@@ -25,6 +25,7 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -240,7 +241,12 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
 
         } else {
             int sign = getTurn(edge, baseNode, prevNode, adjNode, name, destination + destinationRef);
-            if (sign != Instruction.IGNORE) {
+            final List<LanesInfo> lanes = getLanesInfo((String) prevEdge.getValue(TURN_LANES));
+            // TODO NOW could this trigger too many "continue" instructions? But if there is a lane change, then those would be important!?
+            boolean forceTurnDueToLanes = prevInstruction.getLanes() != null && !lanes.equals(prevInstruction.getLanes());
+            if (sign != Instruction.IGNORE || forceTurnDueToLanes) {
+                if (forceTurnDueToLanes && sign == Instruction.IGNORE)
+                    sign = Instruction.CONTINUE_ON_STREET;
                 /*
                     Check if the next instruction is likely to only be a short connector to execute a u-turn
                     --A->--
@@ -289,7 +295,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                     prevInstructionName = prevName;
                     ways.add(prevInstruction);
                 }
-                prevInstruction.setLanes(getLanesInfo((String) prevEdge.getValue(TURN_LANES), sign));
+                prevInstruction.setLanes(markActive(lanes, (String) prevEdge.getValue(TURN_LANES_VEHICLE_ACCESS), sign));
                 prevInstruction.setExtraInfo(STREET_REF, ref);
                 prevInstruction.setExtraInfo(STREET_DESTINATION, destination);
                 prevInstruction.setExtraInfo(STREET_DESTINATION_REF, destinationRef);
@@ -318,15 +324,23 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         prevEdge = edge;
     }
 
-    private List<LanesInfo> getLanesInfo(String turnLaneKVString, int sign) {
+    List<LanesInfo> getLanesInfo(String turnLaneKVString) {
         if (turnLaneKVString == null) return Collections.emptyList();
-
         List<LanesInfo> lanes = new ArrayList<>();
         for (String lane : turnLaneKVString.split("\\|")) {
             lanes.add(new LanesInfo(lane));
         }
+        return lanes;
+    }
 
-        for (LanesInfo lane : lanes) {
+    private List<LanesInfo> markActive(List<LanesInfo> lanes, String lanesAccessStr, int sign) {
+        if (lanes.isEmpty()) return Collections.emptyList();
+        List<String> lanesAccess = lanesAccessStr == null ? Collections.emptyList() : Arrays.asList(lanesAccessStr.split("\\|"));
+        for (int i = 0; i < lanes.size(); i++) {
+            LanesInfo lane = lanes.get(i);
+            String accessStr = lanesAccess.size() != lanes.size() ? "" : lanesAccess.get(i);
+            if (accessStr.equals("no")) continue;
+
             if (lanes.size() == 1) {
                 lane.setActive(true);
             } else if (sign < 0 && !"merge_to_left".equals(lane.getDirection()) && lane.getDirection().contains("left")) {

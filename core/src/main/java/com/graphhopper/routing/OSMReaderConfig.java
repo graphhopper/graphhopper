@@ -19,13 +19,14 @@
 package com.graphhopper.routing;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class OSMReaderConfig {
     private List<String> ignoredHighways = new ArrayList<>();
     private boolean parseWayNames = true;
     private String preferredLanguage = "";
-    private boolean withTurnLanes = false;
+    private List<String> turnLanesProfiles = new ArrayList<>();
     private double maxWayPointDistance = 1;
     private double elevationMaxWayPointDistance = Double.MAX_VALUE;
     private String smoothElevation = "";
@@ -67,12 +68,12 @@ public class OSMReaderConfig {
         return this;
     }
 
-    public void setTurnLanes(boolean withTurnLanes) {
-        this.withTurnLanes = withTurnLanes;
+    public void setTurnLanesProfiles(List<String> turnLanesProfiles) {
+        this.turnLanesProfiles = turnLanesProfiles;
     }
 
-    public boolean withTurnLanes() {
-        return withTurnLanes;
+    public List<String> getTurnLanesProfiles() {
+        return turnLanesProfiles;
     }
 
     public boolean isParseWayNames() {

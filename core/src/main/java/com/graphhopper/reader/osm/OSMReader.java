@@ -425,13 +425,21 @@ public class OSMReader {
             if (!name.isEmpty())
                 list.add(new KVStorage.KeyValue(STREET_NAME, name));
 
-            if (config.withTurnLanes()) {
+            if (!config.getTurnLanesProfiles().isEmpty()) {
                 if (way.hasTag("turn:lanes"))
-                    list.add(new KVStorage.KeyValue(TURN_LANES, way.getTag("turn:lanes"), true, false));
+                    list.add(new KVStorage.KeyValue(TURN_LANES, way.getTag("turn:lanes"), true, true));
                 else if (way.hasTag("turn:lanes:forward"))
                     list.add(new KVStorage.KeyValue(TURN_LANES, way.getTag("turn:lanes:forward"), true, false));
                 else if (way.hasTag("turn:lanes:backward"))
                     list.add(new KVStorage.KeyValue(TURN_LANES, way.getTag("turn:lanes:backward"), false, true));
+
+                // TODO LATER do taxi:lanes, bus:lanes, hgv:lanes
+                if (way.hasTag("vehicle:lanes"))
+                    list.add(new KVStorage.KeyValue(TURN_LANES_VEHICLE_ACCESS, way.getTag("vehicle:lanes"), true, true));
+                else if (way.hasTag("vehicle:lanes:forward"))
+                    list.add(new KVStorage.KeyValue(TURN_LANES_VEHICLE_ACCESS, way.getTag("vehicle:lanes:forward"), true, false));
+                else if (way.hasTag("vehicle:lanes:backward"))
+                    list.add(new KVStorage.KeyValue(TURN_LANES_VEHICLE_ACCESS, way.getTag("vehicle:lanes:backward"), false, true));
             }
 
             // http://wiki.openstreetmap.org/wiki/Key:ref
