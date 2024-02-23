@@ -427,19 +427,19 @@ public class OSMReader {
 
             if (!config.getTurnLanesProfiles().isEmpty()) {
                 if (way.hasTag("turn:lanes"))
-                    list.add(new KVStorage.KeyValue(TURN_LANES, way.getTag("turn:lanes"), true, true));
+                    list.add(new KVStorage.KeyValue(TURN_LANES, replace(way.getTag("turn:lanes")), true, true));
                 else if (way.hasTag("turn:lanes:forward"))
-                    list.add(new KVStorage.KeyValue(TURN_LANES, way.getTag("turn:lanes:forward"), true, false));
+                    list.add(new KVStorage.KeyValue(TURN_LANES, replace(way.getTag("turn:lanes:forward")), true, false));
                 else if (way.hasTag("turn:lanes:backward"))
-                    list.add(new KVStorage.KeyValue(TURN_LANES, way.getTag("turn:lanes:backward"), false, true));
+                    list.add(new KVStorage.KeyValue(TURN_LANES, replace(way.getTag("turn:lanes:backward")), false, true));
 
                 // TODO LATER do taxi:lanes, bus:lanes, hgv:lanes
                 if (way.hasTag("vehicle:lanes"))
-                    list.add(new KVStorage.KeyValue(TURN_LANES_VEHICLE_ACCESS, way.getTag("vehicle:lanes"), true, true));
+                    list.add(new KVStorage.KeyValue(TURN_LANES_VEHICLE_ACCESS, replace(way.getTag("vehicle:lanes")), true, true));
                 else if (way.hasTag("vehicle:lanes:forward"))
-                    list.add(new KVStorage.KeyValue(TURN_LANES_VEHICLE_ACCESS, way.getTag("vehicle:lanes:forward"), true, false));
+                    list.add(new KVStorage.KeyValue(TURN_LANES_VEHICLE_ACCESS, replace(way.getTag("vehicle:lanes:forward")), true, false));
                 else if (way.hasTag("vehicle:lanes:backward"))
-                    list.add(new KVStorage.KeyValue(TURN_LANES_VEHICLE_ACCESS, way.getTag("vehicle:lanes:backward"), false, true));
+                    list.add(new KVStorage.KeyValue(TURN_LANES_VEHICLE_ACCESS, replace(way.getTag("vehicle:lanes:backward")), false, true));
             }
 
             // http://wiki.openstreetmap.org/wiki/Key:ref
@@ -509,6 +509,11 @@ public class OSMReader {
         // such that the distance could actually be calculated, 3) there was a duration tag we could parse, and 4) the
         // derived speed was not unrealistically slow.
         way.setTag("speed_from_duration", speedInKmPerHour);
+    }
+
+    static String replace(String str) {
+        // naming must be consistent with our instructions
+        return str.replaceAll("through", "continue");
     }
 
     static String fixWayName(String str) {

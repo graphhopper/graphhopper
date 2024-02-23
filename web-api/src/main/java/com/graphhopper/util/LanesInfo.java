@@ -18,36 +18,40 @@
 
 package com.graphhopper.util;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 public class LanesInfo {
     /**
      * Direction as string based on the OSM lane tags.
      */
-    public final String direction;
+    public final List<String> directions;
 
     /**
      * Defines if the lane can be used for the next turn instruction.
      */
-    public boolean active;
+    public boolean valid;
 
-    public LanesInfo(String direction) {
-        if (direction == null) throw new IllegalArgumentException("direction cannot be null");
-        this.direction = direction;
+    public LanesInfo(String directions) {
+        if (directions == null) throw new IllegalArgumentException("direction cannot be null");
+        this.directions = Arrays.asList(directions.split(";"));
     }
 
-    public void setActive(boolean active) {
-        this.active = active;
+    public void setValid(boolean valid) {
+        this.valid = valid;
     }
 
-    public String getDirection() {
-        return direction;
+    public List<String> getDirections() {
+        return directions;
     }
 
-    public boolean isActive() {
-        return active;
+    public boolean isValid() {
+        return valid;
     }
 
     @Override
     public String toString() {
-        return "{direction:" + direction + ", " + "active:" + active + "}";
+        return "{directions:" + directions + ", " + "valid:" + valid + "}";
     }
 }

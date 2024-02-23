@@ -242,7 +242,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         } else {
             int sign = getTurn(edge, baseNode, prevNode, adjNode, name, destination + destinationRef);
             final List<LanesInfo> lanes = getLanesInfo((String) prevEdge.getValue(TURN_LANES));
-            // TODO NOW could this trigger too many "continue" instructions? But if there is a lane change, then those would be important!?
+            // TODO this might trigger too many "continue" instructions, but if there is a lane change, then those would be important
             boolean forceTurnDueToLanes = prevInstruction.getLanes() != null && !lanes.equals(prevInstruction.getLanes());
             if (sign != Instruction.IGNORE || forceTurnDueToLanes) {
                 if (forceTurnDueToLanes && sign == Instruction.IGNORE)
@@ -342,13 +342,13 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             if (accessStr.equals("no")) continue;
 
             if (lanes.size() == 1) {
-                lane.setActive(true);
-            } else if (sign < 0 && !"merge_to_left".equals(lane.getDirection()) && lane.getDirection().contains("left")) {
-                lane.setActive(true);
-            } else if (sign == 0 && lane.getDirection().contains("through")) {
-                lane.setActive(true);
-            } else if (sign > 0 && !"merge_to_right".equals(lane.getDirection()) && lane.getDirection().contains("right")) {
-                lane.setActive(true);
+                lane.setValid(true);
+            } else if (sign < 0 && !"merge_to_left".equals(lane.getDirections()) && lane.getDirections().contains("left")) {
+                lane.setValid(true);
+            } else if (sign == 0 && lane.getDirections().contains("continue")) {
+                lane.setValid(true);
+            } else if (sign > 0 && !"merge_to_right".equals(lane.getDirections()) && lane.getDirections().contains("right")) {
+                lane.setValid(true);
             }
         }
         return lanes;

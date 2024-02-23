@@ -543,13 +543,13 @@ public class InstructionListTest {
         na.setNode(3, 1.1, 1.0);
         na.setNode(4, 1.1, 1.1);
         na.setNode(5, 1.1, 1.2);
-        g.edge(0, 1).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "0-1", TURN_LANES, "through|right"));
+        g.edge(0, 1).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "0-1", TURN_LANES, "continue|right"));
         g.edge(1, 2).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "1-2"));
         g.edge(0, 3).setDistance(11000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "0-3"));
         g.edge(1, 4).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "1-4"));
         g.edge(2, 5).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "2-5"));
-        g.edge(3, 4).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "3-4", TURN_LANES, "through;left|through|right", TURN_LANES_VEHICLE_ACCESS, "yes|no|yes"));
-        List<KVStorage.KeyValue> kv = Arrays.asList(new KVStorage.KeyValue(STREET_NAME, "4-5"), new KVStorage.KeyValue(TURN_LANES, "left|through|right", true, false));
+        g.edge(3, 4).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "3-4", TURN_LANES, "continue;left|continue|right", TURN_LANES_VEHICLE_ACCESS, "yes|no|yes"));
+        List<KVStorage.KeyValue> kv = Arrays.asList(new KVStorage.KeyValue(STREET_NAME, "4-5"), new KVStorage.KeyValue(TURN_LANES, "left|continue|right", true, false));
         g.edge(4, 5).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(kv);
 
         Weighting weighting = new SpeedWeighting(speedEnc);
@@ -559,7 +559,7 @@ public class InstructionListTest {
         assertEquals("continue onto 0-1", wayList.get(0).getTurnDescription(usTR));
         assertEquals("[]", wayList.get(0).getLanes().toString());
         assertEquals("turn right onto 1-4", wayList.get(1).getTurnDescription(usTR));
-        assertEquals("[{direction:through, active:false}, {direction:right, active:true}]", wayList.get(1).getLanes().toString());
+        assertEquals("[{directions:[continue], valid:false}, {directions:[right], valid:true}]", wayList.get(1).getLanes().toString());
         assertEquals("[]", wayList.get(2).getLanes().toString());
 
         p = new Dijkstra(g, weighting, tMode).calcPath(0, 2);
@@ -568,7 +568,7 @@ public class InstructionListTest {
         assertEquals("continue onto 0-1", wayList.get(0).getTurnDescription(usTR));
         assertEquals("[]", wayList.get(0).getLanes().toString());
         assertEquals("continue onto 1-2", wayList.get(1).getTurnDescription(usTR));
-        assertEquals("[{direction:through, active:true}, {direction:right, active:false}]", wayList.get(1).getLanes().toString());
+        assertEquals("[{directions:[continue], valid:true}, {directions:[right], valid:false}]", wayList.get(1).getLanes().toString());
         assertEquals("[]", wayList.get(2).getLanes().toString());
 
         p = new Dijkstra(g, weighting, tMode).calcPath(3, 5);
@@ -577,7 +577,7 @@ public class InstructionListTest {
         assertEquals("continue onto 3-4", wayList.get(0).getTurnDescription(usTR));
         assertEquals("[]", wayList.get(0).getLanes().toString());
         assertEquals("continue onto 4-5", wayList.get(1).getTurnDescription(usTR));
-        assertEquals("[{direction:through;left, active:true}, {direction:through, active:false}, {direction:right, active:false}]", wayList.get(1).getLanes().toString());
+        assertEquals("[{directions:[continue, left], valid:true}, {directions:[continue], valid:false}, {directions:[right], valid:false}]", wayList.get(1).getLanes().toString());
         assertEquals("[]", wayList.get(2).getLanes().toString());
 
         p = new Dijkstra(g, weighting, tMode).calcPath(3, 4);
@@ -595,11 +595,11 @@ public class InstructionListTest {
         assertEquals("[]", wayList.get(1).getLanes().toString());
     }
 
-    // TODO NOW why is the reverse (!) value turn:lanes:forward=left|through|right of way https://www.openstreetmap.org/way/326116286
+    // TODO NOW why is the reverse (!) value turn:lanes:forward=left|continue|right of way https://www.openstreetmap.org/way/326116286
     //  shown at the beginning of this route? in json: interval:[1,2]
     // http://localhost:3000/?point=52.515522%2C13.386126&point=52.516672%2C13.386361&profile=car&layer=OpenStreetMap
 
-    // TODO better lane guidance: do not mark the "left+through" lane of "left+through|through|right" as active (even through it is valid)
+    // TODO better lane guidance: do not mark the "left+continue" lane of "left+continue|continue|right" as active (even continue it is valid)
     //  but the next turn is a right turn and very close and would require two lane changes
 
     private void compare(List<List<Double>> expected, List<List<Double>> actual) {
