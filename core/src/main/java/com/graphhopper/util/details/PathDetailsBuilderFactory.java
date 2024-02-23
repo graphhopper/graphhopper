@@ -25,8 +25,6 @@ import com.graphhopper.storage.Graph;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.graphhopper.search.KVStorage.KeyValue.TURN_LANES;
-import static com.graphhopper.search.KVStorage.KeyValue.TURN_LANES_VEHICLE_ACCESS;
 import static com.graphhopper.util.Parameters.Details.*;
 
 /**

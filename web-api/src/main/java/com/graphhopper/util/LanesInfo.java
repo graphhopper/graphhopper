@@ -33,9 +33,9 @@ public class LanesInfo {
      */
     public boolean valid;
 
-    public LanesInfo(String directions) {
+    public LanesInfo(List<String> directions) {
         if (directions == null) throw new IllegalArgumentException("direction cannot be null");
-        this.directions = Arrays.asList(directions.split(";"));
+        this.directions = directions;
     }
 
     public void setValid(boolean valid) {

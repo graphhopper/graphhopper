@@ -129,12 +129,12 @@ public class InstructionListTest {
 
         SpeedWeighting weighting = new SpeedWeighting(speedEnc);
         Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED).calcPath(0, 10);
-        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR);
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR, false);
         List<String> tmpList = getTurnDescriptions(wayList);
         assertEquals(Arrays.asList("continue onto 0-1", "turn right onto 1-4", "turn left onto 7-8", "arrive at destination"),
                 tmpList);
 
-        wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, trMap.getWithFallBack(Locale.GERMAN));
+        wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, trMap.getWithFallBack(Locale.GERMAN), false);
         tmpList = getTurnDescriptions(wayList, trMap.getWithFallBack(Locale.GERMAN));
         assertEquals(Arrays.asList("dem Straßenverlauf von 0-1 folgen", "rechts abbiegen auf 1-4", "links abbiegen auf 7-8", "Ziel erreicht"),
                 tmpList);
@@ -158,7 +158,7 @@ public class InstructionListTest {
         assertEquals(42000, p.getDistance(), 1e-2);
         assertEquals(IntArrayList.from(6, 7, 8, 5, 2), p.calcNodes());
 
-        wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR);
+        wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR, false);
         tmpList = getTurnDescriptions(wayList);
         assertEquals(Arrays.asList("continue onto 6-7", "turn left onto 5-8", "arrive at destination"),
                 tmpList);
@@ -168,7 +168,7 @@ public class InstructionListTest {
 
         // special case of identical start and end
         p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED).calcPath(0, 0);
-        wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR);
+        wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR, false);
         assertEquals(1, wayList.size());
         assertEquals("arrive at destination", wayList.get(0).getTurnDescription(usTR));
     }
@@ -199,13 +199,13 @@ public class InstructionListTest {
         SpeedWeighting weighting = new SpeedWeighting(speedEnc);
         Path p = new Dijkstra(g, weighting, tMode).calcPath(2, 3);
 
-        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR);
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR, false);
         List<String> tmpList = getTurnDescriptions(wayList);
         assertEquals(Arrays.asList("continue onto 2-4", "turn slight right onto 3-4", "arrive at destination"),
                 tmpList);
 
         p = new Dijkstra(g, weighting, tMode).calcPath(3, 5);
-        wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR);
+        wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR, false);
         tmpList = getTurnDescriptions(wayList);
         assertEquals(Arrays.asList("continue onto 3-4", "keep right onto 4-5", "arrive at destination"),
                 tmpList);
@@ -237,7 +237,7 @@ public class InstructionListTest {
 
         Weighting weighting = new SpeedWeighting(speedEnc);
         Path p = new Dijkstra(g, weighting, tMode).calcPath(2, 3);
-        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR);
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR, false);
         List<String> tmpList = getTurnDescriptions(wayList);
         assertEquals(Arrays.asList("continue onto street", "turn right onto street", "arrive at destination"), tmpList);
     }
@@ -266,7 +266,7 @@ public class InstructionListTest {
 
         Weighting weighting = new SpeedWeighting(speedEnc);
         Path p = new Dijkstra(g, weighting, tMode).calcPath(1, 3);
-        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR);
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR, false);
         List<String> tmpList = getTurnDescriptions(wayList);
         assertEquals(Arrays.asList("continue", "arrive at destination"), tmpList);
     }
@@ -295,7 +295,7 @@ public class InstructionListTest {
 
         Weighting weighting = new SpeedWeighting(speedEnc);
         Path p = new Dijkstra(g, weighting, tMode).calcPath(1, 3);
-        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR);
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR, false);
         List<String> tmpList = getTurnDescriptions(wayList);
         assertEquals(Arrays.asList("continue", "arrive at destination"), tmpList);
     }
@@ -332,7 +332,7 @@ public class InstructionListTest {
 
         Weighting weighting = new SpeedWeighting(speedEnc);
         Path p = new Dijkstra(g, weighting, tMode).calcPath(1, 3);
-        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, tmpEM, usTR);
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, tmpEM, usTR, false);
         List<String> tmpList = getTurnDescriptions(wayList);
         assertEquals(Arrays.asList("continue", "turn left", "arrive at destination"), tmpList);
         assertEquals(3, wayList.size());
@@ -369,7 +369,7 @@ public class InstructionListTest {
 
         Weighting weighting = new SpeedWeighting(speedEnc);
         Path p = new Dijkstra(g, weighting, tMode).calcPath(1, 4);
-        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, tmpEM, usTR);
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, tmpEM, usTR, false);
         List<String> tmpList = getTurnDescriptions(wayList);
         assertEquals(Arrays.asList("continue", "turn right", "arrive at destination"), tmpList);
         assertEquals(3, wayList.size());
@@ -416,14 +416,14 @@ public class InstructionListTest {
                 new CustomModel().setDistanceInfluence(0d));
         Path p = new Dijkstra(g, weighting, tMode).calcPath(4, 3);
         assertTrue(p.isFound());
-        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, tmpEM, usTR);
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, tmpEM, usTR, false);
         List<String> tmpList = getTurnDescriptions(wayList);
         assertEquals(Arrays.asList("continue onto myroad", "keep right onto myroad", "arrive at destination"), tmpList);
         assertEquals(3, wayList.size());
         assertEquals(20, wayList.get(1).getDistance());
 
         p = new Dijkstra(g, weighting, tMode).calcPath(4, 1);
-        wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, tmpEM, usTR);
+        wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, tmpEM, usTR, false);
         tmpList = getTurnDescriptions(wayList);
         assertEquals(Arrays.asList("continue onto myroad", "keep left onto myroad", "arrive at destination"), tmpList);
         assertEquals(3, wayList.size());
@@ -463,7 +463,7 @@ public class InstructionListTest {
         customModel.addToPriority(Statement.If("road_class == PEDESTRIAN", Statement.Op.MULTIPLY, "0"));
         Weighting weighting = CustomModelParser.createWeighting(roadsAccessEnc, roadsSpeedEnc, null, tmpEM, TurnCostProvider.NO_TURN_COST_PROVIDER, customModel);
         Path p = new Dijkstra(g, weighting, tMode).calcPath(3, 4);
-        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, tmpEM, usTR);
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, tmpEM, usTR, false);
         List<String> tmpList = getTurnDescriptions(wayList);
         assertEquals(Arrays.asList("continue", "keep right", "arrive at destination"), tmpList);
     }
@@ -474,7 +474,7 @@ public class InstructionListTest {
         g.getNodeAccess().setNode(1, 0, 0);
         Weighting weighting = new SpeedWeighting(speedEnc);
         Path p = new Dijkstra(g, weighting, tMode).calcPath(0, 1);
-        InstructionList il = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR);
+        InstructionList il = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR, false);
         assertEquals(0, il.size());
     }
 
@@ -506,7 +506,7 @@ public class InstructionListTest {
 
         Weighting weighting = new SpeedWeighting(speedEnc);
         Path p = new Dijkstra(g, weighting, tMode).calcPath(1, 5);
-        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR);
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR, false);
 
         // query on first edge, get instruction for second edge
         assertEquals("2-3", Instructions.find(wayList, 15.05, 10, 1000).getName());
@@ -526,7 +526,7 @@ public class InstructionListTest {
         Graph g = createTestGraph();
         Weighting weighting = new SpeedWeighting(speedEnc);
         Path p = new Dijkstra(g, weighting, tMode).calcPath(1, 5);
-        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR);
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR, false);
         assertTrue(wayList.get(0).getLanes().isEmpty());
     }
 
@@ -554,7 +554,7 @@ public class InstructionListTest {
 
         Weighting weighting = new SpeedWeighting(speedEnc);
         Path p = new Dijkstra(g, weighting, tMode).calcPath(0, 4);
-        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR);
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR, true);
         assertEquals(3, wayList.size());
         assertEquals("continue onto 0-1", wayList.get(0).getTurnDescription(usTR));
         assertEquals("[]", wayList.get(0).getLanes().toString());
@@ -563,7 +563,7 @@ public class InstructionListTest {
         assertEquals("[]", wayList.get(2).getLanes().toString());
 
         p = new Dijkstra(g, weighting, tMode).calcPath(0, 2);
-        wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR);
+        wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR, true);
         assertEquals(3, wayList.size());
         assertEquals("continue onto 0-1", wayList.get(0).getTurnDescription(usTR));
         assertEquals("[]", wayList.get(0).getLanes().toString());
@@ -572,7 +572,7 @@ public class InstructionListTest {
         assertEquals("[]", wayList.get(2).getLanes().toString());
 
         p = new Dijkstra(g, weighting, tMode).calcPath(3, 5);
-        wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR);
+        wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR, true);
         assertEquals(3, wayList.size());
         assertEquals("continue onto 3-4", wayList.get(0).getTurnDescription(usTR));
         assertEquals("[]", wayList.get(0).getLanes().toString());
@@ -581,23 +581,19 @@ public class InstructionListTest {
         assertEquals("[]", wayList.get(2).getLanes().toString());
 
         p = new Dijkstra(g, weighting, tMode).calcPath(3, 4);
-        wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR);
+        wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR, true);
         assertEquals(2, wayList.size());
         assertEquals("continue onto 3-4", wayList.get(0).getTurnDescription(usTR));
         assertEquals("[]", wayList.get(0).getLanes().toString()); // unsure. no turn, hence no lanes?
         assertEquals("[]", wayList.get(1).getLanes().toString());
 
         p = new Dijkstra(g, weighting, tMode).calcPath(5, 3);
-        wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR);
+        wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR, true);
         assertEquals(2, wayList.size());
         assertEquals("continue onto 4-5", wayList.get(0).getTurnDescription(usTR));
         assertEquals("[]", wayList.get(0).getLanes().toString()); // different direction => no turn lanes info
         assertEquals("[]", wayList.get(1).getLanes().toString());
     }
-
-    // TODO NOW why is the reverse (!) value turn:lanes:forward=left|continue|right of way https://www.openstreetmap.org/way/326116286
-    //  shown at the beginning of this route? in json: interval:[1,2]
-    // http://localhost:3000/?point=52.515522%2C13.386126&point=52.516672%2C13.386361&profile=car&layer=OpenStreetMap
 
     // TODO better lane guidance: do not mark the "left+continue" lane of "left+continue|continue|right" as active (even continue it is valid)
     //  but the next turn is a right turn and very close and would require two lane changes

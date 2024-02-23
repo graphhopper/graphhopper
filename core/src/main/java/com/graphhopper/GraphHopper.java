@@ -588,6 +588,7 @@ public class GraphHopper {
         urbanDensityCalculationThreads = ghConfig.getInt("graph.urban_density.threads", urbanDensityCalculationThreads);
 
         // routing
+        routerConfig.setTurnLanesProfiles(osmReaderConfig.getTurnLanesProfiles());
         routerConfig.setMaxVisitedNodes(ghConfig.getInt(Routing.INIT_MAX_VISITED_NODES, routerConfig.getMaxVisitedNodes()));
         routerConfig.setTimeoutMillis(ghConfig.getLong(Routing.INIT_TIMEOUT_MS, routerConfig.getTimeoutMillis()));
         routerConfig.setMaxRoundTripRetries(ghConfig.getInt(RoundTrip.INIT_MAX_RETRIES, routerConfig.getMaxRoundTripRetries()));

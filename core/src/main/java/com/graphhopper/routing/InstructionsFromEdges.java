@@ -83,11 +83,12 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
     private String prevDestinationAndRef;
     private String prevName;
     private String prevInstructionName;
+    private boolean withTurnLanes;
 
     private static final int MAX_U_TURN_DISTANCE = 35;
 
     public InstructionsFromEdges(Graph graph, Weighting weighting, EncodedValueLookup evLookup,
-                                 InstructionList ways) {
+                                 InstructionList ways, boolean withTurnLanes) {
         this.weighting = weighting;
         this.roundaboutEnc = evLookup.getBooleanEncodedValue(Roundabout.KEY);
         this.roadClassEnc = evLookup.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
@@ -95,6 +96,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         this.maxSpeedEnc = evLookup.getDecimalEncodedValue(MaxSpeed.KEY);
         this.nodeAccess = graph.getNodeAccess();
         this.ways = ways;
+        this.withTurnLanes = withTurnLanes;
         prevNode = -1;
         prevInRoundabout = false;
         prevName = null;
@@ -105,13 +107,15 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
     /**
      * @return the list of instructions for this path.
      */
-    public static InstructionList calcInstructions(Path path, Graph graph, Weighting weighting, EncodedValueLookup evLookup, final Translation tr) {
+    public static InstructionList calcInstructions(Path path, Graph graph, Weighting weighting,
+                                                   EncodedValueLookup evLookup, Translation tr,
+                                                   boolean withTurnLanes) {
         final InstructionList ways = new InstructionList(tr);
         if (path.isFound()) {
             if (path.getEdgeCount() == 0) {
                 ways.add(new FinishInstruction(graph.getNodeAccess(), path.getEndNode()));
             } else {
-                path.forEveryEdge(new InstructionsFromEdges(graph, weighting, evLookup, ways));
+                path.forEveryEdge(new InstructionsFromEdges(graph, weighting, evLookup, ways, withTurnLanes));
             }
         }
         return ways;
@@ -241,9 +245,14 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
 
         } else {
             int sign = getTurn(edge, baseNode, prevNode, adjNode, name, destination + destinationRef);
-            final List<LanesInfo> lanes = getLanesInfo((String) prevEdge.getValue(TURN_LANES));
-            // TODO this might trigger too many "continue" instructions, but if there is a lane change, then those would be important
-            boolean forceTurnDueToLanes = prevInstruction.getLanes() != null && !lanes.equals(prevInstruction.getLanes());
+            boolean forceTurnDueToLanes = false;
+            List<LanesInfo> lanes = Collections.emptyList();
+            if (withTurnLanes) {
+                lanes = getLanesInfo((String) prevEdge.getValue(TURN_LANES));
+                // this might trigger too many "continue" instructions, but if there is a lane change, then those would be important
+                forceTurnDueToLanes = prevInstruction.getLanes() != null && !lanes.equals(prevInstruction.getLanes());
+            }
+
             if (sign != Instruction.IGNORE || forceTurnDueToLanes) {
                 if (forceTurnDueToLanes && sign == Instruction.IGNORE)
                     sign = Instruction.CONTINUE_ON_STREET;
@@ -295,7 +304,10 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                     prevInstructionName = prevName;
                     ways.add(prevInstruction);
                 }
-                prevInstruction.setLanes(markActive(lanes, (String) prevEdge.getValue(TURN_LANES_VEHICLE_ACCESS), sign));
+                if (withTurnLanes) {
+                    String lanesAccessStr = (String) prevEdge.getValue(TURN_LANES_VEHICLE_ACCESS);
+                    prevInstruction.setLanes(markActive(lanes, lanesAccessStr == null ? Collections.emptyList() : Arrays.asList(lanesAccessStr.split("\\|")), sign));
+                }
                 prevInstruction.setExtraInfo(STREET_REF, ref);
                 prevInstruction.setExtraInfo(STREET_DESTINATION, destination);
                 prevInstruction.setExtraInfo(STREET_DESTINATION_REF, destinationRef);
@@ -328,14 +340,13 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         if (turnLaneKVString == null) return Collections.emptyList();
         List<LanesInfo> lanes = new ArrayList<>();
         for (String lane : turnLaneKVString.split("\\|")) {
-            lanes.add(new LanesInfo(lane));
+            lanes.add(new LanesInfo(Arrays.asList(lane.split(";"))));
         }
         return lanes;
     }
 
-    private List<LanesInfo> markActive(List<LanesInfo> lanes, String lanesAccessStr, int sign) {
+    private List<LanesInfo> markActive(List<LanesInfo> lanes, List<String> lanesAccess, int sign) {
         if (lanes.isEmpty()) return Collections.emptyList();
-        List<String> lanesAccess = lanesAccessStr == null ? Collections.emptyList() : Arrays.asList(lanesAccessStr.split("\\|"));
         for (int i = 0; i < lanes.size(); i++) {
             LanesInfo lane = lanes.get(i);
             String accessStr = lanesAccess.size() != lanes.size() ? "" : lanesAccess.get(i);

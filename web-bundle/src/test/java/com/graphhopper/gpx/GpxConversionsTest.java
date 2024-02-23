@@ -89,7 +89,7 @@ public class GpxConversionsTest {
 
         Weighting weighting = new ShortestWeighting(accessEnc, speedEnc);
         Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED).calcPath(1, 5);
-        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, trMap.getWithFallBack(Locale.US));
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, trMap.getWithFallBack(Locale.US), false);
         PointList points = p.calcPoints();
         assertEquals(4, wayList.size());
 
