@@ -531,7 +531,7 @@ public class InstructionListTest {
     }
 
     @Test
-    public void getLanesInfoSingleLaneRight() {
+    public void getLanesInfo() {
         BaseGraph g = new BaseGraph.Builder(carManager).create();
         // 0-1-2
         // | | |

@@ -343,11 +343,11 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
 
             if (lanes.size() == 1) {
                 lane.setValid(true);
-            } else if (sign < 0 && !"merge_to_left".equals(lane.getDirections()) && lane.getDirections().contains("left")) {
+            } else if (sign < 0 && !lane.getDirections().contains("merge_to_left") && lane.getDirections().contains("left")) {
                 lane.setValid(true);
             } else if (sign == 0 && lane.getDirections().contains("continue")) {
                 lane.setValid(true);
-            } else if (sign > 0 && !"merge_to_right".equals(lane.getDirections()) && lane.getDirections().contains("right")) {
+            } else if (sign > 0 && !lane.getDirections().contains("merge_to_right") && lane.getDirections().contains("right")) {
                 lane.setValid(true);
             }
         }
