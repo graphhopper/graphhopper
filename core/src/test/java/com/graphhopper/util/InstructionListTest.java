@@ -572,6 +572,7 @@ public class InstructionListTest {
         assertEquals("arrive at destination", wayList.get(1).getTurnDescription(usTR));
         assertEquals("[]", wayList.get(1).getInstructionDetails().toString());
 
+        // vehicle access restricts usage of middle lane e.g. http://localhost:3000/?point=52.515454%2C13.385814&point=52.516705%2C13.386264
         p = new Dijkstra(g, weighting, tMode).calcPath(3, 2);
         wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR, true);
         assertEquals(4, wayList.size());
@@ -598,6 +599,7 @@ public class InstructionListTest {
 
     @Test
     public void getMergeMultipleEdgesOfSameJunction() {
+        // e.g. http://localhost:3000/?point=52.519159%2C13.452253&point=52.516092%2C13.45156
         BaseGraph g = new BaseGraph.Builder(carManager).create();
         // 0-1-2-3
         //     | |
@@ -609,7 +611,7 @@ public class InstructionListTest {
         na.setNode(3, 1.2, 1.3);
         na.setNode(5, 1.1, 1.2);
         na.setNode(6, 1.1, 1.3);
-        g.edge(0, 1).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "0-1", TURN_LANES, "continue|right"));
+        g.edge(0, 1).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "0-1", TURN_LANES, "continue|continue;right"));
         g.edge(1, 2).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "1-2", TURN_LANES, "continue|right"));
         g.edge(2, 3).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "2-3"));
         g.edge(2, 5).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "2-5"));
@@ -622,12 +624,14 @@ public class InstructionListTest {
         assertEquals("continue onto 0-1", wayList.get(0).getTurnDescription(usTR));
         assertEquals("[]", wayList.get(0).getInstructionDetails().toString());
         assertEquals("turn right onto 2-5", wayList.get(1).getTurnDescription(usTR));
-        assertEquals("[{segmentDistance=20000.0, lanes=[{directions:[continue], valid:false}, {directions:[right], valid:true}]}]", wayList.get(1).getInstructionDetails().toString());
+        assertEquals("[{segmentDistance=20000.0, lanes=[{directions:[continue], valid:false}, {directions:[continue, right], valid:true}]}, {segmentDistance=10000.0, lanes=[{directions:[continue], valid:false}, {directions:[right], valid:true}]}]", wayList.get(1).getInstructionDetails().toString());
         assertEquals("[]", wayList.get(2).getInstructionDetails().toString());
     }
 
     // TODO better lane guidance: do not mark the "left+continue" lane of "left+continue|continue|right" as active (even continue it is valid)
     //  but the next turn is a right turn and very close and would require two lane changes
+    // TODO no arrow is on the road => lane gets "none" => no lane is valid for right turn
+    //  http://localhost:3000/?point=52.515176%252C13.460514&point=52.51728%252C13.453813
 
     private void compare(List<List<Double>> expected, List<List<Double>> actual) {
         for (int i = 0; i < expected.size(); i++) {

@@ -246,7 +246,11 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             prevDestinationAndRef = destination + destinationRef;
 
         } else {
-            int sign = getTurn(edge, baseNode, prevNode, adjNode, name, destination + destinationRef);
+            InstructionsOutgoingEdges outdoingEdges = new InstructionsOutgoingEdges(prevEdge, edge, weighting, maxSpeedEnc,
+                    roadClassEnc, roadClassLinkEnc, allExplorer, nodeAccess, prevNode, baseNode, adjNode);
+            int sign = edge.getEdge() == prevEdge.getEdge()
+                    ? Instruction.U_TURN_UNKNOWN // this is the simplest turn to recognize, a plain u-turn.
+                    : getTurn(outdoingEdges, edge, name, destination + destinationRef);
             List<LaneInfo> lanes = Collections.emptyList();
             if (withTurnLanes) {
                 lanes = getLanesInfo((String) prevEdge.getValue(TURN_LANES));
@@ -255,14 +259,15 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                 //  worse guidance when inserting continue instructions. See the following route:
                 //  http://localhost:3000/?point=52.453383%2C13.457341&point=52.454789%2C13.461292&profile=car&layer=OpenStreetMap
 
-                if (!lanes.isEmpty()) {
-                    // for now merge only identical lanes
-                    if (!prevInstructionDetails.isEmpty() && !prevInstructionDetails.get(0).getLanes().equals(lanes)) {
+                if (lanes.isEmpty()) {
+                    prevInstructionDetails.clear();
+                    prevLanesAccess.clear();
+                } else {
+                    if (sign == Instruction.IGNORE && outdoingEdges.getAllowedTurns() > 1) {
+                        // restart collecting lanes if turns are possible before the actual turn (i.e. lanes could be associated to different turns)
                         prevInstructionDetails.clear();
                         prevLanesAccess.clear();
-                    }
-
-                    for (InstructionDetails d : prevInstructionDetails) {
+                    } else for (InstructionDetails d : prevInstructionDetails) {
                         d.setBeforeTurn(d.getBeforeTurn() + prevEdge.getDistance());
                     }
 
@@ -332,7 +337,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                     for (int i = 0; i < prevInstructionDetails.size(); i++) {
                         InstructionDetails d = prevInstructionDetails.get(i);
                         markActive(d.getLanes(), prevLanesAccess.get(i), sign);
-                        // currently only the first InstructionDetails will be added
+                        // skip duplicates
                         if (currDetails.isEmpty() || !currDetails.get(currDetails.size() - 1).getLanes().equals(d.getLanes()))
                             prevInstruction.getInstructionDetails().add(d);
                     }
@@ -411,18 +416,12 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         ways.add(finishInstruction);
     }
 
-    private int getTurn(EdgeIteratorState edge, int baseNode, int prevNode, int adjNode, String name, String destinationAndRef) {
-        if (edge.getEdge() == prevEdge.getEdge())
-            // this is the simplest turn to recognize, a plain u-turn.
-            return Instruction.U_TURN_UNKNOWN;
+    private int getTurn(InstructionsOutgoingEdges outgoingEdges, EdgeIteratorState edge, String name, String destinationAndRef) {
         GHPoint point = InstructionsHelper.getPointForOrientationCalculation(edge, nodeAccess);
         double lat = point.getLat();
         double lon = point.getLon();
         prevOrientation = AngleCalc.ANGLE_CALC.calcOrientation(doublePrevLat, doublePrevLon, prevLat, prevLon);
         int sign = InstructionsHelper.calculateSign(prevLat, prevLon, lat, lon, prevOrientation);
-
-        InstructionsOutgoingEdges outgoingEdges = new InstructionsOutgoingEdges(prevEdge, edge, weighting, maxSpeedEnc,
-                roadClassEnc, roadClassLinkEnc, allExplorer, nodeAccess, prevNode, baseNode, adjNode);
         int nrOfPossibleTurns = outgoingEdges.getAllowedTurns();
 
         // there is no other turn possible

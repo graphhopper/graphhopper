@@ -25,7 +25,6 @@ import com.graphhopper.storage.Graph;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.graphhopper.search.KVStorage.KeyValue.TURN_LANES;
 import static com.graphhopper.util.Parameters.Details.*;
 
 /**
@@ -52,8 +51,7 @@ public class PathDetailsBuilderFactory {
         if (requestedPathDetails.contains(STREET_DESTINATION))
             builders.add(new KVStringDetails(STREET_DESTINATION));
         // for now do not expose it via path detail because we would want similar object structure of lanes as we have in instructions
-        if (requestedPathDetails.contains(TURN_LANES))
-            builders.add(new KVStringDetails(TURN_LANES));
+        //if (requestedPathDetails.contains(TURN_LANES)) builders.add(new KVStringDetails(TURN_LANES));
         //if (requestedPathDetails.contains(TURN_LANES_VEHICLE_ACCESS)) builders.add(new KVStringDetails(TURN_LANES_VEHICLE_ACCESS));
 
         if (requestedPathDetails.contains(AVERAGE_SPEED))
