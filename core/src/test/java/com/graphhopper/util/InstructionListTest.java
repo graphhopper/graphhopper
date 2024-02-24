@@ -527,11 +527,11 @@ public class InstructionListTest {
         Weighting weighting = new SpeedWeighting(speedEnc);
         Path p = new Dijkstra(g, weighting, tMode).calcPath(1, 5);
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR, false);
-        assertTrue(wayList.get(0).getLanes().isEmpty());
+        assertTrue(wayList.get(0).getInstructionDetails().isEmpty());
     }
 
     @Test
-    public void getLanesInfo() {
+    public void getBasicLanesInfo() {
         BaseGraph g = new BaseGraph.Builder(carManager).create();
         // 0-1-2
         // | | |
@@ -557,42 +557,73 @@ public class InstructionListTest {
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR, true);
         assertEquals(3, wayList.size());
         assertEquals("continue onto 0-1", wayList.get(0).getTurnDescription(usTR));
-        assertEquals("[]", wayList.get(0).getLanes().toString());
+        assertEquals("[]", wayList.get(0).getInstructionDetails().toString());
         assertEquals("turn right onto 1-4", wayList.get(1).getTurnDescription(usTR));
-        assertEquals("[{directions:[continue], valid:false}, {directions:[right], valid:true}]", wayList.get(1).getLanes().toString());
-        assertEquals("[]", wayList.get(2).getLanes().toString());
+        assertEquals("[{segmentDistance=10000.0, lanes=[{directions:[continue], valid:false}, {directions:[right], valid:true}]}]", wayList.get(1).getInstructionDetails().toString());
+        assertEquals("[]", wayList.get(2).getInstructionDetails().toString());
 
         p = new Dijkstra(g, weighting, tMode).calcPath(0, 2);
         wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR, true);
-        assertEquals(3, wayList.size());
+        assertEquals(2, wayList.size());
         assertEquals("continue onto 0-1", wayList.get(0).getTurnDescription(usTR));
-        assertEquals("[]", wayList.get(0).getLanes().toString());
-        assertEquals("continue onto 1-2", wayList.get(1).getTurnDescription(usTR));
-        assertEquals("[{directions:[continue], valid:true}, {directions:[right], valid:false}]", wayList.get(1).getLanes().toString());
-        assertEquals("[]", wayList.get(2).getLanes().toString());
+        assertEquals("[]", wayList.get(0).getInstructionDetails().toString());
+        // TODO lanes in the middle is not shown as continue does currently not create a new instruction
+        //  ust forcing a new instruction will make problems for cases where a single junction has its lanes spread along multiple edges
+        assertEquals("arrive at destination", wayList.get(1).getTurnDescription(usTR));
+        assertEquals("[]", wayList.get(1).getInstructionDetails().toString());
 
-        p = new Dijkstra(g, weighting, tMode).calcPath(3, 5);
+        p = new Dijkstra(g, weighting, tMode).calcPath(3, 2);
         wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR, true);
-        assertEquals(3, wayList.size());
+        assertEquals(4, wayList.size());
         assertEquals("continue onto 3-4", wayList.get(0).getTurnDescription(usTR));
-        assertEquals("[]", wayList.get(0).getLanes().toString());
-        assertEquals("continue onto 4-5", wayList.get(1).getTurnDescription(usTR));
-        assertEquals("[{directions:[continue, left], valid:true}, {directions:[continue], valid:false}, {directions:[right], valid:false}]", wayList.get(1).getLanes().toString());
-        assertEquals("[]", wayList.get(2).getLanes().toString());
+        assertEquals("[]", wayList.get(0).getInstructionDetails().toString());
+        assertEquals("turn left onto 1-4", wayList.get(1).getTurnDescription(usTR));
+        assertEquals("[{segmentDistance=10000.0, lanes=[{directions:[continue, left], valid:true}, {directions:[continue], valid:false}, {directions:[right], valid:false}]}]", wayList.get(1).getInstructionDetails().toString());
+        assertEquals("[]", wayList.get(2).getInstructionDetails().toString());
 
         p = new Dijkstra(g, weighting, tMode).calcPath(3, 4);
         wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR, true);
         assertEquals(2, wayList.size());
         assertEquals("continue onto 3-4", wayList.get(0).getTurnDescription(usTR));
-        assertEquals("[]", wayList.get(0).getLanes().toString()); // unsure. no turn, hence no lanes?
-        assertEquals("[]", wayList.get(1).getLanes().toString());
+        assertEquals("[]", wayList.get(0).getInstructionDetails().toString()); // no turn, hence no lanes?
+        assertEquals("[]", wayList.get(1).getInstructionDetails().toString());
 
         p = new Dijkstra(g, weighting, tMode).calcPath(5, 3);
         wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR, true);
         assertEquals(2, wayList.size());
         assertEquals("continue onto 4-5", wayList.get(0).getTurnDescription(usTR));
-        assertEquals("[]", wayList.get(0).getLanes().toString()); // different direction => no turn lanes info
-        assertEquals("[]", wayList.get(1).getLanes().toString());
+        assertEquals("[]", wayList.get(0).getInstructionDetails().toString()); // different direction => no turn lanes info
+        assertEquals("[]", wayList.get(1).getInstructionDetails().toString());
+    }
+
+    @Test
+    public void getMergeMultipleEdgesOfSameJunction() {
+        BaseGraph g = new BaseGraph.Builder(carManager).create();
+        // 0-1-2-3
+        //     | |
+        //     5-6
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(0, 1.2, 1.0);
+        na.setNode(1, 1.2, 1.1);
+        na.setNode(2, 1.2, 1.2);
+        na.setNode(3, 1.2, 1.3);
+        na.setNode(5, 1.1, 1.2);
+        na.setNode(6, 1.1, 1.3);
+        g.edge(0, 1).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "0-1", TURN_LANES, "continue|right"));
+        g.edge(1, 2).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "1-2", TURN_LANES, "continue|right"));
+        g.edge(2, 3).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "2-3"));
+        g.edge(2, 5).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "2-5"));
+        g.edge(3, 6).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "3-6"));
+
+        Weighting weighting = new SpeedWeighting(speedEnc);
+        Path p = new Dijkstra(g, weighting, tMode).calcPath(0, 5);
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR, true);
+        assertEquals(3, wayList.size());
+        assertEquals("continue onto 0-1", wayList.get(0).getTurnDescription(usTR));
+        assertEquals("[]", wayList.get(0).getInstructionDetails().toString());
+        assertEquals("turn right onto 2-5", wayList.get(1).getTurnDescription(usTR));
+        assertEquals("[{segmentDistance=20000.0, lanes=[{directions:[continue], valid:false}, {directions:[right], valid:true}]}]", wayList.get(1).getInstructionDetails().toString());
+        assertEquals("[]", wayList.get(2).getInstructionDetails().toString());
     }
 
     // TODO better lane guidance: do not mark the "left+continue" lane of "left+continue|continue|right" as active (even continue it is valid)

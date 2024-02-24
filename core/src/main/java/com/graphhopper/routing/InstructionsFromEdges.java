@@ -79,11 +79,13 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
     private double prevOrientation;
     private double prevInstructionPrevOrientation = Double.NaN;
     private Instruction prevInstruction;
+    private final List<InstructionDetails> prevInstructionDetails = new ArrayList<>();
+    private final List<List<String>> prevLanesAccess = new ArrayList<>();
+    private final boolean withTurnLanes;
     private boolean prevInRoundabout;
     private String prevDestinationAndRef;
     private String prevName;
     private String prevInstructionName;
-    private boolean withTurnLanes;
 
     private static final int MAX_U_TURN_DISTANCE = 35;
 
@@ -245,17 +247,36 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
 
         } else {
             int sign = getTurn(edge, baseNode, prevNode, adjNode, name, destination + destinationRef);
-            boolean forceTurnDueToLanes = false;
-            List<LanesInfo> lanes = Collections.emptyList();
+            List<LaneInfo> lanes = Collections.emptyList();
             if (withTurnLanes) {
                 lanes = getLanesInfo((String) prevEdge.getValue(TURN_LANES));
-                // this might trigger too many "continue" instructions, but if there is a lane change, then those would be important
-                forceTurnDueToLanes = prevInstruction.getLanes() != null && !lanes.equals(prevInstruction.getLanes());
+                // TODO
+                //  Do not force an instruction if just the lanes change as it might lead to a much
+                //  worse guidance when inserting continue instructions. See the following route:
+                //  http://localhost:3000/?point=52.453383%2C13.457341&point=52.454789%2C13.461292&profile=car&layer=OpenStreetMap
+
+                if (!lanes.isEmpty()) {
+                    // for now merge only identical lanes
+                    if (!prevInstructionDetails.isEmpty() && !prevInstructionDetails.get(0).getLanes().equals(lanes)) {
+                        prevInstructionDetails.clear();
+                        prevLanesAccess.clear();
+                    }
+
+                    for (InstructionDetails d : prevInstructionDetails) {
+                        d.setBeforeTurn(d.getBeforeTurn() + prevEdge.getDistance());
+                    }
+
+                    InstructionDetails d = new InstructionDetails();
+                    d.setBeforeTurn(prevEdge.getDistance());
+                    String lanesAccessStr = (String) prevEdge.getValue(TURN_LANES_VEHICLE_ACCESS);
+                    d.setLanes(lanes);
+                    prevInstructionDetails.add(d);
+                    List<String> lanesAccess = lanesAccessStr == null ? Collections.emptyList() : Arrays.asList(lanesAccessStr.split("\\|"));
+                    prevLanesAccess.add(lanesAccess);
+                }
             }
 
-            if (sign != Instruction.IGNORE || forceTurnDueToLanes) {
-                if (forceTurnDueToLanes && sign == Instruction.IGNORE)
-                    sign = Instruction.CONTINUE_ON_STREET;
+            if (sign != Instruction.IGNORE) {
                 /*
                     Check if the next instruction is likely to only be a short connector to execute a u-turn
                     --A->--
@@ -304,10 +325,21 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                     prevInstructionName = prevName;
                     ways.add(prevInstruction);
                 }
-                if (withTurnLanes) {
-                    String lanesAccessStr = (String) prevEdge.getValue(TURN_LANES_VEHICLE_ACCESS);
-                    prevInstruction.setLanes(markActive(lanes, lanesAccessStr == null ? Collections.emptyList() : Arrays.asList(lanesAccessStr.split("\\|")), sign));
+
+                // TODO what happens for u-turns?
+                if (withTurnLanes && !lanes.isEmpty()) {
+                    List<InstructionDetails> currDetails = prevInstruction.getInstructionDetails();
+                    for (int i = 0; i < prevInstructionDetails.size(); i++) {
+                        InstructionDetails d = prevInstructionDetails.get(i);
+                        markActive(d.getLanes(), prevLanesAccess.get(i), sign);
+                        // currently only the first InstructionDetails will be added
+                        if (currDetails.isEmpty() || !currDetails.get(currDetails.size() - 1).getLanes().equals(d.getLanes()))
+                            prevInstruction.getInstructionDetails().add(d);
+                    }
+                    prevInstructionDetails.clear();
+                    prevLanesAccess.clear();
                 }
+
                 prevInstruction.setExtraInfo(STREET_REF, ref);
                 prevInstruction.setExtraInfo(STREET_DESTINATION, destination);
                 prevInstruction.setExtraInfo(STREET_DESTINATION_REF, destinationRef);
@@ -336,19 +368,18 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         prevEdge = edge;
     }
 
-    List<LanesInfo> getLanesInfo(String turnLaneKVString) {
+    List<LaneInfo> getLanesInfo(String turnLaneKVString) {
         if (turnLaneKVString == null) return Collections.emptyList();
-        List<LanesInfo> lanes = new ArrayList<>();
+        List<LaneInfo> lanes = new ArrayList<>();
         for (String lane : turnLaneKVString.split("\\|")) {
-            lanes.add(new LanesInfo(Arrays.asList(lane.split(";"))));
+            lanes.add(new LaneInfo(Arrays.asList(lane.split(";"))));
         }
         return lanes;
     }
 
-    private List<LanesInfo> markActive(List<LanesInfo> lanes, List<String> lanesAccess, int sign) {
-        if (lanes.isEmpty()) return Collections.emptyList();
+    private void markActive(List<LaneInfo> lanes, List<String> lanesAccess, int sign) {
         for (int i = 0; i < lanes.size(); i++) {
-            LanesInfo lane = lanes.get(i);
+            LaneInfo lane = lanes.get(i);
             String accessStr = lanesAccess.size() != lanes.size() ? "" : lanesAccess.get(i);
             if (accessStr.equals("no")) continue;
 
@@ -362,7 +393,6 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                 lane.setValid(true);
             }
         }
-        return lanes;
     }
 
     @Override

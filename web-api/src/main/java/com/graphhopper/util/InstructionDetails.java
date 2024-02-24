@@ -18,40 +18,34 @@
 
 package com.graphhopper.util;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.List;
 
-public class LanesInfo {
-    /**
-     * Direction as string based on the OSM lane tags.
-     */
-    public final List<String> directions;
+public class InstructionDetails {
 
-    /**
-     * Defines if the lane can be used for the next turn instruction.
-     */
-    public boolean valid;
+    private double beforeTurn;
+    private List<LaneInfo> lanes;
 
-    public LanesInfo(List<String> directions) {
-        if (directions == null) throw new IllegalArgumentException("direction cannot be null");
-        this.directions = directions;
+    public List<LaneInfo> getLanes() {
+        return lanes;
     }
 
-    public void setValid(boolean valid) {
-        this.valid = valid;
+    public void setLanes(List<LaneInfo> lanes) {
+        this.lanes = lanes;
     }
 
-    public List<String> getDirections() {
-        return directions;
+    @JsonProperty("before_turn")
+    public double getBeforeTurn() {
+        return beforeTurn;
     }
 
-    public boolean isValid() {
-        return valid;
+    public void setBeforeTurn(double beforeTurn) {
+        this.beforeTurn = beforeTurn;
     }
 
     @Override
     public String toString() {
-        return "{directions:" + directions + ", " + "valid:" + valid + "}";
+        return "{segmentDistance=" + beforeTurn + ", lanes=" + lanes + '}';
     }
 }

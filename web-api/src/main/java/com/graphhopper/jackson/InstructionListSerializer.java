@@ -48,7 +48,7 @@ public class InstructionListSerializer extends JsonSerializer<InstructionList> {
             instrJson.put("time", instruction.getTime());
             instrJson.put("distance", Helper.round(instruction.getDistance(), 3));
             instrJson.put("sign", instruction.getSign());
-            instrJson.put("lanes", instruction.getLanes());
+            instrJson.put("details", instruction.getInstructionDetails());
 
             instrJson.putAll(instruction.getExtraInfoJSON());
 

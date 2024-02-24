@@ -53,7 +53,7 @@ public class Instruction {
     protected double distance;
     protected long time;
     protected Map<String, Object> extraInfo = new HashMap<>(3);
-    protected List<LanesInfo> lanes = new ArrayList<>();
+    protected List<InstructionDetails> instructionDetails = new ArrayList<>();
 
     /**
      * The points, distances and times have exactly the same count. The last point of this
@@ -234,11 +234,11 @@ public class Instruction {
         return str;
     }
 
-    public List<LanesInfo> getLanes() {
-        return lanes;
+    public List<InstructionDetails> getInstructionDetails() {
+        return instructionDetails;
     }
 
-    public void setLanes(List<LanesInfo> lanes) {
-        this.lanes = lanes;
+    public void setInstructionDetails(List<InstructionDetails> instructionDetails) {
+        this.instructionDetails = instructionDetails;
     }
 }
