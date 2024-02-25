@@ -45,7 +45,7 @@ public class PathDetailsBuilderFactory {
             builders.add(new ConstantDetailsBuilder(LEG_WEIGHT, path.getWeight()));
 
         for (String key : requestedPathDetails) {
-            if (key.startsWith("tag_") && key.endsWith("_conditional"))
+            if (key.endsWith("_conditional"))
                 builders.add(new KVStringDetails(key));
         }
 

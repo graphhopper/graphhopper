@@ -455,9 +455,9 @@ public class OSMReader {
                         boolean fwd = entry.getKey().contains("forward");
                         boolean bwd = entry.getKey().contains("backward");
                         if (!fwd && !bwd)
-                            list.add(new KVStorage.KeyValue("tag_" + entry.getKey().replace(':', '_'), value, true, true));
+                            list.add(new KVStorage.KeyValue(entry.getKey().replace(':', '_'), value, true, true));
                         else
-                            list.add(new KVStorage.KeyValue("tag_" + entry.getKey().replace(':', '_'), value, fwd, bwd));
+                            list.add(new KVStorage.KeyValue(entry.getKey().replace(':', '_'), value, fwd, bwd));
                     }
 
                 }

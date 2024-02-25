@@ -46,7 +46,7 @@ public class CustomizableConditionalRestrictionsTest {
                 putObject("datareader.date_range_parser_day", "2023-08-01"));
         hopper.importOrLoad();
 
-        String PD_KEY = "tag_access_conditional";
+        String PD_KEY = "access_conditional";
         GHResponse rsp = hopper.route(new GHRequest(50.909136, 14.213924, 50.90918, 14.213549).
                 setProfile("foot").
                 setPathDetails(Arrays.asList(PD_KEY)));
