@@ -332,7 +332,8 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
     @Override
     public Object getValue(String key) {
         for (KVStorage.KeyValue keyValue : keyValues) {
-            if (keyValue.key.equals(key)) return keyValue.value;
+            if (keyValue.key.equals(key) && (!reverse && keyValue.fwd || reverse && keyValue.bwd))
+                return keyValue.value;
         }
         return null;
     }
