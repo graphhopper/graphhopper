@@ -52,11 +52,11 @@ public class DateRangeParser implements ConditionalValueParser {
         this(createCalendar());
     }
 
-    DateRangeParser(Calendar date) {
+    public DateRangeParser(Calendar date) {
         this.date = date;
     }
 
-    static Calendar createCalendar() {
+    public static Calendar createCalendar() {
         // Use locale US as exception here (instead of UK) to match week order "Su-Sa" used in Calendar for day_of_week.
         // Inconsistent but we should not use US for other date handling stuff like strange default formatting, related to #647.
         return Calendar.getInstance(Helper.UTC, Locale.US);
