@@ -26,7 +26,7 @@ import java.util.HashSet;
 
 /**
  * Stores temporary so-called conditional restrictions from access:conditional and other conditional
- * tags affecting cars.
+ * tags affecting cars. See OSMRoadAccessConditionalParser.
  */
 public enum CarRoadAccessConditional {
 

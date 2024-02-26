@@ -449,9 +449,10 @@ public class OSMReader {
                 for (Map.Entry<String, Object> entry : way.getTags().entrySet()) {
                     if (entry.getKey().endsWith(":conditional") && entry.getValue() instanceof String &&
                             // for now reduce index size a bit and focus on access tags
-                            !entry.getKey().startsWith("maxspeed")) {
+                            !entry.getKey().startsWith("maxspeed") && !entry.getKey().startsWith("maxweight")) {
                         // remove spaces as they unnecessarily increase the unique number of values:
-                        String value = KVStorage.cutString(((String) entry.getValue()).replace(" ", ""));
+                        String value = KVStorage.cutString(((String) entry.getValue()).
+                                replace(" ", "").replace("bicycle", "bike"));
                         boolean fwd = entry.getKey().contains("forward");
                         boolean bwd = entry.getKey().contains("backward");
                         if (!fwd && !bwd)
@@ -459,7 +460,6 @@ public class OSMReader {
                         else
                             list.add(new KVStorage.KeyValue(entry.getKey().replace(':', '_'), value, fwd, bwd));
                     }
-
                 }
 
             way.setTag("key_values", list);
