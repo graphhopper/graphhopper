@@ -21,8 +21,8 @@ package com.graphhopper.application.resources;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.ResponsePath;
-import com.graphhopper.config.Profile;
 import com.graphhopper.gpx.GpxConversions;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.jupiter.api.BeforeAll;
@@ -46,7 +46,7 @@ public class GpxTravelTimeConsistencyTest {
         Helper.removeDir(new File(graphFileFoot));
         hopper = new GraphHopper().
                 setOSMFile(osmFile).
-                setProfiles(Profile.createTestProfile("profile")).
+                setProfiles(TestProfiles.constantSpeed("profile")).
                 setStoreOnFlush(true).
                 setGraphHopperLocation(graphFileFoot).
                 importOrLoad();

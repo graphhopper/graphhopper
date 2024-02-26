@@ -23,7 +23,7 @@ import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.jackson.Jackson;
-import com.graphhopper.util.Helper;
+import com.graphhopper.routing.TestProfiles;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -73,7 +73,7 @@ public class GraphHopperProfileTest {
     @Test
     public void chProfileDoesNotExist_error() {
         final GraphHopper hopper = createHopper();
-        hopper.setProfiles(Profile.createTestProfile("profile1"));
+        hopper.setProfiles(TestProfiles.constantSpeed("profile1"));
         hopper.getCHPreparationHandler().setCHProfiles(new CHProfile("other_profile"));
         assertIllegalArgument(hopper::importOrLoad, "CH profile references unknown profile 'other_profile'");
     }
@@ -81,7 +81,7 @@ public class GraphHopperProfileTest {
     @Test
     public void duplicateCHProfile_error() {
         final GraphHopper hopper = createHopper();
-        hopper.setProfiles(Profile.createTestProfile("profile"));
+        hopper.setProfiles(TestProfiles.constantSpeed("profile"));
         hopper.getCHPreparationHandler().setCHProfiles(
                 new CHProfile("profile"),
                 new CHProfile("profile")
@@ -92,7 +92,7 @@ public class GraphHopperProfileTest {
     @Test
     public void lmProfileDoesNotExist_error() {
         final GraphHopper hopper = createHopper();
-        hopper.setProfiles(Profile.createTestProfile("profile1"));
+        hopper.setProfiles(TestProfiles.constantSpeed("profile1"));
         hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("other_profile"));
         assertIllegalArgument(hopper::importOrLoad, "LM profile references unknown profile 'other_profile'");
     }
@@ -100,7 +100,7 @@ public class GraphHopperProfileTest {
     @Test
     public void duplicateLMProfile_error() {
         final GraphHopper hopper = createHopper();
-        hopper.setProfiles(Profile.createTestProfile("profile"));
+        hopper.setProfiles(TestProfiles.constantSpeed("profile"));
         hopper.getLMPreparationHandler().setLMProfiles(
                 new LMProfile("profile"),
                 new LMProfile("profile")
@@ -111,7 +111,7 @@ public class GraphHopperProfileTest {
     @Test
     public void unknownLMPreparationProfile_error() {
         final GraphHopper hopper = createHopper();
-        hopper.setProfiles(Profile.createTestProfile("profile"));
+        hopper.setProfiles(TestProfiles.constantSpeed("profile"));
         hopper.getLMPreparationHandler().setLMProfiles(
                 new LMProfile("profile").setPreparationProfile("xyz")
         );
@@ -122,9 +122,9 @@ public class GraphHopperProfileTest {
     public void lmPreparationProfileChain_error() {
         final GraphHopper hopper = createHopper();
         hopper.setProfiles(
-                Profile.createTestProfile("profile1"),
-                Profile.createTestProfile("profile2"),
-                Profile.createTestProfile("profile3")
+                TestProfiles.constantSpeed("profile1"),
+                TestProfiles.constantSpeed("profile2"),
+                TestProfiles.constantSpeed("profile3")
         );
         hopper.getLMPreparationHandler().setLMProfiles(
                 new LMProfile("profile1"),
@@ -138,9 +138,9 @@ public class GraphHopperProfileTest {
     public void noLMProfileForPreparationProfile_error() {
         final GraphHopper hopper = createHopper();
         hopper.setProfiles(
-                Profile.createTestProfile("profile1"),
-                Profile.createTestProfile("profile2"),
-                Profile.createTestProfile("profile3")
+                TestProfiles.constantSpeed("profile1"),
+                TestProfiles.constantSpeed("profile2"),
+                TestProfiles.constantSpeed("profile3")
         );
         hopper.getLMPreparationHandler().setLMProfiles(
                 new LMProfile("profile1").setPreparationProfile("profile2")

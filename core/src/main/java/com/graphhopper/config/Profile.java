@@ -21,7 +21,6 @@ package com.graphhopper.config;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.graphhopper.json.Statement;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
@@ -62,14 +61,6 @@ public class Profile {
         setTurnCostsConfig(p.getTurnCostsConfig());
         setWeighting(p.getWeighting());
         hints = new PMap(p.getHints());
-    }
-
-    public static Profile createTestProfile(String name) {
-        Profile profile = new Profile(name);
-        CustomModel customModel = new CustomModel();
-        customModel.addToSpeed(Statement.If("true", Statement.Op.LIMIT, "36"));
-        profile.setCustomModel(customModel);
-        return profile;
     }
 
     public static Profile create(String name, boolean turnCosts) {

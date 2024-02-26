@@ -1,7 +1,7 @@
 package com.graphhopper.example;
 
 import com.graphhopper.GraphHopper;
-import com.graphhopper.config.Profile;
+import com.graphhopper.routing.Profiles;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.search.KVStorage;
 import com.graphhopper.storage.BaseGraph;
@@ -9,7 +9,6 @@ import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Helper;
 
 public class LocationIndexExample {
     public static void main(String[] args) {
@@ -20,7 +19,7 @@ public class LocationIndexExample {
 
     public static void graphhopperLocationIndex(String relDir) {
         GraphHopper hopper = new GraphHopper();
-        hopper.setProfiles(new Profile("car").setCustomModel(Helper.createBaseModel("car")));
+        hopper.setProfiles(Profiles.car("car"));
         hopper.setOSMFile(relDir + "core/files/andorra.osm.pbf");
         hopper.setGraphHopperLocation("./target/locationindex-graph-cache");
         hopper.importOrLoad();

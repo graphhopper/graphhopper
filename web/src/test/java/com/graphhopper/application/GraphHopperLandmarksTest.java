@@ -21,7 +21,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
-import com.graphhopper.config.Profile;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -58,7 +58,7 @@ public class GraphHopperLandmarksTest {
                 // force landmark creation even for tiny networks
                 .putObject("prepare.lm.min_network_size", 2)
                 .setProfiles(Collections.singletonList(
-                        Profile.createTestProfile("car_profile")
+                        TestProfiles.constantSpeed("car_profile")
                 ))
                 .setCHProfiles(Collections.singletonList(
                         new CHProfile("car_profile")

@@ -6,7 +6,7 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
-import com.graphhopper.config.Profile;
+import com.graphhopper.routing.Profiles;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 
@@ -36,7 +36,7 @@ public class RoutingExample {
         hopper.setGraphHopperLocation("target/routing-graph-cache");
 
         // see docs/core/profiles.md to learn more about profiles
-        hopper.setProfiles(new Profile("car").setCustomModel(Helper.createBaseModel("car")));
+        hopper.setProfiles(Profiles.car("car"));
 
         // this enables speed mode for the profile we called car
         hopper.getCHPreparationHandler().setCHProfiles(new CHProfile("car"));
@@ -107,8 +107,7 @@ public class RoutingExample {
         GraphHopper hopper = new GraphHopper();
         hopper.setOSMFile(ghLoc);
         hopper.setGraphHopperLocation("target/routing-custom-graph-cache");
-        CustomModel serverSideCustomModel = Helper.createBaseModel("car");
-        hopper.setProfiles(new Profile("car_custom").setCustomModel(serverSideCustomModel));
+        hopper.setProfiles(Profiles.car("car_custom"));
 
         // The hybrid mode uses the "landmark algorithm" and is up to 15x faster than the flexible mode (Dijkstra).
         // Still it is slower than the speed mode ("contraction hierarchies algorithm") ...
