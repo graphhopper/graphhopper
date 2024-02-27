@@ -38,7 +38,6 @@ import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.RoutingCHGraph;
@@ -59,7 +58,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
-import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 
 /**
@@ -94,19 +93,18 @@ public class MiniGraphUI {
     private Snap fromRes;
     private Snap toRes;
     private QueryGraph qGraph;
-    private static String VEHICLE = "car";
 
     public static void main(String[] strs) {
         PMap args = PMap.read(strs);
         args.putObject("datareader.file", args.getString("datareader.file", "core/files/monaco.osm.gz"));
         args.putObject("graph.location", args.getString("graph.location", "tools/target/mini-graph-ui-gh"));
         GraphHopperConfig ghConfig = new GraphHopperConfig(args);
-        ghConfig.setProfiles(Arrays.asList(Profile.create(VEHICLE, true).setName("profile"))).
+        ghConfig.setProfiles(List.of(TestProfiles.accessAndSpeed("profile", "car").setTurnCostsConfig(TurnCostsConfig.car()))).
                 putObject("import.osm.ignored_highways", "");
-        ghConfig.setCHProfiles(Arrays.asList(
+        ghConfig.setCHProfiles(List.of(
                 new CHProfile("profile")
         ));
-        ghConfig.setLMProfiles(Arrays.asList(
+        ghConfig.setLMProfiles(List.of(
                 new LMProfile("profile")
         ));
         GraphHopper hopper = new GraphHopper().init(ghConfig).importOrLoad();
@@ -118,8 +116,8 @@ public class MiniGraphUI {
     public MiniGraphUI(GraphHopper hopper, boolean debug, boolean useCH) {
         this.graph = hopper.getBaseGraph();
         this.na = graph.getNodeAccess();
-        accessEnc = hopper.getEncodingManager().getBooleanEncodedValue(VehicleAccess.key(VEHICLE));
-        avSpeedEnc = hopper.getEncodingManager().getDecimalEncodedValue(VehicleSpeed.key(VEHICLE));
+        accessEnc = hopper.getEncodingManager().getBooleanEncodedValue(VehicleAccess.key("car"));
+        avSpeedEnc = hopper.getEncodingManager().getDecimalEncodedValue(VehicleSpeed.key("car"));
         this.useCH = useCH;
 
         logger.info("locations:" + graph.getNodes() + ", debug:" + debug);

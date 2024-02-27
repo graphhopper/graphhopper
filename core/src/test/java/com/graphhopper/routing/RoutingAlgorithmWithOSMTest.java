@@ -24,6 +24,7 @@ import com.graphhopper.ResponsePath;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
+import com.graphhopper.config.TurnCostsConfig;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.storage.Graph;
@@ -73,7 +74,9 @@ public class RoutingAlgorithmWithOSMTest {
 
     @Test
     public void testMonaco() {
-        GraphHopper hopper = createHopper(MONACO, TestProfiles.accessAndSpeed("car", "car"));
+        Profile profile = TestProfiles.accessAndSpeed("car", "car");
+        profile.getCustomModel().setDistanceInfluence(10_000d);
+        GraphHopper hopper = createHopper(MONACO, profile);
         hopper.importOrLoad();
         checkQueries(hopper, createMonacoCarQueries());
         Graph g = hopper.getBaseGraph();
@@ -175,7 +178,7 @@ public class RoutingAlgorithmWithOSMTest {
         List<Query> queries = new ArrayList<>();
         queries.add(new Query(55.813357, 37.5958585, 55.811042, 37.594689, 1043.99, 12));
         queries.add(new Query(55.813159, 37.593884, 55.811278, 37.594217, 1048, 13));
-        GraphHopper hopper = createHopper(MOSCOW, Profile.create("car", true));
+        GraphHopper hopper = createHopper(MOSCOW, TestProfiles.accessAndSpeed("car", "car").setTurnCostsConfig(TurnCostsConfig.car()));
         hopper.setMinNetworkSize(200);
         hopper.importOrLoad();
         checkQueries(hopper, queries);
@@ -185,7 +188,7 @@ public class RoutingAlgorithmWithOSMTest {
     public void testSimpleTurnCosts() {
         List<Query> list = new ArrayList<>();
         list.add(new Query(-0.49, 0.0, 0.0, -0.49, 298792.107, 6));
-        GraphHopper hopper = createHopper(DIR + "/test_simple_turncosts.osm.xml", Profile.create("car", true));
+        GraphHopper hopper = createHopper(DIR + "/test_simple_turncosts.osm.xml", TestProfiles.accessAndSpeed("car", "car").setTurnCostsConfig(TurnCostsConfig.car()));
         hopper.importOrLoad();
         checkQueries(hopper, list);
     }
@@ -194,7 +197,7 @@ public class RoutingAlgorithmWithOSMTest {
     public void testSimplePTurn() {
         List<Query> list = new ArrayList<>();
         list.add(new Query(0, 0.00099, -0.00099, 0, 664, 6));
-        GraphHopper hopper = createHopper(DIR + "/test_simple_pturn.osm.xml", Profile.create("car", true));
+        GraphHopper hopper = createHopper(DIR + "/test_simple_pturn.osm.xml", TestProfiles.accessAndSpeed("car", "car").setTurnCostsConfig(TurnCostsConfig.car()));
         hopper.importOrLoad();
         checkQueries(hopper, list);
     }

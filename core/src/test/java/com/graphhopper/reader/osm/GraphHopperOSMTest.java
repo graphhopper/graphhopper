@@ -467,7 +467,7 @@ public class GraphHopperOSMTest {
                 setGraphHopperLocation(ghLoc);
         instance.load();
         assertEquals(5, instance.getBaseGraph().getNodes());
-        assertEquals("foot_access,car_access,road_class,road_environment,roundabout,road_class_link,max_speed,foot_network,ferry_speed,foot_subnetwork,car_subnetwork",
+        assertEquals("road_class,road_environment,roundabout,road_class_link,max_speed,foot_subnetwork,car_subnetwork",
                 instance.getEncodingManager().getEncodedValues().stream().map(EncodedValue::getName).collect(Collectors.joining(",")));
     }
 
@@ -575,7 +575,7 @@ public class GraphHopperOSMTest {
         final String profile = "foot_profile";
         instance = new GraphHopper().
                 setStoreOnFlush(false).
-                setProfiles(TestProfiles.accessSpeedAndPriority("foot", "foot")).
+                setProfiles(TestProfiles.accessSpeedAndPriority(profile, "foot")).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm3);
         // exclude motorways which aren't accessible for foot
@@ -730,7 +730,7 @@ public class GraphHopperOSMTest {
         GraphHopper hopper = new GraphHopper().
                 setProfiles(
                         TestProfiles.constantSpeed("profile1", 60),
-                        TestProfiles.constantSpeed("profile1", 100)
+                        TestProfiles.constantSpeed("profile2", 100)
                 ).
                 setStoreOnFlush(false).
                 setGraphHopperLocation(ghLoc).

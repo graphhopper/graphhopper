@@ -19,6 +19,14 @@ public class TurnCostsConfig {
             "share_taxi", "small_electric_vehicle", "speed_pedelec",
             "taxi", "trailer", "tourist_bus");
 
+    public static TurnCostsConfig car() {
+        return new TurnCostsConfig(List.of("motorcar", "motor_vehicle"));
+    }
+
+    public static TurnCostsConfig bike() {
+        return new TurnCostsConfig(List.of("bicycle"));
+    }
+
     // jackson
     public TurnCostsConfig() {
     }

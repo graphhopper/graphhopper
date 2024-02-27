@@ -22,7 +22,7 @@ import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
-import com.graphhopper.config.Profile;
+import com.graphhopper.config.TurnCostsConfig;
 import com.graphhopper.jackson.ResponsePathDeserializer;
 import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
@@ -62,7 +62,7 @@ public class MapMatchingResourceTurnCostsTest {
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR).
                 setProfiles(Arrays.asList(
-                        Profile.create("car", true),
+                        TestProfiles.accessAndSpeed("car", "car").setTurnCostsConfig(TurnCostsConfig.car()),
                         TestProfiles.accessAndSpeed("car_no_tc", "car"),
                         TestProfiles.accessSpeedAndPriority("bike", "bike"))
                 ).

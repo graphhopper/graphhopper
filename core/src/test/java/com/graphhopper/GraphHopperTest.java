@@ -928,7 +928,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
-                setProfiles(TestProfiles.constantSpeed("foot")).
+                setProfiles(TestProfiles.accessSpeedAndPriority(profile, "foot")).
                 setStoreOnFlush(true).
                 importOrLoad();
 
@@ -940,7 +940,7 @@ public class GraphHopperTest {
 
         assertTrue(rsp.hasErrors());
         Throwable throwable = rsp.getErrors().get(0);
-        assertTrue(throwable instanceof MaximumNodesExceededException);
+        assertInstanceOf(MaximumNodesExceededException.class, throwable);
         Object nodesDetail = ((MaximumNodesExceededException) throwable).getDetails().get(MaximumNodesExceededException.NODES_KEY);
         assertEquals(5, nodesDetail);
 
@@ -1779,7 +1779,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MOSCOW).
-                setProfiles(Profile.create("car", turnCosts));
+                setProfiles(TestProfiles.accessAndSpeed("car", "car").setTurnCostsConfig(turnCosts ? TurnCostsConfig.car() : null));
         hopper.getCHPreparationHandler().setCHProfiles(new CHProfile("car"));
         hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("car"));
         hopper.importOrLoad();
@@ -1821,7 +1821,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MOSCOW).
-                setProfiles(Profile.create("car", turnCosts));
+                setProfiles(TestProfiles.accessAndSpeed("car", "car").setTurnCostsConfig(turnCosts ? TurnCostsConfig.car() : null));
         hopper.getCHPreparationHandler().setCHProfiles(new CHProfile("car"));
         hopper.importOrLoad();
 
@@ -1843,7 +1843,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MOSCOW).
-                setProfiles(Profile.create("car", true));
+                setProfiles(TestProfiles.accessAndSpeed("car", "car").setTurnCostsConfig(TurnCostsConfig.car()));
         hopper.getCHPreparationHandler().setCHProfiles(new CHProfile("car"));
         hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("car"));
 
@@ -1905,9 +1905,9 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MOSCOW).
-                setProfiles(Arrays.asList(
-                        Profile.create("car", true).setName(profile1),
-                        Profile.create("car", false).setName(profile2)
+                setProfiles(List.of(
+                        TestProfiles.accessAndSpeed(profile1, "car").setTurnCostsConfig(TurnCostsConfig.car()),
+                        TestProfiles.accessAndSpeed(profile2, "car")
                 )).
                 setStoreOnFlush(true);
         hopper.getCHPreparationHandler().setCHProfiles(
@@ -1930,7 +1930,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MOSCOW).
-                setProfiles(Profile.create("car", true).setName(profile)).
+                setProfiles(TestProfiles.accessAndSpeed(profile, "car").setTurnCostsConfig(TurnCostsConfig.car())).
                 setStoreOnFlush(true);
         hopper.getCHPreparationHandler()
                 .setCHProfiles(new CHProfile(profile));
@@ -1959,9 +1959,10 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MOSCOW).
-                setProfiles(Arrays.asList(
-                        Profile.create("car", true).setName(profile1),
-                        Profile.create("car", false).setName(profile2))).
+                setProfiles(List.of(
+                        TestProfiles.accessAndSpeed(profile1, "car").setTurnCostsConfig(TurnCostsConfig.car()),
+                        TestProfiles.accessAndSpeed(profile2, "car")
+                )).
                 setStoreOnFlush(true);
         hopper.getCHPreparationHandler()
                 // we only do the CH preparation for the profile without turn costs
@@ -1991,12 +1992,15 @@ public class GraphHopperTest {
     }
 
     @Test
-    public void testEncoderWithTurnCostSupport_stillAllows_nodeBasedRouting() {
+    public void testProfileWithTurnCostSupport_stillAllows_nodeBasedRouting() {
         // see #1698
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MOSCOW).
-                setProfiles(Profile.create("foot", false), Profile.create("car", true));
+                setProfiles(
+                        TestProfiles.accessSpeedAndPriority("foot", "foot"),
+                        TestProfiles.accessAndSpeed("car", "car").setTurnCostsConfig(TurnCostsConfig.car())
+                );
 
         hopper.importOrLoad();
         GHPoint p = new GHPoint(55.813357, 37.5958585);
@@ -2018,8 +2022,8 @@ public class GraphHopperTest {
                 setOSMFile(ESSEN).
                 setMinNetworkSize(50).
                 setProfiles(
-                        Profile.create("foot", false),
-                        Profile.create("car", true)
+                        TestProfiles.accessSpeedAndPriority("foot", "foot"),
+                        TestProfiles.accessAndSpeed("car", "car").setTurnCostsConfig(TurnCostsConfig.car())
                 );
 
         hopper.importOrLoad();
@@ -2087,7 +2091,7 @@ public class GraphHopperTest {
         GraphHopper h = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(BAYREUTH).
-                setProfiles(Profile.create("car", true));
+                setProfiles(TestProfiles.accessAndSpeed("car", "car").setTurnCostsConfig(TurnCostsConfig.car()));
         h.getCHPreparationHandler()
                 .setCHProfiles(new CHProfile("car"));
         h.importOrLoad();
@@ -2134,7 +2138,7 @@ public class GraphHopperTest {
         GraphHopper h = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
-                setProfiles(Profile.create("car", true));
+                setProfiles(TestProfiles.accessAndSpeed("car", "car").setTurnCostsConfig(TurnCostsConfig.car()));
         h.getCHPreparationHandler()
                 .setCHProfiles(new CHProfile("car"));
         h.importOrLoad();
@@ -2583,7 +2587,7 @@ public class GraphHopperTest {
     @Test
     void curbsideWithSubnetwork_issue2502() {
         GraphHopper hopper = new GraphHopper()
-                .setProfiles(Profile.create("car", true))
+                .setProfiles(TestProfiles.accessAndSpeed("car", "car").setTurnCostsConfig(TurnCostsConfig.car()))
                 .setGraphHopperLocation(GH_LOCATION)
                 .setMinNetworkSize(200)
                 .setOSMFile(DIR + "/one_way_dead_end.osm.pbf");
@@ -2618,7 +2622,7 @@ public class GraphHopperTest {
     @Test
     void averageSpeedPathDetailBug() {
         GraphHopper hopper = new GraphHopper()
-                .setProfiles(Profile.create("car", true))
+                .setProfiles(TestProfiles.accessAndSpeed("car", "car").setTurnCostsConfig(TurnCostsConfig.car()))
                 .setGraphHopperLocation(GH_LOCATION)
                 .setMinNetworkSize(200)
                 .setOSMFile(BAYREUTH);
@@ -2639,7 +2643,7 @@ public class GraphHopperTest {
     @Test
     void timeDetailBug() {
         GraphHopper hopper = new GraphHopper()
-                .setProfiles(Profile.create("car", true))
+                .setProfiles(TestProfiles.accessAndSpeed("car", "car").setTurnCostsConfig(TurnCostsConfig.car()))
                 .setGraphHopperLocation(GH_LOCATION)
                 .setMinNetworkSize(200)
                 .setOSMFile(BAYREUTH);

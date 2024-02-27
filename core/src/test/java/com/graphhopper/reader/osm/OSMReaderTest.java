@@ -541,7 +541,7 @@ public class OSMReaderTest {
     @Test
     public void testTurnRestrictionsFromXML() {
         String fileTurnRestrictions = "test-restrictions.xml";
-        GraphHopper hopper = new GraphHopperFacade(fileTurnRestrictions, true, "").
+        GraphHopper hopper = new GraphHopperFacade(fileTurnRestrictions, "").
                 importOrLoad();
 
         Graph graph = hopper.getBaseGraph();
@@ -612,7 +612,7 @@ public class OSMReaderTest {
     @Test
     public void testTurnRestrictionsViaHgvTransportationMode() {
         String fileTurnRestrictions = "test-restrictions.xml";
-        GraphHopper hopper = new GraphHopperFacade(fileTurnRestrictions, true, "").
+        GraphHopper hopper = new GraphHopperFacade(fileTurnRestrictions, "").
                 importOrLoad();
 
         Graph graph = hopper.getBaseGraph();
@@ -748,7 +748,7 @@ public class OSMReaderTest {
     @Test
     public void testConditionalTurnRestriction() {
         String fileConditionalTurnRestrictions = "test-conditional-turn-restrictions.xml";
-        GraphHopper hopper = new GraphHopperFacade(fileConditionalTurnRestrictions, true, "").
+        GraphHopper hopper = new GraphHopperFacade(fileConditionalTurnRestrictions, "").
                 setMinNetworkSize(0).
                 importOrLoad();
 
@@ -817,7 +817,7 @@ public class OSMReaderTest {
     @Test
     public void testMultipleTurnRestrictions() {
         String fileMultipleConditionalTurnRestrictions = "test-multiple-conditional-turn-restrictions.xml";
-        GraphHopper hopper = new GraphHopperFacade(fileMultipleConditionalTurnRestrictions, true, "").
+        GraphHopper hopper = new GraphHopperFacade(fileMultipleConditionalTurnRestrictions, "").
                 importOrLoad();
 
         Graph graph = hopper.getBaseGraph();
@@ -859,7 +859,7 @@ public class OSMReaderTest {
 
     @Test
     public void testPreferredLanguage() {
-        GraphHopper hopper = new GraphHopperFacade(file1, false, "de").
+        GraphHopper hopper = new GraphHopperFacade(file1, "de").
                 importOrLoad();
         BaseGraph graph = hopper.getBaseGraph();
         int n20 = AbstractGraphStorageTester.getIdOf(graph, 52);
@@ -867,7 +867,7 @@ public class OSMReaderTest {
         assertTrue(iter.next());
         assertEquals("straße 123, B 122", iter.getName());
 
-        hopper = new GraphHopperFacade(file1, false, "el").
+        hopper = new GraphHopperFacade(file1, "el").
                 importOrLoad();
         graph = hopper.getBaseGraph();
         n20 = AbstractGraphStorageTester.getIdOf(graph, 52);
@@ -994,10 +994,10 @@ public class OSMReaderTest {
 
     class GraphHopperFacade extends GraphHopper {
         public GraphHopperFacade(String osmFile) {
-            this(osmFile, false, "");
+            this(osmFile, "");
         }
 
-        public GraphHopperFacade(String osmFile, boolean turnCosts, String prefLang) {
+        public GraphHopperFacade(String osmFile, String prefLang) {
             setStoreOnFlush(false);
             setOSMFile(osmFile);
             setGraphHopperLocation(dir);
@@ -1007,7 +1007,7 @@ public class OSMReaderTest {
                     TestProfiles.accessSpeedAndPriority("foot", "foot"),
                     TestProfiles.accessAndSpeed("car", "car").setTurnCostsConfig(new TurnCostsConfig(List.of("motorcar", "motor_vehicle"))),
                     TestProfiles.accessSpeedAndPriority("bike", "bike").setTurnCostsConfig(new TurnCostsConfig(List.of("bicycle"))),
-                    TestProfiles.constantSpeed("truck", 100).setTurnCostsConfig(turnCosts ? new TurnCostsConfig(List.of("hgv", "motor_vehicle")) : null)
+                    TestProfiles.constantSpeed("truck", 100).setTurnCostsConfig(new TurnCostsConfig(List.of("hgv", "motor_vehicle")))
             );
             getReaderConfig().setPreferredLanguage(prefLang);
         }
