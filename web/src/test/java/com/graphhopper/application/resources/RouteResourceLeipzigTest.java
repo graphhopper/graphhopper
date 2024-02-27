@@ -23,8 +23,7 @@ import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.config.CHProfile;
-import com.graphhopper.config.Profile;
-import com.graphhopper.util.CustomModel;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -38,11 +37,10 @@ import org.junit.jupiter.params.provider.CsvSource;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.Collections;
+import java.util.List;
 import java.util.Random;
 
 import static com.graphhopper.application.util.TestUtils.clientTarget;
-import static com.graphhopper.json.Statement.If;
-import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static com.graphhopper.util.Parameters.Algorithms.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -59,9 +57,7 @@ public class RouteResourceLeipzigTest {
                 putObject("datareader.file", "../map-matching/files/leipzig_germany.osm.pbf").
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR)
-                .setProfiles(Collections.singletonList(new Profile("my_car").
-                        setCustomModel(Helper.createBaseModel("car").
-                                addToPriority(If("road_access == DESTINATION", MULTIPLY, "0.1")))))
+                .setProfiles(List.of(TestProfiles.accessAndSpeed("my_car", "car")))
                 .setCHProfiles(Collections.singletonList(new CHProfile("my_car")));
         return config;
     }
@@ -82,12 +78,12 @@ public class RouteResourceLeipzigTest {
 
     @ParameterizedTest
     @CsvSource(value = {
-            "92,-1,algorithm=" + DIJKSTRA_BI,
-            "92,-1,algorithm=" + ASTAR_BI,
-            "30719,1,ch.disable=true&algorithm=" + DIJKSTRA,
-            "21011,1,ch.disable=true&algorithm=" + ASTAR,
-            "14720,1,ch.disable=true&algorithm=" + DIJKSTRA_BI,
-            "10392,1,ch.disable=true&algorithm=" + ASTAR_BI
+            "104,-1,algorithm=" + DIJKSTRA_BI,
+            "130,-1,algorithm=" + ASTAR_BI,
+            "30866,1,ch.disable=true&algorithm=" + DIJKSTRA,
+            "21180,1,ch.disable=true&algorithm=" + ASTAR,
+            "14854,1,ch.disable=true&algorithm=" + DIJKSTRA_BI,
+            "10538,1,ch.disable=true&algorithm=" + ASTAR_BI
     })
     void testTimeout(int expectedVisitedNodes, int timeout, String args) {
         {

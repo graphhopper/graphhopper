@@ -24,7 +24,7 @@ import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.config.Profile;
 import com.graphhopper.config.TurnCostsConfig;
-import com.graphhopper.util.CustomModel;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.JsonFeatureCollection;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
@@ -61,8 +61,8 @@ public class IsochroneResourceTest {
                 putObject("graph.location", DIR).
                 setProfiles(Arrays.asList(
                         Profile.create("car", true).setName("fast_car"),
-                        new Profile("short_car").setCustomModel(Helper.createBaseModel("car").setDistanceInfluence(1_000d)).setTurnCostsConfig(new TurnCostsConfig(List.of("motorcar", "motor_vehicle"))),
-                        new Profile("fast_car_no_turn_restrictions").setCustomModel(Helper.createBaseModel("car"))
+                        TestProfiles.accessAndSpeed("short_car", "car").setTurnCostsConfig(new TurnCostsConfig(List.of("motorcar", "motor_vehicle"))),
+                        TestProfiles.accessAndSpeed("fast_car_no_turn_restrictions", "car")
                 ));
         return config;
     }

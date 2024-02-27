@@ -23,7 +23,7 @@ import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.config.LMProfile;
-import com.graphhopper.config.Profile;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -53,7 +53,7 @@ public class RouteResourceIssue2020Test {
                 putObject("graph.encoded_values", "road_class,surface,road_environment,max_speed").
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR).
-                setProfiles(Collections.singletonList(new Profile("my_car").setCustomModel(Helper.createBaseModel("car")))).
+                setProfiles(Collections.singletonList(TestProfiles.accessAndSpeed("my_car", "car"))).
                 setLMProfiles(Collections.singletonList(new LMProfile("my_car")));
         return config;
     }

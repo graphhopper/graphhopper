@@ -18,8 +18,8 @@
 
 package com.graphhopper;
 
-import com.graphhopper.config.Profile;
 import com.graphhopper.gtfs.*;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap;
 import org.junit.jupiter.api.AfterAll;
@@ -57,9 +57,9 @@ public class AnotherAgencyIT {
         ghConfig.putObject("import.osm.ignored_highways", "");
         ghConfig.putObject("datareader.file", "files/beatty.osm");
         ghConfig.putObject("gtfs.file", "files/sample-feed,files/another-sample-feed");
-        ghConfig.setProfiles(Arrays.asList(
-                Profile.create("foot", false),
-                Profile.create("car", false)));
+        ghConfig.setProfiles(List.of(
+                TestProfiles.accessSpeedAndPriority("foot", "foot"),
+                TestProfiles.accessAndSpeed("car", "car")));
         Helper.removeDir(new File(GRAPH_LOC));
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);

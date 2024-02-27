@@ -24,8 +24,7 @@ import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
-import com.graphhopper.config.Profile;
-import com.graphhopper.util.CustomModel;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -57,9 +56,9 @@ public class RouteResourceProfileSelectionTest {
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR)
                 .setProfiles(Arrays.asList(
-                        new Profile("my_car").setCustomModel(Helper.createBaseModel("car")),
-                        new Profile("my_bike").setCustomModel(Helper.createBaseModel("bike").setDistanceInfluence(200d)),
-                        new Profile("my_feet").setCustomModel(Helper.createBaseModel("foot"))
+                        TestProfiles.accessAndSpeed("my_car", "car"),
+                        TestProfiles.accessSpeedAndPriority("my_bike", "bike"),
+                        TestProfiles.accessSpeedAndPriority("my_feet", "foot")
                 ))
                 .setCHProfiles(Arrays.asList(
                         new CHProfile("my_car"),
@@ -84,7 +83,7 @@ public class RouteResourceProfileSelectionTest {
     @ValueSource(strings = {"CH", "LM", "flex"})
     public void selectUsingProfile(String mode) {
         assertDistance("my_car", mode, 3563);
-        assertDistance("my_bike", mode, 3296);
+        assertDistance("my_bike", mode, 3700);
         assertDistance("my_feet", mode, 3158);
         assertError("my_pink_car", mode, "The requested profile 'my_pink_car' does not exist");
     }

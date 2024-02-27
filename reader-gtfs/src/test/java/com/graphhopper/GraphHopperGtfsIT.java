@@ -19,8 +19,8 @@
 package com.graphhopper;
 
 import com.conveyal.gtfs.model.Stop;
-import com.graphhopper.config.Profile;
 import com.graphhopper.gtfs.*;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Instruction;
 import com.graphhopper.util.TranslationMap;
@@ -58,9 +58,10 @@ public class GraphHopperGtfsIT {
         ghConfig.putObject("graph.location", GRAPH_LOC);
         ghConfig.putObject("import.osm.ignored_highways", "");
         ghConfig.putObject("gtfs.file", "files/sample-feed");
-        ghConfig.setProfiles(Arrays.asList(
-                Profile.create("foot", false),
-                Profile.create("car", false)));
+        ghConfig.setProfiles(List.of(
+                TestProfiles.accessSpeedAndPriority("foot", "foot"),
+                TestProfiles.accessAndSpeed("car", "car")));
+
         Helper.removeDir(new File(GRAPH_LOC));
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);

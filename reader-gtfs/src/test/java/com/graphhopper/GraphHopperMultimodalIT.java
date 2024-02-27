@@ -20,6 +20,7 @@ package com.graphhopper;
 
 import com.graphhopper.config.Profile;
 import com.graphhopper.gtfs.*;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.util.AllEdgesIterator;
@@ -60,10 +61,10 @@ public class GraphHopperMultimodalIT {
         ghConfig.putObject("import.osm.ignored_highways", "");
         ghConfig.putObject("gtfs.file", "files/sample-feed");
         ghConfig.putObject("graph.location", GRAPH_LOC);
-        Profile carLocal = new Profile("car_custom").setCustomModel(Helper.createBaseModel("car"));
+        Profile carLocal = TestProfiles.accessAndSpeed("car_custom", "car");
         ghConfig.setProfiles(Arrays.asList(
-                new Profile("foot").setCustomModel(Helper.createBaseModel("foot")),
-                new Profile("car_default").setCustomModel(Helper.createBaseModel("car")),
+                TestProfiles.accessSpeedAndPriority("foot", "foot"),
+               TestProfiles.accessAndSpeed("car_default", "car"),
                 carLocal));
         Helper.removeDir(new File(GRAPH_LOC));
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);

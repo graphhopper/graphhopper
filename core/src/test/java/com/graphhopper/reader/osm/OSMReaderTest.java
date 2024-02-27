@@ -21,7 +21,6 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperTest;
-import com.graphhopper.config.Profile;
 import com.graphhopper.config.TurnCostsConfig;
 import com.graphhopper.reader.ReaderElement;
 import com.graphhopper.reader.ReaderRelation;
@@ -29,6 +28,7 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.routing.OSMReaderConfig;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
@@ -52,8 +52,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
-import static com.graphhopper.json.Statement.If;
-import static com.graphhopper.json.Statement.Op.LIMIT;
 import static com.graphhopper.routing.util.TransportationMode.CAR;
 import static com.graphhopper.util.GHUtility.readCountries;
 import static org.junit.jupiter.api.Assertions.*;
@@ -388,7 +386,7 @@ public class OSMReaderTest {
         hopper.setEncodedValuesString("car_access|block_fords=true,car_average_speed");
         hopper.setOSMFile(getClass().getResource("test-barriers3.xml").getFile()).
                 setGraphHopperLocation(dir).
-                setProfiles(new Profile("car").setCustomModel(Helper.createBaseModel("car"))).
+                setProfiles(TestProfiles.accessAndSpeed("car", "car")).
                 setMinNetworkSize(0).
                 importOrLoad();
         Graph graph = hopper.getBaseGraph();
@@ -713,9 +711,9 @@ public class OSMReaderTest {
         hopper.setOSMFile(getClass().getResource("test-multi-profile-turn-restrictions.xml").getFile()).
                 setGraphHopperLocation(dir).
                 setProfiles(
-                        Profile.create("bike", true),
-                        Profile.create("car", true),
-                        new Profile("truck").setCustomModel(Helper.createBaseModel("car")).setTurnCostsConfig(new TurnCostsConfig(List.of("hgv", "motor_vehicle")))
+                        TestProfiles.accessAndSpeed("bike", "bike").setTurnCostsConfig(new TurnCostsConfig(List.of("bicycle"))),
+                        TestProfiles.accessAndSpeed("car", "car").setTurnCostsConfig(new TurnCostsConfig(List.of("motorcar", "motor_vehicle"))),
+                        TestProfiles.accessAndSpeed("truck", "car").setTurnCostsConfig(new TurnCostsConfig(List.of("hgv", "motor_vehicle")))
                 ).
                 importOrLoad();
         EncodingManager manager = hopper.getEncodingManager();
@@ -913,7 +911,7 @@ public class OSMReaderTest {
             }
         }.setOSMFile("dummy").
                 setEncodedValuesString("car_access,car_average_speed").
-                setProfiles(new Profile("profile").setCustomModel(Helper.createBaseModel("car"))).
+                setProfiles(TestProfiles.accessAndSpeed("profile", "car")).
                 setMinNetworkSize(0).
                 setGraphHopperLocation(dir).
                 importOrLoad();
@@ -1006,10 +1004,10 @@ public class OSMReaderTest {
             String str = "max_width,max_height,max_weight";
             setEncodedValuesString(str);
             setProfiles(
-                    Profile.create("foot", false),
-                    Profile.create("car", true),
-                    Profile.create("bike", true),
-                    new Profile("truck").setCustomModel(new CustomModel().addToSpeed(If("true", LIMIT, "100"))).setTurnCostsConfig(turnCosts ? new TurnCostsConfig(List.of("hgv", "motor_vehicle")) : null)
+                    TestProfiles.accessSpeedAndPriority("foot", "foot"),
+                    TestProfiles.accessAndSpeed("car", "car").setTurnCostsConfig(new TurnCostsConfig(List.of("motorcar", "motor_vehicle"))),
+                    TestProfiles.accessSpeedAndPriority("bike", "bike").setTurnCostsConfig(new TurnCostsConfig(List.of("bicycle"))),
+                    TestProfiles.constantSpeed("truck", 100).setTurnCostsConfig(turnCosts ? new TurnCostsConfig(List.of("hgv", "motor_vehicle")) : null)
             );
             getReaderConfig().setPreferredLanguage(prefLang);
         }

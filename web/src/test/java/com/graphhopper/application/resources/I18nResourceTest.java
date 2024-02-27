@@ -21,7 +21,7 @@ package com.graphhopper.application.resources;
 import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
-import com.graphhopper.config.Profile;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -32,7 +32,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import javax.ws.rs.core.Response;
 import java.io.File;
-import java.util.Collections;
+import java.util.List;
 
 import static com.graphhopper.application.util.TestUtils.clientTarget;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -49,7 +49,7 @@ public class I18nResourceTest {
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("graph.location", DIR).
                 putObject("import.osm.ignored_highways", "").
-                setProfiles(Collections.singletonList(Profile.create("car", false)));
+                setProfiles(List.of(TestProfiles.constantSpeed("car")));
         return config;
     }
 
