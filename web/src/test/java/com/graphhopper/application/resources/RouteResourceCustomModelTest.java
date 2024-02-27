@@ -81,12 +81,12 @@ public class RouteResourceCustomModelTest {
                                         addToSpeed(If("road_class == PRIMARY", LIMIT, "28")).
                                         addToPriority(If("max_width < 1.2", MULTIPLY, "0"))),
                         new Profile("custom_bike2").setCustomModel(
-                                        TestProfiles.accessSpeedAndPriority("unused", "bike").getCustomModel().setDistanceInfluence(70d).
+                                TestProfiles.accessSpeedAndPriority("unused", "bike").getCustomModel().setDistanceInfluence(70d).
                                                 addToPriority(If("road_class == TERTIARY || road_class == TRACK", MULTIPLY, "0"))),
                         new Profile("custom_bike3").setCustomModel(TestProfiles.accessSpeedAndPriority("unused", "bike").getCustomModel().
                                                 addToSpeed(If("road_class == TERTIARY || road_class == TRACK", MULTIPLY, "10")).
                                                 addToSpeed(If("true", LIMIT, "40")))
-                        )).
+                )).
                 setCHProfiles(Arrays.asList(new CHProfile("bus"), new CHProfile("car_no_unclassified")));
         return config;
     }

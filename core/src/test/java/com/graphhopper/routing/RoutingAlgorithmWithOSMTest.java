@@ -212,7 +212,7 @@ public class RoutingAlgorithmWithOSMTest {
         // longer path should go through tertiary, see discussion in #476
         queries.add(new Query(57.154888, -2.101822, 57.147299, -2.096286, 1118, 68));
 
-        Profile profile =TestProfiles.accessSpeedAndPriority("foot", "foot");
+        Profile profile = TestProfiles.accessSpeedAndPriority("foot", "foot");
         GraphHopper hopper = createHopper(DIR + "/map-sidewalk-no.osm.gz", profile);
         hopper.importOrLoad();
         checkQueries(hopper, queries);
@@ -256,7 +256,7 @@ public class RoutingAlgorithmWithOSMTest {
     public void testMonacoFoot() {
         Profile profile = TestProfiles.accessSpeedAndPriority("foot", "foot");
         profile.getCustomModel().setDistanceInfluence(10_000d);
-        GraphHopper hopper = createHopper(MONACO,profile);
+        GraphHopper hopper = createHopper(MONACO, profile);
         hopper.importOrLoad();
         checkQueries(hopper, createMonacoFoot());
         Graph g = hopper.getBaseGraph();
