@@ -18,34 +18,54 @@
 
 package com.graphhopper.routing;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.config.Profile;
-import com.graphhopper.jackson.Jackson;
-import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.GHUtility;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-
-import static com.graphhopper.util.Helper.readJSONFileWithoutComments;
 
 public class Profiles {
 
-    public static Profile car(String name) {
-        return new Profile(name).setCustomModel(loadCustomModelFromJar("car"));
+    public static Profile bike(String name) {
+        return new Profile(name).setCustomModel(GHUtility.loadCustomModelFromJar("bike.json"));
     }
 
-    private static CustomModel loadCustomModelFromJar(String name) {
-        try {
-            InputStream is = GHUtility.class.getResourceAsStream("/com/graphhopper/custom_models/" + name + ".json");
-            if (is == null)
-                throw new IllegalArgumentException("There is no built-in custom model for '" + name + "'");
-            String json = readJSONFileWithoutComments(new InputStreamReader(is));
-            ObjectMapper objectMapper = Jackson.newObjectMapper();
-            return objectMapper.readValue(json, CustomModel.class);
-        } catch (IOException e) {
-            throw new IllegalArgumentException("Could not load built-in custom model for '" + name + "'");
-        }
+    public static Profile bus(String name) {
+        return new Profile(name).setCustomModel(GHUtility.loadCustomModelFromJar("bus.json"));
     }
+
+    public static Profile car(String name) {
+        return new Profile(name).setCustomModel(GHUtility.loadCustomModelFromJar("car.json"));
+    }
+
+    public static Profile car4wd(String name) {
+        return new Profile(name).setCustomModel(GHUtility.loadCustomModelFromJar("car4wd.json"));
+    }
+
+    public static Profile cargoBike(String name) {
+        return new Profile(name).setCustomModel(GHUtility.loadCustomModelFromJar("cargo_bike.json"));
+    }
+
+    public static Profile foot(String name) {
+        return new Profile(name).setCustomModel(GHUtility.loadCustomModelFromJar("foot.json"));
+    }
+
+    public static Profile hike(String name) {
+        return new Profile(name).setCustomModel(GHUtility.loadCustomModelFromJar("hike.json"));
+    }
+
+    public static Profile motorcycle(String name) {
+        return new Profile(name).setCustomModel(GHUtility.loadCustomModelFromJar("motorcycle.json"));
+    }
+
+    public static Profile mtb(String name) {
+        return new Profile(name).setCustomModel(GHUtility.loadCustomModelFromJar("mtb.json"));
+    }
+
+    public static Profile racingbike(String name) {
+        return new Profile(name).setCustomModel(GHUtility.loadCustomModelFromJar("racingbike.json"));
+    }
+
+    public static Profile truck(String name) {
+        return new Profile(name).setCustomModel(GHUtility.loadCustomModelFromJar("truck.json"));
+    }
+
+
 }

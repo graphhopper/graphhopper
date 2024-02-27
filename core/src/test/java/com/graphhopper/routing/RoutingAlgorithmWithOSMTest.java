@@ -25,7 +25,6 @@ import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.config.TurnCostsConfig;
-import com.graphhopper.jackson.Jackson;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.*;
@@ -35,7 +34,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -203,12 +201,7 @@ public class RoutingAlgorithmWithOSMTest {
     }
 
     static CustomModel getCustomModel(String file) {
-        try {
-            String string = Helper.readJSONFileWithoutComments(new InputStreamReader(GHUtility.class.getResourceAsStream("/com/graphhopper/custom_models/" + file)));
-            return Jackson.newObjectMapper().readValue(string, CustomModel.class);
-        } catch (Exception ex) {
-            throw new RuntimeException(ex);
-        }
+        return GHUtility.loadCustomModelFromJar(file);
     }
 
     @Test
