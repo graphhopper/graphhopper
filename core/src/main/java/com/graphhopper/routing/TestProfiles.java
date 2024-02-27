@@ -22,15 +22,20 @@ import com.graphhopper.config.Profile;
 import com.graphhopper.json.Statement;
 import com.graphhopper.util.CustomModel;
 
+import static com.graphhopper.json.Statement.Else;
 import static com.graphhopper.json.Statement.If;
 import static com.graphhopper.json.Statement.Op.LIMIT;
 import static com.graphhopper.json.Statement.Op.MULTIPLY;
 
 public class TestProfiles {
     public static Profile constantSpeed(String name) {
+        return constantSpeed(name, 60);
+    }
+
+    public static Profile constantSpeed(String name, double speed) {
         Profile profile = new Profile(name);
         CustomModel customModel = new CustomModel();
-        customModel.addToSpeed(Statement.If("true", Statement.Op.LIMIT, "36"));
+        customModel.addToSpeed(Statement.If("true", Statement.Op.LIMIT, String.valueOf(speed)));
         profile.setCustomModel(customModel);
         return profile;
     }
@@ -39,6 +44,16 @@ public class TestProfiles {
         Profile profile = new Profile(name);
         CustomModel customModel = new CustomModel().
                 addToPriority(If("!" + vehicle + "_access", MULTIPLY, "0")).
+                addToSpeed(If("true", LIMIT, vehicle + "_average_speed"));
+        profile.setCustomModel(customModel);
+        return profile;
+    }
+
+    public static Profile accessSpeedAndPriority(String name, String vehicle) {
+        Profile profile = new Profile(name);
+        CustomModel customModel = new CustomModel().
+                addToPriority(If(vehicle + "_access", MULTIPLY, vehicle + "_priority")).
+                addToPriority(Else(MULTIPLY, "0")).
                 addToSpeed(If("true", LIMIT, vehicle + "_average_speed"));
         profile.setCustomModel(customModel);
         return profile;

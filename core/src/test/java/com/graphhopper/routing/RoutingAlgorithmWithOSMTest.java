@@ -24,7 +24,6 @@ import com.graphhopper.ResponsePath;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
-import com.graphhopper.config.TurnCostsConfig;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.storage.Graph;
@@ -74,7 +73,7 @@ public class RoutingAlgorithmWithOSMTest {
 
     @Test
     public void testMonaco() {
-        GraphHopper hopper = createHopper(MONACO, new Profile("car").setCustomModel(Helper.createBaseModel("car").setDistanceInfluence(10_000d)));
+        GraphHopper hopper = createHopper(MONACO, TestProfiles.accessAndSpeed("car", "car"));
         hopper.importOrLoad();
         checkQueries(hopper, createMonacoCarQueries());
         Graph g = hopper.getBaseGraph();
@@ -131,7 +130,7 @@ public class RoutingAlgorithmWithOSMTest {
         // reverse route avoids the location
 //        list.add(new OneRun(52.349713, 8.013293, 52.349969, 8.013813, 293, 21));
         GraphHopper hopper = createHopper(DIR + "/map-bug432.osm.gz",
-                new Profile("bike2").setCustomModel(Helper.createBaseModel("bike")));
+                TestProfiles.accessSpeedAndPriority("bike", "bike"));
         hopper.setElevationProvider(new SRTMProvider(DIR));
         hopper.importOrLoad();
         checkQueries(hopper, queries);
@@ -147,7 +146,7 @@ public class RoutingAlgorithmWithOSMTest {
         queries.add(new Query(51.376509, -0.530863, 51.376197, -0.531576, 75, 15));
 
         GraphHopper hopper = createHopper(DIR + "/circle-bug.osm.gz",
-                new Profile("car").setCustomModel(Helper.createBaseModel("car")));
+                TestProfiles.accessAndSpeed("car", "car"));
         hopper.importOrLoad();
         checkQueries(hopper, queries);
     }
@@ -165,7 +164,7 @@ public class RoutingAlgorithmWithOSMTest {
         // respect one way!
         // http://localhost:8989/?point=55.819066%2C37.596374&point=55.818898%2C37.59661
         queries.add(new Query(55.818702, 37.595564, 55.818536, 37.595848, 1114, 23));
-        GraphHopper hopper = createHopper(MOSCOW, new Profile("car").setCustomModel(Helper.createBaseModel("car")));
+        GraphHopper hopper = createHopper(MOSCOW, TestProfiles.accessAndSpeed("car", "car"));
         hopper.setMinNetworkSize(200);
         hopper.importOrLoad();
         checkQueries(hopper, queries);
@@ -232,7 +231,7 @@ public class RoutingAlgorithmWithOSMTest {
         queries.get(3).getPoints().get(1).expectedPoints = 141;
         queries.get(4).getPoints().get(1).expectedDistance = 2149;
         queries.get(4).getPoints().get(1).expectedPoints = 120;
-        GraphHopper hopper = createHopper(MONACO, new Profile("car").setCustomModel(Helper.createBaseModel("car")));
+        GraphHopper hopper = createHopper(MONACO, TestProfiles.accessAndSpeed("car", "car"));
         hopper.importOrLoad();
         checkQueries(hopper, queries);
     }
@@ -455,7 +454,7 @@ public class RoutingAlgorithmWithOSMTest {
 
         hopper = createHopper(KREMS,
                 new Profile("bike").setCustomModel(Helper.createBaseModel("bike").setDistanceInfluence(70d)),
-                new Profile("car").setCustomModel(Helper.createBaseModel("car")));
+                TestProfiles.accessAndSpeed("car", "car"));
         hopper.importOrLoad();
         checkQueries(hopper, queries);
     }
@@ -492,7 +491,7 @@ public class RoutingAlgorithmWithOSMTest {
 
     @Test
     public void testAndorra() {
-        Profile profile = new Profile("car").setCustomModel(Helper.createBaseModel("car"));
+        Profile profile = TestProfiles.accessAndSpeed("car", "car");
         GraphHopper hopper = createHopper(ANDORRA, profile);
         hopper.importOrLoad();
         checkQueries(hopper, createAndorraQueries());
@@ -500,7 +499,7 @@ public class RoutingAlgorithmWithOSMTest {
 
     @Test
     public void testAndorraPbf() {
-        Profile profile = new Profile("car").setCustomModel(Helper.createBaseModel("car"));
+        Profile profile = TestProfiles.accessAndSpeed("car", "car");
         GraphHopper hopper = createHopper(ANDORRA_PBF, profile);
         hopper.importOrLoad();
         checkQueries(hopper, createAndorraQueries());
@@ -516,7 +515,7 @@ public class RoutingAlgorithmWithOSMTest {
 
         queries.add(new Query(42.521269, 1.52298, 42.50418, 1.520662, 3223, 107));
 
-        GraphHopper hopper = createHopper(ANDORRA, new Profile("foot").setCustomModel(Helper.createBaseModel("foot")));
+        GraphHopper hopper = createHopper(ANDORRA, TestProfiles.accessSpeedAndPriority("foot", "foot"));
         hopper.importOrLoad();
         checkQueries(hopper, queries);
     }
@@ -604,7 +603,7 @@ public class RoutingAlgorithmWithOSMTest {
         query.add(53.751299, 9.3869, 10, 10);
 
         GraphHopper hopper = createHopper(DIR + "/krautsand.osm.gz",
-                new Profile("car").setCustomModel(Helper.createBaseModel("car")));
+                TestProfiles.accessAndSpeed("car", "car"));
         hopper.importOrLoad();
 
         for (Function<Query, GHRequest> requestFactory : createRequestFactories()) {
