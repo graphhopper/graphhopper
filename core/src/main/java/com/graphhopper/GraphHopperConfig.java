@@ -47,9 +47,9 @@ public class GraphHopperConfig {
 
     public GraphHopperConfig(GraphHopperConfig otherConfig) {
         map = new PMap(otherConfig.map);
-        profiles = new ArrayList<>(otherConfig.profiles);
-        chProfiles = new ArrayList<>(otherConfig.chProfiles);
-        lmProfiles = new ArrayList<>(otherConfig.lmProfiles);
+        otherConfig.profiles.forEach(p -> profiles.add(new Profile(p)));
+        otherConfig.chProfiles.forEach(p -> chProfiles.add(new CHProfile(p)));
+        otherConfig.lmProfiles.forEach(p -> lmProfiles.add(new LMProfile(p)));
     }
 
     public GraphHopperConfig(PMap pMap) {

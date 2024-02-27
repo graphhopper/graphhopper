@@ -43,7 +43,7 @@ public class PriorityRoutingTest {
         BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", false);
         DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 4, 2, false);
         DecimalEncodedValue priorityEnc = new DecimalEncodedValueImpl("priority", 4, PriorityCode.getFactor(1), false);
-        EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).add(priorityEnc).build();
+        EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).add(priorityEnc).add(RoadClass.create()).build();
         BaseGraph graph = new BaseGraph.Builder(em).create();
         NodeAccess na = graph.getNodeAccess();
         na.setNode(0, 48.0, 11.0);

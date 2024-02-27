@@ -5,7 +5,6 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.PMap;
 
 import java.util.*;
 
@@ -25,8 +24,8 @@ public class FootPriorityParser implements TagParser {
     protected EnumEncodedValue<RouteNetwork> footRouteEnc;
     protected Map<RouteNetwork, Integer> routeMap = new HashMap<>();
 
-    public FootPriorityParser(EncodedValueLookup lookup, PMap properties) {
-        this(lookup.getDecimalEncodedValue(VehiclePriority.key(properties.getString("name", "foot"))),
+    public FootPriorityParser(EncodedValueLookup lookup) {
+        this(lookup.getDecimalEncodedValue(VehiclePriority.key("foot")),
                 lookup.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class)
         );
     }

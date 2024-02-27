@@ -180,7 +180,7 @@ public class LMPreparationHandler {
             final int count = i + 1;
             final String name = prepare.getLMConfig().getName();
             prepareRunnables.add(() -> {
-                LOGGER.info(count + "/" + lmConfigs.size() + " calling LM prepare.doWork for " + prepare.getLMConfig().getWeighting() + " ... (" + getMemInfo() + ")");
+                LOGGER.info(count + "/" + lmConfigs.size() + " calling LM prepare.doWork for " + prepare.getLMConfig().getName() + " ... (" + getMemInfo() + ")");
                 Thread.currentThread().setName(name);
                 prepare.doWork();
                 if (closeEarly)

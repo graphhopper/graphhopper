@@ -37,7 +37,7 @@ public class FootAccessParser extends AbstractAccessParser implements TagParser 
     protected Map<RouteNetwork, Integer> routeMap = new HashMap<>();
 
     public FootAccessParser(EncodedValueLookup lookup, PMap properties) {
-        this(lookup.getBooleanEncodedValue(VehicleAccess.key(properties.getString("name", "foot"))));
+        this(lookup.getBooleanEncodedValue(VehicleAccess.key("foot")));
         blockPrivate(properties.getBool("block_private", true));
         blockFords(properties.getBool("block_fords", false));
     }

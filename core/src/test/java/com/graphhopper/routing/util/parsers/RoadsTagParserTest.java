@@ -5,19 +5,17 @@ import com.graphhopper.routing.ev.ArrayEdgeIntAccess;
 import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.ev.VehicleSpeed;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.VehicleEncodedValues;
-import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class RoadsTagParserTest {
 
-    private final EncodingManager encodingManager = new EncodingManager.Builder().add(VehicleEncodedValues.roads(new PMap())).build();
+    private final EncodingManager encodingManager = new EncodingManager.Builder().add(VehicleSpeed.create("roads", 7, 2, true)).build();
     private final RoadsAverageSpeedParser parser;
 
     public RoadsTagParserTest() {
-        parser = new RoadsAverageSpeedParser(encodingManager, new PMap());
+        parser = new RoadsAverageSpeedParser(encodingManager);
     }
 
     @Test

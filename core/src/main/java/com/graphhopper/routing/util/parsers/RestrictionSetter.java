@@ -86,7 +86,7 @@ public class RestrictionSetter {
     }
 
     private void addViaWayRestrictions(List<Pair<GraphRestriction, RestrictionType>> restrictions, BooleanEncodedValue turnRestrictionEnc) {
-        IntSet viaEdgesUsedByOnlyRestrictions = new IntHashSet();
+        IntSet directedViaEdgesUsedByRestrictions = new IntHashSet();
         for (Pair<GraphRestriction, RestrictionType> p : restrictions) {
             if (!p.first.isViaWayRestriction()) continue;
             if (ignoreViaWayRestriction(p)) continue;
@@ -96,8 +96,19 @@ public class RestrictionSetter {
             final int artificialVia = artificialEdgesByEdges.getOrDefault(viaEdge, viaEdge);
             if (artificialVia == viaEdge)
                 throw new IllegalArgumentException("There should be an artificial edge for every via edge of a way restriction");
-            if (p.second == ONLY && !viaEdgesUsedByOnlyRestrictions.add(viaEdge))
-                throw new IllegalStateException("We cannot deal with 'only' via-way restrictions that use the same via edges");
+
+            // With a single artificial edge per original edge there can only be one restriction
+            // that uses this edge as via-member **per direction**, see #2907.
+            // We can use the two via node ids to determine the via-edge direction in the restriction:
+            if (p.first.getViaEdges().size() != 1)
+                throw new IllegalStateException("At this point we assumed we were dealing with single via-way restrictions only");
+            if (viaEdge == 0 && directedViaEdgesUsedByRestrictions.contains(viaEdge))
+                // This approach does not work for edge 0...
+                throw new IllegalStateException("We cannot deal with multiple via-way restrictions if the via-edge is edge 0");
+            final int directedViaEdge = viaEdge * (p.first.getViaNodes().get(0) < p.first.getViaNodes().get(1) ? +1 : -1);
+            if (!directedViaEdgesUsedByRestrictions.add(directedViaEdge))
+                throw new IllegalStateException("We cannot deal with multiple via-way restrictions that use the same via edge in the same direction");
+
             final int artificialFrom = artificialEdgesByEdges.getOrDefault(fromEdge, fromEdge);
             final int artificialTo = artificialEdgesByEdges.getOrDefault(toEdge, toEdge);
             final int fromToViaNode = p.first.getViaNodes().get(0);

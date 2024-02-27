@@ -60,7 +60,7 @@ public class TrafficChangeWithNodeOrderingReusingTest {
             BooleanEncodedValue accessEnc = VehicleAccess.create("car");
             DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 5, 5, false);
             em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
-            CarAverageSpeedParser carParser = new CarAverageSpeedParser(em, new PMap());
+            CarAverageSpeedParser carParser = new CarAverageSpeedParser(em);
             osmParsers = new OSMParsers()
                     .addWayTagParser(carParser);
             baseCHConfig = CHConfig.nodeBased("base", CustomModelParser.createFastestWeighting(accessEnc, speedEnc, em));
@@ -206,9 +206,9 @@ public class TrafficChangeWithNodeOrderingReusingTest {
         }
 
         @Override
-        public double getMinWeight(double distance) {
+        public double calcMinWeightPerDistance() {
             // left as is, ok for now, but do not use with astar, at least as long as deviations can be negative!!
-            return this.baseWeighting.getMinWeight(distance);
+            return this.baseWeighting.calcMinWeightPerDistance();
         }
 
         @Override

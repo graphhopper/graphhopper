@@ -110,7 +110,7 @@ public class RoutingAlgorithmWithOSMTest {
     public void testMonacoMotorcycleCurvature() {
         List<Query> queries = new ArrayList<>();
         queries.add(new Query(43.730729, 7.42135, 43.727697, 7.419199, 2675, 117));
-        queries.add(new Query(43.727687, 7.418737, 43.74958, 7.436566, 3730, 173));
+        queries.add(new Query(43.727687, 7.418737, 43.74958, 7.436566, 3727, 170));
         queries.add(new Query(43.728677, 7.41016, 43.739213, 7.4277, 2769, 167));
         queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 2373, 137));
         queries.add(new Query(43.730949, 7.412338, 43.739643, 7.424542, 2203, 116));
@@ -644,7 +644,7 @@ public class RoutingAlgorithmWithOSMTest {
                     GHRequest req = requestFactory.apply(query);
                     Thread t = new Thread(() -> {
                         GHResponse res = hopper.route(req);
-                        checkResponse(res, query);
+                        checkResponse(req.getHints().getString("expected_algo", "no_expected_algo"), res, query);
                         routeCount.incrementAndGet();
                     });
                     t.start();
@@ -732,8 +732,8 @@ public class RoutingAlgorithmWithOSMTest {
                 Profile profile = hopper.getProfiles().get(0);
                 request.setProfile(profile.getName());
                 GHResponse res = hopper.route(request);
-                checkResponse(res, query);
                 String expectedAlgo = request.getHints().getString("expected_algo", "no_expected_algo");
+                checkResponse(expectedAlgo, res, query);
                 // for edge-based routing we expect a slightly different algo name for CH
                 if (profile.isTurnCosts())
                     expectedAlgo = expectedAlgo.replaceAll("\\|ch-routing", "|ch|edge_based|no_sod-routing");
@@ -744,16 +744,16 @@ public class RoutingAlgorithmWithOSMTest {
         }
     }
 
-    private void checkResponse(GHResponse res, Query query) {
+    private void checkResponse(String expectedAlgo, GHResponse res, Query query) {
         assertFalse(res.hasErrors(), res.getErrors().toString());
         ResponsePath responsePath = res.getBest();
         assertFalse(responsePath.hasErrors(), responsePath.getErrors().toString());
         assertEquals(distCalc.calcDistance(responsePath.getPoints()), responsePath.getDistance(), 2,
                 "responsePath.getDistance does not equal point list distance");
-        assertEquals(query.getPoints().stream().mapToDouble(a -> a.expectedDistance).sum(), responsePath.getDistance(), 2, "unexpected distance");
+        assertEquals(query.getPoints().stream().mapToDouble(a -> a.expectedDistance).sum(), responsePath.getDistance(), 2, "unexpected distance, " + expectedAlgo);
         // We check the number of points to make sure we found the expected route.
         // There are real world instances where A-B-C is identical to A-C (in meter precision).
-        assertEquals(query.getPoints().stream().mapToInt(a -> a.expectedPoints).sum(), responsePath.getPoints().size(), 1, "unexpected point list size");
+        assertEquals(query.getPoints().stream().mapToInt(a -> a.expectedPoints).sum(), responsePath.getPoints().size(), 1, "unexpected point list size, " + expectedAlgo);
     }
 
     private List<Function<Query, GHRequest>> createRequestFactories() {

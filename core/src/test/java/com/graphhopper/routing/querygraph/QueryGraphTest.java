@@ -25,6 +25,7 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.SpeedWeighting;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.search.KVStorage;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
@@ -34,10 +35,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -985,6 +983,89 @@ public class QueryGraphTest {
                         queryGraph.getEdgeIteratorState(i, Integer.MIN_VALUE).toString()).collect(Collectors.joining(",")));
     }
 
+    @Test
+    public void testExternalEV() {
+        IntEncodedValue intEnc = new IntEncodedValueImpl("my_int", 3, true);
+        EnumEncodedValue<RoadClass> enumEnc = RoadClass.create();
+        BooleanEncodedValue roadClassLincEnc = RoadClassLink.create();
+        ExternalBooleanEncodedValue externalEnc = new ExternalBooleanEncodedValue("my_ext", true);
+        EncodingManager encodingManager = EncodingManager.start()
+                .add(intEnc).add(enumEnc).add(roadClassLincEnc).add(externalEnc)
+                .build();
+        BaseGraph g = new BaseGraph.Builder(encodingManager).create();
+        g.edge(0, 1).set(intEnc, 5).set(enumEnc, RoadClass.BRIDLEWAY).set(roadClassLincEnc, true).set(externalEnc, false, true);
+        g.edge(1, 2).set(intEnc, 2).set(enumEnc, RoadClass.CYCLEWAY).set(roadClassLincEnc, false).set(externalEnc, false, true);
+        g.edge(2, 3).set(intEnc, 7).set(enumEnc, RoadClass.PRIMARY).set(roadClassLincEnc, true).set(externalEnc, true, false);
+        g.edge(3, 4).set(intEnc, 1).set(enumEnc, RoadClass.MOTORWAY).set(roadClassLincEnc, false).set(externalEnc, true, false);
+
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(0, 50.00, 10.00);
+        na.setNode(1, 50.10, 10.10);
+        na.setNode(2, 50.20, 10.20);
+        na.setNode(3, 50.30, 10.30);
+        na.setNode(4, 50.40, 10.40);
+
+        LocationIndexTree locationIndex = new LocationIndexTree(g, g.getDirectory());
+        locationIndex.prepareIndex();
+
+        Snap snap1 = locationIndex.findClosest(50.05, 10.05, EdgeFilter.ALL_EDGES);
+        Snap snap2 = locationIndex.findClosest(50.35, 10.35, EdgeFilter.ALL_EDGES);
+
+        QueryGraph queryGraph = QueryGraph.create(g, snap1, snap2);
+        assertEquals(7, queryGraph.getNodes());
+        assertEquals(4, queryGraph.getBaseGraph().getEdges());
+        assertEquals(8, queryGraph.getVirtualEdges().size());
+
+        // fetching EVs from the virtual edge yields the values of the corresponding original edge
+        EdgeIteratorState virt05 = queryGraph.getEdgeIteratorState(4, 5);
+        assertFalse(queryGraph.getEdgeIteratorState(0, 1).get(externalEnc));
+        assertTrue(queryGraph.getEdgeIteratorState(0, 1).getReverse(externalEnc));
+        assertFalse(virt05.get(externalEnc));
+        assertTrue(virt05.getReverse(externalEnc));
+
+        assertEquals(RoadClass.MOTORWAY, queryGraph.getEdgeIteratorState(3, 4).get(enumEnc));
+        EdgeIteratorState virt64 = queryGraph.getEdgeIteratorState(7, 4);
+        assertEquals(6, virt64.getBaseNode());
+        assertEquals(4, virt64.getAdjNode());
+        assertEquals(RoadClass.MOTORWAY, virt64.get(enumEnc));
+        assertTrue(virt64.get(externalEnc));
+        assertFalse(virt64.getReverse(externalEnc));
+    }
+
+    @Test
+    public void directedKeyValues() {
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(0, 1, 0);
+        na.setNode(1, 1, 2.5);
+        ArrayList<KVStorage.KeyValue> kvs = new ArrayList<>();
+        kvs.add(new KVStorage.KeyValue("a", "hello", true, false));
+        kvs.add(new KVStorage.KeyValue("b", "world", false, true));
+        EdgeIteratorState origEdge = g.edge(0, 1).setDistance(10).set(speedEnc, 60, 60).setKeyValues(kvs);
+
+        // keyValues List stays the same
+        assertEquals(origEdge.getKeyValues().toString(), origEdge.detach(true).getKeyValues().toString());
+        // determine if edge is reverse via origEdge.get(EdgeIteratorState.REVERSE_STATE)
+
+        // but getValue is sensitive to direction
+        assertEquals("hello", origEdge.getValue("a"));
+        assertNull(origEdge.detach(true).getValue("a"));
+        assertEquals("world", origEdge.detach(true).getValue("b"));
+        assertNull(origEdge.getValue("b"));
+
+        LocationIndexTree index = new LocationIndexTree(g, new RAMDirectory());
+        index.prepareIndex();
+        Snap snap = index.findClosest(1.01, 0.7, EdgeFilter.ALL_EDGES);
+        QueryGraph queryGraph = lookup(snap);
+        EdgeIteratorState edge0ToSnap = queryGraph.getEdgeIteratorState(1, 2);
+
+        assertEquals(edge0ToSnap.getKeyValues().toString(), edge0ToSnap.detach(true).getKeyValues().toString());
+
+        assertEquals("hello", edge0ToSnap.getValue("a"));
+        assertNull(edge0ToSnap.detach(true).getValue("a"));
+        assertEquals("world", edge0ToSnap.detach(true).getValue("b"));
+        assertNull(edge0ToSnap.getValue("b"));
+    }
+
     private QueryGraph lookup(Snap res) {
         return lookup(Collections.singletonList(res));
     }
@@ -992,5 +1073,4 @@ public class QueryGraphTest {
     private QueryGraph lookup(List<Snap> snaps) {
         return QueryGraph.create(g, snaps);
     }
-
 }

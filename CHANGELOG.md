@@ -1,4 +1,13 @@
-### 8.0 [not yet released]
+### 9.0 [not yet released]
+
+- replaced (Vehicle)EncodedValueFactory and (Vehicle)TagParserFactory with ImportRegistry, #2935
+- encoded values used in custom models are added automatically, no need to add them to graph.encoded_values anymore, #2935
+- removed the ability to sort the graph (graph.do_sort) due to incomplete support, #2919
+- minor changes for import hooks, #2917
+- removed wheelchair vehicle and related parsers, with currently no complete replacement as it needs to be redone properly with a custom model
+- removed deprecated PMap.put
+
+### 8.0 [18 Oct 2023]
 
 - access "turn"-EncodedValue of EncodingManager through separate methods, see #2884
 - removed fastest weighting for public usage, use custom instead, see #2866
