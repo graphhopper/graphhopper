@@ -285,9 +285,14 @@ public class PrepareContractionHierarchies {
             IntContainer neighbors = contractNode(polledNode, level);
             level++;
 
-            if (sortedNodes.size() < nodesToAvoidContract)
-                // skipped nodes are already set to maxLevel
+            if (sortedNodes.size() < nodesToAvoidContract) {
+                while (!sortedNodes.isEmpty()) {
+                    int node = sortedNodes.poll();
+                    chBuilder.setLevel(node, maxLevel - 1);
+                    nodeContractor.finishNodeWithoutContraction(node);
+                }
                 break;
+            }
 
             int neighborCount = 0;
             // there might be multiple edges going to the same neighbor nodes -> only calculate priority once per node

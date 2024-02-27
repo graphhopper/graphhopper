@@ -45,4 +45,5 @@ public interface NodeContractor {
 
     float getDijkstraSeconds();
 
+    void finishNodeWithoutContraction(int node);
 }

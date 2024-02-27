@@ -123,6 +123,11 @@ class NodeBasedNodeContractor implements NodeContractor {
         return prepareGraph.disconnect(node);
     }
 
+    @Override
+    public void finishNodeWithoutContraction(int node) {
+        insertShortcuts(node);
+    }
+
     /**
      * Calls the shortcut handler for all edges and shortcuts adjacent to the given node. After this method is called
      * these edges and shortcuts will be removed from the prepare graph, so this method offers the last chance to deal

@@ -152,6 +152,11 @@ class EdgeBasedNodeContractor implements NodeContractor {
     }
 
     @Override
+    public void finishNodeWithoutContraction(int node) {
+        insertShortcuts(node);
+    }
+
+    @Override
     public void finishContraction() {
         chBuilder.replaceSkippedEdges(prepareGraph::getShortcutForPrepareEdge);
     }

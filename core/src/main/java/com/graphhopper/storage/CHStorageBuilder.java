@@ -89,9 +89,9 @@ public class CHStorageBuilder {
         if (getLevel(a) >= storage.getNodes() || getLevel(a) < 0)
             throw new IllegalArgumentException("Invalid level for node " + a + ": " + getLevel(a) + ". Node a must" +
                     " be assigned a valid level before we add shortcuts a->b or a<-b");
-        if (a != b && getLevel(a) == getLevel(b))
-            throw new IllegalArgumentException("Different nodes must not have the same level, got levels " + getLevel(a)
-                    + " and " + getLevel(b) + " for nodes " + a + " and " + b);
+//        if (a != b && getLevel(a) == getLevel(b))
+//            throw new IllegalArgumentException("Different nodes must not have the same level, got levels " + getLevel(a)
+//                    + " and " + getLevel(b) + " for nodes " + a + " and " + b);
         if (a != b && getLevel(a) > getLevel(b))
             throw new IllegalArgumentException("The level of nodeA must be smaller than the level of nodeB, but got: " +
                     getLevel(a) + " and " + getLevel(b) + ". When inserting shortcut: " + a + "-" + b);
