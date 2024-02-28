@@ -27,12 +27,14 @@ import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
-import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.Subnetwork;
+import com.graphhopper.routing.ev.TurnRestriction;
+import com.graphhopper.routing.ev.VehicleAccess;
 import com.graphhopper.routing.lm.LMConfig;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.Weighting;
-
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
@@ -191,15 +193,15 @@ public class Measurement {
                 boolean isLM = false;
                 measureRouting(hopper, new QuerySettings("routing", count / 20, isCH, isLM).
                         withInstructions());
-                measureRouting(hopper, new QuerySettings("routing_alt", count / 500, isCH, isLM).
-                        alternative());
+//                measureRouting(hopper, new QuerySettings("routing_alt", count / 500, isCH, isLM).
+//                        alternative());
                 if (withTurnCosts) {
                     measureRouting(hopper, new QuerySettings("routing_edge", count / 20, isCH, isLM).
                             withInstructions().edgeBased());
                     // unfortunately alt routes are so slow that we cannot really afford many iterations
-                    measureRouting(hopper, new QuerySettings("routing_edge_alt", count / 500, isCH, isLM).
-                            edgeBased().alternative()
-                    );
+//                    measureRouting(hopper, new QuerySettings("routing_edge_alt", count / 500, isCH, isLM).
+//                            edgeBased().alternative()
+//                    );
                 }
             }
 
@@ -211,13 +213,13 @@ public class Measurement {
                         .mapToInt(Integer::parseInt).forEach(activeLMCount -> {
                             measureRouting(hopper, new QuerySettings("routingLM" + activeLMCount, count / 20, isCH, isLM).
                                     withInstructions().activeLandmarks(activeLMCount));
-                            measureRouting(hopper, new QuerySettings("routingLM" + activeLMCount + "_alt", count / 500, isCH, isLM).
-                                    activeLandmarks(activeLMCount).alternative());
+//                            measureRouting(hopper, new QuerySettings("routingLM" + activeLMCount + "_alt", count / 500, isCH, isLM).
+//                                    activeLandmarks(activeLMCount).alternative());
                             if (args.getBool("measurement.lm.edge_based", withTurnCosts)) {
                                 measureRouting(hopper, new QuerySettings("routingLM" + activeLMCount + "_edge", count / 20, isCH, isLM).
                                         withInstructions().activeLandmarks(activeLMCount).edgeBased());
-                                measureRouting(hopper, new QuerySettings("routingLM" + activeLMCount + "_alt_edge", count / 500, isCH, isLM).
-                                        activeLandmarks(activeLMCount).edgeBased().alternative());
+//                                measureRouting(hopper, new QuerySettings("routingLM" + activeLMCount + "_alt_edge", count / 500, isCH, isLM).
+//                                        activeLandmarks(activeLMCount).edgeBased().alternative());
                             }
                         });
             }
@@ -232,8 +234,8 @@ public class Measurement {
                     gcAndWait();
                     measureRouting(hopper, new QuerySettings("routingCH", count, isCH, isLM).
                             withInstructions().sod());
-                    measureRouting(hopper, new QuerySettings("routingCH_alt", count / 100, isCH, isLM).
-                            withInstructions().sod().alternative());
+//                    measureRouting(hopper, new QuerySettings("routingCH_alt", count / 100, isCH, isLM).
+//                            withInstructions().sod().alternative());
                     measureRouting(hopper, new QuerySettings("routingCH_with_hints", count, isCH, isLM).
                             withInstructions().sod().withPointHints());
                     measureRouting(hopper, new QuerySettings("routingCH_no_sod", count, isCH, isLM).
@@ -252,8 +254,8 @@ public class Measurement {
                 if (edgeBasedCH != null) {
                     measureRouting(hopper, new QuerySettings("routingCH_edge", count, isCH, isLM).
                             edgeBased().withInstructions());
-                    measureRouting(hopper, new QuerySettings("routingCH_edge_alt", count / 100, isCH, isLM).
-                            edgeBased().withInstructions().alternative());
+//                    measureRouting(hopper, new QuerySettings("routingCH_edge_alt", count / 100, isCH, isLM).
+//                            edgeBased().withInstructions().alternative());
                     measureRouting(hopper, new QuerySettings("routingCH_edge_no_instr", count, isCH, isLM).
                             edgeBased());
                     measureRouting(hopper, new QuerySettings("routingCH_edge_full", count, isCH, isLM).
