@@ -32,10 +32,8 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 import static com.graphhopper.routing.ch.CHParameters.*;
 import static com.graphhopper.util.GHUtility.reverseEdgeKey;
@@ -55,6 +53,7 @@ import static java.util.Collections.emptyList;
  * @author easbar
  */
 class EdgeBasedNodeContractor implements NodeContractor {
+    private static final String monitor = "abc";
     private static final Logger LOGGER = LoggerFactory.getLogger(EdgeBasedNodeContractor.class);
     private final CHPreparationGraph prepareGraph;
     private PrepareGraphEdgeExplorer inEdgeExplorer;
@@ -185,7 +184,7 @@ class EdgeBasedNodeContractor implements NodeContractor {
         addedShortcuts.clear();
         sourceNodes.clear();
 
-        List<Future<Pair<List<ShortcutHandlerData>, EdgeBasedWitnessPathSearcher.Stats>>> futures = new ArrayList<>();
+        List<Pair<List<ShortcutHandlerData>, EdgeBasedWitnessPathSearcher.Stats>> futures = new ArrayList<>();
         // traverse incoming edges/shortcuts to find all the source nodes
         PrepareGraphEdgeIterator incomingEdges = inEdgeExplorer.setBaseNode(node);
         while (incomingEdges.next()) {
@@ -199,32 +198,18 @@ class EdgeBasedNodeContractor implements NodeContractor {
             PrepareGraphOrigEdgeIterator origInIter = sourceNodeOrigInEdgeExplorer.setBaseNode(sourceNode);
             while (origInIter.next()) {
                 final int sourceInEdgeKey = reverseEdgeKey(origInIter.getOrigEdgeKeyLast());
-                futures.add(executorService.submit(() -> {
-                    // todonow: maybe move this worker initialization somewhere else, so it does not affect the time we measure for this method
-                    Worker worker = workerThreadLocal.get();
-                    if (worker == null) {
-                        worker = new Worker(prepareGraph);
-                        // todonow: do we ever need to destroy the worker, shutdown the threadpool and/or call witnesspathfinder.close()?
-                        workerThreadLocal.set(worker);
-                    }
-                    Pair<List<ShortcutHandlerData>, EdgeBasedWitnessPathSearcher.Stats> p;
-                    synchronized (this) {
-                        p = worker.findAndHandlePrepareShortcutsForSource(sourceNode, sourceInEdgeKey, node, maxPolls);
-                    }
-                    return p;
-                }));
+                // todonow: maybe move this worker initialization somewhere else, so it does not affect the time we measure for this method
+                Worker worker = workerThreadLocal.get();
+                if (worker == null) {
+                    worker = new Worker(prepareGraph);
+                    // todonow: do we ever need to destroy the worker, shutdown the threadpool and/or call witnesspathfinder.close()?
+                    workerThreadLocal.set(worker);
+                }
+                futures.add(worker.findAndHandlePrepareShortcutsForSource(sourceNode, sourceInEdgeKey, node, maxPolls));
             }
         }
-        for (Future<Pair<List<ShortcutHandlerData>, EdgeBasedWitnessPathSearcher.Stats>> future : futures) {
-            Pair<List<ShortcutHandlerData>, EdgeBasedWitnessPathSearcher.Stats> data;
-            try {
-                data = future.get();
-            } catch (InterruptedException | ExecutionException e) {
-                throw new RuntimeException(e);
-            }
-            synchronized (this) {
-                handleResults(data, shortcutHandler, wpsStats);
-            }
+        for (Pair<List<ShortcutHandlerData>, EdgeBasedWitnessPathSearcher.Stats> future : futures) {
+            handleResults(future, shortcutHandler, wpsStats);
         }
     }
 
