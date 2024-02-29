@@ -32,6 +32,10 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import static com.graphhopper.routing.ch.CHParameters.*;
 import static com.graphhopper.util.GHUtility.reverseEdgeKey;
@@ -60,6 +64,7 @@ class EdgeBasedNodeContractor implements NodeContractor {
     private CHStorageBuilder chBuilder;
     private final Params params = new Params();
     private final StopWatch dijkstraSW = new StopWatch();
+    private final ExecutorService executorService;
     // temporary data used during node contraction
     private final IntSet sourceNodes = new IntHashSet(10);
     private final LongSet addedShortcuts = new LongHashSet();
@@ -88,6 +93,7 @@ class EdgeBasedNodeContractor implements NodeContractor {
     public EdgeBasedNodeContractor(CHPreparationGraph prepareGraph, CHStorageBuilder chBuilder, PMap pMap) {
         this.prepareGraph = prepareGraph;
         this.chBuilder = chBuilder;
+        this.executorService = Executors.newFixedThreadPool(1);
         extractParams(pMap);
     }
 
@@ -183,7 +189,7 @@ class EdgeBasedNodeContractor implements NodeContractor {
         addedShortcuts.clear();
         sourceNodes.clear();
 
-        List<Pair<List<ShortcutHandlerData>, EdgeBasedWitnessPathSearcher.Stats>> futures = new ArrayList<>();
+        List<Future<Pair<List<ShortcutHandlerData>, EdgeBasedWitnessPathSearcher.Stats>>> futures = new ArrayList<>();
         // traverse incoming edges/shortcuts to find all the source nodes
         PrepareGraphEdgeIterator incomingEdges = inEdgeExplorer.setBaseNode(node);
         while (incomingEdges.next()) {
@@ -197,10 +203,16 @@ class EdgeBasedNodeContractor implements NodeContractor {
             PrepareGraphOrigEdgeIterator origInIter = sourceNodeOrigInEdgeExplorer.setBaseNode(sourceNode);
             while (origInIter.next()) {
                 final int sourceInEdgeKey = reverseEdgeKey(origInIter.getOrigEdgeKeyLast());
-                futures.add(findAndHandlePrepareShortcutsForSource(sourceNode, sourceInEdgeKey, node, maxPolls));
+                futures.add(executorService.submit(() -> findAndHandlePrepareShortcutsForSource(sourceNode, sourceInEdgeKey, node, maxPolls)));
             }
         }
-        for (Pair<List<ShortcutHandlerData>, EdgeBasedWitnessPathSearcher.Stats> data : futures) {
+        for (Future<Pair<List<ShortcutHandlerData>, EdgeBasedWitnessPathSearcher.Stats>> future : futures) {
+            Pair<List<ShortcutHandlerData>, EdgeBasedWitnessPathSearcher.Stats> data;
+            try {
+                data = future.get();
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+            }
             extracted(shortcutHandler, wpsStats, data);
         }
     }
