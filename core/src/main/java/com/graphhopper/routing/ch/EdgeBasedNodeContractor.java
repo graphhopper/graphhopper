@@ -20,6 +20,7 @@ package com.graphhopper.routing.ch;
 import com.carrotsearch.hppc.*;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.carrotsearch.hppc.cursors.IntObjectCursor;
+import com.graphhopper.reader.osm.Pair;
 import com.graphhopper.storage.CHStorageBuilder;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.EdgeIterator;
@@ -28,11 +29,14 @@ import com.graphhopper.util.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 import static com.graphhopper.routing.ch.CHParameters.*;
 import static com.graphhopper.util.GHUtility.reverseEdgeKey;
 import static com.graphhopper.util.Helper.nf;
+import static java.util.Collections.emptyList;
 
 /**
  * This class is used to calculate the priority of or contract a given node in edge-based Contraction Hierarchies as it
@@ -58,7 +62,6 @@ class EdgeBasedNodeContractor implements NodeContractor {
     private final StopWatch dijkstraSW = new StopWatch();
     // temporary data used during node contraction
     private final IntSet sourceNodes = new IntHashSet(10);
-    private final IntSet targetNodes = new IntHashSet(10);
     private final LongSet addedShortcuts = new LongHashSet();
     private final Stats addingStats = new Stats();
     private final Stats countingStats = new Stats();
@@ -180,6 +183,7 @@ class EdgeBasedNodeContractor implements NodeContractor {
         addedShortcuts.clear();
         sourceNodes.clear();
 
+        List<Pair<List<ShortcutHandlerData>, EdgeBasedWitnessPathSearcher.Stats>> futures = new ArrayList<>();
         // traverse incoming edges/shortcuts to find all the source nodes
         PrepareGraphEdgeIterator incomingEdges = inEdgeExplorer.setBaseNode(node);
         while (incomingEdges.next()) {
@@ -192,39 +196,77 @@ class EdgeBasedNodeContractor implements NodeContractor {
             // for each source node we need to look at every incoming original edge and check which target edges are reachable
             PrepareGraphOrigEdgeIterator origInIter = sourceNodeOrigInEdgeExplorer.setBaseNode(sourceNode);
             while (origInIter.next()) {
-                int origInKey = reverseEdgeKey(origInIter.getOrigEdgeKeyLast());
-                // we search 'bridge paths' leading to the target edges
-                IntObjectMap<BridgePathFinder.BridePathEntry> bridgePaths = bridgePathFinder.find(origInKey, sourceNode, node);
-                if (bridgePaths.isEmpty())
-                    continue;
-                witnessPathSearcher.initSearch(origInKey, sourceNode, node, wpsStats);
-                for (IntObjectCursor<BridgePathFinder.BridePathEntry> bridgePath : bridgePaths) {
-                    if (!Double.isFinite(bridgePath.value.weight))
-                        throw new IllegalStateException("Bridge entry weights should always be finite");
-                    int targetEdgeKey = bridgePath.key;
-                    dijkstraSW.start();
-                    double weight = witnessPathSearcher.runSearch(bridgePath.value.chEntry.adjNode, targetEdgeKey, bridgePath.value.weight, maxPolls);
-                    dijkstraSW.stop();
-                    if (weight <= bridgePath.value.weight)
-                        // we found a witness, nothing to do
-                        continue;
-                    PrepareCHEntry root = bridgePath.value.chEntry;
-                    while (EdgeIterator.Edge.isValid(root.parent.prepareEdge))
-                        root = root.getParent();
-                    // we make sure to add each shortcut only once. when we are actually adding shortcuts we check for existing
-                    // shortcuts anyway, but at least this is important when we *count* shortcuts.
-                    long addedShortcutKey = BitUtil.LITTLE.toLong(root.firstEdgeKey, bridgePath.value.chEntry.incEdgeKey);
-                    if (!addedShortcuts.add(addedShortcutKey))
-                        continue;
-                    double initialTurnCost = prepareGraph.getTurnWeight(origInKey, sourceNode, root.firstEdgeKey);
-                    bridgePath.value.chEntry.weight -= initialTurnCost;
-                    LOGGER.trace("Adding shortcuts for target entry {}", bridgePath.value.chEntry);
-                    // todo: re-implement loop-avoidance heuristic as it existed in GH 1.0? it did not work the
-                    //       way it was implemented so it was removed at some point
-                    shortcutHandler.handleShortcut(root, bridgePath.value.chEntry, bridgePath.value.chEntry.origEdges);
-                }
-                witnessPathSearcher.finishSearch();
+                final int sourceInEdgeKey = reverseEdgeKey(origInIter.getOrigEdgeKeyLast());
+                futures.add(findAndHandlePrepareShortcutsForSource(sourceNode, sourceInEdgeKey, node, maxPolls));
             }
+        }
+        for (Pair<List<ShortcutHandlerData>, EdgeBasedWitnessPathSearcher.Stats> data : futures) {
+            extracted(shortcutHandler, wpsStats, data);
+        }
+    }
+
+    private void extracted(PrepareShortcutHandler shortcutHandler, EdgeBasedWitnessPathSearcher.Stats wpsStats, Pair<List<ShortcutHandlerData>, EdgeBasedWitnessPathSearcher.Stats> data) {
+        for (ShortcutHandlerData shortcut : data.first) {
+            // we make sure to add each shortcut only once. when we are actually adding shortcuts we check for existing
+            // shortcuts anyway, but at least this is important when we *count* shortcuts.
+            long addedShortcutKey = BitUtil.LITTLE.toLong(shortcut.edgeFrom.firstEdgeKey, shortcut.edgeTo.incEdgeKey);
+            if (!addedShortcuts.add(addedShortcutKey))
+                continue;
+            shortcutHandler.handleShortcut(shortcut.edgeFrom, shortcut.edgeTo, shortcut.origEdgeCount);
+        }
+        EdgeBasedWitnessPathSearcher.Stats stats = data.second;
+        // update stats using values of last search
+        wpsStats.numTrees += stats.numTrees;
+        wpsStats.numSearches += stats.numSearches;
+        wpsStats.numPolls += stats.numPolls;
+        wpsStats.maxPolls = Math.max(wpsStats.maxPolls, stats.numPolls);
+        wpsStats.numExplored += stats.numExplored;
+        wpsStats.maxExplored = Math.max(wpsStats.maxExplored, stats.numExplored);
+        wpsStats.numUpdates += stats.numUpdates;
+        wpsStats.maxUpdates = Math.max(stats.maxUpdates, stats.numUpdates);
+        wpsStats.numCapped += stats.numCapped;
+    }
+
+    private Pair<List<ShortcutHandlerData>, EdgeBasedWitnessPathSearcher.Stats> findAndHandlePrepareShortcutsForSource(int sourceNode, int sourceInEdgeKey, int centerNode, int maxPolls) {
+        // we search 'bridge paths' leading to the target edges
+        IntObjectMap<BridgePathFinder.BridePathEntry> bridgePaths = bridgePathFinder.find(sourceInEdgeKey, sourceNode, centerNode);
+        if (bridgePaths.isEmpty())
+            return new Pair<>(emptyList(), new EdgeBasedWitnessPathSearcher.Stats());
+        List<ShortcutHandlerData> result = new ArrayList<>();
+        witnessPathSearcher.initSearch(sourceInEdgeKey, sourceNode, centerNode);
+        for (IntObjectCursor<BridgePathFinder.BridePathEntry> bridgePath : bridgePaths) {
+            if (!Double.isFinite(bridgePath.value.weight))
+                throw new IllegalStateException("Bridge entry weights should always be finite");
+            int targetEdgeKey = bridgePath.key;
+            dijkstraSW.start();
+            double weight = witnessPathSearcher.runSearch(bridgePath.value.chEntry.adjNode, targetEdgeKey, bridgePath.value.weight, maxPolls);
+            dijkstraSW.stop();
+            if (weight <= bridgePath.value.weight)
+                // we found a witness, nothing to do
+                continue;
+            PrepareCHEntry root = bridgePath.value.chEntry;
+            while (EdgeIterator.Edge.isValid(root.parent.prepareEdge))
+                root = root.getParent();
+            double initialTurnCost = prepareGraph.getTurnWeight(sourceInEdgeKey, sourceNode, root.firstEdgeKey);
+            bridgePath.value.chEntry.weight -= initialTurnCost;
+            LOGGER.trace("Adding shortcuts for target entry {}", bridgePath.value.chEntry);
+            // todo: re-implement loop-avoidance heuristic as it existed in GH 1.0? it did not work the
+            //       way it was implemented so it was removed at some point
+            result.add(new ShortcutHandlerData(root, bridgePath.value.chEntry, bridgePath.value.chEntry.origEdges));
+        }
+        EdgeBasedWitnessPathSearcher.Stats stats = witnessPathSearcher.finishSearch();
+        return new Pair<>(result, stats);
+    }
+
+    private static class ShortcutHandlerData {
+        PrepareCHEntry edgeFrom;
+        PrepareCHEntry edgeTo;
+        int origEdgeCount;
+
+        public ShortcutHandlerData(PrepareCHEntry edgeFrom, PrepareCHEntry edgeTo, int origEdgeCount) {
+            this.edgeFrom = edgeFrom;
+            this.edgeTo = edgeTo;
+            this.origEdgeCount = origEdgeCount;
         }
     }
 
@@ -375,7 +417,6 @@ class EdgeBasedNodeContractor implements NodeContractor {
         chBuilder = null;
         witnessPathSearcher.close();
         sourceNodes.release();
-        targetNodes.release();
         addedShortcuts.release();
         hierarchyDepths = null;
     }
