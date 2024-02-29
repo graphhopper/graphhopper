@@ -166,7 +166,7 @@ class EdgeBasedNodeContractor implements NodeContractor {
 
     @Override
     public float getDijkstraSeconds() {
-        return dijkstraSW.getCurrentSeconds();
+        return (wpsStatsHeur.dijkstraNanos + wpsStatsContr.dijkstraNanos) / 1e9f;
     }
 
     @Override
@@ -225,6 +225,7 @@ class EdgeBasedNodeContractor implements NodeContractor {
         wpsStats.numUpdates += stats.numUpdates;
         wpsStats.maxUpdates = Math.max(wpsStats.maxUpdates, stats.numUpdates);
         wpsStats.numCapped += stats.numCapped;
+        wpsStats.dijkstraNanos += stats.dijkstraNanos;
     }
 
     private Pair<List<ShortcutHandlerData>, EdgeBasedWitnessPathSearcher.Stats> findAndHandlePrepareShortcutsForSource(int sourceNode, int sourceInEdgeKey, int centerNode, int maxPolls) {
@@ -234,13 +235,14 @@ class EdgeBasedNodeContractor implements NodeContractor {
             return new Pair<>(emptyList(), new EdgeBasedWitnessPathSearcher.Stats());
         List<ShortcutHandlerData> result = new ArrayList<>();
         witnessPathSearcher.initSearch(sourceInEdgeKey, sourceNode, centerNode);
+        long dijkstraNanos = 0;
         for (IntObjectCursor<BridgePathFinder.BridePathEntry> bridgePath : bridgePaths) {
             if (!Double.isFinite(bridgePath.value.weight))
                 throw new IllegalStateException("Bridge entry weights should always be finite");
             int targetEdgeKey = bridgePath.key;
-            dijkstraSW.start();
+            long dijkstraStart = System.nanoTime();
             double weight = witnessPathSearcher.runSearch(bridgePath.value.chEntry.adjNode, targetEdgeKey, bridgePath.value.weight, maxPolls);
-            dijkstraSW.stop();
+            dijkstraNanos += (System.nanoTime() - dijkstraStart);
             if (weight <= bridgePath.value.weight)
                 // we found a witness, nothing to do
                 continue;
@@ -255,6 +257,7 @@ class EdgeBasedNodeContractor implements NodeContractor {
             result.add(new ShortcutHandlerData(root, bridgePath.value.chEntry, bridgePath.value.chEntry.origEdges));
         }
         EdgeBasedWitnessPathSearcher.Stats stats = witnessPathSearcher.finishSearch();
+        stats.dijkstraNanos = dijkstraNanos;
         return new Pair<>(result, stats);
     }
 
