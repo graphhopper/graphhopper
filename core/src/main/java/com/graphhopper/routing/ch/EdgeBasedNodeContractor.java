@@ -36,6 +36,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static com.graphhopper.routing.ch.CHParameters.*;
 import static com.graphhopper.util.GHUtility.reverseEdgeKey;
@@ -65,6 +67,7 @@ class EdgeBasedNodeContractor implements NodeContractor {
     private final Params params = new Params();
     private final StopWatch dijkstraSW = new StopWatch();
     private final ExecutorService executorService;
+    private final ReadWriteLock lock = new ReentrantReadWriteLock();
     // temporary data used during node contraction
     private final IntSet sourceNodes = new IntHashSet(10);
     private final LongSet addedShortcuts = new LongHashSet();
@@ -203,7 +206,16 @@ class EdgeBasedNodeContractor implements NodeContractor {
             PrepareGraphOrigEdgeIterator origInIter = sourceNodeOrigInEdgeExplorer.setBaseNode(sourceNode);
             while (origInIter.next()) {
                 final int sourceInEdgeKey = reverseEdgeKey(origInIter.getOrigEdgeKeyLast());
-                futures.add(executorService.submit(() -> findAndHandlePrepareShortcutsForSource(sourceNode, sourceInEdgeKey, node, maxPolls)));
+                futures.add(executorService.submit(() -> {
+                    Pair<List<ShortcutHandlerData>, EdgeBasedWitnessPathSearcher.Stats> p;
+                    lock.readLock().lock();
+                    try {
+                        p = findAndHandlePrepareShortcutsForSource(sourceNode, sourceInEdgeKey, node, maxPolls);
+                    } finally {
+                        lock.readLock().unlock();
+                    }
+                    return p;
+                }));
             }
         }
         for (Future<Pair<List<ShortcutHandlerData>, EdgeBasedWitnessPathSearcher.Stats>> future : futures) {
@@ -213,7 +225,12 @@ class EdgeBasedNodeContractor implements NodeContractor {
             } catch (InterruptedException | ExecutionException e) {
                 throw new RuntimeException(e);
             }
-            extracted(shortcutHandler, wpsStats, data);
+            lock.writeLock().lock();
+            try {
+                extracted(shortcutHandler, wpsStats, data);
+            } finally {
+                lock.writeLock().unlock();
+            }
         }
     }
 
