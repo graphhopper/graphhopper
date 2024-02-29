@@ -197,8 +197,14 @@ class EdgeBasedNodeContractor implements NodeContractor {
             while (origInIter.next())
                 shortcuts.addAll(findAndHandlePrepareShortcutsForSource(sourceNode, reverseEdgeKey(origInIter.getOrigEdgeKeyLast()), node, maxPolls, wpsStats));
         }
-        for (ShortcutHandlerData shortcut : shortcuts)
+        for (ShortcutHandlerData shortcut : shortcuts) {
+            // we make sure to add each shortcut only once. when we are actually adding shortcuts we check for existing
+            // shortcuts anyway, but at least this is important when we *count* shortcuts.
+            long addedShortcutKey = BitUtil.LITTLE.toLong(shortcut.edgeFrom.firstEdgeKey, shortcut.edgeTo.incEdgeKey);
+            if (!addedShortcuts.add(addedShortcutKey))
+                continue;
             shortcutHandler.handleShortcut(shortcut.edgeFrom, shortcut.edgeTo, shortcut.origEdgeCount);
+        }
     }
 
     private List<ShortcutHandlerData> findAndHandlePrepareShortcutsForSource(int sourceNode, int sourceInEdgeKey, int centerNode, int maxPolls, EdgeBasedWitnessPathSearcher.Stats wpsStats) {
@@ -221,11 +227,6 @@ class EdgeBasedNodeContractor implements NodeContractor {
             PrepareCHEntry root = bridgePath.value.chEntry;
             while (EdgeIterator.Edge.isValid(root.parent.prepareEdge))
                 root = root.getParent();
-            // we make sure to add each shortcut only once. when we are actually adding shortcuts we check for existing
-            // shortcuts anyway, but at least this is important when we *count* shortcuts.
-            long addedShortcutKey = BitUtil.LITTLE.toLong(root.firstEdgeKey, bridgePath.value.chEntry.incEdgeKey);
-            if (!addedShortcuts.add(addedShortcutKey))
-                continue;
             double initialTurnCost = prepareGraph.getTurnWeight(sourceInEdgeKey, sourceNode, root.firstEdgeKey);
             bridgePath.value.chEntry.weight -= initialTurnCost;
             LOGGER.trace("Adding shortcuts for target entry {}", bridgePath.value.chEntry);
