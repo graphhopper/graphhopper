@@ -259,6 +259,7 @@ public class EdgeBasedWitnessPathSearcher {
         long numUpdates;
         long maxUpdates;
         long numCapped;
+        long dijkstraNanos;
 
         @Override
         public String toString() {
