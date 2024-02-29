@@ -32,8 +32,10 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import static com.graphhopper.routing.ch.CHParameters.*;
 import static com.graphhopper.util.GHUtility.reverseEdgeKey;
@@ -144,9 +146,16 @@ class EdgeBasedNodeContractor implements NodeContractor {
     public IntContainer contractNode(int node) {
         activeStats = addingStats;
         stats().stopWatch.start();
-        findAndHandlePrepareShortcuts(node, this::addShortcutsToPrepareGraph, (int) (meanDegree * params.maxPollFactorContraction), wpsStatsContr);
-        insertShortcuts(node);
-        IntContainer neighbors = prepareGraph.disconnect(node);
+        findAndHandlePrepareShortcuts(node, (edgeFrom, edgeTo, origEdgeCount) -> {
+            synchronized (monitor) {
+                addShortcutsToPrepareGraph(edgeFrom, edgeTo, origEdgeCount);
+            }
+        }, (int) (meanDegree * params.maxPollFactorContraction), wpsStatsContr);
+        IntContainer neighbors;
+        synchronized (monitor) {
+            insertShortcuts(node);
+            neighbors = prepareGraph.disconnect(node);
+        }
         // We maintain an approximation of the mean degree which we update after every contracted node.
         // We do it the same way as for node-based CH for now.
         meanDegree = (meanDegree * 2 + neighbors.size()) / 3;
@@ -184,7 +193,7 @@ class EdgeBasedNodeContractor implements NodeContractor {
         addedShortcuts.clear();
         sourceNodes.clear();
 
-        List<Pair<List<ShortcutHandlerData>, EdgeBasedWitnessPathSearcher.Stats>> futures = new ArrayList<>();
+        List<Future<Pair<List<ShortcutHandlerData>, EdgeBasedWitnessPathSearcher.Stats>>> futures = new ArrayList<>();
         // traverse incoming edges/shortcuts to find all the source nodes
         PrepareGraphEdgeIterator incomingEdges = inEdgeExplorer.setBaseNode(node);
         while (incomingEdges.next()) {
@@ -198,18 +207,30 @@ class EdgeBasedNodeContractor implements NodeContractor {
             PrepareGraphOrigEdgeIterator origInIter = sourceNodeOrigInEdgeExplorer.setBaseNode(sourceNode);
             while (origInIter.next()) {
                 final int sourceInEdgeKey = reverseEdgeKey(origInIter.getOrigEdgeKeyLast());
-                // todonow: maybe move this worker initialization somewhere else, so it does not affect the time we measure for this method
-                Worker worker = workerThreadLocal.get();
-                if (worker == null) {
-                    worker = new Worker(prepareGraph);
-                    // todonow: do we ever need to destroy the worker, shutdown the threadpool and/or call witnesspathfinder.close()?
-                    workerThreadLocal.set(worker);
-                }
-                futures.add(worker.findAndHandlePrepareShortcutsForSource(sourceNode, sourceInEdgeKey, node, maxPolls));
+                futures.add(executorService.submit(() -> {
+                    Pair<List<ShortcutHandlerData>, EdgeBasedWitnessPathSearcher.Stats> p;
+                    synchronized (monitor) {
+                        // todonow: maybe move this worker initialization somewhere else, so it does not affect the time we measure for this method
+                        Worker worker = workerThreadLocal.get();
+                        if (worker == null) {
+                            worker = new Worker(prepareGraph);
+                            // todonow: do we ever need to destroy the worker, shutdown the threadpool and/or call witnesspathfinder.close()?
+                            workerThreadLocal.set(worker);
+                        }
+                        p = worker.findAndHandlePrepareShortcutsForSource(sourceNode, sourceInEdgeKey, node, maxPolls);
+                    }
+                    return p;
+                }));
             }
         }
-        for (Pair<List<ShortcutHandlerData>, EdgeBasedWitnessPathSearcher.Stats> future : futures) {
-            handleResults(future, shortcutHandler, wpsStats);
+        for (Future<Pair<List<ShortcutHandlerData>, EdgeBasedWitnessPathSearcher.Stats>> future : futures) {
+            Pair<List<ShortcutHandlerData>, EdgeBasedWitnessPathSearcher.Stats> data;
+            try {
+                data = future.get();
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+            handleResults(data, shortcutHandler, wpsStats);
         }
     }
 
