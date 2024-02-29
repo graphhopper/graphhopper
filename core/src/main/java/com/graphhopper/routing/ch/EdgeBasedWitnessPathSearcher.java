@@ -60,10 +60,6 @@ public class EdgeBasedWitnessPathSearcher {
     private int sourceNode;
     private int centerNode;
 
-    // various counters
-    private int numPolls;
-    private int numUpdates;
-
     // data structures used to build the shortest path tree
     // we allocate memory for all possible edge keys and keep track which ones have been discovered so far
     private double[] weights;
@@ -73,7 +69,7 @@ public class EdgeBasedWitnessPathSearcher {
     private IntFloatBinaryHeap dijkstraHeap;
 
     // statistics to analyze performance
-    private Stats stats;
+    private Stats stats = new Stats();
 
     public EdgeBasedWitnessPathSearcher(CHPreparationGraph prepareGraph) {
         this.prepareGraph = prepareGraph;
@@ -93,8 +89,8 @@ public class EdgeBasedWitnessPathSearcher {
      * @param sourceNode    the neighbor node from which the search starts (s)
      * @param centerNode    the node to be contracted (x)
      */
-    public void initSearch(int sourceEdgeKey, int sourceNode, int centerNode, Stats stats) {
-        this.stats = stats;
+    public void initSearch(int sourceEdgeKey, int sourceNode, int centerNode) {
+        stats = new Stats();
         stats.numTrees++;
         this.sourceNode = sourceNode;
         this.centerNode = centerNode;
@@ -110,7 +106,7 @@ public class EdgeBasedWitnessPathSearcher {
     /**
      * Runs a witness path search for a given target edge key. Results of previous searches (the shortest path tree) are
      * reused and the previous search is extended if necessary. Note that you need to call
-     * {@link #initSearch(int, int, int, Stats)} before calling this method to initialize the search.
+     * {@link #initSearch(int, int, int)} before calling this method to initialize the search.
      *
      * @param targetNode     the neighbor node that should be reached by the path (t)
      * @param targetEdgeKey  the original edge key outgoing from t where the search ends
@@ -134,7 +130,7 @@ public class EdgeBasedWitnessPathSearcher {
         }
 
         // run the search
-        while (!dijkstraHeap.isEmpty() && numPolls < maxPolls &&
+        while (!dijkstraHeap.isEmpty() && stats.numPolls < maxPolls &&
                 // we *could* use dijkstraHeap.peekKey() instead, but since it is cast to float this might be smaller than
                 // the actual weight in which case the search might continue and find a false witness path when there is
                 // an adjacent zero weight edge *and* u-turn costs are zero. we could check this explicitly somewhere,,
@@ -142,7 +138,7 @@ public class EdgeBasedWitnessPathSearcher {
                 weights[dijkstraHeap.peekElement()] < acceptedWeight
         ) {
             int currKey = dijkstraHeap.poll();
-            numPolls++;
+            stats.numPolls++;
             final int currNode = getAdjNode(currKey);
             PrepareGraphEdgeIterator iter = outEdgeExplorer.setBaseNode(currNode);
             double foundWeight = Double.POSITIVE_INFINITY;
@@ -167,7 +163,7 @@ public class EdgeBasedWitnessPathSearcher {
                 } else if (weight < weights[key]
                         // if weights are equal make sure we prefer witness paths over bridge paths
                         || (weight == weights[key] && !isPathToCenter(currKey))) {
-                    numUpdates++;
+                    stats.numUpdates++;
                     weights[key] = weight;
                     parents[key] = currKey;
                     setAdjNodeAndPathToCenter(key, iter.getAdjNode(), isPathToCenter);
@@ -181,21 +177,15 @@ public class EdgeBasedWitnessPathSearcher {
                 // remaining edges again
                 return foundWeight;
         }
-        if (numPolls == maxPolls)
+        if (stats.numPolls == maxPolls)
             stats.numCapped++;
         return Double.POSITIVE_INFINITY;
     }
 
-    public void finishSearch() {
-
-        // update stats using values of last search
-        stats.numPolls += numPolls;
-        stats.maxPolls = Math.max(stats.maxPolls, numPolls);
-        stats.numExplored += changedEdgeKeys.size();
-        stats.maxExplored = Math.max(stats.maxExplored, changedEdgeKeys.size());
-        stats.numUpdates += numUpdates;
-        stats.maxUpdates = Math.max(stats.maxUpdates, numUpdates);
+    public Stats finishSearch() {
+        stats.numExplored = changedEdgeKeys.size();
         reset();
+        return stats;
     }
 
     private void setAdjNodeAndPathToCenter(int key, int adjNode, boolean isPathToCenter) {
@@ -239,8 +229,6 @@ public class EdgeBasedWitnessPathSearcher {
     }
 
     private void reset() {
-        numPolls = 0;
-        numUpdates = 0;
         resetShortestPathTree();
     }
 

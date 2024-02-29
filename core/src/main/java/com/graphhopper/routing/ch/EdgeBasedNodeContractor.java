@@ -20,6 +20,7 @@ package com.graphhopper.routing.ch;
 import com.carrotsearch.hppc.*;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.carrotsearch.hppc.cursors.IntObjectCursor;
+import com.graphhopper.reader.osm.Pair;
 import com.graphhopper.storage.CHStorageBuilder;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.EdgeIterator;
@@ -182,7 +183,7 @@ class EdgeBasedNodeContractor implements NodeContractor {
         addedShortcuts.clear();
         sourceNodes.clear();
 
-        List<ShortcutHandlerData> shortcuts = new ArrayList<>();
+        List<Pair<List<ShortcutHandlerData>, EdgeBasedWitnessPathSearcher.Stats>> results = new ArrayList<>();
         // traverse incoming edges/shortcuts to find all the source nodes
         PrepareGraphEdgeIterator incomingEdges = inEdgeExplorer.setBaseNode(node);
         while (incomingEdges.next()) {
@@ -194,10 +195,18 @@ class EdgeBasedNodeContractor implements NodeContractor {
                 continue;
             // for each source node we need to look at every incoming original edge and check which target edges are reachable
             PrepareGraphOrigEdgeIterator origInIter = sourceNodeOrigInEdgeExplorer.setBaseNode(sourceNode);
-            while (origInIter.next())
-                shortcuts.addAll(findAndHandlePrepareShortcutsForSource(sourceNode, reverseEdgeKey(origInIter.getOrigEdgeKeyLast()), node, maxPolls, wpsStats));
+            while (origInIter.next()) {
+                final int sourceInEdgeKey = reverseEdgeKey(origInIter.getOrigEdgeKeyLast());
+                results.add(findAndHandlePrepareShortcutsForSource(sourceNode, sourceInEdgeKey, node, maxPolls));
+            }
         }
-        for (ShortcutHandlerData shortcut : shortcuts) {
+        for (Pair<List<ShortcutHandlerData>, EdgeBasedWitnessPathSearcher.Stats> result : results) {
+            handleResults(result, shortcutHandler, wpsStats);
+        }
+    }
+
+    private void handleResults(Pair<List<ShortcutHandlerData>, EdgeBasedWitnessPathSearcher.Stats> data, PrepareShortcutHandler shortcutHandler, EdgeBasedWitnessPathSearcher.Stats wpsStats) {
+        for (ShortcutHandlerData shortcut : data.first) {
             // we make sure to add each shortcut only once. when we are actually adding shortcuts we check for existing
             // shortcuts anyway, but at least this is important when we *count* shortcuts.
             long addedShortcutKey = BitUtil.LITTLE.toLong(shortcut.edgeFrom.firstEdgeKey, shortcut.edgeTo.incEdgeKey);
@@ -205,15 +214,26 @@ class EdgeBasedNodeContractor implements NodeContractor {
                 continue;
             shortcutHandler.handleShortcut(shortcut.edgeFrom, shortcut.edgeTo, shortcut.origEdgeCount);
         }
+        EdgeBasedWitnessPathSearcher.Stats stats = data.second;
+        // update stats using values of last search
+        wpsStats.numTrees += stats.numTrees;
+        wpsStats.numSearches += stats.numSearches;
+        wpsStats.numPolls += stats.numPolls;
+        wpsStats.maxPolls = Math.max(wpsStats.maxPolls, stats.numPolls);
+        wpsStats.numExplored += stats.numExplored;
+        wpsStats.maxExplored = Math.max(wpsStats.maxExplored, stats.numExplored);
+        wpsStats.numUpdates += stats.numUpdates;
+        wpsStats.maxUpdates = Math.max(wpsStats.maxUpdates, stats.numUpdates);
+        wpsStats.numCapped += stats.numCapped;
     }
 
-    private List<ShortcutHandlerData> findAndHandlePrepareShortcutsForSource(int sourceNode, int sourceInEdgeKey, int centerNode, int maxPolls, EdgeBasedWitnessPathSearcher.Stats wpsStats) {
+    private Pair<List<ShortcutHandlerData>, EdgeBasedWitnessPathSearcher.Stats> findAndHandlePrepareShortcutsForSource(int sourceNode, int sourceInEdgeKey, int centerNode, int maxPolls) {
         // we search 'bridge paths' leading to the target edges
         IntObjectMap<BridgePathFinder.BridePathEntry> bridgePaths = bridgePathFinder.find(sourceInEdgeKey, sourceNode, centerNode);
         if (bridgePaths.isEmpty())
-            return emptyList();
+            return new Pair<>(emptyList(), new EdgeBasedWitnessPathSearcher.Stats());
         List<ShortcutHandlerData> result = new ArrayList<>();
-        witnessPathSearcher.initSearch(sourceInEdgeKey, sourceNode, centerNode, wpsStats);
+        witnessPathSearcher.initSearch(sourceInEdgeKey, sourceNode, centerNode);
         for (IntObjectCursor<BridgePathFinder.BridePathEntry> bridgePath : bridgePaths) {
             if (!Double.isFinite(bridgePath.value.weight))
                 throw new IllegalStateException("Bridge entry weights should always be finite");
@@ -234,8 +254,8 @@ class EdgeBasedNodeContractor implements NodeContractor {
             //       way it was implemented so it was removed at some point
             result.add(new ShortcutHandlerData(root, bridgePath.value.chEntry, bridgePath.value.chEntry.origEdges));
         }
-        witnessPathSearcher.finishSearch();
-        return result;
+        EdgeBasedWitnessPathSearcher.Stats stats = witnessPathSearcher.finishSearch();
+        return new Pair<>(result, stats);
     }
 
     private static class ShortcutHandlerData {

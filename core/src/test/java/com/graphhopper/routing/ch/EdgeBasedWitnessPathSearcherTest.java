@@ -36,7 +36,7 @@ public class EdgeBasedWitnessPathSearcherTest {
         graph.addEdge(3, 4, edge++, 10, Double.POSITIVE_INFINITY);
         graph.prepareForContraction();
         EdgeBasedWitnessPathSearcher searcher = new EdgeBasedWitnessPathSearcher(graph);
-        searcher.initSearch(0, 1, 2, new EdgeBasedWitnessPathSearcher.Stats());
+        searcher.initSearch(0, 1, 2);
         double weight = searcher.runSearch(3, 6, 20.0, 100);
         assertTrue(Double.isInfinite(weight));
     }
@@ -52,7 +52,7 @@ public class EdgeBasedWitnessPathSearcherTest {
         graph.addEdge(3, 4, edge++, 10, 10);
         graph.prepareForContraction();
         EdgeBasedWitnessPathSearcher searcher = new EdgeBasedWitnessPathSearcher(graph);
-        searcher.initSearch(0, 1, 2, new EdgeBasedWitnessPathSearcher.Stats());
+        searcher.initSearch(0, 1, 2);
         double weight = searcher.runSearch(3, 6, 20.0, 100);
         assertTrue(Double.isInfinite(weight));
     }
@@ -72,7 +72,7 @@ public class EdgeBasedWitnessPathSearcherTest {
         graph.addEdge(5, 3, edge++, 10, Double.POSITIVE_INFINITY);
         graph.prepareForContraction();
         EdgeBasedWitnessPathSearcher searcher = new EdgeBasedWitnessPathSearcher(graph);
-        searcher.initSearch(0, 1, 2, new EdgeBasedWitnessPathSearcher.Stats());
+        searcher.initSearch(0, 1, 2);
         double weight = searcher.runSearch(3, 6, 30.0, 100);
         assertEquals(20, weight, 1.e-6);
     }
@@ -92,7 +92,7 @@ public class EdgeBasedWitnessPathSearcherTest {
         graph.addEdge(5, 3, edge++, 10, 10);
         graph.prepareForContraction();
         EdgeBasedWitnessPathSearcher searcher = new EdgeBasedWitnessPathSearcher(graph);
-        searcher.initSearch(0, 1, 2, new EdgeBasedWitnessPathSearcher.Stats());
+        searcher.initSearch(0, 1, 2);
         double weight = searcher.runSearch(3, 6, 30.0, 100);
         assertEquals(20, weight, 1.e-6);
     }
