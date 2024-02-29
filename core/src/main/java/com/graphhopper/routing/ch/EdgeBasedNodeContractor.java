@@ -58,7 +58,6 @@ class EdgeBasedNodeContractor implements NodeContractor {
     private final StopWatch dijkstraSW = new StopWatch();
     // temporary data used during node contraction
     private final IntSet sourceNodes = new IntHashSet(10);
-    private final IntSet targetNodes = new IntHashSet(10);
     private final LongSet addedShortcuts = new LongHashSet();
     private final Stats addingStats = new Stats();
     private final Stats countingStats = new Stats();
@@ -375,7 +374,6 @@ class EdgeBasedNodeContractor implements NodeContractor {
         chBuilder = null;
         witnessPathSearcher.close();
         sourceNodes.release();
-        targetNodes.release();
         addedShortcuts.release();
         hierarchyDepths = null;
     }
