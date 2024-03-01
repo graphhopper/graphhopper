@@ -129,6 +129,26 @@ public class CarTagParserTest {
         assertTrue(parser.getAccess(way).isWay());
 
         way.clearTags();
+        way.setTag("highway", "pedestrian");
+        assertTrue(parser.getAccess(way).canSkip());
+
+        way.clearTags();
+        way.setTag("highway", "pedestrian");
+        way.setTag("motor_vehicle", "yes");
+        assertTrue(parser.getAccess(way).isWay());
+
+        way.clearTags();
+        way.setTag("highway", "pedestrian");
+        way.setTag("motor_vehicle", "yes");
+        way.setTag("motorcar", "no");
+        assertTrue(parser.getAccess(way).canSkip());
+
+        way.clearTags();
+        way.setTag("highway", "pedestrian");
+        way.setTag("motor_vehicle", "destination");
+        assertTrue(parser.getAccess(way).isWay());
+
+        way.clearTags();
         way.setTag("highway", "service");
         way.setTag("access", "no");
         way.setTag("motorcar", "yes");
@@ -702,7 +722,7 @@ public class CarTagParserTest {
     @ValueSource(strings = {"mofa", "moped", "motorcar", "motor_vehicle", "motorcycle"})
     void footway_etc_not_allowed_despite_vehicle_yes(String vehicle) {
         // these highways are blocked, even when we set one of the vehicles to yes
-        for (String highway : Arrays.asList("footway", "cycleway", "steps", "pedestrian")) {
+        for (String highway : Arrays.asList("footway", "cycleway", "steps")) {
             ReaderWay way = new ReaderWay(1);
             way.setTag("highway", highway);
             way.setTag(vehicle, "yes");

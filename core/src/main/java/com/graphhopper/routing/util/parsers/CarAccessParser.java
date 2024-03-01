@@ -71,7 +71,7 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
 
         highwayValues.addAll(Arrays.asList("motorway", "motorway_link", "trunk", "trunk_link",
                 "primary", "primary_link", "secondary", "secondary_link", "tertiary", "tertiary_link",
-                "unclassified", "residential", "living_street", "service", "road", "track"));
+                "unclassified", "residential", "living_street", "service", "road", "track", "pedestrian"));
 
         trackTypeValues.addAll(Arrays.asList("grade1", "grade2", "grade3", null));
     }
@@ -117,7 +117,8 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
                 if (intendedValues.contains(value) && !permittedWayConditionallyRestricted)
                     return WayAccess.WAY;
             }
-        }
+        } else if ("pedestrian".equals(highwayValue))
+            return WayAccess.CAN_SKIP;
 
         if (isBlockFords() && ("ford".equals(highwayValue) || way.hasTag("ford")))
             return WayAccess.CAN_SKIP;
