@@ -26,12 +26,14 @@ import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.StopWatch;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.*;
 
 import static com.graphhopper.routing.ch.CHParameters.*;
 import static com.graphhopper.util.GHUtility.reverseEdgeKey;
@@ -64,9 +66,28 @@ class EdgeBasedNodeContractor implements NodeContractor {
     private final LongSet addedShortcuts = new LongHashSet();
     private final Stats addingStats = new Stats();
     private final Stats countingStats = new Stats();
+    private final int threads = 1;
+    private final ExecutorService executorService = Executors.newFixedThreadPool(threads, new ThreadFactory() {
+        int count = 0;
+
+        @Override
+        public Thread newThread(@NotNull Runnable r) {
+            return new NumberedThread(count++, r);
+        }
+    });
+
+    private static class NumberedThread extends Thread {
+        public int number;
+
+        NumberedThread(int number, Runnable r) {
+            super(r);
+            this.number = number;
+        }
+    }
+
     private Stats activeStats;
 
-    private Worker worker;
+    private Worker[] workers;
     private int[] hierarchyDepths;
     private final EdgeBasedWitnessPathSearcher.Stats wpsStatsHeur = new EdgeBasedWitnessPathSearcher.Stats();
     private final EdgeBasedWitnessPathSearcher.Stats wpsStatsContr = new EdgeBasedWitnessPathSearcher.Stats();
@@ -106,7 +127,9 @@ class EdgeBasedNodeContractor implements NodeContractor {
         hierarchyDepths = new int[prepareGraph.getNodes()];
         meanDegree = prepareGraph.getOriginalEdges() * 1.0 / prepareGraph.getNodes();
         // todonow: do we ever need to destroy the worker, shutdown the threadpool and/or call witnesspathfinder.close()?
-        worker = new Worker(prepareGraph);
+        workers = new Worker[threads];
+        for (int i = 0; i < threads; i++)
+            workers[i] = new Worker(prepareGraph);
     }
 
     @Override
@@ -155,6 +178,7 @@ class EdgeBasedNodeContractor implements NodeContractor {
     @Override
     public void finishContraction() {
         chBuilder.replaceSkippedEdges(prepareGraph::getShortcutForPrepareEdge);
+        executorService.shutdown();
     }
 
     @Override
@@ -181,7 +205,7 @@ class EdgeBasedNodeContractor implements NodeContractor {
         addedShortcuts.clear();
         sourceNodes.clear();
 
-        List<Pair<List<ShortcutHandlerData>, EdgeBasedWitnessPathSearcher.Stats>> results = new ArrayList<>();
+        List<Future<Pair<List<ShortcutHandlerData>, EdgeBasedWitnessPathSearcher.Stats>>> futures = new ArrayList<>();
         // traverse incoming edges/shortcuts to find all the source nodes
         PrepareGraphEdgeIterator incomingEdges = inEdgeExplorer.setBaseNode(node);
         while (incomingEdges.next()) {
@@ -195,12 +219,26 @@ class EdgeBasedNodeContractor implements NodeContractor {
             PrepareGraphOrigEdgeIterator origInIter = sourceNodeOrigInEdgeExplorer.setBaseNode(sourceNode);
             while (origInIter.next()) {
                 final int sourceInEdgeKey = reverseEdgeKey(origInIter.getOrigEdgeKeyLast());
-                results.add(worker.findAndHandlePrepareShortcutsForSource(sourceNode, sourceInEdgeKey, node, maxPolls));
+                futures.add(executorService.submit(() -> {
+                    Thread thread = Thread.currentThread();
+                    int threadId = thread instanceof NumberedThread ? ((NumberedThread) thread).number : thread.getName().equals("main") ? 0 : -1;
+                    if (threadId < 0)
+                        throw new IllegalStateException("Unexpected thread: " + thread.getName());
+                    Worker worker = workers[threadId];
+                    return worker.findAndHandlePrepareShortcutsForSource(sourceNode, sourceInEdgeKey, node, maxPolls);
+                }));
             }
         }
-        for (Pair<List<ShortcutHandlerData>, EdgeBasedWitnessPathSearcher.Stats> result : results) {
+
+        List<Pair<List<ShortcutHandlerData>, EdgeBasedWitnessPathSearcher.Stats>> results = futures.stream().map(f -> {
+            try {
+                return f.get();
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+        }).toList();
+        for (Pair<List<ShortcutHandlerData>, EdgeBasedWitnessPathSearcher.Stats> result : results)
             handleResults(result, shortcutHandler, wpsStats);
-        }
     }
 
     private void handleResults(Pair<List<ShortcutHandlerData>, EdgeBasedWitnessPathSearcher.Stats> data, PrepareShortcutHandler shortcutHandler, EdgeBasedWitnessPathSearcher.Stats wpsStats) {
