@@ -412,8 +412,7 @@ public class OSMReader {
      * the duration tag when it is present. The latter cannot be done on a per-edge basis, because the duration tag
      * refers to the duration of the entire way.
      */
-    protected void preprocessWay(ReaderWay way, WaySegmentParser.CoordinateSupplier coordinateSupplier) {
-        // storing the road name does not yet depend on the flagEncoder so manage it directly
+    protected void preprocessWay(ReaderWay way, WaySegmentParser.CoordinateSupplier coordinateSupplier, WaySegmentParser.NodeTagSupplier nodeTagSupplier) {
         List<KVStorage.KeyValue> list = new ArrayList<>();
         if (config.isParseWayNames()) {
             // http://wiki.openstreetmap.org/wiki/Key:name
@@ -446,7 +445,20 @@ public class OSMReader {
                 if (way.hasTag("destination:backward"))
                     list.add(new KVStorage.KeyValue(STREET_DESTINATION, fixWayName(way.getTag("destination:backward")), false, true));
             }
+
+            // copy name of motorway_junction for named exits and junctions
+            LongArrayList nodes = way.getNodes();
+            if (name.isEmpty() && (way.hasTag("highway", "motorway") || way.hasTag("highway", "motorway_link")))
+                for (int i = 0; i < nodes.size(); i++) {
+                    Map<String, Object> nodeTags = nodeTagSupplier.getTags(nodes.get(i));
+                    String nodeName = (String) nodeTags.getOrDefault("name", "");
+                    if (!nodeName.isEmpty() && "motorway_junction".equals(nodeTags.getOrDefault("highway", ""))) {
+                        list.add(new KVStorage.KeyValue(STREET_NAME, nodeName));
+                        break;
+                    }
+                }
         }
+
         way.setTag("key_values", list);
 
         if (!isCalculateWayDistance(way))

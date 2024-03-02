@@ -541,7 +541,7 @@ public class GraphHopperTest {
 
         GHResponse rsp = hopper.route(new GHRequest(51.1915, 14.416, 51.192, 14.412).setProfile(profile));
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
-        assertEquals("keep right and take B 96 toward Bautzen-West, Hoyerswerda",
+        assertEquals("keep right onto Bautzen-West and take B 96 toward Bautzen-West, Hoyerswerda",
                 rsp.getBest().getInstructions().get(1).getTurnDescription(tr));
         assertEquals("turn left onto Hoyerswerdaer Straße and drive toward Hoyerswerda, Kleinwelka",
                 rsp.getBest().getInstructions().get(2).getTurnDescription(tr));
