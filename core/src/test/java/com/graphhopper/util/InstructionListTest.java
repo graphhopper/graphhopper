@@ -630,6 +630,7 @@ public class InstructionListTest {
 
     // TODO better lane guidance: do not mark the "left+continue" lane of "left+continue|continue|right" as active (even continue it is valid)
     //  but the next turn is a right turn and very close and would require two lane changes
+    // TODO no matching lanes: "slight left" turn but lanes are none|none|slight_right => https://www.openstreetmap.org/way/215226484
     // TODO no arrow is on the road => lane gets "none" => no lane is valid for right turn
     //  http://localhost:3000/?point=52.515176%252C13.460514&point=52.51728%252C13.453813
 

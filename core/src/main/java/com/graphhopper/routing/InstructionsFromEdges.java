@@ -388,13 +388,14 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             String accessStr = lanesAccess.size() != lanes.size() ? "" : lanesAccess.get(i);
             if (accessStr.equals("no")) continue;
 
+            String allAsStr = lane.getDirections().toString(); // "left" should match "slight left" too
             if (lanes.size() == 1) {
                 lane.setValid(true);
-            } else if (sign < 0 && !lane.getDirections().contains("merge_to_left") && lane.getDirections().contains("left")) {
+            } else if (sign < 0 && !allAsStr.contains("merge_to_left") && allAsStr.contains("left")) {
                 lane.setValid(true);
-            } else if (sign == 0 && lane.getDirections().contains("continue")) {
+            } else if (sign == 0 && allAsStr.contains("continue")) {
                 lane.setValid(true);
-            } else if (sign > 0 && !lane.getDirections().contains("merge_to_right") && lane.getDirections().contains("right")) {
+            } else if (sign > 0 && !allAsStr.contains("merge_to_right") && allAsStr.contains("right")) {
                 lane.setValid(true);
             }
         }
