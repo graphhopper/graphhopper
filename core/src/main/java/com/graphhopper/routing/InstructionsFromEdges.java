@@ -254,16 +254,17 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             List<LaneInfo> lanes = Collections.emptyList();
             if (withTurnLanes) {
                 lanes = getLanesInfo((String) prevEdge.getValue(TURN_LANES));
-                // TODO
-                //  Do not force an instruction if just the lanes change as it might lead to a much
-                //  worse guidance when inserting continue instructions. See the following route:
-                //  http://localhost:3000/?point=52.453383%2C13.457341&point=52.454789%2C13.461292&profile=car&layer=OpenStreetMap
+                // do not force an instruction if just the lanes change as it might lead to a much
+                // worse guidance when inserting continue instructions
 
                 if (lanes.isEmpty()) {
                     prevInstructionDetails.clear();
                     prevLanesAccess.clear();
                 } else {
                     if (sign == Instruction.IGNORE && outdoingEdges.getAllowedTurns() > 1) {
+                        // TODO do not clear previous lanes and then search backward from turnN to keep lane infos like this too:
+                        //  http://localhost:3000/?point=52.453383%2C13.457341&point=52.454789%2C13.461292&profile=car
+
                         // restart collecting lanes if turns are possible before the actual turn (i.e. lanes could be associated to different turns)
                         prevInstructionDetails.clear();
                         prevLanesAccess.clear();
