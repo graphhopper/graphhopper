@@ -164,7 +164,7 @@ class InstructionsOutgoingEdges {
     public EdgeIteratorState getOtherContinue(double prevLat, double prevLon, double prevOrientation) {
         int tmpSign;
         for (EdgeIteratorState edge : allowedAlternativeTurns) {
-            GHPoint point = InstructionsHelper.getPointForOrientationCalculation(edge, nodeAccess);
+            GHPoint point = InstructionsHelper.getPointForOrientationCalculation(edge);
             tmpSign = InstructionsHelper.calculateSign(prevLat, prevLon, point.getLat(), point.getLon(), prevOrientation);
             if (Math.abs(tmpSign) <= 1) {
                 return edge;

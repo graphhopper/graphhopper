@@ -80,12 +80,18 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
     private double prevInstructionPrevOrientation = Double.NaN;
     private Instruction prevInstruction;
     private final List<InstructionDetails> prevInstructionDetails = new ArrayList<>();
-    private final List<List<String>> prevLanesAccess = new ArrayList<>();
+    private final List<AdditionalInfo> prevAdditionalInfo = new ArrayList<>();
     private final boolean withTurnLanes;
     private boolean prevInRoundabout;
     private String prevDestinationAndRef;
     private String prevName;
     private String prevInstructionName;
+
+    class AdditionalInfo {
+        List<String> lanesAccess = Collections.emptyList();
+        int allowedTurns = 0;
+        EdgeIteratorState edge;
+    }
 
     private static final int MAX_U_TURN_DISTANCE = 35;
 
@@ -259,16 +265,16 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
 
                 if (lanes.isEmpty()) {
                     prevInstructionDetails.clear();
-                    prevLanesAccess.clear();
+                    prevAdditionalInfo.clear();
                 } else {
-                    if (sign == Instruction.IGNORE && outdoingEdges.getAllowedTurns() > 1) {
-                        // TODO do not clear previous lanes and then search backward from turnN to keep lane infos like this too:
-                        //  http://localhost:3000/?point=52.453383%2C13.457341&point=52.454789%2C13.461292&profile=car
+                    // TODO search backward from turn to keep lane infos like this too:
+                    //  http://localhost:3000/?point=52.453383%2C13.457341&point=52.454789%2C13.461292&profile=car
 
-                        // restart collecting lanes if turns are possible before the actual turn (i.e. lanes could be associated to different turns)
-                        prevInstructionDetails.clear();
-                        prevLanesAccess.clear();
-                    } else for (InstructionDetails d : prevInstructionDetails) {
+                    AdditionalInfo addInfo = new AdditionalInfo();
+                    if (sign == Instruction.IGNORE)
+                        addInfo.allowedTurns = outdoingEdges.getAllowedTurns();
+
+                    for (InstructionDetails d : prevInstructionDetails) {
                         d.setBeforeTurn(d.getBeforeTurn() + prevEdge.getDistance());
                     }
 
@@ -277,8 +283,9 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                     String lanesAccessStr = (String) prevEdge.getValue(TURN_LANES_VEHICLE_ACCESS);
                     d.setLanes(lanes);
                     prevInstructionDetails.add(d);
-                    List<String> lanesAccess = lanesAccessStr == null ? Collections.emptyList() : Arrays.asList(lanesAccessStr.split("\\|"));
-                    prevLanesAccess.add(lanesAccess);
+                    addInfo.lanesAccess = lanesAccessStr == null ? Collections.emptyList() : Arrays.asList(lanesAccessStr.split("\\|"));
+                    addInfo.edge = edge;
+                    prevAdditionalInfo.add(addInfo);
                 }
             }
 
@@ -305,7 +312,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                         && Double.isFinite(weighting.calcEdgeWeight(edge, false)) != Double.isFinite(weighting.calcEdgeWeight(edge, true))
                         && InstructionsHelper.isNameSimilar(prevInstructionName, name)) {
                     // Chances are good that this is a u-turn, we only need to check if the orientation matches
-                    GHPoint point = InstructionsHelper.getPointForOrientationCalculation(edge, nodeAccess);
+                    GHPoint point = InstructionsHelper.getPointForOrientationCalculation(edge);
                     double lat = point.getLat();
                     double lon = point.getLon();
                     double currentOrientation = AngleCalc.ANGLE_CALC.calcOrientation(prevLat, prevLon, lat, lon, false);
@@ -334,16 +341,24 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
 
                 // TODO what happens for u-turns?
                 if (withTurnLanes && !lanes.isEmpty()) {
-                    List<InstructionDetails> currDetails = prevInstruction.getInstructionDetails();
-                    for (int i = 0; i < prevInstructionDetails.size(); i++) {
+                    int i = prevInstructionDetails.size() - 1;
+                    for (; i >= 0; i--) {
+                        if (prevAdditionalInfo.get(i).allowedTurns > 1) {
+
+                        }
+
+                    }
+                    i++;
+                    List<InstructionDetails> detailsList = prevInstruction.getInstructionDetails();
+                    for (; i < prevInstructionDetails.size(); i++) {
                         InstructionDetails d = prevInstructionDetails.get(i);
-                        markActive(d.getLanes(), prevLanesAccess.get(i), sign);
+                        markActive(d.getLanes(), prevAdditionalInfo.get(i).lanesAccess, sign);
                         // skip duplicates
-                        if (currDetails.isEmpty() || !currDetails.get(currDetails.size() - 1).getLanes().equals(d.getLanes()))
-                            prevInstruction.getInstructionDetails().add(d);
+                        if (detailsList.isEmpty() || !detailsList.get(detailsList.size() - 1).getLanes().equals(d.getLanes()))
+                            detailsList.add(d);
                     }
                     prevInstructionDetails.clear();
-                    prevLanesAccess.clear();
+                    prevAdditionalInfo.clear();
                 }
 
                 prevInstruction.setExtraInfo(STREET_REF, ref);
@@ -419,7 +434,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
     }
 
     private int getTurn(InstructionsOutgoingEdges outgoingEdges, EdgeIteratorState edge, String name, String destinationAndRef) {
-        GHPoint point = InstructionsHelper.getPointForOrientationCalculation(edge, nodeAccess);
+        GHPoint point = InstructionsHelper.getPointForOrientationCalculation(edge);
         double lat = point.getLat();
         double lon = point.getLon();
         prevOrientation = AngleCalc.ANGLE_CALC.calcOrientation(doublePrevLat, doublePrevLon, prevLat, prevLon);
@@ -494,7 +509,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                     }
                 }
 
-                GHPoint tmpPoint = InstructionsHelper.getPointForOrientationCalculation(otherContinue, nodeAccess);
+                GHPoint tmpPoint = InstructionsHelper.getPointForOrientationCalculation(otherContinue);
                 double otherDelta = InstructionsHelper.calculateOrientationDelta(prevLat, prevLon, tmpPoint.getLat(), tmpPoint.getLon(), prevOrientation);
 
                 // This is required to avoid keep left/right on the motorway at off-ramps/motorway_links

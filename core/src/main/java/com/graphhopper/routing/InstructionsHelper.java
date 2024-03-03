@@ -67,17 +67,8 @@ class InstructionsHelper {
         return name1.equals(name2);
     }
 
-    static GHPoint getPointForOrientationCalculation(EdgeIteratorState edgeIteratorState, NodeAccess nodeAccess) {
-        double tmpLat;
-        double tmpLon;
+    static GHPoint getPointForOrientationCalculation(EdgeIteratorState edgeIteratorState) {
         PointList tmpWayGeo = edgeIteratorState.fetchWayGeometry(FetchMode.ALL);
-        if (tmpWayGeo.size() <= 2) {
-            tmpLat = nodeAccess.getLat(edgeIteratorState.getAdjNode());
-            tmpLon = nodeAccess.getLon(edgeIteratorState.getAdjNode());
-        } else {
-            tmpLat = tmpWayGeo.getLat(1);
-            tmpLon = tmpWayGeo.getLon(1);
-        }
-        return new GHPoint(tmpLat, tmpLon);
+        return new GHPoint(tmpWayGeo.getLat(1), tmpWayGeo.getLon(1));
     }
 }
