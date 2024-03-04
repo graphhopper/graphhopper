@@ -10,6 +10,7 @@ import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeIteratorState;
 import de.westnordost.osm_legal_default_speeds.LegalDefaultSpeeds;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -254,7 +255,7 @@ class MaxSpeedCalculatorTest {
     @Test
     public void testAllCountriesForMissingSpeedLimitOfFreeways() {
         // Ensure that the speed limit on urban motorways is not below 80km/h.
-        // Additionally, it checks the same for rural motorways (skips known exceptions).
+        // Additionally, it checks the same for rural motorways and skips known exceptions.
         List<EdgeIteratorState> edges = new ArrayList<>();
         for (Country c : Country.values()) {
             if (c == Country.MISSING) continue;
@@ -274,43 +275,7 @@ class MaxSpeedCalculatorTest {
         }
         calc.fillMaxSpeed(graph, em);
 
-        Map<String, Double> knownSpeedsBelow80 = new HashMap<>();
-        knownSpeedsBelow80.put(Country.ATG + "|" + MISSING + "|" + RURAL, 64.); // wiki is correct
-        knownSpeedsBelow80.put(Country.BHS + "|" + MISSING + "|" + RURAL, 48.); // TODO without state the rural speed limit should be 72
-        knownSpeedsBelow80.put(Country.BRB + "|" + MISSING + "|" + RURAL, 60.); // wiki is correct
-        knownSpeedsBelow80.put(Country.BTN + "|" + MISSING + "|" + RURAL, 50.); // wiki is correct
-        knownSpeedsBelow80.put(Country.CAN + "|" + CA_YT + "|" + RURAL, 50.); // TODO wiki incomplete
-        knownSpeedsBelow80.put(Country.CRI + "|" + MISSING + "|" + RURAL, 60.); // TODO wiki: speed limit seems to be 90
-        knownSpeedsBelow80.put(Country.DOM + "|" + MISSING + "|" + RURAL, 60.); // TODO wiki: seems to be 80 or for highways 120
-        knownSpeedsBelow80.put(Country.FSM + "|" + FM_KSA + "|" + RURAL, 40.); // wiki is correct
-        knownSpeedsBelow80.put(Country.FSM + "|" + FM_PNI + "|" + RURAL, 40.); // wiki is correct
-        knownSpeedsBelow80.put(Country.FSM + "|" + FM_TRK + "|" + RURAL, 40.); // wiki is correct
-        knownSpeedsBelow80.put(Country.FSM + "|" + FM_YAP + "|" + RURAL, 40.); // wiki is correct
-        knownSpeedsBelow80.put(Country.GGY + "|" + MISSING + "|" + RURAL, 56.);// wiki is correct
-        knownSpeedsBelow80.put(Country.GRD + "|" + MISSING + "|" + RURAL, 64.);// wiki is correct
-        knownSpeedsBelow80.put(Country.GUY + "|" + MISSING + "|" + RURAL, 64.);
-        knownSpeedsBelow80.put(Country.JEY + "|" + MISSING + "|" + RURAL, 64.);
-        knownSpeedsBelow80.put(Country.KIR + "|" + MISSING + "|" + RURAL, 60.);
-        knownSpeedsBelow80.put(Country.KNA + "|" + MISSING + "|" + RURAL, 64.);
-        knownSpeedsBelow80.put(Country.LBR + "|" + MISSING + "|" + RURAL, 72.);
-        knownSpeedsBelow80.put(Country.MCO + "|" + MISSING + "|" + RURAL, 50.);
-        knownSpeedsBelow80.put(Country.MHL + "|" + MISSING + "|" + RURAL, 64.);
-        knownSpeedsBelow80.put(Country.MSR + "|" + MISSING + "|" + RURAL, 64.);
-        knownSpeedsBelow80.put(Country.MUS + "|" + MISSING + "|" + RURAL, 60.);
-        knownSpeedsBelow80.put(Country.NIC + "|" + MISSING + "|" + RURAL, 60.);
-        knownSpeedsBelow80.put(Country.NRU + "|" + MISSING + "|" + RURAL, 50.);
-        knownSpeedsBelow80.put(Country.PCN + "|" + MISSING + "|" + RURAL, 48.);
-        knownSpeedsBelow80.put(Country.PER + "|" + MISSING + "|" + RURAL, 60.);
-        knownSpeedsBelow80.put(Country.PHL + "|" + MISSING + "|" + RURAL, 40.);
-        knownSpeedsBelow80.put(Country.SGP + "|" + MISSING + "|" + RURAL, 50.);
-        knownSpeedsBelow80.put(Country.SHN + "|" + MISSING + "|" + RURAL, 48.);
-        knownSpeedsBelow80.put(Country.TUV + "|" + MISSING + "|" + RURAL, 40.);
-        knownSpeedsBelow80.put(Country.TWN + "|" + MISSING + "|" + RURAL, 50.);
-        knownSpeedsBelow80.put(Country.USA + "|" + US_AL + "|" + RURAL, 72.);
-        knownSpeedsBelow80.put(Country.USA + "|" + US_DC + "|" + RURAL, 32.);
-        knownSpeedsBelow80.put(Country.USA + "|" + US_ME + "|" + RURAL, 72.);
-        knownSpeedsBelow80.put(Country.USA + "|" + US_MA + "|" + RURAL, 64.);
-        knownSpeedsBelow80.put(Country.WSM + "|" + MISSING + "|" + RURAL, 56.);
+        Map<String, Double> knownRuralSpeedLimits = getKnownRuralSpeedLimits();
 
         // too low speed limits for *trunk* roads because of default for any road!
         // COUNTRY: urban, rural; CHN: 50, 70; AND: 50, 60; IND: 70, 70; JPN: 60, 60; KOR: 50, 60; PAK: 55, 70; SWE: 50, 70; VEN: 40, 70
@@ -319,14 +284,59 @@ class MaxSpeedCalculatorTest {
             State state = edge.get(em.getEnumEncodedValue(State.KEY, State.class));
             Country country = edge.get(em.getEnumEncodedValue(Country.KEY, Country.class));
             UrbanDensity ub = edge.get(urbanDensity);
-            Double value = knownSpeedsBelow80.get(country + "|" + state + "|" + ub);
-            String msg = edge.getEdge() + ", max:" + edge.get(maxSpeedEnc) + ", " + country + ", " + state + ", " + ub;
-            if (value == null) {
-                assertTrue(edge.get(maxSpeedEnc) >= 80, msg);
-            } else {
-                assertEquals(value, edge.get(maxSpeedEnc), msg);
+            String msg = edge.getEdge() + ", max:" + edge.get(maxSpeedEnc) + ", " + country + ", " + state;
+            if (ub == RURAL) {
+                Double value = knownRuralSpeedLimits.get(country + "|" + state);
+                if (value != null) {
+                    assertEquals(value, edge.get(maxSpeedEnc), msg);
+                    continue;
+                }
             }
+
+            assertTrue(edge.get(maxSpeedEnc) >= 80, msg);
         }
+    }
+
+    @NotNull
+    private static Map<String, Double> getKnownRuralSpeedLimits() {
+        Map<String, Double> knownRuralSpeedLimitBelow80 = new HashMap<>();
+        knownRuralSpeedLimitBelow80.put(Country.ATG + "|" + MISSING, 64.);
+        knownRuralSpeedLimitBelow80.put(Country.BHS + "|" + MISSING, 48.);
+        knownRuralSpeedLimitBelow80.put(Country.BRB + "|" + MISSING, 60.);
+        knownRuralSpeedLimitBelow80.put(Country.BTN + "|" + MISSING, 50.);
+        knownRuralSpeedLimitBelow80.put(Country.CAN + "|" + CA_YT, 50.);
+        knownRuralSpeedLimitBelow80.put(Country.CRI + "|" + MISSING, 60.);
+        knownRuralSpeedLimitBelow80.put(Country.DOM + "|" + MISSING, 60.);
+        knownRuralSpeedLimitBelow80.put(Country.FSM + "|" + FM_KSA, 40.);
+        knownRuralSpeedLimitBelow80.put(Country.FSM + "|" + FM_PNI, 40.);
+        knownRuralSpeedLimitBelow80.put(Country.FSM + "|" + FM_TRK, 40.);
+        knownRuralSpeedLimitBelow80.put(Country.FSM + "|" + FM_YAP, 40.);
+        knownRuralSpeedLimitBelow80.put(Country.GGY + "|" + MISSING, 56.);
+        knownRuralSpeedLimitBelow80.put(Country.GRD + "|" + MISSING, 64.);
+        knownRuralSpeedLimitBelow80.put(Country.GUY + "|" + MISSING, 64.);
+        knownRuralSpeedLimitBelow80.put(Country.JEY + "|" + MISSING, 64.);
+        knownRuralSpeedLimitBelow80.put(Country.KIR + "|" + MISSING, 60.);
+        knownRuralSpeedLimitBelow80.put(Country.KNA + "|" + MISSING, 64.);
+        knownRuralSpeedLimitBelow80.put(Country.LBR + "|" + MISSING, 72.);
+        knownRuralSpeedLimitBelow80.put(Country.MCO + "|" + MISSING, 50.);
+        knownRuralSpeedLimitBelow80.put(Country.MHL + "|" + MISSING, 64.);
+        knownRuralSpeedLimitBelow80.put(Country.MSR + "|" + MISSING, 64.);
+        knownRuralSpeedLimitBelow80.put(Country.MUS + "|" + MISSING, 60.);
+        knownRuralSpeedLimitBelow80.put(Country.NIC + "|" + MISSING, 60.);
+        knownRuralSpeedLimitBelow80.put(Country.NRU + "|" + MISSING, 50.);
+        knownRuralSpeedLimitBelow80.put(Country.PCN + "|" + MISSING, 48.);
+        knownRuralSpeedLimitBelow80.put(Country.PER + "|" + MISSING, 60.);
+        knownRuralSpeedLimitBelow80.put(Country.PHL + "|" + MISSING, 40.);
+        knownRuralSpeedLimitBelow80.put(Country.SGP + "|" + MISSING, 50.);
+        knownRuralSpeedLimitBelow80.put(Country.SHN + "|" + MISSING, 48.);
+        knownRuralSpeedLimitBelow80.put(Country.TUV + "|" + MISSING, 40.);
+        knownRuralSpeedLimitBelow80.put(Country.TWN + "|" + MISSING, 50.);
+        knownRuralSpeedLimitBelow80.put(Country.USA + "|" + US_AL, 72.);
+        knownRuralSpeedLimitBelow80.put(Country.USA + "|" + US_DC, 32.);
+        knownRuralSpeedLimitBelow80.put(Country.USA + "|" + US_ME, 72.);
+        knownRuralSpeedLimitBelow80.put(Country.USA + "|" + US_MA, 64.);
+        knownRuralSpeedLimitBelow80.put(Country.WSM + "|" + MISSING, 56.);
+        return knownRuralSpeedLimitBelow80;
     }
 
     @Test
