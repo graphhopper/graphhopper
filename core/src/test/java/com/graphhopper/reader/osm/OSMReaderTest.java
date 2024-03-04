@@ -386,7 +386,7 @@ public class OSMReaderTest {
         hopper.setEncodedValuesString("car_access|block_fords=true,car_average_speed");
         hopper.setOSMFile(getClass().getResource("test-barriers3.xml").getFile()).
                 setGraphHopperLocation(dir).
-                setProfiles(TestProfiles.accessAndSpeed("car", "car")).
+                setProfiles(TestProfiles.accessAndSpeed("car")).
                 setMinNetworkSize(0).
                 importOrLoad();
         Graph graph = hopper.getBaseGraph();
@@ -711,8 +711,8 @@ public class OSMReaderTest {
         hopper.setOSMFile(getClass().getResource("test-multi-profile-turn-restrictions.xml").getFile()).
                 setGraphHopperLocation(dir).
                 setProfiles(
-                        TestProfiles.accessAndSpeed("bike", "bike").setTurnCostsConfig(new TurnCostsConfig(List.of("bicycle"))),
-                        TestProfiles.accessAndSpeed("car", "car").setTurnCostsConfig(new TurnCostsConfig(List.of("motorcar", "motor_vehicle"))),
+                        TestProfiles.accessAndSpeed("bike").setTurnCostsConfig(new TurnCostsConfig(List.of("bicycle"))),
+                        TestProfiles.accessAndSpeed("car").setTurnCostsConfig(new TurnCostsConfig(List.of("motorcar", "motor_vehicle"))),
                         TestProfiles.accessAndSpeed("truck", "car").setTurnCostsConfig(new TurnCostsConfig(List.of("hgv", "motor_vehicle")))
                 ).
                 importOrLoad();
@@ -1004,9 +1004,9 @@ public class OSMReaderTest {
             String str = "max_width,max_height,max_weight";
             setEncodedValuesString(str);
             setProfiles(
-                    TestProfiles.accessSpeedAndPriority("foot", "foot"),
-                    TestProfiles.accessAndSpeed("car", "car").setTurnCostsConfig(new TurnCostsConfig(List.of("motorcar", "motor_vehicle"))),
-                    TestProfiles.accessSpeedAndPriority("bike", "bike").setTurnCostsConfig(new TurnCostsConfig(List.of("bicycle"))),
+                    TestProfiles.accessSpeedAndPriority("foot"),
+                    TestProfiles.accessAndSpeed("car").setTurnCostsConfig(new TurnCostsConfig(List.of("motorcar", "motor_vehicle"))),
+                    TestProfiles.accessSpeedAndPriority("bike").setTurnCostsConfig(new TurnCostsConfig(List.of("bicycle"))),
                     TestProfiles.constantSpeed("truck", 100).setTurnCostsConfig(new TurnCostsConfig(List.of("hgv", "motor_vehicle")))
             );
             getReaderConfig().setPreferredLanguage(prefLang);

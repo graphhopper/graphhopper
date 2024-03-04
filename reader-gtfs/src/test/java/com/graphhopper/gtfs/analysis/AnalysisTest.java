@@ -46,8 +46,8 @@ public class AnalysisTest {
         ghConfig.putObject("gtfs.file", "files/sample-feed,files/another-sample-feed");
         ghConfig.putObject("import.osm.ignored_highways", "");
         ghConfig.setProfiles(List.of(
-                TestProfiles.accessSpeedAndPriority("foot", "foot"),
-                TestProfiles.accessAndSpeed("car", "car")));
+                TestProfiles.accessSpeedAndPriority("foot"),
+                TestProfiles.accessAndSpeed("car")));
         Helper.removeDir(new File(GRAPH_LOC));
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);

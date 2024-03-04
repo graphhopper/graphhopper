@@ -58,8 +58,8 @@ public class AnotherAgencyIT {
         ghConfig.putObject("datareader.file", "files/beatty.osm");
         ghConfig.putObject("gtfs.file", "files/sample-feed,files/another-sample-feed");
         ghConfig.setProfiles(List.of(
-                TestProfiles.accessSpeedAndPriority("foot", "foot"),
-                TestProfiles.accessAndSpeed("car", "car")));
+                TestProfiles.accessSpeedAndPriority("foot"),
+                TestProfiles.accessAndSpeed("car")));
         Helper.removeDir(new File(GRAPH_LOC));
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);

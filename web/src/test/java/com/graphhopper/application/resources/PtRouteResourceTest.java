@@ -55,7 +55,7 @@ public class PtRouteResourceTest {
                 putObject("gtfs.file", "../reader-gtfs/files/sample-feed").
                 putObject("graph.location", DIR).
                 putObject("import.osm.ignored_highways", "").
-                setProfiles(List.of(TestProfiles.accessSpeedAndPriority("foot", "foot")));
+                setProfiles(List.of(TestProfiles.accessSpeedAndPriority("foot")));
         return config;
     }
 

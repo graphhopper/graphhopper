@@ -62,9 +62,9 @@ public class MapMatchingResourceTurnCostsTest {
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR).
                 setProfiles(Arrays.asList(
-                        TestProfiles.accessAndSpeed("car", "car").setTurnCostsConfig(TurnCostsConfig.car()),
+                        TestProfiles.accessAndSpeed("car").setTurnCostsConfig(TurnCostsConfig.car()),
                         TestProfiles.accessAndSpeed("car_no_tc", "car"),
-                        TestProfiles.accessSpeedAndPriority("bike", "bike"))
+                        TestProfiles.accessSpeedAndPriority("bike"))
                 ).
                 setLMProfiles(Arrays.asList(
                         new LMProfile("car"),

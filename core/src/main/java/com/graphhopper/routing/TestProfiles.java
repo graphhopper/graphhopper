@@ -40,6 +40,10 @@ public class TestProfiles {
         return profile;
     }
 
+    public static Profile accessAndSpeed(String vehicle) {
+        return accessAndSpeed(vehicle, vehicle);
+    }
+
     public static Profile accessAndSpeed(String name, String vehicle) {
         Profile profile = new Profile(name);
         CustomModel customModel = new CustomModel().
@@ -47,6 +51,10 @@ public class TestProfiles {
                 addToSpeed(If("true", LIMIT, vehicle + "_average_speed"));
         profile.setCustomModel(customModel);
         return profile;
+    }
+
+    public static Profile accessSpeedAndPriority(String vehicle) {
+        return accessSpeedAndPriority(vehicle, vehicle);
     }
 
     public static Profile accessSpeedAndPriority(String name, String vehicle) {

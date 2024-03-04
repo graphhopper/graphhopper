@@ -69,8 +69,8 @@ public class RouteResourceClientHCTest {
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR)
                 .setProfiles(Arrays.asList(
-                        TestProfiles.accessAndSpeed("car", "car"),
-                        TestProfiles.accessSpeedAndPriority("bike", "bike"),
+                        TestProfiles.accessAndSpeed("car"),
+                        TestProfiles.accessSpeedAndPriority("bike"),
                         TestProfiles.accessAndSpeed("my_custom_car", "car")
                 ))
                 .setCHProfiles(Arrays.asList(new CHProfile("car"), new CHProfile("bike")));

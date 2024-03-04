@@ -48,7 +48,7 @@ public class GraphSpeedMeasurement {
                     .putObject("import.osm.ignored_highways", "")
                     .putObject("graph.encoded_values", String.format("car_average_speed|speed_bits=%d,bike_average_speed|speed_bits=%d,foot_average_speed|speed_bits=%d", speedBits, speedBits, speedBits))
                     .setProfiles(List.of(
-                            TestProfiles.accessAndSpeed("car", "car")
+                            TestProfiles.accessAndSpeed("car")
                     ));
             GraphHopper hopper = new GraphHopper()
                     .init(ghConfig)

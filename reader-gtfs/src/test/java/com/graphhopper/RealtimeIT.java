@@ -55,8 +55,8 @@ public class RealtimeIT {
         ghConfig.putObject("graph.location", GRAPH_LOC);
         ghConfig.putObject("import.osm.ignored_highways", "");
         ghConfig.setProfiles(List.of(
-                TestProfiles.accessSpeedAndPriority("foot", "foot"),
-                TestProfiles.accessAndSpeed("car", "car")));
+                TestProfiles.accessSpeedAndPriority("foot"),
+                TestProfiles.accessAndSpeed("car")));
 
         Helper.removeDir(new File(GRAPH_LOC));
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);

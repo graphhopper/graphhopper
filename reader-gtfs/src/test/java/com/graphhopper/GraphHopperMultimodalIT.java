@@ -63,7 +63,7 @@ public class GraphHopperMultimodalIT {
         ghConfig.putObject("graph.location", GRAPH_LOC);
         Profile carLocal = TestProfiles.accessAndSpeed("car_custom", "car");
         ghConfig.setProfiles(Arrays.asList(
-                TestProfiles.accessSpeedAndPriority("foot", "foot"),
+                TestProfiles.accessSpeedAndPriority("foot"),
                 TestProfiles.accessAndSpeed("car_default", "car"),
                 carLocal));
         Helper.removeDir(new File(GRAPH_LOC));
