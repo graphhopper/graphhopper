@@ -8,7 +8,7 @@ import com.graphhopper.ResponsePath;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.config.TurnCostsConfig;
-import com.graphhopper.routing.Profiles;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Parameters;
 
 import java.util.Arrays;
@@ -26,7 +26,7 @@ public class RoutingExampleTC {
         GraphHopper hopper = createGraphHopperInstance(relDir + "core/files/andorra.osm.pbf");
         routeWithTurnCosts(hopper);
         routeWithTurnCostsAndCurbsides(hopper);
-        routeWithTurnCostsAndOtherUTurnCosts(hopper);
+        routeWithTurnCostsAndCurbsidesAndOtherUTurnCosts(hopper);
     }
 
     public static void routeWithTurnCosts(GraphHopper hopper) {
@@ -39,10 +39,10 @@ public class RoutingExampleTC {
         GHRequest req = new GHRequest(42.50822, 1.533966, 42.506899, 1.525372).
                 setCurbsides(Arrays.asList(CURBSIDE_ANY, CURBSIDE_RIGHT)).
                 setProfile("car");
-        route(hopper, req, 1729, 110_800);
+        route(hopper, req, 1370, 128_000);
     }
 
-    public static void routeWithTurnCostsAndOtherUTurnCosts(GraphHopper hopper) {
+    public static void routeWithTurnCostsAndCurbsidesAndOtherUTurnCosts(GraphHopper hopper) {
         GHRequest req = new GHRequest(42.50822, 1.533966, 42.506899, 1.525372)
                 .setCurbsides(Arrays.asList(CURBSIDE_ANY, CURBSIDE_RIGHT))
                 // to change u-turn costs per request we have to disable CH. otherwise the u-turn costs we set per request
@@ -70,7 +70,7 @@ public class RoutingExampleTC {
         GraphHopper hopper = new GraphHopper();
         hopper.setOSMFile(ghLoc);
         hopper.setGraphHopperLocation("target/routing-tc-graph-cache");
-        Profile profile = Profiles.car("car")
+        Profile profile = new Profile("car").setCustomModel(GHUtility.loadCustomModelFromJar("car.json"))
                 // enabling turn costs means OSM turn restriction constraints like 'no_left_turn' will be taken into account for the specified access restrictions
                 // we can also set u_turn_costs (in seconds). i.e. we will consider u-turns at all junctions with a 40s time penalty
                 .setTurnCostsConfig(new TurnCostsConfig(List.of("motorcar", "motor_vehicle"), 40));

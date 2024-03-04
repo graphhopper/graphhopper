@@ -1,8 +1,8 @@
 package com.graphhopper.example;
 
 import com.graphhopper.GraphHopper;
+import com.graphhopper.config.Profile;
 import com.graphhopper.isochrone.algorithm.ShortestPathTree;
-import com.graphhopper.routing.Profiles;
 import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.DefaultSnapFilter;
@@ -10,6 +10,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.index.Snap;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -48,7 +49,7 @@ public class IsochroneExample {
         GraphHopper hopper = new GraphHopper();
         hopper.setOSMFile(ghLoc);
         hopper.setGraphHopperLocation("target/isochrone-graph-cache");
-        hopper.setProfiles(Profiles.car("car"));
+        hopper.setProfiles(new Profile("car").setCustomModel(GHUtility.loadCustomModelFromJar("car.json")));
         hopper.importOrLoad();
         return hopper;
     }
