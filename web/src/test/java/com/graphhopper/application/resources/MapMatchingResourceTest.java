@@ -20,8 +20,8 @@ package com.graphhopper.application.resources;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
-import com.graphhopper.config.Profile;
 import com.graphhopper.jackson.ResponsePathDeserializer;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -58,8 +58,8 @@ public class MapMatchingResourceTest {
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR).
                 setProfiles(Arrays.asList(
-                        new Profile("fast_car").setCustomModel(Helper.createBaseModel("car")),
-                        new Profile("fast_bike").setCustomModel(Helper.createBaseModel("bike"))));
+                        TestProfiles.accessAndSpeed("fast_car", "car"),
+                        TestProfiles.accessSpeedAndPriority("fast_bike", "bike")));
         return config;
     }
 

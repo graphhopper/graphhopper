@@ -27,6 +27,7 @@ import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.config.TurnCostsConfig;
 import com.graphhopper.jackson.Jackson;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.Subnetwork;
@@ -318,9 +319,9 @@ public class Measurement {
                 profiles.add(new Profile("profile_tc").setCustomModel(customModel).setTurnCostsConfig(new TurnCostsConfig(restrictions, uTurnCosts)));
         } else {
             // use standard profiles
-            profiles.add(new Profile("profile_no_tc").setCustomModel(Helper.createBaseModel(vehicle)));
+            profiles.add(TestProfiles.accessAndSpeed("profile_no_tc", vehicle));
             if (turnCosts)
-                profiles.add(new Profile("profile_tc").setCustomModel(Helper.createBaseModel(vehicle)).setTurnCostsConfig(new TurnCostsConfig(restrictions, uTurnCosts)));
+                profiles.add(TestProfiles.accessAndSpeed("profile_tc", vehicle).setTurnCostsConfig(new TurnCostsConfig(restrictions, uTurnCosts)));
         }
         ghConfig.setProfiles(profiles);
 

@@ -22,9 +22,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
-import com.graphhopper.config.Profile;
 import com.graphhopper.config.TurnCostsConfig;
-import com.graphhopper.util.CustomModel;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.JsonFeatureCollection;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
@@ -43,7 +42,6 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.Arrays;
-import java.util.List;
 
 import static com.graphhopper.application.util.TestUtils.clientTarget;
 import static org.junit.jupiter.api.Assertions.*;
@@ -60,9 +58,9 @@ public class IsochroneResourceTest {
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR).
                 setProfiles(Arrays.asList(
-                        Profile.create("car", true).setName("fast_car"),
-                        new Profile("short_car").setCustomModel(Helper.createBaseModel("car").setDistanceInfluence(1_000d)).setTurnCostsConfig(new TurnCostsConfig(List.of("motorcar", "motor_vehicle"))),
-                        new Profile("fast_car_no_turn_restrictions").setCustomModel(Helper.createBaseModel("car"))
+                        TestProfiles.accessAndSpeed("fast_car", "car").setTurnCostsConfig(TurnCostsConfig.car()),
+                        TestProfiles.constantSpeed("short_car", 35).setTurnCostsConfig(TurnCostsConfig.car()),
+                        TestProfiles.accessAndSpeed("fast_car_no_turn_restrictions", "car")
                 ));
         return config;
     }

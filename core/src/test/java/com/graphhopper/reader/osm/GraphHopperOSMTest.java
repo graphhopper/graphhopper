@@ -23,6 +23,7 @@ import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.util.EdgeFilter;
@@ -42,8 +43,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-import static com.graphhopper.json.Statement.If;
-import static com.graphhopper.json.Statement.Op.LIMIT;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -74,7 +73,7 @@ public class GraphHopperOSMTest {
         String profile = "car_profile";
         GraphHopper hopper = new GraphHopper().
                 setStoreOnFlush(true).
-                setProfiles(new Profile(profile).setCustomModel(Helper.createBaseModel("car"))).
+                setProfiles(TestProfiles.constantSpeed(profile)).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm);
         hopper.getCHPreparationHandler().setCHProfiles(new CHProfile(profile));
@@ -88,7 +87,7 @@ public class GraphHopperOSMTest {
 
         // no encoding manager necessary
         hopper = new GraphHopper().
-                setProfiles(new Profile(profile).setCustomModel(Helper.createBaseModel("car"))).
+                setProfiles(TestProfiles.constantSpeed(profile)).
                 setStoreOnFlush(true);
         hopper.getCHPreparationHandler().setCHProfiles(new CHProfile(profile));
         hopper.setGraphHopperLocation(ghLoc);
@@ -119,7 +118,7 @@ public class GraphHopperOSMTest {
     public void testLoadOSMNoCH() {
         final String profile = "profile";
         GraphHopper gh = new GraphHopper().
-                setProfiles(new Profile(profile).setCustomModel(Helper.createBaseModel("car"))).
+                setProfiles(TestProfiles.constantSpeed(profile)).
                 setStoreOnFlush(true).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm);
@@ -134,7 +133,7 @@ public class GraphHopperOSMTest {
 
         gh.close();
         gh = new GraphHopper().
-                setProfiles(new Profile(profile).setCustomModel(Helper.createBaseModel("car"))).
+                setProfiles(TestProfiles.constantSpeed(profile)).
                 setStoreOnFlush(true).
                 setGraphHopperLocation(ghLoc);
         assertTrue(gh.load());
@@ -146,7 +145,7 @@ public class GraphHopperOSMTest {
         gh.close();
 
         gh = new GraphHopper().
-                setProfiles(new Profile(profile).setCustomModel(Helper.createBaseModel("car"))).
+                setProfiles(TestProfiles.constantSpeed(profile)).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm);
 
@@ -157,7 +156,7 @@ public class GraphHopperOSMTest {
     @Test
     public void testQueryLocationIndexWithBBox() {
         final GraphHopper gh = new GraphHopper().
-                setProfiles(new Profile("car").setCustomModel(Helper.createBaseModel("car"))).
+                setProfiles(TestProfiles.constantSpeed("car")).
                 setStoreOnFlush(true).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile("../core/files/monaco.osm.gz");
@@ -211,7 +210,7 @@ public class GraphHopperOSMTest {
     public void testLoadingWithDifferentCHConfig_issue471_pr1488() {
         // when there is a single CH profile we can also load GraphHopper without it
         // in #471 this was forbidden, but later it was allowed again, see #1488
-        Profile profile = new Profile("car").setCustomModel(Helper.createBaseModel("car"));
+        Profile profile = TestProfiles.constantSpeed("car");
 
         GraphHopper gh = new GraphHopper().
                 setStoreOnFlush(true).
@@ -262,21 +261,21 @@ public class GraphHopperOSMTest {
     @Test
     public void testAllowMultipleReadingInstances() {
         GraphHopper instance1 = new GraphHopper().
-                setProfiles(new Profile("car").setCustomModel(Helper.createBaseModel("car"))).
+                setProfiles(TestProfiles.constantSpeed("car")).
                 setStoreOnFlush(true).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm);
         instance1.importOrLoad();
 
         GraphHopper instance2 = new GraphHopper().
-                setProfiles(new Profile("car").setCustomModel(Helper.createBaseModel("car"))).
+                setProfiles(TestProfiles.constantSpeed("car")).
                 setStoreOnFlush(true).
                 setOSMFile(testOsm).
                 setGraphHopperLocation(ghLoc);
         instance2.load();
 
         GraphHopper instance3 = new GraphHopper().
-                setProfiles(new Profile("car").setCustomModel(Helper.createBaseModel("car"))).
+                setProfiles(TestProfiles.constantSpeed("car")).
                 setStoreOnFlush(true).
                 setOSMFile(testOsm).
                 setGraphHopperLocation(ghLoc);
@@ -304,7 +303,7 @@ public class GraphHopperOSMTest {
             }
         }.setStoreOnFlush(true).
                 setGraphHopperLocation(ghLoc).
-                setProfiles(new Profile("car").setCustomModel(Helper.createBaseModel("car"))).
+                setProfiles(TestProfiles.constantSpeed("car")).
                 setOSMFile(testOsm);
         final AtomicReference<Exception> ar = new AtomicReference<>();
         Thread thread = new Thread() {
@@ -320,7 +319,7 @@ public class GraphHopperOSMTest {
         thread.start();
 
         GraphHopper instance2 = new GraphHopper().
-                setProfiles(new Profile("car").setCustomModel(Helper.createBaseModel("car"))).
+                setProfiles(TestProfiles.constantSpeed("car")).
                 setStoreOnFlush(true).
                 setOSMFile(testOsm).
                 setGraphHopperLocation(ghLoc);
@@ -351,7 +350,7 @@ public class GraphHopperOSMTest {
 
         instance = new GraphHopper().
                 setStoreOnFlush(false).
-                setProfiles(new Profile(profile).setCustomModel(Helper.createBaseModel("car"))).
+                setProfiles(TestProfiles.constantSpeed("profile")).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm);
         instance.getCHPreparationHandler().setCHProfiles(new CHProfile(profile));
@@ -372,8 +371,8 @@ public class GraphHopperOSMTest {
         // now all ways are imported
         instance = new GraphHopper().
                 setProfiles(
-                        new Profile(profile1).setCustomModel(Helper.createBaseModel("car")),
-                        new Profile(profile2).setCustomModel(Helper.createBaseModel("foot"))
+                        TestProfiles.accessAndSpeed(profile1, "car"),
+                        TestProfiles.accessAndSpeed(profile2, "foot")
                 ).
                 setStoreOnFlush(false).
                 setGraphHopperLocation(ghLoc).
@@ -430,45 +429,45 @@ public class GraphHopperOSMTest {
                                 putObject("datareader.file", testOsm3).
                                 putObject("datareader.dataaccess", "RAM").
                                 putObject("import.osm.ignored_highways", "").
-                                setProfiles(Arrays.asList(
-                                        new Profile("foot").setCustomModel(Helper.createBaseModel("foot")),
-                                        new Profile("car").setCustomModel(Helper.createBaseModel("car"))
+                                setProfiles(List.of(
+                                        TestProfiles.constantSpeed("foot"),
+                                        TestProfiles.constantSpeed("car")
                                 ))).
                 setGraphHopperLocation(ghLoc);
         instance.importOrLoad();
         assertEquals(5, instance.getBaseGraph().getNodes());
         instance.close();
 
-        // different flagEncoder list has no effect when loading, so it does not matter, but the profiles must be the same
+        // the profiles must be the same
         GraphHopper tmpGH = new GraphHopper().init(
                         new GraphHopperConfig().
                                 putObject("datareader.file", testOsm3).
                                 putObject("datareader.dataaccess", "RAM").
                                 putObject("import.osm.ignored_highways", "").
-                                setProfiles(Collections.singletonList(
-                                        new Profile("foot").setCustomModel(Helper.createBaseModel("foot"))
+                                setProfiles(List.of(
+                                        TestProfiles.constantSpeed("foot")
                                 ))).
                 setOSMFile(testOsm3).
                 setGraphHopperLocation(ghLoc);
         IllegalStateException e = assertThrows(IllegalStateException.class, tmpGH::load);
         assertTrue(e.getMessage().contains("Profiles do not match"), e.getMessage());
 
-        // different encoded values do not matter either
+        // different encoded values do not matter, since they are ignored when loading the graph anyway
         instance = new GraphHopper().init(
                         new GraphHopperConfig().
                                 putObject("datareader.file", testOsm3).
                                 putObject("datareader.dataaccess", "RAM").
                                 putObject("graph.encoded_values", "road_class").
                                 putObject("import.osm.ignored_highways", "").
-                                setProfiles(Arrays.asList(
-                                        new Profile("foot").setCustomModel(Helper.createBaseModel("foot")),
-                                        new Profile("car").setCustomModel(Helper.createBaseModel("car"))
+                                setProfiles(List.of(
+                                        TestProfiles.constantSpeed("foot"),
+                                        TestProfiles.constantSpeed("car")
                                 ))).
                 setOSMFile(testOsm3).
                 setGraphHopperLocation(ghLoc);
         instance.load();
         assertEquals(5, instance.getBaseGraph().getNodes());
-        assertEquals("foot_access,foot_priority,foot_average_speed,car_access,car_average_speed,road_class,road_environment,roundabout,road_class_link,max_speed,foot_network,ferry_speed,foot_subnetwork,car_subnetwork",
+        assertEquals("road_class,road_environment,roundabout,road_class_link,max_speed,foot_subnetwork,car_subnetwork",
                 instance.getEncodingManager().getEncodedValues().stream().map(EncodedValue::getName).collect(Collectors.joining(",")));
     }
 
@@ -479,10 +478,7 @@ public class GraphHopperOSMTest {
                                 putObject("datareader.file", testOsm3).
                                 putObject("datareader.dataaccess", "RAM").
                                 putObject("import.osm.ignored_highways", "").
-                                setProfiles(Arrays.asList(
-                                        new Profile("foot").setCustomModel(Helper.createBaseModel("foot")),
-                                        new Profile("car").setCustomModel(Helper.createBaseModel("car"))
-                                ))).
+                                setProfiles(List.of(TestProfiles.constantSpeed("car")))).
                 setGraphHopperLocation(ghLoc);
         instance.importOrLoad();
         // older versions <= 0.12 did not store this property, ensure that we fail to load it
@@ -499,14 +495,11 @@ public class GraphHopperOSMTest {
                                 putObject("graph.location", ghLoc).
                                 putObject("graph.encoded_values", "road_environment,road_class").
                                 putObject("import.osm.ignored_highways", "").
-                                setProfiles(Arrays.asList(
-                                        new Profile("foot").setCustomModel(Helper.createBaseModel("foot")),
-                                        new Profile("car").setCustomModel(Helper.createBaseModel("car"))
-                                ))).
+                                setProfiles(List.of(TestProfiles.constantSpeed("car")))).
                 setOSMFile(testOsm3);
         instance.load();
         assertEquals(5, instance.getBaseGraph().getNodes());
-        assertEquals("foot_access,foot_priority,foot_average_speed,car_access,car_average_speed,road_class,road_environment,roundabout,road_class_link,max_speed,foot_network,ferry_speed,foot_subnetwork,car_subnetwork", instance.getEncodingManager().getEncodedValues().stream().map(EncodedValue::getName).collect(Collectors.joining(",")));
+        assertEquals("road_class,road_environment,roundabout,road_class_link,max_speed,car_subnetwork", instance.getEncodingManager().getEncodedValues().stream().map(EncodedValue::getName).collect(Collectors.joining(",")));
     }
 
     @Test
@@ -551,7 +544,7 @@ public class GraphHopperOSMTest {
 
         // missing OSM file to import
         instance = new GraphHopper().
-                setProfiles(new Profile("car").setCustomModel(Helper.createBaseModel("car"))).
+                setProfiles(TestProfiles.constantSpeed("car")).
                 setStoreOnFlush(true).
                 setGraphHopperLocation(ghLoc);
         ex = assertThrows(IllegalStateException.class, instance::importOrLoad);
@@ -568,7 +561,7 @@ public class GraphHopperOSMTest {
 
         // Import is possible even if no storeOnFlush is specified BUT here we miss the OSM file
         instance = new GraphHopper().
-                setProfiles(new Profile("car").setCustomModel(Helper.createBaseModel("car"))).
+                setProfiles(TestProfiles.constantSpeed("car")).
                 setStoreOnFlush(false).
                 setGraphHopperLocation(ghLoc);
         ex = assertThrows(IllegalStateException.class, instance::importOrLoad);
@@ -582,11 +575,11 @@ public class GraphHopperOSMTest {
         final String profile = "foot_profile";
         instance = new GraphHopper().
                 setStoreOnFlush(false).
-                setProfiles(new Profile(profile).setCustomModel(Helper.createBaseModel("foot"))).
+                setProfiles(TestProfiles.accessSpeedAndPriority(profile, "foot")).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm3);
         // exclude motorways which aren't accessible for foot
-        instance.getReaderConfig().setIgnoredHighways(Arrays.asList("motorway"));
+        instance.getReaderConfig().setIgnoredHighways(List.of("motorway"));
         instance.getCHPreparationHandler().setCHProfiles(new CHProfile(profile));
         instance.importOrLoad();
 
@@ -612,7 +605,7 @@ public class GraphHopperOSMTest {
                         putObject("datareader.file", testOsm3).
                         putObject("prepare.min_network_size", 0).
                         putObject("import.osm.ignored_highways", "").
-                        setProfiles(Collections.singletonList(new Profile(profile).setCustomModel(Helper.createBaseModel("car")))).
+                        setProfiles(List.of(TestProfiles.accessAndSpeed(profile, "car"))).
                         setCHProfiles(Collections.singletonList(new CHProfile(profile)))
                 ).
                 setGraphHopperLocation(ghLoc);
@@ -646,19 +639,19 @@ public class GraphHopperOSMTest {
             GraphHopper hopper = new GraphHopper().
                     setStoreOnFlush(false).
                     setProfiles(
-                            new Profile("car_profile").setCustomModel(Helper.createBaseModel("car")),
-                            new Profile("mtb_profile").setCustomModel(Helper.createBaseModel("bike")),
-                            new Profile("bike_profile").setCustomModel(Helper.createBaseModel("racingbike")),
-                            new Profile("foot_profile").setCustomModel(Helper.createBaseModel("foot"))
+                            TestProfiles.constantSpeed("p1", 60),
+                            TestProfiles.constantSpeed("p2", 70),
+                            TestProfiles.constantSpeed("p3", 80),
+                            TestProfiles.constantSpeed("p4", 90)
                     ).
                     setGraphHopperLocation(ghLoc).
                     setOSMFile(testOsm);
             hopper.getCHPreparationHandler()
                     .setCHProfiles(
-                            new CHProfile("car_profile"),
-                            new CHProfile("mtb_profile"),
-                            new CHProfile("bike_profile"),
-                            new CHProfile("foot_profile")
+                            new CHProfile("p1"),
+                            new CHProfile("p2"),
+                            new CHProfile("p3"),
+                            new CHProfile("p4")
                     )
                     .setPreparationThreads(threadCount);
 
@@ -693,19 +686,19 @@ public class GraphHopperOSMTest {
             GraphHopper hopper = new GraphHopper().
                     setStoreOnFlush(false).
                     setProfiles(Arrays.asList(
-                            new Profile("car_profile").setCustomModel(Helper.createBaseModel("car")),
-                            new Profile("mtb_profile").setCustomModel(Helper.createBaseModel("mtb")),
-                            new Profile("bike_profile").setCustomModel(Helper.createBaseModel("racingbike")),
-                            new Profile("foot_profile").setCustomModel(Helper.createBaseModel("foot"))
+                            TestProfiles.constantSpeed("p1", 60),
+                            TestProfiles.constantSpeed("p2", 70),
+                            TestProfiles.constantSpeed("p3", 80),
+                            TestProfiles.constantSpeed("p4", 90)
                     )).
                     setGraphHopperLocation(ghLoc).
                     setOSMFile(testOsm);
             hopper.getLMPreparationHandler().
                     setLMProfiles(
-                            new LMProfile("car_profile"),
-                            new LMProfile("mtb_profile"),
-                            new LMProfile("bike_profile"),
-                            new LMProfile("foot_profile")
+                            new LMProfile("p1"),
+                            new LMProfile("p2"),
+                            new LMProfile("p3"),
+                            new LMProfile("p4")
                     ).
                     setPreparationThreads(threadCount);
 
@@ -733,11 +726,11 @@ public class GraphHopperOSMTest {
     }
 
     @Test
-    public void testGetMultipleWeightingsForCH() {
+    public void testMultipleProfilesForCH() {
         GraphHopper hopper = new GraphHopper().
                 setProfiles(
-                        new Profile("profile1").setCustomModel(Helper.createBaseModel("car")),
-                        new Profile("profile2").setCustomModel(new CustomModel().addToSpeed(If("true", LIMIT, "100")).setDistanceInfluence(1000d))
+                        TestProfiles.constantSpeed("profile1", 60),
+                        TestProfiles.constantSpeed("profile2", 100)
                 ).
                 setStoreOnFlush(false).
                 setGraphHopperLocation(ghLoc).
@@ -752,38 +745,38 @@ public class GraphHopperOSMTest {
     @Test
     public void testProfilesMustNotBeChanged() {
         {
-            GraphHopper hopper = createHopperWithProfiles(Arrays.asList(
-                    new Profile("car").setCustomModel(Helper.createBaseModel("car")),
-                    new Profile("custom").setCustomModel(new CustomModel().addToSpeed(If("true", LIMIT, "120")).setDistanceInfluence(3d))
+            GraphHopper hopper = createHopperWithProfiles(List.of(
+                    TestProfiles.constantSpeed("bike1", 60),
+                    TestProfiles.constantSpeed("bike2", 120)
             ));
             hopper.importOrLoad();
             hopper.close();
         }
         {
             // load without problem
-            GraphHopper hopper = createHopperWithProfiles(Arrays.asList(
-                    new Profile("car").setCustomModel(Helper.createBaseModel("car")),
-                    new Profile("custom").setCustomModel(new CustomModel().addToSpeed(If("true", LIMIT, "120")).setDistanceInfluence(3d))
+            GraphHopper hopper = createHopperWithProfiles(List.of(
+                    TestProfiles.constantSpeed("bike1", 60),
+                    TestProfiles.constantSpeed("bike2", 120)
             ));
             hopper.importOrLoad();
             hopper.close();
         }
         {
             // problem: the profile changed (slightly). we do not allow this because we would potentially need to re-calculate the subnetworks
-            GraphHopper hopper = createHopperWithProfiles(Arrays.asList(
-                    new Profile("car").setCustomModel(Helper.createBaseModel("car")),
-                    new Profile("custom").setCustomModel(new CustomModel().setDistanceInfluence(80d))
+            GraphHopper hopper = createHopperWithProfiles(List.of(
+                    TestProfiles.constantSpeed("bike1", 60),
+                    TestProfiles.constantSpeed("bike2", 110)
             ));
             IllegalStateException e = assertThrows(IllegalStateException.class, hopper::importOrLoad);
             assertTrue(e.getMessage().contains("Profiles do not match"), e.getMessage());
             hopper.close();
         }
         {
-            // problem: we add another profile, which is not allowed, because there would be no subnetwork ev for it
-            GraphHopper hopper = createHopperWithProfiles(Arrays.asList(
-                    new Profile("car").setCustomModel(Helper.createBaseModel("car")),
-                    new Profile("custom").setCustomModel(new CustomModel().setDistanceInfluence(3d)),
-                    new Profile("car2").setCustomModel(Helper.createBaseModel("car"))
+            // problem: we add another profile, which is not allowed either, because there would be no subnetwork ev for it
+            GraphHopper hopper = createHopperWithProfiles(List.of(
+                    TestProfiles.constantSpeed("bike1", 60),
+                    TestProfiles.constantSpeed("bike2", 120),
+                    TestProfiles.constantSpeed("bike3", 110)
             ));
             IllegalStateException e = assertThrows(IllegalStateException.class, hopper::importOrLoad);
             assertTrue(e.getMessage().contains("Profiles do not match"), e.getMessage());
@@ -792,8 +785,8 @@ public class GraphHopperOSMTest {
         {
             // problem: we remove a profile, which would technically be possible, but does not save memory either. it
             //          could be useful to disable a profile, but currently we just force a new import.
-            GraphHopper hopper = createHopperWithProfiles(Arrays.asList(
-                    new Profile("car").setCustomModel(Helper.createBaseModel("car"))
+            GraphHopper hopper = createHopperWithProfiles(List.of(
+                    TestProfiles.constantSpeed("bike1", 60)
             ));
             IllegalStateException e = assertThrows(IllegalStateException.class, hopper::importOrLoad);
             assertTrue(e.getMessage().contains("Profiles do not match"), e.getMessage());
@@ -814,7 +807,7 @@ public class GraphHopperOSMTest {
 
     @Test
     public void testLoadingLMAndCHProfiles() {
-        Profile profile = new Profile("car").setCustomModel(Helper.createBaseModel("car"));
+        Profile profile = TestProfiles.constantSpeed("car");
         GraphHopper hopper = new GraphHopper()
                 .setGraphHopperLocation(ghLoc)
                 .setOSMFile(testOsm)

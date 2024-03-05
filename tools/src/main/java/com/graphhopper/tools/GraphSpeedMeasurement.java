@@ -20,14 +20,16 @@ package com.graphhopper.tools;
 
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
-import com.graphhopper.config.Profile;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.BaseGraph;
-import com.graphhopper.util.*;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.MiniPerfTest;
+import com.graphhopper.util.PMap;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
@@ -44,9 +46,9 @@ public class GraphSpeedMeasurement {
                     .putObject("graph.location", args.getString("location", "graph-speed-measurement") + "-" + speedBits + "-gh")
                     .putObject("graph.dataaccess", args.getString("da", "RAM_STORE"))
                     .putObject("import.osm.ignored_highways", "")
-                    .putObject("graph.encoded_values", String.format("car_average_speed|speed_bits=%d,bike_average_speed|speed_bits=%d,foot_average_speed|speed_bits=%d", speedBits, speedBits, speedBits, speedBits))
-                    .setProfiles(Arrays.asList(
-                            new Profile("car").setCustomModel(Helper.createBaseModel("car"))
+                    .putObject("graph.encoded_values", String.format("car_average_speed|speed_bits=%d,bike_average_speed|speed_bits=%d,foot_average_speed|speed_bits=%d", speedBits, speedBits, speedBits))
+                    .setProfiles(List.of(
+                            TestProfiles.accessAndSpeed("car")
                     ));
             GraphHopper hopper = new GraphHopper()
                     .init(ghConfig)

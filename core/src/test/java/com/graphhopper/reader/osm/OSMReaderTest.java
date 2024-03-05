@@ -21,7 +21,6 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperTest;
-import com.graphhopper.config.Profile;
 import com.graphhopper.config.TurnCostsConfig;
 import com.graphhopper.reader.ReaderElement;
 import com.graphhopper.reader.ReaderRelation;
@@ -29,6 +28,7 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.routing.OSMReaderConfig;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
@@ -52,8 +52,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
-import static com.graphhopper.json.Statement.If;
-import static com.graphhopper.json.Statement.Op.LIMIT;
 import static com.graphhopper.routing.util.TransportationMode.CAR;
 import static com.graphhopper.util.GHUtility.readCountries;
 import static org.junit.jupiter.api.Assertions.*;
@@ -388,7 +386,7 @@ public class OSMReaderTest {
         hopper.setEncodedValuesString("car_access|block_fords=true,car_average_speed");
         hopper.setOSMFile(getClass().getResource("test-barriers3.xml").getFile()).
                 setGraphHopperLocation(dir).
-                setProfiles(new Profile("car").setCustomModel(Helper.createBaseModel("car"))).
+                setProfiles(TestProfiles.accessAndSpeed("car")).
                 setMinNetworkSize(0).
                 importOrLoad();
         Graph graph = hopper.getBaseGraph();
@@ -543,7 +541,7 @@ public class OSMReaderTest {
     @Test
     public void testTurnRestrictionsFromXML() {
         String fileTurnRestrictions = "test-restrictions.xml";
-        GraphHopper hopper = new GraphHopperFacade(fileTurnRestrictions, true, "").
+        GraphHopper hopper = new GraphHopperFacade(fileTurnRestrictions, "").
                 importOrLoad();
 
         Graph graph = hopper.getBaseGraph();
@@ -614,7 +612,7 @@ public class OSMReaderTest {
     @Test
     public void testTurnRestrictionsViaHgvTransportationMode() {
         String fileTurnRestrictions = "test-restrictions.xml";
-        GraphHopper hopper = new GraphHopperFacade(fileTurnRestrictions, true, "").
+        GraphHopper hopper = new GraphHopperFacade(fileTurnRestrictions, "").
                 importOrLoad();
 
         Graph graph = hopper.getBaseGraph();
@@ -713,9 +711,9 @@ public class OSMReaderTest {
         hopper.setOSMFile(getClass().getResource("test-multi-profile-turn-restrictions.xml").getFile()).
                 setGraphHopperLocation(dir).
                 setProfiles(
-                        Profile.create("bike", true),
-                        Profile.create("car", true),
-                        new Profile("truck").setCustomModel(Helper.createBaseModel("car")).setTurnCostsConfig(new TurnCostsConfig(List.of("hgv", "motor_vehicle")))
+                        TestProfiles.accessAndSpeed("bike").setTurnCostsConfig(new TurnCostsConfig(List.of("bicycle"))),
+                        TestProfiles.accessAndSpeed("car").setTurnCostsConfig(new TurnCostsConfig(List.of("motorcar", "motor_vehicle"))),
+                        TestProfiles.accessAndSpeed("truck", "car").setTurnCostsConfig(new TurnCostsConfig(List.of("hgv", "motor_vehicle")))
                 ).
                 importOrLoad();
         EncodingManager manager = hopper.getEncodingManager();
@@ -750,7 +748,7 @@ public class OSMReaderTest {
     @Test
     public void testConditionalTurnRestriction() {
         String fileConditionalTurnRestrictions = "test-conditional-turn-restrictions.xml";
-        GraphHopper hopper = new GraphHopperFacade(fileConditionalTurnRestrictions, true, "").
+        GraphHopper hopper = new GraphHopperFacade(fileConditionalTurnRestrictions, "").
                 setMinNetworkSize(0).
                 importOrLoad();
 
@@ -819,7 +817,7 @@ public class OSMReaderTest {
     @Test
     public void testMultipleTurnRestrictions() {
         String fileMultipleConditionalTurnRestrictions = "test-multiple-conditional-turn-restrictions.xml";
-        GraphHopper hopper = new GraphHopperFacade(fileMultipleConditionalTurnRestrictions, true, "").
+        GraphHopper hopper = new GraphHopperFacade(fileMultipleConditionalTurnRestrictions, "").
                 importOrLoad();
 
         Graph graph = hopper.getBaseGraph();
@@ -861,7 +859,7 @@ public class OSMReaderTest {
 
     @Test
     public void testPreferredLanguage() {
-        GraphHopper hopper = new GraphHopperFacade(file1, false, "de").
+        GraphHopper hopper = new GraphHopperFacade(file1, "de").
                 importOrLoad();
         BaseGraph graph = hopper.getBaseGraph();
         int n20 = AbstractGraphStorageTester.getIdOf(graph, 52);
@@ -869,7 +867,7 @@ public class OSMReaderTest {
         assertTrue(iter.next());
         assertEquals("straße 123, B 122", iter.getName());
 
-        hopper = new GraphHopperFacade(file1, false, "el").
+        hopper = new GraphHopperFacade(file1, "el").
                 importOrLoad();
         graph = hopper.getBaseGraph();
         n20 = AbstractGraphStorageTester.getIdOf(graph, 52);
@@ -913,7 +911,7 @@ public class OSMReaderTest {
             }
         }.setOSMFile("dummy").
                 setEncodedValuesString("car_access,car_average_speed").
-                setProfiles(new Profile("profile").setCustomModel(Helper.createBaseModel("car"))).
+                setProfiles(TestProfiles.accessAndSpeed("profile", "car")).
                 setMinNetworkSize(0).
                 setGraphHopperLocation(dir).
                 importOrLoad();
@@ -996,20 +994,20 @@ public class OSMReaderTest {
 
     class GraphHopperFacade extends GraphHopper {
         public GraphHopperFacade(String osmFile) {
-            this(osmFile, false, "");
+            this(osmFile, "");
         }
 
-        public GraphHopperFacade(String osmFile, boolean turnCosts, String prefLang) {
+        public GraphHopperFacade(String osmFile, String prefLang) {
             setStoreOnFlush(false);
             setOSMFile(osmFile);
             setGraphHopperLocation(dir);
             String str = "max_width,max_height,max_weight";
             setEncodedValuesString(str);
             setProfiles(
-                    Profile.create("foot", false),
-                    Profile.create("car", true),
-                    Profile.create("bike", true),
-                    new Profile("truck").setCustomModel(new CustomModel().addToSpeed(If("true", LIMIT, "100"))).setTurnCostsConfig(turnCosts ? new TurnCostsConfig(List.of("hgv", "motor_vehicle")) : null)
+                    TestProfiles.accessSpeedAndPriority("foot"),
+                    TestProfiles.accessAndSpeed("car").setTurnCostsConfig(new TurnCostsConfig(List.of("motorcar", "motor_vehicle"))),
+                    TestProfiles.accessSpeedAndPriority("bike").setTurnCostsConfig(new TurnCostsConfig(List.of("bicycle"))),
+                    TestProfiles.constantSpeed("truck", 100).setTurnCostsConfig(new TurnCostsConfig(List.of("hgv", "motor_vehicle")))
             );
             getReaderConfig().setPreferredLanguage(prefLang);
         }
