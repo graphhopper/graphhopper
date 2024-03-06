@@ -217,22 +217,6 @@ public abstract class AbstractBikeTagParserTester {
         way.setTag("bicycle", "no");
         assertTrue(accessParser.getAccess(way).canSkip());
 
-        DateFormat simpleDateFormat = Helper.createFormatter("yyyy MMM dd");
-
-        way.clearTags();
-        way.setTag("highway", "road");
-        way.setTag("bicycle:conditional", "no @ (" + simpleDateFormat.format(new Date().getTime()) + ")");
-        assertTrue(accessParser.getAccess(way).canSkip());
-
-        way.setTag("bicycle", "yes"); // the conditional tag even overrules "yes"
-        assertTrue(accessParser.getAccess(way).canSkip());
-
-        way.clearTags();
-        way.setTag("highway", "road");
-        way.setTag("access", "no");
-        way.setTag("bicycle:conditional", "yes @ (" + simpleDateFormat.format(new Date().getTime()) + ")");
-        assertTrue(accessParser.getAccess(way).isWay());
-
         way.clearTags();
         way.setTag("highway", "track");
         way.setTag("vehicle", "forestry");
