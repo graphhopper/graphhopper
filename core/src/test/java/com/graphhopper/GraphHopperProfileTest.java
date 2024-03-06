@@ -42,7 +42,7 @@ public class GraphHopperProfileTest {
         assertEquals("my_car", profile.getName());
         assertEquals("car", profile.getVehicle());
         assertEquals("custom", profile.getWeighting());
-        assertTrue(profile.isTurnCosts());
+        assertTrue(profile.hasTurnCosts());
         assertEquals(2, profile.getHints().toMap().size());
         assertEquals("bar", profile.getHints().getString("foo", ""));
         assertEquals("buzz", profile.getHints().getString("baz", ""));

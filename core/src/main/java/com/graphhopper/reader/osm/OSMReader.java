@@ -412,7 +412,8 @@ public class OSMReader {
      * the duration tag when it is present. The latter cannot be done on a per-edge basis, because the duration tag
      * refers to the duration of the entire way.
      */
-    protected void preprocessWay(ReaderWay way, WaySegmentParser.CoordinateSupplier coordinateSupplier, WaySegmentParser.NodeTagSupplier nodeTagSupplier) {
+    protected void preprocessWay(ReaderWay way, WaySegmentParser.CoordinateSupplier coordinateSupplier,
+                                 WaySegmentParser.NodeTagSupplier nodeTagSupplier) {
         List<KVStorage.KeyValue> list = new ArrayList<>();
         if (config.isParseWayNames()) {
             // http://wiki.openstreetmap.org/wiki/Key:name
@@ -458,6 +459,23 @@ public class OSMReader {
                     }
                 }
         }
+
+        if (way.getTags().size() > 1) // at least highway tag
+            for (Map.Entry<String, Object> entry : way.getTags().entrySet()) {
+                if (entry.getKey().endsWith(":conditional") && entry.getValue() instanceof String &&
+                        // for now reduce index size a bit and focus on access tags
+                        !entry.getKey().startsWith("maxspeed") && !entry.getKey().startsWith("maxweight")) {
+                    // remove spaces as they unnecessarily increase the unique number of values:
+                    String value = KVStorage.cutString(((String) entry.getValue()).
+                            replace(" ", "").replace("bicycle", "bike"));
+                    boolean fwd = entry.getKey().contains("forward");
+                    boolean bwd = entry.getKey().contains("backward");
+                    if (!fwd && !bwd)
+                        list.add(new KVStorage.KeyValue(entry.getKey().replace(':', '_'), value, true, true));
+                    else
+                        list.add(new KVStorage.KeyValue(entry.getKey().replace(':', '_'), value, fwd, bwd));
+                }
+            }
 
         way.setTag("key_values", list);
 

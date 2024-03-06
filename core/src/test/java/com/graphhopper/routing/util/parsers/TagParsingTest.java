@@ -20,7 +20,6 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.OSMParsers;
@@ -152,9 +151,6 @@ class TagParsingTest {
                 new BikeAccessParser(manager, new PMap()),
                 new MountainBikeAccessParser(manager, new PMap())
         );
-        for (TagParser tagParser : tagParsers)
-            if (tagParser instanceof AbstractAccessParser)
-                ((AbstractAccessParser) tagParser).init(new DateRangeParser());
 
         final ArrayEdgeIntAccess intAccess = new ArrayEdgeIntAccess(manager.getIntsForFlags());
         int edgeId = 0;

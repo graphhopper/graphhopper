@@ -735,7 +735,7 @@ public class RoutingAlgorithmWithOSMTest {
                 String expectedAlgo = request.getHints().getString("expected_algo", "no_expected_algo");
                 checkResponse(expectedAlgo, res, query);
                 // for edge-based routing we expect a slightly different algo name for CH
-                if (profile.isTurnCosts())
+                if (profile.hasTurnCosts())
                     expectedAlgo = expectedAlgo.replaceAll("\\|ch-routing", "|ch|edge_based|no_sod-routing");
                 assertTrue(res.getBest().getDebugInfo().contains(expectedAlgo),
                         "Response does not contain expected algo string. Expected: '" + expectedAlgo +

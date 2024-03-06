@@ -55,7 +55,7 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
 
     @Override
     protected BikeCommonAccessParser createAccessParser(EncodedValueLookup lookup, PMap pMap) {
-        return (BikeCommonAccessParser) new RacingBikeAccessParser(lookup, pMap).init(new DateRangeParser());
+        return (BikeCommonAccessParser) new RacingBikeAccessParser(lookup, pMap);
     }
 
     @Override

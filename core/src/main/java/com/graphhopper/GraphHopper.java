@@ -698,13 +698,13 @@ public class GraphHopper {
         }
         Map<String, PMap> vehiclePropsFromProfiles = new LinkedHashMap<>();
         for (Profile profile : profiles) {
-            if (profile.isTurnCosts() && vehicleProps.containsKey(profile.getVehicle())
+            if (profile.hasTurnCosts() && vehicleProps.containsKey(profile.getVehicle())
                     && vehicleProps.get(profile.getVehicle()).has("turn_costs") && !vehicleProps.get(profile.getVehicle()).getBool("turn_costs", false))
                 throw new IllegalArgumentException("turn_costs=false was set explicitly for vehicle '" + profile.getVehicle() + "', but profile '" + profile.getName() + "' using it uses turn costs");
             // if a profile uses a vehicle with turn costs make sure we add that vehicle with turn costs
             String vehicle = profile.getVehicle().trim();
-            if (!vehiclePropsFromProfiles.containsKey(vehicle) || profile.isTurnCosts())
-                vehiclePropsFromProfiles.put(vehicle, new PMap(profile.isTurnCosts() ? "turn_costs=true" : ""));
+            if (!vehiclePropsFromProfiles.containsKey(vehicle) || profile.hasTurnCosts())
+                vehiclePropsFromProfiles.put(vehicle, new PMap(profile.hasTurnCosts() ? "turn_costs=true" : ""));
         }
         // vehicles from profiles are only taken into account when they were not given explicitly
         vehiclePropsFromProfiles.forEach(vehicleProps::putIfAbsent);
@@ -1137,7 +1137,7 @@ public class GraphHopper {
             BooleanEncodedValue turnRestrictionEnc = encodingManager.hasTurnEncodedValue(TurnRestriction.key(profile.getVehicle()))
                     ? encodingManager.getTurnBooleanEncodedValue(TurnRestriction.key(profile.getVehicle()))
                     : null;
-            if (profile.isTurnCosts() && turnRestrictionEnc == null) {
+            if (profile.hasTurnCosts() && turnRestrictionEnc == null) {
                 throw new IllegalArgumentException("The profile '" + profile.getName() + "' was configured with " +
                         "'turn_costs=true', but the corresponding vehicle '" + profile.getVehicle() + "' does not support turn costs." +
                         "\nYou need to add `|turn_costs=true` to the vehicle in `graph.vehicles`");
@@ -1198,7 +1198,7 @@ public class GraphHopper {
         List<CHConfig> chConfigs = new ArrayList<>();
         for (CHProfile chProfile : chProfiles) {
             Profile profile = profilesByName.get(chProfile.getProfile());
-            if (profile.isTurnCosts()) {
+            if (profile.hasTurnCosts()) {
                 chConfigs.add(CHConfig.edgeBased(profile.getName(), createWeighting(profile, new PMap())));
             } else {
                 chConfigs.add(CHConfig.nodeBased(profile.getName(), createWeighting(profile, new PMap())));
