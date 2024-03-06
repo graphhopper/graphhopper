@@ -39,7 +39,10 @@ import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks.PrepareJob;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
-import com.graphhopper.routing.util.parsers.*;
+import com.graphhopper.routing.util.parsers.OSMBikeNetworkTagParser;
+import com.graphhopper.routing.util.parsers.OSMFootNetworkTagParser;
+import com.graphhopper.routing.util.parsers.OSMMtbNetworkTagParser;
+import com.graphhopper.routing.util.parsers.TagParser;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
@@ -615,7 +618,7 @@ public class GraphHopper {
 
     protected OSMParsers buildOSMParsers(Map<String, PMap> encodedValuesWithProps,
                                          Map<String, ImportUnit> activeImportUnits,
-                                         Map<String, List<String>> turnCostRestrictions,
+                                         Map<String, List<String>> restrictionVehicleTypesByProfile,
                                          List<String> ignoredHighways, String dateRangeParserString) {
         ImportUnitSorter sorter = new ImportUnitSorter(activeImportUnits);
         Map<String, ImportUnit> sortedImportUnits = new LinkedHashMap<>();
@@ -644,9 +647,9 @@ public class GraphHopper {
         if (encodingManager.hasEncodedValue(FootNetwork.KEY))
             osmParsers.addRelationTagParser(relConfig -> new OSMFootNetworkTagParser(encodingManager.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class), relConfig));
 
-        turnCostRestrictions.forEach((profile, osmRestrictions) -> {
+        restrictionVehicleTypesByProfile.forEach((profile, restrictionVehicleTypes) -> {
             osmParsers.addRestrictionTagParser(new RestrictionTagParser(
-                    osmRestrictions, encodingManager.getTurnBooleanEncodedValue(TurnRestriction.key(profile))));
+                    restrictionVehicleTypes, encodingManager.getTurnBooleanEncodedValue(TurnRestriction.key(profile))));
         });
         return osmParsers;
     }
@@ -659,12 +662,12 @@ public class GraphHopper {
         return encodedValuesWithProps;
     }
 
-    public static Map<String, List<String>> getTurnCostsRestrictions(Collection<Profile> profiles) {
-        Map<String, List<String>> turnCostRestrictions = new LinkedHashMap<>();
+    private static Map<String, List<String>> getRestrictionVehicleTypesByProfile(Collection<Profile> profiles) {
+        Map<String, List<String>> result = new LinkedHashMap<>();
         for (Profile profile : profiles)
             if (profile.hasTurnCosts())
-                turnCostRestrictions.put(profile.getName(), profile.getTurnCostsConfig().getRestrictions());
-        return turnCostRestrictions;
+                result.put(profile.getName(), profile.getTurnCostsConfig().getVehicleTypes());
+        return result;
     }
 
     private static ElevationProvider createElevationProvider(GraphHopperConfig ghConfig) {
@@ -831,7 +834,7 @@ public class GraphHopper {
         encodedValuesWithProps.putIfAbsent(RoadClassLink.KEY, new PMap());
         encodedValuesWithProps.putIfAbsent(MaxSpeed.KEY, new PMap());
 
-        Map<String, List<String>> turnCostsRestrictions = getTurnCostsRestrictions(profilesByName.values());
+        Map<String, List<String>> restrictionVehicleTypesByProfile = getRestrictionVehicleTypesByProfile(profilesByName.values());
 
         if (urbanDensityCalculationThreads > 0)
             encodedValuesWithProps.put(UrbanDensity.KEY, new PMap());
@@ -848,8 +851,8 @@ public class GraphHopper {
             if (activeImportUnits.put(ev, importUnit) == null)
                 deque.addAll(importUnit.getRequiredImportUnits());
         }
-        encodingManager = buildEncodingManager(encodedValuesWithProps, activeImportUnits, turnCostsRestrictions.keySet());
-        osmParsers = buildOSMParsers(encodedValuesWithProps, activeImportUnits, turnCostsRestrictions, osmReaderConfig.getIgnoredHighways(), dateRangeParserString);
+        encodingManager = buildEncodingManager(encodedValuesWithProps, activeImportUnits, restrictionVehicleTypesByProfile.keySet());
+        osmParsers = buildOSMParsers(encodedValuesWithProps, activeImportUnits, restrictionVehicleTypesByProfile, osmReaderConfig.getIgnoredHighways(), dateRangeParserString);
     }
 
     protected void postImportOSM() {

@@ -8,7 +8,7 @@ import java.util.Set;
 public class TurnCostsConfig {
     public static final int INFINITE_U_TURN_COSTS = -1;
     private int uTurnCosts = INFINITE_U_TURN_COSTS;
-    private List<String> restrictions;
+    private List<String> vehicleTypes;
     // ensure that no typos can occur like motor_car vs motorcar or bike vs bicycle
     private static final Set<String> ALL_SUPPORTED = Set.of(
             "agricultural", "atv", "auto_rickshaw",
@@ -31,17 +31,17 @@ public class TurnCostsConfig {
     public TurnCostsConfig() {
     }
 
-    public TurnCostsConfig(List<String> restrictions) {
-        this.restrictions = check(restrictions);
+    public TurnCostsConfig(List<String> vehicleTypes) {
+        this.vehicleTypes = check(vehicleTypes);
     }
 
-    public TurnCostsConfig(List<String> restrictions, int uTurnCost) {
-        this.restrictions = check(restrictions);
+    public TurnCostsConfig(List<String> vehicleTypes, int uTurnCost) {
+        this.vehicleTypes = check(vehicleTypes);
         this.uTurnCosts = uTurnCost;
     }
 
-    public void setRestrictions(List<String> restrictions) {
-        this.restrictions = check(restrictions);
+    public void setVehicleTypes(List<String> vehicleTypes) {
+        this.vehicleTypes = check(vehicleTypes);
     }
 
     List<String> check(List<String> restrictions) {
@@ -54,8 +54,9 @@ public class TurnCostsConfig {
         return restrictions;
     }
 
-    public List<String> getRestrictions() {
-        return restrictions;
+    @JsonProperty("vehicle_types")
+    public List<String> getVehicleTypes() {
+        return vehicleTypes;
     }
 
     public TurnCostsConfig setUTurnCosts(int uTurnCosts) {
@@ -70,6 +71,6 @@ public class TurnCostsConfig {
 
     @Override
     public String toString() {
-        return "restrictions=" + restrictions + ", uTurnCosts=" + uTurnCosts;
+        return "vehicleTypes=" + vehicleTypes + ", uTurnCosts=" + uTurnCosts;
     }
 }

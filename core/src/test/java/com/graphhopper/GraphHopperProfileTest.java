@@ -42,7 +42,7 @@ public class GraphHopperProfileTest {
         String json = "{\"name\":\"my_car\",\"weighting\":\"custom\",\"turn_costs\":{\"restrictions\":[\"motorcar\"]},\"foo\":\"bar\",\"baz\":\"buzz\"}";
         Profile profile = objectMapper.readValue(json, Profile.class);
         assertEquals("my_car", profile.getName());
-        assertEquals(List.of("motorcar"), profile.getTurnCostsConfig().getRestrictions());
+        assertEquals(List.of("motorcar"), profile.getTurnCostsConfig().getVehicleTypes());
         assertEquals("custom", profile.getWeighting());
         assertTrue(profile.hasTurnCosts());
         assertEquals(2, profile.getHints().toMap().size());

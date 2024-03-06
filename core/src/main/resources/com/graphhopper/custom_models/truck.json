@@ -2,7 +2,7 @@
 // profiles:
 //    - name: truck
 //      turn_costs:
-//        restrictions: car
+//        vehicle_types: [hgv, motorcar, motor_vehicle]
 //      custom_model_files: [truck.json]
 
 {

@@ -26,7 +26,7 @@ Another important profile setting is the `turn_costs` configuration. Use this to
 profiles:
   - name: car
     turn_costs:
-      restrictions: [motorcar, motor_vehicle]
+      vehicle_types: [motorcar, motor_vehicle]
     custom_model_files: [car.json]
 ```
 

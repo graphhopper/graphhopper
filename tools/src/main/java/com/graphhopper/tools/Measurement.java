@@ -308,7 +308,7 @@ public class Measurement {
         List<Profile> profiles = new ArrayList<>();
         if (turnCosts && !vehicle.equals("car"))
             throw new IllegalArgumentException("turn costs not yet supported for: " + vehicle);
-        List<String> restrictions = List.of("motorcar", "motor_vehicle");
+        List<String> restrictionVehicleTypes = List.of("motorcar", "motor_vehicle");
         if (!customModelFile.isEmpty()) {
             if (!weighting.equals(CustomWeighting.NAME))
                 throw new IllegalArgumentException("To make use of a custom model you need to set measurement.weighting to 'custom'");
@@ -316,12 +316,12 @@ public class Measurement {
             CustomModel customModel = loadCustomModel(customModelFile);
             profiles.add(new Profile("profile_no_tc").setCustomModel(customModel));
             if (turnCosts)
-                profiles.add(new Profile("profile_tc").setCustomModel(customModel).setTurnCostsConfig(new TurnCostsConfig(restrictions, uTurnCosts)));
+                profiles.add(new Profile("profile_tc").setCustomModel(customModel).setTurnCostsConfig(new TurnCostsConfig(restrictionVehicleTypes, uTurnCosts)));
         } else {
             // use standard profiles
             profiles.add(TestProfiles.accessAndSpeed("profile_no_tc", vehicle));
             if (turnCosts)
-                profiles.add(TestProfiles.accessAndSpeed("profile_tc", vehicle).setTurnCostsConfig(new TurnCostsConfig(restrictions, uTurnCosts)));
+                profiles.add(TestProfiles.accessAndSpeed("profile_tc", vehicle).setTurnCostsConfig(new TurnCostsConfig(restrictionVehicleTypes, uTurnCosts)));
         }
         ghConfig.setProfiles(profiles);
 
