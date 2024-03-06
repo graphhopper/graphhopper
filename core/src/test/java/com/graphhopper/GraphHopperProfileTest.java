@@ -39,7 +39,7 @@ public class GraphHopperProfileTest {
     @Test
     public void deserialize() throws IOException {
         ObjectMapper objectMapper = Jackson.newObjectMapper();
-        String json = "{\"name\":\"my_car\",\"weighting\":\"custom\",\"turn_costs\":{\"restrictions\":[\"motorcar\"]},\"foo\":\"bar\",\"baz\":\"buzz\"}";
+        String json = "{\"name\":\"my_car\",\"weighting\":\"custom\",\"turn_costs\":{\"vehicle_types\":[\"motorcar\"]},\"foo\":\"bar\",\"baz\":\"buzz\"}";
         Profile profile = objectMapper.readValue(json, Profile.class);
         assertEquals("my_car", profile.getName());
         assertEquals(List.of("motorcar"), profile.getTurnCostsConfig().getVehicleTypes());
