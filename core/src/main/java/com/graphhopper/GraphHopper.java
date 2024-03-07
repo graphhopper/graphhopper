@@ -857,8 +857,9 @@ public class GraphHopper {
             properties.put("profiles", getProfilesString());
             writeEncodingManagerToProperties();
 
-            postProcessing(closeEarly);
             flush();
+
+            postProcessing(closeEarly);
         } finally {
             if (lock != null)
                 lock.release();

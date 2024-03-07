@@ -23,9 +23,7 @@ import com.carrotsearch.hppc.cursors.IntObjectCursor;
 import com.graphhopper.reader.osm.Pair;
 import com.graphhopper.storage.CHStorageBuilder;
 import com.graphhopper.util.BitUtil;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.PMap;
-import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,15 +64,7 @@ class EdgeBasedNodeContractor implements NodeContractor {
     private final LongSet addedShortcuts = new LongHashSet();
     private final Stats addingStats = new Stats();
     private final Stats countingStats = new Stats();
-    private final int threads = 1;
-    private final ExecutorService executorService = Executors.newFixedThreadPool(threads, new ThreadFactory() {
-        int count = 0;
-
-        @Override
-        public Thread newThread(@NotNull Runnable r) {
-            return new NumberedThread(count++, r);
-        }
-    });
+    private final ExecutorService executorService;
 
     private static class NumberedThread extends Thread {
         public int number;
@@ -91,6 +81,13 @@ class EdgeBasedNodeContractor implements NodeContractor {
     private int[] hierarchyDepths;
     private final EdgeBasedWitnessPathSearcher.Stats wpsStatsHeur = new EdgeBasedWitnessPathSearcher.Stats();
     private final EdgeBasedWitnessPathSearcher.Stats wpsStatsContr = new EdgeBasedWitnessPathSearcher.Stats();
+    private final int average_count;
+    private final int logging_count;
+    private final int threads;
+    private final double parallelThreshold;
+    private final IntDeque times;
+    private double average;
+    private boolean parallel;
 
     // counts the total number of added shortcuts
     private int addedShortcutsCount;
@@ -104,9 +101,26 @@ class EdgeBasedNodeContractor implements NodeContractor {
 
     private double meanDegree;
 
+    int count = 0;
+
     public EdgeBasedNodeContractor(CHPreparationGraph prepareGraph, CHStorageBuilder chBuilder, PMap pMap) {
         this.prepareGraph = prepareGraph;
         this.chBuilder = chBuilder;
+        average_count = pMap.getInt("parallel_ch.average_count", 10_000);
+        logging_count = pMap.getInt("parallel_ch.logging_count", 10_000);
+        threads = pMap.getInt("parallel_ch.threads", 4);
+        parallelThreshold = pMap.getDouble("parallel_ch.threshold", 100);
+        times = new IntArrayDeque(average_count);
+        for (int i = 0; i < average_count; i++)
+            times.addLast(0);
+        executorService = Executors.newFixedThreadPool(threads, new ThreadFactory() {
+            int count = 0;
+
+            @Override
+            public Thread newThread(@NotNull Runnable r) {
+                return new NumberedThread(count++, r);
+            }
+        });
         extractParams(pMap);
     }
 
@@ -205,6 +219,7 @@ class EdgeBasedNodeContractor implements NodeContractor {
         addedShortcuts.clear();
         sourceNodes.clear();
 
+        long start = System.nanoTime();
         List<Future<Pair<List<ShortcutHandlerData>, EdgeBasedWitnessPathSearcher.Stats>>> futures = new ArrayList<>();
         // traverse incoming edges/shortcuts to find all the source nodes
         PrepareGraphEdgeIterator incomingEdges = inEdgeExplorer.setBaseNode(node);
@@ -219,14 +234,40 @@ class EdgeBasedNodeContractor implements NodeContractor {
             PrepareGraphOrigEdgeIterator origInIter = sourceNodeOrigInEdgeExplorer.setBaseNode(sourceNode);
             while (origInIter.next()) {
                 final int sourceInEdgeKey = reverseEdgeKey(origInIter.getOrigEdgeKeyLast());
-                futures.add(executorService.submit(() -> {
+                futures.add(parallel ? executorService.submit(() -> {
                     Thread thread = Thread.currentThread();
-                    int threadId = thread instanceof NumberedThread ? ((NumberedThread) thread).number : thread.getName().equals("main") ? 0 : -1;
+                    int threadId = thread instanceof NumberedThread ? ((NumberedThread) thread).number : -1;
                     if (threadId < 0)
                         throw new IllegalStateException("Unexpected thread: " + thread.getName());
                     Worker worker = workers[threadId];
-                    return worker.findAndHandlePrepareShortcutsForSource(sourceNode, sourceInEdgeKey, node, maxPolls);
-                }));
+                    return worker.findShortcuts(sourceNode, sourceInEdgeKey, node, maxPolls);
+                })
+                        : new Future<Pair<List<ShortcutHandlerData>, EdgeBasedWitnessPathSearcher.Stats>>() {
+                    @Override
+                    public boolean cancel(boolean mayInterruptIfRunning) {
+                        return false;
+                    }
+
+                    @Override
+                    public boolean isCancelled() {
+                        return false;
+                    }
+
+                    @Override
+                    public boolean isDone() {
+                        return false;
+                    }
+
+                    @Override
+                    public Pair<List<ShortcutHandlerData>, EdgeBasedWitnessPathSearcher.Stats> get() throws InterruptedException, ExecutionException {
+                        return workers[0].findShortcuts(sourceNode, sourceInEdgeKey, node, maxPolls);
+                    }
+
+                    @Override
+                    public Pair<List<ShortcutHandlerData>, EdgeBasedWitnessPathSearcher.Stats> get(long timeout, @NotNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+                        return null;
+                    }
+                });
             }
         }
 
@@ -237,6 +278,21 @@ class EdgeBasedNodeContractor implements NodeContractor {
                 throw new RuntimeException(e);
             }
         }).toList();
+
+        long time = System.nanoTime() - start;
+        int last = times.removeLast();
+        times.addFirst((int) (time / 1_000));
+        int first = ((int) (time / 1_000));
+        average -= last / (double) average_count;
+        average += first / (double) average_count;
+
+        if (count % average_count == 0)
+            parallel = average > parallelThreshold;
+
+        if (count % logging_count == 0)
+            LOGGER.info(Helper.nf(count) + " " + String.format("%.2f", average) + "μs - " + (parallel ? "PARALLEL" : "SEQUENTIAL"));
+        count++;
+
         for (Pair<List<ShortcutHandlerData>, EdgeBasedWitnessPathSearcher.Stats> result : results)
             handleResults(result, shortcutHandler, wpsStats);
     }
@@ -275,7 +331,7 @@ class EdgeBasedNodeContractor implements NodeContractor {
             bridgePathFinder = new BridgePathFinder(prepareGraph);
         }
 
-        private Pair<List<ShortcutHandlerData>, EdgeBasedWitnessPathSearcher.Stats> findAndHandlePrepareShortcutsForSource(int sourceNode, int sourceInEdgeKey, int centerNode, int maxPolls) {
+        private Pair<List<ShortcutHandlerData>, EdgeBasedWitnessPathSearcher.Stats> findShortcuts(int sourceNode, int sourceInEdgeKey, int centerNode, int maxPolls) {
             // we search 'bridge paths' leading to the target edges
             IntObjectMap<BridgePathFinder.BridePathEntry> bridgePaths = bridgePathFinder.find(sourceInEdgeKey, sourceNode, centerNode);
             if (bridgePaths.isEmpty())
