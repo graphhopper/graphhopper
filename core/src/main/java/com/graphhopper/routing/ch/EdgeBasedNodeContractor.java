@@ -76,6 +76,9 @@ class EdgeBasedNodeContractor implements NodeContractor {
     }
 
     private Stats activeStats;
+    int futureIdx;
+    List<Future<Pair<List<ShortcutHandlerData>, EdgeBasedWitnessPathSearcher.Stats>>> futures = new ArrayList<>();
+    List<Pair<List<ShortcutHandlerData>, EdgeBasedWitnessPathSearcher.Stats>> results = new ArrayList<>();
 
     private Worker[] workers;
     private int[] hierarchyDepths;
@@ -220,7 +223,7 @@ class EdgeBasedNodeContractor implements NodeContractor {
         sourceNodes.clear();
 
         long start = System.nanoTime();
-        List<Future<Pair<List<ShortcutHandlerData>, EdgeBasedWitnessPathSearcher.Stats>>> futures = new ArrayList<>();
+        futureIdx = -1;
         // traverse incoming edges/shortcuts to find all the source nodes
         PrepareGraphEdgeIterator incomingEdges = inEdgeExplorer.setBaseNode(node);
         while (incomingEdges.next()) {
@@ -234,7 +237,10 @@ class EdgeBasedNodeContractor implements NodeContractor {
             PrepareGraphOrigEdgeIterator origInIter = sourceNodeOrigInEdgeExplorer.setBaseNode(sourceNode);
             while (origInIter.next()) {
                 final int sourceInEdgeKey = reverseEdgeKey(origInIter.getOrigEdgeKeyLast());
-                futures.add(parallel ? executorService.submit(() -> {
+                futureIdx++;
+                if (futureIdx >= futures.size())
+                    futures.add(null);
+                futures.set(futureIdx, parallel ? executorService.submit(() -> {
                     Thread thread = Thread.currentThread();
                     int threadId = thread instanceof NumberedThread ? ((NumberedThread) thread).number : -1;
                     if (threadId < 0)
@@ -271,13 +277,15 @@ class EdgeBasedNodeContractor implements NodeContractor {
             }
         }
 
-        List<Pair<List<ShortcutHandlerData>, EdgeBasedWitnessPathSearcher.Stats>> results = futures.stream().map(f -> {
+        while (futureIdx + 1 >= results.size())
+            results.add(null);
+        for (int i = 0; i < futureIdx + 1; i++) {
             try {
-                return f.get();
+                results.set(i, futures.get(i).get());
             } catch (InterruptedException | ExecutionException e) {
                 throw new RuntimeException(e);
             }
-        }).toList();
+        }
 
         long time = System.nanoTime() - start;
         int last = times.removeLast();
@@ -292,9 +300,10 @@ class EdgeBasedNodeContractor implements NodeContractor {
         if (count % logging_count == 0)
             LOGGER.info(Helper.nf(count) + " " + String.format("%.2f", average) + "μs - " + (parallel ? "PARALLEL" : "SEQUENTIAL"));
         count++;
-
-        for (Pair<List<ShortcutHandlerData>, EdgeBasedWitnessPathSearcher.Stats> result : results)
+        for (int i = 0; i < futureIdx + 1; i++) {
+            Pair<List<ShortcutHandlerData>, EdgeBasedWitnessPathSearcher.Stats> result = results.get(i);
             handleResults(result, shortcutHandler, wpsStats);
+        }
     }
 
     private void handleResults(Pair<List<ShortcutHandlerData>, EdgeBasedWitnessPathSearcher.Stats> data, PrepareShortcutHandler shortcutHandler, EdgeBasedWitnessPathSearcher.Stats wpsStats) {
