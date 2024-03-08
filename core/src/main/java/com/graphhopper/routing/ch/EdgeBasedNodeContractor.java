@@ -294,11 +294,11 @@ class EdgeBasedNodeContractor implements NodeContractor {
         average -= last / (double) average_count;
         average += first / (double) average_count;
 
-        if (count % average_count == 0)
-            parallel = average > parallelThreshold;
-
         if (count % logging_count == 0)
             LOGGER.info(Helper.nf(count) + " " + String.format("%.2f", average) + "μs - " + (parallel ? "PARALLEL" : "SEQUENTIAL"));
+
+        if (count % average_count == 0)
+            parallel = average > parallelThreshold;
         count++;
         for (int i = 0; i < futureIdx + 1; i++) {
             Pair<List<ShortcutHandlerData>, EdgeBasedWitnessPathSearcher.Stats> result = results.get(i);
