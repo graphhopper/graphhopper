@@ -449,7 +449,7 @@ public class OSMReader {
 
             // copy node name of motorway_junction
             LongArrayList nodes = way.getNodes();
-            if (!nodes.isEmpty() && name.isEmpty() && (way.hasTag("highway", "motorway") || way.hasTag("highway", "motorway_link"))) {
+            if (!nodes.isEmpty() && (way.hasTag("highway", "motorway") || way.hasTag("highway", "motorway_link"))) {
                 // index 0 assumes oneway=yes
                 Map<String, Object> nodeTags = nodeTagSupplier.getTags(nodes.get(0));
                 String nodeName = (String) nodeTags.getOrDefault("name", "");
