@@ -447,17 +447,15 @@ public class OSMReader {
                     list.add(new KVStorage.KeyValue(STREET_DESTINATION, fixWayName(way.getTag("destination:backward")), false, true));
             }
 
-            // copy name of motorway_junction for named exits and junctions
+            // copy node name of motorway_junction
             LongArrayList nodes = way.getNodes();
-            if (name.isEmpty() && (way.hasTag("highway", "motorway") || way.hasTag("highway", "motorway_link")))
-                for (int i = 0; i < nodes.size(); i++) {
-                    Map<String, Object> nodeTags = nodeTagSupplier.getTags(nodes.get(i));
-                    String nodeName = (String) nodeTags.getOrDefault("name", "");
-                    if (!nodeName.isEmpty() && "motorway_junction".equals(nodeTags.getOrDefault("highway", ""))) {
-                        list.add(new KVStorage.KeyValue(STREET_NAME, nodeName));
-                        break;
-                    }
-                }
+            if (!nodes.isEmpty() && name.isEmpty() && (way.hasTag("highway", "motorway") || way.hasTag("highway", "motorway_link"))) {
+                // index 0 assumes oneway=yes
+                Map<String, Object> nodeTags = nodeTagSupplier.getTags(nodes.get(0));
+                String nodeName = (String) nodeTags.getOrDefault("name", "");
+                if (!nodeName.isEmpty() && "motorway_junction".equals(nodeTags.getOrDefault("highway", "")))
+                    list.add(new KVStorage.KeyValue(MOTORWAY_JUNCTION, nodeName));
+            }
         }
 
         if (way.getTags().size() > 1) // at least highway tag
