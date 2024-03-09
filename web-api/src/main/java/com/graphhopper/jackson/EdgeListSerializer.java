@@ -46,6 +46,7 @@ public class EdgeListSerializer extends JsonSerializer<EdgeList> {
             instrJson.put("penalty", edge.getPenalty());
             instrJson.put("time", edge.getTime());
             instrJson.put("weight", edge.getWeight());
+            instrJson.put("points", edge.getPoints().toLineString(true));
             
         }
         jsonGenerator.writeObject(instrList);

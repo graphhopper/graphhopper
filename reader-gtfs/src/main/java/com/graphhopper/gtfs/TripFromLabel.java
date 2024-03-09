@@ -411,7 +411,7 @@ class TripFromLabel {
                 if (includeEdges) {
                     Edge edgeDetail = new Edge(edge.getName(), edge.getDistance(), edge.getGrade(), edge.isReversed(),
                             weighting.calcEdgeMillis(edge, false), weighting.calcEdgeWeight(edge, false),
-                            edge.get(penaltyEnc));
+                            edge.get(penaltyEnc), edge.fetchWayGeometry(FetchMode.ALL));
                     edges.add(edgeDetail);
                 }
                 prevEdgeId = edge.getEdge();
