@@ -539,7 +539,7 @@ public class InstructionListTest {
         NodeAccess na = g.getNodeAccess();
         na.setNode(0, 1.2, 1.0);
         na.setNode(1, 1.2, 1.1);
-        na.setNode(2, 1.2, 1.2);
+        na.setNode(2, 1.17, 1.2);
         na.setNode(3, 1.1, 1.0);
         na.setNode(4, 1.1, 1.1);
         na.setNode(5, 1.1, 1.2);
@@ -653,6 +653,8 @@ public class InstructionListTest {
         assertEquals("[{beforeTurn=20000.0, lanes=[{directions:[continue], valid:false}, {directions:[continue, right], valid:true}]}, {beforeTurn=10000.0, lanes=[{directions:[continue], valid:false}, {directions:[right], valid:true}]}]", wayList.get(1).getInstructionDetails().toString());
         assertEquals("[]", wayList.get(2).getInstructionDetails().toString());
 
+        // search backward from turn to keep lane infos
+        // similar in real world: http://localhost:3000/?point=52.453383%2C13.457341&point=52.454789%2C13.461292&profile=car
         p = new Dijkstra(g, weighting, tMode).calcPath(6, 10);
         wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR, true);
         assertEquals(3, wayList.size());

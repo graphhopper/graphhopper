@@ -22,7 +22,6 @@ import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
@@ -155,15 +154,15 @@ class InstructionsOutgoingEdges {
     }
 
     /**
-     * Returns an edge that has more or less in the same orientation as the prevEdge, but is not the currentEdge.
-     * If there is one, this indicates that we might need an instruction to help finding the correct edge out of the different choices.
-     * If there is none, return null.
+     * Returns an edge with the specified "signFunction" (similar orientation) as the prevEdge,
+     * but is not the currentEdge. If there is one, this indicates that we might need an instruction
+     * to help finding the correct edge out of the different choices. If there is none, return null.
      */
-    public EdgeIteratorState getOtherContinue(double prevLat, double prevLon, double prevOrientation, Function<Integer, Boolean> fun) {
+    public EdgeIteratorState getOtherContinue(double prevLat, double prevLon, double prevOrientation, Function<Integer, Boolean> signFunction) {
         for (EdgeIteratorState edge : allowedAlternativeTurns) {
             GHPoint point = InstructionsHelper.getPointForOrientationCalculation(edge);
             int sign = InstructionsHelper.calculateSign(prevLat, prevLon, point.getLat(), point.getLon(), prevOrientation);
-            if (fun.apply(sign)) return edge;
+            if (signFunction.apply(sign)) return edge;
         }
         return null;
     }

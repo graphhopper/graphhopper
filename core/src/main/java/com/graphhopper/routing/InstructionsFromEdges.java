@@ -268,9 +268,6 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                     prevInstructionDetails.clear();
                     prevAdditionalInfo.clear();
                 } else {
-                    // TODO search backward from turn to keep lane infos like this too:
-                    //  http://localhost:3000/?point=52.453383%2C13.457341&point=52.454789%2C13.461292&profile=car
-
                     for (InstructionDetails d : prevInstructionDetails) {
                         d.setBeforeTurn(d.getBeforeTurn() + prevEdge.getDistance());
                     }
@@ -348,11 +345,12 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                         AdditionalInfo info = prevAdditionalInfo.get(i);
                         List<LaneInfo> infoLanes = prevInstructionDetails.get(i).getLanes();
                         markActive(infoLanes, info.lanesAccess, sign);
-                        if (info.outgoingEdges.getAllowedTurns() <= 1)
-                            continue;
-                        if (sign > 3 || sign < -3 || sign == Instruction.CONTINUE_ON_STREET)
+                        if (info.outgoingEdges.getAllowedTurns() <= 1 || i == prevInstructionDetails.size() - 1)
                             continue;
 
+                        // remove previous lane info due to ambiguity when same turn direction
+                        if (sign > 3 || sign < -3 || sign == Instruction.CONTINUE_ON_STREET)
+                            continue;
                         EdgeIteratorState anotherTurnEdgeBeforeTurn = info.outgoingEdges.getOtherContinue(info.prevLat, info.prevLon, info.prevOrientation,
                                 tmpSign -> tmpSign * sign > 0);
                         if (anotherTurnEdgeBeforeTurn != null)
