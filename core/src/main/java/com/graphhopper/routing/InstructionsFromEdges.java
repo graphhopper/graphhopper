@@ -87,10 +87,10 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
     private String prevName;
     private String prevInstructionName;
 
-    class AdditionalInfo {
+    private static class AdditionalInfo {
         List<String> lanesAccess = Collections.emptyList();
-        int allowedTurns = 0;
-        EdgeIteratorState edge;
+        InstructionsOutgoingEdges outgoingEdges;
+        double prevLat, prevLon, prevOrientation;
     }
 
     private static final int MAX_U_TURN_DISTANCE = 35;
@@ -253,7 +253,8 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
 
         } else {
             InstructionsOutgoingEdges outdoingEdges = new InstructionsOutgoingEdges(prevEdge, edge, weighting, maxSpeedEnc,
-                    roadClassEnc, roadClassLinkEnc, allExplorer, nodeAccess, prevNode, baseNode, adjNode);
+                    roadClassEnc, roadClassLinkEnc, allExplorer, prevNode, baseNode, adjNode);
+            prevOrientation = AngleCalc.ANGLE_CALC.calcOrientation(doublePrevLat, doublePrevLon, prevLat, prevLon);
             int sign = edge.getEdge() == prevEdge.getEdge()
                     ? Instruction.U_TURN_UNKNOWN // this is the simplest turn to recognize, a plain u-turn.
                     : getTurn(outdoingEdges, edge, name, destination + destinationRef);
@@ -270,10 +271,6 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                     // TODO search backward from turn to keep lane infos like this too:
                     //  http://localhost:3000/?point=52.453383%2C13.457341&point=52.454789%2C13.461292&profile=car
 
-                    AdditionalInfo addInfo = new AdditionalInfo();
-                    if (sign == Instruction.IGNORE)
-                        addInfo.allowedTurns = outdoingEdges.getAllowedTurns();
-
                     for (InstructionDetails d : prevInstructionDetails) {
                         d.setBeforeTurn(d.getBeforeTurn() + prevEdge.getDistance());
                     }
@@ -283,8 +280,12 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                     String lanesAccessStr = (String) prevEdge.getValue(TURN_LANES_VEHICLE_ACCESS);
                     d.setLanes(lanes);
                     prevInstructionDetails.add(d);
+                    AdditionalInfo addInfo = new AdditionalInfo();
                     addInfo.lanesAccess = lanesAccessStr == null ? Collections.emptyList() : Arrays.asList(lanesAccessStr.split("\\|"));
-                    addInfo.edge = edge;
+                    addInfo.outgoingEdges = outdoingEdges;
+                    addInfo.prevLat = prevLat;
+                    addInfo.prevLon = prevLon;
+                    addInfo.prevOrientation = prevOrientation;
                     prevAdditionalInfo.add(addInfo);
                 }
             }
@@ -341,18 +342,30 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
 
                 // TODO what happens for u-turns?
                 if (withTurnLanes && !lanes.isEmpty()) {
+                    // search backward for ambiguous lane changes
                     int i = prevInstructionDetails.size() - 1;
                     for (; i >= 0; i--) {
-                        if (prevAdditionalInfo.get(i).allowedTurns > 1) {
+                        AdditionalInfo info = prevAdditionalInfo.get(i);
+                        List<LaneInfo> infoLanes = prevInstructionDetails.get(i).getLanes();
+                        markActive(infoLanes, info.lanesAccess, sign);
+                        if (info.outgoingEdges.getAllowedTurns() <= 1)
+                            continue;
+                        if (sign > 3 || sign < -3 || sign == Instruction.CONTINUE_ON_STREET)
+                            continue;
 
-                        }
+                        EdgeIteratorState anotherTurnEdgeBeforeTurn = info.outgoingEdges.getOtherContinue(info.prevLat, info.prevLon, info.prevOrientation,
+                                tmpSign -> tmpSign * sign > 0);
+                        if (anotherTurnEdgeBeforeTurn != null)
+                            break;
 
+                        // TODO are there real world cases where we have to mark a different lane active?
+                        if (infoLanes.stream().noneMatch(l -> l.valid))
+                            markActive(infoLanes, info.lanesAccess, Instruction.CONTINUE_ON_STREET);
                     }
                     i++;
                     List<InstructionDetails> detailsList = prevInstruction.getInstructionDetails();
                     for (; i < prevInstructionDetails.size(); i++) {
                         InstructionDetails d = prevInstructionDetails.get(i);
-                        markActive(d.getLanes(), prevAdditionalInfo.get(i).lanesAccess, sign);
                         // skip duplicates
                         if (detailsList.isEmpty() || !detailsList.get(detailsList.size() - 1).getLanes().equals(d.getLanes()))
                             detailsList.add(d);
@@ -437,7 +450,6 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         GHPoint point = InstructionsHelper.getPointForOrientationCalculation(edge);
         double lat = point.getLat();
         double lon = point.getLon();
-        prevOrientation = AngleCalc.ANGLE_CALC.calcOrientation(doublePrevLat, doublePrevLon, prevLat, prevLon);
         int sign = InstructionsHelper.calculateSign(prevLat, prevLon, lat, lon, prevOrientation);
         int nrOfPossibleTurns = outgoingEdges.getAllowedTurns();
 
@@ -480,14 +492,13 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         // There is at least one other possibility to turn, and we are almost going straight
         // Check the other turns if one of them is also going almost straight
         // If not, we don't need a turn instruction
-        EdgeIteratorState otherContinue = outgoingEdges.getOtherContinue(prevLat, prevLon, prevOrientation);
+        EdgeIteratorState otherContinue = outgoingEdges.getOtherContinue(prevLat, prevLon, prevOrientation, tmpSign -> Math.abs(tmpSign) <= 1);
 
         // Signs provide too less detail, so we use the delta for a precise comparison
         double delta = InstructionsHelper.calculateOrientationDelta(prevLat, prevLon, lat, lon, prevOrientation);
 
         // This state is bad! Two streets are going more or less straight
         // Happens a lot for trunk_links
-        // For _links, comparing flags works quite good, as links usually have different speeds => different flags
         if (otherContinue != null) {
             // We are at a fork
             if (!InstructionsHelper.isNameSimilar(name, prevName)

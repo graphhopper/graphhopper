@@ -559,7 +559,7 @@ public class InstructionListTest {
         assertEquals("continue onto 0-1", wayList.get(0).getTurnDescription(usTR));
         assertEquals("[]", wayList.get(0).getInstructionDetails().toString());
         assertEquals("turn right onto 1-4", wayList.get(1).getTurnDescription(usTR));
-        assertEquals("[{segmentDistance=10000.0, lanes=[{directions:[continue], valid:false}, {directions:[right], valid:true}]}]", wayList.get(1).getInstructionDetails().toString());
+        assertEquals("[{beforeTurn=10000.0, lanes=[{directions:[continue], valid:false}, {directions:[right], valid:true}]}]", wayList.get(1).getInstructionDetails().toString());
         assertEquals("[]", wayList.get(2).getInstructionDetails().toString());
 
         p = new Dijkstra(g, weighting, tMode).calcPath(0, 2);
@@ -579,7 +579,7 @@ public class InstructionListTest {
         assertEquals("continue onto 3-4", wayList.get(0).getTurnDescription(usTR));
         assertEquals("[]", wayList.get(0).getInstructionDetails().toString());
         assertEquals("turn left onto 1-4", wayList.get(1).getTurnDescription(usTR));
-        assertEquals("[{segmentDistance=10000.0, lanes=[{directions:[continue, left], valid:true}, {directions:[continue], valid:false}, {directions:[right], valid:false}]}]", wayList.get(1).getInstructionDetails().toString());
+        assertEquals("[{beforeTurn=10000.0, lanes=[{directions:[continue, left], valid:true}, {directions:[continue], valid:false}, {directions:[right], valid:false}]}]", wayList.get(1).getInstructionDetails().toString());
         assertEquals("[]", wayList.get(2).getInstructionDetails().toString());
 
         p = new Dijkstra(g, weighting, tMode).calcPath(3, 4);
@@ -601,9 +601,11 @@ public class InstructionListTest {
     public void getMergeMultipleEdgesOfSameJunction() {
         // e.g. http://localhost:3000/?point=52.519159%2C13.452253&point=52.516092%2C13.45156
         BaseGraph g = new BaseGraph.Builder(carManager).create();
-        // 0-1-2-3
-        //     | |
-        //     5-6
+        // 0-1-2-3     10
+        //     | |     |
+        //     5-6--7--8--9
+        //       |  |     |
+        //      11-12-13-14-15
         NodeAccess na = g.getNodeAccess();
         na.setNode(0, 1.2, 1.0);
         na.setNode(1, 1.2, 1.1);
@@ -611,11 +613,35 @@ public class InstructionListTest {
         na.setNode(3, 1.2, 1.3);
         na.setNode(5, 1.1, 1.2);
         na.setNode(6, 1.1, 1.3);
+        na.setNode(7, 1.1, 1.4);
+        na.setNode(8, 1.1, 1.5);
+        na.setNode(9, 1.1, 1.6);
+        na.setNode(10, 1.2, 1.5);
+        na.setNode(11, 1.0, 1.3);
+        na.setNode(12, 1.0, 1.4);
+        na.setNode(13, 1.0, 1.5);
+        na.setNode(14, 1.0, 1.6);
+        na.setNode(15, 1.0, 1.7);
+
         g.edge(0, 1).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "0-1", TURN_LANES, "continue|continue;right"));
         g.edge(1, 2).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "1-2", TURN_LANES, "continue|right"));
         g.edge(2, 3).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "2-3"));
         g.edge(2, 5).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "2-5"));
-        g.edge(3, 6).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "3-6"));
+        g.edge(3, 6).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "3-6", TURN_LANES, "continue|right"));
+        g.edge(5, 6).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "5-6"));
+        g.edge(6, 7).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "6-7", TURN_LANES, "continue|right"));
+        g.edge(7, 8).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "7-8", TURN_LANES, "left|continue"));
+        g.edge(8, 9).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "8-9"));
+
+        g.edge(8, 10).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "8-10"));
+        g.edge(6, 11).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "6-11"));
+        g.edge(7, 12).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "7-12"));
+        g.edge(9, 14).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "9-14"));
+
+        g.edge(11, 12).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "11-12", TURN_LANES, "left|continue"));
+        g.edge(12, 13).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "12-13", TURN_LANES, "left|continue"));
+        g.edge(13, 14).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "13-14", TURN_LANES, "left|continue"));
+        g.edge(14, 15).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "14-15"));
 
         Weighting weighting = new SpeedWeighting(speedEnc);
         Path p = new Dijkstra(g, weighting, tMode).calcPath(0, 5);
@@ -624,7 +650,26 @@ public class InstructionListTest {
         assertEquals("continue onto 0-1", wayList.get(0).getTurnDescription(usTR));
         assertEquals("[]", wayList.get(0).getInstructionDetails().toString());
         assertEquals("turn right onto 2-5", wayList.get(1).getTurnDescription(usTR));
-        assertEquals("[{segmentDistance=20000.0, lanes=[{directions:[continue], valid:false}, {directions:[continue, right], valid:true}]}, {segmentDistance=10000.0, lanes=[{directions:[continue], valid:false}, {directions:[right], valid:true}]}]", wayList.get(1).getInstructionDetails().toString());
+        assertEquals("[{beforeTurn=20000.0, lanes=[{directions:[continue], valid:false}, {directions:[continue, right], valid:true}]}, {beforeTurn=10000.0, lanes=[{directions:[continue], valid:false}, {directions:[right], valid:true}]}]", wayList.get(1).getInstructionDetails().toString());
+        assertEquals("[]", wayList.get(2).getInstructionDetails().toString());
+
+        p = new Dijkstra(g, weighting, tMode).calcPath(6, 10);
+        wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR, true);
+        assertEquals(3, wayList.size());
+        assertEquals("continue onto 6-7", wayList.get(0).getTurnDescription(usTR));
+        assertEquals("[]", wayList.get(0).getInstructionDetails().toString());
+        assertEquals("turn left onto 8-10", wayList.get(1).getTurnDescription(usTR));
+        assertEquals("[{beforeTurn=20000.0, lanes=[{directions:[continue], valid:true}, {directions:[right], valid:false}]}, {beforeTurn=10000.0, lanes=[{directions:[left], valid:true}, {directions:[continue], valid:false}]}]", wayList.get(1).getInstructionDetails().toString());
+        assertEquals("[]", wayList.get(2).getInstructionDetails().toString());
+
+        // an ambiguous left turn lane comes directly before the correct left turn -> beforeTurn should not be too early (i.e. 30 000 vs 20 000)
+        p = new Dijkstra(g, weighting, tMode).calcPath(11, 9);
+        wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR, true);
+        assertEquals(3, wayList.size());
+        assertEquals("continue onto 11-12", wayList.get(0).getTurnDescription(usTR));
+        assertEquals("[]", wayList.get(0).getInstructionDetails().toString());
+        assertEquals("turn left onto 9-14", wayList.get(1).getTurnDescription(usTR));
+        assertEquals("[{beforeTurn=20000.0, lanes=[{directions:[left], valid:true}, {directions:[continue], valid:false}]}]", wayList.get(1).getInstructionDetails().toString());
         assertEquals("[]", wayList.get(2).getInstructionDetails().toString());
     }
 

@@ -30,6 +30,7 @@ import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * This class handles the outgoing edges for a single turn instruction.
@@ -65,7 +66,6 @@ class InstructionsOutgoingEdges {
     private final DecimalEncodedValue maxSpeedEnc;
     private final EnumEncodedValue<RoadClass> roadClassEnc;
     private final BooleanEncodedValue roadClassLinkEnc;
-    private final NodeAccess nodeAccess;
     private final Weighting weighting;
 
     public InstructionsOutgoingEdges(EdgeIteratorState prevEdge,
@@ -75,7 +75,6 @@ class InstructionsOutgoingEdges {
                                      EnumEncodedValue<RoadClass> roadClassEnc,
                                      BooleanEncodedValue roadClassLinkEnc,
                                      EdgeExplorer allExplorer,
-                                     NodeAccess nodeAccess,
                                      int prevNode,
                                      int baseNode,
                                      int adjNode) {
@@ -85,7 +84,6 @@ class InstructionsOutgoingEdges {
         this.maxSpeedEnc = maxSpeedEnc;
         this.roadClassEnc = roadClassEnc;
         this.roadClassLinkEnc = roadClassLinkEnc;
-        this.nodeAccess = nodeAccess;
 
         visibleAlternativeTurns = new ArrayList<>();
         allowedAlternativeTurns = new ArrayList<>();
@@ -161,14 +159,11 @@ class InstructionsOutgoingEdges {
      * If there is one, this indicates that we might need an instruction to help finding the correct edge out of the different choices.
      * If there is none, return null.
      */
-    public EdgeIteratorState getOtherContinue(double prevLat, double prevLon, double prevOrientation) {
-        int tmpSign;
+    public EdgeIteratorState getOtherContinue(double prevLat, double prevLon, double prevOrientation, Function<Integer, Boolean> fun) {
         for (EdgeIteratorState edge : allowedAlternativeTurns) {
             GHPoint point = InstructionsHelper.getPointForOrientationCalculation(edge);
-            tmpSign = InstructionsHelper.calculateSign(prevLat, prevLon, point.getLat(), point.getLon(), prevOrientation);
-            if (Math.abs(tmpSign) <= 1) {
-                return edge;
-            }
+            int sign = InstructionsHelper.calculateSign(prevLat, prevLon, point.getLat(), point.getLon(), prevOrientation);
+            if (fun.apply(sign)) return edge;
         }
         return null;
     }

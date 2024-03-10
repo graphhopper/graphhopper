@@ -46,6 +46,6 @@ public class InstructionDetails {
 
     @Override
     public String toString() {
-        return "{segmentDistance=" + beforeTurn + ", lanes=" + lanes + '}';
+        return "{beforeTurn=" + beforeTurn + ", lanes=" + lanes + '}';
     }
 }
