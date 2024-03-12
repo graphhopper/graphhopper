@@ -231,11 +231,11 @@ public final class CustomWeighting extends AbstractWeighting {
                 if (Double.isInfinite(weight)) return weight;
                 double changeAngle = calcChangeAngle(inEdge, viaNode, outEdge, graph, orientationEnc);
                 if (changeAngle > minRightInRad && changeAngle < minLeftInRad)
-                    return tcConfig.getStraightCost();
+                    return tcConfig.getStraightCost() + weight;
                 else if (changeAngle >= minLeftInRad && changeAngle <= maxLeftInRad)
-                    return tcConfig.getLeftCost();
+                    return tcConfig.getLeftCost() + weight;
                 else if (changeAngle <= minRightInRad && changeAngle >= maxRightInRad)
-                    return tcConfig.getRightCost();
+                    return tcConfig.getRightCost() + weight;
                 else return Double.POSITIVE_INFINITY; // too sharp turn
             }
 
