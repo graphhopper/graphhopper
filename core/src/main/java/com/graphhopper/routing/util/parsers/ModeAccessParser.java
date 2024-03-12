@@ -16,6 +16,7 @@ public class ModeAccessParser implements TagParser {
     private final List<String> restrictionKeys;
     private final List<String> vehicleForward;
     private final List<String> vehicleBackward;
+    private final List<String> ignoreOnewayKeys;
     private final BooleanEncodedValue accessEnc;
     private final BooleanEncodedValue roundaboutEnc;
 
@@ -25,6 +26,8 @@ public class ModeAccessParser implements TagParser {
         restrictionKeys = OSMRoadAccessParser.toOSMRestrictions(mode);
         vehicleForward = restrictionKeys.stream().map(r -> r + ":forward").toList();
         vehicleBackward = restrictionKeys.stream().map(r -> r + ":backward").toList();
+
+        ignoreOnewayKeys = restrictionKeys.stream().map(r -> "oneway:" + r).toList();
     }
 
     @Override
@@ -46,8 +49,9 @@ public class ModeAccessParser implements TagParser {
             accessEnc.setBool(true, edgeId, edgeIntAccess, true);
         } else {
             boolean isRoundabout = roundaboutEnc.getBool(false, edgeId, edgeIntAccess);
+            boolean ignoreOneway = way.hasTag(ignoreOnewayKeys, "no");
             boolean isBwd = isBackwardOneway(way);
-            if (isBwd || isRoundabout || isForwardOneway(way)) {
+            if (!ignoreOneway && (isBwd || isRoundabout || isForwardOneway(way))) {
                 accessEnc.setBool(isBwd, edgeId, edgeIntAccess, true);
             } else {
                 accessEnc.setBool(false, edgeId, edgeIntAccess, true);

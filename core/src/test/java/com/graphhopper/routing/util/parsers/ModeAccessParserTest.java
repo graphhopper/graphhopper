@@ -73,6 +73,15 @@ class ModeAccessParserTest {
         way.setTag("bus", "yes");
         parser.handleWayTags(edgeId, access, way, null);
         assertTrue(busAccessEnc.getBool(false, edgeId, access));
+
+        access = new ArrayEdgeIntAccess(1);
+        way = new ReaderWay(0);
+        way.setTag("highway", "primary");
+        way.setTag("oneway", "yes");
+        way.setTag("oneway:bus", "no");
+        parser.handleWayTags(edgeId, access, way, null);
+        assertTrue(busAccessEnc.getBool(false, edgeId, access));
+        assertTrue(busAccessEnc.getBool(true, edgeId, access));
     }
 
     @Test
