@@ -49,7 +49,7 @@ public class ModeAccessParser implements TagParser {
             accessEnc.setBool(true, edgeId, edgeIntAccess, true);
         } else {
             boolean isRoundabout = roundaboutEnc.getBool(false, edgeId, edgeIntAccess);
-            boolean ignoreOneway = way.hasTag(ignoreOnewayKeys, "no");
+            boolean ignoreOneway = "no".equals(way.getFirstPriorityTag(ignoreOnewayKeys));
             boolean isBwd = isBackwardOneway(way);
             if (!ignoreOneway && (isBwd || isRoundabout || isForwardOneway(way))) {
                 accessEnc.setBool(isBwd, edgeId, edgeIntAccess, true);
@@ -70,11 +70,11 @@ public class ModeAccessParser implements TagParser {
 
     protected boolean isBackwardOneway(ReaderWay way) {
         // vehicle:forward=no is like oneway=-1
-        return way.hasTag("oneway", "-1") || way.hasTag(vehicleForward, "no");
+        return way.hasTag("oneway", "-1") || "no".equals(way.getFirstPriorityTag(vehicleForward));
     }
 
     protected boolean isForwardOneway(ReaderWay way) {
         // vehicle:backward=no is like oneway=yes
-        return way.hasTag("oneway", onewaysForward) || way.hasTag(vehicleBackward, "no");
+        return way.hasTag("oneway", onewaysForward) || "no".equals(way.getFirstPriorityTag(vehicleBackward));
     }
 }

@@ -57,6 +57,21 @@ class ModeAccessParserTest {
         parser.handleWayTags(edgeId, edgeIntAccess, way, null);
         assertTrue(busAccessEnc.getBool(false, edgeId, edgeIntAccess));
         assertFalse(busAccessEnc.getBool(true, edgeId, edgeIntAccess));
+
+        way.setTag("bus:backward", "yes");
+        edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
+        parser.handleWayTags(edgeId, edgeIntAccess, way, null);
+        assertTrue(busAccessEnc.getBool(false, edgeId, edgeIntAccess));
+        assertTrue(busAccessEnc.getBool(true, edgeId, edgeIntAccess));
+
+        way.clearTags();
+        way.setTag("highway", "tertiary");
+        way.setTag("vehicle:backward", "yes");
+        way.setTag("bus:backward", "no");
+        edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
+        parser.handleWayTags(edgeId, edgeIntAccess, way, null);
+        assertTrue(busAccessEnc.getBool(false, edgeId, edgeIntAccess));
+        assertFalse(busAccessEnc.getBool(true, edgeId, edgeIntAccess));
     }
 
     @Test
@@ -82,6 +97,13 @@ class ModeAccessParserTest {
         parser.handleWayTags(edgeId, access, way, null);
         assertTrue(busAccessEnc.getBool(false, edgeId, access));
         assertTrue(busAccessEnc.getBool(true, edgeId, access));
+
+        access = new ArrayEdgeIntAccess(1);
+        way.setTag("oneway:psv", "no");
+        way.setTag("oneway:bus", "yes");
+        parser.handleWayTags(edgeId, access, way, null);
+        assertTrue(busAccessEnc.getBool(false, edgeId, access));
+        assertFalse(busAccessEnc.getBool(true, edgeId, access));
     }
 
     @Test
