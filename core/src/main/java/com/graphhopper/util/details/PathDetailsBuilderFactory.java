@@ -44,6 +44,11 @@ public class PathDetailsBuilderFactory {
         if (requestedPathDetails.contains(LEG_WEIGHT))
             builders.add(new ConstantDetailsBuilder(LEG_WEIGHT, path.getWeight()));
 
+        for (String key : requestedPathDetails) {
+            if (key.endsWith("_conditional"))
+                builders.add(new KVStringDetails(key));
+        }
+
         if (requestedPathDetails.contains(STREET_NAME))
             builders.add(new KVStringDetails(STREET_NAME));
         if (requestedPathDetails.contains(STREET_REF))

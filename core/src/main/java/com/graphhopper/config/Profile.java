@@ -58,7 +58,7 @@ public class Profile {
         setName(p.getName());
         setVehicle(p.getVehicle());
         setWeighting(p.getWeighting());
-        setTurnCosts(p.isTurnCosts());
+        setTurnCosts(p.hasTurnCosts());
         hints = new PMap(p.getHints());
     }
 
@@ -101,7 +101,7 @@ public class Profile {
         return getHints().getObject(CustomModel.KEY, null);
     }
 
-    public boolean isTurnCosts() {
+    public boolean hasTurnCosts() {
         return turnCosts;
     }
 

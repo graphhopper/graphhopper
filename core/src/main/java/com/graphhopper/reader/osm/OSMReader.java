@@ -413,9 +413,8 @@ public class OSMReader {
      * refers to the duration of the entire way.
      */
     protected void preprocessWay(ReaderWay way, WaySegmentParser.CoordinateSupplier coordinateSupplier) {
-        // storing the road name does not yet depend on the flagEncoder so manage it directly
-        List<KVStorage.KeyValue> list = new ArrayList<>();
         if (config.isParseWayNames()) {
+            List<KVStorage.KeyValue> list = new ArrayList<>();
             // http://wiki.openstreetmap.org/wiki/Key:name
             String name = "";
             if (!config.getPreferredLanguage().isEmpty())
@@ -446,8 +445,25 @@ public class OSMReader {
                 if (way.hasTag("destination:backward"))
                     list.add(new KVStorage.KeyValue(STREET_DESTINATION, fixWayName(way.getTag("destination:backward")), false, true));
             }
+            if (way.getTags().size() > 1) // at least highway tag
+                for (Map.Entry<String, Object> entry : way.getTags().entrySet()) {
+                    if (entry.getKey().endsWith(":conditional") && entry.getValue() instanceof String &&
+                            // for now reduce index size a bit and focus on access tags
+                            !entry.getKey().startsWith("maxspeed") && !entry.getKey().startsWith("maxweight")) {
+                        // remove spaces as they unnecessarily increase the unique number of values:
+                        String value = KVStorage.cutString(((String) entry.getValue()).
+                                replace(" ", "").replace("bicycle", "bike"));
+                        boolean fwd = entry.getKey().contains("forward");
+                        boolean bwd = entry.getKey().contains("backward");
+                        if (!fwd && !bwd)
+                            list.add(new KVStorage.KeyValue(entry.getKey().replace(':', '_'), value, true, true));
+                        else
+                            list.add(new KVStorage.KeyValue(entry.getKey().replace(':', '_'), value, fwd, bwd));
+                    }
+                }
+
+            way.setTag("key_values", list);
         }
-        way.setTag("key_values", list);
 
         if (!isCalculateWayDistance(way))
             return;

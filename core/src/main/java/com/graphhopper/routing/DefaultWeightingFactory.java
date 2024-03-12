@@ -56,7 +56,7 @@ public class DefaultWeightingFactory implements WeightingFactory {
 
         final String vehicle = profile.getVehicle();
         TurnCostProvider turnCostProvider;
-        if (profile.isTurnCosts() && !disableTurnCosts) {
+        if (profile.hasTurnCosts() && !disableTurnCosts) {
             BooleanEncodedValue turnRestrictionEnc = encodingManager.getTurnBooleanEncodedValue(TurnRestriction.key(vehicle));
             if (turnRestrictionEnc == null)
                 throw new IllegalArgumentException("Vehicle " + vehicle + " does not support turn costs");
