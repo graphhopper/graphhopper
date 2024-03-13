@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -16,13 +17,25 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ModeAccessParserTest {
 
     private final EncodingManager em = new EncodingManager.Builder().add(Roundabout.create()).add(BusAccess.create()).build();
-    private final ModeAccessParser parser = new ModeAccessParser(TransportationMode.BUS, em.getBooleanEncodedValue(BusAccess.KEY), em.getBooleanEncodedValue(Roundabout.KEY));
+    private final ModeAccessParser parser = new ModeAccessParser(TransportationMode.BUS, em.getBooleanEncodedValue(BusAccess.KEY), em.getBooleanEncodedValue(Roundabout.KEY), List.of());
     private final BooleanEncodedValue busAccessEnc = em.getBooleanEncodedValue(BusAccess.KEY);
 
     @Test
     public void testAccess() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "primary");
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
+        int edgeId = 0;
+        parser.handleWayTags(edgeId, edgeIntAccess, way, null);
+        assertTrue(busAccessEnc.getBool(false, edgeId, edgeIntAccess));
+        assertTrue(busAccessEnc.getBool(true, edgeId, edgeIntAccess));
+    }
+
+    @Test
+    public void testPrivate() {
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "primary");
+        way.setTag("access", "private");
         EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
         int edgeId = 0;
         parser.handleWayTags(edgeId, edgeIntAccess, way, null);
@@ -179,7 +192,7 @@ class ModeAccessParserTest {
     public void testMotorcycleYes() {
         BooleanEncodedValue mcAccessEnc = new SimpleBooleanEncodedValue("motorcycle_access", true);
         EncodingManager mcEM = new EncodingManager.Builder().add(mcAccessEnc).add(Roundabout.create()).build();
-        ModeAccessParser mcParser = new ModeAccessParser(TransportationMode.MOTORCYCLE, mcAccessEnc, mcEM.getBooleanEncodedValue(Roundabout.KEY));
+        ModeAccessParser mcParser = new ModeAccessParser(TransportationMode.MOTORCYCLE, mcAccessEnc, mcEM.getBooleanEncodedValue(Roundabout.KEY), List.of());
 
         int edgeId = 0;
         EdgeIntAccess access = new ArrayEdgeIntAccess(1);

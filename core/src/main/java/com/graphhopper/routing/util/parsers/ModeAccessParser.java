@@ -12,7 +12,7 @@ import java.util.*;
 public class ModeAccessParser implements TagParser {
 
     private final static Set<String> onewaysForward = new HashSet<>(Arrays.asList("yes", "true", "1"));
-    private final static Set<String> restrictedValues = new HashSet<>(Arrays.asList("no", "restricted", "military", "emergency", "private", "permit"));
+    private final Set<String> restrictedValues;
     private final List<String> restrictionKeys;
     private final List<String> vehicleForward;
     private final List<String> vehicleBackward;
@@ -20,14 +20,16 @@ public class ModeAccessParser implements TagParser {
     private final BooleanEncodedValue accessEnc;
     private final BooleanEncodedValue roundaboutEnc;
 
-    public ModeAccessParser(TransportationMode mode, BooleanEncodedValue accessEnc, BooleanEncodedValue roundaboutEnc) {
+    public ModeAccessParser(TransportationMode mode, BooleanEncodedValue accessEnc, BooleanEncodedValue roundaboutEnc, List<String> restrictions) {
         this.accessEnc = accessEnc;
         this.roundaboutEnc = roundaboutEnc;
         restrictionKeys = OSMRoadAccessParser.toOSMRestrictions(mode);
         vehicleForward = restrictionKeys.stream().map(r -> r + ":forward").toList();
         vehicleBackward = restrictionKeys.stream().map(r -> r + ":backward").toList();
-
         ignoreOnewayKeys = restrictionKeys.stream().map(r -> "oneway:" + r).toList();
+        restrictedValues = new HashSet<>(restrictions.isEmpty() ? Arrays.asList("no", "restricted", "military", "emergency") : restrictions);
+        if (restrictedValues.contains(""))
+            throw new IllegalArgumentException("restriction values cannot contain empty string");
     }
 
     @Override

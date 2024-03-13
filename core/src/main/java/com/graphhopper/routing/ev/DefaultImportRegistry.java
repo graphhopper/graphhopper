@@ -21,6 +21,9 @@ package com.graphhopper.routing.ev;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.parsers.*;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
 public class DefaultImportRegistry implements ImportRegistry {
     @Override
     public ImportUnit createImportUnit(String name) {
@@ -206,13 +209,15 @@ public class DefaultImportRegistry implements ImportRegistry {
 
         else if (BusAccess.KEY.equals(name))
             return ImportUnit.create(name, props -> BusAccess.create(),
-                    (lookup, props) -> new ModeAccessParser(TransportationMode.BUS, lookup.getBooleanEncodedValue(BusAccess.KEY), lookup.getBooleanEncodedValue(Roundabout.KEY)),
+                    (lookup, props) -> new ModeAccessParser(TransportationMode.BUS, lookup.getBooleanEncodedValue(BusAccess.KEY),
+                            lookup.getBooleanEncodedValue(Roundabout.KEY), Arrays.stream(props.getString("restrictions", "").split(";")).filter(s -> !s.isEmpty()).collect(Collectors.toList())),
                     "roundabout"
             );
 
         else if (HovAccess.KEY.equals(name))
             return ImportUnit.create(name, props -> HovAccess.create(),
-                    (lookup, props) -> new ModeAccessParser(TransportationMode.HOV, lookup.getBooleanEncodedValue(HovAccess.KEY), lookup.getBooleanEncodedValue(Roundabout.KEY)),
+                    (lookup, props) -> new ModeAccessParser(TransportationMode.HOV, lookup.getBooleanEncodedValue(HovAccess.KEY),
+                            lookup.getBooleanEncodedValue(Roundabout.KEY), Arrays.stream(props.getString("restrictions", "").split(";")).filter(s -> !s.isEmpty()).collect(Collectors.toList())),
                     "roundabout"
             );
         else if (FootRoadAccessConditional.KEY.equals(name))
