@@ -1,4 +1,4 @@
-# do not edit manually, instead use spreadsheet https://t.co/f086oJXAEI and script ./core/files/update-translations.sh
+# do not edit manually, instead use spreadsheet from translations.md and script ./core/files/update-translations.sh
 
 continue=Ga rechtdoor
 continue_onto=blijf op %1$s
@@ -72,6 +72,9 @@ web.custom_model_enabled=
 web.settings=Instellingen
 web.settings_close=Sluit
 web.exclude_motorway_example=Vermijd snelweg
+web.exclude_disneyland_paris_example=
+web.simple_electric_car_example=
+web.avoid_tunnels_bridges_example=
 web.limit_speed_example=Max snelheid
 web.cargo_bike_example=Bestel fiets
 web.prefer_bike_network=Prefereer fiets routes
@@ -141,6 +144,8 @@ web.max_speed=
 web.average_speed=
 web.track_type=
 web.toll=
+web.next=
+web.back=
 navigate.accept_risks_after_warning=Ik snap het
 navigate.for_km=Voor %1$s kilometer
 navigate.for_mi=Voor %1$s mijl
