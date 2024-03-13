@@ -49,7 +49,7 @@ public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
 
     @Override
     protected BikeCommonAccessParser createAccessParser(EncodedValueLookup lookup, PMap pMap) {
-        return (BikeCommonAccessParser) new MountainBikeAccessParser(lookup, pMap).init(new DateRangeParser());
+        return new MountainBikeAccessParser(lookup, pMap);
     }
 
     @Override

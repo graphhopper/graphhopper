@@ -38,7 +38,7 @@ public class HikeCustomModelTest {
         parsers = new OSMParsers().
                 addWayTagParser(new OSMHikeRatingParser(hikeRating));
 
-        parsers.addWayTagParser(new FootAccessParser(em, new PMap()).init(new DateRangeParser()));
+        parsers.addWayTagParser(new FootAccessParser(em, new PMap()));
         parsers.addWayTagParser(new FootAverageSpeedParser(em));
         parsers.addWayTagParser(new FootPriorityParser(em));
     }

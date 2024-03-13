@@ -168,7 +168,7 @@ public class MapMatchingTest {
                 new Observation(new GHPoint(51.23, 12.18)),
                 new Observation(new GHPoint(51.45, 12.59)));
         MatchResult mr = mapMatching.match(inputGPXEntries);
-        assertEquals(57553.0, mr.getMatchLength(), 1.0);
+        assertEquals(57649.2, mr.getMatchLength(), 1.0);
     }
 
     @ParameterizedTest

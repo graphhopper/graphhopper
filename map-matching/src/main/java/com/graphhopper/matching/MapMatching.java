@@ -69,7 +69,7 @@ public class MapMatching {
     private final BaseGraph graph;
     private final Router router;
     private final LocationIndexTree locationIndex;
-    private double measurementErrorSigma = 50.0;
+    private double measurementErrorSigma = 10.0;
     private double transitionProbabilityBeta = 2.0;
     private final DistanceCalc distanceCalc = new DistancePlaneProjection();
     private QueryGraph queryGraph;

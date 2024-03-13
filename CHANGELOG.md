@@ -2,6 +2,7 @@
 
 - u_turn_costs information is no longer stored in profile. Use the TurnCostsConfig instead
 - the custom models do no longer include the speed, access and priority encoded values only implicitly, see #2938 for a migration guide. You have to specify an initial statement like `{ "if": "true", "limit_to": "car_average_speed" }` for `speed` and `{ "if": "!car_access", "multiply_by": "0" }` for `priority`
+- conditional access restriction tags are no longer considered from vehicle tag parsers and instead a car_road_access_conditional encoded value (similarly for bike + foot) can be used in a custom model. This fixes #2477. More details are accessible via path details "access_conditional" (i.e. converted from OSM access:conditional). See #2863
 - replaced (Vehicle)EncodedValueFactory and (Vehicle)TagParserFactory with ImportRegistry, #2935
 - encoded values used in custom models are added automatically, no need to add them to graph.encoded_values anymore, #2935
 - removed the ability to sort the graph (graph.do_sort) due to incomplete support, #2919
