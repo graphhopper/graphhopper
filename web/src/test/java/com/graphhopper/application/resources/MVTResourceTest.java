@@ -79,7 +79,7 @@ public class MVTResourceTest {
         VectorTileDecoder.Feature feature = features.iterator().next();
         Map<String, Object> attributes = feature.getAttributes();
         Geometry geometry = feature.getGeometry();
-        assertEquals(48, geometry.getCoordinates().length);
+        assertEquals(51, geometry.getCoordinates().length);
         assertEquals("Camì de les Pardines", attributes.get(STREET_NAME));
     }
 

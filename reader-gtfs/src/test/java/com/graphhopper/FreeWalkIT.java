@@ -122,7 +122,7 @@ public class FreeWalkIT {
         assertThat(walkSolution.getLegs().get(0).getDepartureTime().toInstant().atZone(zoneId).toLocalTime())
                 .isEqualTo(LocalTime.parse("06:40"));
         assertThat(walkSolution.getLegs().get(0).getArrivalTime().toInstant().atZone(zoneId).toLocalTime())
-                .isEqualTo(LocalTime.parse("06:41:07.025"));
+                .isEqualTo(LocalTime.parse("06:41:07.031"));
         assertThat(walkSolution.getLegs().size()).isEqualTo(1);
         assertThat(walkSolution.getNumChanges()).isEqualTo(-1);
     }

@@ -295,7 +295,7 @@ public class RouteResourceTest {
         List<PathDetail> averageSpeedList = pathDetails.get("average_speed");
         assertEquals(13, averageSpeedList.size());
         assertEquals(30.0, averageSpeedList.get(0).getValue());
-        assertEquals(14, averageSpeedList.get(0).getLength());
+        assertEquals(15, averageSpeedList.get(0).getLength());
         assertEquals(60.0, averageSpeedList.get(1).getValue());
         assertEquals(5, averageSpeedList.get(1).getLength());
 
@@ -304,7 +304,7 @@ public class RouteResourceTest {
         assertEquals(924L, edgeIdDetails.get(0).getValue());
         assertEquals(2, edgeIdDetails.get(0).getLength());
         assertEquals(925L, edgeIdDetails.get(1).getValue());
-        assertEquals(8, edgeIdDetails.get(1).getLength());
+        assertEquals(9, edgeIdDetails.get(1).getLength());
 
         long expectedTime = rsp.getBest().getTime();
         long actualTime = 0;
@@ -351,9 +351,9 @@ public class RouteResourceTest {
         assertTrue(details.has("average_speed"));
         JsonNode averageSpeed = details.get("average_speed");
         assertEquals(30.0, averageSpeed.get(0).get(2).asDouble(), .1);
-        assertEquals(14, averageSpeed.get(0).get(1).asInt(), .1);
+        assertEquals(15, averageSpeed.get(0).get(1).asInt(), .1);
         assertEquals(60.0, averageSpeed.get(1).get(2).asDouble(), .1);
-        assertEquals(19, averageSpeed.get(1).get(1).asInt());
+        assertEquals(20, averageSpeed.get(1).get(1).asInt());
         assertTrue(details.has("edge_id"));
         JsonNode edgeIds = details.get("edge_id");
         int firstLink = edgeIds.get(0).get(2).asInt();
@@ -362,24 +362,24 @@ public class RouteResourceTest {
         assertEquals(1584, lastLink);
 
         JsonNode maxSpeed = details.get("max_speed");
-        assertEquals("[0,33,50.0]", maxSpeed.get(0).toString());
-        assertEquals("[33,34,60.0]", maxSpeed.get(1).toString());
-        assertEquals("[34,38,50.0]", maxSpeed.get(2).toString());
-        assertEquals("[38,50,90.0]", maxSpeed.get(3).toString());
-        assertEquals("[50,52,50.0]", maxSpeed.get(4).toString());
-        assertEquals("[52,60,90.0]", maxSpeed.get(5).toString());
+        assertEquals("[0,34,50.0]", maxSpeed.get(0).toString());
+        assertEquals("[34,35,60.0]", maxSpeed.get(1).toString());
+        assertEquals("[35,39,50.0]", maxSpeed.get(2).toString());
+        assertEquals("[39,53,90.0]", maxSpeed.get(3).toString());
+        assertEquals("[53,55,50.0]", maxSpeed.get(4).toString());
+        assertEquals("[55,65,90.0]", maxSpeed.get(5).toString());
 
         JsonNode urbanDensityNode = details.get("urban_density");
-        assertEquals("[0,63,\"residential\"]", urbanDensityNode.get(0).toString());
-        assertEquals("[63,68,\"rural\"]", urbanDensityNode.get(1).toString());
-        assertEquals("[68,71,\"residential\"]", urbanDensityNode.get(2).toString());
-        assertEquals("[71,75,\"rural\"]", urbanDensityNode.get(3).toString());
-        assertEquals("[75,106,\"residential\"]", urbanDensityNode.get(4).toString());
-        assertEquals("[106,128,\"rural\"]", urbanDensityNode.get(5).toString());
-        assertEquals("[128,166,\"residential\"]", urbanDensityNode.get(6).toString());
-        assertEquals("[166,171,\"rural\"]", urbanDensityNode.get(7).toString());
-        assertEquals("[171,183,\"residential\"]", urbanDensityNode.get(8).toString());
-        assertEquals("[183,213,\"rural\"]", urbanDensityNode.get(9).toString());
+        assertEquals("[0,68,\"residential\"]", urbanDensityNode.get(0).toString());
+        assertEquals("[68,73,\"rural\"]", urbanDensityNode.get(1).toString());
+        assertEquals("[73,76,\"residential\"]", urbanDensityNode.get(2).toString());
+        assertEquals("[76,80,\"rural\"]", urbanDensityNode.get(3).toString());
+        assertEquals("[80,115,\"residential\"]", urbanDensityNode.get(4).toString());
+        assertEquals("[115,141,\"rural\"]", urbanDensityNode.get(5).toString());
+        assertEquals("[141,181,\"residential\"]", urbanDensityNode.get(6).toString());
+        assertEquals("[181,186,\"rural\"]", urbanDensityNode.get(7).toString());
+        assertEquals("[186,199,\"residential\"]", urbanDensityNode.get(8).toString());
+        assertEquals("[199,233,\"rural\"]", urbanDensityNode.get(9).toString());
     }
 
     @Test
@@ -531,8 +531,8 @@ public class RouteResourceTest {
         assertEquals(200, response.getStatus());
         String str = response.readEntity(String.class);
         // For backward compatibility we currently export route and track.
-        assertTrue(str.contains("<gh:distance>1841.5</gh:distance>"), str);
-        assertFalse(str.contains("<wpt lat=\"42.51003\" lon=\"1.548188\"> <name>Finish!</name></wpt>"));
+        assertTrue(str.contains("<gh:distance>1841.7</gh:distance>"), str);
+        assertFalse(str.contains("<name>Finish!</name></wpt>"));
         assertTrue(str.contains("<trkpt lat=\"42.554839\" lon=\"1.536374\"><time>"));
     }
 
