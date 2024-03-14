@@ -144,6 +144,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         final String ref = (String) edge.getValue(STREET_REF);
         final String destination = (String) edge.getValue(STREET_DESTINATION); // getValue is fast if it does not exist in edge
         final String destinationRef = (String) edge.getValue(STREET_DESTINATION_REF);
+        final String motorwayJunction = (String) edge.getValue(MOTORWAY_JUNCTION);
         if ((prevInstruction == null) && (!isRoundabout)) // very first instruction (if not in Roundabout)
         {
             int sign = Instruction.CONTINUE_ON_STREET;
@@ -151,6 +152,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             prevInstruction.setExtraInfo(STREET_REF, ref);
             prevInstruction.setExtraInfo(STREET_DESTINATION, destination);
             prevInstruction.setExtraInfo(STREET_DESTINATION_REF, destinationRef);
+            prevInstruction.setExtraInfo(MOTORWAY_JUNCTION, motorwayJunction);
             double startLat = nodeAccess.getLat(baseNode);
             double startLon = nodeAccess.getLon(baseNode);
             double heading = AngleCalc.ANGLE_CALC.calcAzimuth(startLat, startLon, latitude, longitude);
@@ -213,6 +215,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             prevInstruction.setExtraInfo(STREET_REF, ref);
             prevInstruction.setExtraInfo(STREET_DESTINATION, destination);
             prevInstruction.setExtraInfo(STREET_DESTINATION_REF, destinationRef);
+            prevInstruction.setExtraInfo(MOTORWAY_JUNCTION, motorwayJunction);
 
             // calc angle between roundabout entrance and exit
             double orientation = AngleCalc.ANGLE_CALC.calcOrientation(prevLat, prevLon, latitude, longitude);
@@ -273,7 +276,6 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                             uTurnType = Instruction.U_TURN_RIGHT;
                         }
                     }
-
                 }
 
                 if (isUTurn) {
@@ -289,6 +291,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                 prevInstruction.setExtraInfo(STREET_REF, ref);
                 prevInstruction.setExtraInfo(STREET_DESTINATION, destination);
                 prevInstruction.setExtraInfo(STREET_DESTINATION_REF, destinationRef);
+                prevInstruction.setExtraInfo(MOTORWAY_JUNCTION, motorwayJunction);
             }
             // Update the prevName, since we don't always create an instruction on name changes the previous
             // name can be an old name. This leads to incorrect turn instructions due to name changes

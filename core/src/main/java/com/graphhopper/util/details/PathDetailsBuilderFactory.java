@@ -49,6 +49,8 @@ public class PathDetailsBuilderFactory {
                 builders.add(new KVStringDetails(key));
         }
 
+        if (requestedPathDetails.contains(MOTORWAY_JUNCTION))
+            builders.add(new KVStringDetails(MOTORWAY_JUNCTION));
         if (requestedPathDetails.contains(STREET_NAME))
             builders.add(new KVStringDetails(STREET_NAME));
         if (requestedPathDetails.contains(STREET_REF))

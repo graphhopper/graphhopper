@@ -68,7 +68,7 @@ public class WaySegmentParser {
     private ElevationProvider elevationProvider = ElevationProvider.NOOP;
     private Predicate<ReaderWay> wayFilter = way -> true;
     private Predicate<ReaderNode> splitNodeFilter = node -> false;
-    private WayPreprocessor wayPreprocessor = (way, supplier) -> {
+    private WayPreprocessor wayPreprocessor = (way, coordinateSupplier, nodeTagSupplier) -> {
     };
     private Consumer<ReaderRelation> relationPreprocessor = relation -> {
     };
@@ -252,7 +252,7 @@ public class WaySegmentParser {
             List<SegmentNode> segment = new ArrayList<>(way.getNodes().size());
             for (LongCursor node : way.getNodes())
                 segment.add(new SegmentNode(node.value, nodeData.getId(node.value), nodeData.getTags(node.value)));
-            wayPreprocessor.preprocessWay(way, osmNodeId -> nodeData.getCoordinates(nodeData.getId(osmNodeId)));
+            wayPreprocessor.preprocessWay(way, osmNodeId -> nodeData.getCoordinates(nodeData.getId(osmNodeId)), osmNodeId -> nodeData.getTags(osmNodeId));
             splitWayAtJunctionsAndEmptySections(segment, way);
         }
 
@@ -541,10 +541,14 @@ public class WaySegmentParser {
          *                           of this node. If elevation is disabled it will be NaN. Returns null if no such OSM
          *                           node exists.
          */
-        void preprocessWay(ReaderWay way, CoordinateSupplier coordinateSupplier);
+        void preprocessWay(ReaderWay way, CoordinateSupplier coordinateSupplier, NodeTagSupplier nodeTagSupplier);
     }
 
     public interface CoordinateSupplier {
         GHPoint3D getCoordinate(long osmNodeId);
+    }
+
+    public interface NodeTagSupplier {
+        Map<String, Object> getTags(long osmNodeId);
     }
 }
