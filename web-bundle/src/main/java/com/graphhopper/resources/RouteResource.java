@@ -85,6 +85,7 @@ public class RouteResource {
             @QueryParam(CALC_POINTS) @DefaultValue("true") boolean calcPoints,
             @QueryParam("elevation") @DefaultValue("false") boolean enableElevation,
             @QueryParam("points_encoded") @DefaultValue("true") boolean pointsEncoded,
+            @QueryParam("points_encoded_multiplier") @DefaultValue("1e5") double pointsEncodedMultiplier,
             @QueryParam("profile") String profileName,
             @QueryParam(ALGORITHM) @DefaultValue("") String algoStr,
             @QueryParam("locale") @DefaultValue("en") String localeStr,
@@ -98,6 +99,7 @@ public class RouteResource {
             @QueryParam("gpx.waypoints") @DefaultValue("false") boolean withWayPoints,
             @QueryParam("gpx.trackname") @DefaultValue("GraphHopper Track") String trackName,
             @QueryParam("gpx.millis") String timeString) {
+        if(!pointsEncoded) pointsEncodedMultiplier = -1;
         StopWatch sw = new StopWatch().start();
         List<GHPoint> points = pointParams.stream().map(AbstractParam::get).collect(toList());
         boolean writeGPX = "gpx".equalsIgnoreCase(type);
@@ -157,7 +159,7 @@ public class RouteResource {
                             header("X-GH-Took", "" + Math.round(took)).
                             build()
                     :
-                    Response.ok(ResponsePathSerializer.jsonObject(ghResponse, osmDate, instructions, calcPoints, enableElevation, pointsEncoded, took)).
+                    Response.ok(ResponsePathSerializer.jsonObject(ghResponse, osmDate, instructions, calcPoints, enableElevation, pointsEncodedMultiplier, took)).
                             header("X-GH-Took", "" + Math.round(took)).
                             type(MediaType.APPLICATION_JSON).
                             build();
@@ -186,6 +188,8 @@ public class RouteResource {
         boolean enableElevation = request.getHints().getBool("elevation", false);
         boolean calcPoints = request.getHints().getBool(CALC_POINTS, true);
         boolean pointsEncoded = request.getHints().getBool("points_encoded", true);
+        double pointsEncodedMultiplier = request.getHints().getDouble("points_encoded_multiplier", 1e5);
+        if(!pointsEncoded) pointsEncodedMultiplier = -1;
 
         double took = sw.stop().getMillisDouble();
         String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
@@ -202,7 +206,7 @@ public class RouteResource {
                     + ", time0: " + Math.round(ghResponse.getBest().getTime() / 60000f) + "min"
                     + ", points0: " + ghResponse.getBest().getPoints().size()
                     + ", debugInfo: " + ghResponse.getDebugInfo());
-            return Response.ok(ResponsePathSerializer.jsonObject(ghResponse, osmDate, instructions, calcPoints, enableElevation, pointsEncoded, took)).
+            return Response.ok(ResponsePathSerializer.jsonObject(ghResponse, osmDate, instructions, calcPoints, enableElevation, pointsEncodedMultiplier, took)).
                     header("X-GH-Took", "" + Math.round(took)).
                     type(MediaType.APPLICATION_JSON).
                     build();

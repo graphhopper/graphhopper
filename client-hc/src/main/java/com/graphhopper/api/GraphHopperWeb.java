@@ -68,7 +68,7 @@ public class GraphHopperWeb {
     private String optimize = "false";
     private boolean postRequest = true;
     private int maxUnzippedLength = 1000;
-    private final Set<String> ignoreSet;
+    private final Set<String> ignoreSetForGet;
     private final Set<String> ignoreSetForPost;
 
     public static final String TIMEOUT = "timeout";
@@ -94,24 +94,26 @@ public class GraphHopperWeb {
         ignoreSetForPost.add("elevation");
         ignoreSetForPost.add("optimize");
         ignoreSetForPost.add("points_encoded");
+        ignoreSetForPost.add("points_encoded_multiplier");
 
-        ignoreSet = new HashSet<>();
-        ignoreSet.add(KEY);
-        ignoreSet.add(CALC_POINTS);
-        ignoreSet.add("calcpoints");
-        ignoreSet.add(INSTRUCTIONS);
-        ignoreSet.add("elevation");
-        ignoreSet.add("optimize");
+        ignoreSetForGet = new HashSet<>();
+        ignoreSetForGet.add(KEY);
+        ignoreSetForGet.add(CALC_POINTS);
+        ignoreSetForGet.add("calcpoints");
+        ignoreSetForGet.add(INSTRUCTIONS);
+        ignoreSetForGet.add("elevation");
+        ignoreSetForGet.add("optimize");
 
         // some parameters are in the request:
-        ignoreSet.add("algorithm");
-        ignoreSet.add("locale");
-        ignoreSet.add("point");
+        ignoreSetForGet.add("algorithm");
+        ignoreSetForGet.add("locale");
+        ignoreSetForGet.add("point");
 
         // some are special and need to be avoided
-        ignoreSet.add("points_encoded");
-        ignoreSet.add("pointsencoded");
-        ignoreSet.add("type");
+        ignoreSetForGet.add("points_encoded");
+        ignoreSetForGet.add("pointsencoded");
+        ignoreSetForGet.add("points_encoded_multiplier");
+        ignoreSetForGet.add("type");
         objectMapper = Jackson.newObjectMapper();
     }
 
@@ -205,7 +207,7 @@ public class GraphHopperWeb {
 
             JsonNode paths = json.get("paths");
             for (JsonNode path : paths) {
-                ResponsePath altRsp = ResponsePathDeserializer.createResponsePath(objectMapper, path, tmpElevation, tmpTurnDescription);
+                ResponsePath altRsp = ResponsePathDeserializer.createResponsePath(objectMapper, path, tmpElevation, 1e6, tmpTurnDescription);
                 res.add(altRsp);
             }
 
@@ -278,6 +280,7 @@ public class GraphHopperWeb {
             requestJson.put("algorithm", ghRequest.getAlgorithm());
 
         requestJson.put("points_encoded", true);
+        requestJson.put("points_encoded_multiplier", 1e6);
         requestJson.put(INSTRUCTIONS, ghRequest.getHints().getBool(INSTRUCTIONS, instructions));
         requestJson.put(CALC_POINTS, ghRequest.getHints().getBool(CALC_POINTS, calcPoints));
         requestJson.put("elevation", ghRequest.getHints().getBool("elevation", elevation));
@@ -329,6 +332,7 @@ public class GraphHopperWeb {
                 + "&type=" + type
                 + "&instructions=" + tmpInstructions
                 + "&points_encoded=true"
+                + "&points_encoded_multiplier=1000000"
                 + "&calc_points=" + tmpCalcPoints
                 + "&algorithm=" + ghRequest.getAlgorithm()
                 + "&locale=" + ghRequest.getLocale().toString()
@@ -369,7 +373,7 @@ public class GraphHopperWeb {
             String urlValue = entry.getValue().toString();
 
             // use lower case conversion for check only!
-            if (ignoreSet.contains(toLowerCase(urlKey))) {
+            if (ignoreSetForGet.contains(toLowerCase(urlKey))) {
                 continue;
             }
 

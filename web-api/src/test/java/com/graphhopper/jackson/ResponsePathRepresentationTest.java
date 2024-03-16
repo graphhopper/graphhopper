@@ -29,10 +29,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class ResponsePathRepresentationTest {
     @Test
     public void testDecode() {
-        PointList list = ResponsePathDeserializer.decodePolyline("_p~iF~ps|U", 1, false);
+        PointList list = ResponsePathDeserializer.decodePolyline("_p~iF~ps|U", 1, false, 1e5);
         assertEquals(Helper.createPointList(38.5, -120.2), list);
 
-        list = ResponsePathDeserializer.decodePolyline("_p~iF~ps|U_ulLnnqC_mqNvxq`@", 3, false);
+        list = ResponsePathDeserializer.decodePolyline("_p~iF~ps|U_ulLnnqC_mqNvxq`@", 3, false, 1e5);
         assertEquals(Helper.createPointList(38.5, -120.2, 40.7, -120.95, 43.252, -126.453), list);
     }
 
@@ -50,20 +50,20 @@ public class ResponsePathRepresentationTest {
         PointList list = Helper.createPointList(38.5, -120.2, 43.252, -126.453,
                 40.7, -120.95, 50.3139, 10.61279, 50.04303, 9.49768);
         String str = ResponsePathSerializer.encodePolyline(list, list.is3D(), 1e5);
-        assertEquals(list, ResponsePathDeserializer.decodePolyline(str, list.size(), false));
+        assertEquals(list, ResponsePathDeserializer.decodePolyline(str, list.size(), false, 1e5));
 
         list = Helper.createPointList(38.5, -120.2, 43.252, -126.453,
                 40.7, -120.95, 40.70001, -120.95001);
         str = ResponsePathSerializer.encodePolyline(list, list.is3D(), 1e5);
-        assertEquals(list, ResponsePathDeserializer.decodePolyline(str, list.size(), false));
+        assertEquals(list, ResponsePathDeserializer.decodePolyline(str, list.size(), false, 1e5));
     }
 
     @Test
     public void testDecode3D() {
-        PointList list = ResponsePathDeserializer.decodePolyline("_p~iF~ps|Uo}@", 1, true);
+        PointList list = ResponsePathDeserializer.decodePolyline("_p~iF~ps|Uo}@", 1, true, 1e5);
         assertEquals(Helper.createPointList3D(38.5, -120.2, 10), list);
 
-        list = ResponsePathDeserializer.decodePolyline("_p~iF~ps|Uo}@_ulLnnqC_anF_mqNvxq`@?", 3, true);
+        list = ResponsePathDeserializer.decodePolyline("_p~iF~ps|Uo}@_ulLnnqC_anF_mqNvxq`@?", 3, true, 1e5);
         assertEquals(Helper.createPointList3D(38.5, -120.2, 10, 40.7, -120.95, 1234, 43.252, -126.453, 1234), list);
     }
 

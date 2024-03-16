@@ -90,6 +90,7 @@ public class MapMatchingResource {
             @QueryParam(CALC_POINTS) @DefaultValue("true") boolean calcPoints,
             @QueryParam("elevation") @DefaultValue("false") boolean enableElevation,
             @QueryParam("points_encoded") @DefaultValue("true") boolean pointsEncoded,
+            @QueryParam("points_encoded_multiplier") @DefaultValue("1e5") double pointsEncodedMultiplier,
             @QueryParam("locale") @DefaultValue("en") String localeStr,
             @QueryParam("profile") String profile,
             @QueryParam(PATH_DETAILS) List<String> pathDetails,
@@ -97,7 +98,7 @@ public class MapMatchingResource {
             @QueryParam("gpx.track") @DefaultValue("true") boolean withTrack,
             @QueryParam("traversal_keys") @DefaultValue("false") boolean enableTraversalKeys,
             @QueryParam("gps_accuracy") @DefaultValue("10") double gpsAccuracy) {
-
+        if (!pointsEncoded) pointsEncodedMultiplier = -1;
         boolean writeGPX = "gpx".equalsIgnoreCase(outType);
         if (gpx.trk.isEmpty()) {
             throw new IllegalArgumentException("No tracks found in GPX document. Are you using waypoints or routes instead?");
@@ -165,7 +166,7 @@ public class MapMatchingResource {
                         build();
             } else {
                 ObjectNode map = ResponsePathSerializer.jsonObject(rsp, osmDate, instructions,
-                        calcPoints, enableElevation, pointsEncoded, sw.getMillisDouble());
+                        calcPoints, enableElevation, pointsEncodedMultiplier, sw.getMillisDouble());
 
                 Map<String, Object> matchStatistics = new HashMap<>();
                 matchStatistics.put("distance", matchResult.getMatchLength());
