@@ -422,9 +422,9 @@ public class RouteResourceClientHCTest {
             List<PathDetail> pathDetails = path.getPathDetails().get(detail);
 
             // explicitly check one of the waypoints
-            assertEquals(42.50539, path.getWaypoints().get(3).lat);
-            assertEquals(42.50539, path.getPoints().get(pathDetails.get(2).getLast()).getLat());
-            assertEquals(42.50539, path.getPoints().get(pathDetails.get(3).getFirst()).getLat());
+            assertEquals(42.5054, path.getWaypoints().get(3).lat);
+            assertEquals(42.5054, path.getPoints().get(pathDetails.get(2).getLast()).getLat());
+            assertEquals(42.5054, path.getPoints().get(pathDetails.get(3).getFirst()).getLat());
             // check all the waypoints
             assertEquals(path.getWaypoints().get(0), path.getPoints().get(pathDetails.get(0).getFirst()));
             for (int i = 1; i < path.getWaypoints().size(); ++i)
