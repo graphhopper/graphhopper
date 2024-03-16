@@ -38,7 +38,7 @@ public class ResponsePathDeserializer extends JsonDeserializer<ResponsePath> {
         return createResponsePath((ObjectMapper) p.getCodec(), p.readValueAsTree(), false, 1e5, true);
     }
 
-    public static ResponsePath createResponsePath(ObjectMapper objectMapper, JsonNode path, boolean hasElevation, double precision, boolean turnDescription) {
+    public static ResponsePath createResponsePath(ObjectMapper objectMapper, JsonNode path, boolean hasElevation, double multiplier, boolean turnDescription) {
         ResponsePath responsePath = new ResponsePath();
         responsePath.addErrors(readErrors(objectMapper, path));
         if (responsePath.hasErrors())
@@ -46,7 +46,7 @@ public class ResponsePathDeserializer extends JsonDeserializer<ResponsePath> {
 
         if (path.has("snapped_waypoints")) {
             JsonNode snappedWaypoints = path.get("snapped_waypoints");
-            PointList snappedPoints = deserializePointList(objectMapper, snappedWaypoints, hasElevation, precision);
+            PointList snappedPoints = deserializePointList(objectMapper, snappedWaypoints, hasElevation, multiplier);
             responsePath.setWaypoints(snappedPoints);
         }
 
@@ -73,7 +73,7 @@ public class ResponsePathDeserializer extends JsonDeserializer<ResponsePath> {
         }
 
         if (path.has("points")) {
-            final PointList pointList = deserializePointList(objectMapper, path.get("points"), hasElevation, precision);
+            final PointList pointList = deserializePointList(objectMapper, path.get("points"), hasElevation, multiplier);
             responsePath.setPoints(pointList);
 
             if (path.has("instructions")) {
@@ -177,10 +177,10 @@ public class ResponsePathDeserializer extends JsonDeserializer<ResponsePath> {
         return responsePath;
     }
 
-    private static PointList deserializePointList(ObjectMapper objectMapper, JsonNode jsonNode, boolean hasElevation, double precision) {
+    private static PointList deserializePointList(ObjectMapper objectMapper, JsonNode jsonNode, boolean hasElevation, double multiplier) {
         PointList snappedPoints;
         if (jsonNode.isTextual()) {
-            snappedPoints = decodePolyline(jsonNode.asText(), Math.max(10, jsonNode.asText().length() / 4), hasElevation, precision);
+            snappedPoints = decodePolyline(jsonNode.asText(), Math.max(10, jsonNode.asText().length() / 4), hasElevation, multiplier);
         } else {
             LineString lineString = objectMapper.convertValue(jsonNode, LineString.class);
             snappedPoints = PointList.fromLineString(lineString);
@@ -188,7 +188,7 @@ public class ResponsePathDeserializer extends JsonDeserializer<ResponsePath> {
         return snappedPoints;
     }
 
-    public static PointList decodePolyline(String encoded, int initCap, boolean is3D, double precision) {
+    public static PointList decodePolyline(String encoded, int initCap, boolean is3D, double multiplier) {
         PointList poly = new PointList(initCap, is3D);
         int index = 0;
         int len = encoded.length();
@@ -226,9 +226,9 @@ public class ResponsePathDeserializer extends JsonDeserializer<ResponsePath> {
                 } while (b >= 0x20);
                 int deltaElevation = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
                 ele += deltaElevation;
-                poly.add((double) lat / precision, (double) lng / precision, (double) ele / 100);
+                poly.add((double) lat / multiplier, (double) lng / multiplier, (double) ele / 100);
             } else
-                poly.add((double) lat / precision, (double) lng / precision);
+                poly.add((double) lat / multiplier, (double) lng / multiplier);
         }
         return poly;
     }
