@@ -98,7 +98,6 @@ public class MapMatchingResource {
             @QueryParam("gpx.track") @DefaultValue("true") boolean withTrack,
             @QueryParam("traversal_keys") @DefaultValue("false") boolean enableTraversalKeys,
             @QueryParam("gps_accuracy") @DefaultValue("10") double gpsAccuracy) {
-        if (!pointsEncoded) pointsEncodedMultiplier = -1;
         boolean writeGPX = "gpx".equalsIgnoreCase(outType);
         if (gpx.trk.isEmpty()) {
             throw new IllegalArgumentException("No tracks found in GPX document. Are you using waypoints or routes instead?");
@@ -137,7 +136,7 @@ public class MapMatchingResource {
                 .putPOJO("mapmatching", matching.getStatistics()).toString());
 
         if ("extended_json".equals(outType)) {
-            return Response.ok(convertToTree(matchResult, enableElevation, pointsEncoded)).
+            return Response.ok(convertToTree(matchResult, enableElevation, pointsEncoded, pointsEncodedMultiplier)).
                     header("X-GH-Took", "" + Math.round(sw.getMillisDouble())).
                     build();
         } else {
@@ -166,7 +165,7 @@ public class MapMatchingResource {
                         build();
             } else {
                 ObjectNode map = ResponsePathSerializer.jsonObject(rsp, osmDate, instructions,
-                        calcPoints, enableElevation, pointsEncodedMultiplier, sw.getMillisDouble());
+                        calcPoints, enableElevation, pointsEncoded, pointsEncodedMultiplier, sw.getMillisDouble());
 
                 Map<String, Object> matchStatistics = new HashMap<>();
                 matchStatistics.put("distance", matchResult.getMatchLength());
@@ -190,7 +189,7 @@ public class MapMatchingResource {
         }
     }
 
-    public static JsonNode convertToTree(MatchResult result, boolean elevation, boolean pointsEncoded) {
+    public static JsonNode convertToTree(MatchResult result, boolean elevation, boolean pointsEncoded, double pointsEncodedMultiplier) {
         ObjectNode root = JsonNodeFactory.instance.objectNode();
         ObjectNode diary = root.putObject("diary");
         ArrayNode entries = diary.putArray("entries");
@@ -202,10 +201,10 @@ public class MapMatchingResource {
             PointList pointList = edgeMatch.getEdgeState().fetchWayGeometry(emIndex == 0 ? FetchMode.ALL : FetchMode.PILLAR_AND_ADJ);
             final ObjectNode geometry = link.putObject("geometry");
             if (pointList.size() < 2) {
-                geometry.putPOJO("coordinates", pointsEncoded ? ResponsePathSerializer.encodePolyline(pointList, elevation, 1e5) : pointList.toLineString(elevation));
+                geometry.putPOJO("coordinates", pointsEncoded ? ResponsePathSerializer.encodePolyline(pointList, elevation, pointsEncodedMultiplier) : pointList.toLineString(elevation));
                 geometry.put("type", "Point");
             } else {
-                geometry.putPOJO("coordinates", pointsEncoded ? ResponsePathSerializer.encodePolyline(pointList, elevation, 1e5) : pointList.toLineString(elevation));
+                geometry.putPOJO("coordinates", pointsEncoded ? ResponsePathSerializer.encodePolyline(pointList, elevation, pointsEncodedMultiplier) : pointList.toLineString(elevation));
                 geometry.put("type", "LineString");
             }
             link.put("id", edgeMatch.getEdgeState().getEdge());
