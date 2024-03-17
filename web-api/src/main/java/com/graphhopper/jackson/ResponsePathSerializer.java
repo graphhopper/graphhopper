@@ -108,6 +108,7 @@ public class ResponsePathSerializer {
             }
             if (calcPoints) {
                 jsonPath.put("points_encoded", pointsEncoded);
+                if (pointsEncoded) jsonPath.put("points_encoded_multiplier", pointsMultiplier);
                 jsonPath.putPOJO("bbox", p.calcBBox2D());
                 jsonPath.putPOJO("points", pointsEncoded ? encodePolyline(p.getPoints(), enableElevation, pointsMultiplier) : p.getPoints().toLineString(enableElevation));
                 if (enableInstructions) {

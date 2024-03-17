@@ -30,11 +30,16 @@ import java.util.*;
 
 public class ResponsePathDeserializerHelper {
 
-    public static ResponsePath createResponsePath(ObjectMapper objectMapper, JsonNode path, boolean hasElevation, double multiplier, boolean turnDescription) {
+    public static ResponsePath createResponsePath(ObjectMapper objectMapper, JsonNode path, boolean hasElevation, boolean turnDescription) {
         ResponsePath responsePath = new ResponsePath();
         responsePath.addErrors(readErrors(objectMapper, path));
         if (responsePath.hasErrors())
             return responsePath;
+
+        // read multiplier from JSON to properly decode the "points" array
+        double multiplier = 1e5;
+        if (path.has("points_encoded_multiplier") && path.has("points_encoded") && path.get("points_encoded").asBoolean())
+            multiplier = path.get("points_encoded_multiplier").asDouble();
 
         if (path.has("snapped_waypoints")) {
             JsonNode snappedWaypoints = path.get("snapped_waypoints");
@@ -181,6 +186,9 @@ public class ResponsePathDeserializerHelper {
     }
 
     public static PointList decodePolyline(String encoded, int initCap, boolean is3D, double multiplier) {
+        if (multiplier < 1)
+            throw new IllegalArgumentException("multiplier cannot be smaller than 1 but was " + multiplier + " for polyline " + encoded);
+
         PointList poly = new PointList(initCap, is3D);
         int index = 0;
         int len = encoded.length();

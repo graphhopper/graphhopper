@@ -37,8 +37,8 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -141,9 +141,8 @@ public class GraphHopperWeb {
         return this;
     }
 
-
     /**
-     * Use new endpoint 'POST /route' instead of 'GET /route'
+     * If false it will use the 'GET /route' endpoint instead of the default 'POST /route'.
      */
     public GraphHopperWeb setPostRequest(boolean postRequest) {
         this.postRequest = postRequest;
@@ -181,8 +180,6 @@ public class GraphHopperWeb {
      *                 location is optimized according to the overall best route and returned
      *                 this way i.e. the traveling salesman problem is solved under the hood.
      *                 Note that in this case the request takes longer and costs more credits.
-     *                 For more details see:
-     *                 https://github.com/graphhopper/directions-api/blob/master/FAQ.md#what-is-one-credit
      */
     public GraphHopperWeb setOptimize(String optimize) {
         this.optimize = optimize;
@@ -207,7 +204,7 @@ public class GraphHopperWeb {
 
             JsonNode paths = json.get("paths");
             for (JsonNode path : paths) {
-                ResponsePath altRsp = ResponsePathDeserializerHelper.createResponsePath(objectMapper, path, tmpElevation, 1e6, tmpTurnDescription);
+                ResponsePath altRsp = ResponsePathDeserializerHelper.createResponsePath(objectMapper, path, tmpElevation, tmpTurnDescription);
                 res.add(altRsp);
             }
 
@@ -242,7 +239,7 @@ public class GraphHopperWeb {
         String tmpServiceURL = ghRequest.getHints().getString(SERVICE_URL, routeServiceUrl);
         String url = tmpServiceURL + "?";
         if (!Helper.isEmpty(key))
-            url += "key=" + key;
+            url += "key=" + encodeURL(key);
 
         ObjectNode requestJson = requestToJson(ghRequest);
         String body;
@@ -340,7 +337,7 @@ public class GraphHopperWeb {
                 + "&optimize=" + tmpOptimize;
 
         for (String details : ghRequest.getPathDetails()) {
-            url += "&" + Parameters.Details.PATH_DETAILS + "=" + details;
+            url += "&" + Parameters.Details.PATH_DETAILS + "=" + encodeURL(details);
         }
 
         // append *all* point hints if at least one is not empty
@@ -389,16 +386,20 @@ public class GraphHopperWeb {
 
     public String export(GHRequest ghRequest) {
         String str = "Creating request failed";
+        ResponseBody body = null;
         try {
             if (postRequest)
                 throw new IllegalArgumentException("GPX export only works for GET requests, make sure to use `setPostRequest(false)`");
             Request okRequest = createGetRequest(ghRequest);
-            str = getClientForRequest(ghRequest).newCall(okRequest).execute().body().string();
+            body = getClientForRequest(ghRequest).newCall(okRequest).execute().body();
+            str = body.string();
 
             return str;
         } catch (Exception ex) {
             throw new RuntimeException("Problem while fetching export " + ghRequest.getPoints()
                     + ", error: " + ex.getMessage() + " response: " + str, ex);
+        } finally {
+            Helper.close(body);
         }
     }
 
@@ -430,10 +431,6 @@ public class GraphHopperWeb {
     }
 
     private static String encodeURL(String str) {
-        try {
-            return URLEncoder.encode(str, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
-        }
+        return URLEncoder.encode(str, StandardCharsets.UTF_8);
     }
 }
