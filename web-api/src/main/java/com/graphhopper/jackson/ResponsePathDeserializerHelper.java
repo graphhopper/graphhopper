@@ -17,10 +17,7 @@
  */
 package com.graphhopper.jackson;
 
-import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.ResponsePath;
@@ -29,14 +26,9 @@ import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.exceptions.*;
 import org.locationtech.jts.geom.LineString;
 
-import java.io.IOException;
 import java.util.*;
 
-public class ResponsePathDeserializer extends JsonDeserializer<ResponsePath> {
-    @Override
-    public ResponsePath deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
-        return createResponsePath((ObjectMapper) p.getCodec(), p.readValueAsTree(), false, 1e5, true);
-    }
+public class ResponsePathDeserializerHelper {
 
     public static ResponsePath createResponsePath(ObjectMapper objectMapper, JsonNode path, boolean hasElevation, double multiplier, boolean turnDescription) {
         ResponsePath responsePath = new ResponsePath();

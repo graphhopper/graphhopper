@@ -26,7 +26,7 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.jackson.Jackson;
-import com.graphhopper.jackson.ResponsePathDeserializer;
+import com.graphhopper.jackson.ResponsePathDeserializerHelper;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
@@ -201,13 +201,13 @@ public class GraphHopperWeb {
             JsonNode json = objectMapper.reader().readTree(rspBody.byteStream());
 
             GHResponse res = new GHResponse();
-            res.addErrors(ResponsePathDeserializer.readErrors(objectMapper, json));
+            res.addErrors(ResponsePathDeserializerHelper.readErrors(objectMapper, json));
             if (res.hasErrors())
                 return res;
 
             JsonNode paths = json.get("paths");
             for (JsonNode path : paths) {
-                ResponsePath altRsp = ResponsePathDeserializer.createResponsePath(objectMapper, path, tmpElevation, 1e6, tmpTurnDescription);
+                ResponsePath altRsp = ResponsePathDeserializerHelper.createResponsePath(objectMapper, path, tmpElevation, 1e6, tmpTurnDescription);
                 res.add(altRsp);
             }
 
