@@ -367,7 +367,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             // Don't show an instruction if the user is following a street, even though the street is
             // bending. We should only do this, if following the street is the obvious choice.
             if (InstructionsHelper.isNameSimilar(name, prevName)
-                    && (outgoingEdges.outgoingEdgesAreSlowerByFactor(2) || isLaneSeparatelyTagged(edge, prevEdge))) {
+                    && (outgoingEdges.outgoingEdgesAreSlowerByFactor(2) || isDirectionSeparatelyTagged(edge, prevEdge))) {
                 return Instruction.IGNORE;
             }
 
@@ -435,7 +435,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             }
         }
 
-        if (!outgoingEdgesAreSlower && !isLaneSeparatelyTagged(edge, prevEdge)
+        if (!outgoingEdgesAreSlower && !isDirectionSeparatelyTagged(edge, prevEdge)
                 && (Math.abs(delta) > .6 || outgoingEdges.isLeavingCurrentStreet(prevName, name))) {
             // Leave the current road -> create instruction
             return sign;
@@ -444,12 +444,12 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         return Instruction.IGNORE;
     }
 
-    private boolean isLaneSeparatelyTagged(EdgeIteratorState edge, EdgeIteratorState prevEdge) {
+    private boolean isDirectionSeparatelyTagged(EdgeIteratorState edge, EdgeIteratorState prevEdge) {
         if (lanesEnc == null) return false;
         // for cases like in #2946 we should not create instructions as they are only "tagging artifacts"
         int lanes = edge.get(lanesEnc);
         int prevLanes = prevEdge.get(lanesEnc);
-        // usually it is a 2+2 split and then the equal sign could be used but in case of a "3+2 split" we need gte
+        // Usually it is a 2+2 split and then the equal sign applies. In case of a "3+2 split" we need ">=".
         return lanes * 2 >= prevLanes || lanes <= 2 * prevLanes;
     }
 
