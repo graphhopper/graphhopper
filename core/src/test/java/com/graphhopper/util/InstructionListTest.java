@@ -531,7 +531,6 @@ public class InstructionListTest {
         IntEncodedValue lanesEnc = tmpEM.getIntEncodedValue(Lanes.KEY);
         BaseGraph g = new BaseGraph.Builder(tmpEM).create();
         // real world example: https://graphhopper.com/maps/?point=43.626238%2C-79.715268&point=43.624647%2C-79.713204&profile=car
-        // From 3 to 4
         //
         //       1   3
         //         \ |
