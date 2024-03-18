@@ -1046,7 +1046,7 @@ public class GraphHopper {
         return profilesByName.values().stream().map(p -> p.getName() + "|" + p.getVersion()).collect(Collectors.joining(","));
     }
 
-    private void checkProfilesConsistency() {
+    void checkProfilesConsistency() {
         if (profilesByName.isEmpty())
             throw new IllegalArgumentException("There has to be at least one profile");
         for (Profile profile : profilesByName.values()) {
