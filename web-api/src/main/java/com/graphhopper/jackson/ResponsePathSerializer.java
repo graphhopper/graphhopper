@@ -57,14 +57,14 @@ public class ResponsePathSerializer {
         int prevLon = 0;
         int prevEle = 0;
         for (int i = 0; i < size; i++) {
-            int num = (int) Math.floor(poly.getLat(i) * precision);
+            int num = (int) Math.round(poly.getLat(i) * precision);
             encodeNumber(sb, num - prevLat);
             prevLat = num;
-            num = (int) Math.floor(poly.getLon(i) * precision);
+            num = (int) Math.round(poly.getLon(i) * precision);
             encodeNumber(sb, num - prevLon);
             prevLon = num;
             if (includeElevation) {
-                num = (int) Math.floor(poly.getEle(i) * 100);
+                num = (int) Math.round(poly.getEle(i) * 100);
                 encodeNumber(sb, num - prevEle);
                 prevEle = num;
             }
