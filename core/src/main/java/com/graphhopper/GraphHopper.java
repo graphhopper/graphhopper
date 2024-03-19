@@ -593,7 +593,7 @@ public class GraphHopper {
 
     protected EncodingManager buildEncodingManager(Map<String, PMap> encodedValuesWithProps,
                                                    Map<String, ImportUnit> activeImportUnits,
-                                                   Set<String> profiles) {
+                                                   Map<String, List<String>> restrictionVehicleTypesByProfile) {
         List<EncodedValue> encodedValues = new ArrayList<>(activeImportUnits.entrySet().stream()
                 .map(e -> {
                     Function<PMap, EncodedValue> f = e.getValue().getCreateEncodedValue();
@@ -608,7 +608,9 @@ public class GraphHopper {
 
         EncodingManager.Builder emBuilder = new EncodingManager.Builder();
         encodedValues.forEach(emBuilder::add);
-        profiles.forEach(tr -> emBuilder.addTurnCostEncodedValue(TurnRestriction.create(tr)));
+        restrictionVehicleTypesByProfile.entrySet().stream()
+                .filter(e -> !e.getValue().isEmpty())
+                .forEach(e -> emBuilder.addTurnCostEncodedValue(TurnRestriction.create(e.getKey())));
         return emBuilder.build();
     }
 
@@ -851,7 +853,7 @@ public class GraphHopper {
             if (activeImportUnits.put(ev, importUnit) == null)
                 deque.addAll(importUnit.getRequiredImportUnits());
         }
-        encodingManager = buildEncodingManager(encodedValuesWithProps, activeImportUnits, restrictionVehicleTypesByProfile.keySet());
+        encodingManager = buildEncodingManager(encodedValuesWithProps, activeImportUnits, restrictionVehicleTypesByProfile);
         osmParsers = buildOSMParsers(encodedValuesWithProps, activeImportUnits, restrictionVehicleTypesByProfile, osmReaderConfig.getIgnoredHighways(), dateRangeParserString);
     }
 
@@ -1047,6 +1049,7 @@ public class GraphHopper {
     }
 
     public void checkProfilesConsistency() {
+        // todonow: did we make sure profile.vehicle and profile.turn_costs are now forbidden?
         if (profilesByName.isEmpty())
             throw new IllegalArgumentException("There has to be at least one profile");
         for (Profile profile : profilesByName.values()) {
