@@ -344,7 +344,83 @@ public class GTFSFeed implements Cloneable, Closeable {
 
         return ls;
     }
+    public List<Shape> getShapesByLeg(com.graphhopper.Trip.PtLeg leg){
+        String shapeId = resolveShapeIdByLeg(leg);
+        List<Shape> shapes = new ArrayList<>();
+        if (shapeId.isEmpty())
+            // Failed to get shape id, infer stop individually. Works well, but not guaranteed.
+            for(int j = 1; j < leg.stops.size(); j++) {
+                shapes.add(new Shape(
+                        this,
+                        leg.stops.get(j - 1).geometry,
+                        leg.stops.get(j).geometry)
+                );
+            }
+        else{
+            Iterator<StopTime> allStopTimes = getOrderedStopTimesForTrip(leg.trip_id).iterator();
+            List<Fun.Tuple2<com.graphhopper.Trip.Stop, StopTime>> stopTimes = leg.stops.stream()
+                    .map(s -> {
+                        while (allStopTimes.hasNext()){
+                            StopTime target = allStopTimes.next();
+                            if (target.stop_id.equals(s.stop_id))
+                                return new Fun.Tuple2<>(s, target);
+                        }
+                        return new Fun.Tuple2<com.graphhopper.Trip.Stop, StopTime>(s, null);
+                    })
+                    .toList();
+            if (stopTimes.stream().allMatch(s -> Double.isNaN(s.b.shape_dist_traveled)))
+                shapes.addAll(Shape.fromStops(this, shapeId, leg.stops));
+            else
+                shapes.addAll(Shape.fromDist(this, shapeId, stopTimes));
+        }
+        return shapes;
+    }
+    private Set<String> getUniqueShapeIds(){
+        return shape_points.keySet()
+                        .stream()
+                        .map(pair -> pair.a)
+                        .collect(Collectors.toSet());
+    }
+    public String resolveShapeIdByLeg(com.graphhopper.Trip.PtLeg ptLeg){
+        String tripId = ptLeg.trip_id;
+        String resolvedId = resolveShapeIdByTrip(tripId);
+        if (resolvedId != null)
+            return resolvedId;
 
+        // TODO: create proper trip resolve
+        return resolveShapeIdByStops(ptLeg.stops);
+    }
+    // get shape_id by Trip
+    public String resolveShapeIdByTrip(String tripId){
+        Trip trip = trips.get(tripId);
+        if (trip != null)
+            return trip.shape_id;
+        return null;
+    }
+
+    // get shape_id by averaging stop distance
+    public String resolveShapeIdByStops(List<com.graphhopper.Trip.Stop> stops){
+        Set<String> uniqueIds = getUniqueShapeIds();
+        Fun.Tuple2<Double, String> id = uniqueIds.stream()
+                .parallel()
+                .map(shapeId -> {
+                    Map<Fun.Tuple2<String, Integer>, ShapePoint> points = shape_points.subMap(
+                            new Fun.Tuple2(shapeId, null), new Fun.Tuple2(shapeId, Fun.HI)
+                    );
+                    List<ShapePoint> shapePoints = new ArrayList<>(points.values());
+                    double totalAverageDistance = stops.stream().mapToDouble(x ->
+                            shapePoints.stream()
+                                    .mapToDouble(p -> Shape.distanceLatLon(
+                                            x.geometry.getY(), x.geometry.getX(),
+                                            p.shape_pt_lat, p.shape_pt_lon))
+                                    .min().orElse(Double.POSITIVE_INFINITY)
+                    ).reduce(0, Double::sum) / stops.size();
+                    return new Fun.Tuple2<>(totalAverageDistance, shapeId);
+                })
+                .min(Comparator.comparing(x -> x.a))
+                .orElse(new Fun.Tuple2<>(-1., ""));
+        return id.b;
+    }
     /**
      * Cloning can be useful when you want to make only a few modifications to an existing feed.
      * Keep in mind that this is a shallow copy, so you'll have to create new maps in the clone for tables you want
