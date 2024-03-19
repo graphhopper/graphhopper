@@ -709,7 +709,7 @@ public class OSMReaderTest {
                 importOrLoad();
         EncodingManager manager = hopper.getEncodingManager();
         BooleanEncodedValue carTCEnc = manager.getTurnBooleanEncodedValue(TurnRestriction.key("car"));
-        BooleanEncodedValue truckTCEnc = manager.getTurnBooleanEncodedValue(TurnRestriction.key("roads"));
+        BooleanEncodedValue truckTCEnc = manager.getTurnBooleanEncodedValue(TurnRestriction.key("truck"));
         BooleanEncodedValue bikeTCEnc = manager.getTurnBooleanEncodedValue(TurnRestriction.key("bike"));
 
         Graph graph = hopper.getBaseGraph();

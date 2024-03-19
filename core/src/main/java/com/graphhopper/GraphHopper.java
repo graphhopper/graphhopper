@@ -599,7 +599,7 @@ public class GraphHopper {
         return this;
     }
 
-    protected EncodingManager buildEncodingManager(Map<String, PMap> encodedValuesWithProps, Map<String, ImportUnit> activeImportUnits, Map<String, PMap> vehiclePropsByVehicle) {
+    protected EncodingManager buildEncodingManager(Map<String, PMap> encodedValuesWithProps, Map<String, ImportUnit> activeImportUnits, Map<String, PMap> vehiclePropsByVehicle, Map<String, List<String>> restrictionVehicleTypesByProfile) {
         List<EncodedValue> encodedValues = new ArrayList<>(activeImportUnits.entrySet().stream()
                 .map(e -> {
                     Function<PMap, EncodedValue> f = e.getValue().getCreateEncodedValue();
@@ -614,8 +614,8 @@ public class GraphHopper {
 
         EncodingManager.Builder emBuilder = new EncodingManager.Builder();
         encodedValues.forEach(emBuilder::add);
-        vehiclePropsByVehicle.entrySet().stream()
-                .filter(e -> e.getValue().getBool("turn_costs", false))
+        restrictionVehicleTypesByProfile.entrySet().stream()
+                .filter(e -> !e.getValue().isEmpty())
                 .forEach(e -> emBuilder.addTurnCostEncodedValue(TurnRestriction.create(e.getKey())));
         return emBuilder.build();
     }
@@ -624,7 +624,9 @@ public class GraphHopper {
         return Collections.emptyList();
     }
 
-    protected OSMParsers buildOSMParsers(Map<String, PMap> encodedValuesWithProps, Map<String, ImportUnit> activeImportUnits, Map<String, PMap> vehiclesWithProps,
+    protected OSMParsers buildOSMParsers(Map<String, PMap> encodedValuesWithProps,
+                                         Map<String, ImportUnit> activeImportUnits,
+                                         Map<String, List<String>> restrictionVehicleTypesByProfile,
                                          List<String> ignoredHighways, String dateRangeParserString) {
         ImportUnitSorter sorter = new ImportUnitSorter(activeImportUnits);
         Map<String, ImportUnit> sortedImportUnits = new LinkedHashMap<>();
@@ -653,13 +655,10 @@ public class GraphHopper {
         if (encodingManager.hasEncodedValue(FootNetwork.KEY))
             osmParsers.addRelationTagParser(relConfig -> new OSMFootNetworkTagParser(encodingManager.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class), relConfig));
 
-        vehiclesWithProps.entrySet().stream()
-                .filter(e -> e.getValue().getBool("turn_costs", false))
-                .forEach(e -> {
-                    List<String> osmRestrictions = getTurnRestrictionsForVehicle(e.getKey(), e.getValue());
-                    osmParsers.addRestrictionTagParser(new RestrictionTagParser(
-                            osmRestrictions, encodingManager.getTurnBooleanEncodedValue(TurnRestriction.key(e.getKey()))));
-                });
+        restrictionVehicleTypesByProfile.forEach((profile, restrictionVehicleTypes) -> {
+            osmParsers.addRestrictionTagParser(new RestrictionTagParser(
+                    restrictionVehicleTypes, encodingManager.getTurnBooleanEncodedValue(TurnRestriction.key(profile))));
+        });
         return osmParsers;
     }
 
@@ -711,6 +710,14 @@ public class GraphHopper {
                 vehicleProps.get(vehicle).putObject("turn_costs", true);
         });
         return vehicleProps;
+    }
+
+    private Map<String, List<String>> getRestrictionVehicleTypesByProfile(Collection<Profile> profiles, Map<String, PMap> vehiclesWithProps) {
+        Map<String, List<String>> result = new LinkedHashMap<>();
+        for (Profile profile : profiles)
+            if (profile.hasTurnCosts())
+                result.put(profile.getName(), getTurnRestrictionsForVehicle(profile.getVehicle(), vehiclesWithProps.get(profile.getVehicle())));
+        return result;
     }
 
     private static ElevationProvider createElevationProvider(GraphHopperConfig ghConfig) {
@@ -880,6 +887,7 @@ public class GraphHopper {
         // we still need these as long as we use vehicle in profiles instead of explicit xyz_access/average_speed/priority
         Map<String, PMap> vehiclesWithProps = getVehiclePropsByVehicle(vehiclesString, profilesByName.values());
         vehiclesWithProps.forEach((vehicle, props) -> addEncodedValuesWithPropsForVehicle(vehicle, props, encodedValuesWithProps));
+        Map<String, List<String>> restrictionVehicleTypesByProfile = getRestrictionVehicleTypesByProfile(profilesByName.values(), vehiclesWithProps);
 
         if (urbanDensityCalculationThreads > 0)
             encodedValuesWithProps.put(UrbanDensity.KEY, new PMap());
@@ -896,8 +904,8 @@ public class GraphHopper {
             if (activeImportUnits.put(ev, importUnit) == null)
                 deque.addAll(importUnit.getRequiredImportUnits());
         }
-        encodingManager = buildEncodingManager(encodedValuesWithProps, activeImportUnits, vehiclesWithProps);
-        osmParsers = buildOSMParsers(encodedValuesWithProps, activeImportUnits, vehiclesWithProps, osmReaderConfig.getIgnoredHighways(), dateRangeParserString);
+        encodingManager = buildEncodingManager(encodedValuesWithProps, activeImportUnits, vehiclesWithProps, restrictionVehicleTypesByProfile);
+        osmParsers = buildOSMParsers(encodedValuesWithProps, activeImportUnits, restrictionVehicleTypesByProfile, osmReaderConfig.getIgnoredHighways(), dateRangeParserString);
     }
 
     protected void addEncodedValuesWithPropsForVehicle(String vehicle, PMap props, Map<String, PMap> encodedValuesWithProps) {
@@ -1131,8 +1139,8 @@ public class GraphHopper {
             if (!encodingManager.getVehicles().contains(profile.getVehicle()))
                 throw new IllegalArgumentException("Unknown vehicle '" + profile.getVehicle() + "' in profile: " + profile + ". " +
                         "Available vehicles: " + String.join(",", encodingManager.getVehicles()));
-            BooleanEncodedValue turnRestrictionEnc = encodingManager.hasTurnEncodedValue(TurnRestriction.key(profile.getVehicle()))
-                    ? encodingManager.getTurnBooleanEncodedValue(TurnRestriction.key(profile.getVehicle()))
+            BooleanEncodedValue turnRestrictionEnc = encodingManager.hasTurnEncodedValue(TurnRestriction.key(profile.getName()))
+                    ? encodingManager.getTurnBooleanEncodedValue(TurnRestriction.key(profile.getName()))
                     : null;
             if (profile.hasTurnCosts() && turnRestrictionEnc == null) {
                 throw new IllegalArgumentException("The profile '" + profile.getName() + "' was configured with " +
