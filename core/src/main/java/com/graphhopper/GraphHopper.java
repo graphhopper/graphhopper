@@ -646,14 +646,11 @@ public class GraphHopper {
             osmParsers.addWayTagParser(maxSpeedCalculator.getParser());
         }
 
-        // todo: no real need to make this dependent on 'vehicles', but keep it as it used to be for now
-        final boolean hasBike = vehiclesWithProps.containsKey("bike") || vehiclesWithProps.containsKey("mtb") || vehiclesWithProps.containsKey("racingbike");
-        final boolean hasFoot = vehiclesWithProps.containsKey("foot");
-        if (hasBike && encodingManager.hasEncodedValue(BikeNetwork.KEY))
+        if (encodingManager.hasEncodedValue(BikeNetwork.KEY))
             osmParsers.addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class), relConfig));
-        if (hasBike && encodingManager.hasEncodedValue(MtbNetwork.KEY))
+        if (encodingManager.hasEncodedValue(MtbNetwork.KEY))
             osmParsers.addRelationTagParser(relConfig -> new OSMMtbNetworkTagParser(encodingManager.getEnumEncodedValue(MtbNetwork.KEY, RouteNetwork.class), relConfig));
-        if (hasFoot && encodingManager.hasEncodedValue(FootNetwork.KEY))
+        if (encodingManager.hasEncodedValue(FootNetwork.KEY))
             osmParsers.addRelationTagParser(relConfig -> new OSMFootNetworkTagParser(encodingManager.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class), relConfig));
 
         vehiclesWithProps.entrySet().stream()
