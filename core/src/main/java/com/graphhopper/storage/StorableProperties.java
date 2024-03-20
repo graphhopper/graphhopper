@@ -38,8 +38,10 @@ public class StorableProperties {
 
     private final Map<String, String> map = new LinkedHashMap<>();
     private final DataAccess da;
+    private final Directory dir;
 
     public StorableProperties(Directory dir) {
+        this.dir = dir;
         // reduce size
         int segmentSize = 1 << 15;
         this.da = dir.create("properties", segmentSize);
@@ -68,6 +70,12 @@ public class StorableProperties {
             byte[] bytes = sw.toString().getBytes(UTF_CS);
             da.setBytes(0, bytes, bytes.length);
             da.flush();
+            // todo: would not be needed if the properties file used a format that is compatible with common text tools
+            if (dir.getDefaultType().isStoring()) {
+                try (BufferedWriter writer = new BufferedWriter(new FileWriter(dir.getLocation() + "/properties.txt"))) {
+                    writer.write(sw.toString());
+                }
+            }
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
