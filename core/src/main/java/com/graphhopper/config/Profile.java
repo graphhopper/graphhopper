@@ -113,9 +113,9 @@ public class Profile {
     @JsonAnySetter
     public Profile putHint(String key, Object value) {
         if (key.equals("u_turn_costs"))
-            throw new IllegalArgumentException("u_turn_costs no longer accepted in profile. Use the turn costs configuration instead.");
+            throw new IllegalArgumentException("u_turn_costs no longer accepted in profile. Use the turn costs configuration instead, see #2938");
         if (key.equals("vehicle"))
-            throw new IllegalArgumentException("vehicle no longer accepted in profile.");
+            throw new IllegalArgumentException("vehicle no longer accepted in profile, see #2938");
         this.hints.putObject(key, value);
         return this;
     }
