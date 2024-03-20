@@ -31,7 +31,7 @@ graphhopper:
   profiles:
    - name: car
 #     turn_costs:
-     #       vehicle_types: [motorcar, motor_vehicle]
+#       vehicle_types: [motorcar, motor_vehicle]
 #       u_turn_costs: 60
      custom_model_files: [car.json]
 
