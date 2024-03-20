@@ -87,7 +87,7 @@ And if you used a property like block_private=false for e.g. the `car` vehicle, 
 
 # shortest and fastest weighting
 
-Both weightints were replaced by the custom model. Instead of `weighting: fastest` you now use the default custom weighting as
+Both weightings were replaced by the custom model. Instead of `weighting: fastest` you now use the default custom weighting as
 explained in the previous section.
 
 Instead of `weighting: shortest` you now use a custom weighting with a high `distance_influence`:
