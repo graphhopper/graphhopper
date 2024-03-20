@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
-import com.graphhopper.config.Profile;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.TranslationMap;
@@ -26,7 +26,6 @@ public class NavigateResponseConverterTest {
     private static final String graphFolder = "target/graphhopper-test-car";
     private static final String osmFile = "../core/files/andorra.osm.gz";
     private static GraphHopper hopper;
-    private static final String vehicle = "car";
     private static final String profile = "my_car";
 
     private final TranslationMap trMap = hopper.getTranslationMap();
@@ -41,7 +40,7 @@ public class NavigateResponseConverterTest {
                 setOSMFile(osmFile).
                 setStoreOnFlush(true).
                 setGraphHopperLocation(graphFolder).
-                setProfiles(new Profile(profile).setVehicle(vehicle).setTurnCosts(false)).
+                setProfiles(TestProfiles.accessAndSpeed(profile, "car")).
                 importOrLoad();
     }
 

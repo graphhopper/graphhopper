@@ -317,13 +317,13 @@ public class PrepareContractionHierarchiesTest {
         // * the fact that the CHLevelEdgeFilter always accepts virtual nodes
         // here we will construct a special case where a connection is not found without the fix in #1574.
 
-        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
         DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, true);
-        EncodingManager encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).build();
+        EncodingManager encodingManager = EncodingManager.start().add(speedEnc).build();
         BaseGraph g = new BaseGraph.Builder(encodingManager).create();
-        // use fastest weighting in this test to be able to fine-tune some weights via the speed (see below)
-        Weighting fastestWeighting = CustomModelParser.createFastestWeighting(accessEnc, speedEnc, encodingManager);
-        CHConfig chConfig = CHConfig.nodeBased("c", fastestWeighting);
+        // note: we changed the weighting during some refactorings, so if this test is no longer testing what
+        //       it is supposed to test maybe that's why.
+        Weighting weighting = new SpeedWeighting(speedEnc);
+        CHConfig chConfig = CHConfig.nodeBased("c", weighting);
         // the following graph reproduces the issue. note that we will use the node ids as ch levels, so there will
         // be a shortcut 3->2 visible at node 2 and another one 3->4 visible at node 3.
         // we will fine-tune the edge-speeds such that without the fix node 4 will be stalled and node 5 will not get
@@ -334,13 +334,13 @@ public class PrepareContractionHierarchiesTest {
         // start 0 - 3 - x - 1 - 2
         //             \         |
         //               sc ---- 4 - 5 - 6 - 7 finish
-        g.edge(0, 3).setDistance(1).set(speedEnc, 60, 60).set(accessEnc, true, true);
-        EdgeIteratorState edge31 = g.edge(3, 1).setDistance(1).set(speedEnc, 60, 60).set(accessEnc, true, true);
-        g.edge(1, 2).setDistance(1).set(speedEnc, 60, 60).set(accessEnc, true, true);
-        EdgeIteratorState edge24 = g.edge(2, 4).setDistance(1).set(speedEnc, 60, 60).set(accessEnc, true, true);
-        g.edge(4, 5).setDistance(1).set(speedEnc, 60, 60).set(accessEnc, true, true);
-        g.edge(5, 6).setDistance(1).set(speedEnc, 60, 60).set(accessEnc, true, true);
-        g.edge(6, 7).setDistance(1).set(speedEnc, 60, 60).set(accessEnc, true, true);
+        g.edge(0, 3).setDistance(1).set(speedEnc, 60, 60);
+        EdgeIteratorState edge31 = g.edge(3, 1).setDistance(1).set(speedEnc, 60, 60);
+        g.edge(1, 2).setDistance(1).set(speedEnc, 60, 60);
+        EdgeIteratorState edge24 = g.edge(2, 4).setDistance(1).set(speedEnc, 60, 60);
+        g.edge(4, 5).setDistance(1).set(speedEnc, 60, 60);
+        g.edge(5, 6).setDistance(1).set(speedEnc, 60, 60);
+        g.edge(6, 7).setDistance(1).set(speedEnc, 60, 60);
         updateDistancesFor(g, 0, 0.001, 0.0000);
         updateDistancesFor(g, 3, 0.001, 0.0001);
         updateDistancesFor(g, 1, 0.001, 0.0002);
@@ -381,11 +381,11 @@ public class PrepareContractionHierarchiesTest {
         QueryGraph queryGraph = QueryGraph.create(g, snap);
 
         // we make sure our weight fine tunings do what they are supposed to
-        double weight03 = getWeight(queryGraph, fastestWeighting, accessEnc, 0, 3, false);
+        double weight03 = getWeight(queryGraph, weighting, 0, 3);
         double scWeight23 = weight03 + getEdge(routingCHGraph, 2, 3, true).getWeight(false);
         double scWeight34 = weight03 + getEdge(routingCHGraph, 3, 4, false).getWeight(false);
-        double sptWeight2 = weight03 + getWeight(queryGraph, fastestWeighting, accessEnc, 3, 8, false) + getWeight(queryGraph, fastestWeighting, accessEnc, 8, 1, false) + getWeight(queryGraph, fastestWeighting, accessEnc, 1, 2, false);
-        double sptWeight4 = sptWeight2 + getWeight(queryGraph, fastestWeighting, accessEnc, 2, 4, false);
+        double sptWeight2 = weight03 + getWeight(queryGraph, weighting, 3, 8) + getWeight(queryGraph, weighting, 8, 1) + getWeight(queryGraph, weighting, 1, 2);
+        double sptWeight4 = sptWeight2 + getWeight(queryGraph, weighting, 2, 4);
         assertTrue(scWeight23 < sptWeight2, "incoming shortcut weight 3->2 should be smaller than sptWeight at node 2 to make sure 2 gets stalled");
         assertTrue(sptWeight4 < scWeight34, "sptWeight at node 4 should be smaller than shortcut weight 3->4 to make sure node 4 gets stalled");
 
@@ -393,13 +393,12 @@ public class PrepareContractionHierarchiesTest {
         assertEquals(IntArrayList.from(0, 3, 8, 1, 2, 4, 5, 6, 7), path.calcNodes(), "wrong or no path found");
     }
 
-    private double getWeight(Graph graph, Weighting w, BooleanEncodedValue accessEnc, int from, int to, boolean incoming) {
-        return w.calcEdgeWeight(getEdge(graph, accessEnc, from, to, false), incoming);
+    private double getWeight(Graph graph, Weighting w, int from, int to) {
+        return w.calcEdgeWeight(getEdge(graph, from, to), false);
     }
 
-    private EdgeIteratorState getEdge(Graph graph, BooleanEncodedValue accessEnc, int from, int to, boolean incoming) {
-        EdgeFilter filter = incoming ? AccessFilter.inEdges(accessEnc) : AccessFilter.outEdges(accessEnc);
-        EdgeIterator iter = graph.createEdgeExplorer(filter).setBaseNode(from);
+    private EdgeIteratorState getEdge(Graph graph, int from, int to) {
+        EdgeIterator iter = graph.createEdgeExplorer().setBaseNode(from);
         while (iter.next()) {
             if (iter.getAdjNode() == to) {
                 return iter;

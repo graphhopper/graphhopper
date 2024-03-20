@@ -19,7 +19,8 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.config.Profile;
-import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.TurnRestriction;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.TurnCostProvider;
@@ -32,7 +33,6 @@ import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
-import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.Helper.toLowerCase;
 
 public class DefaultWeightingFactory implements WeightingFactory {
@@ -54,13 +54,12 @@ public class DefaultWeightingFactory implements WeightingFactory {
         hints.putAll(profile.getHints());
         hints.putAll(requestHints);
 
-        final String vehicle = profile.getVehicle();
         TurnCostProvider turnCostProvider;
         if (profile.hasTurnCosts() && !disableTurnCosts) {
             BooleanEncodedValue turnRestrictionEnc = encodingManager.getTurnBooleanEncodedValue(TurnRestriction.key(profile.getName()));
             if (turnRestrictionEnc == null)
-                throw new IllegalArgumentException("Vehicle " + vehicle + " does not support turn costs");
-            int uTurnCosts = hints.getInt(Parameters.Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
+                throw new IllegalArgumentException("Cannot find turn restriction encoded value for " + profile.getName());
+            int uTurnCosts = hints.getInt(Parameters.Routing.U_TURN_COSTS, profile.getTurnCostsConfig().getUTurnCosts());
             turnCostProvider = new DefaultTurnCostProvider(turnRestrictionEnc, graph.getTurnCostStorage(), uTurnCosts);
         } else {
             turnCostProvider = NO_TURN_COST_PROVIDER;
@@ -71,18 +70,13 @@ public class DefaultWeightingFactory implements WeightingFactory {
             throw new IllegalArgumentException("You have to specify a weighting");
 
         Weighting weighting = null;
-        BooleanEncodedValue accessEnc = encodingManager.getBooleanEncodedValue(VehicleAccess.key(vehicle));
-        DecimalEncodedValue speedEnc = encodingManager.getDecimalEncodedValue(VehicleSpeed.key(vehicle));
-        DecimalEncodedValue priorityEnc = encodingManager.hasEncodedValue(VehiclePriority.key(vehicle))
-                ? encodingManager.getDecimalEncodedValue(VehiclePriority.key(vehicle))
-                : null;
         if (CustomWeighting.NAME.equalsIgnoreCase(weightingStr)) {
             final CustomModel queryCustomModel = requestHints.getObject(CustomModel.KEY, null);
             final CustomModel mergedCustomModel = CustomModel.merge(profile.getCustomModel(), queryCustomModel);
             if (requestHints.has(Parameters.Routing.HEADING_PENALTY))
                 mergedCustomModel.setHeadingPenalty(requestHints.getDouble(Parameters.Routing.HEADING_PENALTY, Parameters.Routing.DEFAULT_HEADING_PENALTY));
-            weighting = CustomModelParser.createWeighting(accessEnc, speedEnc,
-                    priorityEnc, encodingManager, turnCostProvider, mergedCustomModel);
+            weighting = CustomModelParser.createWeighting(encodingManager, turnCostProvider, mergedCustomModel);
+
         } else if ("shortest".equalsIgnoreCase(weightingStr)) {
             throw new IllegalArgumentException("Instead of weighting=shortest use weighting=custom with a high distance_influence");
         } else if ("fastest".equalsIgnoreCase(weightingStr)) {
