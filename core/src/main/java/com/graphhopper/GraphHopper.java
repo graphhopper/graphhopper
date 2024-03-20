@@ -1355,8 +1355,8 @@ public class GraphHopper {
         }
         int index = 0;
         for (Profile profile : profilesByName.values()) {
-            properties.put("checksum.fwd" + profile.getName(), checksums_fwd[index]);
-            properties.put("checksum.bwd" + profile.getName(), checksums_bwd[index]);
+            properties.put("checksum.fwd." + profile.getName(), checksums_fwd[index]);
+            properties.put("checksum.bwd." + profile.getName(), checksums_bwd[index]);
             logger.info("checksum.fwd." + profile.getName() + ": " + checksums_fwd[index]);
             logger.info("checksum.bwd." + profile.getName() + ": " + checksums_bwd[index]);
             index++;
