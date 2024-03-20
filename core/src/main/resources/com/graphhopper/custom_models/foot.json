@@ -6,7 +6,14 @@
 
 {
   "priority": [
-    { "if": "!foot_access", "multiply_by": "0" }
+    {
+      "if": "foot_access",
+      "multiply_by": "foot_priority"
+    },
+    {
+      "else": "",
+      "multiply_by": "0"
+    }
   ],
   "speed": [
     { "if": "true", "limit_to": "foot_average_speed" }
