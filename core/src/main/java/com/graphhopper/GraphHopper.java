@@ -83,6 +83,7 @@ public class GraphHopper {
     // utils
     private final TranslationMap trMap = new TranslationMap().doImport();
     boolean removeZipped = true;
+    boolean calcChecksums = false;
     // for country rules:
     private CountryRuleFactory countryRuleFactory = null;
     // for custom areas:
@@ -595,6 +596,8 @@ public class GraphHopper {
             throw new IllegalArgumentException("Default value for active landmarks " + activeLandmarkCount
                     + " should be less or equal to landmark count of " + lmPreparationHandler.getLandmarks());
         routerConfig.setActiveLandmarkCount(activeLandmarkCount);
+
+        calcChecksums = ghConfig.getBool("graph.calc_checksums", false);
 
         return this;
     }
@@ -1239,6 +1242,7 @@ public class GraphHopper {
      * @param closeEarly release resources as early as possible
      */
     protected void postProcessing(boolean closeEarly) {
+        calcChecksums();
         initLocationIndex();
         importPublicTransit();
 
@@ -1327,6 +1331,37 @@ public class GraphHopper {
         }
 
         return tmpIndex;
+    }
+
+    private void calcChecksums() {
+        if (!calcChecksums) return;
+        logger.info("Calculating checksums for {} profiles", profilesByName.size());
+        StopWatch sw = StopWatch.started();
+        double[] checksums_fwd = new double[profilesByName.size()];
+        double[] checksums_bwd = new double[profilesByName.size()];
+        List<Weighting> weightings = profilesByName.values().stream().map(profile -> createWeighting(profile, new PMap())).toList();
+        AllEdgesIterator edge = baseGraph.getAllEdges();
+        while (edge.next()) {
+            for (int i = 0; i < profilesByName.size(); i++) {
+                double weightFwd = weightings.get(i).calcEdgeWeight(edge, false);
+                if (Double.isInfinite(weightFwd)) weightFwd = -1;
+                weightFwd *= (i % 2 == 0) ? -1 : 1;
+                double weightBwd = weightings.get(i).calcEdgeWeight(edge, true);
+                if (Double.isInfinite(weightBwd)) weightBwd = -1;
+                weightBwd *= (i % 2 == 0) ? -1 : 1;
+                checksums_fwd[i] += weightFwd;
+                checksums_bwd[i] += weightBwd;
+            }
+        }
+        int index = 0;
+        for (Profile profile : profilesByName.values()) {
+            properties.put("checksum.fwd" + profile.getName(), checksums_fwd[index]);
+            properties.put("checksum.bwd" + profile.getName(), checksums_bwd[index]);
+            logger.info("checksum.fwd." + profile.getName() + ": " + checksums_fwd[index]);
+            logger.info("checksum.bwd." + profile.getName() + ": " + checksums_bwd[index]);
+            index++;
+        }
+        logger.info("Calculating checksums took: " + sw.stop().getTimeString());
     }
 
     /**
