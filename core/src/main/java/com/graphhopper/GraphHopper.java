@@ -513,7 +513,7 @@ public class GraphHopper {
         setProfiles(GraphHopper.resolveCustomModelFiles(customModelFolder, ghConfig.getProfiles(), globalAreas));
 
         if (ghConfig.has("graph.vehicles"))
-            throw new IllegalArgumentException("The option graph.vehicles is no longer supported. Use the appropriate turn_costs and custom_model instead, see issue #2938.");
+            throw new IllegalArgumentException("The option graph.vehicles is no longer supported. Use the appropriate turn_costs and custom_model instead, see docs/migration/config-migration-08-09.md");
         if (ghConfig.has("graph.flag_encoders"))
             throw new IllegalArgumentException("The option graph.flag_encoders is no longer supported.");
 

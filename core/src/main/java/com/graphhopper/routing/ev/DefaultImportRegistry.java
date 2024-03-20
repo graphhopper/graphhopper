@@ -253,7 +253,7 @@ public class DefaultImportRegistry implements ImportRegistry {
                     "roundabout"
             );
         else if (VehicleAccess.key("roads").equals(name))
-            throw new IllegalArgumentException("roads_access parser no longer necessary, see #2938");
+            throw new IllegalArgumentException("roads_access parser no longer necessary, see docs/migration/config-migration-08-09.md");
         else if (VehicleAccess.key("bike").equals(name))
             return ImportUnit.create(name, props -> VehicleAccess.create("bike"),
                     BikeAccessParser::new,
@@ -280,7 +280,7 @@ public class DefaultImportRegistry implements ImportRegistry {
                     "ferry_speed"
             );
         else if (VehicleSpeed.key("roads").equals(name))
-            throw new IllegalArgumentException("roads_average_speed parser no longer necessary, see #2938");
+            throw new IllegalArgumentException("roads_average_speed parser no longer necessary, see docs/migration/config-migration-08-09.md");
         else if (VehicleSpeed.key("bike").equals(name))
             return ImportUnit.create(name, props -> new DecimalEncodedValueImpl(
                             name, props.getInt("speed_bits", 4), props.getDouble("speed_factor", 2), false),
