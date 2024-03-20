@@ -1052,7 +1052,7 @@ public class GraphHopper {
     }
 
     public void checkProfilesConsistency() {
-        // todonow: did we make sure profile.vehicle and profile.turn_costs are now forbidden?
+        // todonow: did we make sure profile.turn_costs (boolean) is now forbidden?
         if (profilesByName.isEmpty())
             throw new IllegalArgumentException("There has to be at least one profile");
         for (Profile profile : profilesByName.values()) {
