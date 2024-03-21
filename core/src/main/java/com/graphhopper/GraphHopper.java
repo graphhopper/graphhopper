@@ -94,7 +94,7 @@ public class GraphHopper {
     // for graph:
     private BaseGraph baseGraph;
     private StorableProperties properties;
-    private EncodingManager encodingManager;
+    protected EncodingManager encodingManager;
     private OSMParsers osmParsers;
     private int defaultSegmentSize = -1;
     private String ghLocation = "";
