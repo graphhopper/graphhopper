@@ -67,8 +67,18 @@ class InstructionsHelper {
         return name1.equals(name2);
     }
 
-    static GHPoint getPointForOrientationCalculation(EdgeIteratorState edgeIteratorState) {
+    static GHPoint getPointForOrientationCalculation(EdgeIteratorState edgeIteratorState, NodeAccess nodeAccess) {
+        double tmpLat;
+        double tmpLon;
         PointList tmpWayGeo = edgeIteratorState.fetchWayGeometry(FetchMode.ALL);
-        return new GHPoint(tmpWayGeo.getLat(1), tmpWayGeo.getLon(1));
+        if (tmpWayGeo.size() <= 2) {
+            // e.g. single point (virtual) edges - can this really happen?
+            tmpLat = nodeAccess.getLat(edgeIteratorState.getAdjNode());
+            tmpLon = nodeAccess.getLon(edgeIteratorState.getAdjNode());
+        } else {
+            tmpLat = tmpWayGeo.getLat(1);
+            tmpLon = tmpWayGeo.getLon(1);
+        }
+        return new GHPoint(tmpLat, tmpLon);
     }
 }
