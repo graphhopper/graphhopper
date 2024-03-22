@@ -22,6 +22,7 @@ import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
@@ -65,6 +66,7 @@ class InstructionsOutgoingEdges {
     private final DecimalEncodedValue maxSpeedEnc;
     private final EnumEncodedValue<RoadClass> roadClassEnc;
     private final BooleanEncodedValue roadClassLinkEnc;
+    private final NodeAccess nodeAccess;
     private final Weighting weighting;
 
     public InstructionsOutgoingEdges(EdgeIteratorState prevEdge,
@@ -74,6 +76,7 @@ class InstructionsOutgoingEdges {
                                      EnumEncodedValue<RoadClass> roadClassEnc,
                                      BooleanEncodedValue roadClassLinkEnc,
                                      EdgeExplorer allExplorer,
+                                     NodeAccess nodeAccess,
                                      int prevNode,
                                      int baseNode,
                                      int adjNode) {
@@ -83,6 +86,7 @@ class InstructionsOutgoingEdges {
         this.maxSpeedEnc = maxSpeedEnc;
         this.roadClassEnc = roadClassEnc;
         this.roadClassLinkEnc = roadClassLinkEnc;
+        this.nodeAccess = nodeAccess;
 
         visibleAlternativeTurns = new ArrayList<>();
         allowedAlternativeTurns = new ArrayList<>();
@@ -160,7 +164,7 @@ class InstructionsOutgoingEdges {
      */
     public EdgeIteratorState getOtherContinue(double prevLat, double prevLon, double prevOrientation, Function<Integer, Boolean> signFunction) {
         for (EdgeIteratorState edge : allowedAlternativeTurns) {
-            GHPoint point = InstructionsHelper.getPointForOrientationCalculation(edge);
+            GHPoint point = InstructionsHelper.getPointForOrientationCalculation(edge, nodeAccess);
             int sign = InstructionsHelper.calculateSign(prevLat, prevLon, point.getLat(), point.getLon(), prevOrientation);
             if (signFunction.apply(sign)) return edge;
         }
@@ -195,5 +199,4 @@ class InstructionsOutgoingEdges {
     private boolean isTheSameRoadClassAndLink(EdgeIteratorState edge1, EdgeIteratorState edge2) {
         return edge1.get(roadClassEnc) == edge2.get(roadClassEnc) && edge1.get(roadClassLinkEnc) == edge2.get(roadClassLinkEnc);
     }
-
 }

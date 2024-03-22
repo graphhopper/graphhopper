@@ -258,7 +258,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
 
         } else {
             InstructionsOutgoingEdges outdoingEdges = new InstructionsOutgoingEdges(prevEdge, edge, weighting, maxSpeedEnc,
-                    roadClassEnc, roadClassLinkEnc, allExplorer, prevNode, baseNode, adjNode);
+                    roadClassEnc, roadClassLinkEnc, allExplorer, nodeAccess, prevNode, baseNode, adjNode);
             prevOrientation = AngleCalc.ANGLE_CALC.calcOrientation(doublePrevLat, doublePrevLon, prevLat, prevLon);
             int sign = edge.getEdge() == prevEdge.getEdge()
                     ? Instruction.U_TURN_UNKNOWN // this is the simplest turn to recognize, a plain u-turn.
@@ -315,7 +315,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                         && Double.isFinite(weighting.calcEdgeWeight(edge, false)) != Double.isFinite(weighting.calcEdgeWeight(edge, true))
                         && InstructionsHelper.isNameSimilar(prevInstructionName, name)) {
                     // Chances are good that this is a u-turn, we only need to check if the orientation matches
-                    GHPoint point = InstructionsHelper.getPointForOrientationCalculation(edge);
+                    GHPoint point = InstructionsHelper.getPointForOrientationCalculation(edge, nodeAccess);
                     double lat = point.getLat();
                     double lon = point.getLon();
                     double currentOrientation = AngleCalc.ANGLE_CALC.calcOrientation(prevLat, prevLon, lat, lon, false);
@@ -451,7 +451,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
     }
 
     private int getTurn(InstructionsOutgoingEdges outgoingEdges, EdgeIteratorState edge, String name, String destinationAndRef) {
-        GHPoint point = InstructionsHelper.getPointForOrientationCalculation(edge);
+        GHPoint point = InstructionsHelper.getPointForOrientationCalculation(edge, nodeAccess);
         double lat = point.getLat();
         double lon = point.getLon();
         int sign = InstructionsHelper.calculateSign(prevLat, prevLon, lat, lon, prevOrientation);
@@ -525,7 +525,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                     }
                 }
 
-                GHPoint tmpPoint = InstructionsHelper.getPointForOrientationCalculation(otherContinue);
+                GHPoint tmpPoint = InstructionsHelper.getPointForOrientationCalculation(otherContinue, nodeAccess);
                 double otherDelta = InstructionsHelper.calculateOrientationDelta(prevLat, prevLon, tmpPoint.getLat(), tmpPoint.getLon(), prevOrientation);
 
                 // This is required to avoid keep left/right on the motorway at off-ramps/motorway_links
