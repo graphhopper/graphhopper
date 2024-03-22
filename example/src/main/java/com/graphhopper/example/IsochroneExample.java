@@ -3,15 +3,15 @@ package com.graphhopper.example;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.config.Profile;
 import com.graphhopper.isochrone.algorithm.ShortestPathTree;
-import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.DefaultSnapFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.routing.weighting.custom.CustomModelParser;
-
 import com.graphhopper.storage.index.Snap;
+import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.PMap;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -21,11 +21,9 @@ public class IsochroneExample {
         GraphHopper hopper = createGraphHopperInstance(relDir + "core/files/andorra.osm.pbf");
         // get encoder from GraphHopper instance
         EncodingManager encodingManager = hopper.getEncodingManager();
-        BooleanEncodedValue accessEnc = encodingManager.getBooleanEncodedValue(VehicleAccess.key("car"));
-        DecimalEncodedValue speedEnc = encodingManager.getDecimalEncodedValue(VehicleSpeed.key("car"));
 
         // snap some GPS coordinates to the routing graph and build a query graph
-        Weighting weighting = CustomModelParser.createFastestWeighting(accessEnc, speedEnc, encodingManager);
+        Weighting weighting = hopper.createWeighting(hopper.getProfile("car"), new PMap());
         Snap snap = hopper.getLocationIndex().findClosest(42.508679, 1.532078, new DefaultSnapFilter(weighting, encodingManager.getBooleanEncodedValue(Subnetwork.key("car"))));
         QueryGraph queryGraph = QueryGraph.create(hopper.getBaseGraph(), snap);
 
@@ -51,7 +49,7 @@ public class IsochroneExample {
         GraphHopper hopper = new GraphHopper();
         hopper.setOSMFile(ghLoc);
         hopper.setGraphHopperLocation("target/isochrone-graph-cache");
-        hopper.setProfiles(new Profile("car").setVehicle("car").setTurnCosts(false));
+        hopper.setProfiles(new Profile("car").setCustomModel(GHUtility.loadCustomModelFromJar("car.json")));
         hopper.importOrLoad();
         return hopper;
     }

@@ -3,6 +3,7 @@ package com.graphhopper.routing.weighting.custom;
 import com.graphhopper.json.MinMax;
 import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.ev.RoadEnvironment;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.CustomModel;
 import org.junit.jupiter.api.BeforeEach;
@@ -10,15 +11,13 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 
 import static com.graphhopper.json.Statement.*;
 import static com.graphhopper.json.Statement.Op.LIMIT;
 import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static com.graphhopper.routing.weighting.custom.FindMinMax.findMinMax;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 class FindMinMaxTest {
 
@@ -26,7 +25,7 @@ class FindMinMaxTest {
 
     @BeforeEach
     void setup() {
-        lookup = new EncodingManager.Builder().build();
+        lookup = new EncodingManager.Builder().add(RoadEnvironment.create()).build();
     }
 
     @Test
@@ -76,16 +75,15 @@ class FindMinMaxTest {
         statements.add(If("true", MULTIPLY, "2"));
         assertEquals(2, findMinMax(new MinMax(0, 1), statements, lookup).max);
 
-        statements = new ArrayList<>();
-        statements.add(If("true", MULTIPLY, "0.5"));
-        assertEquals(0.5, findMinMax(new MinMax(0, 1), statements, lookup).max);
+        List<Statement> statements2 = new ArrayList<>();
+        statements2.add(If("true", MULTIPLY, "0.5"));
+        assertEquals(0.5, findMinMax(new MinMax(0, 1), statements2, lookup).max);
 
-        statements = new ArrayList<>();
-        statements.add(If("road_class == MOTORWAY", MULTIPLY, "0.5"));
-        statements.add(Else(MULTIPLY, "-0.5"));
-        MinMax minMax = findMinMax(new MinMax(1, 1), statements, lookup);
-        assertEquals(-0.5, minMax.min);
-        assertEquals(0.5, minMax.max);
+        List<Statement> statements3 = new ArrayList<>();
+        statements3.add(If("road_class == MOTORWAY", MULTIPLY, "0.5"));
+        statements3.add(Else(MULTIPLY, "-0.5"));
+        IllegalArgumentException m = assertThrows(IllegalArgumentException.class, () -> findMinMax(new MinMax(1, 1), statements3, lookup));
+        assertTrue(m.getMessage().startsWith("statement resulted in negative value"));
     }
 
     @Test

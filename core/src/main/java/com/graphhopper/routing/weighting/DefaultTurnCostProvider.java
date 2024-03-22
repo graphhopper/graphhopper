@@ -18,11 +18,12 @@
 
 package com.graphhopper.routing.weighting;
 
+import com.graphhopper.config.TurnCostsConfig;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.EdgeIterator;
 
-import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
+import static com.graphhopper.config.TurnCostsConfig.INFINITE_U_TURN_COSTS;
 
 public class DefaultTurnCostProvider implements TurnCostProvider {
     private final BooleanEncodedValue turnRestrictionEnc;
@@ -31,11 +32,11 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
     private final double uTurnCosts;
 
     public DefaultTurnCostProvider(BooleanEncodedValue turnRestrictionEnc, TurnCostStorage turnCostStorage) {
-        this(turnRestrictionEnc, turnCostStorage, Weighting.INFINITE_U_TURN_COSTS);
+        this(turnRestrictionEnc, turnCostStorage, TurnCostsConfig.INFINITE_U_TURN_COSTS);
     }
 
     /**
-     * @param uTurnCosts the costs of a u-turn in seconds, for {@link Weighting#INFINITE_U_TURN_COSTS} the u-turn costs
+     * @param uTurnCosts the costs of a u-turn in seconds, for {@link TurnCostsConfig#INFINITE_U_TURN_COSTS} the u-turn costs
      *                   will be infinite
      */
     public DefaultTurnCostProvider(BooleanEncodedValue turnRestrictionEnc, TurnCostStorage turnCostStorage, int uTurnCosts) {

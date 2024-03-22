@@ -14,12 +14,12 @@ graphhopper:
   #
   # In general a profile consists of the following
   # - name (required): a unique string identifier for the profile
-  # - vehicle (required): refers to the `graph.vehicles` used for this profile
-  # - weighting (required): the weighting used for this profile like custom
-  # - turn_costs (true/false, default: false): whether or not turn restrictions should be applied for this profile.
+  # - weighting (optional): by default 'custom'
+  # - turn_costs (optional):
+  #     vehicle_types: [motorcar, motor_vehicle] (vehicle types used for vehicle-specific turn restrictions)
+  #     u_turn_costs: 60 (time-penalty for doing a u-turn in seconds)
   #
   # Depending on the above fields there are other properties that can be used, e.g.
-  # - u_turn_costs: 60 (time-penalty for doing a u-turn in seconds (only possible when `turn_costs: true`)).
   # - custom_model_files: when you specified "weighting: custom" you need to set one or more json files which are searched in
   #   custom_models.directory or the working directory that defines the custom_model. If you want an empty model you can
   #   set "custom_model_files: []
@@ -29,24 +29,30 @@ graphhopper:
   # profiles (see below). Or at least limit the number of `routing.max_visited_nodes`.
 
   profiles:
-    - name: car
-      vehicle: car
-      custom_model:
-        distance_influence: 70
-#      turn_costs: true
-#      u_turn_costs: 60
+   - name: car
+#     turn_costs:
+#       vehicle_types: [motorcar, motor_vehicle]
+#       u_turn_costs: 60
+     custom_model_files: [car.json]
 
+#    - name: foot
+#      custom_model_files: [foot.json, foot_elevation.json]
+#
 #    - name: bike
-#      # to use the bike vehicle make sure to not ignore cycleways etc., see import.osm.ignored_highways below
-#      vehicle: bike
 #      custom_model_files: [bike.json, bike_elevation.json]
+#
+#    - name: racingbike
+#      custom_model_files: [racingbike.json, bike_elevation.json]
+#
+#    - name: mtb
+#      custom_model_files: [mtb.json, bike_elevation.json]
 
   # instead of the inbuilt custom models (see ./core/src/main/resources/com/graphhopper/custom_models)
   # you can specify a folder where to find your own custom model files
   # custom_models.directory: custom_models
 
   # Speed mode:
-  # Its possible to speed up routing by doing a special graph preparation (Contraction Hierarchies, CH). This requires
+  # It's possible to speed up routing by doing a special graph preparation (Contraction Hierarchies, CH). This requires
   # more RAM/disk space for holding the prepared graph but also means less memory usage per request. Using the following
   # list you can define for which of the above routing profiles such preparation shall be performed. Note that to support
   # profiles with `turn_costs: true` a more elaborate preparation is required (longer preparation time and more memory
@@ -66,22 +72,13 @@ graphhopper:
   profiles_lm: []
 
 
-  #### Vehicles ####
-
-  # The vehicle defines the base for how the routing of a profile behaves. It can be adjusted with the turn_costs=true
-  # option or, only for the roads vehicle, there is the transportation_mode option:
-  # name=mycustomvehicle,turn_costs=true,transportation_mode=MOTOR_VEHICLE
-  # But you should prefer to configure the turn_costs via the profile configuration.
-  # Other standard vehicles: foot,bike,mtb,racingbike
-
-
   #### Encoded Values ####
 
   # Add additional information to every edge. Used for path details (#1548) and custom models (docs/core/custom-models.md)
   # Default values are: road_class,road_class_link,road_environment,max_speed,road_access
   # More are: surface,smoothness,max_width,max_height,max_weight,max_weight_except,hgv,max_axle_load,max_length,
   #           hazmat,hazmat_tunnel,hazmat_water,lanes,osm_way_id,toll,track_type,mtb_rating,hike_rating,horse_rating,
-  #           country,curvature,average_slope,max_slope
+  #           country,curvature,average_slope,max_slope,car_road_access_conditional,bike_road_access_conditional,foot_road_access_conditional
   # graph.encoded_values: surface,toll,track_type
 
   #### Speed, hybrid and flexible mode ####
@@ -163,7 +160,6 @@ graphhopper:
   prepare.min_network_size: 200
   prepare.subnetworks.threads: 1
 
-
   #### Routing ####
 
   # You can define the maximum visited nodes when routing. This may result in not found connections if there is no
@@ -201,7 +197,7 @@ graphhopper:
   #### Custom Areas ####
 
   # GraphHopper reads GeoJSON polygon files including their properties from this directory and makes them available
-  # to all tag parsers, vehicles and custom models. All GeoJSON Features require to have the "id" property.
+  # to all tag parsers and custom models. All GeoJSON Features require to have the "id" property.
   # Country borders are included automatically (see countries.geojson).
   # custom_areas.directory: path/to/custom_areas
 

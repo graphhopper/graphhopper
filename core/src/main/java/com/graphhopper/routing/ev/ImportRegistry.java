@@ -15,23 +15,9 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.weighting;
 
-import org.junit.jupiter.api.Test;
+package com.graphhopper.routing.ev;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-/**
- * @author Peter Karich
- */
-public class AbstractWeightingTest {
-    @Test
-    public void testToString() {
-        assertTrue(AbstractWeighting.isValidName("blup"));
-        assertTrue(AbstractWeighting.isValidName("blup_a"));
-        assertTrue(AbstractWeighting.isValidName("blup|a"));
-        assertFalse(AbstractWeighting.isValidName("Blup"));
-        assertFalse(AbstractWeighting.isValidName("Blup!"));
-    }
+public interface ImportRegistry {
+    ImportUnit createImportUnit(String name);
 }

@@ -24,6 +24,10 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 
+import static com.graphhopper.json.Statement.If;
+import static com.graphhopper.json.Statement.Op.LIMIT;
+import static com.graphhopper.json.Statement.Op.MULTIPLY;
+
 /**
  * Use this example to gain access to the low level API of GraphHopper.
  * If you want to keep using the GraphHopper class but want to customize the internal EncodingManager
@@ -79,7 +83,8 @@ public class LowLevelAPIExample {
             Snap fromSnap = index.findClosest(15.15, 20.20, EdgeFilter.ALL_EDGES);
             Snap toSnap = index.findClosest(15.25, 20.21, EdgeFilter.ALL_EDGES);
             QueryGraph queryGraph = QueryGraph.create(graph, fromSnap, toSnap);
-            Weighting weighting = CustomModelParser.createWeighting(accessEnc, speedEnc, null, em, TurnCostProvider.NO_TURN_COST_PROVIDER, new CustomModel());
+            Weighting weighting = CustomModelParser.createWeighting(em, TurnCostProvider.NO_TURN_COST_PROVIDER,
+                    new CustomModel().addToPriority(If("!" + accessEnc.getName(), MULTIPLY, "0")).addToSpeed(If("true", LIMIT, speedEnc.getName())));
             Path path = new Dijkstra(queryGraph, weighting, TraversalMode.NODE_BASED).calcPath(fromSnap.getClosestNode(), toSnap.getClosestNode());
             assert Helper.round(path.getDistance(), -2) == 1500;
 
@@ -94,12 +99,13 @@ public class LowLevelAPIExample {
         BooleanEncodedValue accessEnc = VehicleAccess.create("car");
         DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 7, 2, false);
         EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
-        Weighting weighting = CustomModelParser.createWeighting(accessEnc, speedEnc, null, em, TurnCostProvider.NO_TURN_COST_PROVIDER, new CustomModel());
-        CHConfig chConfig = CHConfig.nodeBased("my_profile", weighting);
         BaseGraph graph = new BaseGraph.Builder(em)
                 .setDir(new RAMDirectory(graphLocation, true))
                 .create();
         graph.flush();
+        Weighting weighting = CustomModelParser.createWeighting(em, TurnCostProvider.NO_TURN_COST_PROVIDER,
+                new CustomModel().addToPriority(If("!" + accessEnc.getName(), MULTIPLY, "0")).addToSpeed(If("true", LIMIT, speedEnc.getName())));
+        CHConfig chConfig = CHConfig.nodeBased("my_profile", weighting);
 
         // Set node coordinates and build location index
         NodeAccess na = graph.getNodeAccess();

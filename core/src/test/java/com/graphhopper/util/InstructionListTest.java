@@ -24,9 +24,10 @@ import com.graphhopper.routing.InstructionsFromEdges;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.*;
+import com.graphhopper.routing.weighting.SpeedWeighting;
+import com.graphhopper.routing.weighting.TurnCostProvider;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
@@ -56,7 +57,8 @@ public class InstructionListTest {
     @BeforeEach
     public void setUp() {
         speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, true);
-        carManager = EncodingManager.start().add(speedEnc).build();
+        carManager = EncodingManager.start().add(speedEnc).add(Roundabout.create())
+                .add(MaxSpeed.create()).add(RoadClass.create()).add(RoadClassLink.create()).build();
     }
 
     private static List<String> getTurnDescriptions(InstructionList instructionList) {
@@ -299,7 +301,8 @@ public class InstructionListTest {
     @Test
     public void testNoInstructionIfSlightTurnAndAlternativeIsSharp3() {
         DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 4, 2, true);
-        EncodingManager tmpEM = new EncodingManager.Builder().add(speedEnc).build();
+        EncodingManager tmpEM = new EncodingManager.Builder().add(speedEnc).add(RoadClass.create())
+                .add(RoadClassLink.create()).add(Roundabout.create()).add(MaxSpeed.create()).build();
         EnumEncodedValue<RoadClass> rcEV = tmpEM.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         BaseGraph g = new BaseGraph.Builder(tmpEM).create();
         // real world example: https://graphhopper.com/maps/?point=48.411549,15.599567&point=48.411663%2C15.600527&profile=bike
@@ -337,7 +340,7 @@ public class InstructionListTest {
     @Test
     public void testInstructionIfTurn() {
         DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 4, 2, true);
-        EncodingManager tmpEM = new EncodingManager.Builder().add(speedEnc).build();
+        EncodingManager tmpEM = new EncodingManager.Builder().add(speedEnc).add(RoadClass.create()).add(RoadClassLink.create()).add(Roundabout.create()).add(MaxSpeed.create()).build();
         EnumEncodedValue<RoadClass> rcEV = tmpEM.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         BaseGraph g = new BaseGraph.Builder(tmpEM).create();
         // real world example: https://graphhopper.com/maps/?point=48.412169%2C15.604888&point=48.412251%2C15.60543&profile=bike
@@ -373,10 +376,9 @@ public class InstructionListTest {
 
     @Test
     public void testInstructionIfSlightTurn() {
-        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
         DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 4, 1, false);
-        DecimalEncodedValue priorityEnc = new DecimalEncodedValueImpl("priority", 4, PriorityCode.getFactor(1), false);
-        EncodingManager tmpEM = new EncodingManager.Builder().add(accessEnc).add(speedEnc).add(priorityEnc).build();
+        EncodingManager tmpEM = new EncodingManager.Builder().add(speedEnc)
+                .add(Roundabout.create()).add(RoadClass.create()).add(RoadClassLink.create()).add(MaxSpeed.create()).build();
         BaseGraph g = new BaseGraph.Builder(tmpEM).create();
         // real world example: https://graphhopper.com/maps/?point=43.729379,7.417697&point=43.729798,7.417263&profile=foot
         // From 4 to 3 and 4 to 1
@@ -396,20 +398,19 @@ public class InstructionListTest {
         na.setNode(4, 43.729476, 7.417633);
 
         // default is priority=0 so set it to 1
-        GHUtility.setSpeed(5, true, true, accessEnc, speedEnc, g.edge(1, 2).setDistance(20).
-                setKeyValues(createKV(STREET_NAME, "myroad")).set(priorityEnc, 1));
-        GHUtility.setSpeed(5, true, true, accessEnc, speedEnc, g.edge(2, 3).setDistance(20).
-                setKeyValues(createKV(STREET_NAME, "myroad")).set(priorityEnc, 1));
+        g.edge(1, 2).setDistance(20).set(speedEnc, 5).
+                setKeyValues(createKV(STREET_NAME, "myroad"));
+        g.edge(2, 3).setDistance(20).set(speedEnc, 5).
+                setKeyValues(createKV(STREET_NAME, "myroad"));
         PointList pointList = new PointList();
         pointList.add(43.729627, 7.41749);
-        GHUtility.setSpeed(5, true, true, accessEnc, speedEnc, g.edge(2, 4).setDistance(20).
-                setKeyValues(createKV(STREET_NAME, "myroad")).set(priorityEnc, 1).setWayGeometry(pointList));
+        g.edge(2, 4).setDistance(20).set(speedEnc, 5).
+                setKeyValues(createKV(STREET_NAME, "myroad")).setWayGeometry(pointList);
 
-        Weighting weighting = CustomModelParser.createWeighting(accessEnc, speedEnc,
-                priorityEnc, tmpEM, DefaultTurnCostProvider.NO_TURN_COST_PROVIDER,
-                new CustomModel().setDistanceInfluence(0d));
+        Weighting weighting = new SpeedWeighting(speedEnc);
         Path p = new Dijkstra(g, weighting, tMode).calcPath(4, 3);
         assertTrue(p.isFound());
+        assertEquals(IntArrayList.from(4, 2, 3), p.calcNodes());
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, tmpEM, usTR);
         List<String> tmpList = getTurnDescriptions(wayList);
         assertEquals(Arrays.asList("continue onto myroad", "keep right onto myroad", "arrive at destination"), tmpList);
@@ -417,6 +418,7 @@ public class InstructionListTest {
         assertEquals(20, wayList.get(1).getDistance());
 
         p = new Dijkstra(g, weighting, tMode).calcPath(4, 1);
+        assertEquals(IntArrayList.from(4, 2, 1), p.calcNodes());
         wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, tmpEM, usTR);
         tmpList = getTurnDescriptions(wayList);
         assertEquals(Arrays.asList("continue onto myroad", "keep left onto myroad", "arrive at destination"), tmpList);
@@ -428,7 +430,8 @@ public class InstructionListTest {
     public void testInstructionWithHighlyCustomProfileWithRoadsBase() {
         BooleanEncodedValue roadsAccessEnc = new SimpleBooleanEncodedValue("access", true);
         DecimalEncodedValue roadsSpeedEnc = new DecimalEncodedValueImpl("speed", 7, 2, true);
-        EncodingManager tmpEM = EncodingManager.start().add(roadsAccessEnc).add(roadsSpeedEnc).build();
+        EncodingManager tmpEM = EncodingManager.start().add(roadsAccessEnc).add(roadsSpeedEnc)
+                .add(RoadClass.create()).add(Roundabout.create()).add(RoadClassLink.create()).add(MaxSpeed.create()).build();
         EnumEncodedValue<RoadClass> rcEV = tmpEM.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         BaseGraph g = new BaseGraph.Builder(tmpEM).create();
         // real world example: https://graphhopper.com/maps/?point=55.691214%2C12.57065&point=55.689957%2C12.570387
@@ -453,9 +456,11 @@ public class InstructionListTest {
         g.edge(2, 5).setDistance(10).set(roadsSpeedEnc, 10, 10).set(roadsAccessEnc, true, true).set(rcEV, RoadClass.PEDESTRIAN);
 
         CustomModel customModel = new CustomModel();
+        customModel.addToSpeed(Statement.If("true", Statement.Op.LIMIT, "speed"));
         customModel.addToPriority(Statement.If("road_class == PEDESTRIAN", Statement.Op.MULTIPLY, "0"));
-        Weighting weighting = CustomModelParser.createWeighting(roadsAccessEnc, roadsSpeedEnc, null, tmpEM, TurnCostProvider.NO_TURN_COST_PROVIDER, customModel);
+        Weighting weighting = CustomModelParser.createWeighting(tmpEM, TurnCostProvider.NO_TURN_COST_PROVIDER, customModel);
         Path p = new Dijkstra(g, weighting, tMode).calcPath(3, 4);
+        assertEquals(IntArrayList.from(3, 2, 4), p.calcNodes());
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, tmpEM, usTR);
         List<String> tmpList = getTurnDescriptions(wayList);
         assertEquals(Arrays.asList("continue", "keep right", "arrive at destination"), tmpList);
@@ -499,6 +504,7 @@ public class InstructionListTest {
 
         Weighting weighting = new SpeedWeighting(speedEnc);
         Path p = new Dijkstra(g, weighting, tMode).calcPath(1, 5);
+        assertEquals(IntArrayList.from(1, 2, 3, 4, 5), p.calcNodes());
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR);
 
         // query on first edge, get instruction for second edge
@@ -512,6 +518,44 @@ public class InstructionListTest {
 
         // too far away
         assertNull(Instructions.find(wayList, 50.8, 50.25, 1000));
+    }
+
+    @Test
+    public void testSplitWays() {
+        DecimalEncodedValue roadsSpeedEnc = new DecimalEncodedValueImpl("speed", 7, 2, true);
+        EncodingManager tmpEM = EncodingManager.start().add(roadsSpeedEnc).
+                add(RoadClass.create()).add(Roundabout.create()).add(RoadClassLink.create()).
+                add(MaxSpeed.create()).add(Lanes.create()).build();
+        IntEncodedValue lanesEnc = tmpEM.getIntEncodedValue(Lanes.KEY);
+        BaseGraph g = new BaseGraph.Builder(tmpEM).create();
+        // real world example: https://graphhopper.com/maps/?point=43.626238%2C-79.715268&point=43.624647%2C-79.713204&profile=car
+        //
+        //       1   3
+        //         \ |
+        //          2
+        //           \
+        //            4
+
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(1, 43.626246, -79.71522);
+        na.setNode(2, 43.625503, -79.714228);
+        na.setNode(3, 43.626285, -79.714974);
+        na.setNode(4, 43.625129, -79.713692);
+
+        PointList list = new PointList();
+        list.add(43.62549, -79.714292);
+        g.edge(1, 2).setKeyValues(createKV(STREET_NAME, "main")).setWayGeometry(list).
+                setDistance(110).set(roadsSpeedEnc, 50, 50).set(lanesEnc, 2);
+        g.edge(2, 3).setKeyValues(createKV(STREET_NAME, "main")).
+                setDistance(110).set(roadsSpeedEnc, 50, 50).set(lanesEnc, 3);
+        g.edge(2, 4).setKeyValues(createKV(STREET_NAME, "main")).
+                setDistance(80).set(roadsSpeedEnc, 50, 50).set(lanesEnc, 5);
+
+        Weighting weighting = new SpeedWeighting(roadsSpeedEnc);
+        Path p = new Dijkstra(g, weighting, tMode).calcPath(1, 4);
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, tmpEM, usTR);
+        List<String> tmpList = getTurnDescriptions(wayList);
+        assertEquals(Arrays.asList("continue onto main", "arrive at destination"), tmpList);
     }
 
     private void compare(List<List<Double>> expected, List<List<Double>> actual) {

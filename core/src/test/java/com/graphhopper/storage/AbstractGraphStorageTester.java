@@ -17,10 +17,7 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
-import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.AccessFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
@@ -57,6 +54,7 @@ public abstract class AbstractGraphStorageTester {
         return new EncodingManager.Builder()
                 .add(carAccessEnc).add(carSpeedEnc)
                 .add(footAccessEnc).add(footSpeedEnc)
+                .add(RoadClass.create())
                 .build();
     }
 

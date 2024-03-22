@@ -1,4 +1,4 @@
-# do not edit manually, instead use spreadsheet https://t.co/f086oJXAEI and script ./core/files/update-translations.sh
+# do not edit manually, instead use spreadsheet from translations.md and script ./core/files/update-translations.sh
 
 continue=continue
 continue_onto=continue onto %1$s
@@ -72,6 +72,9 @@ web.custom_model_enabled=Custom Model Active
 web.settings=Settings
 web.settings_close=Close
 web.exclude_motorway_example=Exclude Motorway
+web.exclude_disneyland_paris_example=Exclude Disneyland Paris
+web.simple_electric_car_example=Simple Electric Car
+web.avoid_tunnels_bridges_example=Avoid Bridges & Tunnels
 web.limit_speed_example=Limit Speed
 web.cargo_bike_example=Cargo Bike
 web.prefer_bike_network=Prefer Cycle Routes
@@ -141,6 +144,8 @@ web.max_speed=Max. speed
 web.average_speed=Avg. speed
 web.track_type=Track type
 web.toll=Toll
+web.next=Next
+web.back=Back
 navigate.accept_risks_after_warning=I understand and agree
 navigate.for_km=for %1$s kilometers
 navigate.for_mi=for %1$s miles

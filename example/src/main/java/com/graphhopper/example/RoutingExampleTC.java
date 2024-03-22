@@ -7,9 +7,12 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.Profile;
+import com.graphhopper.config.TurnCostsConfig;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Parameters;
 
 import java.util.Arrays;
+import java.util.List;
 
 import static com.graphhopper.util.Parameters.Curbsides.CURBSIDE_ANY;
 import static com.graphhopper.util.Parameters.Curbsides.CURBSIDE_RIGHT;
@@ -23,7 +26,7 @@ public class RoutingExampleTC {
         GraphHopper hopper = createGraphHopperInstance(relDir + "core/files/andorra.osm.pbf");
         routeWithTurnCosts(hopper);
         routeWithTurnCostsAndCurbsides(hopper);
-        routeWithTurnCostsAndOtherUTurnCosts(hopper);
+        routeWithTurnCostsAndCurbsidesAndOtherUTurnCosts(hopper);
     }
 
     public static void routeWithTurnCosts(GraphHopper hopper) {
@@ -36,10 +39,10 @@ public class RoutingExampleTC {
         GHRequest req = new GHRequest(42.50822, 1.533966, 42.506899, 1.525372).
                 setCurbsides(Arrays.asList(CURBSIDE_ANY, CURBSIDE_RIGHT)).
                 setProfile("car");
-        route(hopper, req, 1729, 110_800);
+        route(hopper, req, 1370, 128_000);
     }
 
-    public static void routeWithTurnCostsAndOtherUTurnCosts(GraphHopper hopper) {
+    public static void routeWithTurnCostsAndCurbsidesAndOtherUTurnCosts(GraphHopper hopper) {
         GHRequest req = new GHRequest(42.50822, 1.533966, 42.506899, 1.525372)
                 .setCurbsides(Arrays.asList(CURBSIDE_ANY, CURBSIDE_RIGHT))
                 // to change u-turn costs per request we have to disable CH. otherwise the u-turn costs we set per request
@@ -67,12 +70,10 @@ public class RoutingExampleTC {
         GraphHopper hopper = new GraphHopper();
         hopper.setOSMFile(ghLoc);
         hopper.setGraphHopperLocation("target/routing-tc-graph-cache");
-        Profile profile = new Profile("car").setVehicle("car")
-                // enabling turn costs means OSM turn restriction constraints like 'no_left_turn' will be taken into account
-                .setTurnCosts(true)
-                // we can also set u_turn_costs (in seconds). by default no u-turns are allowed, but with this setting
-                // we will consider u-turns at all junctions with a 40s time penalty
-                .putHint("u_turn_costs", 40);
+        Profile profile = new Profile("car").setCustomModel(GHUtility.loadCustomModelFromJar("car.json"))
+                // enabling turn costs means OSM turn restriction constraints like 'no_left_turn' will be taken into account for the specified access restrictions
+                // we can also set u_turn_costs (in seconds). i.e. we will consider u-turns at all junctions with a 40s time penalty
+                .setTurnCostsConfig(new TurnCostsConfig(List.of("motorcar", "motor_vehicle"), 40));
         hopper.setProfiles(profile);
         // enable CH for our profile. since turn costs are enabled this will take more time and memory to prepare than
         // without turn costs.

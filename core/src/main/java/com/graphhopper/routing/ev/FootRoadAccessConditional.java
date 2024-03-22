@@ -15,10 +15,33 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
 package com.graphhopper.routing.ev;
 
-import com.graphhopper.util.PMap;
+import com.graphhopper.util.Helper;
 
-public interface EncodedValueFactory {
-    EncodedValue create(String name, PMap properties);
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+
+/**
+ * Stores temporary so-called conditional restrictions from access:conditional and other conditional
+ * tags affecting foot. See OSMRoadAccessConditionalParser.
+ */
+public enum FootRoadAccessConditional {
+
+    MISSING, YES, NO;
+
+    public static final Collection<String> CONDITIONALS = new HashSet<>(Arrays.asList("access:conditional",
+            "foot:conditional"));
+    public static final String KEY = "foot_road_access_conditional";
+
+    public static EnumEncodedValue<FootRoadAccessConditional> create() {
+        return new EnumEncodedValue<>(KEY, FootRoadAccessConditional.class);
+    }
+
+    @Override
+    public String toString() {
+        return Helper.toLowerCase(super.toString());
+    }
 }

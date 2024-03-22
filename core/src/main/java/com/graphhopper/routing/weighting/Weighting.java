@@ -25,7 +25,6 @@ import com.graphhopper.util.EdgeIteratorState;
  * @author Peter Karich
  */
 public interface Weighting {
-    int INFINITE_U_TURN_COSTS = -1;
 
     /**
      * Used only for the heuristic estimation in A*
@@ -67,4 +66,10 @@ public interface Weighting {
 
     String getName();
 
+    static boolean isValidName(String name) {
+        if (name == null || name.isEmpty())
+            return false;
+
+        return name.matches("[\\|_a-z]+");
+    }
 }

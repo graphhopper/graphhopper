@@ -19,13 +19,10 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.routing.util.WayAccess;
-import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
@@ -44,7 +41,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class CarTagParserTest {
     private final EncodingManager em = createEncodingManager("car");
     final CarAccessParser parser = createParser(em, new PMap("block_fords=true"));
-    final CarAverageSpeedParser speedParser = new CarAverageSpeedParser(em, new PMap("block_fords=true"));
+    final CarAverageSpeedParser speedParser = new CarAverageSpeedParser(em);
     private final BooleanEncodedValue roundaboutEnc = em.getBooleanEncodedValue(Roundabout.KEY);
     private final BooleanEncodedValue accessEnc = parser.getAccessEnc();
     private final DecimalEncodedValue avSpeedEnc = speedParser.getAverageSpeedEnc();
@@ -59,13 +56,13 @@ public class CarTagParserTest {
                 .add(VehiclePriority.create("bike", 4, PriorityCode.getFactor(1), false))
                 .add(RouteNetwork.create(BikeNetwork.KEY))
                 .add(Smoothness.create())
+                .add(Roundabout.create())
+                .add(FerrySpeed.create())
                 .build();
     }
 
     CarAccessParser createParser(EncodedValueLookup lookup, PMap properties) {
-        CarAccessParser carTagParser = new CarAccessParser(lookup, properties);
-        carTagParser.init(new DateRangeParser());
-        return carTagParser;
+        return new CarAccessParser(lookup, properties);
     }
 
     @Test
@@ -144,25 +141,6 @@ public class CarTagParserTest {
         way.setTag("motor_vehicle", "emergency");
         assertTrue(parser.getAccess(way).canSkip());
 
-        DateFormat simpleDateFormat = Helper.createFormatter("yyyy MMM dd");
-
-        way.clearTags();
-        way.setTag("highway", "road");
-        way.setTag("access:conditional", "no @ (" + simpleDateFormat.format(new Date().getTime()) + ")");
-        assertTrue(parser.getAccess(way).canSkip());
-
-        way.clearTags();
-        way.setTag("highway", "road");
-        way.setTag("access", "no");
-        way.setTag("access:conditional", "yes @ (" + simpleDateFormat.format(new Date().getTime()) + ")");
-        assertTrue(parser.getAccess(way).isWay());
-
-        way.clearTags();
-        way.setTag("highway", "road");
-        way.setTag("access", "yes");
-        way.setTag("access:conditional", "no @ (" + simpleDateFormat.format(new Date().getTime()) + ")");
-        assertTrue(parser.getAccess(way).canSkip());
-
         way.clearTags();
         way.setTag("highway", "service");
         way.setTag("service", "emergency_access");
@@ -192,7 +170,6 @@ public class CarTagParserTest {
         assertTrue(parser.isBarrier(node));
 
         CarAccessParser tmpParser = new CarAccessParser(em, new PMap("block_fords=false"));
-        tmpParser.init(new DateRangeParser());
         assertTrue(tmpParser.getAccess(way).isWay());
         assertFalse(tmpParser.isBarrier(node));
     }
@@ -608,9 +585,10 @@ public class CarTagParserTest {
         EncodingManager em = new EncodingManager.Builder()
                 .add(new SimpleBooleanEncodedValue("car_access", true))
                 .add(smallFactorSpeedEnc)
+                .add(FerrySpeed.create())
                 .addTurnCostEncodedValue(TurnCost.create("car", 1))
                 .build();
-        CarAverageSpeedParser speedParser = new CarAverageSpeedParser(em, new PMap());
+        CarAverageSpeedParser speedParser = new CarAverageSpeedParser(em);
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "motorway_link");
         way.setTag("maxspeed", "60 mph");
@@ -652,7 +630,6 @@ public class CarTagParserTest {
         way.setTag("sac_scale", "hiking");
 
         BikeAccessParser bikeParser = new BikeAccessParser(em, new PMap());
-        bikeParser.init(new DateRangeParser());
         assertEquals(WayAccess.CAN_SKIP, parser.getAccess(way));
         assertNotEquals(WayAccess.CAN_SKIP, bikeParser.getAccess(way));
         EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
@@ -690,9 +667,10 @@ public class CarTagParserTest {
         EncodingManager lowFactorEm = new EncodingManager.Builder()
                 .add(new SimpleBooleanEncodedValue(VehicleAccess.key("car"), true))
                 .add(lowFactorSpeedEnc)
+                .add(FerrySpeed.create())
                 .build();
         edgeIntAccess = new ArrayEdgeIntAccess(lowFactorEm.getIntsForFlags());
-        new CarAverageSpeedParser(lowFactorEm, new PMap()).handleWayTags(edgeId, edgeIntAccess, way);
+        new CarAverageSpeedParser(lowFactorEm).handleWayTags(edgeId, edgeIntAccess, way);
         assertEquals(1, lowFactorSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), .1);
     }
 

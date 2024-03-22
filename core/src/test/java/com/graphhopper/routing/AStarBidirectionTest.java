@@ -19,17 +19,14 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
-import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.ShortestWeighting;
+import com.graphhopper.routing.weighting.SpeedWeighting;
 import com.graphhopper.routing.weighting.WeightApproximator;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.BaseGraph;
-import com.graphhopper.util.GHUtility;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -45,31 +42,30 @@ class AStarBidirectionTest {
         // This means the resulting path contains the invalid search tree branch 2(old)-3-4 and is not the shortest path,
         // because the SPTEntry for node 3 still points to the outdated/deleted entry for node 2.
         // We do not expect an exception, though, because for an infeasible approximator we cannot expect optimal paths.
-        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
-        DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
-        EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
+        DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 2, 1, true);
+        EncodingManager em = EncodingManager.start().add(speedEnc).build();
         BaseGraph graph = new BaseGraph.Builder(em).create();
         // 0-1----2-3-4----5-6-7-8-9
         //    \  /
         //     10
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(0, 1).setDistance(100));
+        graph.edge(0, 1).set(speedEnc, 1, 0).setDistance(100);
         // the distance 1-2 is longer than 1-10-2
         // we deliberately use 2-1 as storage direction, even though the edge points from 1 to 2, because this way
         // we can reproduce the 'Calculating time should not require to read speed from edge in wrong direction' error
         // from #2600
-        graph.edge(2, 1).setDistance(300).set(accessEnc, false, true).set(speedEnc, 60);
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(2, 3).setDistance(100));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 4).setDistance(100));
+        graph.edge(2, 1).setDistance(300).set(speedEnc, 0, 1);
+        graph.edge(2, 3).set(speedEnc, 1, 0).setDistance(100);
+        graph.edge(3, 4).set(speedEnc, 1, 0).setDistance(100);
         // distance 4-5 is very long
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(4, 5).setDistance(10_000));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(5, 6).setDistance(100));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(6, 7).setDistance(100));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(7, 8).setDistance(100));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(8, 9).setDistance(100));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(1, 10).setDistance(100));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(10, 2).setDistance(100));
+        graph.edge(4, 5).set(speedEnc, 1, 0).setDistance(10_000);
+        graph.edge(5, 6).set(speedEnc, 1, 0).setDistance(100);
+        graph.edge(6, 7).set(speedEnc, 1, 0).setDistance(100);
+        graph.edge(7, 8).set(speedEnc, 1, 0).setDistance(100);
+        graph.edge(8, 9).set(speedEnc, 1, 0).setDistance(100);
+        graph.edge(1, 10).set(speedEnc, 1, 0).setDistance(100);
+        graph.edge(10, 2).set(speedEnc, 1, 0).setDistance(100);
 
-        Weighting weighting = new ShortestWeighting(accessEnc, speedEnc);
+        Weighting weighting = new SpeedWeighting(speedEnc);
         AStarBidirection algo = new AStarBidirection(graph, weighting, TraversalMode.NODE_BASED);
         algo.setApproximation(new InfeasibleApproximator());
         Path path = algo.calcPath(0, 9);

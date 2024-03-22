@@ -24,10 +24,12 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.util.Constants;
-import com.graphhopper.util.PMap;
 
 import java.io.UncheckedIOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -126,18 +128,6 @@ public class EncodingManager implements EncodedValueLookup {
         private final EncodedValue.InitializerConfig turnCostConfig = new EncodedValue.InitializerConfig();
         private EncodingManager em = new EncodingManager();
 
-        public Builder add(VehicleEncodedValues v) {
-            checkNotBuiltAlready();
-            List<EncodedValue> list = new ArrayList<>();
-            v.createEncodedValues(list);
-            list.forEach(this::add);
-
-            list = new ArrayList<>();
-            v.createTurnCostEncodedValues(list);
-            list.forEach(this::addTurnCostEncodedValue);
-            return this;
-        }
-
         public Builder add(EncodedValue encodedValue) {
             checkNotBuiltAlready();
             if (em.hasEncodedValue(encodedValue.getName()))
@@ -167,9 +157,6 @@ public class EncodingManager implements EncodedValueLookup {
 
         public EncodingManager build() {
             checkNotBuiltAlready();
-            addDefaultEncodedValues();
-            if (em.encodedValueMap.isEmpty())
-                throw new IllegalStateException("No EncodedValues were added to the EncodingManager");
             em.intsForFlags = edgeConfig.getRequiredInts();
             em.intsForTurnCostFlags = turnCostConfig.getRequiredInts();
             EncodingManager result = em;
@@ -177,31 +164,6 @@ public class EncodingManager implements EncodedValueLookup {
             return result;
         }
 
-        private void addDefaultEncodedValues() {
-            // todo: I think ultimately these should all be removed and must be added explicitly
-            List<String> keys = new ArrayList<>(Arrays.asList(
-                    Roundabout.KEY,
-                    RoadClass.KEY,
-                    RoadClassLink.KEY,
-                    RoadEnvironment.KEY,
-                    MaxSpeed.KEY,
-                    RoadAccess.KEY,
-                    FerrySpeed.KEY
-            ));
-            if (em.getVehicles().stream().anyMatch(vehicle -> vehicle.contains("bike") || vehicle.contains("mtb") || vehicle.contains("racingbike"))) {
-                keys.add(BikeNetwork.KEY);
-                keys.add(MtbNetwork.KEY);
-                keys.add(GetOffBike.KEY);
-                keys.add(Smoothness.KEY);
-            }
-            if (em.getVehicles().stream().anyMatch(vehicle -> vehicle.contains("foot") || vehicle.contains("hike")))
-                keys.add(FootNetwork.KEY);
-
-            DefaultEncodedValueFactory evFactory = new DefaultEncodedValueFactory();
-            for (String key : keys)
-                if (!em.hasEncodedValue(key))
-                    add(evFactory.create(key, new PMap()));
-        }
     }
 
     public int getIntsForFlags() {
@@ -216,9 +178,10 @@ public class EncodingManager implements EncodedValueLookup {
         return turnEncodedValueMap.get(key) != null;
     }
 
+    /**
+     * @return list of all prefixes of xy_access and xy_average_speed encoded values.
+     */
     public List<String> getVehicles() {
-        // we define the 'vehicles' as all the prefixes for which there is an access and speed EV
-        // any EVs that contain prefix_average_speed are accepted
         return getEncodedValues().stream()
                 .filter(ev -> ev.getName().endsWith("_access"))
                 .map(ev -> ev.getName().replaceAll("_access", ""))
@@ -290,7 +253,7 @@ public class EncodingManager implements EncodedValueLookup {
         EncodedValue ev = encodedValueMap.get(key);
         // todo: why do we not just return null when EV is missing? just like java.util.Map? -> https://github.com/graphhopper/graphhopper/pull/2561#discussion_r859770067
         if (ev == null)
-            throw new IllegalArgumentException("Cannot find EncodedValue " + key + " in collection: " + encodedValueMap.keySet());
+            throw new IllegalArgumentException("Cannot find EncodedValue '" + key + "' in collection: " + encodedValueMap.keySet());
         return (T) ev;
     }
 

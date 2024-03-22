@@ -15,12 +15,23 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+package com.graphhopper.routing.weighting;
 
-package com.graphhopper.routing.util;
+import org.junit.jupiter.api.Test;
 
-import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.util.PMap;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public interface VehicleTagParserFactory {
-    VehicleTagParsers createParsers(EncodedValueLookup lookup, String name, PMap configuration);
+/**
+ * @author Peter Karich
+ */
+public class WeightingTest {
+    @Test
+    public void testToString() {
+        assertTrue(Weighting.isValidName("blup"));
+        assertTrue(Weighting.isValidName("blup_a"));
+        assertTrue(Weighting.isValidName("blup|a"));
+        assertFalse(Weighting.isValidName("Blup"));
+        assertFalse(Weighting.isValidName("Blup!"));
+    }
 }
