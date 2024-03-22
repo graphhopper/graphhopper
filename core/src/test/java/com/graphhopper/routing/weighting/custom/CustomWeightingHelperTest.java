@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import static com.graphhopper.json.Statement.Else;
 import static com.graphhopper.json.Statement.If;
+import static com.graphhopper.json.Statement.Op.LIMIT;
 import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -55,14 +56,14 @@ class CustomWeightingHelperTest {
     @Test
     public void testNegativeMax() {
         CustomModel customModel = new CustomModel();
+        customModel.addToSpeed(If("true", LIMIT, VehicleSpeed.key("car")));
         customModel.addToSpeed(If("road_class == PRIMARY", MULTIPLY, "0.5"));
         customModel.addToSpeed(Else(MULTIPLY, "-0.5"));
 
         CustomWeightingHelper helper = new CustomWeightingHelper();
-        EncodingManager lookup = new EncodingManager.Builder().add(VehicleSpeed.create("car", 7, 2, false)).build();
-        helper.init(customModel, lookup, lookup.getDecimalEncodedValue(VehicleSpeed.key("car")), null, null);
-        IllegalArgumentException ret = assertThrows(IllegalArgumentException.class,
-                helper::calcMaxSpeed);
-        assertEquals("speed has to be >=0 but can be negative (-0.5)" ,ret.getMessage());
+        EncodingManager lookup = new EncodingManager.Builder().add(VehicleSpeed.create("car", 5, 5, true)).build();
+        helper.init(customModel, lookup, null);
+        IllegalArgumentException ret = assertThrows(IllegalArgumentException.class, helper::calcMaxSpeed);
+        assertTrue(ret.getMessage().startsWith("statement resulted in negative value"));
     }
 }

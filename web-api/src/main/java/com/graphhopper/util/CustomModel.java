@@ -35,7 +35,6 @@ public class CustomModel {
     private boolean internal;
     private List<Statement> speedStatements = new ArrayList<>();
     private List<Statement> priorityStatements = new ArrayList<>();
-    private TurnCostsConfig turnCostsConfig = new TurnCostsConfig();
     private JsonFeatureCollection areas = new JsonFeatureCollection();
 
     public CustomModel() {
@@ -48,7 +47,6 @@ public class CustomModel {
 
         speedStatements = deepCopy(toCopy.getSpeed());
         priorityStatements = deepCopy(toCopy.getPriority());
-        turnCostsConfig = new TurnCostsConfig(toCopy.turnCostsConfig);
 
         addAreas(toCopy.getAreas());
     }
@@ -136,16 +134,6 @@ public class CustomModel {
         return areas;
     }
 
-    @JsonProperty("turn_costs")
-    public CustomModel setTurnCostsConfig(TurnCostsConfig turnCostsConfig) {
-        this.turnCostsConfig = turnCostsConfig;
-        return this;
-    }
-
-    public TurnCostsConfig getTurnCostsConfig() {
-        return turnCostsConfig;
-    }
-
     public CustomModel setDistanceInfluence(Double distanceFactor) {
         this.distanceInfluence = distanceFactor;
         return this;
@@ -173,7 +161,7 @@ public class CustomModel {
         // used to check against stored custom models, see #2026
         return "distanceInfluence=" + distanceInfluence + "|headingPenalty=" + headingPenalty
                 + "|speedStatements=" + speedStatements + "|priorityStatements=" + priorityStatements
-                + "|areas=" + areas + "|turnCostConfig=" + turnCostsConfig;
+                + "|areas=" + areas;
     }
 
     /**
@@ -193,26 +181,25 @@ public class CustomModel {
         mergedCM.speedStatements.addAll(queryModel.getSpeed());
         mergedCM.priorityStatements.addAll(queryModel.getPriority());
 
-        mergedCM.setTurnCostsConfig(new TurnCostsConfig(queryModel.getTurnCostsConfig()));
         mergedCM.addAreas(queryModel.getAreas());
         return mergedCM;
     }
 
-    public void checkTurnCostConfigForLM(TurnCostsConfig baseModelTCConfig) {
-        if (turnCostsConfig.getLeftCost() < baseModelTCConfig.getLeftCost())
-            throw new IllegalArgumentException("left turn cost can only increase but was " + turnCostsConfig.getLeftCost() + " < " + baseModelTCConfig.getLeftCost());
-        if (turnCostsConfig.getRightCost() < baseModelTCConfig.getRightCost())
-            throw new IllegalArgumentException("right turn cost can only increase but was " + turnCostsConfig.getRightCost() + " < " + baseModelTCConfig.getRightCost());
-        if (turnCostsConfig.getStraightCost() < baseModelTCConfig.getStraightCost())
-            throw new IllegalArgumentException("straight costs can only increase but was " + turnCostsConfig.getStraightCost() + " < " + baseModelTCConfig.getStraightCost());
+    public void checkTurnCostConfigForLM(TurnCostsConfig baseModelTCConfig, TurnCostsConfig queryTCConfig) {
+        if (queryTCConfig.getLeftCost() < baseModelTCConfig.getLeftCost())
+            throw new IllegalArgumentException("left turn cost can only increase but was " + queryTCConfig.getLeftCost() + " < " + baseModelTCConfig.getLeftCost());
+        if (queryTCConfig.getRightCost() < baseModelTCConfig.getRightCost())
+            throw new IllegalArgumentException("right turn cost can only increase but was " + queryTCConfig.getRightCost() + " < " + baseModelTCConfig.getRightCost());
+        if (queryTCConfig.getStraightCost() < baseModelTCConfig.getStraightCost())
+            throw new IllegalArgumentException("straight costs can only increase but was " + queryTCConfig.getStraightCost() + " < " + baseModelTCConfig.getStraightCost());
 
-        if (turnCostsConfig.getMaxLeftAngle() != baseModelTCConfig.getMaxLeftAngle())
-            throw new IllegalArgumentException("max left angle must be identical but was " + turnCostsConfig.getMaxLeftAngle() + "!=" + baseModelTCConfig.getMaxLeftAngle());
-        if (turnCostsConfig.getMinLeftAngle() != baseModelTCConfig.getMinLeftAngle())
-            throw new IllegalArgumentException("min left angle must be identical but was " + turnCostsConfig.getMinLeftAngle() + "!=" + baseModelTCConfig.getMinLeftAngle());
-        if (turnCostsConfig.getMaxRightAngle() != baseModelTCConfig.getMaxRightAngle())
-            throw new IllegalArgumentException("max right angle must be identical but was " + turnCostsConfig.getMaxRightAngle() + "!=" + baseModelTCConfig.getMaxRightAngle());
-        if (turnCostsConfig.getMinRightAngle() != baseModelTCConfig.getMinRightAngle())
-            throw new IllegalArgumentException("max right angle must be identical but was " + turnCostsConfig.getMinRightAngle() + "!=" + baseModelTCConfig.getMinRightAngle());
+        if (queryTCConfig.getMaxLeftAngle() != baseModelTCConfig.getMaxLeftAngle())
+            throw new IllegalArgumentException("max left angle must be identical but was " + queryTCConfig.getMaxLeftAngle() + "!=" + baseModelTCConfig.getMaxLeftAngle());
+        if (queryTCConfig.getMinLeftAngle() != baseModelTCConfig.getMinLeftAngle())
+            throw new IllegalArgumentException("min left angle must be identical but was " + queryTCConfig.getMinLeftAngle() + "!=" + baseModelTCConfig.getMinLeftAngle());
+        if (queryTCConfig.getMaxRightAngle() != baseModelTCConfig.getMaxRightAngle())
+            throw new IllegalArgumentException("max right angle must be identical but was " + queryTCConfig.getMaxRightAngle() + "!=" + baseModelTCConfig.getMaxRightAngle());
+        if (queryTCConfig.getMinRightAngle() != baseModelTCConfig.getMinRightAngle())
+            throw new IllegalArgumentException("max right angle must be identical but was " + queryTCConfig.getMinRightAngle() + "!=" + baseModelTCConfig.getMinRightAngle());
     }
 }

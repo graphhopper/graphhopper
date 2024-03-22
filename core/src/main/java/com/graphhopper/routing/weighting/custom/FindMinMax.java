@@ -27,7 +27,6 @@ public class FindMinMax {
                         + bmDI + ", but was: " + queryModel.getDistanceInfluence());
         }
 
-        queryModel.checkTurnCostConfigForLM(baseModel.getTurnCostsConfig());
         checkMultiplyValue(queryModel.getPriority(), lookup);
         checkMultiplyValue(queryModel.getSpeed(), lookup);
     }
@@ -50,7 +49,7 @@ public class FindMinMax {
      */
     static MinMax findMinMax(MinMax minMax, List<Statement> statements, EncodedValueLookup lookup) {
         // 'blocks' of the statements are applied one after the other. A block consists of one (if) or more statements (elseif+else)
-        List<List<Statement>> blocks = ValueExpressionVisitor.splitIntoBlocks(statements);
+        List<List<Statement>> blocks = CustomModelParser.splitIntoBlocks(statements);
         for (List<Statement> block : blocks) findMinMaxForBlock(minMax, block, lookup);
         return minMax;
     }
@@ -62,12 +61,16 @@ public class FindMinMax {
         MinMax minMaxBlock;
         if (block.get(0).getCondition().trim().equals("true")) {
             minMaxBlock = block.get(0).getOperation().apply(minMax, ValueExpressionVisitor.findMinMax(block.get(0).getValue(), lookup));
+            if (minMaxBlock.max < 0)
+                throw new IllegalArgumentException("statement resulted in negative value: " + block.get(0));
         } else {
             minMaxBlock = new MinMax(Double.MAX_VALUE, 0);
             boolean foundElse = false;
             for (Statement s : block) {
                 if (s.getKeyword() == ELSE) foundElse = true;
                 MinMax tmp = s.getOperation().apply(minMax, ValueExpressionVisitor.findMinMax(s.getValue(), lookup));
+                if (tmp.max < 0)
+                    throw new IllegalArgumentException("statement resulted in negative value: " + s);
                 minMaxBlock.min = Math.min(minMaxBlock.min, tmp.min);
                 minMaxBlock.max = Math.max(minMaxBlock.max, tmp.max);
             }

@@ -37,6 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -82,7 +83,7 @@ public class MapMatchingResource {
     @Consumes({MediaType.APPLICATION_XML, "application/gpx+xml"})
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, "application/gpx+xml"})
     public Response match(
-            Gpx gpx,
+            @NotNull Gpx gpx,
             @Context UriInfo uriInfo,
             @QueryParam(WAY_POINT_MAX_DISTANCE) @DefaultValue("1") double minPathPrecision,
             @QueryParam("type") @DefaultValue("json") String outType,
@@ -96,7 +97,7 @@ public class MapMatchingResource {
             @QueryParam("gpx.route") @DefaultValue("true") boolean withRoute,
             @QueryParam("gpx.track") @DefaultValue("true") boolean withTrack,
             @QueryParam("traversal_keys") @DefaultValue("false") boolean enableTraversalKeys,
-            @QueryParam("gps_accuracy") @DefaultValue("40") double gpsAccuracy) {
+            @QueryParam("gps_accuracy") @DefaultValue("10") double gpsAccuracy) {
 
         boolean writeGPX = "gpx".equalsIgnoreCase(outType);
         if (gpx.trk.isEmpty()) {

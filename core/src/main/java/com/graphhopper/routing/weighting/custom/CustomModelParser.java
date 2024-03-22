@@ -52,7 +52,7 @@ public class CustomModelParser {
     // Use accessOrder==true to remove oldest accessed entry, not oldest inserted.
     private static final int CACHE_SIZE = Integer.getInteger("graphhopper.custom_weighting.cache_size", 1000);
     private static final Map<String, Class<?>> CACHE = Collections.synchronizedMap(
-            new LinkedHashMap<String, Class<?>>(CACHE_SIZE, 0.75f, true) {
+            new LinkedHashMap<>(CACHE_SIZE, 0.75f, true) {
                 protected boolean removeEldestEntry(Map.Entry eldest) {
                     return size() > CACHE_SIZE;
                 }
@@ -68,33 +68,24 @@ public class CustomModelParser {
         // utility class
     }
 
-    public static CustomWeighting createWeighting(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc,
-                                                  DecimalEncodedValue priorityEnc, EncodedValueLookup lookup,
-                                                  TurnCostProvider turnCostProvider, CustomModel customModel) {
+    /**
+     * This method creates a weighting from a CustomModel that must limit the speed. Either as an
+     * unconditional statement <code>{ "if": "true", "limit_to": "car_average_speed" }<code/> or as
+     * an if-else block.
+     */
+    public static CustomWeighting createWeighting(EncodedValueLookup lookup, TurnCostProvider turnCostProvider, CustomModel customModel) {
         if (customModel == null)
             throw new IllegalStateException("CustomModel cannot be null");
-        CustomWeighting.Parameters parameters = createWeightingParameters(customModel, lookup, speedEnc, priorityEnc);
-        return new CustomWeighting(accessEnc, speedEnc, turnCostProvider, parameters);
-    }
-
-    public static CustomWeighting createFastestWeighting(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, EncodingManager lookup) {
-        CustomModel cm = new CustomModel();
-
-        return createWeighting(accessEnc, speedEnc, null, lookup, TurnCostProvider.NO_TURN_COST_PROVIDER, cm);
+        CustomWeighting.Parameters parameters = createWeightingParameters(customModel, lookup);
+        return new CustomWeighting(turnCostProvider, parameters);
     }
 
     /**
      * This method compiles a new subclass of CustomWeightingHelper composed from the provided CustomModel caches this
      * and returns an instance.
-     *
-     * @param priorityEnc can be null
      */
-    public static CustomWeighting.Parameters createWeightingParameters(CustomModel customModel, EncodedValueLookup lookup,
-                                                                       DecimalEncodedValue avgSpeedEnc,
-                                                                       DecimalEncodedValue priorityEnc) {
-
-        // if the same custom model is used with a different base profile we cannot use the cached version
-        String key = customModel.toString() + "," + avgSpeedEnc.getName() + "," + (priorityEnc == null ? "-" : priorityEnc.getName());
+    public static CustomWeighting.Parameters createWeightingParameters(CustomModel customModel, EncodedValueLookup lookup) {
+        String key = customModel.toString();
         if (key.length() > 100_000)
             throw new IllegalArgumentException("Custom Model too big: " + key.length());
 
@@ -119,11 +110,10 @@ public class CustomModelParser {
         try {
             // The class does not need to be thread-safe as we create an instance per request
             CustomWeightingHelper prio = (CustomWeightingHelper) clazz.getDeclaredConstructor().newInstance();
-            prio.init(customModel, lookup, avgSpeedEnc, priorityEnc, CustomModel.getAreasAsMap(customModel.getAreas()));
+            prio.init(customModel, lookup, CustomModel.getAreasAsMap(customModel.getAreas()));
             return new CustomWeighting.Parameters(
                     prio::getSpeed, prio::calcMaxSpeed,
                     prio::getPriority, prio::calcMaxPriority,
-                    customModel.getTurnCostsConfig(),
                     customModel.getDistanceInfluence() == null ? 0 : customModel.getDistanceInfluence(),
                     customModel.getHeadingPenalty() == null ? Parameters.Routing.DEFAULT_HEADING_PENALTY : customModel.getHeadingPenalty());
         } catch (ReflectiveOperationException ex) {
@@ -134,15 +124,11 @@ public class CustomModelParser {
     /**
      * This method does the following:
      * <ul>
-     * <li>0. optionally we already checked the right-hand side expressions before this method call in FindMinMax.checkLMConstraints
-     *     (only the client-side custom model statements)
+     * <li>
+     *     1. parse the value expressions (RHS) to know about additional encoded values ('findVariables')
+     *     and check for multiplications with negative values.
      * </li>
-     * <li>1. determine minimum and maximum values via parsing the right-hand side expression -> done in ValueExpressionVisitor.
-     *     We need the maximum values for a simple negative check AND for the CustomWeighting.Parameters which is for
-     *     Weighting.getMinWeight which is for A*. Note: we could make this step optional somehow for other algorithms,
-     *     but parsing would be still required in the next step for security reasons.
-     * </li>
-     * <li>2. parse condition value of priority and speed statements -> done in ConditionalExpressionVisitor (don't parse RHS expressions again)
+     * <li>2. parse conditional expression of priority and speed statements -> done in ConditionalExpressionVisitor (don't parse RHS expressions again)
      * </li>
      * <li>3. create class template as String, inject the created statements and create the Class
      * </li>
@@ -152,6 +138,20 @@ public class CustomModelParser {
         try {
             Set<String> priorityVariables = ValueExpressionVisitor.findVariables(customModel.getPriority(), lookup);
             List<Java.BlockStatement> priorityStatements = createGetPriorityStatements(priorityVariables, customModel, lookup);
+
+            if (customModel.getSpeed().isEmpty())
+                throw new IllegalArgumentException("At least one initial statement under 'speed' is required.");
+
+            List<Statement> firstBlock = splitIntoBlocks(customModel.getSpeed()).get(0);
+            if (firstBlock.size() > 1) {
+                Statement lastSt = firstBlock.get(firstBlock.size() - 1);
+                if (lastSt.getOperation() != Statement.Op.LIMIT || lastSt.getKeyword() != Statement.Keyword.ELSE)
+                    throw new IllegalArgumentException("The first block needs to end with an 'else' (or contain a single unconditional 'if' statement).");
+            } else {
+                Statement firstSt = firstBlock.get(0);
+                if (!"true".equals(firstSt.getCondition()) || firstSt.getOperation() != Statement.Op.LIMIT || firstSt.getKeyword() != Statement.Keyword.IF)
+                    throw new IllegalArgumentException("The first block needs to contain a single unconditional 'if' statement (or end with an 'else').");
+            }
 
             Set<String> speedVariables = ValueExpressionVisitor.findVariables(customModel.getSpeed(), lookup);
             List<Java.BlockStatement> speedStatements = createGetSpeedStatements(speedVariables, customModel, lookup);
@@ -172,9 +172,7 @@ public class CustomModelParser {
         }
     }
 
-    public static List<String> findVariablesForEncodedValuesString(CustomModel model,
-                                                                   NameValidator nameValidator,
-                                                                   EncodedValueLookup lookup) {
+    public static List<String> findVariablesForEncodedValuesString(CustomModel model, NameValidator nameValidator, ClassHelper classHelper) {
         Set<String> variables = new LinkedHashSet<>();
         // avoid parsing exception for backward_xy or in_xy ...
         NameValidator nameValidatorIntern = s -> {
@@ -187,20 +185,17 @@ public class CustomModelParser {
             }
             return false;
         };
-        ClassHelper helper = key -> getReturnType(lookup.getEncodedValue(key, EncodedValue.class));
-        findVariablesForEncodedValuesString(model.getPriority(), nameValidatorIntern, helper);
-        findVariablesForEncodedValuesString(model.getSpeed(), nameValidatorIntern, helper);
+        findVariablesForEncodedValuesString(model.getPriority(), nameValidatorIntern, classHelper);
+        findVariablesForEncodedValuesString(model.getSpeed(), nameValidatorIntern, classHelper);
         return new ArrayList<>(variables);
     }
 
-    private static void findVariablesForEncodedValuesString(List<Statement> statements,
-                                                            NameValidator nameValidator,
-                                                            ClassHelper helper) {
+    private static void findVariablesForEncodedValuesString(List<Statement> statements, NameValidator nameValidator, ClassHelper classHelper) {
         List<List<Statement>> blocks = CustomModelParser.splitIntoBlocks(statements);
         for (List<Statement> block : blocks) {
             for (Statement statement : block) {
                 // ignore potential problems; collect only variables in this step
-                ConditionalExpressionVisitor.parse(statement.getCondition(), nameValidator, helper);
+                ConditionalExpressionVisitor.parse(statement.getCondition(), nameValidator, classHelper);
                 ValueExpressionVisitor.parse(statement.getValue(), nameValidator);
             }
         }
@@ -230,8 +225,8 @@ public class CustomModelParser {
                                                                       CustomModel customModel, EncodedValueLookup lookup) throws Exception {
         List<Java.BlockStatement> speedStatements = new ArrayList<>(verifyExpressions(new StringBuilder(),
                 "speed entry", speedVariables, customModel.getSpeed(), lookup));
-        String speedMethodStartBlock = "double value = super.getRawSpeed(edge, reverse);\n";
-        // a bit inefficient to possibly define variables twice, but for now we have two separate methods
+        String speedMethodStartBlock = "double value = " + CustomWeightingHelper.GLOBAL_MAX_SPEED + ";\n";
+        // potentially we fetch EncodedValues twice (one time here and one time for priority)
         for (String arg : speedVariables) {
             speedMethodStartBlock += getVariableDeclaration(lookup, arg);
         }
@@ -249,7 +244,7 @@ public class CustomModelParser {
                                                                          CustomModel customModel, EncodedValueLookup lookup) throws Exception {
         List<Java.BlockStatement> priorityStatements = new ArrayList<>(verifyExpressions(new StringBuilder(),
                 "priority entry", priorityVariables, customModel.getPriority(), lookup));
-        String priorityMethodStartBlock = "double value = super.getRawPriority(edge, reverse);\n";
+        String priorityMethodStartBlock = "double value = " + CustomWeightingHelper.GLOBAL_PRIORITY + ";\n";
         for (String arg : priorityVariables) {
             priorityMethodStartBlock += getVariableDeclaration(lookup, arg);
         }
@@ -325,9 +320,7 @@ public class CustomModelParser {
         final StringBuilder classSourceCode = new StringBuilder(100);
         boolean includedAreaImports = false;
 
-        final StringBuilder initSourceCode = new StringBuilder("this.avg_speed_enc = avgSpeedEnc;\n");
-        initSourceCode.append("this.priority_enc = priorityEnc;\n");
-        initSourceCode.append("this.lookup = lookup;\n");
+        final StringBuilder initSourceCode = new StringBuilder("this.lookup = lookup;\n");
         initSourceCode.append("this.customModel = customModel;\n");
         Set<String> set = new HashSet<>();
         for (String prioVar : priorityVariables)
@@ -382,8 +375,7 @@ public class CustomModelParser {
                 + "\npublic class JaninoCustomWeightingHelperSubclass" + counter + " extends " + CustomWeightingHelper.class.getSimpleName() + " {\n"
                 + classSourceCode
                 + "   @Override\n"
-                + "   public void init(CustomModel customModel, EncodedValueLookup lookup, " + DecimalEncodedValue.class.getName() + " avgSpeedEnc, "
-                + DecimalEncodedValue.class.getName() + " priorityEnc, Map<String, " + JsonFeature.class.getName() + "> areas) {\n"
+                + "   public void init(CustomModel customModel, EncodedValueLookup lookup, Map<String, " + JsonFeature.class.getName() + "> areas) {\n"
                 + initSourceCode
                 + "   }\n\n"
                 // we need these placeholder methods so that the hooks in DeepCopier are invoked
@@ -393,7 +385,7 @@ public class CustomModelParser {
                 + "   }\n"
                 + "   @Override\n"
                 + "   public double getSpeed(EdgeIteratorState edge, boolean reverse) {\n"
-                + "      return getRawSpeed(edge, reverse); //will be overwritten by code injected in DeepCopier\n"
+                + "      return 1; //will be overwritten by code injected in DeepCopier\n"
                 + "   }\n"
                 + "}";
     }
@@ -421,7 +413,7 @@ public class CustomModelParser {
 
     static void parseExpressions(StringBuilder expressions, NameValidator nameInConditionValidator,
                                  String exceptionInfo, Set<String> createObjects, List<Statement> list,
-                                 ClassHelper helper) {
+                                 ClassHelper classHelper) {
 
         for (Statement statement : list) {
             // avoid parsing the RHS value expression again as we just did it to get the maximum values in createClazz
@@ -431,7 +423,7 @@ public class CustomModelParser {
 
                 expressions.append("else {").append(statement.getOperation().build(statement.getValue())).append("; }\n");
             } else if (statement.getKeyword() == Statement.Keyword.ELSEIF || statement.getKeyword() == Statement.Keyword.IF) {
-                ParseResult parseResult = ConditionalExpressionVisitor.parse(statement.getCondition(), nameInConditionValidator, helper);
+                ParseResult parseResult = ConditionalExpressionVisitor.parse(statement.getCondition(), nameInConditionValidator, classHelper);
                 if (!parseResult.ok)
                     throw new IllegalArgumentException(exceptionInfo + " invalid condition \"" + statement.getCondition() + "\"" +
                             (parseResult.invalidMessage == null ? "" : ": " + parseResult.invalidMessage));

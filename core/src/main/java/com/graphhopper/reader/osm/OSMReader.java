@@ -412,9 +412,10 @@ public class OSMReader {
      * the duration tag when it is present. The latter cannot be done on a per-edge basis, because the duration tag
      * refers to the duration of the entire way.
      */
-    protected void preprocessWay(ReaderWay way, WaySegmentParser.CoordinateSupplier coordinateSupplier) {
+    protected void preprocessWay(ReaderWay way, WaySegmentParser.CoordinateSupplier coordinateSupplier,
+                                 WaySegmentParser.NodeTagSupplier nodeTagSupplier) {
+        List<KVStorage.KeyValue> list = new ArrayList<>();
         if (config.isParseWayNames()) {
-            List<KVStorage.KeyValue> list = new ArrayList<>();
             // http://wiki.openstreetmap.org/wiki/Key:name
             String name = "";
             if (!config.getPreferredLanguage().isEmpty())
@@ -445,25 +446,36 @@ public class OSMReader {
                 if (way.hasTag("destination:backward"))
                     list.add(new KVStorage.KeyValue(STREET_DESTINATION, fixWayName(way.getTag("destination:backward")), false, true));
             }
-            if (way.getTags().size() > 1) // at least highway tag
-                for (Map.Entry<String, Object> entry : way.getTags().entrySet()) {
-                    if (entry.getKey().endsWith(":conditional") && entry.getValue() instanceof String &&
-                            // for now reduce index size a bit and focus on access tags
-                            !entry.getKey().startsWith("maxspeed") && !entry.getKey().startsWith("maxweight")) {
-                        // remove spaces as they unnecessarily increase the unique number of values:
-                        String value = KVStorage.cutString(((String) entry.getValue()).
-                                replace(" ", "").replace("bicycle", "bike"));
-                        boolean fwd = entry.getKey().contains("forward");
-                        boolean bwd = entry.getKey().contains("backward");
-                        if (!fwd && !bwd)
-                            list.add(new KVStorage.KeyValue(entry.getKey().replace(':', '_'), value, true, true));
-                        else
-                            list.add(new KVStorage.KeyValue(entry.getKey().replace(':', '_'), value, fwd, bwd));
-                    }
-                }
 
-            way.setTag("key_values", list);
+            // copy node name of motorway_junction
+            LongArrayList nodes = way.getNodes();
+            if (!nodes.isEmpty() && (way.hasTag("highway", "motorway") || way.hasTag("highway", "motorway_link"))) {
+                // index 0 assumes oneway=yes
+                Map<String, Object> nodeTags = nodeTagSupplier.getTags(nodes.get(0));
+                String nodeName = (String) nodeTags.getOrDefault("name", "");
+                if (!nodeName.isEmpty() && "motorway_junction".equals(nodeTags.getOrDefault("highway", "")))
+                    list.add(new KVStorage.KeyValue(MOTORWAY_JUNCTION, nodeName));
+            }
         }
+
+        if (way.getTags().size() > 1) // at least highway tag
+            for (Map.Entry<String, Object> entry : way.getTags().entrySet()) {
+                if (entry.getKey().endsWith(":conditional") && entry.getValue() instanceof String &&
+                        // for now reduce index size a bit and focus on access tags
+                        !entry.getKey().startsWith("maxspeed") && !entry.getKey().startsWith("maxweight")) {
+                    // remove spaces as they unnecessarily increase the unique number of values:
+                    String value = KVStorage.cutString(((String) entry.getValue()).
+                            replace(" ", "").replace("bicycle", "bike"));
+                    boolean fwd = entry.getKey().contains("forward");
+                    boolean bwd = entry.getKey().contains("backward");
+                    if (!fwd && !bwd)
+                        list.add(new KVStorage.KeyValue(entry.getKey().replace(':', '_'), value, true, true));
+                    else
+                        list.add(new KVStorage.KeyValue(entry.getKey().replace(':', '_'), value, fwd, bwd));
+                }
+            }
+
+        way.setTag("key_values", list);
 
         if (!isCalculateWayDistance(way))
             return;

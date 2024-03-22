@@ -20,10 +20,7 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
-import com.graphhopper.routing.ev.Subnetwork;
-import com.graphhopper.routing.ev.TurnCost;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.lm.*;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
