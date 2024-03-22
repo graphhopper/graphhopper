@@ -112,7 +112,7 @@ public class FootAccessParser extends AbstractAccessParser implements TagParser 
                 acceptPotentially = WayAccess.WAY;
 
             if (!acceptPotentially.canSkip()) {
-                if (way.hasTag(restrictions, restrictedValues) && !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way))
+                if (way.hasTag(restrictions, restrictedValues))
                     return WayAccess.CAN_SKIP;
                 return acceptPotentially;
             }
@@ -124,15 +124,13 @@ public class FootAccessParser extends AbstractAccessParser implements TagParser 
         if (way.getTag("sac_scale") != null && !way.hasTag("sac_scale", allowedSacScale))
             return WayAccess.CAN_SKIP;
 
-        boolean permittedWayConditionallyRestricted = getConditionalTagInspector().isPermittedWayConditionallyRestricted(way);
-        boolean restrictedWayConditionallyPermitted = getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way);
         String firstValue = way.getFirstPriorityTag(restrictions);
         if (!firstValue.isEmpty()) {
             String[] restrict = firstValue.split(";");
             for (String value : restrict) {
-                if (restrictedValues.contains(value) && !restrictedWayConditionallyPermitted)
+                if (restrictedValues.contains(value))
                     return WayAccess.CAN_SKIP;
-                if (intendedValues.contains(value) && !permittedWayConditionallyRestricted)
+                if (intendedValues.contains(value))
                     return WayAccess.WAY;
             }
         }
@@ -147,9 +145,6 @@ public class FootAccessParser extends AbstractAccessParser implements TagParser 
             return WayAccess.CAN_SKIP;
 
         if (isBlockFords() && ("ford".equals(highwayValue) || way.hasTag("ford")))
-            return WayAccess.CAN_SKIP;
-
-        if (permittedWayConditionallyRestricted)
             return WayAccess.CAN_SKIP;
 
         return WayAccess.WAY;

@@ -1,11 +1,7 @@
 // to use this custom model you need to set the following option in the config.yml
-// graph.vehicles: roads|transportation_mode=MOTORCYCLE,car
 // graph.urban_density.threads: 4 # expensive to calculate but very useful
-// graph.encoded_values: curvature,track_type,surface
 // profiles:
 //    - name: motorcycle
-//      vehicle: roads
-//      weighting: custom
 //      custom_model_files: [motorcycle.json,curvature.json]
 
 {

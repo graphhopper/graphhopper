@@ -136,26 +136,11 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         return result;
     }
 
-    public static Set<String> findVariables(List<Statement> statements, EncodedValueLookup lookup) {
-        List<List<Statement>> blocks = splitIntoBlocks(statements);
+    static Set<String> findVariables(List<Statement> statements, EncodedValueLookup lookup) {
+        List<List<Statement>> blocks = CustomModelParser.splitIntoBlocks(statements);
         Set<String> variables = new LinkedHashSet<>();
         for (List<Statement> block : blocks) findVariablesForBlock(variables, block, lookup);
         return variables;
-    }
-
-    /**
-     * Splits the specified list into several list of statements starting with if
-     */
-    static List<List<Statement>> splitIntoBlocks(List<Statement> statements) {
-        List<List<Statement>> result = new ArrayList<>();
-        List<Statement> block = null;
-        for (Statement st : statements) {
-            if (IF.equals(st.getKeyword())) result.add(block = new ArrayList<>());
-            if (block == null)
-                throw new IllegalArgumentException("Every block must start with an if-statement");
-            block.add(st);
-        }
-        return result;
     }
 
     private static void findVariablesForBlock(Set<String> createdObjects, List<Statement> block, EncodedValueLookup lookup) {
@@ -177,6 +162,42 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
             throw new IllegalArgumentException(result.invalidMessage);
         if (result.guessedVariables.size() > 1)
             throw new IllegalArgumentException("Currently only a single EncodedValue is allowed on the right-hand side, but was " + result.guessedVariables.size() + ". Value expression: " + valueExpression);
+
+        // TODO Nearly duplicate code as in findMinMax
+        double value;
+        try {
+            // Speed optimization for numbers only as its over 200x faster than ExpressionEvaluator+cook+evaluate!
+            // We still call the parse() method before as it is only ~3x slower and might increase security slightly. Because certain
+            // expressions are accepted from Double.parseDouble but parse() rejects them. With this call order we avoid unexpected security problems.
+            value = Double.parseDouble(valueExpression);
+        } catch (NumberFormatException ex) {
+            try {
+                if (result.guessedVariables.isEmpty()) { // without encoded values
+                    ExpressionEvaluator ee = new ExpressionEvaluator();
+                    ee.cook(valueExpression);
+                    value = ((Number) ee.evaluate()).doubleValue();
+                } else if (lookup.hasEncodedValue(valueExpression)) { // speed up for common case that complete right-hand side is the encoded value
+                    EncodedValue enc = lookup.getEncodedValue(valueExpression, EncodedValue.class);
+                    value = Math.min(getMin(enc), getMax(enc));
+                } else {
+                    // single encoded value
+                    ExpressionEvaluator ee = new ExpressionEvaluator();
+                    String var = result.guessedVariables.iterator().next();
+                    ee.setParameters(new String[]{var}, new Class[]{double.class});
+                    ee.cook(valueExpression);
+                    double max = getMax(lookup.getEncodedValue(var, EncodedValue.class));
+                    Number val1 = (Number) ee.evaluate(max);
+                    double min = getMin(lookup.getEncodedValue(var, EncodedValue.class));
+                    Number val2 = (Number) ee.evaluate(min);
+                    value = Math.min(val1.doubleValue(), val2.doubleValue());
+                }
+            } catch (CompileException | InvocationTargetException ex2) {
+                throw new IllegalArgumentException(ex2);
+            }
+        }
+        if (value < 0)
+            throw new IllegalArgumentException("illegal expression as it can result in a negative weight: " + valueExpression);
+
         return result.guessedVariables;
     }
 
@@ -187,6 +208,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         if (result.guessedVariables.size() > 1)
             throw new IllegalArgumentException("Currently only a single EncodedValue is allowed on the right-hand side, but was " + result.guessedVariables.size() + ". Value expression: " + valueExpression);
 
+        // TODO Nearly duplicate as in findVariables
         try {
             // Speed optimization for numbers only as its over 200x faster than ExpressionEvaluator+cook+evaluate!
             // We still call the parse() method before as it is only ~3x slower and might increase security slightly. Because certain

@@ -20,13 +20,13 @@ package com.graphhopper.application;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.config.LMProfile;
-import com.graphhopper.config.Profile;
 import com.graphhopper.gpx.GpxConversions;
 import com.graphhopper.jackson.Gpx;
 import com.graphhopper.matching.EdgeMatch;
 import com.graphhopper.matching.MapMatching;
 import com.graphhopper.matching.MatchResult;
 import com.graphhopper.matching.State;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
@@ -59,7 +59,7 @@ public class MapMatching2Test {
         GraphHopper hopper = new GraphHopper();
         hopper.setOSMFile("../map-matching/files/map-issue13.osm.gz");
         hopper.setGraphHopperLocation(GH_LOCATION);
-        hopper.setProfiles(new Profile("my_profile").setVehicle("car"));
+        hopper.setProfiles(TestProfiles.accessAndSpeed("my_profile", "car"));
         hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("my_profile"));
         hopper.importOrLoad();
 
@@ -84,7 +84,7 @@ public class MapMatching2Test {
         GraphHopper hopper = new GraphHopper();
         hopper.setOSMFile("../map-matching/files/issue-70.osm.gz");
         hopper.setGraphHopperLocation(GH_LOCATION);
-        hopper.setProfiles(new Profile("my_profile").setVehicle("car"));
+        hopper.setProfiles(TestProfiles.accessAndSpeed("my_profile", "car"));
         hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("my_profile"));
         hopper.importOrLoad();
 
@@ -104,7 +104,7 @@ public class MapMatching2Test {
         GraphHopper hopper = new GraphHopper();
         hopper.setOSMFile("../map-matching/files/map-issue13.osm.gz");
         hopper.setGraphHopperLocation(GH_LOCATION);
-        hopper.setProfiles(new Profile("my_profile").setVehicle("car"));
+        hopper.setProfiles(TestProfiles.accessAndSpeed("my_profile", "car"));
         hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("my_profile"));
         hopper.importOrLoad();
 

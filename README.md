@@ -2,7 +2,13 @@
 
 ![Build Status](https://github.com/graphhopper/graphhopper/actions/workflows/build.yml/badge.svg?branch=master)
 
-GraphHopper is a fast and memory-efficient routing engine released under Apache License 2.0. It can be used as a Java library or standalone web server to calculate the distance, time, turn-by-turn instructions and many road attributes for a route between two or more points. Beyond this "A-to-B" routing it supports ["snap to road"](README.md#Map-Matching), [Isochrone calculation](README.md#Analysis), [mobile navigation](README.md#mobile-apps) and [more](README.md#Features). GraphHopper uses OpenStreetMap and GTFS data by default and it can import [other data sources too](README.md#OpenStreetMap-Support).
+GraphHopper is a fast and memory-efficient routing engine released under Apache License 2.0.
+It can be used as a Java library or standalone web server to calculate the distance, time,
+turn-by-turn instructions and many road attributes for a route between two or more points.
+Beyond this "A-to-B" routing it supports ["snap to road"](README.md#Map-Matching),
+[Isochrone calculation](README.md#Analysis), [mobile navigation](README.md#mobile-apps) and
+[more](README.md#Features). GraphHopper uses OpenStreetMap and GTFS data by default and it
+can import [other data sources too](README.md#OpenStreetMap-Support).
 
 # Community
 

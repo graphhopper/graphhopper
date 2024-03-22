@@ -30,7 +30,6 @@ public class RouteResourceTruckTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.vehicles", "roads|transportation_mode=HGV,car").
                 putObject("prepare.min_network_size", 200).
                 putObject("datareader.file", "../core/files/north-bayreuth.osm.gz").
                 putObject("graph.location", DIR).
@@ -38,7 +37,7 @@ public class RouteResourceTruckTest {
                 putObject("import.osm.ignored_highways", "").
                 putObject("custom_models.directory", "./src/test/resources/com/graphhopper/application/resources").
                 setProfiles(Arrays.asList(new Profile("truck").setCustomModel(null).
-                        setVehicle("roads").putHint("custom_model_files", Arrays.asList("test_truck.json")))).
+                        putHint("custom_model_files", Arrays.asList("test_truck.json")))).
                 setCHProfiles(Arrays.asList(new CHProfile("truck")));
         return config;
     }

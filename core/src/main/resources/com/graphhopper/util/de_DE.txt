@@ -1,4 +1,4 @@
-# do not edit manually, instead use spreadsheet https://t.co/f086oJXAEI and script ./core/files/update-translations.sh
+# do not edit manually, instead use spreadsheet from translations.md and script ./core/files/update-translations.sh
 
 continue=dem Straßenverlauf folgen
 continue_onto=dem Straßenverlauf von %1$s folgen
@@ -72,6 +72,9 @@ web.custom_model_enabled=Custom Model aktiv
 web.settings=Optionen
 web.settings_close=Schließen
 web.exclude_motorway_example=Autobahn vermeiden
+web.exclude_disneyland_paris_example=
+web.simple_electric_car_example=Elektroauto (vereinfacht)
+web.avoid_tunnels_bridges_example=Brücken u. Tunnel vermeiden
 web.limit_speed_example=Max. Geschwindigkeit
 web.cargo_bike_example=Lastenfahrrad
 web.prefer_bike_network=Radnetz bevorzugen
@@ -141,6 +144,8 @@ web.max_speed=Max. Geschwindigkeit
 web.average_speed=Durchsch. Geschwindigkeit
 web.track_type=Straßenbefestigung
 web.toll=Maut
+web.next=Weiter
+web.back=Zurück
 navigate.accept_risks_after_warning=Ich verstehe und akzeptiere
 navigate.for_km=für %1$s Kilometer
 navigate.for_mi=für %1$s Meilen

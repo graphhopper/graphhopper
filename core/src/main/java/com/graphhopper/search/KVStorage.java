@@ -482,6 +482,7 @@ public class KVStorage {
         public static final String STREET_DESTINATION_REF = "street_destination_ref";
         public static final String TURN_LANES = "turn_lanes";
         public static final String TURN_LANES_VEHICLE_ACCESS = "turn_lanes_vehicle_access";
+        public static final String MOTORWAY_JUNCTION = "motorway_junction";
 
         public String key;
         public Object value;
