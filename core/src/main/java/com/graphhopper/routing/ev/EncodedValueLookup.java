@@ -31,6 +31,8 @@ public interface EncodedValueLookup {
 
     DecimalEncodedValue getDecimalEncodedValue(String key);
 
+    DecimalEncodedValueImpl getDecimalEncodedValueImpl(String key);
+
     <T extends Enum<?>> EnumEncodedValue<T> getEnumEncodedValue(String key, Class<T> enumType);
     
     StringEncodedValue getStringEncodedValue(String key);

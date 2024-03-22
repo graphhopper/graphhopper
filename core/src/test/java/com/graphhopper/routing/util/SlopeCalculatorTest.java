@@ -13,7 +13,7 @@ class SlopeCalculatorTest {
     @Test
     void simpleElevation() {
         DecimalEncodedValue averageEnc = AverageSlope.create();
-        DecimalEncodedValue maxEnc = MaxSlope.create();
+        DecimalEncodedValueImpl maxEnc = MaxSlope.create();
         new EncodingManager.Builder().add(averageEnc).add(maxEnc).build();
         SlopeCalculator creator = new SlopeCalculator(maxEnc, averageEnc);
         EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
@@ -31,14 +31,14 @@ class SlopeCalculatorTest {
         assertEquals(-Math.round(2.0 / 210 * 100), averageEnc.getDecimal(true, edgeId, edgeIntAccess), 1e-3);
 
         assertEquals(Math.round(1.75 / 105 * 100), maxEnc.getDecimal(false, edgeId, edgeIntAccess), 1e-3);
-        assertEquals(Math.round(1.75 / 105 * 100), maxEnc.getDecimal(true, edgeId, edgeIntAccess), 1e-3);
+        assertEquals(-Math.round(1.75 / 105 * 100), maxEnc.getDecimal(true, edgeId, edgeIntAccess), 1e-3);
     }
 
     @Test
     public void testAveragingOfMaxSlope() {
         // point=49.977518%2C11.564285&point=49.979878%2C11.563663&profile=bike
         DecimalEncodedValue averageEnc = AverageSlope.create();
-        DecimalEncodedValue maxEnc = MaxSlope.create();
+        DecimalEncodedValueImpl maxEnc = MaxSlope.create();
         new EncodingManager.Builder().add(averageEnc).add(maxEnc).build();
         SlopeCalculator creator = new SlopeCalculator(maxEnc, averageEnc);
         ArrayEdgeIntAccess intAccess = new ArrayEdgeIntAccess(1);
@@ -54,7 +54,7 @@ class SlopeCalculatorTest {
         creator.handleWayTags(edgeId, intAccess, way, IntsRef.EMPTY);
 
         assertEquals(Math.round(8.0 / 210 * 100), maxEnc.getDecimal(false, edgeId, intAccess), 1e-3);
-        assertEquals(Math.round(8.0 / 210 * 100), maxEnc.getDecimal(true, edgeId, intAccess), 1e-3);
+        assertEquals(-Math.round(8.0 / 210 * 100), maxEnc.getDecimal(true, edgeId, intAccess), 1e-3);
     }
 
     @Test
@@ -68,12 +68,12 @@ class SlopeCalculatorTest {
         ArrayEdgeIntAccess intAccess = new ArrayEdgeIntAccess(1);
         int edgeId = 0;
         DecimalEncodedValue averageEnc = AverageSlope.create();
-        DecimalEncodedValue maxEnc = MaxSlope.create();
+        DecimalEncodedValueImpl maxEnc = MaxSlope.create();
         new EncodingManager.Builder().add(averageEnc).add(maxEnc).build();
         SlopeCalculator creator = new SlopeCalculator(maxEnc, averageEnc);
         creator.handleWayTags(edgeId, intAccess, way, IntsRef.EMPTY);
         assertEquals(31, maxEnc.getDecimal(false, edgeId, intAccess), 1e-3);
-        assertEquals(31, averageEnc.getDecimal(false, edgeId, intAccess), 1e-3);
+        assertEquals(-31, averageEnc.getDecimal(true, edgeId, intAccess), 1e-3);
     }
 
     @Test
@@ -85,7 +85,7 @@ class SlopeCalculatorTest {
         ReaderWay way = new ReaderWay(1);
         way.setTag("point_list", pointList);
         DecimalEncodedValue averageEnc = AverageSlope.create();
-        DecimalEncodedValue maxEnc = MaxSlope.create();
+        DecimalEncodedValueImpl maxEnc = MaxSlope.create();
         new EncodingManager.Builder().add(averageEnc).add(maxEnc).build();
 
         SlopeCalculator creator = new SlopeCalculator(maxEnc, averageEnc);
