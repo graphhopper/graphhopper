@@ -21,8 +21,7 @@ import com.bedatadriven.jackson.datatype.jts.JtsModule;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.graphhopper.coll.GHBitSet;
-import com.graphhopper.coll.GHBitSetImpl;
+import com.graphhopper.jackson.Jackson;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.Country;
@@ -33,7 +32,10 @@ import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.CustomArea;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.storage.RoutingCHEdgeIterator;
+import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.shapes.BBox;
@@ -43,21 +45,18 @@ import org.locationtech.jts.geom.Polygon;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.UncheckedIOException;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static com.graphhopper.routing.ev.State.ISO_3166_2;
 import static com.graphhopper.util.DistanceCalcEarth.DIST_EARTH;
+import static com.graphhopper.util.Helper.readJSONFileWithoutComments;
 
 /**
  * A helper class to avoid cluttering the Graph interface with all the common methods. Most of the
@@ -632,5 +631,18 @@ public class GHUtility {
 
     private static void fail(String message) {
         throw new AssertionError(message);
+    }
+
+    public static CustomModel loadCustomModelFromJar(String name) {
+        try {
+            InputStream is = GHUtility.class.getResourceAsStream("/com/graphhopper/custom_models/" + name);
+            if (is == null)
+                throw new IllegalArgumentException("There is no built-in custom model '" + name + "'");
+            String json = readJSONFileWithoutComments(new InputStreamReader(is));
+            ObjectMapper objectMapper = Jackson.newObjectMapper();
+            return objectMapper.readValue(json, CustomModel.class);
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Could not load built-in custom model '" + name + "'");
+        }
     }
 }

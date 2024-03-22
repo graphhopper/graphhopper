@@ -20,8 +20,8 @@ package com.graphhopper.application.resources;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
-import com.graphhopper.config.Profile;
 import com.graphhopper.jackson.ResponsePathDeserializerHelper;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -54,13 +54,12 @@ public class MapMatchingResourceTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.vehicles", "car,bike").
                 putObject("datareader.file", "../map-matching/files/leipzig_germany.osm.pbf").
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR).
                 setProfiles(Arrays.asList(
-                        new Profile("fast_car").setVehicle("car"),
-                        new Profile("fast_bike").setVehicle("bike")));
+                        TestProfiles.accessAndSpeed("fast_car", "car"),
+                        TestProfiles.accessSpeedAndPriority("fast_bike", "bike")));
         return config;
     }
 

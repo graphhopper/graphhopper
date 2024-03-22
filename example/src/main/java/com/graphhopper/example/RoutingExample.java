@@ -36,7 +36,7 @@ public class RoutingExample {
         hopper.setGraphHopperLocation("target/routing-graph-cache");
 
         // see docs/core/profiles.md to learn more about profiles
-        hopper.setProfiles(new Profile("car").setVehicle("car").setTurnCosts(false));
+        hopper.setProfiles(new Profile("car").setCustomModel(GHUtility.loadCustomModelFromJar("car.json")));
 
         // this enables speed mode for the profile we called car
         hopper.getCHPreparationHandler().setCHProfiles(new CHProfile("car"));
@@ -74,7 +74,7 @@ public class RoutingExample {
             // System.out.println("distance " + instruction.getDistance() + " for instruction: " + instruction.getTurnDescription(tr));
         }
         assert il.size() == 6;
-        assert Helper.round(path.getDistance(), -2) == 900;
+        assert Helper.round(path.getDistance(), -2) == 600;
     }
 
     public static void speedModeVersusFlexibleMode(GraphHopper hopper) {
@@ -83,7 +83,7 @@ public class RoutingExample {
         GHResponse res = hopper.route(req);
         if (res.hasErrors())
             throw new RuntimeException(res.getErrors().toString());
-        assert Helper.round(res.getBest().getDistance(), -2) == 900;
+        assert Helper.round(res.getBest().getDistance(), -2) == 600;
     }
 
     public static void alternativeRoute(GraphHopper hopper) {
@@ -107,8 +107,7 @@ public class RoutingExample {
         GraphHopper hopper = new GraphHopper();
         hopper.setOSMFile(ghLoc);
         hopper.setGraphHopperLocation("target/routing-custom-graph-cache");
-        CustomModel serverSideCustomModel = new CustomModel();
-        hopper.setProfiles(new Profile("car_custom").setCustomModel(serverSideCustomModel).setVehicle("car"));
+        hopper.setProfiles(new Profile("car_custom").setCustomModel(GHUtility.loadCustomModelFromJar("car.json")));
 
         // The hybrid mode uses the "landmark algorithm" and is up to 15x faster than the flexible mode (Dijkstra).
         // Still it is slower than the speed mode ("contraction hierarchies algorithm") ...
@@ -126,19 +125,19 @@ public class RoutingExample {
 
         assert Math.round(res.getBest().getTime() / 1000d) == 94;
 
-        // 2. now avoid primary roads and reduce maximum speed, see docs/core/custom-models.md for an in-depth explanation
+        // 2. now avoid the secondary road and reduce the maximum speed, see docs/core/custom-models.md for an in-depth explanation
         // and also the blog posts https://www.graphhopper.com/?s=customizable+routing
         CustomModel model = new CustomModel();
-        model.addToPriority(If("road_class == PRIMARY", MULTIPLY, "0.5"));
+        model.addToPriority(If("road_class == SECONDARY", MULTIPLY, "0.5"));
 
-        // unconditional limit to 100km/h
-        model.addToPriority(If("true", LIMIT, "100"));
+        // unconditional limit to 20km/h
+        model.addToSpeed(If("true", LIMIT, "30"));
 
         req.setCustomModel(model);
         res = hopper.route(req);
         if (res.hasErrors())
             throw new RuntimeException(res.getErrors().toString());
 
-        assert Math.round(res.getBest().getTime() / 1000d) == 164;
+        assert Math.round(res.getBest().getTime() / 1000d) == 184;
     }
 }

@@ -38,7 +38,7 @@ public class CustomizableConditionalRestrictionsTest {
                 setEncodedValuesString(FootRoadAccessConditional.KEY);
 
         hopper.init(new GraphHopperConfig().
-                setProfiles(Arrays.asList(new Profile("foot").setVehicle("foot"))).
+                setProfiles(List.of(TestProfiles.accessAndSpeed("foot", "foot"))).
                 putObject("graph.location", GH_LOCATION).
                 putObject("datareader.file", "../core/files/conditional-restrictions.osm.xml").
                 putObject("prepare.min_network_size", "0").

@@ -1,5 +1,5 @@
 package com.graphhopper.routing.weighting.custom;
 
-interface ClassHelper {
+public interface ClassHelper {
     String getClassName(String encVal);
 }
