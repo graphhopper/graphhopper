@@ -9,6 +9,8 @@ import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.PointList;
 
+import static java.lang.Math.abs;
+
 public class SlopeCalculator implements TagParser {
     private final DecimalEncodedValueImpl maxSlopeEnc;
     private final DecimalEncodedValue averageSlopeEnc;
@@ -51,7 +53,7 @@ public class SlopeCalculator implements TagParser {
                 if (towerNodeSlope >= 0)
                     averageSlopeEnc.setDecimal(false, edgeId, edgeIntAccess, Math.min(towerNodeSlope, averageSlopeEnc.getMaxStorableDecimal()));
                 else
-                    averageSlopeEnc.setDecimal(true, edgeId, edgeIntAccess, Math.min(Math.abs(towerNodeSlope), averageSlopeEnc.getMaxStorableDecimal()));
+                    averageSlopeEnc.setDecimal(true, edgeId, edgeIntAccess, Math.min(abs(towerNodeSlope), averageSlopeEnc.getMaxStorableDecimal()));
             }
 
             if (maxSlopeEnc != null) {
@@ -63,7 +65,7 @@ public class SlopeCalculator implements TagParser {
                     if (i > 1 && prevDist > MIN_LENGTH) {
                         double averagedPrevEle = (pointList.getEle(i - 1) + pointList.getEle(i - 2)) / 2;
                         double tmpSlope = calcSlope(pointList.getEle(i) - averagedPrevEle, pillarDistance2D + prevDist / 2);
-                        maxSlope = Math.max(maxSlope, Math.abs(tmpSlope));
+                        maxSlope = abs(tmpSlope) > abs(maxSlope) ? tmpSlope : maxSlope;
                     }
                     prevDist = pillarDistance2D;
                     prevLat = pointList.getLat(i);
@@ -73,14 +75,22 @@ public class SlopeCalculator implements TagParser {
                 // For tunnels and bridges we cannot trust the pillar node elevation and ignore all changes.
                 // Probably we should somehow recalculate even the average_slope after elevation interpolation? See EdgeElevationInterpolator
                 if (way.hasTag("tunnel", "yes") || way.hasTag("bridge", "yes") || way.hasTag("highway", "steps"))
-                    maxSlope = Math.abs(towerNodeSlope);
+                    maxSlope = towerNodeSlope;
                 else
-                    maxSlope = Math.max(Math.abs(towerNodeSlope), maxSlope);
+                    maxSlope = abs(towerNodeSlope) > abs(maxSlope) ? towerNodeSlope : maxSlope;
 
                 if (Double.isNaN(maxSlope))
                     throw new IllegalArgumentException("max_slope was NaN for OSM way ID " + way.getId());
 
-                maxSlopeEnc.setDecimal(false, edgeId, edgeIntAccess, Math.min(maxSlope, maxSlopeEnc.getMaxStorableDecimal()));
+                if (maxSlope > maxSlopeEnc.getMaxStorableDecimal()) {
+                    maxSlopeEnc.setDecimal(false, edgeId, edgeIntAccess, maxSlopeEnc.getMaxStorableDecimal());
+                }
+                else if (maxSlope < maxSlopeEnc.getMinStorableDecimal()) {
+                    maxSlopeEnc.setDecimal(false, edgeId, edgeIntAccess, maxSlopeEnc.getMinStorableDecimal());
+                }
+                else {
+                    maxSlopeEnc.setDecimal(false, edgeId, edgeIntAccess, maxSlope);
+                }
             }
         }
     }
