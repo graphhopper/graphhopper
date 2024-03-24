@@ -50,13 +50,13 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         setSurfaceSpeed("concrete", 18);
         setSurfaceSpeed("concrete:lanes", 16);
         setSurfaceSpeed("concrete:plates", 16);
-        setSurfaceSpeed("paving_stones", 14);
-        setSurfaceSpeed("paving_stones:30", 14);
+        setSurfaceSpeed("paving_stones", 16);
+        setSurfaceSpeed("paving_stones:30", 16);
         setSurfaceSpeed("unpaved", 12);
         setSurfaceSpeed("compacted", 14);
         setSurfaceSpeed("dirt", 10);
         setSurfaceSpeed("earth", 12);
-        setSurfaceSpeed("fine_gravel", 18);
+        setSurfaceSpeed("fine_gravel", 14); // should not be faster than compacted
         setSurfaceSpeed("grass", 8);
         setSurfaceSpeed("grass_paver", 8);
         setSurfaceSpeed("gravel", 12);
