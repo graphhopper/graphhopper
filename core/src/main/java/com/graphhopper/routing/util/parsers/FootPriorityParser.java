@@ -54,16 +54,16 @@ public class FootPriorityParser implements TagParser {
         safeHighwayTags.add("service");
         safeHighwayTags.add("platform");
 
-        avoidHighwayTags.put("motorway", REACH_DESTINATION);
+        avoidHighwayTags.put("motorway", REACH_DESTINATION); // could be allowed when they have sidewalks
         avoidHighwayTags.put("motorway_link", REACH_DESTINATION);
         avoidHighwayTags.put("trunk", REACH_DESTINATION);
         avoidHighwayTags.put("trunk_link", REACH_DESTINATION);
-        avoidHighwayTags.put("primary", AVOID);
-        avoidHighwayTags.put("primary_link", AVOID);
-        avoidHighwayTags.put("secondary", AVOID);
-        avoidHighwayTags.put("secondary_link", AVOID);
-        avoidHighwayTags.put("tertiary", SLIGHT_AVOID);
-        avoidHighwayTags.put("tertiary_link", SLIGHT_AVOID);
+        avoidHighwayTags.put("primary", AVOID_MORE);
+        avoidHighwayTags.put("primary_link", AVOID_MORE);
+        avoidHighwayTags.put("secondary", AVOID_MORE);
+        avoidHighwayTags.put("secondary_link", AVOID_MORE);
+        avoidHighwayTags.put("tertiary", AVOID);
+        avoidHighwayTags.put("tertiary_link", AVOID);
 
         routeMap.put(INTERNATIONAL, UNCHANGED.getValue());
         routeMap.put(NATIONAL, UNCHANGED.getValue());
@@ -117,11 +117,9 @@ public class FootPriorityParser implements TagParser {
         } else if ((isValidSpeed(maxSpeed) && maxSpeed > 50) || avoidHighwayTags.containsKey(highway)) {
             PriorityCode priorityCode = avoidHighwayTags.get(highway);
             if (way.hasTag("sidewalk", sidewalksNoValues))
-                weightToPrioMap.put(40d, priorityCode == null ? BAD : (priorityCode == REACH_DESTINATION ? REACH_DESTINATION : priorityCode.worse()));
-            else if (!way.hasTag("sidewalk", sidewalkValues))
-                weightToPrioMap.put(40d, priorityCode == null ? AVOID : priorityCode);
+                weightToPrioMap.put(40d, priorityCode == null ? BAD : priorityCode);
             else
-                weightToPrioMap.put(40d, priorityCode == null ? SLIGHT_AVOID : priorityCode.better());
+                weightToPrioMap.put(40d, priorityCode == null ? AVOID : priorityCode.better());
         } else if (way.hasTag("sidewalk", sidewalksNoValues))
             weightToPrioMap.put(40d, AVOID);
 

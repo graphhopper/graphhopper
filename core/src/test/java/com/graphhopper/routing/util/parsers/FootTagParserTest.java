@@ -326,6 +326,20 @@ public class FootTagParserTest {
         way.setTag("highway", "primary");
         assertEquals(PriorityCode.AVOID.getValue(), prioParser.handlePriority(way, null));
 
+        way.setTag("sidewalk", "yes");
+        assertEquals(PriorityCode.AVOID.getValue(), prioParser.handlePriority(way, null));
+
+        way.setTag("sidewalk", "no");
+        assertEquals(PriorityCode.AVOID_MORE.getValue(), prioParser.handlePriority(way, null));
+
+        way.clearTags();
+        way.setTag("highway", "tertiary");
+        assertEquals(PriorityCode.SLIGHT_AVOID.getValue(), prioParser.handlePriority(way, null));
+
+        // tertiary without sidewalk is roughly like primary with sidewalk?
+        way.setTag("sidewalk", "no");
+        assertEquals(PriorityCode.AVOID.getValue(), prioParser.handlePriority(way, null));
+
         way.setTag("highway", "track");
         way.setTag("bicycle", "official");
         assertEquals(PriorityCode.SLIGHT_AVOID.getValue(), prioParser.handlePriority(way, null));
@@ -338,15 +352,6 @@ public class FootTagParserTest {
         way.setTag("bicycle", "designated");
         way.setTag("foot", "designated");
         assertEquals(PriorityCode.PREFER.getValue(), prioParser.handlePriority(way, null));
-
-        way.clearTags();
-        way.setTag("highway", "primary");
-        way.setTag("sidewalk", "yes");
-        assertEquals(PriorityCode.SLIGHT_AVOID.getValue(), prioParser.handlePriority(way, null));
-
-        way.clearTags();
-        way.setTag("highway", "tertiary");
-        assertEquals(PriorityCode.SLIGHT_AVOID.getValue(), prioParser.handlePriority(way, null));
 
         way.clearTags();
         way.setTag("highway", "cycleway");
