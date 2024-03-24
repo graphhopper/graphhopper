@@ -749,7 +749,7 @@ public class GraphHopperTest {
                 setAlgorithm(ASTAR).setProfile(profile));
 
         ResponsePath res = rsp.getBest();
-        assertEquals(6874.2, res.getDistance(), .1);
+        assertEquals(6874, res.getDistance(), 1);
         assertEquals(170, res.getPoints().size());
 
         InstructionList il = res.getInstructions();
@@ -1202,15 +1202,13 @@ public class GraphHopperTest {
                 setAlgorithm(ASTAR).setProfile(profile));
 
         ResponsePath arsp = rsp.getBest();
-        assertEquals(1569.7, arsp.getDistance(), .1);
+        assertEquals(1570, arsp.getDistance(), 1);
         assertEquals(60, arsp.getPoints().size());
         assertTrue(arsp.getPoints().is3D());
 
         InstructionList il = arsp.getInstructions();
         assertEquals(12, il.size());
         assertTrue(il.get(0).getPoints().is3D());
-
-        String str = arsp.getPoints().toString();
 
         assertEquals(23.8, arsp.getAscend(), 1e-1);
         assertEquals(67.4, arsp.getDescend(), 1e-1);

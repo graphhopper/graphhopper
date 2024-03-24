@@ -208,9 +208,9 @@ public class RoutingAlgorithmWithOSMTest {
     public void testSidewalkNo() {
         List<Query> queries = new ArrayList<>();
         // roundabout contains sidewalk=no which should be avoided
-        queries.add(new Query(57.154888, -2.101822, 57.153445, -2.099869, 329, 31));
+        queries.add(new Query(57.154888, -2.101822, 57.153445, -2.099869, 252, 19));
         // longer path should go through tertiary, see discussion in #476
-        queries.add(new Query(57.154888, -2.101822, 57.147299, -2.096286, 1118, 68));
+        queries.add(new Query(57.154888, -2.101822, 57.147299, -2.096286, 1040, 56));
 
         Profile profile = TestProfiles.accessSpeedAndPriority("foot");
         GraphHopper hopper = createHopper(DIR + "/map-sidewalk-no.osm.gz", profile);
@@ -510,7 +510,7 @@ public class RoutingAlgorithmWithOSMTest {
         List<Query> queries = createAndorraQueries();
         queries.get(0).getPoints().get(1).expectedDistance = 16460;
         queries.get(0).getPoints().get(1).expectedPoints = 653;
-        queries.get(1).getPoints().get(1).expectedDistance = 12839;
+        queries.get(1).getPoints().get(1).expectedDistance = 12840;
         queries.get(1).getPoints().get(1).expectedPoints = 435;
 
         queries.add(new Query(42.521269, 1.52298, 42.50418, 1.520662, 3223, 107));

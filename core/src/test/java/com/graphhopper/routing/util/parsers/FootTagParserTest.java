@@ -345,6 +345,10 @@ public class FootTagParserTest {
         assertEquals(PriorityCode.SLIGHT_AVOID.getValue(), prioParser.handlePriority(way, null));
 
         way.clearTags();
+        way.setTag("highway", "tertiary");
+        assertEquals(PriorityCode.SLIGHT_AVOID.getValue(), prioParser.handlePriority(way, null));
+
+        way.clearTags();
         way.setTag("highway", "cycleway");
         way.setTag("sidewalk", "no");
         assertEquals(PriorityCode.AVOID.getValue(), prioParser.handlePriority(way, null));
@@ -358,9 +362,9 @@ public class FootTagParserTest {
         way.clearTags();
         way.setTag("highway", "trunk");
         way.setTag("sidewalk", "no");
-        assertEquals(PriorityCode.VERY_BAD.getValue(), prioParser.handlePriority(way, null));
+        assertEquals(PriorityCode.REACH_DESTINATION.getValue(), prioParser.handlePriority(way, null));
         way.setTag("sidewalk", "none");
-        assertEquals(PriorityCode.VERY_BAD.getValue(), prioParser.handlePriority(way, null));
+        assertEquals(PriorityCode.REACH_DESTINATION.getValue(), prioParser.handlePriority(way, null));
 
         way.clearTags();
         way.setTag("highway", "residential");
