@@ -18,6 +18,9 @@
 
 package com.graphhopper.routing;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * This class contains various parameters that control the behavior of {@link Router}.
  */
@@ -31,6 +34,15 @@ public class RouterConfig {
     private boolean simplifyResponse = true;
     private double elevationWayPointMaxDistance = Double.MAX_VALUE;
     private int activeLandmarkCount = 8;
+    private List<String> turnLanesProfiles = new ArrayList<>();
+
+    public void setTurnLanesProfiles(List<String> turnLanesProfiles) {
+        this.turnLanesProfiles = turnLanesProfiles;
+    }
+
+    public List<String> getTurnLanesProfiles() {
+        return turnLanesProfiles;
+    }
 
     public int getMaxVisitedNodes() {
         return maxVisitedNodes;

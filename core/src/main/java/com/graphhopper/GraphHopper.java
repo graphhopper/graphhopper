@@ -563,6 +563,8 @@ public class GraphHopper {
                 .split(",")).map(String::trim).collect(Collectors.toList()));
         osmReaderConfig.setParseWayNames(ghConfig.getBool("datareader.instructions", osmReaderConfig.isParseWayNames()));
         osmReaderConfig.setPreferredLanguage(ghConfig.getString("datareader.preferred_language", osmReaderConfig.getPreferredLanguage()));
+        osmReaderConfig.setTurnLanesProfiles(Arrays.stream(ghConfig.getString("datareader.turn_lanes_profiles", String.join(",", osmReaderConfig.getTurnLanesProfiles()))
+                .split(",")).map(String::trim).collect(Collectors.toList()));
         osmReaderConfig.setMaxWayPointDistance(ghConfig.getDouble(Routing.INIT_WAY_POINT_MAX_DISTANCE, osmReaderConfig.getMaxWayPointDistance()));
         osmReaderConfig.setWorkerThreads(ghConfig.getInt("datareader.worker_threads", osmReaderConfig.getWorkerThreads()));
 
@@ -578,6 +580,7 @@ public class GraphHopper {
         urbanDensityCalculationThreads = ghConfig.getInt("graph.urban_density.threads", urbanDensityCalculationThreads);
 
         // routing
+        routerConfig.setTurnLanesProfiles(osmReaderConfig.getTurnLanesProfiles());
         routerConfig.setMaxVisitedNodes(ghConfig.getInt(Routing.INIT_MAX_VISITED_NODES, routerConfig.getMaxVisitedNodes()));
         routerConfig.setTimeoutMillis(ghConfig.getLong(Routing.INIT_TIMEOUT_MS, routerConfig.getTimeoutMillis()));
         routerConfig.setMaxRoundTripRetries(ghConfig.getInt(RoundTrip.INIT_MAX_RETRIES, routerConfig.getMaxRoundTripRetries()));
