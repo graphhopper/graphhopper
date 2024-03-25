@@ -22,7 +22,7 @@ import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
-import com.graphhopper.config.TurnCostsConfig;
+import com.graphhopper.util.TurnCostsConfig;
 import com.graphhopper.jackson.ResponsePathDeserializer;
 import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;

@@ -262,7 +262,8 @@ public class AlternativeRoute extends AStarBidirection implements RoutingAlgorit
                     return true;
 
                 // (1) skip too long paths
-                final double weight = fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath();
+                final double weight = fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath()
+                        + weighting.calcTurnWeight(fromSPTEntry.edge, fromSPTEntry.adjNode, toSPTEntry.edge);
                 if (weight > maxWeight)
                     return true;
 
@@ -341,7 +342,7 @@ public class AlternativeRoute extends AStarBidirection implements RoutingAlgorit
 
                         Collections.sort(alternatives, ALT_COMPARATOR);
                         if (alternatives.get(0) != bestAlt)
-                            throw new IllegalStateException("best path should be always first entry");
+                            throw new IllegalStateException("best path should be always first entry " + bestAlt.path.getWeight() + " vs " + alternatives.get(0).path.getWeight());
 
                         if (alternatives.size() > maxPaths)
                             alternatives.subList(maxPaths, alternatives.size()).clear();

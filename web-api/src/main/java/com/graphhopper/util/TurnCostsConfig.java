@@ -1,12 +1,18 @@
-package com.graphhopper.config;
+package com.graphhopper.util;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
 public class TurnCostsConfig {
     public static final int INFINITE_U_TURN_COSTS = -1;
+    private double leftCost = 3; // in seconds
+    private double rightCost = 0.5;
+    private double straightCost = 0;
+    private double minLeftAngle = 25, maxLeftAngle = 180;
+    private double minRightAngle = -25, maxRightAngle = -180;
     private int uTurnCosts = INFINITE_U_TURN_COSTS;
     private List<String> vehicleTypes;
     // ensure that no typos can occur like motor_car vs motorcar or bike vs bicycle
@@ -70,8 +76,73 @@ public class TurnCostsConfig {
         return uTurnCosts;
     }
 
+    public TurnCostsConfig setLeftCost(double leftCost) {
+        this.leftCost = leftCost;
+        return this;
+    }
+
+    @JsonProperty("left")
+    public double getLeftCost() {
+        return leftCost;
+    }
+
+    public TurnCostsConfig setRightCost(double rightCost) {
+        this.rightCost = rightCost;
+        return this;
+    }
+
+    @JsonProperty("right")
+    public double getRightCost() {
+        return rightCost;
+    }
+
+    public TurnCostsConfig setStraightCost(double straightCost) {
+        this.straightCost = straightCost;
+        return this;
+    }
+
+    @JsonProperty("straight")
+    public double getStraightCost() {
+        return straightCost;
+    }
+
+    public void setMinLeftAngle(double minLeftAngle) {
+        this.minLeftAngle = minLeftAngle;
+    }
+
+    public double getMinLeftAngle() {
+        return minLeftAngle;
+    }
+
+    public void setMaxLeftAngle(double maxLeftAngle) {
+        this.maxLeftAngle = maxLeftAngle;
+    }
+
+    public double getMaxLeftAngle() {
+        return maxLeftAngle;
+    }
+
+    public void setMinRightAngle(double minRightAngle) {
+        this.minRightAngle = minRightAngle;
+    }
+
+    public double getMinRightAngle() {
+        return minRightAngle;
+    }
+
+    public void setMaxRightAngle(double maxRightAngle) {
+        this.maxRightAngle = maxRightAngle;
+    }
+
+    public double getMaxRightAngle() {
+        return maxRightAngle;
+    }
+
     @Override
     public String toString() {
-        return "vehicleTypes=" + vehicleTypes + ", uTurnCosts=" + uTurnCosts;
+        return "vehicleTypes=" + vehicleTypes + ", uTurnCosts=" + uTurnCosts
+                + ", leftCost=" + leftCost + ", rightCost=" + rightCost + ", straightCost=" + straightCost
+                + ", minLeftAngle=" + minLeftAngle + ", maxLeftAngle=" + maxLeftAngle
+                + ", minRightAngle=" + minRightAngle + ", maxRightAngle=" + maxRightAngle;
     }
 }
