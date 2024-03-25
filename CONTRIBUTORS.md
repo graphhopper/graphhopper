@@ -54,6 +54,7 @@ Here is an overview:
  * matkoniecz, tweaking documentation
  * manueltimita, fixes like #1651
  * mathstpierre, fixes like #1753
+ * michaelkrog, Pedestrian street improvements
  * michalmac, fixes like #1467
  * michaz, one of the core developers
  * mprins, improvements for travis CI and regarding JDK9 #806
