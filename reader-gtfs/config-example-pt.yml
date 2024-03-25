@@ -8,6 +8,9 @@ graphhopper:
     - name: foot
       vehicle: foot
       weighting: custom
+      custom_model_files: []
+
+  import.osm.ignored_highways: motorway,trunk
 
 server:
   application_connectors:
@@ -18,3 +21,4 @@ server:
     - type: http
       port: 8990
       bind_host: localhost
+

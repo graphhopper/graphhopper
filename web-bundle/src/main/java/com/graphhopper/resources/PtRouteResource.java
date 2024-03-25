@@ -40,6 +40,8 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
+import static com.graphhopper.util.Parameters.Routing.CALC_POINTS;
+import static com.graphhopper.util.Parameters.Routing.INSTRUCTIONS;
 import static java.util.stream.Collectors.toList;
 
 @Path("route-pt")
@@ -55,6 +57,10 @@ public class PtRouteResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public ObjectNode route(@QueryParam("point") @Size(min=2,max=2) List<GHLocationParam> requestPoints,
+                            @QueryParam(INSTRUCTIONS) @DefaultValue("true") boolean instructions,
+                            @QueryParam(CALC_POINTS) @DefaultValue("true") boolean calcPoints,
+                            @QueryParam("elevation") @DefaultValue("false") boolean enableElevation,
+                            @QueryParam("points_encoded") @DefaultValue("true") boolean pointsEncoded,
                             @QueryParam("pt.earliest_departure_time") @NotNull OffsetDateTimeParam departureTimeParam,
                             @QueryParam("pt.profile_duration") DurationParam profileDuration,
                             @QueryParam("pt.arrive_by") @DefaultValue("false") boolean arriveBy,
@@ -87,7 +93,9 @@ public class PtRouteResource {
         Optional.ofNullable(betaEgressTime).ifPresent(request::setBetaEgressTime);
 
         GHResponse route = ptRouter.route(request);
-        return ResponsePathSerializer.jsonObject(route, "", true, true, false, false, stopWatch.stop().getMillis());
+
+        return ResponsePathSerializer.jsonObject(route, "", instructions, calcPoints, enableElevation, pointsEncoded
+                , stopWatch.stop().getMillis());
     }
 
 }

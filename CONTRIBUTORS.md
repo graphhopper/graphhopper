@@ -29,6 +29,7 @@ Here is an overview:
  * easbar, one of the core developers
  * edy, improvements regarding docker #849
  * elibar, fix for alternative route calculation
+ * efesler, fixes like #2531
  * fbonzon, several UI improvements like #615
  * florent-morel, improvements regarding fords, #320
  * fredao, translations 
