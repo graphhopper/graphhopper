@@ -58,10 +58,10 @@ public class FootPriorityParser implements TagParser {
         avoidHighwayTags.put("motorway_link", REACH_DESTINATION);
         avoidHighwayTags.put("trunk", REACH_DESTINATION);
         avoidHighwayTags.put("trunk_link", REACH_DESTINATION);
-        avoidHighwayTags.put("primary", AVOID_MORE);
-        avoidHighwayTags.put("primary_link", AVOID_MORE);
-        avoidHighwayTags.put("secondary", AVOID_MORE);
-        avoidHighwayTags.put("secondary_link", AVOID_MORE);
+        avoidHighwayTags.put("primary", BAD);
+        avoidHighwayTags.put("primary_link", BAD);
+        avoidHighwayTags.put("secondary", BAD);
+        avoidHighwayTags.put("secondary_link", BAD);
         avoidHighwayTags.put("tertiary", AVOID);
         avoidHighwayTags.put("tertiary_link", AVOID);
 
@@ -119,7 +119,7 @@ public class FootPriorityParser implements TagParser {
             if (way.hasTag("sidewalk", sidewalksNoValues))
                 weightToPrioMap.put(40d, priorityCode == null ? BAD : priorityCode);
             else
-                weightToPrioMap.put(40d, priorityCode == null ? AVOID : priorityCode.better());
+                weightToPrioMap.put(40d, priorityCode == null ? AVOID : priorityCode.better().better());
         } else if (way.hasTag("sidewalk", sidewalksNoValues))
             weightToPrioMap.put(40d, AVOID);
 

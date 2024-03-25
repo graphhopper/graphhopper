@@ -330,13 +330,13 @@ public class FootTagParserTest {
         assertEquals(PriorityCode.AVOID.getValue(), prioParser.handlePriority(way, null));
 
         way.setTag("sidewalk", "no");
-        assertEquals(PriorityCode.AVOID_MORE.getValue(), prioParser.handlePriority(way, null));
+        assertEquals(PriorityCode.BAD.getValue(), prioParser.handlePriority(way, null));
 
         way.clearTags();
         way.setTag("highway", "tertiary");
-        assertEquals(PriorityCode.SLIGHT_AVOID.getValue(), prioParser.handlePriority(way, null));
+        assertEquals(PriorityCode.UNCHANGED.getValue(), prioParser.handlePriority(way, null));
 
-        // tertiary without sidewalk is roughly like primary with sidewalk?
+        // tertiary without sidewalk is roughly like primary with sidewalk
         way.setTag("sidewalk", "no");
         assertEquals(PriorityCode.AVOID.getValue(), prioParser.handlePriority(way, null));
 
@@ -365,7 +365,11 @@ public class FootTagParserTest {
         assertEquals(PriorityCode.SLIGHT_AVOID.getValue(), prioParser.handlePriority(way, null));
 
         way.clearTags();
-        way.setTag("highway", "trunk");
+        way.setTag("highway", "secondary");
+        assertEquals(PriorityCode.AVOID.getValue(), prioParser.handlePriority(way, null));
+        way.setTag("highway", "trunk"); // secondary should be better to mostly avoid trunk e.g. here 46.9889,10.5664->47.0172,10.6059
+        assertEquals(PriorityCode.BAD.getValue(), prioParser.handlePriority(way, null));
+
         way.setTag("sidewalk", "no");
         assertEquals(PriorityCode.REACH_DESTINATION.getValue(), prioParser.handlePriority(way, null));
         way.setTag("sidewalk", "none");

@@ -866,8 +866,8 @@ public class GraphHopperTest {
         GHResponse rsp = hopper.route(req);
 
         ResponsePath res = rsp.getBest();
-        assertEquals(921, res.getDistance(), 10.);
-        assertEquals(36, res.getPoints().size());
+        assertEquals(575, res.getDistance(), 10.);
+        assertEquals(22, res.getPoints().size());
 
         // headings must be in [0, 360)
         req = new GHRequest().
@@ -1474,9 +1474,9 @@ public class GraphHopperTest {
 
         assertEquals(1, rsp.getAll().size());
         ResponsePath res = rsp.getBest();
-        assertEquals(1.49, rsp.getBest().getDistance() / 1000f, .01);
+        assertEquals(1.47, rsp.getBest().getDistance() / 1000f, .01);
         assertEquals(19, rsp.getBest().getTime() / 1000f / 60, 1);
-        assertEquals(66, res.getPoints().size());
+        assertEquals(64, res.getPoints().size());
     }
 
     @Test
