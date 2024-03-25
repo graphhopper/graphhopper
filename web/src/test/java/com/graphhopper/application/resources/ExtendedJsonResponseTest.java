@@ -43,7 +43,7 @@ public class ExtendedJsonResponseTest {
 
     @Test
     public void shouldCreateBasicStructure() {
-        JsonNode jsonObject = MapMatchingResource.convertToTree(new MatchResult(getEdgeMatch()), false, false);
+        JsonNode jsonObject = MapMatchingResource.convertToTree(new MatchResult(getEdgeMatch()), false, false, -1);
         JsonNode route = jsonObject.get("diary").get("entries").get(0);
         JsonNode link = route.get("links").get(0);
         JsonNode geometry = link.get("geometry");
