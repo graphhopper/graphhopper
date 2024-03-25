@@ -19,9 +19,11 @@ package com.graphhopper.routing.util.countryrules;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.RoadAccess;
+import com.graphhopper.routing.ev.Toll;
 import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.routing.util.countryrules.europe.AustriaCountryRule;
 import com.graphhopper.routing.util.countryrules.europe.GermanyCountryRule;
+import com.graphhopper.routing.util.countryrules.europe.HungaryCountryRule;
 
 import org.junit.jupiter.api.Test;
 
@@ -42,6 +44,25 @@ class CountryRuleTest {
         assertEquals(RoadAccess.FORESTRY, rule.getAccess(createReaderWay("track"), TransportationMode.CAR, RoadAccess.YES));
         assertEquals(RoadAccess.YES, rule.getAccess(createReaderWay("primary"), TransportationMode.CAR, RoadAccess.YES));
         assertEquals(RoadAccess.DESTINATION, rule.getAccess(createReaderWay("living_street"), TransportationMode.CAR, RoadAccess.YES));
+    }
+
+    @Test
+    void hungary() {
+        HungaryCountryRule rule = new HungaryCountryRule();
+        assertEquals(RoadAccess.YES, rule.getAccess(createReaderWay("primary"), TransportationMode.CAR, RoadAccess.YES));
+        assertEquals(RoadAccess.DESTINATION, rule.getAccess(createReaderWay("living_street"), TransportationMode.CAR, RoadAccess.YES));
+        assertEquals(RoadAccess.YES, rule.getAccess(createReaderWay("living_street"), TransportationMode.BIKE, RoadAccess.YES));
+        assertEquals(RoadAccess.PRIVATE, rule.getAccess(createReaderWay("living_street"), TransportationMode.CAR, RoadAccess.PRIVATE));
+        assertEquals(RoadAccess.PRIVATE, rule.getAccess(createReaderWay("living_street"), TransportationMode.BIKE, RoadAccess.PRIVATE));
+        assertEquals(Toll.ALL, rule.getToll(createReaderWay("motorway"), Toll.MISSING));
+        assertEquals(Toll.HGV, rule.getToll(createReaderWay("trunk"), Toll.MISSING));
+        assertEquals(Toll.HGV, rule.getToll(createReaderWay("primary"), Toll.MISSING));
+        assertEquals(Toll.MISSING, rule.getToll(createReaderWay("secondary"), Toll.MISSING));
+        assertEquals(Toll.MISSING, rule.getToll(createReaderWay("residential"), Toll.MISSING));
+        assertEquals(Toll.MISSING, rule.getToll(createReaderWay("service"), Toll.MISSING));
+        assertEquals(Toll.ALL, rule.getToll(createReaderWay("service"), Toll.ALL));
+        assertEquals(Toll.HGV, rule.getToll(createReaderWay("service"), Toll.HGV));
+        assertEquals(Toll.NO, rule.getToll(createReaderWay("service"), Toll.NO));
     }
 
     private ReaderWay createReaderWay(String highway) {
