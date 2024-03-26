@@ -6,7 +6,7 @@ package com.graphhopper.routing.ev;
 public class MaxSlope {
     public static final String KEY = "max_slope";
 
-    public static DecimalEncodedValue create() {
-        return new DecimalEncodedValueImpl(KEY, 5, 1, false);
+    public static DecimalEncodedValueImpl create() {
+        return new DecimalEncodedValueImpl(KEY, 5, 0, 1, true, false, false);
     }
 }

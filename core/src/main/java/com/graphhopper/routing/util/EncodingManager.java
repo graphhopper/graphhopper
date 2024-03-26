@@ -237,6 +237,11 @@ public class EncodingManager implements EncodedValueLookup {
         return getEncodedValue(key, DecimalEncodedValue.class);
     }
 
+    @Override
+    public DecimalEncodedValueImpl getDecimalEncodedValueImpl(String key) {
+        return getEncodedValue(key, DecimalEncodedValueImpl.class);
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     public <T extends Enum<?>> EnumEncodedValue<T> getEnumEncodedValue(String key, Class<T> type) {

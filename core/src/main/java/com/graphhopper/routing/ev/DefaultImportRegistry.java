@@ -201,7 +201,7 @@ public class DefaultImportRegistry implements ImportRegistry {
         else if ("slope_calculator".equals(name))
             return ImportUnit.create(name, null,
                     (lookup, props) -> new SlopeCalculator(
-                            lookup.hasEncodedValue(MaxSlope.KEY) ? lookup.getDecimalEncodedValue(MaxSlope.KEY) : null,
+                            lookup.hasEncodedValue(MaxSlope.KEY) ? lookup.getDecimalEncodedValueImpl(MaxSlope.KEY) : null,
                             lookup.hasEncodedValue(AverageSlope.KEY) ? lookup.getDecimalEncodedValue(AverageSlope.KEY) : null
                     ));
         else if (BikeNetwork.KEY.equals(name) || MtbNetwork.KEY.equals(name) || FootNetwork.KEY.equals(name))
