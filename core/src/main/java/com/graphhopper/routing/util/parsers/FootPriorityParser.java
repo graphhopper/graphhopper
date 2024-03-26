@@ -17,7 +17,7 @@ import static com.graphhopper.routing.util.parsers.AbstractAverageSpeedParser.is
 public class FootPriorityParser implements TagParser {
     final Set<String> intendedValues = new HashSet<>(INTENDED);
     final Set<String> safeHighwayTags = new HashSet<>();
-    final Set<String> avoidHighwayTags = new HashSet<>();
+    final Map<String, PriorityCode> avoidHighwayTags = new HashMap<>();
     protected HashSet<String> sidewalkValues = new HashSet<>(5);
     protected HashSet<String> sidewalksNoValues = new HashSet<>(5);
     protected final DecimalEncodedValue priorityWayEncoder;
@@ -54,14 +54,16 @@ public class FootPriorityParser implements TagParser {
         safeHighwayTags.add("service");
         safeHighwayTags.add("platform");
 
-        avoidHighwayTags.add("trunk");
-        avoidHighwayTags.add("trunk_link");
-        avoidHighwayTags.add("primary");
-        avoidHighwayTags.add("primary_link");
-        avoidHighwayTags.add("secondary");
-        avoidHighwayTags.add("secondary_link");
-        avoidHighwayTags.add("tertiary");
-        avoidHighwayTags.add("tertiary_link");
+        avoidHighwayTags.put("motorway", REACH_DESTINATION); // could be allowed when they have sidewalks
+        avoidHighwayTags.put("motorway_link", REACH_DESTINATION);
+        avoidHighwayTags.put("trunk", REACH_DESTINATION);
+        avoidHighwayTags.put("trunk_link", REACH_DESTINATION);
+        avoidHighwayTags.put("primary", BAD);
+        avoidHighwayTags.put("primary_link", BAD);
+        avoidHighwayTags.put("secondary", BAD);
+        avoidHighwayTags.put("secondary_link", BAD);
+        avoidHighwayTags.put("tertiary", AVOID);
+        avoidHighwayTags.put("tertiary_link", AVOID);
 
         routeMap.put(INTERNATIONAL, UNCHANGED.getValue());
         routeMap.put(NATIONAL, UNCHANGED.getValue());
@@ -82,47 +84,46 @@ public class FootPriorityParser implements TagParser {
     }
 
     public int handlePriority(ReaderWay way, Integer priorityFromRelation) {
-        TreeMap<Double, Integer> weightToPrioMap = new TreeMap<>();
+        TreeMap<Double, PriorityCode> weightToPrioMap = new TreeMap<>();
         if (priorityFromRelation == null)
-            weightToPrioMap.put(0d, UNCHANGED.getValue());
+            weightToPrioMap.put(0d, UNCHANGED);
         else
-            weightToPrioMap.put(110d, priorityFromRelation);
+            weightToPrioMap.put(110d, PriorityCode.valueOf(priorityFromRelation));
 
         collect(way, weightToPrioMap);
 
-        // pick priority with biggest order value
-        return weightToPrioMap.lastEntry().getValue();
+        // pick priority with the biggest order value
+        return weightToPrioMap.lastEntry().getValue().getValue();
     }
 
     /**
      * @param weightToPrioMap associate a weight with every priority. This sorted map allows
      *                        subclasses to 'insert' more important priorities as well as overwrite determined priorities.
      */
-    void collect(ReaderWay way, TreeMap<Double, Integer> weightToPrioMap) {
+    void collect(ReaderWay way, TreeMap<Double, PriorityCode> weightToPrioMap) {
         String highway = way.getTag("highway");
         if (way.hasTag("foot", "designated"))
-            weightToPrioMap.put(100d, PREFER.getValue());
+            weightToPrioMap.put(100d, PREFER);
 
         double maxSpeed = Math.max(getMaxSpeed(way, false), getMaxSpeed(way, true));
         if (safeHighwayTags.contains(highway) || (isValidSpeed(maxSpeed) && maxSpeed <= 20)) {
-            weightToPrioMap.put(40d, PREFER.getValue());
+            weightToPrioMap.put(40d, PREFER);
             if (way.hasTag("tunnel", intendedValues)) {
                 if (way.hasTag("sidewalk", sidewalksNoValues))
-                    weightToPrioMap.put(40d, AVOID.getValue());
+                    weightToPrioMap.put(40d, AVOID);
                 else
-                    weightToPrioMap.put(40d, UNCHANGED.getValue());
+                    weightToPrioMap.put(40d, UNCHANGED);
             }
-        } else if ((isValidSpeed(maxSpeed) && maxSpeed > 50) || avoidHighwayTags.contains(highway)) {
+        } else if ((isValidSpeed(maxSpeed) && maxSpeed > 50) || avoidHighwayTags.containsKey(highway)) {
+            PriorityCode priorityCode = avoidHighwayTags.get(highway);
             if (way.hasTag("sidewalk", sidewalksNoValues))
-                weightToPrioMap.put(40d, VERY_BAD.getValue());
-            else if (!way.hasTag("sidewalk", sidewalkValues))
-                weightToPrioMap.put(40d, AVOID.getValue());
+                weightToPrioMap.put(40d, priorityCode == null ? BAD : priorityCode);
             else
-                weightToPrioMap.put(40d, SLIGHT_AVOID.getValue());
+                weightToPrioMap.put(40d, priorityCode == null ? AVOID : priorityCode.better().better());
         } else if (way.hasTag("sidewalk", sidewalksNoValues))
-            weightToPrioMap.put(40d, AVOID.getValue());
+            weightToPrioMap.put(40d, AVOID);
 
         if (way.hasTag("bicycle", "official") || way.hasTag("bicycle", "designated"))
-            weightToPrioMap.put(44d, SLIGHT_AVOID.getValue());
+            weightToPrioMap.put(44d, SLIGHT_AVOID);
     }
 }

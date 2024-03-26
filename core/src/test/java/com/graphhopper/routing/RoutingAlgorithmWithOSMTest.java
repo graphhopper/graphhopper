@@ -510,7 +510,7 @@ public class RoutingAlgorithmWithOSMTest {
         List<Query> queries = createAndorraQueries();
         queries.get(0).getPoints().get(1).expectedDistance = 16460;
         queries.get(0).getPoints().get(1).expectedPoints = 653;
-        queries.get(1).getPoints().get(1).expectedDistance = 12839;
+        queries.get(1).getPoints().get(1).expectedDistance = 12840;
         queries.get(1).getPoints().get(1).expectedPoints = 435;
 
         queries.add(new Query(42.521269, 1.52298, 42.50418, 1.520662, 3223, 107));
