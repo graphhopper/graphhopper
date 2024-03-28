@@ -12,12 +12,12 @@ import com.graphhopper.util.PointList;
 import static java.lang.Math.abs;
 
 public class SlopeCalculator implements TagParser {
-    private final DecimalEncodedValueImpl maxSlopeEnc;
+    private final DecimalEncodedValue maxSlopeEnc;
     private final DecimalEncodedValue averageSlopeEnc;
     // the elevation data fluctuates a lot and so the slope is not that precise for short edges.
     private static final double MIN_LENGTH = 8;
 
-    public SlopeCalculator(DecimalEncodedValueImpl max, DecimalEncodedValue averageEnc) {
+    public SlopeCalculator(DecimalEncodedValue max, DecimalEncodedValue averageEnc) {
         this.maxSlopeEnc = max;
         this.averageSlopeEnc = averageEnc;
     }
@@ -85,12 +85,8 @@ public class SlopeCalculator implements TagParser {
                 if (maxSlope > maxSlopeEnc.getMaxStorableDecimal()) {
                     maxSlopeEnc.setDecimal(false, edgeId, edgeIntAccess, maxSlopeEnc.getMaxStorableDecimal());
                 }
-                else if (maxSlope < maxSlopeEnc.getMinStorableDecimal()) {
-                    maxSlopeEnc.setDecimal(false, edgeId, edgeIntAccess, maxSlopeEnc.getMinStorableDecimal());
-                }
-                else {
-                    maxSlopeEnc.setDecimal(false, edgeId, edgeIntAccess, maxSlope);
-                }
+                else
+                    maxSlopeEnc.setDecimal(false, edgeId, edgeIntAccess, Math.max(maxSlope, maxSlopeEnc.getMinStorableDecimal()));
             }
         }
     }

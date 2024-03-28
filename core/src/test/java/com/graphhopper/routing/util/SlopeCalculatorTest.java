@@ -13,7 +13,7 @@ class SlopeCalculatorTest {
     @Test
     void simpleElevation() {
         DecimalEncodedValue averageEnc = AverageSlope.create();
-        DecimalEncodedValueImpl maxEnc = MaxSlope.create();
+        DecimalEncodedValue maxEnc = MaxSlope.create();
         new EncodingManager.Builder().add(averageEnc).add(maxEnc).build();
         SlopeCalculator creator = new SlopeCalculator(maxEnc, averageEnc);
         EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
@@ -38,7 +38,7 @@ class SlopeCalculatorTest {
     public void testAveragingOfMaxSlope() {
         // point=49.977518%2C11.564285&point=49.979878%2C11.563663&profile=bike
         DecimalEncodedValue averageEnc = AverageSlope.create();
-        DecimalEncodedValueImpl maxEnc = MaxSlope.create();
+        DecimalEncodedValue maxEnc = MaxSlope.create();
         new EncodingManager.Builder().add(averageEnc).add(maxEnc).build();
         SlopeCalculator creator = new SlopeCalculator(maxEnc, averageEnc);
         ArrayEdgeIntAccess intAccess = new ArrayEdgeIntAccess(1);
@@ -69,7 +69,7 @@ class SlopeCalculatorTest {
         ArrayEdgeIntAccess intAccess = new ArrayEdgeIntAccess(1);
 
         DecimalEncodedValue averageEnc = AverageSlope.create();
-        DecimalEncodedValueImpl maxEnc = MaxSlope.create();
+        DecimalEncodedValue maxEnc = MaxSlope.create();
         new EncodingManager.Builder().add(averageEnc).add(maxEnc).build();
         SlopeCalculator creator = new SlopeCalculator(maxEnc, averageEnc);
 
@@ -91,7 +91,7 @@ class SlopeCalculatorTest {
         ArrayEdgeIntAccess intAccess = new ArrayEdgeIntAccess(1);
 
         DecimalEncodedValue averageEnc = AverageSlope.create();
-        DecimalEncodedValueImpl maxEnc = MaxSlope.create();
+        DecimalEncodedValue maxEnc = MaxSlope.create();
         new EncodingManager.Builder().add(averageEnc).add(maxEnc).build();
         SlopeCalculator creator = new SlopeCalculator(maxEnc, averageEnc);
 
@@ -111,7 +111,7 @@ class SlopeCalculatorTest {
         ReaderWay way = new ReaderWay(1);
         way.setTag("point_list", pointList);
         DecimalEncodedValue averageEnc = AverageSlope.create();
-        DecimalEncodedValueImpl maxEnc = MaxSlope.create();
+        DecimalEncodedValue maxEnc = MaxSlope.create();
         new EncodingManager.Builder().add(averageEnc).add(maxEnc).build();
 
         SlopeCalculator creator = new SlopeCalculator(maxEnc, averageEnc);
