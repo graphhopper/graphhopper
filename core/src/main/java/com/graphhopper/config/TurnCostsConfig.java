@@ -45,8 +45,8 @@ public class TurnCostsConfig {
     }
 
     List<String> check(List<String> restrictions) {
-        if (restrictions.isEmpty())
-            throw new IllegalArgumentException("turn restrictions cannot be empty");
+        if (restrictions == null || restrictions.isEmpty())
+            throw new IllegalArgumentException("turn_costs cannot have empty vehicle_types");
         for (String r : restrictions) {
             if (!ALL_SUPPORTED.contains(r))
                 throw new IllegalArgumentException("Currently we do not support the restriction: " + r);
@@ -56,6 +56,7 @@ public class TurnCostsConfig {
 
     @JsonProperty("vehicle_types")
     public List<String> getVehicleTypes() {
+        check(vehicleTypes);
         return vehicleTypes;
     }
 
