@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
+import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.gpx.GpxConversions;
 import com.graphhopper.http.ProfileResolver;
@@ -36,6 +37,7 @@ import com.graphhopper.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
@@ -63,20 +65,23 @@ public class MapMatchingResource {
 
     private static final Logger logger = LoggerFactory.getLogger(MapMatchingResource.class);
 
+    private final GraphHopperConfig config;
     private final GraphHopper graphHopper;
     private final ProfileResolver profileResolver;
     private final TranslationMap trMap;
     private final MapMatchingRouterFactory mapMatchingRouterFactory;
     private final ObjectMapper objectMapper = Jackson.newObjectMapper();
+    @Nullable
     private final String osmDate;
 
     @Inject
-    public MapMatchingResource(GraphHopper graphHopper, ProfileResolver profileResolver, TranslationMap trMap, MapMatchingRouterFactory mapMatchingRouterFactory) {
+    public MapMatchingResource(GraphHopperConfig config, GraphHopper graphHopper, ProfileResolver profileResolver, TranslationMap trMap, MapMatchingRouterFactory mapMatchingRouterFactory) {
+        this.config = config;
         this.graphHopper = graphHopper;
         this.profileResolver = profileResolver;
         this.trMap = trMap;
         this.mapMatchingRouterFactory = mapMatchingRouterFactory;
-        this.osmDate = graphHopper.getProperties().get("datareader.data.date");
+        this.osmDate = graphHopper.getProperties().getAll().get("datareader.data.date");
     }
 
     @POST
@@ -165,8 +170,8 @@ public class MapMatchingResource {
                         header("X-GH-Took", "" + Math.round(sw.getMillisDouble())).
                         build();
             } else {
-                ObjectNode map = ResponsePathSerializer.jsonObject(rsp, osmDate, instructions,
-                        calcPoints, enableElevation, pointsEncoded, sw.getMillisDouble());
+                ObjectNode map = ResponsePathSerializer.jsonObject(rsp, new ResponsePathSerializer.Info(config.getCopyrights(), Math.round(sw.getMillisDouble()), osmDate), instructions,
+                        calcPoints, enableElevation, pointsEncoded);
 
                 Map<String, Object> matchStatistics = new HashMap<>();
                 matchStatistics.put("distance", matchResult.getMatchLength());

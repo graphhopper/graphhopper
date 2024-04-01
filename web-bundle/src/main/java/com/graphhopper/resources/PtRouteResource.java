@@ -20,6 +20,7 @@ package com.graphhopper.resources;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GHResponse;
+import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.gtfs.GHLocation;
 import com.graphhopper.gtfs.PtRouter;
 import com.graphhopper.gtfs.Request;
@@ -45,10 +46,12 @@ import static java.util.stream.Collectors.toList;
 @Path("route-pt")
 public class PtRouteResource {
 
+    private final GraphHopperConfig config;
     private final PtRouter ptRouter;
 
     @Inject
-    public PtRouteResource(PtRouter ptRouter) {
+    public PtRouteResource(GraphHopperConfig config, PtRouter ptRouter) {
+        this.config = config;
         this.ptRouter = ptRouter;
     }
 
@@ -87,7 +90,7 @@ public class PtRouteResource {
         Optional.ofNullable(betaEgressTime).ifPresent(request::setBetaEgressTime);
 
         GHResponse route = ptRouter.route(request);
-        return ResponsePathSerializer.jsonObject(route, "", true, true, false, false, stopWatch.stop().getMillis());
+        return ResponsePathSerializer.jsonObject(route, new ResponsePathSerializer.Info(config.getCopyrights(), Math.round(stopWatch.stop().getMillis()), null), true, true, false, false);
     }
 
 }
