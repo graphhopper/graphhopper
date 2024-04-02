@@ -44,6 +44,7 @@ web.way_contains_private=המסלול כולל דרכים פרטיות
 web.way_contains_toll=המסלול כולל כבישי אגרה
 web.way_crosses_border=המסלול כולל חציית גבולות בין מדינות
 web.way_contains=המסלול כולל %1$s
+web.way_contains_restrictions=
 web.tracks=דרכי עפר לא סלולות
 web.steps=מדרגות
 web.footways=שבילים להולכי רגל

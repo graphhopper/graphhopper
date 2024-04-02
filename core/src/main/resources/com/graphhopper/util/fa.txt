@@ -44,6 +44,7 @@ web.way_contains_private=مسیردارای گذرگاه های  شخصی (ما�
 web.way_contains_toll=این مسیر دارای عوارض است
 web.way_crosses_border=این مسیر از مرز یک کشور عبور میکند
 web.way_contains=این مسیر دارای %1$s   است
+web.way_contains_restrictions=
 web.tracks=هشدار: این مسیر دارای جاده های خاکی و غیر آسفالت است
 web.steps=پله
 web.footways=
