@@ -43,6 +43,9 @@ import java.util.Locale;
 public class ResponsePathSerializer {
 
     public static String encodePolyline(PointList poly, boolean includeElevation, double multiplier) {
+        if (multiplier < 1)
+            throw new IllegalArgumentException("multiplier cannot be smaller than 1 but was " + multiplier + " for polyline");
+
         StringBuilder sb = new StringBuilder(Math.max(20, poly.size() * 3));
         int size = poly.size();
         int prevLat = 0;
