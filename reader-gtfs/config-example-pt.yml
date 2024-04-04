@@ -6,8 +6,12 @@ graphhopper:
 
   profiles:
     - name: foot
-      vehicle: foot
-      weighting: custom
+      custom_model_files:
+        - foot.json
+      # optionally add
+      #  - foot_elevation.json
+
+  import.osm.ignored_highways: motorway,trunk
 
 server:
   application_connectors:

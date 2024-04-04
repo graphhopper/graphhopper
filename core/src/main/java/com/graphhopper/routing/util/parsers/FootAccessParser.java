@@ -120,8 +120,10 @@ public class FootAccessParser extends AbstractAccessParser implements TagParser 
             return WayAccess.CAN_SKIP;
         }
 
-        // other scales are too dangerous, see http://wiki.openstreetmap.org/wiki/Key:sac_scale
-        if (way.getTag("sac_scale") != null && !way.hasTag("sac_scale", allowedSacScale))
+        // certain scales are too dangerous, see http://wiki.openstreetmap.org/wiki/Key:sac_scale
+        // same for via_ferrata, see #1326
+        if (way.getTag("sac_scale") != null && !way.hasTag("sac_scale", allowedSacScale)
+            || "via_ferrata".equals(highwayValue))
             return WayAccess.CAN_SKIP;
 
         String firstValue = way.getFirstPriorityTag(restrictions);

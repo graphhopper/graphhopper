@@ -5,9 +5,11 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
+import com.graphhopper.jackson.ResponsePathSerializer;
 import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
+import com.graphhopper.util.PointList;
 import com.graphhopper.util.TranslationMap;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.jupiter.api.AfterAll;
@@ -117,6 +119,28 @@ public class NavigateResponseConverterTest {
         JsonNode waypointLoc = waypointsJson.get(0).get("location");
         assertEquals(1.536198, waypointLoc.get(0).asDouble(), .001);
 
+    }
+
+    @Test
+    public void arriveGeometryTest() {
+
+        GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).
+                setProfile(profile));
+
+        ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH, distanceConfig);
+
+        JsonNode steps = json.get("routes").get(0).get("legs").get(0).get("steps");
+
+        // Step 17 is the last before arrival
+        JsonNode step = steps.get(17);
+
+        PointList expectedArrivePointList = rsp.getBest().getInstructions().get(17).getPoints().clone(false);
+        PointList ghArrive = rsp.getBest().getInstructions().get(18).getPoints();
+        // We expect that the Mapbox compatible response builds the geometry to the arrival coordinate
+        expectedArrivePointList.add(ghArrive);
+        String encodedExpected = ResponsePathSerializer.encodePolyline(expectedArrivePointList, false, 1e6);
+
+        assertEquals(encodedExpected, step.get("geometry").asText());
     }
 
     @Test

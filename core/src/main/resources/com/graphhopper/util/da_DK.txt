@@ -44,6 +44,7 @@ web.way_contains_private=Rute med private veje
 web.way_contains_toll=Rute med betalingsveje
 web.way_crosses_border=Rute der krydser landegrænser
 web.way_contains=Rute inkluderer %1$s
+web.way_contains_restrictions=
 web.tracks=Grusveje uden asfalt
 web.steps=Trapper
 web.footways=Fortove

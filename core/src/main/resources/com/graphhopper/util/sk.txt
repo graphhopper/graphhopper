@@ -44,6 +44,7 @@ web.way_contains_private=Trasa obsahuje súkromné cesty.
 web.way_contains_toll=Trasa obsahuje spoplatnené úseky.
 web.way_crosses_border=Trasa križuje štátnu hranicu.
 web.way_contains=Trasa obsahuje %1$s
+web.way_contains_restrictions=
 web.tracks=nespevnené cesty
 web.steps=schody
 web.footways=chodníky

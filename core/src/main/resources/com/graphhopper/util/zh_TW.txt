@@ -44,6 +44,7 @@ web.way_contains_private=私人道路
 web.way_contains_toll=收費道路
 web.way_crosses_border=
 web.way_contains=
+web.way_contains_restrictions=
 web.tracks=
 web.steps=
 web.footways=
