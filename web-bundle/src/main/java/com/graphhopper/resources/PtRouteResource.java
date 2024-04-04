@@ -90,7 +90,7 @@ public class PtRouteResource {
         Optional.ofNullable(betaEgressTime).ifPresent(request::setBetaEgressTime);
 
         GHResponse route = ptRouter.route(request);
-        return ResponsePathSerializer.jsonObject(route, new ResponsePathSerializer.Info(config.getCopyrights(), Math.round(stopWatch.stop().getMillis()), null), true, true, false, false);
+        return ResponsePathSerializer.jsonObject(route, new ResponsePathSerializer.Info(config.getCopyrights(), Math.round(stopWatch.stop().getMillis()), null), true, true, false, false, -1);
     }
 
 }
