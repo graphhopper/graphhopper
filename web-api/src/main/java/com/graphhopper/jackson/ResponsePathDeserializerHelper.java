@@ -36,8 +36,8 @@ public class ResponsePathDeserializerHelper {
         if (responsePath.hasErrors())
             return responsePath;
 
-        // Read multiplier from JSON to properly decode the "points" array.
-        // Note, in earlier versions points_encoded was missing in JSON for calc_points == false and still required for snapped_waypoints
+        // Read multiplier from JSON to properly decode the "points" and/or "snapped_waypoints" array.
+        // Note, in earlier versions the points_encoded was missing from the JSON for calc_points == false (although still required for snapped_waypoints).
         double multiplier = 1e5;
         if (path.has("points_encoded") && path.get("points_encoded").asBoolean() && path.has("points_encoded_multiplier"))
             multiplier = path.get("points_encoded_multiplier").asDouble();
