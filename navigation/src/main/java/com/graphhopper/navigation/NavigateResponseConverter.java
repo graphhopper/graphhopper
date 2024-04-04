@@ -180,7 +180,7 @@ public class NavigateResponseConverter {
         //Make pointList mutable
         PointList pointList = instruction.getPoints().clone(false);
 
-        if (instructionIndex + 2 < instructions.size()) {
+        if (instructionIndex + 1 < instructions.size()) {
             // Add the first point of the next instruction
             PointList nextPoints = instructions.get(instructionIndex + 1).getPoints();
             pointList.add(nextPoints.getLat(0), nextPoints.getLon(0), nextPoints.getEle(0));

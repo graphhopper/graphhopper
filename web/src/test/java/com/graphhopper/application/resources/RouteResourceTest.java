@@ -109,6 +109,7 @@ public class RouteResourceTest {
         JsonNode json = response.readEntity(JsonNode.class);
         JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
+        assertEquals("GraphHopper", infoJson.at("/copyrights/0").asText());
         JsonNode path = json.get("paths").get(0);
         double distance = path.get("distance").asDouble();
         assertTrue(distance > 9000, "distance wasn't correct:" + distance);

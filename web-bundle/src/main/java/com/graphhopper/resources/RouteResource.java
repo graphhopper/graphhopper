@@ -20,6 +20,7 @@ package com.graphhopper.resources;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
+import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.gpx.GpxConversions;
 import com.graphhopper.http.GHPointParam;
 import com.graphhopper.http.GHRequestTransformer;
@@ -32,6 +33,7 @@ import io.dropwizard.jersey.params.AbstractParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.servlet.http.HttpServletRequest;
@@ -57,19 +59,22 @@ public class RouteResource {
 
     private static final Logger logger = LoggerFactory.getLogger(RouteResource.class);
 
+    private final GraphHopperConfig config;
     private final GraphHopper graphHopper;
     private final ProfileResolver profileResolver;
     private final GHRequestTransformer ghRequestTransformer;
     private final Boolean hasElevation;
+    @Nullable
     private final String osmDate;
 
     @Inject
-    public RouteResource(GraphHopper graphHopper, ProfileResolver profileResolver, GHRequestTransformer ghRequestTransformer, @Named("hasElevation") Boolean hasElevation) {
+    public RouteResource(GraphHopperConfig config, GraphHopper graphHopper, ProfileResolver profileResolver, GHRequestTransformer ghRequestTransformer, @Named("hasElevation") Boolean hasElevation) {
+        this.config = config;
         this.graphHopper = graphHopper;
         this.profileResolver = profileResolver;
         this.ghRequestTransformer = ghRequestTransformer;
         this.hasElevation = hasElevation;
-        this.osmDate = graphHopper.getProperties().get("datareader.data.date");
+        this.osmDate = graphHopper.getProperties().getAll().get("datareader.data.date");
     }
 
     @GET
@@ -158,7 +163,7 @@ public class RouteResource {
                             header("X-GH-Took", "" + Math.round(took)).
                             build()
                     :
-                    Response.ok(ResponsePathSerializer.jsonObject(ghResponse, osmDate, instructions, calcPoints, enableElevation, pointsEncoded, pointsEncodedMultiplier, took)).
+                    Response.ok(ResponsePathSerializer.jsonObject(ghResponse, new ResponsePathSerializer.Info(config.getCopyrights(), Math.round(took), osmDate), instructions, calcPoints, enableElevation, pointsEncoded, pointsEncodedMultiplier)).
                             header("X-GH-Took", "" + Math.round(took)).
                             type(MediaType.APPLICATION_JSON).
                             build();
@@ -204,7 +209,7 @@ public class RouteResource {
                     + ", time0: " + Math.round(ghResponse.getBest().getTime() / 60000f) + "min"
                     + ", points0: " + ghResponse.getBest().getPoints().size()
                     + ", debugInfo: " + ghResponse.getDebugInfo());
-            return Response.ok(ResponsePathSerializer.jsonObject(ghResponse, osmDate, instructions, calcPoints, enableElevation, pointsEncoded, pointsEncodedMultiplier, took)).
+            return Response.ok(ResponsePathSerializer.jsonObject(ghResponse, new ResponsePathSerializer.Info(config.getCopyrights(), Math.round(took), osmDate), instructions, calcPoints, enableElevation, pointsEncoded, pointsEncodedMultiplier)).
                     header("X-GH-Took", "" + Math.round(took)).
                     type(MediaType.APPLICATION_JSON).
                     build();

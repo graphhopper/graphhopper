@@ -44,6 +44,7 @@ web.way_contains_private=Route mit Privatwegen
 web.way_contains_toll=Route mit mautpflichtigen Straßen
 web.way_crosses_border=Route überquert Landesgrenzen
 web.way_contains=Auf der Route sind %1$s
+web.way_contains_restrictions=Auf der Route gibt es potentielle Zugangsbeschränkungen
 web.tracks=unbefestigte Feldwege
 web.steps=Treppen
 web.footways=Fußwege

@@ -44,6 +44,7 @@ web.way_contains_private=Route with private roads
 web.way_contains_toll=Route has tolls
 web.way_crosses_border=Route crosses a country border
 web.way_contains=Route includes %1$s
+web.way_contains_restrictions=Route with potential access restrictions
 web.tracks=unpaved dirt roads
 web.steps=steps
 web.footways=footways

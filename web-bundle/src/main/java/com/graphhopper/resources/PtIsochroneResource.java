@@ -19,6 +19,7 @@
 package com.graphhopper.resources;
 
 import com.conveyal.gtfs.model.Stop;
+import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.gtfs.*;
 import com.graphhopper.http.GHLocationParam;
 import com.graphhopper.http.OffsetDateTimeParam;
@@ -59,13 +60,15 @@ public class PtIsochroneResource {
 
     private static final double JTS_TOLERANCE = 0.00001;
 
+    private final GraphHopperConfig config;
     private final GtfsStorage gtfsStorage;
     private final EncodingManager encodingManager;
     private final BaseGraph baseGraph;
     private final LocationIndex locationIndex;
 
     @Inject
-    public PtIsochroneResource(GtfsStorage gtfsStorage, EncodingManager encodingManager, BaseGraph baseGraph, LocationIndex locationIndex) {
+    public PtIsochroneResource(GraphHopperConfig config, GtfsStorage gtfsStorage, EncodingManager encodingManager, BaseGraph baseGraph, LocationIndex locationIndex) {
+        this.config = config;
         this.gtfsStorage = gtfsStorage;
         this.encodingManager = encodingManager;
         this.baseGraph = baseGraph;
@@ -193,7 +196,7 @@ public class PtIsochroneResource {
                 properties.put("z", targetZ);
                 feature.setProperties(properties);
                 response.polygons.add(feature);
-                response.info.copyrights.addAll(ResponsePathSerializer.COPYRIGHTS);
+                response.info.copyrights.addAll(config.getCopyrights());
                 return response;
             } else {
                 return wrap(isoline);
@@ -211,7 +214,7 @@ public class PtIsochroneResource {
 
         Response response = new Response();
         response.polygons.add(feature);
-        response.info.copyrights.addAll(ResponsePathSerializer.COPYRIGHTS);
+        response.info.copyrights.addAll(config.getCopyrights());
         return response;
     }
 

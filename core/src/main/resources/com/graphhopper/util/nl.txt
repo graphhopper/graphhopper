@@ -44,6 +44,7 @@ web.way_contains_private=route met privé wegen
 web.way_contains_toll=route met tolwegen
 web.way_crosses_border=route met grensovergangen
 web.way_contains=route bevat %1$s
+web.way_contains_restrictions=
 web.tracks=route bevat onverharde wegen
 web.steps=trappen
 web.footways=voetpaden
