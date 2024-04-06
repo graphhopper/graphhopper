@@ -28,6 +28,7 @@ import java.util.*;
 
 import static com.graphhopper.routing.ev.RouteNetwork.*;
 import static com.graphhopper.routing.util.PriorityCode.UNCHANGED;
+import static com.graphhopper.routing.util.parsers.OSMTemporalAccessParser.hasTemporalRestriction;
 
 public class FootAccessParser extends AbstractAccessParser implements TagParser {
 
@@ -112,7 +113,7 @@ public class FootAccessParser extends AbstractAccessParser implements TagParser 
                 acceptPotentially = WayAccess.WAY;
 
             if (!acceptPotentially.canSkip()) {
-                if (way.hasTag(restrictions, restrictedValues))
+                if (way.hasTag(restrictionKeys, restrictedValues))
                     return WayAccess.CAN_SKIP;
                 return acceptPotentially;
             }
@@ -123,14 +124,15 @@ public class FootAccessParser extends AbstractAccessParser implements TagParser 
         // certain scales are too dangerous, see http://wiki.openstreetmap.org/wiki/Key:sac_scale
         // same for via_ferrata, see #1326
         if (way.getTag("sac_scale") != null && !way.hasTag("sac_scale", allowedSacScale)
-            || "via_ferrata".equals(highwayValue))
+                || "via_ferrata".equals(highwayValue))
             return WayAccess.CAN_SKIP;
 
-        String firstValue = way.getFirstPriorityTag(restrictions);
-        if (!firstValue.isEmpty()) {
+        int firstIndex = way.getFirstIndex(restrictionKeys);
+        if (firstIndex >= 0) {
+            String firstValue = way.getTag(restrictionKeys.get(firstIndex), "");
             String[] restrict = firstValue.split(";");
             for (String value : restrict) {
-                if (restrictedValues.contains(value))
+                if (restrictedValues.contains(value) && !hasTemporalRestriction(way, firstIndex, restrictionKeys))
                     return WayAccess.CAN_SKIP;
                 if (intendedValues.contains(value))
                     return WayAccess.WAY;

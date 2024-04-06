@@ -9,6 +9,8 @@ import com.graphhopper.routing.util.WayAccess;
 
 import java.util.*;
 
+import static com.graphhopper.routing.util.parsers.OSMTemporalAccessParser.hasTemporalRestriction;
+
 public abstract class BikeCommonAccessParser extends AbstractAccessParser implements TagParser {
 
     private static final Set<String> OPP_LANES = new HashSet<>(Arrays.asList("opposite", "opposite_lane", "opposite_track"));
@@ -57,7 +59,7 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
                 access = WayAccess.WAY;
 
             if (!access.canSkip()) {
-                if (way.hasTag(restrictions, restrictedValues))
+                if (way.hasTag(restrictionKeys, restrictedValues))
                     return WayAccess.CAN_SKIP;
                 return access;
             }
@@ -78,11 +80,12 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
         if (way.hasTag("bicycle", "dismount") || way.hasTag("highway", "cycleway"))
             return WayAccess.WAY;
 
-        String firstValue = way.getFirstPriorityTag(restrictions);
-        if (!firstValue.isEmpty()) {
+        int firstIndex = way.getFirstIndex(restrictionKeys);
+        if (firstIndex >= 0) {
+            String firstValue = way.getTag(restrictionKeys.get(firstIndex), "");
             String[] restrict = firstValue.split(";");
             for (String value : restrict) {
-                if (restrictedValues.contains(value))
+                if (restrictedValues.contains(value) && !hasTemporalRestriction(way, firstIndex, restrictionKeys))
                     return WayAccess.CAN_SKIP;
                 if (intendedValues.contains(value))
                     return WayAccess.WAY;
