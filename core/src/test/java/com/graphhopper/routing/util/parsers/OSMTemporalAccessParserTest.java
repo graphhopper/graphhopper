@@ -43,17 +43,22 @@ class OSMTemporalAccessParserTest {
         parser.handleWayTags(edgeId, edgeIntAccess, way, IntsRef.EMPTY);
         assertEquals(CarTemporalAccess.YES, restricted.getEnum(false, edgeId, edgeIntAccess));
 
-        // range does not match => inverse of NO
-        edgeIntAccess = new ArrayEdgeIntAccess(1);
-        way.setTag("access:conditional", "no @ ( 2023 Mar 23 )");
-        parser.handleWayTags(edgeId, edgeIntAccess, way, IntsRef.EMPTY);
-        assertEquals(CarTemporalAccess.YES, restricted.getEnum(false, edgeId, edgeIntAccess));
-
         // for now consider if seasonal range
         edgeIntAccess = new ArrayEdgeIntAccess(1);
         way.setTag("access:conditional", "no @ ( Mar 23 - Aug 23 )");
         parser.handleWayTags(edgeId, edgeIntAccess, way, IntsRef.EMPTY);
         assertEquals(CarTemporalAccess.NO, restricted.getEnum(false, edgeId, edgeIntAccess));
+
+        // range does not match => inverse!
+        edgeIntAccess = new ArrayEdgeIntAccess(1);
+        way.setTag("access:conditional", "no @ ( Jun 23 - Aug 23 )");
+        parser.handleWayTags(edgeId, edgeIntAccess, way, IntsRef.EMPTY);
+        assertEquals(CarTemporalAccess.YES, restricted.getEnum(false, edgeId, edgeIntAccess));
+
+        edgeIntAccess = new ArrayEdgeIntAccess(1);
+        way.setTag("access:conditional", "no @ ( 2023 Mar 23 )");
+        parser.handleWayTags(edgeId, edgeIntAccess, way, IntsRef.EMPTY);
+        assertEquals(CarTemporalAccess.YES, restricted.getEnum(false, edgeId, edgeIntAccess));
 
         edgeIntAccess = new ArrayEdgeIntAccess(1);
         way.setTag("access:conditional", "yes @ Apr-Nov");
