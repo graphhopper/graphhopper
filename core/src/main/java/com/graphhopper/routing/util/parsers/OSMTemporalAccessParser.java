@@ -33,12 +33,13 @@ import java.util.Date;
 import java.util.Map;
 
 /**
- * This parser fills the different XYRoadAccessConditional enums from the OSM conditional
- * restrictions based on the specified dateRangeParserDate. Node tags will be ignored for now.
+ * This parser fills the different XYTemporalAccess enums from the OSM conditional
+ * restrictions based on the specified dateRangeParserDate. 'Temporal' means that both, temporary
+ * and seasonal restrictions will be considered. Node tags will be ignored for now.
  */
-public class OSMRoadAccessConditionalParser implements TagParser {
+public class OSMTemporalAccessParser implements TagParser {
 
-    private static final Logger logger = LoggerFactory.getLogger(OSMRoadAccessConditionalParser.class);
+    private static final Logger logger = LoggerFactory.getLogger(OSMTemporalAccessParser.class);
     private final Collection<String> conditionals;
     private final Setter restrictionSetter;
     private final DateRangeParser parser;
@@ -49,7 +50,7 @@ public class OSMRoadAccessConditionalParser implements TagParser {
         void setBoolean(int edgeId, EdgeIntAccess edgeIntAccess, boolean b);
     }
 
-    public OSMRoadAccessConditionalParser(Collection<String> conditionals, Setter restrictionSetter, String dateRangeParserDate) {
+    public OSMTemporalAccessParser(Collection<String> conditionals, Setter restrictionSetter, String dateRangeParserDate) {
         this.conditionals = conditionals;
         this.restrictionSetter = restrictionSetter;
         if (dateRangeParserDate.isEmpty())
@@ -74,22 +75,25 @@ public class OSMRoadAccessConditionalParser implements TagParser {
 
             String value = (String) entry.getValue();
             String[] strs = value.split("@");
-            if (strs.length == 2 && isInRange(strs[1].trim())) {
-                if (strs[0].trim().equals("no")) return false;
-                if (strs[0].trim().equals("yes")) return true;
+            if (strs.length == 2) {
+                Boolean inRange = isInRange(strs[1].trim());
+                if (inRange != null) {
+                    if (strs[0].trim().equals("no")) return !inRange;
+                    if (strs[0].trim().equals("yes")) return inRange;
+                }
             }
         }
         return null;
     }
 
-    private boolean isInRange(final String value) {
+    private Boolean isInRange(final String value) {
         if (value.isEmpty())
-            return false;
+            return null;
 
         if (value.contains(";")) {
             if (enabledLogs)
                 logger.warn("We do not support multiple conditions yet: " + value);
-            return false;
+            return null;
         }
 
         String conditionalValue = value.replace('(', ' ').replace(')', ' ').trim();
@@ -103,6 +107,6 @@ public class OSMRoadAccessConditionalParser implements TagParser {
             if (enabledLogs)
                 logger.warn("Cannot parse " + conditionalValue);
         }
-        return false;
+        return null;
     }
 }
