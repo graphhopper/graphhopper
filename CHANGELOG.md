@@ -1,5 +1,6 @@
 ### 9.0 [not yet released]
 
+- move sac_scale handling out of foot_access parser and made foot safer via lowering to sac_scale<2, same for hike sac_scale<5
 - removed shortest+fastest weightings, #2938
 - u_turn_costs information is no longer stored in profile. Use the TurnCostsConfig instead
 - the custom models do no longer include the speed, access and priority encoded values only implicitly, see docs/migration/config-migration-08-09.md

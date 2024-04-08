@@ -320,7 +320,7 @@ public class RoutingAlgorithmWithOSMTest {
         // do not pull elevation data: hopper.setElevationProvider(new SRTMProvider(DIR));
         hopper.importOrLoad();
         GHResponse res = hopper.route(new GHRequest(47.290322, 11.333889, 47.301593, 11.333489).setProfile("hike"));
-        assertEquals(3604, res.getBest().getTime() / 1000.0, 60); // 6100sec with srtm data
+        assertEquals(4806, res.getBest().getTime() / 1000.0, 60); // 6100sec with srtm data
         assertEquals(2000, res.getBest().getDistance(), 10); // 2536m with srtm data
     }
 
