@@ -253,8 +253,8 @@ public class RoutingAlgorithmWithOSMTest {
     }
 
     @Test
-    public void testMonacoFoot() {
-        Profile profile = TestProfiles.accessSpeedAndPriority("foot");
+    public void testRealFootCustomModelInMonaco() {
+        Profile profile = new Profile("foot").setCustomModel(getCustomModel("foot.json"));
         profile.getCustomModel().setDistanceInfluence(10_000d);
         GraphHopper hopper = createHopper(MONACO, profile);
         hopper.importOrLoad();
@@ -305,13 +305,12 @@ public class RoutingAlgorithmWithOSMTest {
         // prefer hiking route 'Teufelsloch Unterwaiz' and 'Rotmain-Wanderweg'
         queries.add(new Query(49.974972, 11.515657, 49.991022, 11.512299, 2365, 67));
         // prefer hiking route 'Markgrafenweg Bayreuth Kulmbach' but avoid tertiary highway from Pechgraben
-        queries.add(new Query(49.990967, 11.545258, 50.023182, 11.555386, 5636, 97));
+        queries.add(new Query(49.990967, 11.545258, 50.023182, 11.555386, 5690, 118));
         GraphHopper hopper = createHopper(BAYREUTH, new Profile("hike").setCustomModel(getCustomModel("hike.json")));
         hopper.setElevationProvider(new SRTMProvider(DIR));
         hopper.importOrLoad();
 
-        // TODO NOW what is wrong? expected 2365 vs actual 2334
-        // checkQueries(hopper, queries);
+        checkQueries(hopper, queries);
     }
 
     @Test
