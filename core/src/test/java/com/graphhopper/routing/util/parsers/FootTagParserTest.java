@@ -542,4 +542,37 @@ public class FootTagParserTest {
         // note that this test made more sense when we used encoders that defined a max speed.
         assertEquals(16, speedEnc.getNextStorableValue(15));
     }
+    @Test
+    public void temporalAccess() {
+        int edgeId = 0;
+        ArrayEdgeIntAccess access = new ArrayEdgeIntAccess(1);
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "primary");
+        way.setTag("access:conditional", "no @ (May - June)");
+        accessParser.handleWayTags(edgeId, access, way, null);
+        assertTrue(footAccessEnc.getBool(false, edgeId, access));
+
+        access = new ArrayEdgeIntAccess(1);
+        way = new ReaderWay(1);
+        way.setTag("highway", "primary");
+        way.setTag("foot:conditional", "no @ (May - June)");
+        accessParser.handleWayTags(edgeId, access, way, null);
+        assertTrue(footAccessEnc.getBool(false, edgeId, access));
+
+        access = new ArrayEdgeIntAccess(1);
+        way = new ReaderWay(1);
+        way.setTag("highway", "primary");
+        way.setTag("foot", "no");
+        way.setTag("access:conditional", "yes @ (May - June)");
+        accessParser.handleWayTags(edgeId, access, way, null);
+        assertFalse(footAccessEnc.getBool(false, edgeId, access));
+
+        access = new ArrayEdgeIntAccess(1);
+        way = new ReaderWay(1);
+        way.setTag("highway", "primary");
+        way.setTag("access", "no");
+        way.setTag("foot:conditional", "yes @ (May - June)");
+        accessParser.handleWayTags(edgeId, access, way, null);
+        assertTrue(footAccessEnc.getBool(false, edgeId, access));
+    }
 }

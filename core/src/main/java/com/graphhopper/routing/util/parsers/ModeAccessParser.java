@@ -9,6 +9,8 @@ import com.graphhopper.storage.IntsRef;
 
 import java.util.*;
 
+import static com.graphhopper.routing.util.parsers.OSMTemporalAccessParser.hasTemporalRestriction;
+
 public class ModeAccessParser implements TagParser {
 
     private final static Set<String> onewaysForward = new HashSet<>(Arrays.asList("yes", "true", "1"));
@@ -34,8 +36,9 @@ public class ModeAccessParser implements TagParser {
 
     @Override
     public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
-        String firstValue = way.getFirstPriorityTag(restrictionKeys);
-        if (restrictedValues.contains(firstValue))
+        int firstIndex = way.getFirstIndex(restrictionKeys);
+        String firstValue = firstIndex < 0 ? "" : way.getTag(restrictionKeys.get(firstIndex), "");
+        if (restrictedValues.contains(firstValue) && !hasTemporalRestriction(way, firstIndex, restrictionKeys))
             return;
 
         if (way.hasTag("gh:barrier_edge") && way.hasTag("node_tags")) {
@@ -51,7 +54,7 @@ public class ModeAccessParser implements TagParser {
             accessEnc.setBool(true, edgeId, edgeIntAccess, true);
         } else {
             boolean isRoundabout = roundaboutEnc.getBool(false, edgeId, edgeIntAccess);
-            boolean ignoreOneway = "no".equals(way.getFirstPriorityTag(ignoreOnewayKeys));
+            boolean ignoreOneway = "no".equals(way.getFirstValue(ignoreOnewayKeys));
             boolean isBwd = isBackwardOneway(way);
             if (!ignoreOneway && (isBwd || isRoundabout || isForwardOneway(way))) {
                 accessEnc.setBool(isBwd, edgeId, edgeIntAccess, true);
@@ -72,11 +75,11 @@ public class ModeAccessParser implements TagParser {
 
     protected boolean isBackwardOneway(ReaderWay way) {
         // vehicle:forward=no is like oneway=-1
-        return way.hasTag("oneway", "-1") || "no".equals(way.getFirstPriorityTag(vehicleForward));
+        return way.hasTag("oneway", "-1") || "no".equals(way.getFirstValue(vehicleForward));
     }
 
     protected boolean isForwardOneway(ReaderWay way) {
         // vehicle:backward=no is like oneway=yes
-        return way.hasTag("oneway", onewaysForward) || "no".equals(way.getFirstPriorityTag(vehicleBackward));
+        return way.hasTag("oneway", onewaysForward) || "no".equals(way.getFirstValue(vehicleBackward));
     }
 }

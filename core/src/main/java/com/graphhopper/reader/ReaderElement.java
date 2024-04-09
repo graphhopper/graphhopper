@@ -162,17 +162,30 @@ public abstract class ReaderElement {
     }
 
     /**
-     * Returns the first existing tag of the specified list where the order is important.
+     * Returns the first existing value of the specified list of keys where the order is important.
      *
      * @return an empty string if nothing found
      */
-    public String getFirstPriorityTag(List<String> restrictions) {
+    public String getFirstValue(List<String> restrictions) {
         for (String str : restrictions) {
             Object value = properties.get(str);
             if (value != null)
                 return (String) value;
         }
         return "";
+    }
+
+    /**
+     * @return -1 if not found
+     */
+    public int getFirstIndex(List<String> restrictions) {
+        for (int i = 0; i < restrictions.size(); i++) {
+            String str = restrictions.get(i);
+            Object value = properties.get(str);
+            if (value != null)
+                return i;
+        }
+        return -1;
     }
 
     public void removeTag(String name) {

@@ -28,16 +28,16 @@ import java.util.HashSet;
  * Stores temporary so-called conditional restrictions from access:conditional and other conditional
  * tags affecting cars. See OSMRoadAccessConditionalParser.
  */
-public enum CarRoadAccessConditional {
+public enum CarTemporalAccess {
 
     MISSING, YES, NO;
 
     public static final Collection<String> CONDITIONALS = new HashSet<>(Arrays.asList("access:conditional",
             "vehicle:conditional", "motor_vehicle:conditional", "motorcar:conditional"));
-    public static final String KEY = "car_road_access_conditional";
+    public static final String KEY = "car_temporal_access";
 
-    public static EnumEncodedValue<CarRoadAccessConditional> create() {
-        return new EnumEncodedValue<>(KEY, CarRoadAccessConditional.class);
+    public static EnumEncodedValue<CarTemporalAccess> create() {
+        return new EnumEncodedValue<>(KEY, CarTemporalAccess.class);
     }
 
     @Override
