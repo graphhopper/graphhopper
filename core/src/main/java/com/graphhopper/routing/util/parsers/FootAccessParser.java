@@ -33,7 +33,6 @@ import static com.graphhopper.routing.util.parsers.OSMTemporalAccessParser.hasTe
 public class FootAccessParser extends AbstractAccessParser implements TagParser {
 
     final Set<String> allowedHighwayTags = new HashSet<>();
-    final Set<String> allowedSacScale = new HashSet<>();
     protected HashSet<String> sidewalkValues = new HashSet<>(5);
     protected Map<RouteNetwork, Integer> routeMap = new HashMap<>();
 
@@ -85,10 +84,6 @@ public class FootAccessParser extends AbstractAccessParser implements TagParser 
         routeMap.put(NATIONAL, UNCHANGED.getValue());
         routeMap.put(REGIONAL, UNCHANGED.getValue());
         routeMap.put(LOCAL, UNCHANGED.getValue());
-
-        allowedSacScale.add("hiking");
-        allowedSacScale.add("mountain_hiking");
-        allowedSacScale.add("demanding_mountain_hiking");
     }
 
     /**
@@ -121,10 +116,8 @@ public class FootAccessParser extends AbstractAccessParser implements TagParser 
             return WayAccess.CAN_SKIP;
         }
 
-        // certain scales are too dangerous, see http://wiki.openstreetmap.org/wiki/Key:sac_scale
-        // same for via_ferrata, see #1326
-        if (way.getTag("sac_scale") != null && !way.hasTag("sac_scale", allowedSacScale)
-                || "via_ferrata".equals(highwayValue))
+        // via_ferrata is too dangerous, see #1326
+        if ("via_ferrata".equals(highwayValue))
             return WayAccess.CAN_SKIP;
 
         int firstIndex = way.getFirstIndex(restrictionKeys);
