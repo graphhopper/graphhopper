@@ -370,6 +370,7 @@ public class GraphHopperOSMTest {
 
         // now all ways are imported
         instance = new GraphHopper().
+                setEncodedValuesString("car_access, car_average_speed, foot_access, foot_average_speed").
                 setProfiles(
                         TestProfiles.accessAndSpeed(profile1, "car"),
                         TestProfiles.accessAndSpeed(profile2, "foot")
@@ -575,6 +576,7 @@ public class GraphHopperOSMTest {
         final String profile = "foot_profile";
         instance = new GraphHopper().
                 setStoreOnFlush(false).
+                setEncodedValuesString("foot_access, foot_priority, foot_average_speed").
                 setProfiles(TestProfiles.accessSpeedAndPriority(profile, "foot")).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm3);
@@ -604,6 +606,7 @@ public class GraphHopperOSMTest {
                 init(new GraphHopperConfig().
                         putObject("datareader.file", testOsm3).
                         putObject("prepare.min_network_size", 0).
+                        putObject("graph.encoded_values", "car_access, car_average_speed").
                         putObject("import.osm.ignored_highways", "").
                         setProfiles(List.of(TestProfiles.accessAndSpeed(profile, "car"))).
                         setCHProfiles(Collections.singletonList(new CHProfile(profile)))

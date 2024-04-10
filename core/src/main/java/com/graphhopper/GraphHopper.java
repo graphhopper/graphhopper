@@ -827,9 +827,17 @@ public class GraphHopper {
     protected void prepareImport() {
         Map<String, PMap> encodedValuesWithProps = parseEncodedValueString(encodedValuesString);
         NameValidator nameValidator = s -> importRegistry.createImportUnit(s) != null;
+        Set<String> missing = new HashSet<>();
         profilesByName.values().
                 forEach(profile -> CustomModelParser.findVariablesForEncodedValuesString(profile.getCustomModel(), nameValidator, s -> "").
-                        forEach(var -> encodedValuesWithProps.putIfAbsent(var, new PMap())));
+                        forEach(var -> {
+                            if (!encodedValuesWithProps.containsKey(var)) missing.add(var);
+                            encodedValuesWithProps.putIfAbsent(var, new PMap());
+                        }));
+        if (!missing.isEmpty())
+            throw new IllegalArgumentException("Encoded values missing: " + String.join(", ", missing) + ".\n" +
+                    "To avoid that certain encoded values are automatically removed when you change the custom model later, you need to set the encoded values manually:\n" +
+                    "graph.encoded_values: " + String.join(", ", encodedValuesWithProps.keySet()));
 
         // these are used in the snap prevention filter (avoid motorway, tunnel, etc.) so they have to be there
         encodedValuesWithProps.putIfAbsent(RoadClass.KEY, new PMap());

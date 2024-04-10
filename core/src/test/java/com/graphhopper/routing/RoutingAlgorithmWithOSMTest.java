@@ -118,7 +118,7 @@ public class RoutingAlgorithmWithOSMTest {
         queries.add(new Query(43.727592, 7.419333, 43.727712, 7.419333, 0, 1));
         GraphHopper hopper = createHopper(MONACO, new Profile("car").setCustomModel(
                 CustomModel.merge(getCustomModel("motorcycle.json"), getCustomModel("curvature.json"))));
-        hopper.setEncodedValuesString("curvature,track_type,surface");
+        hopper.setEncodedValuesString("curvature,track_type,surface,road_access, road_class, car_average_speed, car_access");
         hopper.setElevationProvider(new SRTMProvider(DIR));
         hopper.importOrLoad();
         checkQueries(hopper, queries);
@@ -707,7 +707,11 @@ public class RoutingAlgorithmWithOSMTest {
                 setStoreOnFlush(false).
                 setOSMFile(osmFile).
                 setProfiles(profiles).
-                setEncodedValuesString("average_slope,max_slope,hike_rating").
+                setEncodedValuesString("average_slope, max_slope, hike_rating, car_access, car_average_speed, " +
+                        "foot_access, foot_priority, foot_average_speed, " +
+                        "bike_access, bike_priority, bike_average_speed, foot_network, roundabout, " +
+                        "mtb_access, mtb_priority, mtb_average_speed, " +
+                        "racingbike_access, racingbike_priority, racingbike_average_speed").
                 setGraphHopperLocation(GH_LOCATION);
         hopper.getRouterConfig().setSimplifyResponse(false);
         hopper.setMinNetworkSize(0);
