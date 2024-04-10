@@ -56,9 +56,10 @@ public class RouteResourceLeipzigTest {
                 putObject("prepare.min_network_size", 200).
                 putObject("datareader.file", "../map-matching/files/leipzig_germany.osm.pbf").
                 putObject("import.osm.ignored_highways", "").
-                putObject("graph.location", DIR)
-                .setProfiles(List.of(TestProfiles.accessAndSpeed("my_car", "car")))
-                .setCHProfiles(Collections.singletonList(new CHProfile("my_car")));
+                putObject("graph.location", DIR).
+                putObject("graph.encoded_values", "car_access, car_average_speed").
+                setProfiles(List.of(TestProfiles.accessAndSpeed("my_car", "car"))).
+                setCHProfiles(Collections.singletonList(new CHProfile("my_car")));
         return config;
     }
 

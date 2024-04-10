@@ -54,7 +54,7 @@ public class RouteResourceCustomModelLMTest {
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("graph.location", DIR).
                 putObject("import.osm.ignored_highways", "").
-                putObject("graph.encoded_values", "surface").
+                putObject("graph.encoded_values", "surface, car_access, car_average_speed, foot_access, foot_priority, foot_average_speed").
                 setProfiles(Arrays.asList(
                         TestProfiles.accessAndSpeed("car_custom", "car"),
                         TestProfiles.accessSpeedAndPriority("foot_profile", "foot"),

@@ -59,6 +59,7 @@ public class MapMatching2Test {
         GraphHopper hopper = new GraphHopper();
         hopper.setOSMFile("../map-matching/files/map-issue13.osm.gz");
         hopper.setGraphHopperLocation(GH_LOCATION);
+        hopper.setEncodedValuesString("car_access, car_average_speed");
         hopper.setProfiles(TestProfiles.accessAndSpeed("my_profile", "car"));
         hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("my_profile"));
         hopper.importOrLoad();
@@ -84,6 +85,7 @@ public class MapMatching2Test {
         GraphHopper hopper = new GraphHopper();
         hopper.setOSMFile("../map-matching/files/issue-70.osm.gz");
         hopper.setGraphHopperLocation(GH_LOCATION);
+        hopper.setEncodedValuesString("car_access, car_average_speed");
         hopper.setProfiles(TestProfiles.accessAndSpeed("my_profile", "car"));
         hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("my_profile"));
         hopper.importOrLoad();
@@ -104,6 +106,7 @@ public class MapMatching2Test {
         GraphHopper hopper = new GraphHopper();
         hopper.setOSMFile("../map-matching/files/map-issue13.osm.gz");
         hopper.setGraphHopperLocation(GH_LOCATION);
+        hopper.setEncodedValuesString("car_access, car_average_speed");
         hopper.setProfiles(TestProfiles.accessAndSpeed("my_profile", "car"));
         hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("my_profile"));
         hopper.importOrLoad();
