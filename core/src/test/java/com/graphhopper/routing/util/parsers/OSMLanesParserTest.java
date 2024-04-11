@@ -25,7 +25,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class OSMLaneInfoParserTest {
+class OSMLanesParserTest {
     private final IntEncodedValue lanesEnc = Lanes.create();
     private OSMLanesParser parser;
     private IntsRef relFlags;

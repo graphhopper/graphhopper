@@ -566,8 +566,8 @@ public class InstructionListTest {
         assertEquals(2, wayList.size());
         assertEquals("continue onto 0-1", wayList.get(0).getTurnDescription(usTR));
         assertEquals("[]", wayList.get(0).getInstructionDetails().toString());
-        // TODO lanes in the middle is not shown as continue does currently not create a new instruction
-        //  ust forcing a new instruction will make problems for cases where a single junction has its lanes spread along multiple edges
+        // TODO using a lane in the middle should create a new "continue" instruction and turn lane info
+        //  but forcing a new instruction in these cases will make problems when a way of a junction has its lanes spread along multiple edges
         assertEquals("arrive at destination", wayList.get(1).getTurnDescription(usTR));
         assertEquals("[]", wayList.get(1).getInstructionDetails().toString());
 
@@ -674,8 +674,8 @@ public class InstructionListTest {
         assertEquals("[]", wayList.get(2).getInstructionDetails().toString());
     }
 
-    // TODO better lane guidance: do not mark the "left+continue" lane of "left+continue|continue|right" as active (even continue it is valid)
-    //  but the next turn is a right turn and very close and would require two lane changes
+    // TODO better lane guidance: do not mark the "left+continue" lane of "left+continue|continue|right" as active
+    //  when the next turn is a right turn and very close and would require two lane changes
     // TODO no matching lanes: "slight left" turn but lanes are none|none|slight_right => https://www.openstreetmap.org/way/215226484
     // TODO no arrow is on the road => lane gets "none" => no lane is valid for right turn
     //  http://localhost:3000/?point=52.515176%252C13.460514&point=52.51728%252C13.453813
