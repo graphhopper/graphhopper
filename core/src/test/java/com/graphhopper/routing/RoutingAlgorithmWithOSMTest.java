@@ -733,7 +733,7 @@ public class RoutingAlgorithmWithOSMTest {
                 // for edge-based routing we expect a slightly different algo name for CH
                 if (profile.hasTurnCosts())
                     expectedAlgo = expectedAlgo.replaceAll("\\|ch-routing", "|ch|edge_based|no_sod-routing");
-                assertTrue(res.getBest().getDebugInfo().contains(expectedAlgo),
+                assertTrue(res.getBest().getDebugInfo().toString().contains(expectedAlgo),
                         "Response does not contain expected algo string. Expected: '" + expectedAlgo +
                                 "', got: '" + res.getBest().getDebugInfo() + "'");
             }

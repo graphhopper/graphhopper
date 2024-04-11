@@ -32,7 +32,7 @@ public class GHResponse {
     private final List<Throwable> errors = new ArrayList<>(4);
     private PMap hintsMap = new PMap();
     private final List<ResponsePath> responsePaths = new ArrayList<>(5);
-    private String debugInfo = "";
+    private final StringBuilder debugInfo = new StringBuilder();
 
     public GHResponse() {
     }
@@ -70,20 +70,20 @@ public class GHResponse {
             throw new IllegalStateException("Debug information has to be none null");
 
         if (!this.debugInfo.isEmpty())
-            this.debugInfo += "; ";
+            this.debugInfo.append("; ");
 
-        this.debugInfo += debugInfo;
+        this.debugInfo.append(debugInfo);
     }
 
     public String getDebugInfo() {
-        String str = debugInfo;
+        StringBuilder str = new StringBuilder(debugInfo);
         for (ResponsePath p : responsePaths) {
             if (!str.isEmpty())
-                str += "; ";
+                str.append("; ");
 
-            str += p.getDebugInfo();
+            str.append(p.getDebugInfo());
         }
-        return str;
+        return str.toString();
     }
 
     /**
@@ -126,18 +126,18 @@ public class GHResponse {
 
     @Override
     public String toString() {
-        String str = "";
+        StringBuilder str = new StringBuilder();
         for (ResponsePath a : responsePaths) {
-            str += "; " + a.toString();
+            str.append("; ").append(a.toString());
         }
 
         if (responsePaths.isEmpty())
-            str = "no paths";
+            str.append("no paths");
 
         if (!errors.isEmpty())
-            str += ", main errors: " + errors.toString();
+            str.append(", main errors: ").append(errors);
 
-        return str;
+        return str.toString();
     }
 
     public void setHints(PMap hints) {

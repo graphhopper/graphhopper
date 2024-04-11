@@ -39,7 +39,7 @@ public class ResponsePath {
     private double descend;
     private double routeWeight;
     private long time;
-    private String debugInfo = "";
+    private final StringBuilder debugInfo = new StringBuilder();
     private InstructionList instructions;
     private PointList waypointList = PointList.EMPTY;
     private List<Integer> waypointIndices = new ArrayList<>();
@@ -71,13 +71,13 @@ public class ResponsePath {
             throw new IllegalStateException("Debug information has to be none null");
 
         if (!this.debugInfo.isEmpty())
-            this.debugInfo += ";";
+            this.debugInfo.append(";");
 
-        this.debugInfo += debugInfo;
+        this.debugInfo.append(debugInfo);
         return this;
     }
 
-    public String getDebugInfo() {
+    public StringBuilder getDebugInfo() {
         return debugInfo;
     }
 
