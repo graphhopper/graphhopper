@@ -834,10 +834,14 @@ public class GraphHopper {
                             if (!encodedValuesWithProps.containsKey(var)) missing.add(var);
                             encodedValuesWithProps.putIfAbsent(var, new PMap());
                         }));
-        if (!missing.isEmpty())
+        if (!missing.isEmpty()) {
+            String encodedValuesString = encodedValuesWithProps.entrySet().stream()
+                    .map(e -> e.getKey() + (e.getValue().isEmpty() ? "" : ("|" + e.getValue().toMap().entrySet().stream().map(p -> p.getKey() + "=" + p.getValue()).collect(Collectors.joining("|")))))
+                    .collect(Collectors.joining(", "));
             throw new IllegalArgumentException("Encoded values missing: " + String.join(", ", missing) + ".\n" +
                     "To avoid that certain encoded values are automatically removed when you change the custom model later, you need to set the encoded values manually:\n" +
-                    "graph.encoded_values: " + String.join(", ", encodedValuesWithProps.keySet()));
+                    "graph.encoded_values: " + encodedValuesString);
+        }
 
         // these are used in the snap prevention filter (avoid motorway, tunnel, etc.) so they have to be there
         encodedValuesWithProps.putIfAbsent(RoadClass.KEY, new PMap());
