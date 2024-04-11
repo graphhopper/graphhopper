@@ -827,7 +827,7 @@ public class GraphHopper {
     protected void prepareImport() {
         Map<String, PMap> encodedValuesWithProps = parseEncodedValueString(encodedValuesString);
         NameValidator nameValidator = s -> importRegistry.createImportUnit(s) != null;
-        Set<String> missing = new HashSet<>();
+        Set<String> missing = new LinkedHashSet<>();
         profilesByName.values().
                 forEach(profile -> CustomModelParser.findVariablesForEncodedValuesString(profile.getCustomModel(), nameValidator, s -> "").
                         forEach(var -> {
