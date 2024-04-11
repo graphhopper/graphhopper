@@ -104,7 +104,7 @@ public interface GraphHopperGtfsIT<T extends PtRouter> {
             Trips tripTransfers = graphHopperGtfs().getGtfsStorage().tripTransfers;
             int tripIdx = findTrip("STBA", LocalTime.of(7, 50), 2, ARRIVAL);
             Collection<Trips.TripAtStopTime> transferDestinations = tripTransfers.getTripTransfers(LocalDate.of(2007, 1, 1)).get(new Trips.TripAtStopTime(tripIdx, 2));
-            assertThat(transferDestinations).extracting(td -> print(td, tripTransfers, DEPARTURE)).contains("4 AB1 @ 1 BEATTY_AIRPORT 08:00");
+            assertThat(transferDestinations).extracting(td -> print(td, tripTransfers, DEPARTURE)).contains("4 AB1 @ 1 BEATTY_AIRPORT 28800");
         }
 
         private int findTrip(String tripId, LocalTime time, int stopSequence, Trips.TripAtStopTime.ArrivalDeparture arrivalDeparture) {
