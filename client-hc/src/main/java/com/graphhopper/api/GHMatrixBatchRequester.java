@@ -86,6 +86,7 @@ public class GHMatrixBatchRequester extends GHMatrixAbstractRequester {
         try {
             String postUrl = buildURLNoHints("/calculate", ghRequest);
             JsonResult jsonResult = postJson(postUrl, requestJson);
+            matrixResponse.setHeaders(jsonResult.headers());
             boolean debug = ghRequest.getHints().getBool("debug", false);
             if (debug) {
                 logger.info("POST URL:" + postUrl + ", request:" + requestJson + ", response: " + jsonResult);
@@ -166,7 +167,7 @@ public class GHMatrixBatchRequester extends GHMatrixAbstractRequester {
         try {
             Response rsp = getDownloader().newCall(okRequest).execute();
             body = rsp.body();
-            return new JsonResult(body.string(), rsp.code());
+            return new JsonResult(body.string(), rsp.code(), rsp.headers().toMultimap());
         } finally {
             Helper.close(body);
         }

@@ -32,10 +32,7 @@ import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.shapes.GHPoint;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.ResponseBody;
+import okhttp3.*;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -194,7 +191,8 @@ public class GraphHopperWeb {
             ghRequest.getHints().remove("turn_description"); // do not include in request
 
             Request okRequest = postRequest ? createPostRequest(ghRequest) : createGetRequest(ghRequest);
-            rspBody = getClientForRequest(ghRequest).newCall(okRequest).execute().body();
+            Response rsp = getClientForRequest(ghRequest).newCall(okRequest).execute();
+            rspBody = rsp.body();
             JsonNode json = objectMapper.reader().readTree(rspBody.byteStream());
 
             GHResponse res = new GHResponse();
@@ -208,10 +206,11 @@ public class GraphHopperWeb {
                 res.add(altRsp);
             }
 
+            for (Map.Entry<String, List<String>> entry : rsp.headers().toMultimap().entrySet()) {
+                res.getHints().putObject(entry.getKey(), entry.getValue());
+            }
             JsonNode b = json.get("hints");
-            PMap hints = new PMap();
-            b.fields().forEachRemaining(f -> hints.putObject(f.getKey(), Helper.toObject(f.getValue().asText())));
-            res.setHints(hints);
+            b.fields().forEachRemaining(f -> res.getHints().putObject(f.getKey(), Helper.toObject(f.getValue().asText())));
 
             return res;
 
