@@ -162,12 +162,26 @@ public abstract class ReaderElement {
     }
 
     /**
+     * Returns the first matching value of the specified list of keys where the order is important.
+     *
+     * @return an empty string if nothing found or the value does not match to one of the list of expected values 
+     */
+    public String getFirstMatchingValue(List<String> searchedTags, List<String> searchedValues) {
+        for (String str : searchedTags) {
+            Object value = properties.get(str);
+            if ((value != null) && (searchedValues.contains(value)))
+                return (String) value;
+        }
+        return "";
+    }
+
+    /**
      * Returns the first existing value of the specified list of keys where the order is important.
      *
      * @return an empty string if nothing found
      */
-    public String getFirstValue(List<String> restrictions) {
-        for (String str : restrictions) {
+    public String getFirstValue(List<String> searchedTags) {
+        for (String str : searchedTags) {
             Object value = properties.get(str);
             if (value != null)
                 return (String) value;
@@ -178,9 +192,9 @@ public abstract class ReaderElement {
     /**
      * @return -1 if not found
      */
-    public int getFirstIndex(List<String> restrictions) {
-        for (int i = 0; i < restrictions.size(); i++) {
-            String str = restrictions.get(i);
+    public int getFirstIndex(List<String> searchedTags) {
+        for (int i = 0; i < searchedTags.size(); i++) {
+            String str = searchedTags.get(i);
             Object value = properties.get(str);
             if (value != null)
                 return i;

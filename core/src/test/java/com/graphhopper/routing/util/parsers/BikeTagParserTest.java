@@ -335,6 +335,8 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("highway", "primary");
         way.setTag("cycleway:right", "lane");
         assertPriority(SLIGHT_PREFER, way);
+        way.setTag("cycleway:left", "no");
+        assertPriority(SLIGHT_PREFER, way);
 
         way.clearTags();
         way.setTag("highway", "primary");
