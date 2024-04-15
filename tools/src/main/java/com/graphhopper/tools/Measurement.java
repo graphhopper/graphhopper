@@ -295,7 +295,7 @@ public class Measurement {
     private GraphHopperConfig createConfigFromArgs(PMap args) {
         GraphHopperConfig ghConfig = new GraphHopperConfig(args);
         vehicle = args.getString("measurement.vehicle", "car");
-        ghConfig.putObject("graph.encoded_values", VehicleAccess.key(vehicle) + "," + VehicleSpeed.key(vehicle));
+        ghConfig.putObject("graph.encoded_values", ghConfig.getString("graph.encoded_values", "") + ", " + VehicleAccess.key(vehicle) + "," + VehicleSpeed.key(vehicle));
         boolean turnCosts = args.getBool("measurement.turn_costs", false);
         int uTurnCosts = args.getInt("measurement.u_turn_costs", 40);
         String weighting = args.getString("measurement.weighting", "custom");
