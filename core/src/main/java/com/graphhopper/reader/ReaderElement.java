@@ -166,8 +166,8 @@ public abstract class ReaderElement {
      *
      * @return an empty string if nothing found
      */
-    public String getFirstValue(List<String> restrictions) {
-        for (String str : restrictions) {
+    public String getFirstValue(List<String> searchedTags) {
+        for (String str : searchedTags) {
             Object value = properties.get(str);
             if (value != null)
                 return (String) value;
@@ -178,9 +178,9 @@ public abstract class ReaderElement {
     /**
      * @return -1 if not found
      */
-    public int getFirstIndex(List<String> restrictions) {
-        for (int i = 0; i < restrictions.size(); i++) {
-            String str = restrictions.get(i);
+    public int getFirstIndex(List<String> searchedTags) {
+        for (int i = 0; i < searchedTags.size(); i++) {
+            String str = searchedTags.get(i);
             Object value = properties.get(str);
             if (value != null)
                 return i;
