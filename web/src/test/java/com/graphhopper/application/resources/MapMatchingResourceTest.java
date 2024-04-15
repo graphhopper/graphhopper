@@ -57,6 +57,7 @@ public class MapMatchingResourceTest {
                 putObject("datareader.file", "../map-matching/files/leipzig_germany.osm.pbf").
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR).
+                putObject("graph.encoded_values", "car_access, car_average_speed, bike_access, bike_priority, bike_average_speed").
                 setProfiles(Arrays.asList(
                         TestProfiles.accessAndSpeed("fast_car", "car"),
                         TestProfiles.accessSpeedAndPriority("fast_bike", "bike")));

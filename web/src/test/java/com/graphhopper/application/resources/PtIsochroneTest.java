@@ -55,10 +55,11 @@ public class PtIsochroneTest {
 
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
-        config.getGraphHopperConfiguration()
-                .putObject("graph.location", GRAPH_LOC)
-                .putObject("gtfs.file", "../reader-gtfs/files/sample-feed")
-                .putObject("import.osm.ignored_highways", "").
+        config.getGraphHopperConfiguration().
+                putObject("graph.location", GRAPH_LOC).
+                putObject("gtfs.file", "../reader-gtfs/files/sample-feed").
+                putObject("import.osm.ignored_highways", "").
+                putObject("graph.encoded_values", "foot_access, foot_priority, foot_average_speed").
                 setProfiles(List.of(TestProfiles.accessSpeedAndPriority("foot")));
         Helper.removeDir(new File(GRAPH_LOC));
         return config;
