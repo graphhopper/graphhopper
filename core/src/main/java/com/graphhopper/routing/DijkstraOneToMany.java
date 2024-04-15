@@ -67,6 +67,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
 
     @Override
     public Path calcPath(int from, int to) {
+        setupFinishTime();
         fromNode = from;
         endNode = findEndNode(from, to);
         if (endNode < 0 || isWeightLimitExceeded()) {
