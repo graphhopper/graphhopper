@@ -183,15 +183,12 @@ public abstract class BikeCommonPriorityParser implements TagParser {
                 weightToPrioMap.put(50d, worse == EXCLUDE ? REACH_DESTINATION : worse);
             }
         }
-        final List<String> searchedTags = Arrays.asList("cycleway", "cycleway:left", "cycleway:right", "cycleway:both");
-        final List<String> slightPreferredTags = Arrays.asList("lane", "opposite_track", "shared_lane", "share_busway", "shoulder");
-        final List<String> preferredTags = Arrays.asList("track");
-        final List<String> searchedValues = Stream.concat(slightPreferredTags.stream(), preferredTags.stream()).toList();
-        String cycleway = way.getFirstMatchingValue(searchedTags , searchedValues);
-        if (slightPreferredTags.contains(cycleway)) {
-            weightToPrioMap.put(100d, SLIGHT_PREFER);
-        } else if ("track".equals(cycleway)) {
+
+        List<String> cyclewayValues = Stream.of("cycleway", "cycleway:left", "cycleway:both", "cycleway:right").map(key -> way.getTag(key, "")).toList();
+        if (cyclewayValues.contains("track")) {
             weightToPrioMap.put(100d, PREFER);
+        } else if (Stream.of("lane", "opposite_track", "shared_lane", "share_busway", "shoulder").anyMatch(cyclewayValues::contains)) {
+            weightToPrioMap.put(100d, SLIGHT_PREFER);
         }
 
         if (way.hasTag("bicycle", "use_sidepath")) {

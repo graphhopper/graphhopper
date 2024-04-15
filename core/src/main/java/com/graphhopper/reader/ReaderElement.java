@@ -162,20 +162,6 @@ public abstract class ReaderElement {
     }
 
     /**
-     * Returns the first matching value of the specified list of keys where the order is important.
-     *
-     * @return an empty string if nothing found or the value does not match to one of the list of expected values 
-     */
-    public String getFirstMatchingValue(List<String> searchedTags, List<String> searchedValues) {
-        for (String str : searchedTags) {
-            Object value = properties.get(str);
-            if ((value != null) && (searchedValues.contains(value)))
-                return (String) value;
-        }
-        return "";
-    }
-
-    /**
      * Returns the first existing value of the specified list of keys where the order is important.
      *
      * @return an empty string if nothing found
