@@ -126,3 +126,11 @@ new default and show the conditional restriction value via the new path details
 `access:conditional`, `vehicle:conditional` etc.
 See how we utilized this for [GraphHopper Maps](https://graphhopper.com/maps/?point=50.909136%2C14.213924&point=50.90918%2C14.213549&profile=foot)
 with a separate route hint (icon below the route distance).
+
+# max_slope
+
+Is now a signed value. To get the previous behavious use:
+
+```
+Math.abs(max_slope)
+```

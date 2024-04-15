@@ -1,5 +1,6 @@
 ### 9.0 [not yet released]
 
+- max_slope is now a signed decimal, see #2955
 - move sac_scale handling out of foot_access parser and made foot safer via lowering to sac_scale<2, same for hike sac_scale<5
 - removed shortest+fastest weightings, #2938
 - u_turn_costs information is no longer stored in profile. Use the TurnCostsConfig instead
