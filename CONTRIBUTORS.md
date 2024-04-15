@@ -43,12 +43,12 @@ Here is an overview:
  * Janekdererste, GUI for public transit
  * jansoe, many improvements regarding A* algorithm, forcing direction, roundabouts etc
  * jansonhanson, general host config
+ * jessLryan, max elevation can now be negative
  * joe-akeem, improvements like #2158
  * JohannesPelzer, improved GPX information and various other things
  * karussell, one of the core developers
  * khuebner, initial turn costs support
  * kodonnell, adding support for CH and other algorithms (#60) and penalizing inner-link U-turns (#88)
- * jessLryan, max elevation can now be negative
  * legraina, improved docker for dockerhub
  * lmar, improved instructions
  * lukasalexanderweber, helped to implement via-way restrictions #2689 and fixes like #2652

@@ -108,7 +108,7 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
                     }
                 }
             }
-            invalidMessage = mi.methodName + " is an illegal method in a conditional expression " + allowedMethods.toString();
+            invalidMessage = mi.methodName + " is an illegal method in a conditional expression";
             return false;
         } else if (rv instanceof Java.ParenthesizedExpression) {
             return ((Java.ParenthesizedExpression) rv).value.accept(this);
