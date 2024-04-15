@@ -87,11 +87,12 @@ public class RouteResourceTest {
                 putObject("graph.urban_density.threads", 1). // for max_speed_calculator
                 putObject("graph.urban_density.city_radius", 0).
                 putObject("import.osm.ignored_highways", "").
-                putObject("graph.location", DIR)
+                putObject("graph.location", DIR).
                 // adding this so the corresponding check is not just skipped...
-                .putObject(MAX_NON_CH_POINT_DISTANCE, 10e6)
-                .setProfiles(Collections.singletonList(TestProfiles.accessAndSpeed("my_car", "car")))
-                .setCHProfiles(Collections.singletonList(new CHProfile("my_car")));
+                putObject(MAX_NON_CH_POINT_DISTANCE, 10e6).
+                putObject("graph.encoded_values", "road_class, surface, road_environment, max_speed, country, car_access, car_average_speed").
+                setProfiles(Collections.singletonList(TestProfiles.accessAndSpeed("my_car", "car"))).
+                setCHProfiles(Collections.singletonList(new CHProfile("my_car")));
         return config;
     }
 
@@ -109,6 +110,7 @@ public class RouteResourceTest {
         JsonNode json = response.readEntity(JsonNode.class);
         JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
+        assertEquals("GraphHopper", infoJson.at("/copyrights/0").asText());
         JsonNode path = json.get("paths").get(0);
         double distance = path.get("distance").asDouble();
         assertTrue(distance > 9000, "distance wasn't correct:" + distance);

@@ -44,6 +44,7 @@ web.way_contains_private=διαδρομή με ιδιωτικούς δρόμου
 web.way_contains_toll=διαδρομή με διόδια
 web.way_crosses_border=διαδρομή διασχίζει σύνορα χώρας
 web.way_contains=διαδρομή περιλαμβάνει %1$s
+web.way_contains_restrictions=
 web.tracks=μη ασφαλτοστρωμένοι χωματόδρομοι
 web.steps=σκαλοπάτια
 web.footways=μονοπάτια

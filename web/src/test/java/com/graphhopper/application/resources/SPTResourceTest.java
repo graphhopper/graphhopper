@@ -52,6 +52,7 @@ public class SPTResourceTest {
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR).
+                putObject("graph.encoded_values", "car_access, car_average_speed").
                 setProfiles(List.of(
                         TestProfiles.accessAndSpeed("car_without_turncosts", "car"),
                         TestProfiles.accessAndSpeed("car_with_turncosts", "car").setTurnCostsConfig(TurnCostsConfig.car())

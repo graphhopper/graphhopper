@@ -44,6 +44,7 @@ web.way_contains_private=Trasa przez prywatne drogi
 web.way_contains_toll=Trasa jest płatna
 web.way_crosses_border=Trasa przebiega przez granicę państwową
 web.way_contains=Trasa przez %1$s
+web.way_contains_restrictions=
 web.tracks=nieutwardzone drogi gruntowe
 web.steps=schody
 web.footways=chodniki

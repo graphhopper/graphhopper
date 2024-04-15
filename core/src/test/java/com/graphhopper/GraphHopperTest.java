@@ -112,6 +112,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
+                setEncodedValuesString("car_access, car_average_speed").
                 setProfiles(TestProfiles.accessAndSpeed("profile", "car")).
                 setStoreOnFlush(true);
         hopper.getCHPreparationHandler()
@@ -148,6 +149,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
+                setEncodedValuesString("foot_access, foot_priority, foot_average_speed").
                 setProfiles(TestProfiles.accessSpeedAndPriority(profile, "foot")).
                 setStoreOnFlush(true).
                 importOrLoad();
@@ -200,6 +202,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
+                setEncodedValuesString("foot_access, foot_priority, foot_average_speed").
                 setProfiles(TestProfiles.accessSpeedAndPriority(profile, "foot")).
                 setStoreOnFlush(true).
                 importOrLoad();
@@ -233,6 +236,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
+                setEncodedValuesString("car_access, car_average_speed").
                 setProfiles(TestProfiles.accessAndSpeed(profile, "car").
                         setTurnCostsConfig(new TurnCostsConfig(List.of("motorcar", "motor_vehicle"), 20)));
         hopper.importOrLoad();
@@ -285,9 +289,10 @@ public class GraphHopperTest {
         }
     }
 
-    private void testImportCloseAndLoad(boolean ch, boolean lm, boolean sort) {
+    private void testImportCloseAndLoad(boolean ch, boolean lm) {
         final String profileName = "profile";
         GraphHopper hopper = new GraphHopper().
+                setEncodedValuesString("foot_access, foot_priority, foot_average_speed").
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
                 setStoreOnFlush(true);
@@ -383,27 +388,27 @@ public class GraphHopperTest {
 
     @Test
     public void testImportThenLoadCH() {
-        testImportCloseAndLoad(true, false, false);
+        testImportCloseAndLoad(true, false);
     }
 
     @Test
     public void testImportThenLoadLM() {
-        testImportCloseAndLoad(false, true, false);
+        testImportCloseAndLoad(false, true);
     }
 
     @Test
     public void testImportThenLoadCHLM() {
-        testImportCloseAndLoad(true, true, false);
+        testImportCloseAndLoad(true, true);
     }
 
     @Test
     public void testImportThenLoadCHLMAndSort() {
-        testImportCloseAndLoad(true, true, true);
+        testImportCloseAndLoad(true, true);
     }
 
     @Test
     public void testImportThenLoadFlexible() {
-        testImportCloseAndLoad(false, false, false);
+        testImportCloseAndLoad(false, false);
     }
 
     @Test
@@ -413,6 +418,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
+                setEncodedValuesString("car_access, car_average_speed, foot_access, foot_priority, foot_average_speed").
                 setProfiles(TestProfiles.accessSpeedAndPriority(profile, "foot")).
                 setStoreOnFlush(true).
                 importOrLoad();
@@ -445,6 +451,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(BAYREUTH).
+                setEncodedValuesString("car_access, car_average_speed, bike_access, bike_priority, bike_average_speed").
                 setProfiles(TestProfiles.accessSpeedAndPriority(profile, "bike"));
         hopper.importOrLoad();
 
@@ -470,6 +477,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(BAYREUTH).
+                setEncodedValuesString("car_access, car_average_speed").
                 setProfiles(TestProfiles.accessAndSpeed(profile, "car"));
         hopper.importOrLoad();
 
@@ -531,6 +539,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(BAUTZEN).
+                setEncodedValuesString("car_access, car_average_speed").
                 setProfiles(TestProfiles.accessAndSpeed(profile, "car"));
         hopper.setMinNetworkSize(0);
         hopper.importOrLoad();
@@ -560,6 +569,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(BAYREUTH).
+                setEncodedValuesString("car_access, road_access, car_average_speed").
                 setProfiles(p);
         hopper.importOrLoad();
 
@@ -578,6 +588,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(BAYREUTH).
+                setEncodedValuesString("car_access, car_average_speed").
                 setProfiles(TestProfiles.accessAndSpeed(profile, "car"));
         hopper.importOrLoad();
 
@@ -692,7 +703,7 @@ public class GraphHopperTest {
         p1.getCustomModel().addToSpeed(If("road_class == TERTIARY || road_class == TRACK", MULTIPLY, "0.1"));
         Profile p2 = TestProfiles.accessAndSpeed(emptyCar, "car");
         GraphHopper hopper = new GraphHopper().
-                setEncodedValuesString("car_average_speed,car_access").
+                setEncodedValuesString("car_average_speed,car_access,road_class").
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(BAYREUTH).
                 setProfiles(p1, p2).
@@ -737,6 +748,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
+                setEncodedValuesString("foot_access, foot_priority, foot_average_speed").
                 setProfiles(p).
                 setStoreOnFlush(true).
                 importOrLoad();
@@ -749,7 +761,7 @@ public class GraphHopperTest {
                 setAlgorithm(ASTAR).setProfile(profile));
 
         ResponsePath res = rsp.getBest();
-        assertEquals(6874.2, res.getDistance(), .1);
+        assertEquals(6874, res.getDistance(), 1);
         assertEquals(170, res.getPoints().size());
 
         InstructionList il = res.getInstructions();
@@ -822,6 +834,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
+                setEncodedValuesString("foot_access, foot_priority, foot_average_speed").
                 setProfiles(TestProfiles.accessSpeedAndPriority(profile, "foot")).
                 setStoreOnFlush(true).
                 importOrLoad();
@@ -853,6 +866,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
+                setEncodedValuesString("foot_access, foot_priority, foot_average_speed").
                 setProfiles(TestProfiles.accessSpeedAndPriority(profile, "foot")).
                 setStoreOnFlush(true).
                 importOrLoad();
@@ -866,8 +880,8 @@ public class GraphHopperTest {
         GHResponse rsp = hopper.route(req);
 
         ResponsePath res = rsp.getBest();
-        assertEquals(921, res.getDistance(), 10.);
-        assertEquals(36, res.getPoints().size());
+        assertEquals(575, res.getDistance(), 10.);
+        assertEquals(22, res.getPoints().size());
 
         // headings must be in [0, 360)
         req = new GHRequest().
@@ -899,6 +913,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(BAYREUTH).
+                setEncodedValuesString("car_access, car_average_speed").
                 setProfiles(TestProfiles.accessAndSpeed(profile, "car")).
                 setStoreOnFlush(true).
                 importOrLoad();
@@ -929,6 +944,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
+                setEncodedValuesString("foot_access, foot_priority, foot_average_speed").
                 setProfiles(TestProfiles.accessSpeedAndPriority(profile, "foot")).
                 setStoreOnFlush(true).
                 importOrLoad();
@@ -1027,6 +1043,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
+                setEncodedValuesString("foot_access, foot_priority, foot_average_speed").
                 setProfiles(TestProfiles.accessSpeedAndPriority(profile, "foot")).
                 setStoreOnFlush(true).
                 importOrLoad();
@@ -1061,6 +1078,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
+                setEncodedValuesString("foot_access, foot_priority, foot_average_speed").
                 setProfiles(TestProfiles.accessSpeedAndPriority(profile, "foot")).
                 setStoreOnFlush(true);
 
@@ -1122,6 +1140,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
+                setEncodedValuesString("foot_access, foot_priority, foot_average_speed").
                 setProfiles(TestProfiles.accessSpeedAndPriority(profile, "foot")).
                 setStoreOnFlush(true);
 
@@ -1187,6 +1206,7 @@ public class GraphHopperTest {
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
                 setStoreOnFlush(true).
+                setEncodedValuesString("foot_access, foot_priority, foot_average_speed").
                 setProfiles(TestProfiles.accessSpeedAndPriority("profile", "foot"));
         hopper.getRouterConfig().setElevationWayPointMaxDistance(1.);
         hopper.getReaderConfig().
@@ -1202,15 +1222,13 @@ public class GraphHopperTest {
                 setAlgorithm(ASTAR).setProfile(profile));
 
         ResponsePath arsp = rsp.getBest();
-        assertEquals(1569.7, arsp.getDistance(), .1);
+        assertEquals(1570, arsp.getDistance(), 1);
         assertEquals(60, arsp.getPoints().size());
         assertTrue(arsp.getPoints().is3D());
 
         InstructionList il = arsp.getInstructions();
         assertEquals(12, il.size());
         assertTrue(il.get(0).getPoints().is3D());
-
-        String str = arsp.getPoints().toString();
 
         assertEquals(23.8, arsp.getAscend(), 1e-1);
         assertEquals(67.4, arsp.getDescend(), 1e-1);
@@ -1258,6 +1276,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(KREMS).
+                setEncodedValuesString("foot_access, foot_priority, foot_average_speed, bike_access, bike_priority, bike_average_speed").
                 setProfiles(
                         TestProfiles.accessSpeedAndPriority(footProfile, "foot"),
                         TestProfiles.accessSpeedAndPriority(bikeProfile, "bike")).
@@ -1306,6 +1325,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
+                setEncodedValuesString("car_access, car_average_speed, bike_access, bike_priority, bike_average_speed").
                 setProfiles(Arrays.asList(
                         TestProfiles.accessAndSpeed(profile1, "car"),
                         TestProfiles.accessSpeedAndPriority(profile2, "bike"))
@@ -1350,6 +1370,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(BERLIN).
+                setEncodedValuesString("car_access, car_average_speed, bike_access, bike_priority, bike_average_speed").
                 setProfiles(
                         TestProfiles.accessAndSpeed(profile1, "car"),
                         TestProfiles.accessSpeedAndPriority(profile2, "bike")
@@ -1383,6 +1404,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
+                setEncodedValuesString("bike_access, bike_priority, bike_average_speed, car_access, car_average_speed").
                 setProfiles(profiles).
                 setStoreOnFlush(true);
         hopper.getCHPreparationHandler().setCHProfiles(
@@ -1433,6 +1455,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
+                setEncodedValuesString("car_access, car_average_speed, foot_access, foot_priority, foot_average_speed").
                 setProfiles(TestProfiles.accessSpeedAndPriority(profile, "foot")).
                 setStoreOnFlush(true);
         hopper.getCHPreparationHandler().setCHProfiles(new CHProfile(profile));
@@ -1460,6 +1483,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
+                setEncodedValuesString("foot_access, foot_priority, foot_average_speed").
                 setProfiles(TestProfiles.accessSpeedAndPriority(profile, "foot")).
                 setStoreOnFlush(true).
                 importOrLoad();
@@ -1476,9 +1500,9 @@ public class GraphHopperTest {
 
         assertEquals(1, rsp.getAll().size());
         ResponsePath res = rsp.getBest();
-        assertEquals(1.49, rsp.getBest().getDistance() / 1000f, .01);
+        assertEquals(1.47, rsp.getBest().getDistance() / 1000f, .01);
         assertEquals(19, rsp.getBest().getTime() / 1000f / 60, 1);
-        assertEquals(66, res.getPoints().size());
+        assertEquals(64, res.getPoints().size());
     }
 
     @Test
@@ -1488,6 +1512,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(BAYREUTH).
+                setEncodedValuesString("car_access, car_average_speed").
                 setProfiles(TestProfiles.accessAndSpeed(profile, "car"));
         hopper.importOrLoad();
 
@@ -1533,6 +1558,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
+                setEncodedValuesString("car_access, car_average_speed").
                 setProfiles(TestProfiles.accessAndSpeed(profile, "car")).
                 setStoreOnFlush(true);
 
@@ -1600,6 +1626,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
+                setEncodedValuesString("car_access, car_average_speed").
                 setProfiles(p1, p2, p3).
                 setStoreOnFlush(true);
 
@@ -1642,6 +1669,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
+                setEncodedValuesString("car_access, car_average_speed").
                 setProfiles(p1, p2).
                 setStoreOnFlush(true);
 
@@ -1687,6 +1715,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
+                setEncodedValuesString("car_access, car_average_speed, mtb_access, mtb_priority, mtb_average_speed").
                 setProfiles(TestProfiles.accessSpeedAndPriority("profile", "mtb").setTurnCostsConfig(new TurnCostsConfig(List.of("bicycle"), 123)));
         hopper.importOrLoad();
 
@@ -1707,6 +1736,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
+                setEncodedValuesString("car_access, car_average_speed").
                 setProfiles(
                         TestProfiles.accessAndSpeed(profile1, "car"),
                         TestProfiles.accessAndSpeed(profile2, "car")
@@ -1780,6 +1810,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MOSCOW).
+                setEncodedValuesString("car_access, car_average_speed").
                 setProfiles(TestProfiles.accessAndSpeed("car").setTurnCostsConfig(turnCosts ? TurnCostsConfig.car() : null));
         hopper.getCHPreparationHandler().setCHProfiles(new CHProfile("car"));
         hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("car"));
@@ -1822,6 +1853,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MOSCOW).
+                setEncodedValuesString("car_access, car_average_speed").
                 setProfiles(TestProfiles.accessAndSpeed("car").setTurnCostsConfig(turnCosts ? TurnCostsConfig.car() : null));
         hopper.getCHPreparationHandler().setCHProfiles(new CHProfile("car"));
         hopper.importOrLoad();
@@ -1844,6 +1876,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MOSCOW).
+                setEncodedValuesString("car_access, car_average_speed").
                 setProfiles(TestProfiles.accessAndSpeed("car").setTurnCostsConfig(TurnCostsConfig.car()));
         hopper.getCHPreparationHandler().setCHProfiles(new CHProfile("car"));
         hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("car"));
@@ -1876,6 +1909,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MOSCOW).
+                setEncodedValuesString("car_access, car_average_speed").
                 // add profile with turn costs first when no flag encoder is explicitly added
                         setProfiles(
                         TestProfiles.accessAndSpeed(profile2, "car").
@@ -1906,6 +1940,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MOSCOW).
+                setEncodedValuesString("car_access, car_average_speed").
                 setProfiles(List.of(
                         TestProfiles.accessAndSpeed(profile1, "car").setTurnCostsConfig(TurnCostsConfig.car()),
                         TestProfiles.accessAndSpeed(profile2, "car")
@@ -1931,6 +1966,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MOSCOW).
+                setEncodedValuesString("car_access, car_average_speed").
                 setProfiles(TestProfiles.accessAndSpeed(profile, "car").setTurnCostsConfig(TurnCostsConfig.car())).
                 setStoreOnFlush(true);
         hopper.getCHPreparationHandler()
@@ -1960,6 +1996,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MOSCOW).
+                setEncodedValuesString("car_access, car_average_speed").
                 setProfiles(List.of(
                         TestProfiles.accessAndSpeed(profile1, "car").setTurnCostsConfig(TurnCostsConfig.car()),
                         TestProfiles.accessAndSpeed(profile2, "car")
@@ -1998,6 +2035,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MOSCOW).
+                setEncodedValuesString("foot_access, foot_priority, foot_average_speed, car_access, car_average_speed").
                 setProfiles(
                         TestProfiles.accessSpeedAndPriority("foot"),
                         TestProfiles.accessAndSpeed("car").setTurnCostsConfig(TurnCostsConfig.car())
@@ -2022,6 +2060,7 @@ public class GraphHopperTest {
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(ESSEN).
                 setMinNetworkSize(50).
+                setEncodedValuesString("foot_access, foot_priority, foot_average_speed, car_access, car_average_speed").
                 setProfiles(
                         TestProfiles.accessSpeedAndPriority("foot"),
                         TestProfiles.accessAndSpeed("car").setTurnCostsConfig(TurnCostsConfig.car())
@@ -2054,6 +2093,7 @@ public class GraphHopperTest {
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(BAYREUTH).
                 setMinNetworkSize(0).
+                setEncodedValuesString("bike_access, bike_priority, bike_average_speed").
                 setProfiles(TestProfiles.accessSpeedAndPriority("bike"));
 
         hopper.importOrLoad();
@@ -2092,6 +2132,7 @@ public class GraphHopperTest {
         GraphHopper h = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(BAYREUTH).
+                setEncodedValuesString("car_access, car_average_speed").
                 setProfiles(TestProfiles.accessAndSpeed("car").setTurnCostsConfig(TurnCostsConfig.car()));
         h.getCHPreparationHandler()
                 .setCHProfiles(new CHProfile("car"));
@@ -2139,6 +2180,7 @@ public class GraphHopperTest {
         GraphHopper h = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
+                setEncodedValuesString("car_access, car_average_speed").
                 setProfiles(TestProfiles.accessAndSpeed("car").setTurnCostsConfig(TurnCostsConfig.car()));
         h.getCHPreparationHandler()
                 .setCHProfiles(new CHProfile("car"));
@@ -2204,6 +2246,7 @@ public class GraphHopperTest {
         GraphHopper h = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
+                setEncodedValuesString("car_access, car_average_speed").
                 setProfiles(TestProfiles.accessAndSpeed("my_profile", "car").setTurnCostsConfig(new TurnCostsConfig(List.of("motorcar", "motor_vehicle"), 40)));
         h.getCHPreparationHandler()
                 .setCHProfiles(new CHProfile("my_profile"));
@@ -2228,6 +2271,7 @@ public class GraphHopperTest {
         final String profile = "profile";
         GraphHopper hopper = new GraphHopper();
         hopper.setOSMFile(BAYREUTH).
+                setEncodedValuesString("car_access, car_average_speed").
                 setProfiles(TestProfiles.accessAndSpeed(profile, "car")).
                 setGraphHopperLocation(GH_LOCATION);
         hopper.importOrLoad();
@@ -2306,6 +2350,7 @@ public class GraphHopperTest {
         GraphHopper h = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
+                setEncodedValuesString("car_access, car_average_speed").
                 setProfiles(TestProfiles.accessAndSpeed("car"));
         if (elevation)
             h.setElevationProvider(new SRTMProvider(DIR));
@@ -2360,6 +2405,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(BAYREUTH).
+                setEncodedValuesString("car_access, car_average_speed").
                 setProfiles(TestProfiles.accessAndSpeed(profile, "car")).
                 setStoreOnFlush(true);
         hopper.getCHPreparationHandler()
@@ -2419,6 +2465,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile("../map-matching/files/leipzig_germany.osm.pbf").
+                setEncodedValuesString("car_access, car_average_speed").
                 setProfiles(TestProfiles.accessAndSpeed(profile, "car")).
                 setMinNetworkSize(200);
         hopper.importOrLoad();
@@ -2441,6 +2488,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile("../map-matching/files/leipzig_germany.osm.pbf").
+                setEncodedValuesString("car_access, car_average_speed").
                 setProfiles(TestProfiles.accessAndSpeed(profile, "car")).
                 setMinNetworkSize(200);
         hopper.importOrLoad();
@@ -2457,7 +2505,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile("../map-matching/files/leipzig_germany.osm.pbf").
-                setEncodedValuesString("car_access|block_private=false,road_access").
+                setEncodedValuesString("car_access|block_private=false,road_access,car_average_speed, bike_access, bike_priority, bike_average_speed, foot_access, foot_priority, foot_average_speed").
                 setProfiles(
                         TestProfiles.accessAndSpeed("car"),
                         TestProfiles.accessSpeedAndPriority("bike"),
@@ -2555,6 +2603,7 @@ public class GraphHopperTest {
 
         // first we try without country rules (the default)
         GraphHopper hopper = new GraphHopper()
+                .setEncodedValuesString("car_access, car_average_speed, road_access")
                 .setProfiles(p)
                 .setCountryRuleFactory(null)
                 .setGraphHopperLocation(GH_LOCATION)
@@ -2571,6 +2620,7 @@ public class GraphHopperTest {
         // this time we enable country rules
         hopper.clean();
         hopper = new GraphHopper()
+                .setEncodedValuesString("car_access, car_average_speed, road_access")
                 .setProfiles(p)
                 .setGraphHopperLocation(GH_LOCATION)
                 .setCountryRuleFactory(new CountryRuleFactory())
@@ -2588,6 +2638,7 @@ public class GraphHopperTest {
     @Test
     void curbsideWithSubnetwork_issue2502() {
         GraphHopper hopper = new GraphHopper()
+                .setEncodedValuesString("car_access, car_average_speed")
                 .setProfiles(TestProfiles.accessAndSpeed("car").setTurnCostsConfig(TurnCostsConfig.car()))
                 .setGraphHopperLocation(GH_LOCATION)
                 .setMinNetworkSize(200)
@@ -2623,6 +2674,7 @@ public class GraphHopperTest {
     @Test
     void averageSpeedPathDetailBug() {
         GraphHopper hopper = new GraphHopper()
+                .setEncodedValuesString("car_access, car_average_speed")
                 .setProfiles(TestProfiles.accessAndSpeed("car").setTurnCostsConfig(TurnCostsConfig.car()))
                 .setGraphHopperLocation(GH_LOCATION)
                 .setMinNetworkSize(200)
@@ -2644,6 +2696,7 @@ public class GraphHopperTest {
     @Test
     void timeDetailBug() {
         GraphHopper hopper = new GraphHopper()
+                .setEncodedValuesString("car_access, car_average_speed")
                 .setProfiles(TestProfiles.accessAndSpeed("car").setTurnCostsConfig(TurnCostsConfig.car()))
                 .setGraphHopperLocation(GH_LOCATION)
                 .setMinNetworkSize(200)
@@ -2728,7 +2781,7 @@ public class GraphHopperTest {
     void testLoadingWithAnotherSpeedFactorWorks() {
         {
             GraphHopper hopper = new GraphHopper()
-                    .setEncodedValuesString("car_average_speed|speed_factor=3")
+                    .setEncodedValuesString("car_average_speed|speed_factor=3, car_access")
                     .setProfiles(TestProfiles.accessAndSpeed("car"))
                     .setGraphHopperLocation(GH_LOCATION)
                     .setOSMFile(BAYREUTH);

@@ -17,10 +17,7 @@
  */
 package com.graphhopper.jackson;
 
-import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.ResponsePath;
@@ -29,14 +26,9 @@ import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.exceptions.*;
 import org.locationtech.jts.geom.LineString;
 
-import java.io.IOException;
 import java.util.*;
 
-public class ResponsePathDeserializer extends JsonDeserializer<ResponsePath> {
-    @Override
-    public ResponsePath deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
-        return createResponsePath((ObjectMapper) p.getCodec(), p.readValueAsTree(), false, true);
-    }
+public class ResponsePathDeserializerHelper {
 
     public static ResponsePath createResponsePath(ObjectMapper objectMapper, JsonNode path, boolean hasElevation, boolean turnDescription) {
         ResponsePath responsePath = new ResponsePath();
@@ -44,9 +36,15 @@ public class ResponsePathDeserializer extends JsonDeserializer<ResponsePath> {
         if (responsePath.hasErrors())
             return responsePath;
 
+        // Read multiplier from JSON to properly decode the "points" and/or "snapped_waypoints" array.
+        // Note, in earlier versions the points_encoded was missing from the JSON for calc_points == false (although still required for snapped_waypoints).
+        double multiplier = 1e5;
+        if (path.has("points_encoded") && path.get("points_encoded").asBoolean() && path.has("points_encoded_multiplier"))
+            multiplier = path.get("points_encoded_multiplier").asDouble();
+
         if (path.has("snapped_waypoints")) {
             JsonNode snappedWaypoints = path.get("snapped_waypoints");
-            PointList snappedPoints = deserializePointList(objectMapper, snappedWaypoints, hasElevation);
+            PointList snappedPoints = deserializePointList(objectMapper, snappedWaypoints, hasElevation, multiplier);
             responsePath.setWaypoints(snappedPoints);
         }
 
@@ -73,7 +71,7 @@ public class ResponsePathDeserializer extends JsonDeserializer<ResponsePath> {
         }
 
         if (path.has("points")) {
-            final PointList pointList = deserializePointList(objectMapper, path.get("points"), hasElevation);
+            final PointList pointList = deserializePointList(objectMapper, path.get("points"), hasElevation, multiplier);
             responsePath.setPoints(pointList);
 
             if (path.has("instructions")) {
@@ -177,10 +175,10 @@ public class ResponsePathDeserializer extends JsonDeserializer<ResponsePath> {
         return responsePath;
     }
 
-    private static PointList deserializePointList(ObjectMapper objectMapper, JsonNode jsonNode, boolean hasElevation) {
+    private static PointList deserializePointList(ObjectMapper objectMapper, JsonNode jsonNode, boolean hasElevation, double multiplier) {
         PointList snappedPoints;
         if (jsonNode.isTextual()) {
-            snappedPoints = decodePolyline(jsonNode.asText(), Math.max(10, jsonNode.asText().length() / 4), hasElevation);
+            snappedPoints = decodePolyline(jsonNode.asText(), Math.max(10, jsonNode.asText().length() / 4), hasElevation, multiplier);
         } else {
             LineString lineString = objectMapper.convertValue(jsonNode, LineString.class);
             snappedPoints = PointList.fromLineString(lineString);
@@ -188,7 +186,10 @@ public class ResponsePathDeserializer extends JsonDeserializer<ResponsePath> {
         return snappedPoints;
     }
 
-    public static PointList decodePolyline(String encoded, int initCap, boolean is3D) {
+    public static PointList decodePolyline(String encoded, int initCap, boolean is3D, double multiplier) {
+        if (multiplier < 1)
+            throw new IllegalArgumentException("multiplier cannot be smaller than 1 but was " + multiplier + " for polyline " + encoded);
+
         PointList poly = new PointList(initCap, is3D);
         int index = 0;
         int len = encoded.length();
@@ -226,9 +227,9 @@ public class ResponsePathDeserializer extends JsonDeserializer<ResponsePath> {
                 } while (b >= 0x20);
                 int deltaElevation = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
                 ele += deltaElevation;
-                poly.add((double) lat / 1e5, (double) lng / 1e5, (double) ele / 100);
+                poly.add((double) lat / multiplier, (double) lng / multiplier, (double) ele / 100);
             } else
-                poly.add((double) lat / 1e5, (double) lng / 1e5);
+                poly.add((double) lat / multiplier, (double) lng / multiplier);
         }
         return poly;
     }

@@ -326,6 +326,20 @@ public class FootTagParserTest {
         way.setTag("highway", "primary");
         assertEquals(PriorityCode.AVOID.getValue(), prioParser.handlePriority(way, null));
 
+        way.setTag("sidewalk", "yes");
+        assertEquals(PriorityCode.AVOID.getValue(), prioParser.handlePriority(way, null));
+
+        way.setTag("sidewalk", "no");
+        assertEquals(PriorityCode.BAD.getValue(), prioParser.handlePriority(way, null));
+
+        way.clearTags();
+        way.setTag("highway", "tertiary");
+        assertEquals(PriorityCode.UNCHANGED.getValue(), prioParser.handlePriority(way, null));
+
+        // tertiary without sidewalk is roughly like primary with sidewalk
+        way.setTag("sidewalk", "no");
+        assertEquals(PriorityCode.AVOID.getValue(), prioParser.handlePriority(way, null));
+
         way.setTag("highway", "track");
         way.setTag("bicycle", "official");
         assertEquals(PriorityCode.SLIGHT_AVOID.getValue(), prioParser.handlePriority(way, null));
@@ -340,11 +354,6 @@ public class FootTagParserTest {
         assertEquals(PriorityCode.PREFER.getValue(), prioParser.handlePriority(way, null));
 
         way.clearTags();
-        way.setTag("highway", "primary");
-        way.setTag("sidewalk", "yes");
-        assertEquals(PriorityCode.SLIGHT_AVOID.getValue(), prioParser.handlePriority(way, null));
-
-        way.clearTags();
         way.setTag("highway", "cycleway");
         way.setTag("sidewalk", "no");
         assertEquals(PriorityCode.AVOID.getValue(), prioParser.handlePriority(way, null));
@@ -356,11 +365,15 @@ public class FootTagParserTest {
         assertEquals(PriorityCode.SLIGHT_AVOID.getValue(), prioParser.handlePriority(way, null));
 
         way.clearTags();
-        way.setTag("highway", "trunk");
+        way.setTag("highway", "secondary");
+        assertEquals(PriorityCode.AVOID.getValue(), prioParser.handlePriority(way, null));
+        way.setTag("highway", "trunk"); // secondary should be better to mostly avoid trunk e.g. here 46.9889,10.5664->47.0172,10.6059
+        assertEquals(PriorityCode.BAD.getValue(), prioParser.handlePriority(way, null));
+
         way.setTag("sidewalk", "no");
-        assertEquals(PriorityCode.VERY_BAD.getValue(), prioParser.handlePriority(way, null));
+        assertEquals(PriorityCode.REACH_DESTINATION.getValue(), prioParser.handlePriority(way, null));
         way.setTag("sidewalk", "none");
-        assertEquals(PriorityCode.VERY_BAD.getValue(), prioParser.handlePriority(way, null));
+        assertEquals(PriorityCode.REACH_DESTINATION.getValue(), prioParser.handlePriority(way, null));
 
         way.clearTags();
         way.setTag("highway", "residential");
@@ -528,5 +541,38 @@ public class FootTagParserTest {
         // such conversion occurs. in our case it must be 16 not 15!
         // note that this test made more sense when we used encoders that defined a max speed.
         assertEquals(16, speedEnc.getNextStorableValue(15));
+    }
+    @Test
+    public void temporalAccess() {
+        int edgeId = 0;
+        ArrayEdgeIntAccess access = new ArrayEdgeIntAccess(1);
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "primary");
+        way.setTag("access:conditional", "no @ (May - June)");
+        accessParser.handleWayTags(edgeId, access, way, null);
+        assertTrue(footAccessEnc.getBool(false, edgeId, access));
+
+        access = new ArrayEdgeIntAccess(1);
+        way = new ReaderWay(1);
+        way.setTag("highway", "primary");
+        way.setTag("foot:conditional", "no @ (May - June)");
+        accessParser.handleWayTags(edgeId, access, way, null);
+        assertTrue(footAccessEnc.getBool(false, edgeId, access));
+
+        access = new ArrayEdgeIntAccess(1);
+        way = new ReaderWay(1);
+        way.setTag("highway", "primary");
+        way.setTag("foot", "no");
+        way.setTag("access:conditional", "yes @ (May - June)");
+        accessParser.handleWayTags(edgeId, access, way, null);
+        assertFalse(footAccessEnc.getBool(false, edgeId, access));
+
+        access = new ArrayEdgeIntAccess(1);
+        way = new ReaderWay(1);
+        way.setTag("highway", "primary");
+        way.setTag("access", "no");
+        way.setTag("foot:conditional", "yes @ (May - June)");
+        accessParser.handleWayTags(edgeId, access, way, null);
+        assertTrue(footAccessEnc.getBool(false, edgeId, access));
     }
 }

@@ -44,6 +44,7 @@ web.way_contains_private=жекеменшік жол
 web.way_contains_toll=жол ақылы
 web.way_crosses_border=жол ел шекарасын кесіп жатыр
 web.way_contains=жолда %1$s бар
+web.way_contains_restrictions=
 web.tracks=асфальтталмаған қара жолдар
 web.steps=қадамдар
 web.footways=жаяу жүргіншілер жолы

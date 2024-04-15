@@ -466,12 +466,13 @@ public class OSMReader {
                     // remove spaces as they unnecessarily increase the unique number of values:
                     String value = KVStorage.cutString(((String) entry.getValue()).
                             replace(" ", "").replace("bicycle", "bike"));
-                    boolean fwd = entry.getKey().contains("forward");
-                    boolean bwd = entry.getKey().contains("backward");
+                    String key = entry.getKey().replace(':', '_').replace("bicycle", "bike");
+                    boolean fwd = key.contains("forward");
+                    boolean bwd = key.contains("backward");
                     if (!fwd && !bwd)
-                        list.add(new KVStorage.KeyValue(entry.getKey().replace(':', '_'), value, true, true));
+                        list.add(new KVStorage.KeyValue(key, value, true, true));
                     else
-                        list.add(new KVStorage.KeyValue(entry.getKey().replace(':', '_'), value, fwd, bwd));
+                        list.add(new KVStorage.KeyValue(key, value, fwd, bwd));
                 }
             }
 

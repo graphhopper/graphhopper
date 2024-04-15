@@ -44,6 +44,7 @@ web.way_contains_private=Privat väg
 web.way_contains_toll=Avgiftsbelagd väg
 web.way_crosses_border=
 web.way_contains=Rutten inkluderar %1$s
+web.way_contains_restrictions=
 web.tracks=
 web.steps=steg
 web.footways=

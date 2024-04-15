@@ -57,16 +57,17 @@ public class RouteResourceTurnCostsTest {
                 putObject("datareader.file", "../core/files/moscow.osm.gz").
                 putObject("graph.encoded_values", "road_class,surface,road_environment,max_speed").
                 putObject("import.osm.ignored_highways", "").
-                putObject("graph.location", DIR)
-                .setProfiles(Arrays.asList(
+                putObject("graph.location", DIR).
+                putObject("graph.encoded_values", "road_class, surface, road_environment, max_speed, car_access, car_average_speed").
+                setProfiles(Arrays.asList(
                         TestProfiles.accessAndSpeed("my_car_turn_costs", "car").setTurnCostsConfig(TurnCostsConfig.car()),
                         TestProfiles.accessAndSpeed("my_car_no_turn_costs", "car")
-                ))
-                .setCHProfiles(Arrays.asList(
+                )).
+                setCHProfiles(Arrays.asList(
                         new CHProfile("my_car_turn_costs"),
                         new CHProfile("my_car_no_turn_costs")
-                ))
-                .setLMProfiles(Arrays.asList(
+                )).
+                setLMProfiles(Arrays.asList(
                         new LMProfile("my_car_no_turn_costs"),
                         // no need for a second LM preparation: we can just cross query here
                         new LMProfile("my_car_turn_costs").setPreparationProfile("my_car_no_turn_costs")

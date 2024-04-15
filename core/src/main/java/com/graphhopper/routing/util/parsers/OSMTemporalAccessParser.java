@@ -28,28 +28,26 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.text.ParseException;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Map;
+import java.util.*;
 
 /**
- * This parser fills the different XYRoadAccessConditional enums from the OSM conditional
- * restrictions based on the specified dateRangeParserDate. Node tags will be ignored for now.
+ * This parser fills the different XYTemporalAccess enums from the OSM conditional
+ * restrictions based on the specified dateRangeParserDate. 'Temporal' means that both, temporary
+ * and seasonal restrictions will be considered. Node tags will be ignored for now.
  */
-public class OSMRoadAccessConditionalParser implements TagParser {
+public class OSMTemporalAccessParser implements TagParser {
 
-    private static final Logger logger = LoggerFactory.getLogger(OSMRoadAccessConditionalParser.class);
+    private static final Logger logger = LoggerFactory.getLogger(OSMTemporalAccessParser.class);
     private final Collection<String> conditionals;
     private final Setter restrictionSetter;
     private final DateRangeParser parser;
-    private final boolean enabledLogs = false;
 
     @FunctionalInterface
     public interface Setter {
         void setBoolean(int edgeId, EdgeIntAccess edgeIntAccess, boolean b);
     }
 
-    public OSMRoadAccessConditionalParser(Collection<String> conditionals, Setter restrictionSetter, String dateRangeParserDate) {
+    public OSMTemporalAccessParser(Collection<String> conditionals, Setter restrictionSetter, String dateRangeParserDate) {
         this.conditionals = conditionals;
         this.restrictionSetter = restrictionSetter;
         if (dateRangeParserDate.isEmpty())
@@ -74,34 +72,53 @@ public class OSMRoadAccessConditionalParser implements TagParser {
 
             String value = (String) entry.getValue();
             String[] strs = value.split("@");
-            if (strs.length == 2 && isInRange(strs[1].trim())) {
-                if (strs[0].trim().equals("no")) return false;
-                if (strs[0].trim().equals("yes")) return true;
+            if (strs.length == 2) {
+                Boolean inRange = isInRange(parser, strs[1].trim());
+                if (inRange != null) {
+                    if (strs[0].trim().equals("no")) return !inRange;
+                    if (strs[0].trim().equals("yes")) return inRange;
+                }
             }
         }
         return null;
     }
 
-    private boolean isInRange(final String value) {
+    private static Boolean isInRange(final DateRangeParser parser, final String value) {
         if (value.isEmpty())
-            return false;
+            return null;
 
-        if (value.contains(";")) {
-            if (enabledLogs)
-                logger.warn("We do not support multiple conditions yet: " + value);
-            return false;
-        }
+        if (value.contains(";"))
+            return null;
 
         String conditionalValue = value.replace('(', ' ').replace(')', ' ').trim();
         try {
             ConditionalValueParser.ConditionState res = parser.checkCondition(conditionalValue);
             if (res.isValid())
                 return res.isCheckPassed();
-            if (enabledLogs)
-                logger.warn("Invalid date to parse " + conditionalValue);
         } catch (ParseException ex) {
-            if (enabledLogs)
-                logger.warn("Cannot parse " + conditionalValue);
+        }
+        return null;
+    }
+
+    // We do not care about the date. We just want to know if ConditionState is valid and the value before @ is accepted
+    private static final DateRangeParser GENERIC_PARSER = DateRangeParser.createInstance("1970-01-01");
+    private static final Set<String> GENERIC_ACCEPTED_VALUES = Set.of("yes", "no");
+
+    public static boolean hasTemporalRestriction(ReaderWay way, int firstIndex, List<String> restrictions) {
+        for (int i = firstIndex; i >= 0; i--) {
+            String value = way.getTag(restrictions.get(i) + ":conditional");
+            if (OSMTemporalAccessParser.hasTemporalRestriction(value)) return true;
+        }
+        return false;
+    }
+
+    private static boolean hasTemporalRestriction(String value) {
+        if (value == null) return false;
+        String[] strs = value.split("@");
+        if (strs.length == 2) {
+            Boolean inRange = isInRange(GENERIC_PARSER, strs[1].trim());
+            if (inRange != null && GENERIC_ACCEPTED_VALUES.contains(strs[0].trim()))
+                return true;
         }
         return false;
     }

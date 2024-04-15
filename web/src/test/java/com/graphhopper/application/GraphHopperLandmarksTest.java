@@ -52,6 +52,7 @@ public class GraphHopperLandmarksTest {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
                 putObject("datareader.file", "../core/files/belarus-east.osm.gz").
+                putObject("graph.encoded_values", "car_access, car_average_speed").
                 putObject("prepare.min_network_size", 0).
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR)

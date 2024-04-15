@@ -207,4 +207,38 @@ class ModeAccessParserTest {
         mcParser.handleWayTags(0, access, way, null);
         assertTrue(mcAccessEnc.getBool(false, edgeId, access));
     }
+
+    @Test
+    public void temporalAccess() {
+        int edgeId = 0;
+        ArrayEdgeIntAccess access = new ArrayEdgeIntAccess(1);
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "primary");
+        way.setTag("access:conditional", "no @ (May - June)");
+        parser.handleWayTags(edgeId, access, way, null);
+        assertTrue(busAccessEnc.getBool(false, edgeId, access));
+
+        access = new ArrayEdgeIntAccess(1);
+        way = new ReaderWay(1);
+        way.setTag("highway", "primary");
+        way.setTag("psv:conditional", "no @ (May - June)");
+        parser.handleWayTags(edgeId, access, way, null);
+        assertTrue(busAccessEnc.getBool(false, edgeId, access));
+
+        access = new ArrayEdgeIntAccess(1);
+        way = new ReaderWay(1);
+        way.setTag("highway", "primary");
+        way.setTag("psv", "no");
+        way.setTag("access:conditional", "yes @ (May - June)");
+        parser.handleWayTags(edgeId, access, way, null);
+        assertFalse(busAccessEnc.getBool(false, edgeId, access));
+
+        access = new ArrayEdgeIntAccess(1);
+        way = new ReaderWay(1);
+        way.setTag("highway", "primary");
+        way.setTag("access", "no");
+        way.setTag("psv:conditional", "yes @ (May - June)");
+        parser.handleWayTags(edgeId, access, way, null);
+        assertTrue(busAccessEnc.getBool(false, edgeId, access));
+    }
 }

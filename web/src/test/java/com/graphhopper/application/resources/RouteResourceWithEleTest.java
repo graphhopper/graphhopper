@@ -54,6 +54,7 @@ public class RouteResourceWithEleTest {
                 putObject("datareader.file", "../core/files/monaco.osm.gz").
                 putObject("graph.location", dir).
                 putObject("import.osm.ignored_highways", "").
+                putObject("graph.encoded_values", "car_access, car_average_speed").
                 setProfiles(List.of(TestProfiles.accessAndSpeed("profile", "car")));
         return config;
     }

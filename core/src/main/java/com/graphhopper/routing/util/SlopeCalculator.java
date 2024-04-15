@@ -24,6 +24,8 @@ public class SlopeCalculator implements TagParser {
         PointList pointList = way.getTag("point_list", null);
         if (pointList != null) {
             if (pointList.isEmpty() || !pointList.is3D()) {
+                if (maxSlopeEnc != null)
+                    maxSlopeEnc.setDecimal(false, edgeId, edgeIntAccess, 0);
                 if (averageSlopeEnc != null)
                     averageSlopeEnc.setDecimal(false, edgeId, edgeIntAccess, 0);
                 return;
@@ -58,7 +60,7 @@ public class SlopeCalculator implements TagParser {
                     if (i > 1 && prevDist > MIN_LENGTH) {
                         double averagedPrevEle = (pointList.getEle(i - 1) + pointList.getEle(i - 2)) / 2;
                         double tmpSlope = calcSlope(pointList.getEle(i) - averagedPrevEle, pillarDistance2D + prevDist / 2);
-                        maxSlope = Math.max(maxSlope, Math.abs(tmpSlope));
+                        maxSlope = Math.abs(tmpSlope) > Math.abs(maxSlope) ? tmpSlope : maxSlope;
                     }
                     prevDist = pillarDistance2D;
                     prevLat = pointList.getLat(i);
@@ -68,16 +70,15 @@ public class SlopeCalculator implements TagParser {
                 // For tunnels and bridges we cannot trust the pillar node elevation and ignore all changes.
                 // Probably we should somehow recalculate even the average_slope after elevation interpolation? See EdgeElevationInterpolator
                 if (way.hasTag("tunnel", "yes") || way.hasTag("bridge", "yes") || way.hasTag("highway", "steps"))
-                    maxSlope = Math.abs(towerNodeSlope);
+                    maxSlope = towerNodeSlope;
                 else
-                    maxSlope = Math.max(Math.abs(towerNodeSlope), maxSlope);
+                    maxSlope = Math.abs(towerNodeSlope) > Math.abs(maxSlope) ? towerNodeSlope : maxSlope;
 
                 if (Double.isNaN(maxSlope))
                     throw new IllegalArgumentException("max_slope was NaN for OSM way ID " + way.getId());
 
-                // TODO Use two independent values for both directions to store if it is a gain or loss and not just the absolute change.
-                // TODO To save space then it would be nice to have an encoded value that can store two different values which are swapped when the reverse direction is used
-                maxSlopeEnc.setDecimal(false, edgeId, edgeIntAccess, Math.min(maxSlope, maxSlopeEnc.getMaxStorableDecimal()));
+                double val = Math.max(maxSlope, maxSlopeEnc.getMinStorableDecimal());
+                maxSlopeEnc.setDecimal(false, edgeId, edgeIntAccess, Math.min(maxSlopeEnc.getMaxStorableDecimal(), val));
             }
         }
     }

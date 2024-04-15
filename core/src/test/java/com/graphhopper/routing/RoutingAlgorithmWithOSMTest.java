@@ -118,7 +118,7 @@ public class RoutingAlgorithmWithOSMTest {
         queries.add(new Query(43.727592, 7.419333, 43.727712, 7.419333, 0, 1));
         GraphHopper hopper = createHopper(MONACO, new Profile("car").setCustomModel(
                 CustomModel.merge(getCustomModel("motorcycle.json"), getCustomModel("curvature.json"))));
-        hopper.setEncodedValuesString("curvature,track_type,surface");
+        hopper.setEncodedValuesString("curvature,track_type,surface,road_access, road_class, car_average_speed, car_access");
         hopper.setElevationProvider(new SRTMProvider(DIR));
         hopper.importOrLoad();
         checkQueries(hopper, queries);
@@ -253,8 +253,8 @@ public class RoutingAlgorithmWithOSMTest {
     }
 
     @Test
-    public void testMonacoFoot() {
-        Profile profile = TestProfiles.accessSpeedAndPriority("foot");
+    public void testRealFootCustomModelInMonaco() {
+        Profile profile = new Profile("foot").setCustomModel(getCustomModel("foot.json"));
         profile.getCustomModel().setDistanceInfluence(10_000d);
         GraphHopper hopper = createHopper(MONACO, profile);
         hopper.importOrLoad();
@@ -305,13 +305,12 @@ public class RoutingAlgorithmWithOSMTest {
         // prefer hiking route 'Teufelsloch Unterwaiz' and 'Rotmain-Wanderweg'
         queries.add(new Query(49.974972, 11.515657, 49.991022, 11.512299, 2365, 67));
         // prefer hiking route 'Markgrafenweg Bayreuth Kulmbach' but avoid tertiary highway from Pechgraben
-        queries.add(new Query(49.990967, 11.545258, 50.023182, 11.555386, 5636, 97));
+        queries.add(new Query(49.990967, 11.545258, 50.023182, 11.555386, 5690, 118));
         GraphHopper hopper = createHopper(BAYREUTH, new Profile("hike").setCustomModel(getCustomModel("hike.json")));
         hopper.setElevationProvider(new SRTMProvider(DIR));
         hopper.importOrLoad();
 
-        // TODO NOW what is wrong? expected 2365 vs actual 2334
-        // checkQueries(hopper, queries);
+        checkQueries(hopper, queries);
     }
 
     @Test
@@ -320,7 +319,7 @@ public class RoutingAlgorithmWithOSMTest {
         // do not pull elevation data: hopper.setElevationProvider(new SRTMProvider(DIR));
         hopper.importOrLoad();
         GHResponse res = hopper.route(new GHRequest(47.290322, 11.333889, 47.301593, 11.333489).setProfile("hike"));
-        assertEquals(3604, res.getBest().getTime() / 1000.0, 60); // 6100sec with srtm data
+        assertEquals(4806, res.getBest().getTime() / 1000.0, 60); // 6100sec with srtm data
         assertEquals(2000, res.getBest().getDistance(), 10); // 2536m with srtm data
     }
 
@@ -510,7 +509,7 @@ public class RoutingAlgorithmWithOSMTest {
         List<Query> queries = createAndorraQueries();
         queries.get(0).getPoints().get(1).expectedDistance = 16460;
         queries.get(0).getPoints().get(1).expectedPoints = 653;
-        queries.get(1).getPoints().get(1).expectedDistance = 12839;
+        queries.get(1).getPoints().get(1).expectedDistance = 12840;
         queries.get(1).getPoints().get(1).expectedPoints = 435;
 
         queries.add(new Query(42.521269, 1.52298, 42.50418, 1.520662, 3223, 107));
@@ -708,7 +707,11 @@ public class RoutingAlgorithmWithOSMTest {
                 setStoreOnFlush(false).
                 setOSMFile(osmFile).
                 setProfiles(profiles).
-                setEncodedValuesString("average_slope,max_slope,hike_rating").
+                setEncodedValuesString("average_slope, max_slope, hike_rating, car_access, car_average_speed, " +
+                        "foot_access, foot_priority, foot_average_speed, " +
+                        "bike_access, bike_priority, bike_average_speed, foot_network, roundabout, " +
+                        "mtb_access, mtb_priority, mtb_average_speed, " +
+                        "racingbike_access, racingbike_priority, racingbike_average_speed").
                 setGraphHopperLocation(GH_LOCATION);
         hopper.getRouterConfig().setSimplifyResponse(false);
         hopper.setMinNetworkSize(0);

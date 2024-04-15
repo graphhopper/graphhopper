@@ -303,7 +303,7 @@ public abstract class GHMatrixAbstractRequester {
         return url;
     }
 
-    record JsonResult(String body, int statusCode) {
+    protected record JsonResult(String body, int statusCode, Map<String, List<String>> headers) {
     }
 
     protected JsonResult postJson(String url, JsonNode data) throws IOException {
@@ -318,7 +318,7 @@ public abstract class GHMatrixAbstractRequester {
         try {
             Response rsp = getDownloader().newCall(okRequest).execute();
             body = rsp.body();
-            return new JsonResult(body.string(), rsp.code());
+            return new JsonResult(body.string(), rsp.code(), rsp.headers().toMultimap());
         } finally {
             Helper.close(body);
         }
