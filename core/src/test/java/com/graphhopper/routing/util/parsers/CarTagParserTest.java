@@ -674,6 +674,51 @@ public class CarTagParserTest {
         assertEquals(1, lowFactorSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), .1);
     }
 
+    @Test
+    public void temporalAccess() {
+        int edgeId = 0;
+        ArrayEdgeIntAccess access = new ArrayEdgeIntAccess(1);
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "primary");
+        way.setTag("access:conditional", "no @ (May - June)");
+        parser.handleWayTags(edgeId, access, way, null);
+        assertTrue(accessEnc.getBool(false, edgeId, access));
+
+        access = new ArrayEdgeIntAccess(1);
+        way = new ReaderWay(1);
+        way.setTag("highway", "primary");
+        way.setTag("motorcar:conditional", "no @ (May - June)");
+        parser.handleWayTags(edgeId, access, way, null);
+        assertTrue(accessEnc.getBool(false, edgeId, access));
+
+        access = new ArrayEdgeIntAccess(1);
+        way = new ReaderWay(1);
+        way.setTag("highway", "primary");
+        way.setTag("motorcar", "no");
+        way.setTag("access:conditional", "yes @ (May - June)");
+        parser.handleWayTags(edgeId, access, way, null);
+        assertFalse(accessEnc.getBool(false, edgeId, access));
+
+        // car should ignore unrelated conditional access restrictions of e.g. bicycle
+        access = new ArrayEdgeIntAccess(1);
+        way = new ReaderWay(1);
+        way.setTag("highway", "primary");
+        way.setTag("vehicle", "no");
+        way.setTag("bicycle:conditional", "yes @ (May - June)");
+        parser.handleWayTags(edgeId, access, way, null);
+        assertFalse(accessEnc.getBool(false, edgeId, access));
+
+        // Ignore access restriction if there is a *higher* priority temporal restriction that *could* lift it.
+        // But this is independent on the date!
+        access = new ArrayEdgeIntAccess(1);
+        way = new ReaderWay(1);
+        way.setTag("highway", "primary");
+        way.setTag("access", "no");
+        way.setTag("motorcar:conditional", "yes @ (May - June)");
+        parser.handleWayTags(edgeId, access, way, null);
+        assertTrue(accessEnc.getBool(false, edgeId, access));
+    }
+
     @ParameterizedTest
     @ValueSource(strings = {"mofa", "moped", "motorcar", "motor_vehicle", "motorcycle"})
     void footway_etc_not_allowed_despite_vehicle_yes(String vehicle) {

@@ -44,6 +44,7 @@ web.way_contains_private=camí privat
 web.way_contains_toll=via de peatge
 web.way_crosses_border=
 web.way_contains=
+web.way_contains_restrictions=
 web.tracks=
 web.steps=
 web.footways=

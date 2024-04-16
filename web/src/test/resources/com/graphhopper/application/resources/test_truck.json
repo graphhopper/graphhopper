@@ -68,6 +68,10 @@
   // average_speed*0.85*0.9
   "speed": [
     {
+      "if": "true",
+      "limit_to": "100"
+    },
+    {
       "if": "road_environment == TUNNEL",
       "multiply_by": 0.85
     },

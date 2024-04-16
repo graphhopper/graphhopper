@@ -21,7 +21,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
-import com.graphhopper.config.Profile;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -51,15 +51,15 @@ public class GraphHopperLandmarksTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.vehicles", "car").
                 putObject("datareader.file", "../core/files/belarus-east.osm.gz").
+                putObject("graph.encoded_values", "car_access, car_average_speed").
                 putObject("prepare.min_network_size", 0).
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR)
                 // force landmark creation even for tiny networks
                 .putObject("prepare.lm.min_network_size", 2)
                 .setProfiles(Collections.singletonList(
-                        new Profile("car_profile").setVehicle("car")
+                        TestProfiles.accessAndSpeed("car_profile", "car")
                 ))
                 .setCHProfiles(Collections.singletonList(
                         new CHProfile("car_profile")

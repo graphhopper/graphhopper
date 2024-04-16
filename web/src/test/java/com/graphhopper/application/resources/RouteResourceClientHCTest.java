@@ -26,7 +26,7 @@ import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.application.util.TestUtils;
 import com.graphhopper.config.CHProfile;
-import com.graphhopper.config.Profile;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.exceptions.PointNotFoundException;
@@ -61,20 +61,20 @@ public class RouteResourceClientHCTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.vehicles", "car,bike").
                 putObject("prepare.min_network_size", 0).
                 putObject("graph.elevation.provider", "srtm").
                 putObject("graph.elevation.cache_dir", "../core/files/").
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("graph.encoded_values", "road_class,surface,road_environment,max_speed").
                 putObject("import.osm.ignored_highways", "").
-                putObject("graph.location", DIR)
-                .setProfiles(Arrays.asList(
-                        new Profile("car").setVehicle("car"),
-                        new Profile("bike").setVehicle("bike"),
-                        new Profile("my_custom_car").setVehicle("car")
-                ))
-                .setCHProfiles(Arrays.asList(new CHProfile("car"), new CHProfile("bike")));
+                putObject("graph.location", DIR).
+                putObject("graph.encoded_values", "road_class, surface, road_environment, max_speed, car_access, car_average_speed, bike_access, bike_priority, bike_average_speed").
+                setProfiles(Arrays.asList(
+                        TestProfiles.accessAndSpeed("car"),
+                        TestProfiles.accessSpeedAndPriority("bike"),
+                        TestProfiles.accessAndSpeed("my_custom_car", "car")
+                )).
+                setCHProfiles(Arrays.asList(new CHProfile("car"), new CHProfile("bike")));
         return config;
     }
 
@@ -422,9 +422,9 @@ public class RouteResourceClientHCTest {
             List<PathDetail> pathDetails = path.getPathDetails().get(detail);
 
             // explicitly check one of the waypoints
-            assertEquals(42.50539, path.getWaypoints().get(3).lat);
-            assertEquals(42.50539, path.getPoints().get(pathDetails.get(2).getLast()).getLat());
-            assertEquals(42.50539, path.getPoints().get(pathDetails.get(3).getFirst()).getLat());
+            assertEquals(42.505398, path.getWaypoints().get(3).lat);
+            assertEquals(42.505398, path.getPoints().get(pathDetails.get(2).getLast()).getLat());
+            assertEquals(42.505398, path.getPoints().get(pathDetails.get(3).getFirst()).getLat());
             // check all the waypoints
             assertEquals(path.getWaypoints().get(0), path.getPoints().get(pathDetails.get(0).getFirst()));
             for (int i = 1; i < path.getWaypoints().size(); ++i)

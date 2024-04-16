@@ -1,7 +1,7 @@
 package com.graphhopper.api;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.graphhopper.jackson.ResponsePathDeserializer;
+import com.graphhopper.jackson.ResponsePathDeserializerHelper;
 import okhttp3.OkHttpClient;
 
 import java.io.IOException;
@@ -42,13 +42,14 @@ public class GHMatrixSyncRequester extends GHMatrixAbstractRequester {
             String postUrl = buildURLNoHints("", ghRequest);
             JsonResult jsonResult = postJson(postUrl, requestJson);
             JsonNode responseJson = fromStringToJSON(postUrl, jsonResult.body());
+            matrixResponse.setHeaders(jsonResult.headers());
             matrixResponse.setStatusCode(jsonResult.statusCode());
             if (responseJson.has("message")) {
-                matrixResponse.addErrors(ResponsePathDeserializer.readErrors(objectMapper, responseJson));
+                matrixResponse.addErrors(ResponsePathDeserializerHelper.readErrors(objectMapper, responseJson));
                 return matrixResponse;
             }
 
-            matrixResponse.addErrors(ResponsePathDeserializer.readErrors(objectMapper, responseJson));
+            matrixResponse.addErrors(ResponsePathDeserializerHelper.readErrors(objectMapper, responseJson));
             if (!matrixResponse.hasErrors())
                 matrixResponse.addErrors(readUsableEntityError(ghRequest.getOutArrays(), responseJson));
 

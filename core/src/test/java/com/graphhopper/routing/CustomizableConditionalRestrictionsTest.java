@@ -4,9 +4,8 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
-import com.graphhopper.config.Profile;
 import com.graphhopper.json.Statement;
-import com.graphhopper.routing.ev.FootRoadAccessConditional;
+import com.graphhopper.routing.ev.FootTemporalAccess;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.details.PathDetail;
@@ -35,11 +34,12 @@ public class CustomizableConditionalRestrictionsTest {
     public void testConditionalAccess() {
         GraphHopper hopper = new GraphHopper().
                 setStoreOnFlush(false).
-                setEncodedValuesString(FootRoadAccessConditional.KEY);
+                setEncodedValuesString(FootTemporalAccess.KEY);
 
         hopper.init(new GraphHopperConfig().
-                setProfiles(Arrays.asList(new Profile("foot").setVehicle("foot"))).
+                setProfiles(List.of(TestProfiles.accessAndSpeed("foot", "foot"))).
                 putObject("graph.location", GH_LOCATION).
+                putObject("graph.encoded_values", "foot_temporal_access, foot_access, foot_average_speed").
                 putObject("datareader.file", "../core/files/conditional-restrictions.osm.xml").
                 putObject("prepare.min_network_size", "0").
                 putObject("import.osm.ignored_highways", "").
@@ -58,7 +58,7 @@ public class CustomizableConditionalRestrictionsTest {
 
         rsp = hopper.route(new GHRequest(50.909136, 14.213924, 50.90918, 14.213549).
                 setProfile("foot").
-                setCustomModel(new CustomModel().addToPriority(Statement.If("foot_road_access_conditional == NO", Statement.Op.MULTIPLY, "0"))).
+                setCustomModel(new CustomModel().addToPriority(Statement.If("foot_temporal_access == NO", Statement.Op.MULTIPLY, "0"))).
                 setPathDetails(Arrays.asList(PD_KEY)));
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(16, rsp.getBest().getDistance(), 1);

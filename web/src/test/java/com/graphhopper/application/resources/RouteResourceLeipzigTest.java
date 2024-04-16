@@ -23,8 +23,7 @@ import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.config.CHProfile;
-import com.graphhopper.config.Profile;
-import com.graphhopper.util.CustomModel;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -38,11 +37,10 @@ import org.junit.jupiter.params.provider.CsvSource;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.Collections;
+import java.util.List;
 import java.util.Random;
 
 import static com.graphhopper.application.util.TestUtils.clientTarget;
-import static com.graphhopper.json.Statement.If;
-import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static com.graphhopper.util.Parameters.Algorithms.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -58,11 +56,10 @@ public class RouteResourceLeipzigTest {
                 putObject("prepare.min_network_size", 200).
                 putObject("datareader.file", "../map-matching/files/leipzig_germany.osm.pbf").
                 putObject("import.osm.ignored_highways", "").
-                putObject("graph.location", DIR)
-                .setProfiles(Collections.singletonList(new Profile("my_car").
-                        setCustomModel(new CustomModel().
-                                addToPriority(If("road_access == DESTINATION", MULTIPLY, "0.1"))).setVehicle("car")))
-                .setCHProfiles(Collections.singletonList(new CHProfile("my_car")));
+                putObject("graph.location", DIR).
+                putObject("graph.encoded_values", "car_access, car_average_speed").
+                setProfiles(List.of(TestProfiles.accessAndSpeed("my_car", "car"))).
+                setCHProfiles(Collections.singletonList(new CHProfile("my_car")));
         return config;
     }
 

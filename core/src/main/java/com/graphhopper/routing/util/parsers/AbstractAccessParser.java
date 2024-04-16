@@ -14,7 +14,7 @@ public abstract class AbstractAccessParser implements TagParser {
     static final Collection<String> INTENDED = Arrays.asList("yes", "designated", "official", "permissive");
 
     // order is important
-    protected final List<String> restrictions = new ArrayList<>(5);
+    protected final List<String> restrictionKeys = new ArrayList<>(5);
     protected final Set<String> restrictedValues = new HashSet<>(5);
 
     protected final Set<String> intendedValues = new HashSet<>(INTENDED);
@@ -34,7 +34,7 @@ public abstract class AbstractAccessParser implements TagParser {
         restrictedValues.add("private");
         restrictedValues.add("permit");
 
-        restrictions.addAll(OSMRoadAccessParser.toOSMRestrictions(transportationMode));
+        restrictionKeys.addAll(OSMRoadAccessParser.toOSMRestrictions(transportationMode));
     }
 
     public boolean isBlockFords() {
@@ -75,11 +75,11 @@ public abstract class AbstractAccessParser implements TagParser {
     public abstract void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way);
 
     /**
-     * @return true if the given OSM node blocks access for this vehicle, false otherwise
+     * @return true if the given OSM node blocks access for the specified restrictions, false otherwise
      */
     public boolean isBarrier(ReaderNode node) {
         // note that this method will be only called for certain nodes as defined by OSMReader!
-        String firstValue = node.getFirstPriorityTag(restrictions);
+        String firstValue = node.getFirstValue(restrictionKeys);
         if (restrictedValues.contains(firstValue) || node.hasTag("locked", "yes"))
             return true;
         else if (intendedValues.contains(firstValue))
@@ -94,8 +94,8 @@ public abstract class AbstractAccessParser implements TagParser {
         return accessEnc;
     }
 
-    public final List<String> getRestrictions() {
-        return restrictions;
+    public final List<String> getRestrictionKeys() {
+        return restrictionKeys;
     }
 
     public final String getName() {

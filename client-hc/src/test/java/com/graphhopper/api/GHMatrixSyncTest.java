@@ -3,6 +3,7 @@ package com.graphhopper.api;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import java.io.IOException;
+import java.util.HashMap;
 
 /**
  * @author Peter Karich
@@ -23,7 +24,7 @@ public class GHMatrixSyncTest extends AbstractGHMatrixWebTester {
 
             @Override
             protected JsonResult postJson(String url, JsonNode data) {
-                return new JsonResult(finalJsonStr, errorCode);
+                return new JsonResult(finalJsonStr, errorCode, new HashMap<>());
             }
         });
     }

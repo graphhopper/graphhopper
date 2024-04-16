@@ -44,6 +44,7 @@ web.way_contains_private=Il percorso include strade private
 web.way_contains_toll=Il percorso include pedaggi
 web.way_crosses_border=Il percorso attraversa un confine di stato
 web.way_contains=Il percorso include %1$s
+web.way_contains_restrictions=
 web.tracks=strade sterrate
 web.steps=Passi
 web.footways=

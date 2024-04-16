@@ -44,6 +44,7 @@ web.way_contains_private=ruten inneholder privat vei
 web.way_contains_toll=ruten er avgiftsbelagt
 web.way_crosses_border=ruten krysser landegrense
 web.way_contains=ruten inneholder %1$s
+web.way_contains_restrictions=
 web.tracks=grusvei
 web.steps=trapper
 web.footways=

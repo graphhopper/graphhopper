@@ -178,9 +178,10 @@ public class EncodingManager implements EncodedValueLookup {
         return turnEncodedValueMap.get(key) != null;
     }
 
+    /**
+     * @return list of all prefixes of xy_access and xy_average_speed encoded values.
+     */
     public List<String> getVehicles() {
-        // we define the 'vehicles' as all the prefixes for which there is an access and speed EV
-        // any EVs that contain prefix_average_speed are accepted
         return getEncodedValues().stream()
                 .filter(ev -> ev.getName().endsWith("_access"))
                 .map(ev -> ev.getName().replaceAll("_access", ""))
