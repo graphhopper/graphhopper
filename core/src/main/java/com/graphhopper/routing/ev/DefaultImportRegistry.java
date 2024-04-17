@@ -185,6 +185,11 @@ public class DefaultImportRegistry implements ImportRegistry {
                     (lookup, props) -> new OSMCrossingParser(
                             lookup.getEnumEncodedValue(Crossing.KEY, Crossing.class))
             );
+        else if (HighwayFeature.KEY.equals(name))
+            return ImportUnit.create(name, props -> HighwayFeature.create(),
+                    (lookup, props) -> new OSMHighwayFeatureParser(
+                            lookup.getEnumEncodedValue(HighwayFeature.KEY, HighwayFeature.class))
+            );
         else if (FerrySpeed.KEY.equals(name))
             return ImportUnit.create(name, props -> FerrySpeed.create(),
                     (lookup, props) -> new FerrySpeedCalculator(
