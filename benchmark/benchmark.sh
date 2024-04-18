@@ -18,8 +18,8 @@ set -o xtrace
 defaultGraphDir=measurements/
 defaultResultsDir=measurements/results/$(date '+%d-%m-%Y-%s%N')/
 defaultSummaryDir=measurements/
-defaultSmallMap=core/files/andorra.osm.pbf
-defaultBigMap=core/files/andorra.osm.pbf
+defaultSmallMap=map-matching/files/leipzig_germany.osm.pbf
+defaultBigMap=map-matching/files/leipzig_germany.osm.pbf
 defaultUseMeasurementTimeAsRefTime=false
 
 GRAPH_DIR=${1:-$defaultGraphDir}
