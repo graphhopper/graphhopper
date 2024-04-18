@@ -41,7 +41,7 @@ public class IntersectionValues {
         List<Boolean> entry = (List<Boolean>) intersectionMap.get("entries");
 
         if (bearings.size() != entry.size()) {
-            return list;
+            throw new IllegalStateException("Bearings and entry array sizes different");
         }
         int numEntries = bearings.size();
 
