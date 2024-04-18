@@ -118,10 +118,10 @@ public class RouteResourceClientHCTest {
         GHResponse rsp = gh.route(req);
         assertFalse(rsp.hasErrors(), "errors:" + rsp.getErrors().toString());
         ResponsePath res = rsp.getBest();
-        isBetween(60, 70, res.getPoints().size());
+        isBetween(70, 80, res.getPoints().size());
         isBetween(2900, 3000, res.getDistance());
         isBetween(110, 120, res.getAscend());
-        isBetween(70, 80, res.getDescend());
+        isBetween(75, 85, res.getDescend());
         isBetween(190, 200, res.getRouteWeight());
 
         // change vehicle
@@ -152,13 +152,13 @@ public class RouteResourceClientHCTest {
         assertEquals(2, paths.size());
 
         ResponsePath path = paths.get(0);
-        assertEquals(35, path.getPoints().size());
-        assertEquals(1689, path.getDistance(), 1);
+        assertEquals(52, path.getPoints().size());
+        assertEquals(1690, path.getDistance(), 1);
         assertTrue(path.getInstructions().toString().contains("Avinguda de Tarragona"), path.getInstructions().toString());
 
         path = paths.get(1);
-        assertEquals(30, path.getPoints().size());
-        assertEquals(1759, path.getDistance(), 1);
+        assertEquals(35, path.getPoints().size());
+        assertEquals(1763, path.getDistance(), 1);
         assertTrue(path.getInstructions().toString().contains("Avinguda Prat de la Creu"), path.getInstructions().toString());
     }
 
@@ -406,7 +406,7 @@ public class RouteResourceClientHCTest {
 
         GHResponse response = gh.route(req);
         ResponsePath path = response.getBest();
-        assertEquals(5428, path.getDistance(), 5);
+        assertEquals(5436, path.getDistance(), 5);
         assertEquals(11, path.getWaypoints().size());
 
         assertEquals(path.getTime(), path.getPathDetails().get("leg_time").stream().mapToLong(d -> (long) d.getValue()).sum(), 1);

@@ -82,7 +82,7 @@ public class RouteResource {
     public Response doGet(
             @Context HttpServletRequest httpReq,
             @Context UriInfo uriInfo,
-            @QueryParam(WAY_POINT_MAX_DISTANCE) @DefaultValue("1") double minPathPrecision,
+            @QueryParam(WAY_POINT_MAX_DISTANCE) @DefaultValue("0.5") double minPathPrecision,
             @QueryParam(ELEVATION_WAY_POINT_MAX_DISTANCE) Double minPathElevationPrecision,
             @QueryParam("point") @NotNull List<GHPointParam> pointParams,
             @QueryParam("type") @DefaultValue("json") String type,
