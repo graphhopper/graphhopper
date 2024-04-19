@@ -64,7 +64,7 @@ class BaseGraphNodesAndEdges {
 
     public BaseGraphNodesAndEdges(Directory dir, int intsForFlags, boolean withElevation, boolean withTurnCosts, int segmentSize) {
         nodes = dir.create("nodes", dir.getDefaultType("nodes", true), segmentSize);
-        edges = dir.create("edges", dir.getDefaultType("edges", true), segmentSize);
+        edges = dir.create("edges", dir.getDefaultType("edges", false), segmentSize);
         this.intsForFlags = intsForFlags;
         this.withTurnCosts = withTurnCosts;
         this.withElevation = withElevation;
