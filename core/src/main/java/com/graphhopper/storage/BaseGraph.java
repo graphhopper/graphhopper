@@ -387,12 +387,9 @@ public class BaseGraph implements Graph, Closeable {
     }
 
     private void setWayGeometryAtGeoRef(PointList pillarNodes, long edgePointer, boolean reverse, long geoRef) {
-        int len = pillarNodes.size();
-        int dim = nodeAccess.getDimension();
         long geoRefPosition = geoRef * 4;
-        int totalLen = len * dim * 4 + 4;
-        wayGeometry.ensureCapacity(geoRefPosition + totalLen);
         byte[] wayGeometryBytes = createWayGeometryBytes(pillarNodes, reverse);
+        wayGeometry.ensureCapacity(geoRefPosition + wayGeometryBytes.length);
         wayGeometry.setBytes(geoRefPosition, wayGeometryBytes, wayGeometryBytes.length);
         store.setGeoRef(edgePointer, geoRef);
     }
