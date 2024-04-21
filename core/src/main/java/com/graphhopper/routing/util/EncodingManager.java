@@ -21,6 +21,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.routing.ev.*;
+import com.graphhopper.storage.BytesRef;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.util.Constants;
@@ -44,12 +45,12 @@ import java.util.stream.Collectors;
 public class EncodingManager implements EncodedValueLookup {
     private final LinkedHashMap<String, EncodedValue> encodedValueMap;
     private final LinkedHashMap<String, EncodedValue> turnEncodedValueMap;
-    private int intsForFlags;
+    private int bytesForFlags;
     private int intsForTurnCostFlags;
 
     public static void putEncodingManagerIntoProperties(EncodingManager encodingManager, StorableProperties properties) {
         properties.put("graph.em.version", Constants.VERSION_EM);
-        properties.put("graph.em.ints_for_flags", encodingManager.intsForFlags);
+        properties.put("graph.em.bytes_for_flags", encodingManager.bytesForFlags);
         properties.put("graph.em.ints_for_turn_cost_flags", encodingManager.intsForTurnCostFlags);
         properties.put("graph.encoded_values", encodingManager.toEncodedValuesAsString());
         properties.put("graph.turn_encoded_values", encodingManager.toTurnEncodedValuesAsString());
@@ -82,9 +83,8 @@ public class EncodingManager implements EncodedValueLookup {
                 throw new IllegalStateException("Duplicate turn encoded value name: " + encodedValue.getName() + " in: graph.turn_encoded_values=" + turnEncodedValueStr);
         });
 
-        return new EncodingManager(encodedValues, turnEncodedValues,
-                getIntegerProperty(properties, "graph.em.ints_for_flags"),
-                getIntegerProperty(properties, "graph.em.ints_for_turn_cost_flags")
+        return new EncodingManager(getIntegerProperty(properties, "graph.em.bytes_for_flags"), getIntegerProperty(properties, "graph.em.ints_for_turn_cost_flags"), encodedValues,
+                turnEncodedValues
         );
     }
 
@@ -110,17 +110,17 @@ public class EncodingManager implements EncodedValueLookup {
         return new Builder();
     }
 
-    public EncodingManager(LinkedHashMap<String, EncodedValue> encodedValueMap,
-                           LinkedHashMap<String, EncodedValue> turnEncodedValueMap,
-                           int intsForFlags, int intsForTurnCostFlags) {
+    public EncodingManager(int bytesForFlags, int intsForTurnCostFlags,
+                           LinkedHashMap<String, EncodedValue> encodedValueMap,
+                           LinkedHashMap<String, EncodedValue> turnEncodedValueMap) {
         this.encodedValueMap = encodedValueMap;
         this.turnEncodedValueMap = turnEncodedValueMap;
-        this.intsForFlags = intsForFlags;
+        this.bytesForFlags = bytesForFlags;
         this.intsForTurnCostFlags = intsForTurnCostFlags;
     }
 
     private EncodingManager() {
-        this(new LinkedHashMap<>(), new LinkedHashMap<>(), 0, 0);
+        this(0, 0, new LinkedHashMap<>(), new LinkedHashMap<>());
     }
 
     public static class Builder {
@@ -157,7 +157,7 @@ public class EncodingManager implements EncodedValueLookup {
 
         public EncodingManager build() {
             checkNotBuiltAlready();
-            em.intsForFlags = edgeConfig.getRequiredInts();
+            em.bytesForFlags = edgeConfig.getRequiredBytes();
             em.intsForTurnCostFlags = turnCostConfig.getRequiredInts();
             EncodingManager result = em;
             em = null;
@@ -166,8 +166,8 @@ public class EncodingManager implements EncodedValueLookup {
 
     }
 
-    public int getIntsForFlags() {
-        return intsForFlags;
+    public int getBytesForFlags() {
+        return bytesForFlags;
     }
 
     public boolean hasEncodedValue(String key) {
@@ -204,8 +204,8 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     // TODO hide IntsRef even more in a later version: https://gist.github.com/karussell/f4c2b2b1191be978d7ee9ec8dd2cd48f
-    public IntsRef createEdgeFlags() {
-        return new IntsRef(getIntsForFlags());
+    public BytesRef createEdgeFlags() {
+        return new BytesRef(getBytesForFlags());
     }
 
     public IntsRef createRelationFlags() {

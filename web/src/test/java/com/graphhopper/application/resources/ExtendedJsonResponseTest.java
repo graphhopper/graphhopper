@@ -26,6 +26,7 @@ import com.graphhopper.matching.State;
 import com.graphhopper.resources.MapMatchingResource;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.search.KVStorage;
+import com.graphhopper.storage.BytesRef;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.EdgeIteratorState;
@@ -87,7 +88,7 @@ public class ExtendedJsonResponseTest {
         PointList pointList = new PointList();
         pointList.add(-3.4445, -38.9990);
         pointList.add(-3.5550, -38.7990);
-        return new VirtualEdgeIteratorState(0, 0, 0, 1, 10, new IntsRef(1),
+        return new VirtualEdgeIteratorState(0, 0, 0, 1, 10, new BytesRef(4),
                 KVStorage.KeyValue.createKV(KVStorage.KeyValue.STREET_NAME, "test of iterator"), pointList, false);
     }
 

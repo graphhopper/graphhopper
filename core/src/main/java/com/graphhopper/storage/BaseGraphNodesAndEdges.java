@@ -49,7 +49,7 @@ class BaseGraphNodesAndEdges {
     // edges
     private final DataAccess edges;
     private final int E_NODEA, E_NODEB, E_LINKA, E_LINKB, E_FLAGS, E_DIST, E_GEO, E_KV;
-    private final int intsForFlags;
+    private final int bytesForFlags;
     private int edgeEntryBytes;
     private int edgeCount;
 
@@ -62,10 +62,10 @@ class BaseGraphNodesAndEdges {
     public final BBox bounds;
     private boolean frozen;
 
-    public BaseGraphNodesAndEdges(Directory dir, int intsForFlags, boolean withElevation, boolean withTurnCosts, int segmentSize) {
+    public BaseGraphNodesAndEdges(Directory dir, boolean withElevation, boolean withTurnCosts, int segmentSize, int bytesForFlags) {
         nodes = dir.create("nodes", dir.getDefaultType("nodes", true), segmentSize);
-        edges = dir.create("edges", dir.getDefaultType("edges", true), segmentSize);
-        this.intsForFlags = intsForFlags;
+        edges = dir.create("edges", dir.getDefaultType("edges", false), segmentSize);
+        this.bytesForFlags = bytesForFlags;
         this.withTurnCosts = withTurnCosts;
         this.withElevation = withElevation;
         bounds = BBox.createInverse(withElevation);
@@ -84,8 +84,9 @@ class BaseGraphNodesAndEdges {
         E_LINKA = 8;
         E_LINKB = 12;
         E_FLAGS = 16;
-        E_DIST = E_FLAGS + intsForFlags * 4;
-        E_GEO = E_DIST + 4;
+        E_DIST = E_FLAGS + bytesForFlags;
+        int padding = 4 - E_DIST % 4;
+        E_GEO = E_DIST + 4 + padding;
         E_KV = E_GEO + 4;
         edgeEntryBytes = E_KV + 4;
     }
@@ -162,8 +163,8 @@ class BaseGraphNodesAndEdges {
         return edgeCount;
     }
 
-    public int getIntsForFlags() {
-        return intsForFlags;
+    public int getBytesForFlags() {
+        return bytesForFlags;
     }
 
     public boolean withElevation() {
@@ -242,16 +243,12 @@ class BaseGraphNodesAndEdges {
         return (long) edge * edgeEntryBytes;
     }
 
-    public void readFlags(long edgePointer, IntsRef edgeFlags) {
-        int size = edgeFlags.ints.length;
-        for (int i = 0; i < size; ++i)
-            edgeFlags.ints[i] = getFlagInt(edgePointer, i);
+    public void readFlags(long edgePointer, BytesRef edgeFlags) {
+        edges.getBytes(edgePointer + E_FLAGS, edgeFlags.bytes, edgeFlags.length);
     }
 
-    public void writeFlags(long edgePointer, IntsRef edgeFlags) {
-        int size = edgeFlags.ints.length;
-        for (int i = 0; i < size; ++i)
-            setFlagInt(edgePointer, i, edgeFlags.ints[i]);
+    public void writeFlags(long edgePointer, BytesRef edgeFlags) {
+        edges.setBytes(edgePointer + E_FLAGS, edgeFlags.bytes, edgeFlags.length);
     }
 
     public int getFlagInt(long edgePointer, int index) {
@@ -383,16 +380,16 @@ class BaseGraphNodesAndEdges {
         System.out.println("edges:");
         String formatEdges = "%12s | %12s | %12s | %12s | %12s | %12s | %12s \n";
         System.out.format(Locale.ROOT, formatEdges, "#", "E_NODEA", "E_NODEB", "E_LINKA", "E_LINKB", "E_FLAGS", "E_DIST");
-        IntsRef intsRef = new IntsRef(intsForFlags);
+        BytesRef bytesRef = new BytesRef(bytesForFlags);
         for (int i = 0; i < Math.min(edgeCount, printMax); ++i) {
             long edgePointer = toEdgePointer(i);
-            readFlags(edgePointer, intsRef);
+            readFlags(edgePointer, bytesRef);
             System.out.format(Locale.ROOT, formatEdges, i,
                     getNodeA(edgePointer),
                     getNodeB(edgePointer),
                     getLinkA(edgePointer),
                     getLinkB(edgePointer),
-                    intsRef,
+                    bytesRef,
                     getDist(edgePointer));
         }
         if (edgeCount > printMax) {

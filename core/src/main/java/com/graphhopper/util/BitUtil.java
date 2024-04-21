@@ -88,6 +88,10 @@ public class BitUtil {
                 | (b[offset + 1] & 0xFF) << 8 | (b[offset] & 0xFF);
     }
 
+    public final int toInt3(byte[] b, int offset) {
+        return (b[offset + 2] & 0xFF) << 16 | (b[offset + 1] & 0xFF) << 8 | (b[offset] & 0xFF);
+    }
+
     public final byte[] fromInt(int value) {
         byte[] bytes = new byte[4];
         fromInt(bytes, value, 0);
@@ -115,6 +119,12 @@ public class BitUtil {
 
     public final void fromInt(byte[] bytes, int value, int offset) {
         bytes[offset + 3] = (byte) (value >>> 24);
+        bytes[offset + 2] = (byte) (value >>> 16);
+        bytes[offset + 1] = (byte) (value >>> 8);
+        bytes[offset] = (byte) (value);
+    }
+
+    public final void fromInt3(byte[] bytes, int value, int offset) {
         bytes[offset + 2] = (byte) (value >>> 16);
         bytes[offset + 1] = (byte) (value >>> 8);
         bytes[offset] = (byte) (value);

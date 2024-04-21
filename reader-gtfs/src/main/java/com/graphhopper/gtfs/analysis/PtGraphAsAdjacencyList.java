@@ -164,12 +164,12 @@ class PtGraphAsAdjacencyList implements Graph {
             }
 
             @Override
-            public IntsRef getFlags() {
+            public BytesRef getFlags() {
                 throw new RuntimeException();
             }
 
             @Override
-            public EdgeIteratorState setFlags(IntsRef edgeFlags) {
+            public EdgeIteratorState setFlags(BytesRef edgeFlags) {
                 throw new RuntimeException();
             }
 

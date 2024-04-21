@@ -58,12 +58,12 @@ public class BaseGraph implements Graph, Closeable {
     private boolean initialized = false;
     private long maxGeoRef;
 
-    public BaseGraph(Directory dir, int intsForFlags, boolean withElevation, boolean withTurnCosts, int segmentSize) {
+    public BaseGraph(Directory dir, boolean withElevation, boolean withTurnCosts, int segmentSize, int bytesForFlags) {
         this.dir = dir;
         this.bitUtil = BitUtil.LITTLE;
         this.wayGeometry = dir.create("geometry", segmentSize);
         this.edgeKVStorage = new KVStorage(dir, true);
-        this.store = new BaseGraphNodesAndEdges(dir, intsForFlags, withElevation, withTurnCosts, segmentSize);
+        this.store = new BaseGraphNodesAndEdges(dir, withElevation, withTurnCosts, segmentSize, bytesForFlags);
         this.nodeAccess = new GHNodeAccess(store);
         this.segmentSize = segmentSize;
         turnCostStorage = withTurnCosts ? new TurnCostStorage(this, dir.create("turn_costs", dir.getDefaultType("turn_costs", true), segmentSize)) : null;
@@ -173,8 +173,8 @@ public class BaseGraph implements Graph, Closeable {
         return this;
     }
 
-    public int getIntsForFlags() {
-        return store.getIntsForFlags();
+    public int getBytesForFlags() {
+        return store.getBytesForFlags();
     }
 
     public String toDetailsString() {
@@ -518,7 +518,7 @@ public class BaseGraph implements Graph, Closeable {
     }
 
     public static class Builder {
-        private final int intsForFlags;
+        private final int bytesForFlags;
         private Directory directory = new RAMDirectory();
         private boolean withElevation = false;
         private boolean withTurnCosts = false;
@@ -526,12 +526,12 @@ public class BaseGraph implements Graph, Closeable {
         private int segmentSize = -1;
 
         public Builder(EncodingManager em) {
-            this(em.getIntsForFlags());
+            this(em.getBytesForFlags());
             withTurnCosts(em.needsTurnCostsSupport());
         }
 
-        public Builder(int intsForFlags) {
-            this.intsForFlags = intsForFlags;
+        public Builder(int bytesForFlags) {
+            this.bytesForFlags = bytesForFlags;
         }
 
         // todo: maybe rename later, but for now this makes it easier to replace GraphBuilder
@@ -563,7 +563,7 @@ public class BaseGraph implements Graph, Closeable {
         }
 
         public BaseGraph build() {
-            return new BaseGraph(directory, intsForFlags, withElevation, withTurnCosts, segmentSize);
+            return new BaseGraph(directory, withElevation, withTurnCosts, segmentSize, bytesForFlags);
         }
 
         public BaseGraph create() {
@@ -753,14 +753,14 @@ public class BaseGraph implements Graph, Closeable {
         }
 
         @Override
-        public IntsRef getFlags() {
-            IntsRef edgeFlags = new IntsRef(store.getIntsForFlags());
+        public BytesRef getFlags() {
+            BytesRef edgeFlags = new BytesRef(store.getBytesForFlags());
             store.readFlags(edgePointer, edgeFlags);
             return edgeFlags;
         }
 
         @Override
-        public final EdgeIteratorState setFlags(IntsRef edgeFlags) {
+        public final EdgeIteratorState setFlags(BytesRef edgeFlags) {
             assert edgeId < store.getEdges() : "must be edge but was shortcut: " + edgeId + " >= " + store.getEdges() + ". Use setFlagsAndWeight";
             store.writeFlags(edgePointer, edgeFlags);
             return this;
