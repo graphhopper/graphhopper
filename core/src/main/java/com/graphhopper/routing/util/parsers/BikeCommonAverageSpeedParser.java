@@ -188,6 +188,9 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
             }
         }
 
+        if (way.hasTag("vehicle", "no") && !way.hasTag("bicycle", intendedValues))
+            speed = PUSHING_SECTION_SPEED;
+
         // Until now we assumed that the way is no pushing section
         // Now we check that, but only in case that our speed computed so far is bigger compared to the PUSHING_SECTION_SPEED
         if (speed > PUSHING_SECTION_SPEED

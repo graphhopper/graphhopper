@@ -102,6 +102,13 @@ public class OSMGetOffBikeParserTest {
         assertFalse(isGetOffBike(way)); // for now only designated will trigger true
         way.setTag("foot", "designated");
         assertTrue(isGetOffBike(way));
+
+        way = new ReaderWay(1);
+        way.setTag("highway", "cycleway");
+        way.setTag("vehicle", "no");
+        assertFalse(isGetOffBike(way));
+        way.setTag("bicycle", "designated");
+        assertFalse(isGetOffBike(way));
     }
 
     @Test
