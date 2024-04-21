@@ -211,8 +211,6 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
                     speed = Math.min(speed, surfaceSpeed);
             }
         }
-        if (way.hasTag("vehicle", "no"))
-            speed = PUSHING_SECTION_SPEED;
         return speed;
     }
 
