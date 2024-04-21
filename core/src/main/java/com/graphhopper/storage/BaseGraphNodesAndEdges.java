@@ -45,7 +45,7 @@ class BaseGraphNodesAndEdges {
 
     // edges
     private final DataAccess edges;
-    private final int E_NODEA, E_NODEB, E_LINKA, E_LINKB, E_DIST, E_FLAGS, E_GEO_1, E_GEO_2, E_KV;
+    private final int E_NODEA, E_NODEB, E_LINKA, E_LINKB, E_DIST, E_KV, E_FLAGS, E_GEO;
     private final int bytesForFlags;
     private int edgeEntryBytes;
     private int edgeCount;
@@ -81,13 +81,11 @@ class BaseGraphNodesAndEdges {
         E_LINKA = 8;
         E_LINKB = 12;
         E_DIST = 16;
-        E_FLAGS = 20;
-        int tmp = E_FLAGS + bytesForFlags + 4;
-        int padding = 4 - tmp % 4;
-        E_GEO_1 = tmp + padding + 4;
-        E_GEO_2 = E_GEO_1 + 4;
-        E_KV = E_GEO_2 + 4;
-        edgeEntryBytes = E_KV + 4;
+        E_KV = 20;
+        E_FLAGS = 24;
+        // padding does no longer matter for E_GEO
+        E_GEO = E_FLAGS + bytesForFlags + 4;
+        edgeEntryBytes = E_GEO + 5;
     }
 
     public void create(long initSize) {
@@ -279,10 +277,9 @@ class BaseGraphNodesAndEdges {
     }
 
     public void setGeoRef(long edgePointer, long geoRef) {
-        int geo1 = BitUtil.LITTLE.getIntLow(geoRef);
-        int geo2 = BitUtil.LITTLE.getIntHigh(geoRef);
-        edges.setInt(edgePointer + E_GEO_1, geo1);
-        edges.setInt(edgePointer + E_GEO_2, geo2);
+        byte[] bytes = new byte[5];
+        BitUtil.LITTLE.fromLong5(bytes, geoRef, 0);
+        edges.setBytes(edgePointer + E_GEO, bytes, bytes.length);
     }
 
     public void setKeyValuesRef(long edgePointer, int nameRef) {
@@ -312,10 +309,9 @@ class BaseGraphNodesAndEdges {
     }
 
     public long getGeoRef(long edgePointer) {
-        return BitUtil.LITTLE.toLong(
-                edges.getInt(edgePointer + E_GEO_1),
-                edges.getInt(edgePointer + E_GEO_2)
-        );
+        byte[] bytes = new byte[5];
+        edges.getBytes(edgePointer + E_GEO, bytes, bytes.length);
+        return BitUtil.LITTLE.toLong5(bytes, 0);
     }
 
     public int getKeyValuesRef(long edgePointer) {
