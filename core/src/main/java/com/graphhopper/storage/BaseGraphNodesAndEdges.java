@@ -20,6 +20,7 @@ package com.graphhopper.storage;
 
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
+import org.slf4j.LoggerFactory;
 
 import java.util.Locale;
 
@@ -83,9 +84,16 @@ class BaseGraphNodesAndEdges {
         E_DIST = 16;
         E_KV = 20;
         E_FLAGS = 24;
-        // padding does no longer matter for E_GEO
         E_GEO = E_FLAGS + bytesForFlags + 4;
         edgeEntryBytes = E_GEO + 5;
+
+        // TODO make padding unnecessary via the DataAccess implementations set/getInt/Short methods
+        // padding must be correct for next line
+        int padding = (4 - edgeEntryBytes % 4) % 4;
+        if (padding > 0)
+            LoggerFactory.getLogger(BaseGraphNodesAndEdges.class).warn("base graph padding of " + padding + " bytes increases storage size");
+
+        edgeEntryBytes += padding;
     }
 
     public void create(long initSize) {
