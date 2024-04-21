@@ -111,9 +111,9 @@ public class GraphHopperGtfs extends GraphHopper {
         final int maxTransferWalkTimeSeconds = ghConfig.getInt("gtfs.max_transfer_interpolation_walk_time_seconds", 120);
         GraphHopperStorage graphHopperStorage = getGraphHopperStorage();
         QueryGraph queryGraph = QueryGraph.create(graphHopperStorage.getBaseGraph(), Collections.emptyList());
-        String transferProfileName = ghConfig.getString("pt.transfer_profile", "foot");
-        Weighting transferWeighting = createWeighting(getProfile(transferProfileName), new PMap());
-        final GraphExplorer graphExplorer = new GraphExplorer(queryGraph, ptGraph, transferWeighting, getGtfsStorage(), RealtimeFeed.empty(), true, true, false, false, false, 0);
+        String connectingProfileName = ghConfig.getString("pt.connecting_profile", "foot");
+        Weighting transferWeighting = createWeighting(getProfile(connectingProfileName), new PMap());
+        final GraphExplorer graphExplorer = new GraphExplorer(queryGraph, ptGraph, transferWeighting, getGtfsStorage(), RealtimeFeed.empty(), true, true, false, true, false, 0);
         getGtfsStorage().getStationNodes().values().stream().distinct().map(n -> {
             int streetNode = Optional.ofNullable(gtfsStorage.getPtToStreet().get(n)).orElse(-1);
             return new Label.NodeId(streetNode, n);
