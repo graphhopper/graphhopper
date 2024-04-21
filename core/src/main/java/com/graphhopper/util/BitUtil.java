@@ -88,7 +88,7 @@ public class BitUtil {
                 | (b[offset + 1] & 0xFF) << 8 | (b[offset] & 0xFF);
     }
 
-    public final int toInt3(byte[] b, int offset) {
+    public final int toUInt3(byte[] b, int offset) {
         return (b[offset + 2] & 0xFF) << 16 | (b[offset + 1] & 0xFF) << 8 | (b[offset] & 0xFF);
     }
 
@@ -124,7 +124,7 @@ public class BitUtil {
         bytes[offset] = (byte) (value);
     }
 
-    public final void fromInt3(byte[] bytes, int value, int offset) {
+    public final void fromUInt3(byte[] bytes, int value, int offset) {
         bytes[offset + 2] = (byte) (value >>> 16);
         bytes[offset + 1] = (byte) (value >>> 8);
         bytes[offset] = (byte) (value);
@@ -145,7 +145,7 @@ public class BitUtil {
         return ((long) toInt(b, offset + 4) << 32) | (toInt(b, offset) & 0xFFFFFFFFL);
     }
 
-    public final long toLong5(byte[] b, int offset) {
+    public final long toULong5(byte[] b, int offset) {
         return ((long) (b[offset + 4] & 0xFF) << 32) | (toInt(b, offset) & 0xFFFFFFFFL);
     }
 
@@ -170,7 +170,7 @@ public class BitUtil {
         bytes[offset] = (byte) (value);
     }
 
-    public final void fromLong5(byte[] bytes, long value, int offset) {
+    public final void fromULong5(byte[] bytes, long value, int offset) {
         bytes[offset + 4] = (byte) (value >> 32);
         bytes[offset + 3] = (byte) (value >> 24);
         bytes[offset + 2] = (byte) (value >> 16);

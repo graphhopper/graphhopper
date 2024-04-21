@@ -286,7 +286,7 @@ class BaseGraphNodesAndEdges {
 
     public void setGeoRef(long edgePointer, long geoRef) {
         byte[] bytes = new byte[5];
-        BitUtil.LITTLE.fromLong5(bytes, geoRef, 0);
+        BitUtil.LITTLE.fromULong5(bytes, geoRef, 0);
         edges.setBytes(edgePointer + E_GEO, bytes, bytes.length);
     }
 
@@ -319,7 +319,7 @@ class BaseGraphNodesAndEdges {
     public long getGeoRef(long edgePointer) {
         byte[] bytes = new byte[5];
         edges.getBytes(edgePointer + E_GEO, bytes, bytes.length);
-        return BitUtil.LITTLE.toLong5(bytes, 0);
+        return BitUtil.LITTLE.toULong5(bytes, 0);
     }
 
     public int getKeyValuesRef(long edgePointer) {

@@ -77,9 +77,7 @@ public interface EncodedValue {
         }
 
         public int getRequiredBytes() {
-            // TODO NOW ugly: at the moment the following fails in several tests, because in BitUtil we always require full 4 bytes to read and write an integer!
             return (int) Math.ceil((double) getRequiredBits() / 8.0);
-//            return (int) Math.ceil((double) getRequiredBits() / 32.0) * 4;
         }
     }
 }

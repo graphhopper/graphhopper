@@ -98,4 +98,16 @@ public abstract class AbstractBitUtilTester {
         assertEquals("011", bitUtil.toLastBitString(3L, 3));
     }
 
+    @Test
+    public void testUInt3() {
+        byte[] bytes = new byte[3];
+        bitUtil.fromUInt3(bytes, 12345678, 0);
+        assertEquals(12345678, bitUtil.toUInt3(bytes, 0));
+
+        // of course negative numbers won't work but at this level we don't check range
+        bytes = new byte[3];
+        bitUtil.fromUInt3(bytes, -12345678, 0);
+        assertEquals(4431538, bitUtil.toUInt3(bytes, 0));
+    }
+
 }
