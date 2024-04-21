@@ -51,7 +51,6 @@ public class BaseGraph implements Graph, Closeable {
     final TurnCostStorage turnCostStorage;
     final BitUtil bitUtil;
     // length | nodeA | nextNode | ... | nodeB
-    // as we use integer index in 'edges' area => 'geometry' area is limited to 4GB (we use pos&neg values!)
     private final DataAccess wayGeometry;
     private final Directory dir;
     private final int segmentSize;
@@ -352,7 +351,7 @@ public class BaseGraph implements Graph, Closeable {
                 throw new IllegalArgumentException("Cannot use pointlist which is " + pillarNodes.getDimension()
                         + "D for graph which is " + nodeAccess.getDimension() + "D");
 
-            long existingGeoRef = Integer.toUnsignedLong(store.getGeoRef(edgePointer));
+            long existingGeoRef = store.getGeoRef(edgePointer);
 
             int len = pillarNodes.size();
             int dim = nodeAccess.getDimension();
@@ -367,7 +366,7 @@ public class BaseGraph implements Graph, Closeable {
             long nextGeoRef = nextGeoRef(len * dim);
             setWayGeometryAtGeoRef(pillarNodes, edgePointer, reverse, nextGeoRef);
         } else {
-            store.setGeoRef(edgePointer, 0);
+            store.setGeoRef(edgePointer, 0L);
         }
     }
 
@@ -388,14 +387,11 @@ public class BaseGraph implements Graph, Closeable {
     }
 
     private void setWayGeometryAtGeoRef(PointList pillarNodes, long edgePointer, boolean reverse, long geoRef) {
-        int len = pillarNodes.size();
-        int dim = nodeAccess.getDimension();
         long geoRefPosition = geoRef * 4;
-        int totalLen = len * dim * 4 + 4;
-        ensureGeometry(geoRefPosition, totalLen);
         byte[] wayGeometryBytes = createWayGeometryBytes(pillarNodes, reverse);
+        wayGeometry.ensureCapacity(geoRefPosition + wayGeometryBytes.length);
         wayGeometry.setBytes(geoRefPosition, wayGeometryBytes, wayGeometryBytes.length);
-        store.setGeoRef(edgePointer, BitUtil.toSignedInt(geoRef));
+        store.setGeoRef(edgePointer, geoRef);
     }
 
     private byte[] createWayGeometryBytes(PointList pillarNodes, boolean reverse) {
@@ -432,7 +428,7 @@ public class BaseGraph implements Graph, Closeable {
             pillarNodes.add(nodeAccess, adjNode);
             return pillarNodes;
         }
-        long geoRef = Integer.toUnsignedLong(store.getGeoRef(edgePointer));
+        long geoRef = store.getGeoRef(edgePointer);
         int count = 0;
         byte[] bytes = null;
         if (geoRef > 0) {
@@ -492,16 +488,9 @@ public class BaseGraph implements Graph, Closeable {
         throw new IllegalArgumentException("Mode isn't handled " + mode);
     }
 
-    private void ensureGeometry(long bytePos, int byteLength) {
-        wayGeometry.ensureCapacity(bytePos + byteLength);
-    }
-
     private long nextGeoRef(int arrayLength) {
         long tmp = maxGeoRef;
         maxGeoRef += arrayLength + 1L;
-        if (maxGeoRef > MAX_UNSIGNED_INT)
-            throw new IllegalStateException("Geometry too large, does not fit in 32 bits " + maxGeoRef);
-
         return tmp;
     }
 
