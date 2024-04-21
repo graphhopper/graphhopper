@@ -23,6 +23,7 @@ public abstract class AbstractAccessParser implements TagParser {
     protected final Set<String> barriers = new HashSet<>(5);
     protected final BooleanEncodedValue accessEnc;
     private boolean blockFords = true;
+    private TransportationMode transportationMode;
 
     protected AbstractAccessParser(BooleanEncodedValue accessEnc, TransportationMode transportationMode) {
         this.accessEnc = accessEnc;
@@ -35,6 +36,7 @@ public abstract class AbstractAccessParser implements TagParser {
         restrictedValues.add("permit");
 
         restrictionKeys.addAll(OSMRoadAccessParser.toOSMRestrictions(transportationMode));
+        this.transportationMode = transportationMode;
     }
 
     public boolean isBlockFords() {
@@ -74,13 +76,29 @@ public abstract class AbstractAccessParser implements TagParser {
 
     public abstract void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way);
 
+    private String getVehicleAccessTag(){
+        if (this.transportationMode.isMotorVehicle())
+            return "motorcar";
+        switch (this.transportationMode) {
+            case FOOT:
+                return "foot";
+            case BIKE:
+                return "bicycle";
+            case VEHICLE:
+                return "vehicle";
+            case OTHER:
+            default:
+                throw new IllegalArgumentException("Unknown transportationMode");
+        }
+    }
+
     /**
      * @return true if the given OSM node blocks access for the specified restrictions, false otherwise
      */
     public boolean isBarrier(ReaderNode node) {
         // note that this method will be only called for certain nodes as defined by OSMReader!
         String firstValue = node.getFirstValue(restrictionKeys);
-        if (restrictedValues.contains(firstValue) || node.hasTag("locked", "yes"))
+        if (restrictedValues.contains(firstValue) || (node.hasTag("locked", "yes") && !node.hasTag(getVehicleAccessTag(), intendedValues)))
             return true;
         else if (intendedValues.contains(firstValue))
             return false;

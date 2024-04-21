@@ -399,6 +399,8 @@ public abstract class AbstractBikeTagParserTester {
         node.setTag("barrier", "gate");
         node.setTag("locked", "yes");
         assertTrue(accessParser.isBarrier(node));
+        node.setTag("bicycle", "yes");
+        assertFalse(accessParser.isBarrier(node));
     }
 
     @Test

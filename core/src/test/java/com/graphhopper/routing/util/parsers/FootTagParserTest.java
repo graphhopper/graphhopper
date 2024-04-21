@@ -443,12 +443,16 @@ public class FootTagParserTest {
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
         node.setTag("access", "no");
+        assertTrue(accessParser.isBarrier(node));
         node.setTag("foot", "yes");
-        // no barrier!
+        assertFalse(accessParser.isBarrier(node));
+        node.setTag("locked", "yes");
+        // no barrier for foot=yes!
         assertFalse(accessParser.isBarrier(node));
 
+        node.clearTags();
+        node.setTag("barrier", "yes");
         node.setTag("locked", "yes");
-        // barrier!
         assertTrue(accessParser.isBarrier(node));
 
         node.clearTags();
