@@ -35,6 +35,7 @@ public class OSMGetOffBikeParser implements TagParser {
         boolean notIntended = !way.hasTag("bicycle", INTENDED) &&
                 (GET_OFF_BIKE.contains(highway)
                         || way.hasTag("railway", "platform")
+                        || (way.hasTag("vehicle", "no") && highway != null && !highway.equals("cycleway"))
                         || "path".equals(highway) && way.hasTag("foot", "designated") && !way.hasTag("segregated", "yes"));
         if ("steps".equals(highway) || way.hasTag("bicycle", "dismount") || notIntended) {
             getOffBikeEnc.setBool(false, edgeId, edgeIntAccess, true);
