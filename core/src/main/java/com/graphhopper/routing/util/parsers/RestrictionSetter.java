@@ -72,12 +72,7 @@ public class RestrictionSetter {
                 int viaEdge = p.first.getViaEdges().get(0);
                 int artificialEdge = artificialEdgesByEdges.getOrDefault(viaEdge, -1);
                 if (artificialEdge < 0) {
-                    EdgeIteratorState viaEdgeState = baseGraph.getEdgeIteratorState(p.first.getViaEdges().get(0), Integer.MIN_VALUE);
-                    EdgeIteratorState artificialEdgeState = baseGraph.edge(viaEdgeState.getBaseNode(), viaEdgeState.getAdjNode())
-                            .setFlags(viaEdgeState.getFlags())
-                            .setWayGeometry(viaEdgeState.fetchWayGeometry(FetchMode.PILLAR_ONLY))
-                            .setDistance(viaEdgeState.getDistance())
-                            .setKeyValues(viaEdgeState.getKeyValues());
+                    EdgeIteratorState artificialEdgeState = baseGraph.copyEdge(p.first.getViaEdges().get(0), true);
                     artificialEdge = artificialEdgeState.getEdge();
                     artificialEdgesByEdges.put(viaEdge, artificialEdge);
                 }

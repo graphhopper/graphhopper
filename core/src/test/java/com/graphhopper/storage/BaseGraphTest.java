@@ -289,4 +289,22 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
         edge.set(rcEnc, RoadClass.CORRIDOR);
         assertEquals(RoadClass.CORRIDOR, edge.get(rcEnc));
     }
+
+    @Test
+    public void copyEdge() {
+        BaseGraph graph = createGHStorage();
+        EnumEncodedValue<RoadClass> rcEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
+        EdgeIteratorState edge1 = graph.edge(3, 5).set(rcEnc, RoadClass.LIVING_STREET);
+        EdgeIteratorState edge2 = graph.edge(3, 5).set(rcEnc, RoadClass.MOTORWAY);
+        EdgeIteratorState edge3 = graph.copyEdge(edge1.getEdge(), true);
+        EdgeIteratorState edge4 = graph.copyEdge(edge1.getEdge(), false);
+        assertEquals(RoadClass.LIVING_STREET, edge1.get(rcEnc));
+        assertEquals(RoadClass.MOTORWAY, edge2.get(rcEnc));
+        assertEquals(edge1.get(rcEnc), edge3.get(rcEnc));
+        assertEquals(edge1.get(rcEnc), edge4.get(rcEnc));
+        graph.forEdgeAndCopyOfEdge(graph.createEdgeExplorer(), edge1, e -> e.set(rcEnc, RoadClass.FOOTWAY));
+        assertEquals(RoadClass.FOOTWAY, edge1.get(rcEnc));
+        assertEquals(RoadClass.FOOTWAY, edge3.get(rcEnc));
+        assertEquals(RoadClass.LIVING_STREET, edge4.get(rcEnc));
+    }
 }

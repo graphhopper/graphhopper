@@ -28,6 +28,7 @@ import com.graphhopper.util.shapes.BBox;
 
 import java.io.Closeable;
 import java.util.List;
+import java.util.function.Consumer;
 
 import static com.graphhopper.util.Helper.nf;
 
@@ -55,6 +56,7 @@ public class BaseGraph implements Graph, Closeable {
     private final Directory dir;
     private final int segmentSize;
     private boolean initialized = false;
+    private long minGeoRef;
     private long maxGeoRef;
 
     public BaseGraph(Directory dir, int intsForFlags, boolean withElevation, boolean withTurnCosts, int segmentSize) {
@@ -105,16 +107,22 @@ public class BaseGraph implements Graph, Closeable {
     private void loadWayGeometryHeader() {
         int geometryVersion = wayGeometry.getHeader(0);
         GHUtility.checkDAVersion(wayGeometry.getName(), Constants.VERSION_GEOMETRY, geometryVersion);
-        maxGeoRef = bitUtil.toLong(
+        minGeoRef = bitUtil.toLong(
                 wayGeometry.getHeader(4),
                 wayGeometry.getHeader(8)
+        );
+        maxGeoRef = bitUtil.toLong(
+                wayGeometry.getHeader(12),
+                wayGeometry.getHeader(16)
         );
     }
 
     private void setWayGeometryHeader() {
         wayGeometry.setHeader(0, Constants.VERSION_GEOMETRY);
-        wayGeometry.setHeader(4, bitUtil.getIntLow(maxGeoRef));
-        wayGeometry.setHeader(8, bitUtil.getIntHigh(maxGeoRef));
+        wayGeometry.setHeader(4, bitUtil.getIntLow(minGeoRef));
+        wayGeometry.setHeader(8, bitUtil.getIntHigh(minGeoRef));
+        wayGeometry.setHeader(12, bitUtil.getIntLow(maxGeoRef));
+        wayGeometry.setHeader(16, bitUtil.getIntHigh(maxGeoRef));
     }
 
     private void setInitialized() {
@@ -167,7 +175,8 @@ public class BaseGraph implements Graph, Closeable {
             turnCostStorage.create(initSize);
         }
         setInitialized();
-        // 0 stands for no separate geoRef
+        // 0 stands for no separate geoRef, <0 stands for no separate geoRef but existing edge copies
+        minGeoRef = 0;
         maxGeoRef = 4;
         return this;
     }
@@ -179,7 +188,7 @@ public class BaseGraph implements Graph, Closeable {
     public String toDetailsString() {
         return store.toDetailsString() + ", "
                 + "name:(" + edgeKVStorage.getCapacity() / Helper.MB + "MB), "
-                + "geo:" + nf(maxGeoRef) + "(" + wayGeometry.getCapacity() / Helper.MB + "MB)";
+                + "geo:" + nf(minGeoRef) + "/" + nf(maxGeoRef) + "(" + wayGeometry.getCapacity() / Helper.MB + "MB)";
     }
 
     /**
@@ -292,6 +301,45 @@ public class BaseGraph implements Graph, Closeable {
         return edge;
     }
 
+    /**
+     * Creates a copy of a given edge with the same properties.
+     *
+     * @param reuseGeometry If true the copy uses the same pointer to the geometry,
+     *                      so changing the geometry would alter the geometry for both edges!
+     */
+    public EdgeIteratorState copyEdge(int edge, boolean reuseGeometry) {
+        EdgeIteratorStateImpl edgeState = (EdgeIteratorStateImpl) getEdgeIteratorState(edge, Integer.MIN_VALUE);
+        EdgeIteratorStateImpl newEdge = (EdgeIteratorStateImpl) edge(edgeState.getBaseNode(), edgeState.getAdjNode())
+                .setFlags(edgeState.getFlags())
+                .setDistance(edgeState.getDistance())
+                .setKeyValues(edgeState.getKeyValues());
+        if (reuseGeometry) {
+            // We use the same geo ref for the copied edge. This saves memory because we are not duplicating
+            // the geometry, and it allows to identify the copies of a given edge.
+            long edgePointer = edgeState.edgePointer;
+            long geoRef = store.getGeoRef(edgePointer);
+            if (geoRef == 0) {
+                // No geometry for this edge, but we need to be able to identify the copied edges later, so
+                // we use a dedicated negative value for the geo ref.
+                minGeoRef--;
+                geoRef = minGeoRef;
+                store.setGeoRef(edgePointer, geoRef);
+            }
+            store.setGeoRef(newEdge.edgePointer, geoRef);
+        } else {
+            newEdge.setWayGeometry(edgeState.fetchWayGeometry(FetchMode.PILLAR_ONLY));
+        }
+        return newEdge;
+    }
+
+    public void forEdgeAndCopyOfEdge(EdgeExplorer explorer, EdgeIteratorState edge, Consumer<EdgeIteratorState> consumer) {
+        EdgeIterator iter = explorer.setBaseNode(edge.getBaseNode());
+        while (iter.next()) {
+            if (store.getGeoRef(((EdgeIteratorStateImpl) edge).edgePointer) == store.getGeoRef(((EdgeIteratorStateImpl) iter).edgePointer))
+                consumer.accept(iter);
+        }
+    }
+
     @Override
     public EdgeIteratorState getEdgeIteratorState(int edgeId, int adjNode) {
         EdgeIteratorStateImpl edge = new EdgeIteratorStateImpl(this);
@@ -352,6 +400,9 @@ public class BaseGraph implements Graph, Closeable {
                         + "D for graph which is " + nodeAccess.getDimension() + "D");
 
             long existingGeoRef = store.getGeoRef(edgePointer);
+            if (existingGeoRef < 0)
+                // in theory we could handle this and update the geometry of all copies as well, but it is easier to just not allow this
+                throw new IllegalStateException("The edge " + edgePointer + " has already been copied so we cannot change the geometry again");
 
             int len = pillarNodes.size();
             int dim = nodeAccess.getDimension();
