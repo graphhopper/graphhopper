@@ -332,11 +332,18 @@ public class BaseGraph implements Graph, Closeable {
         return newEdge;
     }
 
-    public void forEdgeAndCopyOfEdge(EdgeExplorer explorer, EdgeIteratorState edge, Consumer<EdgeIteratorState> consumer) {
+    /**
+     * Runs the given action on the given edge and all its copies that were created with 'reuseGeometry=true'.
+     */
+    public void forEdgeAndCopiesOfEdge(EdgeExplorer explorer, EdgeIteratorState edge, Consumer<EdgeIteratorState> consumer) {
         EdgeIterator iter = explorer.setBaseNode(edge.getBaseNode());
+        final long geoRef = store.getGeoRef(((EdgeIteratorStateImpl) edge).edgePointer);
         while (iter.next()) {
-            if (store.getGeoRef(((EdgeIteratorStateImpl) edge).edgePointer) == store.getGeoRef(((EdgeIteratorStateImpl) iter).edgePointer))
+            long geoRefBefore = store.getGeoRef(((EdgeIteratorStateImpl) iter).edgePointer);
+            if (geoRefBefore == geoRef)
                 consumer.accept(iter);
+            if (store.getGeoRef(((EdgeIteratorStateImpl) iter).edgePointer) != geoRefBefore)
+                throw new IllegalStateException("The consumer must not change the geo ref");
         }
     }
 
@@ -401,8 +408,9 @@ public class BaseGraph implements Graph, Closeable {
 
             long existingGeoRef = store.getGeoRef(edgePointer);
             if (existingGeoRef < 0)
-                // in theory we could handle this and update the geometry of all copies as well, but it is easier to just not allow this
-                throw new IllegalStateException("The edge " + edgePointer + " has already been copied so we cannot change the geometry again");
+                // users of this method might not be aware that after changing the geo ref it is no
+                // longer possible to find the copies corresponding to an edge, so we deny this
+                throw new IllegalStateException("This edge has already been copied so we can no longer change the geometry, pointer=" + edgePointer);
 
             int len = pillarNodes.size();
             int dim = nodeAccess.getDimension();
@@ -411,9 +419,10 @@ public class BaseGraph implements Graph, Closeable {
                 if (len <= count) {
                     setWayGeometryAtGeoRef(pillarNodes, edgePointer, reverse, existingGeoRef);
                     return;
+                } else {
+                    throw new IllegalStateException("This edge already has a way geometry so it cannot be changed to a bigger geometry, pointer=" + edgePointer);
                 }
             }
-
             long nextGeoRef = nextGeoRef(len * dim);
             setWayGeometryAtGeoRef(pillarNodes, edgePointer, reverse, nextGeoRef);
         } else {

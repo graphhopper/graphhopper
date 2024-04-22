@@ -23,6 +23,8 @@ import com.graphhopper.search.KVStorage.KeyValue;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -302,9 +304,64 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
         assertEquals(RoadClass.MOTORWAY, edge2.get(rcEnc));
         assertEquals(edge1.get(rcEnc), edge3.get(rcEnc));
         assertEquals(edge1.get(rcEnc), edge4.get(rcEnc));
-        graph.forEdgeAndCopyOfEdge(graph.createEdgeExplorer(), edge1, e -> e.set(rcEnc, RoadClass.FOOTWAY));
+        graph.forEdgeAndCopiesOfEdge(graph.createEdgeExplorer(), edge1, e -> e.set(rcEnc, RoadClass.FOOTWAY));
         assertEquals(RoadClass.FOOTWAY, edge1.get(rcEnc));
         assertEquals(RoadClass.FOOTWAY, edge3.get(rcEnc));
+        // edge4 was not changed because it was copied with reuseGeometry=false
         assertEquals(RoadClass.LIVING_STREET, edge4.get(rcEnc));
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    public void copyEdge_multiple(boolean withGeometries) {
+        BaseGraph graph = createGHStorage();
+        EnumEncodedValue<RoadClass> rcEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
+        EdgeIteratorState edge1 = graph.edge(1, 2).set(rcEnc, RoadClass.FOOTWAY);
+        EdgeIteratorState edge2 = graph.edge(1, 3).set(rcEnc, RoadClass.MOTORWAY);
+        EdgeIteratorState edge3 = graph.edge(1, 4).set(rcEnc, RoadClass.CYCLEWAY);
+        if (withGeometries) {
+            edge1.setWayGeometry(Helper.createPointList(1.5, 1, 0, 2, 3, 0));
+            edge2.setWayGeometry(Helper.createPointList(1.5, 1, 1, 2, 3, 5));
+            edge3.setWayGeometry(Helper.createPointList(1.5, 1, 2, 2, 3, 6));
+        }
+        EdgeIteratorState edge4 = graph.copyEdge(edge1.getEdge(), true);
+        EdgeIteratorState edge5 = graph.copyEdge(edge3.getEdge(), true);
+        EdgeIteratorState edge6 = graph.copyEdge(edge3.getEdge(), true);
+        EdgeExplorer explorer = graph.createEdgeExplorer();
+        graph.forEdgeAndCopiesOfEdge(explorer, edge1, e -> e.set(rcEnc, RoadClass.PATH));
+        assertEquals(RoadClass.PATH, edge1.get(rcEnc));
+        assertEquals(RoadClass.CYCLEWAY, edge3.get(rcEnc));
+        assertEquals(RoadClass.PATH, edge4.get(rcEnc));
+        assertEquals(RoadClass.CYCLEWAY, edge5.get(rcEnc));
+        assertEquals(RoadClass.CYCLEWAY, edge6.get(rcEnc));
+        graph.forEdgeAndCopiesOfEdge(explorer, edge6, e -> e.set(rcEnc, RoadClass.OTHER));
+        assertEquals(RoadClass.PATH, edge1.get(rcEnc));
+        assertEquals(RoadClass.OTHER, edge3.get(rcEnc));
+        assertEquals(RoadClass.PATH, edge4.get(rcEnc));
+        assertEquals(RoadClass.OTHER, edge5.get(rcEnc));
+        assertEquals(RoadClass.OTHER, edge6.get(rcEnc));
+    }
+
+    @Test
+    public void copyEdge_changeGeometry() {
+        BaseGraph graph = createGHStorage();
+        EnumEncodedValue<RoadClass> rcEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
+        EdgeIteratorState edge1 = graph.edge(1, 2).set(rcEnc, RoadClass.FOOTWAY);
+        EdgeIteratorState edge2 = graph.edge(1, 3).set(rcEnc, RoadClass.FOOTWAY).setWayGeometry(Helper.createPointList(0, 1, 2, 3));
+        EdgeIteratorState edge3 = graph.edge(1, 4).set(rcEnc, RoadClass.FOOTWAY).setWayGeometry(Helper.createPointList(4, 5, 6, 7));
+        EdgeIteratorState edge4 = graph.copyEdge(edge1.getEdge(), true);
+        EdgeIteratorState edge5 = graph.copyEdge(edge3.getEdge(), true);
+
+        // after copying an edge we can no longer change the geometry
+        assertThrows(IllegalStateException.class, () -> graph.getEdgeIteratorState(edge1.getEdge(), Integer.MIN_VALUE).setWayGeometry(Helper.createPointList(1.5, 1, 5, 4)));
+        // after setting the geometry once we can change it again
+        graph.getEdgeIteratorState(edge2.getEdge(), Integer.MIN_VALUE).setWayGeometry(Helper.createPointList(2, 3, 4, 5));
+        // ... but not if it is longer than before
+        IllegalStateException e = assertThrows(IllegalStateException.class, () -> graph.getEdgeIteratorState(edge2.getEdge(), Integer.MIN_VALUE).setWayGeometry(Helper.createPointList(2, 3, 4, 5, 6, 7)));
+        assertTrue(e.getMessage().contains("This edge already has a way geometry so it cannot be changed to a bigger geometry"), e.getMessage());
+        // it's the same for edges with geometry that were copied:
+        graph.getEdgeIteratorState(edge3.getEdge(), Integer.MIN_VALUE).setWayGeometry(Helper.createPointList(6, 7, 8, 9));
+        e = assertThrows(IllegalStateException.class, () -> graph.getEdgeIteratorState(edge3.getEdge(), Integer.MIN_VALUE).setWayGeometry(Helper.createPointList(0, 1, 6, 7, 8, 9)));
+        assertTrue(e.getMessage().contains("This edge already has a way geometry so it cannot be changed to a bigger geometry"), e.getMessage());
     }
 }
