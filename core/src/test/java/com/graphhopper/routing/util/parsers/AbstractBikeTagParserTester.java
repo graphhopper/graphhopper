@@ -140,6 +140,18 @@ public abstract class AbstractBikeTagParserTester {
         way.clearTags();
         way.setTag("highway", "path");
         assertTrue(accessParser.getAccess(way).isWay());
+        way.setTag("vehicle", "no");
+        assertTrue(accessParser.getAccess(way).isWay());
+        way.setTag("bicycle", "no");
+        assertTrue(accessParser.getAccess(way).canSkip());
+
+        way.clearTags();
+        way.setTag("highway", "path");
+        assertTrue(accessParser.getAccess(way).isWay());
+        way.setTag("access", "no");
+        assertTrue(accessParser.getAccess(way).canSkip());
+        way.setTag("bicycle", "no");
+        assertTrue(accessParser.getAccess(way).canSkip());
 
         way.setTag("highway", "path");
         way.setTag("bicycle", "yes");
@@ -195,6 +207,8 @@ public abstract class AbstractBikeTagParserTester {
         assertTrue(accessParser.getAccess(way).isWay());
         way.setTag("bicycle", "dismount");
         assertTrue(accessParser.getAccess(way).isWay());
+        way.setTag("bicycle", "no");
+        assertTrue(accessParser.getAccess(way).canSkip());
 
 
         way.clearTags();

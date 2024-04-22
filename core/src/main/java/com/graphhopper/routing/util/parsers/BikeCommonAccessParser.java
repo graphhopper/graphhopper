@@ -77,17 +77,25 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
         }
 
         // use the way for pushing
-        if (way.hasTag("bicycle", "dismount") || way.hasTag("vehicle", "no"))
+        if (way.hasTag("bicycle", "dismount"))
             return WayAccess.WAY;
-
-        if (way.hasTag("access", "no") && (!way.hasTag("bicycle:conditional")) && (!way.hasTag("bicycle", intendedValues)))
-            return WayAccess.CAN_SKIP;
 
         int firstIndex = way.getFirstIndex(restrictionKeys);
         if (firstIndex >= 0) {
-            String firstValue = way.getTag(restrictionKeys.get(firstIndex), "");
+            String firstRestrictedKey = restrictionKeys.get(firstIndex);
+            String firstValue = way.getTag(firstRestrictedKey, "");
             String[] restrict = firstValue.split(";");
             for (String value : restrict) {
+                if (value.equals("no")) {
+                    if (firstRestrictedKey.equals("vehicle"))
+                        return WayAccess.WAY;
+                    if (firstRestrictedKey.equals("bicycle") && way.hasTag("vehicle", "no")) {
+                        if (way.hasTag("highway", "cycleway"))
+                            return WayAccess.WAY;  // Tagging error, we follow the highway value
+                        else
+                            return WayAccess.CAN_SKIP;
+                    }
+                }
                 if (restrictedValues.contains(value) && !hasTemporalRestriction(way, firstIndex, restrictionKeys))
                     return WayAccess.CAN_SKIP;
                 if (intendedValues.contains(value))
