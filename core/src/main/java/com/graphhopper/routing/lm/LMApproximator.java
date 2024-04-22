@@ -23,6 +23,7 @@ import com.graphhopper.routing.weighting.BeelineWeightApproximator;
 import com.graphhopper.routing.weighting.WeightApproximator;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.util.DistancePlaneProjection;
 
 import java.util.Arrays;
 
@@ -78,8 +79,10 @@ public class LMApproximator implements WeightApproximator {
         this.graph = graph;
         this.lmWeighting = lmWeighting;
         this.routingWeighting = routingWeighting;
-        this.fallBackApproximation = new BeelineWeightApproximator(graph.getNodeAccess(), lmWeighting);
-        this.beelineApproximation = new BeelineWeightApproximator(graph.getNodeAccess(), routingWeighting);
+        this.fallBackApproximation = new BeelineWeightApproximator(graph.getNodeAccess(), lmWeighting)
+                .setDistanceCalc(DistancePlaneProjection.DIST_PLANE);
+        this.beelineApproximation = new BeelineWeightApproximator(graph.getNodeAccess(), routingWeighting)
+                .setDistanceCalc(DistancePlaneProjection.DIST_PLANE);
         this.maxBaseNodes = maxBaseNodes;
     }
 
