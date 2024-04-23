@@ -66,13 +66,28 @@ public class Stop extends Entity {
             s.sourceFileLine = row + 1; // offset line number by 1 to account for 0-based row index
             s.stop_id   = getStringField("stop_id", true);
             s.stop_code = getStringField("stop_code", false);
-            s.stop_name = getStringField("stop_name", true);
             s.stop_desc = getStringField("stop_desc", false);
             s.stop_lat  = getDoubleField("stop_lat", true, -90D, 90D);
             s.stop_lon  = getDoubleField("stop_lon", true, -180D, 180D);
             s.zone_id   = getStringField("zone_id", false);
             s.stop_url  = getUrlField("stop_url", false);
             s.location_type  = getIntField("location_type", false, 0, 4);
+
+            // Stop names are conditionally required.
+            //
+            // They are required for locations which are
+            // * stops (location_type=0),
+            // * stations (location_type=1), or
+            // * entrances/exits (location_type=2)
+            //
+            // They are optional for locations which are
+            // * generic nodes (location_type=3), or
+            // * boarding areas (location_type=4).
+            if (s.location_type >= 0 && s.location_type <= 2)
+                s.stop_name = getStringField("stop_name", true);
+            else
+                s.stop_name = getStringField("stop_name", false);
+
             s.parent_station = getStringField("parent_station", false);
             s.stop_timezone  = getStringField("stop_timezone", false);
             s.wheelchair_boarding = getStringField("wheelchair_boarding", false);
