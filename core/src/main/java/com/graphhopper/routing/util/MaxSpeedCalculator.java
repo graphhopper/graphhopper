@@ -130,8 +130,8 @@ public class MaxSpeedCalculator {
         EncodedValue.InitializerConfig config = new EncodedValue.InitializerConfig();
         ruralMaxSpeedEnc.init(config);
         urbanMaxSpeedEnc.init(config);
-        if (config.getRequiredBits() > 16)
-            throw new IllegalStateException("bits are not sufficient " + config.getRequiredBits());
+        if (config.getRequiredBytes() > 4)
+            throw new IllegalStateException("bytes are not sufficient " + config.getRequiredBytes());
 
         parser.init(ruralMaxSpeedEnc, urbanMaxSpeedEnc, internalMaxSpeedStorage);
     }

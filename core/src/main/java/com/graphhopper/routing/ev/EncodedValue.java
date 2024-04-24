@@ -66,12 +66,8 @@ public interface EncodedValue {
             nextShift = shift + usedBits;
         }
 
-        public int getRequiredBits() {
+        private int getRequiredBits() {
             return (dataIndex) * 32 + nextShift;
-        }
-
-        public int getRequiredInts() {
-            return (int) Math.ceil((double) getRequiredBits() / 32.0);
         }
 
         public int getRequiredBytes() {

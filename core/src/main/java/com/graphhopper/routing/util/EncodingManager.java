@@ -45,12 +45,12 @@ public class EncodingManager implements EncodedValueLookup {
     private final LinkedHashMap<String, EncodedValue> encodedValueMap;
     private final LinkedHashMap<String, EncodedValue> turnEncodedValueMap;
     private int bytesForFlags;
-    private int intsForTurnCostFlags;
+    private int bytesForTurnCostFlags;
 
     public static void putEncodingManagerIntoProperties(EncodingManager encodingManager, StorableProperties properties) {
         properties.put("graph.em.version", Constants.VERSION_EM);
         properties.put("graph.em.bytes_for_flags", encodingManager.bytesForFlags);
-        properties.put("graph.em.ints_for_turn_cost_flags", encodingManager.intsForTurnCostFlags);
+        properties.put("graph.em.bytes_for_turn_cost_flags", encodingManager.bytesForTurnCostFlags);
         properties.put("graph.encoded_values", encodingManager.toEncodedValuesAsString());
         properties.put("graph.turn_encoded_values", encodingManager.toTurnEncodedValuesAsString());
     }
@@ -82,7 +82,7 @@ public class EncodingManager implements EncodedValueLookup {
                 throw new IllegalStateException("Duplicate turn encoded value name: " + encodedValue.getName() + " in: graph.turn_encoded_values=" + turnEncodedValueStr);
         });
 
-        return new EncodingManager(getIntegerProperty(properties, "graph.em.bytes_for_flags"), getIntegerProperty(properties, "graph.em.ints_for_turn_cost_flags"), encodedValues,
+        return new EncodingManager(getIntegerProperty(properties, "graph.em.bytes_for_flags"), getIntegerProperty(properties, "graph.em.bytes_for_turn_cost_flags"), encodedValues,
                 turnEncodedValues
         );
     }
@@ -109,13 +109,13 @@ public class EncodingManager implements EncodedValueLookup {
         return new Builder();
     }
 
-    public EncodingManager(int bytesForFlags, int intsForTurnCostFlags,
+    public EncodingManager(int bytesForFlags, int bytesForTurnCostFlags,
                            LinkedHashMap<String, EncodedValue> encodedValueMap,
                            LinkedHashMap<String, EncodedValue> turnEncodedValueMap) {
         this.encodedValueMap = encodedValueMap;
         this.turnEncodedValueMap = turnEncodedValueMap;
         this.bytesForFlags = bytesForFlags;
-        this.intsForTurnCostFlags = intsForTurnCostFlags;
+        this.bytesForTurnCostFlags = bytesForTurnCostFlags;
     }
 
     private EncodingManager() {
@@ -157,7 +157,7 @@ public class EncodingManager implements EncodedValueLookup {
         public EncodingManager build() {
             checkNotBuiltAlready();
             em.bytesForFlags = edgeConfig.getRequiredBytes();
-            em.intsForTurnCostFlags = turnCostConfig.getRequiredInts();
+            em.bytesForTurnCostFlags = turnCostConfig.getRequiredBytes();
             EncodingManager result = em;
             em = null;
             return result;
@@ -213,7 +213,7 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     public boolean needsTurnCostsSupport() {
-        return intsForTurnCostFlags > 0;
+        return bytesForTurnCostFlags > 0;
     }
 
     @Override
