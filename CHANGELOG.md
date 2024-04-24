@@ -1,5 +1,7 @@
 ### 10.0 [not yet released]
 
+- replaced IntsRef with BytesRef. Note that setInt(edgeId, index) uses a byte index now, i.e. instead of edgeAccess.setInt(edgeId, index, value) you now have to use edgeAccess.setInt(edgeId, index * 4, value)
+
 
 ### 9.0 [23 Apr 2024]
 

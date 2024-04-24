@@ -733,7 +733,7 @@ public class BaseGraph implements Graph, Closeable {
         public BytesRef getFlags() {
             byte[] bytes = new byte[store.getBytesForFlags()];
             edgeAccess.getBytes(edgeId, 0, bytes, 0, bytes.length);
-            return new BytesRef(bytes, 0, bytes.length); // TODO NOW just bytes array
+            return new BytesRef(bytes, 0, bytes.length); // TODO use just byte[] as public API?
         }
 
         @Override
