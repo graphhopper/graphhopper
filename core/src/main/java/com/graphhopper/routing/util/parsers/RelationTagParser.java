@@ -18,7 +18,7 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderRelation;
-import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.BytesRef;
 
 /**
  * This interface serves the purpose of creating relation flags (max. 64 bits) from ReaderRelation in handleRelationTags
@@ -31,5 +31,5 @@ public interface RelationTagParser extends TagParser {
      * Analyze the tags of a relation and create the routing flags for the second read step.
      * In the pre-parsing step this method will be called to determine the useful relation tags.
      */
-    void handleRelationTags(IntsRef relFlags, ReaderRelation relation);
+    void handleRelationTags(BytesRef relFlags, ReaderRelation relation);
 }

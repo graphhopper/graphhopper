@@ -20,7 +20,7 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.BytesRef;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -32,19 +32,19 @@ class OSMRoadEnvironmentParserTest {
         EnumEncodedValue<RoadEnvironment> roadEnvironmentEnc = RoadEnvironment.create();
         roadEnvironmentEnc.init(new EncodedValue.InitializerConfig());
         OSMRoadEnvironmentParser parser = new OSMRoadEnvironmentParser(roadEnvironmentEnc);
-        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        EdgeBytesAccess edgeAccess = new EdgeBytesAccessArray(4);
         int edgeId = 0;
         ReaderWay way = new ReaderWay(0);
         way.setTag("route", "shuttle_train");
-        parser.handleWayTags(edgeId, edgeIntAccess, way, new IntsRef(2));
-        RoadEnvironment roadEnvironment = roadEnvironmentEnc.getEnum(false, edgeId, edgeIntAccess);
+        parser.handleWayTags(edgeId, edgeAccess, way, new BytesRef(8));
+        RoadEnvironment roadEnvironment = roadEnvironmentEnc.getEnum(false, edgeId, edgeAccess);
         assertEquals(RoadEnvironment.FERRY, roadEnvironment);
 
         way = new ReaderWay(1);
         way.setTag("highway", "footway");
         way.setTag("route", "ferry");
-        parser.handleWayTags(edgeId, edgeIntAccess = new ArrayEdgeIntAccess(1), way, new IntsRef(2));
-        roadEnvironment = roadEnvironmentEnc.getEnum(false, edgeId, edgeIntAccess);
+        parser.handleWayTags(edgeId, edgeAccess = new EdgeBytesAccessArray(4), way, new BytesRef(8));
+        roadEnvironment = roadEnvironmentEnc.getEnum(false, edgeId, edgeAccess);
         assertEquals(RoadEnvironment.FERRY, roadEnvironment);
     }
 

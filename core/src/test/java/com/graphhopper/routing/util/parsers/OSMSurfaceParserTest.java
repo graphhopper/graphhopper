@@ -2,7 +2,7 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.BytesRef;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -22,69 +22,69 @@ public class OSMSurfaceParserTest {
 
     @Test
     public void testSimpleTags() {
-        IntsRef relFlags = new IntsRef(2);
+        BytesRef relFlags = new BytesRef(8);
         ReaderWay readerWay = new ReaderWay(1);
-        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        EdgeBytesAccess edgeAccess = new EdgeBytesAccessArray(4);
         int edgeId = 0;
         readerWay.setTag("highway", "primary");
-        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
-        assertEquals(Surface.MISSING, surfaceEnc.getEnum(false, edgeId, edgeIntAccess));
+        parser.handleWayTags(edgeId, edgeAccess, readerWay, relFlags);
+        assertEquals(Surface.MISSING, surfaceEnc.getEnum(false, edgeId, edgeAccess));
 
         readerWay.setTag("surface", "cobblestone");
-        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
-        assertEquals(Surface.COBBLESTONE, surfaceEnc.getEnum(false, edgeId, edgeIntAccess));
+        parser.handleWayTags(edgeId, edgeAccess, readerWay, relFlags);
+        assertEquals(Surface.COBBLESTONE, surfaceEnc.getEnum(false, edgeId, edgeAccess));
         assertTrue(Surface.COBBLESTONE.ordinal() > Surface.ASPHALT.ordinal());
 
         readerWay.setTag("surface", "wood");
-        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
-        assertEquals(Surface.WOOD, surfaceEnc.getEnum(false, edgeId, edgeIntAccess));
+        parser.handleWayTags(edgeId, edgeAccess, readerWay, relFlags);
+        assertEquals(Surface.WOOD, surfaceEnc.getEnum(false, edgeId, edgeAccess));
     }
 
     @Test
     public void testSynonyms() {
-        IntsRef relFlags = new IntsRef(2);
+        BytesRef relFlags = new BytesRef(8);
         ReaderWay readerWay = new ReaderWay(1);
-        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        EdgeBytesAccess edgeAccess = new EdgeBytesAccessArray(4);
         int edgeId = 0;
         readerWay.setTag("highway", "primary");
         readerWay.setTag("surface", "metal");
-        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
-        assertEquals(Surface.PAVED, surfaceEnc.getEnum(false, edgeId, edgeIntAccess));
+        parser.handleWayTags(edgeId, edgeAccess, readerWay, relFlags);
+        assertEquals(Surface.PAVED, surfaceEnc.getEnum(false, edgeId, edgeAccess));
 
         readerWay.setTag("surface", "sett");
-        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
-        assertEquals(Surface.COBBLESTONE, surfaceEnc.getEnum(false, edgeId, edgeIntAccess));
+        parser.handleWayTags(edgeId, edgeAccess, readerWay, relFlags);
+        assertEquals(Surface.COBBLESTONE, surfaceEnc.getEnum(false, edgeId, edgeAccess));
 
         readerWay.setTag("surface", "unhewn_cobblestone");
-        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
-        assertEquals(Surface.COBBLESTONE, surfaceEnc.getEnum(false, edgeId, edgeIntAccess));
+        parser.handleWayTags(edgeId, edgeAccess, readerWay, relFlags);
+        assertEquals(Surface.COBBLESTONE, surfaceEnc.getEnum(false, edgeId, edgeAccess));
 
         readerWay.setTag("surface", "earth");
-        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
-        assertEquals(Surface.DIRT, surfaceEnc.getEnum(false, edgeId, edgeIntAccess));
+        parser.handleWayTags(edgeId, edgeAccess, readerWay, relFlags);
+        assertEquals(Surface.DIRT, surfaceEnc.getEnum(false, edgeId, edgeAccess));
 
         readerWay.setTag("surface", "pebblestone");
-        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
-        assertEquals(Surface.GRAVEL, surfaceEnc.getEnum(false, edgeId, edgeIntAccess));
+        parser.handleWayTags(edgeId, edgeAccess, readerWay, relFlags);
+        assertEquals(Surface.GRAVEL, surfaceEnc.getEnum(false, edgeId, edgeAccess));
 
         readerWay.setTag("surface", "grass_paver");
-        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
-        assertEquals(Surface.GRASS, surfaceEnc.getEnum(false, edgeId, edgeIntAccess));
+        parser.handleWayTags(edgeId, edgeAccess, readerWay, relFlags);
+        assertEquals(Surface.GRASS, surfaceEnc.getEnum(false, edgeId, edgeAccess));
     }
 
     @Test
     public void testSubtypes() {
-        IntsRef relFlags = new IntsRef(2);
+        BytesRef relFlags = new BytesRef(8);
         ReaderWay readerWay = new ReaderWay(1);
-        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        EdgeBytesAccess edgeAccess = new EdgeBytesAccessArray(4);
         int edgeId = 0;
         readerWay.setTag("highway", "primary");
         readerWay.setTag("surface", "concrete:plates");
-        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
-        assertEquals(Surface.CONCRETE, surfaceEnc.getEnum(false, edgeId, edgeIntAccess));
+        parser.handleWayTags(edgeId, edgeAccess, readerWay, relFlags);
+        assertEquals(Surface.CONCRETE, surfaceEnc.getEnum(false, edgeId, edgeAccess));
 
         readerWay.setTag("surface", "cobblestone:flattened");
-        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
-        assertEquals(Surface.COBBLESTONE, surfaceEnc.getEnum(false, edgeId, edgeIntAccess));
+        parser.handleWayTags(edgeId, edgeAccess, readerWay, relFlags);
+        assertEquals(Surface.COBBLESTONE, surfaceEnc.getEnum(false, edgeId, edgeAccess));
     }
 }

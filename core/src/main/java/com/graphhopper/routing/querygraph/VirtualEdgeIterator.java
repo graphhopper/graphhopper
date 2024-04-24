@@ -21,7 +21,6 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.search.KVStorage;
 import com.graphhopper.storage.BytesRef;
-import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.FetchMode;

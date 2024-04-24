@@ -183,7 +183,7 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
 
     @Test
     public void testMultipleDecoupledEdges() {
-        // a typical usage where we create independent EdgeIteratorState's BUT due to the IntsRef reference they are no more independent
+        // a typical usage where we create independent EdgeIteratorState's BUT due to the cached BytesRef reference they are no more independent
         BaseGraph graph = createGHStorage();
         graph.edge(0, 1).setDistance(10).set(carAccessEnc, true, true);
         graph.edge(1, 2).setDistance(10).set(carAccessEnc, true, true);
@@ -198,7 +198,7 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
 
         // obviously this should pass but as the reference is shared and freshFlags=false the edge1 flags are returned!
         // So we do not set the reference for _setFlags but just the value
-        // A better solution would be if we do not allow to create IntsRef outside of the EdgeIterator API
+        // A better solution would be if we do not allow to create BytesRef outside of the EdgeIterator API
         assertTrue(edge0.get(carAccessEnc));
         assertFalse(edge0.getReverse(carAccessEnc));
     }

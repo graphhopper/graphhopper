@@ -3,7 +3,7 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.BytesRef;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
@@ -110,22 +110,22 @@ public class OSMGetOffBikeParserTest {
         way.setTag("highway", "primary");
         way.setTag("oneway", "yes");
 
-        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        EdgeBytesAccess edgeAccess = new EdgeBytesAccessArray(4);
         int edgeId = 0;
-        IntsRef rel = new IntsRef(1);
-        accessParser.handleWayTags(edgeId, edgeIntAccess, way, new IntsRef(1));
-        getOffParser.handleWayTags(edgeId, edgeIntAccess, way, new IntsRef(1));
+        BytesRef rel = new BytesRef(4);
+        accessParser.handleWayTags(edgeId, edgeAccess, way, rel);
+        getOffParser.handleWayTags(edgeId, edgeAccess, way, rel);
 
-        assertFalse(offBikeEnc.getBool(false, edgeId, edgeIntAccess));
-        assertTrue(offBikeEnc.getBool(true, edgeId, edgeIntAccess));
+        assertFalse(offBikeEnc.getBool(false, edgeId, edgeAccess));
+        assertTrue(offBikeEnc.getBool(true, edgeId, edgeAccess));
     }
 
     private boolean isGetOffBike(ReaderWay way) {
-        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        EdgeBytesAccess edgeAccess = new EdgeBytesAccessArray(4);
         int edgeId = 0;
-        IntsRef rel = new IntsRef(1);
-        accessParser.handleWayTags(edgeId, edgeIntAccess, way, rel);
-        getOffParser.handleWayTags(edgeId, edgeIntAccess, way, rel);
-        return offBikeEnc.getBool(false, edgeId, edgeIntAccess);
+        BytesRef rel = new BytesRef(4);
+        accessParser.handleWayTags(edgeId, edgeAccess, way, rel);
+        getOffParser.handleWayTags(edgeId, edgeAccess, way, rel);
+        return offBikeEnc.getBool(false, edgeId, edgeAccess);
     }
 }

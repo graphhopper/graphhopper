@@ -2,9 +2,9 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.ev.EdgeBytesAccess;
 import com.graphhopper.routing.util.parsers.TagParser;
-import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.BytesRef;
 
 public class FerrySpeedCalculator implements TagParser {
     private final DecimalEncodedValue ferrySpeedEnc;
@@ -55,10 +55,10 @@ public class FerrySpeedCalculator implements TagParser {
     }
 
     @Override
-    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(int edgeId, EdgeBytesAccess edgeAccess, ReaderWay way, BytesRef relationFlags) {
         if (isFerry(way)) {
             double ferrySpeed = minmax(getSpeed(way), ferrySpeedEnc);
-            ferrySpeedEnc.setDecimal(false, edgeId, edgeIntAccess, ferrySpeed);
+            ferrySpeedEnc.setDecimal(false, edgeId, edgeAccess, ferrySpeed);
         }
     }
 }

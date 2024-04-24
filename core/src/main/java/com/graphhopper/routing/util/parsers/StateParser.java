@@ -18,10 +18,10 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.ev.EdgeBytesAccess;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.State;
-import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.BytesRef;
 
 public class StateParser implements TagParser {
     private final EnumEncodedValue<State> stateEnc;
@@ -31,8 +31,8 @@ public class StateParser implements TagParser {
     }
 
     @Override
-    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(int edgeId, EdgeBytesAccess edgeAccess, ReaderWay way, BytesRef relationFlags) {
         State country = way.getTag("country_state", State.MISSING);
-        stateEnc.setEnum(false, edgeId, edgeIntAccess, country);
+        stateEnc.setEnum(false, edgeId, edgeAccess, country);
     }
 }

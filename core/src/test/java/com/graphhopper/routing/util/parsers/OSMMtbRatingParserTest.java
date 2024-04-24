@@ -20,7 +20,7 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.BytesRef;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -57,13 +57,13 @@ class OSMMtbRatingParserTest {
         IntEncodedValue ev = MtbRating.create();
         ev.init(new EncodedValue.InitializerConfig());
         OSMMtbRatingParser parser = new OSMMtbRatingParser(ev);
-        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        EdgeBytesAccess edgeAccess = new EdgeBytesAccessArray(4);
         int edgeId = 0;
         ReaderWay way = new ReaderWay(0);
         if (scaleString != null)
             way.setTag("mtb:scale", scaleString);
-        parser.handleWayTags(edgeId, edgeIntAccess, way, new IntsRef(2));
-        assertEquals(expectedRating, ev.getInt(false, edgeId, edgeIntAccess), "unexpected rating for mtb:scale=" + scaleString);
+        parser.handleWayTags(edgeId, edgeAccess, way, new BytesRef(8));
+        assertEquals(expectedRating, ev.getInt(false, edgeId, edgeAccess), "unexpected rating for mtb:scale=" + scaleString);
     }
 
 }

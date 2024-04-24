@@ -19,10 +19,10 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.ev.EdgeBytesAccess;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.Footway;
-import com.graphhopper.routing.ev.EdgeIntAccess;
-import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.BytesRef;
 
 /**
  * see: https://wiki.openstreetmap.org/wiki/Key%3Afootway
@@ -35,8 +35,8 @@ public class OSMFootwayParser implements TagParser {
     }
 
     @Override
-    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(int edgeId, EdgeBytesAccess edgeAccess, ReaderWay way, BytesRef relationFlags) {
         String footway = way.getTag("footway");
-        footwayEnc.setEnum(false, edgeId, edgeIntAccess, Footway.find(footway));
+        footwayEnc.setEnum(false, edgeId, edgeAccess, Footway.find(footway));
     }
 }

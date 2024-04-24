@@ -17,8 +17,6 @@
  */
 package com.graphhopper.util;
 
-import com.graphhopper.storage.IntsRef;
-
 /**
  * LITTLE endianness is default for GraphHopper and most microprocessors.
  *
@@ -199,14 +197,6 @@ public class BitUtil {
             bytes[b] = res;
         }
         return bytes;
-    }
-
-    public final String toBitString(IntsRef intsRef) {
-        StringBuilder str = new StringBuilder();
-        for (int ints : intsRef.ints) {
-            str.append(toBitString(ints, 32));
-        }
-        return str.toString();
     }
 
     /**

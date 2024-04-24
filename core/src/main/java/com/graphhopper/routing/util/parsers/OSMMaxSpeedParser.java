@@ -19,10 +19,10 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.ev.EdgeBytesAccess;
 import com.graphhopper.routing.ev.MaxSpeed;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
-import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.BytesRef;
 
 import static com.graphhopper.routing.ev.MaxSpeed.UNSET_SPEED;
 
@@ -38,9 +38,9 @@ public class OSMMaxSpeedParser implements TagParser {
     }
 
     @Override
-    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
-        carMaxSpeedEnc.setDecimal(false, edgeId, edgeIntAccess, getMaxSpeed(way, false));
-        carMaxSpeedEnc.setDecimal(true, edgeId, edgeIntAccess, getMaxSpeed(way, true));
+    public void handleWayTags(int edgeId, EdgeBytesAccess edgeAccess, ReaderWay way, BytesRef relationFlags) {
+        carMaxSpeedEnc.setDecimal(false, edgeId, edgeAccess, getMaxSpeed(way, false));
+        carMaxSpeedEnc.setDecimal(true, edgeId, edgeAccess, getMaxSpeed(way, true));
     }
 
     private double getMaxSpeed(ReaderWay way, boolean reverse) {

@@ -21,11 +21,11 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.RestrictionTagParser;
+import com.graphhopper.routing.ev.EdgeBytesAccess;
 import com.graphhopper.routing.ev.EncodedValue;
-import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.util.parsers.RelationTagParser;
 import com.graphhopper.routing.util.parsers.TagParser;
-import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.BytesRef;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -87,25 +87,25 @@ public class OSMParsers {
             return false;
     }
 
-    public IntsRef handleRelationTags(ReaderRelation relation, IntsRef relFlags) {
+    public BytesRef handleRelationTags(ReaderRelation relation, BytesRef relFlags) {
         for (RelationTagParser relParser : relationTagParsers) {
             relParser.handleRelationTags(relFlags, relation);
         }
         return relFlags;
     }
 
-    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(int edgeId, EdgeBytesAccess edgeAccess, ReaderWay way, BytesRef relationFlags) {
         for (RelationTagParser relParser : relationTagParsers)
-            relParser.handleWayTags(edgeId, edgeIntAccess, way, relationFlags);
+            relParser.handleWayTags(edgeId, edgeAccess, way, relationFlags);
         for (TagParser parser : wayTagParsers)
-            parser.handleWayTags(edgeId, edgeIntAccess, way, relationFlags);
+            parser.handleWayTags(edgeId, edgeAccess, way, relationFlags);
     }
 
-    public IntsRef createRelationFlags() {
-        int requiredInts = relConfig.getRequiredInts();
-        if (requiredInts > 2)
-            throw new IllegalStateException("More than two ints are needed for relation flags, but OSMReader does not allow this");
-        return new IntsRef(2);
+    public BytesRef createRelationFlags() {
+        int requiredBytes = relConfig.getRequiredBytes();
+        if (requiredBytes > 8)
+            throw new IllegalStateException("More than 8 bytes are needed for relation flags, but OSMReader does not allow this");
+        return new BytesRef(8);
     }
 
     public List<String> getIgnoredHighways() {

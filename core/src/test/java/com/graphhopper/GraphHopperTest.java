@@ -33,7 +33,7 @@ import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
 import com.graphhopper.routing.util.parsers.OSMRoadEnvironmentParser;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.search.KVStorage;
-import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.BytesRef;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.*;
@@ -1149,7 +1149,7 @@ public class GraphHopperTest {
                         importUnit = ImportUnit.create(name, props -> RoadEnvironment.create(),
                                 (lookup, props) -> new OSMRoadEnvironmentParser(lookup.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class)) {
                                     @Override
-                                    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay readerWay, IntsRef relationFlags) {
+                                    public void handleWayTags(int edgeId, EdgeBytesAccess edgeAccess, ReaderWay readerWay, BytesRef relationFlags) {
                                         // do not change RoadEnvironment to avoid triggering tunnel interpolation
                                     }
                                 });

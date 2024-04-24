@@ -20,7 +20,7 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.BytesRef;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,32 +28,32 @@ import org.junit.jupiter.api.Test;
 class OSMLanesParserTest {
     private final IntEncodedValue lanesEnc = Lanes.create();
     private OSMLanesParser parser;
-    private IntsRef relFlags;
+    private BytesRef relFlags;
 
     @BeforeEach
     void setup() {
         lanesEnc.init(new EncodedValue.InitializerConfig());
         parser = new OSMLanesParser(lanesEnc);
-        relFlags = new IntsRef(2);
+        relFlags = new BytesRef(8);
     }
 
     @Test
     void basic() {
         ReaderWay readerWay = new ReaderWay(1);
-        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        EdgeBytesAccess edgeAccess = new EdgeBytesAccessArray(new byte[4]);
         int edgeId = 0;
         readerWay.setTag("lanes", "4");
-        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
-        Assertions.assertEquals(4, lanesEnc.getInt(false, edgeId, edgeIntAccess));
+        parser.handleWayTags(edgeId, edgeAccess, readerWay, relFlags);
+        Assertions.assertEquals(4, lanesEnc.getInt(false, edgeId, edgeAccess));
     }
 
     @Test
     void notTagged() {
         ReaderWay readerWay = new ReaderWay(1);
-        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        EdgeBytesAccess edgeAccess = new EdgeBytesAccessArray(new byte[4]);
         int edgeId = 0;
-        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
-        Assertions.assertEquals(1, lanesEnc.getInt(false, edgeId, edgeIntAccess));
+        parser.handleWayTags(edgeId, edgeAccess, readerWay, relFlags);
+        Assertions.assertEquals(1, lanesEnc.getInt(false, edgeId, edgeAccess));
     }
 
 }

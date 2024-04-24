@@ -1,8 +1,9 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.ArrayEdgeIntAccess;
 import com.graphhopper.routing.ev.Curvature;
+import com.graphhopper.routing.ev.EdgeBytesAccess;
+import com.graphhopper.routing.ev.EdgeBytesAccessArray;
 import com.graphhopper.util.PointList;
 import org.junit.jupiter.api.Test;
 
@@ -15,12 +16,12 @@ class CurvatureCalculatorTest {
     @Test
     public void testCurvature() {
         CurvatureCalculator calculator = new CurvatureCalculator(em.getDecimalEncodedValue(Curvature.KEY));
-        ArrayEdgeIntAccess intAccess = new ArrayEdgeIntAccess(em.getBytesForFlags() * 4);
+        EdgeBytesAccess intAccess = new EdgeBytesAccessArray(em.getBytesForFlags());
         int edgeId = 0;
         calculator.handleWayTags(edgeId, intAccess, getStraightWay(), null);
         double valueStraight = em.getDecimalEncodedValue(Curvature.KEY).getDecimal(false, edgeId, intAccess);
 
-        intAccess = new ArrayEdgeIntAccess(em.getBytesForFlags() * 4);
+        intAccess = new EdgeBytesAccessArray(em.getBytesForFlags());
         calculator.handleWayTags(edgeId, intAccess, getCurvyWay(), null);
         double valueCurvy = em.getDecimalEncodedValue(Curvature.KEY).getDecimal(false, edgeId, intAccess);
 

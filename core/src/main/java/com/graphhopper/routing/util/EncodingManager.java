@@ -22,7 +22,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.BytesRef;
-import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.util.Constants;
 
@@ -203,14 +202,14 @@ public class EncodingManager implements EncodedValueLookup {
         return String.join(",", getVehicles());
     }
 
-    // TODO hide IntsRef even more in a later version: https://gist.github.com/karussell/f4c2b2b1191be978d7ee9ec8dd2cd48f
+    // TODO hide BytesRef even more in a later version: https://gist.github.com/karussell/f4c2b2b1191be978d7ee9ec8dd2cd48f
     public BytesRef createEdgeFlags() {
         return new BytesRef(getBytesForFlags());
     }
 
-    public IntsRef createRelationFlags() {
-        // for backward compatibility use 2 ints
-        return new IntsRef(2);
+    public BytesRef createRelationFlags() {
+        // for backward compatibility use 8 bytes
+        return new BytesRef(8);
     }
 
     public boolean needsTurnCostsSupport() {

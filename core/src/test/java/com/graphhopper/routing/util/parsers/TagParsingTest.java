@@ -25,7 +25,6 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.OSMParsers;
 import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.storage.BytesRef;
-import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
@@ -59,10 +58,10 @@ class TagParsingTest {
         BikePriorityParser bike1Parser = new BikePriorityParser(bike1PriorityEnc, bike1SpeedEnc, bikeNetworkEnc);
         BikePriorityParser bike2Parser = new BikePriorityParser(bike2PriorityEnc, bike2SpeedEnc, bikeNetworkEnc) {
             @Override
-            public void handleWayTags(int edgeId, EdgeIntAccess intAccess, ReaderWay way, IntsRef relTags) {
+            public void handleWayTags(int edgeId, EdgeBytesAccess access, ReaderWay way, BytesRef relTags) {
                 // accept less relations
-                if (bikeRouteEnc.getEnum(false, edgeId, intAccess) != RouteNetwork.MISSING)
-                    priorityEnc.setDecimal(false, edgeId, intAccess, PriorityCode.getFactor(2));
+                if (bikeRouteEnc.getEnum(false, edgeId, access) != RouteNetwork.MISSING)
+                    priorityEnc.setDecimal(false, edgeId, access, PriorityCode.getFactor(2));
             }
         };
         OSMParsers osmParsers = new OSMParsers()
@@ -74,13 +73,13 @@ class TagParsingTest {
         // relation code is PREFER
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "lcn");
-        IntsRef relFlags = osmParsers.createRelationFlags();
+        BytesRef relFlags = osmParsers.createRelationFlags();
         relFlags = osmParsers.handleRelationTags(osmRel, relFlags);
-        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(em.getBytesForFlags() * 4);
+        EdgeBytesAccess edgeAccess = new EdgeBytesAccessArray(em.getBytesForFlags());
         int edgeId = 0;
-        osmParsers.handleWayTags(edgeId, edgeIntAccess, osmWay, relFlags);
-        assertEquals(RouteNetwork.LOCAL, bikeNetworkEnc.getEnum(false, edgeId, edgeIntAccess));
-        assertTrue(bike1PriorityEnc.getDecimal(false, edgeId, edgeIntAccess) > bike2PriorityEnc.getDecimal(false, edgeId, edgeIntAccess));
+        osmParsers.handleWayTags(edgeId, edgeAccess, osmWay, relFlags);
+        assertEquals(RouteNetwork.LOCAL, bikeNetworkEnc.getEnum(false, edgeId, edgeAccess));
+        assertTrue(bike1PriorityEnc.getDecimal(false, edgeId, edgeAccess) > bike2PriorityEnc.getDecimal(false, edgeId, edgeAccess));
     }
 
     @Test
@@ -116,14 +115,14 @@ class TagParsingTest {
         // relation code for network rcn is NICE for bike and PREFER for mountainbike
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "rcn");
-        IntsRef relFlags = osmParsers.createRelationFlags();
+        BytesRef relFlags = osmParsers.createRelationFlags();
         relFlags = osmParsers.handleRelationTags(osmRel, relFlags);
-        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(em.getBytesForFlags() * 4);
+        EdgeBytesAccess edgeAccess = new EdgeBytesAccessArray(em.getBytesForFlags());
         int edgeId = 0;
-        osmParsers.handleWayTags(edgeId, edgeIntAccess, osmWay, relFlags);
+        osmParsers.handleWayTags(edgeId, edgeAccess, osmWay, relFlags);
         // bike: uninfluenced speed for grade but via network => NICE
         // mtb: uninfluenced speed only PREFER
-        assertTrue(bikePriorityEnc.getDecimal(false, edgeId, edgeIntAccess) > mtbPriorityEnc.getDecimal(false, edgeId, edgeIntAccess));
+        assertTrue(bikePriorityEnc.getDecimal(false, edgeId, edgeAccess) > mtbPriorityEnc.getDecimal(false, edgeId, edgeAccess));
     }
 
     @Test
@@ -153,9 +152,9 @@ class TagParsingTest {
                 new MountainBikeAccessParser(manager, new PMap())
         );
 
-        final ArrayEdgeIntAccess intAccess = new ArrayEdgeIntAccess(manager.getBytesForFlags() * 4);
+        final EdgeBytesAccess intAccess = new EdgeBytesAccessArray(manager.getBytesForFlags());
         int edgeId = 0;
-        IntsRef relFlags = manager.createRelationFlags();
+        BytesRef relFlags = manager.createRelationFlags();
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "primary");
         way.setTag("junction", "roundabout");

@@ -2,7 +2,7 @@ package com.graphhopper.routing.util.parsers.helpers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.ev.EdgeBytesAccess;
 import com.graphhopper.routing.ev.MaxSpeed;
 import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.Helper;
@@ -29,13 +29,13 @@ public class OSMValueExtractor {
         // utility class
     }
 
-    public static void extractTons(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, DecimalEncodedValue valueEncoder, List<String> keys) {
+    public static void extractTons(int edgeId, EdgeBytesAccess edgeAccess, ReaderWay way, DecimalEncodedValue valueEncoder, List<String> keys) {
         final String rawValue = way.getFirstValue(keys);
         double value = stringToTons(rawValue);
 
         if (Double.isNaN(value)) value = Double.POSITIVE_INFINITY;
 
-        valueEncoder.setDecimal(false, edgeId, edgeIntAccess, value);
+        valueEncoder.setDecimal(false, edgeId, edgeAccess, value);
         // too many
 //        if (value - valueEncoder.getDecimal(false, edgeFlags) > 2)
 //            logger.warn("Value " + value + " for " + valueEncoder.getName() + " was too large and truncated to " + valueEncoder.getDecimal(false, edgeFlags));
@@ -92,13 +92,13 @@ public class OSMValueExtractor {
         }
     }
 
-    public static void extractMeter(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, DecimalEncodedValue valueEncoder, List<String> keys) {
+    public static void extractMeter(int edgeId, EdgeBytesAccess edgeAccess, ReaderWay way, DecimalEncodedValue valueEncoder, List<String> keys) {
         final String rawValue = way.getFirstValue(keys);
         double value = stringToMeter(rawValue);
 
         if (Double.isNaN(value)) value = Double.POSITIVE_INFINITY;
 
-        valueEncoder.setDecimal(false, edgeId, edgeIntAccess, value);
+        valueEncoder.setDecimal(false, edgeId, edgeAccess, value);
         // too many
 //        if (value - valueEncoder.getDecimal(false, edgeFlags) > 2)
 //            logger.warn("Value " + value + " for " + valueEncoder.getName() + " was too large and truncated to " + valueEncoder.getDecimal(false, edgeFlags));

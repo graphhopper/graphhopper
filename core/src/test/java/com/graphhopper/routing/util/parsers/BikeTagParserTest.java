@@ -23,7 +23,7 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.PriorityCode;
-import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.BytesRef;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
@@ -494,30 +494,30 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         ReaderRelation osmRel = new ReaderRelation(1);
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "icn");
-        IntsRef relFlags = osmParsers.handleRelationTags(osmRel, osmParsers.createRelationFlags());
-        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getBytesForFlags() * 4);
+        BytesRef relFlags = osmParsers.handleRelationTags(osmRel, osmParsers.createRelationFlags());
+        EdgeBytesAccess edgeAccess = new EdgeBytesAccessArray(encodingManager.getBytesForFlags());
         int edgeId = 0;
-        osmParsers.handleWayTags(edgeId, edgeIntAccess, osmWay, relFlags);
-        assertEquals(RouteNetwork.INTERNATIONAL, encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class).getEnum(false, edgeId, edgeIntAccess));
-        assertEquals(PriorityCode.getValue(BEST.getValue()), priorityEnc.getDecimal(false, edgeId, edgeIntAccess), .1);
+        osmParsers.handleWayTags(edgeId, edgeAccess, osmWay, relFlags);
+        assertEquals(RouteNetwork.INTERNATIONAL, encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class).getEnum(false, edgeId, edgeAccess));
+        assertEquals(PriorityCode.getValue(BEST.getValue()), priorityEnc.getDecimal(false, edgeId, edgeAccess), .1);
 
         // for some highways the priority is UNCHANGED
         osmRel = new ReaderRelation(1);
         osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "track");
-        edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getBytesForFlags() * 4);
-        osmParsers.handleWayTags(edgeId, edgeIntAccess, osmWay, osmParsers.createRelationFlags());
-        assertEquals(RouteNetwork.MISSING, encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class).getEnum(false, edgeId, edgeIntAccess));
-        assertEquals(PriorityCode.getValue(UNCHANGED.getValue()), priorityEnc.getDecimal(false, edgeId, edgeIntAccess), .1);
+        edgeAccess = new EdgeBytesAccessArray(encodingManager.getBytesForFlags());
+        osmParsers.handleWayTags(edgeId, edgeAccess, osmWay, osmParsers.createRelationFlags());
+        assertEquals(RouteNetwork.MISSING, encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class).getEnum(false, edgeId, edgeAccess));
+        assertEquals(PriorityCode.getValue(UNCHANGED.getValue()), priorityEnc.getDecimal(false, edgeId, edgeAccess), .1);
 
         // unknown highway tags will be excluded but priority will be unchanged
         osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "whatever");
-        edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getBytesForFlags() * 4);
-        osmParsers.handleWayTags(edgeId, edgeIntAccess, osmWay, osmParsers.createRelationFlags());
-        assertFalse(accessParser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
-        assertEquals(RouteNetwork.MISSING, encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class).getEnum(false, edgeId, edgeIntAccess));
-        assertEquals(PriorityCode.getValue(UNCHANGED.getValue()), priorityEnc.getDecimal(false, edgeId, edgeIntAccess), .1);
+        edgeAccess = new EdgeBytesAccessArray(encodingManager.getBytesForFlags());
+        osmParsers.handleWayTags(edgeId, edgeAccess, osmWay, osmParsers.createRelationFlags());
+        assertFalse(accessParser.getAccessEnc().getBool(false, edgeId, edgeAccess));
+        assertEquals(RouteNetwork.MISSING, encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class).getEnum(false, edgeId, edgeAccess));
+        assertEquals(PriorityCode.getValue(UNCHANGED.getValue()), priorityEnc.getDecimal(false, edgeId, edgeAccess), .1);
     }
 
     @Test
@@ -618,21 +618,21 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
     @Test
     public void temporalAccess() {
         int edgeId = 0;
-        ArrayEdgeIntAccess access = new ArrayEdgeIntAccess(1);
+        EdgeBytesAccessArray access = new EdgeBytesAccessArray(4);
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "primary");
         way.setTag("access:conditional", "no @ (May - June)");
         accessParser.handleWayTags(edgeId, access, way, null);
         assertTrue(accessEnc.getBool(false, edgeId, access));
 
-        access = new ArrayEdgeIntAccess(1);
+        access = new EdgeBytesAccessArray(4);
         way = new ReaderWay(1);
         way.setTag("highway", "primary");
         way.setTag("bicycle:conditional", "no @ (May - June)");
         accessParser.handleWayTags(edgeId, access, way, null);
         assertTrue(accessEnc.getBool(false, edgeId, access));
 
-        access = new ArrayEdgeIntAccess(1);
+        access = new EdgeBytesAccessArray(4);
         way = new ReaderWay(1);
         way.setTag("highway", "primary");
         way.setTag("bicycle", "no");
@@ -640,7 +640,7 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         accessParser.handleWayTags(edgeId, access, way, null);
         assertFalse(accessEnc.getBool(false, edgeId, access));
 
-        access = new ArrayEdgeIntAccess(1);
+        access = new EdgeBytesAccessArray(1);
         way = new ReaderWay(1);
         way.setTag("highway", "primary");
         way.setTag("access", "no");

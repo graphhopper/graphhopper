@@ -2,10 +2,10 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.ev.EdgeBytesAccess;
 import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.routing.util.TransportationMode;
-import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.BytesRef;
 
 import java.util.*;
 
@@ -35,7 +35,7 @@ public class ModeAccessParser implements TagParser {
     }
 
     @Override
-    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(int edgeId, EdgeBytesAccess edgeAccess, ReaderWay way, BytesRef relationFlags) {
         int firstIndex = way.getFirstIndex(restrictionKeys);
         String firstValue = firstIndex < 0 ? "" : way.getTag(restrictionKeys.get(firstIndex), "");
         if (restrictedValues.contains(firstValue) && !hasTemporalRestriction(way, firstIndex, restrictionKeys))
@@ -50,17 +50,17 @@ public class ModeAccessParser implements TagParser {
         }
 
         if (FerrySpeedCalculator.isFerry(way)) {
-            accessEnc.setBool(false, edgeId, edgeIntAccess, true);
-            accessEnc.setBool(true, edgeId, edgeIntAccess, true);
+            accessEnc.setBool(false, edgeId, edgeAccess, true);
+            accessEnc.setBool(true, edgeId, edgeAccess, true);
         } else {
-            boolean isRoundabout = roundaboutEnc.getBool(false, edgeId, edgeIntAccess);
+            boolean isRoundabout = roundaboutEnc.getBool(false, edgeId, edgeAccess);
             boolean ignoreOneway = "no".equals(way.getFirstValue(ignoreOnewayKeys));
             boolean isBwd = isBackwardOneway(way);
             if (!ignoreOneway && (isBwd || isRoundabout || isForwardOneway(way))) {
-                accessEnc.setBool(isBwd, edgeId, edgeIntAccess, true);
+                accessEnc.setBool(isBwd, edgeId, edgeAccess, true);
             } else {
-                accessEnc.setBool(false, edgeId, edgeIntAccess, true);
-                accessEnc.setBool(true, edgeId, edgeIntAccess, true);
+                accessEnc.setBool(false, edgeId, edgeAccess, true);
+                accessEnc.setBool(true, edgeId, edgeAccess, true);
             }
         }
     }

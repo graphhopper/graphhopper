@@ -20,7 +20,7 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.BytesRef;
 import com.graphhopper.util.Helper;
 
 import static com.graphhopper.routing.util.EncodingManager.getKey;
@@ -36,9 +36,9 @@ public class OSMFootNetworkTagParser implements RelationTagParser {
     }
 
     @Override
-    public void handleRelationTags(IntsRef relFlags, ReaderRelation relation) {
-        IntsRefEdgeIntAccess relIntAccess = new IntsRefEdgeIntAccess(relFlags);
-        RouteNetwork oldFootNetwork = transformerRouteRelEnc.getEnum(false, -1, relIntAccess);
+    public void handleRelationTags(BytesRef relFlags, ReaderRelation relation) {
+        EdgeBytesAccess relAccess = new EdgeBytesAccessArray(relFlags.bytes);
+        RouteNetwork oldFootNetwork = transformerRouteRelEnc.getEnum(false, -1, relAccess);
         if (relation.hasTag("route", "hiking") || relation.hasTag("route", "foot")) {
             String tag = Helper.toLowerCase(relation.getTag("network", ""));
             RouteNetwork newFootNetwork = RouteNetwork.LOCAL;
@@ -52,15 +52,15 @@ public class OSMFootNetworkTagParser implements RelationTagParser {
                 newFootNetwork = RouteNetwork.INTERNATIONAL;
             }
             if (oldFootNetwork == RouteNetwork.MISSING || oldFootNetwork.ordinal() > newFootNetwork.ordinal())
-                transformerRouteRelEnc.setEnum(false, -1, relIntAccess, newFootNetwork);
+                transformerRouteRelEnc.setEnum(false, -1, relAccess, newFootNetwork);
         }
     }
 
     @Override
-    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(int edgeId, EdgeBytesAccess edgeAccess, ReaderWay way, BytesRef relationFlags) {
         // just copy value into different bit range
-        IntsRefEdgeIntAccess relIntAccess = new IntsRefEdgeIntAccess(relationFlags);
-        RouteNetwork footNetwork = transformerRouteRelEnc.getEnum(false, -1, relIntAccess);
-        footRouteEnc.setEnum(false, edgeId, edgeIntAccess, footNetwork);
+        EdgeBytesAccess relAccess = new EdgeBytesAccessArray(relationFlags.bytes);
+        RouteNetwork footNetwork = transformerRouteRelEnc.getEnum(false, -1, relAccess);
+        footRouteEnc.setEnum(false, edgeId, edgeAccess, footNetwork);
     }
 }

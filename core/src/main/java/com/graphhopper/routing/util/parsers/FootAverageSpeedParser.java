@@ -30,14 +30,14 @@ public class FootAverageSpeedParser extends AbstractAverageSpeedParser implement
     }
 
     @Override
-    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way) {
+    public void handleWayTags(int edgeId, EdgeBytesAccess edgeAccess, ReaderWay way) {
         String highwayValue = way.getTag("highway");
         if (highwayValue == null) {
             if (FerrySpeedCalculator.isFerry(way)) {
-                double ferrySpeed = FerrySpeedCalculator.minmax(ferrySpeedEnc.getDecimal(false, edgeId, edgeIntAccess), avgSpeedEnc);
-                setSpeed(false, edgeId, edgeIntAccess, ferrySpeed);
+                double ferrySpeed = FerrySpeedCalculator.minmax(ferrySpeedEnc.getDecimal(false, edgeId, edgeAccess), avgSpeedEnc);
+                setSpeed(false, edgeId, edgeAccess, ferrySpeed);
                 if (avgSpeedEnc.isStoreTwoDirections())
-                    setSpeed(true, edgeId, edgeIntAccess, ferrySpeed);
+                    setSpeed(true, edgeId, edgeAccess, ferrySpeed);
             }
             if (!way.hasTag("railway", "platform") && !way.hasTag("man_made", "pier"))
                 return;
@@ -45,13 +45,13 @@ public class FootAverageSpeedParser extends AbstractAverageSpeedParser implement
 
         String sacScale = way.getTag("sac_scale");
         if (sacScale != null) {
-            setSpeed(false, edgeId, edgeIntAccess, "hiking".equals(sacScale) ? MEAN_SPEED : SLOW_SPEED);
+            setSpeed(false, edgeId, edgeAccess, "hiking".equals(sacScale) ? MEAN_SPEED : SLOW_SPEED);
             if (avgSpeedEnc.isStoreTwoDirections())
-                setSpeed(true, edgeId, edgeIntAccess, "hiking".equals(sacScale) ? MEAN_SPEED : SLOW_SPEED);
+                setSpeed(true, edgeId, edgeAccess, "hiking".equals(sacScale) ? MEAN_SPEED : SLOW_SPEED);
         } else {
-            setSpeed(false, edgeId, edgeIntAccess, way.hasTag("highway", "steps") ? MEAN_SPEED - 2 : MEAN_SPEED);
+            setSpeed(false, edgeId, edgeAccess, way.hasTag("highway", "steps") ? MEAN_SPEED - 2 : MEAN_SPEED);
             if (avgSpeedEnc.isStoreTwoDirections())
-                setSpeed(true, edgeId, edgeIntAccess, way.hasTag("highway", "steps") ? MEAN_SPEED - 2 : MEAN_SPEED);
+                setSpeed(true, edgeId, edgeAccess, way.hasTag("highway", "steps") ? MEAN_SPEED - 2 : MEAN_SPEED);
         }
     }
 }

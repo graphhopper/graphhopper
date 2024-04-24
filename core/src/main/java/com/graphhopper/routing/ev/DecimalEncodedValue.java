@@ -11,13 +11,13 @@ package com.graphhopper.routing.ev;
 public interface DecimalEncodedValue extends EncodedValue {
 
     /**
-     * This method stores the specified double value (rounding with a previously defined factor) into the IntsRef.
+     * This method stores the specified double value (rounding with a previously defined factor) into the edge access.
      *
      * @see #getMaxStorableDecimal()
      */
-    void setDecimal(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess, double value);
+    void setDecimal(boolean reverse, int edgeId, EdgeBytesAccess edgeAccess, double value);
 
-    double getDecimal(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess);
+    double getDecimal(boolean reverse, int edgeId, EdgeBytesAccess edgeAccess);
 
     /**
      * The maximum double value this EncodedValue accepts for setDecimal without throwing an exception.

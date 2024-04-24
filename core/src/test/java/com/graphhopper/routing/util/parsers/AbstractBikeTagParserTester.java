@@ -24,14 +24,10 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.OSMParsers;
 import com.graphhopper.routing.util.PriorityCode;
-import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.Helper;
+import com.graphhopper.storage.BytesRef;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import java.text.DateFormat;
-import java.util.Date;
 
 import static com.graphhopper.routing.util.PriorityCode.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -75,8 +71,8 @@ public abstract class AbstractBikeTagParserTester {
     protected abstract BikeCommonPriorityParser createPriorityParser(EncodedValueLookup lookup);
 
     protected void assertPriority(PriorityCode expectedPrio, ReaderWay way) {
-        IntsRef relFlags = osmParsers.handleRelationTags(new ReaderRelation(0), osmParsers.createRelationFlags());
-        ArrayEdgeIntAccess intAccess = new ArrayEdgeIntAccess(encodingManager.getBytesForFlags() * 4);
+        BytesRef relFlags = osmParsers.handleRelationTags(new ReaderRelation(0), osmParsers.createRelationFlags());
+        EdgeBytesAccess intAccess = new EdgeBytesAccessArray(encodingManager.getBytesForFlags());
         int edgeId = 0;
         osmParsers.handleWayTags(edgeId, intAccess, way, relFlags);
         assertEquals(PriorityCode.getValue(expectedPrio.getValue()), priorityEnc.getDecimal(false, edgeId, intAccess), 0.01);
@@ -87,8 +83,8 @@ public abstract class AbstractBikeTagParserTester {
     }
 
     protected void assertPriorityAndSpeed(PriorityCode expectedPrio, double expectedSpeed, ReaderWay way, ReaderRelation rel) {
-        IntsRef relFlags = osmParsers.handleRelationTags(rel, osmParsers.createRelationFlags());
-        ArrayEdgeIntAccess intAccess = new ArrayEdgeIntAccess(encodingManager.getBytesForFlags() * 4);
+        BytesRef relFlags = osmParsers.handleRelationTags(rel, osmParsers.createRelationFlags());
+        EdgeBytesAccess intAccess = new EdgeBytesAccessArray(encodingManager.getBytesForFlags());
         int edgeId = 0;
         osmParsers.handleWayTags(edgeId, intAccess, way, relFlags);
         assertEquals(PriorityCode.getValue(expectedPrio.getValue()), priorityEnc.getDecimal(false, edgeId, intAccess), 0.01);
@@ -97,8 +93,8 @@ public abstract class AbstractBikeTagParserTester {
     }
 
     protected double getSpeedFromFlags(ReaderWay way) {
-        IntsRef relFlags = osmParsers.createRelationFlags();
-        ArrayEdgeIntAccess intAccess = new ArrayEdgeIntAccess(encodingManager.getBytesForFlags() * 4);
+        BytesRef relFlags = osmParsers.createRelationFlags();
+        EdgeBytesAccess intAccess = new EdgeBytesAccessArray(encodingManager.getBytesForFlags());
         int edgeId = 0;
         osmParsers.handleWayTags(edgeId, intAccess, way, relFlags);
         return avgSpeedEnc.getDecimal(false, edgeId, intAccess);
@@ -248,8 +244,8 @@ public abstract class AbstractBikeTagParserTester {
 
         // two relation tags => we currently cannot store a list, so pick the lower ordinal 'regional'
         // Example https://www.openstreetmap.org/way/213492914 => two hike 84544, 2768803 and two bike relations 3162932, 5254650
-        IntsRef relFlags = osmParsers.handleRelationTags(rel2, osmParsers.handleRelationTags(rel, osmParsers.createRelationFlags()));
-        ArrayEdgeIntAccess intAccess = new ArrayEdgeIntAccess(encodingManager.getBytesForFlags() * 4);
+        BytesRef relFlags = osmParsers.handleRelationTags(rel2, osmParsers.handleRelationTags(rel, osmParsers.createRelationFlags()));
+        EdgeBytesAccess intAccess = new EdgeBytesAccessArray(encodingManager.getBytesForFlags());
         int edgeId = 0;
         osmParsers.handleWayTags(edgeId, intAccess, way, relFlags);
         EnumEncodedValue<RouteNetwork> enc = encodingManager.getEnumEncodedValue(RouteNetwork.key("bike"), RouteNetwork.class);
@@ -279,7 +275,7 @@ public abstract class AbstractBikeTagParserTester {
 
         way = new ReaderWay(1);
         way.setTag("railway", "platform");
-        ArrayEdgeIntAccess intAccess = new ArrayEdgeIntAccess(encodingManager.getBytesForFlags() * 4);
+        EdgeBytesAccess intAccess = new EdgeBytesAccessArray(encodingManager.getBytesForFlags());
         int edgeId = 0;
         accessParser.handleWayTags(edgeId, intAccess, way, null);
         speedParser.handleWayTags(edgeId, intAccess, way, null);
@@ -300,7 +296,7 @@ public abstract class AbstractBikeTagParserTester {
         way.setTag("railway", "platform");
         way.setTag("bicycle", "no");
 
-        intAccess = new ArrayEdgeIntAccess(encodingManager.getBytesForFlags() * 4);
+        intAccess = new EdgeBytesAccessArray(encodingManager.getBytesForFlags());
         accessParser.handleWayTags(edgeId, intAccess, way);
         assertEquals(0.0, avgSpeedEnc.getDecimal(false, edgeId, intAccess));
         assertFalse(accessEnc.getBool(false, edgeId, intAccess));
@@ -387,7 +383,7 @@ public abstract class AbstractBikeTagParserTester {
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "cycleway");
 
-        ArrayEdgeIntAccess intAccess = new ArrayEdgeIntAccess(encodingManager.getBytesForFlags() * 4);
+        EdgeBytesAccess intAccess = new EdgeBytesAccessArray(encodingManager.getBytesForFlags());
         int edgeId = 0;
         priorityParser.handleWayTags(edgeId, intAccess, osmWay, null);
         assertEquals(PriorityCode.getValue(VERY_NICE.getValue()), priorityEnc.getDecimal(false, edgeId, intAccess), 1e-3);
@@ -649,11 +645,11 @@ public abstract class AbstractBikeTagParserTester {
     }
 
     private void assertAccess(ReaderWay way, boolean fwd, boolean bwd) {
-        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        EdgeBytesAccess edgeAccess = new EdgeBytesAccessArray(4);
         int edge = 0;
-        IntsRef relationFlags = new IntsRef(1);
-        accessParser.handleWayTags(edge, edgeIntAccess, way, relationFlags);
-        if (fwd) assertTrue(accessEnc.getBool(false, edge, edgeIntAccess));
-        if (bwd) assertTrue(accessEnc.getBool(true, edge, edgeIntAccess));
+        BytesRef relationFlags = new BytesRef(4);
+        accessParser.handleWayTags(edge, edgeAccess, way, relationFlags);
+        if (fwd) assertTrue(accessEnc.getBool(false, edge, edgeAccess));
+        if (bwd) assertTrue(accessEnc.getBool(true, edge, edgeAccess));
     }
 }

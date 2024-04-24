@@ -53,7 +53,7 @@ class MaxSpeedCalculatorTest {
 
     @Test
     public void internalMaxSpeed() {
-        EdgeIntAccess storage = calc.getInternalMaxSpeedStorage();
+        EdgeBytesAccess storage = calc.getInternalMaxSpeedStorage();
         DecimalEncodedValue ruralEnc = calc.getRuralMaxSpeedEnc();
         ruralEnc.setDecimal(false, 0, storage, UNSET_SPEED);
         assertEquals(UNSET_SPEED, ruralEnc.getDecimal(false, 0, storage));
@@ -75,8 +75,8 @@ class MaxSpeedCalculatorTest {
 
     EdgeIteratorState createEdge(ReaderWay way) {
         EdgeIteratorState edge = graph.edge(0, 1);
-        EdgeIntAccess edgeIntAccess = graph.createEdgeIntAccess();
-        parsers.handleWayTags(edge.getEdge(), edgeIntAccess, way, em.createRelationFlags());
+        EdgeBytesAccess edgeAccess = graph.getEdgeBytesAccess();
+        parsers.handleWayTags(edge.getEdge(), edgeAccess, way, em.createRelationFlags());
         return edge;
     }
 

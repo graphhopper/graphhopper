@@ -18,9 +18,9 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.ev.EdgeBytesAccess;
 import com.graphhopper.routing.ev.IntEncodedValue;
-import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.BytesRef;
 
 /**
  * Parses the horseback riding difficulty. Where common is mapped to 1, demanding to 2 until 6
@@ -36,7 +36,7 @@ public class OSMHorseRatingParser implements TagParser {
     }
 
     @Override
-    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay readerWay, IntsRef relationFlags) {
+    public void handleWayTags(int edgeId, EdgeBytesAccess edgeAccess, ReaderWay readerWay, BytesRef relationFlags) {
         String scale = readerWay.getTag("horse_scale");
         int rating = 0;
         if (scale != null) {
@@ -48,6 +48,6 @@ public class OSMHorseRatingParser implements TagParser {
             else if (scale.equals("impossible")) rating = 6;
         }
         if (rating != 0)
-            horseScale.setInt(false, edgeId, edgeIntAccess, rating);
+            horseScale.setInt(false, edgeId, edgeAccess, rating);
     }
 }

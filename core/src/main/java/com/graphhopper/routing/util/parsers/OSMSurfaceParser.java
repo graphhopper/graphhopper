@@ -18,12 +18,12 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.ev.EdgeBytesAccess;
 import com.graphhopper.routing.ev.EnumEncodedValue;
-import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.ev.Surface;
-import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.BytesRef;
 
-import static com.graphhopper.routing.ev.Surface.*;
+import static com.graphhopper.routing.ev.Surface.MISSING;
 
 public class OSMSurfaceParser implements TagParser {
 
@@ -34,12 +34,12 @@ public class OSMSurfaceParser implements TagParser {
     }
 
     @Override
-    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay readerWay, IntsRef relationFlags) {
+    public void handleWayTags(int edgeId, EdgeBytesAccess edgeAccess, ReaderWay readerWay, BytesRef relationFlags) {
         String surfaceTag = readerWay.getTag("surface");
         Surface surface = Surface.find(surfaceTag);
         if (surface == MISSING)
             return;
 
-        surfaceEnc.setEnum(false, edgeId, edgeIntAccess, surface);
+        surfaceEnc.setEnum(false, edgeId, edgeAccess, surface);
     }
 }

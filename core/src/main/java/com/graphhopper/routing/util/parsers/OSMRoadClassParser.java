@@ -18,10 +18,10 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.ev.EdgeBytesAccess;
 import com.graphhopper.routing.ev.EnumEncodedValue;
-import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.ev.RoadClass;
-import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.BytesRef;
 
 import static com.graphhopper.routing.ev.RoadClass.OTHER;
 
@@ -34,7 +34,7 @@ public class OSMRoadClassParser implements TagParser {
     }
 
     @Override
-    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay readerWay, IntsRef relationFlags) {
+    public void handleWayTags(int edgeId, EdgeBytesAccess edgeAccess, ReaderWay readerWay, BytesRef relationFlags) {
         String roadClassTag = readerWay.getTag("highway");
         if (roadClassTag == null)
             return;
@@ -43,6 +43,6 @@ public class OSMRoadClassParser implements TagParser {
             roadClass = RoadClass.find(roadClassTag.substring(0, roadClassTag.length() - 5));
 
         if (roadClass != OTHER)
-            roadClassEnc.setEnum(false, edgeId, edgeIntAccess, roadClass);
+            roadClassEnc.setEnum(false, edgeId, edgeAccess, roadClass);
     }
 }

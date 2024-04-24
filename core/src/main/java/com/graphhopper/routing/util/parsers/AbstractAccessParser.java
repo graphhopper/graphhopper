@@ -3,9 +3,9 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.ev.EdgeBytesAccess;
 import com.graphhopper.routing.util.TransportationMode;
-import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.BytesRef;
 
 import java.util.*;
 
@@ -56,23 +56,23 @@ public abstract class AbstractAccessParser implements TagParser {
         }
     }
 
-    protected void handleBarrierEdge(int edgeId, EdgeIntAccess edgeIntAccess, Map<String, Object> nodeTags) {
+    protected void handleBarrierEdge(int edgeId, EdgeBytesAccess edgeAccess, Map<String, Object> nodeTags) {
         // for now we just create a dummy reader node, because our encoders do not make use of the coordinates anyway
         ReaderNode readerNode = new ReaderNode(0, 0, 0, nodeTags);
         // block access for barriers
         if (isBarrier(readerNode)) {
             BooleanEncodedValue accessEnc = getAccessEnc();
-            accessEnc.setBool(false, edgeId, edgeIntAccess, false);
-            accessEnc.setBool(true, edgeId, edgeIntAccess, false);
+            accessEnc.setBool(false, edgeId, edgeAccess, false);
+            accessEnc.setBool(true, edgeId, edgeAccess, false);
         }
     }
 
     @Override
-    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
-        handleWayTags(edgeId, edgeIntAccess, way);
+    public void handleWayTags(int edgeId, EdgeBytesAccess edgeAccess, ReaderWay way, BytesRef relationFlags) {
+        handleWayTags(edgeId, edgeAccess, way);
     }
 
-    public abstract void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way);
+    public abstract void handleWayTags(int edgeId, EdgeBytesAccess edgeAccess, ReaderWay way);
 
     /**
      * @return true if the given OSM node blocks access for the specified restrictions, false otherwise

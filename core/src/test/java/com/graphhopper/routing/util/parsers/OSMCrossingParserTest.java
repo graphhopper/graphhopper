@@ -26,56 +26,56 @@ class OSMCrossingParserTest {
 
     @Test
     public void testRailway() {
-        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        EdgeBytesAccess edgeAccess = new EdgeBytesAccessArray(4);
         int edgeId = 0;
-        parser.handleWayTags(edgeId, edgeIntAccess,
+        parser.handleWayTags(edgeId, edgeAccess,
                 createReader(new PMap().putObject("railway", "level_crossing").toMap()), null);
-        assertEquals(Crossing.RAILWAY, crossingEV.getEnum(false, edgeId, edgeIntAccess));
+        assertEquals(Crossing.RAILWAY, crossingEV.getEnum(false, edgeId, edgeAccess));
     }
 
     @Test
     public void testSignals() {
-        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        EdgeBytesAccess edgeAccess = new EdgeBytesAccessArray(4);
         int edgeId = 0;
-        parser.handleWayTags(edgeId, edgeIntAccess,
+        parser.handleWayTags(edgeId, edgeAccess,
                 createReader(new PMap().putObject("crossing", "traffic_signals").toMap()), null);
-        assertEquals(Crossing.TRAFFIC_SIGNALS, crossingEV.getEnum(false, edgeId, edgeIntAccess));
+        assertEquals(Crossing.TRAFFIC_SIGNALS, crossingEV.getEnum(false, edgeId, edgeAccess));
 
-        parser.handleWayTags(edgeId, edgeIntAccess = new ArrayEdgeIntAccess(1),
+        parser.handleWayTags(edgeId, edgeAccess = new EdgeBytesAccessArray(4),
                 createReader(new PMap().putObject("crossing:signals", "yes").toMap()), null);
-        assertEquals(Crossing.TRAFFIC_SIGNALS, crossingEV.getEnum(false, edgeId, edgeIntAccess));
+        assertEquals(Crossing.TRAFFIC_SIGNALS, crossingEV.getEnum(false, edgeId, edgeAccess));
 
-        parser.handleWayTags(edgeId, edgeIntAccess = new ArrayEdgeIntAccess(1),
+        parser.handleWayTags(edgeId, edgeAccess = new EdgeBytesAccessArray(4),
                 createReader(new PMap().putObject("crossing:signals", "no").toMap()), null);
-        assertEquals(Crossing.UNMARKED, crossingEV.getEnum(false, edgeId, edgeIntAccess));
+        assertEquals(Crossing.UNMARKED, crossingEV.getEnum(false, edgeId, edgeAccess));
     }
 
     @Test
     public void testMarked() {
-        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        EdgeBytesAccess edgeAccess = new EdgeBytesAccessArray(4);
         int edgeId = 0;
-        parser.handleWayTags(edgeId, edgeIntAccess, createReader(new HashMap<>()), null);
-        assertEquals(Crossing.MISSING, crossingEV.getEnum(false, edgeId, edgeIntAccess));
+        parser.handleWayTags(edgeId, edgeAccess, createReader(new HashMap<>()), null);
+        assertEquals(Crossing.MISSING, crossingEV.getEnum(false, edgeId, edgeAccess));
 
-        parser.handleWayTags(edgeId, edgeIntAccess = new ArrayEdgeIntAccess(1),
+        parser.handleWayTags(edgeId, edgeAccess = new EdgeBytesAccessArray(4),
                 createReader(new PMap().putObject("highway", "crossing").toMap()), null);
-        assertEquals(Crossing.UNMARKED, crossingEV.getEnum(false, edgeId, edgeIntAccess));
+        assertEquals(Crossing.UNMARKED, crossingEV.getEnum(false, edgeId, edgeAccess));
 
-        parser.handleWayTags(edgeId, edgeIntAccess = new ArrayEdgeIntAccess(1),
+        parser.handleWayTags(edgeId, edgeAccess = new EdgeBytesAccessArray(4),
                 createReader(new PMap().putObject("crossing", "marked").toMap()), null);
-        assertEquals(Crossing.MARKED, crossingEV.getEnum(false, edgeId, edgeIntAccess));
+        assertEquals(Crossing.MARKED, crossingEV.getEnum(false, edgeId, edgeAccess));
 
-        parser.handleWayTags(edgeId, edgeIntAccess = new ArrayEdgeIntAccess(1),
+        parser.handleWayTags(edgeId, edgeAccess = new EdgeBytesAccessArray(4),
                 createReader(new PMap().putObject("crossing:markings", "yes").toMap()), null);
-        assertEquals(Crossing.MARKED, crossingEV.getEnum(false, edgeId, edgeIntAccess));
+        assertEquals(Crossing.MARKED, crossingEV.getEnum(false, edgeId, edgeAccess));
 
-        parser.handleWayTags(edgeId, edgeIntAccess = new ArrayEdgeIntAccess(1),
+        parser.handleWayTags(edgeId, edgeAccess = new EdgeBytesAccessArray(4),
                 createReader(new PMap().putObject("crossing:markings", "no").toMap()), null);
-        assertEquals(Crossing.UNMARKED, crossingEV.getEnum(false, edgeId, edgeIntAccess));
+        assertEquals(Crossing.UNMARKED, crossingEV.getEnum(false, edgeId, edgeAccess));
 
-        parser.handleWayTags(edgeId, edgeIntAccess = new ArrayEdgeIntAccess(1),
+        parser.handleWayTags(edgeId, edgeAccess = new EdgeBytesAccessArray(4),
                 createReader(new PMap().putObject("crossing:signals", "no").putObject("crossing:markings", "yes").toMap()), null);
-        assertEquals(Crossing.MARKED, crossingEV.getEnum(false, edgeId, edgeIntAccess));
+        assertEquals(Crossing.MARKED, crossingEV.getEnum(false, edgeId, edgeAccess));
     }
 
     ReaderWay createReader(Map<String, Object> map) {

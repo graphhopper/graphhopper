@@ -79,15 +79,15 @@ public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implement
     }
 
     @Override
-    public void setDecimal(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess, double value) {
+    public void setDecimal(boolean reverse, int edgeId, EdgeBytesAccess edgeAccess, double value) {
         if (!isInitialized())
             throw new IllegalStateException("Call init before using EncodedValue " + getName());
         if (useMaximumAsInfinity) {
             if (Double.isInfinite(value)) {
-                super.setInt(reverse, edgeId, edgeIntAccess, maxStorableValue);
+                super.setInt(reverse, edgeId, edgeAccess, maxStorableValue);
                 return;
             } else if (value >= maxStorableValue * factor) { // equality is important as maxStorableValue is reserved for infinity
-                super.uncheckedSet(reverse, edgeId, edgeIntAccess, maxStorableValue - 1);
+                super.uncheckedSet(reverse, edgeId, edgeAccess, maxStorableValue - 1);
                 return;
             }
         } else if (Double.isInfinite(value))
@@ -102,12 +102,12 @@ public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implement
         if (value < minStorableValue)
             throw new IllegalArgumentException(getName() + " value too small for encoding " + value + ", minValue:" + minStorableValue + ", factor: " + factor);
 
-        super.uncheckedSet(reverse, edgeId, edgeIntAccess, (int) Math.round(value));
+        super.uncheckedSet(reverse, edgeId, edgeAccess, (int) Math.round(value));
     }
 
     @Override
-    public double getDecimal(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess) {
-        int value = getInt(reverse, edgeId, edgeIntAccess);
+    public double getDecimal(boolean reverse, int edgeId, EdgeBytesAccess edgeAccess) {
+        int value = getInt(reverse, edgeId, edgeAccess);
         if (useMaximumAsInfinity && value == maxStorableValue)
             return Double.POSITIVE_INFINITY;
         return value * factor;

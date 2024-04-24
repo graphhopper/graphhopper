@@ -20,7 +20,7 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.BytesRef;
 import com.graphhopper.util.Helper;
 
 import static com.graphhopper.routing.util.EncodingManager.getKey;
@@ -36,23 +36,23 @@ public class OSMBikeNetworkTagParser implements RelationTagParser {
     }
 
     @Override
-    public void handleRelationTags(IntsRef relFlags, ReaderRelation relation) {
-        IntsRefEdgeIntAccess relIntAccess = new IntsRefEdgeIntAccess(relFlags);
-        RouteNetwork oldBikeNetwork = transformerRouteRelEnc.getEnum(false, -1, relIntAccess);
+    public void handleRelationTags(BytesRef relFlags, ReaderRelation relation) {
+        EdgeBytesAccess relAccess = new EdgeBytesAccessArray(relFlags.bytes);
+        RouteNetwork oldBikeNetwork = transformerRouteRelEnc.getEnum(false, -1, relAccess);
         if (relation.hasTag("route", "bicycle")) {
             String tag = Helper.toLowerCase(relation.getTag("network", ""));
             RouteNetwork newBikeNetwork = BikeNetworkParserHelper.determine(tag);
             if (oldBikeNetwork == RouteNetwork.MISSING || oldBikeNetwork.ordinal() > newBikeNetwork.ordinal())
-                transformerRouteRelEnc.setEnum(false, -1, relIntAccess, newBikeNetwork);
+                transformerRouteRelEnc.setEnum(false, -1, relAccess, newBikeNetwork);
         }
     }
 
     @Override
-    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(int edgeId, EdgeBytesAccess edgeAccess, ReaderWay way, BytesRef relationFlags) {
         // just copy value into different bit range
-        IntsRefEdgeIntAccess relIntAccess = new IntsRefEdgeIntAccess(relationFlags);
-        RouteNetwork routeNetwork = transformerRouteRelEnc.getEnum(false, -1, relIntAccess);
-        bikeRouteEnc.setEnum(false, edgeId, edgeIntAccess, routeNetwork);
+        EdgeBytesAccess relAccess = new EdgeBytesAccessArray(relationFlags.bytes);
+        RouteNetwork routeNetwork = transformerRouteRelEnc.getEnum(false, -1, relAccess);
+        bikeRouteEnc.setEnum(false, edgeId, edgeAccess, routeNetwork);
     }
 
     public EnumEncodedValue<RouteNetwork> getTransformerRouteRelEnc() {

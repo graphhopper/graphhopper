@@ -23,7 +23,6 @@ import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.search.KVStorage;
 import com.graphhopper.storage.BytesRef;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;

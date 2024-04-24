@@ -19,9 +19,9 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.ev.EdgeBytesAccess;
 import com.graphhopper.routing.ev.IntEncodedValue;
-import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.BytesRef;
 
 /**
  * https://wiki.openstreetmap.org/wiki/Key:lanes
@@ -34,7 +34,7 @@ public class OSMLanesParser implements TagParser {
     }
 
     @Override
-    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(int edgeId, EdgeBytesAccess edgeAccess, ReaderWay way, BytesRef relationFlags) {
         int laneCount = 1;
         if (way.hasTag("lanes")) {
             String noLanes = way.getTag("lanes");
@@ -54,6 +54,6 @@ public class OSMLanesParser implements TagParser {
                 }
             }
         }
-        lanesEnc.setInt(false, edgeId, edgeIntAccess, laneCount);
+        lanesEnc.setInt(false, edgeId, edgeAccess, laneCount);
     }
 }

@@ -21,8 +21,8 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.ConditionalValueParser;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
-import com.graphhopper.routing.ev.EdgeIntAccess;
-import com.graphhopper.storage.IntsRef;
+import com.graphhopper.routing.ev.EdgeBytesAccess;
+import com.graphhopper.storage.BytesRef;
 import com.graphhopper.util.Helper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +44,7 @@ public class OSMTemporalAccessParser implements TagParser {
 
     @FunctionalInterface
     public interface Setter {
-        void setBoolean(int edgeId, EdgeIntAccess edgeIntAccess, boolean b);
+        void setBoolean(int edgeId, EdgeBytesAccess edgeAccess, boolean b);
     }
 
     public OSMTemporalAccessParser(Collection<String> conditionals, Setter restrictionSetter, String dateRangeParserDate) {
@@ -57,13 +57,13 @@ public class OSMTemporalAccessParser implements TagParser {
     }
 
     @Override
-    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(int edgeId, EdgeBytesAccess edgeAccess, ReaderWay way, BytesRef relationFlags) {
         // TODO for now the node tag overhead is not worth the effort due to very few data points
         // List<Map<String, Object>> nodeTags = way.getTag("node_tags", null);
 
         Boolean b = getConditional(way.getTags());
         if (b != null)
-            restrictionSetter.setBoolean(edgeId, edgeIntAccess, b);
+            restrictionSetter.setBoolean(edgeId, edgeAccess, b);
     }
 
     Boolean getConditional(Map<String, Object> tags) {

@@ -1,10 +1,10 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.ev.EdgeBytesAccess;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.HazmatWater;
-import com.graphhopper.routing.ev.EdgeIntAccess;
-import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.BytesRef;
 
 
 public class OSMHazmatWaterParser implements TagParser {
@@ -16,11 +16,11 @@ public class OSMHazmatWaterParser implements TagParser {
     }
 
     @Override
-    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay readerWay, IntsRef relationFlags) {
+    public void handleWayTags(int edgeId, EdgeBytesAccess edgeAccess, ReaderWay readerWay, BytesRef relationFlags) {
         if (readerWay.hasTag("hazmat:water", "no")) {
-            hazWaterEnc.setEnum(false, edgeId, edgeIntAccess, HazmatWater.NO);
+            hazWaterEnc.setEnum(false, edgeId, edgeAccess, HazmatWater.NO);
         } else if (readerWay.hasTag("hazmat:water", "permissive")) {
-            hazWaterEnc.setEnum(false, edgeId, edgeIntAccess, HazmatWater.PERMISSIVE);
+            hazWaterEnc.setEnum(false, edgeId, edgeAccess, HazmatWater.PERMISSIVE);
         }
     }
 

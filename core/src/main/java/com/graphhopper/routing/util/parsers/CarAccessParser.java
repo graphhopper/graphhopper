@@ -127,31 +127,31 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
     }
 
     @Override
-    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way) {
+    public void handleWayTags(int edgeId, EdgeBytesAccess edgeAccess, ReaderWay way) {
         WayAccess access = getAccess(way);
         if (access.canSkip())
             return;
 
         if (!access.isFerry()) {
-            boolean isRoundabout = roundaboutEnc.getBool(false, edgeId, edgeIntAccess);
+            boolean isRoundabout = roundaboutEnc.getBool(false, edgeId, edgeAccess);
             if (isOneway(way) || isRoundabout) {
                 if (isForwardOneway(way))
-                    accessEnc.setBool(false, edgeId, edgeIntAccess, true);
+                    accessEnc.setBool(false, edgeId, edgeAccess, true);
                 if (isBackwardOneway(way))
-                    accessEnc.setBool(true, edgeId, edgeIntAccess, true);
+                    accessEnc.setBool(true, edgeId, edgeAccess, true);
             } else {
-                accessEnc.setBool(false, edgeId, edgeIntAccess, true);
-                accessEnc.setBool(true, edgeId, edgeIntAccess, true);
+                accessEnc.setBool(false, edgeId, edgeAccess, true);
+                accessEnc.setBool(true, edgeId, edgeAccess, true);
             }
 
         } else {
-            accessEnc.setBool(false, edgeId, edgeIntAccess, true);
-            accessEnc.setBool(true, edgeId, edgeIntAccess, true);
+            accessEnc.setBool(false, edgeId, edgeAccess, true);
+            accessEnc.setBool(true, edgeId, edgeAccess, true);
         }
 
         if (way.hasTag("gh:barrier_edge")) {
             List<Map<String, Object>> nodeTags = way.getTag("node_tags", Collections.emptyList());
-            handleBarrierEdge(edgeId, edgeIntAccess, nodeTags.get(0));
+            handleBarrierEdge(edgeId, edgeAccess, nodeTags.get(0));
         }
     }
 

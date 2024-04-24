@@ -20,9 +20,7 @@ package com.graphhopper.routing.ev;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 /**
- * This interface defines how to store and read values from a list of integers
- *
- * @see com.graphhopper.storage.IntsRef
+ * This interface defines how to store and read values from a list of integers.
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "className")
 public interface EncodedValue {

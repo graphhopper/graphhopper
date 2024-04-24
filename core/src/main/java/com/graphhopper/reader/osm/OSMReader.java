@@ -33,7 +33,7 @@ import com.graphhopper.reader.dem.EdgeSampling;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.routing.OSMReaderConfig;
 import com.graphhopper.routing.ev.Country;
-import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.ev.EdgeBytesAccess;
 import com.graphhopper.routing.ev.State;
 import com.graphhopper.routing.util.AreaIndex;
 import com.graphhopper.routing.util.CustomArea;
@@ -43,10 +43,7 @@ import com.graphhopper.routing.util.countryrules.CountryRule;
 import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
 import com.graphhopper.routing.util.parsers.RestrictionSetter;
 import com.graphhopper.search.KVStorage;
-import com.graphhopper.storage.BaseGraph;
-import com.graphhopper.storage.IntsRef;
-import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.storage.TurnCostStorage;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
@@ -81,7 +78,7 @@ public class OSMReader {
 
     private final OSMReaderConfig config;
     private final BaseGraph baseGraph;
-    private final EdgeIntAccess edgeIntAccess;
+    private final EdgeBytesAccess edgeAccess;
     private final NodeAccess nodeAccess;
     private final TurnCostStorage turnCostStorage;
     private final OSMParsers osmParsers;
@@ -93,7 +90,6 @@ public class OSMReader {
     private File osmFile;
     private final RamerDouglasPeucker simplifyAlgo = new RamerDouglasPeucker();
 
-    private final IntsRef tempRelFlags;
     private Date osmDataDate;
     private long zeroCounter = 0;
 
@@ -103,7 +99,7 @@ public class OSMReader {
 
     public OSMReader(BaseGraph baseGraph, OSMParsers osmParsers, OSMReaderConfig config) {
         this.baseGraph = baseGraph;
-        this.edgeIntAccess = baseGraph.createEdgeIntAccess();
+        this.edgeAccess = baseGraph.getEdgeBytesAccess();
         this.config = config;
         this.nodeAccess = baseGraph.getNodeAccess();
         this.osmParsers = osmParsers;
@@ -113,10 +109,9 @@ public class OSMReader {
         simplifyAlgo.setElevationMaxDistance(config.getElevationMaxWayPointDistance());
         turnCostStorage = baseGraph.getTurnCostStorage();
 
-        tempRelFlags = osmParsers.createRelationFlags();
-        if (tempRelFlags.length != 2)
-            // we use a long to store relation flags currently, so the relation flags ints ref must have length 2
-            throw new IllegalArgumentException("OSMReader cannot use relation flags with != 2 integers");
+        BytesRef tempRelFlags = osmParsers.createRelationFlags();
+        if (tempRelFlags.length > 8)
+            throw new IllegalArgumentException("OSMReader cannot use relation flags with != 8 bytes");
     }
 
     /**
@@ -367,9 +362,9 @@ public class OSMReader {
         }
 
         setArtificialWayTags(pointList, way, distance, nodeTags);
-        IntsRef relationFlags = getRelFlagsMap(way.getId());
+        BytesRef relationFlags = getRelFlagsMap(way.getId());
         EdgeIteratorState edge = baseGraph.edge(fromIndex, toIndex).setDistance(distance);
-        osmParsers.handleWayTags(edge.getEdge(), edgeIntAccess, way, relationFlags);
+        osmParsers.handleWayTags(edge.getEdge(), edgeAccess, way, relationFlags);
         List<KVStorage.KeyValue> list = way.getTag("key_values", Collections.emptyList());
         if (!list.isEmpty())
             edge.setKeyValues(list);
@@ -564,8 +559,8 @@ public class OSMReader {
             for (ReaderRelation.Member member : relation.getMembers()) {
                 if (member.getType() != ReaderElement.Type.WAY)
                     continue;
-                IntsRef oldRelationFlags = getRelFlagsMap(member.getRef());
-                IntsRef newRelationFlags = osmParsers.handleRelationTags(relation, oldRelationFlags);
+                BytesRef oldRelationFlags = getRelFlagsMap(member.getRef());
+                BytesRef newRelationFlags = osmParsers.handleRelationTags(relation, oldRelationFlags);
                 putRelFlagsMap(member.getRef(), newRelationFlags);
             }
         }
@@ -666,16 +661,15 @@ public class OSMReader {
         restrictionRelations = null;
     }
 
-    IntsRef getRelFlagsMap(long osmId) {
+    private final static BitUtil bitUtil = BitUtil.LITTLE;
+
+    BytesRef getRelFlagsMap(long osmId) {
         long relFlagsAsLong = osmWayIdToRelationFlagsMap.get(osmId);
-        tempRelFlags.ints[0] = (int) relFlagsAsLong;
-        tempRelFlags.ints[1] = (int) (relFlagsAsLong >> 32);
-        return tempRelFlags;
+        return new BytesRef(bitUtil.fromLong(relFlagsAsLong), 0, 8);
     }
 
-    void putRelFlagsMap(long osmId, IntsRef relFlags) {
-        long relFlagsAsLong = ((long) relFlags.ints[1] << 32) | (relFlags.ints[0] & 0xFFFFFFFFL);
-        osmWayIdToRelationFlagsMap.put(osmId, relFlagsAsLong);
+    void putRelFlagsMap(long osmId, BytesRef relFlags) {
+        osmWayIdToRelationFlagsMap.put(osmId, bitUtil.toLong(relFlags.bytes));
     }
 
     @Override

@@ -1,10 +1,10 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.ev.EdgeBytesAccess;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.Hazmat;
-import com.graphhopper.routing.ev.EdgeIntAccess;
-import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.BytesRef;
 
 public class OSMHazmatParser implements TagParser {
 
@@ -15,8 +15,8 @@ public class OSMHazmatParser implements TagParser {
     }
 
     @Override
-    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay readerWay, IntsRef relationFlags) {
+    public void handleWayTags(int edgeId, EdgeBytesAccess edgeAccess, ReaderWay readerWay, BytesRef relationFlags) {
         if (readerWay.hasTag("hazmat", "no"))
-            hazEnc.setEnum(false, edgeId, edgeIntAccess, Hazmat.NO);
+            hazEnc.setEnum(false, edgeId, edgeAccess, Hazmat.NO);
     }
 }

@@ -10,13 +10,13 @@ public class MaxWeightTest {
     public void testSetAndGet() {
         DecimalEncodedValue mappedDecimalEnc = MaxWeight.create();
         mappedDecimalEnc.init(new EncodedValue.InitializerConfig());
-        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        EdgeBytesAccess edgeAccess = new EdgeBytesAccessArray(4);
         int edgeId = 0;
-        mappedDecimalEnc.setDecimal(false, edgeId, edgeIntAccess, 20);
-        assertEquals(20, mappedDecimalEnc.getDecimal(false, edgeId, edgeIntAccess), .1);
+        mappedDecimalEnc.setDecimal(false, edgeId, edgeAccess, 20);
+        assertEquals(20, mappedDecimalEnc.getDecimal(false, edgeId, edgeAccess), .1);
 
-        edgeIntAccess = new ArrayEdgeIntAccess(1);
-        mappedDecimalEnc.setDecimal(false, edgeId, edgeIntAccess, Double.POSITIVE_INFINITY);
-        assertEquals(Double.POSITIVE_INFINITY, mappedDecimalEnc.getDecimal(false, edgeId, edgeIntAccess), .1);
+        edgeAccess = new EdgeBytesAccessArray(4);
+        mappedDecimalEnc.setDecimal(false, edgeId, edgeAccess, Double.POSITIVE_INFINITY);
+        assertEquals(Double.POSITIVE_INFINITY, mappedDecimalEnc.getDecimal(false, edgeId, edgeAccess), .1);
     }
 }

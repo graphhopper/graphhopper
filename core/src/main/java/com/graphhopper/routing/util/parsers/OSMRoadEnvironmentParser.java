@@ -18,11 +18,11 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.ev.EdgeBytesAccess;
 import com.graphhopper.routing.ev.EnumEncodedValue;
-import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.ev.RoadEnvironment;
 import com.graphhopper.routing.util.FerrySpeedCalculator;
-import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.BytesRef;
 
 import java.util.Collections;
 import java.util.List;
@@ -39,7 +39,7 @@ public class OSMRoadEnvironmentParser implements TagParser {
     }
 
     @Override
-    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay readerWay, IntsRef relationFlags) {
+    public void handleWayTags(int edgeId, EdgeBytesAccess edgeAccess, ReaderWay readerWay, BytesRef relationFlags) {
         RoadEnvironment roadEnvironment = OTHER;
         if (FerrySpeedCalculator.isFerry(readerWay))
             roadEnvironment = FERRY;
@@ -59,6 +59,6 @@ public class OSMRoadEnvironmentParser implements TagParser {
         }
 
         if (roadEnvironment != OTHER)
-            roadEnvEnc.setEnum(false, edgeId, edgeIntAccess, roadEnvironment);
+            roadEnvEnc.setEnum(false, edgeId, edgeAccess, roadEnvironment);
     }
 }

@@ -19,9 +19,9 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.ev.EdgeBytesAccess;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
-import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.BytesRef;
 
 import java.util.Collections;
 
@@ -34,7 +34,7 @@ public class OSMMaxLengthParser implements TagParser {
     }
 
     @Override
-    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
-        OSMValueExtractor.extractMeter(edgeId, edgeIntAccess, way, lengthEncoder, Collections.singletonList("maxlength"));
+    public void handleWayTags(int edgeId, EdgeBytesAccess edgeAccess, ReaderWay way, BytesRef relationFlags) {
+        OSMValueExtractor.extractMeter(edgeId, edgeAccess, way, lengthEncoder, Collections.singletonList("maxlength"));
     }
 }

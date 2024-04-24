@@ -170,8 +170,8 @@ public class RAMDataAccess extends AbstractDataAccess {
         assert segments.length > 0 : "call create or loadExisting before usage!";
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
-//        if (index + 4 > segmentSizeInBytes)
-//            throw new IllegalStateException("Padding required. Currently an int cannot be distributed over two segments. " + bytePos);
+        if (index + 4 > segmentSizeInBytes)
+            throw new IllegalStateException("Padding required. Currently an int cannot be distributed over two segments. " + bytePos);
         return bitUtil.toInt(segments[bufferIndex], index);
     }
 

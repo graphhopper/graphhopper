@@ -2,10 +2,9 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.ev.EdgeBytesAccess;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
-import com.graphhopper.storage.IntsRef;
-
+import com.graphhopper.storage.BytesRef;
 
 public abstract class AbstractAverageSpeedParser implements TagParser {
     // http://wiki.openstreetmap.org/wiki/Mapfeatures#Barrier
@@ -37,11 +36,11 @@ public abstract class AbstractAverageSpeedParser implements TagParser {
         return avgSpeedEnc;
     }
 
-    protected void setSpeed(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess, double speed) {
+    protected void setSpeed(boolean reverse, int edgeId, EdgeBytesAccess edgeAccess, double speed) {
         if (speed < avgSpeedEnc.getSmallestNonZeroValue() / 2) {
             throw new IllegalArgumentException("Speed was " + speed + " but cannot be lower than " + avgSpeedEnc.getSmallestNonZeroValue() / 2);
         } else {
-            avgSpeedEnc.setDecimal(reverse, edgeId, edgeIntAccess, speed);
+            avgSpeedEnc.setDecimal(reverse, edgeId, edgeAccess, speed);
         }
     }
 
@@ -50,11 +49,11 @@ public abstract class AbstractAverageSpeedParser implements TagParser {
     }
 
     @Override
-    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
-        handleWayTags(edgeId, edgeIntAccess, way);
+    public void handleWayTags(int edgeId, EdgeBytesAccess edgeAccess, ReaderWay way, BytesRef relationFlags) {
+        handleWayTags(edgeId, edgeAccess, way);
     }
 
-    public abstract void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way);
+    public abstract void handleWayTags(int edgeId, EdgeBytesAccess edgeAccess, ReaderWay way);
 
     @Override
     public String toString() {

@@ -18,6 +18,7 @@
 
 package com.graphhopper.storage;
 
+import com.graphhopper.routing.ev.EdgeBytesAccess;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import org.slf4j.LoggerFactory;
@@ -31,7 +32,7 @@ import static com.graphhopper.util.Helper.nf;
  * Underlying storage for nodes and edges of {@link BaseGraph}. Nodes and edges are stored using two {@link DataAccess}
  * instances. Nodes and edges are simply stored sequentially, see the memory layout in the constructor.
  */
-class BaseGraphNodesAndEdges {
+class BaseGraphNodesAndEdges implements EdgeBytesAccess {
     // Currently distances are stored as 4 byte integers. using a conversion factor of 1000 the minimum distance
     // that is not considered zero is 0.0005m (=0.5mm) and the maximum distance per edge is about 2.147.483m=2147km.
     // See OSMReader.addEdge and #1871.
@@ -242,26 +243,30 @@ class BaseGraphNodesAndEdges {
         return (long) node * nodeEntryBytes;
     }
 
-    public long toEdgePointer(int edge) {
+    long toEdgePointer(int edge) {
         if (edge < 0 || edge >= edgeCount)
             throw new IllegalArgumentException("edge: " + edge + " out of bounds [0," + edgeCount + "[");
         return (long) edge * edgeEntryBytes;
     }
 
-    public void readFlags(long edgePointer, BytesRef edgeFlags) {
-        edges.getBytes(edgePointer + E_FLAGS, edgeFlags.bytes, edgeFlags.length);
+    @Override
+    public void setInt(int edgeId, int edgeRowBytesOffset, int value) {
+        edges.setInt(toEdgePointer(edgeId) + E_FLAGS + edgeRowBytesOffset, value);
     }
 
-    public void writeFlags(long edgePointer, BytesRef edgeFlags) {
-        edges.setBytes(edgePointer + E_FLAGS, edgeFlags.bytes, edgeFlags.length);
+    @Override
+    public int getInt(int edgeId, int edgeRowBytesOffset) {
+        return edges.getInt(toEdgePointer(edgeId) + E_FLAGS + edgeRowBytesOffset);
     }
 
-    public int getFlagInt(long edgePointer, int index) {
-        return edges.getInt(edgePointer + E_FLAGS + index * 4);
+    @Override
+    public void setBytes(int edgeId, int edgeRowBytesOffset, byte[] bytes, int bytesOffset, int len) {
+        edges.setBytes(toEdgePointer(edgeId) + E_FLAGS + edgeRowBytesOffset, bytes, len);
     }
 
-    public void setFlagInt(long edgePointer, int index, int value) {
-        edges.setInt(edgePointer + E_FLAGS + index * 4, value);
+    @Override
+    public void getBytes(int edgeId, int edgeRowBytesOffset, byte[] bytes, int bytesOffset, int len) {
+        edges.getBytes(toEdgePointer(edgeId) + E_FLAGS + edgeRowBytesOffset, bytes, len);
     }
 
     public void setNodeA(long edgePointer, int nodeA) {
@@ -389,16 +394,16 @@ class BaseGraphNodesAndEdges {
         System.out.println("edges:");
         String formatEdges = "%12s | %12s | %12s | %12s | %12s | %12s | %12s \n";
         System.out.format(Locale.ROOT, formatEdges, "#", "E_NODEA", "E_NODEB", "E_LINKA", "E_LINKB", "E_FLAGS", "E_DIST");
-        BytesRef bytesRef = new BytesRef(bytesForFlags);
+        byte[] bytesRef = new byte[bytesForFlags];
         for (int i = 0; i < Math.min(edgeCount, printMax); ++i) {
             long edgePointer = toEdgePointer(i);
-            readFlags(edgePointer, bytesRef);
+            getBytes(i, 0, bytesRef, 0, bytesRef.length);
             System.out.format(Locale.ROOT, formatEdges, i,
                     getNodeA(edgePointer),
                     getNodeB(edgePointer),
                     getLinkA(edgePointer),
                     getLinkB(edgePointer),
-                    bytesRef,
+                    new BytesRef(bytesRef, 0, bytesRef.length),
                     getDist(edgePointer));
         }
         if (edgeCount > printMax) {

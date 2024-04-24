@@ -18,10 +18,10 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.ev.EdgeBytesAccess;
 import com.graphhopper.routing.ev.EnumEncodedValue;
-import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.ev.Smoothness;
-import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.BytesRef;
 
 import static com.graphhopper.routing.ev.Smoothness.MISSING;
 
@@ -34,12 +34,12 @@ public class OSMSmoothnessParser implements TagParser {
     }
 
     @Override
-    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay readerWay, IntsRef relationFlags) {
+    public void handleWayTags(int edgeId, EdgeBytesAccess edgeAccess, ReaderWay readerWay, BytesRef relationFlags) {
         String smoothnessTag = readerWay.getTag("smoothness");
         Smoothness smoothness = Smoothness.find(smoothnessTag);
         if (smoothness == MISSING)
             return;
 
-        smoothnessEnc.setEnum(false, edgeId, edgeIntAccess, smoothness);
+        smoothnessEnc.setEnum(false, edgeId, edgeAccess, smoothness);
     }
 }

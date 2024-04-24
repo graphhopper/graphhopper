@@ -19,8 +19,8 @@ package com.graphhopper.storage;
 
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EdgeIntAccess;
-import com.graphhopper.routing.ev.IntsRefEdgeIntAccess;
+import com.graphhopper.routing.ev.EdgeBytesAccess;
+import com.graphhopper.routing.ev.EdgeBytesAccessArray;
 import com.graphhopper.util.Constants;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
@@ -87,7 +87,7 @@ public class TurnCostStorage {
         long pointer = findOrCreateTurnCostEntry(fromEdge, viaNode, toEdge);
         if (pointer < 0)
             throw new IllegalStateException("Invalid pointer: " + pointer + " at (" + fromEdge + ", " + viaNode + ", " + toEdge + ")");
-        bev.setBool(false, -1, createIntAccess(pointer), value);
+        bev.setBool(false, -1, createAccess(pointer), value);
     }
 
     /**
@@ -97,7 +97,7 @@ public class TurnCostStorage {
         long pointer = findOrCreateTurnCostEntry(fromEdge, viaNode, toEdge);
         if (pointer < 0)
             throw new IllegalStateException("Invalid pointer: " + pointer + " at (" + fromEdge + ", " + viaNode + ", " + toEdge + ")");
-        turnCostEnc.setDecimal(false, -1, createIntAccess(pointer), cost);
+        turnCostEnc.setDecimal(false, -1, createAccess(pointer), cost);
     }
 
     private long findOrCreateTurnCostEntry(int fromEdge, int viaNode, int toEdge) {
@@ -117,15 +117,25 @@ public class TurnCostStorage {
     }
 
     public double get(DecimalEncodedValue dev, int fromEdge, int viaNode, int toEdge) {
-        return dev.getDecimal(false, -1, createIntAccess(findPointer(fromEdge, viaNode, toEdge)));
+        return dev.getDecimal(false, -1, createAccess(findPointer(fromEdge, viaNode, toEdge)));
     }
 
     public boolean get(BooleanEncodedValue bev, int fromEdge, int viaNode, int toEdge) {
-        return bev.getBool(false, -1, createIntAccess(findPointer(fromEdge, viaNode, toEdge)));
+        return bev.getBool(false, -1, createAccess(findPointer(fromEdge, viaNode, toEdge)));
     }
 
-    private EdgeIntAccess createIntAccess(long pointer) {
-        return new EdgeIntAccess() {
+    private EdgeBytesAccess createAccess(long pointer) {
+        return new EdgeBytesAccess() {
+            @Override
+            public void setBytes(int edgeId, int edgeRowBytesOffset, byte[] bytes, int bytesOffset, int len) {
+                throw new IllegalStateException("not implemented");
+            }
+
+            @Override
+            public void getBytes(int edgeId, int edgeRowBytesOffset, byte[] bytes, int bytesOffset, int len) {
+                throw new IllegalStateException("not implemented");
+            }
+
             @Override
             public int getInt(int edgeId, int index) {
                 return pointer < 0 ? 0 : turnCosts.getInt(pointer + TC_FLAGS);
@@ -200,8 +210,7 @@ public class TurnCostStorage {
     private class Itr implements Iterator {
         private int viaNode = -1;
         private int turnCostIndex = -1;
-        private final IntsRef intsRef = new IntsRef(1);
-        private final EdgeIntAccess edgeIntAccess = new IntsRefEdgeIntAccess(intsRef);
+        private final EdgeBytesAccess edgeAccess = new EdgeBytesAccessArray(new byte[4]);
 
         private long turnCostPtr() {
             return (long) turnCostIndex * BYTES_PER_ENTRY;
@@ -224,14 +233,14 @@ public class TurnCostStorage {
 
         @Override
         public boolean get(BooleanEncodedValue booleanEncodedValue) {
-            intsRef.ints[0] = turnCosts.getInt(turnCostPtr() + TC_FLAGS);
-            return booleanEncodedValue.getBool(false, -1, edgeIntAccess);
+            edgeAccess.setInt(0, 0, turnCosts.getInt(turnCostPtr() + TC_FLAGS));
+            return booleanEncodedValue.getBool(false, 0, edgeAccess);
         }
 
         @Override
         public double getCost(DecimalEncodedValue encodedValue) {
-            intsRef.ints[0] = turnCosts.getInt(turnCostPtr() + TC_FLAGS);
-            return encodedValue.getDecimal(false, -1, edgeIntAccess);
+            edgeAccess.setInt(0, 0, turnCosts.getInt(turnCostPtr() + TC_FLAGS));
+            return encodedValue.getDecimal(false, 0, edgeAccess);
         }
 
         @Override

@@ -19,8 +19,8 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.EdgeIntAccess;
-import com.graphhopper.storage.IntsRef;
+import com.graphhopper.routing.ev.EdgeBytesAccess;
+import com.graphhopper.storage.BytesRef;
 
 public class OSMRoundaboutParser implements TagParser {
 
@@ -31,9 +31,9 @@ public class OSMRoundaboutParser implements TagParser {
     }
 
     @Override
-    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(int edgeId, EdgeBytesAccess edgeAccess, ReaderWay way, BytesRef relationFlags) {
         boolean isRoundabout = way.hasTag("junction", "roundabout") || way.hasTag("junction", "circular");
         if (isRoundabout)
-            roundaboutEnc.setBool(false, edgeId, edgeIntAccess, true);
+            roundaboutEnc.setBool(false, edgeId, edgeAccess, true);
     }
 }

@@ -661,10 +661,10 @@ public abstract class AbstractGraphStorageTester {
         graph = new BaseGraph.Builder(manager).create();
 
         EdgeIteratorState edge = graph.edge(0, 1);
-        BytesRef intsRef = manager.createEdgeFlags();
-        BitUtil.LITTLE.fromInt(intsRef.bytes, Integer.MAX_VALUE / 3, intsRef.offset);
-        edge.setFlags(intsRef);
-        int val = BitUtil.LITTLE.toInt(intsRef.bytes, 0);
+        BytesRef bytesRef = manager.createEdgeFlags();
+        BitUtil.LITTLE.fromInt(bytesRef.bytes, Integer.MAX_VALUE / 3, bytesRef.offset);
+        edge.setFlags(bytesRef);
+        int val = BitUtil.LITTLE.toInt(bytesRef.bytes, 0);
         assertEquals(Integer.MAX_VALUE / 3, val);
         graph.close();
 

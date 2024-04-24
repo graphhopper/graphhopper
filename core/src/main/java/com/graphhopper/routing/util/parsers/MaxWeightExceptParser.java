@@ -1,12 +1,12 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.ev.EdgeBytesAccess;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.MaxWeightExcept;
 import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
-import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.BytesRef;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -22,7 +22,7 @@ public class MaxWeightExceptParser implements TagParser {
         this.mweEnc = mweEnc;
     }
 
-    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(int edgeId, EdgeBytesAccess edgeAccess, ReaderWay way, BytesRef relationFlags) {
         // tagging like maxweight:conditional=no/none @ destination/delivery/forestry/service
         String condValue = way.getTag("maxweight:conditional", "");
         if (!condValue.isEmpty()) {
@@ -31,8 +31,9 @@ public class MaxWeightExceptParser implements TagParser {
                 String key = values[0].trim();
                 String value = values[1].trim();
                 if ("no".equals(key) || "none".equals(key)) {
-                    if (value.startsWith("(") && value.endsWith(")")) value = value.substring(1, value.length() - 1);
-                    mweEnc.setEnum(false, edgeId, edgeIntAccess, MaxWeightExcept.find(value));
+                    if (value.startsWith("(") && value.endsWith(")"))
+                        value = value.substring(1, value.length() - 1);
+                    mweEnc.setEnum(false, edgeId, edgeAccess, MaxWeightExcept.find(value));
                     return;
                 }
             }
@@ -50,7 +51,7 @@ public class MaxWeightExceptParser implements TagParser {
                         && (stringToTons(way.getTag("maxweight", "")) == dec
                         || stringToTons(way.getTag("maxweightrating:hgv", "")) == dec
                         || stringToTons(way.getTag("maxgcweight", "")) == dec)) {
-                    mweEnc.setEnum(false, edgeId, edgeIntAccess, MaxWeightExcept.find(value.substring(0, atIndex).trim()));
+                    mweEnc.setEnum(false, edgeId, edgeAccess, MaxWeightExcept.find(value.substring(0, atIndex).trim()));
                     break;
                 }
             }

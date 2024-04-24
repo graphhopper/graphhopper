@@ -2,12 +2,12 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.ev.EdgeBytesAccess;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RouteNetwork;
 import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.routing.util.PriorityCode;
-import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.BytesRef;
 
 import java.util.*;
 import java.util.stream.Stream;
@@ -86,9 +86,9 @@ public abstract class BikeCommonPriorityParser implements TagParser {
     }
 
     @Override
-    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(int edgeId, EdgeBytesAccess edgeAccess, ReaderWay way, BytesRef relationFlags) {
         String highwayValue = way.getTag("highway");
-        Integer priorityFromRelation = routeMap.get(bikeRouteEnc.getEnum(false, edgeId, edgeIntAccess));
+        Integer priorityFromRelation = routeMap.get(bikeRouteEnc.getEnum(false, edgeId, edgeAccess));
         if (highwayValue == null) {
             if (FerrySpeedCalculator.isFerry(way)) {
                 priorityFromRelation = SLIGHT_AVOID.getValue();
@@ -97,8 +97,8 @@ public abstract class BikeCommonPriorityParser implements TagParser {
             }
         }
 
-        double maxSpeed = Math.max(avgSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), avgSpeedEnc.getDecimal(true, edgeId, edgeIntAccess));
-        priorityEnc.setDecimal(false, edgeId, edgeIntAccess, PriorityCode.getValue(handlePriority(way, maxSpeed, priorityFromRelation)));
+        double maxSpeed = Math.max(avgSpeedEnc.getDecimal(false, edgeId, edgeAccess), avgSpeedEnc.getDecimal(true, edgeId, edgeAccess));
+        priorityEnc.setDecimal(false, edgeId, edgeAccess, PriorityCode.getValue(handlePriority(way, maxSpeed, priorityFromRelation)));
     }
 
     /**

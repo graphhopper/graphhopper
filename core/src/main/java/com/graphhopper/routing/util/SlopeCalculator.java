@@ -2,9 +2,9 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.ev.EdgeBytesAccess;
 import com.graphhopper.routing.util.parsers.TagParser;
-import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.BytesRef;
 import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.PointList;
 
@@ -20,14 +20,14 @@ public class SlopeCalculator implements TagParser {
     }
 
     @Override
-    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(int edgeId, EdgeBytesAccess edgeAccess, ReaderWay way, BytesRef relationFlags) {
         PointList pointList = way.getTag("point_list", null);
         if (pointList != null) {
             if (pointList.isEmpty() || !pointList.is3D()) {
                 if (maxSlopeEnc != null)
-                    maxSlopeEnc.setDecimal(false, edgeId, edgeIntAccess, 0);
+                    maxSlopeEnc.setDecimal(false, edgeId, edgeAccess, 0);
                 if (averageSlopeEnc != null)
-                    averageSlopeEnc.setDecimal(false, edgeId, edgeIntAccess, 0);
+                    averageSlopeEnc.setDecimal(false, edgeId, edgeAccess, 0);
                 return;
             }
             // Calculate 2d distance, although pointList might be 3D.
@@ -36,7 +36,7 @@ public class SlopeCalculator implements TagParser {
             if (distance2D < MIN_LENGTH) {
                 if (averageSlopeEnc != null)
                     // default is minimum of average_slope is negative so we have to explicitly set it to 0
-                    averageSlopeEnc.setDecimal(false, edgeId, edgeIntAccess, 0);
+                    averageSlopeEnc.setDecimal(false, edgeId, edgeAccess, 0);
                 return;
             }
 
@@ -46,9 +46,9 @@ public class SlopeCalculator implements TagParser {
 
             if (averageSlopeEnc != null) {
                 if (towerNodeSlope >= 0)
-                    averageSlopeEnc.setDecimal(false, edgeId, edgeIntAccess, Math.min(towerNodeSlope, averageSlopeEnc.getMaxStorableDecimal()));
+                    averageSlopeEnc.setDecimal(false, edgeId, edgeAccess, Math.min(towerNodeSlope, averageSlopeEnc.getMaxStorableDecimal()));
                 else
-                    averageSlopeEnc.setDecimal(true, edgeId, edgeIntAccess, Math.min(Math.abs(towerNodeSlope), averageSlopeEnc.getMaxStorableDecimal()));
+                    averageSlopeEnc.setDecimal(true, edgeId, edgeAccess, Math.min(Math.abs(towerNodeSlope), averageSlopeEnc.getMaxStorableDecimal()));
             }
 
             if (maxSlopeEnc != null) {
@@ -78,7 +78,7 @@ public class SlopeCalculator implements TagParser {
                     throw new IllegalArgumentException("max_slope was NaN for OSM way ID " + way.getId());
 
                 double val = Math.max(maxSlope, maxSlopeEnc.getMinStorableDecimal());
-                maxSlopeEnc.setDecimal(false, edgeId, edgeIntAccess, Math.min(maxSlopeEnc.getMaxStorableDecimal(), val));
+                maxSlopeEnc.setDecimal(false, edgeId, edgeAccess, Math.min(maxSlopeEnc.getMaxStorableDecimal(), val));
             }
         }
     }

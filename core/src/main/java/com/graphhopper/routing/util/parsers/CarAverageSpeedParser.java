@@ -120,12 +120,12 @@ public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements
     }
 
     @Override
-    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way) {
+    public void handleWayTags(int edgeId, EdgeBytesAccess edgeAccess, ReaderWay way) {
         if (FerrySpeedCalculator.isFerry(way)) {
-            double ferrySpeed = FerrySpeedCalculator.minmax(ferrySpeedEnc.getDecimal(false, edgeId, edgeIntAccess), avgSpeedEnc);
-            setSpeed(false, edgeId, edgeIntAccess, ferrySpeed);
+            double ferrySpeed = FerrySpeedCalculator.minmax(ferrySpeedEnc.getDecimal(false, edgeId, edgeAccess), avgSpeedEnc);
+            setSpeed(false, edgeId, edgeAccess, ferrySpeed);
             if (avgSpeedEnc.isStoreTwoDirections())
-                setSpeed(true, edgeId, edgeIntAccess, ferrySpeed);
+                setSpeed(true, edgeId, edgeAccess, ferrySpeed);
             return;
         }
 
@@ -133,8 +133,8 @@ public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements
         double speed = getSpeed(way);
         speed = applyBadSurfaceSpeed(way, speed);
 
-        setSpeed(false, edgeId, edgeIntAccess, applyMaxSpeed(way, speed, false));
-        setSpeed(true, edgeId, edgeIntAccess, applyMaxSpeed(way, speed, true));
+        setSpeed(false, edgeId, edgeAccess, applyMaxSpeed(way, speed, false));
+        setSpeed(true, edgeId, edgeAccess, applyMaxSpeed(way, speed, true));
     }
 
     /**

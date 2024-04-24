@@ -18,9 +18,9 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.ev.EdgeBytesAccess;
 import com.graphhopper.routing.ev.IntEncodedValue;
-import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.BytesRef;
 
 /**
  * Parses the mountain biking difficulty.
@@ -37,7 +37,7 @@ public class OSMMtbRatingParser implements TagParser {
     }
 
     @Override
-    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay readerWay, IntsRef relationFlags) {
+    public void handleWayTags(int edgeId, EdgeBytesAccess edgeAccess, ReaderWay readerWay, BytesRef relationFlags) {
         String scale = readerWay.getTag("mtb:scale");
         int rating = 0;
         if (scale != null) {
@@ -50,6 +50,6 @@ public class OSMMtbRatingParser implements TagParser {
             }
         }
         if (rating > 0 && rating < 8)
-            mtbRatingEnc.setInt(false, edgeId, edgeIntAccess, rating);
+            mtbRatingEnc.setInt(false, edgeId, edgeAccess, rating);
     }
 }

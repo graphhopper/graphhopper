@@ -19,9 +19,9 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.Country;
+import com.graphhopper.routing.ev.EdgeBytesAccess;
 import com.graphhopper.routing.ev.EnumEncodedValue;
-import com.graphhopper.routing.ev.EdgeIntAccess;
-import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.BytesRef;
 
 public class CountryParser implements TagParser {
     private final EnumEncodedValue<Country> countryEnc;
@@ -31,8 +31,8 @@ public class CountryParser implements TagParser {
     }
 
     @Override
-    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(int edgeId, EdgeBytesAccess edgeAccess, ReaderWay way, BytesRef relationFlags) {
         Country country = way.getTag("country", Country.MISSING);
-        countryEnc.setEnum(false, edgeId, edgeIntAccess, country);
+        countryEnc.setEnum(false, edgeId, edgeAccess, country);
     }
 }

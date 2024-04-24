@@ -27,7 +27,7 @@ public class MaxSpeedCalculator {
 
     private final DefaultMaxSpeedParser parser;
     private final LegalDefaultSpeeds defaultSpeeds;
-    private EdgeIntAccess internalMaxSpeedStorage;
+    private EdgeBytesAccess internalMaxSpeedStorage;
     private DecimalEncodedValue ruralMaxSpeedEnc;
     private DecimalEncodedValue urbanMaxSpeedEnc;
     private DataAccess dataAccess;
@@ -45,7 +45,7 @@ public class MaxSpeedCalculator {
         return urbanMaxSpeedEnc;
     }
 
-    EdgeIntAccess getInternalMaxSpeedStorage() {
+    EdgeBytesAccess getInternalMaxSpeedStorage() {
         return internalMaxSpeedStorage;
     }
 
@@ -91,8 +91,18 @@ public class MaxSpeedCalculator {
     /**
      * Creates temporary uni dir max_speed storage that is removed after import.
      */
-    private EdgeIntAccess createMaxSpeedStorage(DataAccess dataAccess) {
-        return new EdgeIntAccess() {
+    private EdgeBytesAccess createMaxSpeedStorage(DataAccess dataAccess) {
+        return new EdgeBytesAccess() {
+
+            @Override
+            public void setBytes(int edgeId, int edgeRowBytesOffset, byte[] bytes, int bytesOffset, int len) {
+                throw new IllegalStateException("not implemented");
+            }
+
+            @Override
+            public void getBytes(int edgeId, int edgeRowBytesOffset, byte[] bytes, int bytesOffset, int len) {
+                throw new IllegalStateException("not implemented");
+            }
 
             public int getInt(int edgeId, int index) {
                 dataAccess.ensureCapacity(edgeId * 2L + 2L);

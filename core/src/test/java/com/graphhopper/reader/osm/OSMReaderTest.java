@@ -494,23 +494,23 @@ public class OSMReaderTest {
         osmRel.setTag("network", "lcn");
 
         // bikeNetworkEnc and MtbNetworkEnc share the same instance of the relFlags
-        IntsRef relFlags = manager.createRelationFlags();
-        IntsRefEdgeIntAccess intAccess = new IntsRefEdgeIntAccess(relFlags);
+        BytesRef relFlags = manager.createRelationFlags();
+        EdgeBytesAccess edgeAccess = new EdgeBytesAccessArray(relFlags.bytes);
         int edgeId = 0;
         osmParsers.handleRelationTags(osmRel, relFlags);
-        assertEquals(RouteNetwork.LOCAL, transformEnc.getEnum(false, edgeId, intAccess));
+        assertEquals(RouteNetwork.LOCAL, transformEnc.getEnum(false, edgeId, edgeAccess));
 
         // unchanged network
-        IntsRef before = IntsRef.deepCopyOf(relFlags);
+        BytesRef before = BytesRef.deepCopyOf(relFlags);
         osmParsers.handleRelationTags(osmRel, relFlags);
         assertEquals(before, relFlags);
-        assertEquals(RouteNetwork.LOCAL, transformEnc.getEnum(false, edgeId, intAccess));
-        assertEquals(RouteNetwork.LOCAL, transformEnc.getEnum(false, edgeId, intAccess));
+        assertEquals(RouteNetwork.LOCAL, transformEnc.getEnum(false, edgeId, edgeAccess));
+        assertEquals(RouteNetwork.LOCAL, transformEnc.getEnum(false, edgeId, edgeAccess));
 
         // overwrite network
         osmRel.setTag("network", "ncn");
         osmParsers.handleRelationTags(osmRel, relFlags);
-        assertEquals(RouteNetwork.NATIONAL, transformEnc.getEnum(false, edgeId, intAccess));
+        assertEquals(RouteNetwork.NATIONAL, transformEnc.getEnum(false, edgeId, edgeAccess));
         assertNotEquals(before, relFlags);
 
         // The further tests below are for an edge which is part of a bike and another mountainbike relation
@@ -524,17 +524,17 @@ public class OSMReaderTest {
         osmRel.setTag("network", "lcn");
 
         osmParsers.handleRelationTags(osmRel, relFlags);
-        assertEquals(RouteNetwork.LOCAL, transformEnc.getEnum(false, edgeId, intAccess));
+        assertEquals(RouteNetwork.LOCAL, transformEnc.getEnum(false, edgeId, edgeAccess));
 
         // unchanged network
         osmParsers.handleRelationTags(osmRel, relFlags);
-        assertEquals(RouteNetwork.LOCAL, transformEnc.getEnum(false, edgeId, intAccess));
-        assertEquals(RouteNetwork.LOCAL, transformEnc.getEnum(false, edgeId, intAccess));
+        assertEquals(RouteNetwork.LOCAL, transformEnc.getEnum(false, edgeId, edgeAccess));
+        assertEquals(RouteNetwork.LOCAL, transformEnc.getEnum(false, edgeId, edgeAccess));
 
         // overwrite network
         osmRel.setTag("network", "ncn");
         osmParsers.handleRelationTags(osmRel, relFlags);
-        assertEquals(RouteNetwork.NATIONAL, transformEnc.getEnum(false, edgeId, intAccess));
+        assertEquals(RouteNetwork.NATIONAL, transformEnc.getEnum(false, edgeId, edgeAccess));
         assertNotEquals(before, relFlags);
     }
 

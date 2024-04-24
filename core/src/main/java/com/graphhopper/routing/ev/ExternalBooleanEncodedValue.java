@@ -41,14 +41,14 @@ public class ExternalBooleanEncodedValue implements BooleanEncodedValue {
     }
 
     @Override
-    public void setBool(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess, boolean value) {
+    public void setBool(boolean reverse, int edgeId, EdgeBytesAccess edgeAccess, boolean value) {
         // it'll grow as we go
         if (value) bits.set(getIndex(edgeId, reverse));
         else bits.clear(getIndex(edgeId, reverse));
     }
 
     @Override
-    public boolean getBool(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess) {
+    public boolean getBool(boolean reverse, int edgeId, EdgeBytesAccess edgeAccess) {
         return bits.get(getIndex(edgeId, reverse));
     }
 

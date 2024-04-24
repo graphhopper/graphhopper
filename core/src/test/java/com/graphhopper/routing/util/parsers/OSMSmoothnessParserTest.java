@@ -2,7 +2,7 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.BytesRef;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -22,18 +22,18 @@ public class OSMSmoothnessParserTest {
 
     @Test
     public void testSimpleTags() {
-        IntsRef relFlags = new IntsRef(2);
+        BytesRef relFlags = new BytesRef(8);
 
         ReaderWay readerWay = new ReaderWay(1);
-        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        EdgeBytesAccess edgeAccess = new EdgeBytesAccessArray(4);
         int edgeId = 0;
         readerWay.setTag("highway", "primary");
-        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
-        assertEquals(Smoothness.MISSING, smoothnessEnc.getEnum(false, edgeId, edgeIntAccess));
+        parser.handleWayTags(edgeId, edgeAccess, readerWay, relFlags);
+        assertEquals(Smoothness.MISSING, smoothnessEnc.getEnum(false, edgeId, edgeAccess));
 
         readerWay.setTag("smoothness", "bad");
-        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
-        assertEquals(Smoothness.BAD, smoothnessEnc.getEnum(false, edgeId, edgeIntAccess));
+        parser.handleWayTags(edgeId, edgeAccess, readerWay, relFlags);
+        assertEquals(Smoothness.BAD, smoothnessEnc.getEnum(false, edgeId, edgeAccess));
         assertTrue(Smoothness.BAD.ordinal() < Smoothness.VERY_BAD.ordinal());
     }
 }

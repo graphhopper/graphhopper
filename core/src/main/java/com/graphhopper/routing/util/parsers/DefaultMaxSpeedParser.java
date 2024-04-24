@@ -3,9 +3,9 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.Country;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.ev.EdgeBytesAccess;
 import com.graphhopper.routing.ev.State;
-import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.BytesRef;
 import de.westnordost.osm_legal_default_speeds.LegalDefaultSpeeds;
 
 import java.util.Collections;
@@ -21,20 +21,20 @@ public class DefaultMaxSpeedParser implements TagParser {
     private final LegalDefaultSpeeds speeds;
     private DecimalEncodedValue ruralMaxSpeedEnc;
     private DecimalEncodedValue urbanMaxSpeedEnc;
-    private EdgeIntAccess externalAccess;
+    private EdgeBytesAccess externalAccess;
 
     public DefaultMaxSpeedParser(LegalDefaultSpeeds speeds) {
         this.speeds = speeds;
     }
 
-    public void init(DecimalEncodedValue ruralMaxSpeedEnc, DecimalEncodedValue urbanMaxSpeedEnc, EdgeIntAccess externalAccess) {
+    public void init(DecimalEncodedValue ruralMaxSpeedEnc, DecimalEncodedValue urbanMaxSpeedEnc, EdgeBytesAccess externalAccess) {
         this.ruralMaxSpeedEnc = ruralMaxSpeedEnc;
         this.urbanMaxSpeedEnc = urbanMaxSpeedEnc;
         this.externalAccess = externalAccess;
     }
 
     @Override
-    public void handleWayTags(int edgeId, EdgeIntAccess _ignoreAccess, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(int edgeId, EdgeBytesAccess _ignoreAccess, ReaderWay way, BytesRef relationFlags) {
         if (externalAccess == null)
             throw new IllegalArgumentException("Call init before using " + getClass().getName());
         double maxSpeed = stringToKmh(way.getTag("maxspeed"));

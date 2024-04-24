@@ -2,8 +2,8 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.EdgeIntAccess;
-import com.graphhopper.storage.IntsRef;
+import com.graphhopper.routing.ev.EdgeBytesAccess;
+import com.graphhopper.storage.BytesRef;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -30,22 +30,22 @@ public class OSMGetOffBikeParser implements TagParser {
     }
 
     @Override
-    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(int edgeId, EdgeBytesAccess edgeAccess, ReaderWay way, BytesRef relationFlags) {
         String highway = way.getTag("highway");
         boolean notIntended = !way.hasTag("bicycle", INTENDED) &&
                 (GET_OFF_BIKE.contains(highway)
                         || way.hasTag("railway", "platform")
                         || "path".equals(highway) && way.hasTag("foot", "designated") && !way.hasTag("segregated", "yes"));
         if ("steps".equals(highway) || way.hasTag("bicycle", "dismount") || notIntended) {
-            getOffBikeEnc.setBool(false, edgeId, edgeIntAccess, true);
-            getOffBikeEnc.setBool(true, edgeId, edgeIntAccess, true);
+            getOffBikeEnc.setBool(false, edgeId, edgeAccess, true);
+            getOffBikeEnc.setBool(true, edgeId, edgeAccess, true);
         }
-        boolean fwd = bikeAccessEnc.getBool(false, edgeId, edgeIntAccess);
-        boolean bwd = bikeAccessEnc.getBool(true, edgeId, edgeIntAccess);
+        boolean fwd = bikeAccessEnc.getBool(false, edgeId, edgeAccess);
+        boolean bwd = bikeAccessEnc.getBool(true, edgeId, edgeAccess);
         // get off bike for reverse oneways
         if (fwd != bwd) {
-            if (!fwd) getOffBikeEnc.setBool(false, edgeId, edgeIntAccess, true);
-            if (!bwd) getOffBikeEnc.setBool(true, edgeId, edgeIntAccess, true);
+            if (!fwd) getOffBikeEnc.setBool(false, edgeId, edgeAccess, true);
+            if (!bwd) getOffBikeEnc.setBool(true, edgeId, edgeAccess, true);
         }
     }
 }

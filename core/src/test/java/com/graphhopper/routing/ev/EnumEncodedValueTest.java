@@ -14,7 +14,7 @@ public class EnumEncodedValueTest {
         assertEquals(5, prop.bits);
         assertEquals(0, init.dataIndex);
         assertEquals(0, init.shift);
-        ArrayEdgeIntAccess intAccess = new ArrayEdgeIntAccess(1);
+        EdgeBytesAccess intAccess = new EdgeBytesAccessArray(4);
         // default if empty
         intAccess.setInt(0, 0, 0);
         assertEquals(RoadClass.OTHER, prop.getEnum(false, 0, intAccess));

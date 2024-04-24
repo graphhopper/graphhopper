@@ -21,7 +21,6 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.search.KVStorage;
 import com.graphhopper.storage.BytesRef;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.IntsRef;
 
 import java.util.List;
 
@@ -57,12 +56,12 @@ public interface EdgeIteratorState {
         }
 
         @Override
-        public boolean getBool(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess) {
+        public boolean getBool(boolean reverse, int edgeId, EdgeBytesAccess edgeAccess) {
             return reverse;
         }
 
         @Override
-        public void setBool(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess, boolean value) {
+        public void setBool(boolean reverse, int edgeId, EdgeBytesAccess edgeAccess, boolean value) {
             throw new IllegalStateException("reverse state cannot be modified");
         }
 

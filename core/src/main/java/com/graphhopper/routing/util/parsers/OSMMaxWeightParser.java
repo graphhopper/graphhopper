@@ -19,10 +19,10 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.ev.EdgeBytesAccess;
 import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
-import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.BytesRef;
 
 import java.util.Arrays;
 import java.util.List;
@@ -41,15 +41,15 @@ public class OSMMaxWeightParser implements TagParser {
     }
 
     @Override
-    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
-        OSMValueExtractor.extractTons(edgeId, edgeIntAccess, way, weightEncoder, MAX_WEIGHT_TAGS);
+    public void handleWayTags(int edgeId, EdgeBytesAccess edgeAccess, ReaderWay way, BytesRef relationFlags) {
+        OSMValueExtractor.extractTons(edgeId, edgeAccess, way, weightEncoder, MAX_WEIGHT_TAGS);
 
         // vehicle:conditional no @ (weight > 7.5)
         for (String restriction : HGV_RESTRICTIONS) {
             String value = way.getTag(restriction, "");
             if (value.startsWith("no") && value.indexOf("@") < 6) { // no,none[ ]@
                 double dec = OSMValueExtractor.conditionalWeightToTons(value);
-                if (!Double.isNaN(dec)) weightEncoder.setDecimal(false, edgeId, edgeIntAccess, dec);
+                if (!Double.isNaN(dec)) weightEncoder.setDecimal(false, edgeId, edgeAccess, dec);
             }
         }
     }

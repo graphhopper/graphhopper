@@ -224,7 +224,7 @@ public class DefaultImportRegistry implements ImportRegistry {
             return ImportUnit.create(name, props -> FootTemporalAccess.create(),
                     (lookup, props) -> {
                         EnumEncodedValue<FootTemporalAccess> enc = lookup.getEnumEncodedValue(FootTemporalAccess.KEY, FootTemporalAccess.class);
-                        OSMTemporalAccessParser.Setter fct = (edgeId, edgeIntAccess, b) -> enc.setEnum(false, edgeId, edgeIntAccess, b ? FootTemporalAccess.YES : FootTemporalAccess.NO);
+                        OSMTemporalAccessParser.Setter fct = (edgeId, edgeAccess, b) -> enc.setEnum(false, edgeId, edgeAccess, b ? FootTemporalAccess.YES : FootTemporalAccess.NO);
                         return new OSMTemporalAccessParser(FootTemporalAccess.CONDITIONALS, fct, props.getString("date_range_parser_day", ""));
                     }
             );
@@ -233,7 +233,7 @@ public class DefaultImportRegistry implements ImportRegistry {
             return ImportUnit.create(name, props -> BikeTemporalAccess.create(),
                     (lookup, props) -> {
                         EnumEncodedValue<BikeTemporalAccess> enc = lookup.getEnumEncodedValue(BikeTemporalAccess.KEY, BikeTemporalAccess.class);
-                        OSMTemporalAccessParser.Setter fct = (edgeId, edgeIntAccess, b) -> enc.setEnum(false, edgeId, edgeIntAccess, b ? BikeTemporalAccess.YES : BikeTemporalAccess.NO);
+                        OSMTemporalAccessParser.Setter fct = (edgeId, edgeAccess, b) -> enc.setEnum(false, edgeId, edgeAccess, b ? BikeTemporalAccess.YES : BikeTemporalAccess.NO);
                         return new OSMTemporalAccessParser(BikeTemporalAccess.CONDITIONALS, fct, props.getString("date_range_parser_day", ""));
                     }
             );
@@ -242,7 +242,7 @@ public class DefaultImportRegistry implements ImportRegistry {
             return ImportUnit.create(name, props -> CarTemporalAccess.create(),
                     (lookup, props) -> {
                         EnumEncodedValue<CarTemporalAccess> enc = lookup.getEnumEncodedValue(CarTemporalAccess.KEY, CarTemporalAccess.class);
-                        OSMTemporalAccessParser.Setter fct = (edgeId, edgeIntAccess, b) -> enc.setEnum(false, edgeId, edgeIntAccess, b ? CarTemporalAccess.YES : CarTemporalAccess.NO);
+                        OSMTemporalAccessParser.Setter fct = (edgeId, edgeAccess, b) -> enc.setEnum(false, edgeId, edgeAccess, b ? CarTemporalAccess.YES : CarTemporalAccess.NO);
                         return new OSMTemporalAccessParser(CarTemporalAccess.CONDITIONALS, fct, props.getString("date_range_parser_day", ""));
                     }
             );
