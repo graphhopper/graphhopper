@@ -18,6 +18,7 @@
 
 package com.graphhopper.storage;
 
+import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 
@@ -30,7 +31,7 @@ import static com.graphhopper.util.Helper.nf;
  * Underlying storage for nodes and edges of {@link BaseGraph}. Nodes and edges are stored using two {@link DataAccess}
  * instances. Nodes and edges are simply stored sequentially, see the memory layout in the constructor.
  */
-class BaseGraphNodesAndEdges {
+class BaseGraphNodesAndEdges implements EdgeIntAccess {
     // Currently distances are stored as 4 byte integers. using a conversion factor of 1000 the minimum distance
     // that is not considered zero is 0.0005m (=0.5mm) and the maximum distance per edge is about 2.147.483m=2147km.
     // See OSMReader.addEdge and #1871.
@@ -250,6 +251,18 @@ class BaseGraphNodesAndEdges {
         int size = edgeFlags.ints.length;
         for (int i = 0; i < size; ++i)
             setFlagInt(edgePointer, i, edgeFlags.ints[i]);
+    }
+
+    @Override
+    public int getInt(int edgeId, int index) {
+        long edgePointer = toEdgePointer(edgeId);
+        return getFlagInt(edgePointer, index);
+    }
+
+    @Override
+    public void setInt(int edgeId, int index, int value) {
+        long edgePointer = toEdgePointer(edgeId);
+        setFlagInt(edgePointer, index, value);
     }
 
     public int getFlagInt(long edgePointer, int index) {
