@@ -21,7 +21,6 @@ package com.graphhopper.storage;
 import com.graphhopper.routing.ev.EdgeBytesAccess;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
-import org.slf4j.LoggerFactory;
 
 import java.util.Locale;
 
@@ -47,7 +46,7 @@ class BaseGraphNodesAndEdges implements EdgeBytesAccess {
 
     // edges
     private final DataAccess edges;
-    private final int E_NODEA, E_NODEB, E_LINKA, E_LINKB, E_DIST, E_KV, E_FLAGS, E_GEO;
+    private final int E_NODEA, E_NODEB, E_LINKA, E_LINKB, E_FLAGS, E_DIST, E_GEO, E_KV;
     private final int bytesForFlags;
     private int edgeEntryBytes;
     private int edgeCount;
@@ -82,11 +81,11 @@ class BaseGraphNodesAndEdges implements EdgeBytesAccess {
         E_NODEB = 4;
         E_LINKA = 8;
         E_LINKB = 12;
-        E_DIST = 16;
-        E_KV = 20;
-        E_FLAGS = 24;
-        E_GEO = E_FLAGS + bytesForFlags + 4;
-        edgeEntryBytes = E_GEO + 5;
+        E_FLAGS = 16;
+        E_DIST = E_FLAGS + bytesForFlags + 4;
+        E_GEO = E_DIST + 4;
+        E_KV = E_GEO + 5;
+        edgeEntryBytes = E_KV + 4;
     }
 
     public void create(long initSize) {

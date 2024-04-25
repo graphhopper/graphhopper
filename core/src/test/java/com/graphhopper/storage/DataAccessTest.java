@@ -57,7 +57,7 @@ public abstract class DataAccessTest {
     }
 
     @Test
-    public void testPadding() {
+    public void testCrossingSegmentBoundary() {
         DataAccess da = createDataAccess(name);
         da.create(10);
         da.ensureCapacity(12_800);
