@@ -137,6 +137,11 @@ public class TurnCostStorage {
             }
 
             @Override
+            public byte getByte(int edgeId, int byteIndex) {
+                throw new IllegalStateException("not implemented");
+            }
+
+            @Override
             public int getInt(int edgeId, int index) {
                 return pointer < 0 ? 0 : turnCosts.getInt(pointer + TC_FLAGS);
             }

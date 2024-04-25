@@ -24,6 +24,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
+import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -53,6 +54,32 @@ public abstract class DataAccessTest {
     @AfterEach
     public void tearDown() {
         Helper.removeDir(folder);
+    }
+
+    @Test
+    public void testPadding() {
+        DataAccess da = createDataAccess(name);
+        da.create(10);
+        da.ensureCapacity(12_800);
+        assertEquals(100, da.getSegments());
+        int val = Integer.MAX_VALUE / 2;
+        for (int i = 0; i < 10_000; i++) {
+            da.setInt(i, val * i);
+            assertEquals(val * i, da.getInt(i), "idx " + i);
+            da.setInt(i, -val * i);
+            assertEquals(-val * i, da.getInt(i), "idx " + i);
+        }
+
+        Random rand = new Random(0);
+        for (int i = 0; i < 10_000; i++) {
+            val = 1 << rand.nextInt(32) + rand.nextInt();
+            da.setInt(i, val);
+            assertEquals(val, da.getInt(i), "idx " + i);
+            da.setInt(i, -val);
+            assertEquals(-val, da.getInt(i), "idx " + i);
+        }
+
+        da.close();
     }
 
     @Test

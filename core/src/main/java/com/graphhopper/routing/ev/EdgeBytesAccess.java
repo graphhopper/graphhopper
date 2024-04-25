@@ -21,13 +21,15 @@ public interface EdgeBytesAccess {
 
     void getBytes(int edgeId, int edgeRowBytesOffset, byte[] bytes, int bytesOffset, int len);
 
+    byte getByte(int edgeId, int edgeRowBytesOffset);
+
     /**
      * Gets the int value at the given index for the given edgeId
      */
-    int getInt(int edgeId, int byteIndex);
+    int getInt(int edgeId, int edgeRowBytesOffset);
 
     /**
      * Sets the int value at the given index for the given edgeId
      */
-    void setInt(int edgeId, int byteIndex, int value);
+    void setInt(int edgeId, int edgeRowBytesOffset, int value);
 }

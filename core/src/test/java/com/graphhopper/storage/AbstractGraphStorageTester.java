@@ -670,7 +670,6 @@ public abstract class AbstractGraphStorageTester {
 
         graph = new BaseGraph.Builder(manager).create();
 
-
         edge = graph.edge(0, 1);
         GHUtility.setSpeed(99.123, true, true, access0Enc, speed0Enc, edge);
         assertEquals(99.123, edge.get(speed0Enc), 1e-3);

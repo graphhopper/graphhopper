@@ -40,29 +40,34 @@ public class EdgeBytesAccessArray implements EdgeBytesAccess {
         System.arraycopy(this.bytes, edgeRowBytesOffset, bytes, bytesOffset, len);
     }
 
-   @Override
-   public int getInt(int edgeId, int index) {
-       if (index + 3 == bytes.length)
-           return bitUtil.toUInt3(bytes, index);
-       if (index + 2 == bytes.length)
-           return bitUtil.toShort(bytes, index);
-       if (index + 1 == bytes.length)
-           return bytes[index];
-       return bitUtil.toInt(bytes, index);
-   }
+    @Override
+    public byte getByte(int edgeId, int byteIndex) {
+        return bytes[byteIndex];
+    }
 
-   @Override
-   public void setInt(int edgeId, int index, int value) {
-       if (index + 3 == bytes.length) {
-           if (value < 0)
-               throw new IllegalArgumentException("value was " + value + " but negative currently not supported");
-           bitUtil.fromUInt3(bytes, value, index);
-       } else if (index + 2 == bytes.length)
-           bitUtil.fromShort(bytes, (short) value, index);
-       else if (index + 1 == bytes.length)
-           bytes[index] = (byte) value;
-       else
-           bitUtil.fromInt(bytes, value, index);
-   }
+    @Override
+    public void setInt(int edgeId, int index, int value) {
+        if (index + 3 == bytes.length) {
+            if (value < 0)
+                throw new IllegalArgumentException("value was " + value + " but negative currently not supported");
+            bitUtil.fromUInt3(bytes, value, index);
+        } else if (index + 2 == bytes.length)
+            bitUtil.fromShort(bytes, (short) value, index);
+        else if (index + 1 == bytes.length)
+            bytes[index] = (byte) value;
+        else
+            bitUtil.fromInt(bytes, value, index);
+    }
+
+    @Override
+    public int getInt(int edgeId, int index) {
+        if (index + 3 == bytes.length)
+            return bitUtil.toUInt3(bytes, index);
+        if (index + 2 == bytes.length)
+            return bitUtil.toShort(bytes, index);
+        if (index + 1 == bytes.length)
+            return bytes[index];
+        return bitUtil.toInt(bytes, index);
+    }
 
 }

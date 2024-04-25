@@ -104,6 +104,11 @@ public class MaxSpeedCalculator {
                 throw new IllegalStateException("not implemented");
             }
 
+            @Override
+            public byte getByte(int edgeId, int byteIndex) {
+                throw new IllegalStateException("not implemented");
+            }
+
             public int getInt(int edgeId, int index) {
                 dataAccess.ensureCapacity(edgeId * 2L + 2L);
                 return dataAccess.getShort(edgeId * 2L);
