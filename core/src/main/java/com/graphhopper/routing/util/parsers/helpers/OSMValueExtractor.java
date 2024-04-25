@@ -36,9 +36,10 @@ public class OSMValueExtractor {
         if (Double.isNaN(value)) value = Double.POSITIVE_INFINITY;
 
         valueEncoder.setDecimal(false, edgeId, edgeIntAccess, value);
-        // too many
-//        if (value - valueEncoder.getDecimal(false, edgeFlags) > 2)
-//            logger.warn("Value " + value + " for " + valueEncoder.getName() + " was too large and truncated to " + valueEncoder.getDecimal(false, edgeFlags));
+
+        double storedValue = valueEncoder.getDecimal(false, edgeId, edgeIntAccess);
+        if (value - storedValue > 2)
+            logger.warn("Value {} for {} was too large and truncated to {} for way {}", value, valueEncoder.getName(), storedValue, way.getId());
     }
 
     /**
