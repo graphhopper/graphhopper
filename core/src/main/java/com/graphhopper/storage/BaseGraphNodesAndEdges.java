@@ -59,6 +59,7 @@ class BaseGraphNodesAndEdges implements EdgeBytesAccess {
     // because of: #2393
     public final BBox bounds;
     private boolean frozen;
+    private final ThreadLocal<byte[]> georefCaches = ThreadLocal.withInitial(() -> new byte[5]);
 
     public BaseGraphNodesAndEdges(Directory dir, boolean withElevation, boolean withTurnCosts, int segmentSize, int bytesForFlags) {
         nodes = dir.create("nodes", dir.getDefaultType("nodes", true), segmentSize);
@@ -285,10 +286,8 @@ class BaseGraphNodesAndEdges implements EdgeBytesAccess {
         edges.setInt(edgePointer + E_DIST, distToInt(distance));
     }
 
-    // TODO NOW revert as not thread-safe. test for performance comparison
-    byte[] geoRefBytes = new byte[5];
-
     public void setGeoRef(long edgePointer, long geoRef) {
+        byte[] geoRefBytes = georefCaches.get();
         BitUtil.LITTLE.fromULong5(geoRefBytes, geoRef, 0);
         edges.setBytes(edgePointer + E_GEO, geoRefBytes, geoRefBytes.length);
     }
@@ -320,6 +319,7 @@ class BaseGraphNodesAndEdges implements EdgeBytesAccess {
     }
 
     public long getGeoRef(long edgePointer) {
+        byte[] geoRefBytes = georefCaches.get();
         edges.getBytes(edgePointer + E_GEO, geoRefBytes, geoRefBytes.length);
         return BitUtil.LITTLE.toULong5(geoRefBytes, 0);
     }
