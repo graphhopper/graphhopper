@@ -31,7 +31,7 @@ import static com.graphhopper.util.Helper.nf;
  * Underlying storage for nodes and edges of {@link BaseGraph}. Nodes and edges are stored using two {@link DataAccess}
  * instances. Nodes and edges are simply stored sequentially, see the memory layout in the constructor.
  */
-class BaseGraphNodesAndEdges implements EdgeBytesAccess {
+public class BaseGraphNodesAndEdges implements EdgeBytesAccess {
     // Currently distances are stored as 4 byte integers. using a conversion factor of 1000 the minimum distance
     // that is not considered zero is 0.0005m (=0.5mm) and the maximum distance per edge is about 2.147.483m=2147km.
     // See OSMReader.addEdge and #1871.

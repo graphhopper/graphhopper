@@ -275,7 +275,7 @@ public class DefaultImportRegistry implements ImportRegistry {
 
         else if (VehicleSpeed.key("car").equals(name))
             return ImportUnit.create(name, props -> new DecimalEncodedValueImpl(
-                            name, props.getInt("speed_bits", 7), props.getDouble("speed_factor", 2), true),
+                            name, props.getInt("speed_bits", 6), props.getDouble("speed_factor", 5), true),
                     (lookup, props) -> new CarAverageSpeedParser(lookup),
                     "ferry_speed"
             );

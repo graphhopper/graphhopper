@@ -31,7 +31,7 @@ import java.util.List;
 /**
  * @author Peter Karich
  */
-class VirtualEdgeIterator implements EdgeIterator {
+public class VirtualEdgeIterator implements EdgeIterator {
     private final EdgeFilter edgeFilter;
     private List<EdgeIteratorState> edges;
     private int current;

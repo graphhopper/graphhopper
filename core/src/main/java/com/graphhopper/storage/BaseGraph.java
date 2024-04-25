@@ -125,6 +125,10 @@ public class BaseGraph implements Graph, Closeable {
         return turnCostStorage != null;
     }
 
+    public BaseGraphNodesAndEdges getStore() {
+        return store;
+    }
+
     @Override
     public int getNodes() {
         return store.getNodes();
