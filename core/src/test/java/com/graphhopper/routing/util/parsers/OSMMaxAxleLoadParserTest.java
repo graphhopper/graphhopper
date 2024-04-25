@@ -30,11 +30,12 @@ public class OSMMaxAxleLoadParserTest {
         parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
         assertEquals(11.5, malEnc.getDecimal(false, edgeId, edgeIntAccess), .01);
 
-        // if value is beyond the maximum then do not use infinity instead fallback to more restrictive maximum
+        // if value is beyond the maximum then do use infinity
         edgeIntAccess = new ArrayEdgeIntAccess(1);
         readerWay.setTag("maxaxleload", "80");
         parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
-        assertEquals(63.0, malEnc.getDecimal(false, edgeId, edgeIntAccess), .01);
+        assertEquals(Double.POSITIVE_INFINITY, malEnc.getNextStorableValue(80), .01);
+        assertEquals(Double.POSITIVE_INFINITY, malEnc.getDecimal(false, edgeId, edgeIntAccess), .01);
     }
 
     @Test
