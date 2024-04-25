@@ -82,14 +82,10 @@ public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implement
     public void setDecimal(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess, double value) {
         if (!isInitialized())
             throw new IllegalStateException("Call init before using EncodedValue " + getName());
-        if (useMaximumAsInfinity) {
-            if (Double.isInfinite(value)) {
-                super.setInt(reverse, edgeId, edgeIntAccess, maxStorableValue);
-                return;
-            } else if (value >= maxStorableValue * factor) { // equality is important as maxStorableValue is reserved for infinity
-                super.uncheckedSet(reverse, edgeId, edgeIntAccess, maxStorableValue - 1);
-                return;
-            }
+        if (useMaximumAsInfinity && value >= maxStorableValue * factor) {
+            // treat any value larger or equal to maxStorableValue as infinity
+            super.setInt(reverse, edgeId, edgeIntAccess, maxStorableValue);
+            return;
         } else if (Double.isInfinite(value))
             throw new IllegalArgumentException("Value cannot be infinite if useMaximumAsInfinity is false");
 
