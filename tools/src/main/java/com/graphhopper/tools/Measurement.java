@@ -183,8 +183,8 @@ public class Measurement {
 
             final boolean runSlow = args.getBool("measurement.run_slow_routing", true);
             printGraphDetails(g, vehicle);
-//            measureGraphTraversal(g, accessEnc, count * 100);
-//            measureLocationIndex(g, hopper.getLocationIndex(), count);
+            measureGraphTraversal(g, accessEnc, count * 100);
+            measureLocationIndex(g, hopper.getLocationIndex(), count);
 
             if (runSlow) {
                 boolean isCH = false;
@@ -228,25 +228,25 @@ public class Measurement {
                 gcAndWait();
                 RoutingCHGraph nodeBasedCH = hopper.getCHGraphs().get("profile_no_tc");
                 if (nodeBasedCH != null) {
-//                    measureGraphTraversalCH(nodeBasedCH, count * 100);
+                    measureGraphTraversalCH(nodeBasedCH, count * 100);
                     gcAndWait();
                     measureRouting(hopper, new QuerySettings("routingCH", count, isCH, isLM).
                             withInstructions().sod());
-//                    measureRouting(hopper, new QuerySettings("routingCH_alt", count / 100, isCH, isLM).
-//                            withInstructions().sod().alternative());
-//                    measureRouting(hopper, new QuerySettings("routingCH_with_hints", count, isCH, isLM).
-//                            withInstructions().sod().withPointHints());
-//                    measureRouting(hopper, new QuerySettings("routingCH_no_sod", count, isCH, isLM).
-//                            withInstructions());
-//                    measureRouting(hopper, new QuerySettings("routingCH_no_instr", count, isCH, isLM).
-//                            sod());
-//                    measureRouting(hopper, new QuerySettings("routingCH_full", count, isCH, isLM).
-//                            withInstructions().withPointHints().sod().simplify().pathDetails());
+                    measureRouting(hopper, new QuerySettings("routingCH_alt", count / 100, isCH, isLM).
+                            withInstructions().sod().alternative());
+                    measureRouting(hopper, new QuerySettings("routingCH_with_hints", count, isCH, isLM).
+                            withInstructions().sod().withPointHints());
+                    measureRouting(hopper, new QuerySettings("routingCH_no_sod", count, isCH, isLM).
+                            withInstructions());
+                    measureRouting(hopper, new QuerySettings("routingCH_no_instr", count, isCH, isLM).
+                            sod());
+                    measureRouting(hopper, new QuerySettings("routingCH_full", count, isCH, isLM).
+                            withInstructions().withPointHints().sod().simplify().pathDetails());
                     // for some strange (jvm optimizations) reason adding these measurements reduced the measured time for routingCH_full... see #2056
-//                    measureRouting(hopper, new QuerySettings("routingCH_via_100", count / 100, isCH, isLM).
-//                            withPoints(100).sod());
-//                    measureRouting(hopper, new QuerySettings("routingCH_via_100_full", count / 100, isCH, isLM).
-//                            withPoints(100).sod().withInstructions().simplify().pathDetails());
+                    measureRouting(hopper, new QuerySettings("routingCH_via_100", count / 100, isCH, isLM).
+                            withPoints(100).sod());
+                    measureRouting(hopper, new QuerySettings("routingCH_via_100_full", count / 100, isCH, isLM).
+                            withPoints(100).sod().withInstructions().simplify().pathDetails());
                 }
                 RoutingCHGraph edgeBasedCH = hopper.getCHGraphs().get("profile_tc");
                 if (edgeBasedCH != null) {
@@ -265,7 +265,7 @@ public class Measurement {
                             withPoints(100).edgeBased().sod().withInstructions().simplify().pathDetails());
                 }
             }
-//            measureCountryAreaIndex(count);
+            measureCountryAreaIndex(count);
 
         } catch (Exception ex) {
             logger.error("Problem while measuring " + graphLocation, ex);
