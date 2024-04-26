@@ -18,27 +18,23 @@
 
 package com.graphhopper;
 
-import com.graphhopper.routing.ev.EdgeIntAccess;
-import com.graphhopper.routing.ev.IntEncodedValue;
-import com.graphhopper.routing.ev.IntEncodedValueImpl;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.DAType;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.RAMDirectory;
-import com.graphhopper.util.BitUtil;
 import org.openjdk.jmh.annotations.*;
+import org.openjdk.jmh.annotations.State;
 
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 public class JHMTest {
     private static final int EDGES = 1_000_000;
     private static final int BYTES_PER_EDGE = 12;
-    private static final int BITS_PER_EV = 8;
-    private static final int EVS = 12;
+    private static final int EVS = 96;
 
     @Benchmark
     @BenchmarkMode({Mode.AverageTime, Mode.SampleTime})
@@ -48,9 +44,11 @@ public class JHMTest {
     @OutputTimeUnit(TimeUnit.MICROSECONDS)
     public double testEvs(MyState state) {
         double result = 0;
-        int edge = state.rnd.nextInt(EDGES);
-        for (int i = 0; i < state.evs.length; i++) {
-            result += state.evs[i].getInt(false, edge, state.edgeIntAccess);
+        for (int j = 0; j < 100; j++) {
+            int edge = state.rnd.nextInt(EDGES);
+            for (int i = 0; i < state.evs.length; i++) {
+                result += state.evs[i].getBool(false, edge, state.edgeIntAccess) ? 1 : 0;
+            }
         }
         return result;
     }
@@ -63,9 +61,12 @@ public class JHMTest {
     @OutputTimeUnit(TimeUnit.MICROSECONDS)
     public double testDirect(MyState state) {
         double result = 0;
-        int edge = state.rnd.nextInt(EDGES);
-        for (int i = 0; i < state.evs.length; i++) {
-            result += (state.da.getByte(edge * BYTES_PER_EDGE + i) & 0xFF);
+        for (int j = 0; j < 100; j++) {
+            int edge = state.rnd.nextInt(EDGES);
+            for (int i = 0; i < state.evs.length; i++) {
+                byte b = state.da.getByte(edge * BYTES_PER_EDGE + i / 8);
+                result += ((b >>> i % 8) & 1);
+            }
         }
         return result;
     }
@@ -73,16 +74,18 @@ public class JHMTest {
     public static void main(String[] args) throws Exception {
         MyState m1 = new MyState();
         m1.setup();
+        double v1 = new JHMTest().testEvs(m1);
         MyState m2 = new MyState();
         m2.setup();
-        if (new JHMTest().testEvs(m1) != new JHMTest().testDirect(m2))
-            throw new IllegalStateException("should be the same");
+        double v2 = new JHMTest().testDirect(m2);
+        if (v1 != v2)
+            throw new IllegalStateException("should be the same: " + v1 + " vs " + v2);
         org.openjdk.jmh.Main.main(args);
     }
 
     @State(Scope.Thread)
     public static class MyState {
-        private IntEncodedValue[] evs;
+        private BooleanEncodedValue[] evs;
         private Random rnd;
         private DataAccess da;
         private EdgeIntAccess edgeIntAccess;
@@ -91,9 +94,9 @@ public class JHMTest {
         public void setup() {
             System.out.println("--- setup ---");
             EncodingManager.Builder builder = EncodingManager.start();
-            evs = new IntEncodedValueImpl[EVS];
+            evs = new SimpleBooleanEncodedValue[EVS];
             for (int i = 0; i < EVS; i++)
-                builder.add(evs[i] = new IntEncodedValueImpl("my_int_" + i, BITS_PER_EV, false));
+                builder.add(evs[i] = new SimpleBooleanEncodedValue("my_int_" + i, false));
             builder.build();
 
             edgeIntAccess = new EdgeIntAccess() {
