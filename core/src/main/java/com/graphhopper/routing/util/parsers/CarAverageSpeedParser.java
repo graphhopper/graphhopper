@@ -133,6 +133,9 @@ public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements
         double speed = getSpeed(way);
         speed = applyBadSurfaceSpeed(way, speed);
 
+        if (speed > 0 && speed < 5)
+            speed = 5;
+
         setSpeed(false, edgeId, edgeAccess, applyMaxSpeed(way, speed, false));
         setSpeed(true, edgeId, edgeAccess, applyMaxSpeed(way, speed, true));
     }
@@ -144,6 +147,8 @@ public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements
      */
     protected double applyMaxSpeed(ReaderWay way, double speed, boolean bwd) {
         double maxSpeed = getMaxSpeed(way, bwd);
+        if (maxSpeed > 0 && maxSpeed < 5)
+            maxSpeed = 5;
         return Math.min(140, isValidSpeed(maxSpeed) ? Math.max(1, maxSpeed * 0.9) : speed);
     }
 
