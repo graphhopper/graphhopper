@@ -28,6 +28,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
+import java.util.Random;
 
 import static com.graphhopper.search.KVStorage.KeyValue.STREET_NAME;
 import static com.graphhopper.search.KVStorage.KeyValue.createKV;
@@ -127,6 +128,15 @@ public abstract class AbstractGraphStorageTester {
         // max out should NOT lead to infinity as this leads fast to NaN! -> we set dist to the maximum if its larger than desired
         EdgeIteratorState edge2 = graph.edge(0, 2).setDistance(maxDist + 1);
         assertEquals(maxDist, edge2.getDistance(), 1);
+    }
+
+    @Test
+    public void testBigGeoRef() {
+        BaseGraphNodesAndEdges baseGraphNE = new BaseGraphNodesAndEdges(new RAMDirectory("", false), false, false, 1 << 16, 5);
+        baseGraphNE.create(100);
+        long value = 1L << 36 | 1_234_567_898L;
+        baseGraphNE.setGeoRef(0, value);
+        assertEquals(value, baseGraphNE.getGeoRef(0));
     }
 
     @Test

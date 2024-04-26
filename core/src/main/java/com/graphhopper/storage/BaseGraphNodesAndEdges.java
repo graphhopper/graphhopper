@@ -19,7 +19,10 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.routing.ev.EdgeBytesAccess;
-import com.graphhopper.util.*;
+import com.graphhopper.util.Constants;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.BBox;
 
 import java.util.Locale;
@@ -59,7 +62,6 @@ class BaseGraphNodesAndEdges implements EdgeBytesAccess {
     // because of: #2393
     public final BBox bounds;
     private boolean frozen;
-    private final ThreadLocal<byte[]> georefCaches = ThreadLocal.withInitial(() -> new byte[5]);
 
     public BaseGraphNodesAndEdges(Directory dir, boolean withElevation, boolean withTurnCosts, int segmentSize, int bytesForFlags) {
         nodes = dir.create("nodes", dir.getDefaultType("nodes", true), segmentSize);
@@ -287,9 +289,8 @@ class BaseGraphNodesAndEdges implements EdgeBytesAccess {
     }
 
     public void setGeoRef(long edgePointer, long geoRef) {
-        byte[] geoRefBytes = georefCaches.get();
-        BitUtil.LITTLE.fromULong5(geoRefBytes, geoRef, 0);
-        edges.setBytes(edgePointer + E_GEO, geoRefBytes, geoRefBytes.length);
+        edges.setByte(edgePointer + E_GEO, (byte) (geoRef & 0xFF));
+        edges.setInt(edgePointer + E_GEO + 1, (int) (geoRef >> 8));
     }
 
     public void setKeyValuesRef(long edgePointer, int nameRef) {
@@ -319,9 +320,9 @@ class BaseGraphNodesAndEdges implements EdgeBytesAccess {
     }
 
     public long getGeoRef(long edgePointer) {
-        byte[] geoRefBytes = georefCaches.get();
-        edges.getBytes(edgePointer + E_GEO, geoRefBytes, geoRefBytes.length);
-        return BitUtil.LITTLE.toULong5(geoRefBytes, 0);
+        int b1 = edges.getByte(edgePointer + E_GEO) & 0xFF;
+        int i2 = edges.getInt(edgePointer + E_GEO + 1);
+        return ((long) i2 << 8) | b1;
     }
 
     public int getKeyValuesRef(long edgePointer) {
