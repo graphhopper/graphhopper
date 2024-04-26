@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 public class OSMMaxWeightParser implements TagParser {
 
     // do not include OSM tag "height" here as it has completely different meaning (height of peak)
-    private static final List<String> MAX_WEIGHT_TAGS = Arrays.asList("maxweight", "maxgcweight"/*abandoned*/, "maxweightrating:hgv");
+    private static final List<String> MAX_WEIGHT_TAGS = Arrays.asList("maxweight", "maxweightrating:hgv", "maxgcweight"/*abandoned*/);
     private static final List<String> HGV_RESTRICTIONS = OSMRoadAccessParser.toOSMRestrictions(TransportationMode.HGV).stream()
             .map(e -> e + ":conditional").collect(Collectors.toList());
     private final DecimalEncodedValue weightEncoder;
