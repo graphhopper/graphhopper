@@ -63,9 +63,11 @@ public class JHMTest {
         double result = 0;
         for (int j = 0; j < 100; j++) {
             int edge = state.rnd.nextInt(EDGES);
-            for (int i = 0; i < state.evs.length; i++) {
-                byte b = state.da.getByte(edge * BYTES_PER_EDGE + i / 8);
-                result += ((b >>> i % 8) & 1);
+            for (int i = 0; i < BYTES_PER_EDGE; ++i) {
+                byte b = state.da.getByte(edge * BYTES_PER_EDGE + i);
+                for (int k = 0; k < 8; ++k) {
+                    result += ((b >>> k) & 1);
+                }
             }
         }
         return result;
