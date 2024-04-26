@@ -44,8 +44,8 @@ public class JHMTest {
     @OutputTimeUnit(TimeUnit.MICROSECONDS)
     public double testEvs(MyState state) {
         double result = 0;
-        for (int j = 0; j < 100; j++) {
-            int edge = state.rnd.nextInt(EDGES);
+        for (int j = 0; j < state.edgePointers.length; j++) {
+            int edge = state.edges[j];
             for (int i = 0; i < state.evs.length; i++) {
                 result += state.evs[i].getBool(false, edge, state.edgeIntAccess) ? 1 : 0;
             }
@@ -61,10 +61,10 @@ public class JHMTest {
     @OutputTimeUnit(TimeUnit.MICROSECONDS)
     public double testDirect(MyState state) {
         double result = 0;
-        for (int j = 0; j < 100; j++) {
-            int edge = state.rnd.nextInt(EDGES);
+        for (int j = 0; j < state.edgePointers.length; j++) {
+            long edgePointer = state.edgePointers[j];
             for (int i = 0; i < BYTES_PER_EDGE; ++i) {
-                byte b = state.da.getByte(edge * BYTES_PER_EDGE + i);
+                byte b = state.da.getByte(edgePointer + i);
                 for (int k = 0; k < 8; ++k) {
                     result += ((b >>> k) & 1);
                 }
@@ -88,9 +88,10 @@ public class JHMTest {
     @State(Scope.Thread)
     public static class MyState {
         private BooleanEncodedValue[] evs;
-        private Random rnd;
         private DataAccess da;
         private EdgeIntAccess edgeIntAccess;
+        private int[] edges;
+        private long[] edgePointers;
 
         @Setup(Level.Iteration)
         public void setup() {
@@ -115,12 +116,16 @@ public class JHMTest {
             RAMDirectory dir = new RAMDirectory();
             da = dir.create("edges", DAType.RAM, EDGES * BYTES_PER_EDGE);
             da.create(EDGES * BYTES_PER_EDGE);
-            rnd = new Random(123);
+            Random rnd = new Random(123);
             for (int i = 0; i < EDGES; i++)
                 for (int j = 0; j < BYTES_PER_EDGE / 4; j++)
                     da.setInt(i * BYTES_PER_EDGE + j * 4L, rnd.nextInt(Integer.MAX_VALUE));
-            // reset
-            rnd = new Random(123);
+            edges = new int[100];
+            edgePointers = new long[100];
+            for (int i = 0; i < edgePointers.length; i++) {
+                edges[i] = rnd.nextInt(EDGES);
+                edgePointers[i] = (long) edges[i] * BYTES_PER_EDGE;
+            }
 
         }
     }
