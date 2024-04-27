@@ -130,8 +130,8 @@ public class MaxSpeedCalculator {
     public void createDataAccessForParser(Directory directory) {
         this.dataAccess = directory.create("max_speed_storage_tmp").create(1000);
         this.internalMaxSpeedStorage = createMaxSpeedStorage(this.dataAccess);
-        this.ruralMaxSpeedEnc = new DecimalEncodedValueImpl("tmp_rural", 7, 0, 2, false, false, true);
-        this.urbanMaxSpeedEnc = new DecimalEncodedValueImpl("tmp_urban", 7, 0, 2, false, false, true);
+        this.ruralMaxSpeedEnc = new DecimalEncodedValueImpl("tmp_rural", 7, 0, 2, false, false, true, false);
+        this.urbanMaxSpeedEnc = new DecimalEncodedValueImpl("tmp_urban", 7, 0, 2, false, false, true, false);
         EncodedValue.InitializerConfig config = new EncodedValue.InitializerConfig();
         ruralMaxSpeedEnc.init(config);
         urbanMaxSpeedEnc.init(config);

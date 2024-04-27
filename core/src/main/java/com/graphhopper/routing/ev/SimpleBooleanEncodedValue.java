@@ -32,6 +32,10 @@ public final class SimpleBooleanEncodedValue extends IntEncodedValueImpl impleme
         super(name, 1, storeBothDirections);
     }
 
+    public SimpleBooleanEncodedValue(String name, boolean storeBothDirections, boolean byteSupport) {
+        super(name, 1, 0, false, storeBothDirections, byteSupport);
+    }
+
     @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
     SimpleBooleanEncodedValue(
             @JsonProperty("name") String name,
@@ -46,10 +50,12 @@ public final class SimpleBooleanEncodedValue extends IntEncodedValueImpl impleme
             @JsonProperty("fwd_shift") int fwdShift,
             @JsonProperty("bwd_shift") int bwdShift,
             @JsonProperty("fwd_mask") int fwdMask,
-            @JsonProperty("bwd_mask") int bwdMask
+            @JsonProperty("bwd_mask") int bwdMask,
+            @JsonProperty("byte_support") boolean byteSupport
     ) {
         // we need this constructor for Jackson
-        super(name, bits, minStorableValue, maxStorableValue, maxValue, negateReverseDirection, storeTwoDirections, fwdDataIndex, bwdDataIndex, fwdShift, bwdShift, fwdMask, bwdMask);
+        super(name, bits, minStorableValue, maxStorableValue, maxValue, negateReverseDirection, storeTwoDirections,
+                fwdDataIndex, bwdDataIndex, fwdShift, bwdShift, fwdMask, bwdMask, byteSupport);
     }
 
     @Override

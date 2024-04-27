@@ -32,6 +32,6 @@ public class MaxHeight {
      * it is assumed to use the maximum value.
      */
     public static DecimalEncodedValue create() {
-        return new DecimalEncodedValueImpl(KEY, 7, 0, 0.1, false, false, true);
+        return new DecimalEncodedValueImpl(KEY, 7, 0, 0.1, false, false, true, true);
     }
 }

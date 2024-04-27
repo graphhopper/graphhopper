@@ -29,10 +29,10 @@ public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implement
     private final boolean useMaximumAsInfinity;
 
     /**
-     * @see #DecimalEncodedValueImpl(String, int, double, double, boolean, boolean, boolean)
+     * @see #DecimalEncodedValueImpl(String, int, double, double, boolean, boolean, boolean, boolean)
      */
     public DecimalEncodedValueImpl(String name, int bits, double factor, boolean storeTwoDirections) {
-        this(name, bits, 0, factor, false, storeTwoDirections, false);
+        this(name, bits, 0, factor, false, storeTwoDirections, false, true);
     }
 
     /**
@@ -45,10 +45,11 @@ public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implement
      *                               This is used to reduce space and store the value only once.
      * @param storeTwoDirections     true if forward and backward direction of the edge should get two independent values.
      * @param useMaximumAsInfinity   true if the maximum value should be treated as Double.Infinity
+     * @param byteSupport
      */
     public DecimalEncodedValueImpl(String name, int bits, double minStorableValue, double factor,
-                                   boolean negateReverseDirection, boolean storeTwoDirections, boolean useMaximumAsInfinity) {
-        super(name, bits, (int) Math.round(minStorableValue / factor), negateReverseDirection, storeTwoDirections);
+                                   boolean negateReverseDirection, boolean storeTwoDirections, boolean useMaximumAsInfinity, boolean byteSupport) {
+        super(name, bits, (int) Math.round(minStorableValue / factor), negateReverseDirection, storeTwoDirections, byteSupport);
         if (!negateReverseDirection && super.minStorableValue * factor != minStorableValue)
             throw new IllegalArgumentException("minStorableValue " + minStorableValue + " is not a multiple of the specified factor "
                     + factor + " (" + super.minStorableValue * factor + ")");
@@ -70,10 +71,12 @@ public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implement
                             @JsonProperty("bwd_shift") int bwdShift,
                             @JsonProperty("fwd_mask") int fwdMask,
                             @JsonProperty("bwd_mask") int bwdMask,
+                            @JsonProperty("byte_support") boolean byteSupport,
                             @JsonProperty("factor") double factor,
                             @JsonProperty("use_maximum_as_infinity") boolean useMaximumAsInfinity) {
         // we need this constructor for Jackson
-        super(name, bits, minStorableValue, maxStorableValue, maxValue, negateReverseDirection, storeTwoDirections, fwdDataIndex, bwdDataIndex, fwdShift, bwdShift, fwdMask, bwdMask);
+        super(name, bits, minStorableValue, maxStorableValue, maxValue, negateReverseDirection, storeTwoDirections,
+                fwdDataIndex, bwdDataIndex, fwdShift, bwdShift, fwdMask, bwdMask, byteSupport);
         this.factor = factor;
         this.useMaximumAsInfinity = useMaximumAsInfinity;
     }

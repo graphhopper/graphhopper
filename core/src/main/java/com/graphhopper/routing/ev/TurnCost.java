@@ -15,6 +15,6 @@ public class TurnCost {
      */
     public static DecimalEncodedValue create(String name, int maxTurnCosts) {
         int turnBits = BitUtil.countBitValue(maxTurnCosts);
-        return new DecimalEncodedValueImpl(key(name), turnBits, 0, 1, false, false, true);
+        return new DecimalEncodedValueImpl(key(name), turnBits, 0, 1, false, false, true, false);
     }
 }

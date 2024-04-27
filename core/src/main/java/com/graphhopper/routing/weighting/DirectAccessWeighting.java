@@ -90,36 +90,27 @@ public class DirectAccessWeighting implements Weighting {
             roadAccess = edgeState.get(roadAccessEnc);
             roadClass = edgeState.get(roadClassEnc);
         } else {
-            byte b1 = store.getByte(edgeId, 1); // 6 bits
-            int rawSpeed = reverse ? extract(b1, 6, 0) : extract(b0, 6, 2);
-            speed = rawSpeed * 5;
+            byte b1 = store.getByte(edgeId, 1);
+            byte b2 = store.getByte(edgeId, 2);
+            byte b3 = store.getByte(edgeId, 3);
+
+            int rawSpeed = reverse ? extract(b1, 7, 0) : extract(b2, b0, 7, 2);
+            speed = rawSpeed * 2;
 
             if (speed != (rawReverse ? edgeState.getReverse(carSpeedEnc) : edgeState.get(carSpeedEnc)))
-                throw new IllegalArgumentException(speed + " vs " + edgeState.get(carSpeedEnc) + " " +extract(b1, 6, 0) + " " + extract(b0, 6, 2) + ", b1=" + b1 + ", b0="+ b0);
+                throw new IllegalArgumentException(speed + " vs " + edgeState.get(carSpeedEnc) + " " + extract(b1, 6, 0) + " " + extract(b0, 6, 2) + ", b1=" + b1 + ", b0=" + b0);
 
-            byte b2 = store.getByte(edgeId, 2); // 4 bits
-            roadAccess = allRoadAccess[extract(b2, b1, 4, 6)];
+            // skip 2 bits for roundabout in-between in b2 0b00000011
+
+            roadAccess = allRoadAccess[extract(b2, 4, 2)];
             if (roadAccess != edgeState.get(roadAccessEnc))
                 throw new IllegalArgumentException(roadAccess + " vs " + edgeState.get(roadAccessEnc));
 
-            // skip 4 bits for surface in-between 0b00111100
+            // skip 4 bits for surface in-between 0b11110000
 
-            byte b3 = store.getByte(edgeId, 3); // 5 bits
             roadClass = allRoadClasses[extract(b3, b2, 5, 6)];
             if (roadClass != edgeState.get(roadClassEnc))
-                throw new IllegalArgumentException(roadClass + " vs " + edgeState.get(roadClassEnc) + " " + extract(b3, b2, 5, 6)+ " " + b3 + " " + b2);
-
-//            byte b1 = store.getByte(edgeId, 1); // 6 bits
-//            int rawSpeed = reverse ? (b1 & 0b00111111) : ((b0 >> 2) & 0xFF);
-//            speed = rawSpeed * 5;
-//
-//            byte b2 = store.getByte(edgeId, 2); // 4 bits
-//            roadAccess = allRoadAccess[(b2 & 0b00000011) << 2 | (b1 & 0b11000000) >>> 6];
-//
-//            // skip 4 bits for surface in-between 0b00111100
-//
-//            byte b3 = store.getByte(edgeId, 3); // 5 bits
-//            roadClass = allRoadClasses[(b3 & 0b00000111) << 2 | (b2 & 0b11000000) >>> 6];
+                throw new IllegalArgumentException(roadClass + " vs " + edgeState.get(roadClassEnc) + " " + extract(b3, b2, 5, 6) + " " + b3 + " " + b2);
         }
 
         if (roadAccess == RoadAccess.PRIVATE)

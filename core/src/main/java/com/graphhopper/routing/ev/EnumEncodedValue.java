@@ -54,9 +54,11 @@ public final class EnumEncodedValue<E extends Enum> extends IntEncodedValueImpl 
                      @JsonProperty("bwd_shift") int bwdShift,
                      @JsonProperty("fwd_mask") int fwdMask,
                      @JsonProperty("bwd_mask") int bwdMask,
+                     @JsonProperty("byte_support") boolean byteSupport,
                      @JsonProperty("enum_type") Class<E> enumType) {
         // we need this constructor for Jackson
-        super(name, bits, minStorableValue, maxStorableValue, maxValue, negateReverseDirection, storeTwoDirections, fwdDataIndex, bwdDataIndex, fwdShift, bwdShift, fwdMask, bwdMask);
+        super(name, bits, minStorableValue, maxStorableValue, maxValue, negateReverseDirection, storeTwoDirections,
+                fwdDataIndex, bwdDataIndex, fwdShift, bwdShift, fwdMask, bwdMask, byteSupport);
         this.enumType = enumType;
         arr = enumType.getEnumConstants();
     }

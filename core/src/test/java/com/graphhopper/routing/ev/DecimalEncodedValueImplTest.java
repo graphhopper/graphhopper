@@ -23,7 +23,7 @@ public class DecimalEncodedValueImplTest {
 
     @Test
     public void setMaxToInfinity() {
-        DecimalEncodedValueImpl testEnc = new DecimalEncodedValueImpl("test", 3, 0, 1, false, false, true);
+        DecimalEncodedValueImpl testEnc = new DecimalEncodedValueImpl("test", 3, 0, 1, false, false, true, true);
         testEnc.init(new EncodedValue.InitializerConfig());
         EdgeBytesAccess edgeAccess = new EdgeBytesAccessArray(4);
         int edgeId = 0;
@@ -48,7 +48,7 @@ public class DecimalEncodedValueImplTest {
 
     @Test
     public void testNegative() {
-        DecimalEncodedValueImpl testEnc = new DecimalEncodedValueImpl("test", 3, -6, 0.1, false, false, true);
+        DecimalEncodedValueImpl testEnc = new DecimalEncodedValueImpl("test", 3, -6, 0.1, false, false, true, true);
         testEnc.init(new EncodedValue.InitializerConfig());
         EdgeBytesAccess edgeAccess = new EdgeBytesAccessArray(4);
         int edgeId = 0;
@@ -60,14 +60,14 @@ public class DecimalEncodedValueImplTest {
         assertEquals(-5.5, testEnc.getDecimal(true, edgeId, edgeAccess), .1);
 
         Exception e = assertThrows(IllegalArgumentException.class, () -> {
-            new DecimalEncodedValueImpl("test", 3, -6, 0.11, false, false, true);
+            new DecimalEncodedValueImpl("test", 3, -6, 0.11, false, false, true, true);
         });
         assertTrue(e.getMessage().contains("minStorableValue -6.0 is not a multiple of the specified factor"), e.getMessage());
     }
 
     @Test
     public void testInfinityWithMinValue() {
-        DecimalEncodedValueImpl testEnc = new DecimalEncodedValueImpl("test", 3, -6, 0.1, false, false, true);
+        DecimalEncodedValueImpl testEnc = new DecimalEncodedValueImpl("test", 3, -6, 0.1, false, false, true, true);
         testEnc.init(new EncodedValue.InitializerConfig());
         EdgeBytesAccess edgeAccess = new EdgeBytesAccessArray(4);
         int edgeId = 0;
@@ -77,7 +77,7 @@ public class DecimalEncodedValueImplTest {
 
     @Test
     public void testNegateReverse() {
-        DecimalEncodedValueImpl testEnc = new DecimalEncodedValueImpl("test", 4, 0, 0.5, true, false, false);
+        DecimalEncodedValueImpl testEnc = new DecimalEncodedValueImpl("test", 4, 0, 0.5, true, false, false, true);
         testEnc.init(new EncodedValue.InitializerConfig());
         EdgeBytesAccess edgeAccess = new EdgeBytesAccessArray(4);
         int edgeId = 0;
@@ -91,7 +91,7 @@ public class DecimalEncodedValueImplTest {
 
         EncodedValue.InitializerConfig config = new EncodedValue.InitializerConfig();
         new DecimalEncodedValueImpl("tmp1", 5, 1, false).init(config);
-        testEnc = new DecimalEncodedValueImpl("tmp2", 5, 0, 1, true, false, false);
+        testEnc = new DecimalEncodedValueImpl("tmp2", 5, 0, 1, true, false, false, true);
         testEnc.init(config);
         edgeAccess = new EdgeBytesAccessArray(4);
         testEnc.setDecimal(true, edgeId, edgeAccess, 2.6);
@@ -152,7 +152,7 @@ public class DecimalEncodedValueImplTest {
         assertSmallestNonZeroValue(new DecimalEncodedValueImpl("test", 5, 0.1, true), 0.1);
 
         assertTrue(assertThrows(IllegalStateException.class,
-                () -> new DecimalEncodedValueImpl("test", 5, 0, 5, true, false, false).getSmallestNonZeroValue())
+                () -> new DecimalEncodedValueImpl("test", 5, 0, 5, true, false, false, true).getSmallestNonZeroValue())
                 .getMessage().contains("getting the smallest non-zero value is not possible"));
     }
 
@@ -169,7 +169,7 @@ public class DecimalEncodedValueImplTest {
 
     @Test
     public void testNextStorableValue_maxInfinity() {
-        DecimalEncodedValueImpl enc = new DecimalEncodedValueImpl("test", 4, 0, 3, false, false, true);
+        DecimalEncodedValueImpl enc = new DecimalEncodedValueImpl("test", 4, 0, 3, false, false, true, true);
         enc.init(new EncodedValue.InitializerConfig());
         assertEquals(12, enc.getNextStorableValue(11.2));
         assertEquals(42, enc.getNextStorableValue(41.3));
@@ -188,7 +188,7 @@ public class DecimalEncodedValueImplTest {
 
     @Test
     public void lowestUpperBound_with_negateReverseDirection() {
-        DecimalEncodedValueImpl enc = new DecimalEncodedValueImpl("test", 4, 0, 3, true, false, false);
+        DecimalEncodedValueImpl enc = new DecimalEncodedValueImpl("test", 4, 0, 3, true, false, false, true);
         enc.init(new EncodedValue.InitializerConfig());
         assertEquals(15 * 3, enc.getMaxOrMaxStorableDecimal());
         EdgeBytesAccess edgeAccess = new EdgeBytesAccessArray(4);
@@ -207,7 +207,7 @@ public class DecimalEncodedValueImplTest {
 
     @Test
     public void minStorableBug() {
-        DecimalEncodedValue enc = new DecimalEncodedValueImpl("test", 5, -3, 0.2, false, true, false);
+        DecimalEncodedValue enc = new DecimalEncodedValueImpl("test", 5, -3, 0.2, false, true, false, true);
         enc.init(new EncodedValue.InitializerConfig());
         assertEquals(3.2, enc.getMaxStorableDecimal());
 

@@ -60,11 +60,13 @@ public final class StringEncodedValue extends IntEncodedValueImpl {
             @JsonProperty("bwd_shift") int bwdShift,
             @JsonProperty("fwd_mask") int fwdMask,
             @JsonProperty("bwd_mask") int bwdMask,
+            @JsonProperty("byte_support") boolean byteSupport,
             @JsonProperty("max_values") int maxValues,
             @JsonProperty("values") List<String> values,
             @JsonProperty("index_map") HashMap<String, Integer> indexMap) {
         // we need this constructor for Jackson
-        super(name, bits, minStorableValue, maxStorableValue, maxValue, negateReverseDirection, storeTwoDirections, fwdDataIndex, bwdDataIndex, fwdShift, bwdShift, fwdMask, bwdMask);
+        super(name, bits, minStorableValue, maxStorableValue, maxValue, negateReverseDirection, storeTwoDirections,
+                fwdDataIndex, bwdDataIndex, fwdShift, bwdShift, fwdMask, bwdMask, byteSupport);
         if (values.size() > maxValues)
             throw new IllegalArgumentException("Number of values is higher than the maximum value count: "
                     + values.size() + " > " + maxValues);

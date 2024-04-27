@@ -64,7 +64,7 @@ public class IntEncodedValueImplTest {
 
     @Test
     public void testSignedInt() {
-        IntEncodedValue prop = new IntEncodedValueImpl("test", 31, -5, false, true);
+        IntEncodedValue prop = new IntEncodedValueImpl("test", 31, -5, false, true, true);
         EncodedValue.InitializerConfig config = new EncodedValue.InitializerConfig();
         prop.init(config);
 
@@ -97,7 +97,7 @@ public class IntEncodedValueImplTest {
 
     @Test
     public void testNegateReverseDirection() {
-        IntEncodedValue prop = new IntEncodedValueImpl("test", 5, 0, true, false);
+        IntEncodedValue prop = new IntEncodedValueImpl("test", 5, 0, true, false, true);
         EncodedValue.InitializerConfig config = new EncodedValue.InitializerConfig();
         prop.init(config);
 

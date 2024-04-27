@@ -37,6 +37,6 @@ public class MaxSpeed {
     public static DecimalEncodedValue create() {
         // if we would store only km/h we could live with a factor of 5 and only 5 bits
         // but there is also mph and we don't want to store the unit
-        return new DecimalEncodedValueImpl(KEY, 7, 0, 2, false, true, true);
+        return new DecimalEncodedValueImpl(KEY, 7, 0, 2, false, true, true, true);
     }
 }

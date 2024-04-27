@@ -640,7 +640,7 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         accessParser.handleWayTags(edgeId, access, way, null);
         assertFalse(accessEnc.getBool(false, edgeId, access));
 
-        access = new EdgeBytesAccessArray(1);
+        access = new EdgeBytesAccessArray(4);
         way = new ReaderWay(1);
         way.setTag("highway", "primary");
         way.setTag("access", "no");

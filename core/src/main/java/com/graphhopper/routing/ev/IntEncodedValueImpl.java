@@ -39,6 +39,7 @@ public class IntEncodedValueImpl implements IntEncodedValue {
     final boolean negateReverseDirection;
     final int minStorableValue;
     final int maxStorableValue;
+    final boolean byteSupport;
     int maxValue;
 
     /**
@@ -56,10 +57,10 @@ public class IntEncodedValueImpl implements IntEncodedValue {
     int bwdMask;
 
     /**
-     * @see #IntEncodedValueImpl(String, int, int, boolean, boolean)
+     * @see #IntEncodedValueImpl(String, int, int, boolean, boolean, boolean)
      */
     public IntEncodedValueImpl(String name, int bits, boolean storeTwoDirections) {
-        this(name, bits, 0, false, storeTwoDirections);
+        this(name, bits, 0, false, storeTwoDirections, true);
     }
 
     /**
@@ -73,8 +74,9 @@ public class IntEncodedValueImpl implements IntEncodedValue {
      *                               This is used to reduce space and store the value only once. If this option is used
      *                               you cannot use storeTwoDirections or a minValue different to 0.
      * @param storeTwoDirections     true if forward and backward direction of the edge should get two independent values.
+     * @param byteSupport
      */
-    public IntEncodedValueImpl(String name, int bits, int minStorableValue, boolean negateReverseDirection, boolean storeTwoDirections) {
+    public IntEncodedValueImpl(String name, int bits, int minStorableValue, boolean negateReverseDirection, boolean storeTwoDirections, boolean byteSupport) {
         if (!isValidEncodedValue(name))
             throw new IllegalArgumentException("EncodedValue name wasn't valid: " + name + ". Use lower case letters, underscore and numbers only.");
         if (bits <= 0)
@@ -97,6 +99,7 @@ public class IntEncodedValueImpl implements IntEncodedValue {
         // negateReverseDirection: we need twice the integer range, i.e. 1 more bit
         this.bits = negateReverseDirection ? bits + 1 : bits;
         this.negateReverseDirection = negateReverseDirection;
+        this.byteSupport = byteSupport;
     }
 
     @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
@@ -112,7 +115,8 @@ public class IntEncodedValueImpl implements IntEncodedValue {
                         @JsonProperty("fwd_shift") int fwdShift,
                         @JsonProperty("bwd_shift") int bwdShift,
                         @JsonProperty("fwd_mask") int fwdMask,
-                        @JsonProperty("bwd_mask") int bwdMask
+                        @JsonProperty("bwd_mask") int bwdMask,
+                        @JsonProperty("byte_support") boolean byteSupport
     ) {
         // we need this constructor for Jackson
         this.name = name;
@@ -133,6 +137,7 @@ public class IntEncodedValueImpl implements IntEncodedValue {
         this.byteFwdOffset = fwdShift / 8;
         this.byteBwdShift = bwdShift % 8;
         this.byteBwdOffset = bwdShift / 8;
+        this.byteSupport = byteSupport;
     }
 
     @Override
@@ -220,6 +225,8 @@ public class IntEncodedValueImpl implements IntEncodedValue {
         int value;
         int offset = dataIndex * 4;
         int origFlags = edgeAccess.getInt(edgeId, offset);
+        if (!byteSupport) return (origFlags & intMask) >>> intShift;
+
         if (shift + bits <= 8) {
             assert byteOffset >= 0 && byteOffset < 4;
             offset += byteOffset;
@@ -243,7 +250,7 @@ public class IntEncodedValueImpl implements IntEncodedValue {
         }
 
         if (((origFlags & intMask) >>> intShift) != value) {
-            int tmp = edgeAccess.getInt(edgeId, offset);
+            // int tmp = edgeAccess.getInt(edgeId, offset);
             throw new IllegalArgumentException(((origFlags & intMask) >>> intShift) + " != " + value
                     + "\noffset=" + offset + ", byteOffset=" + byteOffset + ", shift=" + shift + ", bits=" + bits +
                     ", b0=" + edgeAccess.getByte(edgeId, offset) +

@@ -27,6 +27,6 @@ public class TurnRestriction {
     }
 
     public static BooleanEncodedValue create(String name) {
-        return new SimpleBooleanEncodedValue(key(name), false);
+        return new SimpleBooleanEncodedValue(key(name), false, false);
     }
 }
