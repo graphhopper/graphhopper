@@ -18,6 +18,7 @@
 package com.graphhopper.routing.ev;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.graphhopper.routing.weighting.DirectAccessWeighting;
 
@@ -55,6 +56,10 @@ public class IntEncodedValueImpl implements IntEncodedValue {
     int byteBwdOffset = 0;
     int fwdMask;
     int bwdMask;
+    @JsonIgnore
+    TmpInterface fwdFunction;
+    @JsonIgnore
+    TmpInterface bwdFunction;
 
     /**
      * @see #IntEncodedValueImpl(String, int, int, boolean, boolean, boolean)
@@ -138,6 +143,9 @@ public class IntEncodedValueImpl implements IntEncodedValue {
         this.byteBwdShift = bwdShift % 8;
         this.byteBwdOffset = bwdShift / 8;
         this.byteSupport = byteSupport;
+
+        this.fwdFunction = getInterface(fwdDataIndex, fwdMask, fwdShift, byteFwdOffset, byteFwdShift);
+        this.bwdFunction = getInterface(bwdDataIndex, bwdMask, bwdShift, byteBwdOffset, byteBwdShift);
     }
 
     @Override
@@ -151,6 +159,7 @@ public class IntEncodedValueImpl implements IntEncodedValue {
         this.fwdShift = init.shift;
         this.byteFwdShift = fwdShift % 8;
         this.byteFwdOffset = fwdShift / 8;
+        this.fwdFunction = getInterface(fwdDataIndex, fwdMask, fwdShift, byteFwdOffset, byteFwdShift);
         if (storeTwoDirections) {
             init.next(bits);
             this.bwdMask = init.bitMask;
@@ -158,6 +167,7 @@ public class IntEncodedValueImpl implements IntEncodedValue {
             this.bwdShift = init.shift;
             this.byteBwdShift = bwdShift % 8;
             this.byteBwdOffset = bwdShift / 8;
+            this.bwdFunction = getInterface(bwdDataIndex, bwdMask, bwdShift, byteBwdOffset, byteBwdShift);
         }
 
         return storeTwoDirections ? 2 * bits : bits;
@@ -211,52 +221,50 @@ public class IntEncodedValueImpl implements IntEncodedValue {
         int value;
         // if we do not store both directions ignore reverse == true for convenient reading
         if (storeTwoDirections && reverse) {
-            value = extractValue(edgeId, edgeAccess, bwdDataIndex, byteBwdOffset, byteBwdShift, bwdMask, bwdShift);
+            value = bwdFunction.extract(edgeAccess, edgeId);
             return minStorableValue + value;
         } else {
-            value = extractValue(edgeId, edgeAccess, fwdDataIndex, byteFwdOffset, byteFwdShift, fwdMask, fwdShift);
+            value = fwdFunction.extract(edgeAccess, edgeId);
             if (negateReverseDirection && reverse)
                 return -(minStorableValue + value);
             return minStorableValue + value;
         }
     }
 
-    private int extractValue(int edgeId, EdgeBytesAccess edgeAccess, int dataIndex, int byteOffset, int shift, int intMask, int intShift) {
-        int value;
+    interface TmpInterface {
+        int extract(EdgeBytesAccess edgeAccess, int edgeId);
+    }
+
+    TmpInterface getInterface(int dataIndex, int intMask, int intShift, int byteOffset, int byteShift) {
         int offset = dataIndex * 4;
-        if (!byteSupport) return (edgeAccess.getInt(edgeId, offset) & intMask) >>> intShift;
+        if (!byteSupport)
+            return (edgeAccess, edgeId) -> (edgeAccess.getInt(edgeId, offset) & intMask) >>> intShift;
 
-        if (shift + bits <= 8) {
-            assert byteOffset >= 0 && byteOffset < 4;
-            offset += byteOffset;
-            value = DirectAccessWeighting.extract(
-                    edgeAccess.getByte(edgeId, offset), bits, shift);
-        } else if (shift + bits <= 16) {
-            assert byteOffset >= 0 && byteOffset < 3;
-            offset += byteOffset;
-            value = DirectAccessWeighting.extract(
-                    edgeAccess.getByte(edgeId, offset + 1),
-                    edgeAccess.getByte(edgeId, offset), bits, shift);
-        } else if (shift + bits <= 24) {
-            assert byteOffset >= 0 && byteOffset < 2;
-            offset += byteOffset;
-            value = DirectAccessWeighting.extract(
-                    edgeAccess.getByte(edgeId, offset + 2),
-                    edgeAccess.getByte(edgeId, offset + 1),
-                    edgeAccess.getByte(edgeId, offset), bits, shift);
-        } else {
-            value = (edgeAccess.getInt(edgeId, offset) & intMask) >>> intShift;
+        if (byteShift + bits <= 8) {
+            return (edgeAccess, edgeId) -> {
+                assert byteOffset >= 0 && byteOffset < 4;
+                return DirectAccessWeighting.extract(
+                        edgeAccess.getByte(edgeId, offset + byteOffset), bits, byteShift);
+            };
+        } else if (byteShift + bits <= 16) {
+            return (edgeAccess, edgeId) -> {
+                assert byteOffset >= 0 && byteOffset < 3;
+                int tmp = offset + byteOffset;
+                return DirectAccessWeighting.extract(
+                        edgeAccess.getByte(edgeId, tmp + 1),
+                        edgeAccess.getByte(edgeId, tmp), bits, byteShift);
+            };
+        } else if (byteShift + bits <= 24) {
+            return (edgeAccess, edgeId) -> {
+                assert byteOffset >= 0 && byteOffset < 2;
+                int tmp = offset + byteOffset;
+                return DirectAccessWeighting.extract(
+                        edgeAccess.getByte(edgeId, tmp + 2),
+                        edgeAccess.getByte(edgeId, tmp + 1),
+                        edgeAccess.getByte(edgeId, tmp), bits, byteShift);
+            };
         }
-
-//        if (((origFlags & intMask) >>> intShift) != value) {
-//            // int tmp = edgeAccess.getInt(edgeId, offset);
-//            throw new IllegalArgumentException(((origFlags & intMask) >>> intShift) + " != " + value
-//                    + "\noffset=" + offset + ", byteOffset=" + byteOffset + ", shift=" + shift + ", bits=" + bits +
-//                    ", b0=" + edgeAccess.getByte(edgeId, offset) +
-//                    ", b1=" + edgeAccess.getByte(edgeId, offset + 1) +
-//                    ", b2=" + edgeAccess.getByte(edgeId, offset + 1));
-//        }
-        return value;
+        return (edgeAccess, edgeId) -> (edgeAccess.getInt(edgeId, offset) & intMask) >>> intShift;
     }
 
     @Override
