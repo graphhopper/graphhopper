@@ -19,6 +19,7 @@ package com.graphhopper.routing.ev;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.graphhopper.routing.weighting.DirectAccessWeighting;
 
 import javax.lang.model.SourceVersion;
 
@@ -46,7 +47,11 @@ public class IntEncodedValueImpl implements IntEncodedValue {
     private int fwdDataIndex;
     private int bwdDataIndex;
     int fwdShift = -1;
+    int byteFwdShift = 0;
+    int byteFwdOffset = 0;
     int bwdShift = -1;
+    int byteBwdShift = 0;
+    int byteBwdOffset = 0;
     int fwdMask;
     int bwdMask;
 
@@ -123,6 +128,11 @@ public class IntEncodedValueImpl implements IntEncodedValue {
         this.bwdShift = bwdShift;
         this.fwdMask = fwdMask;
         this.bwdMask = bwdMask;
+
+        this.byteFwdShift = fwdShift % 8;
+        this.byteFwdOffset = fwdShift / 8;
+        this.byteBwdShift = bwdShift % 8;
+        this.byteBwdOffset = bwdShift / 8;
     }
 
     @Override
@@ -134,11 +144,15 @@ public class IntEncodedValueImpl implements IntEncodedValue {
         this.fwdMask = init.bitMask;
         this.fwdDataIndex = init.dataIndex;
         this.fwdShift = init.shift;
+        this.byteFwdShift = fwdShift % 8;
+        this.byteFwdOffset = fwdShift / 8;
         if (storeTwoDirections) {
             init.next(bits);
             this.bwdMask = init.bitMask;
             this.bwdDataIndex = init.dataIndex;
             this.bwdShift = init.shift;
+            this.byteBwdShift = bwdShift % 8;
+            this.byteBwdOffset = bwdShift / 8;
         }
 
         return storeTwoDirections ? 2 * bits : bits;
@@ -189,17 +203,54 @@ public class IntEncodedValueImpl implements IntEncodedValue {
 
     @Override
     public final int getInt(boolean reverse, int edgeId, EdgeBytesAccess edgeAccess) {
-        int flags;
+        int value;
         // if we do not store both directions ignore reverse == true for convenient reading
         if (storeTwoDirections && reverse) {
-            flags = edgeAccess.getInt(edgeId, bwdDataIndex * 4);
-            return minStorableValue + ((flags & bwdMask) >>> bwdShift);
+            value = extractValue(edgeId, edgeAccess, bwdDataIndex, byteBwdOffset, byteBwdShift, bwdMask, bwdShift);
+            return minStorableValue + value;
         } else {
-            flags = edgeAccess.getInt(edgeId, fwdDataIndex * 4);
+            value = extractValue(edgeId, edgeAccess, fwdDataIndex, byteFwdOffset, byteFwdShift, fwdMask, fwdShift);
             if (negateReverseDirection && reverse)
-                return -(minStorableValue + ((flags & fwdMask) >>> fwdShift));
-            return minStorableValue + ((flags & fwdMask) >>> fwdShift);
+                return -(minStorableValue + value);
+            return minStorableValue + value;
         }
+    }
+
+    private int extractValue(int edgeId, EdgeBytesAccess edgeAccess, int dataIndex, int byteOffset, int shift, int intMask, int intShift) {
+        int value;
+        int offset = dataIndex * 4;
+        int origFlags = edgeAccess.getInt(edgeId, offset);
+        if (shift + bits <= 8) {
+            assert byteOffset >= 0 && byteOffset < 4;
+            offset += byteOffset;
+            value = DirectAccessWeighting.extract(
+                    edgeAccess.getByte(edgeId, offset), bits, shift);
+        } else if (shift + bits <= 16) {
+            assert byteOffset >= 0 && byteOffset < 3;
+            offset += byteOffset;
+            value = DirectAccessWeighting.extract(
+                    edgeAccess.getByte(edgeId, offset + 1),
+                    edgeAccess.getByte(edgeId, offset), bits, shift);
+        } else if (shift + bits <= 24) {
+            assert byteOffset >= 0 && byteOffset < 2;
+            offset += byteOffset;
+            value = DirectAccessWeighting.extract(
+                    edgeAccess.getByte(edgeId, offset + 2),
+                    edgeAccess.getByte(edgeId, offset + 1),
+                    edgeAccess.getByte(edgeId, offset), bits, shift);
+        } else {
+            value = (origFlags & intMask) >>> intShift;
+        }
+
+        if (((origFlags & intMask) >>> intShift) != value) {
+            int tmp = edgeAccess.getInt(edgeId, offset);
+            throw new IllegalArgumentException(((origFlags & intMask) >>> intShift) + " != " + value
+                    + "\noffset=" + offset + ", byteOffset=" + byteOffset + ", shift=" + shift + ", bits=" + bits +
+                    ", b0=" + edgeAccess.getByte(edgeId, offset) +
+                    ", b1=" + edgeAccess.getByte(edgeId, offset + 1) +
+                    ", b2=" + edgeAccess.getByte(edgeId, offset + 1));
+        }
+        return value;
     }
 
     @Override
@@ -254,5 +305,9 @@ public class IntEncodedValueImpl implements IntEncodedValue {
 
     private static boolean isLowerLetter(char c) {
         return c >= 'a' && c <= 'z';
+    }
+
+    public int getBits() {
+        return bits;
     }
 }

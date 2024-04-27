@@ -19,6 +19,7 @@ package com.graphhopper.storage;
 
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RoadClass;
+import com.graphhopper.routing.weighting.DirectAccessWeighting;
 import com.graphhopper.search.KVStorage.KeyValue;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
