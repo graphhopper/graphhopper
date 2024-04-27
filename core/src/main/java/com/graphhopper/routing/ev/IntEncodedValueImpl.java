@@ -224,8 +224,7 @@ public class IntEncodedValueImpl implements IntEncodedValue {
     private int extractValue(int edgeId, EdgeBytesAccess edgeAccess, int dataIndex, int byteOffset, int shift, int intMask, int intShift) {
         int value;
         int offset = dataIndex * 4;
-        int origFlags = edgeAccess.getInt(edgeId, offset);
-        if (!byteSupport) return (origFlags & intMask) >>> intShift;
+        if (!byteSupport) return (edgeAccess.getInt(edgeId, offset) & intMask) >>> intShift;
 
         if (shift + bits <= 8) {
             assert byteOffset >= 0 && byteOffset < 4;
@@ -246,17 +245,17 @@ public class IntEncodedValueImpl implements IntEncodedValue {
                     edgeAccess.getByte(edgeId, offset + 1),
                     edgeAccess.getByte(edgeId, offset), bits, shift);
         } else {
-            value = (origFlags & intMask) >>> intShift;
+            value = (edgeAccess.getInt(edgeId, offset) & intMask) >>> intShift;
         }
 
-        if (((origFlags & intMask) >>> intShift) != value) {
-            // int tmp = edgeAccess.getInt(edgeId, offset);
-            throw new IllegalArgumentException(((origFlags & intMask) >>> intShift) + " != " + value
-                    + "\noffset=" + offset + ", byteOffset=" + byteOffset + ", shift=" + shift + ", bits=" + bits +
-                    ", b0=" + edgeAccess.getByte(edgeId, offset) +
-                    ", b1=" + edgeAccess.getByte(edgeId, offset + 1) +
-                    ", b2=" + edgeAccess.getByte(edgeId, offset + 1));
-        }
+//        if (((origFlags & intMask) >>> intShift) != value) {
+//            // int tmp = edgeAccess.getInt(edgeId, offset);
+//            throw new IllegalArgumentException(((origFlags & intMask) >>> intShift) + " != " + value
+//                    + "\noffset=" + offset + ", byteOffset=" + byteOffset + ", shift=" + shift + ", bits=" + bits +
+//                    ", b0=" + edgeAccess.getByte(edgeId, offset) +
+//                    ", b1=" + edgeAccess.getByte(edgeId, offset + 1) +
+//                    ", b2=" + edgeAccess.getByte(edgeId, offset + 1));
+//        }
         return value;
     }
 
