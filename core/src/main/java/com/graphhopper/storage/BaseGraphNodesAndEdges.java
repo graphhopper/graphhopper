@@ -260,20 +260,12 @@ class BaseGraphNodesAndEdges implements EdgeIntAccess {
     @Override
     public int getInt(int edgeId, int index) {
         long edgePointer = toEdgePointer(edgeId);
-        return getFlagInt(edgePointer, index);
+        return edges.getInt(edgePointer + E_FLAGS + index * 4);
     }
 
     @Override
     public void setInt(int edgeId, int index, int value) {
         long edgePointer = toEdgePointer(edgeId);
-        setFlagInt(edgePointer, index, value);
-    }
-
-    public int getFlagInt(long edgePointer, int index) {
-        return edges.getInt(edgePointer + E_FLAGS + index * 4);
-    }
-
-    public void setFlagInt(long edgePointer, int index, int value) {
         edges.setInt(edgePointer + E_FLAGS + index * 4, value);
     }
 
