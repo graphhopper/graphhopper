@@ -1,5 +1,6 @@
 ### 10.0 [not yet released]
 
+- constructor of BaseGraph.Builder uses byte instead of integer count.
 
 ### 9.0 [23 Apr 2024]
 
