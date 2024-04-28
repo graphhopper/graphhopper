@@ -21,7 +21,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.storage.BytesRef;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.util.Constants;
@@ -204,8 +203,8 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     // TODO hide IntsRef even more in a later version: https://gist.github.com/karussell/f4c2b2b1191be978d7ee9ec8dd2cd48f
-    public BytesRef createEdgeFlags() {
-        return new BytesRef(getBytesForFlags());
+    public IntsRef createEdgeFlags() {
+        return new IntsRef((int) Math.ceil((double) getBytesForFlags() / 4));
     }
 
     public IntsRef createRelationFlags() {

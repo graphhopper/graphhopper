@@ -20,7 +20,6 @@ package com.graphhopper.routing.querygraph;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.search.KVStorage;
-import com.graphhopper.storage.BytesRef;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
@@ -111,12 +110,12 @@ class VirtualEdgeIterator implements EdgeIterator {
     }
 
     @Override
-    public BytesRef getFlags() {
+    public IntsRef getFlags() {
         return getCurrentEdge().getFlags();
     }
 
     @Override
-    public EdgeIteratorState setFlags(BytesRef flags) {
+    public EdgeIteratorState setFlags(IntsRef flags) {
         return getCurrentEdge().setFlags(flags);
     }
 

@@ -169,6 +169,10 @@ class BaseGraphNodesAndEdges implements EdgeIntAccess {
         return edgeCount;
     }
 
+    IntsRef createEdgeFlags() {
+        return new IntsRef((int) Math.ceil((double) getBytesForFlags() / 4));
+    }
+
     public int getBytesForFlags() {
         return bytesForFlags;
     }
@@ -249,24 +253,62 @@ class BaseGraphNodesAndEdges implements EdgeIntAccess {
         return (long) edge * edgeEntryBytes;
     }
 
-    public void readFlags(long edgePointer, BytesRef edgeFlags) {
-        edges.getBytes(edgePointer + E_FLAGS, edgeFlags.bytes, edgeFlags.length);
+    public void readFlags(long edgePointer, IntsRef edgeFlags) {
+        int size = edgeFlags.ints.length;
+        for (int i = 0; i < size; ++i)
+            edgeFlags.ints[i] = getFlagInt(edgePointer, i * 4);
     }
 
-    public void writeFlags(long edgePointer, BytesRef edgeFlags) {
-        edges.setBytes(edgePointer + E_FLAGS, edgeFlags.bytes, edgeFlags.length);
+    public void writeFlags(long edgePointer, IntsRef edgeFlags) {
+        int size = edgeFlags.ints.length;
+        for (int i = 0; i < size; ++i)
+            setFlagInt(edgePointer, i * 4, edgeFlags.ints[i]);
+    }
+
+    private int getFlagInt(long edgePointer, int byteOffset) {
+        if (byteOffset >= bytesForFlags)
+            throw new IllegalArgumentException("too large byteOffset " + byteOffset + " vs " + bytesForFlags);
+        edgePointer += byteOffset;
+        if (byteOffset + 3 == bytesForFlags) {
+            return (edges.getShort(edgePointer + E_FLAGS) << 8) & 0x00FF_FFFF | edges.getByte(edgePointer + E_FLAGS + 2) & 0xFF;
+        } else if (byteOffset + 2 == bytesForFlags) {
+            return edges.getShort(edgePointer + E_FLAGS) & 0xFFFF;
+        } else if (byteOffset + 1 == bytesForFlags) {
+            return edges.getByte(edgePointer + E_FLAGS) & 0xFF;
+        }
+        return edges.getInt(edgePointer + E_FLAGS);
+    }
+
+    private void setFlagInt(long edgePointer, int byteOffset, int value) {
+        if (byteOffset >= bytesForFlags)
+            throw new IllegalArgumentException("too large byteOffset " + byteOffset + " vs " + bytesForFlags);
+        edgePointer += byteOffset;
+        if (byteOffset + 3 == bytesForFlags) {
+            if ((value & 0xFF00_0000) != 0)
+                throw new IllegalArgumentException("value at byteOffset " + byteOffset + " must not have the highest byte set but was " + value);
+            edges.setShort(edgePointer + E_FLAGS, (short) (value >> 8));
+            edges.setByte(edgePointer + E_FLAGS + 2, (byte) value);
+        } else if (byteOffset + 2 == bytesForFlags) {
+            if ((value & 0xFFFF_0000) != 0)
+                throw new IllegalArgumentException("value at byteOffset " + byteOffset + " must not have the 2 highest bytes set but was " + value);
+            edges.setShort(edgePointer + E_FLAGS, (short) value);
+        } else if (byteOffset + 1 == bytesForFlags) {
+            if ((value & 0xFFFF_FF00) != 0)
+                throw new IllegalArgumentException("value at byteOffset " + byteOffset + " must not have the 3 highest bytes set but was " + value);
+            edges.setByte(edgePointer + E_FLAGS, (byte) value);
+        } else {
+            edges.setInt(edgePointer + E_FLAGS, value);
+        }
     }
 
     @Override
     public int getInt(int edgeId, int index) {
-        long edgePointer = toEdgePointer(edgeId);
-        return edges.getInt(edgePointer + E_FLAGS + index * 4);
+        return getFlagInt(toEdgePointer(edgeId), index * 4);
     }
 
     @Override
     public void setInt(int edgeId, int index, int value) {
-        long edgePointer = toEdgePointer(edgeId);
-        edges.setInt(edgePointer + E_FLAGS + index * 4, value);
+        setFlagInt(toEdgePointer(edgeId), index * 4, value);
     }
 
     public void setNodeA(long edgePointer, int nodeA) {
@@ -394,16 +436,16 @@ class BaseGraphNodesAndEdges implements EdgeIntAccess {
         System.out.println("edges:");
         String formatEdges = "%12s | %12s | %12s | %12s | %12s | %12s | %12s \n";
         System.out.format(Locale.ROOT, formatEdges, "#", "E_NODEA", "E_NODEB", "E_LINKA", "E_LINKB", "E_FLAGS", "E_DIST");
-        BytesRef bytesRef = new BytesRef(bytesForFlags);
+        IntsRef edgeFlags = createEdgeFlags();
         for (int i = 0; i < Math.min(edgeCount, printMax); ++i) {
             long edgePointer = toEdgePointer(i);
-            readFlags(edgePointer, bytesRef);
+            readFlags(edgePointer, edgeFlags);
             System.out.format(Locale.ROOT, formatEdges, i,
                     getNodeA(edgePointer),
                     getNodeB(edgePointer),
                     getLinkA(edgePointer),
                     getLinkB(edgePointer),
-                    bytesRef,
+                    edgeFlags,
                     getDist(edgePointer));
         }
         if (edgeCount > printMax) {

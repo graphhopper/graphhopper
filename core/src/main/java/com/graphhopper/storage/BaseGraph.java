@@ -730,14 +730,14 @@ public class BaseGraph implements Graph, Closeable {
         }
 
         @Override
-        public BytesRef getFlags() {
-            BytesRef edgeFlags = new BytesRef(store.getBytesForFlags());
+        public IntsRef getFlags() {
+            IntsRef edgeFlags = store.createEdgeFlags();
             store.readFlags(edgePointer, edgeFlags);
             return edgeFlags;
         }
 
         @Override
-        public final EdgeIteratorState setFlags(BytesRef edgeFlags) {
+        public final EdgeIteratorState setFlags(IntsRef edgeFlags) {
             assert edgeId < store.getEdges() : "must be edge but was shortcut: " + edgeId + " >= " + store.getEdges() + ". Use setFlagsAndWeight";
             store.writeFlags(edgePointer, edgeFlags);
             return this;

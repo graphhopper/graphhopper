@@ -19,7 +19,6 @@ package com.graphhopper.routing.querygraph;
 
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.search.KVStorage;
-import com.graphhopper.storage.BytesRef;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.FetchMode;
@@ -41,7 +40,7 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
     private final int adjNode;
     private final int originalEdgeKey;
     private double distance;
-    private BytesRef edgeFlags;
+    private IntsRef edgeFlags;
     private EdgeIntAccess edgeIntAccess;
     private List<KVStorage.KeyValue> keyValues;
     // true if edge should be avoided as start/stop
@@ -50,14 +49,14 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
     private final boolean reverse;
 
     public VirtualEdgeIteratorState(int originalEdgeKey, int edgeKey, int baseNode, int adjNode, double distance,
-                                    BytesRef edgeFlags, List<KVStorage.KeyValue> keyValues, PointList pointList, boolean reverse) {
+                                    IntsRef edgeFlags, List<KVStorage.KeyValue> keyValues, PointList pointList, boolean reverse) {
         this.originalEdgeKey = originalEdgeKey;
         this.edgeKey = edgeKey;
         this.baseNode = baseNode;
         this.adjNode = adjNode;
         this.distance = distance;
         this.edgeFlags = edgeFlags;
-        this.edgeIntAccess = new BytesRefEdgeIntAccess(edgeFlags);
+        this.edgeIntAccess = new IntsRefEdgeIntAccess(edgeFlags);
         this.keyValues = keyValues;
         this.pointList = pointList;
         this.reverse = reverse;
@@ -141,14 +140,14 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
     }
 
     @Override
-    public BytesRef getFlags() {
+    public IntsRef getFlags() {
         return edgeFlags;
     }
 
     @Override
-    public EdgeIteratorState setFlags(BytesRef flags) {
+    public EdgeIteratorState setFlags(IntsRef flags) {
         this.edgeFlags = flags;
-        this.edgeIntAccess = new BytesRefEdgeIntAccess(flags);
+        this.edgeIntAccess = new IntsRefEdgeIntAccess(flags);
         return this;
     }
 

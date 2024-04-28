@@ -21,7 +21,6 @@ package com.graphhopper.routing.querygraph;
 import com.carrotsearch.hppc.predicates.IntObjectPredicate;
 import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.search.KVStorage;
-import com.graphhopper.storage.BytesRef;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.index.Snap;
@@ -238,7 +237,7 @@ class QueryOverlayBuilder {
         VirtualEdgeIteratorState baseEdge = new VirtualEdgeIteratorState(origEdgeKey, GHUtility.createEdgeKey(virtEdgeId, false),
                 prevNodeId, nodeId, baseDistance, closestEdge.getFlags(), keyValues, basePoints, reverse);
         VirtualEdgeIteratorState baseReverseEdge = new VirtualEdgeIteratorState(origRevEdgeKey, GHUtility.createEdgeKey(virtEdgeId, true),
-                nodeId, prevNodeId, baseDistance, BytesRef.deepCopyOf(closestEdge.getFlags()), keyValues, baseReversePoints, !reverse);
+                nodeId, prevNodeId, baseDistance, IntsRef.deepCopyOf(closestEdge.getFlags()), keyValues, baseReversePoints, !reverse);
 
         baseEdge.setReverseEdge(baseReverseEdge);
         baseReverseEdge.setReverseEdge(baseEdge);

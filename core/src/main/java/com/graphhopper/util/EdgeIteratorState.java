@@ -19,7 +19,6 @@ package com.graphhopper.util;
 
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.search.KVStorage;
-import com.graphhopper.storage.BytesRef;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.IntsRef;
 
@@ -163,12 +162,12 @@ public interface EdgeIteratorState {
      * Returns edge properties stored in direction of the raw database layout. So do not use it directly, instead
      * use the appropriate set/get methods with its EncodedValue object.
      */
-    BytesRef getFlags();
+    IntsRef getFlags();
 
     /**
      * Stores the specified edgeFlags down to the DataAccess
      */
-    EdgeIteratorState setFlags(BytesRef edgeFlags);
+    EdgeIteratorState setFlags(IntsRef edgeFlags);
 
     boolean get(BooleanEncodedValue property);
 
