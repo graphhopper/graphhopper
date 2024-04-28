@@ -180,7 +180,7 @@ public class DecimalEncodedValueImplTest {
         EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
         int edgeId = 0;
         enc.setDecimal(false, edgeId, edgeIntAccess, 45);
-        assertEquals(42, enc.getDecimal(false, edgeId, edgeIntAccess));
+        assertEquals(Double.POSITIVE_INFINITY, enc.getDecimal(false, edgeId, edgeIntAccess));
 
         enc.setDecimal(false, edgeId, edgeIntAccess, Double.POSITIVE_INFINITY);
         assertEquals(Double.POSITIVE_INFINITY, enc.getDecimal(false, edgeId, edgeIntAccess));
