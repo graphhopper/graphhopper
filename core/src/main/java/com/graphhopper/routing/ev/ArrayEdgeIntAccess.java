@@ -19,6 +19,7 @@
 package com.graphhopper.routing.ev;
 
 import com.carrotsearch.hppc.IntArrayList;
+import com.graphhopper.storage.IntsRef;
 
 public class ArrayEdgeIntAccess implements EdgeIntAccess {
     private final int intsPerEdge;

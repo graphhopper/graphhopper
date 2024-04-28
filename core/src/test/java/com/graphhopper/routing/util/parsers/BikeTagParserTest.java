@@ -495,7 +495,7 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "icn");
         IntsRef relFlags = osmParsers.handleRelationTags(osmRel, osmParsers.createRelationFlags());
-        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getBytesForFlags() * 4);
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getBytesForFlags() / 4 + 1);
         int edgeId = 0;
         osmParsers.handleWayTags(edgeId, edgeIntAccess, osmWay, relFlags);
         assertEquals(RouteNetwork.INTERNATIONAL, encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class).getEnum(false, edgeId, edgeIntAccess));
@@ -505,7 +505,7 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         osmRel = new ReaderRelation(1);
         osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "track");
-        edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getBytesForFlags() * 4);
+        edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getBytesForFlags() / 4 + 1);
         osmParsers.handleWayTags(edgeId, edgeIntAccess, osmWay, osmParsers.createRelationFlags());
         assertEquals(RouteNetwork.MISSING, encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class).getEnum(false, edgeId, edgeIntAccess));
         assertEquals(PriorityCode.getValue(UNCHANGED.getValue()), priorityEnc.getDecimal(false, edgeId, edgeIntAccess), .1);
@@ -513,7 +513,7 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         // unknown highway tags will be excluded but priority will be unchanged
         osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "whatever");
-        edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getBytesForFlags() * 4);
+        edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getBytesForFlags() / 4 + 1);
         osmParsers.handleWayTags(edgeId, edgeIntAccess, osmWay, osmParsers.createRelationFlags());
         assertFalse(accessParser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
         assertEquals(RouteNetwork.MISSING, encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class).getEnum(false, edgeId, edgeIntAccess));

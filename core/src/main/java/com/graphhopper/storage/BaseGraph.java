@@ -172,10 +172,6 @@ public class BaseGraph implements Graph, Closeable {
         return this;
     }
 
-    public int getBytesForFlags() {
-        return store.getBytesForFlags();
-    }
-
     public String toDetailsString() {
         return store.toDetailsString() + ", "
                 + "name:(" + edgeKVStorage.getCapacity() / Helper.MB + "MB), "

@@ -75,7 +75,7 @@ class TagParsingTest {
         osmRel.setTag("network", "lcn");
         IntsRef relFlags = osmParsers.createRelationFlags();
         relFlags = osmParsers.handleRelationTags(osmRel, relFlags);
-        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(em.getBytesForFlags() * 4);
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(em.getBytesForFlags() / 4 + 1);
         int edgeId = 0;
         osmParsers.handleWayTags(edgeId, edgeIntAccess, osmWay, relFlags);
         assertEquals(RouteNetwork.LOCAL, bikeNetworkEnc.getEnum(false, edgeId, edgeIntAccess));
@@ -117,7 +117,7 @@ class TagParsingTest {
         osmRel.setTag("network", "rcn");
         IntsRef relFlags = osmParsers.createRelationFlags();
         relFlags = osmParsers.handleRelationTags(osmRel, relFlags);
-        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(em.getBytesForFlags() * 4);
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(em.getBytesForFlags() / 4 + 1);
         int edgeId = 0;
         osmParsers.handleWayTags(edgeId, edgeIntAccess, osmWay, relFlags);
         // bike: uninfluenced speed for grade but via network => NICE
@@ -152,7 +152,7 @@ class TagParsingTest {
                 new MountainBikeAccessParser(manager, new PMap())
         );
 
-        final ArrayEdgeIntAccess intAccess = new ArrayEdgeIntAccess(manager.getBytesForFlags() * 4);
+        final ArrayEdgeIntAccess intAccess = new ArrayEdgeIntAccess(manager.getBytesForFlags() / 4 + 1);
         int edgeId = 0;
         IntsRef relFlags = manager.createRelationFlags();
         ReaderWay way = new ReaderWay(1);
