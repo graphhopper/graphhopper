@@ -17,6 +17,7 @@
  */
 package com.graphhopper.util;
 
+import java.io.DataInputStream;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
@@ -121,10 +122,7 @@ public class BitUtil {
     }
 
     public final void fromInt(byte[] bytes, int value, int offset) {
-        bytes[offset + 3] = (byte) (value >>> 24);
-        bytes[offset + 2] = (byte) (value >>> 16);
-        bytes[offset + 1] = (byte) (value >>> 8);
-        bytes[offset] = (byte) (value);
+        INT.set(bytes, offset, value);
     }
 
     public final void fromUInt3(byte[] bytes, int value, int offset) {
