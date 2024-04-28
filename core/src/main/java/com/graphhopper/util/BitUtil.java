@@ -138,15 +138,11 @@ public class BitUtil {
     }
 
     public final long toLong(int intLow, int intHigh) {
-        return ((long) intHigh << 32) | (intLow & 0xFFFFFFFFL);
+        return ((long) intHigh << 32) | (intLow & 0xFFFF_FFFFL);
     }
 
     public final long toLong(byte[] b, int offset) {
-        return ((long) toInt(b, offset + 4) << 32) | (toInt(b, offset) & 0xFFFFFFFFL);
-    }
-
-    public final long toULong5(byte[] b, int offset) {
-        return ((long) (b[offset + 4] & 0xFF) << 32) | (toInt(b, offset) & 0xFFFFFFFFL);
+        return ((long) toInt(b, offset + 4) << 32) | (toInt(b, offset) & 0xFFFF_FFFFL);
     }
 
     public final byte[] fromLong(long value) {
@@ -163,14 +159,6 @@ public class BitUtil {
         bytes[offset + 7] = (byte) (value >> 56);
         bytes[offset + 6] = (byte) (value >> 48);
         bytes[offset + 5] = (byte) (value >> 40);
-        bytes[offset + 4] = (byte) (value >> 32);
-        bytes[offset + 3] = (byte) (value >> 24);
-        bytes[offset + 2] = (byte) (value >> 16);
-        bytes[offset + 1] = (byte) (value >> 8);
-        bytes[offset] = (byte) (value);
-    }
-
-    public final void fromULong5(byte[] bytes, long value, int offset) {
         bytes[offset + 4] = (byte) (value >> 32);
         bytes[offset + 3] = (byte) (value >> 24);
         bytes[offset + 2] = (byte) (value >> 16);
@@ -271,7 +259,7 @@ public class BitUtil {
     }
 
     public final int getIntLow(long longValue) {
-        return (int) (longValue & 0xFFFFFFFFL);
+        return (int) (longValue & 0xFFFF_FFFFL);
     }
 
     public final int getIntHigh(long longValue) {
