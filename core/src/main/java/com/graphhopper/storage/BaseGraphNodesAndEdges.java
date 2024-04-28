@@ -59,7 +59,6 @@ public class BaseGraphNodesAndEdges implements EdgeBytesAccess {
     // because of: #2393
     public final BBox bounds;
     private boolean frozen;
-    private final ThreadLocal<byte[]> georefCaches = ThreadLocal.withInitial(() -> new byte[5]);
 
     public BaseGraphNodesAndEdges(Directory dir, boolean withElevation, boolean withTurnCosts, int segmentSize, int bytesForFlags) {
         nodes = dir.create("nodes", dir.getDefaultType("nodes", true), segmentSize);
@@ -287,9 +286,8 @@ public class BaseGraphNodesAndEdges implements EdgeBytesAccess {
     }
 
     public void setGeoRef(long edgePointer, long geoRef) {
-        byte[] geoRefBytes = georefCaches.get();
-        BitUtil.LITTLE.fromULong5(geoRefBytes, geoRef, 0);
-        edges.setBytes(edgePointer + E_GEO, geoRefBytes, geoRefBytes.length);
+        edges.setInt(edgePointer + E_GEO, (int) geoRef);
+        edges.setByte(edgePointer + E_GEO + 4, (byte) (geoRef >>> 32));
     }
 
     public void setKeyValuesRef(long edgePointer, int nameRef) {
@@ -319,9 +317,9 @@ public class BaseGraphNodesAndEdges implements EdgeBytesAccess {
     }
 
     public long getGeoRef(long edgePointer) {
-        byte[] geoRefBytes = georefCaches.get();
-        edges.getBytes(edgePointer + E_GEO, geoRefBytes, geoRefBytes.length);
-        return BitUtil.LITTLE.toULong5(geoRefBytes, 0);
+        int int0 = edges.getInt(edgePointer + E_GEO);
+        byte byte5 = edges.getByte(edgePointer + E_GEO + 4);
+        return BitUtil.LITTLE.toLong(int0, byte5);
     }
 
     public int getKeyValuesRef(long edgePointer) {
