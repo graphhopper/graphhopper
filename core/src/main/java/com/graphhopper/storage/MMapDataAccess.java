@@ -254,20 +254,43 @@ public final class MMapDataAccess extends AbstractDataAccess {
     public void setInt(long bytePos, int value) {
         int bufferIndex = (int) (bytePos >> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
-        if (index + 4 > segmentSizeInBytes)
-            throw new IllegalStateException("Padding required. Currently an int cannot be distributed over two segments. " + bytePos);
-        ByteBuffer byteBuffer = segments.get(bufferIndex);
-        byteBuffer.putInt(index, value);
+        ByteBuffer b1 = segments.get(bufferIndex);
+        if (index + 3 >= segmentSizeInBytes) {
+            // seldom and special case if int has to be written into two separate segments
+            ByteBuffer b2 = segments.get(bufferIndex + 1);
+            if (index + 1 >= segmentSizeInBytes) {
+                b2.putShort(1, (short) (value >>> 16));
+                b2.put(0, (byte) (value >>> 8));
+                b1.put(index, (byte) value);
+            } else if (index + 2 >= segmentSizeInBytes) {
+                b2.putShort(0, (short) (value >>> 16));
+                b1.putShort(index, (short) value);
+            } else {
+                // index + 3 >= segmentSizeInBytes
+                b2.put(0, (byte) (value >>> 24));
+                b1.putShort(index + 1, (short) (value >>> 8));
+                b1.put(index, (byte) value);
+            }
+        } else {
+            b1.putInt(index, value);
+        }
     }
 
     @Override
     public int getInt(long bytePos) {
         int bufferIndex = (int) (bytePos >> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
-        if (index + 4 > segmentSizeInBytes)
-            throw new IllegalStateException("Padding required. Currently an int cannot be distributed over two segments. " + bytePos);
-        ByteBuffer byteBuffer = segments.get(bufferIndex);
-        return byteBuffer.getInt(index);
+        ByteBuffer b1 = segments.get(bufferIndex);
+        if (index + 3 >= segmentSizeInBytes) {
+            ByteBuffer b2 = segments.get(bufferIndex + 1);
+            if (index + 1 >= segmentSizeInBytes)
+                return (b2.get(2) & 0xFF) << 24 | (b2.get(1) & 0xFF) << 16 | (b2.get(0) & 0xFF) << 8 | (b1.get(index) & 0xFF);
+            if (index + 2 >= segmentSizeInBytes)
+                return (b2.get(1) & 0xFF) << 24 | (b2.get(0) & 0xFF) << 16 | (b1.get(index + 1) & 0xFF) << 8 | (b1.get(index) & 0xFF);
+            // index + 3 >= segmentSizeInBytes
+            return (b2.get(0) & 0xFF) << 24 | (b1.get(index + 2) & 0xFF) << 16 | (b1.get(index + 1) & 0xFF) << 8 | (b1.get(index) & 0xFF);
+        }
+        return b1.getInt(index);
     }
 
     @Override
@@ -275,9 +298,9 @@ public final class MMapDataAccess extends AbstractDataAccess {
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
         ByteBuffer byteBuffer = segments.get(bufferIndex);
-        if (index + 2 > segmentSizeInBytes) {
+        if (index + 1 >= segmentSizeInBytes) {
             ByteBuffer byteBufferNext = segments.get(bufferIndex + 1);
-            // special case if short has to be written into two separate segments
+            // seldom and special case if short has to be written into two separate segments
             byteBuffer.put(index, (byte) value);
             byteBufferNext.put(0, (byte) (value >>> 8));
         } else {
@@ -290,7 +313,7 @@ public final class MMapDataAccess extends AbstractDataAccess {
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
         ByteBuffer byteBuffer = segments.get(bufferIndex);
-        if (index + 2 > segmentSizeInBytes) {
+        if (index + 1 >= segmentSizeInBytes) {
             ByteBuffer byteBufferNext = segments.get(bufferIndex + 1);
             return (short) ((byteBufferNext.get(0) & 0xFF) << 8 | byteBuffer.get(index) & 0xFF);
         }

@@ -87,14 +87,6 @@ class BaseGraphNodesAndEdges implements EdgeIntAccess {
         E_FLAGS = 24;
         E_GEO = E_FLAGS + bytesForFlags + 4;
         edgeEntryBytes = E_GEO + 5;
-
-        // TODO make padding unnecessary via the DataAccess implementations set/getInt/Short methods
-        // padding must be correct for next line
-        int padding = (4 - edgeEntryBytes % 4) % 4;
-        if (padding > 0)
-            LoggerFactory.getLogger(BaseGraphNodesAndEdges.class).warn("base graph padding of " + padding + " bytes increases storage size");
-
-        edgeEntryBytes += padding;
     }
 
     public void create(long initSize) {
