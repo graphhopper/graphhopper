@@ -17,6 +17,10 @@
  */
 package com.graphhopper.util;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
+import java.nio.ByteOrder;
+
 /**
  * LITTLE endianness is default for GraphHopper and most microprocessors.
  *
@@ -81,9 +85,10 @@ public class BitUtil {
         return toInt(b, 0);
     }
 
+    private static final VarHandle INT = MethodHandles.byteArrayViewVarHandle(int[].class, ByteOrder.LITTLE_ENDIAN);
+
     public final int toInt(byte[] b, int offset) {
-        return (b[offset + 3] & 0xFF) << 24 | (b[offset + 2] & 0xFF) << 16
-                | (b[offset + 1] & 0xFF) << 8 | (b[offset] & 0xFF);
+        return (int) INT.get(b, offset);
     }
 
     public final int toUInt3(byte[] b, int offset) {
