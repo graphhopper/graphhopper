@@ -68,7 +68,7 @@ public interface EncodedValue {
             nextShift = shift + usedBits;
         }
 
-        public int getRequiredBits() {
+        private int getRequiredBits() {
             return (dataIndex) * 32 + nextShift;
         }
 
