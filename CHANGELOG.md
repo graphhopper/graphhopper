@@ -1,4 +1,7 @@
-### 9.0 [not yet released]
+### 10.0 [not yet released]
+
+
+### 9.0 [23 Apr 2024]
 
 - max_slope is now a signed decimal, see #2955
 - move sac_scale handling out of foot_access parser and made foot safer via lowering to sac_scale<2, same for hike sac_scale<5

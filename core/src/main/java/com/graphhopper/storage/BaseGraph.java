@@ -370,20 +370,8 @@ public class BaseGraph implements Graph, Closeable {
         }
     }
 
-    public EdgeIntAccess createEdgeIntAccess() {
-        return new EdgeIntAccess() {
-            @Override
-            public int getInt(int edgeId, int index) {
-                long edgePointer = store.toEdgePointer(edgeId);
-                return store.getFlagInt(edgePointer, index);
-            }
-
-            @Override
-            public void setInt(int edgeId, int index, int value) {
-                long edgePointer = store.toEdgePointer(edgeId);
-                store.setFlagInt(edgePointer, index, value);
-            }
-        };
+    public EdgeIntAccess getEdgeAccess() {
+        return store;
     }
 
     private void setWayGeometryAtGeoRef(PointList pillarNodes, long edgePointer, boolean reverse, long geoRef) {
@@ -671,7 +659,7 @@ public class BaseGraph implements Graph, Closeable {
 
         public EdgeIteratorStateImpl(BaseGraph baseGraph) {
             this.baseGraph = baseGraph;
-            edgeIntAccess = baseGraph.createEdgeIntAccess();
+            edgeIntAccess = baseGraph.getEdgeAccess();
             store = baseGraph.store;
         }
 
