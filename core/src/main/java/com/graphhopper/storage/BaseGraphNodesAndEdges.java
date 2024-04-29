@@ -326,8 +326,9 @@ class BaseGraphNodesAndEdges implements EdgeIntAccess {
         if ((geoRef & 0xFFFF_FF00_0000_0000L) != 0)
             throw new IllegalArgumentException("geoRef is too large " + geoRef);
 
-        edges.setInt(edgePointer + E_GEO, (int) geoRef);
-        edges.setByte(edgePointer + E_GEO + 4, (byte) (geoRef >>> 32));
+        byte[] bytes = new byte[5];
+        BitUtil.LITTLE.fromULong5(bytes, geoRef, 0);
+        edges.setBytes(edgePointer + E_GEO, bytes, bytes.length);
     }
 
     public void setKeyValuesRef(long edgePointer, int nameRef) {
@@ -357,9 +358,9 @@ class BaseGraphNodesAndEdges implements EdgeIntAccess {
     }
 
     public long getGeoRef(long edgePointer) {
-        int int0 = edges.getInt(edgePointer + E_GEO);
-        byte byte5 = edges.getByte(edgePointer + E_GEO + 4);
-        return BitUtil.LITTLE.toLong(int0, byte5);
+        byte[] bytes = new byte[5];
+        edges.getBytes(edgePointer + E_GEO, bytes, bytes.length);
+        return BitUtil.LITTLE.toULong5(bytes, 0);
     }
 
     public int getKeyValuesRef(long edgePointer) {
