@@ -19,7 +19,6 @@
 package com.graphhopper.routing.ev;
 
 import com.carrotsearch.hppc.IntArrayList;
-import com.graphhopper.storage.IntsRef;
 
 public class ArrayEdgeIntAccess implements EdgeIntAccess {
     private final int intsPerEdge;
@@ -27,6 +26,13 @@ public class ArrayEdgeIntAccess implements EdgeIntAccess {
 
     public ArrayEdgeIntAccess(int intsPerEdge) {
         this.intsPerEdge = intsPerEdge;
+    }
+
+    /**
+     * Ensures that the underlying storage has enough integers reserved for the specified bytes.
+     */
+    public static ArrayEdgeIntAccess createFromBytes(int bytes) {
+        return new ArrayEdgeIntAccess((int) Math.ceil((double) bytes / 4));
     }
 
     @Override

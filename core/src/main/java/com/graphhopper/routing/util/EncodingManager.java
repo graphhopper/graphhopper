@@ -162,7 +162,6 @@ public class EncodingManager implements EncodedValueLookup {
             em = null;
             return result;
         }
-
     }
 
     public int getBytesForFlags() {
