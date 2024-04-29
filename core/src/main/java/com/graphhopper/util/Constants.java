@@ -59,7 +59,7 @@ public class Constants {
     private static final int JVM_MINOR_VERSION;
 
     public static final int VERSION_NODE = 9;
-    public static final int VERSION_EDGE = 21;
+    public static final int VERSION_EDGE = 22;
     // this should be increased whenever the format of the serialized EncodingManager is changed
     public static final int VERSION_EM = 3;
     public static final int VERSION_SHORTCUT = 9;

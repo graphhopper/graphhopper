@@ -369,6 +369,6 @@ public class IsochroneResourceTest {
 
         Polygon beforeLastPolygon = (Polygon) collection.getFeatures().get(collection.getFeatures().size() - 2).getGeometry();
         assertTrue(beforeLastPolygon.contains(geometryFactory.createPoint(new Coordinate(1.564136, 42.524938))));
-        assertFalse(beforeLastPolygon.contains(geometryFactory.createPoint(new Coordinate(1.571474, 42.529176))));
+        assertFalse(beforeLastPolygon.contains(geometryFactory.createPoint(new Coordinate(1.575551, 42.532528))));
     }
 }

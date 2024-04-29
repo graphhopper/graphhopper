@@ -25,7 +25,7 @@ public class OSMReaderConfig {
     private List<String> ignoredHighways = new ArrayList<>();
     private boolean parseWayNames = true;
     private String preferredLanguage = "";
-    private double maxWayPointDistance = 1;
+    private double maxWayPointDistance = 0.5;
     private double elevationMaxWayPointDistance = Double.MAX_VALUE;
     private String smoothElevation = "";
 

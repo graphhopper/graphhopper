@@ -18,10 +18,8 @@
 
 package com.graphhopper.storage;
 
-import com.graphhopper.util.Constants;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.Helper;
+import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 
 import java.util.Locale;
@@ -33,7 +31,7 @@ import static com.graphhopper.util.Helper.nf;
  * Underlying storage for nodes and edges of {@link BaseGraph}. Nodes and edges are stored using two {@link DataAccess}
  * instances. Nodes and edges are simply stored sequentially, see the memory layout in the constructor.
  */
-class BaseGraphNodesAndEdges {
+class BaseGraphNodesAndEdges implements EdgeIntAccess {
     // Currently distances are stored as 4 byte integers. using a conversion factor of 1000 the minimum distance
     // that is not considered zero is 0.0005m (=0.5mm) and the maximum distance per edge is about 2.147.483m=2147km.
     // See OSMReader.addEdge and #1871.
@@ -48,7 +46,7 @@ class BaseGraphNodesAndEdges {
 
     // edges
     private final DataAccess edges;
-    private final int E_NODEA, E_NODEB, E_LINKA, E_LINKB, E_FLAGS, E_DIST, E_GEO, E_KV;
+    private final int E_NODEA, E_NODEB, E_LINKA, E_LINKB, E_FLAGS, E_DIST, E_GEO_1, E_GEO_2, E_KV;
     private final int intsForFlags;
     private int edgeEntryBytes;
     private int edgeCount;
@@ -85,8 +83,9 @@ class BaseGraphNodesAndEdges {
         E_LINKB = 12;
         E_FLAGS = 16;
         E_DIST = E_FLAGS + intsForFlags * 4;
-        E_GEO = E_DIST + 4;
-        E_KV = E_GEO + 4;
+        E_GEO_1 = E_DIST + 4;
+        E_GEO_2 = E_GEO_1 + 4;
+        E_KV = E_GEO_2 + 4;
         edgeEntryBytes = E_KV + 4;
     }
 
@@ -254,6 +253,18 @@ class BaseGraphNodesAndEdges {
             setFlagInt(edgePointer, i, edgeFlags.ints[i]);
     }
 
+    @Override
+    public int getInt(int edgeId, int index) {
+        long edgePointer = toEdgePointer(edgeId);
+        return getFlagInt(edgePointer, index);
+    }
+
+    @Override
+    public void setInt(int edgeId, int index, int value) {
+        long edgePointer = toEdgePointer(edgeId);
+        setFlagInt(edgePointer, index, value);
+    }
+
     public int getFlagInt(long edgePointer, int index) {
         return edges.getInt(edgePointer + E_FLAGS + index * 4);
     }
@@ -282,8 +293,11 @@ class BaseGraphNodesAndEdges {
         edges.setInt(edgePointer + E_DIST, distToInt(distance));
     }
 
-    public void setGeoRef(long edgePointer, int geoRef) {
-        edges.setInt(edgePointer + E_GEO, geoRef);
+    public void setGeoRef(long edgePointer, long geoRef) {
+        int geo1 = BitUtil.LITTLE.getIntLow(geoRef);
+        int geo2 = BitUtil.LITTLE.getIntHigh(geoRef);
+        edges.setInt(edgePointer + E_GEO_1, geo1);
+        edges.setInt(edgePointer + E_GEO_2, geo2);
     }
 
     public void setKeyValuesRef(long edgePointer, int nameRef) {
@@ -312,8 +326,11 @@ class BaseGraphNodesAndEdges {
         return val / INT_DIST_FACTOR;
     }
 
-    public int getGeoRef(long edgePointer) {
-        return edges.getInt(edgePointer + E_GEO);
+    public long getGeoRef(long edgePointer) {
+        return BitUtil.LITTLE.toLong(
+                edges.getInt(edgePointer + E_GEO_1),
+                edges.getInt(edgePointer + E_GEO_2)
+        );
     }
 
     public int getKeyValuesRef(long edgePointer) {

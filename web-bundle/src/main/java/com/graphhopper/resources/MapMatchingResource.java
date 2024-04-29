@@ -90,7 +90,7 @@ public class MapMatchingResource {
     public Response match(
             @NotNull Gpx gpx,
             @Context UriInfo uriInfo,
-            @QueryParam(WAY_POINT_MAX_DISTANCE) @DefaultValue("1") double minPathPrecision,
+            @QueryParam(WAY_POINT_MAX_DISTANCE) @DefaultValue("0.5") double minPathPrecision,
             @QueryParam("type") @DefaultValue("json") String outType,
             @QueryParam(INSTRUCTIONS) @DefaultValue("true") boolean instructions,
             @QueryParam(CALC_POINTS) @DefaultValue("true") boolean calcPoints,
