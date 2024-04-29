@@ -88,7 +88,7 @@ public class ExtendedJsonResponseTest {
         pointList.add(-3.4445, -38.9990);
         pointList.add(-3.5550, -38.7990);
         return new VirtualEdgeIteratorState(0, 0, 0, 1, 10, new IntsRef(1),
-                KVStorage.KeyValue.createKV(KVStorage.KeyValue.STREET_NAME, "test of iterator"), pointList, false);
+                KVStorage.KValue.createKV(KVStorage.KValue.STREET_NAME, "test of iterator"), pointList, false);
     }
 
 }
