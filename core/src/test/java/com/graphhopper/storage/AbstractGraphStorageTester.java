@@ -29,8 +29,8 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 
-import static com.graphhopper.search.KVStorage.KeyValue.STREET_NAME;
-import static com.graphhopper.search.KVStorage.KeyValue.createKV;
+import static com.graphhopper.search.KVStorage.KValue.STREET_NAME;
+import static com.graphhopper.search.KVStorage.KValue.createKV;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**

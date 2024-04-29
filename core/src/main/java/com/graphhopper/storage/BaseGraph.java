@@ -28,6 +28,7 @@ import com.graphhopper.util.shapes.BBox;
 
 import java.io.Closeable;
 import java.util.List;
+import java.util.Map;
 
 import static com.graphhopper.util.Helper.nf;
 
@@ -930,7 +931,7 @@ public class BaseGraph implements Graph, Closeable {
         }
 
         @Override
-        public EdgeIteratorState setKeyValues(List<KVStorage.KeyValue> entries) {
+        public EdgeIteratorState setKeyValues(Map<String, KVStorage.KValue> entries) {
             long pointer = baseGraph.edgeKVStorage.add(entries);
             if (pointer > MAX_UNSIGNED_INT)
                 throw new IllegalStateException("Too many key value pairs are stored, currently limited to " + MAX_UNSIGNED_INT + " was " + pointer);
@@ -939,7 +940,7 @@ public class BaseGraph implements Graph, Closeable {
         }
 
         @Override
-        public List<KVStorage.KeyValue> getKeyValues() {
+        public Map<String, KVStorage.KValue> getKeyValues() {
             long kvEntryRef = Integer.toUnsignedLong(store.getKeyValuesRef(edgePointer));
             return baseGraph.edgeKVStorage.getAll(kvEntryRef);
         }
@@ -952,7 +953,7 @@ public class BaseGraph implements Graph, Closeable {
 
         @Override
         public String getName() {
-            String name = (String) getValue(KVStorage.KeyValue.STREET_NAME);
+            String name = (String) getValue(KVStorage.KValue.STREET_NAME);
             // preserve backward compatibility (returns empty string if name tag missing)
             return name == null ? "" : name;
         }

@@ -21,14 +21,14 @@ import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.search.KVStorage.KeyValue;
+import com.graphhopper.search.KVStorage.KValue;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import org.junit.jupiter.api.Test;
 
 import java.util.Random;
 
-import static com.graphhopper.search.KVStorage.KeyValue.STREET_NAME;
+import static com.graphhopper.search.KVStorage.KValue.STREET_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -81,8 +81,8 @@ public class BaseGraphWithTurnCostsTest extends BaseGraphTest {
         setTurnCost(iter2.getEdge(), 0, iter1.getEdge(), 666);
         setTurnCost(iter1.getEdge(), 1, iter2.getEdge(), 815);
 
-        iter1.setKeyValues(KeyValue.createKV(STREET_NAME, "named street1"));
-        iter2.setKeyValues(KeyValue.createKV(STREET_NAME, "named street2"));
+        iter1.setKeyValues(KValue.createKV(STREET_NAME, "named street1"));
+        iter2.setKeyValues(KValue.createKV(STREET_NAME, "named street2"));
 
         checkGraph(graph);
         graph.flush();

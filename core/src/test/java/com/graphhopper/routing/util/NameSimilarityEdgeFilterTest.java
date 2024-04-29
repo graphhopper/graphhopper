@@ -28,8 +28,8 @@ import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.jupiter.api.Test;
 
-import static com.graphhopper.search.KVStorage.KeyValue.STREET_NAME;
-import static com.graphhopper.search.KVStorage.KeyValue.createKV;
+import static com.graphhopper.search.KVStorage.KValue.STREET_NAME;
+import static com.graphhopper.search.KVStorage.KValue.createKV;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -310,7 +310,7 @@ public class NameSimilarityEdgeFilterTest {
         EdgeIteratorState edge = new BaseGraph.Builder(1).create().edge(0, 1)
                 .setWayGeometry(pointList);
         if (name != null)
-            edge.setKeyValues(KVStorage.KeyValue.createKV(KVStorage.KeyValue.STREET_NAME, name));
+            edge.setKeyValues(KVStorage.KValue.createKV(KVStorage.KValue.STREET_NAME, name));
         return edge;
     }
 
