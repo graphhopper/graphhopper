@@ -17,18 +17,17 @@
  */
 package com.graphhopper.routing.weighting.custom;
 
-import com.graphhopper.util.TurnCostsConfig;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.weighting.TurnCostProvider;
-import com.graphhopper.storage.Graph;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.storage.Graph;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.FetchMode;
-
-import static com.graphhopper.util.AngleCalc.ANGLE_CALC;
+import com.graphhopper.util.TurnCostsConfig;
 
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
+import static com.graphhopper.util.AngleCalc.ANGLE_CALC;
 
 /**
  * The CustomWeighting allows adjusting the edge weights relative to those we'd obtain for a given base flag encoder.
@@ -219,12 +218,12 @@ public final class CustomWeighting implements Weighting {
         }
     }
 
-    public static TurnCostProvider createFromTurnCostConfig(TurnCostProvider turnCostProvider, DecimalEncodedValue orientationEnc, Graph graph, TurnCostsConfig tcConfig) {
-        final double minRightInRad, maxRightInRad, minLeftInRad, maxLeftInRad;
-        minRightInRad = Math.toRadians(tcConfig.getMinRightAngle());
-        maxRightInRad = Math.toRadians(tcConfig.getMaxRightAngle());
-        minLeftInRad = Math.toRadians(tcConfig.getMinLeftAngle());
-        maxLeftInRad = Math.toRadians(tcConfig.getMaxLeftAngle());
+    public static TurnCostProvider createFromTurnCostConfig(TurnCostProvider turnCostProvider,
+                                                            DecimalEncodedValue orientationEnc, Graph graph, TurnCostsConfig tcConfig) {
+        final double minRightInRad = Math.toRadians(tcConfig.getMinRightAngle());
+        final double maxRightInRad = Math.toRadians(tcConfig.getMaxRightAngle());
+        final double minLeftInRad = Math.toRadians(tcConfig.getMinLeftAngle());
+        final double maxLeftInRad = Math.toRadians(tcConfig.getMaxLeftAngle());
 
         return new TurnCostProvider() {
 
@@ -251,18 +250,17 @@ public final class CustomWeighting implements Weighting {
     }
 
     static double calcChangeAngle(int inEdge, int viaNode, int outEdge, Graph graph, DecimalEncodedValue orientationEnc) {
-        EdgeIteratorState prevEdge = graph.getEdgeIteratorState(inEdge, viaNode);
-        EdgeIteratorState edge = graph.getEdgeIteratorState(outEdge, viaNode);
-        if (prevEdge == null || edge == null) {
-            EdgeIteratorState in = graph.getEdgeIteratorState(inEdge, Integer.MIN_VALUE);
-            EdgeIteratorState out = graph.getEdgeIteratorState(outEdge, Integer.MIN_VALUE);
-            throw new IllegalStateException(inEdge + "->" + viaNode + "->" + outEdge
-                    + " || " + in + ": " + in.fetchWayGeometry(FetchMode.ALL)
-                    + " || " + out + ": " + out.fetchWayGeometry(FetchMode.ALL));
-        }
+        EdgeIteratorState inEdgeState = graph.getEdgeIteratorState(inEdge, viaNode);
+        EdgeIteratorState revOutEdgeState = graph.getEdgeIteratorState(outEdge, viaNode);
+        if (inEdgeState == null)
+            throw new IllegalStateException(inEdge + " --(" + viaNode + ") " + "->" + outEdge + " "
+                    + revOutEdgeState + " " + (revOutEdgeState != null ? revOutEdgeState.fetchWayGeometry(FetchMode.ALL) : ""));
+        if (revOutEdgeState == null)
+            throw new IllegalStateException(inEdgeState + " --(" + viaNode + ") " + "->" + outEdge + " "
+                    + inEdgeState + " " + inEdgeState.fetchWayGeometry(FetchMode.ALL));
 
-        double prevOrientation = prevEdge.get(orientationEnc);
-        double orientation = edge.get(orientationEnc);
+        double prevOrientation = inEdgeState.get(orientationEnc);
+        double orientation = revOutEdgeState.get(orientationEnc);
         // bring parallel to prevOrientation
         if (orientation >= 0) orientation -= Math.PI;
         else orientation += Math.PI;
@@ -270,8 +268,6 @@ public final class CustomWeighting implements Weighting {
         double changeAngle = orientation - prevOrientation;
         if (changeAngle > Math.PI) changeAngle -= 2 * Math.PI;
         else if (changeAngle < -Math.PI) changeAngle += 2 * Math.PI;
-
-        // System.out.println(changeAngle + " " + graph.getEdgeIteratorState(inEdge, viaNode).getName() + " -> " +graph.getEdgeIteratorState(outEdge, viaNode).getName());
         return changeAngle;
     }
 }

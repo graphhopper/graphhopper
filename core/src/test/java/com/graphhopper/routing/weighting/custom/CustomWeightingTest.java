@@ -3,7 +3,6 @@ package com.graphhopper.routing.weighting.custom;
 import com.bedatadriven.jackson.datatype.jts.JtsModule;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.config.Profile;
-import com.graphhopper.util.TurnCostsConfig;
 import com.graphhopper.json.Statement;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.DefaultWeightingFactory;
@@ -11,7 +10,8 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.parsers.OrientationCalculator;
-import com.graphhopper.routing.weighting.*;
+import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.*;
@@ -137,8 +137,8 @@ class CustomWeightingTest {
         assertEquals(3.1, weighting.calcEdgeWeight(edge, false), 0.01);
         // here we increase weight for edges that are road class links
         weighting = createWeighting(createSpeedCustomModel(avSpeedEnc)
-                        .setDistanceInfluence(70d)
-                        .addToPriority(If(RoadClassLink.KEY, MULTIPLY, "0.5")));
+                .setDistanceInfluence(70d)
+                .addToPriority(If(RoadClassLink.KEY, MULTIPLY, "0.5")));
         BooleanEncodedValue rcLinkEnc = encodingManager.getBooleanEncodedValue(RoadClassLink.KEY);
         assertEquals(3.1, weighting.calcEdgeWeight(edge.set(rcLinkEnc, false), false), 0.01);
         assertEquals(5.5, weighting.calcEdgeWeight(edge.set(rcLinkEnc, true), false), 0.01);
@@ -156,9 +156,9 @@ class CustomWeightingTest {
         Weighting weighting = createWeighting(createSpeedCustomModel(avSpeedEnc).setDistanceInfluence(70d));
         assertEquals(3.1, weighting.calcEdgeWeight(edge, false), 0.01);
         weighting = createWeighting(createSpeedCustomModel(avSpeedEnc)
-                        .setDistanceInfluence(70d)
-                        .addToPriority(If("special == true", MULTIPLY, "0.8"))
-                        .addToPriority(If("special == false", MULTIPLY, "0.4")));
+                .setDistanceInfluence(70d)
+                .addToPriority(If("special == true", MULTIPLY, "0.8"))
+                .addToPriority(If("special == false", MULTIPLY, "0.4")));
         assertEquals(6.7, weighting.calcEdgeWeight(edge, false), 0.01);
         assertEquals(3.7, weighting.calcEdgeWeight(edge, true), 0.01);
     }
@@ -510,7 +510,7 @@ class CustomWeightingTest {
         graph.getNodeAccess().setNode(3, 0.010, 0.000);
         graph.getNodeAccess().setNode(4, 0.000, 0.008);
 
-        EdgeIntAccess edgeIntAccess = graph.createEdgeIntAccess();
+        EdgeIntAccess edgeIntAccess = graph.getEdgeAccess();
         //      1
         //      |
         //   /--2
@@ -580,7 +580,7 @@ class CustomWeightingTest {
         profile.setTurnCostsConfig(config);
         Weighting weighting = new DefaultWeightingFactory(turnGraph, em).createWeighting(profile, new PMap(), false);
         OrientationCalculator calc = new OrientationCalculator(orientEnc);
-        EdgeIntAccess edgeIntAccess = turnGraph.createEdgeIntAccess();
+        EdgeIntAccess edgeIntAccess = turnGraph.getEdgeAccess();
         EdgeIteratorState edge01 = handleWayTags(edgeIntAccess, calc, turnGraph.edge(0, 1).setDistance(500).set(tcAvgSpeedEnc, 15).set(tcAccessEnc, true, true));
         EdgeIteratorState edge13 = handleWayTags(edgeIntAccess, calc, turnGraph.edge(1, 3).setDistance(500).set(tcAvgSpeedEnc, 15).set(tcAccessEnc, true, true));
         EdgeIteratorState edge14 = handleWayTags(edgeIntAccess, calc, turnGraph.edge(1, 4).setDistance(500).set(tcAvgSpeedEnc, 15).set(tcAccessEnc, true, true));
