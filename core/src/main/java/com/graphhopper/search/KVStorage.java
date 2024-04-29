@@ -518,7 +518,7 @@ public class KVStorage {
                         + fwdValue.getClass() + " vs " + bwdValue.getClass());
             if (fwdValue == null && bwdValue == null)
                 throw new IllegalArgumentException("If both values are null just do not store them");
-            fwdBwdEqual = fwd == bwd;
+            fwdBwdEqual = false;
         }
 
         public Object getFwd() {
