@@ -1037,9 +1037,9 @@ public class QueryGraphTest {
         NodeAccess na = g.getNodeAccess();
         na.setNode(0, 1, 0);
         na.setNode(1, 1, 2.5);
-        Map<String, KVStorage.KValue> kvs = new HashMap<>();
-        kvs.put("a", new KVStorage.KValue("hello", null));
-        kvs.put("b", new KVStorage.KValue(null, "world"));
+        Map<String, KVStorage.KeyValue> kvs = new HashMap<>();
+        kvs.put("a", new KVStorage.KeyValue("hello", null));
+        kvs.put("b", new KVStorage.KeyValue(null, "world"));
         EdgeIteratorState origEdge = g.edge(0, 1).setDistance(10).set(speedEnc, 60, 60).setKeyValues(kvs);
 
         // keyValues List stays the same

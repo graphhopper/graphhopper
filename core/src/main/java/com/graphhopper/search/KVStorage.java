@@ -81,7 +81,7 @@ public class KVStorage {
     private final BitUtil bitUtil = BitUtil.LITTLE;
     private long bytePointer = START_POINTER;
     private long lastEntryPointer = -1;
-    private Map<String, KValue> lastEntries;
+    private Map<String, KeyValue> lastEntries;
 
     /**
      * Specify a larger cacheSize to reduce disk usage. Note that this increases the memory usage of this object.
@@ -145,10 +145,10 @@ public class KVStorage {
         return indexToKey;
     }
 
-    private long setKVList(long currentPointer, final Map<String, KValue> entries) {
+    private long setKVList(long currentPointer, final Map<String, KeyValue> entries) {
         if (currentPointer == EMPTY_POINTER) return currentPointer;
         currentPointer += 1; // skip stored count
-        for (Map.Entry<String, KValue> entry : entries.entrySet()) {
+        for (Map.Entry<String, KeyValue> entry : entries.entrySet()) {
             if (entry.getValue().fwdBwdEqual) {
                 currentPointer = add(currentPointer, entry.getKey(), entry.getValue().fwdValue, true, true);
             } else {
@@ -216,7 +216,7 @@ public class KVStorage {
      *
      * @return entryPointer with which you can later fetch the entryMap via the get or getAll method
      */
-    public long add(final Map<String, KValue> entries) {
+    public long add(final Map<String, KeyValue> entries) {
         if (entries == null) throw new IllegalArgumentException("specified List must not be null");
         if (entries.isEmpty()) return EMPTY_POINTER;
         else if (entries.size() > 200)
@@ -227,7 +227,7 @@ public class KVStorage {
         if (entries.equals(lastEntries)) return lastEntryPointer;
 
         int entryCount = 0;
-        for (Map.Entry<String, KValue> kv : entries.entrySet()) {
+        for (Map.Entry<String, KeyValue> kv : entries.entrySet()) {
 
             if (kv.getValue().fwdBwdEqual) {
                 entryCount++;
@@ -256,7 +256,7 @@ public class KVStorage {
         return lastEntryPointer;
     }
 
-    public Map<String, KValue> getAll(final long entryPointer) {
+    public Map<String, KeyValue> getAll(final long entryPointer) {
         if (entryPointer < 0)
             throw new IllegalStateException("Pointer to access KVStorage cannot be negative:" + entryPointer);
 
@@ -265,7 +265,7 @@ public class KVStorage {
         int keyCount = vals.getByte(entryPointer) & 0xFF;
         if (keyCount == 0) return Collections.emptyMap();
 
-        Map<String, KValue> map = new LinkedHashMap<>();
+        Map<String, KeyValue> map = new LinkedHashMap<>();
         long tmpPointer = entryPointer + 1;
         AtomicInteger sizeOfObject = new AtomicInteger();
         for (int i = 0; i < keyCount; i++) {
@@ -278,13 +278,13 @@ public class KVStorage {
             Object object = deserializeObj(sizeOfObject, tmpPointer, indexToClass.get(currentKeyIndex));
             tmpPointer += sizeOfObject.get();
             String key = indexToKey.get(currentKeyIndex);
-            KValue oldValue = map.get(key);
+            KeyValue oldValue = map.get(key);
             if (oldValue != null)
-                map.put(key, new KValue(fwd ? object : oldValue.fwdValue, bwd ? object : oldValue.bwdValue));
+                map.put(key, new KeyValue(fwd ? object : oldValue.fwdValue, bwd ? object : oldValue.bwdValue));
             else if (fwd && bwd)
-                map.put(key, new KValue(object));
+                map.put(key, new KeyValue(object));
             else
-                map.put(key, new KValue(fwd ? object : null, bwd ? object : null));
+                map.put(key, new KeyValue(fwd ? object : null, bwd ? object : null));
         }
 
         return map;
@@ -492,19 +492,19 @@ public class KVStorage {
         return vals.getCapacity() + keys.getCapacity();
     }
 
-    public static class KValue {
+    public static class KeyValue {
         private final Object fwdValue;
         private final Object bwdValue;
         final boolean fwdBwdEqual;
 
-        public KValue(Object obj) {
+        public KeyValue(Object obj) {
             if (obj == null)
                 throw new IllegalArgumentException("Object cannot be null if forward and backward is both true");
             fwdValue = bwdValue = obj;
             fwdBwdEqual = true;
         }
 
-        public KValue(Object fwd, Object bwd) {
+        public KeyValue(Object fwd, Object bwd) {
             fwdValue = fwd;
             bwdValue = bwd;
             if (fwdValue != null && bwdValue != null && fwd.getClass() != bwd.getClass())
@@ -523,15 +523,15 @@ public class KVStorage {
             return bwdValue;
         }
 
-        public static Map<String, KValue> createKV(String key, Object value) {
-            return Collections.singletonMap(key, new KValue(value));
+        public static Map<String, KeyValue> createKV(String key, Object value) {
+            return Collections.singletonMap(key, new KeyValue(value));
         }
 
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
-            KValue value = (KValue) o;
+            KeyValue value = (KeyValue) o;
             // due to check in constructor we can assume that fwdValue and bwdValue are of same type. I.e. if one is a byte array they other is too.
             if (fwdValue instanceof byte[] || bwdValue instanceof byte[])
                 return fwdBwdEqual == value.fwdBwdEqual && (Arrays.equals((byte[]) fwdValue, (byte[]) value.fwdValue) || Arrays.equals((byte[]) bwdValue, (byte[]) value.bwdValue));

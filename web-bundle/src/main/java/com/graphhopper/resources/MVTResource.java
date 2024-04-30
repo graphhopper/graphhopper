@@ -119,7 +119,7 @@ public class MVTResource {
 
             edgeCounter.incrementAndGet();
             Map<String, Object> map = new LinkedHashMap<>();
-            for (Map.Entry<String, KVStorage.KValue> e : edge.getKeyValues().entrySet()) {
+            for (Map.Entry<String, KVStorage.KeyValue> e : edge.getKeyValues().entrySet()) {
                 map.put(e.getKey(), e.getValue().toString());
             }
             map.put("edge_id", edge.getEdge());

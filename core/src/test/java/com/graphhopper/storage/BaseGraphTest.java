@@ -19,7 +19,7 @@ package com.graphhopper.storage;
 
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RoadClass;
-import com.graphhopper.search.KVStorage.KValue;
+import com.graphhopper.search.KVStorage.KeyValue;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import org.junit.jupiter.api.Test;
@@ -70,14 +70,14 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
         graph.edge(9, 11).setDistance(200).set(carAccessEnc, true, true);
         graph.edge(1, 2).setDistance(120).set(carAccessEnc, true, false);
 
-        iter1.setKeyValues(KValue.createKV(STREET_NAME, "named street1"));
-        iter2.setKeyValues(KValue.createKV(STREET_NAME, "named street2"));
+        iter1.setKeyValues(KeyValue.createKV(STREET_NAME, "named street1"));
+        iter2.setKeyValues(KeyValue.createKV(STREET_NAME, "named street2"));
 
-        Map<String, KValue> map = new LinkedHashMap<>();
-        map.put("keyA", new KValue("FORWARD", null));
-        map.put("keyB", new KValue(null, "BACKWARD"));
-        map.put("keyC", new KValue("BOTH"));
-        map.put("keyD", new KValue("BOTH2", "BOTH2"));
+        Map<String, KeyValue> map = new LinkedHashMap<>();
+        map.put("keyA", new KeyValue("FORWARD", null));
+        map.put("keyB", new KeyValue(null, "BACKWARD"));
+        map.put("keyC", new KeyValue("BOTH"));
+        map.put("keyD", new KeyValue("BOTH2", "BOTH2"));
         iter3.setKeyValues(map);
 
         checkGraph(graph);

@@ -263,12 +263,12 @@ class VirtualEdgeIterator implements EdgeIterator {
     }
 
     @Override
-    public Map<String, KVStorage.KValue> getKeyValues() {
+    public Map<String, KVStorage.KeyValue> getKeyValues() {
         return getCurrentEdge().getKeyValues();
     }
 
     @Override
-    public EdgeIteratorState setKeyValues(Map<String, KVStorage.KValue> list) {
+    public EdgeIteratorState setKeyValues(Map<String, KVStorage.KeyValue> list) {
         return getCurrentEdge().setKeyValues(list);
     }
 

@@ -44,14 +44,14 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
     private double distance;
     private IntsRef edgeFlags;
     private EdgeIntAccess edgeIntAccess;
-    private Map<String, KVStorage.KValue> keyValues;
+    private Map<String, KVStorage.KeyValue> keyValues;
     // true if edge should be avoided as start/stop
     private boolean unfavored;
     private EdgeIteratorState reverseEdge;
     private final boolean reverse;
 
     public VirtualEdgeIteratorState(int originalEdgeKey, int edgeKey, int baseNode, int adjNode, double distance,
-                                    IntsRef edgeFlags, Map<String, KVStorage.KValue> keyValues, PointList pointList, boolean reverse) {
+                                    IntsRef edgeFlags, Map<String, KVStorage.KeyValue> keyValues, PointList pointList, boolean reverse) {
         this.originalEdgeKey = originalEdgeKey;
         this.edgeKey = edgeKey;
         this.baseNode = baseNode;
@@ -321,19 +321,19 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
     }
 
     @Override
-    public EdgeIteratorState setKeyValues(Map<String, KVStorage.KValue> list) {
+    public EdgeIteratorState setKeyValues(Map<String, KVStorage.KeyValue> list) {
         this.keyValues = list;
         return this;
     }
 
     @Override
-    public Map<String, KVStorage.KValue> getKeyValues() {
+    public Map<String, KVStorage.KeyValue> getKeyValues() {
         return keyValues;
     }
 
     @Override
     public Object getValue(String key) {
-        KVStorage.KValue value = keyValues.get(key);
+        KVStorage.KeyValue value = keyValues.get(key);
         if (value != null) {
             if (!reverse && value.getFwd() != null) return value.getFwd();
             if (reverse && value.getBwd() != null) return value.getBwd();
