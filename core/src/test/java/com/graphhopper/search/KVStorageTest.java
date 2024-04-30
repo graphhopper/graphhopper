@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.util.*;
 
-import static com.graphhopper.search.KVStorage.KValue.createKV;
+import static com.graphhopper.search.KVStorage.createKV;
 import static com.graphhopper.search.KVStorage.MAX_UNIQUE_KEYS;
 import static com.graphhopper.search.KVStorage.cutString;
 import static com.graphhopper.util.Helper.UTF_CS;

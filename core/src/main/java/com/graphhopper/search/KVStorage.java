@@ -523,10 +523,6 @@ public class KVStorage {
             return bwdValue;
         }
 
-        public static Map<String, KValue> createKV(String key, Object value) {
-            return Collections.singletonMap(key, new KValue(value));
-        }
-
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
@@ -557,5 +553,9 @@ public class KVStorage {
         byte[] bytes = value.getBytes(Helper.UTF_CS);
         // See #2609 and test why we use a value < 255
         return bytes.length > 250 ? new String(bytes, 0, 250, Helper.UTF_CS) : value;
+    }
+
+    public static Map<String, KValue> createKV(String key, Object value) {
+        return Collections.singletonMap(key, new KValue(value));
     }
 }
