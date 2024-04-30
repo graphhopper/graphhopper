@@ -37,6 +37,7 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.graphhopper.util.Parameters.Details.STREET_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class ExtendedJsonResponseTest {
@@ -88,7 +89,7 @@ public class ExtendedJsonResponseTest {
         pointList.add(-3.4445, -38.9990);
         pointList.add(-3.5550, -38.7990);
         return new VirtualEdgeIteratorState(0, 0, 0, 1, 10, new IntsRef(1),
-                KVStorage.KValue.createKV(KVStorage.KValue.STREET_NAME, "test of iterator"), pointList, false);
+                KVStorage.KValue.createKV(STREET_NAME, "test of iterator"), pointList, false);
     }
 
 }

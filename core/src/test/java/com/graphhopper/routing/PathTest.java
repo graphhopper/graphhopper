@@ -34,7 +34,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.*;
 
-import static com.graphhopper.search.KVStorage.KValue.STREET_NAME;
 import static com.graphhopper.search.KVStorage.KValue.createKV;
 import static com.graphhopper.storage.AbstractGraphStorageTester.assertPList;
 import static com.graphhopper.util.Parameters.Details.*;

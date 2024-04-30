@@ -63,6 +63,7 @@ import java.util.stream.Collectors;
 import static com.graphhopper.search.KVStorage.KValue.*;
 import static com.graphhopper.util.GHUtility.OSM_WARNING_LOGGER;
 import static com.graphhopper.util.Helper.nf;
+import static com.graphhopper.util.Parameters.Details.*;
 import static java.util.Collections.emptyList;
 
 /**

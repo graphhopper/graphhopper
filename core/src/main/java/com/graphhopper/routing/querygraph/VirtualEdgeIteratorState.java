@@ -27,6 +27,8 @@ import com.graphhopper.util.PointList;
 
 import java.util.Map;
 
+import static com.graphhopper.util.Parameters.Details.STREET_NAME;
+
 /**
  * Creates an edge state decoupled from a graph where nodes, pointList, etc are kept in memory.
  * <p>
@@ -313,7 +315,7 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
 
     @Override
     public String getName() {
-        String name = (String) getValue(KVStorage.KValue.STREET_NAME);
+        String name = (String) getValue(STREET_NAME);
         // preserve backward compatibility (returns empty string if name tag missing)
         return name == null ? "" : name;
     }
