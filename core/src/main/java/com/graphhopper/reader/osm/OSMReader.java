@@ -60,6 +60,7 @@ import java.util.function.LongToIntFunction;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static com.graphhopper.search.KVStorage.KValue.*;
 import static com.graphhopper.util.GHUtility.OSM_WARNING_LOGGER;
 import static com.graphhopper.util.Helper.nf;
 import static com.graphhopper.util.Parameters.Details.*;
@@ -370,7 +371,7 @@ public class OSMReader {
         IntsRef relationFlags = getRelFlagsMap(way.getId());
         EdgeIteratorState edge = baseGraph.edge(fromIndex, toIndex).setDistance(distance);
         osmParsers.handleWayTags(edge.getEdge(), edgeIntAccess, way, relationFlags);
-        Map<String, KVStorage.KeyValue> map = way.getTag("key_values", Collections.emptyMap());
+        Map<String, KVStorage.KValue> map = way.getTag("key_values", Collections.emptyMap());
         if (!map.isEmpty())
             edge.setKeyValues(map);
 
@@ -414,7 +415,7 @@ public class OSMReader {
      */
     protected void preprocessWay(ReaderWay way, WaySegmentParser.CoordinateSupplier coordinateSupplier,
                                  WaySegmentParser.NodeTagSupplier nodeTagSupplier) {
-        Map<String, KVStorage.KeyValue> map = new LinkedHashMap<>();
+        Map<String, KVStorage.KValue> map = new LinkedHashMap<>();
         if (config.isParseWayNames()) {
             // http://wiki.openstreetmap.org/wiki/Key:name
             String name = "";
@@ -423,28 +424,28 @@ public class OSMReader {
             if (name.isEmpty())
                 name = fixWayName(way.getTag("name"));
             if (!name.isEmpty())
-                map.put(STREET_NAME, new KVStorage.KeyValue(name));
+                map.put(STREET_NAME, new KVStorage.KValue(name));
 
             // http://wiki.openstreetmap.org/wiki/Key:ref
             String refName = fixWayName(way.getTag("ref"));
             if (!refName.isEmpty())
-                map.put(STREET_REF, new KVStorage.KeyValue(refName));
+                map.put(STREET_REF, new KVStorage.KValue(refName));
 
             if (way.hasTag("destination:ref")) {
-                map.put(STREET_DESTINATION_REF, new KVStorage.KeyValue(fixWayName(way.getTag("destination:ref"))));
+                map.put(STREET_DESTINATION_REF, new KVStorage.KValue(fixWayName(way.getTag("destination:ref"))));
             } else {
                 String fwdStr = fixWayName(way.getTag("destination:ref:forward"));
                 String bwdStr = fixWayName(way.getTag("destination:ref:backward"));
                 if (!fwdStr.isEmpty() || !bwdStr.isEmpty())
-                    map.put(STREET_DESTINATION_REF, new KVStorage.KeyValue(fwdStr.isEmpty() ? null : fwdStr, bwdStr.isEmpty() ? null : bwdStr));
+                    map.put(STREET_DESTINATION_REF, new KVStorage.KValue(fwdStr.isEmpty() ? null : fwdStr, bwdStr.isEmpty() ? null : bwdStr));
             }
             if (way.hasTag("destination")) {
-                map.put(STREET_DESTINATION, new KVStorage.KeyValue(fixWayName(way.getTag("destination"))));
+                map.put(STREET_DESTINATION, new KVStorage.KValue(fixWayName(way.getTag("destination"))));
             } else {
                 String fwdStr = fixWayName(way.getTag("destination:forward"));
                 String bwdStr = fixWayName(way.getTag("destination:backward"));
                 if (!fwdStr.isEmpty() || !bwdStr.isEmpty())
-                    map.put(STREET_DESTINATION, new KVStorage.KeyValue(fwdStr.isEmpty() ? null : fwdStr, bwdStr.isEmpty() ? null : bwdStr));
+                    map.put(STREET_DESTINATION, new KVStorage.KValue(fwdStr.isEmpty() ? null : fwdStr, bwdStr.isEmpty() ? null : bwdStr));
             }
 
             // copy node name of motorway_junction
@@ -454,7 +455,7 @@ public class OSMReader {
                 Map<String, Object> nodeTags = nodeTagSupplier.getTags(nodes.get(0));
                 String nodeName = (String) nodeTags.getOrDefault("name", "");
                 if (!nodeName.isEmpty() && "motorway_junction".equals(nodeTags.getOrDefault("highway", "")))
-                    map.put(MOTORWAY_JUNCTION, new KVStorage.KeyValue(nodeName));
+                    map.put(MOTORWAY_JUNCTION, new KVStorage.KValue(nodeName));
             }
         }
 
@@ -471,9 +472,9 @@ public class OSMReader {
                     boolean bwd = key.contains("backward");
                     if (!value.isEmpty()) {
                         if (fwd == bwd)
-                            map.put(key, new KVStorage.KeyValue(value));
+                            map.put(key, new KVStorage.KValue(value));
                         else
-                            map.put(key, new KVStorage.KeyValue(fwd ? value : null, bwd ? value : null));
+                            map.put(key, new KVStorage.KValue(fwd ? value : null, bwd ? value : null));
                     }
                 }
             }

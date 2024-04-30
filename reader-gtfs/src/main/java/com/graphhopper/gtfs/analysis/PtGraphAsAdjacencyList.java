@@ -304,12 +304,12 @@ class PtGraphAsAdjacencyList implements Graph {
             }
 
             @Override
-            public EdgeIteratorState setKeyValues(Map<String, KVStorage.KeyValue> map) {
+            public EdgeIteratorState setKeyValues(Map<String, KVStorage.KValue> map) {
                 throw new RuntimeException();
             }
 
             @Override
-            public Map<String, KVStorage.KeyValue> getKeyValues() {
+            public Map<String, KVStorage.KValue> getKeyValues() {
                 throw new RuntimeException();
             }
 

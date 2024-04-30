@@ -233,14 +233,14 @@ public interface EdgeIteratorState {
      * But it might be slow and more inefficient on retrieval. Call this setKeyValues method only once per
      * EdgeIteratorState as it allocates new space everytime this method is called.
      */
-    EdgeIteratorState setKeyValues(Map<String, KVStorage.KeyValue> map);
+    EdgeIteratorState setKeyValues(Map<String, KVStorage.KValue> map);
 
     /**
      * This method returns KeyValue pairs for both directions in contrast to {@link #getValue(String)}.
      *
      * @see #setKeyValues(Map)
      */
-    Map<String, KVStorage.KeyValue> getKeyValues();
+    Map<String, KVStorage.KValue> getKeyValues();
 
     /**
      * This method returns the *first* value for the specified key and only if stored for the direction of this

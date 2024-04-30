@@ -1,7 +1,7 @@
 package com.graphhopper.search;
 
 import com.carrotsearch.hppc.LongArrayList;
-import com.graphhopper.search.KVStorage.KeyValue;
+import com.graphhopper.search.KVStorage.KValue;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.Helper;
 import org.junit.jupiter.api.RepeatedTest;
@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.util.*;
 
-import static com.graphhopper.search.KVStorage.KeyValue.createKV;
+import static com.graphhopper.search.KVStorage.KValue.createKV;
 import static com.graphhopper.search.KVStorage.MAX_UNIQUE_KEYS;
 import static com.graphhopper.search.KVStorage.cutString;
 import static com.graphhopper.util.Helper.UTF_CS;
@@ -24,12 +24,12 @@ public class KVStorageTest {
         return new KVStorage(new RAMDirectory(), true).create(1000);
     }
 
-    Map<String, KeyValue> createMap(Object... keyValues) {
+    Map<String, KValue> createMap(Object... keyValues) {
         if (keyValues.length % 2 != 0)
             throw new IllegalArgumentException("Cannot create list from " + Arrays.toString(keyValues));
-        Map<String, KeyValue> map = new LinkedHashMap<>();
+        Map<String, KValue> map = new LinkedHashMap<>();
         for (int i = 0; i < keyValues.length; i += 2) {
-            map.put((String) keyValues[i], new KeyValue(keyValues[i + 1]));
+            map.put((String) keyValues[i], new KValue(keyValues[i + 1]));
         }
         return map;
     }
@@ -62,15 +62,15 @@ public class KVStorageTest {
     @Test
     public void getForwardBackward() {
         KVStorage index = create();
-        Map<String, KeyValue> map = new LinkedHashMap<>();
-        map.put("keyA", new KeyValue("FORWARD", null));
-        map.put("keyB", new KeyValue(null, "BACKWARD"));
-        map.put("keyC", new KeyValue("BOTH"));
-        map.put("keyD", new KeyValue("BOTH1", "BOTH2"));
+        Map<String, KValue> map = new LinkedHashMap<>();
+        map.put("keyA", new KValue("FORWARD", null));
+        map.put("keyB", new KValue(null, "BACKWARD"));
+        map.put("keyC", new KValue("BOTH"));
+        map.put("keyD", new KValue("BOTH1", "BOTH2"));
         long aPointer = index.add(map);
 
         assertNull(index.get(aPointer, "", false));
-        Map<String, KeyValue> deserializedList = index.getAll(aPointer);
+        Map<String, KValue> deserializedList = index.getAll(aPointer);
         assertEquals(map, deserializedList);
 
         assertEquals("FORWARD", index.get(aPointer, "keyA", false));
@@ -198,11 +198,11 @@ public class KVStorageTest {
     @Test
     public void testIntLongDoubleFloat2() {
         KVStorage index = create();
-        Map<String, KeyValue> map = new LinkedHashMap<>();
-        map.put("int", new KeyValue(4));
-        map.put("long", new KeyValue(4L));
-        map.put("double", new KeyValue(4d));
-        map.put("float", new KeyValue(4f));
+        Map<String, KValue> map = new LinkedHashMap<>();
+        map.put("int", new KValue(4));
+        map.put("long", new KValue(4L));
+        map.put("double", new KValue(4d));
+        map.put("float", new KValue(4f));
         long allInOne = index.add(map);
 
         long afterMapInsert = index.add(createKV("somenext", 0));
@@ -210,7 +210,7 @@ public class KVStorageTest {
         // 1 + 1 + (2+4) + (2+8) + (2+8) + (2+4)
         assertEquals(1 + 1 + 32, afterMapInsert);
 
-        Map<String, KeyValue> resMap = index.getAll(allInOne);
+        Map<String, KValue> resMap = index.getAll(allInOne);
         assertEquals(4, resMap.get("int").getFwd());
         assertEquals(4L, resMap.get("long").getFwd());
         assertEquals(4d, resMap.get("double").getFwd());
@@ -280,8 +280,8 @@ public class KVStorageTest {
 
     @Test
     public void testDifferentValuePerDirection() {
-        Map<String, KeyValue> map = new LinkedHashMap<>();
-        map.put("test", new KeyValue("forw", "back"));
+        Map<String, KValue> map = new LinkedHashMap<>();
+        map.put("test", new KValue("forw", "back"));
 
         KVStorage index = create();
         long pointerA = index.add(map);
@@ -323,7 +323,7 @@ public class KVStorageTest {
             int size = 10000;
             LongArrayList pointers = new LongArrayList(size);
             for (int i = 0; i < size; i++) {
-                Map<String, KeyValue> list = createRandomMap(random, keys, values);
+                Map<String, KValue> list = createRandomMap(random, keys, values);
                 long pointer = index.add(list);
                 try {
                     assertEquals(list.size(), index.getAll(pointer).size(), "" + i);
@@ -334,9 +334,9 @@ public class KVStorageTest {
             }
 
             for (int i = 0; i < size; i++) {
-                Map<String, KeyValue> map = index.getAll(pointers.get(i));
+                Map<String, KValue> map = index.getAll(pointers.get(i));
                 assertFalse(map.isEmpty(), i + " " + map);
-                for (Map.Entry<String, KeyValue> entry : map.entrySet()) {
+                for (Map.Entry<String, KValue> entry : map.entrySet()) {
                     Object value = index.get(pointers.get(i), entry.getKey(), false);
                     assertEquals(entry.getValue().getFwd(), value, i + " " + map);
                 }
@@ -347,9 +347,9 @@ public class KVStorageTest {
             index = new KVStorage(new RAMDirectory(location, true).create(), true);
             assertTrue(index.loadExisting());
             for (int i = 0; i < size; i++) {
-                Map<String, KeyValue> map = index.getAll(pointers.get(i));
+                Map<String, KValue> map = index.getAll(pointers.get(i));
                 assertFalse(map.isEmpty(), i + " " + map);
-                for (Map.Entry<String, KeyValue> entry : map.entrySet()) {
+                for (Map.Entry<String, KValue> entry : map.entrySet()) {
                     Object value = index.get(pointers.get(i), entry.getKey(), false);
                     assertEquals(entry.getValue().getFwd(), value, i + " " + map);
                 }
@@ -376,16 +376,16 @@ public class KVStorageTest {
         return list;
     }
 
-    private Map<String, KeyValue> createRandomMap(Random random, List<String> keys, List<Integer> values) {
+    private Map<String, KValue> createRandomMap(Random random, List<String> keys, List<Integer> values) {
         int count = random.nextInt(10) + 2;
         Set<String> avoidDuplicates = new HashSet<>(); // otherwise index.get returns potentially wrong value
-        Map<String, KeyValue> list = new LinkedHashMap<>();
+        Map<String, KValue> list = new LinkedHashMap<>();
         for (int i = 0; i < count; i++) {
             String key = keys.get(random.nextInt(keys.size()));
             if (!avoidDuplicates.add(key))
                 continue;
             Object o = values.get(random.nextInt(values.size()));
-            list.put(key, new KeyValue(key.endsWith("_s") ? o + "_s" : o));
+            list.put(key, new KValue(key.endsWith("_s") ? o + "_s" : o));
         }
         return list;
     }

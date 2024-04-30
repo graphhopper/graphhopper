@@ -37,7 +37,7 @@ public class LocationIndexExample {
     public static void lowLevelLocationIndex() {
         // If you don't use the GraphHopper class you have to use the low level API:
         BaseGraph graph = new BaseGraph.Builder(1).create();
-        graph.edge(0, 1).setKeyValues(KVStorage.KeyValue.createKV("name", "test edge"));
+        graph.edge(0, 1).setKeyValues(KVStorage.KValue.createKV("name", "test edge"));
         graph.getNodeAccess().setNode(0, 12, 42);
         graph.getNodeAccess().setNode(1, 12.01, 42.01);
 
