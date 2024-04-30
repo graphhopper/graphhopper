@@ -68,6 +68,7 @@ import static com.graphhopper.util.GHUtility.createCircle;
 import static com.graphhopper.util.GHUtility.createRectangle;
 import static com.graphhopper.util.Parameters.Algorithms.*;
 import static com.graphhopper.util.Parameters.Curbsides.*;
+import static com.graphhopper.util.Parameters.Details.STREET_REF;
 import static com.graphhopper.util.Parameters.Routing.TIMEOUT_MS;
 import static com.graphhopper.util.Parameters.Routing.U_TURN_COSTS;
 import static java.util.Arrays.asList;
@@ -2277,7 +2278,7 @@ public class GraphHopperTest {
                 .addPoint(new GHPoint(50.016895, 11.4923))
                 .addPoint(new GHPoint(50.003464, 11.49157))
                 .setProfile(profile)
-                .setPathDetails(Arrays.asList(KVStorage.KeyValue.STREET_REF, "max_speed"));
+                .setPathDetails(Arrays.asList(STREET_REF, "max_speed"));
         req.putHint("elevation", true);
 
         GHResponse rsp = hopper.route(req);
@@ -2319,7 +2320,7 @@ public class GraphHopperTest {
         assertDetail(speeds.get(7), "null [52, 54]");
 
         // check street names
-        List<PathDetail> streetNames = path.getPathDetails().get(KVStorage.KeyValue.STREET_REF);
+        List<PathDetail> streetNames = path.getPathDetails().get(STREET_REF);
         assertDetail(streetNames.get(0), "KU 11 [0, 4]");
         assertDetail(streetNames.get(1), "B 85 [4, 24]");
         assertDetail(streetNames.get(2), "B 85 [24, 45]");
@@ -2330,7 +2331,7 @@ public class GraphHopperTest {
     }
 
     private void assertInstruction(Instruction instruction, String expectedRef, String expectedInterval, int expectedLength, int expectedPoints) {
-        assertEquals(expectedRef, instruction.getExtraInfoJSON().get(KVStorage.KeyValue.STREET_REF));
+        assertEquals(expectedRef, instruction.getExtraInfoJSON().get(STREET_REF));
         assertEquals(expectedInterval, ((ShallowImmutablePointList) instruction.getPoints()).getIntervalString());
         assertEquals(expectedLength, instruction.getLength());
         assertEquals(expectedPoints, instruction.getPoints().size());

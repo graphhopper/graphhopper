@@ -28,10 +28,7 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 import static com.graphhopper.util.DistancePlaneProjection.DIST_PLANE;
 
@@ -233,7 +230,7 @@ class QueryOverlayBuilder {
 
         boolean reverse = closestEdge.get(EdgeIteratorState.REVERSE_STATE);
         // edges between base and snapped point
-        List<KVStorage.KeyValue> keyValues = closestEdge.getKeyValues();
+        Map<String, KVStorage.KValue> keyValues = closestEdge.getKeyValues();
         VirtualEdgeIteratorState baseEdge = new VirtualEdgeIteratorState(origEdgeKey, GHUtility.createEdgeKey(virtEdgeId, false),
                 prevNodeId, nodeId, baseDistance, closestEdge.getFlags(), keyValues, basePoints, reverse);
         VirtualEdgeIteratorState baseReverseEdge = new VirtualEdgeIteratorState(origRevEdgeKey, GHUtility.createEdgeKey(virtEdgeId, true),
