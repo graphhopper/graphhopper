@@ -42,9 +42,6 @@ public class LocationIndexExample {
         BaseGraph graph = new BaseGraph.Builder(1).create();
 
         graph.edge(0, 1).setKeyValues(Map.of("name", new KValue( "test edge")));
-        graph.edge(0, 1).setKeyValues(Map.of("name", new KValue( "test edge")));
-        graph.edge(0, 1).setKeyValues(Map.of("name", new KValue( "test edge")));
-        graph.edge(0, 1).setKeyValues(Map.of("name", new KValue( "test edge")));
         graph.getNodeAccess().setNode(0, 12, 42);
         graph.getNodeAccess().setNode(1, 12.01, 42.01);
 
