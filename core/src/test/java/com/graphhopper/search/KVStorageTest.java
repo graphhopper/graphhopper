@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.util.*;
 
-import static com.graphhopper.search.KVStorage.createKV;
 import static com.graphhopper.search.KVStorage.MAX_UNIQUE_KEYS;
 import static com.graphhopper.search.KVStorage.cutString;
 import static com.graphhopper.util.Helper.UTF_CS;
@@ -168,23 +167,23 @@ public class KVStorageTest {
             bytes[i] = (byte) (i % 255);
             copy[i] = bytes[i];
         }
-        long result = index.add(createKV("myval", bytes));
+        long result = index.add(Map.of("myval", new KValue(bytes)));
         bytes = (byte[]) index.get(result, "myval", false);
         assertArrayEquals(copy, bytes);
 
         final byte[] biggerByteArray = Arrays.copyOf(bytes, 256);
-        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> index.add(createKV("myval2", biggerByteArray)));
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> index.add(Map.of("myval2", new KValue(biggerByteArray))));
         assertTrue(e.getMessage().contains("bytes.length cannot be > 255"));
     }
 
     @Test
     public void testIntLongDoubleFloat() {
         KVStorage index = create();
-        long intres = index.add(createKV("intres", 4));
-        long doubleres = index.add(createKV("doubleres", 4d));
-        long floatres = index.add(createKV("floatres", 4f));
-        long longres = index.add(createKV("longres", 4L));
-        long after4Inserts = index.add(createKV("somenext", 0));
+        long intres = index.add(Map.of("intres", new KValue(4)));
+        long doubleres = index.add(Map.of("doubleres", new KValue(4d)));
+        long floatres = index.add(Map.of("floatres", new KValue(4f)));
+        long longres = index.add(Map.of("longres", new KValue(4L)));
+        long after4Inserts = index.add(Map.of("somenext", new KValue(0)));
 
         // initial point is 1, then twice plus 1 + (2+4) and twice plus 1 + (2+8)
         assertEquals(1 + 36, after4Inserts);
@@ -205,7 +204,7 @@ public class KVStorageTest {
         map.put("float", new KValue(4f));
         long allInOne = index.add(map);
 
-        long afterMapInsert = index.add(createKV("somenext", 0));
+        long afterMapInsert = index.add(Map.of("somenext", new KValue(0)));
 
         // 1 + 1 + (2+4) + (2+8) + (2+8) + (2+4)
         assertEquals(1 + 1 + 32, afterMapInsert);

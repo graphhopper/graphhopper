@@ -26,6 +26,7 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import org.junit.jupiter.api.Test;
 
+import java.util.Map;
 import java.util.Random;
 
 import static com.graphhopper.util.Parameters.Details.STREET_NAME;
@@ -81,8 +82,8 @@ public class BaseGraphWithTurnCostsTest extends BaseGraphTest {
         setTurnCost(iter2.getEdge(), 0, iter1.getEdge(), 666);
         setTurnCost(iter1.getEdge(), 1, iter2.getEdge(), 815);
 
-        iter1.setKeyValues(KVStorage.createKV(STREET_NAME, "named street1"));
-        iter2.setKeyValues(KVStorage.createKV(STREET_NAME, "named street2"));
+        iter1.setKeyValues(Map.of(STREET_NAME, new KVStorage.KValue( "named street1")));
+        iter2.setKeyValues(Map.of(STREET_NAME, new KVStorage.KValue( "named street2")));
 
         checkGraph(graph);
         graph.flush();

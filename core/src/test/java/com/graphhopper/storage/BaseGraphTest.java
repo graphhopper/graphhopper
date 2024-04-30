@@ -19,7 +19,6 @@ package com.graphhopper.storage;
 
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RoadClass;
-import com.graphhopper.search.KVStorage;
 import com.graphhopper.search.KVStorage.KValue;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
@@ -71,8 +70,8 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
         graph.edge(9, 11).setDistance(200).set(carAccessEnc, true, true);
         graph.edge(1, 2).setDistance(120).set(carAccessEnc, true, false);
 
-        iter1.setKeyValues(KVStorage.createKV(STREET_NAME, "named street1"));
-        iter2.setKeyValues(KVStorage.createKV(STREET_NAME, "named street2"));
+        iter1.setKeyValues(Map.of(STREET_NAME, new KValue("named street1")));
+        iter2.setKeyValues(Map.of(STREET_NAME, new KValue("named street2")));
 
         Map<String, KValue> map = new LinkedHashMap<>();
         map.put("keyA", new KValue("FORWARD", null));

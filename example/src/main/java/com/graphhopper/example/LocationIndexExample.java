@@ -4,12 +4,15 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.search.KVStorage;
+import com.graphhopper.search.KVStorage.KValue;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
+
+import java.util.Map;
 
 public class LocationIndexExample {
     public static void main(String[] args) {
@@ -37,7 +40,11 @@ public class LocationIndexExample {
     public static void lowLevelLocationIndex() {
         // If you don't use the GraphHopper class you have to use the low level API:
         BaseGraph graph = new BaseGraph.Builder(1).create();
-        graph.edge(0, 1).setKeyValues(KVStorage.createKV("name", "test edge"));
+
+        graph.edge(0, 1).setKeyValues(Map.of("name", new KValue( "test edge")));
+        graph.edge(0, 1).setKeyValues(Map.of("name", new KValue( "test edge")));
+        graph.edge(0, 1).setKeyValues(Map.of("name", new KValue( "test edge")));
+        graph.edge(0, 1).setKeyValues(Map.of("name", new KValue( "test edge")));
         graph.getNodeAccess().setNode(0, 12, 42);
         graph.getNodeAccess().setNode(1, 12.01, 42.01);
 

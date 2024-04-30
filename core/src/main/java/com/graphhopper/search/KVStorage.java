@@ -528,7 +528,8 @@ public class KVStorage {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             KValue value = (KValue) o;
-            // due to check in constructor we can assume that fwdValue and bwdValue are of same type. I.e. if one is a byte array they other is too.
+            // due to check in constructor we can assume that fwdValue and bwdValue are of same type.
+            // I.e. if one is a byte array the other is too.
             if (fwdValue instanceof byte[] || bwdValue instanceof byte[])
                 return fwdBwdEqual == value.fwdBwdEqual && (Arrays.equals((byte[]) fwdValue, (byte[]) value.fwdValue) || Arrays.equals((byte[]) bwdValue, (byte[]) value.bwdValue));
 
@@ -553,9 +554,5 @@ public class KVStorage {
         byte[] bytes = value.getBytes(Helper.UTF_CS);
         // See #2609 and test why we use a value < 255
         return bytes.length > 250 ? new String(bytes, 0, 250, Helper.UTF_CS) : value;
-    }
-
-    public static Map<String, KValue> createKV(String key, Object value) {
-        return Collections.singletonMap(key, new KValue(value));
     }
 }
