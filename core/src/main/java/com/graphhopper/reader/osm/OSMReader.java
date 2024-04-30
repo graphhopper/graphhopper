@@ -60,9 +60,10 @@ import java.util.function.LongToIntFunction;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static com.graphhopper.search.KVStorage.KeyValue.*;
+import static com.graphhopper.search.KVStorage.KValue;
 import static com.graphhopper.util.GHUtility.OSM_WARNING_LOGGER;
 import static com.graphhopper.util.Helper.nf;
+import static com.graphhopper.util.Parameters.Details.*;
 import static java.util.Collections.emptyList;
 
 /**
@@ -370,9 +371,9 @@ public class OSMReader {
         IntsRef relationFlags = getRelFlagsMap(way.getId());
         EdgeIteratorState edge = baseGraph.edge(fromIndex, toIndex).setDistance(distance);
         osmParsers.handleWayTags(edge.getEdge(), edgeIntAccess, way, relationFlags);
-        List<KVStorage.KeyValue> list = way.getTag("key_values", Collections.emptyList());
-        if (!list.isEmpty())
-            edge.setKeyValues(list);
+        Map<String, KValue> map = way.getTag("key_values", Collections.emptyMap());
+        if (!map.isEmpty())
+            edge.setKeyValues(map);
 
         // If the entire way is just the first and last point, do not waste space storing an empty way geometry
         if (pointList.size() > 2) {
@@ -414,7 +415,7 @@ public class OSMReader {
      */
     protected void preprocessWay(ReaderWay way, WaySegmentParser.CoordinateSupplier coordinateSupplier,
                                  WaySegmentParser.NodeTagSupplier nodeTagSupplier) {
-        List<KVStorage.KeyValue> list = new ArrayList<>();
+        Map<String, KValue> map = new LinkedHashMap<>();
         if (config.isParseWayNames()) {
             // http://wiki.openstreetmap.org/wiki/Key:name
             String name = "";
@@ -423,28 +424,28 @@ public class OSMReader {
             if (name.isEmpty())
                 name = fixWayName(way.getTag("name"));
             if (!name.isEmpty())
-                list.add(new KVStorage.KeyValue(STREET_NAME, name));
+                map.put(STREET_NAME, new KValue(name));
 
             // http://wiki.openstreetmap.org/wiki/Key:ref
             String refName = fixWayName(way.getTag("ref"));
             if (!refName.isEmpty())
-                list.add(new KVStorage.KeyValue(STREET_REF, refName));
+                map.put(STREET_REF, new KValue(refName));
 
             if (way.hasTag("destination:ref")) {
-                list.add(new KVStorage.KeyValue(STREET_DESTINATION_REF, fixWayName(way.getTag("destination:ref"))));
+                map.put(STREET_DESTINATION_REF, new KValue(fixWayName(way.getTag("destination:ref"))));
             } else {
-                if (way.hasTag("destination:ref:forward"))
-                    list.add(new KVStorage.KeyValue(STREET_DESTINATION_REF, fixWayName(way.getTag("destination:ref:forward")), true, false));
-                if (way.hasTag("destination:ref:backward"))
-                    list.add(new KVStorage.KeyValue(STREET_DESTINATION_REF, fixWayName(way.getTag("destination:ref:backward")), false, true));
+                String fwdStr = fixWayName(way.getTag("destination:ref:forward"));
+                String bwdStr = fixWayName(way.getTag("destination:ref:backward"));
+                if (!fwdStr.isEmpty() || !bwdStr.isEmpty())
+                    map.put(STREET_DESTINATION_REF, new KValue(fwdStr.isEmpty() ? null : fwdStr, bwdStr.isEmpty() ? null : bwdStr));
             }
             if (way.hasTag("destination")) {
-                list.add(new KVStorage.KeyValue(STREET_DESTINATION, fixWayName(way.getTag("destination"))));
+                map.put(STREET_DESTINATION, new KValue(fixWayName(way.getTag("destination"))));
             } else {
-                if (way.hasTag("destination:forward"))
-                    list.add(new KVStorage.KeyValue(STREET_DESTINATION, fixWayName(way.getTag("destination:forward")), true, false));
-                if (way.hasTag("destination:backward"))
-                    list.add(new KVStorage.KeyValue(STREET_DESTINATION, fixWayName(way.getTag("destination:backward")), false, true));
+                String fwdStr = fixWayName(way.getTag("destination:forward"));
+                String bwdStr = fixWayName(way.getTag("destination:backward"));
+                if (!fwdStr.isEmpty() || !bwdStr.isEmpty())
+                    map.put(STREET_DESTINATION, new KValue(fwdStr.isEmpty() ? null : fwdStr, bwdStr.isEmpty() ? null : bwdStr));
             }
 
             // copy node name of motorway_junction
@@ -454,7 +455,7 @@ public class OSMReader {
                 Map<String, Object> nodeTags = nodeTagSupplier.getTags(nodes.get(0));
                 String nodeName = (String) nodeTags.getOrDefault("name", "");
                 if (!nodeName.isEmpty() && "motorway_junction".equals(nodeTags.getOrDefault("highway", "")))
-                    list.add(new KVStorage.KeyValue(MOTORWAY_JUNCTION, nodeName));
+                    map.put(MOTORWAY_JUNCTION, new KValue(nodeName));
             }
         }
 
@@ -469,14 +470,16 @@ public class OSMReader {
                     String key = entry.getKey().replace(':', '_').replace("bicycle", "bike");
                     boolean fwd = key.contains("forward");
                     boolean bwd = key.contains("backward");
-                    if (!fwd && !bwd)
-                        list.add(new KVStorage.KeyValue(key, value, true, true));
-                    else
-                        list.add(new KVStorage.KeyValue(key, value, fwd, bwd));
+                    if (!value.isEmpty()) {
+                        if (fwd == bwd)
+                            map.put(key, new KValue(value));
+                        else
+                            map.put(key, new KValue(fwd ? value : null, bwd ? value : null));
+                    }
                 }
             }
 
-        way.setTag("key_values", list);
+        way.setTag("key_values", map);
 
         if (!isCalculateWayDistance(way))
             return;

@@ -1,5 +1,6 @@
 ### 10.0 [not yet released]
 
+- KeyValue is now KValue as it holds the value only. Note, the two parameter constructor uses one value for the forward and one for the backward direction (and no longer "key, value")
 
 ### 9.0 [23 Apr 2024]
 
