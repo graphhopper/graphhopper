@@ -284,11 +284,11 @@ public final class MMapDataAccess extends AbstractDataAccess {
         if (index + 3 >= segmentSizeInBytes) {
             ByteBuffer b2 = segments.get(bufferIndex + 1);
             if (index + 1 >= segmentSizeInBytes)
-                return (b2.get(2) & 0xFF) << 24 | (b2.get(1) & 0xFF) << 16 | (b2.get(0) & 0xFF) << 8 | (b1.get(index) & 0xFF);
+                return (b2.getShort(1) & 0xFFFF) << 16 | (b2.get(0) & 0xFF) << 8 | (b1.get(index) & 0xFF);
             if (index + 2 >= segmentSizeInBytes)
-                return (b2.get(1) & 0xFF) << 24 | (b2.get(0) & 0xFF) << 16 | (b1.get(index + 1) & 0xFF) << 8 | (b1.get(index) & 0xFF);
+                return (b2.getShort(0) & 0xFFFF) << 16 | (b1.getShort(index) & 0xFFFF);
             // index + 3 >= segmentSizeInBytes
-            return (b2.get(0) & 0xFF) << 24 | (b1.get(index + 2) & 0xFF) << 16 | (b1.get(index + 1) & 0xFF) << 8 | (b1.get(index) & 0xFF);
+            return (b2.get(0) & 0xFF) << 24 | (b1.getShort(index + 1) & 0xFFFF) << 8 | (b1.get(index) & 0xFF);
         }
         return b1.getInt(index);
     }
