@@ -273,7 +273,7 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
     public void setGetFlagsRaw() {
         BaseGraph graph = new BaseGraph.Builder(1).create();
         EdgeIteratorState edge = graph.edge(0, 1);
-        IntsRef flags = new IntsRef(graph.getIntsForFlags());
+        IntsRef flags = encodingManager.createEdgeFlags();
         flags.ints[0] = 10;
         edge.setFlags(flags);
         assertEquals(10, edge.getFlags().ints[0]);

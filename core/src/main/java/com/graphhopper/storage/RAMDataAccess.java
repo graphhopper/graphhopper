@@ -160,9 +160,23 @@ public class RAMDataAccess extends AbstractDataAccess {
         assert segmentSizePower > 0 : "call create or loadExisting before usage!";
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
-        if (index + 4 > segmentSizeInBytes)
-            throw new IllegalStateException("Padding required. Currently an int cannot be distributed over two segments. " + bytePos);
-        bitUtil.fromInt(segments[bufferIndex], value, index);
+        if (index + 3 >= segmentSizeInBytes) {
+            // seldom and special case if int has to be written into two separate segments
+            byte[] b1 = segments[bufferIndex], b2 = segments[bufferIndex + 1];
+            if (index + 1 >= segmentSizeInBytes) {
+                bitUtil.fromUInt3(b2, value >>> 8, 0);
+                b1[index] = (byte) value;
+            } else if (index + 2 >= segmentSizeInBytes) {
+                bitUtil.fromShort(b2, (short) (value >>> 16), 0);
+                bitUtil.fromShort(b1, (short) value, index);
+            } else {
+                // index + 3 >= segmentSizeInBytes
+                b2[0] = (byte) (value >>> 24);
+                bitUtil.fromUInt3(b1, value, index);
+            }
+        } else {
+            bitUtil.fromInt(segments[bufferIndex], value, index);
+        }
     }
 
     @Override
@@ -170,8 +184,15 @@ public class RAMDataAccess extends AbstractDataAccess {
         assert segments.length > 0 : "call create or loadExisting before usage!";
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
-        if (index + 4 > segmentSizeInBytes)
-            throw new IllegalStateException("Padding required. Currently an int cannot be distributed over two segments. " + bytePos);
+        if (index + 3 >= segmentSizeInBytes) {
+            byte[] b1 = segments[bufferIndex], b2 = segments[bufferIndex + 1];
+            if (index + 1 >= segmentSizeInBytes)
+                return (b2[2] & 0xFF) << 24 | (b2[1] & 0xFF) << 16 | (b2[0] & 0xFF) << 8 | (b1[index] & 0xFF);
+            if (index + 2 >= segmentSizeInBytes)
+                return (b2[1] & 0xFF) << 24 | (b2[0] & 0xFF) << 16 | (b1[index + 1] & 0xFF) << 8 | (b1[index] & 0xFF);
+            // index + 3 >= segmentSizeInBytes
+            return (b2[0] & 0xFF) << 24 | (b1[index + 2] & 0xFF) << 16 | (b1[index + 1] & 0xFF) << 8 | (b1[index] & 0xFF);
+        }
         return bitUtil.toInt(segments[bufferIndex], index);
     }
 
@@ -180,8 +201,8 @@ public class RAMDataAccess extends AbstractDataAccess {
         assert segments.length > 0 : "call create or loadExisting before usage!";
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
-        if (index + 2 > segmentSizeInBytes) {
-            // special case if short has to be written into two separate segments
+        if (index + 1 >= segmentSizeInBytes) {
+            // seldom and special case if short has to be written into two separate segments
             segments[bufferIndex][index] = (byte) (value);
             segments[bufferIndex + 1][0] = (byte) (value >>> 8);
         } else {
@@ -194,7 +215,7 @@ public class RAMDataAccess extends AbstractDataAccess {
         assert segments.length > 0 : "call create or loadExisting before usage!";
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
-        if (index + 2 > segmentSizeInBytes)
+        if (index + 1 >= segmentSizeInBytes)
             return (short) ((segments[bufferIndex + 1][0] & 0xFF) << 8 | (segments[bufferIndex][index] & 0xFF));
         else
             return bitUtil.toShort(segments[bufferIndex], index);
