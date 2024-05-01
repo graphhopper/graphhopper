@@ -104,10 +104,9 @@ public abstract class AbstractBitUtilTester {
         bitUtil.fromUInt3(bytes, 12345678, 0);
         assertEquals(12345678, bitUtil.toUInt3(bytes, 0));
 
-        // of course negative numbers won't work but at this level we don't check range
         bytes = new byte[3];
         bitUtil.fromUInt3(bytes, -12345678, 0);
-        assertEquals(4431538, bitUtil.toUInt3(bytes, 0));
+        assertEquals(-12345678 & 0x00FF_FFFF, bitUtil.toUInt3(bytes, 0));
     }
 
 }

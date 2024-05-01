@@ -124,6 +124,9 @@ public class BitUtil {
         bytes[offset] = (byte) (value);
     }
 
+    /**
+     * Note, value can be negative and no exceptions is thrown as it'll be interpreted as an unsigned number.
+     */
     public final void fromUInt3(byte[] bytes, int value, int offset) {
         bytes[offset + 2] = (byte) (value >>> 16);
         bytes[offset + 1] = (byte) (value >>> 8);
