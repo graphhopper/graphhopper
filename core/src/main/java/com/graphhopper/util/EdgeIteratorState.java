@@ -22,7 +22,7 @@ import com.graphhopper.search.KVStorage;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.IntsRef;
 
-import java.util.List;
+import java.util.Map;
 
 /**
  * This interface represents an edge and is one possible state of an EdgeIterator.
@@ -40,14 +40,40 @@ import java.util.List;
  * @see EdgeExplorer
  */
 public interface EdgeIteratorState {
-    BooleanEncodedValue UNFAVORED_EDGE = new SimpleBooleanEncodedValue("unfavored");
+    BooleanEncodedValue UNFAVORED_EDGE = new BooleanEncodedValue() {
+        @Override
+        public int init(InitializerConfig init) {
+            throw new IllegalStateException("Cannot happen for 'unfavored' BooleanEncodedValue");
+        }
+
+        @Override
+        public boolean getBool(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess) {
+            return false;
+        }
+
+        @Override
+        public void setBool(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess, boolean value) {
+            throw new IllegalStateException("state of 'unfavored' cannot be modified");
+        }
+
+        @Override
+        public boolean isStoreTwoDirections() {
+            return false;
+        }
+
+        @Override
+        public String getName() {
+            return "unfavored";
+        }
+    };
+
     /**
      * This method can be used to fetch the internal reverse state of an edge.
      */
     BooleanEncodedValue REVERSE_STATE = new BooleanEncodedValue() {
         @Override
         public int init(InitializerConfig init) {
-            throw new IllegalStateException("Cannot happen for this BooleanEncodedValue");
+            throw new IllegalStateException("Cannot happen for 'reverse' BooleanEncodedValue");
         }
 
         @Override
@@ -62,7 +88,7 @@ public interface EdgeIteratorState {
 
         @Override
         public void setBool(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess, boolean value) {
-            throw new IllegalStateException("reverse state cannot be modified");
+            throw new IllegalStateException("state of 'reverse' cannot be modified");
         }
 
         @Override
@@ -207,14 +233,14 @@ public interface EdgeIteratorState {
      * But it might be slow and more inefficient on retrieval. Call this setKeyValues method only once per
      * EdgeIteratorState as it allocates new space everytime this method is called.
      */
-    EdgeIteratorState setKeyValues(List<KVStorage.KeyValue> map);
+    EdgeIteratorState setKeyValues(Map<String, KVStorage.KValue> map);
 
     /**
      * This method returns KeyValue pairs for both directions in contrast to {@link #getValue(String)}.
      *
-     * @see #setKeyValues(List)
+     * @see #setKeyValues(Map)
      */
-    List<KVStorage.KeyValue> getKeyValues();
+    Map<String, KVStorage.KValue> getKeyValues();
 
     /**
      * This method returns the *first* value for the specified key and only if stored for the direction of this

@@ -33,9 +33,9 @@ public class OSMMaxWeightParserTest {
 
         // if value is beyond the maximum then do not use infinity instead fallback to more restrictive maximum
         edgeIntAccess = new ArrayEdgeIntAccess(1);
-        readerWay.setTag("maxweight", "50");
+        readerWay.setTag("maxweight", "54");
         parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
-        assertEquals(25.4, mwEnc.getDecimal(false, edgeId, edgeIntAccess), .01);
+        assertEquals(51, mwEnc.getDecimal(false, edgeId, edgeIntAccess), .01);
     }
 
     @Test

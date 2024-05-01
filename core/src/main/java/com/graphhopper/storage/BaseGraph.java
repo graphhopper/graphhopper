@@ -28,8 +28,10 @@ import com.graphhopper.util.shapes.BBox;
 
 import java.io.Closeable;
 import java.util.List;
+import java.util.Map;
 
 import static com.graphhopper.util.Helper.nf;
+import static com.graphhopper.util.Parameters.Details.STREET_NAME;
 
 /**
  * The base graph handles nodes and edges file format. It can be used with different Directory
@@ -57,12 +59,12 @@ public class BaseGraph implements Graph, Closeable {
     private boolean initialized = false;
     private long maxGeoRef;
 
-    public BaseGraph(Directory dir, int intsForFlags, boolean withElevation, boolean withTurnCosts, int segmentSize) {
+    public BaseGraph(Directory dir, boolean withElevation, boolean withTurnCosts, int segmentSize, int bytesForFlags) {
         this.dir = dir;
         this.bitUtil = BitUtil.LITTLE;
         this.wayGeometry = dir.create("geometry", segmentSize);
         this.edgeKVStorage = new KVStorage(dir, true);
-        this.store = new BaseGraphNodesAndEdges(dir, intsForFlags, withElevation, withTurnCosts, segmentSize);
+        this.store = new BaseGraphNodesAndEdges(dir, withElevation, withTurnCosts, segmentSize, bytesForFlags);
         this.nodeAccess = new GHNodeAccess(store);
         this.segmentSize = segmentSize;
         turnCostStorage = withTurnCosts ? new TurnCostStorage(this, dir.create("turn_costs", dir.getDefaultType("turn_costs", true), segmentSize)) : null;
@@ -170,10 +172,6 @@ public class BaseGraph implements Graph, Closeable {
         // 0 stands for no separate geoRef
         maxGeoRef = 4;
         return this;
-    }
-
-    public int getIntsForFlags() {
-        return store.getIntsForFlags();
     }
 
     public String toDetailsString() {
@@ -370,20 +368,8 @@ public class BaseGraph implements Graph, Closeable {
         }
     }
 
-    public EdgeIntAccess createEdgeIntAccess() {
-        return new EdgeIntAccess() {
-            @Override
-            public int getInt(int edgeId, int index) {
-                long edgePointer = store.toEdgePointer(edgeId);
-                return store.getFlagInt(edgePointer, index);
-            }
-
-            @Override
-            public void setInt(int edgeId, int index, int value) {
-                long edgePointer = store.toEdgePointer(edgeId);
-                store.setFlagInt(edgePointer, index, value);
-            }
-        };
+    public EdgeIntAccess getEdgeAccess() {
+        return store;
     }
 
     private void setWayGeometryAtGeoRef(PointList pillarNodes, long edgePointer, boolean reverse, long geoRef) {
@@ -507,7 +493,7 @@ public class BaseGraph implements Graph, Closeable {
     }
 
     public static class Builder {
-        private final int intsForFlags;
+        private final int bytesForFlags;
         private Directory directory = new RAMDirectory();
         private boolean withElevation = false;
         private boolean withTurnCosts = false;
@@ -515,12 +501,12 @@ public class BaseGraph implements Graph, Closeable {
         private int segmentSize = -1;
 
         public Builder(EncodingManager em) {
-            this(em.getIntsForFlags());
+            this(em.getBytesForFlags());
             withTurnCosts(em.needsTurnCostsSupport());
         }
 
-        public Builder(int intsForFlags) {
-            this.intsForFlags = intsForFlags;
+        public Builder(int bytesForFlags) {
+            this.bytesForFlags = bytesForFlags;
         }
 
         // todo: maybe rename later, but for now this makes it easier to replace GraphBuilder
@@ -552,7 +538,7 @@ public class BaseGraph implements Graph, Closeable {
         }
 
         public BaseGraph build() {
-            return new BaseGraph(directory, intsForFlags, withElevation, withTurnCosts, segmentSize);
+            return new BaseGraph(directory, withElevation, withTurnCosts, segmentSize, bytesForFlags);
         }
 
         public BaseGraph create() {
@@ -671,7 +657,7 @@ public class BaseGraph implements Graph, Closeable {
 
         public EdgeIteratorStateImpl(BaseGraph baseGraph) {
             this.baseGraph = baseGraph;
-            edgeIntAccess = baseGraph.createEdgeIntAccess();
+            edgeIntAccess = baseGraph.getEdgeAccess();
             store = baseGraph.store;
         }
 
@@ -743,7 +729,7 @@ public class BaseGraph implements Graph, Closeable {
 
         @Override
         public IntsRef getFlags() {
-            IntsRef edgeFlags = new IntsRef(store.getIntsForFlags());
+            IntsRef edgeFlags = store.createEdgeFlags();
             store.readFlags(edgePointer, edgeFlags);
             return edgeFlags;
         }
@@ -942,7 +928,7 @@ public class BaseGraph implements Graph, Closeable {
         }
 
         @Override
-        public EdgeIteratorState setKeyValues(List<KVStorage.KeyValue> entries) {
+        public EdgeIteratorState setKeyValues(Map<String, KVStorage.KValue> entries) {
             long pointer = baseGraph.edgeKVStorage.add(entries);
             if (pointer > MAX_UNSIGNED_INT)
                 throw new IllegalStateException("Too many key value pairs are stored, currently limited to " + MAX_UNSIGNED_INT + " was " + pointer);
@@ -951,7 +937,7 @@ public class BaseGraph implements Graph, Closeable {
         }
 
         @Override
-        public List<KVStorage.KeyValue> getKeyValues() {
+        public Map<String, KVStorage.KValue> getKeyValues() {
             long kvEntryRef = Integer.toUnsignedLong(store.getKeyValuesRef(edgePointer));
             return baseGraph.edgeKVStorage.getAll(kvEntryRef);
         }
@@ -964,7 +950,7 @@ public class BaseGraph implements Graph, Closeable {
 
         @Override
         public String getName() {
-            String name = (String) getValue(KVStorage.KeyValue.STREET_NAME);
+            String name = (String) getValue(STREET_NAME);
             // preserve backward compatibility (returns empty string if name tag missing)
             return name == null ? "" : name;
         }

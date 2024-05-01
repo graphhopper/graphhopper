@@ -75,7 +75,7 @@ class MaxSpeedCalculatorTest {
 
     EdgeIteratorState createEdge(ReaderWay way) {
         EdgeIteratorState edge = graph.edge(0, 1);
-        EdgeIntAccess edgeIntAccess = graph.createEdgeIntAccess();
+        EdgeIntAccess edgeIntAccess = graph.getEdgeAccess();
         parsers.handleWayTags(edge.getEdge(), edgeIntAccess, way, em.createRelationFlags());
         return edge;
     }

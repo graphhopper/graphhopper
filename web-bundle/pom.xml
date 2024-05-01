@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>graphhopper-web-bundle</artifactId>
     <packaging>jar</packaging>
-    <version>9.0-SNAPSHOT</version>
+    <version>10.0-SNAPSHOT</version>
     <properties>
         <graphhopper-maps.version>0.0.0-6fdf096cf324bcf6761713132fc84a8d1bb276fe</graphhopper-maps.version>
     </properties>
@@ -15,7 +15,7 @@
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>
-        <version>9.0-SNAPSHOT</version>
+        <version>10.0-SNAPSHOT</version>
     </parent>
 
     <dependencies>

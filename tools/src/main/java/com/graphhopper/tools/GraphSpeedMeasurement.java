@@ -90,7 +90,7 @@ public class GraphSpeedMeasurement {
                         }
                         return (int) sum;
                     });
-            result.add(String.format("bits: %d, ints: %d, took: %.2fms, checksum: %d", speedBits, em.getIntsForFlags(), t.getSum(), t.getDummySum()));
+            result.add(String.format("bits: %d, bytes: %d, took: %.2fms, checksum: %d", speedBits, em.getBytesForFlags(), t.getSum(), t.getDummySum()));
             System.out.println(result.get(result.size() - 1));
         }
         System.out.println();
