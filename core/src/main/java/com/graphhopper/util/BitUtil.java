@@ -125,7 +125,7 @@ public class BitUtil {
     }
 
     /**
-     * Note, value can be negative and no exceptions is thrown as it'll be interpreted as an unsigned number.
+     * Note, currently value with higher bits set (like for a negative value) won't throw an exception at this level.
      */
     public final void fromUInt3(byte[] bytes, int value, int offset) {
         bytes[offset + 2] = (byte) (value >>> 16);
@@ -173,6 +173,9 @@ public class BitUtil {
         bytes[offset] = (byte) (value);
     }
 
+    /**
+     * Note, currently value with higher bits set (like for a negative value) won't throw an exception at this level.
+     */
     public final void fromULong5(byte[] bytes, long value, int offset) {
         bytes[offset + 4] = (byte) (value >> 32);
         bytes[offset + 3] = (byte) (value >> 24);
@@ -202,14 +205,6 @@ public class BitUtil {
             bytes[b] = res;
         }
         return bytes;
-    }
-
-    public final String toBitString(IntsRef intsRef) {
-        StringBuilder str = new StringBuilder();
-        for (int ints : intsRef.ints) {
-            str.append(toBitString(ints, 32));
-        }
-        return str.toString();
     }
 
     /**
