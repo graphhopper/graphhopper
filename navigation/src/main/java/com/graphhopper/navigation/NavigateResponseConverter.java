@@ -174,6 +174,22 @@ public class NavigateResponseConverter {
                 if (intersectionValue.containsKey("out")) {
                     intersection.put("out", (int) intersectionValue.get("out"));
                 }
+                // lanes
+                if (!instruction.getInstructionDetails().isEmpty()) {
+                    InstructionDetails lastDetail = instruction.getInstructionDetails().stream()
+                        .sorted(Comparator.comparingDouble(InstructionDetails::getBeforeTurn))
+                        .findFirst()
+                        .get();
+                    ArrayNode lanes = intersection.putArray("lanes");
+                    for (LaneInfo li : lastDetail.getLanes()) {
+                        ObjectNode n = lanes.addObject();
+                        n.put("valid", li.isValid());
+                        n.put("active", li.isValid());
+                        ArrayNode indications = n.putArray("indications");
+                        putDirections(instruction, li, indications, n, "active_indication");
+                    }
+
+                }
             }
         }
 
@@ -309,7 +325,6 @@ public class NavigateResponseConverter {
         },
         secondary: null,
          */
-
         ObjectNode bannerInstruction = bannerInstructions.addObject();
 
         //Show from the beginning
@@ -319,11 +334,32 @@ public class NavigateResponseConverter {
         putSingleBannerInstruction(instructions.get(index + 1), locale, translationMap, primary);
 
         bannerInstruction.putNull("secondary");
+        if (instructions.get(index + 1).getInstructionDetails().isEmpty()) {
+            if (instructions.size() > index + 2 && instructions.get(index + 2).getSign() != Instruction.REACHED_VIA) {
+                // Sub shows the instruction after the current one
+                ObjectNode sub = bannerInstruction.putObject("sub");
+                putSingleBannerInstruction(instructions.get(index + 2), locale, translationMap, sub);
+            }
+        } else {
+            for (InstructionDetails details: instructions.get(index + 1).getInstructionDetails()) {
+                ObjectNode subBannerInstruction = bannerInstructions.addObject();
+                subBannerInstruction.put("distanceAlongGeometry", details.getBeforeTurn());
+        
+                ObjectNode subPrimary = subBannerInstruction.putObject("primary");
+                putSingleBannerInstruction(instructions.get(index + 1), locale, translationMap, subPrimary);
 
-        if (instructions.size() > index + 2 && instructions.get(index + 2).getSign() != Instruction.REACHED_VIA) {
-            // Sub shows the instruction after the current one
-            ObjectNode sub = bannerInstruction.putObject("sub");
-            putSingleBannerInstruction(instructions.get(index + 2), locale, translationMap, sub);
+                ObjectNode sub = subBannerInstruction.putObject("sub");
+                sub.put("text", "");
+                ArrayNode components = sub.putArray("components");
+                for (LaneInfo lane : details.getLanes()) {
+                    ObjectNode component = components.addObject();
+                    component.put("text", "");
+                    component.put("type", "lane");
+                    component.put("active", lane.isValid());
+                    ArrayNode directions = component.putArray("directions");
+                    putDirections(instructions.get(index + 1), lane, directions, primary, "active_direction");
+                }
+            }
         }
     }
 
@@ -468,5 +504,33 @@ public class NavigateResponseConverter {
         json.put("code", "InvalidInput");
         json.put("message", ghResponse.getErrors().get(0).getMessage());
         return json;
+    }
+
+    public static void putDirections(Instruction instruction, LaneInfo lane, ArrayNode directions, 
+        ObjectNode laneNode, String activeDirectionFieldName) {
+        for (String direction: lane.getDirections()){
+            if (direction.equals("continue") || direction.equals("none")) {
+                direction = "straight";
+            }
+            direction = direction.replace("_", " ");
+            directions.add(direction);
+            if (lane.isValid()) {
+                if (lane.getDirections().size() == 1) {
+                    laneNode.put(activeDirectionFieldName, direction);
+                } else {
+                    if (direction.startsWith("merge")) {
+                        return;
+                    }
+                    String modifier = getModifier(instruction);
+                    if (modifier != null) {
+                        String[] dir = modifier.split(" ");
+                        String[] laneDir = direction.split(" ");
+                        if (dir[dir.length - 1].equals(laneDir[laneDir.length - 1])) {
+                            laneNode.put(activeDirectionFieldName, direction);
+                        }    
+                    }
+                }
+            }
+        }
     }
 }
