@@ -156,8 +156,7 @@ Use isochrones to calculate and visualize the reachable area for a certain trave
 
 [![high precision reachability image](https://www.graphhopper.com/wp-content/uploads/2018/06/berlin-reachability-768x401.png)](https://www.graphhopper.com/blog/2018/07/04/high-precision-reachability/)
 
-To support these high precision reachability approaches there is the /spt
-endpoint (shortest path tree). [See #1577](https://github.com/graphhopper/graphhopper/pull/1577)
+You can try the debug user interface at http://localhost:8989/maps/isochrone to see the `/isochrone` and `/spt` endpoint in action.
 
 ### [Map Matching](./map-matching)
 
