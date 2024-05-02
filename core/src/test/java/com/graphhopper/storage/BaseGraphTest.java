@@ -17,6 +17,7 @@
  */
 package com.graphhopper.storage;
 
+import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.search.KVStorage.KValue;
@@ -342,6 +343,30 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
         assertEquals(RoadClass.PATH, edge4.get(rcEnc));
         assertEquals(RoadClass.OTHER, edge5.get(rcEnc));
         assertEquals(RoadClass.OTHER, edge6.get(rcEnc));
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    public void forEdgeAndCopiesOfEdge_noCopyNoGeo(boolean withGeometries) {
+        BaseGraph graph = createGHStorage();
+        EdgeIteratorState edge1 = graph.edge(0, 1);
+        EdgeIteratorState edge2 = graph.edge(1, 2);
+        if (withGeometries) {
+            edge1.setWayGeometry(Helper.createPointList(1.5, 1, 0, 2, 3, 0));
+            edge2.setWayGeometry(Helper.createPointList(3, 0, 4, 5, 4.5, 5.5));
+        }
+        IntArrayList edges = new IntArrayList();
+        graph.forEdgeAndCopiesOfEdge(graph.createEdgeExplorer(), edge2, e -> {
+            edges.add(e.getEdge());
+        });
+        assertEquals(IntArrayList.from(edge2.getEdge()), edges);
+
+        edges.clear();
+        EdgeIteratorState edge3 = graph.copyEdge(edge2.getEdge(), true);
+        graph.forEdgeAndCopiesOfEdge(graph.createEdgeExplorer(), edge2, e -> {
+            edges.add(e.getEdge());
+        });
+        assertEquals(IntArrayList.from(edge3.getEdge(), edge2.getEdge()), edges);
     }
 
     @Test
