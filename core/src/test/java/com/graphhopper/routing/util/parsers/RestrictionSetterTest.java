@@ -339,6 +339,26 @@ public class RestrictionSetterTest {
     }
 
     @Test
+    void viaWayAndNode() {
+        // 4-0-1-2
+        //     |
+        //     3
+        int e0_1 = edge(0, 1);
+        int e0_4 = edge(0, 4);
+        int e1_2 = edge(1, 2);
+        int e1_3 = edge(1, 3);
+        BooleanEncodedValue turnRestrictionEnc = createTurnRestrictionEnc("car");
+        assertEquals(nodes(0, 1, 3), calcPath(0, 3, turnRestrictionEnc));
+        assertEquals(nodes(4, 0, 1, 2), calcPath(4, 2, turnRestrictionEnc));
+        r.setRestrictions(List.of(
+                new Pair<>(GraphRestriction.way(e0_4, e0_1, e1_2, nodes(0, 1)), RestrictionType.NO),
+                new Pair<>(GraphRestriction.node(e0_1, 1, e1_3), RestrictionType.NO)
+        ), turnRestrictionEnc);
+        assertEquals(NO_PATH, calcPath(4, 2, turnRestrictionEnc));
+        assertEquals(NO_PATH, calcPath(0, 3, turnRestrictionEnc));
+    }
+
+    @Test
     void snapToViaWay() {
         //   6   0
         //   |   |
@@ -359,6 +379,8 @@ public class RestrictionSetterTest {
         na.setNode(3, 40.02, 5.03);
         na.setNode(4, 40.02, 5.04);
         na.setNode(5, 40.01, 5.02);
+        na.setNode(6, 40.03, 5.02);
+        na.setNode(7, 40.01, 5.03);
         BooleanEncodedValue turnRestrictionEnc = createTurnRestrictionEnc("car");
 
         assertEquals(nodes(1, 2, 3, 0), calcPath(1, 0, turnRestrictionEnc));
@@ -393,9 +415,9 @@ public class RestrictionSetterTest {
         assertEquals(nodes(5, 2, x), calcPath(queryGraph, 5, x, turnRestrictionEnc));
         assertEquals(nodes(x, 3, 0), calcPath(queryGraph, x, 0, turnRestrictionEnc));
         assertEquals(nodes(x, 3, 4), calcPath(queryGraph, x, 4, turnRestrictionEnc));
-        // even the 6-2-3 and 2-3-7 restrictions are still enforced, despite the virtual node
-        assertEquals(NO_PATH, calcPath(6, 3, turnRestrictionEnc));
-        assertEquals(NO_PATH, calcPath(2, 7, turnRestrictionEnc));
+        // the 6-2-3 and 2-3-7 restrictions are still enforced, despite the virtual node
+        assertEquals(NO_PATH, calcPath(queryGraph, 6, 3, turnRestrictionEnc));
+        assertEquals(NO_PATH, calcPath(queryGraph, 2, 7, turnRestrictionEnc));
     }
 
     @Test
@@ -445,19 +467,18 @@ public class RestrictionSetterTest {
         assertEquals(x, snapX.getClosestNode());
         assertEquals(y, snapY.getClosestNode());
         assertEquals(z, snapZ.getClosestNode());
-        assertEquals(NO_PATH, calcPath(1, 4, turnRestrictionEnc));
-        assertEquals(nodes(2, 3, 4), calcPath(2, 4, turnRestrictionEnc));
-        assertEquals(NO_PATH, calcPath(2, 5, turnRestrictionEnc));
-        assertEquals(nodes(3, 4, 5), calcPath(3, 5, turnRestrictionEnc));
-        assertEquals(NO_PATH, calcPath(3, 6, turnRestrictionEnc));
-        assertEquals(nodes(4, 5, 6), calcPath(4, 6, turnRestrictionEnc));
+        assertEquals(nodes(1, 2, x, 3, 4), calcPath(queryGraph, 1, 4, turnRestrictionEnc));
+        assertEquals(nodes(2, x, 3, 4), calcPath(queryGraph, 2, 4, turnRestrictionEnc));
+        assertEquals(nodes(2, x, 3, y, 4, 5), calcPath(queryGraph, 2, 5, turnRestrictionEnc));
+        assertEquals(nodes(3, y, 4, 5), calcPath(queryGraph, 3, 5, turnRestrictionEnc));
+        assertEquals(nodes(3, y, 4, z, 5, 6), calcPath(queryGraph, 3, 6, turnRestrictionEnc));
+        assertEquals(nodes(4, z, 5, 6), calcPath(queryGraph, 4, 6, turnRestrictionEnc));
         // turning between the virtual nodes is still possible
         assertEquals(nodes(x, 3, y), calcPath(queryGraph, x, y, turnRestrictionEnc));
         assertEquals(nodes(y, 3, x), calcPath(queryGraph, y, x, turnRestrictionEnc));
         assertEquals(nodes(y, 4, z), calcPath(queryGraph, y, z, turnRestrictionEnc));
         assertEquals(nodes(z, 4, y), calcPath(queryGraph, z, y, turnRestrictionEnc));
     }
-
 
     private static BooleanEncodedValue createTurnRestrictionEnc(String name) {
         BooleanEncodedValue turnRestrictionEnc = TurnRestriction.create(name);
