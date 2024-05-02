@@ -334,8 +334,12 @@ public class BaseGraph implements Graph, Closeable {
      * Runs the given action on the given edge and all its copies that were created with 'reuseGeometry=true'.
      */
     public void forEdgeAndCopiesOfEdge(EdgeExplorer explorer, EdgeIteratorState edge, Consumer<EdgeIteratorState> consumer) {
-        EdgeIterator iter = explorer.setBaseNode(edge.getBaseNode());
         final long geoRef = store.getGeoRef(((EdgeIteratorStateImpl) edge).edgePointer);
+        if (geoRef == 0) {
+            consumer.accept(edge);
+            return;
+        }
+        EdgeIterator iter = explorer.setBaseNode(edge.getBaseNode());
         while (iter.next()) {
             long geoRefBefore = store.getGeoRef(((EdgeIteratorStateImpl) iter).edgePointer);
             if (geoRefBefore == geoRef)
