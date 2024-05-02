@@ -43,7 +43,7 @@ class TarjanSCCTest {
         speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, true);
         EncodedValue.InitializerConfig evConf = new EncodedValue.InitializerConfig();
         speedEnc.init(evConf);
-        graph = new BaseGraph.Builder(evConf.getRequiredInts()).create();
+        graph = new BaseGraph.Builder(evConf.getRequiredBytes()).create();
         edgeFilter = edge -> edge.get(speedEnc) > 0;
     }
 
