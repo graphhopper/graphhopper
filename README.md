@@ -146,7 +146,9 @@ demo and [this pull request](http://github.com/graphhopper/graphhopper-ios) of t
 
 ## Analysis
 
-Use isochrones to calculate and visualize the reachable area for a certain travel mode
+Use isochrones to calculate and visualize the reachable area for a certain travel mode.
+
+You can try the debug user interface at http://localhost:8989/maps/isochrone to see the `/isochrone` and `/spt` endpoint in action.
 
 ### [Isochrone Web API](./docs/web/api-doc.md#isochrone)
 
@@ -155,8 +157,6 @@ Use isochrones to calculate and visualize the reachable area for a certain trave
 ### [Shortest Path Tree API](//www.graphhopper.com/blog/2018/07/04/high-precision-reachability/)
 
 [![high precision reachability image](https://www.graphhopper.com/wp-content/uploads/2018/06/berlin-reachability-768x401.png)](https://www.graphhopper.com/blog/2018/07/04/high-precision-reachability/)
-
-You can try the debug user interface at http://localhost:8989/maps/isochrone to see the `/isochrone` and `/spt` endpoint in action.
 
 ### [Map Matching](./map-matching)
 
