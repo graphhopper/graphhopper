@@ -31,6 +31,7 @@ import java.io.File;
 import java.util.Map;
 
 import static com.graphhopper.search.KVStorage.KValue;
+import static com.graphhopper.storage.BaseGraph.FIRST_REAL_GEO_REF;
 import static com.graphhopper.util.Parameters.Details.STREET_NAME;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -725,20 +726,20 @@ public abstract class AbstractGraphStorageTester {
         na.setNode(2, 12, 12, 0.4);
 
         EdgeIteratorState iter2 = graph.edge(0, 1).setDistance(100).set(carAccessEnc, true, true);
-        final BaseGraph baseGraph = (BaseGraph) graph.getBaseGraph();
-        assertEquals(4, baseGraph.getMaxGeoRef());
+        final BaseGraph baseGraph = graph.getBaseGraph();
+        assertEquals(FIRST_REAL_GEO_REF, baseGraph.getMaxGeoRef());
         iter2.setWayGeometry(Helper.createPointList3D(1, 2, 3, 3, 4, 5, 5, 6, 7, 7, 8, 9));
-        assertEquals(4 + (1 + 12), baseGraph.getMaxGeoRef());
+        assertEquals(FIRST_REAL_GEO_REF + (1 + 12), baseGraph.getMaxGeoRef());
         iter2.setWayGeometry(Helper.createPointList3D(1, 2, 3, 3, 4, 5, 5, 6, 7));
-        assertEquals(4 + (1 + 12), baseGraph.getMaxGeoRef());
+        assertEquals(FIRST_REAL_GEO_REF + (1 + 12), baseGraph.getMaxGeoRef());
         iter2.setWayGeometry(Helper.createPointList3D(1, 2, 3, 3, 4, 5));
-        assertEquals(4 + (1 + 12), baseGraph.getMaxGeoRef());
+        assertEquals(FIRST_REAL_GEO_REF + (1 + 12), baseGraph.getMaxGeoRef());
         iter2.setWayGeometry(Helper.createPointList3D(1, 2, 3));
-        assertEquals(4 + (1 + 12), baseGraph.getMaxGeoRef());
+        assertEquals(FIRST_REAL_GEO_REF + (1 + 12), baseGraph.getMaxGeoRef());
         assertThrows(IllegalStateException.class, () -> iter2.setWayGeometry(Helper.createPointList3D(1.5, 1, 0, 2, 3, 0)));
         EdgeIteratorState iter1 = graph.edge(0, 2).setDistance(200).set(carAccessEnc, true, true);
         iter1.setWayGeometry(Helper.createPointList3D(3.5, 4.5, 0, 5, 6, 0));
-        assertEquals(4 + (1 + 12) + (1 + 6), baseGraph.getMaxGeoRef());
+        assertEquals(FIRST_REAL_GEO_REF + (1 + 12) + (1 + 6), baseGraph.getMaxGeoRef());
     }
 
     @Test

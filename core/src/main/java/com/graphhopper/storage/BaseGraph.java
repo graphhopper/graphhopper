@@ -27,7 +27,6 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 
 import java.io.Closeable;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -47,6 +46,7 @@ import static com.graphhopper.util.Parameters.Details.STREET_NAME;
  */
 public class BaseGraph implements Graph, Closeable {
     final static long MAX_UNSIGNED_INT = 0xFFFF_FFFFL;
+    static final long FIRST_REAL_GEO_REF = 1_000_000_000;
     final BaseGraphNodesAndEdges store;
     final NodeAccess nodeAccess;
     final KVStorage edgeKVStorage;
@@ -58,7 +58,7 @@ public class BaseGraph implements Graph, Closeable {
     private final Directory dir;
     private final int segmentSize;
     private boolean initialized = false;
-    private long minGeoRef;
+    private long nextSpecialGeoRef;
     private long maxGeoRef;
 
     public BaseGraph(Directory dir, boolean withElevation, boolean withTurnCosts, int segmentSize, int bytesForFlags) {
@@ -109,7 +109,7 @@ public class BaseGraph implements Graph, Closeable {
     private void loadWayGeometryHeader() {
         int geometryVersion = wayGeometry.getHeader(0);
         GHUtility.checkDAVersion(wayGeometry.getName(), Constants.VERSION_GEOMETRY, geometryVersion);
-        minGeoRef = bitUtil.toLong(
+        nextSpecialGeoRef = bitUtil.toLong(
                 wayGeometry.getHeader(4),
                 wayGeometry.getHeader(8)
         );
@@ -121,8 +121,8 @@ public class BaseGraph implements Graph, Closeable {
 
     private void setWayGeometryHeader() {
         wayGeometry.setHeader(0, Constants.VERSION_GEOMETRY);
-        wayGeometry.setHeader(4, bitUtil.getIntLow(minGeoRef));
-        wayGeometry.setHeader(8, bitUtil.getIntHigh(minGeoRef));
+        wayGeometry.setHeader(4, bitUtil.getIntLow(nextSpecialGeoRef));
+        wayGeometry.setHeader(8, bitUtil.getIntHigh(nextSpecialGeoRef));
         wayGeometry.setHeader(12, bitUtil.getIntLow(maxGeoRef));
         wayGeometry.setHeader(16, bitUtil.getIntHigh(maxGeoRef));
     }
@@ -177,16 +177,16 @@ public class BaseGraph implements Graph, Closeable {
             turnCostStorage.create(initSize);
         }
         setInitialized();
-        // 0 stands for no separate geoRef, <0 stands for no separate geoRef but existing edge copies
-        minGeoRef = 0;
-        maxGeoRef = 4;
+        // 0 stands for no separate geoRef, 0<x<FIRST_REAL_GEO_REF stands for no separate geoRef but existing edge copies
+        nextSpecialGeoRef = 1;
+        maxGeoRef = FIRST_REAL_GEO_REF;
         return this;
     }
 
     public String toDetailsString() {
         return store.toDetailsString() + ", "
                 + "name:(" + edgeKVStorage.getCapacity() / Helper.MB + "MB), "
-                + "geo:" + nf(minGeoRef) + "/" + nf(maxGeoRef) + "(" + wayGeometry.getCapacity() / Helper.MB + "MB)";
+                + "geo:" + nf(maxGeoRef - FIRST_REAL_GEO_REF) + "/" + nf(nextSpecialGeoRef) + "(" + wayGeometry.getCapacity() / Helper.MB + "MB)";
     }
 
     /**
@@ -318,10 +318,10 @@ public class BaseGraph implements Graph, Closeable {
             long geoRef = store.getGeoRef(edgePointer);
             if (geoRef == 0) {
                 // No geometry for this edge, but we need to be able to identify the copied edges later, so
-                // we use a dedicated negative value for the geo ref.
-                minGeoRef--;
-                geoRef = minGeoRef;
+                // we use a special value for the geo ref.
+                geoRef = nextSpecialGeoRef;
                 store.setGeoRef(edgePointer, geoRef);
+                nextSpecialGeoRef++;
             }
             store.setGeoRef(newEdge.edgePointer, geoRef);
         } else {
@@ -405,15 +405,15 @@ public class BaseGraph implements Graph, Closeable {
                         + "D for graph which is " + nodeAccess.getDimension() + "D");
 
             long existingGeoRef = store.getGeoRef(edgePointer);
-            if (existingGeoRef < 0)
+            if (existingGeoRef > 0 && existingGeoRef < FIRST_REAL_GEO_REF)
                 // users of this method might not be aware that after changing the geo ref it is no
                 // longer possible to find the copies corresponding to an edge, so we deny this
                 throw new IllegalStateException("This edge has already been copied so we can no longer change the geometry, pointer=" + edgePointer);
 
             int len = pillarNodes.size();
             int dim = nodeAccess.getDimension();
-            if (existingGeoRef > 0) {
-                final int count = wayGeometry.getInt(existingGeoRef * 4L);
+            if (existingGeoRef >= FIRST_REAL_GEO_REF) {
+                final int count = wayGeometry.getInt((existingGeoRef - FIRST_REAL_GEO_REF) * 4L);
                 if (len <= count) {
                     setWayGeometryAtGeoRef(pillarNodes, edgePointer, reverse, existingGeoRef);
                     return;
@@ -433,7 +433,7 @@ public class BaseGraph implements Graph, Closeable {
     }
 
     private void setWayGeometryAtGeoRef(PointList pillarNodes, long edgePointer, boolean reverse, long geoRef) {
-        long geoRefPosition = geoRef * 4;
+        long geoRefPosition = (geoRef - FIRST_REAL_GEO_REF) * 4;
         byte[] wayGeometryBytes = createWayGeometryBytes(pillarNodes, reverse);
         wayGeometry.ensureCapacity(geoRefPosition + wayGeometryBytes.length);
         wayGeometry.setBytes(geoRefPosition, wayGeometryBytes, wayGeometryBytes.length);
@@ -477,7 +477,8 @@ public class BaseGraph implements Graph, Closeable {
         long geoRef = store.getGeoRef(edgePointer);
         int count = 0;
         byte[] bytes = null;
-        if (geoRef > 0) {
+        if (geoRef >= FIRST_REAL_GEO_REF) {
+            geoRef -= FIRST_REAL_GEO_REF;
             geoRef *= 4L;
             count = wayGeometry.getInt(geoRef);
 
