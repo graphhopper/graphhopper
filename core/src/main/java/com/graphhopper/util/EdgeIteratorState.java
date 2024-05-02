@@ -146,8 +146,9 @@ public interface EdgeIteratorState {
 
     /**
      * @param list is a sorted collection of coordinates between the base node and the current adjacent node. Specify
-     *             the list without the adjacent and base node. This method can be called multiple times, but if the
-     *             distance changes, the setDistance method is not called automatically.
+     *             the list without the adjacent and base node. This method can be called multiple times, unless the
+     *             given point list is longer than the first time the method was called. Also keep in
+     *             mind that if the distance changes the setDistance method is not called automatically.
      */
     EdgeIteratorState setWayGeometry(PointList list);
 

@@ -27,8 +27,8 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 
 import java.io.Closeable;
-import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import static com.graphhopper.util.Helper.nf;
 import static com.graphhopper.util.Parameters.Details.STREET_NAME;
@@ -46,6 +46,7 @@ import static com.graphhopper.util.Parameters.Details.STREET_NAME;
  */
 public class BaseGraph implements Graph, Closeable {
     final static long MAX_UNSIGNED_INT = 0xFFFF_FFFFL;
+    static final long FIRST_REAL_GEO_REF = 1_000_000_000;
     final BaseGraphNodesAndEdges store;
     final NodeAccess nodeAccess;
     final KVStorage edgeKVStorage;
@@ -57,6 +58,7 @@ public class BaseGraph implements Graph, Closeable {
     private final Directory dir;
     private final int segmentSize;
     private boolean initialized = false;
+    private long nextSpecialGeoRef;
     private long maxGeoRef;
 
     public BaseGraph(Directory dir, boolean withElevation, boolean withTurnCosts, int segmentSize, int bytesForFlags) {
@@ -107,16 +109,22 @@ public class BaseGraph implements Graph, Closeable {
     private void loadWayGeometryHeader() {
         int geometryVersion = wayGeometry.getHeader(0);
         GHUtility.checkDAVersion(wayGeometry.getName(), Constants.VERSION_GEOMETRY, geometryVersion);
-        maxGeoRef = bitUtil.toLong(
+        nextSpecialGeoRef = bitUtil.toLong(
                 wayGeometry.getHeader(4),
                 wayGeometry.getHeader(8)
+        );
+        maxGeoRef = bitUtil.toLong(
+                wayGeometry.getHeader(12),
+                wayGeometry.getHeader(16)
         );
     }
 
     private void setWayGeometryHeader() {
         wayGeometry.setHeader(0, Constants.VERSION_GEOMETRY);
-        wayGeometry.setHeader(4, bitUtil.getIntLow(maxGeoRef));
-        wayGeometry.setHeader(8, bitUtil.getIntHigh(maxGeoRef));
+        wayGeometry.setHeader(4, bitUtil.getIntLow(nextSpecialGeoRef));
+        wayGeometry.setHeader(8, bitUtil.getIntHigh(nextSpecialGeoRef));
+        wayGeometry.setHeader(12, bitUtil.getIntLow(maxGeoRef));
+        wayGeometry.setHeader(16, bitUtil.getIntHigh(maxGeoRef));
     }
 
     private void setInitialized() {
@@ -169,15 +177,16 @@ public class BaseGraph implements Graph, Closeable {
             turnCostStorage.create(initSize);
         }
         setInitialized();
-        // 0 stands for no separate geoRef
-        maxGeoRef = 4;
+        // 0 stands for no separate geoRef, 0<x<FIRST_REAL_GEO_REF stands for no separate geoRef but existing edge copies
+        nextSpecialGeoRef = 1;
+        maxGeoRef = FIRST_REAL_GEO_REF;
         return this;
     }
 
     public String toDetailsString() {
         return store.toDetailsString() + ", "
                 + "name:(" + edgeKVStorage.getCapacity() / Helper.MB + "MB), "
-                + "geo:" + nf(maxGeoRef) + "(" + wayGeometry.getCapacity() / Helper.MB + "MB)";
+                + "geo:" + nf(maxGeoRef - FIRST_REAL_GEO_REF) + "/" + nf(nextSpecialGeoRef) + "(" + wayGeometry.getCapacity() / Helper.MB + "MB)";
     }
 
     /**
@@ -290,6 +299,52 @@ public class BaseGraph implements Graph, Closeable {
         return edge;
     }
 
+    /**
+     * Creates a copy of a given edge with the same properties.
+     *
+     * @param reuseGeometry If true the copy uses the same pointer to the geometry,
+     *                      so changing the geometry would alter the geometry for both edges!
+     */
+    public EdgeIteratorState copyEdge(int edge, boolean reuseGeometry) {
+        EdgeIteratorStateImpl edgeState = (EdgeIteratorStateImpl) getEdgeIteratorState(edge, Integer.MIN_VALUE);
+        EdgeIteratorStateImpl newEdge = (EdgeIteratorStateImpl) edge(edgeState.getBaseNode(), edgeState.getAdjNode())
+                .setFlags(edgeState.getFlags())
+                .setDistance(edgeState.getDistance())
+                .setKeyValues(edgeState.getKeyValues());
+        if (reuseGeometry) {
+            // We use the same geo ref for the copied edge. This saves memory because we are not duplicating
+            // the geometry, and it allows to identify the copies of a given edge.
+            long edgePointer = edgeState.edgePointer;
+            long geoRef = store.getGeoRef(edgePointer);
+            if (geoRef == 0) {
+                // No geometry for this edge, but we need to be able to identify the copied edges later, so
+                // we use a special value for the geo ref.
+                geoRef = nextSpecialGeoRef;
+                store.setGeoRef(edgePointer, geoRef);
+                nextSpecialGeoRef++;
+            }
+            store.setGeoRef(newEdge.edgePointer, geoRef);
+        } else {
+            newEdge.setWayGeometry(edgeState.fetchWayGeometry(FetchMode.PILLAR_ONLY));
+        }
+        return newEdge;
+    }
+
+    /**
+     * Runs the given action on the given edge and all its copies that were created with 'reuseGeometry=true'.
+     */
+    public void forEdgeAndCopiesOfEdge(EdgeExplorer explorer, EdgeIteratorState edge, Consumer<EdgeIteratorState> consumer) {
+        EdgeIterator iter = explorer.setBaseNode(edge.getBaseNode());
+        final long geoRef = store.getGeoRef(((EdgeIteratorStateImpl) edge).edgePointer);
+        while (iter.next()) {
+            long geoRefBefore = store.getGeoRef(((EdgeIteratorStateImpl) iter).edgePointer);
+            if (geoRefBefore == geoRef)
+                consumer.accept(iter);
+            if (store.getGeoRef(((EdgeIteratorStateImpl) iter).edgePointer) != geoRefBefore)
+                throw new IllegalStateException("The consumer must not change the geo ref");
+        }
+    }
+
     @Override
     public EdgeIteratorState getEdgeIteratorState(int edgeId, int adjNode) {
         EdgeIteratorStateImpl edge = new EdgeIteratorStateImpl(this);
@@ -350,17 +405,22 @@ public class BaseGraph implements Graph, Closeable {
                         + "D for graph which is " + nodeAccess.getDimension() + "D");
 
             long existingGeoRef = store.getGeoRef(edgePointer);
+            if (existingGeoRef > 0 && existingGeoRef < FIRST_REAL_GEO_REF)
+                // users of this method might not be aware that after changing the geo ref it is no
+                // longer possible to find the copies corresponding to an edge, so we deny this
+                throw new IllegalStateException("This edge has already been copied so we can no longer change the geometry, pointer=" + edgePointer);
 
             int len = pillarNodes.size();
             int dim = nodeAccess.getDimension();
-            if (existingGeoRef > 0) {
-                final int count = wayGeometry.getInt(existingGeoRef * 4L);
+            if (existingGeoRef >= FIRST_REAL_GEO_REF) {
+                final int count = wayGeometry.getInt((existingGeoRef - FIRST_REAL_GEO_REF) * 4L);
                 if (len <= count) {
                     setWayGeometryAtGeoRef(pillarNodes, edgePointer, reverse, existingGeoRef);
                     return;
+                } else {
+                    throw new IllegalStateException("This edge already has a way geometry so it cannot be changed to a bigger geometry, pointer=" + edgePointer);
                 }
             }
-
             long nextGeoRef = nextGeoRef(len * dim);
             setWayGeometryAtGeoRef(pillarNodes, edgePointer, reverse, nextGeoRef);
         } else {
@@ -373,7 +433,7 @@ public class BaseGraph implements Graph, Closeable {
     }
 
     private void setWayGeometryAtGeoRef(PointList pillarNodes, long edgePointer, boolean reverse, long geoRef) {
-        long geoRefPosition = geoRef * 4;
+        long geoRefPosition = (geoRef - FIRST_REAL_GEO_REF) * 4;
         byte[] wayGeometryBytes = createWayGeometryBytes(pillarNodes, reverse);
         wayGeometry.ensureCapacity(geoRefPosition + wayGeometryBytes.length);
         wayGeometry.setBytes(geoRefPosition, wayGeometryBytes, wayGeometryBytes.length);
@@ -417,7 +477,8 @@ public class BaseGraph implements Graph, Closeable {
         long geoRef = store.getGeoRef(edgePointer);
         int count = 0;
         byte[] bytes = null;
-        if (geoRef > 0) {
+        if (geoRef >= FIRST_REAL_GEO_REF) {
+            geoRef -= FIRST_REAL_GEO_REF;
             geoRef *= 4L;
             count = wayGeometry.getInt(geoRef);
 
