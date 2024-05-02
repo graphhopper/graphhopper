@@ -84,7 +84,7 @@ class BaseGraphNodesAndEdges implements EdgeIntAccess {
         E_DIST = 16;
         E_KV = 20;
         E_FLAGS = 24;
-        E_GEO = E_FLAGS + bytesForFlags + 4;
+        E_GEO = E_FLAGS + bytesForFlags;
         edgeEntryBytes = E_GEO + 5;
     }
 
