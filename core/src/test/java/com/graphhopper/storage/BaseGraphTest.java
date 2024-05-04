@@ -291,4 +291,20 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
         edge.set(rcEnc, RoadClass.CORRIDOR);
         assertEquals(RoadClass.CORRIDOR, edge.get(rcEnc));
     }
+
+    @Test
+    public void testGeoRef() {
+        BaseGraph graph = createGHStorage();
+        BaseGraphNodesAndEdges ne = graph.getStore();
+        ne.setGeoRef(0, 123);
+        assertEquals(123, ne.getGeoRef(0));
+        ne.setGeoRef(0, -123);
+        assertEquals(-123, ne.getGeoRef(0));
+        ne.setGeoRef(0, 1L << 38);
+        assertEquals(1L << 38, ne.getGeoRef(0));
+
+        // 1000_0000 0000_0000 0000_0000 0000_0000 0000_0000
+        assertThrows(IllegalArgumentException.class, () -> ne.setGeoRef(0, 1L << 39));
+        graph.close();
+    }
 }
