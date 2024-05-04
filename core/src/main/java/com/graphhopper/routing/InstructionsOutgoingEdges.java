@@ -67,6 +67,7 @@ class InstructionsOutgoingEdges {
     private final BooleanEncodedValue roadClassLinkEnc;
     private final NodeAccess nodeAccess;
     private final Weighting weighting;
+    private boolean allHaveSameName = true;
 
     public InstructionsOutgoingEdges(EdgeIteratorState prevEdge,
                                      EdgeIteratorState currentEdge,
@@ -90,7 +91,13 @@ class InstructionsOutgoingEdges {
         visibleAlternativeTurns = new ArrayList<>();
         allowedAlternativeTurns = new ArrayList<>();
         EdgeIterator edgeIter = allExplorer.setBaseNode(baseNode);
+        String prevName = null;
         while (edgeIter.next()) {
+            String name = edgeIter.getName();
+            if (allHaveSameName && prevName != null && !InstructionsHelper.isSameName(name, prevName))
+                allHaveSameName = false;
+
+            prevName = name;
             if (edgeIter.getAdjNode() != prevNode && edgeIter.getAdjNode() != adjNode) {
                 if (Double.isFinite(weighting.calcEdgeWeight(edgeIter, false))) {
                     EdgeIteratorState tmpEdge = edgeIter.detach(false);
@@ -101,6 +108,10 @@ class InstructionsOutgoingEdges {
                 }
             }
         }
+    }
+
+    public boolean allHaveSameName() {
+        return allHaveSameName;
     }
 
     /**
@@ -179,7 +190,7 @@ class InstructionsOutgoingEdges {
      * If either of these properties is true, we can be quite certain that a turn instruction should be provided.
      */
     public boolean isLeavingCurrentStreet(String prevName, String name) {
-        if (InstructionsHelper.isNameSimilar(name, prevName)) {
+        if (InstructionsHelper.isSameName(name, prevName)) {
             return false;
         }
 
@@ -187,11 +198,11 @@ class InstructionsOutgoingEdges {
         for (EdgeIteratorState edge : allowedAlternativeTurns) {
             String edgeName = edge.getName();
             // leave the current street
-            if (InstructionsHelper.isNameSimilar(prevName, edgeName) || (roadClassOrLinkChange && isTheSameRoadClassAndLink(prevEdge, edge))) {
+            if (InstructionsHelper.isSameName(prevName, edgeName) || (roadClassOrLinkChange && isTheSameRoadClassAndLink(prevEdge, edge))) {
                 return true;
             }
             // enter a different street
-            if (InstructionsHelper.isNameSimilar(name, edgeName) || (roadClassOrLinkChange && isTheSameRoadClassAndLink(currentEdge, edge))) {
+            if (InstructionsHelper.isSameName(name, edgeName) || (roadClassOrLinkChange && isTheSameRoadClassAndLink(currentEdge, edge))) {
                 return true;
             }
         }
