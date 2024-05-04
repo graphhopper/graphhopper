@@ -352,7 +352,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
 
         // there is no other turn possible
         if (nrOfPossibleTurns <= 1) {
-            if (Math.abs(sign) > 1 && outgoingEdges.getVisibleTurns() > 1) {
+            if (Math.abs(sign) > 1 && outgoingEdges.getVisibleTurns() > 1 && !outgoingEdges.mergedOrSplitWay(lanesEnc)) {
                 // This is an actual turn because |sign| > 1
                 // There could be some confusion, if we would not create a turn instruction, even though it is the only
                 // possible turn, also see #1048
@@ -367,7 +367,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             // Don't show an instruction if the user is following a street, even though the street is
             // bending. We should only do this, if following the street is the obvious choice.
             if (InstructionsHelper.isSameName(name, prevName) && outgoingEdges.outgoingEdgesAreSlowerByFactor(2)
-                    || outgoingEdges.allHaveSameName() && isDirectionSeparatelyTagged(edge, prevEdge)) {
+                    || outgoingEdges.mergedOrSplitWay(lanesEnc)) {
                 return Instruction.IGNORE;
             }
 
@@ -436,23 +436,13 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         }
 
         if (!outgoingEdgesAreSlower
-                && !outgoingEdges.allHaveSameName()
-                && !isDirectionSeparatelyTagged(edge, prevEdge)
+                && !outgoingEdges.mergedOrSplitWay(lanesEnc)
                 && (Math.abs(delta) > .6 || outgoingEdges.isLeavingCurrentStreet(prevName, name))) {
             // Leave the current road -> create instruction
             return sign;
         }
 
         return Instruction.IGNORE;
-    }
-
-    private boolean isDirectionSeparatelyTagged(EdgeIteratorState edge, EdgeIteratorState prevEdge) {
-        if (lanesEnc == null) return false;
-        // for cases like in #2946 we should not create instructions as they are only "tagging artifacts"
-        int lanes = edge.get(lanesEnc);
-        int prevLanes = prevEdge.get(lanesEnc);
-        // Usually it is a 2+2 split and then the equal sign applies. In case of a "3+2 split" we need ">=".
-        return lanes * 2 >= prevLanes || lanes <= 2 * prevLanes;
     }
 
     private void updatePointsAndInstruction(EdgeIteratorState edge, PointList pl) {
