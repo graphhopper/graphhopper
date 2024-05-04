@@ -64,7 +64,7 @@ public class Constants {
     public static final int VERSION_EM = 4;
     public static final int VERSION_SHORTCUT = 9;
     public static final int VERSION_NODE_CH = 0;
-    public static final int VERSION_GEOMETRY = 6;
+    public static final int VERSION_GEOMETRY = 7;
     public static final int VERSION_TURN_COSTS = 0;
     public static final int VERSION_LOCATION_IDX = 5;
     public static final int VERSION_KV_STORAGE = 2;
