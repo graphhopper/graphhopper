@@ -148,10 +148,6 @@ public class BitUtil {
         return ((long) toInt(b, offset + 4) << 32) | (toInt(b, offset) & 0xFFFF_FFFFL);
     }
 
-    public final long toULong5(byte[] b, int offset) {
-        return ((long) (b[offset + 4] & 0xFF) << 32) | (toInt(b, offset) & 0xFFFF_FFFFL);
-    }
-
     public final byte[] fromLong(long value) {
         byte[] bytes = new byte[8];
         fromLong(bytes, value, 0);
@@ -166,17 +162,6 @@ public class BitUtil {
         bytes[offset + 7] = (byte) (value >> 56);
         bytes[offset + 6] = (byte) (value >> 48);
         bytes[offset + 5] = (byte) (value >> 40);
-        bytes[offset + 4] = (byte) (value >> 32);
-        bytes[offset + 3] = (byte) (value >> 24);
-        bytes[offset + 2] = (byte) (value >> 16);
-        bytes[offset + 1] = (byte) (value >> 8);
-        bytes[offset] = (byte) (value);
-    }
-
-    /**
-     * Note, currently value with higher bits set (like for a negative value) won't throw an exception at this level.
-     */
-    public final void fromULong5(byte[] bytes, long value, int offset) {
         bytes[offset + 4] = (byte) (value >> 32);
         bytes[offset + 3] = (byte) (value >> 24);
         bytes[offset + 2] = (byte) (value >> 16);

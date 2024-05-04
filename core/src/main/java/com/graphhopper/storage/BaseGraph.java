@@ -27,7 +27,6 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 
 import java.io.Closeable;
-import java.util.List;
 import java.util.Map;
 
 import static com.graphhopper.util.Helper.nf;
@@ -68,6 +67,10 @@ public class BaseGraph implements Graph, Closeable {
         this.nodeAccess = new GHNodeAccess(store);
         this.segmentSize = segmentSize;
         turnCostStorage = withTurnCosts ? new TurnCostStorage(this, dir.create("turn_costs", dir.getDefaultType("turn_costs", true), segmentSize)) : null;
+    }
+
+    BaseGraphNodesAndEdges getStore() {
+        return store;
     }
 
     private int getOtherNode(int nodeThis, long edgePointer) {

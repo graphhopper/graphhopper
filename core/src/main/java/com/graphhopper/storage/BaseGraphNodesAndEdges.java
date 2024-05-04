@@ -323,12 +323,13 @@ class BaseGraphNodesAndEdges implements EdgeIntAccess {
     }
 
     public void setGeoRef(long edgePointer, long geoRef) {
-        if ((geoRef & 0xFFFF_FF00_0000_0000L) != 0)
-            throw new IllegalArgumentException("geoRef is too large " + geoRef);
+        int highest25Bits = (int) (geoRef >>> 39);
+        // Only two cases are allowed for highest bits. If geoRef is positive then all high bits are 0. If negative then all are 1.
+        if (highest25Bits != 0 && highest25Bits != 0x1_FF_FFFF)
+            throw new IllegalArgumentException("geoRef is too " + (geoRef > 0 ? "large " : "small ") + geoRef + ", " + Long.toBinaryString(geoRef));
 
-        byte[] bytes = new byte[5];
-        BitUtil.LITTLE.fromULong5(bytes, geoRef, 0);
-        edges.setBytes(edgePointer + E_GEO, bytes, bytes.length);
+        edges.setInt(edgePointer + E_GEO, (int) (geoRef));
+        edges.setByte(edgePointer + E_GEO + 4, (byte) (geoRef >> 32));
     }
 
     public void setKeyValuesRef(long edgePointer, int nameRef) {
@@ -358,9 +359,10 @@ class BaseGraphNodesAndEdges implements EdgeIntAccess {
     }
 
     public long getGeoRef(long edgePointer) {
-        byte[] bytes = new byte[5];
-        edges.getBytes(edgePointer + E_GEO, bytes, bytes.length);
-        return BitUtil.LITTLE.toULong5(bytes, 0);
+        return BitUtil.LITTLE.toLong(
+                edges.getInt(edgePointer + E_GEO),
+                // to support negative georefs (#2985) do not mask byte with 0xFF:
+                edges.getByte(edgePointer + E_GEO + 4));
     }
 
     public int getKeyValuesRef(long edgePointer) {
