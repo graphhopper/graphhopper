@@ -391,4 +391,20 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
         e = assertThrows(IllegalStateException.class, () -> graph.getEdgeIteratorState(edge3.getEdge(), Integer.MIN_VALUE).setWayGeometry(Helper.createPointList(0, 1, 6, 7, 8, 9)));
         assertTrue(e.getMessage().contains("This edge already has a way geometry so it cannot be changed to a bigger geometry"), e.getMessage());
     }
+
+    @Test
+    public void testGeoRef() {
+        BaseGraph graph = createGHStorage();
+        BaseGraphNodesAndEdges ne = graph.getStore();
+        ne.setGeoRef(0, 123);
+        assertEquals(123, ne.getGeoRef(0));
+        ne.setGeoRef(0, -123);
+        assertEquals(-123, ne.getGeoRef(0));
+        ne.setGeoRef(0, 1L << 38);
+        assertEquals(1L << 38, ne.getGeoRef(0));
+
+        // 1000_0000 0000_0000 0000_0000 0000_0000 0000_0000
+        assertThrows(IllegalArgumentException.class, () -> ne.setGeoRef(0, 1L << 39));
+        graph.close();
+    }
 }

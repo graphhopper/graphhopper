@@ -72,6 +72,10 @@ public class BaseGraph implements Graph, Closeable {
         turnCostStorage = withTurnCosts ? new TurnCostStorage(this, dir.create("turn_costs", dir.getDefaultType("turn_costs", true), segmentSize)) : null;
     }
 
+    BaseGraphNodesAndEdges getStore() {
+        return store;
+    }
+
     private int getOtherNode(int nodeThis, long edgePointer) {
         int nodeA = store.getNodeA(edgePointer);
         return nodeThis == nodeA ? store.getNodeB(edgePointer) : nodeA;
