@@ -55,7 +55,7 @@ class InstructionsOutgoingEdges {
 
     private final EdgeIteratorState prevEdge;
     private final EdgeIteratorState currentEdge;
-    // edges that we would be allowed to turn on
+    // edges that one can turn onto
     private final List<EdgeIteratorState> allowedAlternativeTurns;
     // edges, including oneways in the wrong direction
     private final List<EdgeIteratorState> visibleAlternativeTurns;
