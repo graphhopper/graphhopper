@@ -24,9 +24,7 @@ import com.graphhopper.routing.InstructionsFromEdges;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.SpeedWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
@@ -37,13 +35,10 @@ import com.graphhopper.storage.NodeAccess;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
-import static com.graphhopper.search.KVStorage.KeyValue.STREET_NAME;
-import static com.graphhopper.search.KVStorage.KeyValue.createKV;
+import static com.graphhopper.search.KVStorage.KValue;
+import static com.graphhopper.util.Parameters.Details.STREET_NAME;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -95,30 +90,30 @@ public class InstructionListTest {
         na.setNode(6, 1.0, 1.0);
         na.setNode(7, 1.0, 1.1);
         na.setNode(8, 1.0, 1.2);
-        g.edge(0, 1).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "0-1"));
-        g.edge(1, 2).setDistance(11000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "1-2"));
+        g.edge(0, 1).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(Map.of(STREET_NAME, new KValue("0-1")));
+        g.edge(1, 2).setDistance(11000).set(speedEnc, 60, 60).setKeyValues(Map.of(STREET_NAME, new KValue("1-2")));
 
         g.edge(0, 3).setDistance(11000).set(speedEnc, 60, 60);
-        g.edge(1, 4).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "1-4"));
-        g.edge(2, 5).setDistance(11000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "5-2"));
+        g.edge(1, 4).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(Map.of(STREET_NAME, new KValue("1-4")));
+        g.edge(2, 5).setDistance(11000).set(speedEnc, 60, 60).setKeyValues(Map.of(STREET_NAME, new KValue("5-2")));
 
-        g.edge(3, 6).setDistance(11000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "3-6"));
-        g.edge(4, 7).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "4-7"));
-        g.edge(5, 8).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "5-8"));
+        g.edge(3, 6).setDistance(11000).set(speedEnc, 60, 60).setKeyValues(Map.of(STREET_NAME, new KValue("3-6")));
+        g.edge(4, 7).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(Map.of(STREET_NAME, new KValue("4-7")));
+        g.edge(5, 8).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(Map.of(STREET_NAME, new KValue("5-8")));
 
-        g.edge(6, 7).setDistance(11000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "6-7"));
+        g.edge(6, 7).setDistance(11000).set(speedEnc, 60, 60).setKeyValues(Map.of(STREET_NAME, new KValue("6-7")));
         EdgeIteratorState iter = g.edge(7, 8).setDistance(10000).set(speedEnc, 60, 60);
         PointList list = new PointList();
         list.add(1.0, 1.15);
         list.add(1.0, 1.16);
         iter.setWayGeometry(list);
-        iter.setKeyValues(createKV(STREET_NAME, "7-8"));
+        iter.setKeyValues(Map.of(STREET_NAME, new KValue("7-8")));
         // missing edge name
         g.edge(9, 10).setDistance(10000).set(speedEnc, 60, 60);
         EdgeIteratorState iter2 = g.edge(8, 9).setDistance(20000).set(speedEnc, 60, 60);
         list.clear();
         list.add(1.0, 1.3);
-        iter2.setKeyValues(createKV(STREET_NAME, "8-9"));
+        iter2.setKeyValues(Map.of(STREET_NAME, new KValue("8-9")));
         iter2.setWayGeometry(list);
         return g;
     }
@@ -187,11 +182,11 @@ public class InstructionListTest {
         na.setNode(3, 10.0, 10.08);
         na.setNode(4, 10.1, 10.10);
         na.setNode(5, 10.2, 10.13);
-        g.edge(3, 4).setDistance(100).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "3-4"));
-        g.edge(4, 5).setDistance(100).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "4-5"));
+        g.edge(3, 4).setDistance(100).set(speedEnc, 60, 60).setKeyValues(Map.of(STREET_NAME, new KValue("3-4")));
+        g.edge(4, 5).setDistance(100).set(speedEnc, 60, 60).setKeyValues(Map.of(STREET_NAME, new KValue("4-5")));
 
         EdgeIteratorState iter = g.edge(2, 4).setDistance(100).set(speedEnc, 60, 60);
-        iter.setKeyValues(createKV(STREET_NAME, "2-4"));
+        iter.setKeyValues(Map.of(STREET_NAME, new KValue("2-4")));
         PointList list = new PointList();
         list.add(10.20, 10.05);
         iter.setWayGeometry(list);
@@ -226,11 +221,11 @@ public class InstructionListTest {
         na.setNode(3, 10.0, 10.05);
         na.setNode(4, 10.1, 10.10);
         na.setNode(5, 10.2, 10.15);
-        g.edge(3, 4).setDistance(100).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "street"));
-        g.edge(4, 5).setDistance(100).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "4-5"));
+        g.edge(3, 4).setDistance(100).set(speedEnc, 60, 60).setKeyValues(Map.of(STREET_NAME, new KValue("street")));
+        g.edge(4, 5).setDistance(100).set(speedEnc, 60, 60).setKeyValues(Map.of(STREET_NAME, new KValue("4-5")));
 
         EdgeIteratorState iter = g.edge(2, 4).setDistance(100).set(speedEnc, 60, 60);
-        iter.setKeyValues(createKV(STREET_NAME, "street"));
+        iter.setKeyValues(Map.of(STREET_NAME, new KValue("street")));
         PointList list = new PointList();
         list.add(10.20, 10.05);
         iter.setWayGeometry(list);
@@ -326,9 +321,9 @@ public class InstructionListTest {
         g.edge(2, 3).setDistance(20).set(speedEnc, 18, 18);
         g.edge(2, 4).setDistance(20).set(speedEnc, 4, 4);
 
-        g.edge(1, 2).set(rcEV, RoadClass.RESIDENTIAL).setKeyValues(createKV(STREET_NAME, "pfarr"));
-        g.edge(2, 3).set(rcEV, RoadClass.RESIDENTIAL).setKeyValues(createKV(STREET_NAME, "pfarr"));
-        g.edge(2, 4).set(rcEV, RoadClass.PEDESTRIAN).setKeyValues(createKV(STREET_NAME, "markt"));
+        g.edge(1, 2).set(rcEV, RoadClass.RESIDENTIAL).setKeyValues(Map.of(STREET_NAME, new KValue("pfarr")));
+        g.edge(2, 3).set(rcEV, RoadClass.RESIDENTIAL).setKeyValues(Map.of(STREET_NAME, new KValue("pfarr")));
+        g.edge(2, 4).set(rcEV, RoadClass.PEDESTRIAN).setKeyValues(Map.of(STREET_NAME, new KValue("markt")));
 
         Weighting weighting = new SpeedWeighting(speedEnc);
         Path p = new Dijkstra(g, weighting, tMode).calcPath(1, 3);
@@ -378,10 +373,8 @@ public class InstructionListTest {
 
     @Test
     public void testInstructionIfSlightTurn() {
-        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
         DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 4, 1, false);
-        DecimalEncodedValue priorityEnc = new DecimalEncodedValueImpl("priority", 4, PriorityCode.getFactor(1), false);
-        EncodingManager tmpEM = new EncodingManager.Builder().add(accessEnc).add(speedEnc).add(priorityEnc)
+        EncodingManager tmpEM = new EncodingManager.Builder().add(speedEnc)
                 .add(Roundabout.create()).add(RoadClass.create()).add(RoadClassLink.create()).add(MaxSpeed.create()).build();
         BaseGraph g = new BaseGraph.Builder(tmpEM).create();
         // real world example: https://graphhopper.com/maps/?point=43.729379,7.417697&point=43.729798,7.417263&profile=foot
@@ -402,20 +395,19 @@ public class InstructionListTest {
         na.setNode(4, 43.729476, 7.417633);
 
         // default is priority=0 so set it to 1
-        GHUtility.setSpeed(5, true, true, accessEnc, speedEnc, g.edge(1, 2).setDistance(20).
-                setKeyValues(createKV(STREET_NAME, "myroad")).set(priorityEnc, 1));
-        GHUtility.setSpeed(5, true, true, accessEnc, speedEnc, g.edge(2, 3).setDistance(20).
-                setKeyValues(createKV(STREET_NAME, "myroad")).set(priorityEnc, 1));
+        g.edge(1, 2).setDistance(20).set(speedEnc, 5).
+                setKeyValues(Map.of(STREET_NAME, new KValue("myroad")));
+        g.edge(2, 3).setDistance(20).set(speedEnc, 5).
+                setKeyValues(Map.of(STREET_NAME, new KValue("myroad")));
         PointList pointList = new PointList();
         pointList.add(43.729627, 7.41749);
-        GHUtility.setSpeed(5, true, true, accessEnc, speedEnc, g.edge(2, 4).setDistance(20).
-                setKeyValues(createKV(STREET_NAME, "myroad")).set(priorityEnc, 1).setWayGeometry(pointList));
+        g.edge(2, 4).setDistance(20).set(speedEnc, 5).
+                setKeyValues(Map.of(STREET_NAME, new KValue("myroad"))).setWayGeometry(pointList);
 
-        Weighting weighting = CustomModelParser.createWeighting(accessEnc, speedEnc,
-                priorityEnc, tmpEM, DefaultTurnCostProvider.NO_TURN_COST_PROVIDER,
-                new CustomModel().setDistanceInfluence(0d));
+        Weighting weighting = new SpeedWeighting(speedEnc);
         Path p = new Dijkstra(g, weighting, tMode).calcPath(4, 3);
         assertTrue(p.isFound());
+        assertEquals(IntArrayList.from(4, 2, 3), p.calcNodes());
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, tmpEM, usTR);
         List<String> tmpList = getTurnDescriptions(wayList);
         assertEquals(Arrays.asList("continue onto myroad", "keep right onto myroad", "arrive at destination"), tmpList);
@@ -423,6 +415,7 @@ public class InstructionListTest {
         assertEquals(20, wayList.get(1).getDistance());
 
         p = new Dijkstra(g, weighting, tMode).calcPath(4, 1);
+        assertEquals(IntArrayList.from(4, 2, 1), p.calcNodes());
         wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, tmpEM, usTR);
         tmpList = getTurnDescriptions(wayList);
         assertEquals(Arrays.asList("continue onto myroad", "keep left onto myroad", "arrive at destination"), tmpList);
@@ -460,9 +453,11 @@ public class InstructionListTest {
         g.edge(2, 5).setDistance(10).set(roadsSpeedEnc, 10, 10).set(roadsAccessEnc, true, true).set(rcEV, RoadClass.PEDESTRIAN);
 
         CustomModel customModel = new CustomModel();
+        customModel.addToSpeed(Statement.If("true", Statement.Op.LIMIT, "speed"));
         customModel.addToPriority(Statement.If("road_class == PEDESTRIAN", Statement.Op.MULTIPLY, "0"));
-        Weighting weighting = CustomModelParser.createWeighting(roadsAccessEnc, roadsSpeedEnc, null, tmpEM, TurnCostProvider.NO_TURN_COST_PROVIDER, customModel);
+        Weighting weighting = CustomModelParser.createWeighting(tmpEM, TurnCostProvider.NO_TURN_COST_PROVIDER, customModel);
         Path p = new Dijkstra(g, weighting, tMode).calcPath(3, 4);
+        assertEquals(IntArrayList.from(3, 2, 4), p.calcNodes());
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, tmpEM, usTR);
         List<String> tmpList = getTurnDescriptions(wayList);
         assertEquals(Arrays.asList("continue", "keep right", "arrive at destination"), tmpList);
@@ -497,15 +492,16 @@ public class InstructionListTest {
         na.setNode(6, 15.1, 10.1);
         na.setNode(7, 15.1, 9.8);
 
-        g.edge(1, 2).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "1-2"));
-        g.edge(2, 3).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "2-3"));
-        g.edge(2, 6).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "2-6"));
-        g.edge(3, 4).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "3-4")).setWayGeometry(waypoint);
-        g.edge(3, 7).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "3-7"));
-        g.edge(4, 5).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "4-5"));
+        g.edge(1, 2).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(Map.of(STREET_NAME, new KValue("1-2")));
+        g.edge(2, 3).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(Map.of(STREET_NAME, new KValue("2-3")));
+        g.edge(2, 6).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(Map.of(STREET_NAME, new KValue("2-6")));
+        g.edge(3, 4).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(Map.of(STREET_NAME, new KValue("3-4"))).setWayGeometry(waypoint);
+        g.edge(3, 7).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(Map.of(STREET_NAME, new KValue("3-7")));
+        g.edge(4, 5).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(Map.of(STREET_NAME, new KValue("4-5")));
 
         Weighting weighting = new SpeedWeighting(speedEnc);
         Path p = new Dijkstra(g, weighting, tMode).calcPath(1, 5);
+        assertEquals(IntArrayList.from(1, 2, 3, 4, 5), p.calcNodes());
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR);
 
         // query on first edge, get instruction for second edge
@@ -519,6 +515,44 @@ public class InstructionListTest {
 
         // too far away
         assertNull(Instructions.find(wayList, 50.8, 50.25, 1000));
+    }
+
+    @Test
+    public void testSplitWays() {
+        DecimalEncodedValue roadsSpeedEnc = new DecimalEncodedValueImpl("speed", 7, 2, true);
+        EncodingManager tmpEM = EncodingManager.start().add(roadsSpeedEnc).
+                add(RoadClass.create()).add(Roundabout.create()).add(RoadClassLink.create()).
+                add(MaxSpeed.create()).add(Lanes.create()).build();
+        IntEncodedValue lanesEnc = tmpEM.getIntEncodedValue(Lanes.KEY);
+        BaseGraph g = new BaseGraph.Builder(tmpEM).create();
+        // real world example: https://graphhopper.com/maps/?point=43.626238%2C-79.715268&point=43.624647%2C-79.713204&profile=car
+        //
+        //       1   3
+        //         \ |
+        //          2
+        //           \
+        //            4
+
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(1, 43.626246, -79.71522);
+        na.setNode(2, 43.625503, -79.714228);
+        na.setNode(3, 43.626285, -79.714974);
+        na.setNode(4, 43.625129, -79.713692);
+
+        PointList list = new PointList();
+        list.add(43.62549, -79.714292);
+        g.edge(1, 2).setKeyValues(Map.of(STREET_NAME, new KValue("main"))).setWayGeometry(list).
+                setDistance(110).set(roadsSpeedEnc, 50, 50).set(lanesEnc, 2);
+        g.edge(2, 3).setKeyValues(Map.of(STREET_NAME, new KValue("main"))).
+                setDistance(110).set(roadsSpeedEnc, 50, 50).set(lanesEnc, 3);
+        g.edge(2, 4).setKeyValues(Map.of(STREET_NAME, new KValue("main"))).
+                setDistance(80).set(roadsSpeedEnc, 50, 50).set(lanesEnc, 5);
+
+        Weighting weighting = new SpeedWeighting(roadsSpeedEnc);
+        Path p = new Dijkstra(g, weighting, tMode).calcPath(1, 4);
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, tmpEM, usTR);
+        List<String> tmpList = getTurnDescriptions(wayList);
+        assertEquals(Arrays.asList("continue onto main", "arrive at destination"), tmpList);
     }
 
     private void compare(List<List<Double>> expected, List<List<Double>> actual) {

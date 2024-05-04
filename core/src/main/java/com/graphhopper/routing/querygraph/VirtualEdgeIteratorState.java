@@ -25,7 +25,9 @@ import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PointList;
 
-import java.util.List;
+import java.util.Map;
+
+import static com.graphhopper.util.Parameters.Details.STREET_NAME;
 
 /**
  * Creates an edge state decoupled from a graph where nodes, pointList, etc are kept in memory.
@@ -42,14 +44,14 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
     private double distance;
     private IntsRef edgeFlags;
     private EdgeIntAccess edgeIntAccess;
-    private List<KVStorage.KeyValue> keyValues;
+    private Map<String, KVStorage.KValue> keyValues;
     // true if edge should be avoided as start/stop
     private boolean unfavored;
     private EdgeIteratorState reverseEdge;
     private final boolean reverse;
 
     public VirtualEdgeIteratorState(int originalEdgeKey, int edgeKey, int baseNode, int adjNode, double distance,
-                                    IntsRef edgeFlags, List<KVStorage.KeyValue> keyValues, PointList pointList, boolean reverse) {
+                                    IntsRef edgeFlags, Map<String, KVStorage.KValue> keyValues, PointList pointList, boolean reverse) {
         this.originalEdgeKey = originalEdgeKey;
         this.edgeKey = edgeKey;
         this.baseNode = baseNode;
@@ -313,26 +315,28 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
 
     @Override
     public String getName() {
-        String name = (String) getValue(KVStorage.KeyValue.STREET_NAME);
+        String name = (String) getValue(STREET_NAME);
         // preserve backward compatibility (returns empty string if name tag missing)
         return name == null ? "" : name;
     }
 
     @Override
-    public EdgeIteratorState setKeyValues(List<KVStorage.KeyValue> list) {
+    public EdgeIteratorState setKeyValues(Map<String, KVStorage.KValue> list) {
         this.keyValues = list;
         return this;
     }
 
     @Override
-    public List<KVStorage.KeyValue> getKeyValues() {
+    public Map<String, KVStorage.KValue> getKeyValues() {
         return keyValues;
     }
 
     @Override
     public Object getValue(String key) {
-        for (KVStorage.KeyValue keyValue : keyValues) {
-            if (keyValue.key.equals(key)) return keyValue.value;
+        KVStorage.KValue value = keyValues.get(key);
+        if (value != null) {
+            if (!reverse && value.getFwd() != null) return value.getFwd();
+            if (reverse && value.getBwd() != null) return value.getBwd();
         }
         return null;
     }

@@ -10,6 +10,7 @@ import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 import static com.graphhopper.routing.ev.RouteNetwork.*;
 import static com.graphhopper.routing.util.PriorityCode.*;
@@ -183,11 +184,11 @@ public abstract class BikeCommonPriorityParser implements TagParser {
             }
         }
 
-        String cycleway = way.getFirstPriorityTag(Arrays.asList("cycleway", "cycleway:left", "cycleway:right", "cycleway:both"));
-        if (Arrays.asList("lane", "opposite_track", "shared_lane", "share_busway", "shoulder").contains(cycleway)) {
-            weightToPrioMap.put(100d, SLIGHT_PREFER);
-        } else if ("track".equals(cycleway)) {
+        List<String> cyclewayValues = Stream.of("cycleway", "cycleway:left", "cycleway:both", "cycleway:right").map(key -> way.getTag(key, "")).toList();
+        if (cyclewayValues.contains("track")) {
             weightToPrioMap.put(100d, PREFER);
+        } else if (Stream.of("lane", "opposite_track", "shared_lane", "share_busway", "shoulder").anyMatch(cyclewayValues::contains)) {
+            weightToPrioMap.put(100d, SLIGHT_PREFER);
         }
 
         if (way.hasTag("bicycle", "use_sidepath")) {

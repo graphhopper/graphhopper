@@ -20,7 +20,6 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.OSMParsers;
@@ -76,7 +75,7 @@ class TagParsingTest {
         osmRel.setTag("network", "lcn");
         IntsRef relFlags = osmParsers.createRelationFlags();
         relFlags = osmParsers.handleRelationTags(osmRel, relFlags);
-        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
+        EdgeIntAccess edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
         int edgeId = 0;
         osmParsers.handleWayTags(edgeId, edgeIntAccess, osmWay, relFlags);
         assertEquals(RouteNetwork.LOCAL, bikeNetworkEnc.getEnum(false, edgeId, edgeIntAccess));
@@ -118,7 +117,7 @@ class TagParsingTest {
         osmRel.setTag("network", "rcn");
         IntsRef relFlags = osmParsers.createRelationFlags();
         relFlags = osmParsers.handleRelationTags(osmRel, relFlags);
-        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
+        EdgeIntAccess edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
         int edgeId = 0;
         osmParsers.handleWayTags(edgeId, edgeIntAccess, osmWay, relFlags);
         // bike: uninfluenced speed for grade but via network => NICE
@@ -152,11 +151,8 @@ class TagParsingTest {
                 new BikeAccessParser(manager, new PMap()),
                 new MountainBikeAccessParser(manager, new PMap())
         );
-        for (TagParser tagParser : tagParsers)
-            if (tagParser instanceof AbstractAccessParser)
-                ((AbstractAccessParser) tagParser).init(new DateRangeParser());
 
-        final ArrayEdgeIntAccess intAccess = new ArrayEdgeIntAccess(manager.getIntsForFlags());
+        final ArrayEdgeIntAccess intAccess = ArrayEdgeIntAccess.createFromBytes(manager.getBytesForFlags());
         int edgeId = 0;
         IntsRef relFlags = manager.createRelationFlags();
         ReaderWay way = new ReaderWay(1);
@@ -168,7 +164,6 @@ class TagParsingTest {
         for (BooleanEncodedValue accessEnc : accessEncs)
             assertTrue(accessEnc.getBool(false, edgeId, intAccess));
 
-        final IntsRef edgeFlags2 = manager.createEdgeFlags();
         way.clearTags();
         way.setTag("highway", "tertiary");
         way.setTag("junction", "circular");

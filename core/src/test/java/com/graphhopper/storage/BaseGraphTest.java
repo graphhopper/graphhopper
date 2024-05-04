@@ -19,17 +19,17 @@ package com.graphhopper.storage;
 
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RoadClass;
-import com.graphhopper.search.KVStorage.KeyValue;
+import com.graphhopper.search.KVStorage.KValue;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
-import static com.graphhopper.search.KVStorage.KeyValue.STREET_NAME;
 import static com.graphhopper.util.EdgeIteratorState.REVERSE_STATE;
 import static com.graphhopper.util.FetchMode.*;
+import static com.graphhopper.util.Parameters.Details.STREET_NAME;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -70,14 +70,15 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
         graph.edge(9, 11).setDistance(200).set(carAccessEnc, true, true);
         graph.edge(1, 2).setDistance(120).set(carAccessEnc, true, false);
 
-        iter1.setKeyValues(KeyValue.createKV(STREET_NAME, "named street1"));
-        iter2.setKeyValues(KeyValue.createKV(STREET_NAME, "named street2"));
+        iter1.setKeyValues(Map.of(STREET_NAME, new KValue("named street1")));
+        iter2.setKeyValues(Map.of(STREET_NAME, new KValue("named street2")));
 
-        List<KeyValue> list = new ArrayList<>();
-        list.add(new KeyValue("keyA", "FORWARD", true, false));
-        list.add(new KeyValue("keyB", "BACKWARD", false, true));
-        list.add(new KeyValue("keyC", "BOTH", true, true));
-        iter3.setKeyValues(list);
+        Map<String, KValue> map = new LinkedHashMap<>();
+        map.put("keyA", new KValue("FORWARD", null));
+        map.put("keyB", new KValue(null, "BACKWARD"));
+        map.put("keyC", new KValue("BOTH"));
+        map.put("keyD", new KValue("BOTH2", "BOTH2"));
+        iter3.setKeyValues(map);
 
         checkGraph(graph);
         graph.flush();
@@ -92,8 +93,8 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
         assertEquals("named street1", graph.getEdgeIteratorState(iter1.getEdge(), iter1.getAdjNode()).getName());
         assertEquals("named street2", graph.getEdgeIteratorState(iter2.getEdge(), iter2.getAdjNode()).getName());
         iter3 = graph.getEdgeIteratorState(iter3.getEdge(), iter3.getAdjNode());
-        assertEquals(list, iter3.getKeyValues());
-        assertEquals(list, iter3.detach(true).getKeyValues());
+        assertEquals(map, iter3.getKeyValues());
+        assertEquals(map, iter3.detach(true).getKeyValues());
 
         assertEquals("FORWARD", iter3.getValue("keyA"));
         assertNull(iter3.getValue("keyB"));
@@ -101,6 +102,7 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
         assertNull(iter3.detach(true).getValue("keyA"));
         assertEquals("BACKWARD", iter3.detach(true).getValue("keyB"));
         assertEquals("BOTH", iter3.detach(true).getValue("keyC"));
+        assertEquals("BOTH2", iter3.getValue("keyD"));
 
         GHUtility.setSpeed(60, true, true, carAccessEnc, carSpeedEnc, graph.edge(3, 4).setDistance(123)).
                 setWayGeometry(Helper.createPointList3D(4.4, 5.5, 0, 6.6, 7.7, 0));
@@ -271,7 +273,7 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
     public void setGetFlagsRaw() {
         BaseGraph graph = new BaseGraph.Builder(1).create();
         EdgeIteratorState edge = graph.edge(0, 1);
-        IntsRef flags = new IntsRef(graph.getIntsForFlags());
+        IntsRef flags = encodingManager.createEdgeFlags();
         flags.ints[0] = 10;
         edge.setFlags(flags);
         assertEquals(10, edge.getFlags().ints[0]);
@@ -288,5 +290,21 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
         assertEquals(RoadClass.BRIDLEWAY, edge.get(rcEnc));
         edge.set(rcEnc, RoadClass.CORRIDOR);
         assertEquals(RoadClass.CORRIDOR, edge.get(rcEnc));
+    }
+
+    @Test
+    public void testGeoRef() {
+        BaseGraph graph = createGHStorage();
+        BaseGraphNodesAndEdges ne = graph.getStore();
+        ne.setGeoRef(0, 123);
+        assertEquals(123, ne.getGeoRef(0));
+        ne.setGeoRef(0, -123);
+        assertEquals(-123, ne.getGeoRef(0));
+        ne.setGeoRef(0, 1L << 38);
+        assertEquals(1L << 38, ne.getGeoRef(0));
+
+        // 1000_0000 0000_0000 0000_0000 0000_0000 0000_0000
+        assertThrows(IllegalArgumentException.class, () -> ne.setGeoRef(0, 1L << 39));
+        graph.close();
     }
 }

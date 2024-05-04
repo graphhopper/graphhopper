@@ -2,7 +2,13 @@
 
 ![Build Status](https://github.com/graphhopper/graphhopper/actions/workflows/build.yml/badge.svg?branch=master)
 
-GraphHopper is a fast and memory-efficient routing engine released under Apache License 2.0. It can be used as a Java library or standalone web server to calculate the distance, time, turn-by-turn instructions and many road attributes for a route between two or more points. Beyond this "A-to-B" routing it supports ["snap to road"](README.md#Map-Matching), [Isochrone calculation](README.md#Analysis), [mobile navigation](README.md#mobile-apps) and [more](README.md#Features). GraphHopper uses OpenStreetMap and GTFS data by default and it can import [other data sources too](README.md#OpenStreetMap-Support).
+GraphHopper is a fast and memory-efficient routing engine released under Apache License 2.0.
+It can be used as a Java library or standalone web server to calculate the distance, time,
+turn-by-turn instructions and many road attributes for a route between two or more points.
+Beyond this "A-to-B" routing it supports ["snap to road"](README.md#Map-Matching),
+[Isochrone calculation](README.md#Analysis), [mobile navigation](README.md#mobile-apps) and
+[more](README.md#Features). GraphHopper uses OpenStreetMap and GTFS data by default and it
+can import [other data sources too](README.md#OpenStreetMap-Support).
 
 # Community
 
@@ -22,15 +28,18 @@ We even have [good first issues](https://github.com/graphhopper/graphhopper/issu
 
 To get started you can try [GraphHopper Maps](README.md#graphhopper-maps), read through our documentation and install the GraphHopper Web Service locally.
 
-* 8.x: [documentation](https://github.com/graphhopper/graphhopper/blob/8.x/docs/index.md)
-  , [web service jar](https://repo1.maven.org/maven2/com/graphhopper/graphhopper-web/8.0/graphhopper-web-8.0.jar)
-  , [announcement](https://www.graphhopper.com/blog/2023/10/18/graphhopper-routing-engine-8-0-released/)
+* 9.x: [documentation](https://github.com/graphhopper/graphhopper/blob/9.x/docs/index.md)
+  , [web service jar](https://repo1.maven.org/maven2/com/graphhopper/graphhopper-web/9.0/graphhopper-web-9.0.jar)
+  , [announcement](https://www.graphhopper.com/blog/2024/04/23/graphhopper-routing-engine-9-0-released)
 * unstable master: [documentation](https://github.com/graphhopper/graphhopper/blob/master/docs/index.md)
 
 <details><summary>Click to see older releases</summary>
 
 * See our [changelog file](./CHANGELOG.md) for Java API Changes.
 
+* 8.x: [documentation](https://github.com/graphhopper/graphhopper/blob/8.x/docs/index.md)
+  , [web service jar](https://repo1.maven.org/maven2/com/graphhopper/graphhopper-web/8.0/graphhopper-web-8.0.jar)
+  , [announcement](https://www.graphhopper.com/blog/2023/10/18/graphhopper-routing-engine-8-0-released/)
 * 7.x: [documentation](https://github.com/graphhopper/graphhopper/blob/7.x/docs/index.md)
   , [web service jar](https://repo1.maven.org/maven2/com/graphhopper/graphhopper-web/7.0/graphhopper-web-7.0.jar)
   , [announcement](https://www.graphhopper.com/blog/2023/03/14/graphhopper-routing-engine-7-0-released/)
@@ -137,7 +146,9 @@ demo and [this pull request](http://github.com/graphhopper/graphhopper-ios) of t
 
 ## Analysis
 
-Use isochrones to calculate and visualize the reachable area for a certain travel mode
+Use isochrones to calculate and visualize the reachable area for a certain travel mode.
+
+You can try the debug user interface at http://localhost:8989/maps/isochrone to see the `/isochrone` and `/spt` endpoint in action.
 
 ### [Isochrone Web API](./docs/web/api-doc.md#isochrone)
 
@@ -146,9 +157,6 @@ Use isochrones to calculate and visualize the reachable area for a certain trave
 ### [Shortest Path Tree API](//www.graphhopper.com/blog/2018/07/04/high-precision-reachability/)
 
 [![high precision reachability image](https://www.graphhopper.com/wp-content/uploads/2018/06/berlin-reachability-768x401.png)](https://www.graphhopper.com/blog/2018/07/04/high-precision-reachability/)
-
-To support these high precision reachability approaches there is the /spt
-endpoint (shortest path tree). [See #1577](https://github.com/graphhopper/graphhopper/pull/1577)
 
 ### [Map Matching](./map-matching)
 

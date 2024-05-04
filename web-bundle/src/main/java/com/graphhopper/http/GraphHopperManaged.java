@@ -42,10 +42,10 @@ public class GraphHopperManaged implements Managed {
     @Override
     public void start() {
         graphHopper.importOrLoad();
-        logger.info("loaded graph at:{}, data_reader_file:{}, encoded values:{}, {} ints for edge flags, {}",
+        logger.info("loaded graph at:{}, data_reader_file:{}, encoded values:{}, {} bytes for edge flags, {}",
                 graphHopper.getGraphHopperLocation(), graphHopper.getOSMFile(),
                 graphHopper.getEncodingManager().toEncodedValuesAsString(),
-                graphHopper.getEncodingManager().getIntsForFlags(),
+                graphHopper.getEncodingManager().getBytesForFlags(),
                 graphHopper.getBaseGraph().toDetailsString());
     }
 

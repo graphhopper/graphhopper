@@ -27,6 +27,7 @@ import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.PointList;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Peter Karich
@@ -262,12 +263,12 @@ class VirtualEdgeIterator implements EdgeIterator {
     }
 
     @Override
-    public List<KVStorage.KeyValue> getKeyValues() {
+    public Map<String, KVStorage.KValue> getKeyValues() {
         return getCurrentEdge().getKeyValues();
     }
 
     @Override
-    public EdgeIteratorState setKeyValues(List<KVStorage.KeyValue> list) {
+    public EdgeIteratorState setKeyValues(Map<String, KVStorage.KValue> list) {
         return getCurrentEdge().setKeyValues(list);
     }
 

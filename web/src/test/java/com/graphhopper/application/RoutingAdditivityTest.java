@@ -22,7 +22,7 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.config.LMProfile;
-import com.graphhopper.config.Profile;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.jupiter.api.AfterAll;
@@ -48,7 +48,8 @@ public class RoutingAdditivityTest {
         graphHopper = new GraphHopper();
         graphHopper.setOSMFile("../map-matching/files/leipzig_germany.osm.pbf");
         graphHopper.setGraphHopperLocation(GH_LOCATION);
-        graphHopper.setProfiles(new Profile("my_profile").setVehicle("car"));
+        graphHopper.setEncodedValuesString("car_access, car_average_speed");
+        graphHopper.setProfiles(TestProfiles.accessAndSpeed("my_profile", "car"));
         graphHopper.getLMPreparationHandler().setLMProfiles(new LMProfile("my_profile"));
         graphHopper.importOrLoad();
     }
