@@ -98,13 +98,11 @@ class InstructionsOutgoingEdges {
                     allowedAlternativeTurns.add(tmpEdge);
                     visibleAlternativeTurns.add(tmpEdge);
                 } else if (Double.isFinite(weighting.calcEdgeWeight(edgeIter, true))) {
-                    EdgeIteratorState tmpEdge = edgeIter.detach(false);
-                    visibleAlternativeTurns.add(tmpEdge);
+                    visibleAlternativeTurns.add(edgeIter.detach(false));
                 }
             }
         }
     }
-
 
     /**
      * This method calculates the number of allowed outgoing edges, which could be considered the number of possible
@@ -230,12 +228,12 @@ class InstructionsOutgoingEdges {
         if (otherEdge == null) return false;
 
         if (Double.isFinite(weighting.calcEdgeWeight(currentEdge, true))) {
-            // assume merged into one way
+            // assume two ways are merged into one way
             // -> prev ->
             //              <- edge ->
             // -> other ->
             if (Double.isFinite(weighting.calcEdgeWeight(prevEdge, true))) return false;
-            // other has direction from junction outwards
+            // otherEdge has direction from junction outwards
             if (!Double.isFinite(weighting.calcEdgeWeight(otherEdge, false))) return false;
             if (Double.isFinite(weighting.calcEdgeWeight(otherEdge, true))) return false;
 
@@ -243,12 +241,12 @@ class InstructionsOutgoingEdges {
             return delta <= 1;
         }
 
-        // split into two ways
+        // assume one way is split into two ways
         //             -> edge ->
         // <- prev ->
         //             -> other ->
         if (!Double.isFinite(weighting.calcEdgeWeight(prevEdge, true))) return false;
-        // other has direction from junction outwards
+        // otherEdge has direction from junction outwards
         if (Double.isFinite(weighting.calcEdgeWeight(otherEdge, false))) return false;
         if (!Double.isFinite(weighting.calcEdgeWeight(otherEdge, true))) return false;
 
