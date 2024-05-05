@@ -420,9 +420,8 @@ public class BaseGraph implements Graph, Closeable {
                 throw new IllegalStateException("This edge has already been copied so we can no longer change the geometry, pointer=" + edgePointer);
 
             int len = pillarNodes.size();
-            int dim = nodeAccess.getDimension();
             if (existingGeoRef > 0) {
-                final int count = wayGeometry.getInt(existingGeoRef);
+                final int count = getPillarCount(existingGeoRef);
                 if (len <= count) {
                     setWayGeometryAtGeoRef(pillarNodes, edgePointer, reverse, existingGeoRef);
                     return;
@@ -430,7 +429,7 @@ public class BaseGraph implements Graph, Closeable {
                     throw new IllegalStateException("This edge already has a way geometry so it cannot be changed to a bigger geometry, pointer=" + edgePointer);
                 }
             }
-            long nextGeoRef = nextGeoRef(4 + len * dim * 4);
+            long nextGeoRef = nextGeoRef(3 + len * (8 + (nodeAccess.getDimension() == 3 ? 3 : 0)));
             setWayGeometryAtGeoRef(pillarNodes, edgePointer, reverse, nextGeoRef);
         } else {
             store.setGeoRef(edgePointer, 0L);
@@ -450,14 +449,16 @@ public class BaseGraph implements Graph, Closeable {
 
     private byte[] createWayGeometryBytes(PointList pillarNodes, boolean reverse) {
         int len = pillarNodes.size();
-        int dim = nodeAccess.getDimension();
-        int totalLen = len * dim * 4 + 4;
+        int totalLen = 3 + len * (8 + (nodeAccess.getDimension() == 3 ? 3 : 0));
+        if ((totalLen & 0xFF00_0000) != 0)
+            throw new IllegalArgumentException("too long way geometry " + totalLen + ", " + len);
+
         byte[] bytes = new byte[totalLen];
-        bitUtil.fromInt(bytes, len, 0);
+        bitUtil.fromUInt3(bytes, len, 0);
         if (reverse)
             pillarNodes.reverse();
 
-        int tmpOffset = 4;
+        int tmpOffset = 3;
         boolean is3D = nodeAccess.is3D();
         for (int i = 0; i < len; i++) {
             double lat = pillarNodes.getLat(i);
@@ -467,11 +468,15 @@ public class BaseGraph implements Graph, Closeable {
             tmpOffset += 4;
 
             if (is3D) {
-                bitUtil.fromInt(bytes, Helper.eleToInt(pillarNodes.getEle(i)), tmpOffset);
-                tmpOffset += 4;
+                bitUtil.fromUInt3(bytes, Helper.eleToUInt(pillarNodes.getEle(i)), tmpOffset);
+                tmpOffset += 3;
             }
         }
         return bytes;
+    }
+
+    private int getPillarCount(long geoRef) {
+        return (wayGeometry.getByte(geoRef + 2) & 0xFF << 16) | wayGeometry.getShort(geoRef);
     }
 
     private PointList fetchWayGeometry_(long edgePointer, boolean reverse, FetchMode mode, int baseNode, int adjNode) {
@@ -486,9 +491,9 @@ public class BaseGraph implements Graph, Closeable {
         int count = 0;
         byte[] bytes = null;
         if (geoRef > 0) {
-            count = wayGeometry.getInt(geoRef);
-            geoRef += 4L;
-            bytes = new byte[count * nodeAccess.getDimension() * 4];
+            count = getPillarCount(geoRef);
+            geoRef += 3L;
+            bytes = new byte[count * (8 + (nodeAccess.getDimension() == 3 ? 3 : 0))];
             wayGeometry.getBytes(geoRef, bytes, bytes.length);
         } else if (mode == FetchMode.PILLAR_ONLY)
             return PointList.EMPTY;
@@ -507,8 +512,8 @@ public class BaseGraph implements Graph, Closeable {
             double lon = Helper.intToDegree(bitUtil.toInt(bytes, index));
             index += 4;
             if (nodeAccess.is3D()) {
-                pillarNodes.add(lat, lon, Helper.intToEle(bitUtil.toInt(bytes, index)));
-                index += 4;
+                pillarNodes.add(lat, lon, Helper.uIntToEle(bitUtil.toUInt3(bytes, index)));
+                index += 3;
             } else {
                 pillarNodes.add(lat, lon);
             }

@@ -112,8 +112,8 @@ class BaseGraphNodesAndEdges implements EdgeIntAccess {
             throw new IllegalStateException("Configured dimension elevation=" + withElevation + " is not equal "
                     + "to dimension of loaded graph elevation =" + hasElevation);
         if (withElevation) {
-            bounds.minEle = Helper.intToEle(nodes.getHeader(8 * 4));
-            bounds.maxEle = Helper.intToEle(nodes.getHeader(9 * 4));
+            bounds.minEle = Helper.uIntToEle(nodes.getHeader(8 * 4));
+            bounds.maxEle = Helper.uIntToEle(nodes.getHeader(9 * 4));
         }
         frozen = nodes.getHeader(10 * 4) == 1;
 
@@ -134,8 +134,8 @@ class BaseGraphNodesAndEdges implements EdgeIntAccess {
         nodes.setHeader(6 * 4, Helper.degreeToInt(bounds.maxLat));
         nodes.setHeader(7 * 4, withElevation ? 1 : 0);
         if (withElevation) {
-            nodes.setHeader(8 * 4, Helper.eleToInt(bounds.minEle));
-            nodes.setHeader(9 * 4, Helper.eleToInt(bounds.maxEle));
+            nodes.setHeader(8 * 4, Helper.eleToUInt(bounds.minEle));
+            nodes.setHeader(9 * 4, Helper.eleToUInt(bounds.maxEle));
         }
         nodes.setHeader(10 * 4, frozen ? 1 : 0);
 
@@ -382,7 +382,7 @@ class BaseGraphNodesAndEdges implements EdgeIntAccess {
     }
 
     public void setEle(long elePointer, double ele) {
-        nodes.setInt(elePointer + N_ELE, Helper.eleToInt(ele));
+        nodes.setInt(elePointer + N_ELE, Helper.eleToUInt(ele));
     }
 
     public void setTurnCostRef(long nodePointer, int tcRef) {
@@ -402,7 +402,7 @@ class BaseGraphNodesAndEdges implements EdgeIntAccess {
     }
 
     public double getEle(long nodePointer) {
-        return Helper.intToEle(nodes.getInt(nodePointer + N_ELE));
+        return Helper.uIntToEle(nodes.getInt(nodePointer + N_ELE));
     }
 
     public int getTurnCostRef(long nodePointer) {
