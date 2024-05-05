@@ -542,9 +542,9 @@ public class InstructionListTest {
         PointList list = new PointList();
         list.add(43.62549, -79.714292);
         g.edge(1, 2).setKeyValues(Map.of(STREET_NAME, new KValue("main"))).setWayGeometry(list).
-                setDistance(110).set(roadsSpeedEnc, 50, 50).set(lanesEnc, 2);
+                setDistance(110).set(roadsSpeedEnc, 50, 0).set(lanesEnc, 2);
         g.edge(2, 3).setKeyValues(Map.of(STREET_NAME, new KValue("main"))).
-                setDistance(110).set(roadsSpeedEnc, 50, 50).set(lanesEnc, 3);
+                setDistance(110).set(roadsSpeedEnc, 50, 0).set(lanesEnc, 3);
         g.edge(2, 4).setKeyValues(Map.of(STREET_NAME, new KValue("main"))).
                 setDistance(80).set(roadsSpeedEnc, 50, 50).set(lanesEnc, 5);
 
@@ -553,6 +553,48 @@ public class InstructionListTest {
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, tmpEM, usTR);
         List<String> tmpList = getTurnDescriptions(wayList);
         assertEquals(Arrays.asList("continue onto main", "arrive at destination"), tmpList);
+
+        // Other roads should not influence instructions. Example: https://www.openstreetmap.org/node/392106581
+        na.setNode(5, 43.625666,-79.714048);
+        g.edge(2, 5).setDistance(80).set(roadsSpeedEnc, 50, 50).set(lanesEnc, 5);
+
+        p = new Dijkstra(g, weighting, tMode).calcPath(1, 4);
+        wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, tmpEM, usTR);
+        tmpList = getTurnDescriptions(wayList);
+        assertEquals(Arrays.asList("continue onto main", "arrive at destination"), tmpList);
+    }
+
+    @Test
+    public void testNotSplitWays() {
+        DecimalEncodedValue roadsSpeedEnc = new DecimalEncodedValueImpl("speed", 7, 2, true);
+        EncodingManager tmpEM = EncodingManager.start().add(roadsSpeedEnc).
+                add(RoadClass.create()).add(Roundabout.create()).add(RoadClassLink.create()).
+                add(MaxSpeed.create()).add(Lanes.create()).build();
+        IntEncodedValue lanesEnc = tmpEM.getIntEncodedValue(Lanes.KEY);
+        BaseGraph g = new BaseGraph.Builder(tmpEM).create();
+        // real world example: https://graphhopper.com/maps/?point=51.425484%2C14.223298&point=51.42523%2C14.222864&profile=car
+        //           3
+        //           |
+        //        1-2-4
+
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(1, 51.42523, 14.222864);
+        na.setNode(2, 51.425256, 14.22325);
+        na.setNode(3, 51.425397, 14.223266);
+        na.setNode(4, 51.425273, 14.223427);
+
+        g.edge(1, 2).setKeyValues(Map.of(STREET_NAME, new KValue("dresdener"))).
+                setDistance(110).set(roadsSpeedEnc, 50, 50).set(lanesEnc, 2);
+        g.edge(2, 3).setKeyValues(Map.of(STREET_NAME, new KValue("dresdener"))).
+                setDistance(110).set(roadsSpeedEnc, 50, 50).set(lanesEnc, 3);
+        g.edge(2, 4).setKeyValues(Map.of(STREET_NAME, new KValue("main"))).
+                setDistance(80).set(roadsSpeedEnc, 50, 50).set(lanesEnc, 5);
+
+        Weighting weighting = new SpeedWeighting(roadsSpeedEnc);
+        Path p = new Dijkstra(g, weighting, tMode).calcPath(3, 1);
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, tmpEM, usTR);
+        List<String> tmpList = getTurnDescriptions(wayList);
+        assertEquals(Arrays.asList("continue onto dresdener", "turn right onto dresdener", "arrive at destination"), tmpList);
     }
 
     private void compare(List<List<Double>> expected, List<List<Double>> actual) {
