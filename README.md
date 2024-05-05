@@ -29,7 +29,7 @@ We even have [good first issues](https://github.com/graphhopper/graphhopper/issu
 To get started you can try [GraphHopper Maps](README.md#graphhopper-maps), read through our documentation and install the GraphHopper Web Service locally.
 
 * 9.x: [documentation](https://github.com/graphhopper/graphhopper/blob/9.x/docs/index.md)
-  , [web service jar](https://repo1.maven.org/maven2/com/graphhopper/graphhopper-web/9.0/graphhopper-web-9.0.jar)
+  , [web service jar](https://repo1.maven.org/maven2/com/graphhopper/graphhopper-web/9.1/graphhopper-web-9.1.jar)
   , [announcement](https://www.graphhopper.com/blog/2024/04/23/graphhopper-routing-engine-9-0-released)
 * unstable master: [documentation](https://github.com/graphhopper/graphhopper/blob/master/docs/index.md)
 
@@ -97,7 +97,7 @@ To get started you can try [GraphHopper Maps](README.md#graphhopper-maps), read 
 To install the [GraphHopper Maps](https://graphhopper.com/maps/) UI and the web service locally you [need a JVM](https://adoptium.net) (>= Java 17) and do:
 
 ```bash
-wget https://repo1.maven.org/maven2/com/graphhopper/graphhopper-web/8.0/graphhopper-web-8.0.jar https://raw.githubusercontent.com/graphhopper/graphhopper/8.x/config-example.yml http://download.geofabrik.de/europe/germany/berlin-latest.osm.pbf
+wget https://repo1.maven.org/maven2/com/graphhopper/graphhopper-web/9.1/graphhopper-web-9.1.jar https://raw.githubusercontent.com/graphhopper/graphhopper/9.x/config-example.yml http://download.geofabrik.de/europe/germany/berlin-latest.osm.pbf
 java -D"dw.graphhopper.datareader.file=berlin-latest.osm.pbf" -jar graphhopper*.jar server config-example.yml
 ```
 
