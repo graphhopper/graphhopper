@@ -20,6 +20,9 @@ package com.graphhopper.storage;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
+import java.nio.ByteOrder;
 import java.util.Arrays;
 
 /**
@@ -32,6 +35,8 @@ import java.util.Arrays;
 public class RAMDataAccess extends AbstractDataAccess {
     private byte[][] segments = new byte[0][];
     private boolean store;
+    private static final VarHandle INT = MethodHandles.byteArrayViewVarHandle(int[].class, ByteOrder.LITTLE_ENDIAN);
+    private static final VarHandle SHORT = MethodHandles.byteArrayViewVarHandle(short[].class, ByteOrder.LITTLE_ENDIAN);
 
     RAMDataAccess(String name, String location, boolean store, int segmentSize) {
         super(name, location, segmentSize);
@@ -193,7 +198,7 @@ public class RAMDataAccess extends AbstractDataAccess {
             // index + 3 >= segmentSizeInBytes
             return (b2[0] & 0xFF) << 24 | (b1[index + 2] & 0xFF) << 16 | (b1[index + 1] & 0xFF) << 8 | (b1[index] & 0xFF);
         }
-        return bitUtil.toInt(segments[bufferIndex], index);
+        return (int) INT.get(segments[bufferIndex], index);
     }
 
     @Override
@@ -217,8 +222,8 @@ public class RAMDataAccess extends AbstractDataAccess {
         int index = (int) (bytePos & indexDivisor);
         if (index + 1 >= segmentSizeInBytes)
             return (short) ((segments[bufferIndex + 1][0] & 0xFF) << 8 | (segments[bufferIndex][index] & 0xFF));
-        else
-            return bitUtil.toShort(segments[bufferIndex], index);
+
+        return (short) SHORT.get(segments[bufferIndex], index);
     }
 
     @Override
