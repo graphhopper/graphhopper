@@ -31,9 +31,8 @@ import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.FetchMode;
 
-import java.util.List;
+import java.util.*;
 
 import static com.graphhopper.reader.osm.RestrictionType.NO;
 import static com.graphhopper.reader.osm.RestrictionType.ONLY;

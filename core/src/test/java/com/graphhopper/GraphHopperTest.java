@@ -2593,6 +2593,24 @@ public class GraphHopperTest {
     }
 
     @Test
+    public void turnRestrictionWithSnapToViaEdge_issue2996() {
+        final String profile = "profile";
+        GraphHopper hopper = new GraphHopper().
+                setGraphHopperLocation(GH_LOCATION).
+                setOSMFile("../map-matching/files/leipzig_germany.osm.pbf").
+                setEncodedValuesString("car_access, car_average_speed").
+                setProfiles(TestProfiles.accessAndSpeed(profile, "car").setTurnCostsConfig(TurnCostsConfig.car())).
+                setMinNetworkSize(200);
+        hopper.importOrLoad();
+        // doing a simple left-turn is allowed
+        GHResponse res = hopper.route(new GHRequest(51.34665, 12.391847, 51.346254, 12.39256).setProfile(profile));
+        assertEquals(81, res.getBest().getDistance(), 1);
+        // if we stop right after the left-turn on the via-edge the turn should still be allowed of course (there should be no detour that avoids the turn)
+        res = hopper.route(new GHRequest(51.34665, 12.391847, 51.346306, 12.392091).setProfile(profile));
+        assertEquals(48, res.getBest().getDistance(), 1);
+    }
+
+    @Test
     public void germanyCountryRuleAvoidsTracks() {
         final String profile = "profile";
         Profile p = TestProfiles.accessAndSpeed(profile, "car");
