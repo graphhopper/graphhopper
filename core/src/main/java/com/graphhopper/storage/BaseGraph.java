@@ -181,8 +181,8 @@ public class BaseGraph implements Graph, Closeable {
         }
         setInitialized();
         // 0 stands for no separate geoRef, <0 stands for no separate geoRef but existing edge copies
-        maxGeoRef = 1;
         minGeoRef = -1;
+        maxGeoRef = 1;
         return this;
     }
 
@@ -422,7 +422,7 @@ public class BaseGraph implements Graph, Closeable {
             int len = pillarNodes.size();
             int dim = nodeAccess.getDimension();
             if (existingGeoRef > 0) {
-                final int count = wayGeometry.getInt(existingGeoRef * 4L);
+                final int count = wayGeometry.getInt(existingGeoRef);
                 if (len <= count) {
                     setWayGeometryAtGeoRef(pillarNodes, edgePointer, reverse, existingGeoRef);
                     return;
@@ -430,7 +430,7 @@ public class BaseGraph implements Graph, Closeable {
                     throw new IllegalStateException("This edge already has a way geometry so it cannot be changed to a bigger geometry, pointer=" + edgePointer);
                 }
             }
-            long nextGeoRef = nextGeoRef(len * dim);
+            long nextGeoRef = nextGeoRef(4 + len * dim * 4);
             setWayGeometryAtGeoRef(pillarNodes, edgePointer, reverse, nextGeoRef);
         } else {
             store.setGeoRef(edgePointer, 0L);
@@ -442,10 +442,9 @@ public class BaseGraph implements Graph, Closeable {
     }
 
     private void setWayGeometryAtGeoRef(PointList pillarNodes, long edgePointer, boolean reverse, long geoRef) {
-        long geoRefPosition = geoRef * 4;
         byte[] wayGeometryBytes = createWayGeometryBytes(pillarNodes, reverse);
-        wayGeometry.ensureCapacity(geoRefPosition + wayGeometryBytes.length);
-        wayGeometry.setBytes(geoRefPosition, wayGeometryBytes, wayGeometryBytes.length);
+        wayGeometry.ensureCapacity(geoRef + wayGeometryBytes.length);
+        wayGeometry.setBytes(geoRef, wayGeometryBytes, wayGeometryBytes.length);
         store.setGeoRef(edgePointer, geoRef);
     }
 
@@ -487,9 +486,7 @@ public class BaseGraph implements Graph, Closeable {
         int count = 0;
         byte[] bytes = null;
         if (geoRef > 0) {
-            geoRef *= 4L;
             count = wayGeometry.getInt(geoRef);
-
             geoRef += 4L;
             bytes = new byte[count * nodeAccess.getDimension() * 4];
             wayGeometry.getBytes(geoRef, bytes, bytes.length);
@@ -543,9 +540,9 @@ public class BaseGraph implements Graph, Closeable {
         throw new IllegalArgumentException("Mode isn't handled " + mode);
     }
 
-    private long nextGeoRef(int arrayLength) {
+    private long nextGeoRef(int bytes) {
         long tmp = maxGeoRef;
-        maxGeoRef += arrayLength + 1L;
+        maxGeoRef += bytes;
         return tmp;
     }
 
