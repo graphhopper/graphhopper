@@ -17,12 +17,12 @@
  */
 package com.graphhopper.storage;
 
+import sun.misc.Unsafe;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.VarHandle;
-import java.nio.ByteOrder;
+import java.lang.reflect.Field;
 import java.util.Arrays;
 
 /**
@@ -33,10 +33,20 @@ import java.util.Arrays;
  * @author Peter Karich
  */
 public class RAMDataAccess extends AbstractDataAccess {
+    private static final Unsafe UNSAFE;
+    static {
+        try {
+            Field f = Unsafe.class.getDeclaredField("theUnsafe");
+            f.setAccessible(true);
+            UNSAFE = (Unsafe) f.get(null);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+    private static final int BYTE_ARRAY_OFFSET = UNSAFE.arrayBaseOffset(byte[].class);
+
     private byte[][] segments = new byte[0][];
     private boolean store;
-    private static final VarHandle INT = MethodHandles.byteArrayViewVarHandle(int[].class, ByteOrder.LITTLE_ENDIAN);
-    private static final VarHandle SHORT = MethodHandles.byteArrayViewVarHandle(short[].class, ByteOrder.LITTLE_ENDIAN);
 
     RAMDataAccess(String name, String location, boolean store, int segmentSize) {
         super(name, location, segmentSize);
@@ -198,7 +208,7 @@ public class RAMDataAccess extends AbstractDataAccess {
             // index + 3 >= segmentSizeInBytes
             return (b2[0] & 0xFF) << 24 | (b1[index + 2] & 0xFF) << 16 | (b1[index + 1] & 0xFF) << 8 | (b1[index] & 0xFF);
         }
-        return (int) INT.get(segments[bufferIndex], index);
+        return UNSAFE.getInt(segments[bufferIndex], index + BYTE_ARRAY_OFFSET);
     }
 
     @Override
@@ -223,7 +233,7 @@ public class RAMDataAccess extends AbstractDataAccess {
         if (index + 1 >= segmentSizeInBytes)
             return (short) ((segments[bufferIndex + 1][0] & 0xFF) << 8 | (segments[bufferIndex][index] & 0xFF));
 
-        return (short) SHORT.get(segments[bufferIndex], index);
+        return UNSAFE.getShort(segments[bufferIndex], index + BYTE_ARRAY_OFFSET);
     }
 
     @Override
