@@ -59,6 +59,7 @@ public class BaseGraph implements Graph, Closeable {
     private boolean initialized = false;
     private long minGeoRef;
     private long maxGeoRef;
+    private final int eleBytesPerCoord;
 
     public BaseGraph(Directory dir, boolean withElevation, boolean withTurnCosts, int segmentSize, int bytesForFlags) {
         this.dir = dir;
@@ -68,7 +69,8 @@ public class BaseGraph implements Graph, Closeable {
         this.store = new BaseGraphNodesAndEdges(dir, withElevation, withTurnCosts, segmentSize, bytesForFlags);
         this.nodeAccess = new GHNodeAccess(store);
         this.segmentSize = segmentSize;
-        turnCostStorage = withTurnCosts ? new TurnCostStorage(this, dir.create("turn_costs", dir.getDefaultType("turn_costs", true), segmentSize)) : null;
+        this.turnCostStorage = withTurnCosts ? new TurnCostStorage(this, dir.create("turn_costs", dir.getDefaultType("turn_costs", true), segmentSize)) : null;
+        this.eleBytesPerCoord = (nodeAccess.getDimension() == 3 ? 3 : 0);
     }
 
     BaseGraphNodesAndEdges getStore() {
@@ -429,7 +431,7 @@ public class BaseGraph implements Graph, Closeable {
                     throw new IllegalStateException("This edge already has a way geometry so it cannot be changed to a bigger geometry, pointer=" + edgePointer);
                 }
             }
-            long nextGeoRef = nextGeoRef(3 + len * (8 + (nodeAccess.getDimension() == 3 ? 3 : 0)));
+            long nextGeoRef = nextGeoRef(3 + len * (8 + eleBytesPerCoord));
             setWayGeometryAtGeoRef(pillarNodes, edgePointer, reverse, nextGeoRef);
         } else {
             store.setGeoRef(edgePointer, 0L);
@@ -449,7 +451,7 @@ public class BaseGraph implements Graph, Closeable {
 
     private byte[] createWayGeometryBytes(PointList pillarNodes, boolean reverse) {
         int len = pillarNodes.size();
-        int totalLen = 3 + len * (8 + (nodeAccess.getDimension() == 3 ? 3 : 0));
+        int totalLen = 3 + len * (8 + eleBytesPerCoord);
         if ((totalLen & 0xFF00_0000) != 0)
             throw new IllegalArgumentException("too long way geometry " + totalLen + ", " + len);
 
@@ -493,7 +495,7 @@ public class BaseGraph implements Graph, Closeable {
         if (geoRef > 0) {
             count = getPillarCount(geoRef);
             geoRef += 3L;
-            bytes = new byte[count * (8 + (nodeAccess.getDimension() == 3 ? 3 : 0))];
+            bytes = new byte[count * (8 + eleBytesPerCoord)];
             wayGeometry.getBytes(geoRef, bytes, bytes.length);
         } else if (mode == FetchMode.PILLAR_ONLY)
             return PointList.EMPTY;
