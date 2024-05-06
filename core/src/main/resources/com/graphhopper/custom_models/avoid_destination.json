@@ -1,0 +1,6 @@
+
+{
+  "priority": [
+    { "if": "road_access == DESTINATION",  "multiply_by": "edge.getDistance() * 0.01" }
+  ]
+}

@@ -8,11 +8,13 @@ import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.IntEncodedValue;
 import org.codehaus.commons.compiler.CompileException;
 import org.codehaus.janino.*;
-import org.codehaus.janino.Scanner;
 
 import java.io.StringReader;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 import static com.graphhopper.json.Statement.Keyword.IF;
 
@@ -21,8 +23,8 @@ import static com.graphhopper.json.Statement.Keyword.IF;
  */
 public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
 
-    private static final Set<String> allowedMethodParents = new HashSet<>(Arrays.asList("Math"));
-    private static final Set<String> allowedMethods = new HashSet<>(Arrays.asList("sqrt"));
+    private static final Set<String> allowedMethodParents = new HashSet<>(List.of("edge", "Math"));
+    private static final Set<String> allowedMethods = new HashSet<>(List.of("sqrt", "getDistance"));
     private final ParseResult result;
     private final NameValidator variableValidator;
     private String invalidMessage;
@@ -44,8 +46,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
 
     @Override
     public Boolean visitRvalue(Java.Rvalue rv) throws Exception {
-        if (rv instanceof Java.AmbiguousName) {
-            Java.AmbiguousName n = (Java.AmbiguousName) rv;
+        if (rv instanceof Java.AmbiguousName n) {
             if (n.identifiers.length == 1) {
                 String arg = n.identifiers[0];
                 // e.g. like road_class
@@ -58,14 +59,12 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         }
         if (rv instanceof Java.Literal) {
             return true;
-        } else if (rv instanceof Java.UnaryOperation) {
-            Java.UnaryOperation uop = (Java.UnaryOperation) rv;
+        } else if (rv instanceof Java.UnaryOperation uop) {
             result.operators.add(uop.operator);
             if (uop.operator.equals("-"))
                 return uop.operand.accept(this);
             return false;
-        } else if (rv instanceof Java.MethodInvocation) {
-            Java.MethodInvocation mi = (Java.MethodInvocation) rv;
+        } else if (rv instanceof Java.MethodInvocation mi) {
             if (allowedMethods.contains(mi.methodName)) {
                 // skip methods like this.in()
                 if (mi.target != null) {
@@ -91,8 +90,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
             return false;
         } else if (rv instanceof Java.ParenthesizedExpression) {
             return ((Java.ParenthesizedExpression) rv).value.accept(this);
-        } else if (rv instanceof Java.BinaryOperation) {
-            Java.BinaryOperation binOp = (Java.BinaryOperation) rv;
+        } else if (rv instanceof Java.BinaryOperation binOp) {
             String op = binOp.operator;
             result.operators.add(op);
             if (op.equals("*") || op.equals("+") || binOp.operator.equals("-")) {
@@ -131,7 +129,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
                 result.ok = atom.accept(visitor);
                 result.invalidMessage = visitor.invalidMessage;
             }
-        } catch (Exception ex) {
+        } catch (Exception ignored) {
         }
         return result;
     }
@@ -183,13 +181,17 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
                     // single encoded value
                     ExpressionEvaluator ee = new ExpressionEvaluator();
                     String var = result.guessedVariables.iterator().next();
-                    ee.setParameters(new String[]{var}, new Class[]{double.class});
-                    ee.cook(valueExpression);
-                    double max = getMax(lookup.getEncodedValue(var, EncodedValue.class));
-                    Number val1 = (Number) ee.evaluate(max);
-                    double min = getMin(lookup.getEncodedValue(var, EncodedValue.class));
-                    Number val2 = (Number) ee.evaluate(min);
-                    value = Math.min(val1.doubleValue(), val2.doubleValue());
+                    if ("edge".equals(var)) {
+                        value = 0;
+                    } else {
+                        ee.setParameters(new String[]{var}, new Class[]{double.class});
+                        ee.cook(valueExpression);
+                        double max = getMax(lookup.getEncodedValue(var, EncodedValue.class));
+                        Number val1 = (Number) ee.evaluate(max);
+                        double min = getMin(lookup.getEncodedValue(var, EncodedValue.class));
+                        Number val2 = (Number) ee.evaluate(min);
+                        value = Math.min(val1.doubleValue(), val2.doubleValue());
+                    }
                 }
             } catch (CompileException | InvocationTargetException ex2) {
                 throw new IllegalArgumentException(ex2);
@@ -215,7 +217,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
             // expressions are accepted from Double.parseDouble but parse() rejects them. With this call order we avoid unexpected security problems.
             double val = Double.parseDouble(valueExpression);
             return new MinMax(val, val);
-        } catch (NumberFormatException ex) {
+        } catch (NumberFormatException ignored) {
         }
 
         try {
@@ -234,6 +236,9 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
 
             ExpressionEvaluator ee = new ExpressionEvaluator();
             String var = result.guessedVariables.iterator().next();
+            if ("edge".equals(var))
+                return new MinMax(0, Double.POSITIVE_INFINITY);
+
             ee.setParameters(new String[]{var}, new Class[]{double.class});
             ee.cook(valueExpression);
             double max = getMax(lookup.getEncodedValue(var, EncodedValue.class));
@@ -247,14 +252,17 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
     }
 
     static double getMin(EncodedValue enc) {
-        if (enc instanceof DecimalEncodedValue) return ((DecimalEncodedValue) enc).getMinStorableDecimal();
+        if (enc instanceof DecimalEncodedValue)
+            return ((DecimalEncodedValue) enc).getMinStorableDecimal();
         else if (enc instanceof IntEncodedValue) return ((IntEncodedValue) enc).getMinStorableInt();
         throw new IllegalArgumentException("Cannot use non-number data '" + enc.getName() + "' in value expression");
     }
 
     static double getMax(EncodedValue enc) {
-        if (enc instanceof DecimalEncodedValue) return ((DecimalEncodedValue) enc).getMaxOrMaxStorableDecimal();
-        else if (enc instanceof IntEncodedValue) return ((IntEncodedValue) enc).getMaxOrMaxStorableInt();
+        if (enc instanceof DecimalEncodedValue)
+            return ((DecimalEncodedValue) enc).getMaxOrMaxStorableDecimal();
+        else if (enc instanceof IntEncodedValue)
+            return ((IntEncodedValue) enc).getMaxOrMaxStorableInt();
         throw new IllegalArgumentException("Cannot use non-number data '" + enc.getName() + "' in value expression");
     }
 }

@@ -48,18 +48,10 @@ public class CustomWeightingHelper {
     }
 
     public double getPriority(EdgeIteratorState edge, boolean reverse) {
-        return getRawPriority(edge, reverse);
-    }
-
-    public double getSpeed(EdgeIteratorState edge, boolean reverse) {
-        return getRawSpeed(edge, reverse);
-    }
-
-    protected final double getRawSpeed(EdgeIteratorState edge, boolean reverse) {
         return 1;
     }
 
-    protected final double getRawPriority(EdgeIteratorState edge, boolean reverse) {
+    public double getSpeed(EdgeIteratorState edge, boolean reverse) {
         return 1;
     }
 

@@ -19,7 +19,6 @@ package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
@@ -275,8 +274,10 @@ public class CustomModelParser {
             }
         } else if (arg.startsWith(IN_AREA_PREFIX)) {
             return "";
+        } else if (arg.equals("edge")) {
+            return "";
         } else {
-            throw new IllegalArgumentException("Not supported " + arg);
+            throw new IllegalArgumentException("Unsupported variable: " + arg);
         }
     }
 
@@ -361,7 +362,7 @@ public class CustomModelParser {
                 initSourceCode.append("JsonFeature feature_" + id + " = (JsonFeature) areas.get(\"" + id + "\");\n");
                 initSourceCode.append("this." + arg + " = new Polygon(new PreparedPolygon((Polygonal) feature_" + id + ".getGeometry()));\n");
             } else {
-                if (!arg.startsWith(IN_AREA_PREFIX))
+                if (!arg.startsWith(IN_AREA_PREFIX) && !arg.equals("edge"))
                     throw new IllegalArgumentException("Variable not supported: " + arg);
             }
         }

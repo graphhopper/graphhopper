@@ -6,7 +6,7 @@
 //      custom_model_files: [car.json]
 
 {
-  "distance_influence": 90,
+  "distance_influence": 0,
   "priority": [
     { "if": "!car_access", "multiply_by": "0" }
   ],

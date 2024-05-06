@@ -49,7 +49,7 @@ public class Statement {
     public enum Keyword {
         IF("if"), ELSEIF("else_if"), ELSE("else");
 
-        String name;
+        final String name;
 
         Keyword(String name) {
             this.name = name;
@@ -63,7 +63,7 @@ public class Statement {
     public enum Op {
         MULTIPLY("multiply_by"), LIMIT("limit_to");
 
-        String name;
+        final String name;
 
         Op(String name) {
             this.name = name;
