@@ -24,8 +24,6 @@ import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 
-import java.util.concurrent.atomic.AtomicReference;
-
 /**
  * Whenever a {@link QueryGraph} is used for shortest path calculations including turn costs we need to wrap the
  * {@link Weighting} we want to use with this class. Otherwise turn costs at virtual nodes and/or including virtual
@@ -77,27 +75,27 @@ public class QueryGraphWeighting implements Weighting {
         if (isVirtualEdge(inEdge) && isVirtualEdge(outEdge)) {
             EdgeIteratorState inEdgeState = graph.getEdgeIteratorState(getOriginalEdge(inEdge), Integer.MIN_VALUE);
             EdgeIteratorState outEdgeState = graph.getEdgeIteratorState(getOriginalEdge(outEdge), Integer.MIN_VALUE);
-            AtomicReference<Double> minTurnWeight = new AtomicReference<>(Double.POSITIVE_INFINITY);
+            var minTurnWeight = new Object() { double value = Double.POSITIVE_INFINITY; };
             graph.forEdgeAndCopiesOfEdge(graph.createEdgeExplorer(), inEdgeState, p -> {
                 graph.forEdgeAndCopiesOfEdge(graph.createEdgeExplorer(), outEdgeState, q -> {
-                    minTurnWeight.set(Math.min(minTurnWeight.get(), weighting.calcTurnWeight(p.getEdge(), viaNode, q.getEdge())));
+                    minTurnWeight.value = Math.min(minTurnWeight.value, weighting.calcTurnWeight(p.getEdge(), viaNode, q.getEdge()));
                 });
             });
-            return minTurnWeight.get();
+            return minTurnWeight.value;
         } else if (isVirtualEdge(inEdge)) {
             EdgeIteratorState inEdgeState = graph.getEdgeIteratorState(getOriginalEdge(inEdge), Integer.MIN_VALUE);
-            AtomicReference<Double> minTurnWeight = new AtomicReference<>(Double.POSITIVE_INFINITY);
+            var minTurnWeight = new Object() { double value = Double.POSITIVE_INFINITY; };
             graph.forEdgeAndCopiesOfEdge(graph.createEdgeExplorer(), inEdgeState, p -> {
-                minTurnWeight.set(Math.min(minTurnWeight.get(), weighting.calcTurnWeight(p.getEdge(), viaNode, outEdge)));
+                minTurnWeight.value = Math.min(minTurnWeight.value, weighting.calcTurnWeight(p.getEdge(), viaNode, outEdge));
             });
-            return minTurnWeight.get();
+            return minTurnWeight.value;
         } else if (isVirtualEdge(outEdge)) {
             EdgeIteratorState outEdgeState = graph.getEdgeIteratorState(getOriginalEdge(outEdge), Integer.MIN_VALUE);
-            AtomicReference<Double> minTurnWeight = new AtomicReference<>(Double.POSITIVE_INFINITY);
+            var minTurnWeight = new Object() { double value = Double.POSITIVE_INFINITY; };
             graph.forEdgeAndCopiesOfEdge(graph.createEdgeExplorer(), outEdgeState, p -> {
-                minTurnWeight.set(Math.min(minTurnWeight.get(), weighting.calcTurnWeight(inEdge, viaNode, p.getEdge())));
+                minTurnWeight.value = Math.min(minTurnWeight.value, weighting.calcTurnWeight(inEdge, viaNode, p.getEdge()));
             });
-            return minTurnWeight.get();
+            return minTurnWeight.value;
         } else {
             return weighting.calcTurnWeight(inEdge, viaNode, outEdge);
         }
