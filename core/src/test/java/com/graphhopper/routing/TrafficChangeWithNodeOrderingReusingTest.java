@@ -1,5 +1,6 @@
 package com.graphhopper.routing;
 
+import com.graphhopper.json.Statement;
 import com.graphhopper.reader.osm.OSMReader;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
@@ -16,6 +17,7 @@ import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.storage.*;
+import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.MiniPerfTest;
 import com.graphhopper.util.PMap;
@@ -63,7 +65,12 @@ public class TrafficChangeWithNodeOrderingReusingTest {
             CarAverageSpeedParser carParser = new CarAverageSpeedParser(em);
             osmParsers = new OSMParsers()
                     .addWayTagParser(carParser);
-            baseCHConfig = CHConfig.nodeBased("base", CustomModelParser.createFastestWeighting(accessEnc, speedEnc, em));
+            baseCHConfig = CHConfig.nodeBased("base", CustomModelParser.createWeighting(em, TurnCostProvider.NO_TURN_COST_PROVIDER,
+                    new CustomModel()
+                            .addToPriority(Statement.If("!car_access", Statement.Op.MULTIPLY, "0"))
+                            .addToSpeed(Statement.If("true", Statement.Op.LIMIT, "car_average_speed")
+                    )
+            ));
             trafficCHConfig = CHConfig.nodeBased("traffic", new RandomDeviationWeighting(baseCHConfig.getWeighting(), accessEnc, speedEnc, maxDeviationPercentage));
             graph = new BaseGraph.Builder(em).create();
         }

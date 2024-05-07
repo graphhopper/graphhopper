@@ -1,0 +1,15 @@
+// to use this custom model you need to set the following option in the config.yml
+// graph.elevation.provider: srtm   # enables elevation
+// profiles:
+//    - name: foot
+//      custom_model_files: [foot.json, foot_elevation.json]
+
+{
+  "priority": [
+    { "if": "!foot_access || hike_rating >= 2", "multiply_by": "0" },
+    { "else": "", "multiply_by": "foot_priority"}
+  ],
+  "speed": [
+    { "if": "true", "limit_to": "foot_average_speed" }
+  ]
+}

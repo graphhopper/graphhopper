@@ -26,6 +26,8 @@ import com.graphhopper.util.PMap;
 
 import java.util.*;
 
+import static com.graphhopper.routing.util.parsers.OSMTemporalAccessParser.hasTemporalRestriction;
+
 public class CarAccessParser extends AbstractAccessParser implements TagParser {
 
     protected final Set<String> trackTypeValues = new HashSet<>();
@@ -79,7 +81,8 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
     public WayAccess getAccess(ReaderWay way) {
         // TODO: Ferries have conditionals, like opening hours or are closed during some time in the year
         String highwayValue = way.getTag("highway");
-        String firstValue = way.getFirstPriorityTag(restrictions);
+        int firstIndex = way.getFirstIndex(restrictionKeys);
+        String firstValue = firstIndex < 0 ? "" : way.getTag(restrictionKeys.get(firstIndex), "");
         if (highwayValue == null) {
             if (FerrySpeedCalculator.isFerry(way)) {
                 if (restrictedValues.contains(firstValue))
@@ -107,22 +110,17 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
             return WayAccess.CAN_SKIP;
 
         // multiple restrictions needs special handling
-        boolean permittedWayConditionallyRestricted = getConditionalTagInspector().isPermittedWayConditionallyRestricted(way);
-        boolean restrictedWayConditionallyPermitted = getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way);
-        if (!firstValue.isEmpty()) {
+        if (firstIndex >= 0) {
             String[] restrict = firstValue.split(";");
             for (String value : restrict) {
-                if (restrictedValues.contains(value) && !restrictedWayConditionallyPermitted)
+                if (restrictedValues.contains(value) && !hasTemporalRestriction(way, firstIndex, restrictionKeys))
                     return WayAccess.CAN_SKIP;
-                if (intendedValues.contains(value) && !permittedWayConditionallyRestricted)
+                if (intendedValues.contains(value))
                     return WayAccess.WAY;
             }
         }
 
         if (isBlockFords() && ("ford".equals(highwayValue) || way.hasTag("ford")))
-            return WayAccess.CAN_SKIP;
-
-        if (permittedWayConditionallyRestricted)
             return WayAccess.CAN_SKIP;
 
         return WayAccess.WAY;

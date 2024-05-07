@@ -17,15 +17,25 @@
  */
 package com.graphhopper.util.details;
 
+import static com.graphhopper.util.Parameters.Details.INTERSECTION;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.*;
-
-import java.util.*;
-
-import static com.graphhopper.util.Parameters.Details.INTERSECTION;
+import com.graphhopper.util.AngleCalc;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.FetchMode;
+import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.PointList;
 
 /**
  * Calculate the intersections for a route. Every change of the edge id is considered an intersection.
@@ -44,7 +54,7 @@ public class IntersectionDetails extends AbstractPathDetailsBuilder {
 
     private int fromEdge = -1;
 
-    private Map<String, Object> intersectionMap = new HashMap<>();
+    private Map<String, Object> intersectionMap = null;
 
     private final EdgeExplorer crossingExplorer;
     private final NodeAccess nodeAccess;
@@ -89,25 +99,10 @@ public class IntersectionDetails extends AbstractPathDetailsBuilder {
                 intersectingEdges.add(intersectionValues);
             }
 
-            intersectingEdges.sort(null);
+            intersectingEdges = intersectingEdges.stream().
+                sorted((x, y) -> Integer.compare(x.bearing, y.bearing)).collect(Collectors.toList());
 
-            List<Integer> bearings = new ArrayList<>(intersectingEdges.size());
-            List<Boolean> entries = new ArrayList<>(intersectingEdges.size());
-
-            for (int i = 0; i < intersectingEdges.size(); i++) {
-                IntersectionValues intersectionValues = intersectingEdges.get(i);
-                bearings.add(intersectionValues.bearing);
-                entries.add(intersectionValues.entry);
-                if (intersectionValues.in) {
-                    intersectionMap.put("in", i);
-                }
-                if (intersectionValues.out) {
-                    intersectionMap.put("out", i);
-                }
-            }
-
-            intersectionMap.put("bearings", bearings);
-            intersectionMap.put("entries", entries);
+            intersectionMap = IntersectionValues.createIntersection(intersectingEdges);
 
             fromEdge = toEdge;
             return true;
@@ -133,21 +128,5 @@ public class IntersectionDetails extends AbstractPathDetailsBuilder {
     @Override
     public Object getCurrentValue() {
         return this.intersectionMap;
-    }
-
-    private class IntersectionValues implements Comparable {
-
-        public int bearing;
-        public boolean entry;
-        public boolean in;
-        public boolean out;
-
-        @Override
-        public int compareTo(Object o) {
-            if (o instanceof IntersectionValues) {
-                return Integer.compare(this.bearing, ((IntersectionValues) o).bearing);
-            }
-            return 0;
-        }
     }
 }

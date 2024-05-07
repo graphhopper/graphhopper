@@ -24,8 +24,7 @@ import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
-import com.graphhopper.config.Profile;
-import com.graphhopper.util.CustomModel;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -51,23 +50,23 @@ public class RouteResourceProfileSelectionTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.vehicles", "bike,car,foot").
                 putObject("prepare.min_network_size", 0).
                 putObject("datareader.file", "../core/files/monaco.osm.gz").
                 putObject("graph.encoded_values", "road_class,surface,road_environment,max_speed").
                 putObject("import.osm.ignored_highways", "").
-                putObject("graph.location", DIR)
-                .setProfiles(Arrays.asList(
-                        new Profile("my_car").setVehicle("car"),
-                        new Profile("my_bike").setCustomModel(new CustomModel().setDistanceInfluence(200d)).setVehicle("bike"),
-                        new Profile("my_feet").setVehicle("foot")
-                ))
-                .setCHProfiles(Arrays.asList(
+                putObject("graph.location", DIR).
+                putObject("graph.encoded_values", "road_class, surface, road_environment, max_speed, car_access, car_average_speed, bike_access, bike_priority, bike_average_speed, foot_access, foot_priority, foot_average_speed").
+                setProfiles(Arrays.asList(
+                        TestProfiles.accessAndSpeed("my_car", "car"),
+                        TestProfiles.accessSpeedAndPriority("my_bike", "bike"),
+                        TestProfiles.accessSpeedAndPriority("my_feet", "foot")
+                )).
+                setCHProfiles(Arrays.asList(
                         new CHProfile("my_car"),
                         new CHProfile("my_bike"),
                         new CHProfile("my_feet")
-                ))
-                .setLMProfiles(Arrays.asList(
+                )).
+                setLMProfiles(Arrays.asList(
                         new LMProfile("my_car"),
                         new LMProfile("my_bike"),
                         new LMProfile("my_feet")
@@ -85,7 +84,7 @@ public class RouteResourceProfileSelectionTest {
     @ValueSource(strings = {"CH", "LM", "flex"})
     public void selectUsingProfile(String mode) {
         assertDistance("my_car", mode, 3563);
-        assertDistance("my_bike", mode, 3296);
+        assertDistance("my_bike", mode, 3700);
         assertDistance("my_feet", mode, 3158);
         assertError("my_pink_car", mode, "The requested profile 'my_pink_car' does not exist");
     }

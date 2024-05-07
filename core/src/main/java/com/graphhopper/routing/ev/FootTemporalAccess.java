@@ -15,22 +15,33 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.reader.osm.conditional;
 
-import java.util.Calendar;
+package com.graphhopper.routing.ev;
+
+import com.graphhopper.util.Helper;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
 
 /**
- * Base Test for calendar based tasks.
- * <p>
- *
- * @author Robin Boldt
+ * Stores temporary so-called conditional restrictions from access:conditional and other conditional
+ * tags affecting foot. See OSMRoadAccessConditionalParser.
  */
-public abstract class CalendarBasedTest {
-    protected Calendar getCalendar(int year, int month, int day) {
-        Calendar calendar = DateRangeParser.createCalendar();
-        calendar.set(Calendar.YEAR, year);
-        calendar.set(Calendar.MONTH, month);
-        calendar.set(Calendar.DAY_OF_MONTH, day);
-        return calendar;
+public enum FootTemporalAccess {
+
+    MISSING, YES, NO;
+
+    public static final Collection<String> CONDITIONALS = new HashSet<>(Arrays.asList("access:conditional",
+            "foot:conditional"));
+    public static final String KEY = "foot_temporal_access";
+
+    public static EnumEncodedValue<FootTemporalAccess> create() {
+        return new EnumEncodedValue<>(KEY, FootTemporalAccess.class);
+    }
+
+    @Override
+    public String toString() {
+        return Helper.toLowerCase(super.toString());
     }
 }

@@ -15,12 +15,12 @@ class CurvatureCalculatorTest {
     @Test
     public void testCurvature() {
         CurvatureCalculator calculator = new CurvatureCalculator(em.getDecimalEncodedValue(Curvature.KEY));
-        ArrayEdgeIntAccess intAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
+        ArrayEdgeIntAccess intAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
         int edgeId = 0;
         calculator.handleWayTags(edgeId, intAccess, getStraightWay(), null);
         double valueStraight = em.getDecimalEncodedValue(Curvature.KEY).getDecimal(false, edgeId, intAccess);
 
-        intAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
+        intAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
         calculator.handleWayTags(edgeId, intAccess, getCurvyWay(), null);
         double valueCurvy = em.getDecimalEncodedValue(Curvature.KEY).getDecimal(false, edgeId, intAccess);
 

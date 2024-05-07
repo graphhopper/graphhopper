@@ -22,8 +22,7 @@ import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.config.LMProfile;
-import com.graphhopper.config.Profile;
-import com.graphhopper.util.CustomModel;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -52,15 +51,14 @@ public class RouteResourceCustomModelLMTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.vehicles", "car,foot").
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("graph.location", DIR).
                 putObject("import.osm.ignored_highways", "").
-                putObject("graph.encoded_values", "surface").
+                putObject("graph.encoded_values", "surface, car_access, car_average_speed, foot_access, foot_priority, foot_average_speed").
                 setProfiles(Arrays.asList(
-                        new Profile("car_custom").setCustomModel(new CustomModel().setDistanceInfluence(15d)).setVehicle("car"),
-                        new Profile("foot_profile").setVehicle("foot"),
-                        new Profile("foot_custom").setVehicle("foot"))).
+                        TestProfiles.accessAndSpeed("car_custom", "car"),
+                        TestProfiles.accessSpeedAndPriority("foot_profile", "foot"),
+                        TestProfiles.accessSpeedAndPriority("foot_custom", "foot"))).
                 setLMProfiles(Arrays.asList(new LMProfile("car_custom"), new LMProfile("foot_custom")));
         return config;
     }

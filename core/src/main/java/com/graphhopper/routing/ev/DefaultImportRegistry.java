@@ -18,9 +18,11 @@
 
 package com.graphhopper.routing.ev;
 
-import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.parsers.*;
+
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 public class DefaultImportRegistry implements ImportRegistry {
     @Override
@@ -207,43 +209,69 @@ public class DefaultImportRegistry implements ImportRegistry {
 
         else if (BusAccess.KEY.equals(name))
             return ImportUnit.create(name, props -> BusAccess.create(),
-                    (lookup, props) -> new ModeAccessParser(TransportationMode.BUS, lookup.getBooleanEncodedValue(BusAccess.KEY), lookup.getBooleanEncodedValue(Roundabout.KEY)),
+                    (lookup, props) -> new ModeAccessParser(TransportationMode.BUS, lookup.getBooleanEncodedValue(BusAccess.KEY),
+                            lookup.getBooleanEncodedValue(Roundabout.KEY), Arrays.stream(props.getString("restrictions", "").split(";")).filter(s -> !s.isEmpty()).collect(Collectors.toList())),
                     "roundabout"
             );
 
         else if (HovAccess.KEY.equals(name))
             return ImportUnit.create(name, props -> HovAccess.create(),
-                    (lookup, props) -> new ModeAccessParser(TransportationMode.HOV, lookup.getBooleanEncodedValue(HovAccess.KEY), lookup.getBooleanEncodedValue(Roundabout.KEY)),
+                    (lookup, props) -> new ModeAccessParser(TransportationMode.HOV, lookup.getBooleanEncodedValue(HovAccess.KEY),
+                            lookup.getBooleanEncodedValue(Roundabout.KEY), Arrays.stream(props.getString("restrictions", "").split(";")).filter(s -> !s.isEmpty()).collect(Collectors.toList())),
                     "roundabout"
+            );
+        else if (FootTemporalAccess.KEY.equals(name))
+            return ImportUnit.create(name, props -> FootTemporalAccess.create(),
+                    (lookup, props) -> {
+                        EnumEncodedValue<FootTemporalAccess> enc = lookup.getEnumEncodedValue(FootTemporalAccess.KEY, FootTemporalAccess.class);
+                        OSMTemporalAccessParser.Setter fct = (edgeId, edgeIntAccess, b) -> enc.setEnum(false, edgeId, edgeIntAccess, b ? FootTemporalAccess.YES : FootTemporalAccess.NO);
+                        return new OSMTemporalAccessParser(FootTemporalAccess.CONDITIONALS, fct, props.getString("date_range_parser_day", ""));
+                    }
+            );
+
+        else if (BikeTemporalAccess.KEY.equals(name))
+            return ImportUnit.create(name, props -> BikeTemporalAccess.create(),
+                    (lookup, props) -> {
+                        EnumEncodedValue<BikeTemporalAccess> enc = lookup.getEnumEncodedValue(BikeTemporalAccess.KEY, BikeTemporalAccess.class);
+                        OSMTemporalAccessParser.Setter fct = (edgeId, edgeIntAccess, b) -> enc.setEnum(false, edgeId, edgeIntAccess, b ? BikeTemporalAccess.YES : BikeTemporalAccess.NO);
+                        return new OSMTemporalAccessParser(BikeTemporalAccess.CONDITIONALS, fct, props.getString("date_range_parser_day", ""));
+                    }
+            );
+
+        else if (CarTemporalAccess.KEY.equals(name))
+            return ImportUnit.create(name, props -> CarTemporalAccess.create(),
+                    (lookup, props) -> {
+                        EnumEncodedValue<CarTemporalAccess> enc = lookup.getEnumEncodedValue(CarTemporalAccess.KEY, CarTemporalAccess.class);
+                        OSMTemporalAccessParser.Setter fct = (edgeId, edgeIntAccess, b) -> enc.setEnum(false, edgeId, edgeIntAccess, b ? CarTemporalAccess.YES : CarTemporalAccess.NO);
+                        return new OSMTemporalAccessParser(CarTemporalAccess.CONDITIONALS, fct, props.getString("date_range_parser_day", ""));
+                    }
             );
 
         else if (VehicleAccess.key("car").equals(name))
             return ImportUnit.create(name, props -> VehicleAccess.create("car"),
-                    (lookup, props) -> new CarAccessParser(lookup, props).init(props.getObject("date_range_parser", new DateRangeParser())),
+                    CarAccessParser::new,
                     "roundabout"
             );
         else if (VehicleAccess.key("roads").equals(name))
-            return ImportUnit.create(name, props -> VehicleAccess.create("roads"),
-                    (lookup, props) -> new RoadsAccessParser(lookup)
-            );
+            throw new IllegalArgumentException("roads_access parser no longer necessary, see docs/migration/config-migration-08-09.md");
         else if (VehicleAccess.key("bike").equals(name))
             return ImportUnit.create(name, props -> VehicleAccess.create("bike"),
-                    (lookup, props) -> new BikeAccessParser(lookup, props).init(props.getObject("date_range_parser", new DateRangeParser())),
+                    BikeAccessParser::new,
                     "roundabout"
             );
         else if (VehicleAccess.key("racingbike").equals(name))
             return ImportUnit.create(name, props -> VehicleAccess.create("racingbike"),
-                    (lookup, props) -> new RacingBikeAccessParser(lookup, props).init(props.getObject("date_range_parser", new DateRangeParser())),
+                    RacingBikeAccessParser::new,
                     "roundabout"
             );
         else if (VehicleAccess.key("mtb").equals(name))
             return ImportUnit.create(name, props -> VehicleAccess.create("mtb"),
-                    (lookup, props) -> new MountainBikeAccessParser(lookup, props).init(props.getObject("date_range_parser", new DateRangeParser())),
+                    MountainBikeAccessParser::new,
                     "roundabout"
             );
         else if (VehicleAccess.key("foot").equals(name))
             return ImportUnit.create(name, props -> VehicleAccess.create("foot"),
-                    (lookup, props) -> new FootAccessParser(lookup, props).init(props.getObject("date_range_parser", new DateRangeParser())));
+                    FootAccessParser::new);
 
         else if (VehicleSpeed.key("car").equals(name))
             return ImportUnit.create(name, props -> new DecimalEncodedValueImpl(
@@ -252,10 +280,7 @@ public class DefaultImportRegistry implements ImportRegistry {
                     "ferry_speed"
             );
         else if (VehicleSpeed.key("roads").equals(name))
-            return ImportUnit.create(name, props -> new DecimalEncodedValueImpl(
-                            name, props.getInt("speed_bits", 7), props.getDouble("speed_factor", 2), true),
-                    (lookup, props) -> new RoadsAverageSpeedParser(lookup)
-            );
+            throw new IllegalArgumentException("roads_average_speed parser no longer necessary, see docs/migration/config-migration-08-09.md");
         else if (VehicleSpeed.key("bike").equals(name))
             return ImportUnit.create(name, props -> new DecimalEncodedValueImpl(
                             name, props.getInt("speed_bits", 4), props.getDouble("speed_factor", 2), false),

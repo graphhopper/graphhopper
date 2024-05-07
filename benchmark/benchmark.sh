@@ -18,8 +18,8 @@ set -o xtrace
 defaultGraphDir=measurements/
 defaultResultsDir=measurements/results/$(date '+%d-%m-%Y-%s%N')/
 defaultSummaryDir=measurements/
-defaultSmallMap=core/files/andorra.osm.pbf
-defaultBigMap=core/files/andorra.osm.pbf
+defaultSmallMap=map-matching/files/leipzig_germany.osm.pbf
+defaultBigMap=map-matching/files/leipzig_germany.osm.pbf
 defaultUseMeasurementTimeAsRefTime=false
 
 GRAPH_DIR=${1:-$defaultGraphDir}
@@ -105,7 +105,7 @@ measurement.repeats=1 \
 measurement.run_slow_routing=false \
 measurement.weighting=custom \
 measurement.custom_model_file=benchmark/very_custom.json \
-graph.encoded_values=max_width,max_height,toll,hazmat \
+graph.encoded_values=max_width,max_height,toll,hazmat,road_access,road_class \
 measurement.ch.node=true \
 measurement.ch.edge=false \
 measurement.lm=true \

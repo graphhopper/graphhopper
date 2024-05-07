@@ -19,17 +19,16 @@
 package com.graphhopper.gtfs.analysis;
 
 import com.graphhopper.GraphHopperConfig;
-import com.graphhopper.config.Profile;
 import com.graphhopper.gtfs.GraphHopperGtfs;
 import com.graphhopper.gtfs.GtfsStorage;
 import com.graphhopper.gtfs.PtGraph;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -46,9 +45,10 @@ public class AnalysisTest {
         ghConfig.putObject("datareader.file", "files/beatty.osm");
         ghConfig.putObject("gtfs.file", "files/sample-feed,files/another-sample-feed");
         ghConfig.putObject("import.osm.ignored_highways", "");
-        ghConfig.setProfiles(Arrays.asList(
-                new Profile("foot").setVehicle("foot"),
-                new Profile("car").setVehicle("car")));
+        ghConfig.putObject("graph.encoded_values", "foot_access, foot_priority, foot_average_speed, car_access, car_average_speed");
+        ghConfig.setProfiles(List.of(
+                TestProfiles.accessSpeedAndPriority("foot"),
+                TestProfiles.accessAndSpeed("car")));
         Helper.removeDir(new File(GRAPH_LOC));
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);
