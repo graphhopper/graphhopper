@@ -92,7 +92,7 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
                     RoadAccess roadAccessFrom = randomAccessEdgeState.setEdge(edgeFrom, nodeVia).get(roadAccessEnc);
                     RoadAccess roadAccessTo = randomAccessEdgeState.setEdge(edgeTo, nodeVia).getReverse(roadAccessEnc);
                     if ((roadAccessFrom == RoadAccess.DESTINATION) != (roadAccessTo == RoadAccess.DESTINATION)) {
-                        tCost = 5;
+                        tCost = 50;
                     }
                 }
             }
