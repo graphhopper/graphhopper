@@ -35,6 +35,7 @@ import java.util.Arrays;
 public class RAMDataAccess extends AbstractDataAccess {
     private byte[][] segments = new byte[0][];
     private boolean store;
+    // we could also use UNSAFE but it is not really faster (see #3002)
     private static final VarHandle INT = MethodHandles.byteArrayViewVarHandle(int[].class, ByteOrder.LITTLE_ENDIAN);
     private static final VarHandle SHORT = MethodHandles.byteArrayViewVarHandle(short[].class, ByteOrder.LITTLE_ENDIAN);
 
@@ -180,7 +181,7 @@ public class RAMDataAccess extends AbstractDataAccess {
                 bitUtil.fromUInt3(b1, value, index);
             }
         } else {
-            bitUtil.fromInt(segments[bufferIndex], value, index);
+            INT.set(segments[bufferIndex], index, value);
         }
     }
 
@@ -211,7 +212,7 @@ public class RAMDataAccess extends AbstractDataAccess {
             segments[bufferIndex][index] = (byte) (value);
             segments[bufferIndex + 1][0] = (byte) (value >>> 8);
         } else {
-            bitUtil.fromShort(segments[bufferIndex], value, index);
+            SHORT.set(segments[bufferIndex], index, value);
         }
     }
 
