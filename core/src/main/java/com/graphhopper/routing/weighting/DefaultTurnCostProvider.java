@@ -21,6 +21,7 @@ package com.graphhopper.routing.weighting;
 import com.graphhopper.config.TurnCostsConfig;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.RoadAccess;
 import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.BaseGraph;
@@ -32,6 +33,7 @@ import static com.graphhopper.config.TurnCostsConfig.INFINITE_U_TURN_COSTS;
 public class DefaultTurnCostProvider implements TurnCostProvider {
     private final BooleanEncodedValue turnRestrictionEnc;
     private final EnumEncodedValue<RoadClass> roadClassEnc;
+    private final EnumEncodedValue<RoadAccess> roadAccessEnc;
     private final BaseGraph graph;
     private final TurnCostStorage turnCostStorage;
     private final int uTurnCostsInt;
@@ -58,6 +60,7 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
         // if null the TurnCostProvider can be still useful for edge-based routing
         this.turnRestrictionEnc = turnRestrictionEnc;
         this.roadClassEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
+        this.roadAccessEnc = encodingManager.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
         this.graph = baseGraph;
         this.randomAccessEdgeState = baseGraph.createEdgeRandomAccess();
         this.turnCostStorage = baseGraph.getTurnCostStorage();
@@ -81,10 +84,16 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
                 if (turnCostStorage.get(turnRestrictionEnc, edgeFrom, nodeVia, edgeTo))
                     tCost = Double.POSITIVE_INFINITY;
                 else {
-                    RoadClass roadClassFrom = randomAccessEdgeState.setEdge(edgeFrom, nodeVia).get(roadClassEnc);
-                    RoadClass roadClassTo = randomAccessEdgeState.setEdge(edgeTo, nodeVia).getReverse(roadClassEnc);
-                    if (roadClassFrom != roadClassTo)
+//                    RoadClass roadClassFrom = randomAccessEdgeState.setEdge(edgeFrom, nodeVia).get(roadClassEnc);
+//                    RoadClass roadClassTo = randomAccessEdgeState.setEdge(edgeTo, nodeVia).getReverse(roadClassEnc);
+//                    if (roadClassFrom != roadClassTo)
+//                        tCost = 5;
+
+                    RoadAccess roadAccessFrom = randomAccessEdgeState.setEdge(edgeFrom, nodeVia).get(roadAccessEnc);
+                    RoadAccess roadAccessTo = randomAccessEdgeState.setEdge(edgeTo, nodeVia).getReverse(roadAccessEnc);
+                    if ((roadAccessFrom == RoadAccess.DESTINATION) != (roadAccessTo == RoadAccess.DESTINATION)) {
                         tCost = 5;
+                    }
                 }
             }
         }
