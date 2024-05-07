@@ -92,7 +92,7 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
                     RoadAccess roadAccessFrom = roadAccessEnc.getEnum(false, edgeFrom, edgeAccess);
                     RoadAccess roadAccessTo = roadAccessEnc.getEnum(false, edgeTo, edgeAccess);
                     if ((roadAccessFrom == RoadAccess.DESTINATION) != (roadAccessTo == RoadAccess.DESTINATION)) {
-                        tCost = 50;
+                        tCost = 500;
                     }
                 }
             }
