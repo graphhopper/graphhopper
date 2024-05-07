@@ -18,8 +18,8 @@
 
 package com.graphhopper;
 
-import com.graphhopper.config.Profile;
 import com.graphhopper.gtfs.*;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap;
 import org.junit.jupiter.api.AfterAll;
@@ -40,7 +40,8 @@ import java.util.stream.Collectors;
 
 import static com.graphhopper.gtfs.GtfsHelper.time;
 import static com.graphhopper.util.Parameters.Details.EDGE_KEY;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class AnotherAgencyIT {
 
@@ -53,16 +54,18 @@ public class AnotherAgencyIT {
     public static void init() {
         GraphHopperConfig ghConfig = new GraphHopperConfig();
         ghConfig.putObject("graph.location", GRAPH_LOC);
+        ghConfig.putObject("import.osm.ignored_highways", "");
         ghConfig.putObject("datareader.file", "files/beatty.osm");
         ghConfig.putObject("gtfs.file", "files/sample-feed,files/another-sample-feed");
-        ghConfig.setProfiles(Arrays.asList(
-                new Profile("foot").setVehicle("foot").setWeighting("fastest"),
-                new Profile("car").setVehicle("car").setWeighting("fastest")));
+        ghConfig.putObject("graph.encoded_values", "foot_access, foot_priority, foot_average_speed, car_access, car_average_speed");
+        ghConfig.setProfiles(List.of(
+                TestProfiles.accessSpeedAndPriority("foot"),
+                TestProfiles.accessAndSpeed("car")));
         Helper.removeDir(new File(GRAPH_LOC));
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);
         graphHopperGtfs.importOrLoad();
-        ptRouter = new PtRouterImpl.Factory(ghConfig, new TranslationMap().doImport(), graphHopperGtfs.getGraphHopperStorage(), graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage())
+        ptRouter = new PtRouterImpl.Factory(ghConfig, new TranslationMap().doImport(), graphHopperGtfs.getBaseGraph(), graphHopperGtfs.getEncodingManager(), graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage())
                 .createWithoutRealtimeFeed();
     }
 
@@ -170,7 +173,7 @@ public class AnotherAgencyIT {
         assertEquals("10:00", LocalDateTime.ofInstant(walkDepartureTime, zoneId).toLocalTime().toString());
         assertEquals(readWktLineString("LINESTRING (-116.76164 36.906093, -116.761812 36.905928, -116.76217 36.905659)"), transitSolution.getLegs().get(1).geometry);
         Instant walkArrivalTime = Instant.ofEpochMilli(transitSolution.getLegs().get(1).getArrivalTime().getTime());
-        assertEquals("10:08:06.660", LocalDateTime.ofInstant(walkArrivalTime, zoneId).toLocalTime().toString());
+        assertEquals("10:08:06.670", LocalDateTime.ofInstant(walkArrivalTime, zoneId).toLocalTime().toString());
         assertEquals("EMSI,DADAN", ((Trip.PtLeg) transitSolution.getLegs().get(2)).stops.stream().map(s -> s.stop_id).collect(Collectors.joining(",")));
     }
 
@@ -188,7 +191,7 @@ public class AnotherAgencyIT {
         GHResponse route = ptRouter.route(ghRequest);
         ResponsePath walkRoute = route.getBest();
         assertEquals(1, walkRoute.getLegs().size());
-        assertEquals(486660, walkRoute.getTime()); // < 10 min, so the transfer in test above works ^^
+        assertEquals(486670, walkRoute.getTime()); // < 10 min, so the transfer in test above works ^^
         assertEquals(readWktLineString("LINESTRING (-116.76164 36.906093, -116.761812 36.905928, -116.76217 36.905659)"), walkRoute.getLegs().get(0).geometry);
         assertFalse(route.hasErrors());
     }

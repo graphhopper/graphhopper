@@ -1,42 +1,68 @@
 package com.graphhopper.routing.util.parsers.helpers;
 
-import static com.graphhopper.util.Helper.toLowerCase;
+import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.ev.MaxSpeed;
+import com.graphhopper.util.DistanceCalcEarth;
+import com.graphhopper.util.Helper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.regex.Pattern;
 
-import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.MaxSpeed;
-import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.DistanceCalcEarth;
-import com.graphhopper.util.Helper;
+import static com.graphhopper.util.Helper.toLowerCase;
 
 public class OSMValueExtractor {
-    
-    private static final Pattern TON_PATTERN    = Pattern.compile("tons?");
-    private static final Pattern MGW_PATTERN    = Pattern.compile("mgw");
+
+    private static final Pattern TON_PATTERN = Pattern.compile("tons?");
+    private static final Pattern MGW_PATTERN = Pattern.compile("mgw");
     private static final Pattern WSPACE_PATTERN = Pattern.compile("\\s");
-    private static final Pattern METER_PATTERN  = Pattern.compile("meters?|mtrs?|mt|m\\.");
-    private static final Pattern INCH_PATTERN   = Pattern.compile("\"|\'\'");
-    private static final Pattern FEET_PATTERN   = Pattern.compile("\'|feet");
+    private static final Pattern METER_PATTERN = Pattern.compile("meters?|mtrs?|mt|m\\.");
+    private static final Pattern INCH_PATTERN = Pattern.compile("\"|\'\'");
+    private static final Pattern FEET_PATTERN = Pattern.compile("\'|feet");
     private static final Pattern APPROX_PATTERN = Pattern.compile("~|approx");
+    private static final Logger logger = LoggerFactory.getLogger(OSMValueExtractor.class);
 
     private OSMValueExtractor() {
         // utility class
     }
 
-    public static void extractTons(IntsRef edgeFlags, ReaderWay way, DecimalEncodedValue valueEncoder, List<String> keys) {
-        final String rawValue = way.getFirstPriorityTag(keys);
+    public static void extractTons(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, DecimalEncodedValue valueEncoder, List<String> keys) {
+        final String rawValue = way.getFirstValue(keys);
         double value = stringToTons(rawValue);
-        
-        if (Double.isNaN(value)) {
-            return;
+
+        if (Double.isNaN(value)) value = Double.POSITIVE_INFINITY;
+
+        valueEncoder.setDecimal(false, edgeId, edgeIntAccess, value);
+        // too many
+//        if (value - valueEncoder.getDecimal(false, edgeFlags) > 2)
+//            logger.warn("Value " + value + " for " + valueEncoder.getName() + " was too large and truncated to " + valueEncoder.getDecimal(false, edgeFlags));
+    }
+
+    /**
+     * This parses the weight for a conditional value like "delivery @ (weight > 7.5)"
+     */
+    public static double conditionalWeightToTons(String value) {
+        try {
+            int index = value.indexOf("weight>"); // maxweight or weight
+            if (index < 0) {
+                index = value.indexOf("weight >");
+                if (index > 0) index += "weight >".length();
+            } else {
+                index += "weight>".length();
+            }
+            if (index > 0) {
+                int lastIndex = value.indexOf(')', index); // (value) or value
+                if (lastIndex < 0) lastIndex = value.length() - 1;
+                if (lastIndex > index)
+                    return OSMValueExtractor.stringToTons(value.substring(index, lastIndex));
+            }
+            return Double.NaN;
+        } catch (Exception ex) {
+            throw new RuntimeException("value " + value, ex);
         }
-        
-        if (value > valueEncoder.getMaxDecimal())
-            value = valueEncoder.getMaxDecimal();
-        valueEncoder.setDecimal(false, edgeFlags, value);
     }
 
     public static double stringToTons(String value) {
@@ -66,17 +92,16 @@ public class OSMValueExtractor {
         }
     }
 
-    public static void extractMeter(IntsRef edgeFlags, ReaderWay way, DecimalEncodedValue valueEncoder, List<String> keys) {
-        final String rawValue = way.getFirstPriorityTag(keys);
+    public static void extractMeter(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, DecimalEncodedValue valueEncoder, List<String> keys) {
+        final String rawValue = way.getFirstValue(keys);
         double value = stringToMeter(rawValue);
-        
-        if (Double.isNaN(value)) {
-            return;
-        }
 
-        if (value > valueEncoder.getMaxDecimal())
-            value = valueEncoder.getMaxDecimal();
-        valueEncoder.setDecimal(false, edgeFlags, value);
+        if (Double.isNaN(value)) value = Double.POSITIVE_INFINITY;
+
+        valueEncoder.setDecimal(false, edgeId, edgeIntAccess, value);
+        // too many
+//        if (value - valueEncoder.getDecimal(false, edgeFlags) > 2)
+//            logger.warn("Value " + value + " for " + valueEncoder.getName() + " was too large and truncated to " + valueEncoder.getDecimal(false, edgeFlags));
     }
 
     public static double stringToMeter(String value) {
@@ -124,7 +149,7 @@ public class OSMValueExtractor {
         if (value.isEmpty()) {
             return offset;
         }
-        
+
         try {
             return Double.parseDouble(value) * factor + offset;
         } catch (NumberFormatException e) {
@@ -149,20 +174,14 @@ public class OSMValueExtractor {
     public static double stringToKmh(String str) {
         if (Helper.isEmpty(str))
             return Double.NaN;
-    
+
+        if ("walk".equals(str))
+            return 6;
+
         // on some German autobahns and a very few other places
         if ("none".equals(str))
             return MaxSpeed.UNLIMITED_SIGN_SPEED;
-    
-        if (str.endsWith(":rural") || str.endsWith(":trunk"))
-            return 80;
-    
-        if (str.endsWith(":urban"))
-            return 50;
-    
-        if (str.equals("walk") || str.endsWith(":living_street"))
-            return 6;
-    
+
         int mpInteger = str.indexOf("mp");
         int knotInteger = str.indexOf("knots");
         int kmInteger = str.indexOf("km");
@@ -183,18 +202,18 @@ public class OSMValueExtractor {
             }
             factor = 1;
         }
-            
+
         double value;
         try {
             value = Integer.parseInt(str) * factor;
         } catch (Exception ex) {
             return Double.NaN;
         }
-        
+
         if (value <= 0) {
             return Double.NaN;
         }
-        
+
         return value;
     }
 }

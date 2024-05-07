@@ -17,12 +17,21 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
+import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
+import com.graphhopper.search.KVStorage;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.*;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.jupiter.api.Test;
 
+import java.util.Map;
+
+import static com.graphhopper.search.KVStorage.KValue;
+import static com.graphhopper.util.Parameters.Details.STREET_NAME;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -36,6 +45,7 @@ public class NameSimilarityEdgeFilterTest {
     public void testAccept() {
         EdgeFilter edgeFilter = createNameSimilarityEdgeFilter("Laufamholzstraße 154 Nürnberg");
         EdgeIteratorState edge = createTestEdgeIterator("Laufamholzstraße, ST1333");
+        edge.getName();
         assertTrue(edgeFilter.accept(edge));
 
         edge = createTestEdgeIterator("Hauptstraße");
@@ -81,8 +91,7 @@ public class NameSimilarityEdgeFilterTest {
 
     @Test
     public void testDistanceFiltering() {
-        FlagEncoder encoder = FlagEncoders.createCar();
-        BaseGraph g = new BaseGraph.Builder(EncodingManager.create(encoder)).create();
+        BaseGraph g = new BaseGraph.Builder(1).create();
         NodeAccess na = g.getNodeAccess();
 
         GHPoint pointFarAway = new GHPoint(49.458629, 11.146124);
@@ -98,11 +107,11 @@ public class NameSimilarityEdgeFilterTest {
         na.setNode(nodeID200, point200mAway.lat, point200mAway.lon);
 
         // Check that it matches a street 50m away
-        EdgeIteratorState edge1 = g.edge(nodeId50, farAwayId).setName("Wentworth Street");
+        EdgeIteratorState edge1 = g.edge(nodeId50, farAwayId).setKeyValues(Map.of(STREET_NAME, new KValue("Wentworth Street")));
         assertTrue(createNameSimilarityEdgeFilter("Wentworth Street").accept(edge1));
 
         // Check that it doesn't match streets 200m away
-        EdgeIteratorState edge2 = g.edge(nodeID200, farAwayId).setName("Wentworth Street");
+        EdgeIteratorState edge2 = g.edge(nodeID200, farAwayId).setKeyValues(Map.of(STREET_NAME, new KValue("Wentworth Street")));
         assertFalse(createNameSimilarityEdgeFilter("Wentworth Street").accept(edge2));
     }
 
@@ -226,42 +235,7 @@ public class NameSimilarityEdgeFilterTest {
      * so distance is not used when matching
      */
     private NameSimilarityEdgeFilter createNameSimilarityEdgeFilter(String pointHint) {
-        return new NameSimilarityEdgeFilter(new EdgeFilter() {
-            @Override
-            public boolean accept(EdgeIteratorState edgeState) {
-                return true;
-            }
-        }, pointHint, basePoint, 100);
-    }
-
-    private EdgeIteratorState createTestEdgeIterator(final String name, final int baseNodeId, final int adjNodeId) {
-        return new GHUtility.DisabledEdgeIterator() {
-            @Override
-            public String getName() {
-                return name;
-            }
-
-            @Override
-            public int getBaseNode() {
-                return baseNodeId;
-            }
-
-            @Override
-            public int getAdjNode() {
-                return adjNodeId;
-            }
-
-            @Override
-            public PointList fetchWayGeometry(FetchMode type) {
-                PointList list = new PointList();
-                list.add(basePoint);
-                return list;
-            }
-        };
-    }
-
-    private EdgeIteratorState createTestEdgeIterator(final String name) {
-        return createTestEdgeIterator(name, 0, 0);
+        return new NameSimilarityEdgeFilter(edgeState -> true, pointHint, basePoint, 100);
     }
 
     @Test
@@ -272,8 +246,9 @@ public class NameSimilarityEdgeFilterTest {
         // -----
         //
         //    2 -- 3
-        FlagEncoder encoder = FlagEncoders.createCar(new PMap().putObject("speed_two_directions", true));
-        EncodingManager em = EncodingManager.create(encoder);
+        SimpleBooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
+        DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, true);
+        EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
         BaseGraph graph = new BaseGraph.Builder(em).create();
         PointList pointList = new PointList(20, false);
         pointList.add(43.844377, -79.264005);
@@ -302,14 +277,18 @@ public class NameSimilarityEdgeFilterTest {
         pointList.add(43.842711, -79.264588);
         graph.getNodeAccess().setNode(0, 43.844521, -79.263976);
         graph.getNodeAccess().setNode(1, 43.842775, -79.264649);
-        EdgeIteratorState doubtfire = graph.edge(0, 1).setWayGeometry(pointList).set(encoder.getAccessEnc(), true, true).set(encoder.getAverageSpeedEnc(), 60, 60).setName("Doubtfire Crescent");
-        EdgeIteratorState golden = graph.edge(0, 1).set(encoder.getAccessEnc(), true, true).set(encoder.getAverageSpeedEnc(), 60, 60).setName("Golden Avenue");
+
+        EdgeIteratorState doubtfire = graph.edge(0, 1).setWayGeometry(pointList).set(accessEnc, true, true).
+                set(speedEnc, 60, 60).setKeyValues(Map.of(STREET_NAME, new KValue("Doubtfire Crescent")));
+        EdgeIteratorState golden = graph.edge(0, 1).set(accessEnc, true, true).set(speedEnc, 60, 60).
+                setKeyValues(Map.of(STREET_NAME, new KValue("Golden Avenue")));
 
         graph.getNodeAccess().setNode(2, 43.841501560244744, -79.26366394602502);
         graph.getNodeAccess().setNode(3, 43.842247922172724, -79.2605663670726);
         PointList pointList2 = new PointList(1, false);
         pointList2.add(43.84191413615452, -79.261912128223);
-        EdgeIteratorState denison = graph.edge(2, 3).setWayGeometry(pointList2).set(encoder.getAccessEnc(), true, true).set(encoder.getAverageSpeedEnc(), 60, 60).setName("Denison Street");
+        EdgeIteratorState denison = graph.edge(2, 3).setWayGeometry(pointList2).set(accessEnc, true, true).
+                set(speedEnc, 60, 60).setKeyValues(Map.of(STREET_NAME, new KValue("Denison Street")));
         double qlat = 43.842122;
         double qLon = -79.262162;
 
@@ -325,6 +304,16 @@ public class NameSimilarityEdgeFilterTest {
         assertFalse(filter.accept(golden));
         assertFalse(filter.accept(denison));
         assertTrue(filter.accept(doubtfire));
+    }
+
+    private EdgeIteratorState createTestEdgeIterator(String name) {
+        PointList pointList = new PointList();
+        pointList.add(basePoint);
+        EdgeIteratorState edge = new BaseGraph.Builder(1).create().edge(0, 1)
+                .setWayGeometry(pointList);
+        if (name != null)
+            edge.setKeyValues(Map.of(STREET_NAME, new KValue(name)));
+        return edge;
     }
 
 }

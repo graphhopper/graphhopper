@@ -1,11 +1,10 @@
 package com.graphhopper.api;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.graphhopper.jackson.ResponsePathDeserializer;
+import com.graphhopper.jackson.ResponsePathDeserializerHelper;
 import okhttp3.OkHttpClient;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -29,27 +28,30 @@ public class GHMatrixSyncRequester extends GHMatrixAbstractRequester {
 
     @Override
     public MatrixResponse route(GHMRequest ghRequest) {
-        Collection<String> outArraysList = createOutArrayList(ghRequest);
-        JsonNode requestJson = createPostRequest(ghRequest, outArraysList);
+        JsonNode requestJson = createPostRequest(ghRequest);
 
-        boolean withTimes = outArraysList.contains("times");
-        boolean withDistances = outArraysList.contains("distances");
-        boolean withWeights = outArraysList.contains("weights");
+        boolean withTimes = ghRequest.getOutArrays().contains("times");
+        boolean withDistances = ghRequest.getOutArrays().contains("distances");
+        boolean withWeights = ghRequest.getOutArrays().contains("weights");
         final MatrixResponse matrixResponse = new MatrixResponse(
-                ghRequest.getFromPoints().size(),
-                ghRequest.getToPoints().size(), withTimes, withDistances, withWeights);
+                ghRequest.getPoints() == null ? ghRequest.getFromPoints().size() : ghRequest.getPoints().size(),
+                ghRequest.getPoints() == null ? ghRequest.getToPoints().size() : ghRequest.getPoints().size(),
+                withTimes, withDistances, withWeights);
 
         try {
-            String postUrl = buildURLNoHints("/", ghRequest);
-            JsonNode responseJson = fromStringToJSON(postUrl, postJson(postUrl, requestJson));
+            String postUrl = buildURLNoHints("", ghRequest);
+            JsonResult jsonResult = postJson(postUrl, requestJson);
+            JsonNode responseJson = fromStringToJSON(postUrl, jsonResult.body());
+            matrixResponse.setHeaders(jsonResult.headers());
+            matrixResponse.setStatusCode(jsonResult.statusCode());
             if (responseJson.has("message")) {
-                matrixResponse.addErrors(ResponsePathDeserializer.readErrors(objectMapper, responseJson));
+                matrixResponse.addErrors(ResponsePathDeserializerHelper.readErrors(objectMapper, responseJson));
                 return matrixResponse;
             }
 
-            matrixResponse.addErrors(ResponsePathDeserializer.readErrors(objectMapper, responseJson));
+            matrixResponse.addErrors(ResponsePathDeserializerHelper.readErrors(objectMapper, responseJson));
             if (!matrixResponse.hasErrors())
-                matrixResponse.addErrors(readUsableEntityError(outArraysList, responseJson));
+                matrixResponse.addErrors(readUsableEntityError(ghRequest.getOutArrays(), responseJson));
 
             if (!matrixResponse.hasErrors())
                 fillResponseFromJson(matrixResponse, responseJson, ghRequest.getFailFast());

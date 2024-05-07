@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.graphhopper.util.Helper.createFormatter;
 import static com.graphhopper.util.Helper.getMemInfo;
@@ -98,8 +99,8 @@ public class CHPreparationHandler {
 
     public Map<String, RoutingCHGraph> load(BaseGraph graph, List<CHConfig> chConfigs) {
         Map<String, RoutingCHGraph> loaded = Collections.synchronizedMap(new LinkedHashMap<>());
-        List<Callable<String>> callables = chConfigs.stream()
-                .map(c -> (Callable<String>) () -> {
+        Stream<Runnable> runnables = chConfigs.stream()
+                .map(c -> () -> {
                     CHStorage chStorage = new CHStorage(graph.getDirectory(), c.getName(), graph.getSegmentSize(), c.isEdgeBased());
                     if (chStorage.loadExisting())
                         loaded.put(c.getName(), RoutingCHGraphImpl.fromGraph(graph, chStorage, c));
@@ -108,29 +109,27 @@ public class CHPreparationHandler {
                         graph.getDirectory().remove("nodes_ch_" + c.getName());
                         graph.getDirectory().remove("shortcuts_" + c.getName());
                     }
-                    return c.getName();
-                })
-                .collect(Collectors.toList());
-        GHUtility.runConcurrently(callables, preparationThreads);
+                });
+        GHUtility.runConcurrently(runnables, preparationThreads);
         return loaded;
     }
 
-    public Map<String, PrepareContractionHierarchies.Result> prepare(GraphHopperStorage ghStorage, List<CHConfig> chConfigs, final boolean closeEarly) {
+    public Map<String, PrepareContractionHierarchies.Result> prepare(BaseGraph baseGraph, StorableProperties properties, List<CHConfig> chConfigs, final boolean closeEarly) {
         if (chConfigs.isEmpty()) {
             LOGGER.info("There are no CHs to prepare");
             return Collections.emptyMap();
         }
         LOGGER.info("Creating CH preparations, {}", getMemInfo());
         List<PrepareContractionHierarchies> preparations = chConfigs.stream()
-                .map(c -> createCHPreparation(ghStorage.getBaseGraph(), c))
+                .map(c -> createCHPreparation(baseGraph, c))
                 .collect(Collectors.toList());
         Map<String, PrepareContractionHierarchies.Result> results = Collections.synchronizedMap(new LinkedHashMap<>());
-        List<Callable<String>> callables = new ArrayList<>(preparations.size());
+        List<Runnable> runnables = new ArrayList<>(preparations.size());
         for (int i = 0; i < preparations.size(); ++i) {
             PrepareContractionHierarchies prepare = preparations.get(i);
             LOGGER.info((i + 1) + "/" + preparations.size() + " calling " +
                     "CH prepare.doWork for profile '" + prepare.getCHConfig().getName() + "' " + prepare.getCHConfig().getTraversalMode() + " ... (" + getMemInfo() + ")");
-            callables.add(() -> {
+            runnables.add(() -> {
                 final String name = prepare.getCHConfig().getName();
                 // toString is not taken into account so we need to cheat, see http://stackoverflow.com/q/6113746/194609 for other options
                 Thread.currentThread().setName(name);
@@ -139,11 +138,10 @@ public class CHPreparationHandler {
                 prepare.flush();
                 if (closeEarly)
                     prepare.close();
-                ghStorage.getProperties().put(CH.PREPARE + "date." + name, createFormatter().format(new Date()));
-                return name;
+                properties.put(CH.PREPARE + "date." + name, createFormatter().format(new Date()));
             });
         }
-        GHUtility.runConcurrently(callables, preparationThreads);
+        GHUtility.runConcurrently(runnables.stream(), preparationThreads);
         LOGGER.info("Finished CH preparation, {}", getMemInfo());
         return results;
     }

@@ -23,15 +23,17 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class EncodedValueSerializerTest {
     @Test
     public void serializationAndDeserialization() {
         List<EncodedValue> encodedValues = new ArrayList<>();
         // add enum, int, decimal and boolean encoded values
-        encodedValues.add(new EnumEncodedValue<>(RoadClass.KEY, RoadClass.class));
+        encodedValues.add(RoadClass.create());
         encodedValues.add(Lanes.create());
         encodedValues.add(MaxWidth.create());
         encodedValues.add(GetOffBike.create());
@@ -64,14 +66,33 @@ class EncodedValueSerializerTest {
     }
 
     @Test
-    void wrongVersion() {
-        String serializedEV = "{\"className\":\"com.graphhopper.routing.ev.EnumEncodedValue\",\"name\":\"road_class\",\"bits\":5," +
-                "\"min_value\":0,\"max_value\":31,\"negate_reverse_direction\":false,\"store_two_directions\":false," +
-                "\"enum_type\":\"com.graphhopper.routing.ev.RoadClass\",\"version\":";
-        // this fails, because the version is wrong
-        IllegalStateException e = assertThrows(IllegalStateException.class, () -> EncodedValueSerializer.deserializeEncodedValue(serializedEV + "404}"));
-        assertTrue(e.getMessage().contains("Version does not match"), e.getMessage());
-        // this works
-        assertEquals("road_class", EncodedValueSerializer.deserializeEncodedValue(serializedEV + "979560347}").getName());
+    void explicitString() {
+        EncodedValue.InitializerConfig initializerConfig = new EncodedValue.InitializerConfig();
+        List<EncodedValue> evs = Arrays.asList(
+                Lanes.create(),
+                MaxWidth.create(),
+                GetOffBike.create()
+        );
+        evs.forEach(ev -> ev.init(initializerConfig));
+
+        List<String> serialized = evs.stream().map(EncodedValueSerializer::serializeEncodedValue).collect(Collectors.toList());
+        assertEquals("{\"className\":\"com.graphhopper.routing.ev.IntEncodedValueImpl\",\"name\":\"lanes\",\"bits\":3," +
+                "\"min_storable_value\":0,\"max_storable_value\":7,\"max_value\":-2147483648,\"negate_reverse_direction\":false,\"store_two_directions\":false," +
+                "\"fwd_data_index\":0,\"bwd_data_index\":0,\"fwd_shift\":0,\"bwd_shift\":-1,\"fwd_mask\":7,\"bwd_mask\":0}", serialized.get(0));
+        assertEquals("{\"className\":\"com.graphhopper.routing.ev.DecimalEncodedValueImpl\",\"name\":\"max_width\",\"bits\":7," +
+                "\"min_storable_value\":0,\"max_storable_value\":127,\"max_value\":-2147483648,\"negate_reverse_direction\":false,\"store_two_directions\":false," +
+                "\"fwd_data_index\":0,\"bwd_data_index\":0,\"fwd_shift\":3,\"bwd_shift\":-1,\"fwd_mask\":1016,\"bwd_mask\":0," +
+                "\"factor\":0.1,\"use_maximum_as_infinity\":true}", serialized.get(1));
+        assertEquals("{\"className\":\"com.graphhopper.routing.ev.SimpleBooleanEncodedValue\",\"name\":\"get_off_bike\",\"bits\":1," +
+                "\"min_storable_value\":0,\"max_storable_value\":1,\"max_value\":-2147483648,\"negate_reverse_direction\":false,\"store_two_directions\":true,\"fwd_data_index\":0," +
+                "\"bwd_data_index\":0,\"fwd_shift\":10,\"bwd_shift\":11,\"fwd_mask\":1024,\"bwd_mask\":2048}", serialized.get(2));
+
+        EncodedValue ev0 = EncodedValueSerializer.deserializeEncodedValue(serialized.get(0));
+        assertEquals("lanes", ev0.getName());
+        EncodedValue ev1 = EncodedValueSerializer.deserializeEncodedValue(serialized.get(1));
+        assertEquals("max_width", ev1.getName());
+        EncodedValue ev2 = EncodedValueSerializer.deserializeEncodedValue(serialized.get(2));
+        assertEquals("get_off_bike", ev2.getName());
     }
+
 }

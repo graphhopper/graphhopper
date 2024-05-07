@@ -22,8 +22,9 @@ import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
-import com.graphhopper.config.Profile;
-import com.graphhopper.jackson.ResponsePathDeserializer;
+import com.graphhopper.jackson.ResponsePathDeserializerHelper;
+import com.graphhopper.config.TurnCostsConfig;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -42,6 +43,7 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.Collections;
 
+import static com.graphhopper.application.util.TestUtils.clientTarget;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -56,13 +58,14 @@ public class MapMatchingResourceTurnCostsTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.flag_encoders", "car|turn_costs=true,bike").
                 putObject("datareader.file", "../map-matching/files/leipzig_germany.osm.pbf").
+                putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR).
+                putObject("graph.encoded_values", "car_access, car_average_speed, bike_access, bike_priority, bike_average_speed").
                 setProfiles(Arrays.asList(
-                        new Profile("car").setVehicle("car").setWeighting("fastest").setTurnCosts(true),
-                        new Profile("car_no_tc").setVehicle("car").setWeighting("fastest"),
-                        new Profile("bike").setVehicle("bike").setWeighting("fastest"))
+                        TestProfiles.accessAndSpeed("car").setTurnCostsConfig(TurnCostsConfig.car()),
+                        TestProfiles.accessAndSpeed("car_no_tc", "car"),
+                        TestProfiles.accessSpeedAndPriority("bike"))
                 ).
                 setLMProfiles(Arrays.asList(
                         new LMProfile("car"),
@@ -82,13 +85,6 @@ public class MapMatchingResourceTurnCostsTest {
     }
 
     @Test
-    public void useVehicle() {
-        // see map-matching/#178
-        runCar("vehicle=car");
-        runBike("vehicle=bike");
-    }
-
-    @Test
     public void useProfile() {
         runCar("profile=car");
         runBike("profile=bike");
@@ -97,26 +93,26 @@ public class MapMatchingResourceTurnCostsTest {
 
     @Test
     public void disableCHLM() {
-        runCar("vehicle=car&lm.disable=true");
-        runCar("vehicle=car&ch.disable=true");
-        runBike("vehicle=bike&lm.disable=true");
-        runBike("vehicle=bike&ch.disable=true");
+        runCar("profile=car&lm.disable=true");
+        runCar("profile=car&ch.disable=true");
+        runBike("profile=bike&lm.disable=true");
+        runBike("profile=bike&ch.disable=true");
     }
 
     @Test
     public void errorOnUnknownProfile() {
-        final Response response = app.client().target("http://localhost:8080/match?profile=xyz")
+        final Response response = clientTarget(app, "/match?profile=xyz")
                 .request()
                 .buildPost(Entity.xml(getClass().getResourceAsStream("another-tour-with-loop.gpx")))
                 .invoke();
         JsonNode json = response.readEntity(JsonNode.class);
         assertTrue(json.has("message"), json.toString());
         assertEquals(400, response.getStatus());
-        assertTrue(json.toString().contains("Could not find profile 'xyz', choose one of: [car, car_no_tc, bike]"));
+        assertTrue(json.toString().contains("The requested profile 'xyz' does not exist.\\nAvailable profiles: [car, car_no_tc, bike]"), json.toString());
     }
 
     private void runCar(String urlParams) {
-        final Response response = app.client().target("http://localhost:8080/match?" + urlParams)
+        final Response response = clientTarget(app, "/match?" + urlParams)
                 .request()
                 .buildPost(Entity.xml(getClass().getResourceAsStream("another-tour-with-loop.gpx")))
                 .invoke();
@@ -126,16 +122,16 @@ public class MapMatchingResourceTurnCostsTest {
         JsonNode path = json.get("paths").get(0);
 
         LineString expectedGeometry = readWktLineString("LINESTRING (12.3607 51.34365, 12.36418 51.34443, 12.36379 51.34538, 12.36082 51.34471, 12.36188 51.34278)");
-        LineString actualGeometry = ResponsePathDeserializer.decodePolyline(path.get("points").asText(), 10, false).toLineString(false);
+        LineString actualGeometry = ResponsePathDeserializerHelper.decodePolyline(path.get("points").asText(), 10, false, 1e5).toLineString(false);
         assertEquals(DiscreteHausdorffDistance.distance(expectedGeometry, actualGeometry), 0.0, 1E-4);
-        assertEquals(106.15, path.get("time").asLong() / 1000f, 0.1);
-        assertEquals(106.15, json.get("map_matching").get("time").asLong() / 1000f, 0.1);
-        assertEquals(811.56, path.get("distance").asDouble(), 1);
-        assertEquals(811.56, json.get("map_matching").get("distance").asDouble(), 1);
+        assertEquals(101, path.get("time").asLong() / 1000f, 1);
+        assertEquals(101, json.get("map_matching").get("time").asLong() / 1000f, 1);
+        assertEquals(812, path.get("distance").asDouble(), 1);
+        assertEquals(812, json.get("map_matching").get("distance").asDouble(), 1);
     }
 
     private void runBike(String urlParams) {
-        final Response response = app.client().target("http://localhost:8080/match?" + urlParams)
+        final Response response = clientTarget(app, "/match?" + urlParams)
                 .request()
                 .buildPost(Entity.xml(getClass().getResourceAsStream("another-tour-with-loop.gpx")))
                 .invoke();
@@ -145,7 +141,7 @@ public class MapMatchingResourceTurnCostsTest {
         JsonNode path = json.get("paths").get(0);
 
         LineString expectedGeometry = readWktLineString("LINESTRING (12.3607 51.34365, 12.36418 51.34443, 12.36379 51.34538, 12.36082 51.34471, 12.36188 51.34278)");
-        LineString actualGeometry = ResponsePathDeserializer.decodePolyline(path.get("points").asText(), 10, false).toLineString(false);
+        LineString actualGeometry = ResponsePathDeserializerHelper.decodePolyline(path.get("points").asText(), 10, false, 1e5).toLineString(false);
         assertEquals(DiscreteHausdorffDistance.distance(expectedGeometry, actualGeometry), 0.0, 1E-4);
         assertEquals(162.31, path.get("time").asLong() / 1000f, 0.1);
         assertEquals(162.31, json.get("map_matching").get("time").asLong() / 1000f, 0.1);

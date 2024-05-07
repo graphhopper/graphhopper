@@ -18,42 +18,28 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.EncodedValue;
-import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.ev.Smoothness;
 import com.graphhopper.storage.IntsRef;
 
-import java.util.List;
-
-import static com.graphhopper.routing.ev.Smoothness.KEY;
 import static com.graphhopper.routing.ev.Smoothness.MISSING;
 
 public class OSMSmoothnessParser implements TagParser {
 
     private final EnumEncodedValue<Smoothness> smoothnessEnc;
 
-    public OSMSmoothnessParser() {
-        this(new EnumEncodedValue<>(KEY, Smoothness.class));
-    }
-
     public OSMSmoothnessParser(EnumEncodedValue<Smoothness> smoothnessEnc) {
         this.smoothnessEnc = smoothnessEnc;
     }
 
     @Override
-    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> list) {
-        list.add(smoothnessEnc);
-    }
-
-    @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
+    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay readerWay, IntsRef relationFlags) {
         String smoothnessTag = readerWay.getTag("smoothness");
         Smoothness smoothness = Smoothness.find(smoothnessTag);
         if (smoothness == MISSING)
-            return edgeFlags;
+            return;
 
-        smoothnessEnc.setEnum(false, edgeFlags, smoothness);
-        return edgeFlags;
+        smoothnessEnc.setEnum(false, edgeId, edgeIntAccess, smoothness);
     }
 }

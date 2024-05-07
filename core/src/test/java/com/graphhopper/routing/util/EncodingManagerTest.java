@@ -17,6 +17,11 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.util.parsers.BikeAccessParser;
+import com.graphhopper.routing.util.parsers.CarAccessParser;
+import com.graphhopper.routing.util.parsers.FootAccessParser;
+import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -29,68 +34,48 @@ import static org.junit.jupiter.api.Assertions.*;
 public class EncodingManagerTest {
 
     @Test
-    public void duplicateNamesNotAllowed() {
-        assertThrows(IllegalArgumentException.class, () -> EncodingManager.create("car,car"));
-    }
-
-    @Test
-    public void testEncoderAcceptNoException() {
-        EncodingManager manager = EncodingManager.create("car");
-        assertTrue(manager.hasEncoder("car"));
-        assertFalse(manager.hasEncoder("foot"));
-    }
-
-    @Test
-    public void testWrongEncoders() {
-        try {
-            FlagEncoder foot = FlagEncoders.createFoot();
-            EncodingManager.create(foot, foot);
-            fail("There should have been an exception");
-        } catch (Exception ex) {
-            assertEquals("FlagEncoder already exists: foot", ex.getMessage());
-        }
-    }
-
-    @Test
     public void testSupportFords() {
-        // 1) no encoder crossing fords
-        String flagEncoderStrings = "car,bike,foot";
-        EncodingManager manager = EncodingManager.create(flagEncoderStrings);
+        EncodingManager manager = new EncodingManager.Builder()
+                .add(VehicleAccess.create("car"))
+                .add(VehicleAccess.create("bike"))
+                .add(VehicleAccess.create("foot"))
+                .add(Roundabout.create())
+                .build();
 
-        assertFalse(((CarFlagEncoder) manager.getEncoder("car")).isBlockFords());
-        assertFalse(((BikeFlagEncoder) manager.getEncoder("bike")).isBlockFords());
-        assertFalse(((FootFlagEncoder) manager.getEncoder("foot")).isBlockFords());
+        // 1) default -> no block fords
+        assertFalse(new CarAccessParser(manager, new PMap()).isBlockFords());
+        assertFalse(new BikeAccessParser(manager, new PMap()).isBlockFords());
+        assertFalse(new FootAccessParser(manager, new PMap()).isBlockFords());
 
-        // 2) two encoders crossing fords
-        flagEncoderStrings = "car, bike|block_fords=true, foot|block_fords=false";
-        manager = EncodingManager.create(flagEncoderStrings);
+        // 2) true
+        assertTrue(new CarAccessParser(manager, new PMap("block_fords=true")).isBlockFords());
+        assertTrue(new BikeAccessParser(manager, new PMap("block_fords=true")).isBlockFords());
+        assertTrue(new FootAccessParser(manager, new PMap("block_fords=true")).isBlockFords());
 
-        assertFalse(((CarFlagEncoder) manager.getEncoder("car")).isBlockFords());
-        assertTrue(((BikeFlagEncoder) manager.getEncoder("bike")).isBlockFords());
-        assertFalse(((FootFlagEncoder) manager.getEncoder("foot")).isBlockFords());
-
-        // 2) Try combined with another tag
-        flagEncoderStrings = "car|turn_costs=true|block_fords=true, bike, foot|block_fords=false";
-        manager = EncodingManager.create(flagEncoderStrings);
-
-        assertTrue(((CarFlagEncoder) manager.getEncoder("car")).isBlockFords());
-        assertFalse(((BikeFlagEncoder) manager.getEncoder("bike")).isBlockFords());
-        assertFalse(((FootFlagEncoder) manager.getEncoder("foot")).isBlockFords());
+        // 3) false
+        assertFalse(new CarAccessParser(manager, new PMap("block_fords=false")).isBlockFords());
+        assertFalse(new BikeAccessParser(manager, new PMap("block_fords=false")).isBlockFords());
+        assertFalse(new FootAccessParser(manager, new PMap("block_fords=false")).isBlockFords());
     }
 
     @Test
-    public void validEV() {
-        for (String str : Arrays.asList("blup_test", "test", "test12", "tes$0", "car_test_test", "small_car$average_speed")) {
-            assertTrue(EncodingManager.isValidEncodedValue(str), str);
-        }
-
-        for (String str : Arrays.asList("Test", "12test", "test|3", "car__test", "blup_te.st_", "car___test", "car$$access",
-                "test{34", "truck__average_speed", "blup.test", "test,21", "täst", "blup.two.three", "blup..test")) {
-            assertFalse(EncodingManager.isValidEncodedValue(str), str);
-        }
-
-        for (String str : Arrays.asList("break", "switch")) {
-            assertFalse(EncodingManager.isValidEncodedValue(str), str);
-        }
+    public void testRegisterOnlyOnceAllowed() {
+        DecimalEncodedValueImpl speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+        EncodingManager.start().add(speedEnc).build();
+        assertThrows(IllegalStateException.class, () -> EncodingManager.start().add(speedEnc).build());
     }
+
+    @Test
+    public void testGetVehicles() {
+        EncodingManager em = EncodingManager.start()
+                .add(VehicleAccess.create("car"))
+                .add(VehicleAccess.create("bike")).add(VehicleSpeed.create("bike", 4, 2, true))
+                .add(VehicleSpeed.create("roads", 5, 5, false))
+                .add(VehicleAccess.create("hike")).add(new DecimalEncodedValueImpl("whatever_hike_average_speed_2022", 5, 5, true))
+                .add(RoadAccess.create())
+                .build();
+        // only for bike+hike there is access+'speed'
+        assertEquals(Arrays.asList("bike", "hike"), em.getVehicles());
+    }
+
 }

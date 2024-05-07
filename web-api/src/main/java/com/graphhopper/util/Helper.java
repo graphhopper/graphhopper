@@ -21,6 +21,7 @@ import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
@@ -31,7 +32,7 @@ import java.util.Map.Entry;
  * @author Peter Karich
  */
 public class Helper {
-    public static final Charset UTF_CS = Charset.forName("UTF-8");
+    public static final Charset UTF_CS = StandardCharsets.UTF_8;
     public static final TimeZone UTC = TimeZone.getTimeZone("UTC");
     public static final long MB = 1L << 20;
     // we keep the first seven decimal places of lat/lon coordinates. this corresponds to ~1cm precision ('pointing to waldo on a page')
@@ -63,18 +64,6 @@ public class Helper {
         return string.toUpperCase(Locale.ROOT);
     }
 
-    public static int countBitValue(int maxTurnCosts) {
-        if (maxTurnCosts < 0)
-            throw new IllegalArgumentException("maxTurnCosts cannot be negative " + maxTurnCosts);
-
-        int counter = 0;
-        while (maxTurnCosts > 0) {
-            maxTurnCosts >>= 1;
-            counter++;
-        }
-        return counter;
-    }
-
     public static void saveProperties(Map<String, String> map, Writer tmpWriter) throws IOException {
         BufferedWriter writer = new BufferedWriter(tmpWriter);
         try {
@@ -87,6 +76,18 @@ public class Helper {
         } finally {
             writer.close();
         }
+    }
+
+    public static String readJSONFileWithoutComments(String file) throws IOException {
+        return Helper.readFile(file).stream().
+                filter(line -> !line.trim().startsWith("//")).
+                reduce((s1, s2) -> s1 + "\n" + s2).orElse("");
+    }
+
+    public static String readJSONFileWithoutComments(InputStreamReader reader) throws IOException {
+        return Helper.readFile(reader).stream().
+                filter(line -> !line.trim().startsWith("//")).
+                reduce((s1, s2) -> s1 + "\n" + s2).orElse("");
     }
 
     public static List<String> readFile(String file) throws IOException {
@@ -292,10 +293,8 @@ public class Helper {
     }
 
     public static String nf(long no) {
-        // I like french localization the most: 123654 will be 123 654 instead
-        // of comma vs. point confusion for English/German people.
         // NumberFormat is not thread safe => but getInstance looks like it's cached
-        return NumberFormat.getInstance(Locale.FRANCE).format(no);
+        return NumberFormat.getInstance(Locale.ENGLISH).format(no);
     }
 
     public static String firstBig(String sayText) {
@@ -349,21 +348,6 @@ public class Helper {
         DateFormat df = new SimpleDateFormat(str, Locale.ENGLISH);
         df.setTimeZone(UTC);
         return df;
-    }
-
-    /**
-     * This method handles the specified (potentially negative) int as unsigned bit representation
-     * and returns the positive converted long.
-     */
-    public static long toUnsignedLong(int x) {
-        return ((long) x) & 0xFFFFffffL;
-    }
-
-    /**
-     * Converts the specified long back into a signed int (reverse method for toUnsignedLong)
-     */
-    public static int toSignedInt(long x) {
-        return (int) x;
     }
 
     /**
@@ -430,20 +414,6 @@ public class Helper {
     }
 
     /**
-     * Equivalent to java 8 String#join
-     */
-    public static String join(String delimiter, List<String> strings) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < strings.size(); i++) {
-            if (i > 0) {
-                sb.append(delimiter);
-            }
-            sb.append(strings.get(i));
-        }
-        return sb.toString();
-    }
-
-    /**
      * parses a string like [a,b,c]
      */
     public static List<String> parseList(String listStr) {
@@ -475,4 +445,5 @@ public class Helper {
         }
         return val;
     }
+
 }

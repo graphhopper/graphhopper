@@ -1,4 +1,82 @@
-### 6.0 [not yet released]
+### 10.0 [not yet released]
+
+- constructor of BaseGraph.Builder uses byte instead of integer count.
+- KeyValue is now KValue as it holds the value only. Note, the two parameter constructor uses one value for the forward and one for the backward direction (and no longer "key, value")
+
+### 9.0 [23 Apr 2024]
+
+- max_slope is now a signed decimal, see #2955
+- move sac_scale handling out of foot_access parser and made foot safer via lowering to sac_scale<2, same for hike sac_scale<5
+- removed shortest+fastest weightings, #2938
+- u_turn_costs information is no longer stored in profile. Use the TurnCostsConfig instead
+- the custom models do no longer include the speed, access and priority encoded values only implicitly, see docs/migration/config-migration-08-09.md
+- conditional access restriction tags are no longer considered from vehicle tag parsers and instead a car_temporal_access encoded value (similarly for bike + foot) can be used in a custom model. This fixes #2477. More details are accessible via path details named according to the OSM tags e.g. for access:conditional it is "access_conditional" (i.e. converted from OSM access:conditional). See #2863 and #2965.
+- replaced (Vehicle)EncodedValueFactory and (Vehicle)TagParserFactory with ImportRegistry, #2935
+- encoded values used in custom models are added automatically, no need to add them to graph.encoded_values anymore, #2935
+- removed the ability to sort the graph (graph.do_sort) due to incomplete support, #2919
+- minor changes for import hooks, #2917
+- removed wheelchair vehicle and related parsers, with currently no complete replacement as it needs to be redone properly with a custom model
+- removed deprecated PMap.put
+
+### 8.0 [18 Oct 2023]
+
+- access "turn"-EncodedValue of EncodingManager through separate methods, see #2884
+- removed fastest weighting for public usage, use custom instead, see #2866
+- removed shortest weighting for public usage, use a high distance_influence instead, see #2865
+- removed duration:seconds as intermediate tag
+- /info endpoint does no longer return the vehicle used per profile and won't return encoded value of vehicles like car_average_speed
+- Country rules no longer contain maxspeed handling, enable a much better alternative via `max_speed_calculator.enabled: true`. On the client side use `max_speed_estimated` to determine if max_speed is from OSM or an estimation. See #2810
+- bike routing better avoids dangerous roads, see #2796 and #2802
+- routing requests can be configured to timeout after some time, see #2795
+- custom_model_file string changed to custom_model_files array, see #2787
+- renamed EdgeKVStorage to KVStorage as it is (temporarily) used for node tage too, see #2705
+- bike vehicles are now allowed to go in reverse direction of oneways, see custom_models/bike.json #196
+- prefer cycleways, bicycle_road and cyclestreet for bike routing, see #2784 and #2778
+- add support for further surfaces like pebblestones or concrete:lanes, see #2751
+- reduced memory usage for urban density calculation, see #2828
+- urban density is now based on road junctions, so the according parameters need adjustment in case
+  the config file does not use the defaults, see #2842
+- removed heading penalty *time*, see #2563
+- base graph no longer allows loop edges, see #2862
+
+### 7.0 [14 Mar 2023]
+
+- access node tags via List instead of Map: List<Map<String, Object>> nodeTags = way.getTag("node_tags", emptyList()), see #2705
+- remove StringEncodedValue support from custom model due to insufficient usage/testing
+- handle also node_tags in handleWayTags, when extending AbstractAccessParser call handleNodeTags, #2738
+- Format of 'areas' in CustomModel changed to 'FeatureCollection'. The old format is deprecated and will be removed in a later version, #2734
+- TagParser#handleWayTags no longer returns an IntsRef. We assume it never returned anything other than the input IntsRef.
+- there is no longer a default value for the distanceInfluence parameter in custom models sent via client-hc. Previously it was 70. Not setting it explicitly now means the server-side value will be used. getDistanceInfluence can now be null. Server-side profiles with custom weighting now use distance_influence: 0 by default (previously it was 70). see #2716
+- there is a new, required 'import.osm.ignored_highways' configuration option that must be used to not increase the graph size and decrease performance for motorized-only routing compared to previous versions, #2702
+- new osm_way_id encoded value, #2701
+- the parameters vehicle, weighting, edge_based and turn_costs are no longer supported, use the profile parameter instead
+- removed motorroad to road_class conversion, #2329
+- removed YAML support for custom models on the server-side. Only allow JSON with // comments.
+- Bike2WeightTagParser was removed. Use the bike vehicle with a custom model, see custom_models/bike.json
+- CurvatureWeighting was removed. Use a custom model with 'curvature' instead, see custom_models/curvature.json (#2665)
+- internal keys for EdgeKVStorage changed to contain the street_ prefix like the path details too. Similarly, the
+  extra_info in the instructions of the API response, see #2661
+- subnetwork preparation can now be run in parallel to slightly speed up the base graph import (#2737)
+- The block_area parameter was removed. Use custom model areas instead.
+
+### 6.0 [13 Sep 2022]
+
+- Car4WDTagParser was removed. Use the roads vehicle with a custom model, see custom_models/car4wd.json see #2651
+- When using a DecimalEncodedValue with useMaximumAsInfinity=true and a single bit of space make sure you always use 
+  Double.POSITIVE_INFINITY to set the value, see #2646
+- renamed DouglasPeucker to RamerDouglasPeucker
+- path details at via-points are no longer merged, see #2626
+- removed the FlagEncoder interface. for example encoder.getAccessEnc() is now encodingManager.getBooleanEncodedValue(
+  VehicleAccess.key("car")), #2611
+- backward incompatible change as instructions and the street_name path detail do no longer contain the ref #2598
+- StringIndex is now EdgeKVStorage and can store e.g. byte arrays. String values needs to be limited to 255 bytes before
+  storing them. See EdgeKVStorage.cutString and #2597.
+- the Matrix client changed and users have to adapt the usage, see #2587
+- replaced car$access with car_access (and same for <vehicle>$average_speed and <vehicle>$priority)
+- don't allow cars or motorcycles to use ways tagged with service=emergency_access (#2484)
+- faster flexible routing, especially in conjunction with turn costs (#2571)
+- negative OSM Ids are not supported any longer (#2652)
+- new urban_density encoded value based on road density calculation (#2637)
 
 ### 5.0 [23 Mar 2022]
 
@@ -104,7 +182,7 @@
 - removed android demo, #1940
 - added edge key path detail, #2073
 - fixed bug for turn restrictions on bridges/tunnels, #2070
-- improved resolution of elevation profiles, 3D Douglas-Peucker and long edge sampling, #1953
+- improved resolution of elevation profiles, 3D Ramer-Douglas-Peucker and long edge sampling, #1953
 
 ### 1.0 [22 May 2020]
 

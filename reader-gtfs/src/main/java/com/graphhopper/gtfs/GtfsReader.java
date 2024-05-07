@@ -22,13 +22,7 @@ import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.*;
 import com.google.common.collect.HashMultimap;
 import com.google.transit.realtime.GtfsRealtime;
-import com.graphhopper.routing.ev.Subnetwork;
-import com.graphhopper.routing.util.DefaultSnapFilter;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.weighting.FastestWeighting;
-import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.InMemConstructionIndex;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
@@ -77,8 +71,7 @@ class GtfsReader {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GtfsReader.class);
 
-    private final GraphHopperStorage graph;
-    private final LocationIndex walkNetworkIndex;
+    private final LocationIndex streetNetworkIndex;
     private final GtfsStorage gtfsStorage;
 
     private final Transfers transfers;
@@ -87,11 +80,10 @@ class GtfsReader {
     private final Map<String, Map<GtfsStorage.PlatformDescriptor, NavigableMap<Integer, Integer>>> departureTimelinesByStop = new HashMap<>();
     private final Map<String, Map<GtfsStorage.PlatformDescriptor, NavigableMap<Integer, Integer>>> arrivalTimelinesByStop = new HashMap<>();
 
-    GtfsReader(String id, GraphHopperStorage graph, PtGraph ptGraph, PtGraphOut out, GtfsStorage gtfsStorage, LocationIndex walkNetworkIndex, Transfers transfers, InMemConstructionIndex indexBuilder) {
+    GtfsReader(String id, PtGraph ptGraph, PtGraphOut out, GtfsStorage gtfsStorage, LocationIndex streetNetworkIndex, Transfers transfers, InMemConstructionIndex indexBuilder) {
         this.id = id;
-        this.graph = graph;
         this.gtfsStorage = gtfsStorage;
-        this.walkNetworkIndex = walkNetworkIndex;
+        this.streetNetworkIndex = streetNetworkIndex;
         this.feed = this.gtfsStorage.getGtfsFeeds().get(id);
         this.transfers = transfers;
         this.startDate = feed.getStartDate();
@@ -101,17 +93,14 @@ class GtfsReader {
         this.indexBuilder = indexBuilder;
     }
 
-    void connectStopsToStreetNetwork() {
-        EncodingManager em = graph.getEncodingManager();
-        FlagEncoder footEncoder = em.getEncoder("foot");
-        final EdgeFilter filter = new DefaultSnapFilter(new FastestWeighting(footEncoder), em.getBooleanEncodedValue(Subnetwork.key("foot")));
+    void connectStopsToStreetNetwork(EdgeFilter filter) {
         for (Stop stop : feed.stops.values()) {
             if (stop.location_type == 0) { // Only stops. Not interested in parent stations for now.
-                Snap locationSnap = walkNetworkIndex.findClosest(stop.stop_lat, stop.stop_lon, filter);
-                Integer stopNode;
+                Snap locationSnap = streetNetworkIndex.findClosest(stop.stop_lat, stop.stop_lon, filter);
+                int stopNode;
                 if (locationSnap.isValid()) {
-                    stopNode = gtfsStorage.getStreetToPt().get(locationSnap.getClosestNode());
-                    if (stopNode == null) {
+                    stopNode = gtfsStorage.getStreetToPt().getOrDefault(locationSnap.getClosestNode(), -1);
+                    if (stopNode == -1) {
                         stopNode = out.createNode();
                         indexBuilder.addToAllTilesOnLine(stopNode, stop.stop_lat, stop.stop_lon, stop.stop_lat, stop.stop_lon);
                         gtfsStorage.getPtToStreet().put(stopNode, locationSnap.getClosestNode());

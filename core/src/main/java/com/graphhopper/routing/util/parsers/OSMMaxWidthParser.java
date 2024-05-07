@@ -19,9 +19,7 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EncodedValue;
-import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.routing.ev.MaxWidth;
+import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.IntsRef;
 
@@ -32,23 +30,13 @@ public class OSMMaxWidthParser implements TagParser {
 
     private final DecimalEncodedValue widthEncoder;
 
-    public OSMMaxWidthParser() {
-        this(MaxWidth.create());
-    }
-
     public OSMMaxWidthParser(DecimalEncodedValue widthEncoder) {
         this.widthEncoder = widthEncoder;
     }
 
     @Override
-    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue) {
-        registerNewEncodedValue.add(widthEncoder);
-    }
-
-    @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
         List<String> widthTags = Arrays.asList("maxwidth", "maxwidth:physical", "width");
-        OSMValueExtractor.extractMeter(edgeFlags, way, widthEncoder, widthTags);
-        return edgeFlags;
+        OSMValueExtractor.extractMeter(edgeId, edgeIntAccess, way, widthEncoder, widthTags);
     }
 }

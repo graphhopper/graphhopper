@@ -1,7 +1,5 @@
 package com.graphhopper.routing.ev;
 
-import com.graphhopper.storage.IntsRef;
-
 /**
  * This class defines how and where to store an unsigned decimal value. It is important to note that:
  * 1. the range of the number is highly limited (unlike the Java 32bit float or 64bit double values)
@@ -15,16 +13,26 @@ public interface DecimalEncodedValue extends EncodedValue {
     /**
      * This method stores the specified double value (rounding with a previously defined factor) into the IntsRef.
      *
-     * @see #getMaxDecimal()
+     * @see #getMaxStorableDecimal()
      */
-    void setDecimal(boolean reverse, IntsRef ref, double value);
+    void setDecimal(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess, double value);
 
-    double getDecimal(boolean reverse, IntsRef ref);
+    double getDecimal(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess);
 
     /**
      * The maximum double value this EncodedValue accepts for setDecimal without throwing an exception.
      */
-    double getMaxDecimal();
+    double getMaxStorableDecimal();
+
+    /**
+     * The minimum double value this EncodedValue accepts for setDecimal without throwing an exception.
+     */
+    double getMinStorableDecimal();
+
+    /**
+     * @see IntEncodedValue#getMaxOrMaxStorableInt()
+     */
+    double getMaxOrMaxStorableDecimal();
 
     /**
      * @return the smallest decimal value that is larger or equal to the given value and that can be stored exactly,
@@ -33,4 +41,7 @@ public interface DecimalEncodedValue extends EncodedValue {
      * 6 not 5! The value returned by this method is guaranteed to be storable without such a modification.
      */
     double getNextStorableValue(double value);
+
+    double getSmallestNonZeroValue();
+
 }

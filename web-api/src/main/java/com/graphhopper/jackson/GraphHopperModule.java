@@ -18,7 +18,6 @@
 package com.graphhopper.jackson;
 
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.json.Statement;
@@ -32,8 +31,6 @@ public class GraphHopperModule extends SimpleModule {
     public GraphHopperModule() {
         addDeserializer(Statement.class, new StatementDeserializer());
         addSerializer(Statement.class, new StatementSerializer());
-        addDeserializer(GHResponse.class, new GHResponseDeserializer());
-        addDeserializer(ResponsePath.class, new ResponsePathDeserializer());
         addDeserializer(Envelope.class, new JtsEnvelopeDeserializer());
         addSerializer(Envelope.class, new JtsEnvelopeSerializer());
         addDeserializer(GHPoint.class, new GHPointDeserializer());

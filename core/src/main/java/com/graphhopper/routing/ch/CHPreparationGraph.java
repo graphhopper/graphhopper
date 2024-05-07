@@ -100,70 +100,18 @@ public class CHPreparationGraph {
                     graph.getEdges() + " vs. " + prepareGraph.getOriginalEdges());
         AllEdgesIterator iter = graph.getAllEdges();
         while (iter.next()) {
-            double weightFwd = weighting.calcEdgeWeightWithAccess(iter, false);
-            double weightBwd = weighting.calcEdgeWeightWithAccess(iter, true);
+            double weightFwd = weighting.calcEdgeWeight(iter, false);
+            double weightBwd = weighting.calcEdgeWeight(iter, true);
             prepareGraph.addEdge(iter.getBaseNode(), iter.getAdjNode(), iter.getEdge(), weightFwd, weightBwd);
         }
         prepareGraph.prepareForContraction();
     }
 
-    /**
-     * Builds a turn cost function for a given graph('s turn cost storage) and given uTurnCosts.
-     * The trivial implementation would be simply using {@link Weighting#calcTurnWeight}. However, it turned out
-     * that storing all turn costs in separate arrays upfront speeds up edge-based CH preparation by about 25%. See #2084
-     */
     public static TurnCostFunction buildTurnCostFunctionFromTurnCostStorage(Graph graph, Weighting weighting) {
-        if (!(weighting instanceof AbstractWeighting))
-            return weighting::calcTurnWeight;
-        TurnCostProvider turnCostProvider = ((AbstractWeighting) weighting).getTurnCostProvider();
-        if (!(turnCostProvider instanceof DefaultTurnCostProvider))
-            return weighting::calcTurnWeight;
-        DecimalEncodedValue turnCostEnc = ((DefaultTurnCostProvider) turnCostProvider).getTurnCostEnc();
-        TurnCostStorage turnCostStorage = graph.getTurnCostStorage();
-        // we maintain a list of inEdge/outEdge/turn-cost triples (we use two arrays for this) that is sorted by nodes
-        LongArrayList turnCostEdgePairs = new LongArrayList();
-        DoubleArrayList turnCosts = new DoubleArrayList();
-        // for each node we store the index of the first turn cost entry/triple in the list
-        final int[] turnCostNodes = new int[graph.getNodes() + 1];
-        TurnCostStorage.TurnRelationIterator tcIter = turnCostStorage.getAllTurnRelations();
-        int lastNode = -1;
-        while (tcIter.next()) {
-            int viaNode = tcIter.getViaNode();
-            if (viaNode < lastNode)
-                throw new IllegalStateException();
-            long edgePair = BitUtil.LITTLE.combineIntsToLong(tcIter.getFromEdge(), tcIter.getToEdge());
-            // note that as long as we only use OSM turn restrictions all the turn costs are infinite anyway
-            double turnCost = tcIter.getCost(turnCostEnc);
-            int index = turnCostEdgePairs.size();
-            turnCostEdgePairs.add(edgePair);
-            turnCosts.add(turnCost);
-            if (viaNode != lastNode) {
-                for (int i = lastNode + 1; i <= viaNode; i++) {
-                    turnCostNodes[i] = index;
-                }
-            }
-            lastNode = viaNode;
-        }
-        for (int i = lastNode + 1; i <= turnCostNodes.length - 1; i++) {
-            turnCostNodes[i] = turnCostEdgePairs.size();
-        }
-        turnCostNodes[turnCostNodes.length - 1] = turnCostEdgePairs.size();
-
-        // currently the u-turn costs are the same for all junctions, so for now we just get them for one of them
-        double uTurnCosts = weighting.calcTurnWeight(1, 0, 1);
-        return (inEdge, viaNode, outEdge) -> {
-            if (!EdgeIterator.Edge.isValid(inEdge) || !EdgeIterator.Edge.isValid(outEdge))
-                return 0;
-            else if (inEdge == outEdge)
-                return uTurnCosts;
-            // traverse all turn cost entries we have for this viaNode and return the turn costs if we find a match
-            for (int i = turnCostNodes[viaNode]; i < turnCostNodes[viaNode + 1]; i++) {
-                long l = turnCostEdgePairs.get(i);
-                if (inEdge == BitUtil.LITTLE.getIntLow(l) && outEdge == BitUtil.LITTLE.getIntHigh(l))
-                    return turnCosts.get(i);
-            }
-            return 0;
-        };
+        // At some point we used an optimized version where we copied the turn costs to sorted arrays
+        // temporarily. This seemed to be around 25% faster according to measurements on the Bavaria
+        // map, but for bigger maps the improvement is less, around 10% for planet. See also #2084
+        return weighting::calcTurnWeight;
     }
 
     public int getNodes() {
@@ -180,6 +128,8 @@ public class CHPreparationGraph {
 
     public void addEdge(int from, int to, int edge, double weightFwd, double weightBwd) {
         checkNotReady();
+        if (from == to)
+            throw new IllegalArgumentException("Loop edges are no longer supported since #2862");
         boolean fwd = Double.isFinite(weightFwd);
         boolean bwd = Double.isFinite(weightBwd);
         if (!fwd && !bwd)
@@ -254,8 +204,8 @@ public class CHPreparationGraph {
         return origGraph.createInOrigEdgeExplorer();
     }
 
-    public double getTurnWeight(int inEdge, int viaNode, int outEdge) {
-        return turnCostFunction.getTurnWeight(inEdge, viaNode, outEdge);
+    public double getTurnWeight(int inEdgeKey, int viaNode, int outEdgeKey) {
+        return turnCostFunction.getTurnWeight(GHUtility.getEdgeFromEdgeKey(inEdgeKey), viaNode, GHUtility.getEdgeFromEdgeKey(outEdgeKey));
     }
 
     public IntContainer disconnect(int node) {
@@ -473,7 +423,7 @@ public class CHPreparationGraph {
 
         @Override
         public String toString() {
-            return currEdge == null ? "not_started" : getBaseNode() + "-" + getAdjNode();
+            return currEdge == null ? "not_started" : currEdge.toString();
         }
 
         private boolean nodeAisBase() {
@@ -578,14 +528,12 @@ public class CHPreparationGraph {
 
         @Override
         public int getOrigEdgeKeyFirstAB() {
-            int key = prepareEdge << 1;
-            return nodeA > nodeB ? key + 1 : key;
+            return GHUtility.createEdgeKey(prepareEdge, false);
         }
 
         @Override
         public int getOrigEdgeKeyFirstBA() {
-            int key = prepareEdge << 1;
-            return nodeB > nodeA ? key + 1 : key;
+            return GHUtility.createEdgeKey(prepareEdge, true);
         }
 
         @Override
@@ -855,17 +803,17 @@ public class CHPreparationGraph {
      * edge-based CH. In principle we could use base graph for this, but it turned out it is faster to use this
      * graph (because it does not need to read all the edge flags to determine the access flags).
      */
-    private static class OrigGraph {
+    static class OrigGraph {
         // we store a list of 'edges' in the format: adjNode|edgeId|accessFlags, we use two ints for each edge
         private final IntArrayList adjNodes;
-        private final IntArrayList edgesAndFlags;
+        private final IntArrayList keysAndFlags;
         // for each node we store the index at which the edges for this node begin in the above edge list
         private final IntArrayList firstEdgesByNode;
 
-        private OrigGraph(IntArrayList firstEdgesByNode, IntArrayList adjNodes, IntArrayList edgesAndFlags) {
+        private OrigGraph(IntArrayList firstEdgesByNode, IntArrayList adjNodes, IntArrayList keysAndFlags) {
             this.firstEdgesByNode = firstEdgesByNode;
             this.adjNodes = adjNodes;
-            this.edgesAndFlags = edgesAndFlags;
+            this.keysAndFlags = keysAndFlags;
         }
 
         PrepareGraphOrigEdgeExplorer createOutOrigEdgeExplorer() {
@@ -879,20 +827,20 @@ public class CHPreparationGraph {
         static class Builder {
             private final IntArrayList fromNodes = new IntArrayList();
             private final IntArrayList toNodes = new IntArrayList();
-            private final IntArrayList edgesAndFlags = new IntArrayList();
+            private final IntArrayList keysAndFlags = new IntArrayList();
             private int maxFrom = -1;
             private int maxTo = -1;
 
             void addEdge(int from, int to, int edge, boolean fwd, boolean bwd) {
                 fromNodes.add(from);
                 toNodes.add(to);
-                edgesAndFlags.add(getEdgeWithFlags(edge, fwd, bwd));
+                keysAndFlags.add(getKeyWithFlags(GHUtility.createEdgeKey(edge, false), fwd, bwd));
                 maxFrom = Math.max(maxFrom, from);
                 maxTo = Math.max(maxTo, to);
 
                 fromNodes.add(to);
                 toNodes.add(from);
-                edgesAndFlags.add(getEdgeWithFlags(edge, bwd, fwd));
+                keysAndFlags.add(getKeyWithFlags(GHUtility.createEdgeKey(edge, true), bwd, fwd));
                 maxFrom = Math.max(maxFrom, to);
                 maxTo = Math.max(maxTo, from);
             }
@@ -901,21 +849,24 @@ public class CHPreparationGraph {
                 int[] sortOrder = IndirectSort.mergesort(0, fromNodes.elementsCount, new IndirectComparator.AscendingIntComparator(fromNodes.buffer));
                 sortAndTrim(fromNodes, sortOrder);
                 sortAndTrim(toNodes, sortOrder);
-                sortAndTrim(edgesAndFlags, sortOrder);
-                return new OrigGraph(buildFirstEdgesByNode(), toNodes, edgesAndFlags);
+                sortAndTrim(keysAndFlags, sortOrder);
+                return new OrigGraph(buildFirstEdgesByNode(), toNodes, keysAndFlags);
             }
 
-            private int getEdgeWithFlags(int edge, boolean fwd, boolean bwd) {
-                // we use only 30 bits for the edge Id and store two access flags along with the same int
-                if (edge >= Integer.MAX_VALUE >> 2)
-                    throw new IllegalArgumentException("Maximum edge ID exceeded: " + Integer.MAX_VALUE);
-                edge <<= 1;
+            private static int getKeyWithFlags(int key, boolean fwd, boolean bwd) {
+                // we use only 30 bits for the key and store two access flags along with the same int
+                // this allows for a maximum of 536mio edges in base graph which is still enough for planet-wide OSM,
+                // but if we exceed this limit we should probably move one of the fwd/bwd bits to the nodes field or
+                // store the edge instead of the key as we did before #2567 (only here)
+                if (key > Integer.MAX_VALUE >> 1)
+                    throw new IllegalArgumentException("Maximum edge key exceeded: " + key + ", max: " + (Integer.MAX_VALUE >> 1));
+                key <<= 1;
                 if (fwd)
-                    edge++;
-                edge <<= 1;
+                    key++;
+                key <<= 1;
                 if (bwd)
-                    edge++;
-                return edge;
+                    key++;
+                return key;
             }
 
             private IntArrayList buildFirstEdgesByNode() {
@@ -985,8 +936,7 @@ public class CHPreparationGraph {
 
         @Override
         public int getOrigEdgeKeyFirst() {
-            int e = graph.edgesAndFlags.get(index);
-            return GHUtility.createEdgeKey(node, getAdjNode(), e >> 2, false);
+            return graph.keysAndFlags.get(index) >>> 2;
         }
 
         @Override
@@ -995,12 +945,11 @@ public class CHPreparationGraph {
         }
 
         private boolean hasAccess() {
-            int e = graph.edgesAndFlags.get(index);
-            if (reverse) {
+            int e = graph.keysAndFlags.get(index);
+            if (reverse)
                 return (e & 0b01) == 0b01;
-            } else {
+            else
                 return (e & 0b10) == 0b10;
-            }
         }
 
         @Override

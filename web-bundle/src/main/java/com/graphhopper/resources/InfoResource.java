@@ -21,7 +21,9 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.storage.BaseGraph;
+import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.util.Constants;
 import org.locationtech.jts.geom.Envelope;
 
@@ -41,33 +43,41 @@ import java.util.*;
 public class InfoResource {
 
     private final GraphHopperConfig config;
-    private final GraphHopperStorage storage;
+    private final BaseGraph baseGraph;
+    private final EncodingManager encodingManager;
+    private final StorableProperties properties;
     private final boolean hasElevation;
+    private final Set<String> privateEV;
 
     @Inject
     public InfoResource(GraphHopperConfig config, GraphHopper graphHopper, @Named("hasElevation") Boolean hasElevation) {
         this.config = config;
-        this.storage = graphHopper.getGraphHopperStorage();
+        this.encodingManager = graphHopper.getEncodingManager();
+        this.privateEV = new HashSet<>(Arrays.asList(config.getString("graph.encoded_values.private", "").split(",")));
+        for (String pEV : privateEV) {
+            if (!pEV.isEmpty() && !encodingManager.hasEncodedValue(pEV))
+                throw new IllegalArgumentException("A private encoded value does not exist.");
+        }
+        this.baseGraph = graphHopper.getBaseGraph();
+        this.properties = graphHopper.getProperties();
         this.hasElevation = hasElevation;
     }
 
     public static class Info {
         public static class ProfileData {
+            // for deserialization in e.g. tests
             public ProfileData() {
             }
 
-            public ProfileData(String name, String vehicle) {
+            public ProfileData(String name) {
                 this.name = name;
-                this.vehicle = vehicle;
             }
 
             public String name;
-            public String vehicle;
         }
 
         public Envelope bbox;
         public final List<ProfileData> profiles = new ArrayList<>();
-        public List<String> supported_vehicles;
         public String version = Constants.VERSION;
         public boolean elevation;
         public Map<String, List<Object>> encoded_values;
@@ -78,29 +88,25 @@ public class InfoResource {
     @GET
     public Info getInfo() {
         final Info info = new Info();
-        info.bbox = new Envelope(storage.getBounds().minLon, storage.getBounds().maxLon, storage.getBounds().minLat, storage.getBounds().maxLat);
+        info.bbox = new Envelope(baseGraph.getBounds().minLon, baseGraph.getBounds().maxLon, baseGraph.getBounds().minLat, baseGraph.getBounds().maxLat);
         for (Profile p : config.getProfiles()) {
-            Info.ProfileData profileData = new Info.ProfileData(p.getName(), p.getVehicle());
+            Info.ProfileData profileData = new Info.ProfileData(p.getName());
             info.profiles.add(profileData);
         }
         if (config.has("gtfs.file"))
-            info.profiles.add(new Info.ProfileData("pt", "pt"));
+            info.profiles.add(new Info.ProfileData("pt"));
 
         info.elevation = hasElevation;
-        List<String> encoderNames = Arrays.asList(storage.getEncodingManager().toString().split(","));
-        info.supported_vehicles = new ArrayList<>(encoderNames);
-        if (config.has("gtfs.file")) {
-            info.supported_vehicles.add("pt");
-        }
-        info.import_date = storage.getProperties().get("datareader.import.date");
-        info.data_date = storage.getProperties().get("datareader.data.date");
+        info.import_date = properties.get("datareader.import.date");
+        info.data_date = properties.get("datareader.data.date");
 
-        List<EncodedValue> evList = storage.getEncodingManager().getEncodedValues();
+        List<EncodedValue> evList = encodingManager.getEncodedValues();
         info.encoded_values = new LinkedHashMap<>();
         for (EncodedValue encodedValue : evList) {
             List<Object> possibleValueList = new ArrayList<>();
-            if (encodedValue.getName().contains("turn_costs")) {
-                // skip
+            String name = encodedValue.getName();
+            if (privateEV.contains(name)) {
+                continue;
             } else if (encodedValue instanceof EnumEncodedValue) {
                 for (Enum o : ((EnumEncodedValue) encodedValue).getValues()) {
                     possibleValueList.add(o.name());
@@ -115,7 +121,7 @@ public class InfoResource {
                 // we only add enum, boolean and numeric encoded values to the list
                 continue;
             }
-            info.encoded_values.put(encodedValue.getName(), possibleValueList);
+            info.encoded_values.put(name, possibleValueList);
         }
         return info;
     }

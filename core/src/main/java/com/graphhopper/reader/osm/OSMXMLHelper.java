@@ -26,13 +26,11 @@ import com.graphhopper.reader.ReaderWay;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
-import java.util.List;
 
 /**
  * @author Peter Karich
  */
 public class OSMXMLHelper {
-    private static final String TYPE_DECODE = "nwr";
 
     public static ReaderNode createNode(long id, XMLStreamReader parser) throws XMLStreamException {
         ReaderNode node = new ReaderNode(id,
@@ -105,7 +103,12 @@ public class OSMXMLHelper {
 
     public static Member createMember(XMLStreamReader parser) {
         String typeName = parser.getAttributeValue(null, "type");
-        int type = TYPE_DECODE.indexOf(typeName.charAt(0));
+        ReaderElement.Type type = ReaderElement.Type.NODE;
+        if (typeName.startsWith("w")) {
+            type = ReaderElement.Type.WAY;
+        } else if (typeName.startsWith("r")) {
+            type = ReaderElement.Type.RELATION;
+        }
         long ref = Long.parseLong(parser.getAttributeValue(null, "ref"));
         String role = parser.getAttributeValue(null, "role");
         return new ReaderRelation.Member(type, ref, role);

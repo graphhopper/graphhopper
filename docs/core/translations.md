@@ -1,8 +1,9 @@
 # Translation
 
-You can help improve GraphHopper by adding your language! We have a dedicated [forum for translations](https://discuss.graphhopper.com/c/developers/translations) in case you are unsure or want to discuss before changing things.
+You can help improve GraphHopper by adding your language! We have a dedicated
+[forum for translations](https://discuss.graphhopper.com/c/developers/translations) in case you are unsure or want to discuss before changing things.
 
-See [this spreadsheet](https://docs.google.com/spreadsheets/d/10HKSFmxGVEIO92loVQetVmjXT0qpf3EA2jxuQSSYTdU/edit?pli=1#gid=0)
+See [this spreadsheet](https://docs.google.com/spreadsheets/d/18z00Rbt6QvLIkayEV9P89vW9oU0QbTVsjRk9nz1CeFY/edit#gid=0)
 and add a column for your language. Revisit it regularly to update or add new items. And see your language live at GraphHopper Maps e.g. explicitly specify the locale via:
 
 [https://graphhopper.com/maps/?point=40.979898%2C-3.164062&point=39.909736%2C-2.8125**&locale=de**](https://graphhopper.com/maps/?point=40.979898%2C-3.164062&point=39.909736%2C-2.8125&locale=de) 
@@ -25,8 +26,8 @@ There are already many existing :jp: :cn: :us: :fr: :es: :it: :ru: :de:
 
 ## Integrate into GraphHopper
 
-We'll regularly update GraphHopper with new translations or fixes so no need to do this work for you. But if you still
-want to try your changes or want to speed up the integration you can do the following:
+We'll regularly update GraphHopper with new translations or fixes so no need to do this work for you. You can ping us
+or if you want to try to integrate your changes you have to:
 
  * Make GraphHopper working on your computer, where you need to git clone the repository - see [here](./quickstart-from-source.md) for more information.
  * If you created a new language then add it in lexicographical order to TranslationMap.LOCALES (core/src/main/java/com/graphhopper/util) and to the script: core/files/update-translations.sh
@@ -37,6 +38,7 @@ want to try your changes or want to speed up the integration you can do the foll
  the [GraphHopper service](./quickstart-from-source.md) and go to localhost:8989 append e.g. &locale=de if your translation does not show up automatically
  * Read the [contributing guide](../../CONTRIBUTING.md) to submit your changes
 
-## License Agreement
+### Client-side Translations
 
-Please sign the [GraphHopper License Agreement](../../CONTRIBUTING.md).
+Only turn instructions are handled in the server-side routing engine. All other translations are on the client-side
+[in GraphHopper Maps](https://github.com/graphhopper/graphhopper-maps/blob/master/README.md#help-with-translations).

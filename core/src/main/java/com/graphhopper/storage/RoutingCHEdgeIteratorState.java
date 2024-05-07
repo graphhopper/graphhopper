@@ -33,16 +33,22 @@ public interface RoutingCHEdgeIteratorState {
     int getOrigEdge();
 
     /**
-     * For shortcuts of an edge-based CH graph this is the ID of the first original edge of this edge state, otherwise
-     * it is the same as {@link #getOrigEdge()}}
+     * For shortcuts of an edge-based CH graph this is the key of the first original edge of this edge state
+     * *in the direction of the shortcut*, i.e. the one this shortcut starts with. Otherwise it is the key of the
+     * original/base/query graph edge this CH edge state represents.
+     * It is not so obvious how the direction of this key shall be defined. For base graph edges it is clear as we use
+     * the storage direction and the value of the key simply depends on which node is the base node
+     * (the one stored first or second). For shortcut edges we use the direction of the shortcut to define the direction
+     * of the first/last original edge key.
      */
-    int getOrigEdgeFirst();
+    int getOrigEdgeKeyFirst();
 
     /**
-     * For shortcuts of an edge-based CH graph this is the ID of the last original edge of this edge state, otherwise
-     * it is the same as {@link #getOrigEdge()}}
+     * @see #getOrigEdgeKeyFirst(), but for the last edge, i.e. the one the shortcut points to.
+     * For shortcuts of an edge-based CH graph this is the key of the last original edge of this edge state, otherwise
+     * it is the key of the original/base/query graph edge this CH edge state represents.
      */
-    int getOrigEdgeLast();
+    int getOrigEdgeKeyLast();
 
     int getBaseNode();
 

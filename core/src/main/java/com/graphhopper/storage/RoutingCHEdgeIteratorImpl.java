@@ -73,7 +73,10 @@ public class RoutingCHEdgeIteratorImpl extends RoutingCHEdgeIteratorStateImpl im
                 nextEdgeId = baseIterator.edgeId;
             // todo: note that it would be more efficient (but cost more memory) to separate in/out edges,
             //       especially for edge-based where we do not use bidirectional shortcuts
-            // c.f. comment in AccessFilter
+            // this is needed for edge-based CH, see #1525
+            // background: we need to explicitly accept shortcut edges that are loops so they will be
+            // found as 'incoming' edges no matter which directions we are looking at
+            // todo: or maybe this is not really needed as edge-based shortcuts are not bidirectional anyway?
             if ((baseNode == adjNode && (store.getFwdAccess(shortcutPointer) || store.getBwdAccess(shortcutPointer))) ||
                     (outgoing && store.getFwdAccess(shortcutPointer) || incoming && store.getBwdAccess(shortcutPointer)))
                 return true;
@@ -84,9 +87,7 @@ public class RoutingCHEdgeIteratorImpl extends RoutingCHEdgeIteratorStateImpl im
             baseIterator.goToNext();
             // we update edgeId even when iterating base edges. is it faster to do this also for base/adjNode?
             edgeId = baseIterator.edgeId;
-            // c.f. comment in AccessFilter
-            if ((baseIterator.getBaseNode() == baseIterator.getAdjNode() && (finiteWeight(false) || finiteWeight(true))) ||
-                    (outgoing && finiteWeight(false) || incoming && finiteWeight(true)))
+            if ((outgoing && finiteWeight(false)) || (incoming && finiteWeight(true)))
                 return true;
         }
         return false;
@@ -94,11 +95,11 @@ public class RoutingCHEdgeIteratorImpl extends RoutingCHEdgeIteratorStateImpl im
 
     @Override
     public String toString() {
-        return baseIterator.toString();
+        return getEdge() + " " + getBaseNode() + "-" + getAdjNode();
     }
 
     private boolean finiteWeight(boolean reverse) {
-        return !Double.isInfinite(getOrigEdgeWeight(reverse, false));
+        return !Double.isInfinite(getOrigEdgeWeight(reverse));
     }
 
 }

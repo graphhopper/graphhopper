@@ -39,6 +39,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.util.*;
 
+import static com.graphhopper.util.Parameters.Details.INTERSECTION;
 import static com.graphhopper.util.Parameters.Routing.*;
 
 /**
@@ -169,6 +170,8 @@ public class NavigateResource {
 
         request.setProfile(profileStr).
                 setLocale(localeStr).
+                // We force the intersection details here as we cannot easily add this to the URL
+                setPathDetails(Arrays.asList(INTERSECTION)).
                 putHint(CALC_POINTS, true).
                 putHint(INSTRUCTIONS, enableInstructions).
                 putHint(WAY_POINT_MAX_DISTANCE, minPathPrecision).

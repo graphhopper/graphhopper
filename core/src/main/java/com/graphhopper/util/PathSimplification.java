@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * This class simplifies the path, using {@link DouglasPeucker}, but also considers a given list of partitions of
+ * This class simplifies the path, using {@link RamerDouglasPeucker}, but also considers a given list of partitions of
  * the path. Each partition separates the points of the path into non-overlapping intervals and the simplification is
  * done such that we never simplify across the boundaries of these intervals. This is important, because the points
  * at the interval boundaries must not be removed, e.g. when they are referenced by instructions.
@@ -49,7 +49,7 @@ public class PathSimplification {
      * @see PathSimplification
      */
     private final List<Partition> partitions;
-    private final DouglasPeucker douglasPeucker;
+    private final RamerDouglasPeucker ramerDouglasPeucker;
 
     // temporary variables used when traversing the different partitions
     private final int numPartitions;
@@ -57,16 +57,41 @@ public class PathSimplification {
     private final int[] currIntervalStart;
     private final int[] currIntervalEnd;
     private final boolean[] partitionFinished;
-    // keep track of how many points were removed by Douglas-Peucker in the current and previous intervals
+    // keep track of how many points were removed by Ramer-Douglas-Peucker in the current and previous intervals
     private final int[] removedPointsInCurrInterval;
     private final int[] removedPointsInPrevIntervals;
 
     /**
      * Convenience method used to obtain the partitions from a calculated path with details and instructions
      */
-    public static PointList simplify(ResponsePath responsePath, DouglasPeucker douglasPeucker, boolean enableInstructions) {
+    public static PointList simplify(ResponsePath responsePath, RamerDouglasPeucker ramerDouglasPeucker, boolean enableInstructions) {
         final PointList pointList = responsePath.getPoints();
         List<Partition> partitions = new ArrayList<>();
+
+        // make sure all waypoints are retained in the simplified point list
+        // we copy the waypoint indices into temporary intervals where they will be mutated by the simplification,
+        // afterwards we need to update the way point indices accordingly.
+        List<Interval> intervals = new ArrayList<>();
+        for (int i = 0; i < responsePath.getWaypointIndices().size() - 1; i++)
+            intervals.add(new Interval(responsePath.getWaypointIndices().get(i), responsePath.getWaypointIndices().get(i + 1)));
+        partitions.add(new Partition() {
+            @Override
+            public int size() {
+                return intervals.size();
+            }
+
+            @Override
+            public int getIntervalLength(int index) {
+                return intervals.get(index).end - intervals.get(index).start;
+            }
+
+            @Override
+            public void setInterval(int index, int start, int end) {
+                intervals.get(index).start = start;
+                intervals.get(index).end = end;
+            }
+        });
+
         // todo: maybe this code can be simplified if path details and instructions would be merged, see #1121
         if (enableInstructions) {
             final InstructionList instructions = responsePath.getInstructions();
@@ -123,21 +148,28 @@ public class PathSimplification {
             });
         }
 
-        simplify(responsePath.getPoints(), partitions, douglasPeucker);
+        simplify(responsePath.getPoints(), partitions, ramerDouglasPeucker);
+
+        List<Integer> simplifiedWaypointIndices = new ArrayList<>();
+        simplifiedWaypointIndices.add(intervals.get(0).start);
+        for (Interval interval : intervals)
+            simplifiedWaypointIndices.add(interval.end);
+        responsePath.setWaypointIndices(simplifiedWaypointIndices);
+
         assertConsistencyOfPathDetails(responsePath.getPathDetails());
         if (enableInstructions)
             assertConsistencyOfInstructions(responsePath.getInstructions(), responsePath.getPoints().size());
         return pointList;
     }
 
-    public static void simplify(PointList pointList, List<Partition> partitions, DouglasPeucker douglasPeucker) {
-        new PathSimplification(pointList, partitions, douglasPeucker).simplify();
+    public static void simplify(PointList pointList, List<Partition> partitions, RamerDouglasPeucker ramerDouglasPeucker) {
+        new PathSimplification(pointList, partitions, ramerDouglasPeucker).simplify();
     }
 
-    private PathSimplification(PointList pointList, List<Partition> partitions, DouglasPeucker douglasPeucker) {
+    private PathSimplification(PointList pointList, List<Partition> partitions, RamerDouglasPeucker ramerDouglasPeucker) {
         this.pointList = pointList;
         this.partitions = partitions;
-        this.douglasPeucker = douglasPeucker;
+        this.ramerDouglasPeucker = ramerDouglasPeucker;
         numPartitions = this.partitions.size();
         currIntervalIndex = new int[numPartitions];
         currIntervalStart = new int[numPartitions];
@@ -155,19 +187,19 @@ public class PathSimplification {
 
         // no partitions -> no constraints, just simplify the entire point list
         if (partitions.isEmpty()) {
-            douglasPeucker.simplify(pointList, 0, pointList.size() - 1);
+            ramerDouglasPeucker.simplify(pointList, 0, pointList.size() - 1);
             pointList.makeImmutable();
             return;
         }
 
-        // Douglas-Peucker never removes the first/last point of a given interval, so as long as we only run it
+        // Ramer-Douglas-Peucker never removes the first/last point of a given interval, so as long as we only run it
         // on each interval we can be sure that the interval boundaries will remain in the point list.
         // Whenever we remove points from an interval we have to update the interval indices of all partitions.
         // For example if an interval goes from point 4 to 9 and we remove points 5 and 7 we have to update the interval
         // to [4,7].
         // The basic idea to do this is as follows: We iterate through the point list and whenever we hit an interval
-        // end (q) in one of the partitions we run Douglas-Peucker for the interval [p,q], where p is the point where the
-        // last interval ended. We keep track of the number of removed points in the current and previous intervals
+        // end (q) in one of the partitions we run Ramer-Douglas-Peucker for the interval [p,q], where p is the point where
+        // the last interval ended. We keep track of the number of removed points in the current and previous intervals
         // to be able to calculate the updated indices.
 
         // prepare for the first interval in each partition
@@ -179,7 +211,7 @@ public class PathSimplification {
         // iterate the point list and simplify and update the intervals on the go
         for (int p = 0; p < pointList.size(); p++) {
             int removed = 0;
-            // first we check if we hit the end of an interval for one of the partitions and run Douglas-Peucker if we do
+            // first we check if we hit the end of an interval for one of the partitions and run Ramer-Douglas-Peucker if we do
             for (int s = 0; s < numPartitions; s++) {
                 if (partitionFinished[s]) {
                     continue;
@@ -190,7 +222,7 @@ public class PathSimplification {
                     // see #1764. Note that since the point list does not get compressed here yet we have to keep track
                     // of the total number of removed points to calculate the new interval boundaries later
                     final boolean compress = false;
-                    removed = douglasPeucker.simplify(pointList, intervalStart, currIntervalEnd[s], compress);
+                    removed = ramerDouglasPeucker.simplify(pointList, intervalStart, currIntervalEnd[s], compress);
                     intervalStart = p;
                     break;
                 }
@@ -218,7 +250,7 @@ public class PathSimplification {
 
         // now we finally have to compress the pointList (actually remove the deleted points). note only after this
         // call the (now shifted) indices in path details and instructions are correct
-        DouglasPeucker.removeNaN(pointList);
+        RamerDouglasPeucker.removeNaN(pointList);
 
         // Make sure that the instruction references are not broken
         pointList.makeImmutable();
@@ -316,4 +348,18 @@ public class PathSimplification {
         void setInterval(int index, int start, int end);
     }
 
+    public static class Interval {
+        public int start;
+        public int end;
+
+        public Interval(int start, int end) {
+            this.start = start;
+            this.end = end;
+        }
+
+        @Override
+        public String toString() {
+            return "[" + start + ", " + end + "]";
+        }
+    }
 }

@@ -20,6 +20,8 @@ package com.graphhopper.util;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.graphhopper.util.Parameters.Details.*;
+
 public class Instruction {
     public static final int UNKNOWN = -99;
     public static final int U_TURN_UNKNOWN = -98;
@@ -45,7 +47,7 @@ public class Instruction {
     protected PointList points;
     protected boolean rawName;
     protected int sign;
-    protected String name;
+    protected String name = "";
     protected double distance;
     protected long time;
     protected Map<String, Object> extraInfo = new HashMap<>(3);
@@ -56,7 +58,7 @@ public class Instruction {
      */
     public Instruction(int sign, String name, PointList pl) {
         this.sign = sign;
-        this.name = name;
+        if (name != null) this.name = name;
         this.points = pl;
     }
 
@@ -84,7 +86,11 @@ public class Instruction {
     }
 
     public void setName(String name) {
-        this.name = name;
+        if (name != null) this.name = name;
+    }
+
+    String _getName() {
+        return getName().isEmpty() && extraInfo.get(STREET_REF) instanceof String ? (String) extraInfo.get(STREET_REF) : getName();
     }
 
     public Map<String, Object> getExtraInfoJSON() {
@@ -92,7 +98,8 @@ public class Instruction {
     }
 
     public void setExtraInfo(String key, Object value) {
-        extraInfo.put(key, value);
+        if (value != null && key != null)
+            extraInfo.put(key, value);
     }
 
     /**
@@ -161,7 +168,7 @@ public class Instruction {
             return getName();
 
         String str;
-        String streetName = getName();
+        String streetName = _getName();
         int indi = getSign();
         if (indi == Instruction.CONTINUE_ON_STREET) {
             str = Helper.isEmpty(streetName) ? tr.tr("continue") : tr.tr("continue_onto", streetName);
@@ -211,8 +218,16 @@ public class Instruction {
             if (dir == null)
                 str = tr.tr("unknown", indi);
             else
-                str = Helper.isEmpty(streetName) ? dir : tr.tr("turn_onto", dir, streetName);
+                str = streetName.isEmpty() ? dir : tr.tr("turn_onto", dir, streetName);
         }
+        String dest = (String) extraInfo.get(STREET_DESTINATION);
+        String destRef = (String) extraInfo.get(STREET_DESTINATION_REF);
+        if (dest != null) {
+            if (destRef != null)
+                return tr.tr("toward_destination_with_ref", str, destRef, dest);
+            return tr.tr("toward_destination", str, dest);
+        } else if (destRef != null)
+            return tr.tr("toward_destination_ref_only", str, destRef);
         return str;
     }
 }

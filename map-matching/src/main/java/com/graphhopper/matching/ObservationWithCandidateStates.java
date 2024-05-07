@@ -16,7 +16,7 @@
  */
 package com.graphhopper.matching;
 
-import java.util.Collection;
+import java.util.List;
 
 public class ObservationWithCandidateStates {
 
@@ -28,9 +28,9 @@ public class ObservationWithCandidateStates {
     /**
      * State candidates at this time step.
      */
-    public final Collection<State> candidates;
+    public final List<State> candidates;
 
-    public ObservationWithCandidateStates(Observation observation, Collection<State> candidates) {
+    public ObservationWithCandidateStates(Observation observation, List<State> candidates) {
         if (observation == null || candidates == null) {
             throw new NullPointerException("observation and candidates must not be null.");
         }

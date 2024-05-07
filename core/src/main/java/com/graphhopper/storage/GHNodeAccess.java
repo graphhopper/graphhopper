@@ -18,9 +18,6 @@
 package com.graphhopper.storage;
 
 /**
- * A helper class for GraphHopperStorage for its node access.
- * <p>
- *
  * @author Peter Karich
  */
 class GHNodeAccess implements NodeAccess {

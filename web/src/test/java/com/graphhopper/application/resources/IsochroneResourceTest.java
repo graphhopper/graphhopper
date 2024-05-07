@@ -22,13 +22,15 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
-import com.graphhopper.config.Profile;
+import com.graphhopper.config.TurnCostsConfig;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.JsonFeatureCollection;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.locationtech.jts.geom.Coordinate;
@@ -42,7 +44,6 @@ import java.io.File;
 import java.util.Arrays;
 
 import static com.graphhopper.application.util.TestUtils.clientTarget;
-import static com.graphhopper.util.Parameters.Routing.BLOCK_AREA;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(DropwizardExtensionsSupport.class)
@@ -53,13 +54,14 @@ public class IsochroneResourceTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.flag_encoders", "car|turn_costs=true").
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
+                putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR).
+                putObject("graph.encoded_values", "car_access, car_average_speed").
                 setProfiles(Arrays.asList(
-                        new Profile("fast_car").setVehicle("car").setWeighting("fastest").setTurnCosts(true),
-                        new Profile("short_car").setVehicle("car").setWeighting("shortest").setTurnCosts(true),
-                        new Profile("fast_car_no_turn_restrictions").setVehicle("car").setWeighting("fastest").setTurnCosts(false)
+                        TestProfiles.accessAndSpeed("fast_car", "car").setTurnCostsConfig(TurnCostsConfig.car()),
+                        TestProfiles.constantSpeed("short_car", 35).setTurnCostsConfig(TurnCostsConfig.car()),
+                        TestProfiles.accessAndSpeed("fast_car_no_turn_restrictions", "car")
                 ));
         return config;
     }
@@ -141,14 +143,14 @@ public class IsochroneResourceTest {
     @Test
     public void requestByWeightLimit() {
         WebTarget commonTarget = clientTarget(app, "/isochrone")
-                .queryParam("profile", "short_car")
+                .queryParam("profile", "fast_car")
                 .queryParam("point", "42.531073,1.573792")
                 .queryParam("type", "geojson");
 
-        long limit = 3000;
+        long limit = 10 * 60;
 
         Response distanceLimitRsp = commonTarget
-                .queryParam("distance_limit", limit)
+                .queryParam("time_limit", limit)
                 .request().buildGet().invoke();
         JsonFeatureCollection distanceLimitFeatureCollection = distanceLimitRsp.readEntity(JsonFeatureCollection.class);
         Geometry distanceLimitPolygon = distanceLimitFeatureCollection.getFeatures().get(0).getGeometry();
@@ -199,18 +201,8 @@ public class IsochroneResourceTest {
 
     @Test
     public void profileWithLegacyParametersNotAllowed() {
-        assertNotAllowed("&profile=fast_car&weighting=fastest", "Since you are using the 'profile' parameter, do not use the 'weighting' parameter. You used 'weighting=fastest'");
-        assertNotAllowed("&profile=fast_car&vehicle=car", "Since you are using the 'profile' parameter, do not use the 'vehicle' parameter. You used 'vehicle=car'");
-    }
-
-    @Test
-    public void queryWithLegacyParameter() {
-        Response rsp = clientTarget(app, "/isochrone")
-                .queryParam("point", "42.508932,1.528516")
-                .queryParam("turn_costs", "false")
-                .queryParam("type", "geojson")
-                .request().buildGet().invoke();
-        assertEquals(200, rsp.getStatus());
+        assertNotAllowed("&profile=fast_car&weighting=fastest", "The 'weighting' parameter is no longer supported. You used 'weighting=fastest'");
+        assertNotAllowed("&vehicle=car", "profile parameter required");
     }
 
     @Test
@@ -274,12 +266,14 @@ public class IsochroneResourceTest {
         Response response = clientTarget(app, "/isochrone?profile=fast_car&point=42.531073,1.573792&time_limit=wurst")
                 .request().buildGet().invoke();
 
+        assertEquals(404, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         String message = json.path("message").asText();
 
-        assertEquals("query param time_limit is not a number.", message);
+        assertEquals("HTTP 404 Not Found", message);
     }
 
+    @Disabled("block_area is no longer supported and to use custom models we'd need a POST endpoint for isochrones")
     @Test
     public void requestWithBlockArea() {
         Response rsp = clientTarget(app, "/isochrone")
@@ -288,7 +282,7 @@ public class IsochroneResourceTest {
                 .queryParam("time_limit", 5 * 60)
                 .queryParam("buckets", 2)
                 .queryParam("type", "geojson")
-                .queryParam(BLOCK_AREA, "42.558067,1.589429,100")
+                .queryParam("block_area", "42.558067,1.589429,100")
                 .request().buildGet().invoke();
         JsonFeatureCollection featureCollection = rsp.readEntity(JsonFeatureCollection.class);
 
@@ -375,6 +369,6 @@ public class IsochroneResourceTest {
 
         Polygon beforeLastPolygon = (Polygon) collection.getFeatures().get(collection.getFeatures().size() - 2).getGeometry();
         assertTrue(beforeLastPolygon.contains(geometryFactory.createPoint(new Coordinate(1.564136, 42.524938))));
-        assertFalse(beforeLastPolygon.contains(geometryFactory.createPoint(new Coordinate(1.571474, 42.529176))));
+        assertFalse(beforeLastPolygon.contains(geometryFactory.createPoint(new Coordinate(1.575551, 42.532528))));
     }
 }

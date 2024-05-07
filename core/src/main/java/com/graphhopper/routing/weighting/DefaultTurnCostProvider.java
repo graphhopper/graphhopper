@@ -18,33 +18,28 @@
 
 package com.graphhopper.routing.weighting;
 
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.TurnCost;
-import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.config.TurnCostsConfig;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.EdgeIterator;
 
-import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
+import static com.graphhopper.config.TurnCostsConfig.INFINITE_U_TURN_COSTS;
 
 public class DefaultTurnCostProvider implements TurnCostProvider {
-    private final DecimalEncodedValue turnCostEnc;
+    private final BooleanEncodedValue turnRestrictionEnc;
     private final TurnCostStorage turnCostStorage;
     private final int uTurnCostsInt;
     private final double uTurnCosts;
 
-    public DefaultTurnCostProvider(FlagEncoder encoder, TurnCostStorage turnCostStorage) {
-        this(encoder, turnCostStorage, Weighting.INFINITE_U_TURN_COSTS);
-    }
-
-    public DecimalEncodedValue getTurnCostEnc() {
-        return turnCostEnc;
+    public DefaultTurnCostProvider(BooleanEncodedValue turnRestrictionEnc, TurnCostStorage turnCostStorage) {
+        this(turnRestrictionEnc, turnCostStorage, TurnCostsConfig.INFINITE_U_TURN_COSTS);
     }
 
     /**
-     * @param uTurnCosts the costs of a u-turn in seconds, for {@link Weighting#INFINITE_U_TURN_COSTS} the u-turn costs
+     * @param uTurnCosts the costs of a u-turn in seconds, for {@link TurnCostsConfig#INFINITE_U_TURN_COSTS} the u-turn costs
      *                   will be infinite
      */
-    public DefaultTurnCostProvider(FlagEncoder encoder, TurnCostStorage turnCostStorage, int uTurnCosts) {
+    public DefaultTurnCostProvider(BooleanEncodedValue turnRestrictionEnc, TurnCostStorage turnCostStorage, int uTurnCosts) {
         if (uTurnCosts < 0 && uTurnCosts != INFINITE_U_TURN_COSTS) {
             throw new IllegalArgumentException("u-turn costs must be positive, or equal to " + INFINITE_U_TURN_COSTS + " (=infinite costs)");
         }
@@ -53,10 +48,13 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
         if (turnCostStorage == null) {
             throw new IllegalArgumentException("No storage set to calculate turn weight");
         }
-        String key = TurnCost.key(encoder.toString());
         // if null the TurnCostProvider can be still useful for edge-based routing
-        this.turnCostEnc = encoder.hasEncodedValue(key) ? encoder.getDecimalEncodedValue(key) : null;
+        this.turnRestrictionEnc = turnRestrictionEnc;
         this.turnCostStorage = turnCostStorage;
+    }
+
+    public BooleanEncodedValue getTurnRestrictionEnc() {
+        return turnRestrictionEnc;
     }
 
     @Override
@@ -69,8 +67,8 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
             // note that the u-turn costs overwrite any turn costs set in TurnCostStorage
             tCost = uTurnCosts;
         } else {
-            if (turnCostEnc != null)
-                tCost = turnCostStorage.get(turnCostEnc, edgeFrom, nodeVia, edgeTo);
+            if (turnRestrictionEnc != null)
+                tCost = turnCostStorage.get(turnRestrictionEnc, edgeFrom, nodeVia, edgeTo) ? Double.POSITIVE_INFINITY : 0;
         }
         return tCost;
     }

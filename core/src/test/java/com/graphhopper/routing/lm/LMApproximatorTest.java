@@ -20,8 +20,12 @@ package com.graphhopper.routing.lm;
 
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.Path;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
 import com.graphhopper.routing.ev.Subnetwork;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.ev.TurnCost;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.*;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Directory;
@@ -44,15 +48,15 @@ public class LMApproximatorTest {
 
     private void run(long seed) {
         Directory dir = new RAMDirectory();
-        FlagEncoder encoder = FlagEncoders.createCar(5, 5, 1);
-        EncodingManager encodingManager = new EncodingManager.Builder().add(encoder).add(Subnetwork.create("car")).build();
+        DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, true);
+        DecimalEncodedValue turnCostEnc = TurnCost.create("car", 1);
+        EncodingManager encodingManager = new EncodingManager.Builder().add(speedEnc).addTurnCostEncodedValue(turnCostEnc).add(Subnetwork.create("car")).build();
         BaseGraph graph = new BaseGraph.Builder(encodingManager).setDir(dir).withTurnCosts(true).create();
 
         Random rnd = new Random(seed);
-        GHUtility.buildRandomGraph(graph, rnd, 100, 2.2, true, true,
-                encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), null, 0.7, 0.8, 0.8);
+        GHUtility.buildRandomGraph(graph, rnd, 100, 2.2, true, speedEnc, null, 0.8, 0.8);
 
-        Weighting weighting = new FastestWeighting(encoder);
+        Weighting weighting = new SpeedWeighting(speedEnc);
 
         PrepareLandmarks lm = new PrepareLandmarks(dir, graph, encodingManager, new LMConfig("car", weighting), 16);
         lm.setMaximumWeight(10000);
@@ -60,13 +64,13 @@ public class LMApproximatorTest {
         LandmarkStorage landmarkStorage = lm.getLandmarkStorage();
 
         for (int t = 0; t < graph.getNodes(); t++) {
-            LMApproximator lmApproximator = new LMApproximator(graph, weighting, graph.getNodes(), landmarkStorage, 8, landmarkStorage.getFactor(), false);
+            LMApproximator lmApproximator = new LMApproximator(graph, weighting, weighting, graph.getNodes(), landmarkStorage, 8, landmarkStorage.getFactor(), false);
             WeightApproximator reverseLmApproximator = lmApproximator.reverse();
             BeelineWeightApproximator beelineApproximator = new BeelineWeightApproximator(graph.getNodeAccess(), weighting);
             WeightApproximator reverseBeelineApproximator = beelineApproximator.reverse();
             PerfectApproximator perfectApproximator = new PerfectApproximator(graph, weighting, TraversalMode.NODE_BASED, false);
             PerfectApproximator reversePerfectApproximator = new PerfectApproximator(graph, weighting, TraversalMode.NODE_BASED, true);
-            BalancedWeightApproximator balancedWeightApproximator = new BalancedWeightApproximator(new LMApproximator(graph, weighting, graph.getNodes(), landmarkStorage, 8, landmarkStorage.getFactor(), false));
+            BalancedWeightApproximator balancedWeightApproximator = new BalancedWeightApproximator(new LMApproximator(graph, weighting, weighting, graph.getNodes(), landmarkStorage, 8, landmarkStorage.getFactor(), false));
 
             lmApproximator.setTo(t);
             beelineApproximator.setTo(t);
@@ -105,7 +109,7 @@ public class LMApproximatorTest {
                     // That's a requirement for normal A*-implementations, because if it is violated,
                     // the heap-weight of settled nodes can decrease, and that would mean our
                     // stopping criterion is not sufficient.
-                    EdgeIterator neighbors = graph.createEdgeExplorer(AccessFilter.outEdges(encoder.getAccessEnc())).setBaseNode(v);
+                    EdgeIterator neighbors = graph.createEdgeExplorer(edge -> edge.get(speedEnc) > 0).setBaseNode(v);
                     while (neighbors.next()) {
                         int w = neighbors.getAdjNode();
                         double vw = weighting.calcEdgeWeight(neighbors, false);
@@ -116,7 +120,7 @@ public class LMApproximatorTest {
                         }
                     }
 
-                    neighbors = graph.createEdgeExplorer(AccessFilter.outEdges(encoder.getAccessEnc())).setBaseNode(v);
+                    neighbors = graph.createEdgeExplorer(edge -> edge.get(speedEnc) > 0).setBaseNode(v);
                     while (neighbors.next()) {
                         int w = neighbors.getAdjNode();
                         double vw = weighting.calcEdgeWeight(neighbors, false);

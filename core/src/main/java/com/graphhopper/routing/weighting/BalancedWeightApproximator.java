@@ -33,7 +33,7 @@ package com.graphhopper.routing.weighting;
  * Mitoh, K. (1994). A fast algorithm for finding better routes by ai search techniques. In VNIS,
  * pages 291–296.
  *
- * [2] Pijls, W.H.L.M, & Post, H. (2008). A new bidirectional algorithm for shortest paths (No. EI 2008-25).
+ * [2] Pijls, W.H.L.M, &amp; Post, H. (2008). A new bidirectional algorithm for shortest paths (No. EI 2008-25).
  * Report / Econometric Institute, Erasmus University Rotterdam
  *
  * @author jansoe

@@ -18,39 +18,26 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.EncodedValue;
-import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.ev.IntEncodedValue;
-import com.graphhopper.routing.ev.MtbRating;
 import com.graphhopper.storage.IntsRef;
-
-import java.util.List;
 
 /**
  * Parses the mountain biking difficulty.
  * A mapping mtb:scale=0 corresponds to 1 and mtb:scale=1 to 2 until 7.
  *
  * @see <a href="https://wiki.openstreetmap.org/wiki/Key:mtb:scale">Key:mtb:scale</a> for details on OSM mountain biking difficulties.
- * @see <a href=""http://www.singletrail-skala.de/>Single Trail Scale</a>
+ * @see <a href="http://www.singletrail-skala.de/">Single Trail Scale</a>
  */
 public class OSMMtbRatingParser implements TagParser {
     private final IntEncodedValue mtbRatingEnc;
-
-    public OSMMtbRatingParser() {
-        this(MtbRating.create());
-    }
 
     public OSMMtbRatingParser(IntEncodedValue mtbRatingEnc) {
         this.mtbRatingEnc = mtbRatingEnc;
     }
 
     @Override
-    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> link) {
-        link.add(mtbRatingEnc);
-    }
-
-    @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
+    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay readerWay, IntsRef relationFlags) {
         String scale = readerWay.getTag("mtb:scale");
         int rating = 0;
         if (scale != null) {
@@ -63,7 +50,6 @@ public class OSMMtbRatingParser implements TagParser {
             }
         }
         if (rating > 0 && rating < 8)
-            mtbRatingEnc.setInt(false, edgeFlags, rating);
-        return edgeFlags;
+            mtbRatingEnc.setInt(false, edgeId, edgeIntAccess, rating);
     }
 }

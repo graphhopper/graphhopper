@@ -19,26 +19,17 @@ package com.graphhopper.util;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
 import java.util.Locale;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static com.graphhopper.util.Helper.UTF_CS;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 /**
  * @author Peter Karich
  */
 public class HelperTest {
-
-    @Test
-    public void testCountBitValue() {
-        assertEquals(1, Helper.countBitValue(1));
-        assertEquals(2, Helper.countBitValue(2));
-        assertEquals(2, Helper.countBitValue(3));
-        assertEquals(3, Helper.countBitValue(4));
-        assertEquals(3, Helper.countBitValue(7));
-        assertEquals(4, Helper.countBitValue(8));
-        assertEquals(5, Helper.countBitValue(20));
-    }
 
     @Test
     public void testGetLocale() {
@@ -68,28 +59,6 @@ public class HelperTest {
     }
 
     @Test
-    public void testUnsignedConversions() {
-        long l = Helper.toUnsignedLong(-1);
-        assertEquals(4294967295L, l);
-        assertEquals(-1, Helper.toSignedInt(l));
-
-        int intVal = Integer.MAX_VALUE;
-        long maxInt = (long) intVal;
-        assertEquals(intVal, Helper.toSignedInt(maxInt));
-
-        intVal++;
-        maxInt = Helper.toUnsignedLong(intVal);
-        assertEquals(intVal, Helper.toSignedInt(maxInt));
-
-        intVal++;
-        maxInt = Helper.toUnsignedLong(intVal);
-        assertEquals(intVal, Helper.toSignedInt(maxInt));
-
-        assertEquals(0xFFFFffffL, (1L << 32) - 1);
-        assertTrue(0xFFFFffffL > 0L);
-    }
-
-    @Test
     public void testCamelCaseToUnderscore() {
         assertEquals("test_case", Helper.camelCaseToUnderScore("testCase"));
         assertEquals("test_case_t_b_d", Helper.camelCaseToUnderScore("testCaseTBD"));
@@ -103,5 +72,24 @@ public class HelperTest {
         assertEquals("testCase", Helper.underScoreToCamelCase("test_case"));
         assertEquals("testCaseTBD", Helper.underScoreToCamelCase("test_case_t_b_d"));
         assertEquals("TestCase_", Helper.underScoreToCamelCase("_test_case_"));
+    }
+
+    @Test
+    public void testIssue2609() {
+        String s = "";
+        for (int i = 0; i < 128; i++) {
+            s += "ä";
+        }
+
+        // all chars are 2 bytes so at 255 we cut the char into an invalid character and this is probably automatically
+        // corrected leading to a longer string (or do chars have special marker bits to indicate their byte length?)
+        assertEquals(257, new String(s.getBytes(UTF_CS), 0, 255, UTF_CS).getBytes(UTF_CS).length);
+
+        // see this in action:
+        byte[] bytes = "a".getBytes(UTF_CS);
+        assertEquals(1, new String(bytes, 0, 1, UTF_CS).getBytes(UTF_CS).length);
+        // force incorrect char:
+        bytes[0] = -25;
+        assertEquals(3, new String(bytes, 0, 1, UTF_CS).getBytes(UTF_CS).length);
     }
 }

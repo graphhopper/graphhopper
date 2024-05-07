@@ -18,11 +18,12 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
+import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.AccessFilter;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeExplorer;
@@ -43,14 +44,17 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * @see DirectionResolverOnQueryGraphTest for tests that include direction resolving for virtual nodes and edges
  */
 public class DirectionResolverTest {
-    private FlagEncoder encoder;
+    private BooleanEncodedValue accessEnc;
+    private DecimalEncodedValue speedEnc;
     private BaseGraph graph;
     private NodeAccess na;
 
     @BeforeEach
     public void setup() {
-        encoder = FlagEncoders.createCar();
-        graph = new BaseGraph.Builder(EncodingManager.create(encoder)).create();
+        accessEnc = new SimpleBooleanEncodedValue("access", true);
+        speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+        EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
+        graph = new BaseGraph.Builder(em).create();
         na = graph.getNodeAccess();
     }
 
@@ -70,42 +74,10 @@ public class DirectionResolverTest {
         addNode(0, 0, 0);
         addNode(1, 0.1, 0.1);
         // with edges without access flags (blocked edges)
-        graph.edge(0, 1).set(encoder.getAccessEnc(), false, false);
+        graph.edge(0, 1).set(accessEnc, false, false);
 
         checkResult(0, impossible());
         checkResult(1, impossible());
-    }
-
-    @Test
-    public void isolated_nodes_with_loops() {
-        // 1      2__     3    4     5-6
-        // |\     |  \    |\   |\      |\
-        // x-x    x->x    --   ->      --
-        addNode(0, 2, 0);
-        addNode(1, 2, 1);
-        addNode(2, 2, 2);
-        addNode(3, 2, 3);
-        addNode(4, 2, 4);
-        addNode(5, 2, 5);
-        addNode(6, 2, 5.1);
-        // make sure graph bounds are valid
-        addNode(7, 5, 5);
-
-        addEdge(1, 1, true).setWayGeometry(createPointList(1.9, 1, 1.9, 1.1));
-        addEdge(2, 2, false).setWayGeometry(createPointList(1.9, 2, 1.9, 2.1));
-        addEdge(3, 3, true);
-        addEdge(4, 4, false);
-        addEdge(5, 6, true);
-        addEdge(6, 6, true);
-
-        checkResult(1, impossible());
-        checkResult(2, impossible());
-        checkResult(3, impossible());
-        checkResult(4, impossible());
-
-        // for node 5 we cannot know (without further loop traversing) that 5 is only connected to a single
-        // other node (and its only a loop), so we restrict it as usual
-        checkResult(5, restricted(edge(5, 6), edge(6, 5), edge(5, 6), edge(6, 5)));
     }
 
     @Test
@@ -150,34 +122,6 @@ public class DirectionResolverTest {
         checkResult(1, impossible());
         // we can leave point 2, but never arrive at it
         checkResult(2, impossible());
-    }
-
-    @Test
-    public void nodes_with_loops() {
-        // in case there is a loop edge we simply do not apply any restrictions. loops are rather rare and excluded
-        // by the OSM import. Snapping a point onto a tower node that has a loop is even less likely.
-        // If there is a loop there is often no reasonable way to restrict the direction similar to junctions.
-        // 0------1-------2----3
-        // |\     |  \    |\   |\
-        // x-x    x->x    --   ->
-        addNode(0, 2, 0);
-        addNode(1, 2, 1);
-        addNode(2, 2, 2);
-        addNode(3, 2, 3);
-        // make sure graph bounds are valid
-        addNode(4, 5, 5);
-        addEdge(0, 0, true).setWayGeometry(createPointList(1.9, 0, 1.9, 0.1));
-        addEdge(0, 1, true);
-        addEdge(1, 1, false).setWayGeometry(createPointList(1.9, 1, 1.9, 1.1));
-        addEdge(1, 2, true);
-        addEdge(2, 2, true);
-        addEdge(2, 3, true);
-        addEdge(3, 3, false);
-
-        checkResult(0, unrestricted());
-        checkResult(1, unrestricted());
-        checkResult(2, unrestricted());
-        checkResult(3, unrestricted());
     }
 
     @Test
@@ -382,11 +326,10 @@ public class DirectionResolverTest {
     }
 
     private EdgeIteratorState addEdge(int from, int to, boolean bothDirections) {
-        return GHUtility.setSpeed(60, true, bothDirections, encoder, graph.edge(from, to).setDistance(1));
+        return GHUtility.setSpeed(60, true, bothDirections, accessEnc, speedEnc, graph.edge(from, to).setDistance(1));
     }
 
     private boolean isAccessible(EdgeIteratorState edge, boolean reverse) {
-        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
         return reverse ? edge.getReverse(accessEnc) : edge.get(accessEnc);
     }
 
@@ -400,7 +343,7 @@ public class DirectionResolverTest {
     }
 
     private int edge(int from, int to) {
-        EdgeExplorer explorer = graph.createEdgeExplorer(AccessFilter.outEdges(encoder.getAccessEnc()));
+        EdgeExplorer explorer = graph.createEdgeExplorer(AccessFilter.outEdges(accessEnc));
         EdgeIterator iter = explorer.setBaseNode(from);
         while (iter.next()) {
             if (iter.getAdjNode() == to) {

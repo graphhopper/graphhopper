@@ -9,6 +9,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.Arrays;
 import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -21,23 +22,27 @@ public abstract class AbstractGHMatrixWebTester {
 
     protected final ObjectMapper objectMapper = new ObjectMapper();
 
-    abstract GraphHopperMatrixWeb createMatrixClient(String json) throws IOException;
+    abstract GraphHopperMatrixWeb createMatrixClient(String json, int errorCode) throws IOException;
 
     abstract GHMatrixAbstractRequester createRequester(String url);
 
     public static GHMRequest createRequest() {
         GHMRequest req = new GHMRequest();
-        req.addPoint(new GHPoint(51.534377, -0.087891));
-        req.addPoint(new GHPoint(51.467697, -0.090637));
-        req.addPoint(new GHPoint(51.521241, -0.171833));
-        req.addPoint(new GHPoint(51.473685, -0.211487));
+        req.setPoints(Arrays.asList(
+                new GHPoint(51.534377, -0.087891),
+                new GHPoint(51.467697, -0.090637),
+                new GHPoint(51.521241, -0.171833),
+                new GHPoint(51.473685, -0.211487)
+        ));
+        req.setOutArrays(Arrays.asList("weights"));
+        req.setProfile("car");
         return req;
     }
 
     @Test
     public void testReadingMatrixWithError() throws IOException {
         String ghMatrix = readFile(new InputStreamReader(getClass().getResourceAsStream("matrix_error.json")));
-        GraphHopperMatrixWeb matrixWeb = createMatrixClient(ghMatrix);
+        GraphHopperMatrixWeb matrixWeb = createMatrixClient(ghMatrix, 400);
 
         GHMRequest req = createRequest();
         MatrixResponse rsp = matrixWeb.route(req);
@@ -49,7 +54,7 @@ public abstract class AbstractGHMatrixWebTester {
     @Test
     public void testReadingWeights() throws IOException {
         String ghMatrix = readFile(new InputStreamReader(getClass().getResourceAsStream("matrix-weights-only.json")));
-        GraphHopperMatrixWeb matrixWeb = createMatrixClient(ghMatrix);
+        GraphHopperMatrixWeb matrixWeb = createMatrixClient(ghMatrix, 400);
 
         GHMRequest req = createRequest();
         MatrixResponse rsp = matrixWeb.route(req);
@@ -67,19 +72,21 @@ public abstract class AbstractGHMatrixWebTester {
     @Test
     public void testReadingMatrixConnectionsNotFound_noFailFast() throws IOException {
         String ghMatrix = readFile(new InputStreamReader(getClass().getResourceAsStream("matrix-connection-not-found-fail-fast.json")));
-        GraphHopperMatrixWeb matrixWeb = createMatrixClient(ghMatrix);
+        GraphHopperMatrixWeb matrixWeb = createMatrixClient(ghMatrix, 400);
 
         GHMRequest req = new GHMRequest();
-        req.addPoint(new GHPoint(0, 1));
-        req.addPoint(new GHPoint(2, 3));
-        req.addOutArray("weights");
-        req.addOutArray("distances");
-        req.addOutArray("times");
+        req.setPoints(Arrays.asList(
+                new GHPoint(0, 1),
+                new GHPoint(2, 3)
+        ));
+        req.setOutArrays(Arrays.asList("weights", "distances", "times"));
         req.setFailFast(false);
+        req.setProfile("car");
 
         MatrixResponse rsp = matrixWeb.route(req);
         assertFalse(rsp.hasErrors());
         assertTrue(rsp.hasProblems());
+        assertEquals(400, rsp.getStatusCode());
 
         assertEquals(Double.MAX_VALUE, rsp.getWeight(0, 1), 1.e-3);
         assertEquals(0, rsp.getWeight(0, 0), 1.e-3);
@@ -96,20 +103,22 @@ public abstract class AbstractGHMatrixWebTester {
     @Test
     public void testReadingMatrixPointsNotFound_noFailFast() throws IOException {
         String ghMatrix = readFile(new InputStreamReader(getClass().getResourceAsStream("matrix-point-not-found-fail-fast.json")));
-        GraphHopperMatrixWeb matrixWeb = createMatrixClient(ghMatrix);
+        GraphHopperMatrixWeb matrixWeb = createMatrixClient(ghMatrix, 400);
 
         GHMRequest req = new GHMRequest();
-        req.addPoint(new GHPoint(0, 1));
-        req.addPoint(new GHPoint(2, 3));
-        req.addPoint(new GHPoint(4, 5));
-        req.addOutArray("weights");
-        req.addOutArray("distances");
-        req.addOutArray("times");
+        req.setPoints(Arrays.asList(
+                new GHPoint(0, 1),
+                new GHPoint(2, 3),
+                new GHPoint(4, 5)
+        ));
+        req.setProfile("car");
+        req.setOutArrays(Arrays.asList("weights", "distances", "times"));
         req.setFailFast(false);
 
         MatrixResponse rsp = matrixWeb.route(req);
         assertFalse(rsp.hasErrors());
         assertTrue(rsp.hasProblems());
+        assertEquals(400, rsp.getStatusCode());
 
         assertEquals(Double.MAX_VALUE, rsp.getWeight(1, 0), 1.e-3);
         assertEquals(Double.MAX_VALUE, rsp.getWeight(1, 1), 1.e-3);
@@ -152,24 +161,24 @@ public abstract class AbstractGHMatrixWebTester {
     @Test
     public void testReadingGoogleThrowsException() throws IOException {
         String ghMatrix = readFile(new InputStreamReader(getClass().getResourceAsStream("google-matrix1.json")));
-        GraphHopperMatrixWeb matrixWeb = createMatrixClient(ghMatrix);
+        GraphHopperMatrixWeb matrixWeb = createMatrixClient(ghMatrix, 400);
         GHMRequest req = createRequest();
         MatrixResponse rsp = matrixWeb.route(req);
         assertTrue(rsp.hasErrors());
+        assertEquals(400, rsp.getStatusCode());
     }
 
     @Test
     public void testReadingWeights_TimesAndDistances() throws IOException {
         String ghMatrix = readFile(new InputStreamReader(getClass().getResourceAsStream("matrix.json")));
-        GraphHopperMatrixWeb matrixWeb = createMatrixClient(ghMatrix);
+        GraphHopperMatrixWeb matrixWeb = createMatrixClient(ghMatrix, 200);
 
         GHMRequest req = createRequest();
-        req.addOutArray("weights");
-        req.addOutArray("distances");
-        req.addOutArray("times");
+        req.setOutArrays(Arrays.asList("weights", "distances", "times"));
         MatrixResponse rsp = matrixWeb.route(req);
 
         assertFalse(rsp.hasErrors());
+        assertEquals(200, rsp.getStatusCode());
 
         assertEquals(9475., rsp.getDistance(0, 1), .1);
         assertEquals(9734., rsp.getDistance(1, 2), .1);
@@ -183,19 +192,38 @@ public abstract class AbstractGHMatrixWebTester {
     }
 
     @Test
-    public void noVehicleWhenNotSpecified() {
+    public void noProfileWhenNotSpecified() {
         GHMatrixBatchRequester requester = new GHMatrixBatchRequester("url");
-        JsonNode json = requester.createPostRequest(new GHMRequest(5), Collections.singletonList("weights"));
-        assertEquals("{\"out_arrays\":[\"weights\"],\"fail_fast\":true}", json.toString());
+        JsonNode json = requester.createPostRequest(new GHMRequest().setOutArrays(Collections.singletonList("weights")).
+                setPoints(Arrays.asList(new GHPoint(11, 12))).setProfile("car"));
+        assertEquals("{\"points\":[[12.0,11.0]],\"out_arrays\":[\"weights\"],\"fail_fast\":true,\"profile\":\"car\"}", json.toString());
+    }
+
+    @Test
+    public void hasProfile() {
+        GHMatrixAbstractRequester requester = createRequester("url");
+        GHMRequest ghmRequest = new GHMRequest();
+        ghmRequest.setOutArrays(Collections.singletonList("weights"));
+        ghmRequest.setPoints(Arrays.asList(new GHPoint(11, 12)));
+        ghmRequest.setProfile("bike");
+        JsonNode json = requester.createPostRequest(ghmRequest);
+        assertEquals("{\"points\":[[12.0,11.0]],\"out_arrays\":[\"weights\"],\"fail_fast\":true,\"profile\":\"bike\"}", json.toString());
     }
 
     @Test
     public void hasHintsWhenSpecified() {
         GHMatrixAbstractRequester requester = createRequester("url");
-        GHMRequest ghmRequest = new GHMRequest(5);
-        ghmRequest.putHint("vehicle", "my_car").putHint("profile", "my_profile");
-        JsonNode json = requester.createPostRequest(ghmRequest, Collections.singletonList("weights"));
-        assertEquals("{\"out_arrays\":[\"weights\"],\"fail_fast\":true,\"vehicle\":\"my_car\",\"profile\":\"my_profile\"}", json.toString());
+        GHMRequest ghmRequest = new GHMRequest();
+        ghmRequest.setProfile("car");
+        ghmRequest.putHint("some_property", "value");
+        ghmRequest.setOutArrays(Collections.singletonList("weights"));
+        ghmRequest.setPoints(Arrays.asList(new GHPoint(11, 12)));
+        JsonNode json = requester.createPostRequest(ghmRequest);
+        assertEquals("{\"points\":[[12.0,11.0]],\"out_arrays\":[\"weights\"],\"fail_fast\":true,\"profile\":\"car\",\"some_property\":\"value\"}", json.toString());
+
+        ghmRequest.putHint("profile", "car");
+        Exception ex = assertThrows(IllegalArgumentException.class, () -> requester.createPostRequest(ghmRequest));
+        assertTrue(ex.getMessage().contains("use setProfile"), ex.getMessage());
     }
 
     public static String readFile(Reader simpleReader) throws IOException {

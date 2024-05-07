@@ -17,14 +17,14 @@
  */
 package com.graphhopper.util.details;
 
+import com.graphhopper.routing.Path;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.storage.Graph;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-import static com.graphhopper.routing.util.EncodingManager.getKey;
 import static com.graphhopper.util.Parameters.Details.*;
 
 /**
@@ -34,14 +34,32 @@ import static com.graphhopper.util.Parameters.Details.*;
  */
 public class PathDetailsBuilderFactory {
 
-    public List<PathDetailsBuilder> createPathDetailsBuilders(List<String> requestedPathDetails, EncodedValueLookup evl, Weighting weighting) {
+    public List<PathDetailsBuilder> createPathDetailsBuilders(List<String> requestedPathDetails, Path path, EncodedValueLookup evl, Weighting weighting, Graph graph) {
         List<PathDetailsBuilder> builders = new ArrayList<>();
+
+        if (requestedPathDetails.contains(LEG_TIME))
+            builders.add(new ConstantDetailsBuilder(LEG_TIME, path.getTime()));
+        if (requestedPathDetails.contains(LEG_DISTANCE))
+            builders.add(new ConstantDetailsBuilder(LEG_DISTANCE, path.getDistance()));
+        if (requestedPathDetails.contains(LEG_WEIGHT))
+            builders.add(new ConstantDetailsBuilder(LEG_WEIGHT, path.getWeight()));
+
+        for (String key : requestedPathDetails) {
+            if (key.endsWith("_conditional"))
+                builders.add(new KVStringDetails(key));
+        }
+
+        if (requestedPathDetails.contains(MOTORWAY_JUNCTION))
+            builders.add(new KVStringDetails(MOTORWAY_JUNCTION));
+        if (requestedPathDetails.contains(STREET_NAME))
+            builders.add(new KVStringDetails(STREET_NAME));
+        if (requestedPathDetails.contains(STREET_REF))
+            builders.add(new KVStringDetails(STREET_REF));
+        if (requestedPathDetails.contains(STREET_DESTINATION))
+            builders.add(new KVStringDetails(STREET_DESTINATION));
 
         if (requestedPathDetails.contains(AVERAGE_SPEED))
             builders.add(new AverageSpeedDetails(weighting));
-
-        if (requestedPathDetails.contains(STREET_NAME))
-            builders.add(new StreetNameDetails());
 
         if (requestedPathDetails.contains(EDGE_ID))
             builders.add(new EdgeIdDetails());
@@ -58,37 +76,34 @@ public class PathDetailsBuilderFactory {
         if (requestedPathDetails.contains(DISTANCE))
             builders.add(new DistanceDetails());
 
-        for (String checkSuffix : requestedPathDetails) {
-            if (checkSuffix.endsWith(getKey("", "priority")) && evl.hasEncodedValue(checkSuffix))
-                builders.add(new DecimalDetails(checkSuffix, evl.getDecimalEncodedValue(checkSuffix)));
+        if (requestedPathDetails.contains(INTERSECTION))
+            builders.add(new IntersectionDetails(graph, weighting));
+
+        for (String pathDetail : requestedPathDetails) {
+            if (!evl.hasEncodedValue(pathDetail))
+                continue; // path details like "time" won't be found
+
+            EncodedValue ev = evl.getEncodedValue(pathDetail, EncodedValue.class);
+            if (ev instanceof DecimalEncodedValue)
+                builders.add(new DecimalDetails(pathDetail, (DecimalEncodedValue) ev));
+            else if (ev instanceof BooleanEncodedValue)
+                builders.add(new BooleanDetails(pathDetail, (BooleanEncodedValue) ev));
+            else if (ev instanceof EnumEncodedValue)
+                builders.add(new EnumDetails<>(pathDetail, (EnumEncodedValue) ev));
+            else if (ev instanceof StringEncodedValue)
+                builders.add(new StringDetails(pathDetail, (StringEncodedValue) ev));
+            else if (ev instanceof IntEncodedValue)
+                builders.add(new IntDetails(pathDetail, (IntEncodedValue) ev));
+            else
+                throw new IllegalArgumentException("unknown EncodedValue class " + ev.getClass().getName());
         }
 
-        for (String key : Arrays.asList(MaxSpeed.KEY, MaxWidth.KEY, MaxHeight.KEY, MaxWeight.KEY,
-                MaxAxleLoad.KEY, MaxLength.KEY)) {
-            if (requestedPathDetails.contains(key) && evl.hasEncodedValue(key))
-                builders.add(new DecimalDetails(key, evl.getDecimalEncodedValue(key)));
-        }
-
-        for (String key : Arrays.asList(Roundabout.KEY, RoadClassLink.KEY, GetOffBike.KEY, "car_access", "bike_access")) {
-            if (requestedPathDetails.contains(key) && evl.hasEncodedValue(key))
-                builders.add(new BooleanDetails(key, evl.getBooleanEncodedValue(key)));
-        }
-
-        for (String key : Arrays.asList(RoadClass.KEY, RoadEnvironment.KEY, Surface.KEY, Smoothness.KEY, RoadAccess.KEY,
-                BikeNetwork.KEY, FootNetwork.KEY, Toll.KEY, TrackType.KEY, Hazmat.KEY, HazmatTunnel.KEY,
-                HazmatWater.KEY, Country.KEY)) {
-            if (requestedPathDetails.contains(key) && evl.hasEncodedValue(key))
-                builders.add(new EnumDetails<>(key, evl.getEnumEncodedValue(key, Enum.class)));
-        }
-
-        for (String key : Arrays.asList(MtbRating.KEY, HikeRating.KEY, HorseRating.KEY, Lanes.KEY)) {
-            if (requestedPathDetails.contains(key) && evl.hasEncodedValue(key))
-                builders.add(new IntDetails(key, evl.getIntEncodedValue(key)));
-        }
-
-        if (requestedPathDetails.size() != builders.size()) {
-            throw new IllegalArgumentException("You requested the details " + requestedPathDetails + " but we could only find " + builders);
-        }
+        if (requestedPathDetails.size() > builders.size()) {
+            ArrayList<String> clonedArr = new ArrayList<>(requestedPathDetails); // avoid changing request parameter
+            for (PathDetailsBuilder pdb : builders) clonedArr.remove(pdb.getName());
+            throw new IllegalArgumentException("Cannot find the path details: " + clonedArr);
+        } else if (requestedPathDetails.size() < builders.size())
+            throw new IllegalStateException("It should not happen that there are more path details added " + builders + " than requested " + requestedPathDetails);
 
         return builders;
     }

@@ -17,7 +17,10 @@
  */
 package com.graphhopper.reader;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 /**
@@ -28,19 +31,25 @@ import java.util.Map.Entry;
  * @author Peter
  */
 public abstract class ReaderElement {
-    public static final int NODE = 0;
-    public static final int WAY = 1;
-    public static final int RELATION = 2;
-    public static final int FILEHEADER = 3;
-    private final int type;
-    private final long id;
-    private final Map<String, Object> properties;
-
-    protected ReaderElement(long id, int type) {
-        this(id, type, new HashMap<>(4));
+    public enum Type {
+        NODE,
+        WAY,
+        RELATION,
+        FILEHEADER;
     }
 
-    protected ReaderElement(long id, int type, Map<String, Object> properties) {
+    private final long id;
+    private final Type type;
+    private final Map<String, Object> properties;
+
+    protected ReaderElement(long id, Type type) {
+        this(id, type, new LinkedHashMap<>(4));
+    }
+
+    protected ReaderElement(long id, Type type, Map<String, Object> properties) {
+        if (id < 0) {
+            throw new IllegalArgumentException("Invalid OSM " + type + " Id: " + id + "; Ids must not be negative");
+        }
         this.id = id;
         this.type = type;
         this.properties = properties;
@@ -68,10 +77,10 @@ public abstract class ReaderElement {
         return properties;
     }
 
-    public void setTags(Map<String, String> newTags) {
+    public void setTags(Map<String, Object> newTags) {
         properties.clear();
         if (newTags != null)
-            for (Entry<String, String> e : newTags.entrySet()) {
+            for (Entry<String, Object> e : newTags.entrySet()) {
                 setTag(e.getKey(), e.getValue());
             }
     }
@@ -90,16 +99,6 @@ public abstract class ReaderElement {
         if (val == null)
             return defaultValue;
         return val;
-    }
-
-    public List<String> getKeysWithPrefix(String keyPrefix) {
-        List<String> keys = new ArrayList<>();
-        for (String key : properties.keySet()) {
-            if (key.startsWith(keyPrefix)) {
-                keys.add(key);
-            }
-        }
-        return keys;
     }
 
     public void setTag(String name, Object value) {
@@ -141,8 +140,7 @@ public abstract class ReaderElement {
     }
 
     /**
-     * Check a number of tags in the given order for the any of the given values. Used to parse
-     * hierarchical access restrictions
+     * Check a number of tags in the given order for any of the given values.
      */
     public boolean hasTag(List<String> keyList, Collection<String> values) {
         for (String key : keyList) {
@@ -152,24 +150,42 @@ public abstract class ReaderElement {
         return false;
     }
 
-    public boolean hasTagWithKeyPrefix(String keyPrefix) {
-        for (String key : properties.keySet()) {
-            if (key.startsWith(keyPrefix)) {
+    /**
+     * Check a number of tags in the given order if their value is equal to the specified value.
+     */
+    public boolean hasTag(List<String> keyList, Object value) {
+        for (String key : keyList) {
+            if (value.equals(getTag(key, null)))
                 return true;
-            }
         }
         return false;
     }
 
     /**
-     * Returns the first existing tag of the specified list where the order is important.
+     * Returns the first existing value of the specified list of keys where the order is important.
+     *
+     * @return an empty string if nothing found
      */
-    public String getFirstPriorityTag(List<String> restrictions) {
-        for (String str : restrictions) {
-            if (hasTag(str))
-                return getTag(str);
+    public String getFirstValue(List<String> searchedTags) {
+        for (String str : searchedTags) {
+            Object value = properties.get(str);
+            if (value != null)
+                return (String) value;
         }
         return "";
+    }
+
+    /**
+     * @return -1 if not found
+     */
+    public int getFirstIndex(List<String> searchedTags) {
+        for (int i = 0; i < searchedTags.size(); i++) {
+            String str = searchedTags.get(i);
+            Object value = properties.get(str);
+            if (value != null)
+                return i;
+        }
+        return -1;
     }
 
     public void removeTag(String name) {
@@ -180,12 +196,8 @@ public abstract class ReaderElement {
         properties.clear();
     }
 
-    public int getType() {
+    public Type getType() {
         return type;
-    }
-
-    public boolean isType(int type) {
-        return this.type == type;
     }
 
     @Override

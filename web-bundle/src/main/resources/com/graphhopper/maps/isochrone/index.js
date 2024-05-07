@@ -105,7 +105,7 @@ function _drawMap(bbox) {
         // add GraphHopper vector tiles of road network. this is also called when we change the style
         map.addSource('gh-mvt', {
             type: 'vector',
-            tiles: ['http://' + window.location.host + '/mvt/{z}/{x}/{y}.mvt?details=road_class']
+            tiles: ['http://' + window.location.host + '/mvt/{z}/{x}/{y}.mvt']
         });
         var boundsPolygon = [[bbox[0], bbox[1]], [bbox[2], bbox[1]], [bbox[2], bbox[3]], [bbox[0], bbox[3]], [bbox[0], bbox[1]]];
         map.addLayer({

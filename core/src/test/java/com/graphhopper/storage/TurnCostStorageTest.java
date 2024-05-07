@@ -18,11 +18,8 @@
 
 package com.graphhopper.storage;
 
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.TurnCost;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.util.GHUtility;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -39,12 +36,20 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 public class TurnCostStorageTest {
 
     private EncodingManager manager;
+    private DecimalEncodedValue carTurnCostEnc;
+    private DecimalEncodedValue bikeTurnCostEnc;
+    private BooleanEncodedValue accessEnc;
+    private DecimalEncodedValue speedEnc;
 
     @BeforeEach
     public void setup() {
-        FlagEncoder carEncoder = FlagEncoders.createCar(5, 5, 3);
-        FlagEncoder bikeEncoder = FlagEncoders.createBike(5, 5, 3, false);
-        manager = EncodingManager.create(carEncoder, bikeEncoder);
+        accessEnc = new SimpleBooleanEncodedValue("car_access", true);
+        speedEnc = new DecimalEncodedValueImpl("car_speed", 5, 5, false);
+        carTurnCostEnc = TurnCost.create("car", 3);
+        bikeTurnCostEnc = TurnCost.create("bike", 3);
+        manager = EncodingManager.start()
+                .add(accessEnc).add(speedEnc)
+                .addTurnCostEncodedValue(carTurnCostEnc).addTurnCostEncodedValue(bikeTurnCostEnc).build();
     }
 
     // 0---1
@@ -52,8 +57,8 @@ public class TurnCostStorageTest {
     // 2--3
     // |
     // 4
-    public static void initGraph(BaseGraph g, FlagEncoder encoder) {
-        GHUtility.setSpeed(60, 60, encoder,
+    public static void initGraph(BaseGraph g, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc) {
+        GHUtility.setSpeed(60, 60, accessEnc, speedEnc,
                 g.edge(0, 1).setDistance(3),
                 g.edge(0, 2).setDistance(1),
                 g.edge(1, 3).setDistance(1),
@@ -66,12 +71,12 @@ public class TurnCostStorageTest {
      */
     @Test
     public void testMultipleTurnCosts() {
-        BaseGraph g = new BaseGraph.Builder(manager).create();
-        initGraph(g, manager.getEncoder("car"));
+        BaseGraph g = new BaseGraph.Builder(manager).withTurnCosts(true).create();
+        initGraph(g, accessEnc, speedEnc);
         TurnCostStorage turnCostStorage = g.getTurnCostStorage();
 
-        DecimalEncodedValue carEnc = manager.getDecimalEncodedValue(TurnCost.key("car"));
-        DecimalEncodedValue bikeEnc = manager.getDecimalEncodedValue(TurnCost.key("bike"));
+        DecimalEncodedValue carEnc = carTurnCostEnc;
+        DecimalEncodedValue bikeEnc = bikeTurnCostEnc;
         int edge42 = getEdge(g, 4, 2).getEdge();
         int edge23 = getEdge(g, 2, 3).getEdge();
         int edge31 = getEdge(g, 3, 1).getEdge();
@@ -104,31 +109,31 @@ public class TurnCostStorageTest {
         assertEquals(Double.POSITIVE_INFINITY, turnCostStorage.get(carEnc, edge02, 2, edge23), 0);
         assertEquals(Double.POSITIVE_INFINITY, turnCostStorage.get(bikeEnc, edge02, 2, edge23), 0);
 
-        Set<List<Integer>> allTurnRelations = new HashSet<>();
-        TurnCostStorage.TurnRelationIterator iterator = turnCostStorage.getAllTurnRelations();
+        Set<List<Integer>> turnCosts = new HashSet<>();
+        TurnCostStorage.Iterator iterator = turnCostStorage.getAllTurnCosts();
         while (iterator.next()) {
-            allTurnRelations.add(Arrays.asList(iterator.getFromEdge(), iterator.getViaNode(), iterator.getToEdge(),
+            turnCosts.add(Arrays.asList(iterator.getFromEdge(), iterator.getViaNode(), iterator.getToEdge(),
                     (int) iterator.getCost(carEnc), (int) iterator.getCost(bikeEnc)));
         }
 
-        Set<List<Integer>> expectedTurnRelations = new HashSet<>();
-        expectedTurnRelations.add(Arrays.asList(edge31, 1, edge10, 2, Integer.MAX_VALUE));
-        expectedTurnRelations.add(Arrays.asList(edge42, 2, edge23, Integer.MAX_VALUE, Integer.MAX_VALUE));
-        expectedTurnRelations.add(Arrays.asList(edge02, 2, edge24, 0, Integer.MAX_VALUE));
-        expectedTurnRelations.add(Arrays.asList(edge02, 2, edge23, Integer.MAX_VALUE, Integer.MAX_VALUE));
-        expectedTurnRelations.add(Arrays.asList(edge23, 3, edge31, Integer.MAX_VALUE, 2));
+        Set<List<Integer>> expectedTurnCosts = new HashSet<>();
+        expectedTurnCosts.add(Arrays.asList(edge31, 1, edge10, 2, Integer.MAX_VALUE));
+        expectedTurnCosts.add(Arrays.asList(edge42, 2, edge23, Integer.MAX_VALUE, Integer.MAX_VALUE));
+        expectedTurnCosts.add(Arrays.asList(edge02, 2, edge24, 0, Integer.MAX_VALUE));
+        expectedTurnCosts.add(Arrays.asList(edge02, 2, edge23, Integer.MAX_VALUE, Integer.MAX_VALUE));
+        expectedTurnCosts.add(Arrays.asList(edge23, 3, edge31, Integer.MAX_VALUE, 2));
 
-        assertEquals(expectedTurnRelations, allTurnRelations);
+        assertEquals(expectedTurnCosts, turnCosts);
     }
 
     @Test
     public void testMergeFlagsBeforeAdding() {
-        BaseGraph g = new BaseGraph.Builder(manager).create();
-        initGraph(g, manager.getEncoder("car"));
+        BaseGraph g = new BaseGraph.Builder(manager).withTurnCosts(true).create();
+        initGraph(g, accessEnc, speedEnc);
         TurnCostStorage turnCostStorage = g.getTurnCostStorage();
 
-        DecimalEncodedValue carEnc = manager.getDecimalEncodedValue(TurnCost.key("car"));
-        DecimalEncodedValue bikeEnc = manager.getDecimalEncodedValue(TurnCost.key("bike"));
+        DecimalEncodedValue carEnc = carTurnCostEnc;
+        DecimalEncodedValue bikeEnc = bikeTurnCostEnc;
         int edge23 = getEdge(g, 2, 3).getEdge();
         int edge02 = getEdge(g, 0, 2).getEdge();
 
@@ -137,26 +142,43 @@ public class TurnCostStorageTest {
         assertEquals(Double.POSITIVE_INFINITY, turnCostStorage.get(carEnc, edge02, 2, edge23), 0);
         assertEquals(Double.POSITIVE_INFINITY, turnCostStorage.get(bikeEnc, edge02, 2, edge23), 0);
 
-        Set<List<Integer>> allTurnRelations = new HashSet<>();
-        TurnCostStorage.TurnRelationIterator iterator = turnCostStorage.getAllTurnRelations();
+        Set<List<Integer>> turnCosts = new HashSet<>();
+        TurnCostStorage.Iterator iterator = turnCostStorage.getAllTurnCosts();
         while (iterator.next()) {
-            allTurnRelations.add(Arrays.asList(iterator.getFromEdge(), iterator.getViaNode(), iterator.getToEdge(),
+            turnCosts.add(Arrays.asList(iterator.getFromEdge(), iterator.getViaNode(), iterator.getToEdge(),
                     (int) iterator.getCost(carEnc), (int) iterator.getCost(bikeEnc)));
         }
 
-        Set<List<Integer>> expectedTurnRelations = new HashSet<>();
-        expectedTurnRelations.add(Arrays.asList(edge02, 2, edge23, Integer.MAX_VALUE, Integer.MAX_VALUE));
+        Set<List<Integer>> expectedTurnCosts = new HashSet<>();
+        expectedTurnCosts.add(Arrays.asList(edge02, 2, edge23, Integer.MAX_VALUE, Integer.MAX_VALUE));
 
-        assertEquals(expectedTurnRelations, allTurnRelations);
+        assertEquals(expectedTurnCosts, turnCosts);
+    }
+
+    @Test
+    public void setMultipleTimes() {
+        BaseGraph g = new BaseGraph.Builder(manager).withTurnCosts(true).create();
+        initGraph(g, accessEnc, speedEnc);
+        TurnCostStorage turnCostStorage = g.getTurnCostStorage();
+        DecimalEncodedValue carEnc = carTurnCostEnc;
+        int edge32 = getEdge(g, 3, 2).getEdge();
+        int edge20 = getEdge(g, 2, 0).getEdge();
+        assertEquals(0, turnCostStorage.get(carEnc, edge32, 2, edge20));
+        turnCostStorage.set(carEnc, edge32, 2, edge20, Double.POSITIVE_INFINITY);
+        assertEquals(Double.POSITIVE_INFINITY, turnCostStorage.get(carEnc, edge32, 2, edge20));
+        turnCostStorage.set(carEnc, edge32, 2, edge20, 0);
+        turnCostStorage.set(carEnc, edge32, 2, edge20, Double.POSITIVE_INFINITY);
+        turnCostStorage.set(carEnc, edge32, 2, edge20, 0);
+        assertEquals(0, turnCostStorage.get(carEnc, edge32, 2, edge20));
     }
 
     @Test
     public void testIterateEmptyStore() {
-        BaseGraph g = new BaseGraph.Builder(manager).create();
-        initGraph(g, manager.getEncoder("car"));
+        BaseGraph g = new BaseGraph.Builder(manager).withTurnCosts(true).create();
+        initGraph(g, accessEnc, speedEnc);
         TurnCostStorage turnCostStorage = g.getTurnCostStorage();
 
-        TurnCostStorage.TurnRelationIterator iterator = turnCostStorage.getAllTurnRelations();
+        TurnCostStorage.Iterator iterator = turnCostStorage.getAllTurnCosts();
         assertFalse(iterator.next());
     }
 

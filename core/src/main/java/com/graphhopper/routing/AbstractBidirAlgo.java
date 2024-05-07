@@ -28,7 +28,7 @@ import java.util.PriorityQueue;
 
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 
-public abstract class AbstractBidirAlgo implements BidirRoutingAlgorithm {
+public abstract class AbstractBidirAlgo implements EdgeToEdgeRoutingAlgorithm {
     protected final TraversalMode traversalMode;
     protected int from;
     protected int to;
@@ -43,6 +43,8 @@ public abstract class AbstractBidirAlgo implements BidirRoutingAlgorithm {
     protected SPTEntry bestBwdEntry;
     protected double bestWeight = Double.MAX_VALUE;
     protected int maxVisitedNodes = Integer.MAX_VALUE;
+    protected long timeoutMillis = Long.MAX_VALUE;
+    private long finishTimeMillis = Long.MAX_VALUE;
     PriorityQueue<SPTEntry> pqOpenSetFrom;
     PriorityQueue<SPTEntry> pqOpenSetTo;
     protected boolean updateBestPath = true;
@@ -89,6 +91,7 @@ public abstract class AbstractBidirAlgo implements BidirRoutingAlgorithm {
         this.fromOutEdge = fromOutEdge;
         this.toInEdge = toInEdge;
         checkAlreadyRun();
+        setupFinishTime();
         init(from, 0, to, 0);
         runAlgo();
         return extractPath();
@@ -146,7 +149,7 @@ public abstract class AbstractBidirAlgo implements BidirRoutingAlgorithm {
     protected abstract void postInitTo();
 
     protected void runAlgo() {
-        while (!finished() && !isMaxVisitedNodesExceeded()) {
+        while (!finished() && !isMaxVisitedNodesExceeded() && !isTimeoutExceeded()) {
             if (!finishedFrom)
                 finishedFrom = !fillEdgesFrom();
 
@@ -195,8 +198,6 @@ public abstract class AbstractBidirAlgo implements BidirRoutingAlgorithm {
     }
 
     protected abstract double getInEdgeWeight(SPTEntry entry);
-
-    protected abstract int getOtherNode(int edge, int node);
 
     protected int getIncomingEdge(SPTEntry entry) {
         return entry.edge;
@@ -265,11 +266,24 @@ public abstract class AbstractBidirAlgo implements BidirRoutingAlgorithm {
         this.maxVisitedNodes = numberOfNodes;
     }
 
+    @Override
+    public void setTimeoutMillis(long timeoutMillis) {
+        this.timeoutMillis = timeoutMillis;
+    }
+
     protected void checkAlreadyRun() {
         if (alreadyRun)
             throw new IllegalStateException("Create a new instance per call");
 
         alreadyRun = true;
+    }
+
+    protected void setupFinishTime() {
+        try {
+            this.finishTimeMillis = Math.addExact(System.currentTimeMillis(), timeoutMillis);
+        } catch (ArithmeticException e) {
+            this.finishTimeMillis = Long.MAX_VALUE;
+        }
     }
 
     @Override
@@ -279,6 +293,10 @@ public abstract class AbstractBidirAlgo implements BidirRoutingAlgorithm {
 
     protected boolean isMaxVisitedNodesExceeded() {
         return maxVisitedNodes < getVisitedNodes();
+    }
+
+    protected boolean isTimeoutExceeded() {
+        return finishTimeMillis < Long.MAX_VALUE && System.currentTimeMillis() > finishTimeMillis;
     }
 
 }

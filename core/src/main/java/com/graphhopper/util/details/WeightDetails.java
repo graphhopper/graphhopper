@@ -33,7 +33,7 @@ public class WeightDetails extends AbstractPathDetailsBuilder {
 
     private final Weighting weighting;
     private int edgeId = EdgeIterator.NO_EDGE;
-    private double weight = Double.NaN;
+    private Double weight;
 
     public WeightDetails(Weighting weighting) {
         super(WEIGHT);
@@ -44,7 +44,7 @@ public class WeightDetails extends AbstractPathDetailsBuilder {
     public boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge) {
         if (edge.getEdge() != edgeId) {
             edgeId = edge.getEdge();
-            weight = GHUtility.calcWeightWithTurnWeightWithAccess(weighting, edge, false, edgeId);
+            weight = GHUtility.calcWeightWithTurnWeight(weighting, edge, false, edgeId);
             return true;
         }
         return false;

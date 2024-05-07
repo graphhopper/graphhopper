@@ -70,16 +70,16 @@ public class FlexiblePathCalculator implements PathCalculator {
 
         List<Path> paths;
         if (edgeRestrictions.getSourceOutEdge() != ANY_EDGE || edgeRestrictions.getTargetInEdge() != ANY_EDGE) {
-            if (!(algo instanceof BidirRoutingAlgorithm))
+            if (!(algo instanceof EdgeToEdgeRoutingAlgorithm))
                 throw new IllegalArgumentException("To make use of the " + Parameters.Routing.CURBSIDE + " parameter you need a bidirectional algorithm, got: " + algo.getName());
-            paths = Collections.singletonList(((BidirRoutingAlgorithm) algo).calcPath(from, to, edgeRestrictions.getSourceOutEdge(), edgeRestrictions.getTargetInEdge()));
+            paths = Collections.singletonList(((EdgeToEdgeRoutingAlgorithm) algo).calcPath(from, to, edgeRestrictions.getSourceOutEdge(), edgeRestrictions.getTargetInEdge()));
         } else {
             paths = algo.calcPaths(from, to);
         }
 
         // reset all direction enforcements in queryGraph to avoid influencing next path
-        // todo: is this correct? aren't we taking a second look at these edges later when we calc times or
-        // instructions etc.?
+        // note that afterwards for path processing (like instructions) there will not be a penalty for the unfavored
+        // edges so the edge weight calculated then will be different to the one we used when calculating the route
         queryGraph.clearUnfavoredStatus();
 
         if (paths.isEmpty())

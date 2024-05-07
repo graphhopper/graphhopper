@@ -18,9 +18,7 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.util.JsonFeature;
-import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.Polygon;
-import org.locationtech.jts.geom.util.PolygonExtracter;
+import org.locationtech.jts.geom.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,13 +27,14 @@ import java.util.Map;
 public class CustomArea implements AreaIndex.Area {
     private final Map<String, Object> properties;
     private final List<Polygon> borders;
+    private final double area;
 
     public static CustomArea fromJsonFeature(JsonFeature j) {
         List<Polygon> borders = new ArrayList<>();
         for (int i = 0; i < j.getGeometry().getNumGeometries(); i++) {
             Geometry geometry = j.getGeometry().getGeometryN(i);
             if (geometry instanceof Polygon) {
-                PolygonExtracter.getPolygons(geometry, borders);
+                borders.add((Polygon) geometry);
             } else {
                 throw new IllegalArgumentException("Custom area features must be of type 'Polygon', but was: " + geometry.getClass().getSimpleName());
             }
@@ -46,6 +45,7 @@ public class CustomArea implements AreaIndex.Area {
     public CustomArea(Map<String, Object> properties, List<Polygon> borders) {
         this.properties = properties;
         this.borders = borders;
+        this.area = borders.stream().map(Polygon::getArea).reduce(0d, Double::sum);
     }
 
     public Map<String, Object> getProperties() {
@@ -55,5 +55,9 @@ public class CustomArea implements AreaIndex.Area {
     @Override
     public List<Polygon> getBorders() {
         return borders;
+    }
+
+    public double getArea() {
+        return area;
     }
 }

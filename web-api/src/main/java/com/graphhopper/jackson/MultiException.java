@@ -26,6 +26,7 @@ public class MultiException extends RuntimeException {
     private final List<Throwable> errors;
 
     public MultiException(List<Throwable> errors) {
+        super(errors.toString());
         this.errors = errors;
     }
 

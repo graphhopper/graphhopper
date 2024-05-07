@@ -74,12 +74,19 @@ class TripFromLabel {
         this.walkSpeedKmH = walkSpeedKmH;
     }
 
-    ResponsePath createResponsePath(Translation tr, PointList waypoints, Graph queryGraph, Weighting accessWeighting, Weighting egressWeighting, List<Label.Transition> solution, List<String> requestedPathDetails) {
+    ResponsePath createResponsePath(Translation tr, PointList waypoints, Graph queryGraph, Weighting accessWeighting, Weighting egressWeighting, Weighting transferWeighting, List<Label.Transition> solution, List<String> requestedPathDetails) {
         final List<List<Label.Transition>> partitions = parsePathToPartitions(solution);
 
         final List<Trip.Leg> legs = new ArrayList<>();
         for (int i = 0; i < partitions.size(); i++) {
-            legs.addAll(parsePartitionToLegs(partitions.get(i), queryGraph, encodedValueLookup, i == partitions.size() - 1 ? egressWeighting : accessWeighting, tr, requestedPathDetails));
+            Weighting weighting;
+            if (i == 0)
+                weighting = accessWeighting;
+            else if (i == partitions.size() - 1)
+                weighting = egressWeighting;
+            else
+                weighting = transferWeighting;
+            legs.addAll(parsePartitionToLegs(partitions.get(i), queryGraph, encodedValueLookup, weighting, tr, requestedPathDetails));
         }
 
         if (legs.size() > 1 && legs.get(0) instanceof Trip.WalkLeg) {
@@ -401,7 +408,7 @@ class TripFromLabel {
             pathh.setFromNode(path.get(0).label.node.streetNode);
             pathh.setEndNode(path.get(path.size() - 1).label.node.streetNode);
             pathh.setFound(true);
-            Map<String, List<PathDetail>> pathDetails = PathDetailsFromEdges.calcDetails(pathh, encodedValueLookup, weighting, requestedPathDetails, pathDetailsBuilderFactory, 0);
+            Map<String, List<PathDetail>> pathDetails = PathDetailsFromEdges.calcDetails(pathh, encodedValueLookup, weighting, requestedPathDetails, pathDetailsBuilderFactory, 0, graph);
 
             final Instant departureTime = Instant.ofEpochMilli(path.get(0).label.currentTime);
             final Instant arrivalTime = Instant.ofEpochMilli(path.get(path.size() - 1).label.currentTime);
@@ -416,8 +423,8 @@ class TripFromLabel {
         }
     }
 
-    private List<Label.Transition> transferPath(int[] skippedEdgesForTransfer, Weighting accessEgressWeighting, long currentTime) {
-        GraphExplorer graphExplorer = new GraphExplorer(graph, gtfsStorage.getPtGraph(), accessEgressWeighting, gtfsStorage, realtimeFeed, false, true, false, walkSpeedKmH, false, 0);
+    public List<Label.Transition> transferPath(int[] skippedEdgesForTransfer, Weighting transferWeighting, long currentTime) {
+        GraphExplorer graphExplorer = new GraphExplorer(graph, gtfsStorage.getPtGraph(), transferWeighting, gtfsStorage, realtimeFeed, false, true, false, walkSpeedKmH, false, 0);
         return graphExplorer.walkPath(skippedEdgesForTransfer, currentTime);
     }
 

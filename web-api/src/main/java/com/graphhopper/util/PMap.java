@@ -46,8 +46,7 @@ public class PMap {
     }
 
     public PMap(String propertiesString) {
-        // five chosen as arbitrary initial capacity
-        this.map = new LinkedHashMap<>(5);
+        this.map = new LinkedHashMap<>();
 
         for (String s : propertiesString.split("\\|")) {
             s = s.trim();
@@ -55,7 +54,7 @@ public class PMap {
             if (index < 0)
                 continue;
 
-            put(s.substring(0, index), s.substring(index + 1));
+            putObject(Helper.camelCaseToUnderScore(s.substring(0, index)), Helper.toObject(s.substring(index + 1)));
         }
     }
 
@@ -93,20 +92,8 @@ public class PMap {
         return this;
     }
 
-    /**
-     * @deprecated use {@link #putObject(String, Object)} instead
-     */
-    @Deprecated
-    public PMap put(String key, String str) {
-        if (str == null)
-            throw new NullPointerException("Value cannot be null. Use remove instead.");
-        map.put(Helper.camelCaseToUnderScore(key), Helper.toObject(str));
-        return this;
-    }
-
-    public PMap remove(String key) {
-        map.remove(key);
-        return this;
+    public Object remove(String key) {
+        return map.remove(key);
     }
 
     public boolean has(String key) {

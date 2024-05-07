@@ -23,7 +23,8 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
-import com.graphhopper.config.Profile;
+import com.graphhopper.config.TurnCostsConfig;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
@@ -87,9 +88,8 @@ public class CHMeasurement {
         final GraphHopper graphHopper = new GraphHopper();
         String profile = "car_profile";
         if (withTurnCosts) {
-            ghConfig.putObject("graph.flag_encoders", "car|turn_costs=true");
             ghConfig.setProfiles(Collections.singletonList(
-                    new Profile(profile).setVehicle("car").setWeighting("fastest").setTurnCosts(true).putHint(Parameters.Routing.U_TURN_COSTS, uTurnCosts)
+                    TestProfiles.accessAndSpeed(profile, "car").setTurnCostsConfig(new TurnCostsConfig(List.of("motorcar", "motor_vehicle"), uTurnCosts))
             ));
             ghConfig.setCHProfiles(Collections.singletonList(
                     new CHProfile(profile)
@@ -101,9 +101,8 @@ public class CHMeasurement {
                 ghConfig.putObject("prepare.lm.landmarks", landmarks);
             }
         } else {
-            ghConfig.putObject("graph.flag_encoders", "car");
             ghConfig.setProfiles(Collections.singletonList(
-                    new Profile(profile).setVehicle("car").setWeighting("fastest").setTurnCosts(false)
+                    TestProfiles.accessAndSpeed(profile, "car")
             ));
         }
 
@@ -208,7 +207,7 @@ public class CHMeasurement {
     private static void runCompareTest(final String algo, final GraphHopper graphHopper, final boolean withTurnCosts, final int uTurnCosts,
                                        long seed, final int iterations, final double threshold, final PMap results) {
         LOGGER.info("Running compare test for {}, using seed {}", algo, seed);
-        Graph g = graphHopper.getGraphHopperStorage();
+        Graph g = graphHopper.getBaseGraph();
         final int numNodes = g.getNodes();
         final NodeAccess nodeAccess = g.getNodeAccess();
         final Random random = new Random(seed);
@@ -291,7 +290,7 @@ public class CHMeasurement {
 
     private static void runPerformanceTest(final String algo, final GraphHopper graphHopper, final boolean withTurnCosts,
                                            long seed, final int iterations, final PMap results) {
-        Graph g = graphHopper.getGraphHopperStorage();
+        Graph g = graphHopper.getBaseGraph();
         final int numNodes = g.getNodes();
         final NodeAccess nodeAccess = g.getNodeAccess();
         final Random random = new Random(seed);

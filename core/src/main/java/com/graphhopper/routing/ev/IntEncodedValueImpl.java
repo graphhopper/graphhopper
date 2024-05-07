@@ -18,15 +18,9 @@
 package com.graphhopper.routing.ev;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.Helper;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Objects;
+import javax.lang.model.SourceVersion;
 
 /**
  * Implementation of the IntEncodedValue via a certain number of bits (that determines the maximum value) and
@@ -42,25 +36,18 @@ public class IntEncodedValueImpl implements IntEncodedValue {
     private final boolean storeTwoDirections;
     final int bits;
     final boolean negateReverseDirection;
-    final int minValue;
-    final int maxValue;
+    final int minStorableValue;
+    final int maxStorableValue;
+    int maxValue;
 
-    // the following fields will be set by the init() method and we do not store them on disk, because they will be
-    // set again when we create the EncodingManager
     /**
      * There are multiple int values possible per edge. Here we specify the index into this integer array.
      */
-    @JsonIgnore
     private int fwdDataIndex;
-    @JsonIgnore
     private int bwdDataIndex;
-    @JsonIgnore
     int fwdShift = -1;
-    @JsonIgnore
     int bwdShift = -1;
-    @JsonIgnore
     int fwdMask;
-    @JsonIgnore
     int bwdMask;
 
     /**
@@ -76,29 +63,32 @@ public class IntEncodedValueImpl implements IntEncodedValue {
      * @param name                   the key to identify this EncodedValue
      * @param bits                   the bits that should be reserved for storing the value. This determines the
      *                               maximum value.
-     * @param minValue               the minimum value. Use e.g. 0 if no negative values are needed.
+     * @param minStorableValue       the minimum value. Use e.g. 0 if no negative values are needed.
      * @param negateReverseDirection true if the reverse direction should be always negative of the forward direction.
      *                               This is used to reduce space and store the value only once. If this option is used
      *                               you cannot use storeTwoDirections or a minValue different to 0.
      * @param storeTwoDirections     true if forward and backward direction of the edge should get two independent values.
      */
-    public IntEncodedValueImpl(String name, int bits, int minValue, boolean negateReverseDirection, boolean storeTwoDirections) {
-        if (!EncodingManager.isValidEncodedValue(name))
+    public IntEncodedValueImpl(String name, int bits, int minStorableValue, boolean negateReverseDirection, boolean storeTwoDirections) {
+        if (!isValidEncodedValue(name))
             throw new IllegalArgumentException("EncodedValue name wasn't valid: " + name + ". Use lower case letters, underscore and numbers only.");
         if (bits <= 0)
             throw new IllegalArgumentException(name + ": bits cannot be zero or negative");
         if (bits > 31)
             throw new IllegalArgumentException(name + ": at the moment the number of reserved bits cannot be more than 31");
-        if (negateReverseDirection && (minValue != 0 || storeTwoDirections))
+        if (negateReverseDirection && (minStorableValue != 0 || storeTwoDirections))
             throw new IllegalArgumentException(name + ": negating value for reverse direction only works for minValue == 0 " +
-                    "and !storeTwoDirections but was minValue=" + minValue + ", storeTwoDirections=" + storeTwoDirections);
-
+                    "and !storeTwoDirections but was minValue=" + minStorableValue + ", storeTwoDirections=" + storeTwoDirections);
         this.name = name;
         this.storeTwoDirections = storeTwoDirections;
         int max = (1 << bits) - 1;
         // negateReverseDirection: store the negative value only once, but for that we need the same range as maxValue for negative values
-        this.minValue = negateReverseDirection ? -max : minValue;
-        this.maxValue = max + minValue;
+        this.minStorableValue = negateReverseDirection ? -max : minStorableValue;
+        this.maxStorableValue = max + minStorableValue;
+        if (minStorableValue == Integer.MIN_VALUE)
+            // we do not allow this because we use this value to represent maxValue = untouched, i.e. no value has been set yet
+            throw new IllegalArgumentException(Integer.MIN_VALUE + " is not allowed for minValue");
+        this.maxValue = Integer.MIN_VALUE;
         // negateReverseDirection: we need twice the integer range, i.e. 1 more bit
         this.bits = negateReverseDirection ? bits + 1 : bits;
         this.negateReverseDirection = negateReverseDirection;
@@ -107,17 +97,32 @@ public class IntEncodedValueImpl implements IntEncodedValue {
     @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
     IntEncodedValueImpl(@JsonProperty("name") String name,
                         @JsonProperty("bits") int bits,
-                        @JsonProperty("min_value") int minValue,
+                        @JsonProperty("min_storable_value") int minStorableValue,
+                        @JsonProperty("max_storable_value") int maxStorableValue,
                         @JsonProperty("max_value") int maxValue,
                         @JsonProperty("negate_reverse_direction") boolean negateReverseDirection,
-                        @JsonProperty("store_two_directions") boolean storeTwoDirections) {
+                        @JsonProperty("store_two_directions") boolean storeTwoDirections,
+                        @JsonProperty("fwd_data_index") int fwdDataIndex,
+                        @JsonProperty("bwd_data_index") int bwdDataIndex,
+                        @JsonProperty("fwd_shift") int fwdShift,
+                        @JsonProperty("bwd_shift") int bwdShift,
+                        @JsonProperty("fwd_mask") int fwdMask,
+                        @JsonProperty("bwd_mask") int bwdMask
+    ) {
         // we need this constructor for Jackson
         this.name = name;
         this.storeTwoDirections = storeTwoDirections;
         this.bits = bits;
         this.negateReverseDirection = negateReverseDirection;
-        this.minValue = minValue;
+        this.minStorableValue = minStorableValue;
+        this.maxStorableValue = maxStorableValue;
         this.maxValue = maxValue;
+        this.fwdDataIndex = fwdDataIndex;
+        this.bwdDataIndex = bwdDataIndex;
+        this.fwdShift = fwdShift;
+        this.bwdShift = bwdShift;
+        this.fwdMask = fwdMask;
+        this.bwdMask = bwdMask;
     }
 
     @Override
@@ -144,21 +149,21 @@ public class IntEncodedValueImpl implements IntEncodedValue {
     }
 
     @Override
-    public final void setInt(boolean reverse, IntsRef ref, int value) {
+    public final void setInt(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess, int value) {
         checkValue(value);
-        uncheckedSet(reverse, ref, value);
+        uncheckedSet(reverse, edgeId, edgeIntAccess, value);
     }
 
     private void checkValue(int value) {
         if (!isInitialized())
             throw new IllegalStateException("EncodedValue " + getName() + " not initialized");
-        if (value > maxValue)
-            throw new IllegalArgumentException(name + " value too large for encoding: " + value + ", maxValue:" + maxValue);
-        if (value < minValue)
-            throw new IllegalArgumentException(name + " value too small for encoding " + value + ", minValue:" + minValue);
+        if (value > maxStorableValue)
+            throw new IllegalArgumentException(name + " value too large for encoding: " + value + ", maxValue:" + maxStorableValue);
+        if (value < minStorableValue)
+            throw new IllegalArgumentException(name + " value too small for encoding " + value + ", minValue:" + minStorableValue);
     }
 
-    final void uncheckedSet(boolean reverse, IntsRef ref, int value) {
+    final void uncheckedSet(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess, int value) {
         if (negateReverseDirection) {
             if (reverse) {
                 reverse = false;
@@ -167,37 +172,52 @@ public class IntEncodedValueImpl implements IntEncodedValue {
         } else if (reverse && !storeTwoDirections)
             throw new IllegalArgumentException(getName() + ": value for reverse direction would overwrite forward direction. Enable storeTwoDirections for this EncodedValue or don't use setReverse");
 
-        value -= minValue;
+        maxValue = Math.max(maxValue, value);
+
+        value -= minStorableValue;
         if (reverse) {
-            int flags = ref.ints[bwdDataIndex + ref.offset];
+            int flags = edgeIntAccess.getInt(edgeId, bwdDataIndex);
             // clear value bits
             flags &= ~bwdMask;
-            ref.ints[bwdDataIndex + ref.offset] = flags | (value << bwdShift);
+            edgeIntAccess.setInt(edgeId, bwdDataIndex, flags | (value << bwdShift));
         } else {
-            int flags = ref.ints[fwdDataIndex + ref.offset];
+            int flags = edgeIntAccess.getInt(edgeId, fwdDataIndex);
             flags &= ~fwdMask;
-            ref.ints[fwdDataIndex + ref.offset] = flags | (value << fwdShift);
+            edgeIntAccess.setInt(edgeId, fwdDataIndex, flags | (value << fwdShift));
         }
     }
 
     @Override
-    public final int getInt(boolean reverse, IntsRef ref) {
+    public final int getInt(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess) {
+        assert fwdShift >= 0 : "incorrect shift " + fwdShift + " for " + getName();
+        assert bits > 0 : "incorrect bits " + bits + " for " + getName();
+
         int flags;
         // if we do not store both directions ignore reverse == true for convenient reading
         if (storeTwoDirections && reverse) {
-            flags = ref.ints[bwdDataIndex + ref.offset];
-            return minValue + (flags & bwdMask) >>> bwdShift;
+            flags = edgeIntAccess.getInt(edgeId, bwdDataIndex);
+            return minStorableValue + ((flags & bwdMask) >>> bwdShift);
         } else {
-            flags = ref.ints[fwdDataIndex + ref.offset];
+            flags = edgeIntAccess.getInt(edgeId, fwdDataIndex);
             if (negateReverseDirection && reverse)
-                return -(minValue + (flags & fwdMask) >>> fwdShift);
-            return minValue + (flags & fwdMask) >>> fwdShift;
+                return -(minStorableValue + ((flags & fwdMask) >>> fwdShift));
+            return minStorableValue + ((flags & fwdMask) >>> fwdShift);
         }
     }
 
     @Override
-    public int getMaxInt() {
-        return maxValue;
+    public int getMaxStorableInt() {
+        return maxStorableValue;
+    }
+
+    @Override
+    public int getMinStorableInt() {
+        return minStorableValue;
+    }
+
+    @Override
+    public int getMaxOrMaxStorableInt() {
+        return maxValue == Integer.MIN_VALUE ? getMaxStorableInt() : maxValue;
     }
 
     @Override
@@ -212,100 +232,30 @@ public class IntEncodedValueImpl implements IntEncodedValue {
 
     @Override
     public final String toString() {
-        return getName() + "|version=" + getVersion() + "|bits=" + bits + "|min_value=" + minValue
-                + "|negate_reverse_direction" + negateReverseDirection + "|index=" + fwdDataIndex
-                + "|shift=" + fwdShift + "|store_both_directions=" + storeTwoDirections;
+        return getName();
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        IntEncodedValueImpl that = (IntEncodedValueImpl) o;
-        return fwdDataIndex == that.fwdDataIndex &&
-                bwdDataIndex == that.bwdDataIndex &&
-                bits == that.bits &&
-                maxValue == that.maxValue &&
-                minValue == that.minValue &&
-                fwdShift == that.fwdShift &&
-                bwdShift == that.bwdShift &&
-                fwdMask == that.fwdMask &&
-                bwdMask == that.bwdMask &&
-                negateReverseDirection == that.negateReverseDirection &&
-                storeTwoDirections == that.storeTwoDirections &&
-                Objects.equals(name, that.name);
-    }
+    static boolean isValidEncodedValue(String name) {
+        if (name.length() < 2 || name.startsWith("in_") || name.startsWith("backward_")
+                || !isLowerLetter(name.charAt(0)) || SourceVersion.isKeyword(name))
+            return false;
 
-    @Override
-    public final int hashCode() {
-        return getVersion();
-    }
-
-    @Override
-    public int getVersion() {
-        int val = Helper.staticHashCode(name);
-        val = 31 * val + (storeTwoDirections ? 1231 : 1237);
-        val = 31 * val + (negateReverseDirection ? 13 : 17);
-        return staticHashCode(val, fwdDataIndex, bwdDataIndex, bits, minValue, maxValue, fwdShift, bwdShift, fwdMask, bwdMask);
-    }
-
-    /**
-     * Produces a static hashcode for an integer arrays that is platform independent and still compatible to the default
-     * of openjdk.
-     *
-     * @see Arrays#hashCode(int[])
-     */
-    static int staticHashCode(int... vals) {
-        if (vals == null)
-            return 0;
-        int len = vals.length;
-        int val = 1;
-        for (int idx = 0; idx < len; ++idx) {
-            val = 31 * val + vals[idx];
+        int underscoreCount = 0;
+        for (int i = 1; i < name.length(); i++) {
+            char c = name.charAt(i);
+            if (c == '_') {
+                if (underscoreCount > 0) return false;
+                underscoreCount++;
+            } else if (!isLowerLetter(c) && !Character.isDigit(c)) {
+                return false;
+            } else {
+                underscoreCount = 0;
+            }
         }
-
-        return val;
+        return true;
     }
 
-    /**
-     * Produces a static hashcode for an Enum arrays that is platform independent and still compatible to the default
-     * of openjdk.
-     */
-    static int staticHashCode(Enum<?>... vals) {
-        if (vals == null)
-            return 0;
-        int len = vals.length;
-        int val = 1;
-        for (int idx = 0; idx < len; ++idx) {
-            val = 31 * val + vals[idx].ordinal();
-        }
-
-        return val;
-    }
-
-    /**
-     * Produces a static hashcode for a collection of Strings that is platform independent and still compatible to the default
-     * of openjdk.
-     */
-    static int staticHashCode(Collection<String> vals) {
-        if (vals == null)
-            return 0;
-        int val = 1;
-        for (String str : vals) {
-            val = 31 * val + Helper.staticHashCode(str);
-        }
-
-        return val;
-    }
-
-    /**
-     * Produces a static hashcode for an integer arrays that is platform independent and still compatible to the default
-     * of openjdk
-     *
-     * @see Double#hashCode
-     */
-    static int staticHashCode(double val) {
-        long var2 = Double.doubleToLongBits(val);
-        return (int) (var2 ^ var2 >>> 32);
+    private static boolean isLowerLetter(char c) {
+        return c >= 'a' && c <= 'z';
     }
 }

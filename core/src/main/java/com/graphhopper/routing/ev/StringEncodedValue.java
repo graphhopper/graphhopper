@@ -2,7 +2,6 @@ package com.graphhopper.routing.ev;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.graphhopper.storage.IntsRef;
 
 import java.util.*;
 
@@ -50,15 +49,22 @@ public final class StringEncodedValue extends IntEncodedValueImpl {
     StringEncodedValue(
             @JsonProperty("name") String name,
             @JsonProperty("bits") int bits,
-            @JsonProperty("min_value") int minValue,
+            @JsonProperty("min_storable_value") int minStorableValue,
+            @JsonProperty("max_storable_value") int maxStorableValue,
             @JsonProperty("max_value") int maxValue,
             @JsonProperty("negate_reverse_direction") boolean negateReverseDirection,
             @JsonProperty("store_two_directions") boolean storeTwoDirections,
+            @JsonProperty("fwd_data_index") int fwdDataIndex,
+            @JsonProperty("bwd_data_index") int bwdDataIndex,
+            @JsonProperty("fwd_shift") int fwdShift,
+            @JsonProperty("bwd_shift") int bwdShift,
+            @JsonProperty("fwd_mask") int fwdMask,
+            @JsonProperty("bwd_mask") int bwdMask,
             @JsonProperty("max_values") int maxValues,
             @JsonProperty("values") List<String> values,
             @JsonProperty("index_map") HashMap<String, Integer> indexMap) {
         // we need this constructor for Jackson
-        super(name, bits, minValue, maxValue, negateReverseDirection, storeTwoDirections);
+        super(name, bits, minStorableValue, maxStorableValue, maxValue, negateReverseDirection, storeTwoDirections, fwdDataIndex, bwdDataIndex, fwdShift, bwdShift, fwdMask, bwdMask);
         if (values.size() > maxValues)
             throw new IllegalArgumentException("Number of values is higher than the maximum value count: "
                     + values.size() + " > " + maxValues);
@@ -67,9 +73,9 @@ public final class StringEncodedValue extends IntEncodedValueImpl {
         this.indexMap = indexMap;
     }
 
-    public final void setString(boolean reverse, IntsRef ref, String value) {
+    public final void setString(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess, String value) {
         if (value == null) {
-            super.setInt(reverse, ref, 0);
+            super.setInt(reverse, edgeId, edgeIntAccess, 0);
             return;
         }
         int index = indexMap.getOrDefault(value, 0);
@@ -81,11 +87,11 @@ public final class StringEncodedValue extends IntEncodedValueImpl {
             index = values.size();
             indexMap.put(value, index);
         }
-        super.setInt(reverse, ref, index);
+        super.setInt(reverse, edgeId, edgeIntAccess, index);
     }
 
-    public final String getString(boolean reverse, IntsRef ref) {
-        int value = super.getInt(reverse, ref);
+    public final String getString(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess) {
+        int value = super.getInt(reverse, edgeId, edgeIntAccess);
         if (value == 0) {
             return null;
         }
@@ -115,23 +121,4 @@ public final class StringEncodedValue extends IntEncodedValueImpl {
         return Collections.unmodifiableList(values);
     }
 
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (!(obj instanceof StringEncodedValue)) {
-            return false;
-        }
-        StringEncodedValue other = (StringEncodedValue) obj;
-        if (this.bits != other.bits) {
-            return false;
-        }
-        return Objects.equals(values, other.values);
-    }
-
-    @Override
-    public int getVersion() {
-        return 31 * super.getVersion() + staticHashCode(values);
-    }
 }

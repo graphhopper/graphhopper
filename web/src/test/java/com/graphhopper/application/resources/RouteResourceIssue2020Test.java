@@ -23,7 +23,7 @@ import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.config.LMProfile;
-import com.graphhopper.config.Profile;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -48,12 +48,12 @@ public class RouteResourceIssue2020Test {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.flag_encoders", "car").
                 putObject("prepare.lm.split_area_location", "../core/files/split.geo.json").
                 putObject("datareader.file", "../core/files/north-bayreuth.osm.gz").
-                putObject("graph.encoded_values", "road_class,surface,road_environment,max_speed").
+                putObject("graph.encoded_values", "road_class,surface,road_environment,max_speed,car_access,car_average_speed").
+                putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR).
-                setProfiles(Collections.singletonList(new Profile("my_car").setVehicle("car").setWeighting("fastest"))).
+                setProfiles(Collections.singletonList(TestProfiles.accessAndSpeed("my_car", "car"))).
                 setLMProfiles(Collections.singletonList(new LMProfile("my_car")));
         return config;
     }

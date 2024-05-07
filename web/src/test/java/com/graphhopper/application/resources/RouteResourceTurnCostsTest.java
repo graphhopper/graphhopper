@@ -24,7 +24,8 @@ import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
-import com.graphhopper.config.Profile;
+import com.graphhopper.config.TurnCostsConfig;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -52,29 +53,24 @@ public class RouteResourceTurnCostsTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.flag_encoders", "car|turn_costs=true").
                 putObject("prepare.min_network_size", 0).
                 putObject("datareader.file", "../core/files/moscow.osm.gz").
                 putObject("graph.encoded_values", "road_class,surface,road_environment,max_speed").
-                putObject("graph.location", DIR)
-                .setProfiles(Arrays.asList(
-                        new Profile("my_car_turn_costs").setVehicle("car").setWeighting("fastest").setTurnCosts(true),
-                        new Profile("my_car_no_turn_costs").setVehicle("car").setWeighting("fastest").setTurnCosts(false),
-                        new Profile("my_custom_car_turn_costs").setVehicle("car").setWeighting("custom").setTurnCosts(true).putHint("custom_model_file", "empty"),
-                        new Profile("my_custom_car_no_turn_costs").setVehicle("car").setWeighting("custom").setTurnCosts(false).putHint("custom_model_file", "empty")
-                ))
-                .setCHProfiles(Arrays.asList(
+                putObject("import.osm.ignored_highways", "").
+                putObject("graph.location", DIR).
+                putObject("graph.encoded_values", "road_class, surface, road_environment, max_speed, car_access, car_average_speed").
+                setProfiles(Arrays.asList(
+                        TestProfiles.accessAndSpeed("my_car_turn_costs", "car").setTurnCostsConfig(TurnCostsConfig.car()),
+                        TestProfiles.accessAndSpeed("my_car_no_turn_costs", "car")
+                )).
+                setCHProfiles(Arrays.asList(
                         new CHProfile("my_car_turn_costs"),
-                        new CHProfile("my_car_no_turn_costs"),
-                        new CHProfile("my_custom_car_turn_costs"),
-                        new CHProfile("my_custom_car_no_turn_costs")
-                ))
-                .setLMProfiles(Arrays.asList(
+                        new CHProfile("my_car_no_turn_costs")
+                )).
+                setLMProfiles(Arrays.asList(
                         new LMProfile("my_car_no_turn_costs"),
-                        new LMProfile("my_custom_car_no_turn_costs"),
                         // no need for a second LM preparation: we can just cross query here
-                        new LMProfile("my_car_turn_costs").setPreparationProfile("my_car_no_turn_costs"),
-                        new LMProfile("my_custom_car_turn_costs").setPreparationProfile("my_custom_car_no_turn_costs")
+                        new LMProfile("my_car_turn_costs").setPreparationProfile("my_car_no_turn_costs")
                 ));
         return config;
     }
@@ -90,8 +86,6 @@ public class RouteResourceTurnCostsTest {
     public void canToggleTurnCostsOnOff(String mode) {
         assertDistance(mode, "my_car_turn_costs", emptyList(), 1044);
         assertDistance(mode, "my_car_no_turn_costs", emptyList(), 400);
-        assertDistance(mode, "my_custom_car_turn_costs", emptyList(), 1044);
-        assertDistance(mode, "my_custom_car_no_turn_costs", emptyList(), 400);
     }
 
     @ParameterizedTest

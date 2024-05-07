@@ -27,6 +27,9 @@ import com.graphhopper.util.*;
 
 import java.util.PriorityQueue;
 
+import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
+import static com.graphhopper.util.EdgeIterator.NO_EDGE;
+
 /**
  * This class implements the A* algorithm according to
  * http://en.wikipedia.org/wiki/A*_search_algorithm
@@ -36,13 +39,15 @@ import java.util.PriorityQueue;
  *
  * @author Peter Karich
  */
-public class AStar extends AbstractRoutingAlgorithm {
+public class AStar extends AbstractRoutingAlgorithm implements EdgeToEdgeRoutingAlgorithm {
     private GHIntObjectHashMap<AStarEntry> fromMap;
     private PriorityQueue<AStarEntry> fromHeap;
     private AStarEntry currEdge;
     private int visitedNodes;
     private int to = -1;
     private WeightApproximator weightApprox;
+    private int fromOutEdge;
+    private int toInEdge;
 
     public AStar(Graph graph, Weighting weighting, TraversalMode tMode) {
         super(graph, weighting, tMode);
@@ -68,32 +73,50 @@ public class AStar extends AbstractRoutingAlgorithm {
 
     @Override
     public Path calcPath(int from, int to) {
+        return calcPath(from, to, EdgeIterator.ANY_EDGE, EdgeIterator.ANY_EDGE);
+    }
+
+    @Override
+    public Path calcPath(int from, int to, int fromOutEdge, int toInEdge) {
+        if ((fromOutEdge != ANY_EDGE || toInEdge != ANY_EDGE) && !traversalMode.isEdgeBased()) {
+            throw new IllegalArgumentException("Restricting the start/target edges is only possible for edge-based graph traversal");
+        }
+        this.fromOutEdge = fromOutEdge;
+        this.toInEdge = toInEdge;
         checkAlreadyRun();
+        setupFinishTime();
         this.to = to;
+        if (fromOutEdge == NO_EDGE || toInEdge == NO_EDGE)
+            return extractPath();
         weightApprox.setTo(to);
         double weightToGoal = weightApprox.approximate(from);
-        currEdge = new AStarEntry(EdgeIterator.NO_EDGE, from, 0 + weightToGoal, 0);
-        if (!traversalMode.isEdgeBased()) {
+        if (Double.isInfinite(weightToGoal))
+            return extractPath();
+        AStarEntry startEntry = new AStarEntry(EdgeIterator.NO_EDGE, from, 0 + weightToGoal, 0);
+        fromHeap.add(startEntry);
+        if (!traversalMode.isEdgeBased())
             fromMap.put(from, currEdge);
-        }
         runAlgo();
         return extractPath();
     }
 
     private void runAlgo() {
         double currWeightToGoal, estimationFullWeight;
-        while (true) {
+        while (!fromHeap.isEmpty()) {
+            currEdge = fromHeap.poll();
+            if (currEdge.isDeleted())
+                continue;
             visitedNodes++;
-            if (isMaxVisitedNodesExceeded() || finished())
+            if (isMaxVisitedNodesExceeded() || finished() || isTimeoutExceeded())
                 break;
 
             int currNode = currEdge.adjNode;
             EdgeIterator iter = edgeExplorer.setBaseNode(currNode);
             while (iter.next()) {
-                if (!accept(iter, currEdge.edge))
+                if (!accept(iter, currEdge.edge) || (currEdge.edge == NO_EDGE && fromOutEdge != ANY_EDGE && iter.getEdge() != fromOutEdge))
                     continue;
 
-                double tmpWeight = GHUtility.calcWeightWithTurnWeightWithAccess(weighting, iter, false, currEdge.edge) + currEdge.weightOfVisitedPath;
+                double tmpWeight = GHUtility.calcWeightWithTurnWeight(weighting, iter, false, currEdge.edge) + currEdge.weightOfVisitedPath;
                 if (Double.isInfinite(tmpWeight)) {
                     continue;
                 }
@@ -103,48 +126,40 @@ public class AStar extends AbstractRoutingAlgorithm {
                 if (ase == null || ase.weightOfVisitedPath > tmpWeight) {
                     int neighborNode = iter.getAdjNode();
                     currWeightToGoal = weightApprox.approximate(neighborNode);
+                    if (Double.isInfinite(currWeightToGoal))
+                        continue;
                     estimationFullWeight = tmpWeight + currWeightToGoal;
                     if (ase == null) {
-                        ase = new AStarEntry(iter.getEdge(), neighborNode, estimationFullWeight, tmpWeight);
+                        ase = new AStarEntry(iter.getEdge(), neighborNode, estimationFullWeight, tmpWeight, currEdge);
                         fromMap.put(traversalId, ase);
                     } else {
 //                        assert (ase.weight > 0.9999999 * estimationFullWeight) : "Inconsistent distance estimate. It is expected weight >= estimationFullWeight but was "
 //                                + ase.weight + " < " + estimationFullWeight + " (" + ase.weight / estimationFullWeight + "), and weightOfVisitedPath:"
 //                                + ase.weightOfVisitedPath + " vs. alreadyVisitedWeight:" + alreadyVisitedWeight + " (" + ase.weightOfVisitedPath / alreadyVisitedWeight + ")";
-
-                        fromHeap.remove(ase);
-                        ase.edge = iter.getEdge();
-                        ase.weight = estimationFullWeight;
-                        ase.weightOfVisitedPath = tmpWeight;
+                        ase.setDeleted();
+                        ase = new AStarEntry(iter.getEdge(), neighborNode, estimationFullWeight, tmpWeight, currEdge);
+                        fromMap.put(traversalId, ase);
                     }
-
-                    ase.parent = currEdge;
                     fromHeap.add(ase);
-
                     updateBestPath(iter, ase, traversalId);
                 }
             }
-
-            if (fromHeap.isEmpty())
-                break;
-
-            currEdge = fromHeap.poll();
-            if (currEdge == null)
-                throw new AssertionError("Empty edge cannot happen");
         }
     }
 
-    @Override
-    protected boolean finished() {
-        return currEdge.adjNode == to;
+    private boolean finished() {
+        return currEdge.adjNode == to && (toInEdge == ANY_EDGE || currEdge.edge == toInEdge) && (fromOutEdge == ANY_EDGE || currEdge.edge != NO_EDGE);
     }
 
-    @Override
     protected Path extractPath() {
         if (currEdge == null || !finished())
             return createEmptyPath();
 
-        return PathExtractor.extractPath(graph, weighting, currEdge);
+        return PathExtractor.extractPath(graph, weighting, currEdge)
+                // the path extractor uses currEdge.weight to set the weight, but this is the one that includes the
+                // A* approximation, not the weight of the visited path! this is still correct, because the approximation
+                // at the to-node (the end of the route) must be zero. Still it seems clearer to set the weight explicitly.
+                .setWeight(currEdge.getWeightOfVisitedPath());
     }
 
     @Override
@@ -159,7 +174,11 @@ public class AStar extends AbstractRoutingAlgorithm {
         double weightOfVisitedPath;
 
         public AStarEntry(int edgeId, int adjNode, double weightForHeap, double weightOfVisitedPath) {
-            super(edgeId, adjNode, weightForHeap);
+            this(edgeId, adjNode, weightForHeap, weightOfVisitedPath, null);
+        }
+
+        public AStarEntry(int edgeId, int adjNode, double weightForHeap, double weightOfVisitedPath, SPTEntry parent) {
+            super(edgeId, adjNode, weightForHeap, parent);
             this.weightOfVisitedPath = weightOfVisitedPath;
         }
 

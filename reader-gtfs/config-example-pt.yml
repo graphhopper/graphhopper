@@ -1,12 +1,18 @@
 graphhopper:
   datareader.file: brandenburg-latest.osm.pbf
+  # for multiple files you can use: gtfs.file: file1.zip,file2.zip,file3.zip
   gtfs.file: gtfs-vbb.zip
   graph.location: graphs/brandenburg-with-transit
 
   profiles:
     - name: foot
-      vehicle: foot
-      weighting: fastest
+      custom_model_files:
+        - foot.json
+      # optionally add
+      #  - foot_elevation.json
+
+  import.osm.ignored_highways: motorway,trunk
+  graph.encoded_values: foot_access, foot_average_speed, hike_rating, foot_priority
 
 server:
   application_connectors:

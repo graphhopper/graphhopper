@@ -18,8 +18,8 @@
 
 package com.graphhopper;
 
-import com.graphhopper.config.Profile;
 import com.graphhopper.gtfs.*;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap;
 import org.junit.jupiter.api.AfterAll;
@@ -30,8 +30,11 @@ import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKTReader;
 
 import java.io.File;
-import java.time.*;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.graphhopper.gtfs.GtfsHelper.time;
@@ -53,18 +56,21 @@ public class FreeWalkIT {
         ghConfig.putObject("datareader.file", "files/beatty.osm");
         ghConfig.putObject("gtfs.file", "files/sample-feed,files/another-sample-feed");
         ghConfig.putObject("gtfs.max_transfer_interpolation_walk_time_seconds", 0);
+        ghConfig.putObject("import.osm.ignored_highways", "");
         // TODO: This setting vv is currently "dead", as in production it switches to PtRouterFreeWalkImpl, but
         // TODO: here it is instantiated directly. Refactor by having only one Router but two Solvers, similar
         // TODO: to the street router.
         ghConfig.putObject("gtfs.free_walk", true);
-        ghConfig.setProfiles(Arrays.asList(
-                new Profile("foot").setVehicle("foot").setWeighting("fastest"),
-                new Profile("car").setVehicle("car").setWeighting("fastest")));
+        ghConfig.putObject("graph.encoded_values", "foot_access, foot_priority, foot_average_speed, car_access, car_average_speed");
+        ghConfig.setProfiles(List.of(
+                TestProfiles.accessSpeedAndPriority("foot"),
+                TestProfiles.accessAndSpeed("car")));
+
         Helper.removeDir(new File(GRAPH_LOC));
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);
         graphHopperGtfs.importOrLoad();
-        ptRouter = new PtRouterFreeWalkImpl.Factory(ghConfig, new TranslationMap().doImport(), graphHopperGtfs.getGraphHopperStorage(), graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage())
+        ptRouter = new PtRouterFreeWalkImpl.Factory(ghConfig, new TranslationMap().doImport(), graphHopperGtfs.getBaseGraph(), graphHopperGtfs.getEncodingManager(), graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage())
                 .createWithoutRealtimeFeed();
     }
 
@@ -95,7 +101,7 @@ public class FreeWalkIT {
         assertEquals("JUSTICE_COURT,MUSEUM", firstLeg.stops.stream().map(s -> s.stop_id).collect(Collectors.joining(",")));
         assertEquals("EMSI,DADAN", secondLeg.stops.stream().map(s -> s.stop_id).collect(Collectors.joining(",")));
         assertEquals(LocalDateTime.parse("2007-01-01T10:00:00").atZone(zoneId).toInstant(), transferLeg.getDepartureTime().toInstant());
-        assertEquals(LocalDateTime.parse("2007-01-01T10:08:06.660").atZone(zoneId).toInstant(), transferLeg.getArrivalTime().toInstant());
+        assertEquals(LocalDateTime.parse("2007-01-01T10:08:06.670").atZone(zoneId).toInstant(), transferLeg.getArrivalTime().toInstant());
 
         assertEquals(readWktLineString("LINESTRING (-116.76164 36.906093, -116.761812 36.905928, -116.76217 36.905659)"), transitSolution.getLegs().get(1).geometry);
 
@@ -119,7 +125,7 @@ public class FreeWalkIT {
         assertThat(walkSolution.getLegs().get(0).getDepartureTime().toInstant().atZone(zoneId).toLocalTime())
                 .isEqualTo(LocalTime.parse("06:40"));
         assertThat(walkSolution.getLegs().get(0).getArrivalTime().toInstant().atZone(zoneId).toLocalTime())
-                .isEqualTo(LocalTime.parse("06:41:07.025"));
+                .isEqualTo(LocalTime.parse("06:41:07.031"));
         assertThat(walkSolution.getLegs().size()).isEqualTo(1);
         assertThat(walkSolution.getNumChanges()).isEqualTo(-1);
     }

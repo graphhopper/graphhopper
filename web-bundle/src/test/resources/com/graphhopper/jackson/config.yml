@@ -1,10 +1,8 @@
 datareader.file: map-matching/files/leipzig_germany.osm.pbf
 graph.location: graphs/leipzig-regular/graph
-graph.flag_encoders: car
 profiles:
   - name: car
-    vehicle: car
-    weighting: fastest
+    weighting: custom
 
 index.max_region_search: 100
 index:

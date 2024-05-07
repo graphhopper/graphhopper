@@ -23,6 +23,7 @@ import java.util.Objects;
 
 public class Observation {
     private GHPoint point;
+    private double accumulatedLinearDistanceToPrevious;
 
     public Observation(GHPoint p) {
         this.point = p;
@@ -30,6 +31,14 @@ public class Observation {
 
     public GHPoint getPoint() {
         return point;
+    }
+
+    public double getAccumulatedLinearDistanceToPrevious() {
+        return accumulatedLinearDistanceToPrevious;
+    }
+
+    public void setAccumulatedLinearDistanceToPrevious(double accumulatedLinearDistanceToPrevious) {
+        this.accumulatedLinearDistanceToPrevious = accumulatedLinearDistanceToPrevious;
     }
 
     @Override

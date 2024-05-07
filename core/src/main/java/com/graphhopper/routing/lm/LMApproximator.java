@@ -34,10 +34,13 @@ import java.util.Arrays;
 public class LMApproximator implements WeightApproximator {
 
     private final LandmarkStorage lms;
-    private final Weighting weighting;
-    private int[] activeLandmarkIndices;
-    private int[] weightsFromActiveLandmarksToT;
-    private int[] weightsFromTToActiveLandmarks;
+    // the weighting used for the LM preparation
+    private final Weighting lmWeighting;
+    // the weighting used for the current path calculation
+    private final Weighting routingWeighting;
+    private final int[] activeLandmarkIndices;
+    private final int[] weightsFromActiveLandmarksToT;
+    private final int[] weightsFromTToActiveLandmarks;
     private double epsilon = 1;
     private int towerNodeNextToT = -1;
     private double weightFromTToTowerNode;
@@ -47,13 +50,18 @@ public class LMApproximator implements WeightApproximator {
     private final int maxBaseNodes;
     private final Graph graph;
     private final WeightApproximator fallBackApproximation;
+    private final WeightApproximator beelineApproximation;
     private boolean fallback = false;
 
-    public static LMApproximator forLandmarks(Graph g, LandmarkStorage lms, int activeLM) {
-        return new LMApproximator(g, lms.getWeighting(), lms.getBaseNodes(), lms, activeLM, lms.getFactor(), false);
+    /**
+     * @param weighting the weighting used for the current path calculation, not necessarily the same that we used for the LM preparation.
+     *                  All edge weights must be larger or equal compared to those used for the preparation.
+     */
+    public static LMApproximator forLandmarks(Graph g, Weighting weighting, LandmarkStorage lms, int activeLM) {
+        return new LMApproximator(g, lms.getWeighting(), weighting, lms.getBaseNodes(), lms, activeLM, lms.getFactor(), false);
     }
 
-    public LMApproximator(Graph graph, Weighting weighting, int maxBaseNodes, LandmarkStorage lms, int activeCount,
+    public LMApproximator(Graph graph, Weighting lmWeighting, Weighting routingWeighting, int maxBaseNodes, LandmarkStorage lms, int activeCount,
                           double factor, boolean reverse) {
         this.reverse = reverse;
         this.lms = lms;
@@ -68,8 +76,10 @@ public class LMApproximator implements WeightApproximator {
         weightsFromTToActiveLandmarks = new int[activeCount];
 
         this.graph = graph;
-        this.weighting = weighting;
-        this.fallBackApproximation = new BeelineWeightApproximator(graph.getNodeAccess(), weighting);
+        this.lmWeighting = lmWeighting;
+        this.routingWeighting = routingWeighting;
+        this.fallBackApproximation = new BeelineWeightApproximator(graph.getNodeAccess(), lmWeighting);
+        this.beelineApproximation = new BeelineWeightApproximator(graph.getNodeAccess(), routingWeighting);
         this.maxBaseNodes = maxBaseNodes;
     }
 
@@ -109,7 +119,11 @@ public class LMApproximator implements WeightApproximator {
                 return fallBackApproximation.approximate(v);
             }
         }
-        return Math.max(0.0, (getRemainingWeightUnderestimationUpToTowerNode(v) - weightFromTToTowerNode) * epsilon);
+        double lmApproximation = Math.max(0.0, (getRemainingWeightUnderestimationUpToTowerNode(v) - weightFromTToTowerNode) * epsilon);
+        // Since both the LM and the beeline approximations underestimate the real remaining weight the larger one is
+        // more accurate. For example when the speed is reduced for all roads the beeline approximation adjusts automatically
+        // to the reduced global maximum speed, while the LM approximation becomes worse.
+        return Math.max(lmApproximation, beelineApproximation.approximate(v));
     }
 
     private double getRemainingWeightUnderestimationUpToTowerNode(int v) {
@@ -153,26 +167,25 @@ public class LMApproximator implements WeightApproximator {
         //
         // ...and we can get the right-hand sides of III) and IV) by multiplying those of II) and I) by -1.
 
-        int rhs1Int = weightsFromActiveLandmarksToT[i] - lms.getFromWeight(activeLandmarkIndices[i], v);
-        int rhs2Int = lms.getToWeight(activeLandmarkIndices[i], v) - weightsFromTToActiveLandmarks[i];
+        int rhs1Int = lms.getToWeight(activeLandmarkIndices[i], v) - weightsFromTToActiveLandmarks[i];
+        int rhs2Int = weightsFromActiveLandmarksToT[i] - lms.getFromWeight(activeLandmarkIndices[i], v);
 
-        int resultInt;
         if (reverse) {
-            resultInt = Math.max(-rhs2Int, -rhs1Int);
-        } else {
-            resultInt = Math.max(rhs1Int, rhs2Int);
+            rhs1Int *= -1;
+            rhs2Int *= -1;
         }
-        return resultInt;
+        return Math.max(rhs1Int, rhs2Int);
     }
 
     @Override
     public void setTo(int t) {
         this.fallBackApproximation.setTo(t);
+        this.beelineApproximation.setTo(t);
         findClosestRealNode(t);
     }
 
     private void findClosestRealNode(int t) {
-        Dijkstra dijkstra = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED) {
+        Dijkstra dijkstra = new Dijkstra(graph, lmWeighting, TraversalMode.NODE_BASED) {
             @Override
             protected boolean finished() {
                 towerNodeNextToT = currEdge.adjNode;
@@ -191,19 +204,12 @@ public class LMApproximator implements WeightApproximator {
 
     @Override
     public WeightApproximator reverse() {
-        return new LMApproximator(graph, weighting, maxBaseNodes, lms, activeLandmarkIndices.length, factor, !reverse);
+        return new LMApproximator(graph, lmWeighting, routingWeighting, maxBaseNodes, lms, activeLandmarkIndices.length, factor, !reverse);
     }
 
     @Override
     public double getSlack() {
         return lms.getFactor();
-    }
-
-    /**
-     * This method forces a lazy recalculation of the active landmark set e.g. necessary after the 'to' node changed.
-     */
-    public void triggerActiveLandmarkRecalculation() {
-        recalculateActiveLandmarks = true;
     }
 
     @Override

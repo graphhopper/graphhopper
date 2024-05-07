@@ -26,21 +26,21 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.jackson.Jackson;
-import com.graphhopper.jackson.ResponsePathDeserializer;
+import com.graphhopper.jackson.ResponsePathDeserializerHelper;
+import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.shapes.GHPoint;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.ResponseBody;
+import okhttp3.*;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static com.graphhopper.api.GraphHopperMatrixWeb.*;
+import static com.graphhopper.api.Version.GH_VERSION_FROM_MAVEN;
 import static com.graphhopper.util.Helper.round6;
 import static com.graphhopper.util.Helper.toLowerCase;
 import static com.graphhopper.util.Parameters.Routing.CALC_POINTS;
@@ -54,6 +54,7 @@ import static com.graphhopper.util.Parameters.Routing.INSTRUCTIONS;
  */
 public class GraphHopperWeb {
 
+    public static final String X_GH_CLIENT_VERSION = "X-GH-Client-Version";
     private final ObjectMapper objectMapper;
     private final String routeServiceUrl;
     private OkHttpClient downloader;
@@ -64,7 +65,7 @@ public class GraphHopperWeb {
     private String optimize = "false";
     private boolean postRequest = true;
     private int maxUnzippedLength = 1000;
-    private final Set<String> ignoreSet;
+    private final Set<String> ignoreSetForGet;
     private final Set<String> ignoreSetForPost;
 
     public static final String TIMEOUT = "timeout";
@@ -90,24 +91,26 @@ public class GraphHopperWeb {
         ignoreSetForPost.add("elevation");
         ignoreSetForPost.add("optimize");
         ignoreSetForPost.add("points_encoded");
+        ignoreSetForPost.add("points_encoded_multiplier");
 
-        ignoreSet = new HashSet<>();
-        ignoreSet.add(KEY);
-        ignoreSet.add(CALC_POINTS);
-        ignoreSet.add("calcpoints");
-        ignoreSet.add(INSTRUCTIONS);
-        ignoreSet.add("elevation");
-        ignoreSet.add("optimize");
+        ignoreSetForGet = new HashSet<>();
+        ignoreSetForGet.add(KEY);
+        ignoreSetForGet.add(CALC_POINTS);
+        ignoreSetForGet.add("calcpoints");
+        ignoreSetForGet.add(INSTRUCTIONS);
+        ignoreSetForGet.add("elevation");
+        ignoreSetForGet.add("optimize");
 
         // some parameters are in the request:
-        ignoreSet.add("algorithm");
-        ignoreSet.add("locale");
-        ignoreSet.add("point");
+        ignoreSetForGet.add("algorithm");
+        ignoreSetForGet.add("locale");
+        ignoreSetForGet.add("point");
 
         // some are special and need to be avoided
-        ignoreSet.add("points_encoded");
-        ignoreSet.add("pointsencoded");
-        ignoreSet.add("type");
+        ignoreSetForGet.add("points_encoded");
+        ignoreSetForGet.add("pointsencoded");
+        ignoreSetForGet.add("points_encoded_multiplier");
+        ignoreSetForGet.add("type");
         objectMapper = Jackson.newObjectMapper();
     }
 
@@ -135,9 +138,8 @@ public class GraphHopperWeb {
         return this;
     }
 
-
     /**
-     * Use new endpoint 'POST /route' instead of 'GET /route'
+     * If false it will use the 'GET /route' endpoint instead of the default 'POST /route'.
      */
     public GraphHopperWeb setPostRequest(boolean postRequest) {
         this.postRequest = postRequest;
@@ -175,8 +177,6 @@ public class GraphHopperWeb {
      *                 location is optimized according to the overall best route and returned
      *                 this way i.e. the traveling salesman problem is solved under the hood.
      *                 Note that in this case the request takes longer and costs more credits.
-     *                 For more details see:
-     *                 https://github.com/graphhopper/directions-api/blob/master/FAQ.md#what-is-one-credit
      */
     public GraphHopperWeb setOptimize(String optimize) {
         this.optimize = optimize;
@@ -191,20 +191,26 @@ public class GraphHopperWeb {
             ghRequest.getHints().remove("turn_description"); // do not include in request
 
             Request okRequest = postRequest ? createPostRequest(ghRequest) : createGetRequest(ghRequest);
-            rspBody = getClientForRequest(ghRequest).newCall(okRequest).execute().body();
+            Response rsp = getClientForRequest(ghRequest).newCall(okRequest).execute();
+            rspBody = rsp.body();
             JsonNode json = objectMapper.reader().readTree(rspBody.byteStream());
 
             GHResponse res = new GHResponse();
-            res.addErrors(ResponsePathDeserializer.readErrors(objectMapper, json));
+            res.addErrors(ResponsePathDeserializerHelper.readErrors(objectMapper, json));
             if (res.hasErrors())
                 return res;
 
             JsonNode paths = json.get("paths");
-
             for (JsonNode path : paths) {
-                ResponsePath altRsp = ResponsePathDeserializer.createResponsePath(objectMapper, path, tmpElevation, tmpTurnDescription);
+                ResponsePath altRsp = ResponsePathDeserializerHelper.createResponsePath(objectMapper, path, tmpElevation, tmpTurnDescription);
                 res.add(altRsp);
             }
+
+            for (Map.Entry<String, List<String>> entry : rsp.headers().toMultimap().entrySet()) {
+                res.getHints().putObject(entry.getKey(), entry.getValue());
+            }
+            JsonNode b = json.get("hints");
+            b.fields().forEachRemaining(f -> res.getHints().putObject(f.getKey(), Helper.toObject(f.getValue().asText())));
 
             return res;
 
@@ -232,7 +238,7 @@ public class GraphHopperWeb {
         String tmpServiceURL = ghRequest.getHints().getString(SERVICE_URL, routeServiceUrl);
         String url = tmpServiceURL + "?";
         if (!Helper.isEmpty(key))
-            url += "key=" + key;
+            url += "key=" + encodeURL(key);
 
         ObjectNode requestJson = requestToJson(ghRequest);
         String body;
@@ -242,6 +248,7 @@ public class GraphHopperWeb {
             throw new RuntimeException("Could not write request body", e);
         }
         Request.Builder builder = new Request.Builder().url(url).post(RequestBody.create(MT_JSON, body));
+        builder.header(X_GH_CLIENT_VERSION, GH_VERSION_FROM_MAVEN);
         // force avoiding our GzipRequestInterceptor for smaller requests ~30 locations
         if (body.length() < maxUnzippedLength)
             builder.header("Content-Encoding", "identity");
@@ -269,12 +276,13 @@ public class GraphHopperWeb {
             requestJson.put("algorithm", ghRequest.getAlgorithm());
 
         requestJson.put("points_encoded", true);
+        requestJson.put("points_encoded_multiplier", 1e6);
         requestJson.put(INSTRUCTIONS, ghRequest.getHints().getBool(INSTRUCTIONS, instructions));
         requestJson.put(CALC_POINTS, ghRequest.getHints().getBool(CALC_POINTS, calcPoints));
         requestJson.put("elevation", ghRequest.getHints().getBool("elevation", elevation));
         requestJson.put("optimize", ghRequest.getHints().getString("optimize", optimize));
         if (ghRequest.getCustomModel() != null)
-            requestJson.putPOJO("custom_model", ghRequest.getCustomModel());
+            requestJson.putPOJO(CustomModel.KEY, ghRequest.getCustomModel());
 
         Map<String, Object> hintsMap = ghRequest.getHints().toMap();
         for (Map.Entry<String, Object> entry : hintsMap.entrySet()) {
@@ -320,6 +328,7 @@ public class GraphHopperWeb {
                 + "&type=" + type
                 + "&instructions=" + tmpInstructions
                 + "&points_encoded=true"
+                + "&points_encoded_multiplier=1000000"
                 + "&calc_points=" + tmpCalcPoints
                 + "&algorithm=" + ghRequest.getAlgorithm()
                 + "&locale=" + ghRequest.getLocale().toString()
@@ -327,7 +336,7 @@ public class GraphHopperWeb {
                 + "&optimize=" + tmpOptimize;
 
         for (String details : ghRequest.getPathDetails()) {
-            url += "&" + Parameters.Details.PATH_DETAILS + "=" + details;
+            url += "&" + Parameters.Details.PATH_DETAILS + "=" + encodeURL(details);
         }
 
         // append *all* point hints if at least one is not empty
@@ -360,7 +369,7 @@ public class GraphHopperWeb {
             String urlValue = entry.getValue().toString();
 
             // use lower case conversion for check only!
-            if (ignoreSet.contains(toLowerCase(urlKey))) {
+            if (ignoreSetForGet.contains(toLowerCase(urlKey))) {
                 continue;
             }
 
@@ -369,21 +378,27 @@ public class GraphHopperWeb {
             }
         }
 
-        return new Request.Builder().url(url).build();
+        return new Request.Builder().url(url)
+                .header(X_GH_CLIENT_VERSION, GH_VERSION_FROM_MAVEN)
+                .build();
     }
 
     public String export(GHRequest ghRequest) {
         String str = "Creating request failed";
+        ResponseBody body = null;
         try {
             if (postRequest)
                 throw new IllegalArgumentException("GPX export only works for GET requests, make sure to use `setPostRequest(false)`");
             Request okRequest = createGetRequest(ghRequest);
-            str = getClientForRequest(ghRequest).newCall(okRequest).execute().body().string();
+            body = getClientForRequest(ghRequest).newCall(okRequest).execute().body();
+            str = body.string();
 
             return str;
         } catch (Exception ex) {
             throw new RuntimeException("Problem while fetching export " + ghRequest.getPoints()
                     + ", error: " + ex.getMessage() + " response: " + str, ex);
+        } finally {
+            Helper.close(body);
         }
     }
 
@@ -415,10 +430,6 @@ public class GraphHopperWeb {
     }
 
     private static String encodeURL(String str) {
-        try {
-            return URLEncoder.encode(str, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
-        }
+        return URLEncoder.encode(str, StandardCharsets.UTF_8);
     }
 }

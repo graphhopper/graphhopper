@@ -12,7 +12,7 @@ only a sub-set of them are actual junctions, which are the ones we are intereste
 Those junction nodes (and end-standing nodes of dead alleys) we call *tower nodes* which also 
 have a graphhopper node ID associated, going from 0 to graph.getNodes(). 
 The helper nodes between the junctions we call 'pillar nodes' which can be fetched via
-`edgeIteratorState.fetchWayGeometry(FetchMode.PILLAR_ONLY)`. Avoiding the traversal of pillar nodes while routing makes 
+`edgeIteratorState.fetchWayGeometry(FetchMode.PILLAR_ONLY)`. Avoiding the traversal of pillar nodes makes 
 routing a lot faster (~8 times).
 
 That splitting into pillar and tower nodes is also the reason why there can't be a unique mapping from 

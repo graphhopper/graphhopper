@@ -19,7 +19,6 @@ package com.graphhopper.routing.ev;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.graphhopper.storage.IntsRef;
 
 /**
  * This class implements a simple boolean storage via an UnsignedIntEncodedValue with 1 bit.
@@ -37,22 +36,29 @@ public final class SimpleBooleanEncodedValue extends IntEncodedValueImpl impleme
     SimpleBooleanEncodedValue(
             @JsonProperty("name") String name,
             @JsonProperty("bits") int bits,
-            @JsonProperty("minValue") int minValue,
-            @JsonProperty("maxValue") int maxValue,
-            @JsonProperty("negateReverseDirection") boolean negateReverseDirection,
-            @JsonProperty("storeTwoDirections") boolean storeTwoDirections
+            @JsonProperty("min_storable_value") int minStorableValue,
+            @JsonProperty("max_storable_value") int maxStorableValue,
+            @JsonProperty("max_value") int maxValue,
+            @JsonProperty("negate_reverse_direction") boolean negateReverseDirection,
+            @JsonProperty("store_two_directions") boolean storeTwoDirections,
+            @JsonProperty("fwd_data_index") int fwdDataIndex,
+            @JsonProperty("bwd_data_index") int bwdDataIndex,
+            @JsonProperty("fwd_shift") int fwdShift,
+            @JsonProperty("bwd_shift") int bwdShift,
+            @JsonProperty("fwd_mask") int fwdMask,
+            @JsonProperty("bwd_mask") int bwdMask
     ) {
         // we need this constructor for Jackson
-        super(name, bits, minValue, maxValue, negateReverseDirection, storeTwoDirections);
+        super(name, bits, minStorableValue, maxStorableValue, maxValue, negateReverseDirection, storeTwoDirections, fwdDataIndex, bwdDataIndex, fwdShift, bwdShift, fwdMask, bwdMask);
     }
 
     @Override
-    public final void setBool(boolean reverse, IntsRef ref, boolean value) {
-        setInt(reverse, ref, value ? 1 : 0);
+    public final void setBool(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess, boolean value) {
+        setInt(reverse, edgeId, edgeIntAccess, value ? 1 : 0);
     }
 
     @Override
-    public final boolean getBool(boolean reverse, IntsRef ref) {
-        return getInt(reverse, ref) == 1;
+    public final boolean getBool(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess) {
+        return getInt(reverse, edgeId, edgeIntAccess) == 1;
     }
 }

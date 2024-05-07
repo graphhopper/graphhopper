@@ -24,7 +24,10 @@ import com.graphhopper.routing.weighting.BeelineWeightApproximator;
 import com.graphhopper.routing.weighting.WeightApproximator;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.*;
+import com.graphhopper.util.DistancePlaneProjection;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.Parameters;
 
 /**
  * This class implements a bidirectional A* algorithm. It is interesting to note that a
@@ -88,17 +91,7 @@ public class AStarBidirection extends AbstractNonCHBidirAlgo {
     protected SPTEntry createEntry(EdgeIteratorState edge, double weight, SPTEntry parent, boolean reverse) {
         int neighborNode = edge.getAdjNode();
         double heapWeight = weight + weightApprox.approximate(neighborNode, reverse);
-        AStarEntry entry = new AStarEntry(edge.getEdge(), neighborNode, heapWeight, weight);
-        entry.parent = parent;
-        return entry;
-    }
-
-    @Override
-    protected void updateEntry(SPTEntry entry, EdgeIteratorState edge, double weight, SPTEntry parent, boolean reverse) {
-        entry.edge = edge.getEdge();
-        entry.weight = weight + weightApprox.approximate(edge.getAdjNode(), reverse);
-        ((AStarEntry) entry).weightOfVisitedPath = weight;
-        entry.parent = parent;
+        return new AStarEntry(edge.getEdge(), neighborNode, heapWeight, weight, parent);
     }
 
     @Override

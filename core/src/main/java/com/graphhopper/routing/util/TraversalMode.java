@@ -17,30 +17,15 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.storage.RoutingCHEdgeIteratorState;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 
-import java.util.Arrays;
-
-import static com.graphhopper.util.Helper.toUpperCase;
-
 /**
- * Defines how the graph can be traversed while Dijkstra or similar RoutingAlgorithm is in progress.
- * Different options define how precise turn restrictions and costs are taken into account, but
- * still all are without via-way support. BTW: this would not be done at runtime, this would be a
- * pre-processing step to avoid performance penalties.
- * <p>
- *
  * @author Peter Karich
  */
 public enum TraversalMode {
-    /**
-     * The simplest traversal mode but without turn restrictions or cost support.
-     */
     NODE_BASED(false),
-    /**
-     * The edged-based traversal mode with turn restriction and cost support. 2 times slower than node based.
-     */
     EDGE_BASED(true);
 
     private final boolean edgeBased;
@@ -49,38 +34,34 @@ public enum TraversalMode {
         this.edgeBased = edgeBased;
     }
 
-    public static TraversalMode fromString(String name) {
-        try {
-            return valueOf(toUpperCase(name));
-        } catch (Exception ex) {
-            throw new IllegalArgumentException("TraversalMode " + name + " not supported. "
-                    + "Supported are: " + Arrays.asList(TraversalMode.values()));
-        }
-    }
-
     /**
      * Returns the identifier to access the map of the shortest path tree according to the traversal
      * mode. E.g. returning the adjacent node id in node-based behavior whilst returning the edge id
      * in edge-based behavior
      * <p>
      *
-     * @param iterState the current {@link EdgeIteratorState}
+     * @param edgeState the current {@link EdgeIteratorState}
      * @param reverse   <code>true</code>, if traversal in backward direction. Will be true only for
      *                  backward searches in bidirectional algorithms.
      * @return the identifier to access the shortest path tree
      */
-    public final int createTraversalId(EdgeIteratorState iterState, boolean reverse) {
-        return createTraversalId(iterState.getBaseNode(), iterState.getAdjNode(), iterState.getEdge(), reverse);
+    public final int createTraversalId(EdgeIteratorState edgeState, boolean reverse) {
+        if (edgeBased)
+            return reverse ? edgeState.getReverseEdgeKey() : edgeState.getEdgeKey();
+        return edgeState.getAdjNode();
     }
 
-    /**
-     * If you have an EdgeIteratorState the other createTraversalId is preferred!
-     */
-    public final int createTraversalId(int baseNode, int adjNode, int edgeId, boolean reverse) {
+    public final int createTraversalId(RoutingCHEdgeIteratorState chEdgeState, boolean reverse) {
         if (edgeBased) {
-            return GHUtility.createEdgeKey(baseNode, adjNode, edgeId, reverse);
+            int key = reverse ? chEdgeState.getOrigEdgeKeyFirst() : chEdgeState.getOrigEdgeKeyLast();
+            // For reverse traversal we need to revert the edge key, but not for shortcuts.
+            // Why? Because of our definition of the first/last edge keys: they do not depend on the
+            // 'state' of the edge state, but are defined in terms of the direction of the (always directed) shortcut.
+            if (reverse && !chEdgeState.isShortcut() && chEdgeState.getBaseNode() != chEdgeState.getAdjNode())
+                key = GHUtility.reverseEdgeKey(key);
+            return key;
         }
-        return adjNode;
+        return chEdgeState.getAdjNode();
     }
 
     public boolean isEdgeBased() {

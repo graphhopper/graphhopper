@@ -29,7 +29,7 @@ class StatementSerializer extends JsonSerializer<Statement> {
     public void serialize(Statement statement, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
         jsonGenerator.writeStartObject();
         jsonGenerator.writeStringField(statement.getKeyword().getName(), statement.getCondition());
-        jsonGenerator.writeNumberField(statement.getOperation().getName(), statement.getValue());
+        jsonGenerator.writeStringField(statement.getOperation().getName(), statement.getValue());
         jsonGenerator.writeEndObject();
     }
 }

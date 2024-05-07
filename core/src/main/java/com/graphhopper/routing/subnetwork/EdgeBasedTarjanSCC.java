@@ -21,17 +21,17 @@ package com.graphhopper.routing.subnetwork;
 import com.carrotsearch.hppc.*;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.graphhopper.routing.util.AllEdgesIterator;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.BitUtil;
-import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
+import static com.graphhopper.util.GHUtility.getEdgeFromEdgeKey;
 
 /**
  * Edge-based version of Tarjan's algorithm to find strongly connected components on a directed graph. Compared
@@ -39,8 +39,8 @@ import static com.graphhopper.util.EdgeIterator.NO_EDGE;
  * the edges. This way its possible to take into account possible turn restrictions.
  * <p>
  * The algorithm is of course very similar to the node-based version and it might be possible to reuse some code between
- * the two, but especially the version with an explicit stack needs different 'state' information and loops require
- * some special treatment as well.
+ * the two, but especially the version with an explicit stack needs different 'state' information and loops required
+ * some special treatment as well (this was written when base graph could still have loops!).
  *
  * @author easbar
  * @see TarjanSCC
@@ -148,7 +148,7 @@ public class EdgeBasedTarjanSCC {
     private void findComponentForEdgeKey(int p, int adjNode) {
         setupNextEdgeKey(p);
         // we have to create a new explorer on each iteration because of the nested edge iterations
-        final int edge = getEdgeFromKey(p);
+        final int edge = getEdgeFromEdgeKey(p);
         EdgeExplorer explorer = graph.createEdgeExplorer();
         EdgeIterator iter = explorer.setBaseNode(adjNode);
         while (iter.next()) {
@@ -156,10 +156,6 @@ public class EdgeBasedTarjanSCC {
                 continue;
             int q = createEdgeKey(iter, false);
             handleNeighbor(p, q, iter.getAdjNode());
-            // we need a special treatment for loops because our edge iterator only sees it once but it can be travelled
-            // both ways
-            if (iter.getBaseNode() == iter.getAdjNode())
-                handleNeighbor(p, q + 1, iter.getAdjNode());
         }
         buildComponent(p);
     }
@@ -266,15 +262,13 @@ public class EdgeBasedTarjanSCC {
                     setupNextEdgeKey(p);
                     // we push buildComponent first so it will run *after* we finished traversing the edges
                     pushBuildComponent(p);
-                    final int edge = getEdgeFromKey(p);
+                    final int edge = getEdgeFromEdgeKey(p);
                     EdgeIterator it = explorer.setBaseNode(adj);
                     while (it.next()) {
                         if (!edgeTransitionFilter.accept(edge, it))
                             continue;
                         int q = createEdgeKey(it, false);
                         pushHandleNeighbor(p, q, it.getAdjNode());
-                        if (it.getBaseNode() == it.getAdjNode())
-                            pushHandleNeighbor(p, q + 1, it.getAdjNode());
                     }
                     break;
                 default:
@@ -321,41 +315,30 @@ public class EdgeBasedTarjanSCC {
 
     private void pushUpdateLowLinks(int p, int q) {
         assert p >= 0 && q >= 0;
-        dfsStackPQ.addLast(bitUtil.combineIntsToLong(p, q));
+        dfsStackPQ.addLast(bitUtil.toLong(p, q));
         dfsStackAdj.addLast(-1);
     }
 
     private void pushBuildComponent(int p) {
         assert p >= 0;
-        dfsStackPQ.addLast(bitUtil.combineIntsToLong(p, -2));
+        dfsStackPQ.addLast(bitUtil.toLong(p, -2));
         dfsStackAdj.addLast(-2);
     }
 
     private void pushFindComponentForEdgeKey(int p, int adj) {
         assert p >= 0 && adj >= 0;
-        dfsStackPQ.addLast(bitUtil.combineIntsToLong(p, -1));
+        dfsStackPQ.addLast(bitUtil.toLong(p, -1));
         dfsStackAdj.addLast(adj);
     }
 
     private void pushHandleNeighbor(int p, int q, int adj) {
         assert p >= 0 && q >= 0 && adj >= 0;
-        dfsStackPQ.addLast(bitUtil.combineIntsToLong(p, q));
+        dfsStackPQ.addLast(bitUtil.toLong(p, q));
         dfsStackAdj.addLast(adj);
     }
 
-    /**
-     * Use this method to return the edge for the specified edgeKeys that get returned by {@link #findComponents()}} etc.
-     * The implementation is like GHUtility.getEdgeFromEdgeKey but might be different in the future. See #2152.
-     */
-    public static int getEdgeFromKey(int edgeKey) {
-        return edgeKey / 2;
-    }
-
     public static int createEdgeKey(EdgeIteratorState edgeState, boolean reverse) {
-        int edgeKey = edgeState.getEdge() << 1;
-        if (edgeState.get(EdgeIteratorState.REVERSE_STATE) == !reverse)
-            edgeKey++;
-        return edgeKey;
+        return TraversalMode.EDGE_BASED.createTraversalId(edgeState, reverse);
     }
 
     public static class ConnectedComponents {
@@ -377,7 +360,7 @@ public class EdgeBasedTarjanSCC {
          * A list of arrays each containing the edge keys of a strongly connected component. Components with only a single
          * edge key are not included here, but need to be obtained using {@link #getSingleEdgeComponents()}.
          * The edge key is either 2*edgeId (if the edge direction corresponds to the storage order) or 2*edgeId+1 (for
-         * the opposite direction). Use {@link EdgeBasedTarjanSCC#getEdgeFromKey(int)} to convert edge keys back to
+         * the opposite direction). Use {@link GHUtility#getEdgeFromEdgeKey(int)} to convert edge keys back to
          * edge IDs.
          */
         public List<IntArrayList> getComponents() {
@@ -466,7 +449,7 @@ public class EdgeBasedTarjanSCC {
 
         @Override
         public void minTo(int key, int value) {
-            // todonow: optimize
+            // todo: optimize with map.indexOf(key) etc
             map.put(key, Math.min(map.getOrDefault(key, -1), value));
         }
 

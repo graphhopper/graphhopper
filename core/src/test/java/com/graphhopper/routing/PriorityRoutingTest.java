@@ -20,12 +20,10 @@ package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.json.Statement;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EnumEncodedValue;
-import com.graphhopper.routing.ev.RoadClass;
-import com.graphhopper.routing.util.*;
-import com.graphhopper.routing.weighting.PriorityWeighting;
+import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.PriorityCode;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
@@ -34,7 +32,6 @@ import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -43,8 +40,9 @@ public class PriorityRoutingTest {
 
     @Test
     void testMaxPriority() {
-        FlagEncoder encoder = FlagEncoders.createBike();
-        EncodingManager em = EncodingManager.create(encoder);
+        DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 4, 2, false);
+        DecimalEncodedValue priorityEnc = new DecimalEncodedValueImpl("priority", 4, PriorityCode.getFactor(1), false);
+        EncodingManager em = EncodingManager.start().add(speedEnc).add(priorityEnc).add(RoadClass.create()).build();
         BaseGraph graph = new BaseGraph.Builder(em).create();
         NodeAccess na = graph.getNodeAccess();
         na.setNode(0, 48.0, 11.0);
@@ -55,16 +53,17 @@ public class PriorityRoutingTest {
         na.setNode(5, 48.2, 11.1);
         // 0 - 1 - 2 - 3
         //  \- 4 - 5 -/
+        double speed = speedEnc.getNextStorableValue(30);
         double dist1 = 0;
-        dist1 += maxSpeedEdge(em, graph, 0, 1, encoder, 1.0).getDistance();
-        dist1 += maxSpeedEdge(em, graph, 1, 2, encoder, 1.0).getDistance();
-        dist1 += maxSpeedEdge(em, graph, 2, 3, encoder, 1.0).getDistance();
+        dist1 += addEdge(em, graph, 0, 1, 1.0, speedEnc, priorityEnc, speed).getDistance();
+        dist1 += addEdge(em, graph, 1, 2, 1.0, speedEnc, priorityEnc, speed).getDistance();
+        dist1 += addEdge(em, graph, 2, 3, 1.0, speedEnc, priorityEnc, speed).getDistance();
 
         final double maxPrio = PriorityCode.getFactor(PriorityCode.BEST.getValue());
         double dist2 = 0;
-        dist2 += maxSpeedEdge(em, graph, 0, 4, encoder, maxPrio).getDistance();
-        dist2 += maxSpeedEdge(em, graph, 4, 5, encoder, maxPrio).getDistance();
-        dist2 += maxSpeedEdge(em, graph, 5, 3, encoder, maxPrio).getDistance();
+        dist2 += addEdge(em, graph, 0, 4, maxPrio, speedEnc, priorityEnc, speed).getDistance();
+        dist2 += addEdge(em, graph, 4, 5, maxPrio, speedEnc, priorityEnc, speed).getDistance();
+        dist2 += addEdge(em, graph, 5, 3, maxPrio, speedEnc, priorityEnc, speed).getDistance();
 
         // the routes 0-1-2-3 and 0-4-5-3 have similar distances (and use max speed everywhere)
         // ... but the shorter route 0-1-2-3 has smaller priority
@@ -73,16 +72,11 @@ public class PriorityRoutingTest {
 
         // A* and Dijkstra should yield the same path (the max priority must be taken into account by weighting.getMinWeight)
         {
-            PriorityWeighting weighting = new PriorityWeighting(encoder, new PMap(), TurnCostProvider.NO_TURN_COST_PROVIDER);
-            Path pathDijkstra = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED).calcPath(0, 3);
-            Path pathAStar = new AStar(graph, weighting, TraversalMode.NODE_BASED).calcPath(0, 3);
-            assertEquals(pathDijkstra.calcNodes(), pathAStar.calcNodes());
-            assertEquals(IntArrayList.from(0, 4, 5, 3), pathAStar.calcNodes());
-        }
-
-        {
             CustomModel customModel = new CustomModel();
-            CustomWeighting weighting = CustomModelParser.createWeighting(encoder, em, TurnCostProvider.NO_TURN_COST_PROVIDER, customModel);
+            customModel.addToPriority(Statement.If("true", Statement.Op.MULTIPLY, priorityEnc.getName()));
+            customModel.addToSpeed(Statement.If("true", Statement.Op.LIMIT, speedEnc.getName()));
+
+            CustomWeighting weighting = CustomModelParser.createWeighting(em, TurnCostProvider.NO_TURN_COST_PROVIDER, customModel);
             Path pathDijkstra = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED).calcPath(0, 3);
             Path pathAStar = new AStar(graph, weighting, TraversalMode.NODE_BASED).calcPath(0, 3);
             assertEquals(pathDijkstra.calcNodes(), pathAStar.calcNodes());
@@ -92,8 +86,10 @@ public class PriorityRoutingTest {
         {
             CustomModel customModel = new CustomModel();
             // now we even increase the priority in the custom model, which also needs to be accounted for in weighting.getMinWeight
-            customModel.addToPriority(Statement.If("road_class == MOTORWAY", Statement.Op.MULTIPLY, 3));
-            CustomWeighting weighting = CustomModelParser.createWeighting(encoder, em, TurnCostProvider.NO_TURN_COST_PROVIDER, customModel);
+            customModel.addToPriority(Statement.If("true", Statement.Op.MULTIPLY, priorityEnc.getName()));
+            customModel.addToPriority(Statement.If("road_class == MOTORWAY", Statement.Op.MULTIPLY, "3"));
+            customModel.addToSpeed(Statement.If("true", Statement.Op.LIMIT, speedEnc.getName()));
+            CustomWeighting weighting = CustomModelParser.createWeighting(em, TurnCostProvider.NO_TURN_COST_PROVIDER, customModel);
             Path pathDijkstra = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED).calcPath(0, 3);
             Path pathAStar = new AStar(graph, weighting, TraversalMode.NODE_BASED).calcPath(0, 3);
             assertEquals(pathDijkstra.calcNodes(), pathAStar.calcNodes());
@@ -101,14 +97,10 @@ public class PriorityRoutingTest {
         }
     }
 
-    private EdgeIteratorState maxSpeedEdge(EncodingManager em, BaseGraph graph, int p, int q, FlagEncoder encoder, double prio) {
-        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
-        DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
-        DecimalEncodedValue priorityEnc = em.getDecimalEncodedValue(EncodingManager.getKey(encoder, "priority"));
+    private EdgeIteratorState addEdge(EncodingManager em, BaseGraph graph, int p, int q, double prio, DecimalEncodedValue speedEnc, DecimalEncodedValue priorityEnc, double speed) {
         EnumEncodedValue<RoadClass> roadClassEnc = em.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         return graph.edge(p, q)
-                .set(accessEnc, true)
-                .set(speedEnc, encoder.getMaxSpeed())
+                .set(speedEnc, speed)
                 .set(priorityEnc, prio)
                 .set(roadClassEnc, RoadClass.MOTORWAY)
                 .setDistance(calcDist(graph, p, q));

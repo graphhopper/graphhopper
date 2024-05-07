@@ -34,4 +34,9 @@ public class JsonFeatureCollection {
     public List<JsonFeature> getFeatures() {
         return features;
     }
+
+    @Override
+    public String toString() {
+        return features.toString();
+    }
 }

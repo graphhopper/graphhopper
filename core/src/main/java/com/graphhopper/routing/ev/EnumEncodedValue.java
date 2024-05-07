@@ -20,9 +20,6 @@ package com.graphhopper.routing.ev;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.graphhopper.storage.IntsRef;
-
-import java.util.Arrays;
 
 /**
  * This class allows to store distinct values via an enum. I.e. it stores just the indices
@@ -46,40 +43,40 @@ public final class EnumEncodedValue<E extends Enum> extends IntEncodedValueImpl 
     @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
     EnumEncodedValue(@JsonProperty("name") String name,
                      @JsonProperty("bits") int bits,
-                     @JsonProperty("min_value") int minValue,
+                     @JsonProperty("min_storable_value") int minStorableValue,
+                     @JsonProperty("max_storable_value") int maxStorableValue,
                      @JsonProperty("max_value") int maxValue,
                      @JsonProperty("negate_reverse_direction") boolean negateReverseDirection,
                      @JsonProperty("store_two_directions") boolean storeTwoDirections,
+                     @JsonProperty("fwd_data_index") int fwdDataIndex,
+                     @JsonProperty("bwd_data_index") int bwdDataIndex,
+                     @JsonProperty("fwd_shift") int fwdShift,
+                     @JsonProperty("bwd_shift") int bwdShift,
+                     @JsonProperty("fwd_mask") int fwdMask,
+                     @JsonProperty("bwd_mask") int bwdMask,
                      @JsonProperty("enum_type") Class<E> enumType) {
         // we need this constructor for Jackson
-        super(name, bits, minValue, maxValue, negateReverseDirection, storeTwoDirections);
+        super(name, bits, minStorableValue, maxStorableValue, maxValue, negateReverseDirection, storeTwoDirections, fwdDataIndex, bwdDataIndex, fwdShift, bwdShift, fwdMask, bwdMask);
         this.enumType = enumType;
         arr = enumType.getEnumConstants();
+    }
+
+    public Class<E> getEnumType() {
+        return enumType;
     }
 
     public E[] getValues() {
         return arr;
     }
 
-    public final void setEnum(boolean reverse, IntsRef ref, E value) {
+    public final void setEnum(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess, E value) {
         int intValue = value.ordinal();
-        super.setInt(reverse, ref, intValue);
+        super.setInt(reverse, edgeId, edgeIntAccess, intValue);
     }
 
-    public final E getEnum(boolean reverse, IntsRef ref) {
-        int value = super.getInt(reverse, ref);
+    public final E getEnum(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess) {
+        int value = super.getInt(reverse, edgeId, edgeIntAccess);
         return arr[value];
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (!super.equals(o)) return false;
-        EnumEncodedValue that = (EnumEncodedValue) o;
-        return Arrays.equals(arr, that.arr);
-    }
-
-    @Override
-    public int getVersion() {
-        return 31 * super.getVersion() + staticHashCode(arr);
-    }
 }

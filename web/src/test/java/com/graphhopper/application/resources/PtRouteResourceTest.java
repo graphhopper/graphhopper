@@ -22,8 +22,8 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
-import com.graphhopper.config.Profile;
 import com.graphhopper.resources.InfoResource;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -34,7 +34,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import javax.ws.rs.core.Response;
 import java.io.File;
-import java.util.Collections;
+import java.util.List;
 
 import static com.graphhopper.application.util.TestUtils.clientTarget;
 import static org.junit.jupiter.api.Assertions.*;
@@ -54,7 +54,9 @@ public class PtRouteResourceTest {
                 putObject("datareader.file", "../reader-gtfs/files/beatty.osm").
                 putObject("gtfs.file", "../reader-gtfs/files/sample-feed").
                 putObject("graph.location", DIR).
-                setProfiles(Collections.singletonList(new Profile("foot").setVehicle("foot").setWeighting("fastest")));
+                putObject("import.osm.ignored_highways", "").
+                putObject("graph.encoded_values", "foot_access, foot_priority, foot_average_speed").
+                setProfiles(List.of(TestProfiles.accessSpeedAndPriority("foot")));
         return config;
     }
 
@@ -178,7 +180,6 @@ public class PtRouteResourceTest {
                 .request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         InfoResource.Info info = response.readEntity(InfoResource.Info.class);
-        assertTrue(info.supported_vehicles.contains("pt"));
         assertTrue(info.profiles.stream().anyMatch(p -> p.name.equals("pt")));
     }
 

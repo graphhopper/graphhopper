@@ -19,6 +19,7 @@ package com.graphhopper.routing.querygraph;
 
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.search.KVStorage;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
@@ -26,6 +27,7 @@ import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.PointList;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Peter Karich
@@ -71,6 +73,11 @@ class VirtualEdgeIterator implements EdgeIterator {
     @Override
     public int getEdgeKey() {
         return getCurrentEdge().getEdgeKey();
+    }
+
+    @Override
+    public int getReverseEdgeKey() {
+        return getCurrentEdge().getReverseEdgeKey();
     }
 
     @Override
@@ -256,8 +263,18 @@ class VirtualEdgeIterator implements EdgeIterator {
     }
 
     @Override
-    public EdgeIteratorState setName(String name) {
-        return getCurrentEdge().setName(name);
+    public Map<String, KVStorage.KValue> getKeyValues() {
+        return getCurrentEdge().getKeyValues();
+    }
+
+    @Override
+    public EdgeIteratorState setKeyValues(Map<String, KVStorage.KValue> list) {
+        return getCurrentEdge().setKeyValues(list);
+    }
+
+    @Override
+    public Object getValue(String key) {
+        return getCurrentEdge().getValue(key);
     }
 
     @Override
@@ -272,16 +289,6 @@ class VirtualEdgeIterator implements EdgeIterator {
     @Override
     public EdgeIteratorState copyPropertiesFrom(EdgeIteratorState edge) {
         return getCurrentEdge().copyPropertiesFrom(edge);
-    }
-
-    @Override
-    public int getOrigEdgeFirst() {
-        return getCurrentEdge().getOrigEdgeFirst();
-    }
-
-    @Override
-    public int getOrigEdgeLast() {
-        return getCurrentEdge().getOrigEdgeLast();
     }
 
     private EdgeIteratorState getCurrentEdge() {

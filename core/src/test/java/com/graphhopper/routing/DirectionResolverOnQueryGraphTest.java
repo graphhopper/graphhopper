@@ -19,8 +19,13 @@ package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
+import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
 import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.AccessFilter;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.RAMDirectory;
@@ -48,14 +53,17 @@ import static org.junit.jupiter.api.Assertions.fail;
 public class DirectionResolverOnQueryGraphTest {
     private QueryGraph queryGraph;
     private NodeAccess na;
-    private FlagEncoder encoder;
+    private BooleanEncodedValue accessEnc;
+    private DecimalEncodedValue speedEnc;
     private BaseGraph graph;
     private LocationIndexTree locationIndex;
 
     @BeforeEach
     public void setup() {
-        encoder = FlagEncoders.createCar();
-        graph = new BaseGraph.Builder(EncodingManager.create(encoder)).create();
+        accessEnc = new SimpleBooleanEncodedValue("access", true);
+        speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+        EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
+        graph = new BaseGraph.Builder(em).create();
         na = graph.getNodeAccess();
     }
 
@@ -294,7 +302,7 @@ public class DirectionResolverOnQueryGraphTest {
     }
 
     private EdgeIteratorState addEdge(int from, int to, boolean bothDirections) {
-        return GHUtility.setSpeed(60, true, bothDirections, encoder, graph.edge(from, to).setDistance(1));
+        return GHUtility.setSpeed(60, true, bothDirections, accessEnc, speedEnc, graph.edge(from, to).setDistance(1));
     }
 
     private void init() {
@@ -349,7 +357,7 @@ public class DirectionResolverOnQueryGraphTest {
     }
 
     private int findEdge(int from, int to) {
-        EdgeExplorer explorer = queryGraph.createEdgeExplorer(AccessFilter.outEdges(encoder.getAccessEnc()));
+        EdgeExplorer explorer = queryGraph.createEdgeExplorer(AccessFilter.outEdges(accessEnc));
         EdgeIterator iter = explorer.setBaseNode(from);
         while (iter.next()) {
             if (iter.getAdjNode() == to) {
@@ -360,7 +368,6 @@ public class DirectionResolverOnQueryGraphTest {
     }
 
     private boolean isAccessible(EdgeIteratorState edge, boolean reverse) {
-        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
         return reverse ? edge.getReverse(accessEnc) : edge.get(accessEnc);
     }
 

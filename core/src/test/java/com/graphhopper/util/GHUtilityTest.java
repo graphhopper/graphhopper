@@ -18,10 +18,12 @@
 package com.graphhopper.util;
 
 import com.graphhopper.coll.GHIntLongHashMap;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
+import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
@@ -33,110 +35,11 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Peter Karich
  */
 public class GHUtilityTest {
-    private final FlagEncoder carEncoder = FlagEncoders.createCar();
-    private final EncodingManager encodingManager = EncodingManager.create(carEncoder);
-
-    BaseGraph createGraph() {
-        return new BaseGraph.Builder(encodingManager).create();
-    }
-
-    // 7      8\
-    // | \    | 2
-    // |  5   | |
-    // 3    4 | |
-    //   6     \1
-    //   ______/
-    // 0/
-    Graph initUnsorted(Graph g, FlagEncoder encoder) {
-        NodeAccess na = g.getNodeAccess();
-        na.setNode(0, 0, 1);
-        na.setNode(1, 2.5, 4.5);
-        na.setNode(2, 4.5, 4.5);
-        na.setNode(3, 3, 0.5);
-        na.setNode(4, 2.8, 2.8);
-        na.setNode(5, 4.2, 1.6);
-        na.setNode(6, 2.3, 2.2);
-        na.setNode(7, 5, 1.5);
-        na.setNode(8, 4.6, 4);
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(8, 2).setDistance(0.5));
-        GHUtility.setSpeed(60, true, false, encoder, g.edge(7, 3).setDistance(2.1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(1, 0).setDistance(3.9));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(7, 5).setDistance(0.7));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(1, 2).setDistance(1.9));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(8, 1).setDistance(2.05));
-        return g;
-    }
-
-    double getLengthOfAllEdges(Graph graph) {
-        double distance = 0;
-        DistanceCalc calc = new DistanceCalcEuclidean();
-        AllEdgesIterator iter = graph.getAllEdges();
-        while (iter.next()) {
-            // This is meant to verify that all of the same edges (including tower nodes)
-            // are included in the copied graph. Can not use iter.getDistance() since it
-            // does not verify new geometry. See #1732
-            distance += calc.calcDistance(iter.fetchWayGeometry(FetchMode.ALL));
-        }
-        return distance;
-    }
-
-    @Test
-    public void testSort() {
-        Graph g = initUnsorted(createGraph(), carEncoder);
-        Graph newG = GHUtility.sortDFS(g, createGraph());
-        assertEquals(g.getNodes(), newG.getNodes());
-        assertEquals(g.getEdges(), newG.getEdges());
-        NodeAccess na = newG.getNodeAccess();
-        assertEquals(0, na.getLat(0), 1e-4); // 0
-        assertEquals(2.5, na.getLat(1), 1e-4); // 1
-        assertEquals(4.5, na.getLat(2), 1e-4); // 2
-        assertEquals(4.6, na.getLat(3), 1e-4); // 8
-        assertEquals(3.0, na.getLat(4), 1e-4); // 3
-        assertEquals(5.0, na.getLat(5), 1e-4); // 7
-        assertEquals(4.2, na.getLat(6), 1e-4); // 5
-        assertEquals(getLengthOfAllEdges(g), getLengthOfAllEdges(newG), 1e-4);
-
-        // 0 => 1
-        assertEquals(0, newG.getEdgeIteratorState(0, Integer.MIN_VALUE).getAdjNode());
-        assertEquals(1, newG.getEdgeIteratorState(0, Integer.MIN_VALUE).getBaseNode());
-
-        // 1 => 3 (was 8)
-        assertEquals(1, newG.getEdgeIteratorState(1, Integer.MIN_VALUE).getAdjNode());
-        assertEquals(3, newG.getEdgeIteratorState(1, Integer.MIN_VALUE).getBaseNode());
-
-        // 2 => 1
-        assertEquals(2, newG.getEdgeIteratorState(2, Integer.MIN_VALUE).getAdjNode());
-        assertEquals(1, newG.getEdgeIteratorState(2, Integer.MIN_VALUE).getBaseNode());
-    }
-
-    @Test
-    public void testSortDirected() {
-        Graph g = createGraph();
-        NodeAccess na = g.getNodeAccess();
-        na.setNode(0, 0, 1);
-        na.setNode(1, 2.5, 2);
-        na.setNode(2, 3.5, 3);
-        GHUtility.setSpeed(60, true, false, carEncoder, g.edge(0, 1).setDistance(1.1));
-        GHUtility.setSpeed(60, true, false, carEncoder, g.edge(2, 1).setDistance(1.1));
-        GHUtility.sortDFS(g, createGraph());
-    }
 
     @Test
     public void testEdgeStuff() {
-        assertEquals(6, GHUtility.createEdgeKey(1, 2, 3, false));
-        assertEquals(7, GHUtility.createEdgeKey(2, 1, 3, false));
-        assertEquals(7, GHUtility.createEdgeKey(1, 2, 3, true));
-        assertEquals(6, GHUtility.createEdgeKey(2, 1, 3, true));
-
-        assertEquals(8, GHUtility.createEdgeKey(1, 2, 4, false));
-        assertEquals(9, GHUtility.createEdgeKey(2, 1, 4, false));
-
-        assertEquals(6, GHUtility.createEdgeKey(1, 1, 3, false));
-        assertEquals(6, GHUtility.createEdgeKey(1, 1, 3, true));
-
-        assertTrue(GHUtility.isSameEdgeKeys(GHUtility.createEdgeKey(1, 2, 4, false), GHUtility.createEdgeKey(1, 2, 4, false)));
-        assertTrue(GHUtility.isSameEdgeKeys(GHUtility.createEdgeKey(2, 1, 4, false), GHUtility.createEdgeKey(1, 2, 4, false)));
-        assertFalse(GHUtility.isSameEdgeKeys(GHUtility.createEdgeKey(1, 2, 4, false), GHUtility.createEdgeKey(1, 2, 5, false)));
+        assertEquals(2, GHUtility.createEdgeKey(1, false));
+        assertEquals(3, GHUtility.createEdgeKey(1, true));
     }
 
     @Test

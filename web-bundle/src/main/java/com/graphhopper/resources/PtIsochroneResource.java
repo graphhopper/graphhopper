@@ -19,21 +19,24 @@
 package com.graphhopper.resources;
 
 import com.conveyal.gtfs.model.Stop;
+import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.gtfs.*;
 import com.graphhopper.http.GHLocationParam;
 import com.graphhopper.http.OffsetDateTimeParam;
 import com.graphhopper.isochrone.algorithm.ContourBuilder;
 import com.graphhopper.isochrone.algorithm.ReadableTriangulation;
 import com.graphhopper.jackson.ResponsePathSerializer;
-import com.graphhopper.routing.ev.Subnetwork;
+import com.graphhopper.json.Statement;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.DefaultSnapFilter;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.weighting.FastestWeighting;
+import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.routing.weighting.custom.CustomModelParser;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndex;
+import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.JsonFeature;
 import com.graphhopper.util.shapes.BBox;
@@ -57,16 +60,18 @@ public class PtIsochroneResource {
 
     private static final double JTS_TOLERANCE = 0.00001;
 
+    private final GraphHopperConfig config;
     private final GtfsStorage gtfsStorage;
     private final EncodingManager encodingManager;
-    private final GraphHopperStorage graphHopperStorage;
+    private final BaseGraph baseGraph;
     private final LocationIndex locationIndex;
 
     @Inject
-    public PtIsochroneResource(GtfsStorage gtfsStorage, EncodingManager encodingManager, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex) {
+    public PtIsochroneResource(GraphHopperConfig config, GtfsStorage gtfsStorage, EncodingManager encodingManager, BaseGraph baseGraph, LocationIndex locationIndex) {
+        this.config = config;
         this.gtfsStorage = gtfsStorage;
         this.encodingManager = encodingManager;
-        this.graphHopperStorage = graphHopperStorage;
+        this.baseGraph = baseGraph;
         this.locationIndex = locationIndex;
     }
 
@@ -94,11 +99,13 @@ public class PtIsochroneResource {
         double targetZ = seconds * 1000;
 
         GeometryFactory geometryFactory = new GeometryFactory();
-        final FlagEncoder footEncoder = encodingManager.getEncoder("foot");
-        final Weighting weighting = new FastestWeighting(footEncoder);
-        DefaultSnapFilter snapFilter = new DefaultSnapFilter(weighting, graphHopperStorage.getEncodingManager().getBooleanEncodedValue(Subnetwork.key("foot")));
+        CustomModel customModel = new CustomModel()
+                .addToPriority(Statement.If("!" + VehicleAccess.key("foot"), Statement.Op.MULTIPLY, "0"))
+                .addToSpeed(Statement.If("true", Statement.Op.LIMIT, VehicleSpeed.key("foot")));
+        final Weighting weighting = CustomModelParser.createWeighting(encodingManager, TurnCostProvider.NO_TURN_COST_PROVIDER, customModel);
+        DefaultSnapFilter snapFilter = new DefaultSnapFilter(weighting, encodingManager.getBooleanEncodedValue(Subnetwork.key("foot")));
 
-        PtLocationSnapper.Result snapResult = new PtLocationSnapper(graphHopperStorage, locationIndex, gtfsStorage).snapAll(Arrays.asList(location), Arrays.asList(snapFilter));
+        PtLocationSnapper.Result snapResult = new PtLocationSnapper(baseGraph, locationIndex, gtfsStorage).snapAll(Arrays.asList(location), Arrays.asList(snapFilter));
         GraphExplorer graphExplorer = new GraphExplorer(snapResult.queryGraph, gtfsStorage.getPtGraph(), weighting, gtfsStorage, RealtimeFeed.empty(), reverseFlow, false, false, 5.0, reverseFlow, blockedRouteTypes);
         MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, reverseFlow, false, false, 0, Collections.emptyList());
 
@@ -189,7 +196,7 @@ public class PtIsochroneResource {
                 properties.put("z", targetZ);
                 feature.setProperties(properties);
                 response.polygons.add(feature);
-                response.info.copyrights.addAll(ResponsePathSerializer.COPYRIGHTS);
+                response.info.copyrights.addAll(config.getCopyrights());
                 return response;
             } else {
                 return wrap(isoline);
@@ -207,7 +214,7 @@ public class PtIsochroneResource {
 
         Response response = new Response();
         response.polygons.add(feature);
-        response.info.copyrights.addAll(ResponsePathSerializer.COPYRIGHTS);
+        response.info.copyrights.addAll(config.getCopyrights());
         return response;
     }
 

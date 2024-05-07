@@ -54,9 +54,7 @@ public class AStarBidirectionCH extends AbstractBidirCHAlgo {
     @Override
     protected SPTEntry createEntry(int edge, int adjNode, int incEdge, double weight, SPTEntry parent, boolean reverse) {
         double heapWeight = weight + weightApprox.approximate(adjNode, reverse);
-        AStar.AStarEntry entry = new AStar.AStarEntry(edge, adjNode, heapWeight, weight);
-        entry.parent = parent;
-        return entry;
+        return new AStar.AStarEntry(edge, adjNode, heapWeight, weight, parent);
     }
 
     @Override

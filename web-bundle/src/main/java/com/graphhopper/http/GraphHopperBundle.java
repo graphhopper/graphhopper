@@ -28,11 +28,12 @@ import com.graphhopper.http.health.GraphHopperHealthCheck;
 import com.graphhopper.isochrone.algorithm.JTSTriangulator;
 import com.graphhopper.isochrone.algorithm.Triangulator;
 import com.graphhopper.jackson.Jackson;
+import com.graphhopper.matching.MapMatching;
 import com.graphhopper.resources.*;
-import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.index.LocationIndex;
+import com.graphhopper.util.PMap;
 import com.graphhopper.util.TranslationMap;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
 import io.dropwizard.ConfiguredBundle;
@@ -61,18 +62,18 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         }
     }
 
-    static class GraphHopperStorageFactory implements Factory<GraphHopperStorage> {
+    static class BaseGraphFactory implements Factory<BaseGraph> {
 
         @Inject
         GraphHopper graphHopper;
 
         @Override
-        public GraphHopperStorage provide() {
-            return graphHopper.getGraphHopperStorage();
+        public BaseGraph provide() {
+            return graphHopper.getBaseGraph();
         }
 
         @Override
-        public void dispose(GraphHopperStorage instance) {
+        public void dispose(BaseGraph instance) {
 
         }
     }
@@ -126,22 +127,28 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
     }
 
     static class ProfileResolverFactory implements Factory<ProfileResolver> {
-
         @Inject
         GraphHopper graphHopper;
 
         @Override
         public ProfileResolver provide() {
-            return new ProfileResolver(graphHopper.getEncodingManager(),
-                    graphHopper.getProfiles(),
-                    graphHopper.getCHPreparationHandler().getCHProfiles(),
-                    graphHopper.getLMPreparationHandler().getLMProfiles()
-            );
+            return new ProfileResolver(graphHopper.getProfiles());
         }
 
         @Override
-        public void dispose(ProfileResolver profileResolver) {
+        public void dispose(ProfileResolver instance) {
 
+        }
+    }
+
+    static class GHRequestTransformerFactory implements Factory<GHRequestTransformer> {
+        @Override
+        public GHRequestTransformer provide() {
+            return req -> req;
+        }
+
+        @Override
+        public void dispose(GHRequestTransformer instance) {
         }
     }
 
@@ -157,6 +164,27 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
 
         @Override
         public void dispose(PathDetailsBuilderFactory profileResolver) {
+
+        }
+    }
+
+    static class MapMatchingRouterFactoryFactory implements Factory<MapMatchingResource.MapMatchingRouterFactory> {
+
+        @Inject
+        GraphHopper graphHopper;
+
+        @Override
+        public MapMatchingResource.MapMatchingRouterFactory provide() {
+            return new MapMatchingResource.MapMatchingRouterFactory() {
+                @Override
+                public MapMatching.Router createMapMatchingRouter(PMap hints) {
+                    return MapMatching.routerFromGraphHopper(graphHopper, hints);
+                }
+            };
+        }
+
+        @Override
+        public void dispose(MapMatchingResource.MapMatchingRouterFactory mapMatchingRouterFactory) {
 
         }
     }
@@ -236,13 +264,15 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
                 bind(graphHopper).to(GraphHopper.class);
 
                 bind(new JTSTriangulator(graphHopper.getRouterConfig())).to(Triangulator.class);
+                bindFactory(MapMatchingRouterFactoryFactory.class).to(MapMatchingResource.MapMatchingRouterFactory.class);
                 bindFactory(PathDetailsBuilderFactoryFactory.class).to(PathDetailsBuilderFactory.class);
                 bindFactory(ProfileResolverFactory.class).to(ProfileResolver.class);
+                bindFactory(GHRequestTransformerFactory.class).to(GHRequestTransformer.class);
                 bindFactory(HasElevation.class).to(Boolean.class).named("hasElevation");
                 bindFactory(LocationIndexFactory.class).to(LocationIndex.class);
                 bindFactory(TranslationMapFactory.class).to(TranslationMap.class);
                 bindFactory(EncodingManagerFactory.class).to(EncodingManager.class);
-                bindFactory(GraphHopperStorageFactory.class).to(GraphHopperStorage.class);
+                bindFactory(BaseGraphFactory.class).to(BaseGraph.class);
                 bindFactory(GtfsStorageFactory.class).to(GtfsStorage.class);
             }
         });

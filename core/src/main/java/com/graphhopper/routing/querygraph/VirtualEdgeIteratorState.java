@@ -18,11 +18,16 @@
 package com.graphhopper.routing.querygraph;
 
 import com.graphhopper.routing.ev.*;
+import com.graphhopper.search.KVStorage;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PointList;
+
+import java.util.Map;
+
+import static com.graphhopper.util.Parameters.Details.STREET_NAME;
 
 /**
  * Creates an edge state decoupled from a graph where nodes, pointList, etc are kept in memory.
@@ -38,21 +43,23 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
     private final int originalEdgeKey;
     private double distance;
     private IntsRef edgeFlags;
-    private String name;
+    private EdgeIntAccess edgeIntAccess;
+    private Map<String, KVStorage.KValue> keyValues;
     // true if edge should be avoided as start/stop
     private boolean unfavored;
     private EdgeIteratorState reverseEdge;
     private final boolean reverse;
 
     public VirtualEdgeIteratorState(int originalEdgeKey, int edgeKey, int baseNode, int adjNode, double distance,
-                                    IntsRef edgeFlags, String name, PointList pointList, boolean reverse) {
+                                    IntsRef edgeFlags, Map<String, KVStorage.KValue> keyValues, PointList pointList, boolean reverse) {
         this.originalEdgeKey = originalEdgeKey;
         this.edgeKey = edgeKey;
         this.baseNode = baseNode;
         this.adjNode = adjNode;
         this.distance = distance;
         this.edgeFlags = edgeFlags;
-        this.name = name;
+        this.edgeIntAccess = new IntsRefEdgeIntAccess(edgeFlags);
+        this.keyValues = keyValues;
         this.pointList = pointList;
         this.reverse = reverse;
     }
@@ -78,6 +85,11 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
     }
 
     @Override
+    public int getReverseEdgeKey() {
+        return GHUtility.reverseEdgeKey(edgeKey);
+    }
+
+    @Override
     public int getBaseNode() {
         return baseNode;
     }
@@ -89,7 +101,7 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
 
     @Override
     public PointList fetchWayGeometry(FetchMode mode) {
-        if (pointList.size() == 0)
+        if (pointList.isEmpty())
             return PointList.EMPTY;
         // due to API we need to create a new instance per call!
         if (mode == FetchMode.TOWER_ONLY) {
@@ -137,6 +149,7 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
     @Override
     public EdgeIteratorState setFlags(IntsRef flags) {
         this.edgeFlags = flags;
+        this.edgeIntAccess = new IntsRefEdgeIntAccess(flags);
         return this;
     }
 
@@ -145,12 +158,12 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
         if (property == EdgeIteratorState.UNFAVORED_EDGE)
             return unfavored;
 
-        return property.getBool(reverse, edgeFlags);
+        return property.getBool(reverse, GHUtility.getEdgeFromEdgeKey(originalEdgeKey), edgeIntAccess);
     }
 
     @Override
     public EdgeIteratorState set(BooleanEncodedValue property, boolean value) {
-        property.setBool(reverse, edgeFlags, value);
+        property.setBool(reverse, GHUtility.getEdgeFromEdgeKey(originalEdgeKey), edgeIntAccess, value);
         return this;
     }
 
@@ -158,12 +171,12 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
     public boolean getReverse(BooleanEncodedValue property) {
         if (property == EdgeIteratorState.UNFAVORED_EDGE)
             return unfavored;
-        return property.getBool(!reverse, edgeFlags);
+        return property.getBool(!reverse, GHUtility.getEdgeFromEdgeKey(originalEdgeKey), edgeIntAccess);
     }
 
     @Override
     public EdgeIteratorState setReverse(BooleanEncodedValue property, boolean value) {
-        property.setBool(!reverse, edgeFlags, value);
+        property.setBool(!reverse, GHUtility.getEdgeFromEdgeKey(originalEdgeKey), edgeIntAccess, value);
         return this;
     }
 
@@ -171,30 +184,30 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
     public EdgeIteratorState set(BooleanEncodedValue property, boolean fwd, boolean bwd) {
         if (!property.isStoreTwoDirections())
             throw new IllegalArgumentException("EncodedValue " + property.getName() + " supports only one direction");
-        property.setBool(reverse, edgeFlags, fwd);
-        property.setBool(!reverse, edgeFlags, bwd);
+        property.setBool(reverse, GHUtility.getEdgeFromEdgeKey(originalEdgeKey), edgeIntAccess, fwd);
+        property.setBool(!reverse, GHUtility.getEdgeFromEdgeKey(originalEdgeKey), edgeIntAccess, bwd);
         return this;
     }
 
     @Override
     public int get(IntEncodedValue property) {
-        return property.getInt(reverse, edgeFlags);
+        return property.getInt(reverse, GHUtility.getEdgeFromEdgeKey(originalEdgeKey), edgeIntAccess);
     }
 
     @Override
     public EdgeIteratorState set(IntEncodedValue property, int value) {
-        property.setInt(reverse, edgeFlags, value);
+        property.setInt(reverse, GHUtility.getEdgeFromEdgeKey(originalEdgeKey), edgeIntAccess, value);
         return this;
     }
 
     @Override
     public int getReverse(IntEncodedValue property) {
-        return property.getInt(!reverse, edgeFlags);
+        return property.getInt(!reverse, GHUtility.getEdgeFromEdgeKey(originalEdgeKey), edgeIntAccess);
     }
 
     @Override
     public EdgeIteratorState setReverse(IntEncodedValue property, int value) {
-        property.setInt(!reverse, edgeFlags, value);
+        property.setInt(!reverse, GHUtility.getEdgeFromEdgeKey(originalEdgeKey), edgeIntAccess, value);
         return this;
     }
 
@@ -202,30 +215,30 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
     public EdgeIteratorState set(IntEncodedValue property, int fwd, int bwd) {
         if (!property.isStoreTwoDirections())
             throw new IllegalArgumentException("EncodedValue " + property.getName() + " supports only one direction");
-        property.setInt(reverse, edgeFlags, fwd);
-        property.setInt(!reverse, edgeFlags, bwd);
+        property.setInt(reverse, GHUtility.getEdgeFromEdgeKey(originalEdgeKey), edgeIntAccess, fwd);
+        property.setInt(!reverse, GHUtility.getEdgeFromEdgeKey(originalEdgeKey), edgeIntAccess, bwd);
         return this;
     }
 
     @Override
     public double get(DecimalEncodedValue property) {
-        return property.getDecimal(reverse, edgeFlags);
+        return property.getDecimal(reverse, GHUtility.getEdgeFromEdgeKey(originalEdgeKey), edgeIntAccess);
     }
 
     @Override
     public EdgeIteratorState set(DecimalEncodedValue property, double value) {
-        property.setDecimal(reverse, edgeFlags, value);
+        property.setDecimal(reverse, GHUtility.getEdgeFromEdgeKey(originalEdgeKey), edgeIntAccess, value);
         return this;
     }
 
     @Override
     public double getReverse(DecimalEncodedValue property) {
-        return property.getDecimal(!reverse, edgeFlags);
+        return property.getDecimal(!reverse, GHUtility.getEdgeFromEdgeKey(originalEdgeKey), edgeIntAccess);
     }
 
     @Override
     public EdgeIteratorState setReverse(DecimalEncodedValue property, double value) {
-        property.setDecimal(!reverse, edgeFlags, value);
+        property.setDecimal(!reverse, GHUtility.getEdgeFromEdgeKey(originalEdgeKey), edgeIntAccess, value);
         return this;
     }
 
@@ -233,30 +246,30 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
     public EdgeIteratorState set(DecimalEncodedValue property, double fwd, double bwd) {
         if (!property.isStoreTwoDirections())
             throw new IllegalArgumentException("EncodedValue " + property.getName() + " supports only one direction");
-        property.setDecimal(reverse, edgeFlags, fwd);
-        property.setDecimal(!reverse, edgeFlags, bwd);
+        property.setDecimal(reverse, GHUtility.getEdgeFromEdgeKey(originalEdgeKey), edgeIntAccess, fwd);
+        property.setDecimal(!reverse, GHUtility.getEdgeFromEdgeKey(originalEdgeKey), edgeIntAccess, bwd);
         return this;
     }
 
     @Override
     public <T extends Enum<?>> T get(EnumEncodedValue<T> property) {
-        return property.getEnum(reverse, edgeFlags);
+        return property.getEnum(reverse, GHUtility.getEdgeFromEdgeKey(originalEdgeKey), edgeIntAccess);
     }
 
     @Override
     public <T extends Enum<?>> EdgeIteratorState set(EnumEncodedValue<T> property, T value) {
-        property.setEnum(reverse, edgeFlags, value);
+        property.setEnum(reverse, GHUtility.getEdgeFromEdgeKey(originalEdgeKey), edgeIntAccess, value);
         return this;
     }
 
     @Override
     public <T extends Enum<?>> T getReverse(EnumEncodedValue<T> property) {
-        return property.getEnum(!reverse, edgeFlags);
+        return property.getEnum(!reverse, GHUtility.getEdgeFromEdgeKey(originalEdgeKey), edgeIntAccess);
     }
 
     @Override
     public <T extends Enum<?>> EdgeIteratorState setReverse(EnumEncodedValue<T> property, T value) {
-        property.setEnum(!reverse, edgeFlags, value);
+        property.setEnum(!reverse, GHUtility.getEdgeFromEdgeKey(originalEdgeKey), edgeIntAccess, value);
         return this;
     }
 
@@ -264,30 +277,30 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
     public <T extends Enum<?>> EdgeIteratorState set(EnumEncodedValue<T> property, T fwd, T bwd) {
         if (!property.isStoreTwoDirections())
             throw new IllegalArgumentException("EncodedValue " + property.getName() + " supports only one direction");
-        property.setEnum(reverse, edgeFlags, fwd);
-        property.setEnum(!reverse, edgeFlags, bwd);
+        property.setEnum(reverse, GHUtility.getEdgeFromEdgeKey(originalEdgeKey), edgeIntAccess, fwd);
+        property.setEnum(!reverse, GHUtility.getEdgeFromEdgeKey(originalEdgeKey), edgeIntAccess, bwd);
         return this;
     }
 
     @Override
     public String get(StringEncodedValue property) {
-        return property.getString(reverse, edgeFlags);
+        return property.getString(reverse, GHUtility.getEdgeFromEdgeKey(originalEdgeKey), edgeIntAccess);
     }
 
     @Override
     public EdgeIteratorState set(StringEncodedValue property, String value) {
-        property.setString(reverse, edgeFlags, value);
+        property.setString(reverse, GHUtility.getEdgeFromEdgeKey(originalEdgeKey), edgeIntAccess, value);
         return this;
     }
 
     @Override
     public String getReverse(StringEncodedValue property) {
-        return property.getString(!reverse, edgeFlags);
+        return property.getString(!reverse, GHUtility.getEdgeFromEdgeKey(originalEdgeKey), edgeIntAccess);
     }
 
     @Override
     public EdgeIteratorState setReverse(StringEncodedValue property, String value) {
-        property.setString(!reverse, edgeFlags, value);
+        property.setString(!reverse, GHUtility.getEdgeFromEdgeKey(originalEdgeKey), edgeIntAccess, value);
         return this;
     }
 
@@ -295,20 +308,37 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
     public EdgeIteratorState set(StringEncodedValue property, String fwd, String bwd) {
         if (!property.isStoreTwoDirections())
             throw new IllegalArgumentException("EncodedValue " + property.getName() + " supports only one direction");
-        property.setString(reverse, edgeFlags, fwd);
-        property.setString(!reverse, edgeFlags, bwd);
+        property.setString(reverse, GHUtility.getEdgeFromEdgeKey(originalEdgeKey), edgeIntAccess, fwd);
+        property.setString(!reverse, GHUtility.getEdgeFromEdgeKey(originalEdgeKey), edgeIntAccess, bwd);
         return this;
     }
 
     @Override
     public String getName() {
-        return name;
+        String name = (String) getValue(STREET_NAME);
+        // preserve backward compatibility (returns empty string if name tag missing)
+        return name == null ? "" : name;
     }
 
     @Override
-    public EdgeIteratorState setName(String name) {
-        this.name = name;
+    public EdgeIteratorState setKeyValues(Map<String, KVStorage.KValue> list) {
+        this.keyValues = list;
         return this;
+    }
+
+    @Override
+    public Map<String, KVStorage.KValue> getKeyValues() {
+        return keyValues;
+    }
+
+    @Override
+    public Object getValue(String key) {
+        KVStorage.KValue value = keyValues.get(key);
+        if (value != null) {
+            if (!reverse && value.getFwd() != null) return value.getFwd();
+            if (reverse && value.getBwd() != null) return value.getBwd();
+        }
+        return null;
     }
 
     /**
@@ -324,22 +354,12 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
     }
 
     @Override
-    public int getOrigEdgeFirst() {
-        return getEdge();
-    }
-
-    @Override
-    public int getOrigEdgeLast() {
-        return getEdge();
-    }
-
-    @Override
     public EdgeIteratorState detach(boolean reverse) {
         if (reverse) {
             // update properties of reverse edge
             // TODO copy pointList (geometry) too
             reverseEdge.setFlags(getFlags());
-            reverseEdge.setName(getName());
+            reverseEdge.setKeyValues(getKeyValues());
             reverseEdge.setDistance(getDistance());
             return reverseEdge;
         } else {

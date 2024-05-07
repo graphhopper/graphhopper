@@ -26,7 +26,6 @@ import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
 
 import static com.graphhopper.util.Parameters.Algorithms.*;
-import static com.graphhopper.util.Parameters.Algorithms.AltRoute.*;
 
 public class LMRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
     private final LandmarkStorage lms;
@@ -52,27 +51,23 @@ public class LMRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
         if (ASTAR.equalsIgnoreCase(algoStr)) {
             double epsilon = opts.getHints().getDouble(Parameters.Algorithms.AStar.EPSILON, 1);
             AStar algo = new AStar(g, weighting, opts.getTraversalMode());
-            algo.setApproximation(getApproximator(g, activeLM, epsilon));
+            algo.setApproximation(getApproximator(g, weighting, activeLM, epsilon));
             algo.setMaxVisitedNodes(opts.getMaxVisitedNodes());
+            algo.setTimeoutMillis(opts.getTimeoutMillis());
             return algo;
         } else if (ASTAR_BI.equalsIgnoreCase(algoStr) || Helper.isEmpty(algoStr)) {
             double epsilon = opts.getHints().getDouble(Parameters.Algorithms.AStarBi.EPSILON, 1);
             AStarBidirection algo = new AStarBidirection(g, weighting, opts.getTraversalMode());
-            algo.setApproximation(getApproximator(g, activeLM, epsilon));
+            algo.setApproximation(getApproximator(g, weighting, activeLM, epsilon));
             algo.setMaxVisitedNodes(opts.getMaxVisitedNodes());
+            algo.setTimeoutMillis(opts.getTimeoutMillis());
             return algo;
         } else if (ALT_ROUTE.equalsIgnoreCase(algoStr)) {
             double epsilon = opts.getHints().getDouble(Parameters.Algorithms.AStarBi.EPSILON, 1);
-            AlternativeRoute algo = new AlternativeRoute(g, weighting, opts.getTraversalMode());
-            algo.setMaxPaths(opts.getHints().getInt(MAX_PATHS, 2));
-            algo.setMaxWeightFactor(opts.getHints().getDouble(MAX_WEIGHT, 1.4));
-            algo.setMaxShareFactor(opts.getHints().getDouble(MAX_SHARE, 0.6));
-            algo.setMinPlateauFactor(opts.getHints().getDouble("alternative_route.min_plateau_factor", 0.2));
-            algo.setApproximation(getApproximator(g, activeLM, epsilon));
-            // landmark algorithm follows good compromise between fast response and exploring 'interesting' paths so we
-            // can decrease this exploration factor further (1->dijkstra, 0.8->bidir. A*)
-            algo.setMaxExplorationFactor(0.6);
+            AlternativeRoute algo = new AlternativeRoute(g, weighting, opts.getTraversalMode(), opts.getHints());
+            algo.setApproximation(getApproximator(g, weighting, activeLM, epsilon));
             algo.setMaxVisitedNodes(opts.getMaxVisitedNodes());
+            algo.setTimeoutMillis(opts.getTimeoutMillis());
             return algo;
         } else {
             throw new IllegalArgumentException("Landmarks algorithm only supports algorithm="
@@ -80,7 +75,7 @@ public class LMRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
         }
     }
 
-    private LMApproximator getApproximator(Graph g, int activeLM, double epsilon) {
-        return LMApproximator.forLandmarks(g, lms, activeLM).setEpsilon(epsilon);
+    private LMApproximator getApproximator(Graph g, Weighting weighting, int activeLM, double epsilon) {
+        return LMApproximator.forLandmarks(g, weighting, lms, activeLM).setEpsilon(epsilon);
     }
 }

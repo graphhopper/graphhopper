@@ -18,11 +18,11 @@
 
 package com.graphhopper;
 
-import com.graphhopper.config.Profile;
 import com.graphhopper.gtfs.GraphHopperGtfs;
 import com.graphhopper.gtfs.PtRouter;
 import com.graphhopper.gtfs.PtRouterImpl;
 import com.graphhopper.gtfs.Request;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap;
 import org.junit.jupiter.api.AfterAll;
@@ -32,7 +32,7 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Arrays;
+import java.util.List;
 
 import static com.graphhopper.gtfs.GtfsHelper.time;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -50,14 +50,17 @@ public class ExtendedRouteTypeIT {
         GraphHopperConfig ghConfig = new GraphHopperConfig();
         ghConfig.putObject("graph.location", GRAPH_LOC);
         ghConfig.putObject("gtfs.file", "files/another-sample-feed-extended-route-type.zip");
-        ghConfig.setProfiles(Arrays.asList(
-                new Profile("foot").setVehicle("foot").setWeighting("fastest"),
-                new Profile("car").setVehicle("car").setWeighting("fastest")));
+        ghConfig.putObject("import.osm.ignored_highways", "");
+        ghConfig.putObject("graph.encoded_values", "foot_access, foot_priority, foot_average_speed, car_access, car_average_speed");
+        ghConfig.setProfiles(List.of(
+                TestProfiles.accessSpeedAndPriority("foot"),
+                TestProfiles.accessAndSpeed("car")));
+
         Helper.removeDir(new File(GRAPH_LOC));
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);
         graphHopperGtfs.importOrLoad();
-        ptRouter = new PtRouterImpl.Factory(ghConfig, new TranslationMap().doImport(), graphHopperGtfs.getGraphHopperStorage(), graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage()).createWithoutRealtimeFeed();
+        ptRouter = new PtRouterImpl.Factory(ghConfig, new TranslationMap().doImport(), graphHopperGtfs.getBaseGraph(), graphHopperGtfs.getEncodingManager(), graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage()).createWithoutRealtimeFeed();
     }
 
     @AfterAll

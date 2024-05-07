@@ -17,28 +17,24 @@
  */
 package com.graphhopper.util;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.graphhopper.jackson.CustomModelAreasDeserializer;
 import com.graphhopper.json.Statement;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
-import static com.graphhopper.json.Statement.Keyword.ELSE;
-import static com.graphhopper.json.Statement.Keyword.IF;
-
-/**
- * This class is used in combination with CustomProfile.
- */
 public class CustomModel {
 
     public static final String KEY = "custom_model";
 
-    // e.g. 70 means that the time costs are 25€/hour and for the distance 0.5€/km (for trucks this is usually larger)
-    static double DEFAULT_DISTANCE_INFLUENCE = 70;
+    // 'Double' instead of 'double' is required to know if it was 0 or not specified in the request.
     private Double distanceInfluence;
-    private double headingPenalty = Parameters.Routing.DEFAULT_HEADING_PENALTY;
+    private Double headingPenalty;
     private boolean internal;
     private List<Statement> speedStatements = new ArrayList<>();
     private List<Statement> priorityStatements = new ArrayList<>();
-    private Map<String, JsonFeature> areas = new HashMap<>();
+    private JsonFeatureCollection areas = new JsonFeatureCollection();
 
     public CustomModel() {
     }
@@ -46,12 +42,33 @@ public class CustomModel {
     public CustomModel(CustomModel toCopy) {
         this.headingPenalty = toCopy.headingPenalty;
         this.distanceInfluence = toCopy.distanceInfluence;
-        // do not copy "internal"
+        // do not copy "internal" boolean
 
         speedStatements = deepCopy(toCopy.getSpeed());
         priorityStatements = deepCopy(toCopy.getPriority());
 
-        areas.putAll(toCopy.getAreas());
+        addAreas(toCopy.getAreas());
+    }
+
+    public static Map<String, JsonFeature> getAreasAsMap(JsonFeatureCollection areas) {
+        Map<String, JsonFeature> map = new HashMap<>(areas.getFeatures().size());
+        areas.getFeatures().forEach(f -> {
+            if (map.put(f.getId(), f) != null)
+                throw new IllegalArgumentException("Cannot handle duplicate area " + f.getId());
+        });
+        return map;
+    }
+
+    public void addAreas(JsonFeatureCollection externalAreas) {
+        Set<String> indexed = areas.getFeatures().stream().map(JsonFeature::getId).collect(Collectors.toSet());
+        for (JsonFeature ext : externalAreas.getFeatures()) {
+            if (!JsonFeature.isValidId("in_" + ext.getId()))
+                throw new IllegalArgumentException("The area '" + ext.getId() + "' has an invalid id. Only letters, numbers and underscore are allowed.");
+            if (indexed.contains(ext.getId()))
+                throw new IllegalArgumentException("area " + ext.getId() + " already exists");
+            areas.getFeatures().add(ext);
+            indexed.add(ext.getId());
+        }
     }
 
     /**
@@ -106,22 +123,23 @@ public class CustomModel {
         return this;
     }
 
-    public CustomModel setAreas(Map<String, JsonFeature> areas) {
+    @JsonDeserialize(using = CustomModelAreasDeserializer.class)
+    public CustomModel setAreas(JsonFeatureCollection areas) {
         this.areas = areas;
         return this;
     }
 
-    public Map<String, JsonFeature> getAreas() {
+    public JsonFeatureCollection getAreas() {
         return areas;
     }
 
-    public CustomModel setDistanceInfluence(double distanceFactor) {
+    public CustomModel setDistanceInfluence(Double distanceFactor) {
         this.distanceInfluence = distanceFactor;
         return this;
     }
 
-    public double getDistanceInfluence() {
-        return distanceInfluence == null ? DEFAULT_DISTANCE_INFLUENCE : distanceInfluence;
+    public Double getDistanceInfluence() {
+        return distanceInfluence;
     }
 
     public CustomModel setHeadingPenalty(double headingPenalty) {
@@ -129,7 +147,7 @@ public class CustomModel {
         return this;
     }
 
-    public double getHeadingPenalty() {
+    public Double getHeadingPenalty() {
         return headingPenalty;
     }
 
@@ -145,101 +163,22 @@ public class CustomModel {
     }
 
     /**
-     * This method throws an exception when this CustomModel would decrease the edge weight compared to the specified
-     * baseModel as in such a case the optimality of A* with landmarks can no longer be guaranteed (as the preparation
-     * is based on baseModel).
-     */
-    public void checkLMConstraints(CustomModel baseModel) {
-        if (isInternal())
-            throw new IllegalArgumentException("CustomModel of query cannot be internal");
-        if (distanceInfluence != null && distanceInfluence < baseModel.getDistanceInfluence())
-            throw new IllegalArgumentException("CustomModel in query can only use " +
-                    "distance_influence bigger or equal to " + baseModel.getDistanceInfluence() +
-                    ", given: " + distanceInfluence);
-
-        checkMultiplyValue(getPriority());
-        double maxPrio = findMaxPriority(1);
-        if (maxPrio > 1)
-            throw new IllegalArgumentException("priority of CustomModel in query cannot be bigger than 1. Was: " + maxPrio);
-
-        checkMultiplyValue(getSpeed());
-    }
-
-    private static void checkMultiplyValue(List<Statement> list) {
-        for (Statement statement : list) {
-            if (statement.getOperation() == Statement.Op.MULTIPLY && statement.getValue() > 1)
-                throw new IllegalArgumentException("factor cannot be larger than 1 but was " + statement.getValue());
-        }
-    }
-
-    static double findMax(List<Statement> statements, double max, String type) {
-        // we want to find the smallest value that cannot be exceeded by any edge. the 'blocks' of speed statements
-        // are applied one after the other.
-        List<List<Statement>> blocks = splitIntoBlocks(statements);
-        for (List<Statement> block : blocks) max = findMaxForBlock(block, max);
-        if (max <= 0) throw new IllegalArgumentException(type + " cannot be negative or 0 (was " + max + ")");
-        return max;
-    }
-
-    public double findMaxPriority(final double maxPriority) {
-        return findMax(getPriority(), maxPriority, "priority");
-    }
-
-    public double findMaxSpeed(final double maxSpeed) {
-        return findMax(getSpeed(), maxSpeed, "vehicle speed");
-    }
-
-    static double findMaxForBlock(List<Statement> block, final double max) {
-        if (block.isEmpty() || !IF.equals(block.get(0).getKeyword()))
-            throw new IllegalArgumentException("Every block must start with an if-statement");
-        if (block.get(0).getCondition().trim().equals("true"))
-            return block.get(0).apply(max);
-
-        double blockMax = block.stream()
-                .mapToDouble(statement -> statement.apply(max))
-                .max()
-                .orElse(max);
-        // if there is no 'else' statement it's like there is a 'neutral' branch that leaves the initial value as is
-        if (block.stream().noneMatch(st -> ELSE.equals(st.getKeyword())))
-            blockMax = Math.max(blockMax, max);
-        return blockMax;
-    }
-
-    /**
-     * Splits the specified list into several list of statements starting with if
-     */
-    static List<List<Statement>> splitIntoBlocks(List<Statement> statements) {
-        List<List<Statement>> result = new ArrayList<>();
-        List<Statement> block = null;
-        for (Statement st : statements) {
-            if (IF.equals(st.getKeyword())) result.add(block = new ArrayList<>());
-            if (block == null) throw new IllegalArgumentException("Every block must start with an if-statement");
-            block.add(st);
-        }
-        return result;
-    }
-
-    /**
      * A new CustomModel is created from the baseModel merged with the specified queryModel. Returns the baseModel if
      * queryModel is null.
      */
     public static CustomModel merge(CustomModel baseModel, CustomModel queryModel) {
-        if (queryModel == null) return baseModel;
         // avoid changing the specified CustomModel via deep copy otherwise the server-side CustomModel would be
         // modified (same problem if queryModel would be used as target)
         CustomModel mergedCM = new CustomModel(baseModel);
-        // we only overwrite the distance influence if a non-default value was used
-        if (queryModel.distanceInfluence != null)
-            mergedCM.distanceInfluence = queryModel.distanceInfluence;
+        if (queryModel == null) return mergedCM;
 
+        if (queryModel.getDistanceInfluence() != null)
+            mergedCM.distanceInfluence = queryModel.distanceInfluence;
+        if (queryModel.getHeadingPenalty() != null)
+            mergedCM.headingPenalty = queryModel.headingPenalty;
         mergedCM.speedStatements.addAll(queryModel.getSpeed());
         mergedCM.priorityStatements.addAll(queryModel.getPriority());
-
-        for (Map.Entry<String, JsonFeature> entry : queryModel.getAreas().entrySet()) {
-            if (mergedCM.areas.containsKey(entry.getKey()))
-                throw new IllegalArgumentException("area " + entry.getKey() + " already exists");
-            mergedCM.areas.put(entry.getKey(), entry.getValue());
-        }
+        mergedCM.addAreas(queryModel.getAreas());
 
         return mergedCM;
     }

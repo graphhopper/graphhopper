@@ -1,20 +1,32 @@
 package com.graphhopper.example;
 
-import com.graphhopper.routing.BidirRoutingAlgorithm;
+import com.graphhopper.routing.EdgeToEdgeRoutingAlgorithm;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.VehicleAccess;
+import com.graphhopper.routing.ev.VehicleSpeed;
 import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.routing.util.*;
-import com.graphhopper.routing.weighting.FastestWeighting;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
+import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
+
+import static com.graphhopper.json.Statement.If;
+import static com.graphhopper.json.Statement.Op.LIMIT;
+import static com.graphhopper.json.Statement.Op.MULTIPLY;
 
 /**
  * Use this example to gain access to the low level API of GraphHopper.
@@ -31,15 +43,16 @@ public class LowLevelAPIExample {
 
     public static void createAndSaveGraph() {
         {
-            FlagEncoder encoder = FlagEncoders.createCar();
-            EncodingManager em = EncodingManager.create(encoder);
-            GraphHopperStorage graph = new GraphBuilder(em).setRAM(graphLocation, true).create();
+            BooleanEncodedValue accessEnc = VehicleAccess.create("car");
+            DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 7, 2, false);
+            EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
+            BaseGraph graph = new BaseGraph.Builder(em).setDir(new RAMDirectory(graphLocation, true)).create();
             // Make a weighted edge between two nodes and set average speed to 50km/h
-            EdgeIteratorState edge = graph.edge(0, 1).setDistance(1234).set(encoder.getAverageSpeedEnc(), 50);
+            EdgeIteratorState edge = graph.edge(0, 1).setDistance(1234).set(speedEnc, 50);
 
             // Set node coordinates and build location index
             NodeAccess na = graph.getNodeAccess();
-            graph.edge(0, 1).set(encoder.getAccessEnc(), true).set(encoder.getAverageSpeedEnc(), 10).setDistance(1530);
+            graph.edge(0, 1).set(accessEnc, true).set(speedEnc, 10).setDistance(1530);
             na.setNode(0, 15.15, 20.20);
             na.setNode(1, 15.25, 20.21);
             LocationIndexTree index = new LocationIndexTree(graph, graph.getDirectory());
@@ -55,9 +68,10 @@ public class LowLevelAPIExample {
         {
             // Load the graph ... can be also in a different code location
             // note that the EncodingManager must be the same
-            FlagEncoder encoder = FlagEncoders.createCar();
-            EncodingManager em = EncodingManager.create(encoder);
-            GraphHopperStorage graph = new GraphBuilder(em).setRAM(graphLocation, true).build();
+            BooleanEncodedValue accessEnc = VehicleAccess.create("car");
+            DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 7, 2, false);
+            EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
+            BaseGraph graph = new BaseGraph.Builder(em).setDir(new RAMDirectory(graphLocation, true)).build();
             graph.loadExisting();
 
             // Load the location index
@@ -69,7 +83,8 @@ public class LowLevelAPIExample {
             Snap fromSnap = index.findClosest(15.15, 20.20, EdgeFilter.ALL_EDGES);
             Snap toSnap = index.findClosest(15.25, 20.21, EdgeFilter.ALL_EDGES);
             QueryGraph queryGraph = QueryGraph.create(graph, fromSnap, toSnap);
-            Weighting weighting = new FastestWeighting(encoder);
+            Weighting weighting = CustomModelParser.createWeighting(em, TurnCostProvider.NO_TURN_COST_PROVIDER,
+                    new CustomModel().addToPriority(If("!" + accessEnc.getName(), MULTIPLY, "0")).addToSpeed(If("true", LIMIT, speedEnc.getName())));
             Path path = new Dijkstra(queryGraph, weighting, TraversalMode.NODE_BASED).calcPath(fromSnap.getClosestNode(), toSnap.getClosestNode());
             assert Helper.round(path.getDistance(), -2) == 1500;
 
@@ -81,18 +96,20 @@ public class LowLevelAPIExample {
 
     public static void useContractionHierarchiesToMakeQueriesFaster() {
         // Creating and saving the graph
-        FlagEncoder encoder = FlagEncoders.createCar();
-        EncodingManager em = EncodingManager.create(encoder);
-        Weighting weighting = new FastestWeighting(encoder);
-        CHConfig chConfig = CHConfig.nodeBased("my_profile", weighting);
+        BooleanEncodedValue accessEnc = VehicleAccess.create("car");
+        DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 7, 2, false);
+        EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
         BaseGraph graph = new BaseGraph.Builder(em)
                 .setDir(new RAMDirectory(graphLocation, true))
                 .create();
         graph.flush();
+        Weighting weighting = CustomModelParser.createWeighting(em, TurnCostProvider.NO_TURN_COST_PROVIDER,
+                new CustomModel().addToPriority(If("!" + accessEnc.getName(), MULTIPLY, "0")).addToSpeed(If("true", LIMIT, speedEnc.getName())));
+        CHConfig chConfig = CHConfig.nodeBased("my_profile", weighting);
 
         // Set node coordinates and build location index
         NodeAccess na = graph.getNodeAccess();
-        graph.edge(0, 1).set(encoder.getAccessEnc(), true).set(encoder.getAverageSpeedEnc(), 10).setDistance(1020);
+        graph.edge(0, 1).set(accessEnc, true).set(speedEnc, 10).setDistance(1020);
         na.setNode(0, 15.15, 20.20);
         na.setNode(1, 15.25, 20.21);
 
@@ -110,7 +127,7 @@ public class LowLevelAPIExample {
         Snap fromSnap = index.findClosest(15.15, 20.20, EdgeFilter.ALL_EDGES);
         Snap toSnap = index.findClosest(15.25, 20.21, EdgeFilter.ALL_EDGES);
         QueryGraph queryGraph = QueryGraph.create(graph, fromSnap, toSnap);
-        BidirRoutingAlgorithm algo = new CHRoutingAlgorithmFactory(chGraph, queryGraph).createAlgo(new PMap());
+        EdgeToEdgeRoutingAlgorithm algo = new CHRoutingAlgorithmFactory(chGraph, queryGraph).createAlgo(new PMap());
         Path path = algo.calcPath(fromSnap.getClosestNode(), toSnap.getClosestNode());
         assert Helper.round(path.getDistance(), -2) == 1000;
     }

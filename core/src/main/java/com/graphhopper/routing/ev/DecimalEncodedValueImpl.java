@@ -19,7 +19,6 @@ package com.graphhopper.routing.ev;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.graphhopper.storage.IntsRef;
 
 /**
  * This class holds a signed decimal value and stores it as an integer value via a conversion factor and a certain
@@ -27,128 +26,125 @@ import com.graphhopper.storage.IntsRef;
  */
 public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implements DecimalEncodedValue {
     private final double factor;
-    private final boolean defaultIsInfinity;
     private final boolean useMaximumAsInfinity;
 
     /**
-     * @see #DecimalEncodedValueImpl(String, int, double, double, boolean, boolean, boolean, boolean)
+     * @see #DecimalEncodedValueImpl(String, int, double, double, boolean, boolean, boolean)
      */
     public DecimalEncodedValueImpl(String name, int bits, double factor, boolean storeTwoDirections) {
-        this(name, bits, factor, false, storeTwoDirections);
-    }
-
-    /**
-     * @see #DecimalEncodedValueImpl(String, int, double, double, boolean, boolean, boolean, boolean)
-     */
-    public DecimalEncodedValueImpl(String name, int bits, double factor, boolean defaultIsInfinity, boolean storeTwoDirections) {
-        this(name, bits, 0, factor, defaultIsInfinity, false, storeTwoDirections, false);
+        this(name, bits, 0, factor, false, storeTwoDirections, false);
     }
 
     /**
      * @param name                   the key to identify this EncodedValue
      * @param bits                   the bits that should be reserved for storing the integer value. This determines the
      *                               maximum value.
-     * @param minValue               the minimum value. Use e.g. 0 if no negative values are needed.
+     * @param minStorableValue       the minimum storable value. Use e.g. 0 if no negative values are needed.
      * @param factor                 the precision factor, i.e. store = (int) Math.round(value / factor)
-     * @param defaultIsInfinity      true if default should be Double.Infinity. False if 0 should be default.
      * @param negateReverseDirection true if the reverse direction should be always negative of the forward direction.
      *                               This is used to reduce space and store the value only once.
      * @param storeTwoDirections     true if forward and backward direction of the edge should get two independent values.
      * @param useMaximumAsInfinity   true if the maximum value should be treated as Double.Infinity
      */
-    public DecimalEncodedValueImpl(String name, int bits, double minValue, double factor, boolean defaultIsInfinity,
+    public DecimalEncodedValueImpl(String name, int bits, double minStorableValue, double factor,
                                    boolean negateReverseDirection, boolean storeTwoDirections, boolean useMaximumAsInfinity) {
-        super(name, bits, (int) Math.round(minValue / factor), negateReverseDirection, storeTwoDirections);
-        if (!negateReverseDirection && super.minValue * factor != minValue)
-            throw new IllegalArgumentException("minValue " + minValue + " is not a multiple of the specified factor " + factor);
+        super(name, bits, (int) Math.round(minStorableValue / factor), negateReverseDirection, storeTwoDirections);
+        if (!negateReverseDirection && super.minStorableValue * factor != minStorableValue)
+            throw new IllegalArgumentException("minStorableValue " + minStorableValue + " is not a multiple of the specified factor "
+                    + factor + " (" + super.minStorableValue * factor + ")");
         this.factor = factor;
-        this.defaultIsInfinity = defaultIsInfinity;
         this.useMaximumAsInfinity = useMaximumAsInfinity;
-        if (useMaximumAsInfinity && defaultIsInfinity)
-            throw new IllegalArgumentException("defaultIsInfinity and useMaximumAsInfinity cannot be both true");
-        if (defaultIsInfinity && minValue < 0)
-            throw new IllegalArgumentException("defaultIsInfinity cannot be true when minValue is negative");
     }
 
     @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
     DecimalEncodedValueImpl(@JsonProperty("name") String name,
                             @JsonProperty("bits") int bits,
-                            @JsonProperty("min_value") int minValue,
+                            @JsonProperty("min_storable_value") int minStorableValue,
+                            @JsonProperty("max_storable_value") int maxStorableValue,
                             @JsonProperty("max_value") int maxValue,
                             @JsonProperty("negate_reverse_direction") boolean negateReverseDirection,
                             @JsonProperty("store_two_directions") boolean storeTwoDirections,
+                            @JsonProperty("fwd_data_index") int fwdDataIndex,
+                            @JsonProperty("bwd_data_index") int bwdDataIndex,
+                            @JsonProperty("fwd_shift") int fwdShift,
+                            @JsonProperty("bwd_shift") int bwdShift,
+                            @JsonProperty("fwd_mask") int fwdMask,
+                            @JsonProperty("bwd_mask") int bwdMask,
                             @JsonProperty("factor") double factor,
-                            @JsonProperty("default_is_infinity") boolean defaultIsInfinity,
                             @JsonProperty("use_maximum_as_infinity") boolean useMaximumAsInfinity) {
         // we need this constructor for Jackson
-        super(name, bits, minValue, maxValue, negateReverseDirection, storeTwoDirections);
+        super(name, bits, minStorableValue, maxStorableValue, maxValue, negateReverseDirection, storeTwoDirections, fwdDataIndex, bwdDataIndex, fwdShift, bwdShift, fwdMask, bwdMask);
         this.factor = factor;
-        this.defaultIsInfinity = defaultIsInfinity;
         this.useMaximumAsInfinity = useMaximumAsInfinity;
     }
 
     @Override
-    public void setDecimal(boolean reverse, IntsRef ref, double value) {
+    public void setDecimal(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess, double value) {
         if (!isInitialized())
-            throw new IllegalStateException("Call init before usage for EncodedValue " + toString());
-        if (Double.isInfinite(value)) {
-            if (useMaximumAsInfinity) {
-                super.setInt(reverse, ref, maxValue);
+            throw new IllegalStateException("Call init before using EncodedValue " + getName());
+        if (useMaximumAsInfinity) {
+            if (Double.isInfinite(value)) {
+                super.setInt(reverse, edgeId, edgeIntAccess, maxStorableValue);
                 return;
-            } else if (defaultIsInfinity) {
-                super.setInt(reverse, ref, 0);
+            } else if (value >= maxStorableValue * factor) { // equality is important as maxStorableValue is reserved for infinity
+                super.uncheckedSet(reverse, edgeId, edgeIntAccess, maxStorableValue - 1);
                 return;
             }
+        } else if (Double.isInfinite(value))
             throw new IllegalArgumentException("Value cannot be infinite if useMaximumAsInfinity is false");
-        }
+
         if (Double.isNaN(value))
             throw new IllegalArgumentException("NaN value for " + getName() + " not allowed!");
 
         value /= factor;
-        if (value > maxValue)
-            throw new IllegalArgumentException(getName() + " value too large for encoding: " + value + ", maxValue:" + maxValue + ", factor: " + factor);
-        if (value < minValue)
-            throw new IllegalArgumentException(getName() + " value too small for encoding " + value + ", minValue:" + minValue + ", factor: " + factor);
+        if (value > maxStorableValue)
+            throw new IllegalArgumentException(getName() + " value too large for encoding: " + value + ", maxValue:" + maxStorableValue + ", factor: " + factor);
+        if (value < minStorableValue)
+            throw new IllegalArgumentException(getName() + " value too small for encoding " + value + ", minValue:" + minStorableValue + ", factor: " + factor);
 
-        super.uncheckedSet(reverse, ref, (int) Math.round(value));
+        super.uncheckedSet(reverse, edgeId, edgeIntAccess, (int) Math.round(value));
     }
 
     @Override
-    public double getDecimal(boolean reverse, IntsRef ref) {
-        int value = getInt(reverse, ref);
-        if (useMaximumAsInfinity && value == maxValue || defaultIsInfinity && value == 0)
+    public double getDecimal(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess) {
+        int value = getInt(reverse, edgeId, edgeIntAccess);
+        if (useMaximumAsInfinity && value == maxStorableValue)
             return Double.POSITIVE_INFINITY;
         return value * factor;
     }
 
     @Override
     public double getNextStorableValue(double value) {
-        if (!useMaximumAsInfinity && value > getMaxDecimal())
-            throw new IllegalArgumentException(getName() + ": There is no next storable value for " + value + ". max:" + getMaxDecimal());
-        else if (useMaximumAsInfinity && value > getMaxDecimal())
+        if (!useMaximumAsInfinity && value > getMaxStorableDecimal())
+            throw new IllegalArgumentException(getName() + ": There is no next storable value for " + value + ". max:" + getMaxStorableDecimal());
+        else if (useMaximumAsInfinity && value > (maxStorableValue - 1) * factor)
             return Double.POSITIVE_INFINITY;
         else
             return (factor * (int) Math.ceil(value / factor));
     }
 
     @Override
-    public double getMaxDecimal() {
-        return maxValue * factor;
+    public double getSmallestNonZeroValue() {
+        if (minStorableValue != 0 || negateReverseDirection)
+            throw new IllegalStateException("getting the smallest non-zero value is not possible if minValue!=0 or negateReverseDirection");
+        return factor;
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (!super.equals(o)) return false;
-        DecimalEncodedValueImpl that = (DecimalEncodedValueImpl) o;
-        return Double.compare(that.factor, factor) == 0 && useMaximumAsInfinity == that.useMaximumAsInfinity
-                && defaultIsInfinity == that.defaultIsInfinity;
+    public double getMaxStorableDecimal() {
+        if (useMaximumAsInfinity) return Double.POSITIVE_INFINITY;
+        return maxStorableValue * factor;
     }
 
     @Override
-    public int getVersion() {
-        int version = 31 * super.getVersion() + staticHashCode(factor);
-        if (useMaximumAsInfinity) return 31 * version + 13;
-        if (defaultIsInfinity) return 31 * version + 17;
-        return version;
+    public double getMinStorableDecimal() {
+        return minStorableValue * factor;
+    }
+
+    @Override
+    public double getMaxOrMaxStorableDecimal() {
+        int maxOrMaxStorable = getMaxOrMaxStorableInt();
+        if (useMaximumAsInfinity && maxOrMaxStorable == maxStorableValue) return Double.POSITIVE_INFINITY;
+        return maxOrMaxStorable * factor;
     }
 }
