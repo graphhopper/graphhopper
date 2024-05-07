@@ -370,6 +370,23 @@ public class BaseGraph implements Graph, Closeable {
         return edge;
     }
 
+    public static interface RandomAccessEdgeState {
+        EdgeIteratorState setEdge(int edgeId, int adjNodeId);
+    }
+
+    public RandomAccessEdgeState createEdgeRandomAccess() {
+        return new RandomAccessEdgeState() {
+
+            private final EdgeIteratorImpl edge = new EdgeIteratorImpl(BaseGraph.this, EdgeFilter.ALL_EDGES);
+
+            @Override
+            public EdgeIteratorState setEdge(int edgeId, int adjNode) {
+                edge.init(edgeId, adjNode);
+                return edge;
+            }
+        };
+    }
+
     @Override
     public EdgeExplorer createEdgeExplorer(EdgeFilter filter) {
         return new EdgeIteratorImpl(this, filter);

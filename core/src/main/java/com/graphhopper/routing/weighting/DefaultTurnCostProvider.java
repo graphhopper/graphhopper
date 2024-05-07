@@ -36,6 +36,7 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
     private final TurnCostStorage turnCostStorage;
     private final int uTurnCostsInt;
     private final double uTurnCosts;
+    private final BaseGraph.RandomAccessEdgeState randomAccessEdgeState;
 
     public DefaultTurnCostProvider(BooleanEncodedValue turnRestrictionEnc, EncodingManager encodingManager, BaseGraph baseGraph) {
         this(turnRestrictionEnc, encodingManager, baseGraph, TurnCostsConfig.INFINITE_U_TURN_COSTS);
@@ -58,6 +59,7 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
         this.turnRestrictionEnc = turnRestrictionEnc;
         this.roadClassEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         this.graph = baseGraph;
+        this.randomAccessEdgeState = baseGraph.createEdgeRandomAccess();
         this.turnCostStorage = baseGraph.getTurnCostStorage();
     }
 
@@ -79,8 +81,8 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
                 if (turnCostStorage.get(turnRestrictionEnc, edgeFrom, nodeVia, edgeTo))
                     tCost = Double.POSITIVE_INFINITY;
                 else {
-                    RoadClass roadClassFrom = graph.getEdgeIteratorState(edgeFrom, nodeVia).get(roadClassEnc);
-                    RoadClass roadClassTo = graph.getEdgeIteratorState(edgeTo, nodeVia).getReverse(roadClassEnc);
+                    RoadClass roadClassFrom = randomAccessEdgeState.setEdge(edgeFrom, nodeVia).get(roadClassEnc);
+                    RoadClass roadClassTo = randomAccessEdgeState.setEdge(edgeTo, nodeVia).getReverse(roadClassEnc);
                     if (roadClassFrom != roadClassTo)
                         tCost = 5;
                 }
