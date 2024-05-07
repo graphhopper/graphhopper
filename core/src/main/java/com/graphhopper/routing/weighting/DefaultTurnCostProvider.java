@@ -19,10 +19,7 @@
 package com.graphhopper.routing.weighting;
 
 import com.graphhopper.config.TurnCostsConfig;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.EnumEncodedValue;
-import com.graphhopper.routing.ev.RoadAccess;
-import com.graphhopper.routing.ev.RoadClass;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.TurnCostStorage;
@@ -32,13 +29,14 @@ import static com.graphhopper.config.TurnCostsConfig.INFINITE_U_TURN_COSTS;
 
 public class DefaultTurnCostProvider implements TurnCostProvider {
     private final BooleanEncodedValue turnRestrictionEnc;
-    private final EnumEncodedValue<RoadClass> roadClassEnc;
+//    private final EnumEncodedValue<RoadClass> roadClassEnc;
     private final EnumEncodedValue<RoadAccess> roadAccessEnc;
-    private final BaseGraph graph;
+//    private final BaseGraph graph;
     private final TurnCostStorage turnCostStorage;
     private final int uTurnCostsInt;
     private final double uTurnCosts;
-    private final BaseGraph.RandomAccessEdgeState randomAccessEdgeState;
+//    private final BaseGraph.RandomAccessEdgeState randomAccessEdgeState;
+    private final EdgeIntAccess edgeAccess;
 
     public DefaultTurnCostProvider(BooleanEncodedValue turnRestrictionEnc, EncodingManager encodingManager, BaseGraph baseGraph) {
         this(turnRestrictionEnc, encodingManager, baseGraph, TurnCostsConfig.INFINITE_U_TURN_COSTS);
@@ -59,10 +57,11 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
         }
         // if null the TurnCostProvider can be still useful for edge-based routing
         this.turnRestrictionEnc = turnRestrictionEnc;
-        this.roadClassEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
+//        this.roadClassEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         this.roadAccessEnc = encodingManager.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
-        this.graph = baseGraph;
-        this.randomAccessEdgeState = baseGraph.createEdgeRandomAccess();
+//        this.graph = baseGraph;
+//        this.randomAccessEdgeState = baseGraph.createEdgeRandomAccess();
+        this.edgeAccess = baseGraph.getEdgeAccess();
         this.turnCostStorage = baseGraph.getTurnCostStorage();
     }
 
@@ -89,10 +88,11 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
 //                    if (roadClassFrom != roadClassTo)
 //                        tCost = 5;
 
-                    RoadAccess roadAccessFrom = randomAccessEdgeState.setEdge(edgeFrom, nodeVia).get(roadAccessEnc);
-                    RoadAccess roadAccessTo = randomAccessEdgeState.setEdge(edgeTo, nodeVia).getReverse(roadAccessEnc);
+                    // TODO NOW direction not correct but does not matter for road access and we just want to compare it for speed
+                    RoadAccess roadAccessFrom = roadAccessEnc.getEnum(false, edgeFrom, edgeAccess);
+                    RoadAccess roadAccessTo = roadAccessEnc.getEnum(false, edgeTo, edgeAccess);
                     if ((roadAccessFrom == RoadAccess.DESTINATION) != (roadAccessTo == RoadAccess.DESTINATION)) {
-                        tCost = 500;
+                        tCost = 50;
                     }
                 }
             }
