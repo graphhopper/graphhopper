@@ -89,9 +89,8 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
 //                        tCost = 5;
 
                     // TODO NOW direction not correct but does not matter for road access and we just want to compare it for speed
-                    RoadAccess roadAccessFrom = roadAccessEnc.getEnum(false, edgeFrom, edgeAccess);
                     RoadAccess roadAccessTo = roadAccessEnc.getEnum(false, edgeTo, edgeAccess);
-                    if ((roadAccessFrom == RoadAccess.DESTINATION) != (roadAccessTo == RoadAccess.DESTINATION)) {
+                    if (roadAccessTo == RoadAccess.DESTINATION) {
                         tCost = 500;
                     }
                 }
