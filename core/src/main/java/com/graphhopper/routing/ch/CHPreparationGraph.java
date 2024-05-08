@@ -21,15 +21,11 @@ package com.graphhopper.routing.ch;
 import com.carrotsearch.hppc.*;
 import com.carrotsearch.hppc.sorting.IndirectComparator;
 import com.carrotsearch.hppc.sorting.IndirectSort;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
-import com.graphhopper.routing.weighting.AbstractWeighting;
-import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
-import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.BitUtil;
+import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
 
@@ -63,6 +59,9 @@ public class CHPreparationGraph {
     private OrigGraph.Builder origGraphBuilder;
     private int nextShortcutId;
     private boolean ready;
+    private int[] turnCostIndicesByEdgeKey;
+    private IntArrayList turnCostEdgeKeys;
+    private DoubleArrayList turnCosts;
 
     public static CHPreparationGraph nodeBased(int nodes, int edges) {
         return new CHPreparationGraph(nodes, edges, false, (in, via, out) -> 0);
@@ -98,11 +97,37 @@ public class CHPreparationGraph {
         if (graph.getEdges() != prepareGraph.getOriginalEdges())
             throw new IllegalArgumentException("Cannot initialize from given graph. The number of edges does not match: " +
                     graph.getEdges() + " vs. " + prepareGraph.getOriginalEdges());
+        prepareGraph.turnCostIndicesByEdgeKey = new int[2 * graph.getEdges() + 1];
+        prepareGraph.turnCostEdgeKeys = new IntArrayList();
+        prepareGraph.turnCosts = new DoubleArrayList();
+        EdgeExplorer explorer = graph.createEdgeExplorer();
         AllEdgesIterator iter = graph.getAllEdges();
         while (iter.next()) {
             double weightFwd = weighting.calcEdgeWeight(iter, false);
             double weightBwd = weighting.calcEdgeWeight(iter, true);
             prepareGraph.addEdge(iter.getBaseNode(), iter.getAdjNode(), iter.getEdge(), weightFwd, weightBwd);
+            prepareGraph.turnCostIndicesByEdgeKey[iter.getEdgeKey() + 1] =
+                    prepareGraph.turnCostIndicesByEdgeKey[iter.getEdgeKey()];
+            EdgeIterator it = explorer.setBaseNode(iter.getAdjNode());
+            while (it.next()) {
+                double d = prepareGraph.turnCostFunction.getTurnWeight(GHUtility.getEdgeFromEdgeKey(iter.getEdgeKey()), iter.getAdjNode(), GHUtility.getEdgeFromEdgeKey(it.getEdgeKey()));
+                if (d > 0) {
+                    prepareGraph.turnCostEdgeKeys.add(it.getEdgeKey());
+                    prepareGraph.turnCosts.add(d);
+                    prepareGraph.turnCostIndicesByEdgeKey[iter.getEdgeKey() + 1]++;
+                }
+            }
+            prepareGraph.turnCostIndicesByEdgeKey[iter.getReverseEdgeKey() + 1] =
+                    prepareGraph.turnCostIndicesByEdgeKey[iter.getReverseEdgeKey()];
+            it = explorer.setBaseNode(iter.getBaseNode());
+            while (it.next()) {
+                double d = prepareGraph.turnCostFunction.getTurnWeight(GHUtility.getEdgeFromEdgeKey(iter.getReverseEdgeKey()), iter.getBaseNode(), GHUtility.getEdgeFromEdgeKey(it.getEdgeKey()));
+                if (d > 0) {
+                    prepareGraph.turnCostEdgeKeys.add(it.getEdgeKey());
+                    prepareGraph.turnCosts.add(d);
+                    prepareGraph.turnCostIndicesByEdgeKey[iter.getReverseEdgeKey() + 1]++;
+                }
+            }
         }
         prepareGraph.prepareForContraction();
     }
@@ -205,7 +230,15 @@ public class CHPreparationGraph {
     }
 
     public double getTurnWeight(int inEdgeKey, int viaNode, int outEdgeKey) {
-        return turnCostFunction.getTurnWeight(GHUtility.getEdgeFromEdgeKey(inEdgeKey), viaNode, GHUtility.getEdgeFromEdgeKey(outEdgeKey));
+        int idx = turnCostIndicesByEdgeKey[inEdgeKey];
+        int end = turnCostIndicesByEdgeKey[inEdgeKey + 1];
+        for (int i = idx; i < end; i++) {
+            if (turnCostEdgeKeys.get(i) == outEdgeKey)
+                return turnCosts.get(i);
+        }
+        return 0;
+//        throw new RuntimeException("miaow");
+//          return turnCostFunction.getTurnWeight(GHUtility.getEdgeFromEdgeKey(inEdgeKey), viaNode, GHUtility.getEdgeFromEdgeKey(outEdgeKey));
     }
 
     public IntContainer disconnect(int node) {
