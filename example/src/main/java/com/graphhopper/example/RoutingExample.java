@@ -12,7 +12,7 @@ import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.Locale;
 
-import static com.graphhopper.json.SingleStatement.If;
+import static com.graphhopper.json.LeafStatement.If;
 import static com.graphhopper.json.Statement.Op.LIMIT;
 import static com.graphhopper.json.Statement.Op.MULTIPLY;
 

@@ -23,8 +23,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Iterator;
 
-import static com.graphhopper.json.SingleStatement.ElseIf;
-import static com.graphhopper.json.SingleStatement.If;
+import static com.graphhopper.json.LeafStatement.ElseIf;
+import static com.graphhopper.json.LeafStatement.If;
 import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

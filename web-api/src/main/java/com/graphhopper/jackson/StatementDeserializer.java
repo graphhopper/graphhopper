@@ -22,7 +22,7 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.json.BlockStatement;
-import com.graphhopper.json.SingleStatement;
+import com.graphhopper.json.LeafStatement;
 import com.graphhopper.json.Statement;
 
 import java.io.IOException;
@@ -91,13 +91,13 @@ class StatementDeserializer extends JsonDeserializer<Statement> {
                 throw new IllegalArgumentException("Cannot find a value in " + treeNode);
 
             if (treeNode.has(IF.getName()))
-                return SingleStatement.If(treeNode.get(IF.getName()).asText(), jsonOp, value);
+                return LeafStatement.If(treeNode.get(IF.getName()).asText(), jsonOp, value);
             else if (treeNode.has(ELSEIF.getName()))
-                return SingleStatement.ElseIf(treeNode.get(ELSEIF.getName()).asText(), jsonOp, value);
+                return LeafStatement.ElseIf(treeNode.get(ELSEIF.getName()).asText(), jsonOp, value);
             else if (treeNode.has(ELSE.getName())) {
                 JsonNode elseNode = treeNode.get(ELSE.getName());
                 if (elseNode.isNull() || elseNode.isValueNode() && elseNode.asText().isEmpty())
-                    return SingleStatement.Else(jsonOp, value);
+                    return LeafStatement.Else(jsonOp, value);
                 throw new IllegalArgumentException("else cannot have expression but was " + treeNode.get(ELSE.getName()));
             }
         }

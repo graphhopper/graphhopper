@@ -37,7 +37,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.*;
 
-import static com.graphhopper.json.SingleStatement.If;
+import static com.graphhopper.json.LeafStatement.If;
 import static com.graphhopper.search.KVStorage.KValue;
 import static com.graphhopper.util.Parameters.Details.STREET_NAME;
 import static org.junit.jupiter.api.Assertions.*;

@@ -45,7 +45,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static com.graphhopper.application.util.TestUtils.clientTarget;
-import static com.graphhopper.json.SingleStatement.If;
+import static com.graphhopper.json.LeafStatement.If;
 import static com.graphhopper.json.Statement.Op.LIMIT;
 import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static org.junit.jupiter.api.Assertions.*;

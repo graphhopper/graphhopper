@@ -9,7 +9,7 @@ import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.Polygon;
 import org.junit.jupiter.api.Test;
 
-import static com.graphhopper.json.SingleStatement.*;
+import static com.graphhopper.json.LeafStatement.*;
 import static com.graphhopper.json.Statement.Op.LIMIT;
 import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static org.junit.jupiter.api.Assertions.*;

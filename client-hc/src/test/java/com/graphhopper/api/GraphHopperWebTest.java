@@ -19,9 +19,8 @@ import org.locationtech.jts.geom.GeometryFactory;
 
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 
-import static com.graphhopper.json.SingleStatement.If;
+import static com.graphhopper.json.LeafStatement.If;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**

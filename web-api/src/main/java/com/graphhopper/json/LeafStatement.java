@@ -19,8 +19,8 @@ package com.graphhopper.json;
 
 import java.util.List;
 
-public record SingleStatement(Keyword keyword, String condition, Op operation,
-                              String value) implements Statement {
+public record LeafStatement(Keyword keyword, String condition, Op operation,
+                            String value) implements Statement {
 
     @Override
     public List<Statement> then() {
@@ -41,15 +41,15 @@ public record SingleStatement(Keyword keyword, String condition, Op operation,
         return "\"" + str + "\"";
     }
 
-    public static SingleStatement If(String expression, Op op, String value) {
-        return new SingleStatement(Keyword.IF, expression, op, value);
+    public static LeafStatement If(String expression, Op op, String value) {
+        return new LeafStatement(Keyword.IF, expression, op, value);
     }
 
-    public static SingleStatement ElseIf(String expression, Op op, String value) {
-        return new SingleStatement(Keyword.ELSEIF, expression, op, value);
+    public static LeafStatement ElseIf(String expression, Op op, String value) {
+        return new LeafStatement(Keyword.ELSEIF, expression, op, value);
     }
 
-    public static SingleStatement Else(Op op, String value) {
-        return new SingleStatement(Keyword.ELSE, null, op, value);
+    public static LeafStatement Else(Op op, String value) {
+        return new LeafStatement(Keyword.ELSE, null, op, value);
     }
 }
