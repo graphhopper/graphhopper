@@ -25,9 +25,10 @@ import com.graphhopper.http.GHLocationParam;
 import com.graphhopper.http.OffsetDateTimeParam;
 import com.graphhopper.isochrone.algorithm.ContourBuilder;
 import com.graphhopper.isochrone.algorithm.ReadableTriangulation;
-import com.graphhopper.jackson.ResponsePathSerializer;
 import com.graphhopper.json.Statement;
-import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.ev.Subnetwork;
+import com.graphhopper.routing.ev.VehicleAccess;
+import com.graphhopper.routing.ev.VehicleSpeed;
 import com.graphhopper.routing.util.DefaultSnapFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.TurnCostProvider;
@@ -54,6 +55,8 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import java.time.Instant;
 import java.util.*;
+
+import static com.graphhopper.json.SingleStatement.If;
 
 @Path("isochrone-pt")
 public class PtIsochroneResource {
@@ -100,8 +103,8 @@ public class PtIsochroneResource {
 
         GeometryFactory geometryFactory = new GeometryFactory();
         CustomModel customModel = new CustomModel()
-                .addToPriority(Statement.If("!" + VehicleAccess.key("foot"), Statement.Op.MULTIPLY, "0"))
-                .addToSpeed(Statement.If("true", Statement.Op.LIMIT, VehicleSpeed.key("foot")));
+                .addToPriority(If("!" + VehicleAccess.key("foot"), Statement.Op.MULTIPLY, "0"))
+                .addToSpeed(If("true", Statement.Op.LIMIT, VehicleSpeed.key("foot")));
         final Weighting weighting = CustomModelParser.createWeighting(encodingManager, TurnCostProvider.NO_TURN_COST_PROVIDER, customModel);
         DefaultSnapFilter snapFilter = new DefaultSnapFilter(weighting, encodingManager.getBooleanEncodedValue(Subnetwork.key("foot")));
 

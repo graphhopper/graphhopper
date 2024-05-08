@@ -17,39 +17,26 @@
  */
 package com.graphhopper.json;
 
-public class Statement {
-    private final Keyword keyword;
-    private final String condition;
-    private final Op operation;
-    private final String value;
+import java.util.List;
 
-    private Statement(Keyword keyword, String condition, Op operation, String value) {
-        this.keyword = keyword;
-        this.condition = condition;
-        this.value = value;
-        this.operation = operation;
-    }
+public interface Statement {
 
-    public Keyword getKeyword() {
-        return keyword;
-    }
+    Keyword keyword();
 
-    public String getCondition() {
-        return condition;
-    }
+    String condition();
 
-    public Op getOperation() {
-        return operation;
-    }
+    String value();
 
-    public String getValue() {
-        return value;
-    }
+    List<Statement> then();
 
-    public enum Keyword {
-        IF("if"), ELSEIF("else_if"), ELSE("else");
+    Op operation();
 
-        String name;
+    boolean isBlock();
+
+    enum Keyword {
+        IF("if"), ELSEIF("else_if"), ELSE("else"), THEN("then");
+
+        private final String name;
 
         Keyword(String name) {
             this.name = name;
@@ -60,10 +47,10 @@ public class Statement {
         }
     }
 
-    public enum Op {
+    enum Op {
         MULTIPLY("multiply_by"), LIMIT("limit_to");
 
-        String name;
+        private final String name;
 
         Op(String name) {
             this.name = name;
@@ -96,24 +83,4 @@ public class Statement {
         }
     }
 
-    @Override
-    public String toString() {
-        return "{" + str(keyword.getName()) + ": " + str(condition) + ", " + str(operation.getName()) + ": " + value + "}";
-    }
-
-    private String str(String str) {
-        return "\"" + str + "\"";
-    }
-
-    public static Statement If(String expression, Op op, String value) {
-        return new Statement(Keyword.IF, expression, op, value);
-    }
-
-    public static Statement ElseIf(String expression, Op op, String value) {
-        return new Statement(Keyword.ELSEIF, expression, op, value);
-    }
-
-    public static Statement Else(Op op, String value) {
-        return new Statement(Keyword.ELSE, null, op, value);
-    }
 }

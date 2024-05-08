@@ -44,7 +44,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import java.io.File;
 import java.util.*;
 
-import static com.graphhopper.json.Statement.If;
+import static com.graphhopper.json.SingleStatement.If;
 import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static com.graphhopper.util.Instruction.FINISH;
 import static com.graphhopper.util.Instruction.REACHED_VIA;

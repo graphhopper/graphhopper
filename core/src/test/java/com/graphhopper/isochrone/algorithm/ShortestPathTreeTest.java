@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import static com.graphhopper.json.Statement.If;
+import static com.graphhopper.json.SingleStatement.If;
 import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -81,8 +81,8 @@ public class ShortestPathTreeTest {
 
     private CustomModel createBaseCustomModel() {
         CustomModel customModel = new CustomModel();
-        customModel.addToPriority(Statement.If("!" + accessEnc.getName(), Statement.Op.MULTIPLY, "0"));
-        customModel.addToSpeed(Statement.If("true", Statement.Op.LIMIT, speedEnc.getName()));
+        customModel.addToPriority(If("!" + accessEnc.getName(), Statement.Op.MULTIPLY, "0"));
+        customModel.addToSpeed(If("true", Statement.Op.LIMIT, speedEnc.getName()));
         return customModel;
     }
 

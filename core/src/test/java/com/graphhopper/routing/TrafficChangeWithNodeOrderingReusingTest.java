@@ -1,5 +1,6 @@
 package com.graphhopper.routing;
 
+import com.graphhopper.json.SingleStatement;
 import com.graphhopper.json.Statement;
 import com.graphhopper.reader.osm.OSMReader;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
@@ -67,8 +68,8 @@ public class TrafficChangeWithNodeOrderingReusingTest {
                     .addWayTagParser(carParser);
             baseCHConfig = CHConfig.nodeBased("base", CustomModelParser.createWeighting(em, TurnCostProvider.NO_TURN_COST_PROVIDER,
                     new CustomModel()
-                            .addToPriority(Statement.If("!car_access", Statement.Op.MULTIPLY, "0"))
-                            .addToSpeed(Statement.If("true", Statement.Op.LIMIT, "car_average_speed")
+                            .addToPriority(SingleStatement.If("!car_access", Statement.Op.MULTIPLY, "0"))
+                            .addToSpeed(SingleStatement.If("true", Statement.Op.LIMIT, "car_average_speed")
                     )
             ));
             trafficCHConfig = CHConfig.nodeBased("traffic", new RandomDeviationWeighting(baseCHConfig.getWeighting(), accessEnc, speedEnc, maxDeviationPercentage));

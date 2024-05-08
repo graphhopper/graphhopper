@@ -22,8 +22,8 @@ import com.graphhopper.config.Profile;
 import com.graphhopper.json.Statement;
 import com.graphhopper.util.CustomModel;
 
-import static com.graphhopper.json.Statement.Else;
-import static com.graphhopper.json.Statement.If;
+import static com.graphhopper.json.SingleStatement.Else;
+import static com.graphhopper.json.SingleStatement.If;
 import static com.graphhopper.json.Statement.Op.LIMIT;
 import static com.graphhopper.json.Statement.Op.MULTIPLY;
 
@@ -35,7 +35,7 @@ public class TestProfiles {
     public static Profile constantSpeed(String name, double speed) {
         Profile profile = new Profile(name);
         CustomModel customModel = new CustomModel();
-        customModel.addToSpeed(Statement.If("true", Statement.Op.LIMIT, String.valueOf(speed)));
+        customModel.addToSpeed(If("true", Statement.Op.LIMIT, String.valueOf(speed)));
         profile.setCustomModel(customModel);
         return profile;
     }

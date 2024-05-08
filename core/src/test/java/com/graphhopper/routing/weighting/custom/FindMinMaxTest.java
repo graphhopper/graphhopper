@@ -1,5 +1,6 @@
 package com.graphhopper.routing.weighting.custom;
 
+import com.graphhopper.json.BlockStatement;
 import com.graphhopper.json.MinMax;
 import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.EncodedValueLookup;
@@ -13,7 +14,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.graphhopper.json.Statement.*;
+import static com.graphhopper.json.SingleStatement.*;
 import static com.graphhopper.json.Statement.Op.LIMIT;
 import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static com.graphhopper.routing.weighting.custom.FindMinMax.findMinMax;
@@ -100,6 +101,13 @@ class FindMinMaxTest {
         assertEquals(60, findMinMax(new MinMax(0, 60), statements, lookup).max);
 
         statements = Arrays.asList(
+                If("road_environment == TUNNEL", LIMIT, "130"),
+                ElseIf("road_environment == BRIDGE", LIMIT, "50"),
+                Else(MULTIPLY, "0.8")
+        );
+        assertEquals(130, findMinMax(new MinMax(0, 150), statements, lookup).max);
+
+        statements = Arrays.asList(
                 If("road_class == TERTIARY", MULTIPLY, "0.2"),
                 ElseIf("road_class == SECONDARY", LIMIT, "25"),
                 Else(LIMIT, "40"),
@@ -108,5 +116,26 @@ class FindMinMaxTest {
         );
         assertEquals(40, findMinMax(new MinMax(0, 150), statements, lookup).max);
         assertEquals(40, findMinMax(new MinMax(0, 40), statements, lookup).max);
+    }
+
+    @Test
+    public void testBlock() {
+        List<Statement> statements = Arrays.asList(
+                BlockStatement.If("road_class == TERTIARY",
+                        List.of(If("max_speed > 100", LIMIT, "100"),
+                                Else(LIMIT, "30"))),
+                ElseIf("road_class == SECONDARY", LIMIT, "25"),
+                Else(MULTIPLY, "0.8")
+        );
+        assertEquals(100, findMinMax(new MinMax(0, 120), statements, lookup).max);
+
+        statements = Arrays.asList(
+                BlockStatement.If("road_class == TERTIARY",
+                        List.of(If("max_speed > 100", LIMIT, "90"),
+                                Else(LIMIT, "30"))),
+                ElseIf("road_class == SECONDARY", LIMIT, "25"),
+                Else(MULTIPLY, "0.8")
+        );
+        assertEquals(96, findMinMax(new MinMax(0, 120), statements, lookup).max);
     }
 }

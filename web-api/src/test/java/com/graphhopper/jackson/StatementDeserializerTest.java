@@ -37,10 +37,10 @@ class StatementDeserializerTest {
         // true instead of "true" or 100 instead of "100" also work because they are parsed to strings
         // We probably need to accept numbers instead of strings for legacy support, but maybe we should reject true/false
         Statement statement = objectMapper.readValue("{\"if\":true,\"limit_to\":100}", Statement.class);
-        assertEquals(Statement.Keyword.IF, statement.getKeyword());
-        assertEquals("true", statement.getCondition());
-        assertEquals(Statement.Op.LIMIT, statement.getOperation());
-        assertEquals("100", statement.getValue());
+        assertEquals(Statement.Keyword.IF, statement.keyword());
+        assertEquals("true", statement.condition());
+        assertEquals(Statement.Op.LIMIT, statement.operation());
+        assertEquals("100", statement.value());
     }
 
     @Test
@@ -51,10 +51,10 @@ class StatementDeserializerTest {
         // There is no error for `"else": null` currently, even though there is no real reason to support this.
         // The value will actually be null, but the way we use it at the moment this is not a problem.
         Statement statement = objectMapper.readValue("{\"else\":null,\"limit_to\":\"abc\"}", Statement.class);
-        assertEquals(Statement.Keyword.ELSE, statement.getKeyword());
-        assertNull(statement.getCondition());
-        assertEquals(Statement.Op.LIMIT, statement.getOperation());
-        assertEquals("abc", statement.getValue());
+        assertEquals(Statement.Keyword.ELSE, statement.keyword());
+        assertNull(statement.condition());
+        assertEquals(Statement.Op.LIMIT, statement.operation());
+        assertEquals("abc", statement.value());
     }
 
 }

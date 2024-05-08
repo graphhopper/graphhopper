@@ -7,14 +7,15 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.weighting.*;
+import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static com.graphhopper.json.Statement.*;
+import static com.graphhopper.json.SingleStatement.*;
 import static com.graphhopper.json.Statement.Op.LIMIT;
 import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static com.graphhopper.routing.ev.RoadClass.*;
@@ -128,8 +129,8 @@ class CustomWeightingTest {
         assertEquals(3.1, weighting.calcEdgeWeight(edge, false), 0.01);
         // here we increase weight for edges that are road class links
         weighting = createWeighting(createSpeedCustomModel(avSpeedEnc)
-                        .setDistanceInfluence(70d)
-                        .addToPriority(If(RoadClassLink.KEY, MULTIPLY, "0.5")));
+                .setDistanceInfluence(70d)
+                .addToPriority(If(RoadClassLink.KEY, MULTIPLY, "0.5")));
         BooleanEncodedValue rcLinkEnc = encodingManager.getBooleanEncodedValue(RoadClassLink.KEY);
         assertEquals(3.1, weighting.calcEdgeWeight(edge.set(rcLinkEnc, false), false), 0.01);
         assertEquals(5.5, weighting.calcEdgeWeight(edge.set(rcLinkEnc, true), false), 0.01);
@@ -147,9 +148,9 @@ class CustomWeightingTest {
         Weighting weighting = createWeighting(createSpeedCustomModel(avSpeedEnc).setDistanceInfluence(70d));
         assertEquals(3.1, weighting.calcEdgeWeight(edge, false), 0.01);
         weighting = createWeighting(createSpeedCustomModel(avSpeedEnc)
-                        .setDistanceInfluence(70d)
-                        .addToPriority(If("special == true", MULTIPLY, "0.8"))
-                        .addToPriority(If("special == false", MULTIPLY, "0.4")));
+                .setDistanceInfluence(70d)
+                .addToPriority(If("special == true", MULTIPLY, "0.8"))
+                .addToPriority(If("special == false", MULTIPLY, "0.4")));
         assertEquals(6.7, weighting.calcEdgeWeight(edge, false), 0.01);
         assertEquals(3.7, weighting.calcEdgeWeight(edge, true), 0.01);
     }
@@ -330,8 +331,8 @@ class CustomWeightingTest {
                 set(roadClassEnc, MOTORWAY).set(avSpeedEnc, 80);
         CustomModel customModel = createSpeedCustomModel(avSpeedEnc)
                 .setDistanceInfluence(70d)
-                .addToSpeed(Statement.If("road_class == MOTORWAY", Statement.Op.MULTIPLY, "0.7"))
-                .addToSpeed(Statement.Else(LIMIT, "30"));
+                .addToSpeed(If("road_class == MOTORWAY", Statement.Op.MULTIPLY, "0.7"))
+                .addToSpeed(Else(LIMIT, "30"));
         Weighting weighting = createWeighting(customModel);
         assertEquals(1.3429, weighting.calcEdgeWeight(motorway, false), 1e-4);
         assertEquals(10 / (80 * 0.7 / 3.6) * 1000, weighting.calcEdgeMillis(motorway, false), 1);
@@ -342,7 +343,7 @@ class CustomWeightingTest {
         EdgeIteratorState motorway = graph.edge(0, 1).setDistance(0).
                 set(roadClassEnc, MOTORWAY).set(avSpeedEnc, 80);
         CustomModel customModel = createSpeedCustomModel(avSpeedEnc)
-                .addToPriority(Statement.If("road_class == MOTORWAY", Statement.Op.MULTIPLY, "0"));
+                .addToPriority(If("road_class == MOTORWAY", Statement.Op.MULTIPLY, "0"));
         Weighting weighting = createWeighting(customModel);
         assertFalse(Double.isNaN(weighting.calcEdgeWeight(motorway, false)));
         assertTrue(Double.isInfinite(weighting.calcEdgeWeight(motorway, false)));

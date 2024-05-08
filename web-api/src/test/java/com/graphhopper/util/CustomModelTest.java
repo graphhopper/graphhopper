@@ -23,8 +23,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Iterator;
 
-import static com.graphhopper.json.Statement.ElseIf;
-import static com.graphhopper.json.Statement.If;
+import static com.graphhopper.json.SingleStatement.ElseIf;
+import static com.graphhopper.json.SingleStatement.If;
 import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -65,11 +65,11 @@ public class CustomModelTest {
         car.addToPriority(ElseIf("road_class==tertiary", MULTIPLY, "0.8"));
 
         Iterator<Statement> iter = CustomModel.merge(emptyCar, car).getPriority().iterator();
-        assertEquals("0.5", iter.next().getValue());
-        assertEquals("0.8", iter.next().getValue());
+        assertEquals("0.5", iter.next().value());
+        assertEquals("0.8", iter.next().value());
 
         iter = CustomModel.merge(car, emptyCar).getPriority().iterator();
-        assertEquals("0.5", iter.next().getValue());
-        assertEquals("0.8", iter.next().getValue());
+        assertEquals("0.5", iter.next().value());
+        assertEquals("0.8", iter.next().value());
     }
 }

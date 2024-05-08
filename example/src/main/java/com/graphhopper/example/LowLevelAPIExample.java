@@ -1,7 +1,7 @@
 package com.graphhopper.example;
 
-import com.graphhopper.routing.EdgeToEdgeRoutingAlgorithm;
 import com.graphhopper.routing.Dijkstra;
+import com.graphhopper.routing.EdgeToEdgeRoutingAlgorithm;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
@@ -24,7 +24,7 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 
-import static com.graphhopper.json.Statement.If;
+import static com.graphhopper.json.SingleStatement.If;
 import static com.graphhopper.json.Statement.Op.LIMIT;
 import static com.graphhopper.json.Statement.Op.MULTIPLY;
 

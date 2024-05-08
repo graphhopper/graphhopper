@@ -19,7 +19,6 @@ package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
@@ -71,7 +70,7 @@ public class CustomModelParser {
     /**
      * This method creates a weighting from a CustomModel that must limit the speed. Either as an
      * unconditional statement <code>{ "if": "true", "limit_to": "car_average_speed" }<code/> or as
-     * an if-else block.
+     * an if-elseif-else group.
      */
     public static CustomWeighting createWeighting(EncodedValueLookup lookup, TurnCostProvider turnCostProvider, CustomModel customModel) {
         if (customModel == null)
@@ -142,15 +141,15 @@ public class CustomModelParser {
             if (customModel.getSpeed().isEmpty())
                 throw new IllegalArgumentException("At least one initial statement under 'speed' is required.");
 
-            List<Statement> firstBlock = splitIntoBlocks(customModel.getSpeed()).get(0);
-            if (firstBlock.size() > 1) {
-                Statement lastSt = firstBlock.get(firstBlock.size() - 1);
-                if (lastSt.getOperation() != Statement.Op.LIMIT || lastSt.getKeyword() != Statement.Keyword.ELSE)
-                    throw new IllegalArgumentException("The first block needs to end with an 'else' (or contain a single unconditional 'if' statement).");
+            List<Statement> firstGroup = splitIntoGroup(customModel.getSpeed()).get(0);
+            if (firstGroup.size() > 1) {
+                Statement lastSt = firstGroup.get(firstGroup.size() - 1);
+                if (lastSt.operation() != Statement.Op.LIMIT || lastSt.keyword() != Statement.Keyword.ELSE)
+                    throw new IllegalArgumentException("The first group needs to end with an 'else' (or contain a single unconditional 'if' statement).");
             } else {
-                Statement firstSt = firstBlock.get(0);
-                if (!"true".equals(firstSt.getCondition()) || firstSt.getOperation() != Statement.Op.LIMIT || firstSt.getKeyword() != Statement.Keyword.IF)
-                    throw new IllegalArgumentException("The first block needs to contain a single unconditional 'if' statement (or end with an 'else').");
+                Statement firstSt = firstGroup.get(0);
+                if (!"true".equals(firstSt.condition()) || firstSt.operation() != Statement.Op.LIMIT || firstSt.keyword() != Statement.Keyword.IF)
+                    throw new IllegalArgumentException("The first group needs to contain a single unconditional 'if' statement (or end with an 'else').");
             }
 
             Set<String> speedVariables = ValueExpressionVisitor.findVariables(customModel.getSpeed(), lookup);
@@ -191,27 +190,32 @@ public class CustomModelParser {
     }
 
     private static void findVariablesForEncodedValuesString(List<Statement> statements, NameValidator nameValidator, ClassHelper classHelper) {
-        List<List<Statement>> blocks = CustomModelParser.splitIntoBlocks(statements);
-        for (List<Statement> block : blocks) {
-            for (Statement statement : block) {
-                // ignore potential problems; collect only variables in this step
-                ConditionalExpressionVisitor.parse(statement.getCondition(), nameValidator, classHelper);
-                ValueExpressionVisitor.parse(statement.getValue(), nameValidator);
+        List<List<Statement>> groups = CustomModelParser.splitIntoGroup(statements);
+        for (List<Statement> group : groups) {
+            for (Statement statement : group) {
+                if (statement.isBlock()) {
+                    findVariablesForEncodedValuesString(statement.then(), nameValidator, classHelper);
+                } else {
+                    // ignore potential problems; collect only variables in this step
+                    ConditionalExpressionVisitor.parse(statement.condition(), nameValidator, classHelper);
+                    ValueExpressionVisitor.parse(statement.value(), nameValidator);
+                }
             }
         }
     }
 
     /**
-     * Splits the specified list into several list of statements starting with if
+     * Splits the specified list into several lists of statements starting with if.
+     * I.e. a group consists of one 'if' and zero or more 'else_if' and 'else' statements.
      */
-    static List<List<Statement>> splitIntoBlocks(List<Statement> statements) {
+    static List<List<Statement>> splitIntoGroup(List<Statement> statements) {
         List<List<Statement>> result = new ArrayList<>();
-        List<Statement> block = null;
+        List<Statement> group = null;
         for (Statement st : statements) {
-            if (IF.equals(st.getKeyword())) result.add(block = new ArrayList<>());
-            if (block == null)
-                throw new IllegalArgumentException("Every block must start with an if-statement");
-            block.add(st);
+            if (IF.equals(st.keyword())) result.add(group = new ArrayList<>());
+            if (group == null)
+                throw new IllegalArgumentException("Every group must start with an if-statement");
+            group.add(st);
         }
         return result;
     }
@@ -406,31 +410,47 @@ public class CustomModelParser {
                 || name.startsWith(BACKWARD_PREFIX) && lookup.hasEncodedValue(name.substring(BACKWARD_PREFIX.length()));
         ClassHelper helper = key -> getReturnType(lookup.getEncodedValue(key, EncodedValue.class));
 
-        parseExpressions(expressions, nameInConditionValidator, info, createObjects, list, helper);
+        parseExpressions(expressions, nameInConditionValidator, info, createObjects, list, helper, "");
         return new Parser(new org.codehaus.janino.Scanner(info, new StringReader(expressions.toString()))).
                 parseBlockStatements();
     }
 
     static void parseExpressions(StringBuilder expressions, NameValidator nameInConditionValidator,
                                  String exceptionInfo, Set<String> createObjects, List<Statement> list,
-                                 ClassHelper classHelper) {
+                                 ClassHelper classHelper, String indentation) {
 
         for (Statement statement : list) {
             // avoid parsing the RHS value expression again as we just did it to get the maximum values in createClazz
-            if (statement.getKeyword() == Statement.Keyword.ELSE) {
-                if (!Helper.isEmpty(statement.getCondition()))
-                    throw new IllegalArgumentException("condition must be empty but was " + statement.getCondition());
+            if (statement.keyword() == Statement.Keyword.ELSE) {
+                if (!Helper.isEmpty(statement.condition()))
+                    throw new IllegalArgumentException("condition must be empty but was " + statement.condition());
 
-                expressions.append("else {").append(statement.getOperation().build(statement.getValue())).append("; }\n");
-            } else if (statement.getKeyword() == Statement.Keyword.ELSEIF || statement.getKeyword() == Statement.Keyword.IF) {
-                ParseResult parseResult = ConditionalExpressionVisitor.parse(statement.getCondition(), nameInConditionValidator, classHelper);
+                expressions.append(indentation);
+                if (statement.isBlock()) {
+                    expressions.append("else {");
+                    parseExpressions(expressions, nameInConditionValidator, exceptionInfo, createObjects, statement.then(), classHelper, indentation + "  ");
+                    expressions.append(indentation).append("}\n");
+                } else {
+                    expressions.append("else {").append(statement.operation().build(statement.value())).append("; }\n");
+                }
+            } else if (statement.keyword() == Statement.Keyword.ELSEIF || statement.keyword() == Statement.Keyword.IF) {
+                ParseResult parseResult = ConditionalExpressionVisitor.parse(statement.condition(), nameInConditionValidator, classHelper);
                 if (!parseResult.ok)
-                    throw new IllegalArgumentException(exceptionInfo + " invalid condition \"" + statement.getCondition() + "\"" +
+                    throw new IllegalArgumentException(exceptionInfo + " invalid condition \"" + statement.condition() + "\"" +
                             (parseResult.invalidMessage == null ? "" : ": " + parseResult.invalidMessage));
                 createObjects.addAll(parseResult.guessedVariables);
-                if (statement.getKeyword() == Statement.Keyword.ELSEIF)
-                    expressions.append("else ");
-                expressions.append("if (").append(parseResult.converted).append(") {").append(statement.getOperation().build(statement.getValue())).append(";}\n");
+                if (statement.keyword() == Statement.Keyword.ELSEIF)
+                    expressions.append(indentation).append("else ");
+
+                expressions.append(indentation);
+                if (statement.isBlock()) {
+                    expressions.append("if (").append(parseResult.converted).append(") {\n");
+                    parseExpressions(expressions, nameInConditionValidator, exceptionInfo, createObjects, statement.then(), classHelper, indentation + "  ");
+                    expressions.append(indentation).append("}\n");
+                } else {
+                    expressions.append("if (").append(parseResult.converted).append(") {").
+                            append(statement.operation().build(statement.value())).append(";}\n");
+                }
             } else {
                 throw new IllegalArgumentException("The statement must be either 'if', 'else_if' or 'else'");
             }

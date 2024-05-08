@@ -37,6 +37,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.*;
 
+import static com.graphhopper.json.SingleStatement.If;
 import static com.graphhopper.search.KVStorage.KValue;
 import static com.graphhopper.util.Parameters.Details.STREET_NAME;
 import static org.junit.jupiter.api.Assertions.*;
@@ -453,8 +454,8 @@ public class InstructionListTest {
         g.edge(2, 5).setDistance(10).set(roadsSpeedEnc, 10, 10).set(roadsAccessEnc, true, true).set(rcEV, RoadClass.PEDESTRIAN);
 
         CustomModel customModel = new CustomModel();
-        customModel.addToSpeed(Statement.If("true", Statement.Op.LIMIT, "speed"));
-        customModel.addToPriority(Statement.If("road_class == PEDESTRIAN", Statement.Op.MULTIPLY, "0"));
+        customModel.addToSpeed(If("true", Statement.Op.LIMIT, "speed"));
+        customModel.addToPriority(If("road_class == PEDESTRIAN", Statement.Op.MULTIPLY, "0"));
         Weighting weighting = CustomModelParser.createWeighting(tmpEM, TurnCostProvider.NO_TURN_COST_PROVIDER, customModel);
         Path p = new Dijkstra(g, weighting, tMode).calcPath(3, 4);
         assertEquals(IntArrayList.from(3, 2, 4), p.calcNodes());
