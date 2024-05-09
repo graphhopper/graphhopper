@@ -247,7 +247,7 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements E
 
     @Override
     protected double getInEdgeWeight(SPTEntry entry) {
-        return graph.getEdgeIteratorState(getIncomingEdge(entry), entry.adjNode).getWeight(false);
+        throw new UnsupportedOperationException();
     }
 
     @Override
