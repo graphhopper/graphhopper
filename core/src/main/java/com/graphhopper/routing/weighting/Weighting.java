@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.weighting;
 
+import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.util.EdgeIteratorState;
 
 /**
@@ -46,6 +47,10 @@ public interface Weighting {
      * +Infinity. Make sure your method does not return NaN which can e.g. occur for 0/0.
      */
     double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse);
+
+    default double calcWeight(double distance, int edgeKey, int nodeVia, int prevOrNextEdgeId, boolean reverse, EdgeIntAccess edgeIntAccess) {
+        throw new UnsupportedOperationException();
+    }
 
     /**
      * This method calculates the time taken (in milliseconds) to travel along the specified edgeState.

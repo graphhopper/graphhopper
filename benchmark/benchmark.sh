@@ -91,61 +91,61 @@ measurement.json=true \
 measurement.count=5000 \
 measurement.use_measurement_time_as_ref_time=${USE_MEASUREMENT_TIME_AS_REF_TIME}
 
-echo "3 - big map with a custom model that is 'very customized', i.e. has many custom weighting rules"
-echo "node-based CH + LM"
-java -cp tools/target/graphhopper-tools-*-jar-with-dependencies.jar \
--XX:+UseParallelGC -Xmx20g -Xms20g \
-com.graphhopper.tools.Measurement \
-datareader.file=${BIG_OSM_MAP} \
-datareader.date_range_parser_day=2019-11-01 \
-measurement.name=big_map_very_custom \
-measurement.folder=${RESULTS_DIR} \
-measurement.clean=true \
-measurement.stop_on_error=true \
-measurement.summaryfile=${SUMMARY_DIR}summary_big_very_custom.dat \
-measurement.repeats=1 \
-measurement.run_slow_routing=false \
-measurement.weighting=custom \
-measurement.custom_model_file=benchmark/very_custom.json \
-graph.encoded_values=max_width,max_height,toll,hazmat,road_access,road_class,road_environment,surface,roundabout,smoothness \
-measurement.ch.node=true \
-measurement.ch.edge=false \
-measurement.lm=true \
-"measurement.lm.active_counts=[8]" \
-measurement.lm.edge_based=false \
-measurement.vehicle=car \
-import.osm.ignored_highways=footway,cycleway,path,pedestrian,bridleway \
-measurement.turn_costs=true \
-graph.location=${GRAPH_DIR}measurement-big-very-custom-gh \
-prepare.min_network_size=10000 \
-measurement.json=true \
-measurement.count=5000 \
-measurement.use_measurement_time_as_ref_time=${USE_MEASUREMENT_TIME_AS_REF_TIME}
+#echo "3 - big map with a custom model that is 'very customized', i.e. has many custom weighting rules"
+#echo "node-based CH + LM"
+#java -cp tools/target/graphhopper-tools-*-jar-with-dependencies.jar \
+#-XX:+UseParallelGC -Xmx20g -Xms20g \
+#com.graphhopper.tools.Measurement \
+#datareader.file=${BIG_OSM_MAP} \
+#datareader.date_range_parser_day=2019-11-01 \
+#measurement.name=big_map_very_custom \
+#measurement.folder=${RESULTS_DIR} \
+#measurement.clean=true \
+#measurement.stop_on_error=true \
+#measurement.summaryfile=${SUMMARY_DIR}summary_big_very_custom.dat \
+#measurement.repeats=1 \
+#measurement.run_slow_routing=false \
+#measurement.weighting=custom \
+#measurement.custom_model_file=benchmark/very_custom.json \
+#graph.encoded_values=max_width,max_height,toll,hazmat,road_access,road_class,road_environment,surface,roundabout,smoothness \
+#measurement.ch.node=true \
+#measurement.ch.edge=false \
+#measurement.lm=true \
+#"measurement.lm.active_counts=[8]" \
+#measurement.lm.edge_based=false \
+#measurement.vehicle=car \
+#import.osm.ignored_highways=footway,cycleway,path,pedestrian,bridleway \
+#measurement.turn_costs=true \
+#graph.location=${GRAPH_DIR}measurement-big-very-custom-gh \
+#prepare.min_network_size=10000 \
+#measurement.json=true \
+#measurement.count=5000 \
+#measurement.use_measurement_time_as_ref_time=${USE_MEASUREMENT_TIME_AS_REF_TIME}
 
-echo "4 - big map, outdoor: node-based CH + landmarks (edge- & node-based for LM)"
-java -cp tools/target/graphhopper-tools-*-jar-with-dependencies.jar \
--XX:+UseParallelGC -Xmx20g -Xms20g \
-com.graphhopper.tools.Measurement \
-datareader.file=${BIG_OSM_MAP} \
-datareader.date_range_parser_day=2019-11-01 \
-measurement.name=big_map_outdoor \
-measurement.folder=${RESULTS_DIR} \
-measurement.clean=true \
-measurement.stop_on_error=true \
-measurement.summaryfile=${SUMMARY_DIR}summary_big_outdoor.dat \
-measurement.repeats=1 \
-measurement.run_slow_routing=false \
-graph.encoded_values=road_access,road_class,road_environment,surface,roundabout,smoothness \
-measurement.ch.node=true \
-measurement.ch.edge=false \
-measurement.lm=true \
-"measurement.lm.active_counts=[4,8,12]" \
-measurement.lm.edge_based=false \
-measurement.vehicle=foot \
-import.osm.ignored_highways= \
-measurement.turn_costs=false \
-graph.location=${GRAPH_DIR}measurement-big-outdoor-gh \
-prepare.min_network_size=10000 \
-measurement.json=true \
-measurement.count=5000 \
-measurement.use_measurement_time_as_ref_time=${USE_MEASUREMENT_TIME_AS_REF_TIME}
+#echo "4 - big map, outdoor: node-based CH + landmarks (edge- & node-based for LM)"
+#java -cp tools/target/graphhopper-tools-*-jar-with-dependencies.jar \
+#-XX:+UseParallelGC -Xmx20g -Xms20g \
+#com.graphhopper.tools.Measurement \
+#datareader.file=${BIG_OSM_MAP} \
+#datareader.date_range_parser_day=2019-11-01 \
+#measurement.name=big_map_outdoor \
+#measurement.folder=${RESULTS_DIR} \
+#measurement.clean=true \
+#measurement.stop_on_error=true \
+#measurement.summaryfile=${SUMMARY_DIR}summary_big_outdoor.dat \
+#measurement.repeats=1 \
+#measurement.run_slow_routing=false \
+#graph.encoded_values=road_access,road_class,road_environment,surface,roundabout,smoothness \
+#measurement.ch.node=true \
+#measurement.ch.edge=false \
+#measurement.lm=true \
+#"measurement.lm.active_counts=[4,8,12]" \
+#measurement.lm.edge_based=false \
+#measurement.vehicle=foot \
+#import.osm.ignored_highways= \
+#measurement.turn_costs=false \
+#graph.location=${GRAPH_DIR}measurement-big-outdoor-gh \
+#prepare.min_network_size=10000 \
+#measurement.json=true \
+#measurement.count=5000 \
+#measurement.use_measurement_time_as_ref_time=${USE_MEASUREMENT_TIME_AS_REF_TIME}

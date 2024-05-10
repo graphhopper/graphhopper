@@ -77,7 +77,7 @@ public class CustomModelParser {
         if (customModel == null)
             throw new IllegalStateException("CustomModel cannot be null");
         CustomWeighting.Parameters parameters = createWeightingParameters(customModel, lookup);
-        return new CustomWeighting(turnCostProvider, parameters);
+        return new CustomWeighting(turnCostProvider, parameters, lookup);
     }
 
     /**

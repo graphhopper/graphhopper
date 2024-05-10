@@ -29,12 +29,12 @@ import static com.graphhopper.config.TurnCostsConfig.INFINITE_U_TURN_COSTS;
 
 public class DefaultTurnCostProvider implements TurnCostProvider {
     private final BooleanEncodedValue turnRestrictionEnc;
-    private final EnumEncodedValue<RoadClass> roadClassEnc;
+    //    private final EnumEncodedValue<RoadClass> roadClassEnc;
     private final EnumEncodedValue<RoadAccess> roadAccessEnc;
-    private final EnumEncodedValue<RoadEnvironment> roadEnvironmentEnc;
-    private final EnumEncodedValue<Surface> surfaceEnc;
-    private final BooleanEncodedValue roundaboutEnc;
-    private final EnumEncodedValue<Smoothness> smoothnessEnc;
+    //    private final EnumEncodedValue<RoadEnvironment> roadEnvironmentEnc;
+//    private final EnumEncodedValue<Surface> surfaceEnc;
+//    private final BooleanEncodedValue roundaboutEnc;
+//    private final EnumEncodedValue<Smoothness> smoothnessEnc;
 //    private final BaseGraph graph;
     private final TurnCostStorage turnCostStorage;
     private final int uTurnCostsInt;
@@ -61,12 +61,12 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
         }
         // if null the TurnCostProvider can be still useful for edge-based routing
         this.turnRestrictionEnc = turnRestrictionEnc;
-        this.roadClassEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
+//        this.roadClassEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         this.roadAccessEnc = encodingManager.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
-        this.roadEnvironmentEnc = encodingManager.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
-        this.smoothnessEnc = encodingManager.getEnumEncodedValue(Smoothness.KEY, Smoothness.class);
-        this.roundaboutEnc = encodingManager.getBooleanEncodedValue(Roundabout.KEY);
-        this.surfaceEnc = encodingManager.getEnumEncodedValue(Surface.KEY, Surface.class);
+//        this.roadEnvironmentEnc = encodingManager.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
+//        this.smoothnessEnc = encodingManager.getEnumEncodedValue(Smoothness.KEY, Smoothness.class);
+//        this.roundaboutEnc = encodingManager.getBooleanEncodedValue(Roundabout.KEY);
+//        this.surfaceEnc = encodingManager.getEnumEncodedValue(Surface.KEY, Surface.class);
 //        this.graph = baseGraph;
 //        this.randomAccessEdgeState = baseGraph.createEdgeRandomAccess();
         this.edgeAccess = baseGraph.getEdgeAccess();
@@ -75,6 +75,10 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
 
     public BooleanEncodedValue getTurnRestrictionEnc() {
         return turnRestrictionEnc;
+    }
+
+    public boolean isRestricted(int edgeFrom, int nodeVia, int edgeTo) {
+        return turnCostStorage.get(turnRestrictionEnc, edgeFrom, nodeVia, edgeTo);
     }
 
     @Override
@@ -101,16 +105,16 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
                     if (roadAccessTo == RoadAccess.DESTINATION) {
                         tCost = 500;
                     }
-                    if (roadClassEnc.getEnum(false, edgeTo, edgeAccess) == RoadClass.BRIDLEWAY)
-                        tCost += 1;
-                    if (roundaboutEnc.getBool(false, edgeTo, edgeAccess))
-                        tCost += 1;
-                    if (surfaceEnc.getEnum(false, edgeTo, edgeAccess) == Surface.COBBLESTONE)
-                        tCost += 1;
-                    if (smoothnessEnc.getEnum(false, edgeTo, edgeAccess) == Smoothness.EXCELLENT)
-                        tCost += 1;
-                    if (roadEnvironmentEnc.getEnum(false, edgeTo, edgeAccess) == RoadEnvironment.FERRY)
-                        tCost += 1;
+//                    if (roadClassEnc.getEnum(false, edgeTo, edgeAccess) == RoadClass.BRIDLEWAY)
+//                        tCost += 1;
+//                    if (roundaboutEnc.getBool(false, edgeTo, edgeAccess))
+//                        tCost += 1;
+//                    if (surfaceEnc.getEnum(false, edgeTo, edgeAccess) == Surface.COBBLESTONE)
+//                        tCost += 1;
+//                    if (smoothnessEnc.getEnum(false, edgeTo, edgeAccess) == Smoothness.EXCELLENT)
+//                        tCost += 1;
+//                    if (roadEnvironmentEnc.getEnum(false, edgeTo, edgeAccess) == RoadEnvironment.FERRY)
+//                        tCost += 1;
                 }
             }
         }

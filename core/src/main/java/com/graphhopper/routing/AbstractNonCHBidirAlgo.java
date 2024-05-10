@@ -18,9 +18,11 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntObjectMap;
+import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeExplorer;
@@ -45,6 +47,7 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
     protected final Weighting weighting;
     protected EdgeExplorer edgeExplorer;
     protected EdgeFilter additionalEdgeFilter;
+    private final EdgeIntAccess edgeIntAccess;
 
     public AbstractNonCHBidirAlgo(Graph graph, Weighting weighting, TraversalMode tMode) {
         super(tMode);
@@ -56,6 +59,7 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
         edgeExplorer = graph.createEdgeExplorer();
         int size = Math.min(Math.max(200, graph.getNodes() / 10), 150_000);
         initCollections(size);
+        edgeIntAccess = graph.getBaseGraph().getEdgeAccess();
     }
 
     /**
@@ -194,7 +198,14 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
     protected double calcWeight(EdgeIteratorState iter, SPTEntry currEdge, boolean reverse) {
         // note that for node-based routing the weights will be wrong in case the weighting is returning non-zero
         // turn weights, see discussion in #1960
-        return GHUtility.calcWeightWithTurnWeight(weighting, iter, reverse, currEdge.edge) + currEdge.getWeightOfVisitedPath();
+        double before = GHUtility.calcWeightWithTurnWeight(weighting, iter, reverse, currEdge.edge);
+//       double now = weighting.calcWeight(iter.getDistance(), iter.getEdgeKey(), iter.getBaseNode(), currEdge.edge, reverse, edgeIntAccess);
+//       if (before != now) {
+//           System.out.println(GHUtility.calcWeightWithTurnWeight(weighting, iter, reverse, currEdge.edge) + currEdge.getWeightOfVisitedPath());
+//           System.out.println(weighting.calcWeight(iter.getDistance(), iter.getEdgeKey(), iter.getBaseNode(), currEdge.edge, reverse, edgeIntAccess));
+//           throw new IllegalArgumentException();
+//       }
+        return before + currEdge.getWeightOfVisitedPath();
     }
 
     @Override

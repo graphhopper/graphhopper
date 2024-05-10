@@ -19,6 +19,7 @@
 package com.graphhopper.routing.weighting;
 
 import com.carrotsearch.hppc.IntArrayList;
+import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.EdgeIterator;
@@ -99,6 +100,10 @@ public class QueryGraphWeighting implements Weighting {
         } else {
             return weighting.calcTurnWeight(inEdge, viaNode, outEdge);
         }
+    }
+
+    public double calcWeight(double distance, int edgeKey, int nodeVia, int prevOrNextEdgeId, boolean reverse, EdgeIntAccess edgeIntAccess) {
+        return weighting.calcWeight(distance, edgeKey, nodeVia, prevOrNextEdgeId, reverse, edgeIntAccess);
     }
 
     private boolean isUTurn(int inEdge, int outEdge) {

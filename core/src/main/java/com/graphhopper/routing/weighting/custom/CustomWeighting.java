@@ -17,10 +17,14 @@
  */
 package com.graphhopper.routing.weighting.custom;
 
+import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.CustomModel;
+import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
 
@@ -85,7 +89,11 @@ public final class CustomWeighting implements Weighting {
     private final MaxCalc maxPrioCalc;
     private final MaxCalc maxSpeedCalc;
 
-    public CustomWeighting(TurnCostProvider turnCostProvider, Parameters parameters) {
+    private final DecimalEncodedValue speedEnc;
+    private final BooleanEncodedValue accessEnc;
+    private final EnumEncodedValue<RoadAccess> roadAccessEnc;
+
+    public CustomWeighting(TurnCostProvider turnCostProvider, Parameters parameters, EncodedValueLookup lookup) {
         if (!Weighting.isValidName(getName()))
             throw new IllegalStateException("Not a valid name for a Weighting: " + getName());
         this.turnCostProvider = turnCostProvider;
@@ -102,6 +110,10 @@ public final class CustomWeighting implements Weighting {
         this.distanceInfluence = parameters.getDistanceInfluence() / 1000.0;
         if (this.distanceInfluence < 0)
             throw new IllegalArgumentException("distance_influence cannot be negative " + this.distanceInfluence);
+
+        this.speedEnc = lookup.getDecimalEncodedValue("car_average_speed");
+        this.accessEnc = lookup.getBooleanEncodedValue("car_access");
+        this.roadAccessEnc = lookup.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
     }
 
     @Override
@@ -157,6 +169,29 @@ public final class CustomWeighting implements Weighting {
     @Override
     public String getName() {
         return NAME;
+    }
+
+    public double calcWeight(double distance, int edgeKey, int nodeVia, int prevOrNextEdgeId, boolean reverse, EdgeIntAccess edgeIntAccess) {
+        int edge = GHUtility.getEdgeFromEdgeKey(edgeKey);
+        boolean fwd = edgeKey % 2 == 0;
+        if (reverse) fwd = !fwd;
+        double speed = speedEnc.getDecimal(!fwd, edge, edgeIntAccess);
+        if (speed == 0) return Double.POSITIVE_INFINITY;
+        double priority = accessEnc.getBool(!fwd, edge, edgeIntAccess) ? 1 : 0;
+        if (priority == 0) return Double.POSITIVE_INFINITY;
+        double edgeWeight = distance / speed * SPEED_CONV / priority + distance * distanceInfluence;
+        if (!hasTurnCosts() || !EdgeIterator.Edge.isValid(prevOrNextEdgeId))
+            return edgeWeight;
+        if (edge == prevOrNextEdgeId) return edgeWeight + 40;
+        boolean isRestricted = reverse
+                ? ((DefaultTurnCostProvider) turnCostProvider).isRestricted(edge, nodeVia, prevOrNextEdgeId)
+                : ((DefaultTurnCostProvider) turnCostProvider).isRestricted(prevOrNextEdgeId, nodeVia, edge);
+        if (isRestricted) return Double.POSITIVE_INFINITY;
+        else {
+            RoadAccess roadAccessTo = roadAccessEnc.getEnum(false, reverse ? prevOrNextEdgeId : edge, edgeIntAccess);
+            if (roadAccessTo == RoadAccess.DESTINATION) return edgeWeight + 500;
+            else return edgeWeight;
+        }
     }
 
     @FunctionalInterface
