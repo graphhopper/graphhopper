@@ -295,8 +295,8 @@ public class Measurement {
     private GraphHopperConfig createConfigFromArgs(PMap args) {
         GraphHopperConfig ghConfig = new GraphHopperConfig(args);
         vehicle = args.getString("measurement.vehicle", "car");
-        ghConfig.putObject("datareader.file", "map-matching/files/leipzig_germany.osm.pbf");
-        ghConfig.putObject("import.osm.ignored_highways", "footway,cycleway,path,pedestrian,bridleway");
+        ghConfig.putObject("datareader.file", ghConfig.getString("datareader.file", "map-matching/files/leipzig_germany.osm.pbf"));
+        ghConfig.putObject("import.osm.ignored_highways", ghConfig.getString("import.osm.ignored_highways", "footway,cycleway,path,pedestrian,bridleway"));
         ghConfig.putObject("graph.encoded_values", ghConfig.getString("graph.encoded_values", "road_access,smoothness,surface") + ", " + VehicleAccess.key(vehicle) + "," + VehicleSpeed.key(vehicle));
         boolean turnCosts = args.getBool("measurement.turn_costs", true);
         int uTurnCosts = args.getInt("measurement.u_turn_costs", 40);

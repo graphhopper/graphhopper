@@ -198,14 +198,14 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
     protected double calcWeight(EdgeIteratorState iter, SPTEntry currEdge, boolean reverse) {
         // note that for node-based routing the weights will be wrong in case the weighting is returning non-zero
         // turn weights, see discussion in #1960
-//        double before = GHUtility.calcWeightWithTurnWeight(weighting, iter, reverse, currEdge.edge);
-        double now = weighting.calcWeight(iter.getDistance(), iter.getEdgeKey(), iter.getBaseNode(), currEdge.edge, reverse, edgeIntAccess);
+        double before = GHUtility.calcWeightWithTurnWeight(weighting, iter, reverse, currEdge.edge);
+//       double now = weighting.calcWeight(iter.getDistance(), iter.getEdgeKey(), iter.getBaseNode(), currEdge.edge, reverse, edgeIntAccess);
 //       if (before != now) {
 //           System.out.println(GHUtility.calcWeightWithTurnWeight(weighting, iter, reverse, currEdge.edge) + currEdge.getWeightOfVisitedPath());
 //           System.out.println(weighting.calcWeight(iter.getDistance(), iter.getEdgeKey(), iter.getBaseNode(), currEdge.edge, reverse, edgeIntAccess));
 //           throw new IllegalArgumentException();
 //       }
-        return now + currEdge.getWeightOfVisitedPath();
+        return before + currEdge.getWeightOfVisitedPath();
     }
 
     @Override
