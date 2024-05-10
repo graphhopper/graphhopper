@@ -91,6 +91,7 @@ public final class CustomWeighting implements Weighting {
 
     private final DecimalEncodedValue speedEnc;
     private final BooleanEncodedValue accessEnc;
+    private final EnumEncodedValue<RoadClass> roadClassEnc;
     private final EnumEncodedValue<RoadAccess> roadAccessEnc;
 
     public CustomWeighting(TurnCostProvider turnCostProvider, Parameters parameters, EncodedValueLookup lookup) {
@@ -113,6 +114,7 @@ public final class CustomWeighting implements Weighting {
 
         this.speedEnc = lookup.getDecimalEncodedValue("car_average_speed");
         this.accessEnc = lookup.getBooleanEncodedValue("car_access");
+        this.roadClassEnc = lookup.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         this.roadAccessEnc = lookup.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
     }
 
@@ -188,8 +190,10 @@ public final class CustomWeighting implements Weighting {
                 : ((DefaultTurnCostProvider) turnCostProvider).isRestricted(prevOrNextEdgeId, nodeVia, edge);
         if (isRestricted) return Double.POSITIVE_INFINITY;
         else {
+            RoadClass roadClassFrom = roadClassEnc.getEnum(false, reverse ? edge : prevOrNextEdgeId, edgeIntAccess);
             RoadAccess roadAccessTo = roadAccessEnc.getEnum(false, reverse ? prevOrNextEdgeId : edge, edgeIntAccess);
-            if (roadAccessTo == RoadAccess.DESTINATION) return edgeWeight + 500;
+            if (roadClassFrom == RoadClass.BRIDLEWAY || roadAccessTo == RoadAccess.DESTINATION)
+                return edgeWeight + 500;
             else return edgeWeight;
         }
     }
