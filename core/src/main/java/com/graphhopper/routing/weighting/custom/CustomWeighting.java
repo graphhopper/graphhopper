@@ -181,6 +181,10 @@ public final class CustomWeighting implements Weighting {
         if (speed == 0) return Double.POSITIVE_INFINITY;
         double priority = accessEnc.getBool(!fwd, edge, edgeIntAccess) ? 1 : 0;
         if (priority == 0) return Double.POSITIVE_INFINITY;
+        RoadClass roadClass = roadClassEnc.getEnum(!fwd, edge, edgeIntAccess);
+        if (roadClass == RoadClass.BRIDLEWAY)
+            priority *= 0.98;
+
         double edgeWeight = distance / speed * SPEED_CONV / priority + distance * distanceInfluence;
         if (!hasTurnCosts() || !EdgeIterator.Edge.isValid(prevOrNextEdgeId))
             return edgeWeight;
