@@ -179,6 +179,8 @@ public final class CustomWeighting implements Weighting {
         if (reverse) fwd = !fwd;
         double speed = speedEnc.getDecimal(!fwd, edge, edgeIntAccess);
         if (speed == 0) return Double.POSITIVE_INFINITY;
+        if (roadClassEnc.getEnum(!fwd, edge, edgeIntAccess) == RoadClass.PATH)
+            speed *= 0.98;
         double priority = accessEnc.getBool(!fwd, edge, edgeIntAccess) ? 1 : 0;
         if (priority == 0) return Double.POSITIVE_INFINITY;
         RoadClass roadClass = roadClassEnc.getEnum(!fwd, edge, edgeIntAccess);
