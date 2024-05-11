@@ -631,4 +631,21 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         way.setTag("maxspeed", "15");
         assertPriority(VERY_NICE.getValue(), way);
     }
+
+    // Checks that ways with motor_vehicle=no receive the lowest possible
+    // penalty.
+    @Test
+    public void testMotorVehicleNo() {
+        ReaderWay carFreeWay = new ReaderWay(1);
+        carFreeWay.setTag("motor_vehicle", "no");
+
+        // Adding a highway-related tag checks that BikeFlagEncoder still
+        // prioritizes cycling infrastructure-related penalties first.
+        carFreeWay.setTag("highway", "tertiary");
+
+        IntsRef edgeFlags = encodingManager.createEdgeFlags();
+        encoder.handleWayTags(edgeFlags, carFreeWay);
+        assertEquals(PenaltyCode.BEST.getValue(),
+                penaltyEnc.getDecimal(false, edgeFlags));
+    }
 }

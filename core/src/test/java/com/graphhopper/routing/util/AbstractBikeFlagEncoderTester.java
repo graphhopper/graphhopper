@@ -42,13 +42,14 @@ public abstract class AbstractBikeFlagEncoderTester {
     protected BooleanEncodedValue roundaboutEnc;
     protected DecimalEncodedValue priorityEnc;
     protected DecimalEncodedValue avgSpeedEnc;
+    protected DecimalEncodedValue penaltyEnc;
 
     @BeforeEach
     public void setUp() {
         encodingManager = TagParserManager.create(encoder = createBikeEncoder());
         roundaboutEnc = encodingManager.getBooleanEncodedValue(Roundabout.KEY);
-        priorityEnc = encodingManager.getDecimalEncodedValue(EncodingManager.getKey(encoder, "priority"));
         avgSpeedEnc = encoder.getAverageSpeedEnc();
+        penaltyEnc = encodingManager.getDecimalEncodedValue(EncodingManager.getKey(encoder, "penalty"));
     }
 
     protected abstract BikeCommonFlagEncoder createBikeEncoder();
