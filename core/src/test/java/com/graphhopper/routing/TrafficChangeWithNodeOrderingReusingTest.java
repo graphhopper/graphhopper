@@ -69,7 +69,8 @@ public class TrafficChangeWithNodeOrderingReusingTest {
                     new CustomModel()
                             .addToPriority(Statement.If("!car_access", Statement.Op.MULTIPLY, "0"))
                             .addToSpeed(Statement.If("true", Statement.Op.LIMIT, "car_average_speed")
-                    )
+                    ),
+                    null
             ));
             trafficCHConfig = CHConfig.nodeBased("traffic", new RandomDeviationWeighting(baseCHConfig.getWeighting(), accessEnc, speedEnc, maxDeviationPercentage));
             graph = new BaseGraph.Builder(em).create();

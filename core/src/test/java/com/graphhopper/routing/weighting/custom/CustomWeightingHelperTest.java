@@ -62,7 +62,7 @@ class CustomWeightingHelperTest {
 
         CustomWeightingHelper helper = new CustomWeightingHelper();
         EncodingManager lookup = new EncodingManager.Builder().add(VehicleSpeed.create("car", 5, 5, true)).build();
-        helper.init(customModel, lookup, null);
+        helper.init(customModel, lookup, null, null);
         IllegalArgumentException ret = assertThrows(IllegalArgumentException.class, helper::calcMaxSpeed);
         assertTrue(ret.getMessage().startsWith("statement resulted in negative value"));
     }

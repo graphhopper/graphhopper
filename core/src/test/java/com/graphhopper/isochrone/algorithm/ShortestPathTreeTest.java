@@ -76,7 +76,7 @@ public class ShortestPathTreeTest {
     }
 
     private Weighting createWeighting(TurnCostProvider turnCostProvider) {
-        return CustomModelParser.createWeighting(encodingManager, turnCostProvider, createBaseCustomModel());
+        return CustomModelParser.createWeighting(encodingManager, turnCostProvider, createBaseCustomModel(), null);
     }
 
     private CustomModel createBaseCustomModel() {
@@ -199,7 +199,7 @@ public class ShortestPathTreeTest {
         List<ShortestPathTree.IsoLabel> result = new ArrayList<>();
         CustomModel customModel = createBaseCustomModel();
         customModel.addToPriority(If("ferry", MULTIPLY, "0.005"));
-        CustomWeighting weighting = CustomModelParser.createWeighting(encodingManager, TurnCostProvider.NO_TURN_COST_PROVIDER, customModel);
+        CustomWeighting weighting = CustomModelParser.createWeighting(encodingManager, TurnCostProvider.NO_TURN_COST_PROVIDER, customModel, null);
         ShortestPathTree instance = new ShortestPathTree(graph, weighting, false, TraversalMode.NODE_BASED);
         instance.setTimeLimit(30_000);
         instance.search(0, result::add);

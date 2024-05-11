@@ -19,7 +19,7 @@ package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.CacheFunction;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
@@ -73,10 +73,11 @@ public class CustomModelParser {
      * unconditional statement <code>{ "if": "true", "limit_to": "car_average_speed" }<code/> or as
      * an if-else block.
      */
-    public static CustomWeighting createWeighting(EncodedValueLookup lookup, TurnCostProvider turnCostProvider, CustomModel customModel) {
+    public static CustomWeighting createWeighting(EncodedValueLookup lookup, TurnCostProvider turnCostProvider,
+                                                  CustomModel customModel, CacheFunction function) {
         if (customModel == null)
             throw new IllegalStateException("CustomModel cannot be null");
-        CustomWeighting.Parameters parameters = createWeightingParameters(customModel, lookup);
+        CustomWeighting.Parameters parameters = createWeightingParameters(customModel, lookup, function);
         return new CustomWeighting(turnCostProvider, parameters);
     }
 
@@ -84,7 +85,9 @@ public class CustomModelParser {
      * This method compiles a new subclass of CustomWeightingHelper composed from the provided CustomModel caches this
      * and returns an instance.
      */
-    public static CustomWeighting.Parameters createWeightingParameters(CustomModel customModel, EncodedValueLookup lookup) {
+    public static CustomWeighting.Parameters createWeightingParameters(CustomModel customModel,
+                                                                       EncodedValueLookup lookup,
+                                                                       CacheFunction function) {
         String key = customModel.toString();
         if (key.length() > 100_000)
             throw new IllegalArgumentException("Custom Model too big: " + key.length());
@@ -93,7 +96,7 @@ public class CustomModelParser {
         if (CACHE_SIZE > 0 && clazz == null)
             clazz = CACHE.get(key);
         if (clazz == null) {
-            clazz = createClazz(customModel, lookup);
+            clazz = createClazz(customModel, lookup, function);
             if (customModel.isInternal()) {
                 INTERNAL_CACHE.put(key, clazz);
                 if (INTERNAL_CACHE.size() > 100) {
@@ -110,7 +113,7 @@ public class CustomModelParser {
         try {
             // The class does not need to be thread-safe as we create an instance per request
             CustomWeightingHelper prio = (CustomWeightingHelper) clazz.getDeclaredConstructor().newInstance();
-            prio.init(customModel, lookup, CustomModel.getAreasAsMap(customModel.getAreas()));
+            prio.init(customModel, lookup, CustomModel.getAreasAsMap(customModel.getAreas()), function);
             return new CustomWeighting.Parameters(
                     prio::getSpeed, prio::calcMaxSpeed,
                     prio::getPriority, prio::calcMaxPriority,
@@ -134,10 +137,10 @@ public class CustomModelParser {
      * </li>
      * </ul>
      */
-    private static Class<?> createClazz(CustomModel customModel, EncodedValueLookup lookup) {
+    private static Class<?> createClazz(CustomModel customModel, EncodedValueLookup lookup, CacheFunction function) {
         try {
             Set<String> priorityVariables = ValueExpressionVisitor.findVariables(customModel.getPriority(), lookup);
-            List<Java.BlockStatement> priorityStatements = createGetPriorityStatements(priorityVariables, customModel, lookup);
+            List<Java.BlockStatement> priorityStatements = createGetPriorityStatements(priorityVariables, customModel, lookup, function);
 
             if (customModel.getSpeed().isEmpty())
                 throw new IllegalArgumentException("At least one initial statement under 'speed' is required.");
@@ -154,7 +157,7 @@ public class CustomModelParser {
             }
 
             Set<String> speedVariables = ValueExpressionVisitor.findVariables(customModel.getSpeed(), lookup);
-            List<Java.BlockStatement> speedStatements = createGetSpeedStatements(speedVariables, customModel, lookup);
+            List<Java.BlockStatement> speedStatements = createGetSpeedStatements(speedVariables, customModel, lookup, function);
 
             // Create different class name, which is required only for debugging.
             // TODO does it improve performance too? I.e. it could be that the JIT is confused if different classes
@@ -222,14 +225,28 @@ public class CustomModelParser {
      * @return the created statements (parsed expressions)
      */
     private static List<Java.BlockStatement> createGetSpeedStatements(Set<String> speedVariables,
-                                                                      CustomModel customModel, EncodedValueLookup lookup) throws Exception {
+                                                                      CustomModel customModel,
+                                                                      EncodedValueLookup lookup,
+                                                                      CacheFunction function) throws Exception {
         List<Java.BlockStatement> speedStatements = new ArrayList<>(verifyExpressions(new StringBuilder(),
                 "speed entry", speedVariables, customModel.getSpeed(), lookup));
         String speedMethodStartBlock = "double value = " + CustomWeightingHelper.GLOBAL_MAX_SPEED + ";\n";
         // potentially we fetch EncodedValues twice (one time here and one time for priority)
+        speedMethodStartBlock += "List<Object> list = function == null ? null : function.calc(reverse ? GHUtility.reverseEdgeKey(edge.getEdgeKey()) : edge.getEdgeKey());\n";
         for (String arg : speedVariables) {
-            speedMethodStartBlock += getVariableDeclaration(lookup, arg);
+            if (!arg.startsWith(IN_AREA_PREFIX) && !arg.startsWith(BACKWARD_PREFIX))
+                speedMethodStartBlock += getReturnType(lookup.getEncodedValue(arg, EncodedValue.class)) + " " + arg + ";\n";
         }
+        speedMethodStartBlock += "if(list == null) {\n";
+        for (String arg : speedVariables) {
+            speedMethodStartBlock += getVariableDeclaration(lookup, arg, null);
+        }
+        speedMethodStartBlock += "} else {\n";
+        for (String arg : speedVariables) {
+            speedMethodStartBlock += getVariableDeclaration(lookup, arg, function);
+            speedMethodStartBlock += arg + " = (" + getReturnTypeBoxed(lookup.getEncodedValue(arg, EncodedValue.class)) + ") list.get(" + (function == null ? 0 : function.getIndex(arg)) + ");\n";
+        }
+        speedMethodStartBlock += "}\n";
         speedStatements.addAll(0, new Parser(new org.codehaus.janino.Scanner("getSpeed", new StringReader(speedMethodStartBlock))).
                 parseBlockStatements());
         return speedStatements;
@@ -241,13 +258,27 @@ public class CustomModelParser {
      * @return the created statements (parsed expressions)
      */
     private static List<Java.BlockStatement> createGetPriorityStatements(Set<String> priorityVariables,
-                                                                         CustomModel customModel, EncodedValueLookup lookup) throws Exception {
+                                                                         CustomModel customModel,
+                                                                         EncodedValueLookup lookup,
+                                                                         CacheFunction function) throws Exception {
         List<Java.BlockStatement> priorityStatements = new ArrayList<>(verifyExpressions(new StringBuilder(),
                 "priority entry", priorityVariables, customModel.getPriority(), lookup));
         String priorityMethodStartBlock = "double value = " + CustomWeightingHelper.GLOBAL_PRIORITY + ";\n";
+        priorityMethodStartBlock += "List<Object> list = function == null ? null : function.calc(reverse ? GHUtility.reverseEdgeKey(edge.getEdgeKey()) : edge.getEdgeKey());\n";
         for (String arg : priorityVariables) {
-            priorityMethodStartBlock += getVariableDeclaration(lookup, arg);
+            if (!arg.startsWith(IN_AREA_PREFIX) && !arg.startsWith(BACKWARD_PREFIX))
+                priorityMethodStartBlock += getReturnType(lookup.getEncodedValue(arg, EncodedValue.class)) + " " + arg + ";\n";
         }
+        priorityMethodStartBlock += "if(list == null) {\n";
+        for (String arg : priorityVariables) {
+            priorityMethodStartBlock += getVariableDeclaration(lookup, arg, null);
+        }
+        priorityMethodStartBlock += "} else {\n";
+        for (String arg : priorityVariables) {
+            priorityMethodStartBlock += getVariableDeclaration(lookup, arg, function);
+        }
+        priorityMethodStartBlock += "}\n";
+
         priorityStatements.addAll(0, new Parser(new org.codehaus.janino.Scanner("getPriority", new StringReader(priorityMethodStartBlock))).
                 parseBlockStatements());
         return priorityStatements;
@@ -257,17 +288,19 @@ public class CustomModelParser {
      * For the methods getSpeed and getPriority we declare variables that contain the encoded value of the current edge
      * or if an area contains the current edge.
      */
-    private static String getVariableDeclaration(EncodedValueLookup lookup, final String arg) {
+    private static String getVariableDeclaration(EncodedValueLookup lookup, final String arg, CacheFunction function) {
         if (lookup.hasEncodedValue(arg)) {
             EncodedValue enc = lookup.getEncodedValue(arg, EncodedValue.class);
-            return getReturnType(enc) + " " + arg + " = (" + getReturnType(enc) + ") (reverse ? " +
-                    "edge.getReverse((" + getInterface(enc) + ") this." + arg + "_enc) : " +
-                    "edge.get((" + getInterface(enc) + ") this." + arg + "_enc));\n";
+            if (function == null)
+                return arg + " = (" + getReturnType(enc) + ") (reverse ? " +
+                        "edge.getReverse((" + getInterface(enc) + ") this." + arg + "_enc) : " +
+                        "edge.get((" + getInterface(enc) + ") this." + arg + "_enc));\n";
+            return arg + " = (" + getReturnTypeBoxed(enc) + ") list.get(" + function.getIndex(arg) + ");\n";
         } else if (arg.startsWith(BACKWARD_PREFIX)) {
             final String argSubstr = arg.substring(BACKWARD_PREFIX.length());
             if (lookup.hasEncodedValue(argSubstr)) {
                 EncodedValue enc = lookup.getEncodedValue(argSubstr, EncodedValue.class);
-                return getReturnType(enc) + " " + arg + " = (" + getReturnType(enc) + ") (reverse ? " +
+                return arg + " = (" + getReturnType(enc) + ") (reverse ? " +
                         "edge.get((" + getInterface(enc) + ") this." + argSubstr + "_enc) : " +
                         "edge.getReverse((" + getInterface(enc) + ") this." + argSubstr + "_enc));\n";
             } else {
@@ -305,6 +338,21 @@ public class CustomModelParser {
         throw new IllegalArgumentException("Unsupported EncodedValue: " + encodedValue.getClass());
     }
 
+    // can we avoid this (un)boxing stuff?
+    private static String getReturnTypeBoxed(EncodedValue encodedValue) {
+        // order is important
+        if (encodedValue instanceof EnumEncodedValue) {
+            Class cl = ((EnumEncodedValue) encodedValue).getEnumType();
+            // use getSimpleName for inbuilt EncodedValues and more readability of generated source
+            return cl.getPackage().equals(EnumEncodedValue.class.getPackage()) ? cl.getSimpleName() : cl.getName();
+        }
+        if (encodedValue instanceof StringEncodedValue) return "Integer"; // we use indexOf
+        if (encodedValue instanceof DecimalEncodedValue) return "Double";
+        if (encodedValue instanceof BooleanEncodedValue) return "Boolean";
+        if (encodedValue instanceof IntEncodedValue) return "Integer";
+        throw new IllegalArgumentException("Unsupported EncodedValue: " + encodedValue.getClass());
+    }
+
     /**
      * Create the class source file from the detected variables (priorityVariables and speedVariables). We assume that
      * these variables are safe although they are user input because we collected them from parsing via Janino. This
@@ -316,12 +364,14 @@ public class CustomModelParser {
                                               EncodedValueLookup lookup, Map<String, JsonFeature> areas) {
         final StringBuilder importSourceCode = new StringBuilder("import com.graphhopper.routing.ev.*;\n");
         importSourceCode.append("import java.util.Map;\n");
+        importSourceCode.append("import java.util.List;\n");
         importSourceCode.append("import " + CustomModel.class.getName() + ";\n");
         final StringBuilder classSourceCode = new StringBuilder(100);
         boolean includedAreaImports = false;
 
         final StringBuilder initSourceCode = new StringBuilder("this.lookup = lookup;\n");
         initSourceCode.append("this.customModel = customModel;\n");
+        initSourceCode.append("this.function = function;\n");
         Set<String> set = new HashSet<>();
         for (String prioVar : priorityVariables)
             set.add(prioVar.startsWith(BACKWARD_PREFIX) ? prioVar.substring(BACKWARD_PREFIX.length()) : prioVar);
@@ -368,14 +418,15 @@ public class CustomModelParser {
 
         return ""
                 + "package com.graphhopper.routing.weighting.custom;\n"
-                + "import " + CustomWeightingHelper.class.getName() + ";\n"
                 + "import " + EncodedValueLookup.class.getName() + ";\n"
                 + "import " + EdgeIteratorState.class.getName() + ";\n"
+                + "import " + CacheFunction.class.getName() + ";\n"
+                + "import " + GHUtility.class.getName() + ";\n"
                 + importSourceCode
                 + "\npublic class JaninoCustomWeightingHelperSubclass" + counter + " extends " + CustomWeightingHelper.class.getSimpleName() + " {\n"
                 + classSourceCode
                 + "   @Override\n"
-                + "   public void init(CustomModel customModel, EncodedValueLookup lookup, Map<String, " + JsonFeature.class.getName() + "> areas) {\n"
+                + "   public void init(CustomModel customModel, EncodedValueLookup lookup, Map<String, " + JsonFeature.class.getName() + "> areas, CacheFunction function) {\n"
                 + initSourceCode
                 + "   }\n\n"
                 // we need these placeholder methods so that the hooks in DeepCopier are invoked

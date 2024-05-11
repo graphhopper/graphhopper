@@ -19,8 +19,8 @@ package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.json.MinMax;
 import com.graphhopper.json.Statement;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.util.CacheFunction;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.Polygon;
@@ -38,13 +38,16 @@ public class CustomWeightingHelper {
 
     protected EncodedValueLookup lookup;
     protected CustomModel customModel;
+    protected CacheFunction function;
 
     protected CustomWeightingHelper() {
     }
 
-    public void init(CustomModel customModel, EncodedValueLookup lookup, Map<String, JsonFeature> areas) {
+    public void init(CustomModel customModel, EncodedValueLookup lookup, Map<String, JsonFeature> areas,
+                     CacheFunction function) {
         this.lookup = lookup;
         this.customModel = customModel;
+        this.function = function;
     }
 
     public double getPriority(EdgeIteratorState edge, boolean reverse) {

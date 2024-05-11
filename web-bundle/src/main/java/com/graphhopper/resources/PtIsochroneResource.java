@@ -102,7 +102,7 @@ public class PtIsochroneResource {
         CustomModel customModel = new CustomModel()
                 .addToPriority(Statement.If("!" + VehicleAccess.key("foot"), Statement.Op.MULTIPLY, "0"))
                 .addToSpeed(Statement.If("true", Statement.Op.LIMIT, VehicleSpeed.key("foot")));
-        final Weighting weighting = CustomModelParser.createWeighting(encodingManager, TurnCostProvider.NO_TURN_COST_PROVIDER, customModel);
+        final Weighting weighting = CustomModelParser.createWeighting(encodingManager, TurnCostProvider.NO_TURN_COST_PROVIDER, customModel, null);
         DefaultSnapFilter snapFilter = new DefaultSnapFilter(weighting, encodingManager.getBooleanEncodedValue(Subnetwork.key("foot")));
 
         PtLocationSnapper.Result snapResult = new PtLocationSnapper(baseGraph, locationIndex, gtfsStorage).snapAll(Arrays.asList(location), Arrays.asList(snapFilter));

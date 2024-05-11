@@ -76,7 +76,7 @@ public class PriorityRoutingTest {
             customModel.addToPriority(Statement.If("true", Statement.Op.MULTIPLY, priorityEnc.getName()));
             customModel.addToSpeed(Statement.If("true", Statement.Op.LIMIT, speedEnc.getName()));
 
-            CustomWeighting weighting = CustomModelParser.createWeighting(em, TurnCostProvider.NO_TURN_COST_PROVIDER, customModel);
+            CustomWeighting weighting = CustomModelParser.createWeighting(em, TurnCostProvider.NO_TURN_COST_PROVIDER, customModel, null);
             Path pathDijkstra = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED).calcPath(0, 3);
             Path pathAStar = new AStar(graph, weighting, TraversalMode.NODE_BASED).calcPath(0, 3);
             assertEquals(pathDijkstra.calcNodes(), pathAStar.calcNodes());
@@ -89,7 +89,7 @@ public class PriorityRoutingTest {
             customModel.addToPriority(Statement.If("true", Statement.Op.MULTIPLY, priorityEnc.getName()));
             customModel.addToPriority(Statement.If("road_class == MOTORWAY", Statement.Op.MULTIPLY, "3"));
             customModel.addToSpeed(Statement.If("true", Statement.Op.LIMIT, speedEnc.getName()));
-            CustomWeighting weighting = CustomModelParser.createWeighting(em, TurnCostProvider.NO_TURN_COST_PROVIDER, customModel);
+            CustomWeighting weighting = CustomModelParser.createWeighting(em, TurnCostProvider.NO_TURN_COST_PROVIDER, customModel, null);
             Path pathDijkstra = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED).calcPath(0, 3);
             Path pathAStar = new AStar(graph, weighting, TraversalMode.NODE_BASED).calcPath(0, 3);
             assertEquals(pathDijkstra.calcNodes(), pathAStar.calcNodes());

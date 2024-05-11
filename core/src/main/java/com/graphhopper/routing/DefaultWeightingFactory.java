@@ -20,7 +20,9 @@ package com.graphhopper.routing;
 
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.ev.TurnRestriction;
+import com.graphhopper.routing.util.CachedWeightingEVCalculator;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.TurnCostProvider;
@@ -31,6 +33,8 @@ import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
+
+import java.util.List;
 
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
 import static com.graphhopper.util.Helper.toLowerCase;
@@ -75,7 +79,17 @@ public class DefaultWeightingFactory implements WeightingFactory {
             final CustomModel mergedCustomModel = CustomModel.merge(profile.getCustomModel(), queryCustomModel);
             if (requestHints.has(Parameters.Routing.HEADING_PENALTY))
                 mergedCustomModel.setHeadingPenalty(requestHints.getDouble(Parameters.Routing.HEADING_PENALTY, Parameters.Routing.DEFAULT_HEADING_PENALTY));
-            weighting = CustomModelParser.createWeighting(encodingManager, turnCostProvider, mergedCustomModel);
+
+            CachedWeightingEVCalculator.Result result = profile.getHints().getObject("tmp_result", null);
+            if (result == null) {
+                // TODO NOW move e.g. into postProcessing?
+                List<EncodedValue> list = CustomModelParser.findVariablesForEncodedValuesString(profile.getCustomModel(), encodingManager::hasEncodedValue, s -> "").
+                        stream().map(encVal -> encodingManager.getEncodedValue(encVal, EncodedValue.class)).toList();
+                result = CachedWeightingEVCalculator.createMap(graph, list);
+                profile.putHint("tmp_result", result);
+            }
+
+            weighting = CustomModelParser.createWeighting(encodingManager, turnCostProvider, mergedCustomModel, result.createCacheFunction());
 
         } else if ("shortest".equalsIgnoreCase(weightingStr)) {
             throw new IllegalArgumentException("Instead of weighting=shortest use weighting=custom with a high distance_influence");

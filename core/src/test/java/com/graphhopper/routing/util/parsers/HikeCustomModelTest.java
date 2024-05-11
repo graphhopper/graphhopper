@@ -56,17 +56,17 @@ public class HikeCustomModelTest {
         ReaderWay way = new ReaderWay(0L);
         way.setTag("highway", "track");
         EdgeIteratorState edge = createEdge(way);
-        CustomWeighting.Parameters p = CustomModelParser.createWeightingParameters(cm, em);
+        CustomWeighting.Parameters p = CustomModelParser.createWeightingParameters(cm, em, null);
         assertEquals(1.2, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
 
         way.setTag("motor_vehicle", "private");
         edge = createEdge(way);
-        p = CustomModelParser.createWeightingParameters(cm, em);
+        p = CustomModelParser.createWeightingParameters(cm, em, null);
         assertEquals(1.2, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
 
         way.setTag("sac_scale", "alpine_hiking");
         edge = createEdge(way);
-        p = CustomModelParser.createWeightingParameters(cm, em);
+        p = CustomModelParser.createWeightingParameters(cm, em, null);
         assertEquals(1.2, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
         assertEquals(1.5, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
@@ -74,12 +74,12 @@ public class HikeCustomModelTest {
         way.setTag("highway", "track");
         way.setTag("access", "private");
         edge = createEdge(way);
-        p = CustomModelParser.createWeightingParameters(cm, em);
+        p = CustomModelParser.createWeightingParameters(cm, em, null);
         assertEquals(0, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
 
         way.setTag("sac_scale", "alpine_hiking");
         edge = createEdge(way);
-        p = CustomModelParser.createWeightingParameters(cm, em);
+        p = CustomModelParser.createWeightingParameters(cm, em, null);
         assertEquals(0, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
     }
 }

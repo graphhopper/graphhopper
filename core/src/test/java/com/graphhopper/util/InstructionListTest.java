@@ -455,7 +455,7 @@ public class InstructionListTest {
         CustomModel customModel = new CustomModel();
         customModel.addToSpeed(Statement.If("true", Statement.Op.LIMIT, "speed"));
         customModel.addToPriority(Statement.If("road_class == PEDESTRIAN", Statement.Op.MULTIPLY, "0"));
-        Weighting weighting = CustomModelParser.createWeighting(tmpEM, TurnCostProvider.NO_TURN_COST_PROVIDER, customModel);
+        Weighting weighting = CustomModelParser.createWeighting(tmpEM, TurnCostProvider.NO_TURN_COST_PROVIDER, customModel, null);
         Path p = new Dijkstra(g, weighting, tMode).calcPath(3, 4);
         assertEquals(IntArrayList.from(3, 2, 4), p.calcNodes());
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, tmpEM, usTR);
