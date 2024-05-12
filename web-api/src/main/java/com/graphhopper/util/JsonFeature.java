@@ -91,7 +91,7 @@ public class JsonFeature {
 
     @Override
     public String toString() {
-        return "id:" + getId();
+        return "id:" + getId() + " with " + getGeometry().getCoordinates().length + " points: " + getGeometry();
     }
 
     public static boolean isValidId(String name) {
