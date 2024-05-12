@@ -87,6 +87,7 @@ public final class CustomWeighting implements Weighting {
     private final TurnCostProvider turnCostProvider;
     private final MaxCalc maxPrioCalc;
     private final MaxCalc maxSpeedCalc;
+    private CacheWeightCalculator.Result result;
     private CacheFunction function;
 
     public CustomWeighting(TurnCostProvider turnCostProvider, Parameters parameters) {
@@ -115,9 +116,12 @@ public final class CustomWeighting implements Weighting {
 
     @Override
     public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
-        Double weight = function == null ? null : function.calc(reverse ? GHUtility.reverseEdgeKey(edgeState.getEdgeKey()) : edgeState.getEdgeKey());
-        if (weight != null) {
-            return weight;
+        Double weightPerDistance = function == null ? null : function.calc(
+                reverse ? GHUtility.reverseEdgeKey(edgeState.getEdgeKey()) : edgeState.getEdgeKey());
+        if (weightPerDistance != null) {
+            if (weightPerDistance.isInfinite())
+                return Double.POSITIVE_INFINITY; // barrier edges have distance == 0
+            return weightPerDistance * edgeState.getDistance();
         }
 
         double priority = edgeToPriorityMapping.get(edgeState, reverse);
@@ -168,12 +172,14 @@ public final class CustomWeighting implements Weighting {
         return NAME;
     }
 
-    public void setFunction(CacheFunction function) {
-        this.function = function;
-    }
+    public void setResult(CacheWeightCalculator.Result result) {
+        if (result == null && this.result != null)
+            this.result.close();
 
-    public CacheFunction getFunction() {
-        return function;
+        this.result = result;
+
+        if (result != null)
+            this.function = result.createCacheFunction();
     }
 
     @FunctionalInterface

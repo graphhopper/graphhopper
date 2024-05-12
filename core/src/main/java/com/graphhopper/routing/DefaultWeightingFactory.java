@@ -33,7 +33,6 @@ import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -83,16 +82,15 @@ public class DefaultWeightingFactory implements WeightingFactory {
                 mergedCustomModel.setHeadingPenalty(requestHints.getDouble(Parameters.Routing.HEADING_PENALTY, Parameters.Routing.DEFAULT_HEADING_PENALTY));
 
             CustomWeighting tmpWeight = CustomModelParser.createWeighting(encodingManager, turnCostProvider, mergedCustomModel);
-
-            if(tmpWeight.getFunction() == null) {
-                CacheWeightCalculator.Result result = cache.get(mergedCustomModel.toString());
+            if(graph.getEdges() > 0) {
+                String key = mergedCustomModel + " " + profile.getName() + " " + graph.getEdges();
+                CacheWeightCalculator.Result result = cache.get(key);
                 if (result == null) {
                     // TODO NOW move e.g. into postProcessing?
-                    System.out.println("CacheWeightCalculator.createMap");
                     result = CacheWeightCalculator.createMap(graph, tmpWeight);
-                    cache.put(mergedCustomModel.toString(), result);
+                    cache.put(key, result);
                 }
-                tmpWeight.setFunction(result.createCacheFunction());
+                tmpWeight.setResult(result);
             }
             weighting = tmpWeight;
 

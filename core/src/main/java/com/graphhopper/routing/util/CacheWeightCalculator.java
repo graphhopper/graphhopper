@@ -1,6 +1,7 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.RAMDirectory;
@@ -13,23 +14,30 @@ public class CacheWeightCalculator {
 
     private static final int SIZE = 254 * 100;
 
-    public static Result createMap(Graph graph, Weighting weighting) {
+    public static Result createMap(Graph graph, CustomWeighting weighting) {
+        weighting.setResult(null);
+
+        boolean print = true;
+
+        if (print)
+            System.out.println("CacheWeightCalculator.createMap " + weighting);
+
         Map<Double, Integer> frequencyCacheMap = new LinkedHashMap<>(SIZE + 1, .75F, true) {
             public boolean removeEldestEntry(Map.Entry entry) {
                 return size() > SIZE;
             }
         };
-        boolean print = false;
+
         AllEdgesIterator iter = graph.getAllEdges();
         long edges = 0;
         while (iter.next()) {
             edges++;
             // fwd
             double weight = weighting.calcEdgeWeight(iter, false);
-            frequencyCacheMap.compute(weight, (k, v) -> v == null ? 1 : v + 1);
+            frequencyCacheMap.compute(weight == 0 ? 0 : weight / iter.getDistance(), (k, v) -> v == null ? 1 : v + 1);
             // bwd
             weight = weighting.calcEdgeWeight(iter, true);
-            frequencyCacheMap.compute(weight, (k, v) -> v == null ? 1 : v + 1);
+            frequencyCacheMap.compute(weight == 0 ? 0 : weight / iter.getDistance(), (k, v) -> v == null ? 1 : v + 1);
         }
 
         List<Map.Entry<Double, Integer>> sorted = new ArrayList<>(frequencyCacheMap.entrySet());
@@ -52,13 +60,14 @@ public class CacheWeightCalculator {
         Map<Double, Integer> keyToIndexMap = new HashMap<>();
 
         // copy most frequently used 254 elements into resultList
-        List<Double> resultList = new ArrayList<>();
+        double[] resultList = new double[255];
         int index = 1; // index == 0 is reserved for non-existing value
         for (Map.Entry<Double, Integer> entry : sorted) {
-            keyToIndexMap.put(entry.getKey(), index++);
-            resultList.add(entry.getKey());
-
-            if (index > 254) break;
+            keyToIndexMap.put(entry.getKey(), index);
+            resultList[index] = entry.getKey();
+            index++;
+            if (index > 254)
+                break;
         }
 
         DataAccess dataAccess = new RAMDirectory().create("weights");
@@ -69,13 +78,13 @@ public class CacheWeightCalculator {
         while (iter.next()) {
             // fwd
             double weight = weighting.calcEdgeWeight(iter, false);
-            idx = keyToIndexMap.get(weight);
+            idx = keyToIndexMap.get(weight == 0 ? 0 : weight / iter.getDistance());
             if (idx != null)
                 dataAccess.setByte(GHUtility.createEdgeKey(iter.getEdge(), false), (byte) (int) idx);
 
             // bwd
             weight = weighting.calcEdgeWeight(iter, true);
-            idx = keyToIndexMap.get(weight);
+            idx = keyToIndexMap.get(weight == 0 ? 0 : weight / iter.getDistance());
             if (idx != null)
                 dataAccess.setByte(GHUtility.createEdgeKey(iter.getEdge(), true), (byte) (int) idx);
         }
@@ -88,9 +97,13 @@ public class CacheWeightCalculator {
     }
 
     public static class Result {
-        private List<Double> list;
+        private double[] list;
         private DataAccess dataAccess;
         private int edgeKeysCount;
+
+        public void close() {
+            dataAccess.close();
+        }
 
         public CacheFunction createCacheFunction() {
             return edgeKey -> {
@@ -98,7 +111,7 @@ public class CacheWeightCalculator {
                     return null; // TODO NOW proper handling of query graph?
                 int idx = dataAccess.getByte(edgeKey) & 0xFF;
                 if (idx == 0) return null;
-                return list.get(idx - 1);
+                return list[idx];
             };
         }
     }
