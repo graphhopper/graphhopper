@@ -39,6 +39,7 @@ public class CustomWeightingHelper {
     protected EncodedValueLookup lookup;
     protected CustomModel customModel;
     protected CacheFunction function;
+    protected List<Object> list;
 
     protected CustomWeightingHelper() {
     }

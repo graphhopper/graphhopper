@@ -231,20 +231,20 @@ public class CustomModelParser {
         List<Java.BlockStatement> speedStatements = new ArrayList<>(verifyExpressions(new StringBuilder(),
                 "speed entry", speedVariables, customModel.getSpeed(), lookup));
         String speedMethodStartBlock = "double value = " + CustomWeightingHelper.GLOBAL_MAX_SPEED + ";\n";
-        // potentially we fetch EncodedValues twice (one time here and one time for priority)
-        speedMethodStartBlock += "List<Object> list = function == null ? null : function.calc(reverse ? GHUtility.reverseEdgeKey(edge.getEdgeKey()) : edge.getEdgeKey());\n";
         for (String arg : speedVariables) {
-            if (!arg.startsWith(IN_AREA_PREFIX) && !arg.startsWith(BACKWARD_PREFIX))
+            if(arg.startsWith(BACKWARD_PREFIX)) {
+                final String argSubstr = arg.substring(BACKWARD_PREFIX.length());
+                speedMethodStartBlock += getReturnType(lookup.getEncodedValue(argSubstr, EncodedValue.class)) + " " + arg + ";\n";
+            } else if (!arg.startsWith(IN_AREA_PREFIX))
                 speedMethodStartBlock += getReturnType(lookup.getEncodedValue(arg, EncodedValue.class)) + " " + arg + ";\n";
         }
-        speedMethodStartBlock += "if(list == null) {\n";
+        speedMethodStartBlock += "if(this.list == null) {\n";
         for (String arg : speedVariables) {
             speedMethodStartBlock += getVariableDeclaration(lookup, arg, null);
         }
         speedMethodStartBlock += "} else {\n";
         for (String arg : speedVariables) {
             speedMethodStartBlock += getVariableDeclaration(lookup, arg, function);
-            speedMethodStartBlock += arg + " = (" + getReturnTypeBoxed(lookup.getEncodedValue(arg, EncodedValue.class)) + ") list.get(" + (function == null ? 0 : function.getIndex(arg)) + ");\n";
         }
         speedMethodStartBlock += "}\n";
         speedStatements.addAll(0, new Parser(new org.codehaus.janino.Scanner("getSpeed", new StringReader(speedMethodStartBlock))).
@@ -264,12 +264,15 @@ public class CustomModelParser {
         List<Java.BlockStatement> priorityStatements = new ArrayList<>(verifyExpressions(new StringBuilder(),
                 "priority entry", priorityVariables, customModel.getPriority(), lookup));
         String priorityMethodStartBlock = "double value = " + CustomWeightingHelper.GLOBAL_PRIORITY + ";\n";
-        priorityMethodStartBlock += "List<Object> list = function == null ? null : function.calc(reverse ? GHUtility.reverseEdgeKey(edge.getEdgeKey()) : edge.getEdgeKey());\n";
+        priorityMethodStartBlock += "this.list = function == null ? null : function.calc(reverse ? GHUtility.reverseEdgeKey(edge.getEdgeKey()) : edge.getEdgeKey());\n";
         for (String arg : priorityVariables) {
-            if (!arg.startsWith(IN_AREA_PREFIX) && !arg.startsWith(BACKWARD_PREFIX))
+            if(arg.startsWith(BACKWARD_PREFIX)) {
+                final String argSubstr = arg.substring(BACKWARD_PREFIX.length());
+                priorityMethodStartBlock += getReturnType(lookup.getEncodedValue(argSubstr, EncodedValue.class)) + " " + arg + ";\n";
+            } else if (!arg.startsWith(IN_AREA_PREFIX))
                 priorityMethodStartBlock += getReturnType(lookup.getEncodedValue(arg, EncodedValue.class)) + " " + arg + ";\n";
         }
-        priorityMethodStartBlock += "if(list == null) {\n";
+        priorityMethodStartBlock += "if(this.list == null) {\n";
         for (String arg : priorityVariables) {
             priorityMethodStartBlock += getVariableDeclaration(lookup, arg, null);
         }
@@ -295,14 +298,17 @@ public class CustomModelParser {
                 return arg + " = (" + getReturnType(enc) + ") (reverse ? " +
                         "edge.getReverse((" + getInterface(enc) + ") this." + arg + "_enc) : " +
                         "edge.get((" + getInterface(enc) + ") this." + arg + "_enc));\n";
-            return arg + " = (" + getReturnTypeBoxed(enc) + ") list.get(" + function.getIndex(arg) + ");\n";
+            return arg + " = (" + getReturnTypeBoxed(enc) + ") this.list.get(" + function.getIndex(arg) + ");\n";
         } else if (arg.startsWith(BACKWARD_PREFIX)) {
             final String argSubstr = arg.substring(BACKWARD_PREFIX.length());
             if (lookup.hasEncodedValue(argSubstr)) {
                 EncodedValue enc = lookup.getEncodedValue(argSubstr, EncodedValue.class);
-                return arg + " = (" + getReturnType(enc) + ") (reverse ? " +
-                        "edge.get((" + getInterface(enc) + ") this." + argSubstr + "_enc) : " +
-                        "edge.getReverse((" + getInterface(enc) + ") this." + argSubstr + "_enc));\n";
+//                if (function == null)
+                    return arg + " = (" + getReturnType(enc) + ") (reverse ? " +
+                            "edge.get((" + getInterface(enc) + ") this." + argSubstr + "_enc) : " +
+                            "edge.getReverse((" + getInterface(enc) + ") this." + argSubstr + "_enc));\n";
+                // TODO NOW backward_xy will return the wrong cached value! (we would have to cache the backward values too)
+//                return arg + " = (" + getReturnTypeBoxed(enc) + ") this.list.get(" + function.getIndex(arg) + ");\n";
             } else {
                 throw new IllegalArgumentException("Not supported for backward: " + argSubstr);
             }
