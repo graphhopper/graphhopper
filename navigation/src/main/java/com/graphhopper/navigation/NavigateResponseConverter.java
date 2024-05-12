@@ -459,10 +459,12 @@ public class NavigateResponseConverter {
 
         bannerInstruction.putNull("secondary");
 
-        if (instructions.size() > index + 2 && instructions.get(index + 2).getSign() != Instruction.REACHED_VIA) {
-            // Sub shows the instruction after the current one
-            ObjectNode sub = bannerInstruction.putObject("sub");
-            putSingleBannerInstruction(instructions.get(index + 2), locale, translationMap, sub);
+        if (instructions.get(index + 1).getInstructionDetails().isEmpty()) {
+            if (instructions.size() > index + 2 && instructions.get(index + 2).getSign() != Instruction.REACHED_VIA) {
+                // Sub shows the instruction after the current one
+                ObjectNode sub = bannerInstruction.putObject("sub");
+                putSingleBannerInstruction(instructions.get(index + 2), locale, translationMap, sub);
+            }
         } else {
             for (InstructionDetails details : instructions.get(index + 1).getInstructionDetails()) {
                 ObjectNode subBannerInstruction = bannerInstructions.addObject();
