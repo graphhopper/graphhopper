@@ -482,7 +482,7 @@ public class NavigateResponseConverter {
                     component.put("type", "lane");
                     component.put("active", lane.isValid());
                     ArrayNode directions = component.putArray("directions");
-                    putDirections(instructions.get(index + 1), lane, directions, primary, "active_direction");
+                    putDirections(instructions.get(index + 1), lane, directions, component, "active_direction");
                 }
             }
         }
