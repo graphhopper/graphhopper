@@ -11,7 +11,7 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 
 import java.util.Iterator;
-import java.util.List;
+import java.util.Map;
 
 class PtGraphAsAdjacencyList implements Graph {
     private final PtGraph ptGraph;
@@ -304,12 +304,12 @@ class PtGraphAsAdjacencyList implements Graph {
             }
 
             @Override
-            public EdgeIteratorState setKeyValues(List<KVStorage.KeyValue> list) {
+            public EdgeIteratorState setKeyValues(Map<String, KVStorage.KValue> map) {
                 throw new RuntimeException();
             }
 
             @Override
-            public List<KVStorage.KeyValue> getKeyValues() {
+            public Map<String, KVStorage.KValue> getKeyValues() {
                 throw new RuntimeException();
             }
 

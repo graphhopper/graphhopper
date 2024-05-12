@@ -252,9 +252,9 @@ class OSMNodeData {
     public void setTags(ReaderNode node) {
         int tagIndex = Math.toIntExact(nodeTagIndicesByOsmNodeIds.get(node.getId()));
         if (tagIndex == -1) {
-            long pointer = nodeKVStorage.add(node.getTags().entrySet().stream().map(m -> new KVStorage.KeyValue(m.getKey(),
-                            m.getValue() instanceof String ? KVStorage.cutString((String) m.getValue()) : m.getValue())).
-                    collect(Collectors.toList()));
+            long pointer = nodeKVStorage.add(node.getTags().entrySet().stream().collect(
+                    Collectors.toMap(Map.Entry::getKey, // same key
+                            e -> new KVStorage.KValue(e.getValue() instanceof String ? KVStorage.cutString((String) e.getValue()) : e.getValue()))));
             if (pointer > Integer.MAX_VALUE)
                 throw new IllegalStateException("Too many key value pairs are stored in node tags, was " + pointer);
             nodeTagIndicesByOsmNodeIds.put(node.getId(), (int) pointer);

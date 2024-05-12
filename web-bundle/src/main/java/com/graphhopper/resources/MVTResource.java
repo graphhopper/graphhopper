@@ -3,6 +3,7 @@ package com.graphhopper.resources;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.search.KVStorage;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.EdgeIteratorState;
@@ -118,9 +119,9 @@ public class MVTResource {
 
             edgeCounter.incrementAndGet();
             Map<String, Object> map = new LinkedHashMap<>();
-            edge.getKeyValues().forEach(
-                    entry -> map.put(entry.key, entry.value)
-            );
+            for (Map.Entry<String, KVStorage.KValue> e : edge.getKeyValues().entrySet()) {
+                map.put(e.getKey(), e.getValue().toString());
+            }
             map.put("edge_id", edge.getEdge());
             map.put("edge_key", edge.getEdgeKey());
             map.put("base_node", edge.getBaseNode());

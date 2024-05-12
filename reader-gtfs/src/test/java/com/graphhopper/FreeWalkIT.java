@@ -61,6 +61,7 @@ public class FreeWalkIT {
         // TODO: here it is instantiated directly. Refactor by having only one Router but two Solvers, similar
         // TODO: to the street router.
         ghConfig.putObject("gtfs.free_walk", true);
+        ghConfig.putObject("graph.encoded_values", "foot_access, foot_priority, foot_average_speed, car_access, car_average_speed");
         ghConfig.setProfiles(List.of(
                 TestProfiles.accessSpeedAndPriority("foot"),
                 TestProfiles.accessAndSpeed("car")));
@@ -124,7 +125,7 @@ public class FreeWalkIT {
         assertThat(walkSolution.getLegs().get(0).getDepartureTime().toInstant().atZone(zoneId).toLocalTime())
                 .isEqualTo(LocalTime.parse("06:40"));
         assertThat(walkSolution.getLegs().get(0).getArrivalTime().toInstant().atZone(zoneId).toLocalTime())
-                .isEqualTo(LocalTime.parse("06:41:07.025"));
+                .isEqualTo(LocalTime.parse("06:41:07.031"));
         assertThat(walkSolution.getLegs().size()).isEqualTo(1);
         assertThat(walkSolution.getNumChanges()).isEqualTo(-1);
     }

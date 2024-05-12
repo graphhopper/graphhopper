@@ -44,6 +44,7 @@ web.way_contains_private=Az útvonalon magánút is található
 web.way_contains_toll=Az útvonalon útdíjat kell fizetni
 web.way_crosses_border=Az útvonal országhatárt keresztez
 web.way_contains=Az útvonalon előfordul %1$s
+web.way_contains_restrictions=
 web.tracks=burkolatlan földút
 web.steps=lépcső
 web.footways=gyalogút

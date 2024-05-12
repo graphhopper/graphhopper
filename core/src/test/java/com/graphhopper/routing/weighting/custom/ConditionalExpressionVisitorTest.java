@@ -121,6 +121,13 @@ public class ConditionalExpressionVisitorTest {
     }
 
     @Test
+    public void testAbs() {
+        ParseResult result = parse("Math.abs(average_slope) < -0.5", "average_slope"::equals, k -> "");
+        assertTrue(result.ok);
+        assertEquals("[average_slope]", result.guessedVariables.toString());
+    }
+
+    @Test
     public void testNegativeConstant() {
         ParseResult result = parse("average_slope < -0.5", "average_slope"::equals, k -> "");
         assertTrue(result.ok);

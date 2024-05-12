@@ -6,15 +6,23 @@ import com.graphhopper.reader.osm.Pair;
 import com.graphhopper.reader.osm.RestrictionType;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.querygraph.QueryGraph;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.SpeedWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.storage.BaseGraph;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.storage.index.LocationIndex;
+import com.graphhopper.storage.index.LocationIndexTree;
+import com.graphhopper.storage.index.Snap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -330,6 +338,148 @@ public class RestrictionSetterTest {
         assertEquals(nodes(5, 1, 2, 4), calcPath(5, 4, turnRestrictionEnc));
     }
 
+    @Test
+    void viaWayAndNode() {
+        // 4-0-1-2
+        //     |
+        //     3
+        int e0_1 = edge(0, 1);
+        int e0_4 = edge(0, 4);
+        int e1_2 = edge(1, 2);
+        int e1_3 = edge(1, 3);
+        BooleanEncodedValue turnRestrictionEnc = createTurnRestrictionEnc("car");
+        assertEquals(nodes(0, 1, 3), calcPath(0, 3, turnRestrictionEnc));
+        assertEquals(nodes(4, 0, 1, 2), calcPath(4, 2, turnRestrictionEnc));
+        r.setRestrictions(List.of(
+                new Pair<>(GraphRestriction.way(e0_4, e0_1, e1_2, nodes(0, 1)), RestrictionType.NO),
+                new Pair<>(GraphRestriction.node(e0_1, 1, e1_3), RestrictionType.NO)
+        ), turnRestrictionEnc);
+        assertEquals(NO_PATH, calcPath(4, 2, turnRestrictionEnc));
+        assertEquals(NO_PATH, calcPath(0, 3, turnRestrictionEnc));
+    }
+
+    @Test
+    void snapToViaWay() {
+        //   6   0
+        //   |   |
+        // 1-2-x-3-4
+        //   |   |
+        //   5   7
+        int e1_2 = edge(1, 2);
+        int e2_3 = edge(2, 3);
+        int e3_4 = edge(3, 4);
+        int e0_3 = edge(0, 3);
+        int e2_5 = edge(2, 5);
+        int e2_6 = edge(2, 6);
+        int e3_7 = edge(3, 7);
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(0, 40.03, 5.03);
+        na.setNode(1, 40.02, 5.01);
+        na.setNode(2, 40.02, 5.02);
+        na.setNode(3, 40.02, 5.03);
+        na.setNode(4, 40.02, 5.04);
+        na.setNode(5, 40.01, 5.02);
+        na.setNode(6, 40.03, 5.02);
+        na.setNode(7, 40.01, 5.03);
+        BooleanEncodedValue turnRestrictionEnc = createTurnRestrictionEnc("car");
+
+        assertEquals(nodes(1, 2, 3, 0), calcPath(1, 0, turnRestrictionEnc));
+        assertEquals(nodes(1, 2, 3, 4), calcPath(1, 4, turnRestrictionEnc));
+        assertEquals(nodes(5, 2, 3, 0), calcPath(5, 0, turnRestrictionEnc));
+        assertEquals(nodes(6, 2, 3), calcPath(6, 3, turnRestrictionEnc));
+        assertEquals(nodes(2, 3, 7), calcPath(2, 7, turnRestrictionEnc));
+        r.setRestrictions(List.of(
+                new Pair<>(GraphRestriction.way(e1_2, e2_3, e0_3, nodes(2, 3)), RestrictionType.NO),
+                new Pair<>(GraphRestriction.node(e2_6, 2, e2_3), RestrictionType.NO),
+                new Pair<>(GraphRestriction.node(e2_3, 3, e3_7), RestrictionType.NO)
+        ), turnRestrictionEnc);
+        assertEquals(NO_PATH, calcPath(1, 0, turnRestrictionEnc));
+        assertEquals(nodes(1, 2, 3, 4), calcPath(1, 4, turnRestrictionEnc));
+        assertEquals(nodes(5, 2, 3, 0), calcPath(5, 0, turnRestrictionEnc));
+        assertEquals(NO_PATH, calcPath(6, 3, turnRestrictionEnc));
+        assertEquals(NO_PATH, calcPath(2, 7, turnRestrictionEnc));
+
+        // Now we try to route to and from a virtual node x. The problem here is that the 1-2-3-0
+        // restriction forces paths coming from 1 onto an artificial edge (2-3)' (denying turns onto
+        // 2-3 coming from 1), so if we just snapped to the original edge 2-3 we wouldn't find a path!
+        // But if we snapped to the artificial edge we wouldn't find a path if we came from node 5.
+        // If x was our starting point we wouldn't be able to go to 0 either.
+        LocationIndex locationIndex = new LocationIndexTree(graph, graph.getDirectory()).prepareIndex();
+        Snap snap = locationIndex.findClosest(40.02, 5.025, EdgeFilter.ALL_EDGES);
+        QueryGraph queryGraph = QueryGraph.create(graph, snap);
+        final int x = 8;
+        // due to the virtual node the 1-2-3-0 path is now possible
+        assertEquals(nodes(1, 2, x, 3, 0), calcPath(queryGraph, 1, 0, turnRestrictionEnc));
+        assertEquals(nodes(1, 2, 3, 4), calcPath(queryGraph, 1, 4, turnRestrictionEnc));
+        assertEquals(nodes(1, 2, x), calcPath(queryGraph, 1, x, turnRestrictionEnc));
+        assertEquals(nodes(5, 2, x), calcPath(queryGraph, 5, x, turnRestrictionEnc));
+        assertEquals(nodes(x, 3, 0), calcPath(queryGraph, x, 0, turnRestrictionEnc));
+        assertEquals(nodes(x, 3, 4), calcPath(queryGraph, x, 4, turnRestrictionEnc));
+        // the 6-2-3 and 2-3-7 restrictions are still enforced, despite the virtual node
+        assertEquals(NO_PATH, calcPath(queryGraph, 6, 3, turnRestrictionEnc));
+        assertEquals(NO_PATH, calcPath(queryGraph, 2, 7, turnRestrictionEnc));
+    }
+
+    @Test
+    void snapToViaWay_twoVirtualNodes() {
+        // 1-2-x-3-y-4-z-5-6
+        int e1_2 = edge(1, 2);
+        int e2_3 = edge(2, 3);
+        int e3_4 = edge(3, 4);
+        int e4_5 = edge(4, 5);
+        int e5_6 = edge(5, 6);
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(1, 40.02, 5.01);
+        na.setNode(2, 40.02, 5.02);
+        na.setNode(3, 40.02, 5.03);
+        na.setNode(4, 40.02, 5.04);
+        na.setNode(5, 40.02, 5.05);
+        na.setNode(6, 40.02, 5.06);
+        BooleanEncodedValue turnRestrictionEnc = createTurnRestrictionEnc("car");
+
+        assertEquals(nodes(1, 2, 3, 4), calcPath(1, 4, turnRestrictionEnc));
+        assertEquals(nodes(2, 3, 4), calcPath(2, 4, turnRestrictionEnc));
+        assertEquals(nodes(2, 3, 4, 5), calcPath(2, 5, turnRestrictionEnc));
+        assertEquals(nodes(3, 4, 5), calcPath(3, 5, turnRestrictionEnc));
+        assertEquals(nodes(3, 4, 5, 6), calcPath(3, 6, turnRestrictionEnc));
+        assertEquals(nodes(4, 5, 6), calcPath(4, 6, turnRestrictionEnc));
+        r.setRestrictions(List.of(
+                new Pair<>(GraphRestriction.way(e1_2, e2_3, e3_4, nodes(2, 3)), RestrictionType.NO),
+                new Pair<>(GraphRestriction.way(e2_3, e3_4, e4_5, nodes(3, 4)), RestrictionType.NO),
+                new Pair<>(GraphRestriction.way(e3_4, e4_5, e5_6, nodes(4, 5)), RestrictionType.NO)
+        ), turnRestrictionEnc);
+        assertEquals(NO_PATH, calcPath(1, 4, turnRestrictionEnc));
+        assertEquals(nodes(2, 3, 4), calcPath(2, 4, turnRestrictionEnc));
+        assertEquals(NO_PATH, calcPath(2, 5, turnRestrictionEnc));
+        assertEquals(nodes(3, 4, 5), calcPath(3, 5, turnRestrictionEnc));
+        assertEquals(NO_PATH, calcPath(3, 6, turnRestrictionEnc));
+        assertEquals(nodes(4, 5, 6), calcPath(4, 6, turnRestrictionEnc));
+
+        // three virtual notes
+        LocationIndex locationIndex = new LocationIndexTree(graph, graph.getDirectory()).prepareIndex();
+        Snap snapX = locationIndex.findClosest(40.02, 5.025, EdgeFilter.ALL_EDGES);
+        Snap snapY = locationIndex.findClosest(40.02, 5.035, EdgeFilter.ALL_EDGES);
+        Snap snapZ = locationIndex.findClosest(40.02, 5.045, EdgeFilter.ALL_EDGES);
+        QueryGraph queryGraph = QueryGraph.create(graph, List.of(snapX, snapY, snapZ));
+        final int x = 8;
+        final int y = 7;
+        final int z = 9;
+        assertEquals(x, snapX.getClosestNode());
+        assertEquals(y, snapY.getClosestNode());
+        assertEquals(z, snapZ.getClosestNode());
+        assertEquals(nodes(1, 2, x, 3, 4), calcPath(queryGraph, 1, 4, turnRestrictionEnc));
+        assertEquals(nodes(2, x, 3, 4), calcPath(queryGraph, 2, 4, turnRestrictionEnc));
+        assertEquals(nodes(2, x, 3, y, 4, 5), calcPath(queryGraph, 2, 5, turnRestrictionEnc));
+        assertEquals(nodes(3, y, 4, 5), calcPath(queryGraph, 3, 5, turnRestrictionEnc));
+        assertEquals(nodes(3, y, 4, z, 5, 6), calcPath(queryGraph, 3, 6, turnRestrictionEnc));
+        assertEquals(nodes(4, z, 5, 6), calcPath(queryGraph, 4, 6, turnRestrictionEnc));
+        // turning between the virtual nodes is still possible
+        assertEquals(nodes(x, 3, y), calcPath(queryGraph, x, y, turnRestrictionEnc));
+        assertEquals(nodes(y, 3, x), calcPath(queryGraph, y, x, turnRestrictionEnc));
+        assertEquals(nodes(y, 4, z), calcPath(queryGraph, y, z, turnRestrictionEnc));
+        assertEquals(nodes(z, 4, y), calcPath(queryGraph, z, y, turnRestrictionEnc));
+    }
+
     private static BooleanEncodedValue createTurnRestrictionEnc(String name) {
         BooleanEncodedValue turnRestrictionEnc = TurnRestriction.create(name);
         turnRestrictionEnc.init(new EncodedValue.InitializerConfig());
@@ -337,7 +487,11 @@ public class RestrictionSetterTest {
     }
 
     private IntArrayList calcPath(int from, int to, BooleanEncodedValue turnRestrictionEnc) {
-        return new IntArrayList(new Dijkstra(graph, new SpeedWeighting(speedEnc, new TurnCostProvider() {
+        return calcPath(this.graph, from, to, turnRestrictionEnc);
+    }
+
+    private IntArrayList calcPath(Graph graph, int from, int to, BooleanEncodedValue turnRestrictionEnc) {
+        return new IntArrayList(new Dijkstra(graph, graph.wrapWeighting(new SpeedWeighting(speedEnc, new TurnCostProvider() {
             @Override
             public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
                 if (inEdge == outEdge) return Double.POSITIVE_INFINITY;
@@ -348,7 +502,7 @@ public class RestrictionSetterTest {
             public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
                 return Double.isInfinite(calcTurnWeight(inEdge, viaNode, outEdge)) ? Long.MAX_VALUE : 0L;
             }
-        }), TraversalMode.EDGE_BASED).calcPath(from, to).calcNodes());
+        })), TraversalMode.EDGE_BASED).calcPath(from, to).calcNodes());
     }
 
     private IntArrayList nodes(int... nodes) {

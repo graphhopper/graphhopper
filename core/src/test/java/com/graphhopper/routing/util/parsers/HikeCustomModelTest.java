@@ -1,7 +1,6 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.OSMParsers;
@@ -46,7 +45,7 @@ public class HikeCustomModelTest {
     EdgeIteratorState createEdge(ReaderWay way) {
         BaseGraph graph = new BaseGraph.Builder(em).create();
         EdgeIteratorState edge = graph.edge(0, 1);
-        EdgeIntAccess edgeIntAccess = graph.createEdgeIntAccess();
+        EdgeIntAccess edgeIntAccess = graph.getEdgeAccess();
         parsers.handleWayTags(edge.getEdge(), edgeIntAccess, way, em.createRelationFlags());
         return edge;
     }
@@ -69,7 +68,7 @@ public class HikeCustomModelTest {
         edge = createEdge(way);
         p = CustomModelParser.createWeightingParameters(cm, em);
         assertEquals(1.2, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(2, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        assertEquals(1.5, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
         way = new ReaderWay(0L);
         way.setTag("highway", "track");
@@ -81,7 +80,6 @@ public class HikeCustomModelTest {
         way.setTag("sac_scale", "alpine_hiking");
         edge = createEdge(way);
         p = CustomModelParser.createWeightingParameters(cm, em);
-        // TODO this would be wrong tagging but still we should exclude the way - will be fixed with #2819
-        // assertEquals(0, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
+        assertEquals(0, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
     }
 }

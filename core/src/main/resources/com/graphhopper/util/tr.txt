@@ -44,6 +44,7 @@ web.way_contains_private=özel yol
 web.way_contains_toll=Ücretli yol
 web.way_crosses_border=Rota ülke sınırından geçmektedir
 web.way_contains=Rota %1$s içermektedir
+web.way_contains_restrictions=
 web.tracks=Asfaltsız toprak yol
 web.steps=
 web.footways=

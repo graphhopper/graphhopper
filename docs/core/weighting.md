@@ -1,6 +1,6 @@
 ## Weighting
 
-Instead of creating a new Weighting implementation is is highly recommended to use the CustomWeighting instead, which is explained in
+Instead of creating a new Weighting implementation it is highly recommended to use the CustomWeighting instead, which is explained in
 the [profiles](profiles.md) and [custom models](custom-models.md) section.
 
 A weighting calculates the "weight" for an edge. The weight of an edge reflects the cost of travelling along this edge.

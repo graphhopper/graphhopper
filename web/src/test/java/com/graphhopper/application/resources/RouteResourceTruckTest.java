@@ -18,6 +18,8 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import static com.graphhopper.application.util.TestUtils.clientTarget;
 import static org.junit.jupiter.api.Assertions.*;
@@ -36,9 +38,10 @@ public class RouteResourceTruckTest {
                 putObject("graph.encoded_values", "max_height,max_weight,max_width,hazmat,toll,surface,hgv").
                 putObject("import.osm.ignored_highways", "").
                 putObject("custom_models.directory", "./src/test/resources/com/graphhopper/application/resources").
-                setProfiles(Arrays.asList(new Profile("truck").setCustomModel(null).
-                        putHint("custom_model_files", Arrays.asList("test_truck.json")))).
-                setCHProfiles(Arrays.asList(new CHProfile("truck")));
+                putObject("graph.encoded_values", "max_height, max_weight, max_width, hazmat, toll, surface, hgv, road_class, road_access, road_class_link, road_environment\n").
+                setProfiles(List.of(new Profile("truck").setCustomModel(null).
+                        putHint("custom_model_files", List.of("test_truck.json")))).
+                setCHProfiles(List.of(new CHProfile("truck")));
         return config;
     }
 

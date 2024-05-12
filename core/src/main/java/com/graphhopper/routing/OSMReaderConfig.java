@@ -26,7 +26,7 @@ public class OSMReaderConfig {
     private boolean parseWayNames = true;
     private String preferredLanguage = "";
     private List<String> turnLanesProfiles = new ArrayList<>();
-    private double maxWayPointDistance = 1;
+    private double maxWayPointDistance = 0.5;
     private double elevationMaxWayPointDistance = Double.MAX_VALUE;
     private String smoothElevation = "";
 

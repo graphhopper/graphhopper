@@ -37,7 +37,7 @@ public class Helper {
     public static final long MB = 1L << 20;
     // we keep the first seven decimal places of lat/lon coordinates. this corresponds to ~1cm precision ('pointing to waldo on a page')
     private static final float DEGREE_FACTOR = 10_000_000;
-    // milli meter is a bit extreme but we have integers
+    // milli meter is a bit extreme but we have 3 bytes
     private static final float ELE_FACTOR = 1000f;
 
     private Helper() {
@@ -276,20 +276,20 @@ public class Helper {
     /**
      * Converts elevation value (in meters) into integer for storage.
      */
-    public static int eleToInt(double ele) {
-        if (ele >= Integer.MAX_VALUE)
-            return Integer.MAX_VALUE;
-        return (int) (ele * ELE_FACTOR);
+    public static int eleToUInt(double ele) {
+        if (ele < -1000) return -1000;
+        if (ele >= Integer.MAX_VALUE / ELE_FACTOR - 1000) return Integer.MAX_VALUE;
+        return (int) ((ele + 1000) * ELE_FACTOR); // enough for smallest value is -414m
     }
 
     /**
      * Converts the integer value retrieved from storage into elevation (in meters). Do not expect
      * more precision than meters although it currently is!
      */
-    public static double intToEle(int integEle) {
+    public static double uIntToEle(int integEle) {
         if (integEle == Integer.MAX_VALUE)
             return Double.MAX_VALUE;
-        return integEle / ELE_FACTOR;
+        return integEle / ELE_FACTOR - 1000;
     }
 
     public static String nf(long no) {

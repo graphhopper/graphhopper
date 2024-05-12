@@ -54,18 +54,19 @@ public class RouteResourceProfileSelectionTest {
                 putObject("datareader.file", "../core/files/monaco.osm.gz").
                 putObject("graph.encoded_values", "road_class,surface,road_environment,max_speed").
                 putObject("import.osm.ignored_highways", "").
-                putObject("graph.location", DIR)
-                .setProfiles(Arrays.asList(
+                putObject("graph.location", DIR).
+                putObject("graph.encoded_values", "road_class, surface, road_environment, max_speed, car_access, car_average_speed, bike_access, bike_priority, bike_average_speed, foot_access, foot_priority, foot_average_speed").
+                setProfiles(Arrays.asList(
                         TestProfiles.accessAndSpeed("my_car", "car"),
                         TestProfiles.accessSpeedAndPriority("my_bike", "bike"),
                         TestProfiles.accessSpeedAndPriority("my_feet", "foot")
-                ))
-                .setCHProfiles(Arrays.asList(
+                )).
+                setCHProfiles(Arrays.asList(
                         new CHProfile("my_car"),
                         new CHProfile("my_bike"),
                         new CHProfile("my_feet")
-                ))
-                .setLMProfiles(Arrays.asList(
+                )).
+                setLMProfiles(Arrays.asList(
                         new LMProfile("my_car"),
                         new LMProfile("my_bike"),
                         new LMProfile("my_feet")

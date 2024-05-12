@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
+import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.gpx.GpxConversions;
 import com.graphhopper.http.ProfileResolver;
@@ -36,6 +37,7 @@ import com.graphhopper.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
@@ -63,20 +65,23 @@ public class MapMatchingResource {
 
     private static final Logger logger = LoggerFactory.getLogger(MapMatchingResource.class);
 
+    private final GraphHopperConfig config;
     private final GraphHopper graphHopper;
     private final ProfileResolver profileResolver;
     private final TranslationMap trMap;
     private final MapMatchingRouterFactory mapMatchingRouterFactory;
     private final ObjectMapper objectMapper = Jackson.newObjectMapper();
+    @Nullable
     private final String osmDate;
 
     @Inject
-    public MapMatchingResource(GraphHopper graphHopper, ProfileResolver profileResolver, TranslationMap trMap, MapMatchingRouterFactory mapMatchingRouterFactory) {
+    public MapMatchingResource(GraphHopperConfig config, GraphHopper graphHopper, ProfileResolver profileResolver, TranslationMap trMap, MapMatchingRouterFactory mapMatchingRouterFactory) {
+        this.config = config;
         this.graphHopper = graphHopper;
         this.profileResolver = profileResolver;
         this.trMap = trMap;
         this.mapMatchingRouterFactory = mapMatchingRouterFactory;
-        this.osmDate = graphHopper.getProperties().get("datareader.data.date");
+        this.osmDate = graphHopper.getProperties().getAll().get("datareader.data.date");
     }
 
     @POST
@@ -85,12 +90,13 @@ public class MapMatchingResource {
     public Response match(
             @NotNull Gpx gpx,
             @Context UriInfo uriInfo,
-            @QueryParam(WAY_POINT_MAX_DISTANCE) @DefaultValue("1") double minPathPrecision,
+            @QueryParam(WAY_POINT_MAX_DISTANCE) @DefaultValue("0.5") double minPathPrecision,
             @QueryParam("type") @DefaultValue("json") String outType,
             @QueryParam(INSTRUCTIONS) @DefaultValue("true") boolean instructions,
             @QueryParam(CALC_POINTS) @DefaultValue("true") boolean calcPoints,
             @QueryParam("elevation") @DefaultValue("false") boolean enableElevation,
             @QueryParam("points_encoded") @DefaultValue("true") boolean pointsEncoded,
+            @QueryParam("points_encoded_multiplier") @DefaultValue("1e5") double pointsEncodedMultiplier,
             @QueryParam("locale") @DefaultValue("en") String localeStr,
             @QueryParam("profile") String profile,
             @QueryParam(PATH_DETAILS) List<String> pathDetails,
@@ -98,7 +104,6 @@ public class MapMatchingResource {
             @QueryParam("gpx.track") @DefaultValue("true") boolean withTrack,
             @QueryParam("traversal_keys") @DefaultValue("false") boolean enableTraversalKeys,
             @QueryParam("gps_accuracy") @DefaultValue("10") double gpsAccuracy) {
-
         boolean writeGPX = "gpx".equalsIgnoreCase(outType);
         if (gpx.trk.isEmpty()) {
             throw new IllegalArgumentException("No tracks found in GPX document. Are you using waypoints or routes instead?");
@@ -137,7 +142,7 @@ public class MapMatchingResource {
                 .putPOJO("mapmatching", matching.getStatistics()).toString());
 
         if ("extended_json".equals(outType)) {
-            return Response.ok(convertToTree(matchResult, enableElevation, pointsEncoded)).
+            return Response.ok(convertToTree(matchResult, enableElevation, pointsEncoded, pointsEncodedMultiplier)).
                     header("X-GH-Took", "" + Math.round(sw.getMillisDouble())).
                     build();
         } else {
@@ -165,8 +170,8 @@ public class MapMatchingResource {
                         header("X-GH-Took", "" + Math.round(sw.getMillisDouble())).
                         build();
             } else {
-                ObjectNode map = ResponsePathSerializer.jsonObject(rsp, osmDate, instructions,
-                        calcPoints, enableElevation, pointsEncoded, sw.getMillisDouble());
+                ObjectNode map = ResponsePathSerializer.jsonObject(rsp, new ResponsePathSerializer.Info(config.getCopyrights(), Math.round(sw.getMillisDouble()), osmDate), instructions,
+                        calcPoints, enableElevation, pointsEncoded, pointsEncodedMultiplier);
 
                 Map<String, Object> matchStatistics = new HashMap<>();
                 matchStatistics.put("distance", matchResult.getMatchLength());
@@ -190,7 +195,7 @@ public class MapMatchingResource {
         }
     }
 
-    public static JsonNode convertToTree(MatchResult result, boolean elevation, boolean pointsEncoded) {
+    public static JsonNode convertToTree(MatchResult result, boolean elevation, boolean pointsEncoded, double pointsEncodedMultiplier) {
         ObjectNode root = JsonNodeFactory.instance.objectNode();
         ObjectNode diary = root.putObject("diary");
         ArrayNode entries = diary.putArray("entries");
@@ -202,10 +207,10 @@ public class MapMatchingResource {
             PointList pointList = edgeMatch.getEdgeState().fetchWayGeometry(emIndex == 0 ? FetchMode.ALL : FetchMode.PILLAR_AND_ADJ);
             final ObjectNode geometry = link.putObject("geometry");
             if (pointList.size() < 2) {
-                geometry.putPOJO("coordinates", pointsEncoded ? ResponsePathSerializer.encodePolyline(pointList, elevation, 1e5) : pointList.toLineString(elevation));
+                geometry.putPOJO("coordinates", pointsEncoded ? ResponsePathSerializer.encodePolyline(pointList, elevation, pointsEncodedMultiplier) : pointList.toLineString(elevation));
                 geometry.put("type", "Point");
             } else {
-                geometry.putPOJO("coordinates", pointsEncoded ? ResponsePathSerializer.encodePolyline(pointList, elevation, 1e5) : pointList.toLineString(elevation));
+                geometry.putPOJO("coordinates", pointsEncoded ? ResponsePathSerializer.encodePolyline(pointList, elevation, pointsEncodedMultiplier) : pointList.toLineString(elevation));
                 geometry.put("type", "LineString");
             }
             link.put("id", edgeMatch.getEdgeState().getEdge());

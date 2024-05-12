@@ -56,9 +56,10 @@ public class RouteResourceLeipzigTest {
                 putObject("prepare.min_network_size", 200).
                 putObject("datareader.file", "../map-matching/files/leipzig_germany.osm.pbf").
                 putObject("import.osm.ignored_highways", "").
-                putObject("graph.location", DIR)
-                .setProfiles(List.of(TestProfiles.accessAndSpeed("my_car", "car")))
-                .setCHProfiles(Collections.singletonList(new CHProfile("my_car")));
+                putObject("graph.location", DIR).
+                putObject("graph.encoded_values", "car_access, car_average_speed").
+                setProfiles(List.of(TestProfiles.accessAndSpeed("my_car", "car"))).
+                setCHProfiles(Collections.singletonList(new CHProfile("my_car")));
         return config;
     }
 
@@ -78,10 +79,10 @@ public class RouteResourceLeipzigTest {
 
     @ParameterizedTest
     @CsvSource(value = {
-            "104,-1,algorithm=" + DIJKSTRA_BI,
-            "130,-1,algorithm=" + ASTAR_BI,
-            "30866,1,ch.disable=true&algorithm=" + DIJKSTRA,
-            "21180,1,ch.disable=true&algorithm=" + ASTAR,
+            "103,-1,algorithm=" + DIJKSTRA_BI,
+            "128,-1,algorithm=" + ASTAR_BI,
+            "30867,1,ch.disable=true&algorithm=" + DIJKSTRA,
+            "21181,1,ch.disable=true&algorithm=" + ASTAR,
             "14854,1,ch.disable=true&algorithm=" + DIJKSTRA_BI,
             "10538,1,ch.disable=true&algorithm=" + ASTAR_BI
     })

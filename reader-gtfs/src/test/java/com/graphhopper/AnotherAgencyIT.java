@@ -57,6 +57,7 @@ public class AnotherAgencyIT {
         ghConfig.putObject("import.osm.ignored_highways", "");
         ghConfig.putObject("datareader.file", "files/beatty.osm");
         ghConfig.putObject("gtfs.file", "files/sample-feed,files/another-sample-feed");
+        ghConfig.putObject("graph.encoded_values", "foot_access, foot_priority, foot_average_speed, car_access, car_average_speed");
         ghConfig.setProfiles(List.of(
                 TestProfiles.accessSpeedAndPriority("foot"),
                 TestProfiles.accessAndSpeed("car")));

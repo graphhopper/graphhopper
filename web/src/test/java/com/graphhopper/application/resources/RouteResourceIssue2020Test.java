@@ -50,7 +50,7 @@ public class RouteResourceIssue2020Test {
         config.getGraphHopperConfiguration().
                 putObject("prepare.lm.split_area_location", "../core/files/split.geo.json").
                 putObject("datareader.file", "../core/files/north-bayreuth.osm.gz").
-                putObject("graph.encoded_values", "road_class,surface,road_environment,max_speed").
+                putObject("graph.encoded_values", "road_class,surface,road_environment,max_speed,car_access,car_average_speed").
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR).
                 setProfiles(Collections.singletonList(TestProfiles.accessAndSpeed("my_car", "car"))).

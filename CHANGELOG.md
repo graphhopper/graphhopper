@@ -1,9 +1,16 @@
-### 9.0 [not yet released]
+### 10.0 [not yet released]
 
+- constructor of BaseGraph.Builder uses byte instead of integer count.
+- KeyValue is now KValue as it holds the value only. Note, the two parameter constructor uses one value for the forward and one for the backward direction (and no longer "key, value")
+
+### 9.0 [23 Apr 2024]
+
+- max_slope is now a signed decimal, see #2955
+- move sac_scale handling out of foot_access parser and made foot safer via lowering to sac_scale<2, same for hike sac_scale<5
 - removed shortest+fastest weightings, #2938
 - u_turn_costs information is no longer stored in profile. Use the TurnCostsConfig instead
 - the custom models do no longer include the speed, access and priority encoded values only implicitly, see docs/migration/config-migration-08-09.md
-- conditional access restriction tags are no longer considered from vehicle tag parsers and instead a car_road_access_conditional encoded value (similarly for bike + foot) can be used in a custom model. This fixes #2477. More details are accessible via path details "access_conditional" (i.e. converted from OSM access:conditional). See #2863
+- conditional access restriction tags are no longer considered from vehicle tag parsers and instead a car_temporal_access encoded value (similarly for bike + foot) can be used in a custom model. This fixes #2477. More details are accessible via path details named according to the OSM tags e.g. for access:conditional it is "access_conditional" (i.e. converted from OSM access:conditional). See #2863 and #2965.
 - replaced (Vehicle)EncodedValueFactory and (Vehicle)TagParserFactory with ImportRegistry, #2935
 - encoded values used in custom models are added automatically, no need to add them to graph.encoded_values anymore, #2935
 - removed the ability to sort the graph (graph.do_sort) due to incomplete support, #2919

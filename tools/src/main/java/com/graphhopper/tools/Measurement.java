@@ -29,10 +29,7 @@ import com.graphhopper.config.TurnCostsConfig;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.Subnetwork;
-import com.graphhopper.routing.ev.TurnRestriction;
-import com.graphhopper.routing.ev.VehicleAccess;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.lm.LMConfig;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.*;
@@ -298,6 +295,7 @@ public class Measurement {
     private GraphHopperConfig createConfigFromArgs(PMap args) {
         GraphHopperConfig ghConfig = new GraphHopperConfig(args);
         vehicle = args.getString("measurement.vehicle", "car");
+        ghConfig.putObject("graph.encoded_values", ghConfig.getString("graph.encoded_values", "") + ", " + VehicleAccess.key(vehicle) + "," + VehicleSpeed.key(vehicle));
         boolean turnCosts = args.getBool("measurement.turn_costs", false);
         int uTurnCosts = args.getInt("measurement.u_turn_costs", 40);
         String weighting = args.getString("measurement.weighting", "custom");

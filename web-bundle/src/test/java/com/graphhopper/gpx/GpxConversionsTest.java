@@ -43,9 +43,10 @@ import java.io.StringReader;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
-import static com.graphhopper.search.KVStorage.KeyValue.STREET_NAME;
-import static com.graphhopper.search.KVStorage.KeyValue.createKV;
+import static com.graphhopper.search.KVStorage.KValue;
+import static com.graphhopper.util.Parameters.Details.STREET_NAME;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class GpxConversionsTest {
@@ -78,12 +79,12 @@ public class GpxConversionsTest {
         na.setNode(6, 15.1, 10.1);
         na.setNode(7, 15.1, 9.8);
 
-        g.edge(1, 2).set(speedEnc, 63).setDistance(7000).setKeyValues(createKV(STREET_NAME, "1-2"));
-        g.edge(2, 3).set(speedEnc, 72).setDistance(8000).setKeyValues(createKV(STREET_NAME, "2-3"));
-        g.edge(2, 6).set(speedEnc, 9).setDistance(10000).setKeyValues(createKV(STREET_NAME, "2-6"));
-        g.edge(3, 4).set(speedEnc, 81).setDistance(9000).setKeyValues(createKV(STREET_NAME, "3-4"));
-        g.edge(3, 7).set(speedEnc, 9).setDistance(10000).setKeyValues(createKV(STREET_NAME, "3-7"));
-        g.edge(4, 5).set(speedEnc, 90).setDistance(10000).setKeyValues(createKV(STREET_NAME, "4-5"));
+        g.edge(1, 2).set(speedEnc, 63).setDistance(7000).setKeyValues(Map.of(STREET_NAME, new KValue("1-2")));
+        g.edge(2, 3).set(speedEnc, 72).setDistance(8000).setKeyValues(Map.of(STREET_NAME, new KValue("2-3")));
+        g.edge(2, 6).set(speedEnc, 9).setDistance(10000).setKeyValues(Map.of(STREET_NAME, new KValue("2-6")));
+        g.edge(3, 4).set(speedEnc, 81).setDistance(9000).setKeyValues(Map.of(STREET_NAME, new KValue("3-4")));
+        g.edge(3, 7).set(speedEnc, 9).setDistance(10000).setKeyValues(Map.of(STREET_NAME, new KValue("3-7")));
+        g.edge(4, 5).set(speedEnc, 90).setDistance(10000).setKeyValues(Map.of(STREET_NAME, new KValue("4-5")));
 
         Weighting weighting = new SpeedWeighting(speedEnc);
         Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED).calcPath(1, 5);

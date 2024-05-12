@@ -28,6 +28,13 @@ public class ArrayEdgeIntAccess implements EdgeIntAccess {
         this.intsPerEdge = intsPerEdge;
     }
 
+    /**
+     * Ensures that the underlying storage has enough integers reserved for the specified bytes.
+     */
+    public static ArrayEdgeIntAccess createFromBytes(int bytes) {
+        return new ArrayEdgeIntAccess((int) Math.ceil((double) bytes / 4));
+    }
+
     @Override
     public int getInt(int edgeId, int index) {
         int arrIndex = edgeId * intsPerEdge + index;

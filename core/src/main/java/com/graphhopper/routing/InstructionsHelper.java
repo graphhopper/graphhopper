@@ -60,7 +60,7 @@ class InstructionsHelper {
             return Instruction.TURN_SHARP_RIGHT;
     }
 
-    static boolean isNameSimilar(String name1, String name2) {
+    static boolean isSameName(String name1, String name2) {
         // We don't want two empty names to be similar (they usually don't have names if they are random tracks)
         if (name1 == null || name2 == null || name1.isEmpty() || name2.isEmpty())
             return false;
