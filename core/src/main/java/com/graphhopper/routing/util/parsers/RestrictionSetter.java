@@ -31,9 +31,8 @@ import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.FetchMode;
 
-import java.util.List;
+import java.util.*;
 
 import static com.graphhopper.reader.osm.RestrictionType.NO;
 import static com.graphhopper.reader.osm.RestrictionType.ONLY;
@@ -72,12 +71,7 @@ public class RestrictionSetter {
                 int viaEdge = p.first.getViaEdges().get(0);
                 int artificialEdge = artificialEdgesByEdges.getOrDefault(viaEdge, -1);
                 if (artificialEdge < 0) {
-                    EdgeIteratorState viaEdgeState = baseGraph.getEdgeIteratorState(p.first.getViaEdges().get(0), Integer.MIN_VALUE);
-                    EdgeIteratorState artificialEdgeState = baseGraph.edge(viaEdgeState.getBaseNode(), viaEdgeState.getAdjNode())
-                            .setFlags(viaEdgeState.getFlags())
-                            .setWayGeometry(viaEdgeState.fetchWayGeometry(FetchMode.PILLAR_ONLY))
-                            .setDistance(viaEdgeState.getDistance())
-                            .setKeyValues(viaEdgeState.getKeyValues());
+                    EdgeIteratorState artificialEdgeState = baseGraph.copyEdge(viaEdge, true);
                     artificialEdge = artificialEdgeState.getEdge();
                     artificialEdgesByEdges.put(viaEdge, artificialEdge);
                 }

@@ -90,7 +90,7 @@ measurement.count=5000 \
 measurement.use_measurement_time_as_ref_time=${USE_MEASUREMENT_TIME_AS_REF_TIME}
 
 echo "3 - big map with a custom model that is 'very customized', i.e. has many custom weighting rules"
-echo "node-based CH + LM"
+echo "node-based CH + LM + slow routing"
 java -cp tools/target/graphhopper-tools-*-jar-with-dependencies.jar \
 -XX:+UseParallelGC -Xmx20g -Xms20g \
 com.graphhopper.tools.Measurement \
@@ -102,7 +102,7 @@ measurement.clean=true \
 measurement.stop_on_error=true \
 measurement.summaryfile=${SUMMARY_DIR}summary_big_very_custom.dat \
 measurement.repeats=1 \
-measurement.run_slow_routing=false \
+measurement.run_slow_routing=true \
 measurement.weighting=custom \
 measurement.custom_model_file=benchmark/very_custom.json \
 graph.encoded_values=max_width,max_height,toll,hazmat,road_access,road_class \

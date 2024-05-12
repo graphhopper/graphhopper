@@ -17,19 +17,22 @@
  */
 package com.graphhopper.storage;
 
+import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RoadClass;
-import com.graphhopper.search.KVStorage.KeyValue;
+import com.graphhopper.search.KVStorage.KValue;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
-import static com.graphhopper.search.KVStorage.KeyValue.STREET_NAME;
 import static com.graphhopper.util.EdgeIteratorState.REVERSE_STATE;
 import static com.graphhopper.util.FetchMode.*;
+import static com.graphhopper.util.Parameters.Details.STREET_NAME;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -70,14 +73,15 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
         graph.edge(9, 11).setDistance(200).set(carAccessEnc, true, true);
         graph.edge(1, 2).setDistance(120).set(carAccessEnc, true, false);
 
-        iter1.setKeyValues(KeyValue.createKV(STREET_NAME, "named street1"));
-        iter2.setKeyValues(KeyValue.createKV(STREET_NAME, "named street2"));
+        iter1.setKeyValues(Map.of(STREET_NAME, new KValue("named street1")));
+        iter2.setKeyValues(Map.of(STREET_NAME, new KValue("named street2")));
 
-        List<KeyValue> list = new ArrayList<>();
-        list.add(new KeyValue("keyA", "FORWARD", true, false));
-        list.add(new KeyValue("keyB", "BACKWARD", false, true));
-        list.add(new KeyValue("keyC", "BOTH", true, true));
-        iter3.setKeyValues(list);
+        Map<String, KValue> map = new LinkedHashMap<>();
+        map.put("keyA", new KValue("FORWARD", null));
+        map.put("keyB", new KValue(null, "BACKWARD"));
+        map.put("keyC", new KValue("BOTH"));
+        map.put("keyD", new KValue("BOTH2", "BOTH2"));
+        iter3.setKeyValues(map);
 
         checkGraph(graph);
         graph.flush();
@@ -92,8 +96,8 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
         assertEquals("named street1", graph.getEdgeIteratorState(iter1.getEdge(), iter1.getAdjNode()).getName());
         assertEquals("named street2", graph.getEdgeIteratorState(iter2.getEdge(), iter2.getAdjNode()).getName());
         iter3 = graph.getEdgeIteratorState(iter3.getEdge(), iter3.getAdjNode());
-        assertEquals(list, iter3.getKeyValues());
-        assertEquals(list, iter3.detach(true).getKeyValues());
+        assertEquals(map, iter3.getKeyValues());
+        assertEquals(map, iter3.detach(true).getKeyValues());
 
         assertEquals("FORWARD", iter3.getValue("keyA"));
         assertNull(iter3.getValue("keyB"));
@@ -101,6 +105,7 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
         assertNull(iter3.detach(true).getValue("keyA"));
         assertEquals("BACKWARD", iter3.detach(true).getValue("keyB"));
         assertEquals("BOTH", iter3.detach(true).getValue("keyC"));
+        assertEquals("BOTH2", iter3.getValue("keyD"));
 
         GHUtility.setSpeed(60, true, true, carAccessEnc, carSpeedEnc, graph.edge(3, 4).setDistance(123)).
                 setWayGeometry(Helper.createPointList3D(4.4, 5.5, 0, 6.6, 7.7, 0));
@@ -271,7 +276,7 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
     public void setGetFlagsRaw() {
         BaseGraph graph = new BaseGraph.Builder(1).create();
         EdgeIteratorState edge = graph.edge(0, 1);
-        IntsRef flags = new IntsRef(graph.getIntsForFlags());
+        IntsRef flags = encodingManager.createEdgeFlags();
         flags.ints[0] = 10;
         edge.setFlags(flags);
         assertEquals(10, edge.getFlags().ints[0]);
@@ -288,5 +293,118 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
         assertEquals(RoadClass.BRIDLEWAY, edge.get(rcEnc));
         edge.set(rcEnc, RoadClass.CORRIDOR);
         assertEquals(RoadClass.CORRIDOR, edge.get(rcEnc));
+    }
+
+    @Test
+    public void copyEdge() {
+        BaseGraph graph = createGHStorage();
+        EnumEncodedValue<RoadClass> rcEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
+        EdgeIteratorState edge1 = graph.edge(3, 5).set(rcEnc, RoadClass.LIVING_STREET);
+        EdgeIteratorState edge2 = graph.edge(3, 5).set(rcEnc, RoadClass.MOTORWAY);
+        EdgeIteratorState edge3 = graph.copyEdge(edge1.getEdge(), true);
+        EdgeIteratorState edge4 = graph.copyEdge(edge1.getEdge(), false);
+        assertEquals(RoadClass.LIVING_STREET, edge1.get(rcEnc));
+        assertEquals(RoadClass.MOTORWAY, edge2.get(rcEnc));
+        assertEquals(edge1.get(rcEnc), edge3.get(rcEnc));
+        assertEquals(edge1.get(rcEnc), edge4.get(rcEnc));
+        graph.forEdgeAndCopiesOfEdge(graph.createEdgeExplorer(), edge1, e -> e.set(rcEnc, RoadClass.FOOTWAY));
+        assertEquals(RoadClass.FOOTWAY, edge1.get(rcEnc));
+        assertEquals(RoadClass.FOOTWAY, edge3.get(rcEnc));
+        // edge4 was not changed because it was copied with reuseGeometry=false
+        assertEquals(RoadClass.LIVING_STREET, edge4.get(rcEnc));
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    public void copyEdge_multiple(boolean withGeometries) {
+        BaseGraph graph = createGHStorage();
+        EnumEncodedValue<RoadClass> rcEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
+        EdgeIteratorState edge1 = graph.edge(1, 2).set(rcEnc, RoadClass.FOOTWAY);
+        EdgeIteratorState edge2 = graph.edge(1, 3).set(rcEnc, RoadClass.MOTORWAY);
+        EdgeIteratorState edge3 = graph.edge(1, 4).set(rcEnc, RoadClass.CYCLEWAY);
+        if (withGeometries) {
+            edge1.setWayGeometry(Helper.createPointList(1.5, 1, 0, 2, 3, 0));
+            edge2.setWayGeometry(Helper.createPointList(1.5, 1, 1, 2, 3, 5));
+            edge3.setWayGeometry(Helper.createPointList(1.5, 1, 2, 2, 3, 6));
+        }
+        EdgeIteratorState edge4 = graph.copyEdge(edge1.getEdge(), true);
+        EdgeIteratorState edge5 = graph.copyEdge(edge3.getEdge(), true);
+        EdgeIteratorState edge6 = graph.copyEdge(edge3.getEdge(), true);
+        EdgeExplorer explorer = graph.createEdgeExplorer();
+        graph.forEdgeAndCopiesOfEdge(explorer, edge1, e -> e.set(rcEnc, RoadClass.PATH));
+        assertEquals(RoadClass.PATH, edge1.get(rcEnc));
+        assertEquals(RoadClass.CYCLEWAY, edge3.get(rcEnc));
+        assertEquals(RoadClass.PATH, edge4.get(rcEnc));
+        assertEquals(RoadClass.CYCLEWAY, edge5.get(rcEnc));
+        assertEquals(RoadClass.CYCLEWAY, edge6.get(rcEnc));
+        graph.forEdgeAndCopiesOfEdge(explorer, edge6, e -> e.set(rcEnc, RoadClass.OTHER));
+        assertEquals(RoadClass.PATH, edge1.get(rcEnc));
+        assertEquals(RoadClass.OTHER, edge3.get(rcEnc));
+        assertEquals(RoadClass.PATH, edge4.get(rcEnc));
+        assertEquals(RoadClass.OTHER, edge5.get(rcEnc));
+        assertEquals(RoadClass.OTHER, edge6.get(rcEnc));
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    public void forEdgeAndCopiesOfEdge_noCopyNoGeo(boolean withGeometries) {
+        BaseGraph graph = createGHStorage();
+        EdgeIteratorState edge1 = graph.edge(0, 1);
+        EdgeIteratorState edge2 = graph.edge(1, 2);
+        if (withGeometries) {
+            edge1.setWayGeometry(Helper.createPointList(1.5, 1, 0, 2, 3, 0));
+            edge2.setWayGeometry(Helper.createPointList(3, 0, 4, 5, 4.5, 5.5));
+        }
+        IntArrayList edges = new IntArrayList();
+        graph.forEdgeAndCopiesOfEdge(graph.createEdgeExplorer(), edge2, e -> {
+            edges.add(e.getEdge());
+        });
+        assertEquals(IntArrayList.from(edge2.getEdge()), edges);
+
+        edges.clear();
+        EdgeIteratorState edge3 = graph.copyEdge(edge2.getEdge(), true);
+        graph.forEdgeAndCopiesOfEdge(graph.createEdgeExplorer(), edge2, e -> {
+            edges.add(e.getEdge());
+        });
+        assertEquals(IntArrayList.from(edge3.getEdge(), edge2.getEdge()), edges);
+    }
+
+    @Test
+    public void copyEdge_changeGeometry() {
+        BaseGraph graph = createGHStorage();
+        EnumEncodedValue<RoadClass> rcEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
+        EdgeIteratorState edge1 = graph.edge(1, 2).set(rcEnc, RoadClass.FOOTWAY);
+        EdgeIteratorState edge2 = graph.edge(1, 3).set(rcEnc, RoadClass.FOOTWAY).setWayGeometry(Helper.createPointList(0, 1, 2, 3));
+        EdgeIteratorState edge3 = graph.edge(1, 4).set(rcEnc, RoadClass.FOOTWAY).setWayGeometry(Helper.createPointList(4, 5, 6, 7));
+        EdgeIteratorState edge4 = graph.copyEdge(edge1.getEdge(), true);
+        EdgeIteratorState edge5 = graph.copyEdge(edge3.getEdge(), true);
+
+        // after copying an edge we can no longer change the geometry
+        assertThrows(IllegalStateException.class, () -> graph.getEdgeIteratorState(edge1.getEdge(), Integer.MIN_VALUE).setWayGeometry(Helper.createPointList(1.5, 1, 5, 4)));
+        // after setting the geometry once we can change it again
+        graph.getEdgeIteratorState(edge2.getEdge(), Integer.MIN_VALUE).setWayGeometry(Helper.createPointList(2, 3, 4, 5));
+        // ... but not if it is longer than before
+        IllegalStateException e = assertThrows(IllegalStateException.class, () -> graph.getEdgeIteratorState(edge2.getEdge(), Integer.MIN_VALUE).setWayGeometry(Helper.createPointList(2, 3, 4, 5, 6, 7)));
+        assertTrue(e.getMessage().contains("This edge already has a way geometry so it cannot be changed to a bigger geometry"), e.getMessage());
+        // it's the same for edges with geometry that were copied:
+        graph.getEdgeIteratorState(edge3.getEdge(), Integer.MIN_VALUE).setWayGeometry(Helper.createPointList(6, 7, 8, 9));
+        e = assertThrows(IllegalStateException.class, () -> graph.getEdgeIteratorState(edge3.getEdge(), Integer.MIN_VALUE).setWayGeometry(Helper.createPointList(0, 1, 6, 7, 8, 9)));
+        assertTrue(e.getMessage().contains("This edge already has a way geometry so it cannot be changed to a bigger geometry"), e.getMessage());
+    }
+
+    @Test
+    public void testGeoRef() {
+        BaseGraph graph = createGHStorage();
+        BaseGraphNodesAndEdges ne = graph.getStore();
+        ne.setGeoRef(0, 123);
+        assertEquals(123, ne.getGeoRef(0));
+        ne.setGeoRef(0, -123);
+        assertEquals(-123, ne.getGeoRef(0));
+        ne.setGeoRef(0, 1L << 38);
+        assertEquals(1L << 38, ne.getGeoRef(0));
+
+        // 1000_0000 0000_0000 0000_0000 0000_0000 0000_0000
+        assertThrows(IllegalArgumentException.class, () -> ne.setGeoRef(0, 1L << 39));
+        graph.close();
     }
 }

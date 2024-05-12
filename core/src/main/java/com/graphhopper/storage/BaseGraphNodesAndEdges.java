@@ -46,8 +46,8 @@ class BaseGraphNodesAndEdges implements EdgeIntAccess {
 
     // edges
     private final DataAccess edges;
-    private final int E_NODEA, E_NODEB, E_LINKA, E_LINKB, E_FLAGS, E_DIST, E_GEO_1, E_GEO_2, E_KV;
-    private final int intsForFlags;
+    private final int E_NODEA, E_NODEB, E_LINKA, E_LINKB, E_DIST, E_KV, E_FLAGS, E_GEO;
+    private final int bytesForFlags;
     private int edgeEntryBytes;
     private int edgeCount;
 
@@ -60,10 +60,10 @@ class BaseGraphNodesAndEdges implements EdgeIntAccess {
     public final BBox bounds;
     private boolean frozen;
 
-    public BaseGraphNodesAndEdges(Directory dir, int intsForFlags, boolean withElevation, boolean withTurnCosts, int segmentSize) {
+    public BaseGraphNodesAndEdges(Directory dir, boolean withElevation, boolean withTurnCosts, int segmentSize, int bytesForFlags) {
         nodes = dir.create("nodes", dir.getDefaultType("nodes", true), segmentSize);
-        edges = dir.create("edges", dir.getDefaultType("edges", true), segmentSize);
-        this.intsForFlags = intsForFlags;
+        edges = dir.create("edges", dir.getDefaultType("edges", false), segmentSize);
+        this.bytesForFlags = bytesForFlags;
         this.withTurnCosts = withTurnCosts;
         this.withElevation = withElevation;
         bounds = BBox.createInverse(withElevation);
@@ -81,12 +81,11 @@ class BaseGraphNodesAndEdges implements EdgeIntAccess {
         E_NODEB = 4;
         E_LINKA = 8;
         E_LINKB = 12;
-        E_FLAGS = 16;
-        E_DIST = E_FLAGS + intsForFlags * 4;
-        E_GEO_1 = E_DIST + 4;
-        E_GEO_2 = E_GEO_1 + 4;
-        E_KV = E_GEO_2 + 4;
-        edgeEntryBytes = E_KV + 4;
+        E_DIST = 16;
+        E_KV = 20;
+        E_FLAGS = 24;
+        E_GEO = E_FLAGS + bytesForFlags;
+        edgeEntryBytes = E_GEO + 5;
     }
 
     public void create(long initSize) {
@@ -113,8 +112,8 @@ class BaseGraphNodesAndEdges implements EdgeIntAccess {
             throw new IllegalStateException("Configured dimension elevation=" + withElevation + " is not equal "
                     + "to dimension of loaded graph elevation =" + hasElevation);
         if (withElevation) {
-            bounds.minEle = Helper.intToEle(nodes.getHeader(8 * 4));
-            bounds.maxEle = Helper.intToEle(nodes.getHeader(9 * 4));
+            bounds.minEle = Helper.uIntToEle(nodes.getHeader(8 * 4));
+            bounds.maxEle = Helper.uIntToEle(nodes.getHeader(9 * 4));
         }
         frozen = nodes.getHeader(10 * 4) == 1;
 
@@ -135,8 +134,8 @@ class BaseGraphNodesAndEdges implements EdgeIntAccess {
         nodes.setHeader(6 * 4, Helper.degreeToInt(bounds.maxLat));
         nodes.setHeader(7 * 4, withElevation ? 1 : 0);
         if (withElevation) {
-            nodes.setHeader(8 * 4, Helper.eleToInt(bounds.minEle));
-            nodes.setHeader(9 * 4, Helper.eleToInt(bounds.maxEle));
+            nodes.setHeader(8 * 4, Helper.eleToUInt(bounds.minEle));
+            nodes.setHeader(9 * 4, Helper.eleToUInt(bounds.maxEle));
         }
         nodes.setHeader(10 * 4, frozen ? 1 : 0);
 
@@ -161,8 +160,12 @@ class BaseGraphNodesAndEdges implements EdgeIntAccess {
         return edgeCount;
     }
 
-    public int getIntsForFlags() {
-        return intsForFlags;
+    IntsRef createEdgeFlags() {
+        return new IntsRef((int) Math.ceil((double) getBytesForFlags() / 4));
+    }
+
+    public int getBytesForFlags() {
+        return bytesForFlags;
     }
 
     public boolean withElevation() {
@@ -244,33 +247,59 @@ class BaseGraphNodesAndEdges implements EdgeIntAccess {
     public void readFlags(long edgePointer, IntsRef edgeFlags) {
         int size = edgeFlags.ints.length;
         for (int i = 0; i < size; ++i)
-            edgeFlags.ints[i] = getFlagInt(edgePointer, i);
+            edgeFlags.ints[i] = getFlagInt(edgePointer, i * 4);
     }
 
     public void writeFlags(long edgePointer, IntsRef edgeFlags) {
         int size = edgeFlags.ints.length;
         for (int i = 0; i < size; ++i)
-            setFlagInt(edgePointer, i, edgeFlags.ints[i]);
+            setFlagInt(edgePointer, i * 4, edgeFlags.ints[i]);
+    }
+
+    private int getFlagInt(long edgePointer, int byteOffset) {
+        if (byteOffset >= bytesForFlags)
+            throw new IllegalArgumentException("too large byteOffset " + byteOffset + " vs " + bytesForFlags);
+        edgePointer += byteOffset;
+        if (byteOffset + 3 == bytesForFlags) {
+            return (edges.getShort(edgePointer + E_FLAGS) << 8) & 0x00FF_FFFF | edges.getByte(edgePointer + E_FLAGS + 2) & 0xFF;
+        } else if (byteOffset + 2 == bytesForFlags) {
+            return edges.getShort(edgePointer + E_FLAGS) & 0xFFFF;
+        } else if (byteOffset + 1 == bytesForFlags) {
+            return edges.getByte(edgePointer + E_FLAGS) & 0xFF;
+        }
+        return edges.getInt(edgePointer + E_FLAGS);
+    }
+
+    private void setFlagInt(long edgePointer, int byteOffset, int value) {
+        if (byteOffset >= bytesForFlags)
+            throw new IllegalArgumentException("too large byteOffset " + byteOffset + " vs " + bytesForFlags);
+        edgePointer += byteOffset;
+        if (byteOffset + 3 == bytesForFlags) {
+            if ((value & 0xFF00_0000) != 0)
+                throw new IllegalArgumentException("value at byteOffset " + byteOffset + " must not have the highest byte set but was " + value);
+            edges.setShort(edgePointer + E_FLAGS, (short) (value >> 8));
+            edges.setByte(edgePointer + E_FLAGS + 2, (byte) value);
+        } else if (byteOffset + 2 == bytesForFlags) {
+            if ((value & 0xFFFF_0000) != 0)
+                throw new IllegalArgumentException("value at byteOffset " + byteOffset + " must not have the 2 highest bytes set but was " + value);
+            edges.setShort(edgePointer + E_FLAGS, (short) value);
+        } else if (byteOffset + 1 == bytesForFlags) {
+            if ((value & 0xFFFF_FF00) != 0)
+                throw new IllegalArgumentException("value at byteOffset " + byteOffset + " must not have the 3 highest bytes set but was " + value);
+            edges.setByte(edgePointer + E_FLAGS, (byte) value);
+        } else {
+            edges.setInt(edgePointer + E_FLAGS, value);
+        }
     }
 
     @Override
     public int getInt(int edgeId, int index) {
-        long edgePointer = toEdgePointer(edgeId);
-        return getFlagInt(edgePointer, index);
+        return getFlagInt(toEdgePointer(edgeId), index * 4);
     }
 
     @Override
     public void setInt(int edgeId, int index, int value) {
-        long edgePointer = toEdgePointer(edgeId);
-        setFlagInt(edgePointer, index, value);
-    }
-
-    public int getFlagInt(long edgePointer, int index) {
-        return edges.getInt(edgePointer + E_FLAGS + index * 4);
-    }
-
-    public void setFlagInt(long edgePointer, int index, int value) {
-        edges.setInt(edgePointer + E_FLAGS + index * 4, value);
+        setFlagInt(toEdgePointer(edgeId), index * 4, value);
     }
 
     public void setNodeA(long edgePointer, int nodeA) {
@@ -294,10 +323,13 @@ class BaseGraphNodesAndEdges implements EdgeIntAccess {
     }
 
     public void setGeoRef(long edgePointer, long geoRef) {
-        int geo1 = BitUtil.LITTLE.getIntLow(geoRef);
-        int geo2 = BitUtil.LITTLE.getIntHigh(geoRef);
-        edges.setInt(edgePointer + E_GEO_1, geo1);
-        edges.setInt(edgePointer + E_GEO_2, geo2);
+        int highest25Bits = (int) (geoRef >>> 39);
+        // Only two cases are allowed for highest bits. If geoRef is positive then all high bits are 0. If negative then all are 1.
+        if (highest25Bits != 0 && highest25Bits != 0x1_FF_FFFF)
+            throw new IllegalArgumentException("geoRef is too " + (geoRef > 0 ? "large " : "small ") + geoRef + ", " + Long.toBinaryString(geoRef));
+
+        edges.setInt(edgePointer + E_GEO, (int) (geoRef));
+        edges.setByte(edgePointer + E_GEO + 4, (byte) (geoRef >> 32));
     }
 
     public void setKeyValuesRef(long edgePointer, int nameRef) {
@@ -328,9 +360,9 @@ class BaseGraphNodesAndEdges implements EdgeIntAccess {
 
     public long getGeoRef(long edgePointer) {
         return BitUtil.LITTLE.toLong(
-                edges.getInt(edgePointer + E_GEO_1),
-                edges.getInt(edgePointer + E_GEO_2)
-        );
+                edges.getInt(edgePointer + E_GEO),
+                // to support negative georefs (#2985) do not mask byte with 0xFF:
+                edges.getByte(edgePointer + E_GEO + 4));
     }
 
     public int getKeyValuesRef(long edgePointer) {
@@ -350,7 +382,7 @@ class BaseGraphNodesAndEdges implements EdgeIntAccess {
     }
 
     public void setEle(long elePointer, double ele) {
-        nodes.setInt(elePointer + N_ELE, Helper.eleToInt(ele));
+        nodes.setInt(elePointer + N_ELE, Helper.eleToUInt(ele));
     }
 
     public void setTurnCostRef(long nodePointer, int tcRef) {
@@ -370,7 +402,7 @@ class BaseGraphNodesAndEdges implements EdgeIntAccess {
     }
 
     public double getEle(long nodePointer) {
-        return Helper.intToEle(nodes.getInt(nodePointer + N_ELE));
+        return Helper.uIntToEle(nodes.getInt(nodePointer + N_ELE));
     }
 
     public int getTurnCostRef(long nodePointer) {
@@ -400,16 +432,16 @@ class BaseGraphNodesAndEdges implements EdgeIntAccess {
         System.out.println("edges:");
         String formatEdges = "%12s | %12s | %12s | %12s | %12s | %12s | %12s \n";
         System.out.format(Locale.ROOT, formatEdges, "#", "E_NODEA", "E_NODEB", "E_LINKA", "E_LINKB", "E_FLAGS", "E_DIST");
-        IntsRef intsRef = new IntsRef(intsForFlags);
+        IntsRef edgeFlags = createEdgeFlags();
         for (int i = 0; i < Math.min(edgeCount, printMax); ++i) {
             long edgePointer = toEdgePointer(i);
-            readFlags(edgePointer, intsRef);
+            readFlags(edgePointer, edgeFlags);
             System.out.format(Locale.ROOT, formatEdges, i,
                     getNodeA(edgePointer),
                     getNodeB(edgePointer),
                     getLinkA(edgePointer),
                     getLinkB(edgePointer),
-                    intsRef,
+                    edgeFlags,
                     getDist(edgePointer));
         }
         if (edgeCount > printMax) {

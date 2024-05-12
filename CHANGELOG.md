@@ -1,5 +1,7 @@
 ### 10.0 [not yet released]
 
+- constructor of BaseGraph.Builder uses byte instead of integer count.
+- KeyValue is now KValue as it holds the value only. Note, the two parameter constructor uses one value for the forward and one for the backward direction (and no longer "key, value")
 
 ### 9.0 [23 Apr 2024]
 

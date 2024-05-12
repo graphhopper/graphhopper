@@ -24,7 +24,7 @@ import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 
-import static com.graphhopper.search.KVStorage.KeyValue.*;
+import static com.graphhopper.util.Parameters.Details.*;
 
 /**
  * This class calculates instructions from the edges in a Path.
@@ -262,7 +262,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                         && (Math.abs(sign) == Instruction.TURN_SLIGHT_RIGHT || Math.abs(sign) == Instruction.TURN_RIGHT || Math.abs(sign) == Instruction.TURN_SHARP_RIGHT)
                         && (Math.abs(prevInstruction.getSign()) == Instruction.TURN_SLIGHT_RIGHT || Math.abs(prevInstruction.getSign()) == Instruction.TURN_RIGHT || Math.abs(prevInstruction.getSign()) == Instruction.TURN_SHARP_RIGHT)
                         && Double.isFinite(weighting.calcEdgeWeight(edge, false)) != Double.isFinite(weighting.calcEdgeWeight(edge, true))
-                        && InstructionsHelper.isNameSimilar(prevInstructionName, name)) {
+                        && InstructionsHelper.isSameName(prevInstructionName, name)) {
                     // Chances are good that this is a u-turn, we only need to check if the orientation matches
                     GHPoint point = InstructionsHelper.getPointForOrientationCalculation(edge, nodeAccess);
                     double lat = point.getLat();
@@ -352,7 +352,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
 
         // there is no other turn possible
         if (nrOfPossibleTurns <= 1) {
-            if (Math.abs(sign) > 1 && outgoingEdges.getVisibleTurns() > 1) {
+            if (Math.abs(sign) > 1 && outgoingEdges.getVisibleTurns() > 1 && !outgoingEdges.mergedOrSplitWay(lanesEnc)) {
                 // This is an actual turn because |sign| > 1
                 // There could be some confusion, if we would not create a turn instruction, even though it is the only
                 // possible turn, also see #1048
@@ -366,8 +366,8 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         if (Math.abs(sign) > 1) {
             // Don't show an instruction if the user is following a street, even though the street is
             // bending. We should only do this, if following the street is the obvious choice.
-            if (InstructionsHelper.isNameSimilar(name, prevName)
-                    && (outgoingEdges.outgoingEdgesAreSlowerByFactor(2) || isDirectionSeparatelyTagged(edge, prevEdge))) {
+            if (InstructionsHelper.isSameName(name, prevName) && outgoingEdges.outgoingEdgesAreSlowerByFactor(2)
+                    || outgoingEdges.mergedOrSplitWay(lanesEnc)) {
                 return Instruction.IGNORE;
             }
 
@@ -400,9 +400,9 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         // For _links, comparing flags works quite good, as links usually have different speeds => different flags
         if (otherContinue != null) {
             // We are at a fork
-            if (!InstructionsHelper.isNameSimilar(name, prevName)
-                    || !InstructionsHelper.isNameSimilar(destinationAndRef, prevDestinationAndRef)
-                    || InstructionsHelper.isNameSimilar(otherContinue.getName(), prevName)
+            if (!InstructionsHelper.isSameName(name, prevName)
+                    || !InstructionsHelper.isSameName(destinationAndRef, prevDestinationAndRef)
+                    || InstructionsHelper.isSameName(otherContinue.getName(), prevName)
                     || !outgoingEdgesAreSlower) {
 
                 final RoadClass roadClass = edge.get(roadClassEnc);
@@ -423,7 +423,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                 double otherDelta = InstructionsHelper.calculateOrientationDelta(prevLat, prevLon, tmpPoint.getLat(), tmpPoint.getLon(), prevOrientation);
 
                 // This is required to avoid keep left/right on the motorway at off-ramps/motorway_links
-                if (Math.abs(delta) < .1 && Math.abs(otherDelta) > .15 && InstructionsHelper.isNameSimilar(name, prevName)) {
+                if (Math.abs(delta) < .1 && Math.abs(otherDelta) > .15 && InstructionsHelper.isSameName(name, prevName)) {
                     return Instruction.CONTINUE_ON_STREET;
                 }
 
@@ -435,22 +435,14 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             }
         }
 
-        if (!outgoingEdgesAreSlower && !isDirectionSeparatelyTagged(edge, prevEdge)
+        if (!outgoingEdgesAreSlower
+                && !outgoingEdges.mergedOrSplitWay(lanesEnc)
                 && (Math.abs(delta) > .6 || outgoingEdges.isLeavingCurrentStreet(prevName, name))) {
             // Leave the current road -> create instruction
             return sign;
         }
 
         return Instruction.IGNORE;
-    }
-
-    private boolean isDirectionSeparatelyTagged(EdgeIteratorState edge, EdgeIteratorState prevEdge) {
-        if (lanesEnc == null) return false;
-        // for cases like in #2946 we should not create instructions as they are only "tagging artifacts"
-        int lanes = edge.get(lanesEnc);
-        int prevLanes = prevEdge.get(lanesEnc);
-        // Usually it is a 2+2 split and then the equal sign applies. In case of a "3+2 split" we need ">=".
-        return lanes * 2 >= prevLanes || lanes <= 2 * prevLanes;
     }
 
     private void updatePointsAndInstruction(EdgeIteratorState edge, PointList pl) {
