@@ -2631,6 +2631,7 @@ public class GraphHopperTest {
 
         // this time we enable country rules
         hopper.clean();
+        p.getCustomModel().addToPriority(If("true", MULTIPLY, "1")); // TODO NOW force different custom model to avoid using cached weights
         hopper = new GraphHopper()
                 .setEncodedValuesString("car_access, car_average_speed, road_access")
                 .setProfiles(p)
