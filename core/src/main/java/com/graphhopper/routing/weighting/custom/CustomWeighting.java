@@ -17,10 +17,13 @@
  */
 package com.graphhopper.routing.weighting.custom;
 
+import com.graphhopper.routing.util.CacheFunction;
+import com.graphhopper.routing.util.CacheWeightCalculator;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
 
@@ -84,6 +87,7 @@ public final class CustomWeighting implements Weighting {
     private final TurnCostProvider turnCostProvider;
     private final MaxCalc maxPrioCalc;
     private final MaxCalc maxSpeedCalc;
+    private CacheFunction function;
 
     public CustomWeighting(TurnCostProvider turnCostProvider, Parameters parameters) {
         if (!Weighting.isValidName(getName()))
@@ -111,6 +115,11 @@ public final class CustomWeighting implements Weighting {
 
     @Override
     public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
+        Double weight = function == null ? null : function.calc(reverse ? GHUtility.reverseEdgeKey(edgeState.getEdgeKey()) : edgeState.getEdgeKey());
+        if (weight != null) {
+            return weight;
+        }
+
         double priority = edgeToPriorityMapping.get(edgeState, reverse);
         if (priority == 0) return Double.POSITIVE_INFINITY;
 
@@ -157,6 +166,14 @@ public final class CustomWeighting implements Weighting {
     @Override
     public String getName() {
         return NAME;
+    }
+
+    public void setFunction(CacheFunction function) {
+        this.function = function;
+    }
+
+    public CacheFunction getFunction() {
+        return function;
     }
 
     @FunctionalInterface

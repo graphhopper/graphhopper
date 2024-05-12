@@ -21,6 +21,7 @@ package com.graphhopper.routing;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.TurnRestriction;
+import com.graphhopper.routing.util.CacheWeightCalculator;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.TurnCostProvider;
@@ -32,6 +33,10 @@ import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
 import static com.graphhopper.util.Helper.toLowerCase;
 
@@ -39,6 +44,7 @@ public class DefaultWeightingFactory implements WeightingFactory {
 
     private final BaseGraph graph;
     private final EncodingManager encodingManager;
+    private static final Map<String, CacheWeightCalculator.Result> cache = new ConcurrentHashMap<>();
 
     public DefaultWeightingFactory(BaseGraph graph, EncodingManager encodingManager) {
         this.graph = graph;
@@ -75,7 +81,20 @@ public class DefaultWeightingFactory implements WeightingFactory {
             final CustomModel mergedCustomModel = CustomModel.merge(profile.getCustomModel(), queryCustomModel);
             if (requestHints.has(Parameters.Routing.HEADING_PENALTY))
                 mergedCustomModel.setHeadingPenalty(requestHints.getDouble(Parameters.Routing.HEADING_PENALTY, Parameters.Routing.DEFAULT_HEADING_PENALTY));
-            weighting = CustomModelParser.createWeighting(encodingManager, turnCostProvider, mergedCustomModel);
+
+            CustomWeighting tmpWeight = CustomModelParser.createWeighting(encodingManager, turnCostProvider, mergedCustomModel);
+
+            if(tmpWeight.getFunction() == null) {
+                CacheWeightCalculator.Result result = cache.get(mergedCustomModel.toString());
+                if (result == null) {
+                    // TODO NOW move e.g. into postProcessing?
+                    System.out.println("CacheWeightCalculator.createMap");
+                    result = CacheWeightCalculator.createMap(graph, tmpWeight);
+                    cache.put(mergedCustomModel.toString(), result);
+                }
+                tmpWeight.setFunction(result.createCacheFunction());
+            }
+            weighting = tmpWeight;
 
         } else if ("shortest".equalsIgnoreCase(weightingStr)) {
             throw new IllegalArgumentException("Instead of weighting=shortest use weighting=custom with a high distance_influence");
