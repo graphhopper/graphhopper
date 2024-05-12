@@ -92,7 +92,6 @@ class NavigationResponseConverterTurnLanesTest {
 
         assertEquals("Turn left and take A 4 toward Dresden", firstBannerInstruction.get("primary").get("text").asText());
         assertEquals("left", firstBannerInstruction.get("primary").get("modifier").asText());
-        assertEquals("left", firstBannerInstruction.get("primary").get("active_direction").asText());
         assertEquals("turn", firstBannerInstruction.get("primary").get("type").asText());
         assertEquals("[{\"text\":\"Turn left and take A 4 toward Dresden\",\"type\":\"text\"}]", firstBannerInstruction.get("primary").get("components").toString());
         assertNull(firstBannerInstruction.get("sub"));
@@ -106,7 +105,7 @@ class NavigationResponseConverterTurnLanesTest {
         assertEquals(161.593, secondBannerInstruction.get("distanceAlongGeometry").asDouble(), 0.001);
 
         assertEquals("", secondBannerInstruction.get("sub").get("text").asText());
-        assertEquals("[{\"text\":\"\",\"type\":\"lane\",\"active\":true,\"directions\":[\"left\"]},{\"text\":\"\",\"type\":\"lane\",\"active\":false,\"directions\":[\"straight\"]}]",
+        assertEquals("[{\"text\":\"\",\"type\":\"lane\",\"active\":true,\"directions\":[\"left\"],\"active_direction\":\"left\"},{\"text\":\"\",\"type\":\"lane\",\"active\":false,\"directions\":[\"straight\"]}]",
                 secondBannerInstruction.get("sub").get("components").toString());
     }
 }
