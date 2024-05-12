@@ -178,8 +178,8 @@ public final class CustomWeighting implements Weighting {
 
         this.result = result;
 
-        if (result != null)
-            this.function = result.createCacheFunction();
+        if (result != null) this.function = result.createCacheFunction();
+        else this.function = null;
     }
 
     @FunctionalInterface
