@@ -18,14 +18,14 @@
 
 package com.graphhopper.routing.weighting;
 
+import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.TurnCostsConfig;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.TurnCostsConfig;
 
 import static com.graphhopper.util.AngleCalc.ANGLE_CALC;
 import static com.graphhopper.util.TurnCostsConfig.INFINITE_U_TURN_COSTS;
@@ -97,6 +97,9 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
             final double maxRightInRad = Math.toRadians(tcConfig.getMaxRightAngle());
             final double minLeftInRad = Math.toRadians(tcConfig.getMinLeftAngle());
             final double maxLeftInRad = Math.toRadians(tcConfig.getMaxLeftAngle());
+            final double rightCost = tcConfig.getRightCost() == null ? 0 : tcConfig.getRightCost();
+            final double leftCost = tcConfig.getLeftCost() == null ? 0 : tcConfig.getLeftCost();
+            final double straightCost = tcConfig.getStraightCost() == null ? 0 : tcConfig.getStraightCost();
             final BaseGraph baseGraph = graph.getBaseGraph();
             final EdgeIntAccess edgeIntAccess = graph.getBaseGraph().getEdgeAccess();
 
@@ -106,11 +109,11 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
                 if (Double.isInfinite(weight)) return weight;
                 double changeAngle = calcChangeAngle(inEdge, viaNode, outEdge, baseGraph, edgeIntAccess, orientationEnc);
                 if (changeAngle > minRightInRad && changeAngle < minLeftInRad)
-                    return tcConfig.getStraightCost() + weight;
+                    return straightCost + weight;
                 else if (changeAngle >= minLeftInRad && changeAngle <= maxLeftInRad)
-                    return tcConfig.getLeftCost() + weight;
+                    return leftCost + weight;
                 else if (changeAngle <= minRightInRad && changeAngle >= maxRightInRad)
-                    return tcConfig.getRightCost() + weight;
+                    return rightCost + weight;
                 else return Double.POSITIVE_INFINITY; // too sharp turn
             }
 

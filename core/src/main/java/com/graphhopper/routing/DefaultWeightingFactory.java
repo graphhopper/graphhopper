@@ -74,9 +74,12 @@ public class DefaultWeightingFactory implements WeightingFactory {
         if (CustomWeighting.NAME.equalsIgnoreCase(weightingStr)) {
             final CustomModel queryCustomModel = requestHints.getObject(CustomModel.KEY, null);
             final CustomModel mergedCustomModel = CustomModel.merge(profile.getCustomModel(), queryCustomModel);
-            if (turnCostProvider != NO_TURN_COST_PROVIDER && encodingManager.hasEncodedValue(Orientation.KEY))
+            if (turnCostProvider != NO_TURN_COST_PROVIDER && profile.getTurnCostsConfig().hasLeftRightStraight()) {
+                if(!encodingManager.hasEncodedValue(Orientation.KEY))
+                    throw new IllegalArgumentException("Using left,right or straight for turn_costs requires 'orientation' in graph.encoded_values");
                 turnCostProvider = DefaultTurnCostProvider.createFromTurnCostConfig(turnCostProvider,
                         encodingManager.getDecimalEncodedValue(Orientation.KEY), graph, profile.getTurnCostsConfig());
+            }
             if (requestHints.has(Parameters.Routing.HEADING_PENALTY))
                 mergedCustomModel.setHeadingPenalty(requestHints.getDouble(Parameters.Routing.HEADING_PENALTY, Parameters.Routing.DEFAULT_HEADING_PENALTY));
             weighting = CustomModelParser.createWeighting(encodingManager, turnCostProvider, mergedCustomModel);

@@ -2,15 +2,14 @@ package com.graphhopper.util;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
 public class TurnCostsConfig {
     public static final int INFINITE_U_TURN_COSTS = -1;
-    private double leftCost = 3; // in seconds
-    private double rightCost = 0.5;
-    private double straightCost = 0;
+    private Double leftCost; // in seconds
+    private Double rightCost;
+    private Double straightCost;
     private double minLeftAngle = 25, maxLeftAngle = 180;
     private double minRightAngle = -25, maxRightAngle = -180;
     private int uTurnCosts = INFINITE_U_TURN_COSTS;
@@ -76,33 +75,37 @@ public class TurnCostsConfig {
         return uTurnCosts;
     }
 
-    public TurnCostsConfig setLeftCost(double leftCost) {
+    public boolean hasLeftRightStraight() {
+        return leftCost != null || rightCost != null || straightCost != null;
+    }
+
+    public TurnCostsConfig setLeftCost(Double leftCost) {
         this.leftCost = leftCost;
         return this;
     }
 
     @JsonProperty("left")
-    public double getLeftCost() {
+    public Double getLeftCost() {
         return leftCost;
     }
 
-    public TurnCostsConfig setRightCost(double rightCost) {
+    public TurnCostsConfig setRightCost(Double rightCost) {
         this.rightCost = rightCost;
         return this;
     }
 
     @JsonProperty("right")
-    public double getRightCost() {
+    public Double getRightCost() {
         return rightCost;
     }
 
-    public TurnCostsConfig setStraightCost(double straightCost) {
+    public TurnCostsConfig setStraightCost(Double straightCost) {
         this.straightCost = straightCost;
         return this;
     }
 
     @JsonProperty("straight")
-    public double getStraightCost() {
+    public Double getStraightCost() {
         return straightCost;
     }
 
