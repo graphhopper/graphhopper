@@ -93,6 +93,10 @@ public final class CustomWeighting implements Weighting {
     private final BooleanEncodedValue accessEnc;
     private final EnumEncodedValue<RoadClass> roadClassEnc;
     private final EnumEncodedValue<RoadAccess> roadAccessEnc;
+    private final EnumEncodedValue<Smoothness> smoothnessEnc;
+    private final EnumEncodedValue<Surface> surfaceEnc;
+    private final BooleanEncodedValue roundaboutEnc;
+    private final BooleanEncodedValue roadClassLinkEnc;
 
     public CustomWeighting(TurnCostProvider turnCostProvider, Parameters parameters, EncodedValueLookup lookup) {
         if (!Weighting.isValidName(getName()))
@@ -116,6 +120,10 @@ public final class CustomWeighting implements Weighting {
         this.accessEnc = lookup.getBooleanEncodedValue("car_access");
         this.roadClassEnc = lookup.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         this.roadAccessEnc = lookup.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
+        this.smoothnessEnc = lookup.getEnumEncodedValue(Smoothness.KEY, Smoothness.class);
+        this.surfaceEnc = lookup.getEnumEncodedValue(Surface.KEY, Surface.class);
+        this.roundaboutEnc = lookup.getBooleanEncodedValue(Roundabout.KEY);
+        this.roadClassLinkEnc = lookup.getBooleanEncodedValue(RoadClassLink.KEY);
     }
 
     @Override
@@ -186,6 +194,18 @@ public final class CustomWeighting implements Weighting {
         RoadClass roadClass = roadClassEnc.getEnum(!fwd, edge, edgeIntAccess);
         if (roadClass == RoadClass.BRIDLEWAY)
             priority *= 0.98;
+        Smoothness smoothness = smoothnessEnc.getEnum(!fwd, edge, edgeIntAccess);
+        if (smoothness == Smoothness.HORRIBLE)
+            priority *= 0.98;
+        Surface surface = surfaceEnc.getEnum(!fwd, edge, edgeIntAccess);
+        if (surface == Surface.COBBLESTONE)
+            priority *= 0.98;
+        boolean roundabout = roundaboutEnc.getBool(!fwd, edge, edgeIntAccess);
+        if (roundabout)
+            priority *= 0.999;
+        boolean roadClassLink = roadClassLinkEnc.getBool(!fwd, edge, edgeIntAccess);
+        if (roadClassLink)
+            priority *= 0.999;
 
         double edgeWeight = distance / speed * SPEED_CONV / priority + distance * distanceInfluence;
         if (!hasTurnCosts() || !EdgeIterator.Edge.isValid(prevOrNextEdgeId))
