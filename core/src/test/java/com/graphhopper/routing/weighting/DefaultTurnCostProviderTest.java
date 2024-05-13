@@ -76,7 +76,7 @@ public class DefaultTurnCostProviderTest {
         turnGraph.getNodeAccess().setNode(6, 51.0358, 13.726);
 
         Profile profile = new Profile("car");
-        TurnCostsConfig config = new TurnCostsConfig().setLeftCost(6);
+        TurnCostsConfig config = new TurnCostsConfig().setRightCost(0.5).setLeftCost(6.0);
         profile.setCustomModel(new CustomModel().addToSpeed(If("true", LIMIT, tcAvgSpeedEnc.getName())));
         profile.setTurnCostsConfig(config);
         Weighting weighting = new DefaultWeightingFactory(turnGraph, em).createWeighting(profile, new PMap(), false);

@@ -17,18 +17,12 @@
  */
 package com.graphhopper.routing.weighting.custom;
 
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.BaseGraph;
-import com.graphhopper.storage.Graph;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.TurnCostsConfig;
 
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
-import static com.graphhopper.util.AngleCalc.ANGLE_CALC;
 
 /**
  * The CustomWeighting allows adjusting the edge weights relative to those we'd obtain for a given base flag encoder.

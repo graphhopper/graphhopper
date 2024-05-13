@@ -44,5 +44,6 @@ public interface TurnCostProvider {
         public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
             return 0;
         }
+
     };
 }
