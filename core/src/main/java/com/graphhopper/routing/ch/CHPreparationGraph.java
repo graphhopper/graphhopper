@@ -21,16 +21,9 @@ package com.graphhopper.routing.ch;
 import com.carrotsearch.hppc.*;
 import com.carrotsearch.hppc.sorting.IndirectComparator;
 import com.carrotsearch.hppc.sorting.IndirectSort;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
-import com.graphhopper.routing.weighting.AbstractWeighting;
-import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
-import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.TurnCostStorage;
-import com.graphhopper.util.BitUtil;
-import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
 
 import static com.graphhopper.util.ArrayUtil.zero;
@@ -800,20 +793,20 @@ public class CHPreparationGraph {
 
     /**
      * This helper graph can be used to quickly obtain the edge-keys of the edges of a node. It is only used for
-     * edge-based CH. In principle we could use base graph for this, but it turned out it is faster to use this
+     * edge-based CH. In principle, we could use base graph for this, but it turned out it is faster to use this
      * graph (because it does not need to read all the edge flags to determine the access flags).
      */
     static class OrigGraph {
-        // we store a list of 'edges' in the format: adjNode|edgeId|accessFlags, we use two ints for each edge
-        private final IntArrayList adjNodes;
-        private final IntArrayList keysAndFlags;
+        // we store a list of 'edges' in the format: adjNode|fwdAccess|edgeKey|bwdAccess, we use two ints for each edge
+        private final IntArrayList adjNodesAndFwdFlags;
+        private final IntArrayList keysAndBwdFlags;
         // for each node we store the index at which the edges for this node begin in the above edge list
         private final IntArrayList firstEdgesByNode;
 
-        private OrigGraph(IntArrayList firstEdgesByNode, IntArrayList adjNodes, IntArrayList keysAndFlags) {
+        private OrigGraph(IntArrayList firstEdgesByNode, IntArrayList adjNodesAndFwdFlags, IntArrayList keysAndBwdFlags) {
             this.firstEdgesByNode = firstEdgesByNode;
-            this.adjNodes = adjNodes;
-            this.keysAndFlags = keysAndFlags;
+            this.adjNodesAndFwdFlags = adjNodesAndFwdFlags;
+            this.keysAndBwdFlags = keysAndBwdFlags;
         }
 
         PrepareGraphOrigEdgeExplorer createOutOrigEdgeExplorer() {
@@ -826,21 +819,21 @@ public class CHPreparationGraph {
 
         static class Builder {
             private final IntArrayList fromNodes = new IntArrayList();
-            private final IntArrayList toNodes = new IntArrayList();
-            private final IntArrayList keysAndFlags = new IntArrayList();
+            private final IntArrayList toNodesAndFwdFlags = new IntArrayList();
+            private final IntArrayList keysAndBwdFlags = new IntArrayList();
             private int maxFrom = -1;
             private int maxTo = -1;
 
             void addEdge(int from, int to, int edge, boolean fwd, boolean bwd) {
                 fromNodes.add(from);
-                toNodes.add(to);
-                keysAndFlags.add(getKeyWithFlags(GHUtility.createEdgeKey(edge, false), fwd, bwd));
+                toNodesAndFwdFlags.add(getIntWithFlag(to, fwd));
+                keysAndBwdFlags.add(getIntWithFlag(GHUtility.createEdgeKey(edge, false), bwd));
                 maxFrom = Math.max(maxFrom, from);
                 maxTo = Math.max(maxTo, to);
 
                 fromNodes.add(to);
-                toNodes.add(from);
-                keysAndFlags.add(getKeyWithFlags(GHUtility.createEdgeKey(edge, true), bwd, fwd));
+                toNodesAndFwdFlags.add(getIntWithFlag(from, bwd));
+                keysAndBwdFlags.add(getIntWithFlag(GHUtility.createEdgeKey(edge, true), fwd));
                 maxFrom = Math.max(maxFrom, to);
                 maxTo = Math.max(maxTo, from);
             }
@@ -848,25 +841,23 @@ public class CHPreparationGraph {
             OrigGraph build() {
                 int[] sortOrder = IndirectSort.mergesort(0, fromNodes.elementsCount, new IndirectComparator.AscendingIntComparator(fromNodes.buffer));
                 sortAndTrim(fromNodes, sortOrder);
-                sortAndTrim(toNodes, sortOrder);
-                sortAndTrim(keysAndFlags, sortOrder);
-                return new OrigGraph(buildFirstEdgesByNode(), toNodes, keysAndFlags);
+                sortAndTrim(toNodesAndFwdFlags, sortOrder);
+                sortAndTrim(keysAndBwdFlags, sortOrder);
+                return new OrigGraph(buildFirstEdgesByNode(), toNodesAndFwdFlags, keysAndBwdFlags);
             }
 
-            private static int getKeyWithFlags(int key, boolean fwd, boolean bwd) {
-                // we use only 30 bits for the key and store two access flags along with the same int
-                // this allows for a maximum of 536mio edges in base graph which is still enough for planet-wide OSM,
-                // but if we exceed this limit we should probably move one of the fwd/bwd bits to the nodes field or
-                // store the edge instead of the key as we did before #2567 (only here)
-                if (key > Integer.MAX_VALUE >> 1)
-                    throw new IllegalArgumentException("Maximum edge key exceeded: " + key + ", max: " + (Integer.MAX_VALUE >> 1));
-                key <<= 1;
-                if (fwd)
-                    key++;
-                key <<= 1;
-                if (bwd)
-                    key++;
-                return key;
+            private static int getIntWithFlag(int val, boolean access) {
+                // we use only 31 bits for the val and store an access flag along with the same int
+                // this allows for a maximum of 1073mio edges (and 1073mio nodes) in base graph
+                // which is still enough for planet-wide OSM, but if we exceed this limit we need to
+                // move the access bits somewhere else or store the edge instead of the val as we
+                // did before #2567 (only here)
+                if (val < 0)
+                    throw new IllegalArgumentException("Maximum node or edge key exceeded: " + val + ", max: " + Integer.MAX_VALUE);
+                val <<= 1;
+                if (access)
+                    val++;
+                return val;
             }
 
             private IntArrayList buildFirstEdgesByNode() {
@@ -931,12 +922,12 @@ public class CHPreparationGraph {
 
         @Override
         public int getAdjNode() {
-            return graph.adjNodes.get(index);
+            return graph.adjNodesAndFwdFlags.get(index) >>> 1;
         }
 
         @Override
         public int getOrigEdgeKeyFirst() {
-            return graph.keysAndFlags.get(index) >>> 2;
+            return graph.keysAndBwdFlags.get(index) >>> 1;
         }
 
         @Override
@@ -945,11 +936,10 @@ public class CHPreparationGraph {
         }
 
         private boolean hasAccess() {
-            int e = graph.keysAndFlags.get(index);
-            if (reverse)
-                return (e & 0b01) == 0b01;
-            else
-                return (e & 0b10) == 0b10;
+            int e = reverse
+                    ? graph.keysAndBwdFlags.get(index)
+                    : graph.adjNodesAndFwdFlags.get(index);
+            return (e & 0b01) == 0b01;
         }
 
         @Override
