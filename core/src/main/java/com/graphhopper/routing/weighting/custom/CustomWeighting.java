@@ -191,21 +191,23 @@ public final class CustomWeighting implements Weighting {
             speed *= 0.98;
         double priority = accessEnc.getBool(!fwd, edge, edgeIntAccess) ? 1 : 0;
         if (priority == 0) return Double.POSITIVE_INFINITY;
-        RoadClass roadClass = roadClassEnc.getEnum(!fwd, edge, edgeIntAccess);
-        if (roadClass == RoadClass.BRIDLEWAY)
-            priority *= 0.98;
-        Smoothness smoothness = smoothnessEnc.getEnum(!fwd, edge, edgeIntAccess);
-        if (smoothness == Smoothness.HORRIBLE)
-            priority *= 0.98;
-        Surface surface = surfaceEnc.getEnum(!fwd, edge, edgeIntAccess);
-        if (surface == Surface.COBBLESTONE)
-            priority *= 0.98;
-        boolean roundabout = roundaboutEnc.getBool(!fwd, edge, edgeIntAccess);
-        if (roundabout)
-            priority *= 0.999;
-        boolean roadClassLink = roadClassLinkEnc.getBool(!fwd, edge, edgeIntAccess);
-        if (roadClassLink)
-            priority *= 0.999;
+        for (int i = 0; i < 10; i++) {
+            RoadClass roadClass = roadClassEnc.getEnum(!fwd, edge, edgeIntAccess);
+            if (roadClass == RoadClass.BRIDLEWAY)
+                priority *= 0.98;
+            Smoothness smoothness = smoothnessEnc.getEnum(!fwd, edge, edgeIntAccess);
+            if (smoothness == Smoothness.HORRIBLE)
+                priority *= 0.98;
+            Surface surface = surfaceEnc.getEnum(!fwd, edge, edgeIntAccess);
+            if (surface == Surface.COBBLESTONE)
+                priority *= 0.98;
+            boolean roundabout = roundaboutEnc.getBool(!fwd, edge, edgeIntAccess);
+            if (roundabout)
+                priority *= 0.999;
+            boolean roadClassLink = roadClassLinkEnc.getBool(!fwd, edge, edgeIntAccess);
+            if (roadClassLink)
+                priority *= 0.999;
+        }
 
         double edgeWeight = distance / speed * SPEED_CONV / priority + distance * distanceInfluence;
         if (!hasTurnCosts() || !EdgeIterator.Edge.isValid(prevOrNextEdgeId))
