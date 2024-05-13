@@ -69,9 +69,12 @@ public class RouteResourceCustomModelTest {
                         "car_access, car_average_speed, bike_access, bike_priority, bike_average_speed, road_class, road_access, get_off_bike, roundabout, foot_access, foot_priority, foot_average_speed, orientation").
                 setProfiles(List.of(
                         TestProfiles.constantSpeed("roads", 120),
-                        new Profile("car").setCustomModel(TestProfiles.accessAndSpeed("unused", "car").getCustomModel().setDistanceInfluence(70d)),
-                        new Profile("car_tc_left").setCustomModel(TestProfiles.accessAndSpeed("car_tc_left", "car").getCustomModel().setDistanceInfluence(70d)).setTurnCostsConfig(new TurnCostsConfig(List.of("motor_vehicle")).setLeftCost(100)),
-                        new Profile("car_with_area").setCustomModel(TestProfiles.accessAndSpeed("unused", "car").getCustomModel().addToPriority(If("in_external_area52", MULTIPLY, "0.05"))),
+                        new Profile("car").setCustomModel(TestProfiles.accessAndSpeed("unused", "car").
+                                getCustomModel().setDistanceInfluence(70d)),
+                        new Profile("car_tc_left").setCustomModel(TestProfiles.accessAndSpeed("car_tc_left", "car").
+                                getCustomModel().setDistanceInfluence(70d)).setTurnCostsConfig(new TurnCostsConfig(List.of("motor_vehicle")).setLeftCost(100.0)),
+                        new Profile("car_with_area").setCustomModel(TestProfiles.accessAndSpeed("unused", "car").
+                                getCustomModel().addToPriority(If("in_external_area52", MULTIPLY, "0.05"))),
                         TestProfiles.accessSpeedAndPriority("bike"),
                         new Profile("bus").setCustomModel(null).putHint("custom_model_files", List.of("bus.json")),
                         new Profile("cargo_bike").setCustomModel(null).putHint("custom_model_files", List.of("cargo_bike.json")),
