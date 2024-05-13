@@ -18,12 +18,13 @@
 package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.TurnCostsConfig;
 
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
@@ -216,58 +217,5 @@ public final class CustomWeighting implements Weighting {
         public double getHeadingPenaltySeconds() {
             return headingPenaltySeconds;
         }
-    }
-
-    public static TurnCostProvider createFromTurnCostConfig(TurnCostProvider turnCostProvider,
-                                                            DecimalEncodedValue orientationEnc, Graph graph, TurnCostsConfig tcConfig) {
-        final double minRightInRad = Math.toRadians(tcConfig.getMinRightAngle());
-        final double maxRightInRad = Math.toRadians(tcConfig.getMaxRightAngle());
-        final double minLeftInRad = Math.toRadians(tcConfig.getMinLeftAngle());
-        final double maxLeftInRad = Math.toRadians(tcConfig.getMaxLeftAngle());
-
-        return new TurnCostProvider() {
-
-            @Override
-            public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
-                double weight = turnCostProvider.calcTurnWeight(inEdge, viaNode, outEdge);
-                if (Double.isInfinite(weight)) return weight;
-                double changeAngle = calcChangeAngle(inEdge, viaNode, outEdge, graph, orientationEnc);
-                if (changeAngle > minRightInRad && changeAngle < minLeftInRad)
-                    return tcConfig.getStraightCost() + weight;
-                else if (changeAngle >= minLeftInRad && changeAngle <= maxLeftInRad)
-                    return tcConfig.getLeftCost() + weight;
-                else if (changeAngle <= minRightInRad && changeAngle >= maxRightInRad)
-                    return tcConfig.getRightCost() + weight;
-                else return Double.POSITIVE_INFINITY; // too sharp turn
-            }
-
-            @Override
-            public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
-                long millis = (long) (1000 * calcTurnWeight(inEdge, viaNode, outEdge));
-                return millis;
-            }
-        };
-    }
-
-    static double calcChangeAngle(int inEdge, int viaNode, int outEdge, Graph graph, DecimalEncodedValue orientationEnc) {
-        EdgeIteratorState inEdgeState = graph.getEdgeIteratorState(inEdge, viaNode);
-        EdgeIteratorState revOutEdgeState = graph.getEdgeIteratorState(outEdge, viaNode);
-        if (inEdgeState == null)
-            throw new IllegalStateException(inEdge + " --(" + viaNode + ") " + "->" + outEdge + " "
-                    + revOutEdgeState + " " + (revOutEdgeState != null ? revOutEdgeState.fetchWayGeometry(FetchMode.ALL) : ""));
-        if (revOutEdgeState == null)
-            throw new IllegalStateException(inEdgeState + " --(" + viaNode + ") " + "->" + outEdge + " "
-                    + inEdgeState + " " + inEdgeState.fetchWayGeometry(FetchMode.ALL));
-
-        double prevOrientation = inEdgeState.get(orientationEnc);
-        double orientation = revOutEdgeState.get(orientationEnc);
-        // bring parallel to prevOrientation
-        if (orientation >= 0) orientation -= Math.PI;
-        else orientation += Math.PI;
-        prevOrientation = ANGLE_CALC.alignOrientation(orientation, prevOrientation);
-        double changeAngle = orientation - prevOrientation;
-        if (changeAngle > Math.PI) changeAngle -= 2 * Math.PI;
-        else if (changeAngle < -Math.PI) changeAngle += 2 * Math.PI;
-        return changeAngle;
     }
 }

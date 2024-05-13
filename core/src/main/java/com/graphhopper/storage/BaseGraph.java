@@ -409,6 +409,11 @@ public class BaseGraph implements Graph, Closeable {
         return isAdjacentToNode(node, edgePointer);
     }
 
+    public boolean isAdjNode(int edge, int node) {
+        long edgePointer = store.toEdgePointer(edge);
+        return node == store.getNodeB(edgePointer);
+    }
+
     private void setWayGeometry_(PointList pillarNodes, long edgePointer, boolean reverse) {
         if (pillarNodes != null && !pillarNodes.isEmpty()) {
             if (pillarNodes.getDimension() != nodeAccess.getDimension())

@@ -18,11 +18,16 @@
 
 package com.graphhopper.routing.weighting;
 
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.storage.BaseGraph;
+import com.graphhopper.storage.Graph;
 import com.graphhopper.util.TurnCostsConfig;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.EdgeIterator;
 
+import static com.graphhopper.util.AngleCalc.ANGLE_CALC;
 import static com.graphhopper.util.TurnCostsConfig.INFINITE_U_TURN_COSTS;
 
 public class DefaultTurnCostProvider implements TurnCostProvider {
@@ -81,5 +86,59 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
     @Override
     public String toString() {
         return "default_tcp_" + uTurnCostsInt;
+    }
+
+    public static TurnCostProvider createFromTurnCostConfig(TurnCostProvider turnCostProvider,
+                                                            DecimalEncodedValue orientationEnc,
+                                                            Graph graph, TurnCostsConfig tcConfig) {
+        return new TurnCostProvider() {
+
+            final double minRightInRad = Math.toRadians(tcConfig.getMinRightAngle());
+            final double maxRightInRad = Math.toRadians(tcConfig.getMaxRightAngle());
+            final double minLeftInRad = Math.toRadians(tcConfig.getMinLeftAngle());
+            final double maxLeftInRad = Math.toRadians(tcConfig.getMaxLeftAngle());
+            final BaseGraph baseGraph = graph.getBaseGraph();
+            final EdgeIntAccess edgeIntAccess = graph.getBaseGraph().getEdgeAccess();
+
+            @Override
+            public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
+                double weight = turnCostProvider.calcTurnWeight(inEdge, viaNode, outEdge);
+                if (Double.isInfinite(weight)) return weight;
+                double changeAngle = calcChangeAngle(inEdge, viaNode, outEdge, baseGraph, edgeIntAccess, orientationEnc);
+                if (changeAngle > minRightInRad && changeAngle < minLeftInRad)
+                    return tcConfig.getStraightCost() + weight;
+                else if (changeAngle >= minLeftInRad && changeAngle <= maxLeftInRad)
+                    return tcConfig.getLeftCost() + weight;
+                else if (changeAngle <= minRightInRad && changeAngle >= maxRightInRad)
+                    return tcConfig.getRightCost() + weight;
+                else return Double.POSITIVE_INFINITY; // too sharp turn
+            }
+
+            @Override
+            public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
+                long millis = (long) (1000 * calcTurnWeight(inEdge, viaNode, outEdge));
+                return millis;
+            }
+        };
+    }
+
+    public static double calcChangeAngle(int inEdge, int viaNode, int outEdge, BaseGraph graph, EdgeIntAccess access, DecimalEncodedValue orientationEnc) {
+        // this is slightly faster than calling getEdgeIteratorState as it avoids creating a new
+        // object and accesses only one node but is slightly less safe as it cannot check that at
+        // least one node must be identical (the case where getEdgeIteratorState returns null)
+        boolean inEdgeReverse = !graph.isAdjNode(inEdge, viaNode);
+        double prevOrientation = orientationEnc.getDecimal(inEdgeReverse, inEdge, access);
+
+        boolean outEdgeReverse = !graph.isAdjNode(outEdge, viaNode);
+        double orientation = orientationEnc.getDecimal(outEdgeReverse, outEdge, access);
+
+        // bring parallel to prevOrientation
+        if (orientation >= 0) orientation -= Math.PI;
+        else orientation += Math.PI;
+        prevOrientation = ANGLE_CALC.alignOrientation(orientation, prevOrientation);
+        double changeAngle = orientation - prevOrientation;
+        if (changeAngle > Math.PI) changeAngle -= 2 * Math.PI;
+        else if (changeAngle < -Math.PI) changeAngle += 2 * Math.PI;
+        return changeAngle;
     }
 }
