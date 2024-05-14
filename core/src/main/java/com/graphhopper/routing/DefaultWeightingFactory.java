@@ -77,7 +77,7 @@ public class DefaultWeightingFactory implements WeightingFactory {
             if (turnCostProvider != NO_TURN_COST_PROVIDER && profile.getTurnCostsConfig().hasLeftRightStraight()) {
                 if(!encodingManager.hasEncodedValue(Orientation.KEY))
                     throw new IllegalArgumentException("Using left,right or straight for turn_costs requires 'orientation' in graph.encoded_values");
-                turnCostProvider = DefaultTurnCostProvider.createFromTurnCostConfig(turnCostProvider,
+                turnCostProvider = DefaultTurnCostProvider.createFromConfig(turnCostProvider,
                         encodingManager.getDecimalEncodedValue(Orientation.KEY), graph, profile.getTurnCostsConfig());
             }
             if (requestHints.has(Parameters.Routing.HEADING_PENALTY))

@@ -88,18 +88,18 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
         return "default_tcp_" + uTurnCostsInt;
     }
 
-    public static TurnCostProvider createFromTurnCostConfig(TurnCostProvider turnCostProvider,
-                                                            DecimalEncodedValue orientationEnc,
-                                                            Graph graph, TurnCostsConfig tcConfig) {
+    public static TurnCostProvider createFromConfig(TurnCostProvider turnCostProvider,
+                                                    DecimalEncodedValue orientationEnc,
+                                                    Graph graph, TurnCostsConfig tcConfig) {
         return new TurnCostProvider() {
 
             final double minRightInRad = Math.toRadians(tcConfig.getMinRightAngle());
             final double maxRightInRad = Math.toRadians(tcConfig.getMaxRightAngle());
             final double minLeftInRad = Math.toRadians(tcConfig.getMinLeftAngle());
             final double maxLeftInRad = Math.toRadians(tcConfig.getMaxLeftAngle());
-            final double rightCost = tcConfig.getRightCost() == null ? 0 : tcConfig.getRightCost();
-            final double leftCost = tcConfig.getLeftCost() == null ? 0 : tcConfig.getLeftCost();
-            final double straightCost = tcConfig.getStraightCost() == null ? 0 : tcConfig.getStraightCost();
+            final double rightCost = tcConfig.getRightCost();
+            final double leftCost = tcConfig.getLeftCost();
+            final double straightCost = tcConfig.getStraightCost();
             final BaseGraph baseGraph = graph.getBaseGraph();
             final EdgeIntAccess edgeIntAccess = graph.getBaseGraph().getEdgeAccess();
 

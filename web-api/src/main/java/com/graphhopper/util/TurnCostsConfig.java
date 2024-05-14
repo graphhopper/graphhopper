@@ -7,9 +7,9 @@ import java.util.Set;
 
 public class TurnCostsConfig {
     public static final int INFINITE_U_TURN_COSTS = -1;
-    private Double leftCost; // in seconds
-    private Double rightCost;
-    private Double straightCost;
+    private double leftCost; // in seconds
+    private double rightCost;
+    private double straightCost;
     private double minLeftAngle = 25, maxLeftAngle = 180;
     private double minRightAngle = -25, maxRightAngle = -180;
     private int uTurnCosts = INFINITE_U_TURN_COSTS;
@@ -76,36 +76,36 @@ public class TurnCostsConfig {
     }
 
     public boolean hasLeftRightStraight() {
-        return leftCost != null || rightCost != null || straightCost != null;
+        return leftCost != 0 || rightCost != 0 || straightCost != 0;
     }
 
-    public TurnCostsConfig setLeftCost(Double leftCost) {
+    public TurnCostsConfig setLeftCost(double leftCost) {
         this.leftCost = leftCost;
         return this;
     }
 
     @JsonProperty("left")
-    public Double getLeftCost() {
+    public double getLeftCost() {
         return leftCost;
     }
 
-    public TurnCostsConfig setRightCost(Double rightCost) {
+    public TurnCostsConfig setRightCost(double rightCost) {
         this.rightCost = rightCost;
         return this;
     }
 
     @JsonProperty("right")
-    public Double getRightCost() {
+    public double getRightCost() {
         return rightCost;
     }
 
-    public TurnCostsConfig setStraightCost(Double straightCost) {
+    public TurnCostsConfig setStraightCost(double straightCost) {
         this.straightCost = straightCost;
         return this;
     }
 
     @JsonProperty("straight")
-    public Double getStraightCost() {
+    public double getStraightCost() {
         return straightCost;
     }
 
