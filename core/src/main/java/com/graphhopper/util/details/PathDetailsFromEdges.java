@@ -71,6 +71,11 @@ public class PathDetailsFromEdges implements Path.EdgeVisitor {
         Map<String, List<PathDetail>> pathDetails = new HashMap<>(pathBuilders.size());
         for (PathDetailsBuilder builder : pathBuilders) {
             Map.Entry<String, List<PathDetail>> entry = builder.build();
+            if (entry.getValue().get(0).getFirst() != previousIndex)
+                throw new IllegalStateException("Invalid path detail entry: " + entry + ", previousIndex: " + previousIndex);
+            for (int i = 1; i < entry.getValue().size(); i++)
+                if (entry.getValue().get(i).getFirst() != entry.getValue().get(i - 1).getLast())
+                    throw new IllegalStateException("Invalid path detail entry: " + entry);
             List<PathDetail> existing = pathDetails.put(entry.getKey(), entry.getValue());
             if (existing != null)
                 throw new IllegalStateException("Some PathDetailsBuilders use duplicate key: " + entry.getKey());
