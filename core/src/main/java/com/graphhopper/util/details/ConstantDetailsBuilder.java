@@ -62,7 +62,7 @@ public class ConstantDetailsBuilder extends AbstractPathDetailsBuilder {
     public Map.Entry<String, List<PathDetail>> build() {
         if (firstEdge) {
             // #2915 if there was no edge at all we need to add a single entry manually here
-            // #??? we need to set the value but also the (empty) interval (first/last)
+            // #3007 we need to set the value but also the (empty) interval (first/last)
             PathDetail p = new PathDetail(value);
             p.setFirst(lastIndex);
             p.setLast(lastIndex);

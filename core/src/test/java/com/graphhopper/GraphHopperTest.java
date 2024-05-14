@@ -2816,6 +2816,7 @@ public class GraphHopperTest {
     @ParameterizedTest()
     @ValueSource(booleans = {true, false})
     void legDistanceWithDuplicateEndpoint(boolean simplifyResponse) {
+        // see #3007
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
@@ -2845,6 +2846,7 @@ public class GraphHopperTest {
     @ParameterizedTest()
     @ValueSource(booleans = {true, false})
     void legDistanceWithDuplicateEndpoint_onlyTwoPoints(boolean simplifyResponse) {
+        // see #3007
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
