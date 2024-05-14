@@ -797,16 +797,16 @@ public class CHPreparationGraph {
      * graph (because it does not need to read all the edge flags to determine the access flags).
      */
     static class OrigGraph {
-        // we store a list of 'edges' in the format: adjNode|fwdAccess|bwdAccess|edgeKey, we use two ints for each edge
-        private final IntArrayList adjNodesAndFlags;
-        private final IntArrayList edgeKeys;
+        // we store a list of 'edges' in the format: adjNode|fwdAccess|edgeKey|bwdAccess, we use two ints for each edge
+        private final IntArrayList adjNodesAndFwdFlags;
+        private final IntArrayList keysAndBwdFlags;
         // for each node we store the index at which the edges for this node begin in the above edge list
         private final IntArrayList firstEdgesByNode;
 
-        private OrigGraph(IntArrayList firstEdgesByNode, IntArrayList adjNodesAndFlags, IntArrayList edgeKeys) {
+        private OrigGraph(IntArrayList firstEdgesByNode, IntArrayList adjNodesAndFwdFlags, IntArrayList keysAndBwdFlags) {
             this.firstEdgesByNode = firstEdgesByNode;
-            this.adjNodesAndFlags = adjNodesAndFlags;
-            this.edgeKeys = edgeKeys;
+            this.adjNodesAndFwdFlags = adjNodesAndFwdFlags;
+            this.keysAndBwdFlags = keysAndBwdFlags;
         }
 
         PrepareGraphOrigEdgeExplorer createOutOrigEdgeExplorer() {
@@ -819,21 +819,21 @@ public class CHPreparationGraph {
 
         static class Builder {
             private final IntArrayList fromNodes = new IntArrayList();
-            private final IntArrayList toNodesAndFlags = new IntArrayList();
-            private final IntArrayList edgeKeys = new IntArrayList();
+            private final IntArrayList toNodesAndFwdFlags = new IntArrayList();
+            private final IntArrayList keysAndBwdFlags = new IntArrayList();
             private int maxFrom = -1;
             private int maxTo = -1;
 
             void addEdge(int from, int to, int edge, boolean fwd, boolean bwd) {
                 fromNodes.add(from);
-                toNodesAndFlags.add(getIntWithFlags(to, fwd, bwd));
-                edgeKeys.add(GHUtility.createEdgeKey(edge, false));
+                toNodesAndFwdFlags.add(getIntWithFlag(to, fwd));
+                keysAndBwdFlags.add(getIntWithFlag(GHUtility.createEdgeKey(edge, false), bwd));
                 maxFrom = Math.max(maxFrom, from);
                 maxTo = Math.max(maxTo, to);
 
                 fromNodes.add(to);
-                toNodesAndFlags.add(getIntWithFlags(from, bwd, fwd));
-                edgeKeys.add(GHUtility.createEdgeKey(edge, true));
+                toNodesAndFwdFlags.add(getIntWithFlag(from, bwd));
+                keysAndBwdFlags.add(getIntWithFlag(GHUtility.createEdgeKey(edge, true), fwd));
                 maxFrom = Math.max(maxFrom, to);
                 maxTo = Math.max(maxTo, from);
             }
@@ -841,24 +841,21 @@ public class CHPreparationGraph {
             OrigGraph build() {
                 int[] sortOrder = IndirectSort.mergesort(0, fromNodes.elementsCount, new IndirectComparator.AscendingIntComparator(fromNodes.buffer));
                 sortAndTrim(fromNodes, sortOrder);
-                sortAndTrim(toNodesAndFlags, sortOrder);
-                sortAndTrim(edgeKeys, sortOrder);
-                return new OrigGraph(buildFirstEdgesByNode(), toNodesAndFlags, edgeKeys);
+                sortAndTrim(toNodesAndFwdFlags, sortOrder);
+                sortAndTrim(keysAndBwdFlags, sortOrder);
+                return new OrigGraph(buildFirstEdgesByNode(), toNodesAndFwdFlags, keysAndBwdFlags);
             }
 
-            private static int getIntWithFlags(int val, boolean fwd, boolean bwd) {
-                // we use only 30 bits for the val and store two access flags along with the same int
-                // this allows for a maximum of 1073mio nodes (and 1073mio edges) in base graph
-                // which is still enough for planet-wide OSM, but if we exceed this limit we probably
-                // need to move the access bits somewhere else or store the edge instead of the val as we
+            private static int getIntWithFlag(int val, boolean access) {
+                // we use only 31 bits for the val and store an access flag along with the same int
+                // this allows for a maximum of 1073mio edges (and 1073mio nodes) in base graph
+                // which is still enough for planet-wide OSM, but if we exceed this limit we need to
+                // move the access bits somewhere else or store the edge instead of the val as we
                 // did before #2567 (only here)
-                if (val > Integer.MAX_VALUE >> 1)
-                    throw new IllegalArgumentException("Maximum val exceeded: " + val + ", max: " + (Integer.MAX_VALUE >> 1));
+                if (val < 0)
+                    throw new IllegalArgumentException("Maximum node or edge key exceeded: " + val + ", max: " + Integer.MAX_VALUE);
                 val <<= 1;
-                if (fwd)
-                    val++;
-                val <<= 1;
-                if (bwd)
+                if (access)
                     val++;
                 return val;
             }
@@ -925,12 +922,12 @@ public class CHPreparationGraph {
 
         @Override
         public int getAdjNode() {
-            return graph.adjNodesAndFlags.get(index) >>> 2;
+            return graph.adjNodesAndFwdFlags.get(index) >>> 1;
         }
 
         @Override
         public int getOrigEdgeKeyFirst() {
-            return graph.edgeKeys.get(index);
+            return graph.keysAndBwdFlags.get(index) >>> 1;
         }
 
         @Override
@@ -939,11 +936,10 @@ public class CHPreparationGraph {
         }
 
         private boolean hasAccess() {
-            int e = graph.adjNodesAndFlags.get(index);
-            if (reverse)
-                return (e & 0b01) == 0b01;
-            else
-                return (e & 0b10) == 0b10;
+            int e = reverse
+                    ? graph.keysAndBwdFlags.get(index)
+                    : graph.adjNodesAndFwdFlags.get(index);
+            return (e & 0b01) == 0b01;
         }
 
         @Override

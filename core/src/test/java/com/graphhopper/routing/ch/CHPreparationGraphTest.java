@@ -19,7 +19,6 @@
 package com.graphhopper.routing.ch;
 
 import com.graphhopper.util.GHUtility;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -57,22 +56,21 @@ class CHPreparationGraphTest {
     }
 
     @Test
-    @Disabled
     void useLargeEdgeId() {
         CHPreparationGraph.OrigGraph.Builder builder = new CHPreparationGraph.OrigGraph.Builder();
-        int largeNodeId = Integer.MAX_VALUE >> 1;
-        assertEquals(1_073_741_823, largeNodeId);
+        int largeEdgeID = Integer.MAX_VALUE >> 1;
+        assertEquals(1_073_741_823, largeEdgeID);
         // 0->1
-        builder.addEdge(0, largeNodeId, 0, true, false);
+        builder.addEdge(0, 1, largeEdgeID, true, false);
         CHPreparationGraph.OrigGraph g = builder.build();
         PrepareGraphOrigEdgeIterator iter = g.createOutOrigEdgeExplorer().setBaseNode(0);
         assertTrue(iter.next());
-        assertEquals(largeNodeId, GHUtility.getEdgeFromEdgeKey(iter.getOrigEdgeKeyFirst()));
+        assertEquals(largeEdgeID, GHUtility.getEdgeFromEdgeKey(iter.getOrigEdgeKeyFirst()));
         iter = g.createInOrigEdgeExplorer().setBaseNode(0);
         assertFalse(iter.next());
 
         IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () ->
-                new CHPreparationGraph.OrigGraph.Builder().addEdge(0, largeNodeId + 1, 1, true, false)
+                new CHPreparationGraph.OrigGraph.Builder().addEdge(0, 1, largeEdgeID + 1, true, false)
         );
         assertTrue(e.getMessage().contains("Maximum node or edge key exceeded: -2147483648, max: 2147483647"), e.getMessage());
     }
