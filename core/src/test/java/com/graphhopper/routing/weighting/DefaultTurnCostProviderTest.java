@@ -15,7 +15,6 @@ import java.util.List;
 
 import static com.graphhopper.json.Statement.If;
 import static com.graphhopper.json.Statement.Op.LIMIT;
-import static com.graphhopper.routing.weighting.DefaultTurnCostProvider.calcChangeAngle;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class DefaultTurnCostProviderTest {
@@ -42,16 +41,18 @@ public class DefaultTurnCostProviderTest {
         EdgeIteratorState edge23 = handleWayTags(edgeIntAccess, calc, graph.edge(2, 3), Arrays.asList(0.020, 0.002));
         EdgeIteratorState edge23down = handleWayTags(edgeIntAccess, calc, graph.edge(2, 3), Arrays.asList(0.010, 0.005));
 
-        assertEquals(0, Math.toDegrees(calcChangeAngle(edge12.getEdge(), 2, edge24.getEdge(), graph, graph.getEdgeAccess(), orientationEnc)), 1);
-        assertEquals(12, Math.toDegrees(calcChangeAngle(edge23down.getEdge(), 2, edge12.getEdge(), graph, graph.getEdgeAccess(), orientationEnc)), 1);
+        TurnCostsConfig tcConfig = new TurnCostsConfig();
+        DefaultTurnCostProvider tcp = new DefaultTurnCostProvider(null, orientationEnc, graph, tcConfig);
+        assertEquals(0, Math.toDegrees(tcp.calcChangeAngle(edge12.getEdge(), 2, edge24.getEdge())), 1);
+        assertEquals(12, Math.toDegrees(tcp.calcChangeAngle(edge23down.getEdge(), 2, edge12.getEdge())), 1);
 
         // left
-        assertEquals(96, Math.toDegrees(calcChangeAngle(edge24.getEdge(), 2, edge23.getEdge(), graph, graph.getEdgeAccess(), orientationEnc)), 1);
-        assertEquals(84, Math.toDegrees(calcChangeAngle(edge23.getEdge(), 2, edge12.getEdge(), graph, graph.getEdgeAccess(), orientationEnc)), 1);
+        assertEquals(96, Math.toDegrees(tcp.calcChangeAngle(edge24.getEdge(), 2, edge23.getEdge())), 1);
+        assertEquals(84, Math.toDegrees(tcp.calcChangeAngle(edge23.getEdge(), 2, edge12.getEdge())), 1);
 
         // right
-        assertEquals(-96, Math.toDegrees(calcChangeAngle(edge23down.getEdge(), 3, edge23.getEdge(), graph, graph.getEdgeAccess(), orientationEnc)), 1);
-        assertEquals(-84, Math.toDegrees(calcChangeAngle(edge12.getEdge(), 2, edge23.getEdge(), graph, graph.getEdgeAccess(), orientationEnc)), 1);
+        assertEquals(-96, Math.toDegrees(tcp.calcChangeAngle(edge23down.getEdge(), 3, edge23.getEdge())), 1);
+        assertEquals(-84, Math.toDegrees(tcp.calcChangeAngle(edge12.getEdge(), 2, edge23.getEdge())), 1);
     }
 
     @Test

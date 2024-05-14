@@ -2,6 +2,7 @@ package com.graphhopper.util;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -32,8 +33,20 @@ public class TurnCostsConfig {
         return new TurnCostsConfig(List.of("bicycle"));
     }
 
-    // jackson
     public TurnCostsConfig() {
+    }
+
+    public TurnCostsConfig(TurnCostsConfig copy) {
+        leftCost = copy.leftCost;
+        rightCost = copy.rightCost;
+        straightCost = copy.straightCost;
+        minLeftAngle = copy.minLeftAngle;
+        maxLeftAngle = copy.maxLeftAngle;
+        minRightAngle = copy.minRightAngle;
+        maxRightAngle = copy.maxRightAngle;
+        uTurnCosts = copy.uTurnCosts;
+        if (copy.vehicleTypes != null)
+            vehicleTypes = new ArrayList<>(copy.vehicleTypes);
     }
 
     public TurnCostsConfig(List<String> vehicleTypes) {
@@ -65,6 +78,10 @@ public class TurnCostsConfig {
         return vehicleTypes;
     }
 
+    /**
+     * @param uTurnCosts the costs of a u-turn in seconds, for {@link TurnCostsConfig#INFINITE_U_TURN_COSTS} the u-turn costs
+     *                   will be infinite
+     */
     public TurnCostsConfig setUTurnCosts(int uTurnCosts) {
         this.uTurnCosts = uTurnCosts;
         return this;

@@ -20,6 +20,7 @@ package com.graphhopper.routing;
 
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.Orientation;
 import com.graphhopper.routing.ev.TurnRestriction;
 import com.graphhopper.routing.util.EncodingManager;
@@ -32,6 +33,7 @@ import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
+import com.graphhopper.util.TurnCostsConfig;
 
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
 import static com.graphhopper.util.Helper.toLowerCase;
@@ -60,8 +62,12 @@ public class DefaultWeightingFactory implements WeightingFactory {
             BooleanEncodedValue turnRestrictionEnc = encodingManager.getTurnBooleanEncodedValue(TurnRestriction.key(profile.getName()));
             if (turnRestrictionEnc == null)
                 throw new IllegalArgumentException("Cannot find turn restriction encoded value for " + profile.getName());
+            DecimalEncodedValue oEnc = encodingManager.hasEncodedValue(Orientation.KEY) ? encodingManager.getDecimalEncodedValue(Orientation.KEY) : null;
+            if (profile.getTurnCostsConfig().hasLeftRightStraight() && oEnc == null)
+                throw new IllegalArgumentException("Using left,right or straight for turn_costs requires 'orientation' in graph.encoded_values");
             int uTurnCosts = hints.getInt(Parameters.Routing.U_TURN_COSTS, profile.getTurnCostsConfig().getUTurnCosts());
-            turnCostProvider = new DefaultTurnCostProvider(turnRestrictionEnc, graph.getTurnCostStorage(), uTurnCosts);
+            TurnCostsConfig tcConfig = new TurnCostsConfig(profile.getTurnCostsConfig()).setUTurnCosts(uTurnCosts);
+            turnCostProvider = new DefaultTurnCostProvider(turnRestrictionEnc, oEnc, graph, tcConfig);
         } else {
             turnCostProvider = NO_TURN_COST_PROVIDER;
         }
@@ -74,12 +80,6 @@ public class DefaultWeightingFactory implements WeightingFactory {
         if (CustomWeighting.NAME.equalsIgnoreCase(weightingStr)) {
             final CustomModel queryCustomModel = requestHints.getObject(CustomModel.KEY, null);
             final CustomModel mergedCustomModel = CustomModel.merge(profile.getCustomModel(), queryCustomModel);
-            if (turnCostProvider != NO_TURN_COST_PROVIDER && profile.getTurnCostsConfig().hasLeftRightStraight()) {
-                if(!encodingManager.hasEncodedValue(Orientation.KEY))
-                    throw new IllegalArgumentException("Using left,right or straight for turn_costs requires 'orientation' in graph.encoded_values");
-                turnCostProvider = DefaultTurnCostProvider.createFromConfig(turnCostProvider,
-                        encodingManager.getDecimalEncodedValue(Orientation.KEY), graph, profile.getTurnCostsConfig());
-            }
             if (requestHints.has(Parameters.Routing.HEADING_PENALTY))
                 mergedCustomModel.setHeadingPenalty(requestHints.getDouble(Parameters.Routing.HEADING_PENALTY, Parameters.Routing.DEFAULT_HEADING_PENALTY));
             weighting = CustomModelParser.createWeighting(encodingManager, turnCostProvider, mergedCustomModel);
