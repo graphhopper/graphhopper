@@ -36,16 +36,16 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
     private final int uTurnCostsInt;
     private final double uTurnCosts;
 
-    final double minRightInRad;
-    final double maxRightInRad;
-    final double minLeftInRad;
-    final double maxLeftInRad;
-    final double rightCost;
-    final double leftCost;
-    final double straightCost;
-    final BaseGraph graph;
-    final EdgeIntAccess edgeIntAccess;
-    final DecimalEncodedValue orientationEnc;
+    private final double minRightInRad;
+    private final double maxRightInRad;
+    private final double minLeftInRad;
+    private final double maxLeftInRad;
+    private final double rightCost;
+    private final double leftCost;
+    private final double straightCost;
+    private final BaseGraph graph;
+    private final EdgeIntAccess edgeIntAccess;
+    private final DecimalEncodedValue orientationEnc;
 
     public DefaultTurnCostProvider(BooleanEncodedValue turnRestrictionEnc, DecimalEncodedValue orientationEnc,
                                    Graph graph, TurnCostsConfig tcConfig) {
