@@ -2859,7 +2859,17 @@ public class GraphHopperTest {
         request.addPoint(new GHPoint(43.732499, 7.426758));
         request.setPathDetails(List.of("leg_distance"));
         GHResponse routeRsp = hopper.route(request);
-        // todonow: once there are no errors anymore set proper expectations
+        assertEquals(2, routeRsp.getBest().getPoints().size());
+        assertEquals(10.439, routeRsp.getBest().getDistance(), 1.e-3);
+        List<PathDetail> p = routeRsp.getBest().getPathDetails().get("leg_distance");
+        // there should be two consecutive leg_distance intervals, even though the second is empty: [0,3] and [3,3], see #2915
+        assertEquals(2, p.size());
+        assertEquals(0, p.get(0).getFirst());
+        assertEquals(1, p.get(0).getLast());
+        assertEquals(10.439, (double) p.get(0).getValue(), 1.e-3);
+        assertEquals(1, p.get(1).getFirst());
+        assertEquals(1, p.get(1).getLast());
+        assertEquals(0.0, (double) p.get(1).getValue(), 1.e-3);
     }
 
 }
