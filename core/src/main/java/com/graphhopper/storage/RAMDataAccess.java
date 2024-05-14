@@ -36,8 +36,8 @@ public class RAMDataAccess extends AbstractDataAccess {
     private byte[][] segments = new byte[0][];
     private boolean store;
     // we could also use UNSAFE but it is not really faster (see #3005)
-    private static final VarHandle INT = MethodHandles.byteArrayViewVarHandle(int[].class, ByteOrder.LITTLE_ENDIAN);
-    private static final VarHandle SHORT = MethodHandles.byteArrayViewVarHandle(short[].class, ByteOrder.LITTLE_ENDIAN);
+    private static final VarHandle INT = MethodHandles.byteArrayViewVarHandle(int[].class, ByteOrder.LITTLE_ENDIAN).withInvokeExactBehavior();
+    private static final VarHandle SHORT = MethodHandles.byteArrayViewVarHandle(short[].class, ByteOrder.LITTLE_ENDIAN).withInvokeExactBehavior();
 
     RAMDataAccess(String name, String location, boolean store, int segmentSize) {
         super(name, location, segmentSize);
