@@ -1104,7 +1104,7 @@ public class QueryGraphTest {
         assertEquals(0, closestNode);
         // ... but what does matter is that the coordinates of the snapped point match the coordinates of the closest node!
         // This isn't entirely obvious here, because `index.findClosest` first considers the snap an edge snap and only
-        // later updates it to a tower snap. See #???
+        // later updates it to a tower snap. See #3009
         assertEquals(na.getLat(closestNode), snap.getSnappedPoint().getLat());
         assertEquals(na.getLon(closestNode), snap.getSnappedPoint().getLon());
         // also the distance should be correct

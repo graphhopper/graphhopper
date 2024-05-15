@@ -31,7 +31,7 @@ class SnapTest {
 
     @Test
     void snapToCloseTower() {
-        // see #???
+        // see #3009
         BaseGraph graph = new BaseGraph.Builder(1).create();
         EdgeIteratorState edge = graph.edge(0, 1);
         NodeAccess na = graph.getNodeAccess();
