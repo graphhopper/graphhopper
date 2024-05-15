@@ -79,9 +79,6 @@ public class PathDetailsBuilderFactory {
         if (requestedPathDetails.contains(INTERSECTION))
             builders.add(new IntersectionDetails(graph, weighting));
 
-        if (requestedPathDetails.contains("turn_costs"))
-            builders.add(new TurnCostsDetails(weighting));
-
         for (String pathDetail : requestedPathDetails) {
             if (!evl.hasEncodedValue(pathDetail))
                 continue; // path details like "time" won't be found
