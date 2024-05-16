@@ -33,6 +33,7 @@ public class OSMReaderConfig {
     private int ramerElevationSmoothingMax = 5;
     private double longEdgeSamplingDistance = Double.MAX_VALUE;
     private int workerThreads = 2;
+    private double defaultElevation = 0;
 
     public List<String> getIgnoredHighways() {
         return ignoredHighways;
@@ -153,6 +154,15 @@ public class OSMReaderConfig {
      */
     public OSMReaderConfig setWorkerThreads(int workerThreads) {
         this.workerThreads = workerThreads;
+        return this;
+    }
+
+    public double getDefaultElevation() {
+        return defaultElevation;
+    }
+
+    public OSMReaderConfig setDefaultElevation(double defaultElevation) {
+        this.defaultElevation = defaultElevation;
         return this;
     }
 }
