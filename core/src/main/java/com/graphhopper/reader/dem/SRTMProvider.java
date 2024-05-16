@@ -56,6 +56,7 @@ public class SRTMProvider extends AbstractSRTMElevationProvider {
 
     public static void main(String[] args) throws IOException {
         SRTMProvider provider = new SRTMProvider();
+        System.out.println(provider.getEle(42.526246,1.520532));
         // 337
         System.out.println(provider.getEle(49.949784, 11.57517));
         // 466

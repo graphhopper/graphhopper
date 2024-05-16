@@ -39,6 +39,7 @@ public class Helper {
     private static final float DEGREE_FACTOR = 10_000_000;
     // milli meter is a bit extreme but we have 3 bytes
     private static final float ELE_FACTOR = 1000f;
+    private static final int MAX_ELE_UINT = (int) ((10_000 + 1000) * ELE_FACTOR);
 
     private Helper() {
     }
@@ -277,8 +278,9 @@ public class Helper {
      * Converts elevation value (in meters) into integer for storage.
      */
     public static int eleToUInt(double ele) {
+        if (Double.isNaN(ele)) throw new IllegalArgumentException("elevation cannot be NaN");
         if (ele < -1000) return -1000;
-        if (ele >= Integer.MAX_VALUE / ELE_FACTOR - 1000) return Integer.MAX_VALUE;
+        if (ele >= Integer.MAX_VALUE / ELE_FACTOR - 1000) return MAX_ELE_UINT;
         return (int) ((ele + 1000) * ELE_FACTOR); // enough for smallest value is -414m
     }
 
@@ -287,7 +289,7 @@ public class Helper {
      * more precision than meters although it currently is!
      */
     public static double uIntToEle(int integEle) {
-        if (integEle == Integer.MAX_VALUE)
+        if (integEle >= MAX_ELE_UINT)
             return Double.MAX_VALUE;
         return integEle / ELE_FACTOR - 1000;
     }

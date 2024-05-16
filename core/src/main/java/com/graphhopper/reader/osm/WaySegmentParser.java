@@ -206,7 +206,10 @@ public class WaySegmentParser {
                 LOGGER.info("pass2 - processed nodes: " + nf(nodeCounter) + ", accepted nodes: " + nf(acceptedNodes) +
                         ", " + Helper.getMemInfo());
 
-            long nodeType = nodeData.addCoordinatesIfMapped(node.getId(), node.getLat(), node.getLon(), () -> elevationProvider.getEle(node));
+            long nodeType = nodeData.addCoordinatesIfMapped(node.getId(), node.getLat(), node.getLon(), () -> {
+                double ele = elevationProvider.getEle(node);
+                return Double.isNaN(ele) ? 0 : ele;
+            });
             if (nodeType == EMPTY_NODE)
                 return;
 

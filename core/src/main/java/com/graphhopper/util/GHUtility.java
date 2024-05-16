@@ -415,13 +415,18 @@ public class GHUtility {
         return edge;
     }
 
-    public static void updateDistancesFor(Graph g, int node, double lat, double lon) {
+    public static void updateDistancesFor(Graph g, int node, double... latlonele) {
         NodeAccess na = g.getNodeAccess();
-        na.setNode(node, lat, lon);
+        if (latlonele.length == 3)
+            na.setNode(node, latlonele[0], latlonele[1], latlonele[2]);
+        else if (latlonele.length == 2) {
+            if (na.is3D()) throw new IllegalArgumentException("graph requires elevation");
+            na.setNode(node, latlonele[0], latlonele[1]);
+        } else
+            throw new IllegalArgumentException("illegal number of arguments " + latlonele.length);
         EdgeIterator iter = g.createEdgeExplorer().setBaseNode(node);
         while (iter.next()) {
             iter.setDistance(DIST_EARTH.calcDistance(iter.fetchWayGeometry(FetchMode.ALL)));
-            // System.out.println(node + "->" + adj + ": " + iter.getDistance());
         }
     }
 

@@ -32,6 +32,19 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 public class HelperTest {
 
     @Test
+    public void testElevation() {
+        assertEquals(9034.1, Helper.uIntToEle(Helper.eleToUInt(9034.1)), .1);
+        assertEquals(1234.5, Helper.uIntToEle(Helper.eleToUInt(1234.5)), .1);
+        assertEquals(0, Helper.uIntToEle(Helper.eleToUInt(0)), .1);
+        assertEquals(-432.3, Helper.uIntToEle(Helper.eleToUInt(-432.3)), .1);
+
+        assertEquals(Double.MAX_VALUE, Helper.uIntToEle(Helper.eleToUInt(11_000)));
+        assertEquals(Double.MAX_VALUE, Helper.uIntToEle(Helper.eleToUInt(Double.MAX_VALUE)));
+
+        assertThrows(IllegalArgumentException.class, () -> Helper.eleToUInt(Double.NaN));
+    }
+
+    @Test
     public void testGetLocale() {
         assertEquals(Locale.GERMAN, Helper.getLocale("de"));
         assertEquals(Locale.GERMANY, Helper.getLocale("de_DE"));
