@@ -161,6 +161,9 @@ public class OSMReaderConfig {
         return defaultElevation;
     }
 
+    /**
+     * Sets the elevation in meters that shall be used if the elevation data source is missing a value
+     */
     public OSMReaderConfig setDefaultElevation(double defaultElevation) {
         this.defaultElevation = defaultElevation;
         return this;
