@@ -267,12 +267,8 @@ public class ResponsePath {
         }
         for (Map.Entry<String, List<PathDetail>> detailEntry : details.entrySet()) {
             String key = detailEntry.getKey();
-//            if (detailEntry.getValue().isEmpty())
-//                throw new IllegalArgumentException("Empty path detail entry: " + key);
             List<PathDetail> pathDetails = this.pathDetails.get(key);
             if (pathDetails != null) {
-//                if (detailEntry.getValue().get(0).getFirst() != pathDetails.get(pathDetails.size() - 1).getLast())
-//                    throw new IllegalStateException("Path details '" + key + "' aren't consecutive. Existing: " + pathDetails + ", given: " + detailEntry.getValue());
                 pathDetails.addAll(detailEntry.getValue());
             } else {
                 this.pathDetails.put(key, detailEntry.getValue());
