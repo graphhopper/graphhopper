@@ -848,7 +848,7 @@ public class CHPreparationGraph {
 
             private static int getIntWithFlag(int val, boolean access) {
                 // we use only 31 bits for the val and store an access flag along with the same int
-                // this allows for a maximum of 1073mio edges (and 1073mio nodes) in base graph
+                // this allows for a maximum of 1073mio edges (and 2147mio nodes) in base graph
                 // which is still enough for planet-wide OSM, but if we exceed this limit we need to
                 // move the access bits somewhere else or store the edge instead of the val as we
                 // did before #2567 (only here)
