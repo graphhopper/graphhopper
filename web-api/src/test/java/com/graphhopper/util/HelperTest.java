@@ -105,4 +105,22 @@ public class HelperTest {
         bytes[0] = -25;
         assertEquals(3, new String(bytes, 0, 1, UTF_CS).getBytes(UTF_CS).length);
     }
+
+    @Test
+    void degreeToInt() {
+        int storedInt = 444_494_395;
+        double lat = Helper.intToDegree(storedInt);
+        assertEquals(44.4494395, lat);
+        assertEquals(storedInt, Helper.degreeToInt(lat));
+    }
+
+    @Test
+    void eleToInt() {
+        int storedInt = 1145636;
+        double ele = Helper.uIntToEle(storedInt);
+        // converting to double is imprecise
+        assertEquals(145.635986, ele, 1.e-6);
+        // ... but converting back to int should yield the same value we started with!
+        assertEquals(storedInt, Helper.eleToUInt(ele));
+    }
 }

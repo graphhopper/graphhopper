@@ -258,7 +258,7 @@ public class Helper {
             return Integer.MAX_VALUE;
         if (deg <= -Double.MAX_VALUE)
             return -Integer.MAX_VALUE;
-        return (int) (deg * DEGREE_FACTOR);
+        return (int) Math.round(deg * DEGREE_FACTOR);
     }
 
     /**
@@ -281,7 +281,7 @@ public class Helper {
         if (Double.isNaN(ele)) throw new IllegalArgumentException("elevation cannot be NaN");
         if (ele < -1000) return -1000;
         if (ele >= Integer.MAX_VALUE / ELE_FACTOR - 1000) return MAX_ELE_UINT;
-        return (int) ((ele + 1000) * ELE_FACTOR); // enough for smallest value is -414m
+        return (int) Math.round((ele + 1000) * ELE_FACTOR); // enough for smallest value is -414m
     }
 
     /**
