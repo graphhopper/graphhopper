@@ -1228,7 +1228,7 @@ public class GraphHopperTest {
         assertEquals(67.4, arsp.getDescend(), 1e-1);
 
         assertEquals(74, arsp.getPoints().size());
-        assertEquals(new GHPoint3D(43.73068455771767, 7.421283689825812, 55.82), arsp.getPoints().get(0));
+        assertEquals(new GHPoint3D(43.73068455771767, 7.421283689825812, 55.83), arsp.getPoints().get(0));
         assertEquals(new GHPoint3D(43.727679637988224, 7.419198521975086, 12.27), arsp.getPoints().get(arsp.getPoints().size() - 1));
 
         assertEquals(55.83, arsp.getPoints().get(0).getEle(), 1e-2);
@@ -1890,9 +1890,9 @@ public class GraphHopperTest {
         assertEquals(1995.18, pathLM.getDistance(), 0.1);
         assertEquals(1995.18, path.getDistance(), 0.1);
 
-        assertEquals(149481, pathCH.getTime());
-        assertEquals(149481, pathLM.getTime());
-        assertEquals(149481, path.getTime());
+        assertEquals(149482, pathCH.getTime());
+        assertEquals(149482, pathLM.getTime());
+        assertEquals(149482, path.getTime());
     }
 
     @Test
@@ -2811,6 +2811,67 @@ public class GraphHopperTest {
             hopper.load();
             assertEquals(2969, hopper.getBaseGraph().getNodes());
         }
+    }
+
+    @ParameterizedTest()
+    @ValueSource(booleans = {true, false})
+    void legDistanceWithDuplicateEndpoint(boolean simplifyResponse) {
+        // see #3007
+        GraphHopper hopper = new GraphHopper().
+                setGraphHopperLocation(GH_LOCATION).
+                setOSMFile(MONACO).
+                setEncodedValuesString("car_access, car_average_speed").
+                setProfiles(TestProfiles.accessAndSpeed("car")).
+                importOrLoad();
+        hopper.getRouterConfig().setSimplifyResponse(simplifyResponse);
+        GHRequest request = new GHRequest().setProfile("car");
+        request.addPoint(new GHPoint(43.732496, 7.427231));
+        request.addPoint(new GHPoint(43.732499, 7.426758));
+        request.addPoint(new GHPoint(43.732499, 7.426758));
+        request.setPathDetails(List.of("leg_distance"));
+        GHResponse routeRsp = hopper.route(request);
+        assertEquals(4, routeRsp.getBest().getPoints().size());
+        assertEquals(40.080, routeRsp.getBest().getDistance(), 1.e-3);
+        List<PathDetail> p = routeRsp.getBest().getPathDetails().get("leg_distance");
+        // there should be two consecutive leg_distance intervals, even though the second is empty: [0,3] and [3,3], see #2915
+        assertEquals(2, p.size());
+        assertEquals(0, p.get(0).getFirst());
+        assertEquals(3, p.get(0).getLast());
+        assertEquals(40.080, (double) p.get(0).getValue(), 1.e-3);
+        assertEquals(3, p.get(1).getFirst());
+        assertEquals(3, p.get(1).getLast());
+        assertEquals(0.0, (double) p.get(1).getValue(), 1.e-3);
+    }
+
+    @ParameterizedTest()
+    @ValueSource(booleans = {true, false})
+    void legDistanceWithDuplicateEndpoint_onlyTwoPoints(boolean simplifyResponse) {
+        // see #3007
+        GraphHopper hopper = new GraphHopper().
+                setGraphHopperLocation(GH_LOCATION).
+                setOSMFile(MONACO).
+                setEncodedValuesString("car_access, car_average_speed").
+                setProfiles(TestProfiles.accessAndSpeed("car")).
+                importOrLoad();
+        hopper.getRouterConfig().setSimplifyResponse(simplifyResponse);
+        GHRequest request = new GHRequest().setProfile("car");
+        // special case where the points are so close to each other that the resulting route contains only two points total
+        request.addPoint(new GHPoint(43.732399, 7.426658));
+        request.addPoint(new GHPoint(43.732499, 7.426758));
+        request.addPoint(new GHPoint(43.732499, 7.426758));
+        request.setPathDetails(List.of("leg_distance"));
+        GHResponse routeRsp = hopper.route(request);
+        assertEquals(2, routeRsp.getBest().getPoints().size());
+        assertEquals(10.439, routeRsp.getBest().getDistance(), 1.e-3);
+        List<PathDetail> p = routeRsp.getBest().getPathDetails().get("leg_distance");
+        // there should be two consecutive leg_distance intervals, even though the second is empty: [0,3] and [3,3], see #2915
+        assertEquals(2, p.size());
+        assertEquals(0, p.get(0).getFirst());
+        assertEquals(1, p.get(0).getLast());
+        assertEquals(10.439, (double) p.get(0).getValue(), 1.e-3);
+        assertEquals(1, p.get(1).getFirst());
+        assertEquals(1, p.get(1).getLast());
+        assertEquals(0.0, (double) p.get(1).getValue(), 1.e-3);
     }
 
 }

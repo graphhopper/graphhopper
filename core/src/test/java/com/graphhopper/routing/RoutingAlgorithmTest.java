@@ -1061,18 +1061,18 @@ public class RoutingAlgorithmTest {
         graph.edge(8, 9).setDistance(10).set(speedEnc, s, 0);
         graph.edge(9, 8).setDistance(9).set(speedEnc, s, 0);
         graph.edge(10, 9).setDistance(10).set(speedEnc, s, 0);
-        updateDistancesFor(graph, 0, 3, 0);
-        updateDistancesFor(graph, 3, 2.5, 0);
-        updateDistancesFor(graph, 5, 1, 0);
-        updateDistancesFor(graph, 8, 0, 0);
-        updateDistancesFor(graph, 1, 3, 1);
-        updateDistancesFor(graph, 4, 2, 1);
-        updateDistancesFor(graph, 6, 1, 1);
-        updateDistancesFor(graph, 9, 0, 1);
-        updateDistancesFor(graph, 2, 3, 2);
-        updateDistancesFor(graph, 11, 2, 2);
-        updateDistancesFor(graph, 7, 1, 2);
-        updateDistancesFor(graph, 10, 0, 2);
+        updateDistancesFor(graph, 0, 3, 0, 0);
+        updateDistancesFor(graph, 3, 2.5, 0, 0);
+        updateDistancesFor(graph, 5, 1, 0, 0);
+        updateDistancesFor(graph, 8, 0, 0, 0);
+        updateDistancesFor(graph, 1, 3, 1, 0);
+        updateDistancesFor(graph, 4, 2, 1, 0);
+        updateDistancesFor(graph, 6, 1, 1, 0);
+        updateDistancesFor(graph, 9, 0, 1, 0);
+        updateDistancesFor(graph, 2, 3, 2, 0);
+        updateDistancesFor(graph, 11, 2, 2, 0);
+        updateDistancesFor(graph, 7, 1, 2, 0);
+        updateDistancesFor(graph, 10, 0, 2, 0);
     }
 
     private static String getCHGraphName(Weighting weighting) {
