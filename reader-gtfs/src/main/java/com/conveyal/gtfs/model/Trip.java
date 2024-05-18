@@ -78,17 +78,13 @@ public class Trip extends Entity {
             // Hardcoded workarounds for incomplete/wrong SF Bay Area data we've seen.
             // We also want to look up the associated route to check referential integrity
             // (but not store a reference; see below).
-            // TODO: no longer hardcode these
+            // TODO(rohit): no longer hardcode these
             Route route = getRefField("route_id", true, feed.routes);
 
             // Bikes are only allowed on SFMTA/Muni buses including trolleybuses,
             // not on any other trip types (LRV, cable car, etc.) operated by the agency.
             if (route.agency_id.equals("SF") && route.route_type != 3 && route.route_type != 11) {
                 t.bikes_allowed = 2;
-            }
-            // Bikes are allowed on County Connection busses but the data is wrong (May 2023)
-            if (route.agency_id.equals("CC")) {
-                t.bikes_allowed = 1;
             }
 
             feed.trips.put(t.trip_id, t);
@@ -101,7 +97,5 @@ public class Trip extends Entity {
             getRefField("service_id", true, feed.services);
             // Route existence confirmed above
         }
-
     }
-
 }
