@@ -38,6 +38,7 @@ public class QueryGraphWeighting implements Weighting {
     private final IntArrayList closestEdges;
     private final EdgeExplorer explorer1;
     private final EdgeExplorer explorer2;
+    private double minTurnWeight;
 
     public QueryGraphWeighting(BaseGraph graph, Weighting weighting, IntArrayList closestEdges) {
         this.graph = graph;
@@ -78,31 +79,25 @@ public class QueryGraphWeighting implements Weighting {
         // to calculate the actual turn costs or detect u-turns we need to look at the original edge of each virtual
         // edge, see #1593
         if (isVirtualEdge(inEdge) && isVirtualEdge(outEdge)) {
-            var minTurnWeight = new Object() {
-                double value = Double.POSITIVE_INFINITY;
-            };
+            minTurnWeight = Double.POSITIVE_INFINITY;
             graph.forEdgeAndCopiesOfEdge(explorer1, viaNode, getOriginalEdge(inEdge), p -> {
                 graph.forEdgeAndCopiesOfEdge(explorer2, viaNode, getOriginalEdge(outEdge), q -> {
-                    minTurnWeight.value = Math.min(minTurnWeight.value, weighting.calcTurnWeight(p, viaNode, q));
+                    minTurnWeight = Math.min(minTurnWeight, weighting.calcTurnWeight(p, viaNode, q));
                 });
             });
-            return minTurnWeight.value;
+            return minTurnWeight;
         } else if (isVirtualEdge(inEdge)) {
-            var minTurnWeight = new Object() {
-                double value = Double.POSITIVE_INFINITY;
-            };
+            minTurnWeight = Double.POSITIVE_INFINITY;
             graph.forEdgeAndCopiesOfEdge(explorer1, viaNode, getOriginalEdge(inEdge), e -> {
-                minTurnWeight.value = Math.min(minTurnWeight.value, weighting.calcTurnWeight(e, viaNode, outEdge));
+                minTurnWeight = Math.min(minTurnWeight, weighting.calcTurnWeight(e, viaNode, outEdge));
             });
-            return minTurnWeight.value;
+            return minTurnWeight;
         } else if (isVirtualEdge(outEdge)) {
-            var minTurnWeight = new Object() {
-                double value = Double.POSITIVE_INFINITY;
-            };
+            minTurnWeight = Double.POSITIVE_INFINITY;
             graph.forEdgeAndCopiesOfEdge(explorer1, viaNode, getOriginalEdge(outEdge), e -> {
-                minTurnWeight.value = Math.min(minTurnWeight.value, weighting.calcTurnWeight(inEdge, viaNode, e));
+                minTurnWeight = Math.min(minTurnWeight, weighting.calcTurnWeight(inEdge, viaNode, e));
             });
-            return minTurnWeight.value;
+            return minTurnWeight;
         } else {
             return weighting.calcTurnWeight(inEdge, viaNode, outEdge);
         }
