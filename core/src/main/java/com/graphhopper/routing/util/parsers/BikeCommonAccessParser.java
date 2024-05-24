@@ -89,12 +89,6 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
                 if (value.equals("no")) {
                     if (firstRestrictedKey.equals("vehicle"))
                         return WayAccess.WAY;
-                    if (firstRestrictedKey.equals("bicycle") && way.hasTag("vehicle", "no")) {
-                        if (way.hasTag("highway", "cycleway"))
-                            return WayAccess.WAY;  // Tagging error, we follow the highway value
-                        else
-                            return WayAccess.CAN_SKIP;
-                    }
                 }
                 if (restrictedValues.contains(value) && !hasTemporalRestriction(way, firstIndex, restrictionKeys))
                     return WayAccess.CAN_SKIP;

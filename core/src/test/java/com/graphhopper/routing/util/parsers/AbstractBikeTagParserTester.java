@@ -234,7 +234,7 @@ public abstract class AbstractBikeTagParserTester {
         way.clearTags();
         way.setTag("highway", "track");
         way.setTag("vehicle", "forestry");
-        assertTrue(accessParser.getAccess(way).canSkip());
+        assertTrue(accessParser.getAccess(way).isWay());
         way.setTag("bicycle", "yes");
         assertTrue(accessParser.getAccess(way).isWay());
     }

@@ -116,6 +116,13 @@ public class OSMGetOffBikeParserTest {
         assertFalse(isGetOffBike(way));
         way.setTag("bicycle", "designated");
         assertFalse(isGetOffBike(way));
+
+        way = new ReaderWay(1);
+        way.setTag("highway", "track");
+        way.setTag("vehicle", "forestry");
+        assertTrue(isGetOffBike(way));
+        way.setTag("vehicle", "forestry;agricultural");
+        assertTrue(isGetOffBike(way));
     }
 
     @Test

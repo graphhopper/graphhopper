@@ -391,9 +391,9 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("vehicle", "no");
         assertTrue(accessParser.getAccess(way).isWay());
 
-        // Sensless tagging: JOSM does create a warning here. We follow the highway tag:
+        // Senseless tagging: JOSM does create a warning here:
         way.setTag("bicycle", "no");
-        assertTrue(accessParser.getAccess(way).isWay());
+        assertTrue(accessParser.getAccess(way).canSkip());
 
         way.setTag("bicycle", "designated");
         assertTrue(accessParser.getAccess(way).isWay());
@@ -426,9 +426,9 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.clearTags();
         way.setTag("highway", "track");
         way.setTag("vehicle", "forestry");
-        assertTrue(accessParser.getAccess(way).canSkip());
+        assertTrue(accessParser.getAccess(way).isWay());
         way.setTag("vehicle", "agricultural;forestry");
-        assertTrue(accessParser.getAccess(way).canSkip());
+        assertTrue(accessParser.getAccess(way).isWay());
     }
 
     @Test
