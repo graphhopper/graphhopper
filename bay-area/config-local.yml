@@ -52,6 +52,7 @@ graphhopper:
       vehicle: bike2
       weighting: fastest
       use_ferries: false
+      snap_preventions: footway
     - name: foot
       vehicle: foot
       weighting: fastest

@@ -8,6 +8,7 @@ import com.graphhopper.util.Parameters;
 
 import java.util.List;
 
+import static com.graphhopper.routing.ev.RoadClass.FOOTWAY;
 import static com.graphhopper.routing.ev.RoadClass.MOTORWAY;
 import static com.graphhopper.routing.ev.RoadClass.TRUNK;
 import static com.graphhopper.routing.ev.RoadEnvironment.*;
@@ -18,7 +19,7 @@ public class SnapPreventionEdgeFilter implements EdgeFilter {
     private final EnumEncodedValue<RoadClass> rcEnc;
     private final EdgeFilter filter;
     private boolean avoidMotorway = false, avoidTrunk;
-    private boolean avoidTunnel, avoidBridge, avoidFerry, avoidFord;
+    private boolean avoidTunnel, avoidBridge, avoidFerry, avoidFord, avoidFootway;
 
     public SnapPreventionEdgeFilter(EdgeFilter filter, EnumEncodedValue<RoadClass> rcEnc,
                                     EnumEncodedValue<RoadEnvironment> reEnc, List<String> snapPreventions) {
@@ -27,12 +28,16 @@ public class SnapPreventionEdgeFilter implements EdgeFilter {
         this.rcEnc = rcEnc;
 
         for (String roadClassOrRoadEnv : snapPreventions) {
-            if ("motorway".equals(roadClassOrRoadEnv)) {
-                avoidMotorway = true;
-                continue;
-            } else if ("trunk".equals(roadClassOrRoadEnv)) {
-                avoidTrunk = true;
-                continue;
+            switch (roadClassOrRoadEnv) {
+                case "motorway":
+                    avoidMotorway = true;
+                    continue;
+                case "trunk":
+                    avoidTrunk = true;
+                    continue;
+                case "footway":
+                    avoidFootway = true;
+                    continue;
             }
 
             RoadEnvironment rc = RoadEnvironment.find(roadClassOrRoadEnv);
@@ -52,6 +57,7 @@ public class SnapPreventionEdgeFilter implements EdgeFilter {
     @Override
     public boolean accept(EdgeIteratorState edgeState) {
         return filter.accept(edgeState)
+                && !(avoidFootway && edgeState.get(rcEnc) == FOOTWAY)
                 && !(avoidMotorway && edgeState.get(rcEnc) == MOTORWAY)
                 && !(avoidTrunk && edgeState.get(rcEnc) == TRUNK)
                 && !(avoidTunnel && edgeState.get(reEnc) == TUNNEL)

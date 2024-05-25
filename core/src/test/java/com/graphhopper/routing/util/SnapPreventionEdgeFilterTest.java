@@ -20,7 +20,9 @@ public class SnapPreventionEdgeFilterTest {
         EncodingManager em = new EncodingManager.Builder().build();
         EnumEncodedValue<RoadClass> rcEnc = em.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         EnumEncodedValue<RoadEnvironment> reEnc = em.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
-        SnapPreventionEdgeFilter filter = new SnapPreventionEdgeFilter(trueFilter, rcEnc, reEnc, Arrays.asList("motorway", "ferry"));
+        SnapPreventionEdgeFilter filter = new SnapPreventionEdgeFilter(
+                trueFilter, rcEnc, reEnc,
+                Arrays.asList("motorway", "ferry", "footway"));
 
         IntsRef intsRef = em.createEdgeFlags();
         assertTrue(filter.accept(GHUtility.createMockedEdgeIteratorState(1, intsRef)));
@@ -33,5 +35,8 @@ public class SnapPreventionEdgeFilterTest {
         assertTrue(filter.accept(GHUtility.createMockedEdgeIteratorState(1, intsRef)));
         rcEnc.setEnum(false, intsRef, RoadClass.MOTORWAY);
         assertFalse(filter.accept(GHUtility.createMockedEdgeIteratorState(1, intsRef)));
+        rcEnc.setEnum(false, intsRef, RoadClass.FOOTWAY);
+        assertFalse(filter.accept(
+                GHUtility.createMockedEdgeIteratorState(1, intsRef)));
     }
 }

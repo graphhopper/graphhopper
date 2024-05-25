@@ -52,6 +52,7 @@ graphhopper:
     - name: bike2
       vehicle: bike2
       weighting: fastest
+      snap_preventions: footway
       turn_costs: true
       u_turn_costs: 10
       use_ferries: false
