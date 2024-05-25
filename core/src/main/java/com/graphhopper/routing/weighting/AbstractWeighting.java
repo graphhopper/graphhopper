@@ -64,12 +64,16 @@ public abstract class AbstractWeighting implements Weighting {
             reverse = false;
         }
 
-        // TODO: find out why this is triggering on interpolated legs
-        // if (reverse && !edgeState.getReverse(accessEnc) || !reverse && !edgeState.get(accessEnc))
-        //     throw new IllegalStateException("Calculating time should not require to read speed from edge in wrong direction. " +
-        //             "(" + edgeState.getBaseNode() + " - " + edgeState.getAdjNode() + ") "
-        //             + edgeState.fetchWayGeometry(FetchMode.ALL) + ", dist: " + edgeState.getDistance() + " "
-        //             + "Reverse:" + reverse + ", fwd:" + edgeState.get(accessEnc) + ", bwd:" + edgeState.getReverse(accessEnc) + ", fwd-speed: " + edgeState.get(avSpeedEnc) + ", bwd-speed: " + edgeState.getReverse(avSpeedEnc));
+        if (reverse && !edgeState.getReverse(accessEnc) || !reverse && !edgeState.get(accessEnc)) {
+            throw new IllegalStateException(
+                "Calculating time should not require to read speed from edge in wrong direction. " +
+                    "(" + edgeState.getBaseNode() + " - " + edgeState.getAdjNode() + ") "
+                    + edgeState.fetchWayGeometry(FetchMode.ALL) + ", dist: "
+                    + edgeState.getDistance() + " "
+                    + "Reverse:" + reverse + ", fwd:" + edgeState.get(accessEnc) + ", bwd:"
+                    + edgeState.getReverse(accessEnc) + ", fwd-speed: " + edgeState.get(avSpeedEnc)
+                    + ", bwd-speed: " + edgeState.getReverse(avSpeedEnc));
+        }
 
         double speed = reverse ? edgeState.getReverse(avSpeedEnc) : edgeState.get(avSpeedEnc);
         if (Double.isInfinite(speed) || Double.isNaN(speed) || speed < 0)
