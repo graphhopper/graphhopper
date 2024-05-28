@@ -176,7 +176,7 @@ public class OSMReader {
                 .setWorkerThreads(config.getWorkerThreads())
                 .build();
         waySegmentParser.readOSM(osmFile);
-        osmDataDate = waySegmentParser.getTimeStamp();
+        osmDataDate = waySegmentParser.getTimestamp();
         if (baseGraph.getNodes() == 0)
             throw new RuntimeException("Graph after reading OSM must not be empty");
         releaseEverythingExceptRestrictionData();

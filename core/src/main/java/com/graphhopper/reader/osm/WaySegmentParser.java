@@ -115,7 +115,7 @@ public class WaySegmentParser {
     /**
      * @return the timestamp read from the OSM file, or null if nothing was read yet
      */
-    public Date getTimeStamp() {
+    public Date getTimestamp() {
         return timestamp;
     }
 
