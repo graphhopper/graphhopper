@@ -12,21 +12,24 @@ can import [other data sources too](README.md#OpenStreetMap-Support).
 
 # Community
 
-We have an open community and welcome everyone. Let us know your problems, use cases or just [say hello](https://discuss.graphhopper.com/). Please see our [community guidelines](https://graphhopper.com/agreements/cccoc.html).
+We have an open community and welcome everyone. Let us know your problems, use cases or just [say hello](https://discuss.graphhopper.com/).
+Please see our [community guidelines](https://graphhopper.com/agreements/cccoc.html).
 
 ## Questions
 
-All questions go to our [forum](https://discuss.graphhopper.com/) where we also have subsections specially for developers, mobile usage, and [our map matching component](./map-matching). You can also search [Stackoverflow](http://stackoverflow.com/questions/tagged/graphhopper) for answers. Please do not use our issue section for questions :)
+All questions go to our [forum](https://discuss.graphhopper.com/) where we also have subsections specially for developers, mobile usage, and [our map matching component](./map-matching).
+You can also search [Stackoverflow](http://stackoverflow.com/questions/tagged/graphhopper) for answers.
 
 ## Contribute
 
-Read through [how to contribute](CONTRIBUTING.md) for information on topics
-like finding and fixing bugs and improving our documentation or translations! 
-We even have [good first issues](https://github.com/graphhopper/graphhopper/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22) to get started.
+Read through our [contributing guide](CONTRIBUTING.md) for information on topics
+like finding and fixing bugs and improving our documentation or translations!
+We also have [good first issues](https://github.com/graphhopper/graphhopper/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22)
+to get started with contribution.
 
 ## Get Started
 
-To get started you can try [GraphHopper Maps](README.md#graphhopper-maps), read through our documentation and install the GraphHopper Web Service locally.
+To get started you can try [GraphHopper Maps](README.md#graphhopper-maps), read through [our documentation](./docs/index.md) and install GraphHopper including the Maps UI locally.
 
 * 9.x: [documentation](https://github.com/graphhopper/graphhopper/blob/9.x/docs/index.md)
   , [web service jar](https://repo1.maven.org/maven2/com/graphhopper/graphhopper-web/9.1/graphhopper-web-9.1.jar)
@@ -117,9 +120,14 @@ To see the road routing feature of GraphHopper in action please go to [GraphHopp
 
 [![GraphHopper Maps](https://www.graphhopper.com/wp-content/uploads/2022/10/maps2-1024x661.png)](https://graphhopper.com/maps)
 
-GraphHopper Maps is an open source user interface, which you can find [here](https://github.com/graphhopper/graphhopper-maps). It can use this open source routing engine or the [GraphHopper Directions API](https://www.graphhopper.com), which provides the Routing API, a Route Optimization API (based on [jsprit](http://jsprit.github.io/)), a fast Matrix API and an address search (based on [photon](https://github.com/komoot/photon)). The photon project is also supported by the GraphHopper GmbH. Additionally to the GraphHopper Directions API, map tiles from various providers are used where the default is [Omniscale](http://omniscale.com/). 
+GraphHopper Maps is an open source user interface, which you can find [here](https://github.com/graphhopper/graphhopper-maps).
+It can use this open source routing engine or the [GraphHopper Directions API](https://www.graphhopper.com),
+which provides the Routing API, a Route Optimization API (based on [jsprit](http://jsprit.github.io/)),
+a fast Matrix API and an address search (based on [photon](https://github.com/komoot/photon)). 
+The photon project is also supported by the GraphHopper GmbH. Additionally to the GraphHopper
+Directions API, map tiles from various providers are used, with the default being [Omniscale](http://omniscale.com/). 
 
-All this is available for free, via encrypted connections and from German servers for a nice and private route planning experience!
+All this is available for free, via encrypted connections and from German servers - for a nice and private route planning experience!
 
 ## Public Transit
 
@@ -137,9 +145,9 @@ There is a [web service](./navigation) that can be consumed by [our navigation A
 
 ### Offline
 
-Offline routing is [no longer officially supported](https://github.com/graphhopper/graphhopper/issues/1940) but should still work. See
-[version 1.0](https://github.com/graphhopper/graphhopper/blob/1.0/docs/android/index.md) with still an Android
-demo and [this pull request](http://github.com/graphhopper/graphhopper-ios) of the iOS fork including a demo for iOS.
+Offline routing is [no longer officially supported](https://github.com/graphhopper/graphhopper/issues/1940)
+but should still work as Android supports most of Java. See [version 1.0](https://github.com/graphhopper/graphhopper/blob/1.0/docs/android/index.md)
+with the Android demo and also see [this pull request](http://github.com/graphhopper/graphhopper-ios) of the iOS fork including a demo for iOS.
 
 [![simple routing](https://www.graphhopper.com/wp-content/uploads/2016/10/android-demo-screenshot-2.png)](./android/README.md)
 
@@ -231,34 +239,33 @@ client.
 
 ### Desktop
 
-GraphHopper also runs on the Desktop in a Java application without internet access.
-For debugging purposes GraphHopper can produce vector tiles, i.e. a visualization of the road network in the browser (see #1572). Also a more low level Swing-based UI is provided via MiniGraphUI in the tools module, see some
-visualizations done with it [here](https://graphhopper.com/blog/2016/01/19/alternative-roads-to-rome/).
-A fast and production ready map visualization for the Desktop can be implemented via [mapsforge](https://github.com/mapsforge/mapsforge) or [mapsforge vtm](https://github.com/mapsforge/vtm).
+GraphHopper also runs on the Desktop in a Java application without internet access. For debugging
+purposes GraphHopper can produce vector tiles, i.e. a visualization of the road network in the
+browser (see #1572). Also a more low level Swing-based UI is provided via MiniGraphUI in the
+tools module, see some visualizations done with it [here](https://graphhopper.com/blog/2016/01/19/alternative-roads-to-rome/).
+A fast and production-ready map visualization for the Desktop can be implemented via [mapsforge](https://github.com/mapsforge/mapsforge) or [mapsforge vtm](https://github.com/mapsforge/vtm).
 
 # Features
 
-Here is a list of the more detailed features:
-
  * Works out of the box with OpenStreetMap (osm/xml and pbf) and can be adapted to custom data
- * OpenStreetMap integration: stores and considers road type, speed limit, the surface, barriers, access restrictions, ferries, [conditional access restrictions](https://github.com/graphhopper/graphhopper/pull/621), ...
+ * OpenStreetMap integration: stores and considers road type, speed limit, the surface, barriers, access restrictions, ferries, conditional access restrictions and more
  * GraphHopper is fast. And with the so called "Contraction Hierarchies" it can be even faster (enabled by default).
  * Memory efficient data structures, algorithms and [the low and high level API](./docs/core/low-level-api.md) is tuned towards ease of use and efficiency
- * Pre-built routing profiles: car, bike, racing bike, mountain bike, foot, hike, motorcycle, ...
- * [Customization of these profiles](./docs/core/profiles.md#custom-profiles) are possible and e.g. get truck routing or support for cargo bikes and [many other changes](https://www.graphhopper.com/blog/2020/05/31/examples-for-customizable-routing/)
+ * Pre-built routing profiles: car, bike, racing bike, mountain bike, foot, hike, truck, bus, motorcycle, ...
+ * [Customization of these profiles](./docs/core/profiles.md#custom-profiles) are possible. Read about it [here](https://www.graphhopper.com/blog/2020/05/31/examples-for-customizable-routing/).
  * Provides a powerful [web API](./docs/web/api-doc.md) that exposes the data from OpenStreetMap and allows customizing the vehicle profiles per request. With JavaScript and Java clients.
- * Does [map matching](./map-matching)
- * Supports public transit routing and [GTFS](./reader-gtfs/README.md).
- * Offers turn instructions in more than 45 languages, contribute or improve [here](./docs/core/translations.md)
- * Displays and takes into account [elevation data](./docs/core/elevation.md)
- * [Alternative routes](https://discuss.graphhopper.com/t/alternative-routes/424)
- * [Turn costs and restrictions](./docs/core/turn-restrictions.md)
- * Country specific routing via country rules
- * Allows customizing routing behavior using custom areas
- * The core uses only a few dependencies (hppc, jts, janino and slf4j)
- * Scales from small indoor-sized to world-wide-sized graphs
- * Finds nearest point on street e.g. to get elevation or 'snap to road' or being used as spatial index (see [#1485](https://github.com/graphhopper/graphhopper/pull/1485))
- * Calculates isochrones and [shortest path trees](https://github.com/graphhopper/graphhopper/pull/1577)
- * Shows the whole road network in the browser for debugging purposes ("vector tile support") [#1572](https://github.com/graphhopper/graphhopper/pull/1572)
- * Shows details along a route like road_class or max_speed ("path details") [#1142](https://github.com/graphhopper/graphhopper/pull/1142)
- * Written Java and simple start for developers via Maven.
+ * Provides [map matching](./map-matching) i.e. "snap to road".
+ * Supports time-dependent public transit routing and reading [GTFS](./reader-gtfs/README.md).
+ * Offers turn instructions in more than 45 languages. Contribute or improve [here](./docs/core/translations.md).
+ * Displays and takes into account [elevation data](./docs/core/elevation.md).
+ * Supports [alternative routes](https://discuss.graphhopper.com/t/alternative-routes/424).
+ * Supports [turn costs and restrictions](./docs/core/turn-restrictions.md).
+ * Offers country-specific routing via country rules.
+ * Allows customizing routing behavior using custom areas.
+ * The core uses only a few dependencies (hppc, jts, janino and slf4j).
+ * Scales from small indoor-sized to world-wide-sized graphs.
+ * Finds nearest point on street e.g. to get elevation or 'snap to road' or being used as spatial index (see [#1485](https://github.com/graphhopper/graphhopper/pull/1485)).
+ * Calculates isochrones and [shortest path trees](https://github.com/graphhopper/graphhopper/pull/1577).
+ * Shows the whole road network in the browser for debugging purposes ("vector tile support"), see [#1572](https://github.com/graphhopper/graphhopper/pull/1572).
+ * Shows so called "path details" along a route like road_class or max_speed, see [#1142](https://github.com/graphhopper/graphhopper/pull/1142) or the web documentation.
+ * Written in Java and simple to start for developers via Maven.
