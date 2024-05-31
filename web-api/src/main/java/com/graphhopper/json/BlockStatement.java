@@ -22,7 +22,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 public record BlockStatement(Keyword keyword, String condition,
-                             List<Statement> then) implements Statement {
+                             List<Statement> doBlock) implements Statement {
 
     @Override
     public boolean isBlock() {
@@ -31,7 +31,7 @@ public record BlockStatement(Keyword keyword, String condition,
 
     @Override
     public Op operation() {
-        throw new UnsupportedOperationException("Not supported for block statement.");
+        return Op.DO;
     }
 
     @Override
@@ -41,26 +41,26 @@ public record BlockStatement(Keyword keyword, String condition,
 
     public String toPrettyString() {
         return "{\"" + keyword.getName() + "\": \"" + condition + "\",\n"
-                + "  \"then\": [\n"
-                + then.stream().map(Objects::toString).collect(Collectors.joining(",\n  "))
+                + "  \"do\": [\n"
+                + doBlock.stream().map(Objects::toString).collect(Collectors.joining(",\n  "))
                 + "  ]\n" +
                 "}";
     }
 
     @Override
     public String toString() {
-        return "{\"" + keyword.getName() + "\": \"" + condition + "\", \"then\": " + then + " }";
+        return "{\"" + keyword.getName() + "\": \"" + condition + "\", \"do\": " + doBlock + " }";
     }
 
-    public static BlockStatement If(String expression, List<Statement> then) {
-        return new BlockStatement(Keyword.IF, expression, then);
+    public static BlockStatement If(String expression, List<Statement> doBlock) {
+        return new BlockStatement(Keyword.IF, expression, doBlock);
     }
 
-    public static BlockStatement ElseIf(String expression, List<Statement> then) {
-        return new BlockStatement(Keyword.ELSEIF, expression, then);
+    public static BlockStatement ElseIf(String expression, List<Statement> doBlock) {
+        return new BlockStatement(Keyword.ELSEIF, expression, doBlock);
     }
 
-    public static BlockStatement Else(List<Statement> then) {
-        return new BlockStatement(Keyword.ELSE, null, then);
+    public static BlockStatement Else(List<Statement> doBlock) {
+        return new BlockStatement(Keyword.ELSE, "", doBlock);
     }
 }

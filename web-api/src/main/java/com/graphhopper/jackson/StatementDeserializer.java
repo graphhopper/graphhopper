@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.graphhopper.json.Statement.Keyword.*;
+import static com.graphhopper.json.Statement.Op.DO;
 
 class StatementDeserializer extends JsonDeserializer<Statement> {
 
@@ -41,26 +42,15 @@ class StatementDeserializer extends JsonDeserializer<Statement> {
     }
 
     static Statement deserializeStatement(JsonNode treeNode) {
-        if (treeNode.has(ELSE.getName()) && treeNode.get(ELSE.getName()).isArray()) {
-            if (treeNode.size() != 1)
-                throw new IllegalArgumentException("This BlockStatement expects a single else entry, but was " + treeNode.size() + " for " + treeNode);
-
-            JsonNode elseBlock = treeNode.get(ELSE.getName());
-            List<Statement> list = new ArrayList<>();
-            for (JsonNode elseSt : elseBlock) {
-                list.add(deserializeStatement(elseSt));
-            }
-            return BlockStatement.Else(list);
-
-        } else if (treeNode.has(THEN.getName())) {
+        if (treeNode.has(DO.getName())) {
             if (treeNode.size() != 2)
-                throw new IllegalArgumentException("This BlockStatement expects two entries but was " + treeNode.size() + " for " + treeNode);
+                throw new IllegalArgumentException("This block statement expects two entries but was " + treeNode.size() + " for " + treeNode);
 
-            JsonNode thenNode = treeNode.get(THEN.getName());
-            if (!thenNode.isArray())
-                throw new IllegalArgumentException("'then' block must be an array");
+            JsonNode doNode = treeNode.get(DO.getName());
+            if (!doNode.isArray())
+                throw new IllegalArgumentException("'do' block must be an array");
             List<Statement> list = new ArrayList<>();
-            for (JsonNode thenSt : thenNode) {
+            for (JsonNode thenSt : doNode) {
                 list.add(deserializeStatement(thenSt));
             }
 
@@ -68,12 +58,17 @@ class StatementDeserializer extends JsonDeserializer<Statement> {
                 return BlockStatement.If(treeNode.get(IF.getName()).asText(), list);
             else if (treeNode.has(ELSEIF.getName()))
                 return BlockStatement.ElseIf(treeNode.get(ELSEIF.getName()).asText(), list);
-            else
+            else if (treeNode.has(ELSE.getName())) {
+                JsonNode elseNode = treeNode.get(ELSE.getName());
+                if (elseNode.isNull() || elseNode.isValueNode() && elseNode.asText().isEmpty())
+                    return BlockStatement.Else(list);
+                throw new IllegalArgumentException("else cannot have expression but was " + treeNode.get(ELSE.getName()));
+            } else
                 throw new IllegalArgumentException("invalid then block: " + treeNode.toPrettyString());
 
         } else {
             if (treeNode.size() != 2)
-                throw new IllegalArgumentException("This Statement expects two entries but was " + treeNode.size() + " for " + treeNode);
+                throw new IllegalArgumentException("This statement expects two entries but was " + treeNode.size() + " for " + treeNode);
             Statement.Op jsonOp = null;
             String value = null;
             for (Statement.Op op : Statement.Op.values()) {

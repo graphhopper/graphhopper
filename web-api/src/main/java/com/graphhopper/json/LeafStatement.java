@@ -23,7 +23,7 @@ public record LeafStatement(Keyword keyword, String condition, Op operation,
                             String value) implements Statement {
 
     @Override
-    public List<Statement> then() {
+    public List<Statement> doBlock() {
         throw new UnsupportedOperationException("Not supported for single statement.");
     }
 
@@ -50,6 +50,6 @@ public record LeafStatement(Keyword keyword, String condition, Op operation,
     }
 
     public static LeafStatement Else(Op op, String value) {
-        return new LeafStatement(Keyword.ELSE, null, op, value);
+        return new LeafStatement(Keyword.ELSE, "", op, value);
     }
 }

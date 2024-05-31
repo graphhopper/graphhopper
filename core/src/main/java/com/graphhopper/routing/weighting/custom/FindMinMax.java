@@ -78,7 +78,7 @@ public class FindMinMax {
         Statement first = group.get(0);
         if (first.condition().trim().equals("true")) {
             if(first.isBlock()) {
-                for (List<Statement> subGroup : CustomModelParser.splitIntoGroup(first.then())) findMinMaxForGroup(minMax, subGroup, lookup);
+                for (List<Statement> subGroup : CustomModelParser.splitIntoGroup(first.doBlock())) findMinMaxForGroup(minMax, subGroup, lookup);
                 return;
             } else {
                 minMaxGroup = first.operation().apply(minMax, ValueExpressionVisitor.findMinMax(first.value(), lookup));
@@ -93,7 +93,7 @@ public class FindMinMax {
                 MinMax tmp;
                 if(s.isBlock()) {
                     tmp = new MinMax(minMax.min, minMax.max);
-                    for (List<Statement> subGroup : CustomModelParser.splitIntoGroup(first.then())) findMinMaxForGroup(tmp, subGroup, lookup);
+                    for (List<Statement> subGroup : CustomModelParser.splitIntoGroup(first.doBlock())) findMinMaxForGroup(tmp, subGroup, lookup);
                 } else {
                     tmp = s.operation().apply(minMax, ValueExpressionVisitor.findMinMax(s.value(), lookup));
                     if (tmp.max < 0)

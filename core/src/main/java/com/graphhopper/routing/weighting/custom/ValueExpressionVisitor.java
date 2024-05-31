@@ -167,7 +167,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         Statement first = group.get(0);
         if (first.condition().trim().equals("true")) {
             if(first.isBlock()) {
-                List<List<Statement>> groups = CustomModelParser.splitIntoGroup(first.then());
+                List<List<Statement>> groups = CustomModelParser.splitIntoGroup(first.doBlock());
                 for (List<Statement> subGroup : groups) findVariablesForGroup(createdObjects, subGroup, lookup);
             } else {
                 createdObjects.addAll(ValueExpressionVisitor.findVariables(first.value(), lookup));
@@ -175,7 +175,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         } else {
             for (Statement st : group) {
                 if(st.isBlock()) {
-                    List<List<Statement>> groups = CustomModelParser.splitIntoGroup(st.then());
+                    List<List<Statement>> groups = CustomModelParser.splitIntoGroup(st.doBlock());
                     for (List<Statement> subGroup : groups) findVariablesForGroup(createdObjects, subGroup, lookup);
                 } else {
                     createdObjects.addAll(ValueExpressionVisitor.findVariables(st.value(), lookup));

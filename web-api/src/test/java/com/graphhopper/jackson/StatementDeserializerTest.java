@@ -22,21 +22,28 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.graphhopper.json.Statement;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class StatementDeserializerTest {
 
-    @Test
-    void conditionAsBoolean_expressionAsNumber() throws JsonProcessingException {
+    ObjectMapper mapper;
+
+    @BeforeEach
+    public void setup() {
         SimpleModule module = new SimpleModule();
         module.addDeserializer(Statement.class, new StatementDeserializer());
-        ObjectMapper objectMapper = new ObjectMapper().registerModule(module);
+        mapper = new ObjectMapper().registerModule(module);
+    }
+
+    @Test
+    void conditionAsBoolean_expressionAsNumber() throws JsonProcessingException {
         // true instead of "true" or 100 instead of "100" also work because they are parsed to strings
         // We probably need to accept numbers instead of strings for legacy support, but maybe we should reject true/false
-        Statement statement = objectMapper.readValue("{\"if\":true,\"limit_to\":100}", Statement.class);
+        Statement statement = mapper.readValue("{\"if\":true,\"limit_to\":100}", Statement.class);
         assertEquals(Statement.Keyword.IF, statement.keyword());
         assertEquals("true", statement.condition());
         assertEquals(Statement.Op.LIMIT, statement.operation());
@@ -45,16 +52,24 @@ class StatementDeserializerTest {
 
     @Test
     void else_null() throws JsonProcessingException {
-        SimpleModule module = new SimpleModule();
-        module.addDeserializer(Statement.class, new StatementDeserializer());
-        ObjectMapper objectMapper = new ObjectMapper().registerModule(module);
         // There is no error for `"else": null` currently, even though there is no real reason to support this.
         // The value will actually be null, but the way we use it at the moment this is not a problem.
-        Statement statement = objectMapper.readValue("{\"else\":null,\"limit_to\":\"abc\"}", Statement.class);
+        Statement statement = mapper.readValue("{\"else\":null,\"limit_to\":\"abc\"}", Statement.class);
         assertEquals(Statement.Keyword.ELSE, statement.keyword());
-        assertNull(statement.condition());
+        assertTrue(statement.condition().isEmpty());
         assertEquals(Statement.Op.LIMIT, statement.operation());
         assertEquals("abc", statement.value());
     }
 
+    @Test
+    void block() throws JsonProcessingException {
+        Statement statement = mapper.readValue("{\"if\":\"country == DEU\"," +
+                "\"do\": [{ \"if\":\"road_class == PRIMARY\", \"limit_to\": \"123\" }] }", Statement.class);
+        assertEquals(Statement.Keyword.IF, statement.keyword());
+        assertEquals(Statement.Op.DO, statement.operation());
+        assertEquals("country == DEU", statement.condition());
+        assertTrue(statement.isBlock());
+        assertEquals(1, statement.doBlock().size());
+        assertEquals("road_class == PRIMARY", statement.doBlock().get(0).condition());
+    }
 }

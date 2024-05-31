@@ -194,7 +194,7 @@ public class CustomModelParser {
         for (List<Statement> group : groups) {
             for (Statement statement : group) {
                 if (statement.isBlock()) {
-                    findVariablesForEncodedValuesString(statement.then(), nameValidator, classHelper);
+                    findVariablesForEncodedValuesString(statement.doBlock(), nameValidator, classHelper);
                 } else {
                     // ignore potential problems; collect only variables in this step
                     ConditionalExpressionVisitor.parse(statement.condition(), nameValidator, classHelper);
@@ -411,6 +411,7 @@ public class CustomModelParser {
         ClassHelper helper = key -> getReturnType(lookup.getEncodedValue(key, EncodedValue.class));
 
         parseExpressions(expressions, nameInConditionValidator, info, createObjects, list, helper, "");
+        expressions.append("return value;\n");
         return new Parser(new org.codehaus.janino.Scanner(info, new StringReader(expressions.toString()))).
                 parseBlockStatements();
     }
@@ -428,7 +429,7 @@ public class CustomModelParser {
                 expressions.append(indentation);
                 if (statement.isBlock()) {
                     expressions.append("else {");
-                    parseExpressions(expressions, nameInConditionValidator, exceptionInfo, createObjects, statement.then(), classHelper, indentation + "  ");
+                    parseExpressions(expressions, nameInConditionValidator, exceptionInfo, createObjects, statement.doBlock(), classHelper, indentation + "  ");
                     expressions.append(indentation).append("}\n");
                 } else {
                     expressions.append("else {").append(statement.operation().build(statement.value())).append("; }\n");
@@ -445,7 +446,7 @@ public class CustomModelParser {
                 expressions.append(indentation);
                 if (statement.isBlock()) {
                     expressions.append("if (").append(parseResult.converted).append(") {\n");
-                    parseExpressions(expressions, nameInConditionValidator, exceptionInfo, createObjects, statement.then(), classHelper, indentation + "  ");
+                    parseExpressions(expressions, nameInConditionValidator, exceptionInfo, createObjects, statement.doBlock(), classHelper, indentation + "  ");
                     expressions.append(indentation).append("}\n");
                 } else {
                     expressions.append("if (").append(parseResult.converted).append(") {").
@@ -455,7 +456,6 @@ public class CustomModelParser {
                 throw new IllegalArgumentException("The statement must be either 'if', 'else_if' or 'else'");
             }
         }
-        expressions.append("return value;\n");
     }
 
     /**

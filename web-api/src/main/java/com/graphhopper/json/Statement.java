@@ -27,14 +27,14 @@ public interface Statement {
 
     String value();
 
-    List<Statement> then();
+    List<Statement> doBlock();
 
     Op operation();
 
     boolean isBlock();
 
     enum Keyword {
-        IF("if"), ELSEIF("else_if"), ELSE("else"), THEN("then");
+        IF("if"), ELSEIF("else_if"), ELSE("else");
 
         private final String name;
 
@@ -48,7 +48,7 @@ public interface Statement {
     }
 
     enum Op {
-        MULTIPLY("multiply_by"), LIMIT("limit_to");
+        MULTIPLY("multiply_by"), LIMIT("limit_to"), DO("do");
 
         private final String name;
 
