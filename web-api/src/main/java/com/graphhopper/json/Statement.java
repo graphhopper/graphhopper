@@ -17,12 +17,29 @@
  */
 package com.graphhopper.json;
 
+import com.graphhopper.util.Helper;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
 public record Statement(Keyword keyword, String condition, Op operation, String value,
                         List<Statement> doBlock) {
+
+    public Statement {
+        if (condition == null)
+            throw new IllegalArgumentException("'condition' cannot be null");
+        if (doBlock != null && operation != Op.DO)
+            throw new IllegalArgumentException("For 'doBlock' you have to use Op.DO");
+        if (doBlock != null && value != null)
+            throw new IllegalArgumentException("'doBlock' or 'value' cannot be both non-null");
+        if (doBlock == null && Helper.isEmpty(value))
+            throw new IllegalArgumentException("a leaf statement must have a non-empty 'value'");
+        if (condition.isEmpty() && keyword != Keyword.ELSE)
+            throw new IllegalArgumentException("All statements (except 'else') have to use a non-empty 'condition'");
+        if (!condition.isEmpty() && keyword == Keyword.ELSE)
+            throw new IllegalArgumentException("For the 'else' statement you have to use an empty 'condition'");
+    }
 
     public boolean isBlock() {
         return doBlock != null;
