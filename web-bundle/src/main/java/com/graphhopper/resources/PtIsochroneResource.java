@@ -56,7 +56,7 @@ import javax.ws.rs.core.MediaType;
 import java.time.Instant;
 import java.util.*;
 
-import static com.graphhopper.json.LeafStatement.If;
+import static com.graphhopper.json.Statement.If;
 
 @Path("isochrone-pt")
 public class PtIsochroneResource {

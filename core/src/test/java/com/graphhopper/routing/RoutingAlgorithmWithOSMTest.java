@@ -40,7 +40,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
-import static com.graphhopper.json.LeafStatement.If;
+import static com.graphhopper.json.Statement.If;
 import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static com.graphhopper.util.Parameters.Algorithms.*;
 import static org.junit.jupiter.api.Assertions.*;

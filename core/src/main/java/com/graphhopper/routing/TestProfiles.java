@@ -22,8 +22,8 @@ import com.graphhopper.config.Profile;
 import com.graphhopper.json.Statement;
 import com.graphhopper.util.CustomModel;
 
-import static com.graphhopper.json.LeafStatement.Else;
-import static com.graphhopper.json.LeafStatement.If;
+import static com.graphhopper.json.Statement.Else;
+import static com.graphhopper.json.Statement.If;
 import static com.graphhopper.json.Statement.Op.LIMIT;
 import static com.graphhopper.json.Statement.Op.MULTIPLY;
 

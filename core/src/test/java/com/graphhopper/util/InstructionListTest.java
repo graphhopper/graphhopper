@@ -37,7 +37,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.*;
 
-import static com.graphhopper.json.LeafStatement.If;
+import static com.graphhopper.json.Statement.If;
 import static com.graphhopper.search.KVStorage.KValue;
 import static com.graphhopper.util.Parameters.Details.STREET_NAME;
 import static org.junit.jupiter.api.Assertions.*;
@@ -556,7 +556,7 @@ public class InstructionListTest {
         assertEquals(Arrays.asList("continue onto main", "arrive at destination"), tmpList);
 
         // Other roads should not influence instructions. Example: https://www.openstreetmap.org/node/392106581
-        na.setNode(5, 43.625666,-79.714048);
+        na.setNode(5, 43.625666, -79.714048);
         g.edge(2, 5).setDistance(80).set(roadsSpeedEnc, 50, 50).set(lanesEnc, 5);
 
         p = new Dijkstra(g, weighting, tMode).calcPath(1, 4);

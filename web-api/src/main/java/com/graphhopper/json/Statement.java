@@ -18,22 +18,49 @@
 package com.graphhopper.json;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
-public interface Statement {
+public record Statement(Keyword keyword, String condition, Op operation, String value,
+                        List<Statement> doBlock) {
 
-    Keyword keyword();
+    public boolean isBlock() {
+        return doBlock != null;
+    }
 
-    String condition();
+    @Override
+    public String value() {
+        if (isBlock())
+            throw new UnsupportedOperationException("'value' is not supported for block statement.");
+        return value;
+    }
 
-    String value();
+    @Override
+    public List<Statement> doBlock() {
+        if (!isBlock())
+            throw new UnsupportedOperationException("'doBlock' is not supported for leaf statement.");
+        return doBlock;
+    }
 
-    List<Statement> doBlock();
+    public String toPrettyString() {
+        if (isBlock())
+            return "{\"" + keyword.getName() + "\": \"" + condition + "\",\n"
+                    + "  \"do\": [\n"
+                    + doBlock.stream().map(Objects::toString).collect(Collectors.joining(",\n  "))
+                    + "  ]\n" +
+                    "}";
+        else return toString();
+    }
 
-    Op operation();
+    @Override
+    public String toString() {
+        if (isBlock())
+            return "{\"" + keyword.getName() + "\": \"" + condition + "\", \"do\": " + doBlock + " }";
+        else
+            return "{\"" + keyword.getName() + "\": \"" + condition + "\", \"" + operation.getName() + ": \"" + value + "\"}";
+    }
 
-    boolean isBlock();
-
-    enum Keyword {
+    public enum Keyword {
         IF("if"), ELSEIF("else_if"), ELSE("else");
 
         private final String name;
@@ -47,7 +74,7 @@ public interface Statement {
         }
     }
 
-    enum Op {
+    public enum Op {
         MULTIPLY("multiply_by"), LIMIT("limit_to"), DO("do");
 
         private final String name;
@@ -83,4 +110,27 @@ public interface Statement {
         }
     }
 
+    public static Statement If(String expression, List<Statement> doBlock) {
+        return new Statement(Keyword.IF, expression, Op.DO, null, doBlock);
+    }
+
+    public static Statement If(String expression, Op op, String value) {
+        return new Statement(Keyword.IF, expression, op, value, null);
+    }
+
+    public static Statement ElseIf(String expression, List<Statement> doBlock) {
+        return new Statement(Keyword.ELSEIF, expression, Op.DO, null, doBlock);
+    }
+
+    public static Statement ElseIf(String expression, Op op, String value) {
+        return new Statement(Keyword.ELSEIF, expression, op, value, null);
+    }
+
+    public static Statement Else(List<Statement> doBlock) {
+        return new Statement(Keyword.ELSE, "", Op.DO, null, doBlock);
+    }
+
+    public static Statement Else(Op op, String value) {
+        return new Statement(Keyword.ELSE, "", op, value, null);
+    }
 }

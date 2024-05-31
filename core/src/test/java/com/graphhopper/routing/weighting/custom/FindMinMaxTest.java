@@ -1,6 +1,5 @@
 package com.graphhopper.routing.weighting.custom;
 
-import com.graphhopper.json.BlockStatement;
 import com.graphhopper.json.MinMax;
 import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.EncodedValueLookup;
@@ -14,7 +13,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.graphhopper.json.LeafStatement.*;
+import static com.graphhopper.json.Statement.*;
 import static com.graphhopper.json.Statement.Op.LIMIT;
 import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static com.graphhopper.routing.weighting.custom.FindMinMax.findMinMax;
@@ -121,7 +120,7 @@ class FindMinMaxTest {
     @Test
     public void testBlock() {
         List<Statement> statements = Arrays.asList(
-                BlockStatement.If("road_class == TERTIARY",
+                If("road_class == TERTIARY",
                         List.of(If("max_speed > 100", LIMIT, "100"),
                                 Else(LIMIT, "30"))),
                 ElseIf("road_class == SECONDARY", LIMIT, "25"),
@@ -130,7 +129,7 @@ class FindMinMaxTest {
         assertEquals(100, findMinMax(new MinMax(0, 120), statements, lookup).max);
 
         statements = Arrays.asList(
-                BlockStatement.If("road_class == TERTIARY",
+                If("road_class == TERTIARY",
                         List.of(If("max_speed > 100", LIMIT, "90"),
                                 Else(LIMIT, "30"))),
                 ElseIf("road_class == SECONDARY", LIMIT, "25"),

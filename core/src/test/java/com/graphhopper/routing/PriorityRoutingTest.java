@@ -34,7 +34,7 @@ import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.EdgeIteratorState;
 import org.junit.jupiter.api.Test;
 
-import static com.graphhopper.json.LeafStatement.If;
+import static com.graphhopper.json.Statement.If;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class PriorityRoutingTest {

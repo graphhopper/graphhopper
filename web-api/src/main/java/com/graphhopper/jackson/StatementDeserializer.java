@@ -21,8 +21,6 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.graphhopper.json.BlockStatement;
-import com.graphhopper.json.LeafStatement;
 import com.graphhopper.json.Statement;
 
 import java.io.IOException;
@@ -31,6 +29,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.graphhopper.json.Statement.*;
 import static com.graphhopper.json.Statement.Keyword.*;
 import static com.graphhopper.json.Statement.Op.DO;
 
@@ -55,13 +54,13 @@ class StatementDeserializer extends JsonDeserializer<Statement> {
             }
 
             if (treeNode.has(IF.getName()))
-                return BlockStatement.If(treeNode.get(IF.getName()).asText(), list);
+                return If(treeNode.get(IF.getName()).asText(), list);
             else if (treeNode.has(ELSEIF.getName()))
-                return BlockStatement.ElseIf(treeNode.get(ELSEIF.getName()).asText(), list);
+                return ElseIf(treeNode.get(ELSEIF.getName()).asText(), list);
             else if (treeNode.has(ELSE.getName())) {
                 JsonNode elseNode = treeNode.get(ELSE.getName());
                 if (elseNode.isNull() || elseNode.isValueNode() && elseNode.asText().isEmpty())
-                    return BlockStatement.Else(list);
+                    return Else(list);
                 throw new IllegalArgumentException("else cannot have expression but was " + treeNode.get(ELSE.getName()));
             } else
                 throw new IllegalArgumentException("invalid then block: " + treeNode.toPrettyString());
@@ -86,13 +85,13 @@ class StatementDeserializer extends JsonDeserializer<Statement> {
                 throw new IllegalArgumentException("Cannot find a value in " + treeNode);
 
             if (treeNode.has(IF.getName()))
-                return LeafStatement.If(treeNode.get(IF.getName()).asText(), jsonOp, value);
+                return If(treeNode.get(IF.getName()).asText(), jsonOp, value);
             else if (treeNode.has(ELSEIF.getName()))
-                return LeafStatement.ElseIf(treeNode.get(ELSEIF.getName()).asText(), jsonOp, value);
+                return ElseIf(treeNode.get(ELSEIF.getName()).asText(), jsonOp, value);
             else if (treeNode.has(ELSE.getName())) {
                 JsonNode elseNode = treeNode.get(ELSE.getName());
                 if (elseNode.isNull() || elseNode.isValueNode() && elseNode.asText().isEmpty())
-                    return LeafStatement.Else(jsonOp, value);
+                    return Else(jsonOp, value);
                 throw new IllegalArgumentException("else cannot have expression but was " + treeNode.get(ELSE.getName()));
             }
         }

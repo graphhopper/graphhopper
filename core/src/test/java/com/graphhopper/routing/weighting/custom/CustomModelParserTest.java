@@ -18,7 +18,6 @@
 
 package com.graphhopper.routing.weighting.custom;
 
-import com.graphhopper.json.BlockStatement;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.BaseGraph;
@@ -36,7 +35,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
-import static com.graphhopper.json.LeafStatement.*;
+import static com.graphhopper.json.Statement.*;
 import static com.graphhopper.json.Statement.Op.LIMIT;
 import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static com.graphhopper.routing.ev.RoadClass.*;
@@ -270,7 +269,7 @@ class CustomModelParserTest {
 
         CustomModel customModel = new CustomModel();
         customModel.addToSpeed(If("true", LIMIT, "200"));
-        customModel.addToSpeed(BlockStatement.If("max_speed > 65", List.of(If("true", LIMIT, "65"))));
+        customModel.addToSpeed(If("max_speed > 65", List.of(If("true", LIMIT, "65"))));
         CustomWeighting.EdgeToDoubleMapping speedMapping = CustomModelParser.createWeightingParameters(customModel, encodingManager).
                 getEdgeToSpeedMapping();
         assertEquals(65.0, speedMapping.get(edge70, false), 0.01);

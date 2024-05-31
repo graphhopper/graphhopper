@@ -4,7 +4,6 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
-import com.graphhopper.json.LeafStatement;
 import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.FootTemporalAccess;
 import com.graphhopper.util.CustomModel;
@@ -18,6 +17,7 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.graphhopper.json.Statement.If;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
@@ -59,7 +59,7 @@ public class CustomizableConditionalRestrictionsTest {
 
         rsp = hopper.route(new GHRequest(50.909136, 14.213924, 50.90918, 14.213549).
                 setProfile("foot").
-                setCustomModel(new CustomModel().addToPriority(LeafStatement.If("foot_temporal_access == NO", Statement.Op.MULTIPLY, "0"))).
+                setCustomModel(new CustomModel().addToPriority(If("foot_temporal_access == NO", Statement.Op.MULTIPLY, "0"))).
                 setPathDetails(Arrays.asList(PD_KEY)));
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(16, rsp.getBest().getDistance(), 1);
