@@ -32,10 +32,7 @@ import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.CustomArea;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.storage.RoutingCHEdgeIterator;
-import com.graphhopper.storage.TurnCostStorage;
+import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.shapes.BBox;
@@ -379,6 +376,29 @@ public class GHUtility {
      */
     public static int getEdgeFromEdgeKey(int edgeKey) {
         return edgeKey / 2;
+    }
+
+    /**
+     * @return the common node of two edges
+     * @throws IllegalArgumentException if one of the edges doesn't exist or is a loop or the edges
+     *                                  aren't connected at exactly one distinct node
+     */
+    public static int getCommonNode(BaseGraph baseGraph, int edge1, int edge2) {
+        EdgeIteratorState e1 = baseGraph.getEdgeIteratorState(edge1, Integer.MIN_VALUE);
+        EdgeIteratorState e2 = baseGraph.getEdgeIteratorState(edge2, Integer.MIN_VALUE);
+        if (e1.getBaseNode() == e1.getAdjNode())
+            throw new IllegalArgumentException("edge1: " + edge1 + " is a loop at node " + e1.getBaseNode());
+        if (e2.getBaseNode() == e2.getAdjNode())
+            throw new IllegalArgumentException("edge2: " + edge2 + " is a loop at node " + e2.getBaseNode());
+
+        if ((e1.getBaseNode() == e2.getBaseNode() && e1.getAdjNode() == e2.getAdjNode()) || (e1.getBaseNode() == e2.getAdjNode() && e1.getAdjNode() == e2.getBaseNode()))
+            throw new IllegalArgumentException("edge1: " + edge1 + " and edge2: " + edge2 + " form a circle");
+        else if (e1.getBaseNode() == e2.getBaseNode() || e1.getBaseNode() == e2.getAdjNode())
+            return e1.getBaseNode();
+        else if (e1.getAdjNode() == e2.getAdjNode() || e1.getAdjNode() == e2.getBaseNode())
+            return e1.getAdjNode();
+        else
+            throw new IllegalArgumentException("edge1: " + edge1 + " and edge2: " + edge2 + " aren't connected");
     }
 
     public static void setSpeed(double fwdSpeed, double bwdSpeed, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, EdgeIteratorState... edges) {
