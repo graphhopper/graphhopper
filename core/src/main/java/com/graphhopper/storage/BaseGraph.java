@@ -27,9 +27,12 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 
 import java.io.Closeable;
-import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
+import java.util.function.IntConsumer;
 
 import static com.graphhopper.util.Helper.nf;
+import static com.graphhopper.util.Parameters.Details.STREET_NAME;
 
 /**
  * The base graph handles nodes and edges file format. It can be used with different Directory
@@ -55,17 +58,24 @@ public class BaseGraph implements Graph, Closeable {
     private final Directory dir;
     private final int segmentSize;
     private boolean initialized = false;
+    private long minGeoRef;
     private long maxGeoRef;
+    private final int eleBytesPerCoord;
 
-    public BaseGraph(Directory dir, int intsForFlags, boolean withElevation, boolean withTurnCosts, int segmentSize) {
+    public BaseGraph(Directory dir, boolean withElevation, boolean withTurnCosts, int segmentSize, int bytesForFlags) {
         this.dir = dir;
         this.bitUtil = BitUtil.LITTLE;
         this.wayGeometry = dir.create("geometry", segmentSize);
         this.edgeKVStorage = new KVStorage(dir, true);
-        this.store = new BaseGraphNodesAndEdges(dir, intsForFlags, withElevation, withTurnCosts, segmentSize);
+        this.store = new BaseGraphNodesAndEdges(dir, withElevation, withTurnCosts, segmentSize, bytesForFlags);
         this.nodeAccess = new GHNodeAccess(store);
         this.segmentSize = segmentSize;
-        turnCostStorage = withTurnCosts ? new TurnCostStorage(this, dir.create("turn_costs", dir.getDefaultType("turn_costs", true), segmentSize)) : null;
+        this.turnCostStorage = withTurnCosts ? new TurnCostStorage(this, dir.create("turn_costs", dir.getDefaultType("turn_costs", true), segmentSize)) : null;
+        this.eleBytesPerCoord = (nodeAccess.getDimension() == 3 ? 3 : 0);
+    }
+
+    BaseGraphNodesAndEdges getStore() {
+        return store;
     }
 
     private int getOtherNode(int nodeThis, long edgePointer) {
@@ -105,16 +115,22 @@ public class BaseGraph implements Graph, Closeable {
     private void loadWayGeometryHeader() {
         int geometryVersion = wayGeometry.getHeader(0);
         GHUtility.checkDAVersion(wayGeometry.getName(), Constants.VERSION_GEOMETRY, geometryVersion);
-        maxGeoRef = bitUtil.toLong(
+        minGeoRef = bitUtil.toLong(
                 wayGeometry.getHeader(4),
                 wayGeometry.getHeader(8)
+        );
+        maxGeoRef = bitUtil.toLong(
+                wayGeometry.getHeader(12),
+                wayGeometry.getHeader(16)
         );
     }
 
     private void setWayGeometryHeader() {
         wayGeometry.setHeader(0, Constants.VERSION_GEOMETRY);
-        wayGeometry.setHeader(4, bitUtil.getIntLow(maxGeoRef));
-        wayGeometry.setHeader(8, bitUtil.getIntHigh(maxGeoRef));
+        wayGeometry.setHeader(4, bitUtil.getIntLow(minGeoRef));
+        wayGeometry.setHeader(8, bitUtil.getIntHigh(minGeoRef));
+        wayGeometry.setHeader(12, bitUtil.getIntLow(maxGeoRef));
+        wayGeometry.setHeader(16, bitUtil.getIntHigh(maxGeoRef));
     }
 
     private void setInitialized() {
@@ -167,19 +183,16 @@ public class BaseGraph implements Graph, Closeable {
             turnCostStorage.create(initSize);
         }
         setInitialized();
-        // 0 stands for no separate geoRef
-        maxGeoRef = 4;
+        // 0 stands for no separate geoRef, <0 stands for no separate geoRef but existing edge copies
+        minGeoRef = -1;
+        maxGeoRef = 1;
         return this;
-    }
-
-    public int getIntsForFlags() {
-        return store.getIntsForFlags();
     }
 
     public String toDetailsString() {
         return store.toDetailsString() + ", "
                 + "name:(" + edgeKVStorage.getCapacity() / Helper.MB + "MB), "
-                + "geo:" + nf(maxGeoRef) + "(" + wayGeometry.getCapacity() / Helper.MB + "MB)";
+                + "geo:" + nf(maxGeoRef) + "/" + nf(minGeoRef) + "(" + wayGeometry.getCapacity() / Helper.MB + "MB)";
     }
 
     /**
@@ -292,6 +305,74 @@ public class BaseGraph implements Graph, Closeable {
         return edge;
     }
 
+    /**
+     * Creates a copy of a given edge with the same properties.
+     *
+     * @param reuseGeometry If true the copy uses the same pointer to the geometry,
+     *                      so changing the geometry would alter the geometry for both edges!
+     */
+    public EdgeIteratorState copyEdge(int edge, boolean reuseGeometry) {
+        EdgeIteratorStateImpl edgeState = (EdgeIteratorStateImpl) getEdgeIteratorState(edge, Integer.MIN_VALUE);
+        EdgeIteratorStateImpl newEdge = (EdgeIteratorStateImpl) edge(edgeState.getBaseNode(), edgeState.getAdjNode())
+                .setFlags(edgeState.getFlags())
+                .setDistance(edgeState.getDistance())
+                .setKeyValues(edgeState.getKeyValues());
+        if (reuseGeometry) {
+            // We use the same geo ref for the copied edge. This saves memory because we are not duplicating
+            // the geometry, and it allows to identify the copies of a given edge.
+            long edgePointer = edgeState.edgePointer;
+            long geoRef = store.getGeoRef(edgePointer);
+            if (geoRef == 0) {
+                // No geometry for this edge, but we need to be able to identify the copied edges later, so
+                // we use a dedicated negative value for the geo ref.
+                geoRef = minGeoRef;
+                store.setGeoRef(edgePointer, geoRef);
+                minGeoRef--;
+            }
+            store.setGeoRef(newEdge.edgePointer, geoRef);
+        } else {
+            newEdge.setWayGeometry(edgeState.fetchWayGeometry(FetchMode.PILLAR_ONLY));
+        }
+        return newEdge;
+    }
+
+    /**
+     * Runs the given action on the given edge and all its copies that were created with 'reuseGeometry=true'.
+     */
+    public void forEdgeAndCopiesOfEdge(EdgeExplorer explorer, EdgeIteratorState edge, Consumer<EdgeIteratorState> consumer) {
+        final long geoRef = store.getGeoRef(((EdgeIteratorStateImpl) edge).edgePointer);
+        if (geoRef == 0) {
+            // 0 means there is no geometry (and no copy of this edge), but of course not all edges
+            // without geometry are copies of each other, so we need to return early
+            consumer.accept(edge);
+            return;
+        }
+        EdgeIterator iter = explorer.setBaseNode(edge.getBaseNode());
+        while (iter.next()) {
+            long geoRefBefore = store.getGeoRef(((EdgeIteratorStateImpl) iter).edgePointer);
+            if (geoRefBefore == geoRef)
+                consumer.accept(iter);
+            if (store.getGeoRef(((EdgeIteratorStateImpl) iter).edgePointer) != geoRefBefore)
+                throw new IllegalStateException("The consumer must not change the geo ref");
+        }
+    }
+
+    public void forEdgeAndCopiesOfEdge(EdgeExplorer explorer, int node, int edge, IntConsumer consumer) {
+        final long geoRef = store.getGeoRef(store.toEdgePointer(edge));
+        if (geoRef == 0) {
+            // 0 means there is no geometry (and no copy of this edge), but of course not all edges
+            // without geometry are copies of each other, so we need to return early
+            consumer.accept(edge);
+            return;
+        }
+        EdgeIterator iter = explorer.setBaseNode(node);
+        while (iter.next()) {
+            long geoRefBefore = store.getGeoRef(((EdgeIteratorStateImpl) iter).edgePointer);
+            if (geoRefBefore == geoRef)
+                consumer.accept(iter.getEdge());
+        }
+    }
+
     @Override
     public EdgeIteratorState getEdgeIteratorState(int edgeId, int adjNode) {
         EdgeIteratorStateImpl edge = new EdgeIteratorStateImpl(this);
@@ -352,58 +433,51 @@ public class BaseGraph implements Graph, Closeable {
                         + "D for graph which is " + nodeAccess.getDimension() + "D");
 
             long existingGeoRef = store.getGeoRef(edgePointer);
+            if (existingGeoRef < 0)
+                // users of this method might not be aware that after changing the geo ref it is no
+                // longer possible to find the copies corresponding to an edge, so we deny this
+                throw new IllegalStateException("This edge has already been copied so we can no longer change the geometry, pointer=" + edgePointer);
 
             int len = pillarNodes.size();
-            int dim = nodeAccess.getDimension();
             if (existingGeoRef > 0) {
-                final int count = wayGeometry.getInt(existingGeoRef * 4L);
+                final int count = getPillarCount(existingGeoRef);
                 if (len <= count) {
                     setWayGeometryAtGeoRef(pillarNodes, edgePointer, reverse, existingGeoRef);
                     return;
+                } else {
+                    throw new IllegalStateException("This edge already has a way geometry so it cannot be changed to a bigger geometry, pointer=" + edgePointer);
                 }
             }
-
-            long nextGeoRef = nextGeoRef(len * dim);
+            long nextGeoRef = nextGeoRef(3 + len * (8 + eleBytesPerCoord));
             setWayGeometryAtGeoRef(pillarNodes, edgePointer, reverse, nextGeoRef);
         } else {
             store.setGeoRef(edgePointer, 0L);
         }
     }
 
-    public EdgeIntAccess createEdgeIntAccess() {
-        return new EdgeIntAccess() {
-            @Override
-            public int getInt(int edgeId, int index) {
-                long edgePointer = store.toEdgePointer(edgeId);
-                return store.getFlagInt(edgePointer, index);
-            }
-
-            @Override
-            public void setInt(int edgeId, int index, int value) {
-                long edgePointer = store.toEdgePointer(edgeId);
-                store.setFlagInt(edgePointer, index, value);
-            }
-        };
+    public EdgeIntAccess getEdgeAccess() {
+        return store;
     }
 
     private void setWayGeometryAtGeoRef(PointList pillarNodes, long edgePointer, boolean reverse, long geoRef) {
-        long geoRefPosition = geoRef * 4;
         byte[] wayGeometryBytes = createWayGeometryBytes(pillarNodes, reverse);
-        wayGeometry.ensureCapacity(geoRefPosition + wayGeometryBytes.length);
-        wayGeometry.setBytes(geoRefPosition, wayGeometryBytes, wayGeometryBytes.length);
+        wayGeometry.ensureCapacity(geoRef + wayGeometryBytes.length);
+        wayGeometry.setBytes(geoRef, wayGeometryBytes, wayGeometryBytes.length);
         store.setGeoRef(edgePointer, geoRef);
     }
 
     private byte[] createWayGeometryBytes(PointList pillarNodes, boolean reverse) {
         int len = pillarNodes.size();
-        int dim = nodeAccess.getDimension();
-        int totalLen = len * dim * 4 + 4;
+        int totalLen = 3 + len * (8 + eleBytesPerCoord);
+        if ((totalLen & 0xFF00_0000) != 0)
+            throw new IllegalArgumentException("too long way geometry " + totalLen + ", " + len);
+
         byte[] bytes = new byte[totalLen];
-        bitUtil.fromInt(bytes, len, 0);
+        bitUtil.fromUInt3(bytes, len, 0);
         if (reverse)
             pillarNodes.reverse();
 
-        int tmpOffset = 4;
+        int tmpOffset = 3;
         boolean is3D = nodeAccess.is3D();
         for (int i = 0; i < len; i++) {
             double lat = pillarNodes.getLat(i);
@@ -413,11 +487,15 @@ public class BaseGraph implements Graph, Closeable {
             tmpOffset += 4;
 
             if (is3D) {
-                bitUtil.fromInt(bytes, Helper.eleToInt(pillarNodes.getEle(i)), tmpOffset);
-                tmpOffset += 4;
+                bitUtil.fromUInt3(bytes, Helper.eleToUInt(pillarNodes.getEle(i)), tmpOffset);
+                tmpOffset += 3;
             }
         }
         return bytes;
+    }
+
+    private int getPillarCount(long geoRef) {
+        return (wayGeometry.getByte(geoRef + 2) & 0xFF << 16) | wayGeometry.getShort(geoRef);
     }
 
     private PointList fetchWayGeometry_(long edgePointer, boolean reverse, FetchMode mode, int baseNode, int adjNode) {
@@ -432,11 +510,9 @@ public class BaseGraph implements Graph, Closeable {
         int count = 0;
         byte[] bytes = null;
         if (geoRef > 0) {
-            geoRef *= 4L;
-            count = wayGeometry.getInt(geoRef);
-
-            geoRef += 4L;
-            bytes = new byte[count * nodeAccess.getDimension() * 4];
+            count = getPillarCount(geoRef);
+            geoRef += 3L;
+            bytes = new byte[count * (8 + eleBytesPerCoord)];
             wayGeometry.getBytes(geoRef, bytes, bytes.length);
         } else if (mode == FetchMode.PILLAR_ONLY)
             return PointList.EMPTY;
@@ -455,8 +531,8 @@ public class BaseGraph implements Graph, Closeable {
             double lon = Helper.intToDegree(bitUtil.toInt(bytes, index));
             index += 4;
             if (nodeAccess.is3D()) {
-                pillarNodes.add(lat, lon, Helper.intToEle(bitUtil.toInt(bytes, index)));
-                index += 4;
+                pillarNodes.add(lat, lon, Helper.uIntToEle(bitUtil.toUInt3(bytes, index)));
+                index += 3;
             } else {
                 pillarNodes.add(lat, lon);
             }
@@ -488,9 +564,9 @@ public class BaseGraph implements Graph, Closeable {
         throw new IllegalArgumentException("Mode isn't handled " + mode);
     }
 
-    private long nextGeoRef(int arrayLength) {
+    private long nextGeoRef(int bytes) {
         long tmp = maxGeoRef;
-        maxGeoRef += arrayLength + 1L;
+        maxGeoRef += bytes;
         return tmp;
     }
 
@@ -507,7 +583,7 @@ public class BaseGraph implements Graph, Closeable {
     }
 
     public static class Builder {
-        private final int intsForFlags;
+        private final int bytesForFlags;
         private Directory directory = new RAMDirectory();
         private boolean withElevation = false;
         private boolean withTurnCosts = false;
@@ -515,12 +591,12 @@ public class BaseGraph implements Graph, Closeable {
         private int segmentSize = -1;
 
         public Builder(EncodingManager em) {
-            this(em.getIntsForFlags());
+            this(em.getBytesForFlags());
             withTurnCosts(em.needsTurnCostsSupport());
         }
 
-        public Builder(int intsForFlags) {
-            this.intsForFlags = intsForFlags;
+        public Builder(int bytesForFlags) {
+            this.bytesForFlags = bytesForFlags;
         }
 
         // todo: maybe rename later, but for now this makes it easier to replace GraphBuilder
@@ -552,7 +628,7 @@ public class BaseGraph implements Graph, Closeable {
         }
 
         public BaseGraph build() {
-            return new BaseGraph(directory, intsForFlags, withElevation, withTurnCosts, segmentSize);
+            return new BaseGraph(directory, withElevation, withTurnCosts, segmentSize, bytesForFlags);
         }
 
         public BaseGraph create() {
@@ -671,7 +747,7 @@ public class BaseGraph implements Graph, Closeable {
 
         public EdgeIteratorStateImpl(BaseGraph baseGraph) {
             this.baseGraph = baseGraph;
-            edgeIntAccess = baseGraph.createEdgeIntAccess();
+            edgeIntAccess = baseGraph.getEdgeAccess();
             store = baseGraph.store;
         }
 
@@ -743,7 +819,7 @@ public class BaseGraph implements Graph, Closeable {
 
         @Override
         public IntsRef getFlags() {
-            IntsRef edgeFlags = new IntsRef(store.getIntsForFlags());
+            IntsRef edgeFlags = store.createEdgeFlags();
             store.readFlags(edgePointer, edgeFlags);
             return edgeFlags;
         }
@@ -942,7 +1018,7 @@ public class BaseGraph implements Graph, Closeable {
         }
 
         @Override
-        public EdgeIteratorState setKeyValues(List<KVStorage.KeyValue> entries) {
+        public EdgeIteratorState setKeyValues(Map<String, KVStorage.KValue> entries) {
             long pointer = baseGraph.edgeKVStorage.add(entries);
             if (pointer > MAX_UNSIGNED_INT)
                 throw new IllegalStateException("Too many key value pairs are stored, currently limited to " + MAX_UNSIGNED_INT + " was " + pointer);
@@ -951,7 +1027,7 @@ public class BaseGraph implements Graph, Closeable {
         }
 
         @Override
-        public List<KVStorage.KeyValue> getKeyValues() {
+        public Map<String, KVStorage.KValue> getKeyValues() {
             long kvEntryRef = Integer.toUnsignedLong(store.getKeyValuesRef(edgePointer));
             return baseGraph.edgeKVStorage.getAll(kvEntryRef);
         }
@@ -964,7 +1040,7 @@ public class BaseGraph implements Graph, Closeable {
 
         @Override
         public String getName() {
-            String name = (String) getValue(KVStorage.KeyValue.STREET_NAME);
+            String name = (String) getValue(STREET_NAME);
             // preserve backward compatibility (returns empty string if name tag missing)
             return name == null ? "" : name;
         }

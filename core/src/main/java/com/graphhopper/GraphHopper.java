@@ -663,7 +663,11 @@ public class GraphHopper {
         Map<String, PMap> encodedValuesWithProps = new LinkedHashMap<>();
         Arrays.stream(encodedValuesStr.split(","))
                 .filter(evStr -> !evStr.isBlank())
-                .forEach(evStr -> encodedValuesWithProps.put(evStr.trim().split("\\|")[0], new PMap(evStr)));
+                .forEach(evStr -> {
+                    String key = evStr.trim().split("\\|")[0];
+                    if (encodedValuesWithProps.put(key, new PMap(evStr)) != null)
+                        throw new IllegalArgumentException("duplicate encoded value in config graph.encoded_values: " + key);
+                });
         return encodedValuesWithProps;
     }
 

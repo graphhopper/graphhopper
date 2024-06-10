@@ -88,6 +88,10 @@ public class BitUtil {
                 | (b[offset + 1] & 0xFF) << 8 | (b[offset] & 0xFF);
     }
 
+    public final int toUInt3(byte[] b, int offset) {
+        return (b[offset + 2] & 0xFF) << 16 | (b[offset + 1] & 0xFF) << 8 | (b[offset] & 0xFF);
+    }
+
     public final byte[] fromInt(int value) {
         byte[] bytes = new byte[4];
         fromInt(bytes, value, 0);
@@ -121,6 +125,15 @@ public class BitUtil {
     }
 
     /**
+     * Note, currently value with higher bits set (like for a negative value) won't throw an exception at this level.
+     */
+    public final void fromUInt3(byte[] bytes, int value, int offset) {
+        bytes[offset + 2] = (byte) (value >>> 16);
+        bytes[offset + 1] = (byte) (value >>> 8);
+        bytes[offset] = (byte) (value);
+    }
+
+    /**
      * See the counterpart {@link #fromLong(long)}
      */
     public final long toLong(byte[] b) {
@@ -128,11 +141,11 @@ public class BitUtil {
     }
 
     public final long toLong(int intLow, int intHigh) {
-        return ((long) intHigh << 32) | (intLow & 0xFFFFFFFFL);
+        return ((long) intHigh << 32) | (intLow & 0xFFFF_FFFFL);
     }
 
     public final long toLong(byte[] b, int offset) {
-        return ((long) toInt(b, offset + 4) << 32) | (toInt(b, offset) & 0xFFFFFFFFL);
+        return ((long) toInt(b, offset + 4) << 32) | (toInt(b, offset) & 0xFFFF_FFFFL);
     }
 
     public final byte[] fromLong(long value) {
@@ -177,14 +190,6 @@ public class BitUtil {
             bytes[b] = res;
         }
         return bytes;
-    }
-
-    public final String toBitString(IntsRef intsRef) {
-        StringBuilder str = new StringBuilder();
-        for (int ints : intsRef.ints) {
-            str.append(toBitString(ints, 32));
-        }
-        return str.toString();
     }
 
     /**
@@ -249,7 +254,7 @@ public class BitUtil {
     }
 
     public final int getIntLow(long longValue) {
-        return (int) (longValue & 0xFFFFFFFFL);
+        return (int) (longValue & 0xFFFF_FFFFL);
     }
 
     public final int getIntHigh(long longValue) {

@@ -2,6 +2,8 @@
 // profiles:
 //    - name: bus
 //      custom_model_files: [bus.json]
+//
+// There is also a hov_access which might be suitable for carpooling and can replace or be combined with bus_access
 
 {
   "distance_influence": 90,

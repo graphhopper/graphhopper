@@ -267,8 +267,9 @@ public class ResponsePath {
         }
         for (Map.Entry<String, List<PathDetail>> detailEntry : details.entrySet()) {
             String key = detailEntry.getKey();
-            if (this.pathDetails.containsKey(key)) {
-                this.pathDetails.get(key).addAll(detailEntry.getValue());
+            List<PathDetail> pathDetails = this.pathDetails.get(key);
+            if (pathDetails != null) {
+                pathDetails.addAll(detailEntry.getValue());
             } else {
                 this.pathDetails.put(key, detailEntry.getValue());
             }

@@ -62,7 +62,7 @@ public class PillarInfo {
         da.setInt(tmp + LON, Helper.degreeToInt(lon));
 
         if (is3D())
-            da.setInt(tmp + ELE, Helper.eleToInt(ele));
+            da.setInt(tmp + ELE, Helper.eleToUInt(ele));
     }
 
     public double getLat(long id) {
@@ -80,7 +80,7 @@ public class PillarInfo {
             return Double.NaN;
 
         int intVal = da.getInt(id * rowSizeInBytes + ELE);
-        return Helper.intToEle(intVal);
+        return Helper.uIntToEle(intVal);
     }
 
     public void clear() {

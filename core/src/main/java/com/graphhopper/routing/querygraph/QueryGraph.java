@@ -280,7 +280,7 @@ public class QueryGraph implements Graph {
 
     @Override
     public Weighting wrapWeighting(Weighting weighting) {
-        return new QueryGraphWeighting(weighting, baseGraph.getNodes(), baseGraph.getEdges(), queryOverlay.getClosestEdges());
+        return new QueryGraphWeighting(baseGraph, weighting, queryOverlay.getClosestEdges());
     }
 
     @Override

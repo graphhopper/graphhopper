@@ -25,11 +25,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * @author Peter Karich
  */
-public class BitUtilLittleTest extends AbstractBitUtilTester {
-    @Override
-    BitUtil getBitUtil() {
-        return BitUtil.LITTLE;
-    }
+public class BitUtilTest {
+    private static final BitUtil bitUtil = BitUtil.LITTLE;
 
     @Test
     public void testToBitString() {
@@ -85,5 +82,85 @@ public class BitUtilLittleTest extends AbstractBitUtilTester {
 
         assertEquals(0xFFFFffffL, (1L << 32) - 1);
         assertTrue(0xFFFFffffL > 0L);
+    }
+
+    @Test
+    public void testToFloat() {
+        byte[] bytes = bitUtil.fromFloat(Float.MAX_VALUE);
+        assertEquals(Float.MAX_VALUE, bitUtil.toFloat(bytes), 1e-9);
+
+        bytes = bitUtil.fromFloat(Float.MAX_VALUE / 3);
+        assertEquals(Float.MAX_VALUE / 3, bitUtil.toFloat(bytes), 1e-9);
+    }
+
+    @Test
+    public void testToDouble() {
+        byte[] bytes = bitUtil.fromDouble(Double.MAX_VALUE);
+        assertEquals(Double.MAX_VALUE, bitUtil.toDouble(bytes), 1e-9);
+
+        bytes = bitUtil.fromDouble(Double.MAX_VALUE / 3);
+        assertEquals(Double.MAX_VALUE / 3, bitUtil.toDouble(bytes), 1e-9);
+    }
+
+    @Test
+    public void testToInt() {
+        byte[] bytes = bitUtil.fromInt(Integer.MAX_VALUE);
+        assertEquals(Integer.MAX_VALUE, bitUtil.toInt(bytes));
+
+        bytes = bitUtil.fromInt(Integer.MAX_VALUE / 3);
+        assertEquals(Integer.MAX_VALUE / 3, bitUtil.toInt(bytes));
+    }
+
+    @Test
+    public void testToShort() {
+        byte[] bytes = bitUtil.fromShort(Short.MAX_VALUE);
+        assertEquals(Short.MAX_VALUE, bitUtil.toShort(bytes));
+
+        bytes = bitUtil.fromShort((short) (Short.MAX_VALUE / 3));
+        assertEquals(Short.MAX_VALUE / 3, bitUtil.toShort(bytes));
+
+        bytes = bitUtil.fromShort((short) -123);
+        assertEquals(-123, bitUtil.toShort(bytes));
+
+        bytes = bitUtil.fromShort((short) (0xFF | 0xFF));
+        assertEquals(0xFF | 0xFF, bitUtil.toShort(bytes));
+    }
+
+    @Test
+    public void testToLong() {
+        byte[] bytes = bitUtil.fromLong(Long.MAX_VALUE);
+        assertEquals(Long.MAX_VALUE, bitUtil.toLong(bytes));
+
+        bytes = bitUtil.fromLong(Long.MAX_VALUE / 7);
+        assertEquals(Long.MAX_VALUE / 7, bitUtil.toLong(bytes));
+    }
+
+    @Test
+    public void testIntsToLong() {
+        int high = 2565;
+        int low = 9421;
+        long l = bitUtil.toLong(low, high);
+        assertEquals(high, bitUtil.getIntHigh(l));
+        assertEquals(low, bitUtil.getIntLow(l));
+    }
+
+    @Test
+    public void testToLastBitString() {
+        assertEquals("1", bitUtil.toLastBitString(1L, 1));
+        assertEquals("01", bitUtil.toLastBitString(1L, 2));
+        assertEquals("001", bitUtil.toLastBitString(1L, 3));
+        assertEquals("010", bitUtil.toLastBitString(2L, 3));
+        assertEquals("011", bitUtil.toLastBitString(3L, 3));
+    }
+
+    @Test
+    public void testUInt3() {
+        byte[] bytes = new byte[3];
+        bitUtil.fromUInt3(bytes, 12345678, 0);
+        assertEquals(12345678, bitUtil.toUInt3(bytes, 0));
+
+        bytes = new byte[3];
+        bitUtil.fromUInt3(bytes, -12345678, 0);
+        assertEquals(-12345678 & 0x00FF_FFFF, bitUtil.toUInt3(bytes, 0));
     }
 }

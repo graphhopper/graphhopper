@@ -32,7 +32,6 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
 import com.graphhopper.routing.util.parsers.OSMRoadEnvironmentParser;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.search.KVStorage;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
@@ -68,6 +67,7 @@ import static com.graphhopper.util.GHUtility.createCircle;
 import static com.graphhopper.util.GHUtility.createRectangle;
 import static com.graphhopper.util.Parameters.Algorithms.*;
 import static com.graphhopper.util.Parameters.Curbsides.*;
+import static com.graphhopper.util.Parameters.Details.STREET_REF;
 import static com.graphhopper.util.Parameters.Routing.TIMEOUT_MS;
 import static com.graphhopper.util.Parameters.Routing.U_TURN_COSTS;
 import static java.util.Arrays.asList;
@@ -1097,24 +1097,22 @@ public class GraphHopperTest {
         assertEquals(12, il.size());
         assertTrue(il.get(0).getPoints().is3D());
 
-        String str = res.getPoints().toString();
-
-        assertEquals("(43.730684662577524,7.421283725164733,62.0), (43.7306797,7.4213823,66.0), (43.730949,7.4214948,66.0), " +
-                "(43.731098,7.4215463,45.0), (43.7312269,7.4215824,45.0), (43.7312991,7.42159,45.0), (43.7313271,7.4214147,45.0), " +
-                "(43.7312506,7.4213664,45.0), (43.7312546,7.4212741,52.0), (43.7312822,7.4211156,52.0), (43.7313624,7.4211455,52.0), " +
-                "(43.7313714,7.4211233,52.0), (43.7314858,7.4211734,52.0), (43.7315522,7.4209778,52.0), (43.7315753,7.4208688,52.0), " +
-                "(43.7316061,7.4208249,52.0), (43.7316404,7.4208503,52.0), (43.7316741,7.4210502,52.0), (43.7316276,7.4214636,45.0), " +
-                "(43.7316391,7.4215065,45.0), (43.7316664,7.4214904,45.0), (43.7316981,7.4212652,52.0), (43.7317185,7.4211861,52.0), " +
-                "(43.7319676,7.4206159,19.0), (43.732038,7.4203936,20.0), (43.732173,7.4198886,20.0), (43.7322266,7.4196414,26.0), " +
-                "(43.732266,7.4194654,26.0), (43.7323236,7.4192656,26.0), (43.7323374,7.4191503,26.0), (43.7323374,7.4190461,26.0), " +
-                "(43.7323875,7.4189195,26.0), (43.7323444,7.4188579,26.0), (43.731974,7.4181688,29.0), (43.7316421,7.4173042,23.0), " +
-                "(43.7315686,7.4170356,31.0), (43.7314269,7.4166815,31.0), (43.7312401,7.4163184,49.0), (43.7308286,7.4157613,29.399999618530273), " +
-                "(43.730662,7.4155599,22.0), (43.7303643,7.4151193,51.0), (43.729579,7.4137274,40.0), (43.7295167,7.4137244,40.0), (43.7294669,7.4137725,40.0), " +
-                "(43.7285987,7.4149068,23.0), (43.7285167,7.4149272,22.0), (43.7283974,7.4148646,22.0), (43.7285619,7.4151365,23.0), (43.7285774,7.4152444,23.0), " +
-                "(43.7285863,7.4157656,21.0), (43.7285763,7.4159759,21.0), (43.7285238,7.4161982,20.0), (43.7284592,7.4163655,18.0), (43.72838,7.4165003,18.0), " +
-                "(43.7281669,7.4168192,18.0), (43.7281442,7.4169449,18.0), (43.7281477,7.4170695,18.0), (43.7281684,7.4172435,14.0), (43.7282784,7.4179606,14.0), " +
-                "(43.7282757,7.418175,11.0), (43.7282319,7.4183683,11.0), (43.7281482,7.4185473,11.0), (43.7280654,7.4186535,11.0), (43.7279259,7.418748,11.0), " +
-                "(43.7278398,7.4187697,11.0), (43.727779,7.4187731,11.0), (43.7276825,7.4190072,11.0), (43.72767974015672,7.419198523220426,11.0)", str);
+        assertEquals(Helper.createPointList3D(43.730684662577524, 7.421283725164733, 62.0, 43.7306797, 7.4213823, 66.0, 43.730949, 7.4214948, 66.0,
+                43.731098, 7.4215463, 45.0, 43.7312269, 7.4215824, 45.0, 43.7312991, 7.42159, 45.0, 43.7313271, 7.4214147, 45.0,
+                43.7312506, 7.4213664, 45.0, 43.7312546, 7.4212741, 52.0, 43.7312822, 7.4211156, 52.0, 43.7313624, 7.4211455, 52.0,
+                43.7313714, 7.4211233, 52.0, 43.7314858, 7.4211734, 52.0, 43.7315522, 7.4209778, 52.0, 43.7315753, 7.4208688, 52.0,
+                43.7316061, 7.4208249, 52.0, 43.7316404, 7.4208503, 52.0, 43.7316741, 7.4210502, 52.0, 43.7316276, 7.4214636, 45.0,
+                43.7316391, 7.4215065, 45.0, 43.7316664, 7.4214904, 45.0, 43.7316981, 7.4212652, 52.0, 43.7317185, 7.4211861, 52.0,
+                43.7319676, 7.4206159, 19.0, 43.732038, 7.4203936, 20.0, 43.732173, 7.4198886, 20.0, 43.7322266, 7.4196414, 26.0,
+                43.732266, 7.4194654, 26.0, 43.7323236, 7.4192656, 26.0, 43.7323374, 7.4191503, 26.0, 43.7323374, 7.4190461, 26.0,
+                43.7323875, 7.4189195, 26.0, 43.7323444, 7.4188579, 26.0, 43.731974, 7.4181688, 29.0, 43.7316421, 7.4173042, 23.0,
+                43.7315686, 7.4170356, 31.0, 43.7314269, 7.4166815, 31.0, 43.7312401, 7.4163184, 49.0, 43.7308286, 7.4157613, 29.4,
+                43.730662, 7.4155599, 22.0, 43.7303643, 7.4151193, 51.0, 43.729579, 7.4137274, 40.0, 43.7295167, 7.4137244, 40.0, 43.7294669, 7.4137725, 40.0,
+                43.7285987, 7.4149068, 23.0, 43.7285167, 7.4149272, 22.0, 43.7283974, 7.4148646, 22.0, 43.7285619, 7.4151365, 23.0, 43.7285774, 7.4152444, 23.0,
+                43.7285863, 7.4157656, 21.0, 43.7285763, 7.4159759, 21.0, 43.7285238, 7.4161982, 20.0, 43.7284592, 7.4163655, 18.0, 43.72838, 7.4165003, 18.0,
+                43.7281669, 7.4168192, 18.0, 43.7281442, 7.4169449, 18.0, 43.7281477, 7.4170695, 18.0, 43.7281684, 7.4172435, 14.0, 43.7282784, 7.4179606, 14.0,
+                43.7282757, 7.418175, 11.0, 43.7282319, 7.4183683, 11.0, 43.7281482, 7.4185473, 11.0, 43.7280654, 7.4186535, 11.0, 43.7279259, 7.418748, 11.0,
+                43.7278398, 7.4187697, 11.0, 43.727779, 7.4187731, 11.0, 43.7276825, 7.4190072, 11.0, 43.72767974015672, 7.419198523220426, 11.0), res.getPoints());
 
         assertEquals(84, res.getAscend(), 1e-1);
         assertEquals(135, res.getDescend(), 1e-1);
@@ -1230,8 +1228,8 @@ public class GraphHopperTest {
         assertEquals(67.4, arsp.getDescend(), 1e-1);
 
         assertEquals(74, arsp.getPoints().size());
-        assertEquals(new GHPoint3D(43.73068455771767, 7.421283689825812, 55.82900047302246), arsp.getPoints().get(0));
-        assertEquals(new GHPoint3D(43.727679637988224, 7.419198521975086, 12.274499893188477), arsp.getPoints().get(arsp.getPoints().size() - 1));
+        assertEquals(new GHPoint3D(43.73068455771767, 7.421283689825812, 55.83), arsp.getPoints().get(0));
+        assertEquals(new GHPoint3D(43.727679637988224, 7.419198521975086, 12.27), arsp.getPoints().get(arsp.getPoints().size() - 1));
 
         assertEquals(55.83, arsp.getPoints().get(0).getEle(), 1e-2);
         assertEquals(57.78, arsp.getPoints().get(1).getEle(), 1e-2);
@@ -1892,9 +1890,9 @@ public class GraphHopperTest {
         assertEquals(1995.18, pathLM.getDistance(), 0.1);
         assertEquals(1995.18, path.getDistance(), 0.1);
 
-        assertEquals(149481, pathCH.getTime());
-        assertEquals(149481, pathLM.getTime());
-        assertEquals(149481, path.getTime());
+        assertEquals(149482, pathCH.getTime());
+        assertEquals(149482, pathLM.getTime());
+        assertEquals(149482, path.getTime());
     }
 
     @Test
@@ -2277,7 +2275,7 @@ public class GraphHopperTest {
                 .addPoint(new GHPoint(50.016895, 11.4923))
                 .addPoint(new GHPoint(50.003464, 11.49157))
                 .setProfile(profile)
-                .setPathDetails(Arrays.asList(KVStorage.KeyValue.STREET_REF, "max_speed"));
+                .setPathDetails(Arrays.asList(STREET_REF, "max_speed"));
         req.putHint("elevation", true);
 
         GHResponse rsp = hopper.route(req);
@@ -2319,7 +2317,7 @@ public class GraphHopperTest {
         assertDetail(speeds.get(7), "null [52, 54]");
 
         // check street names
-        List<PathDetail> streetNames = path.getPathDetails().get(KVStorage.KeyValue.STREET_REF);
+        List<PathDetail> streetNames = path.getPathDetails().get(STREET_REF);
         assertDetail(streetNames.get(0), "KU 11 [0, 4]");
         assertDetail(streetNames.get(1), "B 85 [4, 24]");
         assertDetail(streetNames.get(2), "B 85 [24, 45]");
@@ -2330,7 +2328,7 @@ public class GraphHopperTest {
     }
 
     private void assertInstruction(Instruction instruction, String expectedRef, String expectedInterval, int expectedLength, int expectedPoints) {
-        assertEquals(expectedRef, instruction.getExtraInfoJSON().get(KVStorage.KeyValue.STREET_REF));
+        assertEquals(expectedRef, instruction.getExtraInfoJSON().get(STREET_REF));
         assertEquals(expectedInterval, ((ShallowImmutablePointList) instruction.getPoints()).getIntervalString());
         assertEquals(expectedLength, instruction.getLength());
         assertEquals(expectedPoints, instruction.getPoints().size());
@@ -2592,6 +2590,24 @@ public class GraphHopperTest {
     }
 
     @Test
+    public void turnRestrictionWithSnapToViaEdge_issue2996() {
+        final String profile = "profile";
+        GraphHopper hopper = new GraphHopper().
+                setGraphHopperLocation(GH_LOCATION).
+                setOSMFile("../map-matching/files/leipzig_germany.osm.pbf").
+                setEncodedValuesString("car_access, car_average_speed").
+                setProfiles(TestProfiles.accessAndSpeed(profile, "car").setTurnCostsConfig(TurnCostsConfig.car())).
+                setMinNetworkSize(200);
+        hopper.importOrLoad();
+        // doing a simple left-turn is allowed
+        GHResponse res = hopper.route(new GHRequest(51.34665, 12.391847, 51.346254, 12.39256).setProfile(profile));
+        assertEquals(81, res.getBest().getDistance(), 1);
+        // if we stop right after the left-turn on the via-edge the turn should still be allowed of course (there should be no detour that avoids the turn)
+        res = hopper.route(new GHRequest(51.34665, 12.391847, 51.346306, 12.392091).setProfile(profile));
+        assertEquals(48, res.getBest().getDistance(), 1);
+    }
+
+    @Test
     public void germanyCountryRuleAvoidsTracks() {
         final String profile = "profile";
         Profile p = TestProfiles.accessAndSpeed(profile, "car");
@@ -2795,6 +2811,67 @@ public class GraphHopperTest {
             hopper.load();
             assertEquals(2969, hopper.getBaseGraph().getNodes());
         }
+    }
+
+    @ParameterizedTest()
+    @ValueSource(booleans = {true, false})
+    void legDistanceWithDuplicateEndpoint(boolean simplifyResponse) {
+        // see #3007
+        GraphHopper hopper = new GraphHopper().
+                setGraphHopperLocation(GH_LOCATION).
+                setOSMFile(MONACO).
+                setEncodedValuesString("car_access, car_average_speed").
+                setProfiles(TestProfiles.accessAndSpeed("car")).
+                importOrLoad();
+        hopper.getRouterConfig().setSimplifyResponse(simplifyResponse);
+        GHRequest request = new GHRequest().setProfile("car");
+        request.addPoint(new GHPoint(43.732496, 7.427231));
+        request.addPoint(new GHPoint(43.732499, 7.426758));
+        request.addPoint(new GHPoint(43.732499, 7.426758));
+        request.setPathDetails(List.of("leg_distance"));
+        GHResponse routeRsp = hopper.route(request);
+        assertEquals(4, routeRsp.getBest().getPoints().size());
+        assertEquals(40.080, routeRsp.getBest().getDistance(), 1.e-3);
+        List<PathDetail> p = routeRsp.getBest().getPathDetails().get("leg_distance");
+        // there should be two consecutive leg_distance intervals, even though the second is empty: [0,3] and [3,3], see #2915
+        assertEquals(2, p.size());
+        assertEquals(0, p.get(0).getFirst());
+        assertEquals(3, p.get(0).getLast());
+        assertEquals(40.080, (double) p.get(0).getValue(), 1.e-3);
+        assertEquals(3, p.get(1).getFirst());
+        assertEquals(3, p.get(1).getLast());
+        assertEquals(0.0, (double) p.get(1).getValue(), 1.e-3);
+    }
+
+    @ParameterizedTest()
+    @ValueSource(booleans = {true, false})
+    void legDistanceWithDuplicateEndpoint_onlyTwoPoints(boolean simplifyResponse) {
+        // see #3007
+        GraphHopper hopper = new GraphHopper().
+                setGraphHopperLocation(GH_LOCATION).
+                setOSMFile(MONACO).
+                setEncodedValuesString("car_access, car_average_speed").
+                setProfiles(TestProfiles.accessAndSpeed("car")).
+                importOrLoad();
+        hopper.getRouterConfig().setSimplifyResponse(simplifyResponse);
+        GHRequest request = new GHRequest().setProfile("car");
+        // special case where the points are so close to each other that the resulting route contains only two points total
+        request.addPoint(new GHPoint(43.732399, 7.426658));
+        request.addPoint(new GHPoint(43.732499, 7.426758));
+        request.addPoint(new GHPoint(43.732499, 7.426758));
+        request.setPathDetails(List.of("leg_distance"));
+        GHResponse routeRsp = hopper.route(request);
+        assertEquals(2, routeRsp.getBest().getPoints().size());
+        assertEquals(10.439, routeRsp.getBest().getDistance(), 1.e-3);
+        List<PathDetail> p = routeRsp.getBest().getPathDetails().get("leg_distance");
+        // there should be two consecutive leg_distance intervals, even though the second is empty: [0,3] and [3,3], see #2915
+        assertEquals(2, p.size());
+        assertEquals(0, p.get(0).getFirst());
+        assertEquals(1, p.get(0).getLast());
+        assertEquals(10.439, (double) p.get(0).getValue(), 1.e-3);
+        assertEquals(1, p.get(1).getFirst());
+        assertEquals(1, p.get(1).getLast());
+        assertEquals(0.0, (double) p.get(1).getValue(), 1.e-3);
     }
 
 }

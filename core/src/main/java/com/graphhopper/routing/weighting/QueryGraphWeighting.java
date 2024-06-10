@@ -20,6 +20,8 @@ package com.graphhopper.routing.weighting;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.querygraph.QueryGraph;
+import com.graphhopper.storage.BaseGraph;
+import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 
@@ -29,15 +31,17 @@ import com.graphhopper.util.EdgeIteratorState;
  * edges will not be calculated correctly.
  */
 public class QueryGraphWeighting implements Weighting {
+    private final BaseGraph graph;
     private final Weighting weighting;
     private final int firstVirtualNodeId;
     private final int firstVirtualEdgeId;
     private final IntArrayList closestEdges;
 
-    public QueryGraphWeighting(Weighting weighting, int firstVirtualNodeId, int firstVirtualEdgeId, IntArrayList closestEdges) {
+    public QueryGraphWeighting(BaseGraph graph, Weighting weighting, IntArrayList closestEdges) {
+        this.graph = graph;
         this.weighting = weighting;
-        this.firstVirtualNodeId = firstVirtualNodeId;
-        this.firstVirtualEdgeId = firstVirtualEdgeId;
+        this.firstVirtualNodeId = graph.getNodes();
+        this.firstVirtualEdgeId = graph.getEdges();
         this.closestEdges = closestEdges;
     }
 
@@ -69,13 +73,36 @@ public class QueryGraphWeighting implements Weighting {
         }
         // to calculate the actual turn costs or detect u-turns we need to look at the original edge of each virtual
         // edge, see #1593
-        if (isVirtualEdge(inEdge)) {
-            inEdge = getOriginalEdge(inEdge);
+        if (isVirtualEdge(inEdge) && isVirtualEdge(outEdge)) {
+            var minTurnWeight = new Object() {
+                double value = Double.POSITIVE_INFINITY;
+            };
+            EdgeExplorer innerExplorer = graph.createEdgeExplorer();
+            graph.forEdgeAndCopiesOfEdge(graph.createEdgeExplorer(), viaNode, getOriginalEdge(inEdge), p -> {
+                graph.forEdgeAndCopiesOfEdge(innerExplorer, viaNode, getOriginalEdge(outEdge), q -> {
+                    minTurnWeight.value = Math.min(minTurnWeight.value, weighting.calcTurnWeight(p, viaNode, q));
+                });
+            });
+            return minTurnWeight.value;
+        } else if (isVirtualEdge(inEdge)) {
+            var minTurnWeight = new Object() {
+                double value = Double.POSITIVE_INFINITY;
+            };
+            graph.forEdgeAndCopiesOfEdge(graph.createEdgeExplorer(), viaNode, getOriginalEdge(inEdge), e -> {
+                minTurnWeight.value = Math.min(minTurnWeight.value, weighting.calcTurnWeight(e, viaNode, outEdge));
+            });
+            return minTurnWeight.value;
+        } else if (isVirtualEdge(outEdge)) {
+            var minTurnWeight = new Object() {
+                double value = Double.POSITIVE_INFINITY;
+            };
+            graph.forEdgeAndCopiesOfEdge(graph.createEdgeExplorer(), viaNode, getOriginalEdge(outEdge), e -> {
+                minTurnWeight.value = Math.min(minTurnWeight.value, weighting.calcTurnWeight(inEdge, viaNode, e));
+            });
+            return minTurnWeight.value;
+        } else {
+            return weighting.calcTurnWeight(inEdge, viaNode, outEdge);
         }
-        if (isVirtualEdge(outEdge)) {
-            outEdge = getOriginalEdge(outEdge);
-        }
-        return weighting.calcTurnWeight(inEdge, viaNode, outEdge);
     }
 
     private boolean isUTurn(int inEdge, int outEdge) {

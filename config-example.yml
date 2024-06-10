@@ -35,6 +35,8 @@ graphhopper:
 #       u_turn_costs: 60
      custom_model_files: [car.json]
 
+#   You can use the following in-built profiles. After you start GraphHopper it will print which encoded values you'll have to add to graph.encoded_values in this config file.
+#
 #    - name: foot
 #      custom_model_files: [foot.json, foot_elevation.json]
 #
@@ -46,10 +48,20 @@ graphhopper:
 #
 #    - name: mtb
 #      custom_model_files: [mtb.json, bike_elevation.json]
+#
+#    # See the bus.json for more details.
+#    - name: bus
+#       turn_costs:
+#         vehicle_types: [bus, motor_vehicle]
+#         u_turn_costs: 60
+#      custom_model_files: [bus.json]
+#
+#   Other custom models not listed here are: car4wd.json, motorcycle.json, truck.json or cargo-bike.json. You might need to modify and test them before production usage.
+#   See ./core/src/main/resources/com/graphhopper/custom_models and let us know if you customize them, improve them or create new onces!
+#   Also there is the curvature.json custom model which might be useful for a motorcyle profile or the opposite for a truck profile.
+#   Then specify a folder where to find your own custom model files:
+#  custom_models.directory: custom_models
 
-  # instead of the inbuilt custom models (see ./core/src/main/resources/com/graphhopper/custom_models)
-  # you can specify a folder where to find your own custom model files
-  # custom_models.directory: custom_models
 
   # Speed mode:
   # It's possible to speed up routing by doing a special graph preparation (Contraction Hierarchies, CH). This requires
