@@ -25,6 +25,7 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
     private final Map<String, Integer> highwaySpeeds = new HashMap<>();
     private final EnumEncodedValue<Smoothness> smoothnessEnc;
     protected final Set<String> intendedValues = new HashSet<>(5);
+    protected final Set<String> restrictedValues = new HashSet<>(8);
 
     protected BikeCommonAverageSpeedParser(DecimalEncodedValue speedEnc, EnumEncodedValue<Smoothness> smoothnessEnc, DecimalEncodedValue ferrySpeedEnc) {
         super(speedEnc, ferrySpeedEnc);
@@ -116,6 +117,15 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         intendedValues.add("designated");
         intendedValues.add("official");
         intendedValues.add("permissive");
+
+        restrictedValues.add("no");
+        restrictedValues.add("agricultural");
+        restrictedValues.add("forestry");
+        restrictedValues.add("restricted");
+        restrictedValues.add("military");
+        restrictedValues.add("emergency");
+        restrictedValues.add("private");
+        restrictedValues.add("permit");
     }
 
     /**
@@ -188,7 +198,17 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
             }
         }
 
-        if (way.hasTag("vehicle", "no") && !way.hasTag("bicycle", intendedValues))
+        boolean pushing_restriction = false;
+        String vehicleValue = way.getTag("vehicle", "");
+        String[] splitVehicleValues = vehicleValue.split(";");
+        for (String value : splitVehicleValues) {
+             if (restrictedValues.contains(value)) {
+                 pushing_restriction = true;
+                 break;
+             }
+        }
+
+        if (pushing_restriction && !way.hasTag("bicycle", intendedValues))
             speed = PUSHING_SECTION_SPEED;
 
         // Until now we assumed that the way is no pushing section
