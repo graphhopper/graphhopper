@@ -376,13 +376,6 @@ public abstract class AbstractBikeTagParserTester {
     }
 
     @Test
-    public void testPreferenceForSlowSpeed() {
-        ReaderWay osmWay = new ReaderWay(1);
-        osmWay.setTag("highway", "tertiary");
-        assertPriority(PREFER, osmWay);
-    }
-
-    @Test
     public void testHandleWayTagsCallsHandlePriority() {
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "cycleway");

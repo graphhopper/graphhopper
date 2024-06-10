@@ -201,7 +201,7 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
                 if (way.hasTag("segregated", "yes"))
                     speed = highwaySpeeds.get("cycleway");
                 else
-                    speed = way.hasTag("bicycle", "yes") ? 10 : highwaySpeeds.get("cycleway");
+                    speed = way.hasTag("bicycle", "yes") ? 12 : highwaySpeeds.get("cycleway");
 
                 // valid surface speed?
                 if (surfaceSpeed > 0)
