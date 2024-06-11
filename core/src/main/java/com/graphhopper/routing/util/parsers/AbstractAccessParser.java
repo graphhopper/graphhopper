@@ -80,7 +80,10 @@ public abstract class AbstractAccessParser implements TagParser {
     public boolean isBarrier(ReaderNode node) {
         // note that this method will be only called for certain nodes as defined by OSMReader!
         String firstValue = node.getFirstValue(restrictionKeys);
-        if (restrictedValues.contains(firstValue) || node.hasTag("locked", "yes"))
+
+        if (restrictedValues.contains(firstValue))
+            return true;
+        else if (node.hasTag("locked", "yes") && !intendedValues.contains(firstValue))
             return true;
         else if (intendedValues.contains(firstValue))
             return false;
