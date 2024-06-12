@@ -198,17 +198,8 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
             }
         }
 
-        boolean pushing_restriction = false;
-        String vehicleValue = way.getTag("vehicle", "");
-        String[] splitVehicleValues = vehicleValue.split(";");
-        for (String value : splitVehicleValues) {
-             if (restrictedValues.contains(value)) {
-                 pushing_restriction = true;
-                 break;
-             }
-        }
-
-        if (pushing_restriction && !way.hasTag("bicycle", intendedValues))
+boolean pushingRestriction = Arrays.stream(way.getTag("vehicle", "").split(";")).anyMatch(restrictedValues::contains);
+if (pushingRestriction && !way.hasTag("bicycle", intendedValues))
             speed = PUSHING_SECTION_SPEED;
 
         // Until now we assumed that the way is no pushing section
