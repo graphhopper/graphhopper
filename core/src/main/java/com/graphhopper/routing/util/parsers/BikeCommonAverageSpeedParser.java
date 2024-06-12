@@ -8,10 +8,7 @@ import com.graphhopper.routing.ev.Smoothness;
 import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.util.Helper;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedParser implements TagParser {
 
@@ -25,7 +22,7 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
     private final Map<String, Integer> highwaySpeeds = new HashMap<>();
     private final EnumEncodedValue<Smoothness> smoothnessEnc;
     protected final Set<String> intendedValues = new HashSet<>(5);
-    protected final Set<String> restrictedValues = new HashSet<>(8);
+    private final Set<String> restrictedValues = new HashSet<>(List.of("no", "agricultural", "forestry", "restricted", "military", "emergency", "private", "permit"));
 
     protected BikeCommonAverageSpeedParser(DecimalEncodedValue speedEnc, EnumEncodedValue<Smoothness> smoothnessEnc, DecimalEncodedValue ferrySpeedEnc) {
         super(speedEnc, ferrySpeedEnc);
@@ -118,14 +115,6 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         intendedValues.add("official");
         intendedValues.add("permissive");
 
-        restrictedValues.add("no");
-        restrictedValues.add("agricultural");
-        restrictedValues.add("forestry");
-        restrictedValues.add("restricted");
-        restrictedValues.add("military");
-        restrictedValues.add("emergency");
-        restrictedValues.add("private");
-        restrictedValues.add("permit");
     }
 
     /**
@@ -198,8 +187,8 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
             }
         }
 
-boolean pushingRestriction = Arrays.stream(way.getTag("vehicle", "").split(";")).anyMatch(restrictedValues::contains);
-if (pushingRestriction && !way.hasTag("bicycle", intendedValues))
+        boolean pushingRestriction = Arrays.stream(way.getTag("vehicle", "").split(";")).anyMatch(restrictedValues::contains);
+        if (pushingRestriction && !way.hasTag("bicycle", intendedValues))
             speed = PUSHING_SECTION_SPEED;
 
         // Until now we assumed that the way is no pushing section
