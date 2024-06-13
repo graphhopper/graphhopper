@@ -31,7 +31,7 @@ public class Edge {
      * The points, distances and times have exactly the same count. The last point of this
      * instruction is not duplicated here and should be in the next one.
      */
-    public Edge(String name, double distance, int grade, boolean reversed, long time, double weight, double penalty) {
+    public Edge(String name, double distance, int grade, boolean reversed, long time, double weight, double penalty, PointList points) {
         this.name = name;
         this.distance = distance;
         this.grade = grade;
@@ -39,6 +39,7 @@ public class Edge {
         this.time = time;
         this.weight = weight;
         this.penalty = penalty;
+        this.points = points;
     }
 
 
