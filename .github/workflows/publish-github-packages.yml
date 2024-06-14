@@ -4,11 +4,11 @@ name: Publish to GitHub Packages
 on:
   push:
     branches:
-    - '**'
+      - "**"
 
 jobs:
   publish:
-    if: github.repository_owner == 'graphhopper'
+    if: github.repository_owner == 'restacks-dev'
     runs-on: ubuntu-22.04
     permissions:
       contents: read
