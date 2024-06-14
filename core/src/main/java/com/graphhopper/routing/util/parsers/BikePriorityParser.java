@@ -1,6 +1,12 @@
 package com.graphhopper.routing.util.parsers;
 
-import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.ev.BikeNetwork;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.RouteNetwork;
+import com.graphhopper.routing.ev.VehiclePriority;
+import com.graphhopper.routing.ev.VehicleSpeed;
 
 public class BikePriorityParser extends BikeCommonPriorityParser {
 
@@ -18,8 +24,6 @@ public class BikePriorityParser extends BikeCommonPriorityParser {
         addPushingSection("path");
 
         preferHighwayTags.add("service");
-        preferHighwayTags.add("tertiary");
-        preferHighwayTags.add("tertiary_link");
         preferHighwayTags.add("residential");
         preferHighwayTags.add("unclassified");
 
