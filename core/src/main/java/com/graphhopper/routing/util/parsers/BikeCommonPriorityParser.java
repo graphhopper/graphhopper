@@ -36,6 +36,7 @@ public abstract class BikeCommonPriorityParser implements TagParser {
     int avoidSpeedLimit;
     EnumEncodedValue<RouteNetwork> bikeRouteEnc;
     Map<RouteNetwork, Integer> routeMap = new HashMap<>();
+    protected final Set<String> goodSurface = new HashSet<>(List.of("paved", "asphalt", "concrete"));
 
     // This is the specific bicycle class
     private String classBicycleKey;
@@ -153,8 +154,11 @@ public abstract class BikeCommonPriorityParser implements TagParser {
      */
     void collect(ReaderWay way, double wayTypeSpeed, TreeMap<Double, PriorityCode> weightToPrioMap) {
         String highway = way.getTag("highway");
+        boolean isTracTypeGrade1 = way.getTag("tracktype", "").equals("grade1");
+        boolean isGoodSurface = goodSurface.contains(way.getTag("surface",""));
         if (isDesignated(way)) {
-            if ("path".equals(highway))
+            if ("path".equals(highway) ||
+                ("track".equals(highway) && (isTracTypeGrade1 || isGoodSurface )))
                 weightToPrioMap.put(100d, VERY_NICE);
             else
                 weightToPrioMap.put(100d, PREFER);
