@@ -15,27 +15,27 @@ jobs:
       contents: read
       packages: write
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-java@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
         with:
           java-version: 17
           distribution: temurin
       - name: Cache Maven artifacts
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-maven-
       - name: Cache node
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: web-bundle/node
           key: ${{ runner.os }}-node-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
             ${{ runner.os}}-node-
       - name: Cache node_modules
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: web-bundle/node_modules
           key: ${{ runner.os }}-node-${{ hashFiles('**/pom.xml', '**/package.json') }}
