@@ -2,13 +2,14 @@ name: Publish to GitHub Packages
 
 # ignore tags as the untagged commit has the same GITHUB_SHA and would conflict
 on:
+  workflow_dispatch:
   push:
     branches:
-    - '**'
+      - "**"
 
 jobs:
   publish:
-    if: github.repository_owner == 'graphhopper'
+    if: github.repository_owner == 'restacks-dev'
     runs-on: ubuntu-22.04
     permissions:
       contents: read
