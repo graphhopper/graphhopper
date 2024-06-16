@@ -93,7 +93,7 @@ public class OSMReader {
     private CountryRuleFactory countryRuleFactory = null;
     private File osmFile;
     private final RamerDouglasPeucker simplifyAlgo = new RamerDouglasPeucker();
-
+    private int bugCounter = 0;
     private final IntsRef tempRelFlags;
     private Date osmDataDate;
     private long zeroCounter = 0;
@@ -360,7 +360,7 @@ public class OSMReader {
 
         double maxDistance = (Integer.MAX_VALUE - 1) / 1000d;
         if (Double.isNaN(distance)) {
-            LOGGER.warn("Bug in OSM or GraphHopper. Illegal tower node distance " + distance + " reset to 1m, osm way " + way.getId());
+            LOGGER.warn("Bug in OSM or GraphHopper (" + bugCounter++ + "). Illegal tower node distance " + distance + " reset to 1m, osm way " + way.getId());
             distance = 1;
         }
 
@@ -368,9 +368,12 @@ public class OSMReader {
             // Too large is very rare and often the wrong tagging. See #435
             // so we can avoid the complexity of splitting the way for now (new towernodes would be required, splitting up geometry etc)
             // For example this happens here: https://www.openstreetmap.org/way/672506453 (Cape Town - Tristan da Cunha ferry)
-            LOGGER.warn("Bug in OSM or GraphHopper. Too big tower node distance " + distance + " reset to large value, osm way " + way.getId());
+            LOGGER.warn("Bug in OSM or GraphHopper (" + bugCounter++ + "). Too big tower node distance " + distance + " reset to large value, osm way " + way.getId());
             distance = maxDistance;
         }
+
+        if (bugCounter > 30)
+            throw new IllegalStateException("Too many bugs in OSM or GraphHopper encountered " + bugCounter);
 
         setArtificialWayTags(pointList, way, distance, nodeTags);
         IntsRef relationFlags = getRelFlagsMap(way.getId());
