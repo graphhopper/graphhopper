@@ -28,14 +28,16 @@ import com.graphhopper.storage.DAType;
 public class MultiSourceElevationProvider extends TileBasedElevationProvider {
 
     // Usually a high resolution provider in the SRTM area
-    private final TileBasedElevationProvider srtmProvider;
+    private final TileBasedElevationProvider primary;
     // The fallback provider that provides elevation data globally
-    private final TileBasedElevationProvider globalProvider;
+    private final TileBasedElevationProvider fallback;
 
-    public MultiSourceElevationProvider(TileBasedElevationProvider srtmProvider, TileBasedElevationProvider globalProvider) {
-        super(srtmProvider.cacheDir.getAbsolutePath());
-        this.srtmProvider = srtmProvider;
-        this.globalProvider = globalProvider;
+    public MultiSourceElevationProvider(
+            TileBasedElevationProvider primary,
+            TileBasedElevationProvider fallback) {
+        super(primary.cacheDir.getAbsolutePath());
+        this.primary = primary;
+        this.fallback = fallback;
     }
 
     public MultiSourceElevationProvider() {
@@ -43,16 +45,14 @@ public class MultiSourceElevationProvider extends TileBasedElevationProvider {
     }
 
     public MultiSourceElevationProvider(String cacheDir) {
-        this(new CGIARProvider(cacheDir), new GMTEDProvider(cacheDir));
+        this(new USGSProvider(cacheDir), new SRTMProvider(cacheDir));
     }
 
     @Override
     public double getEle(double lat, double lon) {
-        // Sometimes the cgiar data north of 59.999 equals 0
-        if (lat < 59.999 && lat > -56) {
-            return srtmProvider.getEle(lat, lon);
-        }
-        return globalProvider.getEle(lat, lon);
+        if (lat > 37 && lat < 38 && lon > -123 && lon < -122)
+            return primary.getEle(lat, lon);
+        return fallback.getEle(lat, lon);
     }
 
     /**
@@ -65,40 +65,40 @@ public class MultiSourceElevationProvider extends TileBasedElevationProvider {
         if (urls.length != 2) {
             throw new IllegalArgumentException("The base url must consist of two urls separated by a ';'. The first for cgiar, the second for gmted");
         }
-        srtmProvider.setBaseURL(urls[0]);
-        globalProvider.setBaseURL(urls[1]);
+        primary.setBaseURL(urls[0]);
+        fallback.setBaseURL(urls[1]);
         return this;
     }
 
     @Override
     public MultiSourceElevationProvider setDAType(DAType daType) {
-        srtmProvider.setDAType(daType);
-        globalProvider.setDAType(daType);
+        primary.setDAType(daType);
+        fallback.setDAType(daType);
         return this;
     }
 
     @Override
     public MultiSourceElevationProvider setInterpolate(boolean interpolate) {
-        srtmProvider.setInterpolate(interpolate);
-        globalProvider.setInterpolate(interpolate);
+        primary.setInterpolate(interpolate);
+        fallback.setInterpolate(interpolate);
         return this;
     }
 
     @Override
     public boolean canInterpolate() {
-        return srtmProvider.canInterpolate() && globalProvider.canInterpolate();
+        return primary.canInterpolate() && fallback.canInterpolate();
     }
 
     @Override
     public void release() {
-        srtmProvider.release();
-        globalProvider.release();
+        primary.release();
+        fallback.release();
     }
 
     @Override
     public MultiSourceElevationProvider setAutoRemoveTemporaryFiles(boolean autoRemoveTemporary) {
-        srtmProvider.setAutoRemoveTemporaryFiles(autoRemoveTemporary);
-        globalProvider.setAutoRemoveTemporaryFiles(autoRemoveTemporary);
+        primary.setAutoRemoveTemporaryFiles(autoRemoveTemporary);
+        fallback.setAutoRemoveTemporaryFiles(autoRemoveTemporary);
         return this;
     }
 
@@ -106,5 +106,4 @@ public class MultiSourceElevationProvider extends TileBasedElevationProvider {
     public String toString() {
         return "multi";
     }
-
 }

@@ -99,11 +99,11 @@ graphhopper:
 
 
   # To populate your graph with elevation data use SRTM, default is noop (no elevation). Read more about it in docs/core/elevation.md
-  graph.elevation.provider: srtm
+  graph.elevation.provider: multi
 
 
   # default location for cache is /tmp/srtm
-  # graph.elevation.cache_dir: ./srtmprovider/
+  graph.elevation.cache_dir: /data/elevation/
 
 
   # If you have a slow disk or plenty of RAM change the default MMAP to:
