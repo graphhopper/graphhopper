@@ -36,6 +36,7 @@ import java.util.Locale;
 import java.util.Random;
 import java.util.stream.Stream;
 
+import static com.graphhopper.json.Statement.If;
 import static java.lang.System.nanoTime;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -67,8 +68,8 @@ public class TrafficChangeWithNodeOrderingReusingTest {
                     .addWayTagParser(carParser);
             baseCHConfig = CHConfig.nodeBased("base", CustomModelParser.createWeighting(em, TurnCostProvider.NO_TURN_COST_PROVIDER,
                     new CustomModel()
-                            .addToPriority(Statement.If("!car_access", Statement.Op.MULTIPLY, "0"))
-                            .addToSpeed(Statement.If("true", Statement.Op.LIMIT, "car_average_speed")
+                            .addToPriority(If("!car_access", Statement.Op.MULTIPLY, "0"))
+                            .addToSpeed(If("true", Statement.Op.LIMIT, "car_average_speed")
                     )
             ));
             trafficCHConfig = CHConfig.nodeBased("traffic", new RandomDeviationWeighting(baseCHConfig.getWeighting(), accessEnc, speedEnc, maxDeviationPercentage));

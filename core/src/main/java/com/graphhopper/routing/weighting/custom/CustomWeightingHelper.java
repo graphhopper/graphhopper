@@ -19,7 +19,6 @@ package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.json.MinMax;
 import com.graphhopper.json.Statement;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
@@ -79,8 +78,8 @@ public class CustomWeightingHelper {
     public final double calcMaxPriority() {
         MinMax minMaxPriority = new MinMax(0, GLOBAL_PRIORITY);
         List<Statement> statements = customModel.getPriority();
-        if (!statements.isEmpty() && "true".equals(statements.get(0).getCondition())) {
-            String value = statements.get(0).getValue();
+        if (!statements.isEmpty() && "true".equals(statements.get(0).condition())) {
+            String value = statements.get(0).value();
             if (lookup.hasEncodedValue(value))
                 minMaxPriority.max = lookup.getDecimalEncodedValue(value).getMaxOrMaxStorableDecimal();
         }
