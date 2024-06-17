@@ -243,13 +243,14 @@ public class Router {
         QueryGraph queryGraph = QueryGraph.create(graph, snaps);
         PathCalculator pathCalculator = solver.createPathCalculator(queryGraph);
         boolean passThrough = getPassThrough(request.getHints());
-        boolean forceCurbsides = getForceCurbsides(request.getHints());
+        String curbsideStrictness = getCurbsideStrictness(request.getHints());
         if (passThrough)
             throw new IllegalArgumentException("Alternative paths and " + PASS_THROUGH + " at the same time is currently not supported");
         if (!request.getCurbsides().isEmpty())
             throw new IllegalArgumentException("Alternative paths do not support the " + CURBSIDE + " parameter yet");
 
-        ViaRouting.Result result = ViaRouting.calcPaths(request.getPoints(), queryGraph, snaps, directedEdgeFilter, pathCalculator, request.getCurbsides(), forceCurbsides, request.getHeadings(), passThrough);
+        ViaRouting.Result result = ViaRouting.calcPaths(request.getPoints(), queryGraph, snaps, directedEdgeFilter,
+                pathCalculator, request.getCurbsides(), curbsideStrictness, request.getHeadings(), passThrough);
         if (result.paths.isEmpty())
             throw new RuntimeException("Empty paths for alternative route calculation not expected");
 
@@ -277,9 +278,9 @@ public class Router {
         QueryGraph queryGraph = QueryGraph.create(graph, snaps);
         PathCalculator pathCalculator = solver.createPathCalculator(queryGraph);
         boolean passThrough = getPassThrough(request.getHints());
-        boolean forceCurbsides = getForceCurbsides(request.getHints());
+        String curbsideStrictness = getCurbsideStrictness(request.getHints());
         ViaRouting.Result result = ViaRouting.calcPaths(request.getPoints(), queryGraph, snaps, directedEdgeFilter,
-                pathCalculator, request.getCurbsides(), forceCurbsides, request.getHeadings(), passThrough);
+                pathCalculator, request.getCurbsides(), curbsideStrictness, request.getHeadings(), passThrough);
 
         if (request.getPoints().size() != result.paths.size() + 1)
             throw new RuntimeException("There should be exactly one more point than paths. points:" + request.getPoints().size() + ", paths:" + result.paths.size());
@@ -339,8 +340,10 @@ public class Router {
         return hints.getBool(PASS_THROUGH, false);
     }
 
-    private static boolean getForceCurbsides(PMap hints) {
-        return hints.getBool(FORCE_CURBSIDE, true);
+    private static String getCurbsideStrictness(PMap hints) {
+        if (hints.has("force_curbside") && hints.getBool("force_curbside", true)) return "strict"; // legacy
+
+        return hints.getString(CURBSIDE_STRICTNESS, "strict");
     }
 
     public static abstract class Solver {
