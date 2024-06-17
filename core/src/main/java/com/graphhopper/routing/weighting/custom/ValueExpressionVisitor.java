@@ -1,3 +1,20 @@
+/*
+ *  Licensed to GraphHopper GmbH under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for
+ *  additional information regarding copyright ownership.
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
+ *  compliance with the License. You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.json.MinMax;
@@ -137,21 +154,32 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
     }
 
     static Set<String> findVariables(List<Statement> statements, EncodedValueLookup lookup) {
-        List<List<Statement>> blocks = CustomModelParser.splitIntoBlocks(statements);
+        List<List<Statement>> groups = CustomModelParser.splitIntoGroup(statements);
         Set<String> variables = new LinkedHashSet<>();
-        for (List<Statement> block : blocks) findVariablesForBlock(variables, block, lookup);
+        for (List<Statement> group : groups) findVariablesForGroup(variables, group, lookup);
         return variables;
     }
 
-    private static void findVariablesForBlock(Set<String> createdObjects, List<Statement> block, EncodedValueLookup lookup) {
-        if (block.isEmpty() || !IF.equals(block.get(0).getKeyword()))
-            throw new IllegalArgumentException("Every block must start with an if-statement");
+    private static void findVariablesForGroup(Set<String> createdObjects, List<Statement> group, EncodedValueLookup lookup) {
+        if (group.isEmpty() || !IF.equals(group.get(0).keyword()))
+            throw new IllegalArgumentException("Every group of statements must start with an if-statement");
 
-        if (block.get(0).getCondition().trim().equals("true")) {
-            createdObjects.addAll(ValueExpressionVisitor.findVariables(block.get(0).getValue(), lookup));
+        Statement first = group.get(0);
+        if (first.condition().trim().equals("true")) {
+            if(first.isBlock()) {
+                List<List<Statement>> groups = CustomModelParser.splitIntoGroup(first.doBlock());
+                for (List<Statement> subGroup : groups) findVariablesForGroup(createdObjects, subGroup, lookup);
+            } else {
+                createdObjects.addAll(ValueExpressionVisitor.findVariables(first.value(), lookup));
+            }
         } else {
-            for (Statement s : block) {
-                createdObjects.addAll(ValueExpressionVisitor.findVariables(s.getValue(), lookup));
+            for (Statement st : group) {
+                if(st.isBlock()) {
+                    List<List<Statement>> groups = CustomModelParser.splitIntoGroup(st.doBlock());
+                    for (List<Statement> subGroup : groups) findVariablesForGroup(createdObjects, subGroup, lookup);
+                } else {
+                    createdObjects.addAll(ValueExpressionVisitor.findVariables(st.value(), lookup));
+                }
             }
         }
     }

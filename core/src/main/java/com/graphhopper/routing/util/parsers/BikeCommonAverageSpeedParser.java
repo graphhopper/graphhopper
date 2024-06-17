@@ -8,10 +8,7 @@ import com.graphhopper.routing.ev.Smoothness;
 import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.util.Helper;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedParser implements TagParser {
 
@@ -25,6 +22,7 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
     private final Map<String, Integer> highwaySpeeds = new HashMap<>();
     private final EnumEncodedValue<Smoothness> smoothnessEnc;
     protected final Set<String> intendedValues = new HashSet<>(5);
+    private final Set<String> restrictedValues = new HashSet<>(List.of("no", "agricultural", "forestry", "restricted", "military", "emergency", "private", "permit"));
 
     protected BikeCommonAverageSpeedParser(DecimalEncodedValue speedEnc, EnumEncodedValue<Smoothness> smoothnessEnc, DecimalEncodedValue ferrySpeedEnc) {
         super(speedEnc, ferrySpeedEnc);
@@ -116,6 +114,7 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         intendedValues.add("designated");
         intendedValues.add("official");
         intendedValues.add("permissive");
+
     }
 
     /**
@@ -187,6 +186,10 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
                     speed = highwaySpeeds.get("living_street");
             }
         }
+
+        boolean pushingRestriction = Arrays.stream(way.getTag("vehicle", "").split(";")).anyMatch(restrictedValues::contains);
+        if (pushingRestriction && !way.hasTag("bicycle", intendedValues))
+            speed = PUSHING_SECTION_SPEED;
 
         // Until now we assumed that the way is no pushing section
         // Now we check that, but only in case that our speed computed so far is bigger compared to the PUSHING_SECTION_SPEED

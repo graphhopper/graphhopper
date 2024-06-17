@@ -19,8 +19,8 @@ import org.locationtech.jts.geom.GeometryFactory;
 
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 
+import static com.graphhopper.json.Statement.If;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -92,9 +92,9 @@ public class GraphHopperWebTest {
                 new GeometryFactory().createPolygon(area_2_coordinates),
                 new HashMap<>()));
         CustomModel customModel = new CustomModel()
-                .addToSpeed(Statement.If("road_class == MOTORWAY", Statement.Op.LIMIT, "80"))
-                .addToPriority(Statement.If("surface == DIRT", Statement.Op.MULTIPLY, "0.7"))
-                .addToPriority(Statement.If("surface == SAND", Statement.Op.MULTIPLY, "0.6"))
+                .addToSpeed(If("road_class == MOTORWAY", Statement.Op.LIMIT, "80"))
+                .addToPriority(If("surface == DIRT", Statement.Op.MULTIPLY, "0.7"))
+                .addToPriority(If("surface == SAND", Statement.Op.MULTIPLY, "0.6"))
                 .setDistanceInfluence(69d)
                 .setHeadingPenalty(22)
                 .setAreas(areas);
@@ -109,7 +109,7 @@ public class GraphHopperWebTest {
         JsonNode customModelJson = postRequest.get("custom_model");
         ObjectMapper objectMapper = Jackson.newObjectMapper();
         JsonNode expected = objectMapper.readTree("{\"distance_influence\":69.0,\"heading_penalty\":22.0,\"internal\":false,\"areas\":{" +
-                "\"type\":\"FeatureCollection\",\"features\":["+
+                "\"type\":\"FeatureCollection\",\"features\":[" +
                 "{\"id\":\"area_1\",\"type\":\"Feature\",\"geometry\":{\"type\":\"Polygon\",\"coordinates\":[[[48.019324184801185,11.28021240234375],[48.019324184801185,11.53564453125],[48.11843396091691,11.53564453125],[48.11843396091691,11.28021240234375],[48.019324184801185,11.28021240234375]]]},\"properties\":{}}," +
                 "{\"id\":\"area_2\",\"type\":\"Feature\",\"geometry\":{\"type\":\"Polygon\",\"coordinates\":[[[48.15509285476017,11.53289794921875],[48.15509285476017,11.8212890625],[48.281365151571755,11.8212890625],[48.281365151571755,11.53289794921875],[48.15509285476017,11.53289794921875]]]},\"properties\":{}}]}," +
                 "\"priority\":[{\"if\":\"surface == DIRT\",\"multiply_by\":\"0.7\"},{\"if\":\"surface == SAND\",\"multiply_by\":\"0.6\"}]," +

@@ -76,8 +76,8 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
                 return WayAccess.CAN_SKIP;
         }
 
-        // use the way if it is tagged for bikes
-        if (way.hasTag("bicycle", "dismount") || way.hasTag("highway", "cycleway"))
+        // use the way for pushing
+        if (way.hasTag("bicycle", "dismount"))
             return WayAccess.WAY;
 
         int firstIndex = way.getFirstIndex(restrictionKeys);

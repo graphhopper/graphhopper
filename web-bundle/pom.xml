@@ -7,7 +7,8 @@
     <packaging>jar</packaging>
     <version>10.0-SNAPSHOT</version>
     <properties>
-        <graphhopper-maps.version>0.0.0-6fdf096cf324bcf6761713132fc84a8d1bb276fe</graphhopper-maps.version>
+        <graphhopper-maps.version>0.0.0-651952a42e591f0cf2f08fcf89bf1c973567597c
+        </graphhopper-maps.version>
     </properties>
     <name>GraphHopper Dropwizard Bundle</name>
     <description>Use the GraphHopper routing engine as a web-service</description>
@@ -140,8 +141,8 @@
                             <goal>install-node-and-npm</goal>
                         </goals>
                         <configuration>
-                            <nodeVersion>v16.17.0</nodeVersion>
-                            <npmVersion>8.15.0</npmVersion>
+                            <nodeVersion>v20.14.0</nodeVersion>
+                            <npmVersion>10.7.0</npmVersion>
                         </configuration>
                     </execution>
                     <execution>

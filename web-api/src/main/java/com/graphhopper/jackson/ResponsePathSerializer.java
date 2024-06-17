@@ -81,7 +81,7 @@ public class ResponsePathSerializer {
         sb.append((char) (num));
     }
 
-    public record Info(List<String> copyrights, long took, String roadDataTimeStamp) {
+    public record Info(List<String> copyrights, long took, String roadDataTimestamp) {
     }
 
     public static ObjectNode jsonObject(GHResponse ghRsp, Info info, boolean enableInstructions,

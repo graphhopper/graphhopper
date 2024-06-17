@@ -34,6 +34,7 @@ import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.EdgeIteratorState;
 import org.junit.jupiter.api.Test;
 
+import static com.graphhopper.json.Statement.If;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class PriorityRoutingTest {
@@ -73,8 +74,8 @@ public class PriorityRoutingTest {
         // A* and Dijkstra should yield the same path (the max priority must be taken into account by weighting.getMinWeight)
         {
             CustomModel customModel = new CustomModel();
-            customModel.addToPriority(Statement.If("true", Statement.Op.MULTIPLY, priorityEnc.getName()));
-            customModel.addToSpeed(Statement.If("true", Statement.Op.LIMIT, speedEnc.getName()));
+            customModel.addToPriority(If("true", Statement.Op.MULTIPLY, priorityEnc.getName()));
+            customModel.addToSpeed(If("true", Statement.Op.LIMIT, speedEnc.getName()));
 
             CustomWeighting weighting = CustomModelParser.createWeighting(em, TurnCostProvider.NO_TURN_COST_PROVIDER, customModel);
             Path pathDijkstra = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED).calcPath(0, 3);
@@ -86,9 +87,9 @@ public class PriorityRoutingTest {
         {
             CustomModel customModel = new CustomModel();
             // now we even increase the priority in the custom model, which also needs to be accounted for in weighting.getMinWeight
-            customModel.addToPriority(Statement.If("true", Statement.Op.MULTIPLY, priorityEnc.getName()));
-            customModel.addToPriority(Statement.If("road_class == MOTORWAY", Statement.Op.MULTIPLY, "3"));
-            customModel.addToSpeed(Statement.If("true", Statement.Op.LIMIT, speedEnc.getName()));
+            customModel.addToPriority(If("true", Statement.Op.MULTIPLY, priorityEnc.getName()));
+            customModel.addToPriority(If("road_class == MOTORWAY", Statement.Op.MULTIPLY, "3"));
+            customModel.addToSpeed(If("true", Statement.Op.LIMIT, speedEnc.getName()));
             CustomWeighting weighting = CustomModelParser.createWeighting(em, TurnCostProvider.NO_TURN_COST_PROVIDER, customModel);
             Path pathDijkstra = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED).calcPath(0, 3);
             Path pathAStar = new AStar(graph, weighting, TraversalMode.NODE_BASED).calcPath(0, 3);

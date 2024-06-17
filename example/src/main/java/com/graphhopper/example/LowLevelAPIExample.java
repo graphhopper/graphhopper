@@ -1,7 +1,7 @@
 package com.graphhopper.example;
 
-import com.graphhopper.routing.EdgeToEdgeRoutingAlgorithm;
 import com.graphhopper.routing.Dijkstra;
+import com.graphhopper.routing.EdgeToEdgeRoutingAlgorithm;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;

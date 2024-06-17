@@ -32,34 +32,34 @@ import com.carrotsearch.hppc.IntArrayList;
  * This class only contains the 'topology' of the restriction. The {@link RestrictionType} is handled separately,
  * because opposite to the type the topology does not depend on the vehicle type.
  */
-public class GraphRestriction {
+public class RestrictionTopology {
     private final boolean isViaWayRestriction;
     private final IntArrayList viaNodes;
     private final IntArrayList fromEdges;
     private final IntArrayList viaEdges;
     private final IntArrayList toEdges;
 
-    public static GraphRestriction node(int fromEdge, int viaNode, int toEdge) {
+    public static RestrictionTopology node(int fromEdge, int viaNode, int toEdge) {
         return node(IntArrayList.from(fromEdge), viaNode, IntArrayList.from(toEdge));
     }
 
-    public static GraphRestriction node(IntArrayList fromEdges, int viaNode, IntArrayList toEdges) {
-        return new GraphRestriction(false, IntArrayList.from(viaNode), fromEdges, null, toEdges);
+    public static RestrictionTopology node(IntArrayList fromEdges, int viaNode, IntArrayList toEdges) {
+        return new RestrictionTopology(false, IntArrayList.from(viaNode), fromEdges, null, toEdges);
     }
 
-    public static GraphRestriction way(int fromEdge, int viaEdge, int toEdge, IntArrayList viaNodes) {
+    public static RestrictionTopology way(int fromEdge, int viaEdge, int toEdge, IntArrayList viaNodes) {
         return way(fromEdge, IntArrayList.from(viaEdge), toEdge, viaNodes);
     }
 
-    public static GraphRestriction way(int fromEdge, IntArrayList viaEdges, int toEdge, IntArrayList viaNodes) {
+    public static RestrictionTopology way(int fromEdge, IntArrayList viaEdges, int toEdge, IntArrayList viaNodes) {
         return way(IntArrayList.from(fromEdge), viaEdges, IntArrayList.from(toEdge), viaNodes);
     }
 
-    public static GraphRestriction way(IntArrayList fromEdges, IntArrayList viaEdges, IntArrayList toEdges, IntArrayList viaNodes) {
-        return new GraphRestriction(true, viaNodes, fromEdges, viaEdges, toEdges);
+    public static RestrictionTopology way(IntArrayList fromEdges, IntArrayList viaEdges, IntArrayList toEdges, IntArrayList viaNodes) {
+        return new RestrictionTopology(true, viaNodes, fromEdges, viaEdges, toEdges);
     }
 
-    private GraphRestriction(boolean isViaWayRestriction, IntArrayList viaNodes, IntArrayList fromEdges, IntArrayList viaEdges, IntArrayList toEdges) {
+    private RestrictionTopology(boolean isViaWayRestriction, IntArrayList viaNodes, IntArrayList fromEdges, IntArrayList viaEdges, IntArrayList toEdges) {
         if (fromEdges.size() > 1 && toEdges.size() > 1)
             throw new IllegalArgumentException("fromEdges and toEdges cannot be size > 1 at the same time");
         if (fromEdges.isEmpty() || toEdges.isEmpty())

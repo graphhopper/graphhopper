@@ -260,6 +260,23 @@ class CustomModelParserTest {
     }
 
     @Test
+    public void parseBlock() {
+        DecimalEncodedValue maxSpeedEnc = encodingManager.getDecimalEncodedValue(MaxSpeed.KEY);
+        EdgeIteratorState edge60 = graph.edge(0, 1).setDistance(10).
+                set(maxSpeedEnc, 60).set(avgSpeedEnc, 70).set(accessEnc, true, true);
+        EdgeIteratorState edge70 = graph.edge(1, 2).setDistance(10).
+                set(maxSpeedEnc, 70).set(avgSpeedEnc, 70).set(accessEnc, true, true);
+
+        CustomModel customModel = new CustomModel();
+        customModel.addToSpeed(If("true", LIMIT, "200"));
+        customModel.addToSpeed(If("max_speed > 65", List.of(If("true", LIMIT, "65"))));
+        CustomWeighting.EdgeToDoubleMapping speedMapping = CustomModelParser.createWeightingParameters(customModel, encodingManager).
+                getEdgeToSpeedMapping();
+        assertEquals(65.0, speedMapping.get(edge70, false), 0.01);
+        assertEquals(200.0, speedMapping.get(edge60, false), 0.01);
+    }
+
+    @Test
     public void parseValueWithError() {
         CustomModel customModel1 = new CustomModel();
         customModel1.addToSpeed(If("true", LIMIT, "unknown"));
@@ -285,7 +302,7 @@ class CustomModelParserTest {
         IllegalArgumentException ret = assertThrows(IllegalArgumentException.class,
                 () -> parseExpressions(new StringBuilder(),
                         validVariable, "[HERE]", new HashSet<>(),
-                        Arrays.asList(If("max_weight > 10", MULTIPLY, "0")), s -> "")
+                        Arrays.asList(If("max_weight > 10", MULTIPLY, "0")), s -> "", "")
         );
         assertTrue(ret.getMessage().startsWith("[HERE] invalid condition \"max_weight > 10\": 'max_weight' not available"), ret.getMessage());
 
@@ -293,14 +310,14 @@ class CustomModelParserTest {
         ret = assertThrows(IllegalArgumentException.class,
                 () -> parseExpressions(new StringBuilder(),
                         validVariable, "[HERE]", new HashSet<>(),
-                        Arrays.asList(If("country == GERMANY", MULTIPLY, "0")), s -> ""));
+                        Arrays.asList(If("country == GERMANY", MULTIPLY, "0")), s -> "", ""));
         assertTrue(ret.getMessage().startsWith("[HERE] invalid condition \"country == GERMANY\": 'GERMANY' not available"), ret.getMessage());
 
         // not whitelisted method
         ret = assertThrows(IllegalArgumentException.class,
                 () -> parseExpressions(new StringBuilder(),
                         validVariable, "[HERE]", new HashSet<>(),
-                        Arrays.asList(If("edge.fetchWayGeometry().size() > 2", MULTIPLY, "0")), s -> ""));
+                        Arrays.asList(If("edge.fetchWayGeometry().size() > 2", MULTIPLY, "0")), s -> "", ""));
         assertTrue(ret.getMessage().startsWith("[HERE] invalid condition \"edge.fetchWayGeometry().size() > 2\": size is an illegal method"), ret.getMessage());
     }
 

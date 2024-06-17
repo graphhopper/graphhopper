@@ -23,8 +23,8 @@ import com.carrotsearch.hppc.IntIntHashMap;
 import com.carrotsearch.hppc.IntIntMap;
 import com.carrotsearch.hppc.IntSet;
 import com.carrotsearch.hppc.cursors.IntCursor;
-import com.graphhopper.reader.osm.GraphRestriction;
 import com.graphhopper.reader.osm.Pair;
+import com.graphhopper.reader.osm.RestrictionTopology;
 import com.graphhopper.reader.osm.RestrictionType;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.storage.BaseGraph;
@@ -32,7 +32,7 @@ import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 
-import java.util.*;
+import java.util.List;
 
 import static com.graphhopper.reader.osm.RestrictionType.NO;
 import static com.graphhopper.reader.osm.RestrictionType.ONLY;
@@ -54,7 +54,7 @@ public class RestrictionSetter {
      * Since we keep track of the added artificial edges here it is important to only use one RestrictionSetter instance
      * for **all** turn restrictions and vehicle types.
      */
-    public void setRestrictions(List<Pair<GraphRestriction, RestrictionType>> restrictions, BooleanEncodedValue turnRestrictionEnc) {
+    public void setRestrictions(List<Pair<RestrictionTopology, RestrictionType>> restrictions, BooleanEncodedValue turnRestrictionEnc) {
         // we first need to add all the artificial edges, because we might need to restrict turns between artificial
         // edges created for different restrictions (when restrictions are overlapping)
         addArtificialEdges(restrictions);
@@ -64,8 +64,8 @@ public class RestrictionSetter {
         addViaNodeRestrictions(restrictions, turnRestrictionEnc);
     }
 
-    private void addArtificialEdges(List<Pair<GraphRestriction, RestrictionType>> restrictions) {
-        for (Pair<GraphRestriction, RestrictionType> p : restrictions) {
+    private void addArtificialEdges(List<Pair<RestrictionTopology, RestrictionType>> restrictions) {
+        for (Pair<RestrictionTopology, RestrictionType> p : restrictions) {
             if (p.first.isViaWayRestriction()) {
                 if (ignoreViaWayRestriction(p)) continue;
                 int viaEdge = p.first.getViaEdges().get(0);
@@ -79,9 +79,9 @@ public class RestrictionSetter {
         }
     }
 
-    private void addViaWayRestrictions(List<Pair<GraphRestriction, RestrictionType>> restrictions, BooleanEncodedValue turnRestrictionEnc) {
+    private void addViaWayRestrictions(List<Pair<RestrictionTopology, RestrictionType>> restrictions, BooleanEncodedValue turnRestrictionEnc) {
         IntSet directedViaEdgesUsedByRestrictions = new IntHashSet();
-        for (Pair<GraphRestriction, RestrictionType> p : restrictions) {
+        for (Pair<RestrictionTopology, RestrictionType> p : restrictions) {
             if (!p.first.isViaWayRestriction()) continue;
             if (ignoreViaWayRestriction(p)) continue;
             final int fromEdge = p.first.getFromEdges().get(0);
@@ -145,8 +145,8 @@ public class RestrictionSetter {
         }
     }
 
-    private void addViaNodeRestrictions(List<Pair<GraphRestriction, RestrictionType>> restrictions, BooleanEncodedValue turnRestrictionEnc) {
-        for (Pair<GraphRestriction, RestrictionType> p : restrictions) {
+    private void addViaNodeRestrictions(List<Pair<RestrictionTopology, RestrictionType>> restrictions, BooleanEncodedValue turnRestrictionEnc) {
+        for (Pair<RestrictionTopology, RestrictionType> p : restrictions) {
             if (p.first.isViaWayRestriction()) continue;
             final int viaNode = p.first.getViaNodes().get(0);
             for (IntCursor fromEdgeCursor : p.first.getFromEdges()) {
@@ -194,7 +194,7 @@ public class RestrictionSetter {
         baseGraph.getTurnCostStorage().set(turnRestrictionEnc, fromEdge, viaNode, toEdge, true);
     }
 
-    private static boolean ignoreViaWayRestriction(Pair<GraphRestriction, RestrictionType> p) {
+    private static boolean ignoreViaWayRestriction(Pair<RestrictionTopology, RestrictionType> p) {
         // todo: how frequent are these?
         if (p.first.getViaEdges().size() > 1)
             // no multi-restrictions yet

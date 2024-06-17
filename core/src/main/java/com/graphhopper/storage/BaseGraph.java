@@ -29,6 +29,7 @@ import com.graphhopper.util.shapes.BBox;
 import java.io.Closeable;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.IntConsumer;
 
 import static com.graphhopper.util.Helper.nf;
 import static com.graphhopper.util.Parameters.Details.STREET_NAME;
@@ -353,6 +354,22 @@ public class BaseGraph implements Graph, Closeable {
                 consumer.accept(iter);
             if (store.getGeoRef(((EdgeIteratorStateImpl) iter).edgePointer) != geoRefBefore)
                 throw new IllegalStateException("The consumer must not change the geo ref");
+        }
+    }
+
+    public void forEdgeAndCopiesOfEdge(EdgeExplorer explorer, int node, int edge, IntConsumer consumer) {
+        final long geoRef = store.getGeoRef(store.toEdgePointer(edge));
+        if (geoRef == 0) {
+            // 0 means there is no geometry (and no copy of this edge), but of course not all edges
+            // without geometry are copies of each other, so we need to return early
+            consumer.accept(edge);
+            return;
+        }
+        EdgeIterator iter = explorer.setBaseNode(node);
+        while (iter.next()) {
+            long geoRefBefore = store.getGeoRef(((EdgeIteratorStateImpl) iter).edgePointer);
+            if (geoRefBefore == geoRef)
+                consumer.accept(iter.getEdge());
         }
     }
 

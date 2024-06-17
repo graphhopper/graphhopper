@@ -331,8 +331,8 @@ class CustomWeightingTest {
                 set(roadClassEnc, MOTORWAY).set(avSpeedEnc, 80);
         CustomModel customModel = createSpeedCustomModel(avSpeedEnc)
                 .setDistanceInfluence(70d)
-                .addToSpeed(Statement.If("road_class == MOTORWAY", Statement.Op.MULTIPLY, "0.7"))
-                .addToSpeed(Statement.Else(LIMIT, "30"));
+                .addToSpeed(If("road_class == MOTORWAY", Statement.Op.MULTIPLY, "0.7"))
+                .addToSpeed(Else(LIMIT, "30"));
         Weighting weighting = createWeighting(customModel);
         assertEquals(1.3429, weighting.calcEdgeWeight(motorway, false), 1e-4);
         assertEquals(10 / (80 * 0.7 / 3.6) * 1000, weighting.calcEdgeMillis(motorway, false), 1);
@@ -343,7 +343,7 @@ class CustomWeightingTest {
         EdgeIteratorState motorway = graph.edge(0, 1).setDistance(0).
                 set(roadClassEnc, MOTORWAY).set(avSpeedEnc, 80);
         CustomModel customModel = createSpeedCustomModel(avSpeedEnc)
-                .addToPriority(Statement.If("road_class == MOTORWAY", Statement.Op.MULTIPLY, "0"));
+                .addToPriority(If("road_class == MOTORWAY", Statement.Op.MULTIPLY, "0"));
         Weighting weighting = createWeighting(customModel);
         assertFalse(Double.isNaN(weighting.calcEdgeWeight(motorway, false)));
         assertTrue(Double.isInfinite(weighting.calcEdgeWeight(motorway, false)));

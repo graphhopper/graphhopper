@@ -14,7 +14,10 @@ import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.*;
+import com.graphhopper.util.CustomModel;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -81,8 +84,8 @@ public class ShortestPathTreeTest {
 
     private CustomModel createBaseCustomModel() {
         CustomModel customModel = new CustomModel();
-        customModel.addToPriority(Statement.If("!" + accessEnc.getName(), Statement.Op.MULTIPLY, "0"));
-        customModel.addToSpeed(Statement.If("true", Statement.Op.LIMIT, speedEnc.getName()));
+        customModel.addToPriority(If("!" + accessEnc.getName(), Statement.Op.MULTIPLY, "0"));
+        customModel.addToSpeed(If("true", Statement.Op.LIMIT, speedEnc.getName()));
         return customModel;
     }
 

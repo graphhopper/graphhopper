@@ -162,6 +162,21 @@ public class TurnCostStorage {
         throw new IllegalStateException("Turn cost list for node: " + viaNode + " is longer than expected, max: " + maxEntries);
     }
 
+    public int getTurnCostsCount() {
+        return turnCostsCount;
+    }
+
+    public int getTurnCostsCount(int node) {
+        int index = baseGraph.getNodeAccess().getTurnCostIndex(node);
+        int count = 0;
+        while (index != NO_TURN_ENTRY) {
+            long pointer = (long) index * BYTES_PER_ENTRY;
+            index = turnCosts.getInt(pointer + TC_NEXT);
+            count++;
+        }
+        return count;
+    }
+
     public boolean isClosed() {
         return turnCosts.isClosed();
     }

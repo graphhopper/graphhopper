@@ -92,8 +92,8 @@ public class Measurement {
         boolean cleanGraph = args.getBool("measurement.clean", false);
         stopOnError = args.getBool("measurement.stop_on_error", false);
         String summaryLocation = args.getString("measurement.summaryfile", "");
-        final String timeStamp = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss").format(new Date());
-        put("measurement.timestamp", timeStamp);
+        final String timestamp = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss").format(new Date());
+        put("measurement.timestamp", timestamp);
         String propFolder = args.getString("measurement.folder", "");
         if (!propFolder.isEmpty()) {
             Files.createDirectories(Paths.get(propFolder));
@@ -103,9 +103,9 @@ public class Measurement {
             if (useJson) {
                 // if we start from IDE or otherwise jar was not built using maven the git commit id will be unknown
                 String id = Constants.GIT_INFO != null ? Constants.GIT_INFO.getCommitHash().substring(0, 8) : "unknown";
-                propFilename = "measurement_" + id + "_" + timeStamp + ".json";
+                propFilename = "measurement_" + id + "_" + timestamp + ".json";
             } else {
-                propFilename = "measurement_" + timeStamp + ".properties";
+                propFilename = "measurement_" + timestamp + ".properties";
             }
         }
         final String propLocation = Paths.get(propFolder).resolve(propFilename).toString();
