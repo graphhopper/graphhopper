@@ -341,9 +341,10 @@ public class Router {
     }
 
     private static String getCurbsideStrictness(PMap hints) {
-        if (hints.has("force_curbside") && hints.getBool("force_curbside", true)) return "strict"; // legacy
+        if (hints.has(CURBSIDE_STRICTNESS)) return hints.getString(CURBSIDE_STRICTNESS, "strict");
 
-        return hints.getString(CURBSIDE_STRICTNESS, "strict");
+        // legacy
+        return hints.getBool("force_curbside", true) ? "strict" : "soft";
     }
 
     public static abstract class Solver {
