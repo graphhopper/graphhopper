@@ -390,7 +390,7 @@ public class RouteResourceClientHCTest {
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(42.509141, 1.546063)).
                 // #2915: duplicating the first point yields an empty leg, but there should still be path details for it
-                        addPoint(new GHPoint(42.509141, 1.546063)).
+                addPoint(new GHPoint(42.509141, 1.546063)).
                 addPoint(new GHPoint(42.507173, 1.531902)).
                 addPoint(new GHPoint(42.505435, 1.515943)).
                 addPoint(new GHPoint(42.499062, 1.506067)).
