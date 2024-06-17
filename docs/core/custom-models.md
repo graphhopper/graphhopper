@@ -338,7 +338,8 @@ which means that the speed is limited to `90km/h` for all road segments regardle
 
 #### The `do` operation
 
-The `do` operation allows nesting statements. E.g. for `if` it can be used like:
+The `do` operation allows multiple statements for an `if`, `else_if`, and `else` statement.
+For example, for an `if` statement, it can be used as follows:
 
 ```json
 {
@@ -350,16 +351,17 @@ The `do` operation allows nesting statements. E.g. for `if` it can be used like:
 }
 ```
 
-And then the following statements are only executed if the expression is true.
+And then the two nested statements under `do` are only executed if the expression `country == DEU` is true.
 
-For `else` the `do` operation can be used like:
+For `else` the `do` operation can be used in a similar way:
 
 ```json
 [
   { "if": "max_speed > 70", "limit": "70" },
   { "else": "",
     "do":  [
-      { "if": "road_class == PRIMARY", "multiply_by": "0.8" }
+      { "if": "road_class == PRIMARY", "multiply_by": "0.8" },
+      { "if": "road_class == SECONDARY", "multiply_by": "0.7" }
     ]
   }
 ]
