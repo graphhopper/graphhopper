@@ -31,8 +31,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.function.LongFunction;
 
-public class RestrictionConverter {
-    private static final Logger LOGGER = LoggerFactory.getLogger(RestrictionConverter.class);
+public class OSMRestrictionConverter {
+    private static final Logger LOGGER = LoggerFactory.getLogger(OSMRestrictionConverter.class);
     private static final long[] EMPTY_LONG_ARRAY_LIST = new long[0];
 
     public static boolean isTurnRestriction(ReaderRelation relation) {
@@ -66,7 +66,7 @@ public class RestrictionConverter {
      * @throws OSMRestrictionException if the given relation is either not valid in some way and/or cannot be handled and
      *                                 shall be ignored
      */
-    public static Triple<ReaderRelation, GraphRestriction, RestrictionMembers> convert(ReaderRelation relation, BaseGraph baseGraph, LongFunction<Iterator<IntCursor>> edgesByWay) throws OSMRestrictionException {
+    public static Triple<ReaderRelation, RestrictionTopology, RestrictionMembers> buildRestrictionTopologyForGraph(ReaderRelation relation, BaseGraph baseGraph, LongFunction<Iterator<IntCursor>> edgesByWay) throws OSMRestrictionException {
         if (!isTurnRestriction(relation))
             throw new IllegalArgumentException("expected a turn restriction: " + relation.getTags());
         RestrictionMembers restrictionMembers = extractMembers(relation);
@@ -78,14 +78,14 @@ public class RestrictionConverter {
         if (restrictionMembers.isViaWay()) {
             WayToEdgeConverter.EdgeResult res = wayToEdgeConverter
                     .convertForViaWays(restrictionMembers.getFromWays(), restrictionMembers.getViaWays(), restrictionMembers.getToWays());
-            return new Triple<>(relation, GraphRestriction.way(res.getFromEdges(), res.getViaEdges(), res.getToEdges(), res.getNodes()), restrictionMembers);
+            return new Triple<>(relation, RestrictionTopology.way(res.getFromEdges(), res.getViaEdges(), res.getToEdges(), res.getNodes()), restrictionMembers);
         } else {
             int viaNode = relation.getTag("graphhopper:via_node", -1);
             if (viaNode < 0)
                 throw new IllegalStateException("For some reason we did not set graphhopper:via_node for this relation: " + relation.getId());
             WayToEdgeConverter.NodeResult res = wayToEdgeConverter
                     .convertForViaNode(restrictionMembers.getFromWays(), viaNode, restrictionMembers.getToWays());
-            return new Triple<>(relation, GraphRestriction.node(res.getFromEdges(), viaNode, res.getToEdges()), restrictionMembers);
+            return new Triple<>(relation, RestrictionTopology.node(res.getFromEdges(), viaNode, res.getToEdges()), restrictionMembers);
         }
     }
 
@@ -99,7 +99,7 @@ public class RestrictionConverter {
         return true;
     }
 
-    public static void checkIfCompatibleWithRestriction(GraphRestriction g, String restriction) throws OSMRestrictionException {
+    public static void checkIfTopologyIsCompatibleWithRestriction(RestrictionTopology g, String restriction) throws OSMRestrictionException {
         if (g.getFromEdges().size() > 1 && !"no_entry".equals(restriction))
             throw new OSMRestrictionException("has multiple members with role 'from' even though it is not a 'no_entry' restriction");
         if (g.getToEdges().size() > 1 && !"no_exit".equals(restriction))

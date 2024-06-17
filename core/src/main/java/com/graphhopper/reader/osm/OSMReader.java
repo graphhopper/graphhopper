@@ -581,7 +581,7 @@ public class OSMReader {
             }
         }
 
-        Arrays.stream(RestrictionConverter.getRestrictedWayIds(relation))
+        Arrays.stream(OSMRestrictionConverter.getRestrictedWayIds(relation))
                 .forEach(restrictedWaysToEdgesMap::reserve);
     }
 
@@ -591,8 +591,8 @@ public class OSMReader {
      */
     protected void processRelation(ReaderRelation relation, LongToIntFunction getIdForOSMNodeId) {
         if (turnCostStorage != null)
-            if (RestrictionConverter.isTurnRestriction(relation)) {
-                long osmViaNode = RestrictionConverter.getViaNodeIfViaNodeRestriction(relation);
+            if (OSMRestrictionConverter.isTurnRestriction(relation)) {
+                long osmViaNode = OSMRestrictionConverter.getViaNodeIfViaNodeRestriction(relation);
                 if (osmViaNode >= 0) {
                     int viaNode = getIdForOSMNodeId.applyAsInt(osmViaNode);
                     // only include the restriction if the corresponding node wasn't excluded
@@ -608,12 +608,12 @@ public class OSMReader {
 
     private void addRestrictionsToGraph() {
         // The OSM restriction format is explained here: https://wiki.openstreetmap.org/wiki/Relation:restriction
-        List<Triple<ReaderRelation, GraphRestriction, RestrictionMembers>> restrictions = new ArrayList<>(restrictionRelations.size());
+        List<Triple<ReaderRelation, RestrictionTopology, RestrictionMembers>> restrictionRelationsWithTopology = new ArrayList<>(restrictionRelations.size());
         for (ReaderRelation restrictionRelation : restrictionRelations) {
             try {
-                // convert the OSM relation topology to the graph representation. this only needs to be done once for all
+                // Build the topology of the OSM relation in the graph representation. This only needs to be done once for all
                 // vehicle types (we also want to print warnings only once)
-                restrictions.add(RestrictionConverter.convert(restrictionRelation, baseGraph, restrictedWaysToEdgesMap::getEdges));
+                restrictionRelationsWithTopology.add(OSMRestrictionConverter.buildRestrictionTopologyForGraph(restrictionRelation, baseGraph, restrictedWaysToEdgesMap::getEdges));
             } catch (OSMRestrictionException e) {
                 warnOfRestriction(restrictionRelation, e);
             }
@@ -622,8 +622,8 @@ public class OSMReader {
         // We handle the restrictions for one vehicle after another.
         for (RestrictionTagParser restrictionTagParser : osmParsers.getRestrictionTagParsers()) {
             LongSet directedViaWaysUsedByRestrictions = new LongHashSet();
-            List<Pair<GraphRestriction, RestrictionType>> restrictionsWithType = new ArrayList<>(restrictions.size());
-            for (Triple<ReaderRelation, GraphRestriction, RestrictionMembers> r : restrictions) {
+            List<Pair<RestrictionTopology, RestrictionType>> restrictionsWithType = new ArrayList<>(restrictionRelationsWithTopology.size());
+            for (Triple<ReaderRelation, RestrictionTopology, RestrictionMembers> r : restrictionRelationsWithTopology) {
                 if (r.second == null)
                     // this relation was found to be invalid by another restriction tag parser already
                     continue;
@@ -632,7 +632,7 @@ public class OSMReader {
                     if (res == null)
                         // this relation is ignored by the current restriction tag parser
                         continue;
-                    RestrictionConverter.checkIfCompatibleWithRestriction(r.second, res.getRestriction());
+                    OSMRestrictionConverter.checkIfTopologyIsCompatibleWithRestriction(r.second, res.getRestriction());
                     // we ignore via-way restrictions that share the same via-way in the same direction, because these would require adding
                     // multiple artificial edges, see here: https://github.com/graphhopper/graphhopper/pull/2689#issuecomment-1306769694 and #2907
                     if (r.second.isViaWayRestriction())

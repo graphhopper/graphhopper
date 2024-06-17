@@ -1,8 +1,8 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.carrotsearch.hppc.IntArrayList;
-import com.graphhopper.reader.osm.GraphRestriction;
 import com.graphhopper.reader.osm.Pair;
+import com.graphhopper.reader.osm.RestrictionTopology;
 import com.graphhopper.reader.osm.RestrictionType;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.ev.*;
@@ -50,9 +50,9 @@ public class RestrictionSetterTest {
         edge(1, 3);
         edge(2, 4);
         edge(3, 4);
-        GraphRestriction graphRestriction = GraphRestriction.node(a, 1, b);
+        RestrictionTopology topology = RestrictionTopology.node(a, 1, b);
         BooleanEncodedValue turnRestrictionEnc = createTurnRestrictionEnc("car");
-        r.setRestrictions(Arrays.asList(new Pair<>(graphRestriction, RestrictionType.NO)), turnRestrictionEnc);
+        setRestrictions(Arrays.asList(new Pair<>(topology, RestrictionType.NO)), turnRestrictionEnc);
         assertEquals(nodes(0, 1, 3, 4, 2), calcPath(0, 2, turnRestrictionEnc));
     }
 
@@ -66,9 +66,9 @@ public class RestrictionSetterTest {
         edge(1, 3);
         edge(2, 4);
         edge(3, 4);
-        GraphRestriction graphRestriction = GraphRestriction.node(a, 1, b);
+        RestrictionTopology topology = RestrictionTopology.node(a, 1, b);
         BooleanEncodedValue turnRestrictionEnc = createTurnRestrictionEnc("car");
-        r.setRestrictions(Arrays.asList(new Pair<>(graphRestriction, RestrictionType.ONLY)), turnRestrictionEnc);
+        setRestrictions(Arrays.asList(new Pair<>(topology, RestrictionType.ONLY)), turnRestrictionEnc);
         assertEquals(nodes(0, 1, 2, 4, 3), calcPath(0, 3, turnRestrictionEnc));
     }
 
@@ -90,10 +90,10 @@ public class RestrictionSetterTest {
         edge(2, 6);
         edge(6, 9);
         edge(8, 9);
-        GraphRestriction graphRestriction = GraphRestriction.way(a, b, c, nodes(1, 2));
+        RestrictionTopology topology = RestrictionTopology.way(a, b, c, nodes(1, 2));
         BooleanEncodedValue turnRestrictionEnc = createTurnRestrictionEnc("car");
-        r.setRestrictions(Arrays.asList(
-                new Pair<>(graphRestriction, RestrictionType.NO)
+        setRestrictions(Arrays.asList(
+                new Pair<>(topology, RestrictionType.NO)
         ), turnRestrictionEnc);
         // turning from a to b and then to c is not allowed
         assertEquals(nodes(0, 1, 5, 8, 9, 6, 2, 3), calcPath(0, 3, turnRestrictionEnc));
@@ -117,9 +117,9 @@ public class RestrictionSetterTest {
         int u = edge(3, 7);
 
         BooleanEncodedValue turnRestrictionEnc = createTurnRestrictionEnc("car");
-        r.setRestrictions(Arrays.asList(
-                new Pair<>(GraphRestriction.way(a, b, c, nodes(1, 2)), RestrictionType.NO),
-                new Pair<>(GraphRestriction.way(b, c, d, nodes(2, 3)), RestrictionType.NO)
+        setRestrictions(Arrays.asList(
+                new Pair<>(RestrictionTopology.way(a, b, c, nodes(1, 2)), RestrictionType.NO),
+                new Pair<>(RestrictionTopology.way(b, c, d, nodes(2, 3)), RestrictionType.NO)
         ), turnRestrictionEnc);
 
         assertEquals(NO_PATH, calcPath(0, 3, turnRestrictionEnc)); // a-b-c
@@ -156,13 +156,13 @@ public class RestrictionSetterTest {
         edge(8, 11);
         edge(10, 11);
         BooleanEncodedValue turnRestrictionEnc = createTurnRestrictionEnc("car");
-        r.setRestrictions(Arrays.asList(
-                new Pair<>(GraphRestriction.node(t, 4, d), RestrictionType.NO),
-                new Pair<>(GraphRestriction.node(s, 3, a), RestrictionType.NO),
-                new Pair<>(GraphRestriction.way(a, b, c, nodes(3, 7)), RestrictionType.NO),
-                new Pair<>(GraphRestriction.way(b, c, d, nodes(7, 8)), RestrictionType.NO),
-                new Pair<>(GraphRestriction.way(c, d, a, nodes(8, 4)), RestrictionType.NO),
-                new Pair<>(GraphRestriction.way(d, a, b, nodes(4, 3)), RestrictionType.NO)
+        setRestrictions(Arrays.asList(
+                new Pair<>(RestrictionTopology.node(t, 4, d), RestrictionType.NO),
+                new Pair<>(RestrictionTopology.node(s, 3, a), RestrictionType.NO),
+                new Pair<>(RestrictionTopology.way(a, b, c, nodes(3, 7)), RestrictionType.NO),
+                new Pair<>(RestrictionTopology.way(b, c, d, nodes(7, 8)), RestrictionType.NO),
+                new Pair<>(RestrictionTopology.way(c, d, a, nodes(8, 4)), RestrictionType.NO),
+                new Pair<>(RestrictionTopology.way(d, a, b, nodes(4, 3)), RestrictionType.NO)
         ), turnRestrictionEnc);
 
         assertEquals(nodes(0, 3, 7, 8, 9), calcPath(0, 9, turnRestrictionEnc));
@@ -186,11 +186,11 @@ public class RestrictionSetterTest {
         int e = edge(4, 5);
 
         BooleanEncodedValue turnRestrictionEnc = createTurnRestrictionEnc("car");
-        r.setRestrictions(Arrays.asList(
+        setRestrictions(Arrays.asList(
                 // A rather common case where u-turns between the a-b and d-e lanes are forbidden.
                 // Importantly, the via-edge c is used only once per direction so a single artificial edge is sufficient.
-                new Pair<>(GraphRestriction.way(b, c, e, nodes(1, 4)), RestrictionType.NO),
-                new Pair<>(GraphRestriction.way(d, c, a, nodes(4, 1)), RestrictionType.NO)
+                new Pair<>(RestrictionTopology.way(b, c, e, nodes(1, 4)), RestrictionType.NO),
+                new Pair<>(RestrictionTopology.way(d, c, a, nodes(4, 1)), RestrictionType.NO)
         ), turnRestrictionEnc);
 
         assertEquals(nodes(0, 1, 2), calcPath(0, 2, turnRestrictionEnc));
@@ -216,11 +216,11 @@ public class RestrictionSetterTest {
         int b = edge(2, 3);
 
         BooleanEncodedValue turnRestrictionEnc = createTurnRestrictionEnc("car");
-        IllegalStateException ex = assertThrows(IllegalStateException.class, () -> r.setRestrictions(Arrays.asList(
+        IllegalStateException ex = assertThrows(IllegalStateException.class, () -> setRestrictions(Arrays.asList(
                 // This is rather academic, but for the special case where the via edge is edge 0
                 // we cannot use two restrictions even though the edge is used in opposite directions.
-                new Pair<>(GraphRestriction.way(a, v, b, nodes(1, 2)), RestrictionType.NO),
-                new Pair<>(GraphRestriction.way(b, v, a, nodes(2, 1)), RestrictionType.NO)
+                new Pair<>(RestrictionTopology.way(a, v, b, nodes(1, 2)), RestrictionType.NO),
+                new Pair<>(RestrictionTopology.way(b, v, a, nodes(2, 1)), RestrictionType.NO)
         ), turnRestrictionEnc));
         assertTrue(ex.getMessage().contains("We cannot deal with multiple via-way restrictions if the via-edge is edge 0"));
     }
@@ -242,9 +242,9 @@ public class RestrictionSetterTest {
         // Here edge c is used by both restrictions in the same direction. Supporting this
         // with our current approach would require a second artificial edge. See #2907
         IllegalStateException ex = assertThrows(IllegalStateException.class, () ->
-                r.setRestrictions(Arrays.asList(
-                        new Pair<>(GraphRestriction.way(a, c, d, nodes(1, 4)), RestrictionType.NO),
-                        new Pair<>(GraphRestriction.way(b, c, e, nodes(1, 4)), RestrictionType.NO)
+                setRestrictions(Arrays.asList(
+                        new Pair<>(RestrictionTopology.way(a, c, d, nodes(1, 4)), RestrictionType.NO),
+                        new Pair<>(RestrictionTopology.way(b, c, e, nodes(1, 4)), RestrictionType.NO)
                 ), turnRestrictionEnc));
         assertTrue(ex.getMessage().contains("We cannot deal with multiple via-way restrictions that use the same via edge in the same direction"), ex.getMessage());
     }
@@ -266,11 +266,11 @@ public class RestrictionSetterTest {
         int f = edge(5, 7);
         int g = edge(5, 6);
         BooleanEncodedValue turnRestrictionEnc = createTurnRestrictionEnc("car");
-        r.setRestrictions(Arrays.asList(
-                new Pair<>(GraphRestriction.way(a, d, f, nodes(2, 5)), RestrictionType.ONLY),
+        setRestrictions(Arrays.asList(
+                new Pair<>(RestrictionTopology.way(a, d, f, nodes(2, 5)), RestrictionType.ONLY),
                 // we add a few more restrictions, because that happens a lot in real data
-                new Pair<>(GraphRestriction.node(d, 5, e), RestrictionType.NO),
-                new Pair<>(GraphRestriction.node(e, 5, f), RestrictionType.NO)
+                new Pair<>(RestrictionTopology.node(d, 5, e), RestrictionType.NO),
+                new Pair<>(RestrictionTopology.node(e, 5, f), RestrictionType.NO)
         ), turnRestrictionEnc);
         // following the restriction is allowed of course
         assertEquals(nodes(1, 2, 5, 7), calcPath(1, 7, turnRestrictionEnc));
@@ -295,14 +295,14 @@ public class RestrictionSetterTest {
         int d = edge(2, 3);
         int e = edge(2, 4);
         BooleanEncodedValue turnRestrictionEnc = createTurnRestrictionEnc("car");
-        assertThrows(IllegalStateException.class, () -> r.setRestrictions(Arrays.asList(
+        assertThrows(IllegalStateException.class, () -> setRestrictions(Arrays.asList(
                         // These are two 'only' via-way restrictions that share the same via way. A real-world example can
                 // be found in Rüdesheim am Rhein (49.97645, 7.91309) where vehicles either have to go straight or enter the ferry depending
                 // on the from-way, even though they use the same via way before. This is the same
                 // problem we saw in #2907.
                         // We have to make sure such cases are ignored already when we parse the OSM data.
-                        new Pair<>(GraphRestriction.way(a, c, d, nodes(1, 2)), RestrictionType.ONLY),
-                        new Pair<>(GraphRestriction.way(b, c, e, nodes(1, 2)), RestrictionType.ONLY)
+                new Pair<>(RestrictionTopology.way(a, c, d, nodes(1, 2)), RestrictionType.ONLY),
+                new Pair<>(RestrictionTopology.way(b, c, e, nodes(1, 2)), RestrictionType.ONLY)
                 ), turnRestrictionEnc)
         );
     }
@@ -319,10 +319,10 @@ public class RestrictionSetterTest {
         int d = edge(2, 3);
         int e = edge(2, 4);
         BooleanEncodedValue turnRestrictionEnc = createTurnRestrictionEnc("car");
-        r.setRestrictions(Arrays.asList(
+        setRestrictions(Arrays.asList(
                 // since the via-edge is used in opposite directions we can deal with these restrictions
-                new Pair<>(GraphRestriction.way(a, c, d, nodes(1, 2)), RestrictionType.ONLY),
-                new Pair<>(GraphRestriction.way(e, c, b, nodes(2, 1)), RestrictionType.ONLY)
+                new Pair<>(RestrictionTopology.way(a, c, d, nodes(1, 2)), RestrictionType.ONLY),
+                new Pair<>(RestrictionTopology.way(e, c, b, nodes(2, 1)), RestrictionType.ONLY)
         ), turnRestrictionEnc);
         assertEquals(nodes(0, 1, 2, 3), calcPath(0, 3, turnRestrictionEnc));
         assertEquals(NO_PATH, calcPath(0, 4, turnRestrictionEnc));
@@ -350,9 +350,9 @@ public class RestrictionSetterTest {
         BooleanEncodedValue turnRestrictionEnc = createTurnRestrictionEnc("car");
         assertEquals(nodes(0, 1, 3), calcPath(0, 3, turnRestrictionEnc));
         assertEquals(nodes(4, 0, 1, 2), calcPath(4, 2, turnRestrictionEnc));
-        r.setRestrictions(List.of(
-                new Pair<>(GraphRestriction.way(e0_4, e0_1, e1_2, nodes(0, 1)), RestrictionType.NO),
-                new Pair<>(GraphRestriction.node(e0_1, 1, e1_3), RestrictionType.NO)
+        setRestrictions(List.of(
+                new Pair<>(RestrictionTopology.way(e0_4, e0_1, e1_2, nodes(0, 1)), RestrictionType.NO),
+                new Pair<>(RestrictionTopology.node(e0_1, 1, e1_3), RestrictionType.NO)
         ), turnRestrictionEnc);
         assertEquals(NO_PATH, calcPath(4, 2, turnRestrictionEnc));
         assertEquals(NO_PATH, calcPath(0, 3, turnRestrictionEnc));
@@ -388,10 +388,10 @@ public class RestrictionSetterTest {
         assertEquals(nodes(5, 2, 3, 0), calcPath(5, 0, turnRestrictionEnc));
         assertEquals(nodes(6, 2, 3), calcPath(6, 3, turnRestrictionEnc));
         assertEquals(nodes(2, 3, 7), calcPath(2, 7, turnRestrictionEnc));
-        r.setRestrictions(List.of(
-                new Pair<>(GraphRestriction.way(e1_2, e2_3, e0_3, nodes(2, 3)), RestrictionType.NO),
-                new Pair<>(GraphRestriction.node(e2_6, 2, e2_3), RestrictionType.NO),
-                new Pair<>(GraphRestriction.node(e2_3, 3, e3_7), RestrictionType.NO)
+        setRestrictions(List.of(
+                new Pair<>(RestrictionTopology.way(e1_2, e2_3, e0_3, nodes(2, 3)), RestrictionType.NO),
+                new Pair<>(RestrictionTopology.node(e2_6, 2, e2_3), RestrictionType.NO),
+                new Pair<>(RestrictionTopology.node(e2_3, 3, e3_7), RestrictionType.NO)
         ), turnRestrictionEnc);
         assertEquals(NO_PATH, calcPath(1, 0, turnRestrictionEnc));
         assertEquals(nodes(1, 2, 3, 4), calcPath(1, 4, turnRestrictionEnc));
@@ -443,10 +443,10 @@ public class RestrictionSetterTest {
         assertEquals(nodes(3, 4, 5), calcPath(3, 5, turnRestrictionEnc));
         assertEquals(nodes(3, 4, 5, 6), calcPath(3, 6, turnRestrictionEnc));
         assertEquals(nodes(4, 5, 6), calcPath(4, 6, turnRestrictionEnc));
-        r.setRestrictions(List.of(
-                new Pair<>(GraphRestriction.way(e1_2, e2_3, e3_4, nodes(2, 3)), RestrictionType.NO),
-                new Pair<>(GraphRestriction.way(e2_3, e3_4, e4_5, nodes(3, 4)), RestrictionType.NO),
-                new Pair<>(GraphRestriction.way(e3_4, e4_5, e5_6, nodes(4, 5)), RestrictionType.NO)
+        setRestrictions(List.of(
+                new Pair<>(RestrictionTopology.way(e1_2, e2_3, e3_4, nodes(2, 3)), RestrictionType.NO),
+                new Pair<>(RestrictionTopology.way(e2_3, e3_4, e4_5, nodes(3, 4)), RestrictionType.NO),
+                new Pair<>(RestrictionTopology.way(e3_4, e4_5, e5_6, nodes(4, 5)), RestrictionType.NO)
         ), turnRestrictionEnc);
         assertEquals(NO_PATH, calcPath(1, 4, turnRestrictionEnc));
         assertEquals(nodes(2, 3, 4), calcPath(2, 4, turnRestrictionEnc));
@@ -484,6 +484,10 @@ public class RestrictionSetterTest {
         BooleanEncodedValue turnRestrictionEnc = TurnRestriction.create(name);
         turnRestrictionEnc.init(new EncodedValue.InitializerConfig());
         return turnRestrictionEnc;
+    }
+
+    private void setRestrictions(List<Pair<RestrictionTopology, RestrictionType>> osmRestrictions, BooleanEncodedValue turnRestrictionEnc) {
+        r.setRestrictions(osmRestrictions, turnRestrictionEnc);
     }
 
     private IntArrayList calcPath(int from, int to, BooleanEncodedValue turnRestrictionEnc) {
