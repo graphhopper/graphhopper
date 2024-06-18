@@ -63,7 +63,15 @@ public class DefaultMaxSpeedParser implements TagParser {
                             tags, Collections.emptyList(), (name, eval) -> eval.invoke() || "urban".equals(name));
                     if (tmpResult != null) {
                         internRes.urban = parseInt(tmpResult.getTags().get("maxspeed"));
-                        if (internRes.urban == null && "130".equals(tmpResult.getTags().get("maxspeed:advisory")))
+
+                        if (internRes.urban != null && internRes.urban < 80
+                                && (way.hasTag("highway", "motorway")
+                                || way.hasTag("highway", "trunk")
+                                || way.hasTag("expressway", "yes")
+                                || way.hasTag("motorroad", "yes"))) {
+                            // ignore too slow urban motorways, see https://github.com/westnordost/osm-legal-default-speeds/discussions/17
+                            internRes.urban = (int) UNSET_SPEED;
+                        } else if (internRes.urban == null && "130".equals(tmpResult.getTags().get("maxspeed:advisory")))
                             internRes.urban = (int) UNLIMITED_SIGN_SPEED;
                     }
                     return internRes;
