@@ -7,7 +7,6 @@ import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.storage.IntsRef;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -19,7 +18,7 @@ public class ModeAccessParser implements TagParser {
     private static final Set<String> CAR_BARRIERS = Set.of("kissing_gate", "fence",
             "bollard", "stile", "turnstile", "cycle_barrier", "motorcycle_barrier", "block",
             "bus_trap", "sump_buster", "jersey_barrier");
-    private static final Collection<String> INTENDED = Set.of("yes", "designated", "official", "permissive", "private", "permit");
+    private static final Set<String> INTENDED = Set.of("yes", "designated", "official", "permissive", "private", "permit");
     private static final Set<String> onewaysForward = Set.of("yes", "true", "1");
     private final Set<String> restrictedValues;
     private final List<String> restrictionKeys;
