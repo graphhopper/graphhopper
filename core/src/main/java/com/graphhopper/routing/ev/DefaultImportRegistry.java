@@ -209,15 +209,19 @@ public class DefaultImportRegistry implements ImportRegistry {
 
         else if (BusAccess.KEY.equals(name))
             return ImportUnit.create(name, props -> BusAccess.create(),
-                    (lookup, props) -> new ModeAccessParser(TransportationMode.BUS, lookup.getBooleanEncodedValue(BusAccess.KEY),
-                            lookup.getBooleanEncodedValue(Roundabout.KEY), Arrays.stream(props.getString("restrictions", "").split(";")).filter(s -> !s.isEmpty()).collect(Collectors.toList())),
+                    (lookup, props) -> new ModeAccessParser(TransportationMode.BUS,
+                            lookup.getBooleanEncodedValue(name), true, lookup.getBooleanEncodedValue(Roundabout.KEY),
+                            Arrays.stream(props.getString("restrictions", "").split(";")).filter(s -> !s.isEmpty()).collect(Collectors.toSet()),
+                            Arrays.stream(props.getString("barriers", "").split(";")).filter(s -> !s.isEmpty()).collect(Collectors.toSet())),
                     "roundabout"
             );
 
         else if (HovAccess.KEY.equals(name))
             return ImportUnit.create(name, props -> HovAccess.create(),
-                    (lookup, props) -> new ModeAccessParser(TransportationMode.HOV, lookup.getBooleanEncodedValue(HovAccess.KEY),
-                            lookup.getBooleanEncodedValue(Roundabout.KEY), Arrays.stream(props.getString("restrictions", "").split(";")).filter(s -> !s.isEmpty()).collect(Collectors.toList())),
+                    (lookup, props) -> new ModeAccessParser(TransportationMode.HOV,
+                            lookup.getBooleanEncodedValue(name), true, lookup.getBooleanEncodedValue(Roundabout.KEY),
+                            Arrays.stream(props.getString("restrictions", "").split(";")).filter(s -> !s.isEmpty()).collect(Collectors.toSet()),
+                            Arrays.stream(props.getString("barriers", "").split(";")).filter(s -> !s.isEmpty()).collect(Collectors.toSet())),
                     "roundabout"
             );
         else if (FootTemporalAccess.KEY.equals(name))
