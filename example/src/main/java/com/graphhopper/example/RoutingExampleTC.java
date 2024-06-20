@@ -58,7 +58,7 @@ public class RoutingExampleTC {
         // handle errors
         if (rsp.hasErrors())
             // if you get: Impossible curbside constraint: 'curbside=right'
-            // you either specify 'curbside=any' or Parameters.Routing.FORCE_CURBSIDE=false to ignore this situation
+            // you can specify 'curbside=any' or Parameters.Routing.CURBSIDE_STRICTNESS="soft" to avoid an error
             throw new RuntimeException(rsp.getErrors().toString());
         ResponsePath path = rsp.getBest();
         assert Math.abs(expectedDistance - path.getDistance()) < 1 : "unexpected distance : " + path.getDistance() + " vs. " + expectedDistance;
