@@ -184,31 +184,27 @@ public abstract class BikeCommonPriorityParser implements TagParser {
             }
         }
 
+        if (way.hasTag("bicycle", "use_sidepath")) {
+            weightToPrioMap.put(100d, REACH_DESTINATION);
+        }
+
         List<String> cyclewayValues = Stream.of("cycleway", "cycleway:left", "cycleway:both", "cycleway:right").map(key -> way.getTag(key, "")).toList();
         if (cyclewayValues.contains("track")) {
             weightToPrioMap.put(100d, PREFER);
         } else if (Stream.of("lane", "opposite_track", "shared_lane", "share_busway", "shoulder").anyMatch(cyclewayValues::contains)) {
             weightToPrioMap.put(100d, SLIGHT_PREFER);
-        }
-
-        if (way.hasTag("bicycle", "use_sidepath")) {
-            weightToPrioMap.put(100d, REACH_DESTINATION);
-        }
-
-        if (pushingSectionsHighways.contains(highway) || "parking_aisle".equals(way.getTag("service"))) {
+        } else if (pushingSectionsHighways.contains(highway) || "parking_aisle".equals(way.getTag("service"))) {
             PriorityCode pushingSectionPrio = SLIGHT_AVOID;
-            if (way.hasTag("bicycle", "yes") || way.hasTag("bicycle", "permissive"))
-                pushingSectionPrio = PREFER;
-            if (isDesignated(way) && (!way.hasTag("highway", "steps")))
-                pushingSectionPrio = VERY_NICE;
-            if (way.hasTag("foot", "yes")) {
-                pushingSectionPrio = pushingSectionPrio.worse();
-                if (way.hasTag("segregated", "yes"))
-                    pushingSectionPrio = pushingSectionPrio.better();
-            }
-            if (way.hasTag("highway", "steps")) {
+            if (way.hasTag("highway", "steps"))
                 pushingSectionPrio = BAD;
-            }
+            else if (way.hasTag("bicycle", "yes") || way.hasTag("bicycle", "permissive"))
+                pushingSectionPrio = PREFER;
+            else if (isDesignated(way))
+                pushingSectionPrio = VERY_NICE;
+
+            if (way.hasTag("foot", "yes") && !way.hasTag("segregated", "yes"))
+                pushingSectionPrio = pushingSectionPrio.worse();
+
             weightToPrioMap.put(100d, pushingSectionPrio);
         }
 
