@@ -19,7 +19,7 @@ public class ModeAccessParser implements TagParser {
             "bollard", "stile", "turnstile", "cycle_barrier", "motorcycle_barrier", "block",
             "bus_trap", "sump_buster", "jersey_barrier");
     private static final Set<String> INTENDED = Set.of("yes", "designated", "official", "permissive", "private", "permit");
-    private static final Set<String> onewaysForward = Set.of("yes", "true", "1");
+    private static final Set<String> ONEWAYS_FW = Set.of("yes", "true", "1");
     private final Set<String> restrictedValues;
     private final List<String> restrictionKeys;
     private final List<String> vehicleForward;
@@ -69,11 +69,12 @@ public class ModeAccessParser implements TagParser {
         }
 
         if (FerrySpeedCalculator.isFerry(way)) {
-            if (INTENDED.contains(firstValue) ||
+            boolean isCar = restrictionKeys.contains("motorcar");
+            if (INTENDED.contains(firstValue)
                     // implied default is allowed only if foot and bicycle is not specified:
-                    restrictionKeys.contains("motorcar") && firstValue.isEmpty() && !way.hasTag("foot") && !way.hasTag("bicycle") ||
+                    || isCar && firstValue.isEmpty() && !way.hasTag("foot") && !way.hasTag("bicycle")
                     // if hgv is allowed then smaller trucks and cars are allowed too even if not specified
-                    restrictionKeys.contains("motorcar") && way.hasTag("hgv", "yes")) {
+                    || isCar && way.hasTag("hgv", "yes")) {
                 accessEnc.setBool(false, edgeId, edgeIntAccess, true);
                 accessEnc.setBool(true, edgeId, edgeIntAccess, true);
             }
@@ -105,6 +106,6 @@ public class ModeAccessParser implements TagParser {
 
     protected boolean isForwardOneway(ReaderWay way) {
         // vehicle:backward=no is like oneway=yes
-        return way.hasTag("oneway", onewaysForward) || "no".equals(way.getFirstValue(vehicleBackward));
+        return way.hasTag("oneway", ONEWAYS_FW) || "no".equals(way.getFirstValue(vehicleBackward));
     }
 }

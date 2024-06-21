@@ -139,28 +139,20 @@ class ModeAccessParserTest {
         way.setTag("highway", "secondary");
         way.setTag("gh:barrier_edge", true);
 
-        Map<String, Object> nodeTags = new HashMap<>();
-        nodeTags.put("access", "no");
-        nodeTags.put("bus", "yes");
-        way.setTag("node_tags", Arrays.asList(nodeTags, new HashMap<>()));
+        way.setTag("node_tags", List.of(Map.of("access", "no", "bus", "yes"), Map.of()));
         EdgeIntAccess access = new ArrayEdgeIntAccess(1);
         int edgeId = 0;
         parser.handleWayTags(edgeId, access, way, null);
         assertTrue(busAccessEnc.getBool(false, edgeId, access));
 
-        nodeTags = new HashMap<>();
-        nodeTags.put("access", "yes");
-        nodeTags.put("bus", "no");
-        way.setTag("node_tags", Arrays.asList(nodeTags));
+        way.setTag("node_tags", List.of(Map.of("access", "yes", "bus", "no")));
         access = new ArrayEdgeIntAccess(1);
         parser.handleWayTags(edgeId, access, way, null);
         assertFalse(busAccessEnc.getBool(false, edgeId, access));
 
         // ensure that allowing node tags (bus=yes) do not unblock the inaccessible way
         way.setTag("access", "no");
-        nodeTags = new HashMap<>();
-        nodeTags.put("bus", "yes");
-        way.setTag("node_tags", Arrays.asList(nodeTags, new HashMap<>()));
+        way.setTag("node_tags", List.of(Map.of("bus", "yes"), Map.of()));
         access = new ArrayEdgeIntAccess(1);
         parser.handleWayTags(edgeId, access, way, null);
         assertFalse(busAccessEnc.getBool(false, edgeId, access));
@@ -172,13 +164,16 @@ class ModeAccessParserTest {
         way.setTag("highway", "secondary");
         way.setTag("gh:barrier_edge", true);
 
-        Map<String, Object> nodeTags = new HashMap<>();
-        nodeTags.put("barrier", "bollard");
-        way.setTag("node_tags", Arrays.asList(nodeTags, new HashMap<>()));
+        way.setTag("node_tags", Arrays.asList(Map.of("barrier", "bollard"), Map.of()));
         EdgeIntAccess access = new ArrayEdgeIntAccess(1);
         int edgeId = 0;
         parser.handleWayTags(edgeId, access, way, null);
         assertFalse(busAccessEnc.getBool(false, edgeId, access));
+
+        way.setTag("node_tags", Arrays.asList(Map.of("barrier", "gate"), Map.of()));
+        access = new ArrayEdgeIntAccess(1);
+        parser.handleWayTags(edgeId, access, way, null);
+        assertTrue(busAccessEnc.getBool(false, edgeId, access));
 
         // this special mode ignores all barriers except kissing_gate
         BooleanEncodedValue tmpAccessEnc = new SimpleBooleanEncodedValue("tmp_access", true);
@@ -190,9 +185,7 @@ class ModeAccessParserTest {
         way.setTag("highway", "secondary");
         way.setTag("gh:barrier_edge", true);
 
-        nodeTags = new HashMap<>();
-        nodeTags.put("barrier", "bollard");
-        way.setTag("node_tags", Arrays.asList(nodeTags, new HashMap<>()));
+        way.setTag("node_tags", List.of(Map.of("barrier", "bollard"), Map.of()));
         access = new ArrayEdgeIntAccess(1);
         tmpParser.handleWayTags(edgeId, access, way, null);
         assertTrue(tmpAccessEnc.getBool(false, edgeId, access));
