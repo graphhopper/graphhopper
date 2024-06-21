@@ -45,8 +45,8 @@ public class MountainBikePriorityParser extends BikeCommonPriorityParser {
         String highway = way.getTag("highway");
         if ("track".equals(highway)) {
             String trackType = way.getTag("tracktype");
-            if ("grade1".equals(trackType))
-                weightToPrioMap.put(50d, UNCHANGED);
+            if ("grade1".equals(trackType) || goodSurface.contains(way.getTag("surface","")))
+                weightToPrioMap.put(50d, SLIGHT_PREFER);
             else if (trackType == null)
                 weightToPrioMap.put(90d, PREFER);
             else if (trackType.startsWith("grade"))

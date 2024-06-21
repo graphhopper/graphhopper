@@ -78,8 +78,6 @@ public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("highway", "track");
         assertPriorityAndSpeed(PREFER, 18, way);
 
-        // test speed for allowed pushing section types
-        way.setTag("highway", "track");
         way.setTag("bicycle", "yes");
         assertPriorityAndSpeed(PREFER, 18, way);
 
@@ -87,9 +85,11 @@ public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("bicycle", "yes");
         way.setTag("tracktype", "grade3");
         assertPriorityAndSpeed(VERY_NICE, 12, way);
+        way.setTag("tracktype", "grade1");
+        assertPriorityAndSpeed(SLIGHT_PREFER, 18, way);
 
         way.setTag("surface", "paved");
-        assertPriorityAndSpeed(VERY_NICE, 18, way);
+        assertPriorityAndSpeed(SLIGHT_PREFER, 18, way);
 
         way.clearTags();
         way.setTag("highway", "path");
