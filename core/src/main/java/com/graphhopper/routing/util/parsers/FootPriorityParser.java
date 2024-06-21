@@ -15,7 +15,6 @@ import static com.graphhopper.routing.util.parsers.AbstractAverageSpeedParser.ge
 import static com.graphhopper.routing.util.parsers.AbstractAverageSpeedParser.isValidSpeed;
 
 public class FootPriorityParser implements TagParser {
-    final Set<String> intendedValues = new HashSet<>(INTENDED);
     final Set<String> safeHighwayTags = new HashSet<>();
     final Map<String, PriorityCode> avoidHighwayTags = new HashMap<>();
     protected HashSet<String> sidewalkValues = new HashSet<>(5);
@@ -108,7 +107,7 @@ public class FootPriorityParser implements TagParser {
         double maxSpeed = Math.max(getMaxSpeed(way, false), getMaxSpeed(way, true));
         if (safeHighwayTags.contains(highway) || (isValidSpeed(maxSpeed) && maxSpeed <= 20)) {
             weightToPrioMap.put(40d, PREFER);
-            if (way.hasTag("tunnel", intendedValues)) {
+            if (way.hasTag("tunnel", INTENDED)) {
                 if (way.hasTag("sidewalk", sidewalksNoValues))
                     weightToPrioMap.put(40d, AVOID);
                 else
