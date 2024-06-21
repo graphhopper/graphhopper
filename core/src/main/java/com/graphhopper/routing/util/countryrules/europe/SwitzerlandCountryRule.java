@@ -36,9 +36,6 @@ public class SwitzerlandCountryRule implements CountryRule {
         }
 
         RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", ""));
-        if (currentToll != null)
-            return currentToll;
-
         switch (roadClass) {
             case MOTORWAY:
             case TRUNK:

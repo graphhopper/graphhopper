@@ -106,6 +106,7 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
         if (!highwayValues.contains(highwayValue))
             return WayAccess.CAN_SKIP;
 
+        // this is a very rare tagging which we should/could remove (the status key itself is described as "vague")
         if (way.hasTag("impassable", "yes") || way.hasTag("status", "impassable"))
             return WayAccess.CAN_SKIP;
 

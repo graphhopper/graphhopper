@@ -6,10 +6,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TransportationMode;
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -17,7 +14,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ModeAccessParserTest {
 
     private final EncodingManager em = new EncodingManager.Builder().add(Roundabout.create()).add(BusAccess.create()).build();
-    private final ModeAccessParser parser = new ModeAccessParser(TransportationMode.BUS, em.getBooleanEncodedValue(BusAccess.KEY), em.getBooleanEncodedValue(Roundabout.KEY), List.of());
+    private final ModeAccessParser parser = new ModeAccessParser(TransportationMode.BUS,
+            em.getBooleanEncodedValue(BusAccess.KEY), true,
+            em.getBooleanEncodedValue(Roundabout.KEY), Set.of(), Set.of());
     private final BooleanEncodedValue busAccessEnc = em.getBooleanEncodedValue(BusAccess.KEY);
 
     @Test
@@ -140,31 +139,56 @@ class ModeAccessParserTest {
         way.setTag("highway", "secondary");
         way.setTag("gh:barrier_edge", true);
 
-        Map<String, Object> nodeTags = new HashMap<>();
-        nodeTags.put("access", "no");
-        nodeTags.put("bus", "yes");
-        way.setTag("node_tags", Arrays.asList(nodeTags, new HashMap<>()));
+        way.setTag("node_tags", List.of(Map.of("access", "no", "bus", "yes"), Map.of()));
         EdgeIntAccess access = new ArrayEdgeIntAccess(1);
         int edgeId = 0;
         parser.handleWayTags(edgeId, access, way, null);
         assertTrue(busAccessEnc.getBool(false, edgeId, access));
 
-        nodeTags = new HashMap<>();
-        nodeTags.put("access", "yes");
-        nodeTags.put("bus", "no");
-        way.setTag("node_tags", Arrays.asList(nodeTags));
+        way.setTag("node_tags", List.of(Map.of("access", "yes", "bus", "no")));
         access = new ArrayEdgeIntAccess(1);
         parser.handleWayTags(edgeId, access, way, null);
         assertFalse(busAccessEnc.getBool(false, edgeId, access));
 
         // ensure that allowing node tags (bus=yes) do not unblock the inaccessible way
         way.setTag("access", "no");
-        nodeTags = new HashMap<>();
-        nodeTags.put("bus", "yes");
-        way.setTag("node_tags", Arrays.asList(nodeTags, new HashMap<>()));
+        way.setTag("node_tags", List.of(Map.of("bus", "yes"), Map.of()));
         access = new ArrayEdgeIntAccess(1);
         parser.handleWayTags(edgeId, access, way, null);
         assertFalse(busAccessEnc.getBool(false, edgeId, access));
+    }
+
+    @Test
+    public void testBarrier() {
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "secondary");
+        way.setTag("gh:barrier_edge", true);
+
+        way.setTag("node_tags", Arrays.asList(Map.of("barrier", "bollard"), Map.of()));
+        EdgeIntAccess access = new ArrayEdgeIntAccess(1);
+        int edgeId = 0;
+        parser.handleWayTags(edgeId, access, way, null);
+        assertFalse(busAccessEnc.getBool(false, edgeId, access));
+
+        way.setTag("node_tags", Arrays.asList(Map.of("barrier", "gate"), Map.of()));
+        access = new ArrayEdgeIntAccess(1);
+        parser.handleWayTags(edgeId, access, way, null);
+        assertTrue(busAccessEnc.getBool(false, edgeId, access));
+
+        // this special mode ignores all barriers except kissing_gate
+        BooleanEncodedValue tmpAccessEnc = new SimpleBooleanEncodedValue("tmp_access", true);
+        EncodingManager tmpEM = new EncodingManager.Builder().add(tmpAccessEnc).add(Roundabout.create()).build();
+        ModeAccessParser tmpParser = new ModeAccessParser(TransportationMode.CAR, tmpAccessEnc, true,
+                tmpEM.getBooleanEncodedValue(Roundabout.KEY), Set.of(), Set.of("kissing_gate"));
+
+        way = new ReaderWay(1);
+        way.setTag("highway", "secondary");
+        way.setTag("gh:barrier_edge", true);
+
+        way.setTag("node_tags", List.of(Map.of("barrier", "bollard"), Map.of()));
+        access = new ArrayEdgeIntAccess(1);
+        tmpParser.handleWayTags(edgeId, access, way, null);
+        assertTrue(tmpAccessEnc.getBool(false, edgeId, access));
     }
 
     @Test
@@ -192,7 +216,8 @@ class ModeAccessParserTest {
     public void testMotorcycleYes() {
         BooleanEncodedValue mcAccessEnc = new SimpleBooleanEncodedValue("motorcycle_access", true);
         EncodingManager mcEM = new EncodingManager.Builder().add(mcAccessEnc).add(Roundabout.create()).build();
-        ModeAccessParser mcParser = new ModeAccessParser(TransportationMode.MOTORCYCLE, mcAccessEnc, mcEM.getBooleanEncodedValue(Roundabout.KEY), List.of());
+        ModeAccessParser mcParser = new ModeAccessParser(TransportationMode.MOTORCYCLE, mcAccessEnc, true,
+                mcEM.getBooleanEncodedValue(Roundabout.KEY), Set.of(), Set.of());
 
         int edgeId = 0;
         EdgeIntAccess access = new ArrayEdgeIntAccess(1);

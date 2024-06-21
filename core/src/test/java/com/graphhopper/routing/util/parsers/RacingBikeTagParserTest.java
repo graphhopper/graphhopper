@@ -310,4 +310,11 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("class:bicycle", "-2");
         assertPriority(BEST, way);
     }
+
+    @Test
+    public void testPreferenceForSlowSpeed() {
+        ReaderWay osmWay = new ReaderWay(1);
+        osmWay.setTag("highway", "tertiary");
+        assertPriority(PREFER, osmWay);
+    }
 }

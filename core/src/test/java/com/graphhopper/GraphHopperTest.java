@@ -455,19 +455,20 @@ public class GraphHopperTest {
                 setProfiles(TestProfiles.accessSpeedAndPriority(profile, "bike"));
         hopper.importOrLoad();
 
-        GHRequest req = new GHRequest(50.028917, 11.496506, 49.985228, 11.600876).
+        GHRequest req = new GHRequest(50.028917, 11.496506, 49.982089,11.599224).
                 setAlgorithm(ALT_ROUTE).setProfile(profile);
+
         req.putHint("alternative_route.max_paths", 3);
         GHResponse rsp = hopper.route(req);
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
 
         assertEquals(3, rsp.getAll().size());
         // via ramsenthal
-        assertEquals(2827, rsp.getAll().get(0).getTime() / 1000);
+        assertEquals(2636, rsp.getAll().get(0).getTime() / 1000);
         // via unterwaiz
-        assertEquals(3318, rsp.getAll().get(1).getTime() / 1000);
+        assertEquals(2985, rsp.getAll().get(1).getTime() / 1000);
         // via eselslohe -> theta; BTW: here smaller time as 2nd alternative due to priority influences time order
-        assertEquals(3116, rsp.getAll().get(2).getTime() / 1000);
+        assertEquals(2783, rsp.getAll().get(2).getTime() / 1000);
     }
 
     @Test
