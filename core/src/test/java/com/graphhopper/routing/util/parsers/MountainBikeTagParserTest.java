@@ -232,4 +232,10 @@ public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
         assertFalse(accessParser.isBarrier(node));
     }
 
+    @Test
+    public void testPreferenceForSlowSpeed() {
+        ReaderWay osmWay = new ReaderWay(1);
+        osmWay.setTag("highway", "tertiary");
+        assertPriority(PREFER, osmWay);
+    }
 }
