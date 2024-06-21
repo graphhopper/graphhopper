@@ -9,8 +9,11 @@ import com.graphhopper.routing.util.FerrySpeedCalculator;
 
 import java.util.*;
 
+import static com.graphhopper.routing.util.parsers.AbstractAccessParser.INTENDED;
+
 public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedParser implements TagParser {
 
+    private static final Set<String> CYCLEWAY_KEYS = Set.of("cycleway", "cycleway:left", "cycleway:both", "cycleway:right");
     protected static final int PUSHING_SECTION_SPEED = 4;
     protected static final int MIN_SPEED = 2;
     // Pushing section highways are parts where you need to get off your bike and push it (German: Schiebestrecke)
@@ -20,7 +23,6 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
     private final Map<Smoothness, Double> smoothnessFactor = new HashMap<>();
     private final Map<String, Integer> highwaySpeeds = new HashMap<>();
     private final EnumEncodedValue<Smoothness> smoothnessEnc;
-    protected final Set<String> intendedValues = new HashSet<>(5);
     private final Set<String> restrictedValues = Set.of("no", "agricultural", "forestry", "restricted", "military", "emergency", "private", "permit");
 
     protected BikeCommonAverageSpeedParser(DecimalEncodedValue speedEnc, EnumEncodedValue<Smoothness> smoothnessEnc, DecimalEncodedValue ferrySpeedEnc) {
@@ -108,12 +110,6 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         setSmoothnessSpeedFactor(Smoothness.HORRIBLE, 0.3d);
         setSmoothnessSpeedFactor(Smoothness.VERY_HORRIBLE, 0.1d);
         setSmoothnessSpeedFactor(Smoothness.IMPASSABLE, 0);
-
-        intendedValues.add("yes");
-        intendedValues.add("designated");
-        intendedValues.add("official");
-        intendedValues.add("permissive");
-
     }
 
     /**
@@ -149,11 +145,11 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
             // ignore
         } else if (way.hasTag("bicycle", "dismount")
                 || way.hasTag("railway", "platform")
-                || pushingRestriction && !way.hasTag("bicycle", intendedValues)) {
+                || pushingRestriction && !way.hasTag("bicycle", INTENDED)) {
             speed = PUSHING_SECTION_SPEED;
         } else if (pushingSectionsHighways.contains(highwayValue)) {
             if (way.hasTag("bicycle", "designated") || way.hasTag("bicycle", "official") || way.hasTag("segregated", "yes")
-                    || way.hasTag("cycleway:right", "track") || way.hasTag("cycleway:left", "track"))
+                    || CYCLEWAY_KEYS.stream().anyMatch(k -> way.getTag(k, "").equals("track")))
                 speed = highwaySpeeds.get("cycleway");
             else if (way.hasTag("bicycle", "yes"))
                 speed = 12;

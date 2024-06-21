@@ -45,11 +45,6 @@ public class FootAccessParser extends AbstractAccessParser implements TagParser 
     protected FootAccessParser(BooleanEncodedValue accessEnc) {
         super(accessEnc, TransportationMode.FOOT);
 
-        intendedValues.add("yes");
-        intendedValues.add("designated");
-        intendedValues.add("official");
-        intendedValues.add("permissive");
-
         sidewalkValues.add("yes");
         sidewalkValues.add("both");
         sidewalkValues.add("left");
@@ -153,8 +148,8 @@ public class FootAccessParser extends AbstractAccessParser implements TagParser 
         if (access.canSkip())
             return;
 
-        if (way.hasTag("oneway:foot", oneways) || way.hasTag("foot:backward") || way.hasTag("foot:forward")
-                || way.hasTag("oneway", oneways) && way.hasTag("highway", "steps") // outdated mapping style
+        if (way.hasTag("oneway:foot", ONEWAYS) || way.hasTag("foot:backward") || way.hasTag("foot:forward")
+                || way.hasTag("oneway", ONEWAYS) && way.hasTag("highway", "steps") // outdated mapping style
         ) {
             boolean reverse = way.hasTag("oneway:foot", "-1") || way.hasTag("foot:backward", "yes") || way.hasTag("foot:forward", "no");
             accessEnc.setBool(reverse, edgeId, edgeIntAccess, true);
