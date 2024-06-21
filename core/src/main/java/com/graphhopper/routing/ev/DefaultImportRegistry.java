@@ -20,9 +20,7 @@ package com.graphhopper.routing.ev;
 
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.parsers.*;
-
-import java.util.Arrays;
-import java.util.stream.Collectors;
+import com.graphhopper.util.PMap;
 
 public class DefaultImportRegistry implements ImportRegistry {
     @Override
@@ -211,8 +209,7 @@ public class DefaultImportRegistry implements ImportRegistry {
             return ImportUnit.create(name, props -> BusAccess.create(),
                     (lookup, props) -> new ModeAccessParser(TransportationMode.BUS,
                             lookup.getBooleanEncodedValue(name), true, lookup.getBooleanEncodedValue(Roundabout.KEY),
-                            Arrays.stream(props.getString("restrictions", "").split(";")).filter(s -> !s.isEmpty()).collect(Collectors.toSet()),
-                            Arrays.stream(props.getString("barriers", "").split(";")).filter(s -> !s.isEmpty()).collect(Collectors.toSet())),
+                            PMap.toSet(props.getString("restrictions", "")), PMap.toSet(props.getString("barriers", ""))),
                     "roundabout"
             );
 
@@ -220,8 +217,7 @@ public class DefaultImportRegistry implements ImportRegistry {
             return ImportUnit.create(name, props -> HovAccess.create(),
                     (lookup, props) -> new ModeAccessParser(TransportationMode.HOV,
                             lookup.getBooleanEncodedValue(name), true, lookup.getBooleanEncodedValue(Roundabout.KEY),
-                            Arrays.stream(props.getString("restrictions", "").split(";")).filter(s -> !s.isEmpty()).collect(Collectors.toSet()),
-                            Arrays.stream(props.getString("barriers", "").split(";")).filter(s -> !s.isEmpty()).collect(Collectors.toSet())),
+                            PMap.toSet(props.getString("restrictions", "")), PMap.toSet(props.getString("barriers", ""))),
                     "roundabout"
             );
         else if (FootTemporalAccess.KEY.equals(name))
