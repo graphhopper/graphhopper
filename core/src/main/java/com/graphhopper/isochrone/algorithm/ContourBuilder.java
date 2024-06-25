@@ -13,7 +13,7 @@
 
 package com.graphhopper.isochrone.algorithm;
 
-import org.locationtech.jts.algorithm.CGAlgorithms;
+import org.locationtech.jts.algorithm.Area;
 import org.locationtech.jts.geom.*;
 import org.locationtech.jts.geom.prep.PreparedPolygon;
 import org.locationtech.jts.triangulate.quadedge.Vertex;
@@ -125,7 +125,7 @@ public class ContourBuilder {
         List<LinearRing> holes = new ArrayList<>(rings.size() / 2);
         // 1. Split the polygon list in two: shells and holes (CCW and CW)
         for (LinearRing ring : rings) {
-            if (CGAlgorithms.signedArea(ring.getCoordinateSequence()) > 0.0)
+            if (Area.ofRingSigned(ring.getCoordinateSequence()) > 0.0)
                 holes.add(ring);
             else
                 shells.add(new PreparedPolygon(geometryFactory.createPolygon(ring)));
