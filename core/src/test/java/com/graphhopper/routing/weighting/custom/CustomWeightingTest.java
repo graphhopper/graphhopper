@@ -414,7 +414,8 @@ class CustomWeightingTest {
     public void calcWeightAndTime_withTurnCosts() {
         BaseGraph graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
         CustomModel customModel = createSpeedCustomModel(avSpeedEnc);
-        Weighting weighting = CustomModelParser.createWeighting(encodingManager, new DefaultTurnCostProvider(turnRestrictionEnc, graph.getTurnCostStorage()), customModel);
+        Weighting weighting = CustomModelParser.createWeighting(encodingManager,
+                new DefaultTurnCostProvider(turnRestrictionEnc, null, graph, new TurnCostsConfig()), customModel);
         graph.edge(0, 1).set(avSpeedEnc, 60, 60).setDistance(100);
         EdgeIteratorState edge = graph.edge(1, 2).set(avSpeedEnc, 60, 60).setDistance(100);
         setTurnRestriction(graph, 0, 1, 2);
@@ -426,7 +427,8 @@ class CustomWeightingTest {
     public void calcWeightAndTime_uTurnCosts() {
         BaseGraph graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
         CustomModel customModel = createSpeedCustomModel(avSpeedEnc);
-        Weighting weighting = CustomModelParser.createWeighting(encodingManager, new DefaultTurnCostProvider(turnRestrictionEnc, graph.getTurnCostStorage(), 40), customModel);
+        Weighting weighting = CustomModelParser.createWeighting(encodingManager,
+                new DefaultTurnCostProvider(turnRestrictionEnc, null, graph, new TurnCostsConfig().setUTurnCosts(40)), customModel);
         EdgeIteratorState edge = graph.edge(0, 1).set(avSpeedEnc, 60, 60).setDistance(100);
         assertEquals(6 + 40, GHUtility.calcWeightWithTurnWeight(weighting, edge, false, 0), 1.e-6);
         assertEquals((6 + 40) * 1000, GHUtility.calcMillisWithTurnMillis(weighting, edge, false, 0), 1.e-6);
