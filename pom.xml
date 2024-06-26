@@ -128,9 +128,9 @@
                 <version>1.0.8</version>
             </dependency>
             <dependency>
-                <groupId>io.mobilitydata.transit</groupId>
+                <groupId>org.mobilitydata</groupId>
                 <artifactId>gtfs-realtime-bindings</artifactId>
-                <version>0.0.5</version>
+                <version>0.0.8</version>
                 <exclusions>
                     <exclusion>
                         <!-- use newer protobuf version  -->
