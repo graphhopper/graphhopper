@@ -27,6 +27,7 @@ import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * This class handles the outgoing edges for a single turn instruction.
@@ -158,18 +159,15 @@ class InstructionsOutgoingEdges {
     }
 
     /**
-     * Returns an edge that has more or less in the same orientation as the prevEdge, but is not the currentEdge.
-     * If there is one, this indicates that we might need an instruction to help finding the correct edge out of the different choices.
-     * If there is none, return null.
+     * Returns an edge with the specified "signFunction" (similar orientation) as the prevEdge,
+     * but is not the currentEdge. If there is one, this indicates that we might need an instruction
+     * to help finding the correct edge out of the different choices. If there is none, return null.
      */
-    public EdgeIteratorState getOtherContinue(double prevLat, double prevLon, double prevOrientation) {
-        int tmpSign;
+    public EdgeIteratorState getOtherContinue(double prevLat, double prevLon, double prevOrientation, Function<Integer, Boolean> signFunction) {
         for (EdgeIteratorState edge : allowedAlternativeTurns) {
             GHPoint point = InstructionsHelper.getPointForOrientationCalculation(edge, nodeAccess);
-            tmpSign = InstructionsHelper.calculateSign(prevLat, prevLon, point.getLat(), point.getLon(), prevOrientation);
-            if (Math.abs(tmpSign) <= 1) {
-                return edge;
-            }
+            int sign = InstructionsHelper.calculateSign(prevLat, prevLon, point.getLat(), point.getLon(), prevOrientation);
+            if (signFunction.apply(sign)) return edge;
         }
         return null;
     }

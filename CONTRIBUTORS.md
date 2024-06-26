@@ -4,6 +4,7 @@ Most of the contributors are mentioned at Github as [Members](https://github.com
 
 Here is an overview:
 
+ * abderrahmane, added turn lane information to navigate endpoint
  * agouge, discussion and API refactoring
  * AnahitaS, docs for Android, Android, Tomcat
  * andreaswolf, flag encoder versioning and more

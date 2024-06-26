@@ -304,6 +304,7 @@ public class Router {
                 setMaxDistance(wayPointMaxDistance).
                 setElevationMaxDistance(elevationWayPointMaxDistance);
         PathMerger pathMerger = new PathMerger(graph, weighting).
+                setWithTurnLanes(routerConfig.getTurnLanesProfiles().contains(request.getProfile())).
                 setCalcPoints(calcPoints).
                 setRamerDouglasPeucker(peucker).
                 setEnableInstructions(enableInstructions).

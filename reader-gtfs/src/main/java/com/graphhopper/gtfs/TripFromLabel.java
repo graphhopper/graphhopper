@@ -388,7 +388,7 @@ class TripFromLabel {
         } else {
             InstructionList instructions = new InstructionList(tr);
             InstructionsFromEdges instructionsFromEdges = new InstructionsFromEdges(graph,
-                    weighting, encodedValueLookup, instructions);
+                    weighting, encodedValueLookup, instructions, false);
             int prevEdgeId = -1;
             for (int i = 1; i < path.size(); i++) {
                 if (path.get(i).edge.getType() != GtfsStorage.EdgeType.HIGHWAY) {
