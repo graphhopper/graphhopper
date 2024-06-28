@@ -420,6 +420,101 @@ public class RestrictionSetterTest {
     }
 
     @Test
+    void viaWay_overlapping_no_only() {
+        //         3
+        //   a   b |c
+        // 0---1---2---4
+        //           d |e
+        //             5
+        int a = edge(0, 1);
+        int b = edge(1, 2);
+        int c = edge(2, 3);
+        int d = edge(2, 4);
+        int e = edge(4, 5);
+        setRestrictions(List.of(
+                // here the via-way of the first and the from-way of the second restriction overlap
+                new Pair<>(RestrictionTopology.way(a, b, c, nodes(1, 2)), RestrictionType.NO),
+                new Pair<>(RestrictionTopology.way(b, d, e, nodes(2, 4)), RestrictionType.ONLY)
+        ));
+        assertEquals(nodes(0, 1, 2, 4, 5), calcPath(0, 5));
+    }
+
+    @Test
+    void multiViaWay_no() {
+        //   a   b
+        // 0---1---2
+        //    c| e |d
+        //     3---4
+        //   g |f
+        // 5---6---7
+        //       h
+
+        int a = edge(0, 1);
+        int b = edge(1, 2);
+        int c = edge(1, 3);
+        int d = edge(2, 4);
+        int e = edge(3, 4);
+        int f = edge(3, 6);
+        int g = edge(5, 6);
+        int h = edge(6, 7);
+        setRestrictions(List.of(
+                new Pair<>(RestrictionTopology.way(a, IntArrayList.from(c, f), g, nodes(1, 3, 6)), RestrictionType.NO)
+        ));
+        assertEquals(nodes(0, 1, 2, 4, 3, 6, 5), calcPath(0, 5));
+        assertEquals(nodes(0, 1, 3, 6, 7), calcPath(0, 7));
+    }
+
+    @Test
+    void multiViaWay_only() {
+        //   a   b   c
+        // 0---1---2---3
+        //     |d  |e  |f
+        //     4---5---6
+        //       g   h
+
+        int a = edge(0, 1);
+        int b = edge(1, 2);
+        int c = edge(2, 3);
+        int d = edge(1, 4);
+        int e = edge(2, 5);
+        int f = edge(3, 6);
+        int g = edge(4, 5);
+        int h = edge(5, 6);
+        assertEquals(nodes(0, 1, 4), calcPath(0, 4));
+        setRestrictions(List.of(
+                new Pair<>(RestrictionTopology.way(a, IntArrayList.from(b, c), f, nodes(1, 2, 3)), RestrictionType.ONLY)
+        ));
+        assertEquals(nodes(0, 1, 2, 3, 6, 5, 4), calcPath(0, 4));
+    }
+
+    @Test
+    void multiViaWay_overlapping() {
+        //   a   b   c   d
+        // 0---1---2---3---4
+        //     |e  |f
+        //     5   6
+
+        int a = edge(0, 1);
+        int b = edge(1, 2);
+        int c = edge(2, 3);
+        int d = edge(3, 4);
+        int e = edge(5, 1);
+        int f = edge(6, 2);
+        assertEquals(nodes(5, 1, 2, 6), calcPath(5, 6));
+        assertEquals(nodes(0, 1, 2, 3, 4), calcPath(0, 4));
+        setRestrictions(List.of(
+                new Pair<>(RestrictionTopology.way(e, b, f, nodes(1, 2)), RestrictionType.NO),
+                new Pair<>(RestrictionTopology.way(a, IntArrayList.from(b, c), d, nodes(1, 2, 3)), RestrictionType.NO)
+        ));
+        assertEquals(NO_PATH, calcPath(5, 6));
+        assertEquals(NO_PATH, calcPath(0, 4));
+        assertEquals(nodes(0, 1, 2, 6), calcPath(0, 6));
+        assertEquals(nodes(5, 1, 2, 3, 4), calcPath(5, 4));
+    }
+
+
+
+    @Test
     void twoProfiles() {
         // Note: There are many more combinations of turn restrictions with multiple profiles that
         //       we could test,
@@ -636,6 +731,10 @@ public class RestrictionSetterTest {
     }
 
     private int edge(int from, int to) {
-        return graph.edge(from, to).setDistance(100).set(speedEnc, 10, 10).getEdge();
+        return edge(from, to, true);
+    }
+
+    private int edge(int from, int to, boolean bothDir) {
+        return graph.edge(from, to).setDistance(100).set(speedEnc, 10, bothDir ? 10 : 0).getEdge();
     }
 }
