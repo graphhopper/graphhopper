@@ -2,9 +2,6 @@ package com.graphhopper.routing.util.parsers;
 
 import com.carrotsearch.hppc.BitSet;
 import com.carrotsearch.hppc.IntArrayList;
-import com.graphhopper.reader.osm.Pair;
-import com.graphhopper.reader.osm.RestrictionTopology;
-import com.graphhopper.reader.osm.RestrictionType;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
@@ -25,11 +22,9 @@ import com.graphhopper.storage.index.Snap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static com.graphhopper.reader.osm.OSMRestrictionConverter.buildRestrictionsForOSMRestriction;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class RestrictionSetterTest {
@@ -38,7 +33,6 @@ public class RestrictionSetterTest {
     private BooleanEncodedValue turnRestrictionEnc;
     private BooleanEncodedValue turnRestrictionEnc2;
     private BaseGraph graph;
-    private EncodingManager encodingManager;
     private RestrictionSetter r;
 
     @BeforeEach
@@ -46,7 +40,7 @@ public class RestrictionSetterTest {
         speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, true);
         turnRestrictionEnc = TurnRestriction.create("car1");
         turnRestrictionEnc2 = TurnRestriction.create("car2");
-        encodingManager = EncodingManager.start()
+        EncodingManager encodingManager = EncodingManager.start()
                 .add(speedEnc)
                 .add(turnRestrictionEnc)
                 .add(turnRestrictionEnc2)
@@ -65,28 +59,12 @@ public class RestrictionSetterTest {
         edge(1, 3);
         edge(2, 4);
         edge(3, 4);
-        RestrictionTopology topology = RestrictionTopology.node(a, 1, b);
-        setRestrictions(List.of(new Pair<>(topology, RestrictionType.NO)));
+        setRestrictions(RestrictionSetter.createViaNodeRestriction(a, 1, b));
         assertEquals(nodes(0, 1, 3, 4, 2), calcPath(0, 2));
     }
 
     @Test
-    void viaNode_only() {
-        // 0-1-2
-        //   | |
-        //   3-4
-        int a = edge(0, 1);
-        int b = edge(1, 2);
-        edge(1, 3);
-        edge(2, 4);
-        edge(3, 4);
-        RestrictionTopology topology = RestrictionTopology.node(a, 1, b);
-        setRestrictions(List.of(new Pair<>(topology, RestrictionType.ONLY)));
-        assertEquals(nodes(0, 1, 2, 4, 3), calcPath(0, 3));
-    }
-
-    @Test
-    void viaWay_no() {
+    void viaEdge_no() {
         //     4
         //  a b|c
         // 0-1-2-3
@@ -103,10 +81,9 @@ public class RestrictionSetterTest {
         edge(2, 6);
         edge(6, 9);
         edge(8, 9);
-        RestrictionTopology topology = RestrictionTopology.way(a, b, c, nodes(1, 2));
-        setRestrictions(List.of(
-                new Pair<>(topology, RestrictionType.NO)
-        ));
+        setRestrictions(
+                createViaEdgeRestriction(a, b, c)
+        );
         // turning from a to b and then to c is not allowed
         assertEquals(nodes(0, 1, 5, 8, 9, 6, 2, 3), calcPath(0, 3));
         // turning from a to b, or b to c is still allowed
@@ -115,7 +92,7 @@ public class RestrictionSetterTest {
     }
 
     @Test
-    void viaWay_no_withOverlap() {
+    void viaEdge_withOverlap() {
         //   a   b   c   d
         // 0---1---2---3---4
         //     |s  |t  |u
@@ -128,10 +105,10 @@ public class RestrictionSetterTest {
         int t = edge(2, 6);
         int u = edge(3, 7);
 
-        setRestrictions(List.of(
-                new Pair<>(RestrictionTopology.way(a, b, c, nodes(1, 2)), RestrictionType.NO),
-                new Pair<>(RestrictionTopology.way(b, c, d, nodes(2, 3)), RestrictionType.NO)
-        ));
+        setRestrictions(
+                createViaEdgeRestriction(a, b, c),
+                createViaEdgeRestriction(b, c, d)
+        );
 
         assertEquals(NO_PATH, calcPath(0, 3)); // a-b-c
         assertEquals(nodes(0, 1, 2, 6), calcPath(0, 6)); // a-b-t
@@ -145,7 +122,7 @@ public class RestrictionSetterTest {
     }
 
     @Test
-    void viaWay_no_withOverlap_more_complex() {
+    void viaEdge_no_withOverlap_more_complex() {
         //    0   1
         //    | a |
         // 2--3---4--5
@@ -166,14 +143,14 @@ public class RestrictionSetterTest {
         edge(7, 10);
         edge(8, 11);
         edge(10, 11);
-        setRestrictions(List.of(
-                new Pair<>(RestrictionTopology.node(t, 4, d), RestrictionType.NO),
-                new Pair<>(RestrictionTopology.node(s, 3, a), RestrictionType.NO),
-                new Pair<>(RestrictionTopology.way(a, b, c, nodes(3, 7)), RestrictionType.NO),
-                new Pair<>(RestrictionTopology.way(b, c, d, nodes(7, 8)), RestrictionType.NO),
-                new Pair<>(RestrictionTopology.way(c, d, a, nodes(8, 4)), RestrictionType.NO),
-                new Pair<>(RestrictionTopology.way(d, a, b, nodes(4, 3)), RestrictionType.NO)
-        ));
+        setRestrictions(
+                createViaNodeRestriction(t, 4, d),
+                createViaNodeRestriction(s, 3, a),
+                createViaEdgeRestriction(a, b, c),
+                createViaEdgeRestriction(b, c, d),
+                createViaEdgeRestriction(c, d, a),
+                createViaEdgeRestriction(d, a, b)
+        );
 
         assertEquals(nodes(0, 3, 7, 8, 9), calcPath(0, 9));
         assertEquals(nodes(5, 4, 3, 7, 10, 11, 8, 9), calcPath(5, 9));
@@ -183,7 +160,7 @@ public class RestrictionSetterTest {
     }
 
     @Test
-    void viaWay_common_via_edge_opposite_direction() {
+    void common_via_edge_opposite_direction() {
         //    a   b
         //  0---1---2
         //      |c
@@ -195,11 +172,11 @@ public class RestrictionSetterTest {
         int d = edge(3, 4);
         int e = edge(4, 5);
 
-        setRestrictions(List.of(
+        setRestrictions(
                 // A rather common case where u-turns between the a-b and d-e lanes are forbidden.
-                new Pair<>(RestrictionTopology.way(b, c, e, nodes(1, 4)), RestrictionType.NO),
-                new Pair<>(RestrictionTopology.way(d, c, a, nodes(4, 1)), RestrictionType.NO)
-        ));
+                createViaEdgeRestriction(b, c, e),
+                createViaEdgeRestriction(d, c, a)
+        );
 
         assertEquals(nodes(0, 1, 2), calcPath(0, 2));
         assertEquals(nodes(0, 1, 4, 5), calcPath(0, 5));
@@ -216,20 +193,20 @@ public class RestrictionSetterTest {
     }
 
     @Test
-    void viaWay_common_via_edge_opposite_direction_edge0() {
+    void viaEdge_common_via_edge_opposite_direction_edge0() {
         //    a   v   b
         //  0---1---2---3
         int v = edge(1, 2);
         int a = edge(0, 1);
         int b = edge(2, 3);
 
-        setRestrictions(List.of(
+        setRestrictions(
                 // This is rather academic, but with our initial implementation for the special case
                 // where the via edge is edge 0 we could not use two restrictions even though the
                 // edge is used in opposite directions.
-                new Pair<>(RestrictionTopology.way(a, v, b, nodes(1, 2)), RestrictionType.NO),
-                new Pair<>(RestrictionTopology.way(b, v, a, nodes(2, 1)), RestrictionType.NO)
-        ));
+                createViaEdgeRestriction(a, v, b),
+                createViaEdgeRestriction(b, v, a)
+        );
         assertEquals(NO_PATH, calcPath(0, 3));
         assertEquals(nodes(1, 2, 3), calcPath(1, 3));
         assertEquals(NO_PATH, calcPath(3, 0));
@@ -237,7 +214,7 @@ public class RestrictionSetterTest {
     }
 
     @Test
-    void viaWay_common_via_edge_same_direction() {
+    void common_via_edge_same_direction() {
         //    a   b
         //  0---1---2
         //      |c
@@ -253,10 +230,10 @@ public class RestrictionSetterTest {
         assertEquals(nodes(2, 1, 4, 5), calcPath(2, 5));
         // Here edge c is used by both restrictions in the same direction. This requires a second
         // artificial edge and our first implementation did not allow this, see #2907
-        setRestrictions(List.of(
-                new Pair<>(RestrictionTopology.way(a, c, d, nodes(1, 4)), RestrictionType.NO),
-                new Pair<>(RestrictionTopology.way(b, c, e, nodes(1, 4)), RestrictionType.NO)
-        ));
+        setRestrictions(
+                createViaEdgeRestriction(a, c, d),
+                createViaEdgeRestriction(b, c, e)
+        );
         assertEquals(NO_PATH, calcPath(0, 3));
         assertEquals(nodes(3, 4, 1, 0), calcPath(3, 0));
         assertEquals(NO_PATH, calcPath(2, 5));
@@ -268,101 +245,7 @@ public class RestrictionSetterTest {
     }
 
     @Test
-    void viaWay_only() {
-        //      0
-        //  a   |b  c
-        // 1----2----3
-        //      |d
-        // 4----5----6
-        //  e   |f  g
-        //      7
-        int a = edge(1, 2);
-        int b = edge(0, 2);
-        int c = edge(2, 3);
-        int d = edge(2, 5);
-        int e = edge(4, 5);
-        int f = edge(5, 7);
-        int g = edge(5, 6);
-        setRestrictions(List.of(
-                new Pair<>(RestrictionTopology.way(a, d, f, nodes(2, 5)), RestrictionType.ONLY),
-                // we add a few more restrictions, because that happens a lot in real data
-                new Pair<>(RestrictionTopology.node(d, 5, e), RestrictionType.NO),
-                new Pair<>(RestrictionTopology.node(e, 5, f), RestrictionType.NO)
-        ));
-        // following the restriction is allowed of course
-        assertEquals(nodes(1, 2, 5, 7), calcPath(1, 7));
-        // taking another turn at the beginning is not allowed
-        assertEquals(NO_PATH, calcPath(1, 3));
-        // taking another turn after the first turn is not allowed either
-        assertEquals(NO_PATH, calcPath(1, 4));
-        // coming from somewhere else we can go anywhere
-        assertEquals(nodes(0, 2, 5, 6), calcPath(0, 6));
-        assertEquals(nodes(0, 2, 5, 7), calcPath(0, 7));
-    }
-
-    @Test
-    void viaWay_only_twoRestrictionsSharingSameVia() {
-        //   a   c   d
-        // 0---1---2---3
-        //     |b  |e
-        // 5--/     \--4
-        int a = edge(0, 1);
-        int b = edge(5, 1);
-        int c = edge(1, 2);
-        int d = edge(2, 3);
-        int e = edge(2, 4);
-        assertEquals(nodes(0, 1, 2, 4), calcPath(0, 4));
-        assertEquals(nodes(5, 1, 2, 3), calcPath(5, 3));
-        setRestrictions(List.of(
-                // These are two 'only' via-way restrictions that share the same via way. A real-world example can
-                // be found in Rüdesheim am Rhein (49.97645, 7.91309) where vehicles either have to go straight or enter the ferry depending
-                // on the from-way, even though they use the same via way before. This is the same
-                // problem we saw in #2907.
-                new Pair<>(RestrictionTopology.way(a, c, d, nodes(1, 2)), RestrictionType.ONLY),
-                new Pair<>(RestrictionTopology.way(b, c, e, nodes(1, 2)), RestrictionType.ONLY)
-        ));
-        assertEquals(nodes(0, 1, 2, 3), calcPath(0, 3));
-        assertEquals(NO_PATH, calcPath(5, 3));
-        assertEquals(nodes(5, 1, 2, 4), calcPath(5, 4));
-        assertEquals(NO_PATH, calcPath(0, 4));
-        assertEquals(nodes(3, 2, 1, 0), calcPath(3, 0));
-        assertEquals(nodes(3, 2, 1, 5), calcPath(3, 5));
-        assertEquals(nodes(4, 2, 1, 0), calcPath(4, 0));
-        assertEquals(nodes(4, 2, 1, 5), calcPath(4, 5));
-    }
-
-    @Test
-    void viaWay_only_twoRestrictionsSharingSameVia_different_directions() {
-        //   a   c   d
-        // 0---1---2---3
-        //     |b  |e
-        // 5--/     \--4
-        int a = edge(0, 1);
-        int b = edge(5, 1);
-        int c = edge(1, 2);
-        int d = edge(2, 3);
-        int e = edge(2, 4);
-        setRestrictions(List.of(
-                // here the via-edge is used in opposite directions (this used to be important with our initial implementation for via-way restrictions)
-                new Pair<>(RestrictionTopology.way(a, c, d, nodes(1, 2)), RestrictionType.ONLY),
-                new Pair<>(RestrictionTopology.way(e, c, b, nodes(2, 1)), RestrictionType.ONLY)
-        ));
-        assertEquals(nodes(0, 1, 2, 3), calcPath(0, 3));
-        assertEquals(NO_PATH, calcPath(0, 4));
-        assertEquals(NO_PATH, calcPath(0, 5));
-        assertEquals(nodes(3, 2, 1, 0), calcPath(3, 0));
-        assertEquals(nodes(3, 2, 4), calcPath(3, 4));
-        assertEquals(nodes(3, 2, 1, 5), calcPath(3, 5));
-        assertEquals(NO_PATH, calcPath(4, 0));
-        assertEquals(NO_PATH, calcPath(4, 3));
-        assertEquals(nodes(4, 2, 1, 5), calcPath(4, 5));
-        assertEquals(nodes(5, 1, 0), calcPath(5, 0));
-        assertEquals(nodes(5, 1, 2, 3), calcPath(5, 3));
-        assertEquals(nodes(5, 1, 2, 4), calcPath(5, 4));
-    }
-
-    @Test
-    void viaWayAndNode() {
+    void viaEdgeAndNode() {
         // 4-0-1-2
         //     |
         //     3
@@ -372,10 +255,10 @@ public class RestrictionSetterTest {
         int e1_3 = edge(1, 3);
         assertEquals(nodes(0, 1, 3), calcPath(0, 3));
         assertEquals(nodes(4, 0, 1, 2), calcPath(4, 2));
-        setRestrictions(List.of(
-                new Pair<>(RestrictionTopology.way(e0_4, e0_1, e1_2, nodes(0, 1)), RestrictionType.NO),
-                new Pair<>(RestrictionTopology.node(e0_1, 1, e1_3), RestrictionType.NO)
-        ));
+        setRestrictions(
+                createViaEdgeRestriction(e0_4, e0_1, e1_2),
+                createViaNodeRestriction(e0_1, 1, e1_3)
+        );
         assertEquals(NO_PATH, calcPath(4, 2));
         assertEquals(NO_PATH, calcPath(0, 3));
     }
@@ -393,16 +276,14 @@ public class RestrictionSetterTest {
         int e3_4 = edge(3, 4);
         int e4_3 = edge(4, 3);
 
-        r.setRestrictions(List.of(
-                        RestrictionSetter.createViaNodeRestriction(e0_1, 1, e1_2),
-                        // here the edges e3_4 and e4_3 share two nodes, but the restrictions are still well-defined
-                        RestrictionSetter.createViaEdgeRestriction(IntArrayList.from(e1_3, e4_3, e3_4)),
-                        // attention: this restriction looks like it makes the previous one redundant,
-                        //            but it doesn't, because it points the other way
-                        RestrictionSetter.createViaNodeRestriction(e4_3, 3, e3_4),
-                        RestrictionSetter.createViaNodeRestriction(e3_4, 4, e4_3)
-                ),
-                Stream.generate(() -> encBits(1, 1)).limit(4).toList()
+        setRestrictions(
+                createViaNodeRestriction(e0_1, 1, e1_2),
+                // here the edges e3_4 and e4_3 share two nodes, but the restrictions are still well-defined
+                createViaEdgeRestriction(e1_3, e4_3, e3_4),
+                // attention: this restriction looks like it makes the previous one redundant,
+                //            but it doesn't, because it points the other way
+                createViaNodeRestriction(e4_3, 3, e3_4),
+                createViaNodeRestriction(e3_4, 4, e4_3)
         );
         assertEquals(NO_PATH, calcPath(0, 2));
     }
@@ -412,35 +293,15 @@ public class RestrictionSetterTest {
         // 0-1-2
         int e0_1 = edge(0, 1);
         int e1_2 = edge(1, 2);
-        r.setRestrictions(List.of(
-                RestrictionSetter.createViaNodeRestriction(e0_1, 1, e1_2),
-                RestrictionSetter.createViaNodeRestriction(e0_1, 1, e1_2)
-        ), Stream.generate(() -> encBits(1, 1)).limit(2).toList());
+        setRestrictions(
+                createViaNodeRestriction(e0_1, 1, e1_2),
+                createViaNodeRestriction(e0_1, 1, e1_2)
+        );
         assertEquals(NO_PATH, calcPath(0, 2));
     }
 
     @Test
-    void viaWay_overlapping_no_only() {
-        //         3
-        //   a   b |c
-        // 0---1---2---4
-        //           d |e
-        //             5
-        int a = edge(0, 1);
-        int b = edge(1, 2);
-        int c = edge(2, 3);
-        int d = edge(2, 4);
-        int e = edge(4, 5);
-        setRestrictions(List.of(
-                // here the via-way of the first and the from-way of the second restriction overlap
-                new Pair<>(RestrictionTopology.way(a, b, c, nodes(1, 2)), RestrictionType.NO),
-                new Pair<>(RestrictionTopology.way(b, d, e, nodes(2, 4)), RestrictionType.ONLY)
-        ));
-        assertEquals(nodes(0, 1, 2, 4, 5), calcPath(0, 5));
-    }
-
-    @Test
-    void multiViaWay_no() {
+    void multiViaEdge_no() {
         //   a   b
         // 0---1---2
         //    c| e |d
@@ -457,38 +318,16 @@ public class RestrictionSetterTest {
         int f = edge(3, 6);
         int g = edge(5, 6);
         int h = edge(6, 7);
-        setRestrictions(List.of(
-                new Pair<>(RestrictionTopology.way(a, IntArrayList.from(c, f), g, nodes(1, 3, 6)), RestrictionType.NO)
-        ));
+        setRestrictions(
+                createViaEdgeRestriction(a, c, f, g)
+        );
         assertEquals(nodes(0, 1, 2, 4, 3, 6, 5), calcPath(0, 5));
+        assertEquals(nodes(1, 3, 6, 5), calcPath(1, 5));
         assertEquals(nodes(0, 1, 3, 6, 7), calcPath(0, 7));
     }
 
     @Test
-    void multiViaWay_only() {
-        //   a   b   c
-        // 0---1---2---3
-        //     |d  |e  |f
-        //     4---5---6
-        //       g   h
-
-        int a = edge(0, 1);
-        int b = edge(1, 2);
-        int c = edge(2, 3);
-        int d = edge(1, 4);
-        int e = edge(2, 5);
-        int f = edge(3, 6);
-        int g = edge(4, 5);
-        int h = edge(5, 6);
-        assertEquals(nodes(0, 1, 4), calcPath(0, 4));
-        setRestrictions(List.of(
-                new Pair<>(RestrictionTopology.way(a, IntArrayList.from(b, c), f, nodes(1, 2, 3)), RestrictionType.ONLY)
-        ));
-        assertEquals(nodes(0, 1, 2, 3, 6, 5, 4), calcPath(0, 4));
-    }
-
-    @Test
-    void multiViaWay_overlapping() {
+    void multiViaEdge_overlapping() {
         //   a   b   c   d
         // 0---1---2---3---4
         //     |e  |f
@@ -502,16 +341,15 @@ public class RestrictionSetterTest {
         int f = edge(6, 2);
         assertEquals(nodes(5, 1, 2, 6), calcPath(5, 6));
         assertEquals(nodes(0, 1, 2, 3, 4), calcPath(0, 4));
-        setRestrictions(List.of(
-                new Pair<>(RestrictionTopology.way(e, b, f, nodes(1, 2)), RestrictionType.NO),
-                new Pair<>(RestrictionTopology.way(a, IntArrayList.from(b, c), d, nodes(1, 2, 3)), RestrictionType.NO)
-        ));
+        setRestrictions(
+                createViaEdgeRestriction(e, b, f),
+                createViaEdgeRestriction(a, b, c, d)
+        );
         assertEquals(NO_PATH, calcPath(5, 6));
         assertEquals(NO_PATH, calcPath(0, 4));
         assertEquals(nodes(0, 1, 2, 6), calcPath(0, 6));
         assertEquals(nodes(5, 1, 2, 3, 4), calcPath(5, 4));
     }
-
 
 
     @Test
@@ -530,9 +368,9 @@ public class RestrictionSetterTest {
             assertEquals(nodes(2, 1, 4, 5), calcPath(2, 5, t));
             assertEquals(nodes(3, 4, 1, 0), calcPath(3, 0, t));
         }
-        List<Pair<RestrictionTopology, RestrictionType>> restrictions = List.of(
-                new Pair<>(RestrictionTopology.way(e1_2, e1_4, e4_5, nodes(1, 4)), RestrictionType.NO),
-                new Pair<>(RestrictionTopology.way(e3_4, e1_4, e0_1, nodes(4, 1)), RestrictionType.NO)
+        List<RestrictionSetter.Restriction> restrictions = List.of(
+                createViaEdgeRestriction(e1_2, e1_4, e4_5),
+                createViaEdgeRestriction(e3_4, e1_4, e0_1)
         );
         List<BitSet> encBits = List.of(
                 encBits(1, 1),
@@ -546,7 +384,7 @@ public class RestrictionSetterTest {
     }
 
     @Test
-    void snapToViaWay() {
+    void artificialEdgeSnapping() {
         //   6   0
         //   |   |
         // 1-2-x-3-4
@@ -573,11 +411,11 @@ public class RestrictionSetterTest {
         assertEquals(nodes(5, 2, 3, 0), calcPath(5, 0));
         assertEquals(nodes(6, 2, 3), calcPath(6, 3));
         assertEquals(nodes(2, 3, 7), calcPath(2, 7));
-        setRestrictions(List.of(
-                new Pair<>(RestrictionTopology.way(e1_2, e2_3, e0_3, nodes(2, 3)), RestrictionType.NO),
-                new Pair<>(RestrictionTopology.node(e2_6, 2, e2_3), RestrictionType.NO),
-                new Pair<>(RestrictionTopology.node(e2_3, 3, e3_7), RestrictionType.NO)
-        ));
+        setRestrictions(
+                createViaEdgeRestriction(e1_2, e2_3, e0_3),
+                createViaNodeRestriction(e2_6, 2, e2_3),
+                createViaNodeRestriction(e2_3, 3, e3_7)
+        );
         assertEquals(NO_PATH, calcPath(1, 0));
         assertEquals(nodes(1, 2, 3, 4), calcPath(1, 4));
         assertEquals(nodes(5, 2, 3, 0), calcPath(5, 0));
@@ -606,7 +444,7 @@ public class RestrictionSetterTest {
     }
 
     @Test
-    void snapToViaWay_twoVirtualNodes() {
+    void artificialEdgeSnapping_twoVirtualNodes() {
         // 1-2-x-3-y-4-z-5-6
         int e1_2 = edge(1, 2);
         int e2_3 = edge(2, 3);
@@ -626,11 +464,11 @@ public class RestrictionSetterTest {
         assertEquals(nodes(3, 4, 5), calcPath(3, 5));
         assertEquals(nodes(3, 4, 5, 6), calcPath(3, 6));
         assertEquals(nodes(4, 5, 6), calcPath(4, 6));
-        setRestrictions(List.of(
-                new Pair<>(RestrictionTopology.way(e1_2, e2_3, e3_4, nodes(2, 3)), RestrictionType.NO),
-                new Pair<>(RestrictionTopology.way(e2_3, e3_4, e4_5, nodes(3, 4)), RestrictionType.NO),
-                new Pair<>(RestrictionTopology.way(e3_4, e4_5, e5_6, nodes(4, 5)), RestrictionType.NO)
-        ));
+        setRestrictions(
+                createViaEdgeRestriction(e1_2, e2_3, e3_4),
+                createViaEdgeRestriction(e2_3, e3_4, e4_5),
+                createViaEdgeRestriction(e3_4, e4_5, e5_6)
+        );
         assertEquals(NO_PATH, calcPath(1, 4));
         assertEquals(nodes(2, 3, 4), calcPath(2, 4));
         assertEquals(NO_PATH, calcPath(2, 5));
@@ -663,23 +501,22 @@ public class RestrictionSetterTest {
         assertEquals(nodes(z, 4, y), calcPath(queryGraph, z, y));
     }
 
+    private RestrictionSetter.Restriction createViaNodeRestriction(int fromEdge, int viaNode, int toEdge) {
+        return RestrictionSetter.createViaNodeRestriction(fromEdge, viaNode, toEdge);
+    }
+
+    private RestrictionSetter.Restriction createViaEdgeRestriction(int... edges) {
+        return RestrictionSetter.createViaEdgeRestriction(IntArrayList.from(edges));
+    }
+
     /**
      * Shorthand version that only sets restriction for the first turn restriction encoded value
      */
-    private void setRestrictions(List<Pair<RestrictionTopology, RestrictionType>> osmRestrictions) {
-        setRestrictions(osmRestrictions, osmRestrictions.stream().map(r -> encBits(1, 0)).toList());
+    private void setRestrictions(RestrictionSetter.Restriction... restrictions) {
+        setRestrictions(List.of(restrictions), Stream.of(restrictions).map(r -> encBits(1, 0)).toList());
     }
 
-    private void setRestrictions(List<Pair<RestrictionTopology, RestrictionType>> osmRestrictions, List<BitSet> osmEncBits) {
-        List<RestrictionSetter.Restriction> restrictions = new ArrayList<>();
-        List<BitSet> encBits = new ArrayList<>();
-        for (int i = 0; i < osmRestrictions.size(); i++) {
-            Pair<RestrictionTopology, RestrictionType> p = osmRestrictions.get(i);
-            List<RestrictionSetter.Restriction> tmpRestrictions = buildRestrictionsForOSMRestriction(graph, p.first, p.second);
-            restrictions.addAll(tmpRestrictions);
-            final BitSet e = osmEncBits.get(i);
-            tmpRestrictions.forEach(__ -> encBits.add(RestrictionSetter.copyEncBits(e)));
-        }
+    private void setRestrictions(List<RestrictionSetter.Restriction> restrictions, List<BitSet> encBits) {
         r.setRestrictions(restrictions, encBits);
     }
 
