@@ -353,6 +353,385 @@ public class RestrictionSetterTest {
     }
 
     @Test
+    void singleViaEdgeRestriction() {
+        //   5
+        //   |
+        // 0-1-2-3
+        //     |
+        //     4
+        int e0_1 = edge(0, 1);
+        int e1_2 = edge(1, 2);
+        int e2_3 = edge(2, 3);
+        int e2_4 = edge(2, 4);
+        int e5_1 = edge(5, 1);
+        assertPath(0, 3, nodes(0, 1, 2, 3));
+        assertPath(0, 4, nodes(0, 1, 2, 4));
+        assertPath(5, 3, nodes(5, 1, 2, 3));
+        assertPath(5, 4, nodes(5, 1, 2, 4));
+        setRestrictions(
+                createViaEdgeRestriction(e0_1, e1_2, e2_4)
+        );
+        assertPath(0, 3, nodes(0, 1, 2, 3));
+        // turning right at 2 is forbidden, iff we come from 0
+        assertPath(0, 4, null);
+        assertPath(5, 3, nodes(5, 1, 2, 3));
+        assertPath(5, 4, nodes(5, 1, 2, 4));
+        assertEquals(6, graph.getTurnCostStorage().getTurnCostsCount());
+    }
+
+    @Test
+    void multiViaEdgeRestriction() {
+        //   5
+        //   |
+        // 0-1-6-2-3
+        //       |
+        //       4
+        int e0_1 = edge(0, 1);
+        int e1_6 = edge(1, 6);
+        int e6_2 = edge(6, 2);
+        int e2_3 = edge(2, 3);
+        int e2_4 = edge(2, 4);
+        int e5_1 = edge(5, 1);
+        assertPath(0, 3, nodes(0, 1, 6, 2, 3));
+        assertPath(0, 4, nodes(0, 1, 6, 2, 4));
+        assertPath(5, 3, nodes(5, 1, 6, 2, 3));
+        assertPath(5, 4, nodes(5, 1, 6, 2, 4));
+        setRestrictions(
+                createViaEdgeRestriction(e0_1, e1_6, e6_2, e2_4)
+        );
+        assertPath(0, 3, nodes(0, 1, 6, 2, 3));
+        // turning right at 2 is forbidden, iff we come from 0
+        assertPath(0, 4, null);
+        assertPath(5, 3, nodes(5, 1, 6, 2, 3));
+        assertPath(5, 4, nodes(5, 1, 6, 2, 4));
+        assertEquals(11, graph.getTurnCostStorage().getTurnCostsCount());
+    }
+
+    @Test
+    void overlappingSingleViaEdgeRestriction() {
+        //     7
+        //     |
+        // 0-1-2-3
+        //   | |
+        //   5 4
+        int e0_1 = edge(0, 1);
+        int e1_2 = edge(1, 2);
+        int e2_3 = edge(2, 3);
+        int e2_4 = edge(2, 4);
+        int e5_1 = edge(5, 1);
+        int e2_7 = edge(2, 7);
+        for (int i : new int[]{3, 4, 7}) {
+            assertPath(0, i, nodes(0, 1, 2, i));
+            assertPath(5, i, nodes(5, 1, 2, i));
+        }
+        setRestrictions(
+                createViaEdgeRestriction(e0_1, e1_2, e2_3),
+                createViaEdgeRestriction(e0_1, e1_2, e2_4)
+        );
+        // coming from 0 we cannot turn onto 3 or 4
+        assertPath(0, 3, null);
+        assertPath(0, 4, null);
+        assertPath(0, 7, nodes(0, 1, 2, 7));
+        assertPath(5, 3, nodes(5, 1, 2, 3));
+        assertPath(5, 4, nodes(5, 1, 2, 4));
+        assertPath(5, 7, nodes(5, 1, 2, 7));
+        assertEquals(7, graph.getTurnCostStorage().getTurnCostsCount());
+    }
+
+    @Test
+    void overlappingSingleViaEdgeRestriction_differentStarts() {
+        //     7
+        //     |
+        // 0-1-2-3
+        //   | |
+        //   5 4
+        int e0_1 = edge(0, 1);
+        int e1_2 = edge(1, 2);
+        int e2_3 = edge(2, 3);
+        int e5_1 = edge(5, 1);
+        int e2_4 = edge(2, 4);
+        int e2_7 = edge(2, 7);
+        for (int i : new int[]{3, 4, 7}) {
+            assertPath(0, i, nodes(0, 1, 2, i));
+            assertPath(5, i, nodes(5, 1, 2, i));
+        }
+        assertPath(7, 4, nodes(7, 2, 4));
+        setRestrictions(
+                createViaEdgeRestriction(e0_1, e1_2, e2_3),
+                createViaEdgeRestriction(e5_1, e1_2, e2_7),
+                createViaEdgeRestriction(e0_1, e1_2, e2_4),
+                createViaEdgeRestriction(e5_1, e1_2, e2_4)
+        );
+        assertPath(0, 3, null);
+        assertPath(0, 4, null);
+        assertPath(0, 7, nodes(0, 1, 2, 7));
+        assertPath(5, 3, nodes(5, 1, 2, 3));
+        assertPath(5, 4, null);
+        assertPath(5, 7, null);
+        assertPath(7, 4, nodes(7, 2, 4));
+        assertEquals(20, graph.getTurnCostStorage().getTurnCostsCount());
+    }
+
+    @Test
+    void overlappingSingleViaEdgeRestriction_oppositeDirections() {
+        //     7
+        //     |
+        // 0-1-2-3
+        //   |
+        //   5
+        int e0_1 = edge(0, 1);
+        int e1_2 = edge(1, 2);
+        int e2_3 = edge(2, 3);
+        int e5_1 = edge(5, 1);
+        int e2_7 = edge(2, 7);
+        for (int i : new int[]{3, 7}) {
+            assertPath(0, i, nodes(0, 1, 2, i));
+            assertPath(5, i, nodes(5, 1, 2, i));
+            assertPath(i, 0, nodes(i, 2, 1, 0));
+            assertPath(i, 5, nodes(i, 2, 1, 5));
+        }
+        setRestrictions(
+                createViaEdgeRestriction(e0_1, e1_2, e2_3),
+                createViaEdgeRestriction(e2_7, e1_2, e5_1)
+        );
+        assertPath(0, 3, null);
+        assertPath(0, 7, nodes(0, 1, 2, 7));
+        assertPath(5, 3, nodes(5, 1, 2, 3));
+        assertPath(5, 7, nodes(5, 1, 2, 7));
+        assertPath(3, 0, nodes(3, 2, 1, 0));
+        assertPath(3, 5, nodes(3, 2, 1, 5));
+        assertPath(7, 0, nodes(7, 2, 1, 0));
+        assertPath(7, 5, null);
+        assertEquals(18, graph.getTurnCostStorage().getTurnCostsCount());
+    }
+
+    @Test
+    void viaNode() {
+        // 4-0-1-2
+        //     |
+        //     3
+        int e0_1 = edge(0, 1);
+        int e0_4 = edge(0, 4);
+        int e1_2 = edge(1, 2);
+        int e1_3 = edge(1, 3);
+        assertPath(0, 3, nodes(0, 1, 3));
+        assertPath(4, 2, nodes(4, 0, 1, 2));
+        setRestrictions(
+                createViaEdgeRestriction(e0_4, e0_1, e1_2),
+                createViaNodeRestriction(e0_1, 1, e1_3)
+        );
+        assertPath(4, 2, null);
+        assertPath(0, 3, null);
+        assertEquals(8, graph.getTurnCostStorage().getTurnCostsCount());
+    }
+
+    @Test
+    void circle() {
+        //    0
+        //   / \
+        //  1---2-3
+        //  |
+        //  4
+        int e4_1 = edge(4, 1, false);
+        int e1_0 = edge(1, 0, false);
+        int e0_2 = edge(0, 2, false);
+        int e2_1 = edge(2, 1, false);
+        int e2_3 = edge(2, 3, false);
+        assertPath(4, 3, nodes(4, 1, 0, 2, 3));
+        setRestrictions(
+                createViaEdgeRestriction(e4_1, e1_0, e0_2, e2_3)
+        );
+        // does this route make sense? no. is it forbidden according to the given restrictions? also no.
+        assertPath(4, 3, nodes(4, 1, 0, 2, 1, 0, 2, 3));
+        assertEquals(11, graph.getTurnCostStorage().getTurnCostsCount());
+    }
+
+    @Test
+    void avoidRedundantRestrictions() {
+        //   /- 1 - 2 - 3 - 4 - 5
+        //  0               |   |
+        //   \- 6 - 7 - 8 - 9 - 10
+        edge(0, 1);
+        edge(1, 2);
+        edge(2, 3);
+        edge(3, 4);
+        edge(4, 5);
+        edge(0, 6);
+        edge(6, 7);
+        edge(7, 8);
+        edge(8, 9);
+        edge(9, 10);
+        edge(4, 9);
+        edge(5, 10);
+
+        setRestrictions(
+                createViaEdgeRestriction(9, 8, 7),
+                createViaEdgeRestriction(0, 1, 2, 3, 4, 11, 9, 8, 7, 6, 5),
+                createViaEdgeRestriction(1, 2, 3, 4, 11, 9, 8, 7, 6, 5, 0),
+                createViaEdgeRestriction(2, 3, 4, 11, 9, 8, 7, 6, 5, 0, 1),
+                createViaEdgeRestriction(3, 4, 11, 9, 8, 7, 6, 5, 0, 1, 2),
+                createViaEdgeRestriction(4, 11, 9, 8, 7, 6, 5, 0, 1, 2, 3)
+        );
+        // only six restrictions? yes, because except the first restriction they are all ignored, bc they are redundant anyway.
+        // without this optimization there would be 415 turn cost entries and many artificial edges!
+        assertEquals(6, graph.getTurnCostStorage().getTurnCostsCount());
+    }
+
+    @Test
+    void duplicateRestrictions() {
+        // 0-1-2
+        int e0_1 = edge(0, 1);
+        int e1_2 = edge(1, 2);
+        assertPath(0, 2, nodes(0, 1, 2));
+        setRestrictions(
+                createViaNodeRestriction(e0_1, 1, e1_2),
+                createViaNodeRestriction(e0_1, 1, e1_2)
+        );
+        assertPath(0, 2, null);
+        assertEquals(1, graph.getTurnCostStorage().getTurnCostsCount());
+    }
+
+    @Test
+    void duplicateViaEdgeRestrictions() {
+        // 0-1-2-3
+        int e0_1 = edge(0, 1);
+        int e1_2 = edge(1, 2);
+        int e2_3 = edge(2, 3);
+        assertPath(0, 3, nodes(0, 1, 2, 3));
+        setRestrictions(
+                // they should not cancel each other out, of course
+                createViaEdgeRestriction(e0_1, e1_2, e2_3),
+                createViaEdgeRestriction(e0_1, e1_2, e2_3)
+        );
+        assertPath(0, 3, null);
+        assertEquals(6, graph.getTurnCostStorage().getTurnCostsCount());
+    }
+
+    @Test
+    void duplicateEdgesInViaEdgeRestriction() {
+        // 0-1-2
+        //   |\
+        //   3 4
+        int e0_1 = edge(0, 1);
+        int e1_2 = edge(1, 2);
+        int e1_3 = edge(1, 3);
+        int e1_4 = edge(1, 4);
+        setRestrictions(
+                createViaNodeRestriction(e1_3, 1, e0_1),
+                createViaEdgeRestriction(e1_2, e1_2, e0_1),
+                createViaNodeRestriction(e1_3, 1, e1_4)
+        );
+        // todo: this test is incomplete: we'd like to check that 1-2-1-0 is forbidden, but it is forbidden anyway
+        //       because of the infinite default u-turn costs. even if we used finite u-turn costs we could not test
+        //       this atm, bc the turn restriction provider applies the default u-turn costs even when an actual restriction
+        //       is present
+        assertPath(3, 0, null);
+//        assertPath(3, 4, nodes(3, 1, 2, 1, 4));
+        assertEquals(8, graph.getTurnCostStorage().getTurnCostsCount());
+    }
+
+    @Test
+    void circleEdgesInViaEdgeRestriction() {
+        // 0=1-2
+        //   |\
+        //   3 4
+        int e0_1 = edge(0, 1);
+        int e1_0 = edge(0, 1);
+        int e1_2 = edge(1, 2);
+        int e1_3 = edge(1, 3);
+        int e1_4 = edge(1, 4);
+        assertPath(3, 2, nodes(3, 1, 2));
+        setRestrictions(
+                createViaEdgeRestriction(e0_1, e1_0, e1_2),
+                createViaNodeRestriction(e1_3, 1, e1_2),
+                createViaNodeRestriction(e1_3, 1, e1_0),
+                createViaNodeRestriction(e1_4, 1, e1_2),
+                createViaNodeRestriction(e1_4, 1, e0_1)
+        );
+        // coming from 3 we are forced to go onto e0_1, but from there we can't go to 2 bc of the via-edge restriction
+        assertPath(3, 2, null);
+        // these work
+        assertPath(0, 2, nodes(0, 1, 2));
+        assertPath(4, 2, nodes(4, 1, 0, 1, 2));
+        assertEquals(11, graph.getTurnCostStorage().getTurnCostsCount());
+    }
+
+    @Test
+    void similarRestrictions() {
+        //   4
+        //   |
+        // 0-1=2-3
+        int e0_1 = edge(0, 1);
+        int e1_2 = edge(1, 2);
+        int e2_1 = edge(2, 1);
+        int e2_3 = edge(2, 3);
+        int e1_4 = edge(1, 4);
+        assertPath(4, 0, nodes(4, 1, 0));
+        setRestrictions(
+                createViaNodeRestriction(e1_4, 1, e0_1),
+                createViaNodeRestriction(e2_1, 2, e1_2),
+                createViaNodeRestriction(e1_2, 2, e2_1),
+                // This restriction has the same edges (but a different node) than the previous,
+                // but it shouldn't affect the others, of course.
+                createViaNodeRestriction(e1_2, 1, e2_1)
+        );
+        assertPath(4, 0, null);
+        assertEquals(4, graph.getTurnCostStorage().getTurnCostsCount());
+    }
+
+    @Test
+    void similarRestrictions_with_artificial_edges() {
+        // 0---1---2---3
+        //     |   |
+        //     5   4
+        int e0_1 = edge(0, 1);
+        int e5_1 = edge(5, 1);
+        int e1_2 = edge(1, 2);
+        int e2_3 = edge(2, 3);
+        int e2_4 = edge(2, 4);
+        setRestrictions(
+                // Here we get artificial edges between nodes 1 and 2, and if we did not pay attention the u-turn
+                // restrictions 1-2-1 and 2-1-2 would cancel out each other, so the path 0-1-2-1-5 would become
+                // possible.
+                createViaNodeRestriction(e0_1, 1, e5_1),
+                createViaEdgeRestriction(e0_1, e1_2, e2_4),
+                createViaEdgeRestriction(e2_4, e1_2, e0_1),
+                createViaNodeRestriction(e1_2, 2, e1_2),
+                createViaNodeRestriction(e1_2, 1, e1_2)
+        );
+        assertPath(0, 5, null);
+        assertEquals(25, graph.getTurnCostStorage().getTurnCostsCount());
+    }
+
+    @Test
+    void restrictTurnsBetweenArtificialEdges() {
+        // 3->| |<-8
+        // 0->1-2->4
+        //    |
+        //    5
+        int e3_1 = edge(3, 1, false);
+        int e0_1 = edge(0, 1, false);
+        int e1_2 = edge(1, 2);
+        int e2_4 = edge(2, 4, false);
+        int e1_5 = edge(1, 5);
+        int e8_2 = edge(8, 2, false);
+        assertPath(3, 4, nodes(3, 1, 2, 4));
+        assertPath(0, 4, nodes(0, 1, 2, 4));
+        assertPath(5, 4, nodes(5, 1, 2, 4));
+        setRestrictions(
+                // This yields three artificial edges 1-2.
+                createViaEdgeRestriction(e0_1, e1_2, e2_4),
+                createViaEdgeRestriction(e3_1, e1_2, e2_4),
+                createViaEdgeRestriction(e8_2, e1_2, e1_5)
+        );
+        // If we did not make sure turning between different artificial edges is forbidden we would get routes like 3-1-2-1-2-4
+        assertPath(3, 4, null);
+        assertPath(0, 4, null);
+        assertPath(5, 4, nodes(5, 1, 2, 4));
+    }
+
+
+    @Test
     void twoProfiles() {
         // Note: There are many more combinations of turn restrictions with multiple profiles that
         //       we could test,
