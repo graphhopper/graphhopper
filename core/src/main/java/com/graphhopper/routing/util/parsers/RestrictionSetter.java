@@ -64,18 +64,18 @@ public class RestrictionSetter {
     public void setRestrictions(List<Restriction> restrictions, List<BitSet> encBits) {
         if (restrictions.size() != encBits.size())
             throw new IllegalArgumentException("There must be as many encBits as restrictions. Got: " + encBits.size() + " and " + restrictions.size());
-        disableRedundantRestrictions(restrictions, encBits);
+        List<InternalRestriction> internalRestrictions = restrictions.stream().map(this::convertToInternal).toList();
+        disableRedundantRestrictions(internalRestrictions, encBits);
         LongIntMap artificialEdgeKeysByIncViaPairs = new LongIntScatterMap();
         IntObjectMap<IntSet> artificialEdgesByEdge = new IntObjectScatterMap<>();
-        List<InternalRestriction> internalRestrictions = restrictions.stream().map(this::convert).toList();
         for (int i = 0; i < internalRestrictions.size(); i++) {
             if (encBits.get(i).cardinality() < 1) continue;
             InternalRestriction restriction = internalRestrictions.get(i);
-            if (restriction.getViaEdgeKeys().isEmpty())
+            if (restriction.getEdgeKeys().size() < 3)
                 continue;
             int incomingEdge = restriction.getFromEdge();
-            for (IntCursor c : restriction.getViaEdgeKeys()) {
-                int viaEdgeKey = c.value;
+            for (int j = 1; j < restriction.getEdgeKeys().size() - 1; ++j) {
+                int viaEdgeKey = restriction.getEdgeKeys().get(j);
                 long key = BitUtil.LITTLE.toLong(incomingEdge, viaEdgeKey);
                 int artificialEdgeKey;
                 if (artificialEdgeKeysByIncViaPairs.containsKey(key)) {
@@ -103,7 +103,7 @@ public class RestrictionSetter {
                         artificialEdgeKey = GHUtility.reverseEdgeKey(artificialEdgeKey);
                     artificialEdgeKeysByIncViaPairs.put(key, artificialEdgeKey);
                 }
-                restriction.actualViaEdgeKeys.set(c.index, artificialEdgeKey);
+                restriction.actualEdgeKeys.set(j, artificialEdgeKey);
                 incomingEdge = GHUtility.getEdgeFromEdgeKey(artificialEdgeKey);
             }
         }
@@ -126,7 +126,7 @@ public class RestrictionSetter {
         for (int i = 0; i < internalRestrictions.size(); i++) {
             if (encBits.get(i).cardinality() < 1) continue;
             InternalRestriction restriction = internalRestrictions.get(i);
-            if (restriction.getViaEdgeKeys().isEmpty()) {
+            if (restriction.getEdgeKeys().size() < 3) {
                 IntSet fromEdges = artificialEdgesByEdge.getOrDefault(restriction.getFromEdge(), new IntScatterSet());
                 fromEdges.add(restriction.getFromEdge());
                 IntSet toEdges = artificialEdgesByEdge.getOrDefault(restriction.getToEdge(), new IntScatterSet());
@@ -140,7 +140,7 @@ public class RestrictionSetter {
                     }
                 }
             } else {
-                int viaEdgeKey = restriction.getActualViaEdgeKeys().get(restriction.getActualViaEdgeKeys().size() - 1);
+                int viaEdgeKey = restriction.getActualEdgeKeys().get(restriction.getActualEdgeKeys().size() - 2);
                 int viaEdge = GHUtility.getEdgeFromEdgeKey(viaEdgeKey);
                 int node = baseGraph.getEdgeIteratorStateForKey(viaEdgeKey).getAdjNode();
                 // For via-edge restrictions we deny turning from the from-edge onto the via-edge,
@@ -160,36 +160,30 @@ public class RestrictionSetter {
         }
     }
 
-    private void disableRedundantRestrictions(List<Restriction> restrictions, List<BitSet> encBits) {
+    private void disableRedundantRestrictions(List<InternalRestriction> restrictions, List<BitSet> encBits) {
         for (int encIdx = 0; encIdx < turnRestrictionEncs.size(); encIdx++) {
             // first we disable all duplicates
-            Set<Restriction> uniqueRestrictions = new HashSet<>();
+            Set<InternalRestriction> uniqueRestrictions = new HashSet<>();
             for (int i = 0; i < restrictions.size(); i++) {
                 if (!encBits.get(i).get(encIdx))
                     continue;
                 if (!uniqueRestrictions.add(restrictions.get(i)))
                     encBits.get(i).clear(encIdx);
             }
-            // build an index of restrictions to quickly find all restrictions containing a given edge
-            IntObjectScatterMap<List<Restriction>> restrictionsByEdges = new IntObjectScatterMap<>();
+            // build an index of restrictions to quickly find all restrictions containing a given edge key
+            IntObjectScatterMap<List<InternalRestriction>> restrictionsByEdgeKeys = new IntObjectScatterMap<>();
             for (int i = 0; i < restrictions.size(); i++) {
                 if (!encBits.get(i).get(encIdx))
                     continue;
-                Restriction restriction = restrictions.get(i);
-                for (IntCursor edge : restriction.edges) {
-                    if (restriction.edges.size() > 2 && edge.index > 0 && edge.value == restriction.edges.get(edge.index - 1))
-                        // If we allowed a restriction like -4-(A)-6-(B)-6-(A)-8- (with nodes A,B and edges 4,6,6,8) it
-                        // might falsely be considered 'redundant' by our current logic if there was another restriction 6-6 (via=B)
-                        // when only a restriction 6-6 (via A) would make the 4-6-6-8 actually redundant.
-                        // ... and since via-edge restrictions with such consecutive duplicates are only imaginary we just throw an error here...
-                        throw new IllegalArgumentException("Restrictions with more than two edges must not contain duplicate consecutive edges");
-                    int idx = restrictionsByEdges.indexOf(edge.value);
+                InternalRestriction restriction = restrictions.get(i);
+                for (IntCursor edgeKey : restriction.edgeKeys) {
+                    int idx = restrictionsByEdgeKeys.indexOf(edgeKey.value);
                     if (idx < 0) {
-                        List<Restriction> list = new ArrayList<>();
+                        List<InternalRestriction> list = new ArrayList<>();
                         list.add(restriction);
-                        restrictionsByEdges.indexInsert(idx, edge.value, list);
+                        restrictionsByEdgeKeys.indexInsert(idx, edgeKey.value, list);
                     } else {
-                        restrictionsByEdges.indexGet(idx).add(restriction);
+                        restrictionsByEdgeKeys.indexGet(idx).add(restriction);
                     }
                 }
             }
@@ -198,38 +192,21 @@ public class RestrictionSetter {
             for (int i = 0; i < restrictions.size(); i++) {
                 if (!encBits.get(i).get(encIdx))
                     continue;
-                if (containsAnotherRestriction(restrictions.get(i), restrictionsByEdges))
+                if (containsAnotherRestriction(restrictions.get(i), restrictionsByEdgeKeys))
                     encBits.get(i).clear(encIdx);
             }
         }
     }
 
-    private boolean containsAnotherRestriction(Restriction restriction, IntObjectMap<List<Restriction>> restrictionsByEdges) {
-        if (restriction.edges.size() < 3)
-            // Special case for restrictions with two edges (via-node restrictions): If the two edges are connected at
-            // both nodes the edges of two such restrictions can be equal without the restrictions being the same.
-            // We have to make sure they aren't both excluded because they contain each other! We can just return false
-            // here, since such restrictions cannot contain another restriction anyway.
-            // For via-edge restrictions (>2 edges) we do not run into this problem, because we already excluded duplicates here.
-            return false;
-        for (IntCursor edge : restriction.edges) {
-            List<Restriction> restrictionsWithThisEdge = restrictionsByEdges.get(edge.value);
-            for (Restriction r : restrictionsWithThisEdge) {
+    private boolean containsAnotherRestriction(InternalRestriction restriction, IntObjectMap<List<InternalRestriction>> restrictionsByEdgeKeys) {
+        for (IntCursor edgeKey : restriction.edgeKeys) {
+            List<InternalRestriction> restrictionsWithThisEdgeKey = restrictionsByEdgeKeys.get(edgeKey.value);
+            for (InternalRestriction r : restrictionsWithThisEdgeKey) {
                 if (r == restriction) continue;
                 if (r.equals(restriction))
                     throw new IllegalStateException("Equal restrictions should have already been filtered out here!");
-                if (isSubsetOf(r.edges, restriction.edges)) {
-                    // super special case: if two consecutive edges share both nodes, the 'direction' of the restriction
-                    // could be opposite to the containing restriction -> they aren't really redundant!
-                    // Ok, this could be a bit cleaner if we did the conversion to InternalRestriction (where the nodes and edge keys are known) first.
-                    for (int i = 1; i < r.edges.size(); i++) {
-                        EdgeIteratorState e1 = baseGraph.getEdgeIteratorState(r.edges.get(i - 1), Integer.MIN_VALUE);
-                        EdgeIteratorState e2 = baseGraph.getEdgeIteratorState(r.edges.get(i), Integer.MIN_VALUE);
-                        if (IntHashSet.from(e1.getBaseNode(), e1.getAdjNode()).equals(IntHashSet.from(e2.getBaseNode(), e2.getAdjNode())))
-                            return false;
-                    }
+                if (isSubsetOf(r.edgeKeys, restriction.edgeKeys))
                     return true;
-                }
             }
         }
         return false;
@@ -259,18 +236,18 @@ public class RestrictionSetter {
         restrictTurn(turnRestrictionEnc, edgeState.getEdge(), edgeState.getAdjNode(), otherEdge);
     }
 
-    private InternalRestriction convert(Restriction restriction) {
+    private InternalRestriction convertToInternal(Restriction restriction) {
         IntArrayList edges = restriction.edges;
         if (edges.size() < 2)
             throw new IllegalArgumentException("Invalid restriction, there must be at least two edges");
-        else if (edges.size() == 2)
-            return new InternalRestriction(edges.get(0), new IntArrayList(), IntArrayList.from(restriction.viaNode), edges.get(1));
-        else {
+        else if (edges.size() == 2) {
+            int fromKey = baseGraph.getEdgeIteratorState(edges.get(0), restriction.viaNode).getEdgeKey();
+            int toKey = baseGraph.getEdgeIteratorState(edges.get(1), restriction.viaNode).getReverseEdgeKey();
+            return new InternalRestriction(IntArrayList.from(restriction.viaNode), IntArrayList.from(fromKey, toKey));
+        } else {
             Pair<IntArrayList, IntArrayList> p = findNodesAndEdgeKeys(baseGraph, edges);
             p.first.remove(p.first.size() - 1);
-            p.second.remove(0);
-            p.second.remove(p.second.size() - 1);
-            return new InternalRestriction(edges.get(0), p.second, p.first, edges.get(edges.size() - 1));
+            return new InternalRestriction(p.first, p.second);
         }
     }
 
@@ -329,18 +306,6 @@ public class RestrictionSetter {
         }
 
         @Override
-        public int hashCode() {
-            return 31 * viaNode + edges.hashCode();
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            // this is actually needed, because we build a Set of Restrictions to remove duplicates
-            if (!(obj instanceof Restriction)) return false;
-            return ((Restriction) obj).viaNode == viaNode && ((Restriction) obj).edges.equals(edges);
-        }
-
-        @Override
         public String toString() {
             return "edges: " + edges.toString() + ", viaNode: " + viaNode;
         }
@@ -348,17 +313,15 @@ public class RestrictionSetter {
 
     private static class InternalRestriction {
         private final IntArrayList viaNodes;
-        private final int fromEdge;
-        private final IntArrayList viaEdgeKeys;
-        private final IntArrayList actualViaEdgeKeys;
-        private final int toEdge;
+        private final IntArrayList edgeKeys;
+        private final IntArrayList actualEdgeKeys;
 
-        public InternalRestriction(int fromEdge, IntArrayList viaEdgeKeys, IntArrayList viaNodes, int toEdge) {
-            this.toEdge = toEdge;
-            this.viaEdgeKeys = viaEdgeKeys;
-            this.actualViaEdgeKeys = ArrayUtil.constant(viaEdgeKeys.size(), -1);
-            this.fromEdge = fromEdge;
+        public InternalRestriction(IntArrayList viaNodes, IntArrayList edgeKeys) {
+            this.edgeKeys = edgeKeys;
             this.viaNodes = viaNodes;
+            this.actualEdgeKeys = ArrayUtil.constant(edgeKeys.size(), -1);
+            this.actualEdgeKeys.set(0, edgeKeys.get(0));
+            this.actualEdgeKeys.set(edgeKeys.size() - 1, edgeKeys.get(edgeKeys.size() - 1));
         }
 
         public IntArrayList getViaNodes() {
@@ -366,27 +329,40 @@ public class RestrictionSetter {
         }
 
         public int getFromEdge() {
-            return fromEdge;
+            return GHUtility.getEdgeFromEdgeKey(edgeKeys.get(0));
         }
 
-        public IntArrayList getViaEdgeKeys() {
-            return viaEdgeKeys;
+        public IntArrayList getEdgeKeys() {
+            return edgeKeys;
         }
 
-        public IntArrayList getActualViaEdgeKeys() {
-            return actualViaEdgeKeys;
+        public IntArrayList getActualEdgeKeys() {
+            return actualEdgeKeys;
         }
 
         public int getToEdge() {
-            return toEdge;
+            return GHUtility.getEdgeFromEdgeKey(edgeKeys.get(edgeKeys.size() - 1));
+        }
+
+        @Override
+        public int hashCode() {
+            return 31 * viaNodes.hashCode() + edgeKeys.hashCode();
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            // this is actually needed, because we build a Set of InternalRestrictions to remove duplicates
+            // no need to compare the actualEdgeKeys
+            if (!(obj instanceof InternalRestriction)) return false;
+            return ((InternalRestriction) obj).viaNodes.equals(viaNodes) && ((InternalRestriction) obj).edgeKeys.equals(edgeKeys);
         }
 
         @Override
         public String toString() {
-            StringBuilder result = new StringBuilder(fromEdge + "-");
-            for (int i = 0; i < viaNodes.size() - 1; i++)
-                result.append("(").append(viaNodes.get(i)).append(")-").append(GHUtility.getEdgeFromEdgeKey(viaEdgeKeys.get(i))).append("-");
-            return result + "(" + viaNodes.get(viaNodes.size() - 1) + ")-" + toEdge;
+            StringBuilder result = new StringBuilder();
+            for (int i = 0; i < viaNodes.size(); i++)
+                result.append(GHUtility.getEdgeFromEdgeKey(edgeKeys.get(i))).append("-(").append(viaNodes.get(i)).append(")-");
+            return result + "" + GHUtility.getEdgeFromEdgeKey(edgeKeys.get(edgeKeys.size() - 1));
         }
     }
 }

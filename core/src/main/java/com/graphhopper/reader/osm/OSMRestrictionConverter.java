@@ -88,10 +88,8 @@ public class OSMRestrictionConverter {
         WayToEdgeConverter wayToEdgeConverter = new WayToEdgeConverter(baseGraph, edgesByWay);
         if (restrictionMembers.isViaWay()) {
             if (containsDuplicateWays(restrictionMembers))
-                // We would (only?) run into a problem if there were consecutive identical ways/edges.
                 // For now let's ignore all via-way restrictions with duplicate from/to/via-members
                 // until we find cases where this is too strict.
-                // todonow: check log
                 throw new OSMRestrictionException("contains duplicate from-/via-/to-members");
             WayToEdgeConverter.EdgeResult res = wayToEdgeConverter
                     .convertForViaWays(restrictionMembers.getFromWays(), restrictionMembers.getViaWays(), restrictionMembers.getToWays());

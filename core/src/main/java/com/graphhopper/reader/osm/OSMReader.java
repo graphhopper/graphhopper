@@ -615,10 +615,10 @@ public class OSMReader {
                 warnOfRestriction(restrictionRelation, e);
             }
         }
-        // The restriction type depends on the vehicle, or at least not all restrictions affect every vehicle type.
-        // For each restriction we find the restriction type for every parser. It is important to set the restrictions
-        // for all parsers at once to make sure the resulting turn restrictions do not interfere.
+        // It is important to set the restrictions for all parsers/encoded values at once to make
+        // sure the resulting turn restrictions do not interfere.
         List<RestrictionSetter.Restriction> restrictions = new ArrayList<>();
+        // For every restriction we set flags that indicate the validity for the different parsers
         List<BitSet> encBits = new ArrayList<>();
         for (Triple<ReaderRelation, RestrictionTopology, RestrictionMembers> r : restrictionRelationsWithTopology) {
             try {
@@ -632,7 +632,6 @@ public class OSMReader {
                         continue;
                     OSMRestrictionConverter.checkIfTopologyIsCompatibleWithRestriction(r.second, res.getRestriction());
                     if (restrictionType != null && res.getRestrictionType() != restrictionType)
-                        // todonow: check logs
                         // so far we restrict ourselves to restriction relations that use the same type for all vehicles
                         throw new OSMRestrictionException("has different restriction type for different vehicles.");
                     restrictionType = res.getRestrictionType();

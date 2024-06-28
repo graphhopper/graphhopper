@@ -408,6 +408,18 @@ public class RestrictionSetterTest {
     }
 
     @Test
+    void redundantRestriction_simple() {
+        // 0-1-2
+        int e0_1 = edge(0, 1);
+        int e1_2 = edge(1, 2);
+        r.setRestrictions(List.of(
+                RestrictionSetter.createViaNodeRestriction(e0_1, 1, e1_2),
+                RestrictionSetter.createViaNodeRestriction(e0_1, 1, e1_2)
+        ), Stream.generate(() -> encBits(1, 1)).limit(2).toList());
+        assertEquals(NO_PATH, calcPath(0, 2));
+    }
+
+    @Test
     void twoProfiles() {
         // Note: There are many more combinations of turn restrictions with multiple profiles that
         //       we could test,
