@@ -86,6 +86,22 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
     }
 
     @Test
+    public void testLivingStreet() {
+        ReaderWay osmWay = new ReaderWay(1);
+        osmWay.clearTags();
+        osmWay.setTag("highway", "living_street");
+        assertPriorityAndSpeed(UNCHANGED, 6, osmWay);
+        osmWay.setTag("maxspeed", "20");
+        assertPriorityAndSpeed(PREFER, 18, osmWay);
+        osmWay.setTag("maxspeed", "10");
+        assertPriorityAndSpeed(VERY_NICE, 10, osmWay);
+        osmWay.clearTags();
+        osmWay.setTag("highway", "residential");
+        osmWay.setTag("maxspeed", "30");
+        assertPriorityAndSpeed(SLIGHT_AVOID, 18, osmWay);
+    }
+
+    @Test
     @Override
     public void testService() {
         ReaderWay way = new ReaderWay(1);
@@ -93,7 +109,7 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         assertPriorityAndSpeed(SLIGHT_AVOID, 12, way);
 
         way.setTag("service", "parking_aisle");
-        assertPriorityAndSpeed(SLIGHT_AVOID, 4, way);
+        assertPriorityAndSpeed(SLIGHT_AVOID, 6, way);
     }
 
     @Test
