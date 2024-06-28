@@ -68,7 +68,7 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         setSurfaceSpeed("sand", PUSHING_SECTION_SPEED);
         setSurfaceSpeed("wood", PUSHING_SECTION_SPEED);
 
-        setHighwaySpeed("living_street", PUSHING_SECTION_SPEED);
+        setHighwaySpeed("living_street", 6);
         setHighwaySpeed("steps", MIN_SPEED);
 
         setHighwaySpeed("cycleway", 18);
@@ -119,6 +119,8 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
      */
     double applyMaxSpeed(ReaderWay way, double speed, boolean bwd) {
         double maxSpeed = getMaxSpeed(way, bwd);
+        if (way.getTag("highway", "").equals("living_street"))
+            return !isValidSpeed(maxSpeed) ? highwaySpeeds.get("living_street") : maxSpeed <= highwaySpeeds.get("cycleway") ? maxSpeed : highwaySpeeds.get("cycleway");
         // We strictly obey speed limits, see #600
         return isValidSpeed(maxSpeed) && speed > maxSpeed ? maxSpeed : speed;
     }
