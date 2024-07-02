@@ -566,7 +566,7 @@ public class OSMReaderTest {
         int edge4_3 = GHUtility.getEdge(graph, n4, n3).getEdge();
         int edge8_3 = GHUtility.getEdge(graph, n8, n3).getEdge();
 
-        // (2-3)->(3-4) only_straight_on = (2-3)->(3-8) restricted
+        // (2-3)->(3-4) only_straight_on = (2-3)->(3-8), (2-3)->(3-2) restricted
         // (4-3)->(3-8) no_right_turn = (4-3)->(3-8) restricted
         // (2-3)->(3-8) no_entry = (2-3)->(3-8) restricted
         BooleanEncodedValue carTCEnc = hopper.getEncodingManager().getTurnBooleanEncodedValue(TurnRestriction.key("car"));
@@ -574,7 +574,7 @@ public class OSMReaderTest {
         assertTrue(tcStorage.get(carTCEnc, edge4_3, n3, edge3_8));
         assertTrue(tcStorage.get(carTCEnc, edge2_3, n3, edge3_8));
         assertFalse(tcStorage.get(carTCEnc, edge2_3, n3, edge3_4));
-        assertFalse(tcStorage.get(carTCEnc, edge2_3, n3, edge3_2));
+        assertTrue(tcStorage.get(carTCEnc, edge2_3, n3, edge3_2));
         assertFalse(tcStorage.get(carTCEnc, edge2_3, n3, edge3_4));
         assertFalse(tcStorage.get(carTCEnc, edge4_3, n3, edge3_2));
         assertFalse(tcStorage.get(carTCEnc, edge8_3, n3, edge3_2));
@@ -778,14 +778,14 @@ public class OSMReaderTest {
         int edge5_6 = GHUtility.getEdge(graph, n5, n6).getEdge();
         int edge5_1 = GHUtility.getEdge(graph, n5, n1).getEdge();
 
-        // (2-3)->(3-4) only_straight_on except bicycle = (2-3)->(3-8) restricted for car
+        // (2-3)->(3-4) only_straight_on except bicycle = (2-3)->(3-8) and (2-3)->(3-2) restricted for car
         // (4-3)->(3-8) no_right_turn dedicated to motorcar = (4-3)->(3-8) restricted for car
 
         BooleanEncodedValue carTCEnc = hopper.getEncodingManager().getTurnBooleanEncodedValue(TurnRestriction.key("car"));
         assertTrue(tcStorage.get(carTCEnc, edge2_3, n3, edge3_8));
         assertTrue(tcStorage.get(carTCEnc, edge4_3, n3, edge3_8));
         assertFalse(tcStorage.get(carTCEnc, edge2_3, n3, edge3_4));
-        assertFalse(tcStorage.get(carTCEnc, edge2_3, n3, edge3_2));
+        assertTrue(tcStorage.get(carTCEnc, edge2_3, n3, edge3_2));
         assertFalse(tcStorage.get(carTCEnc, edge2_3, n3, edge3_4));
         assertFalse(tcStorage.get(carTCEnc, edge4_3, n3, edge3_2));
         assertFalse(tcStorage.get(carTCEnc, edge8_3, n3, edge3_2));
