@@ -396,6 +396,25 @@ public class OSMRestrictionSetterTest {
         assertEquals(nodes(0, 1, 2, 3, 6, 5, 4), calcPath(0, 4));
     }
 
+    @Test
+    void loop_only() {
+        // 0=1-2
+        //   |\
+        //   3 4
+        int e0_1 = edge(0, 1);
+        int e1_0 = edge(0, 1);
+        int e1_2 = edge(1, 2);
+        int e1_3 = edge(1, 3);
+        int e1_4 = edge(1, 4);
+        setRestrictions(List.of(
+                new Pair<>(RestrictionTopology.node(e1_3, 1, e0_1), RestrictionType.ONLY),
+                // here it is important we do not create the ambiguous restriction e0_1-e_1_0-e0_1 when converting the only-restriction
+                new Pair<>(RestrictionTopology.way(e0_1, e1_0, e1_2, nodes(0, 1)), RestrictionType.ONLY)
+        ));
+        assertEquals(nodes(3, 1, 0, 1, 2), calcPath(3, 2));
+        assertEquals(NO_PATH, calcPath(3, 4));
+    }
+
     /**
      * Shorthand version that only sets restriction for the first turn restriction encoded value
      */

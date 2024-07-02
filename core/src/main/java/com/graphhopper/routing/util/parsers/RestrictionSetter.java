@@ -26,10 +26,8 @@ import com.carrotsearch.hppc.procedures.LongIntProcedure;
 import com.graphhopper.reader.osm.Pair;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.storage.BaseGraph;
-import com.graphhopper.util.ArrayUtil;
 import com.graphhopper.util.BitUtil;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.*;
 
 import java.util.*;
 
@@ -256,12 +254,17 @@ public class RestrictionSetter {
         List<Pair<IntArrayList, IntArrayList>> solutions = new ArrayList<>();
         findEdgeChain(baseGraph, edges, 0, IntArrayList.from(), IntArrayList.from(), solutions);
         if (solutions.isEmpty()) {
-            throw new IllegalArgumentException("Disconnected edges: " + edges);
+            throw new IllegalArgumentException("Disconnected edges: " + edges + " " + edgesToLocationString(baseGraph, edges));
         } else if (solutions.size() > 1) {
-            throw new IllegalArgumentException("Ambiguous edge restriction: " + edges);
+            throw new IllegalArgumentException("Ambiguous edge restriction: " + edges + " " + edgesToLocationString(baseGraph, edges));
         } else {
             return solutions.get(0);
         }
+    }
+
+    private static String edgesToLocationString(BaseGraph baseGraph, IntArrayList edges) {
+        return Arrays.stream(edges.buffer, 0, edges.size()).mapToObj(e -> baseGraph.getEdgeIteratorState(e, Integer.MIN_VALUE).fetchWayGeometry(FetchMode.ALL))
+                .toList().toString();
     }
 
     private void findEdgeChain(BaseGraph baseGraph, IntArrayList edges, int index, IntArrayList nodes, IntArrayList edgeKeys, List<Pair<IntArrayList, IntArrayList>> solutions) {

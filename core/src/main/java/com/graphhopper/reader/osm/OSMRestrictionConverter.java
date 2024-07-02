@@ -29,7 +29,6 @@ import com.graphhopper.routing.util.parsers.RestrictionSetter;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.GHUtility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -201,14 +200,6 @@ public class OSMRestrictionConverter {
             throw new OSMRestrictionException("has multiple members with role 'to' even though it is not a 'no_exit' restriction");
     }
 
-    public static List<RestrictionSetter.Restriction> buildRestrictionsForOSMRestrictions(
-            BaseGraph baseGraph, List<Pair<RestrictionTopology, RestrictionType>> osmRestrictions
-    ) {
-        return osmRestrictions.stream()
-                .flatMap(p -> buildRestrictionsForOSMRestriction(baseGraph, p.first, p.second).stream())
-                .toList();
-    }
-
     /**
      * Converts an OSM restriction to (multiple) single 'no' restrictions to be fed into {@link RestrictionSetter}
      */
@@ -229,7 +220,7 @@ public class OSMRestrictionConverter {
             if (topology.getFromEdges().size() > 1 || topology.getToEdges().size() > 1)
                 throw new IllegalArgumentException("'Only' restrictions with multiple from- or to- edges are not supported");
             if (topology.isViaWayRestriction())
-                result.addAll(createRestrictionsForViaEdgeOnlyRestriction(baseGraph, collectEdges(topology)));
+                result.addAll(createRestrictionsForViaEdgeOnlyRestriction(baseGraph, topology));
             else
                 result.addAll(createRestrictionsForViaNodeOnlyRestriction(baseGraph.createEdgeExplorer(),
                         topology.getFromEdges().get(0), topology.getViaNodes().get(0), topology.getToEdges().get(0)));
@@ -257,20 +248,19 @@ public class OSMRestrictionConverter {
         return result;
     }
 
-    private static List<RestrictionSetter.Restriction> createRestrictionsForViaEdgeOnlyRestriction(BaseGraph graph, IntArrayList edges) {
+    private static List<RestrictionSetter.Restriction> createRestrictionsForViaEdgeOnlyRestriction(BaseGraph graph, RestrictionTopology topology) {
         // For via-way ONLY restrictions we have to turn from the from-edge onto the first via-edge,
         // continue with the next via-edge(s) and finally turn onto the to-edge. So we cannot branch
-        // out anywhere. If we did not start with the from-edge the restriction does not apply at all.
+        // out anywhere. If we don't start with the from-edge the restriction does not apply at all.
         // c.f. https://github.com/valhalla/valhalla/discussions/4764
-        if (edges.size() < 3)
-            throw new IllegalArgumentException("Via-edge restrictions must have at least three edges, but got: " + edges.size());
+        if (topology.getViaEdges().isEmpty())
+            throw new IllegalArgumentException("Via-edge restrictions must have at least one via-edge");
         final EdgeExplorer explorer = graph.createEdgeExplorer();
-        int node = GHUtility.getCommonNode(graph, edges.get(0), edges.get(1));
+        IntArrayList edges = collectEdges(topology);
         List<RestrictionSetter.Restriction> result =
-                createRestrictionsForViaNodeOnlyRestriction(explorer, edges.get(0), node, edges.get(1));
+                createRestrictionsForViaNodeOnlyRestriction(explorer, edges.get(0), topology.getViaNodes().get(0), edges.get(1));
         for (int i = 2; i < edges.size(); i++) {
-            node = GHUtility.getCommonNode(graph, edges.get(i - 1), edges.get(i));
-            EdgeIterator iter = explorer.setBaseNode(node);
+            EdgeIterator iter = explorer.setBaseNode(topology.getViaNodes().get(i - 1));
             while (iter.next()) {
                 if (iter.getEdge() != edges.get(i) &&
                         // We deny u-turns within via-way 'only' restrictions unconditionally (see below), so no need
@@ -281,14 +271,18 @@ public class OSMRestrictionConverter {
                     for (int j = 0; j < i; j++)
                         restriction.add(edges.get(j));
                     restriction.add(iter.getEdge());
+                    if (restriction.size() == 3 && restriction.get(0) == restriction.get(restriction.size() - 1))
+                        // To prevent an exception in RestrictionSetter we need to prevent unambiguous
+                        // restrictions like a-b-a. Maybe we even need to exclude other cases as well,
+                        // but so far they did not occur.
+                        continue;
                     result.add(RestrictionSetter.createViaEdgeRestriction(restriction));
                 }
             }
         }
         // explicitly deny all u-turns along the via-way 'only' restriction
-        for (int i = 1; i < edges.size(); i++) {
-            result.add(RestrictionSetter.createViaNodeRestriction(edges.get(i - 1),
-                    GHUtility.getCommonNode(graph, edges.get(i - 1), edges.get(i)), edges.get(i - 1)));
+        for (int i = 0; i < edges.size() - 1; i++) {
+            result.add(RestrictionSetter.createViaNodeRestriction(edges.get(i), topology.getViaNodes().get(i), edges.get(i)));
         }
         return result;
     }
