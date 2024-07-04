@@ -292,10 +292,10 @@ public class RestrictionSetter {
     private void restrictTurn(BooleanEncodedValue turnRestrictionEnc, int fromEdge, int viaNode, int toEdge) {
         if (fromEdge < 0 || toEdge < 0 || viaNode < 0)
             throw new IllegalArgumentException("from/toEdge and viaNode must be >= 0");
-        if (fromEdge == toEdge)
+//        if (fromEdge == toEdge)
             // skip u-turn restrictions to improve reading performance, because so far they are ignored anyway!
             // https://github.com/graphhopper/graphhopper/issues/2570
-            return;
+//            return;
         baseGraph.getTurnCostStorage().set(turnRestrictionEnc, fromEdge, viaNode, toEdge, true);
     }
 

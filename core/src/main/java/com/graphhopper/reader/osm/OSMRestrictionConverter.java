@@ -241,8 +241,8 @@ public class OSMRestrictionConverter {
         List<RestrictionSetter.Restriction> result = new ArrayList<>();
         EdgeIterator iter = edgeExplorer.setBaseNode(viaNode);
         while (iter.next()) {
-            // deny all turns except the one to the to-edge, including the u-turn back to the from-edge
-            if (iter.getEdge() != toEdge)
+            // deny all turns except the one to the to-edge, except the u-turn back to the from-edge
+            if (iter.getEdge() != toEdge && iter.getEdge() != fromEdge)
                 result.add(RestrictionSetter.createViaNodeRestriction(fromEdge, viaNode, iter.getEdge()));
         }
         return result;
@@ -264,7 +264,7 @@ public class OSMRestrictionConverter {
             while (iter.next()) {
                 if (iter.getEdge() != edges.get(i) &&
                         // We deny u-turns within via-way 'only' restrictions unconditionally (see below), so no need
-                        // to restrict them here as well (also our restriction setter cannot handle subsequent identical edges)
+                        // to restrict them here as well
                         iter.getEdge() != edges.get(i - 1)
                 ) {
                     IntArrayList restriction = new IntArrayList(i + 1);
@@ -281,9 +281,9 @@ public class OSMRestrictionConverter {
             }
         }
         // explicitly deny all u-turns along the via-way 'only' restriction
-        for (int i = 0; i < edges.size() - 1; i++) {
-            result.add(RestrictionSetter.createViaNodeRestriction(edges.get(i), topology.getViaNodes().get(i), edges.get(i)));
-        }
+//        for (int i = 0; i < edges.size() - 1; i++) {
+//            result.add(RestrictionSetter.createViaNodeRestriction(edges.get(i), topology.getViaNodes().get(i), edges.get(i)));
+//        }
         return result;
     }
 }
