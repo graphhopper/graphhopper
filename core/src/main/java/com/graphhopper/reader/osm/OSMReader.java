@@ -19,9 +19,6 @@ package com.graphhopper.reader.osm;
 
 import com.carrotsearch.hppc.BitSet;
 import com.carrotsearch.hppc.LongArrayList;
-import com.carrotsearch.hppc.LongHashSet;
-import com.carrotsearch.hppc.LongSet;
-import com.carrotsearch.hppc.cursors.LongCursor;
 import com.graphhopper.coll.GHLongLongHashMap;
 import com.graphhopper.reader.ReaderElement;
 import com.graphhopper.reader.ReaderNode;
@@ -59,7 +56,6 @@ import java.util.*;
 import java.util.function.LongToIntFunction;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.graphhopper.search.KVStorage.KValue;
 import static com.graphhopper.util.GHUtility.OSM_WARNING_LOGGER;
@@ -627,15 +623,12 @@ public class OSMReader {
         List<RestrictionSetter.Restriction> restrictions = new ArrayList<>();
         // For every restriction we set flags that indicate the validity for the different parsers
         List<BitSet> encBits = new ArrayList<>();
-        List<LongHashSet> directedViaWaysUsedByRestrictionsList = Stream.generate(LongHashSet::new).limit(osmParsers.getRestrictionTagParsers().size()).toList();
         for (Triple<ReaderRelation, RestrictionTopology, RestrictionMembers> r : restrictionRelationsWithTopology) {
-            if (r.third.isViaWay() && r.third.getViaWays().size() > 1) continue;
             try {
                 BitSet bits = new BitSet(osmParsers.getRestrictionTagParsers().size());
                 RestrictionType restrictionType = null;
                 for (int i = 0; i < osmParsers.getRestrictionTagParsers().size(); i++) {
                     RestrictionTagParser restrictionTagParser = osmParsers.getRestrictionTagParsers().get(i);
-                    LongSet directedViaWaysUsedByRestrictions = directedViaWaysUsedByRestrictionsList.get(i);
                     RestrictionTagParser.Result res = restrictionTagParser.parseRestrictionTags(r.first.getTags());
                     if (res == null)
                         // this relation is ignored by this restriction tag parser
@@ -644,14 +637,6 @@ public class OSMReader {
                     if (restrictionType != null && res.getRestrictionType() != restrictionType)
                         // so far we restrict ourselves to restriction relations that use the same type for all vehicles
                         throw new OSMRestrictionException("has different restriction type for different vehicles.");
-                    if (r.second.isViaWayRestriction()) {
-                        for (LongCursor viaWay : r.third.getViaWays()) {
-                            // We simply use the first and last via-node to determine the direction of the way, but for multiple via-ways maybe we need to reconsider this!
-                            long directedViaWay = viaWay.value * (r.second.getViaNodes().get(0) < r.second.getViaNodes().get(r.second.getViaNodes().size() - 1) ? +1 : -1);
-                            if (!directedViaWaysUsedByRestrictions.add(directedViaWay))
-                                throw new OSMRestrictionException("has a member with role 'via' (" + viaWay.value + ") that is also used as 'via' member by another restriction in the same direction. GraphHopper cannot handle this.");
-                        }
-                    }
                     restrictionType = res.getRestrictionType();
                     bits.set(i);
                 }
