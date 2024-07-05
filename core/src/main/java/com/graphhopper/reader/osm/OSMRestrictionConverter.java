@@ -241,7 +241,8 @@ public class OSMRestrictionConverter {
         List<RestrictionSetter.Restriction> result = new ArrayList<>();
         EdgeIterator iter = edgeExplorer.setBaseNode(viaNode);
         while (iter.next()) {
-            // deny all turns except the one to the to-edge, except the u-turn back to the from-edge
+            // deny all turns except the one to the to-edge, and (for performance reasons, see below)
+            // except the u-turn back to the from-edge
             if (iter.getEdge() != toEdge && iter.getEdge() != fromEdge)
                 result.add(RestrictionSetter.createViaNodeRestriction(fromEdge, viaNode, iter.getEdge()));
         }
@@ -281,6 +282,8 @@ public class OSMRestrictionConverter {
             }
         }
         // explicitly deny all u-turns along the via-way 'only' restriction
+        // todo: currently disabled! we skip u-turn restrictions to improve reading performance,
+        //       because so far they are ignored anyway! https://github.com/graphhopper/graphhopper/issues/2570
 //        for (int i = 0; i < edges.size() - 1; i++) {
 //            result.add(RestrictionSetter.createViaNodeRestriction(edges.get(i), topology.getViaNodes().get(i), edges.get(i)));
 //        }
