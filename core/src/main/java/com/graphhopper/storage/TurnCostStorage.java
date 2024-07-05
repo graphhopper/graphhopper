@@ -141,7 +141,7 @@ public class TurnCostStorage {
     }
 
     private void ensureTurnCostIndex(int nodeIndex) {
-        turnCosts.ensureCapacity(((long) nodeIndex + 4) * BYTES_PER_ENTRY);
+        turnCosts.ensureCapacity(((long) nodeIndex + 1) * BYTES_PER_ENTRY);
     }
 
     private long findPointer(int fromEdge, int viaNode, int toEdge) {
