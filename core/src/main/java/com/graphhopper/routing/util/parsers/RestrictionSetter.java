@@ -157,7 +157,7 @@ public class RestrictionSetter {
                     final int artificialTo = artificialEdgesByEdges.getOrDefault(toEdge, toEdge);
                     if (p.second == NO) {
                         restrictTurn(turnRestrictionEnc, fromEdge, viaNode, toEdge);
-                        // we also need to restrict this term in case there are artificial edges for the from- and/or to-edge
+                        // we also need to restrict this turn in case there are artificial edges for the from- and/or to-edge
                         if (artificialFrom != fromEdge)
                             restrictTurn(turnRestrictionEnc, artificialFrom, viaNode, toEdge);
                         if (artificialTo != toEdge)
@@ -191,6 +191,8 @@ public class RestrictionSetter {
     private void restrictTurn(BooleanEncodedValue turnRestrictionEnc, int fromEdge, int viaNode, int toEdge) {
         if (fromEdge < 0 || toEdge < 0 || viaNode < 0)
             throw new IllegalArgumentException("from/toEdge and viaNode must be >= 0");
+        if (fromEdge == toEdge)
+            return;
         baseGraph.getTurnCostStorage().set(turnRestrictionEnc, fromEdge, viaNode, toEdge, true);
     }
 
