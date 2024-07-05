@@ -815,6 +815,7 @@ public class GraphHopper {
 
             importOSM();
             postImportOSM();
+            baseGraph.freeze();
             cleanUp();
 
             properties.put("profiles", getProfilesString());
@@ -1342,8 +1343,6 @@ public class GraphHopper {
     protected Map<String, PrepareContractionHierarchies.Result> prepareCH(boolean closeEarly, List<CHConfig> configsToPrepare) {
         if (!configsToPrepare.isEmpty())
             ensureWriteAccess();
-        if (!baseGraph.isFrozen())
-            baseGraph.freeze();
         return chPreparationHandler.prepare(baseGraph, properties, configsToPrepare, closeEarly);
     }
 
@@ -1383,8 +1382,6 @@ public class GraphHopper {
     protected List<PrepareLandmarks> prepareLM(boolean closeEarly, List<LMConfig> configsToPrepare) {
         if (!configsToPrepare.isEmpty())
             ensureWriteAccess();
-        if (!baseGraph.isFrozen())
-            baseGraph.freeze();
         return lmPreparationHandler.prepare(configsToPrepare, baseGraph, encodingManager, properties, locationIndex, closeEarly);
     }
 

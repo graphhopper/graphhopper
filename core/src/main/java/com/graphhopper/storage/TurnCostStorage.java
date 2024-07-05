@@ -25,6 +25,8 @@ import com.graphhopper.util.Constants;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
 
+import java.util.ArrayList;
+
 /**
  * A key/value store, where the unique keys are triples (fromEdge, viaNode, toEdge) and the values
  * are integers that can be used to store encoded values.
@@ -36,50 +38,66 @@ import com.graphhopper.util.GHUtility;
 public class TurnCostStorage {
     static final int NO_TURN_ENTRY = -1;
     // we store each turn cost entry in the format |from_edge|to_edge|flags|next|. each entry has 4 bytes -> 16 bytes total
-    private static final int TC_FROM = 0;
-    private static final int TC_TO = 4;
-    private static final int TC_FLAGS = 8;
-    private static final int TC_NEXT = 12;
-    private static final int BYTES_PER_ENTRY = 16;
+    private static final int W_TC_FROM = 0;
+    private static final int W_TC_TO = 4;
+    private static final int W_TC_FLAGS = 8;
+    private static final int W_TC_NEXT = 12;
+    private static final int W_BYTES_PER_ENTRY = 16;
+
+    // after freeze() store turn cost sorted by via node to avoid linked list: count|from_edge|to_edge|flags| [repeat]
+    private static final int R_TC_FROM = 0;
+    private static final int R_TC_TO = 4;
+    private static final int R_TC_FLAGS = 8;
+    private static final int R_BYTES_PER_ENTRY = 12;
 
     private final BaseGraph baseGraph;
-    private final DataAccess turnCosts;
-    private int turnCostsCount;
+    private final NodeAccess nodeAccess;
 
-    public TurnCostStorage(BaseGraph baseGraph, DataAccess turnCosts) {
+    private final DataAccess writeTmpTurnCosts;
+    private int turnCostsWritePtr = 0;
+
+    private final DataAccess readTurnCosts;
+    private boolean frozen = false;
+
+    public TurnCostStorage(BaseGraph baseGraph, DataAccess readDataAccess, DataAccess writeTmpTurnCosts) {
         this.baseGraph = baseGraph;
-        this.turnCosts = turnCosts;
+        this.readTurnCosts = readDataAccess;
+        this.writeTmpTurnCosts = writeTmpTurnCosts;
+        this.nodeAccess = baseGraph.getNodeAccess();
     }
 
     public TurnCostStorage create(long initBytes) {
-        turnCosts.create(initBytes);
+        writeTmpTurnCosts.create(initBytes);
+        readTurnCosts.create(initBytes);
         return this;
     }
 
     public void flush() {
-        turnCosts.setHeader(0, Constants.VERSION_TURN_COSTS);
-        turnCosts.setHeader(4, BYTES_PER_ENTRY);
-        turnCosts.setHeader(2 * 4, turnCostsCount);
-        turnCosts.flush();
+        if (!frozen) throw new RuntimeException("Cannot flush turn cost storage if not yet frozen");
+        readTurnCosts.setHeader(0, Constants.VERSION_TURN_COSTS);
+        readTurnCosts.setHeader(4, R_BYTES_PER_ENTRY);
+        readTurnCosts.flush();
     }
 
     public void close() {
-        turnCosts.close();
+        // if (!frozen) throw new RuntimeException("Cannot close turn cost storage if not yet frozen");
+        writeTmpTurnCosts.close();
+        readTurnCosts.close();
     }
 
     public long getCapacity() {
-        return turnCosts.getCapacity();
+        return frozen ? readTurnCosts.getCapacity() : writeTmpTurnCosts.getCapacity();
     }
 
     public boolean loadExisting() {
-        if (!turnCosts.loadExisting())
+        frozen = true;
+        if (!readTurnCosts.loadExisting())
             return false;
 
-        GHUtility.checkDAVersion(turnCosts.getName(), Constants.VERSION_TURN_COSTS, turnCosts.getHeader(0));
-        if (turnCosts.getHeader(4) != BYTES_PER_ENTRY) {
-            throw new IllegalStateException("Number of bytes per turn cost entry does not match the current configuration: " + turnCosts.getHeader(0) + " vs. " + BYTES_PER_ENTRY);
-        }
-        turnCostsCount = turnCosts.getHeader(8);
+        GHUtility.checkDAVersion(readTurnCosts.getName(), Constants.VERSION_TURN_COSTS, readTurnCosts.getHeader(0));
+        if (readTurnCosts.getHeader(4) != R_BYTES_PER_ENTRY)
+            throw new IllegalStateException("Number of bytes per turn cost entry does not match the current configuration: " + readTurnCosts.getHeader(0) + " vs. " + R_BYTES_PER_ENTRY);
+
         return true;
     }
 
@@ -87,7 +105,7 @@ public class TurnCostStorage {
         long pointer = findOrCreateTurnCostEntry(fromEdge, viaNode, toEdge);
         if (pointer < 0)
             throw new IllegalStateException("Invalid pointer: " + pointer + " at (" + fromEdge + ", " + viaNode + ", " + toEdge + ")");
-        bev.setBool(false, -1, createIntAccess(pointer), value);
+        bev.setBool(false, -1, createWriteIntAccess(pointer), value);
     }
 
     /**
@@ -97,97 +115,152 @@ public class TurnCostStorage {
         long pointer = findOrCreateTurnCostEntry(fromEdge, viaNode, toEdge);
         if (pointer < 0)
             throw new IllegalStateException("Invalid pointer: " + pointer + " at (" + fromEdge + ", " + viaNode + ", " + toEdge + ")");
-        turnCostEnc.setDecimal(false, -1, createIntAccess(pointer), cost);
+        turnCostEnc.setDecimal(false, -1, createWriteIntAccess(pointer), cost);
+    }
+
+    private EdgeIntAccess createWriteIntAccess(long pointer) {
+        return new EdgeIntAccess() {
+            @Override
+            public int getInt(int edgeId, int index) {
+                return writeTmpTurnCosts.getInt(pointer + W_TC_FLAGS);
+            }
+
+            @Override
+            public void setInt(int edgeId, int index, int value) {
+                writeTmpTurnCosts.setInt(pointer + W_TC_FLAGS, value);
+            }
+        };
     }
 
     private long findOrCreateTurnCostEntry(int fromEdge, int viaNode, int toEdge) {
-        long pointer = findPointer(fromEdge, viaNode, toEdge);
+        if (frozen) throw new IllegalStateException("TurnCostsStorage already frozen");
+        long pointer = findWriteTmpPointer(fromEdge, viaNode, toEdge);
         if (pointer < 0) {
             // create a new entry
-            ensureTurnCostIndex(turnCostsCount);
-            int prevIndex = baseGraph.getNodeAccess().getTurnCostIndex(viaNode);
-            baseGraph.getNodeAccess().setTurnCostIndex(viaNode, turnCostsCount);
-            pointer = (long) turnCostsCount * BYTES_PER_ENTRY;
-            turnCosts.setInt(pointer + TC_FROM, fromEdge);
-            turnCosts.setInt(pointer + TC_TO, toEdge);
-            turnCosts.setInt(pointer + TC_NEXT, prevIndex);
-            turnCostsCount++;
+            writeTmpTurnCosts.ensureCapacity(turnCostsWritePtr + 4 + W_BYTES_PER_ENTRY);
+            int prevIndex = nodeAccess.getTurnCostIndex(viaNode);
+            nodeAccess.setTurnCostIndex(viaNode, turnCostsWritePtr);
+            writeTmpTurnCosts.setInt(turnCostsWritePtr + W_TC_FROM, fromEdge);
+            writeTmpTurnCosts.setInt(turnCostsWritePtr + W_TC_TO, toEdge);
+            writeTmpTurnCosts.setInt(turnCostsWritePtr + W_TC_NEXT, prevIndex);
+            pointer = turnCostsWritePtr;
+            turnCostsWritePtr += W_BYTES_PER_ENTRY;
+            if (turnCostsWritePtr < 0)
+                throw new IllegalStateException("Too many turn cost entries");
         }
         return pointer;
     }
 
     public double get(DecimalEncodedValue dev, int fromEdge, int viaNode, int toEdge) {
-        return dev.getDecimal(false, -1, createIntAccess(findPointer(fromEdge, viaNode, toEdge)));
+        return dev.getDecimal(false, -1, createReadIntAccess(findReadPointer(fromEdge, viaNode, toEdge)));
     }
 
     public boolean get(BooleanEncodedValue bev, int fromEdge, int viaNode, int toEdge) {
-        return bev.getBool(false, -1, createIntAccess(findPointer(fromEdge, viaNode, toEdge)));
+        return bev.getBool(false, -1, createReadIntAccess(findReadPointer(fromEdge, viaNode, toEdge)));
     }
 
-    private EdgeIntAccess createIntAccess(long pointer) {
+    private EdgeIntAccess createReadIntAccess(long pointer) {
         return new EdgeIntAccess() {
             @Override
             public int getInt(int edgeId, int index) {
-                return pointer < 0 ? 0 : turnCosts.getInt(pointer + TC_FLAGS);
+                return pointer < 0 ? 0 : readTurnCosts.getInt(pointer + R_TC_FLAGS);
             }
 
             @Override
             public void setInt(int edgeId, int index, int value) {
-                if (pointer < 0)
-                    throw new IllegalStateException("pointer must not be negative: " + pointer);
-                turnCosts.setInt(pointer + TC_FLAGS, value);
+                throw new IllegalArgumentException("turn cost EdgeIntAccess cannot write to readTurnCosts");
             }
         };
     }
 
-    private void ensureTurnCostIndex(int nodeIndex) {
-        turnCosts.ensureCapacity(((long) nodeIndex + 4) * BYTES_PER_ENTRY);
+    public void freeze() {
+        record TmpEntry(int from, int to, int flags) {
+        }
+        int nextReadPointer = 4;
+        final int maxEntries = 1000;
+
+        for (int nodeIdx = 0; nodeIdx < baseGraph.getNodes(); nodeIdx++) {
+            int pointer = nodeAccess.getTurnCostIndex(nodeIdx);
+
+            ArrayList<TmpEntry> list = new ArrayList<>();
+            for (int i = 0; i < maxEntries; ++i) {
+                if (pointer == NO_TURN_ENTRY) break;
+                list.add(new TmpEntry(writeTmpTurnCosts.getInt(pointer + W_TC_FROM),
+                        writeTmpTurnCosts.getInt(pointer + W_TC_TO),
+                        writeTmpTurnCosts.getInt(pointer + W_TC_FLAGS)));
+                pointer = writeTmpTurnCosts.getInt(pointer + W_TC_NEXT);
+            }
+            if (pointer != NO_TURN_ENTRY)
+                throw new IllegalStateException("Too many turn cost entries for node:" + nodeIdx);
+
+            if (list.isEmpty()) continue;
+            // System.out.println("node " + nodeIdx + ", " + list.size() + ", " + nextReadPointer);
+            nodeAccess.setTurnCostIndex(nodeIdx, nextReadPointer);
+            readTurnCosts.ensureCapacity(nextReadPointer + 4 + (long) list.size() * R_BYTES_PER_ENTRY);
+            readTurnCosts.setInt(nextReadPointer, list.size());
+            nextReadPointer += 4;
+
+            for (TmpEntry tmpEntry : list) {
+                readTurnCosts.setInt(nextReadPointer + R_TC_FROM, tmpEntry.from);
+                readTurnCosts.setInt(nextReadPointer + R_TC_TO, tmpEntry.to);
+                readTurnCosts.setInt(nextReadPointer + R_TC_FLAGS, tmpEntry.flags);
+
+                nextReadPointer += R_BYTES_PER_ENTRY;
+            }
+
+            if (nextReadPointer + R_BYTES_PER_ENTRY < 0)
+                throw new RuntimeException("turn cost storage too large. node: " + nodeIdx + ", of:" + baseGraph.getNodes());
+        }
+
+        writeTmpTurnCosts.close();
+        // nodeAccess and readTurnCosts will be flushed later
+        frozen = true;
     }
 
-    private long findPointer(int fromEdge, int viaNode, int toEdge) {
+    private long findWriteTmpPointer(int fromEdge, int viaNode, int toEdge) {
         if (!EdgeIterator.Edge.isValid(fromEdge) || !EdgeIterator.Edge.isValid(toEdge))
             throw new IllegalArgumentException("from and to edge cannot be NO_EDGE");
         if (viaNode < 0)
             throw new IllegalArgumentException("via node cannot be negative");
 
         final int maxEntries = 1000;
-        int index = baseGraph.getNodeAccess().getTurnCostIndex(viaNode);
+        int pointer = nodeAccess.getTurnCostIndex(viaNode);
         for (int i = 0; i < maxEntries; ++i) {
-            if (index == NO_TURN_ENTRY) return -1;
-            long pointer = (long) index * BYTES_PER_ENTRY;
-            if (fromEdge == turnCosts.getInt(pointer + TC_FROM) && toEdge == turnCosts.getInt(pointer + TC_TO))
+            if (pointer == NO_TURN_ENTRY) return -1;
+            if (fromEdge == writeTmpTurnCosts.getInt(pointer + W_TC_FROM) && toEdge == writeTmpTurnCosts.getInt(pointer + W_TC_TO))
                 return pointer;
-            index = turnCosts.getInt(pointer + TC_NEXT);
+            pointer = writeTmpTurnCosts.getInt(pointer + W_TC_NEXT);
         }
         throw new IllegalStateException("Turn cost list for node: " + viaNode + " is longer than expected, max: " + maxEntries);
     }
 
-    public int getTurnCostsCount() {
-        return turnCostsCount;
-    }
+    private long findReadPointer(int fromEdge, int viaNode, int toEdge) {
+        if (!frozen) throw new IllegalStateException("TurnCostsStorage not yet frozen");
+        if (!EdgeIterator.Edge.isValid(fromEdge) || !EdgeIterator.Edge.isValid(toEdge))
+            throw new IllegalArgumentException("from and to edge cannot be NO_EDGE");
+        if (viaNode < 0)
+            throw new IllegalArgumentException("via node cannot be negative");
 
-    public int getTurnCostsCount(int node) {
-        int index = baseGraph.getNodeAccess().getTurnCostIndex(node);
-        int count = 0;
-        while (index != NO_TURN_ENTRY) {
-            long pointer = (long) index * BYTES_PER_ENTRY;
-            index = turnCosts.getInt(pointer + TC_NEXT);
-            count++;
+        int pointer = nodeAccess.getTurnCostIndex(viaNode);
+        if (pointer == NO_TURN_ENTRY) return -1; // empty
+        int count = readTurnCosts.getInt(pointer);
+        pointer += 4;
+        for (int i = 0; i < count; ++i) {
+            if (fromEdge == readTurnCosts.getInt(pointer + R_TC_FROM) && toEdge == readTurnCosts.getInt(pointer + R_TC_TO))
+                return pointer;
+            pointer += R_BYTES_PER_ENTRY;
         }
-        return count;
+        return -1; // specific edge not found
     }
 
     public boolean isClosed() {
-        return turnCosts.isClosed();
+        return frozen ? readTurnCosts.isClosed() : false;
     }
 
     @Override
     public String toString() {
         return "turn_cost";
     }
-
-    // TODO: Maybe some of the stuff above could now be re-implemented in a simpler way with some of the stuff below.
-    // For now, I just wanted to iterate over all entries.
 
     /**
      * Returns an iterator over all entries.
@@ -214,17 +287,14 @@ public class TurnCostStorage {
 
     private class Itr implements Iterator {
         private int viaNode = -1;
-        private int turnCostIndex = -1;
+        private long pointer = -1;
+        private int count = 0;
         private final IntsRef intsRef = new IntsRef(1);
         private final EdgeIntAccess edgeIntAccess = new IntsRefEdgeIntAccess(intsRef);
 
-        private long turnCostPtr() {
-            return (long) turnCostIndex * BYTES_PER_ENTRY;
-        }
-
         @Override
         public int getFromEdge() {
-            return turnCosts.getInt(turnCostPtr() + TC_FROM);
+            return readTurnCosts.getInt(pointer + R_TC_FROM);
         }
 
         @Override
@@ -234,28 +304,27 @@ public class TurnCostStorage {
 
         @Override
         public int getToEdge() {
-            return turnCosts.getInt(turnCostPtr() + TC_TO);
+            return readTurnCosts.getInt(pointer + R_TC_TO);
         }
 
         @Override
         public boolean get(BooleanEncodedValue booleanEncodedValue) {
-            intsRef.ints[0] = turnCosts.getInt(turnCostPtr() + TC_FLAGS);
+            intsRef.ints[0] = readTurnCosts.getInt(pointer + R_TC_FLAGS);
             return booleanEncodedValue.getBool(false, -1, edgeIntAccess);
         }
 
         @Override
         public double getCost(DecimalEncodedValue encodedValue) {
-            intsRef.ints[0] = turnCosts.getInt(turnCostPtr() + TC_FLAGS);
+            intsRef.ints[0] = readTurnCosts.getInt(pointer + R_TC_FLAGS);
             return encodedValue.getDecimal(false, -1, edgeIntAccess);
         }
 
         @Override
         public boolean next() {
-            boolean gotNextTci = nextTci();
-            if (!gotNextTci) {
-                turnCostIndex = NO_TURN_ENTRY;
+            boolean gotNextTce = nextTurnCostEntry();
+            if (!gotNextTce) {
                 boolean gotNextNode = true;
-                while (turnCostIndex == NO_TURN_ENTRY && (gotNextNode = nextNode())) {
+                while (count <= 0 && (gotNextNode = nextNode())) {
 
                 }
                 if (!gotNextNode) {
@@ -270,18 +339,22 @@ public class TurnCostStorage {
             if (viaNode >= baseGraph.getNodes()) {
                 return false;
             }
-            turnCostIndex = baseGraph.getNodeAccess().getTurnCostIndex(viaNode);
+
+            pointer = nodeAccess.getTurnCostIndex(viaNode);
+            if (pointer != NO_TURN_ENTRY) {
+                count = readTurnCosts.getInt(pointer);
+                pointer += 4;
+            } else {
+                count = 0;
+            }
             return true;
         }
 
-        private boolean nextTci() {
-            if (turnCostIndex == NO_TURN_ENTRY) {
+        private boolean nextTurnCostEntry() {
+            if (--count <= 0)
                 return false;
-            }
-            turnCostIndex = turnCosts.getInt(turnCostPtr() + TC_NEXT);
-            if (turnCostIndex == NO_TURN_ENTRY) {
-                return false;
-            }
+
+            pointer += R_BYTES_PER_ENTRY;
             return true;
         }
     }

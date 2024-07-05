@@ -70,7 +70,9 @@ public class BaseGraph implements Graph, Closeable {
         this.store = new BaseGraphNodesAndEdges(dir, withElevation, withTurnCosts, segmentSize, bytesForFlags);
         this.nodeAccess = new GHNodeAccess(store);
         this.segmentSize = segmentSize;
-        this.turnCostStorage = withTurnCosts ? new TurnCostStorage(this, dir.create("turn_costs", dir.getDefaultType("turn_costs", true), segmentSize)) : null;
+        this.turnCostStorage = withTurnCosts ? new TurnCostStorage(this,
+                dir.create("turn_costs", dir.getDefaultType("turn_costs", true), segmentSize),
+                dir.create("tmp_turn_costs", dir.getDefaultType("tmp_turn_costs", true), segmentSize)) : null;
         this.eleBytesPerCoord = (nodeAccess.getDimension() == 3 ? 3 : 0);
     }
 
@@ -85,12 +87,6 @@ public class BaseGraph implements Graph, Closeable {
 
     private boolean isAdjacentToNode(int node, long edgePointer) {
         return store.getNodeA(edgePointer) == node || store.getNodeB(edgePointer) == node;
-    }
-
-    private static boolean isTestingEnabled() {
-        boolean enableIfAssert = false;
-        assert (enableIfAssert = true) : true;
-        return enableIfAssert;
     }
 
     public void debugPrint() {
@@ -165,6 +161,7 @@ public class BaseGraph implements Graph, Closeable {
         if (isFrozen())
             throw new IllegalStateException("base graph already frozen");
         store.setFrozen(true);
+        if (supportsTurnCosts()) turnCostStorage.freeze();
     }
 
     public synchronized boolean isFrozen() {

@@ -92,8 +92,10 @@ public class TurnCostStorageTest {
         turnCostStorage.set(carEnc, edge31, 1, edge10, 2.0);
         turnCostStorage.set(bikeEnc, edge31, 1, edge10, Double.POSITIVE_INFINITY);
         turnCostStorage.set(bikeEnc, edge02, 2, edge24, Double.POSITIVE_INFINITY);
+        turnCostStorage.set(carEnc, edge02, 2, edge23, Double.POSITIVE_INFINITY);
+        turnCostStorage.set(bikeEnc, edge02, 2, edge23, Double.POSITIVE_INFINITY);
 
-        assertEquals(turnCostStorage.getTurnCostsCount(), IntStream.range(0, g.getNodes()).map(turnCostStorage::getTurnCostsCount).sum());
+        turnCostStorage.freeze();
 
         assertEquals(Double.POSITIVE_INFINITY, turnCostStorage.get(carEnc, edge42, 2, edge23), 0);
         assertEquals(Double.POSITIVE_INFINITY, turnCostStorage.get(bikeEnc, edge42, 2, edge23), 0);
@@ -107,8 +109,6 @@ public class TurnCostStorageTest {
         assertEquals(0.0, turnCostStorage.get(carEnc, edge02, 2, edge24), 0);
         assertEquals(Double.POSITIVE_INFINITY, turnCostStorage.get(bikeEnc, edge02, 2, edge24), 0);
 
-        turnCostStorage.set(carEnc, edge02, 2, edge23, Double.POSITIVE_INFINITY);
-        turnCostStorage.set(bikeEnc, edge02, 2, edge23, Double.POSITIVE_INFINITY);
         assertEquals(Double.POSITIVE_INFINITY, turnCostStorage.get(carEnc, edge02, 2, edge23), 0);
         assertEquals(Double.POSITIVE_INFINITY, turnCostStorage.get(bikeEnc, edge02, 2, edge23), 0);
 
@@ -142,6 +142,7 @@ public class TurnCostStorageTest {
 
         turnCostStorage.set(carEnc, edge02, 2, edge23, Double.POSITIVE_INFINITY);
         turnCostStorage.set(bikeEnc, edge02, 2, edge23, Double.POSITIVE_INFINITY);
+        turnCostStorage.freeze();
         assertEquals(Double.POSITIVE_INFINITY, turnCostStorage.get(carEnc, edge02, 2, edge23), 0);
         assertEquals(Double.POSITIVE_INFINITY, turnCostStorage.get(bikeEnc, edge02, 2, edge23), 0);
 
@@ -166,12 +167,11 @@ public class TurnCostStorageTest {
         DecimalEncodedValue carEnc = carTurnCostEnc;
         int edge32 = getEdge(g, 3, 2).getEdge();
         int edge20 = getEdge(g, 2, 0).getEdge();
-        assertEquals(0, turnCostStorage.get(carEnc, edge32, 2, edge20));
-        turnCostStorage.set(carEnc, edge32, 2, edge20, Double.POSITIVE_INFINITY);
-        assertEquals(Double.POSITIVE_INFINITY, turnCostStorage.get(carEnc, edge32, 2, edge20));
         turnCostStorage.set(carEnc, edge32, 2, edge20, 0);
         turnCostStorage.set(carEnc, edge32, 2, edge20, Double.POSITIVE_INFINITY);
         turnCostStorage.set(carEnc, edge32, 2, edge20, 0);
+        turnCostStorage.freeze();
+
         assertEquals(0, turnCostStorage.get(carEnc, edge32, 2, edge20));
     }
 

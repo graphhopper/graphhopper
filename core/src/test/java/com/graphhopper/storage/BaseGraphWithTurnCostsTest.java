@@ -86,6 +86,7 @@ public class BaseGraphWithTurnCostsTest extends BaseGraphTest {
         iter2.setKeyValues(Map.of(STREET_NAME, new KVStorage.KValue( "named street2")));
 
         checkGraph(graph);
+        graph.freeze();
         graph.flush();
         graph.close();
 
@@ -102,10 +103,6 @@ public class BaseGraphWithTurnCostsTest extends BaseGraphTest {
         assertEquals(666, getTurnCost(iter1, 0, iter2), .1);
         assertEquals(815, getTurnCost(iter2, 1, iter1), .1);
         assertEquals(0, getTurnCost(iter2, 3, iter1), .1);
-
-        graph.edge(3, 4).setDistance(123).set(carAccessEnc, true, true).
-                setWayGeometry(Helper.createPointList3D(4.4, 5.5, 0, 6.6, 7.7, 0));
-        checkGraph(graph);
     }
 
     @Test
@@ -142,11 +139,15 @@ public class BaseGraphWithTurnCostsTest extends BaseGraphTest {
         }
 
         setTurnCost(0, 50, 1, 1337);
-        assertEquals(104, turnCostStorage.getCapacity() / 16); // we are still good here
+        assertEquals(104, turnCostStorage.getCapacity() / 16.0); // we are still good here
 
         setTurnCost(0, 50, 2, 1337);
+        long oldCap = turnCostStorage.getCapacity();
         // A new segment should be added, which will support 128 / 16 = 8 more entries.
-        assertEquals(112, turnCostStorage.getCapacity() / 16);
+        assertEquals(112, oldCap / 16.0);
+
+        turnCostStorage.freeze();
+        assertEquals(oldCap - 384, turnCostStorage.getCapacity());
     }
 
     @Test

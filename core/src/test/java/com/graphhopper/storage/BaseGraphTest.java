@@ -172,6 +172,7 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
     public void testDoThrowExceptionIfDimDoesNotMatch() {
         graph = newGHStorage(new RAMDirectory(defaultGraphLoc, true), false);
         graph.create(1000);
+        graph.freeze();
         graph.flush();
         graph.close();
 
