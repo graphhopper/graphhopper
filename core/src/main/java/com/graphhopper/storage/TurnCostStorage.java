@@ -55,6 +55,7 @@ public class TurnCostStorage {
 
     private final DataAccess writeTmpTurnCosts;
     private int turnCostsWritePtr = 0;
+    private int turnCostCount = 0;
 
     private final DataAccess readTurnCosts;
     private boolean frozen = false;
@@ -76,6 +77,7 @@ public class TurnCostStorage {
         if (!frozen) throw new RuntimeException("Cannot flush turn cost storage if not yet frozen");
         readTurnCosts.setHeader(0, Constants.VERSION_TURN_COSTS);
         readTurnCosts.setHeader(4, R_BYTES_PER_ENTRY);
+        readTurnCosts.setHeader(8, turnCostCount);
         readTurnCosts.flush();
     }
 
@@ -97,6 +99,7 @@ public class TurnCostStorage {
         GHUtility.checkDAVersion(readTurnCosts.getName(), Constants.VERSION_TURN_COSTS, readTurnCosts.getHeader(0));
         if (readTurnCosts.getHeader(4) != R_BYTES_PER_ENTRY)
             throw new IllegalStateException("Number of bytes per turn cost entry does not match the current configuration: " + readTurnCosts.getHeader(0) + " vs. " + R_BYTES_PER_ENTRY);
+        turnCostCount = readTurnCosts.getHeader(8);
 
         return true;
     }
@@ -137,6 +140,7 @@ public class TurnCostStorage {
         long pointer = findWriteTmpPointer(fromEdge, viaNode, toEdge);
         if (pointer < 0) {
             // create a new entry
+            turnCostCount++;
             writeTmpTurnCosts.ensureCapacity(turnCostsWritePtr + 4 + W_BYTES_PER_ENTRY);
             int prevIndex = nodeAccess.getTurnCostIndex(viaNode);
             nodeAccess.setTurnCostIndex(viaNode, turnCostsWritePtr);
@@ -171,6 +175,10 @@ public class TurnCostStorage {
                 throw new IllegalArgumentException("turn cost EdgeIntAccess cannot write to readTurnCosts");
             }
         };
+    }
+
+    public int getTurnCostsCount() {
+        return turnCostCount;
     }
 
     public void freeze() {

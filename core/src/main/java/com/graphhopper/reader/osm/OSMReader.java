@@ -607,6 +607,9 @@ public class OSMReader {
     }
 
     private void addRestrictionsToGraph() {
+        if (turnCostStorage == null)
+            return;
+        StopWatch sw = StopWatch.started();
         // The OSM restriction format is explained here: https://wiki.openstreetmap.org/wiki/Relation:restriction
         List<Triple<ReaderRelation, RestrictionTopology, RestrictionMembers>> restrictionRelationsWithTopology = new ArrayList<>(restrictionRelations.size());
         for (ReaderRelation restrictionRelation : restrictionRelations) {
@@ -652,6 +655,8 @@ public class OSMReader {
             }
             restrictionSetter.setRestrictions(restrictionsWithType, restrictionTagParser.getTurnRestrictionEnc());
         }
+        LOGGER.info("Finished adding turn restrictions. total turn cost entries: {}, took: {}",
+                Helper.nf(baseGraph.getTurnCostStorage().getTurnCostsCount()), sw.stop().getTimeString());
     }
 
     public IntIntMap getArtificialEdgesByEdges() {
