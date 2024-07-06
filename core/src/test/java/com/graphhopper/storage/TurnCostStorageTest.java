@@ -181,6 +181,7 @@ public class TurnCostStorageTest {
         initGraph(g, accessEnc, speedEnc);
         TurnCostStorage turnCostStorage = g.getTurnCostStorage();
 
+        turnCostStorage.freeze();
         TurnCostStorage.Iterator iterator = turnCostStorage.getAllTurnCosts();
         assertFalse(iterator.next());
     }

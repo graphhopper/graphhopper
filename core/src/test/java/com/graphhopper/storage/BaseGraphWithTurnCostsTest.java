@@ -156,7 +156,7 @@ public class BaseGraphWithTurnCostsTest extends BaseGraphTest {
 
         // turn cost index is initialized in BaseGraph.initNodeRefs
         na.setNode(4001, 10, 11, 10);
-        assertEquals(TurnCostStorage.NO_TURN_ENTRY, na.getTurnCostIndex(4001));
+        assertEquals(TurnCostStorage.W_NO_TURN_ENTRY, na.getTurnCostIndex(4001));
 
         na.setNode(4000, 10, 11, 10);
         na.setTurnCostIndex(4000, 12);

@@ -228,7 +228,7 @@ class BaseGraphNodesAndEdges implements EdgeIntAccess {
         for (int n = oldNodes; n < nodeCount; ++n) {
             setEdgeRef(toNodePointer(n), NO_EDGE);
             if (withTurnCosts)
-                setTurnCostRef(toNodePointer(n), TurnCostStorage.NO_TURN_ENTRY);
+                setTurnCostRef(toNodePointer(n), TurnCostStorage.W_NO_TURN_ENTRY);
         }
     }
 
