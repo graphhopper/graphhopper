@@ -105,6 +105,8 @@ public class FootPriorityParser implements TagParser {
             weightToPrioMap.put(100d, PREFER);
 
         if (way.hasTag("foot", "use_sidepath")) {
+            // We use VERY_BAD and not REACH_DESTINATION in order to avoid too long detours, see
+            // https://community.openstreetmap.org/t/foot-use-sidepath-sinnvoll-bei-separat-kartierten-gehwegen/115654
             weightToPrioMap.put(100d, VERY_BAD);
         }
 
