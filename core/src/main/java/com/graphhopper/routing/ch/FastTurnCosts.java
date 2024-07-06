@@ -79,7 +79,7 @@ public class FastTurnCosts {
         while (itr.next()) {
             int flags = itr.getFlags();
             int fastFlags = getFlags(itr.getFromEdge(), itr.getToEdge());
-            System.out.println(flags + " " + fastFlags);
+//            System.out.println(flags + " " + fastFlags);
             if (flags != fastFlags)
                 throw new RuntimeException();
         }
