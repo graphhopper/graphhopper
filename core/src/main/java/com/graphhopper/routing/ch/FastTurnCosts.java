@@ -19,14 +19,11 @@
 package com.graphhopper.routing.ch;
 
 import com.carrotsearch.hppc.IntArrayList;
-import com.carrotsearch.hppc.LongIntMap;
-import com.carrotsearch.hppc.LongIntScatterMap;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.TurnCostStorage;
-import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 
@@ -45,7 +42,6 @@ public class FastTurnCosts {
             return edgeId;
         }
     };
-    private final LongIntMap turnCosts = new LongIntScatterMap();
 
     public FastTurnCosts(BaseGraph graph) {
         System.out.println("building fast turn costs");
@@ -78,20 +74,15 @@ public class FastTurnCosts {
             }
         }
 
-        TurnCostStorage.Iterator itr = graph.getTurnCostStorage().getAllTurnCosts();
-        while (itr.next())
-            turnCosts.put(BitUtil.LITTLE.toLong(itr.getFromEdge(), itr.getToEdge()), itr.getFlags());
-
         // consistency check
-//        itr = graph.getTurnCostStorage().getAllTurnCosts();
-//        while (itr.next()) {
-//            int flags = itr.getFlags();
-//            int fastFlags = getFlags(itr.getFromEdge(), itr.getToEdge());
+        TurnCostStorage.Iterator itr = graph.getTurnCostStorage().getAllTurnCosts();
+        while (itr.next()) {
+            int flags = itr.getFlags();
+            int fastFlags = getFlags(itr.getFromEdge(), itr.getToEdge());
 //            System.out.println(flags + " " + fastFlags);
-//            if (flags != fastFlags)
-//                throw new RuntimeException();
-//        }
-
+            if (flags != fastFlags)
+                throw new RuntimeException();
+        }
     }
 
     public boolean get(BooleanEncodedValue turnCostEnc, int fromEdge, int toEdge) {
@@ -100,14 +91,14 @@ public class FastTurnCosts {
     }
 
     private int getFlags(int fromEdge, int toEdge) {
-        return turnCosts.getOrDefault(BitUtil.LITTLE.toLong(fromEdge, toEdge), 0);
-//        int idx = fromEdgeIndices[fromEdge];
-//        int end = fromEdgeIndices[fromEdge + 1];
-//        for (int i = idx; i < end; i++) {
-//            if (toEdges.get(i) == toEdge)
-//                return turnCostFlags.get(i);
-//        }
-//        return 0;
+        int idx = fromEdgeIndices[fromEdge];
+        int end = fromEdgeIndices[fromEdge + 1];
+        // todo: we could sort by toEdge and do binary search here
+        for (int i = idx; i < end; i++) {
+            if (toEdges.get(i) == toEdge)
+                return turnCostFlags.get(i);
+        }
+        return 0;
     }
 
 }
