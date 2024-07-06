@@ -17,6 +17,7 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.routing.ch.FastTurnCosts;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EdgeIntAccess;
@@ -45,6 +46,8 @@ public class TurnCostStorage {
     private final BaseGraph baseGraph;
     private final DataAccess turnCosts;
     private int turnCostsCount;
+
+    private FastTurnCosts fastTurnCosts;
 
     public TurnCostStorage(BaseGraph baseGraph, DataAccess turnCosts) {
         this.baseGraph = baseGraph;
@@ -121,7 +124,16 @@ public class TurnCostStorage {
     }
 
     public boolean get(BooleanEncodedValue bev, int fromEdge, int viaNode, int toEdge) {
-        return bev.getBool(false, -1, createIntAccess(findPointer(fromEdge, viaNode, toEdge)));
+        if (fastTurnCosts == null) {
+            fastTurnCosts = new FastTurnCosts(baseGraph);
+        }
+        return fastTurnCosts.get(bev, fromEdge, toEdge);
+//        return bev.getBool(false, -1, createIntAccess(findPointer(fromEdge, viaNode, toEdge)));
+    }
+
+    public int getFlags(int fromEdge, int viaNode, int toEdge) {
+        long pointer = findPointer(fromEdge, viaNode, toEdge);
+        return pointer < 0 ? 0 : turnCosts.getInt(pointer + TC_FLAGS);
     }
 
     private EdgeIntAccess createIntAccess(long pointer) {
@@ -209,6 +221,8 @@ public class TurnCostStorage {
 
         double getCost(DecimalEncodedValue encodedValue);
 
+        int getFlags();
+
         boolean next();
     }
 
@@ -247,6 +261,11 @@ public class TurnCostStorage {
         public double getCost(DecimalEncodedValue encodedValue) {
             intsRef.ints[0] = turnCosts.getInt(turnCostPtr() + TC_FLAGS);
             return encodedValue.getDecimal(false, -1, edgeIntAccess);
+        }
+
+        @Override
+        public int getFlags() {
+            return turnCosts.getInt(turnCostPtr() + TC_FLAGS);
         }
 
         @Override
