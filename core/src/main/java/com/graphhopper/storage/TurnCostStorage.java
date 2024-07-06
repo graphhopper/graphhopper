@@ -208,9 +208,12 @@ public class TurnCostStorage {
             if (pointer != W_NO_TURN_ENTRY)
                 throw new IllegalStateException("Too many turn cost entries for node:" + nodeIdx);
 
-            nodeAccess.setTurnCostIndex(nodeIdx, nextReadPointer);
-            if (list.isEmpty()) continue;
+            if (list.isEmpty()) {
+                nodeAccess.setTurnCostIndex(nodeIdx, -nextReadPointer);
+                continue;
+            }
 
+            nodeAccess.setTurnCostIndex(nodeIdx, nextReadPointer);
             readTurnCosts.ensureCapacity(nextReadPointer + (long) list.size() * R_BYTES_PER_ENTRY);
 
             for (TmpEntry tmpEntry : list) {
@@ -257,7 +260,8 @@ public class TurnCostStorage {
             throw new IllegalArgumentException("via node cannot be negative");
 
         int pointer = nodeAccess.getTurnCostIndex(viaNode);
-        long nextPointer = viaNode + 1 == nodeCount ? lastReadPointer : nodeAccess.getTurnCostIndex(viaNode + 1);
+        if (pointer < 0) return -1; // minor performance tweak to avoid nodeAccess.getTurnCostIndex
+        long nextPointer = viaNode + 1 == nodeCount ? lastReadPointer : Math.abs(nodeAccess.getTurnCostIndex(viaNode + 1));
 
         for (; pointer < nextPointer; pointer += R_BYTES_PER_ENTRY) {
             if (fromEdge == readTurnCosts.getInt(pointer + R_TC_FROM) && toEdge == readTurnCosts.getInt(pointer + R_TC_TO))
@@ -359,7 +363,11 @@ public class TurnCostStorage {
             }
 
             pointer = nodeAccess.getTurnCostIndex(viaNode);
-            nextPointer = viaNode + 1 == nodeCount ? lastReadPointer : nodeAccess.getTurnCostIndex(viaNode + 1);
+            if (pointer < 0) {
+                nextPointer = pointer = -pointer;  // minor performance tweak to avoid nodeAccess.getTurnCostIndex
+            } else {
+                nextPointer = viaNode + 1 == nodeCount ? lastReadPointer : Math.abs(nodeAccess.getTurnCostIndex(viaNode + 1));
+            }
             return true;
         }
 
