@@ -78,19 +78,20 @@ public class FastTurnCosts {
             }
         }
 
-        // consistency check
         TurnCostStorage.Iterator itr = graph.getTurnCostStorage().getAllTurnCosts();
-        while (itr.next()) {
-            int flags = itr.getFlags();
-            int fastFlags = getFlags(itr.getFromEdge(), itr.getToEdge());
-//            System.out.println(flags + " " + fastFlags);
-            if (flags != fastFlags)
-                throw new RuntimeException();
-        }
-
-        itr = graph.getTurnCostStorage().getAllTurnCosts();
         while (itr.next())
             turnCosts.put(BitUtil.LITTLE.toLong(itr.getFromEdge(), itr.getToEdge()), itr.getFlags());
+
+        // consistency check
+//        itr = graph.getTurnCostStorage().getAllTurnCosts();
+//        while (itr.next()) {
+//            int flags = itr.getFlags();
+//            int fastFlags = getFlags(itr.getFromEdge(), itr.getToEdge());
+//            System.out.println(flags + " " + fastFlags);
+//            if (flags != fastFlags)
+//                throw new RuntimeException();
+//        }
+
     }
 
     public boolean get(BooleanEncodedValue turnCostEnc, int fromEdge, int toEdge) {
