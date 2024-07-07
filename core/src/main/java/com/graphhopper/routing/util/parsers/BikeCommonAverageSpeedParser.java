@@ -119,8 +119,6 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
      */
     double applyMaxSpeed(ReaderWay way, double speed, boolean bwd) {
         double maxSpeed = getMaxSpeed(way, bwd);
-        if (way.getTag("highway", "").equals("living_street"))
-            return !isValidSpeed(maxSpeed) ? highwaySpeeds.get("living_street") : maxSpeed <= highwaySpeeds.get("cycleway") ? maxSpeed : highwaySpeeds.get("cycleway");
         // We strictly obey speed limits, see #600
         return isValidSpeed(maxSpeed) && speed > maxSpeed ? maxSpeed : speed;
     }
@@ -140,12 +138,8 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         }
 
         double speed = highwaySpeeds.getOrDefault(highwayValue, PUSHING_SECTION_SPEED);
-        String surfaceValue = way.getTag("surface");
-        String trackTypeValue = way.getTag("tracktype");
         boolean pushingRestriction = Arrays.stream(way.getTag("vehicle", "").split(";")).anyMatch(restrictedValues::contains);
-        if ("steps".equals(highwayValue)) {
-            // ignore
-        } else if (way.hasTag("bicycle", "dismount")
+        if (way.hasTag("bicycle", "dismount")
                 || way.hasTag("railway", "platform")
                 || pushingRestriction && !way.hasTag("bicycle", INTENDED)) {
             speed = PUSHING_SECTION_SPEED;
@@ -156,8 +150,13 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
             else if (way.hasTag("bicycle", "yes"))
                 speed = 12;
         }
+        // Increase speed in case maxspeed tag allows it
+        double maxSpeed = getMaxSpeed(way, false);
+        if (isValidSpeed(maxSpeed) && (speed < maxSpeed))
+            speed = Math.min(maxSpeed, highwaySpeeds.get("tertiary"));
 
-        Integer surfaceSpeed = surfaceSpeeds.get(surfaceValue);
+        Integer surfaceSpeed = surfaceSpeeds.get(way.getTag("surface"));
+        String trackTypeValue = way.getTag("tracktype");
         if (way.hasTag("surface") && surfaceSpeed == null) {
             speed = PUSHING_SECTION_SPEED; // unknown surface
         } else if (way.hasTag("service")) {
@@ -173,6 +172,8 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
 
         Smoothness smoothness = smoothnessEnc.getEnum(false, edgeId, edgeIntAccess);
         speed = Math.max(MIN_SPEED, smoothnessFactor.get(smoothness) * speed);
+        if ("steps".equals(highwayValue))
+            speed = MIN_SPEED;
         setSpeed(false, edgeId, edgeIntAccess, applyMaxSpeed(way, speed, false));
         if (avgSpeedEnc.isStoreTwoDirections())
             setSpeed(true, edgeId, edgeIntAccess, applyMaxSpeed(way, speed, true));

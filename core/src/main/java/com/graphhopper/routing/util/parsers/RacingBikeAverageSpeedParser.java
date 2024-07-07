@@ -53,6 +53,8 @@ public class RacingBikeAverageSpeedParser extends BikeCommonAverageSpeedParser {
         setHighwaySpeed("secondary_link", 20);
         setHighwaySpeed("tertiary", 20);
         setHighwaySpeed("tertiary_link", 20);
+        setHighwaySpeed("motorway", 20);
+        setHighwaySpeed("motorway_link", 20);
 
         addPushingSection("path");
 
