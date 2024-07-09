@@ -20,13 +20,12 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.EdgeIntAccess;
-import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 
 public class FastTurnCosts {
-    private final DataAccess fromEdgeIndices;
+    private final DataAccess viaNodeIndices;
     private final DataAccess turnCostEntries;
     private final EdgeIntAccess edgeIntAccess = new EdgeIntAccess() {
         @Override
@@ -42,36 +41,27 @@ public class FastTurnCosts {
 
     public FastTurnCosts(BaseGraph graph) {
         System.out.println("building fast turn costs");
-        fromEdgeIndices = new RAMDirectory().create("from_edge_indices", DAType.RAM_INT).create(42);
-        fromEdgeIndices.ensureCapacity(4L * (graph.getEdges() + 1));
+        viaNodeIndices = new RAMDirectory().create("via_node_indices", DAType.RAM_INT).create(42);
+        viaNodeIndices.ensureCapacity(4L * (graph.getNodes() + 1));
         turnCostEntries = new RAMDirectory().create("turn_cost_entries", DAType.RAM_INT).create(42);
-        EdgeExplorer explorer = graph.createEdgeExplorer();
-        AllEdgesIterator iter = graph.getAllEdges();
         int count = 0;
-        while (iter.next()) {
-            fromEdgeIndices.setInt(4L * (iter.getEdge() + 1), fromEdgeIndices.getInt(4L * iter.getEdge()));
-            EdgeIterator it = explorer.setBaseNode(iter.getAdjNode());
-            while (it.next()) {
-                int flags = graph.getTurnCostStorage().getFlags(iter.getEdge(), iter.getAdjNode(), it.getEdge());
-                if (flags != 0) {
-                    turnCostEntries.ensureCapacity(8L * (count + 1));
-                    turnCostEntries.setInt(8L * count, it.getEdge());
-                    turnCostEntries.setInt(8L * count + 4L, flags);
-                    count++;
-                    fromEdgeIndices.setInt(4L * (iter.getEdge() + 1), fromEdgeIndices.getInt(4L * (iter.getEdge() + 1)) + 1);
-                }
-            }
-            // todo: with this storage we cannot distinguish turn costs a-A-a from a-B-a (for an edge A-(a)-B)!! But right now we just want to see how fast this is
-            //       if we wanted to actually use this we need the edge keys
-            it = explorer.setBaseNode(iter.getBaseNode());
-            while (it.next()) {
-                int flags = graph.getTurnCostStorage().getFlags(iter.getEdge(), iter.getBaseNode(), it.getEdge());
-                if (flags != 0) {
-                    turnCostEntries.ensureCapacity(8L * (count + 1));
-                    turnCostEntries.setInt(8L * count, it.getEdge());
-                    turnCostEntries.setInt(8L * count + 4L, flags);
-                    count++;
-                    fromEdgeIndices.setInt(4L * (iter.getEdge() + 1), fromEdgeIndices.getInt(4L * (iter.getEdge() + 1)) + 1);
+        EdgeExplorer explorer1 = graph.createEdgeExplorer();
+        EdgeExplorer explorer2 = graph.createEdgeExplorer();
+        for (int node = 0; node < graph.getNodes(); node++) {
+            viaNodeIndices.setInt(4L * (node + 1), viaNodeIndices.getInt(4L * node));
+            EdgeIterator fromIter = explorer1.setBaseNode(node);
+            while (fromIter.next()) {
+                EdgeIterator toIter = explorer2.setBaseNode(node);
+                while (toIter.next()) {
+                    int flags = graph.getTurnCostStorage().getFlags(fromIter.getEdge(), node, toIter.getEdge());
+                    if (flags != 0) {
+                        turnCostEntries.ensureCapacity(12L * (count + 1));
+                        turnCostEntries.setInt(12L * count, fromIter.getEdge());
+                        turnCostEntries.setInt(12L * count + 4L, toIter.getEdge());
+                        turnCostEntries.setInt(12L * count + 8L, flags);
+                        count++;
+                        viaNodeIndices.setInt(4L * (node + 1), viaNodeIndices.getInt(4L * (node + 1)) + 1);
+                    }
                 }
             }
         }
@@ -80,25 +70,25 @@ public class FastTurnCosts {
         TurnCostStorage.Iterator itr = graph.getTurnCostStorage().getAllTurnCosts();
         while (itr.next()) {
             int flags = itr.getFlags();
-            int fastFlags = getFlags(itr.getFromEdge(), itr.getToEdge());
+            int fastFlags = getFlags(itr.getFromEdge(), itr.getViaNode(), itr.getToEdge());
 //            System.out.println(flags + " " + fastFlags);
             if (flags != fastFlags)
                 throw new RuntimeException();
         }
     }
 
-    public boolean get(BooleanEncodedValue turnCostEnc, int fromEdge, int toEdge) {
-        int flags = getFlags(fromEdge, toEdge);
+    public boolean get(BooleanEncodedValue turnCostEnc, int fromEdge, int viaNode, int toEdge) {
+        int flags = getFlags(fromEdge, viaNode, toEdge);
         return flags != 0 && turnCostEnc.getBool(false, flags, edgeIntAccess);
     }
 
-    private int getFlags(int fromEdge, int toEdge) {
-        int idx = fromEdgeIndices.getInt(4L * fromEdge);
-        int end = fromEdgeIndices.getInt(4L * (fromEdge + 1));
-        // todo: we could sort by toEdge and do binary search here
+    private int getFlags(int fromEdge, int viaNode, int toEdge) {
+        int idx = viaNodeIndices.getInt(4L * viaNode);
+        int end = viaNodeIndices.getInt(4L * (viaNode + 1));
+        // todo: we could sort by from/toEdge and do binary search here
         for (int i = idx; i < end; i++) {
-            if (turnCostEntries.getInt(8L * i) == toEdge)
-                return turnCostEntries.getInt(8L * i + 4L);
+            if (turnCostEntries.getInt(12L * i) == fromEdge && turnCostEntries.getInt(12L * i + 4L) == toEdge)
+                return turnCostEntries.getInt(12L * i + 8L);
         }
         return 0;
     }
