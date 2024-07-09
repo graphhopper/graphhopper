@@ -655,25 +655,8 @@ public class OSMReader {
             }
             restrictionSetter.setRestrictions(restrictionsWithType, restrictionTagParser.getTurnRestrictionEnc());
         }
-        int[] y = getMaxTurnCostsPerNode();
-//        LOGGER.info("Finished adding turn restrictions. total turn cost entries: {}, took: {}",
-//                Helper.nf(baseGraph.getTurnCostStorage().getTurnCostsCount()), sw.stop().getTimeString());
-        LOGGER.info("Finished creating turn restrictions. total turn cost entries: {}, max per node: {} @ {},{}, took: {}",
-                Helper.nf(baseGraph.getTurnCostStorage().getTurnCostsCount()), y[0],
-                baseGraph.getNodeAccess().getLat(y[1]), baseGraph.getNodeAccess().getLon(y[1]), sw.stop().getTimeString());
-    }
-
-    private int[] getMaxTurnCostsPerNode() {
-        int max = Integer.MIN_VALUE;
-        int i_max = -1;
-        for (int i = 0; i < baseGraph.getNodes(); i++) {
-            int c = baseGraph.getTurnCostStorage().getTurnCostsCount(i);
-            if (c > max) {
-                max = c;
-                i_max = i;
-            }
-        }
-        return new int[]{max, i_max};
+        LOGGER.info("Finished adding turn restrictions. total turn cost entries: {}, took: {}",
+                Helper.nf(baseGraph.getTurnCostStorage().getTurnCostsCount()), sw.stop().getTimeString());
     }
 
     public IntIntMap getArtificialEdgesByEdges() {

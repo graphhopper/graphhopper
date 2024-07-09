@@ -18,7 +18,6 @@
 
 package com.graphhopper.routing.ch;
 
-import com.carrotsearch.hppc.BitSet;
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.EdgeIntAccess;
@@ -29,10 +28,9 @@ import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 
 public class FastTurnCosts {
-    private final SparseIntIntMap fromEdgeIndices;
+    private final int[] fromEdgeIndices;
     private final IntArrayList toEdges;
     private final IntArrayList turnCostFlags;
-    private final IntArrayList counts;
     private final EdgeIntAccess edgeIntAccess = new EdgeIntAccess() {
         @Override
         public void setInt(int edgeId, int index, int value) {
@@ -47,22 +45,20 @@ public class FastTurnCosts {
 
     public FastTurnCosts(BaseGraph graph) {
         System.out.println("building fast turn costs");
-        BitSet fromEdgesWithTurnCosts = new BitSet();
-        counts = new IntArrayList();
-        counts.add(0);
+        fromEdgeIndices = new int[graph.getEdges() + 1];
         toEdges = new IntArrayList();
         turnCostFlags = new IntArrayList();
         EdgeExplorer explorer = graph.createEdgeExplorer();
         AllEdgesIterator iter = graph.getAllEdges();
         while (iter.next()) {
-            int count = 0;
+            fromEdgeIndices[iter.getEdge() + 1] = fromEdgeIndices[iter.getEdge()];
             EdgeIterator it = explorer.setBaseNode(iter.getAdjNode());
             while (it.next()) {
                 int flags = graph.getTurnCostStorage().getFlags(iter.getEdge(), iter.getAdjNode(), it.getEdge());
                 if (flags != 0) {
-                    count++;
                     toEdges.add(it.getEdge());
                     turnCostFlags.add(flags);
+                    fromEdgeIndices[iter.getEdge() + 1]++;
                 }
             }
             // todo: with this storage we cannot distinguish turn costs a-A-a from a-B-a (for an edge A-(a)-B)!! But right now we just want to see how fast this is
@@ -71,17 +67,12 @@ public class FastTurnCosts {
             while (it.next()) {
                 int flags = graph.getTurnCostStorage().getFlags(iter.getEdge(), iter.getBaseNode(), it.getEdge());
                 if (flags != 0) {
-                    count++;
                     toEdges.add(it.getEdge());
                     turnCostFlags.add(flags);
+                    fromEdgeIndices[iter.getEdge() + 1]++;
                 }
             }
-            if (count > 0) {
-                fromEdgesWithTurnCosts.set(iter.getEdge());
-                counts.add(counts.get(counts.size() - 1) + count);
-            }
         }
-        fromEdgeIndices = SparseIntIntMap.fromBitSet(fromEdgesWithTurnCosts, 8);
 
         // consistency check
         TurnCostStorage.Iterator itr = graph.getTurnCostStorage().getAllTurnCosts();
@@ -100,12 +91,10 @@ public class FastTurnCosts {
     }
 
     private int getFlags(int fromEdge, int toEdge) {
-        int idx = fromEdgeIndices.get(fromEdge);
-        if (idx < 0) return 0;
-        int begin = counts.get(idx);
-        int end = counts.get(idx + 1);
+        int idx = fromEdgeIndices[fromEdge];
+        int end = fromEdgeIndices[fromEdge + 1];
         // todo: we could sort by toEdge and do binary search here
-        for (int i = begin; i < end; i++) {
+        for (int i = idx; i < end; i++) {
             if (toEdges.get(i) == toEdge)
                 return turnCostFlags.get(i);
         }
