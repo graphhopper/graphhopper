@@ -136,6 +136,7 @@ public class LMPreparationHandler {
      */
     public void setPreparationThreads(int preparationThreads) {
         this.preparationThreads = preparationThreads;
+        LOGGER.info("Using {} threads for lm preparation threads", preparationThreads);
         this.threadPool = java.util.concurrent.Executors.newFixedThreadPool(preparationThreads);
     }
 

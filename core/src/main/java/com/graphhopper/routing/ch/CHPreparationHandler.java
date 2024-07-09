@@ -179,6 +179,7 @@ public class CHPreparationHandler {
      */
     public void setPreparationThreads(int preparationThreads) {
         this.preparationThreads = preparationThreads;
+        LOGGER.info("Using {} threads for ch preparation threads", preparationThreads);
         this.threadPool = java.util.concurrent.Executors.newFixedThreadPool(preparationThreads);
     }
 
