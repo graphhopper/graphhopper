@@ -21,14 +21,14 @@ package com.graphhopper.routing.ch;
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 
 public class FastTurnCosts {
-    private final int[] viaNodeIndices;
-    private final IntArrayList fromEdges;
+    private final int[] fromEdgeIndices;
     private final IntArrayList toEdges;
     private final IntArrayList turnCostFlags;
     private final EdgeIntAccess edgeIntAccess = new EdgeIntAccess() {
@@ -45,25 +45,31 @@ public class FastTurnCosts {
 
     public FastTurnCosts(BaseGraph graph) {
         System.out.println("building fast turn costs");
-        viaNodeIndices = new int[graph.getNodes() + 1];
-        fromEdges = new IntArrayList();
+        fromEdgeIndices = new int[graph.getEdges() + 1];
         toEdges = new IntArrayList();
         turnCostFlags = new IntArrayList();
-        EdgeExplorer explorer1 = graph.createEdgeExplorer();
-        EdgeExplorer explorer2 = graph.createEdgeExplorer();
-        for (int node = 0; node < graph.getNodes(); node++) {
-            viaNodeIndices[node + 1] = viaNodeIndices[node];
-            EdgeIterator fromIter = explorer1.setBaseNode(node);
-            while (fromIter.next()) {
-                EdgeIterator toIter = explorer2.setBaseNode(node);
-                while (toIter.next()) {
-                    int flags = graph.getTurnCostStorage().getFlags(fromIter.getEdge(), node, toIter.getEdge());
-                    if (flags != 0) {
-                        fromEdges.add(fromIter.getEdge());
-                        toEdges.add(toIter.getEdge());
-                        turnCostFlags.add(flags);
-                        viaNodeIndices[node + 1]++;
-                    }
+        EdgeExplorer explorer = graph.createEdgeExplorer();
+        AllEdgesIterator iter = graph.getAllEdges();
+        while (iter.next()) {
+            fromEdgeIndices[iter.getEdge() + 1] = fromEdgeIndices[iter.getEdge()];
+            EdgeIterator it = explorer.setBaseNode(iter.getAdjNode());
+            while (it.next()) {
+                int flags = graph.getTurnCostStorage().getFlags(iter.getEdge(), iter.getAdjNode(), it.getEdge());
+                if (flags != 0) {
+                    toEdges.add(it.getEdge());
+                    turnCostFlags.add(flags);
+                    fromEdgeIndices[iter.getEdge() + 1]++;
+                }
+            }
+            // todo: with this storage we cannot distinguish turn costs a-A-a from a-B-a (for an edge A-(a)-B)!! But right now we just want to see how fast this is
+            //       if we wanted to actually use this we need the edge keys
+            it = explorer.setBaseNode(iter.getBaseNode());
+            while (it.next()) {
+                int flags = graph.getTurnCostStorage().getFlags(iter.getEdge(), iter.getBaseNode(), it.getEdge());
+                if (flags != 0) {
+                    toEdges.add(it.getEdge());
+                    turnCostFlags.add(flags);
+                    fromEdgeIndices[iter.getEdge() + 1]++;
                 }
             }
         }
@@ -72,24 +78,24 @@ public class FastTurnCosts {
         TurnCostStorage.Iterator itr = graph.getTurnCostStorage().getAllTurnCosts();
         while (itr.next()) {
             int flags = itr.getFlags();
-            int fastFlags = getFlags(itr.getFromEdge(), itr.getViaNode(), itr.getToEdge());
+            int fastFlags = getFlags(itr.getFromEdge(), itr.getToEdge());
 //            System.out.println(flags + " " + fastFlags);
             if (flags != fastFlags)
                 throw new RuntimeException();
         }
     }
 
-    public boolean get(BooleanEncodedValue turnCostEnc, int fromEdge, int viaNode, int toEdge) {
-        int flags = getFlags(fromEdge, viaNode, toEdge);
+    public boolean get(BooleanEncodedValue turnCostEnc, int fromEdge, int toEdge) {
+        int flags = getFlags(fromEdge, toEdge);
         return flags != 0 && turnCostEnc.getBool(false, flags, edgeIntAccess);
     }
 
-    private int getFlags(int fromEdge, int viaNode, int toEdge) {
-        int idx = viaNodeIndices[viaNode];
-        int end = viaNodeIndices[viaNode + 1];
-        // todo: we could sort by from/toEdge and do binary search here
+    private int getFlags(int fromEdge, int toEdge) {
+        int idx = fromEdgeIndices[fromEdge];
+        int end = fromEdgeIndices[fromEdge + 1];
+        // todo: we could sort by toEdge and do binary search here
         for (int i = idx; i < end; i++) {
-            if (fromEdges.get(i) == fromEdge && toEdges.get(i) == toEdge)
+            if (toEdges.get(i) == toEdge)
                 return turnCostFlags.get(i);
         }
         return 0;
