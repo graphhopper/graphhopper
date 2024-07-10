@@ -40,7 +40,7 @@ class BaseGraphNodesAndEdges implements EdgeIntAccess {
 
     // nodes
     private final DataAccess nodes;
-    private final int N_EDGE_REF, N_LAT, N_LON, N_ELE, N_TC;
+    private final int N_EDGE_REF, N_LAT, N_LON, N_ELE;
     private int nodeEntryBytes;
     private int nodeCount;
 
@@ -51,7 +51,6 @@ class BaseGraphNodesAndEdges implements EdgeIntAccess {
     private int edgeEntryBytes;
     private int edgeCount;
 
-    private final boolean withTurnCosts;
     private final boolean withElevation;
 
     // we do not write the bounding box directly to storage, but rather to this bbox object. we only write to storage
@@ -60,11 +59,10 @@ class BaseGraphNodesAndEdges implements EdgeIntAccess {
     public final BBox bounds;
     private boolean frozen;
 
-    public BaseGraphNodesAndEdges(Directory dir, boolean withElevation, boolean withTurnCosts, int segmentSize, int bytesForFlags) {
+    public BaseGraphNodesAndEdges(Directory dir, boolean withElevation, int segmentSize, int bytesForFlags) {
         nodes = dir.create("nodes", dir.getDefaultType("nodes", true), segmentSize);
         edges = dir.create("edges", dir.getDefaultType("edges", false), segmentSize);
         this.bytesForFlags = bytesForFlags;
-        this.withTurnCosts = withTurnCosts;
         this.withElevation = withElevation;
         bounds = BBox.createInverse(withElevation);
 
@@ -73,8 +71,7 @@ class BaseGraphNodesAndEdges implements EdgeIntAccess {
         N_LAT = 4;
         N_LON = 8;
         N_ELE = N_LON + (withElevation ? 4 : 0);
-        N_TC = N_ELE + (withTurnCosts ? 4 : 0);
-        nodeEntryBytes = N_TC + 4;
+        nodeEntryBytes = N_ELE + 4;
 
         // memory layout for edges
         E_NODEA = 0;
@@ -172,10 +169,6 @@ class BaseGraphNodesAndEdges implements EdgeIntAccess {
         return withElevation;
     }
 
-    public boolean withTurnCosts() {
-        return withTurnCosts;
-    }
-
     public BBox getBounds() {
         return bounds;
     }
@@ -225,11 +218,8 @@ class BaseGraphNodesAndEdges implements EdgeIntAccess {
         int oldNodes = nodeCount;
         nodeCount = node + 1;
         nodes.ensureCapacity((long) nodeCount * nodeEntryBytes);
-        for (int n = oldNodes; n < nodeCount; ++n) {
+        for (int n = oldNodes; n < nodeCount; ++n)
             setEdgeRef(toNodePointer(n), NO_EDGE);
-            if (withTurnCosts)
-                setTurnCostRef(toNodePointer(n), TurnCostStorage.NO_TURN_ENTRY);
-        }
     }
 
     public long toNodePointer(int node) {
@@ -385,10 +375,6 @@ class BaseGraphNodesAndEdges implements EdgeIntAccess {
         nodes.setInt(elePointer + N_ELE, Helper.eleToUInt(ele));
     }
 
-    public void setTurnCostRef(long nodePointer, int tcRef) {
-        nodes.setInt(nodePointer + N_TC, tcRef);
-    }
-
     public int getEdgeRef(long nodePointer) {
         return nodes.getInt(nodePointer + N_EDGE_REF);
     }
@@ -403,10 +389,6 @@ class BaseGraphNodesAndEdges implements EdgeIntAccess {
 
     public double getEle(long nodePointer) {
         return Helper.uIntToEle(nodes.getInt(nodePointer + N_ELE));
-    }
-
-    public int getTurnCostRef(long nodePointer) {
-        return nodes.getInt(nodePointer + N_TC);
     }
 
     public void setFrozen(boolean frozen) {

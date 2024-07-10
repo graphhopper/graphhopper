@@ -43,6 +43,7 @@ public class RestrictionSetter {
     private static final IntSet EMPTY_SET = IntHashSet.from();
     private final BaseGraph baseGraph;
     private final List<BooleanEncodedValue> turnRestrictionEncs;
+    private final List<TurnCostEntry> turnCostEntries = new ArrayList<>();
 
     public RestrictionSetter(BaseGraph baseGraph, List<BooleanEncodedValue> turnRestrictionEncs) {
         this.baseGraph = baseGraph;
@@ -62,6 +63,7 @@ public class RestrictionSetter {
     public void setRestrictions(List<Restriction> restrictions, List<BitSet> encBits) {
         if (restrictions.size() != encBits.size())
             throw new IllegalArgumentException("There must be as many encBits as restrictions. Got: " + encBits.size() + " and " + restrictions.size());
+        turnCostEntries.clear();
         List<InternalRestriction> internalRestrictions = restrictions.stream().map(this::convertToInternal).toList();
         disableRedundantRestrictions(internalRestrictions, encBits);
         LongIntMap artificialEdgeKeysByIncViaPairs = new LongIntScatterMap();
@@ -84,18 +86,14 @@ public class RestrictionSetter {
                     int artificialEdge = artificialEdgeState.getEdge();
                     if (artificialEdgesByEdge.containsKey(viaEdge)) {
                         IntSet artificialEdges = artificialEdgesByEdge.get(viaEdge);
-                        artificialEdges.forEach((IntProcedure) a -> {
-                            for (BooleanEncodedValue turnRestrictionEnc : turnRestrictionEncs)
-                                restrictTurnsBetweenEdges(turnRestrictionEnc, artificialEdgeState, a);
-                        });
+                        artificialEdges.forEach((IntProcedure) a -> restrictTurnsBetweenEdgesForAll(artificialEdgeState, a));
                         artificialEdges.add(artificialEdge);
                     } else {
                         IntSet artificialEdges = new IntScatterSet();
                         artificialEdges.add(artificialEdge);
                         artificialEdgesByEdge.put(viaEdge, artificialEdges);
                     }
-                    for (BooleanEncodedValue turnRestrictionEnc : turnRestrictionEncs)
-                        restrictTurnsBetweenEdges(turnRestrictionEnc, artificialEdgeState, viaEdge);
+                    restrictTurnsBetweenEdgesForAll(artificialEdgeState, viaEdge);
                     artificialEdgeKey = artificialEdgeState.getEdgeKey();
                     if (baseGraph.getEdgeIteratorStateForKey(viaEdgeKey).get(REVERSE_STATE))
                         artificialEdgeKey = GHUtility.reverseEdgeKey(artificialEdgeKey);
@@ -112,13 +110,11 @@ public class RestrictionSetter {
             int node = baseGraph.getEdgeIteratorStateForKey(viaEdgeKey).getBaseNode();
             // we restrict turning onto the original edge and all artificial edges except the one we created for this in-edge
             // i.e. we force turning onto the artificial edge we created for this in-edge
-            for (BooleanEncodedValue turnRestrictionEnc : turnRestrictionEncs)
-                restrictTurn(turnRestrictionEnc, incomingEdge, node, viaEdge);
+            restrictTurnForAll(incomingEdge, node, viaEdge);
             IntSet artificialEdges = artificialEdgesByEdge.get(viaEdge);
             artificialEdges.forEach((IntProcedure) a -> {
                 if (a != GHUtility.getEdgeFromEdgeKey(artificialEdgeKey))
-                    for (BooleanEncodedValue turnRestrictionEnc : turnRestrictionEncs)
-                        restrictTurn(turnRestrictionEnc, incomingEdge, node, a);
+                    restrictTurnForAll(incomingEdge, node, a);
             });
         });
         for (int i = 0; i < internalRestrictions.size(); i++) {
@@ -130,10 +126,10 @@ public class RestrictionSetter {
                 IntSet toEdges = artificialEdgesByEdge.getOrDefault(restriction.getToEdge(), new IntScatterSet());
                 toEdges.add(restriction.getToEdge());
                 for (int j = 0; j < turnRestrictionEncs.size(); j++) {
-                    BooleanEncodedValue turnRestrictionEnc = turnRestrictionEncs.get(j);
                     if (encBits.get(i).get(j)) {
+                        final int jj = j;
                         fromEdges.forEach((IntProcedure) from -> toEdges.forEach((IntProcedure) to -> {
-                            restrictTurn(turnRestrictionEnc, from, restriction.getViaNodes().get(0), to);
+                            restrictTurn(jj, from, restriction.getViaNodes().get(0), to);
                         }));
                     }
                 }
@@ -145,17 +141,21 @@ public class RestrictionSetter {
                 // but allow turning onto the artificial edge(s) instead (see above). Then we deny
                 // turning from the artificial edge onto the to-edge here.
                 for (int j = 0; j < turnRestrictionEncs.size(); j++) {
-                    BooleanEncodedValue turnRestrictionEnc = turnRestrictionEncs.get(j);
                     if (encBits.get(i).get(j)) {
-                        restrictTurn(turnRestrictionEnc, viaEdge, node, restriction.getToEdge());
+                        restrictTurn(j, viaEdge, node, restriction.getToEdge());
+                        final int jj = j;
                         // also restrict the turns to the artificial edges corresponding to the to-edge
                         artificialEdgesByEdge.getOrDefault(restriction.getToEdge(), EMPTY_SET).forEach(
-                                (IntProcedure) toEdge -> restrictTurn(turnRestrictionEnc, viaEdge, node, toEdge)
+                                (IntProcedure) toEdge -> restrictTurn(jj, viaEdge, node, toEdge)
                         );
                     }
                 }
             }
         }
+        turnCostEntries.sort(Comparator.comparing(TurnCostEntry::viaNode));
+        turnCostEntries.forEach(tce -> baseGraph.getTurnCostStorage().set(
+                turnRestrictionEncs.get(tce.turnRestrictionEncIndex), tce.fromEdge, tce.viaNode, tce.toEdge, true)
+        );
     }
 
     private void disableRedundantRestrictions(List<InternalRestriction> restrictions, List<BitSet> encBits) {
@@ -227,11 +227,11 @@ public class RestrictionSetter {
         return false;
     }
 
-    private void restrictTurnsBetweenEdges(BooleanEncodedValue turnRestrictionEnc, EdgeIteratorState edgeState, int otherEdge) {
-        restrictTurn(turnRestrictionEnc, otherEdge, edgeState.getBaseNode(), edgeState.getEdge());
-        restrictTurn(turnRestrictionEnc, edgeState.getEdge(), edgeState.getBaseNode(), otherEdge);
-        restrictTurn(turnRestrictionEnc, otherEdge, edgeState.getAdjNode(), edgeState.getEdge());
-        restrictTurn(turnRestrictionEnc, edgeState.getEdge(), edgeState.getAdjNode(), otherEdge);
+    private void restrictTurnsBetweenEdgesForAll(EdgeIteratorState edgeState, int otherEdge) {
+        restrictTurnForAll(otherEdge, edgeState.getBaseNode(), edgeState.getEdge());
+        restrictTurnForAll(edgeState.getEdge(), edgeState.getBaseNode(), otherEdge);
+        restrictTurnForAll(otherEdge, edgeState.getAdjNode(), edgeState.getEdge());
+        restrictTurnForAll(edgeState.getEdge(), edgeState.getAdjNode(), otherEdge);
     }
 
     private InternalRestriction convertToInternal(Restriction restriction) {
@@ -289,14 +289,23 @@ public class RestrictionSetter {
         }
     }
 
-    private void restrictTurn(BooleanEncodedValue turnRestrictionEnc, int fromEdge, int viaNode, int toEdge) {
+    private void restrictTurnForAll(int fromEdge, int viaNode, int toEdge) {
+        for (int i = 0; i < turnRestrictionEncs.size(); i++)
+            restrictTurn(i, fromEdge, viaNode, toEdge);
+    }
+
+    private void restrictTurn(int turnRestrictionEncIndex, int fromEdge, int viaNode, int toEdge) {
         if (fromEdge < 0 || toEdge < 0 || viaNode < 0)
             throw new IllegalArgumentException("from/toEdge and viaNode must be >= 0");
-        baseGraph.getTurnCostStorage().set(turnRestrictionEnc, fromEdge, viaNode, toEdge, true);
+        turnCostEntries.add(new TurnCostEntry(turnRestrictionEncIndex, fromEdge, viaNode, toEdge));
     }
 
     public static BitSet copyEncBits(BitSet encBits) {
         return new BitSet(Arrays.copyOf(encBits.bits, encBits.bits.length), encBits.wlen);
+    }
+
+    private record TurnCostEntry(int turnRestrictionEncIndex, int fromEdge, int viaNode,
+                                 int toEdge) {
     }
 
     public static class Restriction {

@@ -24,7 +24,6 @@ import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
-import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
@@ -84,7 +83,7 @@ public class CHTurnCostTest {
         speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, true);
         turnCostEnc = TurnCost.create("car", maxCost);
         encodingManager = EncodingManager.start().add(speedEnc).addTurnCostEncodedValue(turnCostEnc).build();
-        graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).build();
+        graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).build().create(100);
         turnCostStorage = graph.getTurnCostStorage();
         chConfigs = createCHConfigs();
         // the default CH profile with infinite u-turn costs, can be reset in tests that should run with finite u-turn
@@ -187,8 +186,6 @@ public class CHTurnCostTest {
         LOGGER.info("Seed used to generate turn costs and restrictions: {}", seed);
         setRandomCost(2, 5, 3, rnd);
         setRandomCost(2, 5, 6, rnd);
-        setRandomCost(4, 7, 10, rnd);
-        setRandomCost(6, 7, 10, rnd);
         setRandomCostOrRestriction(0, 5, 3, rnd);
         setRandomCostOrRestriction(1, 5, 3, rnd);
         setRandomCostOrRestriction(0, 5, 6, rnd);
@@ -197,6 +194,8 @@ public class CHTurnCostTest {
         setRandomCostOrRestriction(4, 7, 9, rnd);
         setRandomCostOrRestriction(6, 7, 8, rnd);
         setRandomCostOrRestriction(6, 7, 9, rnd);
+        setRandomCost(4, 7, 10, rnd);
+        setRandomCost(6, 7, 10, rnd);
 
         prepareCH(6, 0, 1, 2, 8, 9, 10, 5, 3, 4, 7);
         // run queries for all cases (target/source edge possibly restricted/has costs)
@@ -321,9 +320,9 @@ public class CHTurnCostTest {
         graph.freeze();
 
         // enforce loop (going counter-clockwise)
-        setRestriction(0, 4, 1);
         setTurnCost(4, 2, 3, 4);
         setTurnCost(3, 2, 4, 2);
+        setRestriction(0, 4, 1);
 
         checkPathUsingRandomContractionOrder(IntArrayList.from(0, 4, 3, 2, 4, 1), 7, 2, 0, 1);
     }
@@ -345,8 +344,8 @@ public class CHTurnCostTest {
         graph.edge(6, 4).setDistance(20).set(speedEnc, 10, 0);
         graph.freeze();
 
-        setRestriction(7, 5, 6);
         setTurnCost(0, 2, 1, 2);
+        setRestriction(7, 5, 6);
 
         final IntArrayList expectedPath = IntArrayList.from(3, 7, 5, 0, 2, 1, 5, 6, 4);
         final int roadCosts = 12;
@@ -419,8 +418,8 @@ public class CHTurnCostTest {
         graph.freeze();
 
         // enforce loop (going counter-clockwise)
-        setRestriction(6, 7, 12);
         setTurnCost(8, 3, 2, 2);
+        setRestriction(6, 7, 12);
         setTurnCost(2, 3, 8, 4);
 
         // make alternative paths not worth it
@@ -507,9 +506,9 @@ public class CHTurnCostTest {
         setTurnCost(2, 7, 13, 7);
 
         // enforce p-loop at the top right (going counter-clockwise)
-        setRestriction(13, 14, 19);
-        setTurnCost(4, 5, 10, 3);
         setTurnCost(10, 5, 4, 2);
+        setTurnCost(4, 5, 10, 3);
+        setRestriction(13, 14, 19);
 
         // enforce big p-loop at bottom left (going clockwise)
         setRestriction(14, 19, 20);

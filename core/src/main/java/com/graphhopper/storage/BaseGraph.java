@@ -67,10 +67,12 @@ public class BaseGraph implements Graph, Closeable {
         this.bitUtil = BitUtil.LITTLE;
         this.wayGeometry = dir.create("geometry", segmentSize);
         this.edgeKVStorage = new KVStorage(dir, true);
-        this.store = new BaseGraphNodesAndEdges(dir, withElevation, withTurnCosts, segmentSize, bytesForFlags);
+        this.store = new BaseGraphNodesAndEdges(dir, withElevation, segmentSize, bytesForFlags);
         this.nodeAccess = new GHNodeAccess(store);
         this.segmentSize = segmentSize;
-        this.turnCostStorage = withTurnCosts ? new TurnCostStorage(this, dir.create("turn_costs", dir.getDefaultType("turn_costs", true), segmentSize)) : null;
+        this.turnCostStorage = withTurnCosts ? new TurnCostStorage(
+                dir.create("turn_cost_indices", dir.getDefaultType("turn_cost_indices", true), segmentSize),
+                dir.create("turn_costs", dir.getDefaultType("turn_costs", true), segmentSize)) : null;
         this.eleBytesPerCoord = (nodeAccess.getDimension() == 3 ? 3 : 0);
     }
 

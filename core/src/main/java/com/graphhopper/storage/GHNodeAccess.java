@@ -65,25 +65,6 @@ class GHNodeAccess implements NodeAccess {
     }
 
     @Override
-    public final void setTurnCostIndex(int index, int turnCostIndex) {
-        if (store.withTurnCosts()) {
-            // todo: remove ensure?
-            store.ensureNodeCapacity(index);
-            store.setTurnCostRef(store.toNodePointer(index), turnCostIndex);
-        } else {
-            throw new AssertionError("This graph does not support turn costs");
-        }
-    }
-
-    @Override
-    public final int getTurnCostIndex(int index) {
-        if (store.withTurnCosts())
-            return store.getTurnCostRef(store.toNodePointer(index));
-        else
-            throw new AssertionError("This graph does not support turn costs");
-    }
-
-    @Override
     public final boolean is3D() {
         return store.withElevation();
     }

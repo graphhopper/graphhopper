@@ -180,9 +180,9 @@ public class CHQueryWithTurnCostsTest {
         f.graph.edge(5, 3).setDistance(10).set(f.speedEnc, 10, 10);
         f.graph.edge(3, 1).setDistance(40).set(f.speedEnc, 10, 10);
         f.setTurnCost(0, 2, 4, 3);
-        f.setTurnCost(4, 6, 5, 6);
-        f.setTurnCost(5, 6, 4, 2);
         f.setTurnCost(5, 3, 1, 5);
+        f.setTurnCost(5, 6, 4, 2);
+        f.setTurnCost(4, 6, 5, 6);
         f.freeze();
 
         // contraction yields no shortcuts
@@ -287,8 +287,8 @@ public class CHQueryWithTurnCostsTest {
         f.graph.edge(2, 0).setDistance(20).set(f.speedEnc, 10, 0);
         f.graph.edge(0, 3).setDistance(30).set(f.speedEnc, 10, 0);
         f.graph.edge(3, 4).setDistance(20).set(f.speedEnc, 10, 0);
-        f.setTurnCost(1, 2, 0, 5);
         f.setTurnCost(2, 0, 3, 2);
+        f.setTurnCost(1, 2, 0, 5);
         f.setTurnCost(0, 3, 4, 1);
         f.freeze();
 
@@ -339,9 +339,9 @@ public class CHQueryWithTurnCostsTest {
         f.graph.edge(3, 1).setDistance(20).set(f.speedEnc, 10, 0);
         f.graph.edge(1, 0).setDistance(30).set(f.speedEnc, 10, 0);
         f.graph.edge(0, 4).setDistance(20).set(f.speedEnc, 10, 0);
-        f.setTurnCost(2, 3, 1, 5);
-        f.setTurnCost(3, 1, 0, 2);
         f.setTurnCost(1, 0, 4, 1);
+        f.setTurnCost(3, 1, 0, 2);
+        f.setTurnCost(2, 3, 1, 5);
         f.freeze();
 
         f.setIdentityLevels();
@@ -446,8 +446,8 @@ public class CHQueryWithTurnCostsTest {
         f.graph.edge(2, 1).setDistance(30).set(f.speedEnc, 10, 0);
         f.setRestriction(0, 2, 1);
         f.setTurnCost(0, 2, 3, 5);
-        f.setTurnCost(2, 3, 2, 4);
         f.setTurnCost(3, 2, 1, 7);
+        f.setTurnCost(2, 3, 2, 4);
         f.freeze();
 
         // contraction yields no shortcuts

@@ -85,13 +85,13 @@ public class TurnCostStorageTest {
         int edge02 = getEdge(g, 0, 2).getEdge();
         int edge24 = getEdge(g, 2, 4).getEdge();
 
-        turnCostStorage.set(carEnc, edge42, 2, edge23, Double.POSITIVE_INFINITY);
-        turnCostStorage.set(bikeEnc, edge42, 2, edge23, Double.POSITIVE_INFINITY);
-        turnCostStorage.set(carEnc, edge23, 3, edge31, Double.POSITIVE_INFINITY);
-        turnCostStorage.set(bikeEnc, edge23, 3, edge31, 2.0);
         turnCostStorage.set(carEnc, edge31, 1, edge10, 2.0);
         turnCostStorage.set(bikeEnc, edge31, 1, edge10, Double.POSITIVE_INFINITY);
+        turnCostStorage.set(carEnc, edge42, 2, edge23, Double.POSITIVE_INFINITY);
+        turnCostStorage.set(bikeEnc, edge42, 2, edge23, Double.POSITIVE_INFINITY);
         turnCostStorage.set(bikeEnc, edge02, 2, edge24, Double.POSITIVE_INFINITY);
+        turnCostStorage.set(carEnc, edge23, 3, edge31, Double.POSITIVE_INFINITY);
+        turnCostStorage.set(bikeEnc, edge23, 3, edge31, 2.0);
 
         assertEquals(turnCostStorage.getTurnCostsCount(), IntStream.range(0, g.getNodes()).map(turnCostStorage::getTurnCostsCount).sum());
 

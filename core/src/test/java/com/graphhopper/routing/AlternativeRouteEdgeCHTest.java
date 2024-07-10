@@ -77,8 +77,8 @@ public class AlternativeRouteEdgeCHTest {
         graph.edge(12, 10).setDistance(10000).set(speedEnc, 60);
 
         TurnCostStorage turnCostStorage = graph.getTurnCostStorage();
-        turnCostStorage.set(turnCostEnc, e3_4.getEdge(), 4, e4_11.getEdge(), Double.POSITIVE_INFINITY);
         turnCostStorage.set(turnCostEnc, e6_3.getEdge(), 3, e3_4.getEdge(), Double.POSITIVE_INFINITY);
+        turnCostStorage.set(turnCostEnc, e3_4.getEdge(), 4, e4_11.getEdge(), Double.POSITIVE_INFINITY);
 
         graph.freeze();
         return graph;

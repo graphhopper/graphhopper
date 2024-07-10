@@ -28,19 +28,4 @@ import com.graphhopper.util.PointAccess;
  * @author Peter Karich
  */
 public interface NodeAccess extends PointAccess {
-    /**
-     * @return the index used to retrieve turn cost information for this node, can be {@link TurnCostStorage#NO_TURN_ENTRY}
-     *         in case no turn costs were stored for this node
-     * @throws AssertionError if, and only if, the underlying storage does not support turn costs
-     */
-    int getTurnCostIndex(int nodeId);
-
-    /**
-     * Sets the turn cost index for this node, using {@link TurnCostStorage#NO_TURN_ENTRY} means there
-     * are no turn costs at this node.
-     * <p>
-     *
-     * @throws AssertionError if, and only if, the underlying storage does not support turn costs
-     */
-    void setTurnCostIndex(int nodeId, int additionalValue);
 }

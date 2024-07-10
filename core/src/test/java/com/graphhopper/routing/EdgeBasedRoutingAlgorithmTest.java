@@ -30,7 +30,6 @@ import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.Helper;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -115,28 +114,30 @@ public class EdgeBasedRoutingAlgorithmTest {
     }
 
     private void initTurnRestrictions(BaseGraph g) {
+        // only right   from 5-2 to 2-3 => limit 5,2->2,0
+        setTurnRestriction(g, 5, 2, 0);
+
         // only forward from 2-3 to 3-4 => limit 2,3->3,6 and 2,3->3,1
         setTurnRestriction(g, 2, 3, 6);
         setTurnRestriction(g, 2, 3, 1);
 
-        // only right   from 5-2 to 2-3 => limit 5,2->2,0
-        setTurnRestriction(g, 5, 2, 0);
+        // no 4-3 to 3-1
+        setTurnRestriction(g, 4, 3, 1);
+        // no 4-3 to 3-2
+        setTurnRestriction(g, 4, 3, 2);
 
         // only right   from 7-6 to 6-3 => limit 7,6->6,5
         setTurnRestriction(g, 7, 6, 5);
 
         // no 5-6 to 6-3
         setTurnRestriction(g, 5, 6, 3);
-        // no 4-3 to 3-1
-        setTurnRestriction(g, 4, 3, 1);
-        // no 4-3 to 3-2
-        setTurnRestriction(g, 4, 3, 2);
+
+        // no u-turn at 3-6
+        setTurnRestriction(g, 3, 6, 3);
 
         // no u-turn at 6-7
         setTurnRestriction(g, 6, 7, 6);
 
-        // no u-turn at 3-6
-        setTurnRestriction(g, 3, 6, 3);
     }
 
     private Weighting createWeighting() {
@@ -297,8 +298,8 @@ public class EdgeBasedRoutingAlgorithmTest {
         getEdge(g, 3, 2).setDistance(8640);
         getEdge(g, 1, 0).setDistance(8640);
 
-        setTurnRestriction(g, 7, 6, 5);
         setTurnRestriction(g, 4, 3, 6);
+        setTurnRestriction(g, 7, 6, 5);
         Path p = createAlgo(g, createWeighting(50), algoStr, EDGE_BASED).calcPath(7, 5);
 
         assertEquals(IntArrayList.from(7, 6, 3, 6, 5), p.calcNodes());
@@ -391,8 +392,8 @@ public class EdgeBasedRoutingAlgorithmTest {
         g.edge(5, 6).setDistance(1).set(speedEnc, 10, 10);
         g.edge(6, 7).setDistance(1).set(speedEnc, 10, 10);
 
-        setTurnCost(g, 2, 5, 2, 3);
         setTurnCost(g, 2, 2, 0, 1);
+        setTurnCost(g, 2, 5, 2, 3);
         setTurnCost(g, 2, 5, 6, 3);
         setTurnCost(g, 1, 6, 7, 4);
 

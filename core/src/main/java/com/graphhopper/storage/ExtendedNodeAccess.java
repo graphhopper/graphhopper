@@ -77,19 +77,7 @@ public class ExtendedNodeAccess implements NodeAccess {
     }
 
     @Override
-    public int getTurnCostIndex(int nodeId) {
-        if (isAdditionalNode(nodeId))
-            return 0;
-        return nodeAccess.getTurnCostIndex(nodeId);
-    }
-
-    @Override
     public void setNode(int nodeId, double lat, double lon, double ele) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public void setTurnCostIndex(int nodeId, int additionalValue) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 

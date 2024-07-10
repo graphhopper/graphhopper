@@ -95,8 +95,8 @@ public class EdgeBasedNodeContractorTest {
         freeze();
         setMaxLevelOnAllNodes();
 
-        setRestriction(6, 7, 9);
         setTurnCost(8, 3, 2, 2);
+        setRestriction(6, 7, 9);
 
         contractNodes(5, 6, 3, 2, 9, 1, 8, 4, 7, 0);
         checkShortcuts(
@@ -662,11 +662,11 @@ public class EdgeBasedNodeContractorTest {
         final EdgeIteratorState e4to7 = graph.edge(4, 7).setDistance(30).set(speedEnc, 10, 0);
 
         GraphWithDetourMultipleInOutEdges(int turnCost20, int turnCost50, int turnCost23, int turnCost53, int turnCost36) {
-            setTurnCost(e1to3, e3to4, 3, 2);
             setTurnCost(e2to1, e1to0, 1, turnCost20);
             setTurnCost(e2to1, e1to3, 1, turnCost23);
             setTurnCost(e5to1, e1to0, 1, turnCost50);
             setTurnCost(e5to1, e1to3, 1, turnCost53);
+            setTurnCost(e1to3, e3to4, 3, 2);
             setTurnCost(e3to4, e4to6, 4, turnCost36);
             freeze();
             setMaxLevelOnAllNodes();
