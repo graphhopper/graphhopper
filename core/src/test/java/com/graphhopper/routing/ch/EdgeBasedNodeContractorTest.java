@@ -178,9 +178,9 @@ public class EdgeBasedNodeContractorTest {
         freeze();
 
         // enforce loop (going counter-clockwise)
-        setRestriction(0, 4, 5);
         setTurnCost(6, 3, 4, 2);
         setTurnCost(4, 3, 6, 4);
+        setRestriction(0, 4, 5);
         setMaxLevelOnAllNodes();
 
         contractAllNodesInOrder();
@@ -1076,9 +1076,9 @@ public class EdgeBasedNodeContractorTest {
         setMaxLevelOnAllNodes();
 
         // enforce loop (going counter-clockwise)
-        setRestriction(0, 4, 1);
         setTurnCost(4, 2, 3, 4);
         setTurnCost(3, 2, 4, 2);
+        setRestriction(0, 4, 1);
         contractNodes(2, 0, 1, 4, 3);
         checkShortcuts(
                 createShortcut(4, 3, 7, 5, 3, 2, 6, true, false),

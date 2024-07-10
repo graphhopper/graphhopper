@@ -419,8 +419,8 @@ public class CHTurnCostTest {
 
         // enforce loop (going counter-clockwise)
         setTurnCost(8, 3, 2, 2);
-        setRestriction(6, 7, 12);
         setTurnCost(2, 3, 8, 4);
+        setRestriction(6, 7, 12);
 
         // make alternative paths not worth it
         setTurnCost(1, 2, 7, 3);

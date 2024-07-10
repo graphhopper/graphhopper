@@ -119,7 +119,7 @@ public class TurnCostStorage {
             turnCostIndices.ensureCapacity((long) viaNode * BYTES_PER_INDEX);
             for (int i = lastViaNode + 1; i <= viaNode; i++)
                 turnCostIndices.setInt((long) i * BYTES_PER_INDEX, turnCostsCount);
-            turnCosts.ensureCapacity((long) turnCostsCount * BYTES_PER_ENTRY);
+            turnCosts.ensureCapacity((long) (turnCostsCount + 1) * BYTES_PER_ENTRY);
             long pointer = (long) turnCostsCount * BYTES_PER_ENTRY;
             turnCosts.setInt(pointer + TC_FROM, fromEdge);
             turnCosts.setInt(pointer + TC_TO, toEdge);
