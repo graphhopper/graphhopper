@@ -152,7 +152,7 @@ public class RestrictionSetter {
                 }
             }
         }
-        turnCostEntries.sort(Comparator.comparing(TurnCostEntry::viaNode));
+        turnCostEntries.sort(Comparator.comparing(TurnCostEntry::fromEdge));
         turnCostEntries.forEach(tce -> baseGraph.getTurnCostStorage().set(
                 turnRestrictionEncs.get(tce.turnRestrictionEncIndex), tce.fromEdge, tce.viaNode, tce.toEdge, true)
         );
