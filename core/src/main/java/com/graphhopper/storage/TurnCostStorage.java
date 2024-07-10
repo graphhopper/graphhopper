@@ -116,7 +116,7 @@ public class TurnCostStorage {
             // create a new entry
             if (viaNode < lastViaNode)
                 throw new IllegalArgumentException("Turn cost entries must be written in ascending order of the viaNode");
-            turnCostIndices.ensureCapacity((long) viaNode * BYTES_PER_INDEX);
+            turnCostIndices.ensureCapacity((long) (viaNode + 1) * BYTES_PER_INDEX);
             for (int i = lastViaNode + 1; i <= viaNode; i++)
                 turnCostIndices.setInt((long) i * BYTES_PER_INDEX, turnCostsCount);
             turnCosts.ensureCapacity((long) (turnCostsCount + 1) * BYTES_PER_ENTRY);
