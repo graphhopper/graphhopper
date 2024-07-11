@@ -72,8 +72,6 @@ public class FastTurnCosts {
                     fromEdgeIndices[iter.getEdge() + 1]++;
                 }
             }
-            if (fromEdgeIndices[iter.getEdge() + 1] == fromEdgeIndices[iter.getEdge()])
-                fromEdgeIndices[iter.getEdge()] *= -1;
         }
 
         // consistency check
@@ -94,8 +92,7 @@ public class FastTurnCosts {
 
     private int getFlags(int fromEdge, int toEdge) {
         int idx = fromEdgeIndices[fromEdge];
-        if (idx < 0) return 0;
-        int end = Math.abs(fromEdgeIndices[fromEdge + 1]);
+        int end = fromEdgeIndices[fromEdge + 1];
         // todo: we could sort by toEdge and do binary search here
         for (int i = idx; i < end; i++) {
             if (toEdges.get(i) == toEdge)
