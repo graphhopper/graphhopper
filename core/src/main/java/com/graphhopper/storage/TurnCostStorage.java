@@ -35,15 +35,16 @@ import com.graphhopper.util.GHUtility;
 public class TurnCostStorage {
     static final int NO_TURN_ENTRY = -1;
     // we store each turn cost entry in the format |from_edge|to_edge|flags|. each element has 4 bytes -> 12 bytes total
-    private static final int TC_TO = 0;
-    private static final int TC_FLAGS = 4;
-    private static final int BYTES_PER_ENTRY = 8;
+    private static final int TC_FROM = 0;
+    private static final int TC_TO = 4;
+    private static final int TC_FLAGS = 8;
+    private static final int BYTES_PER_ENTRY = 12;
     private static final int BYTES_PER_INDEX = 4; // todo: probably three would be enough
 
     private final DataAccess turnCosts;
     private final DataAccess turnCostIndices;
     private final EdgeIntAccess edgeIntAccess = createEdgeIntAccess();
-    private int lastFromEdge;
+    private int lastViaNode;
     private int turnCostsCount;
 
     public TurnCostStorage(DataAccess turnCostIndices, DataAccess turnCosts) {
@@ -65,7 +66,7 @@ public class TurnCostStorage {
 
         turnCostIndices.setHeader(0, Constants.VERSION_TURN_COSTS);
         turnCostIndices.setHeader(4, BYTES_PER_INDEX);
-        turnCostIndices.setHeader(2 * 4, lastFromEdge);
+        turnCostIndices.setHeader(2 * 4, lastViaNode);
         turnCostIndices.flush();
     }
 
@@ -88,7 +89,7 @@ public class TurnCostStorage {
         if (turnCostIndices.getHeader(4) != BYTES_PER_INDEX)
             throw new IllegalStateException("Number of bytes per turn cost index does not match the current configuration: " + turnCostIndices.getHeader(4) + " vs. " + BYTES_PER_INDEX);
         turnCostsCount = turnCosts.getHeader(8);
-        lastFromEdge = turnCostIndices.getHeader(8);
+        lastViaNode = turnCostIndices.getHeader(8);
         return true;
     }
 
@@ -113,17 +114,17 @@ public class TurnCostStorage {
         int index = findIndex(fromEdge, viaNode, toEdge);
         if (index < 0) {
             // create a new entry
-            if (fromEdge < lastFromEdge)
-                throw new IllegalArgumentException("Turn cost entries must be written in ascending order of the fromEdge");
-            turnCostIndices.ensureCapacity((long) (fromEdge + 1) * BYTES_PER_INDEX);
-            for (int i = lastFromEdge + 1; i <= fromEdge; i++)
+            if (viaNode < lastViaNode)
+                throw new IllegalArgumentException("Turn cost entries must be written in ascending order of the viaNode");
+            turnCostIndices.ensureCapacity((long) (viaNode + 1) * BYTES_PER_INDEX);
+            for (int i = lastViaNode + 1; i <= viaNode; i++)
                 turnCostIndices.setInt((long) i * BYTES_PER_INDEX, turnCostsCount);
             turnCosts.ensureCapacity((long) (turnCostsCount + 1) * BYTES_PER_ENTRY);
             long pointer = (long) turnCostsCount * BYTES_PER_ENTRY;
-            // todonow: as long as we do not store the via-node (and do not use edge keys) we cannot really store u-turn restrictions
+            turnCosts.setInt(pointer + TC_FROM, fromEdge);
             turnCosts.setInt(pointer + TC_TO, toEdge);
             turnCostsCount++;
-            lastFromEdge = fromEdge;
+            lastViaNode = viaNode;
             return turnCostsCount - 1;
         }
         return index;
@@ -162,12 +163,12 @@ public class TurnCostStorage {
             throw new IllegalArgumentException("from and to edge cannot be NO_EDGE");
         if (viaNode < 0)
             throw new IllegalArgumentException("via node cannot be negative");
-        if (fromEdge > lastFromEdge) return NO_TURN_ENTRY;
-        int begin = turnCostIndices.getInt((long) fromEdge * BYTES_PER_INDEX);
-        int end = fromEdge == lastFromEdge ? turnCostsCount : turnCostIndices.getInt((long) (fromEdge + 1) * BYTES_PER_INDEX);
+        if (viaNode > lastViaNode) return NO_TURN_ENTRY;
+        int begin = turnCostIndices.getInt((long) viaNode * BYTES_PER_INDEX);
+        int end = viaNode == lastViaNode ? turnCostsCount : turnCostIndices.getInt((long) (viaNode + 1) * BYTES_PER_INDEX);
         for (int index = begin; index < end; ++index) {
             long pointer = (long) index * BYTES_PER_ENTRY;
-            if (toEdge == turnCosts.getInt(pointer + TC_TO))
+            if (fromEdge == turnCosts.getInt(pointer + TC_FROM) && toEdge == turnCosts.getInt(pointer + TC_TO))
                 return index;
         }
         return NO_TURN_ENTRY;
@@ -178,12 +179,10 @@ public class TurnCostStorage {
     }
 
     public int getTurnCostsCount(int node) {
-        // todonow: not implemented atm
-        return 0;
-//        if (node > lastFromEdge) return 0;
-//        int index = turnCostIndices.getInt((long) node * BYTES_PER_INDEX);
-//        int end = node == lastFromEdge ? turnCostsCount : turnCostIndices.getInt((long) (node + 1) * BYTES_PER_INDEX);
-//        return end - index;
+        if (node > lastViaNode) return 0;
+        int index = turnCostIndices.getInt((long) node * BYTES_PER_INDEX);
+        int end = node == lastViaNode ? turnCostsCount : turnCostIndices.getInt((long) (node + 1) * BYTES_PER_INDEX);
+        return end - index;
     }
 
     public boolean isClosed() {
@@ -217,15 +216,13 @@ public class TurnCostStorage {
     }
 
     private class Itr implements Iterator {
-        // todonow: this iterator still needs to be adjusted to from-edge sorting
         private int viaNode = 0;
         private int index = -1;
         private int lastIndexForCurrentViaNode = getTurnCostsCount(viaNode);
 
         @Override
         public int getFromEdge() {
-            return 0;
-//            return turnCosts.getInt(turnCostPtr() + TC_FROM);
+            return turnCosts.getInt(turnCostPtr() + TC_FROM);
         }
 
         @Override
@@ -256,8 +253,8 @@ public class TurnCostStorage {
             else {
                 while (true) {
                     viaNode++;
-                    if (viaNode > lastFromEdge) {
-                        viaNode = lastFromEdge;
+                    if (viaNode > lastViaNode) {
+                        viaNode = lastViaNode;
                         return false;
                     }
                     int count = getTurnCostsCount(viaNode);
