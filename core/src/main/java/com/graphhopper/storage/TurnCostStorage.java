@@ -116,8 +116,12 @@ public class TurnCostStorage {
             if (fromEdge < lastFromEdge)
                 throw new IllegalArgumentException("Turn cost entries must be written in ascending order of the fromEdge");
             turnCostIndices.ensureCapacity((long) (fromEdge + 1) * BYTES_PER_INDEX);
-            for (int i = lastFromEdge + 1; i <= fromEdge; i++)
+            for (int i = lastFromEdge + 1; i <= fromEdge; i++) {
                 turnCostIndices.setInt((long) i * BYTES_PER_INDEX, turnCostsCount);
+                int prev = turnCostIndices.getInt((long) (i - 1) * BYTES_PER_INDEX);
+                if (Math.abs(prev) == turnCostsCount)
+                    turnCostIndices.setInt((long) (i - 1) * BYTES_PER_INDEX, -Math.abs(prev));
+            }
             turnCosts.ensureCapacity((long) (turnCostsCount + 1) * BYTES_PER_ENTRY);
             long pointer = (long) turnCostsCount * BYTES_PER_ENTRY;
             // todonow: as long as we do not store the via-node (and do not use edge keys) we cannot really store u-turn restrictions
@@ -164,7 +168,8 @@ public class TurnCostStorage {
             throw new IllegalArgumentException("via node cannot be negative");
         if (fromEdge > lastFromEdge) return NO_TURN_ENTRY;
         int begin = turnCostIndices.getInt((long) fromEdge * BYTES_PER_INDEX);
-        int end = fromEdge == lastFromEdge ? turnCostsCount : turnCostIndices.getInt((long) (fromEdge + 1) * BYTES_PER_INDEX);
+        if (begin < 0) return NO_TURN_ENTRY;
+        int end = fromEdge == lastFromEdge ? turnCostsCount : Math.abs(turnCostIndices.getInt((long) (fromEdge + 1) * BYTES_PER_INDEX));
         for (int index = begin; index < end; ++index) {
             long pointer = (long) index * BYTES_PER_ENTRY;
             if (toEdge == turnCosts.getInt(pointer + TC_TO))
