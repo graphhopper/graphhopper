@@ -117,12 +117,8 @@ public class TurnCostStorage {
             if (viaNode < lastViaNode)
                 throw new IllegalArgumentException("Turn cost entries must be written in ascending order of the viaNode");
             turnCostIndices.ensureCapacity((long) (viaNode + 1) * BYTES_PER_INDEX);
-            for (int i = lastViaNode + 1; i <= viaNode; i++) {
+            for (int i = lastViaNode + 1; i <= viaNode; i++)
                 turnCostIndices.setInt((long) i * BYTES_PER_INDEX, turnCostsCount);
-                int prev = turnCostIndices.getInt((long) (i - 1) * BYTES_PER_INDEX);
-                if (Math.abs(prev) == turnCostsCount)
-                    turnCostIndices.setInt((long) (i - 1) * BYTES_PER_INDEX, -Math.abs(prev));
-            }
             turnCosts.ensureCapacity((long) (turnCostsCount + 1) * BYTES_PER_ENTRY);
             long pointer = (long) turnCostsCount * BYTES_PER_ENTRY;
             turnCosts.setInt(pointer + TC_FROM, fromEdge);
@@ -169,8 +165,7 @@ public class TurnCostStorage {
             throw new IllegalArgumentException("via node cannot be negative");
         if (viaNode > lastViaNode) return NO_TURN_ENTRY;
         int begin = turnCostIndices.getInt((long) viaNode * BYTES_PER_INDEX);
-        if (begin < 0) return NO_TURN_ENTRY;
-        int end = viaNode == lastViaNode ? turnCostsCount : Math.abs(turnCostIndices.getInt((long) (viaNode + 1) * BYTES_PER_INDEX));
+        int end = viaNode == lastViaNode ? turnCostsCount : turnCostIndices.getInt((long) (viaNode + 1) * BYTES_PER_INDEX);
         for (int index = begin; index < end; ++index) {
             long pointer = (long) index * BYTES_PER_ENTRY;
             if (fromEdge == turnCosts.getInt(pointer + TC_FROM) && toEdge == turnCosts.getInt(pointer + TC_TO))
@@ -186,8 +181,7 @@ public class TurnCostStorage {
     public int getTurnCostsCount(int node) {
         if (node > lastViaNode) return 0;
         int index = turnCostIndices.getInt((long) node * BYTES_PER_INDEX);
-        if (index < 0) return 0;
-        int end = node == lastViaNode ? turnCostsCount : Math.abs(turnCostIndices.getInt((long) (node + 1) * BYTES_PER_INDEX));
+        int end = node == lastViaNode ? turnCostsCount : turnCostIndices.getInt((long) (node + 1) * BYTES_PER_INDEX);
         return end - index;
     }
 
