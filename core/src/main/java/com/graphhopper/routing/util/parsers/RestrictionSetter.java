@@ -292,7 +292,7 @@ public class RestrictionSetter {
     private void restrictTurn(BooleanEncodedValue turnRestrictionEnc, int fromEdge, int viaNode, int toEdge) {
         if (fromEdge < 0 || toEdge < 0 || viaNode < 0)
             throw new IllegalArgumentException("from/toEdge and viaNode must be >= 0");
-//        baseGraph.getTurnCostStorage().set(turnRestrictionEnc, fromEdge, viaNode, toEdge, true);
+        baseGraph.getTurnCostStorage().set(turnRestrictionEnc, fromEdge, viaNode, toEdge, true);
     }
 
     public static BitSet copyEncBits(BitSet encBits) {

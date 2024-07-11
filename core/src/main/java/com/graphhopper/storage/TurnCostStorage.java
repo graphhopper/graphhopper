@@ -127,7 +127,7 @@ public class TurnCostStorage {
         if (fastTurnCosts == null) {
             fastTurnCosts = new FastTurnCosts(baseGraph);
         }
-        return fastTurnCosts.get(bev, fromEdge, viaNode, toEdge);
+        return fastTurnCosts.get(bev, fromEdge, toEdge);
 //        return bev.getBool(false, -1, createIntAccess(findPointer(fromEdge, viaNode, toEdge)));
     }
 
