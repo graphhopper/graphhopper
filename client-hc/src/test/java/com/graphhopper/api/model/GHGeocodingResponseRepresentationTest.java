@@ -18,7 +18,6 @@
 
 package com.graphhopper.api.model;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.jackson.Jackson;
 import org.junit.jupiter.api.Test;
