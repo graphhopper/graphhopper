@@ -31,8 +31,9 @@ import com.graphhopper.gtfs.Transfers;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.BaseGraph;
 import io.dropwizard.lifecycle.Managed;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.glassfish.hk2.api.Factory;
 
 import javax.inject.Inject;
@@ -112,7 +113,7 @@ public class RealtimeFeedLoadingCache implements Factory<RealtimeFeed>, Managed 
         Map<String, GtfsRealtime.FeedMessage> feedMessageMap = new HashMap<>();
         for (FeedConfiguration configuration : bundleConfiguration.gtfsrealtime().getFeeds()) {
             try {
-                GtfsRealtime.FeedMessage feedMessage = GtfsRealtime.FeedMessage.parseFrom(httpClient.execute(new HttpGet(configuration.getUrl().toURI())).getEntity().getContent());
+                GtfsRealtime.FeedMessage feedMessage = GtfsRealtime.FeedMessage.parseFrom(((ClassicHttpResponse)httpClient.execute(new HttpGet(configuration.getUrl().toURI()))).getEntity().getContent());
                 feedMessageMap.put(configuration.getFeedId(), feedMessage);
             } catch (IOException | URISyntaxException e) {
                 throw new RuntimeException(e);
