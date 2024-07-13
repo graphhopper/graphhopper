@@ -36,7 +36,7 @@ import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.glassfish.hk2.api.Factory;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.HashMap;

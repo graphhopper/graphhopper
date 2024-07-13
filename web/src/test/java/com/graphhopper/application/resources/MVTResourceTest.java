@@ -31,7 +31,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.locationtech.jts.geom.Geometry;
 
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;

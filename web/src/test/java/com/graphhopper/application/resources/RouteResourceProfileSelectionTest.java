@@ -34,8 +34,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.Response;
 import java.io.File;
 import java.util.Arrays;
 

@@ -24,7 +24,7 @@ import com.graphhopper.http.RealtimeBundleConfiguration;
 import com.graphhopper.http.RealtimeConfiguration;
 import io.dropwizard.core.Configuration;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 public class GraphHopperServerConfiguration extends Configuration implements GraphHopperBundleConfiguration, RealtimeBundleConfiguration {
 

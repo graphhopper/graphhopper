@@ -32,11 +32,11 @@ import com.graphhopper.util.Helper;
 import com.graphhopper.util.StopWatch;
 import io.dropwizard.jersey.params.AbstractParam;
 
-import javax.inject.Inject;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
+import jakarta.inject.Inject;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.MediaType;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;

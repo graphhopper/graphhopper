@@ -42,7 +42,7 @@ import io.dropwizard.core.setup.Environment;
 import org.glassfish.hk2.api.Factory;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConfiguration> {
 

@@ -33,8 +33,8 @@ import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKTReader;
 
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.Response;
 import java.io.File;
 import java.util.Arrays;
 

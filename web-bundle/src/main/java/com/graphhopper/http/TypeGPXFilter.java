@@ -19,11 +19,11 @@
 package com.graphhopper.http;
 
 import javax.annotation.Priority;
-import javax.ws.rs.Priorities;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.container.ContainerRequestFilter;
-import javax.ws.rs.container.PreMatching;
-import javax.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.Priorities;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.container.ContainerRequestFilter;
+import jakarta.ws.rs.container.PreMatching;
+import jakarta.ws.rs.core.HttpHeaders;
 
 @PreMatching
 @Priority(Priorities.HEADER_DECORATOR)

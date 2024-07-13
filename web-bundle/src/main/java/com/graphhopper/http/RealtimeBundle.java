@@ -28,7 +28,7 @@ import org.apache.hc.client5.http.classic.HttpClient;
 import org.glassfish.hk2.api.Factory;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import javax.inject.Singleton;
 
 public class RealtimeBundle implements ConfiguredBundle<RealtimeBundleConfiguration> {

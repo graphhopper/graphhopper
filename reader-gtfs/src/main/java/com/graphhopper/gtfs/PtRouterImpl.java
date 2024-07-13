@@ -39,7 +39,7 @@ import com.graphhopper.util.details.PathDetailsBuilderFactory;
 import com.graphhopper.util.exceptions.ConnectionNotFoundException;
 import com.graphhopper.util.exceptions.MaximumNodesExceededException;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.time.Instant;
 import java.util.*;
 import java.util.function.Predicate;

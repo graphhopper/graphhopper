@@ -27,10 +27,10 @@ import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import javax.inject.Named;
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.MediaType;
 
 /**
  * @author svantulden
