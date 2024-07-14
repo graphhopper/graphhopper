@@ -135,13 +135,12 @@ public class BaseGraphWithTurnCostsTest extends BaseGraphTest {
             graph.edge(nodeId, 50).setDistance(r.nextDouble()).set(carAccessEnc, true, true);
         }
 
-        // add 100 turn cost entries around node 50
-        for (int edgeId = 0; edgeId < 50; edgeId++) {
+        // add turn cost entries around node 50
+        for (int edgeId = 0; edgeId < 52; edgeId++) {
             setTurnCost(edgeId, 50, edgeId + 50, 1337);
             setTurnCost(edgeId + 50, 50, edgeId, 1337);
         }
 
-        setTurnCost(0, 50, 1, 1337);
         assertEquals(104, turnCostStorage.getCapacity() / 16); // we are still good here
 
         setTurnCost(0, 50, 2, 1337);

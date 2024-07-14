@@ -261,7 +261,7 @@ public class RouteResourceCustomModelTest {
                 "}";
         JsonNode path = getPath(jsonQuery);
         double expectedDistance = path.get("distance").asDouble();
-        assertEquals(4781, expectedDistance, 10);
+        assertEquals(4819, expectedDistance, 10);
     }
 
     @Test

@@ -333,7 +333,11 @@ public class FootTagParserTest {
         way.clearTags();
         way.setTag("highway", "tertiary");
         assertEquals(PriorityCode.UNCHANGED.getValue(), prioParser.handlePriority(way, null));
+        way.setTag("foot","use_sidepath");
+        assertEquals(PriorityCode.VERY_BAD.getValue(), prioParser.handlePriority(way, null));
 
+        way.clearTags();
+        way.setTag("highway", "tertiary");
         // tertiary without sidewalk is roughly like primary with sidewalk
         way.setTag("sidewalk", "no");
         assertEquals(PriorityCode.AVOID.getValue(), prioParser.handlePriority(way, null));

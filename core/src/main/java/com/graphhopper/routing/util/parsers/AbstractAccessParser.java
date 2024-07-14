@@ -17,8 +17,7 @@ public abstract class AbstractAccessParser implements TagParser {
     protected final List<String> restrictionKeys = new ArrayList<>(5);
     protected final Set<String> restrictedValues = new HashSet<>(5);
 
-    protected final Set<String> intendedValues = new HashSet<>(INTENDED);
-    protected final Set<String> oneways = new HashSet<>(ONEWAYS);
+    protected final Set<String> intendedValues = new HashSet<>(INTENDED); // possible to add "private" later
     // http://wiki.openstreetmap.org/wiki/Mapfeatures#Barrier
     protected final Set<String> barriers = new HashSet<>(5);
     protected final BooleanEncodedValue accessEnc;

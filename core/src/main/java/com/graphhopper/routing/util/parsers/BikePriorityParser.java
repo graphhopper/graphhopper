@@ -18,8 +18,6 @@ public class BikePriorityParser extends BikeCommonPriorityParser {
         addPushingSection("path");
 
         preferHighwayTags.add("service");
-        preferHighwayTags.add("tertiary");
-        preferHighwayTags.add("tertiary_link");
         preferHighwayTags.add("residential");
         preferHighwayTags.add("unclassified");
 
