@@ -80,14 +80,11 @@ public class CustomModelParser {
     }
 
     /**
-     * This method compiles a new subclass of CustomWeightingHelper composed from the provided CustomModel caches this
+     * This method compiles a new subclass of CustomWeightingHelper composed of the provided CustomModel caches this
      * and returns an instance.
      */
     public static CustomWeighting.Parameters createWeightingParameters(CustomModel customModel, EncodedValueLookup lookup) {
         String key = customModel.toString();
-        if (key.length() > 100_000)
-            throw new IllegalArgumentException("Custom Model too big: " + key.length());
-
         Class<?> clazz = customModel.isInternal() ? INTERNAL_CACHE.get(key) : null;
         if (CACHE_SIZE > 0 && clazz == null)
             clazz = CACHE.get(key);
