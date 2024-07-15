@@ -36,8 +36,6 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
     private final int uTurnCostsInt;
     private final double uTurnCosts;
 
-    private final double minRightInRad;
-    private final double maxRightInRad;
     private final double minLeftInRad;
     private final double maxLeftInRad;
     private final double rightCost;
@@ -62,8 +60,6 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
         this.turnCostStorage = graph.getTurnCostStorage();
 
         this.orientationEnc = orientationEnc;
-        this.minRightInRad = Math.toRadians(tcConfig.getMinRightAngle());
-        this.maxRightInRad = Math.toRadians(tcConfig.getMaxRightAngle());
         this.minLeftInRad = Math.toRadians(tcConfig.getMinLeftAngle());
         this.maxLeftInRad = Math.toRadians(tcConfig.getMaxLeftAngle());
         this.rightCost = tcConfig.getRightCost();
@@ -90,11 +86,11 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
         if (orientationEnc != null) {
             if (Double.isInfinite(tCost)) return tCost;
             double changeAngle = calcChangeAngle(inEdge, viaNode, outEdge);
-            if (changeAngle > minRightInRad && changeAngle < minLeftInRad)
+            if (changeAngle > -minLeftInRad && changeAngle < minLeftInRad)
                 return straightCost + tCost;
             else if (changeAngle >= minLeftInRad && changeAngle <= maxLeftInRad)
                 return leftCost + tCost;
-            else if (changeAngle <= minRightInRad && changeAngle >= maxRightInRad)
+            else if (changeAngle <= -minLeftInRad && changeAngle >= -maxLeftInRad)
                 return rightCost + tCost;
             else return Double.POSITIVE_INFINITY; // too sharp turn
         }

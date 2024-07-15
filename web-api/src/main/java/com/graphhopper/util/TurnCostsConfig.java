@@ -11,8 +11,10 @@ public class TurnCostsConfig {
     private double leftCost; // in seconds
     private double rightCost;
     private double straightCost;
+
+    // Define when "left" turn start and end. As "right" turn is symmetric and the negated values are used.
     private double minLeftAngle = 25, maxLeftAngle = 180;
-    private double minRightAngle = -25, maxRightAngle = -180;
+
     private int uTurnCosts = INFINITE_U_TURN_COSTS;
     private List<String> vehicleTypes;
     // ensure that no typos can occur like motor_car vs motorcar or bike vs bicycle
@@ -42,8 +44,6 @@ public class TurnCostsConfig {
         straightCost = copy.straightCost;
         minLeftAngle = copy.minLeftAngle;
         maxLeftAngle = copy.maxLeftAngle;
-        minRightAngle = copy.minRightAngle;
-        maxRightAngle = copy.maxRightAngle;
         uTurnCosts = copy.uTurnCosts;
         if (copy.vehicleTypes != null)
             vehicleTypes = new ArrayList<>(copy.vehicleTypes);
@@ -142,27 +142,10 @@ public class TurnCostsConfig {
         return maxLeftAngle;
     }
 
-    public void setMinRightAngle(double minRightAngle) {
-        this.minRightAngle = minRightAngle;
-    }
-
-    public double getMinRightAngle() {
-        return minRightAngle;
-    }
-
-    public void setMaxRightAngle(double maxRightAngle) {
-        this.maxRightAngle = maxRightAngle;
-    }
-
-    public double getMaxRightAngle() {
-        return maxRightAngle;
-    }
-
     @Override
     public String toString() {
         return "vehicleTypes=" + vehicleTypes + ", uTurnCosts=" + uTurnCosts
                 + ", leftCost=" + leftCost + ", rightCost=" + rightCost + ", straightCost=" + straightCost
-                + ", minLeftAngle=" + minLeftAngle + ", maxLeftAngle=" + maxLeftAngle
-                + ", minRightAngle=" + minRightAngle + ", maxRightAngle=" + maxRightAngle;
+                + ", minLeftAngle=" + minLeftAngle + ", maxLeftAngle=" + maxLeftAngle;
     }
 }

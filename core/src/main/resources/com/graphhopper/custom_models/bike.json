@@ -2,6 +2,11 @@
 // graph.elevation.provider: srtm   # enables elevation
 // profiles:
 //    - name: bike
+//      turn_costs:
+//        vehicle_types: [bicycle]
+//        u_turn_costs: 20
+//        left: 3
+//        right: 3
 //      custom_model_files: [bike.json, bike_elevation.json]
 
 {
