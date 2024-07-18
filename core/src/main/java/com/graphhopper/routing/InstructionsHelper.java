@@ -72,6 +72,7 @@ class InstructionsHelper {
         double tmpLon;
         PointList tmpWayGeo = edgeIteratorState.fetchWayGeometry(FetchMode.ALL);
         if (tmpWayGeo.size() <= 2) {
+            // e.g. single point (virtual) edges - can this really happen?
             tmpLat = nodeAccess.getLat(edgeIteratorState.getAdjNode());
             tmpLon = nodeAccess.getLon(edgeIteratorState.getAdjNode());
         } else {

@@ -56,10 +56,16 @@ public class PathMerger {
     private PathDetailsBuilderFactory pathBuilderFactory;
     private List<String> requestedPathDetails = Collections.emptyList();
     private double favoredHeading = Double.NaN;
+    private boolean withTurnLanes = true;
 
     public PathMerger(Graph graph, Weighting weighting) {
         this.graph = graph;
         this.weighting = graph.wrapWeighting(weighting);
+    }
+
+    public PathMerger setWithTurnLanes(boolean enableLanesGuidance) {
+        this.withTurnLanes = enableLanesGuidance;
+        return this;
     }
 
     public PathMerger setCalcPoints(boolean calcPoints) {
@@ -111,7 +117,8 @@ public class PathMerger {
             fullDistance += path.getDistance();
             fullWeight += path.getWeight();
             if (enableInstructions) {
-                InstructionList il = InstructionsFromEdges.calcInstructions(path, graph, weighting, evLookup, tr);
+                InstructionList il = InstructionsFromEdges.calcInstructions(path, graph, weighting,
+                        evLookup, tr, withTurnLanes);
 
                 if (!il.isEmpty()) {
                     fullInstructions.addAll(il);

@@ -57,6 +57,9 @@ public class PathDetailsBuilderFactory {
             builders.add(new KVStringDetails(STREET_REF));
         if (requestedPathDetails.contains(STREET_DESTINATION))
             builders.add(new KVStringDetails(STREET_DESTINATION));
+        // for now do not expose it via path detail because we would want similar object structure of lanes as we have in instructions
+        //if (requestedPathDetails.contains(TURN_LANES)) builders.add(new KVStringDetails(TURN_LANES));
+        //if (requestedPathDetails.contains(TURN_LANES_VEHICLE_ACCESS)) builders.add(new KVStringDetails(TURN_LANES_VEHICLE_ACCESS));
 
         if (requestedPathDetails.contains(AVERAGE_SPEED))
             builders.add(new AverageSpeedDetails(weighting));

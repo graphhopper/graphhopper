@@ -431,6 +431,27 @@ public class OSMReader {
             if (!name.isEmpty())
                 map.put(STREET_NAME, new KValue(name));
 
+            if (!config.getTurnLanesProfiles().isEmpty()) {
+                if (way.hasTag("turn:lanes"))
+                    map.put(TURN_LANES, new KValue(replace(way.getTag("turn:lanes"))));
+                else {
+                    String fwdStr = replace(way.getTag("turn:lanes:forward"));
+                    String bwdStr = replace(way.getTag("turn:lanes:backward"));
+                    if (!fwdStr.isEmpty() || !bwdStr.isEmpty())
+                        map.put(TURN_LANES, new KValue(fwdStr.isEmpty() ? null : fwdStr, bwdStr.isEmpty() ? null : bwdStr));
+                }
+
+                // TODO LATER do taxi:lanes, bus:lanes, hgv:lanes
+                if (way.hasTag("vehicle:lanes"))
+                    map.put(TURN_LANES_VEHICLE_ACCESS, new KValue(replace(way.getTag("vehicle:lanes"))));
+                else {
+                    String fwdStr = replace(way.getTag("vehicle:lanes:forward"));
+                    String bwdStr = replace(way.getTag("vehicle:lanes:backward"));
+                    if (!fwdStr.isEmpty() || !bwdStr.isEmpty())
+                        map.put(TURN_LANES_VEHICLE_ACCESS, new KValue(fwdStr.isEmpty() ? null : fwdStr, bwdStr.isEmpty() ? null : bwdStr));
+                }
+            }
+
             // http://wiki.openstreetmap.org/wiki/Key:ref
             String refName = fixWayName(way.getTag("ref"));
             if (!refName.isEmpty())
@@ -531,9 +552,14 @@ public class OSMReader {
         way.setTag("speed_from_duration", speedInKmPerHour);
     }
 
+    static String replace(String str) {
+        if (str == null) return "";
+        // naming must be consistent with our instructions
+        return str.replaceAll("through", "continue");
+    }
+
     static String fixWayName(String str) {
-        if (str == null)
-            return "";
+        if (str == null) return "";
         // the KVStorage does not accept too long strings -> Helper.cutStringForKV
         return KVStorage.cutString(WAY_NAME_PATTERN.matcher(str).replaceAll(", "));
     }

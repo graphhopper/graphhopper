@@ -54,7 +54,6 @@ public class NavigateResponseConverterTest {
 
     @Test
     public void basicTest() {
-
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile(profile));
 
         ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH, distanceConfig);
@@ -124,7 +123,6 @@ public class NavigateResponseConverterTest {
 
     @Test
     public void arriveGeometryTest() {
-
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile(profile));
 
         ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH, distanceConfig);
@@ -146,7 +144,6 @@ public class NavigateResponseConverterTest {
 
     @Test
     public void voiceInstructionsTest() {
-
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile(profile));
 
         ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH, distanceConfig);
@@ -178,7 +175,6 @@ public class NavigateResponseConverterTest {
 
     @Test
     public void voiceInstructionsImperialTest() {
-
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile(profile));
 
         ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH,
@@ -188,7 +184,6 @@ public class NavigateResponseConverterTest {
 
         // Step 4 is about 240m long
         JsonNode step = steps.get(4);
-        JsonNode maneuver = step.get("maneuver");
 
         JsonNode voiceInstructions = step.get("voiceInstructions");
         assertEquals(2, voiceInstructions.size());
@@ -199,7 +194,6 @@ public class NavigateResponseConverterTest {
 
         // Step 14 is over 3km long
         step = steps.get(14);
-        maneuver = step.get("maneuver");
 
         voiceInstructions = step.get("voiceInstructions");
         assertEquals(4, voiceInstructions.size());
