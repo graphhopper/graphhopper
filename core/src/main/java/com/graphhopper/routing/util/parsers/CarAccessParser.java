@@ -55,10 +55,6 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
         blockPrivate(properties.getBool("block_private", true));
         blockFords(properties.getBool("block_fords", false));
 
-        intendedValues.add("yes");
-        intendedValues.add("designated");
-        intendedValues.add("permissive");
-
         barriers.add("kissing_gate");
         barriers.add("fence");
         barriers.add("bollard");
@@ -106,6 +102,7 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
         if (!highwayValues.contains(highwayValue))
             return WayAccess.CAN_SKIP;
 
+        // this is a very rare tagging which we should/could remove (the status key itself is described as "vague")
         if (way.hasTag("impassable", "yes") || way.hasTag("status", "impassable"))
             return WayAccess.CAN_SKIP;
 
@@ -174,7 +171,7 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
     }
 
     protected boolean isOneway(ReaderWay way) {
-        return way.hasTag("oneway", oneways)
+        return way.hasTag("oneway", ONEWAYS)
                 || way.hasTag("vehicle:backward", restrictedValues)
                 || way.hasTag("vehicle:forward", restrictedValues)
                 || way.hasTag("motor_vehicle:backward", restrictedValues)

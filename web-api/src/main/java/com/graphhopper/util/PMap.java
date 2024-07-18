@@ -17,8 +17,11 @@
  */
 package com.graphhopper.util;
 
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * A properties map (String to Object) with convenient methods to access the content.
@@ -138,6 +141,10 @@ public class PMap {
     public PMap putObject(String key, Object object) {
         map.put(key, object);
         return this;
+    }
+
+    public static Set<String> toSet(String value) {
+        return Arrays.stream(value.split(";")).filter(s -> !s.isEmpty()).collect(Collectors.toSet());
     }
 
     /**

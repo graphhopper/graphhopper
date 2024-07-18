@@ -12,6 +12,6 @@
   ],
   "speed": [
     { "if": "true", "limit_to": "bike_average_speed" },
-    { "if": "!bike_access && backward_bike_access && !roundabout", "limit_to": "5" }
+    { "if": "!bike_access && backward_bike_access", "limit_to": "5" }
   ]
 }

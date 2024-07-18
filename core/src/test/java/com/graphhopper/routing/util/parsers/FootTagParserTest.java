@@ -333,7 +333,11 @@ public class FootTagParserTest {
         way.clearTags();
         way.setTag("highway", "tertiary");
         assertEquals(PriorityCode.UNCHANGED.getValue(), prioParser.handlePriority(way, null));
+        way.setTag("foot","use_sidepath");
+        assertEquals(PriorityCode.VERY_BAD.getValue(), prioParser.handlePriority(way, null));
 
+        way.clearTags();
+        way.setTag("highway", "tertiary");
         // tertiary without sidewalk is roughly like primary with sidewalk
         way.setTag("sidewalk", "no");
         assertEquals(PriorityCode.AVOID.getValue(), prioParser.handlePriority(way, null));
@@ -441,12 +445,16 @@ public class FootTagParserTest {
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
         node.setTag("access", "no");
+        assertTrue(accessParser.isBarrier(node));
         node.setTag("foot", "yes");
-        // no barrier!
+        assertFalse(accessParser.isBarrier(node));
+        node.setTag("locked", "yes");
+        // no barrier for foot=yes!
         assertFalse(accessParser.isBarrier(node));
 
+        node.clearTags();
+        node.setTag("barrier", "yes");
         node.setTag("locked", "yes");
-        // barrier!
         assertTrue(accessParser.isBarrier(node));
 
         node.clearTags();

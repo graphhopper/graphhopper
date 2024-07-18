@@ -455,19 +455,20 @@ public class GraphHopperTest {
                 setProfiles(TestProfiles.accessSpeedAndPriority(profile, "bike"));
         hopper.importOrLoad();
 
-        GHRequest req = new GHRequest(50.028917, 11.496506, 49.985228, 11.600876).
+        GHRequest req = new GHRequest(50.028917, 11.496506, 49.982089,11.599224).
                 setAlgorithm(ALT_ROUTE).setProfile(profile);
+
         req.putHint("alternative_route.max_paths", 3);
         GHResponse rsp = hopper.route(req);
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
 
         assertEquals(3, rsp.getAll().size());
         // via ramsenthal
-        assertEquals(2888, rsp.getAll().get(0).getTime() / 1000);
+        assertEquals(2636, rsp.getAll().get(0).getTime() / 1000);
         // via unterwaiz
-        assertEquals(3318, rsp.getAll().get(1).getTime() / 1000);
+        assertEquals(2985, rsp.getAll().get(1).getTime() / 1000);
         // via eselslohe -> theta; BTW: here smaller time as 2nd alternative due to priority influences time order
-        assertEquals(3116, rsp.getAll().get(2).getTime() / 1000);
+        assertEquals(2783, rsp.getAll().get(2).getTime() / 1000);
     }
 
     @Test
@@ -1228,7 +1229,7 @@ public class GraphHopperTest {
         assertEquals(67.4, arsp.getDescend(), 1e-1);
 
         assertEquals(74, arsp.getPoints().size());
-        assertEquals(new GHPoint3D(43.73068455771767, 7.421283689825812, 55.82), arsp.getPoints().get(0));
+        assertEquals(new GHPoint3D(43.73068455771767, 7.421283689825812, 55.83), arsp.getPoints().get(0));
         assertEquals(new GHPoint3D(43.727679637988224, 7.419198521975086, 12.27), arsp.getPoints().get(arsp.getPoints().size() - 1));
 
         assertEquals(55.83, arsp.getPoints().get(0).getEle(), 1e-2);
@@ -1890,9 +1891,9 @@ public class GraphHopperTest {
         assertEquals(1995.18, pathLM.getDistance(), 0.1);
         assertEquals(1995.18, path.getDistance(), 0.1);
 
-        assertEquals(149481, pathCH.getTime());
-        assertEquals(149481, pathLM.getTime());
-        assertEquals(149481, path.getTime());
+        assertEquals(149482, pathCH.getTime());
+        assertEquals(149482, pathLM.getTime());
+        assertEquals(149482, path.getTime());
     }
 
     @Test
@@ -2188,26 +2189,28 @@ public class GraphHopperTest {
         GHPoint q = new GHPoint(43.737949, 7.423523);
         final String boulevard = "Boulevard de Suisse";
         final String avenue = "Avenue de la Costa";
-        assertCurbsidesPathError(h, p, q, asList(CURBSIDE_RIGHT, CURBSIDE_RIGHT), "Impossible curbside constraint: 'curbside=right' at point 0", true);
-        assertCurbsidesPathError(h, p, q, asList(CURBSIDE_RIGHT, CURBSIDE_LEFT), "Impossible curbside constraint: 'curbside=right' at point 0", true);
+        assertCurbsidesPathError(h, p, q, asList(CURBSIDE_RIGHT, CURBSIDE_RIGHT), "Impossible curbside constraint: 'curbside=right' at point 0", "strict");
+        assertCurbsidesPathError(h, p, q, asList(CURBSIDE_RIGHT, CURBSIDE_LEFT), "Impossible curbside constraint: 'curbside=right' at point 0", "strict");
         assertCurbsidesPath(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_RIGHT), 463, asList(boulevard, avenue));
-        assertCurbsidesPathError(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_LEFT), "Impossible curbside constraint: 'curbside=left' at point 1", true);
+        assertCurbsidesPathError(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_LEFT), "Impossible curbside constraint: 'curbside=left' at point 1", "strict");
         // without restricting anything we get the shortest path
         assertCurbsidesPath(h, p, q, asList(CURBSIDE_ANY, CURBSIDE_ANY), 463, asList(boulevard, avenue));
         assertCurbsidesPath(h, p, q, Collections.<String>emptyList(), 463, asList(boulevard, avenue));
-        // if we set force_curbside to false impossible curbside constraints will be ignored
-        assertCurbsidesPath(h, p, q, asList(CURBSIDE_RIGHT, CURBSIDE_RIGHT), 463, asList(boulevard, avenue), false);
-        assertCurbsidesPath(h, p, q, asList(CURBSIDE_RIGHT, CURBSIDE_LEFT), 463, asList(boulevard, avenue), false);
-        assertCurbsidesPath(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_RIGHT), 463, asList(boulevard, avenue), false);
-        assertCurbsidesPath(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_LEFT), 463, asList(boulevard, avenue), false);
+        // if we set curbside_strictness to "soft" then impossible curbside constraints will be ignored
+        assertCurbsidesPath(h, p, q, asList(CURBSIDE_RIGHT, CURBSIDE_RIGHT), 463, asList(boulevard, avenue), "soft");
+        assertCurbsidesPath(h, p, q, asList(CURBSIDE_RIGHT, CURBSIDE_LEFT), 463, asList(boulevard, avenue), "soft");
+        assertCurbsidesPath(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_RIGHT), 463, asList(boulevard, avenue), "soft");
+        assertCurbsidesPath(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_LEFT), 463, asList(boulevard, avenue), "soft");
     }
 
-    private void assertCurbsidesPath(GraphHopper hopper, GHPoint source, GHPoint target, List<String> curbsides, int expectedDistance, List<String> expectedStreets) {
-        assertCurbsidesPath(hopper, source, target, curbsides, expectedDistance, expectedStreets, true);
+    private void assertCurbsidesPath(GraphHopper hopper, GHPoint source, GHPoint target, List<String> curbsides,
+                                     int expectedDistance, List<String> expectedStreets) {
+        assertCurbsidesPath(hopper, source, target, curbsides, expectedDistance, expectedStreets, "strict");
     }
 
-    private void assertCurbsidesPath(GraphHopper hopper, GHPoint source, GHPoint target, List<String> curbsides, int expectedDistance, List<String> expectedStreets, boolean force) {
-        GHResponse rsp = calcCurbsidePath(hopper, source, target, curbsides, force);
+    private void assertCurbsidesPath(GraphHopper hopper, GHPoint source, GHPoint target, List<String> curbsides,
+                                     int expectedDistance, List<String> expectedStreets, String curbsideStrictness) {
+        GHResponse rsp = calcCurbsidePath(hopper, source, target, curbsides, curbsideStrictness);
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         ResponsePath path = rsp.getBest();
         List<String> streets = new ArrayList<>(path.getInstructions().size());
@@ -2220,16 +2223,17 @@ public class GraphHopperTest {
         assertEquals(expectedDistance, path.getDistance(), 1);
     }
 
-    private void assertCurbsidesPathError(GraphHopper hopper, GHPoint source, GHPoint target, List<String> curbsides, String errorMessage, boolean force) {
-        GHResponse rsp = calcCurbsidePath(hopper, source, target, curbsides, force);
+    private void assertCurbsidesPathError(GraphHopper hopper, GHPoint source, GHPoint target,
+                                          List<String> curbsides, String errorMessage, String curbsideStrictness) {
+        GHResponse rsp = calcCurbsidePath(hopper, source, target, curbsides, curbsideStrictness);
         assertTrue(rsp.hasErrors());
         assertTrue(rsp.getErrors().toString().contains(errorMessage), "unexpected error. expected message containing: " + errorMessage + ", but got: " +
                 rsp.getErrors());
     }
 
-    private GHResponse calcCurbsidePath(GraphHopper hopper, GHPoint source, GHPoint target, List<String> curbsides, boolean force) {
+    private GHResponse calcCurbsidePath(GraphHopper hopper, GHPoint source, GHPoint target, List<String> curbsides, String curbsideStrictness) {
         GHRequest req = new GHRequest(source, target);
-        req.putHint(Routing.FORCE_CURBSIDE, force);
+        req.putHint(Routing.CURBSIDE_STRICTNESS, curbsideStrictness);
         req.setProfile("car");
         req.setCurbsides(curbsides);
         return hopper.route(req);
@@ -2811,6 +2815,67 @@ public class GraphHopperTest {
             hopper.load();
             assertEquals(2969, hopper.getBaseGraph().getNodes());
         }
+    }
+
+    @ParameterizedTest()
+    @ValueSource(booleans = {true, false})
+    void legDistanceWithDuplicateEndpoint(boolean simplifyResponse) {
+        // see #3007
+        GraphHopper hopper = new GraphHopper().
+                setGraphHopperLocation(GH_LOCATION).
+                setOSMFile(MONACO).
+                setEncodedValuesString("car_access, car_average_speed").
+                setProfiles(TestProfiles.accessAndSpeed("car")).
+                importOrLoad();
+        hopper.getRouterConfig().setSimplifyResponse(simplifyResponse);
+        GHRequest request = new GHRequest().setProfile("car");
+        request.addPoint(new GHPoint(43.732496, 7.427231));
+        request.addPoint(new GHPoint(43.732499, 7.426758));
+        request.addPoint(new GHPoint(43.732499, 7.426758));
+        request.setPathDetails(List.of("leg_distance"));
+        GHResponse routeRsp = hopper.route(request);
+        assertEquals(4, routeRsp.getBest().getPoints().size());
+        assertEquals(40.080, routeRsp.getBest().getDistance(), 1.e-3);
+        List<PathDetail> p = routeRsp.getBest().getPathDetails().get("leg_distance");
+        // there should be two consecutive leg_distance intervals, even though the second is empty: [0,3] and [3,3], see #2915
+        assertEquals(2, p.size());
+        assertEquals(0, p.get(0).getFirst());
+        assertEquals(3, p.get(0).getLast());
+        assertEquals(40.080, (double) p.get(0).getValue(), 1.e-3);
+        assertEquals(3, p.get(1).getFirst());
+        assertEquals(3, p.get(1).getLast());
+        assertEquals(0.0, (double) p.get(1).getValue(), 1.e-3);
+    }
+
+    @ParameterizedTest()
+    @ValueSource(booleans = {true, false})
+    void legDistanceWithDuplicateEndpoint_onlyTwoPoints(boolean simplifyResponse) {
+        // see #3007
+        GraphHopper hopper = new GraphHopper().
+                setGraphHopperLocation(GH_LOCATION).
+                setOSMFile(MONACO).
+                setEncodedValuesString("car_access, car_average_speed").
+                setProfiles(TestProfiles.accessAndSpeed("car")).
+                importOrLoad();
+        hopper.getRouterConfig().setSimplifyResponse(simplifyResponse);
+        GHRequest request = new GHRequest().setProfile("car");
+        // special case where the points are so close to each other that the resulting route contains only two points total
+        request.addPoint(new GHPoint(43.732399, 7.426658));
+        request.addPoint(new GHPoint(43.732499, 7.426758));
+        request.addPoint(new GHPoint(43.732499, 7.426758));
+        request.setPathDetails(List.of("leg_distance"));
+        GHResponse routeRsp = hopper.route(request);
+        assertEquals(2, routeRsp.getBest().getPoints().size());
+        assertEquals(10.439, routeRsp.getBest().getDistance(), 1.e-3);
+        List<PathDetail> p = routeRsp.getBest().getPathDetails().get("leg_distance");
+        // there should be two consecutive leg_distance intervals, even though the second is empty: [0,3] and [3,3], see #2915
+        assertEquals(2, p.size());
+        assertEquals(0, p.get(0).getFirst());
+        assertEquals(1, p.get(0).getLast());
+        assertEquals(10.439, (double) p.get(0).getValue(), 1.e-3);
+        assertEquals(1, p.get(1).getFirst());
+        assertEquals(1, p.get(1).getLast());
+        assertEquals(0.0, (double) p.get(1).getValue(), 1.e-3);
     }
 
 }

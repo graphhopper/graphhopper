@@ -18,21 +18,31 @@
 
 package com.graphhopper.reader.osm;
 
+import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.LongArrayList;
+import com.carrotsearch.hppc.LongHashSet;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.carrotsearch.hppc.cursors.LongCursor;
 import com.graphhopper.reader.ReaderElement;
 import com.graphhopper.reader.ReaderRelation;
+import com.graphhopper.routing.util.parsers.RestrictionSetter;
 import com.graphhopper.storage.BaseGraph;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.function.LongFunction;
 
-public class RestrictionConverter {
-    private static final Logger LOGGER = LoggerFactory.getLogger(RestrictionConverter.class);
+import static com.graphhopper.reader.osm.RestrictionType.NO;
+import static com.graphhopper.reader.osm.RestrictionType.ONLY;
+
+public class OSMRestrictionConverter {
+    private static final Logger LOGGER = LoggerFactory.getLogger(OSMRestrictionConverter.class);
     private static final long[] EMPTY_LONG_ARRAY_LIST = new long[0];
 
     public static boolean isTurnRestriction(ReaderRelation relation) {
@@ -59,14 +69,14 @@ public class RestrictionConverter {
     }
 
     /**
-     * OSM restriction relations specify turn restrictions between OSM ways (of course). This method converts such a
-     * relation into a 'graph' representation, where the turn restrictions are specified in terms of edge/node IDs instead
+     * OSM restriction relations specify turn restrictions between OSM ways (of course). This method rebuilds the
+     * topology of such a relation in the graph representation, where the turn restrictions are specified in terms of edge/node IDs instead
      * of OSM IDs.
      *
      * @throws OSMRestrictionException if the given relation is either not valid in some way and/or cannot be handled and
      *                                 shall be ignored
      */
-    public static Triple<ReaderRelation, GraphRestriction, RestrictionMembers> convert(ReaderRelation relation, BaseGraph baseGraph, LongFunction<Iterator<IntCursor>> edgesByWay) throws OSMRestrictionException {
+    public static Triple<ReaderRelation, RestrictionTopology, RestrictionMembers> buildRestrictionTopologyForGraph(BaseGraph baseGraph, ReaderRelation relation, LongFunction<Iterator<IntCursor>> edgesByWay) throws OSMRestrictionException {
         if (!isTurnRestriction(relation))
             throw new IllegalArgumentException("expected a turn restriction: " + relation.getTags());
         RestrictionMembers restrictionMembers = extractMembers(relation);
@@ -76,17 +86,27 @@ public class RestrictionConverter {
         // that are actually part of the given relation
         WayToEdgeConverter wayToEdgeConverter = new WayToEdgeConverter(baseGraph, edgesByWay);
         if (restrictionMembers.isViaWay()) {
+            if (containsDuplicateWays(restrictionMembers))
+                // For now let's ignore all via-way restrictions with duplicate from/to/via-members
+                // until we find cases where this is too strict.
+                throw new OSMRestrictionException("contains duplicate from-/via-/to-members");
             WayToEdgeConverter.EdgeResult res = wayToEdgeConverter
                     .convertForViaWays(restrictionMembers.getFromWays(), restrictionMembers.getViaWays(), restrictionMembers.getToWays());
-            return new Triple<>(relation, GraphRestriction.way(res.getFromEdges(), res.getViaEdges(), res.getToEdges(), res.getNodes()), restrictionMembers);
+            return new Triple<>(relation, RestrictionTopology.way(res.getFromEdges(), res.getViaEdges(), res.getToEdges(), res.getNodes()), restrictionMembers);
         } else {
             int viaNode = relation.getTag("graphhopper:via_node", -1);
             if (viaNode < 0)
                 throw new IllegalStateException("For some reason we did not set graphhopper:via_node for this relation: " + relation.getId());
             WayToEdgeConverter.NodeResult res = wayToEdgeConverter
                     .convertForViaNode(restrictionMembers.getFromWays(), viaNode, restrictionMembers.getToWays());
-            return new Triple<>(relation, GraphRestriction.node(res.getFromEdges(), viaNode, res.getToEdges()), restrictionMembers);
+            return new Triple<>(relation, RestrictionTopology.node(res.getFromEdges(), viaNode, res.getToEdges()), restrictionMembers);
         }
+    }
+
+    private static boolean containsDuplicateWays(RestrictionMembers restrictionMembers) {
+        LongArrayList allWays = restrictionMembers.getAllWays();
+        LongHashSet uniqueWays = new LongHashSet(allWays);
+        return uniqueWays.size() != allWays.size();
     }
 
     private static boolean membersExist(RestrictionMembers members, LongFunction<Iterator<IntCursor>> edgesByWay, ReaderRelation relation) {
@@ -99,7 +119,7 @@ public class RestrictionConverter {
         return true;
     }
 
-    public static void checkIfCompatibleWithRestriction(GraphRestriction g, String restriction) throws OSMRestrictionException {
+    public static void checkIfTopologyIsCompatibleWithRestriction(RestrictionTopology g, String restriction) throws OSMRestrictionException {
         if (g.getFromEdges().size() > 1 && !"no_entry".equals(restriction))
             throw new OSMRestrictionException("has multiple members with role 'from' even though it is not a 'no_entry' restriction");
         if (g.getToEdges().size() > 1 && !"no_exit".equals(restriction))
@@ -178,5 +198,95 @@ public class RestrictionConverter {
             throw new OSMRestrictionException("has multiple members with role 'from' even though it is not a 'no_entry' restriction");
         if (toWays.size() > 1 && !hasNoExit)
             throw new OSMRestrictionException("has multiple members with role 'to' even though it is not a 'no_exit' restriction");
+    }
+
+    /**
+     * Converts an OSM restriction to (multiple) single 'no' restrictions to be fed into {@link RestrictionSetter}
+     */
+    public static List<RestrictionSetter.Restriction> buildRestrictionsForOSMRestriction(
+            BaseGraph baseGraph, RestrictionTopology topology, RestrictionType type) {
+        List<RestrictionSetter.Restriction> result = new ArrayList<>();
+        if (type == NO) {
+            if (topology.isViaWayRestriction()) {
+                if (topology.getFromEdges().size() > 1 || topology.getToEdges().size() > 1)
+                    throw new IllegalArgumentException("Via-way restrictions with multiple from- or to- edges are not supported");
+                result.add(RestrictionSetter.createViaEdgeRestriction(collectEdges(topology)));
+            } else {
+                for (IntCursor fromEdge : topology.getFromEdges())
+                    for (IntCursor toEdge : topology.getToEdges())
+                        result.add(RestrictionSetter.createViaNodeRestriction(fromEdge.value, topology.getViaNodes().get(0), toEdge.value));
+            }
+        } else if (type == ONLY) {
+            if (topology.getFromEdges().size() > 1 || topology.getToEdges().size() > 1)
+                throw new IllegalArgumentException("'Only' restrictions with multiple from- or to- edges are not supported");
+            if (topology.isViaWayRestriction())
+                result.addAll(createRestrictionsForViaEdgeOnlyRestriction(baseGraph, topology));
+            else
+                result.addAll(createRestrictionsForViaNodeOnlyRestriction(baseGraph.createEdgeExplorer(),
+                        topology.getFromEdges().get(0), topology.getViaNodes().get(0), topology.getToEdges().get(0)));
+        } else
+            throw new IllegalArgumentException("Unexpected restriction type: " + type);
+        return result;
+    }
+
+    private static IntArrayList collectEdges(RestrictionTopology r) {
+        IntArrayList result = new IntArrayList(r.getViaEdges().size() + 2);
+        result.add(r.getFromEdges().get(0));
+        r.getViaEdges().iterator().forEachRemaining(c -> result.add(c.value));
+        result.add(r.getToEdges().get(0));
+        return result;
+    }
+
+    private static List<RestrictionSetter.Restriction> createRestrictionsForViaNodeOnlyRestriction(EdgeExplorer edgeExplorer, int fromEdge, int viaNode, int toEdge) {
+        List<RestrictionSetter.Restriction> result = new ArrayList<>();
+        EdgeIterator iter = edgeExplorer.setBaseNode(viaNode);
+        while (iter.next()) {
+            // deny all turns except the one to the to-edge, and (for performance reasons, see below)
+            // except the u-turn back to the from-edge
+            if (iter.getEdge() != toEdge && iter.getEdge() != fromEdge)
+                result.add(RestrictionSetter.createViaNodeRestriction(fromEdge, viaNode, iter.getEdge()));
+        }
+        return result;
+    }
+
+    private static List<RestrictionSetter.Restriction> createRestrictionsForViaEdgeOnlyRestriction(BaseGraph graph, RestrictionTopology topology) {
+        // For via-way ONLY restrictions we have to turn from the from-edge onto the first via-edge,
+        // continue with the next via-edge(s) and finally turn onto the to-edge. So we cannot branch
+        // out anywhere. If we don't start with the from-edge the restriction does not apply at all.
+        // c.f. https://github.com/valhalla/valhalla/discussions/4764
+        if (topology.getViaEdges().isEmpty())
+            throw new IllegalArgumentException("Via-edge restrictions must have at least one via-edge");
+        final EdgeExplorer explorer = graph.createEdgeExplorer();
+        IntArrayList edges = collectEdges(topology);
+        List<RestrictionSetter.Restriction> result =
+                createRestrictionsForViaNodeOnlyRestriction(explorer, edges.get(0), topology.getViaNodes().get(0), edges.get(1));
+        for (int i = 2; i < edges.size(); i++) {
+            EdgeIterator iter = explorer.setBaseNode(topology.getViaNodes().get(i - 1));
+            while (iter.next()) {
+                if (iter.getEdge() != edges.get(i) &&
+                        // We deny u-turns within via-way 'only' restrictions unconditionally (see below), so no need
+                        // to restrict them here as well
+                        iter.getEdge() != edges.get(i - 1)
+                ) {
+                    IntArrayList restriction = new IntArrayList(i + 1);
+                    for (int j = 0; j < i; j++)
+                        restriction.add(edges.get(j));
+                    restriction.add(iter.getEdge());
+                    if (restriction.size() == 3 && restriction.get(0) == restriction.get(restriction.size() - 1))
+                        // To prevent an exception in RestrictionSetter we need to prevent unambiguous
+                        // restrictions like a-b-a. Maybe we even need to exclude other cases as well,
+                        // but so far they did not occur.
+                        continue;
+                    result.add(RestrictionSetter.createViaEdgeRestriction(restriction));
+                }
+            }
+        }
+        // explicitly deny all u-turns along the via-way 'only' restriction
+        // todo: currently disabled! we skip u-turn restrictions to improve reading performance,
+        //       because so far they are ignored anyway! https://github.com/graphhopper/graphhopper/issues/2570
+//        for (int i = 0; i < edges.size() - 1; i++) {
+//            result.add(RestrictionSetter.createViaNodeRestriction(edges.get(i), topology.getViaNodes().get(i), edges.get(i)));
+//        }
+        return result;
     }
 }

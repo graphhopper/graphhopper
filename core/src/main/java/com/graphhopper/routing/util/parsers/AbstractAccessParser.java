@@ -17,8 +17,7 @@ public abstract class AbstractAccessParser implements TagParser {
     protected final List<String> restrictionKeys = new ArrayList<>(5);
     protected final Set<String> restrictedValues = new HashSet<>(5);
 
-    protected final Set<String> intendedValues = new HashSet<>(INTENDED);
-    protected final Set<String> oneways = new HashSet<>(ONEWAYS);
+    protected final Set<String> intendedValues = new HashSet<>(INTENDED); // possible to add "private" later
     // http://wiki.openstreetmap.org/wiki/Mapfeatures#Barrier
     protected final Set<String> barriers = new HashSet<>(5);
     protected final BooleanEncodedValue accessEnc;
@@ -80,7 +79,10 @@ public abstract class AbstractAccessParser implements TagParser {
     public boolean isBarrier(ReaderNode node) {
         // note that this method will be only called for certain nodes as defined by OSMReader!
         String firstValue = node.getFirstValue(restrictionKeys);
-        if (restrictedValues.contains(firstValue) || node.hasTag("locked", "yes"))
+
+        if (restrictedValues.contains(firstValue))
+            return true;
+        else if (node.hasTag("locked", "yes") && !intendedValues.contains(firstValue))
             return true;
         else if (intendedValues.contains(firstValue))
             return false;

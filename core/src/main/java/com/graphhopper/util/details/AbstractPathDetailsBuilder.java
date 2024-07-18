@@ -77,7 +77,7 @@ public abstract class AbstractPathDetailsBuilder implements PathDetailsBuilder {
     }
 
     public Map.Entry<String, List<PathDetail>> build() {
-        return new MapEntry(getName(), pathDetails);
+        return new MapEntry<>(getName(), pathDetails);
     }
 
     @Override

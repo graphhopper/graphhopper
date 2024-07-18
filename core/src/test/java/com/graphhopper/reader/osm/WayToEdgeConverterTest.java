@@ -43,20 +43,85 @@ class WayToEdgeConverterTest {
     }
 
     @Test
-    void convertForViaWays_throwsIfViaWayIsSplitIntoMultipleEdges() {
+    void convertForViaWays_multipleEdgesForViaWay() throws OSMRestrictionException {
         BaseGraph graph = new BaseGraph.Builder(1).create();
         graph.edge(0, 1);
         graph.edge(1, 2);
         graph.edge(2, 3);
         graph.edge(3, 4);
         LongFunction<Iterator<IntCursor>> edgesByWay = way -> {
-            // way 0 and 2 simply correspond to edges 0 and 3, but way 1 is split into the two edges 1 and 2
-            if (way == 1) return IntArrayList.from(1, 2).iterator();
-            else return IntArrayList.from(Math.toIntExact(way)).iterator();
+            if (way == 0) return IntArrayList.from(0).iterator();
+                // way 1 is split into the two edges 1 and 2
+            else if (way == 1) return IntArrayList.from(1, 2).iterator();
+            else if (way == 2) return IntArrayList.from(3).iterator();
+            else throw new IllegalArgumentException();
         };
-        OSMRestrictionException e = assertThrows(OSMRestrictionException.class,
-                () -> new WayToEdgeConverter(graph, edgesByWay).convertForViaWays(ways(0), ways(1), ways(2)));
-        assertTrue(e.getMessage().contains("has via member way that isn't split at adjacent ways"), e.getMessage());
+        WayToEdgeConverter.EdgeResult edgeResult = new WayToEdgeConverter(graph, edgesByWay).convertForViaWays(ways(0), ways(1), ways(2));
+        assertEquals(IntArrayList.from(1, 2), edgeResult.getViaEdges());
+        assertEquals(IntArrayList.from(1, 2, 3), edgeResult.getNodes());
+    }
+
+    @Test
+    void convertForViaWays_multipleEdgesForViaWay_oppositeDirection() throws OSMRestrictionException {
+        BaseGraph graph = new BaseGraph.Builder(1).create();
+        graph.edge(0, 1);
+        graph.edge(1, 2);
+        graph.edge(2, 3);
+        graph.edge(3, 4);
+        LongFunction<Iterator<IntCursor>> edgesByWay = way -> {
+            if (way == 0) return IntArrayList.from(0).iterator();
+                // way 1 is split into the two edges 2, 1 (the wrong order)
+                // Accepting an arbitrary order is important, because OSM ways are generally split into multiple edges
+                // and a via-way might be pointing in the 'wrong' direction.
+            else if (way == 1) return IntArrayList.from(2, 1).iterator();
+            else if (way == 2) return IntArrayList.from(3).iterator();
+            else throw new IllegalArgumentException();
+        };
+        WayToEdgeConverter.EdgeResult edgeResult = new WayToEdgeConverter(graph, edgesByWay).convertForViaWays(ways(0), ways(1), ways(2));
+        assertEquals(IntArrayList.from(1, 2), edgeResult.getViaEdges());
+        assertEquals(IntArrayList.from(1, 2, 3), edgeResult.getNodes());
+    }
+
+    @Test
+    void convertForViaWays_reorderEdges() throws OSMRestrictionException {
+        BaseGraph graph = new BaseGraph.Builder(1).create();
+        graph.edge(0, 1);
+        graph.edge(1, 2);
+        // the next two edges are given in the 'wrong' order
+        graph.edge(3, 4);
+        graph.edge(2, 3);
+        graph.edge(4, 5);
+        graph.edge(5, 6);
+        LongFunction<Iterator<IntCursor>> edgesByWay = way -> {
+            // way 1 is split into the four edges 1-4
+            if (way == 1) return IntArrayList.from(1, 2, 3, 4).iterator();
+            else if (way == 0) return IntArrayList.from(0).iterator();
+            else if (way == 2) return IntArrayList.from(5).iterator();
+            else throw new IllegalArgumentException();
+        };
+        WayToEdgeConverter.EdgeResult edgeResult = new WayToEdgeConverter(graph, edgesByWay).convertForViaWays(ways(0), ways(1), ways(2));
+        assertEquals(IntArrayList.from(1, 3, 2, 4), edgeResult.getViaEdges());
+        assertEquals(IntArrayList.from(1, 2, 3, 4, 5), edgeResult.getNodes());
+    }
+
+    @Test
+    void convertForViaWays_loop() {
+        BaseGraph graph = new BaseGraph.Builder(1).create();
+        //   4
+        //   |
+        // 0-1-2
+        //   |/
+        //   3
+        graph.edge(0, 1);
+        graph.edge(1, 2);
+        graph.edge(2, 3);
+        graph.edge(3, 1);
+        graph.edge(1, 4);
+        LongFunction<Iterator<IntCursor>> edgesByWay = way -> IntArrayList.from(Math.toIntExact(way)).iterator();
+        OSMRestrictionException e = assertThrows(OSMRestrictionException.class, () ->
+                new WayToEdgeConverter(graph, edgesByWay).convertForViaWays(ways(0), ways(1, 2, 3), ways(4)));
+        // So far we allow the via ways/edges to be in an arbitrary order, but do not allow multiple solutions.
+        assertTrue(e.getMessage().contains("has member ways that do not form a unique path"), e.getMessage());
     }
 
     private LongArrayList ways(long... ways) {

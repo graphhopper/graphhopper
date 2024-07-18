@@ -35,7 +35,7 @@ public class TestProfiles {
     public static Profile constantSpeed(String name, double speed) {
         Profile profile = new Profile(name);
         CustomModel customModel = new CustomModel();
-        customModel.addToSpeed(Statement.If("true", Statement.Op.LIMIT, String.valueOf(speed)));
+        customModel.addToSpeed(If("true", Statement.Op.LIMIT, String.valueOf(speed)));
         profile.setCustomModel(customModel);
         return profile;
     }

@@ -5,7 +5,7 @@ default routing behavior by specifying a set of rules in JSON language. Here we 
 background and then show how to use custom models in practice.
 
 Try some live examples in [this blog post](https://www.graphhopper.com/blog/2020/05/31/examples-for-customizable-routing/)
-and the [custom_models](../../custom_models) folder on how to use them on the server-side.
+and the [custom_models](../../core/src/main/resources/com/graphhopper/custom_models) folder on how to use them on the server-side.
 
 ## How GraphHopper's route calculations work
 
@@ -176,10 +176,11 @@ statements that come later in the list are applied to the resulting value of pre
 executed if the corresponding condition applies for the current edge. This will become more clear in the following
 examples.
 
-Currently the custom model language supports two operators:
+The custom model language supports three operators:
 
 - `multiply_by` multiplies the speed value with a given number or expression
 - `limit_to` limits the speed value to a given number or expression
+- `do` lists sub-statements that are executed
 
 #### `if` statements and the `multiply_by` operation
 
@@ -334,6 +335,53 @@ A common use-case for the `limit_to` operation is the following pattern:
 
 which means that the speed is limited to `90km/h` for all road segments regardless of its properties. The condition
 `true` is always fulfilled.
+
+#### The `do` operation
+
+The `do` operation allows multiple statements for an `if`, `else_if`, and `else` statement.
+For example, for an `if` statement, it can be used as follows:
+
+```json
+{
+  "if": "country == DEU",
+  "do": [
+    { "if": "road_class == PRIMARY", "multiply_by": "0.8" },
+    { "if": "road_class == SECONDARY", "multiply_by": "0.7" }
+  ]
+}
+```
+
+And then the two nested statements under `do` are only executed if the expression `country == DEU` is true.
+
+For `else` the `do` operation can be used in a similar way:
+
+```json
+[
+  { "if": "max_speed > 70", "limit": "70" },
+  { "else": "",
+    "do":  [
+      { "if": "road_class == PRIMARY", "multiply_by": "0.8" },
+      { "if": "road_class == SECONDARY", "multiply_by": "0.7" }
+    ]
+  }
+]
+```
+
+Further nesting is also possible:
+
+```json
+{
+  "if": "country == DEU",
+  "do": [
+    {
+      "if": "road_class == PRIMARY",
+      "do": [
+        { "if": "max_speed > 70", "multiply_by": "0.5" }
+      ]
+    }
+  ]
+}
+```
 
 #### `else` and `else_if` statements
 

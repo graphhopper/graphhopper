@@ -122,7 +122,7 @@ public class Parameters {
         public static final String PASS_THROUGH = "pass_through";
         public static final String POINT_HINT = "point_hint";
         public static final String CURBSIDE = "curbside";
-        public static final String FORCE_CURBSIDE = "force_curbside";
+        public static final String CURBSIDE_STRICTNESS = "curbside_strictness";
         public static final String SNAP_PREVENTION = "snap_prevention";
         /**
          * default heading penalty in seconds

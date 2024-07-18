@@ -32,9 +32,13 @@ public class OSMGetOffBikeParser implements TagParser {
     @Override
     public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
         String highway = way.getTag("highway");
+        String vehicle = way.getTag("vehicle", "");
         boolean notIntended = !way.hasTag("bicycle", INTENDED) &&
                 (GET_OFF_BIKE.contains(highway)
                         || way.hasTag("railway", "platform")
+                        || !"cycleway".equals(highway) && way.hasTag("vehicle", "no")
+                        || vehicle.contains("forestry")
+                        || vehicle.contains("agricultural")
                         || "path".equals(highway) && way.hasTag("foot", "designated") && !way.hasTag("segregated", "yes"));
         if ("steps".equals(highway) || way.hasTag("bicycle", "dismount") || notIntended) {
             getOffBikeEnc.setBool(false, edgeId, edgeIntAccess, true);

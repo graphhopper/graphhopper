@@ -58,8 +58,8 @@ class CHPreparationGraphTest {
     @Test
     void useLargeEdgeId() {
         CHPreparationGraph.OrigGraph.Builder builder = new CHPreparationGraph.OrigGraph.Builder();
-        int largeEdgeID = Integer.MAX_VALUE >> 2;
-        assertEquals(536_870_911, largeEdgeID);
+        int largeEdgeID = Integer.MAX_VALUE >> 1;
+        assertEquals(1_073_741_823, largeEdgeID);
         // 0->1
         builder.addEdge(0, 1, largeEdgeID, true, false);
         CHPreparationGraph.OrigGraph g = builder.build();
@@ -72,6 +72,6 @@ class CHPreparationGraphTest {
         IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () ->
                 new CHPreparationGraph.OrigGraph.Builder().addEdge(0, 1, largeEdgeID + 1, true, false)
         );
-        assertTrue(e.getMessage().contains("Maximum edge key exceeded: 1073741824, max: 1073741823"), e.getMessage());
+        assertTrue(e.getMessage().contains("Maximum node or edge key exceeded: -2147483648, max: 2147483647"), e.getMessage());
     }
 }
