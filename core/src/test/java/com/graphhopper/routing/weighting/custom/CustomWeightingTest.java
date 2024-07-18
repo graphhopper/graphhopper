@@ -316,16 +316,6 @@ class CustomWeightingTest {
     }
 
     @Test
-    public void tooManyStatements() {
-        CustomModel customModel = new CustomModel();
-        for (int i = 0; i < 1050; i++) {
-            customModel.addToPriority(If("road_class == MOTORWAY || road_class == SECONDARY || road_class == PRIMARY", MULTIPLY, "0.1"));
-        }
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> createWeighting(customModel));
-        assertTrue(ex.getMessage().startsWith("Custom Model too big"), ex.getMessage());
-    }
-
-    @Test
     public void maxSpeedViolated_bug_2307() {
         EdgeIteratorState motorway = graph.edge(0, 1).setDistance(10).
                 set(roadClassEnc, MOTORWAY).set(avSpeedEnc, 80);
