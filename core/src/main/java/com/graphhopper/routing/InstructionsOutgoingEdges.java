@@ -63,6 +63,7 @@ class InstructionsOutgoingEdges {
     private final DecimalEncodedValue maxSpeedEnc;
     private final EnumEncodedValue<RoadClass> roadClassEnc;
     private final BooleanEncodedValue roadClassLinkEnc;
+    private final IntEncodedValue lanesEnc;
     private final NodeAccess nodeAccess;
     private final Weighting weighting;
     private final int baseNode;
@@ -74,6 +75,7 @@ class InstructionsOutgoingEdges {
                                      DecimalEncodedValue maxSpeedEnc,
                                      EnumEncodedValue<RoadClass> roadClassEnc,
                                      BooleanEncodedValue roadClassLinkEnc,
+                                     IntEncodedValue lanesEnc,
                                      EdgeExplorer allExplorer,
                                      NodeAccess nodeAccess,
                                      int prevNode,
@@ -85,6 +87,7 @@ class InstructionsOutgoingEdges {
         this.maxSpeedEnc = maxSpeedEnc;
         this.roadClassEnc = roadClassEnc;
         this.roadClassLinkEnc = roadClassLinkEnc;
+        this.lanesEnc = lanesEnc;
         this.nodeAccess = nodeAccess;
         this.baseNode = baseNode;
         this.allExplorer = allExplorer;
@@ -202,7 +205,7 @@ class InstructionsOutgoingEdges {
     }
 
     // for cases like in #2946 we should not create instructions as they are only "tagging artifacts"
-    public boolean mergedOrSplitWay(IntEncodedValue lanesEnc) {
+    public boolean mergedOrSplitWay() {
         if (lanesEnc == null) return false;
 
         String name = currentEdge.getName();
