@@ -347,12 +347,12 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         int sign = InstructionsHelper.calculateSign(prevLat, prevLon, lat, lon, prevOrientation);
 
         InstructionsOutgoingEdges outgoingEdges = new InstructionsOutgoingEdges(prevEdge, edge, weighting, maxSpeedEnc,
-                roadClassEnc, roadClassLinkEnc, allExplorer, nodeAccess, prevNode, baseNode, adjNode);
+                roadClassEnc, roadClassLinkEnc, lanesEnc, allExplorer, nodeAccess, prevNode, baseNode, adjNode);
         int nrOfPossibleTurns = outgoingEdges.getAllowedTurns();
 
         // there is no other turn possible
         if (nrOfPossibleTurns <= 1) {
-            if (Math.abs(sign) > 1 && outgoingEdges.getVisibleTurns() > 1 && !outgoingEdges.mergedOrSplitWay(lanesEnc)) {
+            if (Math.abs(sign) > 1 && outgoingEdges.getVisibleTurns() > 1 && !outgoingEdges.mergedOrSplitWay()) {
                 // This is an actual turn because |sign| > 1
                 // There could be some confusion, if we would not create a turn instruction, even though it is the only
                 // possible turn, also see #1048
@@ -367,7 +367,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             // Don't show an instruction if the user is following a street, even though the street is
             // bending. We should only do this, if following the street is the obvious choice.
             if (InstructionsHelper.isSameName(name, prevName) && outgoingEdges.outgoingEdgesAreSlowerByFactor(2)
-                    || outgoingEdges.mergedOrSplitWay(lanesEnc)) {
+                    || outgoingEdges.mergedOrSplitWay()) {
                 return Instruction.IGNORE;
             }
 
@@ -436,7 +436,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         }
 
         if (!outgoingEdgesAreSlower
-                && !outgoingEdges.mergedOrSplitWay(lanesEnc)
+                && !outgoingEdges.mergedOrSplitWay()
                 && (Math.abs(delta) > .6 || outgoingEdges.isLeavingCurrentStreet(prevName, name))) {
             // Leave the current road -> create instruction
             return sign;
