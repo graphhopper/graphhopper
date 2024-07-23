@@ -33,12 +33,12 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Peter Karich
  */
 public class HeightTile {
-    private final int minLat;
-    private final int minLon;
+    private final double minLat;
+    private final double minLon;
     private final int width;
     private final int height;
-    private final int horizontalDegree;
-    private final int verticalDegree;
+    private final double horizontalDegree;
+    private final double verticalDegree;
     private final double lowerBound;
     private final double lonHigherBound;
     private final double latHigherBound;
@@ -47,7 +47,7 @@ public class HeightTile {
     private final double MIN_ELEVATION_METERS = -12_000;
     private final double MAX_ELEVATION_METERS = 9_000;
 
-    public HeightTile(int minLat, int minLon, int width, int height, double precision, int horizontalDegree, int verticalDegree) {
+    public HeightTile(double minLat, double minLon, int width, int height, double precision, double horizontalDegree, double verticalDegree) {
         this.minLat = minLat;
         this.minLon = minLon;
         this.width = width;

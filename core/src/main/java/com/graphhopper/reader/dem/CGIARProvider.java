@@ -118,9 +118,9 @@ public class CGIARProvider extends AbstractTiffElevationProvider {
 
     int down(double val) {
         // 'rounding' to closest 5
-        int intVal = (int) (val / LAT_DEGREE) * LAT_DEGREE;
+        int intVal = (int) ((int) (val / LAT_DEGREE) * LAT_DEGREE);
         if (!(val >= 0 || intVal - val < invPrecision))
-            intVal = intVal - LAT_DEGREE;
+            intVal = (int) (intVal - LAT_DEGREE);
 
         return intVal;
     }
@@ -151,12 +151,12 @@ public class CGIARProvider extends AbstractTiffElevationProvider {
     }
 
     @Override
-    int getMinLatForTile(double lat) {
+    double getMinLatForTile(double lat) {
         return down(lat);
     }
 
     @Override
-    int getMinLonForTile(double lon) {
+    double getMinLonForTile(double lon) {
         return down(lon);
     }
 

@@ -32,6 +32,16 @@ public class MultiSourceElevationProvider extends TileBasedElevationProvider {
     // The fallback provider that provides elevation data globally
     private final TileBasedElevationProvider fallback;
 
+    // While we may have precise elevation data for certain coordinates lying
+    // on the edges of a defined supported area, a TileElevationProvider's
+    // implementation could result in a situation where it requests elevation
+    // data from an adjacent tile instead, in consistency with its naming
+    // convention.
+    //
+    // Removing a small buffer region from the supported area eliminates this
+    // literal edge case.
+    private final double DEGREES_BUFFER = 0.001;
+
     public MultiSourceElevationProvider(
             TileBasedElevationProvider primary,
             TileBasedElevationProvider fallback) {
@@ -50,7 +60,8 @@ public class MultiSourceElevationProvider extends TileBasedElevationProvider {
 
     @Override
     public double getEle(double lat, double lon) {
-        if (lat > 37 && lat < 38 && lon > -123 && lon < -122)
+        if (lat > 37.5 + DEGREES_BUFFER && lat < 38.25 - DEGREES_BUFFER &&
+                lon > -122.75 + DEGREES_BUFFER && lon < -122 - DEGREES_BUFFER)
             return primary.getEle(lat, lon);
         return fallback.getEle(lat, lon);
     }

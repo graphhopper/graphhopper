@@ -154,15 +154,15 @@ public class GMTEDProvider extends AbstractTiffElevationProvider {
         }
     }
 
-    int getMinLatForTile(double lat) {
+    double getMinLatForTile(double lat) {
         return (int) (Math.floor((90 + lat) / LAT_DEGREE) * LAT_DEGREE) - 90;
     }
 
-    int getMinLonForTile(double lon) {
+    double getMinLonForTile(double lon) {
         return (int) (Math.floor((180 + lon) / LON_DEGREE) * LON_DEGREE) - 180;
     }
 
-    private String getLonString(int lonInt) {
+    private String getLonString(double lonInt) {
         lonInt = Math.abs(lonInt);
         String lonString = lonInt < 100 ? "0" : "";
         if (lonInt < 10)
@@ -171,7 +171,7 @@ public class GMTEDProvider extends AbstractTiffElevationProvider {
         return lonString;
     }
 
-    private String getLatString(int latInt) {
+    private String getLatString(double latInt) {
         latInt = Math.abs(latInt);
         String latString = latInt < 10 ? "0" : "";
         latString += latInt;
@@ -184,14 +184,14 @@ public class GMTEDProvider extends AbstractTiffElevationProvider {
     }
 
     String getFileName(double lat, double lon) {
-        int lonInt = getMinLonForTile(lon);
-        int latInt = getMinLatForTile(lat);
+        double lonInt = getMinLonForTile(lon);
+        double latInt = getMinLatForTile(lat);
         return toLowerCase(getLatString(latInt) + getNorthString(latInt) + getLonString(lonInt) + getEastString(lonInt) + FILE_NAME_END);
     }
 
     String getDownloadURL(double lat, double lon) {
-        int lonInt = getMinLonForTile(lon);
-        int latInt = getMinLatForTile(lat);
+        double lonInt = getMinLonForTile(lon);
+        double latInt = getMinLatForTile(lat);
         String east = getEastString(lonInt);
         String lonString = getLonString(lonInt);
         return baseUrl + "/" + east + lonString + "/" + getLatString(latInt) + getNorthString(latInt) + lonString + east + FILE_NAME_END + ".tif";
@@ -202,14 +202,14 @@ public class GMTEDProvider extends AbstractTiffElevationProvider {
         return getFileName(lat, lon) + ".tif";
     }
 
-    private String getNorthString(int lat) {
+    private String getNorthString(double lat) {
         if (lat < 0) {
             return "S";
         }
         return "N";
     }
 
-    private String getEastString(int lon) {
+    private String getEastString(double lon) {
         if (lon < 0) {
             return "W";
         }
