@@ -141,7 +141,7 @@ All this is available for free, via encrypted connections and from German server
 
 There is a [web service](./navigation) that can be consumed by [our navigation Android client](https://github.com/graphhopper/graphhopper-navigation-example).
 
-[![android navigation demo app](https://raw.githubusercontent.com/graphhopper/graphhopper-navigation-example/master/files/graphhopper-navigation-example.png)](https://github.com/graphhopper/graphhopper-navigation-example)
+[<img src="https://raw.githubusercontent.com/maplibre/maplibre-navigation-android/main/.github/preview.png" width="400">](https://github.com/graphhopper/graphhopper-navigation-example)
 
 ### Offline
 
@@ -149,8 +149,7 @@ Offline routing is [no longer officially supported](https://github.com/graphhopp
 but should still work as Android supports most of Java. See [version 1.0](https://github.com/graphhopper/graphhopper/blob/1.0/docs/android/index.md)
 with the Android demo and also see [this pull request](http://github.com/graphhopper/graphhopper-ios) of the iOS fork including a demo for iOS.
 
-[![simple routing](https://www.graphhopper.com/wp-content/uploads/2016/10/android-demo-screenshot-2.png)](./android/README.md)
-
+[<img src="https://www.graphhopper.com/wp-content/uploads/2016/10/android-demo-screenshot-2.png" width="600">](./android/README.md)
 
 ## Analysis
 
