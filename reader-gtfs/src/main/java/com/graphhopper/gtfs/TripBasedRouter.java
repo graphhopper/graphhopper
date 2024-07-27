@@ -164,6 +164,8 @@ public class TripBasedRouter {
         List<EnqueuedTripSegment> queue1 = new ArrayList<>();
         for (EnqueuedTripSegment enqueuedTripSegment : queue0) {
             logger.debug("{}", enqueuedTripSegment);
+            GTFSFeed sourceFeed = gtfsStorage.getGtfsFeeds().get(enqueuedTripSegment.tripPointer.feedId);
+            ZoneId sourceZoneId = ZoneId.of(sourceFeed.agency.values().stream().findFirst().get().agency_timezone);
             int toStopSequence = Math.min(enqueuedTripSegment.toStopSequence, enqueuedTripSegment.tripPointer.stopTimes.size());
             for (int i = enqueuedTripSegment.tripAtStopTime.stop_sequence + 1; i < toStopSequence; i++) {
                 StopTime stopTime = enqueuedTripSegment.tripPointer.stopTimes.get(i);
@@ -175,8 +177,12 @@ public class TripBasedRouter {
                 Collection<Trips.TripAtStopTime> transferDestinations = gtfsStorage.tripTransfers.getTripTransfers(enqueuedTripSegment.serviceDay).get(transferOrigin);
                 for (Trips.TripAtStopTime transferDestination : transferDestinations) {
                     GTFSFeed.StopTimesForTripWithTripPatternKey destinationTripPointer = tripTransfers.getTrip(transferDestination.tripIdx);
+                    GTFSFeed destinationFeed = gtfsStorage.getGtfsFeeds().get(destinationTripPointer.feedId);
+                    ZoneId destinationZoneId = ZoneId.of(destinationFeed.agency.values().stream().findFirst().get().agency_timezone);
                     StopTime transferStopTime = destinationTripPointer.stopTimes.get(transferDestination.stop_sequence);
-                    if (transferStopTime.departure_time >= stopTime.arrival_time && destinationTripPointer.service.activeOn(enqueuedTripSegment.serviceDay) && parameters.getTripFilter().test(destinationTripPointer)) {
+                    LocalDateTime scheduleArrivalTime = enqueuedTripSegment.serviceDay.atStartOfDay().plusSeconds(stopTime.arrival_time);
+                    int timeZoneOffset = (int) (scheduleArrivalTime.atZone(sourceZoneId).toEpochSecond() - scheduleArrivalTime.atZone(destinationZoneId).toEpochSecond());
+                    if (transferStopTime.departure_time >= stopTime.arrival_time + timeZoneOffset && destinationTripPointer.service.activeOn(enqueuedTripSegment.serviceDay) && parameters.getTripFilter().test(destinationTripPointer)) {
                         logger.debug("    {}", transferDestination);
                         enqueue(queue1, destinationTripPointer, transferDestination, transferOrigin, enqueuedTripSegment, enqueuedTripSegment.serviceDay, enqueuedTripSegment.accessStation);
                     }
