@@ -9,7 +9,8 @@ import com.graphhopper.gtfs.*;
 
 import java.io.Serializable;
 import java.time.LocalDate;
-import java.time.LocalTime;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -135,20 +136,26 @@ public class Trips {
                 multimap.put(transfer.to_stop_id, transfer);
             }
             if (!multimap.containsKey(stopTime.stop_id)) {
-                insertTripTransfers(trafficDay, arrivalTimes, stopTime, destinations, new GtfsStorage.FeedIdWithStopId(feedKey, stopTime.stop_id), 0, multimap.get(stopTime.stop_id));
+                insertTripTransfers(trafficDay, arrivalTimes, feedKey, stopTime, destinations, new GtfsStorage.FeedIdWithStopId(feedKey, stopTime.stop_id), 0, multimap.get(stopTime.stop_id));
             }
             for (String toStopId : multimap.keySet()) {
-                insertTripTransfers(trafficDay, arrivalTimes, stopTime, destinations, new GtfsStorage.FeedIdWithStopId(feedKey, toStopId), 0, multimap.get(toStopId));
+                insertTripTransfers(trafficDay, arrivalTimes, feedKey, stopTime, destinations, new GtfsStorage.FeedIdWithStopId(feedKey, toStopId), 0, multimap.get(toStopId));
             }
             for (GtfsStorage.InterpolatedTransfer it : gtfsStorage.interpolatedTransfers.get(stopId)) {
-                insertTripTransfers(trafficDay, arrivalTimes, stopTime, destinations, it.toPlatformDescriptor, it.streetTime, Collections.emptyList());
+                insertTripTransfers(trafficDay, arrivalTimes, feedKey, stopTime, destinations, it.toPlatformDescriptor, it.streetTime, Collections.emptyList());
             }
             result.put(origin, destinations);
         }
         return result;
     }
 
-    private void insertTripTransfers(LocalDate trafficDay, ObjectIntHashMap<GtfsStorage.FeedIdWithStopId> arrivalTimes, StopTime arrivalStopTime, List<TripAtStopTime> destinations, GtfsStorage.FeedIdWithStopId boardingStop, int streetTime, List<Transfer> transfers) {
+    private void insertTripTransfers(LocalDate trafficDay, ObjectIntHashMap<GtfsStorage.FeedIdWithStopId> arrivalTimes, String feedKey, StopTime arrivalStopTime, List<TripAtStopTime> destinations, GtfsStorage.FeedIdWithStopId boardingStop, int streetTime, List<Transfer> transfers) {
+        GTFSFeed sourceFeed = gtfsStorage.getGtfsFeeds().get(feedKey);
+        GTFSFeed destinationFeed = gtfsStorage.getGtfsFeeds().get(boardingStop.feedId);
+        ZoneId sourceZoneId = ZoneId.of(sourceFeed.agency.values().stream().findFirst().get().agency_timezone);
+        ZoneId destinationZoneId = ZoneId.of(destinationFeed.agency.values().stream().findFirst().get().agency_timezone);
+        LocalDateTime scheduleArrivalTime = trafficDay.atStartOfDay().plusSeconds(arrivalStopTime.arrival_time);
+        int timeZoneOffset = (int) (scheduleArrivalTime.atZone(sourceZoneId).toEpochSecond() - scheduleArrivalTime.atZone(destinationZoneId).toEpochSecond());
         int earliestDepartureTime = arrivalStopTime.arrival_time + streetTime;
         Collection<List<TripAtStopTime>> boardingsForPattern = getPatternBoardings(boardingStop).values();
         for (List<TripAtStopTime> boardings : boardingsForPattern) {
@@ -161,18 +168,18 @@ public class Trips {
                     }
                 }
                 StopTime departureStopTime = trip.stopTimes.get(candidate.stop_sequence);
-                if (departureStopTime.departure_time >= arrivalStopTime.arrival_time + MAXIMUM_TRANSFER_DURATION) {
+                if (departureStopTime.departure_time - timeZoneOffset >= arrivalStopTime.arrival_time + MAXIMUM_TRANSFER_DURATION) {
                     break; // next pattern
                 }
                 if (trip.service.activeOn(trafficDay)) {
-                    if (departureStopTime.departure_time >= earliestDepatureTimeForThisDestination) {
+                    if (departureStopTime.departure_time - timeZoneOffset >= earliestDepatureTimeForThisDestination) {
                         boolean keep = false;
                         boolean overnight = false;
                         for (int i = candidate.stop_sequence; i < trip.stopTimes.size(); i++) {
                             StopTime destinationStopTime = trip.stopTimes.get(i);
                             if (destinationStopTime == null)
                                 continue;
-                            int destinationArrivalTime = destinationStopTime.arrival_time;
+                            int destinationArrivalTime = destinationStopTime.arrival_time - timeZoneOffset;
                             if (i == candidate.stop_sequence) {
                                 if (destinationArrivalTime < earliestDepartureTime) {
                                     overnight = true;
