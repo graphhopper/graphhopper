@@ -29,7 +29,7 @@ import org.glassfish.hk2.api.Factory;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
 import jakarta.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 public class RealtimeBundle implements ConfiguredBundle<RealtimeBundleConfiguration> {
 

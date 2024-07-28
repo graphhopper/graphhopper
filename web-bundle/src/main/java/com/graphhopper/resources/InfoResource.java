@@ -28,7 +28,7 @@ import com.graphhopper.util.Constants;
 import org.locationtech.jts.geom.Envelope;
 
 import jakarta.inject.Inject;
-import javax.inject.Named;
+import jakarta.inject.Named;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;

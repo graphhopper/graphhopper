@@ -41,12 +41,6 @@
             <version>${project.parent.version}</version>
         </dependency>
 
-        <!-- required for JDK9 -->
-        <dependency>
-            <groupId>javax.xml.ws</groupId>
-            <artifactId>jaxws-api</artifactId>
-            <version>2.3.1</version>
-        </dependency>
         <!-- required for dropwizard -->
         <dependency>
             <groupId>com.google.guava</groupId>
