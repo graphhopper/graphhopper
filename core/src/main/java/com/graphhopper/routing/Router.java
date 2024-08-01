@@ -66,8 +66,6 @@ public class Router {
     protected final WeightingFactory weightingFactory;
     protected final Map<String, RoutingCHGraph> chGraphs;
     protected final Map<String, LandmarkStorage> landmarks;
-    protected final boolean chEnabled;
-    protected final boolean lmEnabled;
 
     public Router(BaseGraph graph, EncodingManager encodingManager, LocationIndex locationIndex,
                   Map<String, Profile> profilesByName, PathDetailsBuilderFactory pathDetailsBuilderFactory,
@@ -83,11 +81,6 @@ public class Router {
         this.weightingFactory = weightingFactory;
         this.chGraphs = chGraphs;
         this.landmarks = landmarks;
-        // note that his is not the same as !ghStorage.getCHConfigs().isEmpty(), because the GHStorage might have some
-        // CHGraphs that were not built yet (and possibly no CH profiles were configured).
-        this.chEnabled = !chGraphs.isEmpty();
-        this.lmEnabled = !landmarks.isEmpty();
-
         for (String profile : profilesByName.keySet()) {
             if (!encodingManager.hasEncodedValue(Subnetwork.key(profile)))
                 throw new IllegalStateException("The profile '" + profile + "' needs an EncodedValue '" + Subnetwork.key(profile) + "'");
@@ -183,9 +176,9 @@ public class Router {
     protected Solver createSolver(GHRequest request) {
         final boolean disableCH = getDisableCH(request.getHints());
         final boolean disableLM = getDisableLM(request.getHints());
-        if (chEnabled && !disableCH) {
+        if (chGraphs.containsKey(request.getProfile()) && !disableCH) {
             return createCHSolver(request, profilesByName, routerConfig, encodingManager, chGraphs);
-        } else if (lmEnabled && !disableLM) {
+        } else if (landmarks.containsKey(request.getProfile()) && !disableLM) {
             return createLMSolver(request, profilesByName, routerConfig, encodingManager, weightingFactory, graph, locationIndex, landmarks);
         } else {
             return createFlexSolver(request, profilesByName, routerConfig, encodingManager, weightingFactory, graph, locationIndex);
