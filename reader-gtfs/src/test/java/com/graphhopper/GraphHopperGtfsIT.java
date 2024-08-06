@@ -74,11 +74,11 @@ public interface GraphHopperGtfsIT<T extends PtRouter> {
             ghConfig.putObject("import.osm.ignored_highways", "");
             ghConfig.putObject("gtfs.file", "files/sample-feed");
             ghConfig.putObject("gtfs.trip_based", true);
+            ghConfig.putObject("gtfs.trip_based.max_transfer_time", 24 * 60 * 60);
             ghConfig.putObject("gtfs.schedule_day", "2007-01-01,2007-01-02,2007-01-06,2007-01-07");
             ghConfig.setProfiles(Arrays.asList(
                     new Profile("foot").setVehicle("foot").setWeighting("fastest"),
                     new Profile("car").setVehicle("car").setWeighting("fastest")));
-            Trips.MAXIMUM_TRANSFER_DURATION = 24 * 60 * 60;
             graphHopperGtfs = new GraphHopperGtfs(ghConfig);
             graphHopperGtfs.init(ghConfig);
             graphHopperGtfs.importOrLoad();

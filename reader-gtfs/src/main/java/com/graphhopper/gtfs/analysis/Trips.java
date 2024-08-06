@@ -16,7 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class Trips {
 
-    public static int MAXIMUM_TRANSFER_DURATION = 15 * 60;
+    private int maxTransferTime;
     public final List<GTFSFeed.StopTimesForTripWithTripPatternKey> trips;
     private Map<GtfsStorage.FeedIdWithStopId, Map<String, List<TripAtStopTime>>> boardingsForStopByPattern = new ConcurrentHashMap<>();
     private Map<LocalDate, Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>>> tripTransfersPerDay = new ConcurrentHashMap<>();
@@ -108,7 +108,7 @@ public class Trips {
 
     GtfsStorage gtfsStorage;
 
-    public Map<TripAtStopTime, Collection<TripAtStopTime>> findTripTransfers(GTFSFeed.StopTimesForTripWithTripPatternKey tripPointer, String feedKey, LocalDate trafficDay, Map<String, Transfers> transfers) {
+    private Map<TripAtStopTime, Collection<TripAtStopTime>> findTripTransfers(GTFSFeed.StopTimesForTripWithTripPatternKey tripPointer, String feedKey, LocalDate trafficDay, Map<String, Transfers> transfers) {
         Transfers transfersForFeed = transfers.get(feedKey);
         Map<TripAtStopTime, Collection<TripAtStopTime>> result = new HashMap<>();
         List<StopTime> stopTimesExceptFirst = tripPointer.stopTimes.subList(1, tripPointer.stopTimes.size());
@@ -168,7 +168,7 @@ public class Trips {
                     }
                 }
                 StopTime departureStopTime = trip.stopTimes.get(candidate.stop_sequence);
-                if (departureStopTime.departure_time - timeZoneOffset >= arrivalStopTime.arrival_time + MAXIMUM_TRANSFER_DURATION) {
+                if (departureStopTime.departure_time - timeZoneOffset >= arrivalStopTime.arrival_time + maxTransferTime) {
                     break; // next pattern
                 }
                 if (trip.service.activeOn(trafficDay)) {
@@ -204,7 +204,8 @@ public class Trips {
         }
     }
 
-    public void findAllTripTransfersInto(Map<TripAtStopTime, Collection<TripAtStopTime>> result, LocalDate trafficDay, Map<String, Transfers> transfers) {
+    public void findAllTripTransfersInto(Map<TripAtStopTime, Collection<TripAtStopTime>> result, LocalDate trafficDay, Map<String, Transfers> transfers, int maxTransferTime) {
+        this.maxTransferTime = maxTransferTime;
         Map<TripAtStopTime, Collection<TripAtStopTime>> r = Collections.synchronizedMap(result);
         trips.stream()
             .filter(trip -> trip.service.activeOn(trafficDay))
