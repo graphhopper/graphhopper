@@ -1,0 +1,10 @@
+// avoid noisy segments
+
+{
+  "priority": [
+    {
+      "if": "noisy_road_nearby",
+      "multiply_by": "0.9"
+    }
+  ]
+}
