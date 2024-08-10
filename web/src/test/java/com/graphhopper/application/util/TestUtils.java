@@ -21,6 +21,8 @@ import io.dropwizard.core.Configuration;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 
 import jakarta.ws.rs.client.WebTarget;
+import org.apache.hc.core5.http.ConnectionReuseStrategy;
+import org.glassfish.jersey.apache5.connector.Apache5ClientProperties;
 
 /**
  * @author thomas aulinger
@@ -31,6 +33,7 @@ public class TestUtils {
 
     public static WebTarget clientTarget(DropwizardAppExtension<? extends Configuration> app, String path) {
         path = prefixPathWithSlash(path);
+        app.client().property(Apache5ClientProperties.REUSE_STRATEGY, (ConnectionReuseStrategy) (request, response, context) -> false);
         return app.client().target(clientUrl(app, path));
     }
 
