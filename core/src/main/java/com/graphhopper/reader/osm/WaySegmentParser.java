@@ -63,8 +63,10 @@ public class WaySegmentParser {
     private static final Set<String> INCLUDE_IF_NODE_TAGS = new HashSet<>(Arrays.asList("barrier", "highway", "railway", "crossing", "ford"));
 
     private ToDoubleFunction<ReaderNode> elevationProvider = node -> 0d;
+    private static boolean customPass0WayPreHook = false;
     private Consumer<ReaderWay> pass0WayPreHook = way -> {
     };
+    private static boolean customPass1NodePreHook = false;
     private Consumer<ReaderNode> pass1NodePreHook = node -> {
     };
     private Consumer<ReaderWay> pass1WayPreHook = way -> {
@@ -72,8 +74,6 @@ public class WaySegmentParser {
     private Runnable pass1FinishHook = () -> {
     };
     private Predicate<ReaderWay> wayFilter = way -> true;
-    private Consumer<ReaderNode> pass2NodePreHook = node -> {
-    };
     private Runnable pass2AfterNodesHook = () -> {
     };
     private Predicate<ReaderNode> splitNodeFilter = node -> false;
@@ -104,13 +104,14 @@ public class WaySegmentParser {
         LOGGER.info("Start reading OSM file: '" + osmFile + "'");
         LOGGER.info("pass0 - start");
         StopWatch sw0 = StopWatch.started();
-        // todonow: skip options
-        readOSM(osmFile, new Pass0Handler(), new SkipOptions(true, false, true));
+        if (customPass0WayPreHook)  {
+            readOSM(osmFile, new Pass0Handler(), new SkipOptions(true, false, true));
+        }
         LOGGER.info("pass0 - finished, took: {}", sw0.stop().getTimeString());
 
         LOGGER.info("pass1 - start");
         StopWatch sw1 = StopWatch.started();
-        readOSM(osmFile, new Pass1Handler(), new SkipOptions(false, false, false));
+        readOSM(osmFile, new Pass1Handler(), new SkipOptions(!customPass1NodePreHook, false, false));
         LOGGER.info("pass1 - finished, took: {}", sw1.stop().getTimeString());
 
         long nodes = nodeData.getNodeCount();
@@ -236,8 +237,6 @@ public class WaySegmentParser {
             if (++nodeCounter % 10_000_000 == 0)
                 LOGGER.info("pass2 - processed nodes: " + nf(nodeCounter) + ", accepted nodes: " + nf(acceptedNodes) +
                         ", " + Helper.getMemInfo());
-
-            pass2NodePreHook.accept(node);
 
             long nodeType = nodeData.addCoordinatesIfMapped(node.getId(), node.getLat(), node.getLon(), () -> elevationProvider.applyAsDouble(node));
             if (nodeType == EMPTY_NODE)
@@ -465,11 +464,13 @@ public class WaySegmentParser {
         }
 
         public Builder setPass0WayPreHook(Consumer<ReaderWay> pass0WayPreHook) {
+            customPass0WayPreHook = true;
             waySegmentParser.pass0WayPreHook = pass0WayPreHook;
             return this;
         }
 
         public Builder setPass1NodePreHook(Consumer<ReaderNode> pass1NodePreHook) {
+            customPass1NodePreHook = true;
             waySegmentParser.pass1NodePreHook = pass1NodePreHook;
             return this;
         }
@@ -489,11 +490,6 @@ public class WaySegmentParser {
          */
         public Builder setWayFilter(Predicate<ReaderWay> wayFilter) {
             waySegmentParser.wayFilter = wayFilter;
-            return this;
-        }
-
-        public Builder setPass2NodePreHook(Consumer<ReaderNode> pass2NodePreHook) {
-            waySegmentParser.pass2NodePreHook = pass2NodePreHook;
             return this;
         }
 
