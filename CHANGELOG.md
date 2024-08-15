@@ -1,5 +1,6 @@
 ### 10.0 [not yet released]
 
+- the default u-turn time is now 0, the default u-turn weight is still infinite 
 - turn restriction support for restrictions with overlapping and/or multiple via-edges/ways, #3030
 - constructor of BaseGraph.Builder uses byte instead of integer count.
 - KeyValue is now KValue as it holds the value only. Note, the two parameter constructor uses one value for the forward and one for the backward direction (and no longer "key, value")
