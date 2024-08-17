@@ -45,6 +45,7 @@ import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
+import org.openjdk.jol.info.GraphLayout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -186,7 +187,6 @@ public class OSMReader {
                     .setPass1WayPreHook(this::handleOSMNoisyRoadsAgain)
                     .setPass1FinishHook(osmNoisyRoadData::clear)
                     .setPass2AfterNodesHook(this::buildOSMNoisyRoadIndex);
-
         }
         WaySegmentParser waySegmentParser = waySegmentParserBuilder.build();
         waySegmentParser.readOSM(osmFile);
@@ -228,8 +228,13 @@ public class OSMReader {
             }
             return true;
         }).collect(Collectors.toList());
+        // todonow remove toFootprint log lines
+        LOGGER.info(GraphLayout.parseInstance(osmNoisyRoadData, validRoads).toFootprint());
         osmNoisyRoadData.getOsmNoisyRoads().clear();
         osmNoisyRoadNoiseIndex = new NoiseIndex<>(validRoads);
+        LOGGER.info(GraphLayout.parseInstance(osmNoisyRoadNoiseIndex).toFootprint());
+        // they partly overlap
+        LOGGER.info(GraphLayout.parseInstance(osmNoisyRoadData, osmNoisyRoadNoiseIndex, validRoads).toFootprint());
     }
 
     protected double getElevation(ReaderNode node) {

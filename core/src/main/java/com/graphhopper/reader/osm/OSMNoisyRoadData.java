@@ -25,16 +25,15 @@ import com.graphhopper.coll.GHLongLongBTree;
 import com.graphhopper.coll.LongLongMap;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.storage.Directory;
 import com.graphhopper.util.BitUtil;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class OSMNoisyRoadData {
-
-    private final List<OSMNoisyRoad> osmNoisyRoads;
-    private final LongToTwoIntsMap osmNoisyRoadsNodeIndicesByOSMNodeIds;
+    // todonow make private and final
+    List<OSMNoisyRoad> osmNoisyRoads;
+    LongToTwoIntsMap osmNoisyRoadsNodeIndicesByOSMNodeIds;
 
     public OSMNoisyRoadData() {
         osmNoisyRoads = new ArrayList<>();
