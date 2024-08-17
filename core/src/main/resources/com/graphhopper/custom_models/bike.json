@@ -1,5 +1,6 @@
 // to use this custom model you need to set the following option in the config.yml
 // graph.elevation.provider: srtm   # enables elevation
+// graph.encoded_values: bike_priority, bike_access, roundabout, bike_average_speed, average_slope
 // profiles:
 //    - name: bike
 //      custom_model_files: [bike.json, bike_elevation.json]

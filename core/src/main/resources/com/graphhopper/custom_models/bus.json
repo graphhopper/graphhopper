@@ -1,4 +1,5 @@
 // to use this custom model you need to set the following option in the config.yml
+// graph.encoded_values: max_weight, max_width, max_height, bus_access, road_class, car_average_speed
 // profiles:
 //    - name: bus
 //      custom_model_files: [bus.json]
