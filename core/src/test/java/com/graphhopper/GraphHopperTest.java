@@ -85,6 +85,7 @@ public class GraphHopperTest {
     private static final String BAUTZEN = DIR + "/bautzen.osm";
     private static final String BERLIN = DIR + "/berlin-siegessaeule.osm.gz";
     private static final String KREMS = DIR + "/krems.osm.gz";
+    private static final String HOYERSWERDA = DIR + "/Hoyerswerda.osm.pbf";
     private static final String LAUF = DIR + "/Laufamholzstrasse.osm.xml";
     private static final String MONACO = DIR + "/monaco.osm.gz";
     private static final String MOSCOW = DIR + "/moscow.osm.gz";
@@ -2816,6 +2817,69 @@ public class GraphHopperTest {
             assertEquals(2969, hopper.getBaseGraph().getNodes());
         }
     }
+
+    @Test
+    public void testAvoidNoiseNearby() {
+        final String profileName = "profile";
+        GraphHopper hopper = new GraphHopper().
+                setGraphHopperLocation(GH_LOCATION).
+                setOSMFile(HOYERSWERDA).
+                setEncodedValuesString("bike_access, bike_priority, bike_average_speed, noisy_road_nearby").
+                setProfiles(TestProfiles.accessSpeedAndPriority(profileName, "bike")).
+                setStoreOnFlush(true);
+        hopper.importOrLoad();
+
+        Profile profile = TestProfiles.accessSpeedAndPriority(profileName, "bike");
+
+        GHRequest req = new GHRequest(51.434933,14.24468, 51.438776,14.256618);
+        req.setPathDetails(Collections.singletonList("noisy_road_nearby"));
+
+        //Check the result of the route without avoiding the noisy roads nearby
+        GHResponse rspTakeNoisyRoute = hopper.route(req.setProfile(profileName));
+        assertFalse(rspTakeNoisyRoute.hasErrors(), rspTakeNoisyRoute.getErrors().toString());
+        ResponsePath bestPath = rspTakeNoisyRoute.getBest();
+        // Shorter result of route west of river "Schwarze Elster"
+        assertEquals(1133.0, bestPath.getDistance(), 1);
+        assertEquals(43, bestPath.getPoints().size());
+        Map<String, List<PathDetail>> details = bestPath.getPathDetails();
+        assertEquals(1, details.size());
+        List<PathDetail> detailList = details.get("noisy_road_nearby");
+        assertEquals(3, detailList.size());
+        assertEquals(false, detailList.get(0).getValue());
+        assertEquals(0, detailList.get(0).getFirst());
+        assertEquals(19, detailList.get(0).getLast());
+        assertEquals(true, detailList.get(1).getValue());
+        assertEquals(19, detailList.get(1).getFirst());
+        assertEquals(30, detailList.get(1).getLast());
+        assertEquals(false, detailList.get(2).getValue());
+        assertEquals(30, detailList.get(2).getFirst());
+        assertEquals(42, detailList.get(2).getLast());
+
+        //Check the result of the route with avoiding the noisy roads nearby
+        CustomModel customModel = profile.getCustomModel();
+        customModel.getPriority().add(If("noisy_road_nearby", MULTIPLY, "0.8"));
+        GHResponse rspAvoidNoisyRoad = hopper.route(req.setProfile(profileName).setCustomModel(customModel));
+        assertFalse(rspAvoidNoisyRoad.hasErrors(), rspAvoidNoisyRoad.getErrors().toString());
+        bestPath = rspAvoidNoisyRoad.getBest();
+        // Longer result of route east of river "Schwarze Elster"
+        assertEquals(1168.3, bestPath.getDistance(), 1);
+        assertEquals(47, bestPath.getPoints().size());
+        details = bestPath.getPathDetails();
+        assertEquals(1, details.size());
+        // There is also one noisy segment here, but it is much shorter in distance
+        detailList = details.get("noisy_road_nearby");
+        assertEquals(3, detailList.size());
+        assertEquals(false, detailList.get(0).getValue());
+        assertEquals(0, detailList.get(0).getFirst());
+        assertEquals(19, detailList.get(0).getLast());
+        assertEquals(true, detailList.get(1).getValue());
+        assertEquals(19, detailList.get(1).getFirst());
+        assertEquals(29, detailList.get(1).getLast());
+        assertEquals(false, detailList.get(2).getValue());
+        assertEquals(29, detailList.get(2).getFirst());
+        assertEquals(46, detailList.get(2).getLast());
+    }
+
 
     @ParameterizedTest()
     @ValueSource(booleans = {true, false})
