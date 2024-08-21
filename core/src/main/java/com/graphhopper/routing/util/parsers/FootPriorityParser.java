@@ -104,20 +104,8 @@ public class FootPriorityParser implements TagParser {
         if (way.hasTag("foot", "designated"))
             weightToPrioMap.put(100d, PREFER);
 
-        if (way.hasTag("foot", "use_sidepath") || way.hasTag("sidewalk", "separate") || way.hasTag("sidewalk:both", "separate")) {
+        if (use_sidepath(way)) {
             weightToPrioMap.put(100d, VERY_BAD); // see #3035, #3042
-        }
-
-        if (way.hasTag("sidewalk:left", "separate")) {
-            if (way.hasTag("sidewalk:right", sidewalksNoValues)) {
-                weightToPrioMap.put(100d, VERY_BAD); //see #3042
-            }
-        }
-
-        if (way.hasTag("sidewalk:right", "separate")) {
-            if (way.hasTag("sidewalk:left", sidewalksNoValues)) {
-                weightToPrioMap.put(100d, VERY_BAD); //see #3042
-            }
         }
 
         double maxSpeed = Math.max(getMaxSpeed(way, false), getMaxSpeed(way, true));
@@ -140,5 +128,13 @@ public class FootPriorityParser implements TagParser {
 
         if (way.hasTag("bicycle", "official") || way.hasTag("bicycle", "designated"))
             weightToPrioMap.put(44d, SLIGHT_AVOID);
+    }
+
+    protected boolean use_sidepath(ReaderWay way) {
+        return way.hasTag("foot", "use_sidepath")
+                || way.hasTag("sidewalk", "separate")
+                || way.hasTag("sidewalk:both", "separate")
+                || way.hasTag("sidewalk:left", "separate") && way.hasTag("sidewalk:right", sidewalksNoValues)
+                || way.hasTag("sidewalk:right", "separate") && way.hasTag("sidewalk:left", sidewalksNoValues);
     }
 }
