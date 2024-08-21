@@ -379,8 +379,65 @@ public class FootTagParserTest {
 
         way.clearTags();
         way.setTag("highway", "residential");
+        way.setTag("foot", "use_sidepath");
+        assertEquals(PriorityCode.VERY_BAD.getValue(), prioParser.handlePriority(way, null));
+
+        way.clearTags();
+        way.setTag("highway", "residential");
         way.setTag("sidewalk", "yes");
         assertEquals(PriorityCode.PREFER.getValue(), prioParser.handlePriority(way, null));
+
+        way.setTag("sidewalk", "no");
+        assertEquals(PriorityCode.PREFER.getValue(), prioParser.handlePriority(way, null));
+
+        way.setTag("sidewalk", "separate");
+        assertEquals(PriorityCode.VERY_BAD.getValue(), prioParser.handlePriority(way, null));
+
+        way.setTag("sidewalk", "left");
+        assertEquals(PriorityCode.PREFER.getValue(), prioParser.handlePriority(way, null));
+
+        way.setTag("sidewalk", "right");
+        assertEquals(PriorityCode.PREFER.getValue(), prioParser.handlePriority(way, null));
+
+        way.setTag("sidewalk", "both");
+        assertEquals(PriorityCode.PREFER.getValue(), prioParser.handlePriority(way, null));
+
+        way.clearTags();
+        way.setTag("highway", "residential");
+        way.setTag("sidewalk:both", "yes");
+        assertEquals(PriorityCode.PREFER.getValue(), prioParser.handlePriority(way, null));
+
+        way.setTag("sidewalk:both", "no");
+        assertEquals(PriorityCode.PREFER.getValue(), prioParser.handlePriority(way, null));
+
+        way.setTag("sidewalk:both", "separate");
+        assertEquals(PriorityCode.VERY_BAD.getValue(), prioParser.handlePriority(way, null));
+
+        way.clearTags();
+        way.setTag("highway", "residential");
+        way.setTag("sidewalk:left", "yes");
+        way.setTag("sidewalk:right", "no");
+        assertEquals(PriorityCode.PREFER.getValue(), prioParser.handlePriority(way, null));
+
+        way.setTag("sidewalk:left", "no");
+        way.setTag("sidewalk:right", "yes");
+        assertEquals(PriorityCode.PREFER.getValue(), prioParser.handlePriority(way, null));
+
+        way.setTag("sidewalk:left", "separate");
+        way.setTag("sidewalk:right", "yes");
+        assertEquals(PriorityCode.PREFER.getValue(), prioParser.handlePriority(way, null));
+
+        way.setTag("sidewalk:left", "separate");
+        way.setTag("sidewalk:right", "no");
+        assertEquals(PriorityCode.VERY_BAD.getValue(), prioParser.handlePriority(way, null));
+
+        way.setTag("sidewalk:left", "yes");
+        way.setTag("sidewalk:right", "separate");
+        assertEquals(PriorityCode.PREFER.getValue(), prioParser.handlePriority(way, null));
+
+        way.setTag("sidewalk:left", "no");
+        way.setTag("sidewalk:right", "separate");
+        assertEquals(PriorityCode.VERY_BAD.getValue(), prioParser.handlePriority(way, null));
     }
 
     @Test

@@ -104,8 +104,20 @@ public class FootPriorityParser implements TagParser {
         if (way.hasTag("foot", "designated"))
             weightToPrioMap.put(100d, PREFER);
 
-        if (way.hasTag("foot", "use_sidepath")) {
-            weightToPrioMap.put(100d, VERY_BAD); // see #3035
+        if (way.hasTag("foot", "use_sidepath") || way.hasTag("sidewalk", "separate") || way.hasTag("sidewalk:both", "separate")) {
+            weightToPrioMap.put(100d, VERY_BAD); // see #3035, #3042
+        }
+
+        if (way.hasTag("sidewalk:left", "separate")) {
+            if (way.hasTag("sidewalk:right", sidewalksNoValues)) {
+                weightToPrioMap.put(100d, VERY_BAD); //see #3042
+            }
+        }
+
+        if (way.hasTag("sidewalk:right", "separate")) {
+            if (way.hasTag("sidewalk:left", sidewalksNoValues)) {
+                weightToPrioMap.put(100d, VERY_BAD); //see #3042
+            }
         }
 
         double maxSpeed = Math.max(getMaxSpeed(way, false), getMaxSpeed(way, true));
