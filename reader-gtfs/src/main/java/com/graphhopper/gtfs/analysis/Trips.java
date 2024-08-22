@@ -108,7 +108,7 @@ public class Trips {
 
     GtfsStorage gtfsStorage;
 
-    private Map<TripAtStopTime, Collection<TripAtStopTime>> findTripTransfers(GTFSFeed.StopTimesForTripWithTripPatternKey tripPointer, String feedKey, LocalDate trafficDay, Map<String, Transfers> transfers) {
+    private Map<TripAtStopTime, Collection<TripAtStopTime>> findTripTransfers(GTFSFeed.StopTimesForTripWithTripPatternKey tripPointer, String feedKey, LocalDate trafficDay, Map<String, Transfers> transfers, ArrayListMultimap<Integer, GtfsStorage.FeedIdWithStopId> stopsForStationNode) {
         Transfers transfersForFeed = transfers.get(feedKey);
         Map<TripAtStopTime, Collection<TripAtStopTime>> result = new HashMap<>();
         List<StopTime> stopTimesExceptFirst = tripPointer.stopTimes.subList(1, tripPointer.stopTimes.size());
@@ -140,6 +140,11 @@ public class Trips {
             }
             for (String toStopId : multimap.keySet()) {
                 insertTripTransfers(trafficDay, arrivalTimes, feedKey, stopTime, destinations, new GtfsStorage.FeedIdWithStopId(feedKey, toStopId), 0, multimap.get(toStopId));
+            }
+            for (GtfsStorage.FeedIdWithStopId otherStop : stopsForStationNode.get(gtfsStorage.getStationNodes().get(stopId))) {
+                if (!stopId.equals(otherStop)) {
+                    insertTripTransfers(trafficDay, arrivalTimes, feedKey, stopTime, destinations, otherStop, 0, Collections.emptyList());
+                }
             }
             for (GtfsStorage.InterpolatedTransfer it : gtfsStorage.interpolatedTransfers.get(stopId)) {
                 insertTripTransfers(trafficDay, arrivalTimes, feedKey, stopTime, destinations, it.toPlatformDescriptor, it.streetTime, Collections.emptyList());
@@ -204,14 +209,14 @@ public class Trips {
         }
     }
 
-    public void findAllTripTransfersInto(Map<TripAtStopTime, Collection<TripAtStopTime>> result, LocalDate trafficDay, Map<String, Transfers> transfers, int maxTransferTime) {
+    public void findAllTripTransfersInto(Map<TripAtStopTime, Collection<TripAtStopTime>> result, LocalDate trafficDay, Map<String, Transfers> transfers, ArrayListMultimap<Integer, GtfsStorage.FeedIdWithStopId> stopsForStationNode, int maxTransferTime) {
         this.maxTransferTime = maxTransferTime;
         Map<TripAtStopTime, Collection<TripAtStopTime>> r = Collections.synchronizedMap(result);
         trips.stream()
             .filter(trip -> trip.service.activeOn(trafficDay))
             .parallel()
             .forEach(tripPointer -> {
-                Map<TripAtStopTime, Collection<TripAtStopTime>> reducedTripTransfers = findTripTransfers(tripPointer, tripPointer.feedId, trafficDay, transfers);
+                Map<TripAtStopTime, Collection<TripAtStopTime>> reducedTripTransfers = findTripTransfers(tripPointer, tripPointer.feedId, trafficDay, transfers, stopsForStationNode);
                 r.putAll(reducedTripTransfers);
             });
     }

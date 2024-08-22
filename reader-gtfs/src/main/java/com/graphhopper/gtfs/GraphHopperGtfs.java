@@ -21,6 +21,8 @@ package com.graphhopper.gtfs;
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Stop;
 import com.conveyal.gtfs.model.Transfer;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimaps;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.gtfs.analysis.Trips;
@@ -122,11 +124,12 @@ public class GraphHopperGtfs extends GraphHopper {
                 });
                 interpolateTransfers(allReaders, allTransfers);
                 if (ghConfig.getBool("gtfs.trip_based", false)) {
+                    ArrayListMultimap<Integer, GtfsStorage.FeedIdWithStopId> stopsForStationNode = Multimaps.invertFrom(Multimaps.forMap(gtfsStorage.getStationNodes()), ArrayListMultimap.create());
                     for (String trafficDayString : ghConfig.getString("gtfs.schedule_day", null).split(",")) {
                         LocalDate trafficDay = LocalDate.parse(trafficDayString);
                         LOGGER.info("Computing trip-based transfers for pt router. Schedule day: {}", trafficDay);
                         Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripTransfersMap = gtfsStorage.tripTransfers.getTripTransfers(trafficDay);
-                        gtfsStorage.tripTransfers.findAllTripTransfersInto(tripTransfersMap, trafficDay, allTransfers, ghConfig.getInt("gtfs.trip_based.max_transfer_time", 15 * 60));
+                        gtfsStorage.tripTransfers.findAllTripTransfersInto(tripTransfersMap, trafficDay, allTransfers, stopsForStationNode, ghConfig.getInt("gtfs.trip_based.max_transfer_time", 15 * 60));
                         LOGGER.info("Writing. Schedule day: {}", trafficDay);
                         gtfsStorage.serializeTripTransfersMap("trip_transfers_" + trafficDayString, tripTransfersMap);
                     }
