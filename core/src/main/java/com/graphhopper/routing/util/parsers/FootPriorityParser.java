@@ -134,7 +134,7 @@ public class FootPriorityParser implements TagParser {
         return way.hasTag("foot", "use_sidepath")
                 || way.hasTag("sidewalk", "separate")
                 || way.hasTag("sidewalk:both", "separate")
-                || way.hasTag("sidewalk:left", "separate") && way.hasTag("sidewalk:right", sidewalksNoValues)
-                || way.hasTag("sidewalk:right", "separate") && way.hasTag("sidewalk:left", sidewalksNoValues);
+                || (way.hasTag("sidewalk:left", "separate") && way.hasTag("sidewalk:right", sidewalksNoValues))
+                || (way.hasTag("sidewalk:right", "separate") && way.hasTag("sidewalk:left", sidewalksNoValues));
     }
 }
