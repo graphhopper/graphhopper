@@ -27,8 +27,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.graphhopper.util.Helper.createFormatter;
@@ -122,7 +120,7 @@ public class CHPreparationHandler {
         LOGGER.info("Creating CH preparations, {}", getMemInfo());
         List<PrepareContractionHierarchies> preparations = chConfigs.stream()
                 .map(c -> createCHPreparation(baseGraph, c))
-                .collect(Collectors.toList());
+                .toList();
         Map<String, PrepareContractionHierarchies.Result> results = Collections.synchronizedMap(new LinkedHashMap<>());
         List<Runnable> runnables = new ArrayList<>(preparations.size());
         for (int i = 0; i < preparations.size(); ++i) {
