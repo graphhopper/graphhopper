@@ -39,7 +39,7 @@ public class RoutingExampleTC {
         GHRequest req = new GHRequest(42.50822, 1.533966, 42.506899, 1.525372).
                 setCurbsides(Arrays.asList(CURBSIDE_ANY, CURBSIDE_RIGHT)).
                 setProfile("car");
-        route(hopper, req, 1370, 128_000);
+        route(hopper, req, 1370, 88_000);
     }
 
     public static void routeWithTurnCostsAndCurbsidesAndOtherUTurnCosts(GraphHopper hopper) {
@@ -49,8 +49,9 @@ public class RoutingExampleTC {
                 // will be ignored and those set for our profile will be used.
                 .putHint(Parameters.CH.DISABLE, true)
                 .setProfile("car");
-        route(hopper, req.putHint(Parameters.Routing.U_TURN_COSTS, 10), 1370, 98_700);
-        route(hopper, req.putHint(Parameters.Routing.U_TURN_COSTS, 15), 1370, 103_700);
+        route(hopper, req.putHint(Parameters.Routing.U_TURN_COSTS, 10), 1370, 88_000);
+        route(hopper, req.putHint(Parameters.Routing.U_TURN_COSTS, 100), 1635, 120_000);
+        route(hopper, req.putHint(Parameters.Routing.U_TURN_COSTS, 200), 1635, 120_000);
     }
 
     private static void route(GraphHopper hopper, GHRequest req, int expectedDistance, int expectedTime) {
