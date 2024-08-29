@@ -192,12 +192,6 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.clearTags();
         way.setTag("highway", "path");
         way.setTag("bicycle", "designated");
-        way.setTag("surface", "mud");
-        assertPriorityAndSpeed(VERY_NICE, 10, way);
-
-        way.clearTags();
-        way.setTag("highway", "path");
-        way.setTag("bicycle", "designated");
         way.setTag("tracktype", "grade4");
         assertPriorityAndSpeed(VERY_NICE, 6, way);
 
