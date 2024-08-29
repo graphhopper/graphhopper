@@ -60,6 +60,10 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
         this.turnCostStorage = graph.getTurnCostStorage();
 
         this.orientationEnc = orientationEnc;
+        if (tcConfig.getMaxLeftAngle() > 180 || tcConfig.getMaxLeftAngle() < 0)
+            throw new IllegalArgumentException("Illegal max_left_angle = " + tcConfig.getMinLeftAngle());
+        if (tcConfig.getMinLeftAngle() > tcConfig.getMaxLeftAngle() || tcConfig.getMinLeftAngle() < 0)
+            throw new IllegalArgumentException("Illegal min_left_angle = " + tcConfig.getMinLeftAngle());
         this.minLeftInRad = Math.toRadians(tcConfig.getMinLeftAngle());
         this.maxLeftInRad = Math.toRadians(tcConfig.getMaxLeftAngle());
         this.rightCost = tcConfig.getRightCost();

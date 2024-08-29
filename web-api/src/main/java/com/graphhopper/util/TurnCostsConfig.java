@@ -126,6 +126,7 @@ public class TurnCostsConfig {
         return straightCost;
     }
 
+    @JsonProperty("min_left_angle")
     public void setMinLeftAngle(double minLeftAngle) {
         this.minLeftAngle = minLeftAngle;
     }
@@ -134,6 +135,7 @@ public class TurnCostsConfig {
         return minLeftAngle;
     }
 
+    @JsonProperty("max_left_angle")
     public void setMaxLeftAngle(double maxLeftAngle) {
         this.maxLeftAngle = maxLeftAngle;
     }
