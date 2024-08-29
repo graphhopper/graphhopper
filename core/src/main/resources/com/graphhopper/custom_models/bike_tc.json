@@ -1,9 +1,18 @@
+// Configures bike with turn costs (3sec for left and right turns) which reduces zig-zag routes.
+// Note, it is not recommended to increase these costs heavily as otherwise larger, bike-unfriendly
+// roads will be preferred as they often require less turns.
+//
 // to use this custom model you need to set the following option in the config.yml
 // graph.elevation.provider: srtm   # enables elevation
-// graph.encoded_values: bike_priority, bike_access, roundabout, bike_average_speed, average_slope
+// graph.encoded_values: bike_priority, bike_access, roundabout, bike_average_speed, average_slope, orientation
 // profiles:
 //    - name: bike
-//      custom_model_files: [bike.json, bike_elevation.json]
+//      turn_costs:
+//        vehicle_types: [bicycle]
+//        u_turn_costs: 20
+//        left: 3
+//        right: 3
+//      custom_model_files: [bike_tc.json, bike_elevation.json]
 
 {
   "priority": [
