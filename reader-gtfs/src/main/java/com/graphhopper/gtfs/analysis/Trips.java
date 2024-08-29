@@ -102,8 +102,8 @@ public class Trips {
         }
     }
 
-    public Map<String, List<TripAtStopTime>> getPatternBoardings(GtfsStorage.FeedIdWithStopId k) {
-        return boardingsForStopByPattern.get(k);
+    public Map<String, List<TripAtStopTime>> getPatternBoardings(GtfsStorage.FeedIdWithStopId stopId) {
+        return boardingsForStopByPattern.computeIfAbsent(stopId, k -> new HashMap<>());
     }
 
     GtfsStorage gtfsStorage;
