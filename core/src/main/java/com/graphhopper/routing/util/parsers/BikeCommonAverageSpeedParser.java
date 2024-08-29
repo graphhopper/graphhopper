@@ -150,10 +150,7 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         } else if (pushingSectionsHighways.contains(highwayValue)) {
             if (way.hasTag("bicycle", "designated") || way.hasTag("bicycle", "official") || way.hasTag("segregated", "yes")
                     || CYCLEWAY_KEYS.stream().anyMatch(k -> way.getTag(k, "").equals("track"))) {
-                if (trackTypeSpeeds.containsKey(trackTypeValue))
-                    speed = trackTypeSpeeds.get(trackTypeValue);
-                else
-                    speed = highwaySpeeds.get("cycleway");
+speed = trackTypeSpeeds.getOrDefault(trackTypeValue, highwaySpeeds.get("cycleway"));
             }
             else if (way.hasTag("bicycle", "yes"))
                 speed = 12;
