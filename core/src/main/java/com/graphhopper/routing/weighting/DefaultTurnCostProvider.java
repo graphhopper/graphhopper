@@ -18,12 +18,12 @@
 
 package com.graphhopper.routing.weighting;
 
-import com.graphhopper.config.TurnCostsConfig;
+import com.graphhopper.util.TurnCostsConfig;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.EdgeIterator;
 
-import static com.graphhopper.config.TurnCostsConfig.INFINITE_U_TURN_COSTS;
+import static com.graphhopper.util.TurnCostsConfig.INFINITE_U_TURN_COSTS;
 
 public class DefaultTurnCostProvider implements TurnCostProvider {
     private final BooleanEncodedValue turnRestrictionEnc;

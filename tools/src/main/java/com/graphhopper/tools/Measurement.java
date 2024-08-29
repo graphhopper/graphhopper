@@ -25,7 +25,7 @@ import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
-import com.graphhopper.config.TurnCostsConfig;
+import com.graphhopper.util.TurnCostsConfig;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;

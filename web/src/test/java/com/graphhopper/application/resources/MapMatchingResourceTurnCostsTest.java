@@ -23,7 +23,7 @@ import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.jackson.ResponsePathDeserializerHelper;
-import com.graphhopper.config.TurnCostsConfig;
+import com.graphhopper.util.TurnCostsConfig;
 import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;

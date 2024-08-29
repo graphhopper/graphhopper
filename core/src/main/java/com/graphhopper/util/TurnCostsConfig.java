@@ -1,4 +1,4 @@
-package com.graphhopper.config;
+package com.graphhopper.util;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
