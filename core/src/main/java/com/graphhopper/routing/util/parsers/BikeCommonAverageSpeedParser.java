@@ -160,7 +160,8 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
             speed = PUSHING_SECTION_SPEED; // unknown surface
         } else if (way.hasTag("service")) {
             speed = highwaySpeeds.get("living_street");
-        } else if ("track".equals(highwayValue)) {
+        } else if ("track".equals(highwayValue) ||
+                   "bridleway".equals(highwayValue) ) {
             if (surfaceSpeed != null)
                 speed = surfaceSpeed;
             else if (trackTypeSpeeds.containsKey(trackTypeValue))

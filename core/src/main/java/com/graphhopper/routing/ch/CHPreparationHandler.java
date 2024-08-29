@@ -27,8 +27,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.graphhopper.util.Helper.createFormatter;
@@ -120,19 +118,18 @@ public class CHPreparationHandler {
             return Collections.emptyMap();
         }
         LOGGER.info("Creating CH preparations, {}", getMemInfo());
-        List<PrepareContractionHierarchies> preparations = chConfigs.stream()
-                .map(c -> createCHPreparation(baseGraph, c))
-                .collect(Collectors.toList());
         Map<String, PrepareContractionHierarchies.Result> results = Collections.synchronizedMap(new LinkedHashMap<>());
-        List<Runnable> runnables = new ArrayList<>(preparations.size());
-        for (int i = 0; i < preparations.size(); ++i) {
-            PrepareContractionHierarchies prepare = preparations.get(i);
-            LOGGER.info((i + 1) + "/" + preparations.size() + " calling " +
-                    "CH prepare.doWork for profile '" + prepare.getCHConfig().getName() + "' " + prepare.getCHConfig().getTraversalMode() + " ... (" + getMemInfo() + ")");
+        List<Runnable> runnables = new ArrayList<>(chConfigs.size());
+        for (int i = 0; i < chConfigs.size(); ++i) {
+            CHConfig chConfig = chConfigs.get(i);
+            LOGGER.info((i + 1) + "/" + chConfigs.size() + " Setting up CH preparation for profile " +
+                    "'" + chConfig.getName() + "' " + chConfig.getTraversalMode() + " ... (" + getMemInfo() + ")");
             runnables.add(() -> {
-                final String name = prepare.getCHConfig().getName();
+                final String name = chConfig.getName();
                 // toString is not taken into account so we need to cheat, see http://stackoverflow.com/q/6113746/194609 for other options
                 Thread.currentThread().setName(name);
+                PrepareContractionHierarchies prepare = PrepareContractionHierarchies.fromGraph(baseGraph, chConfig);
+                prepare.setParams(pMap);
                 PrepareContractionHierarchies.Result result = prepare.doWork();
                 results.put(name, result);
                 prepare.flush();
