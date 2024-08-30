@@ -18,12 +18,12 @@
 
 package com.graphhopper.routing.weighting;
 
-import com.graphhopper.config.TurnCostsConfig;
+import com.graphhopper.util.TurnCostsConfig;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.EdgeIterator;
 
-import static com.graphhopper.config.TurnCostsConfig.INFINITE_U_TURN_COSTS;
+import static com.graphhopper.util.TurnCostsConfig.INFINITE_U_TURN_COSTS;
 
 public class DefaultTurnCostProvider implements TurnCostProvider {
     private final BooleanEncodedValue turnRestrictionEnc;
@@ -75,7 +75,12 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
 
     @Override
     public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
-        return (long) (1000 * calcTurnWeight(inEdge, viaNode, outEdge));
+        // Making a proper assumption about the turn time is very hard. Assuming zero is the
+        // simplest way to deal with this. This also means the u-turn time is zero. Provided that
+        // the u-turn weight is large enough, u-turns only occur in special situations like curbsides
+        // pointing to the end of dead-end streets where it is unclear if a finite u-turn time would
+        // be a good choice.
+        return 0;
     }
 
     @Override

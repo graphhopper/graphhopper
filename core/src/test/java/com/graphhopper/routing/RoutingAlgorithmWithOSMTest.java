@@ -24,7 +24,7 @@ import com.graphhopper.ResponsePath;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
-import com.graphhopper.config.TurnCostsConfig;
+import com.graphhopper.util.TurnCostsConfig;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.*;

@@ -23,7 +23,7 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
-import com.graphhopper.config.TurnCostsConfig;
+import com.graphhopper.util.TurnCostsConfig;
 import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;

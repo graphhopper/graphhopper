@@ -409,7 +409,8 @@ class CustomWeightingTest {
         EdgeIteratorState edge = graph.edge(1, 2).set(avSpeedEnc, 60, 60).setDistance(100);
         setTurnRestriction(graph, 0, 1, 2);
         assertTrue(Double.isInfinite(GHUtility.calcWeightWithTurnWeight(weighting, edge, false, 0)));
-        assertEquals(Long.MAX_VALUE, GHUtility.calcMillisWithTurnMillis(weighting, edge, false, 0));
+        // the time only reflects the time for the edge, the turn time is 0
+        assertEquals(6000, GHUtility.calcMillisWithTurnMillis(weighting, edge, false, 0));
     }
 
     @Test
@@ -419,7 +420,7 @@ class CustomWeightingTest {
         Weighting weighting = CustomModelParser.createWeighting(encodingManager, new DefaultTurnCostProvider(turnRestrictionEnc, graph.getTurnCostStorage(), 40), customModel);
         EdgeIteratorState edge = graph.edge(0, 1).set(avSpeedEnc, 60, 60).setDistance(100);
         assertEquals(6 + 40, GHUtility.calcWeightWithTurnWeight(weighting, edge, false, 0), 1.e-6);
-        assertEquals((6 + 40) * 1000, GHUtility.calcMillisWithTurnMillis(weighting, edge, false, 0), 1.e-6);
+        assertEquals(6 * 1000, GHUtility.calcMillisWithTurnMillis(weighting, edge, false, 0), 1.e-6);
     }
 
     @Test
