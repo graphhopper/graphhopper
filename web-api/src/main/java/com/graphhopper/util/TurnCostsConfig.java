@@ -9,11 +9,16 @@ import java.util.Set;
 public class TurnCostsConfig {
     public static final int INFINITE_U_TURN_COSTS = -1;
     private double leftCost; // in seconds
-    private double rightCost;
+    private double leftSharpCost; // in seconds
     private double straightCost;
+    private double rightCost;
+    private double rightSharpCost;
 
-    // Define when "left" turn start and end. As "right" turn is symmetric and the negated values are used.
-    private double minLeftAngle = 25, maxLeftAngle = 180;
+    // As "right" and "left" turns are symmetric and for "right" the negated values are used.
+    // From 0 to minAngle no turn cost is added.
+    // From minAngle to minSharpAngle the turn cost leftCost or rightCost is added.
+    // From minSharpAngle to maxAngle the turn cost leftSharpCost or rightSharpCost is added.
+    private double minAngle = 25, minSharpAngle = 110, maxAngle = 180;
 
     private int uTurnCosts = INFINITE_U_TURN_COSTS;
     private List<String> vehicleTypes;
@@ -40,10 +45,14 @@ public class TurnCostsConfig {
 
     public TurnCostsConfig(TurnCostsConfig copy) {
         leftCost = copy.leftCost;
-        rightCost = copy.rightCost;
+        leftSharpCost = copy.leftSharpCost;
         straightCost = copy.straightCost;
-        minLeftAngle = copy.minLeftAngle;
-        maxLeftAngle = copy.maxLeftAngle;
+        rightCost = copy.rightCost;
+        rightSharpCost = copy.rightSharpCost;
+
+        minAngle = copy.minAngle;
+        minSharpAngle = copy.minSharpAngle;
+        maxAngle = copy.maxAngle;
         uTurnCosts = copy.uTurnCosts;
         if (copy.vehicleTypes != null)
             vehicleTypes = new ArrayList<>(copy.vehicleTypes);
@@ -93,7 +102,7 @@ public class TurnCostsConfig {
     }
 
     public boolean hasLeftRightStraight() {
-        return leftCost != 0 || rightCost != 0 || straightCost != 0;
+        return leftCost != 0 || leftSharpCost != 0 || straightCost != 0 || rightCost != 0 || rightSharpCost != 0;
     }
 
     public TurnCostsConfig setLeftCost(double leftCost) {
@@ -106,6 +115,15 @@ public class TurnCostsConfig {
         return leftCost;
     }
 
+    public void setLeftSharpCost(double leftSharpCost) {
+        this.leftSharpCost = leftSharpCost;
+    }
+
+    @JsonProperty("left_sharp")
+    public double getLeftSharpCost() {
+        return leftSharpCost;
+    }
+
     public TurnCostsConfig setRightCost(double rightCost) {
         this.rightCost = rightCost;
         return this;
@@ -114,6 +132,15 @@ public class TurnCostsConfig {
     @JsonProperty("right")
     public double getRightCost() {
         return rightCost;
+    }
+
+    public void setRightSharpCost(double rightSharpCost) {
+        this.rightSharpCost = rightSharpCost;
+    }
+
+    @JsonProperty("right_sharp")
+    public double getRightSharpCost() {
+        return rightSharpCost;
     }
 
     public TurnCostsConfig setStraightCost(double straightCost) {
@@ -126,28 +153,39 @@ public class TurnCostsConfig {
         return straightCost;
     }
 
-    @JsonProperty("min_left_angle")
-    public void setMinLeftAngle(double minLeftAngle) {
-        this.minLeftAngle = minLeftAngle;
+    @JsonProperty("min_angle")
+    public void setMinAngle(double minAngle) {
+        this.minAngle = minAngle;
     }
 
-    public double getMinLeftAngle() {
-        return minLeftAngle;
+    public double getMinAngle() {
+        return minAngle;
     }
 
-    @JsonProperty("max_left_angle")
-    public void setMaxLeftAngle(double maxLeftAngle) {
-        this.maxLeftAngle = maxLeftAngle;
+    @JsonProperty("min_sharp_angle")
+    public void setMinSharpAngle(double minSharpAngle) {
+        this.minSharpAngle = minSharpAngle;
     }
 
-    public double getMaxLeftAngle() {
-        return maxLeftAngle;
+    public double getMinSharpAngle() {
+        return minSharpAngle;
+    }
+
+    @JsonProperty("max_angle")
+    public void setMaxAngle(double maxAngle) {
+        this.maxAngle = maxAngle;
+    }
+
+    public double getMaxAngle() {
+        return maxAngle;
     }
 
     @Override
     public String toString() {
-        return "vehicleTypes=" + vehicleTypes + ", uTurnCosts=" + uTurnCosts
-                + ", leftCost=" + leftCost + ", rightCost=" + rightCost + ", straightCost=" + straightCost
-                + ", minLeftAngle=" + minLeftAngle + ", maxLeftAngle=" + maxLeftAngle;
+        return "left=" + leftCost + ", leftSharp=" + leftSharpCost
+                + ", straight=" + straightCost
+                + ", right=" + rightCost + ", rightSharp=" + rightSharpCost
+                + ", minAngle=" + minAngle + ", minSharpAngle=" + minSharpAngle + ", maxAngle=" + maxAngle
+                + ", uTurnCosts=" + uTurnCosts + ", vehicleTypes=" + vehicleTypes;
     }
 }

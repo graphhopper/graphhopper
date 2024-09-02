@@ -36,11 +36,15 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
     private final int uTurnCostsInt;
     private final double uTurnCosts;
 
-    private final double minLeftInRad;
-    private final double maxLeftInRad;
-    private final double rightCost;
+    private final double minAngleInRad;
+    private final double minSharpAngleInRad;
+    private final double maxAngleInRad;
+
     private final double leftCost;
+    private final double leftSharpCost;
     private final double straightCost;
+    private final double rightCost;
+    private final double rightSharpCost;
     private final BaseGraph graph;
     private final EdgeIntAccess edgeIntAccess;
     private final DecimalEncodedValue orientationEnc;
@@ -60,15 +64,22 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
         this.turnCostStorage = graph.getTurnCostStorage();
 
         this.orientationEnc = orientationEnc;
-        if (tcConfig.getMaxLeftAngle() > 180 || tcConfig.getMaxLeftAngle() < 0)
-            throw new IllegalArgumentException("Illegal max_left_angle = " + tcConfig.getMinLeftAngle());
-        if (tcConfig.getMinLeftAngle() > tcConfig.getMaxLeftAngle() || tcConfig.getMinLeftAngle() < 0)
-            throw new IllegalArgumentException("Illegal min_left_angle = " + tcConfig.getMinLeftAngle());
-        this.minLeftInRad = Math.toRadians(tcConfig.getMinLeftAngle());
-        this.maxLeftInRad = Math.toRadians(tcConfig.getMaxLeftAngle());
-        this.rightCost = tcConfig.getRightCost();
+        if (tcConfig.getMaxAngle() > 180)
+            throw new IllegalArgumentException("Illegal max_angle = " + tcConfig.getMinAngle());
+        if (tcConfig.getMinSharpAngle() > tcConfig.getMaxAngle())
+            throw new IllegalArgumentException("Illegal min_sharp_angle = " + tcConfig.getMinSharpAngle());
+        if (tcConfig.getMinAngle() > tcConfig.getMinSharpAngle() || tcConfig.getMinAngle() < 0)
+            throw new IllegalArgumentException("Illegal min_angle = " + tcConfig.getMinAngle());
+        this.minAngleInRad = Math.toRadians(tcConfig.getMinAngle());
+        this.minSharpAngleInRad = Math.toRadians(tcConfig.getMinSharpAngle());
+        this.maxAngleInRad = Math.toRadians(tcConfig.getMaxAngle());
+
         this.leftCost = tcConfig.getLeftCost();
+        this.leftSharpCost = tcConfig.getLeftSharpCost();
         this.straightCost = tcConfig.getStraightCost();
+        this.rightCost = tcConfig.getRightCost();
+        this.rightSharpCost = tcConfig.getRightSharpCost();
+
         this.graph = graph.getBaseGraph();
         this.edgeIntAccess = graph.getBaseGraph().getEdgeAccess();
     }
@@ -90,12 +101,16 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
         if (orientationEnc != null) {
             if (Double.isInfinite(tCost)) return tCost;
             double changeAngle = calcChangeAngle(inEdge, viaNode, outEdge);
-            if (changeAngle > -minLeftInRad && changeAngle < minLeftInRad)
+            if (changeAngle > -minAngleInRad && changeAngle < minAngleInRad)
                 return straightCost + tCost;
-            else if (changeAngle >= minLeftInRad && changeAngle <= maxLeftInRad)
+            else if (changeAngle >= minAngleInRad && changeAngle < minSharpAngleInRad)
                 return leftCost + tCost;
-            else if (changeAngle <= -minLeftInRad && changeAngle >= -maxLeftInRad)
+            else if (changeAngle >= minSharpAngleInRad && changeAngle <= maxAngleInRad)
+                return leftSharpCost + tCost;
+            else if (changeAngle <= -minAngleInRad && changeAngle > -minSharpAngleInRad)
                 return rightCost + tCost;
+            else if (changeAngle <= -minSharpAngleInRad && changeAngle >= -maxAngleInRad)
+                return rightSharpCost + tCost;
             else return Double.POSITIVE_INFINITY; // too sharp turn
         }
         return tCost;

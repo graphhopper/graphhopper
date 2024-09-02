@@ -64,7 +64,7 @@ public class DefaultWeightingFactory implements WeightingFactory {
                 throw new IllegalArgumentException("Cannot find turn restriction encoded value for " + profile.getName());
             DecimalEncodedValue oEnc = encodingManager.hasEncodedValue(Orientation.KEY) ? encodingManager.getDecimalEncodedValue(Orientation.KEY) : null;
             if (profile.getTurnCostsConfig().hasLeftRightStraight() && oEnc == null)
-                throw new IllegalArgumentException("Using left,right or straight for turn_costs requires 'orientation' in graph.encoded_values");
+                throw new IllegalArgumentException("Using left,left_sharp,right,right_sharp or straight for turn_costs requires 'orientation' in graph.encoded_values");
             int uTurnCosts = hints.getInt(Parameters.Routing.U_TURN_COSTS, profile.getTurnCostsConfig().getUTurnCosts());
             TurnCostsConfig tcConfig = new TurnCostsConfig(profile.getTurnCostsConfig()).setUTurnCosts(uTurnCosts);
             turnCostProvider = new DefaultTurnCostProvider(turnRestrictionEnc, oEnc, graph, tcConfig);

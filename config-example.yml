@@ -33,6 +33,7 @@ graphhopper:
 #     turn_costs:
 #       vehicle_types: [motorcar, motor_vehicle]
 #       u_turn_costs: 60
+#     for more advanced turn costs, see #2957 or bike_tc.yml
      custom_model_files: [car.json]
 
 #   You can use the following in-built profiles. After you start GraphHopper it will print which encoded values you'll have to add to graph.encoded_values in this config file.
