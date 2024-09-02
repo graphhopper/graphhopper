@@ -624,16 +624,19 @@ public class GraphHopper {
     protected OSMParsers buildOSMParsers(Map<String, PMap> encodedValuesWithProps,
                                          Map<String, ImportUnit> activeImportUnits,
                                          Map<String, List<String>> restrictionVehicleTypesByProfile,
-                                         List<String> ignoredHighways, String dateRangeParserString) {
+                                         List<String> ignoredHighways) {
         ImportUnitSorter sorter = new ImportUnitSorter(activeImportUnits);
         Map<String, ImportUnit> sortedImportUnits = new LinkedHashMap<>();
         sorter.sort().forEach(name -> sortedImportUnits.put(name, activeImportUnits.get(name)));
-        DateRangeParser dateRangeParser = DateRangeParser.createInstance(dateRangeParserString);
         List<TagParser> sortedParsers = new ArrayList<>();
         sortedImportUnits.forEach((name, importUnit) -> {
             BiFunction<EncodedValueLookup, PMap, TagParser> createTagParser = importUnit.getCreateTagParser();
-            if (createTagParser != null)
-                sortedParsers.add(createTagParser.apply(encodingManager, encodedValuesWithProps.getOrDefault(name, new PMap().putObject("date_range_parser", dateRangeParser))));
+            if (createTagParser != null) {
+                PMap pmap = encodedValuesWithProps.getOrDefault(name, new PMap());
+                if (!pmap.has("date_range_parser_day"))
+                    pmap.putObject("date_range_parser_day", dateRangeParserString);
+                sortedParsers.add(createTagParser.apply(encodingManager, pmap));
+            }
         });
 
         OSMParsers osmParsers = new OSMParsers();
@@ -873,7 +876,7 @@ public class GraphHopper {
                 deque.addAll(importUnit.getRequiredImportUnits());
         }
         encodingManager = buildEncodingManager(encodedValuesWithProps, activeImportUnits, restrictionVehicleTypesByProfile);
-        osmParsers = buildOSMParsers(encodedValuesWithProps, activeImportUnits, restrictionVehicleTypesByProfile, osmReaderConfig.getIgnoredHighways(), dateRangeParserString);
+        osmParsers = buildOSMParsers(encodedValuesWithProps, activeImportUnits, restrictionVehicleTypesByProfile, osmReaderConfig.getIgnoredHighways());
     }
 
     protected void postImportOSM() {
