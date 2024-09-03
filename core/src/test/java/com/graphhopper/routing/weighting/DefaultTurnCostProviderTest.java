@@ -77,7 +77,9 @@ public class DefaultTurnCostProviderTest {
         turnGraph.getNodeAccess().setNode(6, 51.0358, 13.726);
 
         Profile profile = new Profile("car");
-        TurnCostsConfig config = new TurnCostsConfig().setRightCost(0.5).setLeftCost(6.0);
+        TurnCostsConfig config = new TurnCostsConfig().
+                setRightCost(0.5).setRightSharpCost(0.5).
+                setLeftCost(6).setLeftSharpCost(6);
         profile.setCustomModel(new CustomModel().addToSpeed(If("true", LIMIT, tcAvgSpeedEnc.getName())));
         profile.setTurnCostsConfig(config);
         Weighting weighting = new DefaultWeightingFactory(turnGraph, em).createWeighting(profile, new PMap(), false);
@@ -110,7 +112,7 @@ public class DefaultTurnCostProviderTest {
     }
 
     EdgeIteratorState handleWayTags(EdgeIntAccess edgeIntAccess, OrientationCalculator calc, EdgeIteratorState edge) {
-        return handleWayTags(edgeIntAccess, calc, edge, Arrays.asList());
+        return handleWayTags(edgeIntAccess, calc, edge, List.of());
     }
 
     EdgeIteratorState handleWayTags(EdgeIntAccess edgeIntAccess, OrientationCalculator calc, EdgeIteratorState edge, List<Double> rawPointList) {

@@ -70,6 +70,11 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
             throw new IllegalArgumentException("Illegal min_sharp_angle = " + tcConfig.getMinSharpAngle());
         if (tcConfig.getMinAngle() > tcConfig.getMinSharpAngle() || tcConfig.getMinAngle() < 0)
             throw new IllegalArgumentException("Illegal min_angle = " + tcConfig.getMinAngle());
+        if (tcConfig.getLeftCost() > tcConfig.getLeftSharpCost())
+            throw new IllegalArgumentException("The cost for 'left' (" + tcConfig.getLeftCost() + ") must be lower than for 'left_sharp' (" + tcConfig.getLeftSharpCost() + ")");
+        if (tcConfig.getRightCost() > tcConfig.getRightSharpCost())
+            throw new IllegalArgumentException("The cost for 'right' (" + tcConfig.getRightCost() + ") must be lower than for 'right_sharp' (" + tcConfig.getRightSharpCost() + ")");
+
         this.minAngleInRad = Math.toRadians(tcConfig.getMinAngle());
         this.minSharpAngleInRad = Math.toRadians(tcConfig.getMinSharpAngle());
         this.maxAngleInRad = Math.toRadians(tcConfig.getMaxAngle());

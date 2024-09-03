@@ -67,8 +67,9 @@ public class TurnCostsConfig {
         this.uTurnCosts = uTurnCost;
     }
 
-    public void setVehicleTypes(List<String> vehicleTypes) {
+    public TurnCostsConfig setVehicleTypes(List<String> vehicleTypes) {
         this.vehicleTypes = check(vehicleTypes);
+        return this;
     }
 
     List<String> check(List<String> restrictions) {
@@ -115,8 +116,9 @@ public class TurnCostsConfig {
         return leftCost;
     }
 
-    public void setLeftSharpCost(double leftSharpCost) {
+    public TurnCostsConfig setLeftSharpCost(double leftSharpCost) {
         this.leftSharpCost = leftSharpCost;
+        return this;
     }
 
     @JsonProperty("left_sharp")
@@ -134,8 +136,9 @@ public class TurnCostsConfig {
         return rightCost;
     }
 
-    public void setRightSharpCost(double rightSharpCost) {
+    public TurnCostsConfig setRightSharpCost(double rightSharpCost) {
         this.rightSharpCost = rightSharpCost;
+        return this;
     }
 
     @JsonProperty("right_sharp")
@@ -154,8 +157,9 @@ public class TurnCostsConfig {
     }
 
     @JsonProperty("min_angle")
-    public void setMinAngle(double minAngle) {
+    public TurnCostsConfig setMinAngle(double minAngle) {
         this.minAngle = minAngle;
+        return this;
     }
 
     public double getMinAngle() {
@@ -163,8 +167,9 @@ public class TurnCostsConfig {
     }
 
     @JsonProperty("min_sharp_angle")
-    public void setMinSharpAngle(double minSharpAngle) {
+    public TurnCostsConfig setMinSharpAngle(double minSharpAngle) {
         this.minSharpAngle = minSharpAngle;
+        return this;
     }
 
     public double getMinSharpAngle() {
@@ -172,8 +177,9 @@ public class TurnCostsConfig {
     }
 
     @JsonProperty("max_angle")
-    public void setMaxAngle(double maxAngle) {
+    public TurnCostsConfig setMaxAngle(double maxAngle) {
         this.maxAngle = maxAngle;
+        return this;
     }
 
     public double getMaxAngle() {
