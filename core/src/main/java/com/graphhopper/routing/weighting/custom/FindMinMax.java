@@ -35,8 +35,6 @@ public class FindMinMax {
      * is based on baseModel).
      */
     public static void checkLMConstraints(CustomModel baseModel, CustomModel queryModel, EncodedValueLookup lookup) {
-        if (queryModel.isInternal())
-            throw new IllegalArgumentException("CustomModel of query cannot be internal");
         if (queryModel.getDistanceInfluence() != null) {
             double bmDI = baseModel.getDistanceInfluence() == null ? 0 : baseModel.getDistanceInfluence();
             if (queryModel.getDistanceInfluence() < bmDI)
