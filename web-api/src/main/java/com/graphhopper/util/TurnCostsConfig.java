@@ -17,8 +17,9 @@ public class TurnCostsConfig {
     // As "right" and "left" turns are symmetric and for "right" the negated values are used.
     // From 0 to minAngle no turn cost is added.
     // From minAngle to minSharpAngle the turn cost leftCost or rightCost is added.
-    // From minSharpAngle to maxAngle the turn cost leftSharpCost or rightSharpCost is added.
-    private double minAngle = 25, minSharpAngle = 110, maxAngle = 180;
+    // From minSharpAngle to minUTurnAngle the turn cost leftSharpCost or rightSharpCost is added.
+    // And beyond minUTurnAngle we add uTurnCosts
+    private double minAngle = 25, minSharpAngle = 80, minUTurnAngle = 180;
 
     private int uTurnCosts = INFINITE_U_TURN_COSTS;
     private List<String> vehicleTypes;
@@ -49,11 +50,11 @@ public class TurnCostsConfig {
         straightCost = copy.straightCost;
         rightCost = copy.rightCost;
         rightSharpCost = copy.rightSharpCost;
+        uTurnCosts = copy.uTurnCosts;
 
         minAngle = copy.minAngle;
         minSharpAngle = copy.minSharpAngle;
-        maxAngle = copy.maxAngle;
-        uTurnCosts = copy.uTurnCosts;
+        minUTurnAngle = copy.minUTurnAngle;
         if (copy.vehicleTypes != null)
             vehicleTypes = new ArrayList<>(copy.vehicleTypes);
     }
@@ -67,11 +68,6 @@ public class TurnCostsConfig {
         this.uTurnCosts = uTurnCost;
     }
 
-    public TurnCostsConfig setVehicleTypes(List<String> vehicleTypes) {
-        this.vehicleTypes = check(vehicleTypes);
-        return this;
-    }
-
     List<String> check(List<String> restrictions) {
         if (restrictions == null || restrictions.isEmpty())
             throw new IllegalArgumentException("turn_costs cannot have empty vehicle_types");
@@ -80,6 +76,11 @@ public class TurnCostsConfig {
                 throw new IllegalArgumentException("Currently we do not support the restriction: " + r);
         }
         return restrictions;
+    }
+
+    public TurnCostsConfig setVehicleTypes(List<String> vehicleTypes) {
+        this.vehicleTypes = check(vehicleTypes);
+        return this;
     }
 
     @JsonProperty("vehicle_types")
@@ -102,7 +103,7 @@ public class TurnCostsConfig {
         return uTurnCosts;
     }
 
-    public boolean hasLeftRightStraight() {
+    public boolean hasLeftRightStraightCosts() {
         return leftCost != 0 || leftSharpCost != 0 || straightCost != 0 || rightCost != 0 || rightSharpCost != 0;
     }
 
@@ -111,7 +112,7 @@ public class TurnCostsConfig {
         return this;
     }
 
-    @JsonProperty("left")
+    @JsonProperty("left_costs")
     public double getLeftCost() {
         return leftCost;
     }
@@ -121,7 +122,7 @@ public class TurnCostsConfig {
         return this;
     }
 
-    @JsonProperty("left_sharp")
+    @JsonProperty("left_sharp_costs")
     public double getLeftSharpCost() {
         return leftSharpCost;
     }
@@ -131,7 +132,7 @@ public class TurnCostsConfig {
         return this;
     }
 
-    @JsonProperty("right")
+    @JsonProperty("right_costs")
     public double getRightCost() {
         return rightCost;
     }
@@ -141,7 +142,7 @@ public class TurnCostsConfig {
         return this;
     }
 
-    @JsonProperty("right_sharp")
+    @JsonProperty("right_sharp_costs")
     public double getRightSharpCost() {
         return rightSharpCost;
     }
@@ -151,7 +152,7 @@ public class TurnCostsConfig {
         return this;
     }
 
-    @JsonProperty("straight")
+    @JsonProperty("straight_costs")
     public double getStraightCost() {
         return straightCost;
     }
@@ -176,14 +177,14 @@ public class TurnCostsConfig {
         return minSharpAngle;
     }
 
-    @JsonProperty("max_angle")
-    public TurnCostsConfig setMaxAngle(double maxAngle) {
-        this.maxAngle = maxAngle;
+    @JsonProperty("min_u_turn_angle")
+    public TurnCostsConfig setMinUTurnAngle(double minUTurnAngle) {
+        this.minUTurnAngle = minUTurnAngle;
         return this;
     }
 
-    public double getMaxAngle() {
-        return maxAngle;
+    public double getMinUTurnAngle() {
+        return minUTurnAngle;
     }
 
     @Override
@@ -191,7 +192,7 @@ public class TurnCostsConfig {
         return "left=" + leftCost + ", leftSharp=" + leftSharpCost
                 + ", straight=" + straightCost
                 + ", right=" + rightCost + ", rightSharp=" + rightSharpCost
-                + ", minAngle=" + minAngle + ", minSharpAngle=" + minSharpAngle + ", maxAngle=" + maxAngle
+                + ", minAngle=" + minAngle + ", minSharpAngle=" + minSharpAngle + ", minUTurnAngle=" + minUTurnAngle
                 + ", uTurnCosts=" + uTurnCosts + ", vehicleTypes=" + vehicleTypes;
     }
 }

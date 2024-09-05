@@ -68,7 +68,7 @@ graphhopper:
   # It's possible to speed up routing by doing a special graph preparation (Contraction Hierarchies, CH). This requires
   # more RAM/disk space for holding the prepared graph but also means less memory usage per request. Using the following
   # list you can define for which of the above routing profiles such preparation shall be performed. Note that to support
-  # profiles with `turn_costs: true` a more elaborate preparation is required (longer preparation time and more memory
+  # profiles with `turn_costs` a more elaborate preparation is required (longer preparation time and more memory
   # usage) and the routing will also be slower than with `turn_costs: false`.
   profiles_ch:
     - profile: car
