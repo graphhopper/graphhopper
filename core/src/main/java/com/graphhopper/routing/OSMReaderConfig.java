@@ -26,9 +26,22 @@ public class OSMReaderConfig {
     private boolean smoothElevation = false;
     private double longEdgeSamplingDistance = Double.MAX_VALUE;
     private int workerThreads = 2;
+    private String waysDumpPath = "";
 
     public String getPreferredLanguage() {
         return preferredLanguage;
+    }
+
+    public void setWaysDumpPath(String dumpPath) {
+        this.waysDumpPath = dumpPath;
+    }
+
+    public String getWaysDumpPath() {
+        return this.waysDumpPath;
+    }
+
+    public boolean shouldDumpWays() {
+        return this.waysDumpPath.length() > 0;
     }
 
     /**

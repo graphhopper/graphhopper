@@ -181,6 +181,8 @@ graphhopper:
   # Use this flag to enable these rules (you need to repeat the import for changes to take effect)
   country_rules.enabled: true
 
+  logging.ways_dump_file: logs/ways_dump.ldgeojson
+
 # Dropwizard server configuration
 server:
   application_connectors:

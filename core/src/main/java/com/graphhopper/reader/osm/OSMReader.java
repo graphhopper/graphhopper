@@ -19,6 +19,8 @@ package com.graphhopper.reader.osm;
 
 import com.carrotsearch.hppc.IntLongMap;
 import com.carrotsearch.hppc.LongArrayList;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.graphhopper.coll.GHIntLongHashMap;
 import com.graphhopper.coll.GHLongHashSet;
 import com.graphhopper.coll.GHLongLongHashMap;
@@ -28,6 +30,7 @@ import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.GraphElevationSmoothing;
 import com.graphhopper.routing.OSMReaderConfig;
 import com.graphhopper.routing.ev.Country;
+import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.util.AreaIndex;
 import com.graphhopper.routing.util.CustomArea;
 import com.graphhopper.routing.util.TagParserManager;
@@ -44,8 +47,14 @@ import com.graphhopper.util.shapes.GHPoint3D;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
+import java.io.StringWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.function.LongToIntFunction;
 import java.util.regex.Pattern;
@@ -88,6 +97,8 @@ public class OSMReader {
     private GHLongHashSet osmWayIdSet = new GHLongHashSet();
     private IntLongMap edgeIdToOsmWayIdMap;
 
+    private BufferedWriter ldGeojsonWriter;
+
     public OSMReader(BaseGraph baseGraph, TagParserManager tagParserManager, OSMReaderConfig config) {
         this.baseGraph = baseGraph;
         this.config = config;
@@ -97,6 +108,17 @@ public class OSMReader {
         simplifyAlgo.setMaxDistance(config.getMaxWayPointDistance());
         simplifyAlgo.setElevationMaxDistance(config.getElevationMaxWayPointDistance());
         turnCostStorage = baseGraph.getTurnCostStorage();
+
+        try {
+            if (config.shouldDumpWays()){
+                Path filePath = Paths.get(config.getWaysDumpPath());
+                Files.deleteIfExists(filePath);
+                ldGeojsonWriter = Files.newBufferedWriter(filePath, StandardOpenOption.CREATE);
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error creating logs/ways_dump.ldgeojson file writer");
+            e.printStackTrace();
+        }
 
         tempRelFlags = tagParserManager.createRelationFlags();
         if (tempRelFlags.length != 2)
@@ -348,6 +370,41 @@ public class OSMReader {
             edge.setWayGeometry(pointList.shallowCopy(1, pointList.size() - 1, false));
         }
         tagParserManager.applyWayTags(way, edge);
+
+        if (ldGeojsonWriter != null) {
+            try {
+                JsonFactory factory = new JsonFactory();
+                StringWriter writer = new StringWriter();
+                JsonGenerator generator = factory.createGenerator(writer);
+                generator.writeStartObject();
+
+                generator.writeNumberField("id", way.getId());
+                generator.writeStringField("name", name);
+                generator.writeNumberField("grade", grade);
+
+                for(Map.Entry<String, Boolean> entry : tagParserManager.getBooleanEncodedValues(edgeFlags).entrySet()) {
+                    generator.writeBooleanField(entry.getKey(), entry.getValue());
+                }
+
+                for(Map.Entry<String, Integer> entry : tagParserManager.getIntEncodedValues(edgeFlags).entrySet()) {
+                    generator.writeNumberField(entry.getKey(), entry.getValue());
+                }
+
+                for(Map.Entry<String, Double> entry : tagParserManager.getDecimalEncodedValues(edgeFlags).entrySet()) {
+                    generator.writeNumberField(entry.getKey(), entry.getValue());
+                }
+
+                generator.writeEndObject();
+                generator.close();
+
+                String props = writer.toString();
+                ldGeojsonWriter.write(pointList.toGeojsonString(props));
+                ldGeojsonWriter.write("\n");
+            } catch (IOException e) {
+                LOGGER.error("Error writing way to dumpfile");
+                e.printStackTrace();
+            }
+        }
 
         checkDistance(edge);
         if (osmWayIdSet.contains(way.getId())) {
@@ -609,6 +666,12 @@ public class OSMReader {
     private void finishedReading() {
         tagParserManager.releaseParsers();
         eleProvider.release();
+        try {
+            ldGeojsonWriter.close();
+        } catch (IOException e) {
+            LOGGER.error("Error closing writer to geojson dumpfile");
+            e.printStackTrace();
+        }
         osmWayIdToRelationFlagsMap = null;
         osmWayIdSet = null;
         edgeIdToOsmWayIdMap = null;

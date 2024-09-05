@@ -349,6 +349,28 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
         return sb.toString();
     }
 
+    public String toGeojsonString(String propJsonString) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"type\": \"Feature\", \"properties\": "+propJsonString+",\"geometry\": {\"type\": \"LineString\", \"coordinates\": [");
+        for (int i = 0; i < size(); i++) {
+            if (i > 0)
+                sb.append(", ");
+
+            sb.append('[');
+            sb.append(this.getLon(i));
+            sb.append(',');
+            sb.append(this.getLat(i));
+            if (this.is3D()) {
+                sb.append(',');
+                sb.append(this.getEle(i));
+            }
+            sb.append(']');
+        }
+
+        sb.append("]}}");
+        return sb.toString();
+    }
+
     public static PointList fromLineString(LineString lineString) {
         final PointList pointList = new PointList();
         for (Coordinate coordinate : lineString.getCoordinates()) {

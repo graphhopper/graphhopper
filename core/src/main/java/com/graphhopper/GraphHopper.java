@@ -480,6 +480,7 @@ public class GraphHopper {
         osmReaderConfig.setSmoothElevation(ghConfig.getBool("graph.elevation.smoothing", osmReaderConfig.isSmoothElevation()));
         osmReaderConfig.setLongEdgeSamplingDistance(ghConfig.getDouble("graph.elevation.long_edge_sampling_distance", osmReaderConfig.getLongEdgeSamplingDistance()));
         osmReaderConfig.setElevationMaxWayPointDistance(ghConfig.getDouble("graph.elevation.way_point_max_distance", osmReaderConfig.getElevationMaxWayPointDistance()));
+        osmReaderConfig.setWaysDumpPath(ghConfig.getString("logging.ways_dump_file", ""));
         routerConfig.setElevationWayPointMaxDistance(ghConfig.getDouble("graph.elevation.way_point_max_distance", routerConfig.getElevationWayPointMaxDistance()));
         ElevationProvider elevationProvider = createElevationProvider(ghConfig);
         setElevationProvider(elevationProvider);

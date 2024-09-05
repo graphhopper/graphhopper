@@ -569,14 +569,62 @@ public class TagParserManager implements EncodedValueLookup {
         return getEncodedValue(key, BooleanEncodedValue.class);
     }
 
+    public HashMap<String, Boolean> getBooleanEncodedValues(IntsRef flags) {
+        HashMap<String, Boolean> ret = new HashMap<String, Boolean>();
+        for (Map.Entry<String, EncodedValue> entry : encodedValueMap.entrySet()) {
+            EncodedValue value = entry.getValue();
+            if (value instanceof BooleanEncodedValue) {
+                BooleanEncodedValue casted = (BooleanEncodedValue) value;
+                ret.put(entry.getKey(), casted.getBool(false, flags));
+                if (casted.isStoreTwoDirections()) {
+                    ret.put(entry.getKey() + "_reversed", casted.getBool(true, flags));
+                }
+            }
+        }
+
+        return ret;
+    }
+
     @Override
     public IntEncodedValue getIntEncodedValue(String key) {
         return getEncodedValue(key, IntEncodedValue.class);
     }
 
+    public HashMap<String, Integer> getIntEncodedValues(IntsRef flags) {
+        HashMap<String, Integer> ret = new HashMap<String, Integer>();
+        for (Map.Entry<String, EncodedValue> entry : encodedValueMap.entrySet()) {
+            EncodedValue value = entry.getValue();
+            if (value instanceof IntEncodedValue) {
+                IntEncodedValue casted = (IntEncodedValue) value;
+                ret.put(entry.getKey(), casted.getInt(false, flags));
+                if (casted.isStoreTwoDirections()) {
+                    ret.put(entry.getKey() + "_reversed", casted.getInt(true, flags));
+                }
+            }
+        }
+
+        return ret;
+    }
+
     @Override
     public DecimalEncodedValue getDecimalEncodedValue(String key) {
         return getEncodedValue(key, DecimalEncodedValue.class);
+    }
+
+    public HashMap<String, Double> getDecimalEncodedValues(IntsRef flags) {
+        HashMap<String, Double> ret = new HashMap<String, Double>();
+        for (Map.Entry<String, EncodedValue> entry : encodedValueMap.entrySet()) {
+            EncodedValue value = entry.getValue();
+            if (value instanceof DecimalEncodedValue) {
+                DecimalEncodedValue casted = (DecimalEncodedValue) value;
+                ret.put(entry.getKey(), casted.getDecimal(false, flags));
+                if (casted.isStoreTwoDirections()) {
+                    ret.put(entry.getKey() + "_reversed", casted.getDecimal(true, flags));
+                }
+            }
+        }
+
+        return ret;
     }
 
     @SuppressWarnings("unchecked")
