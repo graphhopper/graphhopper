@@ -95,34 +95,32 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
         if (!EdgeIterator.Edge.isValid(inEdge) || !EdgeIterator.Edge.isValid(outEdge)) {
             return 0;
         }
-        double tCost = 0;
+
         if (inEdge == outEdge) {
             // note that the u-turn costs overwrite any turn costs set in TurnCostStorage
-            tCost = uTurnCosts;
+            return uTurnCosts;
         } else {
-            if (turnRestrictionEnc != null)
-                tCost = turnCostStorage.get(turnRestrictionEnc, inEdge, viaNode, outEdge) ? Double.POSITIVE_INFINITY : 0;
+            if (turnRestrictionEnc != null && turnCostStorage.get(turnRestrictionEnc, inEdge, viaNode, outEdge))
+                return Double.POSITIVE_INFINITY;
         }
 
         if (orientationEnc != null) {
-            if (Double.isInfinite(tCost)) return tCost;
             double changeAngle = calcChangeAngle(inEdge, viaNode, outEdge);
             if (changeAngle > -minAngle && changeAngle < minAngle)
-                return straightCost + tCost;
+                return straightCost;
             else if (changeAngle >= minAngle && changeAngle < minSharpAngle)
-                return rightCost + tCost;
+                return rightCost;
             else if (changeAngle >= minSharpAngle && changeAngle <= minUTurnAngle)
-                return rightSharpCost + tCost;
+                return rightSharpCost;
             else if (changeAngle <= -minAngle && changeAngle > -minSharpAngle)
-                return leftCost + tCost;
+                return leftCost;
             else if (changeAngle <= -minSharpAngle && changeAngle >= -minUTurnAngle)
-                return leftSharpCost + tCost;
+                return leftSharpCost;
 
-            // Too sharp turn is basically a U turn.
-            // For now do not add tCost to avoid inconsistency for inEdge == outEdge
-            return uTurnCosts /* + tCost */;
+            // Too sharp turn is like an u-turn.
+            return uTurnCosts;
         }
-        return tCost;
+        return 0;
     }
 
     @Override
