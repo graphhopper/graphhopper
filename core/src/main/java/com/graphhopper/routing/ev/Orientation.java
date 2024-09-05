@@ -20,9 +20,9 @@ package com.graphhopper.routing.ev;
 public class Orientation {
     public static final String KEY = "orientation";
 
-    // Due to pillar nodes we need 2 values: for the adjacent node and the reverse value for the base node, but store in radians.
-    // radians / pi == degrees / 180
+    // Due to pillar nodes we need 2 values: for the adjacent node and the reverse value for the
+    // base node. Store in degree.
     public static DecimalEncodedValue create() {
-        return new DecimalEncodedValueImpl(KEY, 5, - Math.PI, 2 * Math.PI / 30, false, true, false);
+        return new DecimalEncodedValueImpl(KEY, 5, -180, 360 / 30.0, false, true, false);
     }
 }

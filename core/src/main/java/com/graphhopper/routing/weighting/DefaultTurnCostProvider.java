@@ -27,7 +27,6 @@ import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.TurnCostsConfig;
 
-import static com.graphhopper.util.AngleCalc.ANGLE_CALC;
 import static com.graphhopper.util.TurnCostsConfig.INFINITE_U_TURN_COSTS;
 
 public class DefaultTurnCostProvider implements TurnCostProvider {
@@ -36,9 +35,9 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
     private final int uTurnCostsInt;
     private final double uTurnCosts;
 
-    private final double minAngleInRad;
-    private final double minSharpAngleInRad;
-    private final double maxAngleInRad;
+    private final double minAngle;
+    private final double minSharpAngle;
+    private final double maxAngle;
 
     private final double leftCost;
     private final double leftSharpCost;
@@ -75,9 +74,9 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
         if (tcConfig.getRightCost() > tcConfig.getRightSharpCost())
             throw new IllegalArgumentException("The cost for 'right' (" + tcConfig.getRightCost() + ") must be lower than for 'right_sharp' (" + tcConfig.getRightSharpCost() + ")");
 
-        this.minAngleInRad = Math.toRadians(tcConfig.getMinAngle());
-        this.minSharpAngleInRad = Math.toRadians(tcConfig.getMinSharpAngle());
-        this.maxAngleInRad = Math.toRadians(tcConfig.getMaxAngle());
+        this.minAngle = tcConfig.getMinAngle();
+        this.minSharpAngle = tcConfig.getMinSharpAngle();
+        this.maxAngle = tcConfig.getMaxAngle();
 
         this.leftCost = tcConfig.getLeftCost();
         this.leftSharpCost = tcConfig.getLeftSharpCost();
@@ -106,15 +105,15 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
         if (orientationEnc != null) {
             if (Double.isInfinite(tCost)) return tCost;
             double changeAngle = calcChangeAngle(inEdge, viaNode, outEdge);
-            if (changeAngle > -minAngleInRad && changeAngle < minAngleInRad)
+            if (changeAngle > -minAngle && changeAngle < minAngle)
                 return straightCost + tCost;
-            else if (changeAngle >= minAngleInRad && changeAngle < minSharpAngleInRad)
+            else if (changeAngle >= minAngle && changeAngle < minSharpAngle)
                 return leftCost + tCost;
-            else if (changeAngle >= minSharpAngleInRad && changeAngle <= maxAngleInRad)
+            else if (changeAngle >= minSharpAngle && changeAngle <= maxAngle)
                 return leftSharpCost + tCost;
-            else if (changeAngle <= -minAngleInRad && changeAngle > -minSharpAngleInRad)
+            else if (changeAngle <= -minAngle && changeAngle > -minSharpAngle)
                 return rightCost + tCost;
-            else if (changeAngle <= -minSharpAngleInRad && changeAngle >= -maxAngleInRad)
+            else if (changeAngle <= -minSharpAngle && changeAngle >= -maxAngle)
                 return rightSharpCost + tCost;
             else return Double.POSITIVE_INFINITY; // too sharp turn
         }
@@ -147,12 +146,14 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
         double orientation = orientationEnc.getDecimal(outEdgeReverse, outEdge, edgeIntAccess);
 
         // bring parallel to prevOrientation
-        if (orientation >= 0) orientation -= Math.PI;
-        else orientation += Math.PI;
-        prevOrientation = ANGLE_CALC.alignOrientation(orientation, prevOrientation);
+        if (orientation >= 0) orientation -= 180;
+        else orientation += 180;
+
         double changeAngle = orientation - prevOrientation;
-        if (changeAngle > Math.PI) changeAngle -= 2 * Math.PI;
-        else if (changeAngle < -Math.PI) changeAngle += 2 * Math.PI;
+
+        // keep in [-180, 180]
+        if (changeAngle > 180) changeAngle -= 360;
+        else if (changeAngle < -180) changeAngle += 360;
         return changeAngle;
     }
 }
