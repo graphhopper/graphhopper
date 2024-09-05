@@ -14,10 +14,10 @@ public class TurnCostsConfig {
     private double rightCost;
     private double rightSharpCost;
 
-    // As "right" and "left" turns are symmetric and for "right" the negated values are used.
+    // As "right" and "left" turns are symmetric and for "left" the negated values are used.
     // From 0 to minAngle no turn cost is added.
-    // From minAngle to minSharpAngle the turn cost leftCost or rightCost is added.
-    // From minSharpAngle to minUTurnAngle the turn cost leftSharpCost or rightSharpCost is added.
+    // From minAngle to minSharpAngle the turn cost the rightCost (or leftCost) is added.
+    // From minSharpAngle to minUTurnAngle the turn cost the rightSharpCost (or leftSharpCost) is added.
     // And beyond minUTurnAngle we add uTurnCosts
     private double minAngle = 25, minSharpAngle = 80, minUTurnAngle = 180;
 
