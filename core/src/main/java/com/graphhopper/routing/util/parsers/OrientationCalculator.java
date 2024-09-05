@@ -38,14 +38,14 @@ public class OrientationCalculator implements TagParser {
         PointList pointList = way.getTag("point_list", null);
         if (pointList != null) {
             // store orientation in degrees and use the end of the edge
-            double orientation = ANGLE_CALC.calcOrientation(pointList.getLat(pointList.size() - 2), pointList.getLon(pointList.size() - 2),
-                    pointList.getLat(pointList.size() - 1), pointList.getLon(pointList.size() - 1), true);
-            orientationEnc.setDecimal(false, edgeId, edgeIntAccess, Math.toDegrees(orientation));
+            double azimuth = ANGLE_CALC.calcAzimuth(pointList.getLat(pointList.size() - 2), pointList.getLon(pointList.size() - 2),
+                    pointList.getLat(pointList.size() - 1), pointList.getLon(pointList.size() - 1));
+            orientationEnc.setDecimal(false, edgeId, edgeIntAccess, azimuth);
 
             // same for the opposite direction
-            double revOrientation = ANGLE_CALC.calcOrientation(pointList.getLat(1), pointList.getLon(1),
-                    pointList.getLat(0), pointList.getLon(0), true);
-            orientationEnc.setDecimal(true, edgeId, edgeIntAccess, Math.toDegrees(revOrientation));
+            double revAzimuth = ANGLE_CALC.calcAzimuth(pointList.getLat(1), pointList.getLon(1),
+                    pointList.getLat(0), pointList.getLon(0));
+            orientationEnc.setDecimal(true, edgeId, edgeIntAccess, revAzimuth);
         }
     }
 }

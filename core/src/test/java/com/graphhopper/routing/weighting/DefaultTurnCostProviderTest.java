@@ -43,16 +43,16 @@ public class DefaultTurnCostProviderTest {
 
         TurnCostsConfig tcConfig = new TurnCostsConfig();
         DefaultTurnCostProvider tcp = new DefaultTurnCostProvider(null, orientationEnc, graph, tcConfig);
-        assertEquals(0, tcp.calcChangeAngle(edge12.getEdge(), 2, edge24.getEdge()), 1);
-        assertEquals(12, tcp.calcChangeAngle(edge23down.getEdge(), 2, edge12.getEdge()), 1);
+        assertEquals(-12, tcp.calcChangeAngle(edge12.getEdge(), 2, edge24.getEdge()), 1);
+        assertEquals(-12, tcp.calcChangeAngle(edge23down.getEdge(), 2, edge12.getEdge()), 1);
 
         // left
-        assertEquals(96, tcp.calcChangeAngle(edge24.getEdge(), 2, edge23.getEdge()), 1);
-        assertEquals(84, tcp.calcChangeAngle(edge23.getEdge(), 2, edge12.getEdge()), 1);
+        assertEquals(-84, tcp.calcChangeAngle(edge24.getEdge(), 2, edge23.getEdge()), 1);
+        assertEquals(-84, tcp.calcChangeAngle(edge23.getEdge(), 2, edge12.getEdge()), 1);
 
         // right
-        assertEquals(-96, tcp.calcChangeAngle(edge23down.getEdge(), 3, edge23.getEdge()), 1);
-        assertEquals(-84, tcp.calcChangeAngle(edge12.getEdge(), 2, edge23.getEdge()), 1);
+        assertEquals(96, tcp.calcChangeAngle(edge23down.getEdge(), 3, edge23.getEdge()), 1);
+        assertEquals(84, tcp.calcChangeAngle(edge12.getEdge(), 2, edge23.getEdge()), 1);
     }
 
     @Test

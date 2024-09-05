@@ -108,13 +108,13 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
             if (changeAngle > -minAngle && changeAngle < minAngle)
                 return straightCost + tCost;
             else if (changeAngle >= minAngle && changeAngle < minSharpAngle)
-                return leftCost + tCost;
-            else if (changeAngle >= minSharpAngle && changeAngle <= maxAngle)
-                return leftSharpCost + tCost;
-            else if (changeAngle <= -minAngle && changeAngle > -minSharpAngle)
                 return rightCost + tCost;
-            else if (changeAngle <= -minSharpAngle && changeAngle >= -maxAngle)
+            else if (changeAngle >= minSharpAngle && changeAngle <= maxAngle)
                 return rightSharpCost + tCost;
+            else if (changeAngle <= -minAngle && changeAngle > -minSharpAngle)
+                return leftCost + tCost;
+            else if (changeAngle <= -minSharpAngle && changeAngle >= -maxAngle)
+                return leftSharpCost + tCost;
             else return Double.POSITIVE_INFINITY; // too sharp turn
         }
         return tCost;
@@ -140,16 +140,16 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
         // object and accesses only one node but is slightly less safe as it cannot check that at
         // least one node must be identical (the case where getEdgeIteratorState returns null)
         boolean inEdgeReverse = !graph.isAdjNode(inEdge, viaNode);
-        double prevOrientation = orientationEnc.getDecimal(inEdgeReverse, inEdge, edgeIntAccess);
+        double prevAzimuth = orientationEnc.getDecimal(inEdgeReverse, inEdge, edgeIntAccess);
 
         boolean outEdgeReverse = !graph.isAdjNode(outEdge, viaNode);
-        double orientation = orientationEnc.getDecimal(outEdgeReverse, outEdge, edgeIntAccess);
+        double azimuth = orientationEnc.getDecimal(outEdgeReverse, outEdge, edgeIntAccess);
 
         // bring parallel to prevOrientation
-        if (orientation >= 0) orientation -= 180;
-        else orientation += 180;
+        if (azimuth >= 180) azimuth -= 180;
+        else azimuth += 180;
 
-        double changeAngle = orientation - prevOrientation;
+        double changeAngle = azimuth - prevAzimuth;
 
         // keep in [-180, 180]
         if (changeAngle > 180) changeAngle -= 360;
