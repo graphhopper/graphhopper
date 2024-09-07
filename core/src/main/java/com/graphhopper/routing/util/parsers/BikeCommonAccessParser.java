@@ -71,6 +71,12 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
                 return WayAccess.CAN_SKIP;
         }
 
+        String mtbScale = way.getTag("mtb:scale");
+        if (mtbScale != null) {
+            if (!isMtbScaleAllowed(mtbScale))
+                return WayAccess.CAN_SKIP;
+        }
+
         // use the way for pushing
         if (way.hasTag("bicycle", "dismount"))
             return WayAccess.WAY;
@@ -103,6 +109,11 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
     boolean isSacScaleAllowed(String sacScale) {
         // other scales are nearly impossible by an ordinary bike, see http://wiki.openstreetmap.org/wiki/Key:sac_scale
         return "hiking".equals(sacScale);
+    }
+
+    boolean isMtbScaleAllowed(String mtbScale) {
+        // keep even more difficult accessible as one may push, see https://wiki.openstreetmap.org/wiki/Key:mtb:scale
+        return "0".equals(mtbScale) || "1".equals(mtbScale) || "2".equals(mtbScale);
     }
 
     @Override

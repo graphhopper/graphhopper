@@ -25,13 +25,9 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.OSMParsers;
 import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import java.text.DateFormat;
-import java.util.Date;
 
 import static com.graphhopper.routing.util.PriorityCode.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -373,14 +369,22 @@ public abstract class AbstractBikeTagParserTester {
     }
 
     @Test
-    public void testSacScale() {
+    public void testSacScaleAccess() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "service");
         way.setTag("sac_scale", "hiking");
-        // allow
         assertTrue(accessParser.getAccess(way).isWay());
-
         way.setTag("sac_scale", "alpine_hiking");
+        assertTrue(accessParser.getAccess(way).canSkip());
+    }
+
+    @Test
+    public void testMtbScaleAccess() {
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "path");
+        way.setTag("mtb:scale", "0");
+        assertTrue(accessParser.getAccess(way).isWay());
+        way.setTag("mtb:scale", "3");
         assertTrue(accessParser.getAccess(way).canSkip());
     }
 

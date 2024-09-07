@@ -135,7 +135,7 @@ public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
 
     @Test
     @Override
-    public void testSacScale() {
+    public void testSacScaleAccess() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "service");
         way.setTag("sac_scale", "hiking");
@@ -149,6 +149,19 @@ public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
         assertTrue(accessParser.getAccess(way).isWay());
 
         way.setTag("sac_scale", "demanding_alpine_hiking");
+        assertTrue(accessParser.getAccess(way).canSkip());
+    }
+
+    @Test
+    @Override
+    public void testMtbScaleAccess() {
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "path");
+        way.setTag("mtb:scale", "0");
+        assertTrue(accessParser.getAccess(way).isWay());
+        way.setTag("mtb:scale", "5");
+        assertTrue(accessParser.getAccess(way).isWay());
+        way.setTag("mtb:scale", "6");
         assertTrue(accessParser.getAccess(way).canSkip());
     }
 

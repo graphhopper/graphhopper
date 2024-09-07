@@ -528,7 +528,7 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
 
     @Test
     @Override
-    public void testSacScale() {
+    public void testSacScaleAccess() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "path");
         way.setTag("sac_scale", "hiking");

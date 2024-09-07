@@ -25,4 +25,10 @@ public class MountainBikeAccessParser extends BikeCommonAccessParser {
         return "hiking".equals(sacScale) || "mountain_hiking".equals(sacScale)
                 || "demanding_mountain_hiking".equals(sacScale) || "alpine_hiking".equals(sacScale);
     }
+
+    @Override
+    boolean isMtbScaleAllowed(String mtbScale) {
+        return !"6".equals(mtbScale);
+    }
+
 }
