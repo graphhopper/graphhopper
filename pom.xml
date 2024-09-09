@@ -97,7 +97,7 @@
             <dependency>
                 <groupId>com.graphhopper.external</groupId>
                 <artifactId>jackson-datatype-jts</artifactId>
-                <version>0.12-2.5-1</version>
+                <version>2.14</version>
             </dependency>
             <dependency>
                 <groupId>com.carrotsearch</groupId>
@@ -107,7 +107,7 @@
             <dependency>
                 <groupId>org.locationtech.jts</groupId>
                 <artifactId>jts-core</artifactId>
-                <version>1.15.1</version>
+                <version>1.19.0</version>
             </dependency>
             <dependency>
                 <groupId>com.wdtinc</groupId>
