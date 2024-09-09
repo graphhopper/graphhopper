@@ -69,22 +69,22 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
             throw new IllegalArgumentException("Illegal min_sharp_angle = " + tcConfig.getMinSharpAngle());
         if (tcConfig.getMinAngle() > tcConfig.getMinSharpAngle() || tcConfig.getMinAngle() < 0)
             throw new IllegalArgumentException("Illegal min_angle = " + tcConfig.getMinAngle());
-        if (tcConfig.getLeftCost() > tcConfig.getLeftSharpCost())
-            throw new IllegalArgumentException("The cost for 'left_cost' (" + tcConfig.getLeftCost()
-                    + ") must be lower than for 'left_sharp_cost' (" + tcConfig.getLeftSharpCost() + ")");
-        if (tcConfig.getRightCost() > tcConfig.getRightSharpCost())
-            throw new IllegalArgumentException("The cost for 'right_cost' (" + tcConfig.getRightCost()
-                    + ") must be lower than for 'right_sharp_cost' (" + tcConfig.getRightSharpCost() + ")");
+        if (tcConfig.getLeftCosts() > tcConfig.getLeftSharpCosts())
+            throw new IllegalArgumentException("The cost for 'left_cost' (" + tcConfig.getLeftCosts()
+                    + ") must be lower than for 'left_sharp_cost' (" + tcConfig.getLeftSharpCosts() + ")");
+        if (tcConfig.getRightCosts() > tcConfig.getRightSharpCosts())
+            throw new IllegalArgumentException("The cost for 'right_cost' (" + tcConfig.getRightCosts()
+                    + ") must be lower than for 'right_sharp_cost' (" + tcConfig.getRightSharpCosts() + ")");
 
         this.minAngle = tcConfig.getMinAngle();
         this.minSharpAngle = tcConfig.getMinSharpAngle();
         this.minUTurnAngle = tcConfig.getMinUTurnAngle();
 
-        this.leftCost = tcConfig.getLeftCost();
-        this.leftSharpCost = tcConfig.getLeftSharpCost();
-        this.straightCost = tcConfig.getStraightCost();
-        this.rightCost = tcConfig.getRightCost();
-        this.rightSharpCost = tcConfig.getRightSharpCost();
+        this.leftCost = tcConfig.getLeftCosts();
+        this.leftSharpCost = tcConfig.getLeftSharpCosts();
+        this.straightCost = tcConfig.getStraightCosts();
+        this.rightCost = tcConfig.getRightCosts();
+        this.rightSharpCost = tcConfig.getRightSharpCosts();
 
         this.graph = graph.getBaseGraph();
         this.edgeIntAccess = graph.getBaseGraph().getEdgeAccess();

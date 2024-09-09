@@ -8,17 +8,17 @@ import java.util.Set;
 
 public class TurnCostsConfig {
     public static final int INFINITE_U_TURN_COSTS = -1;
-    private double leftCost; // in seconds
-    private double leftSharpCost; // in seconds
-    private double straightCost;
-    private double rightCost;
-    private double rightSharpCost;
+    private double leftCosts; // in seconds
+    private double leftSharpCosts; // in seconds
+    private double straightCosts;
+    private double rightCosts;
+    private double rightSharpCosts;
 
-    // As "right" and "left" turns are symmetric and for "left" the negated values are used.
-    // From 0 to minAngle no turn cost is added.
-    // From minAngle to minSharpAngle the turn cost the rightCost (or leftCost) is added.
-    // From minSharpAngle to minUTurnAngle the turn cost the rightSharpCost (or leftSharpCost) is added.
-    // And beyond minUTurnAngle we add uTurnCosts
+    // The "right" and "left" turns are symmetric and the negative values are used for "left".
+    // From 0 to minAngle no turn costs are added.
+    // From minAngle to minSharpAngle the rightCosts (or leftCosts) are added.
+    // From minSharpAngle to minUTurnAngle the rightSharpCosts (or leftSharpCosts) are added.
+    // And beyond minUTurnAngle the uTurnCosts are added.
     private double minAngle = 25, minSharpAngle = 80, minUTurnAngle = 180;
 
     private int uTurnCosts = INFINITE_U_TURN_COSTS;
@@ -45,11 +45,11 @@ public class TurnCostsConfig {
     }
 
     public TurnCostsConfig(TurnCostsConfig copy) {
-        leftCost = copy.leftCost;
-        leftSharpCost = copy.leftSharpCost;
-        straightCost = copy.straightCost;
-        rightCost = copy.rightCost;
-        rightSharpCost = copy.rightSharpCost;
+        leftCosts = copy.leftCosts;
+        leftSharpCosts = copy.leftSharpCosts;
+        straightCosts = copy.straightCosts;
+        rightCosts = copy.rightCosts;
+        rightSharpCosts = copy.rightSharpCosts;
         uTurnCosts = copy.uTurnCosts;
 
         minAngle = copy.minAngle;
@@ -90,8 +90,8 @@ public class TurnCostsConfig {
     }
 
     /**
-     * @param uTurnCosts the costs of a u-turn in seconds, for {@link TurnCostsConfig#INFINITE_U_TURN_COSTS} the u-turn costs
-     *                   will be infinite
+     * @param uTurnCosts the costs of an u-turn in seconds, for {@link TurnCostsConfig#INFINITE_U_TURN_COSTS}
+     *                   the u-turn costs will be infinite
      */
     public TurnCostsConfig setUTurnCosts(int uTurnCosts) {
         this.uTurnCosts = uTurnCosts;
@@ -104,57 +104,57 @@ public class TurnCostsConfig {
     }
 
     public boolean hasLeftRightStraightCosts() {
-        return leftCost != 0 || leftSharpCost != 0 || straightCost != 0 || rightCost != 0 || rightSharpCost != 0;
+        return leftCosts != 0 || leftSharpCosts != 0 || straightCosts != 0 || rightCosts != 0 || rightSharpCosts != 0;
     }
 
-    public TurnCostsConfig setLeftCost(double leftCost) {
-        this.leftCost = leftCost;
+    public TurnCostsConfig setLeftCosts(double leftCosts) {
+        this.leftCosts = leftCosts;
         return this;
     }
 
     @JsonProperty("left_costs")
-    public double getLeftCost() {
-        return leftCost;
+    public double getLeftCosts() {
+        return leftCosts;
     }
 
-    public TurnCostsConfig setLeftSharpCost(double leftSharpCost) {
-        this.leftSharpCost = leftSharpCost;
+    public TurnCostsConfig setLeftSharpCosts(double leftSharpCosts) {
+        this.leftSharpCosts = leftSharpCosts;
         return this;
     }
 
     @JsonProperty("left_sharp_costs")
-    public double getLeftSharpCost() {
-        return leftSharpCost;
+    public double getLeftSharpCosts() {
+        return leftSharpCosts;
     }
 
-    public TurnCostsConfig setRightCost(double rightCost) {
-        this.rightCost = rightCost;
+    public TurnCostsConfig setRightCosts(double rightCosts) {
+        this.rightCosts = rightCosts;
         return this;
     }
 
     @JsonProperty("right_costs")
-    public double getRightCost() {
-        return rightCost;
+    public double getRightCosts() {
+        return rightCosts;
     }
 
-    public TurnCostsConfig setRightSharpCost(double rightSharpCost) {
-        this.rightSharpCost = rightSharpCost;
+    public TurnCostsConfig setRightSharpCosts(double rightSharpCosts) {
+        this.rightSharpCosts = rightSharpCosts;
         return this;
     }
 
     @JsonProperty("right_sharp_costs")
-    public double getRightSharpCost() {
-        return rightSharpCost;
+    public double getRightSharpCosts() {
+        return rightSharpCosts;
     }
 
-    public TurnCostsConfig setStraightCost(double straightCost) {
-        this.straightCost = straightCost;
+    public TurnCostsConfig setStraightCosts(double straightCosts) {
+        this.straightCosts = straightCosts;
         return this;
     }
 
     @JsonProperty("straight_costs")
-    public double getStraightCost() {
-        return straightCost;
+    public double getStraightCosts() {
+        return straightCosts;
     }
 
     @JsonProperty("min_angle")
@@ -189,9 +189,9 @@ public class TurnCostsConfig {
 
     @Override
     public String toString() {
-        return "left=" + leftCost + ", leftSharp=" + leftSharpCost
-                + ", straight=" + straightCost
-                + ", right=" + rightCost + ", rightSharp=" + rightSharpCost
+        return "left=" + leftCosts + ", leftSharp=" + leftSharpCosts
+                + ", straight=" + straightCosts
+                + ", right=" + rightCosts + ", rightSharp=" + rightSharpCosts
                 + ", minAngle=" + minAngle + ", minSharpAngle=" + minSharpAngle + ", minUTurnAngle=" + minUTurnAngle
                 + ", uTurnCosts=" + uTurnCosts + ", vehicleTypes=" + vehicleTypes;
     }
