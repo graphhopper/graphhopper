@@ -66,20 +66,20 @@ public class DefaultTurnCostProviderTest {
 
         //       4   5
         //   0 - 1 - 2
-        //       3   6
+        //        3  6
 
         turnGraph.getNodeAccess().setNode(0, 51.0362, 13.714);
         turnGraph.getNodeAccess().setNode(1, 51.0362, 13.720);
         turnGraph.getNodeAccess().setNode(2, 51.0362, 13.726);
-        turnGraph.getNodeAccess().setNode(3, 51.0358, 13.720);
+        turnGraph.getNodeAccess().setNode(3, 51.0358, 13.7205);
         turnGraph.getNodeAccess().setNode(4, 51.0366, 13.720);
         turnGraph.getNodeAccess().setNode(5, 51.0366, 13.726);
         turnGraph.getNodeAccess().setNode(6, 51.0358, 13.726);
 
         Profile profile = new Profile("car");
         TurnCostsConfig config = new TurnCostsConfig().
-                setRightCost(0.5).setRightSharpCost(0.5).
-                setLeftCost(6).setLeftSharpCost(6);
+                setRightCost(0.5).setRightSharpCost(1).
+                setLeftCost(6).setLeftSharpCost(12);
         profile.setCustomModel(new CustomModel().addToSpeed(If("true", LIMIT, tcAvgSpeedEnc.getName())));
         profile.setTurnCostsConfig(config);
         Weighting weighting = new DefaultWeightingFactory(turnGraph, em).createWeighting(profile, new PMap(), false);
@@ -92,23 +92,23 @@ public class DefaultTurnCostProviderTest {
         EdgeIteratorState edge25 = handleWayTags(edgeIntAccess, calc, turnGraph.edge(2, 5).setDistance(500).set(tcAvgSpeedEnc, 15).set(tcAccessEnc, true, true));
         EdgeIteratorState edge12 = handleWayTags(edgeIntAccess, calc, turnGraph.edge(1, 2).setDistance(500).set(tcAvgSpeedEnc, 15).set(tcAccessEnc, true, true));
 
-        // from top to left => right turn
-        assertEquals(0.5, weighting.calcTurnWeight(edge14.getEdge(), 1, edge01.getEdge()), 0.01);
-        // top to down => straight
-        assertEquals(0.0, weighting.calcTurnWeight(edge14.getEdge(), 1, edge13.getEdge()), 0.01);
-        // top to right => left turn
-        assertEquals(6, weighting.calcTurnWeight(edge14.getEdge(), 1, edge12.getEdge()), 0.01);
+        // from top to left => sharp right turn
+        assertEquals(1, weighting.calcTurnWeight(edge14.getEdge(), 1, edge01.getEdge()), 0.01);
+        // left to right => straight
+        assertEquals(0.0, weighting.calcTurnWeight(edge01.getEdge(), 1, edge12.getEdge()), 0.01);
+        // top to right => sharp left turn
+        assertEquals(12, weighting.calcTurnWeight(edge14.getEdge(), 1, edge12.getEdge()), 0.01);
         // left to down => right turn
         assertEquals(0.5, weighting.calcTurnWeight(edge01.getEdge(), 1, edge13.getEdge()), 0.01);
-        // left to top => left turn
-        assertEquals(6, weighting.calcTurnWeight(edge01.getEdge(), 1, edge14.getEdge()), 0.01);
+        // bottom to left => left turn
+        assertEquals(6, weighting.calcTurnWeight(edge13.getEdge(), 1, edge01.getEdge()), 0.01);
 
-        // left to top => left turn => here like 'straight'
-        assertEquals(6, weighting.calcTurnWeight(edge12.getEdge(), 2, edge25.getEdge()), 0.01);
-        // down to left => left turn => here again like 'straight'
-        assertEquals(6, weighting.calcTurnWeight(edge26.getEdge(), 2, edge12.getEdge()), 0.01);
-        // top to left => right turn
-        assertEquals(0.5, weighting.calcTurnWeight(edge25.getEdge(), 2, edge12.getEdge()), 0.01);
+        // left to top => sharp left turn => here like 'straight'
+        assertEquals(12, weighting.calcTurnWeight(edge12.getEdge(), 2, edge25.getEdge()), 0.01);
+        // down to left => sharp left turn => here again like 'straight'
+        assertEquals(12, weighting.calcTurnWeight(edge26.getEdge(), 2, edge12.getEdge()), 0.01);
+        // top to left => sharp right turn
+        assertEquals(1, weighting.calcTurnWeight(edge25.getEdge(), 2, edge12.getEdge()), 0.01);
     }
 
     EdgeIteratorState handleWayTags(EdgeIntAccess edgeIntAccess, OrientationCalculator calc, EdgeIteratorState edge) {
