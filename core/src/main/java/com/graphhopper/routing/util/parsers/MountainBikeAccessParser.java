@@ -28,6 +28,8 @@ public class MountainBikeAccessParser extends BikeCommonAccessParser {
 
     @Override
     boolean isMtbScaleAllowed(String mtbScale) {
+        if (mtbScale.length() == 2 && (mtbScale.charAt(1) == '+' || mtbScale.charAt(1) == '-'))
+            mtbScale = mtbScale.substring(0, 1);
         return !"6".equals(mtbScale);
     }
 
