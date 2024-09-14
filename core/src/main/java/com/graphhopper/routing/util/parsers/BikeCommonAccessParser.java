@@ -65,12 +65,6 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
         if (!allowedHighways.contains(highwayValue))
             return WayAccess.CAN_SKIP;
 
-        String sacScale = way.getTag("sac_scale");
-        if (sacScale != null) {
-            if (!isSacScaleAllowed(sacScale))
-                return WayAccess.CAN_SKIP;
-        }
-
         // use the way for pushing
         if (way.hasTag("bicycle", "dismount"))
             return WayAccess.WAY;
@@ -98,11 +92,6 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
             return WayAccess.CAN_SKIP;
 
         return WayAccess.WAY;
-    }
-
-    boolean isSacScaleAllowed(String sacScale) {
-        // other scales are nearly impossible by an ordinary bike, see http://wiki.openstreetmap.org/wiki/Key:sac_scale
-        return "hiking".equals(sacScale);
     }
 
     @Override

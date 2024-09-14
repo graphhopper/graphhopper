@@ -25,6 +25,7 @@ public class BikeCustomModelTest {
     @BeforeEach
     public void setup() {
         IntEncodedValue bikeRating = MtbRating.create();
+        IntEncodedValue hikeRating = HikeRating.create();
         em = new EncodingManager.Builder().
                 add(VehicleAccess.create("bike")).
                 add(VehicleAccess.create("mtb")).
@@ -40,10 +41,12 @@ public class BikeCustomModelTest {
                 add(Roundabout.create()).
                 add(Smoothness.create()).
                 add(RoadAccess.create()).
-                add(bikeRating).build();
+                add(bikeRating).
+                add(hikeRating).build();
 
         parsers = new OSMParsers().
-                addWayTagParser(new OSMMtbRatingParser(bikeRating));
+                addWayTagParser(new OSMMtbRatingParser(bikeRating)).
+                addWayTagParser(new OSMHikeRatingParser(hikeRating));
 
         parsers.addWayTagParser(new BikeAccessParser(em, new PMap()));
         parsers.addWayTagParser(new MountainBikeAccessParser(em, new PMap()));
@@ -90,6 +93,7 @@ public class BikeCustomModelTest {
         way.setTag("sac_scale", "hiking");
         edge = createEdge(way);
         assertEquals(0.9, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
+        // other scales than hiking are nearly impossible by an ordinary bike, see http://wiki.openstreetmap.org/wiki/Key:sac_scale
         way.setTag("sac_scale", "mountain_hiking");
         edge = createEdge(way);
         assertEquals(0.0, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
@@ -124,9 +128,18 @@ public class BikeCustomModelTest {
         way.setTag("sac_scale", "hiking");
         edge = createEdge(way);
         assertEquals(1.2, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
+
         way.setTag("sac_scale", "mountain_hiking");
         edge = createEdge(way);
         assertEquals(1.2, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
+
+        way.setTag("sac_scale", "alpine_hiking");
+        edge = createEdge(way);
+        assertEquals(1.2, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
+
+        way.setTag("sac_scale", "demanding_alpine_hiking");
+        edge = createEdge(way);
+        assertEquals(0.0, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
     }
 
     @Test
