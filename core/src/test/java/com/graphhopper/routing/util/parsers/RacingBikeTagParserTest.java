@@ -111,7 +111,7 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
 
     @Test
     @Override
-    public void testSacScaleAccess() {
+    public void testSacScale() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "service");
         way.setTag("sac_scale", "mountain_hiking");
@@ -126,14 +126,6 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("sac_scale", "mountain_hiking");
         // we are cautious and disallow this
         assertTrue(accessParser.getAccess(way).canSkip());
-    }
-
-    @Test
-    @Override
-    public void testMtbScaleAccess() {
-        // Intentionally use the same accessibility as ordinary bikes as pushing a racebike is easier
-        // compared to an ordinary bike. The problem is more the shoes, which makes the situation comparable
-        super.testMtbScaleAccess();
     }
 
     @Test
