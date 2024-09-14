@@ -113,9 +113,7 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
 
     boolean isMtbScaleAllowed(String mtbScale) {
         // keep even more difficult accessible as one may push, see https://wiki.openstreetmap.org/wiki/Key:mtb:scale
-        if (mtbScale.length() == 2 && (mtbScale.charAt(1) == '+' || mtbScale.charAt(1) == '-'))
-            mtbScale = mtbScale.substring(0, 1);
-        return "0".equals(mtbScale) || "1".equals(mtbScale);
+        return "0".equals(mtbScale) || "1".equals(mtbScale) || "2".equals(mtbScale);
     }
 
     @Override

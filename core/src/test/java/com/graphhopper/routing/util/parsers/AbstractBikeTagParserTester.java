@@ -384,11 +384,7 @@ public abstract class AbstractBikeTagParserTester {
         way.setTag("highway", "path");
         way.setTag("mtb:scale", "0");
         assertTrue(accessParser.getAccess(way).isWay());
-        way.setTag("mtb:scale", "1+");
-        assertTrue(accessParser.getAccess(way).isWay());
-        way.setTag("mtb:scale", "1-");
-        assertTrue(accessParser.getAccess(way).isWay());
-        way.setTag("mtb:scale", "2");
+        way.setTag("mtb:scale", "3");
         assertTrue(accessParser.getAccess(way).canSkip());
     }
 
