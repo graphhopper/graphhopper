@@ -61,7 +61,8 @@ public class Dropwizard3Test {
     }
 
     private static void post() {
-        Response response = app.client().target("http://localhost:8080/not_found").request().post(Entity.json("{}"));
-        System.out.println("success: " + response.getStatus());
+        try (Response response = app.client().target("http://localhost:8080/not_found").request().post(Entity.json("{}"))) {
+            System.out.println("success: " + response.getStatus());
+        }
     }
 }
