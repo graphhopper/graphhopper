@@ -48,7 +48,7 @@ class EdgeBasedTarjanSCCTest {
         speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, true);
         EncodedValue.InitializerConfig evConf = new EncodedValue.InitializerConfig();
         speedEnc.init(evConf);
-        g = new BaseGraph.Builder(evConf.getRequiredInts()).create();
+        g = new BaseGraph.Builder(evConf.getRequiredBytes()).create();
         fwdAccessFilter = (prev, edge) -> edge.get(speedEnc) > 0;
     }
 

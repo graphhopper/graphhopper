@@ -18,7 +18,7 @@
 package com.graphhopper.api;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.graphhopper.jackson.ResponsePathDeserializer;
+import com.graphhopper.jackson.ResponsePathDeserializerHelper;
 import com.graphhopper.util.Helper;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -86,6 +86,7 @@ public class GHMatrixBatchRequester extends GHMatrixAbstractRequester {
         try {
             String postUrl = buildURLNoHints("/calculate", ghRequest);
             JsonResult jsonResult = postJson(postUrl, requestJson);
+            matrixResponse.setHeaders(jsonResult.headers());
             boolean debug = ghRequest.getHints().getBool("debug", false);
             if (debug) {
                 logger.info("POST URL:" + postUrl + ", request:" + requestJson + ", response: " + jsonResult);
@@ -94,7 +95,7 @@ public class GHMatrixBatchRequester extends GHMatrixAbstractRequester {
             JsonNode responseJson = fromStringToJSON(postUrl, jsonResult.body());
             if (responseJson.has("message")) {
                 matrixResponse.setStatusCode(jsonResult.statusCode());
-                matrixResponse.addErrors(ResponsePathDeserializer.readErrors(objectMapper, responseJson));
+                matrixResponse.addErrors(ResponsePathDeserializerHelper.readErrors(objectMapper, responseJson));
                 return matrixResponse;
             }
             if (!responseJson.has("job_id")) {
@@ -123,7 +124,7 @@ public class GHMatrixBatchRequester extends GHMatrixAbstractRequester {
                 if (debug) {
                     logger.info(i + " GET URL:" + getUrl + ", response: " + rsp);
                 }
-                matrixResponse.addErrors(ResponsePathDeserializer.readErrors(objectMapper, getResponseJson));
+                matrixResponse.addErrors(ResponsePathDeserializerHelper.readErrors(objectMapper, getResponseJson));
                 matrixResponse.setStatusCode(rsp.statusCode());
                 if (matrixResponse.hasErrors()) {
                     break;
@@ -166,7 +167,7 @@ public class GHMatrixBatchRequester extends GHMatrixAbstractRequester {
         try {
             Response rsp = getDownloader().newCall(okRequest).execute();
             body = rsp.body();
-            return new JsonResult(body.string(), rsp.code());
+            return new JsonResult(body.string(), rsp.code(), rsp.headers().toMultimap());
         } finally {
             Helper.close(body);
         }

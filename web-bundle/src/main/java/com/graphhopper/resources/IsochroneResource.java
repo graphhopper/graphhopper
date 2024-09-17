@@ -3,6 +3,7 @@ package com.graphhopper.resources;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GraphHopper;
+import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.Profile;
 import com.graphhopper.http.GHPointParam;
 import com.graphhopper.http.ProfileResolver;
@@ -48,13 +49,15 @@ public class IsochroneResource {
 
     private static final Logger logger = LoggerFactory.getLogger(IsochroneResource.class);
 
+    private final GraphHopperConfig config;
     private final GraphHopper graphHopper;
     private final Triangulator triangulator;
     private final ProfileResolver profileResolver;
     private final String osmDate;
 
     @Inject
-    public IsochroneResource(GraphHopper graphHopper, Triangulator triangulator, ProfileResolver profileResolver) {
+    public IsochroneResource(GraphHopperConfig config, GraphHopper graphHopper, Triangulator triangulator, ProfileResolver profileResolver) {
+        this.config = config;
         this.graphHopper = graphHopper;
         this.triangulator = triangulator;
         this.profileResolver = profileResolver;
@@ -99,7 +102,7 @@ public class IsochroneResource {
         if (!snap.isValid())
             throw new IllegalArgumentException("Point not found:" + point);
         QueryGraph queryGraph = QueryGraph.create(graph, snap);
-        TraversalMode traversalMode = profile.isTurnCosts() ? EDGE_BASED : NODE_BASED;
+        TraversalMode traversalMode = profile.hasTurnCosts() ? EDGE_BASED : NODE_BASED;
         ShortestPathTree shortestPathTree = new ShortestPathTree(queryGraph, queryGraph.wrapWeighting(weighting), reverseFlow, traversalMode);
 
         double limit;
@@ -143,7 +146,7 @@ public class IsochroneResource {
             HashMap<String, Object> properties = new HashMap<>();
             properties.put("bucket", features.size());
             if (respType == geojson) {
-                properties.put("copyrights", ResponsePathSerializer.COPYRIGHTS);
+                properties.put("copyrights", config.getCopyrights());
             }
             feature.setProperties(properties);
             feature.setGeometry(isochrone);
@@ -160,7 +163,7 @@ public class IsochroneResource {
         } else {
             json.putPOJO("polygons", features);
             final ObjectNode info = json.putObject("info");
-            info.putPOJO("copyrights", ResponsePathSerializer.COPYRIGHTS);
+            info.putPOJO("copyrights", config.getCopyrights());
             info.put("took", Math.round((float) sw.getMillis()));
             if (!osmDate.isEmpty()) info.put("road_data_timestamp", osmDate);
             finalJson = json;

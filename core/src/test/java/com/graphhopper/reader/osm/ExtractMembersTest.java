@@ -41,7 +41,7 @@ class ExtractMembersTest {
         relation.add(new ReaderRelation.Member(WAY, 1, "from"));
         relation.add(new ReaderRelation.Member(NODE, 2, "via"));
         relation.add(new ReaderRelation.Member(WAY, 3, "to"));
-        RestrictionMembers restrictionMembers = RestrictionConverter.extractMembers(relation);
+        RestrictionMembers restrictionMembers = OSMRestrictionConverter.extractMembers(relation);
         assertEquals(LongArrayList.from(1), restrictionMembers.getFromWays());
         assertEquals(2, restrictionMembers.getViaOSMNode());
         assertEquals(LongArrayList.from(3), restrictionMembers.getToWays());
@@ -52,7 +52,7 @@ class ExtractMembersTest {
     void noVia() {
         relation.add(new ReaderRelation.Member(WAY, 1, "from"));
         relation.add(new ReaderRelation.Member(WAY, 2, "to"));
-        OSMRestrictionException e = assertThrows(OSMRestrictionException.class, () -> RestrictionConverter.extractMembers(relation));
+        OSMRestrictionException e = assertThrows(OSMRestrictionException.class, () -> OSMRestrictionConverter.extractMembers(relation));
         assertTrue(e.getMessage().contains("has no member with role 'via'"), e.getMessage());
     }
 
@@ -62,7 +62,7 @@ class ExtractMembersTest {
         relation.add(new ReaderRelation.Member(NODE, 2, "via"));
         relation.add(new ReaderRelation.Member(NODE, 3, "via"));
         relation.add(new ReaderRelation.Member(WAY, 4, "to"));
-        OSMRestrictionException e = assertThrows(OSMRestrictionException.class, () -> RestrictionConverter.extractMembers(relation));
+        OSMRestrictionException e = assertThrows(OSMRestrictionException.class, () -> OSMRestrictionConverter.extractMembers(relation));
         assertTrue(e.getMessage().contains("has multiple members with role 'via' and type 'node'"), e.getMessage());
     }
 
@@ -72,7 +72,7 @@ class ExtractMembersTest {
         relation.add(new ReaderRelation.Member(WAY, 2, "from"));
         relation.add(new ReaderRelation.Member(NODE, 3, "via"));
         relation.add(new ReaderRelation.Member(WAY, 4, "to"));
-        OSMRestrictionException e = assertThrows(OSMRestrictionException.class, () -> RestrictionConverter.extractMembers(relation));
+        OSMRestrictionException e = assertThrows(OSMRestrictionException.class, () -> OSMRestrictionConverter.extractMembers(relation));
         assertTrue(e.getMessage().contains("has multiple members with role 'from' even though it is not a 'no_entry' restriction"), e.getMessage());
     }
 
@@ -83,7 +83,7 @@ class ExtractMembersTest {
         relation.add(new ReaderRelation.Member(WAY, 2, "from"));
         relation.add(new ReaderRelation.Member(NODE, 3, "via"));
         relation.add(new ReaderRelation.Member(WAY, 4, "to"));
-        RestrictionMembers res = RestrictionConverter.extractMembers(relation);
+        RestrictionMembers res = OSMRestrictionConverter.extractMembers(relation);
         assertEquals(LongArrayList.from(1, 2), res.getFromWays());
         assertEquals(3, res.getViaOSMNode());
         assertEquals(LongArrayList.from(4), res.getToWays());
@@ -96,7 +96,7 @@ class ExtractMembersTest {
         relation.add(new ReaderRelation.Member(NODE, 2, "via"));
         relation.add(new ReaderRelation.Member(WAY, 3, "to"));
         relation.add(new ReaderRelation.Member(WAY, 4, "to"));
-        OSMRestrictionException e = assertThrows(OSMRestrictionException.class, () -> RestrictionConverter.extractMembers(relation));
+        OSMRestrictionException e = assertThrows(OSMRestrictionException.class, () -> OSMRestrictionConverter.extractMembers(relation));
         assertTrue(e.getMessage().contains("has multiple members with role 'to' even though it is not a 'no_exit' restriction"), e.getMessage());
     }
 
@@ -107,7 +107,7 @@ class ExtractMembersTest {
         relation.add(new ReaderRelation.Member(NODE, 2, "via"));
         relation.add(new ReaderRelation.Member(WAY, 3, "to"));
         relation.add(new ReaderRelation.Member(WAY, 4, "to"));
-        RestrictionMembers res = RestrictionConverter.extractMembers(relation);
+        RestrictionMembers res = OSMRestrictionConverter.extractMembers(relation);
         assertEquals(LongArrayList.from(1), res.getFromWays());
         assertEquals(2, res.getViaOSMNode());
         assertEquals(LongArrayList.from(3, 4), res.getToWays());

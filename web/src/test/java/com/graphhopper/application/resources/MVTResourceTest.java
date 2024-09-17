@@ -20,7 +20,7 @@ package com.graphhopper.application.resources;
 import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
-import com.graphhopper.config.Profile;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -36,7 +36,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 import static com.graphhopper.application.util.TestUtils.clientTarget;
 import static com.graphhopper.util.Parameters.Details.STREET_NAME;
@@ -53,13 +56,12 @@ public class MVTResourceTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.vehicles", "car").
                 putObject("graph.encoded_values", "road_class,road_environment,max_speed,surface").
                 putObject("prepare.min_network_size", 0).
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR).
-                setProfiles(Collections.singletonList(new Profile("car").setVehicle("car")));
+                setProfiles(List.of(TestProfiles.constantSpeed("car")));
         return config;
     }
 
@@ -79,7 +81,7 @@ public class MVTResourceTest {
         VectorTileDecoder.Feature feature = features.iterator().next();
         Map<String, Object> attributes = feature.getAttributes();
         Geometry geometry = feature.getGeometry();
-        assertEquals(48, geometry.getCoordinates().length);
+        assertEquals(51, geometry.getCoordinates().length);
         assertEquals("Camì de les Pardines", attributes.get(STREET_NAME));
     }
 

@@ -20,20 +20,19 @@ package com.graphhopper.http;
 
 import io.dropwizard.jersey.params.AbstractParam;
 
-import org.checkerframework.checker.nullness.qual.Nullable;
 import java.time.Duration;
 
 public class DurationParam extends AbstractParam<Duration> {
-    public DurationParam(@Nullable String input) {
+    public DurationParam(String input) {
         super(input);
     }
 
-    public DurationParam(@Nullable String input, String parameterName) {
+    public DurationParam(String input, String parameterName) {
         super(input, parameterName);
     }
 
     @Override
-    protected Duration parse(@Nullable String input) throws Exception {
+    protected Duration parse(String input) throws Exception {
         if (input == null)
             return null;
         return Duration.parse(input);

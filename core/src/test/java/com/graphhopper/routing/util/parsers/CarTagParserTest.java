@@ -19,22 +19,16 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.routing.util.WayAccess;
-import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import java.text.DateFormat;
 import java.util.Arrays;
-import java.util.Date;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -44,7 +38,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class CarTagParserTest {
     private final EncodingManager em = createEncodingManager("car");
     final CarAccessParser parser = createParser(em, new PMap("block_fords=true"));
-    final CarAverageSpeedParser speedParser = new CarAverageSpeedParser(em, new PMap("block_fords=true"));
+    final CarAverageSpeedParser speedParser = new CarAverageSpeedParser(em);
     private final BooleanEncodedValue roundaboutEnc = em.getBooleanEncodedValue(Roundabout.KEY);
     private final BooleanEncodedValue accessEnc = parser.getAccessEnc();
     private final DecimalEncodedValue avSpeedEnc = speedParser.getAverageSpeedEnc();
@@ -59,13 +53,13 @@ public class CarTagParserTest {
                 .add(VehiclePriority.create("bike", 4, PriorityCode.getFactor(1), false))
                 .add(RouteNetwork.create(BikeNetwork.KEY))
                 .add(Smoothness.create())
+                .add(Roundabout.create())
+                .add(FerrySpeed.create())
                 .build();
     }
 
     CarAccessParser createParser(EncodedValueLookup lookup, PMap properties) {
-        CarAccessParser carTagParser = new CarAccessParser(lookup, properties);
-        carTagParser.init(new DateRangeParser());
-        return carTagParser;
+        return new CarAccessParser(lookup, properties);
     }
 
     @Test
@@ -144,25 +138,6 @@ public class CarTagParserTest {
         way.setTag("motor_vehicle", "emergency");
         assertTrue(parser.getAccess(way).canSkip());
 
-        DateFormat simpleDateFormat = Helper.createFormatter("yyyy MMM dd");
-
-        way.clearTags();
-        way.setTag("highway", "road");
-        way.setTag("access:conditional", "no @ (" + simpleDateFormat.format(new Date().getTime()) + ")");
-        assertTrue(parser.getAccess(way).canSkip());
-
-        way.clearTags();
-        way.setTag("highway", "road");
-        way.setTag("access", "no");
-        way.setTag("access:conditional", "yes @ (" + simpleDateFormat.format(new Date().getTime()) + ")");
-        assertTrue(parser.getAccess(way).isWay());
-
-        way.clearTags();
-        way.setTag("highway", "road");
-        way.setTag("access", "yes");
-        way.setTag("access:conditional", "no @ (" + simpleDateFormat.format(new Date().getTime()) + ")");
-        assertTrue(parser.getAccess(way).canSkip());
-
         way.clearTags();
         way.setTag("highway", "service");
         way.setTag("service", "emergency_access");
@@ -192,7 +167,6 @@ public class CarTagParserTest {
         assertTrue(parser.isBarrier(node));
 
         CarAccessParser tmpParser = new CarAccessParser(em, new PMap("block_fords=false"));
-        tmpParser.init(new DateRangeParser());
         assertTrue(tmpParser.getAccess(way).isWay());
         assertFalse(tmpParser.isBarrier(node));
     }
@@ -201,13 +175,13 @@ public class CarTagParserTest {
     public void testOneway() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "primary");
-        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
+        EdgeIntAccess edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
         int edgeId = 0;
         parser.handleWayTags(edgeId, edgeIntAccess, way);
         assertTrue(accessEnc.getBool(false, edgeId, edgeIntAccess));
         assertTrue(accessEnc.getBool(true, edgeId, edgeIntAccess));
         way.setTag("oneway", "yes");
-        edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
+        edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
         parser.handleWayTags(edgeId, edgeIntAccess, way);
         assertTrue(accessEnc.getBool(false, edgeId, edgeIntAccess));
         assertFalse(accessEnc.getBool(true, edgeId, edgeIntAccess));
@@ -215,7 +189,7 @@ public class CarTagParserTest {
 
         way.setTag("highway", "tertiary");
 
-        edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
+        edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
         parser.handleWayTags(edgeId, edgeIntAccess, way);
         assertTrue(accessEnc.getBool(false, edgeId, edgeIntAccess));
         assertTrue(accessEnc.getBool(true, edgeId, edgeIntAccess));
@@ -224,7 +198,7 @@ public class CarTagParserTest {
         way.setTag("highway", "tertiary");
         way.setTag("vehicle:forward", "no");
 
-        edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
+        edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
         parser.handleWayTags(edgeId, edgeIntAccess, way);
         assertFalse(accessEnc.getBool(false, edgeId, edgeIntAccess));
         assertTrue(accessEnc.getBool(true, edgeId, edgeIntAccess));
@@ -232,7 +206,7 @@ public class CarTagParserTest {
 
         way.setTag("highway", "tertiary");
         way.setTag("vehicle:backward", "no");
-        edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
+        edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
         parser.handleWayTags(edgeId, edgeIntAccess, way);
         assertTrue(accessEnc.getBool(false, edgeId, edgeIntAccess));
         assertFalse(accessEnc.getBool(true, edgeId, edgeIntAccess));
@@ -241,7 +215,7 @@ public class CarTagParserTest {
         // This is no one way
         way.setTag("highway", "tertiary");
         way.setTag("vehicle:backward", "designated");
-        edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
+        edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
         parser.handleWayTags(edgeId, edgeIntAccess, way);
         assertTrue(accessEnc.getBool(false, edgeId, edgeIntAccess));
         assertTrue(accessEnc.getBool(true, edgeId, edgeIntAccess));
@@ -253,26 +227,26 @@ public class CarTagParserTest {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "primary");
         way.setTag("access", "private");
-        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
+        EdgeIntAccess edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
         int edgeId = 0;
         parser.handleWayTags(edgeId, edgeIntAccess, way);
         assertFalse(accessEnc.getBool(false, edgeId, edgeIntAccess));
 
         final CarAccessParser parser = createParser(em, new PMap("block_private=false"));
-        edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
+        edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
         parser.handleWayTags(edgeId, edgeIntAccess, way);
         assertTrue(parser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
 
         way.setTag("highway", "primary");
         way.setTag("motor_vehicle", "permit"); // currently handled like "private", see #2712
-        edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
+        edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
         parser.handleWayTags(edgeId, edgeIntAccess, way);
         assertTrue(parser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
     }
 
     @Test
     public void testSetAccess() {
-        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
+        EdgeIntAccess edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
         int edgeId = 0;
         accessEnc.setBool(false, edgeId, edgeIntAccess, true);
         accessEnc.setBool(true, edgeId, edgeIntAccess, true);
@@ -299,7 +273,7 @@ public class CarTagParserTest {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "trunk");
         way.setTag("maxspeed", "500");
-        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
+        EdgeIntAccess edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
         int edgeId = 0;
         speedParser.handleWayTags(edgeId, edgeIntAccess, way);
         assertEquals(140, avSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), 1e-1);
@@ -308,7 +282,7 @@ public class CarTagParserTest {
         way.setTag("highway", "primary");
         way.setTag("maxspeed:backward", "10");
         way.setTag("maxspeed:forward", "20");
-        edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
+        edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
         speedParser.handleWayTags(edgeId, edgeIntAccess, way);
         assertEquals(18, avSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), 1e-1);
         assertEquals(10, avSpeedEnc.getDecimal(true, edgeId, edgeIntAccess), 1e-1);
@@ -316,14 +290,14 @@ public class CarTagParserTest {
         way = new ReaderWay(1);
         way.setTag("highway", "primary");
         way.setTag("maxspeed:forward", "20");
-        edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
+        edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
         speedParser.handleWayTags(edgeId, edgeIntAccess, way);
         assertEquals(18, avSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), 1e-1);
 
         way = new ReaderWay(1);
         way.setTag("highway", "primary");
         way.setTag("maxspeed:backward", "20");
-        edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
+        edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
         speedParser.handleWayTags(edgeId, edgeIntAccess, way);
         assertEquals(66, avSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), 1e-1);
         assertEquals(18, avSpeedEnc.getDecimal(true, edgeId, edgeIntAccess), 1e-1);
@@ -331,14 +305,14 @@ public class CarTagParserTest {
         way = new ReaderWay(1);
         way.setTag("highway", "motorway");
         way.setTag("maxspeed", "none");
-        edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
+        edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
         speedParser.handleWayTags(edgeId, edgeIntAccess, way);
         assertEquals(136, avSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), .1);
 
         way = new ReaderWay(1);
         way.setTag("highway", "motorway_link");
         way.setTag("maxspeed", "70 mph");
-        edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
+        edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
         speedParser.handleWayTags(edgeId, edgeIntAccess, way);
         assertEquals(102, avSpeedEnc.getDecimal(true, edgeId, edgeIntAccess), 1e-1);
     }
@@ -349,7 +323,7 @@ public class CarTagParserTest {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "trunk");
         way.setTag("maxspeed", "110");
-        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
+        EdgeIntAccess edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
         int edgeId = 0;
         speedParser.handleWayTags(edgeId, edgeIntAccess, way);
         assertEquals(100, avSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), 1e-1);
@@ -357,27 +331,27 @@ public class CarTagParserTest {
         way.clearTags();
         way.setTag("highway", "residential");
         way.setTag("surface", "cobblestone");
-        edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
+        edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
         speedParser.handleWayTags(edgeId, edgeIntAccess, way);
         assertEquals(30, avSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), 1e-1);
 
         way.clearTags();
         way.setTag("highway", "track");
-        edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
+        edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
         speedParser.handleWayTags(edgeId, edgeIntAccess, way);
         assertEquals(16, avSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), 1e-1);
 
         way.clearTags();
         way.setTag("highway", "track");
         way.setTag("tracktype", "grade1");
-        edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
+        edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
         speedParser.handleWayTags(edgeId, edgeIntAccess, way);
         assertEquals(20, avSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), 1e-1);
 
         way.clearTags();
         way.setTag("highway", "secondary");
         way.setTag("surface", "compacted");
-        edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
+        edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
         speedParser.handleWayTags(edgeId, edgeIntAccess, way);
 
         assertEquals(30, avSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), 1e-1);
@@ -385,7 +359,7 @@ public class CarTagParserTest {
         way.clearTags();
         way.setTag("highway", "secondary");
         way.setTag("motorroad", "yes"); // motorroad should not influence speed. only access for non-motor vehicles
-        edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
+        edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
         speedParser.handleWayTags(edgeId, edgeIntAccess, way);
 
         assertEquals(60, avSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), 1e-1);
@@ -393,14 +367,14 @@ public class CarTagParserTest {
         way.clearTags();
         way.setTag("highway", "motorway");
         way.setTag("motorroad", "yes");
-        edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
+        edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
         speedParser.handleWayTags(edgeId, edgeIntAccess, way);
         assertEquals(100, avSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), 1e-1);
 
         way.clearTags();
         way.setTag("highway", "motorway_link");
         way.setTag("motorroad", "yes");
-        edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
+        edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
         speedParser.handleWayTags(edgeId, edgeIntAccess, way);
         assertEquals(70, avSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), 1e-1);
 
@@ -413,7 +387,7 @@ public class CarTagParserTest {
 
     @Test
     public void testSetSpeed() {
-        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
+        EdgeIntAccess edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
         int edgeId = 0;
         avSpeedEnc.setDecimal(false, edgeId, edgeIntAccess, 10);
         assertEquals(10, avSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), 1e-1);
@@ -421,7 +395,7 @@ public class CarTagParserTest {
 
     @Test
     public void testSetSpeed0_issue367_issue1234() {
-        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
+        EdgeIntAccess edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
         int edgeId = 0;
         accessEnc.setBool(false, edgeId, edgeIntAccess, true);
         accessEnc.setBool(true, edgeId, edgeIntAccess, true);
@@ -447,7 +421,7 @@ public class CarTagParserTest {
 
     @Test
     public void testRoundabout() {
-        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
+        EdgeIntAccess edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
         int edgeId = 0;
         accessEnc.setBool(false, edgeId, edgeIntAccess, true);
         accessEnc.setBool(true, edgeId, edgeIntAccess, true);
@@ -463,7 +437,7 @@ public class CarTagParserTest {
 
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "motorway");
-        edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
+        edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
         parser.handleWayTags(edgeId, edgeIntAccess, way);
         assertTrue(accessEnc.getBool(false, edgeId, edgeIntAccess));
         assertTrue(accessEnc.getBool(true, edgeId, edgeIntAccess));
@@ -608,13 +582,14 @@ public class CarTagParserTest {
         EncodingManager em = new EncodingManager.Builder()
                 .add(new SimpleBooleanEncodedValue("car_access", true))
                 .add(smallFactorSpeedEnc)
+                .add(FerrySpeed.create())
                 .addTurnCostEncodedValue(TurnCost.create("car", 1))
                 .build();
-        CarAverageSpeedParser speedParser = new CarAverageSpeedParser(em, new PMap());
+        CarAverageSpeedParser speedParser = new CarAverageSpeedParser(em);
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "motorway_link");
         way.setTag("maxspeed", "60 mph");
-        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
+        EdgeIntAccess edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
         int edgeId = 0;
         speedParser.handleWayTags(edgeId, edgeIntAccess, way);
 
@@ -627,7 +602,7 @@ public class CarTagParserTest {
         way = new ReaderWay(2);
         way.setTag("highway", "motorway_link");
         way.setTag("maxspeed", "70 mph");
-        edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
+        edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
         speedParser.handleWayTags(edgeId, edgeIntAccess, way);
         assertEquals(101.5, smallFactorSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), .1);
     }
@@ -652,10 +627,9 @@ public class CarTagParserTest {
         way.setTag("sac_scale", "hiking");
 
         BikeAccessParser bikeParser = new BikeAccessParser(em, new PMap());
-        bikeParser.init(new DateRangeParser());
         assertEquals(WayAccess.CAN_SKIP, parser.getAccess(way));
         assertNotEquals(WayAccess.CAN_SKIP, bikeParser.getAccess(way));
-        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
+        EdgeIntAccess edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
         int edgeId = 0;
         parser.handleWayTags(edgeId, edgeIntAccess, way);
         bikeParser.handleWayTags(edgeId, edgeIntAccess, way);
@@ -680,7 +654,7 @@ public class CarTagParserTest {
         way.setTag("route", "ferry");
         way.setTag("edge_distance", 257.0);
 
-        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
+        EdgeIntAccess edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
         int edgeId = 0;
         speedParser.handleWayTags(edgeId, edgeIntAccess, way);
         assertEquals(2, speedParser.getAverageSpeedEnc().getDecimal(false, edgeId, edgeIntAccess), .1);
@@ -690,10 +664,56 @@ public class CarTagParserTest {
         EncodingManager lowFactorEm = new EncodingManager.Builder()
                 .add(new SimpleBooleanEncodedValue(VehicleAccess.key("car"), true))
                 .add(lowFactorSpeedEnc)
+                .add(FerrySpeed.create())
                 .build();
-        edgeIntAccess = new ArrayEdgeIntAccess(lowFactorEm.getIntsForFlags());
-        new CarAverageSpeedParser(lowFactorEm, new PMap()).handleWayTags(edgeId, edgeIntAccess, way);
+        edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(lowFactorEm.getBytesForFlags());
+        new CarAverageSpeedParser(lowFactorEm).handleWayTags(edgeId, edgeIntAccess, way);
         assertEquals(1, lowFactorSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), .1);
+    }
+
+    @Test
+    public void temporalAccess() {
+        int edgeId = 0;
+        ArrayEdgeIntAccess access = new ArrayEdgeIntAccess(1);
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "primary");
+        way.setTag("access:conditional", "no @ (May - June)");
+        parser.handleWayTags(edgeId, access, way, null);
+        assertTrue(accessEnc.getBool(false, edgeId, access));
+
+        access = new ArrayEdgeIntAccess(1);
+        way = new ReaderWay(1);
+        way.setTag("highway", "primary");
+        way.setTag("motorcar:conditional", "no @ (May - June)");
+        parser.handleWayTags(edgeId, access, way, null);
+        assertTrue(accessEnc.getBool(false, edgeId, access));
+
+        access = new ArrayEdgeIntAccess(1);
+        way = new ReaderWay(1);
+        way.setTag("highway", "primary");
+        way.setTag("motorcar", "no");
+        way.setTag("access:conditional", "yes @ (May - June)");
+        parser.handleWayTags(edgeId, access, way, null);
+        assertFalse(accessEnc.getBool(false, edgeId, access));
+
+        // car should ignore unrelated conditional access restrictions of e.g. bicycle
+        access = new ArrayEdgeIntAccess(1);
+        way = new ReaderWay(1);
+        way.setTag("highway", "primary");
+        way.setTag("vehicle", "no");
+        way.setTag("bicycle:conditional", "yes @ (May - June)");
+        parser.handleWayTags(edgeId, access, way, null);
+        assertFalse(accessEnc.getBool(false, edgeId, access));
+
+        // Ignore access restriction if there is a *higher* priority temporal restriction that *could* lift it.
+        // But this is independent on the date!
+        access = new ArrayEdgeIntAccess(1);
+        way = new ReaderWay(1);
+        way.setTag("highway", "primary");
+        way.setTag("access", "no");
+        way.setTag("motorcar:conditional", "yes @ (May - June)");
+        parser.handleWayTags(edgeId, access, way, null);
+        assertTrue(accessEnc.getBool(false, edgeId, access));
     }
 
     @ParameterizedTest
@@ -712,29 +732,29 @@ public class CarTagParserTest {
     void nonHighwaysFallbackSpeed_issue2845() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("man_made", "pier");
-        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
+        EdgeIntAccess edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
         speedParser.handleWayTags(0, edgeIntAccess, way);
         assertEquals(10, avSpeedEnc.getDecimal(false, 0, edgeIntAccess), 1e-1);
 
         way.clearTags();
         way.setTag("railway", "platform");
-        speedParser.handleWayTags(0, edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags()), way);
+        speedParser.handleWayTags(0, edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags()), way);
         assertEquals(10, avSpeedEnc.getDecimal(false, 0, edgeIntAccess), 1e-1);
 
         way.clearTags();
         way.setTag("route", "ski");
-        speedParser.handleWayTags(0, edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags()), way);
+        speedParser.handleWayTags(0, edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags()), way);
         assertEquals(10, avSpeedEnc.getDecimal(false, 0, edgeIntAccess), 1e-1);
 
         way.clearTags();
         way.setTag("highway", "abandoned");
-        speedParser.handleWayTags(0, edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags()), way);
+        speedParser.handleWayTags(0, edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags()), way);
         assertEquals(10, avSpeedEnc.getDecimal(false, 0, edgeIntAccess), 1e-1);
 
         way.clearTags();
         way.setTag("highway", "construction");
         way.setTag("maxspeed", "100");
-        speedParser.handleWayTags(0, edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags()), way);
+        speedParser.handleWayTags(0, edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags()), way);
         // unknown highways can be quite fast in combination with maxspeed!?
         assertEquals(90, avSpeedEnc.getDecimal(false, 0, edgeIntAccess), 1e-1);
     }

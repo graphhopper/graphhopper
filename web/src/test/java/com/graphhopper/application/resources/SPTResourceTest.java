@@ -22,7 +22,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
-import com.graphhopper.config.Profile;
+import com.graphhopper.util.TurnCostsConfig;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -47,14 +48,14 @@ public class SPTResourceTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerTestConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.vehicles", "car|turn_costs=true").
                 putObject("graph.encoded_values", "max_speed,road_class").
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR).
-                setProfiles(Arrays.asList(
-                        new Profile("car_without_turncosts").setVehicle("car"),
-                        new Profile("car_with_turncosts").setVehicle("car").setTurnCosts(true)
+                putObject("graph.encoded_values", "car_access, car_average_speed").
+                setProfiles(List.of(
+                        TestProfiles.accessAndSpeed("car_without_turncosts", "car"),
+                        TestProfiles.accessAndSpeed("car_with_turncosts", "car").setTurnCostsConfig(TurnCostsConfig.car())
                 ));
         return config;
     }

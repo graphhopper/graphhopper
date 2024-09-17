@@ -53,7 +53,7 @@ public class GHPoint3D extends GHPoint {
             return NumHelper.equalsEps(lat, other.lat) && NumHelper.equalsEps(lon, other.lon);
         else
             return NumHelper.equalsEps(lat, other.lat) && NumHelper.equalsEps(lon, other.lon)
-                    && NumHelper.equalsEps(ele, other.ele);
+                    && NumHelper.equalsEps(ele, other.ele, 0.01);
     }
 
     @Override

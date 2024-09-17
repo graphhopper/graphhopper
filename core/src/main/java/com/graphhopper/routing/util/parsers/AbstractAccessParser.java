@@ -2,9 +2,6 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.reader.osm.conditional.ConditionalOSMTagInspector;
-import com.graphhopper.reader.osm.conditional.ConditionalTagInspector;
-import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.util.TransportationMode;
@@ -17,16 +14,14 @@ public abstract class AbstractAccessParser implements TagParser {
     static final Collection<String> INTENDED = Arrays.asList("yes", "designated", "official", "permissive");
 
     // order is important
-    protected final List<String> restrictions = new ArrayList<>(5);
+    protected final List<String> restrictionKeys = new ArrayList<>(5);
     protected final Set<String> restrictedValues = new HashSet<>(5);
 
-    protected final Set<String> intendedValues = new HashSet<>(INTENDED);
-    protected final Set<String> oneways = new HashSet<>(ONEWAYS);
+    protected final Set<String> intendedValues = new HashSet<>(INTENDED); // possible to add "private" later
     // http://wiki.openstreetmap.org/wiki/Mapfeatures#Barrier
     protected final Set<String> barriers = new HashSet<>(5);
     protected final BooleanEncodedValue accessEnc;
     private boolean blockFords = true;
-    private ConditionalTagInspector conditionalTagInspector;
 
     protected AbstractAccessParser(BooleanEncodedValue accessEnc, TransportationMode transportationMode) {
         this.accessEnc = accessEnc;
@@ -38,17 +33,7 @@ public abstract class AbstractAccessParser implements TagParser {
         restrictedValues.add("private");
         restrictedValues.add("permit");
 
-        restrictions.addAll(OSMRoadAccessParser.toOSMRestrictions(transportationMode));
-    }
-
-    public AbstractAccessParser init(DateRangeParser dateRangeParser) {
-        setConditionalTagInspector(new ConditionalOSMTagInspector(Collections.singletonList(dateRangeParser),
-                restrictions, restrictedValues, intendedValues, false));
-        return this;
-    }
-
-    protected void setConditionalTagInspector(ConditionalTagInspector inspector) {
-        conditionalTagInspector = inspector;
+        restrictionKeys.addAll(OSMRoadAccessParser.toOSMRestrictions(transportationMode));
     }
 
     public boolean isBlockFords() {
@@ -70,10 +55,6 @@ public abstract class AbstractAccessParser implements TagParser {
         }
     }
 
-    public ConditionalTagInspector getConditionalTagInspector() {
-        return conditionalTagInspector;
-    }
-
     protected void handleBarrierEdge(int edgeId, EdgeIntAccess edgeIntAccess, Map<String, Object> nodeTags) {
         // for now we just create a dummy reader node, because our encoders do not make use of the coordinates anyway
         ReaderNode readerNode = new ReaderNode(0, 0, 0, nodeTags);
@@ -93,12 +74,15 @@ public abstract class AbstractAccessParser implements TagParser {
     public abstract void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way);
 
     /**
-     * @return true if the given OSM node blocks access for this vehicle, false otherwise
+     * @return true if the given OSM node blocks access for the specified restrictions, false otherwise
      */
     public boolean isBarrier(ReaderNode node) {
         // note that this method will be only called for certain nodes as defined by OSMReader!
-        String firstValue = node.getFirstPriorityTag(restrictions);
-        if (restrictedValues.contains(firstValue) || node.hasTag("locked", "yes"))
+        String firstValue = node.getFirstValue(restrictionKeys);
+
+        if (restrictedValues.contains(firstValue))
+            return true;
+        else if (node.hasTag("locked", "yes") && !intendedValues.contains(firstValue))
             return true;
         else if (intendedValues.contains(firstValue))
             return false;
@@ -112,8 +96,8 @@ public abstract class AbstractAccessParser implements TagParser {
         return accessEnc;
     }
 
-    public final List<String> getRestrictions() {
-        return restrictions;
+    public final List<String> getRestrictionKeys() {
+        return restrictionKeys;
     }
 
     public final String getName() {

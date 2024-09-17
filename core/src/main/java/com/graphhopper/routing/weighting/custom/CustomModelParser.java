@@ -19,7 +19,6 @@ package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
@@ -38,6 +37,8 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static com.graphhopper.json.Statement.Keyword.IF;
+
 public class CustomModelParser {
     private static final AtomicLong longVal = new AtomicLong(1);
     static final String IN_AREA_PREFIX = "in_";
@@ -50,7 +51,7 @@ public class CustomModelParser {
     // Use accessOrder==true to remove oldest accessed entry, not oldest inserted.
     private static final int CACHE_SIZE = Integer.getInteger("graphhopper.custom_weighting.cache_size", 1000);
     private static final Map<String, Class<?>> CACHE = Collections.synchronizedMap(
-            new LinkedHashMap<String, Class<?>>(CACHE_SIZE, 0.75f, true) {
+            new LinkedHashMap<>(CACHE_SIZE, 0.75f, true) {
                 protected boolean removeEldestEntry(Map.Entry eldest) {
                     return size() > CACHE_SIZE;
                 }
@@ -66,35 +67,24 @@ public class CustomModelParser {
         // utility class
     }
 
-    public static CustomWeighting createWeighting(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, DecimalEncodedValue priorityEnc,
-                                                  EncodedValueLookup lookup, TurnCostProvider turnCostProvider, CustomModel customModel) {
+    /**
+     * This method creates a weighting from a CustomModel that must limit the speed. Either as an
+     * unconditional statement <code>{ "if": "true", "limit_to": "car_average_speed" }<code/> or as
+     * an if-elseif-else group.
+     */
+    public static CustomWeighting createWeighting(EncodedValueLookup lookup, TurnCostProvider turnCostProvider, CustomModel customModel) {
         if (customModel == null)
             throw new IllegalStateException("CustomModel cannot be null");
-        CustomWeighting.Parameters parameters = createWeightingParameters(customModel, lookup, speedEnc, priorityEnc);
-        return new CustomWeighting(accessEnc, speedEnc, turnCostProvider, parameters);
-    }
-
-    public static CustomWeighting createFastestWeighting(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, EncodingManager lookup) {
-        CustomModel cm = new CustomModel();
-
-        return createWeighting(accessEnc, speedEnc, null, lookup, TurnCostProvider.NO_TURN_COST_PROVIDER, cm);
+        CustomWeighting.Parameters parameters = createWeightingParameters(customModel, lookup);
+        return new CustomWeighting(turnCostProvider, parameters);
     }
 
     /**
-     * This method compiles a new subclass of CustomWeightingHelper composed from the provided CustomModel caches this
+     * This method compiles a new subclass of CustomWeightingHelper composed of the provided CustomModel caches this
      * and returns an instance.
-     *
-     * @param priorityEnc can be null
      */
-    public static CustomWeighting.Parameters createWeightingParameters(CustomModel customModel, EncodedValueLookup lookup,
-                                                                       DecimalEncodedValue avgSpeedEnc,
-                                                                       DecimalEncodedValue priorityEnc) {
-
-        // if the same custom model is used with a different base profile we cannot use the cached version
-        String key = customModel.toString() + "," + avgSpeedEnc.getName() + "," + (priorityEnc == null ? "-" : priorityEnc.getName());
-        if (key.length() > 100_000)
-            throw new IllegalArgumentException("Custom Model too big: " + key.length());
-
+    public static CustomWeighting.Parameters createWeightingParameters(CustomModel customModel, EncodedValueLookup lookup) {
+        String key = customModel.toString();
         Class<?> clazz = customModel.isInternal() ? INTERNAL_CACHE.get(key) : null;
         if (CACHE_SIZE > 0 && clazz == null)
             clazz = CACHE.get(key);
@@ -116,7 +106,7 @@ public class CustomModelParser {
         try {
             // The class does not need to be thread-safe as we create an instance per request
             CustomWeightingHelper prio = (CustomWeightingHelper) clazz.getDeclaredConstructor().newInstance();
-            prio.init(customModel, lookup, avgSpeedEnc, priorityEnc, CustomModel.getAreasAsMap(customModel.getAreas()));
+            prio.init(customModel, lookup, CustomModel.getAreasAsMap(customModel.getAreas()));
             return new CustomWeighting.Parameters(
                     prio::getSpeed, prio::calcMaxSpeed,
                     prio::getPriority, prio::calcMaxPriority,
@@ -130,15 +120,11 @@ public class CustomModelParser {
     /**
      * This method does the following:
      * <ul>
-     * <li>0. optionally we already checked the right-hand side expressions before this method call in FindMinMax.checkLMConstraints
-     *     (only the client-side custom model statements)
+     * <li>
+     *     1. parse the value expressions (RHS) to know about additional encoded values ('findVariables')
+     *     and check for multiplications with negative values.
      * </li>
-     * <li>1. determine minimum and maximum values via parsing the right-hand side expression -> done in ValueExpressionVisitor.
-     *     We need the maximum values for a simple negative check AND for the CustomWeighting.Parameters which is for
-     *     Weighting.getMinWeight which is for A*. Note: we could make this step optional somehow for other algorithms,
-     *     but parsing would be still required in the next step for security reasons.
-     * </li>
-     * <li>2. parse condition value of priority and speed statements -> done in ConditionalExpressionVisitor (don't parse RHS expressions again)
+     * <li>2. parse conditional expression of priority and speed statements -> done in ConditionalExpressionVisitor (don't parse RHS expressions again)
      * </li>
      * <li>3. create class template as String, inject the created statements and create the Class
      * </li>
@@ -148,6 +134,20 @@ public class CustomModelParser {
         try {
             Set<String> priorityVariables = ValueExpressionVisitor.findVariables(customModel.getPriority(), lookup);
             List<Java.BlockStatement> priorityStatements = createGetPriorityStatements(priorityVariables, customModel, lookup);
+
+            if (customModel.getSpeed().isEmpty())
+                throw new IllegalArgumentException("At least one initial statement under 'speed' is required.");
+
+            List<Statement> firstGroup = splitIntoGroup(customModel.getSpeed()).get(0);
+            if (firstGroup.size() > 1) {
+                Statement lastSt = firstGroup.get(firstGroup.size() - 1);
+                if (lastSt.operation() != Statement.Op.LIMIT || lastSt.keyword() != Statement.Keyword.ELSE)
+                    throw new IllegalArgumentException("The first group needs to end with an 'else' (or contain a single unconditional 'if' statement).");
+            } else {
+                Statement firstSt = firstGroup.get(0);
+                if (!"true".equals(firstSt.condition()) || firstSt.operation() != Statement.Op.LIMIT || firstSt.keyword() != Statement.Keyword.IF)
+                    throw new IllegalArgumentException("The first group needs to contain a single unconditional 'if' statement (or end with an 'else').");
+            }
 
             Set<String> speedVariables = ValueExpressionVisitor.findVariables(customModel.getSpeed(), lookup);
             List<Java.BlockStatement> speedStatements = createGetSpeedStatements(speedVariables, customModel, lookup);
@@ -168,6 +168,55 @@ public class CustomModelParser {
         }
     }
 
+    public static List<String> findVariablesForEncodedValuesString(CustomModel model, NameValidator nameValidator, ClassHelper classHelper) {
+        Set<String> variables = new LinkedHashSet<>();
+        // avoid parsing exception for backward_xy or in_xy ...
+        NameValidator nameValidatorIntern = s -> {
+            // some literals are no variables and would throw an exception (encoded value not found)
+            if (Character.isUpperCase(s.charAt(0)) || s.startsWith(BACKWARD_PREFIX) || s.startsWith(IN_AREA_PREFIX))
+                return true;
+            if (nameValidator.isValid(s)) {
+                variables.add(s);
+                return true;
+            }
+            return false;
+        };
+        findVariablesForEncodedValuesString(model.getPriority(), nameValidatorIntern, classHelper);
+        findVariablesForEncodedValuesString(model.getSpeed(), nameValidatorIntern, classHelper);
+        return new ArrayList<>(variables);
+    }
+
+    private static void findVariablesForEncodedValuesString(List<Statement> statements, NameValidator nameValidator, ClassHelper classHelper) {
+        List<List<Statement>> groups = CustomModelParser.splitIntoGroup(statements);
+        for (List<Statement> group : groups) {
+            for (Statement statement : group) {
+                if (statement.isBlock()) {
+                    findVariablesForEncodedValuesString(statement.doBlock(), nameValidator, classHelper);
+                } else {
+                    // ignore potential problems; collect only variables in this step
+                    ConditionalExpressionVisitor.parse(statement.condition(), nameValidator, classHelper);
+                    ValueExpressionVisitor.parse(statement.value(), nameValidator);
+                }
+            }
+        }
+    }
+
+    /**
+     * Splits the specified list into several lists of statements starting with if.
+     * I.e. a group consists of one 'if' and zero or more 'else_if' and 'else' statements.
+     */
+    static List<List<Statement>> splitIntoGroup(List<Statement> statements) {
+        List<List<Statement>> result = new ArrayList<>();
+        List<Statement> group = null;
+        for (Statement st : statements) {
+            if (IF.equals(st.keyword())) result.add(group = new ArrayList<>());
+            if (group == null)
+                throw new IllegalArgumentException("Every group must start with an if-statement");
+            group.add(st);
+        }
+        return result;
+    }
+
     /**
      * Parse the expressions from CustomModel relevant for the method getSpeed - see createClassTemplate.
      *
@@ -177,8 +226,8 @@ public class CustomModelParser {
                                                                       CustomModel customModel, EncodedValueLookup lookup) throws Exception {
         List<Java.BlockStatement> speedStatements = new ArrayList<>(verifyExpressions(new StringBuilder(),
                 "speed entry", speedVariables, customModel.getSpeed(), lookup));
-        String speedMethodStartBlock = "double value = super.getRawSpeed(edge, reverse);\n";
-        // a bit inefficient to possibly define variables twice, but for now we have two separate methods
+        String speedMethodStartBlock = "double value = " + CustomWeightingHelper.GLOBAL_MAX_SPEED + ";\n";
+        // potentially we fetch EncodedValues twice (one time here and one time for priority)
         for (String arg : speedVariables) {
             speedMethodStartBlock += getVariableDeclaration(lookup, arg);
         }
@@ -196,7 +245,7 @@ public class CustomModelParser {
                                                                          CustomModel customModel, EncodedValueLookup lookup) throws Exception {
         List<Java.BlockStatement> priorityStatements = new ArrayList<>(verifyExpressions(new StringBuilder(),
                 "priority entry", priorityVariables, customModel.getPriority(), lookup));
-        String priorityMethodStartBlock = "double value = super.getRawPriority(edge, reverse);\n";
+        String priorityMethodStartBlock = "double value = " + CustomWeightingHelper.GLOBAL_PRIORITY + ";\n";
         for (String arg : priorityVariables) {
             priorityMethodStartBlock += getVariableDeclaration(lookup, arg);
         }
@@ -245,8 +294,11 @@ public class CustomModelParser {
 
     private static String getReturnType(EncodedValue encodedValue) {
         // order is important
-        if (encodedValue instanceof EnumEncodedValue)
-            return ((EnumEncodedValue) encodedValue).getEnumSimpleName();
+        if (encodedValue instanceof EnumEncodedValue) {
+            Class cl = ((EnumEncodedValue) encodedValue).getEnumType();
+            // use getSimpleName for inbuilt EncodedValues and more readability of generated source
+            return cl.getPackage().equals(EnumEncodedValue.class.getPackage()) ? cl.getSimpleName() : cl.getName();
+        }
         if (encodedValue instanceof StringEncodedValue) return "int"; // we use indexOf
         if (encodedValue instanceof DecimalEncodedValue) return "double";
         if (encodedValue instanceof BooleanEncodedValue) return "boolean";
@@ -269,9 +321,7 @@ public class CustomModelParser {
         final StringBuilder classSourceCode = new StringBuilder(100);
         boolean includedAreaImports = false;
 
-        final StringBuilder initSourceCode = new StringBuilder("this.avg_speed_enc = avgSpeedEnc;\n");
-        initSourceCode.append("this.priority_enc = priorityEnc;\n");
-        initSourceCode.append("this.lookup = lookup;\n");
+        final StringBuilder initSourceCode = new StringBuilder("this.lookup = lookup;\n");
         initSourceCode.append("this.customModel = customModel;\n");
         Set<String> set = new HashSet<>();
         for (String prioVar : priorityVariables)
@@ -326,8 +376,7 @@ public class CustomModelParser {
                 + "\npublic class JaninoCustomWeightingHelperSubclass" + counter + " extends " + CustomWeightingHelper.class.getSimpleName() + " {\n"
                 + classSourceCode
                 + "   @Override\n"
-                + "   public void init(CustomModel customModel, EncodedValueLookup lookup, " + DecimalEncodedValue.class.getName() + " avgSpeedEnc, "
-                + DecimalEncodedValue.class.getName() + " priorityEnc, Map<String, " + JsonFeature.class.getName() + "> areas) {\n"
+                + "   public void init(CustomModel customModel, EncodedValueLookup lookup, Map<String, " + JsonFeature.class.getName() + "> areas) {\n"
                 + initSourceCode
                 + "   }\n\n"
                 // we need these placeholder methods so that the hooks in DeepCopier are invoked
@@ -337,7 +386,7 @@ public class CustomModelParser {
                 + "   }\n"
                 + "   @Override\n"
                 + "   public double getSpeed(EdgeIteratorState edge, boolean reverse) {\n"
-                + "      return getRawSpeed(edge, reverse); //will be overwritten by code injected in DeepCopier\n"
+                + "      return 1; //will be overwritten by code injected in DeepCopier\n"
                 + "   }\n"
                 + "}";
     }
@@ -356,36 +405,54 @@ public class CustomModelParser {
         NameValidator nameInConditionValidator = name -> lookup.hasEncodedValue(name)
                 || name.toUpperCase(Locale.ROOT).equals(name) || name.startsWith(IN_AREA_PREFIX)
                 || name.startsWith(BACKWARD_PREFIX) && lookup.hasEncodedValue(name.substring(BACKWARD_PREFIX.length()));
+        ClassHelper helper = key -> getReturnType(lookup.getEncodedValue(key, EncodedValue.class));
 
-        parseExpressions(expressions, nameInConditionValidator, info, createObjects, list);
+        parseExpressions(expressions, nameInConditionValidator, info, createObjects, list, helper, "");
+        expressions.append("return value;\n");
         return new Parser(new org.codehaus.janino.Scanner(info, new StringReader(expressions.toString()))).
                 parseBlockStatements();
     }
 
     static void parseExpressions(StringBuilder expressions, NameValidator nameInConditionValidator,
-                                 String exceptionInfo, Set<String> createObjects, List<Statement> list) {
+                                 String exceptionInfo, Set<String> createObjects, List<Statement> list,
+                                 ClassHelper classHelper, String indentation) {
 
         for (Statement statement : list) {
             // avoid parsing the RHS value expression again as we just did it to get the maximum values in createClazz
-            if (statement.getKeyword() == Statement.Keyword.ELSE) {
-                if (!Helper.isEmpty(statement.getCondition()))
-                    throw new IllegalArgumentException("condition must be empty but was " + statement.getCondition());
+            if (statement.keyword() == Statement.Keyword.ELSE) {
+                if (!Helper.isEmpty(statement.condition()))
+                    throw new IllegalArgumentException("condition must be empty but was " + statement.condition());
 
-                expressions.append("else {").append(statement.getOperation().build(statement.getValue())).append("; }\n");
-            } else if (statement.getKeyword() == Statement.Keyword.ELSEIF || statement.getKeyword() == Statement.Keyword.IF) {
-                ParseResult parseResult = ConditionalExpressionVisitor.parse(statement.getCondition(), nameInConditionValidator);
+                expressions.append(indentation);
+                if (statement.isBlock()) {
+                    expressions.append("else {");
+                    parseExpressions(expressions, nameInConditionValidator, exceptionInfo, createObjects, statement.doBlock(), classHelper, indentation + "  ");
+                    expressions.append(indentation).append("}\n");
+                } else {
+                    expressions.append("else {").append(statement.operation().build(statement.value())).append("; }\n");
+                }
+            } else if (statement.keyword() == Statement.Keyword.ELSEIF || statement.keyword() == Statement.Keyword.IF) {
+                ParseResult parseResult = ConditionalExpressionVisitor.parse(statement.condition(), nameInConditionValidator, classHelper);
                 if (!parseResult.ok)
-                    throw new IllegalArgumentException(exceptionInfo + " invalid condition \"" + statement.getCondition() + "\"" +
+                    throw new IllegalArgumentException(exceptionInfo + " invalid condition \"" + statement.condition() + "\"" +
                             (parseResult.invalidMessage == null ? "" : ": " + parseResult.invalidMessage));
                 createObjects.addAll(parseResult.guessedVariables);
-                if (statement.getKeyword() == Statement.Keyword.ELSEIF)
-                    expressions.append("else ");
-                expressions.append("if (").append(parseResult.converted).append(") {").append(statement.getOperation().build(statement.getValue())).append(";}\n");
+                if (statement.keyword() == Statement.Keyword.ELSEIF)
+                    expressions.append(indentation).append("else ");
+
+                expressions.append(indentation);
+                if (statement.isBlock()) {
+                    expressions.append("if (").append(parseResult.converted).append(") {\n");
+                    parseExpressions(expressions, nameInConditionValidator, exceptionInfo, createObjects, statement.doBlock(), classHelper, indentation + "  ");
+                    expressions.append(indentation).append("}\n");
+                } else {
+                    expressions.append("if (").append(parseResult.converted).append(") {").
+                            append(statement.operation().build(statement.value())).append(";}\n");
+                }
             } else {
                 throw new IllegalArgumentException("The statement must be either 'if', 'else_if' or 'else'");
             }
         }
-        expressions.append("return value;\n");
     }
 
     /**

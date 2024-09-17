@@ -20,15 +20,14 @@ package com.graphhopper.http;
 
 import io.dropwizard.jersey.params.AbstractParam;
 
-import org.checkerframework.checker.nullness.qual.Nullable;
 import java.time.OffsetDateTime;
 
 public class OffsetDateTimeParam extends AbstractParam<OffsetDateTime> {
-    public OffsetDateTimeParam(@Nullable String input) {
+    public OffsetDateTimeParam(String input) {
         super(input);
     }
 
-    public OffsetDateTimeParam(@Nullable String input, String parameterName) {
+    public OffsetDateTimeParam(String input, String parameterName) {
         super(input, parameterName);
     }
 
@@ -38,7 +37,7 @@ public class OffsetDateTimeParam extends AbstractParam<OffsetDateTime> {
     }
 
     @Override
-    protected OffsetDateTime parse(@Nullable String input) throws Exception {
+    protected OffsetDateTime parse(String input) {
         if (input == null)
             return null;
         return OffsetDateTime.parse(input);

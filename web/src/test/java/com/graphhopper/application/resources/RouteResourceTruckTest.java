@@ -18,6 +18,8 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import static com.graphhopper.application.util.TestUtils.clientTarget;
 import static org.junit.jupiter.api.Assertions.*;
@@ -30,16 +32,16 @@ public class RouteResourceTruckTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.vehicles", "roads|transportation_mode=HGV,car").
                 putObject("prepare.min_network_size", 200).
                 putObject("datareader.file", "../core/files/north-bayreuth.osm.gz").
                 putObject("graph.location", DIR).
                 putObject("graph.encoded_values", "max_height,max_weight,max_width,hazmat,toll,surface,hgv").
                 putObject("import.osm.ignored_highways", "").
                 putObject("custom_models.directory", "./src/test/resources/com/graphhopper/application/resources").
-                setProfiles(Arrays.asList(new Profile("truck").setCustomModel(null).
-                        setVehicle("roads").putHint("custom_model_files", Arrays.asList("test_truck.json")))).
-                setCHProfiles(Arrays.asList(new CHProfile("truck")));
+                putObject("graph.encoded_values", "max_height, max_weight, max_width, hazmat, toll, surface, hgv, road_class, road_access, road_class_link, road_environment\n").
+                setProfiles(List.of(new Profile("truck").setCustomModel(null).
+                        putHint("custom_model_files", List.of("test_truck.json")))).
+                setCHProfiles(List.of(new CHProfile("truck")));
         return config;
     }
 

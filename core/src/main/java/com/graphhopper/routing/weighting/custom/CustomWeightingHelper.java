@@ -18,36 +18,36 @@
 package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.json.MinMax;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.Polygon;
 
+import java.util.List;
 import java.util.Map;
 
 /**
- * This class is for internal usage only. It is subclassed by Janino, then special expressions are injected into init,
- * getSpeed and getPriority. At the end an instance is created and used in CustomWeighting.
+ * This class is for internal usage only. It is subclassed by Janino, then special expressions are
+ * injected into init, getSpeed and getPriority. At the end an instance is created and used in CustomWeighting.
  */
 public class CustomWeightingHelper {
-    protected DecimalEncodedValue avg_speed_enc;
-    protected DecimalEncodedValue priority_enc;
+    static double GLOBAL_MAX_SPEED = 999;
+    static double GLOBAL_PRIORITY = 1;
+
     protected EncodedValueLookup lookup;
     protected CustomModel customModel;
 
     protected CustomWeightingHelper() {
     }
 
-    public void init(CustomModel customModel, EncodedValueLookup lookup, DecimalEncodedValue avgSpeedEnc, DecimalEncodedValue priorityEnc, Map<String, JsonFeature> areas) {
+    public void init(CustomModel customModel, EncodedValueLookup lookup, Map<String, JsonFeature> areas) {
         this.lookup = lookup;
         this.customModel = customModel;
-        this.avg_speed_enc = avgSpeedEnc;
-        this.priority_enc = priorityEnc;
     }
 
     public double getPriority(EdgeIteratorState edge, boolean reverse) {
-        return 1;
+        return getRawPriority(edge, reverse);
     }
 
     public double getSpeed(EdgeIteratorState edge, boolean reverse) {
@@ -55,35 +55,35 @@ public class CustomWeightingHelper {
     }
 
     protected final double getRawSpeed(EdgeIteratorState edge, boolean reverse) {
-        double speed = reverse ? edge.getReverse(avg_speed_enc) : edge.get(avg_speed_enc);
-        if (Double.isInfinite(speed) || Double.isNaN(speed) || speed < 0)
-            throw new IllegalStateException("Invalid estimated speed " + speed);
-        return speed;
+        return 1;
     }
 
     protected final double getRawPriority(EdgeIteratorState edge, boolean reverse) {
-        if (priority_enc == null) return 1;
-        double priority = reverse ? edge.getReverse(priority_enc) : edge.get(priority_enc);
-        if (Double.isInfinite(priority) || Double.isNaN(priority) || priority < 0)
-            throw new IllegalStateException("Invalid priority " + priority);
-        return priority;
+        return 1;
     }
 
     public final double calcMaxSpeed() {
-        MinMax minMaxSpeed = new MinMax(1, avg_speed_enc.getMaxOrMaxStorableDecimal());
+        MinMax minMaxSpeed = new MinMax(0, GLOBAL_MAX_SPEED);
         FindMinMax.findMinMax(minMaxSpeed, customModel.getSpeed(), lookup);
         if (minMaxSpeed.min < 0)
             throw new IllegalArgumentException("speed has to be >=0 but can be negative (" + minMaxSpeed.min + ")");
         if (minMaxSpeed.max <= 0)
             throw new IllegalArgumentException("maximum speed has to be >0 but was " + minMaxSpeed.max);
+        if (minMaxSpeed.max == GLOBAL_MAX_SPEED)
+            throw new IllegalArgumentException("The first statement for 'speed' must be unconditionally to set the speed. But it was " + customModel.getSpeed().get(0));
 
         return minMaxSpeed.max;
     }
 
     public final double calcMaxPriority() {
-        // initial value of minimum has to be >0 so that multiple_by with a negative value leads to a negative value and not 0
-        MinMax minMaxPriority = new MinMax(1, priority_enc == null ? 1 : priority_enc.getMaxOrMaxStorableDecimal());
-        FindMinMax.findMinMax(minMaxPriority, customModel.getPriority(), lookup);
+        MinMax minMaxPriority = new MinMax(0, GLOBAL_PRIORITY);
+        List<Statement> statements = customModel.getPriority();
+        if (!statements.isEmpty() && "true".equals(statements.get(0).condition())) {
+            String value = statements.get(0).value();
+            if (lookup.hasEncodedValue(value))
+                minMaxPriority.max = lookup.getDecimalEncodedValue(value).getMaxOrMaxStorableDecimal();
+        }
+        FindMinMax.findMinMax(minMaxPriority, statements, lookup);
         if (minMaxPriority.min < 0)
             throw new IllegalArgumentException("priority has to be >=0 but can be negative (" + minMaxPriority.min + ")");
         if (minMaxPriority.max < 0)

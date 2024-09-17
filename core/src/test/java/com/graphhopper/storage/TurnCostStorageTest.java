@@ -28,6 +28,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.IntStream;
 
 import static com.graphhopper.util.GHUtility.getEdge;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -91,6 +92,8 @@ public class TurnCostStorageTest {
         turnCostStorage.set(carEnc, edge31, 1, edge10, 2.0);
         turnCostStorage.set(bikeEnc, edge31, 1, edge10, Double.POSITIVE_INFINITY);
         turnCostStorage.set(bikeEnc, edge02, 2, edge24, Double.POSITIVE_INFINITY);
+
+        assertEquals(turnCostStorage.getTurnCostsCount(), IntStream.range(0, g.getNodes()).map(turnCostStorage::getTurnCostsCount).sum());
 
         assertEquals(Double.POSITIVE_INFINITY, turnCostStorage.get(carEnc, edge42, 2, edge23), 0);
         assertEquals(Double.POSITIVE_INFINITY, turnCostStorage.get(bikeEnc, edge42, 2, edge23), 0);

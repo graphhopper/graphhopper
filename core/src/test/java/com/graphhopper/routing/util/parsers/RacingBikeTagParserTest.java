@@ -19,11 +19,10 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.PriorityCode;
-import com.graphhopper.routing.util.VehicleEncodedValues;
-import com.graphhopper.routing.util.VehicleTagParsers;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
@@ -42,12 +41,31 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
     @Override
     protected EncodingManager createEncodingManager() {
-        return new EncodingManager.Builder().add(VehicleEncodedValues.racingbike(new PMap())).build();
+        return new EncodingManager.Builder()
+                .add(VehicleAccess.create("racingbike"))
+                .add(VehicleSpeed.create("racingbike", 4, 2, false))
+                .add(VehiclePriority.create("racingbike", 4, PriorityCode.getFactor(1), false))
+                .add(Roundabout.create())
+                .add(Smoothness.create())
+                .add(FerrySpeed.create())
+                .add(RouteNetwork.create(BikeNetwork.KEY))
+                .add(RouteNetwork.create(MtbNetwork.KEY))
+                .build();
     }
 
     @Override
-    protected VehicleTagParsers createBikeTagParsers(EncodedValueLookup lookup, PMap pMap) {
-        return VehicleTagParsers.racingbike(lookup, pMap);
+    protected BikeCommonAccessParser createAccessParser(EncodedValueLookup lookup, PMap pMap) {
+        return (BikeCommonAccessParser) new RacingBikeAccessParser(lookup, pMap);
+    }
+
+    @Override
+    protected BikeCommonAverageSpeedParser createAverageSpeedParser(EncodedValueLookup lookup) {
+        return new RacingBikeAverageSpeedParser(lookup);
+    }
+
+    @Override
+    protected BikeCommonPriorityParser createPriorityParser(EncodedValueLookup lookup) {
+        return new RacingBikePriorityParser(lookup);
     }
 
     @Test
@@ -79,6 +97,19 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
     }
 
     @Test
+    public void testTrack() {
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "track");
+        way.setTag("bicycle", "designated");
+        way.setTag("segregated","no");
+        assertPriorityAndSpeed(AVOID_MORE, 2, way);
+        way.setTag("surface", "asphalt");
+        assertPriorityAndSpeed(VERY_NICE, 20, way);
+        way.setTag("tracktype","grade1");
+        assertPriorityAndSpeed(VERY_NICE, 20, way);
+    }
+
+    @Test
     @Override
     public void testSacScale() {
         ReaderWay way = new ReaderWay(1);
@@ -99,7 +130,7 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
 
     @Test
     public void testGetSpeed() {
-        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
+        EdgeIntAccess edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(encodingManager.getBytesForFlags());
         int edgeId = 0;
         avgSpeedEnc.setDecimal(false, edgeId, edgeIntAccess, 10);
         ReaderWay way = new ReaderWay(1);
@@ -190,7 +221,7 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
 
         // Now we assume bicycle=yes, and paved
         osmWay.setTag("tracktype", "grade1");
-        assertPriorityAndSpeed(PREFER, 20, osmWay, osmRel);
+        assertPriorityAndSpeed(VERY_NICE, 20, osmWay, osmRel);
 
         // Now we assume bicycle=yes, and unpaved as part of a cycle relation
         osmWay.setTag("tracktype", "grade2");
@@ -220,10 +251,11 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
                 .add(accessEnc).add(speedEnc).add(priorityEnc)
                 .add(RouteNetwork.create(BikeNetwork.KEY))
                 .add(Smoothness.create())
+                .add(FerrySpeed.create())
                 .build();
         List<TagParser> parsers = Arrays.asList(
-                new RacingBikeAverageSpeedParser(encodingManager, new PMap()),
-                new RacingBikePriorityParser(encodingManager, new PMap())
+                new RacingBikeAverageSpeedParser(encodingManager),
+                new RacingBikePriorityParser(encodingManager)
         );
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "tertiary");
@@ -274,7 +306,7 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
 
     private void assertPriorityAndSpeed(EncodingManager encodingManager, DecimalEncodedValue priorityEnc, DecimalEncodedValue speedEnc,
                                         List<TagParser> parsers, PriorityCode expectedPrio, double expectedSpeed, ReaderWay way) {
-        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
+        EdgeIntAccess edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(encodingManager.getBytesForFlags());
         int edgeId = 0;
         for (TagParser p : parsers) p.handleWayTags(edgeId, edgeIntAccess, way, null);
         assertEquals(PriorityCode.getValue(expectedPrio.getValue()), priorityEnc.getDecimal(false, edgeId, edgeIntAccess), 0.01);
@@ -290,5 +322,12 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
 
         way.setTag("class:bicycle", "-2");
         assertPriority(BEST, way);
+    }
+
+    @Test
+    public void testPreferenceForSlowSpeed() {
+        ReaderWay osmWay = new ReaderWay(1);
+        osmWay.setTag("highway", "tertiary");
+        assertPriority(PREFER, osmWay);
     }
 }

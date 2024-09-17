@@ -61,7 +61,7 @@ shortcuts and get the edges recursively, this is done in Path4CH.
 In order to traverse the _CHGraph_ like a normal _Graph_ one needs to hide the shortcuts, which
 is done automatically for you if you call graph.getBaseGraph(). This is necessary in a 
 _LocationIndex_ and in the _Path_ class in order to identify how many streets leave a junction
-or similar. See issue #116 for more information.
+or similar. See issue [#116](https://github.com/graphhopper/graphhopper/issues/116) for more information.
 
 
 ### 4. Connecting the Real World to the Graph
@@ -73,7 +73,7 @@ To get the coordinate from an address you will need a geocoding solution
 which is not part of this GraphHopper routing engine.
 
 To get the closest node or edge id from a coordinate we provide you with an efficient lookup concept:
-the LocationIndexTree. See [here](../example/src/main/java/com/graphhopper/example/LocationIndexExample.java) for more information. See #17 and #221.
+the LocationIndexTree. See [here](../../example/src/main/java/com/graphhopper/example/LocationIndexExample.java) for more information. See [#17](https://github.com/graphhopper/graphhopper/issues/17) and [#221](https://github.com/graphhopper/graphhopper/issues/221).
 
 ## 4.2 QueryGraph
 

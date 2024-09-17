@@ -1,4 +1,4 @@
-# do not edit manually, instead use spreadsheet https://t.co/f086oJXAEI and script ./core/files/update-translations.sh
+# do not edit manually, instead use spreadsheet from translations.md and script ./core/files/update-translations.sh
 
 continue=nastavite
 continue_onto=nastavite na %1$s
@@ -44,6 +44,7 @@ web.way_contains_private=
 web.way_contains_toll=
 web.way_crosses_border=
 web.way_contains=
+web.way_contains_restrictions=
 web.tracks=
 web.steps=
 web.footways=
@@ -72,6 +73,9 @@ web.custom_model_enabled=
 web.settings=
 web.settings_close=
 web.exclude_motorway_example=
+web.exclude_disneyland_paris_example=
+web.simple_electric_car_example=
+web.avoid_tunnels_bridges_example=
 web.limit_speed_example=
 web.cargo_bike_example=
 web.prefer_bike_network=
@@ -141,6 +145,8 @@ web.max_speed=
 web.average_speed=
 web.track_type=
 web.toll=
+web.next=
+web.back=
 navigate.accept_risks_after_warning=
 navigate.for_km=
 navigate.for_mi=

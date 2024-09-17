@@ -17,10 +17,7 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EnumEncodedValue;
-import com.graphhopper.routing.ev.RoadClass;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeExplorer;
@@ -58,15 +55,18 @@ class InstructionsOutgoingEdges {
 
     private final EdgeIteratorState prevEdge;
     private final EdgeIteratorState currentEdge;
-    // Outgoing edges that we would be allowed to turn on
+    // edges that one can turn onto
     private final List<EdgeIteratorState> allowedAlternativeTurns;
-    // All outgoing edges, including oneways in the wrong direction
+    // edges, including oneways in the wrong direction
     private final List<EdgeIteratorState> visibleAlternativeTurns;
     private final DecimalEncodedValue maxSpeedEnc;
     private final EnumEncodedValue<RoadClass> roadClassEnc;
     private final BooleanEncodedValue roadClassLinkEnc;
+    private final IntEncodedValue lanesEnc;
     private final NodeAccess nodeAccess;
     private final Weighting weighting;
+    private final int baseNode;
+    private final EdgeExplorer allExplorer;
 
     public InstructionsOutgoingEdges(EdgeIteratorState prevEdge,
                                      EdgeIteratorState currentEdge,
@@ -74,6 +74,7 @@ class InstructionsOutgoingEdges {
                                      DecimalEncodedValue maxSpeedEnc,
                                      EnumEncodedValue<RoadClass> roadClassEnc,
                                      BooleanEncodedValue roadClassLinkEnc,
+                                     IntEncodedValue lanesEnc,
                                      EdgeExplorer allExplorer,
                                      NodeAccess nodeAccess,
                                      int prevNode,
@@ -85,7 +86,10 @@ class InstructionsOutgoingEdges {
         this.maxSpeedEnc = maxSpeedEnc;
         this.roadClassEnc = roadClassEnc;
         this.roadClassLinkEnc = roadClassLinkEnc;
+        this.lanesEnc = lanesEnc;
         this.nodeAccess = nodeAccess;
+        this.baseNode = baseNode;
+        this.allExplorer = allExplorer;
 
         visibleAlternativeTurns = new ArrayList<>();
         allowedAlternativeTurns = new ArrayList<>();
@@ -179,7 +183,7 @@ class InstructionsOutgoingEdges {
      * If either of these properties is true, we can be quite certain that a turn instruction should be provided.
      */
     public boolean isLeavingCurrentStreet(String prevName, String name) {
-        if (InstructionsHelper.isNameSimilar(name, prevName)) {
+        if (InstructionsHelper.isSameName(name, prevName)) {
             return false;
         }
 
@@ -187,11 +191,11 @@ class InstructionsOutgoingEdges {
         for (EdgeIteratorState edge : allowedAlternativeTurns) {
             String edgeName = edge.getName();
             // leave the current street
-            if (InstructionsHelper.isNameSimilar(prevName, edgeName) || (roadClassOrLinkChange && isTheSameRoadClassAndLink(prevEdge, edge))) {
+            if (InstructionsHelper.isSameName(prevName, edgeName) || (roadClassOrLinkChange && isTheSameRoadClassAndLink(prevEdge, edge))) {
                 return true;
             }
             // enter a different street
-            if (InstructionsHelper.isNameSimilar(name, edgeName) || (roadClassOrLinkChange && isTheSameRoadClassAndLink(currentEdge, edge))) {
+            if (InstructionsHelper.isSameName(name, edgeName) || (roadClassOrLinkChange && isTheSameRoadClassAndLink(currentEdge, edge))) {
                 return true;
             }
         }
@@ -202,4 +206,54 @@ class InstructionsOutgoingEdges {
         return edge1.get(roadClassEnc) == edge2.get(roadClassEnc) && edge1.get(roadClassLinkEnc) == edge2.get(roadClassLinkEnc);
     }
 
+    // for cases like in #2946 we should not create instructions as they are only "tagging artifacts"
+    public boolean mergedOrSplitWay() {
+        if (lanesEnc == null) return false;
+
+        String name = currentEdge.getName();
+        RoadClass roadClass = currentEdge.get(roadClassEnc);
+        if (!InstructionsHelper.isSameName(name, prevEdge.getName()) || roadClass != prevEdge.get(roadClassEnc))
+            return false;
+
+        EdgeIterator edgeIter = allExplorer.setBaseNode(baseNode);
+        EdgeIteratorState otherEdge = null;
+        while (edgeIter.next()) {
+            if (currentEdge.getEdge() != edgeIter.getEdge()
+                    && prevEdge.getEdge() != edgeIter.getEdge()
+                    && roadClass == edgeIter.get(roadClassEnc)
+                    && InstructionsHelper.isSameName(name, edgeIter.getName())
+                    && (Double.isFinite(weighting.calcEdgeWeight(edgeIter, false))
+                    || Double.isFinite(weighting.calcEdgeWeight(edgeIter, true)))) {
+                if (otherEdge != null) return false; // too many possible other edges
+                otherEdge = edgeIter.detach(false);
+            }
+        }
+        if (otherEdge == null) return false;
+
+        if (Double.isFinite(weighting.calcEdgeWeight(currentEdge, true))) {
+            // assume two ways are merged into one way
+            // -> prev ->
+            //              <- edge ->
+            // -> other ->
+            if (Double.isFinite(weighting.calcEdgeWeight(prevEdge, true))) return false;
+            // otherEdge has direction from junction outwards
+            if (!Double.isFinite(weighting.calcEdgeWeight(otherEdge, false))) return false;
+            if (Double.isFinite(weighting.calcEdgeWeight(otherEdge, true))) return false;
+
+            int delta = Math.abs(prevEdge.get(lanesEnc) + otherEdge.get(lanesEnc) - currentEdge.get(lanesEnc));
+            return delta <= 1;
+        }
+
+        // assume one way is split into two ways
+        //             -> edge ->
+        // <- prev ->
+        //             -> other ->
+        if (!Double.isFinite(weighting.calcEdgeWeight(prevEdge, true))) return false;
+        // otherEdge has direction from junction outwards
+        if (Double.isFinite(weighting.calcEdgeWeight(otherEdge, false))) return false;
+        if (!Double.isFinite(weighting.calcEdgeWeight(otherEdge, true))) return false;
+
+        int delta = prevEdge.get(lanesEnc) - (currentEdge.get(lanesEnc) + otherEdge.get(lanesEnc));
+        return delta <= 1;
+    }
 }

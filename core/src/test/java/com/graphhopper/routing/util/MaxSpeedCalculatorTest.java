@@ -75,7 +75,7 @@ class MaxSpeedCalculatorTest {
 
     EdgeIteratorState createEdge(ReaderWay way) {
         EdgeIteratorState edge = graph.edge(0, 1);
-        EdgeIntAccess edgeIntAccess = graph.createEdgeIntAccess();
+        EdgeIntAccess edgeIntAccess = graph.getEdgeAccess();
         parsers.handleWayTags(edge.getEdge(), edgeIntAccess, way, em.createRelationFlags());
         return edge;
     }
@@ -239,6 +239,23 @@ class MaxSpeedCalculatorTest {
         calc.fillMaxSpeed(graph, em);
         assertEquals(50, edge.get(maxSpeedEnc), 1);
         assertEquals(100, edge.getReverse(maxSpeedEnc), 1);
+    }
+
+    @Test
+    public void testDifferentStates() {
+        ReaderWay way = new ReaderWay(0L);
+        way.setTag("country", Country.USA);
+        way.setTag("highway", "primary");
+
+        way.setTag("country_state", State.US_CA);
+        EdgeIteratorState edge1 = createEdge(way);
+        way.setTag("country_state", State.US_FL);
+        EdgeIteratorState edge2 = createEdge(way);
+
+        calc.fillMaxSpeed(graph, em);
+
+        assertEquals(106, edge1.get(maxSpeedEnc));
+        assertEquals(90, edge2.get(maxSpeedEnc));
     }
 
     @Test

@@ -26,7 +26,7 @@ import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.application.util.TestUtils;
 import com.graphhopper.config.CHProfile;
-import com.graphhopper.config.Profile;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.exceptions.PointNotFoundException;
@@ -61,20 +61,20 @@ public class RouteResourceClientHCTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.vehicles", "car,bike").
                 putObject("prepare.min_network_size", 0).
                 putObject("graph.elevation.provider", "srtm").
                 putObject("graph.elevation.cache_dir", "../core/files/").
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("graph.encoded_values", "road_class,surface,road_environment,max_speed").
                 putObject("import.osm.ignored_highways", "").
-                putObject("graph.location", DIR)
-                .setProfiles(Arrays.asList(
-                        new Profile("car").setVehicle("car"),
-                        new Profile("bike").setVehicle("bike"),
-                        new Profile("my_custom_car").setVehicle("car")
-                ))
-                .setCHProfiles(Arrays.asList(new CHProfile("car"), new CHProfile("bike")));
+                putObject("graph.location", DIR).
+                putObject("graph.encoded_values", "road_class, surface, road_environment, max_speed, car_access, car_average_speed, bike_access, bike_priority, bike_average_speed").
+                setProfiles(Arrays.asList(
+                        TestProfiles.accessAndSpeed("car"),
+                        TestProfiles.accessSpeedAndPriority("bike"),
+                        TestProfiles.accessAndSpeed("my_custom_car", "car")
+                )).
+                setCHProfiles(Arrays.asList(new CHProfile("car"), new CHProfile("bike")));
         return config;
     }
 
@@ -118,10 +118,10 @@ public class RouteResourceClientHCTest {
         GHResponse rsp = gh.route(req);
         assertFalse(rsp.hasErrors(), "errors:" + rsp.getErrors().toString());
         ResponsePath res = rsp.getBest();
-        isBetween(60, 70, res.getPoints().size());
+        isBetween(70, 80, res.getPoints().size());
         isBetween(2900, 3000, res.getDistance());
         isBetween(110, 120, res.getAscend());
-        isBetween(70, 80, res.getDescend());
+        isBetween(75, 85, res.getDescend());
         isBetween(190, 200, res.getRouteWeight());
 
         // change vehicle
@@ -152,13 +152,13 @@ public class RouteResourceClientHCTest {
         assertEquals(2, paths.size());
 
         ResponsePath path = paths.get(0);
-        assertEquals(35, path.getPoints().size());
-        assertEquals(1689, path.getDistance(), 1);
+        assertEquals(52, path.getPoints().size());
+        assertEquals(1690, path.getDistance(), 1);
         assertTrue(path.getInstructions().toString().contains("Avinguda de Tarragona"), path.getInstructions().toString());
 
         path = paths.get(1);
-        assertEquals(30, path.getPoints().size());
-        assertEquals(1759, path.getDistance(), 1);
+        assertEquals(35, path.getPoints().size());
+        assertEquals(1763, path.getDistance(), 1);
         assertTrue(path.getInstructions().toString().contains("Avinguda Prat de la Creu"), path.getInstructions().toString());
     }
 
@@ -389,6 +389,8 @@ public class RouteResourceClientHCTest {
         List<String> legDetails = Arrays.asList("leg_time", "leg_distance", "leg_weight");
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(42.509141, 1.546063)).
+                // #2915: duplicating the first point yields an empty leg, but there should still be path details for it
+                addPoint(new GHPoint(42.509141, 1.546063)).
                 addPoint(new GHPoint(42.507173, 1.531902)).
                 addPoint(new GHPoint(42.505435, 1.515943)).
                 addPoint(new GHPoint(42.499062, 1.506067)).
@@ -397,33 +399,39 @@ public class RouteResourceClientHCTest {
                 addPoint(new GHPoint(42.49833, 1.504619)).
                 addPoint(new GHPoint(42.498217, 1.504377)).
                 addPoint(new GHPoint(42.495611, 1.498368)).
+                // #2915: duplicating the last point yields an empty leg, but there should still be path details for it
+                        addPoint(new GHPoint(42.495611, 1.498368)).
                 setPathDetails(legDetails).
                 setProfile("bike");
 
         GHResponse response = gh.route(req);
         ResponsePath path = response.getBest();
-        assertEquals(5428, path.getDistance(), 5);
-        assertEquals(9, path.getWaypoints().size());
+        assertEquals(5436, path.getDistance(), 5);
+        assertEquals(11, path.getWaypoints().size());
 
         assertEquals(path.getTime(), path.getPathDetails().get("leg_time").stream().mapToLong(d -> (long) d.getValue()).sum(), 1);
         assertEquals(path.getDistance(), path.getPathDetails().get("leg_distance").stream().mapToDouble(d -> (double) d.getValue()).sum(), 1);
         assertEquals(path.getRouteWeight(), path.getPathDetails().get("leg_weight").stream().mapToDouble(d -> (double) d.getValue()).sum(), 1);
+
+        assertEquals(10, path.getPathDetails().get("leg_time").size());
+        assertEquals(10, path.getPathDetails().get("leg_distance").size());
+        assertEquals(10, path.getPathDetails().get("leg_weight").size());
 
         List<PointList> pointListFromInstructions = getPointListFromInstructions(path);
         for (String detail : legDetails) {
             List<PathDetail> pathDetails = path.getPathDetails().get(detail);
 
             // explicitly check one of the waypoints
-            assertEquals(42.50539, path.getWaypoints().get(2).lat);
-            assertEquals(42.50539, path.getPoints().get(pathDetails.get(1).getLast()).getLat());
-            assertEquals(42.50539, path.getPoints().get(pathDetails.get(2).getFirst()).getLat());
+            assertEquals(42.505398, path.getWaypoints().get(3).lat);
+            assertEquals(42.505398, path.getPoints().get(pathDetails.get(2).getLast()).getLat());
+            assertEquals(42.505398, path.getPoints().get(pathDetails.get(3).getFirst()).getLat());
             // check all the waypoints
             assertEquals(path.getWaypoints().get(0), path.getPoints().get(pathDetails.get(0).getFirst()));
             for (int i = 1; i < path.getWaypoints().size(); ++i)
                 assertEquals(path.getWaypoints().get(i), path.getPoints().get(pathDetails.get(i - 1).getLast()));
 
             List<PointList> pointListFromLegDetails = getPointListFromLegDetails(path, detail);
-            assertEquals(8, pointListFromLegDetails.size());
+            assertEquals(10, pointListFromLegDetails.size());
             assertPointListsEquals(pointListFromInstructions, pointListFromLegDetails);
         }
     }

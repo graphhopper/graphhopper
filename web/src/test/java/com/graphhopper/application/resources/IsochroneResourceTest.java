@@ -22,8 +22,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
-import com.graphhopper.config.Profile;
-import com.graphhopper.util.CustomModel;
+import com.graphhopper.util.TurnCostsConfig;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.JsonFeatureCollection;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
@@ -54,14 +54,14 @@ public class IsochroneResourceTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.vehicles", "car|turn_costs=true").
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR).
+                putObject("graph.encoded_values", "car_access, car_average_speed").
                 setProfiles(Arrays.asList(
-                        new Profile("fast_car").setVehicle("car").setTurnCosts(true),
-                        new Profile("short_car").setCustomModel(new CustomModel().setDistanceInfluence(1_000d)).setVehicle("car").setTurnCosts(true),
-                        new Profile("fast_car_no_turn_restrictions").setVehicle("car").setTurnCosts(false)
+                        TestProfiles.accessAndSpeed("fast_car", "car").setTurnCostsConfig(TurnCostsConfig.car()),
+                        TestProfiles.constantSpeed("short_car", 35).setTurnCostsConfig(TurnCostsConfig.car()),
+                        TestProfiles.accessAndSpeed("fast_car_no_turn_restrictions", "car")
                 ));
         return config;
     }
@@ -369,6 +369,6 @@ public class IsochroneResourceTest {
 
         Polygon beforeLastPolygon = (Polygon) collection.getFeatures().get(collection.getFeatures().size() - 2).getGeometry();
         assertTrue(beforeLastPolygon.contains(geometryFactory.createPoint(new Coordinate(1.564136, 42.524938))));
-        assertFalse(beforeLastPolygon.contains(geometryFactory.createPoint(new Coordinate(1.571474, 42.529176))));
+        assertFalse(beforeLastPolygon.contains(geometryFactory.createPoint(new Coordinate(1.575551, 42.532528))));
     }
 }

@@ -25,6 +25,7 @@ import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
+import com.graphhopper.util.TurnCostsConfig;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
@@ -37,7 +38,6 @@ import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.RoutingCHGraph;
@@ -58,7 +58,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
-import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 
 /**
@@ -99,15 +99,12 @@ public class MiniGraphUI {
         args.putObject("datareader.file", args.getString("datareader.file", "core/files/monaco.osm.gz"));
         args.putObject("graph.location", args.getString("graph.location", "tools/target/mini-graph-ui-gh"));
         GraphHopperConfig ghConfig = new GraphHopperConfig(args);
-        ghConfig.setProfiles(Arrays.asList(
-                new Profile("profile")
-                        .setVehicle("car")
-                        .setTurnCosts(true)
-        )).putObject("import.osm.ignored_highways", "");
-        ghConfig.setCHProfiles(Arrays.asList(
+        ghConfig.setProfiles(List.of(TestProfiles.accessAndSpeed("profile", "car").setTurnCostsConfig(TurnCostsConfig.car()))).
+                putObject("import.osm.ignored_highways", "");
+        ghConfig.setCHProfiles(List.of(
                 new CHProfile("profile")
         ));
-        ghConfig.setLMProfiles(Arrays.asList(
+        ghConfig.setLMProfiles(List.of(
                 new LMProfile("profile")
         ));
         GraphHopper hopper = new GraphHopper().init(ghConfig).importOrLoad();
@@ -119,9 +116,8 @@ public class MiniGraphUI {
     public MiniGraphUI(GraphHopper hopper, boolean debug, boolean useCH) {
         this.graph = hopper.getBaseGraph();
         this.na = graph.getNodeAccess();
-        String vehicle = hopper.getProfiles().get(0).getVehicle();
-        accessEnc = hopper.getEncodingManager().getBooleanEncodedValue(VehicleAccess.key(vehicle));
-        avSpeedEnc = hopper.getEncodingManager().getDecimalEncodedValue(VehicleSpeed.key(vehicle));
+        accessEnc = hopper.getEncodingManager().getBooleanEncodedValue(VehicleAccess.key("car"));
+        avSpeedEnc = hopper.getEncodingManager().getDecimalEncodedValue(VehicleSpeed.key("car"));
         this.useCH = useCH;
 
         logger.info("locations:" + graph.getNodes() + ", debug:" + debug);
@@ -332,7 +328,7 @@ public class MiniGraphUI {
             };
             AlgorithmOptions algoOpts = new AlgorithmOptions().setAlgorithm(Algorithms.ASTAR_BI).
                     setTraversalMode(TraversalMode.EDGE_BASED);
-            return algoFactory.createAlgo(qGraph, CustomModelParser.createFastestWeighting(accessEnc, avSpeedEnc, hopper.getEncodingManager()), algoOpts);
+            return algoFactory.createAlgo(qGraph, hopper.createWeighting(profile, new PMap()), algoOpts);
         }
     }
 

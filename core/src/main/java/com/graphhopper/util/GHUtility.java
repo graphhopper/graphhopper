@@ -21,8 +21,7 @@ import com.bedatadriven.jackson.datatype.jts.JtsModule;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.graphhopper.coll.GHBitSet;
-import com.graphhopper.coll.GHBitSetImpl;
+import com.graphhopper.jackson.Jackson;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.Country;
@@ -43,21 +42,18 @@ import org.locationtech.jts.geom.Polygon;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.UncheckedIOException;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static com.graphhopper.routing.ev.State.ISO_3166_2;
 import static com.graphhopper.util.DistanceCalcEarth.DIST_EARTH;
+import static com.graphhopper.util.Helper.readJSONFileWithoutComments;
 
 /**
  * A helper class to avoid cluttering the Graph interface with all the common methods. Most of the
@@ -311,124 +307,6 @@ public class GHUtility {
         return min + rnd.nextDouble() * (max - min);
     }
 
-    public static Graph shuffle(Graph g, Graph sortedGraph) {
-        if (g.getTurnCostStorage() != null)
-            throw new IllegalArgumentException("Shuffling the graph is currently not supported in the presence of turn costs");
-        IntArrayList nodes = ArrayUtil.permutation(g.getNodes(), new Random());
-        IntArrayList edges = ArrayUtil.permutation(g.getEdges(), new Random());
-        return createSortedGraph(g, sortedGraph, nodes, edges);
-    }
-
-    /**
-     * Sorts the graph according to depth-first search traversal. Other traversals have either no
-     * significant difference (bfs) for querying or are worse (z-curve).
-     */
-    public static Graph sortDFS(Graph g, Graph sortedGraph) {
-        if (g.getTurnCostStorage() != null) {
-            // not only would we have to sort the turn cost storage when we re-sort the graph, but we'd also have to make
-            // sure that the location index always snaps to real edges and not the corresponding artificial edge that we
-            // introduced to deal with via-way restrictions. Without sorting this works automatically because the real
-            // edges use lower edge ids. Otherwise we'd probably have to use some kind of is_artificial flag for each
-            // edge.
-            throw new IllegalArgumentException("Sorting the graph is currently not supported in the presence of turn costs");
-        }
-        int nodes = g.getNodes();
-        final IntArrayList nodeList = ArrayUtil.constant(nodes, -1);
-        final GHBitSetImpl nodeBitset = new GHBitSetImpl(nodes);
-        final AtomicInteger nodeRef = new AtomicInteger(-1);
-
-        int edges = g.getEdges();
-        final IntArrayList edgeList = ArrayUtil.constant(edges, -1);
-        final GHBitSetImpl edgeBitset = new GHBitSetImpl(edges);
-        final AtomicInteger edgeRef = new AtomicInteger(-1);
-
-        EdgeExplorer explorer = g.createEdgeExplorer();
-        for (int startNode = 0; startNode >= 0 && startNode < nodes;
-             startNode = nodeBitset.nextClear(startNode + 1)) {
-            new DepthFirstSearch() {
-                @Override
-                protected GHBitSet createBitSet() {
-                    return nodeBitset;
-                }
-
-                @Override
-                protected boolean checkAdjacent(EdgeIteratorState edge) {
-                    int edgeId = edge.getEdge();
-                    if (!edgeBitset.contains(edgeId)) {
-                        edgeBitset.add(edgeId);
-                        edgeList.set(edgeRef.incrementAndGet(), edgeId);
-                    }
-                    return super.checkAdjacent(edge);
-                }
-
-                @Override
-                protected boolean goFurther(int nodeId) {
-                    nodeList.set(nodeId, nodeRef.incrementAndGet());
-                    return super.goFurther(nodeId);
-                }
-            }.start(explorer, startNode);
-        }
-        return createSortedGraph(g, sortedGraph, nodeList, edgeList);
-    }
-
-    static Graph createSortedGraph(Graph fromGraph, Graph toSortedGraph, final IntIndexedContainer oldToNewNodeList, final IntIndexedContainer newToOldEdgeList) {
-        if (fromGraph.getTurnCostStorage() != null) {
-            throw new IllegalArgumentException("Sorting the graph is currently not supported in the presence of turn costs");
-        }
-        int edges = fromGraph.getEdges();
-        for (int i = 0; i < edges; i++) {
-            int edgeId = newToOldEdgeList.get(i);
-            if (edgeId < 0)
-                continue;
-
-            EdgeIteratorState eIter = fromGraph.getEdgeIteratorState(edgeId, Integer.MIN_VALUE);
-
-            int base = eIter.getBaseNode();
-            int newBaseIndex = oldToNewNodeList.get(base);
-            int adj = eIter.getAdjNode();
-            int newAdjIndex = oldToNewNodeList.get(adj);
-
-            // ignore empty entries
-            if (newBaseIndex < 0 || newAdjIndex < 0)
-                continue;
-
-            toSortedGraph.edge(newBaseIndex, newAdjIndex).copyPropertiesFrom(eIter);
-        }
-
-        int nodes = fromGraph.getNodes();
-        NodeAccess na = fromGraph.getNodeAccess();
-        NodeAccess sna = toSortedGraph.getNodeAccess();
-        for (int old = 0; old < nodes; old++) {
-            int newIndex = oldToNewNodeList.get(old);
-            if (sna.is3D())
-                sna.setNode(newIndex, na.getLat(old), na.getLon(old), na.getEle(old));
-            else
-                sna.setNode(newIndex, na.getLat(old), na.getLon(old));
-        }
-        return toSortedGraph;
-    }
-
-    static Directory guessDirectory(BaseGraph graph) {
-        if (graph.getDirectory() instanceof MMapDirectory) {
-            throw new IllegalStateException("not supported yet: mmap will overwrite existing storage at the same location");
-        }
-        String location = graph.getDirectory().getLocation();
-        boolean isStoring = ((GHDirectory) graph.getDirectory()).isStoring();
-        return new RAMDirectory(location, isStoring);
-    }
-
-    /**
-     * Create a new storage from the specified one without copying the data. CHGraphs won't be copied.
-     */
-    public static BaseGraph newGraph(BaseGraph baseGraph) {
-        Directory outdir = guessDirectory(baseGraph);
-        return new BaseGraph.Builder(baseGraph.getIntsForFlags())
-                .withTurnCosts(baseGraph.getTurnCostStorage() != null)
-                .set3D(baseGraph.getNodeAccess().is3D())
-                .setDir(outdir)
-                .create();
-    }
-
     public static int getAdjNode(Graph g, int edge, int adjNode) {
         if (EdgeIterator.Edge.isValid(edge)) {
             EdgeIteratorState iterTo = g.getEdgeIteratorState(edge, adjNode);
@@ -500,6 +378,29 @@ public class GHUtility {
         return edgeKey / 2;
     }
 
+    /**
+     * @return the common node of two edges
+     * @throws IllegalArgumentException if one of the edges doesn't exist or is a loop or the edges
+     *                                  aren't connected at exactly one distinct node
+     */
+    public static int getCommonNode(BaseGraph baseGraph, int edge1, int edge2) {
+        EdgeIteratorState e1 = baseGraph.getEdgeIteratorState(edge1, Integer.MIN_VALUE);
+        EdgeIteratorState e2 = baseGraph.getEdgeIteratorState(edge2, Integer.MIN_VALUE);
+        if (e1.getBaseNode() == e1.getAdjNode())
+            throw new IllegalArgumentException("edge1: " + edge1 + " is a loop at node " + e1.getBaseNode());
+        if (e2.getBaseNode() == e2.getAdjNode())
+            throw new IllegalArgumentException("edge2: " + edge2 + " is a loop at node " + e2.getBaseNode());
+
+        if ((e1.getBaseNode() == e2.getBaseNode() && e1.getAdjNode() == e2.getAdjNode()) || (e1.getBaseNode() == e2.getAdjNode() && e1.getAdjNode() == e2.getBaseNode()))
+            throw new IllegalArgumentException("edge1: " + edge1 + " and edge2: " + edge2 + " form a circle");
+        else if (e1.getBaseNode() == e2.getBaseNode() || e1.getBaseNode() == e2.getAdjNode())
+            return e1.getBaseNode();
+        else if (e1.getAdjNode() == e2.getAdjNode() || e1.getAdjNode() == e2.getBaseNode())
+            return e1.getAdjNode();
+        else
+            throw new IllegalArgumentException("edge1: " + edge1 + " and edge2: " + edge2 + " aren't connected");
+    }
+
     public static void setSpeed(double fwdSpeed, double bwdSpeed, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, EdgeIteratorState... edges) {
         setSpeed(fwdSpeed, bwdSpeed, accessEnc, speedEnc, Arrays.asList(edges));
     }
@@ -534,13 +435,18 @@ public class GHUtility {
         return edge;
     }
 
-    public static void updateDistancesFor(Graph g, int node, double lat, double lon) {
+    public static void updateDistancesFor(Graph g, int node, double... latlonele) {
         NodeAccess na = g.getNodeAccess();
-        na.setNode(node, lat, lon);
+        if (latlonele.length == 3)
+            na.setNode(node, latlonele[0], latlonele[1], latlonele[2]);
+        else if (latlonele.length == 2) {
+            if (na.is3D()) throw new IllegalArgumentException("graph requires elevation");
+            na.setNode(node, latlonele[0], latlonele[1]);
+        } else
+            throw new IllegalArgumentException("illegal number of arguments " + latlonele.length);
         EdgeIterator iter = g.createEdgeExplorer().setBaseNode(node);
         while (iter.next()) {
             iter.setDistance(DIST_EARTH.calcDistance(iter.fetchWayGeometry(FetchMode.ALL)));
-            // System.out.println(node + "->" + adj + ": " + iter.getDistance());
         }
     }
 
@@ -750,5 +656,18 @@ public class GHUtility {
 
     private static void fail(String message) {
         throw new AssertionError(message);
+    }
+
+    public static CustomModel loadCustomModelFromJar(String name) {
+        try {
+            InputStream is = GHUtility.class.getResourceAsStream("/com/graphhopper/custom_models/" + name);
+            if (is == null)
+                throw new IllegalArgumentException("There is no built-in custom model '" + name + "'");
+            String json = readJSONFileWithoutComments(new InputStreamReader(is));
+            ObjectMapper objectMapper = Jackson.newObjectMapper();
+            return objectMapper.readValue(json, CustomModel.class);
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Could not load built-in custom model '" + name + "'");
+        }
     }
 }

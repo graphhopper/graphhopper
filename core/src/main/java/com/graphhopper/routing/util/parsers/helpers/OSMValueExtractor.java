@@ -30,7 +30,7 @@ public class OSMValueExtractor {
     }
 
     public static void extractTons(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, DecimalEncodedValue valueEncoder, List<String> keys) {
-        final String rawValue = way.getFirstPriorityTag(keys);
+        final String rawValue = way.getFirstValue(keys);
         double value = stringToTons(rawValue);
 
         if (Double.isNaN(value)) value = Double.POSITIVE_INFINITY;
@@ -93,7 +93,7 @@ public class OSMValueExtractor {
     }
 
     public static void extractMeter(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, DecimalEncodedValue valueEncoder, List<String> keys) {
-        final String rawValue = way.getFirstPriorityTag(keys);
+        final String rawValue = way.getFirstValue(keys);
         double value = stringToMeter(rawValue);
 
         if (Double.isNaN(value)) value = Double.POSITIVE_INFINITY;

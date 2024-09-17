@@ -21,20 +21,18 @@ package com.graphhopper.http;
 import com.graphhopper.gtfs.GHLocation;
 import io.dropwizard.jersey.params.AbstractParam;
 
-import org.checkerframework.checker.nullness.qual.Nullable;
-
 public class GHLocationParam extends AbstractParam<GHLocation> {
 
-    public GHLocationParam(@Nullable String input) {
+    public GHLocationParam(String input) {
         super(input);
     }
 
-    public GHLocationParam(@Nullable String input, String parameterName) {
+    public GHLocationParam(String input, String parameterName) {
         super(input, parameterName);
     }
 
     @Override
-    protected GHLocation parse(@Nullable String input) throws Exception {
+    protected GHLocation parse(String input) throws Exception {
         if (input == null)
             return null;
         return GHLocation.fromString(input);

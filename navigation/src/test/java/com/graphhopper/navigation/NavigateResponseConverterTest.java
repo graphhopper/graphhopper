@@ -5,9 +5,11 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
-import com.graphhopper.config.Profile;
+import com.graphhopper.jackson.ResponsePathSerializer;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
+import com.graphhopper.util.PointList;
 import com.graphhopper.util.TranslationMap;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.jupiter.api.AfterAll;
@@ -26,7 +28,6 @@ public class NavigateResponseConverterTest {
     private static final String graphFolder = "target/graphhopper-test-car";
     private static final String osmFile = "../core/files/andorra.osm.gz";
     private static GraphHopper hopper;
-    private static final String vehicle = "car";
     private static final String profile = "my_car";
 
     private final TranslationMap trMap = hopper.getTranslationMap();
@@ -41,7 +42,8 @@ public class NavigateResponseConverterTest {
                 setOSMFile(osmFile).
                 setStoreOnFlush(true).
                 setGraphHopperLocation(graphFolder).
-                setProfiles(new Profile(profile).setVehicle(vehicle).setTurnCosts(false)).
+                setEncodedValuesString("car_access, car_average_speed").
+                setProfiles(TestProfiles.accessAndSpeed(profile, "car")).
                 importOrLoad();
     }
 
@@ -53,8 +55,7 @@ public class NavigateResponseConverterTest {
     @Test
     public void basicTest() {
 
-        GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).
-                setProfile(profile));
+        GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile(profile));
 
         ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH, distanceConfig);
 
@@ -76,7 +77,8 @@ public class NavigateResponseConverterTest {
         JsonNode step = steps.get(0);
         JsonNode maneuver = step.get("maneuver");
         // Intersection coordinates should be equal to maneuver coordinates
-        assertEquals(maneuver.get("location").get(0).asDouble(), step.get("intersections").get(0).get("location").get(0).asDouble(), .00001);
+        assertEquals(maneuver.get("location").get(0).asDouble(),
+                step.get("intersections").get(0).get("location").get(0).asDouble(), .00001);
 
         assertEquals("depart", maneuver.get("type").asText());
         assertEquals("straight", maneuver.get("modifier").asText());
@@ -121,10 +123,31 @@ public class NavigateResponseConverterTest {
     }
 
     @Test
+    public void arriveGeometryTest() {
+
+        GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile(profile));
+
+        ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH, distanceConfig);
+
+        JsonNode steps = json.get("routes").get(0).get("legs").get(0).get("steps");
+
+        // Step 17 is the last before arrival
+        JsonNode step = steps.get(17);
+
+        PointList expectedArrivePointList = rsp.getBest().getInstructions().get(17).getPoints().clone(false);
+        PointList ghArrive = rsp.getBest().getInstructions().get(18).getPoints();
+        // We expect that the Mapbox compatible response builds the geometry to the
+        // arrival coordinate
+        expectedArrivePointList.add(ghArrive);
+        String encodedExpected = ResponsePathSerializer.encodePolyline(expectedArrivePointList, false, 1e6);
+
+        assertEquals(encodedExpected, step.get("geometry").asText());
+    }
+
+    @Test
     public void voiceInstructionsTest() {
 
-        GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).
-                setProfile(profile));
+        GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile(profile));
 
         ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH, distanceConfig);
 
@@ -137,7 +160,8 @@ public class NavigateResponseConverterTest {
         assertEquals(2, voiceInstructions.size());
         JsonNode voiceInstruction = voiceInstructions.get(0);
         assertEquals(200, voiceInstruction.get("distanceAlongGeometry").asDouble(), 1);
-        assertEquals("In 200 meters At roundabout, take exit 2 onto CS-340, then At roundabout, take exit 2 onto CG-3", voiceInstruction.get("announcement").asText());
+        assertEquals("In 200 meters At roundabout, take exit 2 onto CS-340, then At roundabout, take exit 2 onto CG-3",
+                voiceInstruction.get("announcement").asText());
 
         // Step 14 is over 3km long
         step = steps.get(14);
@@ -155,8 +179,7 @@ public class NavigateResponseConverterTest {
     @Test
     public void voiceInstructionsImperialTest() {
 
-        GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).
-                setProfile(profile));
+        GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile(profile));
 
         ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH,
                 new DistanceConfig(DistanceUtils.Unit.IMPERIAL, trMap, Locale.ENGLISH));
@@ -171,7 +194,8 @@ public class NavigateResponseConverterTest {
         assertEquals(2, voiceInstructions.size());
         JsonNode voiceInstruction = voiceInstructions.get(0);
         assertEquals(200, voiceInstruction.get("distanceAlongGeometry").asDouble(), 1);
-        assertEquals("In 600 feet At roundabout, take exit 2 onto CS-340, then At roundabout, take exit 2 onto CG-3", voiceInstruction.get("announcement").asText());
+        assertEquals("In 600 feet At roundabout, take exit 2 onto CS-340, then At roundabout, take exit 2 onto CG-3",
+                voiceInstruction.get("announcement").asText());
 
         // Step 14 is over 3km long
         step = steps.get(14);
@@ -191,8 +215,8 @@ public class NavigateResponseConverterTest {
     @Disabled
     public void alternativeRoutesTest() {
 
-        GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).
-                setProfile(profile).setAlgorithm(Parameters.Algorithms.ALT_ROUTE));
+        GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile(profile)
+                .setAlgorithm(Parameters.Algorithms.ALT_ROUTE));
 
         assertEquals(2, rsp.getAll().size());
 
@@ -208,8 +232,7 @@ public class NavigateResponseConverterTest {
     @Test
     public void voiceInstructionTranslationTest() {
 
-        GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).
-                setProfile(profile));
+        GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile(profile));
 
         ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH, distanceConfig);
 
@@ -217,8 +240,8 @@ public class NavigateResponseConverterTest {
         JsonNode voiceInstruction = steps.get(14).get("voiceInstructions").get(0);
         assertEquals("In 2 kilometers keep right", voiceInstruction.get("announcement").asText());
 
-        rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).
-                setProfile(profile).setLocale(Locale.GERMAN));
+        rsp = hopper.route(
+                new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile(profile).setLocale(Locale.GERMAN));
 
         DistanceConfig distanceConfigGerman = new DistanceConfig(DistanceUtils.Unit.METRIC, trMap, Locale.GERMAN);
 
@@ -232,8 +255,7 @@ public class NavigateResponseConverterTest {
     @Test
     public void roundaboutDegreesTest() {
 
-        GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).
-                setProfile(profile));
+        GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile(profile));
 
         ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH, distanceConfig);
 
@@ -252,8 +274,8 @@ public class NavigateResponseConverterTest {
 
     @Test
     public void intersectionTest() {
-        GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).
-                setProfile(profile).setPathDetails(Collections.singletonList("intersection")));
+        GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile(profile)
+                .setPathDetails(Collections.singletonList("intersection")));
 
         ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH, distanceConfig);
 
@@ -281,6 +303,46 @@ public class NavigateResponseConverterTest {
     }
 
     @Test
+    public void barrierTest() {
+        // There is a barrier https://www.openstreetmap.org/node/2206610569 on the route
+        GHResponse rsp = hopper.route(new GHRequest(42.601991, 1.687227, 42.601616, 1.687888).setProfile(profile)
+                .setPathDetails(Collections.singletonList("intersection")));
+
+        ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH, distanceConfig);
+
+        JsonNode steps = json.get("routes").get(0).get("legs").get(0).get("steps");
+
+        JsonNode step = steps.get(1);
+
+        JsonNode intersection = step.get("intersections").get(1);
+
+        // checking order of entries
+        assertEquals(0, intersection.get("out").asInt());
+
+        JsonNode location = intersection.get("location");
+        // The location of the barrier
+        assertEquals(location.get(0).asDouble(), 1.6878903, .000001);
+        assertEquals(location.get(1).asDouble(), 42.601764, .000001);
+
+        int inPosition = intersection.get("in").asInt();
+        int outPosition = intersection.get("out").asInt();
+        JsonNode entry = intersection.get("entry");
+        assertEquals(false, entry.get(inPosition).asBoolean());
+        assertEquals(true, entry.get(outPosition).asBoolean());
+
+        JsonNode bearings = intersection.get("bearings");
+        double inBearing = bearings.get(inPosition).asDouble();
+        double outBearing = bearings.get(outPosition).asDouble();
+
+        // and these should be the bearings
+        assertEquals(353, inBearing);
+        assertEquals(171, outBearing);
+
+        // and no additional intersection
+        assertEquals(step.get("intersections").size(), 2);
+    }
+
+    @Test
     public void testMultipleWaypoints() {
 
         GHRequest request = new GHRequest();
@@ -294,7 +356,7 @@ public class NavigateResponseConverterTest {
 
         ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH, distanceConfig);
 
-        //Check that all waypoints are there and in the right order
+        // Check that all waypoints are there and in the right order
         JsonNode waypointsJson = json.get("waypoints");
         assertEquals(4, waypointsJson.size());
 
@@ -310,7 +372,7 @@ public class NavigateResponseConverterTest {
         waypointLoc = waypointsJson.get(3).get("location");
         assertEquals(1.527218, waypointLoc.get(0).asDouble(), .00001);
 
-        //Check that there are 3 legs
+        // Check that there are 3 legs
         JsonNode route = json.get("routes").get(0);
         JsonNode legs = route.get("legs");
         assertEquals(3, legs.size());
@@ -333,15 +395,15 @@ public class NavigateResponseConverterTest {
             assertEquals("arrive", maneuver.get("type").asText());
         }
 
-        // Check if the duration and distance of the legs sum up to the overall route distance and duration
+        // Check if the duration and distance of the legs sum up to the overall route
+        // distance and duration
         assertEquals(route.get("duration").asDouble(), duration, 1);
         assertEquals(route.get("distance").asDouble(), distance, 1);
     }
 
     @Test
     public void testError() {
-        GHResponse rsp = hopper.route(new GHRequest(42.554851, 111.536198, 42.510071, 1.548128).
-                setProfile(profile));
+        GHResponse rsp = hopper.route(new GHRequest(42.554851, 111.536198, 42.510071, 1.548128).setProfile(profile));
 
         ObjectNode json = NavigateResponseConverter.convertFromGHResponseError(rsp);
 

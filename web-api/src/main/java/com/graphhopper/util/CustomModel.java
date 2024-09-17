@@ -159,7 +159,8 @@ public class CustomModel {
     private String createContentString() {
         // used to check against stored custom models, see #2026
         return "distanceInfluence=" + distanceInfluence + "|headingPenalty=" + headingPenalty
-                + "|speedStatements=" + speedStatements + "|priorityStatements=" + priorityStatements + "|areas=" + areas;
+                + "|speedStatements=" + speedStatements + "|priorityStatements=" + priorityStatements
+                + "|areas=" + areas;
     }
 
     /**
@@ -178,8 +179,8 @@ public class CustomModel {
             mergedCM.headingPenalty = queryModel.headingPenalty;
         mergedCM.speedStatements.addAll(queryModel.getSpeed());
         mergedCM.priorityStatements.addAll(queryModel.getPriority());
-        mergedCM.addAreas(queryModel.getAreas());
 
+        mergedCM.addAreas(queryModel.getAreas());
         return mergedCM;
     }
 }
