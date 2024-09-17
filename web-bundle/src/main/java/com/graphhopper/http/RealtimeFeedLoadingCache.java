@@ -31,8 +31,8 @@ import com.graphhopper.gtfs.Transfers;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.BaseGraph;
 import io.dropwizard.lifecycle.Managed;
+import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.glassfish.hk2.api.Factory;
 
 import javax.inject.Inject;
@@ -47,7 +47,7 @@ import java.util.concurrent.TimeUnit;
 
 public class RealtimeFeedLoadingCache implements Factory<RealtimeFeed>, Managed {
 
-    private final CloseableHttpClient httpClient;
+    private final HttpClient httpClient;
     private final BaseGraph baseGraph;
     private final EncodingManager encodingManager;
     private final GtfsStorage gtfsStorage;
@@ -57,7 +57,7 @@ public class RealtimeFeedLoadingCache implements Factory<RealtimeFeed>, Managed 
     private Map<String, Transfers> transfers;
 
     @Inject
-    RealtimeFeedLoadingCache(BaseGraph baseGraph, EncodingManager encodingManager, GtfsStorage gtfsStorage, CloseableHttpClient httpClient, RealtimeBundleConfiguration bundleConfiguration) {
+    RealtimeFeedLoadingCache(BaseGraph baseGraph, EncodingManager encodingManager, GtfsStorage gtfsStorage, HttpClient httpClient, RealtimeBundleConfiguration bundleConfiguration) {
         this.baseGraph = baseGraph;
         this.encodingManager = encodingManager;
         this.gtfsStorage = gtfsStorage;
