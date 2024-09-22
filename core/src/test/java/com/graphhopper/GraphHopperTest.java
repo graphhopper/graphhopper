@@ -2856,7 +2856,7 @@ public class GraphHopperTest {
         assertEquals(42, detailList.get(2).getLast());
 
         //Check the result of the route with avoiding the noisy roads nearby
-        CustomModel customModel = profile.getCustomModel();
+        CustomModel customModel = new CustomModel();
         customModel.getPriority().add(If("noisy_road_nearby", MULTIPLY, "0.8"));
         GHResponse rspAvoidNoisyRoad = hopper.route(req.setProfile(profileName).setCustomModel(customModel));
         assertFalse(rspAvoidNoisyRoad.hasErrors(), rspAvoidNoisyRoad.getErrors().toString());
