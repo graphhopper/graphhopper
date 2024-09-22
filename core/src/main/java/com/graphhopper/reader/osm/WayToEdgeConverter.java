@@ -56,9 +56,9 @@ public class WayToEdgeConverter {
                     result.fromEdges.add(e.value);
             });
         if (result.fromEdges.size() < fromWays.size())
-            throw new OSMRestrictionException("has from member ways that aren't adjacent to the via member node");
+            throw new OSMRestrictionException("has from-member ways that aren't adjacent to the via-member node");
         else if (result.fromEdges.size() > fromWays.size())
-            throw new OSMRestrictionException("has from member ways that aren't split at the via member node");
+            throw new OSMRestrictionException("has from-member ways that aren't split at the via-member node");
 
         for (LongCursor toWay : toWays)
             edgesByWay.apply(toWay.value).forEachRemaining(e -> {
@@ -66,9 +66,9 @@ public class WayToEdgeConverter {
                     result.toEdges.add(e.value);
             });
         if (result.toEdges.size() < toWays.size())
-            throw new OSMRestrictionException("has to member ways that aren't adjacent to the via member node");
+            throw new OSMRestrictionException("has to-member ways that aren't adjacent to the via-member node");
         else if (result.toEdges.size() > toWays.size())
-            throw new OSMRestrictionException("has to member ways that aren't split at the via member node");
+            throw new OSMRestrictionException("has to-member ways that aren't split at the via-member node");
         return result;
     }
 

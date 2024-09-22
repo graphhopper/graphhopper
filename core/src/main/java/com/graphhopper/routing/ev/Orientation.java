@@ -15,31 +15,14 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+package com.graphhopper.routing.ev;
 
-package com.graphhopper.http;
+public class Orientation {
+    public static final String KEY = "orientation";
 
-import io.dropwizard.jersey.params.AbstractParam;
-
-import java.time.OffsetDateTime;
-
-public class OffsetDateTimeParam extends AbstractParam<OffsetDateTime> {
-    public OffsetDateTimeParam(String input) {
-        super(input);
-    }
-
-    public OffsetDateTimeParam(String input, String parameterName) {
-        super(input, parameterName);
-    }
-
-    @Override
-    protected String errorMessage(Exception e) {
-        return "%s must be in a ISO-8601 format.";
-    }
-
-    @Override
-    protected OffsetDateTime parse(String input) {
-        if (input == null)
-            return null;
-        return OffsetDateTime.parse(input);
+    // Due to pillar nodes we need 2 values: the orientation at the adjacent node and the reverse
+    // value for orientation at the base node. Store in degrees.
+    public static DecimalEncodedValue create() {
+        return new DecimalEncodedValueImpl(KEY, 5, 0, 360 / 30.0, false, true, false);
     }
 }

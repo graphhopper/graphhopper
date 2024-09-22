@@ -98,6 +98,11 @@ public class DefaultImportRegistry implements ImportRegistry {
                     (lookup, props) -> new OSMMaxLengthParser(
                             lookup.getDecimalEncodedValue(MaxLength.KEY))
             );
+        else if (Orientation.KEY.equals(name))
+            return ImportUnit.create(name, props -> Orientation.create(),
+                    (lookup, props) -> new OrientationCalculator(
+                            lookup.getDecimalEncodedValue(Orientation.KEY))
+            );
         else if (Surface.KEY.equals(name))
             return ImportUnit.create(name, props -> Surface.create(),
                     (lookup, props) -> new OSMSurfaceParser(

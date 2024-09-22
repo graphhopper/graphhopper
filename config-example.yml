@@ -33,6 +33,7 @@ graphhopper:
 #     turn_costs:
 #       vehicle_types: [motorcar, motor_vehicle]
 #       u_turn_costs: 60
+#     for more advanced turn costs, see #2957 or bike_tc.yml
      custom_model_files: [car.json]
 
 #   You can use the following in-built profiles. After you start GraphHopper it will print which encoded values you'll have to add to graph.encoded_values in this config file.
@@ -67,7 +68,7 @@ graphhopper:
   # It's possible to speed up routing by doing a special graph preparation (Contraction Hierarchies, CH). This requires
   # more RAM/disk space for holding the prepared graph but also means less memory usage per request. Using the following
   # list you can define for which of the above routing profiles such preparation shall be performed. Note that to support
-  # profiles with `turn_costs: true` a more elaborate preparation is required (longer preparation time and more memory
+  # profiles with `turn_costs` a more elaborate preparation is required (longer preparation time and more memory
   # usage) and the routing will also be slower than with `turn_costs: false`.
   profiles_ch:
     - profile: car

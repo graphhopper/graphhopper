@@ -37,7 +37,6 @@ import java.util.*;
  */
 public class OSMTemporalAccessParser implements TagParser {
 
-    private static final Logger logger = LoggerFactory.getLogger(OSMTemporalAccessParser.class);
     private final Collection<String> conditionals;
     private final Setter restrictionSetter;
     private final DateRangeParser parser;
