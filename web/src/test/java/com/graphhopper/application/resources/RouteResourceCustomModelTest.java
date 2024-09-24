@@ -25,6 +25,7 @@ import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.TestProfiles;
+import com.graphhopper.util.BodyAndStatus;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TurnCostsConfig;
@@ -37,14 +38,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Response;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.graphhopper.application.resources.Util.postWithStatus;
 import static com.graphhopper.application.util.TestUtils.clientTarget;
 import static com.graphhopper.json.Statement.If;
 import static com.graphhopper.json.Statement.Op.LIMIT;
@@ -384,10 +384,9 @@ public class RouteResourceCustomModelTest {
     }
 
     JsonNode query(String body, int code) {
-        try (Response response = clientTarget(app, "/route").request().post(Entity.json(body))) {
-            JsonNode json = response.readEntity(JsonNode.class);
-            assertEquals(code, response.getStatus(), json.toPrettyString());
-            return json;
-        }
+        BodyAndStatus response = postWithStatus(clientTarget(app, "/route"), body);
+        JsonNode json = response.getBody();
+        assertEquals(code, response.getStatus(), json.toPrettyString());
+        return json;
     }
 }

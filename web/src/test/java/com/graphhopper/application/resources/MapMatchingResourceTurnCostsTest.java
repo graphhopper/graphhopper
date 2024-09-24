@@ -101,14 +101,15 @@ public class MapMatchingResourceTurnCostsTest {
 
     @Test
     public void errorOnUnknownProfile() {
-        final Response response = clientTarget(app, "/match?profile=xyz")
+        try (Response response = clientTarget(app, "/match?profile=xyz")
                 .request()
                 .buildPost(Entity.xml(getClass().getResourceAsStream("another-tour-with-loop.gpx")))
-                .invoke();
-        JsonNode json = response.readEntity(JsonNode.class);
-        assertTrue(json.has("message"), json.toString());
-        assertEquals(400, response.getStatus());
-        assertTrue(json.toString().contains("The requested profile 'xyz' does not exist.\\nAvailable profiles: [car, car_no_tc, bike]"), json.toString());
+                .invoke()) {
+            JsonNode json = response.readEntity(JsonNode.class);
+            assertTrue(json.has("message"), json.toString());
+            assertEquals(400, response.getStatus());
+            assertTrue(json.toString().contains("The requested profile 'xyz' does not exist.\\nAvailable profiles: [car, car_no_tc, bike]"), json.toString());
+        }
     }
 
     private void runCar(String urlParams) {

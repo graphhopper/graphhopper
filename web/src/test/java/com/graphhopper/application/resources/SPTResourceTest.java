@@ -23,6 +23,7 @@ import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.routing.TestProfiles;
+import com.graphhopper.util.BodyAndStatus;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TurnCostsConfig;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
@@ -32,11 +33,11 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.graphhopper.application.resources.Util.getWithStatus;
 import static com.graphhopper.application.util.TestUtils.clientTarget;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -118,9 +119,9 @@ public class SPTResourceTest {
 
     @Test
     public void missingPoint() {
-        Response rsp = clientTarget(app, "/spt").request().buildGet().invoke();
+        BodyAndStatus rsp = getWithStatus(clientTarget(app, "/spt"));
         assertEquals(400, rsp.getStatus());
-        JsonNode json = rsp.readEntity(JsonNode.class);
+        JsonNode json = rsp.getBody();
         assertTrue(json.get("message").toString().contains("query param point must not be null"), json.toString());
     }
 
@@ -131,9 +132,9 @@ public class SPTResourceTest {
     }
 
     private void assertNotAllowed(String hint, String error) {
-        Response rsp = clientTarget(app, "/spt?point=42.531073,1.573792&time_limit=300&columns=street_name,road_class,max_speed" + hint).request().buildGet().invoke();
+        BodyAndStatus rsp = getWithStatus(clientTarget(app, "/spt?point=42.531073,1.573792&time_limit=300&columns=street_name,road_class,max_speed" + hint));
         assertEquals(400, rsp.getStatus());
-        JsonNode json = rsp.readEntity(JsonNode.class);
+        JsonNode json = rsp.getBody();
         assertTrue(json.get("message").toString().contains(error), json.toString());
     }
 }

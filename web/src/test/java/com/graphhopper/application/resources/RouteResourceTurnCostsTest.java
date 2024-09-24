@@ -36,12 +36,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.graphhopper.application.resources.Util.getWithStatus;
+import static com.graphhopper.application.resources.Util.postWithStatus;
 import static com.graphhopper.application.util.TestUtils.clientTarget;
 import static java.util.Collections.emptyList;
 import static org.junit.jupiter.api.Assertions.*;
@@ -155,14 +155,10 @@ public class RouteResourceTurnCostsTest {
     }
 
     private BodyAndStatus doGet(String mode, String profile, List<String> curbsides) {
-        try (Response response = clientTarget(app, "/route?" + getUrlParams(mode, profile, curbsides)).request().get()) {
-            return new BodyAndStatus(response.readEntity(JsonNode.class), response.getStatus());
-        }
+        return getWithStatus(clientTarget(app, "/route?" + getUrlParams(mode, profile, curbsides)));
     }
 
     private BodyAndStatus doPost(String mode, String profile, List<String> curbsides) {
-        try (Response response = clientTarget(app, "/route?").request().post(Entity.json(getJsonStr(mode, profile, curbsides)))) {
-            return new BodyAndStatus(response.readEntity(JsonNode.class), response.getStatus());
-        }
+        return postWithStatus(clientTarget(app, "/route?"), getJsonStr(mode, profile, curbsides));
     }
 }

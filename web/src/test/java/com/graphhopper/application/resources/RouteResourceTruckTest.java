@@ -6,6 +6,7 @@ import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.Profile;
+import com.graphhopper.util.BodyAndStatus;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -14,11 +15,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Response;
 import java.io.File;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import static com.graphhopper.application.util.TestUtils.clientTarget;
@@ -57,17 +54,17 @@ public class RouteResourceTruckTest {
         String body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"truck\", \"custom_model\": {" +
                 "\"speed\": [{\"if\": \"road_class == PRIMARY\", \"multiply_by\": 0.9}]" +
                 "}}";
-        JsonNode json = query(body, 400).readEntity(JsonNode.class);
+        JsonNode json = query(body, 400);
         assertMessageStartsWith(json, "The 'custom_model' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`.");
 
         // ... even when the custom model is just an empty object
         body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"truck\", \"custom_model\": {}}";
-        json = query(body, 400).readEntity(JsonNode.class);
+        json = query(body, 400);
         assertMessageStartsWith(json, "The 'custom_model' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`.");
 
         // ... but when we disable CH it works
         body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"truck\", \"custom_model\": {}, \"ch.disable\": true}";
-        JsonNode path = query(body, 200).readEntity(JsonNode.class).get("paths").get(0);
+        JsonNode path = query(body, 200).get("paths").get(0);
         assertEquals(1008, path.get("distance").asDouble(), 10);
         assertEquals(49_000, path.get("time").asLong(), 1_000);
     }
@@ -78,11 +75,10 @@ public class RouteResourceTruckTest {
                 message + "\nbut got:\n" + jsonNode.get("message").asText());
     }
 
-    Response query(String body, int code) {
-        Response response = clientTarget(app, "/route").request().post(Entity.json(body));
-        response.bufferEntity();
-        JsonNode jsonNode = response.readEntity(JsonNode.class);
+    JsonNode query(String body, int code) {
+        BodyAndStatus response = Util.postWithStatus(clientTarget(app, "/route"), body);
+        JsonNode jsonNode = response.getBody();
         assertEquals(code, response.getStatus(), jsonNode.has("message") ? jsonNode.get("message").toString() : "no error message");
-        return response;
+        return jsonNode;
     }
 }

@@ -35,11 +35,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.Arrays;
 
+import static com.graphhopper.application.resources.Util.getWithStatus;
+import static com.graphhopper.application.resources.Util.postWithStatus;
 import static com.graphhopper.application.util.TestUtils.clientTarget;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -108,9 +108,7 @@ public class RouteResourceProfileSelectionTest {
             urlParams += "&ch.disable=true";
         if (mode.equals("flex"))
             urlParams += "&lm.disable=true";
-        try (Response response = clientTarget(app, "/route?" + urlParams).request().get()) {
-            return new BodyAndStatus(response.readEntity(JsonNode.class), response.getStatus());
-        }
+        return getWithStatus(clientTarget(app, "/route?" + urlParams));
     }
 
     private BodyAndStatus doPost(String profile, String mode) {
@@ -122,9 +120,7 @@ public class RouteResourceProfileSelectionTest {
         if (mode.equals("flex"))
             jsonStr += ",\"lm.disable\": true";
         jsonStr += " }";
-        try (Response response = clientTarget(app, "/route").request().post(Entity.json(jsonStr))) {
-            return new BodyAndStatus(response.readEntity(JsonNode.class), response.getStatus());
-        }
+        return postWithStatus(clientTarget(app, "/route"), jsonStr);
     }
 
     private void assertDistance(BodyAndStatus response, double expectedDistance) {

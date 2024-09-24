@@ -24,6 +24,7 @@ import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.resources.InfoResource;
 import com.graphhopper.routing.TestProfiles;
+import com.graphhopper.util.BodyAndStatus;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -32,10 +33,10 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.List;
 
+import static com.graphhopper.application.resources.Util.getWithStatus;
 import static com.graphhopper.application.util.TestUtils.clientTarget;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -111,43 +112,43 @@ public class PtRouteResourceTest {
 
     @Test
     public void testNoPoints() {
-        final Response response = clientTarget(app, "/route")
+        BodyAndStatus response = getWithStatus(clientTarget(app, "/route")
                 .queryParam("profile", "pt")
-                .request().buildGet().invoke();
+        );
         assertEquals(400, response.getStatus());
     }
 
     @Test
     public void testOnePoint() {
-        final Response response = clientTarget(app, "/route")
+        BodyAndStatus response = getWithStatus(clientTarget(app, "/route")
                 .queryParam("point", "36.914893,-116.76821")
                 .queryParam("profile", "pt")
                 .queryParam("pt.earliest_departure_time", "2007-01-01T08:00:00Z")
-                .request().buildGet().invoke();
+        );
         assertEquals(400, response.getStatus());
-        JsonNode json = response.readEntity(JsonNode.class);
+        JsonNode json = response.getBody();
         assertEquals("query param point size must be between 2 and 2", json.get("message").asText());
     }
 
     @Test
     public void testBadPoints() {
-        final Response response = clientTarget(app, "/route")
+        BodyAndStatus response = getWithStatus(clientTarget(app, "/route")
                 .queryParam("point", "pups")
                 .queryParam("profile", "pt")
                 .queryParam("pt.earliest_departure_time", "2007-01-01T08:00:00Z")
-                .request().buildGet().invoke();
+        );
         assertEquals(400, response.getStatus());
     }
 
     @Test
     public void testNoTime() {
-        final Response response = clientTarget(app, "/route")
+        BodyAndStatus response = getWithStatus(clientTarget(app, "/route")
                 .queryParam("point", "36.914893,-116.76821") // NADAV stop
                 .queryParam("point", "36.914944,-116.761472") //NANAA stop
                 .queryParam("profile", "pt")
-                .request().buildGet().invoke();
+        );
         assertEquals(400, response.getStatus());
-        JsonNode json = response.readEntity(JsonNode.class);
+        JsonNode json = response.getBody();
         // Would prefer a "must not be null" message here, but is currently the same as for a bad time (see below).
         // I DO NOT want to manually catch this, I want to figure out how to fix this upstream, or live with it.
         assertTrue(json.get("message").asText().startsWith("query param pt.earliest_departure_time must"));
@@ -155,14 +156,14 @@ public class PtRouteResourceTest {
 
     @Test
     public void testBadTime() {
-        final Response response = clientTarget(app, "/route")
+        BodyAndStatus response = getWithStatus(clientTarget(app, "/route")
                 .queryParam("point", "36.914893,-116.76821") // NADAV stop
                 .queryParam("point", "36.914944,-116.761472") //NANAA stop
                 .queryParam("profile", "pt")
                 .queryParam("pt.earliest_departure_time", "wurst")
-                .request().buildGet().invoke();
+        );
         assertEquals(400, response.getStatus());
-        JsonNode json = response.readEntity(JsonNode.class);
+        JsonNode json = response.getBody();
         assertEquals("query param pt.earliest_departure_time must be in a ISO-8601 format.", json.get("message").asText());
     }
 

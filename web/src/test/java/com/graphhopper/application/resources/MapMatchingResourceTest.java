@@ -110,15 +110,16 @@ public class MapMatchingResourceTest {
 
     @Test
     public void testEmptyGPX() {
-        final Response response = clientTarget(app, "/match?profile=fast_car")
+        try (Response response = clientTarget(app, "/match?profile=fast_car")
                 .request()
                 .buildPost(Entity.xml(getClass().getResourceAsStream("test-only-wpt.gpx")))
-                .invoke();
-        assertEquals(400, response.getStatus());
-        JsonNode json = response.readEntity(JsonNode.class);
-        JsonNode message = json.get("message");
-        assertTrue(message.isValueNode());
-        assertTrue(message.asText().startsWith("No tracks found"));
+                .invoke()) {
+            assertEquals(400, response.getStatus());
+            JsonNode json = response.readEntity(JsonNode.class);
+            JsonNode message = json.get("message");
+            assertTrue(message.isValueNode());
+            assertTrue(message.asText().startsWith("No tracks found"));
+        }
     }
 
     private LineString readWktLineString(String wkt) {

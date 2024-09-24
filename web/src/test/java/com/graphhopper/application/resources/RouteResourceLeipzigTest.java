@@ -24,6 +24,7 @@ import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.routing.TestProfiles;
+import com.graphhopper.util.BodyAndStatus;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -34,12 +35,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
-import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
+import static com.graphhopper.application.resources.Util.getWithStatus;
 import static com.graphhopper.application.util.TestUtils.clientTarget;
 import static com.graphhopper.util.Parameters.Algorithms.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -96,9 +97,9 @@ public class RouteResourceLeipzigTest {
         }
         {
             // for a short timeout the route calculation fails, for CH we need to use a negative number, because it is too fast
-            Response response = clientTarget(app, "/route?timeout_ms=" + timeout + "&profile=my_car&point=51.319685,12.335525&point=51.367294,12.434745&" + args).request().buildGet().invoke();
+            BodyAndStatus response = getWithStatus(clientTarget(app, "/route?timeout_ms=" + timeout + "&profile=my_car&point=51.319685,12.335525&point=51.367294,12.434745&" + args));
             assertEquals(400, response.getStatus());
-            JsonNode jsonNode = response.readEntity(JsonNode.class);
+            JsonNode jsonNode = response.getBody();
             assertTrue(jsonNode.get("message").asText().contains("Connection between locations not found"), jsonNode.get("message").asText());
         }
     }

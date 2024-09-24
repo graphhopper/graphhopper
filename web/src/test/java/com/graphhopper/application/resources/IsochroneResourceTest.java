@@ -23,6 +23,7 @@ import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.routing.TestProfiles;
+import com.graphhopper.util.BodyAndStatus;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.JsonFeatureCollection;
 import com.graphhopper.util.TurnCostsConfig;
@@ -39,10 +40,10 @@ import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Polygon;
 
 import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.Arrays;
 
+import static com.graphhopper.application.resources.Util.getWithStatus;
 import static com.graphhopper.application.util.TestUtils.clientTarget;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -187,9 +188,9 @@ public class IsochroneResourceTest {
 
     @Test
     public void requestBadRequest() {
-        Response response = clientTarget(app, "/isochrone?profile=fast_car&point=-1.816719,51.557148").request().buildGet().invoke();
+        BodyAndStatus response = getWithStatus(clientTarget(app, "/isochrone?profile=fast_car&point=-1.816719,51.557148"));
         assertEquals(400, response.getStatus());
-        String error = response.readEntity(String.class);
+        String error = response.getBody().toString();
         assertTrue(error.contains("Point not found:-1.816719,51.557148"), error);
     }
 
@@ -201,16 +202,16 @@ public class IsochroneResourceTest {
 
     @Test
     public void missingPoint() {
-        Response rsp = clientTarget(app, "/isochrone").request().buildGet().invoke();
+        BodyAndStatus rsp = getWithStatus(clientTarget(app, "/isochrone"));
         assertEquals(400, rsp.getStatus());
-        JsonNode json = rsp.readEntity(JsonNode.class);
+        JsonNode json = rsp.getBody();
         assertTrue(json.get("message").toString().contains("query param point must not be null"), json.toString());
     }
 
     private void assertNotAllowed(String hint, String error) {
-        Response rsp = clientTarget(app, "/isochrone?point=42.531073,1.573792" + hint).request().buildGet().invoke();
+        BodyAndStatus rsp = getWithStatus(clientTarget(app, "/isochrone?point=42.531073,1.573792" + hint));
         assertEquals(400, rsp.getStatus());
-        JsonNode json = rsp.readEntity(JsonNode.class);
+        JsonNode json = rsp.getBody();
         assertTrue(json.get("message").toString().contains(error), json.toString());
     }
 
@@ -238,10 +239,9 @@ public class IsochroneResourceTest {
 
     @Test
     public void requestBadType() {
-        Response response = clientTarget(app, "/isochrone?profile=fast_car&point=42.531073,1.573792&time_limit=130&type=xml")
-                .request().buildGet().invoke();
+        BodyAndStatus response = getWithStatus(clientTarget(app, "/isochrone?profile=fast_car&point=42.531073,1.573792&time_limit=130&type=xml"));
         assertEquals(400, response.getStatus());
-        JsonNode json = response.readEntity(JsonNode.class);
+        JsonNode json = response.getBody();
         String message = json.path("message").asText();
 
         assertEquals("query param type must be one of [json, geojson]", message);
@@ -256,11 +256,9 @@ public class IsochroneResourceTest {
 
     @Test
     public void requestNotANumber() {
-        Response response = clientTarget(app, "/isochrone?profile=fast_car&point=42.531073,1.573792&time_limit=wurst")
-                .request().buildGet().invoke();
-
+        BodyAndStatus response = getWithStatus(clientTarget(app, "/isochrone?profile=fast_car&point=42.531073,1.573792&time_limit=wurst"));
         assertEquals(404, response.getStatus());
-        JsonNode json = response.readEntity(JsonNode.class);
+        JsonNode json = response.getBody();
         String message = json.path("message").asText();
 
         assertEquals("HTTP 404 Not Found", message);

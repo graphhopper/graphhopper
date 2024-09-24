@@ -31,6 +31,7 @@ import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.routing.ev.RoadClassLink;
 import com.graphhopper.routing.ev.RoadEnvironment;
 import com.graphhopper.routing.ev.Surface;
+import com.graphhopper.util.BodyAndStatus;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.Parameters;
@@ -52,6 +53,7 @@ import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.*;
 
+import static com.graphhopper.application.resources.Util.getWithStatus;
 import static com.graphhopper.application.util.TestUtils.clientTarget;
 import static com.graphhopper.application.util.TestUtils.clientUrl;
 import static com.graphhopper.util.Instruction.FINISH;
@@ -153,9 +155,9 @@ public class RouteResourceTest {
 
     @Test
     public void testWrongPointFormat() {
-        final Response response = clientTarget(app, "/route?profile=my_car&point=1234&point=42.510071,1.548128").request().buildGet().invoke();
+        BodyAndStatus response = getWithStatus(clientTarget(app, "/route?profile=my_car&point=1234&point=42.510071,1.548128"));
         assertEquals(400, response.getStatus());
-        JsonNode json = response.readEntity(JsonNode.class);
+        JsonNode json = response.getBody();
         assertTrue(json.get("message").asText().contains("Cannot parse point '1234'"), "There should be an error " + json.get("message"));
     }
 
@@ -181,10 +183,10 @@ public class RouteResourceTest {
     @Test
     public void testCHWithHeading_error() {
         // There are special cases where heading works with node-based CH, but generally it leads to wrong results -> we expect an error
-        final Response response = clientTarget(app, "/route?profile=my_car&"
-                + "point=42.496696,1.499323&point=42.497257,1.501501&heading=240&heading=240").request().buildGet().invoke();
+        BodyAndStatus response = getWithStatus(clientTarget(app, "/route?profile=my_car&"
+                + "point=42.496696,1.499323&point=42.497257,1.501501&heading=240&heading=240"));
         assertEquals(400, response.getStatus());
-        JsonNode json = response.readEntity(JsonNode.class);
+        JsonNode json = response.getBody();
         assertTrue(json.has("message"), "There should have been an error response");
         String expected = "The 'heading' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`. See issue #483";
         assertTrue(json.get("message").asText().contains(expected), "There should be an error containing " + expected + ", but got: " + json.get("message"));
@@ -193,10 +195,10 @@ public class RouteResourceTest {
     @Test
     public void testCHWithPassThrough_error() {
         // There are special cases where pass_through works with node-based CH, but generally it leads to wrong results -> we expect an error
-        final Response response = clientTarget(app, "/route?profile=my_car&" +
-                "point=42.534133,1.581473&point=42.534781,1.582149&point=42.535042,1.582514&pass_through=true").request().buildGet().invoke();
+        BodyAndStatus response = getWithStatus(clientTarget(app, "/route?profile=my_car&" +
+                "point=42.534133,1.581473&point=42.534781,1.582149&point=42.535042,1.582514&pass_through=true"));
         assertEquals(400, response.getStatus());
-        JsonNode json = response.readEntity(JsonNode.class);
+        JsonNode json = response.getBody();
         assertTrue(json.has("message"), "There should have been an error response");
         String expected = "The '" + Parameters.Routing.PASS_THROUGH + "' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`. See issue #1765";
         assertTrue(json.get("message").asText().contains(expected), "There should be an error containing " + expected + ", but got: " + json.get("message"));
@@ -212,10 +214,10 @@ public class RouteResourceTest {
 
     @Test
     public void testFailIfElevationRequestedButNotIncluded() {
-        final Response response = clientTarget(app, "/route?profile=my_car&" +
-                "point=42.554851234,1.536198&point=42.510071,1.548128&points_encoded=false&elevation=true").request().buildGet().invoke();
+        BodyAndStatus response = getWithStatus(clientTarget(app, "/route?profile=my_car&" +
+                "point=42.554851234,1.536198&point=42.510071,1.548128&points_encoded=false&elevation=true"));
         assertEquals(400, response.getStatus());
-        JsonNode json = response.readEntity(JsonNode.class);
+        JsonNode json = response.getBody();
         assertTrue(json.has("message"));
         assertEquals("Elevation not supported!", json.get("message").asText());
     }
@@ -449,9 +451,9 @@ public class RouteResourceTest {
                 "The requested profile 'space_shuttle' does not exist"), rsp.getErrors().toString());
 
         // unknown profile via web api
-        Response response = clientTarget(app, "/route?profile=SPACE-SHUTTLE&point=42.554851,1.536198&point=42.510071,1.548128").request().buildGet().invoke();
+        BodyAndStatus response = getWithStatus(clientTarget(app, "/route?profile=SPACE-SHUTTLE&point=42.554851,1.536198&point=42.510071,1.548128"));
         assertEquals(400, response.getStatus());
-        String msg = (String) response.readEntity(Map.class).get("message");
+        String msg = response.getBody().get("message").toString();
         assertTrue(msg.contains("The requested profile 'SPACE-SHUTTLE' does not exist"), msg);
 
         // no points
@@ -501,9 +503,9 @@ public class RouteResourceTest {
                 "\nAvailable profiles: [my_car]"), ex.getMessage());
 
         // an IllegalArgumentException from inside the core is written as JSON, unknown profile
-        response = clientTarget(app, "/route?profile=SPACE-SHUTTLE&point=42.554851,1.536198&point=42.510071,1.548128").request().buildGet().invoke();
+        response = getWithStatus(clientTarget(app, "/route?profile=SPACE-SHUTTLE&point=42.554851,1.536198&point=42.510071,1.548128"));
         assertEquals(400, response.getStatus());
-        msg = (String) response.readEntity(Map.class).get("message");
+        msg = (String) response.getBody().get("message").toString();
         assertTrue(msg.contains("The requested profile 'SPACE-SHUTTLE' does not exist"), msg);
     }
 
@@ -537,14 +539,15 @@ public class RouteResourceTest {
 
     @Test
     public void testGPXWithError() {
-        final Response response = clientTarget(app, "/route?profile=my_car&" +
-                "point=42.554851,1.536198&type=gpx").request().buildGet().invoke();
-        assertEquals(400, response.getStatus());
-        String str = response.readEntity(String.class);
-        assertFalse(str.contains("<html>"), str);
-        assertFalse(str.contains("{"), str);
-        assertTrue(str.contains("<message>At least 2 points have to be specified, but was:1</message>"), "Expected error but was: " + str);
-        assertTrue(str.contains("<hints><error details=\"java"), "Expected error but was: " + str);
+        try (Response response = clientTarget(app, "/route?profile=my_car&" +
+                "point=42.554851,1.536198&type=gpx").request().get()) {
+            assertEquals(400, response.getStatus());
+            String str = response.readEntity(String.class);
+            assertFalse(str.contains("<html>"), str);
+            assertFalse(str.contains("{"), str);
+            assertTrue(str.contains("<message>At least 2 points have to be specified, but was:1</message>"), "Expected error but was: " + str);
+            assertTrue(str.contains("<hints><error details=\"java"), "Expected error but was: " + str);
+        }
     }
 
     @Test
@@ -589,36 +592,36 @@ public class RouteResourceTest {
 
     @Test
     public void testWithError() {
-        final Response response = clientTarget(app, "/route?profile=my_car&" +
-                "point=42.554851,1.536198").request().buildGet().invoke();
+        BodyAndStatus response = getWithStatus(clientTarget(app, "/route?profile=my_car&" +
+                "point=42.554851,1.536198"));
         assertEquals(400, response.getStatus());
-        String rsp = response.readEntity(String.class);
+        String rsp = response.getBody().toString();
         assertTrue(rsp.contains("At least 2 points have to be specified, but was:1"), rsp);
 
     }
 
     @Test
     public void testNoPoint() {
-        Response response = clientTarget(app, "/route?profile=my_car&heading=0").request().buildGet().invoke();
-        JsonNode json = response.readEntity(JsonNode.class);
+        BodyAndStatus response = getWithStatus(clientTarget(app, "/route?profile=my_car&heading=0"));
+        JsonNode json = response.getBody();
         assertEquals(400, response.getStatus());
         assertEquals("You have to pass at least one point", json.get("message").asText());
     }
 
     @Test
     public void testBadPoint() {
-        Response response = clientTarget(app, "/route?profile=my_car&heading=0&point=pups").request().buildGet().invoke();
-        JsonNode json = response.readEntity(JsonNode.class);
+        BodyAndStatus response = getWithStatus(clientTarget(app, "/route?profile=my_car&heading=0&point=pups"));
+        JsonNode json = response.getBody();
         assertEquals(400, response.getStatus());
         assertEquals("query param point is invalid: Cannot parse point 'pups'", json.get("message").asText());
     }
 
     @Test
     public void testTooManyHeadings() {
-        final Response response = clientTarget(app, "/route?profile=my_car&" +
-                "point=42.554851,1.536198&heading=0&heading=0").request().buildGet().invoke();
+        BodyAndStatus response = getWithStatus(clientTarget(app, "/route?profile=my_car&" +
+                "point=42.554851,1.536198&heading=0&heading=0"));
         assertEquals(400, response.getStatus());
-        JsonNode json = response.readEntity(JsonNode.class);
+        JsonNode json = response.getBody();
         assertEquals("The number of 'heading' parameters must be zero, one or equal to the number of points (1)", json.get("message").asText());
     }
 
@@ -638,8 +641,8 @@ public class RouteResourceTest {
             }
             for (String legDetail : legDetails)
                 url += "&details=" + legDetail;
-            final Response response = clientTarget(app, url).request().buildGet().invoke();
-            JsonNode json = response.readEntity(JsonNode.class);
+            BodyAndStatus response = getWithStatus(clientTarget(app, url));
+            JsonNode json = response.getBody();
             if (response.getStatus() != 200) {
                 // sometimes there can be connection-not-found for example, also because we set min_network_size to 0 in this test
                 errors++;

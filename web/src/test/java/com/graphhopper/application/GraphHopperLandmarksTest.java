@@ -22,6 +22,7 @@ import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.routing.TestProfiles;
+import com.graphhopper.util.BodyAndStatus;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -30,10 +31,10 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.Collections;
 
+import static com.graphhopper.application.resources.Util.getWithStatus;
 import static com.graphhopper.application.util.TestUtils.clientTarget;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -94,17 +95,17 @@ public class GraphHopperLandmarksTest {
     public void testLandmarkDisconnect() {
         // if one algorithm is disabled then the following chain is executed: CH -> LM -> flexible
         // disconnected for landmarks
-        Response response = clientTarget(app, "/route?profile=car_profile&" +
-                "point=55.99022,29.129734&point=56.007787,29.208355&ch.disable=true").request().buildGet().invoke();
+        BodyAndStatus response = getWithStatus(clientTarget(app, "/route?profile=car_profile&" +
+                "point=55.99022,29.129734&point=56.007787,29.208355&ch.disable=true"));
         assertEquals(400, response.getStatus());
-        JsonNode json = response.readEntity(JsonNode.class);
+        JsonNode json = response.getBody();
         assertTrue(json.get("message").toString().contains("Different subnetworks"));
 
         // without landmarks it should work
-        response = clientTarget(app, "/route?profile=car_profile&" +
-                "point=55.99022,29.129734&point=56.007787,29.208355&ch.disable=true&lm.disable=true").request().buildGet().invoke();
+        response = getWithStatus(clientTarget(app, "/route?profile=car_profile&" +
+                "point=55.99022,29.129734&point=56.007787,29.208355&ch.disable=true&lm.disable=true"));
         assertEquals(200, response.getStatus());
-        json = response.readEntity(JsonNode.class);
+        json = response.getBody();
         double distance = json.get("paths").get(0).get("distance").asDouble();
         assertEquals(5790, distance, 100, "distance wasn't correct:" + distance);
     }
