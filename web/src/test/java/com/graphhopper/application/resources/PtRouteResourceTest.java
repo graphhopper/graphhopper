@@ -68,52 +68,44 @@ public class PtRouteResourceTest {
 
     @Test
     public void testStationStationQuery() {
-        final Response response = clientTarget(app, "/route")
+        JsonNode jsonNode = clientTarget(app, "/route")
                 .queryParam("point", "Stop(NADAV)")
                 .queryParam("point", "Stop(NANAA)")
                 .queryParam("profile", "pt")
                 .queryParam("pt.earliest_departure_time", "2007-01-01T15:44:00Z")
-                .request().buildGet().invoke();
-        assertEquals(200, response.getStatus());
-        JsonNode jsonNode = response.readEntity(JsonNode.class);
+                .request().get(JsonNode.class);
         assertEquals(1, jsonNode.at("/paths/0/legs").size());
     }
 
     @Test
     public void testStationStationQueryWithOffsetDateTime() {
-        final Response response = clientTarget(app, "/route")
+        JsonNode jsonNode = clientTarget(app, "/route")
                 .queryParam("point", "Stop(NADAV)")
                 .queryParam("point", "Stop(NANAA)")
                 .queryParam("profile", "pt")
                 .queryParam("pt.earliest_departure_time", "2007-01-01T07:44:00-08:00")
-                .request().buildGet().invoke();
-        assertEquals(200, response.getStatus());
-        JsonNode jsonNode = response.readEntity(JsonNode.class);
+                .request().get(JsonNode.class);
         assertEquals(1, jsonNode.at("/paths/0/legs").size());
     }
 
     @Test
     public void testPointPointQuery() {
-        final Response response = clientTarget(app, "/route")
+        JsonNode jsonNode = clientTarget(app, "/route")
                 .queryParam("point", "36.914893,-116.76821") // NADAV stop
                 .queryParam("point", "36.914944,-116.761472") //NANAA stop
                 .queryParam("profile", "pt")
                 .queryParam("pt.earliest_departure_time", "2007-01-01T15:44:00Z")
-                .request().buildGet().invoke();
-        assertEquals(200, response.getStatus());
-        JsonNode jsonNode = response.readEntity(JsonNode.class);
+                .request().get(JsonNode.class);
         assertEquals(1, jsonNode.at("/paths/0/legs").size());
     }
 
     @Test
     public void testWalkQuery() {
-        final Response response = clientTarget(app, "/route")
+        GHResponse ghResponse = clientTarget(app, "/route")
                 .queryParam("point", "36.914893,-116.76821")
                 .queryParam("point", "36.914944,-116.761472")
                 .queryParam("profile", "foot")
-                .request().buildGet().invoke();
-        assertEquals(200, response.getStatus());
-        GHResponse ghResponse = response.readEntity(GHResponse.class);
+                .request().get(GHResponse.class);
         assertFalse(ghResponse.hasErrors());
     }
 
@@ -176,10 +168,8 @@ public class PtRouteResourceTest {
 
     @Test
     public void testInfo() {
-        final Response response = clientTarget(app, "/info")
-                .request().buildGet().invoke();
-        assertEquals(200, response.getStatus());
-        InfoResource.Info info = response.readEntity(InfoResource.Info.class);
+        InfoResource.Info info = clientTarget(app, "/info")
+                .request().get(InfoResource.Info.class);
         assertTrue(info.profiles.stream().anyMatch(p -> p.name.equals("pt")));
     }
 

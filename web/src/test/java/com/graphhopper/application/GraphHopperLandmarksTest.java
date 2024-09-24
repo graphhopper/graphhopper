@@ -78,17 +78,14 @@ public class GraphHopperLandmarksTest {
 
     @Test
     public void testQueries() {
-        Response response = clientTarget(app, "/route?profile=car_profile&" +
-                "point=55.99022,29.129734&point=56.001069,29.150848").request().buildGet().invoke();
-        assertEquals(200, response.getStatus());
-        JsonNode json = response.readEntity(JsonNode.class);
+        JsonNode json = clientTarget(app, "/route?profile=car_profile&" +
+                "point=55.99022,29.129734&point=56.001069,29.150848").request().get(JsonNode.class);
         JsonNode path = json.get("paths").get(0);
         double distance = path.get("distance").asDouble();
         assertEquals(1870, distance, 100, "distance wasn't correct:" + distance);
 
-        response = clientTarget(app, "/route?profile=car_profile&" +
-                "point=55.99022,29.129734&point=56.001069,29.150848&ch.disable=true").request().buildGet().invoke();
-        json = response.readEntity(JsonNode.class);
+        json = clientTarget(app, "/route?profile=car_profile&" +
+                "point=55.99022,29.129734&point=56.001069,29.150848&ch.disable=true").request().get(JsonNode.class);
         distance = json.get("paths").get(0).get("distance").asDouble();
         assertEquals(1870, distance, 100, "distance wasn't correct:" + distance);
     }

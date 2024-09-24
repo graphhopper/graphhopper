@@ -22,9 +22,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
-import com.graphhopper.util.TurnCostsConfig;
 import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.TurnCostsConfig;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import org.junit.jupiter.api.AfterAll;
@@ -68,8 +68,7 @@ public class SPTResourceTest {
 
     @Test
     public void requestSPT() {
-        Response rsp = clientTarget(app, "/spt?profile=car_without_turncosts&point=42.531073,1.573792&time_limit=300").request().buildGet().invoke();
-        String rspCsvString = rsp.readEntity(String.class);
+        String rspCsvString = clientTarget(app, "/spt?profile=car_without_turncosts&point=42.531073,1.573792&time_limit=300").request().get(String.class);
         String[] lines = rspCsvString.split("\n");
         List<String> headers = Arrays.asList(lines[0].split(","));
         assertEquals("[longitude, latitude, time, distance]", headers.toString());
@@ -79,8 +78,7 @@ public class SPTResourceTest {
         assertEquals(111, Integer.parseInt(row[2]) / 1000, 1);
         assertEquals(1505, Integer.parseInt(row[3]), 1);
 
-        rsp = clientTarget(app, "/spt?profile=car_without_turncosts&point=42.531073,1.573792&columns=prev_time").request().buildGet().invoke();
-        rspCsvString = rsp.readEntity(String.class);
+        rspCsvString = clientTarget(app, "/spt?profile=car_without_turncosts&point=42.531073,1.573792&columns=prev_time").request().get(String.class);
         lines = rspCsvString.split("\n");
         assertTrue(lines.length > 500);
         headers = Arrays.asList(lines[0].split(","));
@@ -93,8 +91,7 @@ public class SPTResourceTest {
 
     @Test
     public void requestSPTEdgeBased() {
-        Response rsp = clientTarget(app, "/spt?profile=car_with_turncosts&point=42.531073,1.573792&time_limit=300&columns=prev_node_id,edge_id,node_id,time,distance").request().buildGet().invoke();
-        String rspCsvString = rsp.readEntity(String.class);
+        String rspCsvString = clientTarget(app, "/spt?profile=car_with_turncosts&point=42.531073,1.573792&time_limit=300&columns=prev_node_id,edge_id,node_id,time,distance").request().get(String.class);
         String[] lines = rspCsvString.split("\n");
         assertTrue(lines.length > 500);
         assertEquals("prev_node_id,edge_id,node_id,time,distance", lines[0]);
@@ -105,8 +102,7 @@ public class SPTResourceTest {
 
     @Test
     public void requestDetails() {
-        Response rsp = clientTarget(app, "/spt?profile=car_without_turncosts&point=42.531073,1.573792&time_limit=300&columns=street_name,road_class,max_speed").request().buildGet().invoke();
-        String rspCsvString = rsp.readEntity(String.class);
+        String rspCsvString = clientTarget(app, "/spt?profile=car_without_turncosts&point=42.531073,1.573792&time_limit=300&columns=street_name,road_class,max_speed").request().get(String.class);
         String[] lines = rspCsvString.split("\n");
 
         String[] row = lines[362].split(",");

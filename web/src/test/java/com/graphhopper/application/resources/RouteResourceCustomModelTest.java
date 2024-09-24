@@ -106,7 +106,7 @@ public class RouteResourceCustomModelTest {
     @Test
     public void testBlockAreaNotAllowed() {
         String body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"car\", \"block_area\": \"abc\", \"ch.disable\": true}";
-        JsonNode jsonNode = query(body, 400).readEntity(JsonNode.class);
+        JsonNode jsonNode = query(body, 400);
         assertMessageStartsWith(jsonNode, "The `block_area` parameter is no longer supported. Use a custom model with `areas` instead.");
     }
 
@@ -166,25 +166,25 @@ public class RouteResourceCustomModelTest {
     @Test
     public void testMissingProfile() {
         String body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"custom_model\": {}, \"ch.disable\": true}";
-        JsonNode jsonNode = query(body, 400).readEntity(JsonNode.class);
+        JsonNode jsonNode = query(body, 400);
         assertMessageStartsWith(jsonNode, "The 'profile' parameter is required when you use the `custom_model` parameter");
     }
 
     @Test
     public void testUnknownProfile() {
         String body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"unknown\", \"custom_model\": {}, \"ch.disable\": true}";
-        JsonNode jsonNode = query(body, 400).readEntity(JsonNode.class);
+        JsonNode jsonNode = query(body, 400);
         assertMessageStartsWith(jsonNode, "The requested profile 'unknown' does not exist.\nAvailable profiles: ");
     }
 
     @Test
     public void testVehicleAndWeightingNotAllowed() {
         String body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"truck\",\"custom_model\": {}, \"ch.disable\": true, \"vehicle\": \"truck\"}";
-        JsonNode jsonNode = query(body, 400).readEntity(JsonNode.class);
+        JsonNode jsonNode = query(body, 400);
         assertEquals("The 'vehicle' parameter is no longer supported. You used 'vehicle=truck'", jsonNode.get("message").asText());
 
         body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"truck\",\"custom_model\": {}, \"ch.disable\": true, \"weighting\": \"custom\"}";
-        jsonNode = query(body, 400).readEntity(JsonNode.class);
+        jsonNode = query(body, 400);
         assertEquals("The 'weighting' parameter is no longer supported. You used 'weighting=custom'", jsonNode.get("message").asText());
     }
 
@@ -363,8 +363,7 @@ public class RouteResourceCustomModelTest {
 
         body = "{\"points\": [[11.503027,49.987546], [11.503149,49.986786]], \"profile\": \"car_tc_left\", \"ch.disable\":true," +
                 "\"algorithm\":\"alternative_route\"}";
-        final Response response = query(body, 200);
-        JsonNode json = response.readEntity(JsonNode.class);
+        JsonNode json = query(body, 200);
         assertFalse(json.get("info").has("errors"));
 
         // TODO LATER: alternative route bug as the two routes are identical!?
@@ -379,17 +378,16 @@ public class RouteResourceCustomModelTest {
     }
 
     JsonNode getPath(String body) {
-        final Response response = query(body, 200);
-        JsonNode json = response.readEntity(JsonNode.class);
+        JsonNode json = query(body, 200);
         assertFalse(json.get("info").has("errors"));
         return json.get("paths").get(0);
     }
 
-    Response query(String body, int code) {
-        Response response = clientTarget(app, "/route").request().post(Entity.json(body));
-        response.bufferEntity();
-        JsonNode jsonNode = response.readEntity(JsonNode.class);
-        assertEquals(code, response.getStatus(), jsonNode.toPrettyString());
-        return response;
+    JsonNode query(String body, int code) {
+        try (Response response = clientTarget(app, "/route").request().post(Entity.json(body))) {
+            JsonNode json = response.readEntity(JsonNode.class);
+            assertEquals(code, response.getStatus(), json.toPrettyString());
+            return json;
+        }
     }
 }

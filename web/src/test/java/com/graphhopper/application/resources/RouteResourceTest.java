@@ -104,10 +104,8 @@ public class RouteResourceTest {
 
     @Test
     public void testBasicQuery() {
-        final Response response = clientTarget(app, "/route?profile=my_car&" +
-                "point=42.554851,1.536198&point=42.510071,1.548128").request().buildGet().invoke();
-        assertEquals(200, response.getStatus());
-        JsonNode json = response.readEntity(JsonNode.class);
+        JsonNode json = clientTarget(app, "/route?profile=my_car&" +
+                "point=42.554851,1.536198&point=42.510071,1.548128").request().get(JsonNode.class);
         JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
         assertEquals("GraphHopper", infoJson.at("/copyrights/0").asText());
@@ -119,10 +117,9 @@ public class RouteResourceTest {
 
     @Test
     public void testBasicQuerySamePoint() {
-        final Response response = clientTarget(app, "/route?profile=my_car&" +
-                "point=42.510071,1.548128&point=42.510071,1.548128").request().buildGet().invoke();
-        assertEquals(200, response.getStatus());
-        JsonNode path = response.readEntity(JsonNode.class).get("paths").get(0);
+        JsonNode json = clientTarget(app, "/route?profile=my_car&" +
+                "point=42.510071,1.548128&point=42.510071,1.548128").request().get(JsonNode.class);
+        JsonNode path = json.get("paths").get(0);
         assertEquals(0, path.get("distance").asDouble(), 0.001);
         assertEquals("[1.548191,42.510033,1.548191,42.510033]", path.get("bbox").toString());
     }
@@ -130,9 +127,7 @@ public class RouteResourceTest {
     @Test
     public void testBasicPostQuery() {
         String jsonStr = "{ \"profile\": \"my_car\", \"points\": [[1.536198,42.554851], [1.548128, 42.510071]] }";
-        Response response = clientTarget(app, "/route").request().post(Entity.json(jsonStr));
-        assertEquals(200, response.getStatus());
-        JsonNode json = response.readEntity(JsonNode.class);
+        JsonNode json = clientTarget(app, "/route").request().post(Entity.json(jsonStr), JsonNode.class);
         JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
         JsonNode path = json.get("paths").get(0);
@@ -143,19 +138,16 @@ public class RouteResourceTest {
 
         // we currently just ignore URL parameters in a POST request (not sure if this is a good or bad thing)
         jsonStr = "{\"points\": [[1.536198,42.554851], [1.548128, 42.510071]], \"profile\": \"my_car\" }";
-        response = clientTarget(app, "/route?vehicle=unknown&weighting=unknown").request().post(Entity.json(jsonStr));
-        assertEquals(200, response.getStatus());
-        assertFalse(response.readEntity(JsonNode.class).get("info").has("errors"));
+        json = clientTarget(app, "/route?vehicle=unknown&weighting=unknown").request().post(Entity.json(jsonStr), JsonNode.class);
+        assertFalse(json.get("info").has("errors"));
     }
 
     @Test
     public void testBasicNavigationQuery() {
-        Response response = clientTarget(app, "/navigate/directions/v5/gh/driving/1.537174,42.507145;1.539116,42.511368?" +
+        JsonNode json = clientTarget(app, "/navigate/directions/v5/gh/driving/1.537174,42.507145;1.539116,42.511368?" +
                 "access_token=pk.my_api_key&alternatives=true&geometries=polyline6&overview=full&steps=true&continue_straight=true&" +
                 "annotations=congestion%2Cdistance&language=en&roundabout_exits=true&voice_instructions=true&banner_instructions=true&voice_units=metric").
-                request().get();
-        assertEquals(200, response.getStatus());
-        JsonNode json = response.readEntity(JsonNode.class);
+                request().get(JsonNode.class);
         assertEquals(1256, json.get("routes").get(0).get("distance").asDouble(), 20);
     }
 
@@ -169,19 +161,15 @@ public class RouteResourceTest {
 
     @Test
     public void testAcceptOnlyXmlButNoTypeParam() {
-        final Response response = clientTarget(app, "/route?profile=my_car&point=42.554851,1.536198&point=42.510071,1.548128")
-                .request(MediaType.APPLICATION_XML).buildGet().invoke();
-        assertEquals(200, response.getStatus());
-        JsonNode json = response.readEntity(JsonNode.class);
+        JsonNode json = clientTarget(app, "/route?profile=my_car&point=42.554851,1.536198&point=42.510071,1.548128")
+                .request(MediaType.APPLICATION_XML).get(JsonNode.class);
         JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
     }
 
     @Test
     public void testQueryWithoutInstructions() {
-        final Response response = clientTarget(app, "/route?profile=my_car&point=42.554851,1.536198&point=42.510071,1.548128&instructions=false").request().buildGet().invoke();
-        assertEquals(200, response.getStatus());
-        JsonNode json = response.readEntity(JsonNode.class);
+        JsonNode json = clientTarget(app, "/route?profile=my_car&point=42.554851,1.536198&point=42.510071,1.548128&instructions=false").request().get(JsonNode.class);
         JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
         JsonNode path = json.get("paths").get(0);
@@ -216,10 +204,8 @@ public class RouteResourceTest {
 
     @Test
     public void testJsonRounding() {
-        final Response response = clientTarget(app, "/route?profile=my_car&" +
-                "point=42.554851234,1.536198&point=42.510071,1.548128&points_encoded=false").request().buildGet().invoke();
-        assertEquals(200, response.getStatus());
-        JsonNode json = response.readEntity(JsonNode.class);
+        JsonNode json = clientTarget(app, "/route?profile=my_car&" +
+                "point=42.554851234,1.536198&point=42.510071,1.548128&points_encoded=false").request().get(JsonNode.class);
         JsonNode cson = json.get("paths").get(0).get("points");
         assertTrue(cson.toString().contains("[1.536374,42.554839]"), "unexpected precision!");
     }
@@ -340,10 +326,8 @@ public class RouteResourceTest {
 
     @Test
     public void testPathDetailsWithoutGraphHopperWeb() {
-        final Response response = clientTarget(app, "/route?profile=my_car&" +
-                "point=42.554851,1.536198&point=42.510071,1.548128&details=average_speed&details=edge_id&details=max_speed&details=urban_density").request().buildGet().invoke();
-        assertEquals(200, response.getStatus());
-        JsonNode json = response.readEntity(JsonNode.class);
+        JsonNode json = clientTarget(app, "/route?profile=my_car&" +
+                "point=42.554851,1.536198&point=42.510071,1.548128&details=average_speed&details=edge_id&details=max_speed&details=urban_density").request().get(JsonNode.class);
         JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
         JsonNode path = json.get("paths").get(0);
@@ -435,18 +419,16 @@ public class RouteResourceTest {
         String jsonStr = "{ \"points\": [[1.53285,42.511139], [1.532271,42.508165]], " +
                 "\"profile\": \"my_car\", " +
                 "\"point_hints\":[\"Avinguda Fiter i Rossell\",\"\"] }";
-        Response response = clientTarget(app, "/route").request().post(Entity.json(jsonStr));
-        assertEquals(200, response.getStatus());
-        JsonNode path = response.readEntity(JsonNode.class).get("paths").get(0);
+        JsonNode json = clientTarget(app, "/route").request().post(Entity.json(jsonStr), JsonNode.class);
+        JsonNode path = json.get("paths").get(0);
         assertEquals(1590, path.get("distance").asDouble(), 2);
 
         jsonStr = "{ \"points\": [[1.53285,42.511139], [1.532271,42.508165]], " +
                 "\"profile\": \"my_car\", " +
                 "\"point_hints\":[\"Tunèl del Pont Pla\",\"\"], " +
                 "\"snap_preventions\": [\"tunnel\"] }";
-        response = clientTarget(app, "/route").request().post(Entity.json(jsonStr));
-        assertEquals(200, response.getStatus());
-        path = response.readEntity(JsonNode.class).get("paths").get(0);
+        json = clientTarget(app, "/route").request().post(Entity.json(jsonStr), JsonNode.class);
+        path = json.get("paths").get(0);
         assertEquals(490, path.get("distance").asDouble(), 2);
     }
 
@@ -527,10 +509,8 @@ public class RouteResourceTest {
 
     @Test
     public void testGPX() {
-        final Response response = clientTarget(app, "/route?profile=my_car&" +
-                "point=42.554851,1.536198&point=42.510071,1.548128&type=gpx").request().buildGet().invoke();
-        assertEquals(200, response.getStatus());
-        String str = response.readEntity(String.class);
+        String str = clientTarget(app, "/route?profile=my_car&" +
+                "point=42.554851,1.536198&point=42.510071,1.548128&type=gpx").request().get(String.class);
         // For backward compatibility we currently export route and track.
         assertTrue(str.contains("<gh:distance>1841.7</gh:distance>"), str);
         assertFalse(str.contains("<name>Finish!</name></wpt>"));
@@ -539,10 +519,8 @@ public class RouteResourceTest {
 
     @Test
     public void testGPXWithExcludedRouteSelection() {
-        final Response response = clientTarget(app, "/route?profile=my_car&" +
-                "point=42.554851,1.536198&point=42.510071,1.548128&type=gpx&gpx.route=false&gpx.waypoints=false").request().buildGet().invoke();
-        assertEquals(200, response.getStatus());
-        String str = response.readEntity(String.class);
+        String str = clientTarget(app, "/route?profile=my_car&" +
+                "point=42.554851,1.536198&point=42.510071,1.548128&type=gpx&gpx.route=false&gpx.waypoints=false").request().get(String.class);
         assertFalse(str.contains("<gh:distance>115.1</gh:distance>"));
         assertFalse(str.contains("<wpt lat=\"42.51003\" lon=\"1.548188\"> <name>Finish!</name></wpt>"));
         assertTrue(str.contains("<trkpt lat=\"42.554839\" lon=\"1.536374\"><time>"));
@@ -550,10 +528,8 @@ public class RouteResourceTest {
 
     @Test
     public void testGPXWithTrackAndWaypointsSelection() {
-        final Response response = clientTarget(app, "/route?profile=my_car&" +
-                "point=42.554851,1.536198&point=42.510071,1.548128&type=gpx&gpx.track=true&gpx.route=false&gpx.waypoints=true").request().buildGet().invoke();
-        assertEquals(200, response.getStatus());
-        String str = response.readEntity(String.class);
+        String str = clientTarget(app, "/route?profile=my_car&" +
+                "point=42.554851,1.536198&point=42.510071,1.548128&type=gpx&gpx.track=true&gpx.route=false&gpx.waypoints=true").request().get(String.class);
         assertFalse(str.contains("<gh:distance>115.1</gh:distance>"));
         assertTrue(str.contains("<wpt lat=\"42.510033\" lon=\"1.548191\"> <name>arrive at destination</name></wpt>"));
         assertTrue(str.contains("<trkpt lat=\"42.554839\" lon=\"1.536374\"><time>"));

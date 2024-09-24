@@ -30,7 +30,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.List;
 
@@ -67,10 +66,8 @@ public class RouteResourceWithEleTest {
 
     @Test
     public void testElevation() {
-        final Response response = clientTarget(app, "/route?profile=profile&" +
-                "point=43.730864,7.420771&point=43.727687,7.418737&points_encoded=false&elevation=true").request().buildGet().invoke();
-        assertEquals(200, response.getStatus());
-        JsonNode json = response.readEntity(JsonNode.class);
+        JsonNode json = clientTarget(app, "/route?profile=profile&" +
+                "point=43.730864,7.420771&point=43.727687,7.418737&points_encoded=false&elevation=true").request().get(JsonNode.class);
         JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
         JsonNode path = json.get("paths").get(0);
@@ -89,10 +86,8 @@ public class RouteResourceWithEleTest {
     @Test
     public void testNoElevation() {
         // default is elevation=false
-        Response response = clientTarget(app, "/route?profile=profile&" +
-                "point=43.730864,7.420771&point=43.727687,7.418737&points_encoded=false").request().buildGet().invoke();
-        assertEquals(200, response.getStatus());
-        JsonNode json = response.readEntity(JsonNode.class);
+        JsonNode json = clientTarget(app, "/route?profile=profile&" +
+                "point=43.730864,7.420771&point=43.727687,7.418737&points_encoded=false").request().get(JsonNode.class);
         JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
         JsonNode path = json.get("paths").get(0);
@@ -103,10 +98,8 @@ public class RouteResourceWithEleTest {
         assertTrue(cson.toString().contains("[7.421392,43.7307]"), "Elevation should not be included!");
 
         // disable elevation
-        response = clientTarget(app, "/route?profile=profile&" +
-                "point=43.730864,7.420771&point=43.727687,7.418737&points_encoded=false&elevation=false").request().buildGet().invoke();
-        assertEquals(200, response.getStatus());
-        json = response.readEntity(JsonNode.class);
+        json = clientTarget(app, "/route?profile=profile&" +
+                "point=43.730864,7.420771&point=43.727687,7.418737&points_encoded=false&elevation=false").request().get(JsonNode.class);
         infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
         path = json.get("paths").get(0);

@@ -112,13 +112,10 @@ public class MapMatchingResourceTurnCostsTest {
     }
 
     private void runCar(String urlParams) {
-        final Response response = clientTarget(app, "/match?" + urlParams)
+        JsonNode json = clientTarget(app, "/match?" + urlParams)
                 .request()
-                .buildPost(Entity.xml(getClass().getResourceAsStream("another-tour-with-loop.gpx")))
-                .invoke();
-        JsonNode json = response.readEntity(JsonNode.class);
+                .post(Entity.xml(getClass().getResourceAsStream("another-tour-with-loop.gpx")), JsonNode.class);
         assertFalse(json.has("message"), json.toString());
-        assertEquals(200, response.getStatus());
         JsonNode path = json.get("paths").get(0);
 
         LineString expectedGeometry = readWktLineString("LINESTRING (12.3607 51.34365, 12.36418 51.34443, 12.36379 51.34538, 12.36082 51.34471, 12.36188 51.34278)");
@@ -131,13 +128,10 @@ public class MapMatchingResourceTurnCostsTest {
     }
 
     private void runBike(String urlParams) {
-        final Response response = clientTarget(app, "/match?" + urlParams)
+        JsonNode json = clientTarget(app, "/match?" + urlParams)
                 .request()
-                .buildPost(Entity.xml(getClass().getResourceAsStream("another-tour-with-loop.gpx")))
-                .invoke();
-        JsonNode json = response.readEntity(JsonNode.class);
+                .post(Entity.xml(getClass().getResourceAsStream("another-tour-with-loop.gpx")), JsonNode.class);
         assertFalse(json.has("message"), json.toString());
-        assertEquals(200, response.getStatus());
         JsonNode path = json.get("paths").get(0);
 
         LineString expectedGeometry = readWktLineString("LINESTRING (12.3607 51.34365, 12.36418 51.34443, 12.36379 51.34538, 12.36082 51.34471, 12.36188 51.34278)");

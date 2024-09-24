@@ -90,9 +90,7 @@ public class RouteResourceLeipzigTest {
         {
             // for a long timeout the route calculation works
             long longTimeout = 10_000;
-            Response response = clientTarget(app, "/route?timeout_ms=" + longTimeout + "&profile=my_car&point=51.319685,12.335525&point=51.367294,12.434745&" + args).request().buildGet().invoke();
-            assertEquals(200, response.getStatus());
-            JsonNode jsonNode = response.readEntity(JsonNode.class);
+            JsonNode jsonNode = clientTarget(app, "/route?timeout_ms=" + longTimeout + "&profile=my_car&point=51.319685,12.335525&point=51.367294,12.434745&" + args).request().get(JsonNode.class);
             // by checking the visited nodes we make sure different algorithms are used
             assertEquals(expectedVisitedNodes, jsonNode.get("hints").get("visited_nodes.sum").asInt());
         }
@@ -113,10 +111,9 @@ public class RouteResourceLeipzigTest {
             double lonFrom = minLon + rnd.nextDouble() * (maxLon - minLon);
             double latTo = minLat + rnd.nextDouble() * (maxLat - minLat);
             double lonTo = minLon + rnd.nextDouble() * (maxLon - minLon);
-            final Response response = clientTarget(app, "/route?profile=my_car&" +
-                    "point=" + latFrom + "," + lonFrom + "&point=" + latTo + "," + lonTo).request().buildGet().invoke();
-            assertEquals(200, response.getStatus());
-            JsonNode path = response.readEntity(JsonNode.class).get("paths").get(0);
+            JsonNode json = clientTarget(app, "/route?profile=my_car&" +
+                    "point=" + latFrom + "," + lonFrom + "&point=" + latTo + "," + lonTo).request().get(JsonNode.class);
+            JsonNode path = json.get("paths").get(0);
             assertTrue(path.get("distance").asDouble() >= 0);
         }
     }
