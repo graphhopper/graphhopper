@@ -8,18 +8,18 @@ import java.util.Set;
 
 public class TurnCostsConfig {
     public static final int INFINITE_U_TURN_COSTS = -1;
-    private double leftCosts; // in seconds
-    private double leftSharpCosts; // in seconds
+    private double leftTurnCosts; // in seconds
+    private double sharpLeftTurnCosts; // in seconds
     private double straightCosts;
-    private double rightCosts;
-    private double rightSharpCosts;
+    private double rightTurnCosts;
+    private double sharpRightTurnCosts;
 
-    // The "right" and "left" turns are symmetric and the negative values are used for "left".
-    // From 0 to minAngle no turn costs are added.
-    // From minAngle to minSharpAngle the rightCosts (or leftCosts) are added.
-    // From minSharpAngle to minUTurnAngle the rightSharpCosts (or leftSharpCosts) are added.
+    // The "right" and "left" turns are symmetric and the negative values are used for "left_turn_costs".
+    // From 0 to minTurnAngle no turn costs are added.
+    // From minTurnAngle to minSharpTurnAngle the rightTurnCosts (or leftTurnCosts) are added.
+    // From minSharpTurnAngle to minUTurnAngle the rightSharpTurnCosts (or leftSharpTurnCosts) are added.
     // And beyond minUTurnAngle the uTurnCosts are added.
-    private double minAngle = 25, minSharpAngle = 80, minUTurnAngle = 180;
+    private double minTurnAngle = 25, minSharpTurnAngle = 80, minUTurnAngle = 180;
 
     private int uTurnCosts = INFINITE_U_TURN_COSTS;
     private List<String> vehicleTypes;
@@ -45,15 +45,15 @@ public class TurnCostsConfig {
     }
 
     public TurnCostsConfig(TurnCostsConfig copy) {
-        leftCosts = copy.leftCosts;
-        leftSharpCosts = copy.leftSharpCosts;
+        leftTurnCosts = copy.leftTurnCosts;
+        sharpLeftTurnCosts = copy.sharpLeftTurnCosts;
         straightCosts = copy.straightCosts;
-        rightCosts = copy.rightCosts;
-        rightSharpCosts = copy.rightSharpCosts;
+        rightTurnCosts = copy.rightTurnCosts;
+        sharpRightTurnCosts = copy.sharpRightTurnCosts;
         uTurnCosts = copy.uTurnCosts;
 
-        minAngle = copy.minAngle;
-        minSharpAngle = copy.minSharpAngle;
+        minTurnAngle = copy.minTurnAngle;
+        minSharpTurnAngle = copy.minSharpTurnAngle;
         minUTurnAngle = copy.minUTurnAngle;
         if (copy.vehicleTypes != null)
             vehicleTypes = new ArrayList<>(copy.vehicleTypes);
@@ -104,47 +104,47 @@ public class TurnCostsConfig {
     }
 
     public boolean hasLeftRightStraightCosts() {
-        return leftCosts != 0 || leftSharpCosts != 0 || straightCosts != 0 || rightCosts != 0 || rightSharpCosts != 0;
+        return leftTurnCosts != 0 || sharpLeftTurnCosts != 0 || straightCosts != 0 || rightTurnCosts != 0 || sharpRightTurnCosts != 0;
     }
 
-    public TurnCostsConfig setLeftCosts(double leftCosts) {
-        this.leftCosts = leftCosts;
+    public TurnCostsConfig setLeftTurnCosts(double leftTurnCosts) {
+        this.leftTurnCosts = leftTurnCosts;
         return this;
     }
 
-    @JsonProperty("left_costs")
-    public double getLeftCosts() {
-        return leftCosts;
+    @JsonProperty("left_turn_costs")
+    public double getLeftTurnCosts() {
+        return leftTurnCosts;
     }
 
-    public TurnCostsConfig setLeftSharpCosts(double leftSharpCosts) {
-        this.leftSharpCosts = leftSharpCosts;
+    public TurnCostsConfig setSharpLeftTurnCosts(double sharpLeftTurnCosts) {
+        this.sharpLeftTurnCosts = sharpLeftTurnCosts;
         return this;
     }
 
-    @JsonProperty("left_sharp_costs")
-    public double getLeftSharpCosts() {
-        return leftSharpCosts;
+    @JsonProperty("sharp_left_turn_costs")
+    public double getSharpLeftTurnCosts() {
+        return sharpLeftTurnCosts;
     }
 
-    public TurnCostsConfig setRightCosts(double rightCosts) {
-        this.rightCosts = rightCosts;
+    public TurnCostsConfig setRightTurnCosts(double rightTurnCosts) {
+        this.rightTurnCosts = rightTurnCosts;
         return this;
     }
 
-    @JsonProperty("right_costs")
-    public double getRightCosts() {
-        return rightCosts;
+    @JsonProperty("right_turn_costs")
+    public double getRightTurnCosts() {
+        return rightTurnCosts;
     }
 
-    public TurnCostsConfig setRightSharpCosts(double rightSharpCosts) {
-        this.rightSharpCosts = rightSharpCosts;
+    public TurnCostsConfig setSharpRightTurnCosts(double sharpRightTurnCosts) {
+        this.sharpRightTurnCosts = sharpRightTurnCosts;
         return this;
     }
 
-    @JsonProperty("right_sharp_costs")
-    public double getRightSharpCosts() {
-        return rightSharpCosts;
+    @JsonProperty("sharp_right_turn_costs")
+    public double getSharpRightTurnCosts() {
+        return sharpRightTurnCosts;
     }
 
     public TurnCostsConfig setStraightCosts(double straightCosts) {
@@ -157,24 +157,24 @@ public class TurnCostsConfig {
         return straightCosts;
     }
 
-    @JsonProperty("min_angle")
-    public TurnCostsConfig setMinAngle(double minAngle) {
-        this.minAngle = minAngle;
+    @JsonProperty("min_turn_angle")
+    public TurnCostsConfig setMinTurnAngle(double minTurnAngle) {
+        this.minTurnAngle = minTurnAngle;
         return this;
     }
 
-    public double getMinAngle() {
-        return minAngle;
+    public double getMinTurnAngle() {
+        return minTurnAngle;
     }
 
-    @JsonProperty("min_sharp_angle")
-    public TurnCostsConfig setMinSharpAngle(double minSharpAngle) {
-        this.minSharpAngle = minSharpAngle;
+    @JsonProperty("min_sharp_turn_angle")
+    public TurnCostsConfig setMinSharpTurnAngle(double minSharpTurnAngle) {
+        this.minSharpTurnAngle = minSharpTurnAngle;
         return this;
     }
 
-    public double getMinSharpAngle() {
-        return minSharpAngle;
+    public double getMinSharpTurnAngle() {
+        return minSharpTurnAngle;
     }
 
     @JsonProperty("min_u_turn_angle")
@@ -189,10 +189,12 @@ public class TurnCostsConfig {
 
     @Override
     public String toString() {
-        return "left=" + leftCosts + ", leftSharp=" + leftSharpCosts
-                + ", straight=" + straightCosts
-                + ", right=" + rightCosts + ", rightSharp=" + rightSharpCosts
-                + ", minAngle=" + minAngle + ", minSharpAngle=" + minSharpAngle + ", minUTurnAngle=" + minUTurnAngle
+        return "leftTurnCosts=" + leftTurnCosts + ", sharpLeftTurnCosts=" + sharpLeftTurnCosts
+                + ", straightCosts=" + straightCosts
+                + ", rightTurnCosts=" + rightTurnCosts + ", sharpRightTurnCosts=" + sharpRightTurnCosts
+                + ", minTurnAngle=" + minTurnAngle
+                + ", minSharpTurnAngle=" + minSharpTurnAngle
+                + ", minUTurnAngle=" + minUTurnAngle
                 + ", uTurnCosts=" + uTurnCosts + ", vehicleTypes=" + vehicleTypes;
     }
 }

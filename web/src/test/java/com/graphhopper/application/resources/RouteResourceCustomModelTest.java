@@ -72,7 +72,7 @@ public class RouteResourceCustomModelTest {
                         new Profile("car").setCustomModel(TestProfiles.accessAndSpeed("unused", "car").
                                 getCustomModel().setDistanceInfluence(70d)),
                         new Profile("car_tc_left").setCustomModel(TestProfiles.accessAndSpeed("car_tc_left", "car").
-                                getCustomModel().setDistanceInfluence(70d)).setTurnCostsConfig(new TurnCostsConfig(List.of("motor_vehicle")).setLeftCosts(100.0).setLeftSharpCosts(100.0)),
+                                getCustomModel().setDistanceInfluence(70d)).setTurnCostsConfig(new TurnCostsConfig(List.of("motor_vehicle")).setLeftTurnCosts(100.0).setSharpLeftTurnCosts(100.0)),
                         new Profile("car_with_area").setCustomModel(TestProfiles.accessAndSpeed("unused", "car").
                                 getCustomModel().addToPriority(If("in_external_area52", MULTIPLY, "0.05"))),
                         TestProfiles.accessSpeedAndPriority("bike"),
