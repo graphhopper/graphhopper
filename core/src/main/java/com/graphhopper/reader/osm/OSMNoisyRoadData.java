@@ -86,6 +86,11 @@ public class OSMNoisyRoadData {
         return osmNoisyRoads;
     }
 
+    public void clearOsmNoisyRoads()  {
+        osmNoisyRoads.clear();
+        osmNoisyRoads = null;
+    }
+
     public static class LongToTwoIntsMap {
         private final LongLongMap internalIdsByKey = new GHLongLongBTree(200, 4, -1);
         private final IntArrayList vals1 = new IntArrayList();

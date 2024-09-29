@@ -230,7 +230,7 @@ public class OSMReader {
         }).collect(Collectors.toList());
         // todonow remove toFootprint log lines
         LOGGER.info(GraphLayout.parseInstance(osmNoisyRoadData, validRoads).toFootprint());
-        osmNoisyRoadData.getOsmNoisyRoads().clear();
+        osmNoisyRoadData.clearOsmNoisyRoads();
         osmNoisyRoadNoiseIndex = new NoiseIndex<>(validRoads);
         LOGGER.info(GraphLayout.parseInstance(osmNoisyRoadNoiseIndex).toFootprint());
         // they partly overlap
