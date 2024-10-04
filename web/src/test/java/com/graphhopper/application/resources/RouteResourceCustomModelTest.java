@@ -27,6 +27,7 @@ import com.graphhopper.config.Profile;
 import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.TurnCostsConfig;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import org.junit.jupiter.api.AfterAll;
@@ -62,16 +63,18 @@ public class RouteResourceCustomModelTest {
                 putObject("prepare.min_network_size", 200).
                 putObject("datareader.file", "../core/files/north-bayreuth.osm.gz").
                 putObject("graph.location", DIR).
-                putObject("graph.encoded_values", "max_height,max_weight,max_width,hazmat,toll,surface,track_type,hgv,average_slope,max_slope,bus_access").
                 putObject("custom_areas.directory", "./src/test/resources/com/graphhopper/application/resources/areas").
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.encoded_values", "max_height, max_weight, max_width, hazmat, toll, surface, track_type, hgv, average_slope, max_slope, bus_access, " +
-                        "car_access, car_average_speed, bike_access, bike_priority, bike_average_speed, road_class, road_access, get_off_bike, roundabout, foot_access, " +
-                        "foot_priority, foot_average_speed, country, mtb_rating, hike_rating").
+                        "car_access, car_average_speed, bike_access, bike_priority, bike_average_speed, road_class, road_access, get_off_bike, roundabout, foot_access, foot_priority, foot_average_speed, country, orientation, mtb_rating, hike_rating").
                 setProfiles(List.of(
                         TestProfiles.constantSpeed("roads", 120),
-                        new Profile("car").setCustomModel(TestProfiles.accessAndSpeed("unused", "car").getCustomModel().setDistanceInfluence(70d)),
-                        new Profile("car_with_area").setCustomModel(TestProfiles.accessAndSpeed("unused", "car").getCustomModel().addToPriority(If("in_external_area52", MULTIPLY, "0.05"))),
+                        new Profile("car").setCustomModel(TestProfiles.accessAndSpeed("unused", "car").
+                                getCustomModel().setDistanceInfluence(70d)),
+                        new Profile("car_tc_left").setCustomModel(TestProfiles.accessAndSpeed("car_tc_left", "car").
+                                getCustomModel().setDistanceInfluence(70d)).setTurnCostsConfig(new TurnCostsConfig(List.of("motor_vehicle")).setLeftCosts(100.0).setLeftSharpCosts(100.0)),
+                        new Profile("car_with_area").setCustomModel(TestProfiles.accessAndSpeed("unused", "car").
+                                getCustomModel().addToPriority(If("in_external_area52", MULTIPLY, "0.05"))),
                         TestProfiles.accessSpeedAndPriority("bike"),
                         new Profile("bus").setCustomModel(null).putHint("custom_model_files", List.of("bus.json")),
                         new Profile("cargo_bike").setCustomModel(null).putHint("custom_model_files", List.of("cargo_bike.json")),
@@ -343,6 +346,30 @@ public class RouteResourceCustomModelTest {
         JsonNode path = getPath(body);
         assertEquals(7314, path.get("distance").asDouble(), 10);
         assertEquals(944 * 1000, path.get("time").asLong(), 1_000);
+    }
+
+    @Test
+    public void testTurnCosts() {
+        String body = "{\"points\": [[11.508198,50.015441], [11.505063,50.01737]], \"profile\": \"car_tc_left\", \"ch.disable\":true }";
+        JsonNode path = getPath(body);
+        assertEquals(1067, path.get("distance").asDouble(), 10);
+    }
+
+    @Test
+    public void testTurnCostsAlternativeBug() {
+        String body = "{\"points\": [[11.503027,49.987546], [11.503149,49.986786]], \"profile\": \"car_tc_left\", \"ch.disable\":true}";
+        JsonNode path = getPath(body);
+        assertEquals(545, path.get("distance").asDouble(), 10);
+
+        body = "{\"points\": [[11.503027,49.987546], [11.503149,49.986786]], \"profile\": \"car_tc_left\", \"ch.disable\":true," +
+                "\"algorithm\":\"alternative_route\"}";
+        final Response response = query(body, 200);
+        JsonNode json = response.readEntity(JsonNode.class);
+        assertFalse(json.get("info").has("errors"));
+
+        // TODO LATER: alternative route bug as the two routes are identical!?
+        assertEquals(2, json.get("paths").size());
+        assertEquals(545, json.get("paths").get(0).get("distance").asDouble(), 10);
     }
 
     private void assertMessageStartsWith(JsonNode jsonNode, String message) {

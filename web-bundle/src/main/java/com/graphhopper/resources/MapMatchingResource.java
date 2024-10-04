@@ -37,7 +37,6 @@ import com.graphhopper.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
@@ -71,7 +70,6 @@ public class MapMatchingResource {
     private final TranslationMap trMap;
     private final MapMatchingRouterFactory mapMatchingRouterFactory;
     private final ObjectMapper objectMapper = Jackson.newObjectMapper();
-    @Nullable
     private final String osmDate;
 
     @Inject

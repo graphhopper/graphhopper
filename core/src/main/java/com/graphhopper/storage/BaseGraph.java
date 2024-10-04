@@ -426,6 +426,15 @@ public class BaseGraph implements Graph, Closeable {
         return isAdjacentToNode(node, edgePointer);
     }
 
+    /**
+     * @return true if the specified node is the adjacent node of the specified edge
+     * (relative to the direction in which the edge is stored).
+     */
+    public boolean isAdjNode(int edge, int node) {
+        long edgePointer = store.toEdgePointer(edge);
+        return node == store.getNodeB(edgePointer);
+    }
+
     private void setWayGeometry_(PointList pillarNodes, long edgePointer, boolean reverse) {
         if (pillarNodes != null && !pillarNodes.isEmpty()) {
             if (pillarNodes.getDimension() != nodeAccess.getDimension())
