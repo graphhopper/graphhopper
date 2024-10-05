@@ -17,6 +17,9 @@
  */
 package com.graphhopper.routing.ev;
 
+import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.util.TransportationMode;
+import com.graphhopper.routing.util.countryrules.CountryRule;
 import com.graphhopper.util.Helper;
 
 /**
@@ -25,8 +28,9 @@ import com.graphhopper.util.Helper;
  * value OTHER. The NO value does not permit any access.
  */
 public enum RoadAccess {
-    YES, DESTINATION, CUSTOMERS, DELIVERY, FORESTRY, AGRICULTURAL, PRIVATE, OTHER, NO;
+    YES, DESTINATION, CUSTOMERS, DELIVERY, FORESTRY, AGRICULTURAL, PRIVATE, NO;
 
+    // TODO backward compatible rename to car_road_access
     public static final String KEY = "road_access";
 
     public static EnumEncodedValue<RoadAccess> create() {
@@ -41,11 +45,18 @@ public enum RoadAccess {
     public static RoadAccess find(String name) {
         if (name == null)
             return YES;
+        if (name.equalsIgnoreCase("permit"))
+            return PRIVATE;
         try {
             // public and permissive will be converted into "yes"
             return RoadAccess.valueOf(Helper.toUpperCase(name));
         } catch (IllegalArgumentException ex) {
             return YES;
         }
+    }
+
+    public static RoadAccess countryHook(ReaderWay readerWay, RoadAccess roadAccess) {
+        CountryRule countryRule = readerWay.getTag("country_rule", null);
+        return countryRule == null ? roadAccess : countryRule.getAccess(readerWay, TransportationMode.CAR, roadAccess == null ? RoadAccess.YES : roadAccess);
     }
 }

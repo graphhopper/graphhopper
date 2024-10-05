@@ -19,8 +19,11 @@
 package com.graphhopper.routing.ev;
 
 import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.countryrules.CountryRule;
 import com.graphhopper.routing.util.parsers.*;
 import com.graphhopper.util.PMap;
+
+import java.util.Arrays;
 
 public class DefaultImportRegistry implements ImportRegistry {
     @Override
@@ -51,11 +54,28 @@ public class DefaultImportRegistry implements ImportRegistry {
                     (lookup, props) -> new OSMRoadEnvironmentParser(
                             lookup.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class))
             );
+        else if (FootRoadAccess.KEY.equals(name))
+            return ImportUnit.create(name, props -> FootRoadAccess.create(),
+                    (lookup, props) -> new OSMRoadAccessParser<>(
+                            lookup.getEnumEncodedValue(FootRoadAccess.KEY, FootRoadAccess.class),
+                            OSMRoadAccessParser.toOSMRestrictions(TransportationMode.FOOT),
+                            (readerWay, accessValue) -> accessValue,
+                            FootRoadAccess::find)
+            );
+        else if (BikeRoadAccess.KEY.equals(name))
+            return ImportUnit.create(name, props -> BikeRoadAccess.create(),
+                    (lookup, props) -> new OSMRoadAccessParser<>(
+                            lookup.getEnumEncodedValue(BikeRoadAccess.KEY, BikeRoadAccess.class),
+                            BikeRoadAccess.RESTRICTIONS,
+                            (readerWay, accessValue) -> accessValue,
+                            BikeRoadAccess::find)
+            );
         else if (RoadAccess.KEY.equals(name))
             return ImportUnit.create(name, props -> RoadAccess.create(),
-                    (lookup, props) -> new OSMRoadAccessParser(
+                    (lookup, props) -> new OSMRoadAccessParser<>(
                             lookup.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class),
-                            OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR))
+                            OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR),
+                            RoadAccess::countryHook, RoadAccess::find)
             );
         else if (MaxSpeed.KEY.equals(name))
             return ImportUnit.create(name, props -> MaxSpeed.create(),

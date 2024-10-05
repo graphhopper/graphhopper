@@ -4,7 +4,7 @@
 //
 // to use this custom model you need to set the following option in the config.yml
 // graph.elevation.provider: srtm   # enables elevation
-// graph.encoded_values: bike_priority, bike_access, roundabout, bike_average_speed, average_slope, orientation
+// graph.encoded_values: bike_priority, bike_access, roundabout, bike_average_speed, bike_road_access, average_slope, orientation
 // profiles:
 //    - name: bike
 //      turn_costs:
@@ -19,6 +19,7 @@
 {
   "priority": [
     { "if": "true",  "multiply_by": "bike_priority" },
+    { "if": "bike_road_access == PRIVATE", "multiply_by": "0" },
     { "if": "!bike_access && (!backward_bike_access || roundabout)",  "multiply_by": "0" },
     { "else_if": "!bike_access && backward_bike_access",  "multiply_by": "0.2" }
   ],

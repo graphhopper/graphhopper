@@ -1,5 +1,7 @@
 ### 10.0 [not yet released]
 
+- road_access now contains value of highest transportation mode for CAR, i.e. access=private, motorcar=yes will now return YES and not PRIVATE
+- car.json by default avoids private roads
 - the default u-turn time is now 0, the default u-turn weight is still infinite 
 - turn restriction support for restrictions with overlapping and/or multiple via-edges/ways, #3030
 - constructor of BaseGraph.Builder uses byte instead of integer count.

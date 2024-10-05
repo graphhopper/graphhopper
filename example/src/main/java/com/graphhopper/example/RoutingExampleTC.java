@@ -72,7 +72,7 @@ public class RoutingExampleTC {
         hopper.setOSMFile(ghLoc);
         hopper.setGraphHopperLocation("target/routing-tc-graph-cache");
         // add all encoded values that are used in the custom model, these are also available as path details or for client-side custom models
-        hopper.setEncodedValuesString("car_access, car_average_speed");
+        hopper.setEncodedValuesString("car_access, car_average_speed, road_access");
         Profile profile = new Profile("car").setCustomModel(GHUtility.loadCustomModelFromJar("car.json"))
                 // enabling turn costs means OSM turn restriction constraints like 'no_left_turn' will be taken into account for the specified access restrictions
                 // we can also set u_turn_costs (in seconds). i.e. we will consider u-turns at all junctions with a 40s time penalty
