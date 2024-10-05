@@ -312,6 +312,9 @@
         "expressway": {
             "filter": "expressway=yes"
         },
+        "footway": {
+            "filter": "highway=footway"
+        },
         "frontage road": {
             "filter": "frontage_road=yes or side_road=yes"
         },
@@ -3061,6 +3064,18 @@
         "DE": [
             {
                 "name": "living street",
+                "tags": {
+                    "maxspeed": "walk"
+                }
+            },
+            {
+                "name": "pedestrian zone",
+                "tags": {
+                    "maxspeed": "walk"
+                }
+            },
+            {
+                "name": "footway",
                 "tags": {
                     "maxspeed": "walk"
                 }
