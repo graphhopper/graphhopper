@@ -221,13 +221,7 @@ public class OSMReader {
     }
 
     void buildOSMNoisyRoadIndex() {
-        List<OSMNoisyRoad> validRoads = osmNoisyRoadData.getOsmNoisyRoads().stream().filter(r -> {
-            if (!r.isValid()) {
-                OSM_WARNING_LOGGER.warn("invalid noisy road: " + r);
-                return false;
-            }
-            return true;
-        }).collect(Collectors.toList());
+        List<OSMNoisyRoad> validRoads = osmNoisyRoadData.getOsmNoisyRoads().stream().filter(OSMNoisyRoad::isValid).collect(Collectors.toList());
         // todonow remove toFootprint log lines
         LOGGER.info(GraphLayout.parseInstance(osmNoisyRoadData, validRoads).toFootprint());
         osmNoisyRoadData.clearOsmNoisyRoads();
