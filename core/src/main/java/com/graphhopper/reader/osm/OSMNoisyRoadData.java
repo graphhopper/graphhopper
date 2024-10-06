@@ -53,8 +53,8 @@ public class OSMNoisyRoadData {
             int nodeIndex = BitUtil.LITTLE.getIntHigh(index);
             OSMNoisyRoad osmNoisyRoad = osmNoisyRoads.get(osmNoisyRoadIndex);
             // Note that we set the coordinates only for one particular node for one particular
-            // osm area, even though the same osm node might be used in multiple such areas. We will
-            // fix the next time we get to see the osm area ways.
+            // osm way, even though the same osm node might be used in multiple such ways. We will
+            // fix that the next time we get to see the osm way.
             osmNoisyRoad.setCoordinate(nodeIndex, node.getLat(), node.getLon());
         }
     }
