@@ -23,14 +23,13 @@ import com.graphhopper.routing.util.countryrules.CountryRule;
 import com.graphhopper.util.Helper;
 
 /**
- * This enum defines the road access of an edge. Most edges are accessible from everyone and so the default value is
- * YES. But some have restrictions like "accessible only for customers" or when delivering. Unknown tags will get the
- * value OTHER. The NO value does not permit any access.
+ * This enum defines the road access of an edge. Most edges are accessible from everyone and so the
+ * default value is YES. But some have restrictions like "accessible only for customers" or when
+ * delivering. The NO value does not permit any access.
  */
 public enum RoadAccess {
     YES, DESTINATION, CUSTOMERS, DELIVERY, FORESTRY, AGRICULTURAL, PRIVATE, NO;
 
-    // TODO backward compatible rename to car_road_access
     public static final String KEY = "road_access";
 
     public static EnumEncodedValue<RoadAccess> create() {

@@ -6,7 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public enum BikeRoadAccess {
-    YES, DESTINATION, CUSTOMERS, DESIGNATED, USE_SIDEPATH, PRIVATE, DISMOUNT, NO;
+    MISSING, YES, DESTINATION, DESIGNATED, USE_SIDEPATH, DISMOUNT, PRIVATE, NO;
 
     public static final String KEY = "bike_road_access";
 
@@ -31,7 +31,7 @@ public enum BikeRoadAccess {
     public static BikeRoadAccess find(String name) {
         if (name == null)
             return YES;
-        if (name.equalsIgnoreCase("permit"))
+        if (name.equalsIgnoreCase("permit") || name.equalsIgnoreCase("customers"))
             return PRIVATE;
         try {
             return BikeRoadAccess.valueOf(Helper.toUpperCase(name));

@@ -3,7 +3,7 @@ package com.graphhopper.routing.ev;
 import com.graphhopper.util.Helper;
 
 public enum FootRoadAccess {
-    YES, DESTINATION, CUSTOMERS, DESIGNATED, USE_SIDEPATH, PRIVATE, NO;
+    MISSING, YES, DESTINATION, DESIGNATED, USE_SIDEPATH, CUSTOMERS, PRIVATE, NO;
 
     public static final String KEY = "foot_road_access";
 
