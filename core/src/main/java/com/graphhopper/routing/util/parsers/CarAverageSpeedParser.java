@@ -20,6 +20,7 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.FerrySpeedCalculator;
+import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.util.Helper;
 
 import java.util.HashMap;
@@ -119,8 +120,35 @@ public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements
         return speed;
     }
 
+    protected boolean trySetDefinedAvgSpeed(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way) {
+        boolean isAnySpeedValid = false;
+    
+        double avgSpeed = OSMValueExtractor.stringToKmh(way.getTag("avgspeed"));
+        double avgSpeedForward = OSMValueExtractor.stringToKmh(way.getTag("avgspeed:forward"));
+        double avgSpeedBackward = OSMValueExtractor.stringToKmh(way.getTag("avgspeed:backward"));
+    
+        isAnySpeedValid = trySetSpeed(edgeId, edgeIntAccess, avgSpeed, avgSpeedForward, false) || isAnySpeedValid;
+        isAnySpeedValid = trySetSpeed(edgeId, edgeIntAccess, avgSpeed, avgSpeedBackward, true) || isAnySpeedValid;
+    
+        return isAnySpeedValid;
+    }
+    
+    protected boolean trySetSpeed(int edgeId, EdgeIntAccess edgeIntAccess, double avgSpeed, double directedAvgSpeed, boolean isBackward) {
+        if (isValidSpeed(directedAvgSpeed)) {
+            setSpeed(isBackward, edgeId, edgeIntAccess, directedAvgSpeed);
+            return true;
+        } else if (isValidSpeed(avgSpeed)) {
+            setSpeed(isBackward, edgeId, edgeIntAccess, avgSpeed);
+            return true;
+        }
+        return false;
+    }
+
     @Override
     public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way) {
+        if (trySetDefinedAvgSpeed(edgeId, edgeIntAccess, way)){
+            return;
+        }
         if (FerrySpeedCalculator.isFerry(way)) {
             double ferrySpeed = FerrySpeedCalculator.minmax(ferrySpeedEnc.getDecimal(false, edgeId, edgeIntAccess), avgSpeedEnc);
             setSpeed(false, edgeId, edgeIntAccess, ferrySpeed);

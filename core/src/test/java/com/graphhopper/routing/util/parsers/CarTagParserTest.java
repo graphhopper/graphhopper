@@ -378,6 +378,44 @@ public class CarTagParserTest {
         speedParser.handleWayTags(edgeId, edgeIntAccess, way);
         assertEquals(70, avSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), 1e-1);
 
+        way.clearTags();
+        way.setTag("highway", "primary");
+        way.setTag("maxspeed", "110");
+        way.setTag("avgspeed", "78");
+        edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
+        speedParser.handleWayTags(edgeId, edgeIntAccess, way);
+        assertEquals(78, avSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), 1e-1);
+        assertEquals(78, avSpeedEnc.getDecimal(true, edgeId, edgeIntAccess), 1e-1);
+
+        way.clearTags();
+        way.setTag("highway", "primary");
+        way.setTag("maxspeed", "110");
+        way.setTag("avgspeed", "78");
+        way.setTag("avgspeed:forward", "88");
+        edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
+        speedParser.handleWayTags(edgeId, edgeIntAccess, way);
+        assertEquals(88, avSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), 1e-1);
+        assertEquals(78, avSpeedEnc.getDecimal(true, edgeId, edgeIntAccess), 1e-1);
+
+        way.clearTags();
+        way.setTag("highway", "primary");
+        way.setTag("maxspeed", "110");
+        way.setTag("avgspeed:forward", "88");
+        way.setTag("avgspeed:backward", "98");
+        edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
+        speedParser.handleWayTags(edgeId, edgeIntAccess, way);
+        assertEquals(88, avSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), 1e-1);
+        assertEquals(98, avSpeedEnc.getDecimal(true, edgeId, edgeIntAccess), 1e-1);
+
+        way.clearTags();
+        way.setTag("highway", "primary");
+        way.setTag("maxspeed", "110");
+        way.setTag("avgspeed:forward", "88");
+        edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
+        speedParser.handleWayTags(edgeId, edgeIntAccess, way);
+        assertEquals(88, avSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), 1e-1);
+        assertEquals(0, avSpeedEnc.getDecimal(true, edgeId, edgeIntAccess), 1e-1);
+
         try {
             avSpeedEnc.setDecimal(false, edgeId, edgeIntAccess, -1);
             assertTrue(false);
