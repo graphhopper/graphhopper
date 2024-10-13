@@ -468,7 +468,7 @@ public class GraphHopperOSMTest {
                 setGraphHopperLocation(ghLoc);
         instance.load();
         assertEquals(5, instance.getBaseGraph().getNodes());
-        assertEquals("road_class,road_environment,roundabout,road_class_link,max_speed,foot_subnetwork,car_subnetwork",
+        assertEquals("road_class,road_environment,roundabout,road_class_link,max_speed,urban_density,foot_subnetwork,car_subnetwork",
                 instance.getEncodingManager().getEncodedValues().stream().map(EncodedValue::getName).collect(Collectors.joining(",")));
     }
 
@@ -500,7 +500,7 @@ public class GraphHopperOSMTest {
                 setOSMFile(testOsm3);
         instance.load();
         assertEquals(5, instance.getBaseGraph().getNodes());
-        assertEquals("road_class,road_environment,roundabout,road_class_link,max_speed,car_subnetwork", instance.getEncodingManager().getEncodedValues().stream().map(EncodedValue::getName).collect(Collectors.joining(",")));
+        assertEquals("road_class,road_environment,roundabout,road_class_link,max_speed,urban_density,car_subnetwork", instance.getEncodingManager().getEncodedValues().stream().map(EncodedValue::getName).collect(Collectors.joining(",")));
     }
 
     @Test
