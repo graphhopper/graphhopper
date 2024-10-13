@@ -119,7 +119,7 @@ public class GraphHopper {
     private double residentialAreaSensitivity = 6000;
     private double cityAreaRadius = 1500;
     private double cityAreaSensitivity = 1000;
-    private int urbanDensityCalculationThreads = 0;
+    private int urbanDensityCalculationThreads = 8;
 
     // preparation handlers
     private final LMPreparationHandler lmPreparationHandler = new LMPreparationHandler();

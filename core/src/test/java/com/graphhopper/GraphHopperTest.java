@@ -20,6 +20,7 @@ package com.graphhopper;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
+import com.graphhopper.routing.util.MaxSpeedCalculator;
 import com.graphhopper.util.TurnCostsConfig;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.SRTMProvider;
@@ -59,6 +60,7 @@ import org.locationtech.jts.geom.GeometryFactory;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream;
 
 import static com.graphhopper.json.Statement.If;
 import static com.graphhopper.json.Statement.Op.LIMIT;
@@ -140,6 +142,24 @@ public class GraphHopperTest {
         rsp = hopper.route(req);
         assertTrue(rsp.hasErrors());
         assertTrue(rsp.getErrors().toString().contains("ConnectionNotFoundException"), rsp.getErrors().toString());
+    }
+
+    @Test
+    public void testMaxSpeedCalculatorCrash() {
+        try {
+            for (int i : IntStream.range(1, 20).toArray()) {
+                new GraphHopper().
+                        setGraphHopperLocation(GH_LOCATION).
+                        setOSMFile(BERLIN).
+                        // Fixed: line causes a crash
+                        setMaxSpeedCalculator(new MaxSpeedCalculator(MaxSpeedCalculator.createLegalDefaultSpeeds())).
+                        setEncodedValuesString("car_access, car_average_speed, max_speed").
+                        setProfiles(new Profile("car").setCustomModel(GHUtility.loadCustomModelFromJar("car.json"))).
+                        importOrLoad();
+            }
+        } catch (Exception e)   {
+            fail(e.getMessage());
+        }
     }
 
     @Test
