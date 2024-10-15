@@ -55,7 +55,7 @@ public class NavigateResponseConverterTest {
     @Test
     public void basicTest() {
 
-        GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile(profile));
+        GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile(profile).setPathDetails(Collections.singletonList("intersection")));
 
         ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH, distanceConfig);
 
@@ -286,8 +286,8 @@ public class NavigateResponseConverterTest {
         JsonNode intersection = step.get("intersections").get(0);
 
         assertFalse(intersection.has("in"));
-        assertEquals(1, intersection.get("out").asInt());
-
+        assertEquals(0, intersection.get("out").asInt());
+        assertEquals(1, intersection.get("bearings").size());
         JsonNode location = intersection.get("location");
         // The first intersection to be equal to the first snapped waypoint
         assertEquals(rsp.getBest().getWaypoints().get(0).lon, location.get(0).asDouble(), .000001);
@@ -300,6 +300,13 @@ public class NavigateResponseConverterTest {
         location = intersection.get("location");
         assertEquals(1.534679, location.get(0).asDouble(), .000001);
         assertEquals(42.556444, location.get(1).asDouble(), .000001);
+
+        int nrSteps=steps.size();
+        JsonNode lastStep = steps.get(nrSteps-1);
+        intersection= lastStep.get("intersections").get(0);
+        assertFalse(intersection.has("out"));
+        assertEquals(0, intersection.get("in").asInt());
+        assertEquals(1, intersection.get("bearings").size());
     }
 
     @Test
