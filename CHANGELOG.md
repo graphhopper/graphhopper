@@ -1,6 +1,6 @@
 ### 10.0 [not yet released]
 
-- road_access exists only for API backward compatibility. For country rules use CarRoadAccess
+- use car_road_access instead of road_access. road_access exists only for web API backward compatibility. Note that MISSING was added in comparison to road_access, see #3066
 - road_access now contains value of highest transportation mode for CAR, i.e. access=private, motorcar=yes will now return YES and not PRIVATE
 - car.json by default avoids private roads
 - the default u-turn time is now 0, the default u-turn weight is still infinite 
