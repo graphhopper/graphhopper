@@ -42,8 +42,8 @@ public enum CarRoadAccess {
     }
 
     public static CarRoadAccess find(String name) {
-        if (name == null)
-            return YES;
+        if (name == null || name.isEmpty())
+            return MISSING;
         if (name.equalsIgnoreCase("permit") || name.equalsIgnoreCase("customers"))
             return PRIVATE;
         try {

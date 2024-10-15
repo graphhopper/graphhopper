@@ -20,7 +20,6 @@ package com.graphhopper.routing.util.countryrules;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.CarRoadAccess;
-import com.graphhopper.routing.ev.RoadAccess;
 import com.graphhopper.routing.ev.Toll;
 import com.graphhopper.routing.util.TransportationMode;
 
