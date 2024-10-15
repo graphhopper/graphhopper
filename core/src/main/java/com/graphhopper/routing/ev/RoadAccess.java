@@ -58,7 +58,7 @@ public enum RoadAccess {
     public static RoadAccess countryHook(ReaderWay readerWay, RoadAccess roadAccess) {
         CountryRule countryRule = readerWay.getTag("country_rule", null);
         if (countryRule == null) return roadAccess;
-        CarRoadAccess carRA = CarRoadAccess.find(roadAccess.name()); // cannot be MISSING
+        CarRoadAccess carRA = roadAccess == null ? CarRoadAccess.YES : CarRoadAccess.find(roadAccess.name());
         CarRoadAccess result = countryRule.getAccess(readerWay, TransportationMode.CAR, carRA);
         return RoadAccess.find(result.name());
     }
