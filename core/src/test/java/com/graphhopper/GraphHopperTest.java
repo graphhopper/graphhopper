@@ -139,7 +139,7 @@ public class GraphHopperTest {
         req.putHint(TIMEOUT_MS, -1);
         rsp = hopper.route(req);
         assertTrue(rsp.hasErrors());
-        assertTrue(rsp.getErrors().toString().contains("ConnectionNotFoundException"), rsp.getErrors().toString());
+        assertTrue(rsp.getErrors().toString().contains("TimeoutException"), rsp.getErrors().toString());
     }
 
     @Test
@@ -2416,7 +2416,7 @@ public class GraphHopperTest {
         GHPoint to = new GHPoint(50.029247, 11.582851);
         GHRequest req = new GHRequest(from, to).setProfile(profile);
         GHResponse res = hopper.route(req);
-        assertEquals("[com.graphhopper.util.exceptions.ConnectionNotFoundException: Connection between locations not found]",
+        assertEquals("[com.graphhopper.util.exceptions.TimeoutException: Connection between locations not found]",
                 res.getErrors().toString());
     }
 

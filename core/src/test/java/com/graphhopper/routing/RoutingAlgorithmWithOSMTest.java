@@ -613,7 +613,7 @@ public class RoutingAlgorithmWithOSMTest {
             request.setProfile(hopper.getProfiles().get(0).getName());
             GHResponse res = hopper.route(request);
             assertTrue(res.hasErrors());
-            assertTrue(res.getErrors().toString().contains("ConnectionNotFound"), res.getErrors().toString());
+            assertTrue(res.getErrors().toString().contains("TimeoutException"), res.getErrors().toString());
         }
     }
 

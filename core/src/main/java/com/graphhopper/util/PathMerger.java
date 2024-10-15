@@ -26,6 +26,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
 import com.graphhopper.util.details.PathDetailsFromEdges;
 import com.graphhopper.util.exceptions.ConnectionNotFoundException;
+import com.graphhopper.util.exceptions.TimeoutException;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -155,7 +156,7 @@ public class PathMerger {
         }
 
         if (!allFound) {
-            responsePath.addError(new ConnectionNotFoundException("Connection between locations not found", Collections.emptyMap()));
+            responsePath.addError(new TimeoutException("Connection between locations not found", Collections.emptyMap()));
         }
 
         // make sure the way point indices actually point to the points in waypoints...
