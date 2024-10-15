@@ -3,7 +3,7 @@ package com.graphhopper.routing.ev;
 import com.graphhopper.util.Helper;
 
 public enum FootRoadAccess {
-    MISSING, YES, DESTINATION, DESIGNATED, USE_SIDEPATH, CUSTOMERS, PRIVATE, NO;
+    MISSING, YES, DESTINATION, DESIGNATED, USE_SIDEPATH, PRIVATE, NO;
 
     public static final String KEY = "foot_road_access";
 
@@ -17,9 +17,9 @@ public enum FootRoadAccess {
     }
 
     public static FootRoadAccess find(String name) {
-        if (name == null)
-            return YES;
-        if (name.equalsIgnoreCase("permit"))
+        if (name == null || name.isEmpty())
+            return MISSING;
+        if (name.equalsIgnoreCase("permit") || name.equalsIgnoreCase("customers"))
             return PRIVATE;
         try {
             return FootRoadAccess.valueOf(Helper.toUpperCase(name));
