@@ -19,6 +19,7 @@
 package com.graphhopper.routing.util.countryrules;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.ev.CarRoadAccess;
 import com.graphhopper.routing.ev.RoadAccess;
 import com.graphhopper.routing.ev.Toll;
 import com.graphhopper.routing.util.TransportationMode;
@@ -27,7 +28,7 @@ import com.graphhopper.routing.util.TransportationMode;
  * GraphHopper uses country rules to adjust the routing behavior based on the country an edge is located in
  */
 public interface CountryRule {
-    default RoadAccess getAccess(ReaderWay readerWay, TransportationMode transportationMode, RoadAccess currentRoadAccess) {
+    default CarRoadAccess getAccess(ReaderWay readerWay, TransportationMode transportationMode, CarRoadAccess currentRoadAccess) {
         return currentRoadAccess;
     }
 

@@ -72,7 +72,7 @@ public class EncodingManagerTest {
                 .add(VehicleAccess.create("bike")).add(VehicleSpeed.create("bike", 4, 2, true))
                 .add(VehicleSpeed.create("roads", 5, 5, false))
                 .add(VehicleAccess.create("hike")).add(new DecimalEncodedValueImpl("whatever_hike_average_speed_2022", 5, 5, true))
-                .add(RoadAccess.create())
+                .add(CarRoadAccess.create())
                 .build();
         // only for bike+hike there is access+'speed'
         assertEquals(Arrays.asList("bike", "hike"), em.getVehicles());

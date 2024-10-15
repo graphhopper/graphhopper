@@ -34,12 +34,12 @@ public class HeadingExample {
         GraphHopper hopper = new GraphHopper();
         hopper.setOSMFile(ghLoc);
         hopper.setGraphHopperLocation("target/heading-graph-cache");
-        hopper.setEncodedValuesString("car_access, road_access, car_average_speed");
+        hopper.setEncodedValuesString("car_access, car_road_access, car_average_speed");
         hopper.setProfiles(new Profile("car").
                 setCustomModel(new CustomModel().
                         addToSpeed(If("true", LIMIT, "car_average_speed")).
                         addToPriority(If("!car_access", MULTIPLY, "0")).
-                        addToPriority(If("road_access == DESTINATION", MULTIPLY, "0.1"))));
+                        addToPriority(If("car_road_access == DESTINATION", MULTIPLY, "0.1"))));
         hopper.getCHPreparationHandler().setCHProfiles(new CHProfile("car"));
         hopper.importOrLoad();
         return hopper;

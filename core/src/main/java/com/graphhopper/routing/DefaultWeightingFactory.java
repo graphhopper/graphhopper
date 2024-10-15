@@ -87,7 +87,7 @@ public class DefaultWeightingFactory implements WeightingFactory {
         } else if ("shortest".equalsIgnoreCase(weightingStr)) {
             throw new IllegalArgumentException("Instead of weighting=shortest use weighting=custom with a high distance_influence");
         } else if ("fastest".equalsIgnoreCase(weightingStr)) {
-            throw new IllegalArgumentException("Instead of weighting=fastest use weighting=custom with a custom model that avoids road_access == DESTINATION");
+            throw new IllegalArgumentException("Instead of weighting=fastest use weighting=custom with a custom model that avoids car_road_access == DESTINATION");
         } else if ("curvature".equalsIgnoreCase(weightingStr)) {
             throw new IllegalArgumentException("The curvature weighting is no longer supported since 7.0. Use a custom " +
                     "model with the EncodedValue 'curvature' instead");

@@ -18,7 +18,7 @@
 package com.graphhopper.routing.util.countryrules;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.RoadAccess;
+import com.graphhopper.routing.ev.CarRoadAccess;
 import com.graphhopper.routing.ev.Toll;
 import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.routing.util.countryrules.europe.AustriaCountryRule;
@@ -34,26 +34,26 @@ class CountryRuleTest {
     @Test
     void germany() {
         GermanyCountryRule rule = new GermanyCountryRule();
-        assertEquals(RoadAccess.DESTINATION, rule.getAccess(createReaderWay("track"), TransportationMode.CAR, RoadAccess.YES));
-        assertEquals(RoadAccess.YES, rule.getAccess(createReaderWay("primary"), TransportationMode.CAR, RoadAccess.YES));
+        assertEquals(CarRoadAccess.DESTINATION, rule.getAccess(createReaderWay("track"), TransportationMode.CAR, CarRoadAccess.YES));
+        assertEquals(CarRoadAccess.YES, rule.getAccess(createReaderWay("primary"), TransportationMode.CAR, CarRoadAccess.YES));
     }
 
     @Test
     void austria() {
         AustriaCountryRule rule = new AustriaCountryRule();
-        assertEquals(RoadAccess.FORESTRY, rule.getAccess(createReaderWay("track"), TransportationMode.CAR, RoadAccess.YES));
-        assertEquals(RoadAccess.YES, rule.getAccess(createReaderWay("primary"), TransportationMode.CAR, RoadAccess.YES));
-        assertEquals(RoadAccess.DESTINATION, rule.getAccess(createReaderWay("living_street"), TransportationMode.CAR, RoadAccess.YES));
+        assertEquals(CarRoadAccess.FORESTRY, rule.getAccess(createReaderWay("track"), TransportationMode.CAR, CarRoadAccess.YES));
+        assertEquals(CarRoadAccess.YES, rule.getAccess(createReaderWay("primary"), TransportationMode.CAR, CarRoadAccess.YES));
+        assertEquals(CarRoadAccess.DESTINATION, rule.getAccess(createReaderWay("living_street"), TransportationMode.CAR, CarRoadAccess.YES));
     }
 
     @Test
     void hungary() {
         HungaryCountryRule rule = new HungaryCountryRule();
-        assertEquals(RoadAccess.YES, rule.getAccess(createReaderWay("primary"), TransportationMode.CAR, RoadAccess.YES));
-        assertEquals(RoadAccess.DESTINATION, rule.getAccess(createReaderWay("living_street"), TransportationMode.CAR, RoadAccess.YES));
-        assertEquals(RoadAccess.YES, rule.getAccess(createReaderWay("living_street"), TransportationMode.BIKE, RoadAccess.YES));
-        assertEquals(RoadAccess.PRIVATE, rule.getAccess(createReaderWay("living_street"), TransportationMode.CAR, RoadAccess.PRIVATE));
-        assertEquals(RoadAccess.PRIVATE, rule.getAccess(createReaderWay("living_street"), TransportationMode.BIKE, RoadAccess.PRIVATE));
+        assertEquals(CarRoadAccess.YES, rule.getAccess(createReaderWay("primary"), TransportationMode.CAR, CarRoadAccess.YES));
+        assertEquals(CarRoadAccess.DESTINATION, rule.getAccess(createReaderWay("living_street"), TransportationMode.CAR, CarRoadAccess.YES));
+        assertEquals(CarRoadAccess.YES, rule.getAccess(createReaderWay("living_street"), TransportationMode.BIKE, CarRoadAccess.YES));
+        assertEquals(CarRoadAccess.PRIVATE, rule.getAccess(createReaderWay("living_street"), TransportationMode.CAR, CarRoadAccess.PRIVATE));
+        assertEquals(CarRoadAccess.PRIVATE, rule.getAccess(createReaderWay("living_street"), TransportationMode.BIKE, CarRoadAccess.PRIVATE));
         assertEquals(Toll.ALL, rule.getToll(createReaderWay("motorway"), Toll.MISSING));
         assertEquals(Toll.HGV, rule.getToll(createReaderWay("trunk"), Toll.MISSING));
         assertEquals(Toll.HGV, rule.getToll(createReaderWay("primary"), Toll.MISSING));

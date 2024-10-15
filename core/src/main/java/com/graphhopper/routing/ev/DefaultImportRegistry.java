@@ -70,6 +70,13 @@ public class DefaultImportRegistry implements ImportRegistry {
                             (readerWay, accessValue) -> accessValue,
                             BikeRoadAccess::find)
             );
+        else if (CarRoadAccess.KEY.equals(name))
+            return ImportUnit.create(name, props -> CarRoadAccess.create(),
+                    (lookup, props) -> new OSMRoadAccessParser<>(
+                            lookup.getEnumEncodedValue(CarRoadAccess.KEY, CarRoadAccess.class),
+                            OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR),
+                            CarRoadAccess::countryHook, CarRoadAccess::find)
+            );
         else if (RoadAccess.KEY.equals(name))
             return ImportUnit.create(name, props -> RoadAccess.create(),
                     (lookup, props) -> new OSMRoadAccessParser<>(

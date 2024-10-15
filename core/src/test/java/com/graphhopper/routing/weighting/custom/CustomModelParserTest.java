@@ -345,9 +345,9 @@ class CustomModelParserTest {
         assertEquals(List.of("car_access"), variables);
 
         customModel = new CustomModel();
-        customModel.addToPriority(If("!foot_access && (hike_rating < 4 || road_access == PRIVATE)", MULTIPLY, "0"));
+        customModel.addToPriority(If("!foot_access && (hike_rating < 4 || foot_road_access == PRIVATE)", MULTIPLY, "0"));
         //, {"if": "true", "multiply_by": foot_priority}, {"if": "foot_network == INTERNATIONAL || foot_network == NATIONAL", "multiply_by": 1.7}, {"else_if": "foot_network == REGIONAL || foot_network == LOCAL", "multiply_by": 1.5}]|areas=[]|turnCostsConfig=transportationMode=null, restrictions=false, uTurnCosts=-1
         variables = findVariablesForEncodedValuesString(customModel, s -> new DefaultImportRegistry().createImportUnit(s) != null, s -> "");
-        assertEquals(List.of("foot_access", "hike_rating", "road_access"), variables);
+        assertEquals(List.of("foot_access", "hike_rating", "foot_road_access"), variables);
     }
 }
