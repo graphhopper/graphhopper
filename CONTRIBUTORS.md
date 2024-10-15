@@ -9,6 +9,7 @@ Here is an overview:
  * andreaswolf, flag encoder versioning and more
  * andreylh, polygon for blocked area #1306
  * Anvoker, fixes like #1614 and helped with JUnit 5 migration #1632 
+ * aritozen, prioritise separate sidewalks (#3042)
  * b3nn0, Android improvements
  * baumboi, path detail and landmark improvements
  * boldtrn, one of the core developers with motorcycle knowledge :)
