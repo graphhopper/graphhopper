@@ -31,7 +31,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.locationtech.jts.geom.Geometry;
 
-import javax.ws.rs.core.Response;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -73,9 +72,7 @@ public class MVTResourceTest {
 
     @Test
     public void testBasicMvtQuery() throws IOException {
-        final Response response = clientTarget(app, "/mvt/15/16528/12099.mvt").request().buildGet().invoke();
-        assertEquals(200, response.getStatus());
-        InputStream is = response.readEntity(InputStream.class);
+        InputStream is = clientTarget(app, "/mvt/15/16528/12099.mvt").request().get(InputStream.class);
         VectorTileDecoder.FeatureIterable features = new VectorTileDecoder().decode(readInputStream(is));
         assertEquals(Arrays.asList("roads"), new ArrayList<>(features.getLayerNames()));
         VectorTileDecoder.Feature feature = features.iterator().next();
@@ -87,9 +84,7 @@ public class MVTResourceTest {
 
     @Test
     public void testDetailsInResponse() throws IOException {
-        final Response response = clientTarget(app, "/mvt/15/16522/12102.mvt").request().buildGet().invoke();
-        assertEquals(200, response.getStatus());
-        InputStream is = response.readEntity(InputStream.class);
+        InputStream is = clientTarget(app, "/mvt/15/16522/12102.mvt").request().get(InputStream.class);
         List<VectorTileDecoder.Feature> features = new VectorTileDecoder().decode(readInputStream(is)).asList();
         assertEquals(28, features.size());
 

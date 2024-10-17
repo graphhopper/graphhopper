@@ -7,7 +7,7 @@
     <packaging>jar</packaging>
     <version>10.0-SNAPSHOT</version>
     <properties>
-        <graphhopper-maps.version>0.0.0-651952a42e591f0cf2f08fcf89bf1c973567597c
+        <graphhopper-maps.version>0.0.0-cad794ccf2850a302011a831de2892973a7871c7
         </graphhopper-maps.version>
     </properties>
     <name>GraphHopper Dropwizard Bundle</name>

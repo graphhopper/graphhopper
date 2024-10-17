@@ -10,10 +10,10 @@
 //      turn_costs:
 //        vehicle_types: [bicycle]
 //        u_turn_costs: 20
-//        left_costs: 3
-//        left_sharp_costs: 3
-//        right_costs: 3
-//        right_sharp_costs: 3
+//        left_turn_costs: 3
+//        sharp_left_turn_costs: 3
+//        right_turn_costs: 3
+//        sharp_right_turn_costs: 3
 //      custom_model_files: [bike_tc.json, bike_elevation.json]
 
 {

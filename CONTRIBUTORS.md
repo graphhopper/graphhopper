@@ -67,6 +67,7 @@ Here is an overview:
  * OlafFlebbeBosch, improvements like #2730
  * oschlueter, fixes like #1185
  * otbutz, added multiple EncodedValues
+ * pantsleftinwash, speed parsing improvements
  * PGWelch, shapefile reader #874
  * rafaelstelles, fix deserializer web-api
  * rajanski, script to do routing via PostGIS

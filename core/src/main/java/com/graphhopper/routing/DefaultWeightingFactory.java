@@ -64,7 +64,7 @@ public class DefaultWeightingFactory implements WeightingFactory {
                 throw new IllegalArgumentException("Cannot find turn restriction encoded value for " + profile.getName());
             DecimalEncodedValue oEnc = encodingManager.hasEncodedValue(Orientation.KEY) ? encodingManager.getDecimalEncodedValue(Orientation.KEY) : null;
             if (profile.getTurnCostsConfig().hasLeftRightStraightCosts() && oEnc == null)
-                throw new IllegalArgumentException("Using left_costs,left_sharp_costs,right_costs,right_sharp_costs or straight_costs for turn_costs requires 'orientation' in graph.encoded_values");
+                throw new IllegalArgumentException("Using left_turn_costs,sharp_left_turn_costs,right_turn_costs,sharp_right_turn_costs or straight_costs for turn_costs requires 'orientation' in graph.encoded_values");
             int uTurnCosts = hints.getInt(Parameters.Routing.U_TURN_COSTS, profile.getTurnCostsConfig().getUTurnCosts());
             TurnCostsConfig tcConfig = new TurnCostsConfig(profile.getTurnCostsConfig()).setUTurnCosts(uTurnCosts);
             turnCostProvider = new DefaultTurnCostProvider(turnRestrictionEnc, oEnc, graph, tcConfig);
@@ -82,7 +82,12 @@ public class DefaultWeightingFactory implements WeightingFactory {
             final CustomModel mergedCustomModel = CustomModel.merge(profile.getCustomModel(), queryCustomModel);
             if (requestHints.has(Parameters.Routing.HEADING_PENALTY))
                 mergedCustomModel.setHeadingPenalty(requestHints.getDouble(Parameters.Routing.HEADING_PENALTY, Parameters.Routing.DEFAULT_HEADING_PENALTY));
-            weighting = CustomModelParser.createWeighting(encodingManager, turnCostProvider, mergedCustomModel);
+            if (hints.has("cm_version")) {
+                if (!hints.getString("cm_version", "").equals("2"))
+                    throw new IllegalArgumentException("cm_version: \"2\" is required");
+                weighting = CustomModelParser.createWeighting2(encodingManager, turnCostProvider, mergedCustomModel);
+            } else
+                weighting = CustomModelParser.createWeighting(encodingManager, turnCostProvider, mergedCustomModel);
 
         } else if ("shortest".equalsIgnoreCase(weightingStr)) {
             throw new IllegalArgumentException("Instead of weighting=shortest use weighting=custom with a high distance_influence");

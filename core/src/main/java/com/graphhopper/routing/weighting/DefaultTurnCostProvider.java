@@ -35,15 +35,15 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
     private final int uTurnCostsInt;
     private final double uTurnCosts;
 
-    private final double minAngle;
-    private final double minSharpAngle;
+    private final double minTurnAngle;
+    private final double minSharpTurnAngle;
     private final double minUTurnAngle;
 
-    private final double leftCosts;
-    private final double leftSharpCosts;
+    private final double leftTurnCosts;
+    private final double sharpLeftTurnCosts;
     private final double straightCosts;
-    private final double rightCosts;
-    private final double rightSharpCosts;
+    private final double rightTurnCosts;
+    private final double sharpRightTurnCosts;
     private final BaseGraph graph;
     private final EdgeIntAccess edgeIntAccess;
     private final DecimalEncodedValue orientationEnc;
@@ -65,26 +65,26 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
         this.orientationEnc = orientationEnc;
         if (tcConfig.getMinUTurnAngle() > 180)
             throw new IllegalArgumentException("Illegal min_u_turn_angle = " + tcConfig.getMinUTurnAngle());
-        if (tcConfig.getMinSharpAngle() > tcConfig.getMinUTurnAngle())
-            throw new IllegalArgumentException("Illegal min_sharp_angle = " + tcConfig.getMinSharpAngle());
-        if (tcConfig.getMinAngle() > tcConfig.getMinSharpAngle() || tcConfig.getMinAngle() < 0)
-            throw new IllegalArgumentException("Illegal min_angle = " + tcConfig.getMinAngle());
-        if (tcConfig.getLeftCosts() > tcConfig.getLeftSharpCosts())
-            throw new IllegalArgumentException("The costs for 'left_costs' (" + tcConfig.getLeftCosts()
-                    + ") must be lower than for 'left_sharp_costs' (" + tcConfig.getLeftSharpCosts() + ")");
-        if (tcConfig.getRightCosts() > tcConfig.getRightSharpCosts())
-            throw new IllegalArgumentException("The costs for 'right_costs' (" + tcConfig.getRightCosts()
-                    + ") must be lower than for 'right_sharp_costs' (" + tcConfig.getRightSharpCosts() + ")");
+        if (tcConfig.getMinSharpTurnAngle() > tcConfig.getMinUTurnAngle())
+            throw new IllegalArgumentException("Illegal min_sharp_turn_angle = " + tcConfig.getMinSharpTurnAngle());
+        if (tcConfig.getMinTurnAngle() > tcConfig.getMinSharpTurnAngle() || tcConfig.getMinTurnAngle() < 0)
+            throw new IllegalArgumentException("Illegal min_turn_angle = " + tcConfig.getMinTurnAngle());
+        if (tcConfig.getLeftTurnCosts() > tcConfig.getSharpLeftTurnCosts())
+            throw new IllegalArgumentException("The costs for 'left_turn_costs' (" + tcConfig.getLeftTurnCosts()
+                    + ") must be lower than for 'sharp_left_turn_costs' (" + tcConfig.getSharpLeftTurnCosts() + ")");
+        if (tcConfig.getRightTurnCosts() > tcConfig.getSharpRightTurnCosts())
+            throw new IllegalArgumentException("The costs for 'right_turn_costs' (" + tcConfig.getRightTurnCosts()
+                    + ") must be lower than for 'sharp_right_turn_costs' (" + tcConfig.getSharpRightTurnCosts() + ")");
 
-        this.minAngle = tcConfig.getMinAngle();
-        this.minSharpAngle = tcConfig.getMinSharpAngle();
+        this.minTurnAngle = tcConfig.getMinTurnAngle();
+        this.minSharpTurnAngle = tcConfig.getMinSharpTurnAngle();
         this.minUTurnAngle = tcConfig.getMinUTurnAngle();
 
-        this.leftCosts = tcConfig.getLeftCosts();
-        this.leftSharpCosts = tcConfig.getLeftSharpCosts();
+        this.leftTurnCosts = tcConfig.getLeftTurnCosts();
+        this.sharpLeftTurnCosts = tcConfig.getSharpLeftTurnCosts();
         this.straightCosts = tcConfig.getStraightCosts();
-        this.rightCosts = tcConfig.getRightCosts();
-        this.rightSharpCosts = tcConfig.getRightSharpCosts();
+        this.rightTurnCosts = tcConfig.getRightTurnCosts();
+        this.sharpRightTurnCosts = tcConfig.getSharpRightTurnCosts();
 
         this.graph = graph.getBaseGraph();
         this.edgeIntAccess = graph.getBaseGraph().getEdgeAccess();
@@ -106,16 +106,16 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
 
         if (orientationEnc != null) {
             double changeAngle = calcChangeAngle(inEdge, viaNode, outEdge);
-            if (changeAngle > -minAngle && changeAngle < minAngle)
+            if (changeAngle > -minTurnAngle && changeAngle < minTurnAngle)
                 return straightCosts;
-            else if (changeAngle >= minAngle && changeAngle < minSharpAngle)
-                return rightCosts;
-            else if (changeAngle >= minSharpAngle && changeAngle <= minUTurnAngle)
-                return rightSharpCosts;
-            else if (changeAngle <= -minAngle && changeAngle > -minSharpAngle)
-                return leftCosts;
-            else if (changeAngle <= -minSharpAngle && changeAngle >= -minUTurnAngle)
-                return leftSharpCosts;
+            else if (changeAngle >= minTurnAngle && changeAngle < minSharpTurnAngle)
+                return rightTurnCosts;
+            else if (changeAngle >= minSharpTurnAngle && changeAngle <= minUTurnAngle)
+                return sharpRightTurnCosts;
+            else if (changeAngle <= -minTurnAngle && changeAngle > -minSharpTurnAngle)
+                return leftTurnCosts;
+            else if (changeAngle <= -minSharpTurnAngle && changeAngle >= -minUTurnAngle)
+                return sharpLeftTurnCosts;
 
             // Too sharp turn is like an u-turn.
             return uTurnCosts;

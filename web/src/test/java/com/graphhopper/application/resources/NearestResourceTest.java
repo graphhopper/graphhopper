@@ -30,13 +30,11 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.List;
 
 import static com.graphhopper.application.util.TestUtils.clientTarget;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author svantulden
@@ -64,9 +62,7 @@ public class NearestResourceTest {
 
     @Test
     public void testBasicNearestQuery() {
-        final Response response = clientTarget(app, "/nearest?point=42.554851,1.536198").request().buildGet().invoke();
-        assertEquals(200, response.getStatus(), "HTTP status");
-        NearestResource.Response json = response.readEntity(NearestResource.Response.class);
+        NearestResource.Response json = clientTarget(app, "/nearest?point=42.554851,1.536198").request().get(NearestResource.Response.class);
         assertArrayEquals(new double[]{1.5363743623376815, 42.554839049600155}, json.coordinates, "nearest point");
     }
 }
