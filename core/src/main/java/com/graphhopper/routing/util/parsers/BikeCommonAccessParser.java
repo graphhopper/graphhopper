@@ -42,7 +42,7 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
             if (FerrySpeedCalculator.isFerry(way)) {
                 // if bike is NOT explicitly tagged allow bike but only if foot is not specified either
                 String bikeTag = way.getTag("bicycle");
-                if (bikeTag == null && !way.hasTag("foot") || intendedValues.contains(bikeTag))
+                if (bikeTag == null && !way.hasTag("foot") || INTENDED.contains(bikeTag))
                     access = WayAccess.FERRY;
             }
 
@@ -82,7 +82,7 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
             for (String value : restrict) {
                 if (restrictedValues.contains(value) && !hasTemporalRestriction(way, firstIndex, restrictionKeys))
                     return WayAccess.CAN_SKIP;
-                if (intendedValues.contains(value))
+                if (INTENDED.contains(value))
                     return WayAccess.WAY;
             }
         }
@@ -92,9 +92,6 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
             return WayAccess.CAN_SKIP;
 
         if (way.hasTag("motorroad", "yes"))
-            return WayAccess.CAN_SKIP;
-
-        if (isBlockFords() && ("ford".equals(highwayValue) || way.hasTag("ford")))
             return WayAccess.CAN_SKIP;
 
         return WayAccess.WAY;
@@ -127,13 +124,13 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
     protected void handleAccess(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way) {
         // handle oneways. The value -1 means it is a oneway but for reverse direction of stored geometry.
         // The tagging oneway:bicycle=no or cycleway:right:oneway=no or cycleway:left:oneway=no lifts the generic oneway restriction of the way for bike
-        boolean isOneway = way.hasTag("oneway", ONEWAYS) && !way.hasTag("oneway", "-1") && !way.hasTag("bicycle:backward", intendedValues)
-                || way.hasTag("oneway", "-1") && !way.hasTag("bicycle:forward", intendedValues)
+        boolean isOneway = way.hasTag("oneway", ONEWAYS) && !way.hasTag("oneway", "-1") && !way.hasTag("bicycle:backward", INTENDED)
+                || way.hasTag("oneway", "-1") && !way.hasTag("bicycle:forward", INTENDED)
                 || way.hasTag("oneway:bicycle", ONEWAYS)
                 || way.hasTag("cycleway:left:oneway", ONEWAYS)
                 || way.hasTag("cycleway:right:oneway", ONEWAYS)
-                || way.hasTag("vehicle:backward", restrictedValues) && !way.hasTag("bicycle:forward", intendedValues)
-                || way.hasTag("vehicle:forward", restrictedValues) && !way.hasTag("bicycle:backward", intendedValues)
+                || way.hasTag("vehicle:backward", restrictedValues) && !way.hasTag("bicycle:forward", INTENDED)
+                || way.hasTag("vehicle:forward", restrictedValues) && !way.hasTag("bicycle:backward", INTENDED)
                 || way.hasTag("bicycle:forward", restrictedValues)
                 || way.hasTag("bicycle:backward", restrictedValues);
 

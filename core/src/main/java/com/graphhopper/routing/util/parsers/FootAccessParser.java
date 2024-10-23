@@ -38,8 +38,7 @@ public class FootAccessParser extends AbstractAccessParser implements TagParser 
 
     public FootAccessParser(EncodedValueLookup lookup, PMap properties) {
         this(lookup.getBooleanEncodedValue(VehicleAccess.key("foot")));
-        blockPrivate(properties.getBool("block_private", true));
-        blockFords(properties.getBool("block_fords", false));
+        check(properties);
     }
 
     protected FootAccessParser(BooleanEncodedValue accessEnc) {
@@ -91,7 +90,7 @@ public class FootAccessParser extends AbstractAccessParser implements TagParser 
 
             if (FerrySpeedCalculator.isFerry(way)) {
                 String footTag = way.getTag("foot");
-                if (footTag == null || intendedValues.contains(footTag))
+                if (footTag == null || INTENDED.contains(footTag))
                     acceptPotentially = WayAccess.FERRY;
             }
 
@@ -122,7 +121,7 @@ public class FootAccessParser extends AbstractAccessParser implements TagParser 
             for (String value : restrict) {
                 if (restrictedValues.contains(value) && !hasTemporalRestriction(way, firstIndex, restrictionKeys))
                     return WayAccess.CAN_SKIP;
-                if (intendedValues.contains(value))
+                if (INTENDED.contains(value))
                     return WayAccess.WAY;
             }
         }
@@ -134,9 +133,6 @@ public class FootAccessParser extends AbstractAccessParser implements TagParser 
             return WayAccess.CAN_SKIP;
 
         if (way.hasTag("motorroad", "yes"))
-            return WayAccess.CAN_SKIP;
-
-        if (isBlockFords() && ("ford".equals(highwayValue) || way.hasTag("ford")))
             return WayAccess.CAN_SKIP;
 
         return WayAccess.WAY;

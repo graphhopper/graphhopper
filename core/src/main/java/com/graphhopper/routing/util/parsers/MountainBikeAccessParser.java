@@ -11,8 +11,7 @@ public class MountainBikeAccessParser extends BikeCommonAccessParser {
     public MountainBikeAccessParser(EncodedValueLookup lookup, PMap properties) {
         this(lookup.getBooleanEncodedValue(VehicleAccess.key("mtb")),
                 lookup.getBooleanEncodedValue(Roundabout.KEY));
-        blockPrivate(properties.getBool("block_private", true));
-        blockFords(properties.getBool("block_fords", false));
+        check(properties);
     }
 
     protected MountainBikeAccessParser(BooleanEncodedValue accessEnc, BooleanEncodedValue roundaboutEnc) {

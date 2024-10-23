@@ -1,3 +1,5 @@
+- breaking change: fords and private roads are now always allowed and have to be excluded through the custom model, see e.g. custom_models/bike.json and #TODO
+
 ### 10.0 [not yet released]
 
 - use car_road_access instead of road_access. road_access exists only for web API backward compatibility. Note that MISSING was added in comparison to road_access, see #3066

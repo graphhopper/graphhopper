@@ -20,9 +20,12 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.PriorityCode;
-import com.graphhopper.routing.util.WayAccess;
+import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.weighting.custom.CustomModelParser;
+import com.graphhopper.routing.weighting.custom.CustomWeighting;
+import com.graphhopper.storage.BaseGraph;
+import com.graphhopper.util.CustomModel;
+import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -30,6 +33,9 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.Arrays;
 
+import static com.graphhopper.json.Statement.If;
+import static com.graphhopper.json.Statement.Op.LIMIT;
+import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -37,8 +43,9 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class CarTagParserTest {
     private final EncodingManager em = createEncodingManager("car");
-    final CarAccessParser parser = createParser(em, new PMap("block_fords=true"));
+    final CarAccessParser parser = createParser(em);
     final CarAverageSpeedParser speedParser = new CarAverageSpeedParser(em);
+
     private final BooleanEncodedValue roundaboutEnc = em.getBooleanEncodedValue(Roundabout.KEY);
     private final BooleanEncodedValue accessEnc = parser.getAccessEnc();
     private final DecimalEncodedValue avSpeedEnc = speedParser.getAverageSpeedEnc();
@@ -58,8 +65,8 @@ public class CarTagParserTest {
                 .build();
     }
 
-    CarAccessParser createParser(EncodedValueLookup lookup, PMap properties) {
-        return new CarAccessParser(lookup, properties);
+    CarAccessParser createParser(EncodedValueLookup lookup) {
+        return new CarAccessParser(lookup, new PMap());
     }
 
     @Test
@@ -90,13 +97,6 @@ public class CarTagParserTest {
         way.setTag("highway", "service");
         way.setTag("access", "delivery");
         assertTrue(parser.getAccess(way).canSkip());
-
-        way.clearTags();
-        way.setTag("highway", "unclassified");
-        way.setTag("ford", "yes");
-        assertTrue(parser.getAccess(way).canSkip());
-        way.setTag("motorcar", "yes");
-        assertTrue(parser.getAccess(way).isWay());
 
         way.clearTags();
         way.setTag("access", "yes");
@@ -145,30 +145,48 @@ public class CarTagParserTest {
     }
 
     @Test
+    public void testRoadAccessWithFord() {
+        EncodingManager tmpEM = new EncodingManager.Builder()
+                .add(RoadEnvironment.create())
+                .add(CarRoadAccess.create())
+                .build();
+        OSMParsers parsers = new OSMParsers().
+                addWayTagParser(new OSMRoadEnvironmentParser(tmpEM.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class))).
+                addWayTagParser(new OSMRoadAccessParser<>(tmpEM.getEnumEncodedValue(CarRoadAccess.KEY, CarRoadAccess.class),
+                        OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR),
+                        CarRoadAccess::countryHook, CarRoadAccess::find));
+
+        CustomModel cm = new CustomModel().
+                addToSpeed(If("true", LIMIT, "100")).
+                addToPriority(If("road_environment == FORD", MULTIPLY, "0.1")).
+                addToPriority(If("car_road_access != YES", MULTIPLY, "0.5"));
+        CustomWeighting.Parameters p = CustomModelParser.createWeightingParameters(cm, tmpEM);
+
+        ReaderWay way = new ReaderWay(0L);
+        way.setTag("highway", "unclassified");
+        way.setTag("ford", "yes");
+        EdgeIteratorState edge = createEdge(way, tmpEM, parsers);
+        assertEquals(0.05, p.getEdgeToPriorityMapping().get(edge, false));
+
+        way.setTag("motorcar", "yes");
+        edge = createEdge(way, tmpEM, parsers);
+        assertEquals(0.1, p.getEdgeToPriorityMapping().get(edge, false));
+    }
+
+    EdgeIteratorState createEdge(ReaderWay way, EncodingManager em, OSMParsers parsers) {
+        BaseGraph graph = new BaseGraph.Builder(em).create();
+        EdgeIteratorState edge = graph.edge(0, 1);
+        EdgeIntAccess edgeIntAccess = graph.getEdgeAccess();
+        parsers.handleWayTags(edge.getEdge(), edgeIntAccess, way, em.createRelationFlags());
+        return edge;
+    }
+
+    @Test
     public void testMilitaryAccess() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "track");
         way.setTag("access", "military");
         assertTrue(parser.getAccess(way).canSkip());
-    }
-
-    @Test
-    public void testFordAccess() {
-        ReaderNode node = new ReaderNode(0, 0.0, 0.0);
-        node.setTag("ford", "yes");
-
-        ReaderWay way = new ReaderWay(1);
-        way.setTag("highway", "unclassified");
-        way.setTag("ford", "yes");
-
-        // Node and way are initially blocking
-        assertTrue(parser.isBlockFords());
-        assertTrue(parser.getAccess(way).canSkip());
-        assertTrue(parser.isBarrier(node));
-
-        CarAccessParser tmpParser = new CarAccessParser(em, new PMap("block_fords=false"));
-        assertTrue(tmpParser.getAccess(way).isWay());
-        assertFalse(tmpParser.isBarrier(node));
     }
 
     @Test
@@ -220,28 +238,6 @@ public class CarTagParserTest {
         assertTrue(accessEnc.getBool(false, edgeId, edgeIntAccess));
         assertTrue(accessEnc.getBool(true, edgeId, edgeIntAccess));
         way.clearTags();
-    }
-
-    @Test
-    public void shouldBlockPrivate() {
-        ReaderWay way = new ReaderWay(1);
-        way.setTag("highway", "primary");
-        way.setTag("access", "private");
-        EdgeIntAccess edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
-        int edgeId = 0;
-        parser.handleWayTags(edgeId, edgeIntAccess, way);
-        assertFalse(accessEnc.getBool(false, edgeId, edgeIntAccess));
-
-        final CarAccessParser parser = createParser(em, new PMap("block_private=false"));
-        edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
-        parser.handleWayTags(edgeId, edgeIntAccess, way);
-        assertTrue(parser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
-
-        way.setTag("highway", "primary");
-        way.setTag("motor_vehicle", "permit"); // currently handled like "private", see #2712
-        edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
-        parser.handleWayTags(edgeId, edgeIntAccess, way);
-        assertTrue(parser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
     }
 
     @Test

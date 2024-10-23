@@ -23,22 +23,22 @@ import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.storage.IntsRef;
+import com.graphhopper.util.PMap;
 
 import java.util.*;
 
 public abstract class AbstractAccessParser implements TagParser {
     static final Collection<String> ONEWAYS = Arrays.asList("yes", "true", "1", "-1");
-    static final Collection<String> INTENDED = Arrays.asList("yes", "designated", "official", "permissive");
+    static final Collection<String> INTENDED = Arrays.asList("yes", "designated", "official",
+            "permissive", "private", "permit");
 
     // order is important
     protected final List<String> restrictionKeys = new ArrayList<>(5);
     protected final Set<String> restrictedValues = new HashSet<>(5);
 
-    protected final Set<String> intendedValues = new HashSet<>(INTENDED); // possible to add "private" later
     // http://wiki.openstreetmap.org/wiki/Mapfeatures#Barrier
     protected final Set<String> barriers = new HashSet<>(5);
     protected final BooleanEncodedValue accessEnc;
-    private boolean blockFords = true;
 
     protected AbstractAccessParser(BooleanEncodedValue accessEnc, TransportationMode transportationMode) {
         this.accessEnc = accessEnc;
@@ -47,29 +47,14 @@ public abstract class AbstractAccessParser implements TagParser {
         restrictedValues.add("restricted");
         restrictedValues.add("military");
         restrictedValues.add("emergency");
-        restrictedValues.add("private");
-        restrictedValues.add("permit");
 
         restrictionKeys.addAll(OSMRoadAccessParser.toOSMRestrictions(transportationMode));
     }
 
-    public boolean isBlockFords() {
-        return blockFords;
-    }
-
-    protected void blockFords(boolean blockFords) {
-        this.blockFords = blockFords;
-    }
-
-    protected void blockPrivate(boolean blockPrivate) {
-        if (!blockPrivate) {
-            if (!restrictedValues.remove("private"))
-                throw new IllegalStateException("no 'private' found in restrictedValues");
-            if (!restrictedValues.remove("permit"))
-                throw new IllegalStateException("no 'permit' found in restrictedValues");
-            intendedValues.add("private");
-            intendedValues.add("permit");
-        }
+    protected void check(PMap properties) {
+        if (properties.has("block_private") || properties.has("block_fords"))
+            throw new IllegalArgumentException("block_private and block_fords are no longer supported. " +
+                    "Use a custom model as described in #TODO");
     }
 
     protected void handleBarrierEdge(int edgeId, EdgeIntAccess edgeIntAccess, Map<String, Object> nodeTags) {
@@ -99,14 +84,11 @@ public abstract class AbstractAccessParser implements TagParser {
 
         if (restrictedValues.contains(firstValue))
             return true;
-        else if (node.hasTag("locked", "yes") && !intendedValues.contains(firstValue))
+        else if (node.hasTag("locked", "yes") && !INTENDED.contains(firstValue))
             return true;
-        else if (intendedValues.contains(firstValue))
+        else if (INTENDED.contains(firstValue))
             return false;
-        else if (node.hasTag("barrier", barriers))
-            return true;
-        else
-            return blockFords && node.hasTag("ford", "yes");
+        return node.hasTag("barrier", barriers);
     }
 
     public final BooleanEncodedValue getAccessEnc() {

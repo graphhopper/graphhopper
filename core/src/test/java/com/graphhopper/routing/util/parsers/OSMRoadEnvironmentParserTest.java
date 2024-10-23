@@ -18,12 +18,14 @@
 
 package com.graphhopper.routing.util.parsers;
 
+import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.IntsRef;
+import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 class OSMRoadEnvironmentParserTest {
 
@@ -47,5 +49,31 @@ class OSMRoadEnvironmentParserTest {
         roadEnvironment = roadEnvironmentEnc.getEnum(false, edgeId, edgeIntAccess);
         assertEquals(RoadEnvironment.FERRY, roadEnvironment);
     }
+
+//    TODO NOW
+//    @Test
+//    void testFordInNode() {
+//        // by default do not block access due to fords!
+//        ReaderNode node = new ReaderNode(1, -1, -1);
+//        node.setTag("ford", "no");
+//        assertFalse(accessParser.isBarrier(node));
+//
+//        node = new ReaderNode(1, -1, -1);
+//        node.setTag("ford", "yes");
+//        assertFalse(accessParser.isBarrier(node));
+//
+//        // barrier!
+//        node.setTag("foot", "no");
+//        assertTrue(accessParser.isBarrier(node));
+//
+//        FootAccessParser blockFordsParser = new FootAccessParser(encodingManager, new PMap("block_fords=true"));
+//        node = new ReaderNode(1, -1, -1);
+//        node.setTag("ford", "no");
+//        assertFalse(blockFordsParser.isBarrier(node));
+//
+//        node = new ReaderNode(1, -1, -1);
+//        node.setTag("ford", "yes");
+//        assertTrue(blockFordsParser.isBarrier(node));
+//    }
 
 }

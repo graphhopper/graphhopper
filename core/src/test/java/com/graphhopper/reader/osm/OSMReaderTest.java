@@ -21,6 +21,7 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperTest;
+import com.graphhopper.config.Profile;
 import com.graphhopper.reader.ReaderElement;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
@@ -51,6 +52,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
+import static com.graphhopper.json.Statement.If;
+import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static com.graphhopper.routing.util.TransportationMode.CAR;
 import static com.graphhopper.util.GHUtility.readCountries;
 import static org.junit.jupiter.api.Assertions.*;
@@ -382,24 +385,24 @@ public class OSMReaderTest {
     @Test
     public void testFords() {
         GraphHopper hopper = new GraphHopper();
-        hopper.setEncodedValuesString("car_access|block_fords=true,car_average_speed");
+        Profile profile = TestProfiles.accessAndSpeed("car");
+        profile.getCustomModel().addToPriority(If("road_environment == FORD", MULTIPLY, "0"));
+        hopper.setEncodedValuesString("car_access,car_average_speed,road_environment");
         hopper.setOSMFile(getClass().getResource("test-barriers3.xml").getFile()).
                 setGraphHopperLocation(dir).
-                setProfiles(TestProfiles.accessAndSpeed("car")).
+                setProfiles(profile).
                 setMinNetworkSize(0).
                 importOrLoad();
         Graph graph = hopper.getBaseGraph();
         // our way is split into five edges, because there are two ford nodes
         assertEquals(5, graph.getEdges());
-        BooleanEncodedValue accessEnc = hopper.getEncodingManager().getBooleanEncodedValue(VehicleAccess.key("car"));
+        EdgeFilter filter = new FiniteWeightFilter(hopper.createWeighting(profile, new PMap()));
         int blocked = 0;
         int notBlocked = 0;
         AllEdgesIterator edge = graph.getAllEdges();
         while (edge.next()) {
-            if (!edge.get(accessEnc))
-                blocked++;
-            else
-                notBlocked++;
+            if (filter.accept(edge)) notBlocked++;
+            else blocked++;
         }
         // two blocked edges and three accessible edges
         assertEquals(2, blocked);

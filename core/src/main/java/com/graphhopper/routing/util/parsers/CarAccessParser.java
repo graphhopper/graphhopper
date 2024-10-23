@@ -38,22 +38,19 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
         this(
                 lookup.getBooleanEncodedValue(VehicleAccess.key("car")),
                 lookup.getBooleanEncodedValue(Roundabout.KEY),
-                properties,
                 TransportationMode.CAR
         );
+        check(properties);
     }
 
     public CarAccessParser(BooleanEncodedValue accessEnc,
-                           BooleanEncodedValue roundaboutEnc, PMap properties,
+                           BooleanEncodedValue roundaboutEnc,
                            TransportationMode transportationMode) {
         super(accessEnc, transportationMode);
         this.roundaboutEnc = roundaboutEnc;
         restrictedValues.add("agricultural");
         restrictedValues.add("forestry");
         restrictedValues.add("delivery");
-
-        blockPrivate(properties.getBool("block_private", true));
-        blockFords(properties.getBool("block_fords", false));
 
         barriers.add("kissing_gate");
         barriers.add("fence");
@@ -83,7 +80,7 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
             if (FerrySpeedCalculator.isFerry(way)) {
                 if (restrictedValues.contains(firstValue))
                     return WayAccess.CAN_SKIP;
-                if (intendedValues.contains(firstValue) ||
+                if (INTENDED.contains(firstValue) ||
                         // implied default is allowed only if foot and bicycle is not specified:
                         firstValue.isEmpty() && !way.hasTag("foot") && !way.hasTag("bicycle") ||
                         // if hgv is allowed then smaller trucks and cars are allowed too
@@ -112,13 +109,10 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
             for (String value : restrict) {
                 if (restrictedValues.contains(value) && !hasTemporalRestriction(way, firstIndex, restrictionKeys))
                     return WayAccess.CAN_SKIP;
-                if (intendedValues.contains(value))
+                if (INTENDED.contains(value))
                     return WayAccess.WAY;
             }
         }
-
-        if (isBlockFords() && ("ford".equals(highwayValue) || way.hasTag("ford")))
-            return WayAccess.CAN_SKIP;
 
         return WayAccess.WAY;
     }
