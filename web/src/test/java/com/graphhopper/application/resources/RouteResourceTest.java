@@ -388,12 +388,13 @@ public class RouteResourceTest {
     public void testSnapPreventions() {
         GraphHopperWeb hopper = new GraphHopperWeb(clientUrl(app, "route"));
         GHRequest request = new GHRequest(42.511139, 1.53285, 42.508165, 1.532271);
+        request.setSnapPreventions(List.of());
         request.setProfile("my_car");
         GHResponse rsp = hopper.route(request);
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(490, rsp.getBest().getDistance(), 2);
 
-        request.setSnapPreventions(Collections.singletonList("tunnel"));
+        request.setSnapPreventions(List.of("tunnel"));
         rsp = hopper.route(request);
         assertEquals(1081, rsp.getBest().getDistance(), 2);
     }

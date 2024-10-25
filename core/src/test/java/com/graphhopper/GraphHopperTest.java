@@ -1167,8 +1167,9 @@ public class GraphHopperTest {
         assertEquals(Snap.Position.TOWER, hopper.getLocationIndex().findClosest(from.lat, from.lon, EdgeFilter.ALL_EDGES).getSnappedPosition());
         assertEquals(Snap.Position.TOWER, hopper.getLocationIndex().findClosest(to.lat, to.lon, EdgeFilter.ALL_EDGES).getSnappedPosition());
 
-        GHResponse rsp = hopper.route(new GHRequest(from, to)
-                .setProfile(profile));
+        GHResponse rsp = hopper.route(new GHRequest(from, to).
+                setSnapPreventions(List.of()). // by default, we would prevent snapping on tunnel
+                setProfile(profile));
         ResponsePath res = rsp.getBest();
         PointList pointList = res.getPoints();
         assertEquals(6, pointList.size());

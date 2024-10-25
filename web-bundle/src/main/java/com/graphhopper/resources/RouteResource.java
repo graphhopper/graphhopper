@@ -122,12 +122,15 @@ public class RouteResource {
                 setHeadings(headings).
                 setPointHints(pointHints).
                 setCurbsides(curbsides).
-                setSnapPreventions(snapPreventions).
                 setPathDetails(pathDetails).
                 getHints().
                 putObject(CALC_POINTS, calcPoints).
                 putObject(INSTRUCTIONS, instructions).
                 putObject(WAY_POINT_MAX_DISTANCE, minPathPrecision);
+
+        // we need to differentiate between an empty parameter and no parameter(s) specified
+        if (uriInfo.getQueryParameters().containsKey(SNAP_PREVENTION))
+            request.setSnapPreventions(snapPreventions);
 
         request = ghRequestTransformer.transformRequest(request);
 

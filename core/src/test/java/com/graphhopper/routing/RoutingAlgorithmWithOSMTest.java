@@ -540,8 +540,8 @@ public class RoutingAlgorithmWithOSMTest {
     public void testMonacoVia() {
         Query query = new Query();
         query.add(43.730729, 7.42135, 0, 0);
-        query.add(43.727697, 7.419199, 2581, 110);
-        query.add(43.726387, 7.405, 3001, 90);
+        query.add(43.727697, 7.419199, 2581, 109);
+        query.add(43.726387, 7.405, 2953, 132);
 
         List<Query> queries = new ArrayList<>();
         queries.add(query);

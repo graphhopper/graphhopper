@@ -56,14 +56,15 @@ public class GpxTravelTimeConsistencyTest {
     public void testGPXListTravelTimeConsistency() {
         GHPoint routeStart = new GHPoint(43.727687, 7.418737);
         GHPoint routeEnd = new GHPoint(43.74958, 7.436566);
-        GHRequest request = new GHRequest(routeStart, routeEnd);
+        GHRequest request = new GHRequest(routeStart, routeEnd).setSnapPreventions(List.of());
         request.setProfile("profile");
         ResponsePath path = hopper.route(request).getBest();
         List<GpxConversions.GPXEntry> gpxList = GpxConversions.createGPXList(path.getInstructions());
         for (GpxConversions.GPXEntry entry : gpxList) {
             if (entry.getTime() != null) {
-                GHRequest requestForWaypoint = new GHRequest(routeStart, entry.getPoint());
-                requestForWaypoint.setProfile("profile");
+                GHRequest requestForWaypoint = new GHRequest(routeStart, entry.getPoint()).
+                        setSnapPreventions(List.of()).
+                        setProfile("profile");
                 ResponsePath partialPath = hopper.route(requestForWaypoint).getBest();
                 assertEquals(partialPath.getTime(), entry.getTime().longValue(), "GPXListEntry timeStamp is expected to be the same as route duration.");
             }

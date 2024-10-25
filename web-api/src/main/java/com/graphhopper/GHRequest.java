@@ -18,6 +18,7 @@
 package com.graphhopper;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.Helper;
@@ -41,7 +42,7 @@ public class GHRequest {
     private List<Double> headings = new ArrayList<>();
     private List<String> pointHints = new ArrayList<>();
     private List<String> curbsides = new ArrayList<>();
-    private List<String> snapPreventions = new ArrayList<>();
+    private List<String> snapPreventions = List.of("tunnel", "bridge", "ferry");
     private List<String> pathDetails = new ArrayList<>();
     private String algo = "";
     private Locale locale = Locale.US;
