@@ -405,8 +405,7 @@ public class Router {
 
     // ORS GH-MOD START
     private static long getTime(PMap hints) {
-        Instant time = hints.has("departure") ? hints.getObject("departure", null) : hints.getObject("arrival", null);
-        return (time == null) ? -1 : time.toEpochMilli();
+        return hints.getLong("time", -1);
     }
 
     // way to inject additional edgeFilters to router
