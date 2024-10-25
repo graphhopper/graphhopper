@@ -1,6 +1,6 @@
 ### 10.0 [not yet released]
 
-- The snap_preventions array now includes tunnel, bridge and ferry by default, which is the better default for route planning purposes. For other purposes like navigation you can still use an empty array and the /navigate endpoint does this.
+- The config-example.yml uses a non-empty snap_preventions default array: [tunnel, bridge and ferry] for the /route endpoint
 - the default u-turn time is now 0, the default u-turn weight is still infinite 
 - turn restriction support for restrictions with overlapping and/or multiple via-edges/ways, #3030
 - constructor of BaseGraph.Builder uses byte instead of integer count.

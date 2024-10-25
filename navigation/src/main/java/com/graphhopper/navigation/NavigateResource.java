@@ -164,15 +164,14 @@ public class NavigateResource {
 
     private GHResponse calcRoute(List<Double> headings, List<GHPoint> requestPoints, String profileStr,
                                  String localeStr, boolean enableInstructions, double minPathPrecision) {
-        GHRequest request = new GHRequest(requestPoints).
-                setSnapPreventions(List.of()); // force empty snap preventions to potentially snap to bridges etc unlike the default
-        if (!headings.isEmpty())
+        GHRequest request = new GHRequest(requestPoints);
+        if (headings.size() > 0)
             request.setHeadings(headings);
 
         request.setProfile(profileStr).
                 setLocale(localeStr).
                 // We force the intersection details here as we cannot easily add this to the URL
-                setPathDetails(List.of(INTERSECTION)).
+                setPathDetails(Arrays.asList(INTERSECTION)).
                 putHint(CALC_POINTS, true).
                 putHint(INSTRUCTIONS, enableInstructions).
                 putHint(WAY_POINT_MAX_DISTANCE, minPathPrecision).

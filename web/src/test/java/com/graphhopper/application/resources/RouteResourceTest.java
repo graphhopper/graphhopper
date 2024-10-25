@@ -92,6 +92,7 @@ public class RouteResourceTest {
                 putObject("graph.location", DIR).
                 // adding this so the corresponding check is not just skipped...
                 putObject(MAX_NON_CH_POINT_DISTANCE, 10e6).
+                putObject("routing.snap_preventions_default", "tunnel, bridge, ferry").
                 putObject("graph.encoded_values", "road_class, surface, road_environment, max_speed, country, car_access, car_average_speed").
                 setProfiles(Collections.singletonList(TestProfiles.accessAndSpeed("my_car", "car"))).
                 setCHProfiles(Collections.singletonList(new CHProfile("my_car")));
@@ -386,17 +387,21 @@ public class RouteResourceTest {
 
     @Test
     public void testSnapPreventions() {
-        GraphHopperWeb hopper = new GraphHopperWeb(clientUrl(app, "route"));
-        GHRequest request = new GHRequest(42.511139, 1.53285, 42.508165, 1.532271);
-        request.setSnapPreventions(List.of());
-        request.setProfile("my_car");
-        GHResponse rsp = hopper.route(request);
-        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
-        assertEquals(490, rsp.getBest().getDistance(), 2);
+        for (boolean postRequest : List.of(true, false)) {
+            GraphHopperWeb hopper = new GraphHopperWeb(clientUrl(app, "route"));
+            hopper.setPostRequest(postRequest);
+            GHRequest request = new GHRequest(42.511139, 1.53285, 42.508165, 1.532271);
+            request.setProfile("my_car");
+            GHResponse rsp = hopper.route(request);
+            assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
+            assertEquals(1081, rsp.getBest().getDistance(), 2, rsp.getBest().getDistance() + " with post " + postRequest);
 
-        request.setSnapPreventions(List.of("tunnel"));
-        rsp = hopper.route(request);
-        assertEquals(1081, rsp.getBest().getDistance(), 2);
+            // overwrite default:
+            request.setSnapPreventions(List.of());
+            rsp = hopper.route(request);
+            assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
+            assertEquals(490, rsp.getBest().getDistance(), 2, rsp.getBest().getDistance() + " with post " + postRequest);
+        }
     }
 
     @Test

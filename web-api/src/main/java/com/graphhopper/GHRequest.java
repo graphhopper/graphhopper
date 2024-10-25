@@ -18,7 +18,6 @@
 package com.graphhopper;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.Helper;
@@ -26,6 +25,7 @@ import com.graphhopper.util.PMap;
 import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
@@ -42,7 +42,7 @@ public class GHRequest {
     private List<Double> headings = new ArrayList<>();
     private List<String> pointHints = new ArrayList<>();
     private List<String> curbsides = new ArrayList<>();
-    private List<String> snapPreventions = List.of("tunnel", "bridge", "ferry");
+    private List<String> snapPreventions;
     private List<String> pathDetails = new ArrayList<>();
     private String algo = "";
     private Locale locale = Locale.US;
@@ -205,12 +205,17 @@ public class GHRequest {
         return curbsides;
     }
 
+    public boolean hasSnapPreventions() {
+        return snapPreventions != null;
+    }
+
     public GHRequest setSnapPreventions(List<String> snapPreventions) {
         this.snapPreventions = snapPreventions;
         return this;
     }
 
     public List<String> getSnapPreventions() {
+        if (snapPreventions == null) return Collections.EMPTY_LIST;
         return snapPreventions;
     }
 

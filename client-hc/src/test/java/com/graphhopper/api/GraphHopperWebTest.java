@@ -44,12 +44,12 @@ public class GraphHopperWebTest {
         GraphHopperWeb hopper = new GraphHopperWeb("https://localhost:8000/route");
         // no vehicle -> no vehicle
         assertEquals("https://localhost:8000/route?profile=&type=json&instructions=true&points_encoded=true&points_encoded_multiplier=1000000" +
-                        "&calc_points=true&algorithm=&locale=en_US&elevation=false&optimize=false&snap_prevention=tunnel&snap_prevention=bridge&snap_prevention=ferry",
+                        "&calc_points=true&algorithm=&locale=en_US&elevation=false&optimize=false",
                 hopper.createGetRequest(new GHRequest()).url().toString());
 
         // vehicle given -> vehicle used in url
         assertEquals("https://localhost:8000/route?profile=my_car&type=json&instructions=true&points_encoded=true&points_encoded_multiplier=1000000" +
-                        "&calc_points=true&algorithm=&locale=en_US&elevation=false&optimize=false&snap_prevention=tunnel&snap_prevention=bridge&snap_prevention=ferry",
+                        "&calc_points=true&algorithm=&locale=en_US&elevation=false&optimize=false",
                 hopper.createGetRequest(new GHRequest().setProfile("my_car")).url().toString());
     }
 
@@ -59,9 +59,8 @@ public class GraphHopperWebTest {
         GHRequest req = new GHRequest(new GHPoint(42.509225, 1.534728), new GHPoint(42.512602, 1.551558)).
                 setHeadings(Arrays.asList(10.0, 90.0)).
                 setProfile("car");
-        assertEquals("http://localhost:8080/route?profile=car&point=42.509225,1.534728&point=42.512602,1.551558&type=json&" +
-                "instructions=true&points_encoded=true&points_encoded_multiplier=1000000&calc_points=true&algorithm=&locale=en_US&" +
-                "elevation=false&optimize=false&heading=10.0&heading=90.0&snap_prevention=tunnel&snap_prevention=bridge&snap_prevention=ferry", hopper.createGetRequest(req).url().toString());
+        assertEquals("http://localhost:8080/route?profile=car&point=42.509225,1.534728&point=42.512602,1.551558&type=json&instructions=true&points_encoded=true&points_encoded_multiplier=1000000" +
+                "&calc_points=true&algorithm=&locale=en_US&elevation=false&optimize=false&heading=10.0&heading=90.0", hopper.createGetRequest(req).url().toString());
     }
 
     @Test

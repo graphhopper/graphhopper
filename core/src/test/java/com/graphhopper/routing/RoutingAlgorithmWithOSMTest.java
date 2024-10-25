@@ -24,7 +24,6 @@ import com.graphhopper.ResponsePath;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
-import com.graphhopper.util.TurnCostsConfig;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.*;
@@ -540,8 +539,8 @@ public class RoutingAlgorithmWithOSMTest {
     public void testMonacoVia() {
         Query query = new Query();
         query.add(43.730729, 7.42135, 0, 0);
-        query.add(43.727697, 7.419199, 2581, 109);
-        query.add(43.726387, 7.405, 2953, 132);
+        query.add(43.727697, 7.419199, 2581, 110);
+        query.add(43.726387, 7.405, 3001, 90);
 
         List<Query> queries = new ArrayList<>();
         queries.add(query);

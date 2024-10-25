@@ -30,7 +30,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
-import java.util.List;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -79,9 +78,9 @@ public class RoutingAdditivityTest {
         long travelTime = 0L;
         for (int i = 0; i < route2.getPoints().size() - 1; i++) {
             ResponsePath segment = graphHopper.route(new GHRequest(
-                    route2.getPoints().get(i), route2.getPoints().get(i + 1)).
-                    setSnapPreventions(List.of()). // force empty snap preventions
-                    setProfile("my_profile")).getBest();
+                    route2.getPoints().get(i),
+                    route2.getPoints().get(i + 1))
+                    .setProfile("my_profile")).getBest();
             travelTime += segment.getTime();
         }
 
