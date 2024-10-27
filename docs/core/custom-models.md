@@ -98,7 +98,9 @@ There are also some that take on a numeric value, like:
 
 - average_slope: a number for 100 * "elevation change" / edge_distance for a road segment; it changes the sign in reverse direction; see max_slope
 - curvature: "beeline distance" / edge_distance (0..1) e.g. a curvy road is smaller than 1
-- hike_rating, horse_rating, mtb_rating: a number from 0 to 6 for the `sac_scale` in OSM, e.g. 0 means "missing", 1 means "hiking", 2 means "mountain_hiking" and so on
+- hike_rating: a number from 0 to 6 for the `sac_scale` in OSM, e.g. 0 means "missing", 1 means "hiking", 2 means "mountain_hiking" and so on
+- mtb_rating: a number from 0 to 7 for the `mtb:scale` in OSM, e.g. 0 means "missing", 1 means `mtb:scale=0`, 2 means `mtb:scale=1` and so on. The leading "+" or "+" character is ignored.  
+- horse_rating: a number from 0 to 6 for the `horse_scale` in OSM, e.g. 0 means "missing", 1 means ``, 2 means "common", 2 means "demanding" and so on
 - lanes: number of lanes
 - max_slope: a signed decimal for the maximum slope (100 * "elevation change / distance_i") of an edge with `sum(distance_i)=edge_distance`. Important for longer road segments where ups (or downs) can be much bigger than the average_slope.
 - max_speed: the speed limit from a sign (km/h)
