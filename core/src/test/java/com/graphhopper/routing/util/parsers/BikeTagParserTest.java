@@ -361,6 +361,9 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
 
         way.setTag("smoothness", "impassable");
         assertEquals(MIN_SPEED, getSpeedFromFlags(way), 0.01);
+
+        way.setTag("maxspeed", "0.5");
+        assertEquals(MIN_SPEED, getSpeedFromFlags(way), 0.01);
     }
 
     @Test
