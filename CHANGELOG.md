@@ -6,6 +6,7 @@
 - turn restriction support for restrictions with overlapping and/or multiple via-edges/ways, #3030
 - constructor of BaseGraph.Builder uses byte instead of integer count.
 - KeyValue is now KValue as it holds the value only. Note, the two parameter constructor uses one value for the forward and one for the backward direction (and no longer "key, value")
+- sac_scale priority handling for bicycles moved to the bike custom models
 
 ### 9.0 [23 Apr 2024]
 

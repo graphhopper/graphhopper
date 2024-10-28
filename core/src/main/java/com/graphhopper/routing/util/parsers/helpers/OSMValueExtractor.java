@@ -205,7 +205,7 @@ public class OSMValueExtractor {
 
         double value;
         try {
-            value = Integer.parseInt(str) * factor;
+            value = Double.parseDouble(str) * factor;
         } catch (Exception ex) {
             return Double.NaN;
         }
