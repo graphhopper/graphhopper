@@ -187,7 +187,7 @@ public class RouteResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response doPost(@NotNull GHRequest request, @Context HttpServletRequest httpReq) {
         if (!request.hasSnapPreventions())
-            request.setSnapPreventions(List.of("tunnel", "bridge", "ferry"));
+            request.setSnapPreventions(snapPreventionsDefault);
 
         StopWatch sw = new StopWatch().start();
         request = ghRequestTransformer.transformRequest(request);
