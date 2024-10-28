@@ -37,8 +37,7 @@ public class OSMRoadAccessParser<T extends Enum> implements TagParser {
                                BiFunction<ReaderWay, T, T> countryHook,
                                Function<String, T> valueFinder) {
         this.accessEnc = accessEnc;
-        this.restrictions = new ArrayList<>(restrictions);
-
+        this.restrictions = restrictions;
         this.valueFinder = valueFinder;
         this.countryHook = countryHook;
     }

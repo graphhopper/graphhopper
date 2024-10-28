@@ -1,4 +1,4 @@
-- breaking change: fords and private roads are now always allowed and have to be excluded through the custom model, see e.g. custom_models/bike.json and #TODO
+- breaking change: fords and private roads are now always allowed and have to be excluded through the custom model, see e.g. custom_models/bike.json and #3076
 
 ### 10.0 [not yet released]
 
