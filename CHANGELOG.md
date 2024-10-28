@@ -1,5 +1,6 @@
 ### 10.0 [not yet released]
 
+- The config-example.yml uses a non-empty snap_preventions default array: [tunnel, bridge and ferry] for the /route endpoint
 - the default u-turn time is now 0, the default u-turn weight is still infinite 
 - turn restriction support for restrictions with overlapping and/or multiple via-edges/ways, #3030
 - constructor of BaseGraph.Builder uses byte instead of integer count.
