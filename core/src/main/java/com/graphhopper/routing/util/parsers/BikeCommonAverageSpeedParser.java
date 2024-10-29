@@ -119,9 +119,7 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
      */
     double applyMaxSpeed(ReaderWay way, double speed, boolean bwd) {
         double maxSpeed = getMaxSpeed(way, bwd);
-        if (maxSpeed < avgSpeedEnc.getSmallestNonZeroValue() / 2) {
-            maxSpeed = avgSpeedEnc.getSmallestNonZeroValue() / 2;
-        }
+        if (maxSpeed < avgSpeedEnc.getSmallestNonZeroValue() / 2) return speed;
         // We strictly obey speed limits, see #600
         return isValidSpeed(maxSpeed) && speed > maxSpeed ? maxSpeed : speed;
     }
