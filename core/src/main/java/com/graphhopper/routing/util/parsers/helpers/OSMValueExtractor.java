@@ -16,6 +16,8 @@ import static com.graphhopper.util.Helper.toLowerCase;
 
 public class OSMValueExtractor {
 
+    public static final double MAXSPEED_NONE = -1;
+
     private static final Pattern TON_PATTERN = Pattern.compile("tons?");
     private static final Pattern MGW_PATTERN = Pattern.compile("mgw");
     private static final Pattern WSPACE_PATTERN = Pattern.compile("\\s");
@@ -169,18 +171,21 @@ public class OSMValueExtractor {
     }
 
     /**
-     * @return the speed in km/h
+     ** @return the speed in km/h, or Double.NaN if the string is invalid, or {@link MAXSPEED_NONE} in case it equals 'none'
      */
     public static double stringToKmh(String str) {
         if (Helper.isEmpty(str))
             return Double.NaN;
 
-        if ("walk".equals(str))
+        if ("walk".equals(str.trim()))
             return 6;
 
-        // on some German autobahns and a very few other places
-        if ("none".equals(str))
-            return MaxSpeed.UNLIMITED_SIGN_SPEED;
+        if ("none".equals(str.trim()))
+            // Special case intended to be used when there is actually no speed limit and drivers
+            // can go as fast as they want like on parts of the German Autobahn. However, in OSM
+            // this is sometimes misused by mappers trying to indicate that there is no additional
+            // sign apart from the general speed limit.
+            return MAXSPEED_NONE;
 
         int mpInteger = str.indexOf("mp");
         int knotInteger = str.indexOf("knots");
@@ -210,7 +215,7 @@ public class OSMValueExtractor {
             return Double.NaN;
         }
 
-        if (value <= 0) {
+        if (value < 0) {
             return Double.NaN;
         }
 

@@ -1,10 +1,7 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.Country;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EdgeIntAccess;
-import com.graphhopper.routing.ev.State;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.IntsRef;
 import de.westnordost.osm_legal_default_speeds.LegalDefaultSpeeds;
 
@@ -37,9 +34,9 @@ public class DefaultMaxSpeedParser implements TagParser {
     public void handleWayTags(int edgeId, EdgeIntAccess _ignoreAccess, ReaderWay way, IntsRef relationFlags) {
         if (externalAccess == null)
             throw new IllegalArgumentException("Call init before using " + getClass().getName());
-        double maxSpeed = stringToKmh(way.getTag("maxspeed"));
+        double maxSpeed = Math.max(OSMMaxSpeedParser.parseMaxSpeed(way, false), OSMMaxSpeedParser.parseMaxSpeed(way, true));
         Integer ruralSpeedInt = null, urbanSpeedInt = null;
-        if (Double.isNaN(maxSpeed)) {
+        if (maxSpeed == UNSET_SPEED) {
             Country country = way.getTag("country", Country.MISSING);
             State state = way.getTag("country_state", State.MISSING);
             if (country != Country.MISSING) {

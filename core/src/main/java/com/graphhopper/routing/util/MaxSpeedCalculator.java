@@ -80,6 +80,8 @@ public class MaxSpeedCalculator {
                         double tmp = OSMValueExtractor.stringToKmh(tags.getValue());
                         if (Double.isNaN(tmp))
                             throw new IllegalStateException("illegal maxspeed " + tags.getValue());
+                        if (tmp == OSMValueExtractor.MAXSPEED_NONE)
+                            tmp = MaxSpeed.UNLIMITED_SIGN_SPEED;
                         newTags.put(tags.getKey(), "" + Math.round(tmp));
                     }
                 }

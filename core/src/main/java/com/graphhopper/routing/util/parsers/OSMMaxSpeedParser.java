@@ -24,6 +24,9 @@ import com.graphhopper.routing.ev.MaxSpeed;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.IntsRef;
 
+import java.io.Reader;
+
+import static com.graphhopper.routing.ev.MaxSpeed.UNLIMITED_SIGN_SPEED;
 import static com.graphhopper.routing.ev.MaxSpeed.UNSET_SPEED;
 
 public class OSMMaxSpeedParser implements TagParser {
@@ -39,24 +42,32 @@ public class OSMMaxSpeedParser implements TagParser {
 
     @Override
     public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
-        carMaxSpeedEnc.setDecimal(false, edgeId, edgeIntAccess, getMaxSpeed(way, false));
-        carMaxSpeedEnc.setDecimal(true, edgeId, edgeIntAccess, getMaxSpeed(way, true));
-    }
-
-    private double getMaxSpeed(ReaderWay way, boolean reverse) {
-        final double maxSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed"));
-        final double directedMaxSpeed = OSMValueExtractor.stringToKmh(way.getTag(reverse ? "maxspeed:backward" : "maxspeed:forward"));
-        return isValidSpeed(directedMaxSpeed)
-                ? Math.min(directedMaxSpeed, MaxSpeed.UNLIMITED_SIGN_SPEED)
-                : isValidSpeed(maxSpeed)
-                ? Math.min(maxSpeed, MaxSpeed.UNLIMITED_SIGN_SPEED)
-                : UNSET_SPEED;
+        carMaxSpeedEnc.setDecimal(false, edgeId, edgeIntAccess, parseMaxSpeed(way, false));
+        carMaxSpeedEnc.setDecimal(true, edgeId, edgeIntAccess, parseMaxSpeed(way, true));
     }
 
     /**
-     * @return <i>true</i> if the given speed is not {@link Double#NaN}
+     * @return The maxspeed for the given way. It can be anything between 0 and {@link MaxSpeed.UNLIMITED_SIGN_SPEED},
+     *         or {@link MaxSpeed.UNSET_SPEED} in case there is no valid maxspeed tagged for this way in this direction.
      */
-    private boolean isValidSpeed(double speed) {
-        return !Double.isNaN(speed);
+    public static double parseMaxSpeed(ReaderWay way, boolean reverse) {
+        double directedMaxSpeed = parseMaxSpeedTag(way, reverse ? "maxspeed:backward" : "maxspeed:forward");
+        if (directedMaxSpeed != UNSET_SPEED)
+            return directedMaxSpeed;
+        else {
+            return parseMaxSpeedTag(way, "maxspeed");
+        }
     }
+
+    private static double parseMaxSpeedTag(ReaderWay way, String tag) {
+        double maxSpeed = OSMValueExtractor.stringToKmh(way.getTag(tag));
+        if (!Double.isNaN(maxSpeed) && maxSpeed != OSMValueExtractor.MAXSPEED_NONE)
+            // there is no actual use for maxspeeds above 150 so we simply truncate here
+            return Math.min(UNLIMITED_SIGN_SPEED, maxSpeed);
+        else if (maxSpeed == OSMValueExtractor.MAXSPEED_NONE && way.hasTag("highway", "motorway", "trunk"))
+            return MaxSpeed.UNLIMITED_SIGN_SPEED;
+        else
+            return UNSET_SPEED;
+    }
+
 }

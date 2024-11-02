@@ -51,4 +51,31 @@ class OSMMaxSpeedParserTest {
         assertEquals(40, maxSpeedEnc.getDecimal(true, edgeId, edgeIntAccess), .1);
     }
 
+    @Test
+    public void parseMaxSpeed() {
+        ReaderWay way = new ReaderWay(12);
+        way.setTag("maxspeed", "90");
+        assertEquals(90, OSMMaxSpeedParser.parseMaxSpeed(way, false), 1e-2);
+
+        way = new ReaderWay(12);
+        way.setTag("maxspeed", "90");
+        way.setTag("maxspeed:backward", "50");
+        assertEquals(90, OSMMaxSpeedParser.parseMaxSpeed(way, false), 1e-2);
+        assertEquals(50, OSMMaxSpeedParser.parseMaxSpeed(way, true), 1e-2);
+
+        way = new ReaderWay(12);
+        way.setTag("maxspeed", "none");
+        assertEquals(MaxSpeed.UNSET_SPEED, OSMMaxSpeedParser.parseMaxSpeed(way, false), 1e-2);
+
+        way = new ReaderWay(12);
+        way.setTag("maxspeed", "none");
+        way.setTag("highway", "secondary");
+        assertEquals(MaxSpeed.UNSET_SPEED, OSMMaxSpeedParser.parseMaxSpeed(way, false), 1e-2);
+
+        way = new ReaderWay(12);
+        way.setTag("maxspeed", "none");
+        way.setTag("highway", "motorway");
+        assertEquals(MaxSpeed.UNLIMITED_SIGN_SPEED, OSMMaxSpeedParser.parseMaxSpeed(way, false), 1e-2);
+    }
+
 }
