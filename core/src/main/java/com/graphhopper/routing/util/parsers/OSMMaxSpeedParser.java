@@ -64,7 +64,7 @@ public class OSMMaxSpeedParser implements TagParser {
         if (!Double.isNaN(maxSpeed) && maxSpeed != OSMValueExtractor.MAXSPEED_NONE)
             // there is no actual use for maxspeeds above 150 so we simply truncate here
             return Math.min(UNLIMITED_SIGN_SPEED, maxSpeed);
-        else if (maxSpeed == OSMValueExtractor.MAXSPEED_NONE && way.hasTag("highway", "motorway", "trunk"))
+        else if (maxSpeed == OSMValueExtractor.MAXSPEED_NONE && way.hasTag("highway", "motorway", "motorway_link", "trunk", "trunk_link"))
             return MaxSpeed.UNLIMITED_SIGN_SPEED;
         else
             return UNSET_SPEED;

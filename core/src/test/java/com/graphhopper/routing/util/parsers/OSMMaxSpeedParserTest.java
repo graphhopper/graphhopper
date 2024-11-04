@@ -21,6 +21,8 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.IntsRef;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -86,6 +88,27 @@ class OSMMaxSpeedParserTest {
         // maxspeed=5 is rather popular
         way.setTag("maxspeed", "5");
         assertEquals(5, OSMMaxSpeedParser.parseMaxSpeed(way, false), 1e-2);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "motorway",
+            "motorway_link",
+            "trunk",
+            "trunk_link"
+    })
+    void maxSpeedNone(String highway) {
+        DecimalEncodedValue maxSpeedEnc = MaxSpeed.create();
+        maxSpeedEnc.init(new EncodedValue.InitializerConfig());
+        OSMMaxSpeedParser parser = new OSMMaxSpeedParser(maxSpeedEnc);
+        IntsRef relFlags = new IntsRef(2);
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        int edgeId = 0;
+        ReaderWay way = new ReaderWay(29L);
+        way.setTag("highway", highway);
+        way.setTag("maxspeed", "none");
+        parser.handleWayTags(edgeId, edgeIntAccess, way, relFlags);
+        assertEquals(MaxSpeed.UNLIMITED_SIGN_SPEED, maxSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), .1);
     }
 
 }
