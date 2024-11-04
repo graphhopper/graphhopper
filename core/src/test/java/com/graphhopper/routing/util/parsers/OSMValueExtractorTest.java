@@ -94,7 +94,6 @@ public class OSMValueExtractorTest {
         assertEquals(19, OSMValueExtractor.stringToKmh("19kph"), DELTA);
         assertEquals(100, OSMValueExtractor.stringToKmh("100"), DELTA);
         assertEquals(100.5, OSMValueExtractor.stringToKmh("100.5"), DELTA);
-        assertEquals(0, OSMValueExtractor.stringToKmh("0"), DELTA);
 
         assertEquals(OSMValueExtractor.MAXSPEED_NONE, OSMValueExtractor.stringToKmh("none"), DELTA);
     }
@@ -103,6 +102,13 @@ public class OSMValueExtractorTest {
     public void stringToKmhNaN() {
         assertTrue(Double.isNaN(OSMValueExtractor.stringToKmh(null)));
         assertTrue(Double.isNaN(OSMValueExtractor.stringToKmh("-20")));
+        assertTrue(Double.isNaN(OSMValueExtractor.stringToKmh("0")));
+        assertTrue(Double.isNaN(OSMValueExtractor.stringToKmh("1")));
+        assertTrue(Double.isNaN(OSMValueExtractor.stringToKmh("1km/h")));
+        assertTrue(Double.isNaN(OSMValueExtractor.stringToKmh("1mph")));
+        assertTrue(Double.isNaN(OSMValueExtractor.stringToKmh("2")));
+        assertTrue(Double.isNaN(OSMValueExtractor.stringToKmh("3")));
+        assertTrue(Double.isNaN(OSMValueExtractor.stringToKmh("4")));
     }
 
     @Test
