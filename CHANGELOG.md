@@ -1,3 +1,7 @@
+### 11.0
+
+- maxspeed<5 is ignored, maxspeed=none is ignored with some exceptions, #3077
+
 ### 10.0 [not yet released]
 
 - The config-example.yml uses a non-empty snap_preventions default array: [tunnel, bridge and ferry] for the /route endpoint
