@@ -151,7 +151,8 @@ public class MaxSpeedCalculator {
             if (fwdMaxSpeedPureOSM != MaxSpeed.UNSET_SPEED
                     && bwdMaxSpeedPureOSM != MaxSpeed.UNSET_SPEED) continue;
 
-            double maxSpeed = isUrbanDensityFun.apply(iter)
+            boolean isUrban = isUrbanDensityFun.apply(iter);
+            double maxSpeed = isUrban
                     ? urbanMaxSpeedEnc.getDecimal(false, iter.getEdge(), internalMaxSpeedStorage)
                     : ruralMaxSpeedEnc.getDecimal(false, iter.getEdge(), internalMaxSpeedStorage);
             if (maxSpeed != MaxSpeed.UNSET_SPEED) {

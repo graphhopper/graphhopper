@@ -64,7 +64,7 @@ public class DefaultImportRegistry implements ImportRegistry {
             );
         else if (MaxSpeedEstimated.KEY.equals(name))
             return ImportUnit.create(name, props -> MaxSpeedEstimated.create(),
-                    null, Country.KEY, UrbanDensity.KEY);
+                    null, MaxSpeed.KEY);
         else if (UrbanDensity.KEY.equals(name))
             return ImportUnit.create(name, props -> UrbanDensity.create(),
                     null);
