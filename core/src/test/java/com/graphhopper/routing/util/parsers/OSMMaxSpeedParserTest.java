@@ -76,6 +76,16 @@ class OSMMaxSpeedParserTest {
         way.setTag("maxspeed", "none");
         way.setTag("highway", "motorway");
         assertEquals(MaxSpeed.UNLIMITED_SIGN_SPEED, OSMMaxSpeedParser.parseMaxSpeed(way, false), 1e-2);
+
+        way = new ReaderWay(12);
+        // we ignore low maxspeeds as they are mostly bugs, see discussion in #3077
+        way.setTag("maxspeed", "3");
+        assertEquals(MaxSpeed.UNSET_SPEED, OSMMaxSpeedParser.parseMaxSpeed(way, false), 1e-2);
+
+        way = new ReaderWay(12);
+        // maxspeed=5 is rather popular
+        way.setTag("maxspeed", "5");
+        assertEquals(5, OSMMaxSpeedParser.parseMaxSpeed(way, false), 1e-2);
     }
 
 }
