@@ -1,8 +1,8 @@
-### 11.0
+### 11.0 [not yet released]
 
 - maxspeed<5 is ignored, maxspeed=none is ignored with some exceptions, maxspeed parsing and related constants were renamed #3077
 
-### 10.0 [not yet released]
+### 10.0 [5 Nov 2024]
 
 - The config-example.yml uses a non-empty snap_preventions default array: [tunnel, bridge and ferry] for the /route endpoint
 - the default u-turn time is now 0, the default u-turn weight is still infinite 
