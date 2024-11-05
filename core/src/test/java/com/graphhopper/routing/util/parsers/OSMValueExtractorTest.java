@@ -94,6 +94,7 @@ public class OSMValueExtractorTest {
         assertEquals(19, OSMValueExtractor.stringToKmh("19kph"), DELTA);
         assertEquals(100, OSMValueExtractor.stringToKmh("100"), DELTA);
         assertEquals(100.5, OSMValueExtractor.stringToKmh("100.5"), DELTA);
+        assertEquals(4.828, OSMValueExtractor.stringToKmh("3 mph"), DELTA);
 
         assertEquals(OSMValueExtractor.MAXSPEED_NONE, OSMValueExtractor.stringToKmh("none"), DELTA);
     }

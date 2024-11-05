@@ -215,8 +215,10 @@ public class OSMValueExtractor {
             return Double.NaN;
         }
 
-        if (value < 5)
-            // We consider maxspeed < 5km/h a bug in OSM data and act as if the tag wasn't there.
+        if (value < 4.8)
+            // We consider maxspeed < 4.8km/h a bug in OSM data and act as if the tag wasn't there.
+            // The limit is chosen such that maxspeed=3mph is still valid, because there actually are
+            // some road signs using 3mph.
             // https://github.com/graphhopper/graphhopper/pull/3077#discussion_r1826842203
             return Double.NaN;
 

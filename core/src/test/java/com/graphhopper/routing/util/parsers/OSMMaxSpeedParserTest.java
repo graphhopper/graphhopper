@@ -88,6 +88,11 @@ class OSMMaxSpeedParserTest {
         // maxspeed=5 is rather popular
         way.setTag("maxspeed", "5");
         assertEquals(5, OSMMaxSpeedParser.parseMaxSpeed(way, false), 1e-2);
+
+        way = new ReaderWay(12);
+        // maxspeed=3mph is used for a few traffic signs, so this is the smallest we accept
+        way.setTag("maxspeed", "3mph");
+        assertEquals(4.83, OSMMaxSpeedParser.parseMaxSpeed(way, false), 1e-2);
     }
 
     @ParameterizedTest
@@ -109,6 +114,21 @@ class OSMMaxSpeedParserTest {
         way.setTag("maxspeed", "none");
         parser.handleWayTags(edgeId, edgeIntAccess, way, relFlags);
         assertEquals(MaxSpeed.UNLIMITED_SIGN_SPEED, maxSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), .1);
+    }
+
+    @Test
+    void smallMaxSpeed() {
+        DecimalEncodedValue maxSpeedEnc = MaxSpeed.create();
+        maxSpeedEnc.init(new EncodedValue.InitializerConfig());
+        OSMMaxSpeedParser parser = new OSMMaxSpeedParser(maxSpeedEnc);
+        IntsRef relFlags = new IntsRef(2);
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        int edgeId = 0;
+        ReaderWay way = new ReaderWay(29L);
+        way.setTag("highway", "service");
+        way.setTag("maxspeed", "3 mph");
+        parser.handleWayTags(edgeId, edgeIntAccess, way, relFlags);
+        assertEquals(4, maxSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), .1);
     }
 
 }
