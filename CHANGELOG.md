@@ -1,6 +1,6 @@
 ### 11.0
 
-- maxspeed<5 is ignored, maxspeed=none is ignored with some exceptions, #3077
+- maxspeed<5 is ignored, maxspeed=none is ignored with some exceptions, maxspeed parsing and related constants were renamed #3077
 
 ### 10.0 [not yet released]
 
