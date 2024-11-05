@@ -12,7 +12,6 @@ import java.util.Map;
 
 import static com.graphhopper.routing.ev.MaxSpeed.UNLIMITED_SIGN_SPEED;
 import static com.graphhopper.routing.ev.MaxSpeed.UNSET_SPEED;
-import static com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor.stringToKmh;
 
 public class DefaultMaxSpeedParser implements TagParser {
     private final LegalDefaultSpeeds speeds;

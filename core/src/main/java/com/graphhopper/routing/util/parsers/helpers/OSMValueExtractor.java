@@ -3,9 +3,6 @@ package com.graphhopper.routing.util.parsers.helpers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EdgeIntAccess;
-import com.graphhopper.routing.ev.MaxSpeed;
-import com.graphhopper.util.DistanceCalcEarth;
-import com.graphhopper.util.Helper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,8 +12,6 @@ import java.util.regex.Pattern;
 import static com.graphhopper.util.Helper.toLowerCase;
 
 public class OSMValueExtractor {
-
-    public static final double MAXSPEED_NONE = -1;
 
     private static final Pattern TON_PATTERN = Pattern.compile("tons?");
     private static final Pattern MGW_PATTERN = Pattern.compile("mgw");
@@ -170,58 +165,4 @@ public class OSMValueExtractor {
                 || value.contains(",");
     }
 
-    /**
-     ** @return the speed in km/h, or {@link MaxSpeed.UNSET_SPEED} if the string is invalid, or {@link MAXSPEED_NONE} in case it equals 'none'
-     */
-    public static double stringToKmh(String str) {
-        if (Helper.isEmpty(str))
-            return MaxSpeed.UNSET_SPEED;
-
-        if ("walk".equals(str.trim()))
-            return 6;
-
-        if ("none".equals(str.trim()))
-            // Special case intended to be used when there is actually no speed limit and drivers
-            // can go as fast as they want like on parts of the German Autobahn. However, in OSM
-            // this is sometimes misused by mappers trying to indicate that there is no additional
-            // sign apart from the general speed limit.
-            return MAXSPEED_NONE;
-
-        int mpInteger = str.indexOf("mp");
-        int knotInteger = str.indexOf("knots");
-        int kmInteger = str.indexOf("km");
-        int kphInteger = str.indexOf("kph");
-
-        double factor;
-        if (mpInteger > 0) {
-            str = str.substring(0, mpInteger).trim();
-            factor = DistanceCalcEarth.KM_MILE;
-        } else if (knotInteger > 0) {
-            str = str.substring(0, knotInteger).trim();
-            factor = 1.852; // see https://en.wikipedia.org/wiki/Knot_%28unit%29#Definitions
-        } else {
-            if (kmInteger > 0) {
-                str = str.substring(0, kmInteger).trim();
-            } else if (kphInteger > 0) {
-                str = str.substring(0, kphInteger).trim();
-            }
-            factor = 1;
-        }
-
-        double value;
-        try {
-            value = Double.parseDouble(str) * factor;
-        } catch (Exception ex) {
-            return MaxSpeed.UNSET_SPEED;
-        }
-
-        if (value < 4.8)
-            // We consider maxspeed < 4.8km/h a bug in OSM data and act as if the tag wasn't there.
-            // The limit is chosen such that maxspeed=3mph is still valid, because there actually are
-            // some road signs using 3mph.
-            // https://github.com/graphhopper/graphhopper/pull/3077#discussion_r1826842203
-            return MaxSpeed.UNSET_SPEED;
-
-        return value;
-    }
 }

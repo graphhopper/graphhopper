@@ -6,7 +6,6 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.parsers.DefaultMaxSpeedParser;
 import com.graphhopper.routing.util.parsers.OSMMaxSpeedParser;
 import com.graphhopper.routing.util.parsers.TagParser;
-import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
@@ -78,8 +77,8 @@ public class MaxSpeedCalculator {
 
                     if ("maxspeed".equals(tags.getKey())
                             || "maxspeed:advisory".equals(tags.getKey())) {
-                        double tmp = OSMValueExtractor.stringToKmh(tags.getValue());
-                        if (tmp == MaxSpeed.UNSET_SPEED || tmp == OSMValueExtractor.MAXSPEED_NONE)
+                        double tmp = OSMMaxSpeedParser.parseMaxspeedString(tags.getValue());
+                        if (tmp == MaxSpeed.UNSET_SPEED || tmp == MaxSpeed.MAXSPEED_NONE)
                             throw new IllegalStateException("illegal maxspeed " + tags.getValue());
                         newTags.put(tags.getKey(), "" + Math.round(tmp));
                     }

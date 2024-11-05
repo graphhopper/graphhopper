@@ -33,6 +33,7 @@ public class MaxSpeed {
      * The speed value used for road sections without known speed limit.
      */
     public static final double UNSET_SPEED = Double.POSITIVE_INFINITY;
+    public static final double MAXSPEED_NONE = -1;
 
     public static DecimalEncodedValue create() {
         // if we would store only km/h we could live with a factor of 5 and only 5 bits

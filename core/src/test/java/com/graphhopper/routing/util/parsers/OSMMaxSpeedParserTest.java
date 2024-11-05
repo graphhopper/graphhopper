@@ -131,4 +131,34 @@ class OSMMaxSpeedParserTest {
         assertEquals(4, maxSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), .1);
     }
 
+    @Test
+    public void parseMaxspeedString() {
+        assertEquals(40, OSMMaxSpeedParser.parseMaxspeedString("40 km/h"), 0.1);
+        assertEquals(40, OSMMaxSpeedParser.parseMaxspeedString("40km/h"), 0.1);
+        assertEquals(40, OSMMaxSpeedParser.parseMaxspeedString("40kmh"), 0.1);
+        assertEquals(64.4, OSMMaxSpeedParser.parseMaxspeedString("40mph"), 0.1);
+        assertEquals(48.3, OSMMaxSpeedParser.parseMaxspeedString("30 mph"), 0.1);
+        assertEquals(18.5, OSMMaxSpeedParser.parseMaxspeedString("10 knots"), 0.1);
+        assertEquals(19, OSMMaxSpeedParser.parseMaxspeedString("19 kph"), 0.1);
+        assertEquals(19, OSMMaxSpeedParser.parseMaxspeedString("19kph"), 0.1);
+        assertEquals(100, OSMMaxSpeedParser.parseMaxspeedString("100"), 0.1);
+        assertEquals(100.5, OSMMaxSpeedParser.parseMaxspeedString("100.5"), 0.1);
+        assertEquals(4.8, OSMMaxSpeedParser.parseMaxspeedString("3 mph"), 0.1);
+
+        assertEquals(MaxSpeed.MAXSPEED_NONE, OSMMaxSpeedParser.parseMaxspeedString("none"), 0.1);
+    }
+
+    @Test
+    public void parseMaxspeedString_invalid() {
+        assertEquals(MaxSpeed.UNSET_SPEED, OSMMaxSpeedParser.parseMaxspeedString(null));
+        assertEquals(MaxSpeed.UNSET_SPEED, OSMMaxSpeedParser.parseMaxspeedString("-20"));
+        assertEquals(MaxSpeed.UNSET_SPEED, OSMMaxSpeedParser.parseMaxspeedString("0"));
+        assertEquals(MaxSpeed.UNSET_SPEED, OSMMaxSpeedParser.parseMaxspeedString("1"));
+        assertEquals(MaxSpeed.UNSET_SPEED, OSMMaxSpeedParser.parseMaxspeedString("1km/h"));
+        assertEquals(MaxSpeed.UNSET_SPEED, OSMMaxSpeedParser.parseMaxspeedString("1mph"));
+        assertEquals(MaxSpeed.UNSET_SPEED, OSMMaxSpeedParser.parseMaxspeedString("2"));
+        assertEquals(MaxSpeed.UNSET_SPEED, OSMMaxSpeedParser.parseMaxspeedString("3"));
+        assertEquals(MaxSpeed.UNSET_SPEED, OSMMaxSpeedParser.parseMaxspeedString("4"));
+    }
+
 }

@@ -83,36 +83,6 @@ public class OSMValueExtractorTest {
     }
 
     @Test
-    public void stringToKmh() {
-        assertEquals(40, OSMValueExtractor.stringToKmh("40 km/h"), DELTA);
-        assertEquals(40, OSMValueExtractor.stringToKmh("40km/h"), DELTA);
-        assertEquals(40, OSMValueExtractor.stringToKmh("40kmh"), DELTA);
-        assertEquals(64.374, OSMValueExtractor.stringToKmh("40mph"), DELTA);
-        assertEquals(48.28, OSMValueExtractor.stringToKmh("30 mph"), DELTA);
-        assertEquals(18.52, OSMValueExtractor.stringToKmh("10 knots"), DELTA);
-        assertEquals(19, OSMValueExtractor.stringToKmh("19 kph"), DELTA);
-        assertEquals(19, OSMValueExtractor.stringToKmh("19kph"), DELTA);
-        assertEquals(100, OSMValueExtractor.stringToKmh("100"), DELTA);
-        assertEquals(100.5, OSMValueExtractor.stringToKmh("100.5"), DELTA);
-        assertEquals(4.828, OSMValueExtractor.stringToKmh("3 mph"), DELTA);
-
-        assertEquals(OSMValueExtractor.MAXSPEED_NONE, OSMValueExtractor.stringToKmh("none"), DELTA);
-    }
-
-    @Test
-    public void stringToKmhNaN() {
-        assertEquals(MaxSpeed.UNSET_SPEED, OSMValueExtractor.stringToKmh(null));
-        assertEquals(MaxSpeed.UNSET_SPEED, OSMValueExtractor.stringToKmh("-20"));
-        assertEquals(MaxSpeed.UNSET_SPEED, OSMValueExtractor.stringToKmh("0"));
-        assertEquals(MaxSpeed.UNSET_SPEED, OSMValueExtractor.stringToKmh("1"));
-        assertEquals(MaxSpeed.UNSET_SPEED, OSMValueExtractor.stringToKmh("1km/h"));
-        assertEquals(MaxSpeed.UNSET_SPEED, OSMValueExtractor.stringToKmh("1mph"));
-        assertEquals(MaxSpeed.UNSET_SPEED, OSMValueExtractor.stringToKmh("2"));
-        assertEquals(MaxSpeed.UNSET_SPEED, OSMValueExtractor.stringToKmh("3"));
-        assertEquals(MaxSpeed.UNSET_SPEED, OSMValueExtractor.stringToKmh("4"));
-    }
-
-    @Test
     public void testConditionalWeightToTons() {
         assertEquals(7.5, conditionalWeightToTons("no @ (weight>7.5)"));
         assertEquals(7.5, conditionalWeightToTons("delivery @ (Mo-Sa 06:00-12:00); no @ (weight>7.5); no @ (length>12)"));
