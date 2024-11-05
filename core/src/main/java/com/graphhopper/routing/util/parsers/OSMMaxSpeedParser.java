@@ -68,7 +68,10 @@ public class OSMMaxSpeedParser implements TagParser {
         if (maxSpeed != MAXSPEED_MISSING && maxSpeed != MAXSPEED_NONE)
             // there is no actual use for maxspeeds above 150 so we simply truncate here
             return Math.min(MAXSPEED_150, maxSpeed);
-        else if (maxSpeed == MAXSPEED_NONE && way.hasTag("highway", "motorway", "motorway_link", "trunk", "trunk_link"))
+        else if (maxSpeed == MAXSPEED_NONE && way.hasTag("highway", "motorway", "motorway_link", "trunk", "trunk_link", "primary"))
+            // We ignore maxspeed=none with some exceptions where unlimited speed is actually allowed like on some
+            // motorways, trunks and (very rarely) primary roads in Germany, or the Isle of Man. In other cases
+            // maxspeed=none is only used because mappers have a false understanding of this tag.
             return MaxSpeed.MAXSPEED_150;
         else
             return MAXSPEED_MISSING;
