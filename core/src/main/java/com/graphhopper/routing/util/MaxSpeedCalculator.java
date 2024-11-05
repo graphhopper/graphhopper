@@ -78,7 +78,7 @@ public class MaxSpeedCalculator {
                     if ("maxspeed".equals(tags.getKey())
                             || "maxspeed:advisory".equals(tags.getKey())) {
                         double tmp = OSMMaxSpeedParser.parseMaxspeedString(tags.getValue());
-                        if (tmp == MaxSpeed.UNSET_SPEED || tmp == MaxSpeed.MAXSPEED_NONE)
+                        if (tmp == MaxSpeed.MAXSPEED_MISSING || tmp == OSMMaxSpeedParser.MAXSPEED_NONE)
                             throw new IllegalStateException("illegal maxspeed " + tags.getValue());
                         newTags.put(tags.getKey(), "" + Math.round(tmp));
                     }
@@ -148,21 +148,21 @@ public class MaxSpeedCalculator {
             double bwdMaxSpeedPureOSM = iter.getReverse(maxSpeedEnc);
 
             // skip speeds-library if max_speed is known for both directions
-            if (fwdMaxSpeedPureOSM != MaxSpeed.UNSET_SPEED
-                    && bwdMaxSpeedPureOSM != MaxSpeed.UNSET_SPEED) continue;
+            if (fwdMaxSpeedPureOSM != MaxSpeed.MAXSPEED_MISSING
+                    && bwdMaxSpeedPureOSM != MaxSpeed.MAXSPEED_MISSING) continue;
 
             double maxSpeed = isUrbanDensityFun.apply(iter)
                     ? urbanMaxSpeedEnc.getDecimal(false, iter.getEdge(), internalMaxSpeedStorage)
                     : ruralMaxSpeedEnc.getDecimal(false, iter.getEdge(), internalMaxSpeedStorage);
-            if (maxSpeed != MaxSpeed.UNSET_SPEED) {
+            if (maxSpeed != MaxSpeed.MAXSPEED_MISSING) {
                 if (maxSpeed == 0) {
                     // TODO fix properly: RestrictionSetter adds artificial edges for which
                     //  we didn't set the speed in DefaultMaxSpeedParser, #2914
-                    iter.set(maxSpeedEnc, MaxSpeed.UNSET_SPEED, MaxSpeed.UNSET_SPEED);
+                    iter.set(maxSpeedEnc, MaxSpeed.MAXSPEED_MISSING, MaxSpeed.MAXSPEED_MISSING);
                 } else {
                     iter.set(maxSpeedEnc,
-                            fwdMaxSpeedPureOSM == MaxSpeed.UNSET_SPEED ? maxSpeed : fwdMaxSpeedPureOSM,
-                            bwdMaxSpeedPureOSM == MaxSpeed.UNSET_SPEED ? maxSpeed : bwdMaxSpeedPureOSM);
+                            fwdMaxSpeedPureOSM == MaxSpeed.MAXSPEED_MISSING ? maxSpeed : fwdMaxSpeedPureOSM,
+                            bwdMaxSpeedPureOSM == MaxSpeed.MAXSPEED_MISSING ? maxSpeed : bwdMaxSpeedPureOSM);
                     iter.set(maxSpeedEstEnc, true);
                 }
             }

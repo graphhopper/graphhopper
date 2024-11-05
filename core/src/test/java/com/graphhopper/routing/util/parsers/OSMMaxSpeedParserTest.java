@@ -67,22 +67,22 @@ class OSMMaxSpeedParserTest {
 
         way = new ReaderWay(12);
         way.setTag("maxspeed", "none");
-        assertEquals(MaxSpeed.UNSET_SPEED, OSMMaxSpeedParser.parseMaxSpeed(way, false), 1e-2);
+        assertEquals(MaxSpeed.MAXSPEED_MISSING, OSMMaxSpeedParser.parseMaxSpeed(way, false), 1e-2);
 
         way = new ReaderWay(12);
         way.setTag("maxspeed", "none");
         way.setTag("highway", "secondary");
-        assertEquals(MaxSpeed.UNSET_SPEED, OSMMaxSpeedParser.parseMaxSpeed(way, false), 1e-2);
+        assertEquals(MaxSpeed.MAXSPEED_MISSING, OSMMaxSpeedParser.parseMaxSpeed(way, false), 1e-2);
 
         way = new ReaderWay(12);
         way.setTag("maxspeed", "none");
         way.setTag("highway", "motorway");
-        assertEquals(MaxSpeed.UNLIMITED_SIGN_SPEED, OSMMaxSpeedParser.parseMaxSpeed(way, false), 1e-2);
+        assertEquals(MaxSpeed.MAXSPEED_150, OSMMaxSpeedParser.parseMaxSpeed(way, false), 1e-2);
 
         way = new ReaderWay(12);
         // we ignore low maxspeeds as they are mostly bugs, see discussion in #3077
         way.setTag("maxspeed", "3");
-        assertEquals(MaxSpeed.UNSET_SPEED, OSMMaxSpeedParser.parseMaxSpeed(way, false), 1e-2);
+        assertEquals(MaxSpeed.MAXSPEED_MISSING, OSMMaxSpeedParser.parseMaxSpeed(way, false), 1e-2);
 
         way = new ReaderWay(12);
         // maxspeed=5 is rather popular
@@ -113,7 +113,7 @@ class OSMMaxSpeedParserTest {
         way.setTag("highway", highway);
         way.setTag("maxspeed", "none");
         parser.handleWayTags(edgeId, edgeIntAccess, way, relFlags);
-        assertEquals(MaxSpeed.UNLIMITED_SIGN_SPEED, maxSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), .1);
+        assertEquals(MaxSpeed.MAXSPEED_150, maxSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), .1);
     }
 
     @Test
@@ -145,20 +145,20 @@ class OSMMaxSpeedParserTest {
         assertEquals(100.5, OSMMaxSpeedParser.parseMaxspeedString("100.5"), 0.1);
         assertEquals(4.8, OSMMaxSpeedParser.parseMaxspeedString("3 mph"), 0.1);
 
-        assertEquals(MaxSpeed.MAXSPEED_NONE, OSMMaxSpeedParser.parseMaxspeedString("none"), 0.1);
+        assertEquals(OSMMaxSpeedParser.MAXSPEED_NONE, OSMMaxSpeedParser.parseMaxspeedString("none"), 0.1);
     }
 
     @Test
     public void parseMaxspeedString_invalid() {
-        assertEquals(MaxSpeed.UNSET_SPEED, OSMMaxSpeedParser.parseMaxspeedString(null));
-        assertEquals(MaxSpeed.UNSET_SPEED, OSMMaxSpeedParser.parseMaxspeedString("-20"));
-        assertEquals(MaxSpeed.UNSET_SPEED, OSMMaxSpeedParser.parseMaxspeedString("0"));
-        assertEquals(MaxSpeed.UNSET_SPEED, OSMMaxSpeedParser.parseMaxspeedString("1"));
-        assertEquals(MaxSpeed.UNSET_SPEED, OSMMaxSpeedParser.parseMaxspeedString("1km/h"));
-        assertEquals(MaxSpeed.UNSET_SPEED, OSMMaxSpeedParser.parseMaxspeedString("1mph"));
-        assertEquals(MaxSpeed.UNSET_SPEED, OSMMaxSpeedParser.parseMaxspeedString("2"));
-        assertEquals(MaxSpeed.UNSET_SPEED, OSMMaxSpeedParser.parseMaxspeedString("3"));
-        assertEquals(MaxSpeed.UNSET_SPEED, OSMMaxSpeedParser.parseMaxspeedString("4"));
+        assertEquals(MaxSpeed.MAXSPEED_MISSING, OSMMaxSpeedParser.parseMaxspeedString(null));
+        assertEquals(MaxSpeed.MAXSPEED_MISSING, OSMMaxSpeedParser.parseMaxspeedString("-20"));
+        assertEquals(MaxSpeed.MAXSPEED_MISSING, OSMMaxSpeedParser.parseMaxspeedString("0"));
+        assertEquals(MaxSpeed.MAXSPEED_MISSING, OSMMaxSpeedParser.parseMaxspeedString("1"));
+        assertEquals(MaxSpeed.MAXSPEED_MISSING, OSMMaxSpeedParser.parseMaxspeedString("1km/h"));
+        assertEquals(MaxSpeed.MAXSPEED_MISSING, OSMMaxSpeedParser.parseMaxspeedString("1mph"));
+        assertEquals(MaxSpeed.MAXSPEED_MISSING, OSMMaxSpeedParser.parseMaxspeedString("2"));
+        assertEquals(MaxSpeed.MAXSPEED_MISSING, OSMMaxSpeedParser.parseMaxspeedString("3"));
+        assertEquals(MaxSpeed.MAXSPEED_MISSING, OSMMaxSpeedParser.parseMaxspeedString("4"));
     }
 
 }

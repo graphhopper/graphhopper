@@ -25,10 +25,15 @@ import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.Helper;
 
-import static com.graphhopper.routing.ev.MaxSpeed.UNLIMITED_SIGN_SPEED;
-import static com.graphhopper.routing.ev.MaxSpeed.UNSET_SPEED;
+import static com.graphhopper.routing.ev.MaxSpeed.MAXSPEED_150;
+import static com.graphhopper.routing.ev.MaxSpeed.MAXSPEED_MISSING;
 
 public class OSMMaxSpeedParser implements TagParser {
+
+    /**
+     * Special value to represent `maxspeed=none` internally, not exposed via the maxspeed encoded value
+     */
+    public static final double MAXSPEED_NONE = -1;
 
     private final DecimalEncodedValue carMaxSpeedEnc;
 
@@ -51,7 +56,7 @@ public class OSMMaxSpeedParser implements TagParser {
      */
     public static double parseMaxSpeed(ReaderWay way, boolean reverse) {
         double directedMaxSpeed = parseMaxSpeedTag(way, reverse ? "maxspeed:backward" : "maxspeed:forward");
-        if (directedMaxSpeed != UNSET_SPEED)
+        if (directedMaxSpeed != MAXSPEED_MISSING)
             return directedMaxSpeed;
         else {
             return parseMaxSpeedTag(way, "maxspeed");
@@ -60,13 +65,13 @@ public class OSMMaxSpeedParser implements TagParser {
 
     private static double parseMaxSpeedTag(ReaderWay way, String tag) {
         double maxSpeed = parseMaxspeedString(way.getTag(tag));
-        if (maxSpeed != UNSET_SPEED && maxSpeed != MaxSpeed.MAXSPEED_NONE)
+        if (maxSpeed != MAXSPEED_MISSING && maxSpeed != MAXSPEED_NONE)
             // there is no actual use for maxspeeds above 150 so we simply truncate here
-            return Math.min(UNLIMITED_SIGN_SPEED, maxSpeed);
-        else if (maxSpeed == MaxSpeed.MAXSPEED_NONE && way.hasTag("highway", "motorway", "motorway_link", "trunk", "trunk_link"))
-            return MaxSpeed.UNLIMITED_SIGN_SPEED;
+            return Math.min(MAXSPEED_150, maxSpeed);
+        else if (maxSpeed == MAXSPEED_NONE && way.hasTag("highway", "motorway", "motorway_link", "trunk", "trunk_link"))
+            return MaxSpeed.MAXSPEED_150;
         else
-            return UNSET_SPEED;
+            return MAXSPEED_MISSING;
     }
 
     /**
@@ -74,7 +79,7 @@ public class OSMMaxSpeedParser implements TagParser {
      */
     public static double parseMaxspeedString(String str) {
         if (Helper.isEmpty(str))
-            return UNSET_SPEED;
+            return MAXSPEED_MISSING;
 
         if ("walk".equals(str.trim()))
             return 6;
@@ -84,7 +89,7 @@ public class OSMMaxSpeedParser implements TagParser {
             // can go as fast as they want like on parts of the German Autobahn. However, in OSM
             // this is sometimes misused by mappers trying to indicate that there is no additional
             // sign apart from the general speed limit.
-            return MaxSpeed.MAXSPEED_NONE;
+            return MAXSPEED_NONE;
 
         int mpInteger = str.indexOf("mp");
         int knotInteger = str.indexOf("knots");
@@ -111,7 +116,7 @@ public class OSMMaxSpeedParser implements TagParser {
         try {
             value = Double.parseDouble(str) * factor;
         } catch (Exception ex) {
-            return UNSET_SPEED;
+            return MAXSPEED_MISSING;
         }
 
         if (value < 4.8)
@@ -119,7 +124,7 @@ public class OSMMaxSpeedParser implements TagParser {
             // The limit is chosen such that maxspeed=3mph is still valid, because there actually are
             // some road signs using 3mph.
             // https://github.com/graphhopper/graphhopper/pull/3077#discussion_r1826842203
-            return UNSET_SPEED;
+            return MAXSPEED_MISSING;
 
         return value;
     }

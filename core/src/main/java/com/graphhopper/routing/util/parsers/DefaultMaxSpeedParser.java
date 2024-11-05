@@ -10,8 +10,8 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import static com.graphhopper.routing.ev.MaxSpeed.UNLIMITED_SIGN_SPEED;
-import static com.graphhopper.routing.ev.MaxSpeed.UNSET_SPEED;
+import static com.graphhopper.routing.ev.MaxSpeed.MAXSPEED_150;
+import static com.graphhopper.routing.ev.MaxSpeed.MAXSPEED_MISSING;
 
 public class DefaultMaxSpeedParser implements TagParser {
     private final LegalDefaultSpeeds speeds;
@@ -35,7 +35,7 @@ public class DefaultMaxSpeedParser implements TagParser {
             throw new IllegalArgumentException("Call init before using " + getClass().getName());
         double maxSpeed = Math.max(OSMMaxSpeedParser.parseMaxSpeed(way, false), OSMMaxSpeedParser.parseMaxSpeed(way, true));
         Integer ruralSpeedInt = null, urbanSpeedInt = null;
-        if (maxSpeed == UNSET_SPEED) {
+        if (maxSpeed == MAXSPEED_MISSING) {
             Country country = way.getTag("country", Country.MISSING);
             State state = way.getTag("country_state", State.MISSING);
             if (country != Country.MISSING) {
@@ -52,7 +52,7 @@ public class DefaultMaxSpeedParser implements TagParser {
                     if (tmpResult != null) {
                         internRes.rural = parseInt(tmpResult.getTags().get("maxspeed"));
                         if (internRes.rural == null && "130".equals(tmpResult.getTags().get("maxspeed:advisory")))
-                            internRes.rural = (int) UNLIMITED_SIGN_SPEED;
+                            internRes.rural = (int) MAXSPEED_150;
                     }
 
                     tmpResult = speeds.getSpeedLimits(code,
@@ -60,7 +60,7 @@ public class DefaultMaxSpeedParser implements TagParser {
                     if (tmpResult != null) {
                         internRes.urban = parseInt(tmpResult.getTags().get("maxspeed"));
                         if (internRes.urban == null && "130".equals(tmpResult.getTags().get("maxspeed:advisory")))
-                            internRes.urban = (int) UNLIMITED_SIGN_SPEED;
+                            internRes.urban = (int) MAXSPEED_150;
                     }
                     return internRes;
                 });
@@ -70,8 +70,8 @@ public class DefaultMaxSpeedParser implements TagParser {
             }
         }
 
-        urbanMaxSpeedEnc.setDecimal(false, edgeId, externalAccess, urbanSpeedInt == null ? UNSET_SPEED : urbanSpeedInt);
-        ruralMaxSpeedEnc.setDecimal(false, edgeId, externalAccess, ruralSpeedInt == null ? UNSET_SPEED : ruralSpeedInt);
+        urbanMaxSpeedEnc.setDecimal(false, edgeId, externalAccess, urbanSpeedInt == null ? MAXSPEED_MISSING : urbanSpeedInt);
+        ruralMaxSpeedEnc.setDecimal(false, edgeId, externalAccess, ruralSpeedInt == null ? MAXSPEED_MISSING : ruralSpeedInt);
     }
 
     private Map<String, String> filter(Map<String, Object> tags) {

@@ -165,14 +165,14 @@ public abstract class BikeCommonPriorityParser implements TagParser {
         }
 
         double maxSpeed = Math.max(OSMMaxSpeedParser.parseMaxSpeed(way, false), OSMMaxSpeedParser.parseMaxSpeed(way, true));
-        if (preferHighwayTags.contains(highway) || (maxSpeed != MaxSpeed.UNSET_SPEED && maxSpeed <= 30)) {
-            if (maxSpeed == MaxSpeed.UNSET_SPEED || maxSpeed < avoidSpeedLimit) {
+        if (preferHighwayTags.contains(highway) || (maxSpeed != MaxSpeed.MAXSPEED_MISSING && maxSpeed <= 30)) {
+            if (maxSpeed == MaxSpeed.MAXSPEED_MISSING || maxSpeed < avoidSpeedLimit) {
                 weightToPrioMap.put(40d, PREFER);
                 if (way.hasTag("tunnel", INTENDED))
                     weightToPrioMap.put(40d, UNCHANGED);
             }
         } else if (avoidHighwayTags.containsKey(highway)
-                || (maxSpeed != MaxSpeed.UNSET_SPEED && maxSpeed >= avoidSpeedLimit && !"track".equals(highway))) {
+                || (maxSpeed != MaxSpeed.MAXSPEED_MISSING && maxSpeed >= avoidSpeedLimit && !"track".equals(highway))) {
             PriorityCode priorityCode = avoidHighwayTags.get(highway);
             weightToPrioMap.put(50d, priorityCode == null ? AVOID : priorityCode);
             if (way.hasTag("tunnel", INTENDED)) {

@@ -144,7 +144,7 @@ public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements
      */
     protected double applyMaxSpeed(ReaderWay way, double speed, boolean bwd) {
         double maxSpeed = OSMMaxSpeedParser.parseMaxSpeed(way, bwd);
-        return maxSpeed != MaxSpeed.UNSET_SPEED ? Math.max(1, maxSpeed * 0.9) : speed;
+        return maxSpeed != MaxSpeed.MAXSPEED_MISSING ? Math.max(1, maxSpeed * 0.9) : speed;
     }
 
     /**
