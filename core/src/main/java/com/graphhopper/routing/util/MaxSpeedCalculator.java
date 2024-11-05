@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.parsers.DefaultMaxSpeedParser;
+import com.graphhopper.routing.util.parsers.OSMMaxSpeedParser;
 import com.graphhopper.routing.util.parsers.TagParser;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.DataAccess;
@@ -78,10 +79,8 @@ public class MaxSpeedCalculator {
                     if ("maxspeed".equals(tags.getKey())
                             || "maxspeed:advisory".equals(tags.getKey())) {
                         double tmp = OSMValueExtractor.stringToKmh(tags.getValue());
-                        if (Double.isNaN(tmp))
+                        if (tmp == MaxSpeed.UNSET_SPEED || tmp == OSMValueExtractor.MAXSPEED_NONE)
                             throw new IllegalStateException("illegal maxspeed " + tags.getValue());
-                        if (tmp == OSMValueExtractor.MAXSPEED_NONE)
-                            tmp = MaxSpeed.UNLIMITED_SIGN_SPEED;
                         newTags.put(tags.getKey(), "" + Math.round(tmp));
                     }
                 }

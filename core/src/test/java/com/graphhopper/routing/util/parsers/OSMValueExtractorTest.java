@@ -101,15 +101,15 @@ public class OSMValueExtractorTest {
 
     @Test
     public void stringToKmhNaN() {
-        assertTrue(Double.isNaN(OSMValueExtractor.stringToKmh(null)));
-        assertTrue(Double.isNaN(OSMValueExtractor.stringToKmh("-20")));
-        assertTrue(Double.isNaN(OSMValueExtractor.stringToKmh("0")));
-        assertTrue(Double.isNaN(OSMValueExtractor.stringToKmh("1")));
-        assertTrue(Double.isNaN(OSMValueExtractor.stringToKmh("1km/h")));
-        assertTrue(Double.isNaN(OSMValueExtractor.stringToKmh("1mph")));
-        assertTrue(Double.isNaN(OSMValueExtractor.stringToKmh("2")));
-        assertTrue(Double.isNaN(OSMValueExtractor.stringToKmh("3")));
-        assertTrue(Double.isNaN(OSMValueExtractor.stringToKmh("4")));
+        assertEquals(MaxSpeed.UNSET_SPEED, OSMValueExtractor.stringToKmh(null));
+        assertEquals(MaxSpeed.UNSET_SPEED, OSMValueExtractor.stringToKmh("-20"));
+        assertEquals(MaxSpeed.UNSET_SPEED, OSMValueExtractor.stringToKmh("0"));
+        assertEquals(MaxSpeed.UNSET_SPEED, OSMValueExtractor.stringToKmh("1"));
+        assertEquals(MaxSpeed.UNSET_SPEED, OSMValueExtractor.stringToKmh("1km/h"));
+        assertEquals(MaxSpeed.UNSET_SPEED, OSMValueExtractor.stringToKmh("1mph"));
+        assertEquals(MaxSpeed.UNSET_SPEED, OSMValueExtractor.stringToKmh("2"));
+        assertEquals(MaxSpeed.UNSET_SPEED, OSMValueExtractor.stringToKmh("3"));
+        assertEquals(MaxSpeed.UNSET_SPEED, OSMValueExtractor.stringToKmh("4"));
     }
 
     @Test

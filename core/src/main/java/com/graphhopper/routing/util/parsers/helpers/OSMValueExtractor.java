@@ -171,11 +171,11 @@ public class OSMValueExtractor {
     }
 
     /**
-     ** @return the speed in km/h, or Double.NaN if the string is invalid, or {@link MAXSPEED_NONE} in case it equals 'none'
+     ** @return the speed in km/h, or {@link MaxSpeed.UNSET_SPEED} if the string is invalid, or {@link MAXSPEED_NONE} in case it equals 'none'
      */
     public static double stringToKmh(String str) {
         if (Helper.isEmpty(str))
-            return Double.NaN;
+            return MaxSpeed.UNSET_SPEED;
 
         if ("walk".equals(str.trim()))
             return 6;
@@ -212,7 +212,7 @@ public class OSMValueExtractor {
         try {
             value = Double.parseDouble(str) * factor;
         } catch (Exception ex) {
-            return Double.NaN;
+            return MaxSpeed.UNSET_SPEED;
         }
 
         if (value < 4.8)
@@ -220,7 +220,7 @@ public class OSMValueExtractor {
             // The limit is chosen such that maxspeed=3mph is still valid, because there actually are
             // some road signs using 3mph.
             // https://github.com/graphhopper/graphhopper/pull/3077#discussion_r1826842203
-            return Double.NaN;
+            return MaxSpeed.UNSET_SPEED;
 
         return value;
     }
