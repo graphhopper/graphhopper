@@ -364,6 +364,14 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
     }
 
     @Test
+    public void testLowMaxSpeedIsIgnored() {
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "residential");
+        way.setTag("maxspeed", "3");
+        assertEquals(18, getSpeedFromFlags(way), 0.01);
+    }
+
+    @Test
     public void testCycleway() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "primary");

@@ -118,9 +118,9 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
      * @return The assumed average speed.
      */
     double applyMaxSpeed(ReaderWay way, double speed, boolean bwd) {
-        double maxSpeed = getMaxSpeed(way, bwd);
+        double maxSpeed = OSMMaxSpeedParser.parseMaxSpeed(way, bwd);
         // We strictly obey speed limits, see #600
-        return isValidSpeed(maxSpeed) && speed > maxSpeed ? maxSpeed : speed;
+        return Math.min(speed, maxSpeed);
     }
 
     @Override
