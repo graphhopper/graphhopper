@@ -51,8 +51,8 @@ public class OSMMaxSpeedParser implements TagParser {
     }
 
     /**
-     * @return The maxspeed for the given way. It can be anything between 0 and {@link MaxSpeed.UNLIMITED_SIGN_SPEED},
-     *         or {@link MaxSpeed.UNSET_SPEED} in case there is no valid maxspeed tagged for this way in this direction.
+     * @return The maxspeed for the given way. It can be anything between 0 and {@link MaxSpeed.MAXSPEED_150},
+     *         or {@link MaxSpeed.MAXSPEED_MISSING} in case there is no valid maxspeed tagged for this way in this direction.
      */
     public static double parseMaxSpeed(ReaderWay way, boolean reverse) {
         double directedMaxSpeed = parseMaxSpeedTag(way, reverse ? "maxspeed:backward" : "maxspeed:forward");
@@ -78,7 +78,7 @@ public class OSMMaxSpeedParser implements TagParser {
     }
 
     /**
-     ** @return the speed in km/h, or {@link MaxSpeed.UNSET_SPEED} if the string is invalid, or {@link MaxSpeed.MAXSPEED_NONE} in case it equals 'none'
+     ** @return the speed in km/h, or {@link MAXSPEED_MISSING} if the string is invalid, or {@link MAXSPEED_NONE} in case it equals 'none'
      */
     public static double parseMaxspeedString(String str) {
         if (Helper.isEmpty(str))

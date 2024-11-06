@@ -100,7 +100,8 @@ class OSMMaxSpeedParserTest {
             "motorway",
             "motorway_link",
             "trunk",
-            "trunk_link"
+            "trunk_link",
+            "primary"
     })
     void maxSpeedNone(String highway) {
         DecimalEncodedValue maxSpeedEnc = MaxSpeed.create();
@@ -109,6 +110,7 @@ class OSMMaxSpeedParserTest {
         IntsRef relFlags = new IntsRef(2);
         EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
         int edgeId = 0;
+        assertEquals(0, maxSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), .1);
         ReaderWay way = new ReaderWay(29L);
         way.setTag("highway", highway);
         way.setTag("maxspeed", "none");

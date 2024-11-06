@@ -18,7 +18,7 @@
 package com.graphhopper.routing.ev;
 
 /**
- * This EncodedValue stores maximum speed values for car in km/h. If not initialized it returns UNSET_SPEED.
+ * This EncodedValue stores maximum speed values for car in km/h.
  */
 public class MaxSpeed {
     public static final String KEY = "max_speed";

@@ -127,8 +127,8 @@ public class MaxSpeedCalculator {
     }
 
     /**
-     * This method sets max_speed values where the value is UNSET_SPEED to a value determined by
-     * the default speed library which is country-dependent.
+     * This method sets max_speed values where the value is {@link MaxSpeed.MAXSPEED_MISSING} to a
+     * value determined by the default speed library which is country-dependent.
      */
     public void fillMaxSpeed(Graph graph, EncodingManager em) {
         // In DefaultMaxSpeedParser and in OSMMaxSpeedParser we don't have the rural/urban info,
