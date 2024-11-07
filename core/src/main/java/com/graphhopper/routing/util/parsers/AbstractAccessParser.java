@@ -31,7 +31,7 @@ public abstract class AbstractAccessParser implements TagParser {
     static final Collection<String> INTENDED = Arrays.asList("yes", "designated", "official", "permissive");
 
     // order is important
-    protected final List<String> restrictionKeys = new ArrayList<>(5);
+    protected final List<String> restrictionKeys;
     protected final Set<String> restrictedValues = new HashSet<>(5);
 
     protected final Set<String> intendedValues = new HashSet<>(INTENDED); // possible to add "private" later
@@ -40,8 +40,9 @@ public abstract class AbstractAccessParser implements TagParser {
     protected final BooleanEncodedValue accessEnc;
     private boolean blockFords = true;
 
-    protected AbstractAccessParser(BooleanEncodedValue accessEnc, TransportationMode transportationMode) {
+    protected AbstractAccessParser(BooleanEncodedValue accessEnc, List<String> restrictionKeys) {
         this.accessEnc = accessEnc;
+        this.restrictionKeys = restrictionKeys;
 
         restrictedValues.add("no");
         restrictedValues.add("restricted");
@@ -49,8 +50,6 @@ public abstract class AbstractAccessParser implements TagParser {
         restrictedValues.add("emergency");
         restrictedValues.add("private");
         restrictedValues.add("permit");
-
-        restrictionKeys.addAll(OSMRoadAccessParser.toOSMRestrictions(transportationMode));
     }
 
     public boolean isBlockFords() {

@@ -26,8 +26,6 @@ import com.graphhopper.storage.IntsRef;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class OSMRoadAccessParserTest {
@@ -43,7 +41,7 @@ class OSMRoadAccessParserTest {
         bikeRAEnc.init(new EncodedValue.InitializerConfig());
         parser = new OSMRoadAccessParser<>(roadAccessEnc, OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR),
                 RoadAccess::countryHook, RoadAccess::find);
-        bikeRAParser = new OSMRoadAccessParser<>(bikeRAEnc, BikeRoadAccess.RESTRICTIONS,
+        bikeRAParser = new OSMRoadAccessParser<>(bikeRAEnc, OSMRoadAccessParser.toOSMRestrictions(TransportationMode.BIKE),
                 (ignr, access) -> access, BikeRoadAccess::find);
     }
 
