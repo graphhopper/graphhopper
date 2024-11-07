@@ -43,7 +43,7 @@ public class FootAccessParser extends AbstractAccessParser implements TagParser 
     }
 
     protected FootAccessParser(BooleanEncodedValue accessEnc) {
-        super(accessEnc, TransportationMode.FOOT);
+        super(accessEnc, OSMRoadAccessParser.toOSMRestrictions(TransportationMode.FOOT));
 
         sidewalkValues.add("yes");
         sidewalkValues.add("both");

@@ -4,7 +4,6 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.util.FerrySpeedCalculator;
-import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.routing.util.WayAccess;
 
 import java.util.*;
@@ -17,8 +16,14 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
     private final Set<String> allowedHighways = new HashSet<>();
     private final BooleanEncodedValue roundaboutEnc;
 
+    /**
+     * The access restriction list returned from OSMRoadAccessParser.toOSMRestrictions(TransportationMode.Bike)
+     * contains "vehicle". But here we want to allow walking via dismount.
+     */
+    private static final List<String> RESTRICTIONS = Arrays.asList("bicycle", "access");
+
     protected BikeCommonAccessParser(BooleanEncodedValue accessEnc, BooleanEncodedValue roundaboutEnc) {
-        super(accessEnc, TransportationMode.BIKE);
+        super(accessEnc, RESTRICTIONS);
 
         this.roundaboutEnc = roundaboutEnc;
 

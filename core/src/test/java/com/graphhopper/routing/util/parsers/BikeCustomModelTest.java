@@ -28,19 +28,21 @@ public class BikeCustomModelTest {
         IntEncodedValue hikeRating = HikeRating.create();
         em = new EncodingManager.Builder().
                 add(VehicleAccess.create("bike")).
-                add(VehicleAccess.create("mtb")).
-                add(VehicleAccess.create("racingbike")).
                 add(VehicleSpeed.create("bike", 4, 2, false)).
-                add(VehicleSpeed.create("mtb", 4, 2, false)).
-                add(VehicleSpeed.create("racingbike", 4, 2, false)).
                 add(VehiclePriority.create("bike", 4, PriorityCode.getFactor(1), false)).
+                add(VehicleAccess.create("mtb")).
+                add(VehicleSpeed.create("mtb", 4, 2, false)).
                 add(VehiclePriority.create("mtb", 4, PriorityCode.getFactor(1), false)).
+                add(VehicleAccess.create("racingbike")).
+                add(VehicleSpeed.create("racingbike", 4, 2, false)).
                 add(VehiclePriority.create("racingbike", 4, PriorityCode.getFactor(1), false)).
                 add(FerrySpeed.create()).
                 add(RouteNetwork.create(BikeNetwork.KEY)).
                 add(Roundabout.create()).
                 add(Smoothness.create()).
                 add(RoadAccess.create()).
+                add(BikeRoadAccess.create()).
+                add(FootRoadAccess.create()).
                 add(bikeRating).
                 add(hikeRating).build();
 
