@@ -123,6 +123,12 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         return Math.min(speed, maxSpeed);
     }
 
+    void setEdgeSpeed(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, double speed) {
+        setSpeed(false, edgeId, edgeIntAccess, applyMaxSpeed(way, speed, false));
+        if (avgSpeedEnc.isStoreTwoDirections())
+            setSpeed(true, edgeId, edgeIntAccess, applyMaxSpeed(way, speed, true));
+    }
+
     @Override
     public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way) {
         String highwayValue = way.getTag("highway");
@@ -146,11 +152,12 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         } else if (way.hasTag("bicycle", "dismount")
                 || way.hasTag("railway", "platform")
                 || pushingRestriction && !way.hasTag("bicycle", INTENDED)) {
-            speed = PUSHING_SECTION_SPEED;
+            setEdgeSpeed( edgeId, edgeIntAccess, way, PUSHING_SECTION_SPEED );
+            return;
         } else if (pushingSectionsHighways.contains(highwayValue)) {
             if (way.hasTag("bicycle", "designated") || way.hasTag("bicycle", "official") || way.hasTag("segregated", "yes")
                     || CYCLEWAY_KEYS.stream().anyMatch(k -> way.getTag(k, "").equals("track"))) {
-speed = trackTypeSpeeds.getOrDefault(trackTypeValue, highwaySpeeds.get("cycleway"));
+                speed = trackTypeSpeeds.getOrDefault(trackTypeValue, highwaySpeeds.get("cycleway"));
             }
             else if (way.hasTag("bicycle", "yes"))
                 speed = 12;
@@ -172,10 +179,7 @@ speed = trackTypeSpeeds.getOrDefault(trackTypeValue, highwaySpeeds.get("cycleway
         }
 
         Smoothness smoothness = smoothnessEnc.getEnum(false, edgeId, edgeIntAccess);
-        speed = Math.max(MIN_SPEED, smoothnessFactor.get(smoothness) * speed);
-        setSpeed(false, edgeId, edgeIntAccess, applyMaxSpeed(way, speed, false));
-        if (avgSpeedEnc.isStoreTwoDirections())
-            setSpeed(true, edgeId, edgeIntAccess, applyMaxSpeed(way, speed, true));
+        setEdgeSpeed( edgeId, edgeIntAccess, way, Math.max(MIN_SPEED, smoothnessFactor.get(smoothness) * speed) );
     }
 
     void setHighwaySpeed(String highway, int speed) {
