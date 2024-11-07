@@ -3,9 +3,6 @@ package com.graphhopper.routing.util.parsers.helpers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EdgeIntAccess;
-import com.graphhopper.routing.ev.MaxSpeed;
-import com.graphhopper.util.DistanceCalcEarth;
-import com.graphhopper.util.Helper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -168,52 +165,4 @@ public class OSMValueExtractor {
                 || value.contains(",");
     }
 
-    /**
-     * @return the speed in km/h
-     */
-    public static double stringToKmh(String str) {
-        if (Helper.isEmpty(str))
-            return Double.NaN;
-
-        if ("walk".equals(str))
-            return 6;
-
-        // on some German autobahns and a very few other places
-        if ("none".equals(str))
-            return MaxSpeed.UNLIMITED_SIGN_SPEED;
-
-        int mpInteger = str.indexOf("mp");
-        int knotInteger = str.indexOf("knots");
-        int kmInteger = str.indexOf("km");
-        int kphInteger = str.indexOf("kph");
-
-        double factor;
-        if (mpInteger > 0) {
-            str = str.substring(0, mpInteger).trim();
-            factor = DistanceCalcEarth.KM_MILE;
-        } else if (knotInteger > 0) {
-            str = str.substring(0, knotInteger).trim();
-            factor = 1.852; // see https://en.wikipedia.org/wiki/Knot_%28unit%29#Definitions
-        } else {
-            if (kmInteger > 0) {
-                str = str.substring(0, kmInteger).trim();
-            } else if (kphInteger > 0) {
-                str = str.substring(0, kphInteger).trim();
-            }
-            factor = 1;
-        }
-
-        double value;
-        try {
-            value = Double.parseDouble(str) * factor;
-        } catch (Exception ex) {
-            return Double.NaN;
-        }
-
-        if (value <= 0) {
-            return Double.NaN;
-        }
-
-        return value;
-    }
 }

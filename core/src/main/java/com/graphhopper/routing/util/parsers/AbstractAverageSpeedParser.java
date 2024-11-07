@@ -17,22 +17,6 @@ public abstract class AbstractAverageSpeedParser implements TagParser {
         this.ferrySpeedEnc = ferrySpeedEnc;
     }
 
-    /**
-     * @return {@link Double#NaN} if no maxspeed found
-     */
-    public static double getMaxSpeed(ReaderWay way, boolean bwd) {
-        double maxSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed"));
-        double directedMaxSpeed = OSMValueExtractor.stringToKmh(way.getTag(bwd ? "maxspeed:backward" : "maxspeed:forward"));
-        return isValidSpeed(directedMaxSpeed) ? directedMaxSpeed : maxSpeed;
-    }
-
-    /**
-     * @return <i>true</i> if the given speed is not {@link Double#NaN}
-     */
-    protected static boolean isValidSpeed(double speed) {
-        return !Double.isNaN(speed);
-    }
-
     public final DecimalEncodedValue getAverageSpeedEnc() {
         return avgSpeedEnc;
     }

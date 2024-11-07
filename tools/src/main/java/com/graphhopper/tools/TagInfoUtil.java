@@ -13,6 +13,7 @@ import java.util.Map.Entry;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.graphhopper.routing.util.parsers.OSMMaxSpeedParser;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 
 public class TagInfoUtil {
@@ -21,7 +22,7 @@ public class TagInfoUtil {
                     + "filter=all&sortname=count&sortorder=desc&qtype=value&format=json&key=";
     private static final Extractor TONS_EXTRACTOR  = OSMValueExtractor::stringToTons;
     private static final Extractor METER_EXTRACTOR = OSMValueExtractor::stringToMeter;
-    private static final Extractor KMH_EXTRACTOR = OSMValueExtractor::stringToKmh;
+    private static final Extractor MAXSPEED_EXTRACTOR = OSMMaxSpeedParser::parseMaxspeedString;
 
     public static void main(String[] args) throws IOException {
         Map<String, Extractor> keyMap = new LinkedHashMap<>();
@@ -30,7 +31,7 @@ public class TagInfoUtil {
         keyMap.put("maxwidth",  METER_EXTRACTOR);
         keyMap.put("maxheight", METER_EXTRACTOR);
         keyMap.put("maxlength", METER_EXTRACTOR);
-        keyMap.put("maxspeed",  KMH_EXTRACTOR);
+        keyMap.put("maxspeed", MAXSPEED_EXTRACTOR);
         
         for (Entry<String, Extractor> entry: keyMap.entrySet()) {
             String key = entry.getKey();
