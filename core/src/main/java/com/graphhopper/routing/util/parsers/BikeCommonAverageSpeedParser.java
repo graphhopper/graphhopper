@@ -123,12 +123,6 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         return Math.min(speed, maxSpeed);
     }
 
-    void setEdgeSpeed(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, double speed) {
-        setSpeed(false, edgeId, edgeIntAccess, applyMaxSpeed(way, speed, false));
-        if (avgSpeedEnc.isStoreTwoDirections())
-            setSpeed(true, edgeId, edgeIntAccess, applyMaxSpeed(way, speed, true));
-    }
-
     @Override
     public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way) {
         String highwayValue = way.getTag("highway");
@@ -149,11 +143,6 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         boolean pushingRestriction = Arrays.stream(way.getTag("vehicle", "").split(";")).anyMatch(restrictedValues::contains);
         if ("steps".equals(highwayValue)) {
             // ignore
-        } else if (way.hasTag("bicycle", "dismount")
-                || way.hasTag("railway", "platform")
-                || pushingRestriction && !way.hasTag("bicycle", INTENDED)) {
-            setEdgeSpeed( edgeId, edgeIntAccess, way, PUSHING_SECTION_SPEED );
-            return;
         } else if (pushingSectionsHighways.contains(highwayValue)) {
             if (way.hasTag("bicycle", "designated") || way.hasTag("bicycle", "official") || way.hasTag("segregated", "yes")
                     || CYCLEWAY_KEYS.stream().anyMatch(k -> way.getTag(k, "").equals("track"))) {
@@ -164,12 +153,15 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         }
 
         Integer surfaceSpeed = surfaceSpeeds.get(surfaceValue);
-        if (way.hasTag("surface") && surfaceSpeed == null) {
-            speed = PUSHING_SECTION_SPEED; // unknown surface
+        if (way.hasTag("surface") && surfaceSpeed == null
+                || way.hasTag("bicycle", "dismount")
+                || way.hasTag("railway", "platform")
+                || pushingRestriction && !way.hasTag("bicycle", INTENDED)) {
+            speed = PUSHING_SECTION_SPEED;
         } else if (way.hasTag("service")) {
             speed = highwaySpeeds.get("living_street");
         } else if ("track".equals(highwayValue) ||
-                   "bridleway".equals(highwayValue) ) {
+                "bridleway".equals(highwayValue) ) {
             if (surfaceSpeed != null)
                 speed = surfaceSpeed;
             else if (trackTypeSpeeds.containsKey(trackTypeValue))
@@ -179,7 +171,10 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         }
 
         Smoothness smoothness = smoothnessEnc.getEnum(false, edgeId, edgeIntAccess);
-        setEdgeSpeed( edgeId, edgeIntAccess, way, Math.max(MIN_SPEED, smoothnessFactor.get(smoothness) * speed) );
+        speed = Math.max(MIN_SPEED, smoothnessFactor.get(smoothness) * speed);
+        setSpeed(false, edgeId, edgeIntAccess, applyMaxSpeed(way, speed, false));
+        if (avgSpeedEnc.isStoreTwoDirections())
+            setSpeed(true, edgeId, edgeIntAccess, applyMaxSpeed(way, speed, true));
     }
 
     void setHighwaySpeed(String highway, int speed) {
