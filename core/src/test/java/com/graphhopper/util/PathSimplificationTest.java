@@ -53,8 +53,9 @@ public class PathSimplificationTest {
     @Test
     public void testScenario() {
         DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
-        EncodingManager carManager = EncodingManager.start().add(speedEnc)
-                .add(Roundabout.create()).add(RoadClass.create()).add(RoadClassLink.create()).add(MaxSpeed.create()).build();
+        EncodingManager carManager = EncodingManager.start().add(speedEnc).
+                add(VehicleAccess.create("car")).add(Roundabout.create()).add(RoadClass.create()).
+                add(RoadClassLink.create()).add(MaxSpeed.create()).build();
         BaseGraph g = new BaseGraph.Builder(carManager).create();
         // 0-1-2
         // | | |
