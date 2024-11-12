@@ -19,7 +19,6 @@ package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.SpeedWeighting;
@@ -45,15 +44,11 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class PathTest {
     private final DecimalEncodedValue carAvSpeedEnc = new DecimalEncodedValueImpl("speed", 5, 5, true);
-    private final EncodingManager carManager = EncodingManager.start().add(carAvSpeedEnc).
-            add(VehicleAccess.create("car")).add(Roundabout.create()).add(RoadClass.create()).
-            add(RoadClassLink.create()).add(MaxSpeed.create()).build();
-
+    private final EncodingManager carManager = EncodingManager.start().add(carAvSpeedEnc)
+            .add(Roundabout.create()).add(RoadClass.create()).add(RoadClassLink.create()).add(MaxSpeed.create()).build();
     private final DecimalEncodedValue mixedCarSpeedEnc = new DecimalEncodedValueImpl("mixed_car_speed", 5, 5, true);
-    private final BooleanEncodedValue mixedCarAccessEnc = VehicleAccess.create("car");
     private final DecimalEncodedValue mixedFootSpeedEnc = new DecimalEncodedValueImpl("mixed_foot_speed", 4, 1, true);
     private final EncodingManager mixedEncodingManager = EncodingManager.start().
-            add(mixedCarAccessEnc).
             add(mixedCarSpeedEnc).add(mixedFootSpeedEnc).
             add(RoadClass.create()).
             add(RoadClassLink.create()).
@@ -112,7 +107,7 @@ public class PathTest {
         assertEquals(path.calcPoints().size() - 1, acc);
 
         // force minor change for instructions
-        edge2.setKeyValues(Map.of(STREET_NAME, new KValue("2")));
+        edge2.setKeyValues(Map.of(STREET_NAME, new KValue( "2")));
         na.setNode(3, 1.0, 1.0);
         g.edge(1, 3).setDistance(1000).set(carAvSpeedEnc, 10.0, 10.0);
 
@@ -179,16 +174,16 @@ public class PathTest {
 
         EdgeIteratorState edge1 = g.edge(0, 1).setDistance(1000).set(carAvSpeedEnc, 50.0, 50.0);
         edge1.setWayGeometry(Helper.createPointList());
-        edge1.setKeyValues(Map.of(STREET_NAME, new KValue("Street 1")));
+        edge1.setKeyValues(Map.of(STREET_NAME, new KValue( "Street 1")));
         EdgeIteratorState edge2 = g.edge(1, 2).setDistance(1000).set(carAvSpeedEnc, 50.0, 50.0);
         edge2.setWayGeometry(Helper.createPointList());
-        edge2.setKeyValues(Map.of(STREET_NAME, new KValue("Street 2")));
+        edge2.setKeyValues(Map.of(STREET_NAME, new KValue( "Street 2")));
         EdgeIteratorState edge3 = g.edge(2, 3).setDistance(1000).set(carAvSpeedEnc, 50.0, 50.0);
         edge3.setWayGeometry(Helper.createPointList());
-        edge3.setKeyValues(Map.of(STREET_NAME, new KValue("Street 3")));
+        edge3.setKeyValues(Map.of(STREET_NAME, new KValue( "Street 3")));
         EdgeIteratorState edge4 = g.edge(3, 4).setDistance(500).set(carAvSpeedEnc, 50.0, 50.0);
         edge4.setWayGeometry(Helper.createPointList());
-        edge4.setKeyValues(Map.of(STREET_NAME, new KValue("Street 4")));
+        edge4.setKeyValues(Map.of(STREET_NAME, new KValue( "Street 4")));
 
         g.edge(1, 5).setDistance(10000).set(carAvSpeedEnc, 50.0, 50.0);
         g.edge(2, 5).setDistance(10000).set(carAvSpeedEnc, 50.0, 50.0);
@@ -538,38 +533,32 @@ public class PathTest {
         na.setNode(10, 52.5135, 13.348);
         na.setNode(11, 52.514, 13.347);
 
-        graph.edge(2, 1).set(carAvSpeedEnc, 60, 0).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue("MainStreet 2 1")));
-        graph.edge(1, 11).set(carAvSpeedEnc, 60, 0).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue("MainStreet 1 11")));
+        graph.edge(2, 1).set(carAvSpeedEnc, 60, 0).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue( "MainStreet 2 1")));
+        graph.edge(1, 11).set(carAvSpeedEnc, 60, 0).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue( "MainStreet 1 11")));
 
         // roundabout
         EdgeIteratorState tmpEdge;
-        tmpEdge = graph.edge(3, 9).set(carAvSpeedEnc, 60, 0).setDistance(2).setKeyValues(Map.of(STREET_NAME, new KValue("3-9")));
+        tmpEdge = graph.edge(3, 9).set(carAvSpeedEnc, 60, 0).setDistance(2).setKeyValues(Map.of(STREET_NAME, new KValue( "3-9")));
         BooleanEncodedValue carManagerRoundabout = carManager.getBooleanEncodedValue(Roundabout.KEY);
         tmpEdge.set(carManagerRoundabout, true);
-        tmpEdge = graph.edge(9, 10).set(carAvSpeedEnc, 60, 0).setDistance(2).setKeyValues(Map.of(STREET_NAME, new KValue("9-10")));
+        tmpEdge = graph.edge(9, 10).set(carAvSpeedEnc, 60, 0).setDistance(2).setKeyValues(Map.of(STREET_NAME, new KValue( "9-10")));
         tmpEdge.set(carManagerRoundabout, true);
-        tmpEdge = graph.edge(6, 10).set(carAvSpeedEnc, 60, 0).setDistance(2).setKeyValues(Map.of(STREET_NAME, new KValue("6-10")));
+        tmpEdge = graph.edge(6, 10).set(carAvSpeedEnc, 60, 0).setDistance(2).setKeyValues(Map.of(STREET_NAME, new KValue( "6-10")));
         tmpEdge.set(carManagerRoundabout, true);
-        tmpEdge = graph.edge(10, 1).set(carAvSpeedEnc, 60, 0).setDistance(2).setKeyValues(Map.of(STREET_NAME, new KValue("10-1")));
+        tmpEdge = graph.edge(10, 1).set(carAvSpeedEnc, 60, 0).setDistance(2).setKeyValues(Map.of(STREET_NAME, new KValue( "10-1")));
         tmpEdge.set(carManagerRoundabout, true);
-        tmpEdge = graph.edge(3, 2).set(carAvSpeedEnc, 60, 0).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue("2-3")));
+        tmpEdge = graph.edge(3, 2).set(carAvSpeedEnc, 60, 0).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue( "2-3")));
         tmpEdge.set(carManagerRoundabout, true);
-        tmpEdge = graph.edge(4, 3).set(carAvSpeedEnc, 60, 0).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue("3-4")));
+        tmpEdge = graph.edge(4, 3).set(carAvSpeedEnc, 60, 0).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue( "3-4")));
         tmpEdge.set(carManagerRoundabout, true);
-        tmpEdge = graph.edge(5, 4).set(carAvSpeedEnc, 60, 0).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue("4-5")));
+        tmpEdge = graph.edge(5, 4).set(carAvSpeedEnc, 60, 0).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue( "4-5")));
         tmpEdge.set(carManagerRoundabout, true);
-        tmpEdge = graph.edge(2, 5).set(carAvSpeedEnc, 60, 0).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue("5-2")));
+        tmpEdge = graph.edge(2, 5).set(carAvSpeedEnc, 60, 0).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue( "5-2")));
         tmpEdge.set(carManagerRoundabout, true);
 
-        graph.edge(4, 7).set(carAvSpeedEnc, 60, 60).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue("MainStreet 4 7")));
-        graph.edge(5, 8).set(carAvSpeedEnc, 60, 60).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue("5-8")));
-        graph.edge(3, 6).set(carAvSpeedEnc, 60, 60).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue("3-6")));
-        BooleanEncodedValue carAccessEncTmp = carManager.getBooleanEncodedValue(VehicleAccess.key("car"));
-        AllEdgesIterator iter = graph.getAllEdges();
-        while (iter.next()) {
-            if (iter.get(carAvSpeedEnc) > 0) iter.set(carAccessEncTmp, true);
-            if (iter.getReverse(carAvSpeedEnc) > 0) iter.setReverse(carAccessEncTmp, true);
-        }
+        graph.edge(4, 7).set(carAvSpeedEnc, 60, 60).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue( "MainStreet 4 7")));
+        graph.edge(5, 8).set(carAvSpeedEnc, 60, 60).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue( "5-8")));
+        graph.edge(3, 6).set(carAvSpeedEnc, 60, 60).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue( "3-6")));
 
         Weighting weighting = new SpeedWeighting(carAvSpeedEnc);
         Path p = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED)
@@ -645,8 +634,8 @@ public class PathTest {
         na.setNode(3, 48.982611, 13.121012);
         na.setNode(4, 48.982336, 13.121002);
 
-        graph.edge(1, 2).set(carAvSpeedEnc, 60, 60).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue("Regener Weg")));
-        graph.edge(2, 4).set(carAvSpeedEnc, 60, 60).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue("Regener Weg")));
+        graph.edge(1, 2).set(carAvSpeedEnc, 60, 60).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue( "Regener Weg")));
+        graph.edge(2, 4).set(carAvSpeedEnc, 60, 60).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue( "Regener Weg")));
         graph.edge(2, 3).set(carAvSpeedEnc, 60, 60).setDistance(5);
 
         Weighting weighting = new SpeedWeighting(carAvSpeedEnc);
@@ -706,9 +695,9 @@ public class PathTest {
         na.setNode(3, 48.630558, 9.459851);
         na.setNode(4, 48.63054, 9.459406);
 
-        graph.edge(1, 2).set(carAvSpeedEnc, 60, 0).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue("A 8")));
-        graph.edge(2, 3).set(carAvSpeedEnc, 60, 0).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue("A 8")));
-        graph.edge(4, 2).set(carAvSpeedEnc, 60, 0).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue("A 8")));
+        graph.edge(1, 2).set(carAvSpeedEnc, 60, 0).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue( "A 8")));
+        graph.edge(2, 3).set(carAvSpeedEnc, 60, 0).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue( "A 8")));
+        graph.edge(4, 2).set(carAvSpeedEnc, 60, 0).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue( "A 8")));
 
         Weighting weighting = new SpeedWeighting(carAvSpeedEnc);
         Path p = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED)
@@ -735,9 +724,9 @@ public class PathTest {
         na.setNode(3, 48.706805, 9.162995);
         na.setNode(4, 48.706705, 9.16329);
 
-        g.edge(1, 2).setDistance(5).set(carAvSpeedEnc, 60, 0).setKeyValues(Map.of(STREET_NAME, new KValue("A 8")));
-        g.edge(2, 3).setDistance(5).set(carAvSpeedEnc, 60, 0).setKeyValues(Map.of(STREET_NAME, new KValue("A 8")));
-        g.edge(2, 4).setDistance(5).set(carAvSpeedEnc, 60, 0).setKeyValues(Map.of(STREET_NAME, new KValue("A 8")));
+        g.edge(1, 2).setDistance(5).set(carAvSpeedEnc, 60, 0).setKeyValues(Map.of(STREET_NAME, new KValue( "A 8")));
+        g.edge(2, 3).setDistance(5).set(carAvSpeedEnc, 60, 0).setKeyValues(Map.of(STREET_NAME, new KValue( "A 8")));
+        g.edge(2, 4).setDistance(5).set(carAvSpeedEnc, 60, 0).setKeyValues(Map.of(STREET_NAME, new KValue( "A 8")));
 
         Weighting weighting = new SpeedWeighting(carAvSpeedEnc);
         Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED)
@@ -765,9 +754,9 @@ public class PathTest {
         na.setNode(3, -33.824415, 151.188177);
         na.setNode(4, -33.824437, 151.187925);
 
-        g.edge(1, 2).setDistance(5).set(carAvSpeedEnc, 60, 0).setKeyValues(Map.of(STREET_NAME, new KValue("Pacific Highway")));
-        g.edge(2, 3).setDistance(5).set(carAvSpeedEnc, 60, 0).setKeyValues(Map.of(STREET_NAME, new KValue("Pacific Highway")));
-        g.edge(4, 2).setDistance(5).set(carAvSpeedEnc, 60, 60).setKeyValues(Map.of(STREET_NAME, new KValue("Greenwich Road")));
+        g.edge(1, 2).setDistance(5).set(carAvSpeedEnc, 60, 0).setKeyValues(Map.of(STREET_NAME, new KValue( "Pacific Highway")));
+        g.edge(2, 3).setDistance(5).set(carAvSpeedEnc, 60, 0).setKeyValues(Map.of(STREET_NAME, new KValue( "Pacific Highway")));
+        g.edge(4, 2).setDistance(5).set(carAvSpeedEnc, 60, 60).setKeyValues(Map.of(STREET_NAME, new KValue( "Greenwich Road")));
 
         Weighting weighting = new SpeedWeighting(carAvSpeedEnc);
         Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED)
@@ -834,9 +823,9 @@ public class PathTest {
         na.setNode(3, 48.982611, 13.121012);
         na.setNode(4, 48.982565, 13.121002);
 
-        g.edge(1, 2).set(carAvSpeedEnc, 60, 60).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue("Regener Weg")));
+        g.edge(1, 2).set(carAvSpeedEnc, 60, 60).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue( "Regener Weg")));
         g.edge(2, 4).set(carAvSpeedEnc, 60, 60).setDistance(5);
-        g.edge(2, 3).set(carAvSpeedEnc, 60, 60).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue("Regener Weg")));
+        g.edge(2, 3).set(carAvSpeedEnc, 60, 60).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue( "Regener Weg")));
 
         Weighting weighting = new SpeedWeighting(carAvSpeedEnc);
         Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED)
@@ -864,9 +853,9 @@ public class PathTest {
         na.setNode(3, 48.412034, 15.599411);
         na.setNode(4, 48.411927, 15.599197);
 
-        g.edge(1, 2).set(carAvSpeedEnc, 60, 60).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue("Stöhrgasse")));
+        g.edge(1, 2).set(carAvSpeedEnc, 60, 60).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue( "Stöhrgasse")));
         g.edge(2, 3).set(carAvSpeedEnc, 60, 60).setDistance(5);
-        g.edge(2, 4).set(carAvSpeedEnc, 60, 60).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue("Stöhrgasse")));
+        g.edge(2, 4).set(carAvSpeedEnc, 60, 60).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue( "Stöhrgasse")));
 
         Weighting weighting = new SpeedWeighting(carAvSpeedEnc);
         Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED)
@@ -897,12 +886,12 @@ public class PathTest {
         na.setNode(6, 48.402422, 9.996067);
         na.setNode(7, 48.402604, 9.994962);
 
-        g.edge(1, 2).set(carAvSpeedEnc, 60, 0).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue("Olgastraße")));
-        g.edge(2, 3).set(carAvSpeedEnc, 60, 0).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue("Olgastraße")));
-        g.edge(6, 5).set(carAvSpeedEnc, 60, 0).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue("Olgastraße")));
-        g.edge(5, 4).set(carAvSpeedEnc, 60, 0).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue("Olgastraße")));
-        g.edge(2, 5).set(carAvSpeedEnc, 60, 60).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue("Neithardtstraße")));
-        g.edge(5, 7).set(carAvSpeedEnc, 60, 60).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue("Neithardtstraße")));
+        g.edge(1, 2).set(carAvSpeedEnc, 60, 0).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue( "Olgastraße")));
+        g.edge(2, 3).set(carAvSpeedEnc, 60, 0).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue( "Olgastraße")));
+        g.edge(6, 5).set(carAvSpeedEnc, 60, 0).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue( "Olgastraße")));
+        g.edge(5, 4).set(carAvSpeedEnc, 60, 0).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue( "Olgastraße")));
+        g.edge(2, 5).set(carAvSpeedEnc, 60, 60).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue( "Neithardtstraße")));
+        g.edge(5, 7).set(carAvSpeedEnc, 60, 60).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue( "Neithardtstraße")));
 
         Weighting weighting = new SpeedWeighting(carAvSpeedEnc);
         Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED)
@@ -933,12 +922,12 @@ public class PathTest {
         na.setNode(6, -33.885692, 151.181445);
         na.setNode(7, -33.885692, 151.181445);
 
-        g.edge(1, 2).set(carAvSpeedEnc, 60, 0).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue("Parramatta Road")));
-        g.edge(2, 3).set(carAvSpeedEnc, 60, 0).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue("Parramatta Road")));
-        g.edge(4, 5).set(carAvSpeedEnc, 60, 0).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue("Parramatta Road")));
-        g.edge(5, 6).set(carAvSpeedEnc, 60, 0).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue("Parramatta Road")));
-        g.edge(2, 5).set(carAvSpeedEnc, 60, 60).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue("Larkin Street")));
-        g.edge(5, 7).set(carAvSpeedEnc, 60, 60).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue("Larkin Street")));
+        g.edge(1, 2).set(carAvSpeedEnc, 60, 0).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue( "Parramatta Road")));
+        g.edge(2, 3).set(carAvSpeedEnc, 60, 0).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue( "Parramatta Road")));
+        g.edge(4, 5).set(carAvSpeedEnc, 60, 0).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue( "Parramatta Road")));
+        g.edge(5, 6).set(carAvSpeedEnc, 60, 0).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue( "Parramatta Road")));
+        g.edge(2, 5).set(carAvSpeedEnc, 60, 60).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue( "Larkin Street")));
+        g.edge(5, 7).set(carAvSpeedEnc, 60, 60).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue( "Larkin Street")));
 
         Weighting weighting = new SpeedWeighting(carAvSpeedEnc);
         Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED)
@@ -1044,11 +1033,11 @@ public class PathTest {
         na.setNode(5, 52.516, 13.3452);
         na.setNode(6, 52.516, 13.344);
 
-        graph.edge(1, 2).set(carAvSpeedEnc, 45, 45).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue("1-2")));
-        graph.edge(4, 5).set(carAvSpeedEnc, 45, 45).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue("4-5")));
-        graph.edge(2, 3).set(carAvSpeedEnc, 90, 90).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue("2-3")));
-        graph.edge(3, 4).set(carAvSpeedEnc, 9, 9).setDistance(10).setKeyValues(Map.of(STREET_NAME, new KValue("3-4")));
-        graph.edge(5, 6).set(carAvSpeedEnc, 9, 9).setDistance(0.001).setKeyValues(Map.of(STREET_NAME, new KValue("3-4")));
+        graph.edge(1, 2).set(carAvSpeedEnc, 45, 45).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue( "1-2")));
+        graph.edge(4, 5).set(carAvSpeedEnc, 45, 45).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue( "4-5")));
+        graph.edge(2, 3).set(carAvSpeedEnc, 90, 90).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue( "2-3")));
+        graph.edge(3, 4).set(carAvSpeedEnc, 9, 9).setDistance(10).setKeyValues(Map.of(STREET_NAME, new KValue( "3-4")));
+        graph.edge(5, 6).set(carAvSpeedEnc, 9, 9).setDistance(0.001).setKeyValues(Map.of(STREET_NAME, new KValue( "3-4")));
         return graph;
     }
 
@@ -1094,20 +1083,20 @@ public class PathTest {
             na.setNode(19, 52.515, 13.368);
 
             // roundabout
-            roundaboutEdges.add(g.edge(3, 2).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue("2-3"))));
-            roundaboutEdges.add(g.edge(4, 3).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue("3-4"))));
-            roundaboutEdges.add(g.edge(5, 4).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue("4-5"))));
-            roundaboutEdges.add(g.edge(2, 5).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue("5-2"))));
+            roundaboutEdges.add(g.edge(3, 2).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue( "2-3"))));
+            roundaboutEdges.add(g.edge(4, 3).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue( "3-4"))));
+            roundaboutEdges.add(g.edge(5, 4).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue( "4-5"))));
+            roundaboutEdges.add(g.edge(2, 5).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue( "5-2"))));
 
             List<EdgeIteratorState> bothDir = new ArrayList<>();
             List<EdgeIteratorState> oneDir = new ArrayList<>(roundaboutEdges);
 
-            bothDir.add(g.edge(1, 2).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue("MainStreet 1 2"))));
-            bothDir.add(g.edge(4, 7).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue("MainStreet 4 7"))));
-            bothDir.add(g.edge(5, 8).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue("5-8"))));
+            bothDir.add(g.edge(1, 2).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue( "MainStreet 1 2"))));
+            bothDir.add(g.edge(4, 7).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue( "MainStreet 4 7"))));
+            bothDir.add(g.edge(5, 8).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue( "5-8"))));
 
-            bothDir.add(edge3to6 = g.edge(3, 6).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue("3-6"))));
-            oneDir.add(edge3to9 = g.edge(3, 9).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue("3-9"))));
+            bothDir.add(edge3to6 = g.edge(3, 6).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue( "3-6"))));
+            oneDir.add(edge3to9 = g.edge(3, 9).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue( "3-9"))));
 
             bothDir.add(g.edge(7, 10).setDistance(5));
             bothDir.add(g.edge(10, 11).setDistance(5));
@@ -1121,12 +1110,10 @@ public class PathTest {
             bothDir.add(g.edge(17, 19).setDistance(5));
 
             for (EdgeIteratorState edge : bothDir) {
-                edge.set(mixedCarAccessEnc, true, true);
                 edge.set(mixedCarSpeedEnc, 70, 70);
                 edge.set(mixedFootSpeedEnc, 7, 7);
             }
             for (EdgeIteratorState edge : oneDir) {
-                edge.set(mixedCarAccessEnc, true);
                 edge.set(mixedCarSpeedEnc, 70, 0);
                 edge.set(mixedFootSpeedEnc, 7, 0);
             }
@@ -1139,20 +1126,17 @@ public class PathTest {
             for (EdgeIteratorState edge : roundaboutEdges) {
                 edge.set(mixedCarSpeedEnc, clockwise ? 70 : 0, clockwise ? 0 : 70);
                 edge.set(mixedFootSpeedEnc, clockwise ? 7 : 0, clockwise ? 0 : 7);
-                edge.set(mixedCarAccessEnc, clockwise, !clockwise);
                 edge.set(mixedRoundabout, true);
             }
             this.clockwise = clockwise;
         }
 
         public void inverse3to9() {
-            edge3to9.set(mixedCarAccessEnc, !edge3to9.get(mixedCarAccessEnc), false);
             edge3to9.set(mixedCarSpeedEnc, edge3to9.get(mixedCarSpeedEnc) > 0 ? 0 : 70, 0);
             edge3to9.set(mixedFootSpeedEnc, edge3to9.get(mixedFootSpeedEnc) > 0 ? 0 : 7, 0);
         }
 
         public void inverse3to6() {
-            edge3to6.set(mixedCarAccessEnc, !edge3to6.get(mixedCarAccessEnc), true);
             edge3to6.set(mixedCarSpeedEnc, edge3to6.get(mixedCarSpeedEnc) > 0 ? 0 : 70, 70);
             edge3to6.set(mixedFootSpeedEnc, edge3to6.get(mixedFootSpeedEnc) > 0 ? 0 : 7, 7);
         }
