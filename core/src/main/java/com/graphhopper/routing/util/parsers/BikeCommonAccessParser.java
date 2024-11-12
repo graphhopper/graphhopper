@@ -87,7 +87,7 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
         }
 
         // accept only if explicitly tagged for bike usage
-        if ("motorway".equals(highwayValue) || "motorway_link".equals(highwayValue) || "bridleway".equals(highwayValue))
+        if ("motorway".equals(highwayValue) || "motorway_link".equals(highwayValue))
             return WayAccess.CAN_SKIP;
 
         if (way.hasTag("motorroad", "yes"))

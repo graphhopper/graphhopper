@@ -12,7 +12,7 @@ graphhopper:
       #  - foot_elevation.json
 
   import.osm.ignored_highways: motorway,trunk
-  graph.encoded_values: foot_access, foot_average_speed, hike_rating, foot_priority, mtb_rating
+  graph.encoded_values: foot_access, foot_average_speed, foot_priority, foot_road_access, hike_rating, mtb_rating, country, road_class
 
 server:
   application_connectors:

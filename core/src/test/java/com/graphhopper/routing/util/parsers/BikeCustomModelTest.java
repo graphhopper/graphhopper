@@ -37,6 +37,8 @@ public class BikeCustomModelTest {
                 add(VehicleSpeed.create("racingbike", 4, 2, false)).
                 add(VehiclePriority.create("racingbike", 4, PriorityCode.getFactor(1), false)).
                 add(FerrySpeed.create()).
+                add(Country.create()).
+                add(RoadClass.create()).
                 add(RouteNetwork.create(BikeNetwork.KEY)).
                 add(Roundabout.create()).
                 add(Smoothness.create()).
