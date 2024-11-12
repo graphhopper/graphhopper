@@ -36,9 +36,9 @@ To get started you can try [GraphHopper Maps](README.md#graphhopper-maps), read 
   , [announcement](https://www.graphhopper.com/blog/2024/11/05/graphhopper-routing-engine-10-0-released/)
 * unstable master: [documentation](https://github.com/graphhopper/graphhopper/blob/master/docs/index.md)
 
-<details><summary>Click to see older releases</summary>
+See the [changelog file](./CHANGELOG.md) for Java API Changes.
 
-* See our [changelog file](./CHANGELOG.md) for Java API Changes.
+<details><summary>Click to see older releases</summary>
 
 * 9.x: [documentation](https://github.com/graphhopper/graphhopper/blob/9.x/docs/index.md)
   , [web service jar](https://repo1.maven.org/maven2/com/graphhopper/graphhopper-web/9.1/graphhopper-web-9.1.jar)
