@@ -93,9 +93,12 @@ public class RouteResourceTest {
                 // adding this so the corresponding check is not just skipped...
                 putObject(MAX_NON_CH_POINT_DISTANCE, 10e6).
                 putObject("routing.snap_preventions_default", "tunnel, bridge, ferry").
-                putObject("graph.encoded_values", "road_class, surface, road_environment, max_speed, country, car_access, car_average_speed").
-                setProfiles(Collections.singletonList(TestProfiles.accessAndSpeed("my_car", "car"))).
-                setCHProfiles(Collections.singletonList(new CHProfile("my_car")));
+                putObject("graph.encoded_values", "road_class, surface, road_environment, max_speed, country, " +
+                        "car_access, car_average_speed, " +
+                        "foot_access, foot_priority, foot_average_speed").
+                setProfiles(List.of(TestProfiles.accessAndSpeed("my_car", "car"),
+                        TestProfiles.accessSpeedAndPriority("foot"))).
+                setCHProfiles(List.of(new CHProfile("my_car"), new CHProfile("foot")));
         return config;
     }
 
@@ -383,6 +386,15 @@ public class RouteResourceTest {
         rsp = hopper.route(request);
         assertFalse(rsp.hasErrors());
         assertEquals("Carrer Antoni Fiter i Rossell", rsp.getBest().getInstructions().get(3).getName());
+    }
+
+    @Test
+    public void testFootInstructionForReverseCarOnewayInRoundabout() {
+        JsonNode json = clientTarget(app, "/route?profile=foot&" +
+                "point=42.512263%2C1.535468&point=42.512938%2C1.534875").request().get(JsonNode.class);
+        JsonNode path = json.get("paths").get(0);
+        assertEquals(0, path.get("distance").asDouble(), 0.001);
+        assertEquals("[1.548191,42.510033,1.548191,42.510033]", path.get("bbox").toString());
     }
 
     @Test
