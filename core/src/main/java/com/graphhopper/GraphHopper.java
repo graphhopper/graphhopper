@@ -859,6 +859,7 @@ public class GraphHopper {
         encodedValuesWithProps.putIfAbsent(RoadEnvironment.KEY, new PMap());
         // used by instructions...
         encodedValuesWithProps.putIfAbsent(Roundabout.KEY, new PMap());
+        encodedValuesWithProps.putIfAbsent(VehicleAccess.key("car"), new PMap());
         encodedValuesWithProps.putIfAbsent(RoadClassLink.KEY, new PMap());
         encodedValuesWithProps.putIfAbsent(MaxSpeed.KEY, new PMap());
 
