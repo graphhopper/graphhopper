@@ -1041,7 +1041,7 @@ public class PathTest {
         final BaseGraph g = new BaseGraph.Builder(manager).create();
         final NodeAccess na = g.getNodeAccess();
 
-        // Actual example is here 45.7742,4.868 (but block footway, see #3081)
+        // Actual example is here 45.7742,4.868 (but a few roads left out)
         //      0 1
         //       \|
         //        2<-3<--4
@@ -1063,7 +1063,7 @@ public class PathTest {
         na.setNode(10, 52.503515, 13.411178);
 
         g.edge(0, 2).setDistance(5).set(carAccessEnc, true, true).set(footAccessEnc, true, true).setKeyValues(Map.of(STREET_NAME, new KValue("Nordwest")));
-        // this road is not in real world but we need it for test in other situations:
+        // edge 1-2 does not exist in real world, but we need it to test a few other situations
         g.edge(1, 2).setDistance(5).set(carAccessEnc, false, false).set(footAccessEnc, true, true).setKeyValues(Map.of(STREET_NAME, new KValue("Nordwest, foot-only")));
         g.edge(4, 3).setDistance(5).set(carAccessEnc, true, false).set(footAccessEnc, true, true).setKeyValues(Map.of(STREET_NAME, new KValue("Nordeast in")));
         g.edge(5, 6).setDistance(5).set(carAccessEnc, true, false).set(footAccessEnc, true, true).setKeyValues(Map.of(STREET_NAME, new KValue("Nordeast out")));
