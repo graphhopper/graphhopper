@@ -1025,6 +1025,122 @@ public class PathTest {
         assertEquals(2, wayList.size());
     }
 
+    @Test
+    public void testFootAndCar_issue3081() {
+        BooleanEncodedValue carAccessEnc = VehicleAccess.create("car");
+        BooleanEncodedValue footAccessEnc = VehicleAccess.create("foot");
+        BooleanEncodedValue rdEnc = Roundabout.create();
+        EncodingManager manager = EncodingManager.start().
+                add(carAccessEnc).
+                add(footAccessEnc).
+                add(RoadClass.create()).
+                add(RoadClassLink.create()).
+                add(MaxSpeed.create()).
+                add(rdEnc).build();
+
+        final BaseGraph g = new BaseGraph.Builder(manager).create();
+        final NodeAccess na = g.getNodeAccess();
+
+        // Actual example is here 45.7742,4.868 (but block footway, see #3081)
+        //      0 1
+        //       \|
+        //        2<-3<--4
+        //      /     \
+        //      |      5-->6
+        //      \     /
+        //    7--8-->9<--10
+
+        na.setNode(0, 52.503809,13.410198);
+        na.setNode(1, 52.503871,13.410249);
+        na.setNode(2, 52.503751, 13.410377);
+        na.setNode(3, 52.50387, 13.410807);
+        na.setNode(4, 52.503989, 13.41094);
+        na.setNode(5, 52.503794, 13.411024);
+        na.setNode(6, 52.503925, 13.411034);
+        na.setNode(7, 52.503277, 13.41041);
+        na.setNode(8, 52.50344, 13.410545);
+        na.setNode(9, 52.503536, 13.411099);
+        na.setNode(10, 52.503515, 13.411178);
+
+        g.edge(0, 2).setDistance(5).set(carAccessEnc, true, true).set(footAccessEnc, true, true).setKeyValues(Map.of(STREET_NAME, new KValue("Nordwest")));
+        // this road is not in real world but we need it for test in other situations:
+        g.edge(1, 2).setDistance(5).set(carAccessEnc, false, false).set(footAccessEnc, true, true).setKeyValues(Map.of(STREET_NAME, new KValue("Nordwest, foot-only")));
+        g.edge(4, 3).setDistance(5).set(carAccessEnc, true, false).set(footAccessEnc, true, true).setKeyValues(Map.of(STREET_NAME, new KValue("Nordeast in")));
+        g.edge(5, 6).setDistance(5).set(carAccessEnc, true, false).set(footAccessEnc, true, true).setKeyValues(Map.of(STREET_NAME, new KValue("Nordeast out")));
+        g.edge(10, 9).setDistance(5).set(carAccessEnc, true, false).set(footAccessEnc, true, true).setKeyValues(Map.of(STREET_NAME, new KValue("Southeast in")));
+        g.edge(7, 8).setDistance(5).set(carAccessEnc, true, true).set(footAccessEnc, true, true).setKeyValues(Map.of(STREET_NAME, new KValue("Southwest")));
+
+        g.edge(3, 2).setDistance(5).set(carAccessEnc, true, false).set(footAccessEnc, true, false).set(rdEnc, true).setKeyValues(Map.of(STREET_NAME, new KValue("roundabout")));
+        g.edge(5, 3).setDistance(5).set(carAccessEnc, true, false).set(footAccessEnc, true, false).set(rdEnc, true).setKeyValues(Map.of(STREET_NAME, new KValue("roundabout")));
+        g.edge(9, 5).setDistance(5).set(carAccessEnc, true, false).set(footAccessEnc, true, false).set(rdEnc, true).setKeyValues(Map.of(STREET_NAME, new KValue("roundabout")));
+        g.edge(8, 9).setDistance(5).set(carAccessEnc, true, false).set(footAccessEnc, true, false).set(rdEnc, true).setKeyValues(Map.of(STREET_NAME, new KValue("roundabout")));
+        g.edge(2, 8).setDistance(5).set(carAccessEnc, true, false).set(footAccessEnc, true, false).set(rdEnc, true).setKeyValues(Map.of(STREET_NAME, new KValue("roundabout")));
+
+        Weighting weighting = new AccessWeighting(footAccessEnc);
+        Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED).calcPath(7, 10);
+        assertEquals("[7, 8, 9, 10]", p.calcNodes().toString());
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, manager, tr);
+        assertEquals("At roundabout, take exit 1 onto Southeast in", wayList.get(1).getTurnDescription(tr));
+
+        p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED).calcPath(10, 1);
+        assertEquals("[10, 9, 5, 3, 2, 1]", p.calcNodes().toString());
+        wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, manager, tr);
+        assertEquals("At roundabout, take exit 2 onto Nordwest, foot-only", wayList.get(1).getTurnDescription(tr));
+
+        p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED).calcPath(10, 4);
+        assertEquals("[10, 9, 5, 3, 4]", p.calcNodes().toString());
+        wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, manager, tr);
+        assertEquals("At roundabout, take exit 1 onto Nordeast in", wayList.get(1).getTurnDescription(tr));
+
+        p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED).calcPath(10, 6);
+        assertEquals("[10, 9, 5, 6]", p.calcNodes().toString());
+        wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, manager, tr);
+        assertEquals("At roundabout, take exit 1 onto Nordeast out", wayList.get(1).getTurnDescription(tr));
+    }
+
+    static class AccessWeighting implements Weighting {
+        private final BooleanEncodedValue accessEnc;
+
+        public AccessWeighting(BooleanEncodedValue accessEnc) {
+            this.accessEnc = accessEnc;
+        }
+
+        @Override
+        public double calcMinWeightPerDistance() {
+            throw new IllegalStateException();
+        }
+
+        @Override
+        public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
+            return (reverse && edgeState.getReverse(accessEnc) || edgeState.get(accessEnc)) ? 1 : Double.POSITIVE_INFINITY;
+        }
+
+        @Override
+        public long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse) {
+            return (reverse && edgeState.getReverse(accessEnc) || edgeState.get(accessEnc)) ? 1000 : 0;
+        }
+
+        @Override
+        public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
+            return 0;
+        }
+
+        @Override
+        public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
+            return 0;
+        }
+
+        @Override
+        public boolean hasTurnCosts() {
+            return false;
+        }
+
+        @Override
+        public String getName() {
+            return "access";
+        }
+    }
+
     List<String> getTurnDescriptions(InstructionList instructionJson) {
         List<String> list = new ArrayList<>();
         for (Instruction instruction : instructionJson) {

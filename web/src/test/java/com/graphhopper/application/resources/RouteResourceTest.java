@@ -393,8 +393,9 @@ public class RouteResourceTest {
         JsonNode json = clientTarget(app, "/route?profile=foot&" +
                 "point=42.512263%2C1.535468&point=42.512938%2C1.534875").request().get(JsonNode.class);
         JsonNode path = json.get("paths").get(0);
-        assertEquals(0, path.get("distance").asDouble(), 0.001);
-        assertEquals("[1.548191,42.510033,1.548191,42.510033]", path.get("bbox").toString());
+        assertEquals(103, path.get("distance").asDouble(), 1);
+        JsonNode n = path.get("instructions").get(1);
+        assertEquals("At roundabout, take exit 1 onto Avigunda Sant Antoni, Avinguda Fiter i Rossell", n.get("text").asText());
     }
 
     @Test
@@ -518,7 +519,7 @@ public class RouteResourceTest {
         assertTrue(ex instanceof IllegalArgumentException, "Wrong exception found: " + ex.getClass().getName()
                 + ", IllegalArgumentException expected.");
         assertTrue(ex.getMessage().contains("The requested profile 'SPACE-SHUTTLE' does not exist." +
-                "\nAvailable profiles: [my_car]"), ex.getMessage());
+                "\nAvailable profiles: [my_car, foot]"), ex.getMessage());
 
         // an IllegalArgumentException from inside the core is written as JSON, unknown profile
         response = getWithStatus(clientTarget(app, "/route?profile=SPACE-SHUTTLE&point=42.554851,1.536198&point=42.510071,1.548128"));
