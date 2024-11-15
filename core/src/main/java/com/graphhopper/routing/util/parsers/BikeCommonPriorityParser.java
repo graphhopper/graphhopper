@@ -76,7 +76,7 @@ public abstract class BikeCommonPriorityParser implements TagParser {
         routeMap.put(INTERNATIONAL, BEST.getValue());
         routeMap.put(NATIONAL, BEST.getValue());
         routeMap.put(REGIONAL, VERY_NICE.getValue());
-        routeMap.put(LOCAL, PREFER.getValue());
+        routeMap.put(LOCAL, VERY_NICE.getValue());
 
         avoidSpeedLimit = 71;
     }
@@ -209,7 +209,7 @@ public abstract class BikeCommonPriorityParser implements TagParser {
             weightToPrioMap.put(50d, AVOID_MORE);
 
         if (way.hasTag("lcn", "yes"))
-            weightToPrioMap.put(100d, PREFER);
+            weightToPrioMap.put(100d, VERY_NICE);
 
         String classBicycleValue = way.getTag(classBicycleKey);
         if (classBicycleValue != null) {
