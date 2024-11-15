@@ -180,6 +180,9 @@ graphhopper:
   # connection between two points within the given visited nodes. The default is Integer.MAX_VALUE. Useful for flexibility mode
   # routing.max_visited_nodes: 1000000
 
+  # default for snap_preventions
+  routing.snap_preventions_default: tunnel, bridge, ferry
+
   # The maximum time in milliseconds after which a routing request will be aborted. This has some routing algorithm
   # specific caveats, but generally it should allow the prevention of long-running requests. The default is Long.MAX_VALUE
   # routing.timeout_ms: 300000

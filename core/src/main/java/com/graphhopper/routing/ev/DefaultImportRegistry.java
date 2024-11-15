@@ -51,11 +51,28 @@ public class DefaultImportRegistry implements ImportRegistry {
                     (lookup, props) -> new OSMRoadEnvironmentParser(
                             lookup.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class))
             );
+        else if (FootRoadAccess.KEY.equals(name))
+            return ImportUnit.create(name, props -> FootRoadAccess.create(),
+                    (lookup, props) -> new OSMRoadAccessParser<>(
+                            lookup.getEnumEncodedValue(FootRoadAccess.KEY, FootRoadAccess.class),
+                            OSMRoadAccessParser.toOSMRestrictions(TransportationMode.FOOT),
+                            (readerWay, accessValue) -> accessValue,
+                            FootRoadAccess::find)
+            );
+        else if (BikeRoadAccess.KEY.equals(name))
+            return ImportUnit.create(name, props -> BikeRoadAccess.create(),
+                    (lookup, props) -> new OSMRoadAccessParser<>(
+                            lookup.getEnumEncodedValue(BikeRoadAccess.KEY, BikeRoadAccess.class),
+                            OSMRoadAccessParser.toOSMRestrictions(TransportationMode.BIKE),
+                            (readerWay, accessValue) -> accessValue,
+                            BikeRoadAccess::find)
+            );
         else if (RoadAccess.KEY.equals(name))
             return ImportUnit.create(name, props -> RoadAccess.create(),
-                    (lookup, props) -> new OSMRoadAccessParser(
+                    (lookup, props) -> new OSMRoadAccessParser<>(
                             lookup.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class),
-                            OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR))
+                            OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR),
+                            RoadAccess::countryHook, RoadAccess::find)
             );
         else if (MaxSpeed.KEY.equals(name))
             return ImportUnit.create(name, props -> MaxSpeed.create(),
@@ -217,7 +234,7 @@ public class DefaultImportRegistry implements ImportRegistry {
 
         else if (BusAccess.KEY.equals(name))
             return ImportUnit.create(name, props -> BusAccess.create(),
-                    (lookup, props) -> new ModeAccessParser(TransportationMode.BUS,
+                    (lookup, props) -> new ModeAccessParser(OSMRoadAccessParser.toOSMRestrictions(TransportationMode.BUS),
                             lookup.getBooleanEncodedValue(name), true, lookup.getBooleanEncodedValue(Roundabout.KEY),
                             PMap.toSet(props.getString("restrictions", "")), PMap.toSet(props.getString("barriers", ""))),
                     "roundabout"
@@ -225,7 +242,7 @@ public class DefaultImportRegistry implements ImportRegistry {
 
         else if (HovAccess.KEY.equals(name))
             return ImportUnit.create(name, props -> HovAccess.create(),
-                    (lookup, props) -> new ModeAccessParser(TransportationMode.HOV,
+                    (lookup, props) -> new ModeAccessParser(OSMRoadAccessParser.toOSMRestrictions(TransportationMode.HOV),
                             lookup.getBooleanEncodedValue(name), true, lookup.getBooleanEncodedValue(Roundabout.KEY),
                             PMap.toSet(props.getString("restrictions", "")), PMap.toSet(props.getString("barriers", ""))),
                     "roundabout"

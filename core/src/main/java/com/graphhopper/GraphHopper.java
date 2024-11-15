@@ -69,6 +69,10 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import java.util.logging.Level;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+
 import static com.graphhopper.util.GHUtility.readCountries;
 import static com.graphhopper.util.Helper.*;
 import static com.graphhopper.util.Parameters.Algorithms.RoundTrip;
@@ -855,6 +859,7 @@ public class GraphHopper {
         encodedValuesWithProps.putIfAbsent(RoadEnvironment.KEY, new PMap());
         // used by instructions...
         encodedValuesWithProps.putIfAbsent(Roundabout.KEY, new PMap());
+        encodedValuesWithProps.putIfAbsent(VehicleAccess.key("car"), new PMap());
         encodedValuesWithProps.putIfAbsent(RoadClassLink.KEY, new PMap());
         encodedValuesWithProps.putIfAbsent(MaxSpeed.KEY, new PMap());
 
@@ -1488,11 +1493,15 @@ public class GraphHopper {
         if (!customAreasDirectory.isEmpty()) {
             ObjectMapper mapper = new ObjectMapper().registerModule(new JtsModule());
             try (DirectoryStream<Path> stream = Files.newDirectoryStream(Paths.get(customAreasDirectory), "*.{geojson,json}")) {
-                for (Path customAreaFile : stream) {
-                    try (BufferedReader reader = Files.newBufferedReader(customAreaFile, StandardCharsets.UTF_8)) {
-                        globalAreas.getFeatures().addAll(mapper.readValue(reader, JsonFeatureCollection.class).getFeatures());
-                    }
-                }
+                StreamSupport.stream(stream.spliterator(), false)
+                        .sorted(Comparator.comparing(Path::toString))
+                        .forEach(customAreaFile -> {
+                            try (BufferedReader reader = Files.newBufferedReader(customAreaFile, StandardCharsets.UTF_8)) {
+                                globalAreas.getFeatures().addAll(mapper.readValue(reader, JsonFeatureCollection.class).getFeatures());
+                            } catch (IOException e) {
+                                throw new UncheckedIOException(e);
+                            }
+                        });
                 logger.info("Will make " + globalAreas.getFeatures().size() + " areas available to all custom profiles. Found in " + customAreasDirectory);
             } catch (IOException e) {
                 throw new UncheckedIOException(e);

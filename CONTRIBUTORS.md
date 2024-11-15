@@ -40,6 +40,7 @@ Here is an overview:
  * highsource, more efficient geometry update, UI fixes
  * hoofstephan, bug fix   
  * IsNull, improvements like #708
+ * IldarKhayrutdinov, use cache on different machines
  * Janekdererste, GUI for public transit
  * jansoe, many improvements regarding A* algorithm, forcing direction, roundabouts etc
  * jansonhanson, general host config

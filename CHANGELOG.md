@@ -1,5 +1,13 @@
-### 10.0 [not yet released]
+### 11.0 [not yet released]
 
+- the list of restrictions for BIKE returned from OSMRoadAccessParser.toOSMRestrictions is again `[bicycle, vehicle, access]` and not `[bicycle, access]` like before #2981
+- road_access now contains value of highest transportation mode for CAR, i.e. access=private, motorcar=yes will now return YES and not PRIVATE
+- car.json by default avoids private roads
+- maxspeed<5 is ignored, maxspeed=none is ignored with some exceptions, maxspeed parsing and related constants were renamed #3077
+
+### 10.0 [5 Nov 2024]
+
+- The config-example.yml uses a non-empty snap_preventions default array: [tunnel, bridge and ferry] for the /route endpoint
 - the default u-turn time is now 0, the default u-turn weight is still infinite 
 - turn restriction support for restrictions with overlapping and/or multiple via-edges/ways, #3030
 - constructor of BaseGraph.Builder uses byte instead of integer count.

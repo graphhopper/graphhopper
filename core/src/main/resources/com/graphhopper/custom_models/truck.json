@@ -9,8 +9,8 @@
 {
   "distance_influence": 1,
   "priority": [
-    { "if": "road_access == PRIVATE",  "multiply_by": "0" },
-    { "if": "car_access == false || hgv == NO || max_width < 3 || max_height < 4", "multiply_by": "0" }
+    { "if": "car_access == false || road_access == PRIVATE || hgv == NO",  "multiply_by": "0" },
+    { "if": "max_width < 3 || max_height < 4", "multiply_by": "0" }
   ],
   "speed": [
     { "if": "true", "limit_to": "car_average_speed * 0.9" },

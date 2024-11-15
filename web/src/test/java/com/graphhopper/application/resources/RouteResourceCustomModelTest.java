@@ -65,8 +65,12 @@ public class RouteResourceCustomModelTest {
                 putObject("graph.location", DIR).
                 putObject("custom_areas.directory", "./src/test/resources/com/graphhopper/application/resources/areas").
                 putObject("import.osm.ignored_highways", "").
-                putObject("graph.encoded_values", "max_height, max_weight, max_width, hazmat, toll, surface, track_type, hgv, average_slope, max_slope, bus_access, " +
-                        "car_access, car_average_speed, bike_access, bike_priority, bike_average_speed, road_class, road_access, get_off_bike, roundabout, foot_access, foot_priority, foot_average_speed, country, orientation, mtb_rating, hike_rating").
+                putObject("graph.encoded_values", "car_access, car_average_speed, road_access, " +
+                        "bike_access, bike_priority, bike_average_speed, bike_road_access, " +
+                        "foot_access, foot_priority, foot_average_speed, foot_road_access, " +
+                        "max_height, max_weight, max_width, hazmat, toll, surface, track_type, hgv, " +
+                        "average_slope, max_slope, bus_access, road_class, get_off_bike, roundabout, " +
+                        "country, orientation, mtb_rating, hike_rating").
                 setProfiles(List.of(
                         TestProfiles.constantSpeed("roads", 120),
                         new Profile("car").setCustomModel(TestProfiles.accessAndSpeed("unused", "car").
