@@ -37,6 +37,7 @@ import static com.graphhopper.json.Statement.If;
 import static com.graphhopper.json.Statement.Op.LIMIT;
 import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static com.graphhopper.routing.util.PriorityCode.*;
+import static com.graphhopper.routing.util.parsers.BikeCommonAccessParser.RESTRICTIONS;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -75,7 +76,7 @@ public abstract class AbstractBikeTagParserTester {
         priorityParser = createPriorityParser(encodingManager);
         osmParsers = new OSMParsers()
                 .addWayTagParser(new OSMRoadEnvironmentParser(roadEnv))
-                .addWayTagParser(new OSMRoadAccessParser<>(bikeRoadAccess, BikeRoadAccess.RESTRICTIONS, (readerWay, accessValue) -> accessValue, BikeRoadAccess::find))
+                .addWayTagParser(new OSMRoadAccessParser<>(bikeRoadAccess, RESTRICTIONS, (readerWay, accessValue) -> accessValue, BikeRoadAccess::find))
                 .addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class), relConfig))
                 .addRelationTagParser(relConfig -> new OSMMtbNetworkTagParser(encodingManager.getEnumEncodedValue(MtbNetwork.KEY, RouteNetwork.class), relConfig))
                 .addWayTagParser(new OSMSmoothnessParser(encodingManager.getEnumEncodedValue(Smoothness.KEY, Smoothness.class)))

@@ -20,7 +20,7 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
      * The access restriction list returned from OSMRoadAccessParser.toOSMRestrictions(TransportationMode.Bike)
      * contains "vehicle". But here we want to allow walking via dismount.
      */
-    private static final List<String> RESTRICTIONS = Arrays.asList("bicycle", "access");
+    static final List<String> RESTRICTIONS = Arrays.asList("bicycle", "access");
 
     protected BikeCommonAccessParser(BooleanEncodedValue accessEnc, BooleanEncodedValue roundaboutEnc) {
         super(accessEnc, RESTRICTIONS);

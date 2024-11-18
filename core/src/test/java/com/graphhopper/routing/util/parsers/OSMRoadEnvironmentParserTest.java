@@ -25,6 +25,10 @@ import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class OSMRoadEnvironmentParserTest {
@@ -50,30 +54,28 @@ class OSMRoadEnvironmentParserTest {
         assertEquals(RoadEnvironment.FERRY, roadEnvironment);
     }
 
-//    TODO NOW
-//    @Test
-//    void testFordInNode() {
-//        // by default do not block access due to fords!
-//        ReaderNode node = new ReaderNode(1, -1, -1);
-//        node.setTag("ford", "no");
-//        assertFalse(accessParser.isBarrier(node));
-//
-//        node = new ReaderNode(1, -1, -1);
-//        node.setTag("ford", "yes");
-//        assertFalse(accessParser.isBarrier(node));
-//
-//        // barrier!
-//        node.setTag("foot", "no");
-//        assertTrue(accessParser.isBarrier(node));
-//
-//        FootAccessParser blockFordsParser = new FootAccessParser(encodingManager, new PMap("block_fords=true"));
-//        node = new ReaderNode(1, -1, -1);
-//        node.setTag("ford", "no");
-//        assertFalse(blockFordsParser.isBarrier(node));
-//
-//        node = new ReaderNode(1, -1, -1);
-//        node.setTag("ford", "yes");
-//        assertTrue(blockFordsParser.isBarrier(node));
-//    }
+    @Test
+    void testFordInNode() {
+        EnumEncodedValue<RoadEnvironment> roadEnvironmentEnc = RoadEnvironment.create();
+        roadEnvironmentEnc.init(new EncodedValue.InitializerConfig());
+        OSMRoadEnvironmentParser parser = new OSMRoadEnvironmentParser(roadEnvironmentEnc);
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        int edgeId = 0;
+
+        Map<String, String> nodeTags = new HashMap<>();
+        nodeTags.put("ford", "no");
+
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "secondary");
+        way.setTag("gh:barrier_edge", true);
+        way.setTag("node_tags", Collections.singletonList(nodeTags));
+
+        parser.handleWayTags(edgeId, edgeIntAccess, way, new IntsRef(1));
+        assertEquals(RoadEnvironment.FORD, roadEnvironmentEnc.getEnum(false, edgeId, edgeIntAccess));
+
+        nodeTags.put("ford", "yes");
+        parser.handleWayTags(edgeId, edgeIntAccess, way, new IntsRef(1));
+        assertEquals(RoadEnvironment.FORD, roadEnvironmentEnc.getEnum(false, edgeId, edgeIntAccess));
+    }
 
 }

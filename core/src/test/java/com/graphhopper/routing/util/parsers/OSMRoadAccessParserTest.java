@@ -18,7 +18,6 @@
 
 package com.graphhopper.routing.util.parsers;
 
-import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.TransportationMode;
@@ -27,9 +26,10 @@ import com.graphhopper.storage.IntsRef;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class OSMRoadAccessParserTest {
@@ -48,7 +48,7 @@ class OSMRoadAccessParserTest {
         footRAEnc.init(new EncodedValue.InitializerConfig());
         parser = new OSMRoadAccessParser<>(roadAccessEnc, OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR),
                 CarRoadAccess::countryHook, CarRoadAccess::find);
-        bikeRAParser = new OSMRoadAccessParser<>(bikeRAEnc, BikeRoadAccess.RESTRICTIONS,
+        bikeRAParser = new OSMRoadAccessParser<>(bikeRAEnc, OSMRoadAccessParser.toOSMRestrictions(TransportationMode.BIKE),
                 (ignr, access) -> access, BikeRoadAccess::find);
         footRAParser = new OSMRoadAccessParser<>(footRAEnc, OSMRoadAccessParser.toOSMRestrictions(TransportationMode.FOOT),
                 (ignr, access) -> access, FootRoadAccess::find);
@@ -112,7 +112,7 @@ class OSMRoadAccessParserTest {
     }
 
     @Test
-    public void testBike() {
+    public void testBikeWithNodeTags() {
         ArrayEdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
         int edgeId = 0;
         ReaderWay way = new ReaderWay(1L);
@@ -131,24 +131,24 @@ class OSMRoadAccessParserTest {
         bikeRAParser.handleWayTags(edgeId, edgeIntAccess, way, new IntsRef(1));
         assertEquals(BikeRoadAccess.YES, bikeRAEnc.getEnum(false, edgeId, edgeIntAccess));
 
+        Map<String, String> nodeTags = new HashMap<>();
+        nodeTags.put("ford", "yes");
 
-        // TODO NOW
-//        ReaderNode node = new ReaderNode(1, -1, -1);
-//        node.setTag("ford", "yes");
-//        // barrier!
-//        assertTrue(accessParser.isBarrier(node));
-//
-//        node.setTag("bicycle", "yes");
-//        // no barrier!
-//        assertFalse(accessParser.isBarrier(node));
+        way = new ReaderWay(1);
+        way.setTag("highway", "secondary");
+        way.setTag("gh:barrier_edge", true);
+        way.setTag("node_tags", Collections.singletonList(nodeTags));
 
-//        way.clearTags();
-//        way.setTag("highway", "track");
-//        way.setTag("ford", "yes");
-//        assertTrue(accessParser.getAccess(way).canSkip());
-//        way.setTag("bicycle", "yes");
-//        assertTrue(accessParser.getAccess(way).isWay());
+        bikeRAParser.handleWayTags(edgeId, edgeIntAccess, way, new IntsRef(1));
+        assertEquals(BikeRoadAccess.YES, bikeRAEnc.getEnum(false, edgeId, edgeIntAccess));
 
+        nodeTags.put("access", "no");
+        bikeRAParser.handleWayTags(edgeId, edgeIntAccess, way, new IntsRef(1));
+        assertEquals(BikeRoadAccess.NO, bikeRAEnc.getEnum(false, edgeId, edgeIntAccess));
+
+        nodeTags.put("bicycle", "yes");
+        bikeRAParser.handleWayTags(edgeId, edgeIntAccess, way, new IntsRef(1));
+        assertEquals(BikeRoadAccess.YES, bikeRAEnc.getEnum(false, edgeId, edgeIntAccess));
     }
 
     @Test

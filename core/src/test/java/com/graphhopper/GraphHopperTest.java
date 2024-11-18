@@ -415,7 +415,9 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
-                setEncodedValuesString("car_access, car_average_speed, foot_access, foot_priority, foot_average_speed, hike_rating, foot_road_access").
+                setEncodedValuesString("car_access, car_average_speed, " +
+                        "foot_access, foot_priority, foot_average_speed, hike_rating, foot_road_access, " +
+                        "mtb_rating, country, road_class").
                 setProfiles(new Profile("foot").setCustomModel(loadCustomModelFromJar("foot.json"))).
                 setStoreOnFlush(true).
                 importOrLoad();
@@ -446,7 +448,9 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(BAYREUTH).
-                setEncodedValuesString("car_access, car_average_speed, bike_access, bike_priority, bike_average_speed, bike_road_access, foot_road_access, roundabout").
+                setEncodedValuesString("car_access, car_average_speed, " +
+                        "bike_access, bike_priority, bike_average_speed, bike_road_access, mtb_rating, " +
+                        "roundabout, country, road_class, foot_road_access, hike_rating").
                 setProfiles(new Profile("bike").setCustomModel(loadCustomModelFromJar("bike.json")));
         hopper.importOrLoad();
 
