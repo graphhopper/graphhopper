@@ -116,7 +116,7 @@ public class OSMReader {
                 ldGeojsonWriter = Files.newBufferedWriter(filePath, StandardOpenOption.CREATE);
             }
         } catch (Exception e) {
-            LOGGER.error("Error creating logs/ways_dump.ldgeojson file writer");
+            LOGGER.error("Error creating geojson dumpfile writer");
             e.printStackTrace();
         }
 
@@ -666,11 +666,13 @@ public class OSMReader {
     private void finishedReading() {
         tagParserManager.releaseParsers();
         eleProvider.release();
-        try {
-            ldGeojsonWriter.close();
-        } catch (IOException e) {
-            LOGGER.error("Error closing writer to geojson dumpfile");
-            e.printStackTrace();
+        if (ldGeojsonWriter != null) {
+          try {
+              ldGeojsonWriter.close();
+          } catch (IOException e) {
+              LOGGER.error("Error closing writer to geojson dumpfile");
+              e.printStackTrace();
+          }
         }
         osmWayIdToRelationFlagsMap = null;
         osmWayIdSet = null;
