@@ -81,4 +81,19 @@ class OSMRoadAccessParserTest {
         parser.handleWayTags(edgeId, edgeIntAccess, way, new IntsRef(1));
         assertEquals(CarRoadAccess.PRIVATE, roadAccessEnc.getEnum(false, edgeId, edgeIntAccess));
     }
+
+    @Test
+    public void testCar() {
+        ArrayEdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        int edgeId = 0;
+        ReaderWay way = new ReaderWay(1L);
+        way.setTag("access", "private");
+        parser.handleWayTags(edgeId, edgeIntAccess, way, new IntsRef(1));
+        assertEquals(CarRoadAccess.PRIVATE, roadAccessEnc.getEnum(false, edgeId, edgeIntAccess));
+
+        edgeIntAccess = new ArrayEdgeIntAccess(1);
+        way.setTag("motorcar", "yes");
+        parser.handleWayTags(edgeId, edgeIntAccess, way, new IntsRef(1));
+        assertEquals(CarRoadAccess.YES, roadAccessEnc.getEnum(false, edgeId, edgeIntAccess));
+    }
 }
