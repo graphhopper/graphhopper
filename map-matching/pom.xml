@@ -3,14 +3,14 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-map-matching</artifactId>
-    <version>10.0-SNAPSHOT</version>
+    <version>11.0-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>GraphHopper Map Matching</name>
 
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>
-        <version>10.0-SNAPSHOT</version>
+        <version>11.0-SNAPSHOT</version>
     </parent>
     
     <dependencies>

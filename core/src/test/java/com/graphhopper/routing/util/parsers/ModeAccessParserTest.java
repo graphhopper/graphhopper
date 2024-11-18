@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ModeAccessParserTest {
 
     private final EncodingManager em = new EncodingManager.Builder().add(Roundabout.create()).add(BusAccess.create()).build();
-    private final ModeAccessParser parser = new ModeAccessParser(TransportationMode.BUS,
+    private final ModeAccessParser parser = new ModeAccessParser(OSMRoadAccessParser.toOSMRestrictions(TransportationMode.BUS),
             em.getBooleanEncodedValue(BusAccess.KEY), true,
             em.getBooleanEncodedValue(Roundabout.KEY), Set.of(), Set.of());
     private final BooleanEncodedValue busAccessEnc = em.getBooleanEncodedValue(BusAccess.KEY);
@@ -178,7 +178,8 @@ class ModeAccessParserTest {
         // this special mode ignores all barriers except kissing_gate
         BooleanEncodedValue tmpAccessEnc = new SimpleBooleanEncodedValue("tmp_access", true);
         EncodingManager tmpEM = new EncodingManager.Builder().add(tmpAccessEnc).add(Roundabout.create()).build();
-        ModeAccessParser tmpParser = new ModeAccessParser(TransportationMode.CAR, tmpAccessEnc, true,
+        ModeAccessParser tmpParser = new ModeAccessParser(OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR),
+                tmpAccessEnc, true,
                 tmpEM.getBooleanEncodedValue(Roundabout.KEY), Set.of(), Set.of("kissing_gate"));
 
         way = new ReaderWay(1);
@@ -216,7 +217,8 @@ class ModeAccessParserTest {
     public void testMotorcycleYes() {
         BooleanEncodedValue mcAccessEnc = new SimpleBooleanEncodedValue("motorcycle_access", true);
         EncodingManager mcEM = new EncodingManager.Builder().add(mcAccessEnc).add(Roundabout.create()).build();
-        ModeAccessParser mcParser = new ModeAccessParser(TransportationMode.MOTORCYCLE, mcAccessEnc, true,
+        ModeAccessParser mcParser = new ModeAccessParser(OSMRoadAccessParser.toOSMRestrictions(TransportationMode.MOTORCYCLE),
+                mcAccessEnc, true,
                 mcEM.getBooleanEncodedValue(Roundabout.KEY), Set.of(), Set.of());
 
         int edgeId = 0;

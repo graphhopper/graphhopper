@@ -95,7 +95,9 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         prevNode = -1;
         prevInRoundabout = false;
         prevName = null;
-        outEdgeExplorer = graph.createEdgeExplorer(edge -> Double.isFinite(weighting.calcEdgeWeight(edge, false)));
+
+        BooleanEncodedValue carAccessEnc = evLookup.getBooleanEncodedValue(VehicleAccess.key("car"));
+        outEdgeExplorer = graph.createEdgeExplorer(edge -> edge.get(carAccessEnc));
         allExplorer = graph.createEdgeExplorer();
     }
 

@@ -40,6 +40,7 @@ Here is an overview:
  * highsource, more efficient geometry update, UI fixes
  * hoofstephan, bug fix   
  * IsNull, improvements like #708
+ * IldarKhayrutdinov, use cache on different machines
  * Janekdererste, GUI for public transit
  * jansoe, many improvements regarding A* algorithm, forcing direction, roundabouts etc
  * jansonhanson, general host config
@@ -67,6 +68,7 @@ Here is an overview:
  * OlafFlebbeBosch, improvements like #2730
  * oschlueter, fixes like #1185
  * otbutz, added multiple EncodedValues
+ * pantsleftinwash, speed parsing improvements
  * PGWelch, shapefile reader #874
  * rafaelstelles, fix deserializer web-api
  * rajanski, script to do routing via PostGIS
