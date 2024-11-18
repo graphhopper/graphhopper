@@ -38,15 +38,15 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
         this(
                 lookup.getBooleanEncodedValue(VehicleAccess.key("car")),
                 lookup.getBooleanEncodedValue(Roundabout.KEY),
-                TransportationMode.CAR
+                OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR)
         );
         check(properties);
     }
 
     public CarAccessParser(BooleanEncodedValue accessEnc,
                            BooleanEncodedValue roundaboutEnc,
-                           TransportationMode transportationMode) {
-        super(accessEnc, transportationMode);
+                           List<String> restrictionsKeys) {
+        super(accessEnc, restrictionsKeys);
         this.roundaboutEnc = roundaboutEnc;
         restrictedValues.add("agricultural");
         restrictedValues.add("forestry");

@@ -272,7 +272,7 @@ public class CarTagParserTest {
         EdgeIntAccess edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
         int edgeId = 0;
         speedParser.handleWayTags(edgeId, edgeIntAccess, way);
-        assertEquals(140, avSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), 1e-1);
+        assertEquals(136, avSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), 1e-1);
 
         way = new ReaderWay(1);
         way.setTag("highway", "primary");
@@ -601,19 +601,6 @@ public class CarTagParserTest {
         edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
         speedParser.handleWayTags(edgeId, edgeIntAccess, way);
         assertEquals(101.5, smallFactorSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), .1);
-    }
-
-    @Test
-    public void testSetToMaxSpeed() {
-        ReaderWay way = new ReaderWay(12);
-        way.setTag("maxspeed", "90");
-        assertEquals(90, AbstractAverageSpeedParser.getMaxSpeed(way, false), 1e-2);
-
-        way = new ReaderWay(12);
-        way.setTag("maxspeed", "90");
-        way.setTag("maxspeed:backward", "50");
-        assertEquals(90, AbstractAverageSpeedParser.getMaxSpeed(way, false), 1e-2);
-        assertEquals(50, AbstractAverageSpeedParser.getMaxSpeed(way, true), 1e-2);
     }
 
     @Test

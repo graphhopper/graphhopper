@@ -82,7 +82,12 @@ public class DefaultWeightingFactory implements WeightingFactory {
             final CustomModel mergedCustomModel = CustomModel.merge(profile.getCustomModel(), queryCustomModel);
             if (requestHints.has(Parameters.Routing.HEADING_PENALTY))
                 mergedCustomModel.setHeadingPenalty(requestHints.getDouble(Parameters.Routing.HEADING_PENALTY, Parameters.Routing.DEFAULT_HEADING_PENALTY));
-            weighting = CustomModelParser.createWeighting(encodingManager, turnCostProvider, mergedCustomModel);
+            if (hints.has("cm_version")) {
+                if (!hints.getString("cm_version", "").equals("2"))
+                    throw new IllegalArgumentException("cm_version: \"2\" is required");
+                weighting = CustomModelParser.createWeighting2(encodingManager, turnCostProvider, mergedCustomModel);
+            } else
+                weighting = CustomModelParser.createWeighting(encodingManager, turnCostProvider, mergedCustomModel);
 
         } else if ("shortest".equalsIgnoreCase(weightingStr)) {
             throw new IllegalArgumentException("Instead of weighting=shortest use weighting=custom with a high distance_influence");

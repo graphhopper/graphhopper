@@ -63,6 +63,10 @@ public class JTSTriangulator implements Triangulator {
                 PointList innerPoints = edge.fetchWayGeometry(FetchMode.PILLAR_ONLY);
                 if (innerPoints.size() > 0) {
                     int midIndex = innerPoints.size() / 2;
+                    if (innerPoints.size() % 2 == 0 && edge.get(EdgeIteratorState.REVERSE_STATE))
+                        // For edge-based routing we might have explored the same edge in two different directions.
+                        // Here we make sure we only include the **same** point twice instead of two different ones.
+                        midIndex -= 1;
                     double lat2 = innerPoints.getLat(midIndex);
                     double lon2 = innerPoints.getLon(midIndex);
                     Coordinate site2 = new Coordinate(lon2, lat2);

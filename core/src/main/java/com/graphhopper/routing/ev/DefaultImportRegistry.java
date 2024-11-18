@@ -19,11 +19,8 @@
 package com.graphhopper.routing.ev;
 
 import com.graphhopper.routing.util.*;
-import com.graphhopper.routing.util.countryrules.CountryRule;
 import com.graphhopper.routing.util.parsers.*;
 import com.graphhopper.util.PMap;
-
-import java.util.Arrays;
 
 public class DefaultImportRegistry implements ImportRegistry {
     @Override
@@ -66,7 +63,7 @@ public class DefaultImportRegistry implements ImportRegistry {
             return ImportUnit.create(name, props -> BikeRoadAccess.create(),
                     (lookup, props) -> new OSMRoadAccessParser<>(
                             lookup.getEnumEncodedValue(BikeRoadAccess.KEY, BikeRoadAccess.class),
-                            BikeRoadAccess.RESTRICTIONS,
+                            OSMRoadAccessParser.toOSMRestrictions(TransportationMode.BIKE),
                             (readerWay, accessValue) -> accessValue,
                             BikeRoadAccess::find)
             );
@@ -239,7 +236,7 @@ public class DefaultImportRegistry implements ImportRegistry {
 
         else if (BusAccess.KEY.equals(name))
             return ImportUnit.create(name, props -> BusAccess.create(),
-                    (lookup, props) -> new ModeAccessParser(TransportationMode.BUS,
+                    (lookup, props) -> new ModeAccessParser(OSMRoadAccessParser.toOSMRestrictions(TransportationMode.BUS),
                             lookup.getBooleanEncodedValue(name), true, lookup.getBooleanEncodedValue(Roundabout.KEY),
                             PMap.toSet(props.getString("restrictions", "")), PMap.toSet(props.getString("barriers", ""))),
                     "roundabout"
@@ -247,7 +244,7 @@ public class DefaultImportRegistry implements ImportRegistry {
 
         else if (HovAccess.KEY.equals(name))
             return ImportUnit.create(name, props -> HovAccess.create(),
-                    (lookup, props) -> new ModeAccessParser(TransportationMode.HOV,
+                    (lookup, props) -> new ModeAccessParser(OSMRoadAccessParser.toOSMRestrictions(TransportationMode.HOV),
                             lookup.getBooleanEncodedValue(name), true, lookup.getBooleanEncodedValue(Roundabout.KEY),
                             PMap.toSet(props.getString("restrictions", "")), PMap.toSet(props.getString("barriers", ""))),
                     "roundabout"

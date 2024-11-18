@@ -713,9 +713,9 @@ public class RoutingAlgorithmWithOSMTest {
                 setEncodedValuesString("average_slope, max_slope, hike_rating, car_access, car_average_speed, " +
                         "foot_access, foot_priority, foot_average_speed, " +
                         "bike_access, bike_priority, bike_average_speed, foot_network, roundabout, " +
-                        "mtb_access, mtb_priority, mtb_average_speed, " +
+                        "mtb_access, mtb_priority, mtb_average_speed, mtb_rating, " +
                         "racingbike_access, racingbike_priority, racingbike_average_speed, " +
-                        "foot_road_access, bike_road_access").
+                        "foot_road_access, bike_road_access, country, road_class").
                 setGraphHopperLocation(GH_LOCATION);
         hopper.getRouterConfig().setSimplifyResponse(false);
         hopper.setMinNetworkSize(0);

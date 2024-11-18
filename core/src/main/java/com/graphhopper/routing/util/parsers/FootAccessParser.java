@@ -42,7 +42,7 @@ public class FootAccessParser extends AbstractAccessParser implements TagParser 
     }
 
     protected FootAccessParser(BooleanEncodedValue accessEnc) {
-        super(accessEnc, TransportationMode.FOOT);
+        super(accessEnc, OSMRoadAccessParser.toOSMRestrictions(TransportationMode.FOOT));
 
         sidewalkValues.add("yes");
         sidewalkValues.add("both");
@@ -71,8 +71,7 @@ public class FootAccessParser extends AbstractAccessParser implements TagParser 
         allowedHighwayTags.add("cycleway");
         allowedHighwayTags.add("unclassified");
         allowedHighwayTags.add("road");
-        // disallowed in some countries
-        //allowedHighwayTags.add("bridleway");
+        allowedHighwayTags.add("bridleway");
 
         routeMap.put(INTERNATIONAL, UNCHANGED.getValue());
         routeMap.put(NATIONAL, UNCHANGED.getValue());

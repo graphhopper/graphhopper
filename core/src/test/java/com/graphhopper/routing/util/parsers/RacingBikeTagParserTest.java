@@ -101,25 +101,6 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
     }
 
     @Test
-    @Override
-    public void testSacScale() {
-        ReaderWay way = new ReaderWay(1);
-        way.setTag("highway", "service");
-        way.setTag("sac_scale", "mountain_hiking");
-        assertTrue(accessParser.getAccess(way).canSkip());
-
-        way.setTag("highway", "path");
-        way.setTag("sac_scale", "hiking");
-        assertTrue(accessParser.getAccess(way).isWay());
-
-        // This looks to be tagging error:
-        way.setTag("highway", "cycleway");
-        way.setTag("sac_scale", "mountain_hiking");
-        // we are cautious and disallow this
-        assertTrue(accessParser.getAccess(way).canSkip());
-    }
-
-    @Test
     public void testGetSpeed() {
         EdgeIntAccess edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(encodingManager.getBytesForFlags());
         int edgeId = 0;

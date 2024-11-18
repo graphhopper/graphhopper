@@ -33,22 +33,21 @@ public abstract class AbstractAccessParser implements TagParser {
             "permissive", "private", "permit");
 
     // order is important
-    protected final List<String> restrictionKeys = new ArrayList<>(5);
+    protected final List<String> restrictionKeys;
     protected final Set<String> restrictedValues = new HashSet<>(5);
 
     // http://wiki.openstreetmap.org/wiki/Mapfeatures#Barrier
     protected final Set<String> barriers = new HashSet<>(5);
     protected final BooleanEncodedValue accessEnc;
 
-    protected AbstractAccessParser(BooleanEncodedValue accessEnc, TransportationMode transportationMode) {
+    protected AbstractAccessParser(BooleanEncodedValue accessEnc, List<String> restrictionKeys) {
         this.accessEnc = accessEnc;
+        this.restrictionKeys = restrictionKeys;
 
         restrictedValues.add("no");
         restrictedValues.add("restricted");
         restrictedValues.add("military");
         restrictedValues.add("emergency");
-
-        restrictionKeys.addAll(OSMRoadAccessParser.toOSMRestrictions(transportationMode));
     }
 
     protected void check(PMap properties) {

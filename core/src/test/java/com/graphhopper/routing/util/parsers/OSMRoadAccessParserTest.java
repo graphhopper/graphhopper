@@ -30,8 +30,9 @@ import org.junit.jupiter.api.Test;
 import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class OSMCarRoadAccessParserTest {
+class OSMRoadAccessParserTest {
 
     private final EnumEncodedValue<CarRoadAccess> roadAccessEnc = CarRoadAccess.create();
     private OSMRoadAccessParser<CarRoadAccess> parser;
@@ -56,7 +57,7 @@ class OSMCarRoadAccessParserTest {
     @Test
     void countryRule() {
         IntsRef relFlags = new IntsRef(2);
-        ReaderWay way = new ReaderWay(1L);
+        ReaderWay way = new ReaderWay(27L);
         way.setTag("highway", "track");
         way.setTag("country_rule", new CountryRule() {
             @Override
@@ -89,7 +90,7 @@ class OSMCarRoadAccessParserTest {
     public void testPermit() {
         ArrayEdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
         int edgeId = 0;
-        ReaderWay way = new ReaderWay(1L);
+        ReaderWay way = new ReaderWay(27L);
         way.setTag("motor_vehicle", "permit");
         parser.handleWayTags(edgeId, edgeIntAccess, way, new IntsRef(1));
         assertEquals(CarRoadAccess.PRIVATE, roadAccessEnc.getEnum(false, edgeId, edgeIntAccess));

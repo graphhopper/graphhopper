@@ -384,18 +384,6 @@ public abstract class AbstractBikeTagParserTester {
     }
 
     @Test
-    public void testSacScale() {
-        ReaderWay way = new ReaderWay(1);
-        way.setTag("highway", "service");
-        way.setTag("sac_scale", "hiking");
-        // allow
-        assertTrue(accessParser.getAccess(way).isWay());
-
-        way.setTag("sac_scale", "alpine_hiking");
-        assertTrue(accessParser.getAccess(way).canSkip());
-    }
-
-    @Test
     public void testReduceToMaxSpeed() {
         ReaderWay way = new ReaderWay(12);
         way.setTag("maxspeed", "90");

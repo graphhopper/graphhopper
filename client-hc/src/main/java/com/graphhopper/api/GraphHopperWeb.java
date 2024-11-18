@@ -29,7 +29,6 @@ import com.graphhopper.jackson.Jackson;
 import com.graphhopper.jackson.ResponsePathDeserializerHelper;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.shapes.GHPoint;
 import okhttp3.*;
@@ -264,8 +263,9 @@ public class GraphHopperWeb {
             requestJson.putArray("headings").addAll(createDoubleList(ghRequest.getHeadings()));
         if (!ghRequest.getCurbsides().isEmpty())
             requestJson.putArray("curbsides").addAll(createStringList(ghRequest.getCurbsides()));
-        if (!ghRequest.getSnapPreventions().isEmpty())
+        if (ghRequest.hasSnapPreventions())
             requestJson.putArray("snap_preventions").addAll(createStringList(ghRequest.getSnapPreventions()));
+
         if (!ghRequest.getPathDetails().isEmpty())
             requestJson.putArray("details").addAll(createStringList(ghRequest.getPathDetails()));
 
@@ -355,9 +355,13 @@ public class GraphHopperWeb {
             for (Double heading : ghRequest.getHeadings())
                 url += "&heading=" + heading;
 
-
-        for (String snapPrevention : ghRequest.getSnapPreventions()) {
-            url += "&" + Parameters.Routing.SNAP_PREVENTION + "=" + encodeURL(snapPrevention);
+        if (ghRequest.hasSnapPreventions()) {
+            if (ghRequest.getSnapPreventions().isEmpty())
+                url += "&" + Parameters.Routing.SNAP_PREVENTION + "="; // send empty value to indicate explicit empty list
+            else
+                for (String snapPrevention : ghRequest.getSnapPreventions()) {
+                    url += "&" + Parameters.Routing.SNAP_PREVENTION + "=" + encodeURL(snapPrevention);
+                }
         }
 
         if (!key.isEmpty()) {
