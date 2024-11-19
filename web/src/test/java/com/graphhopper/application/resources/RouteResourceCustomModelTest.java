@@ -163,8 +163,30 @@ public class RouteResourceCustomModelTest {
                 "  ]" +
                 "}}";
         JsonNode path = getPath(body);
-        assertEquals(path.get("distance").asDouble(), 660, 10);
-        assertEquals(path.get("time").asLong(), 22_680, 1_000);
+        assertEquals(660, path.get("distance").asDouble(), 10);
+        assertEquals(22_680, path.get("time").asLong(), 1_000);
+
+        body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"roads\", \"ch.disable\": true, " +
+                "\"custom_model\": {\n" +
+                "  \"speed\": [\n" +
+                "    {\n" +
+                "      \"if\": \"false\",\n" +
+                "      \"limit_to\": \"20\"\n" +
+                "    },\n" +
+                "    {\n" +
+                "      \"else\": \"\",\n" +
+                "      \"do\": [\n" +
+                "        {\n" +
+                "          \"if\": \"true\",\n" +
+                "          \"limit_to\": 255\n" +
+                "        }\n" +
+                "      ]\n" +
+                "    }\n" +
+                "  ]\n" +
+                "}\n}";
+        path = getPath(body);
+        assertEquals(660, path.get("distance").asDouble(), 10);
+        assertEquals(19800, path.get("time").asLong(), 1_000);
     }
 
     @Test
