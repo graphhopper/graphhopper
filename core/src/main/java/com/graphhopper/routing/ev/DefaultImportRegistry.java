@@ -18,9 +18,13 @@
 
 package com.graphhopper.routing.ev;
 
+import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.parsers.*;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
+
+import static com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor.conditionalWeightToTons;
 
 public class DefaultImportRegistry implements ImportRegistry {
     @Override
@@ -139,9 +143,20 @@ public class DefaultImportRegistry implements ImportRegistry {
             );
         else if (Hgv.KEY.equals(name))
             return ImportUnit.create(name, props -> Hgv.create(),
-                    (lookup, props) -> new OSMHgvParser(
-                            lookup.getEnumEncodedValue(Hgv.KEY, Hgv.class)
-                    ));
+                    (lookup, props) -> new OSMRoadAccessParser<>(
+                            lookup.getEnumEncodedValue(Hgv.KEY, Hgv.class),
+                            OSMRoadAccessParser.toOSMRestrictions(TransportationMode.HGV),
+                            (ignore, access) -> access, Hgv::find) {
+                        @Override
+                        public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay readerWay, IntsRef relationFlags) {
+                            String value = readerWay.getTag("hgv:conditional", "");
+                            int index = value.indexOf("@");
+                            if (index > 0 && conditionalWeightToTons(value) == 3.5) // special case, not that many tags
+                                accessEnc.setEnum(false, edgeId, edgeIntAccess, Hgv.find(value.substring(0, index).trim()));
+                            else
+                                super.handleWayTags(edgeId, edgeIntAccess, readerWay, relationFlags);
+                        }
+                    });
         else if (Toll.KEY.equals(name))
             return ImportUnit.create(name, props -> Toll.create(),
                     (lookup, props) -> new OSMTollParser(

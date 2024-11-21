@@ -21,8 +21,8 @@ import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.EdgeIntAccess;
-import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.storage.IntsRef;
+import com.graphhopper.util.PMap;
 
 import java.util.*;
 
@@ -31,44 +31,22 @@ public abstract class AbstractAccessParser implements TagParser {
     static final Collection<String> INTENDED = Arrays.asList("yes", "designated", "official", "permissive");
 
     // order is important
-    protected final List<String> restrictionKeys;
-    protected final Set<String> restrictedValues = new HashSet<>(5);
+    protected final List<String> RESTRICTION_KEY;
+    protected final Set<String> RESTRICTION_VALUES = Set.of("no", "restricted", "military", "emergency");
 
-    protected final Set<String> intendedValues = new HashSet<>(INTENDED); // possible to add "private" later
     // http://wiki.openstreetmap.org/wiki/Mapfeatures#Barrier
     protected final Set<String> barriers = new HashSet<>(5);
     protected final BooleanEncodedValue accessEnc;
-    private boolean blockFords = true;
 
     protected AbstractAccessParser(BooleanEncodedValue accessEnc, List<String> restrictionKeys) {
         this.accessEnc = accessEnc;
-        this.restrictionKeys = restrictionKeys;
-
-        restrictedValues.add("no");
-        restrictedValues.add("restricted");
-        restrictedValues.add("military");
-        restrictedValues.add("emergency");
-        restrictedValues.add("private");
-        restrictedValues.add("permit");
+        this.RESTRICTION_KEY = Collections.unmodifiableList(restrictionKeys);
     }
 
-    public boolean isBlockFords() {
-        return blockFords;
-    }
-
-    protected void blockFords(boolean blockFords) {
-        this.blockFords = blockFords;
-    }
-
-    protected void blockPrivate(boolean blockPrivate) {
-        if (!blockPrivate) {
-            if (!restrictedValues.remove("private"))
-                throw new IllegalStateException("no 'private' found in restrictedValues");
-            if (!restrictedValues.remove("permit"))
-                throw new IllegalStateException("no 'permit' found in restrictedValues");
-            intendedValues.add("private");
-            intendedValues.add("permit");
-        }
+    protected void check(PMap properties) {
+        if (properties.has("block_private") || properties.has("block_fords"))
+            throw new IllegalArgumentException("block_private and block_fords are no longer supported. " +
+                    "Use a custom model as described in #TODO");
     }
 
     protected void handleBarrierEdge(int edgeId, EdgeIntAccess edgeIntAccess, Map<String, Object> nodeTags) {
@@ -94,26 +72,19 @@ public abstract class AbstractAccessParser implements TagParser {
      */
     public boolean isBarrier(ReaderNode node) {
         // note that this method will be only called for certain nodes as defined by OSMReader!
-        String firstValue = node.getFirstValue(restrictionKeys);
+        String firstValue = node.getFirstValue(RESTRICTION_KEY);
 
-        if (restrictedValues.contains(firstValue))
+        if (RESTRICTION_VALUES.contains(firstValue))
             return true;
-        else if (node.hasTag("locked", "yes") && !intendedValues.contains(firstValue))
+        else if (node.hasTag("locked", "yes") && !INTENDED.contains(firstValue))
             return true;
-        else if (intendedValues.contains(firstValue))
+        else if (INTENDED.contains(firstValue))
             return false;
-        else if (node.hasTag("barrier", barriers))
-            return true;
-        else
-            return blockFords && node.hasTag("ford", "yes");
+        return node.hasTag("barrier", barriers);
     }
 
     public final BooleanEncodedValue getAccessEnc() {
         return accessEnc;
-    }
-
-    public final List<String> getRestrictionKeys() {
-        return restrictionKeys;
     }
 
     public final String getName() {

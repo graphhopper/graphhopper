@@ -28,7 +28,7 @@ import com.graphhopper.util.Helper;
  * The NO value does not permit any access.
  */
 public enum CarRoadAccess {
-    MISSING, YES, DESTINATION, DELIVERY, FORESTRY, AGRICULTURAL, PRIVATE, NO;
+    MISSING, YES, DESTINATION, DESIGNATED, FORESTRY, AGRICULTURAL, PRIVATE, NO;
 
     public static final String KEY = "car_road_access";
 
@@ -44,7 +44,10 @@ public enum CarRoadAccess {
     public static CarRoadAccess find(String name) {
         if (name == null || name.isEmpty())
             return MISSING;
-        if (name.equalsIgnoreCase("permit") || name.equalsIgnoreCase("customers"))
+        if (name.equalsIgnoreCase("permit")
+                || name.equalsIgnoreCase("residents")
+                || name.equalsIgnoreCase("customers")
+                || name.equalsIgnoreCase("delivery"))
             return PRIVATE;
         try {
             // public and permissive will be converted into "yes"

@@ -2,7 +2,10 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.storage.IntsRef;
+import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -11,14 +14,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class OSMHgvParserTest {
     private final int edgeId = 0;
     private EnumEncodedValue<Hgv> hgvEnc;
-    private OSMHgvParser parser;
+    private TagParser parser;
     private IntsRef relFlags;
 
     @BeforeEach
     public void setUp() {
         hgvEnc = Hgv.create();
-        hgvEnc.init(new EncodedValue.InitializerConfig());
-        parser = new OSMHgvParser(hgvEnc);
+        parser = new DefaultImportRegistry().createImportUnit(Hgv.KEY).getCreateTagParser().
+                apply(new EncodingManager.Builder().add(hgvEnc).build(), new PMap());
         relFlags = new IntsRef(2);
     }
 

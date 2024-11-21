@@ -91,14 +91,14 @@ public class RoutingExample {
     public static void alternativeRoute(GraphHopper hopper) {
         // calculate alternative routes between two points (supported with and without CH)
         GHRequest req = new GHRequest().setProfile("car").
-                addPoint(new GHPoint(42.502904, 1.514714)).addPoint(new GHPoint(42.508774, 1.537094)).
+                addPoint(new GHPoint(42.505411,1.517922)).addPoint(new GHPoint(42.508774, 1.537094)).
                 setAlgorithm(Parameters.Algorithms.ALT_ROUTE);
         req.getHints().putObject(Parameters.Algorithms.AltRoute.MAX_PATHS, 3);
         GHResponse res = hopper.route(req);
         if (res.hasErrors())
             throw new RuntimeException(res.getErrors().toString());
         assert res.getAll().size() == 2;
-        assert Helper.round(res.getBest().getDistance(), -2) == 2200;
+        assert Math.round(res.getBest().getDistance()) == 1864;
     }
 
     /**

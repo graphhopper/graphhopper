@@ -39,22 +39,13 @@ import static org.junit.jupiter.api.Assertions.*;
 public class BikeTagParserTest extends AbstractBikeTagParserTester {
 
     @Override
-    protected EncodingManager createEncodingManager() {
-        return new EncodingManager.Builder()
-                .add(VehicleAccess.create("bike"))
-                .add(VehicleSpeed.create("bike", 4, 2, false))
-                .add(VehiclePriority.create("bike", 4, PriorityCode.getFactor(1), false))
-                .add(Roundabout.create())
-                .add(Smoothness.create())
-                .add(FerrySpeed.create())
-                .add(RouteNetwork.create(BikeNetwork.KEY))
-                .add(RouteNetwork.create(MtbNetwork.KEY))
-                .build();
+    protected String getName() {
+        return "bike";
     }
 
     @Override
-    protected BikeCommonAccessParser createAccessParser(EncodedValueLookup lookup, PMap pMap) {
-        return new BikeAccessParser(lookup, pMap);
+    protected BikeCommonAccessParser createAccessParser(EncodedValueLookup lookup) {
+        return new BikeAccessParser(lookup, new PMap());
     }
 
     @Override

@@ -18,12 +18,18 @@
 
 package com.graphhopper.routing.util.parsers;
 
+import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.IntsRef;
+import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 class OSMRoadEnvironmentParserTest {
 
@@ -46,6 +52,30 @@ class OSMRoadEnvironmentParserTest {
         parser.handleWayTags(edgeId, edgeIntAccess = new ArrayEdgeIntAccess(1), way, new IntsRef(2));
         roadEnvironment = roadEnvironmentEnc.getEnum(false, edgeId, edgeIntAccess);
         assertEquals(RoadEnvironment.FERRY, roadEnvironment);
+    }
+
+    @Test
+    void testFordInNode() {
+        EnumEncodedValue<RoadEnvironment> roadEnvironmentEnc = RoadEnvironment.create();
+        roadEnvironmentEnc.init(new EncodedValue.InitializerConfig());
+        OSMRoadEnvironmentParser parser = new OSMRoadEnvironmentParser(roadEnvironmentEnc);
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        int edgeId = 0;
+
+        Map<String, String> nodeTags = new HashMap<>();
+        nodeTags.put("ford", "no");
+
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "secondary");
+        way.setTag("gh:barrier_edge", true);
+        way.setTag("node_tags", Collections.singletonList(nodeTags));
+
+        parser.handleWayTags(edgeId, edgeIntAccess, way, new IntsRef(1));
+        assertEquals(RoadEnvironment.FORD, roadEnvironmentEnc.getEnum(false, edgeId, edgeIntAccess));
+
+        nodeTags.put("ford", "yes");
+        parser.handleWayTags(edgeId, edgeIntAccess, way, new IntsRef(1));
+        assertEquals(RoadEnvironment.FORD, roadEnvironmentEnc.getEnum(false, edgeId, edgeIntAccess));
     }
 
 }

@@ -36,11 +36,12 @@ public class HikeCustomModelTest {
                 add(hikeRating).build();
 
         parsers = new OSMParsers().
-                addWayTagParser(new OSMHikeRatingParser(hikeRating));
-
-        parsers.addWayTagParser(new FootAccessParser(em, new PMap()));
-        parsers.addWayTagParser(new FootAverageSpeedParser(em));
-        parsers.addWayTagParser(new FootPriorityParser(em));
+                addWayTagParser(new OSMHikeRatingParser(hikeRating)).
+                addWayTagParser(new FootAccessParser(em, new PMap())).
+                addWayTagParser(new FootAverageSpeedParser(em)).
+                addWayTagParser(new FootPriorityParser(em)).
+                addWayTagParser(new OSMRoadAccessParser<>(em.getEnumEncodedValue(FootRoadAccess.KEY, FootRoadAccess.class),
+                        OSMRoadAccessParser.toOSMRestrictions(TransportationMode.FOOT), (a, b) -> b, FootRoadAccess::find));
     }
 
     EdgeIteratorState createEdge(ReaderWay way) {

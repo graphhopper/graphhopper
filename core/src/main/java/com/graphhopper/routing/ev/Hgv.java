@@ -25,7 +25,7 @@ import com.graphhopper.util.Helper;
  * value OTHER. The NO value does not permit any access.
  */
 public enum Hgv {
-    MISSING, YES, DESIGNATED, DESTINATION, DELIVERY, DISCOURAGED, AGRICULTURAL, NO;
+    MISSING, YES, DESTINATION, DESIGNATED, DISCOURAGED, AGRICULTURAL, PRIVATE, NO;
 
     public static final String KEY = "hgv";
 
@@ -39,12 +39,19 @@ public enum Hgv {
     }
 
     public static Hgv find(String name) {
-        if (name == null)
+        if (name == null || name.isEmpty())
             return MISSING;
+        if (name.equalsIgnoreCase("local")) // unclear meaning
+            return DESTINATION;
+        if (name.equalsIgnoreCase("permit")
+                || name.equalsIgnoreCase("residents")
+                || name.equalsIgnoreCase("customers")
+                || name.equalsIgnoreCase("delivery"))
+            return PRIVATE;
         try {
             return Hgv.valueOf(Helper.toUpperCase(name));
         } catch (IllegalArgumentException ex) {
-            return MISSING;
+            return YES;
         }
     }
 }

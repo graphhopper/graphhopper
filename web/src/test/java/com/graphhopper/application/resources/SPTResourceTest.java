@@ -22,8 +22,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
+import com.graphhopper.config.Profile;
+import com.graphhopper.json.Statement;
 import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.BodyAndStatus;
+import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TurnCostsConfig;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
@@ -48,16 +51,18 @@ public class SPTResourceTest {
 
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerTestConfiguration config = new GraphHopperServerTestConfiguration();
+        Profile profile1 = TestProfiles.accessAndSpeed("car_without_turncosts", "car");
+        profile1.getCustomModel().addToPriority(Statement.If("road_access==PRIVATE", Statement.Op.MULTIPLY, "0"));
+        Profile profile2 = TestProfiles.accessAndSpeed("car_with_turncosts", "car");
+        profile2.setTurnCostsConfig(TurnCostsConfig.car()).
+                getCustomModel().addToPriority(Statement.If("road_access==PRIVATE", Statement.Op.MULTIPLY, "0"));
         config.getGraphHopperConfiguration().
                 putObject("graph.encoded_values", "max_speed,road_class").
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR).
-                putObject("graph.encoded_values", "car_access, car_average_speed").
-                setProfiles(List.of(
-                        TestProfiles.accessAndSpeed("car_without_turncosts", "car"),
-                        TestProfiles.accessAndSpeed("car_with_turncosts", "car").setTurnCostsConfig(TurnCostsConfig.car())
-                ));
+                putObject("graph.encoded_values", "car_access, car_average_speed, road_access").
+                setProfiles(List.of(profile1, profile2));
         return config;
     }
 

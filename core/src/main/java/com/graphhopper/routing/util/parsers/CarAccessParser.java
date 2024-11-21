@@ -38,22 +38,16 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
         this(
                 lookup.getBooleanEncodedValue(VehicleAccess.key("car")),
                 lookup.getBooleanEncodedValue(Roundabout.KEY),
-                properties,
                 OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR)
         );
+        check(properties);
     }
 
     public CarAccessParser(BooleanEncodedValue accessEnc,
-                           BooleanEncodedValue roundaboutEnc, PMap properties,
+                           BooleanEncodedValue roundaboutEnc,
                            List<String> restrictionsKeys) {
         super(accessEnc, restrictionsKeys);
         this.roundaboutEnc = roundaboutEnc;
-        restrictedValues.add("agricultural");
-        restrictedValues.add("forestry");
-        restrictedValues.add("delivery");
-
-        blockPrivate(properties.getBool("block_private", true));
-        blockFords(properties.getBool("block_fords", false));
 
         barriers.add("kissing_gate");
         barriers.add("fence");
@@ -77,13 +71,13 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
     public WayAccess getAccess(ReaderWay way) {
         // TODO: Ferries have conditionals, like opening hours or are closed during some time in the year
         String highwayValue = way.getTag("highway");
-        int firstIndex = way.getFirstIndex(restrictionKeys);
-        String firstValue = firstIndex < 0 ? "" : way.getTag(restrictionKeys.get(firstIndex), "");
+        int firstIndex = way.getFirstIndex(RESTRICTION_KEY);
+        String firstValue = firstIndex < 0 ? "" : way.getTag(RESTRICTION_KEY.get(firstIndex), "");
         if (highwayValue == null) {
             if (FerrySpeedCalculator.isFerry(way)) {
-                if (restrictedValues.contains(firstValue))
+                if (RESTRICTION_VALUES.contains(firstValue))
                     return WayAccess.CAN_SKIP;
-                if (intendedValues.contains(firstValue) ||
+                if (INTENDED.contains(firstValue) ||
                         // implied default is allowed only if foot and bicycle is not specified:
                         firstValue.isEmpty() && !way.hasTag("foot") && !way.hasTag("bicycle") ||
                         // if hgv is allowed then smaller trucks and cars are allowed too
@@ -110,15 +104,12 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
         if (firstIndex >= 0) {
             String[] restrict = firstValue.split(";");
             for (String value : restrict) {
-                if (restrictedValues.contains(value) && !hasTemporalRestriction(way, firstIndex, restrictionKeys))
+                if (RESTRICTION_VALUES.contains(value) && !hasTemporalRestriction(way, firstIndex, RESTRICTION_KEY))
                     return WayAccess.CAN_SKIP;
-                if (intendedValues.contains(value))
+                if (INTENDED.contains(value))
                     return WayAccess.WAY;
             }
         }
-
-        if (isBlockFords() && ("ford".equals(highwayValue) || way.hasTag("ford")))
-            return WayAccess.CAN_SKIP;
 
         return WayAccess.WAY;
     }
@@ -157,8 +148,8 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
      */
     protected boolean isBackwardOneway(ReaderWay way) {
         return way.hasTag("oneway", "-1")
-                || way.hasTag("vehicle:forward", restrictedValues)
-                || way.hasTag("motor_vehicle:forward", restrictedValues);
+                || way.hasTag("vehicle:forward", RESTRICTION_VALUES)
+                || way.hasTag("motor_vehicle:forward", RESTRICTION_VALUES);
     }
 
     /**
@@ -166,15 +157,15 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
      */
     protected boolean isForwardOneway(ReaderWay way) {
         return !way.hasTag("oneway", "-1")
-                && !way.hasTag("vehicle:forward", restrictedValues)
-                && !way.hasTag("motor_vehicle:forward", restrictedValues);
+                && !way.hasTag("vehicle:forward", RESTRICTION_VALUES)
+                && !way.hasTag("motor_vehicle:forward", RESTRICTION_VALUES);
     }
 
     protected boolean isOneway(ReaderWay way) {
         return way.hasTag("oneway", ONEWAYS)
-                || way.hasTag("vehicle:backward", restrictedValues)
-                || way.hasTag("vehicle:forward", restrictedValues)
-                || way.hasTag("motor_vehicle:backward", restrictedValues)
-                || way.hasTag("motor_vehicle:forward", restrictedValues);
+                || way.hasTag("vehicle:backward", RESTRICTION_VALUES)
+                || way.hasTag("vehicle:forward", RESTRICTION_VALUES)
+                || way.hasTag("motor_vehicle:backward", RESTRICTION_VALUES)
+                || way.hasTag("motor_vehicle:forward", RESTRICTION_VALUES);
     }
 }

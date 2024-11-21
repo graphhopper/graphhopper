@@ -36,7 +36,10 @@ public enum FootRoadAccess {
     public static FootRoadAccess find(String name) {
         if (name == null || name.isEmpty())
             return MISSING;
-        if (name.equalsIgnoreCase("permit") || name.equalsIgnoreCase("customers"))
+        if (name.equalsIgnoreCase("permit")
+                || name.equalsIgnoreCase("residents")
+                || name.equalsIgnoreCase("customers")
+                || name.equalsIgnoreCase("delivery"))
             return PRIVATE;
         try {
             return FootRoadAccess.valueOf(Helper.toUpperCase(name));

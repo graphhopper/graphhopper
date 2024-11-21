@@ -402,14 +402,16 @@ public class RoutingAlgorithmWithOSMTest {
         // hard to select between secondary and primary (both are AVOID for mtb)
         queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 1867, 107));
 
-        GraphHopper hopper = createHopper(MONACO, TestProfiles.accessSpeedAndPriority("mtb"));
+        Profile profile = TestProfiles.accessSpeedAndPriority("mtb");
+        profile.getCustomModel().addToPriority(If("bike_road_access == PRIVATE", MULTIPLY, "0"));
+        GraphHopper hopper = createHopper(MONACO, profile);
         hopper.importOrLoad();
         checkQueries(hopper, queries);
 
         Helper.removeDir(new File(GH_LOCATION));
 
         hopper = createHopper(MONACO,
-                TestProfiles.accessSpeedAndPriority("mtb"),
+                profile,
                 TestProfiles.accessSpeedAndPriority("racingbike"));
         hopper.importOrLoad();
         checkQueries(hopper, queries);
@@ -423,14 +425,16 @@ public class RoutingAlgorithmWithOSMTest {
         queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 2651, 167));
         queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 1516, 86));
 
-        GraphHopper hopper = createHopper(MONACO, TestProfiles.accessSpeedAndPriority("racingbike"));
+        Profile profile = TestProfiles.accessSpeedAndPriority("racingbike");
+        profile.getCustomModel().addToPriority(If("bike_road_access == PRIVATE", MULTIPLY, "0"));
+        GraphHopper hopper = createHopper(MONACO, profile);
         hopper.importOrLoad();
         checkQueries(hopper, queries);
 
         Helper.removeDir(new File(GH_LOCATION));
 
         hopper = createHopper(MONACO,
-                TestProfiles.accessSpeedAndPriority("racingbike"),
+                profile,
                 TestProfiles.accessSpeedAndPriority("bike")
         );
         hopper.importOrLoad();

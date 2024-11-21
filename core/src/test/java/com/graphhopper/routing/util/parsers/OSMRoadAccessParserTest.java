@@ -26,18 +26,32 @@ import com.graphhopper.storage.IntsRef;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class OSMRoadAccessParserTest {
 
     private final EnumEncodedValue<CarRoadAccess> roadAccessEnc = CarRoadAccess.create();
     private OSMRoadAccessParser<CarRoadAccess> parser;
+    private final EnumEncodedValue<BikeRoadAccess> bikeRAEnc = BikeRoadAccess.create();
+    private final EnumEncodedValue<FootRoadAccess> footRAEnc = FootRoadAccess.create();
+    private OSMRoadAccessParser<BikeRoadAccess> bikeRAParser;
+    private OSMRoadAccessParser<FootRoadAccess> footRAParser;
 
     @BeforeEach
     public void setup() {
         roadAccessEnc.init(new EncodedValue.InitializerConfig());
+        bikeRAEnc.init(new EncodedValue.InitializerConfig());
+        footRAEnc.init(new EncodedValue.InitializerConfig());
         parser = new OSMRoadAccessParser<>(roadAccessEnc, OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR),
                 CarRoadAccess::countryHook, CarRoadAccess::find);
+        bikeRAParser = new OSMRoadAccessParser<>(bikeRAEnc, OSMRoadAccessParser.toOSMRestrictions(TransportationMode.BIKE),
+                (ignr, access) -> access, BikeRoadAccess::find);
+        footRAParser = new OSMRoadAccessParser<>(footRAEnc, OSMRoadAccessParser.toOSMRestrictions(TransportationMode.FOOT),
+                (ignr, access) -> access, FootRoadAccess::find);
     }
 
     @Test
@@ -64,12 +78,11 @@ class OSMRoadAccessParserTest {
 
         way.setTag("motor_vehicle", "agricultural;forestry");
         parser.handleWayTags(edgeId, edgeIntAccess, way, relFlags);
-        assertEquals(CarRoadAccess.AGRICULTURAL, roadAccessEnc.getEnum(false, edgeId, edgeIntAccess));
+        assertEquals(CarRoadAccess.FORESTRY, roadAccessEnc.getEnum(false, edgeId, edgeIntAccess));
 
         way.setTag("motor_vehicle", "forestry;agricultural");
         parser.handleWayTags(edgeId, edgeIntAccess, way, relFlags);
-        assertEquals(CarRoadAccess.AGRICULTURAL, roadAccessEnc.getEnum(false, edgeId, edgeIntAccess));
-
+        assertEquals(CarRoadAccess.FORESTRY, roadAccessEnc.getEnum(false, edgeId, edgeIntAccess));
     }
 
     @Test
@@ -95,5 +108,69 @@ class OSMRoadAccessParserTest {
         way.setTag("motorcar", "yes");
         parser.handleWayTags(edgeId, edgeIntAccess, way, new IntsRef(1));
         assertEquals(CarRoadAccess.YES, roadAccessEnc.getEnum(false, edgeId, edgeIntAccess));
+    }
+
+    @Test
+    public void testBikeWithNodeTags() {
+        ArrayEdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        int edgeId = 0;
+        ReaderWay way = new ReaderWay(1L);
+        way.setTag("access", "private");
+        bikeRAParser.handleWayTags(edgeId, edgeIntAccess, way, new IntsRef(1));
+        assertEquals(BikeRoadAccess.PRIVATE, bikeRAEnc.getEnum(false, edgeId, edgeIntAccess));
+
+        way = new ReaderWay(1L);
+        edgeIntAccess = new ArrayEdgeIntAccess(1);
+        way.setTag("vehicle", "private");
+        bikeRAParser.handleWayTags(edgeId, edgeIntAccess, way, new IntsRef(1));
+        assertEquals(BikeRoadAccess.PRIVATE, bikeRAEnc.getEnum(false, edgeId, edgeIntAccess));
+
+        edgeIntAccess = new ArrayEdgeIntAccess(1);
+        way.setTag("bicycle", "yes");
+        bikeRAParser.handleWayTags(edgeId, edgeIntAccess, way, new IntsRef(1));
+        assertEquals(BikeRoadAccess.YES, bikeRAEnc.getEnum(false, edgeId, edgeIntAccess));
+
+        Map<String, String> nodeTags = new HashMap<>();
+        nodeTags.put("ford", "yes");
+
+        way = new ReaderWay(1);
+        way.setTag("highway", "secondary");
+        way.setTag("gh:barrier_edge", true);
+        way.setTag("node_tags", Collections.singletonList(nodeTags));
+
+        bikeRAParser.handleWayTags(edgeId, edgeIntAccess, way, new IntsRef(1));
+        assertEquals(BikeRoadAccess.YES, bikeRAEnc.getEnum(false, edgeId, edgeIntAccess));
+
+        nodeTags.put("access", "no");
+        bikeRAParser.handleWayTags(edgeId, edgeIntAccess, way, new IntsRef(1));
+        assertEquals(BikeRoadAccess.NO, bikeRAEnc.getEnum(false, edgeId, edgeIntAccess));
+
+        nodeTags.put("bicycle", "yes");
+        bikeRAParser.handleWayTags(edgeId, edgeIntAccess, way, new IntsRef(1));
+        assertEquals(BikeRoadAccess.YES, bikeRAEnc.getEnum(false, edgeId, edgeIntAccess));
+    }
+
+    @Test
+    public void testFoot() {
+        ArrayEdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        int edgeId = 0;
+        ReaderWay way = new ReaderWay(1L);
+        way.setTag("highway", "tertiary");
+        way.setTag("access", "private");
+        footRAParser.handleWayTags(edgeId, edgeIntAccess, way, new IntsRef(1));
+        assertEquals(FootRoadAccess.PRIVATE, footRAEnc.getEnum(false, edgeId, edgeIntAccess));
+
+        edgeIntAccess = new ArrayEdgeIntAccess(1);
+        way.setTag("sidewalk", "left");
+        footRAParser.handleWayTags(edgeId, edgeIntAccess, way, new IntsRef(1));
+        assertEquals(FootRoadAccess.PRIVATE, footRAEnc.getEnum(false, edgeId, edgeIntAccess));
+
+        edgeIntAccess = new ArrayEdgeIntAccess(1);
+        way.clearTags();
+        way.setTag("route", "ferry");
+        way.setTag("foot", "designated");
+        way.setTag("access", "private");
+        footRAParser.handleWayTags(edgeId, edgeIntAccess, way, new IntsRef(1));
+        assertEquals(FootRoadAccess.DESIGNATED, footRAEnc.getEnum(false, edgeId, edgeIntAccess));
     }
 }
