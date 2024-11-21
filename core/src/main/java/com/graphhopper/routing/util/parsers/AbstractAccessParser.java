@@ -28,8 +28,7 @@ import java.util.*;
 
 public abstract class AbstractAccessParser implements TagParser {
     static final Collection<String> ONEWAYS = Arrays.asList("yes", "true", "1", "-1");
-    static final Collection<String> INTENDED = Arrays.asList("yes", "designated", "official",
-            "permissive", "private", "permit");
+    static final Collection<String> INTENDED = Arrays.asList("yes", "designated", "official", "permissive");
 
     // order is important
     protected final List<String> RESTRICTION_KEY;
