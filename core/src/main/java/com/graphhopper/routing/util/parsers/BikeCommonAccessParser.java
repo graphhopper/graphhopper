@@ -27,10 +27,6 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
 
         this.roundaboutEnc = roundaboutEnc;
 
-        restrictedValues.add("agricultural");
-        restrictedValues.add("forestry");
-        restrictedValues.add("delivery");
-
         barriers.add("fence");
 
         allowedHighways.addAll(Arrays.asList("living_street", "steps", "cycleway", "path", "footway", "platform",
@@ -59,7 +55,7 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
                 access = WayAccess.WAY;
 
             if (!access.canSkip()) {
-                if (way.hasTag(restrictionKeys, restrictedValues))
+                if (way.hasTag(RESTRICTION_KEY, RESTRICTION_VALUES))
                     return WayAccess.CAN_SKIP;
                 return access;
             }
@@ -74,12 +70,12 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
         if (way.hasTag("bicycle", "dismount"))
             return WayAccess.WAY;
 
-        int firstIndex = way.getFirstIndex(restrictionKeys);
+        int firstIndex = way.getFirstIndex(RESTRICTION_KEY);
         if (firstIndex >= 0) {
-            String firstValue = way.getTag(restrictionKeys.get(firstIndex), "");
+            String firstValue = way.getTag(RESTRICTION_KEY.get(firstIndex), "");
             String[] restrict = firstValue.split(";");
             for (String value : restrict) {
-                if (restrictedValues.contains(value) && !hasTemporalRestriction(way, firstIndex, restrictionKeys))
+                if (RESTRICTION_VALUES.contains(value) && !hasTemporalRestriction(way, firstIndex, RESTRICTION_KEY))
                     return WayAccess.CAN_SKIP;
                 if (INTENDED.contains(value))
                     return WayAccess.WAY;
@@ -123,10 +119,10 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
                 || way.hasTag("oneway:bicycle", ONEWAYS)
                 || way.hasTag("cycleway:left:oneway", ONEWAYS)
                 || way.hasTag("cycleway:right:oneway", ONEWAYS)
-                || way.hasTag("vehicle:backward", restrictedValues) && !way.hasTag("bicycle:forward", INTENDED)
-                || way.hasTag("vehicle:forward", restrictedValues) && !way.hasTag("bicycle:backward", INTENDED)
-                || way.hasTag("bicycle:forward", restrictedValues)
-                || way.hasTag("bicycle:backward", restrictedValues);
+                || way.hasTag("vehicle:backward", RESTRICTION_VALUES) && !way.hasTag("bicycle:forward", INTENDED)
+                || way.hasTag("vehicle:forward", RESTRICTION_VALUES) && !way.hasTag("bicycle:backward", INTENDED)
+                || way.hasTag("bicycle:forward", RESTRICTION_VALUES)
+                || way.hasTag("bicycle:backward", RESTRICTION_VALUES);
 
         if ((isOneway || roundaboutEnc.getBool(false, edgeId, edgeIntAccess))
                 && !way.hasTag("oneway:bicycle", "no")
@@ -140,8 +136,8 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
                     || way.hasTag("oneway:bicycle", "-1")
                     || way.hasTag("cycleway:left:oneway", "-1")
                     || way.hasTag("cycleway:right:oneway", "-1")
-                    || way.hasTag("vehicle:forward", restrictedValues)
-                    || way.hasTag("bicycle:forward", restrictedValues);
+                    || way.hasTag("vehicle:forward", RESTRICTION_VALUES)
+                    || way.hasTag("bicycle:forward", RESTRICTION_VALUES);
             accessEnc.setBool(isBackward, edgeId, edgeIntAccess, true);
 
         } else {

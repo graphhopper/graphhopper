@@ -101,7 +101,7 @@ public class FootAccessParser extends AbstractAccessParser implements TagParser 
                 acceptPotentially = WayAccess.WAY;
 
             if (!acceptPotentially.canSkip()) {
-                if (way.hasTag(restrictionKeys, restrictedValues))
+                if (way.hasTag(RESTRICTION_KEY, RESTRICTION_VALUES))
                     return WayAccess.CAN_SKIP;
                 return acceptPotentially;
             }
@@ -113,12 +113,12 @@ public class FootAccessParser extends AbstractAccessParser implements TagParser 
         if ("via_ferrata".equals(highwayValue))
             return WayAccess.CAN_SKIP;
 
-        int firstIndex = way.getFirstIndex(restrictionKeys);
+        int firstIndex = way.getFirstIndex(RESTRICTION_KEY);
         if (firstIndex >= 0) {
-            String firstValue = way.getTag(restrictionKeys.get(firstIndex), "");
+            String firstValue = way.getTag(RESTRICTION_KEY.get(firstIndex), "");
             String[] restrict = firstValue.split(";");
             for (String value : restrict) {
-                if (restrictedValues.contains(value) && !hasTemporalRestriction(way, firstIndex, restrictionKeys))
+                if (RESTRICTION_VALUES.contains(value) && !hasTemporalRestriction(way, firstIndex, RESTRICTION_KEY))
                     return WayAccess.CAN_SKIP;
                 if (INTENDED.contains(value))
                     return WayAccess.WAY;

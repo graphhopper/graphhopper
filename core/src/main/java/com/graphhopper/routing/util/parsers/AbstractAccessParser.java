@@ -21,7 +21,6 @@ import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.EdgeIntAccess;
-import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 
@@ -33,8 +32,8 @@ public abstract class AbstractAccessParser implements TagParser {
             "permissive", "private", "permit");
 
     // order is important
-    protected final List<String> restrictionKeys;
-    protected final Set<String> restrictedValues = new HashSet<>(5);
+    protected final List<String> RESTRICTION_KEY;
+    protected final Set<String> RESTRICTION_VALUES = Set.of("no", "restricted", "military", "emergency");
 
     // http://wiki.openstreetmap.org/wiki/Mapfeatures#Barrier
     protected final Set<String> barriers = new HashSet<>(5);
@@ -42,12 +41,7 @@ public abstract class AbstractAccessParser implements TagParser {
 
     protected AbstractAccessParser(BooleanEncodedValue accessEnc, List<String> restrictionKeys) {
         this.accessEnc = accessEnc;
-        this.restrictionKeys = restrictionKeys;
-
-        restrictedValues.add("no");
-        restrictedValues.add("restricted");
-        restrictedValues.add("military");
-        restrictedValues.add("emergency");
+        this.RESTRICTION_KEY = Collections.unmodifiableList(restrictionKeys);
     }
 
     protected void check(PMap properties) {
@@ -79,9 +73,9 @@ public abstract class AbstractAccessParser implements TagParser {
      */
     public boolean isBarrier(ReaderNode node) {
         // note that this method will be only called for certain nodes as defined by OSMReader!
-        String firstValue = node.getFirstValue(restrictionKeys);
+        String firstValue = node.getFirstValue(RESTRICTION_KEY);
 
-        if (restrictedValues.contains(firstValue))
+        if (RESTRICTION_VALUES.contains(firstValue))
             return true;
         else if (node.hasTag("locked", "yes") && !INTENDED.contains(firstValue))
             return true;
@@ -92,10 +86,6 @@ public abstract class AbstractAccessParser implements TagParser {
 
     public final BooleanEncodedValue getAccessEnc() {
         return accessEnc;
-    }
-
-    public final List<String> getRestrictionKeys() {
-        return restrictionKeys;
     }
 
     public final String getName() {

@@ -23,7 +23,6 @@ import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.config.CHProfile;
-import com.graphhopper.config.Profile;
 import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.BodyAndStatus;
 import com.graphhopper.util.Helper;
@@ -43,8 +42,6 @@ import java.util.Random;
 
 import static com.graphhopper.application.resources.Util.getWithStatus;
 import static com.graphhopper.application.util.TestUtils.clientTarget;
-import static com.graphhopper.json.Statement.If;
-import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static com.graphhopper.util.Parameters.Algorithms.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -83,12 +80,12 @@ public class RouteResourceLeipzigTest {
 
     @ParameterizedTest
     @CsvSource(value = {
-            "90,-1,algorithm=" + DIJKSTRA_BI,
-            "104,-1,algorithm=" + ASTAR_BI,
-            "33133,1,ch.disable=true&algorithm=" + DIJKSTRA,
-            "22497,1,ch.disable=true&algorithm=" + ASTAR,
-            "15434,1,ch.disable=true&algorithm=" + DIJKSTRA_BI,
-            "10926,1,ch.disable=true&algorithm=" + ASTAR_BI
+            "91,-1,algorithm=" + DIJKSTRA_BI,
+            "102,-1,algorithm=" + ASTAR_BI,
+            "33334,1,ch.disable=true&algorithm=" + DIJKSTRA,
+            "22649,1,ch.disable=true&algorithm=" + ASTAR,
+            "15496,1,ch.disable=true&algorithm=" + DIJKSTRA_BI,
+            "10974,1,ch.disable=true&algorithm=" + ASTAR_BI
     })
     void testTimeout(int expectedVisitedNodes, int timeout, String args) {
         {

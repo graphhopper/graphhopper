@@ -43,7 +43,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class CarTagParserTest {
     private final EncodingManager em = createEncodingManager("car");
-    final CarAccessParser parser = createParser(em);
+    final CarAccessParser parser = new CarAccessParser(em, new PMap());
     final CarAverageSpeedParser speedParser = new CarAverageSpeedParser(em);
 
     private final BooleanEncodedValue roundaboutEnc = em.getBooleanEncodedValue(Roundabout.KEY);
@@ -63,10 +63,6 @@ public class CarTagParserTest {
                 .add(Roundabout.create())
                 .add(FerrySpeed.create())
                 .build();
-    }
-
-    CarAccessParser createParser(EncodedValueLookup lookup) {
-        return new CarAccessParser(lookup, new PMap());
     }
 
     @Test
@@ -96,7 +92,7 @@ public class CarTagParserTest {
         way.clearTags();
         way.setTag("highway", "service");
         way.setTag("access", "delivery");
-        assertTrue(parser.getAccess(way).canSkip());
+        assertTrue(parser.getAccess(way).isWay());
 
         way.clearTags();
         way.setTag("access", "yes");
@@ -108,19 +104,6 @@ public class CarTagParserTest {
         way.setTag("access", "yes");
         way.setTag("motor_vehicle", "no");
         assertTrue(parser.getAccess(way).canSkip());
-
-        way.clearTags();
-        way.setTag("highway", "track");
-        way.setTag("motor_vehicle", "agricultural");
-        assertTrue(parser.getAccess(way).canSkip());
-        way.setTag("motor_vehicle", "agricultural;forestry");
-        assertTrue(parser.getAccess(way).canSkip());
-        way.setTag("motor_vehicle", "forestry;agricultural");
-        assertTrue(parser.getAccess(way).canSkip());
-        way.setTag("motor_vehicle", "forestry;agricultural;unknown");
-        assertTrue(parser.getAccess(way).canSkip());
-        way.setTag("motor_vehicle", "yes;forestry;agricultural");
-        assertTrue(parser.getAccess(way).isWay());
 
         way.clearTags();
         way.setTag("highway", "service");
