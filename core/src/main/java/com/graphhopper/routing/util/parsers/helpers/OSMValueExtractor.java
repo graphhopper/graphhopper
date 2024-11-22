@@ -52,7 +52,7 @@ public class OSMValueExtractor {
             }
             if (index > 0) {
                 int lastIndex = value.indexOf(')', index); // (value) or value
-                if (lastIndex < 0) lastIndex = value.length() - 1;
+                if (lastIndex < 0) lastIndex = value.length();
                 if (lastIndex > index)
                     return OSMValueExtractor.stringToTons(value.substring(index, lastIndex));
             }
