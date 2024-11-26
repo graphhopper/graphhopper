@@ -165,18 +165,26 @@ public class MapMatchingResource {
             Map<String, List<PathDetail>> details = responsePath.getPathDetails();
             if (details.containsKey("edge_id") &&
                     details.containsKey("time") &&
+                    details.containsKey("osm_way_id") &&
                     matchResult.getEdgeMatches().size() > 0 &&
                     matchResult.getEdgeMatches().get(0).getStates().size() > 0 &&
                     matchResult.getEdgeMatches().get(0).getStates().get(0).getEntry().getTime().toInstant().getEpochSecond() > 0
             ) {
                 List<PathDetail> edges = details.get("edge_id");
                 List<PathDetail> times = details.get("time");
+                List<PathDetail> osmWays = details.get("osm_way_id");
+                List<PathDetail> directedOsmWays = new ArrayList<PathDetail>(0);
+
                 assert edges.size() == times.size();
                 int currentEdgeMatchIdx = 0;
                 int currentTimeIdx = 0;
                 List<EdgeMatch> edgeMatches = matchResult.getEdgeMatches();
 
                 State currentState = edgeMatches.get(0).getStates().get(0);
+
+                int latestOsmDetailIdx = 0;
+                PathDetail currentOsmDetail = osmWays.get(latestOsmDetailIdx);
+                PathDetail newOsmIdDetail = null;
 
                 for (PathDetail edge : edges) {
                     // edge id as per edge path detail
@@ -190,6 +198,27 @@ public class MapMatchingResource {
                         currentState = edgeMatches.get(currentEdgeMatchIdx).getStates().get(0);
                     }
 
+                    while (currentOsmDetail.getLast() < currentEdgeMatchIdx) {
+                        latestOsmDetailIdx++;
+                        currentOsmDetail = osmWays.get(latestOsmDetailIdx);
+                    }
+
+                    int edgeKey = edgeMatches.get(currentEdgeMatchIdx).getEdgeState().getEdgeKey();
+                    Integer newOsmId = null;
+                    if (edgeKey % 2 == 1) {
+                        newOsmId = -1 * (Integer) currentOsmDetail.getValue();
+                    } else {
+                        newOsmId = (Integer) (currentOsmDetail.getValue());
+                    }
+                    if (newOsmIdDetail == null || ((Integer)newOsmIdDetail.getValue()).intValue() != newOsmId.intValue()) {
+                        newOsmIdDetail = new PathDetail(newOsmId);
+                        newOsmIdDetail.setFirst(edge.getFirst());
+                        newOsmIdDetail.setLast(edge.getLast());
+                        directedOsmWays.add(newOsmIdDetail);
+                    } else {
+                        newOsmIdDetail.setLast(edge.getLast());
+                    }
+
                     Observation currentObs = currentState.getEntry();
                     PathDetail mmTime = new PathDetail(currentObs.getTime().toInstant().toString());
                     mmTime.setFirst(edge.getFirst());
@@ -197,7 +226,7 @@ public class MapMatchingResource {
                     times.set(currentTimeIdx, mmTime);
                     currentTimeIdx += 1;
                 }
-
+                details.put("osm_way_id", directedOsmWays);
             }
 
             if (writeGPX) {
