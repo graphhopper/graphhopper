@@ -91,7 +91,7 @@ public class QueryGraph implements Graph {
         virtualEdgesAtVirtualNodes = buildVirtualEdgesAtVirtualNodes();
     }
 
-    public QueryOverlay getQueryOverlay() {
+    QueryOverlay getQueryOverlay() {
         return queryOverlay;
     }
 

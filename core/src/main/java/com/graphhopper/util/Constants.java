@@ -29,36 +29,18 @@ import static com.graphhopper.util.Helper.*;
  * Defining several important constants for GraphHopper. Partially taken from Lucene.
  */
 public class Constants {
-    /**
-     * The value of <code>System.getProperty("java.version")</code>. *
-     */
-    public static final String JAVA_VERSION = System.getProperty("java.version");
 
     /**
      * The value of <code>System.getProperty("os.name")</code>. *
      */
     public static final String OS_NAME = System.getProperty("os.name");
-    /**
-     * True iff running on Linux.
-     */
-    public static final boolean LINUX = OS_NAME.startsWith("Linux");
-    /**
-     * True iff running on Windows.
-     */
     public static final boolean WINDOWS = OS_NAME.startsWith("Windows");
-    /**
-     * True iff running on Mac OS X
-     */
-    public static final boolean MAC_OS_X = OS_NAME.startsWith("Mac OS X");
-    public static final String OS_ARCH = System.getProperty("os.arch");
-    public static final String OS_VERSION = System.getProperty("os.version");
-    public static final String JAVA_VENDOR = System.getProperty("java.vendor");
     public static final String JVM_SPEC_VERSION = System.getProperty("java.specification.version");
     public static final boolean JRE_IS_MINIMUM_JAVA9;
     private static final int JVM_MAJOR_VERSION;
     private static final int JVM_MINOR_VERSION;
 
-    public static final int VERSION_NODE = 9;
+    public static final int VERSION_NODE = 10;
     public static final int VERSION_EDGE = 23;
     // this should be increased whenever the format of the serialized EncodingManager is changed
     public static final int VERSION_EM = 4;

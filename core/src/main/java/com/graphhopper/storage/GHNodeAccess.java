@@ -35,12 +35,12 @@ class GHNodeAccess implements NodeAccess {
     @Override
     public final void setNode(int nodeId, double lat, double lon, double ele) {
         store.ensureNodeCapacity(nodeId);
-        store.setLat(store.toNodePointer(nodeId), lat);
-        store.setLon(store.toNodePointer(nodeId), lon);
+        store.setLat(store.toNodesGeoPointer(nodeId), lat);
+        store.setLon(store.toNodesGeoPointer(nodeId), lon);
 
         if (store.withElevation()) {
             // meter precision is sufficient for now
-            store.setEle(store.toNodePointer(nodeId), ele);
+            store.setEle(store.toNodesGeoPointer(nodeId), ele);
             store.bounds.update(lat, lon, ele);
         } else {
             store.bounds.update(lat, lon);
@@ -49,19 +49,19 @@ class GHNodeAccess implements NodeAccess {
 
     @Override
     public final double getLat(int nodeId) {
-        return store.getLat(store.toNodePointer(nodeId));
+        return store.getLat(store.toNodesGeoPointer(nodeId));
     }
 
     @Override
     public final double getLon(int nodeId) {
-        return store.getLon(store.toNodePointer(nodeId));
+        return store.getLon(store.toNodesGeoPointer(nodeId));
     }
 
     @Override
     public final double getEle(int nodeId) {
         if (!store.withElevation())
             throw new IllegalStateException("elevation is disabled");
-        return store.getEle(store.toNodePointer(nodeId));
+        return store.getEle(store.toNodesGeoPointer(nodeId));
     }
 
     @Override
@@ -69,7 +69,7 @@ class GHNodeAccess implements NodeAccess {
         if (store.withTurnCosts()) {
             // todo: remove ensure?
             store.ensureNodeCapacity(index);
-            store.setTurnCostRef(store.toNodePointer(index), turnCostIndex);
+            store.setTurnCostRef(store.toNodesPointer(index), turnCostIndex);
         } else {
             throw new AssertionError("This graph does not support turn costs");
         }
@@ -78,7 +78,7 @@ class GHNodeAccess implements NodeAccess {
     @Override
     public final int getTurnCostIndex(int index) {
         if (store.withTurnCosts())
-            return store.getTurnCostRef(store.toNodePointer(index));
+            return store.getTurnCostRef(store.toNodesPointer(index));
         else
             throw new AssertionError("This graph does not support turn costs");
     }

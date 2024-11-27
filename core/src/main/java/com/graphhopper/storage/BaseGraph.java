@@ -660,7 +660,7 @@ public class BaseGraph implements Graph, Closeable {
 
         @Override
         public EdgeIterator setBaseNode(int baseNode) {
-            nextEdgeId = edgeId = store.getEdgeRef(store.toNodePointer(baseNode));
+            nextEdgeId = edgeId = store.getEdgeRef(store.toNodesPointer(baseNode));
             this.baseNode = baseNode;
             return this;
         }
