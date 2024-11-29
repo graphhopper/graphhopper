@@ -107,7 +107,7 @@
         <dependency>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java</artifactId>
-            <version>3.22.3</version>
+            <version>3.25.5</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
