@@ -59,10 +59,9 @@ public class AngleCalc {
 
     /**
      * Return orientation of line relative to east.
-     * <p>
      *
      * @param exact If false the atan gets calculated faster, but it might contain small errors
-     * @return Orientation in interval -pi to +pi where 0 is east
+     * @return Orientation in interval -pi to +pi where 0 is east and the "bottom" arc is negative
      */
     public double calcOrientation(double lat1, double lon1, double lat2, double lon2, boolean exact) {
         double shrinkFactor = cos(toRadians((lat1 + lat2) / 2));

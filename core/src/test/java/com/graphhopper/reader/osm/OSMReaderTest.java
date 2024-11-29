@@ -21,7 +21,6 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperTest;
-import com.graphhopper.config.TurnCostsConfig;
 import com.graphhopper.reader.ReaderElement;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
@@ -936,7 +935,8 @@ public class OSMReaderTest {
         EnumEncodedValue<RoadAccess> roadAccessEnc = RoadAccess.create();
         EncodingManager em = new EncodingManager.Builder().add(roadAccessEnc).build();
         OSMParsers osmParsers = new OSMParsers();
-        osmParsers.addWayTagParser(new OSMRoadAccessParser(roadAccessEnc, OSMRoadAccessParser.toOSMRestrictions(CAR)));
+        osmParsers.addWayTagParser(new OSMRoadAccessParser<>(roadAccessEnc,
+                OSMRoadAccessParser.toOSMRestrictions(CAR), RoadAccess::countryHook, RoadAccess::find));
         BaseGraph graph = new BaseGraph.Builder(em).create();
         OSMReader reader = new OSMReader(graph, osmParsers, new OSMReaderConfig());
         reader.setCountryRuleFactory(new CountryRuleFactory());

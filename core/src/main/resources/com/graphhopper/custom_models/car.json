@@ -1,4 +1,5 @@
 // to use this custom model you need to set the following option in the config.yml
+// graph.encoded_values: car_access, car_average_speed, road_access
 // profiles:
 //    - name: car
 //      turn_costs:
@@ -8,7 +9,8 @@
 {
   "distance_influence": 90,
   "priority": [
-    { "if": "!car_access", "multiply_by": "0" }
+    { "if": "!car_access", "multiply_by": "0" },
+    { "if": "road_access == PRIVATE", "multiply_by": "0.1" }
   ],
   "speed": [
     { "if": "true", "limit_to": "car_average_speed" }

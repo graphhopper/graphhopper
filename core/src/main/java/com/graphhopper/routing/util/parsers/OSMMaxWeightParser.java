@@ -44,7 +44,7 @@ public class OSMMaxWeightParser implements TagParser {
     public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
         OSMValueExtractor.extractTons(edgeId, edgeIntAccess, way, weightEncoder, MAX_WEIGHT_TAGS);
 
-        // vehicle:conditional no @ (weight > 7.5)
+        // vehicle:conditional = no @ (weight > 7.5)
         for (String restriction : HGV_RESTRICTIONS) {
             String value = way.getTag(restriction, "");
             if (value.startsWith("no") && value.indexOf("@") < 6) { // no,none[ ]@

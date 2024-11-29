@@ -62,7 +62,7 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
                 "ally", "alley",
                 "arc", "arcade",
                 "bvd", "bvd.", "boulevard",
-                "av.", "avenue", "avenida",
+                "av.", "avenue", "avenida", "ave",
                 "calle",
                 "cl.", "close",
                 "crescend", "cres", "cres.",

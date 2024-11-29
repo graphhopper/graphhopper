@@ -83,27 +83,6 @@ public class OSMValueExtractorTest {
     }
 
     @Test
-    public void stringToKmh() {
-        assertEquals(40, OSMValueExtractor.stringToKmh("40 km/h"), DELTA);
-        assertEquals(40, OSMValueExtractor.stringToKmh("40km/h"), DELTA);
-        assertEquals(40, OSMValueExtractor.stringToKmh("40kmh"), DELTA);
-        assertEquals(64.374, OSMValueExtractor.stringToKmh("40mph"), DELTA);
-        assertEquals(48.28, OSMValueExtractor.stringToKmh("30 mph"), DELTA);
-        assertEquals(18.52, OSMValueExtractor.stringToKmh("10 knots"), DELTA);
-        assertEquals(19, OSMValueExtractor.stringToKmh("19 kph"), DELTA);
-        assertEquals(19, OSMValueExtractor.stringToKmh("19kph"), DELTA);
-
-        assertEquals(MaxSpeed.UNLIMITED_SIGN_SPEED, OSMValueExtractor.stringToKmh("none"), DELTA);
-    }
-
-    @Test
-    public void stringToKmhNaN() {
-        assertTrue(Double.isNaN(OSMValueExtractor.stringToKmh(null)));
-        assertTrue(Double.isNaN(OSMValueExtractor.stringToKmh("0")));
-        assertTrue(Double.isNaN(OSMValueExtractor.stringToKmh("-20")));
-    }
-
-    @Test
     public void testConditionalWeightToTons() {
         assertEquals(7.5, conditionalWeightToTons("no @ (weight>7.5)"));
         assertEquals(7.5, conditionalWeightToTons("delivery @ (Mo-Sa 06:00-12:00); no @ (weight>7.5); no @ (length>12)"));

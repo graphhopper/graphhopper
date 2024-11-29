@@ -14,8 +14,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.graphhopper.routing.ev.MaxSpeed.UNLIMITED_SIGN_SPEED;
-import static com.graphhopper.routing.ev.MaxSpeed.UNSET_SPEED;
+import static com.graphhopper.routing.ev.MaxSpeed.MAXSPEED_150;
+import static com.graphhopper.routing.ev.MaxSpeed.MAXSPEED_MISSING;
 import static com.graphhopper.routing.ev.UrbanDensity.CITY;
 import static com.graphhopper.routing.ev.UrbanDensity.RURAL;
 import static org.junit.jupiter.api.Assertions.*;
@@ -55,21 +55,21 @@ class MaxSpeedCalculatorTest {
     public void internalMaxSpeed() {
         EdgeIntAccess storage = calc.getInternalMaxSpeedStorage();
         DecimalEncodedValue ruralEnc = calc.getRuralMaxSpeedEnc();
-        ruralEnc.setDecimal(false, 0, storage, UNSET_SPEED);
-        assertEquals(UNSET_SPEED, ruralEnc.getDecimal(false, 0, storage));
+        ruralEnc.setDecimal(false, 0, storage, MAXSPEED_MISSING);
+        assertEquals(MAXSPEED_MISSING, ruralEnc.getDecimal(false, 0, storage));
 
         ruralEnc.setDecimal(false, 1, storage, 33);
         assertEquals(34, ruralEnc.getDecimal(false, 1, storage));
 
         DecimalEncodedValue urbanEnc = calc.getUrbanMaxSpeedEnc();
-        urbanEnc.setDecimal(false, 1, storage, UNSET_SPEED);
-        assertEquals(UNSET_SPEED, urbanEnc.getDecimal(false, 1, storage));
+        urbanEnc.setDecimal(false, 1, storage, MAXSPEED_MISSING);
+        assertEquals(MAXSPEED_MISSING, urbanEnc.getDecimal(false, 1, storage));
 
         urbanEnc.setDecimal(false, 0, storage, 46);
         assertEquals(46, urbanEnc.getDecimal(false, 0, storage));
 
         // check that they are not modified
-        assertEquals(UNSET_SPEED, ruralEnc.getDecimal(false, 0, storage));
+        assertEquals(MAXSPEED_MISSING, ruralEnc.getDecimal(false, 0, storage));
         assertEquals(34, ruralEnc.getDecimal(false, 1, storage));
     }
 
@@ -95,7 +95,7 @@ class MaxSpeedCalculatorTest {
         way.setTag("highway", "motorway");
         edge = createEdge(way).set(urbanDensity, CITY);
         calc.fillMaxSpeed(graph, em);
-        assertEquals(UNLIMITED_SIGN_SPEED, edge.get(maxSpeedEnc), 1);
+        assertEquals(MAXSPEED_150, edge.get(maxSpeedEnc), 1);
 
         way = new ReaderWay(0L);
         way.setTag("country", Country.DEU);
@@ -129,7 +129,7 @@ class MaxSpeedCalculatorTest {
         way.setTag("highway", "motorway");
         edge = createEdge(way).set(urbanDensity, RURAL);
         calc.fillMaxSpeed(graph, em);
-        assertEquals(UNLIMITED_SIGN_SPEED, edge.get(maxSpeedEnc), 1);
+        assertEquals(MAXSPEED_150, edge.get(maxSpeedEnc), 1);
 
         way = new ReaderWay(0L);
         way.setTag("country", Country.DEU);
@@ -305,6 +305,6 @@ class MaxSpeedCalculatorTest {
         way.setTag("highway", "primary");
         EdgeIteratorState edge = createEdge(way).set(urbanDensity, CITY);
         calc.fillMaxSpeed(graph, em);
-        assertEquals(UNSET_SPEED, edge.get(maxSpeedEnc), 1);
+        assertEquals(MAXSPEED_MISSING, edge.get(maxSpeedEnc), 1);
     }
 }

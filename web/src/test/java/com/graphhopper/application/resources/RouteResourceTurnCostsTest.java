@@ -24,9 +24,10 @@ import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
-import com.graphhopper.config.TurnCostsConfig;
 import com.graphhopper.routing.TestProfiles;
+import com.graphhopper.util.BodyAndStatus;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.TurnCostsConfig;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import org.junit.jupiter.api.AfterAll;
@@ -35,12 +36,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.graphhopper.application.resources.Util.getWithStatus;
+import static com.graphhopper.application.resources.Util.postWithStatus;
 import static com.graphhopper.application.util.TestUtils.clientTarget;
 import static java.util.Collections.emptyList;
 import static org.junit.jupiter.api.Assertions.*;
@@ -105,9 +106,8 @@ public class RouteResourceTurnCostsTest {
         assertError(doPost(mode, profile, curbsides), expectedErrors);
     }
 
-    private void assertDistance(Response response, double expectedDistance) {
-        JsonNode json = response.readEntity(JsonNode.class);
-        assertEquals(200, response.getStatus(), json.toString());
+    private void assertDistance(BodyAndStatus response, double expectedDistance) {
+        JsonNode json = response.getBody();
         JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
         JsonNode path = json.get("paths").get(0);
@@ -115,9 +115,9 @@ public class RouteResourceTurnCostsTest {
         assertEquals(expectedDistance, distance, 1);
     }
 
-    private void assertError(Response response, String... expectedErrors) {
+    private void assertError(BodyAndStatus response, String... expectedErrors) {
         assert expectedErrors.length > 0;
-        JsonNode json = response.readEntity(JsonNode.class);
+        JsonNode json = response.getBody();
         assertEquals(400, response.getStatus(), json.toString());
         for (String e : expectedErrors) {
             assertTrue(json.get("message").toString().contains(e), json.get("message").toString());
@@ -154,11 +154,11 @@ public class RouteResourceTurnCostsTest {
         return jsonStr;
     }
 
-    private Response doGet(String mode, String profile, List<String> curbsides) {
-        return clientTarget(app, "/route?" + getUrlParams(mode, profile, curbsides)).request().buildGet().invoke();
+    private BodyAndStatus doGet(String mode, String profile, List<String> curbsides) {
+        return getWithStatus(clientTarget(app, "/route?" + getUrlParams(mode, profile, curbsides)));
     }
 
-    private Response doPost(String mode, String profile, List<String> curbsides) {
-        return clientTarget(app, "/route?").request().post(Entity.json(getJsonStr(mode, profile, curbsides)));
+    private BodyAndStatus doPost(String mode, String profile, List<String> curbsides) {
+        return postWithStatus(clientTarget(app, "/route?"), getJsonStr(mode, profile, curbsides));
     }
 }

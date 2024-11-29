@@ -33,15 +33,16 @@ import io.dropwizard.jersey.params.AbstractParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.graphhopper.util.Parameters.Details.PATH_DETAILS;
 import static com.graphhopper.util.Parameters.Routing.*;
@@ -64,8 +65,8 @@ public class RouteResource {
     private final ProfileResolver profileResolver;
     private final GHRequestTransformer ghRequestTransformer;
     private final Boolean hasElevation;
-    @Nullable
     private final String osmDate;
+    private final List<String> snapPreventionsDefault;
 
     @Inject
     public RouteResource(GraphHopperConfig config, GraphHopper graphHopper, ProfileResolver profileResolver, GHRequestTransformer ghRequestTransformer, @Named("hasElevation") Boolean hasElevation) {
@@ -75,6 +76,8 @@ public class RouteResource {
         this.ghRequestTransformer = ghRequestTransformer;
         this.hasElevation = hasElevation;
         this.osmDate = graphHopper.getProperties().getAll().get("datareader.data.date");
+        this.snapPreventionsDefault = Arrays.stream(config.getString("routing.snap_preventions_default", "")
+                .split(",")).map(String::trim).filter(s -> !s.isEmpty()).toList();
     }
 
     @GET
@@ -124,12 +127,21 @@ public class RouteResource {
                 setHeadings(headings).
                 setPointHints(pointHints).
                 setCurbsides(curbsides).
-                setSnapPreventions(snapPreventions).
                 setPathDetails(pathDetails).
                 getHints().
                 putObject(CALC_POINTS, calcPoints).
                 putObject(INSTRUCTIONS, instructions).
                 putObject(WAY_POINT_MAX_DISTANCE, minPathPrecision);
+
+        if (uriInfo.getQueryParameters().containsKey(SNAP_PREVENTION)) {
+            if (snapPreventions.size() == 1 && snapPreventions.contains(""))
+                request.setSnapPreventions(List.of()); // e.g. "&snap_prevention=&" to force empty list
+            else
+                request.setSnapPreventions(snapPreventions);
+        } else {
+            // no "snap_prevention" was specified
+            request.setSnapPreventions(snapPreventionsDefault);
+        }
 
         request = ghRequestTransformer.transformRequest(request);
 
@@ -174,6 +186,9 @@ public class RouteResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response doPost(@NotNull GHRequest request, @Context HttpServletRequest httpReq) {
+        if (!request.hasSnapPreventions())
+            request.setSnapPreventions(snapPreventionsDefault);
+
         StopWatch sw = new StopWatch().start();
         request = ghRequestTransformer.transformRequest(request);
 

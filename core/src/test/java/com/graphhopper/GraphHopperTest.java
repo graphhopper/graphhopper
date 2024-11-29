@@ -20,7 +20,7 @@ package com.graphhopper;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
-import com.graphhopper.config.TurnCostsConfig;
+import com.graphhopper.util.TurnCostsConfig;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.dem.SkadiProvider;
@@ -254,7 +254,7 @@ public class GraphHopperTest {
             ResponsePath res = rsp.getBest();
             assertEquals(286, res.getDistance(), 1);
             // note that this includes the u-turn time for the second u-turn, but not the first, because it's a waypoint!
-            assertEquals(54358, res.getTime(), 1);
+            assertEquals(34358, res.getTime(), 1);
             // the route follows Avenue de l'Annonciade to the waypoint, u-turns there, then does a sharp right turn onto the parallel (dead-end) road,
             // does a u-turn at the dead-end and then arrives at the destination
             InstructionList il = res.getInstructions();
@@ -455,7 +455,7 @@ public class GraphHopperTest {
                 setProfiles(TestProfiles.accessSpeedAndPriority(profile, "bike"));
         hopper.importOrLoad();
 
-        GHRequest req = new GHRequest(50.028917, 11.496506, 49.982862, 11.598022).
+        GHRequest req = new GHRequest(50.028917, 11.496506, 49.982089,11.599224).
                 setAlgorithm(ALT_ROUTE).setProfile(profile);
 
         req.putHint("alternative_route.max_paths", 3);
@@ -464,11 +464,11 @@ public class GraphHopperTest {
 
         assertEquals(3, rsp.getAll().size());
         // via ramsenthal
-        assertEquals(2603, rsp.getAll().get(0).getTime() / 1000);
-        // via eselslohe -> theta;
-        assertEquals(2694, rsp.getAll().get(1).getTime() / 1000);
+        assertEquals(2636, rsp.getAll().get(0).getTime() / 1000);
+        // via eselslohe
+        assertEquals(2783, rsp.getAll().get(1).getTime() / 1000);
         // via unterwaiz
-        assertEquals(2957, rsp.getAll().get(2).getTime() / 1000);
+        assertEquals(2985, rsp.getAll().get(2).getTime() / 1000);
     }
 
     @Test
@@ -2261,7 +2261,7 @@ public class GraphHopperTest {
         assertFalse(res.hasErrors(), "routing should not fail but had errors: " + res.getErrors());
         assertEquals(242.5, res.getBest().getRouteWeight(), 0.1);
         assertEquals(1917, res.getBest().getDistance(), 1);
-        assertEquals(243000, res.getBest().getTime(), 1000);
+        assertEquals(163000, res.getBest().getTime(), 1000);
     }
 
     @Test

@@ -22,9 +22,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
-import com.graphhopper.config.TurnCostsConfig;
 import com.graphhopper.routing.TestProfiles;
+import com.graphhopper.util.BodyAndStatus;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.TurnCostsConfig;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import org.junit.jupiter.api.AfterAll;
@@ -32,11 +33,11 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.graphhopper.application.resources.Util.getWithStatus;
 import static com.graphhopper.application.util.TestUtils.clientTarget;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -68,8 +69,7 @@ public class SPTResourceTest {
 
     @Test
     public void requestSPT() {
-        Response rsp = clientTarget(app, "/spt?profile=car_without_turncosts&point=42.531073,1.573792&time_limit=300").request().buildGet().invoke();
-        String rspCsvString = rsp.readEntity(String.class);
+        String rspCsvString = clientTarget(app, "/spt?profile=car_without_turncosts&point=42.531073,1.573792&time_limit=300").request().get(String.class);
         String[] lines = rspCsvString.split("\n");
         List<String> headers = Arrays.asList(lines[0].split(","));
         assertEquals("[longitude, latitude, time, distance]", headers.toString());
@@ -79,8 +79,7 @@ public class SPTResourceTest {
         assertEquals(111, Integer.parseInt(row[2]) / 1000, 1);
         assertEquals(1505, Integer.parseInt(row[3]), 1);
 
-        rsp = clientTarget(app, "/spt?profile=car_without_turncosts&point=42.531073,1.573792&columns=prev_time").request().buildGet().invoke();
-        rspCsvString = rsp.readEntity(String.class);
+        rspCsvString = clientTarget(app, "/spt?profile=car_without_turncosts&point=42.531073,1.573792&columns=prev_time").request().get(String.class);
         lines = rspCsvString.split("\n");
         assertTrue(lines.length > 500);
         headers = Arrays.asList(lines[0].split(","));
@@ -93,8 +92,7 @@ public class SPTResourceTest {
 
     @Test
     public void requestSPTEdgeBased() {
-        Response rsp = clientTarget(app, "/spt?profile=car_with_turncosts&point=42.531073,1.573792&time_limit=300&columns=prev_node_id,edge_id,node_id,time,distance").request().buildGet().invoke();
-        String rspCsvString = rsp.readEntity(String.class);
+        String rspCsvString = clientTarget(app, "/spt?profile=car_with_turncosts&point=42.531073,1.573792&time_limit=300&columns=prev_node_id,edge_id,node_id,time,distance").request().get(String.class);
         String[] lines = rspCsvString.split("\n");
         assertTrue(lines.length > 500);
         assertEquals("prev_node_id,edge_id,node_id,time,distance", lines[0]);
@@ -105,8 +103,7 @@ public class SPTResourceTest {
 
     @Test
     public void requestDetails() {
-        Response rsp = clientTarget(app, "/spt?profile=car_without_turncosts&point=42.531073,1.573792&time_limit=300&columns=street_name,road_class,max_speed").request().buildGet().invoke();
-        String rspCsvString = rsp.readEntity(String.class);
+        String rspCsvString = clientTarget(app, "/spt?profile=car_without_turncosts&point=42.531073,1.573792&time_limit=300&columns=street_name,road_class,max_speed").request().get(String.class);
         String[] lines = rspCsvString.split("\n");
 
         String[] row = lines[362].split(",");
@@ -122,9 +119,9 @@ public class SPTResourceTest {
 
     @Test
     public void missingPoint() {
-        Response rsp = clientTarget(app, "/spt").request().buildGet().invoke();
+        BodyAndStatus rsp = getWithStatus(clientTarget(app, "/spt"));
         assertEquals(400, rsp.getStatus());
-        JsonNode json = rsp.readEntity(JsonNode.class);
+        JsonNode json = rsp.getBody();
         assertTrue(json.get("message").toString().contains("query param point must not be null"), json.toString());
     }
 
@@ -135,9 +132,9 @@ public class SPTResourceTest {
     }
 
     private void assertNotAllowed(String hint, String error) {
-        Response rsp = clientTarget(app, "/spt?point=42.531073,1.573792&time_limit=300&columns=street_name,road_class,max_speed" + hint).request().buildGet().invoke();
+        BodyAndStatus rsp = getWithStatus(clientTarget(app, "/spt?point=42.531073,1.573792&time_limit=300&columns=street_name,road_class,max_speed" + hint));
         assertEquals(400, rsp.getStatus());
-        JsonNode json = rsp.readEntity(JsonNode.class);
+        JsonNode json = rsp.getBody();
         assertTrue(json.get("message").toString().contains(error), json.toString());
     }
 }

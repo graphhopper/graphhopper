@@ -21,7 +21,6 @@ package com.graphhopper.http;
 import com.graphhopper.util.shapes.GHPoint;
 import io.dropwizard.jersey.params.AbstractParam;
 
-import javax.annotation.Nullable;
 
 /**
  * This is a glue type, used to plug GHPoint as a custom web resource parameter type into Dropwizard,
@@ -38,16 +37,16 @@ import javax.annotation.Nullable;
  */
 public class GHPointParam extends AbstractParam<GHPoint> {
 
-    public GHPointParam(@Nullable String input) {
+    public GHPointParam(String input) {
         super(input);
     }
 
-    public GHPointParam(@Nullable String input, String parameterName) {
+    public GHPointParam(String input, String parameterName) {
         super(input, parameterName);
     }
 
     @Override
-    protected GHPoint parse(@Nullable String input) throws Exception {
+    protected GHPoint parse(String input) {
         if (input == null)
             return null;
         return GHPoint.fromString(input);
