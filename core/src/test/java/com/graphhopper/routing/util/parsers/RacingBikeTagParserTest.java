@@ -86,22 +86,6 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
     }
 
     @Test
-    public void testLivingStreet() {
-        ReaderWay osmWay = new ReaderWay(1);
-        osmWay.clearTags();
-        osmWay.setTag("highway", "living_street");
-        assertPriorityAndSpeed(UNCHANGED, 6, osmWay);
-        osmWay.setTag("maxspeed", "20");
-        assertPriorityAndSpeed(VERY_NICE, 20, osmWay);
-        osmWay.setTag("maxspeed", "10");
-        assertPriorityAndSpeed(VERY_NICE, 10, osmWay);
-        osmWay.clearTags();
-        osmWay.setTag("highway", "residential");
-        osmWay.setTag("maxspeed", "30");
-        assertPriorityAndSpeed(SLIGHT_AVOID, 20, osmWay);
-    }
-
-    @Test
     @Override
     public void testService() {
         ReaderWay way = new ReaderWay(1);
@@ -269,10 +253,10 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, UNCHANGED, 20, osmWay);
 
         osmWay.setTag("highway", "motorway");
-        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, BAD, 20, osmWay);
+        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, BAD, 18, osmWay);
 
         osmWay.setTag("tunnel", "yes");
-        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, REACH_DESTINATION, 20, osmWay);
+        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, REACH_DESTINATION, 18, osmWay);
 
         osmWay.setTag("surface", "cobblestone");
         assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, REACH_DESTINATION, 8, osmWay);
@@ -281,24 +265,24 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         osmWay.setTag("highway", "motorway");
         osmWay.setTag("tunnel", "yes");
         osmWay.setTag("maxspeed", "80");
-        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, REACH_DESTINATION, 20, osmWay);
+        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, REACH_DESTINATION, 18, osmWay);
 
         osmWay.clearTags();
         osmWay.setTag("highway", "motorway");
         osmWay.setTag("tunnel", "yes");
         osmWay.setTag("maxspeed", "120");
-        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, REACH_DESTINATION, 20, osmWay);
+        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, REACH_DESTINATION, 18, osmWay);
 
         osmWay.clearTags();
         osmWay.setTag("highway", "notdefined");
         osmWay.setTag("tunnel", "yes");
         osmWay.setTag("maxspeed", "120");
-        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, BAD, 20, osmWay);
+        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, BAD, 4, osmWay);
 
         osmWay.clearTags();
         osmWay.setTag("highway", "notdefined");
         osmWay.setTag("maxspeed", "50");
-        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, UNCHANGED, 20, osmWay);
+        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, UNCHANGED, 4, osmWay);
     }
 
     private void assertPriorityAndSpeed(EncodingManager encodingManager, DecimalEncodedValue priorityEnc, DecimalEncodedValue speedEnc,

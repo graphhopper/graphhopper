@@ -79,18 +79,6 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.clearTags();
         way.setTag("highway", "living_street");
         assertPriorityAndSpeed(UNCHANGED, 6, way);
-        way.setTag("maxspeed", "20");
-        assertPriorityAndSpeed(PREFER, 18, way);
-        way.setTag("maxspeed", "10");
-        assertPriorityAndSpeed(VERY_NICE, 10, way);
-        way.setTag("maxspeed", "20");
-        way.setTag("surface", "sett");
-        assertPriorityAndSpeed(PREFER, 10, way);
-
-        way.clearTags();
-        way.setTag("highway", "service");
-        way.setTag("maxspeed", "20");
-        assertPriorityAndSpeed(PREFER, 18, way);
 
         // Pushing section: this is fine as we obey the law!
         way.clearTags();
@@ -601,7 +589,7 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way = new ReaderWay(1);
         way.setTag("highway", "track");
         way.setTag("maxspeed", "90");
-        assertPriorityAndSpeed(UNCHANGED, 18, way);
+        assertPriorityAndSpeed(UNCHANGED, 12, way);
 
         // here we are limited by the maxspeed
         way = new ReaderWay(1);
