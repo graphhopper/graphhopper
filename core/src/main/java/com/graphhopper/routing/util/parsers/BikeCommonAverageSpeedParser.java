@@ -1,10 +1,7 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EdgeIntAccess;
-import com.graphhopper.routing.ev.EnumEncodedValue;
-import com.graphhopper.routing.ev.Smoothness;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.FerrySpeedCalculator;
 
 import java.util.*;
@@ -152,8 +149,8 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
                 speed = 12;
         }
         // Increase speed in case maxspeed tag allows it
-        double maxSpeed = getMaxSpeed(way, false);
-        if (isValidSpeed(maxSpeed) && (speed < maxSpeed))
+        double maxSpeed = OSMMaxSpeedParser.parseMaxSpeed(way, false);
+        if (maxSpeed != MaxSpeed.MAXSPEED_MISSING && (speed < maxSpeed))
             speed = Math.min(maxSpeed, highwaySpeeds.get("tertiary"));
 
         Integer surfaceSpeed = surfaceSpeeds.get(surfaceValue);
