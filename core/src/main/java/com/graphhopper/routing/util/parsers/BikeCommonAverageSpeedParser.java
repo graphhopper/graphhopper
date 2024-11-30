@@ -156,10 +156,9 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         if (way.hasTag("surface") && surfaceSpeed == null
                 || way.hasTag("bicycle", "dismount")
                 || way.hasTag("railway", "platform")
-                || pushingRestriction && !way.hasTag("bicycle", INTENDED)) {
+                || pushingRestriction && !way.hasTag("bicycle", INTENDED)
+                || way.hasTag("service")) {
             speed = PUSHING_SECTION_SPEED;
-        } else if (way.hasTag("service")) {
-            speed = highwaySpeeds.get("living_street");
         } else if ("track".equals(highwayValue) ||
                 "bridleway".equals(highwayValue) ) {
             if (surfaceSpeed != null)
