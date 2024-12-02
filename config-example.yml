@@ -119,7 +119,7 @@ graphhopper:
   #### Elevation ####
 
   # To populate your graph with elevation data use SRTM, default is noop (no elevation). Read more about it in docs/core/elevation.md
-  # graph.elevation.provider: srtm
+  graph.elevation.provider: srtm
 
   # default location for cache is /tmp/srtm
   # graph.elevation.cache_dir: ./srtmprovider/
@@ -199,7 +199,7 @@ graphhopper:
 
   # You can limit the max distance between two consecutive waypoints of flexible routing requests to be less or equal
   # the given distance in meter. Default is set to 1000km.
-  routing.non_ch.max_waypoint_distance: 1000000
+  routing.non_ch.max_waypoint_distance: 3000000
 
 
   #### Storage ####
