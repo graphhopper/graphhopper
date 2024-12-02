@@ -4,10 +4,7 @@
     { "if": "!car_access", "multiply_by": "0" },
     { "if": "rsbikeaccess == NO", "multiply_by": "0"},
     { "if": "road_class == CONSTRUCTION", "multiply_by": "0"},
-    { "if": "road_access == PRIVATE", "multiply_by": "0" },
-    { "if": "surface==COBBLESTONE || surface==GRASS || surface==GRAVEL || surface==SAND || surface==PAVING_STONES || surface==DIRT || surface==GROUND || surface==UNPAVED || surface==COMPACTED",
-    "multiply_by": "0"
-    }
+    { "if": "road_access == PRIVATE", "multiply_by": "0" }
   ],
   "speed": [
     { "if": "true", "limit_to": "0.9 * car_average_speed" },

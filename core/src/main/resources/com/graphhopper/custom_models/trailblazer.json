@@ -5,9 +5,6 @@
     { "if": "rsbikeaccess == NO", "multiply_by": "0"},
     { "if": "road_class == CONSTRUCTION", "multiply_by": "0"},
     { "if": "road_access == PRIVATE", "multiply_by": "0" },
-    { "if": "surface==COBBLESTONE || surface==GRASS || surface==GRAVEL || surface==SAND || surface==PAVING_STONES || surface==DIRT || surface==GROUND || surface==UNPAVED || surface==COMPACTED",
-    "multiply_by": "0"
-    },
     { "if": "road_classification_v2 == NH",  "multiply_by": "0.1" },
     { "if": "road_classification_v2 == SH",  "multiply_by": "0.3" },
     { "if": "road_classification_v2 == NH_OR_SH",  "multiply_by": "0.3" },
