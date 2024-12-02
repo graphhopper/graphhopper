@@ -170,6 +170,108 @@ public class DefaultImportRegistry implements ImportRegistry {
                     (lookup, props) -> new OSMFootwayParser(
                             lookup.getEnumEncodedValue(Footway.KEY, Footway.class))
             );
+        // Start block - Added by KJ for RideSense 22062024
+        else if (RSRoadCurvature.KEY.equals(name))
+            return ImportUnit.create(name, props -> RSRoadCurvature.create(),
+                    (lookup, props) -> new RSRoadCurvatureParser(
+                            lookup.getEnumEncodedValue(RSRoadCurvature.KEY, RSRoadCurvature.class))
+            );
+            else if (RSBuildPerc.KEY.equals(name))
+            return ImportUnit.create(name, props -> RSBuildPerc.create(),
+                    (lookup, props) -> new RSBuildPercParser(
+                            lookup.getDecimalEncodedValue(RSBuildPerc.KEY))
+            );
+            else if (RSPopulationDensity.KEY.equals(name))
+            return ImportUnit.create(name, props -> RSPopulationDensity.create(),
+                    (lookup, props) -> new RSPopulationDensityParser(
+                            lookup.getDecimalEncodedValue(RSPopulationDensity.KEY))
+            );
+            else if (RSBikeAccess.KEY.equals(name))
+            return ImportUnit.create(name, props -> RSBikeAccess.create(),
+                    (lookup, props) -> new RSBikeAccessParser(
+                            lookup.getEnumEncodedValue(RSBikeAccess.KEY, RSBikeAccess.class))
+            );            
+            else if (RSRoadClassification.KEY.equals(name))
+            return ImportUnit.create(name, props -> RSRoadClassification.create(),
+                    (lookup, props) -> new RSRoadClassificationParser(
+                            lookup.getEnumEncodedValue(RSRoadClassification.KEY, RSRoadClassification.class))
+            );
+//            else if (RSRoadClassificationv2.KEY.equals(name))
+//            return ImportUnit.create(name, props -> RSRoadClassificationv2.create(),
+//                    (lookup, props) -> new RSRoadClassificationv2Parser(
+//                           lookup.getEnumEncodedValue(RSRoadClassificationv2.KEY, RSRoadClassificationv2.class))
+//            );            
+            else if (RSSceneryUrban.KEY.equals(name))
+            return ImportUnit.create(name, props -> RSSceneryUrban.create(),
+                    (lookup, props) -> new RSSceneryUrbanParser(
+                            lookup.getIntEncodedValue(RSSceneryUrban.KEY))
+            );
+            else if (RSSceneryForest.KEY.equals(name))
+            return ImportUnit.create(name, props -> RSSceneryForest.create(),
+                    (lookup, props) -> new RSSceneryForestParser(
+                            lookup.getIntEncodedValue(RSSceneryForest.KEY))
+            );
+            else if (RSSceneryHill.KEY.equals(name))
+            return ImportUnit.create(name, props -> RSSceneryHill.create(),
+                    (lookup, props) -> new RSSceneryHillParser(
+                            lookup.getIntEncodedValue(RSSceneryHill.KEY))
+            );
+            else if (RSSceneryLake.KEY.equals(name))
+            return ImportUnit.create(name, props -> RSSceneryLake.create(),
+                    (lookup, props) -> new RSSceneryLakeParser(
+                            lookup.getIntEncodedValue(RSSceneryLake.KEY))
+            );
+            else if (RSSceneryBeach.KEY.equals(name))
+            return ImportUnit.create(name, props -> RSSceneryBeach.create(),
+                    (lookup, props) -> new RSSceneryBeachParser(
+                            lookup.getIntEncodedValue(RSSceneryBeach.KEY))
+            );
+            else if (RSSceneryRiver.KEY.equals(name))
+            return ImportUnit.create(name, props -> RSSceneryRiver.create(),
+                    (lookup, props) -> new RSSceneryRiverParser(
+                            lookup.getIntEncodedValue(RSSceneryRiver.KEY))
+            );
+            else if (RSSceneryDesert.KEY.equals(name))
+            return ImportUnit.create(name, props -> RSSceneryDesert.create(),
+                    (lookup, props) -> new RSSceneryDesertParser(
+                            lookup.getIntEncodedValue(RSSceneryDesert.KEY))
+            );
+            else if (RSScenerySnowCappedMountain.KEY.equals(name))
+            return ImportUnit.create(name, props -> RSScenerySnowCappedMountain.create(),
+                    (lookup, props) -> new RSScenerySnowCappedMountainParser(
+                            lookup.getIntEncodedValue(RSScenerySnowCappedMountain.KEY))
+            );
+            else if (RSSceneryField.KEY.equals(name))
+            return ImportUnit.create(name, props -> RSSceneryField.create(),
+                    (lookup, props) -> new RSSceneryFieldParser(
+                            lookup.getIntEncodedValue(RSSceneryField.KEY))
+            );
+            else if (RSSceneryPlantation.KEY.equals(name))
+            return ImportUnit.create(name, props -> RSSceneryPlantation.create(),
+                    (lookup, props) -> new RSSceneryPlantationParser(
+                            lookup.getIntEncodedValue(RSSceneryPlantation.KEY))
+            );
+            else if (RSScenerySaltFlat.KEY.equals(name))
+            return ImportUnit.create(name, props -> RSScenerySaltFlat.create(),
+                    (lookup, props) -> new RSScenerySaltFlatParser(
+                            lookup.getIntEncodedValue(RSScenerySaltFlat.KEY))
+            );
+            else if (RSScenerySemiUrban.KEY.equals(name))
+            return ImportUnit.create(name, props -> RSScenerySemiUrban.create(),
+                    (lookup, props) -> new RSScenerySemiUrbanParser(
+                            lookup.getIntEncodedValue(RSScenerySemiUrban.KEY))
+            );
+            else if (RSSceneryBackwater.KEY.equals(name))
+            return ImportUnit.create(name, props -> RSSceneryBackwater.create(),
+                    (lookup, props) -> new RSSceneryBackwaterParser(
+                            lookup.getIntEncodedValue(RSSceneryBackwater.KEY))
+            );
+            else if (RSSceneryMountainPass.KEY.equals(name))
+            return ImportUnit.create(name, props -> RSSceneryMountainPass.create(),
+                    (lookup, props) -> new RSSceneryMountainPassParser(
+                            lookup.getIntEncodedValue(RSSceneryMountainPass.KEY))
+            );
+            // End block - Added by KJ for RideSense 22062024            
         else if (OSMWayID.KEY.equals(name))
             return ImportUnit.create(name, props -> OSMWayID.create(),
                     (lookup, props) -> new OSMWayIDParser(
