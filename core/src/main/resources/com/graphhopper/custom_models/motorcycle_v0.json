@@ -1,0 +1,25 @@
+// to use this custom model you need to set the following option in the config.yml
+// graph.urban_density.threads: 4 # expensive to calculate but very useful
+// graph.encoded_values: car_access, track_type, road_access, road_class, curvature, car_average_speed, surface
+// profiles:
+//    - name: motorcycle
+//      custom_model_files: [motorcycle.json,curvature.json]
+
+{
+  "distance_influence": 90,
+  "priority": [
+    { "if": "!car_access", "multiply_by": "0"},
+    { "if": "track_type.ordinal() > 1", "multiply_by": "0" },
+    { "if": "road_access == PRIVATE", "multiply_by": "0" },
+    { "if": "road_class == MOTORWAY || road_class == TRUNK", "multiply_by": "0.1" }
+    // { "if": "urban_density != RURAL", "multiply_by": "0.3" },
+  ],
+  "speed": [
+    { "if": "true", "limit_to": "0.9 * car_average_speed" },
+    { "if": "true", "limit_to": "120" },
+    { "if": "surface==COBBLESTONE || surface==GRASS || surface==GRAVEL || surface==SAND || surface==PAVING_STONES || surface==DIRT || surface==GROUND || surface==UNPAVED || surface==COMPACTED",
+      "limit_to": "30"
+    }
+  ]
+
+}

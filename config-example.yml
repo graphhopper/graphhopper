@@ -29,12 +29,16 @@ graphhopper:
   # profiles (see below). Or at least limit the number of `routing.max_visited_nodes`.
 
   profiles:
-   - name: car
-#     turn_costs:
-#       vehicle_types: [motorcar, motor_vehicle]
-#       u_turn_costs: 60
-#     for more advanced turn costs, see #2957 or bike_tc.yml
-     custom_model_files: [car.json]
+  - name: motorcycle
+    custom_model_files: [motorcycle.json]
+  - name: milemuncher
+    custom_model_files: [milemuncher.json]
+  - name: cornercraver
+    custom_model_files: [cornercraver.json]
+  - name: trailblazer
+    custom_model_files: [trailblazer.json]
+  - name: tranquiltraveller
+    custom_model_files: [tranquiltraveller.json]
 
 #   You can use the following in-built profiles. After you start GraphHopper it will print which encoded values you'll have to add to graph.encoded_values in this config file.
 #
@@ -71,7 +75,11 @@ graphhopper:
   # profiles with `turn_costs` a more elaborate preparation is required (longer preparation time and more memory
   # usage) and the routing will also be slower than with `turn_costs: false`.
   profiles_ch:
-    - profile: car
+    - profile: motorcycle
+    - profile: milemuncher
+    - profile: cornercraver
+    - profile: trailblazer
+    - profile: tranquiltraveller
 
   # Hybrid mode:
   # Similar to speed mode, the hybrid mode (Landmarks, LM) also speeds up routing by doing calculating auxiliary data
@@ -92,7 +100,7 @@ graphhopper:
   # More are: surface,smoothness,max_width,max_height,max_weight,max_weight_except,hgv,max_axle_load,max_length,
   #           hazmat,hazmat_tunnel,hazmat_water,lanes,osm_way_id,toll,track_type,mtb_rating,hike_rating,horse_rating,
   #           country,curvature,average_slope,max_slope,car_temporal_access,bike_temporal_access,foot_temporal_access
-  graph.encoded_values: car_access, car_average_speed
+  graph.encoded_values: car_access, road_class, lanes, rsbikeaccess, curvature, average_slope, max_slope, osm_way_id, road_classification_v2, build_perc, population_density, road_scenery_urban, road_scenery_forest, road_scenery_hill, road_scenery_lake, road_scenery_beach, road_scenery_river, road_scenery_desert, road_scenery_snowcappedmountain, road_scenery_field, road_scenery_plantation, road_scenery_saltflat, road_scenery_semiurban, road_scenery_backwater, road_scenery_mountainpass, road_access, car_average_speed, surface, max_speed 
 
   #### Speed, hybrid and flexible mode ####
 
