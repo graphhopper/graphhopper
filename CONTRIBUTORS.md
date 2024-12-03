@@ -48,8 +48,8 @@ Here is an overview:
  * joe-akeem, improvements like #2158
  * JohannesPelzer, improved GPX information and various other things
  * karussell, one of the core developers
- * khuebner, initial turn costs support
  * kodonnell, adding support for CH and other algorithms (#60) and penalizing inner-link U-turns (#88)
+ * kschrab, initial turn costs support
  * legraina, improved docker for dockerhub
  * lmar, improved instructions
  * lukasalexanderweber, helped to implement via-way restrictions #2689 and fixes like #2652

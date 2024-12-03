@@ -28,7 +28,7 @@ reader-gtfs:
  * some files from com.conveyal:gtfs-lib (BSD 2-clause license)
  * com.google.transit:gtfs-realtime-bindings (Apache license)
  * com.google.guava:guava (Apache license)
- * net.sourceforge.javacsv:javacsv (LGPL license)
+ * com.opencsv:opencsv (Apache license)
  * commons-io:commons-io (Apache license)
  * org.mapdb:mapdb (Apache license)
 
