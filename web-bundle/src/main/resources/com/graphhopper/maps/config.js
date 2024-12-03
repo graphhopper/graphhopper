@@ -1,5 +1,5 @@
 const config = {
-    routingApi: location.origin + '/',
+    routingApi: location.origin + (location.host == 'alpha.mostpaths.com' ? '/api/alltrails/graphhopper-service/' : '/'),
     geocodingApi: '',
     defaultTiles: 'OpenStreetMap',
     keys: {

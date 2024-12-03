@@ -51,9 +51,12 @@ import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.*;
+import com.graphhopper.util.Parameters.Algorithms.RoundTrip;
 import com.graphhopper.util.Parameters.Landmark;
 import com.graphhopper.util.Parameters.Routing;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
+
+import com.graphhopper.AtGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -124,6 +127,8 @@ public class GraphHopper {
     private double cityAreaRadius = 1500;
     private double cityAreaSensitivity = 1000;
     private int urbanDensityCalculationThreads = 0;
+    // For loading AllTrails attributes
+    private String atCsvFile = "";
 
     // preparation handlers
     private final LMPreparationHandler lmPreparationHandler = new LMPreparationHandler();
@@ -472,8 +477,17 @@ public class GraphHopper {
             throw new IllegalArgumentException("Instead of osmreader.osm use datareader.file, for other changes see CHANGELOG.md");
 
         String tmpOsmFile = ghConfig.getString("datareader.file", "");
-        if (!isEmpty(tmpOsmFile))
+        if (!isEmpty(tmpOsmFile)) {
             osmFile = tmpOsmFile;
+            String filename = osmFile + ".csv";
+            if (new File(filename).isFile())
+                atCsvFile = filename;
+        }
+        else {
+            // When running on AWS with S3 file system, the latter does not support
+            // locking, so call this to disable read-locks from being attempted:
+            setAllowWrites(false);
+        }
 
         String graphHopperFolder = ghConfig.getString("graph.location", "");
         if (isEmpty(graphHopperFolder) && isEmpty(ghLocation)) {
@@ -904,6 +918,11 @@ public class GraphHopper {
         if (osmFile == null)
             throw new IllegalStateException("Couldn't load from existing folder: " + ghLocation
                     + " but also cannot use file for DataReader as it wasn't specified!");
+
+        if (!isEmpty(atCsvFile)) {
+            logger.info("Loading AllTrails attributes from " + atCsvFile);
+            AtGlobals.loadAllTrailsCsv(atCsvFile);
+        }
 
         List<CustomArea> customAreas = readCountries();
         if (isEmpty(customAreasDirectory)) {
