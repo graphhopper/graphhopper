@@ -30,6 +30,7 @@ reader-gtfs:
  * com.google.guava:guava (Apache license)
  * com.opencsv:opencsv (Apache license)
  * commons-io:commons-io (Apache license)
+ * org.apache.commons:commons-lang3 (Apache license)
  * org.mapdb:mapdb (Apache license)
 
 tools:
