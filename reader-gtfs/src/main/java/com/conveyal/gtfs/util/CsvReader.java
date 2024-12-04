@@ -14,6 +14,9 @@ import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * A supplement wrapper for the old javacsv based implementation.
+ */
 public class CsvReader {
 
     private final CSVReader reader;

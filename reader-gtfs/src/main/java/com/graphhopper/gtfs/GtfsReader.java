@@ -35,7 +35,7 @@ import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.conveyal.gtfs.model.Entity.Writer.convertToGtfsTime;
+import static com.conveyal.gtfs.model.Entity.Loader.convertToGtfsTime;
 import static java.time.temporal.ChronoUnit.DAYS;
 
 class GtfsReader {
