@@ -3,9 +3,8 @@ package com.conveyal.gtfs.util;
 import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
-import com.opencsv.exceptions.CsvValidationException;
-import com.opencsv.validators.LineValidator;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -34,7 +33,6 @@ public class CsvReader {
     public CsvReader(Reader reader, char delimiter) {
         this.reader = new CSVReaderBuilder(reader)
                 .withCSVParser(new CSVParserBuilder().withSeparator(delimiter).build())
-                .withLineValidator(new SkipEmptyLines())
                 .build();
     }
 
@@ -67,24 +65,29 @@ public class CsvReader {
 
     public boolean readRecord() {
         try {
-            currenRecord = this.reader.readNext();
-            return currenRecord != null;
-        } catch (Exception e) {
+            String[] nextRecord;
+            do {
+                if (this.reader.peek() == null) {
+                    currenRecord = null;
+                    return false;
+                }
+                nextRecord = this.reader.readNextSilently();
+            } while (isEmptyLine(nextRecord));
+
+            currenRecord = nextRecord;
+            return true;
+        } catch (IOException e) {
+            currenRecord = null;
             return false;
         }
     }
 
-    static class SkipEmptyLines implements LineValidator {
-        @Override
-        public boolean isValid(String s) {
-            return s != null && !s.isEmpty();
-        }
-
-        @Override
-        public void validate(String s) throws CsvValidationException {
-            if (!isValid(s)) {
-                throw new CsvValidationException();
-            }
-        }
+    /*
+     * Checks if the provided record was produced by an empty line.
+     */
+    private boolean isEmptyLine(String[] record) {
+        // an empty line results in a non-empty record consisting of one empty string: [""]
+        return record.length == 1 && (record[0] == null || record[0].isEmpty());
     }
+
 }
