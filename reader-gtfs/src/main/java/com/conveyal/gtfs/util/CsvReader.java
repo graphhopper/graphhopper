@@ -5,7 +5,6 @@ import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import com.opencsv.exceptions.CsvValidationException;
 import com.opencsv.validators.LineValidator;
-import org.apache.commons.lang3.StringUtils;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -78,7 +77,7 @@ public class CsvReader {
     static class SkipEmptyLines implements LineValidator {
         @Override
         public boolean isValid(String s) {
-            return StringUtils.isNotEmpty(s);
+            return s != null && !s.isEmpty();
         }
 
         @Override
