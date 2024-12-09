@@ -429,26 +429,26 @@ class CustomWeightingTest {
     public void testDestinationTag() {
         DecimalEncodedValue carSpeedEnc = new DecimalEncodedValueImpl("car_speed", 5, 5, false);
         DecimalEncodedValue bikeSpeedEnc = new DecimalEncodedValueImpl("bike_speed", 4, 2, false);
-        EncodingManager em = EncodingManager.start().add(carSpeedEnc).add(bikeSpeedEnc).add(RoadAccess.create()).build();
+        EncodingManager em = EncodingManager.start().add(carSpeedEnc).add(bikeSpeedEnc).add(CarRoadAccess.create()).build();
         BaseGraph graph = new BaseGraph.Builder(em).create();
         EdgeIteratorState edge = graph.edge(0, 1).setDistance(1000);
         edge.set(carSpeedEnc, 60);
         edge.set(bikeSpeedEnc, 18);
-        EnumEncodedValue<RoadAccess> roadAccessEnc = em.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
+        EnumEncodedValue<CarRoadAccess> roadAccessEnc = em.getEnumEncodedValue(CarRoadAccess.KEY, CarRoadAccess.class);
 
         CustomModel customModel = createSpeedCustomModel(carSpeedEnc)
-                .addToPriority(If("road_access == DESTINATION", MULTIPLY, ".1"));
+                .addToPriority(If("car_road_access == DESTINATION", MULTIPLY, ".1"));
         Weighting weighting = CustomModelParser.createWeighting(em, NO_TURN_COST_PROVIDER, customModel);
 
         CustomModel bikeCustomModel = createSpeedCustomModel(bikeSpeedEnc);
         Weighting bikeWeighting = CustomModelParser.createWeighting(em, NO_TURN_COST_PROVIDER, bikeCustomModel);
 
-        edge.set(roadAccessEnc, RoadAccess.YES);
+        edge.set(roadAccessEnc, CarRoadAccess.YES);
         assertEquals(60, weighting.calcEdgeWeight(edge, false), 1.e-6);
         assertEquals(200, bikeWeighting.calcEdgeWeight(edge, false), 1.e-6);
 
         // the destination tag does not change the weight for the bike weighting
-        edge.set(roadAccessEnc, RoadAccess.DESTINATION);
+        edge.set(roadAccessEnc, CarRoadAccess.DESTINATION);
         assertEquals(600, weighting.calcEdgeWeight(edge, false), 0.1);
         assertEquals(200, bikeWeighting.calcEdgeWeight(edge, false), 0.1);
     }
@@ -457,29 +457,29 @@ class CustomWeightingTest {
     public void testPrivateTag() {
         DecimalEncodedValue carSpeedEnc = new DecimalEncodedValueImpl("car_speed", 5, 5, false);
         DecimalEncodedValue bikeSpeedEnc = new DecimalEncodedValueImpl("bike_speed", 4, 2, false);
-        EncodingManager em = EncodingManager.start().add(carSpeedEnc).add(bikeSpeedEnc).add(RoadAccess.create()).build();
+        EncodingManager em = EncodingManager.start().add(carSpeedEnc).add(bikeSpeedEnc).add(CarRoadAccess.create()).build();
         BaseGraph graph = new BaseGraph.Builder(em).create();
         EdgeIteratorState edge = graph.edge(0, 1).setDistance(1000);
         edge.set(carSpeedEnc, 60);
         edge.set(bikeSpeedEnc, 18);
-        EnumEncodedValue<RoadAccess> roadAccessEnc = em.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
+        EnumEncodedValue<CarRoadAccess> roadAccessEnc = em.getEnumEncodedValue(CarRoadAccess.KEY, CarRoadAccess.class);
 
         CustomModel customModel = createSpeedCustomModel(carSpeedEnc)
-                .addToPriority(If("road_access == PRIVATE", MULTIPLY, ".1"));
+                .addToPriority(If("car_road_access == PRIVATE", MULTIPLY, ".1"));
         Weighting weighting = CustomModelParser.createWeighting(em, NO_TURN_COST_PROVIDER, customModel);
 
         customModel = createSpeedCustomModel(bikeSpeedEnc)
-                .addToPriority(If("road_access == PRIVATE", MULTIPLY, "0.8333"));
+                .addToPriority(If("car_road_access == PRIVATE", MULTIPLY, "0.8333"));
         Weighting bikeWeighting = CustomModelParser.createWeighting(em, NO_TURN_COST_PROVIDER, customModel);
 
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "secondary");
 
-        edge.set(roadAccessEnc, RoadAccess.YES);
+        edge.set(roadAccessEnc, CarRoadAccess.YES);
         assertEquals(60, weighting.calcEdgeWeight(edge, false), .01);
         assertEquals(200, bikeWeighting.calcEdgeWeight(edge, false), .01);
 
-        edge.set(roadAccessEnc, RoadAccess.PRIVATE);
+        edge.set(roadAccessEnc, CarRoadAccess.PRIVATE);
         assertEquals(600, weighting.calcEdgeWeight(edge, false), .01);
         // private should influence bike only slightly
         assertEquals(240, bikeWeighting.calcEdgeWeight(edge, false), .01);

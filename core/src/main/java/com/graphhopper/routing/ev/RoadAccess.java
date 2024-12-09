@@ -27,6 +27,7 @@ import com.graphhopper.util.Helper;
  * default value is YES. But some have restrictions like "accessible only for customers" or when
  * delivering. The NO value does not permit any access.
  */
+@Deprecated
 public enum RoadAccess {
     YES, DESTINATION, CUSTOMERS, DELIVERY, FORESTRY, AGRICULTURAL, PRIVATE, NO;
 
@@ -56,6 +57,9 @@ public enum RoadAccess {
 
     public static RoadAccess countryHook(ReaderWay readerWay, RoadAccess roadAccess) {
         CountryRule countryRule = readerWay.getTag("country_rule", null);
-        return countryRule == null ? roadAccess : countryRule.getAccess(readerWay, TransportationMode.CAR, roadAccess == null ? RoadAccess.YES : roadAccess);
+        if (countryRule == null) return roadAccess;
+        CarRoadAccess carRA = roadAccess == null ? CarRoadAccess.YES : CarRoadAccess.find(roadAccess.name());
+        CarRoadAccess result = countryRule.getAccess(readerWay, TransportationMode.CAR, carRA);
+        return RoadAccess.find(result.name());
     }
 }

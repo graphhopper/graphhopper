@@ -1,5 +1,5 @@
 // to use this custom model you need to set the following option in the config.yml
-// graph.encoded_values: car_access, car_average_speed, track_type, road_access
+// graph.encoded_values: car_access, car_average_speed, track_type, car_road_access
 // profiles:
 //    - name: car4wd
 //      custom_model_files: [car4wd.json]
@@ -7,7 +7,7 @@
 {
   "distance_influence": 1,
   "priority": [
-    { "if": "road_access == PRIVATE", "multiply_by": "0" },
+    { "if": "car_road_access == PRIVATE", "multiply_by": "0" },
     { "if": "track_type != GRADE4 && track_type != GRADE5 && car_access == false", "multiply_by": "0" }
   ],
   "speed": [

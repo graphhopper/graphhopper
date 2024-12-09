@@ -70,7 +70,7 @@ encoded values are the following (some of their possible values are given in bra
 
 - road_class: (OTHER, MOTORWAY, TRUNK, PRIMARY, SECONDARY, TRACK, STEPS, CYCLEWAY, FOOTWAY, ...)
 - road_environment: (ROAD, FERRY, BRIDGE, TUNNEL, ...)
-- road_access: (DESTINATION, DELIVERY, PRIVATE, NO, ...)
+- car_road_access: (YES, MISSING, DESTINATION, DELIVERY, PRIVATE, NO, ...)
 - surface: (PAVED, DIRT, SAND, GRAVEL, ...)
 - smoothness: (EXCELLENT, GOOD, INTERMEDIATE, ...)
 - toll: (MISSING, NO, HGV, ALL)

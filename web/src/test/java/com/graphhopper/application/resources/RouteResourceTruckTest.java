@@ -35,7 +35,7 @@ public class RouteResourceTruckTest {
                 putObject("graph.encoded_values", "max_height,max_weight,max_width,hazmat,toll,surface,hgv").
                 putObject("import.osm.ignored_highways", "").
                 putObject("custom_models.directory", "./src/test/resources/com/graphhopper/application/resources").
-                putObject("graph.encoded_values", "max_height, max_weight, max_width, hazmat, toll, surface, hgv, road_class, road_access, road_class_link, road_environment\n").
+                putObject("graph.encoded_values", "max_height, max_weight, max_width, hazmat, toll, surface, hgv, road_class, car_road_access, road_class_link, road_environment\n").
                 setProfiles(List.of(new Profile("truck").setCustomModel(null).
                         putHint("custom_model_files", List.of("test_truck.json")))).
                 setCHProfiles(List.of(new CHProfile("truck")));

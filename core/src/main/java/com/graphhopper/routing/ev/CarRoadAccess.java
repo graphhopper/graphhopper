@@ -17,15 +17,23 @@
  */
 package com.graphhopper.routing.ev;
 
+import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.util.TransportationMode;
+import com.graphhopper.routing.util.countryrules.CountryRule;
 import com.graphhopper.util.Helper;
 
-public enum BikeRoadAccess {
-    MISSING, YES, DESTINATION, DESIGNATED, USE_SIDEPATH, DISMOUNT, PRIVATE, NO;
+/**
+ * This enum defines the car road access of an edge. The default is the MISSING value. Some edges
+ * have an explicit YES and some have restrictions like when delivering.
+ * The NO value does not permit any access.
+ */
+public enum CarRoadAccess {
+    MISSING, YES, DESTINATION, DELIVERY, FORESTRY, AGRICULTURAL, PRIVATE, NO;
 
-    public static final String KEY = "bike_road_access";
+    public static final String KEY = "car_road_access";
 
-    public static EnumEncodedValue<BikeRoadAccess> create() {
-        return new EnumEncodedValue<>(BikeRoadAccess.KEY, BikeRoadAccess.class);
+    public static EnumEncodedValue<CarRoadAccess> create() {
+        return new EnumEncodedValue<>(CarRoadAccess.KEY, CarRoadAccess.class);
     }
 
     @Override
@@ -33,15 +41,21 @@ public enum BikeRoadAccess {
         return Helper.toLowerCase(super.toString());
     }
 
-    public static BikeRoadAccess find(String name) {
+    public static CarRoadAccess find(String name) {
         if (name == null || name.isEmpty())
             return MISSING;
         if (name.equalsIgnoreCase("permit") || name.equalsIgnoreCase("customers"))
             return PRIVATE;
         try {
-            return BikeRoadAccess.valueOf(Helper.toUpperCase(name));
+            // public and permissive will be converted into "yes"
+            return CarRoadAccess.valueOf(Helper.toUpperCase(name));
         } catch (IllegalArgumentException ex) {
             return YES;
         }
+    }
+
+    public static CarRoadAccess countryHook(ReaderWay readerWay, CarRoadAccess roadAccess) {
+        CountryRule countryRule = readerWay.getTag("country_rule", null);
+        return countryRule == null ? roadAccess : countryRule.getAccess(readerWay, TransportationMode.CAR, roadAccess == null ? CarRoadAccess.YES : roadAccess);
     }
 }

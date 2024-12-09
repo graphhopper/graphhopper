@@ -1,5 +1,8 @@
 ### 11.0 [not yet released]
 
+- use car_road_access instead of road_access. road_access exists only for web API backward compatibility. Note that MISSING was added in comparison to road_access, see #3066
+- road_access now contains value of highest transportation mode for CAR, i.e. access=private, motorcar=yes will now return YES and not PRIVATE
+- car.json by default avoids private roads
 - max_weight_except: changed NONE to MISSING
 - the list of restrictions for BIKE returned from OSMRoadAccessParser.toOSMRestrictions is again `[bicycle, vehicle, access]` and not `[bicycle, access]` like before #2981
 - road_access now contains value of highest transportation mode for CAR, i.e. access=private, motorcar=yes will now return YES and not PRIVATE

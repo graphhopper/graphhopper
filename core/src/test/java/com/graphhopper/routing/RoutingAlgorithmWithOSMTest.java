@@ -117,7 +117,7 @@ public class RoutingAlgorithmWithOSMTest {
         queries.add(new Query(43.727592, 7.419333, 43.727712, 7.419333, 0, 1));
         GraphHopper hopper = createHopper(MONACO, new Profile("car").setCustomModel(
                 CustomModel.merge(getCustomModel("motorcycle.json"), getCustomModel("curvature.json"))));
-        hopper.setEncodedValuesString("curvature,track_type,surface,road_access, road_class, car_average_speed, car_access");
+        hopper.setEncodedValuesString("curvature,track_type,surface,car_road_access, road_class, car_average_speed, car_access");
         hopper.setElevationProvider(new SRTMProvider(DIR));
         hopper.importOrLoad();
         checkQueries(hopper, queries);

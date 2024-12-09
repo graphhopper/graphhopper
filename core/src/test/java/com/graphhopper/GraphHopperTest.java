@@ -565,12 +565,12 @@ public class GraphHopperTest {
         final String profile = "profile";
 
         Profile p = TestProfiles.accessAndSpeed(profile, "car");
-        p.getCustomModel().addToPriority(If("road_access == DESTINATION", MULTIPLY, ".1"));
+        p.getCustomModel().addToPriority(If("car_road_access == DESTINATION", MULTIPLY, ".1"));
 
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(BAYREUTH).
-                setEncodedValuesString("car_access, road_access, car_average_speed").
+                setEncodedValuesString("car_access, car_road_access, car_average_speed").
                 setProfiles(p);
         hopper.importOrLoad();
 
@@ -2503,7 +2503,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile("../map-matching/files/leipzig_germany.osm.pbf").
-                setEncodedValuesString("car_access|block_private=false,road_access,car_average_speed, bike_access, bike_priority, bike_average_speed, foot_access, foot_priority, foot_average_speed").
+                setEncodedValuesString("car_access|block_private=false,car_road_access,car_average_speed, bike_access, bike_priority, bike_average_speed, foot_access, foot_priority, foot_average_speed").
                 setProfiles(
                         TestProfiles.accessAndSpeed("car"),
                         TestProfiles.accessSpeedAndPriority("bike"),
@@ -2586,7 +2586,7 @@ public class GraphHopperTest {
             assertEquals(39, rsp.getBest().getDistance(), 1);
 
             rsp = hopper.route(new GHRequest(51.327411, 12.429598, 51.32723, 12.429979).
-                    setCustomModel(new CustomModel().addToPriority(If("road_access == PRIVATE", MULTIPLY, "0"))).
+                    setCustomModel(new CustomModel().addToPriority(If("car_road_access == PRIVATE", MULTIPLY, "0"))).
                     setProfile("car"));
             assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
             assertEquals(20, rsp.getBest().getDistance(), 1);
@@ -2615,11 +2615,11 @@ public class GraphHopperTest {
     public void germanyCountryRuleAvoidsTracks() {
         final String profile = "profile";
         Profile p = TestProfiles.accessAndSpeed(profile, "car");
-        p.getCustomModel().addToPriority(If("road_access == DESTINATION", MULTIPLY, ".1"));
+        p.getCustomModel().addToPriority(If("car_road_access == DESTINATION", MULTIPLY, ".1"));
 
         // first we try without country rules (the default)
         GraphHopper hopper = new GraphHopper()
-                .setEncodedValuesString("car_access, car_average_speed, road_access")
+                .setEncodedValuesString("car_access, car_average_speed, car_road_access")
                 .setProfiles(p)
                 .setCountryRuleFactory(null)
                 .setGraphHopperLocation(GH_LOCATION)
@@ -2636,7 +2636,7 @@ public class GraphHopperTest {
         // this time we enable country rules
         hopper.clean();
         hopper = new GraphHopper()
-                .setEncodedValuesString("car_access, car_average_speed, road_access")
+                .setEncodedValuesString("car_access, car_average_speed, car_road_access")
                 .setProfiles(p)
                 .setGraphHopperLocation(GH_LOCATION)
                 .setCountryRuleFactory(new CountryRuleFactory())

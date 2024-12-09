@@ -20,7 +20,7 @@ package com.graphhopper.routing.util.countryrules.europe;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.MaxSpeed;
-import com.graphhopper.routing.ev.RoadAccess;
+import com.graphhopper.routing.ev.CarRoadAccess;
 import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.routing.ev.Toll;
 import com.graphhopper.routing.util.TransportationMode;
@@ -32,23 +32,23 @@ import com.graphhopper.routing.util.countryrules.CountryRule;
 public class GermanyCountryRule implements CountryRule {
 
     @Override
-    public RoadAccess getAccess(ReaderWay readerWay, TransportationMode transportationMode, RoadAccess currentRoadAccess) {
-        if (currentRoadAccess != RoadAccess.YES)
-            return currentRoadAccess;
+    public CarRoadAccess getAccess(ReaderWay readerWay, TransportationMode transportationMode, CarRoadAccess currentCarRoadAccess) {
+        if (currentCarRoadAccess != CarRoadAccess.YES && currentCarRoadAccess != CarRoadAccess.MISSING)
+            return currentCarRoadAccess;
         if (!transportationMode.isMotorVehicle())
-            return RoadAccess.YES;
+            return CarRoadAccess.YES;
         RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", ""));
         switch (roadClass) {
             case TRACK:
-                return RoadAccess.DESTINATION;
+                return CarRoadAccess.DESTINATION;
             case PATH:
             case BRIDLEWAY:
             case CYCLEWAY:
             case FOOTWAY:
             case PEDESTRIAN:
-                return RoadAccess.NO;
+                return CarRoadAccess.NO;
             default:
-                return RoadAccess.YES;
+                return CarRoadAccess.YES;
         }
     }
 

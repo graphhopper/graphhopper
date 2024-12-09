@@ -932,11 +932,11 @@ public class OSMReaderTest {
 
     @Test
     public void testCountries() throws IOException {
-        EnumEncodedValue<RoadAccess> roadAccessEnc = RoadAccess.create();
+        EnumEncodedValue<CarRoadAccess> roadAccessEnc = CarRoadAccess.create();
         EncodingManager em = new EncodingManager.Builder().add(roadAccessEnc).build();
         OSMParsers osmParsers = new OSMParsers();
         osmParsers.addWayTagParser(new OSMRoadAccessParser<>(roadAccessEnc,
-                OSMRoadAccessParser.toOSMRestrictions(CAR), RoadAccess::countryHook, RoadAccess::find));
+                OSMRoadAccessParser.toOSMRestrictions(CAR), CarRoadAccess::countryHook, CarRoadAccess::find));
         BaseGraph graph = new BaseGraph.Builder(em).create();
         OSMReader reader = new OSMReader(graph, osmParsers, new OSMReaderConfig());
         reader.setCountryRuleFactory(new CountryRuleFactory());
@@ -949,9 +949,9 @@ public class OSMReaderTest {
         assertEquals("berlin", edgeBerlin.getName());
         assertEquals("paris", edgeParis.getName());
         // for Berlin there is GermanyCountryRule which changes RoadAccess for Tracks
-        assertEquals(RoadAccess.DESTINATION, edgeBerlin.get(roadAccessEnc));
+        assertEquals(CarRoadAccess.DESTINATION, edgeBerlin.get(roadAccessEnc));
         // for Paris there is no such rule, we just get the default RoadAccess.YES
-        assertEquals(RoadAccess.YES, edgeParis.get(roadAccessEnc));
+        assertEquals(CarRoadAccess.YES, edgeParis.get(roadAccessEnc));
 
         ReaderWay way = new ReaderWay(0L);
         PointList list = new PointList();
