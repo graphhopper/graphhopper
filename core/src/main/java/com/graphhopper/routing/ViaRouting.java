@@ -35,6 +35,7 @@ import com.graphhopper.util.shapes.GHPoint;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
+import java.util.function.Supplier;
 
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
@@ -96,7 +97,7 @@ public class ViaRouting {
     }
 
     public static Result calcLegs(List<GHPoint> points, QueryGraph queryGraph, List<Snap> snaps,
-                                  DirectedEdgeFilter directedEdgeFilter, PathCalculator pathCalculator,
+                                  DirectedEdgeFilter directedEdgeFilter, Supplier<PathCalculator> pathCalculator,
                                   List<String> curbsides, String curbsideStrictness, List<Double> headings, boolean passThrough) {
         try {
             return doCalcLegs(points, queryGraph, snaps, directedEdgeFilter, pathCalculator, curbsides, curbsideStrictness, headings, passThrough, ForkJoinPool.commonPool());
@@ -111,9 +112,9 @@ public class ViaRouting {
     }
 
     public static Result doCalcLegs(List<GHPoint> points, QueryGraph queryGraph, List<Snap> snaps,
-                                  DirectedEdgeFilter directedEdgeFilter, PathCalculator pathCalculator,
-                                  List<String> curbsides, String curbsideStrictness, List<Double> headings, boolean passThrough,
-                                  ExecutorService executor) throws ExecutionException, InterruptedException {
+                                    DirectedEdgeFilter directedEdgeFilter, Supplier<PathCalculator> pathCalculatorSupplier,
+                                    List<String> curbsides, String curbsideStrictness, List<Double> headings, boolean passThrough,
+                                    ExecutorService executor) throws ExecutionException, InterruptedException {
         if (!curbsides.isEmpty() && curbsides.size() != points.size())
             throw new IllegalArgumentException("If you pass " + CURBSIDE + ", you need to pass exactly one curbside for every point, empty curbsides will be ignored");
         if (!curbsides.isEmpty() && !headings.isEmpty())
@@ -135,17 +136,22 @@ public class ViaRouting {
             double toHeading = (snaps.size() == headings.size() && !Double.isNaN(headings.get(leg + 1))) ? headings.get(leg + 1) : Double.NaN;
 
             // enforce pass-through
-            final int incomingEdge;
-            if (leg != 0 && passThrough) {
-                // enforce straight start after via stop
-                // this necessarily waits on the previous route --> using passthrough means no parallelism
-                Result prevResult = results.get(results.size() - 1).get();
-                Path prevRoute = prevResult.paths.get(prevResult.paths.size() - 1);
-                if (prevRoute.getEdgeCount() > 0)
-                    incomingEdge = prevRoute.getFinalEdge().getEdge();
-                else
-                    incomingEdge = NO_EDGE;
-            } else incomingEdge = NO_EDGE;
+            int incomingEdge = NO_EDGE;
+            if (leg != 0) {
+                Future<Result> prevFuture = results.get(results.size() - 1);
+                if (passThrough || !headings.isEmpty()) {
+                    // wait on the previous route because the unfavored edges stuff isn't thread-safe
+                    prevFuture.get();
+                }
+                if (passThrough) {
+                    // enforce straight start after via stop
+                    // this necessarily waits on the previous route --> using passthrough means no parallelism
+                    Result prevResult = prevFuture.get();
+                    Path prevRoute = prevResult.paths.get(prevResult.paths.size() - 1);
+                    if (prevRoute.getEdgeCount() > 0)
+                        incomingEdge = prevRoute.getFinalEdge().getEdge();
+                }
+            }
 
             // enforce curbsides
             final String fromCurbside = curbsides.isEmpty() ? CURBSIDE_ANY : curbsides.get(leg);
@@ -155,7 +161,9 @@ public class ViaRouting {
             // alternative routing with via-points at the moment). otherwise we would have to return a list<list<path>> and find
             // a good method to decide how to combine the different legs
             int thisLeg = leg;
-            results.add(executor.submit(() -> calcAlternatives(queryGraph, directedEdgeFilter, pathCalculator, curbsideStrictness, fromSnap, toSnap, fromHeading, toHeading, incomingEdge, fromCurbside, toCurbside, thisLeg)));
+            PathCalculator pathCalculator = pathCalculatorSupplier.get();
+            int thisIncomingEdge = incomingEdge;
+            results.add(executor.submit(() -> calcAlternatives(queryGraph, directedEdgeFilter, pathCalculator, curbsideStrictness, fromSnap, toSnap, fromHeading, toHeading, thisIncomingEdge, fromCurbside, toCurbside, thisLeg)));
         }
         for (Future<Result> future : results) {
             Result legResult = future.get();

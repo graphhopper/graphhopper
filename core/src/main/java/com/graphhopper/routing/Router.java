@@ -247,13 +247,12 @@ public class Router {
                 request.getSnapPreventions(), request.getPointHints(), directedEdgeFilter, request.getHeadings());
         ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
         QueryGraph queryGraph = QueryGraph.create(graph, snaps);
-        PathCalculator pathCalculator = solver.createPathCalculator(queryGraph);
         String curbsideStrictness = getCurbsideStrictness(request.getHints());
         if (!request.getCurbsides().isEmpty())
             throw new IllegalArgumentException("Alternative routes do not support the " + CURBSIDE + " parameter yet");
 
         ViaRouting.Result result = ViaRouting.calcLegs(request.getPoints(), queryGraph, snaps, directedEdgeFilter,
-                pathCalculator, request.getCurbsides(), curbsideStrictness, request.getHeadings(), false);
+                () -> solver.createPathCalculator(queryGraph), request.getCurbsides(), curbsideStrictness, request.getHeadings(), false);
         if (result.paths.isEmpty())
             throw new RuntimeException("Empty paths for alternative route calculation not expected");
 
@@ -279,11 +278,10 @@ public class Router {
         // (base) query graph used to resolve headings, curbsides etc. this is not necessarily the same thing as
         // the (possibly implementation specific) query graph used by PathCalculator
         QueryGraph queryGraph = QueryGraph.create(graph, snaps);
-        PathCalculator pathCalculator = solver.createPathCalculator(queryGraph);
         boolean passThrough = getPassThrough(request.getHints());
         String curbsideStrictness = getCurbsideStrictness(request.getHints());
         ViaRouting.Result result = ViaRouting.calcLegs(request.getPoints(), queryGraph, snaps, directedEdgeFilter,
-                pathCalculator, request.getCurbsides(), curbsideStrictness, request.getHeadings(), passThrough);
+                () -> solver.createPathCalculator(queryGraph), request.getCurbsides(), curbsideStrictness, request.getHeadings(), passThrough);
 
         if (request.getPoints().size() != result.paths.size() + 1)
             throw new RuntimeException("There should be exactly one more point than paths. points:" + request.getPoints().size() + ", paths:" + result.paths.size());

@@ -45,20 +45,15 @@ public class FlexiblePathCalculator implements PathCalculator {
         this.algoOpts = algoOpts;
     }
 
-    @Override
-    public List<Path> calcPaths(int from, int to, EdgeRestrictions edgeRestrictions) {
-        RoutingAlgorithm algo = createAlgo();
-        return calcPaths(from, to, edgeRestrictions, algo);
-    }
-
-    private RoutingAlgorithm createAlgo() {
+    private RoutingAlgorithm createAlgo(QueryGraph queryGraphWithUnfavoredVirtualEdges) {
         StopWatch sw = new StopWatch().start();
-        RoutingAlgorithm algo = algoFactory.createAlgo(queryGraph, weighting, algoOpts);
+        RoutingAlgorithm algo = algoFactory.createAlgo(queryGraphWithUnfavoredVirtualEdges, weighting, algoOpts);
         debug = ", algoInit:" + (sw.stop().getNanos() / 1000) + " μs";
         return algo;
     }
 
-    private List<Path> calcPaths(int from, int to, EdgeRestrictions edgeRestrictions, RoutingAlgorithm algo) {
+    @Override
+    public List<Path> calcPaths(int from, int to, EdgeRestrictions edgeRestrictions) {
         StopWatch sw = new StopWatch().start();
         // todo: so far 'heading' is implemented like this: we mark the unfavored edges on the query graph and then
         // our weighting applies a penalty to these edges. however, this only works for virtual edges and to make
@@ -67,6 +62,9 @@ public class FlexiblePathCalculator implements PathCalculator {
         // edges directly without changing the graph
         for (IntCursor c : edgeRestrictions.getUnfavoredEdges())
             queryGraph.unfavorVirtualEdge(c.value);
+
+        QueryGraph queryGraphWithUnfavoredVirtualEdges = queryGraph;
+        RoutingAlgorithm algo = createAlgo(queryGraphWithUnfavoredVirtualEdges);
 
         List<Path> paths;
         if (edgeRestrictions.getSourceOutEdge() != ANY_EDGE || edgeRestrictions.getTargetInEdge() != ANY_EDGE) {
