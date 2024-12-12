@@ -118,7 +118,7 @@ public class ViaRouting {
 
             // enforce pass-through
             int incomingEdge = NO_EDGE;
-            if (leg != 0) {
+            if (leg != 0 && passThrough) {
                 // enforce straight start after via stop
                 Path prevRoute = result.paths.get(leg - 1);
                 if (prevRoute.getEdgeCount() > 0)
@@ -130,7 +130,7 @@ public class ViaRouting {
             final String toCurbside = curbsides.isEmpty() ? CURBSIDE_ANY : curbsides.get(leg + 1);
 
             EdgeRestrictions edgeRestrictions = buildEdgeRestrictions(queryGraph, fromSnap, toSnap,
-                    fromHeading, toHeading, incomingEdge, passThrough,
+                    fromHeading, toHeading, incomingEdge,
                     fromCurbside, toCurbside, directedEdgeFilter);
 
             edgeRestrictions.setSourceOutEdge(ignoreThrowOrAcceptImpossibleCurbsides(curbsides, edgeRestrictions.getSourceOutEdge(), leg, curbsideStrictness));
@@ -180,7 +180,7 @@ public class ViaRouting {
      */
     private static EdgeRestrictions buildEdgeRestrictions(
             QueryGraph queryGraph, Snap fromSnap, Snap toSnap,
-            double fromHeading, double toHeading, int incomingEdge, boolean passThrough,
+            double fromHeading, double toHeading, int incomingEdge,
             String fromCurbside, String toCurbside, DirectedEdgeFilter edgeFilter) {
         EdgeRestrictions edgeRestrictions = new EdgeRestrictions();
 
@@ -239,7 +239,7 @@ public class ViaRouting {
         }
 
         // pass through
-        if (incomingEdge != NO_EDGE && passThrough)
+        if (incomingEdge != NO_EDGE)
             edgeRestrictions.getUnfavoredEdges().add(incomingEdge);
         return edgeRestrictions;
     }
