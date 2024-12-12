@@ -1,6 +1,6 @@
 // to use this custom model you need to set the following option in the config.yml
 // graph.elevation.provider: srtm   # enables elevation
-// graph.encoded_values: racingbike_priority, racingbike_access, roundabout, racingbike_average_speed, average_slope
+// graph.encoded_values: racingbike_priority, racingbike_access, roundabout, racingbike_average_speed, bike_road_access, average_slope, mtb_rating, sac_scale, country, road_class
 // profiles:
 //    - name: racingbike
 //      custom_model_files: [racingbike.json, bike_elevation.json]
@@ -8,6 +8,11 @@
 {
   "priority": [
     { "if": "true",  "multiply_by": "racingbike_priority" },
+    { "if": "bike_road_access == PRIVATE", "multiply_by": "0" },
+    { "if": "mtb_rating > 2",  "multiply_by": "0" },
+    { "if": "mtb_rating == 2",  "multiply_by": "0.5" },
+    { "if": "hike_rating > 1",  "multiply_by": "0" },
+    { "if": "country == DEU && road_class == BRIDLEWAY && bike_road_access != YES", "multiply_by": "0" },
     { "if": "!racingbike_access && (!backward_racingbike_access || roundabout)",  "multiply_by": "0" },
     { "else_if": "!racingbike_access && backward_racingbike_access",  "multiply_by": "0.2" }
   ],

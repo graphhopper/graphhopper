@@ -5,14 +5,14 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>graphhopper-example</artifactId>
-    <version>10.0-SNAPSHOT</version>
+    <version>11.0-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>GraphHopper Example</name>
 
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>
-        <version>10.0-SNAPSHOT</version>
+        <version>11.0-SNAPSHOT</version>
     </parent>  
 
     <dependencies>

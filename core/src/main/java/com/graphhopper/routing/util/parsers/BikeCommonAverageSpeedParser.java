@@ -68,7 +68,7 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         setSurfaceSpeed("sand", PUSHING_SECTION_SPEED);
         setSurfaceSpeed("wood", PUSHING_SECTION_SPEED);
 
-        setHighwaySpeed("living_street", PUSHING_SECTION_SPEED);
+        setHighwaySpeed("living_street", 6);
         setHighwaySpeed("steps", MIN_SPEED);
 
         setHighwaySpeed("cycleway", 18);
@@ -118,9 +118,9 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
      * @return The assumed average speed.
      */
     double applyMaxSpeed(ReaderWay way, double speed, boolean bwd) {
-        double maxSpeed = getMaxSpeed(way, bwd);
+        double maxSpeed = OSMMaxSpeedParser.parseMaxSpeed(way, bwd);
         // We strictly obey speed limits, see #600
-        return isValidSpeed(maxSpeed) && speed > maxSpeed ? maxSpeed : speed;
+        return Math.min(speed, maxSpeed);
     }
 
     @Override
@@ -143,26 +143,24 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         boolean pushingRestriction = Arrays.stream(way.getTag("vehicle", "").split(";")).anyMatch(restrictedValues::contains);
         if ("steps".equals(highwayValue)) {
             // ignore
-        } else if (way.hasTag("bicycle", "dismount")
-                || way.hasTag("railway", "platform")
-                || pushingRestriction && !way.hasTag("bicycle", INTENDED)) {
-            speed = PUSHING_SECTION_SPEED;
         } else if (pushingSectionsHighways.contains(highwayValue)) {
             if (way.hasTag("bicycle", "designated") || way.hasTag("bicycle", "official") || way.hasTag("segregated", "yes")
                     || CYCLEWAY_KEYS.stream().anyMatch(k -> way.getTag(k, "").equals("track"))) {
-speed = trackTypeSpeeds.getOrDefault(trackTypeValue, highwaySpeeds.get("cycleway"));
+                speed = trackTypeSpeeds.getOrDefault(trackTypeValue, highwaySpeeds.get("cycleway"));
             }
             else if (way.hasTag("bicycle", "yes"))
                 speed = 12;
         }
 
         Integer surfaceSpeed = surfaceSpeeds.get(surfaceValue);
-        if (way.hasTag("surface") && surfaceSpeed == null) {
-            speed = PUSHING_SECTION_SPEED; // unknown surface
-        } else if (way.hasTag("service")) {
-            speed = highwaySpeeds.get("living_street");
+        if (way.hasTag("surface") && surfaceSpeed == null
+                || way.hasTag("bicycle", "dismount")
+                || way.hasTag("railway", "platform")
+                || pushingRestriction && !way.hasTag("bicycle", INTENDED)
+                || way.hasTag("service")) {
+            speed = PUSHING_SECTION_SPEED;
         } else if ("track".equals(highwayValue) ||
-                   "bridleway".equals(highwayValue) ) {
+                "bridleway".equals(highwayValue) ) {
             if (surfaceSpeed != null)
                 speed = surfaceSpeed;
             else if (trackTypeSpeeds.containsKey(trackTypeValue))

@@ -667,7 +667,7 @@ public class GHUtility {
             ObjectMapper objectMapper = Jackson.newObjectMapper();
             return objectMapper.readValue(json, CustomModel.class);
         } catch (IOException e) {
-            throw new IllegalArgumentException("Could not load built-in custom model '" + name + "'");
+            throw new IllegalArgumentException("Could not load built-in custom model '" + name + "'", e);
         }
     }
 }
