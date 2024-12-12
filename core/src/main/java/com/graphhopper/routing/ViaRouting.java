@@ -34,6 +34,7 @@ import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.*;
 
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
@@ -97,6 +98,22 @@ public class ViaRouting {
     public static Result calcLegs(List<GHPoint> points, QueryGraph queryGraph, List<Snap> snaps,
                                   DirectedEdgeFilter directedEdgeFilter, PathCalculator pathCalculator,
                                   List<String> curbsides, String curbsideStrictness, List<Double> headings, boolean passThrough) {
+        try {
+            return doCalcLegs(points, queryGraph, snaps, directedEdgeFilter, pathCalculator, curbsides, curbsideStrictness, headings, passThrough, ForkJoinPool.commonPool());
+        } catch (ExecutionException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof IllegalArgumentException) {
+                throw (IllegalArgumentException) cause;
+            } else throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static Result doCalcLegs(List<GHPoint> points, QueryGraph queryGraph, List<Snap> snaps,
+                                  DirectedEdgeFilter directedEdgeFilter, PathCalculator pathCalculator,
+                                  List<String> curbsides, String curbsideStrictness, List<Double> headings, boolean passThrough,
+                                  ExecutorService executor) throws ExecutionException, InterruptedException {
         if (!curbsides.isEmpty() && curbsides.size() != points.size())
             throw new IllegalArgumentException("If you pass " + CURBSIDE + ", you need to pass exactly one curbside for every point, empty curbsides will be ignored");
         if (!curbsides.isEmpty() && !headings.isEmpty())
@@ -104,6 +121,7 @@ public class ViaRouting {
 
         final int legs = snaps.size() - 1;
         Result result = new Result(legs);
+        List<Future<Result>> results = new ArrayList<>(legs);
         for (int leg = 0; leg < legs; ++leg) {
             Snap fromSnap = snaps.get(leg);
             Snap toSnap = snaps.get(leg + 1);
@@ -117,13 +135,17 @@ public class ViaRouting {
             double toHeading = (snaps.size() == headings.size() && !Double.isNaN(headings.get(leg + 1))) ? headings.get(leg + 1) : Double.NaN;
 
             // enforce pass-through
-            int incomingEdge = NO_EDGE;
+            final int incomingEdge;
             if (leg != 0 && passThrough) {
                 // enforce straight start after via stop
-                Path prevRoute = result.paths.get(leg - 1);
+                // this necessarily waits on the previous route --> using passthrough means no parallelism
+                Result prevResult = results.get(results.size() - 1).get();
+                Path prevRoute = prevResult.paths.get(prevResult.paths.size() - 1);
                 if (prevRoute.getEdgeCount() > 0)
                     incomingEdge = prevRoute.getFinalEdge().getEdge();
-            }
+                else
+                    incomingEdge = NO_EDGE;
+            } else incomingEdge = NO_EDGE;
 
             // enforce curbsides
             final String fromCurbside = curbsides.isEmpty() ? CURBSIDE_ANY : curbsides.get(leg);
@@ -132,12 +154,15 @@ public class ViaRouting {
             // for alternative routing we get multiple paths and add all of them (which is ok, because we do not allow
             // alternative routing with via-points at the moment). otherwise we would have to return a list<list<path>> and find
             // a good method to decide how to combine the different legs
-            Result legResult = calcAlternatives(queryGraph, directedEdgeFilter, pathCalculator, curbsideStrictness, fromSnap, toSnap, fromHeading, toHeading, incomingEdge, fromCurbside, toCurbside, leg);
+            int thisLeg = leg;
+            results.add(executor.submit(() -> calcAlternatives(queryGraph, directedEdgeFilter, pathCalculator, curbsideStrictness, fromSnap, toSnap, fromHeading, toHeading, incomingEdge, fromCurbside, toCurbside, thisLeg)));
+        }
+        for (Future<Result> future : results) {
+            Result legResult = future.get();
             result.paths.addAll(legResult.paths);
             result.visitedNodes += legResult.visitedNodes;
             result.debug += legResult.debug;
         }
-
         return result;
     }
 
