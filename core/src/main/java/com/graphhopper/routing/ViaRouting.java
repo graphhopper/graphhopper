@@ -94,9 +94,9 @@ public class ViaRouting {
         return snaps;
     }
 
-    public static Result calcPaths(List<GHPoint> points, QueryGraph queryGraph, List<Snap> snaps,
-                                   DirectedEdgeFilter directedEdgeFilter, PathCalculator pathCalculator,
-                                   List<String> curbsides, String curbsideStrictness, List<Double> headings, boolean passThrough) {
+    public static Result calcLegs(List<GHPoint> points, QueryGraph queryGraph, List<Snap> snaps,
+                                  DirectedEdgeFilter directedEdgeFilter, PathCalculator pathCalculator,
+                                  List<String> curbsides, String curbsideStrictness, List<Double> headings, boolean passThrough) {
         if (!curbsides.isEmpty() && curbsides.size() != points.size())
             throw new IllegalArgumentException("If you pass " + CURBSIDE + ", you need to pass exactly one curbside for every point, empty curbsides will be ignored");
         if (!curbsides.isEmpty() && !headings.isEmpty())
@@ -129,33 +129,41 @@ public class ViaRouting {
             final String fromCurbside = curbsides.isEmpty() ? CURBSIDE_ANY : curbsides.get(leg);
             final String toCurbside = curbsides.isEmpty() ? CURBSIDE_ANY : curbsides.get(leg + 1);
 
-            EdgeRestrictions edgeRestrictions = buildEdgeRestrictions(queryGraph, fromSnap, toSnap,
-                    fromHeading, toHeading, incomingEdge,
-                    fromCurbside, toCurbside, directedEdgeFilter);
-
-            edgeRestrictions.setSourceOutEdge(ignoreThrowOrAcceptImpossibleCurbsides(curbsides, edgeRestrictions.getSourceOutEdge(), leg, curbsideStrictness));
-            edgeRestrictions.setTargetInEdge(ignoreThrowOrAcceptImpossibleCurbsides(curbsides, edgeRestrictions.getTargetInEdge(), leg + 1, curbsideStrictness));
-
-            // calculate paths
-            List<Path> paths = pathCalculator.calcPaths(fromSnap.getClosestNode(), toSnap.getClosestNode(), edgeRestrictions);
-            result.debug += pathCalculator.getDebugString();
-
             // for alternative routing we get multiple paths and add all of them (which is ok, because we do not allow
-            // via-points for alternatives at the moment). otherwise we would have to return a list<list<path>> and find
+            // alternative routing with via-points at the moment). otherwise we would have to return a list<list<path>> and find
             // a good method to decide how to combine the different legs
-            for (int i = 0; i < paths.size(); i++) {
-                Path path = paths.get(i);
-                if (path.getTime() < 0)
-                    throw new RuntimeException("Time was negative " + path.getTime() + " for index " + i);
-
-                result.paths.add(path);
-                result.debug += ", " + path.getDebugInfo();
-            }
-
-            result.visitedNodes += pathCalculator.getVisitedNodes();
-            result.debug += ", visited nodes sum: " + result.visitedNodes;
+            Result legResult = calcAlternatives(queryGraph, directedEdgeFilter, pathCalculator, curbsideStrictness, fromSnap, toSnap, fromHeading, toHeading, incomingEdge, fromCurbside, toCurbside, leg);
+            result.paths.addAll(legResult.paths);
+            result.visitedNodes += legResult.visitedNodes;
+            result.debug += legResult.debug;
         }
 
+        return result;
+    }
+
+    public static Result calcAlternatives(QueryGraph queryGraph, DirectedEdgeFilter directedEdgeFilter, PathCalculator pathCalculator, String curbsideStrictness, Snap fromSnap, Snap toSnap, double fromHeading, double toHeading, int incomingEdge, String fromCurbside, String toCurbside, int leg) {
+        EdgeRestrictions edgeRestrictions = buildEdgeRestrictions(queryGraph, fromSnap, toSnap,
+                fromHeading, toHeading, incomingEdge,
+                fromCurbside, toCurbside, directedEdgeFilter);
+
+        edgeRestrictions.setSourceOutEdge(ignoreThrowOrAcceptImpossibleCurbsides(edgeRestrictions.getSourceOutEdge(), leg, curbsideStrictness, fromCurbside));
+        edgeRestrictions.setTargetInEdge(ignoreThrowOrAcceptImpossibleCurbsides(edgeRestrictions.getTargetInEdge(), leg + 1, curbsideStrictness, toCurbside));
+
+        List<Path> paths = pathCalculator.calcPaths(fromSnap.getClosestNode(), toSnap.getClosestNode(), edgeRestrictions);
+
+        Result result = new Result(paths.size());
+        result.debug += pathCalculator.getDebugString();
+
+        for (int i = 0; i < paths.size(); i++) {
+            Path path = paths.get(i);
+            if (path.getTime() < 0)
+                throw new RuntimeException("Time was negative " + path.getTime() + " for index " + i);
+
+            result.paths.add(path);
+            result.debug += ", " + path.getDebugInfo();
+        }
+
+        result.visitedNodes += pathCalculator.getVisitedNodes();
         return result;
     }
 
@@ -244,12 +252,12 @@ public class ViaRouting {
         return edgeRestrictions;
     }
 
-    private static int ignoreThrowOrAcceptImpossibleCurbsides(List<String> curbsides, int edge, int placeIndex, String curbsideStrictness) {
+    private static int ignoreThrowOrAcceptImpossibleCurbsides(int edge, int placeIndex, String curbsideStrictness, String curbside) {
         if (edge != NO_EDGE) {
             return edge;
         }
         if ("strict".equals(curbsideStrictness)) {
-            return throwImpossibleCurbsideConstraint(curbsides, placeIndex);
+            return throwImpossibleCurbsideConstraint(curbside, placeIndex);
         } else if ("soft".equals(curbsideStrictness)) {
             return ANY_EDGE;
         } else {
@@ -257,8 +265,8 @@ public class ViaRouting {
         }
     }
 
-    private static int throwImpossibleCurbsideConstraint(List<String> curbsides, int placeIndex) {
-        throw new IllegalArgumentException("Impossible curbside constraint: 'curbside=" + curbsides.get(placeIndex) + "' at point " + placeIndex);
+    private static int throwImpossibleCurbsideConstraint(String curbside, int placeIndex) {
+        throw new IllegalArgumentException("Impossible curbside constraint: 'curbside=" + curbside + "' at point " + placeIndex);
     }
 
 }
