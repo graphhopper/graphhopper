@@ -128,18 +128,6 @@
                 <artifactId>mapdb</artifactId>
                 <version>1.0.8</version>
             </dependency>
-            <dependency>
-                <groupId>org.mobilitydata</groupId>
-                <artifactId>gtfs-realtime-bindings</artifactId>
-                <version>0.0.8</version>
-                <exclusions>
-                    <exclusion>
-                        <!-- use newer protobuf version  -->
-                        <groupId>com.google.protobuf</groupId>
-                        <artifactId>protobuf-java</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
             <!-- for reader-gtfs -->
             <dependency>
                 <groupId>jakarta.inject</groupId>
