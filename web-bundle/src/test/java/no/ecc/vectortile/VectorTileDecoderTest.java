@@ -1,7 +1,6 @@
 package no.ecc.vectortile;
 
 import org.junit.jupiter.api.Test;
-import vector_tile.VectorTile;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,16 +10,19 @@ import static org.junit.jupiter.api.Assertions.*;
 public class VectorTileDecoderTest {
 
     @Test
-    public void testDecode() throws IOException {
+    public void testDecode() {
         byte[] data;
         try (InputStream is = getClass().getResourceAsStream("small.vector.pbf")) {
             if (is == null) {
                 fail("Could not find test data");
             }
             data = is.readAllBytes();
+        } catch (IOException e) {
+            fail("Could not read test data", e);
+            return;
         }
-        VectorTileDecoder decoder = new VectorTileDecoder();
-        VectorTileDecoder.FeatureIterable iter = decoder.decode(data);
+        var decoder = new VectorTileDecoder();
+        var iter = assertDoesNotThrow(() -> decoder.decode(data), "Decoding failed");
 
         assertEquals(20, iter.getLayerNames().size());
         assertEquals(2759, iter.asList().size());
