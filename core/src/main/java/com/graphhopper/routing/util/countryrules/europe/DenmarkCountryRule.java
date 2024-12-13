@@ -36,8 +36,9 @@ public class DenmarkCountryRule implements CountryRule {
         }
 
         RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", ""));
-        if (RoadClass.MOTORWAY == roadClass)
-            return Toll.HGV;
-        return currentToll;
+        return switch (roadClass) {
+            case MOTORWAY, TRUNK, PRIMARY -> Toll.HGV;
+            default -> currentToll;
+        };
     }
 }
