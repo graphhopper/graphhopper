@@ -17,6 +17,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <maven.compiler.target>17</maven.compiler.target>
+        <!-- this needs to match the protobuf-java version pulled in by osmpbf -->
         <protobuf.version>4.28.3</protobuf.version>
 
         <!-- We always had this disabled as it is disabled by default in debian JDK builds, but when we
