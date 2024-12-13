@@ -1,3 +1,22 @@
+# AllTrails Fork of GraphHopper Routing Engine
+This is forked from https://github.com/graphhopper/graphhopper
+
+**TAKE GREAT CARE WHEN CREATING A PR**
+
+When you view your branch at https://github.com/alltrails/graphhopper/branches and choose **New pull request**
+GitHub will take you to **GRAPHHOPPER'S** repo, with a URL like
+https://github.com/graphhopper/graphhopper/compare/master...alltrails:graphhopper:men/DISCO-12224/graphhopper-with-at-attributes-poc?expand=1
+
+You **MUST** change the base repo/branch in the dropdown from `graphhopper/graphhopper` to `alltrails/graphhopper`
+which will take you to the proper URL in our repo, eg
+https://github.com/alltrails/graphhopper/compare/master...alltrails:graphhopper:men/DISCO-12224/graphhopper-with-at-attributes-poc?expand=1 with the base shown as `master`.
+
+Then proceed as normal.  This is a GitHub feature that cannot be changed.
+
+Below is the GraphHopper README as at the start of the fork
+
+---
+
 # GraphHopper Routing Engine
 
 ![Build Status](https://github.com/graphhopper/graphhopper/actions/workflows/build.yml/badge.svg?branch=master)
