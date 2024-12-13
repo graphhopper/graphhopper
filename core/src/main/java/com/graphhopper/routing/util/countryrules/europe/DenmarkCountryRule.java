@@ -23,7 +23,7 @@ import com.graphhopper.routing.ev.Toll;
 import com.graphhopper.routing.util.countryrules.CountryRule;
 
 /**
- * Defines the default rules for Polish roads
+ * Defines the default rules for danish roads
  *
  * @author Thomas Butz
  */
