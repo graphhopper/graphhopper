@@ -85,7 +85,7 @@ public class BufferResource {
 
         StopWatch sw = new StopWatch().start();
 
-        roadName = sanitizeRoadNames(roadName)[0];
+        roadName = sanitizeRoadNames(roadName).get(0);
         BufferFeature primaryStartFeature = calculatePrimaryStartFeature(point.get().lat, point.get().lon, roadName,
                 queryMultiplier);
         EdgeIteratorState state = graph.getEdgeIteratorState(primaryStartFeature.getEdge(), Integer.MIN_VALUE);
@@ -108,6 +108,32 @@ public class BufferResource {
         }
 
         return createGeoJsonResponse(lineStrings, sw);
+    }
+
+    @GET
+    @Path("v2")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response doGet2(
+            @QueryParam("point") @NotNull GHPointParam point,
+            @QueryParam("roadName") @NotNull String roadName,
+            @QueryParam("thresholdDistance") @NotNull Double thresholdDistance,
+            @QueryParam("queryMultiplier") @DefaultValue(".01") Double queryMultiplier,
+            @QueryParam("buildUpstream") @DefaultValue("false") Boolean buildUpstream) {
+        if (queryMultiplier > 1) {
+            throw new IllegalArgumentException("Query multiplier is too high.");
+        } else if (queryMultiplier <= 0) {
+            throw new IllegalArgumentException("Query multiplier cannot be zero or negative.");
+        }
+
+        StopWatch sw = new StopWatch().start();
+
+        roadName = sanitizeRoadNames(roadName).get(0);
+        BufferFeature primaryStartFeature = calculatePrimaryStartFeature(point.get().lat, point.get().lon, roadName,
+                queryMultiplier);
+
+        ObjectNode json = JsonNodeFactory.instance.objectNode();
+        json.put("result", roadName);
+        return Response.ok(json).build();
     }
 
     /**
@@ -201,10 +227,27 @@ public class BufferResource {
             public void onEdge(int edgeId) {
                 EdgeIteratorState state = graph.getEdgeIteratorState(edgeId, Integer.MIN_VALUE);
 
+                List<String> queryRoadNames = new ArrayList<String>();
+                List<String> streetNames = null;
+                List<String> streetRef = null;
                 // Roads sometimes have multiple names delineated by a comma
-                String[] queryRoadNames = sanitizeRoadNames(state.getName());
+                if (state.getName() != null || !state.getName().isEmpty()) {
+                    streetNames = sanitizeRoadNames(state.getName());
+                }
+                if (state.getValue("street_ref") != null) {
+                    String s = (String) state.getValue("street_ref");
+                    streetRef = sanitizeRoadNames(s);
+                }
 
-                if (Arrays.stream(queryRoadNames).anyMatch(x -> x.contains(roadName))) {
+                if (streetNames != null) {
+                    queryRoadNames.addAll(streetNames);
+                }
+                if (streetRef != null) {
+                    queryRoadNames.addAll(streetRef);
+                }
+                System.out.println(String.join(",", queryRoadNames));
+
+                if (queryRoadNames.stream().anyMatch(x -> x.contains(roadName))) {
                     filteredEdgesInBbox.add(edgeId);
                 }
             };
@@ -264,7 +307,7 @@ public class BufferResource {
             throw new WebApplicationException("Threshold distance is too short to construct a valid path.");
         }
 
-        return geometryFactory.createLineString(coordinates.toArray(Coordinate[]::new));
+        return geometryFactory.createLineString(coordinates.toArray(new Coordinate[0]));
     }
 
     /**
@@ -364,7 +407,8 @@ public class BufferResource {
             currentEdge = -1;
 
             while (iterator.next()) {
-                String[] roadNames = sanitizeRoadNames(iterator.getName());
+                // TODO: fix this to include the street_ref
+                List<String> roadNames = sanitizeRoadNames(iterator.getName());
                 Integer tempEdge = iterator.getEdge();
                 EdgeIteratorState tempState = graph.getEdgeIteratorState(tempEdge, Integer.MIN_VALUE);
 
@@ -373,7 +417,7 @@ public class BufferResource {
 
                     // Temp has proper road name, isn't part of a roundabout, and bidirectional.
                     // Higher priority escape.
-                    if (Arrays.stream(roadNames).anyMatch(x -> x.contains(roadName))
+                    if (roadNames.stream().anyMatch(x -> x.contains(roadName))
                             && !tempState.get(this.roundaboutAccessEnc)
                             && isBidirectional(tempState)) {
                         currentEdge = tempEdge;
@@ -383,13 +427,13 @@ public class BufferResource {
 
                     // Temp has proper road name and isn't part of a roundabout. Lower priority
                     // escape.
-                    else if (Arrays.stream(roadNames).anyMatch(x -> x.contains(roadName))
+                    else if (roadNames.stream().anyMatch(x -> x.contains(roadName))
                             && !tempState.get(this.roundaboutAccessEnc)) {
                         potentialEdges.add(tempEdge);
                     }
 
                     // Temp has proper road name and is part of a roundabout. Higher entry priority.
-                    else if (Arrays.stream(roadNames).anyMatch(x -> x.contains(roadName))
+                    else if (roadNames.stream().anyMatch(x -> x.contains(roadName))
                             && tempState.get(this.roundaboutAccessEnc)) {
                         potentialRoundaboutEdges.add(tempEdge);
                     }
