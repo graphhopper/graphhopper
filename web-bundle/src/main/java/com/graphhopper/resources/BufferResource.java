@@ -272,13 +272,13 @@ public class BufferResource {
      * and dashes
      *
      * @param roadNames comma-separated list of road names
-     * @return array of split road names
+     * @return list of split road names
      */
-    private String[] sanitizeRoadNames(String roadNames) {
-        String[] separatedNames = roadNames.split(",");
+    private List<String> sanitizeRoadNames(String roadNames) {
+        List<String> separatedNames = Arrays.asList(roadNames.split(","));
 
-        for (int i = 0; i < separatedNames.length; i++) {
-            separatedNames[i] = separatedNames[i].trim().replace("-", "").toLowerCase();
+        for (int i = 0; i < separatedNames.size(); i++) {
+            separatedNames.set(i, separatedNames.get(i).trim().replace("-", "").toLowerCase());
         }
 
         return separatedNames;
