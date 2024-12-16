@@ -19,6 +19,7 @@ import javax.ws.rs.core.Response;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GraphHopper;
+import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.http.GHPointParam;
 import com.graphhopper.jackson.ResponsePathSerializer;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
@@ -54,11 +55,13 @@ public class BufferResource {
     private final BooleanEncodedValue roundaboutAccessEnc;
     private final BooleanEncodedValue carAccessEnc;
     private final Graph graph;
+    private final GraphHopperConfig config;
 
     private final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(1E8));
 
     @Inject
-    public BufferResource(GraphHopper graphHopper) {
+    public BufferResource(GraphHopperConfig config, GraphHopper graphHopper) {
+        this.config = config;
         this.graph = graphHopper.getBaseGraph();
         this.locationIndex = graphHopper.getLocationIndex();
         this.nodeAccess = graph.getNodeAccess();
@@ -714,7 +717,7 @@ public class BufferResource {
 
         ObjectNode json = JsonNodeFactory.instance.objectNode();
         json.put("type", "FeatureCollection");
-        json.putPOJO("copyrights", ResponsePathSerializer.COPYRIGHTS);
+        json.putPOJO("copyrights", config.getCopyrights());
         json.putPOJO("features", features);
         return Response.ok(json).header("X-GH-Took", "" + sw.getSeconds() * 1000).build();
     }
