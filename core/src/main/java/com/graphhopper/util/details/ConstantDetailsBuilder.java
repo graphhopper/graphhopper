@@ -18,7 +18,12 @@
 
 package com.graphhopper.util.details;
 
+import com.graphhopper.coll.MapEntry;
 import com.graphhopper.util.EdgeIteratorState;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Simply returns the same value everywhere, useful to represent values that are the same between two (via-)points
@@ -26,6 +31,7 @@ import com.graphhopper.util.EdgeIteratorState;
 public class ConstantDetailsBuilder extends AbstractPathDetailsBuilder {
     private final Object value;
     private boolean firstEdge = true;
+    private int lastIndex = -1;
 
     public ConstantDetailsBuilder(String name, Object value) {
         super(name);
@@ -44,5 +50,24 @@ public class ConstantDetailsBuilder extends AbstractPathDetailsBuilder {
             return true;
         } else
             return false;
+    }
+
+    @Override
+    public void endInterval(int lastIndex) {
+        this.lastIndex = lastIndex;
+        super.endInterval(lastIndex);
+    }
+
+    @Override
+    public Map.Entry<String, List<PathDetail>> build() {
+        if (firstEdge) {
+            // #2915 if there was no edge at all we need to add a single entry manually here
+            // #3007 we need to set the value but also the (empty) interval (first/last)
+            PathDetail p = new PathDetail(value);
+            p.setFirst(lastIndex);
+            p.setLast(lastIndex);
+            return new MapEntry<>(getName(), new ArrayList<>(List.of(p)));
+        }
+        return super.build();
     }
 }

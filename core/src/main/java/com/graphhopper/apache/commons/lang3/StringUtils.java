@@ -18,7 +18,7 @@ package com.graphhopper.apache.commons.lang3;
 
 
 /**
- * This class is a partial Copy of the org.apache.commons.lang3.StringUtils
+ * This class is a partial copy of the org.apache.commons.lang3.StringUtils
  * that can be found here: https://github.com/apache/commons-lang/blob/master/src/main/java/org/apache/commons/lang3/StringUtils.java
  * <p>
  * The library can be found here: https://commons.apache.org/proper/commons-lang/

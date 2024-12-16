@@ -169,22 +169,16 @@ public class PrepareContractionHierarchies {
     }
 
     private void initFromGraph() {
-        // todo: this whole chain of initFromGraph() methods is just needed because PrepareContractionHierarchies does
-        // not simply prepare contraction hierarchies, but instead it also serves as some kind of 'container' to give
-        // access to the preparations in the GraphHopper class. If this was not so we could make this a lot cleaner here,
-        // declare variables final and would not need all these close() methods...
+        logger.info("Creating CH prepare graph, {}", getMemInfo());
         CHPreparationGraph prepareGraph;
         if (chConfig.getTraversalMode().isEdgeBased()) {
             TurnCostStorage turnCostStorage = graph.getTurnCostStorage();
-            if (turnCostStorage == null) {
+            if (turnCostStorage == null)
                 throw new IllegalArgumentException("For edge-based CH you need a turn cost storage");
-            }
-            logger.info("Creating CH prepare graph, {}", getMemInfo());
             CHPreparationGraph.TurnCostFunction turnCostFunction = CHPreparationGraph.buildTurnCostFunctionFromTurnCostStorage(graph, chConfig.getWeighting());
             prepareGraph = CHPreparationGraph.edgeBased(graph.getNodes(), graph.getEdges(), turnCostFunction);
             nodeContractor = new EdgeBasedNodeContractor(prepareGraph, chBuilder, pMap);
         } else {
-            logger.info("Creating CH prepare graph, {}", getMemInfo());
             prepareGraph = CHPreparationGraph.nodeBased(graph.getNodes(), graph.getEdges());
             nodeContractor = new NodeBasedNodeContractor(prepareGraph, chBuilder, pMap);
         }

@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 public class OSMMaxWeightParser implements TagParser {
 
     // do not include OSM tag "height" here as it has completely different meaning (height of peak)
-    private static final List<String> MAX_WEIGHT_TAGS = Arrays.asList("maxweight", "maxgcweight"/*abandoned*/, "maxweightrating:hgv");
+    private static final List<String> MAX_WEIGHT_TAGS = Arrays.asList("maxweight", "maxweightrating", "maxweightrating:hgv", "maxgcweight"/*abandoned*/);
     private static final List<String> HGV_RESTRICTIONS = OSMRoadAccessParser.toOSMRestrictions(TransportationMode.HGV).stream()
             .map(e -> e + ":conditional").collect(Collectors.toList());
     private final DecimalEncodedValue weightEncoder;
@@ -44,7 +44,7 @@ public class OSMMaxWeightParser implements TagParser {
     public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
         OSMValueExtractor.extractTons(edgeId, edgeIntAccess, way, weightEncoder, MAX_WEIGHT_TAGS);
 
-        // vehicle:conditional no @ (weight > 7.5)
+        // vehicle:conditional = no @ (weight > 7.5)
         for (String restriction : HGV_RESTRICTIONS) {
             String value = way.getTag(restriction, "");
             if (value.startsWith("no") && value.indexOf("@") < 6) { // no,none[ ]@

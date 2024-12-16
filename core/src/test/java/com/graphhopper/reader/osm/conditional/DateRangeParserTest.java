@@ -27,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * @author Robin Boldt
  */
-public class DateRangeParserTest extends CalendarBasedTest {
+public class DateRangeParserTest {
     final DateRangeParser dateRangeParser = new DateRangeParser();
 
     @Test
@@ -218,4 +218,11 @@ public class DateRangeParserTest extends CalendarBasedTest {
         assertEquals(expected.get(Calendar.DAY_OF_MONTH), actual.get(Calendar.DAY_OF_MONTH));
     }
 
+    protected Calendar getCalendar(int year, int month, int day) {
+        Calendar calendar = DateRangeParser.createCalendar();
+        calendar.set(Calendar.YEAR, year);
+        calendar.set(Calendar.MONTH, month);
+        calendar.set(Calendar.DAY_OF_MONTH, day);
+        return calendar;
+    }
 }

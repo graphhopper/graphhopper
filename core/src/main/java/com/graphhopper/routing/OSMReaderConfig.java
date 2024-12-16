@@ -25,12 +25,15 @@ public class OSMReaderConfig {
     private List<String> ignoredHighways = new ArrayList<>();
     private boolean parseWayNames = true;
     private String preferredLanguage = "";
-    private double maxWayPointDistance = 1;
+    private double maxWayPointDistance = 0.5;
     private double elevationMaxWayPointDistance = Double.MAX_VALUE;
     private String smoothElevation = "";
+
+    private double smoothElevationAverageWindowSize = 150.0;
     private int ramerElevationSmoothingMax = 5;
     private double longEdgeSamplingDistance = Double.MAX_VALUE;
     private int workerThreads = 2;
+    private double defaultElevation = 0;
 
     public List<String> getIgnoredHighways() {
         return ignoredHighways;
@@ -122,6 +125,14 @@ public class OSMReaderConfig {
         return this;
     }
 
+    public double getSmoothElevationAverageWindowSize() {
+        return smoothElevationAverageWindowSize;
+    }
+
+    public void setSmoothElevationAverageWindowSize(double smoothElevationAverageWindowSize) {
+        this.smoothElevationAverageWindowSize = smoothElevationAverageWindowSize;
+    }
+
     public double getLongEdgeSamplingDistance() {
         return longEdgeSamplingDistance;
     }
@@ -143,6 +154,18 @@ public class OSMReaderConfig {
      */
     public OSMReaderConfig setWorkerThreads(int workerThreads) {
         this.workerThreads = workerThreads;
+        return this;
+    }
+
+    public double getDefaultElevation() {
+        return defaultElevation;
+    }
+
+    /**
+     * Sets the elevation in meters that shall be used if the elevation data source is missing a value
+     */
+    public OSMReaderConfig setDefaultElevation(double defaultElevation) {
+        this.defaultElevation = defaultElevation;
         return this;
     }
 }

@@ -28,8 +28,10 @@ import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.jupiter.api.Test;
 
-import static com.graphhopper.search.KVStorage.KeyValue.STREET_NAME;
-import static com.graphhopper.search.KVStorage.KeyValue.createKV;
+import java.util.Map;
+
+import static com.graphhopper.search.KVStorage.KValue;
+import static com.graphhopper.util.Parameters.Details.STREET_NAME;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -105,11 +107,11 @@ public class NameSimilarityEdgeFilterTest {
         na.setNode(nodeID200, point200mAway.lat, point200mAway.lon);
 
         // Check that it matches a street 50m away
-        EdgeIteratorState edge1 = g.edge(nodeId50, farAwayId).setKeyValues(createKV(STREET_NAME, "Wentworth Street"));
+        EdgeIteratorState edge1 = g.edge(nodeId50, farAwayId).setKeyValues(Map.of(STREET_NAME, new KValue("Wentworth Street")));
         assertTrue(createNameSimilarityEdgeFilter("Wentworth Street").accept(edge1));
 
         // Check that it doesn't match streets 200m away
-        EdgeIteratorState edge2 = g.edge(nodeID200, farAwayId).setKeyValues(createKV(STREET_NAME, "Wentworth Street"));
+        EdgeIteratorState edge2 = g.edge(nodeID200, farAwayId).setKeyValues(Map.of(STREET_NAME, new KValue("Wentworth Street")));
         assertFalse(createNameSimilarityEdgeFilter("Wentworth Street").accept(edge2));
     }
 
@@ -277,16 +279,16 @@ public class NameSimilarityEdgeFilterTest {
         graph.getNodeAccess().setNode(1, 43.842775, -79.264649);
 
         EdgeIteratorState doubtfire = graph.edge(0, 1).setWayGeometry(pointList).set(accessEnc, true, true).
-                set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "Doubtfire Crescent"));
+                set(speedEnc, 60, 60).setKeyValues(Map.of(STREET_NAME, new KValue("Doubtfire Crescent")));
         EdgeIteratorState golden = graph.edge(0, 1).set(accessEnc, true, true).set(speedEnc, 60, 60).
-                setKeyValues(createKV(STREET_NAME, "Golden Avenue"));
+                setKeyValues(Map.of(STREET_NAME, new KValue("Golden Avenue")));
 
         graph.getNodeAccess().setNode(2, 43.841501560244744, -79.26366394602502);
         graph.getNodeAccess().setNode(3, 43.842247922172724, -79.2605663670726);
         PointList pointList2 = new PointList(1, false);
         pointList2.add(43.84191413615452, -79.261912128223);
         EdgeIteratorState denison = graph.edge(2, 3).setWayGeometry(pointList2).set(accessEnc, true, true).
-                set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "Denison Street"));
+                set(speedEnc, 60, 60).setKeyValues(Map.of(STREET_NAME, new KValue("Denison Street")));
         double qlat = 43.842122;
         double qLon = -79.262162;
 
@@ -307,10 +309,10 @@ public class NameSimilarityEdgeFilterTest {
     private EdgeIteratorState createTestEdgeIterator(String name) {
         PointList pointList = new PointList();
         pointList.add(basePoint);
-        EdgeIteratorState edge = new BaseGraph.Builder(1).create().edge(0, 0)
+        EdgeIteratorState edge = new BaseGraph.Builder(1).create().edge(0, 1)
                 .setWayGeometry(pointList);
         if (name != null)
-            edge.setKeyValues(KVStorage.KeyValue.createKV(KVStorage.KeyValue.STREET_NAME, name));
+            edge.setKeyValues(Map.of(STREET_NAME, new KValue(name)));
         return edge;
     }
 

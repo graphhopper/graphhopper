@@ -75,7 +75,7 @@ public class Examples {
         InstructionList il = res.getInstructions();
         for (Instruction i : il) {
             // System.out.println(i.getName());
-            
+
             // to get the translated turn instructions you call:
             // System.out.println(i.getTurnDescription(null));
             // Note, that you can control the language only in via the request setLocale method and cannot change it only the client side
@@ -85,6 +85,9 @@ public class Examples {
         for (PathDetail detail : pathDetails) {
 //            System.out.println(detail.getValue());
         }
+
+        // get headers
+        // System.out.println(fullRes.getHeader("x-ratelimit-remaining", "0"));
     }
 
     @Test
@@ -106,7 +109,9 @@ public class Examples {
         if (responseSymm.hasErrors())
             throw new RuntimeException(responseSymm.getErrors().toString());
         // get time from first to second point:
-        // System.out.println(response.getTime(0, 1));
+        // System.out.println(responseSymm.getTime(0, 1));
+        // get header information:
+        // System.out.println(responseSymm.getHeader("x-ratelimit-remaining", "0"));
 
         // Option 2: for an asymmetric matrix do:
         ghmRequest = new GHMRequest();
@@ -121,6 +126,6 @@ public class Examples {
             throw new RuntimeException(responseAsymm.getErrors().toString());
 
         // get time from first to second point:
-        // System.out.println(response.getTime(0, 1));
+        // System.out.println(responseAsymm.getTime(0, 1));
     }
 }

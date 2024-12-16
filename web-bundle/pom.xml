@@ -5,9 +5,10 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>graphhopper-web-bundle</artifactId>
     <packaging>jar</packaging>
-    <version>8.0-SNAPSHOT</version>
+    <version>11.0-SNAPSHOT</version>
     <properties>
-        <graphhopper-maps.version>0.0.0-65144ede0dfbb1b0484ee3558e23d35a032204b7</graphhopper-maps.version>
+        <graphhopper-maps.version>0.0.0-4718098d1db1798841a4d12f1727e8e8f7eab202
+        </graphhopper-maps.version>
     </properties>
     <name>GraphHopper Dropwizard Bundle</name>
     <description>Use the GraphHopper routing engine as a web-service</description>
@@ -15,7 +16,7 @@
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>
-        <version>8.0-SNAPSHOT</version>
+        <version>11.0-SNAPSHOT</version>
     </parent>
 
     <dependencies>
@@ -68,7 +69,6 @@
         <dependency>
             <groupId>org.locationtech.jts</groupId>
             <artifactId>jts-core</artifactId>
-            <version>1.19.0</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.jaxrs</groupId>
@@ -140,8 +140,8 @@
                             <goal>install-node-and-npm</goal>
                         </goals>
                         <configuration>
-                            <nodeVersion>v16.17.0</nodeVersion>
-                            <npmVersion>8.15.0</npmVersion>
+                            <nodeVersion>v20.14.0</nodeVersion>
+                            <npmVersion>10.7.0</npmVersion>
                         </configuration>
                     </execution>
                     <execution>
@@ -168,9 +168,9 @@
                         <id>create target directory</id>
                         <phase>initialize</phase>
                         <configuration>
-                            <tasks>
+                            <target>
                                 <mkdir dir="${basedir}/target"/>
-                            </tasks>
+                            </target>
                         </configuration>
                         <goals>
                             <goal>run</goal>
@@ -180,7 +180,7 @@
                         <id>unzip maps bundle</id>
                         <phase>process-resources</phase>
                         <configuration>
-                            <tasks>
+                            <target>
                                 <untar compression="gzip"
                                        src="${basedir}/target/graphhopper-graphhopper-maps-bundle-${graphhopper-maps.version}.tgz"
                                        dest="${basedir}/target/classes/com/graphhopper/maps">
@@ -190,7 +190,7 @@
                                     </patternset>
                                     <mapper type="regexp" from="package\/dist\/(.*)" to="\1"/>
                                 </untar>
-                            </tasks>
+                            </target>
                         </configuration>
                         <goals>
                             <goal>run</goal>

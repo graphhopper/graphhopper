@@ -11,18 +11,18 @@ Then you can embed these commands in a shell script and use this from e.g. [Dock
 For production usage you have a web service included where you can use [this configuration](https://raw.githubusercontent.com/graphhopper/graphhopper/master/config-example.yml)
 Increase the -Xmx/-Xms parameters of the command accordingly.
 
-You can reduce the memory requirements for the import step when you run the
-"import" command explicitly before the "server" command:
+You can reduce the memory requirements for the import step when you run the `import` command explicitly before the `server` command:
 
 ```
 java [options] -jar *.jar import config.yml
 java [options] -jar *.jar server config.yml # calls the import command implicitly, if not done before
 ```
 
-Try different garbage collectors (GCs) like ZGC or Shenandoah for serving the
-routing requests. The G1 is the default GC but the other two GCs are better suited for JVMs with bigger heaps (>32GB) and low pauses.
-You enable them with `-XX:+UseZGC` or `-XX:+UseShenandoahGC`. Please note that especially ZGC and G1 require quite a
-bit memory additionally to the heap and so sometimes speed can be increased when you lower the `Xmx` value.
+To further reduce memory usage for `import` try a special garbage collector (GC): `-XX:+UseParallelGC`.
+
+However after the import, for serving the routing requests GCs like ZGC or Shenandoah could be better than the default G1 as those are optimized for JVMs with bigger heaps (>32GB) and low pauses.
+They can be enabled with `-XX:+UseZGC` or `-XX:+UseShenandoahGC`. Please note that especially ZGC and G1 require quite a
+bit memory additionally to the heap and so sometimes overall speed could be increased when lowering the `Xmx` value.
 
 If you want to support none-CH requests you should consider enabling landmarks or limit requests to a
 certain distance via `routing.non_ch.max_waypoint_distance` (in meter, default is 1) or

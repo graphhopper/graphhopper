@@ -7,11 +7,9 @@ import com.graphhopper.ResponsePath;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
-import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 
-import java.util.Arrays;
 import java.util.Locale;
 
 import static com.graphhopper.json.Statement.If;
@@ -37,8 +35,10 @@ public class RoutingExample {
         // specify where to store graphhopper files
         hopper.setGraphHopperLocation("target/routing-graph-cache");
 
+        // add all encoded values that are used in the custom model, these are also available as path details or for client-side custom models
+        hopper.setEncodedValuesString("car_access, car_average_speed, road_access");
         // see docs/core/profiles.md to learn more about profiles
-        hopper.setProfiles(new Profile("car").setVehicle("car").setWeighting("fastest").setTurnCosts(false));
+        hopper.setProfiles(new Profile("car").setCustomModel(GHUtility.loadCustomModelFromJar("car.json")));
 
         // this enables speed mode for the profile we called car
         hopper.getCHPreparationHandler().setCHProfiles(new CHProfile("car"));
@@ -76,7 +76,7 @@ public class RoutingExample {
             // System.out.println("distance " + instruction.getDistance() + " for instruction: " + instruction.getTurnDescription(tr));
         }
         assert il.size() == 6;
-        assert Helper.round(path.getDistance(), -2) == 900;
+        assert Helper.round(path.getDistance(), -2) == 600;
     }
 
     public static void speedModeVersusFlexibleMode(GraphHopper hopper) {
@@ -85,7 +85,7 @@ public class RoutingExample {
         GHResponse res = hopper.route(req);
         if (res.hasErrors())
             throw new RuntimeException(res.getErrors().toString());
-        assert Helper.round(res.getBest().getDistance(), -2) == 900;
+        assert Helper.round(res.getBest().getDistance(), -2) == 600;
     }
 
     public static void alternativeRoute(GraphHopper hopper) {
@@ -109,7 +109,8 @@ public class RoutingExample {
         GraphHopper hopper = new GraphHopper();
         hopper.setOSMFile(ghLoc);
         hopper.setGraphHopperLocation("target/routing-custom-graph-cache");
-        hopper.setProfiles(new CustomProfile("car_custom").setCustomModel(new CustomModel()).setVehicle("car"));
+        hopper.setEncodedValuesString("car_access, car_average_speed, road_access");
+        hopper.setProfiles(new Profile("car_custom").setCustomModel(GHUtility.loadCustomModelFromJar("car.json")));
 
         // The hybrid mode uses the "landmark algorithm" and is up to 15x faster than the flexible mode (Dijkstra).
         // Still it is slower than the speed mode ("contraction hierarchies algorithm") ...
@@ -125,21 +126,21 @@ public class RoutingExample {
         if (res.hasErrors())
             throw new RuntimeException(res.getErrors().toString());
 
-        assert Math.round(res.getBest().getTime() / 1000d) == 96;
+        assert Math.round(res.getBest().getTime() / 1000d) == 94;
 
-        // 2. now avoid primary roads and reduce maximum speed, see docs/core/custom-models.md for an in-depth explanation
+        // 2. now avoid the secondary road and reduce the maximum speed, see docs/core/custom-models.md for an in-depth explanation
         // and also the blog posts https://www.graphhopper.com/?s=customizable+routing
         CustomModel model = new CustomModel();
-        model.addToPriority(If("road_class == PRIMARY", MULTIPLY, "0.5"));
+        model.addToPriority(If("road_class == SECONDARY", MULTIPLY, "0.5"));
 
-        // unconditional limit to 100km/h
-        model.addToPriority(If("true", LIMIT, "100"));
+        // unconditional limit to 20km/h
+        model.addToSpeed(If("true", LIMIT, "30"));
 
         req.setCustomModel(model);
         res = hopper.route(req);
         if (res.hasErrors())
             throw new RuntimeException(res.getErrors().toString());
 
-        assert Math.round(res.getBest().getTime() / 1000d) == 165;
+        assert Math.round(res.getBest().getTime() / 1000d) == 184;
     }
 }

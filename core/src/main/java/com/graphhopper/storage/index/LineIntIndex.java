@@ -21,6 +21,7 @@ package com.graphhopper.storage.index;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntHashSet;
 import com.graphhopper.geohash.SpatialKeyAlgo;
+import com.graphhopper.storage.DAType;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.util.Constants;
@@ -47,8 +48,12 @@ public class LineIntIndex {
     private SpatialKeyAlgo keyAlgo;
 
     public LineIntIndex(BBox bBox, Directory dir, String name) {
+        this(bBox, dir, name, dir.getDefaultType(name, true));
+    }
+
+    public LineIntIndex(BBox bBox, Directory dir, String name, DAType daType) {
         this.bounds = bBox;
-        this.dataAccess = dir.create(name, dir.getDefaultType(name, true));
+        this.dataAccess = dir.create(name, daType);
     }
 
     public boolean loadExisting() {
@@ -154,8 +159,12 @@ public class LineIntIndex {
     }
 
     public void query(BBox queryShape, final LocationIndex.Visitor function) {
+        query(LocationIndex.createBBoxTileFilter(queryShape), function);
+    }
+
+    public void query(LocationIndex.TileFilter tileFilter, final LocationIndex.Visitor function) {
         final IntHashSet set = new IntHashSet();
-        query(START_POINTER, queryShape,
+        query(START_POINTER, tileFilter,
                 bounds.minLat, bounds.minLon, bounds.maxLat - bounds.minLat, bounds.maxLon - bounds.minLon,
                 new LocationIndex.Visitor() {
                     @Override
@@ -176,7 +185,7 @@ public class LineIntIndex {
                 }, 0);
     }
 
-    private void query(int intPointer, BBox queryBBox,
+    private void query(int intPointer, LocationIndex.TileFilter tileFilter,
                        double minLat, double minLon,
                        double deltaLatPerDepth, double deltaLonPerDepth,
                        LocationIndex.Visitor function, int depth) {
@@ -208,14 +217,14 @@ public class LineIntIndex {
             double tmpMinLon = minLon + deltaLonPerDepth * pixelXY[0];
             double tmpMinLat = minLat + deltaLatPerDepth * pixelXY[1];
 
-            BBox bbox = (queryBBox != null || function.isTileInfo()) ? new BBox(tmpMinLon, tmpMinLon + deltaLonPerDepth, tmpMinLat, tmpMinLat + deltaLatPerDepth) : null;
+            BBox bbox = (tileFilter != null || function.isTileInfo()) ? new BBox(tmpMinLon, tmpMinLon + deltaLonPerDepth, tmpMinLat, tmpMinLat + deltaLatPerDepth) : null;
             if (function.isTileInfo())
                 function.onTile(bbox, depth);
-            if (queryBBox == null || queryBBox.contains(bbox)) {
+            if (tileFilter == null || tileFilter.acceptAll(bbox)) {
                 // fill without a restriction!
                 query(nextIntPointer, null, tmpMinLat, tmpMinLon, deltaLatPerDepth, deltaLonPerDepth, function, depth + 1);
-            } else if (queryBBox.intersects(bbox)) {
-                query(nextIntPointer, queryBBox, tmpMinLat, tmpMinLon, deltaLatPerDepth, deltaLonPerDepth, function, depth + 1);
+            } else if (tileFilter.acceptPartially(bbox)) {
+                query(nextIntPointer, tileFilter, tmpMinLat, tmpMinLon, deltaLatPerDepth, deltaLonPerDepth, function, depth + 1);
             }
         }
     }

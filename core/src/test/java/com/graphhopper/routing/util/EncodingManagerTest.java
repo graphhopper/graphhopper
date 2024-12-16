@@ -17,10 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
-import com.graphhopper.routing.ev.RoadAccess;
-import com.graphhopper.routing.ev.VehicleAccess;
-import com.graphhopper.routing.ev.VehicleSpeed;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.parsers.BikeAccessParser;
 import com.graphhopper.routing.util.parsers.CarAccessParser;
 import com.graphhopper.routing.util.parsers.FootAccessParser;
@@ -39,10 +36,11 @@ public class EncodingManagerTest {
     @Test
     public void testSupportFords() {
         EncodingManager manager = new EncodingManager.Builder()
-                .add(VehicleEncodedValues.car(new PMap()))
-                .add(VehicleEncodedValues.bike(new PMap()))
-                .add(VehicleEncodedValues.foot(new PMap())).
-                build();
+                .add(VehicleAccess.create("car"))
+                .add(VehicleAccess.create("bike"))
+                .add(VehicleAccess.create("foot"))
+                .add(Roundabout.create())
+                .build();
 
         // 1) default -> no block fords
         assertFalse(new CarAccessParser(manager, new PMap()).isBlockFords());

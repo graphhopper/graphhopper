@@ -22,7 +22,7 @@ public abstract class AbstractGHMatrixWebTester {
 
     protected final ObjectMapper objectMapper = new ObjectMapper();
 
-    abstract GraphHopperMatrixWeb createMatrixClient(String json) throws IOException;
+    abstract GraphHopperMatrixWeb createMatrixClient(String json, int errorCode) throws IOException;
 
     abstract GHMatrixAbstractRequester createRequester(String url);
 
@@ -42,7 +42,7 @@ public abstract class AbstractGHMatrixWebTester {
     @Test
     public void testReadingMatrixWithError() throws IOException {
         String ghMatrix = readFile(new InputStreamReader(getClass().getResourceAsStream("matrix_error.json")));
-        GraphHopperMatrixWeb matrixWeb = createMatrixClient(ghMatrix);
+        GraphHopperMatrixWeb matrixWeb = createMatrixClient(ghMatrix, 400);
 
         GHMRequest req = createRequest();
         MatrixResponse rsp = matrixWeb.route(req);
@@ -54,7 +54,7 @@ public abstract class AbstractGHMatrixWebTester {
     @Test
     public void testReadingWeights() throws IOException {
         String ghMatrix = readFile(new InputStreamReader(getClass().getResourceAsStream("matrix-weights-only.json")));
-        GraphHopperMatrixWeb matrixWeb = createMatrixClient(ghMatrix);
+        GraphHopperMatrixWeb matrixWeb = createMatrixClient(ghMatrix, 400);
 
         GHMRequest req = createRequest();
         MatrixResponse rsp = matrixWeb.route(req);
@@ -72,7 +72,7 @@ public abstract class AbstractGHMatrixWebTester {
     @Test
     public void testReadingMatrixConnectionsNotFound_noFailFast() throws IOException {
         String ghMatrix = readFile(new InputStreamReader(getClass().getResourceAsStream("matrix-connection-not-found-fail-fast.json")));
-        GraphHopperMatrixWeb matrixWeb = createMatrixClient(ghMatrix);
+        GraphHopperMatrixWeb matrixWeb = createMatrixClient(ghMatrix, 400);
 
         GHMRequest req = new GHMRequest();
         req.setPoints(Arrays.asList(
@@ -86,6 +86,7 @@ public abstract class AbstractGHMatrixWebTester {
         MatrixResponse rsp = matrixWeb.route(req);
         assertFalse(rsp.hasErrors());
         assertTrue(rsp.hasProblems());
+        assertEquals(400, rsp.getStatusCode());
 
         assertEquals(Double.MAX_VALUE, rsp.getWeight(0, 1), 1.e-3);
         assertEquals(0, rsp.getWeight(0, 0), 1.e-3);
@@ -102,7 +103,7 @@ public abstract class AbstractGHMatrixWebTester {
     @Test
     public void testReadingMatrixPointsNotFound_noFailFast() throws IOException {
         String ghMatrix = readFile(new InputStreamReader(getClass().getResourceAsStream("matrix-point-not-found-fail-fast.json")));
-        GraphHopperMatrixWeb matrixWeb = createMatrixClient(ghMatrix);
+        GraphHopperMatrixWeb matrixWeb = createMatrixClient(ghMatrix, 400);
 
         GHMRequest req = new GHMRequest();
         req.setPoints(Arrays.asList(
@@ -117,6 +118,7 @@ public abstract class AbstractGHMatrixWebTester {
         MatrixResponse rsp = matrixWeb.route(req);
         assertFalse(rsp.hasErrors());
         assertTrue(rsp.hasProblems());
+        assertEquals(400, rsp.getStatusCode());
 
         assertEquals(Double.MAX_VALUE, rsp.getWeight(1, 0), 1.e-3);
         assertEquals(Double.MAX_VALUE, rsp.getWeight(1, 1), 1.e-3);
@@ -159,22 +161,24 @@ public abstract class AbstractGHMatrixWebTester {
     @Test
     public void testReadingGoogleThrowsException() throws IOException {
         String ghMatrix = readFile(new InputStreamReader(getClass().getResourceAsStream("google-matrix1.json")));
-        GraphHopperMatrixWeb matrixWeb = createMatrixClient(ghMatrix);
+        GraphHopperMatrixWeb matrixWeb = createMatrixClient(ghMatrix, 400);
         GHMRequest req = createRequest();
         MatrixResponse rsp = matrixWeb.route(req);
         assertTrue(rsp.hasErrors());
+        assertEquals(400, rsp.getStatusCode());
     }
 
     @Test
     public void testReadingWeights_TimesAndDistances() throws IOException {
         String ghMatrix = readFile(new InputStreamReader(getClass().getResourceAsStream("matrix.json")));
-        GraphHopperMatrixWeb matrixWeb = createMatrixClient(ghMatrix);
+        GraphHopperMatrixWeb matrixWeb = createMatrixClient(ghMatrix, 200);
 
         GHMRequest req = createRequest();
         req.setOutArrays(Arrays.asList("weights", "distances", "times"));
         MatrixResponse rsp = matrixWeb.route(req);
 
         assertFalse(rsp.hasErrors());
+        assertEquals(200, rsp.getStatusCode());
 
         assertEquals(9475., rsp.getDistance(0, 1), .1);
         assertEquals(9734., rsp.getDistance(1, 2), .1);

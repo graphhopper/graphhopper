@@ -20,14 +20,16 @@ package com.graphhopper.tools;
 
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.storage.BaseGraph;
-import com.graphhopper.util.*;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.MiniPerfTest;
+import com.graphhopper.util.PMap;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
@@ -44,9 +46,9 @@ public class GraphSpeedMeasurement {
                     .putObject("graph.location", args.getString("location", "graph-speed-measurement") + "-" + speedBits + "-gh")
                     .putObject("graph.dataaccess", args.getString("da", "RAM_STORE"))
                     .putObject("import.osm.ignored_highways", "")
-                    .putObject("graph.vehicles", String.format("roads|speed_bits=%d,car|speed_bits=%d,bike|speed_bits=%d,foot|speed_bits=%d", speedBits, speedBits, speedBits, speedBits))
-                    .setProfiles(Arrays.asList(
-                            new CustomProfile("car").setCustomModel(new CustomModel()).setVehicle("roads")
+                    .putObject("graph.encoded_values", String.format("car_average_speed|speed_bits=%d,bike_average_speed|speed_bits=%d,foot_average_speed|speed_bits=%d", speedBits, speedBits, speedBits))
+                    .setProfiles(List.of(
+                            TestProfiles.accessAndSpeed("car")
                     ));
             GraphHopper hopper = new GraphHopper()
                     .init(ghConfig)
@@ -76,15 +78,19 @@ public class GraphSpeedMeasurement {
                                 // note that reading **all** the EVs should be in favor of the caching solution, while cases
                                 // with many encoded values where only a selected few are read should make the caching less
                                 // important. but even in this scenario the caching provides no speedup apparently!
-                                for (BooleanEncodedValue ev : booleanEncodedValues) sum += iter.get(ev) ? 1 : 0;
-                                for (IntEncodedValue ev : intEncodedValues) sum += iter.get(ev) > 5 ? 1 : 0;
-                                for (DecimalEncodedValue ev : decimalEncodedValues) sum += iter.get(ev) > 20 ? 1 : 0;
-                                for (EnumEncodedValue ev : enumEncodedValues) sum += iter.get(ev).ordinal();
+                                for (BooleanEncodedValue ev : booleanEncodedValues)
+                                    sum += iter.get(ev) ? 1 : 0;
+                                for (IntEncodedValue ev : intEncodedValues)
+                                    sum += iter.get(ev) > 5 ? 1 : 0;
+                                for (DecimalEncodedValue ev : decimalEncodedValues)
+                                    sum += iter.get(ev) > 20 ? 1 : 0;
+                                for (EnumEncodedValue ev : enumEncodedValues)
+                                    sum += iter.get(ev).ordinal();
                             }
                         }
                         return (int) sum;
                     });
-            result.add(String.format("bits: %d, ints: %d, took: %.2fms, checksum: %d", speedBits, em.getIntsForFlags(), t.getSum(), t.getDummySum()));
+            result.add(String.format("bits: %d, bytes: %d, took: %.2fms, checksum: %d", speedBits, em.getBytesForFlags(), t.getSum(), t.getDummySum()));
             System.out.println(result.get(result.size() - 1));
         }
         System.out.println();

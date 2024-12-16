@@ -20,6 +20,7 @@ package com.graphhopper.resources;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GHResponse;
+import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.gtfs.GHLocation;
 import com.graphhopper.gtfs.PtRouter;
 import com.graphhopper.gtfs.Request;
@@ -45,10 +46,12 @@ import static java.util.stream.Collectors.toList;
 @Path("route-pt")
 public class PtRouteResource {
 
+    private final GraphHopperConfig config;
     private final PtRouter ptRouter;
 
     @Inject
-    public PtRouteResource(PtRouter ptRouter) {
+    public PtRouteResource(GraphHopperConfig config, PtRouter ptRouter) {
+        this.config = config;
         this.ptRouter = ptRouter;
     }
 
@@ -65,7 +68,9 @@ public class PtRouteResource {
                             @QueryParam("pt.limit_trip_time") DurationParam limitTripTime,
                             @QueryParam("pt.limit_street_time") DurationParam limitStreetTime,
                             @QueryParam("pt.access_profile") String accessProfile,
-                            @QueryParam("pt.egress_profile") String egressProfile) {
+                            @QueryParam("pt.beta_access_time") Double betaAccessTime,
+                            @QueryParam("pt.egress_profile") String egressProfile,
+                            @QueryParam("pt.beta_egress_time") Double betaEgressTime) {
         StopWatch stopWatch = new StopWatch().start();
         List<GHLocation> points = requestPoints.stream().map(AbstractParam::get).collect(toList());
         Instant departureTime = departureTimeParam.get().toInstant();
@@ -80,10 +85,12 @@ public class PtRouteResource {
         Optional.ofNullable(limitTripTime.get()).ifPresent(request::setLimitTripTime);
         Optional.ofNullable(limitStreetTime.get()).ifPresent(request::setLimitStreetTime);
         Optional.ofNullable(accessProfile).ifPresent(request::setAccessProfile);
+        Optional.ofNullable(betaAccessTime).ifPresent(request::setBetaAccessTime);
         Optional.ofNullable(egressProfile).ifPresent(request::setEgressProfile);
+        Optional.ofNullable(betaEgressTime).ifPresent(request::setBetaEgressTime);
 
         GHResponse route = ptRouter.route(request);
-        return ResponsePathSerializer.jsonObject(route, true, true, false, false, stopWatch.stop().getMillis());
+        return ResponsePathSerializer.jsonObject(route, new ResponsePathSerializer.Info(config.getCopyrights(), Math.round(stopWatch.stop().getMillis()), null), true, true, false, false, -1);
     }
 
 }

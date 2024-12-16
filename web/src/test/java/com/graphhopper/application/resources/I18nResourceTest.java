@@ -21,7 +21,7 @@ package com.graphhopper.application.resources;
 import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
-import com.graphhopper.config.Profile;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -30,12 +30,10 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import javax.ws.rs.core.Response;
 import java.io.File;
-import java.util.Collections;
+import java.util.List;
 
 import static com.graphhopper.application.util.TestUtils.clientTarget;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ExtendWith(DropwizardExtensionsSupport.class)
@@ -46,11 +44,10 @@ public class I18nResourceTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.vehicles", "car").
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("graph.location", DIR).
                 putObject("import.osm.ignored_highways", "").
-                setProfiles(Collections.singletonList(new Profile("car").setVehicle("car").setWeighting("fastest")));
+                setProfiles(List.of(TestProfiles.constantSpeed("car")));
         return config;
     }
 
@@ -62,14 +59,10 @@ public class I18nResourceTest {
 
     @Test
     public void requestI18n() {
-        Response response = clientTarget(app, "/i18n").request().buildGet().invoke();
-        assertEquals(200, response.getStatus());
-        String str = response.readEntity(String.class);
+        String str = clientTarget(app, "/i18n").request().get(String.class);
         assertTrue(str.contains("\"en\":") && str.contains("\"locale\":\"\""), str);
 
-        response = clientTarget(app, "/i18n/de").request().buildGet().invoke();
-        assertEquals(200, response.getStatus());
-        str = response.readEntity(String.class);
+        str = clientTarget(app, "/i18n/de").request().get(String.class);
         assertTrue(str.contains("\"default\":") && str.contains("\"locale\":\"de\""), str);
     }
 }

@@ -1,8 +1,6 @@
 ## Technical Overview of GraphHopper
 
-To get a better understanding also take a look in the source code, especially in the unit tests and in 
-some resources we [published](http://karussell.wordpress.com/2014/01/23/graphhopper-news-article-in-java-magazine-and-fosdem-2014/)
-or [here](http://graphhopper.com/public/slides/).
+To get a better understanding also take a look in the source code, especially in the unit tests.
 
 There are mainly three parts:
 
@@ -39,14 +37,11 @@ Some explanations:
  * For you custom data import keep in mind that although the nodes 4 and 6 have no edges they still 'exist' and consume space in the current implementations of DataAccess. For OSMReader this cannot be the case as separate networks with only a small number of nodes are removed (very likely OSM bugs).
  * If CH is enabled the storage adds information for shortcuts, see [this issue](https://github.com/graphhopper/graphhopper/pull/447) for more details.
 
-For some algorithms there are special implementations of the Graph (CHGraph). You enable this in GraphHopperStorage
-to store shortcut edges and a level for every node. This special storage is necessary for _Contraction Hierarchies_. 
-For this the graph needs also some preprocessing (which can take several minutes for bigger areas) 
-which is done in the OSMReader when configured or via API in PrepareContractionHierarchies. 
-In order to use the shortcuts and get the benefits of the optimized graph you must use the algorithm returned from 
-createAlgo() in the preparation class.
+For some algorithms like Landmarks or Contraction Hierarchies there additional storages necessary and the 'table'
+layout is special. Furthermore there is a key value storage to store street
+names, conditional tags and more - preferable where the storage size is unknown.
 
-Also there is a version in every vehicle and every data structure which is changed if the 
+Also there is a version in every data structure which is changed if the 
 data structure of GraphHopper gets incompatible to the previous versions.
 
 ### 3. The Algorithms
@@ -58,15 +53,15 @@ An algorithm needs the path extraction: from the shortest-path-tree one needs to
 (list of edges) including the distance and time. Afterwards from this list the exact point (latitude,longitude) 
 can be determined. For bidirectional algorithms this is a bit more complicated and done in PathBidirRef. 
 For [_Contraction Hierarchies_](http://ad-wiki.informatik.uni-freiburg.de/teaching/EfficientRoutePlanningSS2012)
- we use the _CHGraph_ which additionally holds shortcuts. While path extraction we need to identify those
- shortcuts and get the edges recursively, this is done in Path4CH.
+we use the _RoutingCHGraph_ which additionally holds shortcuts. While path extraction we need to identify those
+shortcuts and get the edges recursively, this is done in Path4CH.
 
 ## 3.1 Base Graph
 
 In order to traverse the _CHGraph_ like a normal _Graph_ one needs to hide the shortcuts, which
 is done automatically for you if you call graph.getBaseGraph(). This is necessary in a 
 _LocationIndex_ and in the _Path_ class in order to identify how many streets leave a junction
-or similar. See issue #116 for more information.
+or similar. See issue [#116](https://github.com/graphhopper/graphhopper/issues/116) for more information.
 
 
 ### 4. Connecting the Real World to the Graph
@@ -74,12 +69,11 @@ or similar. See issue #116 for more information.
 ## 4.1 LocationIndex
 
 In real world we have addresses and/or coordinates for the start and end point. 
-To get the coordinate from an address you will need a geocoding solution not part of GraphHopper.
+To get the coordinate from an address you will need a geocoding solution
+which is not part of this GraphHopper routing engine.
 
 To get the closest node or edge id from a coordinate we provide you with an efficient lookup concept:
-the LocationIndex. There are multiple implementations
-where the LocationIndexTree is the most precise and scalable one and used in almost all places.
-See [here](../example/src/main/java/com/graphhopper/example/LocationIndexExample.java) for more information. See #17 and #221.
+the LocationIndexTree. See [here](../../example/src/main/java/com/graphhopper/example/LocationIndexExample.java) for more information. See [#17](https://github.com/graphhopper/graphhopper/issues/17) and [#221](https://github.com/graphhopper/graphhopper/issues/221).
 
 ## 4.2 QueryGraph
 

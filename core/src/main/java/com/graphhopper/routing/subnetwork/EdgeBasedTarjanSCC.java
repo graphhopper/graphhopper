@@ -39,8 +39,8 @@ import static com.graphhopper.util.GHUtility.getEdgeFromEdgeKey;
  * the edges. This way its possible to take into account possible turn restrictions.
  * <p>
  * The algorithm is of course very similar to the node-based version and it might be possible to reuse some code between
- * the two, but especially the version with an explicit stack needs different 'state' information and loops require
- * some special treatment as well.
+ * the two, but especially the version with an explicit stack needs different 'state' information and loops required
+ * some special treatment as well (this was written when base graph could still have loops!).
  *
  * @author easbar
  * @see TarjanSCC
@@ -156,10 +156,6 @@ public class EdgeBasedTarjanSCC {
                 continue;
             int q = createEdgeKey(iter, false);
             handleNeighbor(p, q, iter.getAdjNode());
-            // we need a special treatment for loops because our edge iterator only sees it once but it can be travelled
-            // both ways
-            if (iter.getBaseNode() == iter.getAdjNode())
-                handleNeighbor(p, q + 1, iter.getAdjNode());
         }
         buildComponent(p);
     }
@@ -273,8 +269,6 @@ public class EdgeBasedTarjanSCC {
                             continue;
                         int q = createEdgeKey(it, false);
                         pushHandleNeighbor(p, q, it.getAdjNode());
-                        if (it.getBaseNode() == it.getAdjNode())
-                            pushHandleNeighbor(p, q + 1, it.getAdjNode());
                     }
                     break;
                 default:
@@ -321,25 +315,25 @@ public class EdgeBasedTarjanSCC {
 
     private void pushUpdateLowLinks(int p, int q) {
         assert p >= 0 && q >= 0;
-        dfsStackPQ.addLast(bitUtil.combineIntsToLong(p, q));
+        dfsStackPQ.addLast(bitUtil.toLong(p, q));
         dfsStackAdj.addLast(-1);
     }
 
     private void pushBuildComponent(int p) {
         assert p >= 0;
-        dfsStackPQ.addLast(bitUtil.combineIntsToLong(p, -2));
+        dfsStackPQ.addLast(bitUtil.toLong(p, -2));
         dfsStackAdj.addLast(-2);
     }
 
     private void pushFindComponentForEdgeKey(int p, int adj) {
         assert p >= 0 && adj >= 0;
-        dfsStackPQ.addLast(bitUtil.combineIntsToLong(p, -1));
+        dfsStackPQ.addLast(bitUtil.toLong(p, -1));
         dfsStackAdj.addLast(adj);
     }
 
     private void pushHandleNeighbor(int p, int q, int adj) {
         assert p >= 0 && q >= 0 && adj >= 0;
-        dfsStackPQ.addLast(bitUtil.combineIntsToLong(p, q));
+        dfsStackPQ.addLast(bitUtil.toLong(p, q));
         dfsStackAdj.addLast(adj);
     }
 

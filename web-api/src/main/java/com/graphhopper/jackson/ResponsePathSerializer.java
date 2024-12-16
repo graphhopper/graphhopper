@@ -27,7 +27,6 @@ import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointList;
 
 import java.text.NumberFormat;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
@@ -43,28 +42,24 @@ import java.util.Locale;
  */
 public class ResponsePathSerializer {
 
-    /**
-     * This includes the required attribution for OpenStreetMap.
-     * Do not hesitate to  mention us and link us in your about page
-     * https://support.graphhopper.com/support/search/solutions?term=attribution
-     */
-    public static final List<String> COPYRIGHTS = Arrays.asList("GraphHopper", "OpenStreetMap contributors");
+    public static String encodePolyline(PointList poly, boolean includeElevation, double multiplier) {
+        if (multiplier < 1)
+            throw new IllegalArgumentException("multiplier cannot be smaller than 1 but was " + multiplier + " for polyline");
 
-    public static String encodePolyline(PointList poly, boolean includeElevation, double precision) {
         StringBuilder sb = new StringBuilder(Math.max(20, poly.size() * 3));
         int size = poly.size();
         int prevLat = 0;
         int prevLon = 0;
         int prevEle = 0;
         for (int i = 0; i < size; i++) {
-            int num = (int) Math.floor(poly.getLat(i) * precision);
+            int num = (int) Math.round(poly.getLat(i) * multiplier);
             encodeNumber(sb, num - prevLat);
             prevLat = num;
-            num = (int) Math.floor(poly.getLon(i) * precision);
+            num = (int) Math.round(poly.getLon(i) * multiplier);
             encodeNumber(sb, num - prevLon);
             prevLon = num;
             if (includeElevation) {
-                num = (int) Math.floor(poly.getEle(i) * 100);
+                num = (int) Math.round(poly.getEle(i) * 100);
                 encodeNumber(sb, num - prevEle);
                 prevEle = num;
             }
@@ -86,12 +81,14 @@ public class ResponsePathSerializer {
         sb.append((char) (num));
     }
 
-    public static ObjectNode jsonObject(GHResponse ghRsp, boolean enableInstructions, boolean calcPoints, boolean enableElevation, boolean pointsEncoded, double took) {
+    public record Info(List<String> copyrights, long took, String roadDataTimestamp) {
+    }
+
+    public static ObjectNode jsonObject(GHResponse ghRsp, Info info, boolean enableInstructions,
+                                        boolean calcPoints, boolean enableElevation, boolean pointsEncoded, double pointsMultiplier) {
         ObjectNode json = JsonNodeFactory.instance.objectNode();
         json.putPOJO("hints", ghRsp.getHints().toMap());
-        final ObjectNode info = json.putObject("info");
-        info.putPOJO("copyrights", COPYRIGHTS);
-        info.put("took", Math.round(took));
+        json.putPOJO("info", info);
         ArrayNode jsonPathList = json.putArray("paths");
         for (ResponsePath p : ghRsp.getAll()) {
             ObjectNode jsonPath = jsonPathList.addObject();
@@ -102,10 +99,14 @@ public class ResponsePathSerializer {
             if (!p.getDescription().isEmpty()) {
                 jsonPath.putPOJO("description", p.getDescription());
             }
+
+            // for points and snapped_waypoints:
+            jsonPath.put("points_encoded", pointsEncoded);
+            if (pointsEncoded) jsonPath.put("points_encoded_multiplier", pointsMultiplier);
+
             if (calcPoints) {
-                jsonPath.put("points_encoded", pointsEncoded);
                 jsonPath.putPOJO("bbox", p.calcBBox2D());
-                jsonPath.putPOJO("points", pointsEncoded ? encodePolyline(p.getPoints(), enableElevation, 1e5) : p.getPoints().toLineString(enableElevation));
+                jsonPath.putPOJO("points", pointsEncoded ? encodePolyline(p.getPoints(), enableElevation, pointsMultiplier) : p.getPoints().toLineString(enableElevation));
                 if (enableInstructions) {
                     jsonPath.putPOJO("instructions", p.getInstructions());
                 }
@@ -114,7 +115,7 @@ public class ResponsePathSerializer {
                 jsonPath.put("ascend", p.getAscend());
                 jsonPath.put("descend", p.getDescend());
             }
-            jsonPath.putPOJO("snapped_waypoints", pointsEncoded ? encodePolyline(p.getWaypoints(), enableElevation, 1e5) : p.getWaypoints().toLineString(enableElevation));
+            jsonPath.putPOJO("snapped_waypoints", pointsEncoded ? encodePolyline(p.getWaypoints(), enableElevation, pointsMultiplier) : p.getWaypoints().toLineString(enableElevation));
             if (p.getFare() != null) {
                 jsonPath.put("fare", NumberFormat.getCurrencyInstance(Locale.ROOT).format(p.getFare()));
             }

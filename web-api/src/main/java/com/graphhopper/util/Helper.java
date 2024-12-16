@@ -37,8 +37,9 @@ public class Helper {
     public static final long MB = 1L << 20;
     // we keep the first seven decimal places of lat/lon coordinates. this corresponds to ~1cm precision ('pointing to waldo on a page')
     private static final float DEGREE_FACTOR = 10_000_000;
-    // milli meter is a bit extreme but we have integers
+    // milli meter is a bit extreme but we have 3 bytes
     private static final float ELE_FACTOR = 1000f;
+    private static final int MAX_ELE_UINT = (int) ((10_000 + 1000) * ELE_FACTOR);
 
     private Helper() {
     }
@@ -62,18 +63,6 @@ public class Helper {
 
     public static String toUpperCase(String string) {
         return string.toUpperCase(Locale.ROOT);
-    }
-
-    public static int countBitValue(int maxTurnCosts) {
-        if (maxTurnCosts < 0)
-            throw new IllegalArgumentException("maxTurnCosts cannot be negative " + maxTurnCosts);
-
-        int counter = 0;
-        while (maxTurnCosts > 0) {
-            maxTurnCosts >>= 1;
-            counter++;
-        }
-        return counter;
     }
 
     public static void saveProperties(Map<String, String> map, Writer tmpWriter) throws IOException {
@@ -269,7 +258,7 @@ public class Helper {
             return Integer.MAX_VALUE;
         if (deg <= -Double.MAX_VALUE)
             return -Integer.MAX_VALUE;
-        return (int) (deg * DEGREE_FACTOR);
+        return (int) Math.round(deg * DEGREE_FACTOR);
     }
 
     /**
@@ -288,27 +277,26 @@ public class Helper {
     /**
      * Converts elevation value (in meters) into integer for storage.
      */
-    public static int eleToInt(double ele) {
-        if (ele >= Integer.MAX_VALUE)
-            return Integer.MAX_VALUE;
-        return (int) (ele * ELE_FACTOR);
+    public static int eleToUInt(double ele) {
+        if (Double.isNaN(ele)) throw new IllegalArgumentException("elevation cannot be NaN");
+        if (ele < -1000) return -1000;
+        if (ele >= Integer.MAX_VALUE / ELE_FACTOR - 1000) return MAX_ELE_UINT;
+        return (int) Math.round((ele + 1000) * ELE_FACTOR); // enough for smallest value is -414m
     }
 
     /**
      * Converts the integer value retrieved from storage into elevation (in meters). Do not expect
      * more precision than meters although it currently is!
      */
-    public static double intToEle(int integEle) {
-        if (integEle == Integer.MAX_VALUE)
+    public static double uIntToEle(int integEle) {
+        if (integEle >= MAX_ELE_UINT)
             return Double.MAX_VALUE;
-        return integEle / ELE_FACTOR;
+        return integEle / ELE_FACTOR - 1000;
     }
 
     public static String nf(long no) {
-        // I like french localization the most: 123654 will be 123 654 instead
-        // of comma vs. point confusion for English/German people.
         // NumberFormat is not thread safe => but getInstance looks like it's cached
-        return NumberFormat.getInstance(Locale.FRANCE).format(no);
+        return NumberFormat.getInstance(Locale.ENGLISH).format(no);
     }
 
     public static String firstBig(String sayText) {
@@ -362,21 +350,6 @@ public class Helper {
         DateFormat df = new SimpleDateFormat(str, Locale.ENGLISH);
         df.setTimeZone(UTC);
         return df;
-    }
-
-    /**
-     * This method handles the specified (potentially negative) int as unsigned bit representation
-     * and returns the positive converted long.
-     */
-    public static long toUnsignedLong(int x) {
-        return ((long) x) & 0xFFFF_FFFFL;
-    }
-
-    /**
-     * Converts the specified long back into a signed int (reverse method for toUnsignedLong)
-     */
-    public static int toSignedInt(long x) {
-        return (int) x;
     }
 
     /**
@@ -443,20 +416,6 @@ public class Helper {
     }
 
     /**
-     * Equivalent to java 8 String#join
-     */
-    public static String join(String delimiter, List<String> strings) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < strings.size(); i++) {
-            if (i > 0) {
-                sb.append(delimiter);
-            }
-            sb.append(strings.get(i));
-        }
-        return sb.toString();
-    }
-
-    /**
      * parses a string like [a,b,c]
      */
     public static List<String> parseList(String listStr) {
@@ -488,4 +447,5 @@ public class Helper {
         }
         return val;
     }
+
 }
