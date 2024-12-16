@@ -56,9 +56,9 @@ public class WayToEdgeConverter {
                     result.fromEdges.add(e.value);
             });
         if (result.fromEdges.size() < fromWays.size())
-            throw new OSMRestrictionException("has from member ways that aren't adjacent to the via member node");
+            throw new OSMRestrictionException("has from-member ways that aren't adjacent to the via-member node");
         else if (result.fromEdges.size() > fromWays.size())
-            throw new OSMRestrictionException("has from member ways that aren't split at the via member node");
+            throw new OSMRestrictionException("has from-member ways that aren't split at the via-member node");
 
         for (LongCursor toWay : toWays)
             edgesByWay.apply(toWay.value).forEachRemaining(e -> {
@@ -66,9 +66,9 @@ public class WayToEdgeConverter {
                     result.toEdges.add(e.value);
             });
         if (result.toEdges.size() < toWays.size())
-            throw new OSMRestrictionException("has to member ways that aren't adjacent to the via member node");
+            throw new OSMRestrictionException("has to-member ways that aren't adjacent to the via-member node");
         else if (result.toEdges.size() > toWays.size())
-            throw new OSMRestrictionException("has to member ways that aren't split at the via member node");
+            throw new OSMRestrictionException("has to-member ways that aren't split at the via-member node");
         return result;
     }
 
@@ -113,9 +113,9 @@ public class WayToEdgeConverter {
             for (LongCursor toWay : toWays)
                 findEdgeChain(fromWay.value, viaWays, toWay.value, solutions);
         if (solutions.size() < fromWays.size() * toWays.size())
-            throw new OSMRestrictionException("has from/to member ways that aren't connected with the via member way(s)");
+            throw new OSMRestrictionException("has disconnected member ways");
         else if (solutions.size() > fromWays.size() * toWays.size())
-            throw new OSMRestrictionException("has from/to member ways that aren't split at the via member way(s)");
+            throw new OSMRestrictionException("has member ways that do not form a unique path");
         return buildResult(solutions, new EdgeResult(fromWays.size(), viaWays.size(), toWays.size()));
     }
 
@@ -136,15 +136,14 @@ public class WayToEdgeConverter {
     }
 
     private void findEdgeChain(long fromWay, LongArrayList viaWays, long toWay, List<IntArrayList> solutions) throws OSMRestrictionException {
-        // For each edge chain there must be one edge associated with the from-way, one for each via-way and one
+        // For each edge chain there must be one edge associated with the from-way, at least one for each via-way and one
         // associated with the to-way. We use DFS with backtracking to find all edge chains that connect an edge
         // associated with the from-way with one associated with the to-way.
         IntArrayList viaEdgesForViaWays = new IntArrayList(viaWays.size());
         for (LongCursor c : viaWays) {
             Iterator<IntCursor> iterator = edgesByWay.apply(c.value);
             viaEdgesForViaWays.add(iterator.next().value);
-            if (iterator.hasNext())
-                throw new OSMRestrictionException("has via member way that isn't split at adjacent ways: " + c.value);
+            iterator.forEachRemaining(i -> viaEdgesForViaWays.add(i.value));
         }
         IntArrayList toEdges = listFromIterator(edgesByWay.apply(toWay));
 

@@ -32,7 +32,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -104,12 +103,11 @@ public class PrepareRoutingSubnetworks {
                 Helper.nf(graph.getNodes()) + ", edges: " + Helper.nf(graph.getEdges()) + ", jobs: " + prepareJobs + ", " + Helper.getMemInfo());
         AtomicInteger total = new AtomicInteger(0);
         List<BitSet> flags = Stream.generate(() -> new BitSet(graph.getEdges())).limit(prepareJobs.size()).collect(Collectors.toList());
-        Stream<Callable<String>> callables = IntStream.range(0, prepareJobs.size()).mapToObj(i -> () -> {
+        Stream<Runnable> runnables = IntStream.range(0, prepareJobs.size()).mapToObj(i -> () -> {
             PrepareJob job = prepareJobs.get(i);
             total.addAndGet(setSubnetworks(job.weighting, job.subnetworkEnc.getName().replaceAll("_subnetwork", ""), flags.get(i)));
-            return job.toString();
         });
-        GHUtility.runConcurrently(callables, threads);
+        GHUtility.runConcurrently(runnables, threads);
         AllEdgesIterator iter = graph.getAllEdges();
         while (iter.next()) {
             for (int i = 0; i < prepareJobs.size(); i++) {
@@ -125,7 +123,7 @@ public class PrepareRoutingSubnetworks {
         // partition graph into strongly connected components using Tarjan's algorithm
         StopWatch sw = new StopWatch().start();
         EdgeBasedTarjanSCC.ConnectedComponents ccs = EdgeBasedTarjanSCC.findComponents(graph,
-                (prev, edge) -> Double.isFinite(GHUtility.calcWeightWithTurnWeightWithAccess(weighting, edge, false, prev)),
+                (prev, edge) -> Double.isFinite(GHUtility.calcWeightWithTurnWeight(weighting, edge, false, prev)),
                 false);
         List<IntArrayList> components = ccs.getComponents();
         BitSet singleEdgeComponents = ccs.getSingleEdgeComponents();
@@ -180,7 +178,7 @@ public class PrepareRoutingSubnetworks {
 
     private int setSubnetworkEdge(int edgeKey, Weighting weighting, BitSet subnetworkFlags) {
         // edges that are not accessible anyway are not marked as subnetworks additionally
-        if (!Double.isFinite(weighting.calcEdgeWeightWithAccess(graph.getEdgeIteratorStateForKey(edgeKey), false)))
+        if (!Double.isFinite(weighting.calcEdgeWeight(graph.getEdgeIteratorStateForKey(edgeKey), false)))
             return 0;
 
         // now get edge again but in stored direction so that subnetwork EV is not overwritten (as it is unidirectional)

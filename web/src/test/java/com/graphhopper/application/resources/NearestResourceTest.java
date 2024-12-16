@@ -20,8 +20,8 @@ package com.graphhopper.application.resources;
 import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
-import com.graphhopper.config.Profile;
 import com.graphhopper.resources.NearestResource;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -30,13 +30,11 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import javax.ws.rs.core.Response;
 import java.io.File;
-import java.util.Collections;
+import java.util.List;
 
 import static com.graphhopper.application.util.TestUtils.clientTarget;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author svantulden
@@ -49,11 +47,10 @@ public class NearestResourceTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.vehicles", "car").
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("graph.location", dir).
                 putObject("import.osm.ignored_highways", "").
-                setProfiles(Collections.singletonList(new Profile("car").setVehicle("car").setWeighting("fastest")));
+                setProfiles(List.of(TestProfiles.constantSpeed("car")));
         return config;
     }
 
@@ -65,9 +62,7 @@ public class NearestResourceTest {
 
     @Test
     public void testBasicNearestQuery() {
-        final Response response = clientTarget(app, "/nearest?point=42.554851,1.536198").request().buildGet().invoke();
-        assertEquals(200, response.getStatus(), "HTTP status");
-        NearestResource.Response json = response.readEntity(NearestResource.Response.class);
+        NearestResource.Response json = clientTarget(app, "/nearest?point=42.554851,1.536198").request().get(NearestResource.Response.class);
         assertArrayEquals(new double[]{1.5363743623376815, 42.554839049600155}, json.coordinates, "nearest point");
     }
 }

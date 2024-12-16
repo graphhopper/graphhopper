@@ -14,15 +14,12 @@ graphhopper:
   #
   # In general a profile consists of the following
   # - name (required): a unique string identifier for the profile
-  # - vehicle (required): refers to the `graph.vehicles` used for this profile
-  # - weighting (required): the weighting used for this profile like custom,fastest,shortest or short_fastest
-  # - turn_costs (true/false, default: false): whether or not turn restrictions should be applied for this profile.
+  # - weighting (optional): by default 'custom'
+  # - turn_costs (optional):
+  #     vehicle_types: [motorcar, motor_vehicle] (vehicle types used for vehicle-specific turn restrictions)
+  #     u_turn_costs: 60 (time-penalty for doing a u-turn in seconds)
   #
   # Depending on the above fields there are other properties that can be used, e.g.
-  # - distance_factor: 0.1 (can be used to fine tune the time/distance trade-off of short_fastest weighting)
-  # - u_turn_costs: 60 (time-penalty for doing a u-turn in seconds (only possible when `turn_costs: true`)).
-  #   Note that since the u-turn costs are given in seconds the weighting you use should also calculate the weight
-  #   in seconds, so for example it does not work with shortest weighting.
   # - custom_model_files: when you specified "weighting: custom" you need to set one or more json files which are searched in
   #   custom_models.directory or the working directory that defines the custom_model. If you want an empty model you can
   #   set "custom_model_files: []
@@ -32,28 +29,46 @@ graphhopper:
   # profiles (see below). Or at least limit the number of `routing.max_visited_nodes`.
 
   profiles:
-    - name: car
-      vehicle: car
-      weighting: custom
-      custom_model:
-        distance_influence: 70
-#      turn_costs: true
-#      u_turn_costs: 60
+   - name: car
+#     turn_costs:
+#       vehicle_types: [motorcar, motor_vehicle]
+#       u_turn_costs: 60
+#     for more advanced turn costs, see #2957 or bike_tc.yml
+     custom_model_files: [car.json]
 
+#   You can use the following in-built profiles. After you start GraphHopper it will print which encoded values you'll have to add to graph.encoded_values in this config file.
+#
+#    - name: foot
+#      custom_model_files: [foot.json, foot_elevation.json]
+#
 #    - name: bike
-#      # to use the bike vehicle make sure to not ignore cycleways etc., see import.osm.ignored_highways below
-#      vehicle: bike
-#      weighting: custom
 #      custom_model_files: [bike.json, bike_elevation.json]
+#
+#    - name: racingbike
+#      custom_model_files: [racingbike.json, bike_elevation.json]
+#
+#    - name: mtb
+#      custom_model_files: [mtb.json, bike_elevation.json]
+#
+#    # See the bus.json for more details.
+#    - name: bus
+#       turn_costs:
+#         vehicle_types: [bus, motor_vehicle]
+#         u_turn_costs: 60
+#      custom_model_files: [bus.json]
+#
+#   Other custom models not listed here are: car4wd.json, motorcycle.json, truck.json or cargo-bike.json. You might need to modify and test them before production usage.
+#   See ./core/src/main/resources/com/graphhopper/custom_models and let us know if you customize them, improve them or create new onces!
+#   Also there is the curvature.json custom model which might be useful for a motorcyle profile or the opposite for a truck profile.
+#   Then specify a folder where to find your own custom model files:
+#  custom_models.directory: custom_models
 
-  # specify the folder where to find the custom model files - see this folder for more possibilities
-  custom_models.directory: custom_models
 
   # Speed mode:
-  # Its possible to speed up routing by doing a special graph preparation (Contraction Hierarchies, CH). This requires
+  # It's possible to speed up routing by doing a special graph preparation (Contraction Hierarchies, CH). This requires
   # more RAM/disk space for holding the prepared graph but also means less memory usage per request. Using the following
   # list you can define for which of the above routing profiles such preparation shall be performed. Note that to support
-  # profiles with `turn_costs: true` a more elaborate preparation is required (longer preparation time and more memory
+  # profiles with `turn_costs` a more elaborate preparation is required (longer preparation time and more memory
   # usage) and the routing will also be slower than with `turn_costs: false`.
   profiles_ch:
     - profile: car
@@ -70,23 +85,14 @@ graphhopper:
   profiles_lm: []
 
 
-  #### Vehicles ####
-
-  # The vehicle defines the base for how the routing of a profile behaves. It can be adjusted with the turn_costs=true
-  # option or, only for the roads vehicle, there is the transportation_mode option:
-  # name=mycustomvehicle,turn_costs=true,transportation_mode=MOTOR_VEHICLE
-  # But you should prefer to configure the turn_costs via the profile configuration.
-  # Other standard vehicles: foot,bike,mtb,racingbike,wheelchair
-
-
   #### Encoded Values ####
 
   # Add additional information to every edge. Used for path details (#1548) and custom models (docs/core/custom-models.md)
   # Default values are: road_class,road_class_link,road_environment,max_speed,road_access
   # More are: surface,smoothness,max_width,max_height,max_weight,max_weight_except,hgv,max_axle_load,max_length,
   #           hazmat,hazmat_tunnel,hazmat_water,lanes,osm_way_id,toll,track_type,mtb_rating,hike_rating,horse_rating,
-  #           country,curvature,average_slope,max_slope
-  # graph.encoded_values: surface,toll,track_type
+  #           country,curvature,average_slope,max_slope,car_temporal_access,bike_temporal_access,foot_temporal_access
+  graph.encoded_values: car_access, car_average_speed
 
   #### Speed, hybrid and flexible mode ####
 
@@ -120,8 +126,11 @@ graphhopper:
   # graph.elevation.edge_smoothing: ramer
   # removes elevation fluctuations up to max_elevation (in meter) and replaces the elevation with a value based on the average slope
   # graph.elevation.edge_smoothing.ramer.max_elevation: 5
-  # A potentially bigger reduction of ascend/descend is possible, but maximum slope will often increase (do not use when average_slope and maximum_slope shall be used in a custom_model)
+  # Using an averaging approach for smoothing will reveal values not affected by outliers and realistic slopes and total altitude values (up and down)
   # graph.elevation.edge_smoothing: moving_average
+  # window size in meter along a way used for averaging a node's elevation
+  # graph.elevation.edge_smoothing.moving_average.window_size: 150
+
 
   # To increase elevation profile resolution, use the following two parameters to tune the extra resolution you need
   # against the additional storage space used for edge geometries. You should enable bilinear interpolation when using
@@ -133,6 +142,14 @@ graphhopper:
   # graph.elevation.way_point_max_distance: 10
 
 
+  #### Country-dependent defaults for max speeds ####
+
+  # This features sets a maximum speed in 'max_speed' encoded value if no maxspeed tag was found. It is country-dependent
+  # and based on several rules. See https://github.com/westnordost/osm-legal-default-speeds
+  # To use it uncomment the following, then enable urban density below and add 'country' to graph.encoded_values
+  # max_speed_calculator.enabled: true
+
+
   #### Urban density (built-up areas) ####
 
   # This feature allows classifying roads into 'rural', 'residential' and 'city' areas (encoded value 'urban_density')
@@ -141,10 +158,10 @@ graphhopper:
   # Use higher/lower sensitivities if too little/many roads fall into the according categories.
   # Using smaller radii will speed up the classification, but only change these values if you know what you are doing.
   # If you do not need the (rather slow) city classification set city_radius to zero.
-  # graph.urban_density.residential_radius: 300
-  # graph.urban_density.residential_sensitivity: 60
-  # graph.urban_density.city_radius: 2000
-  # graph.urban_density.city_sensitivity: 30
+  # graph.urban_density.residential_radius: 400
+  # graph.urban_density.residential_sensitivity: 6000
+  # graph.urban_density.city_radius: 1500
+  # graph.urban_density.city_sensitivity: 1000
 
 
   #### Subnetworks ####
@@ -156,12 +173,14 @@ graphhopper:
   prepare.min_network_size: 200
   prepare.subnetworks.threads: 1
 
-
   #### Routing ####
 
   # You can define the maximum visited nodes when routing. This may result in not found connections if there is no
   # connection between two points within the given visited nodes. The default is Integer.MAX_VALUE. Useful for flexibility mode
   # routing.max_visited_nodes: 1000000
+
+  # default for snap_preventions
+  routing.snap_preventions_default: tunnel, bridge, ferry
 
   # The maximum time in milliseconds after which a routing request will be aborted. This has some routing algorithm
   # specific caveats, but generally it should allow the prevention of long-running requests. The default is Long.MAX_VALUE
@@ -191,14 +210,10 @@ graphhopper:
   # will write way names in the preferred language (language code as defined in ISO 639-1 or ISO 639-2):
   # datareader.preferred_language: en
 
-  # Sort the graph after import to make requests roughly ~10% faster. Note that this requires significantly more RAM on import.
-  # graph.do_sort: true
-
-
   #### Custom Areas ####
 
   # GraphHopper reads GeoJSON polygon files including their properties from this directory and makes them available
-  # to all tag parsers, vehicles and custom models. All GeoJSON Features require to have the "id" property.
+  # to all tag parsers and custom models. All GeoJSON Features require to have the "id" property.
   # Country borders are included automatically (see countries.geojson).
   # custom_areas.directory: path/to/custom_areas
 

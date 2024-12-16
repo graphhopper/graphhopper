@@ -147,7 +147,7 @@ public class LMPreparationHandler {
      */
     public List<LandmarkStorage> load(List<LMConfig> lmConfigs, BaseGraph baseGraph, EncodedValueLookup encodedValueLookup) {
         List<LandmarkStorage> loaded = Collections.synchronizedList(new ArrayList<>());
-        Stream<Callable<String>> loadingCallables = lmConfigs.stream()
+        Stream<Runnable> loadingRunnables = lmConfigs.stream()
                 .map(lmConfig -> () -> {
                     // todo: specifying ghStorage and landmarkCount should not be necessary, because all we want to do
                     //       is load the landmark data and these parameters are only needed to calculate the landmarks.
@@ -164,9 +164,8 @@ public class LMPreparationHandler {
                         baseGraph.getDirectory().remove("landmarks_" + lmConfig.getName());
                         baseGraph.getDirectory().remove("landmarks_subnetwork_" + lmConfig.getName());
                     }
-                    return lmConfig.getName();
                 });
-        GHUtility.runConcurrently(loadingCallables, preparationThreads);
+        GHUtility.runConcurrently(loadingRunnables, preparationThreads);
         return loaded;
     }
 
@@ -175,23 +174,22 @@ public class LMPreparationHandler {
      */
     public List<PrepareLandmarks> prepare(List<LMConfig> lmConfigs, BaseGraph baseGraph, EncodingManager encodingManager, StorableProperties properties, LocationIndex locationIndex, final boolean closeEarly) {
         List<PrepareLandmarks> preparations = createPreparations(lmConfigs, baseGraph, encodingManager, locationIndex);
-        List<Callable<String>> prepareCallables = new ArrayList<>();
+        List<Runnable> prepareRunnables = new ArrayList<>();
         for (int i = 0; i < preparations.size(); i++) {
             PrepareLandmarks prepare = preparations.get(i);
             final int count = i + 1;
             final String name = prepare.getLMConfig().getName();
-            prepareCallables.add(() -> {
-                LOGGER.info(count + "/" + lmConfigs.size() + " calling LM prepare.doWork for " + prepare.getLMConfig().getWeighting() + " ... (" + getMemInfo() + ")");
+            prepareRunnables.add(() -> {
+                LOGGER.info(count + "/" + lmConfigs.size() + " calling LM prepare.doWork for " + prepare.getLMConfig().getName() + " ... (" + getMemInfo() + ")");
                 Thread.currentThread().setName(name);
                 prepare.doWork();
                 if (closeEarly)
                     prepare.close();
                 LOGGER.info("LM {} finished {}", name, getMemInfo());
                 properties.put(Landmark.PREPARE + "date." + name, createFormatter().format(new Date()));
-                return name;
             });
         }
-        GHUtility.runConcurrently(prepareCallables.stream(), preparationThreads);
+        GHUtility.runConcurrently(prepareRunnables.stream(), preparationThreads);
         LOGGER.info("Finished LM preparation, {}", getMemInfo());
         return preparations;
     }

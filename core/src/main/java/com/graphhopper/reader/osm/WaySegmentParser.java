@@ -23,7 +23,6 @@ import com.graphhopper.reader.ReaderElement;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointAccess;
@@ -38,9 +37,7 @@ import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.*;
-import java.util.function.Consumer;
-import java.util.function.LongToIntFunction;
-import java.util.function.Predicate;
+import java.util.function.*;
 
 import static com.graphhopper.reader.osm.OSMNodeData.*;
 import static com.graphhopper.util.Helper.nf;
@@ -65,10 +62,10 @@ public class WaySegmentParser {
     private static final Logger LOGGER = LoggerFactory.getLogger(WaySegmentParser.class);
     private static final Set<String> INCLUDE_IF_NODE_TAGS = new HashSet<>(Arrays.asList("barrier", "highway", "railway", "crossing", "ford"));
 
-    private ElevationProvider elevationProvider = ElevationProvider.NOOP;
+    private ToDoubleFunction<ReaderNode> elevationProvider = node -> 0d;
     private Predicate<ReaderWay> wayFilter = way -> true;
     private Predicate<ReaderNode> splitNodeFilter = node -> false;
-    private WayPreprocessor wayPreprocessor = (way, supplier) -> {
+    private WayPreprocessor wayPreprocessor = (way, coordinateSupplier, nodeTagSupplier) -> {
     };
     private Consumer<ReaderRelation> relationPreprocessor = relation -> {
     };
@@ -118,7 +115,7 @@ public class WaySegmentParser {
     /**
      * @return the timestamp read from the OSM file, or null if nothing was read yet
      */
-    public Date getTimeStamp() {
+    public Date getTimestamp() {
         return timestamp;
     }
 
@@ -206,7 +203,7 @@ public class WaySegmentParser {
                 LOGGER.info("pass2 - processed nodes: " + nf(nodeCounter) + ", accepted nodes: " + nf(acceptedNodes) +
                         ", " + Helper.getMemInfo());
 
-            long nodeType = nodeData.addCoordinatesIfMapped(node.getId(), node.getLat(), node.getLon(), () -> elevationProvider.getEle(node));
+            long nodeType = nodeData.addCoordinatesIfMapped(node.getId(), node.getLat(), node.getLon(), () -> elevationProvider.applyAsDouble(node));
             if (nodeType == EMPTY_NODE)
                 return;
 
@@ -252,7 +249,7 @@ public class WaySegmentParser {
             List<SegmentNode> segment = new ArrayList<>(way.getNodes().size());
             for (LongCursor node : way.getNodes())
                 segment.add(new SegmentNode(node.value, nodeData.getId(node.value), nodeData.getTags(node.value)));
-            wayPreprocessor.preprocessWay(way, osmNodeId -> nodeData.getCoordinates(nodeData.getId(osmNodeId)));
+            wayPreprocessor.preprocessWay(way, osmNodeId -> nodeData.getCoordinates(nodeData.getId(osmNodeId)), osmNodeId -> nodeData.getTags(osmNodeId));
             splitWayAtJunctionsAndEmptySections(segment, way);
         }
 
@@ -425,7 +422,7 @@ public class WaySegmentParser {
         /**
          * @param elevationProvider used to determine the elevation of an OSM node
          */
-        public Builder setElevationProvider(ElevationProvider elevationProvider) {
+        public Builder setElevationProvider(ToDoubleFunction<ReaderNode> elevationProvider) {
             waySegmentParser.elevationProvider = elevationProvider;
             return this;
         }
@@ -541,10 +538,14 @@ public class WaySegmentParser {
          *                           of this node. If elevation is disabled it will be NaN. Returns null if no such OSM
          *                           node exists.
          */
-        void preprocessWay(ReaderWay way, CoordinateSupplier coordinateSupplier);
+        void preprocessWay(ReaderWay way, CoordinateSupplier coordinateSupplier, NodeTagSupplier nodeTagSupplier);
     }
 
     public interface CoordinateSupplier {
         GHPoint3D getCoordinate(long osmNodeId);
+    }
+
+    public interface NodeTagSupplier {
+        Map<String, Object> getTags(long osmNodeId);
     }
 }

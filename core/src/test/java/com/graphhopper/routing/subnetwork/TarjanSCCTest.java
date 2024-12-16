@@ -20,10 +20,9 @@ package com.graphhopper.routing.subnetwork;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.cursors.IntCursor;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
 import com.graphhopper.routing.ev.EncodedValue;
-import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
-import com.graphhopper.routing.util.AccessFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.GHUtility;
@@ -36,16 +35,16 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TarjanSCCTest {
-    private final BooleanEncodedValue accessEnc;
+    private final DecimalEncodedValue speedEnc;
     private final BaseGraph graph;
     private final EdgeFilter edgeFilter;
 
     public TarjanSCCTest() {
-        accessEnc = new SimpleBooleanEncodedValue("access", true);
+        speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, true);
         EncodedValue.InitializerConfig evConf = new EncodedValue.InitializerConfig();
-        accessEnc.init(evConf);
-        graph = new BaseGraph.Builder(evConf.getRequiredInts()).create();
-        edgeFilter = AccessFilter.outEdges(accessEnc);
+        speedEnc.init(evConf);
+        graph = new BaseGraph.Builder(evConf.getRequiredBytes()).create();
+        edgeFilter = edge -> edge.get(speedEnc) > 0;
     }
 
     @Test
@@ -56,15 +55,15 @@ class TarjanSCCTest {
         // 4 < 1 - 2
         // |   |
         // <-- 8 - 11 - 12 < 9 - 15
-        graph.edge(1, 2).setDistance(1).set(accessEnc, true, true);
-        graph.edge(1, 4).setDistance(1).set(accessEnc, true, false);
-        graph.edge(1, 8).setDistance(1).set(accessEnc, true, true);
-        graph.edge(2, 4).setDistance(1).set(accessEnc, true, true);
-        graph.edge(8, 4).setDistance(1).set(accessEnc, true, false);
-        graph.edge(8, 11).setDistance(1).set(accessEnc, true, true);
-        graph.edge(12, 11).setDistance(1).set(accessEnc, true, true);
-        graph.edge(9, 12).setDistance(1).set(accessEnc, true, false);
-        graph.edge(9, 15).setDistance(1).set(accessEnc, true, true);
+        graph.edge(1, 2).setDistance(1).set(speedEnc, 10, 10);
+        graph.edge(1, 4).setDistance(1).set(speedEnc, 10, 0);
+        graph.edge(1, 8).setDistance(1).set(speedEnc, 10, 10);
+        graph.edge(2, 4).setDistance(1).set(speedEnc, 10, 10);
+        graph.edge(8, 4).setDistance(1).set(speedEnc, 10, 0);
+        graph.edge(8, 11).setDistance(1).set(speedEnc, 10, 10);
+        graph.edge(12, 11).setDistance(1).set(speedEnc, 10, 10);
+        graph.edge(9, 12).setDistance(1).set(speedEnc, 10, 0);
+        graph.edge(9, 15).setDistance(1).set(speedEnc, 10, 10);
 
         // large network
         // 5 --------
@@ -72,17 +71,17 @@ class TarjanSCCTest {
         // 3 - 0 - 13
         //   \ |
         //     7
-        graph.edge(0, 13).setDistance(1).set(accessEnc, true, true);
-        graph.edge(0, 3).setDistance(1).set(accessEnc, true, true);
-        graph.edge(0, 7).setDistance(1).set(accessEnc, true, true);
-        graph.edge(3, 7).setDistance(1).set(accessEnc, true, true);
-        graph.edge(3, 5).setDistance(1).set(accessEnc, true, true);
-        graph.edge(13, 5).setDistance(1).set(accessEnc, true, true);
+        graph.edge(0, 13).setDistance(1).set(speedEnc, 10, 10);
+        graph.edge(0, 3).setDistance(1).set(speedEnc, 10, 10);
+        graph.edge(0, 7).setDistance(1).set(speedEnc, 10, 10);
+        graph.edge(3, 7).setDistance(1).set(speedEnc, 10, 10);
+        graph.edge(3, 5).setDistance(1).set(speedEnc, 10, 10);
+        graph.edge(13, 5).setDistance(1).set(speedEnc, 10, 10);
 
         // small network
         // 6 - 14 - 10
-        graph.edge(6, 14).setDistance(1).set(accessEnc, true, true);
-        graph.edge(10, 14).setDistance(1).set(accessEnc, true, true);
+        graph.edge(6, 14).setDistance(1).set(speedEnc, 10, 10);
+        graph.edge(10, 14).setDistance(1).set(speedEnc, 10, 10);
 
         TarjanSCC.ConnectedComponents scc = TarjanSCC.findComponentsRecursive(graph, edgeFilter, false);
         List<IntArrayList> components = scc.getComponents();
@@ -103,17 +102,17 @@ class TarjanSCCTest {
         // 0->1->3->4->5->6->7
         //  \ |      \<-----/
         //    2
-        graph.edge(0, 1).setDistance(1).set(accessEnc, true, false);
-        graph.edge(1, 2).setDistance(1).set(accessEnc, true, false);
-        graph.edge(2, 0).setDistance(1).set(accessEnc, true, false);
+        graph.edge(0, 1).setDistance(1).set(speedEnc, 10, 0);
+        graph.edge(1, 2).setDistance(1).set(speedEnc, 10, 0);
+        graph.edge(2, 0).setDistance(1).set(speedEnc, 10, 0);
 
-        graph.edge(1, 3).setDistance(1).set(accessEnc, true, false);
-        graph.edge(3, 4).setDistance(1).set(accessEnc, true, false);
+        graph.edge(1, 3).setDistance(1).set(speedEnc, 10, 0);
+        graph.edge(3, 4).setDistance(1).set(speedEnc, 10, 0);
 
-        graph.edge(4, 5).setDistance(1).set(accessEnc, true, false);
-        graph.edge(5, 6).setDistance(1).set(accessEnc, true, false);
-        graph.edge(6, 7).setDistance(1).set(accessEnc, true, false);
-        graph.edge(7, 4).setDistance(1).set(accessEnc, true, false);
+        graph.edge(4, 5).setDistance(1).set(speedEnc, 10, 0);
+        graph.edge(5, 6).setDistance(1).set(speedEnc, 10, 0);
+        graph.edge(6, 7).setDistance(1).set(speedEnc, 10, 0);
+        graph.edge(7, 4).setDistance(1).set(speedEnc, 10, 0);
 
         TarjanSCC.ConnectedComponents scc = TarjanSCC.findComponentsRecursive(graph, edgeFilter, false);
         List<IntArrayList> components = scc.getComponents();
@@ -150,30 +149,30 @@ class TarjanSCCTest {
         //        8        15-16
 
         // oneway main road
-        graph.edge(0, 1).setDistance(1).set(accessEnc, true, true);
-        graph.edge(1, 2).setDistance(1).set(accessEnc, true, true);
-        graph.edge(2, 3).setDistance(1).set(accessEnc, true, false);
-        graph.edge(3, 4).setDistance(1).set(accessEnc, true, false);
-        graph.edge(4, 5).setDistance(1).set(accessEnc, true, false);
+        graph.edge(0, 1).setDistance(1).set(speedEnc, 10, 10);
+        graph.edge(1, 2).setDistance(1).set(speedEnc, 10, 10);
+        graph.edge(2, 3).setDistance(1).set(speedEnc, 10, 0);
+        graph.edge(3, 4).setDistance(1).set(speedEnc, 10, 0);
+        graph.edge(4, 5).setDistance(1).set(speedEnc, 10, 0);
 
         // going south from main road
-        graph.edge(3, 6).setDistance(1).set(accessEnc, true, true);
-        graph.edge(6, 7).setDistance(1).set(accessEnc, true, true);
-        graph.edge(7, 8).setDistance(1).set(accessEnc, true, true);
+        graph.edge(3, 6).setDistance(1).set(speedEnc, 10, 10);
+        graph.edge(6, 7).setDistance(1).set(speedEnc, 10, 10);
+        graph.edge(7, 8).setDistance(1).set(speedEnc, 10, 10);
 
         // connects the two nodes 2 and 4
-        graph.edge(4, 9).setDistance(1).set(accessEnc, true, true);
-        graph.edge(9, 10).setDistance(1).set(accessEnc, true, true);
-        graph.edge(10, 11).setDistance(1).set(accessEnc, true, true);
-        graph.edge(11, 2).setDistance(1).set(accessEnc, true, true);
+        graph.edge(4, 9).setDistance(1).set(speedEnc, 10, 10);
+        graph.edge(9, 10).setDistance(1).set(speedEnc, 10, 10);
+        graph.edge(10, 11).setDistance(1).set(speedEnc, 10, 10);
+        graph.edge(11, 2).setDistance(1).set(speedEnc, 10, 10);
 
         // eastern part (only connected by a single directed edge to the rest of the graph)
-        graph.edge(5, 12).setDistance(1).set(accessEnc, true, true);
-        graph.edge(12, 13).setDistance(1).set(accessEnc, true, true);
-        graph.edge(13, 14).setDistance(1).set(accessEnc, true, true);
-        graph.edge(14, 15).setDistance(1).set(accessEnc, true, true);
-        graph.edge(15, 13).setDistance(1).set(accessEnc, true, true);
-        graph.edge(15, 16).setDistance(1).set(accessEnc, true, true);
+        graph.edge(5, 12).setDistance(1).set(speedEnc, 10, 10);
+        graph.edge(12, 13).setDistance(1).set(speedEnc, 10, 10);
+        graph.edge(13, 14).setDistance(1).set(speedEnc, 10, 10);
+        graph.edge(14, 15).setDistance(1).set(speedEnc, 10, 10);
+        graph.edge(15, 13).setDistance(1).set(speedEnc, 10, 10);
+        graph.edge(15, 16).setDistance(1).set(speedEnc, 10, 10);
 
         TarjanSCC.ConnectedComponents scc = TarjanSCC.findComponentsRecursive(graph, edgeFilter, false);
         assertEquals(2, scc.getTotalComponents());
@@ -195,8 +194,7 @@ class TarjanSCCTest {
     private void doImplicitVsExplicit(boolean excludeSingle) {
         long seed = System.nanoTime();
         Random rnd = new Random(seed);
-        GHUtility.buildRandomGraph(graph, rnd, 1_000, 2, true, true,
-                accessEnc, null, 60d, 0.8, 0.7, 0);
+        GHUtility.buildRandomGraph(graph, rnd, 1_000, 2, true, speedEnc, 60d, 0.7, 0);
         TarjanSCC.ConnectedComponents implicit = TarjanSCC.findComponentsRecursive(graph, edgeFilter, excludeSingle);
         TarjanSCC.ConnectedComponents explicit = TarjanSCC.findComponents(graph, edgeFilter, excludeSingle);
 
@@ -210,13 +208,13 @@ class TarjanSCCTest {
         Set<IntWithArray> componentsExplicit = buildComponentSet(explicit.getComponents());
         if (!componentsExplicit.equals(componentsImplicit)) {
             System.out.println("seed: " + seed);
-            GHUtility.printGraphForUnitTest(graph, accessEnc, null);
+            GHUtility.printGraphForUnitTest(graph, speedEnc);
             assertEquals(componentsExplicit, componentsImplicit, "The components found for this graph are different between the implicit and explicit implementation");
         }
 
         if (!implicit.getSingleNodeComponents().equals(explicit.getSingleNodeComponents())) {
             System.out.println("seed: " + seed);
-            GHUtility.printGraphForUnitTest(graph, accessEnc, null);
+            GHUtility.printGraphForUnitTest(graph, speedEnc);
             assertEquals(implicit.getSingleNodeComponents(), explicit.getSingleNodeComponents());
         }
 

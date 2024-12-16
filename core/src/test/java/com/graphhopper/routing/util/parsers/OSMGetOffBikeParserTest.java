@@ -1,13 +1,8 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.reader.osm.conditional.DateRangeParser;
-import com.graphhopper.routing.ev.ArrayEdgeIntAccess;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.EdgeIntAccess;
-import com.graphhopper.routing.ev.GetOffBike;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.VehicleEncodedValues;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
@@ -21,9 +16,8 @@ public class OSMGetOffBikeParserTest {
     private final OSMGetOffBikeParser getOffParser;
 
     public OSMGetOffBikeParserTest() {
-        EncodingManager em = new EncodingManager.Builder().add(offBikeEnc).add(VehicleEncodedValues.bike(new PMap()).getAccessEnc()).build();
+        EncodingManager em = new EncodingManager.Builder().add(offBikeEnc).add(VehicleAccess.create("bike")).add(Roundabout.create()).build();
         accessParser = new BikeAccessParser(em, new PMap());
-        accessParser.init(new DateRangeParser());
         getOffParser = new OSMGetOffBikeParser(offBikeEnc, accessParser.getAccessEnc());
     }
 
@@ -105,8 +99,29 @@ public class OSMGetOffBikeParserTest {
         way = new ReaderWay(1);
         way.setTag("highway", "path");
         way.setTag("foot", "yes");
-        assertFalse(isGetOffBike(way)); // for now only designated will trigger true
+        assertFalse(isGetOffBike(way));
         way.setTag("foot", "designated");
+        assertTrue(isGetOffBike(way));
+
+        way = new ReaderWay(1);
+        way.setTag("highway", "track");
+        way.setTag("vehicle", "no");
+        assertTrue(isGetOffBike(way));
+        way.setTag("bicycle", "yes");
+        assertFalse(isGetOffBike(way));
+
+        way = new ReaderWay(1);
+        way.setTag("highway", "cycleway");
+        way.setTag("vehicle", "no");
+        assertFalse(isGetOffBike(way));
+        way.setTag("bicycle", "designated");
+        assertFalse(isGetOffBike(way));
+
+        way = new ReaderWay(1);
+        way.setTag("highway", "track");
+        way.setTag("vehicle", "forestry");
+        assertTrue(isGetOffBike(way));
+        way.setTag("vehicle", "forestry;agricultural");
         assertTrue(isGetOffBike(way));
     }
 

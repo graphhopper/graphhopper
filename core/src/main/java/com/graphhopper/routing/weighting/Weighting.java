@@ -20,27 +20,19 @@ package com.graphhopper.routing.weighting;
 import com.graphhopper.util.EdgeIteratorState;
 
 /**
- * Specifies how the best route is calculated. E.g. the fastest or shortest route.
- * <p>
+ * Specifies how the best route is calculated.
  *
  * @author Peter Karich
  */
 public interface Weighting {
-    int INFINITE_U_TURN_COSTS = -1;
 
     /**
      * Used only for the heuristic estimation in A*
      *
-     * @return minimal weight for the specified distance in meter. E.g. if you calculate the fastest
-     * way the return value is 'distance/max_velocity'
+     * @return minimal weight per meter. E.g. if you calculate the fastest way the return value
+     * is '1/max_velocity' or a shortest weighting would return 1.
      */
-    double getMinWeight(double distance);
-
-    /**
-     * @return true if the edge is not accessible in the given direction. Note that when false is returned it does
-     * **not** mean the weight is finite! But when true is returned the weight must be infinite as well.
-     */
-    boolean edgeHasNoAccess(EdgeIteratorState edgeState, boolean reverse);
+    double calcMinWeightPerDistance();
 
     /**
      * This method calculates the weight of a given {@link EdgeIteratorState}. E.g. a high value indicates that the edge
@@ -56,7 +48,7 @@ public interface Weighting {
     double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse);
 
     /**
-     * This method calculates the time taken (in milli seconds) to travel along the specified edgeState.
+     * This method calculates the time taken (in milliseconds) to travel along the specified edgeState.
      * It is typically used for post-processing and on only a few thousand edges.
      */
     long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse);
@@ -74,10 +66,10 @@ public interface Weighting {
 
     String getName();
 
-    default double calcEdgeWeightWithAccess(EdgeIteratorState edgeState, boolean reverse) {
-        if (edgeHasNoAccess(edgeState, reverse))
-            return Double.POSITIVE_INFINITY;
-        return calcEdgeWeight(edgeState, reverse);
-    }
+    static boolean isValidName(String name) {
+        if (name == null || name.isEmpty())
+            return false;
 
+        return name.matches("[\\|_a-z]+");
+    }
 }

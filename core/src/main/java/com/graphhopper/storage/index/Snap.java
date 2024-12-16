@@ -160,10 +160,12 @@ public class Snap {
             if (considerEqual(crossingPoint.lat, crossingPoint.lon, tmpLat, tmpLon)) {
                 snappedPosition = wayIndex == 0 ? Position.TOWER : Position.PILLAR;
                 snappedPoint = new GHPoint3D(tmpLat, tmpLon, tmpEle);
+                closestNode = wayIndex == 0 ? closestEdge.getBaseNode() : closestNode;
             } else if (considerEqual(crossingPoint.lat, crossingPoint.lon, adjLat, adjLon)) {
                 wayIndex++;
                 snappedPosition = wayIndex == fullPL.size() - 1 ? Position.TOWER : Position.PILLAR;
                 snappedPoint = new GHPoint3D(adjLat, adjLon, adjEle);
+                closestNode = wayIndex == fullPL.size() - 1 ? closestEdge.getAdjNode() : closestNode;
             } else {
                 snappedPoint = new GHPoint3D(crossingPoint.lat, crossingPoint.lon, (tmpEle + adjEle) / 2);
             }

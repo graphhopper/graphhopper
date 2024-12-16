@@ -18,12 +18,9 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.routing.ev.EdgeIntAccess;
-import com.graphhopper.routing.ev.VehicleSpeed;
+import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.PMap;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -32,7 +29,6 @@ import java.util.Set;
 
 public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements TagParser {
 
-    public static final double CAR_MAX_SPEED = 140;
     protected final Map<String, Integer> trackTypeSpeedMap = new HashMap<>();
     protected final Set<String> badSurfaceSpeedMap = new HashSet<>();
     // This value determines the maximal possible on roads with bad surfaces
@@ -45,23 +41,27 @@ public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements
      */
     protected final Map<String, Integer> defaultSpeedMap = new HashMap<>();
 
-    public CarAverageSpeedParser(EncodedValueLookup lookup, PMap properties) {
-        this(
-                lookup.getDecimalEncodedValue(VehicleSpeed.key(properties.getString("name", "car"))),
-                lookup.getDecimalEncodedValue(VehicleSpeed.key(properties.getString("name", "car"))).getNextStorableValue(CAR_MAX_SPEED)
-        );
+    public CarAverageSpeedParser(EncodedValueLookup lookup) {
+        this(lookup.getDecimalEncodedValue(VehicleSpeed.key("car")),
+                lookup.getDecimalEncodedValue(FerrySpeed.KEY));
     }
 
-    public CarAverageSpeedParser(DecimalEncodedValue speedEnc, double maxPossibleSpeed) {
-        super(speedEnc, maxPossibleSpeed);
+    public CarAverageSpeedParser(DecimalEncodedValue speedEnc, DecimalEncodedValue ferrySpeed) {
+        super(speedEnc, ferrySpeed);
 
         badSurfaceSpeedMap.add("cobblestone");
+        badSurfaceSpeedMap.add("unhewn_cobblestone");
+        badSurfaceSpeedMap.add("sett");
         badSurfaceSpeedMap.add("grass_paver");
         badSurfaceSpeedMap.add("gravel");
+        badSurfaceSpeedMap.add("fine_gravel");
+        badSurfaceSpeedMap.add("pebblestone");
         badSurfaceSpeedMap.add("sand");
         badSurfaceSpeedMap.add("paving_stones");
         badSurfaceSpeedMap.add("dirt");
+        badSurfaceSpeedMap.add("earth");
         badSurfaceSpeedMap.add("ground");
+        badSurfaceSpeedMap.add("wood");
         badSurfaceSpeedMap.add("grass");
         badSurfaceSpeedMap.add("unpaved");
         badSurfaceSpeedMap.add("compacted");
@@ -101,7 +101,7 @@ public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements
     }
 
     protected double getSpeed(ReaderWay way) {
-        String highwayValue = way.getTag("highway");
+        String highwayValue = way.getTag("highway", "");
         Integer speed = defaultSpeedMap.get(highwayValue);
 
         // even inaccessible edges get a speed assigned
@@ -121,14 +121,11 @@ public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements
 
     @Override
     public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way) {
-        String highwayValue = way.getTag("highway");
-        if (highwayValue == null) {
-            if (way.hasTag("route", ferries)) {
-                double ferrySpeed = ferrySpeedCalc.getSpeed(way);
-                setSpeed(false, edgeId, edgeIntAccess, ferrySpeed);
-                if (avgSpeedEnc.isStoreTwoDirections())
-                    setSpeed(true, edgeId, edgeIntAccess, ferrySpeed);
-            }
+        if (FerrySpeedCalculator.isFerry(way)) {
+            double ferrySpeed = FerrySpeedCalculator.minmax(ferrySpeedEnc.getDecimal(false, edgeId, edgeIntAccess), avgSpeedEnc);
+            setSpeed(false, edgeId, edgeIntAccess, ferrySpeed);
+            if (avgSpeedEnc.isStoreTwoDirections())
+                setSpeed(true, edgeId, edgeIntAccess, ferrySpeed);
             return;
         }
 
@@ -146,8 +143,8 @@ public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements
      * @return The assumed speed.
      */
     protected double applyMaxSpeed(ReaderWay way, double speed, boolean bwd) {
-        double maxSpeed = getMaxSpeed(way, bwd);
-        return isValidSpeed(maxSpeed) ? maxSpeed * 0.9 : speed;
+        double maxSpeed = OSMMaxSpeedParser.parseMaxSpeed(way, bwd);
+        return maxSpeed != MaxSpeed.MAXSPEED_MISSING ? Math.max(1, maxSpeed * 0.9) : speed;
     }
 
     /**
@@ -157,8 +154,14 @@ public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements
      */
     protected double applyBadSurfaceSpeed(ReaderWay way, double speed) {
         // limit speed if bad surface
-        if (badSurfaceSpeed > 0 && isValidSpeed(speed) && speed > badSurfaceSpeed && way.hasTag("surface", badSurfaceSpeedMap))
-            speed = badSurfaceSpeed;
+        if (badSurfaceSpeed > 0 && speed > badSurfaceSpeed) {
+            String surface = way.getTag("surface", "");
+            int colonIndex = surface.indexOf(":");
+            if (colonIndex != -1)
+                surface = surface.substring(0, colonIndex);
+            if (badSurfaceSpeedMap.contains(surface))
+                speed = badSurfaceSpeed;
+        }
         return speed;
     }
 }

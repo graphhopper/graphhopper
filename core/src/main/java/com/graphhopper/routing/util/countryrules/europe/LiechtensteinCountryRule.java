@@ -30,6 +30,6 @@ public class LiechtensteinCountryRule implements CountryRule {
             return currentToll;
         }
 
-        return Toll.NO;
+        return Toll.HGV;
     }
 }

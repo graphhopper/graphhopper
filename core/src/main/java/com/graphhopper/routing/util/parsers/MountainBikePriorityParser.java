@@ -3,7 +3,6 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.PriorityCode;
-import com.graphhopper.util.PMap;
 
 import java.util.TreeMap;
 
@@ -12,9 +11,9 @@ import static com.graphhopper.routing.util.PriorityCode.*;
 
 public class MountainBikePriorityParser extends BikeCommonPriorityParser {
 
-    public MountainBikePriorityParser(EncodedValueLookup lookup, PMap properties) {
-        this(lookup.getDecimalEncodedValue(VehicleSpeed.key(properties.getString("name", "mtb"))),
-                lookup.getDecimalEncodedValue(VehiclePriority.key(properties.getString("name", "mtb"))),
+    public MountainBikePriorityParser(EncodedValueLookup lookup) {
+        this(lookup.getDecimalEncodedValue(VehicleSpeed.key("mtb")),
+                lookup.getDecimalEncodedValue(VehiclePriority.key("mtb")),
                 lookup.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class));
     }
 
@@ -46,8 +45,8 @@ public class MountainBikePriorityParser extends BikeCommonPriorityParser {
         String highway = way.getTag("highway");
         if ("track".equals(highway)) {
             String trackType = way.getTag("tracktype");
-            if ("grade1".equals(trackType))
-                weightToPrioMap.put(50d, UNCHANGED);
+            if ("grade1".equals(trackType) || goodSurface.contains(way.getTag("surface","")))
+                weightToPrioMap.put(50d, SLIGHT_PREFER);
             else if (trackType == null)
                 weightToPrioMap.put(90d, PREFER);
             else if (trackType.startsWith("grade"))

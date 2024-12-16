@@ -21,7 +21,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
-import com.graphhopper.config.Profile;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -30,9 +30,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import javax.ws.rs.core.Response;
 import java.io.File;
-import java.util.Collections;
+import java.util.List;
 
 import static com.graphhopper.application.util.TestUtils.clientTarget;
 import static org.junit.jupiter.api.Assertions.*;
@@ -51,13 +50,11 @@ public class RouteResourceWithEleTest {
                 putObject("graph.elevation.provider", "srtm").
                 putObject("graph.elevation.cache_dir", "../core/files/").
                 putObject("prepare.min_network_size", 0).
-                putObject("graph.vehicles", "car").
                 putObject("datareader.file", "../core/files/monaco.osm.gz").
                 putObject("graph.location", dir).
                 putObject("import.osm.ignored_highways", "").
-                setProfiles(Collections.singletonList(
-                        new Profile("profile").setVehicle("car").setWeighting("fastest")
-                ));
+                putObject("graph.encoded_values", "car_access, car_average_speed").
+                setProfiles(List.of(TestProfiles.accessAndSpeed("profile", "car")));
         return config;
     }
 
@@ -69,10 +66,8 @@ public class RouteResourceWithEleTest {
 
     @Test
     public void testElevation() {
-        final Response response = clientTarget(app, "/route?profile=profile&" +
-                "point=43.730864,7.420771&point=43.727687,7.418737&points_encoded=false&elevation=true").request().buildGet().invoke();
-        assertEquals(200, response.getStatus());
-        JsonNode json = response.readEntity(JsonNode.class);
+        JsonNode json = clientTarget(app, "/route?profile=profile&" +
+                "point=43.730864,7.420771&point=43.727687,7.418737&points_encoded=false&elevation=true").request().get(JsonNode.class);
         JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
         JsonNode path = json.get("paths").get(0);
@@ -91,10 +86,8 @@ public class RouteResourceWithEleTest {
     @Test
     public void testNoElevation() {
         // default is elevation=false
-        Response response = clientTarget(app, "/route?profile=profile&" +
-                "point=43.730864,7.420771&point=43.727687,7.418737&points_encoded=false").request().buildGet().invoke();
-        assertEquals(200, response.getStatus());
-        JsonNode json = response.readEntity(JsonNode.class);
+        JsonNode json = clientTarget(app, "/route?profile=profile&" +
+                "point=43.730864,7.420771&point=43.727687,7.418737&points_encoded=false").request().get(JsonNode.class);
         JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
         JsonNode path = json.get("paths").get(0);
@@ -105,10 +98,8 @@ public class RouteResourceWithEleTest {
         assertTrue(cson.toString().contains("[7.421392,43.7307]"), "Elevation should not be included!");
 
         // disable elevation
-        response = clientTarget(app, "/route?profile=profile&" +
-                "point=43.730864,7.420771&point=43.727687,7.418737&points_encoded=false&elevation=false").request().buildGet().invoke();
-        assertEquals(200, response.getStatus());
-        json = response.readEntity(JsonNode.class);
+        json = clientTarget(app, "/route?profile=profile&" +
+                "point=43.730864,7.420771&point=43.727687,7.418737&points_encoded=false&elevation=false").request().get(JsonNode.class);
         infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
         path = json.get("paths").get(0);

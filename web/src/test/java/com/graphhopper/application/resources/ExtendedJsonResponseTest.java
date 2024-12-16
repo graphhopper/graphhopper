@@ -36,14 +36,16 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
+import static com.graphhopper.util.Parameters.Details.STREET_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class ExtendedJsonResponseTest {
 
     @Test
     public void shouldCreateBasicStructure() {
-        JsonNode jsonObject = MapMatchingResource.convertToTree(new MatchResult(getEdgeMatch()), false, false);
+        JsonNode jsonObject = MapMatchingResource.convertToTree(new MatchResult(getEdgeMatch()), false, false, -1);
         JsonNode route = jsonObject.get("diary").get("entries").get(0);
         JsonNode link = route.get("links").get(0);
         JsonNode geometry = link.get("geometry");
@@ -88,7 +90,7 @@ public class ExtendedJsonResponseTest {
         pointList.add(-3.4445, -38.9990);
         pointList.add(-3.5550, -38.7990);
         return new VirtualEdgeIteratorState(0, 0, 0, 1, 10, new IntsRef(1),
-                KVStorage.KeyValue.createKV(KVStorage.KeyValue.STREET_NAME, "test of iterator"), pointList, false);
+                Map.of(STREET_NAME, new KVStorage.KValue("test of iterator")), pointList, false);
     }
 
 }

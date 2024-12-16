@@ -1,3 +1,20 @@
+/*
+ *  Licensed to GraphHopper GmbH under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for
+ *  additional information regarding copyright ownership.
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
+ *  compliance with the License. You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.json.MinMax;
@@ -5,10 +22,7 @@ import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.util.CustomModel;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.graphhopper.json.Statement.Keyword.ELSE;
 import static com.graphhopper.json.Statement.Keyword.IF;
@@ -21,8 +35,6 @@ public class FindMinMax {
      * is based on baseModel).
      */
     public static void checkLMConstraints(CustomModel baseModel, CustomModel queryModel, EncodedValueLookup lookup) {
-        if (queryModel.isInternal())
-            throw new IllegalArgumentException("CustomModel of query cannot be internal");
         if (queryModel.getDistanceInfluence() != null) {
             double bmDI = baseModel.getDistanceInfluence() == null ? 0 : baseModel.getDistanceInfluence();
             if (queryModel.getDistanceInfluence() < bmDI)
@@ -35,14 +47,13 @@ public class FindMinMax {
     }
 
     private static void checkMultiplyValue(List<Statement> list, EncodedValueLookup lookup) {
-        Set<String> createdObjects = new HashSet<>();
         for (Statement statement : list) {
-            if (statement.getOperation() == Statement.Op.MULTIPLY) {
-                MinMax minMax = ValueExpressionVisitor.findMinMax(createdObjects, statement.getValue(), lookup);
+            if (statement.operation() == Statement.Op.MULTIPLY) {
+                MinMax minMax = ValueExpressionVisitor.findMinMax(statement.value(), lookup);
                 if (minMax.max > 1)
-                    throw new IllegalArgumentException("maximum of value '" + statement.getValue() + "' cannot be larger than 1, but was: " + minMax.max);
+                    throw new IllegalArgumentException("maximum of value '" + statement.value() + "' cannot be larger than 1, but was: " + minMax.max);
                 else if (minMax.min < 0)
-                    throw new IllegalArgumentException("minimum of value '" + statement.getValue() + "' cannot be smaller than 0, but was: " + minMax.min);
+                    throw new IllegalArgumentException("minimum of value '" + statement.value() + "' cannot be smaller than 0, but was: " + minMax.min);
             }
         }
     }
@@ -51,52 +62,53 @@ public class FindMinMax {
      * This method returns the smallest value possible in "min" and the smallest value that cannot be
      * exceeded by any edge in max.
      */
-    static MinMax findMinMax(Set<String> createdObjects, MinMax minMax, List<Statement> statements, EncodedValueLookup lookup) {
-        // 'blocks' of the statements are applied one after the other. A block consists of one (if) or more statements (elseif+else)
-        List<List<Statement>> blocks = splitIntoBlocks(statements);
-        for (List<Statement> block : blocks) findMinMaxForBlock(createdObjects, minMax, block, lookup);
+    static MinMax findMinMax(MinMax minMax, List<Statement> statements, EncodedValueLookup lookup) {
+        List<List<Statement>> groups = CustomModelParser.splitIntoGroup(statements);
+        for (List<Statement> group : groups) findMinMaxForGroup(minMax, group, lookup);
         return minMax;
     }
 
-    private static void findMinMaxForBlock(Set<String> createdObjects, final MinMax minMax, List<Statement> block, EncodedValueLookup lookup) {
-        if (block.isEmpty() || !IF.equals(block.get(0).getKeyword()))
-            throw new IllegalArgumentException("Every block must start with an if-statement");
+    private static void findMinMaxForGroup(final MinMax minMax, List<Statement> group, EncodedValueLookup lookup) {
+        if (group.isEmpty() || !IF.equals(group.get(0).keyword()))
+            throw new IllegalArgumentException("Every group must start with an if-statement");
 
-        MinMax minMaxBlock;
-        if (block.get(0).getCondition().trim().equals("true")) {
-            minMaxBlock = block.get(0).getOperation().apply(minMax, ValueExpressionVisitor.findMinMax(createdObjects, block.get(0).getValue(), lookup));
+        MinMax minMaxGroup;
+        Statement first = group.get(0);
+        if (first.condition().trim().equals("true")) {
+            if(first.isBlock()) {
+                for (List<Statement> subGroup : CustomModelParser.splitIntoGroup(first.doBlock())) findMinMaxForGroup(minMax, subGroup, lookup);
+                return;
+            } else {
+                minMaxGroup = first.operation().apply(minMax, ValueExpressionVisitor.findMinMax(first.value(), lookup));
+                if (minMaxGroup.max < 0)
+                    throw new IllegalArgumentException("statement resulted in negative value: " + first);
+            }
         } else {
-            minMaxBlock = new MinMax(Double.MAX_VALUE, 0);
+            minMaxGroup = new MinMax(Double.MAX_VALUE, 0);
             boolean foundElse = false;
-            for (Statement s : block) {
-                if (s.getKeyword() == ELSE) foundElse = true;
-                MinMax tmp = s.getOperation().apply(minMax, ValueExpressionVisitor.findMinMax(createdObjects, s.getValue(), lookup));
-                minMaxBlock.min = Math.min(minMaxBlock.min, tmp.min);
-                minMaxBlock.max = Math.max(minMaxBlock.max, tmp.max);
+            for (Statement s : group) {
+                if (s.keyword() == ELSE) foundElse = true;
+                MinMax tmp;
+                if(s.isBlock()) {
+                    tmp = new MinMax(minMax.min, minMax.max);
+                    for (List<Statement> subGroup : CustomModelParser.splitIntoGroup(s.doBlock())) findMinMaxForGroup(tmp, subGroup, lookup);
+                } else {
+                    tmp = s.operation().apply(minMax, ValueExpressionVisitor.findMinMax(s.value(), lookup));
+                    if (tmp.max < 0)
+                        throw new IllegalArgumentException("statement resulted in negative value: " + s);
+                }
+                minMaxGroup.min = Math.min(minMaxGroup.min, tmp.min);
+                minMaxGroup.max = Math.max(minMaxGroup.max, tmp.max);
             }
 
             // if there is no 'else' statement it's like there is a 'neutral' branch that leaves the initial value as is
             if (!foundElse) {
-                minMaxBlock.min = Math.min(minMaxBlock.min, minMax.min);
-                minMaxBlock.max = Math.max(minMaxBlock.max, minMax.max);
+                minMaxGroup.min = Math.min(minMaxGroup.min, minMax.min);
+                minMaxGroup.max = Math.max(minMaxGroup.max, minMax.max);
             }
         }
 
-        minMax.min = minMaxBlock.min;
-        minMax.max = minMaxBlock.max;
-    }
-
-    /**
-     * Splits the specified list into several list of statements starting with if
-     */
-    private static List<List<Statement>> splitIntoBlocks(List<Statement> statements) {
-        List<List<Statement>> result = new ArrayList<>();
-        List<Statement> block = null;
-        for (Statement st : statements) {
-            if (IF.equals(st.getKeyword())) result.add(block = new ArrayList<>());
-            if (block == null) throw new IllegalArgumentException("Every block must start with an if-statement");
-            block.add(st);
-        }
-        return result;
+        minMax.min = minMaxGroup.min;
+        minMax.max = minMaxGroup.max;
     }
 }

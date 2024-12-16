@@ -59,8 +59,9 @@ public class PathDetailsFromEdges implements Path.EdgeVisitor {
         if (!path.isFound() || requestedPathDetails.isEmpty())
             return Collections.emptyMap();
         HashSet<String> uniquePD = new HashSet<>(requestedPathDetails.size());
-        Collection<String> res = requestedPathDetails.stream().filter(pd -> !uniquePD.add(pd)).collect(Collectors.toList());
-        if (!res.isEmpty()) throw new IllegalArgumentException("Do not use duplicate path details: " + res);
+        Collection<String> res = requestedPathDetails.stream().filter(pd -> !uniquePD.add(pd)).toList();
+        if (!res.isEmpty())
+            throw new IllegalArgumentException("Do not use duplicate path details: " + res);
 
         List<PathDetailsBuilder> pathBuilders = pathBuilderFactory.createPathDetailsBuilders(requestedPathDetails, path, evLookup, weighting, graph);
         if (pathBuilders.isEmpty())

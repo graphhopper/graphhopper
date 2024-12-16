@@ -230,8 +230,8 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
     }
 
     private VirtualCHEdgeIteratorState buildVirtualCHEdgeState(EdgeIteratorState edgeState, int edgeID) {
-        double fwdWeight = weighting.calcEdgeWeightWithAccess(edgeState, false);
-        double bwdWeight = weighting.calcEdgeWeightWithAccess(edgeState, true);
+        double fwdWeight = weighting.calcEdgeWeight(edgeState, false);
+        double bwdWeight = weighting.calcEdgeWeight(edgeState, true);
         return new VirtualCHEdgeIteratorState(edgeID, edgeState.getEdge(), edgeState.getBaseNode(), edgeState.getAdjNode(),
                 edgeState.getEdgeKey(), edgeState.getEdgeKey(), NO_EDGE, NO_EDGE, fwdWeight, bwdWeight);
     }

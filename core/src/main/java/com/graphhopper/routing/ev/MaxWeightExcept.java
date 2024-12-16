@@ -8,7 +8,7 @@ import com.graphhopper.util.Helper;
  */
 public enum MaxWeightExcept {
 
-    NONE, DELIVERY, DESTINATION, FORESTRY;
+    MISSING, DELIVERY, DESTINATION, FORESTRY;
 
     public static final String KEY = "max_weight_except";
 
@@ -23,12 +23,16 @@ public enum MaxWeightExcept {
 
     public static MaxWeightExcept find(String name) {
         if (name == null || name.isEmpty())
-            return NONE;
+            return MISSING;
+
+        // "maxweight:conditional=none @ private" is rare and seems to be known from a few mappers only
+        if (name.equalsIgnoreCase("permit") || name.equalsIgnoreCase("private"))
+            return DELIVERY;
 
         try {
             return MaxWeightExcept.valueOf(Helper.toUpperCase(name));
         } catch (IllegalArgumentException ex) {
-            return NONE;
+            return MISSING;
         }
     }
 }

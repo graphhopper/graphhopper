@@ -157,7 +157,7 @@ public class QueryGraph implements Graph {
 
     @Override
     public int getEdges() {
-        return queryOverlay.getNumVirtualEdges() + baseEdges;
+        return queryOverlay.getNumVirtualEdges() / 2 + baseEdges;
     }
 
     @Override
@@ -280,7 +280,7 @@ public class QueryGraph implements Graph {
 
     @Override
     public Weighting wrapWeighting(Weighting weighting) {
-        return new QueryGraphWeighting(weighting, baseGraph.getNodes(), baseGraph.getEdges(), queryOverlay.getClosestEdges());
+        return new QueryGraphWeighting(baseGraph, weighting, queryOverlay.getClosestEdges());
     }
 
     @Override

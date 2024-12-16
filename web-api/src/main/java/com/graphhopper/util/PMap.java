@@ -17,8 +17,11 @@
  */
 package com.graphhopper.util;
 
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * A properties map (String to Object) with convenient methods to access the content.
@@ -54,7 +57,7 @@ public class PMap {
             if (index < 0)
                 continue;
 
-            put(s.substring(0, index), s.substring(index + 1));
+            putObject(Helper.camelCaseToUnderScore(s.substring(0, index)), Helper.toObject(s.substring(index + 1)));
         }
     }
 
@@ -89,17 +92,6 @@ public class PMap {
 
     public PMap putAll(PMap map) {
         this.map.putAll(map.map);
-        return this;
-    }
-
-    /**
-     * @deprecated use {@link #putObject(String, Object)} instead
-     */
-    @Deprecated
-    public PMap put(String key, String str) {
-        if (str == null)
-            throw new NullPointerException("Value cannot be null. Use remove instead.");
-        map.put(Helper.camelCaseToUnderScore(key), Helper.toObject(str));
         return this;
     }
 
@@ -149,6 +141,10 @@ public class PMap {
     public PMap putObject(String key, Object object) {
         map.put(key, object);
         return this;
+    }
+
+    public static Set<String> toSet(String value) {
+        return Arrays.stream(value.split(";")).filter(s -> !s.isEmpty()).collect(Collectors.toSet());
     }
 
     /**
