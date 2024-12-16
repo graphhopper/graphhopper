@@ -15,7 +15,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
+import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.JsonFeatureCollection;
 
@@ -37,16 +39,12 @@ public class BufferResourceTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration()
-                .putObject("graph.vehicles", "car|turn_costs=true")
                 .putObject("datareader.file", "../core/files/andorra.osm.pbf")
+                .putObject("graph.vehicles", "car|turn_costs=true")
                 .putObject("import.osm.ignored_highways", "")
                 .putObject("graph.location", DIR)
-                .setProfiles(Collections.singletonList(new Profile("my_car").setVehicle("car").setWeighting("fastest").setTurnCosts(true)
-                // .setProfiles(Arrays.asList(
-                //         new Profile("fast_car").setVehicle("car").setWeighting("fastest").setTurnCosts(true),
-                //         new Profile("short_car").setVehicle("car").setWeighting("shortest").setTurnCosts(true),
-                //         new Profile("fast_car_no_turn_restrictions").setVehicle("car").setWeighting("fastest").setTurnCosts(false)
-                ));
+                .setProfiles(Collections.singletonList(TestProfiles.accessAndSpeed("my_car", "car")))
+                .setLMProfiles(Collections.singletonList(new LMProfile("my_car")));
         return config;
     }
 
