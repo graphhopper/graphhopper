@@ -33,8 +33,7 @@ import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 @ExtendWith(DropwizardExtensionsSupport.class)
 public class BufferResourceTest {
     private static final String DIR = "./target/andorra-gh/";
-    public static final DropwizardAppExtension<GraphHopperServerConfiguration> app = new DropwizardAppExtension<>(
-            GraphHopperApplication.class, createConfig());
+    public static final DropwizardAppExtension<GraphHopperServerConfiguration> app = new DropwizardAppExtension<>(GraphHopperApplication.class, createConfig());
 
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
