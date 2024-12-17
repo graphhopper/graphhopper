@@ -295,6 +295,11 @@ public class BufferResource {
      * @return list of split road names
      */
     private List<String> sanitizeRoadNames(String roadNames) {
+        // Return empty list if roadNames is null
+        if (roadNames == null) {
+            return new ArrayList<String>();
+        }
+
         List<String> separatedNames = Arrays.asList(roadNames.split(","));
 
         for (int i = 0; i < separatedNames.size(); i++) {
