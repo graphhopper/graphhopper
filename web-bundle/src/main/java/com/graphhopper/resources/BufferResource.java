@@ -203,24 +203,12 @@ public class BufferResource {
             public void onEdge(int edgeId) {
                 EdgeIteratorState state = graph.getEdgeIteratorState(edgeId, Integer.MIN_VALUE);
 
-                List<String> queryRoadNames = new ArrayList<String>();
-                List<String> streetNames = null;
-                List<String> streetRef = null;
-                // Roads sometimes have multiple names delineated by a comma
-                if (state.getName() != null || !state.getName().isEmpty()) {
-                    streetNames = sanitizeRoadNames(state.getName());
-                }
-                if (state.getValue("street_ref") != null) {
-                    String s = (String) state.getValue("street_ref");
-                    streetRef = sanitizeRoadNames(s);
-                }
-
-                if (streetNames != null) {
-                    queryRoadNames.addAll(streetNames);
-                }
-                if (streetRef != null) {
-                    queryRoadNames.addAll(streetRef);
-                }
+                List<String> streetNames = sanitizeRoadNames(state.getName());
+                List<String> streetRef = sanitizeRoadNames((String) state.getValue("street_ref"));
+                // We need to add both street names and street refs to the list of road names to
+                // account for missing road names within one list or the other.
+                // Ie. streetNames contains "Purple Heart Trl" while streetRef contains "I 80"
+                List<String> queryRoadNames = Stream.concat(streetNames.stream(), streetRef.stream()).toList();
 
                 if (queryRoadNames.stream().anyMatch(x -> x.contains(roadName))) {
                     filteredEdgesInBbox.add(edgeId);
