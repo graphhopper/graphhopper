@@ -23,12 +23,16 @@ public class AtGlobals {
               try {
                   // Long wayId = Long.valueOf(nextLine[0]);
                   Long wayId = Double.valueOf(nextLine[0]).longValue();
-                  Double popularity = Double.valueOf(nextLine[1]);
-                  Double scenic_value = Double.valueOf(nextLine[2]);
-                  if (popularity > 0.0)
-                    popularities.put(wayId, popularity);
-                  if (scenic_value > 0.0)
-                    scenicValues.put(wayId, scenic_value);
+                  if (!nextLine[1].isEmpty()) {
+                    Double popularity = Double.valueOf(nextLine[1]);
+                    if (popularity > 0.0)
+                      popularities.put(wayId, popularity);
+                  }
+                  if (!nextLine[2].isEmpty()) {
+                    Double scenic_value = Double.valueOf(nextLine[2]);
+                    if (scenic_value > 0.0)
+                      scenicValues.put(wayId, scenic_value);
+                  }
               } catch (Exception ex) {
                   System.out.println("CSV parse exception: " + ex.getMessage());
               }
