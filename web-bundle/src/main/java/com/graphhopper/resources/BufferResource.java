@@ -19,10 +19,13 @@ import javax.ws.rs.core.Response;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GraphHopper;
+import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.http.GHPointParam;
 import com.graphhopper.jackson.ResponsePathSerializer;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.Roundabout;
+import com.graphhopper.routing.ev.VehicleAccess;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndex;
@@ -49,20 +52,24 @@ public class BufferResource {
     private final LocationIndex locationIndex;
     private final NodeAccess nodeAccess;
     private final EdgeExplorer edgeExplorer;
-    private final FlagEncoder carFlagEncoder;
+    private final BooleanEncodedValue roundaboutAccessEnc;
+    private final BooleanEncodedValue carAccessEnc;
     private final Graph graph;
+    private final GraphHopperConfig config;
 
     private final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(1E8));
 
     @Inject
-    public BufferResource(GraphHopper graphHopper) {
-        this.graph = graphHopper.getGraphHopperStorage().getBaseGraph();
+    public BufferResource(GraphHopperConfig config, GraphHopper graphHopper) {
+        this.config = config;
+        this.graph = graphHopper.getBaseGraph();
         this.locationIndex = graphHopper.getLocationIndex();
         this.nodeAccess = graph.getNodeAccess();
         this.edgeExplorer = graph.createEdgeExplorer();
 
         EncodingManager encodingManager = graphHopper.getEncodingManager();
-        this.carFlagEncoder = encodingManager.getEncoder("car");
+        this.roundaboutAccessEnc = encodingManager.getBooleanEncodedValue(Roundabout.KEY);
+        this.carAccessEnc = encodingManager.getBooleanEncodedValue(VehicleAccess.key("car"));
     }
 
     @GET
@@ -353,7 +360,7 @@ public class BufferResource {
                     // Temp has proper road name, isn't part of a roundabout, and bidirectional.
                     // Higher priority escape.
                     if (Arrays.stream(roadNames).anyMatch(x -> x.contains(roadName))
-                            && !tempState.get(carFlagEncoder.getBooleanEncodedValue("roundabout"))
+                            && !tempState.get(this.roundaboutAccessEnc)
                             && isBidirectional(tempState)) {
                         currentEdge = tempEdge;
                         usedEdges.add(tempEdge);
@@ -363,18 +370,18 @@ public class BufferResource {
                     // Temp has proper road name and isn't part of a roundabout. Lower priority
                     // escape.
                     else if (Arrays.stream(roadNames).anyMatch(x -> x.contains(roadName))
-                            && !tempState.get(carFlagEncoder.getBooleanEncodedValue("roundabout"))) {
+                            && !tempState.get(this.roundaboutAccessEnc)) {
                         potentialEdges.add(tempEdge);
                     }
 
                     // Temp has proper road name and is part of a roundabout. Higher entry priority.
                     else if (Arrays.stream(roadNames).anyMatch(x -> x.contains(roadName))
-                            && tempState.get(carFlagEncoder.getBooleanEncodedValue("roundabout"))) {
+                            && tempState.get(this.roundaboutAccessEnc)) {
                         potentialRoundaboutEdges.add(tempEdge);
                     }
 
                     // Temp is part of a roundabout. Lower entry priority.
-                    else if (tempState.get(carFlagEncoder.getBooleanEncodedValue("roundabout"))) {
+                    else if (tempState.get(this.roundaboutAccessEnc)) {
                         potentialRoundaboutEdgesWithoutName.add(tempEdge);
                     }
                 }
@@ -623,7 +630,7 @@ public class BufferResource {
      * @return true if road is bidirectional
     */
     private Boolean isBidirectional(EdgeIteratorState state) {
-        return state.get(carFlagEncoder.getAccessEnc()) && state.getReverse(carFlagEncoder.getAccessEnc());
+        return state.get(this.carAccessEnc) && state.getReverse(this.carAccessEnc);
     }
 
     /**
@@ -641,7 +648,7 @@ public class BufferResource {
 
         ObjectNode json = JsonNodeFactory.instance.objectNode();
         json.put("type", "FeatureCollection");
-        json.putPOJO("copyrights", ResponsePathSerializer.COPYRIGHTS);
+        json.putPOJO("copyrights", config.getCopyrights());
         json.putPOJO("features", features);
         return Response.ok(json).header("X-GH-Took", "" + sw.getSeconds() * 1000).build();
     }
