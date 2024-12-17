@@ -198,11 +198,12 @@ public class MapMatchingResource {
                         currentState = edgeMatches.get(currentEdgeMatchIdx).getStates().get(0);
                     }
 
-                    while (currentOsmDetail.getLast() < currentEdgeMatchIdx) {
+                    while (currentOsmDetail.getLast() < edge.getLast()) {
                         latestOsmDetailIdx++;
                         currentOsmDetail = osmWays.get(latestOsmDetailIdx);
                     }
 
+                    // Negate OSM Ids if driven in opposite direction
                     int edgeKey = edgeMatches.get(currentEdgeMatchIdx).getEdgeState().getEdgeKey();
                     Integer newOsmId = null;
                     if (edgeKey % 2 == 1) {
@@ -219,6 +220,7 @@ public class MapMatchingResource {
                         newOsmIdDetail.setLast(edge.getLast());
                     }
 
+                    // Update the time
                     Observation currentObs = currentState.getEntry();
                     PathDetail mmTime = new PathDetail(currentObs.getTime().toInstant().toString());
                     mmTime.setFirst(edge.getFirst());
