@@ -22,7 +22,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.http.GHPointParam;
-import com.graphhopper.jackson.ResponsePathSerializer;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.Roundabout;
 import com.graphhopper.routing.ev.VehicleAccess;
@@ -122,7 +121,7 @@ public class BufferResource {
      * @return buffer feature closest to start lat/long
      */
     private BufferFeature calculatePrimaryStartFeature(Double startLat, Double startLon, String roadName,
-            Double queryMultiplier) {
+                                                       Double queryMultiplier) {
         // Scale up query Bbox
         for (int i = 1; i < 4; i++) {
             BBox bbox = new BBox(startLon - queryMultiplier * i, startLon + queryMultiplier * i,
@@ -149,7 +148,7 @@ public class BufferResource {
      * @return buffer feature closest to primary start feature
      */
     private BufferFeature calculateSecondaryStartFeature(BufferFeature primaryStartFeature, String roadName,
-            Double queryMultiplier) {
+                                                         Double queryMultiplier) {
         Double startLat = primaryStartFeature.getPoint().lat;
         Double startLon = primaryStartFeature.getPoint().lon;
 
@@ -217,7 +216,7 @@ public class BufferResource {
     /**
      * Given a starting segment, finds the buffer feature at the distance threshold, the point along
      * that edge at the threshold, and the geometry of of the starting edge.
-     * 
+     *
      * @param startFeature      buffer feature to start at
      * @param roadName          name of road
      * @param thresholdDistance maximum distance in meters
@@ -228,7 +227,7 @@ public class BufferResource {
      * @return lineString representing start -> end
      */
     private LineString computeBufferSegment(BufferFeature startFeature, String roadName, Double thresholdDistance,
-            Boolean upstreamPath, Boolean upstreamStart) {
+                                            Boolean upstreamPath, Boolean upstreamStart) {
 
         BufferFeature featureToThreshold = computeEdgeAtDistanceThreshold(startFeature, thresholdDistance, roadName,
                 upstreamPath, upstreamStart);
@@ -290,7 +289,7 @@ public class BufferResource {
 
     /**
      * Cycles through all nearby, matching roads, and selects the point which is closest to the given lat/lon.
-     * 
+     *
      * @param edgeList all nearby edges with proper road name
      * @param startLat latitude at center of query box
      * @param startLon longitude at center of query box
@@ -324,7 +323,7 @@ public class BufferResource {
      * Iterates along the flow of a road given a starting feature until hitting the denoted threshold.
      * Usually only selects adjacent roads which have the matching road name, but certain road types like
      * roundabouts have separate logic.
-     * 
+     *
      * @param startFeature      buffer feature to start at
      * @param thresholdDistance maximum distance in meters
      * @param roadName          name of road
@@ -335,7 +334,7 @@ public class BufferResource {
      * @return buffer feature at specified distance away from start
      */
     private BufferFeature computeEdgeAtDistanceThreshold(final BufferFeature startFeature, Double thresholdDistance,
-            String roadName, Boolean upstreamPath, Boolean upstreamStart) {
+                                                         String roadName, Boolean upstreamPath, Boolean upstreamStart) {
         List<Integer> usedEdges = new ArrayList<Integer>() {
             {
                 add(startFeature.getEdge());
@@ -422,13 +421,13 @@ public class BufferResource {
                         double dist1 = Math.abs(
                                 nodeAccess.getLat(tempState.getAdjNode()) - nodeAccess.getLat(tempState.getBaseNode()))
                                 + Math.abs(nodeAccess.getLon(tempState.getAdjNode())
-                                        - nodeAccess.getLon(tempState.getBaseNode()));
+                                - nodeAccess.getLon(tempState.getBaseNode()));
                         tempState = graph.getEdgeIteratorState(potentialEdges.get(potentialEdges.size() - 1),
                                 Integer.MIN_VALUE);
                         double dist2 = Math.abs(
                                 nodeAccess.getLat(tempState.getAdjNode()) - nodeAccess.getLat(tempState.getBaseNode()))
                                 + Math.abs(nodeAccess.getLon(tempState.getAdjNode())
-                                        - nodeAccess.getLon(tempState.getBaseNode()));
+                                - nodeAccess.getLon(tempState.getBaseNode()));
 
                         if (dist1 > dist2) {
                             currentEdge = potentialEdges.get(0);
@@ -464,10 +463,10 @@ public class BufferResource {
             if (currentDistance >= thresholdDistance) {
                 break;
             }
-            
+
             EdgeIteratorState state = graph.getEdgeIteratorState(currentEdge, Integer.MIN_VALUE);
             PointList wayGeometry = state.fetchWayGeometry(FetchMode.PILLAR_ONLY);
-            
+
             // Reverse path if segment is flipped
             if (state.getAdjNode() == currentNode) {
                 if (!wayGeometry.isEmpty()) {
@@ -491,7 +490,7 @@ public class BufferResource {
     /**
      * Iterates along the way geometry of a given edge until hitting the denoted threshold. Returns an empty list
      * when the edge of the start feature and end feature are the same.
-     * 
+     *
      * @param startFeature      original starting buffer feature
      * @param thresholdDistance maximum distance in meters
      * @param endFeature        buffer feature of edge at distance threshold
@@ -502,7 +501,7 @@ public class BufferResource {
      * @return PointList to threshold along given edge of end feature
      */
     private PointList computePointAtDistanceThreshold(BufferFeature startFeature, Double thresholdDistance,
-            BufferFeature endFeature, Boolean upstreamPath) {
+                                                      BufferFeature endFeature, Boolean upstreamPath) {
         EdgeIteratorState finalState = graph.getEdgeIteratorState(endFeature.getEdge(), Integer.MIN_VALUE);
         PointList pointList = finalState.fetchWayGeometry(FetchMode.PILLAR_ONLY);
 
@@ -542,7 +541,7 @@ public class BufferResource {
 
     /**
      * Truncates the geometry of the given start feature's edge based on the 'launch' direction then returns path.
-     * 
+     *
      * @param startFeature  original starting buffer feature
      * @param upstreamStart initial 'launch' direction
      * @return PointList of given start feature
@@ -604,7 +603,7 @@ public class BufferResource {
     /**
      * Checks if the next edge is going the same direction as the current edge. Prioritizes bidirectional
      * roads to deal with a road where one-ways converge (e.g. -<)
-     * 
+     *
      * @param currentState current edge
      * @param tempState    edge to test
      * @param upstreamPath direction to build path - either along or against road's
@@ -647,7 +646,7 @@ public class BufferResource {
 
     /**
      * Checks if the road has access flags going in both directions.
-     * 
+     *
      * @param state edge under question
      * @return true if road is bidirectional
      */
