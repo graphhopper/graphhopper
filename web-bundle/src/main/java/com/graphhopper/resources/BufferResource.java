@@ -419,13 +419,13 @@ public class BufferResource {
 
                         EdgeIteratorState tempState = graph.getEdgeIteratorState(potentialEdges.get(0),
                                 Integer.MIN_VALUE);
-                        Double dist1 = Math.abs(
+                        double dist1 = Math.abs(
                                 nodeAccess.getLat(tempState.getAdjNode()) - nodeAccess.getLat(tempState.getBaseNode()))
                                 + Math.abs(nodeAccess.getLon(tempState.getAdjNode())
                                         - nodeAccess.getLon(tempState.getBaseNode()));
                         tempState = graph.getEdgeIteratorState(potentialEdges.get(potentialEdges.size() - 1),
                                 Integer.MIN_VALUE);
-                        Double dist2 = Math.abs(
+                        double dist2 = Math.abs(
                                 nodeAccess.getLat(tempState.getAdjNode()) - nodeAccess.getLat(tempState.getBaseNode()))
                                 + Math.abs(nodeAccess.getLon(tempState.getAdjNode())
                                         - nodeAccess.getLon(tempState.getBaseNode()));
