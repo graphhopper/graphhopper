@@ -116,9 +116,8 @@ public class BufferResource {
 
     /**
      * Given a lat/long, finds all nearby edges with a corresponding road name. Uses
-     * three expanding
-     * 'pulses' based off the queryMultiplier until at least a single matching edge
-     * is found.
+     * three expanding 'pulses' based off the queryMultiplier until at least a
+     * single matching edge is found.
      *
      * @param startLat        latitude at center of query box
      * @param startLon        longitude at center of query box
@@ -145,10 +144,9 @@ public class BufferResource {
 
     /**
      * Given a buffer feature, finds all nearby edges with a corresponding road name
-     * which aren't along
-     * the same road segment as the given feature. Uses three expanding 'pulses'
-     * based off the queryMultiplier
-     * until at least a single matching edge is found.
+     * which aren't along the same road segment as the given feature. Uses three
+     * expanding 'pulses' based off the queryMultiplier until at least a single
+     * matching edge is found.
      *
      * @param primaryStartFeature buffer feature to query off of
      * @param roadName            name of road
@@ -235,8 +233,8 @@ public class BufferResource {
 
     /**
      * Given a starting segment, finds the buffer feature at the distance threshold,
-     * the point along
-     * that edge at the threshold, and the geometry of of the starting edge.
+     * the point along that edge at the threshold, and the geometry of of the
+     * starting edge.
      * 
      * @param startFeature      buffer feature to start at
      * @param roadName          name of road
@@ -344,10 +342,9 @@ public class BufferResource {
 
     /**
      * Iterates along the flow of a road given a starting feature until hitting the
-     * denoted threshold.
-     * Usually only selects adjacent roads which have the matching road name, but
-     * certain road types like
-     * roundabouts have separate logic.
+     * denoted threshold. Usually only selects adjacent roads which have the
+     * matching road name, but certain road types like roundabouts have separate
+     * logic.
      * 
      * @param startFeature      buffer feature to start at
      * @param thresholdDistance maximum distance in meters
@@ -513,8 +510,8 @@ public class BufferResource {
 
     /**
      * Iterates along the way geometry of a given edge until hitting the denoted
-     * threshold. Returns an empty list
-     * when the edge of the start feature and end feature are the same.
+     * threshold. Returns an empty list when the edge of the start feature and end
+     * feature are the same.
      * 
      * @param startFeature      original starting buffer feature
      * @param thresholdDistance maximum distance in meters
@@ -567,8 +564,7 @@ public class BufferResource {
 
     /**
      * Truncates the geometry of the given start feature's edge based on the
-     * 'launch' direction then
-     * returns path
+     * 'launch' direction then returns path
      * 
      * @param startFeature  original starting buffer feature
      * @param upstreamStart initial 'launch' direction
@@ -632,8 +628,8 @@ public class BufferResource {
 
     /**
      * Checks if the next edge is going the same direction as the current edge.
-     * Prioritizes bidirectional
-     * roads to deal with a road where one-ways converge (e.g. -<)
+     * Prioritizes bidirectional roads to deal with a road where one-ways converge
+     * (e.g. -<)
      * 
      * @param currentState current edge
      * @param tempState    edge to test
