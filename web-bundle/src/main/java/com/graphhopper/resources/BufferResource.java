@@ -151,6 +151,9 @@ public class BufferResource {
                                                          Double queryMultiplier) {
         Double startLat = primaryStartFeature.getPoint().lat;
         Double startLon = primaryStartFeature.getPoint().lon;
+                                                         double queryMultiplier) {
+        double startLat = primaryStartFeature.getPoint().lat;
+        double startLon = primaryStartFeature.getPoint().lon;
 
         EdgeIteratorState state = graph.getEdgeIteratorState(primaryStartFeature.getEdge(), Integer.MIN_VALUE);
 
@@ -297,6 +300,8 @@ public class BufferResource {
      */
     private BufferFeature computeStartFeature(List<Integer> edgeList, Double startLat, Double startLon) {
         Double lowestDistance = Double.MAX_VALUE;
+    private BufferFeature computeStartFeature(List<Integer> edgeList, double startLat, double startLon) {
+        double lowestDistance = Double.MAX_VALUE;
         GHPoint3D nearestPoint = null;
         Integer nearestEdge = null;
 
@@ -306,7 +311,7 @@ public class BufferResource {
             PointList pointList = state.fetchWayGeometry(FetchMode.PILLAR_ONLY);
 
             for (GHPoint3D point : pointList) {
-                Double dist = DistancePlaneProjection.DIST_PLANE.calcDist(startLat, startLon, point.lat, point.lon);
+                double dist = DistancePlaneProjection.DIST_PLANE.calcDist(startLat, startLon, point.lat, point.lon);
 
                 if (dist < lowestDistance) {
                     lowestDistance = dist;
@@ -342,14 +347,14 @@ public class BufferResource {
         };
 
         EdgeIteratorState currentState = graph.getEdgeIteratorState(startFeature.getEdge(), Integer.MIN_VALUE);
-        Integer currentNode = upstreamStart ? currentState.getBaseNode() : currentState.getAdjNode();
+        int currentNode = upstreamStart ? currentState.getBaseNode() : currentState.getAdjNode();
         PointList path = new PointList();
 
         // Check starting edge
-        Double currentDistance = DistancePlaneProjection.DIST_PLANE.calcDist(startFeature.getPoint().getLat(),
+        double currentDistance = DistancePlaneProjection.DIST_PLANE.calcDist(startFeature.getPoint().getLat(),
                 startFeature.getPoint().getLon(),
                 nodeAccess.getLat(currentNode), nodeAccess.getLon(currentNode));
-        Double previousDistance = 0.0;
+        double previousDistance = 0.0;
         Integer currentEdge = -1;
 
         if (currentDistance >= thresholdDistance) {
@@ -358,9 +363,6 @@ public class BufferResource {
 
         while (currentDistance < thresholdDistance) {
             EdgeIterator iterator = edgeExplorer.setBaseNode(currentNode);
-            List<Integer> potentialEdges = new ArrayList<Integer>();
-            List<Integer> potentialRoundaboutEdges = new ArrayList<Integer>();
-            List<Integer> potentialRoundaboutEdgesWithoutName = new ArrayList<Integer>();
             List<Integer> potentialEdges = new ArrayList<>();
             List<Integer> potentialRoundaboutEdges = new ArrayList<>();
             List<Integer> potentialRoundaboutEdgesWithoutName = new ArrayList<>();
@@ -457,7 +459,7 @@ public class BufferResource {
             }
 
             // Calculate new distance
-            Integer otherNode = graph.getOtherNode(currentEdge, currentNode);
+            int otherNode = graph.getOtherNode(currentEdge, currentNode);
             previousDistance = currentDistance;
             currentDistance += DistancePlaneProjection.DIST_PLANE.calcDist(nodeAccess.getLat(currentNode),
                     nodeAccess.getLon(currentNode), nodeAccess.getLat(otherNode), nodeAccess.getLon(otherNode));
@@ -563,7 +565,7 @@ public class BufferResource {
         }
         // Truncate after startPoint
         else {
-            Boolean pastPoint = false;
+            boolean pastPoint = false;
             for (GHPoint3D point : pathList) {
                 if (startFeature.getPoint().equals(point)) {
                     pastPoint = true;
@@ -579,7 +581,7 @@ public class BufferResource {
             tempList.reverse();
         }
 
-        Double currentDistance = 0.0;
+        double currentDistance = 0.0;
         GHPoint3D previousPoint = tempList.get(0);
         pathList = new PointList();
 
