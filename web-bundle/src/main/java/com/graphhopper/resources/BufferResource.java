@@ -160,7 +160,7 @@ public class BufferResource {
                     startLat - queryMultiplier * i, startLat + queryMultiplier * i);
 
             final List<Integer> filteredQueryEdges = queryBbox(bbox, roadName);
-            final List<Integer> filteredEdgesByDirection = new ArrayList<Integer>();
+            final List<Integer> filteredEdgesByDirection = new ArrayList<>();
 
             // Secondary filter
             for (Integer edge : filteredQueryEdges) {
@@ -201,13 +201,13 @@ public class BufferResource {
                 List<String> streetRef = sanitizeRoadNames((String) state.getValue("street_ref"));
                 // We need to add both street names and street refs to the list of road names to
                 // account for missing road names within one list or the other.
-                // Ie. streetNames contains "Purple Heart Trl" while streetRef contains "I 80"
+                // I.e. streetNames contains "Purple Heart Trl" while streetRef contains "I 80"
                 List<String> queryRoadNames = Stream.concat(streetNames.stream(), streetRef.stream()).toList();
 
                 if (queryRoadNames.stream().anyMatch(x -> x.contains(roadName))) {
                     filteredEdgesInBbox.add(edgeId);
                 }
-            };
+            }
         });
 
         return filteredEdgesInBbox;
@@ -215,7 +215,7 @@ public class BufferResource {
 
     /**
      * Given a starting segment, finds the buffer feature at the distance threshold, the point along
-     * that edge at the threshold, and the geometry of of the starting edge.
+     * that edge at the threshold, and the geometry of the starting edge.
      *
      * @param startFeature      buffer feature to start at
      * @param roadName          name of road
@@ -368,7 +368,7 @@ public class BufferResource {
                 List<String> streetRefs = sanitizeRoadNames((String) iterator.getValue("street_ref"));
                 // We need to add both street names and street refs to the list of road names to
                 // account for missing road names within one list or the other.
-                // Ie. streetNames contains "Purple Heart Trl" while streetRef contains "I 80"
+                // I.e. streetNames contains "Purple Heart Trl" while streetRef contains "I 80"
                 List<String> roadNames = Stream.concat(streetNames.stream(), streetRefs.stream()).toList();
 
                 Integer tempEdge = iterator.getEdge();
