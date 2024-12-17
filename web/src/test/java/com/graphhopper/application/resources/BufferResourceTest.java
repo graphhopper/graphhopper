@@ -41,6 +41,7 @@ public class BufferResourceTest {
         config.getGraphHopperConfiguration()
                 .putObject("datareader.file", "../core/files/andorra.osm.pbf")
                 .putObject("graph.location", DIR)
+                .putObject("import.osm.ignored_highways", "")
                 .putObject("graph.encoded_values", "car_access, car_average_speed")
                 .setProfiles(List.of(
                         TestProfiles.accessAndSpeed("fast_car", "car").setWeighting("fastest").setTurnCostsConfig(TurnCostsConfig.car()),
