@@ -40,7 +40,6 @@ public class BufferResourceTest {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration()
                 .putObject("datareader.file", "../core/files/andorra.osm.pbf")
-                .putObject("graph.flag_encoders", "car|turn_costs=true")
                 .putObject("graph.location", DIR)
                 .putObject("graph.encoded_values", "car_access, car_average_speed")
                 .setProfiles(List.of(
