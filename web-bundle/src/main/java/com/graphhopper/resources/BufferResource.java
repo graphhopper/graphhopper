@@ -464,8 +464,10 @@ public class BufferResource {
             if (currentDistance >= thresholdDistance) {
                 break;
             }
+            
             EdgeIteratorState state = graph.getEdgeIteratorState(currentEdge, Integer.MIN_VALUE);
             PointList wayGeometry = state.fetchWayGeometry(FetchMode.PILLAR_ONLY);
+            
             // Reverse path if segment is flipped
             if (state.getAdjNode() == currentNode) {
                 if (!wayGeometry.isEmpty()) {
@@ -600,9 +602,8 @@ public class BufferResource {
     }
 
     /**
-     * Checks if the next edge is going the same direction as the current edge.
-     * Prioritizes bidirectional roads to deal with a road where one-ways converge
-     * (e.g. -<)
+     * Checks if the next edge is going the same direction as the current edge. Prioritizes bidirectional
+     * roads to deal with a road where one-ways converge (e.g. -<)
      * 
      * @param currentState current edge
      * @param tempState    edge to test
