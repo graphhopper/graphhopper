@@ -92,7 +92,7 @@ public class BufferResource {
         BufferFeature primaryStartFeature = calculatePrimaryStartFeature(point.get().lat, point.get().lon, roadName,
                 queryMultiplier);
         EdgeIteratorState state = graph.getEdgeIteratorState(primaryStartFeature.getEdge(), Integer.MIN_VALUE);
-        List<LineString> lineStrings = new ArrayList<LineString>();
+        List<LineString> lineStrings = new ArrayList<>();
 
         // Start feature edge is bidirectional. Simple
         if (isBidirectional(state)) {
@@ -190,7 +190,7 @@ public class BufferResource {
      * @return all edges which have matching road name
      */
     private List<Integer> queryBbox(BBox bbox, String roadName) {
-        final List<Integer> filteredEdgesInBbox = new ArrayList<Integer>();
+        final List<Integer> filteredEdgesInBbox = new ArrayList<>();
 
         this.locationIndex.query(bbox, new LocationIndex.Visitor() {
             @Override
@@ -235,7 +235,7 @@ public class BufferResource {
                 featureToThreshold, upstreamPath);
         PointList startingEdgeGeometry = computeWayGeometryOfStartingEdge(startFeature, upstreamStart, thresholdDistance);
 
-        List<Coordinate> coordinates = new ArrayList<Coordinate>();
+        List<Coordinate> coordinates = new ArrayList<>();
 
         // Add start feature point
         for (GHPoint point : startingEdgeGeometry) {
@@ -274,7 +274,7 @@ public class BufferResource {
     private List<String> sanitizeRoadNames(String roadNames) {
         // Return empty list if roadNames is null
         if (roadNames == null) {
-            return new ArrayList<String>();
+            return new ArrayList<>();
         }
 
         List<String> separatedNames = Arrays.asList(roadNames.split(","));
@@ -335,7 +335,7 @@ public class BufferResource {
      */
     private BufferFeature computeEdgeAtDistanceThreshold(final BufferFeature startFeature, Double thresholdDistance,
                                                          String roadName, Boolean upstreamPath, Boolean upstreamStart) {
-        List<Integer> usedEdges = new ArrayList<Integer>() {
+        List<Integer> usedEdges = new ArrayList<>() {
             {
                 add(startFeature.getEdge());
             }
@@ -361,6 +361,9 @@ public class BufferResource {
             List<Integer> potentialEdges = new ArrayList<Integer>();
             List<Integer> potentialRoundaboutEdges = new ArrayList<Integer>();
             List<Integer> potentialRoundaboutEdgesWithoutName = new ArrayList<Integer>();
+            List<Integer> potentialEdges = new ArrayList<>();
+            List<Integer> potentialRoundaboutEdges = new ArrayList<>();
+            List<Integer> potentialRoundaboutEdgesWithoutName = new ArrayList<>();
             currentEdge = -1;
 
             while (iterator.next()) {
