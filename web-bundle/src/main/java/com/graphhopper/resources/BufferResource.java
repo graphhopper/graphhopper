@@ -113,32 +113,6 @@ public class BufferResource {
         return createGeoJsonResponse(lineStrings, sw);
     }
 
-    @GET
-    @Path("v2")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response doGet2(
-            @QueryParam("point") @NotNull GHPointParam point,
-            @QueryParam("roadName") @NotNull String roadName,
-            @QueryParam("thresholdDistance") @NotNull Double thresholdDistance,
-            @QueryParam("queryMultiplier") @DefaultValue(".01") Double queryMultiplier,
-            @QueryParam("buildUpstream") @DefaultValue("false") Boolean buildUpstream) {
-        if (queryMultiplier > 1) {
-            throw new IllegalArgumentException("Query multiplier is too high.");
-        } else if (queryMultiplier <= 0) {
-            throw new IllegalArgumentException("Query multiplier cannot be zero or negative.");
-        }
-
-        StopWatch sw = new StopWatch().start();
-
-        roadName = sanitizeRoadNames(roadName).get(0);
-        BufferFeature primaryStartFeature = calculatePrimaryStartFeature(point.get().lat, point.get().lon, roadName,
-                queryMultiplier);
-
-        ObjectNode json = JsonNodeFactory.instance.objectNode();
-        json.put("result", roadName);
-        return Response.ok(json).build();
-    }
-
     /**
      * Given a lat/long, finds all nearby edges with a corresponding road name. Uses
      * three expanding
