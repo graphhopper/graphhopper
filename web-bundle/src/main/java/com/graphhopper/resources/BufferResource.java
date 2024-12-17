@@ -97,18 +97,14 @@ public class BufferResource {
 
         // Start feature edge is bidirectional. Simple
         if (isBidirectional(state)) {
-            lineStrings
-                    .add(computeBufferSegment(primaryStartFeature, roadName, thresholdDistance, buildUpstream, true));
-            lineStrings
-                    .add(computeBufferSegment(primaryStartFeature, roadName, thresholdDistance, buildUpstream, false));
+            lineStrings.add(computeBufferSegment(primaryStartFeature, roadName, thresholdDistance, buildUpstream, true));
+            lineStrings.add(computeBufferSegment(primaryStartFeature, roadName, thresholdDistance, buildUpstream, false));
         }
         // Start feature edge is unidirectional. Requires finding sister road
         else {
             BufferFeature secondaryStartFeature = calculateSecondaryStartFeature(primaryStartFeature, roadName, .005);
-            lineStrings.add(computeBufferSegment(primaryStartFeature, roadName, thresholdDistance, buildUpstream,
-                    buildUpstream));
-            lineStrings.add(computeBufferSegment(secondaryStartFeature, roadName, thresholdDistance, buildUpstream,
-                    buildUpstream));
+            lineStrings.add(computeBufferSegment(primaryStartFeature, roadName, thresholdDistance, buildUpstream, buildUpstream));
+            lineStrings.add(computeBufferSegment(secondaryStartFeature, roadName, thresholdDistance, buildUpstream, buildUpstream));
         }
 
         return createGeoJsonResponse(lineStrings, sw);
@@ -143,10 +139,9 @@ public class BufferResource {
     }
 
     /**
-     * Given a buffer feature, finds all nearby edges with a corresponding road name
-     * which aren't along the same road segment as the given feature. Uses three
-     * expanding 'pulses' based off the queryMultiplier until at least a single
-     * matching edge is found.
+     * Given a buffer feature, finds all nearby edges with a corresponding road name which aren't along
+     * the same road segment as the given feature. Uses three expanding 'pulses' based off the queryMultiplier
+     * until at least a single matching edge is found.
      *
      * @param primaryStartFeature buffer feature to query off of
      * @param roadName            name of road
@@ -220,9 +215,8 @@ public class BufferResource {
     }
 
     /**
-     * Given a starting segment, finds the buffer feature at the distance threshold,
-     * the point along that edge at the threshold, and the geometry of of the
-     * starting edge.
+     * Given a starting segment, finds the buffer feature at the distance threshold, the point along
+     * that edge at the threshold, and the geometry of of the starting edge.
      * 
      * @param startFeature      buffer feature to start at
      * @param roadName          name of road
@@ -240,8 +234,7 @@ public class BufferResource {
                 upstreamPath, upstreamStart);
         PointList finalSegmentToThreshold = computePointAtDistanceThreshold(startFeature, thresholdDistance,
                 featureToThreshold, upstreamPath);
-        PointList startingEdgeGeometry = computeWayGeometryOfStartingEdge(startFeature, upstreamStart,
-                thresholdDistance);
+        PointList startingEdgeGeometry = computeWayGeometryOfStartingEdge(startFeature, upstreamStart, thresholdDistance);
 
         List<Coordinate> coordinates = new ArrayList<Coordinate>();
 
@@ -270,12 +263,11 @@ public class BufferResource {
             throw new WebApplicationException("Threshold distance is too short to construct a valid path.");
         }
 
-        return geometryFactory.createLineString(coordinates.toArray(new Coordinate[0]));
+        return geometryFactory.createLineString(coordinates.toArray(Coordinate[]::new));
     }
 
     /**
-     * Splits a comma-separated list of road names, then removes any spaces, casing,
-     * and dashes
+     * Splits a comma-separated list of road names, then removes any spaces, casing, and dashes.
      *
      * @param roadNames comma-separated list of road names
      * @return list of split road names
@@ -288,8 +280,7 @@ public class BufferResource {
 
         List<String> separatedNames = Arrays.asList(roadNames.split(","));
         for (int i = 0; i < separatedNames.size(); i++) {
-            // TODO: do we want to remove all spaces from the names? There could be a
-            // mismatch between "I 80" "I-80" "I80" etc.
+            // TODO: do we want to remove all spaces from the names? There could be a mismatch between "I 80" "I-80" "I80" etc.
             String polishedName = separatedNames.get(i).trim().replace("-", "").toLowerCase();
             separatedNames.set(i, polishedName);
         }
@@ -298,8 +289,7 @@ public class BufferResource {
     }
 
     /**
-     * Cycles through all nearby, matching roads, and selects the point which is
-     * closest to the given lat/lon
+     * Cycles through all nearby, matching roads, and selects the point which is closest to the given lat/lon.
      * 
      * @param edgeList all nearby edges with proper road name
      * @param startLat latitude at center of query box
@@ -331,10 +321,9 @@ public class BufferResource {
     }
 
     /**
-     * Iterates along the flow of a road given a starting feature until hitting the
-     * denoted threshold. Usually only selects adjacent roads which have the
-     * matching road name, but certain road types like roundabouts have separate
-     * logic.
+     * Iterates along the flow of a road given a starting feature until hitting the denoted threshold.
+     * Usually only selects adjacent roads which have the matching road name, but certain road types like
+     * roundabouts have separate logic.
      * 
      * @param startFeature      buffer feature to start at
      * @param thresholdDistance maximum distance in meters
@@ -380,6 +369,7 @@ public class BufferResource {
                 List<String> streetRefs = sanitizeRoadNames((String) iterator.getValue("street_ref"));
                 // We need to add both street names and street refs to the list of road names to
                 // account for missing road names within one list or the other.
+                // Ie. streetNames contains "Purple Heart Trl" while streetRef contains "I 80"
                 List<String> roadNames = Stream.concat(streetNames.stream(), streetRefs.stream()).toList();
 
                 Integer tempEdge = iterator.getEdge();
@@ -474,10 +464,8 @@ public class BufferResource {
             if (currentDistance >= thresholdDistance) {
                 break;
             }
-
             EdgeIteratorState state = graph.getEdgeIteratorState(currentEdge, Integer.MIN_VALUE);
             PointList wayGeometry = state.fetchWayGeometry(FetchMode.PILLAR_ONLY);
-
             // Reverse path if segment is flipped
             if (state.getAdjNode() == currentNode) {
                 if (!wayGeometry.isEmpty()) {
@@ -499,9 +487,8 @@ public class BufferResource {
     }
 
     /**
-     * Iterates along the way geometry of a given edge until hitting the denoted
-     * threshold. Returns an empty list when the edge of the start feature and end
-     * feature are the same.
+     * Iterates along the way geometry of a given edge until hitting the denoted threshold. Returns an empty list
+     * when the edge of the start feature and end feature are the same.
      * 
      * @param startFeature      original starting buffer feature
      * @param thresholdDistance maximum distance in meters
@@ -524,8 +511,7 @@ public class BufferResource {
         }
 
         // Reverse geometry when starting at adjacent node
-        if (upstreamPath && finalState.getAdjNode() == endFeature.getNode()
-                || !upstreamPath && finalState.getAdjNode() == endFeature.getNode()) {
+        if (upstreamPath && finalState.getAdjNode() == endFeature.getNode() || !upstreamPath && finalState.getAdjNode() == endFeature.getNode()) {
             pointList.reverse();
         }
 
@@ -553,15 +539,13 @@ public class BufferResource {
     }
 
     /**
-     * Truncates the geometry of the given start feature's edge based on the
-     * 'launch' direction then returns path
+     * Truncates the geometry of the given start feature's edge based on the 'launch' direction then returns path.
      * 
      * @param startFeature  original starting buffer feature
      * @param upstreamStart initial 'launch' direction
      * @return PointList of given start feature
      */
-    private PointList computeWayGeometryOfStartingEdge(BufferFeature startFeature, Boolean upstreamStart,
-            Double thresholdDistance) {
+    private PointList computeWayGeometryOfStartingEdge(BufferFeature startFeature, Boolean upstreamStart, Double thresholdDistance) {
         EdgeIteratorState startState = graph.getEdgeIteratorState(startFeature.getEdge(), Integer.MIN_VALUE);
         PointList pathList = startState.fetchWayGeometry(FetchMode.ALL);
         PointList tempList = new PointList();
@@ -588,8 +572,7 @@ public class BufferResource {
             }
         }
 
-        // Doesn't matter if bidirectional since upstreamStart will always go toward
-        // adjacent node
+        // Doesn't matter if bidirectional since upstreamStart will always go toward adjacent node
         if (upstreamStart) {
             tempList.reverse();
         }
