@@ -18,14 +18,13 @@
 
 package com.graphhopper.routing;
 
+import com.carrotsearch.hppc.IntHashSet;
+import com.carrotsearch.hppc.IntSet;
 import com.graphhopper.routing.ch.PrepareEncoder;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
-import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
-import com.graphhopper.routing.util.AccessFilter;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.weighting.FastestWeighting;
+import com.graphhopper.routing.weighting.SpeedWeighting;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
@@ -38,15 +37,14 @@ import static org.junit.jupiter.api.Assertions.*;
 public class RoutingCHGraphImplTest {
     @Test
     public void testBaseAndCHEdges() {
-        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
         DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
-        EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
+        EncodingManager em = EncodingManager.start().add(speedEnc).build();
         BaseGraph graph = new BaseGraph.Builder(em).create();
         graph.edge(1, 0);
         graph.edge(8, 9);
         graph.freeze();
 
-        CHConfig chConfig = CHConfig.nodeBased("p", new FastestWeighting(accessEnc, speedEnc));
+        CHConfig chConfig = CHConfig.nodeBased("p", new SpeedWeighting(speedEnc));
         CHStorage store = CHStorage.fromGraph(graph, chConfig);
         CHStorageBuilder chBuilder = new CHStorageBuilder(store);
         chBuilder.setIdentityLevels();
@@ -77,15 +75,13 @@ public class RoutingCHGraphImplTest {
         //   4 ------ 1 > 0
         //            ^ \
         //            3  2
-        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
         DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
-        EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
+        EncodingManager em = EncodingManager.start().add(speedEnc).build();
         BaseGraph graph = new BaseGraph.Builder(em).create();
-        EdgeExplorer baseCarOutExplorer = graph.createEdgeExplorer(AccessFilter.outEdges(accessEnc));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(4, 1).setDistance(30));
+        graph.edge(4, 1).setDistance(30).set(speedEnc, 60);
         graph.freeze();
 
-        CHConfig chConfig = CHConfig.nodeBased("ch", new FastestWeighting(accessEnc, speedEnc));
+        CHConfig chConfig = CHConfig.nodeBased("ch", new SpeedWeighting(speedEnc));
         CHStorage store = CHStorage.fromGraph(graph, chConfig);
         CHStorageBuilder chBuilder = new CHStorageBuilder(store);
         chBuilder.setIdentityLevels();
@@ -93,6 +89,7 @@ public class RoutingCHGraphImplTest {
         chBuilder.addShortcutNodeBased(1, 2, PrepareEncoder.getScDirMask(), 10, 10, 11);
         chBuilder.addShortcutNodeBased(1, 3, PrepareEncoder.getScBwdDir(), 10, 14, 15);
 
+        EdgeExplorer baseExplorer = graph.createEdgeExplorer();
         RoutingCHGraph lg = RoutingCHGraphImpl.fromGraph(graph, store, chConfig);
         RoutingCHEdgeExplorer chOutExplorer = lg.createOutEdgeExplorer();
         RoutingCHEdgeExplorer chInExplorer = lg.createInEdgeExplorer();
@@ -104,7 +101,7 @@ public class RoutingCHGraphImplTest {
         assertEquals(2, GHUtility.count(chOutExplorer.setBaseNode(1)));
         assertEquals(3, GHUtility.count(chInExplorer.setBaseNode(1)));
         assertEquals(GHUtility.asSet(2, 4), GHUtility.getNeighbors(chOutExplorer.setBaseNode(1)));
-        assertEquals(GHUtility.asSet(4), GHUtility.getNeighbors(baseCarOutExplorer.setBaseNode(1)));
+        assertEquals(GHUtility.asSet(4), GHUtility.getNeighbors(baseExplorer.setBaseNode(1)));
 
         assertEquals(0, GHUtility.count(chOutExplorer.setBaseNode(3)));
         assertEquals(0, GHUtility.count(chInExplorer.setBaseNode(3)));
@@ -115,15 +112,14 @@ public class RoutingCHGraphImplTest {
 
     @Test
     public void testGetWeight() {
-        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
         DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
-        EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
+        EncodingManager em = EncodingManager.start().add(speedEnc).build();
         BaseGraph graph = new BaseGraph.Builder(em).create();
         EdgeIteratorState edge1 = graph.edge(0, 1);
         EdgeIteratorState edge2 = graph.edge(1, 2);
         graph.freeze();
 
-        CHConfig chConfig = CHConfig.nodeBased("ch", new FastestWeighting(accessEnc, speedEnc));
+        CHConfig chConfig = CHConfig.nodeBased("ch", new SpeedWeighting(speedEnc));
         CHStorage store = CHStorage.fromGraph(graph, chConfig);
         RoutingCHGraph g = RoutingCHGraphImpl.fromGraph(graph, store, chConfig);
         assertFalse(g.getEdgeIteratorState(edge1.getEdge(), Integer.MIN_VALUE).isShortcut());
@@ -143,14 +139,13 @@ public class RoutingCHGraphImplTest {
 
     @Test
     public void testGetWeightIfAdvancedEncoder() {
-        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
         DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 4, 2, true);
-        EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
+        EncodingManager em = EncodingManager.start().add(speedEnc).build();
         BaseGraph ghStorage = new BaseGraph.Builder(em).create();
         ghStorage.edge(0, 3);
         ghStorage.freeze();
 
-        FastestWeighting weighting = new FastestWeighting(accessEnc, speedEnc);
+        Weighting weighting = new SpeedWeighting(speedEnc);
         CHConfig chConfig = CHConfig.nodeBased("p1", weighting);
         CHStorage chStore = CHStorage.fromGraph(ghStorage, chConfig);
         CHStorageBuilder chBuilder = new CHStorageBuilder(chStore);
@@ -171,15 +166,14 @@ public class RoutingCHGraphImplTest {
 
     @Test
     public void testWeightExact() {
-        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
         DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
-        EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
+        EncodingManager em = EncodingManager.start().add(speedEnc).build();
         BaseGraph graph = new BaseGraph.Builder(em).create();
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(0, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(1, 2).setDistance(1));
+        graph.edge(0, 1).setDistance(1).set(speedEnc, 60);
+        graph.edge(1, 2).setDistance(1).set(speedEnc, 60);
         graph.freeze();
 
-        CHConfig chConfig = CHConfig.nodeBased("ch", new FastestWeighting(accessEnc, speedEnc));
+        CHConfig chConfig = CHConfig.nodeBased("ch", new SpeedWeighting(speedEnc));
         CHStorage store = CHStorage.fromGraph(graph, chConfig);
         CHStorageBuilder chBuilder = new CHStorageBuilder(store);
         chBuilder.setIdentityLevels();
@@ -196,16 +190,15 @@ public class RoutingCHGraphImplTest {
 
     @Test
     public void testSimpleShortcutCreationAndTraversal() {
-        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
         DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
-        EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
+        EncodingManager em = EncodingManager.start().add(speedEnc).build();
         BaseGraph graph = new BaseGraph.Builder(em).create();
 
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 3).setDistance(10));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 4).setDistance(10));
+        graph.edge(1, 3).setDistance(10).set(speedEnc, 60);
+        graph.edge(3, 4).setDistance(10).set(speedEnc, 60);
         graph.freeze();
 
-        FastestWeighting weighting = new FastestWeighting(accessEnc, speedEnc);
+        Weighting weighting = new SpeedWeighting(speedEnc);
         CHConfig chConfig = CHConfig.nodeBased("p1", weighting);
         CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
         CHStorageBuilder chBuilder = new CHStorageBuilder(chStore);
@@ -221,15 +214,14 @@ public class RoutingCHGraphImplTest {
 
     @Test
     public void testAddShortcutSkippedEdgesWriteRead() {
-        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
         DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
-        EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
+        EncodingManager em = EncodingManager.start().add(speedEnc).build();
         BaseGraph graph = new BaseGraph.Builder(em).create();
-        final EdgeIteratorState edge1 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 3).setDistance(10));
-        final EdgeIteratorState edge2 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 4).setDistance(10));
+        final EdgeIteratorState edge1 = graph.edge(1, 3).setDistance(10).set(speedEnc, 60);
+        final EdgeIteratorState edge2 = graph.edge(3, 4).setDistance(10).set(speedEnc, 60);
         graph.freeze();
 
-        FastestWeighting weighting = new FastestWeighting(accessEnc, speedEnc);
+        Weighting weighting = new SpeedWeighting(speedEnc);
         CHConfig chConfig = CHConfig.nodeBased("p1", weighting);
         CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
         CHStorageBuilder chBuilder = new CHStorageBuilder(chStore);
@@ -243,15 +235,14 @@ public class RoutingCHGraphImplTest {
 
     @Test
     public void testSkippedEdges() {
-        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
         DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
-        EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
+        EncodingManager em = EncodingManager.start().add(speedEnc).build();
         BaseGraph graph = new BaseGraph.Builder(em).create();
-        final EdgeIteratorState edge1 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 3).setDistance(10));
-        final EdgeIteratorState edge2 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 4).setDistance(10));
+        final EdgeIteratorState edge1 = graph.edge(1, 3).setDistance(10).set(speedEnc, 60);
+        final EdgeIteratorState edge2 = graph.edge(3, 4).setDistance(10).set(speedEnc, 60);
         graph.freeze();
 
-        FastestWeighting weighting = new FastestWeighting(accessEnc, speedEnc);
+        Weighting weighting = new SpeedWeighting(speedEnc);
         CHConfig chConfig = CHConfig.nodeBased("p1", weighting);
         CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
         CHStorageBuilder chBuilder = new CHStorageBuilder(chStore);
@@ -263,16 +254,16 @@ public class RoutingCHGraphImplTest {
 
     @Test
     public void testAddShortcut_edgeBased_throwsIfNotConfiguredForEdgeBased() {
-        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
         DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
-        EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
+        EncodingManager em = EncodingManager.start().add(speedEnc).build();
         BaseGraph graph = new BaseGraph.Builder(em).create();
 
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(0, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(1, 2).setDistance(1));
+        graph.edge(0, 1).setDistance(1).set(speedEnc, 60);
+        graph.edge(1, 2).setDistance(1).set(speedEnc, 60);
+
         graph.freeze();
 
-        FastestWeighting weighting = new FastestWeighting(accessEnc, speedEnc);
+        Weighting weighting = new SpeedWeighting(speedEnc);
         CHConfig chConfig = CHConfig.nodeBased("p1", weighting);
         CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
         CHStorageBuilder chBuilder = new CHStorageBuilder(chStore);
@@ -282,15 +273,14 @@ public class RoutingCHGraphImplTest {
     @Test
     public void testAddShortcut_edgeBased() {
         // 0 -> 1 -> 2
-        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
         DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
-        EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
+        EncodingManager em = EncodingManager.start().add(speedEnc).build();
         BaseGraph graph = new BaseGraph.Builder(em).set3D(true).create();
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(0, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(1, 2).setDistance(3));
+        graph.edge(0, 1).setDistance(1).set(speedEnc, 60);
+        graph.edge(1, 2).setDistance(3).set(speedEnc, 60);
         graph.freeze();
 
-        FastestWeighting weighting = new FastestWeighting(accessEnc, speedEnc);
+        Weighting weighting = new SpeedWeighting(speedEnc);
         CHConfig chConfig = CHConfig.edgeBased("p1", weighting);
         CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
 
@@ -303,12 +293,11 @@ public class RoutingCHGraphImplTest {
 
     @Test
     public void outOfBounds() {
-        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
         DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
-        EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
+        EncodingManager em = EncodingManager.start().add(speedEnc).build();
         BaseGraph graph = new BaseGraph.Builder(em).set3D(true).create();
         graph.freeze();
-        FastestWeighting weighting = new FastestWeighting(accessEnc, speedEnc);
+        Weighting weighting = new SpeedWeighting(speedEnc);
         CHConfig chConfig = CHConfig.nodeBased("p1", weighting);
         CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
         RoutingCHGraph lg = RoutingCHGraphImpl.fromGraph(graph, chStore, chConfig);
@@ -317,15 +306,14 @@ public class RoutingCHGraphImplTest {
 
     @Test
     public void testGetEdgeIterator() {
-        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
         DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
-        EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
+        EncodingManager em = EncodingManager.start().add(speedEnc).build();
         BaseGraph graph = new BaseGraph.Builder(em).set3D(true).create();
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(0, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(1, 2).setDistance(1));
+        graph.edge(0, 1).setDistance(1).set(speedEnc, 60);
+        graph.edge(1, 2).setDistance(1).set(speedEnc, 60);
         graph.freeze();
 
-        FastestWeighting weighting = new FastestWeighting(accessEnc, speedEnc);
+        Weighting weighting = new SpeedWeighting(speedEnc);
         CHConfig chConfig = CHConfig.edgeBased("p1", weighting);
         CHStorage store = CHStorage.fromGraph(graph, chConfig);
         CHStorageBuilder chBuilder = new CHStorageBuilder(store);
@@ -355,5 +343,45 @@ public class RoutingCHGraphImplTest {
         assertEquals(1, sc20.getSkippedEdge2());
         assertEquals(0, sc20.getOrigEdgeKeyFirst());
         assertEquals(2, sc20.getOrigEdgeKeyLast());
+    }
+
+    @Test
+    public void testAccept_fwdLoopShortcut_acceptedByInExplorer() {
+        DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, true);
+        DecimalEncodedValue turnCostEnc = TurnCost.create("car", 1);
+        EncodingManager encodingManager = EncodingManager.start().add(speedEnc).addTurnCostEncodedValue(turnCostEnc).build();
+        BaseGraph graph = new BaseGraph.Builder(encodingManager)
+                .withTurnCosts(true)
+                .create();
+        // 0-1
+        //  \|
+        //   2
+        graph.edge(0, 1).setDistance(100).set(speedEnc, 60, 0);
+        graph.edge(1, 2).setDistance(200).set(speedEnc, 60, 0);
+        graph.edge(2, 0).setDistance(300).set(speedEnc, 60, 0);
+        graph.freeze();
+        // add loop shortcut in 'fwd' direction
+        CHConfig chConfig = CHConfig.edgeBased("profile", new SpeedWeighting(speedEnc, turnCostEnc, graph.getTurnCostStorage(), 50));
+        CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
+        CHStorageBuilder chBuilder = new CHStorageBuilder(chStore);
+        chBuilder.setIdentityLevels();
+        chBuilder.addShortcutEdgeBased(0, 0, PrepareEncoder.getScFwdDir(), 5, 0, 2, 0, 5);
+        RoutingCHGraph chGraph = RoutingCHGraphImpl.fromGraph(graph, chStore, chConfig);
+        RoutingCHEdgeExplorer outExplorer = chGraph.createOutEdgeExplorer();
+        RoutingCHEdgeExplorer inExplorer = chGraph.createInEdgeExplorer();
+
+        IntSet inEdges = new IntHashSet();
+        IntSet outEdges = new IntHashSet();
+        RoutingCHEdgeIterator outIter = outExplorer.setBaseNode(0);
+        while (outIter.next()) {
+            outEdges.add(outIter.getEdge());
+        }
+        RoutingCHEdgeIterator inIter = inExplorer.setBaseNode(0);
+        while (inIter.next()) {
+            inEdges.add(inIter.getEdge());
+        }
+        // the loop should be accepted by in- and outExplorers
+        assertEquals(IntHashSet.from(0, 3), outEdges, "Wrong outgoing edges");
+        assertEquals(IntHashSet.from(2, 3), inEdges, "Wrong incoming edges");
     }
 }

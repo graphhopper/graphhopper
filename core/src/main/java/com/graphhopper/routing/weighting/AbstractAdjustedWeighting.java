@@ -34,13 +34,8 @@ public abstract class AbstractAdjustedWeighting implements Weighting {
     }
 
     @Override
-    public double getMinWeight(double distance) {
-        return superWeighting.getMinWeight(distance);
-    }
-
-    @Override
-    public boolean edgeHasNoAccess(EdgeIteratorState edgeState, boolean reverse) {
-        return superWeighting.edgeHasNoAccess(edgeState, reverse);
+    public double calcMinWeightPerDistance() {
+        return superWeighting.calcMinWeightPerDistance();
     }
 
     @Override

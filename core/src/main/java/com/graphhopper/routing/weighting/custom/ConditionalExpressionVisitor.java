@@ -17,9 +17,6 @@
  */
 package com.graphhopper.routing.weighting.custom;
 
-import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.routing.ev.RouteNetwork;
-import com.graphhopper.routing.ev.StringEncodedValue;
 import com.graphhopper.util.Helper;
 import org.codehaus.janino.Scanner;
 import org.codehaus.janino.*;
@@ -40,11 +37,13 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
     private final ParseResult result;
     private final TreeMap<Integer, Replacement> replacements = new TreeMap<>();
     private final NameValidator variableValidator;
+    private final ClassHelper classHelper;
     private String invalidMessage;
 
-    public ConditionalExpressionVisitor(ParseResult result, NameValidator variableValidator) {
+    public ConditionalExpressionVisitor(ParseResult result, NameValidator variableValidator, ClassHelper classHelper) {
         this.result = result;
         this.variableValidator = variableValidator;
+        this.classHelper = classHelper;
     }
 
     // allow only methods and other identifiers (constants and encoded values)
@@ -88,26 +87,23 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
             return false;
         } else if (rv instanceof Java.MethodInvocation) {
             Java.MethodInvocation mi = (Java.MethodInvocation) rv;
-            if (allowedMethods.contains(mi.methodName)) {
-                // skip methods like this.in()
-                if (mi.target != null) {
-                    Java.AmbiguousName n = (Java.AmbiguousName) mi.target.toRvalue();
-                    if (n.identifiers.length == 2) {
-                        if (allowedMethodParents.contains(n.identifiers[0])) {
-                            // edge.getDistance(), Math.sqrt(x) => check target name i.e. edge or Math
-                            if (mi.arguments.length == 0) {
-                                result.guessedVariables.add(n.identifiers[0]); // return "edge"
-                                return true;
-                            } else if (mi.arguments.length == 1) {
-                                // return "x" but verify before
-                                return mi.arguments[0].accept(this);
-                            }
-                        } else if (variableValidator.isValid(n.identifiers[0])) {
-                            // road_class.ordinal()
-                            if (mi.arguments.length == 0) {
-                                result.guessedVariables.add(n.identifiers[0]); // return road_class
-                                return true;
-                            }
+            if (allowedMethods.contains(mi.methodName) && mi.target != null) {
+                Java.AmbiguousName n = (Java.AmbiguousName) mi.target.toRvalue();
+                if (n.identifiers.length == 2) {
+                    if (allowedMethodParents.contains(n.identifiers[0])) {
+                        // edge.getDistance(), Math.sqrt(x) => check target name i.e. edge or Math
+                        if (mi.arguments.length == 0) {
+                            result.guessedVariables.add(n.identifiers[0]); // return "edge"
+                            return true;
+                        } else if (mi.arguments.length == 1) {
+                            // return "x" but verify before
+                            return mi.arguments[0].accept(this);
+                        }
+                    } else if (variableValidator.isValid(n.identifiers[0])) {
+                        // road_class.ordinal()
+                        if (mi.arguments.length == 0) {
+                            result.guessedVariables.add(n.identifiers[0]); // return road_class
+                            return true;
                         }
                     }
                 }
@@ -128,7 +124,7 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
                     if (variableValidator.isValid(lhVarAsString) && Helper.toUpperCase(rhValueAsString).equals(rhValueAsString)) {
                         if (!eqOps)
                             throw new IllegalArgumentException("Operator " + binOp.operator + " not allowed for enum");
-                        String value = toEncodedValueClassName(binOp.lhs.toString());
+                        String value = classHelper.getClassName(binOp.lhs.toString());
                         replacements.put(startRH, new Replacement(startRH, rhValueAsString.length(), value + "." + rhValueAsString));
                     }
                 }
@@ -160,7 +156,7 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
      * converted expression that includes class names for constants to avoid conflicts e.g. when doing "toll == Toll.NO"
      * instead of "toll == NO".
      */
-    static ParseResult parse(String expression, NameValidator validator) {
+    static ParseResult parse(String expression, NameValidator validator, ClassHelper helper) {
         ParseResult result = new ParseResult();
         try {
             Parser parser = new Parser(new Scanner("ignore", new StringReader(expression)));
@@ -168,7 +164,7 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
             // after parsing the expression the input should end (otherwise it is not "simple")
             if (parser.peek().type == TokenType.END_OF_INPUT) {
                 result.guessedVariables = new LinkedHashSet<>();
-                ConditionalExpressionVisitor visitor = new ConditionalExpressionVisitor(result, validator);
+                ConditionalExpressionVisitor visitor = new ConditionalExpressionVisitor(result, validator, helper);
                 result.ok = atom.accept(visitor);
                 result.invalidMessage = visitor.invalidMessage;
                 if (result.ok) {
@@ -184,13 +180,6 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
         } catch (Exception ex) {
         }
         return result;
-    }
-
-    static String toEncodedValueClassName(String arg) {
-        if (arg.isEmpty()) throw new IllegalArgumentException("Cannot be empty");
-        if (arg.endsWith(RouteNetwork.key(""))) return RouteNetwork.class.getSimpleName();
-        String clazz = Helper.underScoreToCamelCase(arg);
-        return Character.toUpperCase(clazz.charAt(0)) + clazz.substring(1);
     }
 
     static class Replacement {

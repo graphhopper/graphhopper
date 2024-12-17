@@ -33,7 +33,7 @@ public class FiniteWeightFilter implements EdgeFilter {
 
     @Override
     public final boolean accept(EdgeIteratorState edgeState) {
-        return Double.isFinite(weighting.calcEdgeWeightWithAccess(edgeState, false)) ||
-                Double.isFinite(weighting.calcEdgeWeightWithAccess(edgeState, true));
+        return Double.isFinite(weighting.calcEdgeWeight(edgeState, false)) ||
+                Double.isFinite(weighting.calcEdgeWeight(edgeState, true));
     }
 }

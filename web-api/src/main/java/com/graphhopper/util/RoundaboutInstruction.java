@@ -61,9 +61,8 @@ public class RoundaboutInstruction extends Instruction {
     }
 
     public int getExitNumber() {
-        if (exited && exitNumber == 0) {
-            throw new IllegalStateException("RoundaboutInstruction must contain exitNumber>0");
-        }
+        if (exited && exitNumber == 0)
+            return 1; // special case: we leave at a way without car_access
         return exitNumber;
     }
 

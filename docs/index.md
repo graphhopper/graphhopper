@@ -8,7 +8,7 @@ Try out our live demo called [GraphHopper Maps](https://graphhopper.com/maps/)
 
 [The Readme](../README.md#features) lists all features.
 
-See [users of GraphHopper](https://www.graphhopper.com/showcases/) and let us know your application!
+See [users of GraphHopper](https://www.graphhopper.com/open-source/) and let us know your application!
 
 ## Community
 
@@ -22,13 +22,13 @@ For bugs see our [contributing guide](https://github.com/graphhopper/graphhopper
 Install the GraphHopper routing engine with the GraphHopper Maps UI with [this installation guide](../README.md#installation) on your
 machine. This will also install a web API that can be used in many programming languages.
 
- * [Routing API](./web/api-doc.md): Documentation of the Web API to communicate with any GraphHopper server via http.
+ * [Web API](./web/api-doc.md): Documentation to communicate with the GraphHopper server via http.
  * [Deployment Guide](./core/deploy.md): Details about deploying GraphHopper 
  * There are official API clients in [Java](https://github.com/graphhopper/graphhopper/tree/master/client-hc) and [JavaScript](https://github.com/graphhopper/directions-api-js-client).
 
 #### Configuration
 
-You can configure several aspects either programmatically or just via a [configuration](../config-example.yml).
+You can change several aspects either programmatically or in the [configuration](../config-example.yml).
 The configuration of routing profiles is documented [here](./core/profiles.md).
 The elevation configuration is separately documented [here](./core/elevation.md).
 
@@ -63,15 +63,11 @@ Various topics are explained in more detail separately:
  * [Postgis query script](../core/files/postgis)
 
 
-#### Other links
-
- * [Add GraphHopper Maps to your Browser](./web/open-search.md): Instructions how to setup GraphHopper as the standard search engine in your browser.
- * [Embed GraphHopper on your website](https://github.com/karussell/graphhopper-embed-form): A small code snippet on how to integrate GraphHopper Maps in your web site like a contact form
-
 #### Android & iOS
 
 The Android demo, that shows how to use GraphHopper for offline routing on
 Android, was available until [GraphHopper 1.0](https://github.com/graphhopper/graphhopper/tree/1.0/android).
+See discussion on this topic [here](https://github.com/graphhopper/graphhopper/issues/1940).
 
 There is a GraphHopper fork for iOS that allows to do offline routing on
 iOS. See the Instructions on how to setup this [here](https://github.com/graphhopper/graphhopper-ios/) including a sample application.

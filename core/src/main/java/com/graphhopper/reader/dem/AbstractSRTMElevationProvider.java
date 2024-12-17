@@ -19,7 +19,6 @@ package com.graphhopper.reader.dem;
 
 import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.storage.DataAccess;
-import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.Downloader;
 import com.graphhopper.util.Helper;
 
@@ -147,8 +146,7 @@ public abstract class AbstractSRTMElevationProvider extends TileBasedElevationPr
             byte[] bytes = readFile(zipFile);
             heights.create(bytes.length);
             for (int bytePos = 0; bytePos < bytes.length; bytePos += 2) {
-                // we need big endianess to read the SRTM files
-                short val = BitUtil.BIG.toShort(bytes, bytePos);
+                short val = toShort(bytes, bytePos);
                 if (val < -1000 || val > 12000)
                     val = Short.MIN_VALUE;
 
@@ -158,11 +156,16 @@ public abstract class AbstractSRTMElevationProvider extends TileBasedElevationPr
             heights.flush();
 
         } catch (FileNotFoundException ex) {
-            logger.warn("File not found for the coordinates for " + lat + "," + lon);
+            logger.warn("File not found " + heights + " for the coordinates " + lat + "," + lon);
             throw ex;
         } catch (Exception ex) {
-            throw new RuntimeException("There was an issue looking up the coordinates for " + lat + "," + lon, ex);
+            throw new RuntimeException("There was an issue with " + heights + " looking up the coordinates " + lat + "," + lon, ex);
         }
+    }
+
+    // we need big endianess to read the SRTM files
+    final short toShort(byte[] b, int offset) {
+        return (short) ((b[offset] & 0xFF) << 8 | (b[offset + 1] & 0xFF));
     }
 
     private void downloadToFile(File file, String zippedURL) throws InterruptedException, IOException {

@@ -45,7 +45,7 @@ public abstract class EdgeElevationInterpolatorTest {
     public void setUp() {
         accessEnc = new SimpleBooleanEncodedValue("access", true);
         speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
-        encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).build();
+        encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).add(RoadEnvironment.create()).build();
         graph = new BaseGraph.Builder(encodingManager).set3D(true).create();
         roadEnvEnc = encodingManager.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
         edgeElevationInterpolator = createEdgeElevationInterpolator();

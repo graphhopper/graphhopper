@@ -20,7 +20,7 @@ package com.graphhopper.application.resources;
 import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
-import com.graphhopper.config.Profile;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -31,12 +31,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.locationtech.jts.geom.Geometry;
 
-import javax.ws.rs.core.Response;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 import static com.graphhopper.application.util.TestUtils.clientTarget;
 import static com.graphhopper.util.Parameters.Details.STREET_NAME;
@@ -53,13 +55,12 @@ public class MVTResourceTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.vehicles", "car").
                 putObject("graph.encoded_values", "road_class,road_environment,max_speed,surface").
                 putObject("prepare.min_network_size", 0).
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR).
-                setProfiles(Collections.singletonList(new Profile("car").setVehicle("car").setWeighting("fastest")));
+                setProfiles(List.of(TestProfiles.constantSpeed("car")));
         return config;
     }
 
@@ -71,23 +72,19 @@ public class MVTResourceTest {
 
     @Test
     public void testBasicMvtQuery() throws IOException {
-        final Response response = clientTarget(app, "/mvt/15/16528/12099.mvt").request().buildGet().invoke();
-        assertEquals(200, response.getStatus());
-        InputStream is = response.readEntity(InputStream.class);
+        InputStream is = clientTarget(app, "/mvt/15/16528/12099.mvt").request().get(InputStream.class);
         VectorTileDecoder.FeatureIterable features = new VectorTileDecoder().decode(readInputStream(is));
         assertEquals(Arrays.asList("roads"), new ArrayList<>(features.getLayerNames()));
         VectorTileDecoder.Feature feature = features.iterator().next();
         Map<String, Object> attributes = feature.getAttributes();
         Geometry geometry = feature.getGeometry();
-        assertEquals(48, geometry.getCoordinates().length);
+        assertEquals(51, geometry.getCoordinates().length);
         assertEquals("Camì de les Pardines", attributes.get(STREET_NAME));
     }
 
     @Test
     public void testDetailsInResponse() throws IOException {
-        final Response response = clientTarget(app, "/mvt/15/16522/12102.mvt").request().buildGet().invoke();
-        assertEquals(200, response.getStatus());
-        InputStream is = response.readEntity(InputStream.class);
+        InputStream is = clientTarget(app, "/mvt/15/16522/12102.mvt").request().get(InputStream.class);
         List<VectorTileDecoder.Feature> features = new VectorTileDecoder().decode(readInputStream(is)).asList();
         assertEquals(28, features.size());
 

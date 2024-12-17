@@ -19,6 +19,7 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.routing.util.WayAccess;
 import com.graphhopper.util.PMap;
@@ -27,27 +28,22 @@ import java.util.*;
 
 import static com.graphhopper.routing.ev.RouteNetwork.*;
 import static com.graphhopper.routing.util.PriorityCode.UNCHANGED;
+import static com.graphhopper.routing.util.parsers.OSMTemporalAccessParser.hasTemporalRestriction;
 
 public class FootAccessParser extends AbstractAccessParser implements TagParser {
 
     final Set<String> allowedHighwayTags = new HashSet<>();
-    final Set<String> allowedSacScale = new HashSet<>();
     protected HashSet<String> sidewalkValues = new HashSet<>(5);
     protected Map<RouteNetwork, Integer> routeMap = new HashMap<>();
 
     public FootAccessParser(EncodedValueLookup lookup, PMap properties) {
-        this(lookup.getBooleanEncodedValue(VehicleAccess.key(properties.getString("name", "foot"))));
+        this(lookup.getBooleanEncodedValue(VehicleAccess.key("foot")));
         blockPrivate(properties.getBool("block_private", true));
         blockFords(properties.getBool("block_fords", false));
     }
 
     protected FootAccessParser(BooleanEncodedValue accessEnc) {
-        super(accessEnc, TransportationMode.FOOT);
-
-        intendedValues.add("yes");
-        intendedValues.add("designated");
-        intendedValues.add("official");
-        intendedValues.add("permissive");
+        super(accessEnc, OSMRoadAccessParser.toOSMRestrictions(TransportationMode.FOOT));
 
         sidewalkValues.add("yes");
         sidewalkValues.add("both");
@@ -76,17 +72,12 @@ public class FootAccessParser extends AbstractAccessParser implements TagParser 
         allowedHighwayTags.add("cycleway");
         allowedHighwayTags.add("unclassified");
         allowedHighwayTags.add("road");
-        // disallowed in some countries
-        //allowedHighwayTags.add("bridleway");
+        allowedHighwayTags.add("bridleway");
 
         routeMap.put(INTERNATIONAL, UNCHANGED.getValue());
         routeMap.put(NATIONAL, UNCHANGED.getValue());
         routeMap.put(REGIONAL, UNCHANGED.getValue());
         routeMap.put(LOCAL, UNCHANGED.getValue());
-
-        allowedSacScale.add("hiking");
-        allowedSacScale.add("mountain_hiking");
-        allowedSacScale.add("demanding_mountain_hiking");
     }
 
     /**
@@ -97,7 +88,7 @@ public class FootAccessParser extends AbstractAccessParser implements TagParser 
         if (highwayValue == null) {
             WayAccess acceptPotentially = WayAccess.CAN_SKIP;
 
-            if (way.hasTag("route", ferries)) {
+            if (FerrySpeedCalculator.isFerry(way)) {
                 String footTag = way.getTag("foot");
                 if (footTag == null || intendedValues.contains(footTag))
                     acceptPotentially = WayAccess.FERRY;
@@ -111,7 +102,7 @@ public class FootAccessParser extends AbstractAccessParser implements TagParser 
                 acceptPotentially = WayAccess.WAY;
 
             if (!acceptPotentially.canSkip()) {
-                if (way.hasTag(restrictions, restrictedValues) && !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way))
+                if (way.hasTag(restrictionKeys, restrictedValues))
                     return WayAccess.CAN_SKIP;
                 return acceptPotentially;
             }
@@ -119,19 +110,18 @@ public class FootAccessParser extends AbstractAccessParser implements TagParser 
             return WayAccess.CAN_SKIP;
         }
 
-        // other scales are too dangerous, see http://wiki.openstreetmap.org/wiki/Key:sac_scale
-        if (way.getTag("sac_scale") != null && !way.hasTag("sac_scale", allowedSacScale))
+        // via_ferrata is too dangerous, see #1326
+        if ("via_ferrata".equals(highwayValue))
             return WayAccess.CAN_SKIP;
 
-        boolean permittedWayConditionallyRestricted = getConditionalTagInspector().isPermittedWayConditionallyRestricted(way);
-        boolean restrictedWayConditionallyPermitted = getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way);
-        String firstValue = way.getFirstPriorityTag(restrictions);
-        if (!firstValue.isEmpty()) {
+        int firstIndex = way.getFirstIndex(restrictionKeys);
+        if (firstIndex >= 0) {
+            String firstValue = way.getTag(restrictionKeys.get(firstIndex), "");
             String[] restrict = firstValue.split(";");
             for (String value : restrict) {
-                if (restrictedValues.contains(value) && !restrictedWayConditionallyPermitted)
+                if (restrictedValues.contains(value) && !hasTemporalRestriction(way, firstIndex, restrictionKeys))
                     return WayAccess.CAN_SKIP;
-                if (intendedValues.contains(value) && !permittedWayConditionallyRestricted)
+                if (intendedValues.contains(value))
                     return WayAccess.WAY;
             }
         }
@@ -148,9 +138,6 @@ public class FootAccessParser extends AbstractAccessParser implements TagParser 
         if (isBlockFords() && ("ford".equals(highwayValue) || way.hasTag("ford")))
             return WayAccess.CAN_SKIP;
 
-        if (permittedWayConditionallyRestricted)
-            return WayAccess.CAN_SKIP;
-
         return WayAccess.WAY;
     }
 
@@ -160,8 +147,8 @@ public class FootAccessParser extends AbstractAccessParser implements TagParser 
         if (access.canSkip())
             return;
 
-        if (way.hasTag("oneway:foot", oneways) || way.hasTag("foot:backward") || way.hasTag("foot:forward")
-                || way.hasTag("oneway", oneways) && way.hasTag("highway", "steps") // outdated mapping style
+        if (way.hasTag("oneway:foot", ONEWAYS) || way.hasTag("foot:backward") || way.hasTag("foot:forward")
+                || way.hasTag("oneway", ONEWAYS) && way.hasTag("highway", "steps") // outdated mapping style
         ) {
             boolean reverse = way.hasTag("oneway:foot", "-1") || way.hasTag("foot:backward", "yes") || way.hasTag("foot:forward", "no");
             accessEnc.setBool(reverse, edgeId, edgeIntAccess, true);

@@ -1,5 +1,43 @@
-### 8.0 [not yet released]
+### 11.0 [not yet released]
 
+- max_weight_except: changed NONE to MISSING
+- the list of restrictions for BIKE returned from OSMRoadAccessParser.toOSMRestrictions is again `[bicycle, vehicle, access]` and not `[bicycle, access]` like before #2981
+- road_access now contains value of highest transportation mode for CAR, i.e. access=private, motorcar=yes will now return YES and not PRIVATE
+- car.json by default avoids private roads
+- maxspeed<5 is ignored, maxspeed=none is ignored with some exceptions, maxspeed parsing and related constants were renamed #3077
+
+### 10.0 [5 Nov 2024]
+
+- The config-example.yml uses a non-empty snap_preventions default array: [tunnel, bridge and ferry] for the /route endpoint
+- the default u-turn time is now 0, the default u-turn weight is still infinite 
+- turn restriction support for restrictions with overlapping and/or multiple via-edges/ways, #3030
+- constructor of BaseGraph.Builder uses byte instead of integer count.
+- KeyValue is now KValue as it holds the value only. Note, the two parameter constructor uses one value for the forward and one for the backward direction (and no longer "key, value")
+- sac_scale priority handling for bicycles moved to the bike custom models
+
+### 9.0 [23 Apr 2024]
+
+- max_slope is now a signed decimal, see #2955
+- move sac_scale handling out of foot_access parser and made foot safer via lowering to sac_scale<2, same for hike sac_scale<5
+- removed shortest+fastest weightings, #2938
+- u_turn_costs information is no longer stored in profile. Use the TurnCostsConfig instead
+- the custom models do no longer include the speed, access and priority encoded values only implicitly, see docs/migration/config-migration-08-09.md
+- conditional access restriction tags are no longer considered from vehicle tag parsers and instead a car_temporal_access encoded value (similarly for bike + foot) can be used in a custom model. This fixes #2477. More details are accessible via path details named according to the OSM tags e.g. for access:conditional it is "access_conditional" (i.e. converted from OSM access:conditional). See #2863 and #2965.
+- replaced (Vehicle)EncodedValueFactory and (Vehicle)TagParserFactory with ImportRegistry, #2935
+- encoded values used in custom models are added automatically, no need to add them to graph.encoded_values anymore, #2935
+- removed the ability to sort the graph (graph.do_sort) due to incomplete support, #2919
+- minor changes for import hooks, #2917
+- removed wheelchair vehicle and related parsers, with currently no complete replacement as it needs to be redone properly with a custom model
+- removed deprecated PMap.put
+
+### 8.0 [18 Oct 2023]
+
+- access "turn"-EncodedValue of EncodingManager through separate methods, see #2884
+- removed fastest weighting for public usage, use custom instead, see #2866
+- removed shortest weighting for public usage, use a high distance_influence instead, see #2865
+- removed duration:seconds as intermediate tag
+- /info endpoint does no longer return the vehicle used per profile and won't return encoded value of vehicles like car_average_speed
+- Country rules no longer contain maxspeed handling, enable a much better alternative via `max_speed_calculator.enabled: true`. On the client side use `max_speed_estimated` to determine if max_speed is from OSM or an estimation. See #2810
 - bike routing better avoids dangerous roads, see #2796 and #2802
 - routing requests can be configured to timeout after some time, see #2795
 - custom_model_file string changed to custom_model_files array, see #2787
@@ -7,6 +45,11 @@
 - bike vehicles are now allowed to go in reverse direction of oneways, see custom_models/bike.json #196
 - prefer cycleways, bicycle_road and cyclestreet for bike routing, see #2784 and #2778
 - add support for further surfaces like pebblestones or concrete:lanes, see #2751
+- reduced memory usage for urban density calculation, see #2828
+- urban density is now based on road junctions, so the according parameters need adjustment in case
+  the config file does not use the defaults, see #2842
+- removed heading penalty *time*, see #2563
+- base graph no longer allows loop edges, see #2862
 
 ### 7.0 [14 Mar 2023]
 

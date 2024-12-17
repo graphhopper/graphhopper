@@ -4,11 +4,11 @@ import com.carrotsearch.hppc.DoubleArrayList;
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.ch.PrepareEncoder;
 import com.graphhopper.routing.ch.ShortcutUnpacker;
-import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
+import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
-import com.graphhopper.routing.weighting.FastestWeighting;
-import com.graphhopper.routing.weighting.TurnCostProvider;
+import com.graphhopper.routing.weighting.SpeedWeighting;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -19,7 +19,6 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 
 import java.util.stream.Stream;
 
-import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
@@ -29,8 +28,6 @@ public class ShortcutUnpackerTest {
 
     private static final class Fixture {
         private final boolean edgeBased;
-        private final EncodingManager encodingManager;
-        private final BooleanEncodedValue accessEnc;
         private final DecimalEncodedValue speedEnc;
         private final DecimalEncodedValue turnCostEnc;
         private final BaseGraph graph;
@@ -39,10 +36,9 @@ public class ShortcutUnpackerTest {
 
         Fixture(boolean edgeBased) {
             this.edgeBased = edgeBased;
-            accessEnc = new SimpleBooleanEncodedValue("access", true);
             speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, true);
             turnCostEnc = TurnCost.create("car", 10);
-            encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).addTurnCostEncodedValue(turnCostEnc).build();
+            EncodingManager encodingManager = EncodingManager.start().add(speedEnc).addTurnCostEncodedValue(turnCostEnc).build();
             graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
         }
 
@@ -53,8 +49,9 @@ public class ShortcutUnpackerTest {
 
         private void freeze() {
             graph.freeze();
-            TurnCostProvider turnCostProvider = edgeBased ? new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage()) : NO_TURN_COST_PROVIDER;
-            CHConfig chConfig = new CHConfig("profile", new FastestWeighting(accessEnc, speedEnc, turnCostProvider), edgeBased);
+            CHConfig chConfig = new CHConfig("profile", edgeBased
+                    ? new SpeedWeighting(speedEnc, turnCostEnc, graph.getTurnCostStorage(), Double.POSITIVE_INFINITY)
+                    : new SpeedWeighting(speedEnc), edgeBased);
             CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
             chBuilder = new CHStorageBuilder(chStore);
             routingCHGraph = RoutingCHGraphImpl.fromGraph(graph, chStore, chConfig);
@@ -108,14 +105,12 @@ public class ShortcutUnpackerTest {
     @ArgumentsSource(FixtureProvider.class)
     public void testUnpacking(Fixture f) {
         // 0-1-2-3-4-5-6
-        GHUtility.setSpeed(60, 30, f.accessEnc, f.speedEnc,
-                f.graph.edge(0, 1).setDistance(1),
-                f.graph.edge(1, 2).setDistance(1),
-                f.graph.edge(2, 3).setDistance(1),
-                f.graph.edge(3, 4).setDistance(1),
-                f.graph.edge(4, 5).setDistance(1),
-                f.graph.edge(5, 6).setDistance(1) // edge 5
-        );
+        f.graph.edge(0, 1).setDistance(1).set(f.speedEnc, 20, 10);
+        f.graph.edge(1, 2).setDistance(1).set(f.speedEnc, 20, 10);
+        f.graph.edge(2, 3).setDistance(1).set(f.speedEnc, 20, 10);
+        f.graph.edge(3, 4).setDistance(1).set(f.speedEnc, 20, 10);
+        f.graph.edge(4, 5).setDistance(1).set(f.speedEnc, 20, 10);
+        f.graph.edge(5, 6).setDistance(1).set(f.speedEnc, 20, 10); // edge 5
         f.freeze();
 
         f.setCHLevels(1, 3, 5, 4, 2, 0, 6);
@@ -132,9 +127,9 @@ public class ShortcutUnpackerTest {
             assertEquals(IntArrayList.from(0, 1, 2, 3, 4, 5), visitor.edgeIds);
             assertEquals(IntArrayList.from(0, 1, 2, 3, 4, 5), visitor.baseNodes);
             assertEquals(IntArrayList.from(1, 2, 3, 4, 5, 6), visitor.adjNodes);
-            assertEquals(DoubleArrayList.from(0.06, 0.06, 0.06, 0.06, 0.06, 0.06), visitor.weights);
+            assertEquals(DoubleArrayList.from(0.05, 0.05, 0.05, 0.05, 0.05, 0.05), visitor.weights);
             assertEquals(DoubleArrayList.from(1, 1, 1, 1, 1, 1), visitor.distances);
-            assertEquals(DoubleArrayList.from(60, 60, 60, 60, 60, 60), visitor.times);
+            assertEquals(DoubleArrayList.from(50, 50, 50, 50, 50, 50), visitor.times);
             if (f.edgeBased) {
                 assertEquals(IntArrayList.from(PREV_EDGE, 0, 1, 2, 3, 4), visitor.prevOrNextEdgeIds);
             }
@@ -149,9 +144,9 @@ public class ShortcutUnpackerTest {
             assertEquals(IntArrayList.from(5, 4, 3, 2, 1, 0), visitor.edgeIds);
             assertEquals(IntArrayList.from(5, 4, 3, 2, 1, 0), visitor.baseNodes);
             assertEquals(IntArrayList.from(6, 5, 4, 3, 2, 1), visitor.adjNodes);
-            assertEquals(DoubleArrayList.from(0.06, 0.06, 0.06, 0.06, 0.06, 0.06), visitor.weights);
+            assertEquals(DoubleArrayList.from(0.05, 0.05, 0.05, 0.05, 0.05, 0.05), visitor.weights);
             assertEquals(DoubleArrayList.from(1, 1, 1, 1, 1, 1), visitor.distances);
-            assertEquals(DoubleArrayList.from(60, 60, 60, 60, 60, 60), visitor.times);
+            assertEquals(DoubleArrayList.from(50, 50, 50, 50, 50, 50), visitor.times);
             if (f.edgeBased) {
                 assertEquals(IntArrayList.from(4, 3, 2, 1, 0, PREV_EDGE), visitor.prevOrNextEdgeIds);
             }
@@ -164,9 +159,9 @@ public class ShortcutUnpackerTest {
             assertEquals(IntArrayList.from(5, 4, 3, 2, 1, 0), visitor.edgeIds);
             assertEquals(IntArrayList.from(6, 5, 4, 3, 2, 1), visitor.baseNodes);
             assertEquals(IntArrayList.from(5, 4, 3, 2, 1, 0), visitor.adjNodes);
-            assertEquals(DoubleArrayList.from(0.06, 0.06, 0.06, 0.06, 0.06, 0.06), visitor.weights);
+            assertEquals(DoubleArrayList.from(0.05, 0.05, 0.05, 0.05, 0.05, 0.05), visitor.weights);
             assertEquals(DoubleArrayList.from(1, 1, 1, 1, 1, 1), visitor.distances);
-            assertEquals(DoubleArrayList.from(60, 60, 60, 60, 60, 60), visitor.times);
+            assertEquals(DoubleArrayList.from(50, 50, 50, 50, 50, 50), visitor.times);
             if (f.edgeBased) {
                 assertEquals(IntArrayList.from(NEXT_EDGE, 5, 4, 3, 2, 1), visitor.prevOrNextEdgeIds);
             }
@@ -179,9 +174,9 @@ public class ShortcutUnpackerTest {
             assertEquals(IntArrayList.from(0, 1, 2, 3, 4, 5), visitor.edgeIds);
             assertEquals(IntArrayList.from(1, 2, 3, 4, 5, 6), visitor.baseNodes);
             assertEquals(IntArrayList.from(0, 1, 2, 3, 4, 5), visitor.adjNodes);
-            assertEquals(DoubleArrayList.from(0.06, 0.06, 0.06, 0.06, 0.06, 0.06), visitor.weights);
+            assertEquals(DoubleArrayList.from(0.05, 0.05, 0.05, 0.05, 0.05, 0.05), visitor.weights);
             assertEquals(DoubleArrayList.from(1, 1, 1, 1, 1, 1), visitor.distances);
-            assertEquals(DoubleArrayList.from(60, 60, 60, 60, 60, 60), visitor.times);
+            assertEquals(DoubleArrayList.from(50, 50, 50, 50, 50, 50), visitor.times);
             if (f.edgeBased) {
                 assertEquals(IntArrayList.from(1, 2, 3, 4, 5, NEXT_EDGE), visitor.prevOrNextEdgeIds);
             }
@@ -197,13 +192,12 @@ public class ShortcutUnpackerTest {
         //   2   4
         //    \ /
         // 0 - 1 - 5
-        GHUtility.setSpeed(60, 30, f.accessEnc, f.speedEnc,
-                f.graph.edge(0, 1).setDistance(1),
-                f.graph.edge(1, 2).setDistance(1),
-                f.graph.edge(2, 3).setDistance(1),
-                f.graph.edge(3, 4).setDistance(1),
-                f.graph.edge(4, 1).setDistance(1),
-                f.graph.edge(1, 5).setDistance(1));
+        f.graph.edge(0, 1).setDistance(1).set(f.speedEnc, 20, 10);
+        f.graph.edge(1, 2).setDistance(1).set(f.speedEnc, 20, 10);
+        f.graph.edge(2, 3).setDistance(1).set(f.speedEnc, 20, 10);
+        f.graph.edge(3, 4).setDistance(1).set(f.speedEnc, 20, 10);
+        f.graph.edge(4, 1).setDistance(1).set(f.speedEnc, 20, 10);
+        f.graph.edge(1, 5).setDistance(1).set(f.speedEnc, 20, 10);
         f.freeze();
 
         f.setCHLevels(2, 4, 3, 1, 5, 0);
@@ -220,9 +214,9 @@ public class ShortcutUnpackerTest {
             assertEquals(IntArrayList.from(0, 1, 2, 3, 4, 5), visitor.edgeIds);
             assertEquals(IntArrayList.from(0, 1, 2, 3, 4, 1), visitor.baseNodes);
             assertEquals(IntArrayList.from(1, 2, 3, 4, 1, 5), visitor.adjNodes);
-            assertEquals(DoubleArrayList.from(0.06, 0.06, 0.06, 0.06, 0.06, 0.06), visitor.weights);
+            assertEquals(DoubleArrayList.from(0.05, 0.05, 0.05, 0.05, 0.05, 0.05), visitor.weights);
             assertEquals(DoubleArrayList.from(1, 1, 1, 1, 1, 1), visitor.distances);
-            assertEquals(DoubleArrayList.from(60, 60, 60, 60, 60, 60), visitor.times);
+            assertEquals(DoubleArrayList.from(50, 50, 50, 50, 50, 50), visitor.times);
             assertEquals(IntArrayList.from(PREV_EDGE, 0, 1, 2, 3, 4), visitor.prevOrNextEdgeIds);
         }
 
@@ -233,9 +227,9 @@ public class ShortcutUnpackerTest {
             assertEquals(IntArrayList.from(5, 4, 3, 2, 1, 0), visitor.edgeIds);
             assertEquals(IntArrayList.from(1, 4, 3, 2, 1, 0), visitor.baseNodes);
             assertEquals(IntArrayList.from(5, 1, 4, 3, 2, 1), visitor.adjNodes);
-            assertEquals(DoubleArrayList.from(0.06, 0.06, 0.06, 0.06, 0.06, 0.06), visitor.weights);
+            assertEquals(DoubleArrayList.from(0.05, 0.05, 0.05, 0.05, 0.05, 0.05), visitor.weights);
             assertEquals(DoubleArrayList.from(1, 1, 1, 1, 1, 1), visitor.distances);
-            assertEquals(DoubleArrayList.from(60, 60, 60, 60, 60, 60), visitor.times);
+            assertEquals(DoubleArrayList.from(50, 50, 50, 50, 50, 50), visitor.times);
             assertEquals(IntArrayList.from(4, 3, 2, 1, 0, PREV_EDGE), visitor.prevOrNextEdgeIds);
         }
 
@@ -246,9 +240,9 @@ public class ShortcutUnpackerTest {
             assertEquals(IntArrayList.from(5, 4, 3, 2, 1, 0), visitor.edgeIds);
             assertEquals(IntArrayList.from(5, 1, 4, 3, 2, 1), visitor.baseNodes);
             assertEquals(IntArrayList.from(1, 4, 3, 2, 1, 0), visitor.adjNodes);
-            assertEquals(DoubleArrayList.from(0.06, 0.06, 0.06, 0.06, 0.06, 0.06), visitor.weights);
+            assertEquals(DoubleArrayList.from(0.05, 0.05, 0.05, 0.05, 0.05, 0.05), visitor.weights);
             assertEquals(DoubleArrayList.from(1, 1, 1, 1, 1, 1), visitor.distances);
-            assertEquals(DoubleArrayList.from(60, 60, 60, 60, 60, 60), visitor.times);
+            assertEquals(DoubleArrayList.from(50, 50, 50, 50, 50, 50), visitor.times);
             assertEquals(IntArrayList.from(NEXT_EDGE, 5, 4, 3, 2, 1), visitor.prevOrNextEdgeIds);
         }
 
@@ -259,9 +253,9 @@ public class ShortcutUnpackerTest {
             assertEquals(IntArrayList.from(0, 1, 2, 3, 4, 5), visitor.edgeIds);
             assertEquals(IntArrayList.from(1, 2, 3, 4, 1, 5), visitor.baseNodes);
             assertEquals(IntArrayList.from(0, 1, 2, 3, 4, 1), visitor.adjNodes);
-            assertEquals(DoubleArrayList.from(0.06, 0.06, 0.06, 0.06, 0.06, 0.06), visitor.weights);
+            assertEquals(DoubleArrayList.from(0.05, 0.05, 0.05, 0.05, 0.05, 0.05), visitor.weights);
             assertEquals(DoubleArrayList.from(1, 1, 1, 1, 1, 1), visitor.distances);
-            assertEquals(DoubleArrayList.from(60, 60, 60, 60, 60, 60), visitor.times);
+            assertEquals(DoubleArrayList.from(50, 50, 50, 50, 50, 50), visitor.times);
             assertEquals(IntArrayList.from(1, 2, 3, 4, 5, NEXT_EDGE), visitor.prevOrNextEdgeIds);
         }
     }
@@ -274,13 +268,12 @@ public class ShortcutUnpackerTest {
         // prev 0-1-2-3-4-5-6 next
         //      1 0 1 4 2 3 2      turn costs <-
         EdgeIteratorState edge0, edge1, edge2, edge3, edge4, edge5;
-        GHUtility.setSpeed(60, 30, f.accessEnc, f.speedEnc,
-                edge0 = f.graph.edge(0, 1).setDistance(1),
-                edge1 = f.graph.edge(1, 2).setDistance(1),
-                edge2 = f.graph.edge(2, 3).setDistance(1),
-                edge3 = f.graph.edge(3, 4).setDistance(1),
-                edge4 = f.graph.edge(4, 5).setDistance(1),
-                edge5 = f.graph.edge(5, 6).setDistance(1));
+        edge0 = f.graph.edge(0, 1).setDistance(1).set(f.speedEnc, 20, 10);
+        edge1 = f.graph.edge(1, 2).setDistance(1).set(f.speedEnc, 20, 10);
+        edge2 = f.graph.edge(2, 3).setDistance(1).set(f.speedEnc, 20, 10);
+        edge3 = f.graph.edge(3, 4).setDistance(1).set(f.speedEnc, 20, 10);
+        edge4 = f.graph.edge(4, 5).setDistance(1).set(f.speedEnc, 20, 10);
+        edge5 = f.graph.edge(5, 6).setDistance(1).set(f.speedEnc, 20, 10);
         f.freeze();
 
         // turn costs ->
@@ -311,32 +304,32 @@ public class ShortcutUnpackerTest {
             // unpack the shortcut 0->6, traverse original edges in 'forward' order (from node 0 to 6)
             TurnWeightingVisitor visitor = new TurnWeightingVisitor(f.routingCHGraph);
             f.visitFwd(10, 6, false, visitor);
-            assertEquals(6 * 0.06 + 17, visitor.weight, 1.e-3, "wrong weight");
-            assertEquals((6 * 60 + 17000), visitor.time, "wrong time");
+            assertEquals(6 * 0.05 + 17, visitor.weight, 1.e-3, "wrong weight");
+            assertEquals((6 * 50 + 17000), visitor.time, "wrong time");
         }
 
         {
             // unpack the shortcut 0->6, traverse original edges in 'backward' order (from node 6 to 0)
             TurnWeightingVisitor visitor = new TurnWeightingVisitor(f.routingCHGraph);
             f.visitFwd(10, 6, true, visitor);
-            assertEquals(6 * 0.06 + 17, visitor.weight, 1.e-3, "wrong weight");
-            assertEquals((6 * 60 + 17000), visitor.time, "wrong time");
+            assertEquals(6 * 0.05 + 17, visitor.weight, 1.e-3, "wrong weight");
+            assertEquals((6 * 50 + 17000), visitor.time, "wrong time");
         }
 
         {
             // unpack the shortcut 6<-0, traverse original edges in 'forward' order (from node 6 to 0)
             TurnWeightingVisitor visitor = new TurnWeightingVisitor(f.routingCHGraph);
             f.visitBwd(10, 0, false, visitor);
-            assertEquals(6 * 0.06 + 21, visitor.weight, 1.e-3, "wrong weight");
-            assertEquals((6 * 60 + 21000), visitor.time, "wrong time");
+            assertEquals(6 * 0.05 + 21, visitor.weight, 1.e-3, "wrong weight");
+            assertEquals((6 * 50 + 21000), visitor.time, "wrong time");
         }
 
         {
             // unpack the shortcut 6<-0, traverse original edges in 'backward' order (from node 0 to 6)
             TurnWeightingVisitor visitor = new TurnWeightingVisitor(f.routingCHGraph);
             f.visitBwd(10, 0, true, visitor);
-            assertEquals(6 * 0.06 + 21, visitor.weight, 1.e-3, "wrong weight");
-            assertEquals((6 * 60 + 21000), visitor.time, "wrong time");
+            assertEquals(6 * 0.05 + 21, visitor.weight, 1.e-3, "wrong weight");
+            assertEquals((6 * 50 + 21000), visitor.time, "wrong time");
         }
     }
 

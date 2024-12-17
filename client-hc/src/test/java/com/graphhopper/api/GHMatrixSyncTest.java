@@ -3,6 +3,7 @@ package com.graphhopper.api;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import java.io.IOException;
+import java.util.HashMap;
 
 /**
  * @author Peter Karich
@@ -10,7 +11,7 @@ import java.io.IOException;
 public class GHMatrixSyncTest extends AbstractGHMatrixWebTester {
 
     @Override
-    GraphHopperMatrixWeb createMatrixClient(String jsonStr) throws IOException {
+    GraphHopperMatrixWeb createMatrixClient(String jsonStr, int errorCode) throws IOException {
         JsonNode json = objectMapper.readTree(jsonStr);
 
         // for test we grab the solution from the "batch json"
@@ -22,8 +23,8 @@ public class GHMatrixSyncTest extends AbstractGHMatrixWebTester {
         return new GraphHopperMatrixWeb(new GHMatrixSyncRequester("") {
 
             @Override
-            protected String postJson(String url, JsonNode data) throws IOException {
-                return finalJsonStr;
+            protected JsonResult postJson(String url, JsonNode data) {
+                return new JsonResult(finalJsonStr, errorCode, new HashMap<>());
             }
         });
     }

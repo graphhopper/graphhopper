@@ -1,9 +1,6 @@
 package com.graphhopper.api;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * This class defines the response for a M-to-N requests.
@@ -12,6 +9,7 @@ import java.util.Objects;
  */
 public class MatrixResponse {
 
+    private Map<String, List<String>> headers = new HashMap<>();
     private String debugInfo = "";
     private final List<Throwable> errors = new ArrayList<>(4);
     private final List<PointPair> disconnectedPoints = new ArrayList<>(0);
@@ -22,6 +20,7 @@ public class MatrixResponse {
     private double[][] weights = new double[0][];
     private final int fromCount;
     private final int toCount;
+    private int statusCode;
 
     public MatrixResponse() {
         this(10, 10, true, true, true);
@@ -47,6 +46,20 @@ public class MatrixResponse {
 
         if (!withTimes && !withDistances && !withWeights)
             throw new IllegalArgumentException("Please specify times, distances or weights that should be calculated by the matrix");
+    }
+
+    public void setHeaders(Map<String, List<String>> headers) {
+        this.headers = headers;
+    }
+
+    public Map<String, List<String>> getHeaders() {
+        return headers;
+    }
+
+    public String getHeader(String key, String defaultValue) {
+        List<String> res = headers.get(key);
+        if (!res.isEmpty()) return res.get(0);
+        return defaultValue;
     }
 
     public void setFromRow(int row, long[] timeRow, int[] distanceRow, double[] weightRow) {
@@ -174,6 +187,14 @@ public class MatrixResponse {
      */
     public boolean hasErrors() {
         return !errors.isEmpty();
+    }
+
+    public int getStatusCode() {
+        return statusCode;
+    }
+
+    public void setStatusCode(int statusCode) {
+        this.statusCode = statusCode;
     }
 
     public List<Throwable> getErrors() {

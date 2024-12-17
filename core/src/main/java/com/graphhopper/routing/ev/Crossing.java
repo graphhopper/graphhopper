@@ -13,6 +13,10 @@ public enum Crossing {
     NO; // crossing is impossible or illegal
     public static final String KEY = "crossing";
 
+    public static EnumEncodedValue<Crossing> create() {
+        return new EnumEncodedValue<>(Crossing.KEY, Crossing.class);
+    }
+
     @Override
     public String toString() {
         return Helper.toLowerCase(super.toString());

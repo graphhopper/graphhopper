@@ -27,8 +27,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.graphhopper.util.Helper.createFormatter;
@@ -99,7 +97,7 @@ public class CHPreparationHandler {
 
     public Map<String, RoutingCHGraph> load(BaseGraph graph, List<CHConfig> chConfigs) {
         Map<String, RoutingCHGraph> loaded = Collections.synchronizedMap(new LinkedHashMap<>());
-        Stream<Callable<String>> callables = chConfigs.stream()
+        Stream<Runnable> runnables = chConfigs.stream()
                 .map(c -> () -> {
                     CHStorage chStorage = new CHStorage(graph.getDirectory(), c.getName(), graph.getSegmentSize(), c.isEdgeBased());
                     if (chStorage.loadExisting())
@@ -109,9 +107,8 @@ public class CHPreparationHandler {
                         graph.getDirectory().remove("nodes_ch_" + c.getName());
                         graph.getDirectory().remove("shortcuts_" + c.getName());
                     }
-                    return c.getName();
                 });
-        GHUtility.runConcurrently(callables, preparationThreads);
+        GHUtility.runConcurrently(runnables, preparationThreads);
         return loaded;
     }
 
@@ -121,29 +118,27 @@ public class CHPreparationHandler {
             return Collections.emptyMap();
         }
         LOGGER.info("Creating CH preparations, {}", getMemInfo());
-        List<PrepareContractionHierarchies> preparations = chConfigs.stream()
-                .map(c -> createCHPreparation(baseGraph, c))
-                .collect(Collectors.toList());
         Map<String, PrepareContractionHierarchies.Result> results = Collections.synchronizedMap(new LinkedHashMap<>());
-        List<Callable<String>> callables = new ArrayList<>(preparations.size());
-        for (int i = 0; i < preparations.size(); ++i) {
-            PrepareContractionHierarchies prepare = preparations.get(i);
-            LOGGER.info((i + 1) + "/" + preparations.size() + " calling " +
-                    "CH prepare.doWork for profile '" + prepare.getCHConfig().getName() + "' " + prepare.getCHConfig().getTraversalMode() + " ... (" + getMemInfo() + ")");
-            callables.add(() -> {
-                final String name = prepare.getCHConfig().getName();
+        List<Runnable> runnables = new ArrayList<>(chConfigs.size());
+        for (int i = 0; i < chConfigs.size(); ++i) {
+            CHConfig chConfig = chConfigs.get(i);
+            LOGGER.info((i + 1) + "/" + chConfigs.size() + " Setting up CH preparation for profile " +
+                    "'" + chConfig.getName() + "' " + chConfig.getTraversalMode() + " ... (" + getMemInfo() + ")");
+            runnables.add(() -> {
+                final String name = chConfig.getName();
                 // toString is not taken into account so we need to cheat, see http://stackoverflow.com/q/6113746/194609 for other options
                 Thread.currentThread().setName(name);
+                PrepareContractionHierarchies prepare = PrepareContractionHierarchies.fromGraph(baseGraph, chConfig);
+                prepare.setParams(pMap);
                 PrepareContractionHierarchies.Result result = prepare.doWork();
                 results.put(name, result);
                 prepare.flush();
                 if (closeEarly)
                     prepare.close();
                 properties.put(CH.PREPARE + "date." + name, createFormatter().format(new Date()));
-                return name;
             });
         }
-        GHUtility.runConcurrently(callables.stream(), preparationThreads);
+        GHUtility.runConcurrently(runnables.stream(), preparationThreads);
         LOGGER.info("Finished CH preparation, {}", getMemInfo());
         return results;
     }

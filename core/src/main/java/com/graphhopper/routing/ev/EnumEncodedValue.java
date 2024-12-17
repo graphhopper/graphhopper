@@ -61,6 +61,10 @@ public final class EnumEncodedValue<E extends Enum> extends IntEncodedValueImpl 
         arr = enumType.getEnumConstants();
     }
 
+    public Class<E> getEnumType() {
+        return enumType;
+    }
+
     public E[] getValues() {
         return arr;
     }

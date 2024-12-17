@@ -18,7 +18,7 @@
 package com.graphhopper.routing.ev;
 
 /**
- * This EncodedValue stores maximum speed values for car. If not initialized it returns UNSET_SPEED.
+ * This EncodedValue stores maximum speed values for car in km/h.
  */
 public class MaxSpeed {
     public static final String KEY = "max_speed";
@@ -28,13 +28,15 @@ public class MaxSpeed {
      * not explicitly used in OSM and can be precisely returned for a factor of 5, 3, 2 and 1. It is fixed and
      * not DecimalEncodedValue.getMaxInt to allow special case handling.
      */
-    public static final double UNLIMITED_SIGN_SPEED = 150;
+    public static final double MAXSPEED_150 = 150;
     /**
      * The speed value used for road sections without known speed limit.
      */
-    public static final double UNSET_SPEED = Double.POSITIVE_INFINITY;
+    public static final double MAXSPEED_MISSING = Double.POSITIVE_INFINITY;
 
     public static DecimalEncodedValue create() {
-        return new DecimalEncodedValueImpl(KEY, 5, 0, 5, false, true, true);
+        // if we would store only km/h we could live with a factor of 5 and only 5 bits
+        // but there is also mph and we don't want to store the unit
+        return new DecimalEncodedValueImpl(KEY, 7, 0, 2, false, true, true);
     }
 }

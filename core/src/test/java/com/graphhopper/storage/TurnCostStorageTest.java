@@ -28,6 +28,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.IntStream;
 
 import static com.graphhopper.util.GHUtility.getEdge;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -92,6 +93,8 @@ public class TurnCostStorageTest {
         turnCostStorage.set(bikeEnc, edge31, 1, edge10, Double.POSITIVE_INFINITY);
         turnCostStorage.set(bikeEnc, edge02, 2, edge24, Double.POSITIVE_INFINITY);
 
+        assertEquals(turnCostStorage.getTurnCostsCount(), IntStream.range(0, g.getNodes()).map(turnCostStorage::getTurnCostsCount).sum());
+
         assertEquals(Double.POSITIVE_INFINITY, turnCostStorage.get(carEnc, edge42, 2, edge23), 0);
         assertEquals(Double.POSITIVE_INFINITY, turnCostStorage.get(bikeEnc, edge42, 2, edge23), 0);
 
@@ -153,6 +156,23 @@ public class TurnCostStorageTest {
         expectedTurnCosts.add(Arrays.asList(edge02, 2, edge23, Integer.MAX_VALUE, Integer.MAX_VALUE));
 
         assertEquals(expectedTurnCosts, turnCosts);
+    }
+
+    @Test
+    public void setMultipleTimes() {
+        BaseGraph g = new BaseGraph.Builder(manager).withTurnCosts(true).create();
+        initGraph(g, accessEnc, speedEnc);
+        TurnCostStorage turnCostStorage = g.getTurnCostStorage();
+        DecimalEncodedValue carEnc = carTurnCostEnc;
+        int edge32 = getEdge(g, 3, 2).getEdge();
+        int edge20 = getEdge(g, 2, 0).getEdge();
+        assertEquals(0, turnCostStorage.get(carEnc, edge32, 2, edge20));
+        turnCostStorage.set(carEnc, edge32, 2, edge20, Double.POSITIVE_INFINITY);
+        assertEquals(Double.POSITIVE_INFINITY, turnCostStorage.get(carEnc, edge32, 2, edge20));
+        turnCostStorage.set(carEnc, edge32, 2, edge20, 0);
+        turnCostStorage.set(carEnc, edge32, 2, edge20, Double.POSITIVE_INFINITY);
+        turnCostStorage.set(carEnc, edge32, 2, edge20, 0);
+        assertEquals(0, turnCostStorage.get(carEnc, edge32, 2, edge20));
     }
 
     @Test

@@ -32,14 +32,16 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 public class HelperTest {
 
     @Test
-    public void testCountBitValue() {
-        assertEquals(1, Helper.countBitValue(1));
-        assertEquals(2, Helper.countBitValue(2));
-        assertEquals(2, Helper.countBitValue(3));
-        assertEquals(3, Helper.countBitValue(4));
-        assertEquals(3, Helper.countBitValue(7));
-        assertEquals(4, Helper.countBitValue(8));
-        assertEquals(5, Helper.countBitValue(20));
+    public void testElevation() {
+        assertEquals(9034.1, Helper.uIntToEle(Helper.eleToUInt(9034.1)), .1);
+        assertEquals(1234.5, Helper.uIntToEle(Helper.eleToUInt(1234.5)), .1);
+        assertEquals(0, Helper.uIntToEle(Helper.eleToUInt(0)), .1);
+        assertEquals(-432.3, Helper.uIntToEle(Helper.eleToUInt(-432.3)), .1);
+
+        assertEquals(Double.MAX_VALUE, Helper.uIntToEle(Helper.eleToUInt(11_000)));
+        assertEquals(Double.MAX_VALUE, Helper.uIntToEle(Helper.eleToUInt(Double.MAX_VALUE)));
+
+        assertThrows(IllegalArgumentException.class, () -> Helper.eleToUInt(Double.NaN));
     }
 
     @Test
@@ -67,28 +69,6 @@ public class HelperTest {
         assertEquals(2, Helper.keepIn(2, 1, 4), 1e-2);
         assertEquals(3, Helper.keepIn(2, 3, 4), 1e-2);
         assertEquals(3, Helper.keepIn(-2, 3, 4), 1e-2);
-    }
-
-    @Test
-    public void testUnsignedConversions() {
-        long l = Helper.toUnsignedLong(-1);
-        assertEquals(4294967295L, l);
-        assertEquals(-1, Helper.toSignedInt(l));
-
-        int intVal = Integer.MAX_VALUE;
-        long maxInt = (long) intVal;
-        assertEquals(intVal, Helper.toSignedInt(maxInt));
-
-        intVal++;
-        maxInt = Helper.toUnsignedLong(intVal);
-        assertEquals(intVal, Helper.toSignedInt(maxInt));
-
-        intVal++;
-        maxInt = Helper.toUnsignedLong(intVal);
-        assertEquals(intVal, Helper.toSignedInt(maxInt));
-
-        assertEquals(0xFFFFffffL, (1L << 32) - 1);
-        assertTrue(0xFFFFffffL > 0L);
     }
 
     @Test
@@ -124,5 +104,23 @@ public class HelperTest {
         // force incorrect char:
         bytes[0] = -25;
         assertEquals(3, new String(bytes, 0, 1, UTF_CS).getBytes(UTF_CS).length);
+    }
+
+    @Test
+    void degreeToInt() {
+        int storedInt = 444_494_395;
+        double lat = Helper.intToDegree(storedInt);
+        assertEquals(44.4494395, lat);
+        assertEquals(storedInt, Helper.degreeToInt(lat));
+    }
+
+    @Test
+    void eleToInt() {
+        int storedInt = 1145636;
+        double ele = Helper.uIntToEle(storedInt);
+        // converting to double is imprecise
+        assertEquals(145.635986, ele, 1.e-6);
+        // ... but converting back to int should yield the same value we started with!
+        assertEquals(storedInt, Helper.eleToUInt(ele));
     }
 }

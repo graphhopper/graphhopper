@@ -1,7 +1,7 @@
 package com.graphhopper.search;
 
 import com.carrotsearch.hppc.LongArrayList;
-import com.graphhopper.search.KVStorage.KeyValue;
+import com.graphhopper.search.KVStorage.KValue;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.Helper;
 import org.junit.jupiter.api.RepeatedTest;
@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.util.*;
 
-import static com.graphhopper.search.KVStorage.KeyValue.createKV;
 import static com.graphhopper.search.KVStorage.MAX_UNIQUE_KEYS;
 import static com.graphhopper.search.KVStorage.cutString;
 import static com.graphhopper.util.Helper.UTF_CS;
@@ -24,12 +23,12 @@ public class KVStorageTest {
         return new KVStorage(new RAMDirectory(), true).create(1000);
     }
 
-    List<KeyValue> createList(Object... keyValues) {
+    Map<String, KValue> createMap(Object... keyValues) {
         if (keyValues.length % 2 != 0)
             throw new IllegalArgumentException("Cannot create list from " + Arrays.toString(keyValues));
-        List<KeyValue> map = new ArrayList<>();
+        Map<String, KValue> map = new LinkedHashMap<>();
         for (int i = 0; i < keyValues.length; i += 2) {
-            map.add(new KeyValue((String) keyValues[i], keyValues[i + 1]));
+            map.put((String) keyValues[i], new KValue(keyValues[i + 1]));
         }
         return map;
     }
@@ -37,7 +36,7 @@ public class KVStorageTest {
     @Test
     public void putSame() {
         KVStorage index = create();
-        long aPointer = index.add(createList("a", "same name", "b", "same name"));
+        long aPointer = index.add(createMap("a", "same name", "b", "same name"));
 
         assertNull(index.get(aPointer, "", false));
         assertEquals("same name", index.get(aPointer, "a", false));
@@ -45,14 +44,14 @@ public class KVStorageTest {
         assertNull(index.get(aPointer, "c", false));
 
         index = create();
-        aPointer = index.add(createList("a", "a name", "b", "same name"));
+        aPointer = index.add(createMap("a", "a name", "b", "same name"));
         assertEquals("a name", index.get(aPointer, "a", false));
     }
 
     @Test
     public void putAB() {
         KVStorage index = create();
-        long aPointer = index.add(createList("a", "a name", "b", "b name"));
+        long aPointer = index.add(createMap("a", "a name", "b", "b name"));
 
         assertNull(index.get(aPointer, "", false));
         assertEquals("a name", index.get(aPointer, "a", false));
@@ -62,15 +61,16 @@ public class KVStorageTest {
     @Test
     public void getForwardBackward() {
         KVStorage index = create();
-        List<KeyValue> list = new ArrayList<>();
-        list.add(new KeyValue("keyA", "FORWARD", true, false));
-        list.add(new KeyValue("keyB", "BACKWARD", false, true));
-        list.add(new KeyValue("keyC", "BOTH", true, true));
-        long aPointer = index.add(list);
+        Map<String, KValue> map = new LinkedHashMap<>();
+        map.put("keyA", new KValue("FORWARD", null));
+        map.put("keyB", new KValue(null, "BACKWARD"));
+        map.put("keyC", new KValue("BOTH"));
+        map.put("keyD", new KValue("BOTH1", "BOTH2"));
+        long aPointer = index.add(map);
 
         assertNull(index.get(aPointer, "", false));
-        List<KeyValue> deserializedList = index.getAll(aPointer);
-        assertEquals(list, deserializedList);
+        Map<String, KValue> deserializedList = index.getAll(aPointer);
+        assertEquals(map, deserializedList);
 
         assertEquals("FORWARD", index.get(aPointer, "keyA", false));
         assertNull(index.get(aPointer, "keyA", true));
@@ -80,20 +80,23 @@ public class KVStorageTest {
 
         assertEquals("BOTH", index.get(aPointer, "keyC", false));
         assertEquals("BOTH", index.get(aPointer, "keyC", true));
+
+        assertEquals("BOTH1", index.get(aPointer, "keyD", false));
+        assertEquals("BOTH2", index.get(aPointer, "keyD", true));
     }
 
     @Test
     public void putEmpty() {
         KVStorage index = create();
-        assertEquals(1, index.add(createList("", "")));
+        assertEquals(1, index.add(createMap("", "")));
         // cannot store null (in its first version we accepted null once it was clear which type the value has, but this is inconsequential)
-        assertThrows(IllegalArgumentException.class, () -> assertEquals(5, index.add(createList("", null))));
-        assertThrows(IllegalArgumentException.class, () -> index.add(createList("blup", null)));
-        assertThrows(IllegalArgumentException.class, () -> index.add(createList(null, null)));
+        assertThrows(IllegalArgumentException.class, () -> assertEquals(5, index.add(createMap("", null))));
+        assertThrows(IllegalArgumentException.class, () -> index.add(createMap("blup", null)));
+        assertThrows(IllegalArgumentException.class, () -> index.add(createMap(null, null)));
 
         assertNull(index.get(0, "", false));
 
-        assertEquals(5, index.add(createList("else", "else")));
+        assertEquals(5, index.add(createMap("else", "else")));
     }
 
     @Test
@@ -102,7 +105,7 @@ public class KVStorageTest {
         long aPointer = 0, tmpPointer = 0;
 
         for (int i = 0; i < 10000; i++) {
-            aPointer = index.add(createList("a", "a name " + i, "b", "b name " + i, "c", "c name " + i));
+            aPointer = index.add(createMap("a", "a name " + i, "b", "b name " + i, "c", "c name " + i));
             if (i == 567)
                 tmpPointer = aPointer;
         }
@@ -120,10 +123,10 @@ public class KVStorageTest {
         KVStorage index = create();
         // one key is already stored => empty key
         for (int i = 1; i < MAX_UNIQUE_KEYS; i++) {
-            index.add(createList("a" + i, "a name"));
+            index.add(createMap("a" + i, "a name"));
         }
         try {
-            index.add(createList("new", "a name"));
+            index.add(createMap("new", "a name"));
             fail();
         } catch (IllegalArgumentException ex) {
         }
@@ -137,14 +140,14 @@ public class KVStorageTest {
             str += "ß";
         }
         assertEquals(254, str.getBytes(Helper.UTF_CS).length);
-        long result = index.add(createList("", str));
+        long result = index.add(createMap("", str));
         assertEquals(127, ((String) index.get(result, "", false)).length());
     }
 
     @Test
     public void testTooLongStringValueError() {
         KVStorage index = create();
-        assertThrows(IllegalArgumentException.class, () -> index.add(createList("", "Бухарестская улица (http://ru.wikipedia.org/wiki" +
+        assertThrows(IllegalArgumentException.class, () -> index.add(createMap("", "Бухарестская улица (http://ru.wikipedia.org/wiki" +
                 "/%D0%91%D1%83%D1%85%D0%B0%D1%80%D0%B5%D1%81%D1%82%D1%81%D0%BA%D0%B0%D1%8F_%D1%83%D0%BB%D0%B8%D1%86%D0%B0_(%D0%A1%D0%B0%D0%BD%D0%BA%D1%82-%D0%9F%D0%B5%D1%82%D0%B5%D1%80%D0%B1%D1%83%D1%80%D0%B3))")));
 
         String str = "sdfsdfds";
@@ -152,7 +155,7 @@ public class KVStorageTest {
             str += "Б";
         }
         final String finalStr = str;
-        assertThrows(IllegalArgumentException.class, () -> index.add(createList("", finalStr)));
+        assertThrows(IllegalArgumentException.class, () -> index.add(createMap("", finalStr)));
     }
 
     @Test
@@ -164,23 +167,23 @@ public class KVStorageTest {
             bytes[i] = (byte) (i % 255);
             copy[i] = bytes[i];
         }
-        long result = index.add(createKV("myval", bytes));
+        long result = index.add(Map.of("myval", new KValue(bytes)));
         bytes = (byte[]) index.get(result, "myval", false);
         assertArrayEquals(copy, bytes);
 
         final byte[] biggerByteArray = Arrays.copyOf(bytes, 256);
-        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> index.add(createKV("myval2", biggerByteArray)));
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> index.add(Map.of("myval2", new KValue(biggerByteArray))));
         assertTrue(e.getMessage().contains("bytes.length cannot be > 255"));
     }
 
     @Test
     public void testIntLongDoubleFloat() {
         KVStorage index = create();
-        long intres = index.add(createKV("intres", 4));
-        long doubleres = index.add(createKV("doubleres", 4d));
-        long floatres = index.add(createKV("floatres", 4f));
-        long longres = index.add(createKV("longres", 4L));
-        long after4Inserts = index.add(createKV("somenext", 0));
+        long intres = index.add(Map.of("intres", new KValue(4)));
+        long doubleres = index.add(Map.of("doubleres", new KValue(4d)));
+        long floatres = index.add(Map.of("floatres", new KValue(4f)));
+        long longres = index.add(Map.of("longres", new KValue(4L)));
+        long after4Inserts = index.add(Map.of("somenext", new KValue(0)));
 
         // initial point is 1, then twice plus 1 + (2+4) and twice plus 1 + (2+8)
         assertEquals(1 + 36, after4Inserts);
@@ -194,23 +197,23 @@ public class KVStorageTest {
     @Test
     public void testIntLongDoubleFloat2() {
         KVStorage index = create();
-        List<KeyValue> list = new ArrayList<>();
-        list.add(new KeyValue("int", 4));
-        list.add(new KeyValue("long", 4L));
-        list.add(new KeyValue("double", 4d));
-        list.add(new KeyValue("float", 4f));
-        long allInOne = index.add(list);
+        Map<String, KValue> map = new LinkedHashMap<>();
+        map.put("int", new KValue(4));
+        map.put("long", new KValue(4L));
+        map.put("double", new KValue(4d));
+        map.put("float", new KValue(4f));
+        long allInOne = index.add(map);
 
-        long afterMapInsert = index.add(createKV("somenext", 0));
+        long afterMapInsert = index.add(Map.of("somenext", new KValue(0)));
 
         // 1 + 1 + (2+4) + (2+8) + (2+8) + (2+4)
         assertEquals(1 + 1 + 32, afterMapInsert);
 
-        List<KeyValue> resMap = index.getAll(allInOne);
-        assertEquals(4, resMap.get(0).value);
-        assertEquals(4L, resMap.get(1).value);
-        assertEquals(4d, resMap.get(2).value);
-        assertEquals(4f, resMap.get(3).value);
+        Map<String, KValue> resMap = index.getAll(allInOne);
+        assertEquals(4, resMap.get("int").getFwd());
+        assertEquals(4L, resMap.get("long").getFwd());
+        assertEquals(4d, resMap.get("double").getFwd());
+        assertEquals(4f, resMap.get("float").getFwd());
     }
 
     @Test
@@ -218,7 +221,7 @@ public class KVStorageTest {
         Helper.removeDir(new File(location));
 
         KVStorage index = new KVStorage(new RAMDirectory(location, true).create(), true);
-        long pointer = index.add(createList("", "test"));
+        long pointer = index.add(createMap("", "test"));
         index.flush();
         index.close();
 
@@ -226,7 +229,7 @@ public class KVStorageTest {
         assertTrue(index.loadExisting());
         assertEquals("test", index.get(pointer, "", false));
         // make sure bytePointer is correctly set after loadExisting
-        long newPointer = index.add(createList("", "testing"));
+        long newPointer = index.add(createMap("", "testing"));
         assertEquals(pointer + 1 + 3 + "test".getBytes().length, newPointer, newPointer + ">" + pointer);
         index.close();
 
@@ -238,9 +241,9 @@ public class KVStorageTest {
         Helper.removeDir(new File(location));
 
         KVStorage index = new KVStorage(new RAMDirectory(location, true).create(), true).create(1000);
-        long pointerA = index.add(createList("c", "test value"));
+        long pointerA = index.add(createMap("c", "test value"));
         assertEquals(2, index.getKeys().size());
-        long pointerB = index.add(createList("a", "value", "b", "another value"));
+        long pointerB = index.add(createMap("a", "value", "b", "another value"));
         // empty string is always the first key
         assertEquals("[, c, a, b]", index.getKeys().toString());
         index.flush();
@@ -255,7 +258,7 @@ public class KVStorageTest {
         assertNull(index.get(pointerB, "", false));
         assertEquals("value", index.get(pointerB, "a", false));
         assertEquals("another value", index.get(pointerB, "b", false));
-        assertEquals("[a=value (true|true), b=another value (true|true)]", index.getAll(pointerB).toString());
+        assertEquals("{a=value, b=another value}", index.getAll(pointerB).toString());
         index.close();
 
         Helper.removeDir(new File(location));
@@ -264,8 +267,8 @@ public class KVStorageTest {
     @Test
     public void testEmptyKey() {
         KVStorage index = create();
-        long pointerA = index.add(createList("", "test value"));
-        long pointerB = index.add(createList("a", "value", "b", "another value"));
+        long pointerA = index.add(createMap("", "test value"));
+        long pointerB = index.add(createMap("a", "value", "b", "another value"));
 
         assertEquals("test value", index.get(pointerA, "", false));
         assertNull(index.get(pointerA, "a", false));
@@ -275,23 +278,35 @@ public class KVStorageTest {
     }
 
     @Test
+    public void testDifferentValuePerDirection() {
+        Map<String, KValue> map = new LinkedHashMap<>();
+        map.put("test", new KValue("forw", "back"));
+
+        KVStorage index = create();
+        long pointerA = index.add(map);
+
+        assertEquals("forw", index.get(pointerA, "test", false));
+        assertEquals("back", index.get(pointerA, "test", true));
+    }
+
+    @Test
     public void testSameByteArray() {
         KVStorage index = create();
 
-        long pointerA = index.add(createList("mykey", new byte[]{1, 2, 3, 4}));
-        long pointerB = index.add(createList("mykey", new byte[]{1, 2, 3, 4}));
+        long pointerA = index.add(createMap("mykey", new byte[]{1, 2, 3, 4}));
+        long pointerB = index.add(createMap("mykey", new byte[]{1, 2, 3, 4}));
         assertEquals(pointerA, pointerB);
 
         byte[] sameRef = new byte[]{1, 2, 3, 4};
-        pointerA = index.add(createList("mykey", sameRef));
-        pointerB = index.add(createList("mykey", sameRef));
+        pointerA = index.add(createMap("mykey", sameRef));
+        pointerB = index.add(createMap("mykey", sameRef));
         assertEquals(pointerA, pointerB);
     }
 
     @Test
     public void testUnknownValueClass() {
         KVStorage index = create();
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> index.add(createList("mykey", new Object())));
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> index.add(createMap("mykey", new Object())));
         assertTrue(ex.getMessage().contains("The Class of a value was Object, currently supported"), ex.getMessage());
     }
 
@@ -302,12 +317,12 @@ public class KVStorageTest {
             KVStorage index = new KVStorage(new RAMDirectory(location, true).create(), true).create(1000);
             Random random = new Random(seed);
             List<String> keys = createRandomStringList(random, "_key", 100);
-            List<Integer> values = createRandomList(random, 500);
+            List<Integer> values = createRandomMap(random, 500);
 
             int size = 10000;
             LongArrayList pointers = new LongArrayList(size);
             for (int i = 0; i < size; i++) {
-                List<KeyValue> list = createRandomList(random, keys, values);
+                Map<String, KValue> list = createRandomMap(random, keys, values);
                 long pointer = index.add(list);
                 try {
                     assertEquals(list.size(), index.getAll(pointer).size(), "" + i);
@@ -318,11 +333,11 @@ public class KVStorageTest {
             }
 
             for (int i = 0; i < size; i++) {
-                List<KeyValue> list = index.getAll(pointers.get(i));
-                assertTrue(list.size() > 0, i + " " + list);
-                for (KeyValue entry : list) {
-                    Object value = index.get(pointers.get(i), entry.key, false);
-                    assertEquals(entry.value, value, i + " " + list);
+                Map<String, KValue> map = index.getAll(pointers.get(i));
+                assertFalse(map.isEmpty(), i + " " + map);
+                for (Map.Entry<String, KValue> entry : map.entrySet()) {
+                    Object value = index.get(pointers.get(i), entry.getKey(), false);
+                    assertEquals(entry.getValue().getFwd(), value, i + " " + map);
                 }
             }
             index.flush();
@@ -331,11 +346,11 @@ public class KVStorageTest {
             index = new KVStorage(new RAMDirectory(location, true).create(), true);
             assertTrue(index.loadExisting());
             for (int i = 0; i < size; i++) {
-                List<KeyValue> list = index.getAll(pointers.get(i));
-                assertTrue(list.size() > 0, i + " " + list);
-                for (KeyValue entry : list) {
-                    Object value = index.get(pointers.get(i), entry.key, false);
-                    assertEquals(entry.value, value, i + " " + list);
+                Map<String, KValue> map = index.getAll(pointers.get(i));
+                assertFalse(map.isEmpty(), i + " " + map);
+                for (Map.Entry<String, KValue> entry : map.entrySet()) {
+                    Object value = index.get(pointers.get(i), entry.getKey(), false);
+                    assertEquals(entry.getValue().getFwd(), value, i + " " + map);
                 }
             }
             index.close();
@@ -344,7 +359,7 @@ public class KVStorageTest {
         }
     }
 
-    private List<Integer> createRandomList(Random random, int size) {
+    private List<Integer> createRandomMap(Random random, int size) {
         List<Integer> list = new ArrayList<>();
         for (int i = 0; i < size; i++) {
             list.add(random.nextInt(size * 5));
@@ -360,16 +375,16 @@ public class KVStorageTest {
         return list;
     }
 
-    private List<KeyValue> createRandomList(Random random, List<String> keys, List<Integer> values) {
+    private Map<String, KValue> createRandomMap(Random random, List<String> keys, List<Integer> values) {
         int count = random.nextInt(10) + 2;
         Set<String> avoidDuplicates = new HashSet<>(); // otherwise index.get returns potentially wrong value
-        List<KeyValue> list = new ArrayList<>();
+        Map<String, KValue> list = new LinkedHashMap<>();
         for (int i = 0; i < count; i++) {
             String key = keys.get(random.nextInt(keys.size()));
             if (!avoidDuplicates.add(key))
                 continue;
             Object o = values.get(random.nextInt(values.size()));
-            list.add(new KeyValue(key, key.endsWith("_s") ? o + "_s" : o));
+            list.put(key, new KValue(key.endsWith("_s") ? o + "_s" : o));
         }
         return list;
     }
@@ -399,6 +414,6 @@ public class KVStorageTest {
         long pointer = Integer.MAX_VALUE;
         int storedPointer = (int) (pointer + 100);
         assertTrue(storedPointer < 0);
-        assertEquals(pointer + 100, Helper.toUnsignedLong(storedPointer));
+        assertEquals(pointer + 100, Integer.toUnsignedLong(storedPointer));
     }
 }

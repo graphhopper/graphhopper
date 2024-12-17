@@ -5,7 +5,7 @@ default routing behavior by specifying a set of rules in JSON language. Here we 
 background and then show how to use custom models in practice.
 
 Try some live examples in [this blog post](https://www.graphhopper.com/blog/2020/05/31/examples-for-customizable-routing/)
-and the [custom_models](../../custom_models) folder on how to use them on the server-side.
+and the [custom_models](../../core/src/main/resources/com/graphhopper/custom_models) folder on how to use them on the server-side.
 
 ## How GraphHopper's route calculations work
 
@@ -76,6 +76,7 @@ encoded values are the following (some of their possible values are given in bra
 - toll: (MISSING, NO, HGV, ALL)
 - bike_network, foot_network: (MISSING, INTERNATIONAL, NATIONAL, REGIONAL, LOCAL, OTHER)
 - country: (`MISSING` or the country as a `ISO3166-1:alpha3` code e.g. `DEU`)
+- state: (`MISSING` or the state as `ISO3166-2` code e.g. `US_CA`)
 - hazmat: (YES, NO), hazmat_tunnel: (A, B, .., E), hazmat_water: (YES, PERMISSIVE, NO)
 - hgv: (MISSING, YES, DESIGNATED, ...)
 - track_type: (MISSING, GRADE1, GRADE2, ..., GRADE5)
@@ -97,9 +98,11 @@ There are also some that take on a numeric value, like:
 
 - average_slope: a number for 100 * "elevation change" / edge_distance for a road segment; it changes the sign in reverse direction; see max_slope
 - curvature: "beeline distance" / edge_distance (0..1) e.g. a curvy road is smaller than 1
-- hike_rating, horse_rating, mtb_rating: a number from 0 to 6 for the `sac_scale` in OSM, e.g. 0 means "missing", 1 means "hiking", 2 means "mountain_hiking" and so on
+- hike_rating: a number from 0 to 6 for the `sac_scale` in OSM, e.g. 0 means "missing", 1 means "hiking", 2 means "mountain_hiking", 3 means demanding_mountain_hiking, 4 means alpine_hiking, 5 means demanding_alpine_hiking, and 5 means difficult_alpine_hiking
+- mtb_rating: a number from 0 to 7 for the `mtb:scale` in OSM, e.g. 0 means "missing", 1 means `mtb:scale=0`, 2 means `mtb:scale=1` and so on. A leading "+" or "-" character is ignored.  
+- horse_rating: a number from 0 to 6 for the `horse_scale` in OSM, e.g. 0 means "missing", 1 means "common", 2 means "demanding", 3 means difficult, 4 means critical, 5 means dangerous, and 6 means impossible
 - lanes: number of lanes
-- max_slope: an unsigned decimal for the maximum slope (100 * "elevation change / distance_i") of an edge with `sum(distance_i)=edge_distance`. Important for longer road segments where ups (or downs) can be much bigger than the average_slope.
+- max_slope: a signed decimal for the maximum slope (100 * "elevation change / distance_i") of an edge with `sum(distance_i)=edge_distance`. Important for longer road segments where ups (or downs) can be much bigger than the average_slope.
 - max_speed: the speed limit from a sign (km/h)
 - max_height (meter), max_width (meter), max_length (meter)
 - max_weight (ton), max_axle_load (in tons)
@@ -175,10 +178,11 @@ statements that come later in the list are applied to the resulting value of pre
 executed if the corresponding condition applies for the current edge. This will become more clear in the following
 examples.
 
-Currently the custom model language supports two operators:
+The custom model language supports three operators:
 
 - `multiply_by` multiplies the speed value with a given number or expression
 - `limit_to` limits the speed value to a given number or expression
+- `do` lists sub-statements that are executed
 
 #### `if` statements and the `multiply_by` operation
 
@@ -264,14 +268,29 @@ inequality) operators, but the numerical comparison operators "bigger" `>`, "big
 
 which means that for all edges with `max_width` smaller than `2.5m` the speed is multiplied by `0.8`.
 
-Categories of `string` type are used like this (note the quotes ''):
+##### Country
+
+Reduce speed for a country:
 
 ```json
 {
   "speed": [
     {
-      "if": "country == 'DEU'",
-      "multiply_by": "0"
+      "if": "country == USA",
+      "multiply_by": "0.9"
+    }
+  ]
+}
+```
+
+You can also differentiate between the states:
+
+```json
+{
+  "speed": [
+    {
+      "if": "state == US_CA",
+      "multiply_by": "0.9"
     }
   ]
 }
@@ -318,6 +337,53 @@ A common use-case for the `limit_to` operation is the following pattern:
 
 which means that the speed is limited to `90km/h` for all road segments regardless of its properties. The condition
 `true` is always fulfilled.
+
+#### The `do` operation
+
+The `do` operation allows multiple statements for an `if`, `else_if`, and `else` statement.
+For example, for an `if` statement, it can be used as follows:
+
+```json
+{
+  "if": "country == DEU",
+  "do": [
+    { "if": "road_class == PRIMARY", "multiply_by": "0.8" },
+    { "if": "road_class == SECONDARY", "multiply_by": "0.7" }
+  ]
+}
+```
+
+And then the two nested statements under `do` are only executed if the expression `country == DEU` is true.
+
+For `else` the `do` operation can be used in a similar way:
+
+```json
+[
+  { "if": "max_speed > 70", "limit": "70" },
+  { "else": "",
+    "do":  [
+      { "if": "road_class == PRIMARY", "multiply_by": "0.8" },
+      { "if": "road_class == SECONDARY", "multiply_by": "0.7" }
+    ]
+  }
+]
+```
+
+Further nesting is also possible:
+
+```json
+{
+  "if": "country == DEU",
+  "do": [
+    {
+      "if": "road_class == PRIMARY",
+      "do": [
+        { "if": "max_speed > 70", "multiply_by": "0.5" }
+      ]
+    }
+  ]
+}
+```
 
 #### `else` and `else_if` statements
 
@@ -573,7 +639,7 @@ should be 10% slower and the maximum should be 100km/h:
 {
   "speed": [
     { "if": "true", "limit_to": "100" },
-    { "if": "car_average_speed > 50", "limit_to": "car_average_speed * 0.9" }
+    { "if": "car_average_speed > 50", "limit_to": "car_average_speed * 0.9" },
     { "else": "", "limit_to": "car_average_speed" }
   ]
 }
