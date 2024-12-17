@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.List;
 
 import javax.ws.rs.core.Response;
 
@@ -15,8 +16,10 @@ import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.config.Profile;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.JsonFeatureCollection;
+import com.graphhopper.util.TurnCostsConfig;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -35,18 +38,16 @@ public class BufferResourceTest {
 
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
-        config.getGraphHopperConfiguration().putObject("graph.flag_encoders", "car|turn_costs=true")
+        config.getGraphHopperConfiguration()
                 .putObject("datareader.file", "../core/files/andorra.osm.pbf")
+                .putObject("graph.flag_encoders", "car|turn_costs=true")
                 .putObject("graph.location", DIR)
-                .setProfiles(Arrays.asList(
-                        new Profile("fast_car").setVehicle("car")
-                                .setWeighting("fastest").setTurnCosts(true),
-                        new Profile("short_car").setVehicle("car")
-                                .setWeighting("shortest")
-                                .setTurnCosts(true),
-                        new Profile("fast_car_no_turn_restrictions")
-                                .setVehicle("car").setWeighting("fastest")
-                                .setTurnCosts(false)));
+                .putObject("graph.encoded_values", "car_access, car_average_speed")
+                .setProfiles(List.of(
+                        TestProfiles.accessAndSpeed("fast_car", "car").setWeighting("fastest").setTurnCostsConfig(TurnCostsConfig.car()),
+                        TestProfiles.accessAndSpeed("short_car", "car").setWeighting("shortest").setTurnCostsConfig(TurnCostsConfig.car()),
+                        TestProfiles.accessAndSpeed("fast_car_no_turn_restrictions", "car").setWeighting("shortest")
+                ));
         return config;
     }
 
