@@ -222,7 +222,6 @@ public class BufferResource {
                 if (streetRef != null) {
                     queryRoadNames.addAll(streetRef);
                 }
-                System.out.println(String.join(",", queryRoadNames));
 
                 if (queryRoadNames.stream().anyMatch(x -> x.contains(roadName))) {
                     filteredEdgesInBbox.add(edgeId);
