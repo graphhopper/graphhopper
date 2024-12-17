@@ -129,7 +129,7 @@ public class BufferResource {
 
             final List<Integer> filteredQueryEdges = queryBbox(bbox, roadName);
 
-            if (filteredQueryEdges.size() > 0) {
+            if (!filteredQueryEdges.isEmpty()) {
                 return computeStartFeature(filteredQueryEdges, startLat, startLon);
             }
         }
@@ -148,9 +148,6 @@ public class BufferResource {
      * @return buffer feature closest to primary start feature
      */
     private BufferFeature calculateSecondaryStartFeature(BufferFeature primaryStartFeature, String roadName,
-                                                         Double queryMultiplier) {
-        Double startLat = primaryStartFeature.getPoint().lat;
-        Double startLon = primaryStartFeature.getPoint().lon;
                                                          double queryMultiplier) {
         double startLat = primaryStartFeature.getPoint().lat;
         double startLon = primaryStartFeature.getPoint().lon;
@@ -177,7 +174,7 @@ public class BufferResource {
                 }
             }
 
-            if (filteredEdgesByDirection.size() > 0) {
+            if (!filteredEdgesByDirection.isEmpty()) {
                 return computeStartFeature(filteredEdgesByDirection, startLat, startLon);
             }
         }
@@ -298,8 +295,6 @@ public class BufferResource {
      * @param startLon longitude at center of query box
      * @return closest point along road
      */
-    private BufferFeature computeStartFeature(List<Integer> edgeList, Double startLat, Double startLon) {
-        Double lowestDistance = Double.MAX_VALUE;
     private BufferFeature computeStartFeature(List<Integer> edgeList, double startLat, double startLon) {
         double lowestDistance = Double.MAX_VALUE;
         GHPoint3D nearestPoint = null;
@@ -414,7 +409,7 @@ public class BufferResource {
 
             // No bidirectional edge found. Choose from potential edge lists.
             if (currentEdge == -1) {
-                if (potentialEdges.size() > 0) {
+                if (!potentialEdges.isEmpty()) {
 
                     // The Michigan Left
                     if (potentialEdges.size() > 1) {
@@ -447,10 +442,10 @@ public class BufferResource {
                         currentEdge = potentialEdges.get(0);
                         usedEdges.add(currentEdge);
                     }
-                } else if (potentialRoundaboutEdges.size() > 0) {
+                } else if (!potentialRoundaboutEdges.isEmpty()) {
                     currentEdge = potentialRoundaboutEdges.get(0);
                     usedEdges.add(currentEdge);
-                } else if (potentialRoundaboutEdgesWithoutName.size() > 0) {
+                } else if (!potentialRoundaboutEdgesWithoutName.isEmpty()) {
                     currentEdge = potentialRoundaboutEdgesWithoutName.get(0);
                     usedEdges.add(currentEdge);
                 } else {
