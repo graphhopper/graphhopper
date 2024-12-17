@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Stream;
 
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
@@ -388,8 +389,10 @@ public class BufferResource {
             currentEdge = -1;
 
             while (iterator.next()) {
-                // TODO: fix this to include the street_ref
-                List<String> roadNames = sanitizeRoadNames(iterator.getName());
+                List<String> streetNames = sanitizeRoadNames(iterator.getName());
+                List<String> streetRefs = sanitizeRoadNames((String) iterator.getValue("street_ref"));
+                List<String> roadNames = Stream.concat(streetNames.stream(), streetRefs.stream()).toList();
+
                 Integer tempEdge = iterator.getEdge();
                 EdgeIteratorState tempState = graph.getEdgeIteratorState(tempEdge, Integer.MIN_VALUE);
 
