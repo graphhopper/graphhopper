@@ -391,6 +391,8 @@ public class BufferResource {
             while (iterator.next()) {
                 List<String> streetNames = sanitizeRoadNames(iterator.getName());
                 List<String> streetRefs = sanitizeRoadNames((String) iterator.getValue("street_ref"));
+                // We need to add both street names and street refs to the list of road names to
+                // account for missing road names within one list or the other.
                 List<String> roadNames = Stream.concat(streetNames.stream(), streetRefs.stream()).toList();
 
                 Integer tempEdge = iterator.getEdge();
