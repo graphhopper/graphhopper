@@ -496,8 +496,6 @@ public class BufferResource {
      * @param endFeature        buffer feature of edge at distance threshold
      * @param upstreamPath      direction to build path - either along or against
      *                          road's flow
-     * @param upstreamStart     initial 'launch' direction - used only for a
-     *                          bidirectional start
      * @return PointList to threshold along given edge of end feature
      */
     private PointList computePointAtDistanceThreshold(BufferFeature startFeature, Double thresholdDistance,
