@@ -299,9 +299,11 @@ public class BufferResource {
         }
 
         List<String> separatedNames = Arrays.asList(roadNames.split(","));
-
         for (int i = 0; i < separatedNames.size(); i++) {
-            separatedNames.set(i, separatedNames.get(i).trim().replace("-", "").toLowerCase());
+            // TODO: do we want to remove all spaces from the names? There could be a
+            // mismatch between "I 80" "I-80" "I80" etc.
+            String polishedName = separatedNames.get(i).trim().replace("-", "").toLowerCase();
+            separatedNames.set(i, polishedName);
         }
 
         return separatedNames;
