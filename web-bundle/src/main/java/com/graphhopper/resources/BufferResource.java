@@ -196,14 +196,7 @@ public class BufferResource {
             @Override
             public void onEdge(int edgeId) {
                 EdgeIteratorState state = graph.getEdgeIteratorState(edgeId, Integer.MIN_VALUE);
-
-                List<String> streetNames = sanitizeRoadNames(state.getName());
-                List<String> streetRef = sanitizeRoadNames((String) state.getValue("street_ref"));
-                // We need to add both street names and street refs to the list of road names to
-                // account for missing road names within one list or the other.
-                // I.e. streetNames contains "Purple Heart Trl" while streetRef contains "I 80"
-                List<String> queryRoadNames = Stream.concat(streetNames.stream(), streetRef.stream()).toList();
-
+                List<String> queryRoadNames = getAllRouteNamesFromEdge(state);
                 if (queryRoadNames.stream().anyMatch(x -> x.contains(roadName))) {
                     filteredEdgesInBbox.add(edgeId);
                 }
@@ -263,6 +256,21 @@ public class BufferResource {
         }
 
         return geometryFactory.createLineString(coordinates.toArray(Coordinate[]::new));
+    }
+
+    /**
+     * Combines the StreetName and StreetRef from an EdgeIteratorState. Each list can potentially
+     * include different route names so we need to combine both lists.
+     * I.e. streetNames contains "Purple Heart Trl" while streetRef contains "I 80"
+     *
+     * @param state the edge iterator state to fetch from
+     * @return list of road names from street name and ref
+     */
+    private List<String> getAllRouteNamesFromEdge(EdgeIteratorState state) {
+        List<String> streetNames = sanitizeRoadNames(state.getName());
+        List<String> streetRef = sanitizeRoadNames((String) state.getValue("street_ref"));
+
+        return Stream.concat(streetNames.stream(), streetRef.stream()).toList();
     }
 
     /**
@@ -363,13 +371,7 @@ public class BufferResource {
             currentEdge = -1;
 
             while (iterator.next()) {
-                List<String> streetNames = sanitizeRoadNames(iterator.getName());
-                List<String> streetRefs = sanitizeRoadNames((String) iterator.getValue("street_ref"));
-                // We need to add both street names and street refs to the list of road names to
-                // account for missing road names within one list or the other.
-                // I.e. streetNames contains "Purple Heart Trl" while streetRef contains "I 80"
-                List<String> roadNames = Stream.concat(streetNames.stream(), streetRefs.stream()).toList();
-
+                List<String> roadNames = getAllRouteNamesFromEdge(iterator);
                 Integer tempEdge = iterator.getEdge();
                 EdgeIteratorState tempState = graph.getEdgeIteratorState(tempEdge, Integer.MIN_VALUE);
 
