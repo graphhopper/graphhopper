@@ -13,7 +13,9 @@ https://github.com/alltrails/graphhopper/compare/master...alltrails:graphhopper:
 
 Then proceed as normal.  This is a GitHub feature that cannot be changed.
 
-Below is the GraphHopper README as at the start of the fork
+Remainder of this README is the GraphHopper README as at the start of the fork.
+
+See alltrails/README.md for how to build, test and deploy our forked GraphHopper.
 
 ---
 

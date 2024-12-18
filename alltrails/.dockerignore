@@ -1,0 +1,6 @@
+# Block everything by default
+*
+
+# Allow just the things we need to run the app
+!graphhopper
+!config
