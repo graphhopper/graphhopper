@@ -1,26 +1,10 @@
 package com.graphhopper.resources;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Stream;
-
-import javax.inject.Inject;
-import javax.validation.constraints.NotNull;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
+import com.graphhopper.buffer.BufferFeature;
 import com.graphhopper.http.GHPointParam;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.Roundabout;
@@ -29,23 +13,25 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.util.DistancePlaneProjection;
-import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.FetchMode;
-import com.graphhopper.util.JsonFeature;
-import com.graphhopper.util.PointList;
-import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
-import com.graphhopper.buffer.BufferFeature;
-
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.PrecisionModel;
+
+import javax.inject.Inject;
+import javax.validation.constraints.NotNull;
+import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Stream;
 
 @Path("buffer")
 public class BufferResource {
