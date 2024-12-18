@@ -178,14 +178,11 @@ public class BufferResource {
     private List<Integer> queryBbox(BBox bbox, String roadName) {
         final List<Integer> filteredEdgesInBbox = new ArrayList<>();
 
-        this.locationIndex.query(bbox, new LocationIndex.Visitor() {
-            @Override
-            public void onEdge(int edgeId) {
-                EdgeIteratorState state = graph.getEdgeIteratorState(edgeId, Integer.MIN_VALUE);
-                List<String> queryRoadNames = getAllRouteNamesFromEdge(state);
-                if (queryRoadNames.stream().anyMatch(x -> x.contains(roadName))) {
-                    filteredEdgesInBbox.add(edgeId);
-                }
+        this.locationIndex.query(bbox, edgeId -> {
+            EdgeIteratorState state = graph.getEdgeIteratorState(edgeId, Integer.MIN_VALUE);
+            List<String> queryRoadNames = getAllRouteNamesFromEdge(state);
+            if (queryRoadNames.stream().anyMatch(x -> x.contains(roadName))) {
+                filteredEdgesInBbox.add(edgeId);
             }
         });
 
