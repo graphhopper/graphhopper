@@ -1,15 +1,5 @@
 package com.graphhopper.application.resources;
 
-import static com.graphhopper.application.util.TestUtils.clientTarget;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.io.File;
-import java.util.Arrays;
-
-import javax.ws.rs.core.Response;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
@@ -18,15 +8,20 @@ import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.JsonFeatureCollection;
 import com.graphhopper.util.TurnCostsConfig;
-
+import io.dropwizard.testing.junit5.DropwizardAppExtension;
+import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.locationtech.jts.geom.Geometry;
 
-import io.dropwizard.testing.junit5.DropwizardAppExtension;
-import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
+import javax.ws.rs.core.Response;
+import java.io.File;
+import java.util.Arrays;
+
+import static com.graphhopper.application.util.TestUtils.clientTarget;
+import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(DropwizardExtensionsSupport.class)
 public class BufferResourceTest {
