@@ -148,7 +148,7 @@ public class BufferResource {
      * @return buffer feature closest to primary start feature
      */
     private BufferFeature calculateSecondaryStartFeature(BufferFeature primaryStartFeature, String roadName,
-                                                         double queryMultiplier) {
+                                                         Double queryMultiplier) {
         double startLat = primaryStartFeature.getPoint().lat;
         double startLon = primaryStartFeature.getPoint().lon;
 
@@ -294,7 +294,7 @@ public class BufferResource {
      * @param startLon longitude at center of query box
      * @return closest point along road
      */
-    private BufferFeature computeStartFeature(List<Integer> edgeList, double startLat, double startLon) {
+    private BufferFeature computeStartFeature(List<Integer> edgeList, Double startLat, Double startLon) {
         double lowestDistance = Double.MAX_VALUE;
         GHPoint3D nearestPoint = null;
         Integer nearestEdge = null;
