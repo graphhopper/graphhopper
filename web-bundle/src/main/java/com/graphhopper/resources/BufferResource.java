@@ -495,8 +495,7 @@ public class BufferResource {
      * @param startFeature      original starting buffer feature
      * @param thresholdDistance maximum distance in meters
      * @param endFeature        buffer feature of edge at distance threshold
-     * @param upstreamPath      direction to build path - either along or against
-     *                          road's flow
+     * @param upstreamPath      direction to build path - either along or against road's flow
      * @return PointList to threshold along given edge of end feature
      */
     private PointList computePointAtDistanceThreshold(BufferFeature startFeature, Double thresholdDistance,
