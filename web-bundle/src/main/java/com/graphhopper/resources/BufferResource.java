@@ -269,10 +269,8 @@ public class BufferResource {
         }
 
         List<String> separatedNames = Arrays.asList(roadNames.split(","));
-        separatedNames.replaceAll(s -> {
-            // TODO: do we want to remove all spaces from the names? There could be a mismatch between "I 80" "I-80" "I80" etc.
-            return s.trim().replace("-", "").toLowerCase();
-        });
+        // Replace any empty spaces or dashes from the road
+        separatedNames.replaceAll(s -> s.replace(" ", "").replace("-", "").toLowerCase());
 
         return separatedNames;
     }
