@@ -502,25 +502,8 @@ public class BufferResource {
 
         Double currentDistance = endFeature.getDistance();
         GHPoint3D previousPoint = pointList.get(0);
-        PointList pathList = new PointList();
 
-        for (GHPoint3D currentPoint : pointList) {
-            // Filter zero-points made by PointList() scaling
-            if (currentPoint.lat != 0 && currentPoint.lon != 0) {
-                // Check if exceeds thresholdDistance
-                currentDistance += DistancePlaneProjection.DIST_PLANE.calcDist(currentPoint.getLat(),
-                        currentPoint.getLon(), previousPoint.getLat(), previousPoint.getLon());
-                if (currentDistance >= thresholdDistance) {
-                    return pathList;
-                }
-
-                pathList.add(currentPoint);
-                previousPoint = currentPoint;
-            }
-        }
-
-        // Default to full path in case the threshold isn't hit
-        return pathList;
+        return computePathListWithinThreshold(thresholdDistance, pointList, currentDistance, previousPoint);
     }
 
     /**
@@ -564,9 +547,22 @@ public class BufferResource {
 
         double currentDistance = 0.0;
         GHPoint3D previousPoint = tempList.get(0);
-        pathList = new PointList();
 
-        for (GHPoint3D currentPoint : tempList) {
+        return computePathListWithinThreshold(thresholdDistance, tempList, currentDistance, previousPoint);
+    }
+
+    /**
+     * Generates a list of points to create a path that does not exceed a threshold.
+     *
+     * @param thresholdDistance max distance to not exceed
+     * @param origList          the original list to loop through during calculations
+     * @param currentDistance   sum of the distance while moving through the original list
+     * @param previousPoint     point to compute the distance from
+     * @return a PointList containing a path not exceeding the threshold
+     */
+    private PointList computePathListWithinThreshold(Double thresholdDistance, PointList origList, double currentDistance, GHPoint3D previousPoint) {
+        PointList pathList = new PointList();
+        for (GHPoint3D currentPoint : origList) {
             // Filter zero-points made by PointList() scaling
             if (currentPoint.lat != 0 && currentPoint.lon != 0) {
                 // Check if exceeds thresholdDistance
@@ -580,7 +576,7 @@ public class BufferResource {
                 previousPoint = currentPoint;
             }
         }
-
+        // Default to full path in case the threshold isn't hit
         return pathList;
     }
 
