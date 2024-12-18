@@ -55,12 +55,14 @@ public class BufferResourceTest {
 
     @Test
     public void testBasicBidirectionalStartQuery() {
-        final Response response = clientTarget(app, "/buffer?profile=my_car&"
+        JsonFeatureCollection featureCollection;
+        try (Response response = clientTarget(app, "/buffer?profile=my_car&"
                 + "point=42.54287,1.471&roadName=CG-4&thresholdDistance=2000").request()
-                .buildGet().invoke();
-        assertEquals(200, response.getStatus());
+                .buildGet().invoke()) {
+            assertEquals(200, response.getStatus());
 
-        JsonFeatureCollection featureCollection = response.readEntity(JsonFeatureCollection.class);
+            featureCollection = response.readEntity(JsonFeatureCollection.class);
+        }
 
         assertEquals(2, featureCollection.getFeatures().size());
         Geometry lineString0 = featureCollection.getFeatures().get(0).getGeometry();
@@ -76,12 +78,14 @@ public class BufferResourceTest {
 
     @Test
     public void testBasicUnidirectionalStartQuery() {
-        final Response response = clientTarget(app, "/buffer?profile=my_car&"
+        JsonFeatureCollection featureCollection;
+        try (Response response = clientTarget(app, "/buffer?profile=my_car&"
                 + "point=42.57839,1.631823&roadName=CG-2&thresholdDistance=2000").request()
-                .buildGet().invoke();
-        assertEquals(200, response.getStatus());
+                .buildGet().invoke()) {
+            assertEquals(200, response.getStatus());
 
-        JsonFeatureCollection featureCollection = response.readEntity(JsonFeatureCollection.class);
+            featureCollection = response.readEntity(JsonFeatureCollection.class);
+        }
 
         assertEquals(2, featureCollection.getFeatures().size());
         Geometry lineString0 = featureCollection.getFeatures().get(0).getGeometry();
@@ -96,11 +100,13 @@ public class BufferResourceTest {
 
     @Test
     public void testInvalidRoadName() {
-        final Response response = clientTarget(app, "/buffer?profile=my_car&"
+        JsonNode json;
+        try (Response response = clientTarget(app, "/buffer?profile=my_car&"
                 + "point=42.57839,1.631823&roadName=INVALID&thresholdDistance=2000")
-                .request().buildGet().invoke();
-        assertEquals(500, response.getStatus());
-        JsonNode json = response.readEntity(JsonNode.class);
+                .request().buildGet().invoke()) {
+            assertEquals(500, response.getStatus());
+            json = response.readEntity(JsonNode.class);
+        }
         assertTrue(json.has("message"), "There should have been an error response");
         String expected = "Could not find road with that name near the selection.";
         assertTrue(json.get("message").asText().contains(expected),
@@ -109,18 +115,24 @@ public class BufferResourceTest {
     }
 
     @Test
-    public void testLargerthresholdDistance() {
-        final Response longerResponse = clientTarget(app, "/buffer?profile=my_car&"
+    public void testLargerThresholdDistance() {
+        JsonFeatureCollection longFeatureCollection;
+        try (Response longerResponse = clientTarget(app, "/buffer?profile=my_car&"
                 + "point=42.54287,1.471&roadName=CG-4&thresholdDistance=4000").request()
-                .buildGet().invoke();
-        final Response shorterResponse = clientTarget(app, "/buffer?profile=my_car&"
-                + "point=42.54287,1.471&roadName=CG-4&thresholdDistance=2000").request()
-                .buildGet().invoke();
-        assertEquals(200, longerResponse.getStatus());
-        assertEquals(200, shorterResponse.getStatus());
+                .buildGet().invoke()) {
+            assertEquals(200, longerResponse.getStatus());
 
-        JsonFeatureCollection longFeatureCollection = longerResponse.readEntity(JsonFeatureCollection.class);
-        JsonFeatureCollection shortFeatureCollection = shorterResponse.readEntity(JsonFeatureCollection.class);
+            longFeatureCollection = longerResponse.readEntity(JsonFeatureCollection.class);
+        }
+
+        JsonFeatureCollection shortFeatureCollection;
+        try (Response shorterResponse = clientTarget(app, "/buffer?profile=my_car&"
+                + "point=42.54287,1.471&roadName=CG-4&thresholdDistance=2000").request()
+                .buildGet().invoke()) {
+            assertEquals(200, shorterResponse.getStatus());
+            shortFeatureCollection = shorterResponse.readEntity(JsonFeatureCollection.class);
+        }
+
         assertEquals(2, longFeatureCollection.getFeatures().size());
         assertEquals(2, shortFeatureCollection.getFeatures().size());
         Geometry longLineString0 = longFeatureCollection.getFeatures().get(0).getGeometry();
@@ -150,15 +162,20 @@ public class BufferResourceTest {
 
     @Test
     public void testCustomQueryMultiplier() {
-        final Response widerResponse = clientTarget(app, "/buffer?profile=my_car&"
+        try (Response widerResponse = clientTarget(app, "/buffer?profile=my_car&"
                 + "point=42.600114,1.45046&roadName=CG-4&thresholdDistance=2000&queryMultiplier=.2")
-                .request().buildGet().invoke();
-        final Response thinnerResponse = clientTarget(app, "/buffer?profile=my_car&"
+                .request().buildGet().invoke()) {
+            assertEquals(200, widerResponse.getStatus());
+        }
+
+        JsonNode thinnerJson;
+        try (Response thinnerResponse = clientTarget(app, "/buffer?profile=my_car&"
                 + "point=42.600114,1.45046&roadName=CG-4&thresholdDistance=2000").request()
-                .buildGet().invoke();
-        assertEquals(200, widerResponse.getStatus());
-        assertEquals(500, thinnerResponse.getStatus());
-        JsonNode thinnerJson = thinnerResponse.readEntity(JsonNode.class);
+                .buildGet().invoke()) {
+            assertEquals(500, thinnerResponse.getStatus());
+            thinnerJson = thinnerResponse.readEntity(JsonNode.class);
+        }
+
         assertTrue(thinnerJson.has("message"), "There should have been an error response");
         String expected = "Could not find road with that name near the selection.";
         assertTrue(thinnerJson.get("message").asText().contains(expected),
@@ -168,12 +185,14 @@ public class BufferResourceTest {
 
     @Test
     public void testBidirectionalUpstreamPath() {
-        final Response response = clientTarget(app, "/buffer?profile=my_car&"
+        JsonFeatureCollection featureCollection;
+        try (Response response = clientTarget(app, "/buffer?profile=my_car&"
                 + "point=42.54287,1.471&roadName=CG-4&thresholdDistance=2000&buildUpstream=true")
-                .request().buildGet().invoke();
-        assertEquals(200, response.getStatus());
+                .request().buildGet().invoke()) {
+            assertEquals(200, response.getStatus());
 
-        JsonFeatureCollection featureCollection = response.readEntity(JsonFeatureCollection.class);
+            featureCollection = response.readEntity(JsonFeatureCollection.class);
+        }
 
         assertEquals(2, featureCollection.getFeatures().size());
         Geometry lineString0 = featureCollection.getFeatures().get(0).getGeometry();
@@ -189,17 +208,23 @@ public class BufferResourceTest {
 
     @Test
     public void testDownstreamAndUpstreamPathAreIdenticalOnPurelyBidirectionalRoad() {
-        final Response downstreamResponse = clientTarget(app, "/buffer?profile=my_car&"
+        JsonFeatureCollection downstreamFeatureCollection;
+        try (Response downstreamResponse = clientTarget(app, "/buffer?profile=my_car&"
                 + "point=42.54287,1.471&roadName=CG-4&thresholdDistance=2000").request()
-                .buildGet().invoke();
-        final Response upstreamResponse = clientTarget(app, "/buffer?profile=my_car&"
-                + "point=42.54287,1.471&roadName=CG-4&thresholdDistance=2000&buildUpstream=true")
-                .request().buildGet().invoke();
-        assertEquals(200, downstreamResponse.getStatus());
-        assertEquals(200, upstreamResponse.getStatus());
+                .buildGet().invoke()) {
+            assertEquals(200, downstreamResponse.getStatus());
+            downstreamFeatureCollection = downstreamResponse.readEntity(JsonFeatureCollection.class);
+        }
 
-        JsonFeatureCollection upstreamFeatureCollection = upstreamResponse.readEntity(JsonFeatureCollection.class);
-        JsonFeatureCollection downstreamFeatureCollection = downstreamResponse.readEntity(JsonFeatureCollection.class);
+        JsonFeatureCollection upstreamFeatureCollection;
+        try (Response upstreamResponse = clientTarget(app, "/buffer?profile=my_car&"
+                + "point=42.54287,1.471&roadName=CG-4&thresholdDistance=2000&buildUpstream=true")
+                .request().buildGet().invoke()) {
+            assertEquals(200, upstreamResponse.getStatus());
+
+            upstreamFeatureCollection = upstreamResponse.readEntity(JsonFeatureCollection.class);
+        }
+
         assertEquals(2, upstreamFeatureCollection.getFeatures().size());
         assertEquals(2, downstreamFeatureCollection.getFeatures().size());
         Geometry upstreamLineString0 = upstreamFeatureCollection.getFeatures().get(0).getGeometry();
@@ -228,17 +253,23 @@ public class BufferResourceTest {
 
     @Test
     public void testDownstreamAndUpstreamPathAreDifferentWithUnidirectionalStarts() {
-        final Response downstreamResponse = clientTarget(app, "/buffer?profile=my_car&"
+        JsonFeatureCollection downstreamFeatureCollection;
+        try (Response downstreamResponse = clientTarget(app, "/buffer?profile=my_car&"
                 + "point=42.57839,1.631823&roadName=CG-2&thresholdDistance=2000").request()
-                .buildGet().invoke();
-        final Response upstreamResponse = clientTarget(app, "/buffer?profile=my_car&"
-                + "point=42.57839,1.631823&roadName=CG-2&thresholdDistance=2000&buildUpstream=true")
-                .request().buildGet().invoke();
-        assertEquals(200, downstreamResponse.getStatus());
-        assertEquals(200, upstreamResponse.getStatus());
+                .buildGet().invoke()) {
+            assertEquals(200, downstreamResponse.getStatus());
+            downstreamFeatureCollection = downstreamResponse.readEntity(JsonFeatureCollection.class);
+        }
 
-        JsonFeatureCollection upstreamFeatureCollection = upstreamResponse.readEntity(JsonFeatureCollection.class);
-        JsonFeatureCollection downstreamFeatureCollection = downstreamResponse.readEntity(JsonFeatureCollection.class);
+        JsonFeatureCollection upstreamFeatureCollection;
+        try (Response upstreamResponse = clientTarget(app, "/buffer?profile=my_car&"
+                + "point=42.57839,1.631823&roadName=CG-2&thresholdDistance=2000&buildUpstream=true")
+                .request().buildGet().invoke()) {
+            assertEquals(200, upstreamResponse.getStatus());
+
+            upstreamFeatureCollection = upstreamResponse.readEntity(JsonFeatureCollection.class);
+        }
+
         assertEquals(2, upstreamFeatureCollection.getFeatures().size());
         assertEquals(2, downstreamFeatureCollection.getFeatures().size());
         Geometry upstreamLineString0 = upstreamFeatureCollection.getFeatures().get(0).getGeometry();
@@ -261,12 +292,14 @@ public class BufferResourceTest {
 
     @Test
     public void testBidirectionalStartQueryWithSmallerThresholdDistance() {
-        final Response response = clientTarget(app, "/buffer?profile=my_car&"
+        JsonFeatureCollection featureCollection;
+        try (Response response = clientTarget(app, "/buffer?profile=my_car&"
                 + "point=42.54287,1.471&roadName=CG-4&thresholdDistance=100").request()
-                .buildGet().invoke();
-        assertEquals(200, response.getStatus());
+                .buildGet().invoke()) {
+            assertEquals(200, response.getStatus());
 
-        JsonFeatureCollection featureCollection = response.readEntity(JsonFeatureCollection.class);
+            featureCollection = response.readEntity(JsonFeatureCollection.class);
+        }
 
         assertEquals(2, featureCollection.getFeatures().size());
         Geometry lineString0 = featureCollection.getFeatures().get(0).getGeometry();
@@ -282,12 +315,14 @@ public class BufferResourceTest {
 
     @Test
     public void testBidirectionalStartQueryWithTooSmallThresholdDistance() {
-        final Response response = clientTarget(app, "/buffer?profile=my_car&"
+        JsonNode json;
+        try (Response response = clientTarget(app, "/buffer?profile=my_car&"
                 + "point=42.54287,1.471&roadName=CG-4&thresholdDistance=50").request()
-                .buildGet().invoke();
+                .buildGet().invoke()) {
 
-        assertEquals(500, response.getStatus());
-        JsonNode json = response.readEntity(JsonNode.class);
+            assertEquals(500, response.getStatus());
+            json = response.readEntity(JsonNode.class);
+        }
         assertTrue(json.has("message"), "There should have been an error response");
         String expected = "Threshold distance is too short to construct a valid path.";
         assertTrue(json.get("message").asText().contains(expected),
@@ -297,9 +332,10 @@ public class BufferResourceTest {
 
     @Test
     public void testUnusualRoadNameFormat() {
-        final Response response = clientTarget(app, "/buffer?profile=my_car&"
+        try (Response response = clientTarget(app, "/buffer?profile=my_car&"
                 + "point=42.54287,1.471&roadName=cG4-&thresholdDistance=2000").request()
-                .buildGet().invoke();
-        assertEquals(200, response.getStatus());
+                .buildGet().invoke()) {
+            assertEquals(200, response.getStatus());
+        }
     }
 }
