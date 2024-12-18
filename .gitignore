@@ -43,3 +43,7 @@ local.properties
 .DS_Store
 /graph-cache
 package-lock.json
+
+# AllTrails specific
+alltrails/data/*
+!alltrails/data/.gitkeep

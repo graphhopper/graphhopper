@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "graphhopper-service.fullname" . }}
+  labels:
+    {{- include "graphhopper-service.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "graphhopper-service.selectorLabels" . | nindent 6 }}
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        {{- include "graphhopper-service.selectorLabels" . | nindent 8 }}
+    spec:
+      serviceAccountName: graphhopper-service
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+      - name: {{ .Chart.Name }}
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 12 }}
+        image: "{{ .Values.awsAccount }}.dkr.ecr.{{ .Values.region }}.amazonaws.com/graphhopper-service:{{ include "graphhopper-service.appVersion" . }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        resources:
+          {{- toYaml .Values.resources | nindent 12 }}
+        envFrom:
+          - secretRef:
+              name: graphhopper-service-secrets
+          - configMapRef:
+              name: graphhopper-infrastructure
+        env:
+          - name: ENABLE_S3_CACHE
+            value: "true"
+          - name: AWS_REGION
+            value: us-west-2
+          - name: AWS_WEB_IDENTITY_TOKEN_FILE
+            value: /var/run/secrets/eks.amazonaws.com/serviceaccount/token
+          - name: PRODUCTION
+            value: "true"
+          - name: CREATE_DEFAULT_S3_BUCKETS
+            value: "true"
+        lifecycle: 
+          preStop:
+            exec:
+              command: ["/bin/sh", "-c" , "sleep 30"]
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          failureThreshold: 5
+          periodSeconds: 2
+          initialDelaySeconds: 30
+        volumeMounts:
+        - mountPath: /graphhopper/data
+          name: s3-filesystem
+      volumes:
+      - name: s3-filesystem
+        persistentVolumeClaim:
+          claimName: graphhopper-service              
+
