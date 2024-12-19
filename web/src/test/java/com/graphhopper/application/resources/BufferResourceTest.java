@@ -1,307 +1,336 @@
-// package com.graphhopper.application.resources;
+package com.graphhopper.application.resources;
 
-// import static com.graphhopper.application.util.TestUtils.clientTarget;
-// import static org.junit.jupiter.api.Assertions.assertEquals;
-// import static org.junit.jupiter.api.Assertions.assertNotEquals;
-// import static org.junit.jupiter.api.Assertions.assertTrue;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.graphhopper.application.GraphHopperApplication;
+import com.graphhopper.application.GraphHopperServerConfiguration;
+import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
+import com.graphhopper.routing.TestProfiles;
+import com.graphhopper.util.Helper;
+import com.graphhopper.util.JsonFeatureCollection;
+import com.graphhopper.util.TurnCostsConfig;
+import io.dropwizard.testing.junit5.DropwizardAppExtension;
+import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.locationtech.jts.geom.Geometry;
 
-// import java.io.File;
-// import java.util.Arrays;
-// import java.util.List;
+import javax.ws.rs.core.Response;
+import java.io.File;
+import java.util.Arrays;
 
-// import javax.ws.rs.core.Response;
+import static com.graphhopper.application.util.TestUtils.clientTarget;
+import static org.junit.jupiter.api.Assertions.*;
 
-// import com.fasterxml.jackson.databind.JsonNode;
-// import com.graphhopper.application.GraphHopperApplication;
-// import com.graphhopper.application.GraphHopperServerConfiguration;
-// import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
-// import com.graphhopper.config.Profile;
-// import com.graphhopper.routing.TestProfiles;
-// import com.graphhopper.util.Helper;
-// import com.graphhopper.util.JsonFeatureCollection;
-// import com.graphhopper.util.TurnCostsConfig;
+@ExtendWith(DropwizardExtensionsSupport.class)
+public class BufferResourceTest {
+    private static final String DIR = "./target/andorra-gh/";
+    public static final DropwizardAppExtension<GraphHopperServerConfiguration> app = new DropwizardAppExtension<>(GraphHopperApplication.class, createConfig());
 
-// import org.junit.jupiter.api.AfterAll;
-// import org.junit.jupiter.api.BeforeAll;
-// import org.junit.jupiter.api.Test;
-// import org.junit.jupiter.api.extension.ExtendWith;
-// import org.locationtech.jts.geom.Geometry;
+    private static GraphHopperServerConfiguration createConfig() {
+        GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
+        config.getGraphHopperConfiguration()
+                .putObject("datareader.file", "../core/files/andorra.osm.pbf")
+                .putObject("import.osm.ignored_highways", "")
+                .putObject("graph.location", DIR)
+                .putObject("graph.encoded_values", "car_access, car_average_speed")
+                .setProfiles(Arrays.asList(
+                        TestProfiles.accessAndSpeed("fast_car", "car").setTurnCostsConfig(TurnCostsConfig.car()),
+                        TestProfiles.constantSpeed("short_car", 35).setTurnCostsConfig(TurnCostsConfig.car()),
+                        TestProfiles.accessAndSpeed("fast_car_no_turn_restrictions", "car")));
+        return config;
+    }
 
-// import io.dropwizard.testing.junit5.DropwizardAppExtension;
-// import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
+    @BeforeAll
+    @AfterAll
+    public static void cleanUp() {
+        Helper.removeDir(new File(DIR));
+    }
 
-// @ExtendWith(DropwizardExtensionsSupport.class)
-// public class BufferResourceTest {
-//     private static final String DIR = "./target/andorra-gh/";
-//     public static final DropwizardAppExtension<GraphHopperServerConfiguration> app = new DropwizardAppExtension<>(GraphHopperApplication.class, createConfig());
+    @Test
+    public void testBasicBidirectionalStartQuery() {
+        JsonFeatureCollection featureCollection;
+        try (Response response = clientTarget(app, "/buffer?profile=my_car&"
+                + "point=42.54287,1.471&roadName=CG-4&thresholdDistance=2000").request()
+                .buildGet().invoke()) {
+            assertEquals(200, response.getStatus());
 
-//     private static GraphHopperServerConfiguration createConfig() {
-//         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
-//         config.getGraphHopperConfiguration()
-//                 .putObject("datareader.file", "../core/files/andorra.osm.pbf")
-//                 .putObject("import.osm.ignored_highways", "")
-//                 .putObject("graph.location", DIR)
-//                 .putObject("graph.encoded_values", "car_access, car_average_speed")
-//                 .setProfiles(Arrays.asList(
-//                         TestProfiles.accessAndSpeed("fast_car", "car").setTurnCostsConfig(TurnCostsConfig.car()),
-//                         TestProfiles.constantSpeed("short_car", 35).setTurnCostsConfig(TurnCostsConfig.car()),
-//                         TestProfiles.accessAndSpeed("fast_car_no_turn_restrictions", "car")));
-//         return config;
-//     }
+            featureCollection = response.readEntity(JsonFeatureCollection.class);
+        }
 
-//     @BeforeAll
-//     @AfterAll
-//     public static void cleanUp() {
-//         Helper.removeDir(new File(DIR));
-//     }
+        assertEquals(2, featureCollection.getFeatures().size());
+        Geometry lineString0 = featureCollection.getFeatures().get(0).getGeometry();
+        Geometry lineString1 = featureCollection.getFeatures().get(1).getGeometry();
 
-//     @Test
-//     public void testBasicBidirectionalStartQuery() {
-//         final Response response = clientTarget(app, "/buffer?profile=my_car&"
-//                 + "point=42.54287,1.471&roadName=CG-4&thresholdDistance=2000").request()
-//                 .buildGet().invoke();
-//         assertEquals(200, response.getStatus());
+        // Identical start points
+        assertEquals(lineString0.getCoordinates()[0], lineString1.getCoordinates()[0]);
 
-//         JsonFeatureCollection featureCollection = response.readEntity(JsonFeatureCollection.class);
+        // Different end points
+        assertNotEquals(lineString0.getCoordinates()[lineString0.getCoordinates().length - 1],
+                lineString1.getCoordinates()[lineString1.getCoordinates().length - 1]);
+    }
 
-//         assertEquals(2, featureCollection.getFeatures().size());
-//         Geometry lineString0 = featureCollection.getFeatures().get(0).getGeometry();
-//         Geometry lineString1 = featureCollection.getFeatures().get(1).getGeometry();
+    @Test
+    public void testBasicUnidirectionalStartQuery() {
+        JsonFeatureCollection featureCollection;
+        try (Response response = clientTarget(app, "/buffer?profile=my_car&"
+                + "point=42.57839,1.631823&roadName=CG-2&thresholdDistance=2000").request()
+                .buildGet().invoke()) {
+            assertEquals(200, response.getStatus());
 
-//         // Identical start points
-//         assertEquals(lineString0.getCoordinates()[0], lineString1.getCoordinates()[0]);
+            featureCollection = response.readEntity(JsonFeatureCollection.class);
+        }
 
-//         // Different end points
-//         assertNotEquals(lineString0.getCoordinates()[lineString0.getCoordinates().length - 1],
-//                 lineString1.getCoordinates()[lineString1.getCoordinates().length - 1]);
-//     }
+        assertEquals(2, featureCollection.getFeatures().size());
+        Geometry lineString0 = featureCollection.getFeatures().get(0).getGeometry();
+        Geometry lineString1 = featureCollection.getFeatures().get(1).getGeometry();
 
-//     @Test
-//     public void testBasicUnidirectionalStartQuery() {
-//         final Response response = clientTarget(app, "/buffer?profile=my_car&"
-//                 + "point=42.57839,1.631823&roadName=CG-2&thresholdDistance=2000").request()
-//                 .buildGet().invoke();
-//         assertEquals(200, response.getStatus());
+        // Different start points
+        assertNotEquals(lineString0.getCoordinates()[0], lineString1.getCoordinates()[0]);
+        // Arbitrary - different endpoints
+        assertNotEquals(lineString0.getCoordinates()[lineString0.getCoordinates().length - 1],
+                lineString1.getCoordinates()[lineString1.getCoordinates().length - 1]);
+    }
 
-//         JsonFeatureCollection featureCollection = response.readEntity(JsonFeatureCollection.class);
+    @Test
+    public void testInvalidRoadName() {
+        JsonNode json;
+        try (Response response = clientTarget(app, "/buffer?profile=my_car&"
+                + "point=42.57839,1.631823&roadName=INVALID&thresholdDistance=2000")
+                .request().buildGet().invoke()) {
+            assertEquals(500, response.getStatus());
+            json = response.readEntity(JsonNode.class);
+        }
+        assertTrue(json.has("message"), "There should have been an error response");
+        String expected = "Could not find road with that name near the selection.";
+        assertTrue(json.get("message").asText().contains(expected),
+                "There should be an error containing " + expected + ", but got: "
+                        + json.get("message"));
+    }
 
-//         assertEquals(2, featureCollection.getFeatures().size());
-//         Geometry lineString0 = featureCollection.getFeatures().get(0).getGeometry();
-//         Geometry lineString1 = featureCollection.getFeatures().get(1).getGeometry();
+    @Test
+    public void testLargerThresholdDistance() {
+        JsonFeatureCollection longFeatureCollection;
+        try (Response longerResponse = clientTarget(app, "/buffer?profile=my_car&"
+                + "point=42.54287,1.471&roadName=CG-4&thresholdDistance=4000").request()
+                .buildGet().invoke()) {
+            assertEquals(200, longerResponse.getStatus());
 
-//         // Different start points
-//         assertNotEquals(lineString0.getCoordinates()[0], lineString1.getCoordinates()[0]);
-//         // Arbitrary - different endpoints
-//         assertNotEquals(lineString0.getCoordinates()[lineString0.getCoordinates().length - 1],
-//                 lineString1.getCoordinates()[lineString1.getCoordinates().length - 1]);
-//     }
+            longFeatureCollection = longerResponse.readEntity(JsonFeatureCollection.class);
+        }
 
-//     @Test
-//     public void testInvalidRoadName() {
-//         final Response response = clientTarget(app, "/buffer?profile=my_car&"
-//                 + "point=42.57839,1.631823&roadName=INVALID&thresholdDistance=2000")
-//                 .request().buildGet().invoke();
-//         assertEquals(500, response.getStatus());
-//         JsonNode json = response.readEntity(JsonNode.class);
-//         assertTrue(json.has("message"), "There should have been an error response");
-//         String expected = "Could not find road with that name near the selection.";
-//         assertTrue(json.get("message").asText().contains(expected),
-//                 "There should be an error containing " + expected + ", but got: "
-//                         + json.get("message"));
-//     }
+        JsonFeatureCollection shortFeatureCollection;
+        try (Response shorterResponse = clientTarget(app, "/buffer?profile=my_car&"
+                + "point=42.54287,1.471&roadName=CG-4&thresholdDistance=2000").request()
+                .buildGet().invoke()) {
+            assertEquals(200, shorterResponse.getStatus());
+            shortFeatureCollection = shorterResponse.readEntity(JsonFeatureCollection.class);
+        }
 
-//     @Test
-//     public void testLargerthresholdDistance() {
-//         final Response longerResponse = clientTarget(app, "/buffer?profile=my_car&"
-//                 + "point=42.54287,1.471&roadName=CG-4&thresholdDistance=4000").request()
-//                 .buildGet().invoke();
-//         final Response shorterResponse = clientTarget(app, "/buffer?profile=my_car&"
-//                 + "point=42.54287,1.471&roadName=CG-4&thresholdDistance=2000").request()
-//                 .buildGet().invoke();
-//         assertEquals(200, longerResponse.getStatus());
-//         assertEquals(200, shorterResponse.getStatus());
+        assertEquals(2, longFeatureCollection.getFeatures().size());
+        assertEquals(2, shortFeatureCollection.getFeatures().size());
+        Geometry longLineString0 = longFeatureCollection.getFeatures().get(0).getGeometry();
+        Geometry longLineString1 = longFeatureCollection.getFeatures().get(1).getGeometry();
+        Geometry shortLineString0 = shortFeatureCollection.getFeatures().get(0).getGeometry();
+        Geometry shortLineString1 = shortFeatureCollection.getFeatures().get(1).getGeometry();
 
-//         JsonFeatureCollection longFeatureCollection = longerResponse.readEntity(JsonFeatureCollection.class);
-//         JsonFeatureCollection shortFeatureCollection = shorterResponse.readEntity(JsonFeatureCollection.class);
-//         assertEquals(2, longFeatureCollection.getFeatures().size());
-//         assertEquals(2, shortFeatureCollection.getFeatures().size());
-//         Geometry longLineString0 = longFeatureCollection.getFeatures().get(0).getGeometry();
-//         Geometry longLineString1 = longFeatureCollection.getFeatures().get(1).getGeometry();
-//         Geometry shortLineString0 = shortFeatureCollection.getFeatures().get(0).getGeometry();
-//         Geometry shortLineString1 = shortFeatureCollection.getFeatures().get(1).getGeometry();
+        // Identical end points
+        assertEquals(longLineString0.getCoordinates()[0], longLineString1.getCoordinates()[0]);
+        assertEquals(longLineString0.getCoordinates()[0], shortLineString0.getCoordinates()[0]);
+        assertEquals(longLineString0.getCoordinates()[0], shortLineString1.getCoordinates()[0]);
 
-//         // Identical end points
-//         assertEquals(longLineString0.getCoordinates()[0], longLineString1.getCoordinates()[0]);
-//         assertEquals(longLineString0.getCoordinates()[0], shortLineString0.getCoordinates()[0]);
-//         assertEquals(longLineString0.getCoordinates()[0], shortLineString1.getCoordinates()[0]);
+        // Different start points
+        assertNotEquals(longLineString0.getCoordinates()[longLineString0.getCoordinates().length - 1],
+                longLineString1.getCoordinates()[longLineString1.getCoordinates().length - 1]);
+        assertNotEquals(longLineString0.getCoordinates()[longLineString0.getCoordinates().length - 1],
+                shortLineString0.getCoordinates()[shortLineString0.getCoordinates().length - 1]);
+        assertNotEquals(longLineString0.getCoordinates()[longLineString0.getCoordinates().length - 1],
+                shortLineString1.getCoordinates()[shortLineString1.getCoordinates().length - 1]);
+        assertNotEquals(longLineString1.getCoordinates()[longLineString1.getCoordinates().length - 1],
+                shortLineString0.getCoordinates()[shortLineString0.getCoordinates().length - 1]);
+        assertNotEquals(longLineString1.getCoordinates()[longLineString1.getCoordinates().length - 1],
+                shortLineString1.getCoordinates()[shortLineString1.getCoordinates().length - 1]);
+        assertNotEquals(shortLineString0.getCoordinates()[shortLineString0.getCoordinates().length - 1],
+                shortLineString1.getCoordinates()[shortLineString1.getCoordinates().length - 1]);
+    }
 
-//         // Different start points
-//         assertNotEquals(longLineString0.getCoordinates()[longLineString0.getCoordinates().length - 1],
-//                 longLineString1.getCoordinates()[longLineString1.getCoordinates().length - 1]);
-//         assertNotEquals(longLineString0.getCoordinates()[longLineString0.getCoordinates().length - 1],
-//                 shortLineString0.getCoordinates()[shortLineString0.getCoordinates().length - 1]);
-//         assertNotEquals(longLineString0.getCoordinates()[longLineString0.getCoordinates().length - 1],
-//                 shortLineString1.getCoordinates()[shortLineString1.getCoordinates().length - 1]);
-//         assertNotEquals(longLineString1.getCoordinates()[longLineString1.getCoordinates().length - 1],
-//                 shortLineString0.getCoordinates()[shortLineString0.getCoordinates().length - 1]);
-//         assertNotEquals(longLineString1.getCoordinates()[longLineString1.getCoordinates().length - 1],
-//                 shortLineString1.getCoordinates()[shortLineString1.getCoordinates().length - 1]);
-//         assertNotEquals(shortLineString0.getCoordinates()[shortLineString0.getCoordinates().length - 1],
-//                 shortLineString1.getCoordinates()[shortLineString1.getCoordinates().length - 1]);
-//     }
+    @Test
+    public void testCustomQueryMultiplier() {
+        try (Response widerResponse = clientTarget(app, "/buffer?profile=my_car&"
+                + "point=42.600114,1.45046&roadName=CG-4&thresholdDistance=2000&queryMultiplier=.2")
+                .request().buildGet().invoke()) {
+            assertEquals(200, widerResponse.getStatus());
+        }
 
-//     @Test
-//     public void testCustomQueryMultiplier() {
-//         final Response widerResponse = clientTarget(app, "/buffer?profile=my_car&"
-//                 + "point=42.600114,1.45046&roadName=CG-4&thresholdDistance=2000&queryMultiplier=.2")
-//                 .request().buildGet().invoke();
-//         final Response thinnerResponse = clientTarget(app, "/buffer?profile=my_car&"
-//                 + "point=42.600114,1.45046&roadName=CG-4&thresholdDistance=2000").request()
-//                 .buildGet().invoke();
-//         assertEquals(200, widerResponse.getStatus());
-//         assertEquals(500, thinnerResponse.getStatus());
-//         JsonNode thinnerJson = thinnerResponse.readEntity(JsonNode.class);
-//         assertTrue(thinnerJson.has("message"), "There should have been an error response");
-//         String expected = "Could not find road with that name near the selection.";
-//         assertTrue(thinnerJson.get("message").asText().contains(expected),
-//                 "There should be an error containing " + expected + ", but got: "
-//                         + thinnerJson.get("message"));
-//     }
+        JsonNode thinnerJson;
+        try (Response thinnerResponse = clientTarget(app, "/buffer?profile=my_car&"
+                + "point=42.600114,1.45046&roadName=CG-4&thresholdDistance=2000").request()
+                .buildGet().invoke()) {
+            assertEquals(500, thinnerResponse.getStatus());
+            thinnerJson = thinnerResponse.readEntity(JsonNode.class);
+        }
 
-//     @Test
-//     public void testBidirectionalUpstreamPath() {
-//         final Response response = clientTarget(app, "/buffer?profile=my_car&"
-//                 + "point=42.54287,1.471&roadName=CG-4&thresholdDistance=2000&buildUpstream=true")
-//                 .request().buildGet().invoke();
-//         assertEquals(200, response.getStatus());
+        assertTrue(thinnerJson.has("message"), "There should have been an error response");
+        String expected = "Could not find road with that name near the selection.";
+        assertTrue(thinnerJson.get("message").asText().contains(expected),
+                "There should be an error containing " + expected + ", but got: "
+                        + thinnerJson.get("message"));
+    }
 
-//         JsonFeatureCollection featureCollection = response.readEntity(JsonFeatureCollection.class);
+    @Test
+    public void testBidirectionalUpstreamPath() {
+        JsonFeatureCollection featureCollection;
+        try (Response response = clientTarget(app, "/buffer?profile=my_car&"
+                + "point=42.54287,1.471&roadName=CG-4&thresholdDistance=2000&buildUpstream=true")
+                .request().buildGet().invoke()) {
+            assertEquals(200, response.getStatus());
 
-//         assertEquals(2, featureCollection.getFeatures().size());
-//         Geometry lineString0 = featureCollection.getFeatures().get(0).getGeometry();
-//         Geometry lineString1 = featureCollection.getFeatures().get(1).getGeometry();
+            featureCollection = response.readEntity(JsonFeatureCollection.class);
+        }
 
-//         // Identical start points (reversed index)
-//         assertEquals(lineString0.getCoordinates()[lineString0.getCoordinates().length - 1],
-//                 lineString1.getCoordinates()[lineString1.getCoordinates().length - 1]);
+        assertEquals(2, featureCollection.getFeatures().size());
+        Geometry lineString0 = featureCollection.getFeatures().get(0).getGeometry();
+        Geometry lineString1 = featureCollection.getFeatures().get(1).getGeometry();
 
-//         // Different endpoints (reversed index)
-//         assertNotEquals(lineString0.getCoordinates()[0], lineString1.getCoordinates()[0]);
-//     }
+        // Identical start points (reversed index)
+        assertEquals(lineString0.getCoordinates()[lineString0.getCoordinates().length - 1],
+                lineString1.getCoordinates()[lineString1.getCoordinates().length - 1]);
 
-//     @Test
-//     public void testDownstreamAndUpstreamPathAreIdenticalOnPurelyBidirectionalRoad() {
-//         final Response downstreamResponse = clientTarget(app, "/buffer?profile=my_car&"
-//                 + "point=42.54287,1.471&roadName=CG-4&thresholdDistance=2000").request()
-//                 .buildGet().invoke();
-//         final Response upstreamResponse = clientTarget(app, "/buffer?profile=my_car&"
-//                 + "point=42.54287,1.471&roadName=CG-4&thresholdDistance=2000&buildUpstream=true")
-//                 .request().buildGet().invoke();
-//         assertEquals(200, downstreamResponse.getStatus());
-//         assertEquals(200, upstreamResponse.getStatus());
+        // Different endpoints (reversed index)
+        assertNotEquals(lineString0.getCoordinates()[0], lineString1.getCoordinates()[0]);
+    }
 
-//         JsonFeatureCollection upstreamFeatureCollection = upstreamResponse.readEntity(JsonFeatureCollection.class);
-//         JsonFeatureCollection downstreamFeatureCollection = downstreamResponse.readEntity(JsonFeatureCollection.class);
-//         assertEquals(2, upstreamFeatureCollection.getFeatures().size());
-//         assertEquals(2, downstreamFeatureCollection.getFeatures().size());
-//         Geometry upstreamLineString0 = upstreamFeatureCollection.getFeatures().get(0).getGeometry();
-//         Geometry upstreamLineString1 = upstreamFeatureCollection.getFeatures().get(1).getGeometry();
-//         Geometry downstreamLineString0 = downstreamFeatureCollection.getFeatures().get(0).getGeometry();
-//         Geometry downstreamLineString1 = downstreamFeatureCollection.getFeatures().get(1).getGeometry();
+    @Test
+    public void testDownstreamAndUpstreamPathAreIdenticalOnPurelyBidirectionalRoad() {
+        JsonFeatureCollection downstreamFeatureCollection;
+        try (Response downstreamResponse = clientTarget(app, "/buffer?profile=my_car&"
+                + "point=42.54287,1.471&roadName=CG-4&thresholdDistance=2000").request()
+                .buildGet().invoke()) {
+            assertEquals(200, downstreamResponse.getStatus());
+            downstreamFeatureCollection = downstreamResponse.readEntity(JsonFeatureCollection.class);
+        }
 
-//         // Since bidirectional road has an arbitrary flow, downstream-start and
-//         // upstream-end should match
-//         assertEquals(upstreamLineString1.getCoordinates()[upstreamLineString1.getCoordinates().length - 1],
-//                 downstreamLineString1.getCoordinates()[0]);
-//         assertEquals(upstreamLineString0.getCoordinates()[upstreamLineString0.getCoordinates().length - 1],
-//                 downstreamLineString0.getCoordinates()[0]);
+        JsonFeatureCollection upstreamFeatureCollection;
+        try (Response upstreamResponse = clientTarget(app, "/buffer?profile=my_car&"
+                + "point=42.54287,1.471&roadName=CG-4&thresholdDistance=2000&buildUpstream=true")
+                .request().buildGet().invoke()) {
+            assertEquals(200, upstreamResponse.getStatus());
 
-//         // And downstream-end and upstream-start should match
-//         assertEquals(upstreamLineString0.getCoordinates()[0],
-//                 downstreamLineString0.getCoordinates()[downstreamLineString0.getCoordinates().length - 1]);
-//         assertEquals(upstreamLineString1.getCoordinates()[0],
-//                 downstreamLineString1.getCoordinates()[downstreamLineString1.getCoordinates().length - 1]);
+            upstreamFeatureCollection = upstreamResponse.readEntity(JsonFeatureCollection.class);
+        }
 
-//         // And origin points should match internally
-//         assertEquals(upstreamLineString0.getCoordinates()[upstreamLineString0.getCoordinates().length - 1],
-//                 upstreamLineString1.getCoordinates()[upstreamLineString1.getCoordinates().length - 1]);
-//         assertEquals(downstreamLineString0.getCoordinates()[0], downstreamLineString1.getCoordinates()[0]);
-//     }
+        assertEquals(2, upstreamFeatureCollection.getFeatures().size());
+        assertEquals(2, downstreamFeatureCollection.getFeatures().size());
+        Geometry upstreamLineString0 = upstreamFeatureCollection.getFeatures().get(0).getGeometry();
+        Geometry upstreamLineString1 = upstreamFeatureCollection.getFeatures().get(1).getGeometry();
+        Geometry downstreamLineString0 = downstreamFeatureCollection.getFeatures().get(0).getGeometry();
+        Geometry downstreamLineString1 = downstreamFeatureCollection.getFeatures().get(1).getGeometry();
 
-//     @Test
-//     public void testDownstreamAndUpstreamPathAreDifferentWithUnidirectionalStarts() {
-//         final Response downstreamResponse = clientTarget(app, "/buffer?profile=my_car&"
-//                 + "point=42.57839,1.631823&roadName=CG-2&thresholdDistance=2000").request()
-//                 .buildGet().invoke();
-//         final Response upstreamResponse = clientTarget(app, "/buffer?profile=my_car&"
-//                 + "point=42.57839,1.631823&roadName=CG-2&thresholdDistance=2000&buildUpstream=true")
-//                 .request().buildGet().invoke();
-//         assertEquals(200, downstreamResponse.getStatus());
-//         assertEquals(200, upstreamResponse.getStatus());
+        // Since bidirectional road has an arbitrary flow, downstream-start and
+        // upstream-end should match
+        assertEquals(upstreamLineString1.getCoordinates()[upstreamLineString1.getCoordinates().length - 1],
+                downstreamLineString1.getCoordinates()[0]);
+        assertEquals(upstreamLineString0.getCoordinates()[upstreamLineString0.getCoordinates().length - 1],
+                downstreamLineString0.getCoordinates()[0]);
 
-//         JsonFeatureCollection upstreamFeatureCollection = upstreamResponse.readEntity(JsonFeatureCollection.class);
-//         JsonFeatureCollection downstreamFeatureCollection = downstreamResponse.readEntity(JsonFeatureCollection.class);
-//         assertEquals(2, upstreamFeatureCollection.getFeatures().size());
-//         assertEquals(2, downstreamFeatureCollection.getFeatures().size());
-//         Geometry upstreamLineString0 = upstreamFeatureCollection.getFeatures().get(0).getGeometry();
-//         Geometry upstreamLineString1 = upstreamFeatureCollection.getFeatures().get(1).getGeometry();
-//         Geometry downstreamLineString0 = downstreamFeatureCollection.getFeatures().get(0).getGeometry();
-//         Geometry downstreamLineString1 = downstreamFeatureCollection.getFeatures().get(1).getGeometry();
+        // And downstream-end and upstream-start should match
+        assertEquals(upstreamLineString0.getCoordinates()[0],
+                downstreamLineString0.getCoordinates()[downstreamLineString0.getCoordinates().length - 1]);
+        assertEquals(upstreamLineString1.getCoordinates()[0],
+                downstreamLineString1.getCoordinates()[downstreamLineString1.getCoordinates().length - 1]);
 
-//         // Identical start points despite reversed direction
-//         assertEquals(upstreamLineString0.getCoordinates()[upstreamLineString0.getCoordinates().length - 1],
-//                 downstreamLineString0.getCoordinates()[0]);
-//         assertEquals(upstreamLineString1.getCoordinates()[upstreamLineString1.getCoordinates().length - 1],
-//                 downstreamLineString1.getCoordinates()[0]);
+        // And origin points should match internally
+        assertEquals(upstreamLineString0.getCoordinates()[upstreamLineString0.getCoordinates().length - 1],
+                upstreamLineString1.getCoordinates()[upstreamLineString1.getCoordinates().length - 1]);
+        assertEquals(downstreamLineString0.getCoordinates()[0], downstreamLineString1.getCoordinates()[0]);
+    }
 
-//         // Different endpoints
-//         assertNotEquals(upstreamLineString0.getCoordinates()[0],
-//                 downstreamLineString0.getCoordinates()[downstreamLineString0.getCoordinates().length - 1]);
-//         assertNotEquals(upstreamLineString1.getCoordinates()[0],
-//                 downstreamLineString1.getCoordinates()[downstreamLineString1.getCoordinates().length - 1]);
-//     }
+    @Test
+    public void testDownstreamAndUpstreamPathAreDifferentWithUnidirectionalStarts() {
+        JsonFeatureCollection downstreamFeatureCollection;
+        try (Response downstreamResponse = clientTarget(app, "/buffer?profile=my_car&"
+                + "point=42.57839,1.631823&roadName=CG-2&thresholdDistance=2000").request()
+                .buildGet().invoke()) {
+            assertEquals(200, downstreamResponse.getStatus());
+            downstreamFeatureCollection = downstreamResponse.readEntity(JsonFeatureCollection.class);
+        }
 
-//     @Test
-//     public void testBidirectionalStartQueryWithSmallerThresholdDistance() {
-//         final Response response = clientTarget(app, "/buffer?profile=my_car&"
-//                 + "point=42.54287,1.471&roadName=CG-4&thresholdDistance=100").request()
-//                 .buildGet().invoke();
-//         assertEquals(200, response.getStatus());
+        JsonFeatureCollection upstreamFeatureCollection;
+        try (Response upstreamResponse = clientTarget(app, "/buffer?profile=my_car&"
+                + "point=42.57839,1.631823&roadName=CG-2&thresholdDistance=2000&buildUpstream=true")
+                .request().buildGet().invoke()) {
+            assertEquals(200, upstreamResponse.getStatus());
 
-//         JsonFeatureCollection featureCollection = response.readEntity(JsonFeatureCollection.class);
+            upstreamFeatureCollection = upstreamResponse.readEntity(JsonFeatureCollection.class);
+        }
 
-//         assertEquals(2, featureCollection.getFeatures().size());
-//         Geometry lineString0 = featureCollection.getFeatures().get(0).getGeometry();
-//         Geometry lineString1 = featureCollection.getFeatures().get(1).getGeometry();
+        assertEquals(2, upstreamFeatureCollection.getFeatures().size());
+        assertEquals(2, downstreamFeatureCollection.getFeatures().size());
+        Geometry upstreamLineString0 = upstreamFeatureCollection.getFeatures().get(0).getGeometry();
+        Geometry upstreamLineString1 = upstreamFeatureCollection.getFeatures().get(1).getGeometry();
+        Geometry downstreamLineString0 = downstreamFeatureCollection.getFeatures().get(0).getGeometry();
+        Geometry downstreamLineString1 = downstreamFeatureCollection.getFeatures().get(1).getGeometry();
 
-//         // Identical start points
-//         assertEquals(lineString0.getCoordinates()[0], lineString1.getCoordinates()[0]);
+        // Identical start points despite reversed direction
+        assertEquals(upstreamLineString0.getCoordinates()[upstreamLineString0.getCoordinates().length - 1],
+                downstreamLineString0.getCoordinates()[0]);
+        assertEquals(upstreamLineString1.getCoordinates()[upstreamLineString1.getCoordinates().length - 1],
+                downstreamLineString1.getCoordinates()[0]);
 
-//         // Different end points
-//         assertNotEquals(lineString0.getCoordinates()[lineString0.getCoordinates().length - 1],
-//                 lineString1.getCoordinates()[lineString1.getCoordinates().length - 1]);
-//     }
+        // Different endpoints
+        assertNotEquals(upstreamLineString0.getCoordinates()[0],
+                downstreamLineString0.getCoordinates()[downstreamLineString0.getCoordinates().length - 1]);
+        assertNotEquals(upstreamLineString1.getCoordinates()[0],
+                downstreamLineString1.getCoordinates()[downstreamLineString1.getCoordinates().length - 1]);
+    }
 
-//     @Test
-//     public void testBidirectionalStartQueryWithTooSmallThresholdDistance() {
-//         final Response response = clientTarget(app, "/buffer?profile=my_car&"
-//                 + "point=42.54287,1.471&roadName=CG-4&thresholdDistance=50").request()
-//                 .buildGet().invoke();
+    @Test
+    public void testBidirectionalStartQueryWithSmallerThresholdDistance() {
+        JsonFeatureCollection featureCollection;
+        try (Response response = clientTarget(app, "/buffer?profile=my_car&"
+                + "point=42.54287,1.471&roadName=CG-4&thresholdDistance=100").request()
+                .buildGet().invoke()) {
+            assertEquals(200, response.getStatus());
 
-//         assertEquals(500, response.getStatus());
-//         JsonNode json = response.readEntity(JsonNode.class);
-//         assertTrue(json.has("message"), "There should have been an error response");
-//         String expected = "Threshold distance is too short to construct a valid path.";
-//         assertTrue(json.get("message").asText().contains(expected),
-//                 "There should be an error containing " + expected + ", but got: "
-//                         + json.get("message"));
-//     }
+            featureCollection = response.readEntity(JsonFeatureCollection.class);
+        }
 
-//     @Test
-//     public void testUnusualRoadNameFormat() {
-//         final Response response = clientTarget(app, "/buffer?profile=my_car&"
-//                 + "point=42.54287,1.471&roadName=cG4-&thresholdDistance=2000").request()
-//                 .buildGet().invoke();
-//         assertEquals(200, response.getStatus());
-//     }
-// }
+        assertEquals(2, featureCollection.getFeatures().size());
+        Geometry lineString0 = featureCollection.getFeatures().get(0).getGeometry();
+        Geometry lineString1 = featureCollection.getFeatures().get(1).getGeometry();
+
+        // Identical start points
+        assertEquals(lineString0.getCoordinates()[0], lineString1.getCoordinates()[0]);
+
+        // Different end points
+        assertNotEquals(lineString0.getCoordinates()[lineString0.getCoordinates().length - 1],
+                lineString1.getCoordinates()[lineString1.getCoordinates().length - 1]);
+    }
+
+    @Test
+    public void testBidirectionalStartQueryWithTooSmallThresholdDistance() {
+        JsonNode json;
+        try (Response response = clientTarget(app, "/buffer?profile=my_car&"
+                + "point=42.54287,1.471&roadName=CG-4&thresholdDistance=50").request()
+                .buildGet().invoke()) {
+
+            assertEquals(500, response.getStatus());
+            json = response.readEntity(JsonNode.class);
+        }
+        assertTrue(json.has("message"), "There should have been an error response");
+        String expected = "Threshold distance is too short to construct a valid path.";
+        assertTrue(json.get("message").asText().contains(expected),
+                "There should be an error containing " + expected + ", but got: "
+                        + json.get("message"));
+    }
+
+    @Test
+    public void testUnusualRoadNameFormat() {
+        try (Response response = clientTarget(app, "/buffer?profile=my_car&"
+                + "point=42.54287,1.471&roadName=cG4-&thresholdDistance=2000").request()
+                .buildGet().invoke()) {
+            assertEquals(200, response.getStatus());
+        }
+    }
+}
