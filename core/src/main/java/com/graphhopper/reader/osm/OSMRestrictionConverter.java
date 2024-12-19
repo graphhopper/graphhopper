@@ -92,6 +92,9 @@ public class OSMRestrictionConverter {
                 throw new OSMRestrictionException("contains duplicate from-/via-/to-members");
             WayToEdgeConverter.EdgeResult res = wayToEdgeConverter
                     .convertForViaWays(restrictionMembers.getFromWays(), restrictionMembers.getViaWays(), restrictionMembers.getToWays());
+            // temporary fix for #3086
+            if (res.getFromEdges().size() > 1 && res.getToEdges().size() > 1)
+                throw new OSMRestrictionException("fromEdges and toEdges cannot be size > 1 at the same time for relation " + relation.getId());
             return new Triple<>(relation, RestrictionTopology.way(res.getFromEdges(), res.getViaEdges(), res.getToEdges(), res.getNodes()), restrictionMembers);
         } else {
             int viaNode = relation.getTag("graphhopper:via_node", -1);
