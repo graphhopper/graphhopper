@@ -17,16 +17,24 @@
  */
 package com.graphhopper.routing.util.parsers;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.ev.Roundabout;
+import com.graphhopper.routing.ev.VehicleAccess;
 import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.routing.util.WayAccess;
-import com.graphhopper.util.PMap;
-
-import java.util.*;
-
 import static com.graphhopper.routing.util.parsers.OSMTemporalAccessParser.hasTemporalRestriction;
+import com.graphhopper.util.PMap;
 
 public class CarAccessParser extends AbstractAccessParser implements TagParser {
 
@@ -52,7 +60,7 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
         restrictedValues.add("forestry");
         restrictedValues.add("delivery");
 
-        blockPrivate(properties.getBool("block_private", true));
+        blockPrivate(properties.getBool("block_private", false));
         blockFords(properties.getBool("block_fords", false));
 
         barriers.add("kissing_gate");

@@ -19,12 +19,11 @@
  package com.graphhopper.routing.ev;
 
  import com.graphhopper.util.Helper;
- import com.graphhopper.util.PMap;
 
 
 
 public enum RSRoadClassificationv2 {
-    URBANH, URBANWOH, NH, SH, NHORSH, NHSHADJACENT, INTERIOR, UNKNOWN;
+    URBAN_H, URBAN_WOH, NH, SH, NH_OR_SH, NHSH_ADJACENT, INTERIOR, UNKNOWN;
 
     public static final String KEY = "road_classification_v2";
 
