@@ -100,7 +100,7 @@ graphhopper:
   # More are: surface,smoothness,max_width,max_height,max_weight,max_weight_except,hgv,max_axle_load,max_length,
   #           hazmat,hazmat_tunnel,hazmat_water,lanes,osm_way_id,toll,track_type,mtb_rating,hike_rating,horse_rating,
   #           country,curvature,average_slope,max_slope,car_temporal_access,bike_temporal_access,foot_temporal_access
-  graph.encoded_values: car_access, road_class, lanes, rsbikeaccess, curvature, average_slope, max_slope, osm_way_id, road_classification_v2, build_perc, population_density, road_scenery_urban, road_scenery_forest, road_scenery_hill, road_scenery_lake, road_scenery_beach, road_scenery_river, road_scenery_desert, road_scenery_snowcappedmountain, road_scenery_field, road_scenery_plantation, road_scenery_saltflat, road_scenery_semiurban, road_scenery_backwater, road_scenery_mountainpass, road_access, car_average_speed, surface, max_speed 
+  graph.encoded_values: car_access, road_class, lanes, rsbikeaccess, curvature, average_slope, max_slope, osm_way_id, road_curvature_classification, road_classification, road_classification_v2, build_perc, population_density, road_scenery_urban, road_scenery_forest, road_scenery_hill, road_scenery_lake, road_scenery_beach, road_scenery_river, road_scenery_desert, road_scenery_snowcappedmountain, road_scenery_field, road_scenery_plantation, road_scenery_saltflat, road_scenery_semiurban, road_scenery_backwater, road_scenery_mountainpass, road_access, car_average_speed, surface, max_speed 
 
   #### Speed, hybrid and flexible mode ####
 
