@@ -88,6 +88,7 @@ Here is an overview:
  * thehereward, code cleanups like #620
  * vvikas, ideas for many to many improvements and #616
  * zstadler, multiple fixes and car4wd
+ * osamaalmaani, added missing config option for graph.encoded_values in the config-example.yml file
 
 ## Translations
 
