@@ -4,7 +4,7 @@
     { "if": "!car_access", "multiply_by": "0" },
     { "if": "rsbikeaccess == NO", "multiply_by": "0"},
     { "if": "road_class == CONSTRUCTION", "multiply_by": "0"},
-    { "if": "road_access == PRIVATE", "multiply_by": "0" }
+    { "if": "road_access == PRIVATE", "multiply_by": "0.2" }
   ],
   "speed": [
     { "if": "true", "limit_to": "0.8 * car_average_speed" },

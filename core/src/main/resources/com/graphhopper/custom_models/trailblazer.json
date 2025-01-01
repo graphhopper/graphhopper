@@ -4,7 +4,7 @@
     { "if": "!car_access", "multiply_by": "0" },
     { "if": "rsbikeaccess == NO", "multiply_by": "0"},
     { "if": "road_class == CONSTRUCTION", "multiply_by": "0"},
-    { "if": "road_access == PRIVATE", "multiply_by": "0" },
+    { "if": "road_access == PRIVATE", "multiply_by": "0.2" },
     { "if": "road_classification_v2 == NH",  "multiply_by": "0.1" },
     { "if": "road_classification_v2 == SH",  "multiply_by": "0.3" },
     { "if": "road_classification_v2 == NH_OR_SH",  "multiply_by": "0.3" },
