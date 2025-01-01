@@ -21,12 +21,10 @@
  package com.graphhopper.routing.util.parsers;
 
  import com.graphhopper.reader.ReaderWay;
+ import com.graphhopper.routing.ev.EdgeIntAccess;
  import com.graphhopper.routing.ev.EnumEncodedValue;
  import com.graphhopper.routing.ev.RSRoadClassification;
- import com.graphhopper.routing.ev.EdgeIntAccess;
  import com.graphhopper.storage.IntsRef;
-
- import static com.graphhopper.routing.ev.RSRoadClassification.UNKNOWN;
 
 public class RSRoadClassificationParser implements TagParser {
 
@@ -38,7 +36,7 @@ public class RSRoadClassificationParser implements TagParser {
 
     @Override
     public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay readerWay, IntsRef relationFlags) {
-        String rSRoadClassificationTag = readerWay.getTag("road_classification_v2");
+        String rSRoadClassificationTag = readerWay.getTag("road_classification");
         RSRoadClassification rsroadclassification = RSRoadClassification.find(rSRoadClassificationTag);
         rSRoadClassificationEnc.setEnum(false, edgeId, edgeIntAccess, rsroadclassification);
     }

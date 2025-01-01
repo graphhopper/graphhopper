@@ -21,12 +21,10 @@
  package com.graphhopper.routing.util.parsers;
 
  import com.graphhopper.reader.ReaderWay;
+ import com.graphhopper.routing.ev.EdgeIntAccess;
  import com.graphhopper.routing.ev.EnumEncodedValue;
  import com.graphhopper.routing.ev.RSRoadClassificationv2;
- import com.graphhopper.routing.ev.EdgeIntAccess;
  import com.graphhopper.storage.IntsRef;
-
- import static com.graphhopper.routing.ev.RSRoadClassificationv2.UNKNOWN;
 
 public class RSRoadClassificationv2Parser implements TagParser {
 

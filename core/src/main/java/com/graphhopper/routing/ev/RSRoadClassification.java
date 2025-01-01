@@ -19,14 +19,13 @@
  package com.graphhopper.routing.ev;
 
  import com.graphhopper.util.Helper;
- import com.graphhopper.util.PMap;
 
 
 
 public enum RSRoadClassification {
-    URBAN_H, URBAN_WOH, NH, SH, NH_OR_SH, NHSH_ADJACENT, INTERIOR, UNKNOWN;
+    NATIONAL_HIGHWAY, STATE_HIGHWAY, URBAN, SEMI_URBAN, INTERIOR, UNKNOWN;
 
-    public static final String KEY = "road_classification_v2";
+    public static final String KEY = "road_classification";
 
     public static EnumEncodedValue<RSRoadClassification> create() {
         return new EnumEncodedValue<>(KEY, RSRoadClassification.class);
