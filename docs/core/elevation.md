@@ -23,8 +23,8 @@ All should work automatically but you can tune certain settings like the locatio
 downloaded and e.g. if the servers are not reachable, then you set:
 `graph.elevation.base_url`
 
-For CGIAR the default URL is `http://srtm.csi.cgiar.org/SRT-ZIP/SRTM_V41/SRTM_Data_GeoTiff/`
-and this is only accessibly if you specify the [full zip file](http://srtm.csi.cgiar.org/SRT-ZIP/SRTM_V41/SRTM_Data_GeoTiff/srtm_01_02.zip).
+For CGIAR the default URL is `https://srtm.csi.cgiar.org/wp-content/uploads/files/srtm_5x5/TIFF/`
+and this is only accessibly if you specify the [full zip file](https://srtm.csi.cgiar.org/wp-content/uploads/files/srtm_5x5/TIFF//srtm_01_02.zip).
 
 If the geographical area is small and you need a faster import you can change the default MMAP setting to:
 `graph.elevation.dataaccess: RAM_STORE`
