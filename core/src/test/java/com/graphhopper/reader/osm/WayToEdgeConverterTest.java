@@ -124,6 +124,64 @@ class WayToEdgeConverterTest {
         assertTrue(e.getMessage().contains("has member ways that do not form a unique path"), e.getMessage());
     }
 
+    @Test
+    void convertForViaNode_multipleFrom() throws OSMRestrictionException {
+        BaseGraph graph = new BaseGraph.Builder(1).create();
+        graph.edge(1, 0);
+        graph.edge(2, 0);
+        graph.edge(3, 0);
+        graph.edge(0, 4);
+        WayToEdgeConverter.NodeResult nodeResult = new WayToEdgeConverter(graph, way -> IntArrayList.from(Math.toIntExact(way)).iterator())
+                .convertForViaNode(ways(0, 1, 2), 0, ways(3));
+        assertEquals(IntArrayList.from(0, 1, 2), nodeResult.getFromEdges());
+        assertEquals(IntArrayList.from(3), nodeResult.getToEdges());
+    }
+
+    @Test
+    void convertForViaNode_multipleTo() throws OSMRestrictionException {
+        BaseGraph graph = new BaseGraph.Builder(1).create();
+        graph.edge(1, 0);
+        graph.edge(2, 0);
+        graph.edge(3, 0);
+        graph.edge(0, 4);
+        WayToEdgeConverter.NodeResult nodeResult = new WayToEdgeConverter(graph, way -> IntArrayList.from(Math.toIntExact(way)).iterator())
+                .convertForViaNode(ways(3), 0, ways(0, 1, 2));
+        assertEquals(IntArrayList.from(3), nodeResult.getFromEdges());
+        assertEquals(IntArrayList.from(0, 1, 2), nodeResult.getToEdges());
+    }
+
+    @Test
+    void convertForViaWay_multipleFrom() throws OSMRestrictionException {
+        BaseGraph graph = new BaseGraph.Builder(1).create();
+        graph.edge(1, 0);
+        graph.edge(2, 0);
+        graph.edge(3, 0);
+        graph.edge(0, 4);
+        graph.edge(4, 5);
+        WayToEdgeConverter.EdgeResult edgeResult = new WayToEdgeConverter(graph, way -> IntArrayList.from(Math.toIntExact(way)).iterator())
+                .convertForViaWays(ways(0, 1, 2), ways(3), ways(4));
+        assertEquals(IntArrayList.from(0, 1, 2), edgeResult.getFromEdges());
+        assertEquals(IntArrayList.from(3), edgeResult.getViaEdges());
+        assertEquals(IntArrayList.from(4), edgeResult.getToEdges());
+        assertEquals(IntArrayList.from(0, 4), edgeResult.getNodes());
+    }
+
+    @Test
+    void convertForViaWay_multipleTo() throws OSMRestrictionException {
+        BaseGraph graph = new BaseGraph.Builder(1).create();
+        graph.edge(1, 0);
+        graph.edge(2, 0);
+        graph.edge(3, 0);
+        graph.edge(0, 4);
+        graph.edge(4, 5);
+        WayToEdgeConverter.EdgeResult edgeResult = new WayToEdgeConverter(graph, way -> IntArrayList.from(Math.toIntExact(way)).iterator())
+                .convertForViaWays(ways(4), ways(3), ways(0, 1, 2));
+        assertEquals(IntArrayList.from(0, 1, 2), edgeResult.getToEdges());
+        assertEquals(IntArrayList.from(3), edgeResult.getViaEdges());
+        assertEquals(IntArrayList.from(4), edgeResult.getFromEdges());
+        assertEquals(IntArrayList.from(4, 0), edgeResult.getNodes());
+    }
+
     private LongArrayList ways(long... ways) {
         return LongArrayList.from(ways);
     }
