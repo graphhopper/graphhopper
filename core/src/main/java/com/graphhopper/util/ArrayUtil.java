@@ -224,6 +224,13 @@ public class ArrayUtil {
         return result;
     }
 
+    public static IntArrayList subList(IntArrayList list, int fromIndex, int toIndex) {
+        IntArrayList result = new IntArrayList(toIndex - fromIndex);
+        for (int i = fromIndex; i < toIndex; i++)
+            result.add(list.get(i));
+        return result;
+    }
+
     /**
      * @param a sorted array
      * @param b sorted array
