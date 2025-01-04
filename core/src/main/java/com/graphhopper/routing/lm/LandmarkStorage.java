@@ -322,7 +322,7 @@ public class LandmarkStorage {
 
         int subnetworkCount = landmarkIDs.size();
         // store all landmark node IDs and one int for the factor itself.
-        this.landmarkWeightDA.ensureCapacity(maxBytes /* landmark weights */ + (long) subnetworkCount * landmarks /* landmark mapping per subnetwork */);
+        this.landmarkWeightDA.ensureCapacity(maxBytes /* landmark weights */ + (long) subnetworkCount * landmarks /* landmark mapping per subnetwork */ + 4);
 
         // calculate offset to point into landmark mapping
         long bytePos = maxBytes;
