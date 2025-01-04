@@ -66,6 +66,7 @@ Here is an overview:
  * ocampana, initial implementation for instructions
  * oflebbe, work on iOS port and issues like #2060
  * OlafFlebbeBosch, improvements like #2730
+ * osamaalmaani, added missing config option for graph.encoded_values in the config-example.yml file
  * oschlueter, fixes like #1185
  * otbutz, added multiple EncodedValues
  * pantsleftinwash, speed parsing improvements
