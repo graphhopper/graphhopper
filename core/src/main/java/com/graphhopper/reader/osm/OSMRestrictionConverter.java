@@ -92,9 +92,6 @@ public class OSMRestrictionConverter {
                 throw new OSMRestrictionException("contains duplicate from-/via-/to-members");
             WayToEdgeConverter.EdgeResult res = wayToEdgeConverter
                     .convertForViaWays(restrictionMembers.getFromWays(), restrictionMembers.getViaWays(), restrictionMembers.getToWays());
-            // temporary fix for #3086
-            if (res.getFromEdges().size() > 1 && res.getToEdges().size() > 1)
-                throw new OSMRestrictionException("fromEdges and toEdges cannot be size > 1 at the same time for relation " + relation.getId());
             return new Triple<>(relation, RestrictionTopology.way(res.getFromEdges(), res.getViaEdges(), res.getToEdges(), res.getNodes()), restrictionMembers);
         } else {
             int viaNode = relation.getTag("graphhopper:via_node", -1);
@@ -211,9 +208,14 @@ public class OSMRestrictionConverter {
         List<RestrictionSetter.Restriction> result = new ArrayList<>();
         if (type == NO) {
             if (topology.isViaWayRestriction()) {
-                if (topology.getFromEdges().size() > 1 || topology.getToEdges().size() > 1)
-                    throw new IllegalArgumentException("Via-way restrictions with multiple from- or to- edges are not supported");
-                result.add(RestrictionSetter.createViaEdgeRestriction(collectEdges(topology)));
+                for (IntCursor fromEdge : topology.getFromEdges())
+                    for (IntCursor toEdge : topology.getToEdges()) {
+                        IntArrayList edges = new IntArrayList(topology.getViaEdges().size()+2);
+                        edges.add(fromEdge.value);
+                        edges.addAll(topology.getViaEdges());
+                        edges.add(toEdge.value);
+                        result.add(RestrictionSetter.createViaEdgeRestriction(edges));
+                    }
             } else {
                 for (IntCursor fromEdge : topology.getFromEdges())
                     for (IntCursor toEdge : topology.getToEdges())
@@ -235,7 +237,7 @@ public class OSMRestrictionConverter {
     private static IntArrayList collectEdges(RestrictionTopology r) {
         IntArrayList result = new IntArrayList(r.getViaEdges().size() + 2);
         result.add(r.getFromEdges().get(0));
-        r.getViaEdges().iterator().forEachRemaining(c -> result.add(c.value));
+        result.addAll(r.getViaEdges());
         result.add(r.getToEdges().get(0));
         return result;
     }

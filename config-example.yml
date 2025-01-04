@@ -88,11 +88,11 @@ graphhopper:
   #### Encoded Values ####
 
   # Add additional information to every edge. Used for path details (#1548) and custom models (docs/core/custom-models.md)
-  # Default values are: road_class,road_class_link,road_environment,max_speed,road_access
-  # More are: surface,smoothness,max_width,max_height,max_weight,max_weight_except,hgv,max_axle_load,max_length,
-  #           hazmat,hazmat_tunnel,hazmat_water,lanes,osm_way_id,toll,track_type,mtb_rating,hike_rating,horse_rating,
-  #           country,curvature,average_slope,max_slope,car_temporal_access,bike_temporal_access,foot_temporal_access
-  #           noisy_road_nearby
+  # Possible values: road_class,road_class_link,road_environment,max_speed,road_access
+  #   surface,smoothness,max_width,max_height,max_weight,max_weight_except,hgv,max_axle_load,max_length,
+  #   hazmat,hazmat_tunnel,hazmat_water,lanes,osm_way_id,toll,track_type,mtb_rating,hike_rating,horse_rating,
+  #   country,curvature,average_slope,max_slope,car_temporal_access,bike_temporal_access,foot_temporal_access,
+  #   noisy_road_nearby
   graph.encoded_values: car_access, car_average_speed
 
   #### Speed, hybrid and flexible mode ####

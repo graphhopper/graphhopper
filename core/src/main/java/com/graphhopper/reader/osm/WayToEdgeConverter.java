@@ -23,6 +23,7 @@ import com.carrotsearch.hppc.LongArrayList;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.carrotsearch.hppc.cursors.LongCursor;
 import com.graphhopper.storage.BaseGraph;
+import com.graphhopper.util.ArrayUtil;
 import com.graphhopper.util.EdgeIteratorState;
 
 import java.util.ArrayList;
@@ -116,26 +117,36 @@ public class WayToEdgeConverter {
             throw new OSMRestrictionException("has disconnected member ways");
         else if (solutions.size() > fromWays.size() * toWays.size())
             throw new OSMRestrictionException("has member ways that do not form a unique path");
-        return buildResult(solutions, new EdgeResult(fromWays.size(), viaWays.size(), toWays.size()));
+        return buildResult(solutions, fromWays, viaWays, toWays);
     }
 
-    private static EdgeResult buildResult(List<IntArrayList> edgeChains, EdgeResult result) {
-        for (IntArrayList edgeChain : edgeChains) {
-            result.fromEdges.add(edgeChain.get(0));
-            if (result.nodes.isEmpty()) {
-                // the via-edges and nodes are the same for edge chain
-                for (int i = 1; i < edgeChain.size() - 3; i += 2) {
-                    result.nodes.add(edgeChain.get(i));
-                    result.viaEdges.add(edgeChain.get(i + 1));
-                }
-                result.nodes.add(edgeChain.get(edgeChain.size() - 2));
-            }
-            result.toEdges.add(edgeChain.get(edgeChain.size() - 1));
+    private static EdgeResult buildResult(List<IntArrayList> edgeChains, LongArrayList fromWays, LongArrayList viaWays, LongArrayList toWays) {
+        EdgeResult result = new EdgeResult(fromWays.size(), viaWays.size(), toWays.size());
+        // we get multiple edge chains, but they are expected to be identical except for their first or last members
+        IntArrayList firstChain = edgeChains.get(0);
+        result.fromEdges.add(firstChain.get(0));
+        for (int i = 1; i < firstChain.size() - 3; i += 2) {
+            result.nodes.add(firstChain.get(i));
+            result.viaEdges.add(firstChain.get(i + 1));
         }
+        result.nodes.add(firstChain.get(firstChain.size() - 2));
+        result.toEdges.add(firstChain.get(firstChain.size() - 1));
+        // We keep the first/last elements of all chains in case there are multiple from/to ways
+        List<IntArrayList> otherChains = edgeChains.subList(1, edgeChains.size());
+        if (fromWays.size() > 1) {
+            if (otherChains.stream().anyMatch(chain -> chain.get(chain.size() - 1) != firstChain.get(firstChain.size() - 1)))
+                throw new IllegalArgumentException("edge chains were supposed to be the same except for their first elements, but got: " + edgeChains + " - for: " + fromWays + ", " + viaWays + ", " + toWays);
+            otherChains.forEach(chain -> result.fromEdges.add(chain.get(0)));
+        } else if (toWays.size() > 1) {
+            if (otherChains.stream().anyMatch(chain -> chain.get(0) != firstChain.get(0)))
+                throw new IllegalArgumentException("edge chains were supposed to be the same except for their last elements, but got: " + edgeChains + " - for: " + fromWays + ", " + viaWays + ", " + toWays);
+            otherChains.forEach(chain -> result.toEdges.add(chain.get(chain.size() - 1)));
+        } else if (!otherChains.isEmpty())
+            throw new IllegalStateException("If there are multiple chains there must be either multiple from- or to-ways.");
         return result;
     }
 
-    private void findEdgeChain(long fromWay, LongArrayList viaWays, long toWay, List<IntArrayList> solutions) throws OSMRestrictionException {
+    private void findEdgeChain(long fromWay, LongArrayList viaWays, long toWay, List<IntArrayList> solutions) {
         // For each edge chain there must be one edge associated with the from-way, at least one for each via-way and one
         // associated with the to-way. We use DFS with backtracking to find all edge chains that connect an edge
         // associated with the from-way with one associated with the to-way.
