@@ -73,6 +73,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     protected BikeCommonFlagEncoder(String name, int speedBits, double speedFactor, int maxTurnCosts,
             boolean speedTwoDirections, boolean useFerries) {
         super(name, speedBits, speedFactor, speedTwoDirections, maxTurnCosts);
+        this.useFerries = useFerries;
 
         penaltyEnc = new DecimalEncodedValueImpl(getKey(name, "penalty"), 4, PenaltyCode.getFactor(1),
                 penaltyTwoDirections);
