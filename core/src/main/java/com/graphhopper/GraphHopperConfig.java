@@ -23,7 +23,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
-import com.graphhopper.jackson.ResponsePathSerializer;
 import com.graphhopper.util.PMap;
 
 import java.util.ArrayList;

@@ -26,7 +26,6 @@ import com.graphhopper.jackson.Jackson;
 import com.graphhopper.reader.dem.*;
 import com.graphhopper.reader.osm.OSMReader;
 import com.graphhopper.reader.osm.RestrictionTagParser;
-import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHPreparationHandler;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
@@ -69,8 +68,6 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import java.util.logging.Level;
-import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import static com.graphhopper.util.GHUtility.readCountries;

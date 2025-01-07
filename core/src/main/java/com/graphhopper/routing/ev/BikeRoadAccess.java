@@ -19,9 +19,6 @@ package com.graphhopper.routing.ev;
 
 import com.graphhopper.util.Helper;
 
-import java.util.Arrays;
-import java.util.List;
-
 public enum BikeRoadAccess {
     MISSING, YES, DESTINATION, DESIGNATED, USE_SIDEPATH, DISMOUNT, PRIVATE, NO;
 
