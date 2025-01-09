@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 
 import static com.graphhopper.json.Statement.Keyword.*;
 
-class StatementDeserializer extends JsonDeserializer<Statement> {
+public class StatementDeserializer extends JsonDeserializer<Statement> {
     @Override
     public Statement deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
         JsonNode treeNode = p.readValueAsTree();
