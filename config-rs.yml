@@ -5,7 +5,6 @@ graphhopper:
   # Local folder used by graphhopper to store its data
   graph.location: "/data/default-gh"
 
-
   ##### Routing Profiles ####
 
   # Routing can be done only for profiles listed below. For more information about profiles and custom profiles have a
