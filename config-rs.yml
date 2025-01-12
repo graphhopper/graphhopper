@@ -237,7 +237,7 @@ server:
   - type: http
     port: 8989
     # for security reasons bind to localhost
-    bind_host: localhost
+    bind_host: 0.0.0.0
     # increase GET request limit - not necessary if /maps UI is not used or used without custom models
     max_request_header_size: 50k
   request_log:
