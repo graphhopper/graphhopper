@@ -20,8 +20,6 @@ package com.graphhopper.util;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.graphhopper.util.Parameters.CH.DISABLE;
-
 /**
  * @author Peter Karich
  */
@@ -225,7 +223,32 @@ public class Parameters {
     public static final List<String> blacklistedMultipleKeys = new ArrayList<>();
 
     static {
-        blacklistedMultipleKeys.add(DISABLE);
+        blacklistedMultipleKeys.add("block_fords");
+        blacklistedMultipleKeys.add("block_private");
+        blacklistedMultipleKeys.add("debug");
+        blacklistedMultipleKeys.add("edge_based");
+        blacklistedMultipleKeys.add("elevation");
+        blacklistedMultipleKeys.add("force_curbside");
+        blacklistedMultipleKeys.add("measurement.ch.edge");
+        blacklistedMultipleKeys.add("measurement.ch.node");
+        blacklistedMultipleKeys.add("measurement.clean");
+        blacklistedMultipleKeys.add("measurement.json");
+        blacklistedMultipleKeys.add("measurement.lm");
+        blacklistedMultipleKeys.add("measurement.lm.edge_based");
+        blacklistedMultipleKeys.add("measurement.run_slow_routing");
+        blacklistedMultipleKeys.add("measurement.stop_on_error");
+        blacklistedMultipleKeys.add("measurement.turn_costs");
+        blacklistedMultipleKeys.add("measurement.use_measurement_time_as_ref_time");
+        blacklistedMultipleKeys.add("points_encoded");
+        blacklistedMultipleKeys.add("stall_on_demand");
+        blacklistedMultipleKeys.add("turn_costs");
+        blacklistedMultipleKeys.add("turn_description");
+        blacklistedMultipleKeys.add("use_country_rules");
+        blacklistedMultipleKeys.add(CH.DISABLE);
+        blacklistedMultipleKeys.add(Landmark.DISABLE);
+        blacklistedMultipleKeys.add(Routing.CALC_POINTS);
+        blacklistedMultipleKeys.add(Routing.INSTRUCTIONS);
+        blacklistedMultipleKeys.add(Routing.PASS_THROUGH);
     }
 
 }
