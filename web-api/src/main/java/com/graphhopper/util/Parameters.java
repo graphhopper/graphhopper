@@ -17,6 +17,11 @@
  */
 package com.graphhopper.util;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import static com.graphhopper.util.Parameters.CH.DISABLE;
+
 /**
  * @author Peter Karich
  */
@@ -212,6 +217,15 @@ public class Parameters {
         public static final String LEG_TIME = "leg_time";
         public static final String LEG_DISTANCE = "leg_distance";
         public static final String LEG_WEIGHT = "leg_weight";
+    }
+
+    /**
+     * A list of hint keys that may not appear multiple times in a request.
+     */
+    public static final List<String> blacklistedMultipleKeys = new ArrayList<>();
+
+    static {
+        blacklistedMultipleKeys.add(DISABLE);
     }
 
 }

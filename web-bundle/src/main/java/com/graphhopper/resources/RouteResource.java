@@ -42,7 +42,6 @@ import javax.ws.rs.core.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import static com.graphhopper.util.Parameters.Details.PATH_DETAILS;
 import static com.graphhopper.util.Parameters.Routing.*;
@@ -251,17 +250,19 @@ public class RouteResource {
                 header("Content-Disposition", "attachment;filename=" + "GraphHopper.gpx");
     }
 
-    static void initHints(PMap m, MultivaluedMap<String, String> parameterMap) {
-        for (Map.Entry<String, List<String>> e : parameterMap.entrySet()) {
-            if (e.getValue().size() == 1) {
-                m.putObject(Helper.camelCaseToUnderScore(e.getKey()), Helper.toObject(e.getValue().get(0)));
+
+    static void initHints(PMap hints, MultivaluedMap<String, String> parameterMap) {
+        initHints(hints, parameterMap, Parameters.blacklistedMultipleKeys);
+    }
+
+    static void initHints(PMap hints, MultivaluedMap<String, String> parameterMap, List<String> blacklistedMultipleHints) {
+        for (Map.Entry<String, List<String>> entry : parameterMap.entrySet()) {
+            if (entry.getValue().size() == 1) {
+                hints.putObject(Helper.camelCaseToUnderScore(entry.getKey()), Helper.toObject(entry.getValue().get(0)));
             } else {
-                // TODO e.g. 'point' parameter occurs multiple times and we cannot throw an exception here
-                //  unknown parameters (hints) should be allowed to be multiparameters, too, or we shouldn't use them for
-                //  known parameters either, _or_ known parameters must be filtered before they come to this code point,
-                //  _or_ we stop passing unknown parameters altogether.
-                // throw new WebApplicationException(String.format("This query parameter (hint) is not allowed to occur multiple times: %s", e.getKey()));
-                // see also #1976
+                if (blacklistedMultipleHints.contains(entry.getKey())) {
+                    throw new WebApplicationException(String.format("This query parameter (hint) is not allowed to occur multiple times: %s", entry.getKey()));
+                }
             }
         }
     }
