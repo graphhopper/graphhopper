@@ -17,8 +17,6 @@
  */
 package com.graphhopper.util;
 
-import com.graphhopper.storage.IntsRef;
-
 /**
  * LITTLE endianness is default for GraphHopper and most microprocessors.
  *

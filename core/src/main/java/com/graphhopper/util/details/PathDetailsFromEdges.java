@@ -25,7 +25,6 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.FetchMode;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * This class calculates a PathDetail list in a similar fashion to the instruction calculation,

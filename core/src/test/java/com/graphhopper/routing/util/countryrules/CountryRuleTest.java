@@ -24,7 +24,6 @@ import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.routing.util.countryrules.europe.AustriaCountryRule;
 import com.graphhopper.routing.util.countryrules.europe.GermanyCountryRule;
 import com.graphhopper.routing.util.countryrules.europe.HungaryCountryRule;
-
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

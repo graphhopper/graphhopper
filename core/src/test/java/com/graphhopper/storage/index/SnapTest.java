@@ -25,7 +25,7 @@ import com.graphhopper.util.shapes.GHPoint;
 import org.junit.jupiter.api.Test;
 
 import static com.graphhopper.util.DistancePlaneProjection.DIST_PLANE;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class SnapTest {
 

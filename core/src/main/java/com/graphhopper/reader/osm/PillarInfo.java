@@ -20,7 +20,6 @@ package com.graphhopper.reader.osm;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.PointAccess;
 
 /**
  * This class helps to store lat,lon,ele for every node parsed in OSMReader

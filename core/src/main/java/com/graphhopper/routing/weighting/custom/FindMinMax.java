@@ -22,7 +22,7 @@ import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.util.CustomModel;
 
-import java.util.*;
+import java.util.List;
 
 import static com.graphhopper.json.Statement.Keyword.ELSE;
 import static com.graphhopper.json.Statement.Keyword.IF;

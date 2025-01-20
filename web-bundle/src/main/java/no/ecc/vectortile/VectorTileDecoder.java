@@ -18,29 +18,14 @@
  ****************************************************************/
 package no.ecc.vectortile;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Set;
-
 import org.locationtech.jts.algorithm.Area;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.LineString;
-import org.locationtech.jts.geom.LinearRing;
-import org.locationtech.jts.geom.Polygon;
-
+import org.locationtech.jts.geom.*;
 import vector_tile.VectorTile;
 import vector_tile.VectorTile.Tile.GeomType;
 import vector_tile.VectorTile.Tile.Layer;
+
+import java.io.IOException;
+import java.util.*;
 
 public class VectorTileDecoder {
 

@@ -24,7 +24,6 @@ import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
-import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;

@@ -1,6 +1,5 @@
 package com.graphhopper.routing.util.parsers;
 
-import com.graphhopper.routing.ev.MaxSpeed;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import org.junit.jupiter.api.Test;
 
