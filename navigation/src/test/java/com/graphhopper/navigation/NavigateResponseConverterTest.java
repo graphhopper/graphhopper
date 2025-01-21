@@ -55,7 +55,8 @@ public class NavigateResponseConverterTest {
     @Test
     public void basicTest() {
 
-        GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile(profile).setPathDetails(Collections.singletonList("intersection")));
+        GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile(profile).
+                setPathDetails(Collections.singletonList("intersection")));
 
         ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH, distanceConfig);
 
@@ -301,9 +302,9 @@ public class NavigateResponseConverterTest {
         assertEquals(1.534679, location.get(0).asDouble(), .000001);
         assertEquals(42.556444, location.get(1).asDouble(), .000001);
 
-        int nrSteps=steps.size();
-        JsonNode lastStep = steps.get(nrSteps-1);
-        intersection= lastStep.get("intersections").get(0);
+        int nrSteps = steps.size();
+        JsonNode lastStep = steps.get(nrSteps - 1);
+        intersection = lastStep.get("intersections").get(0);
         assertFalse(intersection.has("out"));
         assertEquals(0, intersection.get("in").asInt());
         assertEquals(1, intersection.get("bearings").size());
@@ -347,6 +348,56 @@ public class NavigateResponseConverterTest {
 
         // and no additional intersection
         assertEquals(step.get("intersections").size(), 2);
+    }
+
+    @Test
+    public void startAtBarrierTest() {
+        // Start the route exactly at the barrier
+        // https://www.openstreetmap.org/node/2206610569
+        // The barrier should be deduplicated and have only one "out" link
+        GHResponse rsp = hopper.route(new GHRequest(42.6017641, 1.6878903, 42.601616, 1.687888).setProfile(profile)
+                .setPathDetails(Collections.singletonList("intersection")));
+
+        ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH, distanceConfig);
+
+        JsonNode steps = json.get("routes").get(0).get("legs").get(0).get("steps");
+        // expecting an departure and arrival node
+        assertEquals(steps.size(), 2);
+        JsonNode step = steps.get(0);
+        JsonNode intersections = step.get("intersections");
+        assertEquals(intersections.size(), 1);
+        JsonNode intersection = intersections.get(0);
+
+        // Departure should have only one out node, even for a barrier!
+        assertEquals(0, intersection.get("out").asInt());
+        assertEquals(null, intersection.get("in"));
+        JsonNode location = intersection.get("location");
+        // The location of the barrier
+        assertEquals(location.get(0).asDouble(), 1.687890, .000001);
+        assertEquals(location.get(1).asDouble(), 42.601764, .000001);
+
+        JsonNode bearings = intersection.get("bearings");
+
+        double outBearing = bearings.get(0).asDouble();
+
+        // and these should be the bearing
+        assertEquals(171, outBearing);
+
+        // Second step has an arrival intersection, with one in no out
+        // The location of the arrival intersection should be different from barrier
+        JsonNode step2 = steps.get(1);
+        JsonNode intersections2 = step2.get("intersections");
+        assertEquals(intersections2.size(), 1);
+        JsonNode intersection2 = intersections2.get(0);
+
+        JsonNode location2 = intersection2.get("location");
+
+        assertNotEquals(location.get(0).asDouble(), location2.get(0).asDouble(), .0000001);
+        assertNotEquals(location.get(1).asDouble(), location2.get(1).asDouble(), .0000001);
+        // checking order of entries
+        assertEquals(0, intersection2.get("in").asInt());
+        assertEquals(null, intersection2.get("out"));
+
     }
 
     @Test
