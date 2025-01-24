@@ -1,0 +1,20 @@
+// https://discuss.graphhopper.com/t/routing-for-unpaved-roads/7731
+{
+  "speed": [{
+    "if": "true",
+    "limit_to": "30"
+  }],
+  "priority": [{
+    "if": "!car_access",
+    "multiply_by": "0"
+  },{
+    "else_if": "road_class == TRACK",
+    "multiply_by": "1"
+  },{
+    "else": "",
+    "multiply_by": "0.5"
+  },{
+    "if": "road_access == PRIVATE",
+    "multiply_by": "0.1"
+  }]
+}

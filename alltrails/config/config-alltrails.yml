@@ -31,29 +31,31 @@ graphhopper:
   # profiles (see below). Or at least limit the number of `routing.max_visited_nodes`.
 
   profiles:
-#   - name: car
-#     turn_costs:
-#       vehicle_types: [motorcar, motor_vehicle]
-#       u_turn_costs: 60
-#      custom_model_files: [car.json]
+    - name: car
+      custom_model_files: [car.json]
+      turn_costs:
+        vehicle_types: [motorcar, motor_vehicle]
+        u_turn_costs: 60
 
-#   - name: foot
-#     custom_model_files: [foot.json, foot_elevation.json]
+    - name: offroad
+      weighting: custom
+      custom_model_files: [atv.json]
+      turn_costs:
+        vehicle_types: [motorcar, motor_vehicle]
+        u_turn_costs: 60
+
     - name: hike
       custom_model_files: [hike.json]
 
-#    - name: bike
-#      custom_model_files: [bike.json, bike_elevation.json]
-#
-#    - name: racingbike
-#      custom_model_files: [racingbike.json, bike_elevation.json]
-#
-#    - name: mtb
-#      custom_model_files: [mtb.json, bike_elevation.json]
+    - name: bike
+      custom_model_files: [racingbike.json, bike_elevation.json]
+
+    - name: mtb
+      custom_model_files: [mtb.json, bike_elevation.json]
 
   # instead of the inbuilt custom models (see ./core/src/main/resources/com/graphhopper/custom_models)
   # you can specify a folder where to find your own custom model files
-  # custom_models.directory: custom_models
+  custom_models.directory: alltrails/config
 
   # Speed mode:
   # It's possible to speed up routing by doing a special graph preparation (Contraction Hierarchies, CH). This requires
@@ -62,8 +64,11 @@ graphhopper:
   # profiles with `turn_costs: true` a more elaborate preparation is required (longer preparation time and more memory
   # usage) and the routing will also be slower than with `turn_costs: false`.
   profiles_ch:
-  #   - profile: car
     - profile: hike
+    - profile: bike
+    - profile: mtb
+    - profile: car
+    - profile: offroad
 
   # Hybrid mode:
   # Similar to speed mode, the hybrid mode (Landmarks, LM) also speeds up routing by doing calculating auxiliary data
@@ -85,13 +90,16 @@ graphhopper:
   #           hazmat,hazmat_tunnel,hazmat_water,lanes,osm_way_id,toll,track_type,mtb_rating,hike_rating,horse_rating,
   #           country,curvature,average_slope,max_slope,car_temporal_access,bike_temporal_access,foot_temporal_access
   # graph.encoded_values: car_access, car_average_speed
-  graph.encoded_values: surface, smoothness, track_type, hike_rating, average_slope, foot_access, foot_network, foot_priority, foot_average_speed, mtb_rating, at_popularity, at_scenic_value, foot_road_access
+  graph.encoded_values: foot_road_access, bike_priority, bike_road_access, country, road_class, roundabout, car_access, road_access,
+    car_average_speed, mtb_rating, mtb_priority, mtb_access, mtb_average_speed, racingbike_priority, racingbike_access, racingbike_average_speed,
+    foot_access, hike_rating, foot_priority, foot_network, foot_average_speed, average_slope,
+    surface, smoothness, track_type, at_popularity, at_scenic_value
 
   #### Speed, hybrid and flexible mode ####
 
   # To make CH preparation faster for multiple profiles you can increase the default threads if you have enough RAM.
   # Change this setting only if you know what you are doing and if the default worked for you.
-  # prepare.ch.threads: 1
+  prepare.ch.threads: 5
 
   # To tune the performance vs. memory usage for the hybrid mode use
   # prepare.lm.landmarks: 16
@@ -174,7 +182,7 @@ graphhopper:
 
   # The maximum time in milliseconds after which a routing request will be aborted. This has some routing algorithm
   # specific caveats, but generally it should allow the prevention of long-running requests. The default is Long.MAX_VALUE
-  # routing.timeout_ms: 300000
+  routing.timeout_ms: 10000
 
   # Control how many active landmarks are picked per default, this can improve query performance
   # routing.lm.active_landmarks: 4
@@ -192,9 +200,11 @@ graphhopper:
   # but also because there are fewer crossings between highways (=junctions).
   # Another typical example is excluding 'motorway', 'trunk' and maybe 'primary' highways for bicycle or pedestrian routing.
   # import.osm.ignored_highways: footway,cycleway,path,pedestrian,steps # typically useful for motorized-only routing
-  import.osm.ignored_highways: motorway,trunk # typically useful for non-motorized routing
+  # import.osm.ignored_highways: motorway,trunk # typically useful for non-motorized routing
+  import.osm.ignored_highways:
 
   # configure the memory access, use RAM_STORE for well equipped servers (default and recommended)
+  # Otherwise use MMAP.  See https://github.com/graphhopper/graphhopper/blob/116586191332ef94e4aceee5b93115af140bc096/core/src/main/java/com/graphhopper/storage/DAType.java#L28-L55
   graph.dataaccess.default_type: RAM_STORE
 
   # will write way names in the preferred language (language code as defined in ISO 639-1 or ISO 639-2):
