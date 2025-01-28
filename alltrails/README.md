@@ -22,6 +22,7 @@ cd .. # If needed, to root of `graphhopper` repo
 mvn clean install -DskipTest
 # Run it in "import" mode to import an OSM PBF file and an AT CSV custom attribute file
 # Data files should be in `alltrails/data` 
+# Import step may need -Xmx30G Java option
 rm -r alltrails/data/default-gh
 java -Ddw.graphhopper.datareader.file=alltrails/data/california-latest.osm.pbf \
   -Ddw.graphhopper.graph.location=alltrails/data/default-gh \

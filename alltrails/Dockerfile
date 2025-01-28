@@ -9,16 +9,20 @@ RUN mvn clean install -DskipTests
 
 FROM eclipse-temurin:21.0.1_12-jre
 
-ENV JAVA_OPTS "-Xmx2g -Xms2g"
-
 WORKDIR /graphhopper
+
+RUN mkdir -p ./alltrails/config
 
 COPY --from=build /graphhopper/web/target/graphhopper*.jar ./
 
-COPY alltrails/config/graphhopper.sh alltrails/config/config-alltrails.yml ./
+COPY alltrails/config/graphhopper.sh ./
+
+COPY alltrails/config/config-alltrails.yml alltrails/config/atv.json ./alltrails/config
 
 EXPOSE 8989 8990
 
 HEALTHCHECK --interval=5s --timeout=3s CMD curl --fail http://localhost:8989/health || exit 1
 
-ENTRYPOINT [ "./graphhopper.sh", "-c", "config-alltrails.yml", "-o", "/graphhopper/data/default-gh" ]
+ENV JAVA_OPTS "-Xmx9g -Xms9g"
+
+ENTRYPOINT [ "./graphhopper.sh", "-c", "alltrails/config/config-alltrails.yml", "-o", "/graphhopper/data/default-gh" ]
