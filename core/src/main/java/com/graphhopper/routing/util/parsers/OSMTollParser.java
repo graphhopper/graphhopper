@@ -48,13 +48,9 @@ public class OSMTollParser implements TagParser {
             toll = Toll.MISSING;
         }
 
-        // enable this feature by enabling country rules for now
-        CountryRule countryRule = readerWay.getTag("country_rule", null);
-        if (countryRule != null) {
-            if (toll == Toll.MISSING) {
-                Country country = readerWay.getTag("country", Country.MISSING);
-                toll = getCountryDefault(country, readerWay);
-            }
+        if (toll == Toll.MISSING) {
+            Country country = readerWay.getTag("country", Country.MISSING);
+            toll = getCountryDefault(country, readerWay);
         }
         tollEnc.setEnum(false, edgeId, edgeIntAccess, toll);
     }
