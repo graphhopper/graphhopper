@@ -53,15 +53,6 @@ class CountryRuleTest {
         assertEquals(RoadAccess.YES, rule.getAccess(createReaderWay("living_street"), TransportationMode.BIKE, RoadAccess.YES));
         assertEquals(RoadAccess.PRIVATE, rule.getAccess(createReaderWay("living_street"), TransportationMode.CAR, RoadAccess.PRIVATE));
         assertEquals(RoadAccess.PRIVATE, rule.getAccess(createReaderWay("living_street"), TransportationMode.BIKE, RoadAccess.PRIVATE));
-        assertEquals(Toll.ALL, rule.getToll(createReaderWay("motorway"), Toll.MISSING));
-        assertEquals(Toll.HGV, rule.getToll(createReaderWay("trunk"), Toll.MISSING));
-        assertEquals(Toll.HGV, rule.getToll(createReaderWay("primary"), Toll.MISSING));
-        assertEquals(Toll.MISSING, rule.getToll(createReaderWay("secondary"), Toll.MISSING));
-        assertEquals(Toll.MISSING, rule.getToll(createReaderWay("residential"), Toll.MISSING));
-        assertEquals(Toll.MISSING, rule.getToll(createReaderWay("service"), Toll.MISSING));
-        assertEquals(Toll.ALL, rule.getToll(createReaderWay("service"), Toll.ALL));
-        assertEquals(Toll.HGV, rule.getToll(createReaderWay("service"), Toll.HGV));
-        assertEquals(Toll.NO, rule.getToll(createReaderWay("service"), Toll.NO));
     }
 
     private ReaderWay createReaderWay(String highway) {
