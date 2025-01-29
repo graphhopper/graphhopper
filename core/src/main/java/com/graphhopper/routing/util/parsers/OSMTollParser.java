@@ -18,9 +18,7 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.EnumEncodedValue;
-import com.graphhopper.routing.ev.EdgeIntAccess;
-import com.graphhopper.routing.ev.Toll;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.countryrules.CountryRule;
 import com.graphhopper.storage.IntsRef;
 
@@ -49,10 +47,74 @@ public class OSMTollParser implements TagParser {
         } else {
             toll = Toll.MISSING;
         }
-        
-        CountryRule countryRule = readerWay.getTag("country_rule", null);
-        if (countryRule != null)
-            toll = countryRule.getToll(readerWay, toll);
+
+        if (toll == Toll.MISSING) {
+            Country country = readerWay.getTag("country", Country.MISSING);
+            switch (country) {
+                case ALB, AND, FIN, FRO, GGY, GIB, IMN, ISL, JEY, MCO, MLT, SMR, UKR, VAT: {
+                    toll = Toll.NO;
+                    break;
+                }
+                case BIH, GBR, IRL, MDA, MKD, MNE, NOR, RUS: {
+                    // todonow: missing remains missing?
+                    break;
+                }
+                case AUT, ROU, SVK, SVN: {
+                    RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", ""));
+                    if (roadClass == RoadClass.MOTORWAY || roadClass == RoadClass.TRUNK)
+                        toll = Toll.ALL;
+                    // todonow: why missing not no?
+                    break;
+                }
+                case CHE: {
+                    RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", ""));
+                    if (roadClass == RoadClass.MOTORWAY || roadClass == RoadClass.TRUNK)
+                        toll = Toll.ALL;
+                    else
+                        // todonow: really? every road is a toll road for hgv?
+                        toll = Toll.HGV;
+                    break;
+                }
+                case LIE: {
+                    // todonow: really? every road is a toll road for hgv?
+                    toll = Toll.HGV;
+                    break;
+                }
+                case HUN: {
+                    RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", ""));
+                    if (roadClass == RoadClass.MOTORWAY)
+                        toll = Toll.ALL;
+                    else if (roadClass == RoadClass.TRUNK || roadClass == RoadClass.PRIMARY)
+                        toll = Toll.HGV;
+                    // todonow: why missing not no?
+                    break;
+                }
+                case DEU, DNK, EST, LTU, LVA: {
+                    RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", ""));
+                    if (roadClass == RoadClass.MOTORWAY || roadClass == RoadClass.TRUNK || roadClass == RoadClass.PRIMARY)
+                        toll = Toll.HGV;
+                    // todonow: why missing not no?
+                    break;
+                }
+                case BEL, BLR, LUX, NLD, POL, SWE: {
+                    RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", ""));
+                    if (roadClass == RoadClass.MOTORWAY)
+                        toll = Toll.HGV;
+                    // todonow: why missing not no?
+                    break;
+                }
+                case BGR, CZE, FRA, GRC, HRV, ITA, PRT, SRB, ESP: {
+                    RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", ""));
+                    if (roadClass == RoadClass.MOTORWAY)
+                        toll = Toll.ALL;
+                    // todonow: why missing not no?
+                    break;
+                }
+                default: {
+                    // todonow: missing remains missing?
+                }
+            }
+        }
 
         tollEnc.setEnum(false, edgeId, edgeIntAccess, toll);
     }

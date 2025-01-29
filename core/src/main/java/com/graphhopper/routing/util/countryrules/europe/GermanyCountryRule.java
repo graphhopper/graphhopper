@@ -51,17 +51,4 @@ public class GermanyCountryRule implements CountryRule {
         }
     }
 
-    @Override
-    public Toll getToll(ReaderWay readerWay, Toll currentToll) {
-        if (currentToll != Toll.MISSING) {
-            return currentToll;
-        }
-
-        RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", ""));
-        if (roadClass == RoadClass.MOTORWAY || roadClass == RoadClass.TRUNK || roadClass == RoadClass.PRIMARY) {
-            return Toll.HGV;
-        }
-
-        return currentToll;
-    }
 }
