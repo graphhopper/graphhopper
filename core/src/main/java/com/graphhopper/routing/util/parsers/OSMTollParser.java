@@ -61,15 +61,12 @@ public class OSMTollParser implements TagParser {
 
     private Toll getCountryDefault(Country country, ReaderWay readerWay) {
         switch (country) {
-            case ALB, AND, FIN, FRO, GGY, GIB, IMN, ISL, JEY, MCO, MLT, SMR, UKR, VAT -> {
-                return Toll.NO;
-            }
             case AUT, ROU, SVK, SVN -> {
                 RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", ""));
                 if (roadClass == RoadClass.MOTORWAY || roadClass == RoadClass.TRUNK)
                     return Toll.ALL;
                 else
-                    return Toll.MISSING;
+                    return Toll.NO;
             }
             case CHE -> {
                 RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", ""));
@@ -90,31 +87,31 @@ public class OSMTollParser implements TagParser {
                 else if (roadClass == RoadClass.TRUNK || roadClass == RoadClass.PRIMARY)
                     return Toll.HGV;
                 else
-                    return Toll.MISSING;
+                    return Toll.NO;
             }
             case DEU, DNK, EST, LTU, LVA -> {
                 RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", ""));
                 if (roadClass == RoadClass.MOTORWAY || roadClass == RoadClass.TRUNK || roadClass == RoadClass.PRIMARY)
                     return Toll.HGV;
                 else
-                    return Toll.MISSING;
+                    return Toll.NO;
             }
             case BEL, BLR, LUX, NLD, POL, SWE -> {
                 RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", ""));
                 if (roadClass == RoadClass.MOTORWAY)
                     return Toll.HGV;
                 else
-                    return Toll.MISSING;
+                    return Toll.NO;
             }
             case BGR, CZE, FRA, GRC, HRV, ITA, PRT, SRB, ESP -> {
                 RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", ""));
                 if (roadClass == RoadClass.MOTORWAY)
                     return Toll.ALL;
                 else
-                    return Toll.MISSING;
+                    return Toll.NO;
             }
             default -> {
-                return Toll.MISSING;
+                return Toll.NO;
             }
         }
     }

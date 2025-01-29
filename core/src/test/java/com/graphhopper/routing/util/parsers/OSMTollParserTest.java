@@ -68,16 +68,16 @@ public class OSMTollParserTest {
         assertEquals(Toll.ALL, getToll("motorway", "", Country.HUN));
         assertEquals(Toll.HGV, getToll("trunk", "", Country.HUN));
         assertEquals(Toll.HGV, getToll("primary", "", Country.HUN));
-        assertEquals(Toll.MISSING, getToll("secondary", "", Country.HUN));
-        assertEquals(Toll.MISSING, getToll("tertiary", "", Country.HUN));
+        assertEquals(Toll.NO, getToll("secondary", "", Country.HUN));
+        assertEquals(Toll.NO, getToll("tertiary", "", Country.HUN));
 
         assertEquals(Toll.ALL, getToll("motorway", "", Country.FRA));
-        assertEquals(Toll.MISSING, getToll("trunk", "", Country.FRA));
-        assertEquals(Toll.MISSING, getToll("primary", "", Country.FRA));
+        assertEquals(Toll.NO, getToll("trunk", "", Country.FRA));
+        assertEquals(Toll.NO, getToll("primary", "", Country.FRA));
 
-        assertEquals(Toll.MISSING, getToll("motorway", "", Country.MEX));
-        assertEquals(Toll.MISSING, getToll("trunk", "", Country.MEX));
-        assertEquals(Toll.MISSING, getToll("primary", "", Country.MEX));
+        assertEquals(Toll.NO, getToll("motorway", "", Country.MEX));
+        assertEquals(Toll.NO, getToll("trunk", "", Country.MEX));
+        assertEquals(Toll.NO, getToll("primary", "", Country.MEX));
 
         assertEquals(Toll.ALL, getToll("secondary", "toll=yes", Country.HUN));
         assertEquals(Toll.HGV, getToll("secondary", "toll:hgv=yes", Country.HUN));
