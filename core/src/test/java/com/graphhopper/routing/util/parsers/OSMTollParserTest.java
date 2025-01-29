@@ -27,7 +27,7 @@ public class OSMTollParserTest {
         int edgeId = 0;
         readerWay.setTag("highway", "primary");
         parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
-        assertEquals(Toll.MISSING, tollEnc.getEnum(false, edgeId, edgeIntAccess));
+        assertEquals(Toll.NO, tollEnc.getEnum(false, edgeId, edgeIntAccess));
 
         edgeIntAccess = new ArrayEdgeIntAccess(1);
         readerWay.setTag("highway", "primary");
