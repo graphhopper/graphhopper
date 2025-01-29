@@ -98,7 +98,7 @@ public class Router {
         try {
             checkNoLegacyParameters(request);
             checkAtLeastOnePoint(request);
-            checkIfPointsAreInBounds(request.getPoints());
+            checkIfPointsAreInBoundsAndNotNull(request.getPoints());
             checkHeadings(request);
             checkPointHints(request);
             checkCurbsides(request);
@@ -147,13 +147,14 @@ public class Router {
             throw new IllegalArgumentException("You have to pass at least one point");
     }
 
-    private void checkIfPointsAreInBounds(List<GHPoint> points) {
+    private void checkIfPointsAreInBoundsAndNotNull(List<GHPoint> points) {
         BBox bounds = graph.getBounds();
         for (int i = 0; i < points.size(); i++) {
             GHPoint point = points.get(i);
-            if (!bounds.contains(point.getLat(), point.getLon())) {
+            if (point == null)
+                throw new IllegalArgumentException("Point " + i + " is null");
+            if (!bounds.contains(point.getLat(), point.getLon()))
                 throw new PointOutOfBoundsException("Point " + i + " is out of bounds: " + point + ", the bounds are: " + bounds, i);
-            }
         }
     }
 
