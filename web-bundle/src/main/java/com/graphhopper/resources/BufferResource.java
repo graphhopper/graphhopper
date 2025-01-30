@@ -488,14 +488,14 @@ public class BufferResource {
         // only contain TOWER points and not PILLAR points.
         // When this happens, filtering by FetchMode.PILLAR_ONLY will return an empty
         // PointList.
-        if (pointList.size() == 0) {
-            return new PointList();
+        if (pointList.isEmpty()) {
+            return pointList;
         }
 
         // When the buffer is only as wide as a single edge, truncate one half of the
         // segment
         if (startFeature.getEdge().equals(endFeature.getEdge())) {
-            return new PointList();
+            return pointList;
         }
 
         // Reverse geometry when starting at adjacent node
