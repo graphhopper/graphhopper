@@ -484,6 +484,14 @@ public class BufferResource {
         EdgeIteratorState finalState = graph.getEdgeIteratorState(endFeature.getEdge(), Integer.MIN_VALUE);
         PointList pointList = finalState.fetchWayGeometry(FetchMode.PILLAR_ONLY);
 
+        // It is possible that the finalState.fetchWayGeometry(FetchMode.xxxx) would
+        // only contain TOWER points and not PILLAR points.
+        // When this happens, filtering by FetchMode.PILLAR_ONLY will return an empty
+        // PointList.
+        if (pointList.isEmpty()) {
+            return pointList;
+        }
+
         // When the buffer is only as wide as a single edge, truncate one half of the
         // segment
         if (startFeature.getEdge().equals(endFeature.getEdge())) {
