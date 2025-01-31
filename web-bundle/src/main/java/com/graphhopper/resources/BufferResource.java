@@ -495,7 +495,7 @@ public class BufferResource {
         // When the buffer is only as wide as a single edge, truncate one half of the
         // segment
         if (startFeature.getEdge().equals(endFeature.getEdge())) {
-            return pointList;
+            return new PointList();
         }
 
         // Reverse geometry when starting at adjacent node
