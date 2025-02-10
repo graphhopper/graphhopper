@@ -50,21 +50,4 @@ public class HungaryCountryRule implements CountryRule {
         return RoadAccess.YES;
     }
 
-    @Override
-    public Toll getToll(ReaderWay readerWay, Toll currentToll) {
-        if (currentToll != Toll.MISSING) {
-            return currentToll;
-        }
-
-        RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", ""));
-        switch (roadClass) {
-            case MOTORWAY:
-                return Toll.ALL;
-            case TRUNK:
-            case PRIMARY:
-                return Toll.HGV;
-            default:
-                return currentToll;
-        }
-    }
 }
