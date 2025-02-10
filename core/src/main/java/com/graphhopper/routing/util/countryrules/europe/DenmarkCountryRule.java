@@ -23,7 +23,7 @@ import com.graphhopper.routing.ev.Toll;
 import com.graphhopper.routing.util.countryrules.CountryRule;
 
 /**
- * Defines the default rules for Polish roads
+ * Defines the default rules for danish roads
  *
  * @author Thomas Butz
  */
@@ -36,8 +36,9 @@ public class DenmarkCountryRule implements CountryRule {
         }
 
         RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", ""));
-        if (RoadClass.MOTORWAY == roadClass)
-            return Toll.HGV;
-        return currentToll;
+        return switch (roadClass) {
+            case MOTORWAY, TRUNK, PRIMARY -> Toll.HGV;
+            default -> currentToll;
+        };
     }
 }

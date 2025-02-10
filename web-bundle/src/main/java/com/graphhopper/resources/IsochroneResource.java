@@ -10,7 +10,6 @@ import com.graphhopper.http.ProfileResolver;
 import com.graphhopper.isochrone.algorithm.ContourBuilder;
 import com.graphhopper.isochrone.algorithm.ShortestPathTree;
 import com.graphhopper.isochrone.algorithm.Triangulator;
-import com.graphhopper.jackson.ResponsePathSerializer;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.querygraph.QueryGraph;

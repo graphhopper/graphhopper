@@ -30,7 +30,6 @@ import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.Helper;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;

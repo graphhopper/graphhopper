@@ -19,7 +19,6 @@ import com.graphhopper.storage.RoutingCHGraphImpl;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;

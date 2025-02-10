@@ -27,7 +27,6 @@ import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.SpeedWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.*;

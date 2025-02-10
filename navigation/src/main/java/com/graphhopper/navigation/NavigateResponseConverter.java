@@ -17,35 +17,24 @@
  */
 package com.graphhopper.navigation;
 
-import static com.graphhopper.util.Parameters.Details.INTERSECTION;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GHResponse;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.jackson.ResponsePathSerializer;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.Instruction;
-import com.graphhopper.util.InstructionList;
-import com.graphhopper.util.PointList;
-import com.graphhopper.util.RoundaboutInstruction;
-import com.graphhopper.util.TranslationMap;
+import com.graphhopper.util.*;
 import com.graphhopper.util.details.IntersectionValues;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.shapes.GHPoint3D;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static com.graphhopper.util.Parameters.Details.INTERSECTION;
 
 public class NavigateResponseConverter {
     private static final Logger LOGGER = LoggerFactory.getLogger(NavigateResponseConverter.class);

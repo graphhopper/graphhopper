@@ -19,7 +19,6 @@
 package com.graphhopper.routing.util.countryrules.europe;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.MaxSpeed;
 import com.graphhopper.routing.ev.RoadAccess;
 import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.routing.ev.Toll;

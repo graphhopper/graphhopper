@@ -18,36 +18,19 @@
  ****************************************************************/
 package no.ecc.vectortile;
 
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.locationtech.jts.algorithm.Area;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.Envelope;
-import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.GeometryCollection;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.LineString;
-import org.locationtech.jts.geom.LinearRing;
-import org.locationtech.jts.geom.MultiLineString;
-import org.locationtech.jts.geom.MultiPoint;
-import org.locationtech.jts.geom.MultiPolygon;
-import org.locationtech.jts.geom.Point;
-import org.locationtech.jts.geom.Polygon;
-import org.locationtech.jts.geom.TopologyException;
+import org.locationtech.jts.geom.*;
 import org.locationtech.jts.geom.prep.PreparedGeometry;
 import org.locationtech.jts.geom.prep.PreparedGeometryFactory;
 import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKTReader;
 import org.locationtech.jts.simplify.DouglasPeuckerSimplifier;
 import org.locationtech.jts.simplify.TopologyPreservingSimplifier;
-
 import vector_tile.VectorTile;
 import vector_tile.VectorTile.Tile.GeomType;
+
+import java.math.BigDecimal;
+import java.util.*;
 
 /**
  * This is a copy of https://github.com/ElectronicChartCentre/java-vector-tile/commit/15e2e9b127729a00c52ced3a11fd1e9a45b462b1

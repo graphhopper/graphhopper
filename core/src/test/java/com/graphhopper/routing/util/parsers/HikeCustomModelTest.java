@@ -5,7 +5,6 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.OSMParsers;
 import com.graphhopper.routing.util.PriorityCode;
-import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.BaseGraph;
