@@ -1,5 +1,6 @@
 ### 11.0 [not yet released]
 
+- country-dependent toll rules are now always enabled. in the absence of explicit tags or special toll rules we use Toll.NO instead of Toll.MISSING #3111
 - max_weight_except: changed NONE to MISSING
 - the list of restrictions for BIKE returned from OSMRoadAccessParser.toOSMRestrictions is again `[bicycle, vehicle, access]` and not `[bicycle, access]` like before #2981
 - road_access now contains value of highest transportation mode for CAR, i.e. access=private, motorcar=yes will now return YES and not PRIVATE

@@ -18,9 +18,7 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.EnumEncodedValue;
-import com.graphhopper.routing.ev.EdgeIntAccess;
-import com.graphhopper.routing.ev.Toll;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.countryrules.CountryRule;
 import com.graphhopper.storage.IntsRef;
 
@@ -49,11 +47,68 @@ public class OSMTollParser implements TagParser {
         } else {
             toll = Toll.MISSING;
         }
-        
-        CountryRule countryRule = readerWay.getTag("country_rule", null);
-        if (countryRule != null)
-            toll = countryRule.getToll(readerWay, toll);
 
+        if (toll == Toll.MISSING) {
+            Country country = readerWay.getTag("country", Country.MISSING);
+            toll = getCountryDefault(country, readerWay);
+        }
         tollEnc.setEnum(false, edgeId, edgeIntAccess, toll);
+    }
+
+    private Toll getCountryDefault(Country country, ReaderWay readerWay) {
+        switch (country) {
+            case AUT, ROU, SVK, SVN -> {
+                RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", ""));
+                if (roadClass == RoadClass.MOTORWAY || roadClass == RoadClass.TRUNK)
+                    return Toll.ALL;
+                else
+                    return Toll.NO;
+            }
+            case CHE -> {
+                RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", ""));
+                if (roadClass == RoadClass.MOTORWAY || roadClass == RoadClass.TRUNK)
+                    return Toll.ALL;
+                else
+                    // 'Schwerlastabgabe' for the entire road network
+                    return Toll.HGV;
+            }
+            case LIE -> {
+                // 'Schwerlastabgabe' for the entire road network
+                return Toll.HGV;
+            }
+            case HUN -> {
+                RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", ""));
+                if (roadClass == RoadClass.MOTORWAY)
+                    return Toll.ALL;
+                else if (roadClass == RoadClass.TRUNK || roadClass == RoadClass.PRIMARY)
+                    return Toll.HGV;
+                else
+                    return Toll.NO;
+            }
+            case DEU, DNK, EST, LTU, LVA -> {
+                RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", ""));
+                if (roadClass == RoadClass.MOTORWAY || roadClass == RoadClass.TRUNK || roadClass == RoadClass.PRIMARY)
+                    return Toll.HGV;
+                else
+                    return Toll.NO;
+            }
+            case BEL, BLR, LUX, NLD, POL, SWE -> {
+                RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", ""));
+                if (roadClass == RoadClass.MOTORWAY)
+                    return Toll.HGV;
+                else
+                    return Toll.NO;
+            }
+            case BGR, CZE, FRA, GRC, HRV, ITA, PRT, SRB, ESP -> {
+                RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", ""));
+                if (roadClass == RoadClass.MOTORWAY)
+                    return Toll.ALL;
+                else
+                    return Toll.NO;
+            }
+            default -> {
+                return Toll.NO;
+            }
+        }
     }
 }
