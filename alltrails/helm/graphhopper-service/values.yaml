@@ -42,3 +42,8 @@ tolerations: []
 affinity: {}
 
 additionalVolumeMounts: {}
+
+datadog:
+  prometheusScrape:
+    enabled: true
+    serviceEndpoints: true
