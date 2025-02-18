@@ -18,7 +18,7 @@
 package com.graphhopper.routing.ch;
 
 import com.carrotsearch.hppc.IntContainer;
-import com.carrotsearch.hppc.cursors.IntCursor;
+import com.carrotsearch.hppc.procedures.IntProcedure;
 import com.graphhopper.coll.MinHeapWithUpdate;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.storage.*;
@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Locale;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.graphhopper.routing.ch.CHParameters.*;
 import static com.graphhopper.util.Helper.getMemInfo;
@@ -283,17 +284,19 @@ public class PrepareContractionHierarchies {
                 // skipped nodes are already set to maxLevel
                 break;
 
-            int neighborCount = 0;
+            AtomicInteger neighborCount = new AtomicInteger(0);
             // there might be multiple edges going to the same neighbor nodes -> only calculate priority once per node
-            for (IntCursor neighbor : neighbors) {
-                if (neighborUpdate && (params.getMaxNeighborUpdates() < 0 || neighborCount < params.getMaxNeighborUpdates()) && rand.nextInt(100) < params.getNeighborUpdatePercentage()) {
-                    neighborCount++;
+            neighbors.forEach((IntProcedure) value -> {
+                if (neighborUpdate
+                        && (params.getMaxNeighborUpdates() < 0 || neighborCount.get() < params.getMaxNeighborUpdates())
+                        && rand.nextInt(100) < params.getNeighborUpdatePercentage()) {
+                    neighborCount.incrementAndGet();
                     neighborUpdateSW.start();
-                    float priority = calculatePriority(neighbor.value);
-                    sortedNodes.update(neighbor.value, priority);
+                    float priority = calculatePriority(value);
+                    sortedNodes.update(value, priority);
                     neighborUpdateSW.stop();
                 }
-            }
+            });
         }
 
         nodeContractor.finishContraction();

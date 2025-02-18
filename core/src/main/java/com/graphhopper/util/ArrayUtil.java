@@ -85,12 +85,13 @@ public class ArrayUtil {
 
     public static boolean isPermutation(IntArrayList arr) {
         BitSet present = new BitSet(arr.size());
-        for (IntCursor e : arr) {
-            if (e.value >= arr.size() || e.value < 0)
+        for (int i = 0; i < arr.size(); i++) {
+            int value = arr.get(i);
+            if (value >= arr.size() || value < 0)
                 return false;
-            if (present.get(e.value))
+            if (present.get(value))
                 return false;
-            present.set(e.value);
+            present.set(value);
         }
         return true;
     }

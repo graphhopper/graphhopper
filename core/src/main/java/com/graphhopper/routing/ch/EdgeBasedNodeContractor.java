@@ -18,8 +18,8 @@
 package com.graphhopper.routing.ch;
 
 import com.carrotsearch.hppc.*;
-import com.carrotsearch.hppc.cursors.IntCursor;
 import com.carrotsearch.hppc.cursors.IntObjectCursor;
+import com.carrotsearch.hppc.procedures.IntProcedure;
 import com.graphhopper.storage.CHStorageBuilder;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.EdgeIterator;
@@ -293,11 +293,10 @@ class EdgeBasedNodeContractor implements NodeContractor {
 
     private void updateHierarchyDepthsOfNeighbors(int node, IntContainer neighbors) {
         int level = hierarchyDepths[node];
-        for (IntCursor n : neighbors) {
-            if (n.value == node)
-                continue;
-            hierarchyDepths[n.value] = Math.max(hierarchyDepths[n.value], level + 1);
-        }
+        neighbors.forEach((IntProcedure) i -> {
+            if (i != node)
+                hierarchyDepths[i] = Math.max(hierarchyDepths[i], level + 1);
+        });
     }
 
     private PrepareCHEntry addShortcutsToPrepareGraph(PrepareCHEntry edgeFrom, PrepareCHEntry edgeTo, int origEdgeCount) {
