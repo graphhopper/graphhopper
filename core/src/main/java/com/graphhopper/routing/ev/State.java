@@ -1,5 +1,8 @@
 package com.graphhopper.routing.ev;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * The country subdivision is stored in this EncodedValue. E.g. US-CA is the enum US_CA.
  */
@@ -108,6 +111,15 @@ public enum State {
 
     public static final String KEY = "state", ISO_3166_2 = "ISO3166-2";
 
+    private static final Map<String,State> STATE_BY_CODE;
+    static {
+        var map = new HashMap<String,State>();
+        for (State state : State.values()) {
+            map.put(state.stateCode, state);
+        }
+        STATE_BY_CODE = Map.copyOf(map); // unmodifiable
+    }
+
     private final String stateCode;
 
     /**
@@ -121,16 +133,7 @@ public enum State {
      * @param iso should be ISO 3166-2 but with hyphen like US-CA
      */
     public static State find(String iso) {
-        iso = iso.replace('-', '_');
-        if (iso.indexOf('_') == -1) {
-            return State.MISSING;
-        }
-
-        try {
-            return State.valueOf(iso);
-        } catch (IllegalArgumentException ex) {
-            return State.MISSING;
-        }
+        return STATE_BY_CODE.getOrDefault(iso, State.MISSING);
     }
 
     /**
