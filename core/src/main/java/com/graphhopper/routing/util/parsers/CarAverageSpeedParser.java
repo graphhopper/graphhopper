@@ -85,6 +85,7 @@ public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements
         defaultSpeedMap.put("residential", 30);
         // spielstraße
         defaultSpeedMap.put("living_street", 5);
+        defaultSpeedMap.put("pedestrian", 5);
         defaultSpeedMap.put("service", 20);
         // unknown road
         defaultSpeedMap.put("road", 20);
