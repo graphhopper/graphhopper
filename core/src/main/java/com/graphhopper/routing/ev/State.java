@@ -121,8 +121,13 @@ public enum State {
      * @param iso should be ISO 3166-2 but with hyphen like US-CA
      */
     public static State find(String iso) {
+        iso = iso.replace('-', '_');
+        if (iso.indexOf('_') == -1) {
+            return State.MISSING;
+        }
+
         try {
-            return State.valueOf(iso.replace('-', '_'));
+            return State.valueOf(iso);
         } catch (IllegalArgumentException ex) {
             return State.MISSING;
         }
