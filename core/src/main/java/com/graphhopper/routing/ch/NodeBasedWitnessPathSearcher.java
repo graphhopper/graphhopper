@@ -18,7 +18,6 @@
 package com.graphhopper.routing.ch;
 
 import com.carrotsearch.hppc.IntArrayList;
-import com.carrotsearch.hppc.procedures.IntProcedure;
 import com.graphhopper.apache.commons.collections.IntFloatBinaryHeap;
 import com.graphhopper.util.Helper;
 
@@ -114,7 +113,9 @@ public class NodeBasedWitnessPathSearcher {
     }
 
     private void reset() {
-        changedNodes.forEach((IntProcedure) i -> weights[i] = Double.POSITIVE_INFINITY);
+        for (int i = 0; i < changedNodes.elementsCount; i++) {
+            weights[changedNodes.buffer[i]] = Double.POSITIVE_INFINITY;
+        }
         changedNodes.elementsCount = 0;
         heap.clear();
         ignoreNode = -1;
