@@ -96,7 +96,7 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
         if ("pedestrian".equals(highwayValue)) {
             // allow access if explicitly tagged
             String restriction = way.getFirstValue(restrictionKeys);
-            if (restriction.isEmpty() || restrictedValues.contains(restriction)) {
+            if (!intendedValues.contains(restriction)) {
                 return WayAccess.CAN_SKIP;
             }
         }
