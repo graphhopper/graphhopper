@@ -6,7 +6,7 @@
 - road_access now contains value of highest transportation mode for CAR, i.e. access=private, motorcar=yes will now return YES and not PRIVATE
 - car.json by default avoids private roads
 - maxspeed<5 is ignored, maxspeed=none is ignored with some exceptions, maxspeed parsing and related constants were renamed #3077
-- Added route_type in Trip.PtLeg to describe the vehicle type used in public transport
+- Added agency_id, agency_name, and route_type to Trip.PtLeg to describe the operator and the vehicle type used in public transport.
 
 ### 10.0 [5 Nov 2024]
 
