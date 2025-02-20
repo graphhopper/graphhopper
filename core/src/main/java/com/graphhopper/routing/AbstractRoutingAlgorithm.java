@@ -80,6 +80,11 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
     }
 
     protected void setupFinishTime() {
+        if (timeoutMillis == Long.MAX_VALUE) {
+            this.finishTimeMillis = Long.MAX_VALUE;
+            return;
+        }
+
         try {
             this.finishTimeMillis = Math.addExact(System.currentTimeMillis(), timeoutMillis);
         } catch (ArithmeticException e) {
