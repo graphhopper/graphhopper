@@ -342,6 +342,7 @@ class TripFromLabel {
         }
         if (GtfsStorage.EdgeType.ENTER_PT == path.get(1).edge.getType()) {
             String feedId = path.get(1).edge.getPlatformDescriptor().feed_id;
+            int routeType = path.get(1).edge.getRouteType();
             List<Trip.Leg> result = new ArrayList<>();
             long boardTime = -1;
             List<Label.Transition> partition = null;
@@ -364,10 +365,22 @@ class TripFromLabel {
                     stopsFromBoardHopDwellEdges.finish();
                     List<Trip.Stop> stops = stopsFromBoardHopDwellEdges.stops;
 
+                    GTFSFeed gtfsFeed = gtfsStorage.getGtfsFeeds().get(feedId);
+                    String routeId = tripDescriptor.getRouteId();
+                    String agencyId = gtfsFeed.routes.get(routeId).agency_id;
+                    String agencyName = (agencyId != null
+                                    ? Optional.ofNullable(gtfsFeed.agency.get(agencyId))
+                                    : gtfsFeed.agency.values().stream().findFirst()
+                            ).map(a -> a.agency_name).orElse("");
+
                     result.add(new Trip.PtLeg(
-                            feedId, partition.get(0).edge.getTransfers() == 0,
+                            feedId,
+                            agencyId,
+                            agencyName,
+                            partition.get(0).edge.getTransfers() == 0,
                             tripDescriptor.getTripId(),
-                            tripDescriptor.getRouteId(),
+                            routeId,
+                            routeType,
                             Optional.ofNullable(gtfsStorage.getGtfsFeeds().get(feedId).trips.get(tripDescriptor.getTripId())).map(t -> t.trip_headsign).orElse("extra"),
                             stops,
                             partition.stream().mapToDouble(t -> t.edge.getDistance()).sum(),
