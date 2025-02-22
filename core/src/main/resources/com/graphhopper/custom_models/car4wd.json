@@ -8,6 +8,7 @@
   "distance_influence": 1,
   "priority": [
     { "if": "road_access == PRIVATE", "multiply_by": "0" },
+    { "if": "road_access == DESTINATION", "multiply_by": "0.1" },
     { "if": "track_type != GRADE4 && track_type != GRADE5 && car_access == false", "multiply_by": "0" }
   ],
   "speed": [

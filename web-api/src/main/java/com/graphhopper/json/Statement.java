@@ -74,7 +74,7 @@ public record Statement(Keyword keyword, String condition, Op operation, String 
         if (isBlock())
             return "{\"" + keyword.getName() + "\": \"" + condition + "\", \"do\": " + doBlock + " }";
         else
-            return "{\"" + keyword.getName() + "\": \"" + condition + "\", \"" + operation.getName() + ": \"" + value + "\"}";
+            return "{\"" + keyword.getName() + "\": \"" + condition + "\", \"" + operation.getName() + "\": \"" + value + "\"}";
     }
 
     public enum Keyword {
