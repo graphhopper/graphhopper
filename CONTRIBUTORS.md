@@ -73,7 +73,7 @@ Here is an overview:
  * PGWelch, shapefile reader #874
  * rafaelstelles, fix deserializer web-api
  * rajanski, script to do routing via PostGIS
- * ratrun, route relations, GPX information, bike handling etc
+ * ratrun, route relations, GPX information, noisy road nearby avoidance, bike handling etc
  * rodneyodonnell, improved dead end removal (PrepareRoutingSubnetworks) and fords
  * rodo, more descriptions
  * rory, support milisecond gpx timestamps, see #4 
