@@ -63,21 +63,18 @@ public class StorableProperties {
     }
 
     public synchronized void flush() {
-        try {
-            StringWriter sw = new StringWriter();
-            saveProperties(map, sw);
-            // TODO at the moment the size is limited to da.segmentSize() !
-            byte[] bytes = sw.toString().getBytes(UTF_CS);
-            da.setBytes(0, bytes, bytes.length);
-            da.flush();
-            // todo: would not be needed if the properties file used a format that is compatible with common text tools
-            if (dir.getDefaultType().isStoring()) {
-                try (BufferedWriter writer = new BufferedWriter(new FileWriter(dir.getLocation() + "/properties.txt"))) {
-                    writer.write(sw.toString());
-                }
+        String props = saveProperties(map);
+        // TODO at the moment the size is limited to da.segmentSize() !
+        byte[] bytes = props.getBytes(UTF_CS);
+        da.setBytes(0, bytes, bytes.length);
+        da.flush();
+        // todo: would not be needed if the properties file used a format that is compatible with common text tools
+        if (dir.getDefaultType().isStoring()) {
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(dir.getLocation() + "/properties.txt"))) {
+                writer.write(props);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
         }
     }
 
@@ -145,6 +142,17 @@ public class StorableProperties {
     @Override
     public synchronized String toString() {
         return da.toString();
+    }
+
+    static String saveProperties(Map<String, String> map) {
+        StringBuilder builder = new StringBuilder();
+        for (Map.Entry<String, String> e : map.entrySet()) {
+            builder.append(e.getKey());
+            builder.append('=');
+            builder.append(e.getValue());
+            builder.append('\n');
+        }
+        return builder.toString();
     }
 
     static void loadProperties(Map<String, String> map, Reader tmpReader) throws IOException {
