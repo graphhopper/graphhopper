@@ -172,9 +172,8 @@ public class StorableProperties {
     }
 
     static void loadProperties(Map<String, String> map, Reader tmpReader) throws IOException {
-        BufferedReader reader = new BufferedReader(tmpReader);
-        String line;
-        try {
+        try (BufferedReader reader = new BufferedReader(tmpReader)) {
+            String line;
             while ((line = reader.readLine()) != null) {
                 if (line.startsWith("//") || line.startsWith("#")) {
                     continue;
@@ -194,8 +193,6 @@ public class StorableProperties {
                 String value = line.substring(index + 1);
                 map.put(field.trim(), value.trim());
             }
-        } finally {
-            reader.close();
         }
     }
 }
