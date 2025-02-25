@@ -54,7 +54,15 @@ public class StorableProperties {
 
         int len = (int) da.getCapacity();
         byte[] bytes = new byte[len];
-        da.getBytes(0, bytes, len);
+        int segmentSize = da.getSegmentSize();
+        int segmentCount = (int) Math.ceil((double) len / segmentSize);
+        for (int i = 0; i < segmentCount; i++) {
+            int bytePos = i * segmentSize;
+            int partLen = Math.min(bytes.length - bytePos, segmentSize);
+            byte[] part = new byte[partLen];
+            da.getBytes(bytePos, part, part.length);
+            System.arraycopy(part, 0, bytes, bytePos, partLen);
+        }
         try {
             loadProperties(map, new StringReader(new String(bytes, UTF_CS)));
             return true;
