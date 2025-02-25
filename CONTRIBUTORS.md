@@ -41,6 +41,7 @@ Here is an overview:
  * hoofstephan, bug fix   
  * IsNull, improvements like #708
  * IldarKhayrutdinov, use cache on different machines
+ * james-willis, improved isochrones triangulation robustness
  * Janekdererste, GUI for public transit
  * jansoe, many improvements regarding A* algorithm, forcing direction, roundabouts etc
  * jansonhanson, general host config
