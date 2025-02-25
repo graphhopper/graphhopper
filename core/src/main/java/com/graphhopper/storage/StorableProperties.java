@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -64,9 +65,16 @@ public class StorableProperties {
 
     public synchronized void flush() {
         String props = saveProperties(map);
-        // TODO at the moment the size is limited to da.segmentSize() !
         byte[] bytes = props.getBytes(UTF_CS);
-        da.setBytes(0, bytes, bytes.length);
+        da.ensureCapacity(bytes.length);
+        int segmentSize = da.getSegmentSize();
+        int segmentCount = (int) Math.ceil((double) bytes.length / segmentSize);
+        for (int i = 0; i < segmentCount; i++) {
+            int bytePos = i * segmentSize;
+            int segmentEnd = bytePos + segmentSize;
+            byte[] part = Arrays.copyOfRange(bytes, bytePos, Math.min(bytes.length, segmentEnd));
+            da.setBytes(bytePos, part, part.length);
+        }
         da.flush();
         // todo: would not be needed if the properties file used a format that is compatible with common text tools
         if (dir.getDefaultType().isStoring()) {
