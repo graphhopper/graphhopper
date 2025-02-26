@@ -105,8 +105,12 @@ public class Trip {
         public final String trip_id;
         public final String route_id;
         public final int route_type;
+        public final Geometry shape;
 
-        public PtLeg(String feedId, String agencyId, String agencyName, boolean isInSameVehicleAsPrevious, String tripId, String routeId, int routeType, String headsign, List<Stop> stops, double distance, long travelTime, Geometry geometry) {
+        public PtLeg(String feedId, String agencyId, String agencyName,
+                     boolean isInSameVehicleAsPrevious, String tripId, String routeId,
+                     int routeType, String headsign, List<Stop> stops, double distance,
+                     long travelTime, Geometry geometry, Geometry shape) {
             super("pt", stops.get(0).stop_name, geometry, distance);
             this.feed_id = feedId;
             this.agency_id = agencyId;
@@ -118,6 +122,7 @@ public class Trip {
             this.trip_headsign = headsign;
             this.travelTime = travelTime;
             this.stops = stops;
+            this.shape = shape;
         }
 
         @Override
