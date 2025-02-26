@@ -55,9 +55,7 @@ public class StorableProperties {
         int len = (int) da.getCapacity();
         byte[] bytes = new byte[len];
         int segmentSize = da.getSegmentSize();
-        int segmentCount = (int) Math.ceil((double) len / segmentSize);
-        for (int i = 0; i < segmentCount; i++) {
-            int bytePos = i * segmentSize;
+        for (int bytePos = 0; bytePos < len; bytePos += segmentSize) {
             int partLen = Math.min(bytes.length - bytePos, segmentSize);
             byte[] part = new byte[partLen];
             da.getBytes(bytePos, part, part.length);
@@ -76,11 +74,9 @@ public class StorableProperties {
         byte[] bytes = props.getBytes(UTF_CS);
         da.ensureCapacity(bytes.length);
         int segmentSize = da.getSegmentSize();
-        int segmentCount = (int) Math.ceil((double) bytes.length / segmentSize);
-        for (int i = 0; i < segmentCount; i++) {
-            int bytePos = i * segmentSize;
-            int segmentEnd = bytePos + segmentSize;
-            byte[] part = Arrays.copyOfRange(bytes, bytePos, Math.min(bytes.length, segmentEnd));
+        for (int bytePos = 0; bytePos < bytes.length; bytePos += segmentSize) {
+            int partLen = Math.min(bytes.length - bytePos, segmentSize);
+            byte[] part = Arrays.copyOfRange(bytes, bytePos, bytePos + partLen);
             da.setBytes(bytePos, part, part.length);
         }
         da.flush();
