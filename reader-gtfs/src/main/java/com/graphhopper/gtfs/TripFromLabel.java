@@ -378,8 +378,10 @@ class TripFromLabel {
 
                     List<ShapePoint> shapePoints = getPtLegShapePoints(gtfsFeed,
                             tripDescriptor.getTripId(), stops.get(0), stops.get(stops.size() - 1));
-                    Coordinate[] shapeGeometry = shapePoints.stream().map(s ->
-                            new Coordinate(s.shape_pt_lon, s.shape_pt_lat))
+                    Coordinate[] shapeGeometry = shapePoints.stream()
+                            .map(s -> new Coordinate(
+                                    Math.round(s.shape_pt_lon * 1e6) / 1e6,
+                                    Math.round(s.shape_pt_lat * 1e6) / 1e6))
                             .toArray(Coordinate[]::new);
 
                     result.add(new Trip.PtLeg(
@@ -481,15 +483,15 @@ class TripFromLabel {
         List<ShapePoint> result = new ArrayList<>();
         boolean capturing = false;
         for (ShapePoint point : allPoints) {
-            if (new Coordinate(point.shape_pt_lon, point.shape_pt_lat)
-                    .equals2D(firstStop.geometry.getCoordinate(), 1e-6)) {
+            Coordinate coordinate = new Coordinate(point.shape_pt_lon, point.shape_pt_lat);
+
+            if (coordinate.equals2D(firstStop.geometry.getCoordinate(), 1e-6)) {
                 capturing = true;
             }
 
             if (capturing) {
                 result.add(point);
-                if (new Coordinate(point.shape_pt_lon, point.shape_pt_lat)
-                        .equals2D(lastStop.geometry.getCoordinate(), 1e-6)) {
+                if (coordinate.equals2D(lastStop.geometry.getCoordinate(), 1e-6)) {
                     break;
                 }
             }
