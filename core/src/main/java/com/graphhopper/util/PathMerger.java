@@ -150,7 +150,7 @@ public class PathMerger {
             calcAscendDescend(responsePath, fullPoints);
 
         if (enableInstructions) {
-            fullInstructions = updateInstructionsWithContext(fullInstructions);
+            updateInstructionsWithContext(fullInstructions);
             responsePath.setInstructions(fullInstructions);
         }
 
@@ -187,7 +187,7 @@ public class PathMerger {
      * points into the opposite direction of the route.
      * At a waypoint it can transform the continue to a u-turn if the route involves turning.
      */
-    private InstructionList updateInstructionsWithContext(InstructionList instructions) {
+    private void updateInstructionsWithContext(InstructionList instructions) {
         Instruction instruction;
         Instruction nextInstruction;
 
@@ -222,8 +222,6 @@ public class PathMerger {
                 }
             }
         }
-
-        return instructions;
     }
 
     private void calcAscendDescend(final ResponsePath responsePath, final PointList pointList) {
