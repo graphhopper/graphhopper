@@ -1492,7 +1492,16 @@ public class GraphHopper {
                         .sorted(Comparator.comparing(Path::toString))
                         .forEach(customAreaFile -> {
                             try (BufferedReader reader = Files.newBufferedReader(customAreaFile, StandardCharsets.UTF_8)) {
-                                globalAreas.getFeatures().addAll(mapper.readValue(reader, JsonFeatureCollection.class).getFeatures());
+                                List<JsonFeature> features = mapper.readValue(reader, JsonFeatureCollection.class).getFeatures();
+                                for (JsonFeature feature : features) {
+                                    if (feature.getId() == null) {
+                                        feature.setId(GHUtility.getIdOrPropertiesId(feature));
+                                    }
+                                    if (Helper.isEmpty(feature.getId())) {
+                                        throw new IllegalArgumentException("The JsonFeatures for the CustomModel areas must contain \"id\": " + customAreaFile);
+                                    }
+                                }
+                                globalAreas.getFeatures().addAll(features);
                             } catch (IOException e) {
                                 throw new UncheckedIOException(e);
                             }

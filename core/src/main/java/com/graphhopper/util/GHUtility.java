@@ -521,7 +521,7 @@ public class GHUtility {
         }
     }
 
-    private static String getIdOrPropertiesId(JsonFeature feature) {
+    public static String getIdOrPropertiesId(JsonFeature feature) {
         if (feature.getId() != null) return feature.getId();
         if (feature.getProperties() != null) return (String) feature.getProperties().get("id");
         return null;
