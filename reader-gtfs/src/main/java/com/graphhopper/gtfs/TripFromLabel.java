@@ -466,10 +466,11 @@ class TripFromLabel {
     }
 
     private double getPtLegDistance(List<ShapePoint> shapePoints) {
+        if (shapePoints.isEmpty()) return 0.0;
+
         double startDistance = shapePoints.get(0).shape_dist_traveled;
         double endDistance = shapePoints.get(shapePoints.size() - 1).shape_dist_traveled;
-
-        return endDistance != 0 ? Math.round((endDistance - startDistance) * 1000.0) / 1000.0 : 0.0;
+        return Math.round((endDistance - startDistance) * 1000.0) / 1000.0;
     }
 
     private List<ShapePoint> getPtLegShapePoints(GTFSFeed feed, String tripId,
