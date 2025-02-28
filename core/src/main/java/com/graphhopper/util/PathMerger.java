@@ -125,7 +125,7 @@ public class PathMerger {
                 }
 
             }
-            if (calcPoints || enableInstructions) {
+            if (calcPoints || enableInstructions || !requestedPathDetails.isEmpty()) {
                 PointList tmpPoints = path.calcPoints();
                 if (fullPoints.isEmpty())
                     fullPoints = new PointList(tmpPoints.size(), tmpPoints.is3D());
