@@ -364,6 +364,8 @@ class TripFromLabel {
                     stopsFromBoardHopDwellEdges.finish();
                     List<Trip.Stop> stops = stopsFromBoardHopDwellEdges.stops;
 
+                    var geometry = gtfsStorage.getGtfsFeeds().get(feedId).getTripGeometry(tripDescriptor.getTripId());
+
                     result.add(new Trip.PtLeg(
                             feedId, partition.get(0).edge.getTransfers() == 0,
                             tripDescriptor.getTripId(),
@@ -372,7 +374,7 @@ class TripFromLabel {
                             stops,
                             partition.stream().mapToDouble(t -> t.edge.getDistance()).sum(),
                             path.get(i - 1).label.currentTime - boardTime,
-                            geometryFactory.createLineString(stops.stream().map(s -> s.geometry.getCoordinate()).toArray(Coordinate[]::new))));
+                            geometry));
                     partition = null;
                     if (edge.getType() == GtfsStorage.EdgeType.TRANSFER) {
                         feedId = edge.getPlatformDescriptor().feed_id;
