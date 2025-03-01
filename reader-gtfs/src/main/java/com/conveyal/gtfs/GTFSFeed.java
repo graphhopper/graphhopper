@@ -46,6 +46,7 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -75,6 +76,7 @@ public class GTFSFeed implements Cloneable, Closeable {
     public final Map<String, Stop> stops;
     public final Map<String, Transfer> transfers;
     public final BTreeMap<String, Trip> trips;
+    public final Map<String, Location> locations;
 
     /** CRC32 of the GTFS file this was loaded from */
     public long checksum;
@@ -156,6 +158,7 @@ public class GTFSFeed implements Cloneable, Closeable {
         new Trip.Loader(this).loadTable(zip);
         new Frequency.Loader(this).loadTable(zip);
         new StopTime.Loader(this).loadTable(zip);
+        Location.loadLocations(this, zip);
         loaded = true;
     }
 
@@ -199,6 +202,7 @@ public class GTFSFeed implements Cloneable, Closeable {
     public Iterable<StopTime> getInterpolatedStopTimesForTrip (String trip_id) throws FirstAndLastStopsDoNotHaveTimes {
         // clone stop times so as not to modify base GTFS structures
         StopTime[] stopTimes = StreamSupport.stream(getOrderedStopTimesForTrip(trip_id).spliterator(), false)
+                .filter(stopTime -> stopTime.stop_id != null)
                 .map(st -> st.clone())
                 .toArray(i -> new StopTime[i]);
 
@@ -397,12 +401,13 @@ public class GTFSFeed implements Cloneable, Closeable {
         return dbMaker.make();
     }
 
-    private GTFSFeed (DB db) {
+    private GTFSFeed(DB db) {
         this.db = db;
         agency = db.getTreeMap("agency");
         feedInfo = db.getTreeMap("feed_info");
         routes = db.getTreeMap("routes");
         trips = db.getTreeMap("trips");
+        locations = db.getTreeMap("locations");
         stop_times = db.getTreeMap("stop_times");
         frequencies = db.getTreeSet("frequencies");
         transfers = db.getTreeMap("transfers");

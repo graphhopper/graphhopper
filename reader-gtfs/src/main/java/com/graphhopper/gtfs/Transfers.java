@@ -36,6 +36,7 @@ public class Transfers {
         this.transfersToStop = explodeTransfers(feed).collect(Collectors.groupingBy(t -> t.to_stop_id));
         this.transfersFromStop = explodeTransfers(feed).collect(Collectors.groupingBy(t -> t.from_stop_id));
         this.routesByStop = feed.stop_times.values().stream()
+                .filter(stopTime -> stopTime.stop_id != null)
                 .collect(Collectors.groupingBy(stopTime -> stopTime.stop_id,
                         Collectors.mapping(stopTime -> feed.trips.get(stopTime.trip_id).route_id, Collectors.toSet())));
     }

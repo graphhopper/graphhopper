@@ -44,6 +44,7 @@ public class StopTime extends Entity implements Cloneable, Serializable {
     public int    arrival_time = INT_MISSING;
     public int    departure_time = INT_MISSING;
     public String stop_id;
+    public String location_id;
     public int    stop_sequence;
     public String stop_headsign;
     public int    pickup_type;
@@ -67,11 +68,10 @@ public class StopTime extends Entity implements Cloneable, Serializable {
             StopTime st = new StopTime();
             st.sourceFileLine = row + 1; // offset line number by 1 to account for 0-based row index
             st.trip_id        = getStringField("trip_id", true);
-            // TODO: arrival_time and departure time are not required, but if one is present the other should be
-            // also, if this is the first or last stop, they are both required
             st.arrival_time   = getTimeField("arrival_time", false);
             st.departure_time = getTimeField("departure_time", false);
-            st.stop_id        = getStringField("stop_id", true);
+            st.stop_id        = getStringField("stop_id", false);
+            st.location_id    = getStringField("location_id", false);
             st.stop_sequence  = getIntField("stop_sequence", true, 0, Integer.MAX_VALUE);
             st.stop_headsign  = getStringField("stop_headsign", false);
             st.pickup_type    = getIntField("pickup_type", false, 0, 3); // TODO add ranges as parameters
@@ -81,7 +81,7 @@ public class StopTime extends Entity implements Cloneable, Serializable {
             st.feed           = null; // this could circular-serialize the whole feed
             feed.stop_times.put(new Fun.Tuple2(st.trip_id, st.stop_sequence), st);
             getRefField("trip_id", true, feed.trips);
-            getRefField("stop_id", true, feed.stops);
+            getRefField("stop_id", false, feed.stops);
         }
 
     }

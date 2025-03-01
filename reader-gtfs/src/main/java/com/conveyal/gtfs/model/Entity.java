@@ -38,6 +38,7 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -249,46 +250,43 @@ public abstract class Entity implements Serializable, Cloneable {
          * @param zipOrDirectory the zip file or directory from which to read a table
          */
         public void loadTable(File zipOrDirectory) throws IOException {
-            InputStream zis;
-            if (zipOrDirectory.isDirectory()) {
-                Path path = zipOrDirectory.toPath().resolve(tableName + ".txt");
-                if (!path.toFile().exists()) {
-                    missing();
-                    return;
+            LOG.info("Loading GTFS table {}", tableName);
+            InputStream zis = getInputStreamFromZipOrDirectory(zipOrDirectory, tableName + ".txt");
+            if (zis != null) {
+                // skip any byte order mark that may be present. Files must be UTF-8,
+                // but the GTFS spec says that "files that include the UTF byte order mark are acceptable"
+                InputStream bis = new BOMInputStream(zis);
+                CsvReader reader = new CsvReader(bis, ',', StandardCharsets.UTF_8);
+                this.reader = reader;
+                reader.readHeaders();
+                while (reader.readRecord()) {
+                    // reader.getCurrentRecord() is zero-based and does not include the header line, keep our own row count
+                    if (++row % 500000 == 0) {
+                        LOG.info("Record number {}", human(row));
+                    }
+                    loadOneRow(); // Call subclass method to produce an entity from the current row.
                 }
-                zis = new FileInputStream(path.toFile());
-                LOG.info("Loading GTFS table {} from {}", tableName, path);
+            } else {
+                missing();
+            }
+        }
+
+        static InputStream getInputStreamFromZipOrDirectory(File zipOrDirectory, String fileName) throws IOException {
+            if (zipOrDirectory.isDirectory()) {
+                Path path = zipOrDirectory.toPath().resolve(fileName);
+                if (!path.toFile().exists()) {
+                    return null;
+                } else {
+                    return new FileInputStream(path.toFile());
+                }
             } else {
                 ZipFile zip = new ZipFile(zipOrDirectory);
-                ZipEntry entry = zip.getEntry(tableName + ".txt");
+                ZipEntry entry = zip.getEntry(fileName);
                 if (entry == null) {
-                    Enumeration<? extends ZipEntry> entries = zip.entries();
-                    // check if table is contained within sub-directory
-                    while (entries.hasMoreElements()) {
-                        ZipEntry e = entries.nextElement();
-                        if (e.getName().endsWith(tableName + ".txt")) {
-                            entry = e;
-                            feed.errors.add(new TableInSubdirectoryError(tableName, entry.getName().replace(tableName + ".txt", "")));
-                        }
-                    }
-                    missing();
-                    if (entry == null) return;
+                    return null;
+                } else {
+                    return zip.getInputStream(entry);
                 }
-                zis = zip.getInputStream(entry);
-                LOG.info("Loading GTFS table {} from {}", tableName, entry);
-            }
-            // skip any byte order mark that may be present. Files must be UTF-8,
-            // but the GTFS spec says that "files that include the UTF byte order mark are acceptable"
-            InputStream bis = new BOMInputStream(zis);
-            CsvReader reader = new CsvReader(bis, ',', Charset.forName("UTF8"));
-            this.reader = reader;
-            reader.readHeaders();
-            while (reader.readRecord()) {
-                // reader.getCurrentRecord() is zero-based and does not include the header line, keep our own row count
-                if (++row % 500000 == 0) {
-                    LOG.info("Record number {}", human(row));
-                }
-                loadOneRow(); // Call subclass method to produce an entity from the current row.
             }
         }
 
