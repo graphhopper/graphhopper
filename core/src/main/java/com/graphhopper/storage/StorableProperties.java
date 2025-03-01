@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -53,7 +54,13 @@ public class StorableProperties {
 
         int len = (int) da.getCapacity();
         byte[] bytes = new byte[len];
-        da.getBytes(0, bytes, len);
+        int segmentSize = da.getSegmentSize();
+        for (int bytePos = 0; bytePos < len; bytePos += segmentSize) {
+            int partLen = Math.min(bytes.length - bytePos, segmentSize);
+            byte[] part = new byte[partLen];
+            da.getBytes(bytePos, part, part.length);
+            System.arraycopy(part, 0, bytes, bytePos, partLen);
+        }
         try {
             loadProperties(map, new StringReader(new String(bytes, UTF_CS)));
             return true;
@@ -63,21 +70,23 @@ public class StorableProperties {
     }
 
     public synchronized void flush() {
-        try {
-            StringWriter sw = new StringWriter();
-            saveProperties(map, sw);
-            // TODO at the moment the size is limited to da.segmentSize() !
-            byte[] bytes = sw.toString().getBytes(UTF_CS);
-            da.setBytes(0, bytes, bytes.length);
-            da.flush();
-            // todo: would not be needed if the properties file used a format that is compatible with common text tools
-            if (dir.getDefaultType().isStoring()) {
-                try (BufferedWriter writer = new BufferedWriter(new FileWriter(dir.getLocation() + "/properties.txt"))) {
-                    writer.write(sw.toString());
-                }
+        String props = saveProperties(map);
+        byte[] bytes = props.getBytes(UTF_CS);
+        da.ensureCapacity(bytes.length);
+        int segmentSize = da.getSegmentSize();
+        for (int bytePos = 0; bytePos < bytes.length; bytePos += segmentSize) {
+            int partLen = Math.min(bytes.length - bytePos, segmentSize);
+            byte[] part = Arrays.copyOfRange(bytes, bytePos, bytePos + partLen);
+            da.setBytes(bytePos, part, part.length);
+        }
+        da.flush();
+        // todo: would not be needed if the properties file used a format that is compatible with common text tools
+        if (dir.getDefaultType().isStoring()) {
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(dir.getLocation() + "/properties.txt"))) {
+                writer.write(props);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
         }
     }
 
@@ -147,10 +156,20 @@ public class StorableProperties {
         return da.toString();
     }
 
+    static String saveProperties(Map<String, String> map) {
+        StringBuilder builder = new StringBuilder();
+        for (Map.Entry<String, String> e : map.entrySet()) {
+            builder.append(e.getKey());
+            builder.append('=');
+            builder.append(e.getValue());
+            builder.append('\n');
+        }
+        return builder.toString();
+    }
+
     static void loadProperties(Map<String, String> map, Reader tmpReader) throws IOException {
-        BufferedReader reader = new BufferedReader(tmpReader);
-        String line;
-        try {
+        try (BufferedReader reader = new BufferedReader(tmpReader)) {
+            String line;
             while ((line = reader.readLine()) != null) {
                 if (line.startsWith("//") || line.startsWith("#")) {
                     continue;
@@ -170,8 +189,6 @@ public class StorableProperties {
                 String value = line.substring(index + 1);
                 map.put(field.trim(), value.trim());
             }
-        } finally {
-            reader.close();
         }
     }
 }

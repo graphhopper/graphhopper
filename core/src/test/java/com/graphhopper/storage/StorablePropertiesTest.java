@@ -69,6 +69,30 @@ public class StorablePropertiesTest {
     }
 
     @Test
+    public void testStoreLarge() {
+        String dir = "./target/test";
+        Helper.removeDir(new File(dir));
+        StorableProperties instance = new StorableProperties(createDir(dir, true));
+        instance.create(1000);
+        for (int i = 0; i <= 100_000; i++) {
+            instance.put(Integer.toString(i), "test." + i);
+        }
+
+        instance.flush();
+        long bytesWritten = instance.getCapacity();
+        instance.close();
+
+        instance = new StorableProperties(createDir(dir, true));
+        assertTrue(instance.loadExisting());
+        assertEquals(bytesWritten, instance.getCapacity());
+        assertEquals("test.0", instance.get("0"));
+        assertEquals("test.100000", instance.get("100000"));
+        instance.close();
+
+        Helper.removeDir(new File(dir));
+    }
+
+    @Test
     public void testLoadProperties() throws IOException {
         Map<String, String> map = new HashMap<>();
         StorableProperties.loadProperties(map, new StringReader("blup=test\n blup2 = xy"));
