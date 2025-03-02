@@ -31,9 +31,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class OSMNoisyRoadData {
-    // todonow make private and final
-    List<OSMNoisyRoad> osmNoisyRoads;
-    LongToTwoIntsMap osmNoisyRoadsNodeIndicesByOSMNodeIds;
+    private List<OSMNoisyRoad> osmNoisyRoads;
+    private final LongToTwoIntsMap osmNoisyRoadsNodeIndicesByOSMNodeIds;
 
     public OSMNoisyRoadData() {
         osmNoisyRoads = new ArrayList<>();
