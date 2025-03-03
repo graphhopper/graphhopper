@@ -52,6 +52,9 @@ public class StorableProperties {
         if (!da.loadExisting())
             return false;
 
+        if (da.getCapacity() > Integer.MAX_VALUE) {
+            throw new IllegalStateException("Properties file is too large: " + da.getCapacity());
+        }
         int len = (int) da.getCapacity();
         byte[] bytes = new byte[len];
         int segmentSize = da.getSegmentSize();
