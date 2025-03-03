@@ -71,9 +71,10 @@ mkdir -p $(dirname "${GRAPH}")
 echo "## Loading data"
 # /usr/local/bin/aws s3 cp s3://471112541871-ridesense-routing-data/updated_osm_file_20241121_225129.pbf /data/updated_osm_file_20241121_225129.pbf
 
-FORCE_REDOWNLOAD=true
+FORCE_REDOWNLOAD=false
+FORCE_GRAPH_CLEAR=true
 
-# Presigned url available for 4 hours from 23:39 IST 4th Jan 2025
+# Update presigned url and file name to use a new file
 if [ ! -f "/data/updated_osm_file_20241121_225129.pbf" ] || [ "$FORCE_REDOWNLOAD" = "true" ]; then
     if [ "$FORCE_REDOWNLOAD" = "true" ] && [ -f "/data/updated_osm_file_20241121_225129.pbf" ]; then
         echo "Force redownload enabled, deleting existing file..."
@@ -89,6 +90,11 @@ if [ ! -f "/data/updated_osm_file_20241121_225129.pbf" ] || [ "$FORCE_REDOWNLOAD
     fi
 else
     echo "File already exists"
+fi
+
+if [ "$FORCE_GRAPH_CLEAR" = "true" ] && [ -d "/data/default-gh" ]; then
+    echo "Force graph clear enabled, removing contents of /data/default-gh folder..."
+    rm -rf /data/default-gh/*
 fi
 
 echo "## Executing $ACTION. JAVA_OPTS=$JAVA_OPTS"
