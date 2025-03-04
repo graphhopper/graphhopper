@@ -192,10 +192,6 @@ public class NavigateResource {
                 request.setPathDetails(List.of(INTERSECTION));
         }
 
-        // GraphHopper vs. profile
-        String ghProfile = resolverMap.getOrDefault(request.getProfile(), request.getProfile());
-        request.setProfile(ghProfile);
-
         GHResponse ghResponse = graphHopper.route(request);
 
         double took = sw.stop().getMillisDouble();
@@ -235,7 +231,7 @@ public class NavigateResource {
         request.setProfile(profileStr).
                 setLocale(localeStr).
                 // We force the intersection details here as we cannot easily add this to the URL
-                        setPathDetails(Arrays.asList(INTERSECTION)).
+                setPathDetails(Arrays.asList(INTERSECTION)).
                 putHint(CALC_POINTS, true).
                 putHint(INSTRUCTIONS, enableInstructions).
                 putHint(WAY_POINT_MAX_DISTANCE, minPathPrecision).
