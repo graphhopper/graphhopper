@@ -74,12 +74,11 @@ public final class GraphExplorer {
     }
 
     private Iterable<PtGraph.PtEdge> realtimeEdgesAround(int node) {
-        return () -> realtimeFeed.getAdditionalEdges().stream().filter(e -> e.getBaseNode() == node).iterator();
+        return () -> realtimeFeed.getAdditionalEdgesFrom(node).stream().iterator();
     }
 
     private Iterable<PtGraph.PtEdge> backRealtimeEdgesAround(int node) {
-        return () -> realtimeFeed.getAdditionalEdges().stream()
-                .filter(e -> e.getAdjNode() == node)
+        return () -> realtimeFeed.getAdditionalEdgesTo(node).stream()
                 .map(e -> new PtGraph.PtEdge(e.getId(), e.getAdjNode(), e.getBaseNode(), e.getAttrs()))
                 .iterator();
     }

@@ -50,7 +50,8 @@ public class RealtimeFeed {
     private final IntHashSet blockedEdges;
     private final IntLongHashMap delaysForBoardEdges;
     private final IntLongHashMap delaysForAlightEdges;
-    private final List<PtGraph.PtEdge> additionalEdges;
+    private final TreeSet<PtGraph.PtEdge> additionalEdgesByBaseNode;
+    private final TreeSet<PtGraph.PtEdge> additionalEdgesByAdjNode;
     public final Map<String, GtfsRealtime.FeedMessage> feedMessages;
 
     private RealtimeFeed(Map<String, GtfsRealtime.FeedMessage> feedMessages, IntHashSet blockedEdges,
@@ -59,7 +60,10 @@ public class RealtimeFeed {
         this.blockedEdges = blockedEdges;
         this.delaysForBoardEdges = delaysForBoardEdges;
         this.delaysForAlightEdges = delaysForAlightEdges;
-        this.additionalEdges = additionalEdges;
+        this.additionalEdgesByBaseNode = new TreeSet<>(Comparator.comparingInt(PtGraph.PtEdge::getBaseNode).thenComparingInt(PtGraph.PtEdge::getId));
+        this.additionalEdgesByBaseNode.addAll(additionalEdges);
+        this.additionalEdgesByAdjNode = new TreeSet<>(Comparator.comparingInt(PtGraph.PtEdge::getAdjNode).thenComparingInt(PtGraph.PtEdge::getId));
+        this.additionalEdgesByAdjNode.addAll(additionalEdges);
     }
 
     public static RealtimeFeed empty() {
@@ -268,8 +272,12 @@ public class RealtimeFeed {
         return blockedEdges.contains(edgeId);
     }
 
-    List<PtGraph.PtEdge> getAdditionalEdges() {
-        return additionalEdges;
+    SortedSet<PtGraph.PtEdge> getAdditionalEdgesFrom(int node) {
+        return additionalEdgesByBaseNode.subSet(new PtGraph.PtEdge(0, node, 0, null), new PtGraph.PtEdge(0, node+1, 0, null));
+    }
+
+    SortedSet<PtGraph.PtEdge> getAdditionalEdgesTo(int node) {
+        return additionalEdgesByAdjNode.subSet(new PtGraph.PtEdge(0, 0, node, null), new PtGraph.PtEdge(0, 0, node+1, null));
     }
 
     public Optional<GtfsReader.TripWithStopTimes> getTripUpdate(GTFSFeed staticFeed, GtfsRealtime.TripDescriptor tripDescriptor, Instant boardTime) {
