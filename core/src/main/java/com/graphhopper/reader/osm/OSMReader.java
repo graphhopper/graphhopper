@@ -209,12 +209,15 @@ public class OSMReader {
 
     void handleOSMNoisyRoads(ReaderWay way) {
         if (way.hasTag("highway", noisyHighwayValues))
-            osmNoisyRoadData.addOSMNoisyRoadWithoutCoordinates(way.getNodes());
+            if (way.getNodes().size() >= 2)
+                osmNoisyRoadData.addOSMNoisyRoadWithoutCoordinates(way.getNodes());
+            else
+                OSM_WARNING_LOGGER.warn("OSM data error: way with " + way.getNodes().size() + " nodes found: OSM way ID= " + way.getId());
     }
 
     int osmNoisyWayIndex = -1;
     void handleOSMNoisyRoadsAgain(ReaderWay way) {
-        if (way.hasTag("highway",noisyHighwayValues)) {
+        if (way.hasTag("highway",noisyHighwayValues) && (way.getNodes().size() >= 2)) {
             osmNoisyWayIndex++;
             osmNoisyRoadData.fixOSMNoisyRoads(osmNoisyWayIndex, way);
         }
