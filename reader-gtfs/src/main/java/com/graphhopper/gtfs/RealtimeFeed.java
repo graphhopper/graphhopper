@@ -171,16 +171,19 @@ public class RealtimeFeed {
         Trip trip = feed.trips.get(tripUpdate.getTrip().getTripId());
         StopTime next = feed.getOrderedStopTimesForTrip(trip.trip_id).iterator().next();
         int station = staticGtfs.getStationNodes().get(new GtfsStorage.FeedIdWithStopId(feedKey, next.stop_id));
-        Optional<PtGraph.PtEdge> firstBoarding = StreamSupport.stream(staticGtfs.getPtGraph().backEdgesAround(station).spliterator(), false)
+        Optional<PtGraph.PtEdge> firstAlighting = StreamSupport.stream(staticGtfs.getPtGraph().backEdgesAround(station).spliterator(), false)
                 .flatMap(e -> StreamSupport.stream(staticGtfs.getPtGraph().backEdgesAround(e.getAdjNode()).spliterator(), false))
                 .flatMap(e -> StreamSupport.stream(staticGtfs.getPtGraph().backEdgesAround(e.getAdjNode()).spliterator(), false))
                 .filter(e -> e.getType() == GtfsStorage.EdgeType.ALIGHT)
                 .filter(e -> normalize(e.getAttrs().tripDescriptor).equals(tripUpdate.getTrip()))
-                .findAny();
-        int n = firstBoarding.get().getAdjNode();
-        Stream<PtGraph.PtEdge> boardEdges = evenIndexed(nodes(hopDwellChain(staticGtfs, n)))
+                .min(Comparator.comparingInt(e -> e.getAttrs().stop_sequence));
+        if (firstAlighting.isEmpty()) {
+            return null;
+        }
+        int n = firstAlighting.get().getAdjNode();
+        Stream<PtGraph.PtEdge> leaveEdges = evenIndexed(nodes(hopDwellChain(staticGtfs, n)))
                 .mapToObj(e -> alightForBaseNode(staticGtfs, e));
-        return collectWithPadding(boardEdges);
+        return collectWithPadding(leaveEdges);
     }
 
     private static int[] findBoardEdgesForTrip(GtfsStorage staticGtfs, String feedKey, GTFSFeed feed, GtfsRealtime.TripUpdate tripUpdate) {
@@ -192,7 +195,10 @@ public class RealtimeFeed {
                 .flatMap(e -> StreamSupport.stream(staticGtfs.getPtGraph().edgesAround(e.getAdjNode()).spliterator(), false))
                 .filter(e -> e.getType() == GtfsStorage.EdgeType.BOARD)
                 .filter(e -> normalize(e.getAttrs().tripDescriptor).equals(tripUpdate.getTrip()))
-                .findAny();
+                .min(Comparator.comparingInt(e -> e.getAttrs().stop_sequence));
+        if (firstBoarding.isEmpty()) {
+            return null;
+        }
         int n = firstBoarding.get().getAdjNode();
         Stream<PtGraph.PtEdge> boardEdges = evenIndexed(nodes(hopDwellChain(staticGtfs, n)))
                 .mapToObj(e -> boardForAdjNode(staticGtfs, e));
