@@ -179,7 +179,7 @@ public class RealtimeFeed {
                 .flatMap(e -> StreamSupport.stream(staticGtfs.getPtGraph().backEdgesAround(e.getAdjNode()).spliterator(), false))
                 .flatMap(e -> StreamSupport.stream(staticGtfs.getPtGraph().backEdgesAround(e.getAdjNode()).spliterator(), false))
                 .filter(e -> e.getType() == GtfsStorage.EdgeType.ALIGHT)
-                .filter(e -> normalize(e.getAttrs().tripDescriptor).equals(tripUpdate.getTrip()))
+                .filter(e -> isDescribedBy(e.getAttrs().tripDescriptor, tripUpdate.getTrip()))
                 .min(Comparator.comparingInt(e -> e.getAttrs().stop_sequence));
         if (firstAlighting.isEmpty()) {
             return null;
@@ -198,7 +198,7 @@ public class RealtimeFeed {
                 .flatMap(e -> StreamSupport.stream(staticGtfs.getPtGraph().edgesAround(e.getAdjNode()).spliterator(), false))
                 .flatMap(e -> StreamSupport.stream(staticGtfs.getPtGraph().edgesAround(e.getAdjNode()).spliterator(), false))
                 .filter(e -> e.getType() == GtfsStorage.EdgeType.BOARD)
-                .filter(e -> normalize(e.getAttrs().tripDescriptor).equals(tripUpdate.getTrip()))
+                .filter(e -> isDescribedBy(e.getAttrs().tripDescriptor, tripUpdate.getTrip()))
                 .min(Comparator.comparingInt(e -> e.getAttrs().stop_sequence));
         if (firstBoarding.isEmpty()) {
             return null;
@@ -207,6 +207,18 @@ public class RealtimeFeed {
         Stream<PtGraph.PtEdge> boardEdges = evenIndexed(nodes(hopDwellChain(staticGtfs, n)))
                 .mapToObj(e -> boardForAdjNode(staticGtfs, e));
         return collectWithPadding(boardEdges);
+    }
+
+    private static boolean isDescribedBy(GtfsRealtime.TripDescriptor a, GtfsRealtime.TripDescriptor b) {
+        // a is a descriptor of a trip in our database, static or realtime
+        // b is a descriptor of a trip in a trip update in the literal current rt feed
+        if (a.hasTripId() && !a.getTripId().equals(b.getTripId())) {
+            return false;
+        }
+        if (a.hasStartTime() && !a.getStartTime().equals(b.getStartTime())) {
+            return false;
+        }
+        return true;
     }
 
     private static int[] collectWithPadding(Stream<PtGraph.PtEdge> boardEdges) {
@@ -280,17 +292,16 @@ public class RealtimeFeed {
         return additionalEdgesByAdjNode.subSet(new PtGraph.PtEdge(0, 0, node, null), new PtGraph.PtEdge(0, 0, node+1, null));
     }
 
-    public Optional<GtfsReader.TripWithStopTimes> getTripUpdate(GTFSFeed staticFeed, GtfsRealtime.TripDescriptor tripDescriptor, Instant boardTime) {
+    public Optional<GtfsReader.TripWithStopTimes> getTripUpdate(GTFSFeed staticFeed, GtfsRealtime.TripDescriptor trip, Instant boardTime) {
         try {
-            logger.trace("getTripUpdate {}", tripDescriptor);
+            logger.trace("getTripUpdate {}", trip);
             if (!isThisRealtimeUpdateAboutThisLineRun(boardTime)) {
                 return Optional.empty();
             } else {
-                GtfsRealtime.TripDescriptor normalizedTripDescriptor = normalize(tripDescriptor);
                 return feedMessages.values().stream().flatMap(feedMessage -> feedMessage.getEntityList().stream()
                         .filter(e -> e.hasTripUpdate())
                         .map(e -> e.getTripUpdate())
-                        .filter(tu -> normalize(tu.getTrip()).equals(normalizedTripDescriptor))
+                        .filter(tu -> isDescribedBy(trip, tu.getTrip()))
                         .map(tu -> toTripWithStopTimes(staticFeed, tu)))
                         .findFirst();
             }
@@ -304,10 +315,6 @@ public class RealtimeFeed {
             });
             return Optional.empty();
         }
-    }
-
-    public static GtfsRealtime.TripDescriptor normalize(GtfsRealtime.TripDescriptor tripDescriptor) {
-        return GtfsRealtime.TripDescriptor.newBuilder(tripDescriptor).clearRouteId().build();
     }
 
     public static GtfsReader.TripWithStopTimes toTripWithStopTimes(GTFSFeed feed, GtfsRealtime.TripUpdate tripUpdate) {
