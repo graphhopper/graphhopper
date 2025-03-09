@@ -131,11 +131,11 @@ public class AlternativeRouteEdgeCH extends DijkstraBidirectionEdgeCHNoSOD {
 
             DijkstraBidirectionEdgeCHNoSOD vtRouter = new DijkstraBidirectionEdgeCHNoSOD(graph);
             final Path uvtPath = vtRouter.calcPath(u, t, tailSv, ANY_EDGE);
-//            if (!uvtPath.isFound())
+            if (!uvtPath.isFound())
                 // we were looking for the s->u->v->(x->)t path, but there might be a turn restriction
                 // at u->v->x in which case uvtPath is not found. If we do not stop here we might return
                 // an alternative that does not even reach t, and has a lower weight than the best path.
-//                continue;
+                continue;
             Path path = concat(graph.getBaseGraph(), suvPath, uvtPath);
             extraVisitedNodes += vtRouter.getVisitedNodes();
 
@@ -243,8 +243,8 @@ public class AlternativeRouteEdgeCH extends DijkstraBidirectionEdgeCHNoSOD {
     }
 
     private static Path concat(Graph graph, Path suvPath, Path uvtPath) {
-//        assert suvPath.isFound();
-//        assert uvtPath.isFound();
+        assert suvPath.isFound();
+        assert uvtPath.isFound();
         Path path = new Path(graph);
         path.setFromNode(suvPath.calcNodes().get(0));
         path.getEdges().addAll(suvPath.getEdges());
