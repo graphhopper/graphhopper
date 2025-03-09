@@ -18,6 +18,7 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
+import com.graphhopper.routing.ch.NodeOrderingProvider;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
@@ -25,12 +26,13 @@ import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.SpeedWeighting;
 import com.graphhopper.storage.*;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.PMap;
+import com.graphhopper.util.*;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Locale;
+import java.util.Random;
 
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -147,4 +149,82 @@ public class AlternativeRouteEdgeCHTest {
         // The shortest path works (no restrictions on the way back
     }
 
+    @RepeatedTest(value = 1000)
+    void testForErrors() {
+        // error analysis:
+        // * suvPath is found, but uvtPath isn't!
+        // * suvPath is some kind of loop leading back close to the start (but not the virtual start node)
+        // * the resulting alternative has lower weight than the best path!
+        // * the resulting alternative does not even connect the start and target nodes
+        long seed = System.nanoTime();
+        System.out.println(seed);
+        Random rnd = new Random(seed);
+        final BaseGraph graph = new BaseGraph.Builder(em).withTurnCosts(true).create();
+        GHUtility.buildRandomGraph(graph, rnd, 10, 2.0, false, speedEnc, 60.0, 0.5, 0);
+        GHUtility.addRandomTurnCosts(graph, seed, null, turnCostEnc, 1, graph.getTurnCostStorage());
+//        GHUtility.printGraphForUnitTest(graph, speedEnc);
+        graph.freeze();
+        RoutingCHGraph routingCHGraph = prepareCH(graph);
+
+        for (int i = 0; i < 100; i++) {
+            int s = rnd.nextInt(graph.getNodes());
+            int t = rnd.nextInt(graph.getNodes());
+//            System.out.println(s + " -> " + t);
+            DijkstraBidirectionEdgeCHNoSOD dijkstra = new DijkstraBidirectionEdgeCHNoSOD(routingCHGraph);
+            Path path = dijkstra.calcPath(s, t);
+            if (!path.isFound())
+                continue;
+            PMap hints = new PMap();
+            AlternativeRouteEdgeCH altDijkstra = new AlternativeRouteEdgeCH(routingCHGraph, hints);
+            List<AlternativeRouteEdgeCH.AlternativeInfo> pathInfos = altDijkstra.calcAlternatives(s, t);
+            AlternativeRouteEdgeCH.AlternativeInfo best = pathInfos.get(0);
+            assertEquals(path.getWeight(), best.path.getWeight());
+            for (int j = 1; j < pathInfos.size() - 1; j++) {
+//                assertTrue(pathInfos.get(j).path.getWeight() > best.path.getWeight());
+                PathMerger pathMerger = new PathMerger(graph, routingCHGraph.getWeighting()).setEnableInstructions(false);
+                PointList waypoints = new PointList(2, false);
+                waypoints.add(graph.getNodeAccess().getLat(s), graph.getNodeAccess().getLon(s));
+                waypoints.add(graph.getNodeAccess().getLat(t), graph.getNodeAccess().getLon(t));
+                Translation tr = TranslationMapTest.SINGLETON.getWithFallBack(Locale.US);
+                pathMerger.doWork(waypoints, List.of(pathInfos.get(j).getPath()), em, tr);
+            }
+        }
+    }
+
+    @Test
+    void testBug() {
+        final BaseGraph graph = new BaseGraph.Builder(em).withTurnCosts(true).create();
+        TurnCostStorage tcs = graph.getTurnCostStorage();
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(3, 45.0, 10.0);
+        na.setNode(2, 45.0, 10.1);
+        na.setNode(1, 44.9, 10.1);
+        // 3-2
+        //  \|
+        //   1
+        graph.edge(2, 3).setDistance(500).set(speedEnc, 60); // edgeId=0
+        graph.edge(2, 1).setDistance(1000).set(speedEnc, 60); // edgeId=1
+        graph.edge(3, 1).setDistance(500).set(speedEnc, 60); // edgeId=2
+        tcs.set(turnCostEnc, 0, 3, 2, Double.POSITIVE_INFINITY);
+        graph.freeze();
+        CHConfig chConfig = CHConfig.edgeBased("profile", new SpeedWeighting(speedEnc, turnCostEnc, graph.getTurnCostStorage(), Double.POSITIVE_INFINITY));
+        PrepareContractionHierarchies contractionHierarchies = PrepareContractionHierarchies.fromGraph(graph, chConfig);
+        contractionHierarchies.useFixedNodeOrdering(NodeOrderingProvider.fromArray(3, 0, 2, 1));
+        PrepareContractionHierarchies.Result res = contractionHierarchies.doWork();
+        RoutingCHGraph routingCHGraph = RoutingCHGraphImpl.fromGraph(graph, res.getCHStorage(), res.getCHConfig());
+        final int s = 2;
+        final int t = 1;
+        DijkstraBidirectionEdgeCHNoSOD dijkstra = new DijkstraBidirectionEdgeCHNoSOD(routingCHGraph);
+        Path singlePath = dijkstra.calcPath(s, t);
+        PMap hints = new PMap();
+        AlternativeRouteEdgeCH altDijkstra = new AlternativeRouteEdgeCH(routingCHGraph, hints);
+        List<AlternativeRouteEdgeCH.AlternativeInfo> pathInfos = altDijkstra.calcAlternatives(s, t);
+        AlternativeRouteEdgeCH.AlternativeInfo best = pathInfos.get(0);
+        assertEquals(singlePath.getWeight(), best.path.getWeight());
+        assertEquals(singlePath.calcNodes(), best.path.calcNodes());
+        for (int j = 1; j < pathInfos.size(); j++) {
+//            assertTrue(pathInfos.get(j).path.getWeight() >= best.path.getWeight(), "alternatives must not have lower weight than best path");
+//            assertEquals(IntArrayList.from(s, t), pathInfos.get(j).path.calcNodes(), "alternatives must start/end at start/end node");
+        }
+    }
 }
