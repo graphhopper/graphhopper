@@ -253,7 +253,7 @@ public class GHUtility {
         Random random = new Random(seed);
         double pNodeHasTurnCosts = 0.3;
         double pEdgePairHasTurnCosts = 0.6;
-        double pCostIsRestriction = 1.0;
+        double pCostIsRestriction = 0.1;
 
         EdgeExplorer inExplorer = graph.createEdgeExplorer(accessEnc == null ? edge -> true : AccessFilter.inEdges(accessEnc));
         EdgeExplorer outExplorer = graph.createEdgeExplorer(accessEnc == null ? edge -> true : AccessFilter.outEdges(accessEnc));
@@ -270,8 +270,6 @@ public class GHUtility {
                         if (random.nextDouble() < pEdgePairHasTurnCosts) {
                             double cost = random.nextDouble() < pCostIsRestriction ? Double.POSITIVE_INFINITY : random.nextDouble() * maxTurnCost;
                             turnCostStorage.set(turnCostEnc, inIter.getEdge(), node, outIter.getEdge(), cost);
-                            if (cost > 0)
-                                System.out.println("tcs.set(turnCostEnc, " + inIter.getEdge() + ", " + node + ", " + outIter.getEdge() + ", " + cost + ");");
                         }
                     }
                 }
