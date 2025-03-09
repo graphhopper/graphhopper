@@ -61,7 +61,6 @@ public class RealtimeFeedLoadingCache implements Factory<RealtimeFeed>, Managed 
 
     @Override
     public void start() {
-        System.out.println("Starting RealtimeFeedLoadingCache");
         this.transfers = new HashMap<>();
         for (Map.Entry<String, GTFSFeed> entry : this.graphHopper.getGtfsStorage().getGtfsFeeds().entrySet()) {
             this.transfers.put(entry.getKey(), new Transfers(entry.getValue()));

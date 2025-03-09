@@ -372,7 +372,10 @@ class GtfsReader {
     }
 
     private int findPlatformEnter(GtfsStorage.PlatformDescriptor platformDescriptor) {
-        int stopNode = gtfsStorage.getStationNodes().get(new GtfsStorage.FeedIdWithStopId(platformDescriptor.feed_id, platformDescriptor.stop_id));
+        Integer stopNode = gtfsStorage.getStationNodes().get(new GtfsStorage.FeedIdWithStopId(platformDescriptor.feed_id, platformDescriptor.stop_id));
+        if (stopNode == null) {
+            return -1;
+        }
         for (PtGraph.PtEdge ptEdge : ptGraph.edgesAround(stopNode)) {
             if (ptEdge.getType() == GtfsStorage.EdgeType.ENTER_PT && platformDescriptor.equals(ptEdge.getAttrs().platformDescriptor)) {
                 return ptEdge.getAdjNode();
@@ -382,7 +385,10 @@ class GtfsReader {
     }
 
     private int findPlatformExit(GtfsStorage.PlatformDescriptor platformDescriptor) {
-        int stopNode = gtfsStorage.getStationNodes().get(new GtfsStorage.FeedIdWithStopId(platformDescriptor.feed_id, platformDescriptor.stop_id));
+        Integer stopNode = gtfsStorage.getStationNodes().get(new GtfsStorage.FeedIdWithStopId(platformDescriptor.feed_id, platformDescriptor.stop_id));
+        if (stopNode == null) {
+            return -1;
+        }
         for (PtGraph.PtEdge ptEdge : ptGraph.backEdgesAround(stopNode)) {
             if (ptEdge.getType() == GtfsStorage.EdgeType.EXIT_PT && platformDescriptor.equals(ptEdge.getAttrs().platformDescriptor)) {
                 return ptEdge.getAdjNode();
