@@ -170,7 +170,6 @@ graphhopper:
   # graph.urban_density.city_radius: 1500
   # graph.urban_density.city_sensitivity: 1000
 
-
   #### Subnetworks ####
 
   # In many cases the road network consists of independent components without any routes going in between. In

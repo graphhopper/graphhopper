@@ -11,6 +11,9 @@ FROM eclipse-temurin:21.0.1_12-jre
 # 7-8GB has determined to be the minimum required for import
 ENV JAVA_OPTS="-Xmx10g -Xms8g"
 
+ENV FORCE_REDOWNLOAD="false"
+ENV FORCE_GRAPH_CLEAR="false"
+
 RUN mkdir -p /data
 
 # install aws cli
