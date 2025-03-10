@@ -25,9 +25,10 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListenableFutureTask;
 import com.google.transit.realtime.GtfsRealtime;
-import com.graphhopper.gtfs.GraphHopperGtfs;
-import com.graphhopper.gtfs.RealtimeFeed;
-import com.graphhopper.gtfs.Transfers;
+import com.graphhopper.config.Profile;
+import com.graphhopper.gtfs.*;
+import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.util.PMap;
 import io.dropwizard.lifecycle.Managed;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
@@ -36,6 +37,7 @@ import org.glassfish.hk2.api.Factory;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -124,6 +126,22 @@ public class RealtimeFeedLoadingCache implements Factory<RealtimeFeed>, Managed 
             }
         }
         return RealtimeFeed.fromProtobuf(graphHopper.getGtfsStorage(), this.transfers, feedMessageMap);
+    }
+
+    private void validate(RealtimeFeed realtimeFeed) {
+        Profile foot = graphHopper.getProfile("foot");
+        Weighting weighting = graphHopper.createWeighting(foot, new PMap(), false);
+        GraphExplorer graphExplorer = new GraphExplorer(graphHopper.getBaseGraph(), graphHopper.getGtfsStorage().getPtGraph(), weighting, graphHopper.getGtfsStorage(), realtimeFeed, false, false, false, 6.0, true, 0);
+        EnumSet<GtfsStorage.EdgeType> edgeTypes = EnumSet.noneOf(GtfsStorage.EdgeType.class);
+        for (int streetNode = 0; streetNode < graphHopper.getBaseGraph().getNodes(); streetNode++) {
+            int ptNode = graphHopper.getGtfsStorage().getStreetToPt().getOrDefault(streetNode, -1);
+            if (ptNode != -1) {
+                for (GraphExplorer.MultiModalEdge multiModalEdge : graphExplorer.ptEdgeStream(ptNode, 0)) {
+                    edgeTypes.add(multiModalEdge.getType());
+                }
+            }
+        }
+        System.out.println(edgeTypes);
     }
 
 }

@@ -82,8 +82,19 @@ public class RealtimeFeed {
             @Override
             public int createEdge(int src, int dest, PtEdgeAttributes attrs) {
                 int edgeId = nextEdge++;
-                additionalEdges.add(new PtGraph.PtEdge(edgeId, src, dest, attrs));
+                PtGraph.PtEdge e = new PtGraph.PtEdge(edgeId, src, dest, attrs);
+                assert canBeAdded(e);
+                additionalEdges.add(e);
                 return edgeId;
+            }
+
+            private boolean canBeAdded(PtGraph.PtEdge e) {
+                if (e.getType() != GtfsStorage.EdgeType.ENTER_PT) {
+                    if (staticGtfs.getPtToStreet().containsKey(e.getBaseNode())) {
+                        return false;
+                    }
+                }
+                return true;
             }
 
             @Override
