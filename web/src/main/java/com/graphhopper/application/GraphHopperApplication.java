@@ -22,7 +22,6 @@ import com.graphhopper.application.cli.MatchCommand;
 import com.graphhopper.application.resources.RootResource;
 import com.graphhopper.http.CORSFilter;
 import com.graphhopper.http.GraphHopperBundle;
-import com.graphhopper.http.RealtimeBundle;
 import com.graphhopper.navigation.NavigateResource;
 import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.core.Application;
@@ -41,7 +40,6 @@ public final class GraphHopperApplication extends Application<GraphHopperServerC
     @Override
     public void initialize(Bootstrap<GraphHopperServerConfiguration> bootstrap) {
         bootstrap.addBundle(new GraphHopperBundle());
-        bootstrap.addBundle(new RealtimeBundle());
         bootstrap.addCommand(new ImportCommand());
         bootstrap.addCommand(new MatchCommand());
         bootstrap.addBundle(new AssetsBundle("/com/graphhopper/maps/", "/maps/", "index.html"));

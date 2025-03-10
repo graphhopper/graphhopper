@@ -132,6 +132,8 @@ public class AlternativeRoute extends AStarBidirection implements RoutingAlgorit
 
     @Override
     public List<Path> calcPaths(int from, int to) {
+        checkAlreadyRun();
+        setupFinishTime();
         List<AlternativeInfo> alternatives = calcAlternatives(from, to);
         List<Path> paths = new ArrayList<>(alternatives.size());
         for (AlternativeInfo a : alternatives) {
