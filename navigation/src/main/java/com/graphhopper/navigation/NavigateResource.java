@@ -93,6 +93,7 @@ public class NavigateResource {
             @QueryParam("geometries") @DefaultValue("polyline") String geometries,
             @QueryParam("bearings") @DefaultValue("") String bearings,
             @QueryParam("language") @DefaultValue("en") String localeStr,
+            @QueryParam("alternatives") @DefaultValue("false") boolean alternatives,
             @PathParam("profile") String mapboxProfile) {
 
         /*
@@ -131,11 +132,11 @@ public class NavigateResource {
 
         StopWatch sw = new StopWatch().start();
 
-        GHResponse ghResponse = calcRoute(favoredHeadings, requestPoints, ghProfile, localeStr, enableInstructions, minPathPrecision);
+        GHResponse ghResponse = calcRoute(favoredHeadings, requestPoints, ghProfile, localeStr, enableInstructions, minPathPrecision, alternatives);
 
         // Only do this, when there are more than 2 points, otherwise we use alternative routes
         if (!ghResponse.hasErrors() && favoredHeadings.size() > 0) {
-            GHResponse noHeadingResponse = calcRoute(Collections.EMPTY_LIST, requestPoints, ghProfile, localeStr, enableInstructions, minPathPrecision);
+            GHResponse noHeadingResponse = calcRoute(Collections.EMPTY_LIST, requestPoints, ghProfile, localeStr, enableInstructions, minPathPrecision, alternatives);
             if (ghResponse.getBest().getDistance() != noHeadingResponse.getBest().getDistance()) {
                 ghResponse.getAll().add(noHeadingResponse.getBest());
             }
@@ -163,7 +164,7 @@ public class NavigateResource {
     }
 
     private GHResponse calcRoute(List<Double> headings, List<GHPoint> requestPoints, String profileStr,
-                                 String localeStr, boolean enableInstructions, double minPathPrecision) {
+                                 String localeStr, boolean enableInstructions, double minPathPrecision, boolean alternatives) {
         GHRequest request = new GHRequest(requestPoints);
         if (headings.size() > 0)
             request.setHeadings(headings);
@@ -177,6 +178,13 @@ public class NavigateResource {
                 putHint(WAY_POINT_MAX_DISTANCE, minPathPrecision).
                 putHint(Parameters.CH.DISABLE, true).
                 putHint(Parameters.Routing.PASS_THROUGH, false);
+
+        if (alternatives) {
+            request.setAlgorithm(Parameters.Algorithms.ALT_ROUTE).
+                    putHint(Parameters.Algorithms.AltRoute.MAX_PATHS, 3).
+                    putHint(Parameters.Algorithms.AltRoute.MAX_WEIGHT, 1.4).
+                    putHint(Parameters.Algorithms.AltRoute.MAX_SHARE, 0.6);
+        }
 
         return graphHopper.route(request);
     }
