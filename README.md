@@ -160,7 +160,7 @@ with the Android demo and also see [this pull request](http://github.com/graphho
 
 Use isochrones to calculate and visualize the reachable area for a certain travel mode.
 
-You can try the debug user interface at http://localhost:8989/maps/isochrone to see the `/isochrone` and `/spt` endpoint in action.
+You can try the debug user interface at http://localhost:8989/maps/isochrone/ to see the `/isochrone` and `/spt` endpoint in action.
 
 ### [Isochrone Web API](./docs/web/api-doc.md#isochrone)
 

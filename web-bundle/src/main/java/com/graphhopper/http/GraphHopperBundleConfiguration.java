@@ -24,4 +24,6 @@ public interface GraphHopperBundleConfiguration {
 
     GraphHopperConfig getGraphHopperConfiguration();
 
+    RealtimeConfiguration gtfsrealtime();
+
 }
