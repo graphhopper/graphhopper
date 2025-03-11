@@ -65,7 +65,7 @@ public final class GraphExplorer {
         this.walkSpeedKmH = walkSpeedKmh;
     }
 
-    Iterable<MultiModalEdge> exploreEdgesAround(Label label) {
+    public Iterable<MultiModalEdge> exploreEdgesAround(Label label) {
         return () -> {
             Iterator<MultiModalEdge> ptEdges = label.node.ptNode != -1 ? ptEdgeStream(label.node.ptNode, label.currentTime).iterator() : Collections.emptyIterator();
             Iterator<MultiModalEdge> streetEdges = label.node.streetNode != -1 ? streetEdgeStream(label.node.streetNode).iterator() : Collections.emptyIterator();
@@ -74,18 +74,17 @@ public final class GraphExplorer {
     }
 
     private Iterable<PtGraph.PtEdge> realtimeEdgesAround(int node) {
-        return () -> realtimeFeed.getAdditionalEdges().stream().filter(e -> e.getBaseNode() == node).iterator();
+        return () -> realtimeFeed.getAdditionalEdgesFrom(node).stream().iterator();
     }
 
     private Iterable<PtGraph.PtEdge> backRealtimeEdgesAround(int node) {
-        return () -> realtimeFeed.getAdditionalEdges().stream()
-                .filter(e -> e.getAdjNode() == node)
+        return () -> realtimeFeed.getAdditionalEdgesTo(node).stream()
                 .map(e -> new PtGraph.PtEdge(e.getId(), e.getAdjNode(), e.getBaseNode(), e.getAttrs()))
                 .iterator();
     }
 
 
-    private Iterable<MultiModalEdge> ptEdgeStream(int ptNode, long currentTime) {
+    public Iterable<MultiModalEdge> ptEdgeStream(int ptNode, long currentTime) {
         return () -> Spliterators.iterator(new Spliterators.AbstractSpliterator<MultiModalEdge>(0, 0) {
             final Iterator<PtGraph.PtEdge> edgeIterator = reverse ?
                     Iterators.concat(ptNode < ptGraph.getNodeCount() ? ptGraph.backEdgesAround(ptNode).iterator() : Collections.<PtGraph.PtEdge>emptyIterator(), backRealtimeEdgesAround(ptNode).iterator()) :
