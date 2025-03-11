@@ -63,7 +63,19 @@ public class WaySegmentParser {
     private static final Set<String> INCLUDE_IF_NODE_TAGS = new HashSet<>(Arrays.asList("barrier", "highway", "railway", "crossing", "ford"));
 
     private ToDoubleFunction<ReaderNode> elevationProvider = node -> 0d;
+    private static boolean customPass0WayPreHook = false;
+    private Consumer<ReaderWay> pass0WayPreHook = way -> {
+    };
+    private static boolean customPass1NodePreHook = false;
+    private Consumer<ReaderNode> pass1NodePreHook = node -> {
+    };
+    private Consumer<ReaderWay> pass1WayPreHook = way -> {
+    };
+    private Runnable pass1FinishHook = () -> {
+    };
     private Predicate<ReaderWay> wayFilter = way -> true;
+    private Runnable pass2AfterNodesHook = () -> {
+    };
     private Predicate<ReaderNode> splitNodeFilter = node -> false;
     private WayPreprocessor wayPreprocessor = (way, coordinateSupplier, nodeTagSupplier) -> {
     };
@@ -90,9 +102,16 @@ public class WaySegmentParser {
             throw new IllegalStateException("You can only run way segment parser once");
 
         LOGGER.info("Start reading OSM file: '" + osmFile + "'");
+        LOGGER.info("pass0 - start");
+        StopWatch sw0 = StopWatch.started();
+        if (customPass0WayPreHook)  {
+            readOSM(osmFile, new Pass0Handler(), new SkipOptions(true, false, true));
+        }
+        LOGGER.info("pass0 - finished, took: {}", sw0.stop().getTimeString());
+
         LOGGER.info("pass1 - start");
         StopWatch sw1 = StopWatch.started();
-        readOSM(osmFile, new Pass1Handler(), new SkipOptions(true, false, false));
+        readOSM(osmFile, new Pass1Handler(), new SkipOptions(!customPass1NodePreHook, false, false));
         LOGGER.info("pass1 - finished, took: {}", sw1.stop().getTimeString());
 
         long nodes = nodeData.getNodeCount();
@@ -107,9 +126,10 @@ public class WaySegmentParser {
         nodeData.release();
 
         LOGGER.info("Finished reading OSM file." +
+                " pass0: " + (int) sw0.getSeconds() + "s, " +
                 " pass1: " + (int) sw1.getSeconds() + "s, " +
                 " pass2: " + (int) sw2.getSeconds() + "s, " +
-                " total: " + (int) (sw1.getSeconds() + sw2.getSeconds()) + "s");
+                " total: " + (int) (sw0.getSeconds() + sw1.getSeconds() + sw2.getSeconds()) + "s");
     }
 
     /**
@@ -119,12 +139,24 @@ public class WaySegmentParser {
         return timestamp;
     }
 
+    private class Pass0Handler implements ReaderElementHandler {
+        @Override
+        public void handleWay(ReaderWay way) {
+            pass0WayPreHook.accept(way);
+        }
+    }
+
     private class Pass1Handler implements ReaderElementHandler {
         private boolean handledWays;
         private boolean handledRelations;
         private long wayCounter = 0;
         private long acceptedWays = 0;
         private long relationsCounter = 0;
+
+        @Override
+        public void handleNode(ReaderNode node) {
+            pass1NodePreHook.accept(node);
+        }
 
         @Override
         public void handleWay(ReaderWay way) {
@@ -138,6 +170,8 @@ public class WaySegmentParser {
             if (++wayCounter % 10_000_000 == 0)
                 LOGGER.info("pass1 - processed ways: " + nf(wayCounter) + ", accepted ways: " + nf(acceptedWays) +
                         ", way nodes: " + nf(nodeData.getNodeCount()) + ", " + Helper.getMemInfo());
+
+            pass1WayPreHook.accept(way);
 
             if (!wayFilter.test(way))
                 return;
@@ -173,6 +207,7 @@ public class WaySegmentParser {
 
         @Override
         public void onFinish() {
+            pass1FinishHook.run();
             LOGGER.info("pass1 - finished, processed ways: " + nf(wayCounter) + ", accepted ways: " +
                     nf(acceptedWays) + ", way nodes: " + nf(nodeData.getNodeCount()) + ", relations: " +
                     nf(relationsCounter) + ", " + Helper.getMemInfo());
@@ -235,6 +270,7 @@ public class WaySegmentParser {
         @Override
         public void handleWay(ReaderWay way) {
             if (!handledWays) {
+                pass2AfterNodesHook.run();
                 LOGGER.info("pass2 - start reading OSM ways");
                 handledWays = true;
             }
@@ -427,11 +463,38 @@ public class WaySegmentParser {
             return this;
         }
 
+        public Builder setPass0WayPreHook(Consumer<ReaderWay> pass0WayPreHook) {
+            customPass0WayPreHook = true;
+            waySegmentParser.pass0WayPreHook = pass0WayPreHook;
+            return this;
+        }
+
+        public Builder setPass1NodePreHook(Consumer<ReaderNode> pass1NodePreHook) {
+            customPass1NodePreHook = true;
+            waySegmentParser.pass1NodePreHook = pass1NodePreHook;
+            return this;
+        }
+
+        public Builder setPass1WayPreHook(Consumer<ReaderWay> pass1WayPreHook) {
+            waySegmentParser.pass1WayPreHook = pass1WayPreHook;
+            return this;
+        }
+
+        public Builder setPass1FinishHook(Runnable pass1FinishHook) {
+            waySegmentParser.pass1FinishHook = pass1FinishHook;
+            return this;
+        }
+
         /**
          * @param wayFilter return true for OSM ways that should be considered and false otherwise
          */
         public Builder setWayFilter(Predicate<ReaderWay> wayFilter) {
             waySegmentParser.wayFilter = wayFilter;
+            return this;
+        }
+
+        public Builder setPass2AfterNodesHook(Runnable pass2AfterNodesHook) {
+            waySegmentParser.pass2AfterNodesHook = pass2AfterNodesHook;
             return this;
         }
 

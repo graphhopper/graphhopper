@@ -31,11 +31,9 @@ import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.routing.OSMReaderConfig;
 import com.graphhopper.routing.ev.Country;
 import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.ev.NoisyRoadNearby;
 import com.graphhopper.routing.ev.State;
-import com.graphhopper.routing.util.AreaIndex;
-import com.graphhopper.routing.util.CustomArea;
-import com.graphhopper.routing.util.FerrySpeedCalculator;
-import com.graphhopper.routing.util.OSMParsers;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.countryrules.CountryRule;
 import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
 import com.graphhopper.routing.util.parsers.RestrictionSetter;
@@ -47,6 +45,7 @@ import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
+import org.openjdk.jol.info.GraphLayout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -99,12 +98,19 @@ public class OSMReader {
     private WayToEdgesMap restrictedWaysToEdgesMap = new WayToEdgesMap();
     private List<ReaderRelation> restrictionRelations = new ArrayList<>();
 
-    public OSMReader(BaseGraph baseGraph, OSMParsers osmParsers, OSMReaderConfig config) {
+    private final OSMNoisyRoadData osmNoisyRoadData;
+    private NoiseIndex<OSMNoisyRoad> osmNoisyRoadNoiseIndex;
+    private final EncodingManager encodingManager;
+    final Set<String> noisyHighwayValues = new HashSet<>(Arrays.asList("motorway",
+            "motorway_link", "trunk", "trunk_link", "primary", "primary_link", "secondary", "secondary_link"));
+
+    public OSMReader(BaseGraph baseGraph, EncodingManager encodingManager, OSMParsers osmParsers, OSMReaderConfig config) {
         this.baseGraph = baseGraph;
         this.edgeIntAccess = baseGraph.getEdgeAccess();
         this.config = config;
         this.nodeAccess = baseGraph.getNodeAccess();
         this.osmParsers = osmParsers;
+        this.encodingManager = encodingManager;
         this.restrictionSetter = new RestrictionSetter(baseGraph, osmParsers.getRestrictionTagParsers().stream().map(RestrictionTagParser::getTurnRestrictionEnc).toList());
 
         simplifyAlgo.setMaxDistance(config.getMaxWayPointDistance());
@@ -115,6 +121,7 @@ public class OSMReader {
         if (tempRelFlags.length != 2)
             // we use a long to store relation flags currently, so the relation flags ints ref must have length 2
             throw new IllegalArgumentException("OSMReader cannot use relation flags with != 2 integers");
+        osmNoisyRoadData = new OSMNoisyRoadData();
     }
 
     /**
@@ -162,7 +169,7 @@ public class OSMReader {
         if (!baseGraph.isInitialized())
             throw new IllegalStateException("BaseGraph must be initialize before we can read OSM");
 
-        WaySegmentParser waySegmentParser = new WaySegmentParser.Builder(baseGraph.getNodeAccess(), baseGraph.getDirectory())
+        WaySegmentParser.Builder waySegmentParserBuilder = new WaySegmentParser.Builder(baseGraph.getNodeAccess(), baseGraph.getDirectory())
                 .setElevationProvider(this::getElevation)
                 .setWayFilter(this::acceptWay)
                 .setSplitNodeFilter(this::isBarrierNode)
@@ -170,8 +177,18 @@ public class OSMReader {
                 .setRelationPreprocessor(this::preprocessRelations)
                 .setRelationProcessor(this::processRelation)
                 .setEdgeHandler(this::addEdge)
-                .setWorkerThreads(config.getWorkerThreads())
-                .build();
+                .setWorkerThreads(config.getWorkerThreads());
+        if (encodingManager.hasEncodedValue(NoisyRoadNearby.KEY)) {
+            waySegmentParserBuilder
+                    // todonow: we could move the pass1 way handling and the pass2 node handling of the standard way segment parser to pass0/1,
+                    //          then we could skip nodes in pass2 to speed up the import
+                    .setPass0WayPreHook(this::handleOSMNoisyRoads)
+                    .setPass1NodePreHook(osmNoisyRoadData::fillOSMNoisyRoadNodeCoordinates)
+                    .setPass1WayPreHook(this::handleOSMNoisyRoadsAgain)
+                    .setPass1FinishHook(osmNoisyRoadData::clear)
+                    .setPass2AfterNodesHook(this::buildOSMNoisyRoadIndex);
+        }
+        WaySegmentParser waySegmentParser = waySegmentParserBuilder.build();
         waySegmentParser.readOSM(osmFile);
         osmDataDate = waySegmentParser.getTimestamp();
         if (baseGraph.getNodes() == 0)
@@ -188,6 +205,33 @@ public class OSMReader {
      */
     public Date getDataDate() {
         return osmDataDate;
+    }
+
+    void handleOSMNoisyRoads(ReaderWay way) {
+        if (way.hasTag("highway", noisyHighwayValues))
+            if (way.getNodes().size() >= 2)
+                osmNoisyRoadData.addOSMNoisyRoadWithoutCoordinates(way.getNodes());
+            else
+                OSM_WARNING_LOGGER.warn("OSM data error: way with " + way.getNodes().size() + " nodes found: OSM way ID= " + way.getId());
+    }
+
+    int osmNoisyWayIndex = -1;
+    void handleOSMNoisyRoadsAgain(ReaderWay way) {
+        if (way.hasTag("highway",noisyHighwayValues) && (way.getNodes().size() >= 2)) {
+            osmNoisyWayIndex++;
+            osmNoisyRoadData.fixOSMNoisyRoads(osmNoisyWayIndex, way);
+        }
+    }
+
+    void buildOSMNoisyRoadIndex() {
+        List<OSMNoisyRoad> validRoads = osmNoisyRoadData.getOsmNoisyRoads().stream().filter(OSMNoisyRoad::isValid).collect(Collectors.toList());
+        // todonow remove toFootprint log lines
+        LOGGER.info(GraphLayout.parseInstance(osmNoisyRoadData, validRoads).toFootprint());
+        osmNoisyRoadData.clearOsmNoisyRoads();
+        osmNoisyRoadNoiseIndex = new NoiseIndex<>(validRoads);
+        LOGGER.info(GraphLayout.parseInstance(osmNoisyRoadNoiseIndex).toFootprint());
+        // they partly overlap
+        LOGGER.info(GraphLayout.parseInstance(osmNoisyRoadData, osmNoisyRoadNoiseIndex, validRoads).toFootprint());
     }
 
     protected double getElevation(ReaderNode node) {
@@ -246,20 +290,13 @@ public class OSMReader {
         way.removeTag("country_rule");
         way.removeTag("custom_areas");
 
+        if (osmNoisyRoadNoiseIndex != null) {
+            way.setTag("noisy_road_nearby", osmNoisyRoadNoiseIndex.query(pointList.getMiddleLat(), pointList.getMiddleLon()));
+        }
+
         List<CustomArea> customAreas;
         if (areaIndex != null) {
-            double middleLat;
-            double middleLon;
-            if (pointList.size() > 2) {
-                middleLat = pointList.getLat(pointList.size() / 2);
-                middleLon = pointList.getLon(pointList.size() / 2);
-            } else {
-                double firstLat = pointList.getLat(0), firstLon = pointList.getLon(0);
-                double lastLat = pointList.getLat(pointList.size() - 1), lastLon = pointList.getLon(pointList.size() - 1);
-                middleLat = (firstLat + lastLat) / 2;
-                middleLon = (firstLon + lastLon) / 2;
-            }
-            customAreas = areaIndex.query(middleLat, middleLon);
+            customAreas = areaIndex.query(pointList.getMiddleLat(), pointList.getMiddleLon());
         } else {
             customAreas = emptyList();
         }
