@@ -32,8 +32,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class AlternativeRouteEdgeCHTest {
     private final DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
@@ -183,4 +182,46 @@ public class AlternativeRouteEdgeCHTest {
             assertEquals(IntArrayList.from(s, t), pathInfos.get(j).path.calcNodes(), "alternatives must start/end at start/end node");
         }
     }
+
+    @Test
+    void distanceTimeAndWeight() {
+        final BaseGraph graph = new BaseGraph.Builder(em).withTurnCosts(true).create();
+        //   0-1-2-3---|
+        //        \    |
+        //         5-6-7-8
+        graph.edge(0, 1).setDistance(500).set(speedEnc, 60);
+        graph.edge(1, 2).setDistance(500).set(speedEnc, 60);
+        graph.edge(2, 3).setDistance(500).set(speedEnc, 60);
+        graph.edge(2, 5).setDistance(1000).set(speedEnc, 60);
+        graph.edge(3, 7).setDistance(1500).set(speedEnc, 60);
+        graph.edge(5, 6).setDistance(500).set(speedEnc, 60);
+        graph.edge(6, 7).setDistance(500).set(speedEnc, 60);
+        graph.edge(7, 8).setDistance(500).set(speedEnc, 60);
+        graph.freeze();
+        CHConfig chConfig = CHConfig.edgeBased("profile", new SpeedWeighting(speedEnc, turnCostEnc, graph.getTurnCostStorage(), Double.POSITIVE_INFINITY));
+        PrepareContractionHierarchies contractionHierarchies = PrepareContractionHierarchies.fromGraph(graph, chConfig);
+        contractionHierarchies.useFixedNodeOrdering(NodeOrderingProvider.fromArray(7, 6, 0, 2, 4, 5, 1, 3, 8));
+        PrepareContractionHierarchies.Result res = contractionHierarchies.doWork();
+        RoutingCHGraph routingCHGraph = RoutingCHGraphImpl.fromGraph(graph, res.getCHStorage(), res.getCHConfig());
+        final int s = 0;
+        final int t = 8;
+        PMap hints = new PMap();
+        AlternativeRouteEdgeCH altDijkstra = new AlternativeRouteEdgeCH(routingCHGraph, hints);
+        List<AlternativeRouteEdgeCH.AlternativeInfo> pathInfos = altDijkstra.calcAlternatives(s, t);
+        assertTrue(pathInfos.size() > 1, "the graph, contraction order and alternative route algorith must be such that " +
+                "there is at least one alternative path, otherwise this test makes no sense");
+        AlternativeRouteEdgeCH.AlternativeInfo best = pathInfos.get(0);
+        assertEquals(3500, best.path.getDistance());
+        assertEquals(58.3333, best.path.getWeight(), 1.e-3);
+        assertEquals(58333, best.path.getTime(), 10);
+        assertEquals(IntArrayList.from(0, 1, 2, 5, 6, 7, 8), best.path.calcNodes());
+        for (int j = 1; j < pathInfos.size(); j++) {
+            Path alternative = pathInfos.get(j).path;
+            assertEquals(3500, alternative.getDistance());
+            assertEquals(58.3333, alternative.getWeight(), 1.e-3);
+            assertEquals(58333, alternative.getTime(), 1);
+            assertEquals(IntArrayList.from(0, 1, 2, 3, 7, 8), alternative.calcNodes());
+        }
+    }
+
 }

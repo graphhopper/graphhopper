@@ -101,10 +101,7 @@ public class Path {
         return this;
     }
 
-    /**
-     * @return the first node of this Path.
-     */
-    private int getFromNode() {
+    public int getFromNode() {
         if (fromNode < 0)
             throw new IllegalStateException("fromNode < 0 should not happen");
 

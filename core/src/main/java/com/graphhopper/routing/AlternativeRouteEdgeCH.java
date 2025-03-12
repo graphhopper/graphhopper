@@ -21,6 +21,7 @@ package com.graphhopper.routing;
 import com.carrotsearch.hppc.IntIndexedContainer;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.carrotsearch.hppc.predicates.IntObjectPredicate;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.RoutingCHGraph;
 import com.graphhopper.util.EdgeIteratorState;
@@ -136,7 +137,7 @@ public class AlternativeRouteEdgeCH extends DijkstraBidirectionEdgeCHNoSOD {
                 // at u->v->x in which case uvtPath is not found. If we do not stop here we might return
                 // an alternative that does not even reach t, and has a lower weight than the best path.
                 continue;
-            Path path = concat(graph.getBaseGraph(), suvPath, uvtPath);
+            Path path = concat(graph.getBaseGraph(), graph.getBaseGraph().wrapWeighting(graph.getWeighting()), suvPath, uvtPath);
             extraVisitedNodes += vtRouter.getVisitedNodes();
 
             double sharedDistanceWithShortest = sharedDistanceWithShortest(path);
@@ -242,22 +243,22 @@ public class AlternativeRouteEdgeCH extends DijkstraBidirectionEdgeCHNoSOD {
         return edges.get(i - 1);
     }
 
-    private static Path concat(Graph graph, Path suvPath, Path uvtPath) {
+    private static Path concat(Graph graph, Weighting weighting, Path suvPath, Path uvtPath) {
         assert suvPath.isFound();
         assert uvtPath.isFound();
         Path path = new Path(graph);
-        path.setFromNode(suvPath.calcNodes().get(0));
+        path.setFromNode(suvPath.getFromNode());
         path.getEdges().addAll(suvPath.getEdges());
+        if (uvtPath.getEdges().isEmpty())
+            throw new IllegalStateException("uvtPath.getEdges() should not be empty");
         Iterator<IntCursor> uvtPathI = uvtPath.getEdges().iterator();
-        if (!uvtPathI.hasNext()) { // presumably v == t, has been known to happen, no test yet
-            return suvPath;
-        }
-        uvtPathI.next(); // skip u-v edge
+        int uvEdge = uvtPathI.next().value;// skip u-v edge
         uvtPathI.forEachRemaining(edge -> path.addEdge(edge.value));
+        EdgeIteratorState vuEdgeState = graph.getEdgeIteratorState(uvEdge, uvtPath.getFromNode());
         path.setEndNode(uvtPath.getEndNode());
-        path.setWeight(suvPath.getWeight() + uvtPath.getWeight());
-        path.setDistance(suvPath.getDistance() + uvtPath.getDistance());
-        path.addTime(suvPath.getTime() + uvtPath.getTime());
+        path.setWeight(suvPath.getWeight() + uvtPath.getWeight() - weighting.calcEdgeWeight(vuEdgeState, true));
+        path.setDistance(suvPath.getDistance() + uvtPath.getDistance() - vuEdgeState.getDistance());
+        path.addTime(suvPath.getTime() + uvtPath.getTime() - weighting.calcEdgeMillis(vuEdgeState, true));
         path.setFound(true);
         return path;
     }
