@@ -43,10 +43,10 @@ public abstract class AbstractSRTMElevationProvider extends TileBasedElevationPr
     private final double precision = 1e7;
     private final double invPrecision = 1 / precision;
 
-    public AbstractSRTMElevationProvider(String baseUrl, String cacheDir, String downloaderName, int minLat, int maxLat, int defaultWidth) {
+    public AbstractSRTMElevationProvider(String baseUrl, String cacheDir, int minLat, int maxLat, int defaultWidth) {
         super(cacheDir);
         this.baseUrl = baseUrl;
-        downloader = new Downloader(downloaderName).setTimeout(10000);
+        downloader = new Downloader().setTimeout(10000);
         this.DEFAULT_WIDTH = defaultWidth;
         this.MIN_LAT = minLat;
         this.MAX_LAT = maxLat;

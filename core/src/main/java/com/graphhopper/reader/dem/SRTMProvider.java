@@ -45,7 +45,6 @@ public class SRTMProvider extends AbstractSRTMElevationProvider {
         super(
                 "https://srtm.kurviger.de/SRTM3/",
                 cacheDir.isEmpty()? "/tmp/srtm": cacheDir,
-                "GraphHopper SRTMReader",
                 -56,
                 60,
                 1201

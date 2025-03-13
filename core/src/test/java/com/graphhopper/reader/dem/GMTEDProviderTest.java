@@ -88,7 +88,7 @@ public class GMTEDProviderTest {
         file.delete();
         zipFile.delete();
 
-        instance.setDownloader(new Downloader("test GH") {
+        instance.setDownloader(new Downloader() {
             @Override
             public void downloadFile(String url, File toFile) throws IOException {
                 throw new FileNotFoundException("xyz");
@@ -100,7 +100,7 @@ public class GMTEDProviderTest {
         assertTrue(file.exists());
         assertEquals(1048676, file.length());
 
-        instance.setDownloader(new Downloader("test GH") {
+        instance.setDownloader(new Downloader() {
             @Override
             public void downloadFile(String url, File toFile) throws IOException {
                 throw new HttpTimeoutException("xyz");
