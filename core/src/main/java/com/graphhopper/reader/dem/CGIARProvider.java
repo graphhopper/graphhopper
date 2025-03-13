@@ -59,6 +59,7 @@ public class CGIARProvider extends AbstractTiffElevationProvider {
                 "GraphHopper CGIARReader",
                 6000, 6000,
                 5, 5);
+        downloader.requestCompressed(false);
     }
 
     public static void main(String[] args) {
