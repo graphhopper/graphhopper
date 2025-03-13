@@ -20,11 +20,14 @@ package com.graphhopper;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.util.PMap;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +43,8 @@ public class GraphHopperConfig {
     private List<CHProfile> chProfiles = new ArrayList<>();
     private List<LMProfile> lmProfiles = new ArrayList<>();
     private List<String> copyrights = new ArrayList<>();
+    private static final ObjectMapper mapper = new ObjectMapper();
+
     private final PMap map;
 
     public GraphHopperConfig() {
@@ -102,9 +107,47 @@ public class GraphHopperConfig {
 
     // We can add explicit configuration properties to GraphHopperConfig (for example to allow lists or nested objects),
     // everything else is stored in a HashMap
-    @JsonAnySetter
+@JsonAnySetter
     public GraphHopperConfig putObject(String key, Object value) {
-        map.putObject(key, value);
+        var isString = value instanceof String;
+        if (isString) {
+            var valueString = (String) value;
+            try {
+                // Try to parse the string value as JSON
+                JsonNode jsonNode = mapper.readTree(valueString);
+                
+                // Convert JsonNode to appropriate Java type
+                Object nativeValue;
+                if (jsonNode.isTextual()) {
+                    nativeValue = jsonNode.asText();
+                } else if (jsonNode.isInt()) {
+                    nativeValue = jsonNode.asInt();
+                } else if (jsonNode.isLong()) {
+                    nativeValue = jsonNode.asLong();
+                } else if (jsonNode.isDouble()) {
+                    nativeValue = jsonNode.asDouble();
+                } else if (jsonNode.isBoolean()) {
+                    nativeValue = jsonNode.asBoolean();
+                } else if (jsonNode.isNull()) {
+                    nativeValue = null;
+                } else if (jsonNode.isArray() || jsonNode.isObject()) {
+                    // For complex types, you might want to keep them as JsonNode 
+                    // or convert to Map/List depending on your needs
+                    nativeValue = jsonNode;
+                } else {
+                    // Default fallback - keep as string
+                    nativeValue = value;
+                }
+                
+                map.putObject(key, nativeValue);
+            } catch (IOException e) {
+                // If the string is not valid JSON, store as is
+                map.putObject(key, value);
+            }
+        } else {
+            map.putObject(key, value);
+        }
+        
         return this;
     }
 

@@ -5,7 +5,7 @@ graphhopper:
   # Local folder used by graphhopper to store its data
   graph.location: graph-cache
 
-
+  graph.allow_writes: true
   ##### Routing Profiles ####
 
   # Routing can be done only for profiles listed below. For more information about profiles and custom profiles have a
