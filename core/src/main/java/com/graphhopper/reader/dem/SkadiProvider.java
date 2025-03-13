@@ -48,6 +48,7 @@ public class SkadiProvider extends AbstractSRTMElevationProvider {
                 90,
                 3601
         );
+        downloader.requestCompressed(false);
     }
 
     public static void main(String[] args) throws IOException {
