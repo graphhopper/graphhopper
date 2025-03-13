@@ -25,7 +25,7 @@ import com.graphhopper.util.Helper;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.SocketTimeoutException;
+import java.net.http.HttpTimeoutException;
 
 /**
  * Common functionality used when working with SRTM hgt data.
@@ -171,9 +171,9 @@ public abstract class AbstractSRTMElevationProvider extends TileBasedElevationPr
     private void downloadToFile(File file, String zippedURL) throws InterruptedException, IOException {
         for (int i = 0; i < 3; i++) {
             try {
-                downloader.downloadFile(zippedURL, file.getAbsolutePath());
+                downloader.downloadFile(zippedURL, file);
                 break;
-            } catch (SocketTimeoutException ex) {
+            } catch (HttpTimeoutException ex) {
                 // just try again after a little nap
                 Thread.sleep(2000);
             } catch (FileNotFoundException ex) {

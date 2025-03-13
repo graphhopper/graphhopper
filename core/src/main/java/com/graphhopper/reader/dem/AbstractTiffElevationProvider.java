@@ -24,7 +24,7 @@ import javax.net.ssl.SSLException;
 import java.awt.image.Raster;
 import java.io.File;
 import java.io.IOException;
-import java.net.SocketTimeoutException;
+import java.net.http.HttpTimeoutException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -167,9 +167,9 @@ public abstract class AbstractTiffElevationProvider extends TileBasedElevationPr
             int max = 3;
             for (int trial = 0; trial < max; trial++) {
                 try {
-                    downloader.downloadFile(url, downloadFile.getAbsolutePath());
+                    downloader.downloadFile(url, downloadFile);
                     return;
-                } catch (SocketTimeoutException ex) {
+                } catch (HttpTimeoutException ex) {
                     if (trial >= max - 1)
                         throw new RuntimeException(ex);
                     try {
