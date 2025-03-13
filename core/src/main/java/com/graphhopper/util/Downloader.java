@@ -38,13 +38,11 @@ public class Downloader {
     private static final int BUFFER_SIZE = 8 * 1024;
 
     private final HttpClient client;
-    private final String userAgent;
 
     private boolean requestCompressed = true;
     private long timeout = 4000;
 
-    public Downloader(String userAgent) {
-        this.userAgent = userAgent;
+    public Downloader() {
         this.client = HttpClient.newBuilder()
                 .followRedirects(HttpClient.Redirect.NORMAL)
                 .proxy(ProxySelector.getDefault())
@@ -65,8 +63,7 @@ public class Downloader {
         HttpRequest request;
         try {
             var builder = HttpRequest.newBuilder()
-                    .setHeader("Referrer", "https://www.graphhopper.com/")
-                    .setHeader("User-Agent", userAgent)
+                    .setHeader("User-Agent", "graphhopper/" + Constants.VERSION)
                     .timeout(Duration.ofMillis(timeout))
                     .uri(new URI(url));
             if (requestCompressed) {

@@ -43,7 +43,6 @@ public class SkadiProvider extends AbstractSRTMElevationProvider {
         super(
                 "https://elevation-tiles-prod.s3.amazonaws.com/skadi/",
                 cacheDir.isEmpty()? "/tmp/srtm": cacheDir,
-                "GraphHopper SRTMReader",
                 -90,
                 90,
                 3601

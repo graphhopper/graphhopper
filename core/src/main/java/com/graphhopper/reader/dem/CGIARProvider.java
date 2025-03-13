@@ -56,7 +56,6 @@ public class CGIARProvider extends AbstractTiffElevationProvider {
         // Alternative URLs for the CGIAR data can be found in #346
         super("https://srtm.csi.cgiar.org/wp-content/uploads/files/srtm_5x5/TIFF/",
                 cacheDir.isEmpty() ? "/tmp/cgiar" : cacheDir,
-                "GraphHopper CGIARReader",
                 6000, 6000,
                 5, 5);
         downloader.requestCompressed(false);

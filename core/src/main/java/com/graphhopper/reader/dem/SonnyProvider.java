@@ -44,7 +44,6 @@ public class SonnyProvider extends AbstractSRTMElevationProvider {
     public SonnyProvider(String cacheDir) {
         super("https://drive.google.com/drive/folders/0BxphPoRgwhnoWkRoTFhMbTM3RDA?resourcekey=0-wRe5bWl96pwvQ9tAfI9cQg/", // This base URL cannot be used, as the data is not available via a direct URL
                 cacheDir.isEmpty() ? "/tmp/sonny" : cacheDir,
-                "GraphHopper SonnyReader",
                 -56,
                 90,
                 3601
