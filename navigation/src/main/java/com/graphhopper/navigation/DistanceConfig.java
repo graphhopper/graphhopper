@@ -28,8 +28,10 @@ import static com.graphhopper.navigation.DistanceUtils.UnitTranslationKey.*;
 
 public class DistanceConfig {
     final List<VoiceInstructionConfig> voiceInstructions;
+    final DistanceUtils.Unit unit;
 
     public DistanceConfig(DistanceUtils.Unit unit, TranslationMap translationMap, Locale locale) {
+        this.unit = unit;
         if (unit == DistanceUtils.Unit.METRIC) {
             voiceInstructions = Arrays.asList(
                     new InitialVoiceInstructionConfig(FOR_HIGHER_DISTANCE_PLURAL.metric, translationMap, locale, 4250, 250, unit),
