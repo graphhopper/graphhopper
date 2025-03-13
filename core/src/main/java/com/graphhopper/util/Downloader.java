@@ -60,23 +60,17 @@ public class Downloader {
     }
 
     public void downloadFile(String url, File toFile) throws IOException {
-        HttpRequest request;
-        try {
-            var builder = HttpRequest.newBuilder()
-                    .setHeader("User-Agent", "graphhopper/" + Constants.VERSION)
-                    .timeout(Duration.ofMillis(timeout))
-                    .uri(new URI(url));
-            if (requestCompressed) {
-                builder.setHeader("Accept-Encoding", "gzip, deflate");
-            }
-            request = builder.build();
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
+        var requestBuilder = HttpRequest.newBuilder()
+                .setHeader("User-Agent", "graphhopper/" + Constants.VERSION)
+                .timeout(Duration.ofMillis(timeout))
+                .uri(URI.create(url));
+        if (requestCompressed) {
+            requestBuilder.setHeader("Accept-Encoding", "gzip, deflate");
         }
 
         HttpResponse<InputStream> response;
         try {
-            response = client.send(request, new UncompressHandler());
+            response = client.send(requestBuilder.build(), new UncompressHandler());
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
