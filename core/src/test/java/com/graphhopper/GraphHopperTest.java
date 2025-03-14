@@ -322,8 +322,7 @@ public class GraphHopperTest {
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
                 setProfiles(profile).
-                setStoreOnFlush(true).
-                setAllowWrites(false);
+                setStoreOnFlush(true);
         if (ch) {
             hopper.getCHPreparationHandler()
                     .setCHProfiles(new CHProfile(profileName));
@@ -2875,6 +2874,30 @@ public class GraphHopperTest {
         assertEquals(1, p.get(1).getFirst());
         assertEquals(1, p.get(1).getLast());
         assertEquals(0.0, (double) p.get(1).getValue(), 1.e-3);
+    }
+
+    @Test
+    void setAllowWritesFalseWhenOSMFileisTrue()
+    {
+        GraphHopper hopper = new GraphHopper().
+                setGraphHopperLocation(GH_LOCATION).
+                setEncodedValuesString("car_access, car_average_speed").
+                setOSMFile(MONACO).
+                setProfiles(TestProfiles.accessAndSpeed("car"));
+        assertThrows(IllegalArgumentException.class, ()-> hopper.setAllowWrites(false));
+    }
+
+    @Test
+    void setOSMFileAfterAllowedWritesIsFalse()
+    {
+        GraphHopper hopper = new GraphHopper().
+                setGraphHopperLocation(GH_LOCATION).
+                setEncodedValuesString("car_access, car_average_speed").
+                setProfiles(TestProfiles.accessAndSpeed("car")).
+                setAllowWrites(false);
+                
+        assertThrows(IllegalArgumentException.class, () -> hopper.setOSMFile(MONACO));
+            
     }
 
 }
