@@ -2877,27 +2877,24 @@ public class GraphHopperTest {
     }
 
     @Test
-    void setAllowWritesFalseWhenOSMFileisTrue()
-    {
+    void setAllowWritesFalseWhenOSMFileisTrue() {
         GraphHopper hopper = new GraphHopper().
-                setGraphHopperLocation(GH_LOCATION).
-                setEncodedValuesString("car_access, car_average_speed").
-                setOSMFile(MONACO).
-                setProfiles(TestProfiles.accessAndSpeed("car"));
-        assertThrows(IllegalArgumentException.class, ()-> hopper.setAllowWrites(false));
+            setGraphHopperLocation(GH_LOCATION).
+            setEncodedValuesString("car_access, car_average_speed").
+            setOSMFile(MONACO).
+            setProfiles(TestProfiles.accessAndSpeed("car"));
+    
+        assertThrows(IllegalArgumentException.class, () -> hopper.setAllowWrites(false));
     }
 
     @Test
-    void setOSMFileAfterAllowedWritesIsFalse()
-    {
-        GraphHopper hopper = new GraphHopper().
-                setGraphHopperLocation(GH_LOCATION).
-                setEncodedValuesString("car_access, car_average_speed").
-                setProfiles(TestProfiles.accessAndSpeed("car")).
-                setAllowWrites(false);
-                
+    void setOSMFileAfterAllowedWritesIsFalse() {
+        GraphHopper hopper = new GraphHopper().setGraphHopperLocation(GH_LOCATION).
+            setEncodedValuesString("car_access, car_average_speed").
+            setProfiles(TestProfiles.accessAndSpeed("car")).
+            setAllowWrites(false);
+
         assertThrows(IllegalArgumentException.class, () -> hopper.setOSMFile(MONACO));
-            
     }
 
 }
