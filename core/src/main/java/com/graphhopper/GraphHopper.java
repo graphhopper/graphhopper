@@ -338,7 +338,17 @@ public class GraphHopper {
             throw new IllegalArgumentException("OSM file cannot be empty.");
 
         this.osmFile = osmFile;
+        ValidateOSMFileAndWritesAllowed();
         return this;
+    }
+
+    /**
+     * Validator to check that allow_writes is true when OSM File is truthy.
+     * This allows for loadig a graph from a read-only file system.
+     */
+    void ValidateOSMFileAndWritesAllowed() throws IllegalArgumentException {
+        if (!isEmpty(this.osmFile) & !allowWrites)
+        throw new IllegalArgumentException("graph.allow_writes must be true if datareader.file is read");
     }
 
     public GraphHopper setMaxSpeedCalculator(MaxSpeedCalculator maxSpeedCalculator) {
@@ -409,6 +419,7 @@ public class GraphHopper {
      */
     public GraphHopper setAllowWrites(boolean allowWrites) {
         this.allowWrites = allowWrites;
+        ValidateOSMFileAndWritesAllowed();
         return this;
     }
 
@@ -479,6 +490,8 @@ public class GraphHopper {
             graphHopperFolder = pruneFileEnd(osmFile) + "-gh";
         }
         ghLocation = graphHopperFolder;
+
+        this.setAllowWrites( ghConfig.getBool("graph.allow_writes", true));
 
         countryRuleFactory = ghConfig.getBool("country_rules.enabled", false) ? new CountryRuleFactory() : null;
         customAreasDirectory = ghConfig.getString("custom_areas.directory", customAreasDirectory);
