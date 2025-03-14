@@ -5,7 +5,10 @@ graphhopper:
   # Local folder used by graphhopper to store its data
   graph.location: graph-cache
 
-  graph.allow_writes: true
+  # uncomment if the graph has already been generated and is being loaded from a read-only volume. will only work if datareader.file is empty.
+  # can also be passed as a java VM argument like this: -Ddw.graphhopper.graph.allow_writes=false
+  # graph.allow_writes: false
+
   ##### Routing Profiles ####
 
   # Routing can be done only for profiles listed below. For more information about profiles and custom profiles have a
