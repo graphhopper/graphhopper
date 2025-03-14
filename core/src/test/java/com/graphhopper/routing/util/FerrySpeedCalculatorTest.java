@@ -67,4 +67,19 @@ class FerrySpeedCalculatorTest {
         assertEquals(expected, calc.getSpeed(way));
     }
 
+    // ORS-GH MOD START
+    @Test
+    void testMaxSpeedTag() {
+        double speedFactor = 2;
+        double maxSpeed = 55;
+        double longSpeed = 30;
+        double shortSpeed = 20;
+        double unknownSpeed = 5;
+        FerrySpeedCalculator c = new FerrySpeedCalculator(speedFactor, maxSpeed, longSpeed, shortSpeed, unknownSpeed);
+
+        ReaderWay way = new ReaderWay(0L);
+        way.setTag("maxspeed", "14");
+        assertEquals(10, c.getSpeed(way));
+    }
+    // ORS-GH MOD END
 }
