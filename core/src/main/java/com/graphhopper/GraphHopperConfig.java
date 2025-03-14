@@ -107,7 +107,7 @@ public class GraphHopperConfig {
 
     // We can add explicit configuration properties to GraphHopperConfig (for example to allow lists or nested objects),
     // everything else is stored in a HashMap
-@JsonAnySetter
+    @JsonAnySetter
     public GraphHopperConfig putObject(String key, Object value) {
         var isString = value instanceof String;
         if (isString) {
