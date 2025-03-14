@@ -142,7 +142,7 @@ public class GraphHopperConfig {
                 map.putObject(key, nativeValue);
             } catch (IOException e) {
                 // If the string is not valid JSON, store as is
-                map.putObject(key, value);
+                map.putObject(key, valueString);
             }
         } else {
             map.putObject(key, value);
