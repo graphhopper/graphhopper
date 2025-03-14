@@ -46,6 +46,7 @@ Here is an overview:
  * jansoe, many improvements regarding A* algorithm, forcing direction, roundabouts etc
  * jansonhanson, general host config
  * jessLryan, max elevation can now be negative
+ * jtbaker, allow writes (for lockfile) configurable via config file or as vm argument
  * joe-akeem, improvements like #2158
  * JohannesPelzer, improved GPX information and various other things
  * karussell, one of the core developers
