@@ -29,6 +29,7 @@ import java.util.zip.InflaterInputStream;
  * @author Peter Karich
  */
 public class Downloader {
+    private static final int BUFFER_SIZE = 8 * 1024;
     private final String userAgent;
     private String referrer = "http://graphhopper.com";
     private String acceptEncoding = "gzip, deflate";
@@ -76,9 +77,9 @@ public class Downloader {
         try {
             String encoding = connection.getContentEncoding();
             if (encoding != null && encoding.equalsIgnoreCase("gzip"))
-                is = new GZIPInputStream(is);
+                is = new GZIPInputStream(is, BUFFER_SIZE);
             else if (encoding != null && encoding.equalsIgnoreCase("deflate"))
-                is = new InflaterInputStream(is, new Inflater(true));
+                is = new InflaterInputStream(is, new Inflater(true), BUFFER_SIZE);
         } catch (IOException ex) {
         }
 
@@ -108,15 +109,10 @@ public class Downloader {
     public void downloadFile(String url, String toFile) throws IOException {
         HttpURLConnection conn = createConnection(url);
         InputStream iStream = fetch(conn, false);
-        int size = 8 * 1024;
-        BufferedOutputStream writer = new BufferedOutputStream(new FileOutputStream(toFile), size);
-        InputStream in = new BufferedInputStream(iStream, size);
+        BufferedOutputStream writer = new BufferedOutputStream(new FileOutputStream(toFile), BUFFER_SIZE);
+        InputStream in = new BufferedInputStream(iStream, BUFFER_SIZE);
         try {
-            byte[] buffer = new byte[size];
-            int numRead;
-            while ((numRead = in.read(buffer)) != -1) {
-                writer.write(buffer, 0, numRead);
-            }
+            in.transferTo(writer);
         } finally {
             Helper.close(iStream);
             Helper.close(writer);
