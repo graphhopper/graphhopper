@@ -493,7 +493,7 @@ public class GraphHopper {
 
         this.setAllowWrites( ghConfig.getBool("graph.allow_writes", true));
         if (!this.isAllowWrites() && osmFile != null ) {
-            throw new IllegalArgumentException("If data is being loaded writing must be enabled via `graph.allow_writes`.");
+            throw new IllegalArgumentException("If OSM data is being loaded to generate a graph, writing to the graph directory must be enabled via `graph.allow_writes`.");
         }
 
         countryRuleFactory = ghConfig.getBool("country_rules.enabled", false) ? new CountryRuleFactory() : null;
