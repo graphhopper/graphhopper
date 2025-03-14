@@ -219,8 +219,15 @@ public class Router {
         RoundTripRouting.Result result = RoundTripRouting.calcPaths(snaps, pathCalculator);
         // we merge the different legs of the roundtrip into one response path
         ResponsePath responsePath = concatenatePaths(request, solver.weighting, queryGraph, result.paths, getWaypoints(snaps));
-        ghRsp.add(responsePath);
+
         // ORS-GH MOD START - pass graph date
+        if (request.getEncoderName() != null && !request.getEncoderName().isEmpty()) {
+            PathProcessor pathProcessor = pathProcessorFactory.createPathProcessor(request.getAdditionalHints(), encodingManager.getEncoder(request.getEncoderName()), ghStorage);
+            responsePath = concatenatePaths(request, solver.weighting, queryGraph, result.paths, getWaypoints(snaps), pathProcessor);
+            ghRsp.addReturnObject(pathProcessor);
+        }
+        ghRsp.add(responsePath);
+
         String date = ghStorage.getProperties().get("datareader.import.date");
         if (Helper.isEmpty(date)) {
             date = ghStorage.getProperties().get("datareader.data.date");
