@@ -120,16 +120,16 @@ public class SRTMProvider extends AbstractSRTMElevationProvider {
     @Override
     byte[] readFile(File file) throws IOException {
         InputStream is = new FileInputStream(file);
-        ZipInputStream zis = new ZipInputStream(is);
-        ZipEntry entry = zis.getNextEntry();
-        if (entry == null) {
-            throw new RuntimeException("No entry found in zip file " + file);
+        BufferedInputStream buff = new BufferedInputStream(is, 8 * 1024);
+        try (ZipInputStream zis = new ZipInputStream(buff)) {
+            ZipEntry entry = zis.getNextEntry();
+            if (entry == null) {
+                throw new RuntimeException("No entry found in zip file " + file);
+            }
+            ByteArrayOutputStream os = new ByteArrayOutputStream((int) entry.getSize());
+            zis.transferTo(os);
+            return os.toByteArray();
         }
-        ByteArrayOutputStream os = new ByteArrayOutputStream((int) entry.getSize());
-        try (BufferedInputStream buff = new BufferedInputStream(zis)) {
-            buff.transferTo(os);
-        }
-        return os.toByteArray();
     }
 
     @Override
