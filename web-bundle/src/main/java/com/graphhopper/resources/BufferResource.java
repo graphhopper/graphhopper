@@ -323,7 +323,7 @@ public class BufferResource {
      */
     private BufferFeature computeEdgeAtDistanceThreshold(final BufferFeature startFeature, Double thresholdDistance,
                                                          String roadName, Boolean upstreamPath, Boolean upstreamStart) {
-        List<Integer> usedEdges = new ArrayList<>() {
+        List<Integer> usedEdges = new ArrayList<Integer>() {
             {
                 add(startFeature.getEdge());
             }
@@ -339,6 +339,9 @@ public class BufferResource {
                 nodeAccess.getLat(currentNode), nodeAccess.getLon(currentNode));
         double previousDistance = 0.0;
         Integer currentEdge = -1;
+        // Create previous values to use in case we don't meet the threshold
+        Integer previousEdge = currentEdge;
+        int previousNode = currentNode;
 
         if (currentDistance >= thresholdDistance) {
             return startFeature;
@@ -431,7 +434,12 @@ public class BufferResource {
                     currentEdge = potentialRoundaboutEdgesWithoutName.get(0);
                     usedEdges.add(currentEdge);
                 } else {
-                    throw new WebApplicationException("Dead end found.");
+                    // Instead of throwing an exception, we break the loop and return the
+                    // path up to the current edge even though we haven't met the threshold.
+                    // Assign current edge & node to previous and break the loop.
+                    currentEdge = previousEdge;
+                    currentNode = previousNode;
+                    break;
                 }
             }
 
@@ -462,6 +470,9 @@ public class BufferResource {
             // Move to next node
             currentNode = otherNode;
             currentState = graph.getEdgeIteratorState(currentEdge, Integer.MIN_VALUE);
+            // Update previous values
+            previousEdge = currentEdge;
+            previousNode = currentNode;
         }
 
         return new BufferFeature(currentEdge, currentNode,
