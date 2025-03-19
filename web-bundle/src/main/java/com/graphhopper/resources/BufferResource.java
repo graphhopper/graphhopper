@@ -323,7 +323,7 @@ public class BufferResource {
      */
     private BufferFeature computeEdgeAtDistanceThreshold(final BufferFeature startFeature, Double thresholdDistance,
                                                          String roadName, Boolean upstreamPath, Boolean upstreamStart) {
-        List<Integer> usedEdges = new ArrayList<Integer>() {
+        List<Integer> usedEdges = new ArrayList<>() {
             {
                 add(startFeature.getEdge());
             }
