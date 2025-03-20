@@ -118,6 +118,7 @@ See the [documentation](./docs/index.md) that contains e.g. [the elevation guide
 
 The Docker images created by the community from the `master` branch can be found [here](https://hub.docker.com/r/israelhikingmap/graphhopper)
 (currently daily). See the [Dockerfile](https://github.com/IsraelHikingMap/graphhopper-docker-image-push) for more details.
+For usage with a read-only volume that already has the graph built, you can pass the argument "-Ddw.graphhopper.graph.allow_writes=false" to avoid GraphHopper placing a lock file in the volume of the graph. See the following [issue](https://github.com/graphhopper/graphhopper/issues/2815).
 
 ## GraphHopper Maps
 
