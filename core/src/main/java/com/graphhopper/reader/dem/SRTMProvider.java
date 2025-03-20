@@ -21,6 +21,7 @@ import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.util.Helper;
 
 import java.io.*;
+import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 /**
@@ -119,18 +120,17 @@ public class SRTMProvider extends AbstractSRTMElevationProvider {
     @Override
     byte[] readFile(File file) throws IOException {
         InputStream is = new FileInputStream(file);
-        ZipInputStream zis = new ZipInputStream(is);
-        zis.getNextEntry();
-        BufferedInputStream buff = new BufferedInputStream(zis);
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        byte[] buffer = new byte[0xFFFF];
-        int len;
-        while ((len = buff.read(buffer)) > 0) {
-            os.write(buffer, 0, len);
+        BufferedInputStream buff = new BufferedInputStream(is, 8 * 1024);
+        try (ZipInputStream zis = new ZipInputStream(buff)) {
+            ZipEntry entry = zis.getNextEntry();
+            if (entry == null) {
+                throw new RuntimeException("No entry found in zip file " + file);
+            }
+            int bufferSize = (int) Math.max(entry.getSize(), 64 * 1024);
+            ByteArrayOutputStream os = new ByteArrayOutputStream(bufferSize);
+            zis.transferTo(os);
+            return os.toByteArray();
         }
-        os.flush();
-        Helper.close(buff);
-        return os.toByteArray();
     }
 
     @Override
