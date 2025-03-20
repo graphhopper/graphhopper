@@ -126,7 +126,8 @@ public class SRTMProvider extends AbstractSRTMElevationProvider {
             if (entry == null) {
                 throw new RuntimeException("No entry found in zip file " + file);
             }
-            ByteArrayOutputStream os = new ByteArrayOutputStream((int) entry.getSize());
+            int bufferSize = (int) Math.max(entry.getSize(), 64 * 1024);
+            ByteArrayOutputStream os = new ByteArrayOutputStream(bufferSize);
             zis.transferTo(os);
             return os.toByteArray();
         }
