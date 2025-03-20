@@ -342,10 +342,6 @@ public class GraphHopper {
         return this;
     }
 
-    /**
-     * Validator to check that allow_writes is true when OSM File is truthy.
-     * This allows for loadig a graph from a read-only file system.
-     */
     void validateOSMFileAndWritesAllowed() throws IllegalArgumentException {
         if (!isEmpty(this.osmFile) & !allowWrites)
             throw new IllegalArgumentException("graph.allow_writes must be true if datareader.file is read");
