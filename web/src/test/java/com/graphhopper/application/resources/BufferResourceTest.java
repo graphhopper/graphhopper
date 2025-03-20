@@ -333,4 +333,31 @@ public class BufferResourceTest {
             assertEquals(200, response.getStatus());
         }
     }
+
+    @Test
+    public void testOutOfRoad() {
+        // testing buffer on a road in Andorra that transitions from CG-1 to N-145
+        JsonFeatureCollection featureCollection;
+        try (Response response = clientTarget(app, "/buffer?profile=my_car&"
+            + "point=42.440606,1.477431&roadName=cg-1&"
+            + "thresholdDistance=1600&buildUpstream=true&queryMultiplier=0.000075").request()
+                .buildGet().invoke()) {
+            assertEquals(200, response.getStatus());
+            featureCollection = response.readEntity(JsonFeatureCollection.class);
+        }
+
+        assertEquals(2, featureCollection.getFeatures().size());
+        Geometry lineString0 = featureCollection.getFeatures().get(0).getGeometry();
+        Geometry lineString1 = featureCollection.getFeatures().get(1).getGeometry();
+
+        // Identical start points (reversed index)
+        assertEquals(lineString0.getCoordinates()[lineString0.getCoordinates().length - 1],
+                lineString1.getCoordinates()[lineString1.getCoordinates().length - 1]);
+
+        // Different end points (reversed index)
+        assertNotEquals(lineString0.getCoordinates()[0], lineString1.getCoordinates()[0]);
+
+        // Check lengths are different since one path runs out of road
+        assertNotEquals(lineString0.getLength(), lineString1.getLength());
+    }
 }
