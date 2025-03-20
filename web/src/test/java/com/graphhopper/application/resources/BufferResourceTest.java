@@ -31,14 +31,14 @@ public class BufferResourceTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration()
-                .putObject("datareader.file", "../core/files/andorra.osm.pbf")
-                .putObject("import.osm.ignored_highways", "")
-                .putObject("graph.location", DIR)
-                .putObject("graph.encoded_values", "car_access, car_average_speed")
-                .setProfiles(Arrays.asList(
-                        TestProfiles.accessAndSpeed("fast_car", "car").setTurnCostsConfig(TurnCostsConfig.car()),
-                        TestProfiles.constantSpeed("short_car", 35).setTurnCostsConfig(TurnCostsConfig.car()),
-                        TestProfiles.accessAndSpeed("fast_car_no_turn_restrictions", "car")));
+            .putObject("datareader.file", "../core/files/andorra.osm.pbf")
+            .putObject("import.osm.ignored_highways", "")
+            .putObject("graph.location", DIR)
+            .putObject("graph.encoded_values", "car_access, car_average_speed")
+            .setProfiles(Arrays.asList(
+                TestProfiles.accessAndSpeed("fast_car", "car").setTurnCostsConfig(TurnCostsConfig.car()),
+                TestProfiles.constantSpeed("short_car", 35).setTurnCostsConfig(TurnCostsConfig.car()),
+                TestProfiles.accessAndSpeed("fast_car_no_turn_restrictions", "car")));
         return config;
     }
 
