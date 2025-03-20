@@ -338,7 +338,7 @@ public class GraphHopper {
             throw new IllegalArgumentException("OSM file cannot be empty.");
 
         this.osmFile = osmFile;
-        ValidateOSMFileAndWritesAllowed();
+        validateOSMFileAndWritesAllowed();
         return this;
     }
 
@@ -346,9 +346,9 @@ public class GraphHopper {
      * Validator to check that allow_writes is true when OSM File is truthy.
      * This allows for loadig a graph from a read-only file system.
      */
-    void ValidateOSMFileAndWritesAllowed() throws IllegalArgumentException {
+    void validateOSMFileAndWritesAllowed() throws IllegalArgumentException {
         if (!isEmpty(this.osmFile) & !allowWrites)
-        throw new IllegalArgumentException("graph.allow_writes must be true if datareader.file is read");
+            throw new IllegalArgumentException("graph.allow_writes must be true if datareader.file is read");
     }
 
     public GraphHopper setMaxSpeedCalculator(MaxSpeedCalculator maxSpeedCalculator) {
@@ -419,7 +419,7 @@ public class GraphHopper {
      */
     public GraphHopper setAllowWrites(boolean allowWrites) {
         this.allowWrites = allowWrites;
-        ValidateOSMFileAndWritesAllowed();
+        validateOSMFileAndWritesAllowed();
         return this;
     }
 
