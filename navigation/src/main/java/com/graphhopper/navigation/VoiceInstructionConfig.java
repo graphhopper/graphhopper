@@ -19,7 +19,7 @@ abstract class VoiceInstructionConfig {
         this.locale = locale;
     }
 
-    class VoiceInstructionValue {
+    public static class VoiceInstructionValue {
         final int spokenDistance;
         final String turnDescription;
 
