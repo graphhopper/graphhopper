@@ -28,7 +28,6 @@ import org.codehaus.janino.*;
 import org.codehaus.janino.Scanner;
 
 import java.io.StringReader;
-import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 import static com.graphhopper.json.Statement.Keyword.IF;
@@ -201,25 +200,23 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         } catch (NumberFormatException ex) {
             try {
                 if (result.guessedVariables.isEmpty()) { // without encoded values
-                    ExpressionEvaluator ee = new ExpressionEvaluator();
-                    ee.cook(valueExpression);
-                    value = ((Number) ee.evaluate()).doubleValue();
+                    NoArgEvaluator ee = new ExpressionEvaluator().createFastEvaluator(valueExpression, NoArgEvaluator.class);
+                    value = ee.evaluate();
                 } else if (lookup.hasEncodedValue(valueExpression)) { // speed up for common case that complete right-hand side is the encoded value
                     EncodedValue enc = lookup.getEncodedValue(valueExpression, EncodedValue.class);
                     value = Math.min(getMin(enc), getMax(enc));
                 } else {
                     // single encoded value
-                    ExpressionEvaluator ee = new ExpressionEvaluator();
                     String var = result.guessedVariables.iterator().next();
-                    ee.setParameters(new String[]{var}, new Class[]{double.class});
-                    ee.cook(valueExpression);
-                    double max = getMax(lookup.getEncodedValue(var, EncodedValue.class));
-                    Number val1 = (Number) ee.evaluate(max);
-                    double min = getMin(lookup.getEncodedValue(var, EncodedValue.class));
-                    Number val2 = (Number) ee.evaluate(min);
-                    value = Math.min(val1.doubleValue(), val2.doubleValue());
+                    SingleArgEvaluator ee = new ExpressionEvaluator().createFastEvaluator(valueExpression, SingleArgEvaluator.class, var);
+                    EncodedValue enc = lookup.getEncodedValue(var, EncodedValue.class);
+                    double max = getMax(enc);
+                    double val1 = ee.evaluate(max);
+                    double min = getMin(enc);
+                    double val2 = ee.evaluate(min);
+                    value = Math.min(val1, val2);
                 }
-            } catch (CompileException | InvocationTargetException ex2) {
+            } catch (CompileException ex2) {
                 throw new IllegalArgumentException(ex2);
             }
         }
@@ -248,9 +245,8 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
 
         try {
             if (result.guessedVariables.isEmpty()) { // without encoded values
-                ExpressionEvaluator ee = new ExpressionEvaluator();
-                ee.cook(valueExpression);
-                double val = ((Number) ee.evaluate()).doubleValue();
+                NoArgEvaluator ee = new ExpressionEvaluator().createFastEvaluator(valueExpression, NoArgEvaluator.class);
+                double val = ee.evaluate();
                 return new MinMax(val, val);
             }
 
@@ -260,16 +256,15 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
                 return new MinMax(min, max);
             }
 
-            ExpressionEvaluator ee = new ExpressionEvaluator();
             String var = result.guessedVariables.iterator().next();
-            ee.setParameters(new String[]{var}, new Class[]{double.class});
-            ee.cook(valueExpression);
-            double max = getMax(lookup.getEncodedValue(var, EncodedValue.class));
-            Number val1 = (Number) ee.evaluate(max);
-            double min = getMin(lookup.getEncodedValue(var, EncodedValue.class));
-            Number val2 = (Number) ee.evaluate(min);
-            return new MinMax(Math.min(val1.doubleValue(), val2.doubleValue()), Math.max(val1.doubleValue(), val2.doubleValue()));
-        } catch (CompileException | InvocationTargetException ex) {
+            SingleArgEvaluator ee = new ExpressionEvaluator().createFastEvaluator(valueExpression, SingleArgEvaluator.class, var);
+            EncodedValue enc = lookup.getEncodedValue(var, EncodedValue.class);
+            double max = getMax(enc);
+            double val1 = ee.evaluate(max);
+            double min = getMin(enc);
+            double val2 = ee.evaluate(min);
+            return new MinMax(Math.min(val1, val2), Math.max(val1, val2));
+        } catch (CompileException ex) {
             throw new IllegalArgumentException(ex);
         }
     }
@@ -284,5 +279,13 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         if (enc instanceof DecimalEncodedValue) return ((DecimalEncodedValue) enc).getMaxOrMaxStorableDecimal();
         else if (enc instanceof IntEncodedValue) return ((IntEncodedValue) enc).getMaxOrMaxStorableInt();
         throw new IllegalArgumentException("Cannot use non-number data '" + enc.getName() + "' in value expression");
+    }
+
+    protected interface NoArgEvaluator {
+        double evaluate();
+    }
+
+    protected interface SingleArgEvaluator {
+        double evaluate(double arg);
     }
 }

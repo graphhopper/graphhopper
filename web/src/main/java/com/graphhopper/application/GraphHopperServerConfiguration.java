@@ -20,13 +20,12 @@ package com.graphhopper.application;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.http.GraphHopperBundleConfiguration;
-import com.graphhopper.http.RealtimeBundleConfiguration;
 import com.graphhopper.http.RealtimeConfiguration;
 import io.dropwizard.core.Configuration;
 
 import javax.validation.constraints.NotNull;
 
-public class GraphHopperServerConfiguration extends Configuration implements GraphHopperBundleConfiguration, RealtimeBundleConfiguration {
+public class GraphHopperServerConfiguration extends Configuration implements GraphHopperBundleConfiguration {
 
     @NotNull
     @JsonProperty
@@ -43,7 +42,6 @@ public class GraphHopperServerConfiguration extends Configuration implements Gra
         return graphhopper;
     }
 
-    @Override
     public RealtimeConfiguration gtfsrealtime() {
         return gtfsRealtime;
     }

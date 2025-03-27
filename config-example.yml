@@ -201,7 +201,7 @@ graphhopper:
   # motorized vehicles. This leads to a smaller and less dense graph, because there are fewer ways (obviously),
   # but also because there are fewer crossings between highways (=junctions).
   # Another typical example is excluding 'motorway', 'trunk' and maybe 'primary' highways for bicycle or pedestrian routing.
-  import.osm.ignored_highways: footway,cycleway,path,pedestrian,steps # typically useful for motorized-only routing
+  import.osm.ignored_highways: footway,construction,cycleway,path,pedestrian,steps # typically useful for motorized-only routing
   # import.osm.ignored_highways: motorway,trunk # typically useful for non-motorized routing
 
   # configure the memory access, use RAM_STORE for well equipped servers (default and recommended)

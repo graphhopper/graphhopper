@@ -26,7 +26,6 @@ import java.text.DateFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.Map.Entry;
 
 /**
  * @author Peter Karich
@@ -63,20 +62,6 @@ public class Helper {
 
     public static String toUpperCase(String string) {
         return string.toUpperCase(Locale.ROOT);
-    }
-
-    public static void saveProperties(Map<String, String> map, Writer tmpWriter) throws IOException {
-        BufferedWriter writer = new BufferedWriter(tmpWriter);
-        try {
-            for (Entry<String, String> e : map.entrySet()) {
-                writer.append(e.getKey());
-                writer.append('=');
-                writer.append(e.getValue());
-                writer.append('\n');
-            }
-        } finally {
-            writer.close();
-        }
     }
 
     public static String readJSONFileWithoutComments(String file) throws IOException {
