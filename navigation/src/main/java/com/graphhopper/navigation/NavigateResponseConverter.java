@@ -168,7 +168,7 @@ public class NavigateResponseConverter {
             }
         }
 
-        // TODO
+        // TODO what purpose?
 //        "speed":[24.7, 24.7, 24.7, 24.7, 24.7, 24.7, 24.7, 24.7, 24.7],
 //        "distance":[23.6, 14.9, 9.6, 13.2, 25, 28.1, 38.1, 41.6, 90],
 //        "duration":[0.956, 0.603, 0.387, 0.535, 1.011, 1.135, 1.539, 1.683, 3.641]
@@ -560,7 +560,7 @@ public class NavigateResponseConverter {
                     singleBannerInstruction.putNull("degrees");
                 } else {
                     double degree = (Math.abs(turnAngle) * 180) / Math.PI;
-                    singleBannerInstruction.put("degrees", degree);
+                    singleBannerInstruction.put("degrees", Math.round(degree));
                 }
             }
         }

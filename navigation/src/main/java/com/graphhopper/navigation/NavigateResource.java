@@ -184,7 +184,6 @@ public class NavigateResource {
         if (!request.getHints().getString("type", "").equals("mapbox"))
             throw new IllegalArgumentException("Currently type=mapbox required.");
 
-        request.putHint(WAY_POINT_MAX_DISTANCE, 0);
         if (request.getPathDetails().isEmpty()) {
             if (graphHopper.getEncodingManager().hasEncodedValue(MaxSpeed.KEY))
                 request.setPathDetails(List.of(INTERSECTION, MaxSpeed.KEY, DISTANCE, TIME, AVERAGE_SPEED));
