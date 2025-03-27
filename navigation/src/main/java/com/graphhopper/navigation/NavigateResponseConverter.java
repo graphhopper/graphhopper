@@ -17,6 +17,7 @@
  */
 package com.graphhopper.navigation;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -35,7 +36,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.graphhopper.util.Parameters.Details.*;
+import static com.graphhopper.util.Parameters.Details.INTERSECTION;
 
 public class NavigateResponseConverter {
     private static final Logger LOGGER = LoggerFactory.getLogger(NavigateResponseConverter.class);
@@ -76,7 +77,6 @@ public class NavigateResponseConverter {
         json.put("code", "Ok");
         // TODO: Maybe we need a different format... uuid: "cji4ja4f8004o6xrsta8w4p4h"
         json.put("uuid", UUID.randomUUID().toString().replaceAll("-", ""));
-
         return json;
     }
 
@@ -90,8 +90,6 @@ public class NavigateResponseConverter {
         ObjectNode legJson = legsJson.addObject();
         ArrayNode steps = legJson.putArray("steps");
 
-        ObjectNode annotation = legJson.putObject("annotation");
-
         long time = 0;
         double distance = 0;
         boolean isFirstInstructionOfLeg = true;
@@ -101,6 +99,13 @@ public class NavigateResponseConverter {
         List<PathDetail> intersectionDetails = pathDetails.getOrDefault(INTERSECTION, Collections.emptyList());
         fixFirstIntersectionDetail(intersectionDetails);
 
+        ObjectNode annotation = null;
+        ArrayNode maxSpeedArray = null;
+        if (pathDetails.containsKey(MaxSpeed.KEY)) {
+            annotation = legJson.putObject("annotation");
+            maxSpeedArray = annotation.putArray("maxspeed");
+        }
+
         for (int i = 0; i < instructions.size(); i++) {
             ObjectNode instructionJson = steps.addObject();
             Instruction instruction = instructions.get(i);
@@ -108,8 +113,8 @@ public class NavigateResponseConverter {
             if (instruction.getSign() != Instruction.REACHED_VIA && instruction.getSign() != Instruction.FINISH) {
                 pointIndexTo += instructions.get(i).getPoints().size();
             }
-            if (pathDetails.containsKey(MaxSpeed.KEY))
-                putAnnotation(annotation, pathDetails, pointIndexFrom, pointIndexTo, distanceConfig.unit);
+            if (annotation != null)
+                putAnnotation(maxSpeedArray, pathDetails, pointIndexFrom, pointIndexTo, distanceConfig.unit);
             putInstruction(path.getPoints(), instructions, i, locale, translationMap, instructionJson,
                     isFirstInstructionOfLeg, distanceConfig, intersectionDetails, pointIndexFrom, pointIndexTo);
             pointIndexFrom = pointIndexTo;
@@ -126,7 +131,10 @@ public class NavigateResponseConverter {
                     // Create new leg and steps after a via points
                     legJson = legsJson.addObject();
                     steps = legJson.putArray("steps");
-                    annotation = legJson.putObject("annotation");
+                    if (annotation != null) {
+                        annotation = legJson.putObject("annotation");
+                        maxSpeedArray = annotation.putArray("maxspeed");
+                    }
                 }
             }
         }
@@ -138,35 +146,36 @@ public class NavigateResponseConverter {
         pathJson.put("voiceLocale", locale.toLanguageTag());
     }
 
-    private static void putAnnotation(ObjectNode annotation, Map<String, List<PathDetail>> pathDetails,
+    private static void putAnnotation(ArrayNode maxSpeedArray, Map<String, List<PathDetail>> pathDetails,
                                       final int fromIdx, final int toIdx, DistanceUtils.Unit metric) {
 
         List<PathDetail> maxSpeeds = pathDetails.get(MaxSpeed.KEY);
-        List<PathDetail> speeds = pathDetails.get(AVERAGE_SPEED);
-        List<PathDetail> distances = pathDetails.get(DISTANCE);
-        List<PathDetail> times = pathDetails.get(TIME);
-
-        ArrayNode maxSpeedArray = annotation.putArray("maxspeed");
-        ArrayNode speedArray = annotation.putArray("speed");
-        ArrayNode distanceArray = annotation.putArray("distance");
-        ArrayNode durationArray = annotation.putArray("duration");
         String unitValue = metric == DistanceUtils.Unit.METRIC ? "km/h" : "mph";
 
-        for (PathDetail pd : maxSpeeds) {
-            if (toIdx < pd.getFirst() && fromIdx > pd.getLast()) continue;
+        // loop through indices to ensure that number of entries in maxSpeedArray are exactly the same
+        int nextPDIdx = 0;
+        if (!maxSpeeds.isEmpty())
+            for (int idx = fromIdx; idx < toIdx; ) {
+                for (; nextPDIdx < maxSpeeds.size(); nextPDIdx++) {
+                    PathDetail pd = maxSpeeds.get(nextPDIdx);
+                    if (idx >= pd.getFirst() && idx <= pd.getLast()) break;
+                }
+                if (nextPDIdx >= maxSpeeds.size()) break; // should not happen
 
-            long value = pd.getValue() == null ? Math.round(MaxSpeed.MAXSPEED_150)
-                    : (metric != DistanceUtils.Unit.METRIC
-                    ? Math.round(((Number) pd.getValue()).doubleValue())
-                    : Math.round(((Number) pd.getValue()).doubleValue() / DistanceCalcEarth.KM_MILE));
+                PathDetail pd = maxSpeeds.get(nextPDIdx);
+                long value = pd.getValue() == null ? Math.round(MaxSpeed.MAXSPEED_150)
+                        : (metric == DistanceUtils.Unit.METRIC
+                        ? Math.round(((Number) pd.getValue()).doubleValue())
+                        : Math.round(((Number) pd.getValue()).doubleValue() / DistanceCalcEarth.KM_MILE));
 
-            // one entry for every point
-            for (int from = Math.max(fromIdx, pd.getFirst()); from <= Math.min(toIdx, pd.getLast()); from++) {
-                ObjectNode object = maxSpeedArray.addObject();
-                object.put("speed", value);
-                object.put("unit", unitValue);
+                // one entry for every point
+                for (; idx <= Math.min(toIdx, pd.getLast()); idx++) {
+                    ObjectNode object = maxSpeedArray.addObject();
+                    object.put("speed", value);
+                    object.put("unit", unitValue);
+                }
             }
-        }
+
 
         // TODO what purpose?
 //        "speed":[24.7, 24.7, 24.7, 24.7, 24.7, 24.7, 24.7, 24.7, 24.7],
