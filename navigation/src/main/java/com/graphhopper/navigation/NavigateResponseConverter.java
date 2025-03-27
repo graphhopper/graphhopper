@@ -155,11 +155,12 @@ public class NavigateResponseConverter {
         for (PathDetail pd : maxSpeeds) {
             if (toIdx < pd.getFirst() && fromIdx > pd.getLast()) continue;
 
-            long value = metric != DistanceUtils.Unit.METRIC
+            long value = pd.getValue() == null ? Math.round(MaxSpeed.MAXSPEED_150)
+                    : (metric != DistanceUtils.Unit.METRIC
                     ? Math.round(((Number) pd.getValue()).doubleValue())
-                    : Math.round(((Number) pd.getValue()).doubleValue() / DistanceCalcEarth.KM_MILE);
+                    : Math.round(((Number) pd.getValue()).doubleValue() / DistanceCalcEarth.KM_MILE));
 
-            // TODO really one entry for every point!?
+            // one entry for every point
             for (int from = Math.max(fromIdx, pd.getFirst()); from <= Math.min(toIdx, pd.getLast()); from++) {
                 ObjectNode object = maxSpeedArray.addObject();
                 object.put("speed", value);
@@ -167,6 +168,7 @@ public class NavigateResponseConverter {
             }
         }
 
+        // TODO
 //        "speed":[24.7, 24.7, 24.7, 24.7, 24.7, 24.7, 24.7, 24.7, 24.7],
 //        "distance":[23.6, 14.9, 9.6, 13.2, 25, 28.1, 38.1, 41.6, 90],
 //        "duration":[0.956, 0.603, 0.387, 0.535, 1.011, 1.135, 1.539, 1.683, 3.641]
