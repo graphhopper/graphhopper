@@ -1048,14 +1048,14 @@ public class GraphHopper {
                     .setSegmentSize(defaultSegmentSize)
                     .build();
             baseGraph.loadExisting();
-            String storedProfiles = properties.get("profiles");
-            String configuredProfiles = getProfilesString();
-            if (!storedProfiles.equals(configuredProfiles))
-                throw new IllegalStateException("Profiles do not match:"
-                        + "\nGraphhopper config: " + configuredProfiles
-                        + "\nGraph: " + storedProfiles
-                        + "\nChange configuration to match the graph or delete " + baseGraph.getDirectory().getLocation());
-            checkProfilesConsistency();
+//            String storedProfiles = properties.get("profiles");
+//            String configuredProfiles = getProfilesString();
+//            if (!storedProfiles.equals(configuredProfiles))
+//                throw new IllegalStateException("Profiles do not match:"
+//                        + "\nGraphhopper config: " + configuredProfiles
+//                        + "\nGraph: " + storedProfiles
+//                        + "\nChange configuration to match the graph or delete " + baseGraph.getDirectory().getLocation());
+//            checkProfilesConsistency();
 
             postProcessing(false);
             directory.loadMMap();
