@@ -14,6 +14,8 @@ import static com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor.str
 
 public class MaxWeightExceptParser implements TagParser {
     private final EnumEncodedValue<MaxWeightExcept> mweEnc;
+    private static final List<String> MAX_WEIGHT_RESTRICTIONS = OSMMaxWeightParser.MAX_WEIGHT_TAGS.stream()
+            .map(e -> e + ":conditional").toList();
     private static final List<String> HGV_RESTRICTIONS = OSMRoadAccessParser.toOSMRestrictions(TransportationMode.HGV).stream()
             .map(e -> e + ":conditional").toList();
 
@@ -23,7 +25,7 @@ public class MaxWeightExceptParser implements TagParser {
 
     public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
         // tagging like maxweight:conditional=no/none @ destination/delivery/forestry/service
-        String condValue = way.getTag("maxweight:conditional", "");
+        String condValue = way.getFirstValue(MAX_WEIGHT_RESTRICTIONS);
         if (!condValue.isEmpty()) {
             String[] values = condValue.split("@");
             if (values.length == 2) {
