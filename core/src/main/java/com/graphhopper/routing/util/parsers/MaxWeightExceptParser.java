@@ -9,14 +9,13 @@ import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor.stringToTons;
 
 public class MaxWeightExceptParser implements TagParser {
     private final EnumEncodedValue<MaxWeightExcept> mweEnc;
     private static final List<String> HGV_RESTRICTIONS = OSMRoadAccessParser.toOSMRestrictions(TransportationMode.HGV).stream()
-            .map(e -> e + ":conditional").collect(Collectors.toList());
+            .map(e -> e + ":conditional").toList();
 
     public MaxWeightExceptParser(EnumEncodedValue<MaxWeightExcept> mweEnc) {
         this.mweEnc = mweEnc;
