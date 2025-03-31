@@ -7,6 +7,7 @@ import com.graphhopper.routing.ev.MaxWeightExcept;
 import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.IntsRef;
+import com.graphhopper.util.NumHelper;
 
 import java.util.List;
 
@@ -50,7 +51,7 @@ public class MaxWeightExceptParser implements TagParser {
                     break;
                 }
                 // set it only if the weight value is the same as in max_weight
-                if (getMaxWeight(way) == dec) {
+                if (NumHelper.equalsEps(dec, getMaxWeight(way))) {
                     mweEnc.setEnum(false, edgeId, edgeIntAccess, MaxWeightExcept.find(value.substring(0, atIndex).trim()));
                     break;
                 }
