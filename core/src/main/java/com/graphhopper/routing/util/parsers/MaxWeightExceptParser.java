@@ -50,13 +50,25 @@ public class MaxWeightExceptParser implements TagParser {
                     break;
                 }
                 // set it only if the weight value is the same as in max_weight
-                if (stringToTons(way.getTag("maxweight", "")) == dec
-                        || stringToTons(way.getTag("maxweightrating:hgv", "")) == dec
-                        || stringToTons(way.getTag("maxgcweight", "")) == dec) {
+                if (getMaxWeight(way) == dec) {
                     mweEnc.setEnum(false, edgeId, edgeIntAccess, MaxWeightExcept.find(value.substring(0, atIndex).trim()));
                     break;
                 }
             }
         }
+    }
+
+    private double getMaxWeight(ReaderWay way) {
+        for (String key : OSMMaxWeightParser.MAX_WEIGHT_TAGS) {
+            String value = way.getTag(key, "");
+            if (value.isEmpty()) {
+                continue;
+            }
+            double weight = stringToTons(value);
+            if (!Double.isNaN(weight)) {
+                return weight;
+            }
+        }
+        return Double.NaN;
     }
 }
