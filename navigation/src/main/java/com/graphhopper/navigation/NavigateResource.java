@@ -237,7 +237,7 @@ public class NavigateResource {
 
         if (requestPoints.size() > 2 || !headings.isEmpty()) {
             request.putHint(Parameters.CH.DISABLE, true).
-                    putHint(Parameters.Routing.PASS_THROUGH, false);
+                    putHint(Parameters.Routing.PASS_THROUGH, true);
         }
 
         return graphHopper.route(request);
