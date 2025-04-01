@@ -48,7 +48,7 @@ import static com.graphhopper.util.Parameters.Routing.*;
  * Provides an endpoint that is consumable with the Mapbox Navigation SDK. The Mapbox Navigation SDK consumes json
  * responses that follow the specification of the Mapbox API v5.
  * <p>
- * See: https://www.mapbox.com/api-documentation/#directions
+ * See: <a href="https://docs.mapbox.com/api/navigation/directions/">mapbox docs</a>.
  * <p>
  * The baseurl of this endpoint is: [YOUR-IP/HOST]/navigate
  * The version of this endpoint is: v5
@@ -116,15 +116,15 @@ public class NavigateResource {
         List<GHPoint> requestPoints = getPointsFromRequest(httpReq, mapboxProfile);
 
         List<Double> favoredHeadings = getBearing(bearings);
-        if (favoredHeadings.size() > 0 && favoredHeadings.size() != requestPoints.size()) {
+        if (!favoredHeadings.isEmpty() && favoredHeadings.size() != requestPoints.size()) {
             throw new IllegalArgumentException("Number of bearings and waypoints did not match");
         }
 
         GHResponse ghResponse = calcRouteForGET(favoredHeadings, requestPoints, ghProfile, localeStr, enableInstructions, minPathPrecision);
 
         // Only do this, when there are more than 2 points, otherwise we use alternative routes
-        if (!ghResponse.hasErrors() && favoredHeadings.size() > 0) {
-            GHResponse noHeadingResponse = calcRouteForGET(Collections.EMPTY_LIST, requestPoints, ghProfile, localeStr, enableInstructions, minPathPrecision);
+        if (!ghResponse.hasErrors() && !favoredHeadings.isEmpty()) {
+            GHResponse noHeadingResponse = calcRouteForGET(Collections.emptyList(), requestPoints, ghProfile, localeStr, enableInstructions, minPathPrecision);
             if (ghResponse.getBest().getDistance() != noHeadingResponse.getBest().getDistance()) {
                 ghResponse.getAll().add(noHeadingResponse.getBest());
             }
@@ -224,25 +224,28 @@ public class NavigateResource {
     private GHResponse calcRouteForGET(List<Double> headings, List<GHPoint> requestPoints, String profileStr,
                                        String localeStr, boolean enableInstructions, double minPathPrecision) {
         GHRequest request = new GHRequest(requestPoints);
-        if (headings.size() > 0)
+        if (!headings.isEmpty())
             request.setHeadings(headings);
 
         request.setProfile(profileStr).
                 setLocale(localeStr).
                 // We force the intersection details here as we cannot easily add this to the URL
-                setPathDetails(Arrays.asList(INTERSECTION)).
+                setPathDetails(List.of(INTERSECTION)).
                 putHint(CALC_POINTS, true).
                 putHint(INSTRUCTIONS, enableInstructions).
-                putHint(WAY_POINT_MAX_DISTANCE, minPathPrecision).
-                putHint(Parameters.CH.DISABLE, true).
-                putHint(Parameters.Routing.PASS_THROUGH, false);
+                putHint(WAY_POINT_MAX_DISTANCE, minPathPrecision);
+
+        if (requestPoints.size() > 2 || !headings.isEmpty()) {
+            request.putHint(Parameters.CH.DISABLE, true).
+                    putHint(Parameters.Routing.PASS_THROUGH, false);
+        }
 
         return graphHopper.route(request);
     }
 
     /**
      * This method is parsing the request URL String. Unfortunately it seems that there is no better options right now.
-     * See: https://stackoverflow.com/q/51420380/1548788
+     * See: <a href="https://stackoverflow.com/q/51420380/1548788">...</a>
      * <p>
      * The url looks like: ".../{profile}/1.522438,42.504606;1.527209,42.504776;1.526113,42.505144;1.527218,42.50529?.."
      */
@@ -253,8 +256,8 @@ public class NavigateResource {
         url = url.substring(urlStart.length());
         String[] pointStrings = url.split(";");
         List<GHPoint> points = new ArrayList<>(pointStrings.length);
-        for (int i = 0; i < pointStrings.length; i++) {
-            points.add(GHPoint.fromStringLonLat(pointStrings[i]));
+        for (String pointString : pointStrings) {
+            points.add(GHPoint.fromStringLonLat(pointString));
         }
 
         return points;
@@ -262,13 +265,12 @@ public class NavigateResource {
 
     static List<Double> getBearing(String bearingString) {
         if (bearingString == null || bearingString.isEmpty())
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
 
         String[] bearingArray = bearingString.split(";", -1);
         List<Double> bearings = new ArrayList<>(bearingArray.length);
 
-        for (int i = 0; i < bearingArray.length; i++) {
-            String singleBearing = bearingArray[i];
+        for (String singleBearing : bearingArray) {
             if (singleBearing.isEmpty()) {
                 bearings.add(Double.NaN);
             } else {
