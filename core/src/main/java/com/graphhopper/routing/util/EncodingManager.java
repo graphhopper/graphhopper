@@ -62,7 +62,8 @@ public class EncodingManager implements EncodedValueLookup {
 
         String versionStr = properties.get("graph.em.version");
         if (versionStr.isEmpty() || !String.valueOf(Constants.VERSION_EM).equals(versionStr))
-            throw new IllegalStateException("Incompatible encoding version. You need to use the same GraphHopper version you used to import the graph, or run a new import. "
+            throw new IllegalStateException("Incompatible encoding version. You need to use the same GraphHopper version you used to import the graph" +
+                    " in '" + properties.getDirectory().getLocation() + "', delete the folder, or run a new import with another location. "
                     + " Stored encoding version: " + (versionStr.isEmpty() ? "missing" : versionStr) + ", used encoding version: " + Constants.VERSION_EM);
         String encodedValueStr = properties.get("graph.encoded_values");
         ArrayNode evList = deserializeEncodedValueList(encodedValueStr);

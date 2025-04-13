@@ -863,8 +863,11 @@ public class GraphHopper {
 
         if (urbanDensityCalculationThreads > 0)
             encodedValuesWithProps.put(UrbanDensity.KEY, new PMap());
-        if (maxSpeedCalculator != null)
+        if (maxSpeedCalculator != null) {
+            if (urbanDensityCalculationThreads <= 0)
+                throw new IllegalArgumentException("For max_speed_calculator the urban density calculation needs to be enabled (e.g. graph.urban_density.threads: 1)");
             encodedValuesWithProps.put(MaxSpeedEstimated.KEY, new PMap());
+        }
 
         Map<String, ImportUnit> activeImportUnits = new LinkedHashMap<>();
         ArrayDeque<String> deque = new ArrayDeque<>(encodedValuesWithProps.keySet());

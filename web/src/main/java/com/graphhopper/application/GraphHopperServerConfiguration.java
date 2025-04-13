@@ -42,6 +42,7 @@ public class GraphHopperServerConfiguration extends Configuration implements Gra
         return graphhopper;
     }
 
+    @Override
     public RealtimeConfiguration gtfsrealtime() {
         return gtfsRealtime;
     }

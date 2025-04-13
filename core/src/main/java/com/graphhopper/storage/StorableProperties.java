@@ -142,6 +142,10 @@ public class StorableProperties {
         return this;
     }
 
+    public Directory getDirectory() {
+        return dir;
+    }
+
     public synchronized long getCapacity() {
         return da.getCapacity();
     }
