@@ -17,6 +17,7 @@
  */
 package com.graphhopper.util;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.graphhopper.jackson.CustomModelAreasDeserializer;
 import com.graphhopper.json.Statement;
@@ -31,6 +32,7 @@ public class CustomModel {
     // 'Double' instead of 'double' is required to know if it was 0 or not specified in the request.
     private Double distanceInfluence;
     private Double headingPenalty;
+    @JsonIgnore
     private boolean internal;
     private List<Statement> speedStatements = new ArrayList<>();
     private List<Statement> priorityStatements = new ArrayList<>();
@@ -40,6 +42,7 @@ public class CustomModel {
     }
 
     public CustomModel(CustomModel toCopy) {
+        this.internal = false; // true only when explicitly set
         this.headingPenalty = toCopy.headingPenalty;
         this.distanceInfluence = toCopy.distanceInfluence;
         // do not copy "internal" boolean
