@@ -429,11 +429,16 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                     return Instruction.CONTINUE_ON_STREET;
                 }
 
-                if (otherDelta < delta) {
-                    return Instruction.KEEP_LEFT;
-                } else {
-                    return Instruction.KEEP_RIGHT;
-                }
+        if (Math.abs(delta) <= 0.1) {
+            return Instruction.CONTINUE_ON_STREET;
+        } else if (Math.abs(delta) > 0.1 && Math.abs(delta) <= 0.3) {
+            return Instruction.TURN_SLIGHT_LEFT; // or TURN_SLIGHT_RIGHT based on the situation
+        } else if (otherDelta < delta) {
+            return Instruction.KEEP_LEFT;
+        } else {
+            return Instruction.KEEP_RIGHT;
+        }
+
             }
         }
 
