@@ -18,11 +18,14 @@
 
 package com.graphhopper.storage;
 
+import com.carrotsearch.hppc.DoubleArrayList;
+import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 
 import java.util.Locale;
+import java.util.function.IntUnaryOperator;
 
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 import static com.graphhopper.util.Helper.nf;
@@ -216,6 +219,40 @@ class BaseGraphNodesAndEdges implements EdgeIntAccess {
             setEdgeRef(nodePointerB, edge);
         }
         return edge;
+    }
+
+    public void relabelNodes(IntUnaryOperator getNewNodeForOldNode) {
+        for (int edge = 0; edge < getEdges(); edge++) {
+            long pointer = toEdgePointer(edge);
+            setNodeA(pointer, getNewNodeForOldNode.applyAsInt(getNodeA(pointer)));
+            setNodeB(pointer, getNewNodeForOldNode.applyAsInt(getNodeB(pointer)));
+        }
+        IntArrayList edgeRefs = new IntArrayList();
+        DoubleArrayList lats = new DoubleArrayList();
+        DoubleArrayList lons = new DoubleArrayList();
+        DoubleArrayList eles = new DoubleArrayList();
+        IntArrayList tcs = new IntArrayList();
+        for (int node = 0; node < getNodes(); node++) {
+            long pointer = toNodePointer(node);
+            edgeRefs.add(getEdgeRef(pointer));
+            lats.add(getLat(pointer));
+            lons.add(getLon(pointer));
+            if (withElevation())
+                eles.add(getEle(pointer));
+            if (withTurnCosts())
+                tcs.add(getTurnCostRef(pointer));
+        }
+        for (int oldNode = 0; oldNode < getNodes(); oldNode++) {
+            int newNode = getNewNodeForOldNode.applyAsInt(oldNode);
+            long pointer = toNodePointer(newNode);
+            setEdgeRef(pointer, edgeRefs.get(oldNode));
+            setLat(pointer, lats.get(oldNode));
+            setLon(pointer, lons.get(oldNode));
+            if (withElevation())
+                setEle(pointer, eles.get(oldNode));
+            if (withTurnCosts())
+                setTurnCostRef(pointer, tcs.get(oldNode));
+        }
     }
 
     public void ensureNodeCapacity(int node) {
