@@ -71,15 +71,26 @@ class FerrySpeedCalculatorTest {
     @Test
     void testMaxSpeedTag() {
         double speedFactor = 2;
-        double maxSpeed = 55;
+        double maxSpeed = 30;
         double longSpeed = 30;
         double shortSpeed = 20;
         double unknownSpeed = 5;
         FerrySpeedCalculator c = new FerrySpeedCalculator(speedFactor, maxSpeed, longSpeed, shortSpeed, unknownSpeed);
 
+        // valid
+        checkMaxSpeed(c, "14", 10);
+        // above max (capped to max)
+        checkMaxSpeed(c, "45", maxSpeed);
+        // below smallest storable non-zero value
+        checkMaxSpeed(c, "1", speedFactor / 2);
+        // invalid value
+        checkMaxSpeed(c, "foo", unknownSpeed);
+    }
+
+    private void checkMaxSpeed(FerrySpeedCalculator calc, String maxspeed, double expected) {
         ReaderWay way = new ReaderWay(0L);
-        way.setTag("maxspeed", "14");
-        assertEquals(10, c.getSpeed(way));
+        way.setTag("maxspeed", maxspeed);
+        assertEquals(expected, calc.getSpeed(way));
     }
     // ORS-GH MOD END
 }

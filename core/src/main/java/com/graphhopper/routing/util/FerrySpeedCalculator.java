@@ -74,9 +74,16 @@ public class FerrySpeedCalculator {
             // OSM MOD start
             // Use maxspeed if available, see https://github.com/GIScience/openrouteservice/issues/620
             // Apply the same speed-reduction factor as in trip speed calculation above
-            double maxSpeed = com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor.stringToKmh(way.getTag("maxspeed")) / 1.4;
-            if (maxSpeed > speedFactor / 2)
-                return maxSpeed;
+            if (way.hasTag("maxspeed")) {
+                String maxspeedTagValue = way.getTag("maxspeed");
+                double avarageSpeed = com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor.stringToKmh(maxspeedTagValue) / 1.4;
+                if (avarageSpeed < speedFactor / 2)
+                    return speedFactor / 2;
+                if (avarageSpeed > maxSpeed)
+                    return maxSpeed;
+                if (Double.isFinite(avarageSpeed))
+                    return avarageSpeed;
+            }
             // OSM MOD end
             // unknown speed -> put penalty on ferry transport
             return unknownSpeed;
