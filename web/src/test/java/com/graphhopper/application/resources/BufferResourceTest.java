@@ -1,15 +1,10 @@
 package com.graphhopper.application.resources;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.graphhopper.GraphHopper;
-import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
-import com.graphhopper.config.Profile;
-import com.graphhopper.resources.BufferResource;
 import com.graphhopper.routing.TestProfiles;
-import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.JsonFeatureCollection;
 import com.graphhopper.util.TurnCostsConfig;
@@ -24,7 +19,6 @@ import org.locationtech.jts.geom.Geometry;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.Arrays;
-import java.lang.reflect.Method;
 
 import static com.graphhopper.application.util.TestUtils.clientTarget;
 import static org.junit.jupiter.api.Assertions.*;
