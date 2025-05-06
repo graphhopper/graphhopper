@@ -21,6 +21,7 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
      * contains "vehicle". But here we want to allow walking via dismount.
      */
     private static final List<String> RESTRICTIONS = Arrays.asList("bicycle", "access");
+    private static final Collection<String> FWDONEWAYS = Arrays.asList("yes", "true", "1");
 
     protected BikeCommonAccessParser(BooleanEncodedValue accessEnc, BooleanEncodedValue roundaboutEnc) {
         super(accessEnc, RESTRICTIONS);
@@ -124,8 +125,8 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
         boolean isOneway = way.hasTag("oneway", ONEWAYS) && !way.hasTag("oneway", "-1") && !way.hasTag("bicycle:backward", intendedValues)
                 || way.hasTag("oneway", "-1") && !way.hasTag("bicycle:forward", intendedValues)
                 || way.hasTag("oneway:bicycle", ONEWAYS)
-                || way.hasTag("cycleway:left:oneway", ONEWAYS)
-                || way.hasTag("cycleway:right:oneway", ONEWAYS)
+                || way.hasTag("cycleway:left:oneway", FWDONEWAYS) && !way.hasTag("cycleway:right:oneway", "-1")
+                || way.hasTag("cycleway:right:oneway", FWDONEWAYS) && !way.hasTag("cycleway:left:oneway", "-1")
                 || way.hasTag("vehicle:backward", restrictedValues) && !way.hasTag("bicycle:forward", intendedValues)
                 || way.hasTag("vehicle:forward", restrictedValues) && !way.hasTag("bicycle:backward", intendedValues)
                 || way.hasTag("bicycle:forward", restrictedValues)

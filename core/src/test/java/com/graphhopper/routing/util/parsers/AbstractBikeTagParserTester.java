@@ -643,6 +643,44 @@ public abstract class AbstractBikeTagParserTester {
         assertAccess(way, true, false);
     }
 
+    @Test
+    public void testOnewayIssue3162() {
+        ReaderWay way = new ReaderWay(1);
+        way.clearTags();
+        way.setTag("highway", "secondary");
+        // default for left hand traffic, see https://wiki.openstreetmap.org/wiki/Key:cycleway:right:oneway
+        way.setTag("cycleway:left:oneway" , "yes");
+        way.setTag("cycleway:right:oneway", "-1");
+        assertAccess(way, true, true);
+        // default for right hand traffic, see https://wiki.openstreetmap.org/wiki/Key:cycleway:right:oneway
+        way.setTag("cycleway:left:oneway","-1");
+        way.setTag("cycleway:right:oneway", "yes");
+        assertAccess(way, true, true);
+        // other cases identified in #3162:
+        way.setTag("cycleway:left:oneway","1");
+        way.setTag("cycleway:right:oneway","-1");
+        assertAccess(way, true, true);
+        way.setTag("cycleway:left:oneway","no");
+        way.setTag("cycleway:right:oneway", "yes");
+        assertAccess(way, true, true);
+        way.setTag("cycleway:left:oneway","no");
+        way.setTag("cycleway:right:oneway" ,"1");
+        assertAccess(way, true, true);
+        way.setTag("cycleway:left:oneway","no");
+        way.setTag("cycleway:right:oneway" ,"-1");
+        assertAccess(way, true, true);
+        way.setTag("cycleway:left:oneway","yes");
+        way.setTag("cycleway:right:oneway","no");
+        assertAccess(way, true, true);
+        way.setTag("cycleway:left:oneway","-1");
+        way.setTag("cycleway:right:oneway","no");
+        assertAccess(way, true, true);
+        // most likely a tagging error, allowing both directions:
+        way.setTag("cycleway:left:oneway","-1");
+        way.setTag("cycleway:right:oneway","-1");
+        assertAccess(way, true, true);
+    }
+
     private void assertAccess(ReaderWay way, boolean fwd, boolean bwd) {
         EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
         int edge = 0;
