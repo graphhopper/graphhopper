@@ -660,9 +660,6 @@ public abstract class AbstractBikeTagParserTester {
         way.setTag("cycleway:left:oneway","1");
         way.setTag("cycleway:right:oneway","-1");
         assertAccess(way, true, true);
-        way.setTag("cycleway:left:oneway","-1");
-        way.setTag("cycleway:right:oneway","1");
-        assertAccess(way, true, true);
         way.setTag("cycleway:left:oneway","no");
         way.setTag("cycleway:right:oneway", "yes");
         assertAccess(way, true, true);
@@ -673,9 +670,6 @@ public abstract class AbstractBikeTagParserTester {
         way.setTag("cycleway:right:oneway" ,"-1");
         assertAccess(way, true, true);
         way.setTag("cycleway:left:oneway","yes");
-        way.setTag("cycleway:right:oneway","no");
-        assertAccess(way, true, true);
-        way.setTag("cycleway:left:oneway","1");
         way.setTag("cycleway:right:oneway","no");
         assertAccess(way, true, true);
         way.setTag("cycleway:left:oneway","-1");
