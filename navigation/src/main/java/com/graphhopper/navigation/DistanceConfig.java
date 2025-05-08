@@ -30,22 +30,47 @@ public class DistanceConfig {
     final List<VoiceInstructionConfig> voiceInstructions;
     final DistanceUtils.Unit unit;
 
-    public DistanceConfig(DistanceUtils.Unit unit, TranslationMap translationMap, Locale locale) {
+    public DistanceConfig(DistanceUtils.Unit unit, TranslationMap translationMap, Locale locale, String mapboxProfile) {
         this.unit = unit;
-        if (unit == DistanceUtils.Unit.METRIC) {
-            voiceInstructions = Arrays.asList(
-                    new InitialVoiceInstructionConfig(FOR_HIGHER_DISTANCE_PLURAL.metric, translationMap, locale, 4250, 250, unit),
-                    new FixedDistanceVoiceInstructionConfig(IN_HIGHER_DISTANCE_PLURAL.metric, translationMap, locale, 2000, 2),
-                    new FixedDistanceVoiceInstructionConfig(IN_HIGHER_DISTANCE_SINGULAR.metric, translationMap, locale, 1000, 1),
-                    new ConditionalDistanceVoiceInstructionConfig(IN_LOWER_DISTANCE_PLURAL.metric, translationMap, locale, new int[]{400, 200}, new int[]{400, 200})
-            );
-        } else {
-            voiceInstructions = Arrays.asList(
-                    new InitialVoiceInstructionConfig(FOR_HIGHER_DISTANCE_PLURAL.metric, translationMap, locale, 4250, 250, unit),
-                    new FixedDistanceVoiceInstructionConfig(IN_HIGHER_DISTANCE_PLURAL.imperial, translationMap, locale, 3220, 2),
-                    new FixedDistanceVoiceInstructionConfig(IN_HIGHER_DISTANCE_SINGULAR.imperial, translationMap, locale, 1610, 1),
-                    new ConditionalDistanceVoiceInstructionConfig(IN_LOWER_DISTANCE_PLURAL.imperial, translationMap, locale, new int[]{400, 200}, new int[]{1300, 600})
-            );
+        switch (mapboxProfile) {
+            case "cycling":
+            if (unit == DistanceUtils.Unit.METRIC) {
+                voiceInstructions =  Arrays.asList(
+                    new ConditionalDistanceVoiceInstructionConfig(IN_LOWER_DISTANCE_PLURAL.metric, translationMap, locale, new int[]{150},
+                        new int[]{150}));
+            } else {
+                voiceInstructions =  Arrays.asList(
+                    new ConditionalDistanceVoiceInstructionConfig(IN_LOWER_DISTANCE_PLURAL.imperial, translationMap, locale, new int[]{150},
+                        new int[]{500}));
+            }
+            break;
+            case "hiking":
+            if (unit == DistanceUtils.Unit.METRIC) {
+                voiceInstructions =  Arrays.asList(
+                    new ConditionalDistanceVoiceInstructionConfig(IN_LOWER_DISTANCE_PLURAL.metric, translationMap, locale, new int[]{50},
+                        new int[]{50}));
+            } else {
+                voiceInstructions =  Arrays.asList(
+                    new ConditionalDistanceVoiceInstructionConfig(IN_LOWER_DISTANCE_PLURAL.imperial, translationMap, locale, new int[]{50},
+                        new int[]{150}));
+            }
+            break;
+            default:
+            if (unit == DistanceUtils.Unit.METRIC) {
+                voiceInstructions = Arrays.asList(
+                        new InitialVoiceInstructionConfig(FOR_HIGHER_DISTANCE_PLURAL.metric, translationMap, locale, 4250, 250, unit),
+                        new FixedDistanceVoiceInstructionConfig(IN_HIGHER_DISTANCE_PLURAL.metric, translationMap, locale, 2000, 2),
+                        new FixedDistanceVoiceInstructionConfig(IN_HIGHER_DISTANCE_SINGULAR.metric, translationMap, locale, 1000, 1),
+                        new ConditionalDistanceVoiceInstructionConfig(IN_LOWER_DISTANCE_PLURAL.metric, translationMap, locale, new int[]{400, 200}, new int[]{400, 200})
+                );
+            } else {
+                voiceInstructions = Arrays.asList(
+                        new InitialVoiceInstructionConfig(FOR_HIGHER_DISTANCE_PLURAL.metric, translationMap, locale, 4250, 250, unit),
+                        new FixedDistanceVoiceInstructionConfig(IN_HIGHER_DISTANCE_PLURAL.imperial, translationMap, locale, 3220, 2),
+                        new FixedDistanceVoiceInstructionConfig(IN_HIGHER_DISTANCE_SINGULAR.imperial, translationMap, locale, 1610, 1),
+                        new ConditionalDistanceVoiceInstructionConfig(IN_LOWER_DISTANCE_PLURAL.imperial, translationMap, locale, new int[]{400, 200}, new int[]{1300, 600})
+                );
+            }
         }
 
     }
