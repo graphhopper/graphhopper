@@ -316,7 +316,7 @@ public class BufferResource {
     /**
      * Determines the road name to use based on the provided parameters:
      * - If `roadName` is null:
-     *   - Throws an exception if `requireRoadNameMatch` is true.
+     *   - Throws an exception if `requireRoadNameMatch` is true. (handled in doGet)
      *   - Otherwise, finds the closest edge to the point and uses its road name.
      * - If `roadName` is not null:
      *   - Uses the sanitized road name if `requireRoadNameMatch` is true.
