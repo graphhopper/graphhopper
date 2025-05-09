@@ -72,7 +72,7 @@ public class BufferResource {
             throw new IllegalArgumentException("Query multiplier is too high.");
         } else if (queryMultiplier <= 0) {
             throw new IllegalArgumentException("Query multiplier cannot be zero or negative.");
-        } else if (requireRoadNameMatch && roadName == null) {
+        } else if (requireRoadNameMatch && (roadName == null || roadName.isEmpty())) {
             throw new IllegalArgumentException("Road name is required when requireRoadNameMatch is true.");
         }
 
