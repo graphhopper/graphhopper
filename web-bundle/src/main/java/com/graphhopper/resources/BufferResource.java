@@ -17,6 +17,7 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
+import org.jetbrains.annotations.Nullable;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
@@ -62,21 +63,24 @@ public class BufferResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response doGet(
             @QueryParam("point") @NotNull GHPointParam point,
-            @QueryParam("roadName") @NotNull String roadName,
+            @QueryParam("roadName") @Nullable String roadName,
             @QueryParam("thresholdDistance") @NotNull Double thresholdDistance,
-            @QueryParam("queryMultiplier") @DefaultValue(".01") Double queryMultiplier,
-            @QueryParam("buildUpstream") @DefaultValue("false") Boolean buildUpstream) {
+            @QueryParam("queryMultiplier") @DefaultValue(".000075") Double queryMultiplier, // Default of ~8.33 meters in degrees
+            @QueryParam("buildUpstream") @DefaultValue("false") Boolean buildUpstream,
+            @QueryParam("requireRoadNameMatch") @DefaultValue("false") Boolean requireRoadNameMatch) {
         if (queryMultiplier > 1) {
             throw new IllegalArgumentException("Query multiplier is too high.");
         } else if (queryMultiplier <= 0) {
             throw new IllegalArgumentException("Query multiplier cannot be zero or negative.");
+        } else if (requireRoadNameMatch && (roadName == null || roadName.isEmpty())) {
+            throw new IllegalArgumentException("Road name is required when requireRoadNameMatch is true.");
         }
 
         StopWatch sw = new StopWatch().start();
 
-        roadName = sanitizeRoadNames(roadName).get(0);
-        BufferFeature primaryStartFeature = calculatePrimaryStartFeature(point.get().lat, point.get().lon, roadName,
-                queryMultiplier);
+        roadName = getBufferRoadName(roadName, requireRoadNameMatch, point);
+
+        BufferFeature primaryStartFeature = calculatePrimaryStartFeature(point.get().lat, point.get().lon, roadName, queryMultiplier);
         EdgeIteratorState state = graph.getEdgeIteratorState(primaryStartFeature.getEdge(), Integer.MIN_VALUE);
         List<LineString> lineStrings = new ArrayList<>();
 
@@ -106,12 +110,13 @@ public class BufferResource {
      * @param queryMultiplier base dimension of query box
      * @return buffer feature closest to start lat/long
      */
-    private BufferFeature calculatePrimaryStartFeature(Double startLat, Double startLon, String roadName,
-                                                       Double queryMultiplier) {
+    private BufferFeature calculatePrimaryStartFeature(Double startLat, Double startLon, String roadName, Double queryMultiplier) {
         // Scale up query Bbox
         for (int i = 1; i < 4; i++) {
-            BBox bbox = new BBox(startLon - queryMultiplier * i, startLon + queryMultiplier * i,
-                    startLat - queryMultiplier * i, startLat + queryMultiplier * i);
+            BBox bbox = new BBox(
+                    startLon - queryMultiplier * i, startLon + queryMultiplier * i,
+                    startLat - queryMultiplier * i, startLat + queryMultiplier * i
+            );
 
             final List<Integer> filteredQueryEdges = queryBbox(bbox, roadName);
 
@@ -120,7 +125,7 @@ public class BufferResource {
             }
         }
 
-        throw new WebApplicationException("Could not find road with that name near the selection.");
+        throw new WebApplicationException("Could not find primary road with that name near the selection.");
     }
 
     /**
@@ -133,8 +138,7 @@ public class BufferResource {
      * @param queryMultiplier     base dimension of query box
      * @return buffer feature closest to primary start feature
      */
-    private BufferFeature calculateSecondaryStartFeature(BufferFeature primaryStartFeature, String roadName,
-                                                         Double queryMultiplier) {
+    private BufferFeature calculateSecondaryStartFeature(BufferFeature primaryStartFeature, String roadName, Double queryMultiplier) {
         double startLat = primaryStartFeature.getPoint().lat;
         double startLon = primaryStartFeature.getPoint().lon;
 
@@ -165,15 +169,16 @@ public class BufferResource {
             }
         }
 
-        throw new WebApplicationException("Could not find road with that name near the selection.");
+        throw new WebApplicationException("Could not find secondary road with that name near the selection.");
     }
 
     /**
-     * Filters out all edges within a bbox that don't have a matching road name
+     * Filters out all edges within a bbox that don't have a matching road name.
+     * If no road name is provided, filters out all edges that don't have a non-empty road name.
      *
      * @param bbox     query zone
      * @param roadName name of road
-     * @return all edges which have matching road name
+     * @return all edges within the bbox that meet the road name filter requirements
      */
     private List<Integer> queryBbox(BBox bbox, String roadName) {
         final List<Integer> filteredEdgesInBbox = new ArrayList<>();
@@ -181,7 +186,9 @@ public class BufferResource {
         this.locationIndex.query(bbox, edgeId -> {
             EdgeIteratorState state = graph.getEdgeIteratorState(edgeId, Integer.MIN_VALUE);
             List<String> queryRoadNames = getAllRouteNamesFromEdge(state);
-            if (queryRoadNames.stream().anyMatch(x -> x.contains(roadName))) {
+
+            if ((roadName != null && queryRoadNames.stream().anyMatch(x -> x.contains(roadName))) ||
+                    (roadName == null && !queryRoadNames.stream().allMatch(String::isEmpty))) {
                 filteredEdgesInBbox.add(edgeId);
             }
         });
@@ -290,7 +297,6 @@ public class BufferResource {
 
         for (Integer edge : edgeList) {
             EdgeIteratorState state = graph.getEdgeIteratorState(edge, Integer.MIN_VALUE);
-
             PointList pointList = state.fetchWayGeometry(FetchMode.PILLAR_ONLY);
 
             for (GHPoint3D point : pointList) {
@@ -305,6 +311,127 @@ public class BufferResource {
         }
 
         return new BufferFeature(nearestEdge, nearestPoint, 0.0);
+    }
+
+    /**
+     * Determines the road name to use based on the provided parameters:
+     * - If `roadName` is null:
+     *   - Throws an exception if `requireRoadNameMatch` is true. (handled in doGet)
+     *   - Otherwise, finds the closest edge to the point and uses its road name.
+     * - If `roadName` is not null:
+     *   - Uses the sanitized road name if `requireRoadNameMatch` is true.
+     *   - Otherwise, finds the closest edge with the best matching road name and uses its road name.
+     *
+     * @param roadName              road name
+     * @param requireRoadNameMatch  require road name match
+     * @param point                 point to use for road name matching
+     * @return the road name to use throughout the class
+     */
+    private String getBufferRoadName(String roadName, Boolean requireRoadNameMatch, GHPointParam point) {
+        if (!requireRoadNameMatch) {
+            // Define a small bounding box to reduce the number of edges to filter
+            double twentyFeetInDegrees = 0.0000549;
+            BBox reducedBbox = new BBox(
+                point.get().lon - twentyFeetInDegrees, point.get().lon + twentyFeetInDegrees,
+                point.get().lat - twentyFeetInDegrees, point.get().lat + twentyFeetInDegrees
+            );
+            List<Integer> nearbyEdges = queryBbox(reducedBbox, null);
+
+            String roadNameFromEdge = null;
+            if (!nearbyEdges.isEmpty()) {
+                // Get the best edge based on distance and longest common subsequence with the provided road name (if any)
+                Integer bestEdge = findEdgeByDistAndLCSRoadName(nearbyEdges, point.get().lat, point.get().lon, roadName);
+                EdgeIteratorState state = graph.getEdgeIteratorState(bestEdge, Integer.MIN_VALUE);
+                roadNameFromEdge = getAllRouteNamesFromEdge(state).stream()
+                        .filter(name -> !name.isEmpty())
+                        .findFirst()
+                        .orElse(null);
+            }
+
+            if (roadNameFromEdge == null) {
+                if (roadName == null) {
+                    throw new WebApplicationException("Could not find road name from lat/lon and no road name provided to use as an alternative.");
+                }
+                return sanitizeRoadNames(roadName).get(0);
+            }
+            return roadNameFromEdge;
+        }
+
+        return sanitizeRoadNames(roadName).get(0);
+    }
+
+    /**
+     * Cycles through a list of edges and selects the point which is closest to
+     * the given lat/lon and has the longest common subsequence with the given road name (if provided).
+     *
+     * @param edgeList all nearby edges
+     * @param startLat latitude
+     * @param startLon longitude
+     * @param roadName name of road
+     * @return best matching edge to the given lat/lon considering distance and road name
+     */
+    private Integer findEdgeByDistAndLCSRoadName(List<Integer> edgeList, Double startLat, Double startLon, String roadName) {
+        double lowestDistance = Double.MAX_VALUE;
+        int bestMatchScore = -1;
+        Integer nearestEdge = null;
+
+        for (Integer edge : edgeList) {
+            EdgeIteratorState state = graph.getEdgeIteratorState(edge, Integer.MIN_VALUE);
+            List<String> roadNames = getAllRouteNamesFromEdge(state);
+
+            // Calculate the best match score for this edge
+            int currentMatchScore = 0;
+            if (roadName != null) {
+                for (String edgeRoadName : roadNames) {
+                    currentMatchScore = Math.max(currentMatchScore, calculateLCSLength(roadName, edgeRoadName));
+                }
+            }
+
+            // Calculate the distance to the edge
+            PointList pointList = state.fetchWayGeometry(FetchMode.PILLAR_ONLY);
+            for (GHPoint3D point : pointList) {
+                double dist = DistancePlaneProjection.DIST_PLANE.calcDist(startLat, startLon, point.lat, point.lon);
+
+                // Prioritize the edge with the best match score and the lowest distance
+                if ((currentMatchScore > bestMatchScore) || (currentMatchScore == bestMatchScore && dist < lowestDistance)) {
+                    bestMatchScore = currentMatchScore;
+                    lowestDistance = dist;
+                    nearestEdge = edge;
+                }
+            }
+        }
+
+        return nearestEdge;
+    }
+
+    /**
+     * Calculates the length of the longest common subsequence (LCS) between two strings.
+     * Used when finding the best edge by comparing its road name to the provided road name.
+     *
+     * @param str1 first string
+     * @param str2 second string
+     * @return length of the longest common subsequence
+     */
+    private int calculateLCSLength(String str1, String str2) {
+        // Create a 2D array to store the lengths of longest common subsequences for substrings of str1 and str2
+        int[][] lcsTable = new int[str1.length() + 1][str2.length() + 1];
+
+        // Iterate through each character of both strings
+        for (int i = 1; i <= str1.length(); i++) {
+            for (int j = 1; j <= str2.length(); j++) {
+                // If characters match, increment the length of the LCS by 1
+                if (str1.charAt(i - 1) == str2.charAt(j - 1)) {
+                    lcsTable[i][j] = lcsTable[i - 1][j - 1] + 1;
+                }
+                // Otherwise, take the maximum LCS length from the top or left cell
+                else {
+                    lcsTable[i][j] = Math.max(lcsTable[i - 1][j], lcsTable[i][j - 1]);
+                }
+            }
+        }
+
+        // Return the length of the longest common subsequence
+        return lcsTable[str1.length()][str2.length()];
     }
 
     /**
@@ -334,9 +461,9 @@ public class BufferResource {
         PointList path = new PointList();
 
         // Check starting edge
-        double currentDistance = DistancePlaneProjection.DIST_PLANE.calcDist(startFeature.getPoint().getLat(),
-                startFeature.getPoint().getLon(),
-                nodeAccess.getLat(currentNode), nodeAccess.getLon(currentNode));
+        double currentDistance = DistancePlaneProjection.DIST_PLANE.calcDist(
+            startFeature.getPoint().getLat(), startFeature.getPoint().getLon(),
+            nodeAccess.getLat(currentNode), nodeAccess.getLon(currentNode));
         double previousDistance = 0.0;
         Integer currentEdge = -1;
         // Create previous values to use in case we don't meet the threshold
@@ -372,8 +499,7 @@ public class BufferResource {
                         break;
                     }
 
-                    // Temp has proper road name and isn't part of a roundabout. Lower priority
-                    // escape.
+                    // Temp has proper road name and isn't part of a roundabout. Lower priority escape.
                     else if (roadNames.stream().anyMatch(x -> x.contains(roadName))
                             && !tempState.get(this.roundaboutAccessEnc)) {
                         potentialEdges.add(tempEdge);
@@ -395,12 +521,10 @@ public class BufferResource {
             // No bidirectional edge found. Choose from potential edge lists.
             if (currentEdge == -1) {
                 if (!potentialEdges.isEmpty()) {
-
                     // The Michigan Left
                     if (potentialEdges.size() > 1) {
                         // This logic is not infallible as it stands, but there's no clear alternative.
                         // In the case of a Michigan left, choose the edge that's further away
-
                         EdgeIteratorState tempState = graph.getEdgeIteratorState(potentialEdges.get(0),
                                 Integer.MIN_VALUE);
                         double dist1 = Math.abs(
