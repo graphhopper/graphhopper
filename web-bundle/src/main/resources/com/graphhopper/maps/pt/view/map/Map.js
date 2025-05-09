@@ -49,7 +49,7 @@ class LeafletComponent extends React.Component {
                 'sources': {
                     'raster-tiles-source': {
                         'type': 'raster',
-                        'tiles': ['https://tile.thunderforest.com/transport/{z}/{x}/{y}.png?apikey=88820e96998441019bb5876b601c6084']
+                        'tiles': ['https://tile.thunderforest.com/transport/{z}/{x}/{y}.png?apikey=4f283c77a8644d0b8ead1a3c3faf04ba']
                     },
                     'gh-mvt': {
                         'type': 'vector',
