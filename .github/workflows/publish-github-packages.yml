@@ -9,7 +9,7 @@ on:
 jobs:
   publish:
     if: github.repository_owner == 'graphhopper'
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
