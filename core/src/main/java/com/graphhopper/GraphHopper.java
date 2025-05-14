@@ -604,7 +604,8 @@ public class GraphHopper {
                 })
                 .filter(Objects::nonNull)
                 .toList());
-        profilesByName.values().forEach(profile -> encodedValues.add(Subnetwork.create(profile.getName())));
+
+        encodedValues.addAll(createSubnetworkEncodedValues());
 
         List<String> sortedEVs = getEVSortIndex(profilesByName);
         encodedValues.sort(Comparator.comparingInt(ev -> sortedEVs.indexOf(ev.getName())));
@@ -615,6 +616,10 @@ public class GraphHopper {
                 .filter(e -> !e.getValue().isEmpty())
                 .forEach(e -> emBuilder.addTurnCostEncodedValue(TurnRestriction.create(e.getKey())));
         return emBuilder.build();
+    }
+
+    protected List<BooleanEncodedValue> createSubnetworkEncodedValues() {
+        return profilesByName.values().stream().map(profile -> Subnetwork.create(profile.getName())).toList();
     }
 
     protected List<String> getEVSortIndex(Map<String, Profile> profilesByName) {
