@@ -709,15 +709,21 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
 
     @Test
     public void temporalAccessWithPermit() {
-        ArrayEdgeIntAccess access = new ArrayEdgeIntAccess(1);
+        BikeCommonAccessParser tmpAccessParser = createAccessParser(encodingManager, new PMap("block_private=false"));
+
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "primary");
         way.setTag("bicycle", "no");
         way.setTag("bicycle:conditional", "permit @ (21:00-9:00)");
+
         int edgeId = 0;
-        BikeCommonAccessParser accessParser = createAccessParser(encodingManager, new PMap("block_private=false"));
-        accessParser.handleWayTags(edgeId, access, way, null);
+        ArrayEdgeIntAccess access = new ArrayEdgeIntAccess(1);
+        tmpAccessParser.handleWayTags(edgeId, access, way, null);
         assertTrue(accessEnc.getBool(false, edgeId, access));
+
+        access = new ArrayEdgeIntAccess(1);
+        accessParser.handleWayTags(edgeId, access, way, null);
+        assertFalse(accessEnc.getBool(false, edgeId, access));
     }
 
     @Test
