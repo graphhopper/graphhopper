@@ -44,7 +44,7 @@ public class DistanceConfig {
                         new int[]{500}));
             }
             break;
-            case "hiking":
+            case "walking":
             if (unit == DistanceUtils.Unit.METRIC) {
                 voiceInstructions =  Arrays.asList(
                     new ConditionalDistanceVoiceInstructionConfig(IN_LOWER_DISTANCE_PLURAL.metric, translationMap, locale, new int[]{50},

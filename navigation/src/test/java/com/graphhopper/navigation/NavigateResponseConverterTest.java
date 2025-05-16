@@ -213,12 +213,12 @@ public class NavigateResponseConverterTest {
     }
 
     @Test
-    public void voiceInstructionsHikingMetricTest() {
+    public void voiceInstructionsWalkingMetricTest() {
 
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile(profile));
 
         ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH,
-                new DistanceConfig(DistanceUtils.Unit.METRIC, trMap, Locale.ENGLISH, "hiking"));
+                new DistanceConfig(DistanceUtils.Unit.METRIC, trMap, Locale.ENGLISH, "walking"));
 
         JsonNode steps = json.get("routes").get(0).get("legs").get(0).get("steps");
 
@@ -248,12 +248,12 @@ public class NavigateResponseConverterTest {
     }
 
     @Test
-    public void voiceInstructionsHikingImperialTest() {
+    public void voiceInstructionsWalkingImperialTest() {
 
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile(profile));
 
         ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH,
-                new DistanceConfig(DistanceUtils.Unit.IMPERIAL, trMap, Locale.ENGLISH, "hiking"));
+                new DistanceConfig(DistanceUtils.Unit.IMPERIAL, trMap, Locale.ENGLISH, "walking"));
 
         JsonNode steps = json.get("routes").get(0).get("legs").get(0).get("steps");
 
