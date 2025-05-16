@@ -82,4 +82,30 @@ class OSMTemporalAccessParserTest {
         parser.handleWayTags(edgeId, edgeIntAccess, way, IntsRef.EMPTY);
         assertEquals(CarTemporalAccess.MISSING, restricted.getEnum(false, edgeId, edgeIntAccess));
     }
+
+    @Test
+    public void testWithoutDay_handleAsOpenAsPossible() {
+        ArrayEdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        int edgeId = 0;
+        assertEquals(CarTemporalAccess.MISSING, restricted.getEnum(false, edgeId, edgeIntAccess));
+
+        ReaderWay way = new ReaderWay(0L);
+        way.setTag("highway", "primary");
+        way.setTag("motor_vehicle", "no");
+        way.setTag("motor_vehicle:conditional", "yes @ (21:00-9:00)");
+        parser.handleWayTags(edgeId, edgeIntAccess, way, IntsRef.EMPTY);
+        assertEquals(CarTemporalAccess.MISSING, restricted.getEnum(false, edgeId, edgeIntAccess));
+
+        way = new ReaderWay(0L);
+        way.setTag("highway", "primary");
+        way.setTag("motor_vehicle:conditional", "no @ (21:00-9:00)");
+        parser.handleWayTags(edgeId, edgeIntAccess, way, IntsRef.EMPTY);
+        assertEquals(CarTemporalAccess.MISSING, restricted.getEnum(false, edgeId, edgeIntAccess));
+
+        way = new ReaderWay(0L);
+        way.setTag("highway", "primary");
+        way.setTag("motor_vehicle:conditional", "no @ (fuel=diesel AND emissions <= euro_6)");
+        parser.handleWayTags(edgeId, edgeIntAccess, way, IntsRef.EMPTY);
+        assertEquals(CarTemporalAccess.MISSING, restricted.getEnum(false, edgeId, edgeIntAccess));
+    }
 }
