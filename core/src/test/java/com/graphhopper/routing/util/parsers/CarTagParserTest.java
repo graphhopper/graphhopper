@@ -701,6 +701,24 @@ public class CarTagParserTest {
         way.setTag("motorcar:conditional", "yes @ (May - June)");
         parser.handleWayTags(edgeId, access, way, null);
         assertTrue(accessEnc.getBool(false, edgeId, access));
+
+        // Open access even if we can't parse the conditional
+        access = new ArrayEdgeIntAccess(1);
+        way = new ReaderWay(1);
+        way.setTag("highway", "primary");
+        way.setTag("access", "no");
+        way.setTag("motorcar:conditional", "yes @ (10:00 - 11:00)");
+        parser.handleWayTags(edgeId, access, way, null);
+        assertTrue(accessEnc.getBool(false, edgeId, access));
+
+        // ... but don't do the same for non-intended values
+        access = new ArrayEdgeIntAccess(1);
+        way = new ReaderWay(1);
+        way.setTag("highway", "primary");
+        way.setTag("access", "no");
+        way.setTag("motorcar:conditional", "private @ (10:00 - 11:00)");
+        parser.handleWayTags(edgeId, access, way, null);
+        assertFalse(accessEnc.getBool(false, edgeId, access));
     }
 
     @ParameterizedTest
