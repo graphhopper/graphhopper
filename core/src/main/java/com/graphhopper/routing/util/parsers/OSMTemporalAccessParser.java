@@ -66,7 +66,7 @@ public class OSMTemporalAccessParser implements TagParser {
             restrictionSetter.setBoolean(edgeId, edgeIntAccess, b);
     }
 
-    private Boolean getTemporaryAccess(Map<String, Object> tags) {
+    public Boolean getTemporaryAccess(Map<String, Object> tags) {
         for (Map.Entry<String, Object> entry : tags.entrySet()) {
             if (!conditionals.contains(entry.getKey())) continue;
 
@@ -100,21 +100,32 @@ public class OSMTemporalAccessParser implements TagParser {
         return null;
     }
 
-    public static boolean hasTemporalRestriction(ReaderWay way, int firstIndex, List<String> restrictions, Collection<String> accepted) {
+    /**
+     * This method checks the conditional restrictions starting from firstIndex and returns
+     * true if the access value is in the "accepted" collection AND the conditional value describes
+     * a time (e.g. date, time or interval).
+     */
+    public static boolean hasPermissiveTemporalRestriction(ReaderWay way, int firstIndex,
+                                                           List<String> restrictionKeys, Collection<String> accepted) {
         for (int i = firstIndex; i >= 0; i--) {
-            String value = way.getTag(restrictions.get(i) + ":conditional");
-            if (OSMTemporalAccessParser.hasTemporalRestriction(value, accepted)) return true;
+            String value = way.getTag(restrictionKeys.get(i) + ":conditional");
+            if (acceptedAndInRange(value, accepted)) return true;
         }
         return false;
     }
 
-    private static boolean hasTemporalRestriction(String value, Collection<String> accepted) {
+    private static boolean acceptedAndInRange(String value, Collection<String> accepted) {
         if (value == null) return false;
         String[] strs = value.split("@");
-        if (strs.length == 2) {
-            if (accepted.contains(strs[0].trim()))
-                return true;
-        }
+        if (strs.length == 2)
+            try {
+                String conditionalValue = strs[1].replace('(', ' ').replace(')', ' ').trim();
+                return accepted.contains(strs[0].trim()) &&
+                        (strs[1].contains(":") // time
+                                || DateRangeParser.getRange(conditionalValue    ) != null // date
+                        );
+            } catch (ParseException ex) {
+            }
         return false;
     }
 }

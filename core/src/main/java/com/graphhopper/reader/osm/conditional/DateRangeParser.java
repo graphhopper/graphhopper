@@ -104,7 +104,7 @@ public class DateRangeParser implements ConditionalValueParser {
         return parsedCalendar;
     }
 
-    DateRange getRange(String dateRangeString) throws ParseException {
+    public static DateRange getRange(String dateRangeString) throws ParseException {
         if (dateRangeString == null || dateRangeString.isEmpty())
             return null;
 
