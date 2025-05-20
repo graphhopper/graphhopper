@@ -1055,6 +1055,7 @@ public class GraphHopper {
                     .withTurnCosts(encodingManager.needsTurnCostsSupport())
                     .setSegmentSize(defaultSegmentSize)
                     .build();
+            checkProfilesConsistency();
             baseGraph.loadExisting();
             String storedProfiles = properties.get("profiles");
             String configuredProfiles = getProfilesString();
@@ -1063,7 +1064,6 @@ public class GraphHopper {
                         + "\nGraphhopper config: " + configuredProfiles
                         + "\nGraph: " + storedProfiles
                         + "\nChange configuration to match the graph or delete " + baseGraph.getDirectory().getLocation());
-            checkProfilesConsistency();
 
             postProcessing(false);
             directory.loadMMap();
@@ -1075,8 +1075,12 @@ public class GraphHopper {
         }
     }
 
+    protected int getProfileHash(Profile profile) {
+        return profile.getVersion();
+    }
+
     private String getProfilesString() {
-        return profilesByName.values().stream().map(p -> p.getName() + "|" + p.getVersion()).collect(Collectors.joining(","));
+        return profilesByName.values().stream().map(p -> p.getName() + "|" + getProfileHash(p)).collect(Collectors.joining(","));
     }
 
     public void checkProfilesConsistency() {
@@ -1326,7 +1330,7 @@ public class GraphHopper {
     protected void loadOrPrepareCH(boolean closeEarly) {
         for (CHProfile profile : chPreparationHandler.getCHProfiles())
             if (!getCHProfileVersion(profile.getProfile()).isEmpty()
-                    && !getCHProfileVersion(profile.getProfile()).equals("" + profilesByName.get(profile.getProfile()).getVersion()))
+                    && !getCHProfileVersion(profile.getProfile()).equals("" + getProfileHash(profilesByName.get(profile.getProfile()))))
                 throw new IllegalArgumentException("CH preparation of " + profile.getProfile() + " already exists in storage and doesn't match configuration");
 
         // we load ch graphs that already exist and prepare the other ones
@@ -1341,7 +1345,7 @@ public class GraphHopper {
             if (loaded.containsKey(profile.getProfile()) && prepared.containsKey(profile.getProfile()))
                 throw new IllegalStateException("CH graph should be either loaded or prepared, but not both: " + profile.getProfile());
             else if (prepared.containsKey(profile.getProfile())) {
-                setCHProfileVersion(profile.getProfile(), profilesByName.get(profile.getProfile()).getVersion());
+                setCHProfileVersion(profile.getProfile(), getProfileHash(profilesByName.get(profile.getProfile())));
                 PrepareContractionHierarchies.Result res = prepared.get(profile.getProfile());
                 chGraphs.put(profile.getProfile(), RoutingCHGraphImpl.fromGraph(baseGraph.getBaseGraph(), res.getCHStorage(), res.getCHConfig()));
             } else if (loaded.containsKey(profile.getProfile())) {
@@ -1365,13 +1369,13 @@ public class GraphHopper {
     protected void loadOrPrepareLM(boolean closeEarly) {
         for (LMProfile profile : lmPreparationHandler.getLMProfiles())
             if (!getLMProfileVersion(profile.getProfile()).isEmpty()
-                    && !getLMProfileVersion(profile.getProfile()).equals("" + profilesByName.get(profile.getProfile()).getVersion()))
+                    && !getLMProfileVersion(profile.getProfile()).equals("" + getProfileHash(profilesByName.get(profile.getProfile()))))
                 throw new IllegalArgumentException("LM preparation of " + profile.getProfile() + " already exists in storage and doesn't match configuration");
 
         // we load landmark storages that already exist and prepare the other ones
         List<LMConfig> lmConfigs = createLMConfigs(lmPreparationHandler.getLMProfiles());
         List<LandmarkStorage> loaded = lmPreparationHandler.load(lmConfigs, baseGraph, encodingManager);
-        List<LMConfig> loadedConfigs = loaded.stream().map(LandmarkStorage::getLMConfig).collect(Collectors.toList());
+        List<LMConfig> loadedConfigs = loaded.stream().map(LandmarkStorage::getLMConfig).toList();
         List<LMConfig> configsToPrepare = lmConfigs.stream().filter(c -> !loadedConfigs.contains(c)).collect(Collectors.toList());
         List<PrepareLandmarks> prepared = prepareLM(closeEarly, configsToPrepare);
 
@@ -1385,7 +1389,7 @@ public class GraphHopper {
             if (loadedLMS.isPresent() && preparedLMS.isPresent())
                 throw new IllegalStateException("LM should be either loaded or prepared, but not both: " + prepProfile);
             else if (preparedLMS.isPresent()) {
-                setLMProfileVersion(lmp.getProfile(), profilesByName.get(lmp.getProfile()).getVersion());
+                setLMProfileVersion(lmp.getProfile(), getProfileHash(profilesByName.get(lmp.getProfile())));
                 landmarks.put(lmp.getProfile(), preparedLMS.get().getLandmarkStorage());
             } else
                 loadedLMS.ifPresent(landmarkStorage -> landmarks.put(lmp.getProfile(), landmarkStorage));
