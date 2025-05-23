@@ -273,3 +273,21 @@ A fast and production-ready map visualization for the Desktop can be implemented
  * Shows the whole road network in the browser for debugging purposes ("vector tile support"), see [#1572](https://github.com/graphhopper/graphhopper/pull/1572).
  * Shows so called "path details" along a route like road_class or max_speed, see [#1142](https://github.com/graphhopper/graphhopper/pull/1142) or the web documentation.
  * Written in Java and simple to start for developers via Maven.
+
+
+# Customization
+
+Download map
+```bash
+mkdir -p data
+wget https://download.geofabrik.de/europe/norway-latest.osm.pbf -P data/
+```
+
+Build the image
+```bash
+docker build -t graphhopper .
+```
+Run it
+```bash
+docker run -it -p 8989:8989 -v $(pwd)/data:/data graphhopper-local
+```
