@@ -31,9 +31,9 @@ import static com.graphhopper.routing.weighting.custom.CustomModelParser.IN_AREA
  */
 class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
 
-    private static final Set<String> allowedMethodParents = new HashSet<>(Arrays.asList("edge", "Math"));
+    private static final Set<String> allowedMethodParents = new HashSet<>(Arrays.asList("edge", "Math", "country"));
     private static final Set<String> allowedMethods = new HashSet<>(Arrays.asList("ordinal", "getDistance", "getName",
-            "contains", "sqrt", "abs"));
+            "contains", "sqrt", "abs", "isRightHandTraffic"));
     private final ParseResult result;
     private final TreeMap<Integer, Replacement> replacements = new TreeMap<>();
     private final NameValidator variableValidator;
