@@ -169,11 +169,11 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.clearTags();
         way.setTag("highway", "track");
         way.setTag("bicycle", "designated");
-        way.setTag("segregated","no");
+        way.setTag("segregated", "no");
         assertPriorityAndSpeed(PREFER, 12, way);
         way.setTag("surface", "asphalt");
         assertPriorityAndSpeed(VERY_NICE, cyclewaySpeed, way);
-        way.setTag("tracktype","grade1");
+        way.setTag("tracktype", "grade1");
         assertPriorityAndSpeed(VERY_NICE, cyclewaySpeed, way);
         way.removeTag("surface");
         assertPriorityAndSpeed(VERY_NICE, cyclewaySpeed, way);
@@ -701,10 +701,29 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         access = new ArrayEdgeIntAccess(1);
         way = new ReaderWay(1);
         way.setTag("highway", "primary");
-        way.setTag("access", "no");
-        way.setTag("bicycle:conditional", "yes @ (May - June)");
+        way.setTag("bicycle", "no");
+        way.setTag("bicycle:conditional", "yes @ (21:00-9:00)");
         accessParser.handleWayTags(edgeId, access, way, null);
         assertTrue(accessEnc.getBool(false, edgeId, access));
+    }
+
+    @Test
+    public void temporalAccessWithPermit() {
+        BikeCommonAccessParser tmpAccessParser = createAccessParser(encodingManager, new PMap("block_private=false"));
+
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "primary");
+        way.setTag("bicycle", "no");
+        way.setTag("bicycle:conditional", "permit @ (21:00-9:00)");
+
+        int edgeId = 0;
+        ArrayEdgeIntAccess access = new ArrayEdgeIntAccess(1);
+        tmpAccessParser.handleWayTags(edgeId, access, way, null);
+        assertTrue(accessEnc.getBool(false, edgeId, access));
+
+        access = new ArrayEdgeIntAccess(1);
+        accessParser.handleWayTags(edgeId, access, way, null);
+        assertFalse(accessEnc.getBool(false, edgeId, access));
     }
 
     @Test

@@ -8,7 +8,7 @@ import com.graphhopper.routing.util.WayAccess;
 
 import java.util.*;
 
-import static com.graphhopper.routing.util.parsers.OSMTemporalAccessParser.hasTemporalRestriction;
+import static com.graphhopper.routing.util.parsers.OSMTemporalAccessParser.hasPermissiveTemporalRestriction;
 
 public abstract class BikeCommonAccessParser extends AbstractAccessParser implements TagParser {
 
@@ -80,7 +80,7 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
             String firstValue = way.getTag(restrictionKeys.get(firstIndex), "");
             String[] restrict = firstValue.split(";");
             for (String value : restrict) {
-                if (restrictedValues.contains(value) && !hasTemporalRestriction(way, firstIndex, restrictionKeys))
+                if (restrictedValues.contains(value) && !hasPermissiveTemporalRestriction(way, firstIndex, restrictionKeys, intendedValues))
                     return WayAccess.CAN_SKIP;
                 if (intendedValues.contains(value))
                     return WayAccess.WAY;

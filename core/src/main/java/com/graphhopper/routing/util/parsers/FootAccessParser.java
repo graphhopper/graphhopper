@@ -28,7 +28,7 @@ import java.util.*;
 
 import static com.graphhopper.routing.ev.RouteNetwork.*;
 import static com.graphhopper.routing.util.PriorityCode.UNCHANGED;
-import static com.graphhopper.routing.util.parsers.OSMTemporalAccessParser.hasTemporalRestriction;
+import static com.graphhopper.routing.util.parsers.OSMTemporalAccessParser.hasPermissiveTemporalRestriction;
 
 public class FootAccessParser extends AbstractAccessParser implements TagParser {
 
@@ -119,7 +119,7 @@ public class FootAccessParser extends AbstractAccessParser implements TagParser 
             String firstValue = way.getTag(restrictionKeys.get(firstIndex), "");
             String[] restrict = firstValue.split(";");
             for (String value : restrict) {
-                if (restrictedValues.contains(value) && !hasTemporalRestriction(way, firstIndex, restrictionKeys))
+                if (restrictedValues.contains(value) && !hasPermissiveTemporalRestriction(way, firstIndex, restrictionKeys, intendedValues))
                     return WayAccess.CAN_SKIP;
                 if (intendedValues.contains(value))
                     return WayAccess.WAY;
