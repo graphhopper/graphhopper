@@ -40,24 +40,8 @@ import java.util.stream.Stream;
 import static com.graphhopper.util.GHUtility.getEdgeFromEdgeKey;
 
 /**
- * Detects and marks 'subnetworks' with a dedicated subnetwork encoded value. Subnetworks are parts of the road network
- * that are not connected to the rest of the network and that are below a certain size. These can be isolated nodes with
- * no edges at all, but also small subnetworks which could be bugs in OSM data or 'islands' that are separated from
- * the rest of the network because of some missing link, barrier or some closed road for example.
- * <p>
- * Sometimes there are also subnetworks that can be reached from the main network but not the other way around (or the
- * opposite). For example this can be parking lots that can only be accessed by a single one-way road (a mapping error).
- * These are called 'one-way subnetworks' and are marked using the same subnetwork encoded value, see #86. To find such
- * one-way subnetworks it is important to search for strongly connected components on the directed graph and not do a
- * simple connectivity check for one direction.
- * <p>
- * Note that it depends on the weighting whether or not edges belong to a subnetwork or not. For example if a weighting
- * 'closes' a bridge to an island the island might become a subnetwork, but if the bridge was open it would belong to
- * the main network. There can even be subnetworks that are due to turn restrictions.
- * <p>
- * We always run an edge-based connected component search, because this way we retrieve the edges (not the nodes) that
- * belong to each component and can include turn restrictions as well. Node-based component search is faster, but since
- * the subnetwork search goes relatively fast anyway using it has no real benefit.
+ * Detects and marks 'subnetworks', i.e., parts of the road network that (for the given weighting) aren't
+ * strongly connected to the rest of the network. This excludes subnetworks of a certain size (min_network_size).
  *
  * @author Peter Karich
  * @author easbar
@@ -102,7 +86,7 @@ public class PrepareRoutingSubnetworks {
         logger.info("Start marking subnetworks, prepare.min_network_size: " + minNetworkSize + ", threads: " + threads + ", nodes: " +
                 Helper.nf(graph.getNodes()) + ", edges: " + Helper.nf(graph.getEdges()) + ", jobs: " + prepareJobs + ", " + Helper.getMemInfo());
         AtomicInteger total = new AtomicInteger(0);
-        List<BitSet> flags = Stream.generate(() -> new BitSet(graph.getEdges())).limit(prepareJobs.size()).collect(Collectors.toList());
+        List<BitSet> flags = Stream.generate(() -> new BitSet(graph.getEdges())).limit(prepareJobs.size()).toList();
         Stream<Runnable> runnables = IntStream.range(0, prepareJobs.size()).mapToObj(i -> () -> {
             PrepareJob job = prepareJobs.get(i);
             total.addAndGet(setSubnetworks(job.weighting, job.subnetworkEnc.getName().replaceAll("_subnetwork", ""), flags.get(i)));
@@ -120,14 +104,18 @@ public class PrepareRoutingSubnetworks {
     }
 
     private int setSubnetworks(Weighting weighting, String jobName, BitSet subnetworkFlags) {
+        if (minNetworkSize <= 0)
+            throw new IllegalStateException("minNetworkSize: " + minNetworkSize);
+        if (!subnetworkFlags.isEmpty())
+            throw new IllegalArgumentException("Expected an empty set");
         // partition graph into strongly connected components using Tarjan's algorithm
         StopWatch sw = new StopWatch().start();
         EdgeBasedTarjanSCC.ConnectedComponents ccs = EdgeBasedTarjanSCC.findComponents(graph,
                 (prev, edge) -> Double.isFinite(GHUtility.calcWeightWithTurnWeight(weighting, edge, false, prev)),
                 false);
         List<IntArrayList> components = ccs.getComponents();
-        BitSet singleEdgeComponents = ccs.getSingleEdgeComponents();
-        long numSingleEdgeComponents = singleEdgeComponents.cardinality();
+        BitSet subnetworkEdgeKeys = ccs.getSingleEdgeComponents();
+        long numSingleEdgeComponents = subnetworkEdgeKeys.cardinality();
         logger.info(jobName + " - Found " + ccs.getTotalComponents() + " subnetworks (" + numSingleEdgeComponents + " single edges and "
                 + components.size() + " components with more than one edge, total nodes: " + ccs.getEdgeKeys() + "), took: " + sw.stop().getSeconds() + "s");
 
@@ -135,60 +123,40 @@ public class PrepareRoutingSubnetworks {
 
         // make all small components subnetworks, but keep the biggest (even when its smaller than the given min_network_size)
         sw = new StopWatch().start();
-        int subnetworks = 0;
-        int markedEdges = 0;
         int smallestNonSubnetwork = ccs.getBiggestComponent().size();
         int biggestSubnetwork = 0;
+        int subnetworkComponents = 0;
 
         for (IntArrayList component : components) {
             if (component == ccs.getBiggestComponent())
                 continue;
-
             if (component.size() < minNetworkSizeEdgeKeys) {
-                for (IntCursor cursor : component)
-                    markedEdges += setSubnetworkEdge(cursor.value, weighting, subnetworkFlags);
-                subnetworks++;
+                subnetworkComponents++;
                 biggestSubnetwork = Math.max(biggestSubnetwork, component.size());
-            } else {
+                for (IntCursor cursor : component)
+                    // add all edge keys of subnetwork components into the same set
+                    subnetworkEdgeKeys.set(cursor.value);
+            } else
                 smallestNonSubnetwork = Math.min(smallestNonSubnetwork, component.size());
-            }
         }
 
-        if (minNetworkSizeEdgeKeys > 0) {
-            BitSetIterator iter = singleEdgeComponents.iterator();
-            for (int edgeKey = iter.nextSetBit(); edgeKey >= 0; edgeKey = iter.nextSetBit()) {
-                markedEdges += setSubnetworkEdge(edgeKey, weighting, subnetworkFlags);
-                subnetworks++;
-                biggestSubnetwork = Math.max(biggestSubnetwork, 1);
-            }
-        } else if (numSingleEdgeComponents > 0) {
-            smallestNonSubnetwork = Math.min(smallestNonSubnetwork, 1);
-        }
+        BitSetIterator iter = subnetworkEdgeKeys.iterator();
+        for (int edgeKey = iter.nextSetBit(); edgeKey >= 0; edgeKey = iter.nextSetBit())
+            // Only flag edges as subnetworks if both of the two edge keys belong to subnetworks.
+            // If only one belongs to the main network(s) we accept it for our undirected snapping.
+            if (subnetworkEdgeKeys.get(GHUtility.reverseEdgeKey(edgeKey)))
+                subnetworkFlags.set(getEdgeFromEdgeKey(edgeKey));
 
         int allowedMarked = graph.getEdges() / 2;
-        if (markedEdges / 2 > allowedMarked)
-            throw new IllegalStateException("Too many total (directed) edges were marked as subnetwork edges: " + markedEdges + " out of " + (2 * graph.getEdges()) + "\n" +
-                    "The maximum number of subnetwork edges is: " + (2 * allowedMarked));
+        int markedEdges = Math.toIntExact(subnetworkFlags.cardinality());
+        if (markedEdges > allowedMarked)
+            throw new IllegalStateException("Too many edges were marked as subnetwork edges: " + markedEdges + " out of " + graph.getEdges() + "\n" +
+                    "The maximum number of subnetwork edges is: " + allowedMarked);
 
-        logger.info(jobName + " - Marked " + subnetworks + " subnetworks (biggest: " + biggestSubnetwork + " edges) -> " +
-                (ccs.getTotalComponents() - subnetworks) + " components(s) remain (smallest: " + smallestNonSubnetwork + ", biggest: " + ccs.getBiggestComponent().size() + " edges)"
+        logger.info(jobName + " - Marked " + subnetworkComponents + " subnetworks (biggest: " + biggestSubnetwork + " edge keys) and " + numSingleEdgeComponents + " single edge keys -> " +
+                (components.size() - subnetworkComponents) + " components(s) remain (smallest: " + smallestNonSubnetwork + ", biggest: " + ccs.getBiggestComponent().size() + " edge keys)"
                 + ", total marked edges: " + markedEdges + ", took: " + sw.stop().getSeconds() + "s");
         return markedEdges;
-    }
-
-    private int setSubnetworkEdge(int edgeKey, Weighting weighting, BitSet subnetworkFlags) {
-        // edges that are not accessible anyway are not marked as subnetworks additionally
-        if (!Double.isFinite(weighting.calcEdgeWeight(graph.getEdgeIteratorStateForKey(edgeKey), false)))
-            return 0;
-
-        // now get edge again but in stored direction so that subnetwork EV is not overwritten (as it is unidirectional)
-        int edge = getEdgeFromEdgeKey(edgeKey);
-        if (!subnetworkFlags.get(edge)) {
-            subnetworkFlags.set(edge);
-            return 1;
-        } else {
-            return 0;
-        }
     }
 
     public static class PrepareJob {
