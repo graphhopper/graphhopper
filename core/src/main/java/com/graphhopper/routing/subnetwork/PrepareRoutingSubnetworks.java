@@ -147,12 +147,7 @@ public class PrepareRoutingSubnetworks {
             if (subnetworkEdgeKeys.get(GHUtility.reverseEdgeKey(edgeKey)))
                 subnetworkFlags.set(getEdgeFromEdgeKey(edgeKey));
 
-        int allowedMarked = graph.getEdges() / 2;
         int markedEdges = Math.toIntExact(subnetworkFlags.cardinality());
-        if (markedEdges > allowedMarked)
-            throw new IllegalStateException("Too many edges were marked as subnetwork edges: " + markedEdges + " out of " + graph.getEdges() + "\n" +
-                    "The maximum number of subnetwork edges is: " + allowedMarked);
-
         logger.info(jobName + " - Marked " + subnetworkComponents + " subnetworks (biggest: " + biggestSubnetwork + " edge keys) and " + numSingleEdgeComponents + " single edge keys -> " +
                 (components.size() - subnetworkComponents) + " components(s) remain (smallest: " + smallestNonSubnetwork + ", biggest: " + ccs.getBiggestComponent().size() + " edge keys)"
                 + ", total marked edges: " + markedEdges + ", took: " + sw.stop().getSeconds() + "s");
