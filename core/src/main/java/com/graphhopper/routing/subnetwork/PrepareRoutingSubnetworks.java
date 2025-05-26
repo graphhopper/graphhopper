@@ -108,7 +108,10 @@ public class PrepareRoutingSubnetworks {
             throw new IllegalStateException("minNetworkSize: " + minNetworkSize);
         if (!subnetworkFlags.isEmpty())
             throw new IllegalArgumentException("Expected an empty set");
-        // partition graph into strongly connected components using Tarjan's algorithm
+        // We partition the graph into strongly connected components using Tarjan's algorithm. We require
+        // strong connectivity to be sure our snaps can be reached in both directions and to handle
+        // one-way subnetworks correctly (#86). We use edge-based traversal to account for subnetworks
+        // created by turn restrictions (see #1807).
         StopWatch sw = new StopWatch().start();
         EdgeBasedTarjanSCC.ConnectedComponents ccs = EdgeBasedTarjanSCC.findComponents(graph,
                 (prev, edge) -> Double.isFinite(GHUtility.calcWeightWithTurnWeight(weighting, edge, false, prev)),
@@ -143,7 +146,7 @@ public class PrepareRoutingSubnetworks {
         BitSetIterator iter = subnetworkEdgeKeys.iterator();
         for (int edgeKey = iter.nextSetBit(); edgeKey >= 0; edgeKey = iter.nextSetBit())
             // Only flag edges as subnetworks if both of the two edge keys belong to subnetworks.
-            // If only one belongs to the main network(s) we accept it for our undirected snapping.
+            // If only one direction belongs to the main network(s) we accept the edge for our undirected snapping.
             if (subnetworkEdgeKeys.get(GHUtility.reverseEdgeKey(edgeKey)))
                 subnetworkFlags.set(getEdgeFromEdgeKey(edgeKey));
 
