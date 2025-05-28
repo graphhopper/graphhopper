@@ -246,11 +246,6 @@ class ModeAccessParserTest {
     }
 
     @Test
-    public void testBuswayAccessWithCar() {
-
-    }
-
-    @Test
     public void temporalAccess() {
         int edgeId = 0;
         ArrayEdgeIntAccess access = new ArrayEdgeIntAccess(1);
