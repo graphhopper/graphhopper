@@ -236,6 +236,21 @@ class ModeAccessParserTest {
     }
 
     @Test
+    public void testBuswayAccess() {
+        EdgeIntAccess access = new ArrayEdgeIntAccess(1);
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "busway");
+        int edgeId = 0;
+        parser.handleWayTags(edgeId, access, way, null);
+        assertTrue(busAccessEnc.getBool(false, edgeId, access));
+    }
+
+    @Test
+    public void testBuswayAccessWithCar() {
+
+    }
+
+    @Test
     public void temporalAccess() {
         int edgeId = 0;
         ArrayEdgeIntAccess access = new ArrayEdgeIntAccess(1);
