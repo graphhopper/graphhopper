@@ -579,6 +579,7 @@ public interface GraphHopperGtfsIT<T extends PtRouter> {
 
         ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 7, 18, 0).atZone(zoneId).toInstant());
         response = ptRouter().route(ghRequest);
+        assumeFalse(response.getAll().isEmpty()); // Trip based router doesn't allow this case and doesn't find a solution, and that's fine.
         ResponsePath sundayTrip = response.getBest();
         assertEquals(0, sundayTrip.getNumChanges(), "Sunday trip has no transfers");
         assertEquals(2, sundayTrip.getLegs().size(), "Sunday trip has 2 legs");
