@@ -136,6 +136,7 @@ public class TripBasedRouter {
         Trips.TripAtStopTime transferOrigin;
         EnqueuedTripSegment parent;
         StopWithTimeDelta accessStation;
+        long routeTypePenalty;
         int nRealTransfers;
 
         public EnqueuedTripSegment(GTFSFeed.StopTimesForTripWithTripPatternKey tripPointer, Trips.TripAtStopTime tripAtStopTime, int toStopSequence, LocalDate serviceDay, Trips.TripAtStopTime transferOrigin, EnqueuedTripSegment parent, StopWithTimeDelta accessStation) {
@@ -220,20 +221,26 @@ public class TripBasedRouter {
     private int getArrivalTime(EnqueuedTripSegment enqueuedTripSegment, StopTime stopTime, int extraSeconds) {
         int extraDisutilityOfAccessSeconds = (int) (((long) (enqueuedTripSegment.accessStation.timeDelta * (parameters.getBetaAccessTime() - 1.0))) / 1000L);
         int extraDisutilityOfTransfersSeconds = (int) (((long) enqueuedTripSegment.nRealTransfers * parameters.getBetaTransfers()) / 1000L);
-        return stopTime.arrival_time + extraDisutilityOfAccessSeconds + extraDisutilityOfTransfersSeconds + extraSeconds;
+        int extraDisutilityOfRouteTypeSeconds = (int) (enqueuedTripSegment.routeTypePenalty / 1000L);
+        if (extraDisutilityOfRouteTypeSeconds != 0)
+            System.out.println(extraDisutilityOfRouteTypeSeconds);
+        return stopTime.arrival_time + extraDisutilityOfAccessSeconds + extraDisutilityOfTransfersSeconds + extraDisutilityOfRouteTypeSeconds + extraSeconds;
     }
 
-    private void enqueue(List<EnqueuedTripSegment> queue1, GTFSFeed.StopTimesForTripWithTripPatternKey destinationTripPointer, Trips.TripAtStopTime transferDestination, Trips.TripAtStopTime transferOrigin, EnqueuedTripSegment parent, LocalDate serviceDay, StopWithTimeDelta accessStation) {
-        int thisTripDoneFromIndex = tripDoneFromIndex[destinationTripPointer.idx];
-        if (transferDestination.stop_sequence < thisTripDoneFromIndex) {
-            if (transferDestination.stop_sequence + 1 < thisTripDoneFromIndex) {
-                EnqueuedTripSegment enqueuedTripSegment = new EnqueuedTripSegment(destinationTripPointer, transferDestination, thisTripDoneFromIndex, serviceDay, transferOrigin, parent, accessStation);
+    private void enqueue(List<EnqueuedTripSegment> queue1, GTFSFeed.StopTimesForTripWithTripPatternKey tripPointer, Trips.TripAtStopTime tripAtBoarding, Trips.TripAtStopTime transferOrigin, EnqueuedTripSegment parent, LocalDate serviceDay, StopWithTimeDelta accessStation) {
+        int thisTripDoneFromIndex = tripDoneFromIndex[tripPointer.idx];
+        if (tripAtBoarding.stop_sequence < thisTripDoneFromIndex) {
+            if (tripAtBoarding.stop_sequence + 1 < thisTripDoneFromIndex) {
+                long routeTypePenalty = parameters.transferPenaltiesByRouteType.getOrDefault(tripPointer.routeType, 0L);
+                EnqueuedTripSegment enqueuedTripSegment = new EnqueuedTripSegment(tripPointer, tripAtBoarding, thisTripDoneFromIndex, serviceDay, transferOrigin, parent, accessStation);
                 if (parent != null) {
                     enqueuedTripSegment.nRealTransfers = parent.nRealTransfers + 1;
+                    enqueuedTripSegment.routeTypePenalty = parent.routeTypePenalty;
                 }
+                enqueuedTripSegment.routeTypePenalty += routeTypePenalty;
                 queue1.add(enqueuedTripSegment);
             }
-            markAsDone(destinationTripPointer, transferDestination.stop_sequence);
+            markAsDone(tripPointer, tripAtBoarding.stop_sequence);
         }
     }
 
@@ -286,7 +293,7 @@ public class TripBasedRouter {
         }
 
         int getArrivalTime() {
-            return TripBasedRouter.this.getArrivalTime(enqueuedTripSegment, getStopTime(), (int) ((destination.timeDelta / 1000L) * parameters.getBetaEgressTime()));
+            return TripBasedRouter.this.getArrivalTime(enqueuedTripSegment, getStopTime(), (int) ((destination.timeDelta / 1000L) * parameters.getBetaEgressTime() + getRouteTypePenalty()));
         }
 
         public int getRound() {
@@ -304,6 +311,18 @@ public class TripBasedRouter {
                 }
                 i = i.parent;
             }
+            return result;
+        }
+
+        public long getRouteTypePenalty() {
+            long result = 0L;
+            EnqueuedTripSegment i = enqueuedTripSegment;
+            while (i.parent != null) {
+                result += parameters.transferPenaltiesByRouteType.getOrDefault(i.tripPointer.routeType, 0L);
+                i = i.parent;
+            }
+            if (result != 0L)
+                System.out.println(result);
             return result;
         }
     }
@@ -325,8 +344,9 @@ public class TripBasedRouter {
         private final double betaAccessTime;
         private final double betaEgressTime;
         private final double betaTransfers;
+        private final Map<Integer, Long> transferPenaltiesByRouteType;
 
-        Parameters(List<StopWithTimeDelta> accessStations, List<StopWithTimeDelta> egressStations, Instant profileStartTime, Duration profileLength, Predicate<GTFSFeed.StopTimesForTripWithTripPatternKey> tripFilter, double betaAccessTime, double betaEgressTime, double betaTransfers) {
+        Parameters(List<StopWithTimeDelta> accessStations, List<StopWithTimeDelta> egressStations, Instant profileStartTime, Duration profileLength, Predicate<GTFSFeed.StopTimesForTripWithTripPatternKey> tripFilter, double betaAccessTime, double betaEgressTime, double betaTransfers, Map<Integer, Long> transferPenaltiesByRouteType) {
             this.accessStations = accessStations;
             this.egressStations = egressStations;
             this.profileStartTime = profileStartTime;
@@ -335,6 +355,7 @@ public class TripBasedRouter {
             this.betaAccessTime = betaAccessTime;
             this.betaEgressTime = betaEgressTime;
             this.betaTransfers = betaTransfers;
+            this.transferPenaltiesByRouteType = transferPenaltiesByRouteType;
         }
 
         public List<StopWithTimeDelta> getAccessStations() {
