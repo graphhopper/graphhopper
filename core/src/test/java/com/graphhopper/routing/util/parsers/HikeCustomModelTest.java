@@ -45,8 +45,7 @@ public class HikeCustomModelTest {
     EdgeIteratorState createEdge(ReaderWay way) {
         BaseGraph graph = new BaseGraph.Builder(em).create();
         EdgeIteratorState edge = graph.edge(0, 1);
-        EdgeIntAccess edgeIntAccess = graph.getEdgeAccess();
-        parsers.handleWayTags(edge.getEdge(), edgeIntAccess, way, em.createRelationFlags());
+        parsers.handleWayTags(edge.getEdge(), graph.getEdgeAccess(), way, em.createRelationFlags());
         return edge;
     }
 
