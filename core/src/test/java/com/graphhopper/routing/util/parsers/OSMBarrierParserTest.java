@@ -1,5 +1,6 @@
 package com.graphhopper.routing.util.parsers;
 
+import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.util.PMap;
@@ -9,37 +10,48 @@ import org.junit.jupiter.api.Test;
 import java.util.Collections;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 class OSMBarrierParserTest {
-
     private OSMBarrierParser parser;
-    private EnumEncodedValue<Barrier> barrierEV;
+    private EnumEncodedValue<Barrier> barrierEnc;
+    private BooleanEncodedValue accessEnc;
 
     @BeforeEach
     public void setup() {
-        barrierEV = new EnumEncodedValue<>(Barrier.KEY, Barrier.class);
-        barrierEV.init(new EncodedValue.InitializerConfig());
-        parser = new OSMBarrierParser(barrierEV);
+        barrierEnc = new EnumEncodedValue<>(Barrier.KEY, Barrier.class);
+        barrierEnc.init(new EncodedValue.InitializerConfig());
+        accessEnc = new SimpleBooleanEncodedValue("barrier_access", true);
+        accessEnc.init(new EncodedValue.InitializerConfig());
+        parser = new OSMBarrierParser(accessEnc, barrierEnc);
     }
 
     @Test
-    public void testGate() {
+    public void testBarrierEdge() {
         EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
         int edgeId = 0;
-        parser.handleWayTags(edgeId, edgeIntAccess,
-                createReader(new PMap().putObject("barrier", "gate").toMap()), null);
-        assertEquals(Barrier.GATE, barrierEV.getEnum(false, edgeId, edgeIntAccess));
-
-        edgeIntAccess = new ArrayEdgeIntAccess(1);
-        parser.handleWayTags(edgeId, edgeIntAccess,
-                createReader(new PMap().putObject("barrier", "kissing_gate").toMap()), null);
-        assertEquals(Barrier.GATE, barrierEV.getEnum(false, edgeId, edgeIntAccess));
-    }
-
-    ReaderWay createReader(Map<String, Object> map) {
         ReaderWay way = new ReaderWay(1);
-        way.setTag("node_tags", Collections.singletonList(map));
-        return way;
+        way.setTag("gh:barrier_edge", true);
+        
+        Map<String, Object> tags = Collections.singletonMap("barrier", "gate");
+        way.setTag("node_tags", Collections.singletonList(tags));
+        
+        parser.handleWayTags(edgeId, edgeIntAccess, way);
+        assertEquals(Barrier.GATE, barrierEnc.getEnum(false, edgeId, edgeIntAccess));
     }
-}
+
+    @Test
+    public void testBarrierNode() {
+        ReaderNode node = new ReaderNode(1, -1, -1);
+        node.setTag("barrier", "gate");
+        assertTrue(parser.isBarrier(node));
+
+        node = new ReaderNode(1, -1, -1);
+        node.setTag("barrier", "unknown");
+        assertFalse(parser.isBarrier(node));
+
+        node = new ReaderNode(1, -1, -1);
+        node.setTag("barrier", "bollard");
+        assertTrue(parser.isBarrier(node));
+    }
+} 

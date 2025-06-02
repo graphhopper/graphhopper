@@ -29,4 +29,12 @@ public enum Barrier {
             return MISSING;
         }
     }
+
+    public static String key() {
+        return "barrier";
+    }
+
+    public static EnumEncodedValue<Barrier> create() {
+        return new EnumEncodedValue<>(key(), Barrier.class);
+    }
 }
