@@ -1,9 +1,10 @@
 graphhopper:
 
   # OpenStreetMap input file PBF or XML, can be changed via command line -Ddw.graphhopper.datareader.file=some.pbf
-  datareader.file: "/data/updated_osm_file_20241121_225129.pbf"
+  datareader.file: ""
   # Local folder used by graphhopper to store its data
   graph.location: "/data/default-gh"
+
 
   ##### Routing Profiles ####
 
@@ -170,6 +171,7 @@ graphhopper:
   # graph.urban_density.city_radius: 1500
   # graph.urban_density.city_sensitivity: 1000
 
+
   #### Subnetworks ####
 
   # In many cases the road network consists of independent components without any routes going in between. In
@@ -236,7 +238,7 @@ server:
   - type: http
     port: 8989
     # for security reasons bind to localhost
-    # bind_host: 0.0.0.0
+    bind_host: localhost
     # increase GET request limit - not necessary if /maps UI is not used or used without custom models
     max_request_header_size: 50k
   request_log:
@@ -244,7 +246,7 @@ server:
   admin_connectors:
   - type: http
     port: 8990
-    # bind_host: localhost
+    bind_host: localhost
 # See https://www.dropwizard.io/en/latest/manual/core.html#logging
 logging:
   appenders:
