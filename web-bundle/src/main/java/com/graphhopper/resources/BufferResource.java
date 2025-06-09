@@ -616,6 +616,10 @@ public class BufferResource {
      */
     private PointList computePointAtDistanceThreshold(BufferFeature startFeature, Double thresholdDistance,
                                                       BufferFeature endFeature, Boolean upstreamPath) {
+        if(endFeature.getEdge() < 0)
+        {
+            return new PointList();
+        }
         EdgeIteratorState finalState = graph.getEdgeIteratorState(endFeature.getEdge(), Integer.MIN_VALUE);
         PointList pointList = finalState.fetchWayGeometry(FetchMode.PILLAR_ONLY);
 
