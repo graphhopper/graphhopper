@@ -121,18 +121,21 @@ The Docker images created by the community from the `master` branch can be found
 
 ## GraphHopper Maps
 
-To see the road routing feature of GraphHopper in action please go to [GraphHopper Maps](https://graphhopper.com/maps).
+The GraphHopper routing server uses GraphHopper Maps as web interface, which is also [open source](https://github.com/graphhopper/graphhopper-maps).
+
+To see GraphHopper Maps in action go to [graphhopper.com/maps/](https://graphhopper.com/maps/),
+which is an instance of GraphHopper Maps and available for free, via encrypted connections and from German servers - for a nice and private route planning experience!
 
 [![GraphHopper Maps](https://www.graphhopper.com/wp-content/uploads/2022/10/maps2-1024x661.png)](https://graphhopper.com/maps)
 
-GraphHopper Maps is an open source user interface, which you can find [here](https://github.com/graphhopper/graphhopper-maps).
-It can use this open source routing engine or the [GraphHopper Directions API](https://www.graphhopper.com),
-which provides the Routing API, a Route Optimization API (based on [jsprit](http://jsprit.github.io/)),
-a fast Matrix API and an address search (based on [photon](https://github.com/komoot/photon)). 
-The photon project is also supported by the GraphHopper GmbH. Additionally to the GraphHopper
-Directions API, map tiles from various providers are used, with the default being [Omniscale](http://omniscale.com/). 
+## GraphHopper Directions API
 
-All this is available for free, via encrypted connections and from German servers - for a nice and private route planning experience!
+The GraphHopper Directions API is [our](https://www.graphhopper.com/) commercial offering that provides
+[multiple APIs](https://docs.graphhopper.com) based on this open source routing engine: the Routing API, the Matrix API, the Isochrone API and the Map Matching API.
+
+It also provides the Route Optimization API, which is based on our open source [jsprit project](http://jsprit.github.io/) and uses the fast Matrix API behind the scenes.
+
+The address search is based on the open source [photon project](https://github.com/komoot/photon), which is supported by GraphHopper GmbH.
 
 ## Public Transit
 
