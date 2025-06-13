@@ -114,6 +114,9 @@ public class BufferResource {
     }
 
     private List<LineString> filterByDirection(List<LineString> lineStrings, Boolean buildUpstream, Direction directionEnum) {
+        if (lineStrings == null || lineStrings.isEmpty()) {
+            return Collections.emptyList();
+        }
         Point furthestPointOfFirstPath = buildUpstream ? lineStrings.get(0).getStartPoint() : lineStrings.get(0).getEndPoint();
         Point furthestPointOfSecondPath = buildUpstream ? lineStrings.get(lineStrings.size() - 1).getStartPoint() : lineStrings.get(lineStrings.size() - 1).getEndPoint();
 
@@ -149,18 +152,23 @@ public class BufferResource {
         // or that BOTH lineStrings look good.  By taking the bearing from one terminal to the other, we have a better
         // chance to be correct than if we check the bearing of one lineString.
         boolean isFirstLineStringBetter = false;
+        int DUE_NORTHEAST = 45;
+        int DUE_SOUTHEAST = 135;
+        int DUE_SOUTHWEST = 225;
+        int DUE_NORTHWEST = 315;
+
         switch (directionEnum) {
             case NORTHEAST:
-                isFirstLineStringBetter = bearing >= 315 || bearing <= 135;
+                isFirstLineStringBetter = bearing >= DUE_NORTHWEST || bearing <= DUE_SOUTHEAST;
                 break;
             case SOUTHWEST:
-                isFirstLineStringBetter = bearing > 135.0 && bearing < 315.0;
+                isFirstLineStringBetter = bearing > DUE_SOUTHEAST && bearing < DUE_NORTHWEST;
                 break;
             case NORTHWEST:
-                isFirstLineStringBetter = bearing >= 225.0 || bearing <= 45.0;
+                isFirstLineStringBetter = bearing >= DUE_SOUTHWEST || bearing <= DUE_NORTHEAST;
                 break;
             case SOUTHEAST:
-                isFirstLineStringBetter = bearing > 45.0 && bearing < 225.0;
+                isFirstLineStringBetter = bearing > DUE_NORTHEAST && bearing < DUE_SOUTHWEST;
                 break;
             default:
                 break;
