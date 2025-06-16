@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  graphhopper:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: graphhopper
+    ports:
+      - "8989:8989"
+      - "8990:8990"
+    volumes:
+      - ./data:/data
+    environment:
+      JAVA_OPTS: "-Xmx4g -Xms4g"
+    networks:
+      - backbone
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8989/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+networks:
+  backbone:
+    external: true

@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  downloader:
+    image: busybox
+    volumes:
+      - ./data:/data  # unified volume path
+    entrypoint: >
+      sh -c "test -f /data/norway-latest.osm.pbf || wget -O /data/norway-latest.osm.pbf https://download.geofabrik.de/europe/norway-latest.osm.pbf"
+
+  graphhopper:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: capia/graphhopper:${VERSION:-dev}
+    depends_on:
+      - downloader
+    ports:
+      - "8989:8989"
+      - "8990:8990"
+    volumes:
+      - ./data:/data  # same as downloader
+    environment:
+      JAVA_OPTS: "-Xmx4g -Xms4g"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8989/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped

@@ -277,17 +277,11 @@ A fast and production-ready map visualization for the Desktop can be implemented
 
 # Customization
 
-Download map
-```bash
-mkdir -p data
-wget https://download.geofabrik.de/europe/norway-latest.osm.pbf -P data/
-```
-
 Build the image
 ```bash
-docker build -t graphhopper .
+docker compose -f docker-compose.dev.yml build
 ```
 Run it
 ```bash
-docker run -it -p 8989:8989 -v $(pwd)/data:/data graphhopper-local
+docker compose -f docker-compose.dev.yml up -d
 ```

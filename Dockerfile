@@ -28,4 +28,7 @@ EXPOSE 8989 8990
 HEALTHCHECK --interval=10s --timeout=5s \
   CMD curl --fail http://localhost:8989/health || exit 1
 
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -Ddw.graphhopper.datareader.file=/data/norway-latest.osm.pbf -Ddw.graphhopper.graph.location=/data/graph-cache -jar graphhopper.jar server config-example.yml"]
+ENV JAVA_OPTS="-Xmx4g -Xms4g"
+ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS \"$@\"", "--"]
+
+CMD ["-Ddw.graphhopper.datareader.file=/data/norway-latest.osm.pbf", "-Ddw.graphhopper.graph.location=/data/graph-cache", "-jar", "graphhopper.jar", "server", "config-example.yml"]
