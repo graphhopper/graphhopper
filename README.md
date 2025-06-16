@@ -126,7 +126,7 @@ The GraphHopper routing server uses GraphHopper Maps as web interface, which is 
 To see GraphHopper Maps in action go to [graphhopper.com/maps/](https://graphhopper.com/maps/),
 which is an instance of GraphHopper Maps and available for free, via encrypted connections and from German servers - for a nice and private route planning experience!
 
-[![GraphHopper Maps](https://www.graphhopper.com/wp-content/uploads/2022/10/maps2-1024x661.png)](https://graphhopper.com/maps)
+[![GraphHopper Maps](https://www.graphhopper.com/wp-content/uploads/2025/06/graphhopper-maps-2025.png)](https://graphhopper.com/maps)
 
 ## GraphHopper Directions API
 
