@@ -111,6 +111,15 @@ class ArrayUtilTest {
     }
 
     @Test
+    public void removeConsecutiveDuplicates_empty() {
+        int[] arr = new int[]{};
+        assertEquals(0, ArrayUtil.removeConsecutiveDuplicates(arr, arr.length));
+        arr = new int[]{3};
+        assertEquals(1, ArrayUtil.removeConsecutiveDuplicates(arr, arr.length));
+        assertEquals(0, ArrayUtil.removeConsecutiveDuplicates(arr, 0));
+    }
+
+    @Test
     public void testWithoutConsecutiveDuplicates() {
         assertEquals(from(), ArrayUtil.withoutConsecutiveDuplicates(from()));
         assertEquals(from(1), ArrayUtil.withoutConsecutiveDuplicates(from(1)));
