@@ -131,7 +131,6 @@ public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements
 
         // get assumed speed from highway type
         double speed = getSpeed(way);
-        speed = applyBadSurfaceSpeed(way, speed);
 
         setSpeed(false, edgeId, edgeIntAccess, applyMaxSpeed(way, speed, false));
         setSpeed(true, edgeId, edgeIntAccess, applyMaxSpeed(way, speed, true));
@@ -144,7 +143,8 @@ public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements
      */
     protected double applyMaxSpeed(ReaderWay way, double speed, boolean bwd) {
         double maxSpeed = OSMMaxSpeedParser.parseMaxSpeed(way, bwd);
-        return maxSpeed != MaxSpeed.MAXSPEED_MISSING ? Math.max(1, maxSpeed * 0.9) : speed;
+        maxSpeed = maxSpeed != MaxSpeed.MAXSPEED_MISSING ? Math.max(1, maxSpeed * 0.9) : speed;
+        return applyBadSurfaceSpeed(way, maxSpeed);
     }
 
     /**
