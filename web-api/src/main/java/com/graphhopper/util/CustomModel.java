@@ -18,11 +18,13 @@
 package com.graphhopper.util;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.graphhopper.jackson.CustomModelAreasDeserializer;
 import com.graphhopper.json.Statement;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class CustomModel {
@@ -36,6 +38,8 @@ public class CustomModel {
     private boolean internal;
     private List<Statement> speedStatements = new ArrayList<>();
     private List<Statement> priorityStatements = new ArrayList<>();
+    private List<Statement> turnTimeStatements = new ArrayList<>();
+
     private JsonFeatureCollection areas = new JsonFeatureCollection();
 
     public CustomModel() {
@@ -49,17 +53,17 @@ public class CustomModel {
 
         speedStatements = deepCopy(toCopy.getSpeed());
         priorityStatements = deepCopy(toCopy.getPriority());
+        turnTimeStatements = deepCopy(toCopy.getTurnTimeStatements());
 
         addAreas(toCopy.getAreas());
     }
 
     public static Map<String, JsonFeature> getAreasAsMap(JsonFeatureCollection areas) {
-        Map<String, JsonFeature> map = new HashMap<>(areas.getFeatures().size());
-        areas.getFeatures().forEach(f -> {
-            if (map.put(f.getId(), f) != null)
-                throw new IllegalArgumentException("Cannot handle duplicate area " + f.getId());
-        });
-        return map;
+        return areas.getFeatures().stream().collect(Collectors.toMap(JsonFeature::getId,
+                Function.identity(), (existing, duplicate) -> {
+                    throw new IllegalArgumentException("Cannot handle duplicate area " + duplicate.getId());
+                }
+        ));
     }
 
     public void addAreas(JsonFeatureCollection externalAreas) {
@@ -126,6 +130,16 @@ public class CustomModel {
         return this;
     }
 
+    @JsonProperty("turn_time")
+    public List<Statement> getTurnTimeStatements() {
+        return turnTimeStatements;
+    }
+
+    public CustomModel addToTurnTime(Statement st) {
+        getTurnTimeStatements().add(st);
+        return this;
+    }
+
     @JsonDeserialize(using = CustomModelAreasDeserializer.class)
     public CustomModel setAreas(JsonFeatureCollection areas) {
         this.areas = areas;
@@ -163,6 +177,7 @@ public class CustomModel {
         // used to check against stored custom models, see #2026
         return "distanceInfluence=" + distanceInfluence + "|headingPenalty=" + headingPenalty
                 + "|speedStatements=" + speedStatements + "|priorityStatements=" + priorityStatements
+                + "|turnTimeStatements=" + turnTimeStatements
                 + "|areas=" + areas;
     }
 
@@ -182,6 +197,7 @@ public class CustomModel {
             mergedCM.headingPenalty = queryModel.headingPenalty;
         mergedCM.speedStatements.addAll(queryModel.getSpeed());
         mergedCM.priorityStatements.addAll(queryModel.getPriority());
+        mergedCM.turnTimeStatements.addAll(queryModel.getTurnTimeStatements());
 
         mergedCM.addAreas(queryModel.getAreas());
         return mergedCM;

@@ -19,7 +19,9 @@ package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.json.MinMax;
 import com.graphhopper.json.Statement;
+import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.Polygon;
@@ -47,19 +49,15 @@ public class CustomWeightingHelper {
     }
 
     public double getPriority(EdgeIteratorState edge, boolean reverse) {
-        return getRawPriority(edge, reverse);
+        return 1;
     }
 
     public double getSpeed(EdgeIteratorState edge, boolean reverse) {
-        return getRawSpeed(edge, reverse);
-    }
-
-    protected final double getRawSpeed(EdgeIteratorState edge, boolean reverse) {
         return 1;
     }
 
-    protected final double getRawPriority(EdgeIteratorState edge, boolean reverse) {
-        return 1;
+    public long getTurnTime(BaseGraph graph, EdgeIntAccess edgeIntAccess, int inEdge, int viaNode, int outEdge) {
+        return 0;
     }
 
     public final double calcMaxSpeed() {

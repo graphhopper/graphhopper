@@ -935,6 +935,10 @@ public class RestrictionSetterTest {
     private Path calcPath(Graph graph, int from, int to, BooleanEncodedValue turnRestrictionEnc) {
         Dijkstra dijkstra = new Dijkstra(graph, graph.wrapWeighting(new SpeedWeighting(speedEnc, new TurnCostProvider() {
             @Override
+            public void setTurnTimeMapping(TurnTimeMapping mapping) {
+            }
+
+            @Override
             public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
                 if (inEdge == outEdge) return Double.POSITIVE_INFINITY;
                 return graph.getTurnCostStorage().get(turnRestrictionEnc, inEdge, viaNode, outEdge) ? Double.POSITIVE_INFINITY : 0;

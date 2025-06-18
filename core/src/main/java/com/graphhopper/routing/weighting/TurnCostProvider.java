@@ -18,10 +18,16 @@
 
 package com.graphhopper.routing.weighting;
 
+import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.storage.BaseGraph;
+
 /**
  * Implementations of this interface define how turn costs and turn times are calculated.
  */
 public interface TurnCostProvider {
+
+    void setTurnTimeMapping(TurnTimeMapping mapping);
+
     /**
      * @return the turn weight of a transitions from the edge with id {@param inEdge} to the edge with id
      * {@param outEdge} at the node with id {@param viaNode}
@@ -34,7 +40,15 @@ public interface TurnCostProvider {
      */
     long calcTurnMillis(int inEdge, int viaNode, int outEdge);
 
+    interface TurnTimeMapping {
+        long calcTurnMillis(BaseGraph graph, EdgeIntAccess edgeIntAccess, int inEdge, int viaNode, int outEdge);
+    }
+
     TurnCostProvider NO_TURN_COST_PROVIDER = new TurnCostProvider() {
+        @Override
+        public void setTurnTimeMapping(TurnTimeMapping mapping) {
+        }
+
         @Override
         public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
             return 0;

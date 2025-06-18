@@ -9,10 +9,12 @@
 {
   "distance_influence": 90,
   "priority": [
-    { "if": "!car_access", "multiply_by": "0" },
-    { "if": "road_access == DESTINATION || road_access == PRIVATE", "multiply_by": "0.1" }
+    { "if": "!car_access", "multiply_by": "0" }
   ],
   "speed": [
     { "if": "true", "limit_to": "car_average_speed" }
+  ],
+  "turn_time": [
+    { "if": "prev_road_access != road_access && (road_access == DESTINATION || road_access == PRIVATE)", "add": "300" }
   ]
 }

@@ -20,6 +20,7 @@ package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.EdgeIteratorState;
@@ -36,8 +37,7 @@ import java.util.HashSet;
 import java.util.List;
 
 import static com.graphhopper.json.Statement.*;
-import static com.graphhopper.json.Statement.Op.LIMIT;
-import static com.graphhopper.json.Statement.Op.MULTIPLY;
+import static com.graphhopper.json.Statement.Op.*;
 import static com.graphhopper.routing.ev.RoadClass.*;
 import static com.graphhopper.routing.weighting.custom.CustomModelParser.findVariablesForEncodedValuesString;
 import static com.graphhopper.routing.weighting.custom.CustomModelParser.parseExpressions;
@@ -338,16 +338,30 @@ class CustomModelParserTest {
     }
 
     @Test
+    void testTurnTime() {
+        CustomModel customModel = new CustomModel();
+        customModel.addToSpeed(If("true", LIMIT, "100"));
+        customModel.addToTurnTime(If("prev_road_class != PRIMARY && road_class == PRIMARY", ADD, "100"));
+        TurnCostProvider.TurnTimeMapping turnTimeMapping = CustomModelParser.createWeightingParameters(customModel, encodingManager).
+                getTurnTimeMapping();
+
+        BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
+        EdgeIteratorState edge1 = graph.edge(0, 1).setDistance(100).set(roadClassEnc, SECONDARY);
+        EdgeIteratorState edge2 = graph.edge(1, 2).setDistance(100).set(roadClassEnc, PRIMARY);
+        EdgeIteratorState edge3 = graph.edge(2, 3).setDistance(100).set(roadClassEnc, PRIMARY);
+
+        assertEquals(100, turnTimeMapping.calcTurnMillis(graph, graph.getEdgeAccess(), edge1.getEdge(), 1, edge2.getEdge()));
+        assertEquals(0, turnTimeMapping.calcTurnMillis(graph, graph.getEdgeAccess(), edge2.getEdge(), 2, edge3.getEdge()));
+
+        // TODO NOW are there use cases for directed encoded value like car_access?
+    }
+
+    @Test
     public void findVariablesForEncodedValueString() {
         CustomModel customModel = new CustomModel();
-        customModel.addToPriority(If("backward_car_access != car_access", MULTIPLY, "0.5"));
-        List<String> variables = findVariablesForEncodedValuesString(customModel, s -> new DefaultImportRegistry().createImportUnit(s) != null, s -> "");
-        assertEquals(List.of("car_access"), variables);
-
-        customModel = new CustomModel();
         customModel.addToPriority(If("!foot_access && (hike_rating < 4 || road_access == PRIVATE)", MULTIPLY, "0"));
         //, {"if": "true", "multiply_by": foot_priority}, {"if": "foot_network == INTERNATIONAL || foot_network == NATIONAL", "multiply_by": 1.7}, {"else_if": "foot_network == REGIONAL || foot_network == LOCAL", "multiply_by": 1.5}]|areas=[]|turnCostsConfig=transportationMode=null, restrictions=false, uTurnCosts=-1
-        variables = findVariablesForEncodedValuesString(customModel, s -> new DefaultImportRegistry().createImportUnit(s) != null, s -> "");
+        List<String> variables = findVariablesForEncodedValuesString(customModel, s -> new DefaultImportRegistry().createImportUnit(s) != null, s -> "");
         assertEquals(List.of("foot_access", "hike_rating", "road_access"), variables);
     }
 }

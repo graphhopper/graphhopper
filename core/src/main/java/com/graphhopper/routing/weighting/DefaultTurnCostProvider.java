@@ -18,15 +18,15 @@
 
 package com.graphhopper.routing.weighting;
 
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.TurnCostsConfig;
 
+import static com.graphhopper.routing.ev.RoadAccess.PRIVATE;
 import static com.graphhopper.util.TurnCostsConfig.INFINITE_U_TURN_COSTS;
 
 public class DefaultTurnCostProvider implements TurnCostProvider {
@@ -47,8 +47,9 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
     private final BaseGraph graph;
     private final EdgeIntAccess edgeIntAccess;
     private final DecimalEncodedValue orientationEnc;
-
-    public DefaultTurnCostProvider(BooleanEncodedValue turnRestrictionEnc, DecimalEncodedValue orientationEnc,
+    private TurnTimeMapping turnTimeMapping;
+    public DefaultTurnCostProvider(BooleanEncodedValue turnRestrictionEnc,
+                                   DecimalEncodedValue orientationEnc,
                                    Graph graph, TurnCostsConfig tcConfig) {
         this.uTurnCostsInt = tcConfig.getUTurnCosts();
         if (uTurnCostsInt < 0 && uTurnCostsInt != INFINITE_U_TURN_COSTS) {
@@ -91,36 +92,48 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
     }
 
     @Override
+    public void setTurnTimeMapping(TurnTimeMapping turnTimeMapping) {
+        this.turnTimeMapping = turnTimeMapping;
+    }
+
+    @Override
     public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
         if (!EdgeIterator.Edge.isValid(inEdge) || !EdgeIterator.Edge.isValid(outEdge)) {
             return 0;
         }
 
+        double weight = 0;
         if (inEdge == outEdge) {
             // note that the u-turn costs overwrite any turn costs set in TurnCostStorage
-            return uTurnCosts;
+            weight += uTurnCosts;
         } else {
-            if (turnRestrictionEnc != null && turnCostStorage.get(turnRestrictionEnc, inEdge, viaNode, outEdge))
-                return Double.POSITIVE_INFINITY;
+            if (turnRestrictionEnc != null) {
+                if (turnCostStorage.get(turnRestrictionEnc, inEdge, viaNode, outEdge))
+                    return Double.POSITIVE_INFINITY;
+                else if (turnTimeMapping != null) {
+                    weight = turnTimeMapping.calcTurnMillis(graph, edgeIntAccess, inEdge, viaNode, outEdge);
+                    if (Double.isInfinite(weight)) return weight;
+                }
+            }
         }
 
         if (orientationEnc != null) {
             double changeAngle = calcChangeAngle(inEdge, viaNode, outEdge);
             if (changeAngle > -minTurnAngle && changeAngle < minTurnAngle)
-                return straightCosts;
+                return weight + straightCosts;
             else if (changeAngle >= minTurnAngle && changeAngle < minSharpTurnAngle)
-                return rightTurnCosts;
+                return weight + rightTurnCosts;
             else if (changeAngle >= minSharpTurnAngle && changeAngle <= minUTurnAngle)
-                return sharpRightTurnCosts;
+                return weight + sharpRightTurnCosts;
             else if (changeAngle <= -minTurnAngle && changeAngle > -minSharpTurnAngle)
-                return leftTurnCosts;
+                return weight + leftTurnCosts;
             else if (changeAngle <= -minSharpTurnAngle && changeAngle >= -minUTurnAngle)
-                return sharpLeftTurnCosts;
+                return weight + sharpLeftTurnCosts;
 
             // Too sharp turn is like an u-turn.
-            return uTurnCosts;
+            return weight + uTurnCosts;
         }
-        return 0;
+        return weight;
     }
 
     @Override

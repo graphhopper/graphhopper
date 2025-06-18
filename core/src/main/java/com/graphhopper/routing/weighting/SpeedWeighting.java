@@ -37,6 +37,11 @@ public class SpeedWeighting implements Weighting {
         if (uTurnCosts < 0) throw new IllegalArgumentException("u-turn costs must be positive");
         this.speedEnc = speedEnc;
         this.turnCostProvider = new TurnCostProvider() {
+
+            @Override
+            public void setTurnTimeMapping(TurnTimeMapping mapping) {
+            }
+
             @Override
             public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
                 if (!EdgeIterator.Edge.isValid(inEdge) || !EdgeIterator.Edge.isValid(outEdge))

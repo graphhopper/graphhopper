@@ -89,6 +89,8 @@ public final class CustomWeighting implements Weighting {
         if (!Weighting.isValidName(getName()))
             throw new IllegalStateException("Not a valid name for a Weighting: " + getName());
         this.turnCostProvider = turnCostProvider;
+        // TODO NOW ugly. default provider should be thread-safe but others maybe not?
+        this.turnCostProvider.setTurnTimeMapping(parameters.getTurnTimeMapping());
 
         this.edgeToSpeedMapping = parameters.getEdgeToSpeedMapping();
         this.maxSpeedCalc = parameters.getMaxSpeedCalc();
@@ -174,16 +176,19 @@ public final class CustomWeighting implements Weighting {
         private final EdgeToDoubleMapping edgeToPriorityMapping;
         private final MaxCalc maxSpeedCalc;
         private final MaxCalc maxPrioCalc;
+        private final TurnCostProvider.TurnTimeMapping turnTimeMapping;
         private final double distanceInfluence;
         private final double headingPenaltySeconds;
 
         public Parameters(EdgeToDoubleMapping edgeToSpeedMapping, MaxCalc maxSpeedCalc,
                           EdgeToDoubleMapping edgeToPriorityMapping, MaxCalc maxPrioCalc,
+                          TurnCostProvider.TurnTimeMapping turnTimeMapping,
                           double distanceInfluence, double headingPenaltySeconds) {
             this.edgeToSpeedMapping = edgeToSpeedMapping;
             this.maxSpeedCalc = maxSpeedCalc;
             this.edgeToPriorityMapping = edgeToPriorityMapping;
             this.maxPrioCalc = maxPrioCalc;
+            this.turnTimeMapping = turnTimeMapping;
             this.distanceInfluence = distanceInfluence;
             this.headingPenaltySeconds = headingPenaltySeconds;
         }
@@ -202,6 +207,10 @@ public final class CustomWeighting implements Weighting {
 
         public MaxCalc getMaxPrioCalc() {
             return maxPrioCalc;
+        }
+
+        public TurnCostProvider.TurnTimeMapping getTurnTimeMapping() {
+            return turnTimeMapping;
         }
 
         public double getDistanceInfluence() {
