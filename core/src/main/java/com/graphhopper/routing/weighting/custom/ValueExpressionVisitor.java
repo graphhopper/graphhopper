@@ -37,6 +37,7 @@ import static com.graphhopper.json.Statement.Keyword.IF;
  */
 public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
 
+    private static final String INFINITY = "Infinity"; // can be parsed via Double.parseDouble
     private static final Set<String> allowedMethodParents = new HashSet<>(Arrays.asList("Math"));
     private static final Set<String> allowedMethods = new HashSet<>(Arrays.asList("sqrt"));
     private final ParseResult result;
@@ -184,7 +185,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
     }
 
     static Set<String> findVariables(String valueExpression, EncodedValueLookup lookup) {
-        ParseResult result = parse(valueExpression, lookup::hasEncodedValue);
+        ParseResult result = parse(valueExpression, key -> lookup.hasEncodedValue(key) || key.contains(INFINITY));
         if (!result.ok)
             throw new IllegalArgumentException(result.invalidMessage);
         if (result.guessedVariables.size() > 1)

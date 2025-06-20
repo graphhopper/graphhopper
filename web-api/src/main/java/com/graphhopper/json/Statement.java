@@ -111,7 +111,7 @@ public record Statement(Keyword keyword, String condition, Op operation, String 
                 case LIMIT:
                     return "value = Math.min(value," + value + ")";
                 case ADD:
-                    return "value += " + value;
+                    return "value += " + (value.equals("Infinity") ? "Double.POSITIVE_INFINITY" : value);
                 default:
                     throw new IllegalArgumentException();
             }

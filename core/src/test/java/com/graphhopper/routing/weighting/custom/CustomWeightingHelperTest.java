@@ -140,8 +140,7 @@ class CustomWeightingHelperTest {
         customModel.addToTurnTime(ElseIf("change_angle >= 80 && change_angle <= 180", ADD, "1")); // sharp right
         customModel.addToTurnTime(ElseIf("change_angle <= -25 && change_angle > -80", ADD, "6")); // left
         customModel.addToTurnTime(ElseIf("change_angle <= -80 && change_angle >= -180", ADD, "12")); // sharp left
-        // TODO NOW try if we can somehow parse special number "Infinity"
-        customModel.addToTurnTime(Else(ADD, "1e100")); // uTurn
+        customModel.addToTurnTime(Else(ADD, "Infinity")); // uTurn
 
         Profile profile = new Profile("car");
         profile.setTurnCostsConfig(new TurnCostsConfig());
