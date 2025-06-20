@@ -18,7 +18,8 @@
 
 package com.graphhopper.routing.weighting;
 
-import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.TurnCostStorage;
@@ -35,6 +36,7 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
     private final BaseGraph graph;
     private final EdgeIntAccess edgeIntAccess;
     private TurnWeightMapping turnWeightMapping;
+
     public DefaultTurnCostProvider(BooleanEncodedValue turnRestrictionEnc,
                                    Graph graph, TurnCostsConfig tcConfig) {
         this.uTurnCostsInt = tcConfig.getUTurnCosts();
@@ -68,16 +70,12 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
         if (inEdge == outEdge) {
             // note that the u-turn costs overwrite any turn costs set in TurnCostStorage
             weight += uTurnCosts;
-        } else {
-            if (turnRestrictionEnc != null) {
-                if (turnCostStorage.get(turnRestrictionEnc, inEdge, viaNode, outEdge))
-                    return Double.POSITIVE_INFINITY;
-                else if (turnWeightMapping != null) {
-                    weight = turnWeightMapping.calcTurnWeight(graph, edgeIntAccess, inEdge, viaNode, outEdge);
-                    if (Double.isInfinite(weight)) return weight;
-                }
-            }
+        } else if (turnRestrictionEnc != null) {
+            if (turnCostStorage.get(turnRestrictionEnc, inEdge, viaNode, outEdge))
+                return Double.POSITIVE_INFINITY;
         }
+        if (turnWeightMapping != null)
+            weight += turnWeightMapping.calcTurnWeight(graph, edgeIntAccess, inEdge, viaNode, outEdge);
         return weight;
     }
 
