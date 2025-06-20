@@ -130,6 +130,10 @@ public class ArrayUtil {
      * @return the size of the new range that contains no duplicates (smaller or equal to end).
      */
     public static int removeConsecutiveDuplicates(int[] arr, int end) {
+        if (end < 0)
+            throw new IllegalArgumentException("end less than 0");
+        if (end == 0)
+            return 0;
         int curr = 0;
         for (int i = 1; i < end; ++i) {
             if (arr[i] != arr[curr])
