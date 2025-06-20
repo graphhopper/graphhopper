@@ -69,7 +69,7 @@ graphhopper:
   # more RAM/disk space for holding the prepared graph but also means less memory usage per request. Using the following
   # list you can define for which of the above routing profiles such preparation shall be performed. Note that to support
   # profiles with `turn_costs` a more elaborate preparation is required (longer preparation time and more memory
-  # usage) and the routing will also be slower than with `turn_costs: false`.
+  # usage) and the routing will also be slower than with `turn_costs`.
   profiles_ch:
     - profile: car
 

@@ -350,10 +350,8 @@ class CustomModelParserTest {
         EdgeIteratorState edge2 = graph.edge(1, 2).setDistance(100).set(roadClassEnc, PRIMARY);
         EdgeIteratorState edge3 = graph.edge(2, 3).setDistance(100).set(roadClassEnc, PRIMARY);
 
-        assertEquals(100, turnTimeMapping.calcTurnMillis(graph, graph.getEdgeAccess(), edge1.getEdge(), 1, edge2.getEdge()));
-        assertEquals(0, turnTimeMapping.calcTurnMillis(graph, graph.getEdgeAccess(), edge2.getEdge(), 2, edge3.getEdge()));
-
-        // TODO NOW are there use cases for directed encoded value like car_access?
+        assertEquals(100, turnTimeMapping.calcTurnWeight(graph, graph.getEdgeAccess(), edge1.getEdge(), 1, edge2.getEdge()));
+        assertEquals(0, turnTimeMapping.calcTurnWeight(graph, graph.getEdgeAccess(), edge2.getEdge(), 2, edge3.getEdge()));
     }
 
     @Test

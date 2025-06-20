@@ -41,7 +41,8 @@ public interface TurnCostProvider {
     long calcTurnMillis(int inEdge, int viaNode, int outEdge);
 
     interface TurnTimeMapping {
-        long calcTurnMillis(BaseGraph graph, EdgeIntAccess edgeIntAccess, int inEdge, int viaNode, int outEdge);
+        // TODO NOW calcTurnWeight vs. calcTurnMillis
+        double calcTurnWeight(BaseGraph graph, EdgeIntAccess edgeIntAccess, int inEdge, int viaNode, int outEdge);
     }
 
     TurnCostProvider NO_TURN_COST_PROVIDER = new TurnCostProvider() {

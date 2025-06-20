@@ -34,22 +34,10 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
     private final TurnCostStorage turnCostStorage;
     private final int uTurnCostsInt;
     private final double uTurnCosts;
-
-    private final double minTurnAngle;
-    private final double minSharpTurnAngle;
-    private final double minUTurnAngle;
-
-    private final double leftTurnCosts;
-    private final double sharpLeftTurnCosts;
-    private final double straightCosts;
-    private final double rightTurnCosts;
-    private final double sharpRightTurnCosts;
     private final BaseGraph graph;
     private final EdgeIntAccess edgeIntAccess;
-    private final DecimalEncodedValue orientationEnc;
     private TurnTimeMapping turnTimeMapping;
     public DefaultTurnCostProvider(BooleanEncodedValue turnRestrictionEnc,
-                                   DecimalEncodedValue orientationEnc,
                                    Graph graph, TurnCostsConfig tcConfig) {
         this.uTurnCostsInt = tcConfig.getUTurnCosts();
         if (uTurnCostsInt < 0 && uTurnCostsInt != INFINITE_U_TURN_COSTS) {
@@ -62,30 +50,6 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
         // if null the TurnCostProvider can be still useful for edge-based routing
         this.turnRestrictionEnc = turnRestrictionEnc;
         this.turnCostStorage = graph.getTurnCostStorage();
-
-        this.orientationEnc = orientationEnc;
-        if (tcConfig.getMinUTurnAngle() > 180)
-            throw new IllegalArgumentException("Illegal min_u_turn_angle = " + tcConfig.getMinUTurnAngle());
-        if (tcConfig.getMinSharpTurnAngle() > tcConfig.getMinUTurnAngle())
-            throw new IllegalArgumentException("Illegal min_sharp_turn_angle = " + tcConfig.getMinSharpTurnAngle());
-        if (tcConfig.getMinTurnAngle() > tcConfig.getMinSharpTurnAngle() || tcConfig.getMinTurnAngle() < 0)
-            throw new IllegalArgumentException("Illegal min_turn_angle = " + tcConfig.getMinTurnAngle());
-        if (tcConfig.getLeftTurnCosts() > tcConfig.getSharpLeftTurnCosts())
-            throw new IllegalArgumentException("The costs for 'left_turn_costs' (" + tcConfig.getLeftTurnCosts()
-                    + ") must be lower than for 'sharp_left_turn_costs' (" + tcConfig.getSharpLeftTurnCosts() + ")");
-        if (tcConfig.getRightTurnCosts() > tcConfig.getSharpRightTurnCosts())
-            throw new IllegalArgumentException("The costs for 'right_turn_costs' (" + tcConfig.getRightTurnCosts()
-                    + ") must be lower than for 'sharp_right_turn_costs' (" + tcConfig.getSharpRightTurnCosts() + ")");
-
-        this.minTurnAngle = tcConfig.getMinTurnAngle();
-        this.minSharpTurnAngle = tcConfig.getMinSharpTurnAngle();
-        this.minUTurnAngle = tcConfig.getMinUTurnAngle();
-
-        this.leftTurnCosts = tcConfig.getLeftTurnCosts();
-        this.sharpLeftTurnCosts = tcConfig.getSharpLeftTurnCosts();
-        this.straightCosts = tcConfig.getStraightCosts();
-        this.rightTurnCosts = tcConfig.getRightTurnCosts();
-        this.sharpRightTurnCosts = tcConfig.getSharpRightTurnCosts();
 
         this.graph = graph.getBaseGraph();
         this.edgeIntAccess = graph.getBaseGraph().getEdgeAccess();
@@ -111,27 +75,10 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
                 if (turnCostStorage.get(turnRestrictionEnc, inEdge, viaNode, outEdge))
                     return Double.POSITIVE_INFINITY;
                 else if (turnTimeMapping != null) {
-                    weight = turnTimeMapping.calcTurnMillis(graph, edgeIntAccess, inEdge, viaNode, outEdge);
+                    weight = turnTimeMapping.calcTurnWeight(graph, edgeIntAccess, inEdge, viaNode, outEdge);
                     if (Double.isInfinite(weight)) return weight;
                 }
             }
-        }
-
-        if (orientationEnc != null) {
-            double changeAngle = calcChangeAngle(inEdge, viaNode, outEdge);
-            if (changeAngle > -minTurnAngle && changeAngle < minTurnAngle)
-                return weight + straightCosts;
-            else if (changeAngle >= minTurnAngle && changeAngle < minSharpTurnAngle)
-                return weight + rightTurnCosts;
-            else if (changeAngle >= minSharpTurnAngle && changeAngle <= minUTurnAngle)
-                return weight + sharpRightTurnCosts;
-            else if (changeAngle <= -minTurnAngle && changeAngle > -minSharpTurnAngle)
-                return weight + leftTurnCosts;
-            else if (changeAngle <= -minSharpTurnAngle && changeAngle >= -minUTurnAngle)
-                return weight + sharpLeftTurnCosts;
-
-            // Too sharp turn is like an u-turn.
-            return weight + uTurnCosts;
         }
         return weight;
     }
@@ -149,27 +96,5 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
     @Override
     public String toString() {
         return "default_tcp_" + uTurnCostsInt;
-    }
-
-    double calcChangeAngle(int inEdge, int viaNode, int outEdge) {
-        // this is slightly faster than calling getEdgeIteratorState as it avoids creating a new
-        // object and accesses only one node but is slightly less safe as it cannot check that at
-        // least one node must be identical (the case where getEdgeIteratorState returns null)
-        boolean inEdgeReverse = !graph.isAdjNode(inEdge, viaNode);
-        double prevAzimuth = orientationEnc.getDecimal(inEdgeReverse, inEdge, edgeIntAccess);
-
-        boolean outEdgeReverse = !graph.isAdjNode(outEdge, viaNode);
-        double azimuth = orientationEnc.getDecimal(outEdgeReverse, outEdge, edgeIntAccess);
-
-        // bring parallel to prevOrientation
-        if (azimuth >= 180) azimuth -= 180;
-        else azimuth += 180;
-
-        double changeAngle = azimuth - prevAzimuth;
-
-        // keep in [-180, 180]
-        if (changeAngle > 180) changeAngle -= 360;
-        else if (changeAngle < -180) changeAngle += 360;
-        return changeAngle;
     }
 }

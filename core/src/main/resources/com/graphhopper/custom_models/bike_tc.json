@@ -10,10 +10,6 @@
 //      turn_costs:
 //        vehicle_types: [bicycle]
 //        u_turn_costs: 20
-//        left_turn_costs: 3
-//        sharp_left_turn_costs: 3
-//        right_turn_costs: 3
-//        sharp_right_turn_costs: 3
 //      custom_model_files: [bike_tc.json, bike_elevation.json]
 
 {
@@ -26,5 +22,13 @@
   "speed": [
     { "if": "true", "limit_to": "bike_average_speed" },
     { "if": "!bike_access && backward_bike_access", "limit_to": "5" }
+  ],
+  "turn_time": [
+    { "if": "change_angle > -25 && change_angle < 25", "add":  "0" }, // straight
+    { "else_if": "change_angle >= 25 && change_angle < 80", "add":  "3" }, // right
+    { "else_if": "change_angle >= 80 && change_angle <= 180", "add":  "3" }, // sharp right
+    { "else_if": "change_angle <= -25 && change_angle > -80", "add":  "3" }, // left
+    { "else_if": "change_angle <= -80 && change_angle >= -180", "add":  "3" }, // sharp left
+    { "else": "", "add":  "1e100" } // uTurnCosts == Infinity
   ]
 }

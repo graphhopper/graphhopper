@@ -46,6 +46,7 @@ public class CustomModelParser {
     static final String IN_AREA_PREFIX = "in_";
     static final String BACKWARD_PREFIX = "backward_";
     static final String PREV_PREFIX = "prev_";
+    static final String CHANGE_ANGLE = "change_angle";
     private static final boolean JANINO_DEBUG = Boolean.getBoolean(Scanner.SYSTEM_PROPERTY_SOURCE_DEBUGGING_ENABLE);
     private static final String SCRIPT_FILE_DIR = System.getProperty(Scanner.SYSTEM_PROPERTY_SOURCE_DEBUGGING_DIR, "./src/main/java/com/graphhopper/routing/weighting/custom");
 
@@ -292,25 +293,26 @@ public class CustomModelParser {
             if (s.operation() != Statement.Op.ADD)
                 throw new IllegalArgumentException("'turn_time' statement must have the operation 'add' but was: " + s.operation() + " (not yet implemented)");
         }
+
+        List<Java.BlockStatement> turnTimeStatements = new ArrayList<>(verifyExpressions(new StringBuilder(),
+                "turn_time entry", turnTimeVariables, customModel.getTurnTimeStatements(), lookup));
         boolean needTwoDirections = false;
         Function<String, EncodedValue> fct = createSimplifiedLookup(lookup);
         for (String ttv : turnTimeVariables) {
             EncodedValue ev = fct.apply(ttv);
-            if (ev != null && ev.isStoreTwoDirections()) {
+            if (ev != null && ev.isStoreTwoDirections() || ttv.equals(CHANGE_ANGLE)) {
                 needTwoDirections = true;
                 break;
             }
         }
-        List<Java.BlockStatement> turnTimeStatements = new ArrayList<>(verifyExpressions(new StringBuilder(),
-                "turn_time entry", turnTimeVariables, customModel.getTurnTimeStatements(), lookup));
-        String turnTimeMethodStartBlock = "long value = 0;\n";
+
+        String turnTimeMethodStartBlock = "double value = 0;\n"; // double weight vs. long millis
         if (needTwoDirections) {
             // Performance optimization: avoid the following two calls if there is no encoded value
-            // that stores two directions.
-            // TODO: once we convert the current code for orientationEnc into 'turn_time' statements
-            //  this will be rather common. See DefaultTurnCostProvider::calcChangeAngle. Or instead
-            //  of the conversion at least move the calcChangeAngle method into turnTimeMapping
-            //  so that we can reuse inEdgeReverse and outEdgeReverse
+            // that stores two directions. The call to isAdjNode is slightly faster than calling
+            // getEdgeIteratorState as it avoids creating a new object and accesses only one node
+            // but is slightly less safe as it cannot check that at least one node must be
+            // identical (the case where getEdgeIteratorState returns null)
             turnTimeMethodStartBlock += "boolean inEdgeReverse = !graph.isAdjNode(inEdge, viaNode);\n" +
                     "boolean outEdgeReverse = !graph.isAdjNode(outEdge, viaNode);\n";
         }
@@ -318,6 +320,13 @@ public class CustomModelParser {
         for (String arg : turnTimeVariables) {
             turnTimeMethodStartBlock += getTurnTimeVariableDeclaration(lookup, arg, needTwoDirections);
         }
+
+        // special case for change_angle method call: we need the orientation encoded value
+        if (turnTimeVariables.contains(CHANGE_ANGLE)) {
+            turnTimeVariables.remove(CHANGE_ANGLE);
+            turnTimeVariables.add(Orientation.KEY);
+        }
+
         turnTimeStatements.addAll(0, new Parser(new org.codehaus.janino.Scanner("getTurnTime", new StringReader(turnTimeMethodStartBlock))).
                 parseBlockStatements());
         return turnTimeStatements;
@@ -354,7 +363,9 @@ public class CustomModelParser {
     private static String getTurnTimeVariableDeclaration(EncodedValueLookup lookup, final String arg, boolean needTwoDirections) {
         // parameters in method getTurnTime are: int inEdge, int viaNode, int outEdge
         // (the outEdgeReverse and inEdgeReverse are provided from initial calls in the method itself)
-        if (lookup.hasEncodedValue(arg)) {
+        if (arg.equals(CHANGE_ANGLE)) {
+            return "double change_angle = CustomWeightingHelper.calcChangeAngle(edgeIntAccess, this.orientation_enc, inEdge, inEdgeReverse, outEdge, outEdgeReverse);\n";
+        } else if (lookup.hasEncodedValue(arg)) {
             EncodedValue enc = lookup.getEncodedValue(arg, EncodedValue.class);
             if (!(enc instanceof EnumEncodedValue<?>))
                 throw new IllegalArgumentException("Currently only EnumEncodedValues are supported: " + arg);
@@ -492,7 +503,7 @@ public class CustomModelParser {
                 + "      return 1; //will be overwritten by code injected in DeepCopier\n"
                 + "   }\n"
                 + "   @Override\n"
-                + "   public long getTurnTime(BaseGraph graph, EdgeIntAccess edgeIntAccess, int inEdge, int viaNode, int outEdge) {\n"
+                + "   public double getTurnTime(BaseGraph graph, EdgeIntAccess edgeIntAccess, int inEdge, int viaNode, int outEdge) {\n"
                 + "      return 1; //will be overwritten by code injected in DeepCopier\n"
                 + "   }\n"
                 + "}";
@@ -510,7 +521,7 @@ public class CustomModelParser {
                                                                List<Statement> list, EncodedValueLookup lookup) throws Exception {
         // allow variables, all encoded values, constants and special variables like in_xyarea or backward_car_access
         NameValidator nameInConditionValidator = name -> lookup.hasEncodedValue(name)
-                || name.toUpperCase(Locale.ROOT).equals(name) || name.startsWith(IN_AREA_PREFIX)
+                || name.toUpperCase(Locale.ROOT).equals(name) || name.startsWith(IN_AREA_PREFIX) || name.equals(CHANGE_ANGLE)
                 || name.startsWith(BACKWARD_PREFIX) && lookup.hasEncodedValue(name.substring(BACKWARD_PREFIX.length()))
                 || name.startsWith(PREV_PREFIX) && lookup.hasEncodedValue(name.substring(PREV_PREFIX.length()));
         Function<String, EncodedValue> fct = createSimplifiedLookup(lookup);

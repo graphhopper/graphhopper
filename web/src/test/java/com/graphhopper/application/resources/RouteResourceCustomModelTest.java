@@ -46,9 +46,9 @@ import java.util.List;
 
 import static com.graphhopper.application.resources.Util.postWithStatus;
 import static com.graphhopper.application.util.TestUtils.clientTarget;
+import static com.graphhopper.json.Statement.ElseIf;
 import static com.graphhopper.json.Statement.If;
-import static com.graphhopper.json.Statement.Op.LIMIT;
-import static com.graphhopper.json.Statement.Op.MULTIPLY;
+import static com.graphhopper.json.Statement.Op.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(DropwizardExtensionsSupport.class)
@@ -76,7 +76,10 @@ public class RouteResourceCustomModelTest {
                         new Profile("car").setCustomModel(TestProfiles.accessAndSpeed("unused", "car").
                                 getCustomModel().setDistanceInfluence(70d)),
                         new Profile("car_tc_left").setCustomModel(TestProfiles.accessAndSpeed("car_tc_left", "car").
-                                getCustomModel().setDistanceInfluence(70d)).setTurnCostsConfig(new TurnCostsConfig(List.of("motor_vehicle")).setLeftTurnCosts(100.0).setSharpLeftTurnCosts(100.0)),
+                                        getCustomModel().setDistanceInfluence(70d).
+                                        addToTurnTime(If("change_angle <= -25 && change_angle > -80", ADD, "100")).
+                                        addToTurnTime(ElseIf("change_angle <= -80 && change_angle >= -180", ADD, "100"))).
+                                setTurnCostsConfig(new TurnCostsConfig(List.of("motor_vehicle"))),
                         new Profile("car_with_area").setCustomModel(TestProfiles.accessAndSpeed("unused", "car").
                                 getCustomModel().addToPriority(If("in_external_area52", MULTIPLY, "0.05"))),
                         TestProfiles.accessSpeedAndPriority("bike"),
