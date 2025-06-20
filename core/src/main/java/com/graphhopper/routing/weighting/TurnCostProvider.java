@@ -26,7 +26,7 @@ import com.graphhopper.storage.BaseGraph;
  */
 public interface TurnCostProvider {
 
-    void setTurnTimeMapping(TurnTimeMapping mapping);
+    void setTurnWeightMapping(TurnWeightMapping mapping);
 
     /**
      * @return the turn weight of a transitions from the edge with id {@param inEdge} to the edge with id
@@ -40,14 +40,13 @@ public interface TurnCostProvider {
      */
     long calcTurnMillis(int inEdge, int viaNode, int outEdge);
 
-    interface TurnTimeMapping {
-        // TODO NOW calcTurnWeight vs. calcTurnMillis
+    interface TurnWeightMapping {
         double calcTurnWeight(BaseGraph graph, EdgeIntAccess edgeIntAccess, int inEdge, int viaNode, int outEdge);
     }
 
     TurnCostProvider NO_TURN_COST_PROVIDER = new TurnCostProvider() {
         @Override
-        public void setTurnTimeMapping(TurnTimeMapping mapping) {
+        public void setTurnWeightMapping(TurnWeightMapping mapping) {
         }
 
         @Override

@@ -19,14 +19,12 @@
 package com.graphhopper.routing.weighting;
 
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.TurnCostsConfig;
 
-import static com.graphhopper.routing.ev.RoadAccess.PRIVATE;
 import static com.graphhopper.util.TurnCostsConfig.INFINITE_U_TURN_COSTS;
 
 public class DefaultTurnCostProvider implements TurnCostProvider {
@@ -36,7 +34,7 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
     private final double uTurnCosts;
     private final BaseGraph graph;
     private final EdgeIntAccess edgeIntAccess;
-    private TurnTimeMapping turnTimeMapping;
+    private TurnWeightMapping turnWeightMapping;
     public DefaultTurnCostProvider(BooleanEncodedValue turnRestrictionEnc,
                                    Graph graph, TurnCostsConfig tcConfig) {
         this.uTurnCostsInt = tcConfig.getUTurnCosts();
@@ -56,8 +54,8 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
     }
 
     @Override
-    public void setTurnTimeMapping(TurnTimeMapping turnTimeMapping) {
-        this.turnTimeMapping = turnTimeMapping;
+    public void setTurnWeightMapping(TurnWeightMapping turnWeightMapping) {
+        this.turnWeightMapping = turnWeightMapping;
     }
 
     @Override
@@ -74,8 +72,8 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
             if (turnRestrictionEnc != null) {
                 if (turnCostStorage.get(turnRestrictionEnc, inEdge, viaNode, outEdge))
                     return Double.POSITIVE_INFINITY;
-                else if (turnTimeMapping != null) {
-                    weight = turnTimeMapping.calcTurnWeight(graph, edgeIntAccess, inEdge, viaNode, outEdge);
+                else if (turnWeightMapping != null) {
+                    weight = turnWeightMapping.calcTurnWeight(graph, edgeIntAccess, inEdge, viaNode, outEdge);
                     if (Double.isInfinite(weight)) return weight;
                 }
             }

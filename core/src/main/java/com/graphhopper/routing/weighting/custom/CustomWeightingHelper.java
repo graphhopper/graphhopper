@@ -22,7 +22,6 @@ import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
@@ -58,8 +57,7 @@ public class CustomWeightingHelper {
         return 1;
     }
 
-    // TODO NOW getTurnTime vs. calcTurnWeight
-    public double getTurnTime(BaseGraph graph, EdgeIntAccess edgeIntAccess, int inEdge, int viaNode, int outEdge) {
+    public double getTurnWeight(BaseGraph graph, EdgeIntAccess edgeIntAccess, int inEdge, int viaNode, int outEdge) {
         return 0;
     }
 

@@ -506,7 +506,7 @@ public class OSMRestrictionSetterTest {
     private IntArrayList calcPath(Graph graph, int from, int to, BooleanEncodedValue turnRestrictionEnc) {
         return new IntArrayList(new Dijkstra(graph, graph.wrapWeighting(new SpeedWeighting(speedEnc, new TurnCostProvider() {
             @Override
-            public void setTurnTimeMapping(TurnTimeMapping mapping) {
+            public void setTurnWeightMapping(TurnWeightMapping mapping) {
             }
 
             @Override

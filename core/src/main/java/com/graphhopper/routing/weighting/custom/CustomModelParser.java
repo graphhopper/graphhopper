@@ -81,8 +81,6 @@ public class CustomModelParser {
             throw new IllegalStateException("CustomModel cannot be null");
 
         CustomWeighting.Parameters parameters = createWeightingParameters(customModel, lookup);
-//        if(turnCostProvider instanceof DefaultTurnCostProvider)
-//            ((DefaultTurnCostProvider) turnCostProvider).setRoadClassEnc(lookup.getEnumEncodedValue(RoadClass.KEY, RoadClass.class));
         return new CustomWeighting(turnCostProvider, parameters);
     }
 
@@ -124,7 +122,7 @@ public class CustomModelParser {
             return new CustomWeighting.Parameters(
                     prio::getSpeed, prio::calcMaxSpeed,
                     prio::getPriority, prio::calcMaxPriority,
-                    prio::getTurnTime,
+                    prio::getTurnWeight,
                     customModel.getDistanceInfluence() == null ? 0 : customModel.getDistanceInfluence(),
                     customModel.getHeadingPenalty() == null ? Parameters.Routing.DEFAULT_HEADING_PENALTY : customModel.getHeadingPenalty());
         } catch (ReflectiveOperationException ex) {
@@ -167,17 +165,17 @@ public class CustomModelParser {
             Set<String> speedVariables = ValueExpressionVisitor.findVariables(customModel.getSpeed(), lookup);
             List<Java.BlockStatement> speedStatements = createGetSpeedStatements(speedVariables, customModel, lookup);
 
-            Set<String> turnTimeVariables = ValueExpressionVisitor.findVariables(customModel.getTurnTimeStatements(), lookup);
-            List<Java.BlockStatement> turnTimeStatements = createGetTurnTimeStatements(turnTimeVariables, customModel, lookup);
+            Set<String> turnWeightVariables = ValueExpressionVisitor.findVariables(customModel.getTurnWeightStatements(), lookup);
+            List<Java.BlockStatement> turnWeightStatements = createGetTurnWeightStatements(turnWeightVariables, customModel, lookup);
 
             // Create different class name, which is required only for debugging.
             // TODO does it improve performance too? I.e. it could be that the JIT is confused if different classes
             //  have the same name and it mixes performance stats. See https://github.com/janino-compiler/janino/issues/137
             long counter = longVal.incrementAndGet();
-            String classTemplate = createClassTemplate(counter, priorityVariables, speedVariables, turnTimeVariables, lookup, CustomModel.getAreasAsMap(customModel.getAreas()));
+            String classTemplate = createClassTemplate(counter, priorityVariables, speedVariables, turnWeightVariables, lookup, CustomModel.getAreasAsMap(customModel.getAreas()));
             Java.CompilationUnit cu = (Java.CompilationUnit) new Parser(new Scanner("source", new StringReader(classTemplate))).
                     parseAbstractCompilationUnit();
-            cu = injectStatements(priorityStatements, speedStatements, turnTimeStatements, cu);
+            cu = injectStatements(priorityStatements, speedStatements, turnWeightStatements, cu);
             SimpleCompiler sc = createCompiler(counter, cu);
             return sc.getClassLoader().loadClass("com.graphhopper.routing.weighting.custom.JaninoCustomWeightingHelperSubclass" + counter);
         } catch (Exception ex) {
@@ -281,24 +279,24 @@ public class CustomModelParser {
     }
 
     /**
-     * Parse the expressions from CustomModel relevant for the method getTurnTime - see createClassTemplate.
+     * Parse the expressions from CustomModel relevant for the method getTurnWeight - see createClassTemplate.
      *
      * @return the created statements (parsed expressions)
      */
-    private static List<Java.BlockStatement> createGetTurnTimeStatements(Set<String> turnTimeVariables,
-                                                                         CustomModel customModel, EncodedValueLookup lookup) throws Exception {
-        for (Statement s : customModel.getTurnTimeStatements()) {
+    private static List<Java.BlockStatement> createGetTurnWeightStatements(Set<String> turnWeightVariables,
+                                                                           CustomModel customModel, EncodedValueLookup lookup) throws Exception {
+        for (Statement s : customModel.getTurnWeightStatements()) {
             if (s.isBlock())
-                throw new IllegalArgumentException("'turn_time' statement cannot be a block (not yet implemented)");
+                throw new IllegalArgumentException("'turn_weight' statement cannot be a block (not yet implemented)");
             if (s.operation() != Statement.Op.ADD)
-                throw new IllegalArgumentException("'turn_time' statement must have the operation 'add' but was: " + s.operation() + " (not yet implemented)");
+                throw new IllegalArgumentException("'turn_weight' statement must have the operation 'add' but was: " + s.operation() + " (not yet implemented)");
         }
 
-        List<Java.BlockStatement> turnTimeStatements = new ArrayList<>(verifyExpressions(new StringBuilder(),
-                "turn_time entry", turnTimeVariables, customModel.getTurnTimeStatements(), lookup));
+        List<Java.BlockStatement> turnWeightStatements = new ArrayList<>(verifyExpressions(new StringBuilder(),
+                "turn_weight entry", turnWeightVariables, customModel.getTurnWeightStatements(), lookup));
         boolean needTwoDirections = false;
         Function<String, EncodedValue> fct = createSimplifiedLookup(lookup);
-        for (String ttv : turnTimeVariables) {
+        for (String ttv : turnWeightVariables) {
             EncodedValue ev = fct.apply(ttv);
             if (ev != null && ev.isStoreTwoDirections() || ttv.equals(CHANGE_ANGLE)) {
                 needTwoDirections = true;
@@ -306,30 +304,30 @@ public class CustomModelParser {
             }
         }
 
-        String turnTimeMethodStartBlock = "double value = 0;\n"; // double weight vs. long millis
+        String turnWeightMethodStartBlock = "double value = 0;\n"; // double weight vs. long millis
         if (needTwoDirections) {
             // Performance optimization: avoid the following two calls if there is no encoded value
             // that stores two directions. The call to isAdjNode is slightly faster than calling
             // getEdgeIteratorState as it avoids creating a new object and accesses only one node
             // but is slightly less safe as it cannot check that at least one node must be
             // identical (the case where getEdgeIteratorState returns null)
-            turnTimeMethodStartBlock += "boolean inEdgeReverse = !graph.isAdjNode(inEdge, viaNode);\n" +
+            turnWeightMethodStartBlock += "boolean inEdgeReverse = !graph.isAdjNode(inEdge, viaNode);\n" +
                     "boolean outEdgeReverse = !graph.isAdjNode(outEdge, viaNode);\n";
         }
 
-        for (String arg : turnTimeVariables) {
-            turnTimeMethodStartBlock += getTurnTimeVariableDeclaration(lookup, arg, needTwoDirections);
+        for (String arg : turnWeightVariables) {
+            turnWeightMethodStartBlock += getTurnWeightVariableDeclaration(lookup, arg, needTwoDirections);
         }
 
         // special case for change_angle method call: we need the orientation encoded value
-        if (turnTimeVariables.contains(CHANGE_ANGLE)) {
-            turnTimeVariables.remove(CHANGE_ANGLE);
-            turnTimeVariables.add(Orientation.KEY);
+        if (turnWeightVariables.contains(CHANGE_ANGLE)) {
+            turnWeightVariables.remove(CHANGE_ANGLE);
+            turnWeightVariables.add(Orientation.KEY);
         }
 
-        turnTimeStatements.addAll(0, new Parser(new org.codehaus.janino.Scanner("getTurnTime", new StringReader(turnTimeMethodStartBlock))).
+        turnWeightStatements.addAll(0, new Parser(new org.codehaus.janino.Scanner("getTurnWeight", new StringReader(turnWeightMethodStartBlock))).
                 parseBlockStatements());
-        return turnTimeStatements;
+        return turnWeightStatements;
     }
 
     /**
@@ -360,8 +358,8 @@ public class CustomModelParser {
         }
     }
 
-    private static String getTurnTimeVariableDeclaration(EncodedValueLookup lookup, final String arg, boolean needTwoDirections) {
-        // parameters in method getTurnTime are: int inEdge, int viaNode, int outEdge
+    private static String getTurnWeightVariableDeclaration(EncodedValueLookup lookup, final String arg, boolean needTwoDirections) {
+        // parameters in method getTurnWeight are: int inEdge, int viaNode, int outEdge
         // (the outEdgeReverse and inEdgeReverse are provided from initial calls in the method itself)
         if (arg.equals(CHANGE_ANGLE)) {
             return "double change_angle = CustomWeightingHelper.calcChangeAngle(edgeIntAccess, this.orientation_enc, inEdge, inEdgeReverse, outEdge, outEdgeReverse);\n";
@@ -385,7 +383,7 @@ public class CustomModelParser {
                 throw new IllegalArgumentException("Not supported for prev: " + argSubstr);
             }
         } else {
-            throw new IllegalArgumentException("Not supported for turn_time: " + arg);
+            throw new IllegalArgumentException("Not supported for turn_weight: " + arg);
         }
     }
 
@@ -423,7 +421,7 @@ public class CustomModelParser {
     private static String createClassTemplate(long counter,
                                               Set<String> priorityVariables,
                                               Set<String> speedVariables,
-                                              Set<String> turnTimeVariables,
+                                              Set<String> turnWeightVariables,
                                               EncodedValueLookup lookup, Map<String, JsonFeature> areas) {
         final StringBuilder importSourceCode = new StringBuilder("import com.graphhopper.routing.ev.*;\n");
         importSourceCode.append("import java.util.Map;\n");
@@ -440,7 +438,7 @@ public class CustomModelParser {
             set.add(prioVar.startsWith(BACKWARD_PREFIX) ? prioVar.substring(BACKWARD_PREFIX.length()) : prioVar);
         for (String speedVar : speedVariables)
             set.add(speedVar.startsWith(BACKWARD_PREFIX) ? speedVar.substring(BACKWARD_PREFIX.length()) : speedVar);
-        for (String speedVar : turnTimeVariables)
+        for (String speedVar : turnWeightVariables)
             set.add(speedVar.startsWith(PREV_PREFIX) ? speedVar.substring(PREV_PREFIX.length()) : speedVar);
 
         for (String arg : set) {
@@ -503,7 +501,7 @@ public class CustomModelParser {
                 + "      return 1; //will be overwritten by code injected in DeepCopier\n"
                 + "   }\n"
                 + "   @Override\n"
-                + "   public double getTurnTime(BaseGraph graph, EdgeIntAccess edgeIntAccess, int inEdge, int viaNode, int outEdge) {\n"
+                + "   public double getTurnWeight(BaseGraph graph, EdgeIntAccess edgeIntAccess, int inEdge, int viaNode, int outEdge) {\n"
                 + "      return 1; //will be overwritten by code injected in DeepCopier\n"
                 + "   }\n"
                 + "}";
@@ -597,12 +595,12 @@ public class CustomModelParser {
      */
     private static Java.CompilationUnit injectStatements(List<Java.BlockStatement> priorityStatements,
                                                          List<Java.BlockStatement> speedStatements,
-                                                         List<Java.BlockStatement> turnTimeStatements,
+                                                         List<Java.BlockStatement> turnWeightStatements,
                                                          Java.CompilationUnit cu) throws CompileException {
         cu = new DeepCopier() {
             boolean speedInjected = false;
             boolean priorityInjected = false;
-            boolean turnTimeInjected = false;
+            boolean turnWeightInjected = false;
 
             @Override
             public Java.MethodDeclarator copyMethodDeclarator(Java.MethodDeclarator subject) throws CompileException {
@@ -612,9 +610,9 @@ public class CustomModelParser {
                 } else if (subject.name.equals("getPriority") && !priorityStatements.isEmpty() && !priorityInjected) {
                     priorityInjected = true;
                     return injectStatements(subject, this, priorityStatements);
-                } else if (subject.name.equals("getTurnTime") && !turnTimeStatements.isEmpty() && !turnTimeInjected) {
-                    turnTimeInjected = true;
-                    return injectStatements(subject, this, turnTimeStatements);
+                } else if (subject.name.equals("getTurnWeight") && !turnWeightStatements.isEmpty() && !turnWeightInjected) {
+                    turnWeightInjected = true;
+                    return injectStatements(subject, this, turnWeightStatements);
                 } else {
                     return super.copyMethodDeclarator(subject);
                 }

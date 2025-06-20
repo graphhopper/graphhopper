@@ -45,7 +45,7 @@ public class ShortestPathTreeTest {
         }
 
         @Override
-        public void setTurnTimeMapping(TurnTimeMapping mapping) {
+        public void setTurnWeightMapping(TurnWeightMapping mapping) {
         }
 
         @Override
@@ -61,7 +61,7 @@ public class ShortestPathTreeTest {
 
     public static final TurnCostProvider FORBIDDEN_UTURNS = new TurnCostProvider() {
         @Override
-        public void setTurnTimeMapping(TurnTimeMapping mapping) {
+        public void setTurnWeightMapping(TurnWeightMapping mapping) {
         }
 
         @Override

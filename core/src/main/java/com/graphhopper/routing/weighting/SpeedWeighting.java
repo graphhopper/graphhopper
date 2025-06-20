@@ -39,7 +39,7 @@ public class SpeedWeighting implements Weighting {
         this.turnCostProvider = new TurnCostProvider() {
 
             @Override
-            public void setTurnTimeMapping(TurnTimeMapping mapping) {
+            public void setTurnWeightMapping(TurnWeightMapping mapping) {
             }
 
             @Override

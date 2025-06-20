@@ -135,12 +135,12 @@ class CustomWeightingHelperTest {
 
         CustomModel customModel = new CustomModel();
         customModel.addToSpeed(If("true", LIMIT, "100"));
-        customModel.addToTurnTime(If("change_angle > -25 && change_angle < 25", ADD, "0")); // straight
-        customModel.addToTurnTime(ElseIf("change_angle >= 25 && change_angle < 80", ADD, "0.5")); // right
-        customModel.addToTurnTime(ElseIf("change_angle >= 80 && change_angle <= 180", ADD, "1")); // sharp right
-        customModel.addToTurnTime(ElseIf("change_angle <= -25 && change_angle > -80", ADD, "6")); // left
-        customModel.addToTurnTime(ElseIf("change_angle <= -80 && change_angle >= -180", ADD, "12")); // sharp left
-        customModel.addToTurnTime(Else(ADD, "Infinity")); // uTurn
+        customModel.addToTurnWeight(If("change_angle > -25 && change_angle < 25", ADD, "0")); // straight
+        customModel.addToTurnWeight(ElseIf("change_angle >= 25 && change_angle < 80", ADD, "0.5")); // right
+        customModel.addToTurnWeight(ElseIf("change_angle >= 80 && change_angle <= 180", ADD, "1")); // sharp right
+        customModel.addToTurnWeight(ElseIf("change_angle <= -25 && change_angle > -80", ADD, "6")); // left
+        customModel.addToTurnWeight(ElseIf("change_angle <= -80 && change_angle >= -180", ADD, "12")); // sharp left
+        customModel.addToTurnWeight(Else(ADD, "Infinity")); // uTurn
 
         Profile profile = new Profile("car");
         profile.setTurnCostsConfig(new TurnCostsConfig());

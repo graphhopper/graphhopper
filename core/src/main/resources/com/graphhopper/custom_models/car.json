@@ -14,7 +14,7 @@
   "speed": [
     { "if": "true", "limit_to": "car_average_speed" }
   ],
-  "turn_time": [
+  "turn_weight": [
     { "if": "prev_road_access != road_access && (road_access == DESTINATION || road_access == PRIVATE)", "add": "300" }
   ]
 }

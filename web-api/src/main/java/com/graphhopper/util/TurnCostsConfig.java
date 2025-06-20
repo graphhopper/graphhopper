@@ -9,8 +9,6 @@ import java.util.Set;
 public class TurnCostsConfig {
     public static final int INFINITE_U_TURN_COSTS = -1;
 
-//    private double minTurnAngle = 25, minSharpTurnAngle = 80, minUTurnAngle = 180;
-
     private int uTurnCosts = INFINITE_U_TURN_COSTS;
     private List<String> vehicleTypes;
     // ensure that no typos can occur like motor_car vs motorcar or bike vs bicycle

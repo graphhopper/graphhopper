@@ -338,20 +338,20 @@ class CustomModelParserTest {
     }
 
     @Test
-    void testTurnTime() {
+    void testTurnWeight() {
         CustomModel customModel = new CustomModel();
         customModel.addToSpeed(If("true", LIMIT, "100"));
-        customModel.addToTurnTime(If("prev_road_class != PRIMARY && road_class == PRIMARY", ADD, "100"));
-        TurnCostProvider.TurnTimeMapping turnTimeMapping = CustomModelParser.createWeightingParameters(customModel, encodingManager).
-                getTurnTimeMapping();
+        customModel.addToTurnWeight(If("prev_road_class != PRIMARY && road_class == PRIMARY", ADD, "100"));
+        TurnCostProvider.TurnWeightMapping turnWeightMapping = CustomModelParser.createWeightingParameters(customModel, encodingManager).
+                getTurnWeightMapping();
 
         BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
         EdgeIteratorState edge1 = graph.edge(0, 1).setDistance(100).set(roadClassEnc, SECONDARY);
         EdgeIteratorState edge2 = graph.edge(1, 2).setDistance(100).set(roadClassEnc, PRIMARY);
         EdgeIteratorState edge3 = graph.edge(2, 3).setDistance(100).set(roadClassEnc, PRIMARY);
 
-        assertEquals(100, turnTimeMapping.calcTurnWeight(graph, graph.getEdgeAccess(), edge1.getEdge(), 1, edge2.getEdge()));
-        assertEquals(0, turnTimeMapping.calcTurnWeight(graph, graph.getEdgeAccess(), edge2.getEdge(), 2, edge3.getEdge()));
+        assertEquals(100, turnWeightMapping.calcTurnWeight(graph, graph.getEdgeAccess(), edge1.getEdge(), 1, edge2.getEdge()));
+        assertEquals(0, turnWeightMapping.calcTurnWeight(graph, graph.getEdgeAccess(), edge2.getEdge(), 2, edge3.getEdge()));
     }
 
     @Test
