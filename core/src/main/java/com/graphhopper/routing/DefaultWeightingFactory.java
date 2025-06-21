@@ -76,7 +76,9 @@ public class DefaultWeightingFactory implements WeightingFactory {
             final CustomModel queryCustomModel = requestHints.getObject(CustomModel.KEY, null);
             final CustomModel mergedCustomModel = CustomModel.merge(profile.getCustomModel(), queryCustomModel);
             if (turnCostProvider == NO_TURN_COST_PROVIDER && !mergedCustomModel.getTurnWeightStatements().isEmpty())
-                throw new IllegalArgumentException("turn_weight not supported for " + profile.getName() + ". Enable turn_costs in config.yml.");
+                throw new IllegalArgumentException("The turn_weight feature is not supported for " + profile.getName() + ". You have to enable 'turn_costs' in config.yml.");
+            if (!profile.getHints().getBool("allow_turn_weight_in_request", false) && queryCustomModel != null && !queryCustomModel.getTurnWeightStatements().isEmpty())
+                throw new IllegalArgumentException("The turn_weight feature is not supported per request for " + profile.getName() + ". Set 'allow_turn_weight_in_request' to true in the config.yml.");
             if (requestHints.has(Parameters.Routing.HEADING_PENALTY))
                 mergedCustomModel.setHeadingPenalty(requestHints.getDouble(Parameters.Routing.HEADING_PENALTY, Parameters.Routing.DEFAULT_HEADING_PENALTY));
             if (hints.has("cm_version")) {
