@@ -79,11 +79,14 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
         if (firstIndex >= 0) {
             String firstValue = way.getTag(restrictionKeys.get(firstIndex), "");
             String[] restrict = firstValue.split(";");
+            // if any of the values allows access then return early (regardless of the order)
+            for (String value : restrict) {
+                if (intendedValues.contains(value))
+                    return WayAccess.WAY;
+            }
             for (String value : restrict) {
                 if (restrictedValues.contains(value) && !hasPermissiveTemporalRestriction(way, firstIndex, restrictionKeys, intendedValues))
                     return WayAccess.CAN_SKIP;
-                if (intendedValues.contains(value))
-                    return WayAccess.WAY;
             }
         }
 

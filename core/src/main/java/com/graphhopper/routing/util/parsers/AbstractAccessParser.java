@@ -33,7 +33,7 @@ public abstract class AbstractAccessParser implements TagParser {
     protected final List<String> restrictionKeys;
     protected final Set<String> restrictedValues = new HashSet<>(5);
 
-    protected final Set<String> intendedValues = new HashSet<>(INTENDED); // possible to add "private" later
+    protected final Set<String> intendedValues = new HashSet<>(INTENDED);
     // http://wiki.openstreetmap.org/wiki/Mapfeatures#Barrier
     protected final Set<String> barriers = new HashSet<>(5);
     protected final BooleanEncodedValue accessEnc;
@@ -42,6 +42,8 @@ public abstract class AbstractAccessParser implements TagParser {
     protected AbstractAccessParser(BooleanEncodedValue accessEnc, List<String> restrictionKeys) {
         this.accessEnc = accessEnc;
         this.restrictionKeys = restrictionKeys;
+
+        intendedValues.add("destination");
 
         restrictedValues.add("no");
         restrictedValues.add("restricted");
