@@ -81,7 +81,7 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
         String firstValue = firstIndex < 0 ? "" : way.getTag(restrictionKeys.get(firstIndex), "");
         if (highwayValue == null) {
             if (FerrySpeedCalculator.isFerry(way)) {
-                if (intendedValues.contains(firstValue) ||
+                if (allowedValues.contains(firstValue) ||
                         // implied default is allowed only if foot and bicycle is not specified:
                         firstValue.isEmpty() && !way.hasTag("foot") && !way.hasTag("bicycle") ||
                         // if hgv is allowed then smaller trucks and cars are allowed too
@@ -111,11 +111,11 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
             String[] restrict = firstValue.split(";");
             // if any of the values allows access then return early (regardless of the order)
             for (String value : restrict) {
-                if (intendedValues.contains(value))
+                if (allowedValues.contains(value))
                     return WayAccess.WAY;
             }
             for (String value : restrict) {
-                if (restrictedValues.contains(value) && !hasPermissiveTemporalRestriction(way, firstIndex, restrictionKeys, intendedValues))
+                if (restrictedValues.contains(value) && !hasPermissiveTemporalRestriction(way, firstIndex, restrictionKeys, allowedValues))
                     return WayAccess.CAN_SKIP;
             }
         }
