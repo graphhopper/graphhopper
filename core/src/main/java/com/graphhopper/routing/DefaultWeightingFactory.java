@@ -20,8 +20,6 @@ package com.graphhopper.routing;
 
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.Orientation;
 import com.graphhopper.routing.ev.TurnRestriction;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
@@ -77,6 +75,8 @@ public class DefaultWeightingFactory implements WeightingFactory {
         if (CustomWeighting.NAME.equalsIgnoreCase(weightingStr)) {
             final CustomModel queryCustomModel = requestHints.getObject(CustomModel.KEY, null);
             final CustomModel mergedCustomModel = CustomModel.merge(profile.getCustomModel(), queryCustomModel);
+            if (turnCostProvider == NO_TURN_COST_PROVIDER && !mergedCustomModel.getTurnWeightStatements().isEmpty())
+                throw new IllegalArgumentException("turn_weight not supported for " + profile.getName() + ". Enable turn_costs in config.yml.");
             if (requestHints.has(Parameters.Routing.HEADING_PENALTY))
                 mergedCustomModel.setHeadingPenalty(requestHints.getDouble(Parameters.Routing.HEADING_PENALTY, Parameters.Routing.DEFAULT_HEADING_PENALTY));
             if (hints.has("cm_version")) {
