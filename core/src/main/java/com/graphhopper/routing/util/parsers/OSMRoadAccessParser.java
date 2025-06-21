@@ -72,7 +72,7 @@ public class OSMRoadAccessParser<T extends Enum> implements TagParser {
             for (String simple : complex) {
                 tmpAccessValue = valueFinder.apply(simple);
                 if (tmpAccessValue == null) continue;
-                if (accessValue == null || tmpAccessValue.ordinal() > accessValue.ordinal()) {
+                if (accessValue == null || tmpAccessValue.ordinal() < accessValue.ordinal()) {
                     accessValue = tmpAccessValue;
                 }
             }
