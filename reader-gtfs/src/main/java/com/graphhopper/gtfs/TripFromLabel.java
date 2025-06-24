@@ -19,6 +19,7 @@
 package com.graphhopper.gtfs;
 
 import com.conveyal.gtfs.GTFSFeed;
+import com.conveyal.gtfs.model.ShapePoint;
 import com.conveyal.gtfs.model.Stop;
 import com.conveyal.gtfs.model.StopTime;
 import com.google.common.collect.Iterables;
@@ -40,6 +41,7 @@ import com.graphhopper.util.details.PathDetailsFromEdges;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
+import org.mapdb.Fun;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -342,6 +344,7 @@ class TripFromLabel {
         }
         if (GtfsStorage.EdgeType.ENTER_PT == path.get(1).edge.getType()) {
             String feedId = path.get(1).edge.getPlatformDescriptor().feed_id;
+            int routeType = path.get(1).edge.getRouteType();
             List<Trip.Leg> result = new ArrayList<>();
             long boardTime = -1;
             List<Label.Transition> partition = null;
@@ -364,15 +367,36 @@ class TripFromLabel {
                     stopsFromBoardHopDwellEdges.finish();
                     List<Trip.Stop> stops = stopsFromBoardHopDwellEdges.stops;
 
+                    GTFSFeed gtfsFeed = gtfsStorage.getGtfsFeeds().get(feedId);
+                    String routeId = tripDescriptor.getRouteId();
+                    String agencyId = gtfsFeed.routes.get(routeId).agency_id;
+                    String agencyName = (agencyId != null
+                                    ? Optional.ofNullable(gtfsFeed.agency.get(agencyId))
+                                    : gtfsFeed.agency.values().stream().findFirst()
+                            ).map(a -> a.agency_name).orElse("");
+
+                    List<ShapePoint> shapePoints = getPtLegShapePoints(gtfsFeed,
+                            tripDescriptor.getTripId(), stops.get(0), stops.get(stops.size() - 1));
+                    Coordinate[] shapeGeometry = shapePoints.stream()
+                            .map(s -> new Coordinate(
+                                    Math.round(s.shape_pt_lon * 1e6) / 1e6,
+                                    Math.round(s.shape_pt_lat * 1e6) / 1e6))
+                            .toArray(Coordinate[]::new);
+
                     result.add(new Trip.PtLeg(
-                            feedId, partition.get(0).edge.getTransfers() == 0,
+                            feedId,
+                            agencyId,
+                            agencyName,
+                            partition.get(0).edge.getTransfers() == 0,
                             tripDescriptor.getTripId(),
-                            tripDescriptor.getRouteId(),
+                            routeId,
+                            routeType,
                             Optional.ofNullable(gtfsStorage.getGtfsFeeds().get(feedId).trips.get(tripDescriptor.getTripId())).map(t -> t.trip_headsign).orElse("extra"),
                             stops,
-                            partition.stream().mapToDouble(t -> t.edge.getDistance()).sum(),
+                            getPtLegDistance(shapePoints),
                             path.get(i - 1).label.currentTime - boardTime,
-                            geometryFactory.createLineString(stops.stream().map(s -> s.geometry.getCoordinate()).toArray(Coordinate[]::new))));
+                            geometryFactory.createLineString(stops.stream().map(s -> s.geometry.getCoordinate()).toArray(Coordinate[]::new)),
+                            geometryFactory.createLineString(shapeGeometry)));
                     partition = null;
                     if (edge.getType() == GtfsStorage.EdgeType.TRANSFER) {
                         feedId = edge.getPlatformDescriptor().feed_id;
@@ -440,4 +464,39 @@ class TripFromLabel {
         return pointsList.toLineString(false);
     }
 
+    private double getPtLegDistance(List<ShapePoint> shapePoints) {
+        if (shapePoints.isEmpty()) return 0.0;
+
+        double startDistance = shapePoints.get(0).shape_dist_traveled;
+        double endDistance = shapePoints.get(shapePoints.size() - 1).shape_dist_traveled;
+        return Math.round((endDistance - startDistance) * 1000.0) / 1000.0;
+    }
+
+    private List<ShapePoint> getPtLegShapePoints(GTFSFeed feed, String tripId,
+            Trip.Stop firstStop, Trip.Stop lastStop) {
+        String shapeId = feed.trips.get(tripId).shape_id;
+        Collection<ShapePoint> allPoints = feed.shape_points.subMap(
+                        new Fun.Tuple2<>(shapeId, Integer.MIN_VALUE),
+                        new Fun.Tuple2<>(shapeId, Integer.MAX_VALUE))
+                .values();
+
+        List<ShapePoint> result = new ArrayList<>();
+        boolean capturing = false;
+        for (ShapePoint point : allPoints) {
+            Coordinate coordinate = new Coordinate(point.shape_pt_lon, point.shape_pt_lat);
+
+            if (coordinate.equals2D(firstStop.geometry.getCoordinate(), 1e-6)) {
+                capturing = true;
+            }
+
+            if (capturing) {
+                result.add(point);
+                if (coordinate.equals2D(lastStop.geometry.getCoordinate(), 1e-6)) {
+                    break;
+                }
+            }
+        }
+
+        return result;
+    }
 }
