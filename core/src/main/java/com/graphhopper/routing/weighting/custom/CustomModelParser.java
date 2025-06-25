@@ -240,10 +240,6 @@ public class CustomModelParser {
      */
     private static List<Java.BlockStatement> createGetSpeedStatements(Set<String> speedVariables,
                                                                       CustomModel customModel, EncodedValueLookup lookup) throws Exception {
-        for (Statement s : customModel.getSpeed()) {
-            if (s.operation() == Statement.Op.ADD)
-                throw new IllegalArgumentException("'speed' statement must not have the operation 'add'");
-        }
         List<Java.BlockStatement> speedStatements = new ArrayList<>(verifyExpressions(new StringBuilder(),
                 "speed entry", speedVariables, customModel.getSpeed(), lookup));
         String speedMethodStartBlock = "double value = " + CustomWeightingHelper.GLOBAL_MAX_SPEED + ";\n";
