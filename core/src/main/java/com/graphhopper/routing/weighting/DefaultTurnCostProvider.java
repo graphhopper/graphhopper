@@ -66,17 +66,16 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
             return 0;
         }
 
-        double weight = 0;
         if (inEdge == outEdge) {
             // note that the u-turn costs overwrite any turn costs set in TurnCostStorage
-            weight += uTurnCosts;
+            return uTurnCosts;
         } else if (turnRestrictionEnc != null) {
             if (turnCostStorage.get(turnRestrictionEnc, inEdge, viaNode, outEdge))
                 return Double.POSITIVE_INFINITY;
         }
         if (turnWeightMapping != null)
-            weight += turnWeightMapping.calcTurnWeight(graph, edgeIntAccess, inEdge, viaNode, outEdge);
-        return weight;
+            return turnWeightMapping.calcTurnWeight(graph, edgeIntAccess, inEdge, viaNode, outEdge);
+        return 0;
     }
 
     @Override
