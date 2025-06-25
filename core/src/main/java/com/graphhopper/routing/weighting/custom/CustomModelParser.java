@@ -300,7 +300,7 @@ public class CustomModelParser {
             }
         }
 
-        String turnWeightMethodStartBlock = "double value = 0;\n"; // double weight vs. long millis
+        String turnWeightMethodStartBlock = "double value = 0;\n";
         if (needTwoDirections) {
             // Performance optimization: avoid the following two calls if there is no encoded value
             // that stores two directions. The call to isAdjNode is slightly faster than calling
@@ -355,8 +355,8 @@ public class CustomModelParser {
     }
 
     private static String getTurnWeightVariableDeclaration(EncodedValueLookup lookup, final String arg, boolean needTwoDirections) {
-        // parameters in method getTurnWeight are: int inEdge, int viaNode, int outEdge
-        // (the outEdgeReverse and inEdgeReverse are provided from initial calls in the method itself)
+        // parameters in method getTurnWeight are: int inEdge, int viaNode, int outEdge.
+        // The variables outEdgeReverse and inEdgeReverse are provided from initial calls if needTwoDirections is true.
         if (arg.equals(CHANGE_ANGLE)) {
             return "double change_angle = CustomWeightingHelper.calcChangeAngle(edgeIntAccess, this.orientation_enc, inEdge, inEdgeReverse, outEdge, outEdgeReverse);\n";
         } else if (lookup.hasEncodedValue(arg)) {
