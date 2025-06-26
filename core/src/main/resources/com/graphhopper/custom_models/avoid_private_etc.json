@@ -1,5 +1,5 @@
 {
-  // note, 'turn_weight' requires enabled turn_costs
+  // note, 'turn_weight' requires enabled turn_costs in profile
   "turn_weight": [
     {
       "if": "prev_road_access != road_access && (road_access == DESTINATION || road_access == PRIVATE)",
