@@ -38,7 +38,8 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
     private TurnWeightMapping turnWeightMapping;
 
     public DefaultTurnCostProvider(BooleanEncodedValue turnRestrictionEnc,
-                                   Graph graph, TurnCostsConfig tcConfig) {
+                                   Graph graph, TurnCostsConfig tcConfig,
+                                   TurnWeightMapping turnWeightMapping) {
         this.uTurnCostsInt = tcConfig.getUTurnCosts();
         if (uTurnCostsInt < 0 && uTurnCostsInt != INFINITE_U_TURN_COSTS) {
             throw new IllegalArgumentException("u-turn costs must be positive, or equal to " + INFINITE_U_TURN_COSTS + " (=infinite costs)");
@@ -53,10 +54,7 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
 
         this.graph = graph.getBaseGraph();
         this.edgeIntAccess = graph.getBaseGraph().getEdgeAccess();
-    }
 
-    @Override
-    public void setTurnWeightMapping(TurnWeightMapping turnWeightMapping) {
         this.turnWeightMapping = turnWeightMapping;
     }
 

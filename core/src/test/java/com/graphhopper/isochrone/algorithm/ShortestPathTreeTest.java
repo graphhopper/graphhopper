@@ -45,10 +45,6 @@ public class ShortestPathTreeTest {
         }
 
         @Override
-        public void setTurnWeightMapping(TurnWeightMapping mapping) {
-        }
-
-        @Override
         public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
             return calcTurnMillis(inEdge, viaNode, outEdge) / 1000.0;
         }
@@ -60,10 +56,6 @@ public class ShortestPathTreeTest {
     }
 
     public static final TurnCostProvider FORBIDDEN_UTURNS = new TurnCostProvider() {
-        @Override
-        public void setTurnWeightMapping(TurnWeightMapping mapping) {
-        }
-
         @Override
         public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
             return inEdge == outEdge ? Double.POSITIVE_INFINITY : 0;

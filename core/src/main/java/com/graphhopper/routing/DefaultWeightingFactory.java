@@ -25,8 +25,8 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
+import com.graphhopper.routing.weighting.custom.CustomWeighting2;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.PMap;
@@ -34,6 +34,7 @@ import com.graphhopper.util.Parameters;
 import com.graphhopper.util.TurnCostsConfig;
 
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
+import static com.graphhopper.routing.weighting.custom.CustomModelParser.createWeightingParameters;
 import static com.graphhopper.util.Helper.toLowerCase;
 
 public class DefaultWeightingFactory implements WeightingFactory {
@@ -55,18 +56,6 @@ public class DefaultWeightingFactory implements WeightingFactory {
         hints.putAll(profile.getHints());
         hints.putAll(requestHints);
 
-        TurnCostProvider turnCostProvider;
-        if (profile.hasTurnCosts() && !disableTurnCosts) {
-            BooleanEncodedValue turnRestrictionEnc = encodingManager.getTurnBooleanEncodedValue(TurnRestriction.key(profile.getName()));
-            if (turnRestrictionEnc == null)
-                throw new IllegalArgumentException("Cannot find turn restriction encoded value for " + profile.getName());
-            int uTurnCosts = hints.getInt(Parameters.Routing.U_TURN_COSTS, profile.getTurnCostsConfig().getUTurnCosts());
-            TurnCostsConfig tcConfig = new TurnCostsConfig(profile.getTurnCostsConfig()).setUTurnCosts(uTurnCosts);
-            turnCostProvider = new DefaultTurnCostProvider(turnRestrictionEnc, graph, tcConfig);
-        } else {
-            turnCostProvider = NO_TURN_COST_PROVIDER;
-        }
-
         String weightingStr = toLowerCase(profile.getWeighting());
         if (weightingStr.isEmpty())
             throw new IllegalArgumentException("You have to specify a weighting");
@@ -74,19 +63,35 @@ public class DefaultWeightingFactory implements WeightingFactory {
         Weighting weighting = null;
         if (CustomWeighting.NAME.equalsIgnoreCase(weightingStr)) {
             final CustomModel queryCustomModel = requestHints.getObject(CustomModel.KEY, null);
-            final CustomModel mergedCustomModel = CustomModel.merge(profile.getCustomModel(), queryCustomModel);
-            if (turnCostProvider == NO_TURN_COST_PROVIDER && !mergedCustomModel.getTurnWeightStatements().isEmpty())
-                throw new IllegalArgumentException("The turn_weight feature is not supported for " + profile.getName() + ". You have to enable 'turn_costs' in config.yml.");
             if (!profile.getHints().getBool("allow_turn_weight_in_request", false) && queryCustomModel != null && !queryCustomModel.getTurnWeightStatements().isEmpty())
                 throw new IllegalArgumentException("The turn_weight feature is not supported per request for " + profile.getName() + ". Set 'allow_turn_weight_in_request' to true in the config.yml.");
+
+            final CustomModel mergedCustomModel = CustomModel.merge(profile.getCustomModel(), queryCustomModel);
             if (requestHints.has(Parameters.Routing.HEADING_PENALTY))
                 mergedCustomModel.setHeadingPenalty(requestHints.getDouble(Parameters.Routing.HEADING_PENALTY, Parameters.Routing.DEFAULT_HEADING_PENALTY));
+
+            CustomWeighting.Parameters parameters = createWeightingParameters(mergedCustomModel, encodingManager);
+            final TurnCostProvider turnCostProvider;
+            if (profile.hasTurnCosts() && !disableTurnCosts) {
+                BooleanEncodedValue turnRestrictionEnc = encodingManager.getTurnBooleanEncodedValue(TurnRestriction.key(profile.getName()));
+                if (turnRestrictionEnc == null)
+                    throw new IllegalArgumentException("Cannot find turn restriction encoded value for " + profile.getName());
+                int uTurnCosts = hints.getInt(Parameters.Routing.U_TURN_COSTS, profile.getTurnCostsConfig().getUTurnCosts());
+                TurnCostsConfig tcConfig = new TurnCostsConfig(profile.getTurnCostsConfig()).setUTurnCosts(uTurnCosts);
+                turnCostProvider = new DefaultTurnCostProvider(turnRestrictionEnc, graph, tcConfig, parameters.getTurnWeightMapping());
+            } else {
+                if (!mergedCustomModel.getTurnWeightStatements().isEmpty())
+                    throw new IllegalArgumentException("The turn_weight feature is not supported for " + profile.getName() + ". You have to enable 'turn_costs' in config.yml.");
+                turnCostProvider = NO_TURN_COST_PROVIDER;
+            }
+
             if (hints.has("cm_version")) {
                 if (!hints.getString("cm_version", "").equals("2"))
                     throw new IllegalArgumentException("cm_version: \"2\" is required");
-                weighting = CustomModelParser.createWeighting2(encodingManager, turnCostProvider, mergedCustomModel);
-            } else
-                weighting = CustomModelParser.createWeighting(encodingManager, turnCostProvider, mergedCustomModel);
+                weighting = new CustomWeighting2(turnCostProvider, parameters);
+            } else {
+                weighting = new CustomWeighting(turnCostProvider, parameters);
+            }
 
         } else if ("shortest".equalsIgnoreCase(weightingStr)) {
             throw new IllegalArgumentException("Instead of weighting=shortest use weighting=custom with a high distance_influence");
@@ -104,5 +109,4 @@ public class DefaultWeightingFactory implements WeightingFactory {
 
         return weighting;
     }
-
 }

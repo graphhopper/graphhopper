@@ -89,8 +89,6 @@ public final class CustomWeighting implements Weighting {
         if (!Weighting.isValidName(getName()))
             throw new IllegalStateException("Not a valid name for a Weighting: " + getName());
         this.turnCostProvider = turnCostProvider;
-        // TODO NOW ugly. default provider should be thread-safe but others maybe not?
-        this.turnCostProvider.setTurnWeightMapping(parameters.getTurnWeightMapping());
 
         this.edgeToSpeedMapping = parameters.getEdgeToSpeedMapping();
         this.maxSpeedCalc = parameters.getMaxSpeedCalc();

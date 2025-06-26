@@ -496,19 +496,8 @@ public class OSMRestrictionSetterTest {
         return calcPath(this.graph, from, to, turnRestrictionEnc);
     }
 
-    /**
-     * Shorthand version that calculates the path for the first turn restriction encoded value
-     */
-    private IntArrayList calcPath(Graph graph, int from, int to) {
-        return calcPath(graph, from, to, turnRestrictionEnc);
-    }
-
     private IntArrayList calcPath(Graph graph, int from, int to, BooleanEncodedValue turnRestrictionEnc) {
         return new IntArrayList(new Dijkstra(graph, graph.wrapWeighting(new SpeedWeighting(speedEnc, new TurnCostProvider() {
-            @Override
-            public void setTurnWeightMapping(TurnWeightMapping mapping) {
-            }
-
             @Override
             public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
                 if (inEdge == outEdge) return Double.POSITIVE_INFINITY;

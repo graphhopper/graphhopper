@@ -25,9 +25,6 @@ import com.graphhopper.storage.BaseGraph;
  * Implementations of this interface define how turn costs and turn times are calculated.
  */
 public interface TurnCostProvider {
-
-    void setTurnWeightMapping(TurnWeightMapping mapping);
-
     /**
      * @return the turn weight of a transitions from the edge with id {@param inEdge} to the edge with id
      * {@param outEdge} at the node with id {@param viaNode}
@@ -45,10 +42,6 @@ public interface TurnCostProvider {
     }
 
     TurnCostProvider NO_TURN_COST_PROVIDER = new TurnCostProvider() {
-        @Override
-        public void setTurnWeightMapping(TurnWeightMapping mapping) {
-        }
-
         @Override
         public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
             return 0;
