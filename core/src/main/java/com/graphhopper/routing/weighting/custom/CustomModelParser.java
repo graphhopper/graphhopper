@@ -275,6 +275,8 @@ public class CustomModelParser {
     private static List<Java.BlockStatement> createGetTurnWeightStatements(Set<String> turnWeightVariables,
                                                                            CustomModel customModel, EncodedValueLookup lookup) throws Exception {
         for (Statement s : customModel.getTurnWeightStatements()) {
+            if (s.operation() == Statement.Op.ADD && s.value().trim().startsWith("-"))
+                throw new IllegalArgumentException("The value for the 'add' operation must be positive, but was: " + s.value());
             if (s.isBlock())
                 throw new IllegalArgumentException("'turn_weight' statement cannot be a block (not yet implemented)");
             if (s.operation() != Statement.Op.ADD)
