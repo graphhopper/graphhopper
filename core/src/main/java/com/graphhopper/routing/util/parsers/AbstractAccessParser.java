@@ -33,7 +33,7 @@ public abstract class AbstractAccessParser implements TagParser {
     protected final List<String> restrictionKeys;
     protected final Set<String> restrictedValues = new HashSet<>(5);
 
-    protected final Set<String> intendedValues = new HashSet<>(INTENDED); // possible to add "private" later
+    protected final Set<String> allowedValues = new HashSet<>(INTENDED);
     // http://wiki.openstreetmap.org/wiki/Mapfeatures#Barrier
     protected final Set<String> barriers = new HashSet<>(5);
     protected final BooleanEncodedValue accessEnc;
@@ -42,6 +42,8 @@ public abstract class AbstractAccessParser implements TagParser {
     protected AbstractAccessParser(BooleanEncodedValue accessEnc, List<String> restrictionKeys) {
         this.accessEnc = accessEnc;
         this.restrictionKeys = restrictionKeys;
+
+        allowedValues.add("destination");
 
         restrictedValues.add("no");
         restrictedValues.add("restricted");
@@ -65,8 +67,8 @@ public abstract class AbstractAccessParser implements TagParser {
                 throw new IllegalStateException("no 'private' found in restrictedValues");
             if (!restrictedValues.remove("permit"))
                 throw new IllegalStateException("no 'permit' found in restrictedValues");
-            intendedValues.add("private");
-            intendedValues.add("permit");
+            allowedValues.add("private");
+            allowedValues.add("permit");
         }
     }
 
@@ -97,9 +99,9 @@ public abstract class AbstractAccessParser implements TagParser {
 
         if (restrictedValues.contains(firstValue))
             return true;
-        else if (node.hasTag("locked", "yes") && !intendedValues.contains(firstValue))
+        else if (node.hasTag("locked", "yes") && !allowedValues.contains(firstValue))
             return true;
-        else if (intendedValues.contains(firstValue))
+        else if (allowedValues.contains(firstValue))
             return false;
         else if (node.hasTag("barrier", barriers))
             return true;

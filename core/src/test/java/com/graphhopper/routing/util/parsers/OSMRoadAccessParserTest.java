@@ -67,6 +67,11 @@ class OSMRoadAccessParserTest {
         parser.handleWayTags(edgeId, edgeIntAccess, way, relFlags);
         assertEquals(RoadAccess.YES, roadAccessEnc.getEnum(false, edgeId, edgeIntAccess));
 
+        // prefer lower ordinal as this means less restriction
+        way.setTag("motor_vehicle", "agricultural;destination;forestry");
+        parser.handleWayTags(edgeId, edgeIntAccess, way, relFlags);
+        assertEquals(RoadAccess.DESTINATION, roadAccessEnc.getEnum(false, edgeId, edgeIntAccess));
+
         way.setTag("motor_vehicle", "agricultural;forestry");
         parser.handleWayTags(edgeId, edgeIntAccess, way, relFlags);
         assertEquals(RoadAccess.AGRICULTURAL, roadAccessEnc.getEnum(false, edgeId, edgeIntAccess));
@@ -74,7 +79,6 @@ class OSMRoadAccessParserTest {
         way.setTag("motor_vehicle", "forestry;agricultural");
         parser.handleWayTags(edgeId, edgeIntAccess, way, relFlags);
         assertEquals(RoadAccess.AGRICULTURAL, roadAccessEnc.getEnum(false, edgeId, edgeIntAccess));
-
     }
 
     @Test
