@@ -212,16 +212,8 @@ public class NavigateResource {
             } else {
                 unit = DistanceUtils.Unit.IMPERIAL;
             }
-            String ghProfile = request.getProfile();
-            String mapboxProfile = "driving";
-            // search for a matching profile, use driving if not found
-            for (Map.Entry<String, String> entry : resolverMap.entrySet()) {
-                if (entry.getValue().equals(ghProfile)) { // Use .equals() for Integer comparison
-                    mapboxProfile = entry.getKey();
-                    break;
-                }
-            }
-            DistanceConfig config = new DistanceConfig(unit, translationMap, request.getLocale(), mapboxProfile);
+
+            DistanceConfig config = new DistanceConfig(unit, translationMap, request.getLocale(), "driving");
             logger.info(logStr);
             return Response.ok(NavigateResponseConverter.convertFromGHResponse(ghResponse, translationMap, request.getLocale(), config)).
                     header("X-GH-Took", "" + Math.round(took * 1000)).
