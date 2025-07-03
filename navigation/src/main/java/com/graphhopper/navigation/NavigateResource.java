@@ -213,7 +213,7 @@ public class NavigateResource {
                 unit = DistanceUtils.Unit.IMPERIAL;
             }
 
-            DistanceConfig config = new DistanceConfig(unit, translationMap, request.getLocale(), "driving");
+            DistanceConfig config = new DistanceConfig(unit, translationMap, request.getLocale(), graphHopper.getProfile(request.getProfile()));
             logger.info(logStr);
             return Response.ok(NavigateResponseConverter.convertFromGHResponse(ghResponse, translationMap, request.getLocale(), config)).
                     header("X-GH-Took", "" + Math.round(took * 1000)).
