@@ -82,7 +82,7 @@ public class NavigateResponseConverterTest {
                 step.get("intersections").get(0).get("location").get(0).asDouble(), .00001);
 
         assertEquals("depart", maneuver.get("type").asText());
-        assertEquals("straight", maneuver.get("modifier").asText());
+        assertEquals( null, maneuver.get("modifier")); // depart type does not have an modifier
 
         assertEquals("la Callisa", step.get("name").asText());
         double instructionDistance = step.get("distance").asDouble();
@@ -548,7 +548,7 @@ public class NavigateResponseConverterTest {
         request.addPoint(new GHPoint(42.504776, 1.527209));
         request.addPoint(new GHPoint(42.505144, 1.526113));
         request.addPoint(new GHPoint(42.50529, 1.527218));
-        request.setProfile(profile);
+        request.setProfile(profile).setPathDetails(Collections.singletonList("intersection"));
 
         GHResponse rsp = hopper.route(request);
 
@@ -591,6 +591,10 @@ public class NavigateResponseConverterTest {
 
             maneuver = steps.get(steps.size() - 1).get("maneuver");
             assertEquals("arrive", maneuver.get("type").asText());
+
+            JsonNode lastStep = steps.get(steps.size()-1); // last step
+            JsonNode intersections = lastStep.get("intersections");
+            assertNotEquals(intersections, null);
         }
 
         // Check if the duration and distance of the legs sum up to the overall route
