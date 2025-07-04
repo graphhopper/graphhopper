@@ -617,11 +617,16 @@ public class NavigateResponseConverter {
                 break;
             default: // i.e. ManeuverType.TURN:
                 maneuver.put("type", "turn");
+<<<<<<< HEAD
                 
         }
         String modifier = getModifier(instruction);
         if (modifier != null)
             maneuver.put("modifier", modifier);
+=======
+                break;
+        }
+>>>>>>> bd392d26b (fix: enable last intersection of last step of via points)
         maneuver.put("instruction", instruction.getTurnDescription(translationMap.getWithFallBack(locale)));
 
     }
