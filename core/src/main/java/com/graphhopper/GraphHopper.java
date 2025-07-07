@@ -973,7 +973,7 @@ public class GraphHopper {
         final int order = 31; // using 15 would allow us to use ints for sortIndices, but this would result in (marginally) slower routing
         LongArrayList sortIndices = new LongArrayList();
         for (int node = 0; node < graph.getNodes(); node++)
-            sortIndices.add(latLngToHilbertIndex(na.getLat(node), na.getLon(node), order));
+            sortIndices.add(latLonToHilbertIndex(na.getLat(node), na.getLon(node), order));
         int[] nodeOrder = IndirectSort.mergesort(0, graph.getNodes(), (nodeA, nodeB) -> Long.compare(sortIndices.get(nodeA), sortIndices.get(nodeB)));
         EdgeExplorer explorer = graph.createEdgeExplorer();
         int edges = graph.getEdges();
@@ -1008,7 +1008,7 @@ public class GraphHopper {
         logger.info("sorting {} nodes took: {}", Helper.nf(newNodesByOldNodes.size()), sw.stop().getTimeString());
     }
 
-    public static long latLngToHilbertIndex(double lat, double lon, int order) {
+    public static long latLonToHilbertIndex(double lat, double lon, int order) {
         double nx = (lon + 180) / 360;
         double ny = (90 - lat) / 180;
         long size = 1L << order;
