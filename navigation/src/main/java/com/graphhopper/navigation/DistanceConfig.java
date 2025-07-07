@@ -30,18 +30,15 @@ import static com.graphhopper.navigation.DistanceUtils.UnitTranslationKey.*;
 public class DistanceConfig {
     final List<VoiceInstructionConfig> voiceInstructions;
     final DistanceUtils.Unit unit;
-    static final String MAPBOX_PROFILE_CYCLING = "cycling";
-    static final String MAPBOX_PROFILE_WALKING = "walking";
-    static final String MAPBOX_PROFILE_DRIVING = "driving";
 
     public DistanceConfig(DistanceUtils.Unit unit, TranslationMap translationMap, Locale locale, Profile profile) {
-        this(unit, translationMap, locale, profile.getHints().getString("navigation_transport_mode", MAPBOX_PROFILE_DRIVING));
+        this(unit, translationMap, locale, NavigationTransportMode.find(profile.getHints().getString("navigation_transport_mode", "car")));
     }
 
-    public DistanceConfig(DistanceUtils.Unit unit, TranslationMap translationMap, Locale locale, String mapboxProfile) {
+    public DistanceConfig(DistanceUtils.Unit unit, TranslationMap translationMap, Locale locale, NavigationTransportMode mode) {
         this.unit = unit;
-        switch (mapboxProfile) {
-            case MAPBOX_PROFILE_CYCLING:
+        switch (mode) {
+            case BIKE:
             if (unit == DistanceUtils.Unit.METRIC) {
                 voiceInstructions =  Arrays.asList(
                     new ConditionalDistanceVoiceInstructionConfig(IN_LOWER_DISTANCE_PLURAL.metric, translationMap, locale, new int[]{150},
@@ -52,7 +49,7 @@ public class DistanceConfig {
                         new int[]{500}));
             }
             break;
-            case MAPBOX_PROFILE_WALKING:
+            case FOOT:
             if (unit == DistanceUtils.Unit.METRIC) {
                 voiceInstructions =  Arrays.asList(
                     new ConditionalDistanceVoiceInstructionConfig(IN_LOWER_DISTANCE_PLURAL.metric, translationMap, locale, new int[]{50},
