@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
+import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.PrecisionModel;
 
 import javax.inject.Inject;
@@ -46,6 +47,19 @@ public class BufferResource {
 
     private final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(1E8));
 
+    enum Direction {
+        UNKNOWN,
+        NORTH,
+        SOUTH,
+        EAST,
+        WEST,
+        NORTHWEST,
+        NORTHEAST,
+        SOUTHWEST,
+        SOUTHEAST,
+        BOTH
+    }
+
     @Inject
     public BufferResource(GraphHopperConfig config, GraphHopper graphHopper) {
         this.config = config;
@@ -65,6 +79,7 @@ public class BufferResource {
             @QueryParam("point") @NotNull GHPointParam point,
             @QueryParam("roadName") @Nullable String roadName,
             @QueryParam("thresholdDistance") @NotNull Double thresholdDistance,
+            @QueryParam("direction") @DefaultValue("unknown") String direction,
             @QueryParam("queryMultiplier") @DefaultValue(".000075") Double queryMultiplier, // Default of ~8.33 meters in degrees
             @QueryParam("buildUpstream") @DefaultValue("false") Boolean buildUpstream,
             @QueryParam("requireRoadNameMatch") @DefaultValue("false") Boolean requireRoadNameMatch) {
@@ -77,6 +92,8 @@ public class BufferResource {
         }
 
         StopWatch sw = new StopWatch().start();
+        String directionUpperCase = direction.toUpperCase();
+        Direction directionEnum = Direction.valueOf(directionUpperCase);
 
         roadName = getBufferRoadName(roadName, requireRoadNameMatch, point);
 
@@ -96,7 +113,74 @@ public class BufferResource {
             lineStrings.add(computeBufferSegment(secondaryStartFeature, roadName, thresholdDistance, buildUpstream, buildUpstream));
         }
 
-        return createGeoJsonResponse(lineStrings, sw);
+        List<LineString> filteredLineStrings = filterByDirection(lineStrings, buildUpstream, directionEnum);
+        return createGeoJsonResponse(filteredLineStrings, sw);
+    }
+
+    private List<LineString> filterByDirection(List<LineString> lineStrings, Boolean buildUpstream, Direction directionEnum) {
+        if (lineStrings == null || lineStrings.isEmpty()) {
+            return Collections.emptyList();
+        }
+        Point furthestPointOfFirstPath = buildUpstream ? lineStrings.get(0).getStartPoint() : lineStrings.get(0).getEndPoint();
+        Point furthestPointOfSecondPath = buildUpstream ? lineStrings.get(lineStrings.size() - 1).getStartPoint() : lineStrings.get(lineStrings.size() - 1).getEndPoint();
+
+        switch (directionEnum) {
+            case NORTH:
+                return furthestPointOfFirstPath.getY() < furthestPointOfSecondPath.getY()
+                        ? Collections.singletonList(lineStrings.get(0))
+                        : Collections.singletonList(lineStrings.get(lineStrings.size() - 1));
+            case SOUTH:
+                return furthestPointOfFirstPath.getY() > furthestPointOfSecondPath.getY()
+                        ? Collections.singletonList(lineStrings.get(0))
+                        : Collections.singletonList(lineStrings.get(lineStrings.size() - 1));
+            case EAST:
+                return furthestPointOfFirstPath.getX() < furthestPointOfSecondPath.getX()
+                        ? Collections.singletonList(lineStrings.get(0))
+                        : Collections.singletonList(lineStrings.get(lineStrings.size() - 1));
+            case WEST:
+                return furthestPointOfFirstPath.getX() > furthestPointOfSecondPath.getX()
+                        ? Collections.singletonList(lineStrings.get(0))
+                        : Collections.singletonList(lineStrings.get(lineStrings.size() - 1));
+            case BOTH, UNKNOWN:
+                return lineStrings;
+            default:
+                break;
+        }
+
+        // For non-cardinal directions, use bearing calculation
+        // Splits the circle into two halves and checks if the angle is within the specified half.
+        // For instance, if the direction is NorthEast but the angle in question is NNW (North by Northwest),
+        // this would return true because NNW is closer to NE than it is to the opposite, SW.
+        int bearing = (int) Math.round(AngleCalc.ANGLE_CALC.calcAzimuth(furthestPointOfFirstPath.getY(), furthestPointOfFirstPath.getX(), furthestPointOfSecondPath.getY(),furthestPointOfSecondPath.getX()));
+        // In a case like if start point is in a hairpin turn, it might be the case that NEITHER lineString looks good
+        // or that BOTH lineStrings look good.  By taking the bearing from one terminal to the other, we have a better
+        // chance to be correct than if we check the bearing of one lineString.
+        boolean isFirstLineStringBetter = false;
+        int DUE_NORTHEAST = 45;
+        int DUE_SOUTHEAST = 135;
+        int DUE_SOUTHWEST = 225;
+        int DUE_NORTHWEST = 315;
+
+        switch (directionEnum) {
+            case NORTHEAST:
+                isFirstLineStringBetter = bearing >= DUE_NORTHWEST || bearing <= DUE_SOUTHEAST;
+                break;
+            case SOUTHWEST:
+                isFirstLineStringBetter = bearing > DUE_SOUTHEAST && bearing < DUE_NORTHWEST;
+                break;
+            case NORTHWEST:
+                isFirstLineStringBetter = bearing >= DUE_SOUTHWEST || bearing <= DUE_NORTHEAST;
+                break;
+            case SOUTHEAST:
+                isFirstLineStringBetter = bearing > DUE_NORTHEAST && bearing < DUE_SOUTHWEST;
+                break;
+            default:
+                break;
+        }
+
+        return isFirstLineStringBetter
+                ? Collections.singletonList(lineStrings.get(0))
+                : Collections.singletonList(lineStrings.get(lineStrings.size() - 1));
     }
 
     /**
