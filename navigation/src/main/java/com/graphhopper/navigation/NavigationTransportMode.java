@@ -26,12 +26,22 @@ public enum NavigationTransportMode {
     FOOT();
 
     public static NavigationTransportMode find(String name) {
-        if (name == null)
-            return CAR;
-        try {
-            return NavigationTransportMode.valueOf(Helper.toUpperCase(name));
-        } catch (IllegalArgumentException ex) {
-            return CAR;
+        switch (name) {
+            case "walking":
+            case "walk":
+            case "hiking":
+            case "hike":
+            case "foot":
+            case "pedestrian":
+                return FOOT;
+            case "cycling":
+            case "cyclist":
+            case "mtb":
+            case "racingbike":
+            case "bike":
+                return BIKE;
+            default:
+                return CAR;
         }
     }
 }
