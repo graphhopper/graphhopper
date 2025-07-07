@@ -9,11 +9,11 @@ public class DistanceConfigTest {
 
     @Test
     public void distanceConfigTest() {
-        DistanceConfig driving = new DistanceConfig(DistanceUtils.Unit.METRIC, null, null, "driving");
+        DistanceConfig driving = new DistanceConfig(DistanceUtils.Unit.METRIC, null, null, NavigationTransportMode.CAR);
         assertEquals(4, driving.voiceInstructions.size());
-        DistanceConfig walking = new DistanceConfig(DistanceUtils.Unit.METRIC, null, null, "walking");
+        DistanceConfig walking = new DistanceConfig(DistanceUtils.Unit.METRIC, null, null, NavigationTransportMode.FOOT);
         assertEquals(1, walking.voiceInstructions.size());
-        DistanceConfig cycling = new DistanceConfig(DistanceUtils.Unit.METRIC, null, null, "cycling");
+        DistanceConfig cycling = new DistanceConfig(DistanceUtils.Unit.METRIC, null, null, NavigationTransportMode.BIKE);
         assertEquals(1, cycling.voiceInstructions.size());
 
 

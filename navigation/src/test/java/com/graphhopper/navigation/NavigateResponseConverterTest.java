@@ -29,9 +29,8 @@ public class NavigateResponseConverterTest {
     private static final String osmFile = "../core/files/andorra.osm.gz";
     private static GraphHopper hopper;
     private static final String profile = "my_car";
-    private static final String mapboxProfile = "driving";
     private final TranslationMap trMap = hopper.getTranslationMap();
-    private final DistanceConfig distanceConfig = new DistanceConfig(DistanceUtils.Unit.METRIC, trMap, Locale.ENGLISH, mapboxProfile);
+    private final DistanceConfig distanceConfig = new DistanceConfig(DistanceUtils.Unit.METRIC, trMap, Locale.ENGLISH, NavigationTransportMode.CAR);
 
     @BeforeAll
     public static void beforeClass() {
@@ -183,7 +182,7 @@ public class NavigateResponseConverterTest {
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile(profile));
 
         ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH,
-                new DistanceConfig(DistanceUtils.Unit.IMPERIAL, trMap, Locale.ENGLISH, mapboxProfile));
+                new DistanceConfig(DistanceUtils.Unit.IMPERIAL, trMap, Locale.ENGLISH, NavigationTransportMode.CAR));
 
         JsonNode steps = json.get("routes").get(0).get("legs").get(0).get("steps");
 
@@ -218,7 +217,7 @@ public class NavigateResponseConverterTest {
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile(profile));
 
         ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH,
-                new DistanceConfig(DistanceUtils.Unit.METRIC, trMap, Locale.ENGLISH, "walking"));
+                new DistanceConfig(DistanceUtils.Unit.METRIC, trMap, Locale.ENGLISH, NavigationTransportMode.FOOT));
 
         JsonNode steps = json.get("routes").get(0).get("legs").get(0).get("steps");
 
@@ -253,7 +252,7 @@ public class NavigateResponseConverterTest {
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile(profile));
 
         ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH,
-                new DistanceConfig(DistanceUtils.Unit.IMPERIAL, trMap, Locale.ENGLISH, "walking"));
+                new DistanceConfig(DistanceUtils.Unit.IMPERIAL, trMap, Locale.ENGLISH, NavigationTransportMode.FOOT));
 
         JsonNode steps = json.get("routes").get(0).get("legs").get(0).get("steps");
 
@@ -288,7 +287,7 @@ public class NavigateResponseConverterTest {
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile(profile));
 
         ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH,
-                new DistanceConfig(DistanceUtils.Unit.METRIC, trMap, Locale.ENGLISH, "cycling"));
+                new DistanceConfig(DistanceUtils.Unit.METRIC, trMap, Locale.ENGLISH, NavigationTransportMode.BIKE));
 
         JsonNode steps = json.get("routes").get(0).get("legs").get(0).get("steps");
 
@@ -323,7 +322,7 @@ public class NavigateResponseConverterTest {
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile(profile));
 
         ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH,
-                new DistanceConfig(DistanceUtils.Unit.IMPERIAL, trMap, Locale.ENGLISH, "cycling"));
+                new DistanceConfig(DistanceUtils.Unit.IMPERIAL, trMap, Locale.ENGLISH, NavigationTransportMode.BIKE));
 
         JsonNode steps = json.get("routes").get(0).get("legs").get(0).get("steps");
 
@@ -384,7 +383,7 @@ public class NavigateResponseConverterTest {
         rsp = hopper.route(
                 new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile(profile).setLocale(Locale.GERMAN));
 
-        DistanceConfig distanceConfigGerman = new DistanceConfig(DistanceUtils.Unit.METRIC, trMap, Locale.GERMAN, mapboxProfile);
+        DistanceConfig distanceConfigGerman = new DistanceConfig(DistanceUtils.Unit.METRIC, trMap, Locale.GERMAN, NavigationTransportMode.CAR);
 
         json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.GERMAN, distanceConfigGerman);
 

@@ -144,7 +144,7 @@ public class NavigateResource {
         } else {
             DistanceUtils.Unit unit = voiceUnits.equals("metric") ? DistanceUtils.Unit.METRIC : DistanceUtils.Unit.IMPERIAL;
             Locale locale = Helper.getLocale(localeStr);
-            DistanceConfig config = new DistanceConfig(unit, translationMap, locale, mapboxProfile);
+            DistanceConfig config = new DistanceConfig(unit, translationMap, locale, graphHopper.getProfile(ghProfile));
             logger.info(logStr);
             return Response.ok(NavigateResponseConverter.convertFromGHResponse(ghResponse, translationMap, locale, config)).
                     header("X-GH-Took", "" + Math.round(took * 1000)).
