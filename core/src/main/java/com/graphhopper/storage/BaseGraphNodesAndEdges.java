@@ -18,8 +18,7 @@
 
 package com.graphhopper.storage;
 
-import com.carrotsearch.hppc.DoubleArrayList;
-import com.carrotsearch.hppc.IntArrayList;
+import com.carrotsearch.hppc.BitSet;
 import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
@@ -221,37 +220,111 @@ class BaseGraphNodesAndEdges implements EdgeIntAccess {
         return edge;
     }
 
+    public void sortEdges(IntUnaryOperator getNewEdgeForOldEdge) {
+        BitSet visited = new BitSet(getEdges());
+        for (int edge = 0; edge < getEdges(); edge++) {
+            if (visited.get(edge)) continue;
+            int curr = edge;
+
+            long pointer = toEdgePointer(curr);
+            int nodeA = getNodeA(pointer);
+            int nodeB = getNodeB(pointer);
+            int linkA = getLinkA(pointer);
+            int linkB = getLinkB(pointer);
+            int dist = edges.getInt(pointer + E_DIST);
+            int kv = getKeyValuesRef(pointer);
+            IntsRef flags = createEdgeFlags();
+            readFlags(pointer, flags);
+            long geo = getGeoRef(pointer);
+
+            do {
+                visited.set(curr);
+
+                int newEdge = getNewEdgeForOldEdge.applyAsInt(curr);
+                long newPointer = toEdgePointer(newEdge);
+                int tmpNodeA = getNodeA(newPointer);
+                int tmpNodeB = getNodeB(newPointer);
+                int tmpLinkA = getLinkA(newPointer);
+                int tmpLinkB = getLinkB(newPointer);
+                int tmpDist = edges.getInt(newPointer + E_DIST);
+                int tmpKV = getKeyValuesRef(newPointer);
+                IntsRef tmpFlags = createEdgeFlags();
+                readFlags(newPointer, tmpFlags);
+                long tmpGeo = getGeoRef(newPointer);
+
+                setNodeA(newPointer, nodeA);
+                setNodeB(newPointer, nodeB);
+                setLinkA(newPointer, linkA == -1 ? -1 : getNewEdgeForOldEdge.applyAsInt(linkA));
+                setLinkB(newPointer, linkB == -1 ? -1 : getNewEdgeForOldEdge.applyAsInt(linkB));
+                edges.setInt(newPointer + E_DIST, dist);
+                setKeyValuesRef(newPointer, kv);
+                writeFlags(newPointer, flags);
+                setGeoRef(newPointer, geo);
+
+                nodeA = tmpNodeA;
+                nodeB = tmpNodeB;
+                linkA = tmpLinkA;
+                linkB = tmpLinkB;
+                dist = tmpDist;
+                kv = tmpKV;
+                flags = tmpFlags;
+                geo = tmpGeo;
+
+                curr = newEdge;
+            } while (curr != edge);
+        }
+
+        // update edge references
+        for (int node = 0; node < getNodes(); node++) {
+            long pointer = toNodePointer(node);
+            setEdgeRef(pointer, getNewEdgeForOldEdge.applyAsInt(getEdgeRef(pointer)));
+        }
+    }
+
     public void relabelNodes(IntUnaryOperator getNewNodeForOldNode) {
         for (int edge = 0; edge < getEdges(); edge++) {
             long pointer = toEdgePointer(edge);
             setNodeA(pointer, getNewNodeForOldNode.applyAsInt(getNodeA(pointer)));
             setNodeB(pointer, getNewNodeForOldNode.applyAsInt(getNodeB(pointer)));
         }
-        IntArrayList edgeRefs = new IntArrayList();
-        DoubleArrayList lats = new DoubleArrayList();
-        DoubleArrayList lons = new DoubleArrayList();
-        DoubleArrayList eles = new DoubleArrayList();
-        IntArrayList tcs = new IntArrayList();
+        BitSet visited = new BitSet(getNodes());
         for (int node = 0; node < getNodes(); node++) {
+            if (visited.get(node)) continue;
+
+            int curr = node;
             long pointer = toNodePointer(node);
-            edgeRefs.add(getEdgeRef(pointer));
-            lats.add(getLat(pointer));
-            lons.add(getLon(pointer));
-            if (withElevation())
-                eles.add(getEle(pointer));
-            if (withTurnCosts())
-                tcs.add(getTurnCostRef(pointer));
-        }
-        for (int oldNode = 0; oldNode < getNodes(); oldNode++) {
-            int newNode = getNewNodeForOldNode.applyAsInt(oldNode);
-            long pointer = toNodePointer(newNode);
-            setEdgeRef(pointer, edgeRefs.get(oldNode));
-            setLat(pointer, lats.get(oldNode));
-            setLon(pointer, lons.get(oldNode));
-            if (withElevation())
-                setEle(pointer, eles.get(oldNode));
-            if (withTurnCosts())
-                setTurnCostRef(pointer, tcs.get(oldNode));
+            int edgeRef = getEdgeRef(pointer);
+            double lat = getLat(pointer);
+            double lon = getLon(pointer);
+            double ele = withElevation() ? getEle(pointer) : Double.NaN;
+            int tc = withTurnCosts() ? getTurnCostRef(pointer) : -1;
+
+            do {
+                visited.set(curr);
+                int newNode = getNewNodeForOldNode.applyAsInt(curr);
+                long newPointer = toNodePointer(newNode);
+                int tmpEdgeRef = getEdgeRef(newPointer);
+                double tmpLat = getLat(newPointer);
+                double tmpLon = getLon(newPointer);
+                double tmpEle = withElevation() ? getEle(newPointer) : Double.NaN;
+                int tmpTC = withTurnCosts() ? getTurnCostRef(newPointer) : -1;
+
+                setEdgeRef(newPointer, edgeRef);
+                setLat(newPointer, lat);
+                setLon(newPointer, lon);
+                if (withElevation())
+                    setEle(newPointer, ele);
+                if (withTurnCosts())
+                    setTurnCostRef(newPointer, tc);
+
+                edgeRef = tmpEdgeRef;
+                lat = tmpLat;
+                lon = tmpLon;
+                ele = tmpEle;
+                tc = tmpTC;
+
+                curr = newNode;
+            } while (curr != node);
         }
     }
 
@@ -457,11 +530,11 @@ class BaseGraphNodesAndEdges implements EdgeIntAccess {
     public void debugPrint() {
         final int printMax = 100;
         System.out.println("nodes:");
-        String formatNodes = "%12s | %12s | %12s | %12s \n";
-        System.out.format(Locale.ROOT, formatNodes, "#", "N_EDGE_REF", "N_LAT", "N_LON");
+        String formatNodes = "%12s | %12s | %12s | %12s | %12s | %12s\n";
+        System.out.format(Locale.ROOT, formatNodes, "#", "N_EDGE_REF", "N_LAT", "N_LON", "N_ELE", "N_TC");
         for (int i = 0; i < Math.min(nodeCount, printMax); ++i) {
             long nodePointer = toNodePointer(i);
-            System.out.format(Locale.ROOT, formatNodes, i, getEdgeRef(nodePointer), getLat(nodePointer), getLon(nodePointer));
+            System.out.format(Locale.ROOT, formatNodes, i, getEdgeRef(nodePointer), getLat(nodePointer), getLon(nodePointer), withElevation ? getEle(nodePointer) : "", withTurnCosts ? getTurnCostRef(nodePointer) : "-");
         }
         if (nodeCount > printMax) {
             System.out.format(Locale.ROOT, " ... %d more nodes\n", nodeCount - printMax);

@@ -97,8 +97,8 @@ public class SPTResourceTest {
         assertTrue(lines.length > 500);
         assertEquals("prev_node_id,edge_id,node_id,time,distance", lines[0]);
         assertEquals("-1,-1,2385,0,0", lines[1]);
-        assertEquals("2385,2821,1571,3711,74", lines[2]);
-        assertEquals("2385,2820,274,13121,262", lines[3]);
+        assertEquals("2385,2820,1202,3711,74", lines[2]);
+        assertEquals("2385,2821,1234,13121,262", lines[3]);
     }
 
     @Test
