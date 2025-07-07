@@ -6,6 +6,7 @@
 - road_access now contains value of highest transportation mode for CAR, i.e. access=private, motorcar=yes will now return YES and not PRIVATE
 - car.json by default avoids private roads
 - maxspeed<5 is ignored, maxspeed=none is ignored with some exceptions, maxspeed parsing and related constants were renamed #3077
+- improved performance by sorting graph during import, #3177
 
 ### 10.0 [5 Nov 2024]
 
