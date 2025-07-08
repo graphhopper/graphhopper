@@ -18,6 +18,8 @@
 package com.graphhopper.navigation;
 
 import com.graphhopper.config.Profile;
+import com.graphhopper.routing.util.TransportationMode;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap;
 
 import java.util.ArrayList;
@@ -32,13 +34,22 @@ public class DistanceConfig {
     final DistanceUtils.Unit unit;
 
     public DistanceConfig(DistanceUtils.Unit unit, TranslationMap translationMap, Locale locale, Profile profile) {
-        this(unit, translationMap, locale, NavigationTransportMode.find(profile.getHints().getString("navigation_transport_mode", "car")));
+        this(unit, translationMap, locale, profile.getHints().getString("navigation_transport_mode", ""));
     }
 
-    public DistanceConfig(DistanceUtils.Unit unit, TranslationMap translationMap, Locale locale, NavigationTransportMode mode) {
+    public DistanceConfig(DistanceUtils.Unit unit, TranslationMap translationMap, Locale locale, TransportationMode mode) {
+        this(unit, translationMap, locale, mode.name());
+    }
+
+    public DistanceConfig(DistanceUtils.Unit unit, TranslationMap translationMap, Locale locale, String mode) {
         this.unit = unit;
-        switch (mode) {
-            case BIKE:
+        switch (Helper.toLowerCase(mode)) {
+            case "biking":
+            case "cycling":
+            case "cyclist":
+            case "mtb":
+            case "racingbike":
+            case "bike":
             if (unit == DistanceUtils.Unit.METRIC) {
                 voiceInstructions =  Arrays.asList(
                     new ConditionalDistanceVoiceInstructionConfig(IN_LOWER_DISTANCE_PLURAL.metric, translationMap, locale, new int[]{150},
@@ -49,7 +60,12 @@ public class DistanceConfig {
                         new int[]{500}));
             }
             break;
-            case FOOT:
+            case "walking":
+            case "walk":
+            case "hiking":
+            case "hike":
+            case "foot":
+            case "pedestrian":
             if (unit == DistanceUtils.Unit.METRIC) {
                 voiceInstructions =  Arrays.asList(
                     new ConditionalDistanceVoiceInstructionConfig(IN_LOWER_DISTANCE_PLURAL.metric, translationMap, locale, new int[]{50},

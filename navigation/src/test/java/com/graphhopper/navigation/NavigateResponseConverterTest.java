@@ -7,6 +7,7 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.jackson.ResponsePathSerializer;
 import com.graphhopper.routing.TestProfiles;
+import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.PointList;
@@ -30,7 +31,7 @@ public class NavigateResponseConverterTest {
     private static GraphHopper hopper;
     private static final String profile = "my_car";
     private final TranslationMap trMap = hopper.getTranslationMap();
-    private final DistanceConfig distanceConfig = new DistanceConfig(DistanceUtils.Unit.METRIC, trMap, Locale.ENGLISH, NavigationTransportMode.CAR);
+    private final DistanceConfig distanceConfig = new DistanceConfig(DistanceUtils.Unit.METRIC, trMap, Locale.ENGLISH, TransportationMode.CAR);
 
     @BeforeAll
     public static void beforeClass() {
@@ -182,7 +183,7 @@ public class NavigateResponseConverterTest {
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile(profile));
 
         ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH,
-                new DistanceConfig(DistanceUtils.Unit.IMPERIAL, trMap, Locale.ENGLISH, NavigationTransportMode.CAR));
+                new DistanceConfig(DistanceUtils.Unit.IMPERIAL, trMap, Locale.ENGLISH, TransportationMode.CAR));
 
         JsonNode steps = json.get("routes").get(0).get("legs").get(0).get("steps");
 
@@ -217,7 +218,7 @@ public class NavigateResponseConverterTest {
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile(profile));
 
         ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH,
-                new DistanceConfig(DistanceUtils.Unit.METRIC, trMap, Locale.ENGLISH, NavigationTransportMode.FOOT));
+                new DistanceConfig(DistanceUtils.Unit.METRIC, trMap, Locale.ENGLISH, TransportationMode.FOOT));
 
         JsonNode steps = json.get("routes").get(0).get("legs").get(0).get("steps");
 
@@ -252,7 +253,7 @@ public class NavigateResponseConverterTest {
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile(profile));
 
         ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH,
-                new DistanceConfig(DistanceUtils.Unit.IMPERIAL, trMap, Locale.ENGLISH, NavigationTransportMode.FOOT));
+                new DistanceConfig(DistanceUtils.Unit.IMPERIAL, trMap, Locale.ENGLISH, TransportationMode.FOOT));
 
         JsonNode steps = json.get("routes").get(0).get("legs").get(0).get("steps");
 
@@ -287,7 +288,7 @@ public class NavigateResponseConverterTest {
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile(profile));
 
         ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH,
-                new DistanceConfig(DistanceUtils.Unit.METRIC, trMap, Locale.ENGLISH, NavigationTransportMode.BIKE));
+                new DistanceConfig(DistanceUtils.Unit.METRIC, trMap, Locale.ENGLISH, TransportationMode.BIKE));
 
         JsonNode steps = json.get("routes").get(0).get("legs").get(0).get("steps");
 
@@ -322,7 +323,7 @@ public class NavigateResponseConverterTest {
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile(profile));
 
         ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH,
-                new DistanceConfig(DistanceUtils.Unit.IMPERIAL, trMap, Locale.ENGLISH, NavigationTransportMode.BIKE));
+                new DistanceConfig(DistanceUtils.Unit.IMPERIAL, trMap, Locale.ENGLISH, TransportationMode.BIKE));
 
         JsonNode steps = json.get("routes").get(0).get("legs").get(0).get("steps");
 
@@ -383,7 +384,7 @@ public class NavigateResponseConverterTest {
         rsp = hopper.route(
                 new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile(profile).setLocale(Locale.GERMAN));
 
-        DistanceConfig distanceConfigGerman = new DistanceConfig(DistanceUtils.Unit.METRIC, trMap, Locale.GERMAN, NavigationTransportMode.CAR);
+        DistanceConfig distanceConfigGerman = new DistanceConfig(DistanceUtils.Unit.METRIC, trMap, Locale.GERMAN, TransportationMode.CAR);
 
         json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.GERMAN, distanceConfigGerman);
 
