@@ -416,8 +416,8 @@ public class BufferResource {
             // Define a small bounding box to reduce the number of edges to filter
             double twentyFeetInDegrees = 0.0000549;
             BBox reducedBbox = new BBox(
-        point.get().lon - twentyFeetInDegrees, point.get().lon + twentyFeetInDegrees,
-        point.get().lat - twentyFeetInDegrees, point.get().lat + twentyFeetInDegrees
+                point.get().lon - twentyFeetInDegrees, point.get().lon + twentyFeetInDegrees,
+                point.get().lat - twentyFeetInDegrees, point.get().lat + twentyFeetInDegrees
             );
             List<Integer> nearbyEdges = queryBbox(reducedBbox, null);
 
