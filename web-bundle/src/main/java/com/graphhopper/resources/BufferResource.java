@@ -295,7 +295,6 @@ public class BufferResource {
      */
     private LineString computeBufferSegment(BufferFeature startFeature, String roadName, Double thresholdDistance,
                                             Boolean upstreamPath, Boolean upstreamStart) {
-
         BufferFeature featureToThreshold = computeEdgeAtDistanceThreshold(startFeature, thresholdDistance, roadName,
                 upstreamPath, upstreamStart);
         PointList finalSegmentToThreshold = computePointAtDistanceThreshold(startFeature, thresholdDistance,
@@ -372,18 +371,29 @@ public class BufferResource {
      * @param edgeList all nearby edges with proper road name
      * @param startLat latitude at center of query box
      * @param startLon longitude at center of query box
-     * @return closest point along road
+     * @param isPillarOnly determines if pillar or tower points are attempted. Always check pillar points first
+     *                     but if no pillar points are found, then check tower points. My understanding is that
+     *                     there will always be tower points. (docs/core/low-level-api.md#what-are-pillar-and-tower-nodes)
+            * @return closest point along road
      */
-    private BufferFeature computeStartFeature(List<Integer> edgeList, Double startLat, Double startLon) {
+    private BufferFeature computeStartFeature(List<Integer> edgeList, Double startLat, Double startLon, Boolean isPillarOnly) {
         double lowestDistance = Double.MAX_VALUE;
         GHPoint3D nearestPoint = null;
         Integer nearestEdge = null;
 
         for (Integer edge : edgeList) {
             EdgeIteratorState state = graph.getEdgeIteratorState(edge, Integer.MIN_VALUE);
-            PointList pointList = state.fetchWayGeometry(FetchMode.PILLAR_ONLY);
+            PointList pointList = isPillarOnly ?
+                    state.fetchWayGeometry(FetchMode.PILLAR_ONLY)
+                    : state.fetchWayGeometry((FetchMode.TOWER_ONLY));
 
             for (GHPoint3D point : pointList) {
+                // the purpose of epsilon is to prevent rounding problems in determining equality.
+                double epsilon = 0.000001d;
+                if (Math.abs(startLat - point.lat) < epsilon && Math.abs(startLon - point.lon) < epsilon) {
+                    // Values are considered equal
+                    continue;
+                }
                 double dist = DistancePlaneProjection.DIST_PLANE.calcDist(startLat, startLon, point.lat, point.lon);
 
                 if (dist < lowestDistance) {
@@ -394,7 +404,18 @@ public class BufferResource {
             }
         }
 
+        // In cases where zero PILLAR points have been detected, we must detect TOWER points because we must return
+        // non-null nearestEdge and non-null nearestPoint
+        if(nearestEdge == null && isPillarOnly)
+        {
+            return computeStartFeature(edgeList, startLat, startLon, false);
+        }
+
         return new BufferFeature(nearestEdge, nearestPoint, 0.0);
+    }
+
+    private BufferFeature computeStartFeature(List<Integer> edgeList, Double startLat, Double startLon) {
+        return computeStartFeature(edgeList, startLat, startLon, true);
     }
 
     /**
@@ -717,7 +738,15 @@ public class BufferResource {
         // When this happens, filtering by FetchMode.PILLAR_ONLY will return an empty
         // PointList.
         if (pointList.isEmpty()) {
-            return pointList;
+            pointList = new PointList();
+            PointList tempPointList = finalState.fetchWayGeometry(FetchMode.TOWER_ONLY);
+            for (GHPoint3D point : tempPointList) {
+                if (startFeature.getPoint().equals(point))
+                {
+                    continue;
+                }
+                pointList.add(point);
+            }
         }
 
         // When the buffer is only as wide as a single edge, truncate one half of the
