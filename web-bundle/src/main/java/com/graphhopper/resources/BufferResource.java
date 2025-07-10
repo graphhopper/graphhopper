@@ -387,14 +387,20 @@ public class BufferResource {
                 }
             }
 
+            // Prioritize the edge with the best match score
+            if ((currentMatchScore > bestMatchScore)) {
+                bestMatchScore = currentMatchScore;
+                nearestEdge = edge;
+            }
             // Calculate the distance to the edge
             PointList pointList = state.fetchWayGeometry(FetchMode.PILLAR_ONLY);
+
             for (GHPoint3D point : pointList) {
                 double dist = DistancePlaneProjection.DIST_PLANE.calcDist(startLat, startLon, point.lat, point.lon);
 
-                // Prioritize the edge with the best match score and the lowest distance
-                if ((currentMatchScore > bestMatchScore) || (currentMatchScore == bestMatchScore && dist < lowestDistance)) {
-                    bestMatchScore = currentMatchScore;
+                // In ties, prioritize the edge with the lowest distance
+                if ((currentMatchScore == bestMatchScore && dist < lowestDistance)) {
+
                     lowestDistance = dist;
                     nearestEdge = edge;
                 }
@@ -616,6 +622,10 @@ public class BufferResource {
      */
     private PointList computePointAtDistanceThreshold(BufferFeature startFeature, Double thresholdDistance,
                                                       BufferFeature endFeature, Boolean upstreamPath) {
+        if(endFeature.getEdge() < 0)
+        {
+            return new PointList();
+        }
         EdgeIteratorState finalState = graph.getEdgeIteratorState(endFeature.getEdge(), Integer.MIN_VALUE);
         PointList pointList = finalState.fetchWayGeometry(FetchMode.PILLAR_ONLY);
 
