@@ -18,6 +18,10 @@
 package com.graphhopper;
 
 import com.bedatadriven.jackson.datatype.jts.JtsModule;
+import com.carrotsearch.hppc.BitSet;
+import com.carrotsearch.hppc.IntArrayList;
+import com.carrotsearch.hppc.LongArrayList;
+import com.carrotsearch.hppc.sorting.IndirectSort;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
@@ -100,6 +104,7 @@ public class GraphHopper {
     private String ghLocation = "";
     private DAType dataAccessDefaultType = DAType.RAM_STORE;
     private final LinkedHashMap<String, String> dataAccessConfig = new LinkedHashMap<>();
+    private boolean sortGraph = true;
     private boolean elevation = false;
     private LockFactory lockFactory = new NativeFSLockFactory();
     private boolean allowWrites = true;
@@ -346,6 +351,11 @@ public class GraphHopper {
         return this;
     }
 
+    public GraphHopper setSortGraph(boolean sortGraph) {
+        this.sortGraph = sortGraph;
+        return this;
+    }
+
     /**
      * The underlying graph used in algorithms.
      *
@@ -494,6 +504,7 @@ public class GraphHopper {
                 dataAccessConfig.put(entry.getKey().substring("graph.dataaccess.mmap.".length()), entry.getValue().toString());
         }
 
+        sortGraph = ghConfig.getBool("graph.sort", sortGraph);
         if (ghConfig.getBool("max_speed_calculator.enabled", false))
             maxSpeedCalculator = new MaxSpeedCalculator(MaxSpeedCalculator.createLegalDefaultSpeeds());
 
@@ -893,7 +904,6 @@ public class GraphHopper {
         // These are simply copies of real edges. Any further modifications of the graph edges must take care of keeping
         // the artificial edges in sync with their real counterparts. So if an edge attribute shall be changed this change
         // must also be applied to the corresponding artificial edge.
-
         calculateUrbanDensity();
 
         if (maxSpeedCalculator != null) {
@@ -903,6 +913,9 @@ public class GraphHopper {
 
         if (hasElevation())
             interpolateBridgesTunnelsAndFerries();
+
+        if (sortGraph)
+            sortGraphAlongHilbertCurve(baseGraph);
     }
 
     protected void importOSM() {
@@ -952,6 +965,79 @@ public class GraphHopper {
         properties.create(100);
         if (maxSpeedCalculator != null)
             maxSpeedCalculator.createDataAccessForParser(baseGraph.getDirectory());
+    }
+
+    public static void sortGraphAlongHilbertCurve(BaseGraph graph) {
+        logger.info("sorting graph along Hilbert curve...");
+        StopWatch sw = StopWatch.started();
+        NodeAccess na = graph.getNodeAccess();
+        final int order = 31; // using 15 would allow us to use ints for sortIndices, but this would result in (marginally) slower routing
+        LongArrayList sortIndices = new LongArrayList();
+        for (int node = 0; node < graph.getNodes(); node++)
+            sortIndices.add(latLonToHilbertIndex(na.getLat(node), na.getLon(node), order));
+        int[] nodeOrder = IndirectSort.mergesort(0, graph.getNodes(), (nodeA, nodeB) -> Long.compare(sortIndices.get(nodeA), sortIndices.get(nodeB)));
+        EdgeExplorer explorer = graph.createEdgeExplorer();
+        int edges = graph.getEdges();
+        IntArrayList edgeOrder = new IntArrayList();
+        com.carrotsearch.hppc.BitSet edgesFound = new BitSet(edges);
+        for (int node : nodeOrder) {
+            EdgeIterator iter = explorer.setBaseNode(node);
+            while (iter.next()) {
+                if (!edgesFound.get(iter.getEdge())) {
+                    edgeOrder.add(iter.getEdge());
+                    edgesFound.set(iter.getEdge());
+                }
+            }
+        }
+        IntArrayList newEdgesByOldEdges = ArrayUtil.invert(edgeOrder);
+        IntArrayList newNodesByOldNodes = IntArrayList.from(ArrayUtil.invert(nodeOrder));
+        logger.info("calculating sort order took: " + sw.stop().getTimeString());
+        sortGraphForGivenOrdering(graph, newNodesByOldNodes, newEdgesByOldEdges);
+    }
+
+    public static void sortGraphForGivenOrdering(BaseGraph baseGraph, IntArrayList newNodesByOldNodes, IntArrayList newEdgesByOldEdges) {
+        if (!ArrayUtil.isPermutation(newEdgesByOldEdges))
+            throw new IllegalStateException("New edges: not a permutation");
+        if (!ArrayUtil.isPermutation(newNodesByOldNodes))
+            throw new IllegalStateException("New nodes: not a permutation");
+        logger.info("sort graph for fixed ordering...");
+        StopWatch sw = new StopWatch().start();
+        baseGraph.sortEdges(newEdgesByOldEdges::get);
+        logger.info("sorting {} edges took: {}", Helper.nf(newEdgesByOldEdges.size()), sw.stop().getTimeString());
+        sw = new StopWatch().start();
+        baseGraph.relabelNodes(newNodesByOldNodes::get);
+        logger.info("sorting {} nodes took: {}", Helper.nf(newNodesByOldNodes.size()), sw.stop().getTimeString());
+    }
+
+    public static long latLonToHilbertIndex(double lat, double lon, int order) {
+        double nx = (lon + 180) / 360;
+        double ny = (90 - lat) / 180;
+        long size = 1L << order;
+        long x = (long) (nx * size);
+        long y = (long) (ny * size);
+        x = Math.max(0, Math.min(size - 1, x));
+        y = Math.max(0, Math.min(size - 1, y));
+        return xy2d(order, x, y);
+    }
+
+    public static long xy2d(int n, long x, long y) {
+        long d = 0;
+        for (long s = 1L << (n - 1); s > 0; s >>= 1) {
+            int rx = (x & s) > 0 ? 1 : 0;
+            int ry = (y & s) > 0 ? 1 : 0;
+            d += s * s * ((3 * rx) ^ ry);
+            // rotate
+            if (ry == 0) {
+                if (rx == 1) {
+                    x = s - 1 - x;
+                    y = s - 1 - y;
+                }
+                long tmp = x;
+                x = y;
+                y = tmp;
+            }
+        }
+        return d;
     }
 
     private void calculateUrbanDensity() {

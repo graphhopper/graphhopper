@@ -253,7 +253,7 @@ public class OSMReaderTest {
 
     @Test
     public void testDoNotRejectEdgeIfFirstNodeIsMissing_issue2221() {
-        GraphHopper hopper = new GraphHopperFacade("test-osm9.xml").importOrLoad();
+        GraphHopper hopper = new GraphHopperFacade("test-osm9.xml").setSortGraph(false).importOrLoad();
         BaseGraph graph = hopper.getBaseGraph();
         assertEquals(2, graph.getNodes());
         assertEquals(1, graph.getEdges());
@@ -273,7 +273,7 @@ public class OSMReaderTest {
 
     @Test
     public void test_edgeDistanceWhenFirstNodeIsMissing_issue2221() {
-        GraphHopper hopper = new GraphHopperFacade("test-osm10.xml").importOrLoad();
+        GraphHopper hopper = new GraphHopperFacade("test-osm10.xml").setSortGraph(false).importOrLoad();
         BaseGraph graph = hopper.getBaseGraph();
         assertEquals(3, graph.getNodes());
         assertEquals(3, graph.getEdges());
@@ -322,6 +322,7 @@ public class OSMReaderTest {
     @Test
     public void testBarriers() {
         GraphHopper hopper = new GraphHopperFacade(fileBarriers).
+                setSortGraph(false).
                 setMinNetworkSize(0).
                 importOrLoad();
 
@@ -714,6 +715,7 @@ public class OSMReaderTest {
                         TestProfiles.accessAndSpeed("car").setTurnCostsConfig(new TurnCostsConfig(List.of("motorcar", "motor_vehicle"))),
                         TestProfiles.accessAndSpeed("truck", "car").setTurnCostsConfig(new TurnCostsConfig(List.of("hgv", "motor_vehicle")))
                 ).
+                setSortGraph(false).
                 importOrLoad();
         EncodingManager manager = hopper.getEncodingManager();
         BooleanEncodedValue carTCEnc = manager.getTurnBooleanEncodedValue(TurnRestriction.key("car"));

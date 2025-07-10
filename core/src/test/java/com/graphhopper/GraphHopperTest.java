@@ -105,8 +105,8 @@ public class GraphHopperTest {
             ASTAR + ",false,361",
             DIJKSTRA_BI + ",false,340",
             ASTAR_BI + ",false,192",
-            ASTAR_BI + ",true,46",
-            DIJKSTRA_BI + ",true,51"
+            DIJKSTRA_BI + ",true,45",
+            ASTAR_BI + ",true,43",
     })
     public void testMonacoDifferentAlgorithms(String algo, boolean withCH, int expectedVisitedNodes) {
         GraphHopper hopper = new GraphHopper().
