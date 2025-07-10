@@ -225,14 +225,14 @@ public class NavigateResponseConverter {
      * The first Intersection of the first step should only have one "bearings" and one
      * "out" entry
      */
-    private static void fixDepartIntersectionDetail(List<PathDetail> intersectionDetails, int pos) {
+    private static void fixDepartIntersectionDetail(List<PathDetail> intersectionDetails, int position) {
 
-        if (intersectionDetails.size() < pos + 2) {
+        if (intersectionDetails.size() < position + 2) {
             // Can happen if start and stop are at the same spot and other edge cases
             return;
         }
 
-        final Map<String, Object> departItersectionMap = (Map<String, Object>) intersectionDetails.get(pos).getValue();
+        final Map<String, Object> departItersectionMap = (Map<String, Object>) intersectionDetails.get(position).getValue();
 
         int out = (int) departItersectionMap.get("out");
         departItersectionMap.put("out", 0);
@@ -617,8 +617,11 @@ public class NavigateResponseConverter {
                 break;
             default: // i.e. ManeuverType.TURN:
                 maneuver.put("type", "turn");
-                break;
+                
         }
+        String modifier = getModifier(instruction);
+        if (modifier != null)
+            maneuver.put("modifier", modifier);
         maneuver.put("instruction", instruction.getTurnDescription(translationMap.getWithFallBack(locale)));
 
     }
