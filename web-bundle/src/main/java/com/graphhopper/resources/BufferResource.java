@@ -295,11 +295,15 @@ public class BufferResource {
      */
     private LineString computeBufferSegment(BufferFeature startFeature, String roadName, Double thresholdDistance,
                                             Boolean upstreamPath, Boolean upstreamStart) {
-        BufferFeature featureToThreshold = computeEdgeAtDistanceThreshold(startFeature, thresholdDistance, roadName,
-                upstreamPath, upstreamStart);
-        PointList finalSegmentToThreshold = computePointAtDistanceThreshold(startFeature, thresholdDistance,
-                featureToThreshold, upstreamPath);
         PointList startingEdgeGeometry = computeWayGeometryOfStartingEdge(startFeature, upstreamStart, thresholdDistance);
+        // If startingEdgeGeometry has only one point then we have to ensure that finalSegmentToThreshold is not empty because
+        // we need to be able to return at least two points.
+        Boolean isOkayToReturnStartFeature = startingEdgeGeometry.size() > 1;
+        BufferFeature featureToThreshold = computeEdgeAtDistanceThreshold(startFeature, thresholdDistance, roadName,
+                upstreamPath, upstreamStart, isOkayToReturnStartFeature);
+        PointList finalSegmentToThreshold = computePointAtDistanceThreshold(startFeature, thresholdDistance,
+                featureToThreshold, upstreamPath, isOkayToReturnStartFeature);
+
 
         List<Coordinate> coordinates = new ArrayList<>();
 
@@ -374,7 +378,7 @@ public class BufferResource {
      * @param isPillarOnly determines if pillar or tower points are attempted. Always check pillar points first
      *                     but if no pillar points are found, then check tower points. My understanding is that
      *                     there will always be tower points. (docs/core/low-level-api.md#what-are-pillar-and-tower-nodes)
-            * @return closest point along road
+     * @return closest point along road
      */
     private BufferFeature computeStartFeature(List<Integer> edgeList, Double startLat, Double startLon, Boolean isPillarOnly) {
         double lowestDistance = Double.MAX_VALUE;
@@ -556,10 +560,16 @@ public class BufferResource {
      *                          road's flow
      * @param upstreamStart     initial 'launch' direction - used only for a
      *                          bidirectional start
+     * @param isOkayToReturnStartFeature    determines if it is acceptable to return startFeature.
+     *                                      If it is not acceptable to return startFeature then
+     *                                      it may be necessary to exceed thresholdDistance to find
+     *                                      a BufferFeature.
+     *
      * @return buffer feature at specified distance away from start
      */
     private BufferFeature computeEdgeAtDistanceThreshold(final BufferFeature startFeature, Double thresholdDistance,
-                                                         String roadName, Boolean upstreamPath, Boolean upstreamStart) {
+                                                         String roadName, Boolean upstreamPath, Boolean upstreamStart,
+                                                         Boolean isOkayToReturnStartFeature) {
         List<Integer> usedEdges = new ArrayList<>() {
             {
                 add(startFeature.getEdge());
@@ -572,19 +582,23 @@ public class BufferResource {
 
         // Check starting edge
         double currentDistance = DistancePlaneProjection.DIST_PLANE.calcDist(
-            startFeature.getPoint().getLat(), startFeature.getPoint().getLon(),
-            nodeAccess.getLat(currentNode), nodeAccess.getLon(currentNode));
+                startFeature.getPoint().getLat(), startFeature.getPoint().getLon(),
+                nodeAccess.getLat(currentNode), nodeAccess.getLon(currentNode));
         double previousDistance = 0.0;
         Integer currentEdge = -1;
         // Create previous values to use in case we don't meet the threshold
         Integer previousEdge = currentEdge;
+        int originalNode = currentNode;
         int previousNode = currentNode;
 
-        if (currentDistance >= thresholdDistance) {
+        if (currentDistance >= thresholdDistance && isOkayToReturnStartFeature) {
             return startFeature;
         }
 
-        while (currentDistance < thresholdDistance) {
+        boolean isNodeOriginalNode = true;
+// if it is not okay to return startFeature then we cannot stop looping until currentNode is not the originalNode
+// this comment is not clear.  Reword this comment.  MDO
+        while (currentDistance < thresholdDistance || ( !isOkayToReturnStartFeature && isNodeOriginalNode )) {
             EdgeIterator iterator = edgeExplorer.setBaseNode(currentNode);
             List<Integer> potentialEdges = new ArrayList<>();
             List<Integer> potentialRoundaboutEdges = new ArrayList<>();
@@ -684,7 +698,8 @@ public class BufferResource {
                     nodeAccess.getLon(currentNode), nodeAccess.getLat(otherNode), nodeAccess.getLon(otherNode));
 
             // Break before moving to next node in case hitting the threshold
-            if (currentDistance >= thresholdDistance) {
+            isNodeOriginalNode = currentNode == originalNode;
+            if (currentDistance >= thresholdDistance && ( isOkayToReturnStartFeature || !isNodeOriginalNode )) {
                 break;
             }
 
@@ -725,7 +740,7 @@ public class BufferResource {
      * @return PointList to threshold along given edge of end feature
      */
     private PointList computePointAtDistanceThreshold(BufferFeature startFeature, Double thresholdDistance,
-                                                      BufferFeature endFeature, Boolean upstreamPath) {
+                                                      BufferFeature endFeature, Boolean upstreamPath, Boolean isOkayToReturnZeroPoints) {
         if(endFeature.getEdge() < 0)
         {
             return new PointList();
@@ -738,7 +753,10 @@ public class BufferResource {
         // When this happens, filtering by FetchMode.PILLAR_ONLY will return an empty
         // PointList.
         if (pointList.isEmpty()) {
-            pointList = new PointList();
+            if(isOkayToReturnZeroPoints)
+            {
+                return pointList;
+            }
             PointList tempPointList = finalState.fetchWayGeometry(FetchMode.TOWER_ONLY);
             for (GHPoint3D point : tempPointList) {
                 if (startFeature.getPoint().equals(point))
@@ -763,7 +781,20 @@ public class BufferResource {
         Double currentDistance = endFeature.getDistance();
         GHPoint3D previousPoint = pointList.get(0);
 
-        return computePathListWithinThreshold(thresholdDistance, pointList, currentDistance, previousPoint);
+        PointList resultPointList = computePathListWithinThreshold(thresholdDistance, pointList, currentDistance, previousPoint);
+
+        // If we must return a point and we do not have one then we need to create a point.  We can create a point because the
+        // line segment connecting any two consecutive points of a path necessarily lies entirely on the road.
+        if(!isOkayToReturnZeroPoints && resultPointList.isEmpty())
+        {
+            GHPoint3D beyondThresholdPoint = pointList.get(0);
+            double totalDist = DistancePlaneProjection.DIST_PLANE.calcDist(startFeature.getPoint().lat, startFeature.getPoint().lon, beyondThresholdPoint.lat, beyondThresholdPoint.lon);
+            double resultLat  = startFeature.getPoint().lat + (beyondThresholdPoint.lat - startFeature.getPoint().lat) * (totalDist/thresholdDistance);
+            double resultLon = startFeature.getPoint().lon + (beyondThresholdPoint.lon - startFeature.getPoint().lon) * (totalDist/thresholdDistance);
+            GHPoint3D resultPoint = new GHPoint3D(resultLat, resultLon, startFeature.getPoint().ele);
+            resultPointList.add(resultPoint);
+        }
+        return resultPointList;
     }
 
     /**
