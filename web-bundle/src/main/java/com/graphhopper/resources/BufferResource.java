@@ -312,9 +312,14 @@ public class BufferResource {
             coordinates.add(new Coordinate(point.getLon(), point.getLat()));
         }
 
-        // Add to threshold points
-        for (GHPoint point : featureToThreshold.getPath()) {
-            coordinates.add(new Coordinate(point.getLon(), point.getLat()));
+        // if it is not okay to return startFeature THEN we are using an extrapolated point because all the points in
+        // featureToThreshold are too far. If all the points in featureToThreshold are too far, then we cannot add them!
+        if(isOkayToReturnStartFeature)
+        {
+            // Add to threshold points
+            for (GHPoint point : featureToThreshold.getPath()) {
+                coordinates.add(new Coordinate(point.getLon(), point.getLat()));
+            }
         }
 
         // Add final segment points
@@ -596,8 +601,7 @@ public class BufferResource {
         }
 
         boolean isNodeOriginalNode = true;
-// if it is not okay to return startFeature then we cannot stop looping until currentNode is not the originalNode
-// this comment is not clear.  Reword this comment.  MDO
+        // If the threshold is exceeded, we can stop looping only if it isOkayToReturnStartFeature OR the currentNode is not the originalNode
         while (currentDistance < thresholdDistance || ( !isOkayToReturnStartFeature && isNodeOriginalNode )) {
             EdgeIterator iterator = edgeExplorer.setBaseNode(currentNode);
             List<Integer> potentialEdges = new ArrayList<>();
@@ -757,6 +761,7 @@ public class BufferResource {
             {
                 return pointList;
             }
+            pointList = new PointList();
             PointList tempPointList = finalState.fetchWayGeometry(FetchMode.TOWER_ONLY);
             for (GHPoint3D point : tempPointList) {
                 if (startFeature.getPoint().equals(point))
@@ -789,8 +794,8 @@ public class BufferResource {
         {
             GHPoint3D beyondThresholdPoint = pointList.get(0);
             double totalDist = DistancePlaneProjection.DIST_PLANE.calcDist(startFeature.getPoint().lat, startFeature.getPoint().lon, beyondThresholdPoint.lat, beyondThresholdPoint.lon);
-            double resultLat  = startFeature.getPoint().lat + (beyondThresholdPoint.lat - startFeature.getPoint().lat) * (totalDist/thresholdDistance);
-            double resultLon = startFeature.getPoint().lon + (beyondThresholdPoint.lon - startFeature.getPoint().lon) * (totalDist/thresholdDistance);
+            double resultLat  = startFeature.getPoint().lat + (beyondThresholdPoint.lat - startFeature.getPoint().lat) * (thresholdDistance/totalDist);
+            double resultLon = startFeature.getPoint().lon + (beyondThresholdPoint.lon - startFeature.getPoint().lon) * (thresholdDistance/totalDist);
             GHPoint3D resultPoint = new GHPoint3D(resultLat, resultLon, startFeature.getPoint().ele);
             resultPointList.add(resultPoint);
         }
