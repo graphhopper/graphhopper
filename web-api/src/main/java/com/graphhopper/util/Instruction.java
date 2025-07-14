@@ -41,6 +41,8 @@ public class Instruction {
     public static final int IGNORE = Integer.MIN_VALUE;
     public static final int KEEP_RIGHT = 7;
     public static final int U_TURN_RIGHT = 8;
+
+    public static final int FERRY = 9;
     public static final int PT_START_TRIP = 101;
     public static final int PT_TRANSFER = 102;
     public static final int PT_END_TRIP = 103;
@@ -169,10 +171,13 @@ public class Instruction {
 
         String str;
         String streetName = _getName();
+        String ferryStr = (String) extraInfo.get("ferry");
 
         int indi = getSign();
         if (indi == Instruction.CONTINUE_ON_STREET) {
             str = Helper.isEmpty(streetName) ? tr.tr("continue") : tr.tr("continue_onto", streetName);
+        } else if (indi == Instruction.FERRY) {
+            str = tr.tr(ferryStr, streetName); // pick name only
         } else if (indi == Instruction.PT_START_TRIP) {
             str = tr.tr("pt_start_trip", streetName);
         } else if (indi == Instruction.PT_TRANSFER) {
@@ -222,11 +227,7 @@ public class Instruction {
                 str = streetName.isEmpty() ? dir : tr.tr("turn_onto", dir, streetName);
         }
 
-        String ferryStr = (String) extraInfo.get("ferry");
-
-        if ("board_ferry".equals(ferryStr))
-            return tr.tr(ferryStr, streetName); // pick name only
-        else if ("leave_ferry".equals(ferryStr))
+        if ("leave_ferry".equals(ferryStr))
             return tr.tr(ferryStr, str);
 
         String dest = (String) extraInfo.get(STREET_DESTINATION);

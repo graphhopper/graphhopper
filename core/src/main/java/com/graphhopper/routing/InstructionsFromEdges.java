@@ -24,8 +24,6 @@ import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 
-import java.util.Locale;
-
 import static com.graphhopper.util.Parameters.Details.*;
 
 /**
@@ -371,8 +369,9 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
 
         // there is no other turn possible
         if (nrOfPossibleTurns <= 1) {
+            if (InstructionsHelper.isToFerry(roadEnv, prevRoadEnv)) return Instruction.FERRY;
             if (Math.abs(sign) > 1 && outgoingEdges.getVisibleTurns() > 1 && !outgoingEdges.mergedOrSplitWay()
-                    || InstructionsHelper.isToOrFromFerry(roadEnv, prevRoadEnv)) {
+                    || InstructionsHelper.isFromFerry(roadEnv, prevRoadEnv)) {
                 // This is an actual turn because |sign| > 1
                 // There could be some confusion, if we would not create a turn instruction, even though it is the only
                 // possible turn, also see #1048
@@ -384,10 +383,11 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
 
         // Very certain, this is a turn
         if (Math.abs(sign) > 1) {
+            if (InstructionsHelper.isFromFerry(roadEnv, prevRoadEnv)) return Instruction.FERRY;
             // Don't show an instruction if the user is following a street, even though the street is
             // bending. We should only do this, if following the street is the obvious choice.
             if (InstructionsHelper.isSameName(name, prevName) && outgoingEdges.outgoingEdgesAreSlowerByFactor(2)
-                    || InstructionsHelper.isToOrFromFerry(roadEnv, prevRoadEnv)
+                    || InstructionsHelper.isFromFerry(roadEnv, prevRoadEnv)
                     || outgoingEdges.mergedOrSplitWay()) {
                 return Instruction.IGNORE;
             }
@@ -416,7 +416,9 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         // Signs provide too less detail, so we use the delta for a precise comparison
         double delta = InstructionsHelper.calculateOrientationDelta(prevLat, prevLon, lat, lon, prevOrientation);
 
-        if (InstructionsHelper.isToOrFromFerry(roadEnv, prevRoadEnv))
+        if (InstructionsHelper.isToFerry(roadEnv, prevRoadEnv))
+            return Instruction.FERRY;
+        else if (InstructionsHelper.isFromFerry(roadEnv, prevRoadEnv))
             return Instruction.CONTINUE_ON_STREET;
 
         // This state is bad! Two streets are going more or less straight

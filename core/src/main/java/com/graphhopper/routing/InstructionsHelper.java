@@ -82,8 +82,12 @@ class InstructionsHelper {
         return new GHPoint(tmpLat, tmpLon);
     }
 
-    static boolean isToOrFromFerry(RoadEnvironment re, RoadEnvironment prev) {
-        return (re == RoadEnvironment.FERRY || prev == RoadEnvironment.FERRY) && re != prev;
+    static boolean isToFerry(RoadEnvironment re, RoadEnvironment prev) {
+        return (re == RoadEnvironment.FERRY) && re != prev;
+    }
+
+    static boolean isFromFerry(RoadEnvironment re, RoadEnvironment prev) {
+        return (prev == RoadEnvironment.FERRY) && re != prev;
     }
 
     static String createFerryInfo(RoadEnvironment re, RoadEnvironment prev) {
