@@ -134,6 +134,8 @@ public class MVTResource {
                     map.put(ev.getName(), edge.get((DecimalEncodedValue) ev) + (ev.isStoreTwoDirections() ? " | " + edge.getReverse((DecimalEncodedValue) ev) : ""));
                 else if (ev instanceof BooleanEncodedValue)
                     map.put(ev.getName(), edge.get((BooleanEncodedValue) ev) + (ev.isStoreTwoDirections() ? " | " + edge.getReverse((BooleanEncodedValue) ev) : ""));
+                else if (ev instanceof StringEncodedValue)
+                    map.put(ev.getName(), edge.get((StringEncodedValue) ev) + (ev.isStoreTwoDirections() ? " | " + edge.getReverse((StringEncodedValue) ev) : ""));
                 else if (ev instanceof IntEncodedValue)
                     map.put(ev.getName(), edge.get((IntEncodedValue) ev) + (ev.isStoreTwoDirections() ? " | " + edge.getReverse((IntEncodedValue) ev) : ""));
             });
