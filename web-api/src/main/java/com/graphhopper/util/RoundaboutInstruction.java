@@ -114,16 +114,19 @@ public class RoundaboutInstruction extends Instruction {
 
         String str;
         String streetName = _getName();
-        int indi = getSign();
-        if (indi == Instruction.USE_ROUNDABOUT) {
+        int sign = getSign();
+        if (sign == Instruction.USE_ROUNDABOUT) {
             if (!exited) {
                 str = tr.tr("roundabout_enter");
             } else {
                 str = Helper.isEmpty(streetName) ? tr.tr("roundabout_exit", getExitNumber())
                         : tr.tr("roundabout_exit_onto", getExitNumber(), streetName);
             }
+        } else if (sign == Instruction.LEAVE_ROUNDABOUT) {
+            str = Helper.isEmpty(streetName) ? tr.tr("roundabout_exit_now")
+                    : tr.tr("roundabout_exit_now_onto", streetName);
         } else {
-            throw new IllegalStateException(indi + "no roundabout indication");
+            throw new IllegalStateException(sign + " no roundabout indication");
         }
         return str;
     }

@@ -27,7 +27,7 @@ public class Instruction {
     public static final int U_TURN_UNKNOWN = -98;
     public static final int U_TURN_LEFT = -8;
     public static final int KEEP_LEFT = -7;
-    public static final int LEAVE_ROUNDABOUT = -6; // for future use
+    public static final int LEAVE_ROUNDABOUT = -6;
     public static final int TURN_SHARP_LEFT = -3;
     public static final int TURN_LEFT = -2;
     public static final int TURN_SLIGHT_LEFT = -1;

@@ -24,6 +24,7 @@ import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 
+import static com.graphhopper.util.Instruction.LEAVE_ROUNDABOUT;
 import static com.graphhopper.util.Parameters.Details.*;
 
 /**
@@ -232,11 +233,13 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             orientation = AngleCalc.ANGLE_CALC.alignOrientation(recentOrientation, orientation);
             double deltaOut = (orientation - recentOrientation);
 
-            prevInstruction = ((RoundaboutInstruction) prevInstruction)
+            ((RoundaboutInstruction) prevInstruction)
                     .setRadian(deltaInOut)
                     .setDirOfRotation(deltaOut)
                     .setExited();
 
+            prevInstruction = new RoundaboutInstruction(LEAVE_ROUNDABOUT, name, new PointList(10, nodeAccess.is3D()));
+            ways.add(prevInstruction);
             prevInstructionName = prevName;
             prevName = name;
             prevDestinationAndRef = destination + destinationRef;
