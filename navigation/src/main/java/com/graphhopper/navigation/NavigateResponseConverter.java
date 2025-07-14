@@ -17,7 +17,6 @@
  */
 package com.graphhopper.navigation;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -562,7 +561,7 @@ public class NavigateResponseConverter {
         if (modifier != null)
             singleBannerInstruction.put("modifier", modifier);
 
-        if (instruction.getSign() == Instruction.USE_ROUNDABOUT) {
+        if (instruction.getSign() == Instruction.USE_ROUNDABOUT || instruction.getSign() == Instruction.EXIT_ROUNDABOUT) {
             if (instruction instanceof RoundaboutInstruction) {
                 double turnAngle = ((RoundaboutInstruction) instruction).getTurnAngle();
                 if (Double.isNaN(turnAngle)) {
@@ -590,8 +589,11 @@ public class NavigateResponseConverter {
 
         maneuver.put("type", getTurnType(instruction, isFirstInstructionOfLeg));
         // exit number
-        if (instruction instanceof RoundaboutInstruction)
-            maneuver.put("exit", ((RoundaboutInstruction) instruction).getExitNumber());
+        if (instruction instanceof RoundaboutInstruction) {
+            RoundaboutInstruction ri = (RoundaboutInstruction) instruction;
+            if (ri.getSign() == Instruction.USE_ROUNDABOUT)
+                maneuver.put("exit", ri.getExitNumber());
+        }
 
         maneuver.put("instruction", instruction.getTurnDescription(translationMap.getWithFallBack(locale)));
 
@@ -617,6 +619,8 @@ public class NavigateResponseConverter {
                     return "arrive";
                 case Instruction.USE_ROUNDABOUT:
                     return "roundabout";
+                case Instruction.EXIT_ROUNDABOUT:
+                    return "exit roundabout";
                 default:
                     return "turn";
             }

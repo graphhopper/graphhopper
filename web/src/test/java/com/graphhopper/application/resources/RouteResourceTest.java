@@ -91,7 +91,7 @@ public class RouteResourceTest {
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR).
                 // adding this so the corresponding check is not just skipped...
-                putObject(MAX_NON_CH_POINT_DISTANCE, 10e6).
+                        putObject(MAX_NON_CH_POINT_DISTANCE, 10e6).
                 putObject("routing.snap_preventions_default", "tunnel, bridge, ferry").
                 putObject("graph.encoded_values", "road_class, surface, road_environment, max_speed, country, " +
                         "car_access, car_average_speed, " +
@@ -248,11 +248,12 @@ public class RouteResourceTest {
         assertTrue(res.getDistance() < 21000, "distance wasn't correct:" + res.getDistance());
 
         InstructionList instructions = res.getInstructions();
-        assertEquals(25, instructions.size());
+        assertEquals(35, instructions.size());
         assertEquals("Continue onto la Callisa", instructions.get(0).getTurnDescription(null));
         assertEquals("At roundabout, take exit 2", instructions.get(4).getTurnDescription(null));
         assertEquals(true, instructions.get(4).getExtraInfoJSON().get("exited"));
-        assertEquals(false, instructions.get(23).getExtraInfoJSON().get("exited"));
+        assertNull(instructions.get(10).getExtraInfoJSON().get("exited"));
+        assertEquals(false, instructions.get(33).getExtraInfoJSON().get("exited"));
     }
 
     @Test
