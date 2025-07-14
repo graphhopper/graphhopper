@@ -121,9 +121,9 @@ public class CHTurnCostTest {
         graph.edge(1, 0).setDistance(30).set(speedEnc, 10, 10);
         graph.edge(0, 3).setDistance(10).set(speedEnc, 10, 10);
         graph.edge(3, 4).setDistance(30).set(speedEnc, 10, 10);
-        graph.freeze();
         setTurnCost(2, 1, 0, 2);
         setTurnCost(0, 3, 4, 4);
+        graph.freeze();
         checkPathUsingRandomContractionOrder(IntArrayList.from(2, 1, 0, 3, 4), 9, 6, 2, 4);
     }
 
@@ -256,10 +256,10 @@ public class CHTurnCostTest {
         graph.edge(5, 6).setDistance(10).set(speedEnc, 10, 0);
         graph.edge(6, 7).setDistance(10).set(speedEnc, 10, 0);
         graph.edge(7, 8).setDistance(10).set(speedEnc, 10, 0);
-        graph.freeze();
         setTurnCost(1, 2, 3, 4);
         setTurnCost(3, 4, 5, 2);
         setTurnCost(5, 6, 7, 3);
+        graph.freeze();
 
         // we contract the graph such that only a few shortcuts are created and that the fwd/bwd searches for the
         // 0-8 query meet at node 4 (make sure we include all three cases where turn cost times might come to play:
@@ -278,7 +278,6 @@ public class CHTurnCostTest {
         EdgeIteratorState edge3 = graph.edge(3, 4).setDistance(10).set(speedEnc, 10, 10);
         EdgeIteratorState edge4 = graph.edge(4, 5).setDistance(10).set(speedEnc, 10, 10);
         EdgeIteratorState edge5 = graph.edge(5, 6).setDistance(10).set(speedEnc, 10, 10);
-        graph.freeze();
 
         // turn costs ->
         setTurnCost(edge0, edge1, 1, 5);
@@ -292,6 +291,8 @@ public class CHTurnCostTest {
         setTurnCost(edge3, edge2, 3, 4);
         setTurnCost(edge2, edge1, 2, 1);
         setTurnCost(edge1, edge0, 1, 0);
+
+        graph.freeze();
 
         prepareCH(1, 3, 5, 2, 4, 0, 6);
 
@@ -317,12 +318,13 @@ public class CHTurnCostTest {
         graph.edge(3, 2).setDistance(10).set(speedEnc, 10, 10);
         graph.edge(2, 4).setDistance(10).set(speedEnc, 10, 10);
         graph.edge(4, 1).setDistance(10).set(speedEnc, 10, 0);
-        graph.freeze();
 
         // enforce loop (going counter-clockwise)
         setRestriction(0, 4, 1);
         setTurnCost(4, 2, 3, 4);
         setTurnCost(3, 2, 4, 2);
+
+        graph.freeze();
 
         checkPathUsingRandomContractionOrder(IntArrayList.from(0, 4, 3, 2, 4, 1), 7, 2, 0, 1);
     }
@@ -342,10 +344,11 @@ public class CHTurnCostTest {
         graph.edge(1, 5).setDistance(10).set(speedEnc, 10, 0);
         graph.edge(5, 6).setDistance(10).set(speedEnc, 10, 0);
         graph.edge(6, 4).setDistance(20).set(speedEnc, 10, 0);
-        graph.freeze();
 
         setRestriction(7, 5, 6);
         setTurnCost(0, 2, 1, 2);
+
+        graph.freeze();
 
         final IntArrayList expectedPath = IntArrayList.from(3, 7, 5, 0, 2, 1, 5, 6, 4);
         final int roadCosts = 12;
@@ -368,12 +371,13 @@ public class CHTurnCostTest {
         graph.edge(4, 2).setDistance(10).set(speedEnc, 10, 10);
         graph.edge(2, 5).setDistance(10).set(speedEnc, 10, 0);
         graph.edge(5, 6).setDistance(20).set(speedEnc, 10, 0);
-        graph.freeze();
 
         // enforce loop (going counter-clockwise)
         setRestriction(1, 2, 5);
         setTurnCost(3, 4, 2, 2);
         setTurnCost(2, 4, 3, 4);
+
+        graph.freeze();
 
         final IntArrayList expectedPath = IntArrayList.from(0, 1, 2, 3, 4, 2, 5, 6);
         final int roadCosts = 10;
@@ -415,7 +419,6 @@ public class CHTurnCostTest {
         graph.edge(3, 4).setDistance(20).set(speedEnc, 10, 10);
         graph.edge(4, 9).setDistance(10).set(speedEnc, 10, 10);
         graph.edge(9, 14).setDistance(20).set(speedEnc, 10, 10);
-        graph.freeze();
 
         // enforce loop (going counter-clockwise)
         setRestriction(6, 7, 12);
@@ -429,6 +432,8 @@ public class CHTurnCostTest {
         setTurnCost(16, 17, 4, 4);
         setTurnCost(4, 9, 14, 3);
         setTurnCost(3, 4, 9, 3);
+
+        graph.freeze();
 
         final IntArrayList expectedPath = IntArrayList.from(0, 1, 6, 7, 8, 3, 2, 7, 12, 13, 14);
         final int roadCosts = 15;
@@ -498,7 +503,6 @@ public class CHTurnCostTest {
         graph.edge(27, 28).setDistance(1000).set(speedEnc, 10, 10);
         graph.edge(28, 26).setDistance(10).set(speedEnc, 10, 10);
         graph.edge(20, 28).setDistance(10).set(speedEnc, 10, 10);
-        graph.freeze();
 
         // enforce figure of eight curve at node 7
         setRestriction(1, 7, 13);
@@ -520,6 +524,8 @@ public class CHTurnCostTest {
 
         // add some more turn costs on the shortest path
         setTurnCost(7, 13, 14, 2);
+
+        graph.freeze();
 
         // expected costs of the shortest path
         final IntArrayList expectedPath = IntArrayList.from(
@@ -545,8 +551,9 @@ public class CHTurnCostTest {
         graph.edge(0, 3).setDistance(10).set(speedEnc, 10, 0);
         graph.edge(3, 2).setDistance(10).set(speedEnc, 10, 0);
         graph.edge(2, 4).setDistance(10).set(speedEnc, 10, 0);
-        graph.freeze();
         setRestriction(5, 6, 1);
+
+        graph.freeze();
 
         final IntArrayList expectedPath = IntArrayList.from(5, 6, 4, 0, 3, 2, 4, 6, 1);
         checkPath(expectedPath, 8, 0, 5, 1, new int[]{0, 1, 2, 3, 4, 5, 6});
@@ -570,8 +577,9 @@ public class CHTurnCostTest {
         graph.edge(0, 3).setDistance(10).set(speedEnc, 10, 0);
         graph.edge(3, 2).setDistance(10).set(speedEnc, 10, 0);
         graph.edge(2, 4).setDistance(10).set(speedEnc, 10, 0);
-        graph.freeze();
         setRestriction(5, 6, 7);
+
+        graph.freeze();
 
         final IntArrayList expectedPath = IntArrayList.from(5, 6, 1, 4, 0, 3, 2, 4, 1, 6, 7);
         checkPath(expectedPath, 10, 0, 5, 7, new int[]{0, 1, 2, 3, 4, 5, 6, 7});
@@ -635,7 +643,6 @@ public class CHTurnCostTest {
                 }
             }
         }
-        graph.freeze();
         EdgeExplorer inExplorer = graph.createEdgeExplorer();
         EdgeExplorer outExplorer = graph.createEdgeExplorer();
 
@@ -654,6 +661,7 @@ public class CHTurnCostTest {
                 }
             }
         }
+        graph.freeze();
 
         IntArrayList contractionOrder = getRandomIntegerSequence(graph.getNodes(), rnd);
         checkStrict = false;

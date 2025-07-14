@@ -92,12 +92,10 @@ public class EdgeBasedNodeContractorTest {
         final EdgeIteratorState edge3to2 = graph.edge(3, 2).setDistance(20).set(speedEnc, 10, 0);
         final EdgeIteratorState edge2to7 = graph.edge(2, 7).setDistance(10).set(speedEnc, 10, 0);
         graph.edge(7, 9).setDistance(10).set(speedEnc, 10, 0);
-        freeze();
-        setMaxLevelOnAllNodes();
-
         setRestriction(6, 7, 9);
         setTurnCost(8, 3, 2, 2);
-
+        freeze();
+        setMaxLevelOnAllNodes();
         contractNodes(5, 6, 3, 2, 9, 1, 8, 4, 7, 0);
         checkShortcuts(
                 createShortcut(2, 8, edge8to3, edge3to2, 5, false, true),
@@ -121,9 +119,9 @@ public class EdgeBasedNodeContractorTest {
         final EdgeIteratorState e3to5 = graph.edge(3, 5).setDistance(20).set(speedEnc, 10, 0);
         graph.edge(2, 6).setDistance(10).set(speedEnc, 10, 0);
         graph.edge(5, 4).setDistance(20).set(speedEnc, 10, 0);
+        setRestriction(1, 6, 3);
         freeze();
         setMaxLevelOnAllNodes();
-        setRestriction(1, 6, 3);
         contractAllNodesInOrder();
         checkShortcuts(
                 // from contracting node 0: need a shortcut because of turn restriction
@@ -175,12 +173,12 @@ public class EdgeBasedNodeContractorTest {
         final EdgeIteratorState e3to4 = graph.edge(3, 4).setDistance(10).set(speedEnc, 10, 10);
         final EdgeIteratorState e4to5 = graph.edge(4, 5).setDistance(10).set(speedEnc, 10, 0);
         graph.edge(5, 2).setDistance(20).set(speedEnc, 10, 0);
-        freeze();
 
         // enforce loop (going counter-clockwise)
         setRestriction(0, 4, 5);
         setTurnCost(6, 3, 4, 2);
         setTurnCost(4, 3, 6, 4);
+        freeze();
         setMaxLevelOnAllNodes();
 
         contractAllNodesInOrder();
@@ -469,9 +467,9 @@ public class EdgeBasedNodeContractorTest {
         graph.edge(2, 7).setDistance(10).set(speedEnc, 10, 0);
         graph.edge(5, 6).setDistance(10).set(speedEnc, 10, 0);
         graph.edge(1, 4).setDistance(10).set(speedEnc, 10, 10);
+        setRestriction(7, 3, 5);
         freeze();
         setMaxLevelOnAllNodes();
-        setRestriction(7, 3, 5);
         contractNodes(3, 4, 2, 6, 7, 5, 1);
         checkShortcuts(
                 // from contracting node 3
@@ -1072,13 +1070,13 @@ public class EdgeBasedNodeContractorTest {
         graph.edge(3, 2).setDistance(10).set(speedEnc, 10, 10);
         graph.edge(2, 4).setDistance(10).set(speedEnc, 10, 10);
         graph.edge(4, 1).setDistance(10).set(speedEnc, 10, 0);
-        freeze();
-        setMaxLevelOnAllNodes();
 
         // enforce loop (going counter-clockwise)
         setRestriction(0, 4, 1);
         setTurnCost(4, 2, 3, 4);
         setTurnCost(3, 2, 4, 2);
+        freeze();
+        setMaxLevelOnAllNodes();
         contractNodes(2, 0, 1, 4, 3);
         checkShortcuts(
                 createShortcut(4, 3, 7, 5, 3, 2, 6, true, false),
@@ -1100,12 +1098,12 @@ public class EdgeBasedNodeContractorTest {
         graph.edge(4, 2).setDistance(5000).set(speedEnc, 10, 0);
         graph.edge(2, 3).setDistance(2000).set(speedEnc, 10, 0);
         graph.edge(3, 1).setDistance(1000).set(speedEnc, 10, 0);
+        setRestriction(0, 3, 1);
         freeze();
         chStore = CHStorage.fromGraph(graph, chConfigs.get(1));
         chBuilder = new CHStorageBuilder(chStore);
         weighting = RoutingCHGraphImpl.fromGraph(graph, chStore, chConfigs.get(1)).getWeighting();
         setMaxLevelOnAllNodes();
-        setRestriction(0, 3, 1);
         contractNodes(4, 0, 1, 2, 3);
         checkShortcuts(
                 createShortcut(2, 3, 2, 4, 1, 2, 600, false, true),

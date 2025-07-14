@@ -316,10 +316,11 @@ public class CHQueryWithTurnCostsTest {
         f.graph.edge(2, 0).setDistance(30).set(f.speedEnc, 10, 0);
         f.graph.edge(0, 3).setDistance(10).set(f.speedEnc, 10, 0);
         f.graph.edge(3, 4).setDistance(30).set(f.speedEnc, 10, 0);
-        f.freeze();
 
         f.setTurnCost(1, 2, 0, 2);
         f.setTurnCost(0, 3, 4, 4);
+
+        f.freeze();
 
         f.setIdentityLevels();
         // from contracting node 0
@@ -490,8 +491,8 @@ public class CHQueryWithTurnCostsTest {
         f.graph.edge(nodeB, 2).setDistance(10).set(f.speedEnc, 10, 0);
         final EdgeIteratorState e3toB = f.graph.edge(3, nodeB).setDistance(20).set(f.speedEnc, 10, 0);
         final EdgeIteratorState e3toA = f.graph.edge(3, nodeA).setDistance(10).set(f.speedEnc, 10, 10);
-        f.freeze();
         f.setRestriction(0, 3, nodeB);
+        f.freeze();
 
         // one shortcut when contracting node 3
         f.setIdentityLevels();

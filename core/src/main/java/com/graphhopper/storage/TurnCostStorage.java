@@ -38,16 +38,20 @@ import java.util.function.IntUnaryOperator;
  */
 public class TurnCostStorage {
     static final int NO_TURN_ENTRY = -1;
-    // we store each turn cost entry in the format |from_edge|to_edge|flags|next|. each entry has 4 bytes -> 16 bytes total
+    // turn cost entry format:
+    // before freeze: |from_edge|to_edge|flags|next|. each entry has 4 bytes -> 16 bytes total
+    // after freeze : |from_edge|to_edge|flags|.      each entry has 4 bytes -> 12 bytes total
     private static final int TC_FROM = 0;
     private static final int TC_TO = 4;
     private static final int TC_FLAGS = 8;
-    private static final int TC_NEXT = 12;
-    private static final int BYTES_PER_ENTRY = 16;
+    private static final int TC_NEXT = 12; // only used until the storage is frozen
+    private static final int BYTES_PER_ENTRY_BEFORE_FREEZE = 16;
+    private static final int BYTES_PER_ENTRY_AFTER_FREEZE = 12;
 
     private final BaseGraph baseGraph;
     private final DataAccess turnCosts;
     private final EdgeIntAccess edgeIntAccess = createEdgeIntAccess();
+    private boolean frozen;
     private int turnCostsCount;
 
     public TurnCostStorage(BaseGraph baseGraph, DataAccess turnCosts) {
@@ -60,11 +64,51 @@ public class TurnCostStorage {
         return this;
     }
 
+    public void freeze() {
+        IntArrayList tcFroms = new IntArrayList();
+        IntArrayList tcTos = new IntArrayList();
+        IntArrayList tcFlags = new IntArrayList();
+        IntArrayList tcNexts = new IntArrayList();
+        for (int i = 0; i < turnCostsCount; i++) {
+            long pointer = toPointer(i);
+            tcFroms.add(turnCosts.getInt(pointer + TC_FROM));
+            tcTos.add(turnCosts.getInt(pointer + TC_TO));
+            tcFlags.add(turnCosts.getInt(pointer + TC_FLAGS));
+            tcNexts.add(turnCosts.getInt(pointer + TC_NEXT));
+        }
+        long turnCostsCountBefore = turnCostsCount;
+        turnCostsCount = 0;
+        for (int viaNode = 0; viaNode < baseGraph.getNodes(); ++viaNode) {
+            int index = baseGraph.getNodeAccess().getTurnCostIndex(viaNode);
+            baseGraph.getNodeAccess().setTurnCostIndex(viaNode, turnCostsCount);
+            while (index != NO_TURN_ENTRY) {
+                long pointer = (long) turnCostsCount *  BYTES_PER_ENTRY_AFTER_FREEZE;
+                turnCosts.setInt(pointer + TC_FROM, tcFroms.get(index));
+                turnCosts.setInt(pointer + TC_TO, tcTos.get(index));
+                turnCosts.setInt(pointer + TC_FLAGS, tcFlags.get(index));
+                turnCostsCount++;
+                index = tcNexts.get(index);
+            }
+        }
+        if (turnCostsCount != turnCostsCountBefore)
+            throw new IllegalStateException("turn costs count should remain unchanged during freeze");
+        frozen = true;
+    }
+
+    public boolean isFrozen() {
+        return frozen;
+    }
+
     public void flush() {
         turnCosts.setHeader(0, Constants.VERSION_TURN_COSTS);
-        turnCosts.setHeader(4, BYTES_PER_ENTRY);
-        turnCosts.setHeader(2 * 4, turnCostsCount);
+        turnCosts.setHeader(4, frozen ? 1 : 0);
+        turnCosts.setHeader(8, getBytesPerEntry());
+        turnCosts.setHeader(12, turnCostsCount);
         turnCosts.flush();
+    }
+
+    private int getBytesPerEntry() {
+        return frozen ? BYTES_PER_ENTRY_AFTER_FREEZE : BYTES_PER_ENTRY_BEFORE_FREEZE;
     }
 
     public void close() {
@@ -80,10 +124,11 @@ public class TurnCostStorage {
             return false;
 
         GHUtility.checkDAVersion(turnCosts.getName(), Constants.VERSION_TURN_COSTS, turnCosts.getHeader(0));
-        if (turnCosts.getHeader(4) != BYTES_PER_ENTRY) {
-            throw new IllegalStateException("Number of bytes per turn cost entry does not match the current configuration: " + turnCosts.getHeader(0) + " vs. " + BYTES_PER_ENTRY);
-        }
-        turnCostsCount = turnCosts.getHeader(8);
+        frozen = turnCosts.getHeader(4) == 1;
+        int bytesPerEntry = turnCosts.getHeader(8);
+        if (bytesPerEntry != getBytesPerEntry())
+            throw new IllegalStateException("Unexpected bytes per entry: " + bytesPerEntry + " vs. " + getBytesPerEntry());
+        turnCostsCount = turnCosts.getHeader(12);
         return true;
     }
 
@@ -105,6 +150,8 @@ public class TurnCostStorage {
     }
 
     private int findOrCreateTurnCostEntry(int fromEdge, int viaNode, int toEdge) {
+        if (frozen)
+            throw new IllegalStateException("Turn cost storage is already frozen");
         int index = findIndex(fromEdge, viaNode, toEdge);
         if (index < 0) {
             // create a new entry
@@ -159,6 +206,13 @@ public class TurnCostStorage {
         if (viaNode < 0)
             throw new IllegalArgumentException("via node cannot be negative");
 
+        if (frozen)
+            return doFindIndexAfterFreeze(fromEdge, viaNode, toEdge);
+        else
+            return doFindIndexBeforeFreeze(fromEdge, viaNode, toEdge);
+    }
+
+    private int doFindIndexBeforeFreeze(int fromEdge, int viaNode, int toEdge) {
         final int maxEntries = 1000;
         int index = baseGraph.getNodeAccess().getTurnCostIndex(viaNode);
         for (int i = 0; i < maxEntries; ++i) {
@@ -171,6 +225,17 @@ public class TurnCostStorage {
         throw new IllegalStateException("Turn cost list for node: " + viaNode + " is longer than expected, max: " + maxEntries);
     }
 
+    private int doFindIndexAfterFreeze(int fromEdge, int viaNode, int toEdge) {
+        int start = baseGraph.getNodeAccess().getTurnCostIndex(viaNode);
+        int end = viaNode == baseGraph.getNodes() - 1 ? turnCostsCount : baseGraph.getNodeAccess().getTurnCostIndex(viaNode + 1);
+        for (int index = start; index < end; index++) {
+            long pointer = toPointer(index);
+            if (fromEdge == turnCosts.getInt(pointer + TC_FROM) && toEdge == turnCosts.getInt(pointer + TC_TO))
+                return index;
+        }
+        return -1;
+    }
+
     public void sortEdges(IntUnaryOperator getNewEdgeForOldEdge) {
         for (int i = 0; i < turnCostsCount; i++) {
             long pointer = toPointer(i);
@@ -180,7 +245,7 @@ public class TurnCostStorage {
     }
 
     private long toPointer(int index) {
-        return (long) index * BYTES_PER_ENTRY;
+        return (long) index * getBytesPerEntry();
     }
 
     public int getTurnCostsCount() {
@@ -188,6 +253,13 @@ public class TurnCostStorage {
     }
 
     public int getTurnCostsCount(int node) {
+        if (frozen)
+            return doGetTurnCostsCountAfterFreeze(node);
+        else
+            return doGetTurnCostsCountBeforeFreeze(node);
+    }
+
+    private int doGetTurnCostsCountBeforeFreeze(int node) {
         int index = baseGraph.getNodeAccess().getTurnCostIndex(node);
         int count = 0;
         while (index != NO_TURN_ENTRY) {
@@ -196,6 +268,13 @@ public class TurnCostStorage {
             count++;
         }
         return count;
+    }
+
+    private int doGetTurnCostsCountAfterFreeze(int node) {
+        if (node == baseGraph.getNodes() - 1)
+            return turnCostsCount - baseGraph.getNodeAccess().getTurnCostIndex(node);
+
+        return baseGraph.getNodeAccess().getTurnCostIndex(node + 1) - baseGraph.getNodeAccess().getTurnCostIndex(node);
     }
 
     public boolean isClosed() {
@@ -216,10 +295,12 @@ public class TurnCostStorage {
      * @return an iterator over all entries.
      */
     public Iterator getAllTurnCosts() {
-        return new Itr();
+        return frozen ? new ItrAfterFreeze() : new ItrBeforeFreeze();
     }
 
     public void sortNodes() {
+        if (frozen)
+            throw new IllegalStateException("Turn cost storage is already frozen");
         IntArrayList tcFroms = new IntArrayList();
         IntArrayList tcTos = new IntArrayList();
         IntArrayList tcFlags = new IntArrayList();
@@ -264,6 +345,8 @@ public class TurnCostStorage {
 
         int getToEdge();
 
+        int getFlagsInt();
+
         boolean get(BooleanEncodedValue booleanEncodedValue);
 
         double getCost(DecimalEncodedValue encodedValue);
@@ -271,9 +354,9 @@ public class TurnCostStorage {
         boolean next();
     }
 
-    private class Itr implements Iterator {
-        private int viaNode = -1;
-        private int turnCostIndex = -1;
+    private class ItrBeforeFreeze implements Iterator {
+        protected int viaNode = -1;
+        protected int turnCostIndex = -1;
         private final IntsRef intsRef = new IntsRef(1);
         private final EdgeIntAccess edgeIntAccess = new IntsRefEdgeIntAccess(intsRef);
 
@@ -289,6 +372,11 @@ public class TurnCostStorage {
         @Override
         public int getViaNode() {
             return viaNode;
+        }
+
+        @Override
+        public int getFlagsInt() {
+            return turnCosts.getInt(turnCostPtr() + TC_FLAGS);
         }
 
         @Override
@@ -342,6 +430,23 @@ public class TurnCostStorage {
                 return false;
             }
             return true;
+        }
+    }
+
+    private class ItrAfterFreeze extends ItrBeforeFreeze {
+
+        ItrAfterFreeze() {
+            viaNode = 0;
+            turnCostIndex = -1;
+        }
+
+        @Override
+        public boolean next() {
+            int end = viaNode < baseGraph.getNodes() - 1 ? baseGraph.getNodeAccess().getTurnCostIndex(viaNode + 1) : turnCostsCount;
+            turnCostIndex++;
+            if (turnCostIndex == end)
+                viaNode++;
+            return turnCostIndex < turnCostsCount - 1;
         }
     }
 

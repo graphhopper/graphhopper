@@ -274,7 +274,6 @@ public class ShortcutUnpackerTest {
         edge3 = f.graph.edge(3, 4).setDistance(1).set(f.speedEnc, 20, 10);
         edge4 = f.graph.edge(4, 5).setDistance(1).set(f.speedEnc, 20, 10);
         edge5 = f.graph.edge(5, 6).setDistance(1).set(f.speedEnc, 20, 10);
-        f.freeze();
 
         // turn costs ->
         f.setTurnCost(PREV_EDGE, 0, edge0.getEdge(), 2.0);
@@ -292,6 +291,8 @@ public class ShortcutUnpackerTest {
         f.setTurnCost(edge2.getEdge(), 2, edge1.getEdge(), 1.0);
         f.setTurnCost(edge1.getEdge(), 1, edge0.getEdge(), 0.0);
         f.setTurnCost(edge0.getEdge(), 0, PREV_EDGE, 1.0);
+
+        f.freeze();
 
         f.setCHLevels(1, 3, 5, 4, 2, 0, 6);
         f.shortcut(4, 2, 2, 3, 4, 6, true);
