@@ -17,7 +17,6 @@
  */
 package com.graphhopper.navigation;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -399,8 +398,7 @@ public class NavigateResponseConverter {
         // Does not include elevation
         instructionJson.put("geometry", ResponsePathSerializer.encodePolyline(pointList, false, 1e6));
 
-        // TODO: how about other modes?
-        instructionJson.put("mode", "driving");
+        instructionJson.put("mode", instruction.getSign() == Instruction.FERRY ? "ferry" : "driving");
 
         putManeuver(instruction, instructionJson, locale, translationMap, isFirstInstructionOfLeg);
 
