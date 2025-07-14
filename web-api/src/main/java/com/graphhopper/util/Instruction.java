@@ -173,20 +173,22 @@ public class Instruction {
         String streetName = _getName();
         String ferryStr = (String) extraInfo.get("ferry");
 
-        int indi = getSign();
-        if (indi == Instruction.CONTINUE_ON_STREET) {
+        int sign = getSign();
+        if (sign == Instruction.CONTINUE_ON_STREET) {
             str = Helper.isEmpty(streetName) ? tr.tr("continue") : tr.tr("continue_onto", streetName);
-        } else if (indi == Instruction.FERRY) {
+        } else if (sign == Instruction.FERRY) {
+            if (ferryStr == null)
+                throw new RuntimeException("no ferry information provided but sign is FERRY");
             str = tr.tr(ferryStr, streetName); // pick name only
-        } else if (indi == Instruction.PT_START_TRIP) {
+        } else if (sign == Instruction.PT_START_TRIP) {
             str = tr.tr("pt_start_trip", streetName);
-        } else if (indi == Instruction.PT_TRANSFER) {
+        } else if (sign == Instruction.PT_TRANSFER) {
             str = tr.tr("pt_transfer_to", streetName);
-        } else if (indi == Instruction.PT_END_TRIP) {
+        } else if (sign == Instruction.PT_END_TRIP) {
             str = tr.tr("pt_end_trip", streetName);
         } else {
             String dir = null;
-            switch (indi) {
+            switch (sign) {
                 case Instruction.U_TURN_UNKNOWN:
                     dir = tr.tr("u_turn");
                     break;
@@ -222,7 +224,7 @@ public class Instruction {
                     break;
             }
             if (dir == null)
-                str = tr.tr("unknown", indi);
+                str = tr.tr("unknown", sign);
             else
                 str = streetName.isEmpty() ? dir : tr.tr("turn_onto", dir, streetName);
         }
