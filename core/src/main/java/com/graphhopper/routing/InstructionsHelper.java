@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.ev.RoadEnvironment;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
@@ -79,5 +80,16 @@ class InstructionsHelper {
             tmpLon = tmpWayGeo.getLon(1);
         }
         return new GHPoint(tmpLat, tmpLon);
+    }
+
+    static boolean isToOrFromFerry(RoadEnvironment re, RoadEnvironment prev) {
+        return (re == RoadEnvironment.FERRY || prev == RoadEnvironment.FERRY) && re != prev;
+    }
+
+    static String createFerryInfo(RoadEnvironment re, RoadEnvironment prev) {
+        if (re == prev) return null;
+        if (re == RoadEnvironment.FERRY) return "board_ferry";
+        if (prev == RoadEnvironment.FERRY) return "leave_ferry";
+        return null;
     }
 }

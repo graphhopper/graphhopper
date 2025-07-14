@@ -169,6 +169,7 @@ public class Instruction {
 
         String str;
         String streetName = _getName();
+
         int indi = getSign();
         if (indi == Instruction.CONTINUE_ON_STREET) {
             str = Helper.isEmpty(streetName) ? tr.tr("continue") : tr.tr("continue_onto", streetName);
@@ -220,8 +221,17 @@ public class Instruction {
             else
                 str = streetName.isEmpty() ? dir : tr.tr("turn_onto", dir, streetName);
         }
+
+        String ferryStr = (String) extraInfo.get("ferry");
+
+        if ("board_ferry".equals(ferryStr))
+            return tr.tr(ferryStr, streetName); // pick name only
+        else if ("leave_ferry".equals(ferryStr))
+            return tr.tr(ferryStr, str);
+
         String dest = (String) extraInfo.get(STREET_DESTINATION);
         String destRef = (String) extraInfo.get(STREET_DESTINATION_REF);
+
         if (dest != null) {
             if (destRef != null)
                 return tr.tr("toward_destination_with_ref", str, destRef, dest);

@@ -866,10 +866,10 @@ public class GraphHopper {
                     "graph.encoded_values: " + encodedValuesString);
         }
 
-        // these are used in the snap prevention filter (avoid motorway, tunnel, etc.) so they have to be there
+        // following encoded values are used by instructions and in the snap prevention filter (avoid motorway, tunnel, etc.)
         encodedValuesWithProps.putIfAbsent(RoadClass.KEY, new PMap());
         encodedValuesWithProps.putIfAbsent(RoadEnvironment.KEY, new PMap());
-        // used by instructions...
+        // now only used by instructions:
         encodedValuesWithProps.putIfAbsent(Roundabout.KEY, new PMap());
         encodedValuesWithProps.putIfAbsent(VehicleAccess.key("car"), new PMap());
         encodedValuesWithProps.putIfAbsent(RoadClassLink.KEY, new PMap());
