@@ -374,10 +374,20 @@ public class BaseGraph implements Graph, Closeable {
         }
     }
 
+    public void sortEdges(IntUnaryOperator getNewEdgeForOldEdge) {
+        if (isFrozen())
+            throw new IllegalStateException("Cannot sort edges if graph is already frozen");
+        store.sortEdges(getNewEdgeForOldEdge);
+        if (supportsTurnCosts())
+            turnCostStorage.sortEdges(getNewEdgeForOldEdge);
+    }
+
     public void relabelNodes(IntUnaryOperator getNewNodeForOldNode) {
         if (isFrozen())
             throw new IllegalStateException("Cannot relabel nodes if graph is already frozen");
         store.relabelNodes(getNewNodeForOldNode);
+        if (supportsTurnCosts())
+            turnCostStorage.sortNodes();
     }
 
     @Override

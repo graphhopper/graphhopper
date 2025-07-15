@@ -142,6 +142,11 @@ public class CarTagParserTest {
         way.setTag("highway", "service");
         way.setTag("service", "emergency_access");
         assertTrue(parser.getAccess(way).canSkip());
+
+        way.clearTags();
+        way.setTag("highway", "unclassified");
+        way.setTag("motor_vehicle", "agricultural;destination;forestry");
+        assertFalse(parser.getAccess(way).canSkip());
     }
 
     @Test

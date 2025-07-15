@@ -79,12 +79,12 @@ public class RoutingAlgorithmWithOSMTest {
         Graph g = hopper.getBaseGraph();
 
         // When OSM file stays unchanged make static edge and node IDs a requirement
-        assertEquals(GHUtility.asSet(924, 576, 2), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(10)));
-        assertEquals(GHUtility.asSet(291, 369, 19), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(20)));
-        assertEquals(GHUtility.asSet(45, 497, 488), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(480)));
+        assertEquals(GHUtility.asSet(9, 11), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(10)));
+        assertEquals(GHUtility.asSet(25, 12, 16), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(20)));
+        assertEquals(GHUtility.asSet(536, 481, 479), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(480)));
 
-        assertEquals(43.738776, g.getNodeAccess().getLat(10), 1e-6);
-        assertEquals(7.4170402, g.getNodeAccess().getLon(201), 1e-6);
+        assertEquals(43.7253762, g.getNodeAccess().getLat(10), 1e-6);
+        assertEquals(7.4281012, g.getNodeAccess().getLon(201), 1e-6);
     }
 
     private List<Query> createMonacoCarQueries() {
@@ -258,15 +258,6 @@ public class RoutingAlgorithmWithOSMTest {
         GraphHopper hopper = createHopper(MONACO, profile);
         hopper.importOrLoad();
         checkQueries(hopper, createMonacoFoot());
-        Graph g = hopper.getBaseGraph();
-
-        // see testMonaco for a similar ID test
-        assertEquals(GHUtility.asSet(924, 576, 2), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(10)));
-        assertEquals(GHUtility.asSet(440, 442), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(441)));
-        assertEquals(GHUtility.asSet(913, 914, 911), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(912)));
-
-        assertEquals(43.7467818, g.getNodeAccess().getLat(100), 1e-6);
-        assertEquals(7.4312824, g.getNodeAccess().getLon(702), 1e-6);
     }
 
     @Test

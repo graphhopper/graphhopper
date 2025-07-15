@@ -15,7 +15,6 @@ import static com.graphhopper.routing.util.parsers.AbstractAccessParser.INTENDED
 public class FootPriorityParser implements TagParser {
     final Set<String> safeHighwayTags = new HashSet<>();
     final Map<String, PriorityCode> avoidHighwayTags = new HashMap<>();
-    protected HashSet<String> sidewalkValues = new HashSet<>(5);
     protected HashSet<String> sidewalksNoValues = new HashSet<>(5);
     protected final DecimalEncodedValue priorityWayEncoder;
     protected EnumEncodedValue<RouteNetwork> footRouteEnc;
@@ -35,11 +34,6 @@ public class FootPriorityParser implements TagParser {
         sidewalksNoValues.add("none");
         // see #712
         sidewalksNoValues.add("separate");
-
-        sidewalkValues.add("yes");
-        sidewalkValues.add("both");
-        sidewalkValues.add("left");
-        sidewalkValues.add("right");
 
         safeHighwayTags.add("footway");
         safeHighwayTags.add("path");

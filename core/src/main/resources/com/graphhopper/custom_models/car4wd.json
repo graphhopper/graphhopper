@@ -2,6 +2,8 @@
 // graph.encoded_values: car_access, car_average_speed, track_type, road_access
 // profiles:
 //    - name: car4wd
+//      turn_costs:
+//        vehicle_types: [motorcar, motor_vehicle
 //      custom_model_files: [car4wd.json]
 
 {
