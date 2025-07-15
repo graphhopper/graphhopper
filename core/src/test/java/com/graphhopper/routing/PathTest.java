@@ -213,11 +213,8 @@ public class PathTest {
         assertEquals(Instruction.FINISH, il.get(4).getSign());
     }
 
-    /**
-     * Test roundabout instructions for different profiles
-     */
     @Test
-    void testCalcInstructionsRoundabout() {
+    void testCalcInstructionsRoundaboutForDifferentProfiles() {
         calcInstructionsRoundabout(mixedCarSpeedEnc);
         calcInstructionsRoundabout(mixedFootSpeedEnc);
     }
@@ -283,6 +280,18 @@ public class PathTest {
         assertEquals(List.of("continue onto 3-6",
                         "at roundabout, take exit 3 onto 5-8",
                         "exit the roundabout onto 5-8",
+                        "arrive at destination"),
+                tmpList);
+
+        // edges from 6 and 9 both go into roundabout but if going from 6 to 9 a roundabout edge is
+        // never crossed and so no roundabout instruction is created
+        p = new Dijkstra(roundaboutGraph.g, weighting, TraversalMode.NODE_BASED)
+                .calcPath(6, 9);
+        assertTrue(p.isFound());
+        wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, mixedEncodingManager, tr);
+        tmpList = getTurnDescriptions(wayList);
+        assertEquals(List.of("continue onto 3-6",
+                        "turn sharp right onto 3-9",
                         "arrive at destination"),
                 tmpList);
         roundaboutGraph.inverse3to9();
@@ -1057,8 +1066,8 @@ public class PathTest {
         //      \     /
         //    7--8-->9<--10
 
-        na.setNode(0, 52.503809,13.410198);
-        na.setNode(1, 52.503871,13.410249);
+        na.setNode(0, 52.503809, 13.410198);
+        na.setNode(1, 52.503871, 13.410249);
         na.setNode(2, 52.503751, 13.410377);
         na.setNode(3, 52.50387, 13.410807);
         na.setNode(4, 52.503989, 13.41094);

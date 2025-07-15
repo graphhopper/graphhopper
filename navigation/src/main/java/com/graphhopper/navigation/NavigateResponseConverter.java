@@ -588,12 +588,9 @@ public class NavigateResponseConverter {
             maneuver.put("modifier", modifier);
 
         maneuver.put("type", getTurnType(instruction, isFirstInstructionOfLeg));
-        // exit number
-        if (instruction instanceof RoundaboutInstruction) {
-            RoundaboutInstruction ri = (RoundaboutInstruction) instruction;
-            if (ri.getSign() == Instruction.USE_ROUNDABOUT)
-                maneuver.put("exit", ri.getExitNumber());
-        }
+
+        if (instruction instanceof RoundaboutInstruction ri && ri.getSign() == Instruction.USE_ROUNDABOUT)
+            maneuver.put("exit", ri.getExitNumber());
 
         maneuver.put("instruction", instruction.getTurnDescription(translationMap.getWithFallBack(locale)));
 
