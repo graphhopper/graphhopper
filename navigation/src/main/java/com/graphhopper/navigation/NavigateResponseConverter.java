@@ -232,22 +232,22 @@ public class NavigateResponseConverter {
             return;
         }
 
-        final Map<String, Object> departItersectionMap = (Map<String, Object>) intersectionDetails.get(position).getValue();
+        final Map<String, Object> departIntersectionMap = (Map<String, Object>) intersectionDetails.get(position).getValue();
 
-        int out = (int) departItersectionMap.get("out");
-        departItersectionMap.put("out", 0);
+        int out = (int) departIntersectionMap.get("out");
+        departIntersectionMap.put("out", 0);
 
         // bearings
-        List<Integer> oldBearings = (List<Integer>) departItersectionMap.get("bearings");
+        List<Integer> oldBearings = (List<Integer>) departIntersectionMap.get("bearings");
         List<Integer> newBearings = new ArrayList<>();
         newBearings.add(oldBearings.get(out));
-        departItersectionMap.put("bearings", newBearings);
+        departIntersectionMap.put("bearings", newBearings);
 
         // entries
-        final List<Boolean> oldEntries = (List<Boolean>) departItersectionMap.get("entries");
+        final List<Boolean> oldEntries = (List<Boolean>) departIntersectionMap.get("entries");
         List<Boolean> newEntries = new ArrayList<>();
         newEntries.add(oldEntries.get(out));
-        departItersectionMap.put("entries", newEntries);
+        departIntersectionMap.put("entries", newEntries);
     }
 
     /**
