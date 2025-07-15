@@ -304,7 +304,6 @@ public class BufferResource {
         PointList finalSegmentToThreshold = computePointAtDistanceThreshold(startFeature, thresholdDistance,
                 featureToThreshold, upstreamPath, isOkayToReturnStartFeature);
 
-
         List<Coordinate> coordinates = new ArrayList<>();
 
         // Add start feature point

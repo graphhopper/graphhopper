@@ -667,20 +667,23 @@ public class BufferResourceTest {
     }
 
     @Test
-    public void testBidirectionalStartQueryWithTooSmallThresholdDistance() {
-        JsonNode json;
-        try (Response response = clientTarget(app, "/buffer?profile=my_car&"
-                + "point=42.54287,1.471&roadName=CG-4&thresholdDistance=50").request()
+    public void testSucceedsWhenStartingEdgeGeometryHasOnePoint() {
+        JsonFeatureCollection featureCollection;
+        try (Response response = clientTarget(app, "/buffer?profile=my_car&point=42.506380,1.528551&roadName=Bonaventura-4&thresholdDistance=50").request()
                 .buildGet().invoke()) {
 
-            assertEquals(500, response.getStatus());
-            json = response.readEntity(JsonNode.class);
+            assertEquals(200, response.getStatus());
+            featureCollection = response.readEntity(JsonFeatureCollection.class);
         }
-        assertTrue(json.has("message"), "There should have been an error response");
-        String expected = "Threshold distance is too short to construct a valid path.";
-        assertTrue(json.get("message").asText().contains(expected),
-                "There should be an error containing " + expected + ", but got: "
-                        + json.get("message"));
+        assertEquals(2, featureCollection.getFeatures().size());
+        Geometry lineString0 = featureCollection.getFeatures().get(0).getGeometry();
+        Geometry lineString1 = featureCollection.getFeatures().get(1).getGeometry();
+
+        // The lineString that only had one point in the startingEdgeGeometry should result in exactly two points.
+        assertEquals(2, lineString0.getCoordinates().length);
+
+        // The other lineString have at least 2 points.
+        assertTrue(lineString1.getCoordinates().length >= 2, "The second lineString should have at least 2 points");
     }
 
     @Test
