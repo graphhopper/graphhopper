@@ -47,7 +47,7 @@ public class PathTest {
     private final DecimalEncodedValue carAvSpeedEnc = new DecimalEncodedValueImpl("speed", 5, 5, true);
     private final EncodingManager carManager = EncodingManager.start().add(carAvSpeedEnc).
             add(VehicleAccess.create("car")).add(Roundabout.create()).add(RoadClass.create()).
-            add(RoadClassLink.create()).add(MaxSpeed.create()).build();
+            add(RoadEnvironment.create()).add(RoadClassLink.create()).add(MaxSpeed.create()).build();
 
     private final DecimalEncodedValue mixedCarSpeedEnc = new DecimalEncodedValueImpl("mixed_car_speed", 5, 5, true);
     private final BooleanEncodedValue mixedCarAccessEnc = VehicleAccess.create("car");
@@ -56,6 +56,7 @@ public class PathTest {
             add(mixedCarAccessEnc).
             add(mixedCarSpeedEnc).add(mixedFootSpeedEnc).
             add(RoadClass.create()).
+            add(RoadEnvironment.create()).
             add(RoadClassLink.create()).
             add(MaxSpeed.create()).
             add(Roundabout.create()).build();
@@ -708,6 +709,40 @@ public class PathTest {
     }
 
     @Test
+    public void testFerry() {
+        final BaseGraph graph = new BaseGraph.Builder(carManager).create();
+        final NodeAccess na = graph.getNodeAccess();
+
+        //      1 ---- 2 ---- 3 ---- 4
+        na.setNode(1, 48.909071, 8.647136);
+        na.setNode(2, 48.909071, 8.647978);
+        na.setNode(3, 48.909071, 8.648155);
+        na.setNode(3, 48.909071, 8.648200);
+
+        EnumEncodedValue<RoadEnvironment> roadEnvEnc = carManager.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
+
+        graph.edge(1, 2).set(carAvSpeedEnc, 60, 60).setDistance(5).set(roadEnvEnc, RoadEnvironment.ROAD).
+                setKeyValues(Map.of(STREET_NAME, new KValue("A B")));
+        graph.edge(2, 3).set(carAvSpeedEnc, 60, 60).setDistance(5).set(roadEnvEnc, RoadEnvironment.FERRY).
+                setKeyValues(Map.of(STREET_NAME, new KValue("B C")));
+        graph.edge(3, 4).set(carAvSpeedEnc, 60, 60).setDistance(5).set(roadEnvEnc, RoadEnvironment.ROAD).
+                setKeyValues(Map.of(STREET_NAME, new KValue("C D")));
+
+        Weighting weighting = new SpeedWeighting(carAvSpeedEnc);
+        Path p = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED)
+                .calcPath(1, 4);
+        assertTrue(p.isFound());
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, carManager, tr);
+        assertEquals(4, wayList.size());
+        assertEquals("continue onto A B", wayList.get(0).getTurnDescription(tr));
+        assertEquals("Attention, take ferry (B C)", wayList.get(1).getTurnDescription(tr));
+        assertEquals(Instruction.FERRY, wayList.get(1).getSign());
+        assertEquals("leave ferry and turn right onto C D", wayList.get(2).getTurnDescription(tr));
+        assertEquals(Instruction.TURN_RIGHT, wayList.get(2).getSign());
+        assertEquals("arrive at destination", wayList.get(3).getTurnDescription(tr));
+    }
+
+    @Test
     public void testCalcInstructionsEnterMotorway() {
         final BaseGraph graph = new BaseGraph.Builder(carManager).create();
         final NodeAccess na = graph.getNodeAccess();
@@ -1051,6 +1086,7 @@ public class PathTest {
                 add(footAccessEnc).
                 add(RoadClass.create()).
                 add(RoadClassLink.create()).
+                add(RoadEnvironment.create()).
                 add(MaxSpeed.create()).
                 add(rdEnc).build();
 
@@ -1303,5 +1339,4 @@ public class PathTest {
     private static Path extractPath(Graph graph, Weighting weighting, SPTEntry sptEntry) {
         return PathExtractor.extractPath(graph, weighting, sptEntry);
     }
-
 }

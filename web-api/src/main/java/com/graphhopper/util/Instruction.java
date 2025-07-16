@@ -41,6 +41,8 @@ public class Instruction {
     public static final int IGNORE = Integer.MIN_VALUE;
     public static final int KEEP_RIGHT = 7;
     public static final int U_TURN_RIGHT = 8;
+
+    public static final int FERRY = 9;
     public static final int PT_START_TRIP = 101;
     public static final int PT_TRANSFER = 102;
     public static final int PT_END_TRIP = 103;
@@ -169,18 +171,24 @@ public class Instruction {
 
         String str;
         String streetName = _getName();
-        int indi = getSign();
-        if (indi == Instruction.CONTINUE_ON_STREET) {
+        String ferryStr = (String) extraInfo.get("ferry");
+
+        int sign = getSign();
+        if (sign == Instruction.CONTINUE_ON_STREET) {
             str = Helper.isEmpty(streetName) ? tr.tr("continue") : tr.tr("continue_onto", streetName);
-        } else if (indi == Instruction.PT_START_TRIP) {
+        } else if (sign == Instruction.FERRY) {
+            if (ferryStr == null)
+                throw new RuntimeException("no ferry information provided but sign is FERRY");
+            str = tr.tr(ferryStr, streetName); // pick name only
+        } else if (sign == Instruction.PT_START_TRIP) {
             str = tr.tr("pt_start_trip", streetName);
-        } else if (indi == Instruction.PT_TRANSFER) {
+        } else if (sign == Instruction.PT_TRANSFER) {
             str = tr.tr("pt_transfer_to", streetName);
-        } else if (indi == Instruction.PT_END_TRIP) {
+        } else if (sign == Instruction.PT_END_TRIP) {
             str = tr.tr("pt_end_trip", streetName);
         } else {
             String dir = null;
-            switch (indi) {
+            switch (sign) {
                 case Instruction.U_TURN_UNKNOWN:
                     dir = tr.tr("u_turn");
                     break;
@@ -216,12 +224,17 @@ public class Instruction {
                     break;
             }
             if (dir == null)
-                str = tr.tr("unknown", indi);
+                str = tr.tr("unknown", sign);
             else
                 str = streetName.isEmpty() ? dir : tr.tr("turn_onto", dir, streetName);
         }
+
+        if ("leave_ferry".equals(ferryStr))
+            return tr.tr(ferryStr, str);
+
         String dest = (String) extraInfo.get(STREET_DESTINATION);
         String destRef = (String) extraInfo.get(STREET_DESTINATION_REF);
+
         if (dest != null) {
             if (destRef != null)
                 return tr.tr("toward_destination_with_ref", str, destRef, dest);

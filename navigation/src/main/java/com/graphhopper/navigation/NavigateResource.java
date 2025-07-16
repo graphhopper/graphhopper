@@ -197,6 +197,7 @@ public class NavigateResource {
         String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
         String logStr = infoStr + " " + request.getPoints().size() + ", took: "
                 + String.format("%.1f", took) + " ms, algo: " + request.getAlgorithm() + ", profile: " + request.getProfile()
+                + ", points: " + request.getPoints()
                 + ", custom_model: " + request.getCustomModel();
 
         if (ghResponse.hasErrors()) {

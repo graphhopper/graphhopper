@@ -398,8 +398,7 @@ public class NavigateResponseConverter {
         // Does not include elevation
         instructionJson.put("geometry", ResponsePathSerializer.encodePolyline(pointList, false, 1e6));
 
-        // TODO: how about other modes?
-        instructionJson.put("mode", "driving");
+        instructionJson.put("mode", instruction.getSign() == Instruction.FERRY ? "ferry" : "driving");
 
         putManeuver(instruction, instructionJson, locale, translationMap, isFirstInstructionOfLeg);
 
