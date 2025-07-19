@@ -512,7 +512,7 @@ public abstract class AbstractBikeTagParserTester {
         BikeCommonAccessParser bike = createAccessParser(encodingManager, new PMap());
         assertFalse(bike.isBlockFords());
         assertTrue(bike.restrictedValues.contains("private"));
-        assertFalse(bike.intendedValues.contains("private"));
+        assertFalse(bike.allowedValues.contains("private"));
         ReaderNode node = new ReaderNode(1, 1, 1);
         node.setTag("access", "private");
         assertTrue(bike.isBarrier(node));
@@ -521,7 +521,7 @@ public abstract class AbstractBikeTagParserTester {
         bike = createAccessParser(encodingManager, new PMap("block_fords=true|block_private=false"));
         assertTrue(bike.isBlockFords());
         assertFalse(bike.restrictedValues.contains("private"));
-        assertTrue(bike.intendedValues.contains("private"));
+        assertTrue(bike.allowedValues.contains("private"));
         assertFalse(bike.isBarrier(node));
     }
 

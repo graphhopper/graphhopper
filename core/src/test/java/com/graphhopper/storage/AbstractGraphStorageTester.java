@@ -69,8 +69,8 @@ public abstract class AbstractGraphStorageTester {
     public static void assertPList(PointList expected, PointList list) {
         assertEquals(expected.size(), list.size(), "size of point lists is not equal");
         for (int i = 0; i < expected.size(); i++) {
-            assertEquals(expected.getLat(i), list.getLat(i), 1e-4);
-            assertEquals(expected.getLon(i), list.getLon(i), 1e-4);
+            assertEquals(expected.getLat(i), list.getLat(i), 1e-5);
+            assertEquals(expected.getLon(i), list.getLon(i), 1e-5);
         }
     }
 
@@ -78,7 +78,7 @@ public abstract class AbstractGraphStorageTester {
         int s = g.getNodes();
         NodeAccess na = g.getNodeAccess();
         for (int i = 0; i < s; i++) {
-            if (Math.abs(na.getLat(i) - latitude) < 1e-4) {
+            if (Math.abs(na.getLat(i) - latitude) < 1e-5) {
                 return i;
             }
         }
@@ -89,7 +89,7 @@ public abstract class AbstractGraphStorageTester {
         int s = g.getNodes();
         NodeAccess na = g.getNodeAccess();
         for (int i = 0; i < s; i++) {
-            if (Math.abs(na.getLat(i) - latitude) < 1e-4 && Math.abs(na.getLon(i) - longitude) < 1e-4) {
+            if (Math.abs(na.getLat(i) - latitude) < 1e-5 && Math.abs(na.getLon(i) - longitude) < 1e-5) {
                 return i;
             }
         }

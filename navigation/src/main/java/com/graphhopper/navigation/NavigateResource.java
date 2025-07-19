@@ -144,7 +144,7 @@ public class NavigateResource {
         } else {
             DistanceUtils.Unit unit = voiceUnits.equals("metric") ? DistanceUtils.Unit.METRIC : DistanceUtils.Unit.IMPERIAL;
             Locale locale = Helper.getLocale(localeStr);
-            DistanceConfig config = new DistanceConfig(unit, translationMap, locale);
+            DistanceConfig config = new DistanceConfig(unit, translationMap, locale, graphHopper.getProfile(ghProfile));
             logger.info(logStr);
             return Response.ok(NavigateResponseConverter.convertFromGHResponse(ghResponse, translationMap, locale, config)).
                     header("X-GH-Took", "" + Math.round(took * 1000)).
@@ -197,6 +197,7 @@ public class NavigateResource {
         String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
         String logStr = infoStr + " " + request.getPoints().size() + ", took: "
                 + String.format("%.1f", took) + " ms, algo: " + request.getAlgorithm() + ", profile: " + request.getProfile()
+                + ", points: " + request.getPoints()
                 + ", custom_model: " + request.getCustomModel();
 
         if (ghResponse.hasErrors()) {
@@ -213,7 +214,7 @@ public class NavigateResource {
                 unit = DistanceUtils.Unit.IMPERIAL;
             }
 
-            DistanceConfig config = new DistanceConfig(unit, translationMap, request.getLocale());
+            DistanceConfig config = new DistanceConfig(unit, translationMap, request.getLocale(), graphHopper.getProfile(request.getProfile()));
             logger.info(logStr);
             return Response.ok(NavigateResponseConverter.convertFromGHResponse(ghResponse, translationMap, request.getLocale(), config)).
                     header("X-GH-Took", "" + Math.round(took * 1000)).

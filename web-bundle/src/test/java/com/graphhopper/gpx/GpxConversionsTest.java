@@ -59,7 +59,8 @@ public class GpxConversionsTest {
     public void setUp() {
         speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
         carManager = EncodingManager.start().add(speedEnc).add(VehicleAccess.create("car")).
-                add(Roundabout.create()).add(RoadClass.create()).add(RoadClassLink.create()).add(MaxSpeed.create()).build();
+                add(Roundabout.create()).add(RoadClass.create()).add(RoadClassLink.create()).
+                add(RoadEnvironment.create()).add(MaxSpeed.create()).build();
         trMap = new TranslationMap().doImport();
     }
 

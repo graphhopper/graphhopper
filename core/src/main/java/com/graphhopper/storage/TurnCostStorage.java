@@ -17,6 +17,7 @@
  */
 package com.graphhopper.storage;
 
+import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EdgeIntAccess;
@@ -24,6 +25,8 @@ import com.graphhopper.routing.ev.IntsRefEdgeIntAccess;
 import com.graphhopper.util.Constants;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
+
+import java.util.function.IntUnaryOperator;
 
 /**
  * A key/value store, where the unique keys are triples (fromEdge, viaNode, toEdge) and the values
@@ -109,7 +112,7 @@ public class TurnCostStorage {
             ensureTurnCostIndex(index);
             int prevIndex = baseGraph.getNodeAccess().getTurnCostIndex(viaNode);
             baseGraph.getNodeAccess().setTurnCostIndex(viaNode, index);
-            long pointer = (long) index * BYTES_PER_ENTRY;
+            long pointer = toPointer(index);
             turnCosts.setInt(pointer + TC_FROM, fromEdge);
             turnCosts.setInt(pointer + TC_TO, toEdge);
             turnCosts.setInt(pointer + TC_NEXT, prevIndex);
@@ -136,18 +139,18 @@ public class TurnCostStorage {
         return new EdgeIntAccess() {
             @Override
             public int getInt(int entryIndex, int index) {
-                return turnCosts.getInt((long) entryIndex * BYTES_PER_ENTRY + TC_FLAGS);
+                return turnCosts.getInt(toPointer(entryIndex) + TC_FLAGS);
             }
 
             @Override
             public void setInt(int entryIndex, int index, int value) {
-                turnCosts.setInt((long) entryIndex * BYTES_PER_ENTRY + TC_FLAGS, value);
+                turnCosts.setInt(toPointer(entryIndex) + TC_FLAGS, value);
             }
         };
     }
 
-    private void ensureTurnCostIndex(int nodeIndex) {
-        turnCosts.ensureCapacity(((long) nodeIndex + 1) * BYTES_PER_ENTRY);
+    private void ensureTurnCostIndex(int index) {
+        turnCosts.ensureCapacity(toPointer(index + 1));
     }
 
     private int findIndex(int fromEdge, int viaNode, int toEdge) {
@@ -160,12 +163,24 @@ public class TurnCostStorage {
         int index = baseGraph.getNodeAccess().getTurnCostIndex(viaNode);
         for (int i = 0; i < maxEntries; ++i) {
             if (index == NO_TURN_ENTRY) return -1;
-            long pointer = (long) index * BYTES_PER_ENTRY;
+            long pointer = toPointer(index);
             if (fromEdge == turnCosts.getInt(pointer + TC_FROM) && toEdge == turnCosts.getInt(pointer + TC_TO))
                 return index;
             index = turnCosts.getInt(pointer + TC_NEXT);
         }
         throw new IllegalStateException("Turn cost list for node: " + viaNode + " is longer than expected, max: " + maxEntries);
+    }
+
+    public void sortEdges(IntUnaryOperator getNewEdgeForOldEdge) {
+        for (int i = 0; i < turnCostsCount; i++) {
+            long pointer = toPointer(i);
+            turnCosts.setInt(pointer + TC_FROM, getNewEdgeForOldEdge.applyAsInt(turnCosts.getInt(pointer + TC_FROM)));
+            turnCosts.setInt(pointer + TC_TO, getNewEdgeForOldEdge.applyAsInt(turnCosts.getInt(pointer + TC_TO)));
+        }
+    }
+
+    private long toPointer(int index) {
+        return (long) index * BYTES_PER_ENTRY;
     }
 
     public int getTurnCostsCount() {
@@ -176,7 +191,7 @@ public class TurnCostStorage {
         int index = baseGraph.getNodeAccess().getTurnCostIndex(node);
         int count = 0;
         while (index != NO_TURN_ENTRY) {
-            long pointer = (long) index * BYTES_PER_ENTRY;
+            long pointer = toPointer(index);
             index = turnCosts.getInt(pointer + TC_NEXT);
             count++;
         }
@@ -204,6 +219,44 @@ public class TurnCostStorage {
         return new Itr();
     }
 
+    public void sortNodes() {
+        IntArrayList tcFroms = new IntArrayList();
+        IntArrayList tcTos = new IntArrayList();
+        IntArrayList tcFlags = new IntArrayList();
+        IntArrayList tcNexts = new IntArrayList();
+        for (int i = 0; i < turnCostsCount; i++) {
+            long pointer = toPointer(i);
+            tcFroms.add(turnCosts.getInt(pointer + TC_FROM));
+            tcTos.add(turnCosts.getInt(pointer + TC_TO));
+            tcFlags.add(turnCosts.getInt(pointer + TC_FLAGS));
+            tcNexts.add(turnCosts.getInt(pointer + TC_NEXT));
+        }
+        long turnCostsCountBefore = turnCostsCount;
+        turnCostsCount = 0;
+        for (int node = 0; node < baseGraph.getNodes(); node++) {
+            boolean firstForNode = true;
+            int turnCostIndex = baseGraph.getNodeAccess().getTurnCostIndex(node);
+            while (turnCostIndex != NO_TURN_ENTRY) {
+                if (firstForNode) {
+                    baseGraph.getNodeAccess().setTurnCostIndex(node, turnCostsCount);
+                } else {
+                    long prevPointer = toPointer(turnCostsCount - 1);
+                    turnCosts.setInt(prevPointer + TC_NEXT, turnCostsCount);
+                }
+                long pointer = toPointer(turnCostsCount);
+                turnCosts.setInt(pointer + TC_FROM, tcFroms.get(turnCostIndex));
+                turnCosts.setInt(pointer + TC_TO, tcTos.get(turnCostIndex));
+                turnCosts.setInt(pointer + TC_FLAGS, tcFlags.get(turnCostIndex));
+                turnCosts.setInt(pointer + TC_NEXT, NO_TURN_ENTRY);
+                turnCostsCount++;
+                firstForNode = false;
+                turnCostIndex = tcNexts.get(turnCostIndex);
+            }
+        }
+        if (turnCostsCountBefore != turnCostsCount)
+            throw new IllegalStateException("Turn cost count changed unexpectedly: " + turnCostsCountBefore + " -> " + turnCostsCount);
+    }
+
     public interface Iterator {
         int getFromEdge();
 
@@ -225,7 +278,7 @@ public class TurnCostStorage {
         private final EdgeIntAccess edgeIntAccess = new IntsRefEdgeIntAccess(intsRef);
 
         private long turnCostPtr() {
-            return (long) turnCostIndex * BYTES_PER_ENTRY;
+            return toPointer(turnCostIndex);
         }
 
         @Override

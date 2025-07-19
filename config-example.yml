@@ -30,6 +30,7 @@ graphhopper:
 
   profiles:
    - name: car
+#      navigation_transport_mode: "car"
 #     turn_costs:
 #       vehicle_types: [motorcar, motor_vehicle]
 #       u_turn_costs: 60
@@ -39,15 +40,19 @@ graphhopper:
 #   You can use the following in-built profiles. After you start GraphHopper it will print which encoded values you'll have to add to graph.encoded_values in this config file.
 #
 #    - name: foot
+#      navigation_transport_mode: "foot"
 #      custom_model_files: [foot.json, foot_elevation.json]
 #
 #    - name: bike
+#      navigation_transport_mode: "bike"
 #      custom_model_files: [bike.json, bike_elevation.json]
 #
 #    - name: racingbike
+#      navigation_transport_mode: "bike"
 #      custom_model_files: [racingbike.json, bike_elevation.json]
 #
 #    - name: mtb
+#      navigation_transport_mode: "bike"
 #      custom_model_files: [mtb.json, bike_elevation.json]
 #
 #   # See the bus.json for more details.
