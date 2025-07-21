@@ -35,7 +35,7 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
     private final double uTurnCosts;
     private final BaseGraph graph;
     private final EdgeIntAccess edgeIntAccess;
-    private TurnWeightMapping turnWeightMapping;
+    private final TurnWeightMapping turnWeightMapping;
 
     public DefaultTurnCostProvider(BooleanEncodedValue turnRestrictionEnc,
                                    Graph graph, TurnCostsConfig tcConfig,
