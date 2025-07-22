@@ -145,6 +145,16 @@ public class NavigateResponseConverterTest {
         assertEquals(encodedExpected, step.get("geometry").asText());
     }
 
+        @Test
+    public void departureArrivalTest() {
+
+        GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile(profile));
+
+        NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH, distanceConfig);
+
+        // don't crash and we are happy
+    }
+
     @Test
     public void voiceInstructionsTest() {
 

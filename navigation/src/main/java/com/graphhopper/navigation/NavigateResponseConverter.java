@@ -143,7 +143,6 @@ public class NavigateResponseConverter {
             isDepartInstruction = false;
             if (maneuverType == ManeuverType.ARRIVE) {
                 putLegInformation(legJson, path, routeNr, time, distance);
-              
                 if (instruction.getSign() == Instruction.REACHED_VIA) {
                     // Create new leg and steps after a via points
                     legJson = legsJson.addObject();
@@ -355,9 +354,10 @@ public class NavigateResponseConverter {
         // make pointList writeable
         PointList pointList = instruction.getPoints().clone(false);
 
-        if (maneuverType != ManeuverType.ARRIVE) {
+        if (maneuverType != ManeuverType.ARRIVE && instructionIndex + 1 < instructions.size()) {
             // modify pointlist to include the first point of the next instruction
-            // for all instructions but the arrival
+            // for all instructions but the arrival#
+            // but not for instructions with an DEPART and ARRIVAL at the same last point
             PointList nextPoints = instructions.get(instructionIndex + 1).getPoints();
             pointList.add(nextPoints.getLat(0), nextPoints.getLon(0), nextPoints.getEle(0));
         } else {
@@ -617,16 +617,10 @@ public class NavigateResponseConverter {
                 break;
             default: // i.e. ManeuverType.TURN:
                 maneuver.put("type", "turn");
-<<<<<<< HEAD
-                
         }
         String modifier = getModifier(instruction);
         if (modifier != null)
             maneuver.put("modifier", modifier);
-=======
-                break;
-        }
->>>>>>> bd392d26b (fix: enable last intersection of last step of via points)
         maneuver.put("instruction", instruction.getTurnDescription(translationMap.getWithFallBack(locale)));
 
     }
