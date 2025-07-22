@@ -219,9 +219,9 @@ public class NavigateResponseConverter {
     }
 
     /**
-     * fix the first IntersectionDetail.
+     * fix the first IntersectionDetail which is an Depart
      * <p>
-     * The first Intersection of the first step should only have one "bearings" and one
+     * Departs should only have one "bearings" and one
      * "out" entry
      */
     private static void fixDepartIntersectionDetail(List<PathDetail> intersectionDetails, int position) {
