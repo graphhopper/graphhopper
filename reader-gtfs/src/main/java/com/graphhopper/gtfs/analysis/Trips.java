@@ -91,12 +91,13 @@ public class Trips {
             }
         }
         for (GTFSFeed.StopTimesForTripWithTripPatternKey tripPointer : trips) {
-            for (int i = 0; i < tripPointer.stopTimes.size(); i++) {
+            for (int i = 0; i < tripPointer.stopTimes.size() - 1; i++) {
                 StopTime stopTime = tripPointer.stopTimes.get(i);
                 if (stopTime != null) {
                     Map<String, List<TripAtStopTime>> patternBoardings = boardingsForStopByPattern.computeIfAbsent(new GtfsStorage.FeedIdWithStopId(tripPointer.feedId, stopTime.stop_id), k -> new HashMap<>());
                     List<TripAtStopTime> boardings = patternBoardings.computeIfAbsent(tripPointer.pattern.pattern_id, k -> new ArrayList<>());
                     boardings.add(new TripAtStopTime(tripPointer.idx, i));
+                    // FIXME: When a trip does a loop, we don't get a sorted list here, which breaks the search
                 }
             }
         }
