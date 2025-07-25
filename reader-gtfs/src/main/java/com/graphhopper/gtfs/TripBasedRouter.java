@@ -195,8 +195,8 @@ public class TripBasedRouter {
 
     private void checkArrivals(List<EnqueuedTripSegment> queue0, int round) {
         for (EnqueuedTripSegment enqueuedTripSegment : queue0) {
-            int toStopSequence = Math.min(enqueuedTripSegment.toStopSequence, enqueuedTripSegment.tripPointer.stopTimes.size() - 1);
-            for (int i = enqueuedTripSegment.tripAtStopTime.stop_sequence + 1; i <= toStopSequence; i++) {
+            int toStopSequence = Math.min(enqueuedTripSegment.toStopSequence, enqueuedTripSegment.tripPointer.stopTimes.size());
+            for (int i = enqueuedTripSegment.tripAtStopTime.stop_sequence + 1; i < toStopSequence; i++) {
                 StopTime stopTime = enqueuedTripSegment.tripPointer.stopTimes.get(i);
                 if (stopTime == null) continue;
                 for (StopWithTimeDelta destination : parameters.getEgressStations()) {
@@ -232,14 +232,16 @@ public class TripBasedRouter {
     private void enqueue(List<EnqueuedTripSegment> queue1, GTFSFeed.StopTimesForTripWithTripPatternKey tripPointer, Trips.TripAtStopTime tripAtBoarding, Trips.TripAtStopTime transferOrigin, EnqueuedTripSegment parent, LocalDate serviceDay, StopWithTimeDelta accessStation) {
         int thisTripDoneFromIndex = tripDoneFromIndex[tripPointer.idx];
         if (tripAtBoarding.stop_sequence < thisTripDoneFromIndex) {
-            long routeTypePenalty = parameters.transferPenaltiesByRouteType.getOrDefault(tripPointer.routeType, 0L);
-            EnqueuedTripSegment enqueuedTripSegment = new EnqueuedTripSegment(tripPointer, tripAtBoarding, thisTripDoneFromIndex, serviceDay, transferOrigin, parent, accessStation);
-            if (parent != null) {
-                enqueuedTripSegment.nRealTransfers = parent.nRealTransfers + 1;
-                enqueuedTripSegment.routeTypePenalty = parent.routeTypePenalty;
+            if (tripAtBoarding.stop_sequence + 1 < thisTripDoneFromIndex) {
+                long routeTypePenalty = parameters.transferPenaltiesByRouteType.getOrDefault(tripPointer.routeType, 0L);
+                EnqueuedTripSegment enqueuedTripSegment = new EnqueuedTripSegment(tripPointer, tripAtBoarding, thisTripDoneFromIndex, serviceDay, transferOrigin, parent, accessStation);
+                if (parent != null) {
+                    enqueuedTripSegment.nRealTransfers = parent.nRealTransfers + 1;
+                    enqueuedTripSegment.routeTypePenalty = parent.routeTypePenalty;
+                }
+                enqueuedTripSegment.routeTypePenalty += routeTypePenalty;
+                queue1.add(enqueuedTripSegment);
             }
-            enqueuedTripSegment.routeTypePenalty += routeTypePenalty;
-            queue1.add(enqueuedTripSegment);
             markAsDone(tripPointer, tripAtBoarding.stop_sequence);
         }
     }
