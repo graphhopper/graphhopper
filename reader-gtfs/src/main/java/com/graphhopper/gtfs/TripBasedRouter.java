@@ -57,6 +57,7 @@ public class TripBasedRouter {
     public List<ResultLabel> routeNaiveProfile(Parameters parameters) {
         this.parameters = parameters;
         while (!parameters.getProfileLength().isNegative()) {
+            Arrays.fill(this.tripDoneFromIndex, Integer.MAX_VALUE);
             Instant initialTime = parameters.getProfileStartTime().plus(parameters.getProfileLength());
             route(parameters.getAccessStations(), initialTime, parameters.getTripFilter());
             parameters.setProfileLength(parameters.getProfileLength().minus(Duration.ofMinutes(1)));
