@@ -21,6 +21,7 @@ package com.graphhopper;
 import com.conveyal.gtfs.GTFSFeed;
 import com.graphhopper.config.Profile;
 import com.graphhopper.gtfs.*;
+import com.graphhopper.gtfs.analysis.Trips;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap;
 import org.junit.jupiter.api.AfterAll;
@@ -31,16 +32,18 @@ import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKTReader;
 
 import java.io.File;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.*;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.graphhopper.gtfs.GtfsHelper.time;
+import static com.graphhopper.gtfs.analysis.Trips.TripAtStopTime.ArrivalDeparture.ARRIVAL;
+import static com.graphhopper.gtfs.analysis.Trips.TripAtStopTime.ArrivalDeparture.DEPARTURE;
+import static com.graphhopper.gtfs.analysis.Trips.TripAtStopTime.print;
 import static com.graphhopper.util.Parameters.Details.EDGE_KEY;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 public interface AnotherAgencyIT<T extends PtRouter> {
@@ -68,6 +71,7 @@ public interface AnotherAgencyIT<T extends PtRouter> {
             ghConfig.putObject("gtfs.file", "files/sample-feed,files/another-sample-feed");
             ghConfig.putObject("gtfs.trip_based", true);
             ghConfig.putObject("gtfs.schedule_day", "2007-01-01,2007-01-02,2007-01-06,2007-01-07");
+            ghConfig.putObject("gtfs.trip_based.max_transfer_time", 600 * 60);
             ghConfig.setProfiles(Arrays.asList(
                     new Profile("foot").setVehicle("foot").setWeighting("fastest"),
                     new Profile("car").setVehicle("car").setWeighting("fastest")));
@@ -91,6 +95,26 @@ public interface AnotherAgencyIT<T extends PtRouter> {
             GTFSFeed gtfs_1 = graphHopperGtfs.getGtfsStorage().getGtfsFeeds().get("gtfs_1");
             RealtimeFeed.findAllBoardings(graphHopperGtfs.getGtfsStorage(), new GtfsStorage.FeedIdWithStopId("gtfs_1", "AIRPORT"))
                     .forEach(e -> assertNotNull(gtfs_1.trips.get(e.getAttrs().tripDescriptor.getTripId()), "I only get trips from this feed here."));
+        }
+
+        @Test
+        public void testMuseum() {
+            Trips tripTransfers = graphHopperGtfs().getGtfsStorage().tripTransfers;
+            int tripIdx = findTrip("MUSEUMAIRPORT1", LocalTime.of(10, 40), 2, ARRIVAL);
+            Collection<Trips.TripAtStopTime> transferDestinations = tripTransfers.getTripTransfers(LocalDate.of(2007, 1, 1)).get(new Trips.TripAtStopTime(tripIdx, 2));
+            assertThat(transferDestinations).extracting(td -> print(td, tripTransfers, DEPARTURE)).contains("8 AB3_NO_BLOCK @ 1 BEATTY_AIRPORT 50400");
+        }
+
+        private int findTrip(String tripId, LocalTime time, int stopSequence, Trips.TripAtStopTime.ArrivalDeparture arrivalDeparture) {
+            Trips tripTransfers = graphHopperGtfs().getGtfsStorage().tripTransfers;
+            int tripIdx = 0;
+            for (GTFSFeed.StopTimesForTripWithTripPatternKey trip : tripTransfers.trips) {
+                if (trip.trip.trip_id.equals(tripId) && LocalTime.ofSecondOfDay(arrivalDeparture == ARRIVAL ? trip.stopTimes.get(stopSequence).arrival_time : trip.stopTimes.get(stopSequence).departure_time).equals(time)) {
+                    return tripIdx;
+                }
+                tripIdx++;
+            }
+            throw new RuntimeException();
         }
 
         @AfterAll
@@ -205,7 +229,7 @@ public interface AnotherAgencyIT<T extends PtRouter> {
                 LocalDateTime.of(2007, 1, 1, 10, 0, 0).atZone(zoneId).toInstant()
         );
         ghRequest.setIgnoreTransfers(true);
-        ghRequest.setWalkSpeedKmH(0.005); // Prevent walk solution
+        ghRequest.setWalkSpeedKmH(0.0005); // Prevent walk solution, including just walking to the airport
         ResponsePath transitSolution = route(ghRequest).getBest();
         List<Trip.Leg> ptLegs = transitSolution.getLegs().stream().filter(l -> l instanceof Trip.PtLeg).collect(Collectors.toList());
         assertEquals("MUSEUMAIRPORT1", ((Trip.PtLeg) ptLegs.get(0)).trip_id);

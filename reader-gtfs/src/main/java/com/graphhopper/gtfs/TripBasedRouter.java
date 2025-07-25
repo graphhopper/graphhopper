@@ -66,6 +66,7 @@ public class TripBasedRouter {
     }
 
     public List<ResultLabel> route(List<StopWithTimeDelta> accessStations, Instant initialTime, Predicate<GTFSFeed.StopTimesForTripWithTripPatternKey> tripFilter) {
+        logger.debug("===");
         List<EnqueuedTripSegment> queue = new ArrayList<>();
         for (StopWithTimeDelta accessStation : accessStations) {
             ZonedDateTime earliestDepartureTime = initialTime.atZone(accessStation.zoneId).plus(accessStation.timeDelta, ChronoUnit.MILLIS);
@@ -78,6 +79,7 @@ public class TripBasedRouter {
                     Trips.TripAtStopTime boarding = boardings.get(i);
                     GTFSFeed.StopTimesForTripWithTripPatternKey tripPointer = tripTransfers.getTrip(boarding.tripIdx);
                     if (tripPointer.service.activeOn(serviceDay) && tripFilter.test(tripPointer)) {
+                        logger.debug("{}", boarding);
                         enqueue(queue, tripPointer, boarding, null, null, serviceDay, accessStation);
                         break;
                     }
@@ -173,6 +175,7 @@ public class TripBasedRouter {
                 Trips.TripAtStopTime transferOrigin = new Trips.TripAtStopTime(enqueuedTripSegment.tripPointer.idx, stopTime.stop_sequence);
                 logger.debug("  {}", print(transferOrigin, tripTransfers, ARRIVAL));
                 Collection<Trips.TripAtStopTime> transferDestinations = gtfsStorage.tripTransfers.getTripTransfers(enqueuedTripSegment.serviceDay).get(transferOrigin);
+                if (transferDestinations == null) continue; // currently if we didn't build the service day.
                 for (Trips.TripAtStopTime transferDestination : transferDestinations) {
                     GTFSFeed.StopTimesForTripWithTripPatternKey destinationTripPointer = tripTransfers.getTrip(transferDestination.tripIdx);
                     GTFSFeed destinationFeed = gtfsStorage.getGtfsFeeds().get(destinationTripPointer.feedId);
@@ -192,8 +195,8 @@ public class TripBasedRouter {
 
     private void checkArrivals(List<EnqueuedTripSegment> queue0, int round) {
         for (EnqueuedTripSegment enqueuedTripSegment : queue0) {
-            int toStopSequence = Math.min(enqueuedTripSegment.toStopSequence, enqueuedTripSegment.tripPointer.stopTimes.size());
-            for (int i = enqueuedTripSegment.tripAtStopTime.stop_sequence + 1; i < toStopSequence; i++) {
+            int toStopSequence = Math.min(enqueuedTripSegment.toStopSequence, enqueuedTripSegment.tripPointer.stopTimes.size() - 1);
+            for (int i = enqueuedTripSegment.tripAtStopTime.stop_sequence + 1; i <= toStopSequence; i++) {
                 StopTime stopTime = enqueuedTripSegment.tripPointer.stopTimes.get(i);
                 if (stopTime == null) continue;
                 for (StopWithTimeDelta destination : parameters.getEgressStations()) {
@@ -201,6 +204,7 @@ public class TripBasedRouter {
                     if (destination.stopId.stopId.equals(stopTime.stop_id) && destination.stopId.feedId.equals(enqueuedTripSegment.tripPointer.feedId) && newArrivalTime < earliestArrivalTime) {
                         earliestArrivalTime = newArrivalTime;
                         ResultLabel newResult = new ResultLabel(round, destination, enqueuedTripSegment.tripPointer.idx, stopTime.stop_sequence, enqueuedTripSegment);
+                        logger.debug(" {}", newResult);
                         int newRealTransfers = newResult.getRealTransfers();
                         int newDepartureTime = newResult.getDepartureTime();
                         Iterator<ResultLabel> it = result.iterator();
@@ -222,29 +226,26 @@ public class TripBasedRouter {
         int extraDisutilityOfAccessSeconds = (int) (((long) (enqueuedTripSegment.accessStation.timeDelta * (parameters.getBetaAccessTime() - 1.0))) / 1000L);
         int extraDisutilityOfTransfersSeconds = (int) (((long) enqueuedTripSegment.nRealTransfers * parameters.getBetaTransfers()) / 1000L);
         int extraDisutilityOfRouteTypeSeconds = (int) (enqueuedTripSegment.routeTypePenalty / 1000L);
-        if (extraDisutilityOfRouteTypeSeconds != 0)
-            System.out.println(extraDisutilityOfRouteTypeSeconds);
         return stopTime.arrival_time + extraDisutilityOfAccessSeconds + extraDisutilityOfTransfersSeconds + extraDisutilityOfRouteTypeSeconds + extraSeconds;
     }
 
     private void enqueue(List<EnqueuedTripSegment> queue1, GTFSFeed.StopTimesForTripWithTripPatternKey tripPointer, Trips.TripAtStopTime tripAtBoarding, Trips.TripAtStopTime transferOrigin, EnqueuedTripSegment parent, LocalDate serviceDay, StopWithTimeDelta accessStation) {
         int thisTripDoneFromIndex = tripDoneFromIndex[tripPointer.idx];
         if (tripAtBoarding.stop_sequence < thisTripDoneFromIndex) {
-            if (tripAtBoarding.stop_sequence + 1 < thisTripDoneFromIndex) {
-                long routeTypePenalty = parameters.transferPenaltiesByRouteType.getOrDefault(tripPointer.routeType, 0L);
-                EnqueuedTripSegment enqueuedTripSegment = new EnqueuedTripSegment(tripPointer, tripAtBoarding, thisTripDoneFromIndex, serviceDay, transferOrigin, parent, accessStation);
-                if (parent != null) {
-                    enqueuedTripSegment.nRealTransfers = parent.nRealTransfers + 1;
-                    enqueuedTripSegment.routeTypePenalty = parent.routeTypePenalty;
-                }
-                enqueuedTripSegment.routeTypePenalty += routeTypePenalty;
-                queue1.add(enqueuedTripSegment);
+            long routeTypePenalty = parameters.transferPenaltiesByRouteType.getOrDefault(tripPointer.routeType, 0L);
+            EnqueuedTripSegment enqueuedTripSegment = new EnqueuedTripSegment(tripPointer, tripAtBoarding, thisTripDoneFromIndex, serviceDay, transferOrigin, parent, accessStation);
+            if (parent != null) {
+                enqueuedTripSegment.nRealTransfers = parent.nRealTransfers + 1;
+                enqueuedTripSegment.routeTypePenalty = parent.routeTypePenalty;
             }
+            enqueuedTripSegment.routeTypePenalty += routeTypePenalty;
+            queue1.add(enqueuedTripSegment);
             markAsDone(tripPointer, tripAtBoarding.stop_sequence);
         }
     }
 
     private void markAsDone(GTFSFeed.StopTimesForTripWithTripPatternKey destinationTripPointer, int doneFromIndex) {
+        logger.debug("done: {} [{}", destinationTripPointer.idx, doneFromIndex);
         for (int i = destinationTripPointer.idx; i < destinationTripPointer.endIdxOfPattern; i++) {
             // Trips within a pattern are sorted by start time. All that come after me can be marked as done.
             int previousDoneFromIndex = tripDoneFromIndex[i];
@@ -321,8 +322,6 @@ public class TripBasedRouter {
                 result += parameters.transferPenaltiesByRouteType.getOrDefault(i.tripPointer.routeType, 0L);
                 i = i.parent;
             }
-            if (result != 0L)
-                System.out.println(result);
             return result;
         }
     }
