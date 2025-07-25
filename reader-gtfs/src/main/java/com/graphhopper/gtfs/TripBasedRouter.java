@@ -66,7 +66,7 @@ public class TripBasedRouter {
     }
 
     public List<ResultLabel> route(List<StopWithTimeDelta> accessStations, Instant initialTime, Predicate<GTFSFeed.StopTimesForTripWithTripPatternKey> tripFilter) {
-        logger.debug("===");
+        logger.debug("=== {} ===", initialTime);
         List<EnqueuedTripSegment> queue = new ArrayList<>();
         for (StopWithTimeDelta accessStation : accessStations) {
             ZonedDateTime earliestDepartureTime = initialTime.atZone(accessStation.zoneId).plus(accessStation.timeDelta, ChronoUnit.MILLIS);
