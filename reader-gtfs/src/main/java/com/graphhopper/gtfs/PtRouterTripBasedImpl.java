@@ -20,7 +20,6 @@ package com.graphhopper.gtfs;
 
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Stop;
-import com.conveyal.gtfs.model.StopTime;
 import com.graphhopper.*;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.DefaultWeightingFactory;
@@ -162,11 +161,11 @@ public final class PtRouterTripBasedImpl implements PtRouter {
 
             StopWatch stopWatch1 = new StopWatch().start();
 
-            accessStationLabels = accessEgress(startNode, destNode, false);
+            accessStationLabels = access(startNode, destNode);
             accessStations = accessStationLabels.stream()
                     .map(l -> stopWithTimeDelta(l.edge.getPlatformDescriptor(), l.currentTime - initialTime.toEpochMilli()))
                     .collect(Collectors.toList());
-            egressStationLabels = accessEgress(startNode, destNode, true);
+            egressStationLabels = egress(startNode, destNode);
             egressStations = egressStationLabels.stream()
                     .map(l -> stopWithTimeDelta(l.edge.getPlatformDescriptor(), initialTime.toEpochMilli() - l.currentTime))
                     .collect(Collectors.toList());
@@ -207,18 +206,34 @@ public final class PtRouterTripBasedImpl implements PtRouter {
             return response;
         }
 
-        private List<Label> accessEgress(Label.NodeId startNode, Label.NodeId destNode, boolean isEgress) {
-            final GraphExplorer accessEgressGraphExplorer = new GraphExplorer(queryGraph, ptGraph, isEgress ? egressWeighting : accessWeighting, gtfsStorage, RealtimeFeed.empty(), isEgress, true, false, walkSpeedKmH, false, blockedRouteTypes);
-            GtfsStorage.EdgeType edgeType = isEgress ? GtfsStorage.EdgeType.EXIT_PT : GtfsStorage.EdgeType.ENTER_PT;
-            MultiCriteriaLabelSetting stationRouter = new MultiCriteriaLabelSetting(accessEgressGraphExplorer, isEgress, false, false, 0, new ArrayList<>());
+        private List<Label> access(Label.NodeId startNode, Label.NodeId destNode) {
+            final GraphExplorer accessEgressGraphExplorer = new GraphExplorer(queryGraph, ptGraph, accessWeighting, gtfsStorage, RealtimeFeed.empty(), false, true, false, walkSpeedKmH, false, blockedRouteTypes);
+            MultiCriteriaLabelSetting stationRouter = new MultiCriteriaLabelSetting(accessEgressGraphExplorer, false, false, false, 0, new ArrayList<>());
             stationRouter.setBetaStreetTime(betaStreetTime);
             stationRouter.setLimitStreetTime(limitStreetTime);
             List<Label> stationLabels = new ArrayList<>();
-            for (Label label : stationRouter.calcLabels(isEgress ? destNode : startNode, initialTime)) {
+            for (Label label : stationRouter.calcLabels(startNode, initialTime)) {
                 visitedNodes++;
-                if (isEgress && label.node.equals(startNode) || !isEgress && label.node.equals(destNode)) {
+                if (label.node.equals(destNode)) {
                     break;
-                } else if (label.edge != null && label.edge.getType() == edgeType) {
+                } else if (label.edge != null && label.edge.getType() == GtfsStorage.EdgeType.ENTER_PT) {
+                    stationLabels.add(label);
+                }
+            }
+            return stationLabels;
+        }
+
+        private List<Label> egress(Label.NodeId startNode, Label.NodeId destNode) {
+            final GraphExplorer accessEgressGraphExplorer = new GraphExplorer(queryGraph, ptGraph, egressWeighting, gtfsStorage, RealtimeFeed.empty(), true, true, false, walkSpeedKmH, false, blockedRouteTypes);
+            MultiCriteriaLabelSetting stationRouter = new MultiCriteriaLabelSetting(accessEgressGraphExplorer, true, false, false, 0, new ArrayList<>());
+            stationRouter.setBetaStreetTime(betaStreetTime);
+            stationRouter.setLimitStreetTime(limitStreetTime);
+            List<Label> stationLabels = new ArrayList<>();
+            for (Label label : stationRouter.calcLabels(destNode, initialTime)) {
+                visitedNodes++;
+                if (label.node.equals(startNode)) {
+                    break;
+                } else if (label.edge != null && label.edge.getType() == GtfsStorage.EdgeType.EXIT_PT) {
                     stationLabels.add(label);
                 }
             }
