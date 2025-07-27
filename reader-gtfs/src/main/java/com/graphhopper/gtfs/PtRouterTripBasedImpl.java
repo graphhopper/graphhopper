@@ -118,6 +118,7 @@ public final class PtRouterTripBasedImpl implements PtRouter {
         private TripFromLabel tripFromLabel;
         private List<Label> accessStationLabels;
         private List<TripBasedRouter.StopWithTimeDelta> accessStations;
+        private Label walkDestLabel;
         private List<Label> egressStationLabels;
         private List<TripBasedRouter.StopWithTimeDelta> egressStations;
 
@@ -176,6 +177,10 @@ public final class PtRouterTripBasedImpl implements PtRouter {
             routes = tripBasedRouter.routeNaiveProfileWithNaiveBetas(new TripBasedRouter.Parameters(accessStations, egressStations, initialTime, maxProfileDuration, trip -> (blockedRouteTypes & (1 << trip.routeType)) == 0, betaAccessTime, betaEgressTime, betaTransfers, transferPenaltiesByRouteType));
 
             tripFromLabel = new TripFromLabel(queryGraph, encodingManager, gtfsStorage, RealtimeFeed.empty(), pathDetailsBuilderFactory, walkSpeedKmH);
+            List<Label.Transition> walkTransitions = Label.getTransitions(walkDestLabel, false);
+            List<List<Label.Transition>> walkPartitions = tripFromLabel.parsePathToPartitions(walkTransitions);
+            List<Trip.Leg> walkPath = tripFromLabel.parsePartitionToLegs(walkPartitions.get(0), result.queryGraph, encodingManager, accessWeighting, translation, requestedPathDetails);
+            response.add(TripFromLabel.createResponsePath(gtfsStorage, translation, result.points, walkPath));
             for (TripBasedRouter.ResultLabel route : routes) {
                 ResponsePath responsePath = extractResponse(route, result);
                 response.add(responsePath);
@@ -215,6 +220,7 @@ public final class PtRouterTripBasedImpl implements PtRouter {
             for (Label label : stationRouter.calcLabels(startNode, initialTime)) {
                 visitedNodes++;
                 if (label.node.equals(destNode)) {
+                    walkDestLabel = label;
                     break;
                 } else if (label.edge != null && label.edge.getType() == GtfsStorage.EdgeType.ENTER_PT) {
                     stationLabels.add(label);
