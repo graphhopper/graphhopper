@@ -180,7 +180,9 @@ public final class PtRouterTripBasedImpl implements PtRouter {
             List<Label.Transition> walkTransitions = Label.getTransitions(walkDestLabel, false);
             List<List<Label.Transition>> walkPartitions = tripFromLabel.parsePathToPartitions(walkTransitions);
             List<Trip.Leg> walkPath = tripFromLabel.parsePartitionToLegs(walkPartitions.get(0), result.queryGraph, encodingManager, accessWeighting, translation, requestedPathDetails);
-            response.add(TripFromLabel.createResponsePath(gtfsStorage, translation, result.points, walkPath));
+            ResponsePath walkResponsePath = TripFromLabel.createResponsePath(gtfsStorage, translation, result.points, walkPath);
+            walkResponsePath.setRouteWeight(walkResponsePath.getTime() * betaAccessTime);
+            response.add(walkResponsePath);
             for (TripBasedRouter.ResultLabel route : routes) {
                 ResponsePath responsePath = extractResponse(route, result);
                 response.add(responsePath);
@@ -257,10 +259,15 @@ public final class PtRouterTripBasedImpl implements PtRouter {
             }
             Collections.reverse(segments);
 
+            long routeWeight = 0;
             List<Trip.Leg> legs = new ArrayList<>();
-            extractAccessLeg(route, snapResult).ifPresent(legs::add);
+            Optional<Trip.Leg> maybeAccessLeg = extractAccessLeg(route, snapResult);
+            if (maybeAccessLeg.isPresent()) {
+                Trip.Leg accessLeg = maybeAccessLeg.get();
+                legs.add(accessLeg);
+                routeWeight += (accessLeg.getArrivalTime().getTime() - accessLeg.getDepartureTime().getTime()) * betaAccessTime;
+            }
             String previousBlockId = null;
-            long routeTypePenalty = 0;
             for (int i = 0; i < segments.size(); i++) {
                 TripBasedRouter.EnqueuedTripSegment segment = segments.get(i);
                 GTFSFeed feed = gtfsStorage.getGtfsFeeds().get(segment.tripPointer.feedId);
@@ -291,18 +298,26 @@ public final class PtRouterTripBasedImpl implements PtRouter {
                         legs.add(transferLegs.get(0));
                     });
                 }
+                long travelTime = stops.get(stops.size() - 1).arrivalTime.toInstant().toEpochMilli() - stops.get(0).departureTime.toInstant().toEpochMilli();
                 legs.add(new Trip.PtLeg(segment.tripPointer.feedId, isInSameVehicleAsPrevious, segment.tripPointer.trip.trip_id,
-                        trip.route_id, trip.trip_headsign, stops, 0, stops.get(stops.size() - 1).arrivalTime.toInstant().toEpochMilli() - stops.get(0).departureTime.toInstant().toEpochMilli(), geometryFactory.createLineString(stops.stream().map(s -> s.geometry.getCoordinate()).toArray(Coordinate[]::new))));
-                routeTypePenalty += transferPenaltiesByRouteType.getOrDefault(segment.tripPointer.routeType, 0L);
+                        trip.route_id, trip.trip_headsign, stops, 0, travelTime, geometryFactory.createLineString(stops.stream().map(s -> s.geometry.getCoordinate()).toArray(Coordinate[]::new))));
+                routeWeight += travelTime;
+                routeWeight += transferPenaltiesByRouteType.getOrDefault(segment.tripPointer.routeType, 0L);
                 previousBlockId = trip.block_id;
             }
-            extractEgressLeg(route, snapResult).ifPresent(legs::add);
+            Optional<Trip.Leg> maybeEgressLeg = extractEgressLeg(route, snapResult);
+            if (maybeEgressLeg.isPresent()) {
+                Trip.Leg egressLeg = maybeEgressLeg.get();
+                legs.add(egressLeg);
+                routeWeight += (egressLeg.getArrivalTime().getTime() - egressLeg.getDepartureTime().getTime()) * betaEgressTime;
+            }
 
             ResponsePath responsePath = TripFromLabel.createResponsePath(gtfsStorage, translation, snapResult.points, legs);
-            Duration duration = Duration.between(initialTime,
-                    responsePath.getLegs().get(responsePath.getLegs().size() - 1).getArrivalTime().toInstant());
+            Duration duration = Duration.between(initialTime, responsePath.getLegs().get(responsePath.getLegs().size() - 1).getArrivalTime().toInstant());
             responsePath.setTime(duration.toMillis());
-            responsePath.setRouteWeight(duration.toMillis() + routeTypePenalty);
+            Duration waitTimeBeforeDeparture = Duration.between(initialTime, responsePath.getLegs().get(0).getDepartureTime().toInstant());
+            routeWeight += waitTimeBeforeDeparture.toMillis();
+            responsePath.setRouteWeight(routeWeight);
             return responsePath;
         }
 
