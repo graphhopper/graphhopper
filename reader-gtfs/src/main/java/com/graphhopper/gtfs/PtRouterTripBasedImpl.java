@@ -144,11 +144,11 @@ public final class PtRouterTripBasedImpl implements PtRouter {
             accessProfile = config.getProfiles().stream().filter(p -> p.getName().equals(request.getAccessProfile())).findFirst().get();
             betaAccessTime = request.getBetaAccessTime();
             accessWeighting = weightingFactory.createWeighting(accessProfile, new PMap(), false);
-            accessSnapFilter = new DefaultSnapFilter(accessWeighting, encodingManager.getBooleanEncodedValue(Subnetwork.key(accessProfile.getVehicle())));
+            accessSnapFilter = new DefaultSnapFilter(accessWeighting, encodingManager.getBooleanEncodedValue(Subnetwork.key(accessProfile.getName())));
             egressProfile = config.getProfiles().stream().filter(p -> p.getName().equals(request.getEgressProfile())).findFirst().get();
             betaEgressTime = request.getBetaEgressTime();
             egressWeighting = weightingFactory.createWeighting(egressProfile, new PMap(), false);
-            egressSnapFilter = new DefaultSnapFilter(egressWeighting, encodingManager.getBooleanEncodedValue(Subnetwork.key(egressProfile.getVehicle())));
+            egressSnapFilter = new DefaultSnapFilter(egressWeighting, encodingManager.getBooleanEncodedValue(Subnetwork.key(egressProfile.getName())));
         }
 
         GHResponse route() {
