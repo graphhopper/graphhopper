@@ -177,12 +177,14 @@ public final class PtRouterTripBasedImpl implements PtRouter {
             routes = tripBasedRouter.routeNaiveProfileWithNaiveBetas(new TripBasedRouter.Parameters(accessStations, egressStations, initialTime, maxProfileDuration, trip -> (blockedRouteTypes & (1 << trip.routeType)) == 0, betaAccessTime, betaEgressTime, betaTransfers, transferPenaltiesByRouteType));
 
             tripFromLabel = new TripFromLabel(queryGraph, encodingManager, gtfsStorage, RealtimeFeed.empty(), pathDetailsBuilderFactory, walkSpeedKmH);
-            List<Label.Transition> walkTransitions = Label.getTransitions(walkDestLabel, false);
-            List<List<Label.Transition>> walkPartitions = tripFromLabel.parsePathToPartitions(walkTransitions);
-            List<Trip.Leg> walkPath = tripFromLabel.parsePartitionToLegs(walkPartitions.get(0), result.queryGraph, encodingManager, accessWeighting, translation, requestedPathDetails);
-            ResponsePath walkResponsePath = TripFromLabel.createResponsePath(gtfsStorage, translation, result.points, walkPath);
-            walkResponsePath.setRouteWeight(walkResponsePath.getTime() * betaAccessTime);
-            response.add(walkResponsePath);
+            if (walkDestLabel != null) {
+                List<Label.Transition> walkTransitions = Label.getTransitions(walkDestLabel, false);
+                List<List<Label.Transition>> walkPartitions = tripFromLabel.parsePathToPartitions(walkTransitions);
+                List<Trip.Leg> walkPath = tripFromLabel.parsePartitionToLegs(walkPartitions.get(0), result.queryGraph, encodingManager, accessWeighting, translation, requestedPathDetails);
+                ResponsePath walkResponsePath = TripFromLabel.createResponsePath(gtfsStorage, translation, result.points, walkPath);
+                walkResponsePath.setRouteWeight(walkResponsePath.getTime() * betaAccessTime);
+                response.add(walkResponsePath);
+            }
             for (TripBasedRouter.ResultLabel route : routes) {
                 ResponsePath responsePath = extractResponse(route, result);
                 response.add(responsePath);
@@ -317,6 +319,10 @@ public final class PtRouterTripBasedImpl implements PtRouter {
             responsePath.setTime(duration.toMillis());
             Duration waitTimeBeforeDeparture = Duration.between(initialTime, responsePath.getLegs().get(0).getDepartureTime().toInstant());
             routeWeight += waitTimeBeforeDeparture.toMillis();
+            for (int i = 1; i < responsePath.getLegs().size(); i++) {
+                Duration waitTimeBeforeLeg = Duration.between(responsePath.getLegs().get(i - 1).getArrivalTime().toInstant(), responsePath.getLegs().get(i).getDepartureTime().toInstant());
+                routeWeight += waitTimeBeforeLeg.toMillis();
+            }
             responsePath.setRouteWeight(routeWeight);
             return responsePath;
         }
