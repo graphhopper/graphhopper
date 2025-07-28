@@ -28,6 +28,7 @@ import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.shapes.GHPoint;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -192,6 +193,7 @@ public interface GraphHopperMultimodalIT<T extends PtRouter> {
 
     @Test
     default void testDepartureTimeOfAccessLeg() {
+        SoftAssertions softly = new SoftAssertions();
         Request ghRequest = new Request(
                 36.91311729030539, -116.76769495010377,
                 36.91260259593356, -116.76149368286134
@@ -243,8 +245,9 @@ public interface GraphHopperMultimodalIT<T extends PtRouter> {
         ghRequest.setBetaAccessTime(1.0);
         ghRequest.setBetaEgressTime(1.0);
         response = ptRouter().route(ghRequest);
-        assertThat(response.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(138);
+        softly.assertThat(response.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(138);
         assertThat(response.getAll().stream().filter(p -> p.getLegs().size() > 1).findFirst()).isEmpty();
+        softly.assertAll();
     }
 
     @Test
@@ -303,6 +306,7 @@ public interface GraphHopperMultimodalIT<T extends PtRouter> {
 
     @Test
     default void testProfileQueryDoesntEndPrematurely() {
+        SoftAssertions softly = new SoftAssertions();
         Request ghRequest = new Request(
                 36.91311729030539, -116.76769495010377,
                 36.91260259593356, -116.76149368286134
@@ -315,15 +319,16 @@ public interface GraphHopperMultimodalIT<T extends PtRouter> {
         ghRequest.setMaxProfileDuration(Duration.ofHours(12));
         ghRequest.setLimitSolutions(1);
         GHResponse response1 = ptRouter().route(ghRequest);
-        assertThat(response1.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(142);
+        softly.assertThat(response1.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(142);
         ghRequest.setLimitSolutions(3);
         GHResponse response3 = ptRouter().route(ghRequest);
-        assertThat(response3.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(234);
+        softly.assertThat(response3.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(234);
         assertThat(response1.getAll().get(0).getTime()).isEqualTo(response3.getAll().get(0).getTime());
         ghRequest.setLimitSolutions(5);
         GHResponse response5 = ptRouter().route(ghRequest);
-        assertThat(response5.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(334);
+        softly.assertThat(response5.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(334);
         assertThat(response3.getAll().get(2).getTime()).isEqualTo(response5.getAll().get(2).getTime());
+        softly.assertAll();
     }
 
     @Test
