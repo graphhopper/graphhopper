@@ -47,6 +47,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -191,7 +192,8 @@ public final class PtRouterTripBasedImpl implements PtRouter {
                 if (walkResponsePath != null) {
                     Duration waitTimeBeforeDeparture = Duration.between(initialTime, responsePath.getLegs().get(0).getDepartureTime().toInstant());
                     Duration timeBetweenArrivals = Duration.between(responsePath.getLegs().get(responsePath.getLegs().size()-1).getArrivalTime().toInstant(), walkResponsePath.getLegs().get(0).getArrivalTime().toInstant());
-                    Instant earliestDepartureTimeWhereResponseMightBeBetterThanWalking = responsePath.getLegs().get(0).getDepartureTime().toInstant().minus(timeBetweenArrivals);
+                    double gapBetweenArrivals = responsePath.getRouteWeight() - walkResponsePath.getRouteWeight();
+                    Instant earliestDepartureTimeWhereResponseMightBeBetterThanWalking = responsePath.getLegs().get(0).getDepartureTime().toInstant().minus((long) gapBetweenArrivals, ChronoUnit.MILLIS);
                     Instant endOfProfile = initialTime.plus(maxProfileDuration);
                     if (earliestDepartureTimeWhereResponseMightBeBetterThanWalking.isAfter(endOfProfile)) {
                         continue;
