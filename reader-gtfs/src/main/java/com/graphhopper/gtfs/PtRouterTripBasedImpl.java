@@ -188,6 +188,15 @@ public final class PtRouterTripBasedImpl implements PtRouter {
             }
             for (TripBasedRouter.ResultLabel route : routes) {
                 ResponsePath responsePath = extractResponse(route, result);
+                if (walkResponsePath != null) {
+                    Duration waitTimeBeforeDeparture = Duration.between(initialTime, responsePath.getLegs().get(0).getDepartureTime().toInstant());
+                    Duration timeBetweenArrivals = Duration.between(responsePath.getLegs().get(responsePath.getLegs().size()-1).getArrivalTime().toInstant(), walkResponsePath.getLegs().get(0).getArrivalTime().toInstant());
+                    Instant earliestDepartureTimeWhereResponseMightBeBetterThanWalking = responsePath.getLegs().get(0).getDepartureTime().toInstant().minus(timeBetweenArrivals);
+                    Instant endOfProfile = initialTime.plus(maxProfileDuration);
+                    if (earliestDepartureTimeWhereResponseMightBeBetterThanWalking.isAfter(endOfProfile)) {
+                        continue;
+                    }
+                }
                 response.add(responsePath);
             }
             response.getAll().sort(Comparator.comparingLong(ResponsePath::getTime));
