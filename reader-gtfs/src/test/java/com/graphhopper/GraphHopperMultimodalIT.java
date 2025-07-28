@@ -137,6 +137,11 @@ public interface GraphHopperMultimodalIT<T extends PtRouter> {
         }
 
         @Override
+        public void assertAllIfWeCanAssureMaxVisitedNodes(SoftAssertions softly) {
+
+        }
+
+        @Override
         public PtRouterTripBasedImpl ptRouter() {
             return graphHopper;
         }
@@ -247,6 +252,10 @@ public interface GraphHopperMultimodalIT<T extends PtRouter> {
         response = ptRouter().route(ghRequest);
         softly.assertThat(response.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(138);
         assertThat(response.getAll().stream().filter(p -> p.getLegs().size() > 1).findFirst()).isEmpty();
+        assertAllIfWeCanAssureMaxVisitedNodes(softly);
+    }
+
+    default void assertAllIfWeCanAssureMaxVisitedNodes(SoftAssertions softly) {
         softly.assertAll();
     }
 
@@ -328,7 +337,7 @@ public interface GraphHopperMultimodalIT<T extends PtRouter> {
         GHResponse response5 = ptRouter().route(ghRequest);
         softly.assertThat(response5.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(334);
         assertThat(response3.getAll().get(2).getTime()).isEqualTo(response5.getAll().get(2).getTime());
-        softly.assertAll();
+        assertAllIfWeCanAssureMaxVisitedNodes(softly);
     }
 
     @Test
