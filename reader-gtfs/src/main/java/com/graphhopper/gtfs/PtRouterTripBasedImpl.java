@@ -190,12 +190,13 @@ public final class PtRouterTripBasedImpl implements PtRouter {
             for (TripBasedRouter.ResultLabel route : routes) {
                 ResponsePath responsePath = extractResponse(route, result);
                 if (walkResponsePath != null) {
-                    Duration waitTimeBeforeDeparture = Duration.between(initialTime, responsePath.getLegs().get(0).getDepartureTime().toInstant());
-                    Duration timeBetweenArrivals = Duration.between(responsePath.getLegs().get(responsePath.getLegs().size()-1).getArrivalTime().toInstant(), walkResponsePath.getLegs().get(0).getArrivalTime().toInstant());
-                    double gapBetweenArrivals = responsePath.getRouteWeight() - walkResponsePath.getRouteWeight();
-                    Instant earliestDepartureTimeWhereResponseMightBeBetterThanWalking = responsePath.getLegs().get(0).getDepartureTime().toInstant().minus((long) gapBetweenArrivals, ChronoUnit.MILLIS);
+                    Instant departureTime = responsePath.getLegs().get(0).getDepartureTime().toInstant();
+                    Duration waitTimeBeforeDeparture = Duration.between(initialTime, departureTime);
+                    double travelTimeyWeight = responsePath.getRouteWeight() - waitTimeBeforeDeparture.toMillis();
+                    double gapBetweenTravelTimeyWeights = walkResponsePath.getRouteWeight() - travelTimeyWeight;
+                    Instant earliestDepartureTimeWhereResponseIsBetterThanWalking = departureTime.minus((long) gapBetweenTravelTimeyWeights, ChronoUnit.MILLIS);
                     Instant endOfProfile = initialTime.plus(maxProfileDuration);
-                    if (earliestDepartureTimeWhereResponseMightBeBetterThanWalking.isAfter(endOfProfile)) {
+                    if (earliestDepartureTimeWhereResponseIsBetterThanWalking.isAfter(endOfProfile)) {
                         continue;
                     }
                 }
