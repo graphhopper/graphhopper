@@ -121,6 +121,7 @@ public final class PtRouterTripBasedImpl implements PtRouter {
         private Label walkDestLabel;
         private List<Label> egressStationLabels;
         private List<TripBasedRouter.StopWithTimeDelta> egressStations;
+        private ResponsePath walkResponsePath;
 
         RequestHandler(Request request) {
             maxVisitedNodesForRequest = request.getMaxVisitedNodes();
@@ -181,7 +182,7 @@ public final class PtRouterTripBasedImpl implements PtRouter {
                 List<Label.Transition> walkTransitions = Label.getTransitions(walkDestLabel, false);
                 List<List<Label.Transition>> walkPartitions = tripFromLabel.parsePathToPartitions(walkTransitions);
                 List<Trip.Leg> walkPath = tripFromLabel.parsePartitionToLegs(walkPartitions.get(0), result.queryGraph, encodingManager, accessWeighting, translation, requestedPathDetails);
-                ResponsePath walkResponsePath = TripFromLabel.createResponsePath(gtfsStorage, translation, result.points, walkPath);
+                walkResponsePath = TripFromLabel.createResponsePath(gtfsStorage, translation, result.points, walkPath);
                 walkResponsePath.setRouteWeight(walkResponsePath.getTime() * betaAccessTime);
                 response.add(walkResponsePath);
             }
