@@ -197,6 +197,24 @@ public interface GraphHopperMultimodalIT<T extends PtRouter> {
     }
 
     @Test
+    default void testLess() {
+        Request ghRequest = new Request(
+                36.91311729030539, -116.76769495010377,
+                36.91260259593356, -116.76149368286134
+        );
+        ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 6, 41, 4).atZone(zoneId).toInstant());
+        ghRequest.setBetaAccessTime(1.0);
+        ghRequest.setBetaEgressTime(1.0);
+        GHResponse response = ptRouter().route(ghRequest);
+        ResponsePath walkSolution = response.getAll().stream().filter(p -> p.getLegs().size() == 1).findFirst().get();
+        ResponsePath firstTransitSolution = response.getAll().stream().filter(p -> p.getLegs().size() > 1).findFirst().get();
+        assertThat(routeDuration(firstTransitSolution)).isLessThanOrEqualTo(routeDuration(walkSolution));
+
+        assertThat(response.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(271);
+    }
+
+
+    @Test
     default void testDepartureTimeOfAccessLeg() {
         SoftAssertions softly = new SoftAssertions();
         Request ghRequest = new Request(
