@@ -28,7 +28,7 @@ public class TripBasedRouter {
     private int[][] tripDoneFromIndex;
     private List<ResultLabel> result = new ArrayList<>();
     private Parameters parameters;
-    private final int N_ROUNDS = 3;
+    private final int N_ROUNDS = 8;
     int round;
 
     public TripBasedRouter(GtfsStorage gtfsStorage, Trips tripTransfers) {
@@ -116,7 +116,7 @@ public class TripBasedRouter {
         logger.debug("Round {}: {}", round, queue.size());
         reportQueue(queue);
         checkArrivals(queue, round);
-        while (queue.size() != 0 && round < 3) {
+        while (queue.size() != 0 && round < N_ROUNDS) {
             List<EnqueuedTripSegment> queue1 = enqueueTransfers(queue);
             queue = queue1;
             round = round + 1;
