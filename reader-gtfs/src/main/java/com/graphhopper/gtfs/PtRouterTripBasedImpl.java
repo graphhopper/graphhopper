@@ -41,6 +41,8 @@ import com.graphhopper.util.exceptions.ConnectionNotFoundException;
 import com.graphhopper.util.exceptions.MaximumNodesExceededException;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.time.Duration;
@@ -53,6 +55,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public final class PtRouterTripBasedImpl implements PtRouter {
+
+    private static final Logger logger = LoggerFactory.getLogger(PtRouterTripBasedImpl.class);
 
     private final GraphHopperConfig config;
     private final TranslationMap translationMap;
@@ -168,6 +172,9 @@ public final class PtRouterTripBasedImpl implements PtRouter {
             accessStations = accessStationLabels.stream()
                     .map(l -> stopWithTimeDelta(l.edge.getPlatformDescriptor(), l.currentTime - initialTime.toEpochMilli()))
                     .collect(Collectors.toList());
+            for (TripBasedRouter.StopWithTimeDelta accessStation : accessStations) {
+                logger.debug("access {}", accessStation);
+            }
             egressStationLabels = egress(startNode, destNode);
             egressStations = egressStationLabels.stream()
                     .map(l -> stopWithTimeDelta(l.edge.getPlatformDescriptor(), initialTime.toEpochMilli() - l.currentTime))
@@ -264,6 +271,7 @@ public final class PtRouterTripBasedImpl implements PtRouter {
         }
 
         private ResponsePath extractResponse(TripBasedRouter.ResultLabel route, PtLocationSnapper.Result snapResult) {
+            logger.debug("{}", route);
             GeometryFactory geometryFactory = new GeometryFactory();
 
             List<TripBasedRouter.EnqueuedTripSegment> segments = new ArrayList<>();
@@ -277,6 +285,7 @@ public final class PtRouterTripBasedImpl implements PtRouter {
             long routeWeight = 0;
             List<Trip.Leg> legs = new ArrayList<>();
             Optional<Trip.Leg> maybeAccessLeg = extractAccessLeg(route, snapResult);
+            logger.debug(" {}", maybeAccessLeg);
             if (maybeAccessLeg.isPresent()) {
                 Trip.Leg accessLeg = maybeAccessLeg.get();
                 legs.add(accessLeg);

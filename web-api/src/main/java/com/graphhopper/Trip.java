@@ -96,6 +96,13 @@ public class Trip {
             return arrivalTime;
         }
 
+        @Override
+        public String toString() {
+            return "WalkLeg{" +
+                    "departureTime=" + departureTime +
+                    ", arrivalTime=" + arrivalTime +
+                    '}';
+        }
     }
     public static class PtLeg extends Leg {
         public final String feed_id;
