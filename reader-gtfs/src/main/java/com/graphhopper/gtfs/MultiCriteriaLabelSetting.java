@@ -160,11 +160,6 @@ public class MultiCriteriaLabelSetting {
                             residualDelay = 0;
                         }
                     }
-//                    if (!reverse && edgeType == GtfsStorage.EdgeType.BOARD) {
-//                        String patternId = explorer.getPatternId(edge.getTripDescriptor());
-//                        if (label.blockedPatterns.contains(patternId))
-//                            continue;
-//                    }
                     if (!reverse && edgeType == GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK && residualDelay > 0) {
                         Label newImpossibleLabelForDelayedTrip = new Label(nextTime, edge, edge.getAdjNode(), nTransfers, firstPtDepartureTime, walkTime, extraWeight, residualDelay, true, label);
                         insertIfNotDominated(newImpossibleLabelForDelayedTrip);
@@ -174,14 +169,6 @@ public class MultiCriteriaLabelSetting {
                         insertIfNotDominated(newLabel);
                     } else {
                         Label newLabel = new Label(nextTime, edge, edge.getAdjNode(), nTransfers, firstPtDepartureTime, walkTime, extraWeight, residualDelay, impossible, label);
-//                        if (edgeType == GtfsStorage.EdgeType.WAIT) {
-//                            newLabel.blockedPatterns.addAll(label.blockedPatterns);
-//                            explorer.exploreEdgesAround(label).forEach(e -> {
-//                                if (e.getType() == GtfsStorage.EdgeType.BOARD) {
-//                                    newLabel.blockedPatterns.add(explorer.getPatternId(e.getTripDescriptor()));
-//                                }
-//                            });
-//                        }
                         insertIfNotDominated(newLabel);
                     }
                 }
@@ -190,10 +177,6 @@ public class MultiCriteriaLabelSetting {
         }
     }
 
-
-    public List<Label> pushedBoardings = new ArrayList<Label>();
-
-    public Predicate<Label> isAllowed = l -> true;
 
     void insertIfNotDominated(Label me) {
         Predicate<Label> filter;
@@ -204,13 +187,10 @@ public class MultiCriteriaLabelSetting {
         }
         if (isNotDominatedByAnyOf(me, targetLabels, filter)) {
             List<Label> sptEntries = fromMap.computeIfAbsent(me.node, k -> new ArrayList<>(1));
-            if (isAllowed.test(me) && isNotDominatedByAnyOf(me, sptEntries, filter)) {
+            if (isNotDominatedByAnyOf(me, sptEntries, filter)) {
                 removeDominated(me, sptEntries, filter);
                 sptEntries.add(me);
                 fromHeap.add(me);
-                if (me.edge.getType() == GtfsStorage.EdgeType.BOARD) {
-                    pushedBoardings.add(me);
-                }
             }
         }
     }

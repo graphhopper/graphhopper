@@ -57,8 +57,6 @@ public class Label {
     final long residualDelay;
     final boolean impossible;
 
-    public final List<String> blockedPatterns = new ArrayList<>();
-
     public final Label parent;
 
     Label(long currentTime, GraphExplorer.MultiModalEdge edge, NodeId node, int nTransfers, Long departureTime, long streetTime, long extraWeight, long residualDelay, boolean impossible, Label parent) {
