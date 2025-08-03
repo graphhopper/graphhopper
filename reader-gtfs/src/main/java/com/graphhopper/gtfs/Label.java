@@ -17,8 +17,6 @@
  */
 package com.graphhopper.gtfs;
 
-import com.carrotsearch.hppc.IntHashSet;
-
 import java.time.Instant;
 import java.util.*;
 
