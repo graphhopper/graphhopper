@@ -31,7 +31,7 @@ import com.conveyal.gtfs.error.GeneralError;
 import com.conveyal.gtfs.model.Calendar;
 import com.conveyal.gtfs.model.*;
 import com.google.common.collect.Iterables;
-import com.graphhopper.gtfs.analysis.Trips;
+import com.graphhopper.gtfs.Trips;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.CoordinateList;
 import org.locationtech.jts.geom.GeometryFactory;

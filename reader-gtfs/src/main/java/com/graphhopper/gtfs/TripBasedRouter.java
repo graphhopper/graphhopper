@@ -3,7 +3,6 @@ package com.graphhopper.gtfs;
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.StopTime;
 import com.conveyal.gtfs.model.Trip;
-import com.graphhopper.gtfs.analysis.Trips;
 import com.graphhopper.reader.osm.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,8 +14,8 @@ import java.util.function.Predicate;
 import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
 
-import static com.graphhopper.gtfs.analysis.Trips.TripAtStopTime.ArrivalDeparture.ARRIVAL;
-import static com.graphhopper.gtfs.analysis.Trips.TripAtStopTime.print;
+import static com.graphhopper.gtfs.Trips.TripAtStopTime.ArrivalDeparture.ARRIVAL;
+import static com.graphhopper.gtfs.Trips.TripAtStopTime.print;
 
 public class TripBasedRouter {
 

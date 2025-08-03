@@ -25,7 +25,6 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimaps;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
-import com.graphhopper.gtfs.analysis.Trips;
 import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.DefaultSnapFilter;

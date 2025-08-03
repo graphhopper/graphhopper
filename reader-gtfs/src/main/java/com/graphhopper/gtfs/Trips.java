@@ -1,4 +1,4 @@
-package com.graphhopper.gtfs.analysis;
+package com.graphhopper.gtfs;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.ObjectIntHashMap;
@@ -7,8 +7,6 @@ import com.conveyal.gtfs.model.*;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
-import com.graphhopper.gtfs.GtfsStorage;
-import com.graphhopper.gtfs.Transfers;
 
 import java.io.Serializable;
 import java.time.LocalDate;

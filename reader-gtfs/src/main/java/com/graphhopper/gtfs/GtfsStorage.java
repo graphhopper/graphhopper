@@ -31,7 +31,6 @@ import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SequenceWriter;
 import com.google.common.collect.HashMultimap;
-import com.graphhopper.gtfs.analysis.Trips;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.index.LineIntIndex;
 import org.mapdb.DB;
