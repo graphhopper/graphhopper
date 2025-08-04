@@ -6,7 +6,7 @@
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-parent</artifactId>
     <name>GraphHopper Parent Project</name>
-    <version>8.0-SNAPSHOT</version>
+    <version>11.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <url>https://www.graphhopper.com</url>
     <inceptionYear>2012</inceptionYear>
@@ -16,7 +16,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.target>17</maven.compiler.target>
 
         <!-- We always had this disabled as it is disabled by default in debian JDK builds, but when we
              switched to another JDK on travis it was enabled implicitly. Our javadocs are not ready for this
@@ -75,7 +75,7 @@
             <dependency>
                 <groupId>io.dropwizard</groupId>
                 <artifactId>dropwizard-dependencies</artifactId>
-                <version>2.1.6</version>
+                <version>3.0.8</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -103,7 +103,7 @@
             <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-compress</artifactId>
-                <version>1.21</version>
+                <version>1.26.0</version>
             </dependency>
             <dependency>
                 <groupId>org.junit</groupId>
@@ -120,7 +120,7 @@
             <dependency>
                 <groupId>commons-io</groupId>
                 <artifactId>commons-io</artifactId>
-                <version>2.11.0</version>
+                <version>2.14.0</version>
             </dependency>
             <dependency>
                 <groupId>org.mapdb</groupId>
@@ -128,9 +128,9 @@
                 <version>1.0.8</version>
             </dependency>
             <dependency>
-                <groupId>io.mobilitydata.transit</groupId>
+                <groupId>org.mobilitydata</groupId>
                 <artifactId>gtfs-realtime-bindings</artifactId>
-                <version>0.0.5</version>
+                <version>0.0.8</version>
                 <exclusions>
                     <exclusion>
                         <!-- use newer protobuf version  -->
@@ -183,8 +183,7 @@
                         <compilerArgument>-Xlint:deprecation</compilerArgument>
                         -->
                         <fork>true</fork>
-                        <source>1.8</source>
-                        <target>1.8</target>
+                        <release>17</release>
                     </configuration>
                 </plugin>
 

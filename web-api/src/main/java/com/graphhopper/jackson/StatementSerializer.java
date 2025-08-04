@@ -28,8 +28,16 @@ class StatementSerializer extends JsonSerializer<Statement> {
     @Override
     public void serialize(Statement statement, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
         jsonGenerator.writeStartObject();
-        jsonGenerator.writeStringField(statement.getKeyword().getName(), statement.getCondition());
-        jsonGenerator.writeStringField(statement.getOperation().getName(), statement.getValue());
+        jsonGenerator.writeStringField(statement.keyword().getName(), statement.condition());
+        if (statement.isBlock()) {
+            jsonGenerator.writeArrayFieldStart("do");
+            for (Statement s : statement.doBlock()) {
+                serialize(s, jsonGenerator, serializerProvider);
+            }
+            jsonGenerator.writeEndArray();
+        } else {
+            jsonGenerator.writeStringField(statement.operation().getName(), statement.value());
+        }
         jsonGenerator.writeEndObject();
     }
 }

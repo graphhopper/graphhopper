@@ -3,10 +3,12 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.EdgeIntAccess;
-import com.graphhopper.routing.util.TransportationMode;
+import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.routing.util.WayAccess;
 
 import java.util.*;
+
+import static com.graphhopper.routing.util.parsers.OSMTemporalAccessParser.hasPermissiveTemporalRestriction;
 
 public abstract class BikeCommonAccessParser extends AbstractAccessParser implements TagParser {
 
@@ -14,19 +16,21 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
     private final Set<String> allowedHighways = new HashSet<>();
     private final BooleanEncodedValue roundaboutEnc;
 
+    /**
+     * The access restriction list returned from OSMRoadAccessParser.toOSMRestrictions(TransportationMode.Bike)
+     * contains "vehicle". But here we want to allow walking via dismount.
+     */
+    private static final List<String> RESTRICTIONS = Arrays.asList("bicycle", "access");
+    private static final Collection<String> FWDONEWAYS = Arrays.asList("yes", "true", "1");
+
     protected BikeCommonAccessParser(BooleanEncodedValue accessEnc, BooleanEncodedValue roundaboutEnc) {
-        super(accessEnc, TransportationMode.BIKE);
+        super(accessEnc, RESTRICTIONS);
 
         this.roundaboutEnc = roundaboutEnc;
 
         restrictedValues.add("agricultural");
         restrictedValues.add("forestry");
         restrictedValues.add("delivery");
-
-        intendedValues.add("yes");
-        intendedValues.add("designated");
-        intendedValues.add("official");
-        intendedValues.add("permissive");
 
         barriers.add("fence");
 
@@ -41,10 +45,10 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
         if (highwayValue == null) {
             WayAccess access = WayAccess.CAN_SKIP;
 
-            if (way.hasTag("route", ferries)) {
+            if (FerrySpeedCalculator.isFerry(way)) {
                 // if bike is NOT explicitly tagged allow bike but only if foot is not specified either
                 String bikeTag = way.getTag("bicycle");
-                if (bikeTag == null && !way.hasTag("foot") || intendedValues.contains(bikeTag))
+                if (bikeTag == null && !way.hasTag("foot") || allowedValues.contains(bikeTag))
                     access = WayAccess.FERRY;
             }
 
@@ -56,7 +60,7 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
                 access = WayAccess.WAY;
 
             if (!access.canSkip()) {
-                if (way.hasTag(restrictions, restrictedValues) && !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way))
+                if (way.hasTag(restrictionKeys, restrictedValues))
                     return WayAccess.CAN_SKIP;
                 return access;
             }
@@ -67,31 +71,27 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
         if (!allowedHighways.contains(highwayValue))
             return WayAccess.CAN_SKIP;
 
-        String sacScale = way.getTag("sac_scale");
-        if (sacScale != null) {
-            if (!isSacScaleAllowed(sacScale))
-                return WayAccess.CAN_SKIP;
-        }
-
-        // use the way if it is tagged for bikes
-        if (way.hasTag("bicycle", "dismount") || way.hasTag("highway", "cycleway"))
+        // use the way for pushing
+        if (way.hasTag("bicycle", "dismount"))
             return WayAccess.WAY;
 
-        boolean permittedWayConditionallyRestricted = getConditionalTagInspector().isPermittedWayConditionallyRestricted(way);
-        boolean restrictedWayConditionallyPermitted = getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way);
-        String firstValue = way.getFirstPriorityTag(restrictions);
-        if (!firstValue.isEmpty()) {
+        int firstIndex = way.getFirstIndex(restrictionKeys);
+        if (firstIndex >= 0) {
+            String firstValue = way.getTag(restrictionKeys.get(firstIndex), "");
             String[] restrict = firstValue.split(";");
+            // if any of the values allows access then return early (regardless of the order)
             for (String value : restrict) {
-                if (restrictedValues.contains(value) && !restrictedWayConditionallyPermitted)
-                    return WayAccess.CAN_SKIP;
-                if (intendedValues.contains(value) && !permittedWayConditionallyRestricted)
+                if (allowedValues.contains(value))
                     return WayAccess.WAY;
+            }
+            for (String value : restrict) {
+                if (restrictedValues.contains(value) && !hasPermissiveTemporalRestriction(way, firstIndex, restrictionKeys, allowedValues))
+                    return WayAccess.CAN_SKIP;
             }
         }
 
         // accept only if explicitly tagged for bike usage
-        if ("motorway".equals(highwayValue) || "motorway_link".equals(highwayValue) || "bridleway".equals(highwayValue))
+        if ("motorway".equals(highwayValue) || "motorway_link".equals(highwayValue))
             return WayAccess.CAN_SKIP;
 
         if (way.hasTag("motorroad", "yes"))
@@ -100,15 +100,7 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
         if (isBlockFords() && ("ford".equals(highwayValue) || way.hasTag("ford")))
             return WayAccess.CAN_SKIP;
 
-        if (permittedWayConditionallyRestricted)
-            return WayAccess.CAN_SKIP;
-
         return WayAccess.WAY;
-    }
-
-    boolean isSacScaleAllowed(String sacScale) {
-        // other scales are nearly impossible by an ordinary bike, see http://wiki.openstreetmap.org/wiki/Key:sac_scale
-        return "hiking".equals(sacScale);
     }
 
     @Override
@@ -133,13 +125,13 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
     protected void handleAccess(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way) {
         // handle oneways. The value -1 means it is a oneway but for reverse direction of stored geometry.
         // The tagging oneway:bicycle=no or cycleway:right:oneway=no or cycleway:left:oneway=no lifts the generic oneway restriction of the way for bike
-        boolean isOneway = way.hasTag("oneway", ONEWAYS) && !way.hasTag("oneway", "-1") && !way.hasTag("bicycle:backward", INTENDED)
-                || way.hasTag("oneway", "-1") && !way.hasTag("bicycle:forward", INTENDED)
+        boolean isOneway = way.hasTag("oneway", ONEWAYS) && !way.hasTag("oneway", "-1") && !way.hasTag("bicycle:backward", allowedValues)
+                || way.hasTag("oneway", "-1") && !way.hasTag("bicycle:forward", allowedValues)
                 || way.hasTag("oneway:bicycle", ONEWAYS)
-                || way.hasTag("cycleway:left:oneway", ONEWAYS)
-                || way.hasTag("cycleway:right:oneway", ONEWAYS)
-                || way.hasTag("vehicle:backward", restrictedValues) && !way.hasTag("bicycle:forward", INTENDED)
-                || way.hasTag("vehicle:forward", restrictedValues) && !way.hasTag("bicycle:backward", INTENDED)
+                || way.hasTag("cycleway:left:oneway", FWDONEWAYS) && !way.hasTag("cycleway:right:oneway", "-1")
+                || way.hasTag("cycleway:right:oneway", FWDONEWAYS) && !way.hasTag("cycleway:left:oneway", "-1")
+                || way.hasTag("vehicle:backward", restrictedValues) && !way.hasTag("bicycle:forward", allowedValues)
+                || way.hasTag("vehicle:forward", restrictedValues) && !way.hasTag("bicycle:backward", allowedValues)
                 || way.hasTag("bicycle:forward", restrictedValues)
                 || way.hasTag("bicycle:backward", restrictedValues);
 

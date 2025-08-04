@@ -19,17 +19,29 @@ package com.graphhopper.util;
 
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
 import java.util.Locale;
 
 import static com.graphhopper.util.Helper.UTF_CS;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * @author Peter Karich
  */
 public class HelperTest {
+
+    @Test
+    public void testElevation() {
+        assertEquals(9034.1, Helper.uIntToEle(Helper.eleToUInt(9034.1)), .1);
+        assertEquals(1234.5, Helper.uIntToEle(Helper.eleToUInt(1234.5)), .1);
+        assertEquals(0, Helper.uIntToEle(Helper.eleToUInt(0)), .1);
+        assertEquals(-432.3, Helper.uIntToEle(Helper.eleToUInt(-432.3)), .1);
+
+        assertEquals(Double.MAX_VALUE, Helper.uIntToEle(Helper.eleToUInt(11_000)));
+        assertEquals(Double.MAX_VALUE, Helper.uIntToEle(Helper.eleToUInt(Double.MAX_VALUE)));
+
+        assertThrows(IllegalArgumentException.class, () -> Helper.eleToUInt(Double.NaN));
+    }
 
     @Test
     public void testGetLocale() {
@@ -91,5 +103,23 @@ public class HelperTest {
         // force incorrect char:
         bytes[0] = -25;
         assertEquals(3, new String(bytes, 0, 1, UTF_CS).getBytes(UTF_CS).length);
+    }
+
+    @Test
+    void degreeToInt() {
+        int storedInt = 444_494_395;
+        double lat = Helper.intToDegree(storedInt);
+        assertEquals(44.4494395, lat);
+        assertEquals(storedInt, Helper.degreeToInt(lat));
+    }
+
+    @Test
+    void eleToInt() {
+        int storedInt = 1145636;
+        double ele = Helper.uIntToEle(storedInt);
+        // converting to double is imprecise
+        assertEquals(145.635986, ele, 1.e-6);
+        // ... but converting back to int should yield the same value we started with!
+        assertEquals(storedInt, Helper.eleToUInt(ele));
     }
 }

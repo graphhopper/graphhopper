@@ -23,10 +23,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.GHPoint;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.ResponseBody;
+import okhttp3.*;
 
 import java.io.IOException;
 import java.util.*;
@@ -306,7 +303,10 @@ public abstract class GHMatrixAbstractRequester {
         return url;
     }
 
-    protected String postJson(String url, JsonNode data) throws IOException {
+    protected record JsonResult(String body, int statusCode, Map<String, List<String>> headers) {
+    }
+
+    protected JsonResult postJson(String url, JsonNode data) throws IOException {
         String stringData = data.toString();
         Request.Builder builder = new Request.Builder().url(url).post(RequestBody.create(MT_JSON, stringData));
         builder.header(X_GH_CLIENT_VERSION, Version.GH_VERSION_FROM_MAVEN);
@@ -316,8 +316,9 @@ public abstract class GHMatrixAbstractRequester {
         Request okRequest = builder.build();
         ResponseBody body = null;
         try {
-            body = getDownloader().newCall(okRequest).execute().body();
-            return body.string();
+            Response rsp = getDownloader().newCall(okRequest).execute();
+            body = rsp.body();
+            return new JsonResult(body.string(), rsp.code(), rsp.headers().toMultimap());
         } finally {
             Helper.close(body);
         }

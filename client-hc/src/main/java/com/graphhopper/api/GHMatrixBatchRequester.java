@@ -18,10 +18,11 @@
 package com.graphhopper.api;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.graphhopper.jackson.ResponsePathDeserializer;
+import com.graphhopper.jackson.ResponsePathDeserializerHelper;
 import com.graphhopper.util.Helper;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.Response;
 import okhttp3.ResponseBody;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,20 +85,22 @@ public class GHMatrixBatchRequester extends GHMatrixAbstractRequester {
                 withTimes, withDistances, withWeights);
         try {
             String postUrl = buildURLNoHints("/calculate", ghRequest);
-            String postResponseStr = postJson(postUrl, requestJson);
+            JsonResult jsonResult = postJson(postUrl, requestJson);
+            matrixResponse.setHeaders(jsonResult.headers());
             boolean debug = ghRequest.getHints().getBool("debug", false);
             if (debug) {
-                logger.info("POST URL:" + postUrl + ", request:" + requestJson + ", response: " + postResponseStr);
+                logger.info("POST URL:" + postUrl + ", request:" + requestJson + ", response: " + jsonResult);
             }
 
-            JsonNode responseJson = fromStringToJSON(postUrl, postResponseStr);
+            JsonNode responseJson = fromStringToJSON(postUrl, jsonResult.body());
             if (responseJson.has("message")) {
-                matrixResponse.addErrors(ResponsePathDeserializer.readErrors(objectMapper, responseJson));
+                matrixResponse.setStatusCode(jsonResult.statusCode());
+                matrixResponse.addErrors(ResponsePathDeserializerHelper.readErrors(objectMapper, responseJson));
                 return matrixResponse;
             }
             if (!responseJson.has("job_id")) {
                 throw new IllegalStateException("Response should contain job_id but was "
-                        + postResponseStr + ", json:" + requestJson + ",url:" + postUrl);
+                        + jsonResult + ", request:" + requestJson + ",url:" + postUrl);
             }
 
             final String id = responseJson.get("job_id").asText();
@@ -109,19 +112,20 @@ public class GHMatrixBatchRequester extends GHMatrixAbstractRequester {
                 }
                 String getUrl = buildURLNoHints("/solution/" + id, ghRequest);
 
-                String getResponseStr;
+                JsonResult rsp;
                 try {
-                    getResponseStr = getJson(getUrl);
+                    rsp = getJson(getUrl);
                 } catch (SocketTimeoutException ex) {
                     // if timeout exception try once again:
-                    getResponseStr = getJson(getUrl);
+                    rsp = getJson(getUrl);
                 }
 
-                JsonNode getResponseJson = fromStringToJSON(getUrl, getResponseStr);
+                JsonNode getResponseJson = fromStringToJSON(getUrl, rsp.body());
                 if (debug) {
-                    logger.info(i + " GET URL:" + getUrl + ", response: " + getResponseStr);
+                    logger.info(i + " GET URL:" + getUrl + ", response: " + rsp);
                 }
-                matrixResponse.addErrors(ResponsePathDeserializer.readErrors(objectMapper, getResponseJson));
+                matrixResponse.addErrors(ResponsePathDeserializerHelper.readErrors(objectMapper, getResponseJson));
+                matrixResponse.setStatusCode(rsp.statusCode());
                 if (matrixResponse.hasErrors()) {
                     break;
                 }
@@ -155,14 +159,15 @@ public class GHMatrixBatchRequester extends GHMatrixAbstractRequester {
         return matrixResponse;
     }
 
-    protected String getJson(String url) throws IOException {
+    protected JsonResult getJson(String url) throws IOException {
         Request okRequest = new Request.Builder().url(url)
                 .header(X_GH_CLIENT_VERSION, GH_VERSION_FROM_MAVEN)
                 .build();
         ResponseBody body = null;
         try {
-            body = getDownloader().newCall(okRequest).execute().body();
-            return body.string();
+            Response rsp = getDownloader().newCall(okRequest).execute();
+            body = rsp.body();
+            return new JsonResult(body.string(), rsp.code(), rsp.headers().toMultimap());
         } finally {
             Helper.close(body);
         }

@@ -23,7 +23,7 @@ import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.ev.Surface;
 import com.graphhopper.storage.IntsRef;
 
-import static com.graphhopper.routing.ev.Surface.*;
+import static com.graphhopper.routing.ev.Surface.MISSING;
 
 public class OSMSurfaceParser implements TagParser {
 

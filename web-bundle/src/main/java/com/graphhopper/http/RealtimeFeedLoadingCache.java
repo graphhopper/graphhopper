@@ -25,19 +25,19 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListenableFutureTask;
 import com.google.transit.realtime.GtfsRealtime;
-import com.graphhopper.gtfs.GtfsStorage;
-import com.graphhopper.gtfs.RealtimeFeed;
-import com.graphhopper.gtfs.Transfers;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.storage.BaseGraph;
+import com.graphhopper.config.Profile;
+import com.graphhopper.gtfs.*;
+import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.util.PMap;
 import io.dropwizard.lifecycle.Managed;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.glassfish.hk2.api.Factory;
 
 import javax.inject.Inject;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -48,19 +48,15 @@ import java.util.concurrent.TimeUnit;
 public class RealtimeFeedLoadingCache implements Factory<RealtimeFeed>, Managed {
 
     private final HttpClient httpClient;
-    private final BaseGraph baseGraph;
-    private final EncodingManager encodingManager;
-    private final GtfsStorage gtfsStorage;
-    private final RealtimeBundleConfiguration bundleConfiguration;
+    private final GraphHopperGtfs graphHopper;
+    private final GraphHopperBundleConfiguration bundleConfiguration;
     private ExecutorService executor;
     private LoadingCache<String, RealtimeFeed> cache;
     private Map<String, Transfers> transfers;
 
     @Inject
-    RealtimeFeedLoadingCache(BaseGraph baseGraph, EncodingManager encodingManager, GtfsStorage gtfsStorage, HttpClient httpClient, RealtimeBundleConfiguration bundleConfiguration) {
-        this.baseGraph = baseGraph;
-        this.encodingManager = encodingManager;
-        this.gtfsStorage = gtfsStorage;
+    RealtimeFeedLoadingCache(GraphHopperGtfs graphHopper, HttpClient httpClient, GraphHopperBundleConfiguration bundleConfiguration) {
+        this.graphHopper = graphHopper;
         this.bundleConfiguration = bundleConfiguration;
         this.httpClient = httpClient;
     }
@@ -68,7 +64,7 @@ public class RealtimeFeedLoadingCache implements Factory<RealtimeFeed>, Managed 
     @Override
     public void start() {
         this.transfers = new HashMap<>();
-        for (Map.Entry<String, GTFSFeed> entry : this.gtfsStorage.getGtfsFeeds().entrySet()) {
+        for (Map.Entry<String, GTFSFeed> entry : this.graphHopper.getGtfsStorage().getGtfsFeeds().entrySet()) {
             this.transfers.put(entry.getKey(), new Transfers(entry.getValue()));
         }
         this.executor = Executors.newSingleThreadExecutor();
@@ -112,13 +108,40 @@ public class RealtimeFeedLoadingCache implements Factory<RealtimeFeed>, Managed 
         Map<String, GtfsRealtime.FeedMessage> feedMessageMap = new HashMap<>();
         for (FeedConfiguration configuration : bundleConfiguration.gtfsrealtime().getFeeds()) {
             try {
-                GtfsRealtime.FeedMessage feedMessage = GtfsRealtime.FeedMessage.parseFrom(httpClient.execute(new HttpGet(configuration.getUrl().toURI())).getEntity().getContent());
-                feedMessageMap.put(configuration.getFeedId(), feedMessage);
+                switch (configuration.getUrl().getProtocol()) {
+                    case "http": {
+                        GtfsRealtime.FeedMessage feedMessage = httpClient.execute(new HttpGet(configuration.getUrl().toURI()),
+                                response -> GtfsRealtime.FeedMessage.parseFrom(response.getEntity().getContent()));
+                        feedMessageMap.put(configuration.getFeedId(), feedMessage);
+                        break;
+                    }
+                    case "file": {
+                        GtfsRealtime.FeedMessage feedMessage = GtfsRealtime.FeedMessage.parseFrom(configuration.getUrl().openStream());
+                        feedMessageMap.put(configuration.getFeedId(), feedMessage);
+                        break;
+                    }
+                }
             } catch (IOException | URISyntaxException e) {
                 throw new RuntimeException(e);
             }
         }
-        return RealtimeFeed.fromProtobuf(gtfsStorage, this.transfers, feedMessageMap);
+        return RealtimeFeed.fromProtobuf(graphHopper.getGtfsStorage(), this.transfers, feedMessageMap);
+    }
+
+    private void validate(RealtimeFeed realtimeFeed) {
+        Profile foot = graphHopper.getProfile("foot");
+        Weighting weighting = graphHopper.createWeighting(foot, new PMap(), false);
+        GraphExplorer graphExplorer = new GraphExplorer(graphHopper.getBaseGraph(), graphHopper.getGtfsStorage().getPtGraph(), weighting, graphHopper.getGtfsStorage(), realtimeFeed, false, false, false, 6.0, true, 0);
+        EnumSet<GtfsStorage.EdgeType> edgeTypes = EnumSet.noneOf(GtfsStorage.EdgeType.class);
+        for (int streetNode = 0; streetNode < graphHopper.getBaseGraph().getNodes(); streetNode++) {
+            int ptNode = graphHopper.getGtfsStorage().getStreetToPt().getOrDefault(streetNode, -1);
+            if (ptNode != -1) {
+                for (GraphExplorer.MultiModalEdge multiModalEdge : graphExplorer.ptEdgeStream(ptNode, 0)) {
+                    edgeTypes.add(multiModalEdge.getType());
+                }
+            }
+        }
+        System.out.println(edgeTypes);
     }
 
 }

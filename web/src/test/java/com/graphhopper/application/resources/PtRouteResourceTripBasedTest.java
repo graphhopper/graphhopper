@@ -57,7 +57,7 @@ public class PtRouteResourceTripBasedTest {
                 putObject("import.osm.ignored_highways", "").
                 putObject("gtfs.trip_based", true).
                 putObject("gtfs.schedule_day", "2007-01-01").
-                setProfiles(Collections.singletonList(new Profile("foot").setVehicle("foot").setWeighting("fastest")));
+                setProfiles(Collections.singletonList(new Profile("foot")));
         return config;
     }
 
@@ -199,7 +199,6 @@ public class PtRouteResourceTripBasedTest {
                 .request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         InfoResource.Info info = response.readEntity(InfoResource.Info.class);
-        assertTrue(info.supported_vehicles.contains("pt"));
         assertTrue(info.profiles.stream().anyMatch(p -> p.name.equals("pt")));
     }
 

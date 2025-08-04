@@ -18,8 +18,10 @@
 package com.graphhopper.routing.util.countryrules.europe;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.ev.RoadAccess;
 import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.routing.ev.Toll;
+import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.routing.util.countryrules.CountryRule;
 
 /**
@@ -30,20 +32,22 @@ import com.graphhopper.routing.util.countryrules.CountryRule;
 public class HungaryCountryRule implements CountryRule {
 
     @Override
-    public Toll getToll(ReaderWay readerWay, Toll currentToll) {
-        if (currentToll != Toll.MISSING) {
-            return currentToll;
+    public RoadAccess getAccess(ReaderWay readerWay, TransportationMode transportationMode, RoadAccess currentRoadAccess) {
+        // Pedestrian traffic and bicycles are not restricted
+		if (transportationMode == TransportationMode.FOOT || transportationMode == TransportationMode.BIKE) {
+            return currentRoadAccess;
+        }
+
+        if (currentRoadAccess != RoadAccess.YES) {
+            return currentRoadAccess;
         }
 
         RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", ""));
-        switch (roadClass) {
-            case MOTORWAY:
-                return Toll.ALL;
-            case TRUNK:
-            case PRIMARY:
-                return Toll.HGV;
-            default:
-                return currentToll;
+        if (roadClass == RoadClass.LIVING_STREET) {
+            return RoadAccess.DESTINATION;
         }
+
+        return RoadAccess.YES;
     }
+
 }

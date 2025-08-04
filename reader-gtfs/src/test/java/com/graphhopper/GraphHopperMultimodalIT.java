@@ -20,10 +20,10 @@ package com.graphhopper;
 
 import com.graphhopper.config.Profile;
 import com.graphhopper.gtfs.*;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.util.AllEdgesIterator;
-import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap;
 import com.graphhopper.util.details.PathDetail;
@@ -44,6 +44,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 import static org.assertj.core.api.Assumptions.assumeThat;
 
 public interface GraphHopperMultimodalIT<T extends PtRouter> {
@@ -64,13 +65,11 @@ public interface GraphHopperMultimodalIT<T extends PtRouter> {
             ghConfig.putObject("import.osm.ignored_highways", "");
             ghConfig.putObject("gtfs.file", "files/sample-feed");
             ghConfig.putObject("graph.location", GRAPH_LOC);
-            CustomProfile carLocal = new CustomProfile("car_custom");
-            carLocal.setVehicle("car");
-            carLocal.setWeighting("custom");
+            ghConfig.putObject("graph.encoded_values", "foot_access, foot_priority, foot_average_speed, car_access, car_average_speed");
             ghConfig.setProfiles(Arrays.asList(
-                    new Profile("foot").setVehicle("foot").setWeighting("fastest"),
-                    new Profile("car_default").setVehicle("car").setWeighting("fastest"),
-                    carLocal));
+                    TestProfiles.accessSpeedAndPriority("foot"),
+                    TestProfiles.accessAndSpeed("car_default", "car"),
+                    TestProfiles.accessAndSpeed("car_custom","car")));
             Helper.removeDir(new File(GRAPH_LOC));
             graphHopperGtfs = new GraphHopperGtfs(ghConfig);
             graphHopperGtfs.init(ghConfig);
@@ -115,13 +114,11 @@ public interface GraphHopperMultimodalIT<T extends PtRouter> {
             ghConfig.putObject("gtfs.trip_based", true);
             ghConfig.putObject("gtfs.schedule_day", "2007-01-01");
             ghConfig.putObject("graph.location", GRAPH_LOC);
-            CustomProfile carLocal = new CustomProfile("car_custom");
-            carLocal.setVehicle("car");
-            carLocal.setWeighting("custom");
+            ghConfig.putObject("graph.encoded_values", "foot_access, foot_priority, foot_average_speed, car_access, car_average_speed");
             ghConfig.setProfiles(Arrays.asList(
-                    new Profile("foot").setVehicle("foot").setWeighting("fastest"),
-                    new Profile("car_default").setVehicle("car").setWeighting("fastest"),
-                    carLocal));
+                    TestProfiles.accessSpeedAndPriority("foot"),
+                    TestProfiles.accessAndSpeed("car_default", "car"),
+                    TestProfiles.accessAndSpeed("car_custom","car")));
             Helper.removeDir(new File(GRAPH_LOC));
             graphHopperGtfs = new GraphHopperGtfs(ghConfig);
             graphHopperGtfs.init(ghConfig);
@@ -178,7 +175,7 @@ public interface GraphHopperMultimodalIT<T extends PtRouter> {
         assertThat(firstTransitSolution.getLegs().get(0).getArrivalTime().toInstant())
                 .isEqualTo(firstTransitSolution.getLegs().get(1).getDepartureTime().toInstant());
         assertThat(firstTransitSolution.getLegs().get(2).getArrivalTime().toInstant().atZone(zoneId).toLocalTime())
-                .isEqualTo(LocalTime.parse("06:52:02.641"));
+                .isEqualTo(LocalTime.parse("06:52:02.740"));
 
         // I like walking exactly as I like riding a bus (per travel time unit)
         // Now we get a walk solution which arrives earlier than the transit solutions.
@@ -190,7 +187,7 @@ public interface GraphHopperMultimodalIT<T extends PtRouter> {
         response = ptRouter().route(ghRequest);
         ResponsePath walkSolution = response.getAll().stream().filter(p -> p.getLegs().size() == 1).findFirst().get();
         firstTransitSolution = response.getAll().stream().filter(p -> p.getLegs().size() > 1).findFirst().get();
-        assertThat(arrivalTime(walkSolution.getLegs().get(0))).isBefore(arrivalTime(firstTransitSolution.getLegs().get(firstTransitSolution.getLegs().size()-1)));
+        assertThat(arrivalTime(walkSolution.getLegs().get(0))).isBefore(arrivalTime(firstTransitSolution.getLegs().get(firstTransitSolution.getLegs().size() - 1)));
         assertThat(routeDuration(firstTransitSolution)).isLessThanOrEqualTo(routeDuration(walkSolution));
 
         assertThat(response.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(271);
@@ -235,24 +232,24 @@ public interface GraphHopperMultimodalIT<T extends PtRouter> {
         assertThat(firstTransitSolution.getLegs().get(0).getArrivalTime().toInstant())
                 .isEqualTo(firstTransitSolution.getLegs().get(1).getDepartureTime().toInstant());
         assertThat(firstTransitSolution.getLegs().get(2).getArrivalTime().toInstant().atZone(zoneId).toLocalTime())
-                .isEqualTo(LocalTime.parse("06:52:02.641"));
+                .isEqualTo(LocalTime.parse("06:52:02.740"));
 
-        double EXPECTED_TOTAL_WALKING_DISTANCE = 496.96631386761055;
+        double EXPECTED_TOTAL_WALKING_DISTANCE = 497.1;
         assertThat(firstTransitSolution.getLegs().get(0).distance + firstTransitSolution.getLegs().get(2).distance)
-                .isEqualTo(EXPECTED_TOTAL_WALKING_DISTANCE);
+                .isEqualTo(EXPECTED_TOTAL_WALKING_DISTANCE, within(.1));
         List<PathDetail> distances = firstTransitSolution.getPathDetails().get("distance");
         assertThat(distances.stream().mapToDouble(d -> (double) d.getValue()).sum())
-                .isEqualTo(EXPECTED_TOTAL_WALKING_DISTANCE); // Also total walking distance -- PathDetails only cover access/egress for now
+                .isEqualTo(EXPECTED_TOTAL_WALKING_DISTANCE, within(.1)); // Also total walking distance -- PathDetails only cover access/egress for now
         assertThat(distances.get(0).getFirst()).isEqualTo(0); // PathDetails start and end with PointList
-        assertThat(distances.get(distances.size()-1).getLast()).isEqualTo(10);
+        assertThat(distances.get(distances.size() - 1).getLast()).isEqualTo(12);
 
         List<PathDetail> accessDistances = ((Trip.WalkLeg) firstTransitSolution.getLegs().get(0)).details.get("distance");
         assertThat(accessDistances.get(0).getFirst()).isEqualTo(0);
-        assertThat(accessDistances.get(accessDistances.size()-1).getLast()).isEqualTo(2);
+        assertThat(accessDistances.get(accessDistances.size() - 1).getLast()).isEqualTo(2);
 
         List<PathDetail> egressDistances = ((Trip.WalkLeg) firstTransitSolution.getLegs().get(2)).details.get("distance");
         assertThat(egressDistances.get(0).getFirst()).isEqualTo(0);
-        assertThat(egressDistances.get(egressDistances.size()-1).getLast()).isEqualTo(5);
+        assertThat(egressDistances.get(egressDistances.size() - 1).getLast()).isEqualTo(7);
 
         ResponsePath walkSolution = response.getAll().stream().filter(p -> p.getLegs().size() == 1).findFirst().get();
         assertThat(walkSolution.getLegs().get(0).getDepartureTime().toInstant().atZone(zoneId).toLocalTime())
@@ -260,7 +257,7 @@ public interface GraphHopperMultimodalIT<T extends PtRouter> {
         // In principle, this would dominate the transit solution, since it's faster, but
         // walking gets a penalty.
         assertThat(walkSolution.getLegs().get(0).getArrivalTime().toInstant().atZone(zoneId).toLocalTime())
-                .isEqualTo(LocalTime.parse("06:51:10.306"));
+                .isEqualTo(LocalTime.parse("06:51:10.365"));
         assertThat(walkSolution.getLegs().size()).isEqualTo(1);
         assertThat(walkSolution.getNumChanges()).isEqualTo(-1);
 
@@ -306,7 +303,7 @@ public interface GraphHopperMultimodalIT<T extends PtRouter> {
         assertThat(walkSolution.getLegs().get(0).getDepartureTime().toInstant().atZone(zoneId).toLocalTime())
                 .isEqualTo(LocalTime.parse("06:40"));
         assertThat(walkSolution.getLegs().get(0).getArrivalTime().toInstant().atZone(zoneId).toLocalTime())
-                .isEqualTo(LocalTime.parse("06:41:07.025"));
+                .isEqualTo(LocalTime.parse("06:41:07.031"));
         assertThat(walkSolution.getLegs().size()).isEqualTo(1);
         assertThat(walkSolution.getNumChanges()).isEqualTo(-1);
     }
@@ -327,7 +324,7 @@ public interface GraphHopperMultimodalIT<T extends PtRouter> {
         assertThat(walkSolution.getLegs().get(0).getDepartureTime().toInstant().atZone(zoneId).toLocalTime())
                 .isEqualTo(LocalTime.parse("06:40"));
         assertThat(walkSolution.getLegs().get(0).getArrivalTime().toInstant().atZone(zoneId).toLocalTime())
-                .isEqualTo(LocalTime.parse("06:41:07.025"));
+                .isEqualTo(LocalTime.parse("06:41:07.031"));
         assertThat(walkSolution.getLegs().size()).isEqualTo(1);
         assertThat(walkSolution.getNumChanges()).isEqualTo(-1);
     }

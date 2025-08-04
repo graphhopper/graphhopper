@@ -3,13 +3,13 @@ package com.graphhopper.resources;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GraphHopper;
+import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.Profile;
 import com.graphhopper.http.GHPointParam;
 import com.graphhopper.http.ProfileResolver;
 import com.graphhopper.isochrone.algorithm.ContourBuilder;
 import com.graphhopper.isochrone.algorithm.ShortestPathTree;
 import com.graphhopper.isochrone.algorithm.Triangulator;
-import com.graphhopper.jackson.ResponsePathSerializer;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.querygraph.QueryGraph;
@@ -48,15 +48,19 @@ public class IsochroneResource {
 
     private static final Logger logger = LoggerFactory.getLogger(IsochroneResource.class);
 
+    private final GraphHopperConfig config;
     private final GraphHopper graphHopper;
     private final Triangulator triangulator;
     private final ProfileResolver profileResolver;
+    private final String osmDate;
 
     @Inject
-    public IsochroneResource(GraphHopper graphHopper, Triangulator triangulator, ProfileResolver profileResolver) {
+    public IsochroneResource(GraphHopperConfig config, GraphHopper graphHopper, Triangulator triangulator, ProfileResolver profileResolver) {
+        this.config = config;
         this.graphHopper = graphHopper;
         this.triangulator = triangulator;
         this.profileResolver = profileResolver;
+        this.osmDate = graphHopper.getProperties().get("datareader.data.date");
     }
 
     public enum ResponseType {json, geojson}
@@ -97,14 +101,14 @@ public class IsochroneResource {
         if (!snap.isValid())
             throw new IllegalArgumentException("Point not found:" + point);
         QueryGraph queryGraph = QueryGraph.create(graph, snap);
-        TraversalMode traversalMode = profile.isTurnCosts() ? EDGE_BASED : NODE_BASED;
+        TraversalMode traversalMode = profile.hasTurnCosts() ? EDGE_BASED : NODE_BASED;
         ShortestPathTree shortestPathTree = new ShortestPathTree(queryGraph, queryGraph.wrapWeighting(weighting), reverseFlow, traversalMode);
 
         double limit;
         ToDoubleFunction<ShortestPathTree.IsoLabel> fz;
         if (weightLimit.orElseThrow(() -> new IllegalArgumentException("query param weight_limit is not a number.")) > 0) {
             limit = weightLimit.getAsLong();
-            shortestPathTree.setWeightLimit(limit + Math.max(limit * 0.14, 2_000));
+            shortestPathTree.setWeightLimit(limit + Math.max(limit * 0.14, 200));
             fz = l -> l.weight;
         } else if (distanceLimitInMeter.orElseThrow(() -> new IllegalArgumentException("query param distance_limit is not a number.")) > 0) {
             limit = distanceLimitInMeter.getAsLong();
@@ -141,7 +145,7 @@ public class IsochroneResource {
             HashMap<String, Object> properties = new HashMap<>();
             properties.put("bucket", features.size());
             if (respType == geojson) {
-                properties.put("copyrights", ResponsePathSerializer.COPYRIGHTS);
+                properties.put("copyrights", config.getCopyrights());
             }
             feature.setProperties(properties);
             feature.setGeometry(isochrone);
@@ -158,8 +162,9 @@ public class IsochroneResource {
         } else {
             json.putPOJO("polygons", features);
             final ObjectNode info = json.putObject("info");
-            info.putPOJO("copyrights", ResponsePathSerializer.COPYRIGHTS);
+            info.putPOJO("copyrights", config.getCopyrights());
             info.put("took", Math.round((float) sw.getMillis()));
+            if (!osmDate.isEmpty()) info.put("road_data_timestamp", osmDate);
             finalJson = json;
         }
 

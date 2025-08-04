@@ -20,6 +20,7 @@ package com.graphhopper.resources;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
+import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.gpx.GpxConversions;
 import com.graphhopper.http.GHPointParam;
 import com.graphhopper.http.GHRequestTransformer;
@@ -38,6 +39,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -57,17 +59,24 @@ public class RouteResource {
 
     private static final Logger logger = LoggerFactory.getLogger(RouteResource.class);
 
+    private final GraphHopperConfig config;
     private final GraphHopper graphHopper;
     private final ProfileResolver profileResolver;
     private final GHRequestTransformer ghRequestTransformer;
     private final Boolean hasElevation;
+    private final String osmDate;
+    private final List<String> snapPreventionsDefault;
 
     @Inject
-    public RouteResource(GraphHopper graphHopper, ProfileResolver profileResolver, GHRequestTransformer ghRequestTransformer, @Named("hasElevation") Boolean hasElevation) {
+    public RouteResource(GraphHopperConfig config, GraphHopper graphHopper, ProfileResolver profileResolver, GHRequestTransformer ghRequestTransformer, @Named("hasElevation") Boolean hasElevation) {
+        this.config = config;
         this.graphHopper = graphHopper;
         this.profileResolver = profileResolver;
         this.ghRequestTransformer = ghRequestTransformer;
         this.hasElevation = hasElevation;
+        this.osmDate = graphHopper.getProperties().getAll().get("datareader.data.date");
+        this.snapPreventionsDefault = Arrays.stream(config.getString("routing.snap_preventions_default", "")
+                .split(",")).map(String::trim).filter(s -> !s.isEmpty()).toList();
     }
 
     @GET
@@ -75,7 +84,7 @@ public class RouteResource {
     public Response doGet(
             @Context HttpServletRequest httpReq,
             @Context UriInfo uriInfo,
-            @QueryParam(WAY_POINT_MAX_DISTANCE) @DefaultValue("1") double minPathPrecision,
+            @QueryParam(WAY_POINT_MAX_DISTANCE) @DefaultValue("0.5") double minPathPrecision,
             @QueryParam(ELEVATION_WAY_POINT_MAX_DISTANCE) Double minPathElevationPrecision,
             @QueryParam("point") @NotNull List<GHPointParam> pointParams,
             @QueryParam("type") @DefaultValue("json") String type,
@@ -83,6 +92,7 @@ public class RouteResource {
             @QueryParam(CALC_POINTS) @DefaultValue("true") boolean calcPoints,
             @QueryParam("elevation") @DefaultValue("false") boolean enableElevation,
             @QueryParam("points_encoded") @DefaultValue("true") boolean pointsEncoded,
+            @QueryParam("points_encoded_multiplier") @DefaultValue("1e5") double pointsEncodedMultiplier,
             @QueryParam("profile") String profileName,
             @QueryParam(ALGORITHM) @DefaultValue("") String algoStr,
             @QueryParam("locale") @DefaultValue("en") String localeStr,
@@ -116,12 +126,21 @@ public class RouteResource {
                 setHeadings(headings).
                 setPointHints(pointHints).
                 setCurbsides(curbsides).
-                setSnapPreventions(snapPreventions).
                 setPathDetails(pathDetails).
                 getHints().
                 putObject(CALC_POINTS, calcPoints).
                 putObject(INSTRUCTIONS, instructions).
                 putObject(WAY_POINT_MAX_DISTANCE, minPathPrecision);
+
+        if (uriInfo.getQueryParameters().containsKey(SNAP_PREVENTION)) {
+            if (snapPreventions.size() == 1 && snapPreventions.contains(""))
+                request.setSnapPreventions(List.of()); // e.g. "&snap_prevention=&" to force empty list
+            else
+                request.setSnapPreventions(snapPreventions);
+        } else {
+            // no "snap_prevention" was specified
+            request.setSnapPreventions(snapPreventionsDefault);
+        }
 
         request = ghRequestTransformer.transformRequest(request);
 
@@ -138,9 +157,11 @@ public class RouteResource {
         String logStr = (httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent")) + " " + points + ", took: " + String.format("%.1f", took) + "ms, algo: " + algoStr + ", profile: " + profileName;
 
         if (ghResponse.hasErrors()) {
-            MultiException ex = new MultiException(ghResponse.getErrors());
-            logger.info(logStr, ex);
-            throw ex;
+            logger.info(logStr + " " + ghResponse);
+            return Response.status(Response.Status.BAD_REQUEST).
+                    entity(new MultiException(ghResponse.getErrors())).
+                    type(writeGPX ? "application/gpx+xml" : MediaType.APPLICATION_JSON).
+                    build();
         } else {
             logger.info(logStr + ", alternatives: " + ghResponse.getAll().size()
                     + ", distance0: " + ghResponse.getBest().getDistance()
@@ -153,7 +174,7 @@ public class RouteResource {
                             header("X-GH-Took", "" + Math.round(took)).
                             build()
                     :
-                    Response.ok(ResponsePathSerializer.jsonObject(ghResponse, instructions, calcPoints, enableElevation, pointsEncoded, took)).
+                    Response.ok(ResponsePathSerializer.jsonObject(ghResponse, new ResponsePathSerializer.Info(config.getCopyrights(), Math.round(took), osmDate), instructions, calcPoints, enableElevation, pointsEncoded, pointsEncodedMultiplier)).
                             header("X-GH-Took", "" + Math.round(took)).
                             type(MediaType.APPLICATION_JSON).
                             build();
@@ -164,6 +185,9 @@ public class RouteResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response doPost(@NotNull GHRequest request, @Context HttpServletRequest httpReq) {
+        if (!request.hasSnapPreventions())
+            request.setSnapPreventions(snapPreventionsDefault);
+
         StopWatch sw = new StopWatch().start();
         request = ghRequestTransformer.transformRequest(request);
 
@@ -182,6 +206,7 @@ public class RouteResource {
         boolean enableElevation = request.getHints().getBool("elevation", false);
         boolean calcPoints = request.getHints().getBool(CALC_POINTS, true);
         boolean pointsEncoded = request.getHints().getBool("points_encoded", true);
+        double pointsEncodedMultiplier = request.getHints().getDouble("points_encoded_multiplier", 1e5);
 
         double took = sw.stop().getMillisDouble();
         String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
@@ -190,9 +215,7 @@ public class RouteResource {
                 + ", custom_model: " + request.getCustomModel();
 
         if (ghResponse.hasErrors()) {
-            MultiException ex = new MultiException(ghResponse.getErrors());
-            logger.error(logStr, ex);
-            throw ex;
+            throw new MultiException(ghResponse.getErrors());
         } else {
             logger.info(logStr + ", alternatives: " + ghResponse.getAll().size()
                     + ", distance0: " + ghResponse.getBest().getDistance()
@@ -200,7 +223,7 @@ public class RouteResource {
                     + ", time0: " + Math.round(ghResponse.getBest().getTime() / 60000f) + "min"
                     + ", points0: " + ghResponse.getBest().getPoints().size()
                     + ", debugInfo: " + ghResponse.getDebugInfo());
-            return Response.ok(ResponsePathSerializer.jsonObject(ghResponse, instructions, calcPoints, enableElevation, pointsEncoded, took)).
+            return Response.ok(ResponsePathSerializer.jsonObject(ghResponse, new ResponsePathSerializer.Info(config.getCopyrights(), Math.round(took), osmDate), instructions, calcPoints, enableElevation, pointsEncoded, pointsEncodedMultiplier)).
                     header("X-GH-Took", "" + Math.round(took)).
                     type(MediaType.APPLICATION_JSON).
                     build();

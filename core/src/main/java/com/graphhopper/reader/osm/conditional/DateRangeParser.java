@@ -48,7 +48,7 @@ public class DateRangeParser implements ConditionalValueParser {
 
     private Calendar date;
 
-    public DateRangeParser() {
+    DateRangeParser() {
         this(createCalendar());
     }
 
@@ -104,9 +104,9 @@ public class DateRangeParser implements ConditionalValueParser {
         return parsedCalendar;
     }
 
-    public DateRange getRange(String dateRangeString) throws ParseException {
+    public static DateRange getRange(String dateRangeString) throws ParseException {
         if (dateRangeString == null || dateRangeString.isEmpty())
-            throw new IllegalArgumentException("Passing empty Strings is not allowed");
+            return null;
 
         String[] dateArr = dateRangeString.split("-");
         if (dateArr.length > 2 || dateArr.length < 1)
@@ -122,7 +122,11 @@ public class DateRangeParser implements ConditionalValueParser {
             // to = new ParsedCalendar(from.parseType, (Calendar) from.parsedCalendar.clone());
             to = parseDateString(dateArr[0]);
 
-        return new DateRange(from, to);
+        try {
+            return new DateRange(from, to);
+        } catch (IllegalArgumentException ex) {
+            return null;
+        }
     }
 
     @Override

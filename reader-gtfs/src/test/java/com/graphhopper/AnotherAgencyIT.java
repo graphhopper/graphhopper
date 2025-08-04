@@ -22,6 +22,7 @@ import com.conveyal.gtfs.GTFSFeed;
 import com.graphhopper.config.Profile;
 import com.graphhopper.gtfs.*;
 import com.graphhopper.gtfs.Trips;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap;
 import org.junit.jupiter.api.AfterAll;
@@ -71,10 +72,10 @@ public interface AnotherAgencyIT<T extends PtRouter> {
             ghConfig.putObject("gtfs.file", "files/sample-feed,files/another-sample-feed");
             ghConfig.putObject("gtfs.trip_based", true);
             ghConfig.putObject("gtfs.schedule_day", "2007-01-01,2007-01-02,2007-01-06,2007-01-07");
-            ghConfig.putObject("gtfs.trip_based.max_transfer_time", 600 * 60);
-            ghConfig.setProfiles(Arrays.asList(
-                    new Profile("foot").setVehicle("foot").setWeighting("fastest"),
-                    new Profile("car").setVehicle("car").setWeighting("fastest")));
+            ghConfig.putObject("graph.encoded_values", "foot_access, foot_priority, foot_average_speed, car_access, car_average_speed");
+            ghConfig.setProfiles(List.of(
+                    TestProfiles.accessSpeedAndPriority("foot"),
+                    TestProfiles.accessAndSpeed("car")));
             Helper.removeDir(new File(GRAPH_LOC));
             graphHopperGtfs = new GraphHopperGtfs(ghConfig);
             graphHopperGtfs.init(ghConfig);
@@ -135,9 +136,10 @@ public interface AnotherAgencyIT<T extends PtRouter> {
             ghConfig.putObject("import.osm.ignored_highways", "");
             ghConfig.putObject("datareader.file", "files/beatty.osm");
             ghConfig.putObject("gtfs.file", "files/sample-feed,files/another-sample-feed");
-            ghConfig.setProfiles(Arrays.asList(
-                    new Profile("foot").setVehicle("foot").setWeighting("fastest"),
-                    new Profile("car").setVehicle("car").setWeighting("fastest")));
+            ghConfig.putObject("graph.encoded_values", "foot_access, foot_priority, foot_average_speed, car_access, car_average_speed");
+            ghConfig.setProfiles(List.of(
+                    TestProfiles.accessSpeedAndPriority("foot"),
+                    TestProfiles.accessAndSpeed("car")));
             Helper.removeDir(new File(GRAPH_LOC));
             graphHopperGtfs = new GraphHopperGtfs(ghConfig);
             graphHopperGtfs.init(ghConfig);

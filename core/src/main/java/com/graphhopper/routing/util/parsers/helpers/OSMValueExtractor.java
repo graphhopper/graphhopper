@@ -3,9 +3,6 @@ package com.graphhopper.routing.util.parsers.helpers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EdgeIntAccess;
-import com.graphhopper.routing.ev.MaxSpeed;
-import com.graphhopper.util.DistanceCalcEarth;
-import com.graphhopper.util.Helper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +27,7 @@ public class OSMValueExtractor {
     }
 
     public static void extractTons(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, DecimalEncodedValue valueEncoder, List<String> keys) {
-        final String rawValue = way.getFirstPriorityTag(keys);
+        final String rawValue = way.getFirstValue(keys);
         double value = stringToTons(rawValue);
 
         if (Double.isNaN(value)) value = Double.POSITIVE_INFINITY;
@@ -55,7 +52,7 @@ public class OSMValueExtractor {
             }
             if (index > 0) {
                 int lastIndex = value.indexOf(')', index); // (value) or value
-                if (lastIndex < 0) lastIndex = value.length() - 1;
+                if (lastIndex < 0) lastIndex = value.length();
                 if (lastIndex > index)
                     return OSMValueExtractor.stringToTons(value.substring(index, lastIndex));
             }
@@ -93,7 +90,7 @@ public class OSMValueExtractor {
     }
 
     public static void extractMeter(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, DecimalEncodedValue valueEncoder, List<String> keys) {
-        final String rawValue = way.getFirstPriorityTag(keys);
+        final String rawValue = way.getFirstValue(keys);
         double value = stringToMeter(rawValue);
 
         if (Double.isNaN(value)) value = Double.POSITIVE_INFINITY;
@@ -168,52 +165,4 @@ public class OSMValueExtractor {
                 || value.contains(",");
     }
 
-    /**
-     * @return the speed in km/h
-     */
-    public static double stringToKmh(String str) {
-        if (Helper.isEmpty(str))
-            return Double.NaN;
-
-        if ("walk".equals(str))
-            return 6;
-
-        // on some German autobahns and a very few other places
-        if ("none".equals(str))
-            return MaxSpeed.UNLIMITED_SIGN_SPEED;
-
-        int mpInteger = str.indexOf("mp");
-        int knotInteger = str.indexOf("knots");
-        int kmInteger = str.indexOf("km");
-        int kphInteger = str.indexOf("kph");
-
-        double factor;
-        if (mpInteger > 0) {
-            str = str.substring(0, mpInteger).trim();
-            factor = DistanceCalcEarth.KM_MILE;
-        } else if (knotInteger > 0) {
-            str = str.substring(0, knotInteger).trim();
-            factor = 1.852; // see https://en.wikipedia.org/wiki/Knot_%28unit%29#Definitions
-        } else {
-            if (kmInteger > 0) {
-                str = str.substring(0, kmInteger).trim();
-            } else if (kphInteger > 0) {
-                str = str.substring(0, kphInteger).trim();
-            }
-            factor = 1;
-        }
-
-        double value;
-        try {
-            value = Integer.parseInt(str) * factor;
-        } catch (Exception ex) {
-            return Double.NaN;
-        }
-
-        if (value <= 0) {
-            return Double.NaN;
-        }
-
-        return value;
-    }
 }

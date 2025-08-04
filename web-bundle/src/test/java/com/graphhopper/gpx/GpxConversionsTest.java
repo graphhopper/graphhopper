@@ -21,13 +21,11 @@ package com.graphhopper.gpx;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.InstructionsFromEdges;
 import com.graphhopper.routing.Path;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
-import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.ShortestWeighting;
+import com.graphhopper.routing.weighting.SpeedWeighting;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
@@ -45,23 +43,24 @@ import java.io.StringReader;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
-import static com.graphhopper.search.KVStorage.KeyValue.STREET_NAME;
-import static com.graphhopper.search.KVStorage.KeyValue.createKV;
+import static com.graphhopper.search.KVStorage.KValue;
+import static com.graphhopper.util.Parameters.Details.STREET_NAME;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class GpxConversionsTest {
 
-    private BooleanEncodedValue accessEnc;
     private DecimalEncodedValue speedEnc;
     private EncodingManager carManager;
     private TranslationMap trMap;
 
     @BeforeEach
     public void setUp() {
-        accessEnc = new SimpleBooleanEncodedValue("access", true);
         speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
-        carManager = EncodingManager.start().add(accessEnc).add(speedEnc).build();
+        carManager = EncodingManager.start().add(speedEnc).add(VehicleAccess.create("car")).
+                add(Roundabout.create()).add(RoadClass.create()).add(RoadClassLink.create()).
+                add(RoadEnvironment.create()).add(MaxSpeed.create()).build();
         trMap = new TranslationMap().doImport();
     }
 
@@ -82,14 +81,14 @@ public class GpxConversionsTest {
         na.setNode(6, 15.1, 10.1);
         na.setNode(7, 15.1, 9.8);
 
-        GHUtility.setSpeed(63, true, true, accessEnc, speedEnc, g.edge(1, 2).setDistance(7000).setKeyValues(createKV(STREET_NAME, "1-2")));
-        GHUtility.setSpeed(72, true, true, accessEnc, speedEnc, g.edge(2, 3).setDistance(8000).setKeyValues(createKV(STREET_NAME, "2-3")));
-        GHUtility.setSpeed(9, true, true, accessEnc, speedEnc, g.edge(2, 6).setDistance(10000).setKeyValues(createKV(STREET_NAME, "2-6")));
-        GHUtility.setSpeed(81, true, true, accessEnc, speedEnc, g.edge(3, 4).setDistance(9000).setKeyValues(createKV(STREET_NAME, "3-4")));
-        GHUtility.setSpeed(9, true, true, accessEnc, speedEnc, g.edge(3, 7).setDistance(10000).setKeyValues(createKV(STREET_NAME, "3-7")));
-        GHUtility.setSpeed(90, true, true, accessEnc, speedEnc, g.edge(4, 5).setDistance(10000).setKeyValues(createKV(STREET_NAME, "4-5")));
+        g.edge(1, 2).set(speedEnc, 63).setDistance(7000).setKeyValues(Map.of(STREET_NAME, new KValue("1-2")));
+        g.edge(2, 3).set(speedEnc, 72).setDistance(8000).setKeyValues(Map.of(STREET_NAME, new KValue("2-3")));
+        g.edge(2, 6).set(speedEnc, 9).setDistance(10000).setKeyValues(Map.of(STREET_NAME, new KValue("2-6")));
+        g.edge(3, 4).set(speedEnc, 81).setDistance(9000).setKeyValues(Map.of(STREET_NAME, new KValue("3-4")));
+        g.edge(3, 7).set(speedEnc, 9).setDistance(10000).setKeyValues(Map.of(STREET_NAME, new KValue("3-7")));
+        g.edge(4, 5).set(speedEnc, 90).setDistance(10000).setKeyValues(Map.of(STREET_NAME, new KValue("4-5")));
 
-        ShortestWeighting weighting = new ShortestWeighting(accessEnc, speedEnc);
+        Weighting weighting = new SpeedWeighting(speedEnc);
         Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED).calcPath(1, 5);
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, trMap.getWithFallBack(Locale.US));
         PointList points = p.calcPoints();
@@ -98,7 +97,7 @@ public class GpxConversionsTest {
         assertEquals(34000, p.getDistance(), 1e-1);
         assertEquals(34000, sumDistances(wayList), 1e-1);
         assertEquals(5, points.size());
-        assertEquals(1604121, p.getTime());
+        assertEquals(445588, p.getTime());
 
         assertEquals(Instruction.CONTINUE_ON_STREET, wayList.get(0).getSign());
         assertEquals("1-2", wayList.get(0).getName());

@@ -19,6 +19,7 @@ Here is an overview:
  * ChristophKaser, agrees to the project's CLA, improved Android compatibility #1207
  * Christoph Lingg, elevation smoothing #2772
  * chucre, add special JSON output format, see #41
+ * ctriley, added busway support
  * daisy1754, fixed usage of graphhopper.sh script
  * dardin88, instructions improved
  * dewos, web API bug fixes
@@ -40,11 +41,15 @@ Here is an overview:
  * highsource, more efficient geometry update, UI fixes
  * hoofstephan, bug fix   
  * IsNull, improvements like #708
+ * IldarKhayrutdinov, use cache on different machines
+ * james-willis, improved isochrones triangulation robustness
  * Janekdererste, GUI for public transit
  * jansoe, many improvements regarding A* algorithm, forcing direction, roundabouts etc
  * jansonhanson, general host config
+ * jessLryan, max elevation can now be negative
  * joe-akeem, improvements like #2158
  * JohannesPelzer, improved GPX information and various other things
+ * karololszacki, introduce `navigation_transport_mode` option for Profiles to easily set which Voice Guidance distances to use
  * karussell, one of the core developers
  * khuebner, initial turn costs support
  * kodonnell, adding support for CH and other algorithms (#60) and penalizing inner-link U-turns (#88)
@@ -64,8 +69,10 @@ Here is an overview:
  * ocampana, initial implementation for instructions
  * oflebbe, work on iOS port and issues like #2060
  * OlafFlebbeBosch, improvements like #2730
+ * osamaalmaani, added missing config option for graph.encoded_values in the config-example.yml file
  * oschlueter, fixes like #1185
  * otbutz, added multiple EncodedValues
+ * pantsleftinwash, speed parsing improvements
  * PGWelch, shapefile reader #874
  * rafaelstelles, fix deserializer web-api
  * rajanski, script to do routing via PostGIS
@@ -89,4 +96,4 @@ Here is an overview:
 ## Translations
 
 A lot people helped to create translations - thanks!
-See [this spreadsheet](https://docs.google.com/spreadsheet/ccc?key=0AmukcXek0JP6dGM4R1VTV2d3TkRSUFVQakhVeVBQRHc#gid=0)
+See [this spreadsheet](https://docs.google.com/spreadsheets/d/18z00Rbt6QvLIkayEV9P89vW9oU0QbTVsjRk9nz1CeFY/edit#gid=0)

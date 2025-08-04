@@ -156,10 +156,10 @@ public abstract class AbstractSRTMElevationProvider extends TileBasedElevationPr
             heights.flush();
 
         } catch (FileNotFoundException ex) {
-            logger.warn("File not found for the coordinates for " + lat + "," + lon);
+            logger.warn("File not found " + heights + " for the coordinates " + lat + "," + lon);
             throw ex;
         } catch (Exception ex) {
-            throw new RuntimeException("There was an issue looking up the coordinates for " + lat + "," + lon, ex);
+            throw new RuntimeException("There was an issue with " + heights + " looking up the coordinates " + lat + "," + lon, ex);
         }
     }
 

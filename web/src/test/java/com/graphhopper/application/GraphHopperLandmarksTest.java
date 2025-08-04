@@ -21,7 +21,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
-import com.graphhopper.config.Profile;
+import com.graphhopper.routing.TestProfiles;
+import com.graphhopper.util.BodyAndStatus;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -30,10 +31,10 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.Collections;
 
+import static com.graphhopper.application.resources.Util.getWithStatus;
 import static com.graphhopper.application.util.TestUtils.clientTarget;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -51,15 +52,15 @@ public class GraphHopperLandmarksTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.vehicles", "car").
                 putObject("datareader.file", "../core/files/belarus-east.osm.gz").
+                putObject("graph.encoded_values", "car_access, car_average_speed").
                 putObject("prepare.min_network_size", 0).
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR)
                 // force landmark creation even for tiny networks
                 .putObject("prepare.lm.min_network_size", 2)
                 .setProfiles(Collections.singletonList(
-                        new Profile("car_profile").setVehicle("car").setWeighting("fastest")
+                        TestProfiles.accessAndSpeed("car_profile", "car")
                 ))
                 .setCHProfiles(Collections.singletonList(
                         new CHProfile("car_profile")
@@ -78,17 +79,14 @@ public class GraphHopperLandmarksTest {
 
     @Test
     public void testQueries() {
-        Response response = clientTarget(app, "/route?profile=car_profile&" +
-                "point=55.99022,29.129734&point=56.001069,29.150848").request().buildGet().invoke();
-        assertEquals(200, response.getStatus());
-        JsonNode json = response.readEntity(JsonNode.class);
+        JsonNode json = clientTarget(app, "/route?profile=car_profile&" +
+                "point=55.99022,29.129734&point=56.001069,29.150848").request().get(JsonNode.class);
         JsonNode path = json.get("paths").get(0);
         double distance = path.get("distance").asDouble();
         assertEquals(1870, distance, 100, "distance wasn't correct:" + distance);
 
-        response = clientTarget(app, "/route?profile=car_profile&" +
-                "point=55.99022,29.129734&point=56.001069,29.150848&ch.disable=true").request().buildGet().invoke();
-        json = response.readEntity(JsonNode.class);
+        json = clientTarget(app, "/route?profile=car_profile&" +
+                "point=55.99022,29.129734&point=56.001069,29.150848&ch.disable=true").request().get(JsonNode.class);
         distance = json.get("paths").get(0).get("distance").asDouble();
         assertEquals(1870, distance, 100, "distance wasn't correct:" + distance);
     }
@@ -97,17 +95,17 @@ public class GraphHopperLandmarksTest {
     public void testLandmarkDisconnect() {
         // if one algorithm is disabled then the following chain is executed: CH -> LM -> flexible
         // disconnected for landmarks
-        Response response = clientTarget(app, "/route?profile=car_profile&" +
-                "point=55.99022,29.129734&point=56.007787,29.208355&ch.disable=true").request().buildGet().invoke();
+        BodyAndStatus response = getWithStatus(clientTarget(app, "/route?profile=car_profile&" +
+                "point=55.99022,29.129734&point=56.007787,29.208355&ch.disable=true"));
         assertEquals(400, response.getStatus());
-        JsonNode json = response.readEntity(JsonNode.class);
+        JsonNode json = response.getBody();
         assertTrue(json.get("message").toString().contains("Different subnetworks"));
 
         // without landmarks it should work
-        response = clientTarget(app, "/route?profile=car_profile&" +
-                "point=55.99022,29.129734&point=56.007787,29.208355&ch.disable=true&lm.disable=true").request().buildGet().invoke();
+        response = getWithStatus(clientTarget(app, "/route?profile=car_profile&" +
+                "point=55.99022,29.129734&point=56.007787,29.208355&ch.disable=true&lm.disable=true"));
         assertEquals(200, response.getStatus());
-        json = response.readEntity(JsonNode.class);
+        json = response.getBody();
         double distance = json.get("paths").get(0).get("distance").asDouble();
         assertEquals(5790, distance, 100, "distance wasn't correct:" + distance);
     }

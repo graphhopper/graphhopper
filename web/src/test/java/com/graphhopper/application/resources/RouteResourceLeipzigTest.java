@@ -23,7 +23,8 @@ import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.config.CHProfile;
-import com.graphhopper.config.Profile;
+import com.graphhopper.routing.TestProfiles;
+import com.graphhopper.util.BodyAndStatus;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -34,11 +35,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
-import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.Collections;
+import java.util.List;
 import java.util.Random;
 
+import static com.graphhopper.application.resources.Util.getWithStatus;
 import static com.graphhopper.application.util.TestUtils.clientTarget;
 import static com.graphhopper.util.Parameters.Algorithms.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -55,9 +57,10 @@ public class RouteResourceLeipzigTest {
                 putObject("prepare.min_network_size", 200).
                 putObject("datareader.file", "../map-matching/files/leipzig_germany.osm.pbf").
                 putObject("import.osm.ignored_highways", "").
-                putObject("graph.location", DIR)
-                .setProfiles(Collections.singletonList(new Profile("my_car").setVehicle("car").setWeighting("fastest")))
-                .setCHProfiles(Collections.singletonList(new CHProfile("my_car")));
+                putObject("graph.location", DIR).
+                putObject("graph.encoded_values", "car_access, car_average_speed").
+                setProfiles(List.of(TestProfiles.accessAndSpeed("my_car", "car"))).
+                setCHProfiles(Collections.singletonList(new CHProfile("my_car")));
         return config;
     }
 
@@ -77,28 +80,26 @@ public class RouteResourceLeipzigTest {
 
     @ParameterizedTest
     @CsvSource(value = {
-            "101,-1,algorithm=" + DIJKSTRA_BI,
-            "116,-1,algorithm=" + ASTAR_BI,
-            "30850,1,ch.disable=true&algorithm=" + DIJKSTRA,
-            "21156,1,ch.disable=true&algorithm=" + ASTAR,
-            "14800,1,ch.disable=true&algorithm=" + DIJKSTRA_BI,
-            "10536,1,ch.disable=true&algorithm=" + ASTAR_BI
+            "91,-1,algorithm=" + DIJKSTRA_BI,
+            "107,-1,algorithm=" + ASTAR_BI,
+            "30868,1,ch.disable=true&algorithm=" + DIJKSTRA,
+            "21181,1,ch.disable=true&algorithm=" + ASTAR,
+            "14854,1,ch.disable=true&algorithm=" + DIJKSTRA_BI,
+            "10538,1,ch.disable=true&algorithm=" + ASTAR_BI
     })
     void testTimeout(int expectedVisitedNodes, int timeout, String args) {
         {
             // for a long timeout the route calculation works
             long longTimeout = 10_000;
-            Response response = clientTarget(app, "/route?timeout_ms=" + longTimeout + "&profile=my_car&point=51.319685,12.335525&point=51.367294,12.434745&" + args).request().buildGet().invoke();
-            assertEquals(200, response.getStatus());
-            JsonNode jsonNode = response.readEntity(JsonNode.class);
+            JsonNode jsonNode = clientTarget(app, "/route?timeout_ms=" + longTimeout + "&profile=my_car&point=51.319685,12.335525&point=51.367294,12.434745&" + args).request().get(JsonNode.class);
             // by checking the visited nodes we make sure different algorithms are used
             assertEquals(expectedVisitedNodes, jsonNode.get("hints").get("visited_nodes.sum").asInt());
         }
         {
             // for a short timeout the route calculation fails, for CH we need to use a negative number, because it is too fast
-            Response response = clientTarget(app, "/route?timeout_ms=" + timeout + "&profile=my_car&point=51.319685,12.335525&point=51.367294,12.434745&" + args).request().buildGet().invoke();
+            BodyAndStatus response = getWithStatus(clientTarget(app, "/route?timeout_ms=" + timeout + "&profile=my_car&point=51.319685,12.335525&point=51.367294,12.434745&" + args));
             assertEquals(400, response.getStatus());
-            JsonNode jsonNode = response.readEntity(JsonNode.class);
+            JsonNode jsonNode = response.getBody();
             assertTrue(jsonNode.get("message").asText().contains("Connection between locations not found"), jsonNode.get("message").asText());
         }
     }
@@ -111,10 +112,9 @@ public class RouteResourceLeipzigTest {
             double lonFrom = minLon + rnd.nextDouble() * (maxLon - minLon);
             double latTo = minLat + rnd.nextDouble() * (maxLat - minLat);
             double lonTo = minLon + rnd.nextDouble() * (maxLon - minLon);
-            final Response response = clientTarget(app, "/route?profile=my_car&" +
-                    "point=" + latFrom + "," + lonFrom + "&point=" + latTo + "," + lonTo).request().buildGet().invoke();
-            assertEquals(200, response.getStatus());
-            JsonNode path = response.readEntity(JsonNode.class).get("paths").get(0);
+            JsonNode json = clientTarget(app, "/route?profile=my_car&" +
+                    "point=" + latFrom + "," + lonFrom + "&point=" + latTo + "," + lonTo).request().get(JsonNode.class);
+            JsonNode path = json.get("paths").get(0);
             assertTrue(path.get("distance").asDouble() >= 0);
         }
     }

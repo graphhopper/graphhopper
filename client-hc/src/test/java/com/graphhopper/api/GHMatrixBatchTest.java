@@ -2,7 +2,7 @@ package com.graphhopper.api;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-import java.io.IOException;
+import java.util.HashMap;
 
 /**
  * @author Peter Karich
@@ -10,19 +10,19 @@ import java.io.IOException;
 public class GHMatrixBatchTest extends AbstractGHMatrixWebTester {
 
     @Override
-    GraphHopperMatrixWeb createMatrixClient(final String jsonTmp) {
+    GraphHopperMatrixWeb createMatrixClient(final String jsonTmp, int statusCode) {
         return new GraphHopperMatrixWeb(new GHMatrixBatchRequester("") {
 
             private final String json = jsonTmp;
 
             @Override
-            protected String postJson(String url, JsonNode data) throws IOException {
-                return "{\"job_id\": \"1\"}";
+            protected JsonResult postJson(String url, JsonNode data) {
+                return new JsonResult("{\"job_id\": \"1\"}", statusCode, new HashMap<>());
             }
 
             @Override
-            protected String getJson(String url) throws IOException {
-                return json;
+            protected JsonResult getJson(String url) {
+                return new JsonResult(json, statusCode, new HashMap<>());
             }
         }.setSleepAfterGET(0));
     }

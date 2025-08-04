@@ -247,7 +247,7 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements E
 
     @Override
     protected double getInEdgeWeight(SPTEntry entry) {
-        return graph.getEdgeIteratorState(getIncomingEdge(entry), entry.adjNode).getWeight(false);
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -290,10 +290,6 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements E
             int adj = edgeState.getAdjNode();
             // always accept virtual edges, see #288
             if (base >= maxNodes || adj >= maxNodes)
-                return true;
-
-            // minor performance improvement: shortcuts in wrong direction are disconnected, so no need to exclude them
-            if (edgeState.isShortcut())
                 return true;
 
             return graph.getLevel(base) <= graph.getLevel(adj);

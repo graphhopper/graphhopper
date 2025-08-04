@@ -19,11 +19,14 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.routing.util.WayAccess;
 import com.graphhopper.util.PMap;
 
 import java.util.*;
+
+import static com.graphhopper.routing.util.parsers.OSMTemporalAccessParser.hasPermissiveTemporalRestriction;
 
 public class CarAccessParser extends AbstractAccessParser implements TagParser {
 
@@ -33,17 +36,17 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
 
     public CarAccessParser(EncodedValueLookup lookup, PMap properties) {
         this(
-                lookup.getBooleanEncodedValue(VehicleAccess.key(properties.getString("name", "car"))),
+                lookup.getBooleanEncodedValue(VehicleAccess.key("car")),
                 lookup.getBooleanEncodedValue(Roundabout.KEY),
                 properties,
-                TransportationMode.CAR
+                OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR)
         );
     }
 
     public CarAccessParser(BooleanEncodedValue accessEnc,
                            BooleanEncodedValue roundaboutEnc, PMap properties,
-                           TransportationMode transportationMode) {
-        super(accessEnc, transportationMode);
+                           List<String> restrictionsKeys) {
+        super(accessEnc, restrictionsKeys);
         this.roundaboutEnc = roundaboutEnc;
         restrictedValues.add("agricultural");
         restrictedValues.add("forestry");
@@ -51,10 +54,6 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
 
         blockPrivate(properties.getBool("block_private", true));
         blockFords(properties.getBool("block_fords", false));
-
-        intendedValues.add("yes");
-        intendedValues.add("designated");
-        intendedValues.add("permissive");
 
         barriers.add("kissing_gate");
         barriers.add("fence");
@@ -78,17 +77,18 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
     public WayAccess getAccess(ReaderWay way) {
         // TODO: Ferries have conditionals, like opening hours or are closed during some time in the year
         String highwayValue = way.getTag("highway");
-        String firstValue = way.getFirstPriorityTag(restrictions);
+        int firstIndex = way.getFirstIndex(restrictionKeys);
+        String firstValue = firstIndex < 0 ? "" : way.getTag(restrictionKeys.get(firstIndex), "");
         if (highwayValue == null) {
-            if (way.hasTag("route", ferries)) {
-                if (restrictedValues.contains(firstValue))
-                    return WayAccess.CAN_SKIP;
-                if (intendedValues.contains(firstValue) ||
+            if (FerrySpeedCalculator.isFerry(way)) {
+                if (allowedValues.contains(firstValue) ||
                         // implied default is allowed only if foot and bicycle is not specified:
                         firstValue.isEmpty() && !way.hasTag("foot") && !way.hasTag("bicycle") ||
-                        // if hgv is allowed than smaller trucks and cars are allowed too
+                        // if hgv is allowed then smaller trucks and cars are allowed too
                         way.hasTag("hgv", "yes"))
                     return WayAccess.FERRY;
+                if (restrictedValues.contains(firstValue))
+                    return WayAccess.CAN_SKIP;
             }
             return WayAccess.CAN_SKIP;
         }
@@ -102,26 +102,25 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
         if (!highwayValues.contains(highwayValue))
             return WayAccess.CAN_SKIP;
 
+        // this is a very rare tagging which we should/could remove (the status key itself is described as "vague")
         if (way.hasTag("impassable", "yes") || way.hasTag("status", "impassable"))
             return WayAccess.CAN_SKIP;
 
         // multiple restrictions needs special handling
-        boolean permittedWayConditionallyRestricted = getConditionalTagInspector().isPermittedWayConditionallyRestricted(way);
-        boolean restrictedWayConditionallyPermitted = getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way);
-        if (!firstValue.isEmpty()) {
+        if (firstIndex >= 0) {
             String[] restrict = firstValue.split(";");
+            // if any of the values allows access then return early (regardless of the order)
             for (String value : restrict) {
-                if (restrictedValues.contains(value) && !restrictedWayConditionallyPermitted)
-                    return WayAccess.CAN_SKIP;
-                if (intendedValues.contains(value) && !permittedWayConditionallyRestricted)
+                if (allowedValues.contains(value))
                     return WayAccess.WAY;
+            }
+            for (String value : restrict) {
+                if (restrictedValues.contains(value) && !hasPermissiveTemporalRestriction(way, firstIndex, restrictionKeys, allowedValues))
+                    return WayAccess.CAN_SKIP;
             }
         }
 
         if (isBlockFords() && ("ford".equals(highwayValue) || way.hasTag("ford")))
-            return WayAccess.CAN_SKIP;
-
-        if (permittedWayConditionallyRestricted)
             return WayAccess.CAN_SKIP;
 
         return WayAccess.WAY;
@@ -175,7 +174,7 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
     }
 
     protected boolean isOneway(ReaderWay way) {
-        return way.hasTag("oneway", oneways)
+        return way.hasTag("oneway", ONEWAYS)
                 || way.hasTag("vehicle:backward", restrictedValues)
                 || way.hasTag("vehicle:forward", restrictedValues)
                 || way.hasTag("motor_vehicle:backward", restrictedValues)

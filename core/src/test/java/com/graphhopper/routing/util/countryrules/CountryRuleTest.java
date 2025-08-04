@@ -22,7 +22,7 @@ import com.graphhopper.routing.ev.RoadAccess;
 import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.routing.util.countryrules.europe.AustriaCountryRule;
 import com.graphhopper.routing.util.countryrules.europe.GermanyCountryRule;
-
+import com.graphhopper.routing.util.countryrules.europe.HungaryCountryRule;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -42,6 +42,16 @@ class CountryRuleTest {
         assertEquals(RoadAccess.FORESTRY, rule.getAccess(createReaderWay("track"), TransportationMode.CAR, RoadAccess.YES));
         assertEquals(RoadAccess.YES, rule.getAccess(createReaderWay("primary"), TransportationMode.CAR, RoadAccess.YES));
         assertEquals(RoadAccess.DESTINATION, rule.getAccess(createReaderWay("living_street"), TransportationMode.CAR, RoadAccess.YES));
+    }
+
+    @Test
+    void hungary() {
+        HungaryCountryRule rule = new HungaryCountryRule();
+        assertEquals(RoadAccess.YES, rule.getAccess(createReaderWay("primary"), TransportationMode.CAR, RoadAccess.YES));
+        assertEquals(RoadAccess.DESTINATION, rule.getAccess(createReaderWay("living_street"), TransportationMode.CAR, RoadAccess.YES));
+        assertEquals(RoadAccess.YES, rule.getAccess(createReaderWay("living_street"), TransportationMode.BIKE, RoadAccess.YES));
+        assertEquals(RoadAccess.PRIVATE, rule.getAccess(createReaderWay("living_street"), TransportationMode.CAR, RoadAccess.PRIVATE));
+        assertEquals(RoadAccess.PRIVATE, rule.getAccess(createReaderWay("living_street"), TransportationMode.BIKE, RoadAccess.PRIVATE));
     }
 
     private ReaderWay createReaderWay(String highway) {

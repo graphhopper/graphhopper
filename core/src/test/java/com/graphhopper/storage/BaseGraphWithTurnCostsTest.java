@@ -18,16 +18,18 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.search.KVStorage.KeyValue;
+import com.graphhopper.search.KVStorage;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import org.junit.jupiter.api.Test;
 
+import java.util.Map;
 import java.util.Random;
 
-import static com.graphhopper.search.KVStorage.KeyValue.STREET_NAME;
+import static com.graphhopper.util.Parameters.Details.STREET_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -44,6 +46,7 @@ public class BaseGraphWithTurnCostsTest extends BaseGraphTest {
         return EncodingManager.start()
                 .add(carAccessEnc).add(carSpeedEnc).addTurnCostEncodedValue(turnCostEnc)
                 .add(footAccessEnc).add(footSpeedEnc)
+                .add(RoadClass.create())
                 .build();
     }
 
@@ -79,8 +82,8 @@ public class BaseGraphWithTurnCostsTest extends BaseGraphTest {
         setTurnCost(iter2.getEdge(), 0, iter1.getEdge(), 666);
         setTurnCost(iter1.getEdge(), 1, iter2.getEdge(), 815);
 
-        iter1.setKeyValues(KeyValue.createKV(STREET_NAME, "named street1"));
-        iter2.setKeyValues(KeyValue.createKV(STREET_NAME, "named street2"));
+        iter1.setKeyValues(Map.of(STREET_NAME, new KVStorage.KValue( "named street1")));
+        iter2.setKeyValues(Map.of(STREET_NAME, new KVStorage.KValue( "named street2")));
 
         checkGraph(graph);
         graph.flush();
@@ -132,13 +135,12 @@ public class BaseGraphWithTurnCostsTest extends BaseGraphTest {
             graph.edge(nodeId, 50).setDistance(r.nextDouble()).set(carAccessEnc, true, true);
         }
 
-        // add 100 turn cost entries around node 50
-        for (int edgeId = 0; edgeId < 50; edgeId++) {
+        // add turn cost entries around node 50
+        for (int edgeId = 0; edgeId < 52; edgeId++) {
             setTurnCost(edgeId, 50, edgeId + 50, 1337);
             setTurnCost(edgeId + 50, 50, edgeId, 1337);
         }
 
-        setTurnCost(0, 50, 1, 1337);
         assertEquals(104, turnCostStorage.getCapacity() / 16); // we are still good here
 
         setTurnCost(0, 50, 2, 1337);

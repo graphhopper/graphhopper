@@ -21,8 +21,8 @@ package com.graphhopper.application.resources;
 import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
-import com.graphhopper.config.Profile;
 import com.graphhopper.resources.PtIsochroneResource;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -39,7 +39,7 @@ import javax.ws.rs.client.WebTarget;
 import java.io.File;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Collections;
+import java.util.List;
 
 import static com.graphhopper.application.util.TestUtils.clientTarget;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -55,12 +55,12 @@ public class PtIsochroneTest {
 
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
-        config.getGraphHopperConfiguration()
-                .putObject("graph.vehicles", "foot")
-                .putObject("graph.location", GRAPH_LOC)
-                .putObject("gtfs.file", "../reader-gtfs/files/sample-feed")
-                .putObject("import.osm.ignored_highways", "").
-                setProfiles(Collections.singletonList(new Profile("foot").setVehicle("foot").setWeighting("fastest")));
+        config.getGraphHopperConfiguration().
+                putObject("graph.location", GRAPH_LOC).
+                putObject("gtfs.file", "../reader-gtfs/files/sample-feed").
+                putObject("import.osm.ignored_highways", "").
+                putObject("graph.encoded_values", "foot_access, foot_priority, foot_average_speed").
+                setProfiles(List.of(TestProfiles.accessSpeedAndPriority("foot")));
         Helper.removeDir(new File(GRAPH_LOC));
         return config;
     }

@@ -4,11 +4,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.parsers.DefaultMaxSpeedParser;
+import com.graphhopper.routing.util.parsers.OSMMaxSpeedParser;
 import com.graphhopper.routing.util.parsers.TagParser;
-import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.StopWatch;
 import de.westnordost.osm_legal_default_speeds.LegalDefaultSpeeds;
 import de.westnordost.osm_legal_default_speeds.RoadType;
@@ -20,6 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 public class MaxSpeedCalculator {
 
@@ -75,8 +77,8 @@ public class MaxSpeedCalculator {
 
                     if ("maxspeed".equals(tags.getKey())
                             || "maxspeed:advisory".equals(tags.getKey())) {
-                        double tmp = OSMValueExtractor.stringToKmh(tags.getValue());
-                        if (Double.isNaN(tmp))
+                        double tmp = OSMMaxSpeedParser.parseMaxspeedString(tags.getValue());
+                        if (tmp == MaxSpeed.MAXSPEED_MISSING || tmp == OSMMaxSpeedParser.MAXSPEED_NONE)
                             throw new IllegalStateException("illegal maxspeed " + tags.getValue());
                         newTags.put(tags.getKey(), "" + Math.round(tmp));
                     }
@@ -118,18 +120,24 @@ public class MaxSpeedCalculator {
         EncodedValue.InitializerConfig config = new EncodedValue.InitializerConfig();
         ruralMaxSpeedEnc.init(config);
         urbanMaxSpeedEnc.init(config);
-        if (config.getRequiredBits() > 16)
-            throw new IllegalStateException("bits are not sufficient " + config.getRequiredBits());
+        if (config.getRequiredBytes() > 2)
+            throw new IllegalStateException("bytes are not sufficient " + config.getRequiredBytes());
 
         parser.init(ruralMaxSpeedEnc, urbanMaxSpeedEnc, internalMaxSpeedStorage);
     }
 
     /**
-     * This method sets max_speed values where the value is UNSET_SPEED to a value determined by
-     * the default speed library which is country-dependent.
+     * This method sets max_speed values where the value is {@link MaxSpeed.MAXSPEED_MISSING} to a
+     * value determined by the default speed library which is country-dependent.
      */
     public void fillMaxSpeed(Graph graph, EncodingManager em) {
-        EnumEncodedValue<UrbanDensity> urbanDensityEnc = em.getEnumEncodedValue(UrbanDensity.KEY, UrbanDensity.class);
+        // In DefaultMaxSpeedParser and in OSMMaxSpeedParser we don't have the rural/urban info,
+        // but now we have and can fill the country-dependent max_speed value where missing.
+        EnumEncodedValue<UrbanDensity> udEnc = em.getEnumEncodedValue(UrbanDensity.KEY, UrbanDensity.class);
+        fillMaxSpeed(graph, em, edge -> edge.get(udEnc) != UrbanDensity.RURAL);
+    }
+
+    public void fillMaxSpeed(Graph graph, EncodingManager em, Function<EdgeIteratorState, Boolean> isUrbanDensityFun) {
         DecimalEncodedValue maxSpeedEnc = em.getDecimalEncodedValue(MaxSpeed.KEY);
         BooleanEncodedValue maxSpeedEstEnc = em.getBooleanEncodedValue(MaxSpeedEstimated.KEY);
 
@@ -140,19 +148,23 @@ public class MaxSpeedCalculator {
             double bwdMaxSpeedPureOSM = iter.getReverse(maxSpeedEnc);
 
             // skip speeds-library if max_speed is known for both directions
-            if (fwdMaxSpeedPureOSM != MaxSpeed.UNSET_SPEED
-                    && bwdMaxSpeedPureOSM != MaxSpeed.UNSET_SPEED) continue;
+            if (fwdMaxSpeedPureOSM != MaxSpeed.MAXSPEED_MISSING
+                    && bwdMaxSpeedPureOSM != MaxSpeed.MAXSPEED_MISSING) continue;
 
-            // In DefaultMaxSpeedParser and in OSMMaxSpeedParser we don't have the rural/urban info,
-            // but now we have and can fill the country-dependent max_speed value where missing.
-            double maxSpeed = iter.get(urbanDensityEnc) == UrbanDensity.RURAL
-                    ? ruralMaxSpeedEnc.getDecimal(false, iter.getEdge(), internalMaxSpeedStorage)
-                    : urbanMaxSpeedEnc.getDecimal(false, iter.getEdge(), internalMaxSpeedStorage);
-            if (maxSpeed != MaxSpeed.UNSET_SPEED) {
-                iter.set(maxSpeedEnc,
-                        fwdMaxSpeedPureOSM == MaxSpeed.UNSET_SPEED ? maxSpeed : fwdMaxSpeedPureOSM,
-                        bwdMaxSpeedPureOSM == MaxSpeed.UNSET_SPEED ? maxSpeed : bwdMaxSpeedPureOSM);
-                iter.set(maxSpeedEstEnc, true);
+            double maxSpeed = isUrbanDensityFun.apply(iter)
+                    ? urbanMaxSpeedEnc.getDecimal(false, iter.getEdge(), internalMaxSpeedStorage)
+                    : ruralMaxSpeedEnc.getDecimal(false, iter.getEdge(), internalMaxSpeedStorage);
+            if (maxSpeed != MaxSpeed.MAXSPEED_MISSING) {
+                if (maxSpeed == 0) {
+                    // TODO fix properly: RestrictionSetter adds artificial edges for which
+                    //  we didn't set the speed in DefaultMaxSpeedParser, #2914
+                    iter.set(maxSpeedEnc, MaxSpeed.MAXSPEED_MISSING, MaxSpeed.MAXSPEED_MISSING);
+                } else {
+                    iter.set(maxSpeedEnc,
+                            fwdMaxSpeedPureOSM == MaxSpeed.MAXSPEED_MISSING ? maxSpeed : fwdMaxSpeedPureOSM,
+                            bwdMaxSpeedPureOSM == MaxSpeed.MAXSPEED_MISSING ? maxSpeed : bwdMaxSpeedPureOSM);
+                    iter.set(maxSpeedEstEnc, true);
+                }
             }
         }
 
@@ -161,6 +173,13 @@ public class MaxSpeedCalculator {
 
     public void close() {
         dataAccess.close();
+    }
+
+    public void checkEncodedValues(EncodingManager encodingManager) {
+        if (!encodingManager.hasEncodedValue(Country.KEY))
+            throw new IllegalArgumentException("max_speed_calculator needs country");
+        if (!encodingManager.hasEncodedValue(UrbanDensity.KEY))
+            throw new IllegalArgumentException("max_speed_calculator needs urban_density");
     }
 
     static class SpeedLimitsJson {

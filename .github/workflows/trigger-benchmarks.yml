@@ -3,7 +3,7 @@ on: push
 jobs:
   trigger_measurement:
     if: github.repository_owner == 'graphhopper'
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     environment: benchmarks
     steps:
       - name: trigger

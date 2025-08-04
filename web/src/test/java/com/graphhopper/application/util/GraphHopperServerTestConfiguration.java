@@ -18,8 +18,8 @@
 package com.graphhopper.application.util;
 
 import com.graphhopper.application.GraphHopperServerConfiguration;
+import io.dropwizard.core.server.DefaultServerFactory;
 import io.dropwizard.jetty.HttpConnectorFactory;
-import io.dropwizard.server.DefaultServerFactory;
 
 /**
  * @author thomas aulinger

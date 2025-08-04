@@ -36,13 +36,16 @@ import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.TranslationMap;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
-import io.dropwizard.ConfiguredBundle;
-import io.dropwizard.setup.Bootstrap;
-import io.dropwizard.setup.Environment;
+import io.dropwizard.client.HttpClientBuilder;
+import io.dropwizard.core.ConfiguredBundle;
+import io.dropwizard.core.setup.Bootstrap;
+import io.dropwizard.core.setup.Environment;
+import org.apache.hc.client5.http.classic.HttpClient;
 import org.glassfish.hk2.api.Factory;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConfiguration> {
 
@@ -205,6 +208,26 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         }
     }
 
+    private static class EmptyRealtimeFeedFactory implements Factory<RealtimeFeed> {
+
+        private final GtfsStorage staticGtfs;
+
+        @Inject
+        EmptyRealtimeFeedFactory(GtfsStorage staticGtfs) {
+            this.staticGtfs = staticGtfs;
+        }
+
+        @Override
+        public RealtimeFeed provide() {
+            return RealtimeFeed.empty();
+        }
+
+        @Override
+        public void dispose(RealtimeFeed realtimeFeed) {
+
+        }
+    }
+
     @Override
     public void initialize(Bootstrap<?> bootstrap) {
         // See #1440: avoids warning regarding com.fasterxml.jackson.module.afterburner.util.MyClassLoader
@@ -312,5 +335,27 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         environment.healthChecks().register("graphhopper", new GraphHopperHealthCheck(graphHopper));
         environment.jersey().register(environment.healthChecks());
         environment.jersey().register(HealthCheckResource.class);
+
+        if (configuration.gtfsrealtime().getFeeds().isEmpty()) {
+            environment.jersey().register(new AbstractBinder() {
+                @Override
+                protected void configure() {
+                    bindFactory(EmptyRealtimeFeedFactory.class).to(RealtimeFeed.class).in(Singleton.class);
+                }
+            });
+        } else {
+            final HttpClient httpClient = new HttpClientBuilder(environment)
+                    .using(configuration.gtfsrealtime().getHttpClientConfiguration())
+                    .build("gtfs-realtime-feed-loader");
+            RealtimeFeedLoadingCache realtimeFeedLoadingCache = new RealtimeFeedLoadingCache(((GraphHopperGtfs) graphHopper), httpClient, configuration);
+            environment.lifecycle().manage(realtimeFeedLoadingCache);
+            environment.jersey().register(new AbstractBinder() {
+                @Override
+                protected void configure() {
+                    bind(httpClient).to(HttpClient.class);
+                    bindFactory(realtimeFeedLoadingCache).to(RealtimeFeed.class);
+                }
+            });
+        }
     }
 }

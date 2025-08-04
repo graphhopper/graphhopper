@@ -20,9 +20,9 @@ package com.graphhopper;
 
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Stop;
-import com.graphhopper.config.Profile;
 import com.graphhopper.gtfs.*;
 import com.graphhopper.gtfs.Trips;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Instruction;
 import com.graphhopper.util.TranslationMap;
@@ -76,9 +76,10 @@ public interface GraphHopperGtfsIT<T extends PtRouter> {
             ghConfig.putObject("gtfs.trip_based", true);
             ghConfig.putObject("gtfs.trip_based.max_transfer_time", 24 * 60 * 60);
             ghConfig.putObject("gtfs.schedule_day", "2007-01-01,2007-01-02,2007-01-06,2007-01-07");
-            ghConfig.setProfiles(Arrays.asList(
-                    new Profile("foot").setVehicle("foot").setWeighting("fastest"),
-                    new Profile("car").setVehicle("car").setWeighting("fastest")));
+            ghConfig.putObject("graph.encoded_values", "foot_access, foot_priority, foot_average_speed, car_access, car_average_speed");
+            ghConfig.setProfiles(List.of(
+                    TestProfiles.accessSpeedAndPriority("foot"),
+                    TestProfiles.accessAndSpeed("car")));
             graphHopperGtfs = new GraphHopperGtfs(ghConfig);
             graphHopperGtfs.init(ghConfig);
             graphHopperGtfs.importOrLoad();
@@ -137,9 +138,10 @@ public interface GraphHopperGtfsIT<T extends PtRouter> {
             ghConfig.putObject("graph.location", GRAPH_LOC);
             ghConfig.putObject("import.osm.ignored_highways", "");
             ghConfig.putObject("gtfs.file", "files/sample-feed");
-            ghConfig.setProfiles(Arrays.asList(
-                    new Profile("foot").setVehicle("foot").setWeighting("fastest"),
-                    new Profile("car").setVehicle("car").setWeighting("fastest")));
+            ghConfig.putObject("graph.encoded_values", "foot_access, foot_priority, foot_average_speed, car_access, car_average_speed");
+            ghConfig.setProfiles(List.of(
+                    TestProfiles.accessSpeedAndPriority("foot"),
+                    TestProfiles.accessAndSpeed("car")));
             graphHopperGtfs = new GraphHopperGtfs(ghConfig);
             graphHopperGtfs.init(ghConfig);
             graphHopperGtfs.importOrLoad();
@@ -257,7 +259,7 @@ public interface GraphHopperGtfsIT<T extends PtRouter> {
         // At 10:00 (end of profile time window), the departure at 10:04 is optimal.
         // This is hairy, it's easy to confuse this and 09:54 becomes the last option.
         List<LocalTime> expectedDepartureTimes = Stream.of(
-                "06:44", "07:14", "07:44", "08:14", "08:44", "08:54", "09:04", "09:14", "09:24", "09:34", "09:44", "09:54", "10:04")
+                        "06:44", "07:14", "07:44", "08:14", "08:44", "08:54", "09:04", "09:14", "09:24", "09:34", "09:44", "09:54", "10:04")
                 .map(LocalTime::parse)
                 .collect(Collectors.toList());
         assertEquals(expectedDepartureTimes, actualDepartureTimes);
@@ -280,7 +282,7 @@ public interface GraphHopperGtfsIT<T extends PtRouter> {
         // Find exactly the next departure, tomorrow. It departs outside the profile time window, but there is no
         // walk alternative, so this remains the best solution for the entire time window.
         List<LocalTime> expectedDepartureTimes = Stream.of(
-                "06:44")
+                        "06:44")
                 .map(LocalTime::parse)
                 .collect(Collectors.toList());
         assertEquals(expectedDepartureTimes, actualDepartureTimes);
@@ -303,7 +305,7 @@ public interface GraphHopperGtfsIT<T extends PtRouter> {
                 .map(path -> LocalTime.from(path.getLegs().get(0).getDepartureTime().toInstant().atZone(zoneId)))
                 .collect(Collectors.toList());
         List<LocalTime> expectedDepartureTimes = Stream.of(
-                "12:44", "12:14", "11:44", "11:14")
+                        "12:44", "12:14", "11:44", "11:14")
                 .map(LocalTime::parse)
                 .collect(Collectors.toList());
         assertEquals(expectedDepartureTimes, actualDepartureTimes);

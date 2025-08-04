@@ -27,6 +27,7 @@ import com.graphhopper.util.EdgeIteratorState;
 public class KVStringDetails extends AbstractPathDetailsBuilder {
 
     private String curString;
+    private boolean initial = true;
 
     public KVStringDetails(String name) {
         super(name);
@@ -34,13 +35,17 @@ public class KVStringDetails extends AbstractPathDetailsBuilder {
 
     @Override
     public boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge) {
-        if (curString == null) {
-            curString = (String) edge.getValue(getName());
+        String value = (String) edge.getValue(getName());
+        if (initial) {
+            curString = value;
+            initial = false;
             return true;
-        }
-        String val = (String) edge.getValue(getName());
-        if (!curString.equals(val)) {
-            curString = val;
+        } else if (curString == null) {
+            curString = value;
+            // do not create separate details if value stays null
+            return value != null;
+        } else if (!curString.equals(value)) {
+            curString = value;
             return true;
         }
         return false;

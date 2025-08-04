@@ -130,6 +130,10 @@ public class ArrayUtil {
      * @return the size of the new range that contains no duplicates (smaller or equal to end).
      */
     public static int removeConsecutiveDuplicates(int[] arr, int end) {
+        if (end < 0)
+            throw new IllegalArgumentException("end less than 0");
+        if (end == 0)
+            return 0;
         int curr = 0;
         for (int i = 1; i < end; ++i) {
             if (arr[i] != arr[curr])
@@ -221,6 +225,13 @@ public class ArrayUtil {
         result.elementsCount = list.size();
         for (int i = 0; i < result.elementsCount; ++i)
             result.set(list.get(i), i);
+        return result;
+    }
+
+    public static IntArrayList subList(IntArrayList list, int fromIndex, int toIndex) {
+        IntArrayList result = new IntArrayList(toIndex - fromIndex);
+        for (int i = fromIndex; i < toIndex; i++)
+            result.add(list.get(i));
         return result;
     }
 

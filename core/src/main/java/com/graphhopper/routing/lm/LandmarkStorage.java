@@ -64,7 +64,7 @@ public class LandmarkStorage {
     // Short.MAX_VALUE = 2^15-1 but we have unsigned short so we need 2^16-1
     private static final int SHORT_INFINITY = Short.MAX_VALUE * 2 + 1;
     // We have large values that do not fit into a short, use a specific maximum value
-    private static final int SHORT_MAX = SHORT_INFINITY - 1;
+    static final int SHORT_MAX = SHORT_INFINITY - 1;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LandmarkStorage.class);
     // This value is used to identify nodes where no subnetwork is associated
@@ -269,7 +269,7 @@ public class LandmarkStorage {
         }
 
         EdgeFilter accessFilter = edge -> !edge.get(edgeInSubnetworkEnc) && !blockedEdges.contains(edge.getEdge());
-        EdgeFilter tarjanFilter = edge -> accessFilter.accept(edge) && Double.isFinite(weighting.calcEdgeWeightWithAccess(edge, false));
+        EdgeFilter tarjanFilter = edge -> accessFilter.accept(edge) && Double.isFinite(weighting.calcEdgeWeight(edge, false));
 
         StopWatch sw = new StopWatch().start();
         ConnectedComponents graphComponents = TarjanSCC.findComponents(graph, tarjanFilter, true);
@@ -322,7 +322,7 @@ public class LandmarkStorage {
 
         int subnetworkCount = landmarkIDs.size();
         // store all landmark node IDs and one int for the factor itself.
-        this.landmarkWeightDA.ensureCapacity(maxBytes /* landmark weights */ + subnetworkCount * landmarks /* landmark mapping per subnetwork */);
+        this.landmarkWeightDA.ensureCapacity(maxBytes /* landmark weights */ + (long) subnetworkCount * landmarks /* landmark mapping per subnetwork */ + 4);
 
         // calculate offset to point into landmark mapping
         long bytePos = maxBytes;
@@ -523,7 +523,7 @@ public class LandmarkStorage {
      * a node ID but the internal index of the landmark array.
      */
     int getFromWeight(int landmarkIndex, int node) {
-        int res = (int) landmarkWeightDA.getShort((long) node * LM_ROW_LENGTH + landmarkIndex * 4 + FROM_OFFSET)
+        int res = (int) landmarkWeightDA.getShort((long) node * LM_ROW_LENGTH + landmarkIndex * 4L + FROM_OFFSET)
                 & 0x0000FFFF;
         if (res == SHORT_INFINITY)
             // TODO can happen if endstanding oneway
@@ -567,10 +567,6 @@ public class LandmarkStorage {
 
     boolean isInfinity(long pointer) {
         return ((int) landmarkWeightDA.getShort(pointer) & 0x0000FFFF) == SHORT_INFINITY;
-    }
-
-    int calcWeight(EdgeIteratorState edge, boolean reverse) {
-        return (int) (weighting.calcEdgeWeight(edge, reverse) / factor);
     }
 
     // From all available landmarks pick just a few active ones
@@ -806,7 +802,7 @@ public class LandmarkStorage {
         protected double calcWeight(EdgeIteratorState iter, SPTEntry currEdge, boolean reverse) {
             if (!accessFilter.accept(iter))
                 return Double.POSITIVE_INFINITY;
-            return GHUtility.calcWeightWithTurnWeightWithAccess(weighting, iter, reverse, currEdge.edge) + currEdge.getWeightOfVisitedPath();
+            return GHUtility.calcWeightWithTurnWeight(weighting, iter, reverse, currEdge.edge) + currEdge.getWeightOfVisitedPath();
         }
 
         int getFromCount() {

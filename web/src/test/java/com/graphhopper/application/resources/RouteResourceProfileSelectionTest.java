@@ -24,9 +24,8 @@ import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
-import com.graphhopper.config.Profile;
-import com.graphhopper.routing.weighting.custom.CustomProfile;
-import com.graphhopper.util.CustomModel;
+import com.graphhopper.routing.TestProfiles;
+import com.graphhopper.util.BodyAndStatus;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -36,14 +35,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.Arrays;
 
+import static com.graphhopper.application.resources.Util.getWithStatus;
+import static com.graphhopper.application.resources.Util.postWithStatus;
 import static com.graphhopper.application.util.TestUtils.clientTarget;
-import static com.graphhopper.json.Statement.If;
-import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(DropwizardExtensionsSupport.class)
@@ -54,23 +51,23 @@ public class RouteResourceProfileSelectionTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.vehicles", "bike,car,foot").
                 putObject("prepare.min_network_size", 0).
                 putObject("datareader.file", "../core/files/monaco.osm.gz").
                 putObject("graph.encoded_values", "road_class,surface,road_environment,max_speed").
                 putObject("import.osm.ignored_highways", "").
-                putObject("graph.location", DIR)
-                .setProfiles(Arrays.asList(
-                        new Profile("my_car").setVehicle("car").setWeighting("fastest"),
-                        new CustomProfile("my_bike").setCustomModel(new CustomModel().setDistanceInfluence(200d)).setVehicle("bike"),
-                        new Profile("my_feet").setVehicle("foot").setWeighting("shortest")
-                ))
-                .setCHProfiles(Arrays.asList(
+                putObject("graph.location", DIR).
+                putObject("graph.encoded_values", "road_class, surface, road_environment, max_speed, car_access, car_average_speed, bike_access, bike_priority, bike_average_speed, foot_access, foot_priority, foot_average_speed").
+                setProfiles(Arrays.asList(
+                        TestProfiles.accessAndSpeed("my_car", "car"),
+                        TestProfiles.accessSpeedAndPriority("my_bike", "bike"),
+                        TestProfiles.accessSpeedAndPriority("my_feet", "foot")
+                )).
+                setCHProfiles(Arrays.asList(
                         new CHProfile("my_car"),
                         new CHProfile("my_bike"),
                         new CHProfile("my_feet")
-                ))
-                .setLMProfiles(Arrays.asList(
+                )).
+                setLMProfiles(Arrays.asList(
                         new LMProfile("my_car"),
                         new LMProfile("my_bike"),
                         new LMProfile("my_feet")
@@ -88,8 +85,8 @@ public class RouteResourceProfileSelectionTest {
     @ValueSource(strings = {"CH", "LM", "flex"})
     public void selectUsingProfile(String mode) {
         assertDistance("my_car", mode, 3563);
-        assertDistance("my_bike", mode, 3296);
-        assertDistance("my_feet", mode, 2935);
+        assertDistance("my_bike", mode, 3700);
+        assertDistance("my_feet", mode, 3158);
         assertError("my_pink_car", mode, "The requested profile 'my_pink_car' does not exist");
     }
 
@@ -103,7 +100,7 @@ public class RouteResourceProfileSelectionTest {
         assertError(doPost(profile, mode), expectedErrors);
     }
 
-    private Response doGet(String profile, String mode) {
+    private BodyAndStatus doGet(String profile, String mode) {
         String urlParams = "point=43.727879,7.409678&point=43.745987,7.429848";
         if (profile != null)
             urlParams += "&profile=" + profile;
@@ -111,10 +108,10 @@ public class RouteResourceProfileSelectionTest {
             urlParams += "&ch.disable=true";
         if (mode.equals("flex"))
             urlParams += "&lm.disable=true";
-        return clientTarget(app, "/route?" + urlParams).request().buildGet().invoke();
+        return getWithStatus(clientTarget(app, "/route?" + urlParams));
     }
 
-    private Response doPost(String profile, String mode) {
+    private BodyAndStatus doPost(String profile, String mode) {
         String jsonStr = "{\"points\": [[7.409678,43.727879], [7.429848, 43.745987]]";
         if (profile != null)
             jsonStr += ",\"profile\": \"" + profile + "\"";
@@ -123,11 +120,11 @@ public class RouteResourceProfileSelectionTest {
         if (mode.equals("flex"))
             jsonStr += ",\"lm.disable\": true";
         jsonStr += " }";
-        return clientTarget(app, "/route").request().post(Entity.json(jsonStr));
+        return postWithStatus(clientTarget(app, "/route"), jsonStr);
     }
 
-    private void assertDistance(Response response, double expectedDistance) {
-        JsonNode json = response.readEntity(JsonNode.class);
+    private void assertDistance(BodyAndStatus response, double expectedDistance) {
+        JsonNode json = response.getBody();
         assertEquals(200, response.getStatus(), (json.has("message") ? json.get("message").toString() : ""));
         JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
@@ -136,10 +133,10 @@ public class RouteResourceProfileSelectionTest {
         assertEquals(expectedDistance, distance, 10);
     }
 
-    private void assertError(Response response, String... expectedErrors) {
+    private void assertError(BodyAndStatus response, String... expectedErrors) {
         if (expectedErrors.length == 0)
             throw new IllegalArgumentException("there should be at least one expected error");
-        JsonNode json = response.readEntity(JsonNode.class);
+        JsonNode json = response.getBody();
         assertEquals(400, response.getStatus(), "there should have been an error containing: " + Arrays.toString(expectedErrors));
         assertTrue(json.has("message"));
         for (String expectedError : expectedErrors)

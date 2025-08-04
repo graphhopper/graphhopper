@@ -10,7 +10,7 @@
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>
-        <version>8.0-SNAPSHOT</version>
+        <version>11.0-SNAPSHOT</version>
     </parent>
 
     <dependencies>
@@ -40,7 +40,7 @@
             <artifactId>slf4j-api</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.mobilitydata.transit</groupId>
+            <groupId>org.mobilitydata</groupId>
             <artifactId>gtfs-realtime-bindings</artifactId>
         </dependency>
         <dependency>

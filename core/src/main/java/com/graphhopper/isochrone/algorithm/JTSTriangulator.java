@@ -27,16 +27,15 @@ import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.PointList;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Polygon;
-import org.locationtech.jts.triangulate.ConformingDelaunayTriangulator;
-import org.locationtech.jts.triangulate.ConstraintVertex;
+import org.locationtech.jts.triangulate.DelaunayTriangulationBuilder;
 import org.locationtech.jts.triangulate.quadedge.QuadEdgeSubdivision;
 import org.locationtech.jts.triangulate.quadedge.Vertex;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.function.ToDoubleFunction;
-import java.util.stream.Collectors;
 
 public class JTSTriangulator implements Triangulator {
 
@@ -63,6 +62,10 @@ public class JTSTriangulator implements Triangulator {
                 PointList innerPoints = edge.fetchWayGeometry(FetchMode.PILLAR_ONLY);
                 if (innerPoints.size() > 0) {
                     int midIndex = innerPoints.size() / 2;
+                    if (innerPoints.size() % 2 == 0 && edge.get(EdgeIteratorState.REVERSE_STATE))
+                        // For edge-based routing we might have explored the same edge in two different directions.
+                        // Here we make sure we only include the **same** point twice instead of two different ones.
+                        midIndex -= 1;
                     double lat2 = innerPoints.getLat(midIndex);
                     double lon2 = innerPoints.getLon(midIndex);
                     Coordinate site2 = new Coordinate(lon2, lat2);
@@ -80,12 +83,10 @@ public class JTSTriangulator implements Triangulator {
         // But that's okay, the triangulator de-dupes by itself, and it keeps the first z-value it sees, which is
         // what we want.
 
-        Collection<ConstraintVertex> constraintVertices = sites.stream().map(ConstraintVertex::new).collect(Collectors.toList());
-        ConformingDelaunayTriangulator conformingDelaunayTriangulator = new ConformingDelaunayTriangulator(constraintVertices, tolerance);
-        conformingDelaunayTriangulator.setConstraints(new ArrayList<>(), new ArrayList<>());
-        conformingDelaunayTriangulator.formInitialDelaunay();
-        conformingDelaunayTriangulator.enforceConstraints();
-        Geometry convexHull = conformingDelaunayTriangulator.getConvexHull();
+        DelaunayTriangulationBuilder triangulationBuilder = new DelaunayTriangulationBuilder();
+        triangulationBuilder.setSites(sites);
+        triangulationBuilder.setTolerance(tolerance);
+        Geometry convexHull = triangulationBuilder.getEdges(new GeometryFactory()).convexHull();
 
         // If there's only one site (and presumably also if the convex hull is otherwise degenerated),
         // the triangulation only contains the frame, and not the site within the frame. Not sure if I agree with that.
@@ -102,7 +103,7 @@ public class JTSTriangulator implements Triangulator {
                     + "Please try a different 'point' or a larger 'time_limit'.");
         }
 
-        QuadEdgeSubdivision tin = conformingDelaunayTriangulator.getSubdivision();
+        QuadEdgeSubdivision tin = triangulationBuilder.getSubdivision();
         for (Vertex vertex : (Collection<Vertex>) tin.getVertices(true)) {
             if (tin.isFrameVertex(vertex)) {
                 vertex.setZ(Double.MAX_VALUE);

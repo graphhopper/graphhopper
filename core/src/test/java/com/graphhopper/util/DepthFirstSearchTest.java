@@ -67,7 +67,7 @@ public class DepthFirstSearchTest {
         BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
         EncodedValue.InitializerConfig evConf = new EncodedValue.InitializerConfig();
         accessEnc.init(evConf);
-        BaseGraph g = new BaseGraph.Builder(evConf.getRequiredInts()).create();
+        BaseGraph g = new BaseGraph.Builder(evConf.getRequiredBytes()).create();
         g.edge(1, 2).setDistance(1).set(accessEnc, true, false);
         g.edge(1, 5).setDistance(1).set(accessEnc, true, false);
         g.edge(1, 4).setDistance(1).set(accessEnc, true, false);
@@ -103,7 +103,7 @@ public class DepthFirstSearchTest {
         BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
         EncodedValue.InitializerConfig evConf = new EncodedValue.InitializerConfig();
         accessEnc.init(evConf);
-        BaseGraph g = new BaseGraph.Builder(evConf.getRequiredInts()).create();
+        BaseGraph g = new BaseGraph.Builder(evConf.getRequiredBytes()).create();
         g.edge(1, 2).setDistance(1).set(accessEnc, true, false);
         g.edge(1, 4).setDistance(1).set(accessEnc, true, true);
         g.edge(1, 3).setDistance(1).set(accessEnc, true, false);

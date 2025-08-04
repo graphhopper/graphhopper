@@ -43,7 +43,7 @@ public class RangeError extends GTFSError implements Serializable {
     }
 
     @Override public String getMessage() {
-        return String.format(Locale.getDefault(), "Number %s outside of acceptable range [%s,%s].", actual, min, max);
+        return String.format(Locale.getDefault(), "Number %s in field %s outside of acceptable range [%s,%s].", actual, field, min, max);
     }
 
 }

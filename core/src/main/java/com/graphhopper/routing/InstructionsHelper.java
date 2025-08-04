@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.ev.RoadEnvironment;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
@@ -60,7 +61,7 @@ class InstructionsHelper {
             return Instruction.TURN_SHARP_RIGHT;
     }
 
-    static boolean isNameSimilar(String name1, String name2) {
+    static boolean isSameName(String name1, String name2) {
         // We don't want two empty names to be similar (they usually don't have names if they are random tracks)
         if (name1 == null || name2 == null || name1.isEmpty() || name2.isEmpty())
             return false;
@@ -79,5 +80,20 @@ class InstructionsHelper {
             tmpLon = tmpWayGeo.getLon(1);
         }
         return new GHPoint(tmpLat, tmpLon);
+    }
+
+    static boolean isToFerry(RoadEnvironment re, RoadEnvironment prev) {
+        return (re == RoadEnvironment.FERRY) && re != prev;
+    }
+
+    static boolean isFromFerry(RoadEnvironment re, RoadEnvironment prev) {
+        return (prev == RoadEnvironment.FERRY) && re != prev;
+    }
+
+    static String createFerryInfo(RoadEnvironment re, RoadEnvironment prev) {
+        if (re == prev) return null;
+        if (re == RoadEnvironment.FERRY) return "board_ferry";
+        if (prev == RoadEnvironment.FERRY) return "leave_ferry";
+        return null;
     }
 }

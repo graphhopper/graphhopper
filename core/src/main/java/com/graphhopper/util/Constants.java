@@ -43,17 +43,9 @@ public class Constants {
      */
     public static final boolean LINUX = OS_NAME.startsWith("Linux");
     /**
-     * True iff running on Android.
-     */
-    public static final boolean ANDROID = System.getProperty("java.vendor").contains("Android");
-    /**
      * True iff running on Windows.
      */
     public static final boolean WINDOWS = OS_NAME.startsWith("Windows");
-    /**
-     * True iff running on SunOS.
-     */
-    public static final boolean SUN_OS = OS_NAME.startsWith("SunOS");
     /**
      * True iff running on Mac OS X
      */
@@ -67,12 +59,13 @@ public class Constants {
     private static final int JVM_MINOR_VERSION;
 
     public static final int VERSION_NODE = 9;
-    public static final int VERSION_EDGE = 21;
+    public static final int VERSION_EDGE = 24;
     // this should be increased whenever the format of the serialized EncodingManager is changed
-    public static final int VERSION_EM = 2;
+    public static final int VERSION_EM = 4;
     public static final int VERSION_SHORTCUT = 9;
     public static final int VERSION_NODE_CH = 0;
-    public static final int VERSION_GEOMETRY = 6;
+    public static final int VERSION_GEOMETRY = 7;
+    public static final int VERSION_TURN_COSTS = 0;
     public static final int VERSION_LOCATION_IDX = 5;
     public static final int VERSION_KV_STORAGE = 2;
     /**

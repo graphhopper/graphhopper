@@ -3,6 +3,7 @@ package com.graphhopper.resources;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.search.KVStorage;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.EdgeIteratorState;
@@ -118,9 +119,9 @@ public class MVTResource {
 
             edgeCounter.incrementAndGet();
             Map<String, Object> map = new LinkedHashMap<>();
-            edge.getKeyValues().forEach(
-                    entry -> map.put(entry.key, entry.value)
-            );
+            for (Map.Entry<String, KVStorage.KValue> e : edge.getKeyValues().entrySet()) {
+                map.put(e.getKey(), e.getValue().toString());
+            }
             map.put("edge_id", edge.getEdge());
             map.put("edge_key", edge.getEdgeKey());
             map.put("base_node", edge.getBaseNode());
@@ -133,6 +134,8 @@ public class MVTResource {
                     map.put(ev.getName(), edge.get((DecimalEncodedValue) ev) + (ev.isStoreTwoDirections() ? " | " + edge.getReverse((DecimalEncodedValue) ev) : ""));
                 else if (ev instanceof BooleanEncodedValue)
                     map.put(ev.getName(), edge.get((BooleanEncodedValue) ev) + (ev.isStoreTwoDirections() ? " | " + edge.getReverse((BooleanEncodedValue) ev) : ""));
+                else if (ev instanceof StringEncodedValue)
+                    map.put(ev.getName(), edge.get((StringEncodedValue) ev) + (ev.isStoreTwoDirections() ? " | " + edge.getReverse((StringEncodedValue) ev) : ""));
                 else if (ev instanceof IntEncodedValue)
                     map.put(ev.getName(), edge.get((IntEncodedValue) ev) + (ev.isStoreTwoDirections() ? " | " + edge.getReverse((IntEncodedValue) ev) : ""));
             });

@@ -20,8 +20,15 @@ package com.graphhopper.config;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
+import com.graphhopper.util.TurnCostsConfig;
+
+import java.util.List;
+
+import static java.util.Collections.emptyList;
 
 /**
  * Corresponds to an entry of the `profiles` section in `config.yml` and specifies the properties of a routing profile.
@@ -32,10 +39,9 @@ import com.graphhopper.util.PMap;
  * @see LMProfile
  */
 public class Profile {
-    private String name = "car";
-    private String vehicle = "car";
-    private String weighting = "fastest";
-    private boolean turnCosts = false;
+    private String name;
+    private TurnCostsConfig turnCostsConfig;
+    private String weighting = "custom";
     private PMap hints = new PMap();
 
     public static void validateProfileName(String profileName) {
@@ -50,6 +56,14 @@ public class Profile {
 
     public Profile(String name) {
         setName(name);
+        setCustomModel(new CustomModel());
+    }
+
+    public Profile(Profile p) {
+        setName(p.getName());
+        setTurnCostsConfig(p.getTurnCostsConfig());
+        setWeighting(p.getWeighting());
+        hints = new PMap(p.getHints());
     }
 
     public String getName() {
@@ -62,13 +76,14 @@ public class Profile {
         return this;
     }
 
-    public String getVehicle() {
-        return vehicle;
+    public Profile setTurnCostsConfig(TurnCostsConfig turnCostsConfig) {
+        this.turnCostsConfig = turnCostsConfig;
+        return this;
     }
 
-    public Profile setVehicle(String vehicle) {
-        this.vehicle = vehicle;
-        return this;
+    @JsonProperty("turn_costs")
+    public TurnCostsConfig getTurnCostsConfig() {
+        return turnCostsConfig;
     }
 
     public String getWeighting() {
@@ -80,13 +95,19 @@ public class Profile {
         return this;
     }
 
-    public boolean isTurnCosts() {
-        return turnCosts;
+    public Profile setCustomModel(CustomModel customModel) {
+        if (customModel != null)
+            customModel.internal();
+        getHints().putObject(CustomModel.KEY, customModel);
+        return this;
     }
 
-    public Profile setTurnCosts(boolean turnCosts) {
-        this.turnCosts = turnCosts;
-        return this;
+    public CustomModel getCustomModel() {
+        return getHints().getObject(CustomModel.KEY, null);
+    }
+
+    public boolean hasTurnCosts() {
+        return turnCostsConfig != null;
     }
 
     @JsonIgnore
@@ -96,13 +117,17 @@ public class Profile {
 
     @JsonAnySetter
     public Profile putHint(String key, Object value) {
+        if (key.equals("u_turn_costs"))
+            throw new IllegalArgumentException("u_turn_costs no longer accepted in profile. Use the turn costs configuration instead, see docs/migration/config-migration-08-09.md");
+        if (key.equals("vehicle"))
+            throw new IllegalArgumentException("vehicle no longer accepted in profile, see docs/migration/config-migration-08-09.md");
         this.hints.putObject(key, value);
         return this;
     }
 
     @Override
     public String toString() {
-        return createContentString();
+        return createContentString(emptyList());
     }
 
     @Override
@@ -113,9 +138,11 @@ public class Profile {
         return name.equals(profile.name);
     }
 
-    private String createContentString() {
+    private String createContentString(List<String> excludedHints) {
         // used to check against stored custom models, see #2026
-        return "name=" + name + "|vehicle=" + vehicle + "|weighting=" + weighting + "|turnCosts=" + turnCosts + "|hints=" + hints;
+        PMap filteredHints = new PMap(hints);
+        excludedHints.forEach(filteredHints::remove);
+        return "name=" + name + "|turn_costs={" + turnCostsConfig + "}|weighting=" + weighting + "|hints=" + filteredHints;
     }
 
     @Override
@@ -124,6 +151,11 @@ public class Profile {
     }
 
     public int getVersion() {
-        return Helper.staticHashCode(createContentString());
+        return getVersion(emptyList());
     }
+
+    public int getVersion(List<String> excludedHints) {
+        return Helper.staticHashCode(createContentString(excludedHints));
+    }
+
 }

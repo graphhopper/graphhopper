@@ -63,7 +63,6 @@ public class GraphHopperGtfs extends GraphHopper {
             super.importOSM();
         } else {
             createBaseGraphAndProperties();
-            writeEncodingManagerToProperties();
         }
     }
 
@@ -213,7 +212,7 @@ public class GraphHopperGtfs extends GraphHopper {
     private boolean isValidPath(int[] edgeKeys) {
         List<EdgeIteratorState> edges = Arrays.stream(edgeKeys).mapToObj(i -> getBaseGraph().getEdgeIteratorStateForKey(i)).collect(Collectors.toList());
         for (int i = 1; i < edges.size(); i++) {
-            if (edges.get(i).getBaseNode() != edges.get(i-1).getAdjNode())
+            if (edges.get(i).getBaseNode() != edges.get(i - 1).getAdjNode())
                 return false;
         }
         TripFromLabel tripFromLabel = new TripFromLabel(getBaseGraph(), getEncodingManager(), gtfsStorage, RealtimeFeed.empty(), getPathDetailsBuilderFactory(), 6.0);
