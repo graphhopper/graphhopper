@@ -24,6 +24,7 @@ import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.config.Profile;
 import com.graphhopper.resources.InfoResource;
+import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -57,7 +58,8 @@ public class PtRouteResourceTripBasedTest {
                 putObject("import.osm.ignored_highways", "").
                 putObject("gtfs.trip_based", true).
                 putObject("gtfs.schedule_day", "2007-01-01").
-                setProfiles(Collections.singletonList(new Profile("foot")));
+                setProfiles(Collections.singletonList(TestProfiles.accessSpeedAndPriority("foot")))
+                .putObject("graph.encoded_values", "foot_access, foot_priority, foot_average_speed, car_access, car_average_speed");
         return config;
     }
 
