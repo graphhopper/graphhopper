@@ -174,9 +174,6 @@ public class Trips {
                     }
                 }
                 StopTime departureStopTime = trip.stopTimes.get(candidate.stop_sequence);
-                if (departureStopTime.departure_time - timeZoneOffset >= arrivalStopTime.arrival_time) {
-                    break; // next pattern
-                }
                 if (trip.service.activeOn(trafficDay)) {
                     if (departureStopTime.departure_time - timeZoneOffset >= earliestDepatureTimeForThisDestination) {
                         boolean keep = false;
