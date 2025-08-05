@@ -97,7 +97,7 @@ public class RoundaboutInstruction extends Instruction {
     @Override
     public Map<String, Object> getExtraInfoJSON() {
         Map<String, Object> tmpMap = new HashMap<>(3);
-        tmpMap.put("exit_number", getExitNumber());
+        if (getSign() == USE_ROUNDABOUT) tmpMap.put("exit_number", getExitNumber());
         tmpMap.put("exited", this.exited);
         double tmpAngle = getTurnAngle();
         if (!Double.isNaN(tmpAngle))
@@ -114,16 +114,19 @@ public class RoundaboutInstruction extends Instruction {
 
         String str;
         String streetName = _getName();
-        int indi = getSign();
-        if (indi == Instruction.USE_ROUNDABOUT) {
+        int sign = getSign();
+        if (sign == Instruction.USE_ROUNDABOUT) {
             if (!exited) {
                 str = tr.tr("roundabout_enter");
             } else {
                 str = Helper.isEmpty(streetName) ? tr.tr("roundabout_exit", getExitNumber())
                         : tr.tr("roundabout_exit_onto", getExitNumber(), streetName);
             }
+        } else if (sign == Instruction.EXIT_ROUNDABOUT) {
+            str = Helper.isEmpty(streetName) ? tr.tr("roundabout_exit_now")
+                    : tr.tr("roundabout_exit_onto_now", streetName);
         } else {
-            throw new IllegalStateException(indi + "no roundabout indication");
+            throw new IllegalStateException(sign + " no roundabout indication");
         }
         return str;
     }

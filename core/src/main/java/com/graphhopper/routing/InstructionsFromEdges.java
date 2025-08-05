@@ -24,6 +24,7 @@ import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 
+import static com.graphhopper.util.Instruction.EXIT_ROUNDABOUT;
 import static com.graphhopper.util.Parameters.Details.*;
 
 /**
@@ -178,8 +179,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             // remark: names and annotations within roundabout are ignored
             if (!prevInRoundabout) //just entered roundabout
             {
-                int sign = Instruction.USE_ROUNDABOUT;
-                RoundaboutInstruction roundaboutInstruction = new RoundaboutInstruction(sign, name,
+                RoundaboutInstruction roundaboutInstruction = new RoundaboutInstruction(Instruction.USE_ROUNDABOUT, name,
                         new PointList(10, nodeAccess.is3D()));
                 prevInstructionPrevOrientation = prevOrientation;
                 if (prevInstruction != null) {
@@ -243,11 +243,16 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             orientation = AngleCalc.ANGLE_CALC.alignOrientation(recentOrientation, orientation);
             double deltaOut = (orientation - recentOrientation);
 
-            prevInstruction = ((RoundaboutInstruction) prevInstruction)
+            ((RoundaboutInstruction) prevInstruction)
                     .setRadian(deltaInOut)
                     .setDirOfRotation(deltaOut)
                     .setExited();
 
+            prevInstruction = new RoundaboutInstruction(EXIT_ROUNDABOUT, name, new PointList(10, nodeAccess.is3D()))
+                    .setRadian(deltaInOut)
+                    .setDirOfRotation(deltaOut)
+                    .setExited();
+            ways.add(prevInstruction);
             prevInstructionName = prevName;
             prevName = name;
             prevRoadEnv = roadEnv;
