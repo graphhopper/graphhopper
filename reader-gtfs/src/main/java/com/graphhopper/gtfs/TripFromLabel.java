@@ -27,6 +27,7 @@ import com.google.common.collect.Maps;
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.Trip;
+import com.graphhopper.gtfs.fare.Amount;
 import com.graphhopper.gtfs.fare.Fares;
 import com.graphhopper.routing.InstructionsFromEdges;
 import com.graphhopper.routing.Path;
@@ -89,6 +90,10 @@ class TripFromLabel {
             legs.addAll(parsePartitionToLegs(partitions.get(i), queryGraph, encodedValueLookup, weighting, tr, requestedPathDetails));
         }
 
+        return createResponsePath(gtfsStorage, tr, waypoints, legs);
+    }
+
+    static ResponsePath createResponsePath(GtfsStorage gtfsStorage, Translation tr, PointList waypoints, List<Trip.Leg> legs) {
         if (legs.size() > 1 && legs.get(0) instanceof Trip.WalkLeg) {
             final Trip.WalkLeg accessLeg = (Trip.WalkLeg) legs.get(0);
             legs.set(0, new Trip.WalkLeg(accessLeg.departureLocation, new Date(legs.get(1).getDepartureTime().getTime() - (accessLeg.getArrivalTime().getTime() - accessLeg.getDepartureTime().getTime())),
@@ -159,14 +164,18 @@ class TripFromLabel {
                 .filter(l -> l instanceof Trip.PtLeg)
                 .filter(l -> !((Trip.PtLeg) l).isInSameVehicleAsPrevious)
                 .count() - 1);
-        com.graphhopper.gtfs.fare.Trip faresTrip = new com.graphhopper.gtfs.fare.Trip();
-        path.getLegs().stream()
+        getCheapestFare(gtfsStorage, path.getLegs()).ifPresent(amount -> path.setFare(amount.getAmount()));
+        return path;
+    }
+
+    public static Optional<Amount> getCheapestFare(GtfsStorage gtfsStorage, List<Trip.Leg> pathlegs) {
+        return pathlegs.stream()
                 .filter(leg -> leg instanceof Trip.PtLeg)
                 .map(leg -> (Trip.PtLeg) leg)
-                .findFirst()
-                .ifPresent(firstPtLeg -> {
+                .findFirst().flatMap(firstPtLeg -> {
+                    com.graphhopper.gtfs.fare.Trip faresTrip = new com.graphhopper.gtfs.fare.Trip();
                     LocalDateTime firstPtDepartureTime = GtfsHelper.localDateTimeFromDate(firstPtLeg.getDepartureTime());
-                    path.getLegs().stream()
+                    pathlegs.stream()
                             .filter(leg -> leg instanceof Trip.PtLeg)
                             .map(leg -> (Trip.PtLeg) leg)
                             .map(ptLeg -> {
@@ -177,13 +186,11 @@ class TripFromLabel {
                                         ptLeg.stops.stream().map(s -> gtfsFeed.stops.get(s.stop_id).zone_id).collect(Collectors.toSet()));
                             })
                             .forEach(faresTrip.segments::add);
-                    Fares.cheapestFare(gtfsStorage.getFares(), faresTrip)
-                            .ifPresent(amount -> path.setFare(amount.getAmount()));
+                    return Fares.cheapestFare(gtfsStorage.getFares(), faresTrip);
                 });
-        return path;
     }
 
-    private Map<String, List<PathDetail>> shift(Map<String, List<PathDetail>> pathDetailss, int previousPointsCount) {
+    private static Map<String, List<PathDetail>> shift(Map<String, List<PathDetail>> pathDetailss, int previousPointsCount) {
         return Maps.transformEntries(pathDetailss, (s, pathDetails) -> pathDetails.stream().map(p -> {
             PathDetail pathDetail = new PathDetail(p.getValue());
             pathDetail.setFirst(p.getFirst() + previousPointsCount);
@@ -192,7 +199,7 @@ class TripFromLabel {
         }).collect(Collectors.toList()));
     }
 
-    private List<List<Label.Transition>> parsePathToPartitions(List<Label.Transition> path) {
+    List<List<Label.Transition>> parsePathToPartitions(List<Label.Transition> path) {
         List<List<Label.Transition>> partitions = new ArrayList<>();
         partitions.add(new ArrayList<>());
         final Iterator<Label.Transition> iterator = path.iterator();
@@ -235,12 +242,12 @@ class TripFromLabel {
                 case BOARD: {
                     boardTime = Instant.ofEpochMilli(t.label.currentTime);
                     stopSequence = t.edge.getStopSequence();
-                    stopTime = realtimeFeed.getStopTime(gtfsFeed, tripDescriptor, t, boardTime, stopSequence);
+                    stopTime = realtimeFeed.getStopTime(gtfsFeed, tripDescriptor, boardTime, stopSequence);
                     tripUpdate = realtimeFeed.getTripUpdate(gtfsFeed, tripDescriptor, boardTime).orElse(null);
                     Instant plannedDeparture = Instant.ofEpochMilli(t.label.currentTime);
                     Optional<Instant> updatedDeparture = getDepartureDelay(stopSequence).map(delay -> plannedDeparture.plus(delay, SECONDS));
                     Stop stop = gtfsFeed.stops.get(stopTime.stop_id);
-                    stops.add(new Trip.Stop(stop.stop_id, stop.stop_name, geometryFactory.createPoint(new Coordinate(stop.stop_lon, stop.stop_lat)),
+                    stops.add(new Trip.Stop(stop.stop_id, stopTime.stop_sequence, stop.stop_name, geometryFactory.createPoint(new Coordinate(stop.stop_lon, stop.stop_lat)),
                             null, null, null, isArrivalCancelled(stopSequence),
                             updatedDeparture.map(Date::from).orElse(Date.from(plannedDeparture)), Date.from(plannedDeparture),
                             updatedDeparture.map(Date::from).orElse(null), isDepartureCancelled(stopSequence)));
@@ -248,7 +255,7 @@ class TripFromLabel {
                 }
                 case HOP: {
                     stopSequence = t.edge.getStopSequence();
-                    stopTime = realtimeFeed.getStopTime(gtfsFeed, tripDescriptor, t, boardTime, stopSequence);
+                    stopTime = realtimeFeed.getStopTime(gtfsFeed, tripDescriptor, boardTime, stopSequence);
                     arrivalTimeFromHopEdge = Instant.ofEpochMilli(t.label.currentTime);
                     updatedArrival = getArrivalDelay(stopSequence).map(delay -> arrivalTimeFromHopEdge.plus(delay, SECONDS));
                     break;
@@ -257,7 +264,7 @@ class TripFromLabel {
                     Instant plannedDeparture = Instant.ofEpochMilli(t.label.currentTime);
                     Optional<Instant> updatedDeparture = getDepartureDelay(stopTime.stop_sequence).map(delay -> plannedDeparture.plus(delay, SECONDS));
                     Stop stop = gtfsFeed.stops.get(stopTime.stop_id);
-                    stops.add(new Trip.Stop(stop.stop_id, stop.stop_name, geometryFactory.createPoint(new Coordinate(stop.stop_lon, stop.stop_lat)),
+                    stops.add(new Trip.Stop(stop.stop_id, stopTime.stop_sequence, stop.stop_name, geometryFactory.createPoint(new Coordinate(stop.stop_lon, stop.stop_lat)),
                             updatedArrival.map(Date::from).orElse(Date.from(arrivalTimeFromHopEdge)), Date.from(arrivalTimeFromHopEdge),
                             updatedArrival.map(Date::from).orElse(null), isArrivalCancelled(stopSequence),
                             updatedDeparture.map(Date::from).orElse(Date.from(plannedDeparture)), Date.from(plannedDeparture),
@@ -308,7 +315,7 @@ class TripFromLabel {
 
         void finish() {
             Stop stop = gtfsFeed.stops.get(stopTime.stop_id);
-            stops.add(new Trip.Stop(stop.stop_id, stop.stop_name, geometryFactory.createPoint(new Coordinate(stop.stop_lon, stop.stop_lat)),
+            stops.add(new Trip.Stop(stop.stop_id, stopTime.stop_sequence, stop.stop_name, geometryFactory.createPoint(new Coordinate(stop.stop_lon, stop.stop_lat)),
                     updatedArrival.map(Date::from).orElse(Date.from(arrivalTimeFromHopEdge)), Date.from(arrivalTimeFromHopEdge),
                     updatedArrival.map(Date::from).orElse(null), isArrivalCancelled(stopSequence), null,
                     null, null, isDepartureCancelled(stopSequence)));
@@ -336,7 +343,7 @@ class TripFromLabel {
     // One could argue that one should never write a parser
     // by hand, because it is always ugly, but use a parser library.
     // The code would then read like a specification of what paths through the graph mean.
-    private List<Trip.Leg> parsePartitionToLegs(List<Label.Transition> path, Graph graph, EncodedValueLookup encodedValueLookup, Weighting weighting, Translation tr, List<String> requestedPathDetails) {
+    List<Trip.Leg> parsePartitionToLegs(List<Label.Transition> path, Graph graph, EncodedValueLookup encodedValueLookup, Weighting weighting, Translation tr, List<String> requestedPathDetails) {
         if (path.size() <= 1) {
             return Collections.emptyList();
         }

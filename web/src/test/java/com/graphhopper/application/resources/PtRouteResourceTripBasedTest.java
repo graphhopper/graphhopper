@@ -23,10 +23,8 @@ import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.config.Profile;
-import com.graphhopper.gtfs.Request;
 import com.graphhopper.resources.InfoResource;
 import com.graphhopper.routing.TestProfiles;
-import com.graphhopper.util.BodyAndStatus;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -37,10 +35,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import javax.ws.rs.core.Response;
 import java.io.File;
-import java.time.LocalDateTime;
-import java.util.List;
+import java.util.Collections;
 
-import static com.graphhopper.application.resources.Util.getWithStatus;
 import static com.graphhopper.application.util.TestUtils.clientTarget;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -49,7 +45,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * of stuff (which is different for PT than for the rest) is under test, too.
  */
 @ExtendWith(DropwizardExtensionsSupport.class)
-public class PtRouteResourceTest {
+public class PtRouteResourceTripBasedTest {
     private static final String DIR = "./target/gtfs-app-gh/";
     public static final DropwizardAppExtension<GraphHopperServerConfiguration> app = new DropwizardAppExtension<>(GraphHopperApplication.class, createConfig());
 
@@ -60,8 +56,10 @@ public class PtRouteResourceTest {
                 putObject("gtfs.file", "../reader-gtfs/files/sample-feed").
                 putObject("graph.location", DIR).
                 putObject("import.osm.ignored_highways", "").
-                putObject("graph.encoded_values", "foot_access, foot_priority, foot_average_speed").
-                setProfiles(List.of(TestProfiles.accessSpeedAndPriority("foot")));
+                putObject("gtfs.trip_based", true).
+                putObject("gtfs.schedule_day", "2007-01-01").
+                setProfiles(Collections.singletonList(TestProfiles.accessSpeedAndPriority("foot")))
+                .putObject("graph.encoded_values", "foot_access, foot_priority, foot_average_speed, car_access, car_average_speed");
         return config;
     }
 
@@ -73,86 +71,95 @@ public class PtRouteResourceTest {
 
     @Test
     public void testStationStationQuery() {
-        JsonNode jsonNode = clientTarget(app, "/route")
+        final Response response = clientTarget(app, "/route").queryParam("pt.algorithm", "trip_based")
                 .queryParam("point", "Stop(NADAV)")
                 .queryParam("point", "Stop(NANAA)")
                 .queryParam("profile", "pt")
                 .queryParam("pt.earliest_departure_time", "2007-01-01T15:44:00Z")
-                .request().get(JsonNode.class);
+                .request().buildGet().invoke();
+        assertEquals(200, response.getStatus());
+        JsonNode jsonNode = response.readEntity(JsonNode.class);
         assertEquals(1, jsonNode.at("/paths/0/legs").size());
     }
 
     @Test
     public void testStationStationQueryWithOffsetDateTime() {
-        JsonNode jsonNode = clientTarget(app, "/route")
+        final Response response = clientTarget(app, "/route").queryParam("pt.algorithm", "trip_based")
                 .queryParam("point", "Stop(NADAV)")
                 .queryParam("point", "Stop(NANAA)")
                 .queryParam("profile", "pt")
                 .queryParam("pt.earliest_departure_time", "2007-01-01T07:44:00-08:00")
-                .request().get(JsonNode.class);
+                .request().buildGet().invoke();
+        assertEquals(200, response.getStatus());
+        JsonNode jsonNode = response.readEntity(JsonNode.class);
         assertEquals(1, jsonNode.at("/paths/0/legs").size());
     }
 
     @Test
     public void testPointPointQuery() {
-        JsonNode jsonNode = clientTarget(app, "/route")
+        final Response response = clientTarget(app, "/route").queryParam("pt.algorithm", "trip_based")
                 .queryParam("point", "36.914893,-116.76821") // NADAV stop
                 .queryParam("point", "36.914944,-116.761472") //NANAA stop
                 .queryParam("profile", "pt")
                 .queryParam("pt.earliest_departure_time", "2007-01-01T15:44:00Z")
-                .request().get(JsonNode.class);
+                .request().buildGet().invoke();
+        assertEquals(200, response.getStatus());
+        JsonNode jsonNode = response.readEntity(JsonNode.class);
+        System.out.println(jsonNode.toPrettyString());
         assertEquals(1, jsonNode.at("/paths/0/legs").size());
     }
 
     @Test
     public void testWalkQuery() {
-        GHResponse ghResponse = clientTarget(app, "/route")
+        final Response response = clientTarget(app, "/route").queryParam("pt.algorithm", "trip_based")
                 .queryParam("point", "36.914893,-116.76821")
                 .queryParam("point", "36.914944,-116.761472")
                 .queryParam("profile", "foot")
-                .request().get(GHResponse.class);
+                .request().buildGet().invoke();
+        assertEquals(200, response.getStatus());
+        GHResponse ghResponse = response.readEntity(GHResponse.class);
         assertFalse(ghResponse.hasErrors());
     }
 
     @Test
     public void testNoPoints() {
-        BodyAndStatus response = getWithStatus(clientTarget(app, "/route")
+        final Response response = clientTarget(app, "/route").queryParam("pt.algorithm", "trip_based")
                 .queryParam("profile", "pt")
-        );
+                .request().buildGet().invoke();
         assertEquals(400, response.getStatus());
     }
 
     @Test
     public void testOnePoint() {
-        BodyAndStatus response = getWithStatus(clientTarget(app, "/route")
+        final Response response = clientTarget(app, "/route").queryParam("pt.algorithm", "trip_based")
                 .queryParam("point", "36.914893,-116.76821")
                 .queryParam("profile", "pt")
                 .queryParam("pt.earliest_departure_time", "2007-01-01T08:00:00Z")
-        );
+                .request().buildGet().invoke();
         assertEquals(400, response.getStatus());
-        JsonNode json = response.getBody();
+        JsonNode json = response.readEntity(JsonNode.class);
         assertEquals("query param point size must be between 2 and 2", json.get("message").asText());
     }
 
     @Test
     public void testBadPoints() {
-        BodyAndStatus response = getWithStatus(clientTarget(app, "/route")
+        final Response response = clientTarget(app, "/route").queryParam("pt.algorithm", "trip_based")
                 .queryParam("point", "pups")
                 .queryParam("profile", "pt")
                 .queryParam("pt.earliest_departure_time", "2007-01-01T08:00:00Z")
-        );
+                .request().buildGet().invoke();
         assertEquals(400, response.getStatus());
     }
 
     @Test
     public void testNoTime() {
-        BodyAndStatus response = getWithStatus(clientTarget(app, "/route")
+        final Response response = clientTarget(app, "/route").queryParam("pt.algorithm", "trip_based")
                 .queryParam("point", "36.914893,-116.76821") // NADAV stop
                 .queryParam("point", "36.914944,-116.761472") //NANAA stop
                 .queryParam("profile", "pt")
-        );
+                .request().buildGet().invoke();
         assertEquals(400, response.getStatus());
-        JsonNode json = response.getBody();
+        JsonNode json = response.readEntity(JsonNode.class);
         // Would prefer a "must not be null" message here, but is currently the same as for a bad time (see below).
         // I DO NOT want to manually catch this, I want to figure out how to fix this upstream, or live with it.
         assertTrue(json.get("message").asText().startsWith("query param pt.earliest_departure_time must"));
@@ -160,20 +167,20 @@ public class PtRouteResourceTest {
 
     @Test
     public void testBadTime() {
-        BodyAndStatus response = getWithStatus(clientTarget(app, "/route")
+        final Response response = clientTarget(app, "/route").queryParam("pt.algorithm", "trip_based")
                 .queryParam("point", "36.914893,-116.76821") // NADAV stop
                 .queryParam("point", "36.914944,-116.761472") //NANAA stop
                 .queryParam("profile", "pt")
                 .queryParam("pt.earliest_departure_time", "wurst")
-        );
+                .request().buildGet().invoke();
         assertEquals(400, response.getStatus());
-        JsonNode json = response.getBody();
+        JsonNode json = response.readEntity(JsonNode.class);
         assertEquals("query param pt.earliest_departure_time must be in a ISO-8601 format.", json.get("message").asText());
     }
 
     @Test
     public void testProfileQuery() {
-        final Response response = clientTarget(app, "/route")
+        final Response response = clientTarget(app, "/route").queryParam("pt.algorithm", "trip_based")
                 .queryParam("point", "36.91311729030539,-116.76769495010377")
                 .queryParam("point", "36.91260259593356,-116.76149368286134")
                 .queryParam("profile", "pt")
@@ -190,8 +197,10 @@ public class PtRouteResourceTest {
 
     @Test
     public void testInfo() {
-        InfoResource.Info info = clientTarget(app, "/info")
-                .request().get(InfoResource.Info.class);
+        final Response response = clientTarget(app, "/info")
+                .request().buildGet().invoke();
+        assertEquals(200, response.getStatus());
+        InfoResource.Info info = response.readEntity(InfoResource.Info.class);
         assertTrue(info.profiles.stream().anyMatch(p -> p.name.equals("pt")));
     }
 

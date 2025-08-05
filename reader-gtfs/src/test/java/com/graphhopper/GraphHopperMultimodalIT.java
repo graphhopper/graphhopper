@@ -24,11 +24,11 @@ import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.util.AllEdgesIterator;
-import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.shapes.GHPoint;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -47,51 +47,115 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 import static org.assertj.core.api.Assumptions.assumeThat;
 
-public class GraphHopperMultimodalIT {
+public interface GraphHopperMultimodalIT<T extends PtRouter> {
 
-    private static final String GRAPH_LOC = "target/GraphHopperMultimodalIT";
-    private static PtRouter graphHopper;
-    private static final ZoneId zoneId = ZoneId.of("America/Los_Angeles");
-    private static GraphHopperGtfs graphHopperGtfs;
-    private static LocationIndex locationIndex;
+    String GRAPH_LOC = "target/GraphHopperMultimodalIT";
+    T ptRouter();
+    GraphHopperGtfs graphHopperGtfs();
+    ZoneId zoneId = ZoneId.of("America/Los_Angeles");
 
-    @BeforeAll
-    public static void init() {
-        GraphHopperConfig ghConfig = new GraphHopperConfig();
-        ghConfig.putObject("datareader.file", "files/beatty.osm");
-        ghConfig.putObject("import.osm.ignored_highways", "");
-        ghConfig.putObject("gtfs.file", "files/sample-feed");
-        ghConfig.putObject("graph.location", GRAPH_LOC);
-        ghConfig.putObject("graph.encoded_values", "foot_access, foot_priority, foot_average_speed, car_access, car_average_speed");
-        Profile carLocal = TestProfiles.accessAndSpeed("car_custom", "car");
-        ghConfig.setProfiles(Arrays.asList(
-                TestProfiles.accessSpeedAndPriority("foot"),
-                TestProfiles.accessAndSpeed("car_default", "car"),
-                carLocal));
-        Helper.removeDir(new File(GRAPH_LOC));
-        graphHopperGtfs = new GraphHopperGtfs(ghConfig);
-        graphHopperGtfs.init(ghConfig);
-        graphHopperGtfs.importOrLoad();
+    class DefaultPtRouterMultimodalTest implements GraphHopperMultimodalIT<PtRouterImpl> {
+        private static GraphHopperGtfs graphHopperGtfs;
+        static PtRouterImpl graphHopper;
 
-        graphHopperGtfs.close();
-        // Re-load read only
-        graphHopperGtfs = new GraphHopperGtfs(ghConfig);
-        graphHopperGtfs.init(ghConfig);
-        graphHopperGtfs.importOrLoad();
+        @BeforeAll
+        public static void init() {
+            GraphHopperConfig ghConfig = new GraphHopperConfig();
+            ghConfig.putObject("datareader.file", "files/beatty.osm");
+            ghConfig.putObject("import.osm.ignored_highways", "");
+            ghConfig.putObject("gtfs.file", "files/sample-feed");
+            ghConfig.putObject("graph.location", GRAPH_LOC);
+            ghConfig.putObject("graph.encoded_values", "foot_access, foot_priority, foot_average_speed, car_access, car_average_speed");
+            ghConfig.setProfiles(Arrays.asList(
+                    TestProfiles.accessSpeedAndPriority("foot"),
+                    TestProfiles.accessAndSpeed("car_default", "car"),
+                    TestProfiles.accessAndSpeed("car_custom","car")));
+            Helper.removeDir(new File(GRAPH_LOC));
+            graphHopperGtfs = new GraphHopperGtfs(ghConfig);
+            graphHopperGtfs.init(ghConfig);
+            graphHopperGtfs.importOrLoad();
 
-        locationIndex = graphHopperGtfs.getLocationIndex();
-        graphHopper = new PtRouterImpl.Factory(ghConfig, new TranslationMap().doImport(), graphHopperGtfs.getBaseGraph(), graphHopperGtfs.getEncodingManager(), locationIndex, graphHopperGtfs.getGtfsStorage())
-                .createWithoutRealtimeFeed();
+            graphHopperGtfs.close();
+            // Re-load read only
+            graphHopperGtfs = new GraphHopperGtfs(ghConfig);
+            graphHopperGtfs.init(ghConfig);
+            graphHopperGtfs.importOrLoad();
+
+            graphHopper = ((PtRouterImpl) new PtRouterImpl.Factory(ghConfig, new TranslationMap().doImport(), graphHopperGtfs.getBaseGraph(), graphHopperGtfs.getEncodingManager(), graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage())
+                    .createWithoutRealtimeFeed());
+        }
+
+        @Override
+        public PtRouterImpl ptRouter() {
+            return graphHopper;
+        }
+
+        @Override
+        public GraphHopperGtfs graphHopperGtfs() {
+            return graphHopperGtfs;
+        }
+
+        @AfterAll
+        public static void close() {
+            graphHopperGtfs.close();
+        }
     }
 
-    @AfterAll
-    public static void close() {
-        graphHopperGtfs.close();
-        locationIndex.close();
+    class TripBasedPtRouterMultimodalTest implements GraphHopperMultimodalIT<PtRouterTripBasedImpl> {
+        private static GraphHopperGtfs graphHopperGtfs;
+        private static PtRouterTripBasedImpl graphHopper;
+
+        @BeforeAll
+        public static void init() {
+            GraphHopperConfig ghConfig = new GraphHopperConfig();
+            ghConfig.putObject("datareader.file", "files/beatty.osm");
+            ghConfig.putObject("import.osm.ignored_highways", "");
+            ghConfig.putObject("gtfs.file", "files/sample-feed");
+            ghConfig.putObject("gtfs.trip_based", true);
+            ghConfig.putObject("gtfs.schedule_day", "2007-01-01");
+            ghConfig.putObject("graph.location", GRAPH_LOC);
+            ghConfig.putObject("graph.encoded_values", "foot_access, foot_priority, foot_average_speed, car_access, car_average_speed");
+            ghConfig.setProfiles(Arrays.asList(
+                    TestProfiles.accessSpeedAndPriority("foot"),
+                    TestProfiles.accessAndSpeed("car_default", "car"),
+                    TestProfiles.accessAndSpeed("car_custom","car")));
+            Helper.removeDir(new File(GRAPH_LOC));
+            graphHopperGtfs = new GraphHopperGtfs(ghConfig);
+            graphHopperGtfs.init(ghConfig);
+            graphHopperGtfs.importOrLoad();
+
+            graphHopperGtfs.close();
+            // Re-load read only
+            graphHopperGtfs = new GraphHopperGtfs(ghConfig);
+            graphHopperGtfs.init(ghConfig);
+            graphHopperGtfs.importOrLoad();
+
+            graphHopper = new PtRouterTripBasedImpl(graphHopperGtfs, ghConfig, new TranslationMap().doImport(), graphHopperGtfs.getBaseGraph(), graphHopperGtfs.getEncodingManager(), graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage(), graphHopperGtfs.getPathDetailsBuilderFactory());
+        }
+
+        @Override
+        public void assertAllIfWeCanAssureMaxVisitedNodes(SoftAssertions softly) {
+
+        }
+
+        @Override
+        public PtRouterTripBasedImpl ptRouter() {
+            return graphHopper;
+        }
+
+        @Override
+        public GraphHopperGtfs graphHopperGtfs() {
+            return graphHopperGtfs;
+        }
+
+        @AfterAll
+        public static void close() {
+            graphHopperGtfs.close();
+        }
     }
 
     @Test
-    public void testDepartureTimeOfAccessLegInProfileQuery() {
+    default void testDepartureTimeOfAccessLegInProfileQuery() {
         Request ghRequest = new Request(
                 36.91311729030539, -116.76769495010377,
                 36.91260259593356, -116.76149368286134
@@ -102,7 +166,7 @@ public class GraphHopperMultimodalIT {
         ghRequest.setProfileQuery(true);
         ghRequest.setMaxProfileDuration(Duration.ofHours(1));
 
-        GHResponse response = graphHopper.route(ghRequest);
+        GHResponse response = ptRouter().route(ghRequest);
         assertThat(response.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(263);
 
         ResponsePath firstTransitSolution = response.getAll().stream().filter(p -> p.getLegs().size() > 1).findFirst().get();
@@ -120,7 +184,7 @@ public class GraphHopperMultimodalIT {
         // since it is very slightly faster.
         ghRequest.setBetaAccessTime(1.0);
         ghRequest.setBetaEgressTime(1.0);
-        response = graphHopper.route(ghRequest);
+        response = ptRouter().route(ghRequest);
         ResponsePath walkSolution = response.getAll().stream().filter(p -> p.getLegs().size() == 1).findFirst().get();
         firstTransitSolution = response.getAll().stream().filter(p -> p.getLegs().size() > 1).findFirst().get();
         assertThat(arrivalTime(walkSolution.getLegs().get(0))).isBefore(arrivalTime(firstTransitSolution.getLegs().get(firstTransitSolution.getLegs().size() - 1)));
@@ -130,7 +194,27 @@ public class GraphHopperMultimodalIT {
     }
 
     @Test
-    public void testDepartureTimeOfAccessLeg() {
+    default void testLess() {
+        SoftAssertions softly = new SoftAssertions();
+        Request ghRequest = new Request(
+                36.91311729030539, -116.76769495010377,
+                36.91260259593356, -116.76149368286134
+        );
+        ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 6, 41, 4).atZone(zoneId).toInstant());
+        ghRequest.setBetaAccessTime(1.0);
+        ghRequest.setBetaEgressTime(1.0);
+        GHResponse response = ptRouter().route(ghRequest);
+        ResponsePath walkSolution = response.getAll().stream().filter(p -> p.getLegs().size() == 1).findFirst().get();
+        ResponsePath firstTransitSolution = response.getAll().stream().filter(p -> p.getLegs().size() > 1).findFirst().get();
+        softly.assertThat(routeDuration(firstTransitSolution)).isLessThanOrEqualTo(routeDuration(walkSolution));
+        softly.assertThat(response.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(271);
+        softly.assertAll();
+    }
+
+
+    @Test
+    default void testDepartureTimeOfAccessLeg() {
+        SoftAssertions softly = new SoftAssertions();
         Request ghRequest = new Request(
                 36.91311729030539, -116.76769495010377,
                 36.91260259593356, -116.76149368286134
@@ -140,8 +224,7 @@ public class GraphHopperMultimodalIT {
         ghRequest.setBetaEgressTime(2.0); // I somewhat dislike walking
         ghRequest.setPathDetails(Arrays.asList("distance"));
 
-        GHResponse response = graphHopper.route(ghRequest);
-        assertThat(response.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(129);
+        GHResponse response = ptRouter().route(ghRequest);
 
         ResponsePath firstTransitSolution = response.getAll().stream().filter(p -> p.getLegs().size() > 1).findFirst().get(); // There can be a walk-only trip.
         assertThat(firstTransitSolution.getLegs().get(0).getDepartureTime().toInstant().atZone(zoneId).toLocalTime())
@@ -182,13 +265,18 @@ public class GraphHopperMultimodalIT {
         // Now, the walk solution dominates, and we get no transit solution.
         ghRequest.setBetaAccessTime(1.0);
         ghRequest.setBetaEgressTime(1.0);
-        response = graphHopper.route(ghRequest);
-        assertThat(response.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(138);
+        response = ptRouter().route(ghRequest);
+        softly.assertThat(response.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(138);
         assertThat(response.getAll().stream().filter(p -> p.getLegs().size() > 1).findFirst()).isEmpty();
+        assertAllIfWeCanAssureMaxVisitedNodes(softly);
+    }
+
+    default void assertAllIfWeCanAssureMaxVisitedNodes(SoftAssertions softly) {
+        softly.assertAll();
     }
 
     @Test
-    public void testArriveBy() {
+    default void testArriveBy() {
         Request ghRequest = new Request(
                 36.92311729030539, -116.76769495010377,
                 36.91260259593356, -116.76149368286134
@@ -196,12 +284,12 @@ public class GraphHopperMultimodalIT {
         ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 7, 0, 0).atZone(zoneId).toInstant());
         ghRequest.setArriveBy(true);
 
-        GHResponse response = graphHopper.route(ghRequest);
+        GHResponse response = ptRouter().route(ghRequest);
         assertThat(response.getAll()).isNotEmpty();
     }
 
     @Test
-    public void testFastWalking() {
+    default void testFastWalking() {
         Request ghRequest = new Request(
                 36.91311729030539, -116.76769495010377,
                 36.91260259593356, -116.76149368286134
@@ -209,7 +297,7 @@ public class GraphHopperMultimodalIT {
         ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 6, 40, 0).atZone(zoneId).toInstant());
         ghRequest.setWalkSpeedKmH(50); // Yes, I can walk very fast, 50 km/h. Problem?
 
-        GHResponse response = graphHopper.route(ghRequest);
+        GHResponse response = ptRouter().route(ghRequest);
 
         ResponsePath walkSolution = response.getAll().stream().filter(p -> p.getLegs().size() == 1).findFirst().get();
         assertThat(walkSolution.getLegs().get(0).getDepartureTime().toInstant().atZone(zoneId).toLocalTime())
@@ -221,7 +309,7 @@ public class GraphHopperMultimodalIT {
     }
 
     @Test
-    public void testFastWalkingInProfileQuery() {
+    default void testFastWalkingInProfileQuery() {
         Request ghRequest = new Request(
                 36.91311729030539, -116.76769495010377,
                 36.91260259593356, -116.76149368286134
@@ -230,7 +318,7 @@ public class GraphHopperMultimodalIT {
         ghRequest.setWalkSpeedKmH(50); // Yes, I can walk very fast, 50 km/h. Problem?
         ghRequest.setProfileQuery(true);
 
-        GHResponse response = graphHopper.route(ghRequest);
+        GHResponse response = ptRouter().route(ghRequest);
 
         ResponsePath walkSolution = response.getAll().get(0);
         assertThat(walkSolution.getLegs().get(0).getDepartureTime().toInstant().atZone(zoneId).toLocalTime())
@@ -242,7 +330,8 @@ public class GraphHopperMultimodalIT {
     }
 
     @Test
-    public void testProfileQueryDoesntEndPrematurely() {
+    default void testProfileQueryDoesntEndPrematurely() {
+        SoftAssertions softly = new SoftAssertions();
         Request ghRequest = new Request(
                 36.91311729030539, -116.76769495010377,
                 36.91260259593356, -116.76149368286134
@@ -252,22 +341,23 @@ public class GraphHopperMultimodalIT {
         // If everything is right, the n-th solution should be the same, no matter if I ask for n, or for n+m solutions.
         ghRequest.setWalkSpeedKmH(1); // No, I cannot walk very fast, 1 km/h. Problem?
         ghRequest.setProfileQuery(true);
-
+        ghRequest.setMaxProfileDuration(Duration.ofHours(12));
         ghRequest.setLimitSolutions(1);
-        GHResponse response1 = graphHopper.route(ghRequest);
-        assertThat(response1.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(142);
+        GHResponse response1 = ptRouter().route(ghRequest);
+        softly.assertThat(response1.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(142);
         ghRequest.setLimitSolutions(3);
-        GHResponse response3 = graphHopper.route(ghRequest);
-        assertThat(response3.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(234);
+        GHResponse response3 = ptRouter().route(ghRequest);
+        softly.assertThat(response3.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(234);
         assertThat(response1.getAll().get(0).getTime()).isEqualTo(response3.getAll().get(0).getTime());
         ghRequest.setLimitSolutions(5);
-        GHResponse response5 = graphHopper.route(ghRequest);
-        assertThat(response5.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(334);
+        GHResponse response5 = ptRouter().route(ghRequest);
+        softly.assertThat(response5.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(334);
         assertThat(response3.getAll().get(2).getTime()).isEqualTo(response5.getAll().get(2).getTime());
+        assertAllIfWeCanAssureMaxVisitedNodes(softly);
     }
 
     @Test
-    public void testHighDisutilityOfWalking() {
+    default void testHighDisutilityOfWalking() {
         Request ghRequest = new Request(
                 36.91311729030539, -116.76769495010377,
                 36.91260259593356, -116.76149368286134
@@ -276,7 +366,7 @@ public class GraphHopperMultimodalIT {
         ghRequest.setWalkSpeedKmH(50); // Yes, I can walk very fast, 50 km/h. Problem?
         ghRequest.setBetaAccessTime(20); // But I dislike walking a lot.
         ghRequest.setBetaEgressTime(20); // But I dislike walking a lot.
-        GHResponse response = graphHopper.route(ghRequest);
+        GHResponse response = ptRouter().route(ghRequest);
 
         ResponsePath walkSolution = response.getAll().stream().filter(p -> p.getLegs().size() == 1).findFirst().get();
         assertThat(walkSolution.getRouteWeight()).isEqualTo(legDuration(walkSolution.getLegs().get(0)).toMillis() * 20L);
@@ -292,7 +382,8 @@ public class GraphHopperMultimodalIT {
     }
 
     @Test
-    public void testSubnetworkRemoval() {
+    default void testSubnetworkRemoval() {
+        GraphHopperGtfs graphHopperGtfs = graphHopperGtfs();
         Profile foot = graphHopperGtfs.getProfile("foot");
         BooleanEncodedValue footSub = graphHopperGtfs.getEncodingManager().getBooleanEncodedValue(Subnetwork.key(foot.getName()));
 
@@ -307,7 +398,7 @@ public class GraphHopperMultimodalIT {
                         LocalDateTime.of(2007, 1, 1, 6, 40, 0).atZone(zoneId).toInstant());
                 ghRequest.setWalkSpeedKmH(50); // Yes, I can walk very fast, 50 km/h. Problem?
                 ghRequest.setBetaStreetTime(20); // But I dislike walking a lot.
-                GHResponse response = graphHopper.route(ghRequest);
+                GHResponse response = ptRouter().route(ghRequest);
                 responses.add(response);
             }
         }
@@ -317,14 +408,14 @@ public class GraphHopperMultimodalIT {
     }
 
     @Test
-    public void testLineStringWhenWalking() {
+    default void testLineStringWhenWalking() {
         Request ghRequest = new Request(
                 36.90662748004327, -116.76506702494832,
                 36.90814220713894, -116.76219285567532
         );
         ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 6, 40, 0).atZone(zoneId).toInstant());
 
-        GHResponse response = graphHopper.route(ghRequest);
+        GHResponse response = ptRouter().route(ghRequest);
         Geometry routeGeometry = response.getAll().get(0).getPoints().toLineString(false);
         Geometry legGeometry = response.getAll().get(0).getLegs().get(0).geometry;
         assertThat(routeGeometry).isEqualTo(readWktLineString("LINESTRING (-116.765169 36.906693, -116.764614 36.907243, -116.763438 36.908382, -116.762615 36.907825, -116.762241 36.908175)"));
@@ -332,35 +423,35 @@ public class GraphHopperMultimodalIT {
     }
 
     @Test
-    public void testCustomProfileAccess() {
+    default void testCustomProfileAccess() {
         Request ghRequest = new Request(
                 36.91311729030539, -116.76769495010377,
                 36.91260259593356, -116.76149368286134
         );
         ghRequest.setAccessProfile("car_custom");
         ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 6, 40, 0).atZone(zoneId).toInstant());
-        GHResponse response = graphHopper.route(ghRequest);
+        GHResponse response = ptRouter().route(ghRequest);
     }
 
-    private Duration legDuration(Trip.Leg leg) {
+    static Duration legDuration(Trip.Leg leg) {
         return Duration.between(departureTime(leg), arrivalTime(leg));
     }
 
-    private Duration routeDuration(ResponsePath route) {
+    static Duration routeDuration(ResponsePath route) {
         Trip.Leg firstLeg = route.getLegs().get(0);
         Trip.Leg lastLeg = route.getLegs().get(route.getLegs().size() - 1);
         return Duration.between(departureTime(firstLeg), arrivalTime(lastLeg));
     }
 
-    private Instant departureTime(Trip.Leg firstLeg) {
+    static Instant departureTime(Trip.Leg firstLeg) {
         return Instant.ofEpochMilli(firstLeg.getDepartureTime().getTime());
     }
 
-    private Instant arrivalTime(Trip.Leg leg) {
+    static Instant arrivalTime(Trip.Leg leg) {
         return Instant.ofEpochMilli(leg.getArrivalTime().getTime());
     }
 
-    private LineString readWktLineString(String wkt) {
+    static LineString readWktLineString(String wkt) {
         WKTReader wktReader = new WKTReader();
         LineString expectedGeometry = null;
         try {

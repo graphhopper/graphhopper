@@ -314,9 +314,14 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
                 protected void configure() {
                     if (configuration.getGraphHopperConfiguration().getBool("gtfs.free_walk", false)) {
                         bind(PtRouterFreeWalkImpl.class).to(PtRouter.class);
+                    } else if (configuration.getGraphHopperConfiguration().getBool("gtfs.trip_based", false)) {
+                        bind(PtRouterTripBasedImpl.class).to(PtRouter.class);
                     } else {
                         bind(PtRouterImpl.class).to(PtRouter.class);
                     }
+                    bind(PtRouterImpl.class).to(PtRouter.class).named("classic");
+                    bind(PtRouterFreeWalkImpl.class).to(PtRouter.class).named("free_walk");
+                    bind(PtRouterTripBasedImpl.class).to(PtRouter.class).named("trip_based");
                 }
             });
             environment.jersey().register(PtRouteResource.class);

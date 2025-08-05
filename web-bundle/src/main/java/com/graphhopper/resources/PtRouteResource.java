@@ -31,6 +31,7 @@ import com.graphhopper.jackson.ResponsePathSerializer;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.StopWatch;
 import io.dropwizard.jersey.params.AbstractParam;
+import org.glassfish.hk2.api.ServiceLocator;
 
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
@@ -48,6 +49,9 @@ public class PtRouteResource {
 
     private final GraphHopperConfig config;
     private final PtRouter ptRouter;
+
+    @Inject
+    ServiceLocator serviceLocator;
 
     @Inject
     public PtRouteResource(GraphHopperConfig config, PtRouter ptRouter) {
@@ -70,7 +74,10 @@ public class PtRouteResource {
                             @QueryParam("pt.access_profile") String accessProfile,
                             @QueryParam("pt.beta_access_time") Double betaAccessTime,
                             @QueryParam("pt.egress_profile") String egressProfile,
-                            @QueryParam("pt.beta_egress_time") Double betaEgressTime) {
+                            @QueryParam("pt.beta_egress_time") Double betaEgressTime,
+                            @QueryParam("pt.algorithm") String algorithm) {
+        PtRouter ptRouter = serviceLocator.getService(PtRouter.class, algorithm);
+
         StopWatch stopWatch = new StopWatch().start();
         List<GHLocation> points = requestPoints.stream().map(AbstractParam::get).collect(toList());
         Instant departureTime = departureTimeParam.get().toInstant();
