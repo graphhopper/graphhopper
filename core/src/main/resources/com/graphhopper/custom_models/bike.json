@@ -8,7 +8,7 @@
 {
   "priority": [
     { "if": "true",  "multiply_by": "bike_priority" },
-    { "if": "bike_road_access == PRIVATE && foot_road_access != YES", "multiply_by": "0" },
+    { "if": "bike_road_access == PRIVATE", "multiply_by": "0.1" },
     { "if": "mtb_rating > 2",  "multiply_by": "0" },
     { "if": "hike_rating > 1",  "multiply_by": "0" },
     { "if": "country == DEU && road_class == BRIDLEWAY && bike_road_access != YES", "multiply_by": "0" },
@@ -18,6 +18,6 @@
   "speed": [
     { "if": "true", "limit_to": "bike_average_speed" },
     { "if": "!bike_access && backward_bike_access", "limit_to": "5" },
-    { "if": "bike_road_access == PRIVATE && foot_road_access == YES", "limit_to": "5" }
+    { "if": "bike_road_access == PRIVATE", "limit_to": "5" }
   ]
 }
