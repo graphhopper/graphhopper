@@ -31,20 +31,17 @@ public class NavigateResponseConverterTest {
     private static GraphHopper hopper;
     private static final String profile = "my_car";
     private final TranslationMap trMap = hopper.getTranslationMap();
-    private final DistanceConfig distanceConfig = new DistanceConfig(DistanceUtils.Unit.METRIC, trMap, Locale.ENGLISH, TransportationMode.CAR);
+    private final DistanceConfig distanceConfig = new DistanceConfig(DistanceUtils.Unit.METRIC, trMap, Locale.ENGLISH,
+            TransportationMode.CAR);
 
     @BeforeAll
     public static void beforeClass() {
         // make sure we are using fresh files with correct vehicle
         Helper.removeDir(new File(graphFolder));
 
-        hopper = new GraphHopper().
-                setOSMFile(osmFile).
-                setStoreOnFlush(true).
-                setGraphHopperLocation(graphFolder).
-                setEncodedValuesString("car_access, car_average_speed").
-                setProfiles(TestProfiles.accessAndSpeed(profile, "car")).
-                importOrLoad();
+        hopper = new GraphHopper().setOSMFile(osmFile).setStoreOnFlush(true).setGraphHopperLocation(graphFolder)
+                .setEncodedValuesString("car_access, car_average_speed")
+                .setProfiles(TestProfiles.accessAndSpeed(profile, "car")).importOrLoad();
     }
 
     @AfterAll
@@ -55,8 +52,8 @@ public class NavigateResponseConverterTest {
     @Test
     public void basicTest() {
 
-        GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile(profile).
-                setPathDetails(Collections.singletonList("intersection")));
+        GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile(profile)
+                .setPathDetails(Collections.singletonList("intersection")));
 
         ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH, distanceConfig);
 
@@ -82,7 +79,7 @@ public class NavigateResponseConverterTest {
                 step.get("intersections").get(0).get("location").get(0).asDouble(), .00001);
 
         assertEquals("depart", maneuver.get("type").asText());
-        assertEquals( null, maneuver.get("modifier")); // depart type does not have an modifier
+        assertEquals(null, maneuver.get("modifier")); // depart type does not have an modifier
 
         assertEquals("la Callisa", step.get("name").asText());
         double instructionDistance = step.get("distance").asDouble();
@@ -145,7 +142,7 @@ public class NavigateResponseConverterTest {
         assertEquals(encodedExpected, step.get("geometry").asText());
     }
 
-        @Test
+    @Test
     public void departureArrivalTest() {
 
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile(profile));
@@ -394,7 +391,8 @@ public class NavigateResponseConverterTest {
         rsp = hopper.route(
                 new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile(profile).setLocale(Locale.GERMAN));
 
-        DistanceConfig distanceConfigGerman = new DistanceConfig(DistanceUtils.Unit.METRIC, trMap, Locale.GERMAN, TransportationMode.CAR);
+        DistanceConfig distanceConfigGerman = new DistanceConfig(DistanceUtils.Unit.METRIC, trMap, Locale.GERMAN,
+                TransportationMode.CAR);
 
         json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.GERMAN, distanceConfigGerman);
 
@@ -602,7 +600,7 @@ public class NavigateResponseConverterTest {
             maneuver = steps.get(steps.size() - 1).get("maneuver");
             assertEquals("arrive", maneuver.get("type").asText());
 
-            JsonNode lastStep = steps.get(steps.size()-1); // last step
+            JsonNode lastStep = steps.get(steps.size() - 1); // last step
             JsonNode intersections = lastStep.get("intersections");
             assertNotEquals(intersections, null);
         }
