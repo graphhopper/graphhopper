@@ -79,7 +79,7 @@ public class NavigateResponseConverterTest {
                 step.get("intersections").get(0).get("location").get(0).asDouble(), .00001);
 
         assertEquals("depart", maneuver.get("type").asText());
-        assertEquals(null, maneuver.get("modifier")); // depart type does not have an modifier
+        assertEquals("straight", maneuver.get("modifier").asText());
 
         assertEquals("la Callisa", step.get("name").asText());
         double instructionDistance = step.get("distance").asDouble();
