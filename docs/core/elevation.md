@@ -1,11 +1,11 @@
 # Elevation
 
 Per default elevation is disabled. But you can easily enable it e.g. via
-`graph.elevation.provider: cgiar`. Or use other possibilities `srtm`, `gmted`
-or `multi` (combined cgiar and gmted).
+`graph.elevation.provider: cgiar`. Or use other possibilities `srtm`, `gmted`, `sonny`, 
+`multi` (combined cgiar and gmted), or `multi3` (combined cgiar, gmted and sonny).
 
 Then GraphHopper will automatically download the necessary data for the area and include elevation 
-for all vehicles - making also the distances a bit more precise. 
+for all vehicles except when using `sonny` - making also the distances a bit more precise. 
 
 The default cache directory `/tmp/<provider name>` will be used. For large areas it is highly recommended to 
 use a SSD disc, thus you need to specify the cache directory:
@@ -19,7 +19,7 @@ change. See the [custom model](custom-models.md) feature.
 
 ## What to download and where to store it?
 
-All should work automatically but you can tune certain settings like the location where the files are 
+Except when using `sonny` all should work automatically, but you can tune certain settings like the location where the files are 
 downloaded and e.g. if the servers are not reachable, then you set:
 `graph.elevation.base_url`
 
@@ -35,6 +35,19 @@ The CGIAR data is preferred because of the quality but is in general not public 
 But we got a license for our and our users' usage: https://graphhopper.com/public/license/CGIAR.txt
 
 Using SRTM instead CGIAR has the minor advantage of a faster download, especially for smaller areas.
+
+## Sonny's LiDAR Digital Terrain Models
+Sonny's LiDAR Digital Terrain Models are available for Europe only, see https://sonny.4lima.de/. 
+It is a very high resolution elevation data set, but it is **not free** to use! See the discussion at
+https://github.com/graphhopper/graphhopper/issues/2823.
+The DTM 1" data is provided on a Google Drive https://drive.google.com/drive/folders/0BxphPoRgwhnoWkRoTFhMbTM3RDA?resourcekey=0-wRe5bWl96pwvQ9tAfI9cQg. 
+From there it needs to be manually downloaded and extracted into a persistent cache directory. Automatic download
+is not supported due to Google Drive not providing support for hyperlinks on to the DTM data files.
+The cache directory is expected to contain the DTM data files with the naming convention like 
+"N49E011.hgt" for the area around 49°N and 11°E.
+Sonny's LiDAR Digital Terrain Model `sonny` only works for countries in Europe, which are fully covered 
+by the Sonny DTM 1" data. See https://sonny.4lima.de/map.png for coverage. In case the covered sonny 
+data area does not match your graphhopper coverage area, make sure to use the `multi3` elevation provider.
 
 ## Custom Elevation Data
 
