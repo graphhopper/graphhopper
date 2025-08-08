@@ -38,8 +38,7 @@ public class HeadingExample {
         hopper.setProfiles(new Profile("car").
                 setCustomModel(new CustomModel().
                         addToSpeed(If("true", LIMIT, "car_average_speed")).
-                        addToPriority(If("!car_access", MULTIPLY, "0")).
-                        addToPriority(If("road_access == DESTINATION", MULTIPLY, "0.1"))));
+                        addToPriority(If("!car_access", MULTIPLY, "0"))));
         hopper.getCHPreparationHandler().setCHProfiles(new CHProfile("car"));
         hopper.importOrLoad();
         return hopper;
