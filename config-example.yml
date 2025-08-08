@@ -64,7 +64,7 @@ graphhopper:
 #
 #   Other custom models not listed here are: car4wd.json, motorcycle.json, truck.json or cargo-bike.json. You might need to modify and test them before production usage.
 #   See ./core/src/main/resources/com/graphhopper/custom_models and let us know if you customize them, improve them or create new onces!
-#   Also there is the curvature.json custom model which might be useful for a motorcyle profile or the opposite for a truck profile.
+#   Also, there is the curvature.json custom model which might be useful for a motorcycle profile or the opposite for a truck profile.
 #   Then specify a folder where to find your own custom model files:
 #  custom_models.directory: custom_models
 
@@ -80,7 +80,7 @@ graphhopper:
 
   # Hybrid mode:
   # Similar to speed mode, the hybrid mode (Landmarks, LM) also speeds up routing by doing calculating auxiliary data
-  # in advance. Its not as fast as speed mode, but more flexible.
+  # in advance. It is not as fast as speed mode, but more flexible.
   #
   # Advanced usage: It is possible to use the same preparation for multiple profiles which saves memory and preparation
   # time. To do this use e.g. `preparation_profile: my_other_profile` where `my_other_profile` is the name of another
@@ -97,6 +97,10 @@ graphhopper:
   #   surface,smoothness,max_width,max_height,max_weight,max_weight_except,hgv,max_axle_load,max_length,
   #   hazmat,hazmat_tunnel,hazmat_water,lanes,osm_way_id,toll,track_type,mtb_rating,hike_rating,horse_rating,
   #   country,curvature,average_slope,max_slope,car_temporal_access,bike_temporal_access,foot_temporal_access
+  #   To unblock "access=private" tagged ways, the following encoded values can be parameterized with block_private=false:
+  #      car_access, foot_access, bus_access, bike_access, racingbike_access, mtb_access
+  #   like this:
+  #   car_access|block_private=false
   graph.encoded_values: car_access, car_average_speed, road_access
 
   #### Speed, hybrid and flexible mode ####
