@@ -12,7 +12,7 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           java-version: ${{ matrix.java-version }}
-          distribution: jetbrains
+          distribution: graalvm
       - name: Cache Maven artifacts
         uses: actions/cache@v4
         with:
