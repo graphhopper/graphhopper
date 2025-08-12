@@ -174,16 +174,19 @@ public final class CustomWeighting implements Weighting {
         private final EdgeToDoubleMapping edgeToPriorityMapping;
         private final MaxCalc maxSpeedCalc;
         private final MaxCalc maxPrioCalc;
+        private final TurnCostProvider.TurnWeightMapping turnWeightMapping;
         private final double distanceInfluence;
         private final double headingPenaltySeconds;
 
         public Parameters(EdgeToDoubleMapping edgeToSpeedMapping, MaxCalc maxSpeedCalc,
                           EdgeToDoubleMapping edgeToPriorityMapping, MaxCalc maxPrioCalc,
+                          TurnCostProvider.TurnWeightMapping turnWeightMapping,
                           double distanceInfluence, double headingPenaltySeconds) {
             this.edgeToSpeedMapping = edgeToSpeedMapping;
             this.maxSpeedCalc = maxSpeedCalc;
             this.edgeToPriorityMapping = edgeToPriorityMapping;
             this.maxPrioCalc = maxPrioCalc;
+            this.turnWeightMapping = turnWeightMapping;
             this.distanceInfluence = distanceInfluence;
             this.headingPenaltySeconds = headingPenaltySeconds;
         }
@@ -202,6 +205,10 @@ public final class CustomWeighting implements Weighting {
 
         public MaxCalc getMaxPrioCalc() {
             return maxPrioCalc;
+        }
+
+        public TurnCostProvider.TurnWeightMapping getTurnWeightMapping() {
+            return turnWeightMapping;
         }
 
         public double getDistanceInfluence() {
