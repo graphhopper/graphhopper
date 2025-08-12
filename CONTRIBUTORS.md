@@ -51,8 +51,8 @@ Here is an overview:
  * JohannesPelzer, improved GPX information and various other things
  * karololszacki, introduce `navigation_transport_mode` option for Profiles to easily set which Voice Guidance distances to use
  * karussell, one of the core developers
- * khuebner, initial turn costs support
  * kodonnell, adding support for CH and other algorithms (#60) and penalizing inner-link U-turns (#88)
+ * kschrab, initial turn costs support
  * legraina, improved docker for dockerhub
  * lmar, improved instructions
  * lukasalexanderweber, helped to implement via-way restrictions #2689 and fixes like #2652
