@@ -21,9 +21,9 @@ package com.graphhopper.application.resources;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.util.BodyAndStatus;
 
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.Response;
 
 public class Util {
     public static BodyAndStatus getWithStatus(WebTarget webTarget) {

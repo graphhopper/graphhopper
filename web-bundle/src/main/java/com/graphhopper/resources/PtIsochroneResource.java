@@ -49,10 +49,10 @@ import org.locationtech.jts.triangulate.quadedge.QuadEdge;
 import org.locationtech.jts.triangulate.quadedge.QuadEdgeSubdivision;
 import org.locationtech.jts.triangulate.quadedge.Vertex;
 
-import javax.inject.Inject;
-import javax.validation.constraints.NotNull;
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
+import jakarta.inject.Inject;
+import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.MediaType;
 import java.time.Instant;
 import java.util.*;
 

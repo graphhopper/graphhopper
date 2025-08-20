@@ -34,7 +34,7 @@ import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.glassfish.hk2.api.Factory;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.EnumSet;
