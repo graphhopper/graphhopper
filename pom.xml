@@ -113,9 +113,24 @@
                 <scope>import</scope>
             </dependency>
             <dependency>
-                <groupId>net.sourceforge.javacsv</groupId>
-                <artifactId>javacsv</artifactId>
-                <version>2.0</version>
+                <groupId>com.opencsv</groupId>
+                <artifactId>opencsv</artifactId>
+                <version>5.9</version>
+                <exclusions>
+                    <!-- Following dependencies are only required for bean mapping -->
+                    <exclusion>
+                        <groupId>commons-beanutils</groupId>
+                        <artifactId>commons-beanutils</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.apache.commons</groupId>
+                        <artifactId>commons-text</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.apache.commons</groupId>
+                        <artifactId>commons-collections4</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>commons-io</groupId>

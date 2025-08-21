@@ -19,10 +19,10 @@
 package com.graphhopper.gtfs.fare;
 
 import com.conveyal.gtfs.GTFSFeed;
+import com.conveyal.gtfs.util.CsvReader;
 import com.conveyal.gtfs.model.Fare;
 import com.conveyal.gtfs.model.FareAttribute;
 import com.conveyal.gtfs.model.FareRule;
-import com.csvreader.CsvReader;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;

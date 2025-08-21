@@ -32,7 +32,7 @@ import org.mapdb.Fun;
 import java.io.IOException;
 import java.util.Locale;
 
-import static com.conveyal.gtfs.model.Entity.Writer.convertToGtfsTime;
+import static com.conveyal.gtfs.model.Entity.Loader.convertToGtfsTime;
 
 public class Frequency extends Entity implements Comparable<Frequency> {
     /**
