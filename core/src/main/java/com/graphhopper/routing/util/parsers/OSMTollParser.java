@@ -57,7 +57,7 @@ public class OSMTollParser implements TagParser {
 
     private Toll getCountryDefault(Country country, ReaderWay readerWay) {
         switch (country) {
-            case AUT, ROU, SVK, SVN -> {
+            case ROU, SVK, SVN -> {
                 RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", ""));
                 if (roadClass == RoadClass.MOTORWAY || roadClass == RoadClass.TRUNK)
                     return Toll.ALL;
@@ -99,7 +99,7 @@ public class OSMTollParser implements TagParser {
                 else
                     return Toll.NO;
             }
-            case BGR, CZE, FRA, GRC, HRV, ITA, PRT, SRB, ESP -> {
+            case AUT, BGR, CZE, FRA, GRC, HRV, ITA, PRT, SRB, ESP -> {
                 RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", ""));
                 if (roadClass == RoadClass.MOTORWAY)
                     return Toll.ALL;
