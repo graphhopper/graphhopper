@@ -34,7 +34,7 @@ public class DistanceConfig {
     final DistanceUtils.Unit unit;
 
     public DistanceConfig(DistanceUtils.Unit unit, TranslationMap translationMap, Locale locale, Profile profile) {
-        this(unit, translationMap, locale, profile.getHints().getString("navigation_transport_mode", ""));
+        this(unit, translationMap, locale, profile.getHints().getString("navigation_transportation_mode", ""));
     }
 
     public DistanceConfig(DistanceUtils.Unit unit, TranslationMap translationMap, Locale locale, TransportationMode mode) {
@@ -50,48 +50,48 @@ public class DistanceConfig {
             case "mtb":
             case "racingbike":
             case "bike":
-            if (unit == DistanceUtils.Unit.METRIC) {
-                voiceInstructions =  Arrays.asList(
-                    new ConditionalDistanceVoiceInstructionConfig(IN_LOWER_DISTANCE_PLURAL.metric, translationMap, locale, new int[]{150},
-                        new int[]{150}));
-            } else {
-                voiceInstructions =  Arrays.asList(
-                    new ConditionalDistanceVoiceInstructionConfig(IN_LOWER_DISTANCE_PLURAL.imperial, translationMap, locale, new int[]{150},
-                        new int[]{500}));
-            }
-            break;
+                if (unit == DistanceUtils.Unit.METRIC) {
+                    voiceInstructions = List.of(
+                            new ConditionalDistanceVoiceInstructionConfig(IN_LOWER_DISTANCE_PLURAL.metric, translationMap, locale, new int[]{150},
+                                    new int[]{150}));
+                } else {
+                    voiceInstructions = List.of(
+                            new ConditionalDistanceVoiceInstructionConfig(IN_LOWER_DISTANCE_PLURAL.imperial, translationMap, locale, new int[]{150},
+                                    new int[]{500}));
+                }
+                break;
             case "walking":
             case "walk":
             case "hiking":
             case "hike":
             case "foot":
             case "pedestrian":
-            if (unit == DistanceUtils.Unit.METRIC) {
-                voiceInstructions =  Arrays.asList(
-                    new ConditionalDistanceVoiceInstructionConfig(IN_LOWER_DISTANCE_PLURAL.metric, translationMap, locale, new int[]{50},
-                        new int[]{50}));
-            } else {
-                voiceInstructions =  Arrays.asList(
-                    new ConditionalDistanceVoiceInstructionConfig(IN_LOWER_DISTANCE_PLURAL.imperial, translationMap, locale, new int[]{50},
-                        new int[]{150}));
-            }
-            break;
+                if (unit == DistanceUtils.Unit.METRIC) {
+                    voiceInstructions = List.of(
+                            new ConditionalDistanceVoiceInstructionConfig(IN_LOWER_DISTANCE_PLURAL.metric, translationMap, locale, new int[]{50},
+                                    new int[]{50}));
+                } else {
+                    voiceInstructions = List.of(
+                            new ConditionalDistanceVoiceInstructionConfig(IN_LOWER_DISTANCE_PLURAL.imperial, translationMap, locale, new int[]{50},
+                                    new int[]{150}));
+                }
+                break;
             default:
-            if (unit == DistanceUtils.Unit.METRIC) {
-                voiceInstructions = Arrays.asList(
-                        new InitialVoiceInstructionConfig(FOR_HIGHER_DISTANCE_PLURAL.metric, translationMap, locale, 4250, 250, unit),
-                        new FixedDistanceVoiceInstructionConfig(IN_HIGHER_DISTANCE_PLURAL.metric, translationMap, locale, 2000, 2),
-                        new FixedDistanceVoiceInstructionConfig(IN_HIGHER_DISTANCE_SINGULAR.metric, translationMap, locale, 1000, 1),
-                        new ConditionalDistanceVoiceInstructionConfig(IN_LOWER_DISTANCE_PLURAL.metric, translationMap, locale, new int[]{400, 200}, new int[]{400, 200})
-                );
-            } else {
-                voiceInstructions = Arrays.asList(
-                        new InitialVoiceInstructionConfig(FOR_HIGHER_DISTANCE_PLURAL.metric, translationMap, locale, 4250, 250, unit),
-                        new FixedDistanceVoiceInstructionConfig(IN_HIGHER_DISTANCE_PLURAL.imperial, translationMap, locale, 3220, 2),
-                        new FixedDistanceVoiceInstructionConfig(IN_HIGHER_DISTANCE_SINGULAR.imperial, translationMap, locale, 1610, 1),
-                        new ConditionalDistanceVoiceInstructionConfig(IN_LOWER_DISTANCE_PLURAL.imperial, translationMap, locale, new int[]{400, 200}, new int[]{1300, 600})
-                );
-            }
+                if (unit == DistanceUtils.Unit.METRIC) {
+                    voiceInstructions = Arrays.asList(
+                            new InitialVoiceInstructionConfig(FOR_HIGHER_DISTANCE_PLURAL.metric, translationMap, locale, 4250, 250, unit),
+                            new FixedDistanceVoiceInstructionConfig(IN_HIGHER_DISTANCE_PLURAL.metric, translationMap, locale, 2000, 2),
+                            new FixedDistanceVoiceInstructionConfig(IN_HIGHER_DISTANCE_SINGULAR.metric, translationMap, locale, 1000, 1),
+                            new ConditionalDistanceVoiceInstructionConfig(IN_LOWER_DISTANCE_PLURAL.metric, translationMap, locale, new int[]{400, 200}, new int[]{400, 200})
+                    );
+                } else {
+                    voiceInstructions = Arrays.asList(
+                            new InitialVoiceInstructionConfig(FOR_HIGHER_DISTANCE_PLURAL.metric, translationMap, locale, 4250, 250, unit),
+                            new FixedDistanceVoiceInstructionConfig(IN_HIGHER_DISTANCE_PLURAL.imperial, translationMap, locale, 3220, 2),
+                            new FixedDistanceVoiceInstructionConfig(IN_HIGHER_DISTANCE_SINGULAR.imperial, translationMap, locale, 1610, 1),
+                            new ConditionalDistanceVoiceInstructionConfig(IN_LOWER_DISTANCE_PLURAL.imperial, translationMap, locale, new int[]{400, 200}, new int[]{1300, 600})
+                    );
+                }
         }
 
     }
