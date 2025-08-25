@@ -160,8 +160,11 @@ public final class GraphExplorer {
             public boolean tryAdvance(Consumer<? super MultiModalEdge> action) {
                 while (e.next()) {
                     if (Double.isFinite(accessEgressWeighting.calcEdgeWeight(e, reverse))) {
-                        action.accept(new MultiModalEdge(e.getEdge(), e.getBaseNode(), e.getAdjNode(), (long) (accessEgressWeighting.calcEdgeMillis(e.detach(false), reverse) * (5.0 / walkSpeedKmH)), e.getDistance()));
-                        return true;
+                        long travelTimeOrInfty = accessEgressWeighting.calcEdgeMillis(e.detach(false), reverse);
+                        if (travelTimeOrInfty != Long.MAX_VALUE) {
+                            action.accept(new MultiModalEdge(e.getEdge(), e.getBaseNode(), e.getAdjNode(), (long) (travelTimeOrInfty * (5.0 / walkSpeedKmH)), e.getDistance()));
+                            return true;
+                        }
                     }
                 }
                 return false;

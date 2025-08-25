@@ -28,7 +28,7 @@ import io.dropwizard.core.Application;
 import io.dropwizard.core.setup.Bootstrap;
 import io.dropwizard.core.setup.Environment;
 
-import javax.servlet.DispatcherType;
+import jakarta.servlet.DispatcherType;
 import java.util.EnumSet;
 
 public final class GraphHopperApplication extends Application<GraphHopperServerConfiguration> {

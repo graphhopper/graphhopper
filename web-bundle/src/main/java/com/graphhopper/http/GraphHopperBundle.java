@@ -33,19 +33,17 @@ import com.graphhopper.resources.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.util.PMap;
 import com.graphhopper.util.TranslationMap;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
 import io.dropwizard.client.HttpClientBuilder;
 import io.dropwizard.core.ConfiguredBundle;
 import io.dropwizard.core.setup.Bootstrap;
 import io.dropwizard.core.setup.Environment;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.glassfish.hk2.api.Factory;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConfiguration> {
 
@@ -178,12 +176,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
 
         @Override
         public MapMatchingResource.MapMatchingRouterFactory provide() {
-            return new MapMatchingResource.MapMatchingRouterFactory() {
-                @Override
-                public MapMatching.Router createMapMatchingRouter(PMap hints) {
-                    return MapMatching.routerFromGraphHopper(graphHopper, hints);
-                }
-            };
+            return hints -> MapMatching.routerFromGraphHopper(graphHopper, hints);
         }
 
         @Override
@@ -237,8 +230,10 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
 
         Jackson.initObjectMapper(bootstrap.getObjectMapper());
         bootstrap.getObjectMapper().setDateFormat(new StdDateFormat());
+
+        // Make snake_case work for server_log too ... still required for dropwizard 4.0.15
         // See https://github.com/dropwizard/dropwizard/issues/1558
-        bootstrap.getObjectMapper().enable(MapperFeature.ALLOW_EXPLICIT_PROPERTY_RENAMING);
+        bootstrap.getObjectMapper().setConfig(bootstrap.getObjectMapper().getDeserializationConfig().with(MapperFeature.ALLOW_EXPLICIT_PROPERTY_RENAMING));
     }
 
     @Override
@@ -305,6 +300,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         environment.jersey().register(RouteResource.class);
         environment.jersey().register(IsochroneResource.class);
         environment.jersey().register(MapMatchingResource.class);
+
         if (configuration.getGraphHopperConfiguration().has("gtfs.file")) {
             // These are pt-specific implementations of /route and /isochrone, but the same API.
             // We serve them under different paths (/route-pt and /isochrone-pt), and forward
@@ -314,9 +310,14 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
                 protected void configure() {
                     if (configuration.getGraphHopperConfiguration().getBool("gtfs.free_walk", false)) {
                         bind(PtRouterFreeWalkImpl.class).to(PtRouter.class);
+                    } else if (configuration.getGraphHopperConfiguration().getBool("gtfs.trip_based", false)) {
+                        bind(PtRouterTripBasedImpl.class).to(PtRouter.class);
                     } else {
                         bind(PtRouterImpl.class).to(PtRouter.class);
                     }
+                    bind(PtRouterImpl.class).to(PtRouter.class).named("classic");
+                    bind(PtRouterFreeWalkImpl.class).to(PtRouter.class).named("free_walk");
+                    bind(PtRouterTripBasedImpl.class).to(PtRouter.class).named("trip_based");
                 }
             });
             environment.jersey().register(PtRouteResource.class);

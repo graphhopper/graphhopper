@@ -75,14 +75,14 @@
             <dependency>
                 <groupId>io.dropwizard</groupId>
                 <artifactId>dropwizard-dependencies</artifactId>
-                <version>3.0.8</version>
+                <version>4.0.15</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
             <dependency>
                 <groupId>com.graphhopper.external</groupId>
                 <artifactId>jackson-datatype-jts</artifactId>
-                <version>2.14</version>
+                <version>2.19.2</version>
                 <exclusions>
                     <exclusion>
                         <groupId>com.fasterxml.jackson.core</groupId>
@@ -98,7 +98,7 @@
             <dependency>
                 <groupId>org.locationtech.jts</groupId>
                 <artifactId>jts-core</artifactId>
-                <version>1.19.0</version>
+                <version>1.20.0</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.commons</groupId>
@@ -139,10 +139,11 @@
                     </exclusion>
                 </exclusions>
             </dependency>
+            <!-- for reader-gtfs -->
             <dependency>
-                <groupId>javax.inject</groupId>
-                <artifactId>javax.inject</artifactId>
-                <version>1</version>
+                <groupId>jakarta.inject</groupId>
+                <artifactId>jakarta.inject-api</artifactId>
+                <version>2.0.1</version>
             </dependency>
             <dependency>
                 <groupId>org.hamcrest</groupId>

@@ -24,6 +24,13 @@ import com.carrotsearch.hppc.cursors.IntIntCursor;
 import com.carrotsearch.hppc.cursors.IntObjectCursor;
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Fare;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.MappingIterator;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SequenceWriter;
+import com.google.common.collect.HashMultimap;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.index.LineIntIndex;
 import org.mapdb.DB;
@@ -41,8 +48,12 @@ import java.util.*;
 public class GtfsStorage {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(GtfsStorage.class);
+
+	static ObjectMapper ionMapper = new ObjectMapper();
+
 	private LineIntIndex stopIndex;
 	private PtGraph ptGraph;
+	public Trips tripTransfers;
 
 	public void setStopIndex(LineIntIndex stopIndex) {
 		this.stopIndex = stopIndex;
@@ -88,8 +99,8 @@ public class GtfsStorage {
 		}
 	}
 
-	static class FeedIdWithTimezone implements Serializable {
-		final String feedId;
+	public static class FeedIdWithTimezone implements Serializable {
+		public final String feedId;
 		final ZoneId zoneId;
 
 		FeedIdWithTimezone(String feedId, ZoneId zoneId) {
@@ -112,10 +123,15 @@ public class GtfsStorage {
 	}
 
 	public static class FeedIdWithStopId implements Serializable {
+
+		@JsonProperty("feed_id")
 		public final String feedId;
+
+		@JsonProperty("stop_id")
 		public final String stopId;
 
-		public FeedIdWithStopId(String feedId, String stopId) {
+		public FeedIdWithStopId(@JsonProperty("feed_id") String feedId,
+								@JsonProperty("stop_id") String stopId) {
 			this.feedId = feedId;
 			this.stopId = stopId;
 		}
@@ -158,9 +174,9 @@ public class GtfsStorage {
 		HIGHWAY, ENTER_TIME_EXPANDED_NETWORK, LEAVE_TIME_EXPANDED_NETWORK, ENTER_PT, EXIT_PT, HOP, DWELL, BOARD, ALIGHT, OVERNIGHT, TRANSFER, WAIT, WAIT_ARRIVAL
     }
 
-	private DB data;
+	public DB data;
 
-	GtfsStorage(Directory dir) {
+	public GtfsStorage(Directory dir) {
 		this.dir = dir;
 	}
 
@@ -171,27 +187,43 @@ public class GtfsStorage {
 		}
 		this.data = DBMaker.newFileDB(file).transactionDisable().mmapFileEnable().readOnly().make();
 		init();
-		for (String gtfsFeedId : this.gtfsFeedIds) {
-			File dbFile = new File(dir.getLocation() + "/" + gtfsFeedId);
+        for (int i = 0; i < gtfsFeedIds.size(); i++) {
+            String gtfsFeedId = "gtfs_" + i;
+            File dbFile = new File(dir.getLocation() + "/" + gtfsFeedId);
 
-			if (!dbFile.exists()) {
-				throw new RuntimeException(String.format("The mapping of the gtfsFeeds in the transit_schedule DB does not reflect the files in %s. "
-								+ "dbFile %s is missing.",
-						dir.getLocation(), dbFile.getName()));
-			}
+            if (!dbFile.exists()) {
+                throw new RuntimeException(String.format("The mapping of the gtfsFeeds in the transit_schedule DB does not reflect the files in %s. "
+                                + "dbFile %s is missing.",
+                        dir.getLocation(), dbFile.getName()));
+            }
 
-			GTFSFeed feed = new GTFSFeed(dbFile);
-			this.gtfsFeeds.put(gtfsFeedId, feed);
-		}
-		ptToStreet = deserialize("pt_to_street");
-		streetToPt = deserialize("street_to_pt");
+            GTFSFeed feed = new GTFSFeed(dbFile);
+            this.gtfsFeeds.put(gtfsFeedId, feed);
+        }
+		ptToStreet = deserializeIntoIntIntHashMap("pt_to_street");
+		streetToPt = deserializeIntoIntIntHashMap("street_to_pt");
 		skippedEdgesForTransfer = deserializeIntoIntObjectHashMap("skipped_edges_for_transfer");
-		postInit();
+		try (InputStream is = Files.newInputStream(Paths.get(dir.getLocation() + "interpolated_transfers"))) {
+			MappingIterator<JsonNode> objectMappingIterator = ionMapper.reader(JsonNode.class).readValues(is);
+			objectMappingIterator.forEachRemaining(e -> {
+				try {
+					FeedIdWithStopId key = ionMapper.treeToValue(e.get(0), FeedIdWithStopId.class);
+					for (JsonNode jsonNode : e.get(1)) {
+						InterpolatedTransfer interpolatedTransfer = ionMapper.treeToValue(jsonNode, InterpolatedTransfer.class);
+						interpolatedTransfers.put(key, interpolatedTransfer);
+					}
+				} catch (JsonProcessingException ex) {
+					throw new RuntimeException(ex);
+				}
+			});
+		} catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        postInit();
 		return true;
 	}
 
-
-	private IntIntHashMap deserialize(String filename) {
+	private IntIntHashMap deserializeIntoIntIntHashMap(String filename) {
 		try (FileInputStream in = new FileInputStream(dir.getLocation() + filename)) {
 			ObjectInputStream ois = new ObjectInputStream(new BufferedInputStream(in));
 			int size = ois.readInt();
@@ -205,16 +237,22 @@ public class GtfsStorage {
 		}
 	}
 
-	private IntObjectHashMap<int[]> deserializeIntoIntObjectHashMap(String filename) {
+	public IntObjectHashMap<int[]> deserializeIntoIntObjectHashMap(String filename) {
 		try (FileInputStream in = new FileInputStream(dir.getLocation() + filename)) {
 			ObjectInputStream ois = new ObjectInputStream(new BufferedInputStream(in));
 			int size = ois.readInt();
-			IntObjectHashMap<int[]> result = new IntObjectHashMap<>();
+			IntObjectHashMap<int[]> result = new IntObjectHashMap<>(size);
 			for (int i = 0; i < size; i++) {
-				result.put(ois.readInt(), ((int[]) ois.readObject()));
+				int key = ois.readInt();
+				int n = ois.readInt();
+				int[] ints = new int[n];
+				for (int j = 0; j < n; j++) {
+					ints[j] = ois.readInt();
+				}
+				result.put(key, ints);
 			}
 			return result;
-		} catch (IOException | ClassNotFoundException e) {
+		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -259,6 +297,7 @@ public class GtfsStorage {
 		LOGGER.info("Calendar range covered by all feeds: {} till {}", latestStartDate, earliestEndDate);
 		faresByFeed = new HashMap<>();
 		this.gtfsFeeds.forEach((feed_id, feed) -> faresByFeed.put(feed_id, feed.fares));
+		tripTransfers = new Trips(this);
 	}
 
 	public void close() {
@@ -295,14 +334,65 @@ public class GtfsStorage {
 		serialize("pt_to_street", ptToStreet);
 		serialize("street_to_pt", streetToPt);
 		serialize("skipped_edges_for_transfer", skippedEdgesForTransfer);
+		try (OutputStream os = Files.newOutputStream(Paths.get(dir.getLocation() + "interpolated_transfers"))) {
+			SequenceWriter sequenceWriter = ionMapper.writer().writeValuesAsArray(os);
+			for (Map.Entry<FeedIdWithStopId, Collection<InterpolatedTransfer>> e : interpolatedTransfers.asMap().entrySet()) {
+				sequenceWriter.write(ionMapper.createArrayNode().addPOJO(e.getKey()).addPOJO(e.getValue()));
+			}
+			sequenceWriter.close();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
-	private void serialize(String filename, IntObjectHashMap<int[]> data) {
+	public void serializeTripTransfersMap(String filename, Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> data) {
+		try (ObjectOutputStream oos = new ObjectOutputStream(new BufferedOutputStream(Files.newOutputStream(Paths.get(dir.getLocation() + filename))))) {
+			oos.writeInt(data.size());
+			for (Map.Entry<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> entry : data.entrySet()) {
+				oos.writeInt(entry.getKey().tripIdx);
+				oos.writeInt(entry.getKey().stop_sequence);
+				oos.writeInt(entry.getValue().size());
+				for (Trips.TripAtStopTime tripAtStopTime : entry.getValue()) {
+					oos.writeInt(tripAtStopTime.tripIdx);
+					oos.writeInt(tripAtStopTime.stop_sequence);
+				}
+			}
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	public Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> deserializeTripTransfersMap(String filename) {
+		try (FileInputStream in = new FileInputStream(dir.getLocation() + filename)) {
+			ObjectInputStream ois = new ObjectInputStream(new BufferedInputStream(in));
+			int size = ois.readInt();
+			Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> result = new TreeMap<>();
+			for (int i = 0; i < size; i++) {
+				Trips.TripAtStopTime origin = new Trips.TripAtStopTime(ois.readInt(), ois.readInt());
+				int nDestinations = ois.readInt();
+				List<Trips.TripAtStopTime> destinations = new ArrayList<>(nDestinations);
+				for (int j = 0; j < nDestinations; j++) {
+					int tripIdxTo = ois.readInt();
+					int stop_sequenceTo = ois.readInt();
+					destinations.add(new Trips.TripAtStopTime(tripIdxTo, stop_sequenceTo));
+				}
+				result.put(origin, destinations);
+			}
+			return result;
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	public void serialize(String filename, IntObjectHashMap<int[]> data) {
 		try (ObjectOutputStream oos = new ObjectOutputStream(new BufferedOutputStream(Files.newOutputStream(Paths.get(dir.getLocation() + filename))))) {
 			oos.writeInt(data.size());
 			for (IntObjectCursor<int[]> e : data) {
 				oos.writeInt(e.key);
-				oos.writeObject(e.value);
+				oos.writeInt(e.value.length);
+				for (int v : e.value) {
+					oos.writeInt(v);
+				}
 			}
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -410,4 +500,28 @@ public class GtfsStorage {
 					'}';
 		}
 	}
+
+	public HashMultimap<FeedIdWithStopId, InterpolatedTransfer> interpolatedTransfers = HashMultimap.create();
+
+
+	public static class InterpolatedTransfer {
+
+		@JsonProperty("to_stop")
+		public final FeedIdWithStopId toPlatformDescriptor;
+
+		@JsonProperty("street_time")
+		public final int streetTime;
+
+		@JsonProperty("skipped_edges")
+		public final int[] skippedEdgesForTransfer;
+
+		public InterpolatedTransfer(@JsonProperty("to_stop") FeedIdWithStopId toPlatformDescriptor,
+									@JsonProperty("street_time") int streetTime,
+									@JsonProperty("skipped_edges") int[] skippedEdgesForTransfer) {
+			this.toPlatformDescriptor = toPlatformDescriptor;
+			this.streetTime = streetTime;
+			this.skippedEdgesForTransfer = skippedEdgesForTransfer;
+		}
+	}
+
 }

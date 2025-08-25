@@ -31,6 +31,7 @@ import com.conveyal.gtfs.error.GeneralError;
 import com.conveyal.gtfs.model.Calendar;
 import com.conveyal.gtfs.model.*;
 import com.google.common.collect.Iterables;
+import com.graphhopper.gtfs.Trips;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.CoordinateList;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -51,6 +52,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ConcurrentNavigableMap;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 /**
@@ -174,6 +176,35 @@ public class GTFSFeed implements Cloneable, Closeable {
         return this.hasFeedInfo() ? this.feedInfo.values().iterator().next() : null;
     }
 
+
+    public static class StopTimesForTripWithTripPatternKey {
+        public StopTimesForTripWithTripPatternKey(String feedId, Trip trip, Service service, int routeType, List<StopTime> stopTimes, Trips.Pattern pattern) {
+            this.feedId = feedId;
+            this.trip = trip;
+            this.service = service;
+            this.routeType = routeType;
+            this.stopTimes = stopTimes;
+            this.pattern = pattern;
+        }
+
+        public final String feedId;
+        public final Trip trip;
+        public final Service service;
+        public final int routeType;
+        public final List<StopTime> stopTimes;
+        public final Trips.Pattern pattern;
+        public int idx;
+        public int endIdxOfPattern; // exclusive
+        public int getDepartureTime() {
+            for (StopTime stopTime : stopTimes) {
+                if (stopTime != null) {
+                    return stopTime.departure_time;
+                }
+            }
+            throw new RuntimeException();
+        }
+    }
+
     /**
      * For the given trip ID, fetch all the stop times in order of increasing stop_sequence.
      * This is an efficient iteration over a tree map.
@@ -196,9 +227,9 @@ public class GTFSFeed implements Cloneable, Closeable {
     /**
      * For the given trip ID, fetch all the stop times in order, and interpolate stop-to-stop travel times.
      */
-    public Iterable<StopTime> getInterpolatedStopTimesForTrip (String trip_id) throws FirstAndLastStopsDoNotHaveTimes {
+    public List<StopTime> getInterpolatedStopTimesForTrip (String trip_id) throws FirstAndLastStopsDoNotHaveTimes {
         // clone stop times so as not to modify base GTFS structures
-        StopTime[] stopTimes = StreamSupport.stream(getOrderedStopTimesForTrip(trip_id).spliterator(), false)
+        StopTime[] stopTimes = StreamSupport.stream(Spliterators.spliteratorUnknownSize(getOrderedStopTimesForTrip(trip_id).iterator(), 0), false)
                 .map(st -> st.clone())
                 .toArray(i -> new StopTime[i]);
 
@@ -487,6 +518,11 @@ public class GTFSFeed implements Cloneable, Closeable {
             }
         }
         return endDate;
+    }
+
+    // Utility to more efficiently stream MapDB collections -- by default, stream() expensively determines collection size
+    public static <T> Stream<T> stream(Collection<T> collection) {
+        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(collection.iterator(), 0), false);
     }
 
 }

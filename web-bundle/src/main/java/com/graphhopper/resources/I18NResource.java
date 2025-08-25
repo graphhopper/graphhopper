@@ -21,9 +21,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.graphhopper.util.Translation;
 import com.graphhopper.util.TranslationMap;
 
-import javax.inject.Inject;
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.MediaType;
 import java.util.Locale;
 import java.util.Map;
 
