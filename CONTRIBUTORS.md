@@ -49,7 +49,7 @@ Here is an overview:
  * jessLryan, max elevation can now be negative
  * joe-akeem, improvements like #2158
  * JohannesPelzer, improved GPX information and various other things
- * karololszacki, introduce `navigation_transportation_mode` option for Profiles to easily set which Voice Guidance distances to use
+ * karololszacki, introduce `navigation_mode` option for Profiles to easily set which Voice Guidance distances to use
  * karussell, one of the core developers
  * khuebner, initial turn costs support
  * kodonnell, adding support for CH and other algorithms (#60) and penalizing inner-link U-turns (#88)
