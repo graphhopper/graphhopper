@@ -33,10 +33,6 @@ public class DistanceConfig {
     final List<VoiceInstructionConfig> voiceInstructions;
     final DistanceUtils.Unit unit;
 
-    public DistanceConfig(DistanceUtils.Unit unit, TranslationMap translationMap, Locale locale, Profile profile) {
-        this(unit, translationMap, locale, profile.getHints().getString("navigation_transportation_mode", ""));
-    }
-
     public DistanceConfig(DistanceUtils.Unit unit, TranslationMap translationMap, Locale locale, TransportationMode mode) {
         this(unit, translationMap, locale, mode.name());
     }

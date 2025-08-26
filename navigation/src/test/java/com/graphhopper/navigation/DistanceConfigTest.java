@@ -1,5 +1,6 @@
 package com.graphhopper.navigation;
 
+import com.graphhopper.GraphHopper;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.util.TransportationMode;
 import org.junit.jupiter.api.Test;
@@ -20,24 +21,15 @@ public class DistanceConfigTest {
         DistanceConfig bus = new DistanceConfig(DistanceUtils.Unit.METRIC, null, null, TransportationMode.BUS);
         assertEquals(4, bus.voiceInstructions.size());
 
-
         // from Profile
-        Profile awesomeProfile = new Profile("my_awesome_profile").putHint("navigation_transportation_mode", "car");
-        DistanceConfig carFromProfile = new DistanceConfig(DistanceUtils.Unit.METRIC, null, null, awesomeProfile);
-        assertEquals(4, carFromProfile.voiceInstructions.size());
-
-        Profile fastWalkProfile = new Profile("my_fast_walk_profile").putHint("navigation_transportation_mode", "foot");
-        DistanceConfig footFromProfile = new DistanceConfig(DistanceUtils.Unit.METRIC, null, null, fastWalkProfile);
-        assertEquals(1, footFromProfile.voiceInstructions.size());
-
-        Profile crazyMtbProfile = new Profile("my_crazy_mtb").putHint("navigation_transportation_mode", "bike");
-        DistanceConfig bikeFromProfile = new DistanceConfig(DistanceUtils.Unit.METRIC, null, null, crazyMtbProfile);
-        assertEquals(1, bikeFromProfile.voiceInstructions.size());
-
-        Profile truckProfile = new Profile("my_truck"); // no hint set, so defaults to car
-        DistanceConfig truckCfg = new DistanceConfig(DistanceUtils.Unit.METRIC, null, null, truckProfile);
-        assertEquals(4, truckCfg.voiceInstructions.size());
-
+        GraphHopper hopper = new GraphHopper().setProfiles(
+                new Profile("my_truck"),
+                new Profile("foot"),
+                new Profile("ebike").putHint("navigation_mode", "bike"));
+        assertEquals(TransportationMode.CAR, hopper.getNavigationMode("unknown"));
+        assertEquals(TransportationMode.CAR, hopper.getNavigationMode("my_truck"));
+        assertEquals(TransportationMode.FOOT, hopper.getNavigationMode("foot"));
+        assertEquals(TransportationMode.BIKE, hopper.getNavigationMode("ebike"));
 
         // from String
         DistanceConfig driving = new DistanceConfig(DistanceUtils.Unit.METRIC, null, null, "driving");
