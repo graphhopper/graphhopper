@@ -90,6 +90,7 @@ Here is an overview:
  * Svantulden, improved documentation and nearest API
  * taulinger, hopefully more to come 
  * thehereward, code cleanups like #620
+ * tyrasd, improved toll road handling in Austria #3190
  * vvikas, ideas for many to many improvements and #616
  * zstadler, multiple fixes and car4wd
 
