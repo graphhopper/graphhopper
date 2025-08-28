@@ -37,8 +37,9 @@ import static com.graphhopper.json.Statement.Keyword.IF;
  */
 public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
 
-    private static final Set<String> allowedMethodParents = new HashSet<>(Arrays.asList("Math"));
-    private static final Set<String> allowedMethods = new HashSet<>(Arrays.asList("sqrt"));
+    private static final String INFINITY = Double.toString(Double.POSITIVE_INFINITY);
+    private static final Set<String> allowedMethodParents = Set.of("Math");
+    private static final Set<String> allowedMethods = Set.of("sqrt");
     private final ParseResult result;
     private final NameValidator variableValidator;
     private String invalidMessage;
@@ -60,8 +61,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
 
     @Override
     public Boolean visitRvalue(Java.Rvalue rv) throws Exception {
-        if (rv instanceof Java.AmbiguousName) {
-            Java.AmbiguousName n = (Java.AmbiguousName) rv;
+        if (rv instanceof Java.AmbiguousName n) {
             if (n.identifiers.length == 1) {
                 String arg = n.identifiers[0];
                 // e.g. like road_class
@@ -74,14 +74,12 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         }
         if (rv instanceof Java.Literal) {
             return true;
-        } else if (rv instanceof Java.UnaryOperation) {
-            Java.UnaryOperation uop = (Java.UnaryOperation) rv;
+        } else if (rv instanceof Java.UnaryOperation uop) {
             result.operators.add(uop.operator);
             if (uop.operator.equals("-"))
                 return uop.operand.accept(this);
             return false;
-        } else if (rv instanceof Java.MethodInvocation) {
-            Java.MethodInvocation mi = (Java.MethodInvocation) rv;
+        } else if (rv instanceof Java.MethodInvocation mi) {
             if (allowedMethods.contains(mi.methodName)) {
                 // skip methods like this.in()
                 if (mi.target != null) {
@@ -107,8 +105,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
             return false;
         } else if (rv instanceof Java.ParenthesizedExpression) {
             return ((Java.ParenthesizedExpression) rv).value.accept(this);
-        } else if (rv instanceof Java.BinaryOperation) {
-            Java.BinaryOperation binOp = (Java.BinaryOperation) rv;
+        } else if (rv instanceof Java.BinaryOperation binOp) {
             String op = binOp.operator;
             result.operators.add(op);
             if (op.equals("*") || op.equals("+") || binOp.operator.equals("-")) {
@@ -184,7 +181,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
     }
 
     static Set<String> findVariables(String valueExpression, EncodedValueLookup lookup) {
-        ParseResult result = parse(valueExpression, lookup::hasEncodedValue);
+        ParseResult result = parse(valueExpression, key -> lookup.hasEncodedValue(key) || key.contains(INFINITY));
         if (!result.ok)
             throw new IllegalArgumentException(result.invalidMessage);
         if (result.guessedVariables.size() > 1)
