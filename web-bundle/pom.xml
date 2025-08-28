@@ -116,6 +116,36 @@
         </dependency>
     </dependencies>
 
+    <profiles>
+        <profile>
+            <id>protobuf</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>io.github.ascopes</groupId>
+                        <artifactId>protobuf-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>generate</goal>
+                                </goals>
+                                <configuration>
+                                    <sourceDirectories>
+                                        <sourceDirectory>${project.basedir}/src/main/protobuf</sourceDirectory>
+                                    </sourceDirectories>
+                                    <outputDirectory>${project.basedir}/src/main/java</outputDirectory>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
     <build>
         <plugins>
             <plugin>
@@ -145,21 +175,6 @@
                                 pack --pack-destination=${basedir}/target
                                 @graphhopper/graphhopper-maps-bundle@${graphhopper-maps.version}
                             </arguments>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>io.github.ascopes</groupId>
-                <artifactId>protobuf-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>generate</goal>
-                        </goals>
-                        <configuration>
-                            <sourceDirectory>${project.basedir}/src/main/protobuf</sourceDirectory>
-                            <outputDirectory>${project.build.directory}/generated-sources/protobuf</outputDirectory>
                         </configuration>
                     </execution>
                 </executions>
