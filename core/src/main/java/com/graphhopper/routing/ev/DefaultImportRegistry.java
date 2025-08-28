@@ -214,6 +214,11 @@ public class DefaultImportRegistry implements ImportRegistry {
                     (lookup, props) -> new CurvatureCalculator(
                             lookup.getDecimalEncodedValue(Curvature.KEY))
             );
+        else if (NoisyRoadNearby.KEY.equals(name))
+            return ImportUnit.create(name, props -> NoisyRoadNearby.create(),
+                    (lookup, props) -> new NoisyRoadNearbyCalculator(
+                            lookup.getBooleanEncodedValue(NoisyRoadNearby.KEY))
+            );
         else if (AverageSlope.KEY.equals(name))
             return ImportUnit.create(name, props -> AverageSlope.create(), null, "slope_calculator");
         else if (MaxSlope.KEY.equals(name))

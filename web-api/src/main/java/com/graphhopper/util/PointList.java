@@ -273,6 +273,26 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
         return longitudes[index];
     }
 
+    public double getMiddleLat() {
+        double middleLat;
+        if (size > 2) {
+            middleLat = latitudes[size / 2];
+        } else {
+            middleLat = (latitudes[0] + latitudes[size - 1]) / 2;
+        }
+        return middleLat;
+    }
+
+    public double getMiddleLon() {
+        double middleLon;
+        if (size > 2) {
+            middleLon = longitudes[size / 2];
+        } else {
+            middleLon = (longitudes[0] + longitudes[size - 1]) / 2;
+        }
+        return middleLon;
+    }
+
     @Override
     public double getEle(int index) {
         if (index >= size)

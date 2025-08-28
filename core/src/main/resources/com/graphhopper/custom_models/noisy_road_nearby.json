@@ -1,0 +1,12 @@
+// avoid noisy roads nearby
+// to use this custom model you need to add the following option in the config.yml
+// graph.encoded_values: noisy_road_nearby
+
+{
+  "priority": [
+    {
+      "if": "noisy_road_nearby",
+      "multiply_by": "0.8"
+    }
+  ]
+}
