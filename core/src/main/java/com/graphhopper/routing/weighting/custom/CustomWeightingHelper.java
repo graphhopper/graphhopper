@@ -107,14 +107,11 @@ public class CustomWeightingHelper {
         double azimuth = orientationEnc.getDecimal(outEdgeReverse, outEdge, edgeIntAccess);
 
         // bring parallel to prevOrientation
-        if (azimuth >= 180) azimuth -= 180;
-        else azimuth += 180;
+        azimuth = (azimuth + 180) % 360.0;
 
         double changeAngle = azimuth - prevAzimuth;
 
         // keep in [-180, 180]
-        if (changeAngle > 180) changeAngle -= 360;
-        else if (changeAngle < -180) changeAngle += 360;
-        return changeAngle;
+        return (changeAngle + 540.0) % 360.0 - 180.0;
     }
 }
