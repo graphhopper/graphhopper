@@ -49,7 +49,7 @@ Here is an overview:
  * jessLryan, max elevation can now be negative
  * joe-akeem, improvements like #2158
  * JohannesPelzer, improved GPX information and various other things
- * karololszacki, introduce `navigation_transport_mode` option for Profiles to easily set which Voice Guidance distances to use
+ * karololszacki, introduce `navigation_mode` option for Profiles to easily set which Voice Guidance distances to use
  * karussell, one of the core developers
  * khuebner, initial turn costs support
  * kodonnell, adding support for CH and other algorithms (#60) and penalizing inner-link U-turns (#88)
@@ -90,6 +90,7 @@ Here is an overview:
  * Svantulden, improved documentation and nearest API
  * taulinger, hopefully more to come 
  * thehereward, code cleanups like #620
+ * tyrasd, improved toll road handling in Austria #3190
  * vvikas, ideas for many to many improvements and #616
  * zstadler, multiple fixes and car4wd
 

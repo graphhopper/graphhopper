@@ -298,6 +298,16 @@ public class GraphHopper {
         return profilesByName.get(profileName);
     }
 
+    public TransportationMode getNavigationMode(String profileName) {
+        Profile profile = profilesByName.get(profileName);
+        if (profile == null) return TransportationMode.CAR;
+        try {
+            return TransportationMode.valueOf(profile.getHints().getString("navigation_mode", profileName).toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            return TransportationMode.CAR;
+        }
+    }
+
     /**
      * @return true if storing and fetching elevation data is enabled. Default is false
      */
