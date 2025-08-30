@@ -224,11 +224,11 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
 
         way.clearTags();
         way.setTag("highway", "track");
-        assertPriorityAndSpeed(UNCHANGED, 12, way);
+        assertPriorityAndSpeed(AVOID, 12, way);
         way.setTag("vehicle", "no");
-        assertPriorityAndSpeed(UNCHANGED, PUSHING_SECTION_SPEED, way);
+        assertPriorityAndSpeed(AVOID, PUSHING_SECTION_SPEED, way);
         way.setTag("vehicle", "forestry;agricultural");
-        assertPriorityAndSpeed(UNCHANGED, PUSHING_SECTION_SPEED, way);
+        assertPriorityAndSpeed(AVOID, PUSHING_SECTION_SPEED, way);
 
         way.clearTags();
         way.setTag("highway", "track");
@@ -268,8 +268,6 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
 
         way.clearTags();
         way.setTag("highway", "track");
-        assertPriorityAndSpeed(UNCHANGED, 12, way);
-
         way.setTag("surface", "paved");
         assertPriorityAndSpeed(UNCHANGED, 18, way);
 
@@ -559,14 +557,12 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         assertEquals(RouteNetwork.INTERNATIONAL, encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class).getEnum(false, edgeId, edgeIntAccess));
         assertEquals(PriorityCode.getValue(BEST.getValue()), priorityEnc.getDecimal(false, edgeId, edgeIntAccess), .1);
 
-        // for some highways the priority is UNCHANGED
-        osmRel = new ReaderRelation(1);
         osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "track");
         edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(encodingManager.getBytesForFlags());
         osmParsers.handleWayTags(edgeId, edgeIntAccess, osmWay, osmParsers.createRelationFlags());
         assertEquals(RouteNetwork.MISSING, encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class).getEnum(false, edgeId, edgeIntAccess));
-        assertEquals(PriorityCode.getValue(UNCHANGED.getValue()), priorityEnc.getDecimal(false, edgeId, edgeIntAccess), .1);
+        assertEquals(PriorityCode.getValue(AVOID.getValue()), priorityEnc.getDecimal(false, edgeId, edgeIntAccess), .1);
 
         // unknown highway tags will be excluded but priority will be unchanged
         osmWay = new ReaderWay(1);
@@ -589,7 +585,7 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way = new ReaderWay(1);
         way.setTag("highway", "track");
         way.setTag("maxspeed", "90");
-        assertPriorityAndSpeed(UNCHANGED, 12, way);
+        assertPriorityAndSpeed(AVOID, 12, way);
 
         // here we are limited by the maxspeed
         way = new ReaderWay(1);
