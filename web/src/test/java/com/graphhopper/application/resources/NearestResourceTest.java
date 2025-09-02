@@ -31,10 +31,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.List;
 
 import static com.graphhopper.application.util.TestUtils.clientTarget;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author svantulden
@@ -46,11 +48,14 @@ public class NearestResourceTest {
 
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
-        config.getGraphHopperConfiguration().
-                putObject("datareader.file", "../core/files/andorra.osm.pbf").
-                putObject("graph.location", dir).
-                putObject("import.osm.ignored_highways", "").
-                setProfiles(List.of(TestProfiles.constantSpeed("car")));
+        config.getGraphHopperConfiguration()
+                        .putObject("datareader.file", "../core/files/andorra.osm.pbf")
+                        .putObject("graph.location", dir)
+                        .putObject("import.osm.ignored_highways", "")
+                        .putObject("graph.encoded_values",
+                                        "car_access,car_average_speed,foot_access,foot_average_speed,road_class,road_environment")
+                        .setProfiles(Arrays.asList(TestProfiles.accessAndSpeed("car", "car"),
+                                        TestProfiles.accessAndSpeed("foot", "foot")));
         return config;
     }
 
@@ -60,9 +65,31 @@ public class NearestResourceTest {
         Helper.removeDir(new File(dir));
     }
 
+    private void testWithProfile(double lat, double lon, double[] expectedSnap, String profile, double distance) {
+        String url = "/nearest?point=" + lat + "," + lon + "&profile=" + profile;
+        NearestResource.Response json = clientTarget(app, url).request().get(NearestResource.Response.class);
+        assertArrayEquals(expectedSnap, json.coordinates, 0.00001, "nearest point (profile " + profile + ")");
+        assertEquals(distance, json.distance, 1.0, "distance from nearest point (profile " + profile + ")");
+    }
+
     @Test
     public void testBasicNearestQuery() {
         NearestResource.Response json = clientTarget(app, "/nearest?point=42.554851,1.536198").request().get(NearestResource.Response.class);
         assertArrayEquals(new double[]{1.5363743623376815, 42.554839049600155}, json.coordinates, "nearest point");
+    }
+
+    @Test
+    public void testNearestQueryWithProfile() {
+        testWithProfile(42.543384, 1.5108401, new double[] { 1.51081, 42.5434317 }, "foot", 6.0);
+        testWithProfile(42.543384, 1.5108401, new double[] { 1.51075, 42.5432716 }, "car", 14.0);
+    }
+
+    @Test
+    public void testNearestQueryWithSnapPreventoin() {
+        NearestResource.Response json = clientTarget(app,
+                        "/nearest?point=42.5285314,1.5239083&profile=car&snap_prevention=tunnel")
+                                        .request().get(NearestResource.Response.class);
+        assertArrayEquals(new double[] { 1.5240604, 42.5289345 }, json.coordinates,
+                        "nearest point");
     }
 }
