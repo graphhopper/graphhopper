@@ -164,7 +164,7 @@ public abstract class BikeCommonPriorityParser implements TagParser {
         }
 
         double maxSpeed = Math.max(OSMMaxSpeedParser.parseMaxSpeed(way, false), OSMMaxSpeedParser.parseMaxSpeed(way, true));
-        if (preferHighwayTags.contains(highway) || (maxSpeed != MaxSpeed.MAXSPEED_MISSING && maxSpeed <= 30)) {
+        if (preferHighwayTags.contains(highway) || maxSpeed <= 30) {
             if (maxSpeed == MaxSpeed.MAXSPEED_MISSING || maxSpeed < avoidSpeedLimit) {
                 weightToPrioMap.put(40d, PREFER);
                 if (way.hasTag("tunnel", INTENDED))

@@ -232,7 +232,7 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         assertPriorityAndSpeed(PREFER, 12, way);
 
         way.setTag("surface", "paved");
-        assertPriorityAndSpeed(PREFER, 18, way);
+        assertPriorityAndSpeed(PREFER, cyclewaySpeed, way);
 
         // use pushing section
         way.clearTags();
@@ -252,17 +252,13 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         assertPriorityAndSpeed(VERY_NICE, 6, way);
 
         way.clearTags();
-        way.setTag("highway", "path");
-        way.setTag("surface", "ground");
-        assertPriorityAndSpeed(SLIGHT_AVOID, PUSHING_SECTION_SPEED, way);
-
-        way.clearTags();
         way.setTag("highway", "cycleway");
         assertPriorityAndSpeed(VERY_NICE, cyclewaySpeed, way);
         way.setTag("foot", "yes");
+        assertPriorityAndSpeed(PREFER, cyclewaySpeed, way);
         way.setTag("segregated", "yes");
         assertPriorityAndSpeed(VERY_NICE, cyclewaySpeed, way);
-        way.setTag("segregated", "no");
+        way.setTag("segregated", "no"); // should be same as without segregated tag
         assertPriorityAndSpeed(PREFER, cyclewaySpeed, way);
 
         way.clearTags();

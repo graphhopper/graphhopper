@@ -41,8 +41,6 @@ public class RacingBikeAverageSpeedParser extends BikeCommonAverageSpeedParser {
         setSurfaceSpeed("sand", MIN_SPEED);
         setSurfaceSpeed("wood", MIN_SPEED);
 
-        setHighwaySpeed("path", 8);
-        setHighwaySpeed("footway", PUSHING_SECTION_SPEED);
         setHighwaySpeed("track", MIN_SPEED); // assume unpaved
 
         setHighwaySpeed("trunk", 20);

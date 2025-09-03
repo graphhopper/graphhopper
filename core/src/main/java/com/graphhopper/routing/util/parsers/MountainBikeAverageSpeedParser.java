@@ -35,10 +35,5 @@ public class MountainBikeAverageSpeedParser extends BikeCommonAverageSpeedParser
         setSurfaceSpeed("salt", 12);
         setSurfaceSpeed("sand", 10);
         setSurfaceSpeed("wood", 10);
-
-        setHighwaySpeed("path", 18);
-        setHighwaySpeed("footway", PUSHING_SECTION_SPEED);
-        setHighwaySpeed("track", 18);
-        setHighwaySpeed("residential", 16);
     }
 }
