@@ -16,8 +16,9 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
     private static final Set<String> CYCLEWAY_KEYS = Set.of("cycleway", "cycleway:left", "cycleway:both", "cycleway:right");
     protected static final int PUSHING_SECTION_SPEED = 4;
     protected static final int MIN_SPEED = 2;
-    // Pushing section highways are parts where you need to get off your bike and push it (German: Schiebestrecke)
-    protected final HashSet<String> pushingSectionsHighways = new HashSet<>();
+
+    // TODO NOW what about pushingSectionsHighways in BikeCommonPriorityParser -> also rename?
+    private final HashSet<String> slowByDefaultHighways = new HashSet<>(Set.of("footway", "pedestrian", "platform", "path")); // wrap in HashSet as contains(null) otherwise throws NPE
     private final Map<String, Integer> trackTypeSpeeds = new HashMap<>();
     private final Map<String, Integer> surfaceSpeeds = new HashMap<>();
     private final Map<Smoothness, Double> smoothnessFactor = new HashMap<>();
@@ -28,12 +29,6 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
     protected BikeCommonAverageSpeedParser(DecimalEncodedValue speedEnc, EnumEncodedValue<Smoothness> smoothnessEnc, DecimalEncodedValue ferrySpeedEnc) {
         super(speedEnc, ferrySpeedEnc);
         this.smoothnessEnc = smoothnessEnc;
-
-        // duplicate code as also in BikeCommonPriorityParser
-        addPushingSection("footway");
-        addPushingSection("pedestrian");
-        addPushingSection("steps");
-        addPushingSection("platform");
 
         setTrackTypeSpeed("grade1", 18); // paved
         setTrackTypeSpeed("grade2", 12); // now unpaved ...
@@ -141,9 +136,7 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         String surfaceValue = way.getTag("surface");
         String trackTypeValue = way.getTag("tracktype");
         boolean pushingRestriction = Arrays.stream(way.getTag("vehicle", "").split(";")).anyMatch(restrictedValues::contains);
-        if ("steps".equals(highwayValue)) {
-            // ignore
-        } else if (pushingSectionsHighways.contains(highwayValue)) {
+        if (slowByDefaultHighways.contains(highwayValue)) {
             if (way.hasTag("bicycle", "designated") || way.hasTag("bicycle", "official") || way.hasTag("segregated", "yes")
                     || CYCLEWAY_KEYS.stream().anyMatch(k -> way.getTag(k, "").equals("track"))) {
                 speed = trackTypeSpeeds.getOrDefault(trackTypeValue, highwaySpeeds.get("cycleway"));
@@ -178,10 +171,6 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
 
     void setHighwaySpeed(String highway, int speed) {
         highwaySpeeds.put(highway, speed);
-    }
-
-    void addPushingSection(String highway) {
-        pushingSectionsHighways.add(highway);
     }
 
     void setTrackTypeSpeed(String tracktype, int speed) {

@@ -54,12 +54,10 @@ public class RacingBikeAverageSpeedParser extends BikeCommonAverageSpeedParser {
         setHighwaySpeed("tertiary", 20);
         setHighwaySpeed("tertiary_link", 20);
 
-        addPushingSection("path");
-
         // overwite map from BikeCommon
-        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.EXCELLENT, 1.2d);
-        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.VERY_BAD, 0.1);
-        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.HORRIBLE, 0.1);
-        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.VERY_HORRIBLE, 0.1);
+        setSmoothnessSpeedFactor(Smoothness.EXCELLENT, 1.2d);
+        setSmoothnessSpeedFactor(Smoothness.VERY_BAD, 0.1);
+        setSmoothnessSpeedFactor(Smoothness.HORRIBLE, 0.1);
+        setSmoothnessSpeedFactor(Smoothness.VERY_HORRIBLE, 0.1);
     }
 }
