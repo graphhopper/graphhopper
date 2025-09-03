@@ -212,20 +212,18 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("bicycle", "designated");
         // Assume foot=no for designated in absence of a foot tag
         assertPriorityAndSpeed(VERY_NICE, cyclewaySpeed, way);
+        way.setTag("foot", "no");
+        assertPriorityAndSpeed(VERY_NICE, cyclewaySpeed, way);
         way.setTag("foot", "yes");
         assertPriorityAndSpeed(PREFER, cyclewaySpeed, way);
 
-        way.setTag("foot", "no");
-        assertPriorityAndSpeed(VERY_NICE, cyclewaySpeed, way);
-
         way.setTag("segregated", "yes");
         assertPriorityAndSpeed(VERY_NICE, cyclewaySpeed, way);
-
         way.setTag("segregated", "no");
-        assertPriorityAndSpeed(VERY_NICE, cyclewaySpeed, way);
+        assertPriorityAndSpeed(PREFER, cyclewaySpeed, way);
 
         way.setTag("bicycle", "yes");
-        assertPriorityAndSpeed(PREFER, 12, way);
+        assertPriorityAndSpeed(SLIGHT_PREFER, 12, way);
 
         way.setTag("segregated", "yes");
         assertPriorityAndSpeed(PREFER, cyclewaySpeed, way);
@@ -260,7 +258,7 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
 
         way.clearTags();
         way.setTag("highway", "cycleway");
-        assertPriorityAndSpeed(VERY_NICE, 18, way);
+        assertPriorityAndSpeed(VERY_NICE, cyclewaySpeed, way);
         way.setTag("foot", "yes");
         way.setTag("segregated", "yes");
         assertPriorityAndSpeed(VERY_NICE, cyclewaySpeed, way);
@@ -272,7 +270,7 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("vehicle", "no");
         assertPriorityAndSpeed(VERY_NICE, PUSHING_SECTION_SPEED, way);
         way.setTag("bicycle", "yes");
-        assertPriorityAndSpeed(VERY_NICE, 18, way);
+        assertPriorityAndSpeed(VERY_NICE, cyclewaySpeed, way);
     }
 
     @Test
