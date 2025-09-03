@@ -37,11 +37,6 @@ public class RacingBikePriorityParser extends BikeCommonPriorityParser {
         avoidHighwayTags.put("primary", AVOID_MORE);
         avoidHighwayTags.put("primary_link", AVOID_MORE);
 
-        routeMap.put(INTERNATIONAL, BEST.getValue());
-        routeMap.put(NATIONAL, BEST.getValue());
-        routeMap.put(REGIONAL, VERY_NICE.getValue());
-        routeMap.put(LOCAL, UNCHANGED.getValue());
-
         setSpecificClassBicycle("roadcycling");
 
         avoidSpeedLimit = 81;
