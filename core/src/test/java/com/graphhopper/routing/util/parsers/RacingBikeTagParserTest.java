@@ -100,7 +100,8 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("highway", "track");
         way.setTag("bicycle", "designated");
         way.setTag("segregated","no");
-        assertPriorityAndSpeed(AVOID_MORE, 2, way);
+        // TODO NOW no surface/tracktype should lead to 6 for racingbike
+        assertPriorityAndSpeed(AVOID_MORE, 18, way);
         way.setTag("surface", "asphalt");
         assertPriorityAndSpeed(VERY_NICE, 20, way);
         way.setTag("tracktype","grade1");

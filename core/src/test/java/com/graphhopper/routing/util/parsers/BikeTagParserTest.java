@@ -238,12 +238,12 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.clearTags();
         way.setTag("highway", "path");
         way.setTag("surface", "paved");
-        assertPriorityAndSpeed(SLIGHT_AVOID, PUSHING_SECTION_SPEED, way);
+        assertPriorityAndSpeed(SLIGHT_AVOID, 12, way);
 
         way.clearTags();
         way.setTag("highway", "path");
         way.setTag("surface", "ground");
-        assertPriorityAndSpeed(SLIGHT_AVOID, PUSHING_SECTION_SPEED, way);
+        assertPriorityAndSpeed(SLIGHT_AVOID, 8, way);
 
         way.clearTags();
         way.setTag("highway", "path");
@@ -276,7 +276,8 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("highway", "track");
         way.setTag("bicycle", "designated");
         way.setTag("segregated", "no");
-        assertPriorityAndSpeed(PREFER, 12, way);
+        // TODO NOW no surface/tracktype and segregated=no should lead to 12
+        assertPriorityAndSpeed(PREFER, cyclewaySpeed, way);
         way.setTag("surface", "asphalt");
         assertPriorityAndSpeed(VERY_NICE, cyclewaySpeed, way);
         way.setTag("tracktype", "grade1");

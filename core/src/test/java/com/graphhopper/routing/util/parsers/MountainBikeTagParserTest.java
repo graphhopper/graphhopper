@@ -92,8 +92,8 @@ public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
 
         way.clearTags();
         way.setTag("highway", "path");
-        way.setTag("surface", "ground"); // bad surface is bad for mtb speed too
-        assertPriorityAndSpeed(PREFER, 4, way);
+        way.setTag("surface", "ground");
+        assertPriorityAndSpeed(PREFER, 8, way);
     }
 
     @Test
@@ -115,10 +115,10 @@ public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
         way.clearTags();
         way.setTag("highway", "residential");
         way.setTag("surface", "ground");
-        assertEquals(16, getSpeedFromFlags(way), 0.01);
+        assertEquals(12, getSpeedFromFlags(way), 0.01);
 
         way.setTag("smoothness", "bad");
-        assertEquals(12, getSpeedFromFlags(way), 0.01);
+        assertEquals(8, getSpeedFromFlags(way), 0.01);
 
         way.clearTags();
         way.setTag("highway", "track");

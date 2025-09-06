@@ -7,7 +7,10 @@ import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.Smoothness;
 import com.graphhopper.routing.util.FerrySpeedCalculator;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 import static com.graphhopper.routing.util.parsers.AbstractAccessParser.INTENDED;
 
@@ -16,9 +19,6 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
     private static final Set<String> CYCLEWAY_KEYS = Set.of("cycleway", "cycleway:left", "cycleway:both", "cycleway:right");
     protected static final int PUSHING_SECTION_SPEED = 4;
     protected static final int MIN_SPEED = 2;
-
-    // TODO NOW what about pushingSectionsHighways in BikeCommonPriorityParser -> also rename?
-    private final HashSet<String> slowByDefaultHighways = new HashSet<>(Set.of("footway", "pedestrian", "platform", "path")); // wrap in HashSet as contains(null) otherwise throws NPE
     private final Map<String, Integer> trackTypeSpeeds = new HashMap<>();
     private final Map<String, Integer> surfaceSpeeds = new HashMap<>();
     private final Map<Smoothness, Double> smoothnessFactor = new HashMap<>();
@@ -136,37 +136,48 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         String surfaceValue = way.getTag("surface");
         String trackTypeValue = way.getTag("tracktype");
         boolean pushingRestriction = Arrays.stream(way.getTag("vehicle", "").split(";")).anyMatch(restrictedValues::contains);
-        if (slowByDefaultHighways.contains(highwayValue)) {
-            if (way.hasTag("bicycle", "designated") || way.hasTag("bicycle", "official") || way.hasTag("segregated", "yes")
-                    || CYCLEWAY_KEYS.stream().anyMatch(k -> way.getTag(k, "").equals("track"))) {
-                speed = trackTypeSpeeds.getOrDefault(trackTypeValue, highwaySpeeds.get("cycleway"));
-            }
-            else if (way.hasTag("bicycle", "yes"))
-                speed = 12;
-        }
-
         Integer surfaceSpeed = surfaceSpeeds.get(surfaceValue);
+        Integer trackTypeSpeed = trackTypeSpeeds.get(trackTypeValue);
+        if (trackTypeSpeed != null)
+            surfaceSpeed = surfaceSpeed == null ? trackTypeSpeed : Math.min(surfaceSpeed, trackTypeSpeed);
+
         if (way.hasTag("surface") && surfaceSpeed == null
                 || way.hasTag("bicycle", "dismount")
                 || way.hasTag("railway", "platform")
                 || pushingRestriction && !way.hasTag("bicycle", INTENDED)
                 || way.hasTag("service")) {
             speed = PUSHING_SECTION_SPEED;
-        } else if ("track".equals(highwayValue) ||
-                "bridleway".equals(highwayValue) ) {
-            if (surfaceSpeed != null)
-                speed = surfaceSpeed;
-            else if (trackTypeSpeeds.containsKey(trackTypeValue))
-                speed = trackTypeSpeeds.get(trackTypeValue);
-        } else if (surfaceSpeed != null) {
-            speed = Math.min(surfaceSpeed, speed);
+        } else if (highwayValue != null) {
+            switch (highwayValue) {
+                case "path", "track", "bridleway": // speed increase if good surface
+                    if (surfaceSpeed != null) {
+                        if (!isDesignated(way) && "path".equals(highwayValue))
+                            speed = 0.7 * surfaceSpeed; // without extra info we expect that that width is too small for "full speed"
+                        else
+                            speed = surfaceSpeed;
+                    }
+                case "footway", "pedestrian", "platform": // ... and speed increase if for bike
+                    if (isDesignated(way))
+                        speed = Math.max(speed, highwaySpeeds.get("cycleway"));
+                    else if (way.hasTag("bicycle", "yes"))
+                        speed = Math.max(speed, highwaySpeeds.get("track"));
+            }
         }
+
+        // speed reduction if bad surface
+        if (surfaceSpeed != null)
+            speed = Math.min(surfaceSpeed, speed);
 
         Smoothness smoothness = smoothnessEnc.getEnum(false, edgeId, edgeIntAccess);
         speed = Math.max(MIN_SPEED, smoothnessFactor.get(smoothness) * speed);
         setSpeed(false, edgeId, edgeIntAccess, applyMaxSpeed(way, speed, false));
         if (avgSpeedEnc.isStoreTwoDirections())
             setSpeed(true, edgeId, edgeIntAccess, applyMaxSpeed(way, speed, true));
+    }
+
+    private boolean isDesignated(ReaderWay way) {
+        return way.hasTag("bicycle", "designated") || way.hasTag("bicycle", "official") || way.hasTag("segregated", "yes")
+                || CYCLEWAY_KEYS.stream().anyMatch(k -> way.getTag(k, "").equals("track"));
     }
 
     void setHighwaySpeed(String highway, int speed) {

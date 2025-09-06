@@ -18,22 +18,17 @@ public class MountainBikeAverageSpeedParser extends BikeCommonAverageSpeedParser
         setTrackTypeSpeed("grade4", 8);
         setTrackTypeSpeed("grade5", 6); // like sand/grass
 
-        setSurfaceSpeed("concrete", 14);
-        setSurfaceSpeed("concrete:lanes", 16);
-        setSurfaceSpeed("concrete:plates", 16);
         setSurfaceSpeed("dirt", 14);
         setSurfaceSpeed("earth", 14);
-        setSurfaceSpeed("fine_gravel", 18);
+        setSurfaceSpeed("fine_gravel", 16);
         setSurfaceSpeed("grass", 14);
         setSurfaceSpeed("grass_paver", 14);
         setSurfaceSpeed("compacted", 16);
-        setSurfaceSpeed("gravel", 16);
-        setSurfaceSpeed("ground", 16);
+
         setSurfaceSpeed("ice", MIN_SPEED);
-        setSurfaceSpeed("metal", 10);
-        setSurfaceSpeed("mud", 12);
-        setSurfaceSpeed("salt", 12);
-        setSurfaceSpeed("sand", 10);
-        setSurfaceSpeed("wood", 10);
+
+        setSurfaceSpeed("salt", 6);
+        setSurfaceSpeed("sand", 6);
+        setSurfaceSpeed("wood", 6);
     }
 }
