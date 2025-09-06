@@ -123,10 +123,10 @@ public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
         way.clearTags();
         way.setTag("highway", "track");
         way.setTag("tracktype", "grade5");
-        assertEquals(6, getSpeedFromFlags(way), 0.01);
+        assertEquals(PUSHING_SECTION_SPEED, getSpeedFromFlags(way), 0.01);
 
         way.setTag("smoothness", "bad");
-        assertEquals(4, getSpeedFromFlags(way), 0.01);
+        assertEquals(MIN_SPEED, getSpeedFromFlags(way), 0.01);
 
         way.setTag("smoothness", "impassable");
         assertEquals(MIN_SPEED, getSpeedFromFlags(way), 0.01);
@@ -141,7 +141,6 @@ public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
         // unchanged
         assertPriorityAndSpeed(PREFER, 12, osmWay, osmRel);
 
-        // TODO NOW: if track is an official bike route we should assume that surface is at least for 14km/h
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "lcn");
         assertPriorityAndSpeed(BEST, 12, osmWay, osmRel);
@@ -163,8 +162,7 @@ public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
 
         osmWay.clearTags();
         osmWay.setTag("highway", "track");
-        // TODO NOW priority should be only PREFER not BEST
-//        assertPriorityAndSpeed(PREFER, 12, osmWay, osmRel);
+        assertPriorityAndSpeed(BEST, 12, osmWay, osmRel);
 
         osmRel.setTag("route", "mtb");
         osmRel.setTag("network", "lcn");

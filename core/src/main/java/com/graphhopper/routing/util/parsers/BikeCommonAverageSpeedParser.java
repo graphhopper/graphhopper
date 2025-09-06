@@ -6,6 +6,7 @@ import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.Smoothness;
 import com.graphhopper.routing.util.FerrySpeedCalculator;
+import com.graphhopper.storage.IntsRef;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -120,6 +121,9 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
 
     @Override
     public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way) {
+        // TODO NOW official bike route is at least like bicycle=yes => boosts speed for path and track
+        // designated = isDesignate(way) || MISSING != bikeRouteEnc.getEnum(false, edgeId, edgeIntAccess);
+
         String highwayValue = way.getTag("highway");
         if (highwayValue == null) {
             if (FerrySpeedCalculator.isFerry(way)) {
@@ -149,13 +153,10 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
             speed = PUSHING_SECTION_SPEED;
         } else if (highwayValue != null) {
             switch (highwayValue) {
-                case "path", "track", "bridleway": // speed increase if good surface
-                    if (surfaceSpeed != null) {
-                        if (!isDesignated(way) && "path".equals(highwayValue))
-                            speed = 0.7 * surfaceSpeed; // without extra info we expect that that width is too small for "full speed"
-                        else
-                            speed = surfaceSpeed;
-                    }
+                case "path", "track", "bridleway": // speed increase if good surface but not too much if bike status unknown
+                    if (surfaceSpeed != null)
+                        speed = isDesignated(way) || way.hasTag("bicycle", "yes") ? surfaceSpeed : surfaceSpeed * 0.7;
+
                 case "footway", "pedestrian", "platform": // ... and speed increase if for bike
                     if (isDesignated(way))
                         speed = Math.max(speed, highwaySpeeds.get("cycleway"));

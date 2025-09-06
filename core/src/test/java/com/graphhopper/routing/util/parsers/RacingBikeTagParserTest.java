@@ -98,9 +98,15 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
     public void testTrack() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "track");
+        way.setTag("bicycle", "yes");
+        assertPriorityAndSpeed(AVOID_MORE, 2, way);
+        way.setTag("surface", "asphalt");
+        assertPriorityAndSpeed(VERY_NICE, 20, way);
+
+        way.clearTags();
+        way.setTag("highway", "track");
         way.setTag("bicycle", "designated");
         way.setTag("segregated","no");
-        // TODO NOW no surface/tracktype should lead to 6 for racingbike
         assertPriorityAndSpeed(AVOID_MORE, 18, way);
         way.setTag("surface", "asphalt");
         assertPriorityAndSpeed(VERY_NICE, 20, way);
@@ -117,7 +123,7 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("highway", "track");
         way.setTag("tracktype", "grade3");
         // use pushing section
-        assertEquals(PUSHING_SECTION_SPEED, getSpeedFromFlags(way), 1e-1);
+        assertEquals(MIN_SPEED, getSpeedFromFlags(way), 1e-1);
 
         // Even if it is part of a cycle way
         way.setTag("bicycle", "yes");
@@ -125,7 +131,7 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
 
         way.clearTags();
         way.setTag("highway", "steps");
-        assertEquals(2, getSpeedFromFlags(way), 1e-1);
+        assertEquals(MIN_SPEED, getSpeedFromFlags(way), 1e-1);
 
         way.clearTags();
         way.setTag("highway", "primary");
@@ -171,10 +177,10 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         way.clearTags();
         way.setTag("highway", "track");
         way.setTag("tracktype", "grade5");
-        assertEquals(4, getSpeedFromFlags(way), 0.01);
+        assertEquals(MIN_SPEED, getSpeedFromFlags(way), 0.01);
 
         way.setTag("smoothness", "bad");
-        assertEquals(2, getSpeedFromFlags(way), 0.01);
+        assertEquals(MIN_SPEED, getSpeedFromFlags(way), 0.01);
 
         way.setTag("smoothness", "impassable");
         assertEquals(MIN_SPEED, getSpeedFromFlags(way), 0.01);
@@ -212,12 +218,7 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         osmWay.clearTags();
         osmWay.setTag("highway", "track");
         osmWay.setTag("tracktype", "grade3");
-        assertPriorityAndSpeed(AVOID_MORE, PUSHING_SECTION_SPEED, osmWay);
-
-        // Now we assume bicycle=yes, and tracktype = null
-        osmWay.clearTags();
-        osmWay.setTag("highway", "track");
-        assertPriorityAndSpeed(AVOID_MORE, 2, osmWay);
+        assertPriorityAndSpeed(AVOID_MORE, MIN_SPEED, osmWay);
     }
 
     @Test
