@@ -6,7 +6,6 @@ import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.Smoothness;
 import com.graphhopper.routing.util.FerrySpeedCalculator;
-import com.graphhopper.storage.IntsRef;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -153,11 +152,13 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
             speed = PUSHING_SECTION_SPEED;
         } else if (highwayValue != null) {
             switch (highwayValue) {
-                case "path", "track", "bridleway": // speed increase if good surface but not too much if bike status unknown
+                case "path", "track", "bridleway":
+                    // speed change (increase or decrease)
                     if (surfaceSpeed != null)
                         speed = isDesignated(way) || way.hasTag("bicycle", "yes") ? surfaceSpeed : surfaceSpeed * 0.7;
 
-                case "footway", "pedestrian", "platform": // ... and speed increase if for bike
+                case "footway", "pedestrian", "platform":
+                    // (potential additional) speed increase if allowed for bike
                     if (isDesignated(way))
                         speed = Math.max(speed, highwaySpeeds.get("cycleway"));
                     else if (way.hasTag("bicycle", "yes"))

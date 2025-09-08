@@ -37,6 +37,11 @@ public class RacingBikePriorityParser extends BikeCommonPriorityParser {
         avoidHighwayTags.put("primary", AVOID_MORE);
         avoidHighwayTags.put("primary_link", AVOID_MORE);
 
+        routeMap.put(INTERNATIONAL, BEST.getValue());
+        routeMap.put(NATIONAL, BEST.getValue());
+        routeMap.put(REGIONAL, VERY_NICE.getValue());
+        routeMap.put(LOCAL, UNCHANGED.getValue());
+
         setSpecificClassBicycle("roadcycling");
 
         avoidSpeedLimit = 81;
@@ -51,7 +56,7 @@ public class RacingBikePriorityParser extends BikeCommonPriorityParser {
             weightToPrioMap.put(40d, SLIGHT_AVOID);
         } else if ("track".equals(highway)) {
             String trackType = way.getTag("tracktype");
-            if ("grade1".equals(trackType) || goodSurface.contains(way.getTag("surface","")))
+            if ("grade1".equals(trackType) || goodSurface.contains(way.getTag("surface", "")))
                 weightToPrioMap.put(110d, VERY_NICE);
             else if (trackType == null || trackType.startsWith("grade"))
                 weightToPrioMap.put(110d, AVOID_MORE);
