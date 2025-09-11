@@ -19,12 +19,13 @@
 {
   "priority": [
     { "if": "true",  "multiply_by": "bike_priority" },
-    { "if": "bike_road_access == PRIVATE", "multiply_by": "0" },
+    { "if": "bike_road_access == PRIVATE || bike_road_access == DESTINATION", "multiply_by": "0.1" },
     { "if": "!bike_access && (!backward_bike_access || roundabout)",  "multiply_by": "0" },
     { "else_if": "!bike_access && backward_bike_access",  "multiply_by": "0.2" }
   ],
   "speed": [
     { "if": "true", "limit_to": "bike_average_speed" },
-    { "if": "!bike_access && backward_bike_access", "limit_to": "5" }
+    { "if": "!bike_access && backward_bike_access", "limit_to": "5" },
+    { "if": "bike_road_access == PRIVATE || bike_road_access == DESTINATION", "limit_to": "6" }
   ]
 }
