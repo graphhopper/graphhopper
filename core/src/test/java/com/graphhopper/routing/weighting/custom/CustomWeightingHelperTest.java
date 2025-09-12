@@ -72,7 +72,7 @@ class CustomWeightingHelperTest {
     }
 
     @Test
-    public void testRawTurnWeight() {
+    public void testCalcChangeAngle() {
         EncodingManager encodingManager = new EncodingManager.Builder().add(Orientation.create()).build();
         DecimalEncodedValue orientationEnc = encodingManager.getDecimalEncodedValue(Orientation.KEY);
         OrientationCalculator calc = new OrientationCalculator(orientationEnc);
@@ -135,12 +135,12 @@ class CustomWeightingHelperTest {
 
         CustomModel customModel = new CustomModel();
         customModel.addToSpeed(If("true", LIMIT, "100"));
-        customModel.addToTurnWeight(If("change_angle > -25 && change_angle < 25", ADD, "0")); // straight
-        customModel.addToTurnWeight(ElseIf("change_angle >= 25 && change_angle < 80", ADD, "0.5")); // right
-        customModel.addToTurnWeight(ElseIf("change_angle >= 80 && change_angle <= 180", ADD, "1")); // sharp right
-        customModel.addToTurnWeight(ElseIf("change_angle <= -25 && change_angle > -80", ADD, "6")); // left
-        customModel.addToTurnWeight(ElseIf("change_angle <= -80 && change_angle >= -180", ADD, "12")); // sharp left
-        customModel.addToTurnWeight(Else(ADD, "Infinity")); // uTurn
+        customModel.addToTurnPenalty(If("change_angle > -25 && change_angle < 25", ADD, "0")); // straight
+        customModel.addToTurnPenalty(ElseIf("change_angle >= 25 && change_angle < 80", ADD, "0.5")); // right
+        customModel.addToTurnPenalty(ElseIf("change_angle >= 80 && change_angle <= 180", ADD, "1")); // sharp right
+        customModel.addToTurnPenalty(ElseIf("change_angle <= -25 && change_angle > -80", ADD, "6")); // left
+        customModel.addToTurnPenalty(ElseIf("change_angle <= -80 && change_angle >= -180", ADD, "12")); // sharp left
+        customModel.addToTurnPenalty(Else(ADD, "Infinity")); // uTurn
 
         Profile profile = new Profile("car");
         profile.setTurnCostsConfig(new TurnCostsConfig());

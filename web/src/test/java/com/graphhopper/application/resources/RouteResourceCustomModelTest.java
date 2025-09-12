@@ -77,8 +77,8 @@ public class RouteResourceCustomModelTest {
                                 getCustomModel().setDistanceInfluence(70d)),
                         new Profile("car_tc_left").setCustomModel(TestProfiles.accessAndSpeed("car_tc_left", "car").
                                         getCustomModel().setDistanceInfluence(70d).
-                                        addToTurnWeight(If("change_angle <= -25 && change_angle > -80", ADD, "100")).
-                                        addToTurnWeight(ElseIf("change_angle <= -80 && change_angle >= -180", ADD, "100"))).
+                                        addToTurnPenalty(If("change_angle <= -25 && change_angle > -80", ADD, "100")).
+                                        addToTurnPenalty(ElseIf("change_angle <= -80 && change_angle >= -180", ADD, "100"))).
                                 setTurnCostsConfig(new TurnCostsConfig(List.of("motor_vehicle"))),
                         new Profile("car_with_area").setCustomModel(TestProfiles.accessAndSpeed("unused", "car").
                                 getCustomModel().addToPriority(If("in_external_area52", MULTIPLY, "0.05"))),

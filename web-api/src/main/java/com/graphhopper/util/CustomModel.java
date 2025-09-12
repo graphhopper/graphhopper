@@ -38,7 +38,7 @@ public class CustomModel {
     private boolean internal;
     private List<Statement> speedStatements = new ArrayList<>();
     private List<Statement> priorityStatements = new ArrayList<>();
-    private List<Statement> turnWeightStatements = new ArrayList<>();
+    private List<Statement> turnPenaltyStatements = new ArrayList<>();
 
     private JsonFeatureCollection areas = new JsonFeatureCollection();
 
@@ -53,7 +53,7 @@ public class CustomModel {
 
         speedStatements = deepCopy(toCopy.getSpeed());
         priorityStatements = deepCopy(toCopy.getPriority());
-        turnWeightStatements = deepCopy(toCopy.getTurnWeightStatements());
+        turnPenaltyStatements = deepCopy(toCopy.getTurnPenalty());
 
         addAreas(toCopy.getAreas());
     }
@@ -130,13 +130,13 @@ public class CustomModel {
         return this;
     }
 
-    @JsonProperty("turn_weight")
-    public List<Statement> getTurnWeightStatements() {
-        return turnWeightStatements;
+    @JsonProperty("turn_penalty")
+    public List<Statement> getTurnPenalty() {
+        return turnPenaltyStatements;
     }
 
-    public CustomModel addToTurnWeight(Statement st) {
-        getTurnWeightStatements().add(st);
+    public CustomModel addToTurnPenalty(Statement st) {
+        getTurnPenalty().add(st);
         return this;
     }
 
@@ -177,7 +177,7 @@ public class CustomModel {
         // used to check against stored custom models, see #2026
         return "distanceInfluence=" + distanceInfluence + "|headingPenalty=" + headingPenalty
                 + "|speedStatements=" + speedStatements + "|priorityStatements=" + priorityStatements
-                + "|turnWeightStatements=" + turnWeightStatements
+                + "|turnPenaltyStatements=" + turnPenaltyStatements
                 + "|areas=" + areas;
     }
 
@@ -197,7 +197,7 @@ public class CustomModel {
             mergedCM.headingPenalty = queryModel.headingPenalty;
         mergedCM.speedStatements.addAll(queryModel.getSpeed());
         mergedCM.priorityStatements.addAll(queryModel.getPriority());
-        mergedCM.turnWeightStatements.addAll(queryModel.getTurnWeightStatements());
+        mergedCM.turnPenaltyStatements.addAll(queryModel.getTurnPenalty());
 
         mergedCM.addAreas(queryModel.getAreas());
         return mergedCM;

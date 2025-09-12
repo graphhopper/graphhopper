@@ -63,8 +63,8 @@ public class DefaultWeightingFactory implements WeightingFactory {
         Weighting weighting = null;
         if (CustomWeighting.NAME.equalsIgnoreCase(weightingStr)) {
             final CustomModel queryCustomModel = requestHints.getObject(CustomModel.KEY, null);
-            if (!profile.getHints().getBool("allow_turn_weight_in_request", false) && queryCustomModel != null && !queryCustomModel.getTurnWeightStatements().isEmpty())
-                throw new IllegalArgumentException("The turn_weight feature is not supported per request for " + profile.getName() + ". Set 'allow_turn_weight_in_request' to true in the config.yml.");
+            if (!profile.getHints().getBool("allow_turn_penalty_in_request", false) && queryCustomModel != null && !queryCustomModel.getTurnPenalty().isEmpty())
+                throw new IllegalArgumentException("The turn_penalty feature is not supported per request for " + profile.getName() + ". Set 'allow_turn_penalty_in_request' to true in the config.yml.");
 
             final CustomModel mergedCustomModel = CustomModel.merge(profile.getCustomModel(), queryCustomModel);
             if (requestHints.has(Parameters.Routing.HEADING_PENALTY))
@@ -78,10 +78,10 @@ public class DefaultWeightingFactory implements WeightingFactory {
                     throw new IllegalArgumentException("Cannot find turn restriction encoded value for " + profile.getName());
                 int uTurnCosts = hints.getInt(Parameters.Routing.U_TURN_COSTS, profile.getTurnCostsConfig().getUTurnCosts());
                 TurnCostsConfig tcConfig = new TurnCostsConfig(profile.getTurnCostsConfig()).setUTurnCosts(uTurnCosts);
-                turnCostProvider = new DefaultTurnCostProvider(turnRestrictionEnc, graph, tcConfig, parameters.getTurnWeightMapping());
+                turnCostProvider = new DefaultTurnCostProvider(turnRestrictionEnc, graph, tcConfig, parameters.getTurnPenaltyMapping());
             } else {
-                if (!mergedCustomModel.getTurnWeightStatements().isEmpty())
-                    throw new IllegalArgumentException("The turn_weight feature is not supported for " + profile.getName() + ". You have to enable 'turn_costs' in config.yml.");
+                if (!mergedCustomModel.getTurnPenalty().isEmpty())
+                    throw new IllegalArgumentException("The turn_penalty feature is not supported for " + profile.getName() + ". You have to enable 'turn_costs' in config.yml.");
                 turnCostProvider = NO_TURN_COST_PROVIDER;
             }
 

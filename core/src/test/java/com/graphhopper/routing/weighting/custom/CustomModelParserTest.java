@@ -20,7 +20,6 @@ package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.EdgeIteratorState;
@@ -338,20 +337,20 @@ class CustomModelParserTest {
     }
 
     @Test
-    void testTurnWeight() {
+    void testTurnPenalty() {
         CustomModel customModel = new CustomModel();
         customModel.addToSpeed(If("true", LIMIT, "100"));
-        customModel.addToTurnWeight(If("prev_road_class != PRIMARY && road_class == PRIMARY", ADD, "100"));
-        TurnCostProvider.TurnWeightMapping turnWeightMapping = CustomModelParser.createWeightingParameters(customModel, encodingManager).
-                getTurnWeightMapping();
+        customModel.addToTurnPenalty(If("prev_road_class != PRIMARY && road_class == PRIMARY", ADD, "100"));
+        CustomWeighting.TurnPenaltyMapping turnPenaltyMapping = CustomModelParser.createWeightingParameters(customModel, encodingManager).
+                getTurnPenaltyMapping();
 
         BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
         EdgeIteratorState edge1 = graph.edge(0, 1).setDistance(100).set(roadClassEnc, SECONDARY);
         EdgeIteratorState edge2 = graph.edge(1, 2).setDistance(100).set(roadClassEnc, PRIMARY);
         EdgeIteratorState edge3 = graph.edge(2, 3).setDistance(100).set(roadClassEnc, PRIMARY);
 
-        assertEquals(100, turnWeightMapping.calcTurnWeight(graph, graph.getEdgeAccess(), edge1.getEdge(), 1, edge2.getEdge()));
-        assertEquals(0, turnWeightMapping.calcTurnWeight(graph, graph.getEdgeAccess(), edge2.getEdge(), 2, edge3.getEdge()));
+        assertEquals(100, turnPenaltyMapping.get(graph, graph.getEdgeAccess(), edge1.getEdge(), 1, edge2.getEdge()));
+        assertEquals(0, turnPenaltyMapping.get(graph, graph.getEdgeAccess(), edge2.getEdge(), 2, edge3.getEdge()));
     }
 
     @Test

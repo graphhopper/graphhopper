@@ -37,10 +37,6 @@ public interface TurnCostProvider {
      */
     long calcTurnMillis(int inEdge, int viaNode, int outEdge);
 
-    interface TurnWeightMapping {
-        double calcTurnWeight(BaseGraph graph, EdgeIntAccess edgeIntAccess, int inEdge, int viaNode, int outEdge);
-    }
-
     TurnCostProvider NO_TURN_COST_PROVIDER = new TurnCostProvider() {
         @Override
         public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {

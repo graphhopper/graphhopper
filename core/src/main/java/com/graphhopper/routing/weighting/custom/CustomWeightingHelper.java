@@ -57,7 +57,7 @@ public class CustomWeightingHelper {
         return 1;
     }
 
-    public double getTurnWeight(BaseGraph graph, EdgeIntAccess edgeIntAccess, int inEdge, int viaNode, int outEdge) {
+    public double getTurnPenalty(BaseGraph graph, EdgeIntAccess edgeIntAccess, int inEdge, int viaNode, int outEdge) {
         return 0;
     }
 

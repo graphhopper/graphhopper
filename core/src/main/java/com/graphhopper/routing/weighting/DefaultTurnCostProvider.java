@@ -20,6 +20,7 @@ package com.graphhopper.routing.weighting;
 
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.TurnCostStorage;
@@ -35,11 +36,11 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
     private final double uTurnCosts;
     private final BaseGraph graph;
     private final EdgeIntAccess edgeIntAccess;
-    private final TurnWeightMapping turnWeightMapping;
+    private final CustomWeighting.TurnPenaltyMapping turnPenaltyMapping;
 
     public DefaultTurnCostProvider(BooleanEncodedValue turnRestrictionEnc,
                                    Graph graph, TurnCostsConfig tcConfig,
-                                   TurnWeightMapping turnWeightMapping) {
+                                   CustomWeighting.TurnPenaltyMapping turnPenaltyMapping) {
         this.uTurnCostsInt = tcConfig.getUTurnCosts();
         if (uTurnCostsInt < 0 && uTurnCostsInt != INFINITE_U_TURN_COSTS) {
             throw new IllegalArgumentException("u-turn costs must be positive, or equal to " + INFINITE_U_TURN_COSTS + " (=infinite costs)");
@@ -55,7 +56,7 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
         this.graph = graph.getBaseGraph();
         this.edgeIntAccess = graph.getBaseGraph().getEdgeAccess();
 
-        this.turnWeightMapping = turnWeightMapping;
+        this.turnPenaltyMapping = turnPenaltyMapping;
     }
 
     @Override
@@ -71,8 +72,8 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
             if (turnCostStorage.get(turnRestrictionEnc, inEdge, viaNode, outEdge))
                 return Double.POSITIVE_INFINITY;
         }
-        if (turnWeightMapping != null)
-            return turnWeightMapping.calcTurnWeight(graph, edgeIntAccess, inEdge, viaNode, outEdge);
+        if (turnPenaltyMapping != null)
+            return turnPenaltyMapping.get(graph, edgeIntAccess, inEdge, viaNode, outEdge);
         return 0;
     }
 

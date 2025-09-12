@@ -115,7 +115,7 @@ public class CustomModelParser {
             return new CustomWeighting.Parameters(
                     prio::getSpeed, prio::calcMaxSpeed,
                     prio::getPriority, prio::calcMaxPriority,
-                    prio::getTurnWeight,
+                    prio::getTurnPenalty,
                     customModel.getDistanceInfluence() == null ? 0 : customModel.getDistanceInfluence(),
                     customModel.getHeadingPenalty() == null ? Parameters.Routing.DEFAULT_HEADING_PENALTY : customModel.getHeadingPenalty());
         } catch (ReflectiveOperationException ex) {
@@ -158,17 +158,17 @@ public class CustomModelParser {
             Set<String> speedVariables = ValueExpressionVisitor.findVariables(customModel.getSpeed(), lookup);
             List<Java.BlockStatement> speedStatements = createGetSpeedStatements(speedVariables, customModel, lookup);
 
-            Set<String> turnWeightVariables = ValueExpressionVisitor.findVariables(customModel.getTurnWeightStatements(), lookup);
-            List<Java.BlockStatement> turnWeightStatements = createGetTurnWeightStatements(turnWeightVariables, customModel, lookup);
+            Set<String> turnPenaltyVariables = ValueExpressionVisitor.findVariables(customModel.getTurnPenalty(), lookup);
+            List<Java.BlockStatement> turnPenaltyStatements = createGetTurnPenaltyStatements(turnPenaltyVariables, customModel, lookup);
 
             // Create different class name, which is required only for debugging.
             // TODO does it improve performance too? I.e. it could be that the JIT is confused if different classes
             //  have the same name and it mixes performance stats. See https://github.com/janino-compiler/janino/issues/137
             long counter = longVal.incrementAndGet();
-            String classTemplate = createClassTemplate(counter, priorityVariables, speedVariables, turnWeightVariables, lookup, CustomModel.getAreasAsMap(customModel.getAreas()));
+            String classTemplate = createClassTemplate(counter, priorityVariables, speedVariables, turnPenaltyVariables, lookup, CustomModel.getAreasAsMap(customModel.getAreas()));
             Java.CompilationUnit cu = (Java.CompilationUnit) new Parser(new Scanner("source", new StringReader(classTemplate))).
                     parseAbstractCompilationUnit();
-            cu = injectStatements(priorityStatements, speedStatements, turnWeightStatements, cu);
+            cu = injectStatements(priorityStatements, speedStatements, turnPenaltyStatements, cu);
             SimpleCompiler sc = createCompiler(counter, cu);
             return sc.getClassLoader().loadClass("com.graphhopper.routing.weighting.custom.JaninoCustomWeightingHelperSubclass" + counter);
         } catch (Exception ex) {
@@ -268,26 +268,26 @@ public class CustomModelParser {
     }
 
     /**
-     * Parse the expressions from CustomModel relevant for the method getTurnWeight - see createClassTemplate.
+     * Parse the expressions from CustomModel relevant for the method getTurnPenalty - see createClassTemplate.
      *
      * @return the created statements (parsed expressions)
      */
-    private static List<Java.BlockStatement> createGetTurnWeightStatements(Set<String> turnWeightVariables,
-                                                                           CustomModel customModel, EncodedValueLookup lookup) throws Exception {
-        for (Statement s : customModel.getTurnWeightStatements()) {
+    private static List<Java.BlockStatement> createGetTurnPenaltyStatements(Set<String> turnPenaltyVariables,
+                                                                            CustomModel customModel, EncodedValueLookup lookup) throws Exception {
+        for (Statement s : customModel.getTurnPenalty()) {
             if (s.operation() == Statement.Op.ADD && s.value().trim().startsWith("-"))
                 throw new IllegalArgumentException("The value for the 'add' operation must be positive, but was: " + s.value());
             if (s.isBlock())
-                throw new IllegalArgumentException("'turn_weight' statement cannot be a block (not yet implemented)");
+                throw new IllegalArgumentException("'turn_penalty' statement cannot be a block (not yet implemented)");
             if (s.operation() != Statement.Op.ADD)
-                throw new IllegalArgumentException("'turn_weight' statement must have the operation 'add' but was: " + s.operation() + " (not yet implemented)");
+                throw new IllegalArgumentException("'turn_penalty' statement must have the operation 'add' but was: " + s.operation() + " (not yet implemented)");
         }
 
-        List<Java.BlockStatement> turnWeightStatements = new ArrayList<>(verifyExpressions(new StringBuilder(),
-                "turn_weight entry", turnWeightVariables, customModel.getTurnWeightStatements(), lookup));
+        List<Java.BlockStatement> turnPenaltyStatements = new ArrayList<>(verifyExpressions(new StringBuilder(),
+                "turn_penalty entry", turnPenaltyVariables, customModel.getTurnPenalty(), lookup));
         boolean needTwoDirections = false;
         Function<String, EncodedValue> fct = createSimplifiedLookup(lookup);
-        for (String ttv : turnWeightVariables) {
+        for (String ttv : turnPenaltyVariables) {
             EncodedValue ev = fct.apply(ttv);
             if (ev != null && ev.isStoreTwoDirections() || ttv.equals(CHANGE_ANGLE)) {
                 needTwoDirections = true;
@@ -295,30 +295,30 @@ public class CustomModelParser {
             }
         }
 
-        String turnWeightMethodStartBlock = "double value = 0;\n";
+        String turnPenaltyMethodStartBlock = "double value = 0;\n";
         if (needTwoDirections) {
             // Performance optimization: avoid the following two calls if there is no encoded value
             // that stores two directions. The call to isAdjNode is slightly faster than calling
             // getEdgeIteratorState as it avoids creating a new object and accesses only one node
             // but is slightly less safe as it cannot check that at least one node must be
             // identical (the case where getEdgeIteratorState returns null)
-            turnWeightMethodStartBlock += "boolean inEdgeReverse = !graph.isAdjNode(inEdge, viaNode);\n" +
+            turnPenaltyMethodStartBlock += "boolean inEdgeReverse = !graph.isAdjNode(inEdge, viaNode);\n" +
                     "boolean outEdgeReverse = !graph.isAdjNode(outEdge, viaNode);\n";
         }
 
-        for (String arg : turnWeightVariables) {
-            turnWeightMethodStartBlock += getTurnWeightVariableDeclaration(lookup, arg, needTwoDirections);
+        for (String arg : turnPenaltyVariables) {
+            turnPenaltyMethodStartBlock += getTurnPenaltyVariableDeclaration(lookup, arg, needTwoDirections);
         }
 
         // special case for change_angle method call: we need the orientation encoded value
-        if (turnWeightVariables.contains(CHANGE_ANGLE)) {
-            turnWeightVariables.remove(CHANGE_ANGLE);
-            turnWeightVariables.add(Orientation.KEY);
+        if (turnPenaltyVariables.contains(CHANGE_ANGLE)) {
+            turnPenaltyVariables.remove(CHANGE_ANGLE);
+            turnPenaltyVariables.add(Orientation.KEY);
         }
 
-        turnWeightStatements.addAll(0, new Parser(new org.codehaus.janino.Scanner("getTurnWeight", new StringReader(turnWeightMethodStartBlock))).
+        turnPenaltyStatements.addAll(0, new Parser(new org.codehaus.janino.Scanner("getTurnPenalty", new StringReader(turnPenaltyMethodStartBlock))).
                 parseBlockStatements());
-        return turnWeightStatements;
+        return turnPenaltyStatements;
     }
 
     /**
@@ -349,8 +349,8 @@ public class CustomModelParser {
         }
     }
 
-    private static String getTurnWeightVariableDeclaration(EncodedValueLookup lookup, final String arg, boolean needTwoDirections) {
-        // parameters in method getTurnWeight are: int inEdge, int viaNode, int outEdge.
+    private static String getTurnPenaltyVariableDeclaration(EncodedValueLookup lookup, final String arg, boolean needTwoDirections) {
+        // parameters in method getTurnPenalty are: int inEdge, int viaNode, int outEdge.
         // The variables outEdgeReverse and inEdgeReverse are provided from initial calls if needTwoDirections is true.
         if (arg.equals(CHANGE_ANGLE)) {
             return "double change_angle = CustomWeightingHelper.calcChangeAngle(edgeIntAccess, this.orientation_enc, inEdge, inEdgeReverse, outEdge, outEdgeReverse);\n";
@@ -374,7 +374,7 @@ public class CustomModelParser {
                 throw new IllegalArgumentException("Not supported for prev: " + argSubstr);
             }
         } else {
-            throw new IllegalArgumentException("Not supported for turn_weight: " + arg);
+            throw new IllegalArgumentException("Not supported for turn_penalty: " + arg);
         }
     }
 
@@ -412,7 +412,7 @@ public class CustomModelParser {
     private static String createClassTemplate(long counter,
                                               Set<String> priorityVariables,
                                               Set<String> speedVariables,
-                                              Set<String> turnWeightVariables,
+                                              Set<String> turnPenaltyVariables,
                                               EncodedValueLookup lookup, Map<String, JsonFeature> areas) {
         final StringBuilder importSourceCode = new StringBuilder("import com.graphhopper.routing.ev.*;\n");
         importSourceCode.append("import java.util.Map;\n");
@@ -429,7 +429,7 @@ public class CustomModelParser {
             set.add(prioVar.startsWith(BACKWARD_PREFIX) ? prioVar.substring(BACKWARD_PREFIX.length()) : prioVar);
         for (String speedVar : speedVariables)
             set.add(speedVar.startsWith(BACKWARD_PREFIX) ? speedVar.substring(BACKWARD_PREFIX.length()) : speedVar);
-        for (String speedVar : turnWeightVariables)
+        for (String speedVar : turnPenaltyVariables)
             set.add(speedVar.startsWith(PREV_PREFIX) ? speedVar.substring(PREV_PREFIX.length()) : speedVar);
 
         for (String arg : set) {
@@ -492,7 +492,7 @@ public class CustomModelParser {
                 + "      return 1; //will be overwritten by code injected in DeepCopier\n"
                 + "   }\n"
                 + "   @Override\n"
-                + "   public double getTurnWeight(BaseGraph graph, EdgeIntAccess edgeIntAccess, int inEdge, int viaNode, int outEdge) {\n"
+                + "   public double getTurnPenalty(BaseGraph graph, EdgeIntAccess edgeIntAccess, int inEdge, int viaNode, int outEdge) {\n"
                 + "      return 1; //will be overwritten by code injected in DeepCopier\n"
                 + "   }\n"
                 + "}";
@@ -586,12 +586,12 @@ public class CustomModelParser {
      */
     private static Java.CompilationUnit injectStatements(List<Java.BlockStatement> priorityStatements,
                                                          List<Java.BlockStatement> speedStatements,
-                                                         List<Java.BlockStatement> turnWeightStatements,
+                                                         List<Java.BlockStatement> turnPenaltyStatements,
                                                          Java.CompilationUnit cu) throws CompileException {
         cu = new DeepCopier() {
             boolean speedInjected = false;
             boolean priorityInjected = false;
-            boolean turnWeightInjected = false;
+            boolean turnPenaltyInjected = false;
 
             @Override
             public Java.MethodDeclarator copyMethodDeclarator(Java.MethodDeclarator subject) throws CompileException {
@@ -601,9 +601,9 @@ public class CustomModelParser {
                 } else if (subject.name.equals("getPriority") && !priorityStatements.isEmpty() && !priorityInjected) {
                     priorityInjected = true;
                     return injectStatements(subject, this, priorityStatements);
-                } else if (subject.name.equals("getTurnWeight") && !turnWeightStatements.isEmpty() && !turnWeightInjected) {
-                    turnWeightInjected = true;
-                    return injectStatements(subject, this, turnWeightStatements);
+                } else if (subject.name.equals("getTurnPenalty") && !turnPenaltyStatements.isEmpty() && !turnPenaltyInjected) {
+                    turnPenaltyInjected = true;
+                    return injectStatements(subject, this, turnPenaltyStatements);
                 } else {
                     return super.copyMethodDeclarator(subject);
                 }

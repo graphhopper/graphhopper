@@ -1,5 +1,5 @@
 {
-  "turn_weight": [
+  "turn_penalty": [
     { "if": "change_angle > -25 && change_angle < 25", "add":  "0" }, // straight
     { "else_if": "change_angle >= 25 && change_angle < 80", "add":  "3" }, // right
     { "else_if": "change_angle >= 80 && change_angle <= 180", "add":  "3" }, // sharp right
