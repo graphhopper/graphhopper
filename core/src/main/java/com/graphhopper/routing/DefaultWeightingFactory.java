@@ -63,8 +63,8 @@ public class DefaultWeightingFactory implements WeightingFactory {
         Weighting weighting = null;
         if (CustomWeighting.NAME.equalsIgnoreCase(weightingStr)) {
             final CustomModel queryCustomModel = requestHints.getObject(CustomModel.KEY, null);
-            if (!profile.getHints().getBool("allow_turn_penalty_in_request", false) && queryCustomModel != null && !queryCustomModel.getTurnPenalty().isEmpty())
-                throw new IllegalArgumentException("The turn_penalty feature is not supported per request for " + profile.getName() + ". Set 'allow_turn_penalty_in_request' to true in the config.yml.");
+            if (profile.getTurnCostsConfig() != null && !profile.getTurnCostsConfig().isAllowTurnPenaltyInRequest() && queryCustomModel != null && !queryCustomModel.getTurnPenalty().isEmpty())
+                throw new IllegalArgumentException("The turn_penalty feature is not supported per request for " + profile.getName() + ". Set 'allow_turn_penalty_in_request' to true in the 'turn_costs' option in the config.yml.");
 
             final CustomModel mergedCustomModel = CustomModel.merge(profile.getCustomModel(), queryCustomModel);
             if (requestHints.has(Parameters.Routing.HEADING_PENALTY))

@@ -33,7 +33,7 @@ graphhopper:
 #     turn_costs:
 #       vehicle_types: [motorcar, motor_vehicle]
 #       u_turn_costs: 60
-#     for more advanced turn costs see avoid-turns.json
+#     for more advanced turn costs see avoid_turns.json
      custom_model_files: [car.json]
 
 #   You can use the following in-built profiles. After you start GraphHopper it will print which encoded values you'll have to add to graph.encoded_values in this config file.
@@ -67,8 +67,8 @@ graphhopper:
 #   You can configure a profile with turn costs like "3 seconds for left" and "5 seconds for right turns" via:
 #    1. add the turn_costs entry to the profile (see e.g. the car profile)
 #    2. add orientation to the graph.encoded_values list
-#    3. add avoid-turns.json to the custom_model_files
-#   Edit avoid-turns.json or create your own JSON file and put it into the "custom_models.directory".
+#    3. add avoid_turns.json to the custom_model_files
+#   Edit avoid_turns.json or create your own JSON file and put it into the "custom_models.directory".
 #   Note, for bike it is NOT recommended to increase these costs heavily as otherwise larger, bike-unfriendly
 #   roads will be preferred as they often require less turns.
 #
