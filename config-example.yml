@@ -65,7 +65,7 @@ graphhopper:
 #      custom_model_files: [bus.json]
 #
 #   You can configure a profile with turn costs like "3 seconds for left" and "5 seconds for right turns" via:
-#    1. add the turn_costs entry to the profile (see e.g. the bus profile)
+#    1. add the turn_costs entry to the profile (see e.g. the car profile)
 #    2. add orientation to the graph.encoded_values list
 #    3. add avoid-turns.json to the custom_model_files
 #   Edit avoid-turns.json or create your own JSON file and put it into the "custom_models.directory".

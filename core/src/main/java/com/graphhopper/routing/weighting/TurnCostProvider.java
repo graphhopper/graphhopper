@@ -18,9 +18,6 @@
 
 package com.graphhopper.routing.weighting;
 
-import com.graphhopper.routing.ev.EdgeIntAccess;
-import com.graphhopper.storage.BaseGraph;
-
 /**
  * Implementations of this interface define how turn costs and turn times are calculated.
  */
