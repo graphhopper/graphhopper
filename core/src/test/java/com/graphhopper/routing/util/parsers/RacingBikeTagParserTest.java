@@ -107,7 +107,7 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("highway", "track");
         way.setTag("bicycle", "designated");
         way.setTag("segregated","no");
-        assertPriorityAndSpeed(AVOID_MORE, 18, way);
+        assertPriorityAndSpeed(AVOID_MORE, 2, way);
         way.setTag("surface", "asphalt");
         assertPriorityAndSpeed(VERY_NICE, 20, way);
         way.setTag("tracktype","grade1");
@@ -123,11 +123,11 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("highway", "track");
         way.setTag("tracktype", "grade3");
         // use pushing section
-        assertEquals(MIN_SPEED, getSpeedFromFlags(way), 1e-1);
+        assertEquals(2, getSpeedFromFlags(way), 1e-1);
 
         // Even if it is part of a cycle way
         way.setTag("bicycle", "yes");
-        assertEquals(PUSHING_SECTION_SPEED, getSpeedFromFlags(way), 1e-1);
+        assertEquals(4, getSpeedFromFlags(way), 1e-1);
 
         way.clearTags();
         way.setTag("highway", "steps");
@@ -190,7 +190,7 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
     public void testHandleWayTagsInfluencedByRelation() {
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "track");
-        assertEquals(MIN_SPEED, getSpeedFromFlags(osmWay), 1e-1);
+        assertEquals(2, getSpeedFromFlags(osmWay), 1e-1);
 
         // relation code is PREFER
         ReaderRelation osmRel = new ReaderRelation(1);
@@ -209,12 +209,12 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         osmWay.setTag("tracktype", "grade1");
         assertPriorityAndSpeed(VERY_NICE, 20, osmWay, osmRel);
 
-        // Now we assume bicycle=yes, and unpaved as part of a cycle relation
+        // Now we assume bicycle=yes, and unpaved and as part of a cycle relation
         osmWay.setTag("tracktype", "grade2");
         osmWay.setTag("bicycle", "yes");
         assertPriorityAndSpeed(AVOID_MORE, 10, osmWay, osmRel);
 
-        // Now we assume bicycle=yes, and unpaved not part of a cycle relation
+        // Now we assume bicycle=yes, and unpaved and not part of a cycle relation
         osmWay.clearTags();
         osmWay.setTag("highway", "track");
         osmWay.setTag("tracktype", "grade3");

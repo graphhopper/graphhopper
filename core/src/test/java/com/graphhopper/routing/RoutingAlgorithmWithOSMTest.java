@@ -319,7 +319,7 @@ public class RoutingAlgorithmWithOSMTest {
         // 1. alternative: go over steps 'Rampe Major' => 1.7km vs. around 2.7km
         queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 2702, 111));
         // 2.
-        queries.add(new Query(43.728499, 7.417907, 43.74958, 7.436566, 4208, 228));
+        queries.add(new Query(43.728499, 7.417907, 43.74958, 7.436566, 4221, 233));
         // 3.
         queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 2776, 167));
         // 4.

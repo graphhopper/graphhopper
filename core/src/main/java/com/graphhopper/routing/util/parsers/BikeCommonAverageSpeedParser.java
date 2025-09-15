@@ -25,6 +25,7 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
     private final Map<String, Integer> highwaySpeeds = new HashMap<>();
     private final EnumEncodedValue<Smoothness> smoothnessEnc;
     private final Set<String> restrictedValues = Set.of("no", "agricultural", "forestry", "restricted", "military", "emergency", "private", "permit");
+    private final Set<String> potentialSpeedIncreaseHighwayTags = Set.of("track", "path", "bridleway", "footway", "platform", "pedestrian");
 
     protected BikeCommonAverageSpeedParser(DecimalEncodedValue speedEnc, EnumEncodedValue<Smoothness> smoothnessEnc, DecimalEncodedValue ferrySpeedEnc) {
         super(speedEnc, ferrySpeedEnc);
@@ -67,10 +68,10 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         setHighwaySpeed("steps", MIN_SPEED);
 
         setHighwaySpeed("cycleway", 18);
-        setHighwaySpeed("path", PUSHING_SECTION_SPEED);
-        setHighwaySpeed("footway", PUSHING_SECTION_SPEED);
-        setHighwaySpeed("platform", PUSHING_SECTION_SPEED);
-        setHighwaySpeed("pedestrian", PUSHING_SECTION_SPEED);
+        setHighwaySpeed("path", 6);
+        setHighwaySpeed("footway", 6);
+        setHighwaySpeed("platform", 6);
+        setHighwaySpeed("pedestrian", 6);
         setHighwaySpeed("track", 12);
         setHighwaySpeed("service", 12);
         setHighwaySpeed("residential", 18);
@@ -123,8 +124,8 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         // TODO NOW official bike route is at least like bicycle=yes => boosts speed for path and track
         // designated = isDesignate(way) || MISSING != bikeRouteEnc.getEnum(false, edgeId, edgeIntAccess);
 
-        String highwayValue = way.getTag("highway");
-        if (highwayValue == null) {
+        String highwayValue = way.getTag("highway", "");
+        if (highwayValue.isEmpty()) {
             if (FerrySpeedCalculator.isFerry(way)) {
                 double ferrySpeed = FerrySpeedCalculator.minmax(ferrySpeedEnc.getDecimal(false, edgeId, edgeIntAccess), avgSpeedEnc);
                 setSpeed(false, edgeId, edgeIntAccess, ferrySpeed);
@@ -150,20 +151,31 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
                 || pushingRestriction && !way.hasTag("bicycle", INTENDED)
                 || way.hasTag("service")) {
             speed = PUSHING_SECTION_SPEED;
-        } else if (highwayValue != null) {
-            switch (highwayValue) {
-                case "path", "track", "bridleway":
-                    // speed change (increase or decrease)
-                    if (surfaceSpeed != null)
-                        speed = isDesignated(way) || way.hasTag("bicycle", "yes") ? surfaceSpeed : surfaceSpeed * 0.7;
 
-                case "footway", "pedestrian", "platform":
-                    // (potential additional) speed increase if allowed for bike
-                    if (isDesignated(way))
-                        speed = Math.max(speed, highwaySpeeds.get("cycleway"));
-                    else if (way.hasTag("bicycle", "yes"))
-                        speed = Math.max(speed, highwaySpeeds.get("track"));
+        } else if (potentialSpeedIncreaseHighwayTags.contains(highwayValue)) {
+            boolean bikeDesignated = isDesignated(way);
+            boolean bikeAllowed = way.hasTag("bicycle", "yes") || bikeDesignated;
+
+            Integer highSpeed = null;
+            if (bikeDesignated) highSpeed = isRacingBike() ? 20 : 18;
+            else if (bikeAllowed) highSpeed = 12;
+
+            if (surfaceSpeed != null && surfaceSpeed > speed) {
+                if (!bikeAllowed && Set.of("footway", "pedestrian", "platform").contains(highwayValue)) {
+                    // when no bicycle is allowed for e.g. footway then no speed increase when good surface
+                } else {
+                    // speed increase if good surface
+                    speed = bikeAllowed ? surfaceSpeed : surfaceSpeed * 0.7;
+                }
             }
+
+            if ("track".equals(highwayValue) && surfaceSpeed == null && isRacingBike()) {
+                // special case that resets speed increase when no surface tag for racingbike
+                // TODO NOW why not for path and bridleway too?
+
+            } else if (highSpeed != null && highSpeed > speed)
+                // speed increase if bike allowed or designated
+                speed = highSpeed;
         }
 
         // speed reduction if bad surface
@@ -175,6 +187,10 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         setSpeed(false, edgeId, edgeIntAccess, applyMaxSpeed(way, speed, false));
         if (avgSpeedEnc.isStoreTwoDirections())
             setSpeed(true, edgeId, edgeIntAccess, applyMaxSpeed(way, speed, true));
+    }
+
+    protected boolean isRacingBike() {
+        return false;
     }
 
     private boolean isDesignated(ReaderWay way) {
