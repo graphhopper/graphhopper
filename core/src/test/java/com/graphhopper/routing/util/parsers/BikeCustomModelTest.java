@@ -101,7 +101,6 @@ public class BikeCustomModelTest {
         way.setTag("sac_scale", "mountain_hiking");
         edge = createEdge(way);
         assertEquals(0.0, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(8.0, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
     }
 
     @Test

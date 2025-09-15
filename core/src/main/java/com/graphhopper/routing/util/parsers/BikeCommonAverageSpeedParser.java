@@ -25,7 +25,6 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
     private final Map<String, Integer> highwaySpeeds = new HashMap<>();
     private final EnumEncodedValue<Smoothness> smoothnessEnc;
     private final Set<String> restrictedValues = Set.of("no", "agricultural", "forestry", "restricted", "military", "emergency", "private", "permit");
-    private final Set<String> potentialSpeedIncreaseHighwayTags = Set.of("track", "path", "bridleway", "footway", "platform", "pedestrian");
 
     protected BikeCommonAverageSpeedParser(DecimalEncodedValue speedEnc, EnumEncodedValue<Smoothness> smoothnessEnc, DecimalEncodedValue ferrySpeedEnc) {
         super(speedEnc, ferrySpeedEnc);
@@ -72,6 +71,7 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         setHighwaySpeed("footway", 6);
         setHighwaySpeed("platform", 6);
         setHighwaySpeed("pedestrian", 6);
+        setHighwaySpeed("bridleway", 6);
         setHighwaySpeed("track", 12);
         setHighwaySpeed("service", 12);
         setHighwaySpeed("residential", 18);
@@ -92,8 +92,6 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         // special case see tests and #191
         setHighwaySpeed("motorway", 18);
         setHighwaySpeed("motorway_link", 18);
-
-        setHighwaySpeed("bridleway", PUSHING_SECTION_SPEED);
 
         // note that this factor reduces the speed but only until MIN_SPEED
         setSmoothnessSpeedFactor(Smoothness.MISSING, 1.0d);
@@ -152,30 +150,27 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
                 || way.hasTag("service")) {
             speed = PUSHING_SECTION_SPEED;
 
-        } else if (potentialSpeedIncreaseHighwayTags.contains(highwayValue)) {
+        } else {
+
             boolean bikeDesignated = isDesignated(way);
             boolean bikeAllowed = way.hasTag("bicycle", "yes") || bikeDesignated;
+            boolean isRacingBike = this instanceof RacingBikeAverageSpeedParser;
 
-            Integer highSpeed = null;
-            if (bikeDesignated) highSpeed = isRacingBike() ? 20 : 18;
-            else if (bikeAllowed) highSpeed = 12;
+            // increase speed for certain highway tags because of a good surface or a more permissive bike access
+            switch (highwayValue) {
+                case "path", "track", "bridleway":
+                    if (surfaceSpeed != null)
+                        speed = Math.max(speed, bikeAllowed ? surfaceSpeed : surfaceSpeed * 0.7);
+                    else if (isRacingBike)
+                        break; // no speed increase if no surface tag
 
-            if (surfaceSpeed != null && surfaceSpeed > speed) {
-                if (!bikeAllowed && Set.of("footway", "pedestrian", "platform").contains(highwayValue)) {
-                    // when no bicycle is allowed for e.g. footway then no speed increase when good surface
-                } else {
-                    // speed increase if good surface
-                    speed = bikeAllowed ? surfaceSpeed : surfaceSpeed * 0.7;
-                }
+                case "footway", "pedestrian", "platform":
+                    // speed increase if bike allowed or even designated
+                    if (bikeDesignated)
+                        speed = Math.max(speed, highwaySpeeds.get("cycleway"));
+                    else if (way.hasTag("bicycle", "yes"))
+                        speed = Math.max(speed, 12);
             }
-
-            if ("track".equals(highwayValue) && surfaceSpeed == null && isRacingBike()) {
-                // special case that resets speed increase when no surface tag for racingbike
-                // TODO NOW why not for path and bridleway too?
-
-            } else if (highSpeed != null && highSpeed > speed)
-                // speed increase if bike allowed or designated
-                speed = highSpeed;
         }
 
         // speed reduction if bad surface
@@ -187,10 +182,6 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         setSpeed(false, edgeId, edgeIntAccess, applyMaxSpeed(way, speed, false));
         if (avgSpeedEnc.isStoreTwoDirections())
             setSpeed(true, edgeId, edgeIntAccess, applyMaxSpeed(way, speed, true));
-    }
-
-    protected boolean isRacingBike() {
-        return false;
     }
 
     private boolean isDesignated(ReaderWay way) {

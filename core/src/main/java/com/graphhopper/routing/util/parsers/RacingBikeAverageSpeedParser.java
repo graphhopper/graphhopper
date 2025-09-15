@@ -52,15 +52,14 @@ public class RacingBikeAverageSpeedParser extends BikeCommonAverageSpeedParser {
         setHighwaySpeed("tertiary", 20);
         setHighwaySpeed("tertiary_link", 20);
 
+        // TODO NOW: remove this comment
+        // why we have in master 18 for this important highway tag?
+        setHighwaySpeed("cycleway", 20);
+
         // overwrite map from BikeCommon
         setSmoothnessSpeedFactor(Smoothness.EXCELLENT, 1.2d);
         setSmoothnessSpeedFactor(Smoothness.VERY_BAD, 0.1);
         setSmoothnessSpeedFactor(Smoothness.HORRIBLE, 0.1);
         setSmoothnessSpeedFactor(Smoothness.VERY_HORRIBLE, 0.1);
-    }
-
-    @Override
-    protected boolean isRacingBike() {
-        return true;
     }
 }
