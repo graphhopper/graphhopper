@@ -142,13 +142,13 @@ public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
 
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "lcn");
-        assertPriorityAndSpeed(BEST, 12, osmWay, osmRel);
+        assertPriorityAndSpeed(BEST, 18, osmWay, osmRel);
 
         osmRel.setTag("network", "rcn");
-        assertPriorityAndSpeed(PREFER, 12, osmWay, osmRel);
+        assertPriorityAndSpeed(PREFER, 18, osmWay, osmRel);
 
         osmRel.setTag("network", "ncn");
-        assertPriorityAndSpeed(PREFER, 12, osmWay, osmRel);
+        assertPriorityAndSpeed(PREFER, 18, osmWay, osmRel);
 
         // PREFER relation, but tertiary road
         // => no pushing section but road wayTypeCode and faster
@@ -161,7 +161,7 @@ public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
 
         osmWay.clearTags();
         osmWay.setTag("highway", "track");
-        assertPriorityAndSpeed(BEST, 12, osmWay, osmRel);
+        assertPriorityAndSpeed(BEST, 18, osmWay, osmRel);
 
         osmRel.setTag("route", "mtb");
         osmRel.setTag("network", "lcn");

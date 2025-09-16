@@ -532,6 +532,15 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "lcn");
         assertPriorityAndSpeed(VERY_NICE, 18, osmWay, osmRel);
+
+        osmRel.clearTags();
+        osmWay.clearTags();
+        osmWay.setTag("highway", "track");
+        assertPriorityAndSpeed(UNCHANGED, 12, osmWay, osmRel);
+
+        osmRel.setTag("route", "bicycle");
+        osmRel.setTag("network", "lcn");
+        assertPriorityAndSpeed(VERY_NICE, 18, osmWay, osmRel);
     }
 
     @Test

@@ -1,11 +1,9 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EdgeIntAccess;
-import com.graphhopper.routing.ev.EnumEncodedValue;
-import com.graphhopper.routing.ev.Smoothness;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.FerrySpeedCalculator;
+import com.graphhopper.storage.IntsRef;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -25,9 +23,14 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
     private final Map<String, Integer> highwaySpeeds = new HashMap<>();
     private final EnumEncodedValue<Smoothness> smoothnessEnc;
     private final Set<String> restrictedValues = Set.of("no", "agricultural", "forestry", "restricted", "military", "emergency", "private", "permit");
+    private final EnumEncodedValue<RouteNetwork> bikeRouteEnc;
 
-    protected BikeCommonAverageSpeedParser(DecimalEncodedValue speedEnc, EnumEncodedValue<Smoothness> smoothnessEnc, DecimalEncodedValue ferrySpeedEnc) {
+    protected BikeCommonAverageSpeedParser(DecimalEncodedValue speedEnc,
+                                           EnumEncodedValue<Smoothness> smoothnessEnc,
+                                           DecimalEncodedValue ferrySpeedEnc,
+                                           EnumEncodedValue<RouteNetwork> bikeRouteEnc) {
         super(speedEnc, ferrySpeedEnc);
+        this.bikeRouteEnc = bikeRouteEnc;
         this.smoothnessEnc = smoothnessEnc;
 
         setTrackTypeSpeed("grade1", 18); // paved
@@ -117,11 +120,12 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         return Math.min(speed, maxSpeed);
     }
 
-    @Override
     public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way) {
-        // TODO NOW official bike route is at least like bicycle=yes => boosts speed for path and track
-        // designated = isDesignate(way) || MISSING != bikeRouteEnc.getEnum(false, edgeId, edgeIntAccess);
+        throw new IllegalArgumentException("use handleWayTags with relationFlags");
+    }
 
+    @Override
+    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
         String highwayValue = way.getTag("highway", "");
         if (highwayValue.isEmpty()) {
             if (FerrySpeedCalculator.isFerry(way)) {
@@ -152,7 +156,7 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
 
         } else {
 
-            boolean bikeDesignated = isDesignated(way);
+            boolean bikeDesignated = isDesignated(way) || RouteNetwork.MISSING != bikeRouteEnc.getEnum(false, edgeId, edgeIntAccess);
             boolean bikeAllowed = way.hasTag("bicycle", "yes") || bikeDesignated;
             boolean isRacingBike = this instanceof RacingBikeAverageSpeedParser;
 
