@@ -154,14 +154,15 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
 
             boolean bikeDesignated = isDesignated(way);
             boolean bikeAllowed = way.hasTag("bicycle", "yes") || bikeDesignated;
-            boolean isRacingBike = this instanceof RacingBikeAverageSpeedParser;
 
             // increase speed for certain highway tags because of a good surface or a more permissive bike access
             switch (highwayValue) {
                 case "path", "track", "bridleway":
+                    // TODO NOW good idea? if there is no surface tag avoid a speed increase FOR ALL bike types
+                    boolean skipSpeedIncrease = true;
                     if (surfaceSpeed != null)
                         speed = Math.max(speed, bikeAllowed ? surfaceSpeed : surfaceSpeed * 0.7);
-                    else if (isRacingBike)
+                    else if (skipSpeedIncrease)
                         break; // no speed increase if no surface tag
 
                 case "footway", "pedestrian", "platform":
