@@ -281,6 +281,8 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.clearTags();
         way.setTag("highway", "track");
         way.setTag("bicycle", "designated");
+        // lower speed might be better as no surface tag, but strange tagging anyway and rare in real world
+        assertPriorityAndSpeed(PREFER, 18, way);
         way.setTag("segregated", "no");
         assertPriorityAndSpeed(PREFER, 18, way);
         way.setTag("surface", "asphalt");
