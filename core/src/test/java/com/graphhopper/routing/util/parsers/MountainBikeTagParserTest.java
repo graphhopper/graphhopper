@@ -141,29 +141,23 @@ public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
         // unchanged
         assertPriorityAndSpeed(PREFER, 18, osmWay, osmRel);
 
-        // relation code is PREFER
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "lcn");
+        assertPriorityAndSpeed(VERY_NICE, 18, osmWay, osmRel);
+
+        osmRel.setTag("network", "rcn");
+        assertPriorityAndSpeed(VERY_NICE, 18, osmWay, osmRel);
+
+        osmRel.setTag("network", "ncn");
         assertPriorityAndSpeed(BEST, 18, osmWay, osmRel);
 
-        // relation code is PREFER
-        osmRel.setTag("network", "rcn");
-        assertPriorityAndSpeed(PREFER, 18, osmWay, osmRel);
-
-        // relation code is PREFER
-        osmRel.setTag("network", "ncn");
-        assertPriorityAndSpeed(PREFER, 18, osmWay, osmRel);
-
-        // PREFER relation, but tertiary road
-        // => no pushing section but road wayTypeCode and faster
         osmWay.clearTags();
         osmWay.setTag("highway", "tertiary");
 
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "lcn");
-        assertPriorityAndSpeed(BEST, 18, osmWay, osmRel);
+        assertPriorityAndSpeed(VERY_NICE, 18, osmWay, osmRel);
 
-        osmWay.clearTags();
         osmRel.clearTags();
         osmWay.setTag("highway", "track");
         // unchanged
