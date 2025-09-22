@@ -505,9 +505,8 @@ public class BufferResource {
                 bestMatchScore = currentMatchScore;
                 nearestEdge = edge;
             }
-
             // Calculate the distance to the edge
-            PointList pointList = state.fetchWayGeometry(FetchMode.ALL);
+            PointList pointList = state.fetchWayGeometry(FetchMode.PILLAR_ONLY);
 
             for (GHPoint3D point : pointList) {
                 double dist = DistancePlaneProjection.DIST_PLANE.calcDist(startLat, startLon, point.lat, point.lon);
@@ -708,7 +707,7 @@ public class BufferResource {
             }
 
             EdgeIteratorState state = graph.getEdgeIteratorState(currentEdge, Integer.MIN_VALUE);
-            PointList wayGeometry = state.fetchWayGeometry(FetchMode.ALL);
+            PointList wayGeometry = state.fetchWayGeometry(FetchMode.PILLAR_ONLY);
 
             // Reverse path if segment is flipped
             if (state.getAdjNode() == currentNode) {
@@ -716,13 +715,9 @@ public class BufferResource {
                     wayGeometry.reverse();
                 }
             }
-
-            if (!wayGeometry.isEmpty()) {
-                path.add(wayGeometry);
-            } else {
-                // Fallback: add current node if no geometry available
-                path.add(new GHPoint(nodeAccess.getLat(currentNode), nodeAccess.getLon(currentNode)));
-            }
+            // Add current node first
+            path.add(new GHPoint(nodeAccess.getLat(currentNode), nodeAccess.getLon(currentNode)));
+            path.add(wayGeometry);
 
             // Move to next node
             currentNode = otherNode;
@@ -754,19 +749,26 @@ public class BufferResource {
             return new PointList();
         }
         EdgeIteratorState finalState = graph.getEdgeIteratorState(endFeature.getEdge(), Integer.MIN_VALUE);
-        PointList pointList = finalState.fetchWayGeometry(FetchMode.ALL);
+        PointList pointList = finalState.fetchWayGeometry(FetchMode.PILLAR_ONLY);
 
-        // Filter out duplicate start points
-        if (!pointList.isEmpty()) {
-            PointList filteredPointList = new PointList();
-            for (GHPoint3D point : pointList) {
-                if (!startFeature.getPoint().equals(point)) {
-                    filteredPointList.add(point);
-                }
+        // It is possible that the finalState.fetchWayGeometry(FetchMode.xxxx) would
+        // only contain TOWER points and not PILLAR points.
+        // When this happens, filtering by FetchMode.PILLAR_ONLY will return an empty
+        // PointList.
+        if (pointList.isEmpty()) {
+            if(isOkayToReturnZeroPoints)
+            {
+                return pointList;
             }
-            pointList = filteredPointList;
-        } else if(isOkayToReturnZeroPoints) {
-            return pointList;
+            pointList = new PointList();
+            PointList tempPointList = finalState.fetchWayGeometry(FetchMode.TOWER_ONLY);
+            for (GHPoint3D point : tempPointList) {
+                if (startFeature.getPoint().equals(point))
+                {
+                    continue;
+                }
+                pointList.add(point);
+            }
         }
 
         // When the buffer is only as wide as a single edge, truncate one half of the
@@ -775,7 +777,7 @@ public class BufferResource {
             return new PointList();
         }
 
-        // Reverse geometry when the edge's adjacent node matches the end feature's node
+        // Reverse geometry when starting at adjacent node
         if (finalState.getAdjNode() == endFeature.getNode()) {
             pointList.reverse();
         }
