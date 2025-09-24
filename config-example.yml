@@ -68,9 +68,7 @@ graphhopper:
 #    1. add the turn_costs entry to the profile (see e.g. the car profile)
 #    2. add orientation to the graph.encoded_values list
 #    3. add avoid_turns.json to the custom_model_files
-#   Edit avoid_turns.json or create your own JSON file and put it into the "custom_models.directory".
-#   Note, for bike it is NOT recommended to increase these costs heavily as otherwise larger, bike-unfriendly
-#   roads will be preferred as they often require less turns.
+#   Edit avoid_turns.json or create your own JSON file and put it into the "custom_models.directory". See also bike_tc.yml.
 #
 #   Other custom models not listed here are: car4wd.json, motorcycle.json, truck.json or cargo-bike.json. You might need to modify and test them before production usage.
 #   See ./core/src/main/resources/com/graphhopper/custom_models and let us know if you customize them, improve them or create new onces!
