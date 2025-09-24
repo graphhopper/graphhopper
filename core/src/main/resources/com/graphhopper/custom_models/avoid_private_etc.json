@@ -3,7 +3,7 @@
   "turn_penalty": [
     {
       "if": "prev_road_access != road_access && (road_access == DESTINATION || road_access == PRIVATE || road_access == DELIVERY)",
-      "add": "300"
+      "add": "2000"
     }
   ]
 }
