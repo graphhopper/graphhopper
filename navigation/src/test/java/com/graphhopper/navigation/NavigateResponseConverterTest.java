@@ -168,7 +168,7 @@ public class NavigateResponseConverterTest {
         assertEquals(2, voiceInstructions.size());
         JsonNode voiceInstruction = voiceInstructions.get(0);
         assertEquals(200, voiceInstruction.get("distanceAlongGeometry").asDouble(), 1);
-        assertEquals("In 200 meters At roundabout, take exit 2 onto CS-340, then At roundabout, take exit 2 onto CG-3",
+        assertEquals("In 200 meters at roundabout, take exit 2 onto CS-340, then at roundabout, take exit 2 onto CG-3",
                 voiceInstruction.get("announcement").asText());
 
         // Step 14 is over 3km long
@@ -202,7 +202,7 @@ public class NavigateResponseConverterTest {
         assertEquals(2, voiceInstructions.size());
         JsonNode voiceInstruction = voiceInstructions.get(0);
         assertEquals(200, voiceInstruction.get("distanceAlongGeometry").asDouble(), 1);
-        assertEquals("In 600 feet At roundabout, take exit 2 onto CS-340, then At roundabout, take exit 2 onto CG-3",
+        assertEquals("In 600 feet at roundabout, take exit 2 onto CS-340, then at roundabout, take exit 2 onto CG-3",
                 voiceInstruction.get("announcement").asText());
 
         // Step 14 is over 3km long
@@ -237,7 +237,7 @@ public class NavigateResponseConverterTest {
         assertEquals(2, voiceInstructions.size());
         JsonNode voiceInstruction = voiceInstructions.get(0);
         assertEquals(50, voiceInstruction.get("distanceAlongGeometry").asDouble(), 1);
-        assertEquals("In 50 meters At roundabout, take exit 2 onto CS-340, then At roundabout, take exit 2 onto CG-3",
+        assertEquals("In 50 meters at roundabout, take exit 2 onto CS-340, then at roundabout, take exit 2 onto CG-3",
                 voiceInstruction.get("announcement").asText());
 
         // Step 14 is over 3km long
@@ -272,7 +272,7 @@ public class NavigateResponseConverterTest {
         assertEquals(2, voiceInstructions.size());
         JsonNode voiceInstruction = voiceInstructions.get(0);
         assertEquals(50, voiceInstruction.get("distanceAlongGeometry").asDouble(), 1);
-        assertEquals("In 150 feet At roundabout, take exit 2 onto CS-340, then At roundabout, take exit 2 onto CG-3",
+        assertEquals("In 150 feet at roundabout, take exit 2 onto CS-340, then at roundabout, take exit 2 onto CG-3",
                 voiceInstruction.get("announcement").asText());
 
         // Step 14 is over 3km long
@@ -307,7 +307,7 @@ public class NavigateResponseConverterTest {
         assertEquals(2, voiceInstructions.size());
         JsonNode voiceInstruction = voiceInstructions.get(0);
         assertEquals(150, voiceInstruction.get("distanceAlongGeometry").asDouble(), 1);
-        assertEquals("In 150 meters At roundabout, take exit 2 onto CS-340, then At roundabout, take exit 2 onto CG-3",
+        assertEquals("In 150 meters at roundabout, take exit 2 onto CS-340, then at roundabout, take exit 2 onto CG-3",
                 voiceInstruction.get("announcement").asText());
 
         // Step 14 is over 3km long
@@ -342,7 +342,7 @@ public class NavigateResponseConverterTest {
         assertEquals(2, voiceInstructions.size());
         JsonNode voiceInstruction = voiceInstructions.get(0);
         assertEquals(150, voiceInstruction.get("distanceAlongGeometry").asDouble(), 1);
-        assertEquals("In 500 feet At roundabout, take exit 2 onto CS-340, then At roundabout, take exit 2 onto CG-3",
+        assertEquals("In 500 feet at roundabout, take exit 2 onto CS-340, then at roundabout, take exit 2 onto CG-3",
                 voiceInstruction.get("announcement").asText());
 
         // Step 14 is over 3km long
