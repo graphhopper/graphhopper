@@ -17,8 +17,10 @@
  */
 package com.graphhopper.routing.weighting.custom;
 
+import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.EdgeIteratorState;
 
@@ -164,6 +166,10 @@ public final class CustomWeighting implements Weighting {
         double get(EdgeIteratorState edge, boolean reverse);
     }
 
+    public interface TurnPenaltyMapping {
+        double get(BaseGraph graph, EdgeIntAccess edgeIntAccess, int inEdge, int viaNode, int outEdge);
+    }
+
     @FunctionalInterface
     public interface MaxCalc {
         double calcMax();
@@ -174,16 +180,19 @@ public final class CustomWeighting implements Weighting {
         private final EdgeToDoubleMapping edgeToPriorityMapping;
         private final MaxCalc maxSpeedCalc;
         private final MaxCalc maxPrioCalc;
+        private final TurnPenaltyMapping turnPenaltyMapping;
         private final double distanceInfluence;
         private final double headingPenaltySeconds;
 
         public Parameters(EdgeToDoubleMapping edgeToSpeedMapping, MaxCalc maxSpeedCalc,
                           EdgeToDoubleMapping edgeToPriorityMapping, MaxCalc maxPrioCalc,
+                          TurnPenaltyMapping turnPenaltyMapping,
                           double distanceInfluence, double headingPenaltySeconds) {
             this.edgeToSpeedMapping = edgeToSpeedMapping;
             this.maxSpeedCalc = maxSpeedCalc;
             this.edgeToPriorityMapping = edgeToPriorityMapping;
             this.maxPrioCalc = maxPrioCalc;
+            this.turnPenaltyMapping = turnPenaltyMapping;
             this.distanceInfluence = distanceInfluence;
             this.headingPenaltySeconds = headingPenaltySeconds;
         }
@@ -202,6 +211,10 @@ public final class CustomWeighting implements Weighting {
 
         public MaxCalc getMaxPrioCalc() {
             return maxPrioCalc;
+        }
+
+        public TurnPenaltyMapping getTurnPenaltyMapping() {
+            return turnPenaltyMapping;
         }
 
         public double getDistanceInfluence() {

@@ -1,0 +1,9 @@
+{
+  // note, 'turn_penalty' requires enabled turn_costs in profile
+  "turn_penalty": [
+    {
+      "if": "prev_road_access != road_access && (road_access == DESTINATION || road_access == PRIVATE)",
+      "add": "300"
+    }
+  ]
+}

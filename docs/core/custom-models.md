@@ -29,10 +29,11 @@ out with a smaller total weight and thus will be preferred.
 Internally, GraphHopper uses the following formula for the weighting:
 
 ```
-edge_weight = edge_distance / (speed * priority) + edge_distance * distance_influence
+edge_weight = edge_distance / (speed * priority) + edge_distance * distance_influence + turn_penalty
 ```
 
-To simplify the discussion, let's first assume that `distance_influence=0` and `priority=1` so the formula simply reads:
+To simplify the discussion, let's first assume that `distance_influence=0`, `priority=1` and
+`turn_penalty=0` so the formula simply reads:
 
 ```
 edge_weight = edge_distance / speed
@@ -50,7 +51,7 @@ travelling time? This is the reason why there is the `priority` factor in the ab
 as `speed`, but changing the priority only changes the edge weight, and not the travelling time. By default, `priority`
 is always `1`, so it has no effect, but it can be used to modify the edge weights as we will see in the next section.
 
-Finally, `distance_influence` allows us to control the trade-off between a fast route (minimum time) and a short route
+The `distance_influence` allows us to control the trade-off between a fast route (minimum time) and a short route
 (minimum distance). For example if `priority=1` setting `distance_influence=0` means that GraphHopper will return the
 fastest possible route and the larger `distance_influence` is the more GraphHopper will prioritize routes with a small
 total distance. More precisely, the `distance_influence` is the time you need to save on a detour (a longer distance
@@ -62,6 +63,11 @@ reference route takes `600s` and is `10km` long, `distance_influence=30` means t
 alternative route that is `11km` long only if it takes no longer than `570s` (saves `30s`). Things get a bit more
 complicated when `priority` is not strictly `1`, but the effect stays the same: The larger
 `distance_influence` is, the more GraphHopper will focus on finding short routes.
+
+The `turn_penalty` allows you to add absolute weight values to edges independent of their length and speed,
+making it particularly useful for avoiding specific turn types, short road segments, or when road attributes
+change. Unlike statements in `speed`, turn penalties don't affect the travelling time of a route and only
+influence route selection during the pathfinding process without changing the estimated travel duration.
 
 ### Edge attributes used by GraphHopper: Encoded Values
 
@@ -98,6 +104,7 @@ There are also some that take on a numeric value, like:
 
 - average_slope: a number for 100 * "elevation change" / edge_distance for a road segment; it changes the sign in reverse direction; see max_slope
 - curvature: "beeline distance" / edge_distance (0..1) e.g. a curvy road is smaller than 1
+- change_angle: specifies the angle difference between the current and the previous edge; only available in "turn_penalty"
 - hike_rating: a number from 0 to 6 for the `sac_scale` in OSM, e.g. 0 means "missing", 1 means "hiking", 2 means "mountain_hiking", 3 means demanding_mountain_hiking, 4 means alpine_hiking, 5 means demanding_alpine_hiking, and 6 means difficult_alpine_hiking
 - mtb_rating: a number from 0 to 7 for the `mtb:scale` in OSM, e.g. 0 means "missing", 1 means `mtb:scale=0`, 2 means `mtb:scale=1` and so on. A leading "+" or "-" character is ignored.  
 - horse_rating: a number from 0 to 6 for the `horse_scale` in OSM, e.g. 0 means "missing", 1 means "common", 2 means "demanding", 3 means difficult, 4 means critical, 5 means dangerous, and 6 means impossible
@@ -108,6 +115,14 @@ There are also some that take on a numeric value, like:
 - max_weight (tonne), max_axle_load (tonne)
 - with postfix `_average_speed` contains the average speed (km/h) for a specific vehicle
 - with postfix `_priority` contains the road preference without changing the speed for a specific vehicle (0..1)
+
+Special expressions:
+
+ - `backward_*`: this expression allows to access the reverse direction of the current edge
+ - `in_*`: see `areas` for more information about this expression
+ - `prev_*`: this expression allows to access the previous edge; can only be used in statements of `turn_penalty`.
+ - `country.isRightHandTraffic()`: returns true if right-hand traffic is the standard in the country of the current edge; `false` otherwise
+ - `edge.getDistance()`: returns the distance of the current edge
 
 In the next section will see how we can use these encoded values to customize GraphHopper's route calculations.
 
@@ -613,6 +628,57 @@ following:
 which means that the priority for all road segments that allow a maximum vehicle width of `2.5m`, a maximum vehicle
 length of `10m` or a maximum vehicle weight of `3.5tons`, or less, is zero, i.e. these "narrow" road segments are
 blocked.
+
+### Customizing `turn_penalty`
+
+Turn penalties are applied when transitioning between road edges. The feature supports both angle-based
+penalties for actual turns and attribute-change penalties.
+
+This features allows you to specify a turn penalty. To penalize turns based on their sharpness,
+you can use the `change_angle` attribute:
+
+```json
+{
+  "turn_penalty": [
+    { "if": "change_angle >= 25 && change_angle < 80", "add":  "1" },
+    { "else_if": "change_angle >= 80 && change_angle <= 180", "add":  "3" }
+  ]
+}
+```
+
+This example adds a penalty of 1 for moderate turns (25-79 degrees) and a penalty of 3 for
+sharp turns (80-180 degrees). The angle is measured as the change in direction when moving from one
+road segment to the next. See avoid_turns.json for a full example. To completely block certain turns
+you can add "Infinity".
+
+Note that it does not avoid curvy road segments. To avoid these cases you can use the `curvature`
+road attribute in a statement of `priority`.
+
+To discourage routing through private roads while still allowing access when necessary e.g. destination is on a private road,
+you can use the `prev_*` expression to access road attributes of previous road segments:
+
+```json
+{
+  "turn_penalty": [
+      { "if": "prev_road_access != road_access && road_access == PRIVATE", "add": "300" }
+  ]
+}
+```
+
+See avoid_private_etc.json. The advantage of using `turn_penalty` over `priority` for avoiding
+private roads is that it gracefully handles cases where the destination (or a via point) is on a
+private road. With `priority`, high penalty values can create routing artifacts and detours (see #3174 and #733),
+but `turn_penalty` only penalizes the transition onto private roads, not traveling within them.
+
+Similarly, you can discourage border crossings by penalizing transitions between countries:
+
+```json
+{
+  "turn_penalty": [
+      { "if": "prev_country != country && country == DEU", "add": "300" }
+  ]
+}
+```
 
 ### The value expression
 

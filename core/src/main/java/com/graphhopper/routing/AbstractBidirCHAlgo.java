@@ -233,7 +233,7 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements E
     }
 
     protected boolean accept(RoutingCHEdgeIteratorState edge, SPTEntry currEdge, boolean reverse) {
-        // for edge-based traversal we leave it for TurnWeighting to decide whether or not a u-turn is acceptable,
+        // for edge-based traversal we leave it for calcTurnWeight to decide whether or not a u-turn is acceptable,
         // but for node-based traversal we exclude such a turn for performance reasons already here
         if (!traversalMode.isEdgeBased() && edge.getEdge() == getIncomingEdge(currEdge))
             return false;
