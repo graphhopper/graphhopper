@@ -295,27 +295,28 @@ public class BufferResource {
      */
     private LineString computeBufferSegment(BufferFeature startFeature, String roadName, Double thresholdDistance,
                                             Boolean upstreamPath, Boolean upstreamStart) {
+        // Get geometry of starting edge up to the startFeature point
         PointList startingEdgeGeometry = computeWayGeometryOfStartingEdge(startFeature, upstreamStart, thresholdDistance);
-        // If startingEdgeGeometry has only one point then we have to ensure that finalSegmentToThreshold is not empty because
-        // we need to be able to return at least two points.
-        Boolean isOkayToReturnStartFeature = startingEdgeGeometry.size() > 1;
+        boolean canReturnStartFeature = canReturnStartFeature(startingEdgeGeometry, startFeature, upstreamStart, thresholdDistance);
+
+        // Get buffer feature to threshold distance
         BufferFeature featureToThreshold = computeEdgeAtDistanceThreshold(startFeature, thresholdDistance, roadName,
-                upstreamPath, upstreamStart, isOkayToReturnStartFeature);
+                upstreamPath, upstreamStart, canReturnStartFeature);
+
+        // Get geometry of final segment from featureToThreshold to threshold point
         PointList finalSegmentToThreshold = computePointAtDistanceThreshold(startFeature, thresholdDistance,
-                featureToThreshold, upstreamPath, isOkayToReturnStartFeature);
+                featureToThreshold, upstreamPath, canReturnStartFeature);
 
         List<Coordinate> coordinates = new ArrayList<>();
 
-        // Add start feature point
+        // Add start feature points
         for (GHPoint point : startingEdgeGeometry) {
             coordinates.add(new Coordinate(point.getLon(), point.getLat()));
         }
 
-        // if it is not okay to return startFeature THEN we are using an extrapolated point because all the points in
-        // featureToThreshold are too far. If all the points in featureToThreshold are too far, then we cannot add them!
-        if(isOkayToReturnStartFeature)
+        // Add to-threshold points unless canReturnStartFeature is false as they are past the threshold distance.
+        if(canReturnStartFeature)
         {
-            // Add to threshold points
             for (GHPoint point : featureToThreshold.getPath()) {
                 coordinates.add(new Coordinate(point.getLon(), point.getLat()));
             }
@@ -393,7 +394,7 @@ public class BufferResource {
             EdgeIteratorState state = graph.getEdgeIteratorState(edge, Integer.MIN_VALUE);
             PointList pointList = isPillarOnly ?
                     state.fetchWayGeometry(FetchMode.PILLAR_ONLY)
-                    : state.fetchWayGeometry((FetchMode.TOWER_ONLY));
+                    : state.fetchWayGeometry(FetchMode.TOWER_ONLY);
 
             for (GHPoint3D point : pointList) {
                 // the purpose of epsilon is to prevent rounding problems in determining equality.
@@ -501,7 +502,7 @@ public class BufferResource {
             }
 
             // Prioritize the edge with the best match score
-            if ((currentMatchScore > bestMatchScore)) {
+            if (currentMatchScore > bestMatchScore) {
                 bestMatchScore = currentMatchScore;
                 nearestEdge = edge;
             }
@@ -512,7 +513,7 @@ public class BufferResource {
                 double dist = DistancePlaneProjection.DIST_PLANE.calcDist(startLat, startLon, point.lat, point.lon);
 
                 // In ties, prioritize the edge with the lowest distance
-                if ((currentMatchScore == bestMatchScore && dist < lowestDistance)) {
+                if (currentMatchScore == bestMatchScore && dist < lowestDistance) {
                     lowestDistance = dist;
                     nearestEdge = edge;
                 }
@@ -550,6 +551,36 @@ public class BufferResource {
 
         // Return the length of the longest common subsequence
         return lcsTable[str1.length()][str2.length()];
+    }
+
+    /**
+     * Determines whether the start feature can be returned based on edge geometry and distance constraints.
+     * Returns true if the starting edge has multiple geometry points, or if it has only one point and
+     * the distance to the target node is within the threshold.
+     *
+     * @param startingEdgeGeometry  the geometry of the starting edge
+     * @param startFeature         the buffer feature to start at
+     * @param isUpstream        initial 'launch' direction
+     * @param thresholdDistance    maximum distance in meters
+     * @return true if it's okay to return the start feature, false otherwise
+     */
+    private boolean canReturnStartFeature(PointList startingEdgeGeometry, BufferFeature startFeature,
+                                           Boolean isUpstream, Double thresholdDistance) {
+        // Multiple geometry points means we can safely return the start feature
+        if (startingEdgeGeometry.size() > 1) {
+            return true;
+        }
+
+        // Single point requires distance validation against the threshold distance
+        // 1. If the start feature is within the threshold distance of the nearest node, we can return it
+        // 2. Otherwise, we cannot return it as it would exceed the threshold
+        EdgeIteratorState startEdgeState = graph.getEdgeIteratorState(startFeature.getEdge(), Integer.MIN_VALUE);
+        int startNode = isUpstream ? startEdgeState.getBaseNode() : startEdgeState.getAdjNode();
+        double startDistance = DistancePlaneProjection.DIST_PLANE.calcDist(
+                startFeature.getPoint().getLat(), startFeature.getPoint().getLon(),
+                nodeAccess.getLat(startNode), nodeAccess.getLon(startNode));
+
+        return startDistance < thresholdDistance;
     }
 
     /**
