@@ -665,7 +665,7 @@ you can use the `prev_*` expression to access road attributes of previous road s
 }
 ```
 
-See avoid_private_etc.json. The advantage of using `turn_penalty` over `priority` for avoiding
+See car_avoid_private_etc.json. The advantage of using `turn_penalty` over `priority` for avoiding
 private roads is that it gracefully handles cases where the destination (or a via point) is on a
 private road. With `priority`, high penalty values can create routing artifacts and detours (see #3174 and #733),
 but `turn_penalty` only penalizes the transition onto private roads, not traveling within them.

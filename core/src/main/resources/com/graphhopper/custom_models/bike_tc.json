@@ -11,7 +11,7 @@
 //      turn_costs:
 //        vehicle_types: [bicycle]
 //        u_turn_costs: 20
-//      custom_model_files: [bike_tc.json, avoid_turns.json, avoid_private_etc.json, bike_elevation.json]
+//      custom_model_files: [bike_tc.json, avoid_turns.json, car_avoid_private_etc.json, bike_elevation.json]
 
 {
   "priority": [
