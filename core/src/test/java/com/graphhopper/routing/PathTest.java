@@ -18,10 +18,12 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
+import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.util.parsers.OrientationCalculator;
 import com.graphhopper.routing.weighting.SpeedWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.BaseGraph;
@@ -46,8 +48,9 @@ import static org.junit.jupiter.api.Assertions.*;
 public class PathTest {
     private final DecimalEncodedValue carAvSpeedEnc = new DecimalEncodedValueImpl("speed", 5, 5, true);
     private final EncodingManager carManager = EncodingManager.start().add(carAvSpeedEnc).
-            add(VehicleAccess.create("car")).add(Roundabout.create()).add(RoadClass.create()).
-            add(RoadEnvironment.create()).add(RoadClassLink.create()).add(MaxSpeed.create()).build();
+            add(Orientation.create()).add(VehicleAccess.create("car")).add(Roundabout.create()).
+            add(RoadClass.create()).add(RoadEnvironment.create()).add(RoadClassLink.create()).
+            add(MaxSpeed.create()).build();
 
     private final DecimalEncodedValue mixedCarSpeedEnc = new DecimalEncodedValueImpl("mixed_car_speed", 5, 5, true);
     private final BooleanEncodedValue mixedCarAccessEnc = VehicleAccess.create("car");
@@ -486,6 +489,34 @@ public class PathTest {
         intersectionMap.put("bearings", List.of(90, 270));
 
         assertEquals(intersectionMap, intersectionDetails.get(1).getValue());
+    }
+
+    @Test
+    public void testChangeDetails() {
+        Weighting weighting = new SpeedWeighting(carAvSpeedEnc);
+        DecimalEncodedValue orEnc = carManager.getDecimalEncodedValue(Orientation.KEY);
+        OrientationCalculator calc = new OrientationCalculator(orEnc);
+        AllEdgesIterator allEdges = pathDetailGraph.getAllEdges();
+        EdgeIntAccess intAccess = pathDetailGraph.getBaseGraph().getEdgeAccess();
+        while(allEdges.next()) {
+            ReaderWay way = new ReaderWay(allEdges.getEdge());
+            way.setTag("point_list", allEdges.fetchWayGeometry(FetchMode.ALL));
+            calc.handleWayTags(allEdges.getEdge(), intAccess, way, null);
+        }
+        Path path = new Dijkstra(pathDetailGraph, weighting, TraversalMode.NODE_BASED).calcPath(1, 7);
+        assertTrue(path.isFound());
+
+        Map<String, List<PathDetail>> details = PathDetailsFromEdges.calcDetails(path, carManager, weighting,
+                List.of(CHANGE_ANGLE), new PathDetailsBuilderFactory(), 0, pathDetailGraph);
+        assertEquals(1, details.size());
+
+        List<PathDetail> caDetail = details.get(CHANGE_ANGLE);
+
+        assertEquals(4, caDetail.size());
+        assertNull(caDetail.get(0).getValue());
+        assertEquals(0.0, caDetail.get(1).getValue());
+        assertEquals(-132.0, caDetail.get(2).getValue());
+        assertEquals(72.0, caDetail.get(3).getValue());
     }
 
     /**
@@ -1189,18 +1220,24 @@ public class PathTest {
         final BaseGraph graph = new BaseGraph.Builder(carManager).create();
         final NodeAccess na = graph.getNodeAccess();
 
+        // 6 -5 \   / 7
+        //        4
+        //           \
+        //    1 - 2 - 3
         na.setNode(1, 52.514, 13.348);
         na.setNode(2, 52.514, 13.349);
         na.setNode(3, 52.514, 13.350);
         na.setNode(4, 52.515, 13.349);
         na.setNode(5, 52.516, 13.3452);
         na.setNode(6, 52.516, 13.344);
+        na.setNode(7, 52.516, 13.350);
 
         graph.edge(1, 2).set(carAvSpeedEnc, 45, 45).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue("1-2")));
         graph.edge(4, 5).set(carAvSpeedEnc, 45, 45).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue("4-5")));
         graph.edge(2, 3).set(carAvSpeedEnc, 90, 90).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue("2-3")));
         graph.edge(3, 4).set(carAvSpeedEnc, 9, 9).setDistance(10).setKeyValues(Map.of(STREET_NAME, new KValue("3-4")));
         graph.edge(5, 6).set(carAvSpeedEnc, 9, 9).setDistance(0.001).setKeyValues(Map.of(STREET_NAME, new KValue("3-4")));
+        graph.edge(4, 7).set(carAvSpeedEnc, 45, 45).setDistance(5).setKeyValues(Map.of(STREET_NAME, new KValue("4-7")));
         return graph;
     }
 

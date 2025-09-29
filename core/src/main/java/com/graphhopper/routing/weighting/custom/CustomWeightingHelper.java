@@ -102,10 +102,12 @@ public class CustomWeightingHelper {
 
     public static double calcChangeAngle(EdgeIntAccess edgeIntAccess, DecimalEncodedValue orientationEnc,
                                          int inEdge, boolean inEdgeReverse, int outEdge, boolean outEdgeReverse) {
-
         double prevAzimuth = orientationEnc.getDecimal(inEdgeReverse, inEdge, edgeIntAccess);
         double azimuth = orientationEnc.getDecimal(outEdgeReverse, outEdge, edgeIntAccess);
+        return calcChangeAngle(prevAzimuth, azimuth);
+    }
 
+    public static double calcChangeAngle(double prevAzimuth, double azimuth) {
         // bring parallel to prevOrientation
         azimuth = (azimuth + 180) % 360.0;
 
