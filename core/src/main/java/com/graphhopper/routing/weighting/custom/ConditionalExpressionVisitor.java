@@ -40,7 +40,7 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
     private final ClassHelper classHelper;
     private String invalidMessage;
     private Java.BinaryOperation lhsOpForVarInclude;
-    private Java.BinaryOperation lhsOpForTypeInclude;
+    private Java.BinaryOperation opForTypeInclude;
 
     public ConditionalExpressionVisitor(ParseResult result, NameValidator variableValidator, ClassHelper classHelper) {
         this.result = result;
@@ -74,16 +74,12 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
                     // e.g. like road_class
                     if (isValidIdentifier(arg)) {
                         int start = rv.getLocation().getColumnNumber() - 1;
-                        if (lhsOpForVarInclude != null) {
+                        if (lhsOpForVarInclude != null)
                             replacements.add(new Replacement(start, 0, lhsOpForVarInclude.lhs + " " + lhsOpForVarInclude.operator + " "));
-                        }
 
-                        if (lhsOpForTypeInclude != null && Helper.toUpperCase(arg).equals(arg)) {
+                        if (opForTypeInclude != null && Helper.toUpperCase(arg).equals(arg))
                             // lhs must be a variable and the arg is the rhs and must be an enum
-                            String lhValueAsString = lhsOpForTypeInclude.lhs.toString();
-                            String value = classHelper.getClassName(lhValueAsString);
-                            replacements.add(new Replacement(start, 0, value + "."));
-                        }
+                            replacements.add(new Replacement(start, 0, classHelper.getClassName(opForTypeInclude.lhs.toString()) + "."));
 
                         return true;
                     }
@@ -128,34 +124,26 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
             lhsOpForVarInclude = null;
             return ((Java.ParenthesizedExpression) rv).value.accept(this);
         } else if (rv instanceof Java.BinaryOperation binOp) {
-            // Do 'type includes'. I.e. for expressions like 'road_class == MOTORWAY'
-            // we'll include the type like 'road_class == RoadClass.MOTORWAY'.
-            boolean doTypeInclude = false;
-            if (lhsOpForTypeInclude == null) {
-                lhsOpForTypeInclude = getEnumOp(binOp);
-                doTypeInclude = lhsOpForTypeInclude != null;
-            }
+            // Handle "type includes": for expressions like "road_class == MOTORWAY", store the operation
+            // in opForTypeInclude so that the rhs value is prefixed with its enum type. Results in: "road_class == RoadClass.MOTORWAY".
+            // To avoid confusion and simplify reasoning the variable opForTypeInclude cannot be overwritten and will be the same (even recursively downstream) until set to null at the end.
+            boolean doTypeInclude = opForTypeInclude == null && (opForTypeInclude = getEnumOp(binOp)) != null;
 
             boolean lhsRet = binOp.lhs.accept(this);
 
-            // Do 'variable includes'. I.e. for expressions like 'road_class == A || B || C'
-            // we'll include the variable like: 'road_class == A || road_class == B || road_class == C'.
-            boolean doVarInclude = false;
-            if (lhsOpForVarInclude == null) {
-                lhsOpForVarInclude = getLHSOp(binOp);
-                doVarInclude = lhsOpForVarInclude != null;
-            }
+            // Handle "variable includes": for expressions like "road_class == MOTORWAY || SECONDARY || TERTIARY",
+            // store the left-most operation in lhsOpForVarInclude so that all subsequent rhs values (SECONDARY and TERTIARY) will get the "road_class ==" prefix too.
+            // Results in: "road_class == MOTORWAY || road_class == SECONDARY || road_class == TERTIARY".
+            boolean doVarInclude = lhsOpForVarInclude == null && (lhsOpForVarInclude = getLHSOp(binOp)) != null;
 
-            // When we do 'variable includes' in this binOp, and the rhs of lhsOpForVarInclude is an enum,
-            // then we need to include the type for all rhs values, so that they get a proper type.
-            if (lhsOpForVarInclude != null) {
-                lhsOpForTypeInclude = getEnumOp(lhsOpForVarInclude);
-                doTypeInclude = lhsOpForTypeInclude != null;
-            }
+            // Special case for "variable includes": we need to enable "type includes" for all subsequent rhs values too.
+            // Results in: "road_class == RoadClass.MOTORWAY || road_class == RoadClass.SECONDARY || road_class == RoadClass.TERTIARY".
+            if (lhsOpForVarInclude != null)
+                doTypeInclude = (opForTypeInclude = getEnumOp(lhsOpForVarInclude)) != null;
 
             boolean ret = lhsRet && binOp.rhs.accept(this);
             if (doVarInclude) lhsOpForVarInclude = null;
-            if (doTypeInclude) lhsOpForTypeInclude = null;
+            if (doTypeInclude) opForTypeInclude = null;
             return ret;
         }
         return false;
@@ -163,8 +151,8 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
 
     /**
      * This recursive method extracts the first lhs operation 'var == A' of a binary operation 'tree'
-     * with abbreviations like: 'var == A || B || ...'. And it ensures that the rhs expressions
-     * (like A) are no BinaryOperations.
+     * like: 'var == A || B || ...' and it ensures that the rhs expressions (like A) are no
+     * BinaryOperations and e.g. just enums.
      */
     private Java.BinaryOperation getLHSOp(Java.Rvalue v) {
         if (v instanceof Java.BinaryOperation binOp) {
@@ -186,10 +174,9 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
 
     private Java.BinaryOperation getEnumOp(Java.Rvalue v) {
         if (v instanceof Java.BinaryOperation binOp) {
-            String lhValueAsString = binOp.lhs.toString();
-            String rhValueAsString = binOp.rhs.toString();
             if ("==".equals(binOp.operator) || "!=".equals(binOp.operator)) {
-                if (variableValidator.isValid(lhValueAsString) && Helper.toUpperCase(rhValueAsString).equals(rhValueAsString))
+                String rhValueAsString = binOp.rhs.toString();
+                if (variableValidator.isValid(binOp.lhs.toString()) && Helper.toUpperCase(rhValueAsString).equals(rhValueAsString))
                     return binOp;
                 return null;
             }

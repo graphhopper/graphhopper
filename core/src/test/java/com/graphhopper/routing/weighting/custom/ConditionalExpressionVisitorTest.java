@@ -143,9 +143,9 @@ public class ConditionalExpressionVisitorTest {
         assertEquals("road_class == RoadClass.SECONDARY || road_class == RoadClass.PRIMARY", result.converted.toString());
 
         // and more than 2 arguments
-        result = parse("road_class == SECONDARY || PRIMARY || TERTIARY", validVariable, helper);
+        result = parse("road_class == SECONDARY || PRIMARY|| TERTIARY", validVariable, helper);
         assertTrue(result.ok);
-        assertEquals("road_class == RoadClass.SECONDARY || road_class == RoadClass.PRIMARY || road_class == RoadClass.TERTIARY", result.converted.toString());
+        assertEquals("road_class == RoadClass.SECONDARY || road_class == RoadClass.PRIMARY|| road_class == RoadClass.TERTIARY", result.converted.toString());
 
         // || and && should both work
         result = parse("road_class == SECONDARY && PRIMARY && TERTIARY || RESIDENTIAL", validVariable, helper);
@@ -157,17 +157,27 @@ public class ConditionalExpressionVisitorTest {
         assertTrue(result.ok);
         assertEquals("(road_class == RoadClass.SECONDARY && road_class == RoadClass.PRIMARY) && TERTIARY || RESIDENTIAL", result.converted.toString());
 
-        // now combine multiple conditions with different variables
+        // also such mixed constructs won't work
+        result = parse("road_class == SECONDARY || PRIMARY && road_environment == TUNNEL || BRIDGE || ROAD", validVariable, helper);
+        assertTrue(result.ok);
+//        assertEquals("road_class == RoadClass.SECONDARY || road_class == RoadClass.PRIMARY && road_environment == RoadEnvironment.TUNNEL || road_environment == RoadEnvironment.BRIDGE || road_environment == RoadEnvironment.ROAD", result.converted.toString());
+
+        // when combining multiple conditions with different variables you need to put brackets around them ...
         result = parse("(road_class == SECONDARY || PRIMARY) && (road_environment == TUNNEL || BRIDGE || ROAD)", validVariable, helper);
         assertTrue(result.ok);
         assertEquals("(road_class == RoadClass.SECONDARY || road_class == RoadClass.PRIMARY) && (road_environment == RoadEnvironment.TUNNEL || road_environment == RoadEnvironment.BRIDGE || road_environment == RoadEnvironment.ROAD)", result.converted.toString());
 
-        // 'variable include' currently won't work for Java.Literal (like number), but has also no practical relevance at the moment
+        // ... or use the natural preference of &&
+        result = parse("road_class == SECONDARY && PRIMARY || road_environment == TUNNEL && BRIDGE && ROAD", validVariable, helper);
+        assertTrue(result.ok);
+        assertEquals("road_class == RoadClass.SECONDARY && road_class == RoadClass.PRIMARY || road_environment == RoadEnvironment.TUNNEL && road_environment == RoadEnvironment.BRIDGE && road_environment == RoadEnvironment.ROAD", result.converted.toString());
+
+        // 'variable include' currently won't work for numbers yet (Java.Literal), but has no practical relevance at the moment
         result = parse("max_speed == 90 || 100", validVariable, helper);
         assertTrue(result.ok);
 //        assertEquals("max_speed == 90 || max_speed == 100", result.converted.toString());
 
-        result = parse("prev_bike_road_access != bike_road_access && (bike_road_access == DESTINATION || bike_road_access == PRIVATE)", validVariable, helper);
+        result = parse("prev_bike_road_access != bike_road_access && (bike_road_access == DESTINATION || PRIVATE)", validVariable, helper);
         assertTrue(result.ok);
         assertEquals("prev_bike_road_access != bike_road_access && (bike_road_access == BikeRoadAccess.DESTINATION || bike_road_access == BikeRoadAccess.PRIVATE)", result.converted.toString());
     }
