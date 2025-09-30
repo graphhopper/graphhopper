@@ -147,7 +147,17 @@ public class ConditionalExpressionVisitorTest {
         assertTrue(result.ok);
         assertEquals("road_class == RoadClass.SECONDARY || road_class == RoadClass.PRIMARY || road_class == RoadClass.TERTIARY", result.converted.toString());
 
-        // now combine multiple
+        // || and && should both work
+        result = parse("road_class == SECONDARY && PRIMARY && TERTIARY || RESIDENTIAL", validVariable, helper);
+        assertTrue(result.ok);
+        assertEquals("road_class == RoadClass.SECONDARY && road_class == RoadClass.PRIMARY && road_class == RoadClass.TERTIARY || road_class == RoadClass.RESIDENTIAL", result.converted.toString());
+
+        // but no variable inclusion outside of parenthesis
+        result = parse("(road_class == SECONDARY && PRIMARY) && TERTIARY || RESIDENTIAL", validVariable, helper);
+        assertTrue(result.ok);
+        assertEquals("(road_class == RoadClass.SECONDARY && road_class == RoadClass.PRIMARY) && TERTIARY || RESIDENTIAL", result.converted.toString());
+
+        // now combine multiple conditions with different variables
         result = parse("(road_class == SECONDARY || PRIMARY) && (road_environment == TUNNEL || BRIDGE || ROAD)", validVariable, helper);
         assertTrue(result.ok);
         assertEquals("(road_class == RoadClass.SECONDARY || road_class == RoadClass.PRIMARY) && (road_environment == RoadEnvironment.TUNNEL || road_environment == RoadEnvironment.BRIDGE || road_environment == RoadEnvironment.ROAD)", result.converted.toString());
