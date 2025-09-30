@@ -125,11 +125,8 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
             invalidMessage = mi.methodName + " is an illegal method in a conditional expression";
             return false;
         } else if (rv instanceof Java.ParenthesizedExpression) {
-            Java.BinaryOperation tmp = lhsOpForVarInclude;
             lhsOpForVarInclude = null;
-            boolean ret = ((Java.ParenthesizedExpression) rv).value.accept(this);
-            lhsOpForVarInclude = tmp;
-            return ret;
+            return ((Java.ParenthesizedExpression) rv).value.accept(this);
         } else if (rv instanceof Java.BinaryOperation binOp) {
             // Do 'type includes'. I.e. for expressions like 'road_class == MOTORWAY'
             // we'll include the type like 'road_class == RoadClass.MOTORWAY'.
