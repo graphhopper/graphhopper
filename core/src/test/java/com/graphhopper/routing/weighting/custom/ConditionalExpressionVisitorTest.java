@@ -128,6 +128,41 @@ public class ConditionalExpressionVisitorTest {
     }
 
     @Test
+    public void testConvertCondition() {
+        NameValidator validVariable = s -> Helper.toUpperCase(s).equals(s) || s.equals("road_class") || s.equals("road_environment") || s.equals("max_speed") || s.equals("bike_road_access") || s.equals("prev_bike_road_access");
+        ClassHelper helper = k -> k.equals("road_class") ? "RoadClass" : k.equals("road_environment") ? "RoadEnvironment" : k.equals("max_speed") ? "MaxSpeed" : "BikeRoadAccess";
+
+        ParseResult result = parse("road_class == SECONDARY || PRIMARY", validVariable, helper);
+        assertTrue(result.ok);
+        assertEquals("[road_class]", result.guessedVariables.toString());
+        assertEquals("road_class == RoadClass.SECONDARY || road_class == RoadClass.PRIMARY", result.converted.toString());
+
+        // still support old explicit way
+        result = parse("road_class == SECONDARY || road_class == PRIMARY", validVariable, helper);
+        assertTrue(result.ok);
+        assertEquals("road_class == RoadClass.SECONDARY || road_class == RoadClass.PRIMARY", result.converted.toString());
+
+        // and more than 2 arguments
+        result = parse("road_class == SECONDARY || PRIMARY || TERTIARY", validVariable, helper);
+        assertTrue(result.ok);
+        assertEquals("road_class == RoadClass.SECONDARY || road_class == RoadClass.PRIMARY || road_class == RoadClass.TERTIARY", result.converted.toString());
+
+        // now combine multiple
+        result = parse("(road_class == SECONDARY || PRIMARY) && (road_environment == TUNNEL || BRIDGE || ROAD)", validVariable, helper);
+        assertTrue(result.ok);
+        assertEquals("(road_class == RoadClass.SECONDARY || road_class == RoadClass.PRIMARY) && (road_environment == RoadEnvironment.TUNNEL || road_environment == RoadEnvironment.BRIDGE || road_environment == RoadEnvironment.ROAD)", result.converted.toString());
+
+        // 'variable include' currently won't work for Java.Literal (like number), but has also no practical relevance at the moment
+        result = parse("max_speed == 90 || 100", validVariable, helper);
+        assertTrue(result.ok);
+//        assertEquals("max_speed == 90 || max_speed == 100", result.converted.toString());
+
+        result = parse("prev_bike_road_access != bike_road_access && (bike_road_access == DESTINATION || bike_road_access == PRIVATE)", validVariable, helper);
+        assertTrue(result.ok);
+        assertEquals("prev_bike_road_access != bike_road_access && (bike_road_access == BikeRoadAccess.DESTINATION || bike_road_access == BikeRoadAccess.PRIVATE)", result.converted.toString());
+    }
+
+    @Test
     public void testNegativeConstant() {
         ParseResult result = parse("average_slope < -0.5", "average_slope"::equals, k -> "");
         assertTrue(result.ok);
