@@ -1,6 +1,7 @@
 package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.routing.ev.ArrayEdgeIntAccess;
+import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.routing.ev.StringEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.Helper;
@@ -8,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
+import java.util.Set;
 
 import static com.graphhopper.routing.weighting.custom.ConditionalExpressionVisitor.parse;
 import static org.junit.jupiter.api.Assertions.*;
@@ -132,6 +134,7 @@ public class ConditionalExpressionVisitorTest {
         NameValidator validVariable = s -> Helper.toUpperCase(s).equals(s) || s.equals("road_class") || s.equals("road_environment") || s.equals("max_speed") || s.equals("bike_road_access") || s.equals("prev_bike_road_access");
         ClassHelper helper = k -> k.equals("road_class") ? "RoadClass" : k.equals("road_environment") ? "RoadEnvironment" : k.equals("max_speed") ? "MaxSpeed" : "BikeRoadAccess";
 
+        // use case should read like "road_class is in set_of(SECONDARY,PRIMARY)
         ParseResult result = parse("road_class == SECONDARY || PRIMARY", validVariable, helper);
         assertTrue(result.ok);
         assertEquals("[road_class]", result.guessedVariables.toString());
@@ -141,6 +144,11 @@ public class ConditionalExpressionVisitorTest {
         result = parse("road_class == SECONDARY || road_class == PRIMARY", validVariable, helper);
         assertTrue(result.ok);
         assertEquals("road_class == RoadClass.SECONDARY || road_class == RoadClass.PRIMARY", result.converted.toString());
+
+        // try different use case like 'not in set_of(SECONDARY,PRIMARY)'
+        result = parse("road_class != SECONDARY && PRIMARY", validVariable, helper);
+        assertTrue(result.ok);
+        assertEquals("road_class != RoadClass.SECONDARY && road_class != RoadClass.PRIMARY", result.converted.toString());
 
         // and more than 2 arguments
         result = parse("road_class == SECONDARY || PRIMARY|| TERTIARY", validVariable, helper);
