@@ -2,6 +2,7 @@ package com.graphhopper.reader.dem;
 
 import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.PointList;
+import org.slf4j.LoggerFactory;
 
 /**
  * Elevation data is read from DEM tiles that have data points for rectangular tiles usually having an
@@ -15,6 +16,8 @@ import com.graphhopper.util.PointList;
  * @author Peter Karich
  */
 public class EdgeElevationSmoothingRamer {
+    private static final int MAX_RECURSION_DEPTH = 1000;
+
     /**
      * This method removes elevation fluctuations up to maxElevationDelta. Compared to the smoothMovingAverage function
      * this method has the advantage that the maximum slope of a PointList never increases (max(abs(slope_i))).
@@ -27,12 +30,16 @@ public class EdgeElevationSmoothingRamer {
      * point of the specified pointList
      */
     public static void smooth(PointList pointList, double maxElevationDelta) {
-        internSmooth(pointList, 0, pointList.size() - 1, maxElevationDelta);
+        internSmooth(pointList, 0, pointList.size() - 1, maxElevationDelta, 0, pointList);
     }
 
-    static void internSmooth(PointList pointList, int fromIndex, int lastIndex, double maxElevationDelta) {
+    static void internSmooth(PointList pointList, int fromIndex, int lastIndex, double maxElevationDelta, int depth, PointList origPointList) {
         if (lastIndex - fromIndex < 2)
             return;
+        if (depth > MAX_RECURSION_DEPTH) {
+            LoggerFactory.getLogger(EdgeElevationSmoothingRamer.class).warn("max recursion depth " + MAX_RECURSION_DEPTH + ", remaining point list: " + pointList + ", original: " + origPointList);
+            return;
+        }
 
         double prevLat = pointList.getLat(fromIndex);
         double prevLon = pointList.getLon(fromIndex);
@@ -59,7 +66,7 @@ public class EdgeElevationSmoothingRamer {
             prevLon = lon;
         }
 
-        // the maximum elevation change limit filters away especially the smaller high frequent elevation changes,
+        // "the maximum elevation change"-limit filters away especially the smaller high frequent elevation changes,
         // which is likely the "noise" that we want to remove.
         if (indexWithMaxDelta < 0 || maxElevationDelta > maxEleDelta) {
             prevLat = pointList.getLat(fromIndex);
@@ -76,8 +83,8 @@ public class EdgeElevationSmoothingRamer {
                 prevLon = lon;
             }
         } else {
-            internSmooth(pointList, fromIndex, indexWithMaxDelta, maxElevationDelta);
-            internSmooth(pointList, indexWithMaxDelta, lastIndex, maxElevationDelta);
+            internSmooth(pointList, fromIndex, indexWithMaxDelta, maxElevationDelta, depth + 1, origPointList);
+            internSmooth(pointList, indexWithMaxDelta, lastIndex, maxElevationDelta, depth + 1, origPointList);
         }
     }
 }
