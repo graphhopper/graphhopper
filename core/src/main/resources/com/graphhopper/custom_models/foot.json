@@ -7,9 +7,11 @@
 
 {
   "priority": [
-    { "if": "!foot_access || hike_rating >= 2 || mtb_rating > 2", "multiply_by": "0" },
+    { "if": "!foot_access || hike_rating >= 2", "multiply_by": "0" },
     { "else": "", "multiply_by": "foot_priority"},
     { "if": "country == DEU && road_class == BRIDLEWAY && foot_road_access != YES", "multiply_by": "0" },
+    // note that mtb_rating=0 is the default and mtb_rating=1 corresponds to mtb:scale=0 and so on
+    { "if": "mtb_rating > 3", "multiply_by": "0.7" },
     { "if": "foot_road_access == PRIVATE", "multiply_by": "0.1" }
   ],
   "speed": [
