@@ -93,9 +93,12 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
             return WayAccess.CAN_SKIP;
         }
 
-        // allow access if explicitly tagged
-        if ("pedestrian".equals(highwayValue) && !allowedValues.contains(firstValue))
+        if ("pedestrian".equals(highwayValue)
+                && !allowedValues.contains(firstValue)
+                && !hasPermissiveTemporalRestriction(way, restrictionKeys.size() - 1, restrictionKeys, allowedValues)) {
+            // allow pedestrian if explicitly tagged
             return WayAccess.CAN_SKIP;
+        }
 
         if ("service".equals(highwayValue) && "emergency_access".equals(way.getTag("service")))
             return WayAccess.CAN_SKIP;

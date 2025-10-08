@@ -774,18 +774,37 @@ public class CarTagParserTest {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "pedestrian");
         assertTrue(parser.getAccess(way).canSkip());
+
         way.clearTags();
         way.setTag("highway", "pedestrian");
         way.setTag("motor_vehicle", "no");
         assertTrue(parser.getAccess(way).canSkip());
+
+        way.clearTags();
+        way.setTag("highway", "pedestrian");
+        way.setTag("motor_vehicle", "unknown");
+        assertTrue(parser.getAccess(way).canSkip());
+
         way.clearTags();
         way.setTag("highway", "pedestrian");
         way.setTag("motor_vehicle", "destination");
         assertTrue(parser.getAccess(way).isWay());
+
         way.clearTags();
         way.setTag("highway", "pedestrian");
         way.setTag("motorcar", "no");
         way.setTag("motor_vehicle", "destination");
         assertTrue(parser.getAccess(way).canSkip());
+
+        way.clearTags();
+        way.setTag("highway", "pedestrian");
+        way.setTag("motor_vehicle:conditional", "destination @ ( 8:00 - 10:00 )");
+        assertTrue(parser.getAccess(way).isWay());
+
+        way.clearTags();
+        way.setTag("highway", "pedestrian");
+        way.setTag("access", "no");
+        way.setTag("motor_vehicle:conditional", "destination @ ( 8:00 - 10:00 )");
+        assertTrue(parser.getAccess(way).isWay());
     }
 }
