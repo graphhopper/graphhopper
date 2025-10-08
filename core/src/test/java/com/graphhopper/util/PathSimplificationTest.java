@@ -26,6 +26,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.SpeedWeighting;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.search.KVStorage.KValue;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.details.PathDetail;
@@ -39,6 +40,7 @@ import static com.graphhopper.search.KVStorage.KValue;
 import static com.graphhopper.util.Parameters.Details.AVERAGE_SPEED;
 import static com.graphhopper.util.Parameters.Details.STREET_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -354,4 +356,83 @@ public class PathSimplificationTest {
             }
         }
     }
+
+     
+    // Nouveaux Tests Unitaires (Devoir IFT3913 Tache 2)
+    @Test
+    public void testSimplifyWithEmptyPointList() {
+        PointList points = new PointList();
+        PointList originalPoints = points.clone(false);
+        List<PathSimplification.Partition> partitions = new ArrayList<>();
+        
+        partitions.add(new TestPartition());
+
+        PathSimplification.simplify(points, partitions, new RamerDouglasPeucker());
+
+        assertEquals(originalPoints.size(), points.size(), "An empty PointList should remain empty after simplification.");
+        assertTrue(points.isEmpty(), "The PointList should be empty.");
+    }
+
+    @Test
+    public void testSimplifyWithSinglePoint() {
+        PointList points = new PointList();
+        points.add(48.0, 9.0);
+        PointList originalPoints = points.clone(false);
+
+        List<PathSimplification.Partition> partitions = new ArrayList<>();
+        PathSimplification.simplify(points, partitions, new RamerDouglasPeucker());
+
+        assertEquals(1, points.size(), "A PointList with a single point should not be modified.");
+        assertEquals(originalPoints.getLat(0), points.getLat(0), "The point's latitude should be unchanged.");
+        assertEquals(originalPoints.getLon(0), points.getLon(0), "The point's longitude should be unchanged.");
+    }
+
+    @Test
+    public void testSimplifyWithNoPartitions() {
+        PointList points = new PointList();
+        points.add(10, 10);
+        points.add(10, 20); // This point should be removed
+        points.add(10, 30);
+
+        List<PathSimplification.Partition> partitions = new ArrayList<>(); // 空的分区列表
+        RamerDouglasPeucker rdp = new RamerDouglasPeucker();
+        rdp.setMaxDistance(1); // Set a small max distance to ensure the middle point is removed
+
+        PathSimplification.simplify(points, partitions, rdp);
+
+        assertEquals(2, points.size(), "Without partitions, simplification should reduce collinear points.");
+        assertEquals(10.0, points.getLat(0), "First point should be the start of the line.");
+        assertEquals(10.0, points.getLon(0), "First point should be the start of the line.");
+        assertEquals(10.0, points.getLat(1), "Last point should be the end of the line.");
+        assertEquals(30.0, points.getLon(1), "Last point should be the end of the line.");
+    }
+
+    @Test
+    public void testInconsistentViaInstructionThrowsException() {
+        // Set up a response path with a via instruction that has a non-zero length
+        ResponsePath responsePath = new ResponsePath();
+        PointList points = new PointList();
+        points.add(0, 0);
+        points.add(1, 1);
+        points.add(2, 2);
+        responsePath.setPoints(points);
+
+        // Set up an instruction list with a via instruction that has a non-zero length
+        InstructionList instructions = new InstructionList(usTR);
+        ViaInstruction viaInstruction = new ViaInstruction("via", new PointList());
+        
+        viaInstruction.setPoints(points.shallowCopy(0, 2, false));
+        instructions.add(viaInstruction);
+
+        responsePath.setInstructions(instructions);
+        responsePath.setWaypointIndices(Arrays.asList(0, 2));
+
+        RamerDouglasPeucker ramerDouglasPeucker = new RamerDouglasPeucker();
+
+        // Assert that calling simplify throws an IllegalStateException
+        assertThrows(IllegalStateException.class, () -> {
+            PathSimplification.simplify(responsePath, ramerDouglasPeucker, true);
+        }, "An IllegalStateException should be thrown for a via-instruction with non-zero length.");
+    }
+
 }

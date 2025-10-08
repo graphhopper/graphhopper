@@ -164,6 +164,28 @@
                     <failOnUnableToExtractRepoInfo>false</failOnUnableToExtractRepoInfo>
                 </configuration>
             </plugin>
+
+            <plugin>
+                <groupId>org.pitest</groupId>
+                <artifactId>pitest-maven</artifactId>
+                <version>1.9.0</version>
+
+                <dependencies>
+                    <dependency>
+                        <groupId>org.pitest</groupId>
+                        <artifactId>pitest-junit5-plugin</artifactId>
+                        <version>1.0.0</version>
+                    </dependency>
+                </dependencies>
+                <configuration>
+                    <targetClasses>
+                        <param>com.graphhopper.util.PathSimplification</param>
+                    </targetClasses>
+                    <targetTests>
+                        <param>com.graphhopper.util.PathSimplificationTest</param>
+                    </targetTests>
+                </configuration>
+            </plugin>
         </plugins>
 
         <!-- make version available at runtime via version file -->
