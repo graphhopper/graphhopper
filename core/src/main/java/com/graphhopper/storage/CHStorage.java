@@ -385,6 +385,10 @@ public class CHStorage {
         return nodesCH.getCapacity() + shortcuts.getCapacity();
     }
 
+    public int getMB() {
+        return (int) ((shortcutEntryBytes * (long) shortcutCount + nodeCHEntryBytes * (long) nodeCount) / 1024 / 1024);
+    }
+
     public int getNumShortcutsExceedingWeight() {
         return numShortcutsExceedingWeight;
     }
