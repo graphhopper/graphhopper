@@ -71,7 +71,7 @@ public class EdgeElevationSmoothingRamer {
             prevLon = lon;
         }
 
-        // "the maximum elevation change"-limit filters away especially the smaller high frequent elevation changes,
+        // The limit for the maximum elevation change filters away especially the smaller high frequent elevation changes,
         // which is likely the "noise" that we want to remove.
         if (indexWithMaxDelta < 0 || maxElevationDelta > maxEleDelta) {
             prevLat = pointList.getLat(fromIndex);
