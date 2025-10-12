@@ -94,6 +94,7 @@ Here is an overview:
  * tyrasd, improved toll road handling in Austria #3190
  * vvikas, ideas for many to many improvements and #616
  * zstadler, multiple fixes and car4wd
+ * binora, fix mode in navigation response converter
 
 ## Translations
 
