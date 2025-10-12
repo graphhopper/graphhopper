@@ -32,7 +32,7 @@ import static com.graphhopper.navigation.DistanceUtils.UnitTranslationKey.*;
 public class DistanceConfig {
     final List<VoiceInstructionConfig> voiceInstructions;
     final DistanceUtils.Unit unit;
-    private final String mode;
+    final String mode;
 
     public DistanceConfig(DistanceUtils.Unit unit, TranslationMap translationMap, Locale locale, TransportationMode mode) {
         this(unit, translationMap, locale, mode.name());
