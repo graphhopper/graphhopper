@@ -85,6 +85,9 @@ public class NavigateResponseConverterTest {
         double instructionDistance = step.get("distance").asDouble();
         assertTrue(instructionDistance < routeDistance);
 
+        // Check that the mode is correctly set to "driving" for car profile
+        assertEquals("driving", step.get("mode").asText());
+
         JsonNode voiceInstructions = step.get("voiceInstructions");
         assertEquals(1, voiceInstructions.size());
         JsonNode voiceInstruction = voiceInstructions.get(0);
@@ -619,6 +622,35 @@ public class NavigateResponseConverterTest {
 
         assertEquals("InvalidInput", json.get("code").asText());
         assertTrue(json.get("message").asText().startsWith("Point 0 is out of bounds: 42.554851,111.536198"));
+    }
+
+    @Test
+    public void testTransportationModeInSteps() {
+        GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile(profile));
+
+        // Test walking mode
+        DistanceConfig walkingConfig = new DistanceConfig(DistanceUtils.Unit.METRIC, trMap, Locale.ENGLISH, TransportationMode.FOOT);
+        ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH, walkingConfig);
+        JsonNode steps = json.get("routes").get(0).get("legs").get(0).get("steps");
+
+        // Check first non-ferry step has walking mode
+        for (int i = 0; i < steps.size(); i++) {
+            JsonNode step = steps.get(i);
+            String expectedMode = "walking";
+            // Ferry instructions should override to "ferry" mode
+            // We don't have ferry in this test data, but this shows the expected behavior
+            assertEquals(expectedMode, step.get("mode").asText(), "Step " + i + " should have mode 'walking'");
+        }
+
+        // Test cycling mode
+        DistanceConfig cyclingConfig = new DistanceConfig(DistanceUtils.Unit.METRIC, trMap, Locale.ENGLISH, TransportationMode.BIKE);
+        json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH, cyclingConfig);
+        steps = json.get("routes").get(0).get("legs").get(0).get("steps");
+
+        for (int i = 0; i < steps.size(); i++) {
+            JsonNode step = steps.get(i);
+            assertEquals("cycling", step.get("mode").asText(), "Step " + i + " should have mode 'cycling'");
+        }
     }
 
 }
