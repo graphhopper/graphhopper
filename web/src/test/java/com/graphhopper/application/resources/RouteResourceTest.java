@@ -149,6 +149,37 @@ public class RouteResourceTest {
     }
 
     @Test
+    public void testPostWithNullHeadings() {
+        // Test that null values in headings array are accepted and converted to NaN (issue #3192)
+        String jsonStr = "{ \"profile\": \"my_car\", " +
+                "\"points\": [[1.536198,42.554851], [1.548128, 42.510071]], " +
+                "\"headings\": [10, null], " +
+                "\"ch.disable\": true }";
+        JsonNode json = clientTarget(app, "/route").request().post(Entity.json(jsonStr), JsonNode.class);
+        JsonNode infoJson = json.get("info");
+        assertFalse(infoJson.has("errors"));
+        JsonNode path = json.get("paths").get(0);
+        double distance = path.get("distance").asDouble();
+
+        // The route should succeed despite the null in headings
+        assertTrue(distance > 9000, "distance wasn't correct:" + distance);
+        assertTrue(distance < 9500, "distance wasn't correct:" + distance);
+
+        // Also test mixing null with "NaN" string for backward compatibility
+        jsonStr = "{ \"profile\": \"my_car\", " +
+                "\"points\": [[1.536198,42.554851], [1.548128, 42.510071]], " +
+                "\"headings\": [null, \"NaN\"], " +
+                "\"ch.disable\": true }";
+        json = clientTarget(app, "/route").request().post(Entity.json(jsonStr), JsonNode.class);
+        infoJson = json.get("info");
+        assertFalse(infoJson.has("errors"));
+        path = json.get("paths").get(0);
+        distance = path.get("distance").asDouble();
+        assertTrue(distance > 9000, "distance wasn't correct:" + distance);
+        assertTrue(distance < 9500, "distance wasn't correct:" + distance);
+    }
+
+    @Test
     public void testBasicNavigationQuery() {
         JsonNode json = clientTarget(app, "/navigate/directions/v5/gh/driving/1.537174,42.507145;1.539116,42.511368?" +
                 "access_token=pk.my_api_key&alternatives=true&geometries=polyline6&overview=full&steps=true&continue_straight=true&" +
