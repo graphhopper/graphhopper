@@ -1,4 +1,8 @@
-### 11.0 [not yet released]
+### 12.0 [not yet released]
+
+
+
+### 11.0 [14 Oct 2025]
 
 - country-dependent toll rules are now always enabled. in the absence of explicit tags or special toll rules we use Toll.NO instead of Toll.MISSING #3111
 - max_weight_except: changed NONE to MISSING
