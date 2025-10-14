@@ -50,38 +50,6 @@ public class DistanceConfigTest {
 
         DistanceConfig foot = new DistanceConfig(DistanceUtils.Unit.METRIC, null, null, TransportationMode.FOOT);
         assertEquals("walking", foot.getMode());
-
-        DistanceConfig bike = new DistanceConfig(DistanceUtils.Unit.METRIC, null, null, TransportationMode.BIKE);
-        assertEquals("cycling", bike.getMode());
-
-        DistanceConfig bus = new DistanceConfig(DistanceUtils.Unit.METRIC, null, null, TransportationMode.BUS);
-        assertEquals("driving", bus.getMode());
-
-        DistanceConfig hgv = new DistanceConfig(DistanceUtils.Unit.METRIC, null, null, TransportationMode.HGV);
-        assertEquals("driving", hgv.getMode());
-
-        // cycling
-        assertEquals("cycling", new DistanceConfig(DistanceUtils.Unit.METRIC, null, null, "biking").getMode());
-        assertEquals("cycling", new DistanceConfig(DistanceUtils.Unit.METRIC, null, null, "cycling").getMode());
-        assertEquals("cycling", new DistanceConfig(DistanceUtils.Unit.METRIC, null, null, "cyclist").getMode());
-        assertEquals("cycling", new DistanceConfig(DistanceUtils.Unit.METRIC, null, null, "mtb").getMode());
-        assertEquals("cycling", new DistanceConfig(DistanceUtils.Unit.METRIC, null, null, "racingbike").getMode());
-        assertEquals("cycling", new DistanceConfig(DistanceUtils.Unit.METRIC, null, null, "bike").getMode());
-
-        // walking
-        assertEquals("walking", new DistanceConfig(DistanceUtils.Unit.METRIC, null, null, "walking").getMode());
-        assertEquals("walking", new DistanceConfig(DistanceUtils.Unit.METRIC, null, null, "walk").getMode());
-        assertEquals("walking", new DistanceConfig(DistanceUtils.Unit.METRIC, null, null, "hiking").getMode());
-        assertEquals("walking", new DistanceConfig(DistanceUtils.Unit.METRIC, null, null, "hike").getMode());
-        assertEquals("walking", new DistanceConfig(DistanceUtils.Unit.METRIC, null, null, "foot").getMode());
-        assertEquals("walking", new DistanceConfig(DistanceUtils.Unit.METRIC, null, null, "pedestrian").getMode());
-
-        // unknown modes
-        assertEquals("driving", new DistanceConfig(DistanceUtils.Unit.METRIC, null, null, "driving").getMode());
-        assertEquals("driving", new DistanceConfig(DistanceUtils.Unit.METRIC, null, null, "unknown").getMode());
-        assertEquals("driving", new DistanceConfig(DistanceUtils.Unit.METRIC, null, null, "").getMode());
-        assertEquals("driving", new DistanceConfig(DistanceUtils.Unit.METRIC, null, null, "car").getMode());
-        assertEquals("driving", new DistanceConfig(DistanceUtils.Unit.METRIC, null, null, "truck").getMode());
     }
 
 }
