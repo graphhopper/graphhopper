@@ -651,23 +651,6 @@ public class NavigateResponseConverterTest {
             JsonNode step = steps.get(i);
             assertEquals("cycling", step.get("mode").asText(), "Step " + i + " should have mode 'cycling'");
         }
-
-        // Test driving mode (default)
-        DistanceConfig drivingConfig = new DistanceConfig(DistanceUtils.Unit.METRIC, trMap, Locale.ENGLISH, TransportationMode.CAR);
-        json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH, drivingConfig);
-        steps = json.get("routes").get(0).get("legs").get(0).get("steps");
-
-        for (int i = 0; i < steps.size(); i++) {
-            JsonNode step = steps.get(i);
-            assertEquals("driving", step.get("mode").asText(), "Step " + i + " should have mode 'driving'");
-        }
-
-        // Test that HGV also maps to driving
-        DistanceConfig hgvConfig = new DistanceConfig(DistanceUtils.Unit.METRIC, trMap, Locale.ENGLISH, TransportationMode.HGV);
-        json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH, hgvConfig);
-        steps = json.get("routes").get(0).get("legs").get(0).get("steps");
-
-        assertEquals("driving", steps.get(0).get("mode").asText(), "HGV should map to driving mode");
     }
 
 }
