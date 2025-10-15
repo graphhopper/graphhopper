@@ -110,6 +110,12 @@ public class CarTagParserTest {
         assertTrue(parser.getAccess(way).canSkip());
 
         way.clearTags();
+        way.setTag("highway", "service");
+        way.setTag("access", "no");
+        way.setTag("motor_vehicle", "unknown");
+        assertTrue(parser.getAccess(way).canSkip());
+
+        way.clearTags();
         way.setTag("highway", "track");
         way.setTag("motor_vehicle", "agricultural");
         assertTrue(parser.getAccess(way).canSkip());
@@ -127,6 +133,11 @@ public class CarTagParserTest {
         way.setTag("access", "no");
         way.setTag("motorcar", "yes");
         assertTrue(parser.getAccess(way).isWay());
+
+        way.clearTags();
+        way.setTag("highway", "service");
+        way.setTag("motor_vehicle", "service");
+        assertTrue(parser.getAccess(way).canSkip());
 
         way.clearTags();
         way.setTag("highway", "service");
