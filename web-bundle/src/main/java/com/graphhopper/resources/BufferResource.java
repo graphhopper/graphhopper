@@ -826,12 +826,12 @@ public class BufferResource {
                     currentPoint.getLat(), currentPoint.getLon(),
                     previousPoint.getLat(), previousPoint.getLon());
 
-            if (currentDistance + segmentDistance >= thresholdDistance) {
+            currentDistance += segmentDistance;            
+            if (currentDistance >= thresholdDistance) {
                 break;
             }
 
             truncatedPath.add(currentPoint);
-            currentDistance += segmentDistance;
             previousPoint = currentPoint;
         }
 
