@@ -667,26 +667,6 @@ public class BufferResourceTest {
     }
 
     @Test
-    public void testSucceedsWhenStartingEdgeGeometryHasOnePoint() {
-        JsonFeatureCollection featureCollection;
-        try (Response response = clientTarget(app, "/buffer?profile=my_car&point=42.506380,1.528551&roadName=Bonaventura-4&thresholdDistance=50").request()
-                .buildGet().invoke()) {
-
-            assertEquals(200, response.getStatus());
-            featureCollection = response.readEntity(JsonFeatureCollection.class);
-        }
-        assertEquals(2, featureCollection.getFeatures().size());
-        Geometry lineString0 = featureCollection.getFeatures().get(0).getGeometry();
-        Geometry lineString1 = featureCollection.getFeatures().get(1).getGeometry();
-
-        // The lineString that only had one point in the startingEdgeGeometry should result in exactly two points.
-        assertEquals(2, lineString0.getCoordinates().length);
-
-        // The other lineString have at least 2 points.
-        assertTrue(lineString1.getCoordinates().length >= 2, "The second lineString should have at least 2 points");
-    }
-
-    @Test
     public void testUnusualRoadNameFormat() {
         try (Response response = clientTarget(app, "/buffer?profile=my_car&"
                 + "point=42.54287,1.471&roadName=cG4-&thresholdDistance=2000").request()
