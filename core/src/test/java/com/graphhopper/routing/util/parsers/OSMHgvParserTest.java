@@ -33,6 +33,24 @@ class OSMHgvParserTest {
     }
 
     @Test
+    public void testImplicitAccess() {
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        ReaderWay readerWay = new ReaderWay(1);
+        readerWay.setTag("highway", "primary");
+        readerWay.setTag("motor_vehicle", "destination");
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(Hgv.DESTINATION, hgvEnc.getEnum(false, edgeId, edgeIntAccess));
+
+        edgeIntAccess = new ArrayEdgeIntAccess(1);
+        readerWay = new ReaderWay(1);
+        readerWay.setTag("highway", "primary");
+        readerWay.setTag("access", "yes");
+        readerWay.setTag("motor_vehicle", "no");
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(Hgv.NO, hgvEnc.getEnum(false, edgeId, edgeIntAccess));
+    }
+
+    @Test
     public void testConditionalTags() {
         EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
         ReaderWay readerWay = new ReaderWay(1);
