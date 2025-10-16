@@ -19,6 +19,8 @@ package com.graphhopper;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.graphhopper.jackson.HeadingsDeserializer;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
@@ -39,6 +41,7 @@ public class GHRequest {
     private List<GHPoint> points;
     private String profile = "";
     private final PMap hints = new PMap();
+    @JsonDeserialize(using = HeadingsDeserializer.class)
     private List<Double> headings = new ArrayList<>();
     private List<String> pointHints = new ArrayList<>();
     private List<String> curbsides = new ArrayList<>();
