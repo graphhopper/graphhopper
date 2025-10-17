@@ -106,7 +106,7 @@ public class BikeCustomModelTest {
         way.setTag("sac_scale", "mountain_hiking");
         edge = createEdge(way);
         assertEquals(0.0, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(4.0, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        assertEquals(8.0, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
         way.clearTags();
         way.setTag("highway", "tertiary");
@@ -120,11 +120,11 @@ public class BikeCustomModelTest {
         CustomModel cm = GHUtility.loadCustomModelFromJar("mtb.json");
         ReaderWay way = new ReaderWay(0L);
         way.setTag("highway", "path");
-        way.setTag("surface", "ground");
+        way.setTag("surface", "ground"); // bad surface means slow speed for mtb too
         EdgeIteratorState edge = createEdge(way);
         CustomWeighting.Parameters p = CustomModelParser.createWeightingParameters(cm, em);
         assertEquals(1.2, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(16.0, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        assertEquals(10.0, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
         way.setTag("mtb:scale", "3");
         edge = createEdge(way);
@@ -165,7 +165,7 @@ public class BikeCustomModelTest {
         EdgeIteratorState edge = createEdge(way);
         CustomWeighting.Parameters p = CustomModelParser.createWeightingParameters(cm, em);
         assertEquals(0.9, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(8.0, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        assertEquals(6.0, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
         way.setTag("mtb:scale", "0");
         edge = createEdge(way);

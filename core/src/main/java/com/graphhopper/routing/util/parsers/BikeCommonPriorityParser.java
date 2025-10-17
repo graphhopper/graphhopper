@@ -42,7 +42,6 @@ public abstract class BikeCommonPriorityParser implements TagParser {
         this.priorityEnc = priorityEnc;
         this.avgSpeedEnc = avgSpeedEnc;
 
-        // duplicate code as also in BikeCommonAverageSpeedParser
         addPushingSection("footway");
         addPushingSection("pedestrian");
         addPushingSection("steps");
@@ -165,7 +164,7 @@ public abstract class BikeCommonPriorityParser implements TagParser {
         }
 
         double maxSpeed = Math.max(OSMMaxSpeedParser.parseMaxSpeed(way, false), OSMMaxSpeedParser.parseMaxSpeed(way, true));
-        if (preferHighwayTags.contains(highway) || (maxSpeed != MaxSpeed.MAXSPEED_MISSING && maxSpeed <= 30)) {
+        if (preferHighwayTags.contains(highway) || maxSpeed <= 30) {
             if (maxSpeed == MaxSpeed.MAXSPEED_MISSING || maxSpeed < avoidSpeedLimit) {
                 weightToPrioMap.put(40d, PREFER);
                 if (way.hasTag("tunnel", INTENDED))
@@ -234,7 +233,6 @@ public abstract class BikeCommonPriorityParser implements TagParser {
                 || way.hasTag("bicycle_road", "yes") || way.hasTag("cyclestreet", "yes") || way.hasTag("bicycle", "official");
     }
 
-    // TODO duplicated in average speed
     void addPushingSection(String highway) {
         pushingSectionsHighways.add(highway);
     }
