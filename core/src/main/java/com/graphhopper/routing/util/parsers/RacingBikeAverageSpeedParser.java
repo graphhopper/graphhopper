@@ -55,9 +55,6 @@ public class RacingBikeAverageSpeedParser extends BikeCommonAverageSpeedParser {
         setHighwaySpeed("secondary_link", 20);
         setHighwaySpeed("tertiary", 20);
         setHighwaySpeed("tertiary_link", 20);
-
-        // TODO NOW: remove this comment
-        // why we have in master 18 for this important highway tag?
         setHighwaySpeed("cycleway", 20);
 
         // overwrite map from BikeCommon
