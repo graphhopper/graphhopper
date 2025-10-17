@@ -5,9 +5,9 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>graphhopper-web-bundle</artifactId>
     <packaging>jar</packaging>
-    <version>11.0-SNAPSHOT</version>
+    <version>12.0-SNAPSHOT</version>
     <properties>
-        <graphhopper-maps.version>0.0.0-040ae9d3f2c4a67588449027a29b0e86d93004fc
+        <graphhopper-maps.version>0.0.0-f171bcf55e447bf494348dd274cd377b73c951f6
         </graphhopper-maps.version>
     </properties>
     <name>GraphHopper Dropwizard Bundle</name>
@@ -16,7 +16,7 @@
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>
-        <version>11.0-SNAPSHOT</version>
+        <version>12.0-SNAPSHOT</version>
     </parent>
 
     <dependencies>

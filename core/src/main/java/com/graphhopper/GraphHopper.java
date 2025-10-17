@@ -1449,6 +1449,10 @@ public class GraphHopper {
             } else
                 throw new IllegalStateException("CH graph should be either loaded or prepared: " + profile.getProfile());
         }
+        chGraphs.forEach((name, ch) -> {
+            CHStorage store = ((RoutingCHGraphImpl) ch).getCHStorage();
+            logger.info("CH available for profile {}, {}MB, {}, ({}MB)", name, Helper.nf(store.getCapacity() / Helper.MB), store.toDetailsString(), store.getMB());
+        });
     }
 
     protected Map<String, PrepareContractionHierarchies.Result> prepareCH(boolean closeEarly, List<CHConfig> configsToPrepare) {

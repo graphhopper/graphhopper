@@ -19,7 +19,7 @@ public class GHMatrixSyncRequester extends GHMatrixAbstractRequester {
     public GHMatrixSyncRequester(String serviceUrl) {
         this(serviceUrl, new OkHttpClient.Builder().
                 connectTimeout(5, TimeUnit.SECONDS).
-                readTimeout(5, TimeUnit.SECONDS).build(), true);
+                readTimeout(15, TimeUnit.SECONDS).build(), true);
     }
 
     public GHMatrixSyncRequester(String serviceUrl, OkHttpClient client, boolean doRequestGzip) {

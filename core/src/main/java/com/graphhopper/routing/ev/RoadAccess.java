@@ -44,7 +44,7 @@ public enum RoadAccess {
     public static RoadAccess find(String name) {
         if (name == null)
             return YES;
-        if (name.equalsIgnoreCase("permit"))
+        if (name.equalsIgnoreCase("permit") || name.equalsIgnoreCase("service"))
             return PRIVATE;
         try {
             // public and permissive will be converted into "yes"
