@@ -2079,12 +2079,6 @@ public class GraphHopperTest {
     }
 
     @Test
-    public void testTagParserProcessingOrder() {
-        // TODO NOW remove this test as it does not longer test what it should and compares
-        // two completely different cases and distances
-    }
-
-    @Test
     public void testEdgeCount() {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
