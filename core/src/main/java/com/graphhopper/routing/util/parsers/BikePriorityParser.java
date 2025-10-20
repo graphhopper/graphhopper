@@ -1,6 +1,10 @@
 package com.graphhopper.routing.util.parsers;
 
+import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.util.PriorityCode;
+import static com.graphhopper.routing.util.PriorityCode.*;
+import java.util.TreeMap;
 
 public class BikePriorityParser extends BikeCommonPriorityParser {
 
@@ -22,5 +26,13 @@ public class BikePriorityParser extends BikeCommonPriorityParser {
         preferHighwayTags.add("unclassified");
 
         setSpecificClassBicycle("touring");
+    }
+
+    @Override
+    void collect(ReaderWay way, double wayTypeSpeed, TreeMap<Double, PriorityCode> weightToPrioMap) {
+        super.collect(way, wayTypeSpeed, weightToPrioMap);
+        String highway = way.getTag("highway");
+        if ("track".equals(highway) && (way.getTag("surface") == null) && way.getTag("tracktype") == null)
+            weightToPrioMap.put(90d, AVOID);
     }
 }
