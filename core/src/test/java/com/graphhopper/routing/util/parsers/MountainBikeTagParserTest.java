@@ -121,11 +121,11 @@ public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
 
         way.clearTags();
         way.setTag("highway", "track");
-        way.setTag("tracktype", "grade5");
-        assertEquals(6, getSpeedFromFlags(way), 0.01);
+        way.setTag("tracktype", "grade4");
+        assertEquals(8, getSpeedFromFlags(way), 0.01);
 
         way.setTag("smoothness", "bad");
-        assertEquals(4, getSpeedFromFlags(way), 0.01);
+        assertEquals(6, getSpeedFromFlags(way), 0.01);
 
         way.setTag("smoothness", "impassable");
         assertEquals(MIN_SPEED, getSpeedFromFlags(way), 0.01);

@@ -37,7 +37,7 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         setTrackTypeSpeed("grade2", 12); // now unpaved ...
         setTrackTypeSpeed("grade3", 8);
         setTrackTypeSpeed("grade4", 6);
-        setTrackTypeSpeed("grade5", 4); // like sand/grass
+        setTrackTypeSpeed("grade5", PUSHING_SECTION_SPEED); // like sand
 
         setSurfaceSpeed("paved", 18);
         setSurfaceSpeed("asphalt", 18);
