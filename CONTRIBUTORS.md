@@ -8,6 +8,7 @@ Here is an overview:
  * AnahitaS, docs for Android, Android, Tomcat
  * andreaswolf, flag encoder versioning and more
  * andreylh, polygon for blocked area #1306
+ * modhtom, fixes like #3211
  * Anvoker, fixes like #1614 and helped with JUnit 5 migration #1632 
  * b3nn0, Android improvements
  * baumboi, path detail and landmark improvements

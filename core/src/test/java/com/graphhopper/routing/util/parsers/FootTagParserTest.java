@@ -287,6 +287,26 @@ public class FootTagParserTest {
     }
 
     @Test
+    public void testCarOneWayIsIgnored() {
+        // This test simulates the bug #3211
+        // A road with a 'oneway=yes' tag (for cars) should be ignored by the foot parser
+        // and allow pedestrian access in BOTH directions.
+
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "residential");
+        way.setTag("oneway", "yes");
+
+        EdgeIntAccess edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(encodingManager.getBytesForFlags());
+        int edgeId = 0;
+
+        accessParser.handleWayTags(edgeId, edgeIntAccess, way);
+
+        // We expect BOTH forward (false) and backward (true) access to be allowed
+        assertTrue(footAccessEnc.getBool(false, edgeId, edgeIntAccess), "Forward access should be allowed");
+        assertTrue(footAccessEnc.getBool(true, edgeId, edgeIntAccess), "Backward access should be allowed");
+    }
+
+    @Test
     public void testMixSpeedAndSafe() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "motorway");
