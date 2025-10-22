@@ -29,10 +29,7 @@ import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Stream;
 
 @Path("buffer")
@@ -525,6 +522,7 @@ public class BufferResource {
         };
 
         EdgeIteratorState currentState = graph.getEdgeIteratorState(startFeature.getEdge(), Integer.MIN_VALUE);
+        String previousRoadName = currentState.getName();
         int currentNode = upstreamStart ? currentState.getBaseNode() : currentState.getAdjNode();
         PointList path = new PointList();
 
@@ -583,8 +581,19 @@ public class BufferResource {
 
                     // Handle unnamed edge continuation when roadName is null
                     else if (roadName == null && !tempState.get(this.roundaboutAccessEnc)) {
-                        // For unnamed edges, accept any non-roundabout driveable edge
-                        potentialEdges.add(tempEdge);
+                        // Prioritize edges based on the previously selected edge road name if applicable
+                        String currentEdgeRoadName = tempState.getName();
+                        boolean matchesPreviousEdgeName = currentEdgeRoadName != null && currentEdgeRoadName.equals(previousRoadName);
+
+                        if (matchesPreviousEdgeName && isBidirectional(tempState)) {
+                            currentEdge = tempEdge;
+                            usedEdges.add(tempEdge);
+                            break;
+                        } else if (matchesPreviousEdgeName) {
+                            potentialEdges.add(0, tempEdge);
+                        } else if (Objects.equals(previousRoadName, "") || previousRoadName == null) {
+                            potentialEdges.add(tempEdge);
+                        }
                     }
 
                     // Temp is part of a roundabout. Lower entry priority.
@@ -655,6 +664,7 @@ public class BufferResource {
             }
 
             EdgeIteratorState state = graph.getEdgeIteratorState(currentEdge, Integer.MIN_VALUE);
+            previousRoadName = state.getName();
             PointList wayGeometry = state.fetchWayGeometry(FetchMode.PILLAR_ONLY);
 
             // Reverse path if segment is flipped
