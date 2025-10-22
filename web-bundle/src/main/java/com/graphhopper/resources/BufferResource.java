@@ -399,7 +399,10 @@ public class BufferResource {
 
         // Add final segment points
         for (GHPoint point : finalSegmentToThreshold) {
-            coordinates.add(new Coordinate(point.getLon(), point.getLat()));
+            Coordinate coordinate = new Coordinate(point.getLon(), point.getLat());
+            if (!coordinates.contains(coordinate)) {
+                coordinates.add(coordinate);
+            }
         }
 
         // Reverse final path when building upstream
@@ -585,12 +588,10 @@ public class BufferResource {
                         String currentEdgeRoadName = tempState.getName();
                         boolean matchesPreviousEdgeName = currentEdgeRoadName != null && currentEdgeRoadName.equals(previousRoadName);
 
-                        if (matchesPreviousEdgeName && isBidirectional(tempState)) {
+                        if (matchesPreviousEdgeName) {
                             currentEdge = tempEdge;
                             usedEdges.add(tempEdge);
                             break;
-                        } else if (matchesPreviousEdgeName) {
-                            potentialEdges.add(0, tempEdge);
                         } else if (Objects.equals(previousRoadName, "") || previousRoadName == null) {
                             potentialEdges.add(tempEdge);
                         }
