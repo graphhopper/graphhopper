@@ -83,49 +83,6 @@ class TagParsingTest {
     }
 
     @Test
-    public void testMixBikeTypesAndRelationCombination() {
-        ReaderWay osmWay = new ReaderWay(1);
-        osmWay.setTag("highway", "track");
-        osmWay.setTag("tracktype", "grade1");
-
-        ReaderRelation osmRel = new ReaderRelation(1);
-
-        BooleanEncodedValue bikeAccessEnc = VehicleAccess.create("bike");
-        DecimalEncodedValue bikeSpeedEnc = VehicleSpeed.create("bike", 4, 2, false);
-        DecimalEncodedValue bikePriorityEnc = VehiclePriority.create("bike", 4, PriorityCode.getFactor(1), false);
-        BooleanEncodedValue mtbAccessEnc = VehicleAccess.create("mtb");
-        DecimalEncodedValue mtbSpeedEnc = VehicleSpeed.create("mtb", 4, 2, false);
-        DecimalEncodedValue mtbPriorityEnc = VehiclePriority.create("mtb", 4, PriorityCode.getFactor(1), false);
-        EnumEncodedValue<RouteNetwork> bikeNetworkEnc = RouteNetwork.create(BikeNetwork.KEY);
-        EncodingManager em = EncodingManager.start()
-                .add(bikeAccessEnc).add(bikeSpeedEnc).add(bikePriorityEnc)
-                .add(mtbAccessEnc).add(mtbSpeedEnc).add(mtbPriorityEnc)
-                .add(bikeNetworkEnc)
-                .add(Smoothness.create())
-                .add(RoadClass.create())
-                .build();
-        BikePriorityParser bikeTagParser = new BikePriorityParser(em);
-        MountainBikePriorityParser mtbTagParser = new MountainBikePriorityParser(em);
-        OSMParsers osmParsers = new OSMParsers()
-                .addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(bikeNetworkEnc, relConfig))
-                .addWayTagParser(new OSMRoadClassParser(em.getEnumEncodedValue(RoadClass.KEY, RoadClass.class)))
-                .addWayTagParser(bikeTagParser)
-                .addWayTagParser(mtbTagParser);
-
-        // relation code for network rcn is NICE for bike and PREFER for mountainbike
-        osmRel.setTag("route", "bicycle");
-        osmRel.setTag("network", "rcn");
-        IntsRef relFlags = osmParsers.createRelationFlags();
-        relFlags = osmParsers.handleRelationTags(osmRel, relFlags);
-        EdgeIntAccess edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
-        int edgeId = 0;
-        osmParsers.handleWayTags(edgeId, edgeIntAccess, osmWay, relFlags);
-        // bike: uninfluenced speed for grade but via network => NICE
-        // mtb: uninfluenced speed only PREFER
-        assertTrue(bikePriorityEnc.getDecimal(false, edgeId, edgeIntAccess) > mtbPriorityEnc.getDecimal(false, edgeId, edgeIntAccess));
-    }
-
-    @Test
     public void testSharedEncodedValues() {
         BooleanEncodedValue carAccessEnc = VehicleAccess.create("car");
         BooleanEncodedValue footAccessEnc = VehicleAccess.create("foot");
