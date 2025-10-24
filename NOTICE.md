@@ -2,7 +2,7 @@
 
 GraphHopper licensed under the Apache license, Version 2.0
 
-Copyright 2012 - 2024 GraphHopper GmbH
+Copyright 2012 - 2025 GraphHopper GmbH
 
 The core module includes the following additional software:
 

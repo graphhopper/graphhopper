@@ -53,7 +53,7 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
 
     @Override
     protected BikeCommonAccessParser createAccessParser(EncodedValueLookup lookup, PMap pMap) {
-        return (BikeCommonAccessParser) new RacingBikeAccessParser(lookup, pMap);
+        return new RacingBikeAccessParser(lookup, pMap);
     }
 
     @Override
@@ -98,6 +98,13 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
     public void testTrack() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "track");
+        way.setTag("bicycle", "yes");
+        assertPriorityAndSpeed(AVOID_MORE, 2, way);
+        way.setTag("surface", "asphalt");
+        assertPriorityAndSpeed(VERY_NICE, 20, way);
+
+        way.clearTags();
+        way.setTag("highway", "track");
         way.setTag("bicycle", "designated");
         way.setTag("segregated","no");
         assertPriorityAndSpeed(AVOID_MORE, 2, way);
@@ -116,15 +123,15 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("highway", "track");
         way.setTag("tracktype", "grade3");
         // use pushing section
-        assertEquals(PUSHING_SECTION_SPEED, getSpeedFromFlags(way), 1e-1);
+        assertEquals(4, getSpeedFromFlags(way), 1e-1);
 
         // Even if it is part of a cycle way
         way.setTag("bicycle", "yes");
-        assertEquals(PUSHING_SECTION_SPEED, getSpeedFromFlags(way), 1e-1);
+        assertEquals(4, getSpeedFromFlags(way), 1e-1);
 
         way.clearTags();
         way.setTag("highway", "steps");
-        assertEquals(2, getSpeedFromFlags(way), 1e-1);
+        assertEquals(MIN_SPEED, getSpeedFromFlags(way), 1e-1);
 
         way.clearTags();
         way.setTag("highway", "primary");
@@ -173,7 +180,7 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         assertEquals(4, getSpeedFromFlags(way), 0.01);
 
         way.setTag("smoothness", "bad");
-        assertEquals(2, getSpeedFromFlags(way), 0.01);
+        assertEquals(MIN_SPEED, getSpeedFromFlags(way), 0.01);
 
         way.setTag("smoothness", "impassable");
         assertEquals(MIN_SPEED, getSpeedFromFlags(way), 0.01);
@@ -183,7 +190,7 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
     public void testHandleWayTagsInfluencedByRelation() {
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "track");
-        assertEquals(MIN_SPEED, getSpeedFromFlags(osmWay), 1e-1);
+        assertEquals(2, getSpeedFromFlags(osmWay), 1e-1);
 
         // relation code is PREFER
         ReaderRelation osmRel = new ReaderRelation(1);
@@ -202,21 +209,16 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         osmWay.setTag("tracktype", "grade1");
         assertPriorityAndSpeed(VERY_NICE, 20, osmWay, osmRel);
 
-        // Now we assume bicycle=yes, and unpaved as part of a cycle relation
+        // Now we assume bicycle=yes, and unpaved and as part of a cycle relation
         osmWay.setTag("tracktype", "grade2");
         osmWay.setTag("bicycle", "yes");
         assertPriorityAndSpeed(AVOID_MORE, 10, osmWay, osmRel);
 
-        // Now we assume bicycle=yes, and unpaved not part of a cycle relation
+        // Now we assume bicycle=yes, and unpaved and not part of a cycle relation
         osmWay.clearTags();
         osmWay.setTag("highway", "track");
         osmWay.setTag("tracktype", "grade3");
-        assertPriorityAndSpeed(AVOID_MORE, PUSHING_SECTION_SPEED, osmWay);
-
-        // Now we assume bicycle=yes, and tracktype = null
-        osmWay.clearTags();
-        osmWay.setTag("highway", "track");
-        assertPriorityAndSpeed(AVOID_MORE, 2, osmWay);
+        assertPriorityAndSpeed(AVOID_MORE, 4, osmWay);
     }
 
     @Test

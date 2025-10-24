@@ -319,7 +319,7 @@ public class RoutingAlgorithmWithOSMTest {
         // 1. alternative: go over steps 'Rampe Major' => 1.7km vs. around 2.7km
         queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 2702, 111));
         // 2.
-        queries.add(new Query(43.728499, 7.417907, 43.74958, 7.436566, 4208, 228));
+        queries.add(new Query(43.728499, 7.417907, 43.74958, 7.436566, 4220, 233));
         // 3.
         queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 2776, 167));
         // 4.
@@ -454,7 +454,7 @@ public class RoutingAlgorithmWithOSMTest {
     public void testKremsMountainBikeRelation() {
         List<Query> queries = new ArrayList<>();
         queries.add(new Query(48.409523, 15.602394, 48.375466, 15.72916, 12491, 159));
-        queries.add(new Query(48.410061, 15.63951, 48.411386, 15.604899, 3078, 79));
+        queries.add(new Query(48.410061, 15.63951, 48.411386, 15.604899, 3077, 79));
         queries.add(new Query(48.412294, 15.62007, 48.398306, 15.609667, 3965, 95));
 
         GraphHopper hopper = createHopper(KREMS, TestProfiles.accessSpeedAndPriority("mtb"));

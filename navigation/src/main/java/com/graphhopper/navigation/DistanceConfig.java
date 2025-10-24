@@ -32,6 +32,7 @@ import static com.graphhopper.navigation.DistanceUtils.UnitTranslationKey.*;
 public class DistanceConfig {
     final List<VoiceInstructionConfig> voiceInstructions;
     final DistanceUtils.Unit unit;
+    final String mode;
 
     public DistanceConfig(DistanceUtils.Unit unit, TranslationMap translationMap, Locale locale, TransportationMode mode) {
         this(unit, translationMap, locale, mode.name());
@@ -46,6 +47,7 @@ public class DistanceConfig {
             case "mtb":
             case "racingbike":
             case "bike":
+                this.mode = "cycling";
                 if (unit == DistanceUtils.Unit.METRIC) {
                     voiceInstructions = List.of(
                             new ConditionalDistanceVoiceInstructionConfig(IN_LOWER_DISTANCE_PLURAL.metric, translationMap, locale, new int[]{150},
@@ -62,6 +64,7 @@ public class DistanceConfig {
             case "hike":
             case "foot":
             case "pedestrian":
+                this.mode = "walking";
                 if (unit == DistanceUtils.Unit.METRIC) {
                     voiceInstructions = List.of(
                             new ConditionalDistanceVoiceInstructionConfig(IN_LOWER_DISTANCE_PLURAL.metric, translationMap, locale, new int[]{50},
@@ -73,6 +76,7 @@ public class DistanceConfig {
                 }
                 break;
             default:
+                this.mode = "driving";
                 if (unit == DistanceUtils.Unit.METRIC) {
                     voiceInstructions = Arrays.asList(
                             new InitialVoiceInstructionConfig(FOR_HIGHER_DISTANCE_PLURAL.metric, translationMap, locale, 4250, 250, unit),
@@ -103,5 +107,12 @@ public class DistanceConfig {
         return instructionsConfigs;
     }
 
+    /**
+     * Returns the Mapbox-compatible mode string for this transportation mode.
+     * @return "cycling" for bike profiles, "walking" for foot profiles, or "driving" for vehicle profiles
+     */
+    public String getMode() {
+        return mode;
+    }
 
 }

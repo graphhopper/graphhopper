@@ -207,6 +207,7 @@ public class Parameters {
         public static final String TIME = "time";
         public static final String WEIGHT = "weight";
         public static final String DISTANCE = "distance";
+        public static final String CHANGE_ANGLE = "change_angle";
         public static final String INTERSECTION = "intersection";
 
         public static final String LEG_TIME = "leg_time";

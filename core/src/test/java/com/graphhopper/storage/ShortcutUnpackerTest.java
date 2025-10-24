@@ -262,7 +262,7 @@ public class ShortcutUnpackerTest {
 
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
-    public void withTurnWeighting(Fixture f) {
+    public void withCalcTurnWeight(Fixture f) {
         assumeTrue(f.edgeBased);
         //      2 5 3 2 1 4 6      turn costs ->
         // prev 0-1-2-3-4-5-6 next

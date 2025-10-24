@@ -423,7 +423,7 @@ class EdgeBasedNodeContractor implements NodeContractor {
         private float hierarchyDepthWeight = 20;
         // Increasing these parameters (heuristic especially) will lead to a longer preparation time but also to fewer
         // shortcuts and possibly (slightly) faster queries.
-        private double maxPollFactorHeuristic = 5;
+        private double maxPollFactorHeuristic = 4;
         private double maxPollFactorContraction = 200;
     }
 

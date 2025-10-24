@@ -11,6 +11,7 @@
   "priority": [
     { "if": "hgv == NO",  "multiply_by": "0" },
     { "if": "!car_access && road_access != PRIVATE && hgv != DELIVERY && hgv != DESTINATION",  "multiply_by": "0" },
+    // also have a look into car_avoid_private_etc.json
     { "if": "road_access == PRIVATE || hgv == DELIVERY || hgv == DESTINATION",  "multiply_by": "0.1" },
     { "if": "max_width < 3 || max_height < 4", "multiply_by": "0" },
     { "if": "max_weight < 18 && max_weight_except == MISSING", "multiply_by": "0" }
