@@ -1153,14 +1153,21 @@ public class GraphHopper {
                     .build();
             checkProfilesConsistency();
             baseGraph.loadExisting();
-            String storedProfiles = properties.get("profiles");
-            String configuredProfiles = getProfilesString();
-            if (!storedProfiles.equals(configuredProfiles))
-                throw new IllegalStateException("Profiles do not match:"
-                        + "\nGraphhopper config: " + configuredProfiles
-                        + "\nGraph: " + storedProfiles
-                        + "\nChange configuration to match the graph or delete " + baseGraph.getDirectory().getLocation());
-
+            String storedProfilesString = properties.get("profiles");
+            Map<String, Integer> storedProfileHashes = Arrays.stream(storedProfilesString.split(",")).map(s -> s.split("\\|", 2)).collect((Collectors.toMap(kv -> kv[0], kv -> Integer.parseInt(kv[1]))));
+            Map<String, Integer> configuredProfileHashes = getProfileHashes();
+            configuredProfileHashes.forEach((profile, hash) -> {
+                Integer storedHash = storedProfileHashes.get(profile);
+                if (storedHash == null)
+                    throw new IllegalStateException("You cannot add new profiles to the loaded graph. Profile '" + profile + "' is new."
+                            + "\nExisting profiles: " + String.join(",", storedProfileHashes.keySet())
+                            + "\nChange your configuration to match the graph or delete " + baseGraph.getDirectory().getLocation());
+                if (!hash.equals(storedHash))
+                    throw new IllegalStateException("Profile '" + profile + "' does not match."
+                            + "\nStored: " + storedHash
+                            + "\nConfigured: " + hash
+                            + "\nChange this profile to match the stored one or delete " + baseGraph.getDirectory().getLocation());
+            });
             postProcessing(false);
             directory.loadMMap();
             setFullyLoaded();
@@ -1176,7 +1183,11 @@ public class GraphHopper {
     }
 
     private String getProfilesString() {
-        return profilesByName.values().stream().map(p -> p.getName() + "|" + getProfileHash(p)).collect(Collectors.joining(","));
+        return getProfileHashes().entrySet().stream().map(e -> e.getKey() + "|" + e.getValue()).collect(Collectors.joining(","));
+    }
+
+    private Map<String, Integer> getProfileHashes() {
+        return profilesByName.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> getProfileHash(e.getValue())));
     }
 
     public void checkProfilesConsistency() {
