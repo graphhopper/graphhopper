@@ -151,7 +151,7 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
                 || way.hasTag("bicycle", "dismount")
                 || way.hasTag("railway", "platform")
                 || pushingRestriction && !way.hasTag("bicycle", INTENDED)
-                || way.hasTag("service")) {
+                || way.hasTag("service") && !isDesignated(way)) {
             speed = PUSHING_SECTION_SPEED;
 
         } else {
