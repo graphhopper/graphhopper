@@ -72,6 +72,9 @@ public class CHStorage {
     private Consumer<LowWeightShortcut> lowWeightShortcutConsumer;
     private Consumer<HighWeightShortcut> highWeightShortcutConsumer;
 
+    private double minValidWeight = Double.POSITIVE_INFINITY;
+    private double maxValidWeight = Double.NEGATIVE_INFINITY;
+
     public static CHStorage fromGraph(BaseGraph baseGraph, CHConfig chConfig) {
         String name = chConfig.getName();
         boolean edgeBased = chConfig.isEdgeBased();
@@ -223,6 +226,10 @@ public class CHStorage {
             lowWeightShortcutConsumer.accept(new LowWeightShortcut(nodeA, nodeB, shortcutCount, weight, MIN_WEIGHT));
         if (highWeightShortcutConsumer != null && weight >= MAX_WEIGHT)
             highWeightShortcutConsumer.accept(new HighWeightShortcut(nodeA, nodeB, shortcutCount, weight, MAX_WEIGHT));
+        if (weight >= MIN_WEIGHT && weight < MAX_WEIGHT) {
+            minValidWeight = Math.min(weight, minValidWeight);
+            maxValidWeight = Math.max(weight, maxValidWeight);
+        }
         long shortcutPointer = (long) shortcutCount * shortcutEntryBytes;
         shortcutCount++;
         shortcuts.ensureCapacity((long) shortcutCount * shortcutEntryBytes);
@@ -406,6 +413,14 @@ public class CHStorage {
 
     public int getMB() {
         return (int) ((shortcutEntryBytes * (long) shortcutCount + nodeCHEntryBytes * (long) nodeCount) / 1024 / 1024);
+    }
+
+    public double getMinValidWeight() {
+        return minValidWeight;
+    }
+
+    public double getMaxValidWeight() {
+        return maxValidWeight;
     }
 
     public int getNumShortcutsUnderMinWeight() {
