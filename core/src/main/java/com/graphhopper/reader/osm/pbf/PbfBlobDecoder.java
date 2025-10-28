@@ -10,8 +10,8 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.OSMFileHeader;
 import com.graphhopper.reader.osm.SkipOptions;
 import com.graphhopper.util.Helper;
-import org.openstreetmap.osmosis.osmbinary.Fileformat;
-import org.openstreetmap.osmosis.osmbinary.Osmformat;
+import crosby.binary.Fileformat;
+import crosby.binary.Osmformat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
