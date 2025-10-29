@@ -587,23 +587,20 @@ public class BufferResource {
 
                     // Handle unnamed edge continuation when roadName is null
                     else if (roadName == null && !tempState.get(this.roundaboutAccessEnc)) {
-                        // Prioritize edges based on the previously selected edge road name if applicable
                         String currentEdgeRoadName = tempState.getName();
-                        boolean matchesPreviousEdgeName =
-                            (currentEdgeRoadName != null && currentEdgeRoadName.equals(previousRoadName)) ||
-                            (currentEdgeRoadName == null && previousRoadName == null) ||
-                            (currentEdgeRoadName != null && currentEdgeRoadName.isEmpty() && (previousRoadName == null || previousRoadName.isEmpty()));
+                        boolean currentIsBlank = currentEdgeRoadName == null || currentEdgeRoadName.isEmpty();
+                        boolean previousIsBlank = previousRoadName == null || previousRoadName.isEmpty();
+                        boolean matchesPreviousEdgeName = (currentIsBlank && previousIsBlank)
+                                || (currentEdgeRoadName != null && currentEdgeRoadName.equals(previousRoadName));
 
                         if (matchesPreviousEdgeName) {
-                            if (currentEdgeRoadName != null && !currentEdgeRoadName.isEmpty()) {
+                            if (!currentIsBlank) {
                                 currentEdge = tempEdge;
                                 usedEdges.add(tempEdge);
                                 break;
                             }
-                            else {
-                                potentialUnnamedEdges.add(tempEdge);
-                            }
-                        } else if (Objects.equals(previousRoadName, "") || previousRoadName == null) {
+                            potentialUnnamedEdges.add(tempEdge);
+                        } else if (previousIsBlank) {
                             potentialEdges.add(tempEdge);
                         }
                     }
