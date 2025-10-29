@@ -42,6 +42,7 @@ public class BufferResource {
     private final Graph graph;
     private final GraphHopperConfig config;
     private final DistanceCalculationHelper distanceHelper;
+    private final EdgeAngleCalculator angleCalculator;
 
     private final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(1E8));
 
@@ -90,6 +91,7 @@ public class BufferResource {
         this.nodeAccess = graph.getNodeAccess();
         this.edgeExplorer = graph.createEdgeExplorer();
         this.distanceHelper = new DistanceCalculationHelper(graph, nodeAccess);
+        this.angleCalculator = new EdgeAngleCalculator(graph);
 
         EncodingManager encodingManager = graphHopper.getEncodingManager();
         this.roundaboutAccessEnc = encodingManager.getBooleanEncodedValue(Roundabout.KEY);
@@ -550,6 +552,7 @@ public class BufferResource {
             List<Integer> potentialEdges = new ArrayList<>();
             List<Integer> potentialRoundaboutEdges = new ArrayList<>();
             List<Integer> potentialRoundaboutEdgesWithoutName = new ArrayList<>();
+            List<Integer> potentialUnnamedEdges = new ArrayList<>();
             currentEdge = -1;
 
             while (iterator.next()) {
@@ -586,12 +589,20 @@ public class BufferResource {
                     else if (roadName == null && !tempState.get(this.roundaboutAccessEnc)) {
                         // Prioritize edges based on the previously selected edge road name if applicable
                         String currentEdgeRoadName = tempState.getName();
-                        boolean matchesPreviousEdgeName = currentEdgeRoadName != null && currentEdgeRoadName.equals(previousRoadName);
+                        boolean matchesPreviousEdgeName =
+                            (currentEdgeRoadName != null && currentEdgeRoadName.equals(previousRoadName)) ||
+                            (currentEdgeRoadName == null && previousRoadName == null) ||
+                            (currentEdgeRoadName != null && currentEdgeRoadName.isEmpty() && (previousRoadName == null || previousRoadName.isEmpty()));
 
                         if (matchesPreviousEdgeName) {
-                            currentEdge = tempEdge;
-                            usedEdges.add(tempEdge);
-                            break;
+                            if (currentEdgeRoadName != null && !currentEdgeRoadName.isEmpty()) {
+                                currentEdge = tempEdge;
+                                usedEdges.add(tempEdge);
+                                break;
+                            }
+                            else {
+                                potentialUnnamedEdges.add(tempEdge);
+                            }
                         } else if (Objects.equals(previousRoadName, "") || previousRoadName == null) {
                             potentialEdges.add(tempEdge);
                         }
@@ -605,7 +616,11 @@ public class BufferResource {
             }
 
             // No bidirectional edge found. Choose from potential edge lists.
-            if (currentEdge == -1) {
+            if (!potentialUnnamedEdges.isEmpty()) {
+                currentEdge = angleCalculator.selectStraightestEdge(potentialUnnamedEdges, currentState, currentNode);
+                usedEdges.add(currentEdge);
+            }
+            else if (currentEdge == -1) {
                 if (!potentialEdges.isEmpty()) {
                     // The Michigan Left
                     if (potentialEdges.size() > 1) {
