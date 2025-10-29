@@ -148,10 +148,9 @@ public class PrepareContractionHierarchies {
     }
 
     private void logFinalGraphStats() {
-        logger.info("minimum valid shortcut weight: {}", chStore.getMinValidWeight());
-        logger.info("maximum valid shortcut weight: {}", chStore.getMaxValidWeight());
-        logger.info("shortcuts under minimum weight: {}", chStore.getNumShortcutsUnderMinWeight());
-        logger.info("shortcuts over maximum weight: {}", chStore.getNumShortcutsOverMaxWeight());
+        logger.info("shortcut weights - under minimum: {}, over maximum: {}, minimum valid: {}, maximum valid: {}",
+                Helper.nf(chStore.getNumShortcutsUnderMinWeight()), Helper.nf(chStore.getNumShortcutsOverMaxWeight()),
+                chStore.getMinValidWeight(), chStore.getMaxValidWeight());
         logger.info("took: {}s, graph now - num edges: {}, num nodes: {}, num shortcuts: {}",
                 (int) allSW.getSeconds(), nf(graph.getEdges()), nf(nodes), nf(chStore.getShortcuts()));
     }
