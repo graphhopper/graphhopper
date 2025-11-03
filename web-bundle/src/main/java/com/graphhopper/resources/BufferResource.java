@@ -46,7 +46,7 @@ public class BufferResource {
     private final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(1E8));
 
     //region Constants, Enums and Records
-    private static final double PROXIMITY_THRESHOLD_METERS = 8; // 20 feet
+    private static final double PROXIMITY_THRESHOLD_METERS = 6; // 20 feet
     private static final double INITIAL_SEARCH_RADIUS_DEGREES = 0.0001; // Roughly 11 meters
 
 
