@@ -46,7 +46,7 @@ public class BufferResource {
     private final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(1E8));
 
     //region Constants, Enums and Records
-    private static final double PROXIMITY_THRESHOLD_METERS = 6.096; // 20 feet
+    private static final double PROXIMITY_THRESHOLD_METERS = 8; // 20 feet
     private static final double INITIAL_SEARCH_RADIUS_DEGREES = 0.0001; // Roughly 11 meters
 
 
@@ -218,7 +218,11 @@ public class BufferResource {
 
             // If closest edge is named, use road name matching
             if (!roadNames.stream().allMatch(String::isEmpty)) {
-                String bestEdgeRoadName = findClosestMatchingRoadName(roadNames, roadName);
+                List<String> allRoadNames = namedEdges.stream()
+                        .flatMap(edgeId -> getAllRouteNamesFromEdge(graph.getEdgeIteratorState(edgeId, Integer.MIN_VALUE)).stream())
+                        .distinct()
+                        .toList();
+                String bestEdgeRoadName = findClosestMatchingRoadName(allRoadNames, roadName);
 
                 // Filter namedEdges to only include edges with the bestEdgeRoadName
                 List<Integer> filteredNamedEdges = filterEdgesByRoadName(namedEdges, bestEdgeRoadName);
