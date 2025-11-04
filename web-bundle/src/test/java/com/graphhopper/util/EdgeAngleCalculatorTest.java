@@ -277,7 +277,7 @@ public class EdgeAngleCalculatorTest {
         NodeAccess na = graph.getNodeAccess();
         na.setNode(0, 49.9, 10.0);   // South
         na.setNode(1, 50.0, 10.0);   // Center (common node)
-        na.setNode(2, 50.1, 9.95);   // Northwest branch
+        na.setNode(2, 50.1, 9.94);   // Northwest branch
         na.setNode(3, 50.1, 10.05);  // Northeast branch (more aligned)
 
         // Current edge comes INTO node 1, candidate edges ALSO COME INTO node 1
