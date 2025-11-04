@@ -218,7 +218,11 @@ public class BufferResource {
 
             // If closest edge is named, use road name matching
             if (!roadNames.stream().allMatch(String::isEmpty)) {
-                String bestEdgeRoadName = findClosestMatchingRoadName(roadNames, roadName);
+                List<String> allRoadNames = namedEdges.stream()
+                        .flatMap(edgeId -> getAllRouteNamesFromEdge(graph.getEdgeIteratorState(edgeId, Integer.MIN_VALUE)).stream())
+                        .distinct()
+                        .toList();
+                String bestEdgeRoadName = findClosestMatchingRoadName(allRoadNames, roadName);
 
                 // Filter namedEdges to only include edges with the bestEdgeRoadName
                 List<Integer> filteredNamedEdges = filterEdgesByRoadName(namedEdges, bestEdgeRoadName);
