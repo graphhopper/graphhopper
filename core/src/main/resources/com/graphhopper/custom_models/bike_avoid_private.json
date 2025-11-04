@@ -2,7 +2,7 @@
   // Note, 'turn_penalty' requires enabled turn_costs in profile
   "turn_penalty": [
     {
-      "if": "prev_bike_road_access != bike_road_access && (bike_road_access == DESTINATION || bike_road_access == PRIVATE)",
+      "if": "prev_bike_road_access != bike_road_access && bike_road_access == PRIVATE",
       "add": "2000"
     }
   ]
