@@ -3,7 +3,6 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.FerrySpeedCalculator;
-import com.graphhopper.storage.IntsRef;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -14,7 +13,6 @@ import static com.graphhopper.routing.util.parsers.AbstractAccessParser.INTENDED
 
 public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedParser implements TagParser {
 
-    private static final Set<String> CYCLEWAY_KEYS = Set.of("cycleway", "cycleway:left", "cycleway:both", "cycleway:right");
     protected static final int PUSHING_SECTION_SPEED = 4;
     protected static final int MIN_SPEED = 2;
     private final Map<String, Integer> trackTypeSpeeds = new HashMap<>();
@@ -120,12 +118,8 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         return Math.min(speed, maxSpeed);
     }
 
-    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way) {
-        throw new IllegalArgumentException("use handleWayTags with relationFlags");
-    }
-
     @Override
-    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way) {
         String highwayValue = way.getTag("highway", "");
         if (highwayValue.isEmpty()) {
             if (FerrySpeedCalculator.isFerry(way)) {
@@ -146,11 +140,8 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         Integer trackTypeSpeed = trackTypeSpeeds.get(trackTypeValue);
         if (trackTypeSpeed != null)
             surfaceSpeed = surfaceSpeed == null ? trackTypeSpeed : Math.min(surfaceSpeed, trackTypeSpeed);
-        boolean bikeDesignated = way.hasTag("bicycle", "designated")
-                || way.hasTag("bicycle", "official")
-                || way.hasTag("segregated", "yes")
-                || CYCLEWAY_KEYS.stream().anyMatch(k -> way.getTag(k, "").equals("track"))
-                || RouteNetwork.MISSING != bikeRouteEnc.getEnum(false, edgeId, edgeIntAccess);
+        boolean bikeDesignated = RouteNetwork.MISSING != bikeRouteEnc.getEnum(false, edgeId, edgeIntAccess)
+                || BikeCommonPriorityParser.isBikeDesignated(way);
 
         if (way.hasTag("surface") && surfaceSpeed == null
                 || way.hasTag("bicycle", "dismount")
