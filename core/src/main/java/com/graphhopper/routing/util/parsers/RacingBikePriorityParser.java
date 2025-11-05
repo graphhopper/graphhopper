@@ -43,8 +43,8 @@ public class RacingBikePriorityParser extends BikeCommonPriorityParser {
     }
 
     @Override
-    void collect(ReaderWay way, double wayTypeSpeed, TreeMap<Double, PriorityCode> weightToPrioMap) {
-        super.collect(way, wayTypeSpeed, weightToPrioMap);
+    void collect(ReaderWay way, double wayTypeSpeed, boolean bikeDesignated, TreeMap<Double, PriorityCode> weightToPrioMap) {
+        super.collect(way, wayTypeSpeed, bikeDesignated, weightToPrioMap);
 
         String highway = way.getTag("highway");
         if ("service".equals(highway) || "residential".equals(highway)) {

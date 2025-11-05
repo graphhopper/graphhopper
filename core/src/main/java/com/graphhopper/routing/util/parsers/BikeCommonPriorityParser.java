@@ -14,11 +14,12 @@ import static com.graphhopper.routing.util.PriorityCode.*;
 import static com.graphhopper.routing.util.parsers.AbstractAccessParser.INTENDED;
 
 public abstract class BikeCommonPriorityParser implements TagParser {
+    private static final Set<String> CYCLEWAY_KEYS = Set.of("cycleway", "cycleway:left", "cycleway:both", "cycleway:right");
 
-    // Bicycle tracks subject to compulsory use in Germany and Poland (https://wiki.openstreetmap.org/wiki/DE:Key:cycleway)
+    // rare use case when a bicycle lane has access tag
     private static final List<String> CYCLEWAY_BICYCLE_KEYS = List.of("cycleway:bicycle", "cycleway:both:bicycle", "cycleway:left:bicycle", "cycleway:right:bicycle");
 
-    // Pushing section highways are parts where you need to get off your bike and push it (German: Schiebestrecke)
+    // pushing section highways are parts where you need to get off your bike and push it
     protected final HashSet<String> pushingSectionsHighways = new HashSet<>();
     protected final Set<String> preferHighwayTags = new HashSet<>();
     protected final Map<String, PriorityCode> avoidHighwayTags = new HashMap<>();
@@ -76,41 +77,34 @@ public abstract class BikeCommonPriorityParser implements TagParser {
     @Override
     public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
         String highwayValue = way.getTag("highway");
-        Integer priorityFromRelation = null;
-        switch (bikeRouteEnc.getEnum(false, edgeId, edgeIntAccess)) {
-            case INTERNATIONAL, NATIONAL -> priorityFromRelation = BEST.getValue();
-            case REGIONAL, LOCAL -> priorityFromRelation = VERY_NICE.getValue();
+        PriorityCode priorityFromRelation = null;
+        RouteNetwork bikeRouteNetwork = bikeRouteEnc.getEnum(false, edgeId, edgeIntAccess);
+        switch (bikeRouteNetwork) {
+            case INTERNATIONAL, NATIONAL -> priorityFromRelation = BEST;
+            case REGIONAL, LOCAL -> priorityFromRelation = VERY_NICE;
         }
 
         if (highwayValue == null) {
             if (FerrySpeedCalculator.isFerry(way)) {
-                priorityFromRelation = SLIGHT_AVOID.getValue();
+                priorityFromRelation = SLIGHT_AVOID;
             } else {
                 return;
             }
         }
 
-        double maxSpeed = Math.max(avgSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), avgSpeedEnc.getDecimal(true, edgeId, edgeIntAccess));
-        priorityEnc.setDecimal(false, edgeId, edgeIntAccess, PriorityCode.getValue(handlePriority(way, maxSpeed, priorityFromRelation)));
-    }
-
-    /**
-     * In this method we prefer cycleways or roads with designated bike access and avoid big roads
-     * or roads with trams or pedestrian.
-     *
-     * @return new priority based on priorityFromRelation and on the tags in ReaderWay.
-     */
-    int handlePriority(ReaderWay way, double wayTypeSpeed, Integer priorityFromRelation) {
         TreeMap<Double, PriorityCode> weightToPrioMap = new TreeMap<>();
         if (priorityFromRelation == null)
             weightToPrioMap.put(0d, UNCHANGED);
         else
-            weightToPrioMap.put(110d, PriorityCode.valueOf(priorityFromRelation));
+            weightToPrioMap.put(110d, priorityFromRelation);
 
-        collect(way, wayTypeSpeed, weightToPrioMap);
+        double maxSpeed = Math.max(avgSpeedEnc.getDecimal(false, edgeId, edgeIntAccess),
+                avgSpeedEnc.getDecimal(true, edgeId, edgeIntAccess));
+        collect(way, maxSpeed, RouteNetwork.MISSING != bikeRouteNetwork || isBikeDesignated(way), weightToPrioMap);
 
         // pick priority with biggest order value
-        return weightToPrioMap.lastEntry().getValue().getValue();
+        double prio = PriorityCode.getValue(weightToPrioMap.lastEntry().getValue().getValue());
+        priorityEnc.setDecimal(false, edgeId, edgeIntAccess, prio);
     }
 
     // Conversion of class value to priority. See http://wiki.openstreetmap.org/wiki/Class:bicycle
@@ -144,9 +138,9 @@ public abstract class BikeCommonPriorityParser implements TagParser {
      * @param weightToPrioMap associate a weight with every priority. This sorted map allows
      *                        subclasses to 'insert' more important priorities as well as overwrite determined priorities.
      */
-    void collect(ReaderWay way, double wayTypeSpeed, TreeMap<Double, PriorityCode> weightToPrioMap) {
+    void collect(ReaderWay way, double wayTypeSpeed, boolean bikeDesignated, TreeMap<Double, PriorityCode> weightToPrioMap) {
         String highway = way.getTag("highway");
-        if (isDesignated(way)) {
+        if (bikeDesignated) {
             boolean isGoodSurface = way.getTag("tracktype", "").equals("grade1") || goodSurface.contains(way.getTag("surface", ""));
             if ("path".equals(highway) || "track".equals(highway) && isGoodSurface)
                 weightToPrioMap.put(100d, VERY_NICE);
@@ -193,7 +187,7 @@ public abstract class BikeCommonPriorityParser implements TagParser {
                 pushingSectionPrio = BAD;
             else if (way.hasTag("bicycle", "yes") || way.hasTag("bicycle", "permissive"))
                 pushingSectionPrio = PREFER;
-            else if (isDesignated(way))
+            else if (bikeDesignated)
                 pushingSectionPrio = VERY_NICE;
 
             if (way.hasTag("foot", "yes") && !way.hasTag("segregated", "yes"))
@@ -226,9 +220,14 @@ public abstract class BikeCommonPriorityParser implements TagParser {
         }
     }
 
-    boolean isDesignated(ReaderWay way) {
-        return way.hasTag("bicycle", "designated") || way.hasTag(CYCLEWAY_BICYCLE_KEYS, "designated")
-                || way.hasTag("bicycle_road", "yes") || way.hasTag("cyclestreet", "yes") || way.hasTag("bicycle", "official");
+    static boolean isBikeDesignated(ReaderWay way) {
+        return way.hasTag("bicycle", "designated")
+                || way.hasTag("bicycle", "official")
+                || way.hasTag("segregated", "yes")
+                || way.hasTag("bicycle_road", "yes")
+                || way.hasTag("cyclestreet", "yes")
+                || CYCLEWAY_KEYS.stream().anyMatch(k -> way.getTag(k, "").equals("track"))
+                || way.hasTag(CYCLEWAY_BICYCLE_KEYS, "designated");
     }
 
     void addPushingSection(String highway) {
