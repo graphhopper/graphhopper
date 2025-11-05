@@ -195,12 +195,13 @@ public abstract class BikeCommonPriorityParser implements TagParser {
         String classBicycleValue = way.getTag(classBicycleKey);
         if (classBicycleValue == null) classBicycleValue = way.getTag("class:bicycle");
 
-        // We assume that humans are better in classifying preferences compared to our algorithm above -> weight = 100
+        // We assume that humans are better in classifying preferences compared to our algorithm above
         if (classBicycleValue != null) {
             PriorityCode prio = convertClassValueToPriority(classBicycleValue);
             // do not overwrite if e.g. designated
-//            if (weightToPrioMap.lastEntry().getKey() < 100 || weightToPrioMap.lastEntry().getValue().getValue() < prio.getValue())
-                weightToPrioMap.put(100d, prio);
+            weightToPrioMap.compute(100d, (key, existing) ->
+                    existing == null || existing.getValue() < prio.getValue() ? prio : existing
+            );
         }
 
         // Increase the priority for scenic routes or in case that maxspeed limits our average speed as compensation. See #630
