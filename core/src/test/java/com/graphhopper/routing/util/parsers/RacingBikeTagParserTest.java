@@ -192,7 +192,6 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         osmWay.setTag("highway", "track");
         assertEquals(2, getSpeedFromFlags(osmWay), 1e-1);
 
-        // relation code is PREFER
         ReaderRelation osmRel = new ReaderRelation(1);
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "lcn");
@@ -213,6 +212,12 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         osmWay.setTag("tracktype", "grade2");
         osmWay.setTag("bicycle", "yes");
         assertPriorityAndSpeed(AVOID_MORE, 10, osmWay, osmRel);
+
+        // Now we check good surface without tracktype
+        osmWay.clearTags();
+        osmWay.setTag("highway", "track");
+        osmWay.setTag("surface", "asphalt");
+        assertPriorityAndSpeed(VERY_NICE, 24, osmWay, osmRel);
 
         // Now we assume bicycle=yes, and unpaved and not part of a cycle relation
         osmWay.clearTags();
