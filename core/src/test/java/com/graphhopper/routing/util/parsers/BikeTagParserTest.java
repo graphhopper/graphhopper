@@ -661,11 +661,11 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("class:bicycle", "invalidvalue");
         assertPriority(UNCHANGED, way);
         way.setTag("class:bicycle", "-1");
-        assertPriority(SLIGHT_AVOID, way);
-        way.setTag("class:bicycle", "-2");
         assertPriority(AVOID, way);
+        way.setTag("class:bicycle", "-2");
+        assertPriority(BAD, way);
         way.setTag("class:bicycle", "-3");
-        assertPriority(AVOID_MORE, way);
+        assertPriority(REACH_DESTINATION, way);
 
         way.setTag("highway", "residential");
         way.setTag("bicycle", "designated");
