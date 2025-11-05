@@ -146,17 +146,21 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         Integer trackTypeSpeed = trackTypeSpeeds.get(trackTypeValue);
         if (trackTypeSpeed != null)
             surfaceSpeed = surfaceSpeed == null ? trackTypeSpeed : Math.min(surfaceSpeed, trackTypeSpeed);
+        boolean bikeDesignated = way.hasTag("bicycle", "designated")
+                || way.hasTag("bicycle", "official")
+                || way.hasTag("segregated", "yes")
+                || CYCLEWAY_KEYS.stream().anyMatch(k -> way.getTag(k, "").equals("track"))
+                || RouteNetwork.MISSING != bikeRouteEnc.getEnum(false, edgeId, edgeIntAccess);
 
         if (way.hasTag("surface") && surfaceSpeed == null
                 || way.hasTag("bicycle", "dismount")
                 || way.hasTag("railway", "platform")
                 || pushingRestriction && !way.hasTag("bicycle", INTENDED)
-                || way.hasTag("service") && !isDesignated(way)) {
+                || way.hasTag("service") && !bikeDesignated) {
             speed = PUSHING_SECTION_SPEED;
 
         } else {
 
-            boolean bikeDesignated = isDesignated(way) || RouteNetwork.MISSING != bikeRouteEnc.getEnum(false, edgeId, edgeIntAccess);
             boolean bikeAllowed = way.hasTag("bicycle", "yes") || bikeDesignated;
             boolean isRacingBike = this instanceof RacingBikeAverageSpeedParser;
 
@@ -189,11 +193,6 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         setSpeed(false, edgeId, edgeIntAccess, applyMaxSpeed(way, speed, false));
         if (avgSpeedEnc.isStoreTwoDirections())
             setSpeed(true, edgeId, edgeIntAccess, applyMaxSpeed(way, speed, true));
-    }
-
-    private boolean isDesignated(ReaderWay way) {
-        return way.hasTag("bicycle", "designated") || way.hasTag("bicycle", "official") || way.hasTag("segregated", "yes")
-                || CYCLEWAY_KEYS.stream().anyMatch(k -> way.getTag(k, "").equals("track"));
     }
 
     void setHighwaySpeed(String highway, int speed) {
