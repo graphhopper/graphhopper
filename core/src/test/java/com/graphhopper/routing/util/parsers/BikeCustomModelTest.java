@@ -78,7 +78,9 @@ public class BikeCustomModelTest {
 
     @Test
     public void testCustomBike() {
-        CustomModel cm = GHUtility.loadCustomModelFromJar("bike.json");
+        CustomModel baseCM = GHUtility.loadCustomModelFromJar("bike.json");
+        CustomModel bikeAvoidPrivate = GHUtility.loadCustomModelFromJar("bike_avoid_private_node.json");
+        CustomModel cm = CustomModel.merge(baseCM, bikeAvoidPrivate);
         ReaderWay way = new ReaderWay(0L);
         way.setTag("highway", "path");
         way.setTag("surface", "ground");
@@ -110,9 +112,9 @@ public class BikeCustomModelTest {
 
         way.clearTags();
         way.setTag("highway", "tertiary");
-        way.setTag("vehicle", "destination");
+        way.setTag("vehicle", "private");
         edge = createEdge(way);
-        assertEquals(6, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        assertEquals(0.1, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
     }
 
     @Test

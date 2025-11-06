@@ -6,7 +6,6 @@ import com.graphhopper.routing.util.PriorityCode;
 
 import java.util.TreeMap;
 
-import static com.graphhopper.routing.ev.RouteNetwork.*;
 import static com.graphhopper.routing.util.PriorityCode.*;
 
 public class RacingBikePriorityParser extends BikeCommonPriorityParser {
