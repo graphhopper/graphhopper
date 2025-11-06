@@ -13,13 +13,11 @@ public class MountainBikePriorityParser extends BikeCommonPriorityParser {
 
     public MountainBikePriorityParser(EncodedValueLookup lookup) {
         this(lookup.getDecimalEncodedValue(VehicleSpeed.key("mtb")),
-                lookup.getDecimalEncodedValue(VehiclePriority.key("mtb")),
-                lookup.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class));
+                lookup.getDecimalEncodedValue(VehiclePriority.key("mtb")));
     }
 
-    protected MountainBikePriorityParser(DecimalEncodedValue speedEnc, DecimalEncodedValue priorityEnc,
-                                         EnumEncodedValue<RouteNetwork> bikeRouteEnc) {
-        super(priorityEnc, speedEnc, bikeRouteEnc);
+    protected MountainBikePriorityParser(DecimalEncodedValue speedEnc, DecimalEncodedValue priorityEnc) {
+        super(priorityEnc, speedEnc);
 
         preferHighwayTags.add("road");
         preferHighwayTags.add("track");

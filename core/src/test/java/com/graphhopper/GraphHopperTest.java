@@ -157,7 +157,7 @@ public class GraphHopperTest {
                 setAlgorithm(ASTAR).setProfile(profile));
 
         // identify the number of counts to compare with CH foot route
-        assertEquals(1033, rsp.getHints().getLong("visited_nodes.sum", 0));
+        assertEquals(1040, rsp.getHints().getLong("visited_nodes.sum", 0));
 
         ResponsePath res = rsp.getBest();
         assertEquals(3536, res.getDistance(), 1);
@@ -213,20 +213,20 @@ public class GraphHopperTest {
         // no simplification
         hopper.getRouterConfig().setSimplifyResponse(false);
         GHResponse routeRsp = hopper.route(request);
-        assertEquals(8, routeRsp.getBest().getInstructions().size());
-        assertEquals(50, routeRsp.getBest().getPoints().size());
+        assertEquals(10, routeRsp.getBest().getInstructions().size());
+        assertEquals(52, routeRsp.getBest().getPoints().size());
 
         // with simplification
         hopper.getRouterConfig().setSimplifyResponse(true);
         routeRsp = hopper.route(request);
-        assertEquals(8, routeRsp.getBest().getInstructions().size());
-        assertEquals(46, routeRsp.getBest().getPoints().size());
+        assertEquals(10, routeRsp.getBest().getInstructions().size());
+        assertEquals(50, routeRsp.getBest().getPoints().size());
 
         // no instructions
         request.getHints().putObject("instructions", false);
         routeRsp = hopper.route(request);
         // the path is still simplified
-        assertEquals(46, routeRsp.getBest().getPoints().size());
+        assertEquals(50, routeRsp.getBest().getPoints().size());
     }
 
     @Test
@@ -465,9 +465,9 @@ public class GraphHopperTest {
         // via ramsenthal
         assertEquals(2636, rsp.getAll().get(0).getTime() / 1000);
         // via eselslohe
-        assertEquals(2783, rsp.getAll().get(1).getTime() / 1000);
+        assertEquals(2785, rsp.getAll().get(1).getTime() / 1000);
         // via unterwaiz
-        assertEquals(2985, rsp.getAll().get(2).getTime() / 1000);
+        assertEquals(2772, rsp.getAll().get(2).getTime() / 1000);
     }
 
     @Test
@@ -1282,11 +1282,11 @@ public class GraphHopperTest {
                 setProfile(bikeProfile));
         assertFalse(rsp.hasErrors());
         ResponsePath res = rsp.getBest();
-        assertEquals(6932.2, res.getDistance(), .1);
-        assertEquals(117, res.getPoints().size());
+        assertEquals(7007.7, res.getDistance(), .1);
+        assertEquals(136, res.getPoints().size());
 
         InstructionList il = res.getInstructions();
-        assertEquals(19, il.size());
+        assertEquals(25, il.size());
 
         assertEquals("continue onto Obere Landstraße", il.get(0).getTurnDescription(tr));
         assertEquals(69.28, (Double) il.get(0).getExtraInfoJSON().get("heading"), .01);
@@ -1297,12 +1297,9 @@ public class GraphHopperTest {
         assertEquals("keep left onto Hoher Markt", il.get(4).getTurnDescription(tr));
         assertEquals("turn right onto Wegscheid", il.get(6).getTurnDescription(tr));
         assertEquals("continue onto Wegscheid", il.get(7).getTurnDescription(tr));
-        assertEquals("turn right onto Ringstraße", il.get(8).getTurnDescription(tr));
-        assertEquals("keep left onto Eyblparkstraße", il.get(9).getTurnDescription(tr));
-        assertEquals("keep left onto Austraße", il.get(10).getTurnDescription(tr));
-        assertEquals("keep left onto Rechte Kremszeile", il.get(11).getTurnDescription(tr));
+        assertEquals("at roundabout, take exit 1 onto Hohensteinstraße", il.get(8).getTurnDescription(tr));
         //..
-        assertEquals("turn right onto Treppelweg", il.get(15).getTurnDescription(tr));
+        assertEquals("turn right onto Treppelweg", il.get(21).getTurnDescription(tr));
 
         rsp = hopper.route(new GHRequest(48.410987, 15.599492, 48.411172, 15.600371).
                 setAlgorithm(ASTAR).setProfile(footProfile));

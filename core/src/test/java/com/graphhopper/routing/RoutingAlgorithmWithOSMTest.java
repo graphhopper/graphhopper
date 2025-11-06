@@ -39,7 +39,8 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
-import static com.graphhopper.json.Statement.If;
+import static com.graphhopper.json.Statement.*;
+import static com.graphhopper.json.Statement.Op.LIMIT;
 import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static com.graphhopper.util.Parameters.Algorithms.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -431,21 +432,24 @@ public class RoutingAlgorithmWithOSMTest {
     @Test
     public void testKremsBikeRelation() {
         List<Query> queries = new ArrayList<>();
-        queries.add(new Query(48.409523, 15.602394, 48.375466, 15.72916, 12491, 159));
-        queries.add(new Query(48.410061, 15.63951, 48.411386, 15.604899, 3077, 79));
-        queries.add(new Query(48.412294, 15.62007, 48.398306, 15.609667, 3965, 94));
+        queries.add(new Query(48.409523, 15.602394, 48.375466, 15.72916, 12493, 159));
+        queries.add(new Query(48.410061, 15.63951, 48.411386, 15.604899, 3091, 92));
+        queries.add(new Query(48.412294, 15.62007, 48.398306, 15.609667, 3965, 95));
 
-        GraphHopper hopper = createHopper(KREMS,
-                TestProfiles.accessSpeedAndPriority("bike"));
+        Profile bikeProfile = new Profile("bike").setCustomModel(new CustomModel().
+                addToPriority(If("bike_access", MULTIPLY, "bike_priority")).
+                addToPriority(ElseIf("bike_network != MISSING", MULTIPLY, "1.8")).
+                addToPriority(Else(MULTIPLY, "0")).
+                addToSpeed(If("true", LIMIT, "bike_average_speed")));
+
+        GraphHopper hopper = createHopper(KREMS, bikeProfile);
         hopper.importOrLoad();
         checkQueries(hopper, queries);
         hopper.getBaseGraph();
 
         Helper.removeDir(new File(GH_LOCATION));
 
-        hopper = createHopper(KREMS,
-                TestProfiles.accessSpeedAndPriority("bike"),
-                TestProfiles.accessAndSpeed("car"));
+        hopper = createHopper(KREMS, bikeProfile, TestProfiles.accessAndSpeed("car"));
         hopper.importOrLoad();
         checkQueries(hopper, queries);
     }
@@ -453,19 +457,23 @@ public class RoutingAlgorithmWithOSMTest {
     @Test
     public void testKremsMountainBikeRelation() {
         List<Query> queries = new ArrayList<>();
-        queries.add(new Query(48.409523, 15.602394, 48.375466, 15.72916, 12491, 159));
-        queries.add(new Query(48.410061, 15.63951, 48.411386, 15.604899, 3077, 79));
-        queries.add(new Query(48.412294, 15.62007, 48.398306, 15.609667, 3965, 95));
+        queries.add(new Query(48.409523, 15.602394, 48.375466, 15.72916, 12493, 159));
+        queries.add(new Query(48.410061, 15.63951, 48.411386, 15.604899, 3019, 82));
+        queries.add(new Query(48.412294, 15.62007, 48.398306, 15.609667, 3385, 83));
 
-        GraphHopper hopper = createHopper(KREMS, TestProfiles.accessSpeedAndPriority("mtb"));
+        Profile mtbProfile = new Profile("mtb").setCustomModel(new CustomModel().
+                addToPriority(If("bike_access", MULTIPLY, "bike_priority")).
+                addToPriority(ElseIf("bike_network == MISSING", MULTIPLY, "0.3")).
+                addToPriority(Else(MULTIPLY, "0")).
+                addToSpeed(If("true", LIMIT, "bike_average_speed")));
+
+        GraphHopper hopper = createHopper(KREMS, mtbProfile);
         hopper.importOrLoad();
         checkQueries(hopper, queries);
 
         Helper.removeDir(new File(GH_LOCATION));
 
-        hopper = createHopper(KREMS,
-                TestProfiles.accessSpeedAndPriority("mtb"),
-                TestProfiles.accessSpeedAndPriority("bike"));
+        hopper = createHopper(KREMS, mtbProfile, TestProfiles.accessSpeedAndPriority("bike"));
         hopper.importOrLoad();
         checkQueries(hopper, queries);
 
@@ -698,8 +706,8 @@ public class RoutingAlgorithmWithOSMTest {
                 setOSMFile(osmFile).
                 setProfiles(profiles).
                 setEncodedValuesString("average_slope, max_slope, hike_rating, car_access, car_average_speed, " +
-                        "foot_access, foot_priority, foot_average_speed, " +
-                        "bike_access, bike_priority, bike_average_speed, foot_network, roundabout, " +
+                        "foot_access, foot_priority, foot_average_speed, foot_network, " +
+                        "bike_access, bike_priority, bike_average_speed, bike_network, roundabout, " +
                         "mtb_access, mtb_priority, mtb_average_speed, mtb_rating, " +
                         "racingbike_access, racingbike_priority, racingbike_average_speed, " +
                         "foot_road_access, bike_road_access, country, road_class").

@@ -503,54 +503,6 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
     }
 
     @Test
-    public void testHandleWayTagsInfluencedByRelation() {
-        ReaderWay osmWay = new ReaderWay(1);
-        osmWay.setTag("highway", "road");
-
-        // unchanged
-        assertPriorityAndSpeed(UNCHANGED, 12, osmWay);
-
-        // "lcn=yes" is in fact no relation, but shall be treated the same like a relation with "network=lcn"
-        osmWay.setTag("lcn", "yes");
-        assertPriorityAndSpeed(VERY_NICE, 12, osmWay);
-        osmWay.removeTag("lcn");
-
-        // relation code is VERY_NICE
-        ReaderRelation osmRel = new ReaderRelation(1);
-        osmRel.setTag("route", "bicycle");
-        assertPriorityAndSpeed(VERY_NICE, 12, osmWay, osmRel);
-
-        osmRel.setTag("network", "lcn");
-        assertPriorityAndSpeed(VERY_NICE, 12, osmWay, osmRel);
-
-        // relation code is NICE
-        osmRel.setTag("network", "rcn");
-        assertPriorityAndSpeed(VERY_NICE, 12, osmWay, osmRel);
-        osmWay.setTag("lcn", "yes");
-        assertPriorityAndSpeed(VERY_NICE, 12, osmWay, osmRel);
-
-        // relation code is BEST
-        osmRel.setTag("network", "ncn");
-        assertPriorityAndSpeed(BEST, 12, osmWay, osmRel);
-
-        // PREFER relation, but tertiary road => no get off the bike but road wayTypeCode and faster
-        osmWay.clearTags();
-        osmWay.setTag("highway", "tertiary");
-        osmRel.setTag("route", "bicycle");
-        osmRel.setTag("network", "lcn");
-        assertPriorityAndSpeed(VERY_NICE, 18, osmWay, osmRel);
-
-        osmRel.clearTags();
-        osmWay.clearTags();
-        osmWay.setTag("highway", "track");
-        assertPriorityAndSpeed(UNCHANGED, 12, osmWay, osmRel);
-
-        osmRel.setTag("route", "bicycle");
-        osmRel.setTag("network", "lcn");
-        assertPriorityAndSpeed(VERY_NICE, 18, osmWay, osmRel);
-    }
-
-    @Test
     public void testUnchangedRelationShouldNotInfluencePriority() {
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "secondary");
@@ -558,39 +510,6 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         ReaderRelation osmRel = new ReaderRelation(1);
         osmRel.setTag("description", "something");
         assertPriorityAndSpeed(AVOID, 18, osmWay, osmRel);
-    }
-
-    @Test
-    public void testCalcPriority() {
-        ReaderWay osmWay = new ReaderWay(1);
-        osmWay.setTag("highway", "tertiary");
-        ReaderRelation osmRel = new ReaderRelation(1);
-        osmRel.setTag("route", "bicycle");
-        osmRel.setTag("network", "icn");
-        IntsRef relFlags = osmParsers.handleRelationTags(osmRel, osmParsers.createRelationFlags());
-        EdgeIntAccess edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(encodingManager.getBytesForFlags());
-        int edgeId = 0;
-        osmParsers.handleWayTags(edgeId, edgeIntAccess, osmWay, relFlags);
-        assertEquals(RouteNetwork.INTERNATIONAL, encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class).getEnum(false, edgeId, edgeIntAccess));
-        assertEquals(PriorityCode.getValue(BEST.getValue()), priorityEnc.getDecimal(false, edgeId, edgeIntAccess), .1);
-
-        // for some highways the priority is UNCHANGED
-        osmRel = new ReaderRelation(1);
-        osmWay = new ReaderWay(1);
-        osmWay.setTag("highway", "track");
-        edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(encodingManager.getBytesForFlags());
-        osmParsers.handleWayTags(edgeId, edgeIntAccess, osmWay, osmParsers.createRelationFlags());
-        assertEquals(RouteNetwork.MISSING, encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class).getEnum(false, edgeId, edgeIntAccess));
-        assertEquals(PriorityCode.getValue(UNCHANGED.getValue()), priorityEnc.getDecimal(false, edgeId, edgeIntAccess), .1);
-
-        // unknown highway tags will be excluded but priority will be unchanged
-        osmWay = new ReaderWay(1);
-        osmWay.setTag("highway", "whatever");
-        edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(encodingManager.getBytesForFlags());
-        osmParsers.handleWayTags(edgeId, edgeIntAccess, osmWay, osmParsers.createRelationFlags());
-        assertFalse(accessParser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
-        assertEquals(RouteNetwork.MISSING, encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class).getEnum(false, edgeId, edgeIntAccess));
-        assertEquals(PriorityCode.getValue(UNCHANGED.getValue()), priorityEnc.getDecimal(false, edgeId, edgeIntAccess), .1);
     }
 
     @Test
