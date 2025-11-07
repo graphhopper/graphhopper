@@ -458,12 +458,12 @@ public class RoutingAlgorithmWithOSMTest {
     public void testKremsMountainBikeRelation() {
         List<Query> queries = new ArrayList<>();
         queries.add(new Query(48.409523, 15.602394, 48.375466, 15.72916, 12493, 159));
-        queries.add(new Query(48.410061, 15.63951, 48.411386, 15.604899, 3019, 82));
-        queries.add(new Query(48.412294, 15.62007, 48.398306, 15.609667, 3385, 83));
+        queries.add(new Query(48.410061, 15.63951, 48.411386, 15.604899, 3091, 92));
+        queries.add(new Query(48.412294, 15.62007, 48.398306, 15.609667, 3965, 95));
 
         Profile mtbProfile = new Profile("mtb").setCustomModel(new CustomModel().
                 addToPriority(If("bike_access", MULTIPLY, "bike_priority")).
-                addToPriority(ElseIf("bike_network == MISSING", MULTIPLY, "0.3")).
+                addToPriority(ElseIf("bike_network != MISSING", MULTIPLY, "1.8")).
                 addToPriority(Else(MULTIPLY, "0")).
                 addToSpeed(If("true", LIMIT, "bike_average_speed")));
 
