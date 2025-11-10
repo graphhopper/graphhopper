@@ -661,23 +661,31 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("class:bicycle", "invalidvalue");
         assertPriority(UNCHANGED, way);
         way.setTag("class:bicycle", "-1");
-        assertPriority(SLIGHT_AVOID, way);
-        way.setTag("class:bicycle", "-2");
         assertPriority(AVOID, way);
+        way.setTag("class:bicycle", "-2");
+        assertPriority(BAD, way);
         way.setTag("class:bicycle", "-3");
-        assertPriority(AVOID_MORE, way);
+        assertPriority(REACH_DESTINATION, way);
 
         way.setTag("highway", "residential");
         way.setTag("bicycle", "designated");
         way.setTag("class:bicycle", "3");
         assertPriority(BEST, way);
 
-        // Now we test overriding by a specific class subtype
+        // test overriding by a specific class subtype
         way.setTag("class:bicycle:touring", "2");
         assertPriority(VERY_NICE, way);
 
         way.setTag("maxspeed", "15");
         assertPriority(BEST, way);
+
+        // do not overwrite better priority
+        way = new ReaderWay(1);
+        way.setTag("highway", "path");
+        way.setTag("bicycle", "designated");
+        way.setTag("surface", "asphalt");
+        way.setTag("class:bicycle", "1");
+        assertPriority(VERY_NICE, way);
     }
 
     @Test
