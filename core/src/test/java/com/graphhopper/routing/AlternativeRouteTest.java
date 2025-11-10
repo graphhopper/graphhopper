@@ -85,17 +85,17 @@ public class AlternativeRouteTest {
          5--6-7---8
         
          */
-        graph.edge(1, 9).setDistance(1).set(speedEnc, 60, 60);
-        graph.edge(9, 2).setDistance(1).set(speedEnc, 60, 60);
-        graph.edge(2, 3).setDistance(1).set(speedEnc, 60, 60);
-        graph.edge(3, 4).setDistance(1).set(speedEnc, 60, 60);
-        graph.edge(4, 10).setDistance(1).set(speedEnc, 60, 60);
-        graph.edge(5, 6).setDistance(1).set(speedEnc, 60, 60);
-        graph.edge(6, 7).setDistance(1).set(speedEnc, 60, 60);
-        graph.edge(7, 8).setDistance(1).set(speedEnc, 60, 60);
-        graph.edge(1, 5).setDistance(2).set(speedEnc, 60, 60);
-        graph.edge(6, 3).setDistance(1).set(speedEnc, 60, 60);
-        graph.edge(4, 8).setDistance(1).set(speedEnc, 60, 60);
+        graph.edge(1, 9).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(9, 2).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(2, 3).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(3, 4).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(4, 10).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(5, 6).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(6, 7).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(7, 8).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(1, 5).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(6, 3).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(4, 8).setDistance(0).set(speedEnc, 60, 60);
 
         updateDistancesFor(graph, 5, 0.00, 0.05);
         updateDistancesFor(graph, 6, 0.00, 0.10);

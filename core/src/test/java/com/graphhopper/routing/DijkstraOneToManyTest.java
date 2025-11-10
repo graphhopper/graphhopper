@@ -86,12 +86,12 @@ public class DijkstraOneToManyTest {
     @Test
     public void testIssue239_and362() {
         BaseGraph graph = createGHStorage();
-        graph.edge(0, 1).setDistance(1).set(speedEnc, 60, 60);
-        graph.edge(1, 2).setDistance(1).set(speedEnc, 60, 60);
-        graph.edge(2, 0).setDistance(1).set(speedEnc, 60, 60);
-        graph.edge(4, 5).setDistance(1).set(speedEnc, 60, 60);
-        graph.edge(5, 6).setDistance(1).set(speedEnc, 60, 60);
-        graph.edge(6, 4).setDistance(1).set(speedEnc, 60, 60);
+        graph.edge(0, 1).setDistance(100).set(speedEnc, 60, 60);
+        graph.edge(1, 2).setDistance(100).set(speedEnc, 60, 60);
+        graph.edge(2, 0).setDistance(100).set(speedEnc, 60, 60);
+        graph.edge(4, 5).setDistance(100).set(speedEnc, 60, 60);
+        graph.edge(5, 6).setDistance(100).set(speedEnc, 60, 60);
+        graph.edge(6, 4).setDistance(100).set(speedEnc, 60, 60);
 
         DijkstraOneToMany algo = createAlgo(graph);
         assertEquals(-1, algo.findEndNode(0, 4));
@@ -123,14 +123,14 @@ public class DijkstraOneToManyTest {
         // |       /
         // 7-10----
         // \-8
-        graph.edge(0, 1).setDistance(1).set(speedEnc, 60, 60);
-        graph.edge(1, 2).setDistance(1).set(speedEnc, 60, 60);
-        graph.edge(2, 3).setDistance(1).set(speedEnc, 60, 60);
-        graph.edge(3, 4).setDistance(1).set(speedEnc, 60, 60);
-        graph.edge(4, 10).setDistance(1).set(speedEnc, 60, 60);
-        graph.edge(0, 7).setDistance(1).set(speedEnc, 60, 60);
-        graph.edge(7, 8).setDistance(1).set(speedEnc, 60, 60);
-        graph.edge(7, 10).setDistance(10).set(speedEnc, 60, 60);
+        graph.edge(0, 1).setDistance(100).set(speedEnc, 60, 60);
+        graph.edge(1, 2).setDistance(100).set(speedEnc, 60, 60);
+        graph.edge(2, 3).setDistance(100).set(speedEnc, 60, 60);
+        graph.edge(3, 4).setDistance(100).set(speedEnc, 60, 60);
+        graph.edge(4, 10).setDistance(100).set(speedEnc, 60, 60);
+        graph.edge(0, 7).setDistance(100).set(speedEnc, 60, 60);
+        graph.edge(7, 8).setDistance(100).set(speedEnc, 60, 60);
+        graph.edge(7, 10).setDistance(1000).set(speedEnc, 60, 60);
     }
 
     @Test
