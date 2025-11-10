@@ -133,7 +133,7 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("highway", "platform");
         way.setTag("surface", "paved");
         way.setTag("bicycle", "yes");
-        assertPriorityAndSpeed(1.2, 12, way);
+        assertPriorityAndSpeed(1.1, 12, way);
         way.setTag("segregated", "yes");
         assertPriorityAndSpeed(1.2, 18, way);
 
@@ -141,14 +141,14 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("highway", "platform");
         way.setTag("surface", "paved");
         way.setTag("bicycle", "designated");
-        assertPriorityAndSpeed(1.3, 18, way);
+        assertPriorityAndSpeed(1.2, 18, way);
 
         way.clearTags();
         way.setTag("highway", "footway");
         way.setTag("bicycle", "yes");
-        assertPriorityAndSpeed(1.2, 12, way);
+        assertPriorityAndSpeed(1.1, 12, way);
         way.setTag("segregated", "no");
-        assertPriorityAndSpeed(1.2, 12, way);
+        assertPriorityAndSpeed(1.1, 12, way);
         way.setTag("segregated", "yes");
         assertPriorityAndSpeed(1.2, 18, way);
 
@@ -156,9 +156,9 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("highway", "footway");
         way.setTag("surface", "paved");
         way.setTag("bicycle", "yes");
-        assertPriorityAndSpeed(1.2, 12, way);
+        assertPriorityAndSpeed(1.1, 12, way);
         way.setTag("surface", "cobblestone");
-        assertPriorityAndSpeed(1.2, 8, way);
+        assertPriorityAndSpeed(1.1, 8, way);
         way.setTag("segregated", "yes");
         way.setTag("surface", "paved");
         assertPriorityAndSpeed(1.2, 18, way);
@@ -167,13 +167,13 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("highway", "footway");
         way.setTag("surface", "paved");
         way.setTag("bicycle", "designated");
-        assertPriorityAndSpeed(1.3, 18, way);
+        assertPriorityAndSpeed(1.2, 18, way);
         way.clearTags();
 
         way.setTag("highway", "footway");
         way.setTag("tracktype", "grade4");
         way.setTag("bicycle", "designated");
-        assertPriorityAndSpeed(1.3, 6, way);
+        assertPriorityAndSpeed(1.2, 6, way);
 
         way.clearTags();
         way.setTag("highway", "steps");
@@ -206,14 +206,14 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("highway", "path");
         way.setTag("bicycle", "designated");
         // Assume foot=no for designated in absence of a foot tag
-        assertPriorityAndSpeed(1.3, 18, way);
+        assertPriorityAndSpeed(1.2, 18, way);
         way.setTag("foot", "no");
-        assertPriorityAndSpeed(1.3, 18, way);
+        assertPriorityAndSpeed(1.2, 18, way);
         way.setTag("foot", "yes");
         assertPriorityAndSpeed(1.2, 18, way);
 
         way.setTag("segregated", "yes");
-        assertPriorityAndSpeed(1.3, 18, way);
+        assertPriorityAndSpeed(1.2, 18, way);
         way.setTag("segregated", "no");
         assertPriorityAndSpeed(1.2, 18, way);
 
@@ -222,7 +222,7 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("bicycle", "yes");
         way.setTag("foot", "yes");
         way.setTag("segregated", "no");
-        assertPriorityAndSpeed(1.1, 12, way);
+        assertPriorityAndSpeed(1.2, 12, way);
 
         way.setTag("segregated", "yes");
         assertPriorityAndSpeed(1.2, 18, way);
@@ -231,7 +231,7 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         assertPriorityAndSpeed(1.2, 12, way);
 
         way.setTag("surface", "paved");
-        assertPriorityAndSpeed(1.2, 18, way);
+        assertPriorityAndSpeed(1.3, 18, way);
 
         way.clearTags();
         way.setTag("highway", "path");
@@ -252,7 +252,7 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("highway", "path");
         way.setTag("bicycle", "designated");
         way.setTag("tracktype", "grade4");
-        assertPriorityAndSpeed(1.3, 6, way);
+        assertPriorityAndSpeed(1.2, 6, way);
 
         way.clearTags();
         way.setTag("highway", "cycleway");
@@ -430,12 +430,12 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.clearTags();
         way.setTag("highway", "path");
         way.setTag("bicycle_road", "yes");
-        assertPriority(1.3, way);
+        assertPriority(1.2, way);
 
         way.clearTags();
         way.setTag("highway", "path");
         way.setTag("cyclestreet", "yes");
-        assertPriority(1.3, way);
+        assertPriority(1.2, way);
 
         way.clearTags();
         way.setTag("highway", "secondary");
@@ -671,9 +671,9 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("highway", "pedestrian");
         assertPriorityAndSpeed(0.9, 6, way);
         way.setTag("bicycle", "yes");
-        assertPriorityAndSpeed(1.2, 12, way);
+        assertPriorityAndSpeed(1.1, 12, way);
         way.setTag("surface", "asphalt");
-        assertPriorityAndSpeed(1.2, 12, way);
+        assertPriorityAndSpeed(1.1, 12, way);
 
         way.clearTags();
         way.setTag("highway", "pedestrian");

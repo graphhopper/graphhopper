@@ -76,15 +76,10 @@ public abstract class BikeCommonPriorityParser implements TagParser {
         String highwayValue = way.getTag("highway");
         if (highwayValue == null && !FerrySpeedCalculator.isFerry(way)) return;
 
-        TreeMap<Double, Double> weightToPrioMap = new TreeMap<>();
-        weightToPrioMap.put(0d, 1d);
         double maxSpeed = Math.max(avgSpeedEnc.getDecimal(false, edgeId, edgeIntAccess),
                 avgSpeedEnc.getDecimal(true, edgeId, edgeIntAccess));
-        collect(way, maxSpeed, isBikeDesignated(way), weightToPrioMap);
-
-        // pick priority with the biggest order value
-        double prio = weightToPrioMap.lastEntry().getValue();
-        priorityEnc.setDecimal(false, edgeId, edgeIntAccess, prio);
+        double prio = collect(way, maxSpeed, isBikeDesignated(way));
+        priorityEnc.setDecimal(false, edgeId, edgeIntAccess, Math.min(1.5, Math.max(0, prio)));
     }
 
     // Conversion of class value to priority. See http://wiki.openstreetmap.org/wiki/Class:bicycle
@@ -104,88 +99,69 @@ public abstract class BikeCommonPriorityParser implements TagParser {
         }
     }
 
-    /**
-     * @param weightToPrioMap associate a weight with every priority. This sorted map allows
-     *                        subclasses to 'insert' more important priorities as well as overwrite determined priorities.
-     */
-    void collect(ReaderWay way, double wayTypeSpeed, boolean bikeDesignated, TreeMap<Double, Double> weightToPrioMap) {
+    double collect(ReaderWay way, double wayTypeSpeed, boolean bikeDesignated) {
+        double prio = 1;
         String highway = way.getTag("highway");
-        if (bikeDesignated) {
-            boolean isGoodSurface = way.getTag("tracktype", "").equals("grade1") || goodSurface.contains(way.getTag("surface", ""));
-            if ("path".equals(highway) || "track".equals(highway) && isGoodSurface)
-                weightToPrioMap.put(100d, 1.3);
-            else
-                weightToPrioMap.put(100d, 1.2);
-        }
 
-        if ("cycleway".equals(highway)) {
-            if (way.hasTag("foot", INTENDED) && !way.hasTag("segregated", "yes"))
-                weightToPrioMap.put(100d, 1.2);
-            else
-                weightToPrioMap.put(100d, 1.3);
-        }
-
+        Set<String> cyclewayValues = Stream.of("cycleway", "cycleway:left", "cycleway:both", "cycleway:right").map(key -> way.getTag(key, "")).collect(Collectors.toSet());
         double maxSpeed = Math.max(OSMMaxSpeedParser.parseMaxSpeed(way, false), OSMMaxSpeedParser.parseMaxSpeed(way, true));
-        if (preferHighwayTags.contains(highway) || maxSpeed <= 30) {
+
+        boolean bikeNotSeparate = way.hasTag("foot", "yes") && !way.hasTag("segregated", "yes");
+
+        if (pushingSectionsHighways.contains(highway) || "parking_aisle".equals(way.getTag("service"))) {
+            if (way.hasTag("highway", "steps"))
+                prio = 0.5;
+            else if (bikeDesignated)
+                prio = 1.3;
+            else if (way.hasTag("bicycle", INTENDED))
+                prio = bikeNotSeparate ? 1.2 : 1.1;
+            else
+                prio = 0.9;
+
+        } else if (preferHighwayTags.contains(highway) || maxSpeed <= 30) {
             if (maxSpeed == MaxSpeed.MAXSPEED_MISSING || maxSpeed < avoidSpeedLimit) {
-                weightToPrioMap.put(40d, 1.2);
-                if (way.hasTag("tunnel", INTENDED))
-                    weightToPrioMap.put(40d, 1.0);
+                if (!way.hasTag("tunnel", INTENDED))
+                    prio = 1.2;
             }
+
         } else if (avoidHighwayTags.containsKey(highway)
                 || (maxSpeed != MaxSpeed.MAXSPEED_MISSING && maxSpeed >= avoidSpeedLimit && !"track".equals(highway))) {
             Double priorityCode = avoidHighwayTags.get(highway);
-            weightToPrioMap.put(50d, priorityCode == null ? 0.8 : priorityCode);
+            prio = priorityCode == null ? 0.8 : priorityCode;
             if (way.hasTag("tunnel", INTENDED)) {
-                weightToPrioMap.put(50d, priorityCode == null ? 0.5 : Math.max(0.1, priorityCode - 0.3));
+                prio = priorityCode == null ? 0.5 : Math.max(0.1, priorityCode - 0.3);
             }
         }
 
-        if (way.hasTag("bicycle", "use_sidepath")) {
-            weightToPrioMap.put(100d, 0.1);
-        }
-
-        Set<String> cyclewayValues = Stream.of("cycleway", "cycleway:left", "cycleway:both", "cycleway:right").map(key -> way.getTag(key, "")).collect(Collectors.toSet());
-        if (cyclewayValues.contains("track")) {
-            weightToPrioMap.put(100d, 1.2);
+        if ("cycleway".equals(highway)) {
+            prio = bikeNotSeparate ? 1.2 : 1.3;
+        } else if (bikeDesignated && ("path".equals(highway) || "track".equals(highway) || "bridleway".equals(highway))) {
+            boolean isGoodSurface = way.getTag("tracktype", "").equals("grade1") || goodSurface.contains(way.getTag("surface", ""));
+            prio = isGoodSurface ? 1.3 : 1.2;
+        } else if (bikeDesignated && !"steps".equals(highway) || cyclewayValues.contains("track")) {
+            prio = 1.2;
         } else if (Stream.of("lane", "opposite_track", "shared_lane", "share_busway", "shoulder").anyMatch(cyclewayValues::contains)) {
-            weightToPrioMap.put(100d, 1.1);
-        } else if (pushingSectionsHighways.contains(highway) || "parking_aisle".equals(way.getTag("service"))) {
-            double pushingSectionPrio = 0.9;
-            if (way.hasTag("highway", "steps"))
-                pushingSectionPrio = 0.5;
-            else if (way.hasTag("bicycle", "yes") || way.hasTag("bicycle", "permissive"))
-                pushingSectionPrio = 1.2;
-            else if (bikeDesignated)
-                pushingSectionPrio = 1.3;
-
-            if (way.hasTag("foot", "yes") && !way.hasTag("segregated", "yes"))
-                pushingSectionPrio = Math.max(0.1, pushingSectionPrio - 0.1);
-
-            weightToPrioMap.put(100d, pushingSectionPrio);
+            prio = 1.1;
+        } else if (way.hasTag("railway", "tram")) {
+            prio = 0.6;
+        } else if (way.hasTag("bicycle", "use_sidepath")) {
+            prio = 0.1;
         }
-
-        if (way.hasTag("railway", "tram"))
-            weightToPrioMap.put(50d, 0.6);
-
-        String classBicycleValue = way.getTag(classBicycleKey);
-        if (classBicycleValue == null) classBicycleValue = way.getTag("class:bicycle");
 
         // We assume that humans are better in classifying preferences compared to our algorithm above
+        String classBicycleValue = way.getTag(classBicycleKey);
+        if (classBicycleValue == null) classBicycleValue = way.getTag("class:bicycle");
         if (classBicycleValue != null) {
-            double prio = convertClassValueToPriority(classBicycleValue);
-            // do not overwrite if e.g. designated
-            weightToPrioMap.compute(100d, (key, existing) ->
-                    existing == null || existing < prio ? prio : existing
-            );
+            double tmpPrio = convertClassValueToPriority(classBicycleValue);
+            // do not overwrite if e.g. already designated
+            if (tmpPrio > prio || prio == 1.0) prio = tmpPrio;
         }
 
         // Increase the priority for scenic routes or in case that maxspeed limits our average speed as compensation. See #630
-        if (way.hasTag("scenic", "yes") || maxSpeed > 0 && maxSpeed <= wayTypeSpeed) {
-            double lastEntryValue = weightToPrioMap.lastEntry().getValue();
-            if (lastEntryValue < 1.5)
-                weightToPrioMap.put(110d, lastEntryValue + 0.1);
-        }
+        if (way.hasTag("scenic", "yes") || maxSpeed > 0 && maxSpeed <= wayTypeSpeed)
+            prio *= 1.1;
+
+        return prio;
     }
 
     static boolean isBikeDesignated(ReaderWay way) {
@@ -206,7 +182,7 @@ public abstract class BikeCommonPriorityParser implements TagParser {
         classBicycleKey = "class:bicycle:" + subkey;
     }
 
-    public final DecimalEncodedValue getPriorityEnc() {
+    DecimalEncodedValue getPriorityEnc() {
         return priorityEnc;
     }
 }

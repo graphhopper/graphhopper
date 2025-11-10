@@ -6,8 +6,6 @@ import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.VehiclePriority;
 import com.graphhopper.routing.ev.VehicleSpeed;
 
-import java.util.TreeMap;
-
 public class RacingBikePriorityParser extends BikeCommonPriorityParser {
 
     public RacingBikePriorityParser(EncodedValueLookup lookup) {
@@ -40,18 +38,20 @@ public class RacingBikePriorityParser extends BikeCommonPriorityParser {
     }
 
     @Override
-    void collect(ReaderWay way, double wayTypeSpeed, boolean bikeDesignated, TreeMap<Double, Double> weightToPrioMap) {
-        super.collect(way, wayTypeSpeed, bikeDesignated, weightToPrioMap);
+    double collect(ReaderWay way, double wayTypeSpeed, boolean bikeDesignated) {
+        double prio = super.collect(way, wayTypeSpeed, bikeDesignated);
 
         String highway = way.getTag("highway");
         if ("service".equals(highway) || "residential".equals(highway)) {
-            weightToPrioMap.put(40d, 0.9);
+            prio *= 0.9;
         } else if ("track".equals(highway)) {
             String trackType = way.getTag("tracktype");
-            if ("grade1".equals(trackType) || goodSurface.contains(way.getTag("surface", "")))
-                weightToPrioMap.put(110d, 1.3);
-            else if (trackType == null || trackType.startsWith("grade"))
-                weightToPrioMap.put(110d, 0.6);
+            if ("grade1".equals(trackType) || goodSurface.contains(way.getTag("surface", ""))) {
+                prio = Math.max(1.3, prio);
+            } else if (trackType == null || trackType.startsWith("grade"))
+                prio = Math.min(0.6, prio);
         }
+
+        return prio;
     }
 }
