@@ -105,12 +105,12 @@ public class ShortcutUnpackerTest {
     @ArgumentsSource(FixtureProvider.class)
     public void testUnpacking(Fixture f) {
         // 0-1-2-3-4-5-6
-        f.graph.edge(0, 1).setDistance(1).set(f.speedEnc, 20, 10);
-        f.graph.edge(1, 2).setDistance(1).set(f.speedEnc, 20, 10);
-        f.graph.edge(2, 3).setDistance(1).set(f.speedEnc, 20, 10);
-        f.graph.edge(3, 4).setDistance(1).set(f.speedEnc, 20, 10);
-        f.graph.edge(4, 5).setDistance(1).set(f.speedEnc, 20, 10);
-        f.graph.edge(5, 6).setDistance(1).set(f.speedEnc, 20, 10); // edge 5
+        f.graph.edge(0, 1).setDistance(100).set(f.speedEnc, 20, 10);
+        f.graph.edge(1, 2).setDistance(100).set(f.speedEnc, 20, 10);
+        f.graph.edge(2, 3).setDistance(100).set(f.speedEnc, 20, 10);
+        f.graph.edge(3, 4).setDistance(100).set(f.speedEnc, 20, 10);
+        f.graph.edge(4, 5).setDistance(100).set(f.speedEnc, 20, 10);
+        f.graph.edge(5, 6).setDistance(100).set(f.speedEnc, 20, 10); // edge 5
         f.freeze();
 
         f.setCHLevels(1, 3, 5, 4, 2, 0, 6);
@@ -127,9 +127,9 @@ public class ShortcutUnpackerTest {
             assertEquals(IntArrayList.from(0, 1, 2, 3, 4, 5), visitor.edgeIds);
             assertEquals(IntArrayList.from(0, 1, 2, 3, 4, 5), visitor.baseNodes);
             assertEquals(IntArrayList.from(1, 2, 3, 4, 5, 6), visitor.adjNodes);
-            assertEquals(DoubleArrayList.from(0.05, 0.05, 0.05, 0.05, 0.05, 0.05), visitor.weights);
-            assertEquals(DoubleArrayList.from(1, 1, 1, 1, 1, 1), visitor.distances);
-            assertEquals(DoubleArrayList.from(50, 50, 50, 50, 50, 50), visitor.times);
+            assertEquals(DoubleArrayList.from(5, 5, 5, 5, 5, 5), visitor.weights);
+            assertEquals(DoubleArrayList.from(100, 100, 100, 100, 100, 100), visitor.distances);
+            assertEquals(DoubleArrayList.from(5000, 5000, 5000, 5000, 5000, 5000), visitor.times);
             if (f.edgeBased) {
                 assertEquals(IntArrayList.from(PREV_EDGE, 0, 1, 2, 3, 4), visitor.prevOrNextEdgeIds);
             }
@@ -144,9 +144,9 @@ public class ShortcutUnpackerTest {
             assertEquals(IntArrayList.from(5, 4, 3, 2, 1, 0), visitor.edgeIds);
             assertEquals(IntArrayList.from(5, 4, 3, 2, 1, 0), visitor.baseNodes);
             assertEquals(IntArrayList.from(6, 5, 4, 3, 2, 1), visitor.adjNodes);
-            assertEquals(DoubleArrayList.from(0.05, 0.05, 0.05, 0.05, 0.05, 0.05), visitor.weights);
-            assertEquals(DoubleArrayList.from(1, 1, 1, 1, 1, 1), visitor.distances);
-            assertEquals(DoubleArrayList.from(50, 50, 50, 50, 50, 50), visitor.times);
+            assertEquals(DoubleArrayList.from(5, 5, 5, 5, 5, 5), visitor.weights);
+            assertEquals(DoubleArrayList.from(100, 100, 100, 100, 100, 100), visitor.distances);
+            assertEquals(DoubleArrayList.from(5000, 5000, 5000, 5000, 5000, 5000), visitor.times);
             if (f.edgeBased) {
                 assertEquals(IntArrayList.from(4, 3, 2, 1, 0, PREV_EDGE), visitor.prevOrNextEdgeIds);
             }
@@ -159,9 +159,9 @@ public class ShortcutUnpackerTest {
             assertEquals(IntArrayList.from(5, 4, 3, 2, 1, 0), visitor.edgeIds);
             assertEquals(IntArrayList.from(6, 5, 4, 3, 2, 1), visitor.baseNodes);
             assertEquals(IntArrayList.from(5, 4, 3, 2, 1, 0), visitor.adjNodes);
-            assertEquals(DoubleArrayList.from(0.05, 0.05, 0.05, 0.05, 0.05, 0.05), visitor.weights);
-            assertEquals(DoubleArrayList.from(1, 1, 1, 1, 1, 1), visitor.distances);
-            assertEquals(DoubleArrayList.from(50, 50, 50, 50, 50, 50), visitor.times);
+            assertEquals(DoubleArrayList.from(5, 5, 5, 5, 5, 5), visitor.weights);
+            assertEquals(DoubleArrayList.from(100, 100, 100, 100, 100, 100), visitor.distances);
+            assertEquals(DoubleArrayList.from(5000, 5000, 5000, 5000, 5000, 5000), visitor.times);
             if (f.edgeBased) {
                 assertEquals(IntArrayList.from(NEXT_EDGE, 5, 4, 3, 2, 1), visitor.prevOrNextEdgeIds);
             }
@@ -174,9 +174,9 @@ public class ShortcutUnpackerTest {
             assertEquals(IntArrayList.from(0, 1, 2, 3, 4, 5), visitor.edgeIds);
             assertEquals(IntArrayList.from(1, 2, 3, 4, 5, 6), visitor.baseNodes);
             assertEquals(IntArrayList.from(0, 1, 2, 3, 4, 5), visitor.adjNodes);
-            assertEquals(DoubleArrayList.from(0.05, 0.05, 0.05, 0.05, 0.05, 0.05), visitor.weights);
-            assertEquals(DoubleArrayList.from(1, 1, 1, 1, 1, 1), visitor.distances);
-            assertEquals(DoubleArrayList.from(50, 50, 50, 50, 50, 50), visitor.times);
+            assertEquals(DoubleArrayList.from(5, 5, 5, 5, 5, 5), visitor.weights);
+            assertEquals(DoubleArrayList.from(100, 100, 100, 100, 100, 100), visitor.distances);
+            assertEquals(DoubleArrayList.from(5000, 5000, 5000, 5000, 5000, 5000), visitor.times);
             if (f.edgeBased) {
                 assertEquals(IntArrayList.from(1, 2, 3, 4, 5, NEXT_EDGE), visitor.prevOrNextEdgeIds);
             }
@@ -192,12 +192,12 @@ public class ShortcutUnpackerTest {
         //   2   4
         //    \ /
         // 0 - 1 - 5
-        f.graph.edge(0, 1).setDistance(1).set(f.speedEnc, 20, 10);
-        f.graph.edge(1, 2).setDistance(1).set(f.speedEnc, 20, 10);
-        f.graph.edge(2, 3).setDistance(1).set(f.speedEnc, 20, 10);
-        f.graph.edge(3, 4).setDistance(1).set(f.speedEnc, 20, 10);
-        f.graph.edge(4, 1).setDistance(1).set(f.speedEnc, 20, 10);
-        f.graph.edge(1, 5).setDistance(1).set(f.speedEnc, 20, 10);
+        f.graph.edge(0, 1).setDistance(100).set(f.speedEnc, 20, 10);
+        f.graph.edge(1, 2).setDistance(100).set(f.speedEnc, 20, 10);
+        f.graph.edge(2, 3).setDistance(100).set(f.speedEnc, 20, 10);
+        f.graph.edge(3, 4).setDistance(100).set(f.speedEnc, 20, 10);
+        f.graph.edge(4, 1).setDistance(100).set(f.speedEnc, 20, 10);
+        f.graph.edge(1, 5).setDistance(100).set(f.speedEnc, 20, 10);
         f.freeze();
 
         f.setCHLevels(2, 4, 3, 1, 5, 0);
@@ -214,9 +214,9 @@ public class ShortcutUnpackerTest {
             assertEquals(IntArrayList.from(0, 1, 2, 3, 4, 5), visitor.edgeIds);
             assertEquals(IntArrayList.from(0, 1, 2, 3, 4, 1), visitor.baseNodes);
             assertEquals(IntArrayList.from(1, 2, 3, 4, 1, 5), visitor.adjNodes);
-            assertEquals(DoubleArrayList.from(0.05, 0.05, 0.05, 0.05, 0.05, 0.05), visitor.weights);
-            assertEquals(DoubleArrayList.from(1, 1, 1, 1, 1, 1), visitor.distances);
-            assertEquals(DoubleArrayList.from(50, 50, 50, 50, 50, 50), visitor.times);
+            assertEquals(DoubleArrayList.from(5, 5, 5, 5, 5, 5), visitor.weights);
+            assertEquals(DoubleArrayList.from(100, 100, 100, 100, 100, 100), visitor.distances);
+            assertEquals(DoubleArrayList.from(5000, 5000, 5000, 5000, 5000, 5000), visitor.times);
             assertEquals(IntArrayList.from(PREV_EDGE, 0, 1, 2, 3, 4), visitor.prevOrNextEdgeIds);
         }
 
@@ -227,9 +227,9 @@ public class ShortcutUnpackerTest {
             assertEquals(IntArrayList.from(5, 4, 3, 2, 1, 0), visitor.edgeIds);
             assertEquals(IntArrayList.from(1, 4, 3, 2, 1, 0), visitor.baseNodes);
             assertEquals(IntArrayList.from(5, 1, 4, 3, 2, 1), visitor.adjNodes);
-            assertEquals(DoubleArrayList.from(0.05, 0.05, 0.05, 0.05, 0.05, 0.05), visitor.weights);
-            assertEquals(DoubleArrayList.from(1, 1, 1, 1, 1, 1), visitor.distances);
-            assertEquals(DoubleArrayList.from(50, 50, 50, 50, 50, 50), visitor.times);
+            assertEquals(DoubleArrayList.from(5, 5, 5, 5, 5, 5), visitor.weights);
+            assertEquals(DoubleArrayList.from(100, 100, 100, 100, 100, 100), visitor.distances);
+            assertEquals(DoubleArrayList.from(5000, 5000, 5000, 5000, 5000, 5000), visitor.times);
             assertEquals(IntArrayList.from(4, 3, 2, 1, 0, PREV_EDGE), visitor.prevOrNextEdgeIds);
         }
 
@@ -240,9 +240,9 @@ public class ShortcutUnpackerTest {
             assertEquals(IntArrayList.from(5, 4, 3, 2, 1, 0), visitor.edgeIds);
             assertEquals(IntArrayList.from(5, 1, 4, 3, 2, 1), visitor.baseNodes);
             assertEquals(IntArrayList.from(1, 4, 3, 2, 1, 0), visitor.adjNodes);
-            assertEquals(DoubleArrayList.from(0.05, 0.05, 0.05, 0.05, 0.05, 0.05), visitor.weights);
-            assertEquals(DoubleArrayList.from(1, 1, 1, 1, 1, 1), visitor.distances);
-            assertEquals(DoubleArrayList.from(50, 50, 50, 50, 50, 50), visitor.times);
+            assertEquals(DoubleArrayList.from(5, 5, 5, 5, 5, 5), visitor.weights);
+            assertEquals(DoubleArrayList.from(100, 100, 100, 100, 100, 100), visitor.distances);
+            assertEquals(DoubleArrayList.from(5000, 5000, 5000, 5000, 5000, 5000), visitor.times);
             assertEquals(IntArrayList.from(NEXT_EDGE, 5, 4, 3, 2, 1), visitor.prevOrNextEdgeIds);
         }
 
@@ -253,9 +253,9 @@ public class ShortcutUnpackerTest {
             assertEquals(IntArrayList.from(0, 1, 2, 3, 4, 5), visitor.edgeIds);
             assertEquals(IntArrayList.from(1, 2, 3, 4, 1, 5), visitor.baseNodes);
             assertEquals(IntArrayList.from(0, 1, 2, 3, 4, 1), visitor.adjNodes);
-            assertEquals(DoubleArrayList.from(0.05, 0.05, 0.05, 0.05, 0.05, 0.05), visitor.weights);
-            assertEquals(DoubleArrayList.from(1, 1, 1, 1, 1, 1), visitor.distances);
-            assertEquals(DoubleArrayList.from(50, 50, 50, 50, 50, 50), visitor.times);
+            assertEquals(DoubleArrayList.from(5, 5, 5, 5, 5, 5), visitor.weights);
+            assertEquals(DoubleArrayList.from(100, 100, 100, 100, 100, 100), visitor.distances);
+            assertEquals(DoubleArrayList.from(5000, 5000, 5000, 5000, 5000, 5000), visitor.times);
             assertEquals(IntArrayList.from(1, 2, 3, 4, 5, NEXT_EDGE), visitor.prevOrNextEdgeIds);
         }
     }
@@ -268,12 +268,12 @@ public class ShortcutUnpackerTest {
         // prev 0-1-2-3-4-5-6 next
         //      1 0 1 4 2 3 2      turn costs <-
         EdgeIteratorState edge0, edge1, edge2, edge3, edge4, edge5;
-        edge0 = f.graph.edge(0, 1).setDistance(1).set(f.speedEnc, 20, 10);
-        edge1 = f.graph.edge(1, 2).setDistance(1).set(f.speedEnc, 20, 10);
-        edge2 = f.graph.edge(2, 3).setDistance(1).set(f.speedEnc, 20, 10);
-        edge3 = f.graph.edge(3, 4).setDistance(1).set(f.speedEnc, 20, 10);
-        edge4 = f.graph.edge(4, 5).setDistance(1).set(f.speedEnc, 20, 10);
-        edge5 = f.graph.edge(5, 6).setDistance(1).set(f.speedEnc, 20, 10);
+        edge0 = f.graph.edge(0, 1).setDistance(100).set(f.speedEnc, 20, 10);
+        edge1 = f.graph.edge(1, 2).setDistance(100).set(f.speedEnc, 20, 10);
+        edge2 = f.graph.edge(2, 3).setDistance(100).set(f.speedEnc, 20, 10);
+        edge3 = f.graph.edge(3, 4).setDistance(100).set(f.speedEnc, 20, 10);
+        edge4 = f.graph.edge(4, 5).setDistance(100).set(f.speedEnc, 20, 10);
+        edge5 = f.graph.edge(5, 6).setDistance(100).set(f.speedEnc, 20, 10);
         f.freeze();
 
         // turn costs ->
@@ -304,32 +304,32 @@ public class ShortcutUnpackerTest {
             // unpack the shortcut 0->6, traverse original edges in 'forward' order (from node 0 to 6)
             TurnWeightingVisitor visitor = new TurnWeightingVisitor(f.routingCHGraph);
             f.visitFwd(10, 6, false, visitor);
-            assertEquals(6 * 0.05 + 17, visitor.weight, 1.e-3, "wrong weight");
-            assertEquals((6 * 50 + 17000), visitor.time, "wrong time");
+            assertEquals(6 * 5 + 17, visitor.weight, 1.e-3, "wrong weight");
+            assertEquals((6 * 5000 + 17000), visitor.time, "wrong time");
         }
 
         {
             // unpack the shortcut 0->6, traverse original edges in 'backward' order (from node 6 to 0)
             TurnWeightingVisitor visitor = new TurnWeightingVisitor(f.routingCHGraph);
             f.visitFwd(10, 6, true, visitor);
-            assertEquals(6 * 0.05 + 17, visitor.weight, 1.e-3, "wrong weight");
-            assertEquals((6 * 50 + 17000), visitor.time, "wrong time");
+            assertEquals(6 * 5 + 17, visitor.weight, 1.e-3, "wrong weight");
+            assertEquals((6 * 5000 + 17000), visitor.time, "wrong time");
         }
 
         {
             // unpack the shortcut 6<-0, traverse original edges in 'forward' order (from node 6 to 0)
             TurnWeightingVisitor visitor = new TurnWeightingVisitor(f.routingCHGraph);
             f.visitBwd(10, 0, false, visitor);
-            assertEquals(6 * 0.05 + 21, visitor.weight, 1.e-3, "wrong weight");
-            assertEquals((6 * 50 + 21000), visitor.time, "wrong time");
+            assertEquals(6 * 5 + 21, visitor.weight, 1.e-3, "wrong weight");
+            assertEquals((6 * 5000 + 21000), visitor.time, "wrong time");
         }
 
         {
             // unpack the shortcut 6<-0, traverse original edges in 'backward' order (from node 0 to 6)
             TurnWeightingVisitor visitor = new TurnWeightingVisitor(f.routingCHGraph);
             f.visitBwd(10, 0, true, visitor);
-            assertEquals(6 * 0.05 + 21, visitor.weight, 1.e-3, "wrong weight");
-            assertEquals((6 * 50 + 21000), visitor.time, "wrong time");
+            assertEquals(6 * 5 + 21, visitor.weight, 1.e-3, "wrong weight");
+            assertEquals((6 * 5000 + 21000), visitor.time, "wrong time");
         }
     }
 

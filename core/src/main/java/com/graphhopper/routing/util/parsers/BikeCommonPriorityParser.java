@@ -96,28 +96,18 @@ public abstract class BikeCommonPriorityParser implements TagParser {
 
     // Conversion of class value to priority. See http://wiki.openstreetmap.org/wiki/Class:bicycle
     private PriorityCode convertClassValueToPriority(String tagvalue) {
-        int classvalue;
         try {
-            classvalue = Integer.parseInt(tagvalue);
+            return switch (Integer.parseInt(tagvalue)) {
+                case 3 -> BEST;
+                case 2 -> VERY_NICE;
+                case 1 -> PREFER;
+                case -1 -> AVOID;
+                case -2 -> BAD;
+                case -3 -> REACH_DESTINATION;
+                default -> UNCHANGED;
+            };
         } catch (NumberFormatException e) {
             return UNCHANGED;
-        }
-
-        switch (classvalue) {
-            case 3:
-                return BEST;
-            case 2:
-                return VERY_NICE;
-            case 1:
-                return PREFER;
-            case -1:
-                return SLIGHT_AVOID;
-            case -2:
-                return AVOID;
-            case -3:
-                return AVOID_MORE;
-            default:
-                return UNCHANGED;
         }
     }
 
@@ -187,13 +177,15 @@ public abstract class BikeCommonPriorityParser implements TagParser {
             weightToPrioMap.put(50d, AVOID_MORE);
 
         String classBicycleValue = way.getTag(classBicycleKey);
+        if (classBicycleValue == null) classBicycleValue = way.getTag("class:bicycle");
+
+        // We assume that humans are better in classifying preferences compared to our algorithm above
         if (classBicycleValue != null) {
-            // We assume that humans are better in classifying preferences compared to our algorithm above -> weight = 100
-            weightToPrioMap.put(100d, convertClassValueToPriority(classBicycleValue));
-        } else {
-            String classBicycle = way.getTag("class:bicycle");
-            if (classBicycle != null)
-                weightToPrioMap.put(100d, convertClassValueToPriority(classBicycle));
+            PriorityCode prio = convertClassValueToPriority(classBicycleValue);
+            // do not overwrite if e.g. designated
+            weightToPrioMap.compute(100d, (key, existing) ->
+                    existing == null || existing.getValue() < prio.getValue() ? prio : existing
+            );
         }
 
         // Increase the priority for scenic routes or in case that maxspeed limits our average speed as compensation. See #630
