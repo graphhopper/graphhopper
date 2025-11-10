@@ -710,7 +710,7 @@ public class RoutingAlgorithmWithOSMTest {
                         "bike_access, bike_priority, bike_average_speed, bike_network, roundabout, " +
                         "mtb_access, mtb_priority, mtb_average_speed, mtb_rating, " +
                         "racingbike_access, racingbike_priority, racingbike_average_speed, " +
-                        "foot_road_access, bike_road_access, country, road_class").
+                        "foot_road_access, bike_road_access, country, road_class, road_environment").
                 setGraphHopperLocation(GH_LOCATION);
         hopper.getRouterConfig().setSimplifyResponse(false);
         hopper.setMinNetworkSize(0);

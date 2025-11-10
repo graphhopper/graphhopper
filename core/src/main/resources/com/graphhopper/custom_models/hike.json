@@ -10,7 +10,8 @@
     { "if": "!foot_access || hike_rating >= 6", "multiply_by": "0"},
     { "else": "", "multiply_by": "foot_priority"},
     { "if": "foot_network == INTERNATIONAL || foot_network == NATIONAL", "multiply_by": "1.7"},
-    { "else_if": "foot_network == REGIONAL || foot_network == LOCAL", "multiply_by": "1.5"}
+    { "else_if": "foot_network == REGIONAL || foot_network == LOCAL", "multiply_by": "1.5"},
+    { "if": "road_environment == FERRY", "multiply_by": "0.5" }
   ],
   "speed": [
     { "if": "hike_rating < 1", "limit_to": "foot_average_speed" },

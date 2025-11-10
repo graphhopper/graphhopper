@@ -1,7 +1,9 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.ev.MaxSpeed;
 import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.storage.IntsRef;
@@ -74,17 +76,10 @@ public abstract class BikeCommonPriorityParser implements TagParser {
     @Override
     public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
         String highwayValue = way.getTag("highway");
-        TreeMap<Double, PriorityCode> weightToPrioMap = new TreeMap<>();
-        if (highwayValue != null) {
-            weightToPrioMap.put(0d, UNCHANGED);
-        } else {
-            if (FerrySpeedCalculator.isFerry(way)) {
-                weightToPrioMap.put(110d, SLIGHT_AVOID);
-            } else {
-                return;
-            }
-        }
+        if (highwayValue == null && !FerrySpeedCalculator.isFerry(way)) return;
 
+        TreeMap<Double, PriorityCode> weightToPrioMap = new TreeMap<>();
+        weightToPrioMap.put(0d, UNCHANGED);
         double maxSpeed = Math.max(avgSpeedEnc.getDecimal(false, edgeId, edgeIntAccess),
                 avgSpeedEnc.getDecimal(true, edgeId, edgeIntAccess));
         collect(way, maxSpeed, isBikeDesignated(way), weightToPrioMap);

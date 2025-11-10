@@ -43,6 +43,7 @@ public class BikeCustomModelTest {
                 add(FerrySpeed.create()).
                 add(Country.create()).
                 add(RoadClass.create()).
+                add(RoadEnvironment.create()).
                 add(RouteNetwork.create(BikeNetwork.KEY)).
                 add(Roundabout.create()).
                 add(Smoothness.create()).
@@ -54,20 +55,19 @@ public class BikeCustomModelTest {
 
         parsers = new OSMParsers().
                 addWayTagParser(new OSMMtbRatingParser(bikeRating)).
-                addWayTagParser(new OSMHikeRatingParser(hikeRating));
-
-        parsers.addWayTagParser(new BikeAccessParser(em, new PMap()));
-        parsers.addWayTagParser(new MountainBikeAccessParser(em, new PMap()));
-        parsers.addWayTagParser(new RacingBikeAccessParser(em, new PMap()));
-        parsers.addWayTagParser(new BikeAverageSpeedParser(em));
-        parsers.addWayTagParser(new MountainBikeAverageSpeedParser(em));
-        parsers.addWayTagParser(new RacingBikeAverageSpeedParser(em));
-        parsers.addWayTagParser(new BikePriorityParser(em));
-        parsers.addWayTagParser(new MountainBikePriorityParser(em));
-        parsers.addWayTagParser(new RacingBikePriorityParser(em));
-        parsers.addWayTagParser(new OSMRoadAccessParser<>(bikeRA,
-                OSMRoadAccessParser.toOSMRestrictions(TransportationMode.BIKE),
-                (readerWay, accessValue) -> accessValue, BikeRoadAccess::find));
+                addWayTagParser(new OSMHikeRatingParser(hikeRating)).
+                addWayTagParser(new BikeAccessParser(em, new PMap())).
+                addWayTagParser(new MountainBikeAccessParser(em, new PMap())).
+                addWayTagParser(new RacingBikeAccessParser(em, new PMap())).
+                addWayTagParser(new BikeAverageSpeedParser(em)).
+                addWayTagParser(new MountainBikeAverageSpeedParser(em)).
+                addWayTagParser(new RacingBikeAverageSpeedParser(em)).
+                addWayTagParser(new BikePriorityParser(em)).
+                addWayTagParser(new MountainBikePriorityParser(em)).
+                addWayTagParser(new RacingBikePriorityParser(em)).
+                addWayTagParser(new OSMRoadAccessParser<>(bikeRA,
+                        OSMRoadAccessParser.toOSMRestrictions(TransportationMode.BIKE),
+                        (readerWay, accessValue) -> accessValue, BikeRoadAccess::find));
 
         parsers.addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(em.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class), relConfig));
     }
