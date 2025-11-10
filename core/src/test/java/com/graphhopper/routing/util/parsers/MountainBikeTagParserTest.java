@@ -18,15 +18,12 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderNode;
-import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
-import static com.graphhopper.routing.util.PriorityCode.*;
 import static com.graphhopper.routing.util.parsers.BikeCommonAverageSpeedParser.MIN_SPEED;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -36,7 +33,7 @@ public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
         return new EncodingManager.Builder()
                 .add(VehicleAccess.create("mtb"))
                 .add(VehicleSpeed.create("mtb", 4, 2, false))
-                .add(VehiclePriority.create("mtb", 4, PriorityCode.getFactor(1), false))
+                .add(VehiclePriority.create("mtb", 4, 0.1, false))
                 .add(Roundabout.create())
                 .add(Smoothness.create())
                 .add(FerrySpeed.create())
@@ -64,35 +61,35 @@ public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
     public void testSpeedAndPriority() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "primary");
-        assertPriorityAndSpeed(BAD, 18, way);
+        assertPriorityAndSpeed(0.5, 18, way);
 
         way.setTag("highway", "residential");
-        assertPriorityAndSpeed(PREFER, 18, way);
+        assertPriorityAndSpeed(1.2, 18, way);
 
         // Test pushing section speeds
         way.setTag("highway", "footway");
-        assertPriorityAndSpeed(SLIGHT_AVOID, 6, way);
+        assertPriorityAndSpeed(0.9, 6, way);
 
         way.setTag("highway", "track");
-        assertPriorityAndSpeed(PREFER, 12, way);
+        assertPriorityAndSpeed(1.2, 12, way);
 
         way.setTag("bicycle", "yes");
-        assertPriorityAndSpeed(PREFER, 12, way);
+        assertPriorityAndSpeed(1.2, 12, way);
 
         way.setTag("highway", "track");
         way.setTag("bicycle", "yes");
         way.setTag("tracktype", "grade3");
-        assertPriorityAndSpeed(VERY_NICE, 12, way);
+        assertPriorityAndSpeed(1.3, 12, way);
         way.setTag("tracktype", "grade1");
-        assertPriorityAndSpeed(SLIGHT_PREFER, 18, way);
+        assertPriorityAndSpeed(1.1, 18, way);
 
         way.setTag("surface", "paved");
-        assertPriorityAndSpeed(SLIGHT_PREFER, 18, way);
+        assertPriorityAndSpeed(1.1, 18, way);
 
         way.clearTags();
         way.setTag("highway", "path");
         way.setTag("surface", "ground");
-        assertPriorityAndSpeed(PREFER, 10, way);
+        assertPriorityAndSpeed(1.2, 10, way);
     }
 
     @Test
@@ -160,6 +157,6 @@ public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
     public void testPreferenceForSlowSpeed() {
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "tertiary");
-        assertPriority(PREFER, osmWay);
+        assertPriority(1.2, osmWay);
     }
 }

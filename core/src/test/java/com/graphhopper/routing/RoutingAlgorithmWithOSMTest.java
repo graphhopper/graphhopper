@@ -329,7 +329,7 @@ public class RoutingAlgorithmWithOSMTest {
         // try reverse direction
         // 1.
         queries.add(new Query(43.727687, 7.418737, 43.730864, 7.420771, 2598, 115));
-        queries.add(new Query(43.74958, 7.436566, 43.728499, 7.417907, 4250, 165));
+        queries.add(new Query(43.74958, 7.436566, 43.728499, 7.417907, 4180, 165));
         queries.add(new Query(43.739213, 7.427806, 43.728677, 7.41016, 2806, 145));
         // 4. avoid tunnel(s)!
         queries.add(new Query(43.739662, 7.424355, 43.733802, 7.413433, 1901, 116));

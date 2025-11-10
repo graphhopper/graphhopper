@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static com.graphhopper.routing.ev.RouteNetwork.*;
-import static com.graphhopper.routing.util.PriorityCode.UNCHANGED;
 
 public class FootAverageSpeedParser extends AbstractAverageSpeedParser implements TagParser {
     static final int SLOW_SPEED = 2;
@@ -22,11 +21,6 @@ public class FootAverageSpeedParser extends AbstractAverageSpeedParser implement
 
     public FootAverageSpeedParser(DecimalEncodedValue speedEnc, DecimalEncodedValue ferrySpeedEnc) {
         super(speedEnc, ferrySpeedEnc);
-
-        routeMap.put(INTERNATIONAL, UNCHANGED.getValue());
-        routeMap.put(NATIONAL, UNCHANGED.getValue());
-        routeMap.put(REGIONAL, UNCHANGED.getValue());
-        routeMap.put(LOCAL, UNCHANGED.getValue());
     }
 
     @Override

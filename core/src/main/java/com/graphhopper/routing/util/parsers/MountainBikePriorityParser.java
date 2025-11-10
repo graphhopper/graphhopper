@@ -2,12 +2,8 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.util.PriorityCode;
 
 import java.util.TreeMap;
-
-import static com.graphhopper.routing.ev.RouteNetwork.*;
-import static com.graphhopper.routing.util.PriorityCode.*;
 
 public class MountainBikePriorityParser extends BikeCommonPriorityParser {
 
@@ -32,18 +28,18 @@ public class MountainBikePriorityParser extends BikeCommonPriorityParser {
     }
 
     @Override
-    void collect(ReaderWay way, double wayTypeSpeed, boolean bikeDesignated, TreeMap<Double, PriorityCode> weightToPrioMap) {
+    void collect(ReaderWay way, double wayTypeSpeed, boolean bikeDesignated, TreeMap<Double, Double> weightToPrioMap) {
         super.collect(way, wayTypeSpeed, bikeDesignated, weightToPrioMap);
 
         String highway = way.getTag("highway");
         if ("track".equals(highway)) {
             String trackType = way.getTag("tracktype");
             if ("grade1".equals(trackType) || goodSurface.contains(way.getTag("surface","")))
-                weightToPrioMap.put(50d, SLIGHT_PREFER);
+                weightToPrioMap.put(50d, 1.1);
             else if (trackType == null)
-                weightToPrioMap.put(90d, PREFER);
+                weightToPrioMap.put(90d, 1.2);
             else if (trackType.startsWith("grade"))
-                weightToPrioMap.put(100d, VERY_NICE);
+                weightToPrioMap.put(100d, 1.3);
         }
     }
 }
