@@ -2470,7 +2470,8 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile("../map-matching/files/leipzig_germany.osm.pbf").
-                setEncodedValuesString("car_access|block_private=false,road_access,car_average_speed, bike_access, bike_priority, bike_average_speed, foot_access, foot_priority, foot_average_speed").
+                setEncodedValuesString("car_access|block_private=false,road_access,road_environment," +
+                        "car_average_speed, bike_access, bike_priority, bike_average_speed, foot_access, foot_priority, foot_average_speed").
                 setProfiles(
                         TestProfiles.accessAndSpeed("car"),
                         TestProfiles.accessSpeedAndPriority("bike"),

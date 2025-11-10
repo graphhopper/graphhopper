@@ -10,6 +10,7 @@
     { "if": "true",  "multiply_by": "racingbike_priority" },
     { "if": "bike_network == INTERNATIONAL || bike_network == NATIONAL",  "multiply_by": "1.8" },
     { "else_if": "bike_network == REGIONAL || bike_network == LOCAL",  "multiply_by": "1.5" },
+    { "if": "road_environment == FERRY", "multiply_by": "0.5" },
     { "if": "mtb_rating > 2",  "multiply_by": "0" },
     { "else_if": "mtb_rating == 2",  "multiply_by": "0.5" },
     { "if": "hike_rating > 1",  "multiply_by": "0" },
