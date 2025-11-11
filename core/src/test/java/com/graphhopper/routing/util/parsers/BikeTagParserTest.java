@@ -222,7 +222,7 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("bicycle", "yes");
         way.setTag("foot", "yes");
         way.setTag("segregated", "no");
-        assertPriorityAndSpeed(1.2, 12, way);
+        assertPriorityAndSpeed(1.1, 12, way);
 
         way.setTag("segregated", "yes");
         assertPriorityAndSpeed(1.2, 18, way);
