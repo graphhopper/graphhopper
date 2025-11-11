@@ -105,12 +105,24 @@ public abstract class BikeCommonPriorityParser implements TagParser {
 
         Set<String> cyclewayValues = Stream.of("cycleway", "cycleway:left", "cycleway:both", "cycleway:right").map(key -> way.getTag(key, "")).collect(Collectors.toSet());
         double maxSpeed = Math.max(OSMMaxSpeedParser.parseMaxSpeed(way, false), OSMMaxSpeedParser.parseMaxSpeed(way, true));
+        boolean shareWithFoot = way.hasTag("foot", "yes") && !way.hasTag("segregated", "yes");
 
-        if (pushingSectionsHighways.contains(highway) || "parking_aisle".equals(way.getTag("service"))) {
+        if ("cycleway".equals(highway) || cyclewayValues.contains("track")) {
+            prio = shareWithFoot ? 1.2 : 1.3;
+        } else if (bikeDesignated && ("path".equals(highway) || "track".equals(highway) || "bridleway".equals(highway))) {
+            boolean isGoodSurface = way.getTag("tracktype", "").equals("grade1") || goodSurface.contains(way.getTag("surface", ""));
+            prio = shareWithFoot || !isGoodSurface ? 1.2 : 1.3;
+        } else if (bikeDesignated && !"steps".equals(highway)) {
+            prio = 1.2;
+        } else if (Stream.of("lane", "opposite_track", "shared_lane", "share_busway", "shoulder").anyMatch(cyclewayValues::contains)) {
+            prio = 1.1;
+        } else if (way.hasTag("railway", "tram")) {
+            prio = 0.6;
+        } else if (way.hasTag("bicycle", "use_sidepath")) {
+            prio = 0.1;
+        } else if (pushingSectionsHighways.contains(highway) || "parking_aisle".equals(way.getTag("service"))) {
             if (way.hasTag("highway", "steps"))
                 prio = 0.5;
-            else if (bikeDesignated)
-                prio = 1.3;
             else if (way.hasTag("bicycle", INTENDED))
                 prio = 1.1;
             else
@@ -129,22 +141,6 @@ public abstract class BikeCommonPriorityParser implements TagParser {
             if (way.hasTag("tunnel", INTENDED)) {
                 prio = priorityCode == null ? 0.5 : Math.max(0.1, priorityCode - 0.3);
             }
-        }
-
-        boolean shareWithFoot = way.hasTag("foot", "yes") && !way.hasTag("segregated", "yes");
-        if ("cycleway".equals(highway) || cyclewayValues.contains("track")) {
-            prio = shareWithFoot ? 1.2 : 1.3;
-        } else if (bikeDesignated && ("path".equals(highway) || "track".equals(highway) || "bridleway".equals(highway))) {
-            boolean isGoodSurface = way.getTag("tracktype", "").equals("grade1") || goodSurface.contains(way.getTag("surface", ""));
-            prio = shareWithFoot || !isGoodSurface ? 1.2 : 1.3;
-        } else if (bikeDesignated && !"steps".equals(highway)) {
-            prio = 1.2;
-        } else if (Stream.of("lane", "opposite_track", "shared_lane", "share_busway", "shoulder").anyMatch(cyclewayValues::contains)) {
-            prio = 1.1;
-        } else if (way.hasTag("railway", "tram")) {
-            prio = 0.6;
-        } else if (way.hasTag("bicycle", "use_sidepath")) {
-            prio = 0.1;
         }
 
         // We assume that humans are better in classifying preferences compared to our algorithm above
