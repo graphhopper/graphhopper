@@ -251,6 +251,8 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.clearTags();
         way.setTag("highway", "path");
         way.setTag("bicycle", "designated");
+        way.setTag("tracktype", "grade1");
+        assertPriorityAndSpeed(1.3, 18, way);
         way.setTag("tracktype", "grade4");
         assertPriorityAndSpeed(1.2, 6, way);
 
@@ -385,13 +387,18 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
     }
 
     @Test
-    public void testCycleway() {
+    public void testKey_Cycleway() {
         ReaderWay way = new ReaderWay(1);
+        // the real world for highway=* && cycleway=track is identical to highway=cycleway just mapped differently
+        way.setTag("highway", "cycleway");
+        assertPriorityAndSpeed(1.3, 18, way);
+
+        way.clearTags();
         way.setTag("highway", "primary");
         way.setTag("surface", "paved");
         assertPriority(0.5, way);
         way.setTag("cycleway", "track");
-        assertPriority(1.2, way);
+        assertPriority(1.3, way);
 
         way.clearTags();
         way.setTag("highway", "primary");
@@ -678,8 +685,8 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.clearTags();
         way.setTag("highway", "pedestrian");
         way.setTag("cycleway:right", "track");
-        assertPriorityAndSpeed(1.2, 18, way);
+        assertPriorityAndSpeed(1.3, 18, way);
         way.setTag("bicycle", "yes");
-        assertPriorityAndSpeed(1.2, 18, way);
+        assertPriorityAndSpeed(1.3, 18, way);
     }
 }

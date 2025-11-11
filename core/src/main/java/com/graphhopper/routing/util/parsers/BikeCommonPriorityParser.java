@@ -133,12 +133,12 @@ public abstract class BikeCommonPriorityParser implements TagParser {
             }
         }
 
-        if ("cycleway".equals(highway)) {
+        if ("cycleway".equals(highway) || cyclewayValues.contains("track")) {
             prio = bikeNotSeparate ? 1.2 : 1.3;
         } else if (bikeDesignated && ("path".equals(highway) || "track".equals(highway) || "bridleway".equals(highway))) {
             boolean isGoodSurface = way.getTag("tracktype", "").equals("grade1") || goodSurface.contains(way.getTag("surface", ""));
             prio = isGoodSurface ? 1.3 : 1.2;
-        } else if (bikeDesignated && !"steps".equals(highway) || cyclewayValues.contains("track")) {
+        } else if (bikeDesignated && !"steps".equals(highway)) {
             prio = 1.2;
         } else if (Stream.of("lane", "opposite_track", "shared_lane", "share_busway", "shoulder").anyMatch(cyclewayValues::contains)) {
             prio = 1.1;
