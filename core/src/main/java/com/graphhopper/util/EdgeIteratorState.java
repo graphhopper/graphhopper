@@ -266,4 +266,7 @@ public interface EdgeIteratorState {
      * @return the specified edge e
      */
     EdgeIteratorState copyPropertiesFrom(EdgeIteratorState e);
+
+    boolean isVirtual();
+
 }

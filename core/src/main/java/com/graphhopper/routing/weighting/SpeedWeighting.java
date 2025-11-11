@@ -19,6 +19,8 @@
 package com.graphhopper.routing.weighting;
 
 import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.querygraph.VirtualEdgeIterator;
+import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
@@ -66,6 +68,8 @@ public class SpeedWeighting implements Weighting {
 
     @Override
     public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
+//        if (edgeState.isVirtual())
+//            throw new IllegalStateException("Edge state must not be virtual: " + edgeState.getClass().getName() + ". You need to use graph.wrapWeighting");
         double speed = reverse ? edgeState.getReverse(speedEnc) : edgeState.get(speedEnc);
         if (speed == 0) return Double.POSITIVE_INFINITY;
         return edgeState.getDistance() / speed;

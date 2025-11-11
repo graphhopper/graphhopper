@@ -232,8 +232,10 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
     private VirtualCHEdgeIteratorState buildVirtualCHEdgeState(VirtualEdgeIteratorState edgeState, int edgeID) {
         double fwdWeight = weighting.calcEdgeWeight(edgeState, false);
         double bwdWeight = weighting.calcEdgeWeight(edgeState, true);
+        if (Math.abs(fwdWeight - edgeState.getWeight(false)) > 0.1) throw new IllegalArgumentException("Edge " + edgeID + " has wrong weight");
+        if (Math.abs(bwdWeight - edgeState.getWeight(true)) > 0.1) throw new IllegalArgumentException("Edge " + edgeID + " has wrong weight");
         return new VirtualCHEdgeIteratorState(edgeID, edgeState.getEdge(), edgeState.getBaseNode(), edgeState.getAdjNode(),
-                edgeState.getEdgeKey(), edgeState.getEdgeKey(), NO_EDGE, NO_EDGE, fwdWeight, bwdWeight);
+                edgeState.getEdgeKey(), edgeState.getEdgeKey(), NO_EDGE, NO_EDGE, edgeState.getWeight(false), edgeState.getWeight(true));
     }
 
     private int shiftVirtualEdgeIDForCH(int edge) {
@@ -329,7 +331,7 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
 
         @Override
         public String toString() {
-            return "virtual: " + edge + ": " + baseNode + "->" + adjNode + ", orig: " + origEdge + ", weightFwd: " + Helper.round2(weightFwd) + ", weightBwd: " + Helper.round2(weightBwd);
+            return "virtual: " + edge + ": " + baseNode + "->" + adjNode + ", orig: " + origEdge + ", weightFwd: " + weightFwd + ", weightBwd: " + weightBwd;
         }
 
     }

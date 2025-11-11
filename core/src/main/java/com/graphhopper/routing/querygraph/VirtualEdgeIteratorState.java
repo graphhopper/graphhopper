@@ -49,6 +49,8 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
     private boolean unfavored;
     private EdgeIteratorState reverseEdge;
     private final boolean reverse;
+    private double weightFwd = -1;
+    private double weightBwd = -1;
 
     public VirtualEdgeIteratorState(int originalEdgeKey, int edgeKey, int baseNode, int adjNode, double distance,
                                     IntsRef edgeFlags, Map<String, KVStorage.KValue> keyValues, PointList pointList, boolean reverse) {
@@ -372,8 +374,25 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
         throw new RuntimeException("Not supported.");
     }
 
+    @Override
+    public boolean isVirtual() {
+        return true;
+    }
+
     public void setReverseEdge(EdgeIteratorState reverseEdge) {
         this.reverseEdge = reverseEdge;
     }
 
+    public void setWeight(double weight, boolean reverse) {
+        if (reverse)
+            this.weightBwd = weight;
+        else
+            this.weightFwd = weight;
+    }
+
+    public double getWeight(boolean reverse) {
+        if ((reverse && weightBwd == -1) || (reverse && weightFwd == -1))
+            throw new IllegalStateException();
+        return reverse ? weightBwd : weightFwd;
+    }
 }

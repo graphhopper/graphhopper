@@ -32,7 +32,7 @@ import java.util.Map;
 /**
  * @author Peter Karich
  */
-class VirtualEdgeIterator implements EdgeIterator {
+public class VirtualEdgeIterator implements EdgeIterator {
     private final EdgeFilter edgeFilter;
     private List<EdgeIteratorState> edges;
     private int current;
@@ -278,6 +278,11 @@ class VirtualEdgeIterator implements EdgeIterator {
     }
 
     @Override
+    public boolean isVirtual() {
+        return getCurrentEdge().isVirtual();
+    }
+
+    @Override
     public String toString() {
         if (current >= 0 && current < edges.size()) {
             return "virtual edge: " + getCurrentEdge() + ", all: " + edges.toString();
@@ -297,5 +302,13 @@ class VirtualEdgeIterator implements EdgeIterator {
 
     public List<EdgeIteratorState> getEdges() {
         return edges;
+    }
+
+    public double getWeight(boolean reverse) {
+        EdgeIteratorState edgeState = getCurrentEdge();
+        if (edgeState instanceof VirtualEdgeIteratorState)
+            return ((VirtualEdgeIteratorState) edgeState).getWeight(reverse);
+        else
+            throw new IllegalStateException("Cannot getWeight since edge state is not a virtual edge: " + edgeState.getClass().getName());
     }
 }

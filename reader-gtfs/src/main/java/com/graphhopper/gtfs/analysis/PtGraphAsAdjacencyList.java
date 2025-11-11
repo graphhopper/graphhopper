@@ -327,6 +327,11 @@ class PtGraphAsAdjacencyList implements Graph {
             public EdgeIteratorState copyPropertiesFrom(EdgeIteratorState e) {
                 throw new RuntimeException();
             }
+
+            @Override
+            public boolean isVirtual() {
+                return false;
+            }
         }
     }
 }

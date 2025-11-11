@@ -18,6 +18,8 @@
 package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.querygraph.VirtualEdgeIterator;
+import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.BaseGraph;
@@ -113,6 +115,8 @@ public final class CustomWeighting implements Weighting {
 
     @Override
     public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
+//        if (edgeState.isVirtual())
+//            throw new IllegalStateException("Edge state must not be virtual. You need to use graph.wrapWeighting");
         double priority = edgeToPriorityMapping.get(edgeState, reverse);
         if (priority == 0) return Double.POSITIVE_INFINITY;
 

@@ -20,6 +20,8 @@ package com.graphhopper.routing.weighting;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.querygraph.QueryGraph;
+import com.graphhopper.routing.querygraph.VirtualEdgeIterator;
+import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
@@ -52,6 +54,14 @@ public class QueryGraphWeighting implements Weighting {
 
     @Override
     public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
+        if (isVirtualEdge(edgeState.getEdge()) && !edgeState.get(EdgeIteratorState.UNFAVORED_EDGE)) {
+            if (edgeState instanceof VirtualEdgeIteratorState v)
+                return v.getWeight(reverse);
+            else if (edgeState instanceof VirtualEdgeIterator v)
+                return v.getWeight(reverse);
+            else
+                throw new IllegalStateException("Unexpected virtual edge state: " + edgeState);
+        }
         return weighting.calcEdgeWeight(edgeState, reverse);
     }
 
