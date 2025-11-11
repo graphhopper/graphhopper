@@ -605,7 +605,7 @@ public class QueryGraphTest {
 
         Snap snap = fakeEdgeSnap(edge, 0, 1, 0);
         QueryGraph queryGraph = QueryGraph.create(g, snap);
-        queryGraph.unfavorVirtualEdge(1);
+        queryGraph.unfavorVirtualEdges(IntArrayList.from(1));
         // this sets the unfavored flag for both 'directions' (not sure if this is really what we want, but this is how
         // it is). for example we can not set the virtual edge 0-2 unfavored when going from 0 to 2 but *not* unfavored
         // when going from 2 to 0. this would be a problem for edge-based routing where we might apply a penalty when
@@ -640,7 +640,7 @@ public class QueryGraphTest {
         QueryGraph queryGraph = lookup(snap);
 
         // enforce coming in north
-        queryGraph.unfavorVirtualEdge(1);
+        queryGraph.unfavorVirtualEdges(IntArrayList.from(1));
         // test penalized south
         VirtualEdgeIteratorState incomingEdge = (VirtualEdgeIteratorState) queryGraph.getEdgeIteratorState(1, 2);
         VirtualEdgeIteratorState incomingEdgeReverse = (VirtualEdgeIteratorState) queryGraph.getEdgeIteratorState(1, incomingEdge.getBaseNode());

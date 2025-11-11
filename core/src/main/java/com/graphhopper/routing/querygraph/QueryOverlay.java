@@ -77,7 +77,7 @@ class QueryOverlay {
     }
 
     static class EdgeChanges {
-        private final List<EdgeIteratorState> additionalEdges;
+        private final List<VirtualEdgeIteratorState> additionalEdges;
         private final IntArrayList removedEdges;
 
         EdgeChanges(int expectedNumAdditionalEdges, int expectedNumRemovedEdges) {
@@ -85,7 +85,7 @@ class QueryOverlay {
             removedEdges = new IntArrayList(expectedNumRemovedEdges);
         }
 
-        List<EdgeIteratorState> getAdditionalEdges() {
+        List<VirtualEdgeIteratorState> getAdditionalEdges() {
             return additionalEdges;
         }
 
