@@ -124,7 +124,7 @@ public abstract class BikeCommonPriorityParser implements TagParser {
             if (way.hasTag("highway", "steps"))
                 prio = 0.5;
             else if (way.hasTag("bicycle", INTENDED))
-                prio = 1.1;
+                prio = 1.2;
             else
                 prio = 0.9;
 
