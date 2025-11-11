@@ -43,7 +43,7 @@ public class RacingBikePriorityParser extends BikeCommonPriorityParser {
 
         String highway = way.getTag("highway");
         if ("service".equals(highway) || "residential".equals(highway)) {
-            prio *= 0.8;
+            prio *= 0.7;
         } else if ("track".equals(highway)) {
             String trackType = way.getTag("tracktype");
             if ("grade1".equals(trackType) || goodSurface.contains(way.getTag("surface", ""))) {

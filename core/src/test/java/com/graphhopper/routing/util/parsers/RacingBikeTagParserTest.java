@@ -71,7 +71,7 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "residential");
         osmWay.setTag("tunnel", "yes");
-        assertPriorityAndSpeed(0.8, 18, osmWay);
+        assertPriorityAndSpeed(0.7, 18, osmWay);
 
         osmWay.setTag("highway", "secondary");
         osmWay.setTag("tunnel", "yes");
@@ -86,10 +86,10 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
     public void testService() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "service");
-        assertPriorityAndSpeed(0.8, 12, way);
+        assertPriorityAndSpeed(0.7, 12, way);
 
         way.setTag("service", "parking_aisle");
-        assertPriorityAndSpeed(0.7, 4, way);
+        assertPriorityAndSpeed(0.6, 4, way);
     }
 
     @Test
