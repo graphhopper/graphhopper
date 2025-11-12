@@ -77,7 +77,7 @@ public class AlternativeRouteTest {
         }
     }
 
-    public static void initTestGraph(Graph graph, DecimalEncodedValue speedEnc) {
+    private static void initTestGraph(Graph graph, DecimalEncodedValue speedEnc) {
         /* 9
          _/\
          1  2-3-4-10
@@ -103,7 +103,7 @@ public class AlternativeRouteTest {
         updateDistancesFor(graph, 8, 0.00, 0.25);
 
         updateDistancesFor(graph, 1, 0.05, 0.00);
-        updateDistancesFor(graph, 9, 0.10, 0.05);
+        updateDistancesFor(graph, 9, 0.07, 0.05);
         updateDistancesFor(graph, 2, 0.05, 0.10);
         updateDistancesFor(graph, 3, 0.05, 0.15);
         updateDistancesFor(graph, 4, 0.05, 0.25);
@@ -159,7 +159,9 @@ public class AlternativeRouteTest {
         assertEquals(IntArrayList.from(5, 6, 3, 4), pathInfos.get(0).getPath().calcNodes());
         assertEquals(IntArrayList.from(5, 6, 7, 8, 4), pathInfos.get(1).getPath().calcNodes());
         assertEquals(IntArrayList.from(5, 1, 9, 2, 3, 4), pathInfos.get(2).getPath().calcNodes());
-        assertEquals(671.1, pathInfos.get(2).getPath().getWeight(), .1);
+        assertEquals(409.0, pathInfos.get(0).getPath().getWeight(), .1);
+        assertEquals(463.4, pathInfos.get(1).getPath().getWeight(), .1);
+        assertEquals(608.6, pathInfos.get(2).getPath().getWeight(), .1);
     }
 
     private void checkAlternatives(List<AlternativeRoute.AlternativeInfo> alternativeInfos) {
