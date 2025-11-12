@@ -116,7 +116,8 @@ class QueryOverlay {
             for (VirtualEdgeIteratorState v : virtualEdges)
                 v.setWeight(fullWeight, reverse);
             return;
-        }
+        } else if (fullWeight % 1 != 0)
+            throw new IllegalStateException("QueryGraph requires edge weights to be whole numbers (or infinite), but got: " + fullWeight);
 
         for (VirtualEdgeIteratorState v : virtualEdges) {
             double weight = fullWeight * v.getDistance() / fullDistance;
@@ -127,6 +128,7 @@ class QueryOverlay {
         for (VirtualEdgeIteratorState v : virtualEdges)
             sum += v.getWeight(reverse);
         double difference = fullWeight - sum;
+        // todonow: is it even necessary to round here?
         int units = (int) Math.round(difference);
         int baseIncrement = units / virtualEdges.size();
         int remainder = units % virtualEdges.size();
