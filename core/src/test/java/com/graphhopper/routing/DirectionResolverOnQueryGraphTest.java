@@ -39,7 +39,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.graphhopper.routing.DirectionResolverResult.unrestricted;
+import static com.graphhopper.util.DistanceCalcEarth.DIST_EARTH;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
+import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static com.graphhopper.util.Helper.createPointList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -196,7 +198,8 @@ public class DirectionResolverOnQueryGraphTest {
         // make sure graph has valid bounds
         addNode(2, 5, 5);
 
-        addEdge(0, 1, true).setWayGeometry(createPointList(2, 2, 2, 3));
+        EdgeIteratorState edge = addEdge(0, 1, true).setWayGeometry(createPointList(2, 2, 2, 3));
+        edge.setDistance(DIST_EARTH.calcDistance(edge.fetchWayGeometry(FetchMode.ALL)));
         init();
 
         // pillar nodes / geometry are important to decide on which side of the road a location is.
@@ -302,7 +305,10 @@ public class DirectionResolverOnQueryGraphTest {
     }
 
     private EdgeIteratorState addEdge(int from, int to, boolean bothDirections) {
-        return GHUtility.setSpeed(60, true, bothDirections, accessEnc, speedEnc, graph.edge(from, to).setDistance(100));
+        EdgeIteratorState edge = GHUtility.setSpeed(60, true, bothDirections, accessEnc, speedEnc, graph.edge(from, to).setDistance(100));
+        updateDistancesFor(graph, from, graph.getNodeAccess().getLat(from), graph.getNodeAccess().getLon(from));
+        updateDistancesFor(graph, to, graph.getNodeAccess().getLat(to), graph.getNodeAccess().getLon(to));
+        return edge;
     }
 
     private void init() {
