@@ -1173,7 +1173,7 @@ public class PathTest {
         }
 
         @Override
-        public double calcMinWeightPerDistance() {
+        public double calcMinWeightPerKm() {
             throw new IllegalStateException();
         }
 

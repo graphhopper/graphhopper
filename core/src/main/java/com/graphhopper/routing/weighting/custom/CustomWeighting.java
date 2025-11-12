@@ -26,6 +26,7 @@ import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.EdgeIteratorState;
 
+import static com.graphhopper.routing.weighting.SpeedWeighting.roundDouble;
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
 
 /**
@@ -102,15 +103,14 @@ public final class CustomWeighting implements Weighting {
 
         this.headingPenaltySeconds = parameters.getHeadingPenaltySeconds();
 
-        // given unit is s/km -> convert to s/m
-        this.distanceInfluence = parameters.getDistanceInfluence() / 1000.0;
+        this.distanceInfluence = parameters.getDistanceInfluence();
         if (this.distanceInfluence < 0)
             throw new IllegalArgumentException("distance_influence cannot be negative " + this.distanceInfluence);
     }
 
     @Override
-    public double calcMinWeightPerDistance() {
-        return 1d / (maxSpeedCalc.calcMax() / SPEED_CONV) / maxPrioCalc.calcMax() + distanceInfluence;
+    public double calcMinWeightPerKm() {
+        return Math.round(10 * (1000d / (maxSpeedCalc.calcMax() / SPEED_CONV) / maxPrioCalc.calcMax() + distanceInfluence));
     }
 
     @Override
@@ -125,9 +125,9 @@ public final class CustomWeighting implements Weighting {
         if (Double.isInfinite(seconds)) return Double.POSITIVE_INFINITY;
         // add penalty at start/stop/via points
         if (edgeState.get(EdgeIteratorState.UNFAVORED_EDGE)) seconds += headingPenaltySeconds;
-        double distanceCosts = distance * distanceInfluence;
+        double distanceCosts = distance * distanceInfluence / 1000.0;
         if (Double.isInfinite(distanceCosts)) return Double.POSITIVE_INFINITY;
-        return seconds / priority + distanceCosts;
+        return roundDouble(10 * (seconds / priority + distanceCosts));
     }
 
     double calcSeconds(double distance, EdgeIteratorState edgeState, boolean reverse) {
@@ -147,7 +147,8 @@ public final class CustomWeighting implements Weighting {
 
     @Override
     public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
-        return turnCostProvider.calcTurnWeight(inEdge, viaNode, outEdge);
+        double turnWeight = turnCostProvider.calcTurnWeight(inEdge, viaNode, outEdge);
+        return roundDouble(10 * turnWeight);
     }
 
     @Override

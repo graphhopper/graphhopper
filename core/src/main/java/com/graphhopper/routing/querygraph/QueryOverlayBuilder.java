@@ -255,7 +255,11 @@ class QueryOverlayBuilder {
         assert basePoints.size() >= 2 : "basePoints must have at least two points";
 
         PointList baseReversePoints = basePoints.clone(true);
-        double baseDistance = Math.round(1000 * DistancePlaneProjection.DIST_PLANE.calcDistance(basePoints)) / 1000.0;
+        double baseDistance = DistancePlaneProjection.DIST_PLANE.calcDistance(basePoints);
+        if (baseDistance < 1) {
+            // todonow:is it acceptable/necessary?
+        }
+        baseDistance = Math.round(1000 * baseDistance) / 1000.0;
         int virtEdgeId = firstVirtualEdgeId + queryOverlay.getNumVirtualEdges() / 2;
 
         boolean reverse = closestEdge.get(EdgeIteratorState.REVERSE_STATE);

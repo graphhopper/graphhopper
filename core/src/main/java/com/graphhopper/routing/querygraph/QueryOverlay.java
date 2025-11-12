@@ -120,27 +120,42 @@ class QueryOverlay {
 
         for (VirtualEdgeIteratorState v : virtualEdges) {
             double weight = fullWeight * v.getDistance() / fullDistance;
-            weight = Math.round(1000 * weight) / 1000.0;
+            weight = Math.round(weight);
             v.setWeight(weight, reverse);
         }
         double sum = 0;
         for (VirtualEdgeIteratorState v : virtualEdges)
             sum += v.getWeight(reverse);
         double difference = fullWeight - sum;
-        int units = (int) Math.round(difference * 1000);
+        int units = (int) Math.round(difference);
         int baseIncrement = units / virtualEdges.size();
         int remainder = units % virtualEdges.size();
+        int leftOver = 0;
         for (int i = 0; i < virtualEdges.size(); i++) {
             VirtualEdgeIteratorState v = virtualEdges.get(i);
             int adjustment = baseIncrement + (i < Math.abs(remainder) ? Integer.signum(remainder) : 0);
-            v.setWeight(v.getWeight(reverse) + adjustment / 1000.0, reverse);
+            double newWeight = v.getWeight(reverse) + adjustment;
+            if (newWeight >= 0)
+                v.setWeight(newWeight, reverse);
+            else
+                leftOver += adjustment;
         }
+        for (VirtualEdgeIteratorState v : virtualEdges) {
+            double newWeight = v.getWeight(reverse) + leftOver;
+            if (newWeight >= 0) {
+                v.setWeight(newWeight, reverse);
+                leftOver = 0;
+                break;
+            }
+        }
+        if (leftOver > 0)
+            throw new IllegalStateException("Could not distribute weight difference");
 
         // verify
         sum = 0;
         for (VirtualEdgeIteratorState v : virtualEdges)
             sum += v.getWeight(reverse);
-        if (Math.abs(sum - fullWeight) > 0.001)
+        if (fullWeight != sum)
             throw new IllegalStateException();
     }
 

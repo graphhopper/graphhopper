@@ -812,7 +812,7 @@ public class RestrictionSetterTest {
         final int x = 8;
         // due to the virtual node the 1-2-3-0 path is now possible
         assertPath(queryGraph, 1, 0, nodes(1, 2, x, 3, 0));
-        assertPath(queryGraph, 1, 4, nodes(1, 2, x, 3, 4));
+        assertPath(queryGraph, 1, 4, nodes(1, 2, 3, 4));
         assertPath(queryGraph, 1, x, nodes(1, 2, x));
         assertPath(queryGraph, 5, x, nodes(5, 2, x));
         assertPath(queryGraph, x, 0, nodes(x, 3, 0));
@@ -868,9 +868,9 @@ public class RestrictionSetterTest {
         assertEquals(x, snapX.getClosestNode());
         assertEquals(y, snapY.getClosestNode());
         assertEquals(z, snapZ.getClosestNode());
-        assertPath(queryGraph, 1, 4, nodes(1, 2, x, 3, y, 4));
-        assertPath(queryGraph, 2, 4, nodes(2, x, 3, y, 4));
-        assertPath(queryGraph, 2, 5, nodes(2, x, 3, y, 4, z, 5));
+        assertPath(queryGraph, 1, 4, nodes(1, 2, x, 3, 4));
+        assertPath(queryGraph, 2, 4, nodes(2, x, 3, 4));
+        assertPath(queryGraph, 2, 5, nodes(2, x, 3, y, 4, 5));
         assertPath(queryGraph, 3, 5, nodes(3, y, 4, z, 5));
         assertPath(queryGraph, 3, 6, nodes(3, y, 4, z, 5, 6));
         assertPath(queryGraph, 4, 6, nodes(4, z, 5, 6));

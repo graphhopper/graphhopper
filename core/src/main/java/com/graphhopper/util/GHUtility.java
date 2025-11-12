@@ -577,7 +577,7 @@ public class GHUtility {
         List<String> strictViolations = new ArrayList<>();
         double refWeight = refPath.getWeight();
         double weight = path.getWeight();
-        if (Math.abs(refWeight - weight) > 1.e-2) {
+        if (refWeight != weight) {
             LOGGER.warn("expected: " + refPath.calcNodes());
             LOGGER.warn("given:    " + path.calcNodes());
             LOGGER.warn("seed: " + seed);

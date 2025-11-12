@@ -42,13 +42,10 @@ import static com.graphhopper.util.Helper.nf;
  */
 public class CHStorage {
     private static final Logger LOGGER = LoggerFactory.getLogger(CHStorage.class);
-    // we store double weights as integers (rounded to three decimal digits)
-    private static final double WEIGHT_FACTOR = 1000;
     // the maximum integer value we can store
     private static final long MAX_STORED_INTEGER_WEIGHT = ((long) Integer.MAX_VALUE) << 1;
     // the maximum double weight we can store. if this is exceeded the shortcut will gain infinite weight, potentially yielding connection-not-found errors
-    private static final double MAX_WEIGHT = MAX_STORED_INTEGER_WEIGHT / WEIGHT_FACTOR;
-    private static final double MIN_WEIGHT = 1 / WEIGHT_FACTOR;
+    private static final double MAX_WEIGHT = MAX_STORED_INTEGER_WEIGHT;
 
     // shortcuts
     private final DataAccess shortcuts;
@@ -222,11 +219,11 @@ public class CHStorage {
     private int shortcut(int nodeA, int nodeB, int accessFlags, double weight, int skip1, int skip2) {
         if (shortcutCount == Integer.MAX_VALUE)
             throw new IllegalStateException("Maximum shortcut count exceeded: " + shortcutCount);
-        if (lowWeightShortcutConsumer != null && weight < MIN_WEIGHT)
-            lowWeightShortcutConsumer.accept(new LowWeightShortcut(nodeA, nodeB, shortcutCount, weight, MIN_WEIGHT));
+        if (lowWeightShortcutConsumer != null && weight == 0)
+            lowWeightShortcutConsumer.accept(new LowWeightShortcut(nodeA, nodeB, shortcutCount, weight, 0));
         if (highWeightShortcutConsumer != null && weight >= MAX_WEIGHT)
             highWeightShortcutConsumer.accept(new HighWeightShortcut(nodeA, nodeB, shortcutCount, weight, MAX_WEIGHT));
-        if (weight >= MIN_WEIGHT && weight < MAX_WEIGHT) {
+        if (weight >= 1 && weight < MAX_WEIGHT) {
             minValidWeight = Math.min(weight, minValidWeight);
             maxValidWeight = Math.max(weight, maxValidWeight);
         }
@@ -444,15 +441,18 @@ public class CHStorage {
     private int weightFromDouble(double weight) {
         if (weight < 0)
             throw new IllegalArgumentException("weight cannot be negative but was " + weight);
-        if (weight < MIN_WEIGHT) {
+        if (weight % 1 != 0)
+            throw new IllegalArgumentException("weight must be an exact multiple of 1");
+        if (weight == 0) {
+            // todonow: should we really round up??
             numShortcutsUnderMinWeight++;
-            weight = MIN_WEIGHT;
+            weight = 1;
         }
         if (weight >= MAX_WEIGHT) {
             numShortcutsOverMaxWeight++;
             return (int) MAX_STORED_INTEGER_WEIGHT; // negative
         } else
-            return (int) Math.round(weight * WEIGHT_FACTOR);
+            return (int) (long) weight;
     }
 
     private double weightToDouble(int intWeight) {
@@ -461,7 +461,7 @@ public class CHStorage {
         long weightLong = (long) intWeight & 0xFFFFFFFFL;
         if (weightLong == MAX_STORED_INTEGER_WEIGHT)
             return Double.POSITIVE_INFINITY;
-        double weight = weightLong / WEIGHT_FACTOR;
+        double weight = weightLong;
         if (weight >= MAX_WEIGHT)
             throw new IllegalArgumentException("too large shortcut weight " + weight + " should get infinity marker bits "
                     + MAX_STORED_INTEGER_WEIGHT);

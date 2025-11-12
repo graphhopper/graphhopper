@@ -62,8 +62,8 @@ public class SpeedWeighting implements Weighting {
     }
 
     @Override
-    public double calcMinWeightPerDistance() {
-        return 1 / speedEnc.getMaxStorableDecimal();
+    public double calcMinWeightPerKm() {
+        return Math.round(10 * 1000.0 / speedEnc.getMaxStorableDecimal());
     }
 
     @Override
@@ -72,17 +72,26 @@ public class SpeedWeighting implements Weighting {
 //            throw new IllegalStateException("Edge state must not be virtual: " + edgeState.getClass().getName() + ". You need to use graph.wrapWeighting");
         double speed = reverse ? edgeState.getReverse(speedEnc) : edgeState.get(speedEnc);
         if (speed == 0) return Double.POSITIVE_INFINITY;
-        return edgeState.getDistance() / speed;
+        return roundDouble(10 * edgeState.getDistance() / speed);
     }
 
     @Override
     public long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse) {
-        return (long) (1000 * calcEdgeWeight(edgeState, reverse));
+        double speed = reverse ? edgeState.getReverse(speedEnc) : edgeState.get(speedEnc);
+        if (speed == 0) return Long.MAX_VALUE;
+        return (long) (1000 * edgeState.getDistance() / speed);
     }
 
     @Override
     public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
-        return turnCostProvider.calcTurnWeight(inEdge, viaNode, outEdge);
+        double turnWeight = turnCostProvider.calcTurnWeight(inEdge, viaNode, outEdge);
+        return roundDouble(10 * turnWeight);
+    }
+
+    public static double roundDouble(double d) {
+        if (Double.isInfinite(d)) return Double.POSITIVE_INFINITY;
+        // todonow: maybe rather not round done to 0 hoping paths are more likely to be unique then?
+        return Math.round(d);
     }
 
     @Override

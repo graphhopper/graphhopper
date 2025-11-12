@@ -145,15 +145,14 @@ public class IsochroneResourceTest {
                 .queryParam("point", "42.531073,1.573792")
                 .queryParam("type", "geojson");
 
-        long limit = 10 * 60;
-
         JsonFeatureCollection timeLimitFeatureCollection = commonTarget
-                .queryParam("time_limit", limit)
+                .queryParam("time_limit", 600)
                 .request().get(JsonFeatureCollection.class);
         Geometry timeLimitPolygon = timeLimitFeatureCollection.getFeatures().get(0).getGeometry();
 
         JsonFeatureCollection weightLimitFeatureCollection = commonTarget
-                .queryParam("weight_limit", limit)
+                // todonow: doesn't work?
+                .queryParam("weight_limit", 6000)
                 .request().get(JsonFeatureCollection.class);
         Geometry weightLimitPolygon = weightLimitFeatureCollection.getFeatures().get(0).getGeometry();
 

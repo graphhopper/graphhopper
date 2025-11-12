@@ -34,8 +34,8 @@ public abstract class AbstractAdjustedWeighting implements Weighting {
     }
 
     @Override
-    public double calcMinWeightPerDistance() {
-        return superWeighting.calcMinWeightPerDistance();
+    public double calcMinWeightPerKm() {
+        return superWeighting.calcMinWeightPerKm();
     }
 
     @Override

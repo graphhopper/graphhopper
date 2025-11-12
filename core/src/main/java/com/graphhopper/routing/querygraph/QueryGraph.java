@@ -276,6 +276,8 @@ public class QueryGraph implements Graph {
 
     @Override
     public Weighting wrapWeighting(Weighting weighting) {
+        if (weighting instanceof QueryGraphWeighting)
+            return weighting;
         queryOverlay.adjustVirtualWeights(baseGraph, weighting);
         return new QueryGraphWeighting(baseGraph, weighting, queryOverlay.getClosestEdges());
     }

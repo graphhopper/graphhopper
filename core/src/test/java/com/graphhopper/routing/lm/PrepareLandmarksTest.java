@@ -112,13 +112,13 @@ public class PrepareLandmarksTest {
 
         assertEquals(0, store.getFromWeight(0, 224));
         double factor = store.getFactor();
-        assertEquals(1297, Math.round(store.getFromWeight(0, 47) * factor));
-        assertEquals(1011, Math.round(store.getFromWeight(0, 52) * factor));
+        assertEquals(12971, Math.round(store.getFromWeight(0, 47) * factor));
+        assertEquals(10108, Math.round(store.getFromWeight(0, 52) * factor));
 
         long weight1_224 = store.getFromWeight(1, 224);
-        assertEquals(1535, Math.round(weight1_224 * factor));
+        assertEquals(15345, Math.round(weight1_224 * factor));
         long weight1_47 = store.getFromWeight(1, 47);
-        assertEquals(256, Math.round(weight1_47 * factor));
+        assertEquals(2558, Math.round(weight1_47 * factor));
 
         // grid is symmetric
         assertEquals(weight1_224, store.getToWeight(1, 224));
@@ -172,7 +172,7 @@ public class PrepareLandmarksTest {
                 new AlgorithmOptions().setAlgorithm(ASTAR).setTraversalMode(tm).setHints(hints));
         path = qGraphOneDirAlgo.calcPath(fromSnap.getClosestNode(), toSnap.getClosestNode());
 
-        expectedAlgo = new AStar(qGraph, weighting, tm);
+        expectedAlgo = new AStar(qGraph, qGraph.wrapWeighting(weighting), tm);
         expectedPath = expectedAlgo.calcPath(fromSnap.getClosestNode(), toSnap.getClosestNode());
         assertEquals(expectedPath.getWeight(), path.getWeight(), .1);
         assertEquals(expectedPath.calcNodes(), path.calcNodes());
@@ -199,7 +199,7 @@ public class PrepareLandmarksTest {
         assertEquals(Arrays.toString(new int[]{
                 2, 0
         }), Arrays.toString(plm.getLandmarkStorage().getLandmarks(1)));
-        assertEquals(1333, Math.round(plm.getLandmarkStorage().getFromWeight(0, 1) * expectedFactor));
+        assertEquals(13333, Math.round(plm.getLandmarkStorage().getFromWeight(0, 1) * expectedFactor));
 
         dir = new RAMDirectory(fileStr, true);
         plm = new PrepareLandmarks(dir, graph, encodingManager, lmConfig, 2);
@@ -208,7 +208,7 @@ public class PrepareLandmarksTest {
         assertEquals(Arrays.toString(new int[]{
                 2, 0
         }), Arrays.toString(plm.getLandmarkStorage().getLandmarks(1)));
-        assertEquals(1333, Math.round(plm.getLandmarkStorage().getFromWeight(0, 1) * expectedFactor));
+        assertEquals(13333, Math.round(plm.getLandmarkStorage().getFromWeight(0, 1) * expectedFactor));
 
         Helper.removeDir(new File(fileStr));
     }

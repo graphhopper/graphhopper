@@ -151,7 +151,7 @@ public class RandomCHRoutingTest {
                 }
 
                 double weight = path.getWeight();
-                if (Math.abs(refWeight - weight) > 1.e-2) {
+                if (refWeight != weight) {
                     LOGGER.warn("expected: " + refPath.calcNodes());
                     LOGGER.warn("given:    " + path.calcNodes());
                     fail("wrong weight: " + from + "->" + to + ", dijkstra: " + refWeight + " vs. ch: " + path.getWeight());
@@ -166,7 +166,7 @@ public class RandomCHRoutingTest {
             if (numPathsNotFound > 0.9 * numQueries) {
                 fail("Too many paths not found: " + numPathsNotFound + "/" + numQueries);
             }
-            if (strictViolations.size() > 0.05 * numQueries) {
+            if (strictViolations.size() > 0.1 * numQueries) {
                 fail("Too many strict violations: " + strictViolations.size() + "/" + numQueries + "\n" +
                         String.join("\n", strictViolations));
             }

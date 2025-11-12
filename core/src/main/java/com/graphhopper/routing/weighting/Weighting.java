@@ -32,7 +32,7 @@ public interface Weighting {
      * @return minimal weight per meter. E.g. if you calculate the fastest way the return value
      * is '1/max_velocity' or a shortest weighting would return 1.
      */
-    double calcMinWeightPerDistance();
+    double calcMinWeightPerKm();
 
     /**
      * This method calculates the weight of a given {@link EdgeIteratorState}. E.g. a high value indicates that the edge

@@ -157,22 +157,22 @@ class CustomWeightingHelperTest {
         EdgeIteratorState edge12 = handleWayTags(edgeIntAccess, calc, graph.edge(1, 2).setDistance(500).set(avgSpeedEnc, 15).set(accessEnc, true, true), List.of());
 
         // from top to left => sharp right turn
-        assertEquals(1, weighting.calcTurnWeight(edge14.getEdge(), 1, edge01.getEdge()), 0.01);
+        assertEquals(10, weighting.calcTurnWeight(edge14.getEdge(), 1, edge01.getEdge()), 0.01);
         // left to right => straight
         assertEquals(0.0, weighting.calcTurnWeight(edge01.getEdge(), 1, edge12.getEdge()), 0.01);
         // top to right => sharp left turn
-        assertEquals(12, weighting.calcTurnWeight(edge14.getEdge(), 1, edge12.getEdge()), 0.01);
+        assertEquals(120, weighting.calcTurnWeight(edge14.getEdge(), 1, edge12.getEdge()), 0.01);
         // left to down => right turn
-        assertEquals(0.5, weighting.calcTurnWeight(edge01.getEdge(), 1, edge13.getEdge()), 0.01);
+        assertEquals(5, weighting.calcTurnWeight(edge01.getEdge(), 1, edge13.getEdge()), 0.01);
         // bottom to left => left turn
-        assertEquals(6, weighting.calcTurnWeight(edge13.getEdge(), 1, edge01.getEdge()), 0.01);
+        assertEquals(60, weighting.calcTurnWeight(edge13.getEdge(), 1, edge01.getEdge()), 0.01);
 
         // left to top => sharp left turn => here like 'straight'
-        assertEquals(12, weighting.calcTurnWeight(edge12.getEdge(), 2, edge25.getEdge()), 0.01);
+        assertEquals(120, weighting.calcTurnWeight(edge12.getEdge(), 2, edge25.getEdge()), 0.01);
         // down to left => sharp left turn => here again like 'straight'
-        assertEquals(12, weighting.calcTurnWeight(edge26.getEdge(), 2, edge12.getEdge()), 0.01);
+        assertEquals(120, weighting.calcTurnWeight(edge26.getEdge(), 2, edge12.getEdge()), 0.01);
         // top to left => sharp right turn
-        assertEquals(1, weighting.calcTurnWeight(edge25.getEdge(), 2, edge12.getEdge()), 0.01);
+        assertEquals(10, weighting.calcTurnWeight(edge25.getEdge(), 2, edge12.getEdge()), 0.01);
     }
 
     EdgeIteratorState handleWayTags(EdgeIntAccess edgeIntAccess, OrientationCalculator calc, EdgeIteratorState edge, List<Double> rawPointList) {

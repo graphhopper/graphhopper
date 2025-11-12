@@ -139,6 +139,8 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
 
     @Override
     public EdgeIteratorState setDistance(double dist) {
+        if (dist < 0)
+            throw new IllegalArgumentException("Distance must not be negative");
         this.distance = dist;
         return this;
     }
@@ -384,6 +386,11 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
     }
 
     public void setWeight(double weight, boolean reverse) {
+        // todonow: attention! if weight is rounded to zero bc vedge very short we can end up with negative weights after adjustment :(
+//        if (weight == 0)
+//            throw new IllegalArgumentException("weight cannot be zero");
+        if (weight < 0)
+            throw new IllegalArgumentException("weight must not be negative");
         if (reverse)
             this.weightBwd = weight;
         else

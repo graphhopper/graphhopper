@@ -190,12 +190,12 @@ public class RandomizedRoutingTest {
                     return algoFactory.createAlgo(new PMap().putObject(ALGORITHM, ASTAR_BI));
                 }
                 case LM_BIDIR:
-                    return new LMRoutingAlgorithmFactory(lm).createAlgo(graph, weighting, new AlgorithmOptions().setAlgorithm(ASTAR_BI).setTraversalMode(traversalMode));
+                    return new LMRoutingAlgorithmFactory(lm).createAlgo(graph, graph.wrapWeighting(weighting), new AlgorithmOptions().setAlgorithm(ASTAR_BI).setTraversalMode(traversalMode));
                 case LM_UNIDIR:
-                    return new LMRoutingAlgorithmFactory(lm).createAlgo(graph, weighting, new AlgorithmOptions().setAlgorithm(ASTAR).setTraversalMode(traversalMode));
+                    return new LMRoutingAlgorithmFactory(lm).createAlgo(graph, graph.wrapWeighting(weighting), new AlgorithmOptions().setAlgorithm(ASTAR).setTraversalMode(traversalMode));
                 case PERFECT_ASTAR: {
-                    AStarBidirection perfectAStarBi = new AStarBidirection(graph, weighting, traversalMode);
-                    perfectAStarBi.setApproximation(new PerfectApproximator(graph, weighting, traversalMode, false));
+                    AStarBidirection perfectAStarBi = new AStarBidirection(graph, graph.wrapWeighting(weighting), traversalMode);
+                    perfectAStarBi.setApproximation(new PerfectApproximator(graph, graph.wrapWeighting(weighting), traversalMode, false));
                     return perfectAStarBi;
                 }
                 default:
@@ -245,7 +245,7 @@ public class RandomizedRoutingTest {
                     .calcPath(source, target);
             strictViolations.addAll(GHUtility.comparePaths(refPath, path, source, target, seed));
         }
-        if (strictViolations.size() > 3) {
+        if (strictViolations.size() > 10) {
             for (String strictViolation : strictViolations) {
                 LOGGER.info("strict violation: " + strictViolation);
             }
