@@ -30,6 +30,7 @@ import java.util.Random;
 
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
+import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -444,23 +445,22 @@ public class DirectedBidirectionalDijkstraTest {
         // 0 -- 1 -> 2
         // |         |
         // 5 <- 4 <- 3
-        graph.edge(0, 1).setDistance(100).set(speedEnc, 10, 10);
-        graph.edge(1, 2).setDistance(100).set(speedEnc, 10, 0);
-        graph.edge(2, 3).setDistance(100).set(speedEnc, 10, 0);
-        graph.edge(3, 4).setDistance(100).set(speedEnc, 10, 0);
-        graph.edge(4, 5).setDistance(100).set(speedEnc, 10, 0);
-        graph.edge(5, 0).setDistance(100).set(speedEnc, 10, 0);
-        NodeAccess na = graph.getNodeAccess();
-        na.setNode(0, 1, 0);
-        na.setNode(1, 1, 1);
-        na.setNode(2, 1, 2);
-        na.setNode(3, 0, 2);
-        na.setNode(4, 0, 1);
-        na.setNode(5, 0, 0);
+        graph.edge(0, 1).setDistance(0).set(speedEnc, 10, 10);
+        graph.edge(1, 2).setDistance(0).set(speedEnc, 10, 0);
+        graph.edge(2, 3).setDistance(0).set(speedEnc, 10, 0);
+        graph.edge(3, 4).setDistance(0).set(speedEnc, 10, 0);
+        graph.edge(4, 5).setDistance(0).set(speedEnc, 10, 0);
+        graph.edge(5, 0).setDistance(0).set(speedEnc, 10, 0);
+        updateDistancesFor(graph, 0, 0.01, 0.00);
+        updateDistancesFor(graph, 1, 0.01, 0.01);
+        updateDistancesFor(graph, 2, 0.01, 0.02);
+        updateDistancesFor(graph, 3, 0.00, 0.02);
+        updateDistancesFor(graph, 4, 0.00, 0.01);
+        updateDistancesFor(graph, 5, 0.00, 0.00);
 
         LocationIndexTree locationIndex = new LocationIndexTree(graph, graph.getDirectory());
         locationIndex.prepareIndex();
-        Snap snap = locationIndex.findClosest(1.1, 0.5, EdgeFilter.ALL_EDGES);
+        Snap snap = locationIndex.findClosest(0.011, 0.005, EdgeFilter.ALL_EDGES);
         QueryGraph queryGraph = QueryGraph.create(graph, snap);
 
         assertEquals(Snap.Position.EDGE, snap.getSnappedPosition(), "wanted to get EDGE");
@@ -473,10 +473,10 @@ public class DirectedBidirectionalDijkstraTest {
 
         EdgeIteratorState virtualEdge = GHUtility.getEdge(queryGraph, 6, 1);
         int outEdge = virtualEdge.getEdge();
-        EdgeToEdgeRoutingAlgorithm algo = createAlgo(queryGraph, weighting);
+        EdgeToEdgeRoutingAlgorithm algo = createAlgo(queryGraph, queryGraph.wrapWeighting(weighting));
         Path path = algo.calcPath(6, 0, outEdge, ANY_EDGE);
         assertEquals(nodes(6, 1, 2, 3, 4, 5, 0), path.calcNodes());
-        assertEquals(500 + virtualEdge.getDistance(), path.getDistance(), 1.e-3);
+        assertEquals(6115.720, path.getDistance(), 1.e-3);
     }
 
     private Path calcPath(int source, int target, int sourceOutEdge, int targetInEdge) {
