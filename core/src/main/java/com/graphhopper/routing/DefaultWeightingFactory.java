@@ -26,7 +26,6 @@ import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
-import com.graphhopper.routing.weighting.custom.CustomWeighting2;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.PMap;
@@ -84,14 +83,7 @@ public class DefaultWeightingFactory implements WeightingFactory {
                     throw new IllegalArgumentException("The turn_penalty feature is not supported for " + profile.getName() + ". You have to enable this in 'turn_costs' in config.yml.");
                 turnCostProvider = NO_TURN_COST_PROVIDER;
             }
-
-            if (hints.has("cm_version")) {
-                if (!hints.getString("cm_version", "").equals("2"))
-                    throw new IllegalArgumentException("cm_version: \"2\" is required");
-                weighting = new CustomWeighting2(turnCostProvider, parameters);
-            } else {
-                weighting = new CustomWeighting(turnCostProvider, parameters);
-            }
+            weighting = new CustomWeighting(turnCostProvider, parameters);
 
         } else if ("shortest".equalsIgnoreCase(weightingStr)) {
             throw new IllegalArgumentException("Instead of weighting=shortest use weighting=custom with a high distance_influence");
