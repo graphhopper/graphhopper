@@ -66,7 +66,7 @@ public class RouteResourceCustomModelTest {
                 putObject("custom_areas.directory", "./src/test/resources/com/graphhopper/application/resources/areas").
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.encoded_values", "car_access, car_average_speed, road_access, " +
-                        "bike_access, bike_priority, bike_average_speed, bike_road_access, " +
+                        "bike_access, bike_priority, bike_average_speed, bike_road_access, bike_network, " +
                         "foot_access, foot_priority, foot_average_speed, foot_road_access, " +
                         "max_height, max_weight, max_width, hazmat, toll, surface, track_type, hgv, " +
                         "average_slope, max_slope, bus_access, road_class, get_off_bike, roundabout, " +

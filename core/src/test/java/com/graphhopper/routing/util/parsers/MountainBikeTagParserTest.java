@@ -131,61 +131,6 @@ public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
         assertEquals(MIN_SPEED, getSpeedFromFlags(way), 0.01);
     }
 
-    @Test
-    public void testHandleWayTagsInfluencedByBikeAndMtbRelation() {
-        ReaderWay osmWay = new ReaderWay(1);
-        osmWay.setTag("highway", "track");
-
-        ReaderRelation osmRel = new ReaderRelation(1);
-        // unchanged
-        assertPriorityAndSpeed(PREFER, 12, osmWay, osmRel);
-
-        // relation code is PREFER
-        osmRel.setTag("route", "bicycle");
-        osmRel.setTag("network", "lcn");
-        assertPriorityAndSpeed(VERY_NICE, 18, osmWay, osmRel);
-
-        // relation code is PREFER
-        osmRel.setTag("network", "rcn");
-        assertPriorityAndSpeed(VERY_NICE, 18, osmWay, osmRel);
-
-        // relation code is PREFER
-        osmRel.setTag("network", "ncn");
-        assertPriorityAndSpeed(BEST, 18, osmWay, osmRel);
-
-        // PREFER relation, but tertiary road
-        // => no pushing section but road wayTypeCode and faster
-        osmWay.clearTags();
-        osmWay.setTag("highway", "tertiary");
-
-        osmRel.setTag("route", "bicycle");
-        osmRel.setTag("network", "lcn");
-        assertPriorityAndSpeed(VERY_NICE, 18, osmWay, osmRel);
-
-        osmWay.clearTags();
-        osmRel.clearTags();
-        osmWay.setTag("highway", "track");
-        // unchanged
-        assertPriorityAndSpeed(PREFER, 12, osmWay, osmRel);
-
-        osmRel.setTag("route", "mtb");
-        osmRel.setTag("network", "lcn");
-        assertPriorityAndSpeed(PREFER, 12, osmWay, osmRel);
-
-        osmRel.setTag("network", "rcn");
-        assertPriorityAndSpeed(PREFER, 12, osmWay, osmRel);
-
-        osmRel.setTag("network", "ncn");
-        assertPriorityAndSpeed(PREFER, 12, osmWay, osmRel);
-
-        osmWay.clearTags();
-        osmWay.setTag("highway", "tertiary");
-
-        osmRel.setTag("route", "mtb");
-        osmRel.setTag("network", "lcn");
-        assertPriorityAndSpeed(PREFER, 18, osmWay, osmRel);
-    }
-
     // Issue 407 : Always block kissing_gate except for mountainbikes
     @Test
     @Override
