@@ -20,9 +20,11 @@ package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.json.Statement;
-import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
+import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.custom.CustomModelParser;
@@ -42,7 +44,7 @@ public class PriorityRoutingTest {
     @Test
     void testMaxPriority() {
         DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 4, 2, false);
-        DecimalEncodedValue priorityEnc = new DecimalEncodedValueImpl("priority", 4, PriorityCode.getFactor(1), false);
+        DecimalEncodedValue priorityEnc = new DecimalEncodedValueImpl("priority", 4, 0.1, false);
         EncodingManager em = EncodingManager.start().add(speedEnc).add(priorityEnc).add(RoadClass.create()).build();
         BaseGraph graph = new BaseGraph.Builder(em).create();
         NodeAccess na = graph.getNodeAccess();
@@ -60,11 +62,10 @@ public class PriorityRoutingTest {
         dist1 += addEdge(em, graph, 1, 2, 1.0, speedEnc, priorityEnc, speed).getDistance();
         dist1 += addEdge(em, graph, 2, 3, 1.0, speedEnc, priorityEnc, speed).getDistance();
 
-        final double maxPrio = PriorityCode.getFactor(PriorityCode.BEST.getValue());
         double dist2 = 0;
-        dist2 += addEdge(em, graph, 0, 4, maxPrio, speedEnc, priorityEnc, speed).getDistance();
-        dist2 += addEdge(em, graph, 4, 5, maxPrio, speedEnc, priorityEnc, speed).getDistance();
-        dist2 += addEdge(em, graph, 5, 3, maxPrio, speedEnc, priorityEnc, speed).getDistance();
+        dist2 += addEdge(em, graph, 0, 4, 1.5, speedEnc, priorityEnc, speed).getDistance();
+        dist2 += addEdge(em, graph, 4, 5, 1.5, speedEnc, priorityEnc, speed).getDistance();
+        dist2 += addEdge(em, graph, 5, 3, 1.5, speedEnc, priorityEnc, speed).getDistance();
 
         // the routes 0-1-2-3 and 0-4-5-3 have similar distances (and use max speed everywhere)
         // ... but the shorter route 0-1-2-3 has smaller priority
