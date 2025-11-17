@@ -1003,8 +1003,9 @@ public class OSMReaderTest {
             setStoreOnFlush(false);
             setOSMFile(osmFile);
             setGraphHopperLocation(dir);
-            String str = "max_width,max_height,max_weight,foot_access, foot_priority, foot_average_speed, car_access, car_average_speed, bike_access, bike_priority, bike_average_speed";
-            setEncodedValuesString(str);
+            setEncodedValuesString("max_width,max_height,max_weight,road_environment," +
+                    "foot_access, foot_priority, foot_average_speed, " +
+                    "car_access, car_average_speed, bike_access, bike_priority, bike_average_speed");
             setProfiles(
                     TestProfiles.accessSpeedAndPriority("foot"),
                     TestProfiles.accessAndSpeed("car").setTurnCostsConfig(new TurnCostsConfig(List.of("motorcar", "motor_vehicle"))),

@@ -1,13 +1,10 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.util.PriorityCode;
-
-import java.util.TreeMap;
-
-import static com.graphhopper.routing.ev.RouteNetwork.*;
-import static com.graphhopper.routing.util.PriorityCode.*;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.ev.VehiclePriority;
+import com.graphhopper.routing.ev.VehicleSpeed;
 
 public class MountainBikePriorityParser extends BikeCommonPriorityParser {
 
@@ -32,18 +29,12 @@ public class MountainBikePriorityParser extends BikeCommonPriorityParser {
     }
 
     @Override
-    void collect(ReaderWay way, double wayTypeSpeed, boolean bikeDesignated, TreeMap<Double, PriorityCode> weightToPrioMap) {
-        super.collect(way, wayTypeSpeed, bikeDesignated, weightToPrioMap);
+    double collect(ReaderWay way, double wayTypeSpeed, boolean bikeDesignated) {
+        double prio = super.collect(way, wayTypeSpeed, bikeDesignated);
 
-        String highway = way.getTag("highway");
-        if ("track".equals(highway)) {
-            String trackType = way.getTag("tracktype");
-            if ("grade1".equals(trackType) || goodSurface.contains(way.getTag("surface","")))
-                weightToPrioMap.put(50d, SLIGHT_PREFER);
-            else if (trackType == null)
-                weightToPrioMap.put(90d, PREFER);
-            else if (trackType.startsWith("grade"))
-                weightToPrioMap.put(100d, VERY_NICE);
-        }
+        // worse grade should not mean we prefer it because it is also less fun
+        if ("track".equals(way.getTag("highway"))) prio = Math.max(1.1, prio);
+
+        return prio;
     }
 }
