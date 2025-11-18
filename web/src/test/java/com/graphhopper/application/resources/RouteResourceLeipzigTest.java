@@ -80,9 +80,9 @@ public class RouteResourceLeipzigTest {
 
     @ParameterizedTest
     @CsvSource(value = {
-            "84,-1,algorithm=" + DIJKSTRA_BI,
-            "108,-1,algorithm=" + ASTAR_BI,
-            "30754,1,ch.disable=true&algorithm=" + DIJKSTRA,
+            "94,-1,algorithm=" + DIJKSTRA_BI,
+            "116,-1,algorithm=" + ASTAR_BI,
+            "30756,1,ch.disable=true&algorithm=" + DIJKSTRA,
             "21134,1,ch.disable=true&algorithm=" + ASTAR,
             "14860,1,ch.disable=true&algorithm=" + DIJKSTRA_BI,
             "10532,1,ch.disable=true&algorithm=" + ASTAR_BI

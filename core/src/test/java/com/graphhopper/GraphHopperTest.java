@@ -101,7 +101,7 @@ public class GraphHopperTest {
     @ParameterizedTest
     @CsvSource({
             DIJKSTRA + ",false,705",
-            ASTAR + ",false,363",
+            ASTAR + ",false,362",
             DIJKSTRA_BI + ",false,342",
             ASTAR_BI + ",false,192",
             DIJKSTRA_BI + ",true,45",

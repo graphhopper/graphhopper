@@ -251,13 +251,13 @@ public class RoutingAlgorithmTest {
         //    |  |
         //    3--4
         BaseGraph graph = f.createGHStorage();
-        graph.edge(0, 2).setDistance(9).set(f.carSpeedEnc, 60, 60);
-        graph.edge(2, 1).setDistance(2).set(f.carSpeedEnc, 60, 60);
-        graph.edge(2, 3).setDistance(11).set(f.carSpeedEnc, 60, 60);
-        graph.edge(3, 4).setDistance(6).set(f.carSpeedEnc, 60, 60);
-        graph.edge(4, 1).setDistance(9).set(f.carSpeedEnc, 60, 60);
+        graph.edge(0, 2).setDistance(90).set(f.carSpeedEnc, 10, 10);
+        graph.edge(2, 1).setDistance(20).set(f.carSpeedEnc, 10, 10);
+        graph.edge(2, 3).setDistance(110).set(f.carSpeedEnc, 10, 10);
+        graph.edge(3, 4).setDistance(60).set(f.carSpeedEnc, 10, 10);
+        graph.edge(4, 1).setDistance(90).set(f.carSpeedEnc, 10, 10);
         Path p = f.calcPath(graph, 0, 4);
-        assertEquals(20, p.getDistance(), 1e-4, p.toString());
+        assertEquals(200, p.getDistance(), 1e-4, p.toString());
         assertEquals(nodes(0, 2, 1, 4), p.calcNodes());
     }
 

@@ -90,7 +90,8 @@ public class SpeedWeighting implements Weighting {
 
     public static double roundDouble(double d) {
         if (Double.isInfinite(d)) return Double.POSITIVE_INFINITY;
-        // todonow: maybe rather not round done to 0 hoping paths are more likely to be unique then?
+        if (d % 1 != 0 && d < 0.5)
+            return 1;
         return Math.round(d);
     }
 
