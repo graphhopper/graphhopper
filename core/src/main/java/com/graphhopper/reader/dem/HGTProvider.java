@@ -26,7 +26,7 @@ import java.util.zip.ZipInputStream;
 
 public class HGTProvider extends AbstractSRTMElevationProvider {
     public HGTProvider(String dir) {
-        super("", dir, "", Integer.MIN_VALUE, Integer.MAX_VALUE, 3601);
+        super("", dir, Integer.MIN_VALUE, Integer.MAX_VALUE, 3601);
     }
 
     @Override
