@@ -38,4 +38,10 @@ jobs:
         run: mvn -B clean test
       - name: Package JAR
         run: mvn -B package -DskipTests
+      - name: Upload JAR Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: graphhopper-jar-${{ matrix.java-version }}
+          path: graphhopper-web/target/*.jar
+          retention-days: 1
 
