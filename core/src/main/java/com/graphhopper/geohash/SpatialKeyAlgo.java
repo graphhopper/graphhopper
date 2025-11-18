@@ -36,7 +36,7 @@ import com.graphhopper.util.shapes.BBox;
  *
  * Implementation:
  * - From the query point and the grid parameters, calculate (integer) coordinates (x,y) of the cell
- *   the query point is in, using simple arithmetics.
+ *   the query point is in, using simple arithmetic.
  * - Use a lookup table to interleave the bits of (x,y) to get the cell number, which is the spatial key.
  *   See the drawing below. This is called a Z-order curve (because of the path you get when you follow
  *   increasing cell numbers through the grid), or Morton code.
