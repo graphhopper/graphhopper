@@ -112,6 +112,7 @@ public class BufferResource {
             @QueryParam("buildUpstream") @DefaultValue("false") Boolean buildUpstream,
             @QueryParam("requireRoadNameMatch") @DefaultValue("false") Boolean requireRoadNameMatch) {
 
+        // Hello :)
         validateInputParameters(queryMultiplier, requireRoadNameMatch, roadName);
 
         StopWatch stopWatch = new StopWatch().start();
