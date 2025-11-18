@@ -39,7 +39,7 @@ jobs:
       - name: Package JAR
         run: mvn -B package -DskipTests
       - name: Upload JAR Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: graphhopper-jar-${{ matrix.java-version }}
           path: graphhopper-web/target/*.jar
