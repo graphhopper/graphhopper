@@ -29,15 +29,12 @@ public abstract class BikeCommonPriorityParser implements TagParser {
     protected final DecimalEncodedValue priorityEnc;
     // Car speed limit which switches the preference from UNCHANGED to AVOID_IF_POSSIBLE
     int avoidSpeedLimit;
-    EnumEncodedValue<RouteNetwork> bikeRouteEnc;
     protected final Set<String> goodSurface = Set.of("paved", "asphalt", "concrete");
 
     // This is the specific bicycle class
     private String classBicycleKey;
 
-    protected BikeCommonPriorityParser(DecimalEncodedValue priorityEnc, DecimalEncodedValue avgSpeedEnc,
-                                       EnumEncodedValue<RouteNetwork> bikeRouteEnc) {
-        this.bikeRouteEnc = bikeRouteEnc;
+    protected BikeCommonPriorityParser(DecimalEncodedValue priorityEnc, DecimalEncodedValue avgSpeedEnc) {
         this.priorityEnc = priorityEnc;
         this.avgSpeedEnc = avgSpeedEnc;
 
@@ -77,32 +74,22 @@ public abstract class BikeCommonPriorityParser implements TagParser {
     @Override
     public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
         String highwayValue = way.getTag("highway");
-        PriorityCode priorityFromRelation = null;
-        RouteNetwork bikeRouteNetwork = bikeRouteEnc.getEnum(false, edgeId, edgeIntAccess);
-        switch (bikeRouteNetwork) {
-            case INTERNATIONAL, NATIONAL -> priorityFromRelation = BEST;
-            case REGIONAL, LOCAL -> priorityFromRelation = VERY_NICE;
-        }
-
-        if (highwayValue == null) {
+        TreeMap<Double, PriorityCode> weightToPrioMap = new TreeMap<>();
+        if (highwayValue != null) {
+            weightToPrioMap.put(0d, UNCHANGED);
+        } else {
             if (FerrySpeedCalculator.isFerry(way)) {
-                priorityFromRelation = SLIGHT_AVOID;
+                weightToPrioMap.put(110d, SLIGHT_AVOID);
             } else {
                 return;
             }
         }
 
-        TreeMap<Double, PriorityCode> weightToPrioMap = new TreeMap<>();
-        if (priorityFromRelation == null)
-            weightToPrioMap.put(0d, UNCHANGED);
-        else
-            weightToPrioMap.put(110d, priorityFromRelation);
-
         double maxSpeed = Math.max(avgSpeedEnc.getDecimal(false, edgeId, edgeIntAccess),
                 avgSpeedEnc.getDecimal(true, edgeId, edgeIntAccess));
-        collect(way, maxSpeed, RouteNetwork.MISSING != bikeRouteNetwork || isBikeDesignated(way), weightToPrioMap);
+        collect(way, maxSpeed, isBikeDesignated(way), weightToPrioMap);
 
-        // pick priority with biggest order value
+        // pick priority with the biggest order value
         double prio = PriorityCode.getValue(weightToPrioMap.lastEntry().getValue().getValue());
         priorityEnc.setDecimal(false, edgeId, edgeIntAccess, prio);
     }
@@ -188,9 +175,6 @@ public abstract class BikeCommonPriorityParser implements TagParser {
 
         if (way.hasTag("railway", "tram"))
             weightToPrioMap.put(50d, AVOID_MORE);
-
-        if (way.hasTag("lcn", "yes"))
-            weightToPrioMap.put(100d, VERY_NICE);
 
         String classBicycleValue = way.getTag(classBicycleKey);
         if (classBicycleValue == null) classBicycleValue = way.getTag("class:bicycle");
