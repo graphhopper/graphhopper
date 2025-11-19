@@ -37,11 +37,13 @@ jobs:
       - name: Build ${{ matrix.java-version }}
         run: mvn -B clean test
       - name: Package JAR
+        if: github.ref == 'refs/heads/master'
         run: mvn -B package -DskipTests
       - name: Upload JAR Artifact
+        if: github.ref == 'refs/heads/master'
         uses: actions/upload-artifact@v4
         with:
           name: graphhopper-jar-${{ matrix.java-version }}
           path: web-bundle/target/*.jar
-          retention-days: 1
+          retention-days: 90
 
