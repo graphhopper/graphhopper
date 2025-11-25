@@ -1744,21 +1744,21 @@ public class GraphHopperTest {
         GHRequest req = new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
                 setProfile(profile2);
 
-        // try with CH
+        // no CH or LM profile and so nothing can be ignored
         req.putHint(CH.DISABLE, false);
         req.putHint(Landmark.DISABLE, false);
         GHResponse res = hopper.route(req);
-        assertTrue(res.hasErrors(), res.getErrors().toString());
-        assertTrue(res.getErrors().get(0).getMessage().contains("Cannot disable CH for short_fast_profile as it does not exist"), res.getErrors().toString());
+        assertFalse(res.hasErrors(), res.getErrors().toString());
+        assertEquals(3587, res.getBest().getDistance(), 1);
 
         // try with LM
         req.putHint(CH.DISABLE, true);
         req.putHint(Landmark.DISABLE, false);
         res = hopper.route(req);
-        assertTrue(res.hasErrors(), res.getErrors().toString());
-        assertTrue(res.getErrors().get(0).getMessage().contains("Cannot disable LM for short_fast_profile as it does not exist"), res.getErrors().toString());
+        assertFalse(res.hasErrors(), res.getErrors().toString());
+        assertEquals(3587, res.getBest().getDistance(), 1);
 
-        // falling back to non-prepared algo works
+        // falling back to non-prepared algo
         req.putHint(CH.DISABLE, true);
         req.putHint(Landmark.DISABLE, true);
         res = hopper.route(req);
@@ -1998,23 +1998,22 @@ public class GraphHopperTest {
         hopper.importOrLoad();
 
         GHRequest req = new GHRequest(55.813357, 37.5958585, 55.811042, 37.594689);
-        // without CH, turn turn costs on and off
+        // without CH and with tc
         req.putHint(CH.DISABLE, true);
         req.setProfile(profile_tc);
         assertEquals(1044, hopper.route(req).getBest().getDistance(), 1);
+        // without CH and without tc
         req.setProfile(profile_no_tc);
         assertEquals(400, hopper.route(req).getBest().getDistance(), 1);
 
-        // with CH, turn turn costs on and off, since turn costs not supported for CH throw an error
+        // with CH and without tc => since turn costs not supported for CH throw an error
         req.putHint(CH.DISABLE, false);
         req.setProfile(profile_no_tc);
         assertEquals(400, hopper.route(req).getBest().getDistance(), 1);
+        // since there is no CH preparation for car_profile_tc the ch.disable parameter is ignored
         req.setProfile(profile_tc);
         GHResponse rsp = hopper.route(req);
-        assertEquals(1, rsp.getErrors().size());
-        String expected = "Cannot disable CH for car_profile_tc as it does not exist";
-        assertTrue(rsp.getErrors().toString().contains(expected), "unexpected error:\n" + rsp.getErrors().toString() + "\nwhen expecting an error containing:\n" + expected
-        );
+        assertEquals(1044, hopper.route(req).getBest().getDistance(), 1);
     }
 
     @Test

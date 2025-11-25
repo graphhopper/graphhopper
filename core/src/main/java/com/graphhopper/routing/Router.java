@@ -187,12 +187,6 @@ public class Router {
         } else if (landmarks.containsKey(request.getProfile()) && !getDisableLM(request.getHints())) {
             return createLMSolver(request, profilesByName, routerConfig, encodingManager, weightingFactory, graph, locationIndex, landmarks);
         } else {
-            // TODO NOW remove this and fix the failing tests as this is overly strict as we do not want to throw an error for ch.disable=true if no CH profile exists
-            if (request.getHints().has(Parameters.CH.DISABLE) && !getDisableCH(request.getHints()))
-                throw new IllegalArgumentException("Cannot disable CH for " + request.getProfile() + " as it does not exist");
-            if (request.getHints().has(Parameters.Landmark.DISABLE) && !getDisableLM(request.getHints()))
-                throw new IllegalArgumentException("Cannot disable LM for " + request.getProfile() + " as it does not exist");
-
             return createFlexSolver(request, profilesByName, routerConfig, encodingManager, weightingFactory, graph, locationIndex);
         }
     }
