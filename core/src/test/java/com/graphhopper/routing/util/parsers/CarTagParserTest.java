@@ -21,7 +21,6 @@ import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.routing.util.WayAccess;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
@@ -50,7 +49,7 @@ public class CarTagParserTest {
                 .addTurnCostEncodedValue(TurnCost.create(carName, 1))
                 .add(VehicleAccess.create("bike"))
                 .add(VehicleSpeed.create("bike", 4, 2, false))
-                .add(VehiclePriority.create("bike", 4, PriorityCode.getFactor(1), false))
+                .add(VehiclePriority.create("bike", 4, 0.1, false))
                 .add(RouteNetwork.create(BikeNetwork.KEY))
                 .add(Smoothness.create())
                 .add(Roundabout.create())

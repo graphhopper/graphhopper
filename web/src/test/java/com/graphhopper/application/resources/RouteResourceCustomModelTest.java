@@ -70,7 +70,7 @@ public class RouteResourceCustomModelTest {
                         "foot_access, foot_priority, foot_average_speed, foot_road_access, " +
                         "max_height, max_weight, max_width, hazmat, toll, surface, track_type, hgv, " +
                         "average_slope, max_slope, bus_access, road_class, get_off_bike, roundabout, " +
-                        "country, orientation, mtb_rating, hike_rating").
+                        "country, orientation, mtb_rating, hike_rating, road_environment").
                 setProfiles(List.of(
                         TestProfiles.constantSpeed("roads", 120),
                         new Profile("car").setCustomModel(TestProfiles.accessAndSpeed("unused", "car").

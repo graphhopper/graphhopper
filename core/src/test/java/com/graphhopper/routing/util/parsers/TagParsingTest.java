@@ -18,12 +18,9 @@
 
 package com.graphhopper.routing.util.parsers;
 
-import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.OSMParsers;
-import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
@@ -31,7 +28,6 @@ import org.junit.jupiter.api.Test;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TagParsingTest {
@@ -45,9 +41,9 @@ class TagParsingTest {
         List<BooleanEncodedValue> accessEncs = Arrays.asList(carAccessEnc, footAccessEnc, bikeAccessEnc, mtbAccessEnc);
         EncodingManager manager = EncodingManager.start()
                 .add(carAccessEnc).add(VehicleSpeed.create("car", 5, 5, true))
-                .add(footAccessEnc).add(VehicleSpeed.create("foot", 4, 1, true)).add(VehiclePriority.create("foot", 4, PriorityCode.getFactor(1), false))
-                .add(bikeAccessEnc).add(VehicleSpeed.create("bike", 4, 2, false)).add(VehiclePriority.create("bike", 4, PriorityCode.getFactor(1), false))
-                .add(mtbAccessEnc).add(VehicleSpeed.create("mtb", 4, 2, false)).add(VehiclePriority.create("mtb", 4, PriorityCode.getFactor(1), false))
+                .add(footAccessEnc).add(VehicleSpeed.create("foot", 4, 1, true)).add(VehiclePriority.create("foot", 4, 0.1, false))
+                .add(bikeAccessEnc).add(VehicleSpeed.create("bike", 4, 2, false)).add(VehiclePriority.create("bike", 4, 0.1, false))
+                .add(mtbAccessEnc).add(VehicleSpeed.create("mtb", 4, 2, false)).add(VehiclePriority.create("mtb", 4, 0.1, false))
                 .add(RouteNetwork.create(FootNetwork.KEY))
                 .add(RouteNetwork.create(BikeNetwork.KEY))
                 .add(Roundabout.create())
