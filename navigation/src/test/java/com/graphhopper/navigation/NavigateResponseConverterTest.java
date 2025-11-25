@@ -614,6 +614,36 @@ public class NavigateResponseConverterTest {
         assertEquals(route.get("distance").asDouble(), distance, 1);
     }
 
+
+    @Test
+    public void testMultipleWaypointsAndLastDuplicate() {
+
+        GHRequest request = new GHRequest();
+        request.addPoint(new GHPoint(42.505144, 1.526113));
+        request.addPoint(new GHPoint(42.50529, 1.527218));
+        request.addPoint(new GHPoint(42.50529, 1.527218));
+        request.setProfile(profile).setPathDetails(Collections.singletonList("intersection"));
+
+        GHResponse rsp = hopper.route(request);
+
+        ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH, distanceConfig);
+
+        // Check that all waypoints are there and in the right order
+        JsonNode waypointsJson = json.get("waypoints");
+        assertEquals(3, waypointsJson.size());
+
+        // Check that there are 2 legs
+        JsonNode route = json.get("routes").get(0);
+        JsonNode legs = route.get("legs");
+        assertEquals(2, legs.size());
+
+        // check last leg
+        JsonNode leg = legs.get(1);
+
+        JsonNode summary = leg.get("summary");
+        assertNotNull(summary);
+    }
+
     @Test
     public void testError() {
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 111.536198, 42.510071, 1.548128).setProfile(profile));
