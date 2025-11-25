@@ -150,7 +150,7 @@ The address search is based on the open source [photon project](https://github.c
 
 ### Online
 
-There is a [web service](./navigation) that can be consumed by [our navigation Android client](https://github.com/graphhopper/graphhopper-navigation-example).
+There is the [/navigate web service](./navigation) that can be consumed by [the Maplibre Navigation SDK](https://github.com/maplibre/maplibre-navigation-android) or [the ferrostar SDK](https://github.com/stadiamaps/ferrostar).
 
 [<img src="https://raw.githubusercontent.com/maplibre/maplibre-navigation-android/main/.github/preview.png" width="400">](https://github.com/graphhopper/graphhopper-navigation-example)
 
