@@ -71,7 +71,7 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
                     result.guessedVariables.add(arg);
                     return true;
                 } else {
-                    // e.g. like road_class
+                    // arg is e.g. "road_class" or "MOTORWAY"
                     if (isValidIdentifier(arg)) {
                         int start = rv.getLocation().getColumnNumber() - 1;
                         if (lhsOpForVarInclude != null)
@@ -122,6 +122,7 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
             return false;
         } else if (rv instanceof Java.ParenthesizedExpression) {
             lhsOpForVarInclude = null;
+            opForTypeInclude = null;
             return ((Java.ParenthesizedExpression) rv).value.accept(this);
         } else if (rv instanceof Java.BinaryOperation binOp) {
             // Handle "type includes": for expressions like "road_class == MOTORWAY", store the operation

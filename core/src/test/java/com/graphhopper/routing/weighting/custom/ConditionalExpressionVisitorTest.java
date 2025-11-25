@@ -160,7 +160,7 @@ public class ConditionalExpressionVisitorTest {
         assertTrue(result.ok);
         assertEquals("road_class == RoadClass.SECONDARY && road_class == RoadClass.PRIMARY && road_class == RoadClass.TERTIARY || road_class == RoadClass.RESIDENTIAL", result.converted.toString());
 
-        // but no variable inclusion outside of parenthesis
+        // but no variable inclusion outside of parenthesis (parsing here works but later compiling obviously not)
         result = parse("(road_class == SECONDARY && PRIMARY) && TERTIARY || RESIDENTIAL", validVariable, helper);
         assertTrue(result.ok);
         assertEquals("(road_class == RoadClass.SECONDARY && road_class == RoadClass.PRIMARY) && TERTIARY || RESIDENTIAL", result.converted.toString());
@@ -168,7 +168,7 @@ public class ConditionalExpressionVisitorTest {
         // also such mixed constructs won't work
         result = parse("road_class == SECONDARY || PRIMARY && road_environment == TUNNEL || BRIDGE || ROAD", validVariable, helper);
         assertTrue(result.ok);
-//        assertEquals("road_class == RoadClass.SECONDARY || road_class == RoadClass.PRIMARY && road_environment == RoadEnvironment.TUNNEL || road_environment == RoadEnvironment.BRIDGE || road_environment == RoadEnvironment.ROAD", result.converted.toString());
+        assertEquals("road_class == RoadClass.SECONDARY || PRIMARY && road_environment == RoadEnvironment.TUNNEL || BRIDGE || ROAD", result.converted.toString());
 
         // when combining multiple conditions with different variables you need to put brackets around them ...
         result = parse("(road_class == SECONDARY || PRIMARY) && (road_environment == TUNNEL || BRIDGE || ROAD)", validVariable, helper);
@@ -180,10 +180,18 @@ public class ConditionalExpressionVisitorTest {
         assertTrue(result.ok);
         assertEquals("road_class == RoadClass.SECONDARY && road_class == RoadClass.PRIMARY || road_environment == RoadEnvironment.TUNNEL && road_environment == RoadEnvironment.BRIDGE && road_environment == RoadEnvironment.ROAD", result.converted.toString());
 
-        // 'variable include' currently won't work for numbers yet (Java.Literal), but has no practical relevance at the moment
+        // no automatic bracket placement => no working replacement mechanism
+        result = parse("road_environment == TUNNEL && road_class == SECONDARY || PRIMARY", validVariable, helper);
+        assertTrue(result.ok);
+        assertEquals("road_environment == RoadEnvironment.TUNNEL && road_class == RoadClass.SECONDARY || PRIMARY", result.converted.toString());
+        result = parse("road_environment == TUNNEL && (road_class == SECONDARY || PRIMARY)", validVariable, helper);
+        assertTrue(result.ok);
+        assertEquals("road_environment == RoadEnvironment.TUNNEL && (road_class == RoadClass.SECONDARY || road_class == RoadClass.PRIMARY)", result.converted.toString());
+
+        // 'variable include' currently won't work for numbers, but has no practical relevance at the moment
         result = parse("max_speed == 90 || 100", validVariable, helper);
         assertTrue(result.ok);
-//        assertEquals("max_speed == 90 || max_speed == 100", result.converted.toString());
+        assertEquals("max_speed == 90 || 100", result.converted.toString());
 
         result = parse("prev_bike_road_access != bike_road_access && (bike_road_access == DESTINATION || PRIVATE)", validVariable, helper);
         assertTrue(result.ok);
