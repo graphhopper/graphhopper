@@ -88,6 +88,11 @@ encoded values are the following (some of their possible values are given in bra
 - track_type: (MISSING, GRADE1, GRADE2, ..., GRADE5)
 - urban_density: (RURAL, RESIDENTIAL, CITY)
 - max_weight_except: (NONE, DELIVERY, DESTINATION, FORESTRY)
+- footway: (MISSING, SIDEWALK, CROSSING, ACCESS_AISLE, LINK, TRAFFIC_ISLAND, ALLEY)
+- crossing: (MISSING, RAILWAY_BARRIER, RAILWAY, TRAFFIC_SIGNALS, UNCONTROLLED, MARKED, UNMARKED, NO)
+- tactile_paving: (MISSING, YES, NO, CONTRASTED, PRIMITIVE, INCORRECT, PARTIAL)
+- kerb: (MISSING, FLUSH, LOWERED, NO, RAISED, ROLLED, YES)
+- traffic_signals_sound: (MISSING, YES, NO, LOCATE, WALK)
 
 
 To learn about all available encoded values you can query the `/info` endpoint
