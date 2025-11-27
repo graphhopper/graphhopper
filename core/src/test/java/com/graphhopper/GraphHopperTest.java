@@ -1637,10 +1637,8 @@ public class GraphHopperTest {
 
         // LM (should be the same as flex, but with less visited nodes!)
         testCrossQueryAssert(profile1, hopper, 5255, 108, false);
-        // todonow: weight should be 6330 still?!
-        testCrossQueryAssert(profile2, hopper, 6199, 126, false);
-        // todonow: weight should be 7776 still?!
-        testCrossQueryAssert(profile3, hopper, 7776, 192, false);
+        testCrossQueryAssert(profile2, hopper, 6330, 126, false);
+        testCrossQueryAssert(profile3, hopper, 8125, 192, false);
     }
 
     private void testCrossQueryAssert(String profile, GraphHopper hopper, double expectedWeight, int expectedVisitedNodes, boolean disableLM) {

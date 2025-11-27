@@ -151,7 +151,6 @@ public class IsochroneResourceTest {
         Geometry timeLimitPolygon = timeLimitFeatureCollection.getFeatures().get(0).getGeometry();
 
         JsonFeatureCollection weightLimitFeatureCollection = commonTarget
-                // todonow: doesn't work?
                 .queryParam("weight_limit", 6000)
                 .request().get(JsonFeatureCollection.class);
         Geometry weightLimitPolygon = weightLimitFeatureCollection.getFeatures().get(0).getGeometry();

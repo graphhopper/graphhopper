@@ -19,6 +19,7 @@
 package com.graphhopper.routing.weighting;
 
 import com.carrotsearch.hppc.IntArrayList;
+import com.carrotsearch.hppc.IntDoubleMap;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.VirtualEdgeIterator;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
@@ -38,13 +39,15 @@ public class QueryGraphWeighting implements Weighting {
     private final int firstVirtualNodeId;
     private final int firstVirtualEdgeId;
     private final IntArrayList closestEdges;
+    private final IntDoubleMap virtualWeightsByEdgeKey;
 
-    public QueryGraphWeighting(BaseGraph graph, Weighting weighting, IntArrayList closestEdges) {
+    public QueryGraphWeighting(BaseGraph graph, Weighting weighting, IntArrayList closestEdges, IntDoubleMap virtualWeightsByEdgeKey) {
         this.graph = graph;
         this.weighting = weighting;
         this.firstVirtualNodeId = graph.getNodes();
         this.firstVirtualEdgeId = graph.getEdges();
         this.closestEdges = closestEdges;
+        this.virtualWeightsByEdgeKey = virtualWeightsByEdgeKey;
     }
 
     @Override
@@ -56,9 +59,9 @@ public class QueryGraphWeighting implements Weighting {
     public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
         if (isVirtualEdge(edgeState.getEdge()) && !edgeState.get(EdgeIteratorState.UNFAVORED_EDGE)) {
             if (edgeState instanceof VirtualEdgeIteratorState v)
-                return v.getWeight(reverse);
+                return virtualWeightsByEdgeKey.get(reverse ? v.getReverseEdgeKey() : v.getEdgeKey());
             else if (edgeState instanceof VirtualEdgeIterator v)
-                return v.getWeight(reverse);
+                return virtualWeightsByEdgeKey.get(reverse ? v.getReverseEdgeKey() : v.getEdgeKey());
             else
                 throw new IllegalStateException("Unexpected virtual edge state: " + edgeState);
         }

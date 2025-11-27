@@ -18,9 +18,7 @@
 
 package com.graphhopper.routing.querygraph;
 
-import com.carrotsearch.hppc.IntArrayList;
-import com.carrotsearch.hppc.IntObjectHashMap;
-import com.carrotsearch.hppc.IntObjectMap;
+import com.carrotsearch.hppc.*;
 import com.carrotsearch.hppc.cursors.IntObjectCursor;
 import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.weighting.Weighting;
@@ -80,9 +78,9 @@ class QueryOverlay {
         return closestEdges;
     }
 
-    void adjustVirtualWeights(BaseGraph baseGraph, Weighting weighting) {
+    public static IntDoubleMap calcAdjustedVirtualWeights(QueryOverlay queryOverlay, BaseGraph baseGraph, Weighting weighting) {
         IntObjectMap<List<VirtualEdgeIteratorState>> virtualEdgesByOriginalKey = new IntObjectHashMap<>();
-        for (VirtualEdgeIteratorState v : virtualEdges) {
+        for (VirtualEdgeIteratorState v : queryOverlay.getVirtualEdges()) {
             List<VirtualEdgeIteratorState> edges = virtualEdgesByOriginalKey.get(v.getOriginalEdgeKey());
             if (edges == null) {
                 edges = new ArrayList<>();
@@ -91,42 +89,43 @@ class QueryOverlay {
             if (edges.isEmpty() || v != edges.get(edges.size() - 1))
                 edges.add(v);
         }
+        IntDoubleMap virtualWeightsByEdgeKey = new IntDoubleHashMap();
         for (IntObjectCursor<List<VirtualEdgeIteratorState>> c : virtualEdgesByOriginalKey) {
             EdgeIteratorState edgeState = baseGraph.getEdgeIteratorStateForKey(c.key);
-            double fullWeightFwd = weighting.calcEdgeWeight(edgeState, false);
-            double fullWeightBwd = weighting.calcEdgeWeight(edgeState, true);
-            adjustWeights(c.value, fullWeightFwd, edgeState.getDistance(), false);
-            adjustWeights(c.value, fullWeightBwd, edgeState.getDistance(), true);
+            double fullWeight = weighting.calcEdgeWeight(edgeState, false);
+            adjustWeights(virtualWeightsByEdgeKey, c.value, fullWeight, edgeState.getDistance());
         }
 
-//        for (VirtualEdgeIteratorState v : virtualEdges) {
+//        for (VirtualEdgeIteratorState v : queryOverlay.getVirtualEdges()) {
 //            double wFwd = weighting.calcEdgeWeight(v, false);
-//            double wwFwd = v.getWeight(false);
+//            double wwFwd = virtualWeightsByEdgeKey.get(v.getEdgeKey());
 //            double wBwd = weighting.calcEdgeWeight(v, true);
-//            double wwBwd = v.getWeight(true);
+//            double wwBwd = virtualWeightsByEdgeKey.get(v.getReverseEdgeKey());
 //            if (Math.abs(wFwd - wwFwd) > 1)
 //                throw new IllegalArgumentException(wFwd + " vs " + wwFwd);
 //            if (Math.abs(wBwd - wwBwd) > 1)
 //                throw new IllegalArgumentException(wBwd + " vs " + wwBwd);
 //        }
+
+        return virtualWeightsByEdgeKey;
     }
 
-    static void adjustWeights(List<VirtualEdgeIteratorState> virtualEdges, double fullWeight, double fullDistance, boolean reverse) {
+    static void adjustWeights(IntDoubleMap virtualWeightsByEdgeKey, List<VirtualEdgeIteratorState> virtualEdges, double fullWeight, double fullDistance) {
+        // todonow: replace map#put/get with simple array and add to map later, or even switch to array in QueryGraphWeighting
         if (Double.isInfinite(fullWeight)) {
             for (VirtualEdgeIteratorState v : virtualEdges)
-                v.setWeight(fullWeight, reverse);
+                virtualWeightsByEdgeKey.put(v.getEdgeKey(), fullWeight);
             return;
         } else if (fullWeight % 1 != 0)
             throw new IllegalStateException("QueryGraph requires edge weights to be whole numbers (or infinite), but got: " + fullWeight);
 
+        double sum = 0;
         for (VirtualEdgeIteratorState v : virtualEdges) {
             double weight = fullWeight * v.getDistance() / fullDistance;
             weight = Math.round(weight);
-            v.setWeight(weight, reverse);
+            virtualWeightsByEdgeKey.put(v.getEdgeKey(), weight);
+            sum += weight;
         }
-        double sum = 0;
-        for (VirtualEdgeIteratorState v : virtualEdges)
-            sum += v.getWeight(reverse);
         double difference = fullWeight - sum;
         // todonow: is it even necessary to round here?
         int units = (int) Math.round(difference);
@@ -136,16 +135,16 @@ class QueryOverlay {
         for (int i = 0; i < virtualEdges.size(); i++) {
             VirtualEdgeIteratorState v = virtualEdges.get(i);
             int adjustment = baseIncrement + (i < Math.abs(remainder) ? Integer.signum(remainder) : 0);
-            double newWeight = v.getWeight(reverse) + adjustment;
+            double newWeight = virtualWeightsByEdgeKey.get(v.getEdgeKey()) + adjustment;
             if (newWeight >= 0)
-                v.setWeight(newWeight, reverse);
+                virtualWeightsByEdgeKey.put(v.getEdgeKey(), newWeight);
             else
                 leftOver += adjustment;
         }
         for (VirtualEdgeIteratorState v : virtualEdges) {
-            double newWeight = v.getWeight(reverse) + leftOver;
+            double newWeight = virtualWeightsByEdgeKey.get(v.getEdgeKey()) + leftOver;
             if (newWeight >= 0) {
-                v.setWeight(newWeight, reverse);
+                virtualWeightsByEdgeKey.put(v.getEdgeKey(), newWeight);
                 leftOver = 0;
                 break;
             }
@@ -156,7 +155,7 @@ class QueryOverlay {
         // verify
         sum = 0;
         for (VirtualEdgeIteratorState v : virtualEdges)
-            sum += v.getWeight(reverse);
+            sum += virtualWeightsByEdgeKey.get(v.getEdgeKey());
         if (fullWeight != sum)
             throw new IllegalStateException();
     }

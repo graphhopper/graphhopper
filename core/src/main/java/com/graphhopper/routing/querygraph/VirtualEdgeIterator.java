@@ -304,11 +304,4 @@ public class VirtualEdgeIterator implements EdgeIterator {
         return edges;
     }
 
-    public double getWeight(boolean reverse) {
-        EdgeIteratorState edgeState = getCurrentEdge();
-        if (edgeState instanceof VirtualEdgeIteratorState)
-            return ((VirtualEdgeIteratorState) edgeState).getWeight(reverse);
-        else
-            throw new IllegalStateException("Cannot getWeight since edge state is not a virtual edge: " + edgeState.getClass().getName());
-    }
 }
