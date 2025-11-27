@@ -429,12 +429,12 @@ public class GraphHopper implements GraphHopperAPI
      * <p/>
      * @throws IllegalStateException if graph is not instantiated.
      */
-    public GraphStorage getGraph()
+    public GraphHopperStorage getGraphHopperStorage()
     {
-        if (graph == null)
-            throw new IllegalStateException("Graph not initialized");
+        if (ghStorage == null)
+            throw new IllegalStateException("GraphHopper storage not initialized");
 
-        return graph;
+        return ghStorage;
     }
 
     public void setGraph( GraphStorage graph )

@@ -21,11 +21,26 @@ package com.graphhopper.storage;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.AllEdgesSkipIterator;
 import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.storage.GraphHopperStorage.SingleEdge;
 import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.EdgeSkipIterator;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.BBox;
+
+///////
+import com.graphhopper.coll.GHBitSet;
+import com.graphhopper.coll.GHBitSetImpl;
+import com.graphhopper.coll.SparseIntIntArray;
+
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.search.NameIndex;
+import com.graphhopper.util.*;
+import static com.graphhopper.util.Helper.nf;
+
+import java.io.UnsupportedEncodingException;
 
 /**
  * @author Peter Karich
@@ -83,6 +98,186 @@ class BaseGraph implements Graph
 
         return lg.getEdgeProps(edgeId, adjNode);
     }
+
+    protected final int nextEdgeEntryIndex( int sizeInBytes )
+    {
+        int tmp = edgeEntryIndex;
+        edgeEntryIndex += sizeInBytes;
+        return tmp;
+    }
+
+    protected final int nextNodeEntryIndex( int sizeInBytes )
+    {
+        int tmp = nodeEntryIndex;
+        nodeEntryIndex += sizeInBytes;
+        return tmp;
+    }
+
+    protected final void initNodeAndEdgeEntrySize()
+    {
+        nodeEntryBytes = nodeEntryIndex;
+        edgeEntryBytes = edgeEntryIndex;
+    }
+
+    protected final long getLinkPosInEdgeArea( int nodeThis, int nodeOther, long edgePointer )
+    {
+        return nodeThis <= nodeOther ? edgePointer + E_LINKA : edgePointer + E_LINKB;
+    }
+
+    public String getDebugInfo( int node, int area )
+    {
+        String str = "--- node " + node + " ---";
+        int min = Math.max(0, node - area / 2);
+        int max = Math.min(nodeCount, node + area / 2);
+        long nodePointer = (long) node * nodeEntryBytes;
+        for (int i = min; i < max; i++)
+        {
+            str += "\n" + i + ": ";
+            for (int j = 0; j < nodeEntryBytes; j += 4)
+            {
+                if (j > 0)
+                {
+                    str += ",\t";
+                }
+                str += nodes.getInt(nodePointer + j);
+            }
+        }
+        int edge = nodes.getInt(nodePointer);
+        str += "\n--- edges " + edge + " ---";
+        int otherNode;
+        for (int i = 0; i < 1000; i++)
+        {
+            str += "\n";
+            if (edge == EdgeIterator.NO_EDGE)
+                break;
+
+            str += edge + ": ";
+            long edgePointer = (long) edge * edgeEntryBytes;
+            for (int j = 0; j < edgeEntryBytes; j += 4)
+            {
+                if (j > 0)
+                {
+                    str += ",\t";
+                }
+                str += edges.getInt(edgePointer + j);
+            }
+
+            otherNode = getOtherNode(node, edgePointer);
+            long lastLink = getLinkPosInEdgeArea(node, otherNode, edgePointer);
+            edge = edges.getInt(lastLink);
+        }
+        return str;
+    }
+
+    protected SingleEdge createSingleEdge( int edgeId, int nodeId )
+    {
+        return new SingleEdge(edgeId, nodeId);
+    }
+
+    protected void initStorage()
+    {
+        edgeEntryIndex = 0;
+        nodeEntryIndex = 0;
+        E_NODEA = nextEdgeEntryIndex(4);
+        E_NODEB = nextEdgeEntryIndex(4);
+        E_LINKA = nextEdgeEntryIndex(4);
+        E_LINKB = nextEdgeEntryIndex(4);
+        E_DIST = nextEdgeEntryIndex(4);
+        this.flagsSizeIsLong = encodingManager.getBytesForFlags() == 8;
+        E_FLAGS = nextEdgeEntryIndex(encodingManager.getBytesForFlags());
+        E_GEO = nextEdgeEntryIndex(4);
+        E_NAME = nextEdgeEntryIndex(4);
+        if (extStorage.isRequireEdgeField())
+            E_ADDITIONAL = nextEdgeEntryIndex(4);
+        else
+            E_ADDITIONAL = -1;
+
+        N_EDGE_REF = nextNodeEntryIndex(4);
+        N_LAT = nextNodeEntryIndex(4);
+        N_LON = nextNodeEntryIndex(4);
+        if (nodeAccess.is3D())
+            N_ELE = nextNodeEntryIndex(4);
+        else
+            N_ELE = -1;
+
+        if (extStorage.isRequireNodeField())
+            N_ADDITIONAL = nextNodeEntryIndex(4);
+        else
+            N_ADDITIONAL = -1;
+
+        initNodeAndEdgeEntrySize();
+        initialized = true;
+    }
+
+    protected int loadNodesHeader()
+    {
+        int hash = nodes.getHeader(0);
+        if (hash != stringHashCode(getClass().getName()))
+            throw new IllegalStateException("Cannot load the graph when using instance of "
+                    + getClass().getName() + " and location: " + dir);
+
+        nodeEntryBytes = nodes.getHeader(1 * 4);
+        nodeCount = nodes.getHeader(2 * 4);
+        bounds.minLon = Helper.intToDegree(nodes.getHeader(3 * 4));
+        bounds.maxLon = Helper.intToDegree(nodes.getHeader(4 * 4));
+        bounds.minLat = Helper.intToDegree(nodes.getHeader(5 * 4));
+        bounds.maxLat = Helper.intToDegree(nodes.getHeader(6 * 4));
+
+        if (bounds.hasElevation())
+        {
+            bounds.minEle = Helper.intToEle(nodes.getHeader(7 * 4));
+            bounds.maxEle = Helper.intToEle(nodes.getHeader(8 * 4));
+        }
+
+        return 7;
+    }
+
+    protected int setNodesHeader()
+    {
+        nodes.setHeader(0, stringHashCode(getClass().getName()));
+        nodes.setHeader(1 * 4, nodeEntryBytes);
+        nodes.setHeader(2 * 4, nodeCount);
+        nodes.setHeader(3 * 4, Helper.degreeToInt(bounds.minLon));
+        nodes.setHeader(4 * 4, Helper.degreeToInt(bounds.maxLon));
+        nodes.setHeader(5 * 4, Helper.degreeToInt(bounds.minLat));
+        nodes.setHeader(6 * 4, Helper.degreeToInt(bounds.maxLat));
+        if (bounds.hasElevation())
+        {
+            nodes.setHeader(7 * 4, Helper.eleToInt(bounds.minEle));
+            nodes.setHeader(8 * 4, Helper.eleToInt(bounds.maxEle));
+        }
+
+        return 7;
+    }
+
+    protected int loadEdgesHeader()
+    {
+        edgeEntryBytes = edges.getHeader(0 * 4);
+        edgeCount = edges.getHeader(1 * 4);
+        return 4;
+    }
+
+    protected int setEdgesHeader()
+    {
+        edges.setHeader(0, edgeEntryBytes);
+        edges.setHeader(1 * 4, edgeCount);
+        edges.setHeader(2 * 4, encodingManager.hashCode());
+        edges.setHeader(3 * 4, extStorage.hashCode());
+        return 4;
+    }
+
+    protected int loadWayGeometryHeader()
+    {
+        maxGeoRef = wayGeometry.getHeader(0);
+        return 1;
+    }
+
+    protected int setWayGeometryHeader()
+    {
+        wayGeometry.setHeader(0, maxGeoRef);
+        return 1;
+    }
+
 
     @Override
     public AllEdgesIterator getAllEdges()

@@ -139,25 +139,7 @@ public class GraphHopperStorage implements GraphStorage
                     + "after calling create or loadExisting. Calling one of the methods twice is also not allowed.");
     }
 
-    protected final int nextEdgeEntryIndex( int sizeInBytes )
-    {
-        int tmp = edgeEntryIndex;
-        edgeEntryIndex += sizeInBytes;
-        return tmp;
-    }
 
-    protected final int nextNodeEntryIndex( int sizeInBytes )
-    {
-        int tmp = nodeEntryIndex;
-        nodeEntryIndex += sizeInBytes;
-        return tmp;
-    }
-
-    protected final void initNodeAndEdgeEntrySize()
-    {
-        nodeEntryBytes = nodeEntryIndex;
-        edgeEntryBytes = edgeEntryIndex;
-    }
 
     /**
      * @return the directory where this graph is stored.
@@ -424,10 +406,6 @@ public class GraphHopperStorage implements GraphStorage
         return edgePointer;
     }
 
-    protected final long getLinkPosInEdgeArea( int nodeThis, int nodeOther, long edgePointer )
-    {
-        return nodeThis <= nodeOther ? edgePointer + E_LINKA : edgePointer + E_LINKB;
-    }
 
     public String getDebugInfo( int node, int area )
     {
@@ -690,11 +668,6 @@ public class GraphHopperStorage implements GraphStorage
         }
         // if edgeId exists but adjacent nodes do not match
         return null;
-    }
-
-    protected SingleEdge createSingleEdge( int edgeId, int nodeId )
-    {
-        return new SingleEdge(edgeId, nodeId);
     }
 
     private long getFlags( long edgePointer, boolean reverse )
@@ -1485,68 +1458,9 @@ public class GraphHopperStorage implements GraphStorage
         initialized = true;
     }
 
-    protected int loadNodesHeader()
-    {
-        int hash = nodes.getHeader(0);
-        if (hash != stringHashCode(getClass().getName()))
-            throw new IllegalStateException("Cannot load the graph when using instance of "
-                    + getClass().getName() + " and location: " + dir);
 
-        nodeEntryBytes = nodes.getHeader(1 * 4);
-        nodeCount = nodes.getHeader(2 * 4);
-        bounds.minLon = Helper.intToDegree(nodes.getHeader(3 * 4));
-        bounds.maxLon = Helper.intToDegree(nodes.getHeader(4 * 4));
-        bounds.minLat = Helper.intToDegree(nodes.getHeader(5 * 4));
-        bounds.maxLat = Helper.intToDegree(nodes.getHeader(6 * 4));
 
-        if (bounds.hasElevation())
-        {
-            bounds.minEle = Helper.intToEle(nodes.getHeader(7 * 4));
-            bounds.maxEle = Helper.intToEle(nodes.getHeader(8 * 4));
-        }
-
-        return 7;
-    }
-
-    protected int setNodesHeader()
-    {
-        nodes.setHeader(0, stringHashCode(getClass().getName()));
-        nodes.setHeader(1 * 4, nodeEntryBytes);
-        nodes.setHeader(2 * 4, nodeCount);
-        nodes.setHeader(3 * 4, Helper.degreeToInt(bounds.minLon));
-        nodes.setHeader(4 * 4, Helper.degreeToInt(bounds.maxLon));
-        nodes.setHeader(5 * 4, Helper.degreeToInt(bounds.minLat));
-        nodes.setHeader(6 * 4, Helper.degreeToInt(bounds.maxLat));
-        if (bounds.hasElevation())
-        {
-            nodes.setHeader(7 * 4, Helper.eleToInt(bounds.minEle));
-            nodes.setHeader(8 * 4, Helper.eleToInt(bounds.maxEle));
-        }
-
-        return 7;
-    }
-
-    protected int loadEdgesHeader()
-    {
-        edgeEntryBytes = edges.getHeader(0 * 4);
-        edgeCount = edges.getHeader(1 * 4);
-        return 4;
-    }
-
-    protected int setEdgesHeader()
-    {
-        edges.setHeader(0, edgeEntryBytes);
-        edges.setHeader(1 * 4, edgeCount);
-        edges.setHeader(2 * 4, encodingManager.hashCode());
-        edges.setHeader(3 * 4, extStorage.hashCode());
-        return 4;
-    }
-
-    protected int loadWayGeometryHeader()
-    {
-        maxGeoRef = wayGeometry.getHeader(0);
-        return 1;
-    }
+    
 
     protected int setWayGeometryHeader()
     {
