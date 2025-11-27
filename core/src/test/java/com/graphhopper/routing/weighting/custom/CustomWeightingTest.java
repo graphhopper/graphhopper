@@ -340,6 +340,14 @@ class CustomWeightingTest {
     }
 
     @Test
+    public void testMinWeightHasSameUnitAs_getWeight() {
+        EdgeIteratorState edge = graph.edge(0, 1).set(avSpeedEnc, 140, 0).setDistance(1000);
+        CustomModel customModel = createSpeedCustomModel(avSpeedEnc);
+        Weighting weighting = createWeighting(customModel);
+        assertEquals(weighting.calcMinWeightPerKm() * 1, weighting.calcEdgeWeight(edge, false));
+    }
+
+    @Test
     public void testWeightWrongHeading() {
         CustomModel customModel = createSpeedCustomModel(avSpeedEnc).setHeadingPenalty(100);
         Weighting weighting = createWeighting(customModel);
