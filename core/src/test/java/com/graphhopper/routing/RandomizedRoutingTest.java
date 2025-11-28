@@ -245,7 +245,7 @@ public class RandomizedRoutingTest {
                     .calcPath(source, target);
             strictViolations.addAll(GHUtility.comparePaths(refPath, path, source, target, seed));
         }
-        if (strictViolations.size() > 10) {
+        if (strictViolations.size() > 3) {
             for (String strictViolation : strictViolations) {
                 LOGGER.info("strict violation: " + strictViolation);
             }

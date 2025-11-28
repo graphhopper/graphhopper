@@ -166,7 +166,7 @@ public class RandomCHRoutingTest {
             if (numPathsNotFound > 0.9 * numQueries) {
                 fail("Too many paths not found: " + numPathsNotFound + "/" + numQueries);
             }
-            if (strictViolations.size() > 0.1 * numQueries) {
+            if (strictViolations.size() > 0.05 * numQueries) {
                 fail("Too many strict violations: " + strictViolations.size() + "/" + numQueries + "\n" +
                         String.join("\n", strictViolations));
             }
