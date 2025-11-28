@@ -208,6 +208,8 @@ class QueryOverlayBuilder {
                             fullPL.get(fullPL.size() - 1), fullPL.size() - 2,
                             fullPL, closestEdge, virtNodeId - 1, adjNode);
 
+                // todonow: should we really adjust distances even when addedEdges=false? then again addedEdges is never false in any of our tests?!
+                //          when is it even supposed to be false?
                 adjustDistances(virtualEdgesFwdForSnap, closestEdge.getDistance());
                 adjustDistances(virtualEdgesBwdForSnap, closestEdge.getDistance());
 
