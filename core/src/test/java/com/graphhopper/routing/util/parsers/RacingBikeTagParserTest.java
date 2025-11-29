@@ -78,7 +78,7 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         assertPriorityAndSpeed(1.0, 24, osmWay);
 
         osmWay.setTag("bicycle", "designated");
-        assertPriorityAndSpeed(1.2, 24, osmWay);
+        assertPriorityAndSpeed(1.3, 24, osmWay);
     }
 
     @Test

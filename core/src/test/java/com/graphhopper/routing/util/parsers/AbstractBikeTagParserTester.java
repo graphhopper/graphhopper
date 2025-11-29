@@ -330,7 +330,7 @@ public abstract class AbstractBikeTagParserTester {
         assertPriority(0.5, osmWay);
 
         osmWay.setTag("bicycle", "designated");
-        assertPriority(1.2, osmWay);
+        assertPriority(1.3, osmWay);
     }
 
     @Test
@@ -343,7 +343,7 @@ public abstract class AbstractBikeTagParserTester {
 
         // should be safe now
         way.setTag("bicycle", "designated");
-        assertPriority(1.2, way);
+        assertPriority(1.3, way);
     }
 
     @Test
@@ -355,7 +355,7 @@ public abstract class AbstractBikeTagParserTester {
         way.setTag("service", "parking_aisle");
         assertPriorityAndSpeed(0.9, 4, way);
         way.setTag("bicycle", "designated");
-        assertPriorityAndSpeed(1.2, 12, way);
+        assertPriorityAndSpeed(1.3, 12, way);
     }
 
     @Test

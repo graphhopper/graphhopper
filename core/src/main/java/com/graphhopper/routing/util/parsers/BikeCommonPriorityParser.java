@@ -23,7 +23,6 @@ public abstract class BikeCommonPriorityParser implements TagParser {
     protected final HashSet<String> pushingSectionsHighways = new HashSet<>();
     protected final Set<String> preferHighwayTags = new HashSet<>();
     protected final Map<String, Double> avoidHighwayTags = new HashMap<>();
-    protected final Set<String> unpavedSurfaceTags = new HashSet<>();
 
     protected final DecimalEncodedValue avgSpeedEnc;
     protected final DecimalEncodedValue priorityEnc;
@@ -42,21 +41,6 @@ public abstract class BikeCommonPriorityParser implements TagParser {
         addPushingSection("pedestrian");
         addPushingSection("steps");
         addPushingSection("platform");
-
-        unpavedSurfaceTags.add("unpaved");
-        unpavedSurfaceTags.add("gravel");
-        unpavedSurfaceTags.add("ground");
-        unpavedSurfaceTags.add("dirt");
-        unpavedSurfaceTags.add("grass");
-        unpavedSurfaceTags.add("compacted");
-        unpavedSurfaceTags.add("earth");
-        unpavedSurfaceTags.add("fine_gravel");
-        unpavedSurfaceTags.add("grass_paver");
-        unpavedSurfaceTags.add("ice");
-        unpavedSurfaceTags.add("mud");
-        unpavedSurfaceTags.add("salt");
-        unpavedSurfaceTags.add("sand");
-        unpavedSurfaceTags.add("wood");
 
         avoidHighwayTags.put("motorway", 0.1);
         avoidHighwayTags.put("motorway_link", 0.1);
@@ -107,13 +91,15 @@ public abstract class BikeCommonPriorityParser implements TagParser {
         double maxSpeed = Math.max(OSMMaxSpeedParser.parseMaxSpeed(way, false), OSMMaxSpeedParser.parseMaxSpeed(way, true));
         boolean shareWithFoot = way.hasTag("foot", "yes") && !way.hasTag("segregated", "yes");
 
-        if ("cycleway".equals(highway) || cyclewayValues.contains("track")) {
-            prio = shareWithFoot ? 1.2 : 1.3;
-        } else if (bikeDesignated && ("path".equals(highway) || "track".equals(highway) || "bridleway".equals(highway))) {
-            boolean isGoodSurface = way.getTag("tracktype", "").equals("grade1") || goodSurface.contains(way.getTag("surface", ""));
-            prio = shareWithFoot || !isGoodSurface ? 1.2 : 1.3;
-        } else if (bikeDesignated && !"steps".equals(highway)) {
-            prio = 1.2;
+        // 1 TODO NOW instead of pushingSectionsHighways, preferHighwayTags and avoidHighwayTags use just a single map and assign priority => 1 instead of 3 extra branches
+        // 2 TODO NOW according to wiki: bicycle=designated is not necessary on highway=footway + bicycle=yes or highway=pedestrian + bicycle=yes => do we handle this via preferHighwayTags?
+
+        if ("steps".equals(highway)) {
+            prio = 0.5;
+        } else if ("cycleway".equals(highway) || cyclewayValues.contains("track") || bikeDesignated) {
+            boolean isBadSurfaceByDefault = "path".equals(highway) || "track".equals(highway) || "bridleway".equals(highway);
+            boolean isBadSurfaceRelevant = isBadSurfaceByDefault && !(way.getTag("tracktype", "").equals("grade1") || goodSurface.contains(way.getTag("surface", "")));
+            prio = shareWithFoot || isBadSurfaceRelevant ? 1.2 : 1.3;
         } else if (Stream.of("lane", "opposite_track", "shared_lane", "share_busway", "shoulder").anyMatch(cyclewayValues::contains)) {
             prio = 1.1;
         } else if (way.hasTag("railway", "tram")) {
@@ -121,9 +107,7 @@ public abstract class BikeCommonPriorityParser implements TagParser {
         } else if (way.hasTag("bicycle", "use_sidepath")) {
             prio = 0.1;
         } else if (pushingSectionsHighways.contains(highway) || "parking_aisle".equals(way.getTag("service"))) {
-            if (way.hasTag("highway", "steps"))
-                prio = 0.5;
-            else if (way.hasTag("bicycle", INTENDED))
+            if (way.hasTag("bicycle", INTENDED))
                 prio = 1.2;
             else
                 prio = 0.9;

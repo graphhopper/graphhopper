@@ -28,6 +28,8 @@ public class BikeCustomModelTest {
     public void setup() {
         IntEncodedValue bikeRating = MtbRating.create();
         IntEncodedValue hikeRating = HikeRating.create();
+        EnumEncodedValue<TrackType> trackType = TrackType.create();
+        EnumEncodedValue<Surface> surface = Surface.create();
         EnumEncodedValue<BikeRoadAccess> bikeRA = BikeRoadAccess.create();
         em = new EncodingManager.Builder().
                 add(VehicleAccess.create("bike")).
@@ -41,6 +43,8 @@ public class BikeCustomModelTest {
                 add(VehiclePriority.create("racingbike", 4, 0.1, false)).
                 add(FerrySpeed.create()).
                 add(Country.create()).
+                add(TrackType.create()).
+                add(surface).
                 add(RoadClass.create()).
                 add(RoadEnvironment.create()).
                 add(RouteNetwork.create(BikeNetwork.KEY)).
@@ -55,6 +59,8 @@ public class BikeCustomModelTest {
         parsers = new OSMParsers().
                 addWayTagParser(new OSMMtbRatingParser(bikeRating)).
                 addWayTagParser(new OSMHikeRatingParser(hikeRating)).
+                addWayTagParser(new OSMTrackTypeParser(trackType)).
+                addWayTagParser(new OSMSurfaceParser(surface)).
                 addWayTagParser(new BikeAccessParser(em, new PMap())).
                 addWayTagParser(new MountainBikeAccessParser(em, new PMap())).
                 addWayTagParser(new RacingBikeAccessParser(em, new PMap())).
@@ -306,7 +312,6 @@ public class BikeCustomModelTest {
         assertEquals(1.2, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
         assertEquals(12, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
-        // relation code is PREFER
         rel.setTag("route", "bicycle");
         rel.setTag("network", "lcn");
         edge = createEdge(way, rel);
@@ -323,7 +328,6 @@ public class BikeCustomModelTest {
         assertEquals(2.16, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
         assertEquals(18, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
-        // no pushing section but road wayTypeCode and faster
         way.clearTags();
         way.setTag("highway", "tertiary");
         rel.setTag("route", "bicycle");
