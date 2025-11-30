@@ -525,7 +525,13 @@ public class BaseGraph implements Graph, Closeable {
     }
 
     private int getPillarCount(long geoRef) {
-        return (wayGeometry.getByte(geoRef + 2) & 0xFF << 16) | wayGeometry.getShort(geoRef);
+        // Read the 3rd byte, mask it to unsigned, and shift it to the high position (bits 16-23)
+        int high = (wayGeometry.getByte(geoRef + 2) & 0xFF) << 16;
+
+        // Read the lower 2 bytes and mask to unsigned (bits 0-15)
+        int low = wayGeometry.getShort(geoRef) & 0xFFFF;
+
+        return high | low;
     }
 
     private PointList fetchWayGeometry_(long edgePointer, boolean reverse, FetchMode mode, int baseNode, int adjNode) {
