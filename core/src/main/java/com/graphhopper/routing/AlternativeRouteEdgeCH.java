@@ -111,7 +111,7 @@ public class AlternativeRouteEdgeCH extends DijkstraBidirectionEdgeCHNoSOD {
             PotentialAlternativeInfo potentialAlternativeInfo = new PotentialAlternativeInfo();
             potentialAlternativeInfo.v = fromSPTEntry.adjNode;
             potentialAlternativeInfo.edgeIn = getIncomingEdge(fromSPTEntry);
-            potentialAlternativeInfo.weight = 2 * (fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath()) + preliminaryShare;
+            potentialAlternativeInfo.weight = 0.2 * (fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath()) + preliminaryShare;
             potentialAlternativeInfos.add(potentialAlternativeInfo);
             return true;
         });
