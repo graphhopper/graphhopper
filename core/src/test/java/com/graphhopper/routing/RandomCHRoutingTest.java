@@ -151,7 +151,8 @@ public class RandomCHRoutingTest {
                     continue;
                 }
 
-                strictViolations.addAll(comparePaths(refPath, path, from, to, seed));
+                // todo: to check nodes as well we would have to ignore intermediate virtual nodes
+                strictViolations.addAll(comparePaths(refPath, path, from, to, false, seed));
             }
             if (numPathsNotFound > 0.9 * numQueries) {
                 fail("Too many paths not found: " + numPathsNotFound + "/" + numQueries);

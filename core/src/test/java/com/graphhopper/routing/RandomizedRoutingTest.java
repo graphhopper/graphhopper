@@ -243,7 +243,7 @@ public class RandomizedRoutingTest {
                     .calcPath(source, target);
             Path path = f.createAlgo()
                     .calcPath(source, target);
-            strictViolations.addAll(GHUtility.comparePaths(refPath, path, source, target, seed));
+            strictViolations.addAll(GHUtility.comparePaths(refPath, path, source, target, true, seed));
         }
         if (strictViolations.size() > 3) {
             for (String strictViolation : strictViolations) {
@@ -283,7 +283,7 @@ public class RandomizedRoutingTest {
 
             Path refPath = new DijkstraBidirectionRef(queryGraph, queryGraph.wrapWeighting(f.weighting), f.traversalMode).calcPath(source, target);
             Path path = f.createAlgo(queryGraph).calcPath(source, target);
-            strictViolations.addAll(GHUtility.comparePaths(refPath, path, source, target, seed));
+            strictViolations.addAll(GHUtility.comparePaths(refPath, path, source, target, true, seed));
         }
         // we do not do a strict check because there can be ambiguity, for example when there are zero weight loops.
         // however, when there are too many deviations we fail
