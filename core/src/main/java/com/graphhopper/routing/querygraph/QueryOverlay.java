@@ -79,6 +79,8 @@ class QueryOverlay {
     }
 
     public static IntDoubleMap calcAdjustedVirtualWeights(QueryOverlay queryOverlay, BaseGraph baseGraph, Weighting weighting) {
+        // todo: once we use exact (non-fractional) distances and weights there won't be anything to adjust anymore
+        //       and we can remove this code again.
         IntObjectMap<List<VirtualEdgeIteratorState>> virtualEdgesByOriginalKey = new IntObjectHashMap<>();
         for (VirtualEdgeIteratorState v : queryOverlay.getVirtualEdges()) {
             List<VirtualEdgeIteratorState> edges = virtualEdgesByOriginalKey.get(v.getOriginalEdgeKey());
@@ -93,7 +95,7 @@ class QueryOverlay {
         for (IntObjectCursor<List<VirtualEdgeIteratorState>> c : virtualEdgesByOriginalKey) {
             EdgeIteratorState edgeState = baseGraph.getEdgeIteratorStateForKey(c.key);
             double fullWeight = weighting.calcEdgeWeight(edgeState, false);
-            adjustWeights(virtualWeightsByEdgeKey, c.value, fullWeight, edgeState.getDistance());
+            adjustWeights(weighting, virtualWeightsByEdgeKey, c.value, fullWeight, edgeState.getDistance());
         }
 
 //        for (VirtualEdgeIteratorState v : queryOverlay.getVirtualEdges()) {
@@ -110,7 +112,7 @@ class QueryOverlay {
         return virtualWeightsByEdgeKey;
     }
 
-    static void adjustWeights(IntDoubleMap virtualWeightsByEdgeKey, List<VirtualEdgeIteratorState> virtualEdges, double fullWeight, double fullDistance) {
+    static void adjustWeights(Weighting weighting, IntDoubleMap virtualWeightsByEdgeKey, List<VirtualEdgeIteratorState> virtualEdges, double fullWeight, double fullDistance) {
         // todonow: replace map#put/get with simple array and add to map later, or even switch to array in QueryGraphWeighting
         if (Double.isInfinite(fullWeight)) {
             for (VirtualEdgeIteratorState v : virtualEdges)
@@ -120,13 +122,29 @@ class QueryOverlay {
             throw new IllegalStateException("QueryGraph requires edge weights to be whole numbers (or infinite), but got: " + fullWeight);
 
         double sum = 0;
+        double sumOfSingleWeights = 0;
         for (VirtualEdgeIteratorState v : virtualEdges) {
             double weight = fullWeight * v.getDistance() / fullDistance;
             weight = Math.round(weight);
             virtualWeightsByEdgeKey.put(v.getEdgeKey(), weight);
             sum += weight;
+            sumOfSingleWeights += weighting.calcEdgeWeight(v, false);
         }
         double difference = fullWeight - sum;
+        // todonow: or is 1 * virtualEdges.size() enough?
+        if (Math.abs(fullWeight - sumOfSingleWeights) > 2 * virtualEdges.size()) {
+            // We do not adjust the weights if the difference is too large.
+            // For example, when we snap onto an edge only partially covered by an avoided area,
+            // only one of the virtual edges might intersect the area. In this case we do not want to
+            // penalize the virtual edges that are outside the area. This means that the sum of the
+            // virtual edges' weights does not equal the weight of the original edge.
+            // todonow: this is covered by RouteResourceCustomModelTest#avoidArea2, but rather coincidentally, add a more explicit test
+            //          also note that we cannot have such avoid areas in randomized tests, bc they induce an inherent difference between dijkstra+ch.
+//            throw new RuntimeException("full-weight=" + fullWeight + ", single-sum=" + sumOfSingleWeights + ", difference=" + (fullWeight - sumOfSingleWeights) + ", vedges: " + virtualEdges.size());
+            for (VirtualEdgeIteratorState v : virtualEdges)
+                virtualWeightsByEdgeKey.put(v.getEdgeKey(), Math.ceil(weighting.calcEdgeWeight(v, false)));
+            return;
+        }
         // todonow: is it even necessary to round here?
         int units = (int) Math.round(difference);
         int baseIncrement = units / virtualEdges.size();
