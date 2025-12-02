@@ -329,7 +329,7 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
 
         @Override
         public String toString() {
-            return "virtual: " + edge + ": " + baseNode + "->" + adjNode + ", orig: " + origEdge + ", weightFwd: " + Helper.round2(weightFwd) + ", weightBwd: " + Helper.round2(weightBwd);
+            return "virtual: " + edge + ": " + baseNode + "->" + adjNode + ", orig: " + origEdge + ", weightFwd: " + weightFwd + ", weightBwd: " + weightBwd;
         }
 
     }

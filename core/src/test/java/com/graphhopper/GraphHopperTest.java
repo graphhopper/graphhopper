@@ -1828,6 +1828,9 @@ public class GraphHopperTest {
             assertEquals(path.hasErrors(), pathLM.hasErrors(), failMessage);
 
             if (!path.hasErrors()) {
+                assertEquals(path.getRouteWeight(), pathCH.getRouteWeight(), failMessage);
+                assertEquals(path.getRouteWeight(), pathLM.getRouteWeight(), failMessage);
+
                 assertEquals(path.getDistance(), pathCH.getDistance(), 0.1, failMessage);
                 assertEquals(path.getDistance(), pathLM.getDistance(), 0.1, failMessage);
 

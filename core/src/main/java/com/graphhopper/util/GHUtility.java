@@ -574,6 +574,8 @@ public class GHUtility {
     }
 
     public static List<String> comparePaths(Path refPath, Path path, int source, int target, long seed) {
+        if (path.getGraph() != refPath.getGraph())
+            fail("path and refPath graphs are different");
         List<String> strictViolations = new ArrayList<>();
         double refWeight = refPath.getWeight();
         double weight = path.getWeight();
