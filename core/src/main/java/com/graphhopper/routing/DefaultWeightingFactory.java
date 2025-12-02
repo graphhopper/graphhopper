@@ -79,7 +79,7 @@ public class DefaultWeightingFactory implements WeightingFactory {
                 TurnCostsConfig tcConfig = new TurnCostsConfig(profile.getTurnCostsConfig()).setUTurnCosts(uTurnCosts);
                 turnCostProvider = new DefaultTurnCostProvider(turnRestrictionEnc, graph, tcConfig, parameters.getTurnPenaltyMapping());
             } else {
-                if (!mergedCustomModel.getTurnPenalty().isEmpty())
+                if (!mergedCustomModel.getTurnPenalty().isEmpty() && !disableTurnCosts)
                     throw new IllegalArgumentException("The turn_penalty feature is not supported for " + profile.getName() + ". You have to enable this in 'turn_costs' in config.yml.");
                 turnCostProvider = NO_TURN_COST_PROVIDER;
             }
