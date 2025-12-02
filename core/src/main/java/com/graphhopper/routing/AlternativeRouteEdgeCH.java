@@ -111,6 +111,7 @@ public class AlternativeRouteEdgeCH extends DijkstraBidirectionEdgeCHNoSOD {
             PotentialAlternativeInfo potentialAlternativeInfo = new PotentialAlternativeInfo();
             potentialAlternativeInfo.v = fromSPTEntry.adjNode;
             potentialAlternativeInfo.edgeIn = getIncomingEdge(fromSPTEntry);
+            // todonow: not entirely sure about the 2/0.2 factor here, can we even tell the difference?
             potentialAlternativeInfo.weight = 0.2 * (fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath()) + preliminaryShare;
             potentialAlternativeInfos.add(potentialAlternativeInfo);
             return true;
