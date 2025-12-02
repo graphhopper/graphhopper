@@ -121,6 +121,10 @@ public class NavigateResponseConverter {
             if (isDepartInstruction) {
                 maneuverType = ManeuverType.DEPART;
                 fixDepartIntersectionDetail(intersectionDetails, i);
+                // if the depart is on a REACHED_VIA or FINISH node, add the summary
+                if (instruction.getSign() == Instruction.REACHED_VIA || instruction.getSign() == Instruction.FINISH) {
+                    putLegInformation(legJson, path, routeNr, time, distance);
+                }
             } else {
                 switch (instruction.getSign()) {
                     case Instruction.REACHED_VIA, Instruction.FINISH:

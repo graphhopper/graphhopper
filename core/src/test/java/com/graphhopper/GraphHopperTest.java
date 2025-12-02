@@ -1685,13 +1685,14 @@ public class GraphHopperTest {
         assertFalse(response.hasErrors(), response.getErrors().toString());
         assertEquals(3587, response.getBest().getDistance(), 1);
 
-        // currently required to disable LM for p2 too, see #1904 (default is LM for *all* profiles once LM preparation is enabled for any profile)
+        // p2 has no LM and so no lm.disable=true is required
         response = hopper.route(new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
                 setCustomModel(customModel).
                 setProfile("p2"));
-        assertTrue(response.getErrors().get(0).toString().contains("Cannot find LM preparation for the requested profile: 'p2'"), response.getErrors().toString());
-        assertEquals(IllegalArgumentException.class, response.getErrors().get(0).getClass());
+        assertFalse(response.hasErrors(), response.getErrors().toString());
+        assertEquals(3587, response.getBest().getDistance(), 1);
 
+        // but still works
         response = hopper.route(new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
                 setCustomModel(customModel).
                 setProfile("p2").putHint("lm.disable", true));
@@ -1743,21 +1744,21 @@ public class GraphHopperTest {
         GHRequest req = new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
                 setProfile(profile2);
 
-        // try with CH
+        // no CH or LM profile and so nothing can be ignored
         req.putHint(CH.DISABLE, false);
         req.putHint(Landmark.DISABLE, false);
         GHResponse res = hopper.route(req);
-        assertTrue(res.hasErrors(), res.getErrors().toString());
-        assertTrue(res.getErrors().get(0).getMessage().contains("Cannot find CH preparation for the requested profile: 'short_fast_profile'"), res.getErrors().toString());
+        assertFalse(res.hasErrors(), res.getErrors().toString());
+        assertEquals(3587, res.getBest().getDistance(), 1);
 
         // try with LM
         req.putHint(CH.DISABLE, true);
         req.putHint(Landmark.DISABLE, false);
         res = hopper.route(req);
-        assertTrue(res.hasErrors(), res.getErrors().toString());
-        assertTrue(res.getErrors().get(0).getMessage().contains("Cannot find LM preparation for the requested profile: 'short_fast_profile'"), res.getErrors().toString());
+        assertFalse(res.hasErrors(), res.getErrors().toString());
+        assertEquals(3587, res.getBest().getDistance(), 1);
 
-        // falling back to non-prepared algo works
+        // falling back to non-prepared algo
         req.putHint(CH.DISABLE, true);
         req.putHint(Landmark.DISABLE, true);
         res = hopper.route(req);
@@ -1829,6 +1830,9 @@ public class GraphHopperTest {
             assertEquals(path.hasErrors(), pathLM.hasErrors(), failMessage);
 
             if (!path.hasErrors()) {
+                assertEquals(path.getRouteWeight(), pathCH.getRouteWeight(), failMessage);
+                assertEquals(path.getRouteWeight(), pathLM.getRouteWeight(), failMessage);
+
                 assertEquals(path.getDistance(), pathCH.getDistance(), 0.1, failMessage);
                 assertEquals(path.getDistance(), pathLM.getDistance(), 0.1, failMessage);
 
@@ -1980,8 +1984,8 @@ public class GraphHopperTest {
 
     @Test
     public void testNodeBasedCHOnlyButTurnCostForNonCH() {
-        final String profile1 = "car_profile_tc";
-        final String profile2 = "car_profile_notc";
+        final String profile_tc = "car_profile_tc";
+        final String profile_no_tc = "car_profile_notc";
 
         // before edge-based CH was added a common case was to use edge-based without CH and CH for node-based
         GraphHopper hopper = new GraphHopper().
@@ -1989,35 +1993,32 @@ public class GraphHopperTest {
                 setOSMFile(MOSCOW).
                 setEncodedValuesString("car_access, car_average_speed").
                 setProfiles(List.of(
-                        TestProfiles.accessAndSpeed(profile1, "car").setTurnCostsConfig(TurnCostsConfig.car()),
-                        TestProfiles.accessAndSpeed(profile2, "car")
+                        TestProfiles.accessAndSpeed(profile_tc, "car").setTurnCostsConfig(TurnCostsConfig.car()),
+                        TestProfiles.accessAndSpeed(profile_no_tc, "car")
                 )).
                 setStoreOnFlush(true);
         hopper.getCHPreparationHandler()
                 // we only do the CH preparation for the profile without turn costs
-                .setCHProfiles(new CHProfile(profile2));
+                .setCHProfiles(new CHProfile(profile_no_tc));
         hopper.importOrLoad();
 
         GHRequest req = new GHRequest(55.813357, 37.5958585, 55.811042, 37.594689);
-        // without CH, turn turn costs on and off
+        // without CH and with tc
         req.putHint(CH.DISABLE, true);
-        req.setProfile(profile1);
+        req.setProfile(profile_tc);
         assertEquals(1044, hopper.route(req).getBest().getDistance(), 1);
-        req.setProfile(profile2);
+        // without CH and without tc
+        req.setProfile(profile_no_tc);
         assertEquals(400, hopper.route(req).getBest().getDistance(), 1);
 
-        // with CH, turn turn costs on and off, since turn costs not supported for CH throw an error
+        // with CH and without tc => since turn costs not supported for CH throw an error
         req.putHint(CH.DISABLE, false);
-        req.setProfile(profile2);
+        req.setProfile(profile_no_tc);
         assertEquals(400, hopper.route(req).getBest().getDistance(), 1);
-        req.setProfile(profile1);
+        // since there is no CH preparation for car_profile_tc the ch.disable parameter is ignored
+        req.setProfile(profile_tc);
         GHResponse rsp = hopper.route(req);
-        assertEquals(1, rsp.getErrors().size());
-        String expected = "Cannot find CH preparation for the requested profile: 'car_profile_tc'" +
-                "\nYou can try disabling CH using ch.disable=true" +
-                "\navailable CH profiles: [car_profile_notc]";
-        assertTrue(rsp.getErrors().toString().contains(expected), "unexpected error:\n" + rsp.getErrors().toString() + "\nwhen expecting an error containing:\n" + expected
-        );
+        assertEquals(1044, hopper.route(req).getBest().getDistance(), 1);
     }
 
     @Test
