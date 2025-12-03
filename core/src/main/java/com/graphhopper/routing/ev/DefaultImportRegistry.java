@@ -328,22 +328,22 @@ public class DefaultImportRegistry implements ImportRegistry {
                     "ferry_speed"
             );
         else if (VehiclePriority.key("foot").equals(name))
-            return ImportUnit.create(name, props -> VehiclePriority.create("foot", 4, PriorityCode.getFactor(1), false),
+            return ImportUnit.create(name, props -> VehiclePriority.create("foot", 4, 0.1, false),
                     (lookup, props) -> new FootPriorityParser(lookup),
                     RouteNetwork.key("foot")
             );
         else if (VehiclePriority.key("bike").equals(name))
-            return ImportUnit.create(name, props -> VehiclePriority.create("bike", 4, PriorityCode.getFactor(1), false),
+            return ImportUnit.create(name, props -> VehiclePriority.create("bike", 4, 0.1, false),
                     (lookup, props) -> new BikePriorityParser(lookup),
                     VehicleSpeed.key("bike"), BikeNetwork.KEY
             );
         else if (VehiclePriority.key("racingbike").equals(name))
-            return ImportUnit.create(name, props -> VehiclePriority.create("racingbike", 4, PriorityCode.getFactor(1), false),
+            return ImportUnit.create(name, props -> VehiclePriority.create("racingbike", 4, 0.1, false),
                     (lookup, props) -> new RacingBikePriorityParser(lookup),
                     VehicleSpeed.key("racingbike"), BikeNetwork.KEY
             );
         else if (VehiclePriority.key("mtb").equals(name))
-            return ImportUnit.create(name, props -> VehiclePriority.create("mtb", 4, PriorityCode.getFactor(1), false),
+            return ImportUnit.create(name, props -> VehiclePriority.create("mtb", 4, 0.1, false),
                     (lookup, props) -> new MountainBikePriorityParser(lookup),
                     VehicleSpeed.key("mtb"), BikeNetwork.KEY
             );
