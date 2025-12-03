@@ -407,4 +407,32 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
         assertThrows(IllegalArgumentException.class, () -> ne.setGeoRef(0, 1L << 39));
         graph.close();
     }
+
+
+    @Test
+    public void testWayGeometryOverflow_ReproducesInfinityCrash_2D() {
+        // 1. Setup a 2D graph (false = 2D)
+        BaseGraph graph = newGHStorage(new RAMDirectory(), false).create(1000);
+
+        // 2. Create an edge (Tower nodes 0 and 1 are created implicitly or don't need elevation)
+        EdgeIteratorState edge = graph.edge(0, 1);
+
+        // 3. Create a massive 2D geometry (false = 2D)
+        int overflowCount = 32768;
+        PointList massiveList = new PointList(overflowCount, false);
+        for (int i = 0; i < overflowCount; i++) {
+            massiveList.add(50.0 + (i * 0.000001), 10.0);
+        }
+
+        // 4. Store the geometry
+        edge.setWayGeometry(massiveList);
+
+        // 5. Fetch it back
+        try {
+            PointList fetched = edge.fetchWayGeometry(FetchMode.ALL);
+            assertEquals(overflowCount + 2, fetched.size(), "Should return all points + tower nodes");
+        } catch (Exception e) {
+            fail("Crash reproducing the 32k point overflow: " + e.getMessage());
+        }
+    }
 }
