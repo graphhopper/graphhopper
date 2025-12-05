@@ -26,7 +26,7 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.SocketTimeoutException;
+import java.net.http.HttpTimeoutException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -88,9 +88,9 @@ public class GMTEDProviderTest {
         file.delete();
         zipFile.delete();
 
-        instance.setDownloader(new Downloader("test GH") {
+        instance.setDownloader(new Downloader() {
             @Override
-            public void downloadFile(String url, String toFile) throws IOException {
+            public void downloadFile(String url, File toFile) throws IOException {
                 throw new FileNotFoundException("xyz");
             }
         });
@@ -100,10 +100,10 @@ public class GMTEDProviderTest {
         assertTrue(file.exists());
         assertEquals(1048676, file.length());
 
-        instance.setDownloader(new Downloader("test GH") {
+        instance.setDownloader(new Downloader() {
             @Override
-            public void downloadFile(String url, String toFile) throws IOException {
-                throw new SocketTimeoutException("xyz");
+            public void downloadFile(String url, File toFile) throws IOException {
+                throw new HttpTimeoutException("xyz");
             }
         });
 
