@@ -2,28 +2,29 @@
 
 GraphHopper licensed under the Apache license, Version 2.0
 
-Copyright 2012 - 2022 GraphHopper GmbH
+Copyright 2012 - 2025 GraphHopper GmbH
 
 The core module includes the following additional software:
 
  * slf4j.org - SLF4J distributed under the MIT license. 
  * com.carrotsearch:hppc (Apache license)
- * SparseArray from the Android project (Apache license)
  * Snippets regarding mmap, vint/vlong and compression from Lucene (Apache license)
  * XMLGraphics-Commons for CGIAR elevation files (Apache License)
- * Apache Commons Lang - we copied the implementation of the Levenshtein Distance (Apache License)
- * Apache Commons Collections - we copied parts of the BinaryHeap (Apache License)
+ * Apache Commons Lang - we copied the implementation of the Levenshtein Distance - see com.graphhopper.apache.commons.lang3 (Apache License)
+ * Apache Commons Collections - we copied parts of the BinaryHeap - see com.graphhopper.apache.commons.collections (Apache License)
  * java-string-similarity - we copied the implementation of JaroWinkler (MIT license)
  * Jackson (Apache License)
- * org.locationtech:jts (EDL), see #1039
+ * org.locationtech:jts (EDL)
  * AngleCalc.atan2 from Jim Shima, 1999 (public domain)
  * janino compiler (BSD-3-Clause license)
- * protobuf - New BSD license
- * OSM-binary - LGPL license
+ * osm-legal-default-speeds-jvm (BSD-3-Clause license)
+ * kotlin stdlib (Apache License)
+ * protobuf - (New BSD license)
+ * OSM-binary - (LGPL license)
  * Osmosis - public domain, see their github under package/copying.txt
 
 reader-gtfs:
- 
+
  * some files from com.conveyal:gtfs-lib (BSD 2-clause license)
  * com.google.transit:gtfs-realtime-bindings (Apache license)
  * com.google.guava:guava (Apache license)
@@ -43,8 +44,7 @@ web:
 
  * org.eclipse.jetty:jetty-server (Apache License)
  * Dropwizard and dependencies (Apache license)
- * no.ecc:java-vector-tile (Apache license)
- * some images from mapbox https://www.mapbox.com/maki/, BSD License, see core/files
+ * classes in no.ecc are a copy of no.ecc.vectortile:java-vector-tile, see #2698 (Apache license)
 
 ## Data
 

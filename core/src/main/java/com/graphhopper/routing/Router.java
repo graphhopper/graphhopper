@@ -49,11 +49,11 @@ import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.*;
 
-import static com.graphhopper.config.TurnCostsConfig.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.DistanceCalcEarth.DIST_EARTH;
 import static com.graphhopper.util.Parameters.Algorithms.ALT_ROUTE;
 import static com.graphhopper.util.Parameters.Algorithms.ROUND_TRIP;
 import static com.graphhopper.util.Parameters.Routing.*;
+import static com.graphhopper.util.TurnCostsConfig.INFINITE_U_TURN_COSTS;
 
 public class Router {
     protected final BaseGraph graph;
@@ -66,8 +66,6 @@ public class Router {
     protected final WeightingFactory weightingFactory;
     protected final Map<String, RoutingCHGraph> chGraphs;
     protected final Map<String, LandmarkStorage> landmarks;
-    protected final boolean chEnabled;
-    protected final boolean lmEnabled;
 
     public Router(BaseGraph graph, EncodingManager encodingManager, LocationIndex locationIndex,
                   Map<String, Profile> profilesByName, PathDetailsBuilderFactory pathDetailsBuilderFactory,
@@ -83,10 +81,6 @@ public class Router {
         this.weightingFactory = weightingFactory;
         this.chGraphs = chGraphs;
         this.landmarks = landmarks;
-        // note that his is not the same as !ghStorage.getCHConfigs().isEmpty(), because the GHStorage might have some
-        // CHGraphs that were not built yet (and possibly no CH profiles were configured).
-        this.chEnabled = !chGraphs.isEmpty();
-        this.lmEnabled = !landmarks.isEmpty();
 
         for (String profile : profilesByName.keySet()) {
             if (!encodingManager.hasEncodedValue(Subnetwork.key(profile)))
@@ -98,11 +92,12 @@ public class Router {
         try {
             checkNoLegacyParameters(request);
             checkAtLeastOnePoint(request);
-            checkIfPointsAreInBounds(request.getPoints());
+            checkIfPointsAreInBoundsAndNotNull(request.getPoints());
             checkHeadings(request);
             checkPointHints(request);
             checkCurbsides(request);
             checkNoBlockArea(request);
+            checkCustomModel(request);
 
             Solver solver = createSolver(request);
             solver.checkRequest();
@@ -146,13 +141,14 @@ public class Router {
             throw new IllegalArgumentException("You have to pass at least one point");
     }
 
-    private void checkIfPointsAreInBounds(List<GHPoint> points) {
+    private void checkIfPointsAreInBoundsAndNotNull(List<GHPoint> points) {
         BBox bounds = graph.getBounds();
         for (int i = 0; i < points.size(); i++) {
             GHPoint point = points.get(i);
-            if (!bounds.contains(point.getLat(), point.getLon())) {
+            if (point == null)
+                throw new IllegalArgumentException("Point " + i + " is null");
+            if (!bounds.contains(point.getLat(), point.getLon()))
                 throw new PointOutOfBoundsException("Point " + i + " is out of bounds: " + point + ", the bounds are: " + bounds, i);
-            }
         }
     }
 
@@ -180,12 +176,15 @@ public class Router {
             throw new IllegalArgumentException("The `block_area` parameter is no longer supported. Use a custom model with `areas` instead.");
     }
 
+    private void checkCustomModel(GHRequest request) {
+        if (request.getCustomModel() != null && request.getCustomModel().isInternal())
+            throw new IllegalArgumentException("CustomModel of query cannot be internal");
+    }
+
     protected Solver createSolver(GHRequest request) {
-        final boolean disableCH = getDisableCH(request.getHints());
-        final boolean disableLM = getDisableLM(request.getHints());
-        if (chEnabled && !disableCH) {
+        if (chGraphs.containsKey(request.getProfile()) && !getDisableCH(request.getHints())) {
             return createCHSolver(request, profilesByName, routerConfig, encodingManager, chGraphs);
-        } else if (lmEnabled && !disableLM) {
+        } else if (landmarks.containsKey(request.getProfile()) && !getDisableLM(request.getHints())) {
             return createLMSolver(request, profilesByName, routerConfig, encodingManager, weightingFactory, graph, locationIndex, landmarks);
         } else {
             return createFlexSolver(request, profilesByName, routerConfig, encodingManager, weightingFactory, graph, locationIndex);

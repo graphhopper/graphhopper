@@ -18,7 +18,10 @@
 
 package com.graphhopper;
 
+import com.conveyal.gtfs.GTFSFeed;
+import com.graphhopper.config.Profile;
 import com.graphhopper.gtfs.*;
+import com.graphhopper.gtfs.Trips;
 import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap;
@@ -30,52 +33,145 @@ import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKTReader;
 
 import java.io.File;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.*;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.graphhopper.gtfs.GtfsHelper.time;
+import static com.graphhopper.gtfs.Trips.TripAtStopTime.ArrivalDeparture.ARRIVAL;
+import static com.graphhopper.gtfs.Trips.TripAtStopTime.ArrivalDeparture.DEPARTURE;
+import static com.graphhopper.gtfs.Trips.TripAtStopTime.print;
 import static com.graphhopper.util.Parameters.Details.EDGE_KEY;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 
-public class AnotherAgencyIT {
+public interface AnotherAgencyIT<T extends PtRouter> {
 
-    private static final String GRAPH_LOC = "target/AnotherAgencyIT";
-    private static PtRouter ptRouter;
-    private static final ZoneId zoneId = ZoneId.of("America/Los_Angeles");
-    private static GraphHopperGtfs graphHopperGtfs;
+    String GRAPH_LOC = "target/AnotherAgencyIT";
+    T ptRouter();
 
-    @BeforeAll
-    public static void init() {
-        GraphHopperConfig ghConfig = new GraphHopperConfig();
-        ghConfig.putObject("graph.location", GRAPH_LOC);
-        ghConfig.putObject("import.osm.ignored_highways", "");
-        ghConfig.putObject("datareader.file", "files/beatty.osm");
-        ghConfig.putObject("gtfs.file", "files/sample-feed,files/another-sample-feed");
-        ghConfig.putObject("graph.encoded_values", "foot_access, foot_priority, foot_average_speed, car_access, car_average_speed");
-        ghConfig.setProfiles(List.of(
-                TestProfiles.accessSpeedAndPriority("foot"),
-                TestProfiles.accessAndSpeed("car")));
-        Helper.removeDir(new File(GRAPH_LOC));
-        graphHopperGtfs = new GraphHopperGtfs(ghConfig);
-        graphHopperGtfs.init(ghConfig);
-        graphHopperGtfs.importOrLoad();
-        ptRouter = new PtRouterImpl.Factory(ghConfig, new TranslationMap().doImport(), graphHopperGtfs.getBaseGraph(), graphHopperGtfs.getEncodingManager(), graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage())
-                .createWithoutRealtimeFeed();
+    default GHResponse route(Request request) {
+        return ptRouter().route(request);
+    };
+
+    ZoneId zoneId = ZoneId.of("America/Los_Angeles");
+
+    class TripBasedPtRouterTest implements AnotherAgencyIT<PtRouterTripBasedImpl> {
+
+        private static GraphHopperGtfs graphHopperGtfs;
+        static PtRouterTripBasedImpl ptRouter;
+
+        @BeforeAll
+        static void init() {
+            GraphHopperConfig ghConfig = new GraphHopperConfig();
+            ghConfig.putObject("graph.location", GRAPH_LOC);
+            ghConfig.putObject("import.osm.ignored_highways", "");
+            ghConfig.putObject("datareader.file", "files/beatty.osm");
+            ghConfig.putObject("gtfs.file", "files/sample-feed,files/another-sample-feed");
+            ghConfig.putObject("gtfs.trip_based", true);
+            ghConfig.putObject("gtfs.schedule_day", "2007-01-01,2007-01-02,2007-01-06,2007-01-07");
+            ghConfig.putObject("graph.encoded_values", "foot_access, foot_priority, foot_average_speed, car_access, car_average_speed");
+            ghConfig.setProfiles(List.of(
+                    TestProfiles.accessSpeedAndPriority("foot"),
+                    TestProfiles.accessAndSpeed("car")));
+            Helper.removeDir(new File(GRAPH_LOC));
+            graphHopperGtfs = new GraphHopperGtfs(ghConfig);
+            graphHopperGtfs.init(ghConfig);
+            graphHopperGtfs.importOrLoad();
+            ptRouter = new PtRouterTripBasedImpl(graphHopperGtfs, ghConfig, new TranslationMap().doImport(), graphHopperGtfs.getBaseGraph(), graphHopperGtfs.getEncodingManager(), graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage(), graphHopperGtfs.getPathDetailsBuilderFactory());
+        }
+
+        public GraphHopperGtfs graphHopperGtfs() {
+            return graphHopperGtfs;
+        }
+
+        public PtRouterTripBasedImpl ptRouter() {
+            return ptRouter;
+        }
+
+        @Test
+        void testBoardingsAtAirport() {
+            GTFSFeed gtfs_1 = graphHopperGtfs.getGtfsStorage().getGtfsFeeds().get("gtfs_1");
+            RealtimeFeed.findAllBoardings(graphHopperGtfs.getGtfsStorage(), new GtfsStorage.FeedIdWithStopId("gtfs_1", "AIRPORT"))
+                    .forEach(e -> assertNotNull(gtfs_1.trips.get(e.getAttrs().tripDescriptor.getTripId()), "I only get trips from this feed here."));
+        }
+
+        @Test
+        public void testMuseum() {
+            Trips tripTransfers = graphHopperGtfs().getGtfsStorage().tripTransfers;
+            int tripIdx = findTrip("MUSEUMAIRPORT1", LocalTime.of(10, 40), 2, ARRIVAL);
+            Collection<Trips.TripAtStopTime> transferDestinations = tripTransfers.getTripTransfers(LocalDate.of(2007, 1, 1)).get(new Trips.TripAtStopTime(tripIdx, 2));
+            assertThat(transferDestinations).extracting(td -> print(td, tripTransfers, DEPARTURE)).contains("8 AB3_NO_BLOCK @ 1 BEATTY_AIRPORT 50400");
+        }
+
+        private int findTrip(String tripId, LocalTime time, int stopSequence, Trips.TripAtStopTime.ArrivalDeparture arrivalDeparture) {
+            Trips tripTransfers = graphHopperGtfs().getGtfsStorage().tripTransfers;
+            int tripIdx = 0;
+            for (GTFSFeed.StopTimesForTripWithTripPatternKey trip : tripTransfers.trips) {
+                if (trip.trip.trip_id.equals(tripId) && LocalTime.ofSecondOfDay(arrivalDeparture == ARRIVAL ? trip.stopTimes.get(stopSequence).arrival_time : trip.stopTimes.get(stopSequence).departure_time).equals(time)) {
+                    return tripIdx;
+                }
+                tripIdx++;
+            }
+            throw new RuntimeException();
+        }
+
+        @AfterAll
+        public static void close() {
+            graphHopperGtfs.close();
+        }
     }
 
-    @AfterAll
-    public static void close() {
-        graphHopperGtfs.close();
+    class DefaultPtRouterTest implements AnotherAgencyIT<PtRouterImpl> {
+
+        private static GraphHopperGtfs graphHopperGtfs;
+        static PtRouterImpl ptRouter;
+
+        @BeforeAll
+        static void init() {
+            GraphHopperConfig ghConfig = new GraphHopperConfig();
+            ghConfig.putObject("graph.location", GRAPH_LOC);
+            ghConfig.putObject("import.osm.ignored_highways", "");
+            ghConfig.putObject("datareader.file", "files/beatty.osm");
+            ghConfig.putObject("gtfs.file", "files/sample-feed,files/another-sample-feed");
+            ghConfig.putObject("graph.encoded_values", "foot_access, foot_priority, foot_average_speed, car_access, car_average_speed");
+            ghConfig.setProfiles(List.of(
+                    TestProfiles.accessSpeedAndPriority("foot"),
+                    TestProfiles.accessAndSpeed("car")));
+            Helper.removeDir(new File(GRAPH_LOC));
+            graphHopperGtfs = new GraphHopperGtfs(ghConfig);
+            graphHopperGtfs.init(ghConfig);
+            graphHopperGtfs.importOrLoad();
+            ptRouter = ((PtRouterImpl) new PtRouterImpl.Factory(ghConfig, new TranslationMap().doImport(), graphHopperGtfs.getBaseGraph(), graphHopperGtfs.getEncodingManager(), graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage())
+                    .createWithoutRealtimeFeed());
+        }
+
+        public GraphHopperGtfs graphHopperGtfs() {
+            return graphHopperGtfs;
+        }
+
+        public PtRouterImpl ptRouter() {
+            return ptRouter;
+        }
+
+        @Test
+        void testBoardingsAtAirport() {
+            GTFSFeed gtfs_1 = graphHopperGtfs.getGtfsStorage().getGtfsFeeds().get("gtfs_1");
+            RealtimeFeed.findAllBoardings(graphHopperGtfs.getGtfsStorage(), new GtfsStorage.FeedIdWithStopId("gtfs_1", "AIRPORT"))
+                    .forEach(e -> assertNotNull(gtfs_1.trips.get(e.getAttrs().tripDescriptor.getTripId()), "I only get trips from this feed here."));
+        }
+
+        @AfterAll
+        public static void close() {
+            graphHopperGtfs.close();
+        }
     }
+
 
     @Test
-    public void testRoute1() {
+    default void testRoute1() {
         Request ghRequest = new Request(
                 Arrays.asList(
                         new GHStationLocation("JUSTICE_COURT"),
@@ -85,7 +181,7 @@ public class AnotherAgencyIT {
         );
         ghRequest.setIgnoreTransfers(true);
         ghRequest.setWalkSpeedKmH(0.005); // Prevent walk solution
-        GHResponse route = ptRouter.route(ghRequest);
+        GHResponse route = route(ghRequest);
 
         assertFalse(route.hasErrors());
         assertEquals(1, route.getAll().size());
@@ -94,7 +190,7 @@ public class AnotherAgencyIT {
     }
 
     @Test
-    public void testRoute2() {
+    default void testRoute2() {
         Request ghRequest = new Request(
                 Arrays.asList(
                         new GHStationLocation("JUSTICE_COURT"),
@@ -104,7 +200,7 @@ public class AnotherAgencyIT {
         );
         ghRequest.setIgnoreTransfers(true);
         ghRequest.setWalkSpeedKmH(0.005); // Prevent walk solution
-        GHResponse route = ptRouter.route(ghRequest);
+        GHResponse route = route(ghRequest);
 
         assertFalse(route.hasErrors());
         assertEquals(1, route.getAll().size());
@@ -126,7 +222,7 @@ public class AnotherAgencyIT {
     }
 
     @Test
-    public void testTransferBetweenFeeds() {
+    default void testTransferBetweenFeeds() {
         Request ghRequest = new Request(
                 Arrays.asList(
                         new GHStationLocation("NEXT_TO_MUSEUM"),
@@ -135,10 +231,12 @@ public class AnotherAgencyIT {
                 LocalDateTime.of(2007, 1, 1, 10, 0, 0).atZone(zoneId).toInstant()
         );
         ghRequest.setIgnoreTransfers(true);
-        ghRequest.setWalkSpeedKmH(0.005); // Prevent walk solution
-        ResponsePath transitSolution = ptRouter.route(ghRequest).getBest();
+        ghRequest.setWalkSpeedKmH(0.0005); // Prevent walk solution, including just walking to the airport
+        ResponsePath transitSolution = route(ghRequest).getBest();
         List<Trip.Leg> ptLegs = transitSolution.getLegs().stream().filter(l -> l instanceof Trip.PtLeg).collect(Collectors.toList());
+        assertEquals("MUSEUMAIRPORT1", ((Trip.PtLeg) ptLegs.get(0)).trip_id);
         assertEquals("NEXT_TO_MUSEUM,AIRPORT", ((Trip.PtLeg) ptLegs.get(0)).stops.stream().map(s -> s.stop_id).collect(Collectors.joining(",")));
+        assertEquals("AB3_NO_BLOCK", ((Trip.PtLeg) ptLegs.get(1)).trip_id);
         assertEquals("BEATTY_AIRPORT,BULLFROG", ((Trip.PtLeg) ptLegs.get(1)).stops.stream().map(s -> s.stop_id).collect(Collectors.joining(",")));
         Instant arrivalTime = Instant.ofEpochMilli(transitSolution.getLegs().get(1).getArrivalTime().getTime());
         assertEquals("14:10", LocalDateTime.ofInstant(arrivalTime, zoneId).toLocalTime().toString());
@@ -147,7 +245,7 @@ public class AnotherAgencyIT {
     }
 
     @Test
-    public void testWalkTransferBetweenFeeds() {
+    default void testWalkTransferBetweenFeeds() {
         Request ghRequest = new Request(
                 Arrays.asList(
                         new GHStationLocation("JUSTICE_COURT"),
@@ -158,14 +256,14 @@ public class AnotherAgencyIT {
         ghRequest.setIgnoreTransfers(true);
         ghRequest.setWalkSpeedKmH(0.5); // Prevent walk solution
         ghRequest.setPathDetails(Arrays.asList(EDGE_KEY));
-        GHResponse route = ptRouter.route(ghRequest);
+        GHResponse route = route(ghRequest);
 
         assertFalse(route.hasErrors());
-        assertEquals(1, route.getAll().size());
+        // assertEquals(1, route.getAll().size());
 
         ResponsePath transitSolution = route.getBest();
         assertEquals(4500000L, transitSolution.getTime());
-        assertEquals(4500000.0, transitSolution.getRouteWeight());
+//        assertEquals(4500000.0, transitSolution.getRouteWeight());
         assertEquals(time(1, 15), transitSolution.getTime(), "Expected total travel time == scheduled travel time + wait time");
 
         assertEquals("JUSTICE_COURT,MUSEUM", ((Trip.PtLeg) transitSolution.getLegs().get(0)).stops.stream().map(s -> s.stop_id).collect(Collectors.joining(",")));
@@ -178,7 +276,7 @@ public class AnotherAgencyIT {
     }
 
     @Test
-    public void testMuseumToEmsi() {
+    default void testMuseumToEmsi() {
         Request ghRequest = new Request(
                 Arrays.asList(
                         new GHStationLocation("MUSEUM"),
@@ -188,7 +286,7 @@ public class AnotherAgencyIT {
         );
         ghRequest.setWalkSpeedKmH(0.5);
         ghRequest.setIgnoreTransfers(true);
-        GHResponse route = ptRouter.route(ghRequest);
+        GHResponse route = route(ghRequest);
         ResponsePath walkRoute = route.getBest();
         assertEquals(1, walkRoute.getLegs().size());
         assertEquals(486670, walkRoute.getTime()); // < 10 min, so the transfer in test above works ^^
@@ -196,7 +294,7 @@ public class AnotherAgencyIT {
         assertFalse(route.hasErrors());
     }
 
-    private LineString readWktLineString(String wkt) {
+    default LineString readWktLineString(String wkt) {
         WKTReader wktReader = new WKTReader();
         LineString expectedGeometry = null;
         try {

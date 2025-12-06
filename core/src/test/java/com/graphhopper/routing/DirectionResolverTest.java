@@ -35,7 +35,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static com.graphhopper.routing.DirectionResolverResult.*;
-import static com.graphhopper.util.Helper.createPointList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
@@ -326,7 +325,7 @@ public class DirectionResolverTest {
     }
 
     private EdgeIteratorState addEdge(int from, int to, boolean bothDirections) {
-        return GHUtility.setSpeed(60, true, bothDirections, accessEnc, speedEnc, graph.edge(from, to).setDistance(1));
+        return GHUtility.setSpeed(60, true, bothDirections, accessEnc, speedEnc, graph.edge(from, to).setDistance(100));
     }
 
     private boolean isAccessible(EdgeIteratorState edge, boolean reverse) {

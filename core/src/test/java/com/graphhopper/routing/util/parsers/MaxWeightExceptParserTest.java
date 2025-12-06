@@ -44,7 +44,7 @@ public class MaxWeightExceptParserTest {
         readerWay.setTag("highway", "primary");
         readerWay.setTag("hgv:conditional", "no @ (weight > 7.5)");
         parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
-        assertEquals(MaxWeightExcept.NONE, mwEnc.getEnum(false, edgeId, edgeIntAccess));
+        assertEquals(MaxWeightExcept.MISSING, mwEnc.getEnum(false, edgeId, edgeIntAccess));
 
         // weight=5 is missing
         edgeIntAccess = new ArrayEdgeIntAccess(1);
@@ -52,7 +52,7 @@ public class MaxWeightExceptParserTest {
         readerWay.setTag("highway", "primary");
         readerWay.setTag("vehicle:conditional", "delivery @ (weight > 5)");
         parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
-        assertEquals(MaxWeightExcept.NONE, mwEnc.getEnum(false, edgeId, edgeIntAccess));
+        assertEquals(MaxWeightExcept.MISSING, mwEnc.getEnum(false, edgeId, edgeIntAccess));
 
         edgeIntAccess = new ArrayEdgeIntAccess(1);
         readerWay.clearTags();

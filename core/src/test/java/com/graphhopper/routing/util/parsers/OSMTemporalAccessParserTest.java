@@ -8,7 +8,10 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import java.util.List;
+import java.util.Set;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 class OSMTemporalAccessParserTest {
 
@@ -81,5 +84,67 @@ class OSMTemporalAccessParserTest {
         way.setTag("access:conditional", "no @ 1 Nov - 1 Mar");
         parser.handleWayTags(edgeId, edgeIntAccess, way, IntsRef.EMPTY);
         assertEquals(CarTemporalAccess.MISSING, restricted.getEnum(false, edgeId, edgeIntAccess));
+    }
+
+    @Test
+    public void testWithoutDay_handleAsOpenAsPossible() {
+        ArrayEdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        int edgeId = 0;
+        assertEquals(CarTemporalAccess.MISSING, restricted.getEnum(false, edgeId, edgeIntAccess));
+
+        ReaderWay way = new ReaderWay(0L);
+        way.setTag("highway", "primary");
+        way.setTag("motor_vehicle", "no");
+        way.setTag("motor_vehicle:conditional", "yes @ (21:00-9:00)");
+        parser.handleWayTags(edgeId, edgeIntAccess, way, IntsRef.EMPTY);
+        assertEquals(CarTemporalAccess.MISSING, restricted.getEnum(false, edgeId, edgeIntAccess));
+
+        way = new ReaderWay(0L);
+        way.setTag("highway", "primary");
+        way.setTag("motor_vehicle:conditional", "no @ (21:00-9:00)");
+        parser.handleWayTags(edgeId, edgeIntAccess, way, IntsRef.EMPTY);
+        assertEquals(CarTemporalAccess.MISSING, restricted.getEnum(false, edgeId, edgeIntAccess));
+
+        way = new ReaderWay(0L);
+        way.setTag("highway", "primary");
+        way.setTag("motor_vehicle:conditional", "no @ (fuel=diesel AND emissions <= euro_6)");
+        parser.handleWayTags(edgeId, edgeIntAccess, way, IntsRef.EMPTY);
+        assertEquals(CarTemporalAccess.MISSING, restricted.getEnum(false, edgeId, edgeIntAccess));
+
+        way = new ReaderWay(0L);
+        way.setTag("highway", "primary");
+        way.setTag("motor_vehicle:conditional", "no @ (weight > 7)");
+        parser.handleWayTags(edgeId, edgeIntAccess, way, IntsRef.EMPTY);
+        assertEquals(CarTemporalAccess.MISSING, restricted.getEnum(false, edgeId, edgeIntAccess));
+    }
+
+    @Test
+    public void testPermissiveTemporalRestriction() {
+        List<String> restrictionKeys = List.of("vehicle", "access");
+        ReaderWay way = new ReaderWay(0L);
+        way.setTag("highway", "primary");
+        way.setTag("access", "no");
+        way.setTag("vehicle:conditional", "yes @ (May - June)");
+        assertTrue(OSMTemporalAccessParser.hasPermissiveTemporalRestriction(way, 1, restrictionKeys, Set.of("yes")));
+
+        way = new ReaderWay(0L);
+        way.setTag("highway", "primary");
+        way.setTag("vehicle", "no");
+        way.setTag("access:conditional", "yes @ (May - June)");
+        assertTrue(OSMTemporalAccessParser.hasPermissiveTemporalRestriction(way, 1, restrictionKeys, Set.of("yes")));
+        way.setTag("access:conditional", "private @ (May - June)");
+        assertFalse(OSMTemporalAccessParser.hasPermissiveTemporalRestriction(way, 1, restrictionKeys, Set.of("yes")));
+        assertTrue(OSMTemporalAccessParser.hasPermissiveTemporalRestriction(way, 1, restrictionKeys, Set.of("yes", "private")));
+
+        way = new ReaderWay(0L);
+        way.setTag("highway", "primary");
+        way.setTag("access", "yes");
+        way.setTag("vehicle:conditional", "no @ (May - June)");
+        assertFalse(OSMTemporalAccessParser.hasPermissiveTemporalRestriction(way, 1, restrictionKeys, Set.of("yes")));
+
+        way = new ReaderWay(0L);
+        way.setTag("highway", "primary");
+        way.setTag("access:conditional", "yes @ weight < 3.5");
+        assertFalse(OSMTemporalAccessParser.hasPermissiveTemporalRestriction(way, 1, restrictionKeys, Set.of("yes")));
     }
 }

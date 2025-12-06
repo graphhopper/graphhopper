@@ -10,7 +10,7 @@
   "distance_influence": 90,
   "priority": [
     { "if": "max_weight < 5 || max_width < 3 || max_height < 4", "multiply_by": "0" },
-    { "if": "bus_access && (road_class == MOTORWAY || road_class == TRUNK || road_class == PRIMARY || road_class == SECONDARY || road_class == TERTIARY || road_class == UNCLASSIFIED || road_class == LIVING_STREET || road_class == RESIDENTIAL || road_class == SERVICE || road_class == ROAD)",
+    { "if": "bus_access && (road_class == BUSWAY || road_class == MOTORWAY || road_class == TRUNK || road_class == PRIMARY || road_class == SECONDARY || road_class == TERTIARY || road_class == UNCLASSIFIED || road_class == LIVING_STREET || road_class == RESIDENTIAL || road_class == SERVICE || road_class == ROAD)",
       "multiply_by": "1"
     },
     { "else": "", "multiply_by": "0" }

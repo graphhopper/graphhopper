@@ -17,35 +17,32 @@
  */
 package com.graphhopper.navigation;
 
-import static com.graphhopper.util.Parameters.Details.INTERSECTION;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GHResponse;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.jackson.ResponsePathSerializer;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.Instruction;
-import com.graphhopper.util.InstructionList;
-import com.graphhopper.util.PointList;
-import com.graphhopper.util.RoundaboutInstruction;
-import com.graphhopper.util.TranslationMap;
+import com.graphhopper.routing.ev.MaxSpeed;
+import com.graphhopper.util.*;
 import com.graphhopper.util.details.IntersectionValues;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.shapes.GHPoint3D;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static com.graphhopper.util.Parameters.Details.INTERSECTION;
+
+enum ManeuverType {
+    ARRIVE,
+    DEPART,
+    TURN,
+    ROUNDABOUT
+} ;
 
 public class NavigateResponseConverter {
     private static final Logger LOGGER = LoggerFactory.getLogger(NavigateResponseConverter.class);
@@ -55,7 +52,7 @@ public class NavigateResponseConverter {
      * Converts a GHResponse into a json that follows the Mapbox API specification
      */
     public static ObjectNode convertFromGHResponse(GHResponse ghResponse, TranslationMap translationMap, Locale locale,
-            DistanceConfig distanceConfig) {
+                                                   DistanceConfig distanceConfig) {
         ObjectNode json = JsonNodeFactory.instance.objectNode();
 
         if (ghResponse.hasErrors())
@@ -86,12 +83,11 @@ public class NavigateResponseConverter {
         json.put("code", "Ok");
         // TODO: Maybe we need a different format... uuid: "cji4ja4f8004o6xrsta8w4p4h"
         json.put("uuid", UUID.randomUUID().toString().replaceAll("-", ""));
-
         return json;
     }
 
     private static void putRouteInformation(ObjectNode pathJson, ResponsePath path, int routeNr,
-            TranslationMap translationMap, Locale locale, DistanceConfig distanceConfig) {
+                                            TranslationMap translationMap, Locale locale, DistanceConfig distanceConfig) {
         InstructionList instructions = path.getInstructions();
 
         pathJson.put("geometry", ResponsePathSerializer.encodePolyline(path.getPoints(), false, 1e6));
@@ -102,35 +98,66 @@ public class NavigateResponseConverter {
 
         long time = 0;
         double distance = 0;
-        boolean isFirstInstructionOfLeg = true;
+        boolean isDepartInstruction = true;
         int pointIndexFrom = 0;
 
         Map<String, List<PathDetail>> pathDetails = path.getPathDetails();
         List<PathDetail> intersectionDetails = pathDetails.getOrDefault(INTERSECTION, Collections.emptyList());
 
+        ObjectNode annotation = null;
+        ArrayNode maxSpeedArray = null;
+        if (pathDetails.containsKey(MaxSpeed.KEY)) {
+            annotation = legJson.putObject("annotation");
+            maxSpeedArray = annotation.putArray("maxspeed");
+        }
+
         for (int i = 0; i < instructions.size(); i++) {
-            ObjectNode instructionJson = steps.addObject();
+            ObjectNode stepJson = steps.addObject();
             Instruction instruction = instructions.get(i);
-            int pointIndexTo = pointIndexFrom;
-            if (instruction.getSign() != Instruction.REACHED_VIA && instruction.getSign() != Instruction.FINISH) {
-                pointIndexTo += instructions.get(i).getPoints().size();
+            // pointIndexTo is the same as ShallowCopy of the path Points toPoint member
+            int pointIndexTo = pointIndexFrom + instruction.getPoints().size();
+
+            ManeuverType maneuverType;
+            if (isDepartInstruction) {
+                maneuverType = ManeuverType.DEPART;
+                fixDepartIntersectionDetail(intersectionDetails, i);
+                // if the depart is on a REACHED_VIA or FINISH node, add the summary
+                if (instruction.getSign() == Instruction.REACHED_VIA || instruction.getSign() == Instruction.FINISH) {
+                    putLegInformation(legJson, path, routeNr, time, distance);
+                }
+            } else {
+                switch (instruction.getSign()) {
+                    case Instruction.REACHED_VIA, Instruction.FINISH:
+                        maneuverType = ManeuverType.ARRIVE;
+                        break;
+                    case Instruction.USE_ROUNDABOUT :
+                        maneuverType = ManeuverType.ROUNDABOUT;
+                        break;
+                    default :
+                        maneuverType = ManeuverType.TURN;
+                }
             }
-            putInstruction(path.getPoints(), instructions, i, locale, translationMap, instructionJson,
-                    isFirstInstructionOfLeg, distanceConfig, intersectionDetails, pointIndexFrom, pointIndexTo);
+            if (annotation != null)
+                putAnnotation(maxSpeedArray, pathDetails, pointIndexFrom, pointIndexTo, distanceConfig.unit);
+            putInstruction(path.getPoints(), instructions, i, locale, translationMap, stepJson,
+                    maneuverType, distanceConfig, intersectionDetails, pointIndexFrom, pointIndexTo);
             pointIndexFrom = pointIndexTo;
             time += instruction.getTime();
             distance += instruction.getDistance();
-            isFirstInstructionOfLeg = false;
-            if (instruction.getSign() == Instruction.REACHED_VIA || instruction.getSign() == Instruction.FINISH) {
+            isDepartInstruction = false;
+            if (maneuverType == ManeuverType.ARRIVE) {
                 putLegInformation(legJson, path, routeNr, time, distance);
-                isFirstInstructionOfLeg = true;
-                time = 0;
-                distance = 0;
-
                 if (instruction.getSign() == Instruction.REACHED_VIA) {
                     // Create new leg and steps after a via points
                     legJson = legsJson.addObject();
                     steps = legJson.putArray("steps");
+                    if (annotation != null) {
+                        annotation = legJson.putObject("annotation");
+                        maxSpeedArray = annotation.putArray("maxspeed");
+                    }
+                    isDepartInstruction = true;
+                    time = 0;
+                    distance = 0;
                 }
             }
         }
@@ -140,6 +167,43 @@ public class NavigateResponseConverter {
         pathJson.put("duration", convertToSeconds(path.getTime()));
         pathJson.put("distance", Helper.round(path.getDistance(), 1));
         pathJson.put("voiceLocale", locale.toLanguageTag());
+    }
+
+    private static void putAnnotation(ArrayNode maxSpeedArray, Map<String, List<PathDetail>> pathDetails,
+                                      final int fromIdx, final int toIdx, DistanceUtils.Unit metric) {
+
+        List<PathDetail> maxSpeeds = pathDetails.get(MaxSpeed.KEY);
+        String unitValue = metric == DistanceUtils.Unit.METRIC ? "km/h" : "mph";
+
+        // loop through indices to ensure that number of entries in maxSpeedArray are exactly the same
+        int nextPDIdx = 0;
+        if (!maxSpeeds.isEmpty())
+            for (int idx = fromIdx; idx < toIdx; ) {
+                for (; nextPDIdx < maxSpeeds.size(); nextPDIdx++) {
+                    PathDetail pd = maxSpeeds.get(nextPDIdx);
+                    if (idx >= pd.getFirst() && idx <= pd.getLast()) break;
+                }
+                if (nextPDIdx >= maxSpeeds.size()) break; // should not happen
+
+                PathDetail pd = maxSpeeds.get(nextPDIdx);
+                long value = pd.getValue() == null ? Math.round(MaxSpeed.MAXSPEED_150)
+                        : (metric == DistanceUtils.Unit.METRIC
+                        ? Math.round(((Number) pd.getValue()).doubleValue())
+                        : Math.round(((Number) pd.getValue()).doubleValue() / DistanceCalcEarth.KM_MILE));
+
+                // one entry for every point
+                for (; idx <= Math.min(toIdx, pd.getLast()); idx++) {
+                    ObjectNode object = maxSpeedArray.addObject();
+                    object.put("speed", value);
+                    object.put("unit", unitValue);
+                }
+            }
+
+
+        // TODO what purpose?
+//        "speed":[24.7, 24.7, 24.7, 24.7, 24.7, 24.7, 24.7, 24.7, 24.7],
+//        "distance":[23.6, 14.9, 9.6, 13.2, 25, 28.1, 38.1, 41.6, 90],
+//        "duration":[0.956, 0.603, 0.387, 0.535, 1.011, 1.135, 1.539, 1.683, 3.641]
     }
 
     private static void putLegInformation(ObjectNode legJson, ResponsePath path, int i, long time, double distance) {
@@ -159,24 +223,55 @@ public class NavigateResponseConverter {
     }
 
     /**
+     * fix the first IntersectionDetail which is an Depart
+     * <p>
+     * Departs should only have one "bearings" and one
+     * "out" entry
+     */
+    private static void fixDepartIntersectionDetail(List<PathDetail> intersectionDetails, int position) {
+
+        if (intersectionDetails.size() < position + 2) {
+            // Can happen if start and stop are at the same spot and other edge cases
+            return;
+        }
+
+        final Map<String, Object> departIntersectionMap = (Map<String, Object>) intersectionDetails.get(position).getValue();
+
+        int out = (int) departIntersectionMap.get("out");
+        departIntersectionMap.put("out", 0);
+
+        // bearings
+        List<Integer> oldBearings = (List<Integer>) departIntersectionMap.get("bearings");
+        List<Integer> newBearings = new ArrayList<>();
+        newBearings.add(oldBearings.get(out));
+        departIntersectionMap.put("bearings", newBearings);
+
+        // entries
+        final List<Boolean> oldEntries = (List<Boolean>) departIntersectionMap.get("entries");
+        List<Boolean> newEntries = new ArrayList<>();
+        newEntries.add(oldEntries.get(out));
+        departIntersectionMap.put("entries", newEntries);
+    }
+
+    /**
      * filter the IntersectionDetails.
-     *
+     * <p>
      * first job is to find the interesting part in the interSectionDetails based on
      * pointIndexFrom and pointIndexTo.
-     *
+     * <p>
      * Next job is to eleminate intersections colocated in the same point
      * since Mapbox chokes on geometries with intersections lying ontop of
      * each other.
-     *
+     * <p>
      * These type of intersections is used for barrier nodes
-     *
+     * <p>
      * We look for intersections in the lists and merge these adjacent, colocated
      * intersection into each other taking the edges from both intersections and
      * removing the connecting zero length edge.
      * Care has to be taken that the result is sorted by bearing
      */
     private static List<PathDetail> filterIntersectionDetails(PointList points, List<PathDetail> intersectionDetails,
-            int pointIndexFrom, int pointIndexTo) {
+                                                              int pointIndexFrom, int pointIndexTo) {
         List<PathDetail> list = new ArrayList<>();
 
         // job1: find out the interesting part of the intersectionDetails
@@ -225,14 +320,14 @@ public class NavigateResponseConverter {
 
                 // merge both Lists while
                 final List<IntersectionValues> mergedInterSectionValueList = Stream.concat(
-                        // removing out from Intersection
-                        intersectionValueList.stream().filter(x -> !x.out),
-                        // removing in from nextIntersection
-                        nextIntersectionValueList.stream().filter(x -> !x.in)).
+                                // removing out from Intersection
+                                intersectionValueList.stream().filter(x -> !x.out),
+                                // removing in from nextIntersection
+                                nextIntersectionValueList.stream().filter(x -> !x.in)).
                         // sort the merged list by bearing
-                        sorted((x, y) -> Integer.compare(x.bearing, y.bearing)).
+                                sorted((x, y) -> Integer.compare(x.bearing, y.bearing)).
                         // create the result list
-                        collect(Collectors.toList());
+                                collect(Collectors.toList());
 
                 // remove the duplicate Intersection from the Path (we are at "i" currently)
                 list.remove(i + 1);
@@ -244,7 +339,7 @@ public class NavigateResponseConverter {
                 // and replace the intersection with the merged one
                 list.set(i, mergedPathDetail);
             } catch (ClassCastException e) {
-                LOGGER.warn( "Exception :" + e);
+                LOGGER.warn("Exception :" + e);
                 continue;
             }
         }
@@ -252,13 +347,42 @@ public class NavigateResponseConverter {
         return list;
     }
 
-    private static ObjectNode putInstruction(PointList points, InstructionList instructions, int instructionIndex,
-            Locale locale,
-            TranslationMap translationMap, ObjectNode instructionJson, boolean isFirstInstructionOfLeg,
-            DistanceConfig distanceConfig, List<PathDetail> intersectionDetails, int pointIndexFrom,
-            int pointIndexTo) {
+    private static void putInstruction(PointList points, InstructionList instructions, int instructionIndex,
+                                       Locale locale,
+                                       TranslationMap translationMap, ObjectNode stepJson, ManeuverType maneuverType,
+                                       DistanceConfig distanceConfig, List<PathDetail> intersectionDetails, int pointIndexFrom,
+                                       int pointIndexTo) {
         Instruction instruction = instructions.get(instructionIndex);
-        ArrayNode intersections = instructionJson.putArray("intersections");
+        ArrayNode intersections = stepJson.putArray("intersections");
+
+        // make pointList writeable
+        PointList pointList = instruction.getPoints().clone(false);
+
+        if (maneuverType != ManeuverType.ARRIVE && instructionIndex + 1 < instructions.size()) {
+            // modify pointlist to include the first point of the next instruction
+            // for all instructions but the arrival#
+            // but not for instructions with an DEPART and ARRIVAL at the same last point
+            PointList nextPoints = instructions.get(instructionIndex + 1).getPoints();
+            pointList.add(nextPoints.getLat(0), nextPoints.getLon(0), nextPoints.getEle(0));
+        } else {
+            // we are at the arrival (or via point arrival instruction)
+            // Duplicate the last point in the arrival instruction, which does has only one
+            // point
+            pointList.add(pointList.getLat(0), pointList.getLon(0), pointList.getEle(0));
+
+            // Add an arrival intersection with only one enty
+            ObjectNode intersection = intersections.addObject();
+            ArrayNode entryArray = intersection.putArray("entry");
+            entryArray.add(true);
+
+            // copy the bearing from the previous instruction
+            ArrayNode bearingsArray = intersection.putArray("bearings");
+            bearingsArray.add(0);
+
+            // add the in tag
+            intersection.put("in", 0);
+            putLocation(pointList.getLat(0), pointList.getLon(0), intersection);
+        }
 
         // preprocess intersectionDetails
         List<PathDetail> filteredIntersectionDetails = filterIntersectionDetails(points, intersectionDetails,
@@ -294,47 +418,24 @@ public class NavigateResponseConverter {
             }
         }
 
-        // Make pointList mutable
-        PointList pointList = instruction.getPoints().clone(false);
-
-        if (instructionIndex + 1 < instructions.size()) {
-            // Add the first point of the next instruction
-            PointList nextPoints = instructions.get(instructionIndex + 1).getPoints();
-            pointList.add(nextPoints.getLat(0), nextPoints.getLon(0), nextPoints.getEle(0));
-        } else if (pointList.size() == 1) {
-            // Duplicate the last point in the arrive instruction, if the size is 1
-            pointList.add(pointList.getLat(0), pointList.getLon(0), pointList.getEle(0));
-        }
-
-        if (intersections.size() == 0) {
-            // this is the fallback if we don't have any intersections.
-            // this can happen for via points or finish instructions or when no intersection
-            // details have been requested
-            ObjectNode intersection = intersections.addObject();
-            intersection.putArray("entry");
-            intersection.putArray("bearings");
-            putLocation(pointList.getLat(0), pointList.getLon(0), intersection);
-        }
-
-        instructionJson.put("driving_side", "right");
+        stepJson.put("driving_side", "right");
 
         // Does not include elevation
-        instructionJson.put("geometry", ResponsePathSerializer.encodePolyline(pointList, false, 1e6));
+        stepJson.put("geometry", ResponsePathSerializer.encodePolyline(pointList, false, 1e6));
 
-        // TODO: how about other modes?
-        instructionJson.put("mode", "driving");
+        stepJson.put("mode", instruction.getSign() == Instruction.FERRY ? "ferry" : distanceConfig.getMode());
 
-        putManeuver(instruction, instructionJson, locale, translationMap, isFirstInstructionOfLeg);
+        putManeuver(instruction, stepJson, locale, translationMap, maneuverType);
 
         // TODO distance = weight, is weight even important?
         double distance = Helper.round(instruction.getDistance(), 1);
-        instructionJson.put("weight", distance);
-        instructionJson.put("duration", convertToSeconds(instruction.getTime()));
-        instructionJson.put("name", instruction.getName());
-        instructionJson.put("distance", distance);
+        stepJson.put("weight", distance);
+        stepJson.put("duration", convertToSeconds(instruction.getTime()));
+        stepJson.put("name", instruction.getName());
+        stepJson.put("distance", distance);
 
-        ArrayNode voiceInstructions = instructionJson.putArray("voiceInstructions");
-        ArrayNode bannerInstructions = instructionJson.putArray("bannerInstructions");
+        ArrayNode voiceInstructions = stepJson.putArray("voiceInstructions");
+        ArrayNode bannerInstructions = stepJson.putArray("bannerInstructions");
 
         // Voice and banner instructions are empty for the last element
         if (instructionIndex + 1 < instructions.size()) {
@@ -342,13 +443,11 @@ public class NavigateResponseConverter {
                     distanceConfig);
             putBannerInstructions(instructions, distance, instructionIndex, locale, translationMap, bannerInstructions);
         }
-
-        return instructionJson;
     }
 
-    private static void putVoiceInstructions(InstructionList instructions, double distance, int index, Locale locale,
-            TranslationMap translationMap,
-            ArrayNode voiceInstructions, DistanceConfig distanceConfig) {
+    private static void putVoiceInstructions(InstructionList instructions, double distance, int index,
+                                             Locale locale, TranslationMap translationMap,
+                                             ArrayNode voiceInstructions, DistanceConfig distanceConfig) {
         /*
          * A VoiceInstruction Object looks like this
          * {
@@ -383,7 +482,7 @@ public class NavigateResponseConverter {
     }
 
     private static void putSingleVoiceInstruction(double distanceAlongGeometry, String turnDescription,
-            ArrayNode voiceInstructions) {
+                                                  ArrayNode voiceInstructions) {
         ObjectNode voiceInstruction = voiceInstructions.addObject();
         voiceInstruction.put("distanceAlongGeometry", distanceAlongGeometry);
         // TODO: ideally, we would even generate instructions including the instructions
@@ -404,7 +503,7 @@ public class NavigateResponseConverter {
      * String will be returned
      */
     private static String getThenVoiceInstructionpart(InstructionList instructions, int index, Locale locale,
-            TranslationMap translationMap) {
+                                                      TranslationMap translationMap) {
         if (instructions.size() > index + 2) {
             Instruction firstInstruction = instructions.get(index + 1);
             if (firstInstruction.getDistance() < VOICE_INSTRUCTION_MERGE_TRESHHOLD) {
@@ -426,7 +525,7 @@ public class NavigateResponseConverter {
      * control when they pop up using distanceAlongGeometry.
      */
     private static void putBannerInstructions(InstructionList instructions, double distance, int index, Locale locale,
-            TranslationMap translationMap, ArrayNode bannerInstructions) {
+                                              TranslationMap translationMap, ArrayNode bannerInstructions) {
         /*
          * A BannerInstruction looks like this
          * distanceAlongGeometry: 107,
@@ -462,7 +561,7 @@ public class NavigateResponseConverter {
     }
 
     private static void putSingleBannerInstruction(Instruction instruction, Locale locale,
-            TranslationMap translationMap, ObjectNode singleBannerInstruction) {
+                                                   TranslationMap translationMap, ObjectNode singleBannerInstruction) {
         String bannerInstructionName = instruction.getName();
         if (bannerInstructionName.isEmpty()) {
             // Fix for final instruction and for instructions without name
@@ -481,7 +580,7 @@ public class NavigateResponseConverter {
         component.put("text", bannerInstructionName);
         component.put("type", "text");
 
-        singleBannerInstruction.put("type", getTurnType(instruction, false));
+        singleBannerInstruction.put("type", getTurnType(instruction));
         String modifier = getModifier(instruction);
         if (modifier != null)
             singleBannerInstruction.put("modifier", modifier);
@@ -493,14 +592,14 @@ public class NavigateResponseConverter {
                     singleBannerInstruction.putNull("degrees");
                 } else {
                     double degree = (Math.abs(turnAngle) * 180) / Math.PI;
-                    singleBannerInstruction.put("degrees", degree);
+                    singleBannerInstruction.put("degrees", Math.round(degree));
                 }
             }
         }
     }
 
     private static void putManeuver(Instruction instruction, ObjectNode instructionJson, Locale locale,
-            TranslationMap translationMap, boolean isFirstInstructionOfLeg) {
+                                    TranslationMap translationMap, ManeuverType maneuverType) {
         ObjectNode maneuver = instructionJson.putObject("maneuver");
         maneuver.put("bearing_after", 0);
         maneuver.put("bearing_before", 0);
@@ -508,42 +607,45 @@ public class NavigateResponseConverter {
         PointList points = instruction.getPoints();
         putLocation(points.getLat(0), points.getLon(0), maneuver);
 
+        // see https://docs.mapbox.com/api/navigation/directions/#maneuver-types
+        switch (maneuverType) {
+            case ARRIVE:
+                maneuver.put("type", "arrive");
+                break;
+            case DEPART:
+                maneuver.put("type", "depart");
+                break;
+            case ROUNDABOUT:
+                maneuver.put("type", "roundabout");
+                maneuver.put("exit", ((RoundaboutInstruction) instruction).getExitNumber());
+                break;
+            default: // i.e. ManeuverType.TURN:
+                maneuver.put("type", "turn");
+        }
         String modifier = getModifier(instruction);
         if (modifier != null)
             maneuver.put("modifier", modifier);
-
-        maneuver.put("type", getTurnType(instruction, isFirstInstructionOfLeg));
-        // exit number
-        if (instruction instanceof RoundaboutInstruction)
-            maneuver.put("exit", ((RoundaboutInstruction) instruction).getExitNumber());
-
         maneuver.put("instruction", instruction.getTurnDescription(translationMap.getWithFallBack(locale)));
 
     }
-
     /**
-     * Relevant maneuver types are:
-     * depart (firs instruction)
+     * Relevant turn types for banners are:
      * turn (regular turns)
      * roundabout (enter roundabout, maneuver contains also the exit number)
      * arrive (last instruction and waypoints)
      * <p>
-     * You can find all maneuver types at:
-     * https://www.mapbox.com/api-documentation/#maneuver-types
+     * You can find all turn types at:
+     * https://docs.mapbox.com/api/navigation/directions/#banner-instruction-object
      */
-    private static String getTurnType(Instruction instruction, boolean isFirstInstructionOfLeg) {
-        if (isFirstInstructionOfLeg) {
-            return "depart";
-        } else {
-            switch (instruction.getSign()) {
-                case Instruction.FINISH:
-                case Instruction.REACHED_VIA:
-                    return "arrive";
-                case Instruction.USE_ROUNDABOUT:
-                    return "roundabout";
-                default:
-                    return "turn";
-            }
+    private static String getTurnType(Instruction instruction) {
+        switch (instruction.getSign()) {
+            case Instruction.FINISH:
+            case Instruction.REACHED_VIA:
+                return "arrive";
+            case Instruction.USE_ROUNDABOUT:
+                return "roundabout";
+            default:
+                return "turn";
         }
     }
 
@@ -610,3 +712,4 @@ public class NavigateResponseConverter {
         return json;
     }
 }
+

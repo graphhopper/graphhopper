@@ -28,7 +28,7 @@ import java.util.*;
 
 import static com.graphhopper.routing.ev.RouteNetwork.*;
 import static com.graphhopper.routing.util.PriorityCode.UNCHANGED;
-import static com.graphhopper.routing.util.parsers.OSMTemporalAccessParser.hasTemporalRestriction;
+import static com.graphhopper.routing.util.parsers.OSMTemporalAccessParser.hasPermissiveTemporalRestriction;
 
 public class FootAccessParser extends AbstractAccessParser implements TagParser {
 
@@ -43,7 +43,7 @@ public class FootAccessParser extends AbstractAccessParser implements TagParser 
     }
 
     protected FootAccessParser(BooleanEncodedValue accessEnc) {
-        super(accessEnc, TransportationMode.FOOT);
+        super(accessEnc, OSMRoadAccessParser.toOSMRestrictions(TransportationMode.FOOT));
 
         sidewalkValues.add("yes");
         sidewalkValues.add("both");
@@ -72,8 +72,7 @@ public class FootAccessParser extends AbstractAccessParser implements TagParser 
         allowedHighwayTags.add("cycleway");
         allowedHighwayTags.add("unclassified");
         allowedHighwayTags.add("road");
-        // disallowed in some countries
-        //allowedHighwayTags.add("bridleway");
+        allowedHighwayTags.add("bridleway");
 
         routeMap.put(INTERNATIONAL, UNCHANGED.getValue());
         routeMap.put(NATIONAL, UNCHANGED.getValue());
@@ -91,7 +90,7 @@ public class FootAccessParser extends AbstractAccessParser implements TagParser 
 
             if (FerrySpeedCalculator.isFerry(way)) {
                 String footTag = way.getTag("foot");
-                if (footTag == null || intendedValues.contains(footTag))
+                if (footTag == null || allowedValues.contains(footTag))
                     acceptPotentially = WayAccess.FERRY;
             }
 
@@ -119,11 +118,14 @@ public class FootAccessParser extends AbstractAccessParser implements TagParser 
         if (firstIndex >= 0) {
             String firstValue = way.getTag(restrictionKeys.get(firstIndex), "");
             String[] restrict = firstValue.split(";");
+            // if any of the values allows access then return early (regardless of the order)
             for (String value : restrict) {
-                if (restrictedValues.contains(value) && !hasTemporalRestriction(way, firstIndex, restrictionKeys))
-                    return WayAccess.CAN_SKIP;
-                if (intendedValues.contains(value))
+                if (allowedValues.contains(value))
                     return WayAccess.WAY;
+            }
+            for (String value : restrict) {
+                if (restrictedValues.contains(value) && !hasPermissiveTemporalRestriction(way, firstIndex, restrictionKeys, allowedValues))
+                    return WayAccess.CAN_SKIP;
             }
         }
 

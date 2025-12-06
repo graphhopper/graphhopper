@@ -30,7 +30,6 @@ import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.Helper;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -79,16 +78,16 @@ public class EdgeBasedRoutingAlgorithmTest {
     // |  |  |
     // 5--6--7
     private void initGraph(Graph graph) {
-        graph.edge(0, 1).setDistance(30).set(speedEnc, 10, 10);
-        graph.edge(0, 2).setDistance(10).set(speedEnc, 10, 10);
-        graph.edge(1, 3).setDistance(10).set(speedEnc, 10, 10);
-        graph.edge(2, 3).setDistance(10).set(speedEnc, 10, 10);
-        graph.edge(3, 4).setDistance(10).set(speedEnc, 10, 10);
-        graph.edge(2, 5).setDistance(5).set(speedEnc, 10, 10);
-        graph.edge(3, 6).setDistance(10).set(speedEnc, 10, 10);
-        graph.edge(4, 7).setDistance(10).set(speedEnc, 10, 10);
-        graph.edge(5, 6).setDistance(10).set(speedEnc, 10, 10);
-        graph.edge(6, 7).setDistance(10).set(speedEnc, 10, 10);
+        graph.edge(0, 1).setDistance(300).set(speedEnc, 10, 10);
+        graph.edge(0, 2).setDistance(100).set(speedEnc, 10, 10);
+        graph.edge(1, 3).setDistance(100).set(speedEnc, 10, 10);
+        graph.edge(2, 3).setDistance(100).set(speedEnc, 10, 10);
+        graph.edge(3, 4).setDistance(100).set(speedEnc, 10, 10);
+        graph.edge(2, 5).setDistance(50).set(speedEnc, 10, 10);
+        graph.edge(3, 6).setDistance(100).set(speedEnc, 10, 10);
+        graph.edge(4, 7).setDistance(100).set(speedEnc, 10, 10);
+        graph.edge(5, 6).setDistance(100).set(speedEnc, 10, 10);
+        graph.edge(6, 7).setDistance(100).set(speedEnc, 10, 10);
     }
 
     private EncodingManager createEncodingManager(boolean restrictedOnly) {
@@ -293,7 +292,7 @@ public class EdgeBasedRoutingAlgorithmTest {
         initGraph(g);
 
         // force u-turn at node 3 by using finite u-turn costs
-        getEdge(g, 3, 6).setDistance(1);
+        getEdge(g, 3, 6).setDistance(10);
         getEdge(g, 3, 2).setDistance(8640);
         getEdge(g, 1, 0).setDistance(8640);
 
@@ -302,23 +301,23 @@ public class EdgeBasedRoutingAlgorithmTest {
         Path p = createAlgo(g, createWeighting(50), algoStr, EDGE_BASED).calcPath(7, 5);
 
         assertEquals(IntArrayList.from(7, 6, 3, 6, 5), p.calcNodes());
-        assertEquals(20 + 2, p.getDistance(), 1.e-6);
-        assertEquals(2.2 + 50, p.getWeight(), 1.e-6);
-        assertEquals((2.2 + 50) * 1000, p.getTime(), 1.e-6);
+        assertEquals(200 + 20, p.getDistance(), 1.e-6);
+        assertEquals(22 + 50, p.getWeight(), 1.e-6);
+        assertEquals((22 + 50) * 1000, p.getTime(), 1.e-6);
 
         // with default infinite u-turn costs we need to take an expensive detour
         p = calcPath(g, 7, 5, algoStr);
         assertEquals(IntArrayList.from(7, 6, 3, 2, 5), p.calcNodes());
-        assertEquals(10 + 1 + 8640 + 5, p.getDistance(), 1.e-6);
-        assertEquals(865.6, p.getWeight(), 1.e-6);
+        assertEquals(100 + 10 + 8640 + 50, p.getDistance(), 1.e-6);
+        assertEquals(880.0, p.getWeight(), 1.e-6);
 
         // no more u-turn 6-3-6 -> now we have to take the expensive roads even with finite u-turn costs
         setTurnRestriction(g, 6, 3, 6);
         p = createAlgo(g, createWeighting(1000), algoStr, EDGE_BASED).calcPath(7, 5);
 
         assertEquals(IntArrayList.from(7, 6, 3, 2, 5), p.calcNodes());
-        assertEquals(10 + 1 + 8640 + 5, p.getDistance(), 1.e-6);
-        assertEquals(865.6, p.getWeight(), 1.e-6);
+        assertEquals(100 + 10 + 8640 + 50, p.getDistance(), 1.e-6);
+        assertEquals(880.0, p.getWeight(), 1.e-6);
     }
 
     @ParameterizedTest
@@ -380,20 +379,20 @@ public class EdgeBasedRoutingAlgorithmTest {
         // 2--3--4
         // |  |  |
         // 5--6--7
-        g.edge(0, 1).setDistance(3).set(speedEnc, 10, 10);
-        g.edge(0, 2).setDistance(1).set(speedEnc, 10, 10);
-        g.edge(1, 3).setDistance(1).set(speedEnc, 10, 10);
-        g.edge(2, 3).setDistance(1).set(speedEnc, 10, 10);
-        g.edge(3, 4).setDistance(1).set(speedEnc, 10, 10);
-        g.edge(2, 5).setDistance(0.5).set(speedEnc, 10, 10);
-        g.edge(3, 6).setDistance(1).set(speedEnc, 10, 10);
-        g.edge(4, 7).setDistance(1).set(speedEnc, 10, 10);
-        g.edge(5, 6).setDistance(1).set(speedEnc, 10, 10);
-        g.edge(6, 7).setDistance(1).set(speedEnc, 10, 10);
+        g.edge(0, 1).setDistance(300).set(speedEnc, 10, 10);
+        g.edge(0, 2).setDistance(100).set(speedEnc, 10, 10);
+        g.edge(1, 3).setDistance(100).set(speedEnc, 10, 10);
+        g.edge(2, 3).setDistance(100).set(speedEnc, 10, 10);
+        g.edge(3, 4).setDistance(100).set(speedEnc, 10, 10);
+        g.edge(2, 5).setDistance(50).set(speedEnc, 10, 10);
+        g.edge(3, 6).setDistance(100).set(speedEnc, 10, 10);
+        g.edge(4, 7).setDistance(100).set(speedEnc, 10, 10);
+        g.edge(5, 6).setDistance(100).set(speedEnc, 10, 10);
+        g.edge(6, 7).setDistance(100).set(speedEnc, 10, 10);
 
-        setTurnCost(g, 2, 5, 2, 3);
-        setTurnCost(g, 2, 2, 0, 1);
-        setTurnCost(g, 2, 5, 6, 3);
+        setTurnRestriction(g, 5, 2, 3);
+        setTurnRestriction(g, 5, 6, 3);
+        setTurnRestriction(g, 2, 0, 1);
         setTurnCost(g, 1, 6, 7, 4);
 
         SpeedWeighting weighting = new SpeedWeighting(speedEnc, turnCostEnc, tcs, Double.POSITIVE_INFINITY) {
@@ -408,8 +407,8 @@ public class EdgeBasedRoutingAlgorithmTest {
         };
         Path p = createAlgo(g, weighting, algoStr, EDGE_BASED).calcPath(5, 1);
         assertEquals(IntArrayList.from(5, 6, 7, 4, 3, 1), p.calcNodes());
-        assertEquals(5 * 0.1 + 1, p.getWeight(), 1.e-6);
-        assertEquals(1500, p.getTime(), .1);
+        assertEquals(5 * 10 + 1, p.getWeight(), 1.e-6);
+        assertEquals(5 * 10000 + 1000, p.getTime(), .1);
     }
 
     private void setTurnRestriction(BaseGraph g, int from, int via, int to) {

@@ -18,15 +18,6 @@
 package com.graphhopper.util;
 
 import com.graphhopper.coll.GHIntLongHashMap;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
-import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
-import com.graphhopper.routing.util.AllEdgesIterator;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.storage.BaseGraph;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.NodeAccess;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;

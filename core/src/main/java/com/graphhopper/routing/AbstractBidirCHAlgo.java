@@ -233,7 +233,7 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements E
     }
 
     protected boolean accept(RoutingCHEdgeIteratorState edge, SPTEntry currEdge, boolean reverse) {
-        // for edge-based traversal we leave it for TurnWeighting to decide whether or not a u-turn is acceptable,
+        // for edge-based traversal we leave it for calcTurnWeight to decide whether or not a u-turn is acceptable,
         // but for node-based traversal we exclude such a turn for performance reasons already here
         if (!traversalMode.isEdgeBased() && edge.getEdge() == getIncomingEdge(currEdge))
             return false;
@@ -290,10 +290,6 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements E
             int adj = edgeState.getAdjNode();
             // always accept virtual edges, see #288
             if (base >= maxNodes || adj >= maxNodes)
-                return true;
-
-            // minor performance improvement: shortcuts in wrong direction are disconnected, so no need to exclude them
-            if (edgeState.isShortcut())
                 return true;
 
             return graph.getLevel(base) <= graph.getLevel(adj);

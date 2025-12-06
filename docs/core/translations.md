@@ -31,7 +31,7 @@ or if you want to try to integrate your changes you have to:
 
  * Make GraphHopper working on your computer, where you need to git clone the repository - see [here](./quickstart-from-source.md) for more information.
  * If you created a new language then add it in lexicographical order to TranslationMap.LOCALES (core/src/main/java/com/graphhopper/util) and to the script: core/files/update-translations.sh
- * Do `cd graphhopper/core; curl -L 'https://docs.google.com/spreadsheets/d/10HKSFmxGVEIO92loVQetVmjXT0qpf3EA2jxuQSSYTdU/export?format=tsv&id=10HKSFmxGVEIO92loVQetVmjXT0qpf3EA2jxuQSSYTdU&gid=0' > tmp.tsv`
+ * Do `cd graphhopper/core; curl -L 'https://docs.google.com/spreadsheets/d/18z00Rbt6QvLIkayEV9P89vW9oU0QbTVsjRk9nz1CeFY/export?format=tsv&id=18z00Rbt6QvLIkayEV9P89vW9oU0QbTVsjRk9nz1CeFY&gid=0' > tmp.tsv`
  * Then `./files/update-translations.sh tmp.tsv && rm tmp.tsv`
  * Now you can see your changes via `git diff`. Make sure that is the only one with `git status`
  * Now execute `mvn clean test` to see if you did not miss arguments in your translation (see point 2 in the questions above) and start

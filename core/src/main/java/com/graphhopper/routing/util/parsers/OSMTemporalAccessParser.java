@@ -24,11 +24,12 @@ import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.text.ParseException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This parser fills the different XYTemporalAccess enums from the OSM conditional
@@ -37,7 +38,6 @@ import java.util.*;
  */
 public class OSMTemporalAccessParser implements TagParser {
 
-    private static final Logger logger = LoggerFactory.getLogger(OSMTemporalAccessParser.class);
     private final Collection<String> conditionals;
     private final Setter restrictionSetter;
     private final DateRangeParser parser;
@@ -61,12 +61,12 @@ public class OSMTemporalAccessParser implements TagParser {
         // TODO for now the node tag overhead is not worth the effort due to very few data points
         // List<Map<String, Object>> nodeTags = way.getTag("node_tags", null);
 
-        Boolean b = getConditional(way.getTags());
+        Boolean b = getTemporaryAccess(way.getTags());
         if (b != null)
             restrictionSetter.setBoolean(edgeId, edgeIntAccess, b);
     }
 
-    Boolean getConditional(Map<String, Object> tags) {
+    public Boolean getTemporaryAccess(Map<String, Object> tags) {
         for (Map.Entry<String, Object> entry : tags.entrySet()) {
             if (!conditionals.contains(entry.getKey())) continue;
 
@@ -100,26 +100,32 @@ public class OSMTemporalAccessParser implements TagParser {
         return null;
     }
 
-    // We do not care about the date. We just want to know if ConditionState is valid and the value before @ is accepted
-    private static final DateRangeParser GENERIC_PARSER = DateRangeParser.createInstance("1970-01-01");
-    private static final Set<String> GENERIC_ACCEPTED_VALUES = Set.of("yes", "no");
-
-    public static boolean hasTemporalRestriction(ReaderWay way, int firstIndex, List<String> restrictions) {
+    /**
+     * This method checks the conditional restrictions starting from firstIndex and returns
+     * true if the access value is in the "accepted" collection AND the conditional value describes
+     * a time (e.g. date, time or interval).
+     */
+    public static boolean hasPermissiveTemporalRestriction(ReaderWay way, int firstIndex,
+                                                           List<String> restrictionKeys, Collection<String> accepted) {
         for (int i = firstIndex; i >= 0; i--) {
-            String value = way.getTag(restrictions.get(i) + ":conditional");
-            if (OSMTemporalAccessParser.hasTemporalRestriction(value)) return true;
+            String value = way.getTag(restrictionKeys.get(i) + ":conditional");
+            if (acceptedAndInRange(value, accepted)) return true;
         }
         return false;
     }
 
-    private static boolean hasTemporalRestriction(String value) {
+    private static boolean acceptedAndInRange(String value, Collection<String> accepted) {
         if (value == null) return false;
         String[] strs = value.split("@");
-        if (strs.length == 2) {
-            Boolean inRange = isInRange(GENERIC_PARSER, strs[1].trim());
-            if (inRange != null && GENERIC_ACCEPTED_VALUES.contains(strs[0].trim()))
-                return true;
-        }
+        if (strs.length == 2)
+            try {
+                String conditionalValue = strs[1].replace('(', ' ').replace(')', ' ').trim();
+                return accepted.contains(strs[0].trim()) &&
+                        (strs[1].contains(":") // time
+                                || DateRangeParser.getRange(conditionalValue    ) != null // date
+                        );
+            } catch (ParseException ex) {
+            }
         return false;
     }
 }

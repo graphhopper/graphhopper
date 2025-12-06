@@ -108,12 +108,12 @@ public class GraphHopperWebTest {
         ObjectNode postRequest = client.requestToJson(req);
         JsonNode customModelJson = postRequest.get("custom_model");
         ObjectMapper objectMapper = Jackson.newObjectMapper();
-        JsonNode expected = objectMapper.readTree("{\"distance_influence\":69.0,\"heading_penalty\":22.0,\"internal\":false,\"areas\":{" +
+        JsonNode expected = objectMapper.readTree("{\"distance_influence\":69.0,\"heading_penalty\":22.0,\"areas\":{" +
                 "\"type\":\"FeatureCollection\",\"features\":[" +
                 "{\"id\":\"area_1\",\"type\":\"Feature\",\"geometry\":{\"type\":\"Polygon\",\"coordinates\":[[[48.019324184801185,11.28021240234375],[48.019324184801185,11.53564453125],[48.11843396091691,11.53564453125],[48.11843396091691,11.28021240234375],[48.019324184801185,11.28021240234375]]]},\"properties\":{}}," +
                 "{\"id\":\"area_2\",\"type\":\"Feature\",\"geometry\":{\"type\":\"Polygon\",\"coordinates\":[[[48.15509285476017,11.53289794921875],[48.15509285476017,11.8212890625],[48.281365151571755,11.8212890625],[48.281365151571755,11.53289794921875],[48.15509285476017,11.53289794921875]]]},\"properties\":{}}]}," +
-                "\"speed\":[{\"if\":\"road_class == MOTORWAY\",\"limit_to\":\"80\"}]," +
-                "\"priority\":[{\"if\":\"surface == DIRT\",\"multiply_by\":\"0.7\"},{\"if\":\"surface == SAND\",\"multiply_by\":\"0.6\"}]}");
+                "\"priority\":[{\"if\":\"surface == DIRT\",\"multiply_by\":\"0.7\"},{\"if\":\"surface == SAND\",\"multiply_by\":\"0.6\"}]," +
+                "\"speed\":[{\"if\":\"road_class == MOTORWAY\",\"limit_to\":\"80\"}],\"turn_penalty\":[]}");
         assertEquals(expected, objectMapper.valueToTree(customModelJson));
 
         CustomModel cm = objectMapper.readValue("{\"distance_influence\":null}", CustomModel.class);

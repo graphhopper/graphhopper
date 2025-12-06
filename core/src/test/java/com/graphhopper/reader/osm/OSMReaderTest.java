@@ -21,7 +21,6 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperTest;
-import com.graphhopper.config.TurnCostsConfig;
 import com.graphhopper.reader.ReaderElement;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
@@ -254,7 +253,7 @@ public class OSMReaderTest {
 
     @Test
     public void testDoNotRejectEdgeIfFirstNodeIsMissing_issue2221() {
-        GraphHopper hopper = new GraphHopperFacade("test-osm9.xml").importOrLoad();
+        GraphHopper hopper = new GraphHopperFacade("test-osm9.xml").setSortGraph(false).importOrLoad();
         BaseGraph graph = hopper.getBaseGraph();
         assertEquals(2, graph.getNodes());
         assertEquals(1, graph.getEdges());
@@ -274,7 +273,7 @@ public class OSMReaderTest {
 
     @Test
     public void test_edgeDistanceWhenFirstNodeIsMissing_issue2221() {
-        GraphHopper hopper = new GraphHopperFacade("test-osm10.xml").importOrLoad();
+        GraphHopper hopper = new GraphHopperFacade("test-osm10.xml").setSortGraph(false).importOrLoad();
         BaseGraph graph = hopper.getBaseGraph();
         assertEquals(3, graph.getNodes());
         assertEquals(3, graph.getEdges());
@@ -323,6 +322,7 @@ public class OSMReaderTest {
     @Test
     public void testBarriers() {
         GraphHopper hopper = new GraphHopperFacade(fileBarriers).
+                setSortGraph(false).
                 setMinNetworkSize(0).
                 importOrLoad();
 
@@ -715,6 +715,7 @@ public class OSMReaderTest {
                         TestProfiles.accessAndSpeed("car").setTurnCostsConfig(new TurnCostsConfig(List.of("motorcar", "motor_vehicle"))),
                         TestProfiles.accessAndSpeed("truck", "car").setTurnCostsConfig(new TurnCostsConfig(List.of("hgv", "motor_vehicle")))
                 ).
+                setSortGraph(false).
                 importOrLoad();
         EncodingManager manager = hopper.getEncodingManager();
         BooleanEncodedValue carTCEnc = manager.getTurnBooleanEncodedValue(TurnRestriction.key("car"));
@@ -936,7 +937,8 @@ public class OSMReaderTest {
         EnumEncodedValue<RoadAccess> roadAccessEnc = RoadAccess.create();
         EncodingManager em = new EncodingManager.Builder().add(roadAccessEnc).build();
         OSMParsers osmParsers = new OSMParsers();
-        osmParsers.addWayTagParser(new OSMRoadAccessParser(roadAccessEnc, OSMRoadAccessParser.toOSMRestrictions(CAR)));
+        osmParsers.addWayTagParser(new OSMRoadAccessParser<>(roadAccessEnc,
+                OSMRoadAccessParser.toOSMRestrictions(CAR), RoadAccess::countryHook, RoadAccess::find));
         BaseGraph graph = new BaseGraph.Builder(em).create();
         OSMReader reader = new OSMReader(graph, osmParsers, new OSMReaderConfig());
         reader.setCountryRuleFactory(new CountryRuleFactory());

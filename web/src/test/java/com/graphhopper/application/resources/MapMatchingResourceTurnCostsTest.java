@@ -23,9 +23,9 @@ import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.jackson.ResponsePathDeserializerHelper;
-import com.graphhopper.config.TurnCostsConfig;
 import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.TurnCostsConfig;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import org.junit.jupiter.api.AfterAll;
@@ -37,8 +37,8 @@ import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKTReader;
 
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.Response;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Collections;
@@ -101,24 +101,22 @@ public class MapMatchingResourceTurnCostsTest {
 
     @Test
     public void errorOnUnknownProfile() {
-        final Response response = clientTarget(app, "/match?profile=xyz")
+        try (Response response = clientTarget(app, "/match?profile=xyz")
                 .request()
                 .buildPost(Entity.xml(getClass().getResourceAsStream("another-tour-with-loop.gpx")))
-                .invoke();
-        JsonNode json = response.readEntity(JsonNode.class);
-        assertTrue(json.has("message"), json.toString());
-        assertEquals(400, response.getStatus());
-        assertTrue(json.toString().contains("The requested profile 'xyz' does not exist.\\nAvailable profiles: [car, car_no_tc, bike]"), json.toString());
+                .invoke()) {
+            JsonNode json = response.readEntity(JsonNode.class);
+            assertTrue(json.has("message"), json.toString());
+            assertEquals(400, response.getStatus());
+            assertTrue(json.toString().contains("The requested profile 'xyz' does not exist.\\nAvailable profiles: [car, car_no_tc, bike]"), json.toString());
+        }
     }
 
     private void runCar(String urlParams) {
-        final Response response = clientTarget(app, "/match?" + urlParams)
+        JsonNode json = clientTarget(app, "/match?" + urlParams)
                 .request()
-                .buildPost(Entity.xml(getClass().getResourceAsStream("another-tour-with-loop.gpx")))
-                .invoke();
-        JsonNode json = response.readEntity(JsonNode.class);
+                .post(Entity.xml(getClass().getResourceAsStream("another-tour-with-loop.gpx")), JsonNode.class);
         assertFalse(json.has("message"), json.toString());
-        assertEquals(200, response.getStatus());
         JsonNode path = json.get("paths").get(0);
 
         LineString expectedGeometry = readWktLineString("LINESTRING (12.3607 51.34365, 12.36418 51.34443, 12.36379 51.34538, 12.36082 51.34471, 12.36188 51.34278)");
@@ -131,13 +129,10 @@ public class MapMatchingResourceTurnCostsTest {
     }
 
     private void runBike(String urlParams) {
-        final Response response = clientTarget(app, "/match?" + urlParams)
+        JsonNode json = clientTarget(app, "/match?" + urlParams)
                 .request()
-                .buildPost(Entity.xml(getClass().getResourceAsStream("another-tour-with-loop.gpx")))
-                .invoke();
-        JsonNode json = response.readEntity(JsonNode.class);
+                .post(Entity.xml(getClass().getResourceAsStream("another-tour-with-loop.gpx")), JsonNode.class);
         assertFalse(json.has("message"), json.toString());
-        assertEquals(200, response.getStatus());
         JsonNode path = json.get("paths").get(0);
 
         LineString expectedGeometry = readWktLineString("LINESTRING (12.3607 51.34365, 12.36418 51.34443, 12.36379 51.34538, 12.36082 51.34471, 12.36188 51.34278)");

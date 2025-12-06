@@ -1,0 +1,26 @@
+// Configures bike that avoids zig-zag routes and uses the turn_costs based approach to avoid private-only and destination-only roads.
+//
+// Note, it is not recommended to increase these costs heavily as otherwise larger, bike-unfriendly
+// roads will be preferred as they often require less turns.
+//
+// To use this custom model you need to set the following option in the config.yml
+// graph.elevation.provider: srtm   # enables elevation
+// graph.encoded_values: bike_priority, bike_access, roundabout, bike_average_speed, bike_road_access, average_slope, orientation
+// profiles:
+//    - name: bike
+//      turn_costs:
+//        vehicle_types: [bicycle]
+//        u_turn_costs: 20
+//      custom_model_files: [bike_tc.json, avoid_turns.json, bike_avoid_private.json, bike_elevation.json]
+
+{
+  "priority": [
+    { "if": "true",  "multiply_by": "bike_priority" },
+    { "if": "!bike_access && (!backward_bike_access || roundabout)",  "multiply_by": "0" },
+    { "else_if": "!bike_access && backward_bike_access",  "multiply_by": "0.2" }
+  ],
+  "speed": [
+    { "if": "true", "limit_to": "bike_average_speed" },
+    { "if": "!bike_access && backward_bike_access", "limit_to": "6" }
+  ]
+}

@@ -707,14 +707,6 @@ public class RealtimeIT {
 
     @Test
     public void testDelayAtEndForNonFrequencyBasedTrip() {
-        final double FROM_LAT = 36.915682, FROM_LON = -116.751677; // STAGECOACH stop
-        final double TO_LAT = 36.88108, TO_LON = -116.81797; // BULLFROG stop
-        Request ghRequest = new Request(
-                FROM_LAT, FROM_LON,
-                TO_LAT, TO_LON
-        );
-        ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 0, 0).atZone(zoneId).toInstant());
-
         final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
         feedMessageBuilder.setHeader(header());
         feedMessageBuilder.addEntityBuilder()
@@ -725,8 +717,20 @@ public class RealtimeIT {
                 .setStopSequence(2)
                 .setScheduleRelationship(SCHEDULED)
                 .setArrival(GtfsRealtime.TripUpdate.StopTimeEvent.newBuilder().setDelay(300).build());
+        GtfsRealtime.FeedMessage feedMessage = feedMessageBuilder.build();
+        checkDelayAtEnd(feedMessage);
+    }
 
-        PtRouter graphHopper = graphHopperFactory.createWith(feedMessageBuilder.build());
+    private static void checkDelayAtEnd(GtfsRealtime.FeedMessage feedMessage) {
+        final double FROM_LAT = 36.915682, FROM_LON = -116.751677; // STAGECOACH stop
+        final double TO_LAT = 36.88108, TO_LON = -116.81797; // BULLFROG stop
+        Request ghRequest = new Request(
+                FROM_LAT, FROM_LON,
+                TO_LAT, TO_LON
+        );
+        ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 0, 0).atZone(zoneId).toInstant());
+
+        PtRouter graphHopper = graphHopperFactory.createWith(feedMessage);
         GHResponse route = graphHopper.route(ghRequest);
 
         assertFalse(route.hasErrors());
@@ -738,6 +742,21 @@ public class RealtimeIT {
         assertEquals(250, route.getBest().getFare().multiply(BigDecimal.valueOf(100)).intValue(), "Paid expected fare"); // Two legs, no transfers allowed. Need two 'p' tickets costing 125 cents each.
     }
 
+    @Test
+    public void testDelayAtEndForNonFrequencyBasedTripWithOverdeterminedDescriptor() {
+        final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
+        feedMessageBuilder.setHeader(header());
+        feedMessageBuilder.addEntityBuilder()
+                .setId("1")
+                .getTripUpdateBuilder()
+                .setTrip(GtfsRealtime.TripDescriptor.newBuilder().setTripId("AB1").setStartTime("08:00:00"))
+                .addStopTimeUpdateBuilder()
+                .setStopSequence(2)
+                .setScheduleRelationship(SCHEDULED)
+                .setArrival(GtfsRealtime.TripUpdate.StopTimeEvent.newBuilder().setDelay(300).build());
+        GtfsRealtime.FeedMessage feedMessage = feedMessageBuilder.build();
+        checkDelayAtEnd(feedMessage);
+    }
 
     public GtfsRealtime.FeedHeader.Builder header() {
         return GtfsRealtime.FeedHeader.newBuilder()

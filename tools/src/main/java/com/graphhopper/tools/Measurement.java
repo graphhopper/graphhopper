@@ -25,7 +25,6 @@ import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
-import com.graphhopper.config.TurnCostsConfig;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
@@ -522,6 +521,7 @@ public class Measurement {
         final AtomicLong maxDistance = new AtomicLong(0);
         final AtomicLong minDistance = new AtomicLong(Long.MAX_VALUE);
         final AtomicLong distSum = new AtomicLong(0);
+        final AtomicLong timeSum = new AtomicLong(0);
         final AtomicLong airDistSum = new AtomicLong(0);
         final AtomicLong altCount = new AtomicLong(0);
         final AtomicInteger failedCount = new AtomicInteger(0);
@@ -610,6 +610,7 @@ public class Measurement {
                 rsp.getAll().forEach(p -> {
                     long dist = (long) p.getDistance();
                     distSum.addAndGet(dist);
+                    timeSum.addAndGet(p.getTime());
                 });
 
                 long dist = (long) responsePath.getDistance();
@@ -645,6 +646,8 @@ public class Measurement {
         String prefix = querySettings.prefix;
         put(prefix + ".guessed_algorithm", algoStr);
         put(prefix + ".failed_count", failedCount.get());
+        put(prefix + ".checksum_dist", distSum.get());
+        put(prefix + ".checksum_time", timeSum.get());
         put(prefix + ".distance_min", minDistance.get());
         put(prefix + ".distance_mean", (float) distSum.get() / count);
         put(prefix + ".air_distance_mean", (float) airDistSum.get() / count);

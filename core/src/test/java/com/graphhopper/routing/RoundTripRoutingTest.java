@@ -126,7 +126,36 @@ public class RoundTripRoutingTest {
 
     private BaseGraph createTestGraph() {
         BaseGraph graph = new BaseGraph.Builder(em).withTurnCosts(true).create();
-        AlternativeRouteTest.initTestGraph(graph, speedEnc);
+        /* 9
+         _/\
+         1  2-3-4-10
+         \   /   \
+         5--6-7---8
+
+         */
+        graph.edge(1, 9).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(9, 2).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(2, 3).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(3, 4).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(4, 10).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(5, 6).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(6, 7).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(7, 8).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(1, 5).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(6, 3).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(4, 8).setDistance(0).set(speedEnc, 60, 60);
+
+        updateDistancesFor(graph, 5, 0.00, 0.05);
+        updateDistancesFor(graph, 6, 0.00, 0.10);
+        updateDistancesFor(graph, 7, 0.00, 0.15);
+        updateDistancesFor(graph, 8, 0.00, 0.25);
+
+        updateDistancesFor(graph, 1, 0.05, 0.00);
+        updateDistancesFor(graph, 9, 0.10, 0.05);
+        updateDistancesFor(graph, 2, 0.05, 0.10);
+        updateDistancesFor(graph, 3, 0.05, 0.15);
+        updateDistancesFor(graph, 4, 0.05, 0.25);
+        updateDistancesFor(graph, 10, 0.05, 0.30);
         return graph;
     }
 

@@ -3,7 +3,6 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EdgeIntAccess;
-import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.IntsRef;
 
 
@@ -15,22 +14,6 @@ public abstract class AbstractAverageSpeedParser implements TagParser {
     protected AbstractAverageSpeedParser(DecimalEncodedValue speedEnc, DecimalEncodedValue ferrySpeedEnc) {
         this.avgSpeedEnc = speedEnc;
         this.ferrySpeedEnc = ferrySpeedEnc;
-    }
-
-    /**
-     * @return {@link Double#NaN} if no maxspeed found
-     */
-    public static double getMaxSpeed(ReaderWay way, boolean bwd) {
-        double maxSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed"));
-        double directedMaxSpeed = OSMValueExtractor.stringToKmh(way.getTag(bwd ? "maxspeed:backward" : "maxspeed:forward"));
-        return isValidSpeed(directedMaxSpeed) ? directedMaxSpeed : maxSpeed;
-    }
-
-    /**
-     * @return <i>true</i> if the given speed is not {@link Double#NaN}
-     */
-    protected static boolean isValidSpeed(double speed) {
-        return !Double.isNaN(speed);
     }
 
     public final DecimalEncodedValue getAverageSpeedEnc() {

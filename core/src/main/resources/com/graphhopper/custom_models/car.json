@@ -1,10 +1,10 @@
 // to use this custom model you need to set the following option in the config.yml
-// graph.encoded_values: car_access, car_average_speed
+// graph.encoded_values: car_access|block_private=false, car_average_speed, road_access
 // profiles:
 //    - name: car
 //      turn_costs:
 //        vehicle_types: [motorcar, motor_vehicle]
-//      custom_model_files: [car.json]
+//      custom_model_files: [car.json, car_avoid_private_etc.json ]
 
 {
   "distance_influence": 90,

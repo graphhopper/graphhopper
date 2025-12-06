@@ -83,8 +83,8 @@ public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements
         defaultSpeedMap.put("tertiary_link", 40);
         defaultSpeedMap.put("unclassified", 30);
         defaultSpeedMap.put("residential", 30);
-        // spielstraße
-        defaultSpeedMap.put("living_street", 5);
+        defaultSpeedMap.put("living_street", 6);
+        defaultSpeedMap.put("pedestrian", 6);
         defaultSpeedMap.put("service", 20);
         // unknown road
         defaultSpeedMap.put("road", 20);
@@ -143,8 +143,8 @@ public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements
      * @return The assumed speed.
      */
     protected double applyMaxSpeed(ReaderWay way, double speed, boolean bwd) {
-        double maxSpeed = getMaxSpeed(way, bwd);
-        return Math.min(140, isValidSpeed(maxSpeed) ? Math.max(1, maxSpeed * 0.9) : speed);
+        double maxSpeed = OSMMaxSpeedParser.parseMaxSpeed(way, bwd);
+        return maxSpeed != MaxSpeed.MAXSPEED_MISSING ? Math.max(1, maxSpeed * 0.9) : speed;
     }
 
     /**
@@ -154,7 +154,7 @@ public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements
      */
     protected double applyBadSurfaceSpeed(ReaderWay way, double speed) {
         // limit speed if bad surface
-        if (badSurfaceSpeed > 0 && isValidSpeed(speed) && speed > badSurfaceSpeed) {
+        if (badSurfaceSpeed > 0 && speed > badSurfaceSpeed) {
             String surface = way.getTag("surface", "");
             int colonIndex = surface.indexOf(":");
             if (colonIndex != -1)

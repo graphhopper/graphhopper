@@ -228,7 +228,7 @@ public class DirectedRoutingTest {
             int sourceOutEdge = getSourceOutEdge(rnd, source, f.graph);
             int targetInEdge = getTargetInEdge(rnd, target, f.graph);
 //            LOGGER.info("source: " + source + ", target: " + target + ", sourceOutEdge: " + sourceOutEdge + ", targetInEdge: " + targetInEdge);
-            Path refPath = new DijkstraBidirectionRef(f.graph, ((Graph) f.graph).wrapWeighting(f.weighting), TraversalMode.EDGE_BASED)
+            Path refPath = new DijkstraBidirectionRef(f.graph, f.graph.wrapWeighting(f.weighting), TraversalMode.EDGE_BASED)
                     .calcPath(source, target, sourceOutEdge, targetInEdge);
             Path path = f.createAlgo()
                     .calcPath(source, target, sourceOutEdge, targetInEdge);

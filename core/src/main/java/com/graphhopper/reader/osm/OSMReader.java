@@ -331,7 +331,7 @@ public class OSMReader {
 
         if (pointList.is3D()) {
             // sample points along long edges
-            if (config.getLongEdgeSamplingDistance() < Double.MAX_VALUE)
+            if (config.getLongEdgeSamplingDistance() < Double.MAX_VALUE && !isFerry(way))
                 pointList = EdgeSampling.sample(pointList, config.getLongEdgeSamplingDistance(), distCalc, eleProvider);
 
             // smooth the elevation before calculating the distance because the distance will be incorrect if calculated afterwards

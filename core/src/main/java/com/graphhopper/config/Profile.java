@@ -24,6 +24,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
+import com.graphhopper.util.TurnCostsConfig;
+
+import java.util.List;
+
+import static java.util.Collections.emptyList;
 
 /**
  * Corresponds to an entry of the `profiles` section in `config.yml` and specifies the properties of a routing profile.
@@ -122,7 +127,7 @@ public class Profile {
 
     @Override
     public String toString() {
-        return createContentString();
+        return createContentString(emptyList());
     }
 
     @Override
@@ -133,9 +138,11 @@ public class Profile {
         return name.equals(profile.name);
     }
 
-    private String createContentString() {
+    private String createContentString(List<String> excludedHints) {
         // used to check against stored custom models, see #2026
-        return "name=" + name + "|turn_costs={" + turnCostsConfig + "}|weighting=" + weighting + "|hints=" + hints;
+        PMap filteredHints = new PMap(hints);
+        excludedHints.forEach(filteredHints::remove);
+        return "name=" + name + "|turn_costs={" + turnCostsConfig + "}|weighting=" + weighting + "|hints=" + filteredHints;
     }
 
     @Override
@@ -144,6 +151,11 @@ public class Profile {
     }
 
     public int getVersion() {
-        return Helper.staticHashCode(createContentString());
+        return getVersion(emptyList());
     }
+
+    public int getVersion(List<String> excludedHints) {
+        return Helper.staticHashCode(createContentString(excludedHints));
+    }
+
 }

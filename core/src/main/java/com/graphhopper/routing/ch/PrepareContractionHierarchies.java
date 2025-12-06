@@ -148,7 +148,9 @@ public class PrepareContractionHierarchies {
     }
 
     private void logFinalGraphStats() {
-        logger.info("shortcuts that exceed maximum weight: {}", chStore.getNumShortcutsExceedingWeight());
+        logger.info("shortcut weights - under minimum: {}, over maximum: {}, minimum valid: {}, maximum valid: {}",
+                Helper.nf(chStore.getNumShortcutsUnderMinWeight()), Helper.nf(chStore.getNumShortcutsOverMaxWeight()),
+                chStore.getMinValidWeight(), chStore.getMaxValidWeight());
         logger.info("took: {}s, graph now - num edges: {}, num nodes: {}, num shortcuts: {}",
                 (int) allSW.getSeconds(), nf(graph.getEdges()), nf(nodes), nf(chStore.getShortcuts()));
     }
@@ -169,22 +171,16 @@ public class PrepareContractionHierarchies {
     }
 
     private void initFromGraph() {
-        // todo: this whole chain of initFromGraph() methods is just needed because PrepareContractionHierarchies does
-        // not simply prepare contraction hierarchies, but instead it also serves as some kind of 'container' to give
-        // access to the preparations in the GraphHopper class. If this was not so we could make this a lot cleaner here,
-        // declare variables final and would not need all these close() methods...
+        logger.info("Creating CH prepare graph, {}", getMemInfo());
         CHPreparationGraph prepareGraph;
         if (chConfig.getTraversalMode().isEdgeBased()) {
             TurnCostStorage turnCostStorage = graph.getTurnCostStorage();
-            if (turnCostStorage == null) {
+            if (turnCostStorage == null)
                 throw new IllegalArgumentException("For edge-based CH you need a turn cost storage");
-            }
-            logger.info("Creating CH prepare graph, {}", getMemInfo());
             CHPreparationGraph.TurnCostFunction turnCostFunction = CHPreparationGraph.buildTurnCostFunctionFromTurnCostStorage(graph, chConfig.getWeighting());
             prepareGraph = CHPreparationGraph.edgeBased(graph.getNodes(), graph.getEdges(), turnCostFunction);
             nodeContractor = new EdgeBasedNodeContractor(prepareGraph, chBuilder, pMap);
         } else {
-            logger.info("Creating CH prepare graph, {}", getMemInfo());
             prepareGraph = CHPreparationGraph.nodeBased(graph.getNodes(), graph.getEdges());
             nodeContractor = new NodeBasedNodeContractor(prepareGraph, chBuilder, pMap);
         }

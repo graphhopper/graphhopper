@@ -25,8 +25,10 @@ import com.graphhopper.util.PMap;
 import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 /**
  * Request object to perform routing with GraphHopper.
@@ -41,7 +43,7 @@ public class GHRequest {
     private List<Double> headings = new ArrayList<>();
     private List<String> pointHints = new ArrayList<>();
     private List<String> curbsides = new ArrayList<>();
-    private List<String> snapPreventions = new ArrayList<>();
+    private List<String> snapPreventions;
     private List<String> pathDetails = new ArrayList<>();
     private String algo = "";
     private Locale locale = Locale.US;
@@ -105,13 +107,15 @@ public class GHRequest {
     /**
      * Sets the headings, i.e. the direction the route should leave the starting point and the directions the route
      * should arrive from at the via-points and the end point. Each heading is given as north based azimuth (clockwise)
-     * in [0, 360) or NaN if no direction shall be specified.
+     * in [0, 360) or NaN or null if no direction shall be specified.
      * <p>
      * The number of headings must be zero (default), one (for the start point) or equal to the number of points
      * when sending the request.
      */
     public GHRequest setHeadings(List<Double> headings) {
-        this.headings = headings;
+        this.headings = headings.stream()
+                .map(d -> d == null ? Double.NaN : d)
+                .collect(Collectors.toList());
         return this;
     }
 
@@ -204,12 +208,17 @@ public class GHRequest {
         return curbsides;
     }
 
+    public boolean hasSnapPreventions() {
+        return snapPreventions != null;
+    }
+
     public GHRequest setSnapPreventions(List<String> snapPreventions) {
         this.snapPreventions = snapPreventions;
         return this;
     }
 
     public List<String> getSnapPreventions() {
+        if (snapPreventions == null) return Collections.EMPTY_LIST;
         return snapPreventions;
     }
 

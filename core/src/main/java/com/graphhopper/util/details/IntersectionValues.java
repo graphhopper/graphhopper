@@ -36,8 +36,8 @@ public class IntersectionValues {
         List<IntersectionValues> list = new ArrayList<>();
 
         List<Integer> bearings = (List<Integer>) intersectionMap.get("bearings");
-        Integer in = (Integer) intersectionMap.get("in");
-        Integer out = (Integer) intersectionMap.get("out");
+        Integer in = (Integer) intersectionMap.getOrDefault("in", -1);
+        Integer out = (Integer) intersectionMap.getOrDefault("out", -1);
         List<Boolean> entry = (List<Boolean>) intersectionMap.get("entries");
 
         if (bearings.size() != entry.size()) {

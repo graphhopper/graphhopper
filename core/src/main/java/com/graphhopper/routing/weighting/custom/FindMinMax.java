@@ -22,7 +22,7 @@ import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.util.CustomModel;
 
-import java.util.*;
+import java.util.List;
 
 import static com.graphhopper.json.Statement.Keyword.ELSE;
 import static com.graphhopper.json.Statement.Keyword.IF;
@@ -35,8 +35,6 @@ public class FindMinMax {
      * is based on baseModel).
      */
     public static void checkLMConstraints(CustomModel baseModel, CustomModel queryModel, EncodedValueLookup lookup) {
-        if (queryModel.isInternal())
-            throw new IllegalArgumentException("CustomModel of query cannot be internal");
         if (queryModel.getDistanceInfluence() != null) {
             double bmDI = baseModel.getDistanceInfluence() == null ? 0 : baseModel.getDistanceInfluence();
             if (queryModel.getDistanceInfluence() < bmDI)
@@ -93,7 +91,7 @@ public class FindMinMax {
                 MinMax tmp;
                 if(s.isBlock()) {
                     tmp = new MinMax(minMax.min, minMax.max);
-                    for (List<Statement> subGroup : CustomModelParser.splitIntoGroup(first.doBlock())) findMinMaxForGroup(tmp, subGroup, lookup);
+                    for (List<Statement> subGroup : CustomModelParser.splitIntoGroup(s.doBlock())) findMinMaxForGroup(tmp, subGroup, lookup);
                 } else {
                     tmp = s.operation().apply(minMax, ValueExpressionVisitor.findMinMax(s.value(), lookup));
                     if (tmp.max < 0)

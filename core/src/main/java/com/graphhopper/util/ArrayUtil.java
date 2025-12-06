@@ -130,6 +130,10 @@ public class ArrayUtil {
      * @return the size of the new range that contains no duplicates (smaller or equal to end).
      */
     public static int removeConsecutiveDuplicates(int[] arr, int end) {
+        if (end < 0)
+            throw new IllegalArgumentException("end less than 0");
+        if (end == 0)
+            return 0;
         int curr = 0;
         for (int i = 1; i < end; ++i) {
             if (arr[i] != arr[curr])
@@ -224,6 +228,13 @@ public class ArrayUtil {
         return result;
     }
 
+    public static IntArrayList subList(IntArrayList list, int fromIndex, int toIndex) {
+        IntArrayList result = new IntArrayList(toIndex - fromIndex);
+        for (int i = fromIndex; i < toIndex; i++)
+            result.add(list.get(i));
+        return result;
+    }
+
     /**
      * @param a sorted array
      * @param b sorted array
@@ -252,4 +263,17 @@ public class ArrayUtil {
         int sizeWithoutDuplicates = removeConsecutiveDuplicates(result, size);
         return Arrays.copyOf(result, sizeWithoutDuplicates);
     }
+
+    public static int getLast(IntArrayList list) {
+        if (list.isEmpty())
+            throw new IllegalArgumentException("Cannot get last element of an empty list");
+        return list.get(list.size() - 1);
+    }
+
+    public static int getLast(int[] array) {
+        if (array.length == 0)
+            throw new IllegalArgumentException("Cannot get last element of an empty array");
+        return array[array.length - 1];
+    }
+
 }

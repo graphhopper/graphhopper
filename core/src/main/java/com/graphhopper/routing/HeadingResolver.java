@@ -19,10 +19,8 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
-import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.*;
-import com.graphhopper.util.shapes.GHPoint;
 
 public class HeadingResolver {
     private final EdgeExplorer edgeExplorer;

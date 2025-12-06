@@ -25,13 +25,9 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.OSMParsers;
 import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import java.text.DateFormat;
-import java.util.Date;
 
 import static com.graphhopper.routing.util.PriorityCode.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -360,6 +356,8 @@ public abstract class AbstractBikeTagParserTester {
 
         way.setTag("service", "parking_aisle");
         assertPriorityAndSpeed(SLIGHT_AVOID, 4, way);
+        way.setTag("bicycle", "designated");
+        assertPriorityAndSpeed(VERY_NICE, 12, way);
     }
 
     @Test
@@ -370,18 +368,6 @@ public abstract class AbstractBikeTagParserTester {
 
         way.setTag("bicycle", "designated");
         assertPriorityAndSpeed(BAD, 2, way);
-    }
-
-    @Test
-    public void testSacScale() {
-        ReaderWay way = new ReaderWay(1);
-        way.setTag("highway", "service");
-        way.setTag("sac_scale", "hiking");
-        // allow
-        assertTrue(accessParser.getAccess(way).isWay());
-
-        way.setTag("sac_scale", "alpine_hiking");
-        assertTrue(accessParser.getAccess(way).canSkip());
     }
 
     @Test
@@ -528,7 +514,7 @@ public abstract class AbstractBikeTagParserTester {
         BikeCommonAccessParser bike = createAccessParser(encodingManager, new PMap());
         assertFalse(bike.isBlockFords());
         assertTrue(bike.restrictedValues.contains("private"));
-        assertFalse(bike.intendedValues.contains("private"));
+        assertFalse(bike.allowedValues.contains("private"));
         ReaderNode node = new ReaderNode(1, 1, 1);
         node.setTag("access", "private");
         assertTrue(bike.isBarrier(node));
@@ -537,7 +523,7 @@ public abstract class AbstractBikeTagParserTester {
         bike = createAccessParser(encodingManager, new PMap("block_fords=true|block_private=false"));
         assertTrue(bike.isBlockFords());
         assertFalse(bike.restrictedValues.contains("private"));
-        assertTrue(bike.intendedValues.contains("private"));
+        assertTrue(bike.allowedValues.contains("private"));
         assertFalse(bike.isBarrier(node));
     }
 
@@ -657,6 +643,44 @@ public abstract class AbstractBikeTagParserTester {
         way.setTag("oneway", "yes");
         way.setTag("cycleway:both", "no");
         assertAccess(way, true, false);
+    }
+
+    @Test
+    public void testOnewayIssue3162() {
+        ReaderWay way = new ReaderWay(1);
+        way.clearTags();
+        way.setTag("highway", "secondary");
+        // default for left hand traffic, see https://wiki.openstreetmap.org/wiki/Key:cycleway:right:oneway
+        way.setTag("cycleway:left:oneway" , "yes");
+        way.setTag("cycleway:right:oneway", "-1");
+        assertAccess(way, true, true);
+        // default for right hand traffic, see https://wiki.openstreetmap.org/wiki/Key:cycleway:right:oneway
+        way.setTag("cycleway:left:oneway","-1");
+        way.setTag("cycleway:right:oneway", "yes");
+        assertAccess(way, true, true);
+        // other cases identified in #3162:
+        way.setTag("cycleway:left:oneway","1");
+        way.setTag("cycleway:right:oneway","-1");
+        assertAccess(way, true, true);
+        way.setTag("cycleway:left:oneway","no");
+        way.setTag("cycleway:right:oneway", "yes");
+        assertAccess(way, true, true);
+        way.setTag("cycleway:left:oneway","no");
+        way.setTag("cycleway:right:oneway" ,"1");
+        assertAccess(way, true, true);
+        way.setTag("cycleway:left:oneway","no");
+        way.setTag("cycleway:right:oneway" ,"-1");
+        assertAccess(way, true, true);
+        way.setTag("cycleway:left:oneway","yes");
+        way.setTag("cycleway:right:oneway","no");
+        assertAccess(way, true, true);
+        way.setTag("cycleway:left:oneway","-1");
+        way.setTag("cycleway:right:oneway","no");
+        assertAccess(way, true, true);
+        // most likely a tagging error, allowing both directions:
+        way.setTag("cycleway:left:oneway","-1");
+        way.setTag("cycleway:right:oneway","-1");
+        assertAccess(way, true, true);
     }
 
     private void assertAccess(ReaderWay way, boolean fwd, boolean bwd) {

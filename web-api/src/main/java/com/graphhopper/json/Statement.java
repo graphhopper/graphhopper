@@ -74,7 +74,7 @@ public record Statement(Keyword keyword, String condition, Op operation, String 
         if (isBlock())
             return "{\"" + keyword.getName() + "\": \"" + condition + "\", \"do\": " + doBlock + " }";
         else
-            return "{\"" + keyword.getName() + "\": \"" + condition + "\", \"" + operation.getName() + ": \"" + value + "\"}";
+            return "{\"" + keyword.getName() + "\": \"" + condition + "\", \"" + operation.getName() + "\": \"" + value + "\"}";
     }
 
     public enum Keyword {
@@ -92,7 +92,7 @@ public record Statement(Keyword keyword, String condition, Op operation, String 
     }
 
     public enum Op {
-        MULTIPLY("multiply_by"), LIMIT("limit_to"), DO("do");
+        MULTIPLY("multiply_by"), LIMIT("limit_to"), DO("do"), ADD("add");
 
         private final String name;
 
@@ -110,6 +110,8 @@ public record Statement(Keyword keyword, String condition, Op operation, String 
                     return "value *= " + value;
                 case LIMIT:
                     return "value = Math.min(value," + value + ")";
+                case ADD:
+                    return "value += " + (value.equals("Infinity") ? "Double.POSITIVE_INFINITY" : value);
                 default:
                     throw new IllegalArgumentException();
             }
@@ -121,6 +123,8 @@ public record Statement(Keyword keyword, String condition, Op operation, String 
                     return new MinMax(minMax1.min * minMax2.min, minMax1.max * minMax2.max);
                 case LIMIT:
                     return new MinMax(Math.min(minMax1.min, minMax2.min), Math.min(minMax1.max, minMax2.max));
+                case ADD:
+                    return new MinMax(minMax1.min + minMax2.min, minMax1.max + minMax2.max);
                 default:
                     throw new IllegalArgumentException();
             }

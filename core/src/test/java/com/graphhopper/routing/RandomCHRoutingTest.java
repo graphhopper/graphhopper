@@ -19,7 +19,6 @@ import com.graphhopper.storage.RoutingCHGraphImpl;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -34,6 +33,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.stream.Stream;
 
+import static com.graphhopper.util.GHUtility.comparePaths;
 import static com.graphhopper.util.GHUtility.createRandomSnaps;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -107,10 +107,10 @@ public class RandomCHRoutingTest {
         if (f.traversalMode.isEdgeBased()) {
             GHUtility.addRandomTurnCosts(f.graph, seed, null, f.turnCostEnc, f.maxTurnCosts, f.graph.getTurnCostStorage());
         }
-        runRandomTest(f, rnd);
+        runRandomTest(f, rnd, seed);
     }
 
-    private void runRandomTest(Fixture f, Random rnd) {
+    private void runRandomTest(Fixture f, Random rnd, long seed) {
         LocationIndexTree locationIndex = new LocationIndexTree(f.graph, f.graph.getDirectory());
         locationIndex.prepareIndex();
 
@@ -151,18 +151,8 @@ public class RandomCHRoutingTest {
                     continue;
                 }
 
-                double weight = path.getWeight();
-                if (Math.abs(refWeight - weight) > 1.e-2) {
-                    LOGGER.warn("expected: " + refPath.calcNodes());
-                    LOGGER.warn("given:    " + path.calcNodes());
-                    fail("wrong weight: " + from + "->" + to + ", dijkstra: " + refWeight + " vs. ch: " + path.getWeight());
-                }
-                if (Math.abs(path.getDistance() - refPath.getDistance()) > 1.e-1) {
-                    strictViolations.add("wrong distance " + from + "->" + to + ", expected: " + refPath.getDistance() + ", given: " + path.getDistance());
-                }
-                if (Math.abs(path.getTime() - refPath.getTime()) > 50) {
-                    strictViolations.add("wrong time " + from + "->" + to + ", expected: " + refPath.getTime() + ", given: " + path.getTime());
-                }
+                // todo: to check nodes as well we would have to ignore intermediate virtual nodes
+                strictViolations.addAll(comparePaths(refPath, path, from, to, false, seed));
             }
             if (numPathsNotFound > 0.9 * numQueries) {
                 fail("Too many paths not found: " + numPathsNotFound + "/" + numQueries);

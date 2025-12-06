@@ -44,6 +44,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
     private final BooleanEncodedValue roundaboutEnc;
     private final BooleanEncodedValue roadClassLinkEnc;
     private final EnumEncodedValue<RoadClass> roadClassEnc;
+    private final EnumEncodedValue<RoadEnvironment> roadEnvEnc;
     private final IntEncodedValue lanesEnc;
     private final DecimalEncodedValue maxSpeedEnc;
 
@@ -78,6 +79,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
     private boolean prevInRoundabout;
     private String prevDestinationAndRef;
     private String prevName;
+    private RoadEnvironment prevRoadEnv;
     private String prevInstructionName;
 
     private static final int MAX_U_TURN_DISTANCE = 35;
@@ -86,6 +88,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                                  InstructionList ways) {
         this.weighting = weighting;
         this.roundaboutEnc = evLookup.getBooleanEncodedValue(Roundabout.KEY);
+        this.roadEnvEnc = evLookup.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
         this.roadClassEnc = evLookup.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         this.roadClassLinkEnc = evLookup.getBooleanEncodedValue(RoadClassLink.KEY);
         this.maxSpeedEnc = evLookup.getDecimalEncodedValue(MaxSpeed.KEY);
@@ -95,7 +98,10 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         prevNode = -1;
         prevInRoundabout = false;
         prevName = null;
-        outEdgeExplorer = graph.createEdgeExplorer(edge -> Double.isFinite(weighting.calcEdgeWeight(edge, false)));
+        prevRoadEnv = null;
+
+        BooleanEncodedValue carAccessEnc = evLookup.getBooleanEncodedValue(VehicleAccess.key("car"));
+        outEdgeExplorer = graph.createEdgeExplorer(edge -> edge.get(carAccessEnc));
         allExplorer = graph.createEdgeExplorer();
     }
 
@@ -147,6 +153,8 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         final String destination = (String) edge.getValue(STREET_DESTINATION); // getValue is fast if it does not exist in edge
         final String destinationRef = (String) edge.getValue(STREET_DESTINATION_REF);
         final String motorwayJunction = (String) edge.getValue(MOTORWAY_JUNCTION);
+        final RoadEnvironment roadEnv = edge.get(roadEnvEnc);
+
         if ((prevInstruction == null) && (!isRoundabout)) // very first instruction (if not in Roundabout)
         {
             int sign = Instruction.CONTINUE_ON_STREET;
@@ -155,12 +163,15 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             prevInstruction.setExtraInfo(STREET_DESTINATION, destination);
             prevInstruction.setExtraInfo(STREET_DESTINATION_REF, destinationRef);
             prevInstruction.setExtraInfo(MOTORWAY_JUNCTION, motorwayJunction);
+            prevInstruction.setExtraInfo("ferry", InstructionsHelper.createFerryInfo(roadEnv, prevRoadEnv));
+
             double startLat = nodeAccess.getLat(baseNode);
             double startLon = nodeAccess.getLon(baseNode);
             double heading = AngleCalc.ANGLE_CALC.calcAzimuth(startLat, startLon, latitude, longitude);
             prevInstruction.setExtraInfo("heading", Helper.round(heading, 2));
             ways.add(prevInstruction);
             prevName = name;
+            prevRoadEnv = roadEnv;
             prevDestinationAndRef = destination + destinationRef;
 
         } else if (isRoundabout) {
@@ -195,6 +206,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                 {
                     prevOrientation = AngleCalc.ANGLE_CALC.calcOrientation(prevLat, prevLon, latitude, longitude);
                     prevName = name;
+                    prevRoadEnv = roadEnv;
                     prevDestinationAndRef = destination + destinationRef;
                 }
                 prevInstruction = roundaboutInstruction;
@@ -218,6 +230,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             prevInstruction.setExtraInfo(STREET_DESTINATION, destination);
             prevInstruction.setExtraInfo(STREET_DESTINATION_REF, destinationRef);
             prevInstruction.setExtraInfo(MOTORWAY_JUNCTION, motorwayJunction);
+            prevInstruction.setExtraInfo("ferry", InstructionsHelper.createFerryInfo(roadEnv, prevRoadEnv));
 
             // calc angle between roundabout entrance and exit
             double orientation = AngleCalc.ANGLE_CALC.calcOrientation(prevLat, prevLon, latitude, longitude);
@@ -237,6 +250,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
 
             prevInstructionName = prevName;
             prevName = name;
+            prevRoadEnv = roadEnv;
             prevDestinationAndRef = destination + destinationRef;
 
         } else {
@@ -294,10 +308,12 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                 prevInstruction.setExtraInfo(STREET_DESTINATION, destination);
                 prevInstruction.setExtraInfo(STREET_DESTINATION_REF, destinationRef);
                 prevInstruction.setExtraInfo(MOTORWAY_JUNCTION, motorwayJunction);
+                prevInstruction.setExtraInfo("ferry", InstructionsHelper.createFerryInfo(roadEnv, prevRoadEnv));
             }
             // Update the prevName, since we don't always create an instruction on name changes the previous
             // name can be an old name. This leads to incorrect turn instructions due to name changes
             prevName = name;
+            prevRoadEnv = roadEnv;
             prevDestinationAndRef = destination + destinationRef;
         }
 
@@ -349,10 +365,13 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         InstructionsOutgoingEdges outgoingEdges = new InstructionsOutgoingEdges(prevEdge, edge, weighting, maxSpeedEnc,
                 roadClassEnc, roadClassLinkEnc, lanesEnc, allExplorer, nodeAccess, prevNode, baseNode, adjNode);
         int nrOfPossibleTurns = outgoingEdges.getAllowedTurns();
+        RoadEnvironment roadEnv = edge.get(roadEnvEnc);
 
         // there is no other turn possible
         if (nrOfPossibleTurns <= 1) {
-            if (Math.abs(sign) > 1 && outgoingEdges.getVisibleTurns() > 1 && !outgoingEdges.mergedOrSplitWay()) {
+            if (InstructionsHelper.isToFerry(roadEnv, prevRoadEnv)) return Instruction.FERRY;
+            if (Math.abs(sign) > 1 && outgoingEdges.getVisibleTurns() > 1 && !outgoingEdges.mergedOrSplitWay()
+                    || InstructionsHelper.isFromFerry(roadEnv, prevRoadEnv)) {
                 // This is an actual turn because |sign| > 1
                 // There could be some confusion, if we would not create a turn instruction, even though it is the only
                 // possible turn, also see #1048
@@ -364,9 +383,11 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
 
         // Very certain, this is a turn
         if (Math.abs(sign) > 1) {
+            if (InstructionsHelper.isToFerry(roadEnv, prevRoadEnv)) return Instruction.FERRY;
             // Don't show an instruction if the user is following a street, even though the street is
             // bending. We should only do this, if following the street is the obvious choice.
             if (InstructionsHelper.isSameName(name, prevName) && outgoingEdges.outgoingEdgesAreSlowerByFactor(2)
+                    || InstructionsHelper.isFromFerry(roadEnv, prevRoadEnv)
                     || outgoingEdges.mergedOrSplitWay()) {
                 return Instruction.IGNORE;
             }
@@ -394,6 +415,11 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
 
         // Signs provide too less detail, so we use the delta for a precise comparison
         double delta = InstructionsHelper.calculateOrientationDelta(prevLat, prevLon, lat, lon, prevOrientation);
+
+        if (InstructionsHelper.isToFerry(roadEnv, prevRoadEnv))
+            return Instruction.FERRY;
+        else if (InstructionsHelper.isFromFerry(roadEnv, prevRoadEnv))
+            return Instruction.CONTINUE_ON_STREET;
 
         // This state is bad! Two streets are going more or less straight
         // Happens a lot for trunk_links

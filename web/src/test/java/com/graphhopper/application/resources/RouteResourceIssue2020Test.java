@@ -32,7 +32,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.Collections;
 
@@ -66,10 +65,8 @@ public class RouteResourceIssue2020Test {
 
     @Test
     public void testBasicQuery() {
-        final Response response = clientTarget(app, "/route?profile=my_car&" +
-                "point=50.01673,11.49878&point=50.018377,11.502782").request().buildGet().invoke();
-        assertEquals(200, response.getStatus());
-        JsonNode json = response.readEntity(JsonNode.class);
+        JsonNode json = clientTarget(app, "/route?profile=my_car&" +
+                "point=50.01673,11.49878&point=50.018377,11.502782").request().get(JsonNode.class);
         JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
         JsonNode path = json.get("paths").get(0);

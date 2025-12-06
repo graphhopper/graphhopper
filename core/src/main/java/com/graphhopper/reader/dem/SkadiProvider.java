@@ -80,15 +80,10 @@ public class SkadiProvider extends AbstractSRTMElevationProvider {
     @Override
     byte[] readFile(File file) throws IOException {
         InputStream is = new FileInputStream(file);
-        GZIPInputStream gzis = new GZIPInputStream(is);
-        BufferedInputStream buff = new BufferedInputStream(gzis);
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        byte[] buffer = new byte[0xFFFF];
-        int len;
-        while ((len = buff.read(buffer)) > 0) {
-            os.write(buffer, 0, len);
-        }
-        os.flush();
+        GZIPInputStream gzis = new GZIPInputStream(is, 8 * 1024);
+        BufferedInputStream buff = new BufferedInputStream(gzis, 16 * 1024);
+        ByteArrayOutputStream os = new ByteArrayOutputStream(64 * 1024);
+        buff.transferTo(os);
         close(buff);
         return os.toByteArray();
     }

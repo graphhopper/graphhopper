@@ -20,7 +20,6 @@ package com.graphhopper.routing.util;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
 import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
-import com.graphhopper.search.KVStorage;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeIteratorState;

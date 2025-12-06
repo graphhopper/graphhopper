@@ -25,8 +25,6 @@ import org.locationtech.jts.geom.impl.PackedCoordinateSequence;
 import org.locationtech.jts.geom.prep.PreparedGeometry;
 import org.locationtech.jts.geom.prep.PreparedPolygon;
 
-import java.util.Arrays;
-
 /**
  * This class represents a polygon that is defined by a set of points.
  * Every point i is connected to point i-1 and i+1.

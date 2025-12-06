@@ -26,7 +26,7 @@ import com.graphhopper.util.PMap;
 
 import java.util.*;
 
-import static com.graphhopper.routing.util.parsers.OSMTemporalAccessParser.hasTemporalRestriction;
+import static com.graphhopper.routing.util.parsers.OSMTemporalAccessParser.hasPermissiveTemporalRestriction;
 
 public class CarAccessParser extends AbstractAccessParser implements TagParser {
 
@@ -39,14 +39,14 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
                 lookup.getBooleanEncodedValue(VehicleAccess.key("car")),
                 lookup.getBooleanEncodedValue(Roundabout.KEY),
                 properties,
-                TransportationMode.CAR
+                OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR)
         );
     }
 
     public CarAccessParser(BooleanEncodedValue accessEnc,
                            BooleanEncodedValue roundaboutEnc, PMap properties,
-                           TransportationMode transportationMode) {
-        super(accessEnc, transportationMode);
+                           List<String> restrictionsKeys) {
+        super(accessEnc, restrictionsKeys);
         this.roundaboutEnc = roundaboutEnc;
         restrictedValues.add("agricultural");
         restrictedValues.add("forestry");
@@ -69,7 +69,7 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
 
         highwayValues.addAll(Arrays.asList("motorway", "motorway_link", "trunk", "trunk_link",
                 "primary", "primary_link", "secondary", "secondary_link", "tertiary", "tertiary_link",
-                "unclassified", "residential", "living_street", "service", "road", "track"));
+                "unclassified", "residential", "living_street", "service", "road", "track", "pedestrian"));
 
         trackTypeValues.addAll(Arrays.asList("grade1", "grade2", "grade3", null));
     }
@@ -81,15 +81,22 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
         String firstValue = firstIndex < 0 ? "" : way.getTag(restrictionKeys.get(firstIndex), "");
         if (highwayValue == null) {
             if (FerrySpeedCalculator.isFerry(way)) {
-                if (restrictedValues.contains(firstValue))
-                    return WayAccess.CAN_SKIP;
-                if (intendedValues.contains(firstValue) ||
+                if (allowedValues.contains(firstValue) ||
                         // implied default is allowed only if foot and bicycle is not specified:
                         firstValue.isEmpty() && !way.hasTag("foot") && !way.hasTag("bicycle") ||
                         // if hgv is allowed then smaller trucks and cars are allowed too
                         way.hasTag("hgv", "yes"))
                     return WayAccess.FERRY;
+                if (restrictedValues.contains(firstValue))
+                    return WayAccess.CAN_SKIP;
             }
+            return WayAccess.CAN_SKIP;
+        }
+
+        if ("pedestrian".equals(highwayValue)
+                && !allowedValues.contains(firstValue)
+                && !hasPermissiveTemporalRestriction(way, restrictionKeys.size() - 1, restrictionKeys, allowedValues)) {
+            // allow pedestrian if explicitly tagged
             return WayAccess.CAN_SKIP;
         }
 
@@ -109,11 +116,14 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
         // multiple restrictions needs special handling
         if (firstIndex >= 0) {
             String[] restrict = firstValue.split(";");
+            // if any of the values allows access then return early (regardless of the order)
             for (String value : restrict) {
-                if (restrictedValues.contains(value) && !hasTemporalRestriction(way, firstIndex, restrictionKeys))
-                    return WayAccess.CAN_SKIP;
-                if (intendedValues.contains(value))
+                if (allowedValues.contains(value))
                     return WayAccess.WAY;
+            }
+            for (String value : restrict) {
+                if (restrictedValues.contains(value) && !hasPermissiveTemporalRestriction(way, firstIndex, restrictionKeys, allowedValues))
+                    return WayAccess.CAN_SKIP;
             }
         }
 

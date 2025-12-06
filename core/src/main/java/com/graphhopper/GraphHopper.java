@@ -18,6 +18,10 @@
 package com.graphhopper;
 
 import com.bedatadriven.jackson.datatype.jts.JtsModule;
+import com.carrotsearch.hppc.BitSet;
+import com.carrotsearch.hppc.IntArrayList;
+import com.carrotsearch.hppc.LongArrayList;
+import com.carrotsearch.hppc.sorting.IndirectSort;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
@@ -26,7 +30,6 @@ import com.graphhopper.jackson.Jackson;
 import com.graphhopper.reader.dem.*;
 import com.graphhopper.reader.osm.OSMReader;
 import com.graphhopper.reader.osm.RestrictionTagParser;
-import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHPreparationHandler;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
@@ -68,6 +71,7 @@ import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import static com.graphhopper.util.GHUtility.readCountries;
 import static com.graphhopper.util.Helper.*;
@@ -100,6 +104,7 @@ public class GraphHopper {
     private String ghLocation = "";
     private DAType dataAccessDefaultType = DAType.RAM_STORE;
     private final LinkedHashMap<String, String> dataAccessConfig = new LinkedHashMap<>();
+    private boolean sortGraph = true;
     private boolean elevation = false;
     private LockFactory lockFactory = new NativeFSLockFactory();
     private boolean allowWrites = true;
@@ -293,6 +298,16 @@ public class GraphHopper {
         return profilesByName.get(profileName);
     }
 
+    public TransportationMode getNavigationMode(String profileName) {
+        Profile profile = profilesByName.get(profileName);
+        if (profile == null) return TransportationMode.CAR;
+        try {
+            return TransportationMode.valueOf(profile.getHints().getString("navigation_mode", profileName).toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            return TransportationMode.CAR;
+        }
+    }
+
     /**
      * @return true if storing and fetching elevation data is enabled. Default is false
      */
@@ -343,6 +358,11 @@ public class GraphHopper {
 
     public GraphHopper setMaxSpeedCalculator(MaxSpeedCalculator maxSpeedCalculator) {
         this.maxSpeedCalculator = maxSpeedCalculator;
+        return this;
+    }
+
+    public GraphHopper setSortGraph(boolean sortGraph) {
+        this.sortGraph = sortGraph;
         return this;
     }
 
@@ -494,6 +514,7 @@ public class GraphHopper {
                 dataAccessConfig.put(entry.getKey().substring("graph.dataaccess.mmap.".length()), entry.getValue().toString());
         }
 
+        sortGraph = ghConfig.getBool("graph.sort", sortGraph);
         if (ghConfig.getBool("max_speed_calculator.enabled", false))
             maxSpeedCalculator = new MaxSpeedCalculator(MaxSpeedCalculator.createLegalDefaultSpeeds());
 
@@ -604,7 +625,8 @@ public class GraphHopper {
                 })
                 .filter(Objects::nonNull)
                 .toList());
-        profilesByName.values().forEach(profile -> encodedValues.add(Subnetwork.create(profile.getName())));
+
+        encodedValues.addAll(createSubnetworkEncodedValues());
 
         List<String> sortedEVs = getEVSortIndex(profilesByName);
         encodedValues.sort(Comparator.comparingInt(ev -> sortedEVs.indexOf(ev.getName())));
@@ -617,6 +639,10 @@ public class GraphHopper {
         return emBuilder.build();
     }
 
+    protected List<BooleanEncodedValue> createSubnetworkEncodedValues() {
+        return profilesByName.values().stream().map(profile -> Subnetwork.create(profile.getName())).toList();
+    }
+
     protected List<String> getEVSortIndex(Map<String, Profile> profilesByName) {
         return Collections.emptyList();
     }
@@ -624,16 +650,19 @@ public class GraphHopper {
     protected OSMParsers buildOSMParsers(Map<String, PMap> encodedValuesWithProps,
                                          Map<String, ImportUnit> activeImportUnits,
                                          Map<String, List<String>> restrictionVehicleTypesByProfile,
-                                         List<String> ignoredHighways, String dateRangeParserString) {
+                                         List<String> ignoredHighways) {
         ImportUnitSorter sorter = new ImportUnitSorter(activeImportUnits);
         Map<String, ImportUnit> sortedImportUnits = new LinkedHashMap<>();
         sorter.sort().forEach(name -> sortedImportUnits.put(name, activeImportUnits.get(name)));
-        DateRangeParser dateRangeParser = DateRangeParser.createInstance(dateRangeParserString);
         List<TagParser> sortedParsers = new ArrayList<>();
         sortedImportUnits.forEach((name, importUnit) -> {
             BiFunction<EncodedValueLookup, PMap, TagParser> createTagParser = importUnit.getCreateTagParser();
-            if (createTagParser != null)
-                sortedParsers.add(createTagParser.apply(encodingManager, encodedValuesWithProps.getOrDefault(name, new PMap().putObject("date_range_parser", dateRangeParser))));
+            if (createTagParser != null) {
+                PMap pmap = encodedValuesWithProps.getOrDefault(name, new PMap());
+                if (!pmap.has("date_range_parser_day"))
+                    pmap.putObject("date_range_parser_day", dateRangeParserString);
+                sortedParsers.add(createTagParser.apply(encodingManager, pmap));
+            }
         });
 
         OSMParsers osmParsers = new OSMParsers();
@@ -704,6 +733,10 @@ public class GraphHopper {
             elevationProvider = new MultiSourceElevationProvider(cacheDirStr);
         } else if (eleProviderStr.equalsIgnoreCase("skadi")) {
             elevationProvider = new SkadiProvider(cacheDirStr);
+        } else if (eleProviderStr.equalsIgnoreCase("sonny")) {
+            elevationProvider = new SonnyProvider(cacheDirStr);
+        } else if (eleProviderStr.equalsIgnoreCase("multi3")) {
+            elevationProvider = new MultiSource3ElevationProvider(cacheDirStr);
         }
 
         if (elevationProvider instanceof TileBasedElevationProvider) {
@@ -847,11 +880,12 @@ public class GraphHopper {
                     "graph.encoded_values: " + encodedValuesString);
         }
 
-        // these are used in the snap prevention filter (avoid motorway, tunnel, etc.) so they have to be there
+        // following encoded values are used by instructions and in the snap prevention filter (avoid motorway, tunnel, etc.)
         encodedValuesWithProps.putIfAbsent(RoadClass.KEY, new PMap());
         encodedValuesWithProps.putIfAbsent(RoadEnvironment.KEY, new PMap());
-        // used by instructions...
+        // now only used by instructions:
         encodedValuesWithProps.putIfAbsent(Roundabout.KEY, new PMap());
+        encodedValuesWithProps.putIfAbsent(VehicleAccess.key("car"), new PMap());
         encodedValuesWithProps.putIfAbsent(RoadClassLink.KEY, new PMap());
         encodedValuesWithProps.putIfAbsent(MaxSpeed.KEY, new PMap());
 
@@ -859,8 +893,11 @@ public class GraphHopper {
 
         if (urbanDensityCalculationThreads > 0)
             encodedValuesWithProps.put(UrbanDensity.KEY, new PMap());
-        if (maxSpeedCalculator != null)
+        if (maxSpeedCalculator != null) {
+            if (urbanDensityCalculationThreads <= 0)
+                throw new IllegalArgumentException("For max_speed_calculator the urban density calculation needs to be enabled (e.g. graph.urban_density.threads: 1)");
             encodedValuesWithProps.put(MaxSpeedEstimated.KEY, new PMap());
+        }
 
         Map<String, ImportUnit> activeImportUnits = new LinkedHashMap<>();
         ArrayDeque<String> deque = new ArrayDeque<>(encodedValuesWithProps.keySet());
@@ -873,7 +910,7 @@ public class GraphHopper {
                 deque.addAll(importUnit.getRequiredImportUnits());
         }
         encodingManager = buildEncodingManager(encodedValuesWithProps, activeImportUnits, restrictionVehicleTypesByProfile);
-        osmParsers = buildOSMParsers(encodedValuesWithProps, activeImportUnits, restrictionVehicleTypesByProfile, osmReaderConfig.getIgnoredHighways(), dateRangeParserString);
+        osmParsers = buildOSMParsers(encodedValuesWithProps, activeImportUnits, restrictionVehicleTypesByProfile, osmReaderConfig.getIgnoredHighways());
     }
 
     protected void postImportOSM() {
@@ -881,7 +918,6 @@ public class GraphHopper {
         // These are simply copies of real edges. Any further modifications of the graph edges must take care of keeping
         // the artificial edges in sync with their real counterparts. So if an edge attribute shall be changed this change
         // must also be applied to the corresponding artificial edge.
-
         calculateUrbanDensity();
 
         if (maxSpeedCalculator != null) {
@@ -891,6 +927,9 @@ public class GraphHopper {
 
         if (hasElevation())
             interpolateBridgesTunnelsAndFerries();
+
+        if (sortGraph)
+            sortGraphAlongHilbertCurve(baseGraph);
     }
 
     protected void importOSM() {
@@ -939,6 +978,79 @@ public class GraphHopper {
         properties.create(100);
         if (maxSpeedCalculator != null)
             maxSpeedCalculator.createDataAccessForParser(baseGraph.getDirectory());
+    }
+
+    public static void sortGraphAlongHilbertCurve(BaseGraph graph) {
+        logger.info("sorting graph along Hilbert curve...");
+        StopWatch sw = StopWatch.started();
+        NodeAccess na = graph.getNodeAccess();
+        final int order = 31; // using 15 would allow us to use ints for sortIndices, but this would result in (marginally) slower routing
+        LongArrayList sortIndices = new LongArrayList();
+        for (int node = 0; node < graph.getNodes(); node++)
+            sortIndices.add(latLonToHilbertIndex(na.getLat(node), na.getLon(node), order));
+        int[] nodeOrder = IndirectSort.mergesort(0, graph.getNodes(), (nodeA, nodeB) -> Long.compare(sortIndices.get(nodeA), sortIndices.get(nodeB)));
+        EdgeExplorer explorer = graph.createEdgeExplorer();
+        int edges = graph.getEdges();
+        IntArrayList edgeOrder = new IntArrayList();
+        com.carrotsearch.hppc.BitSet edgesFound = new BitSet(edges);
+        for (int node : nodeOrder) {
+            EdgeIterator iter = explorer.setBaseNode(node);
+            while (iter.next()) {
+                if (!edgesFound.get(iter.getEdge())) {
+                    edgeOrder.add(iter.getEdge());
+                    edgesFound.set(iter.getEdge());
+                }
+            }
+        }
+        IntArrayList newEdgesByOldEdges = ArrayUtil.invert(edgeOrder);
+        IntArrayList newNodesByOldNodes = IntArrayList.from(ArrayUtil.invert(nodeOrder));
+        logger.info("calculating sort order took: " + sw.stop().getTimeString());
+        sortGraphForGivenOrdering(graph, newNodesByOldNodes, newEdgesByOldEdges);
+    }
+
+    public static void sortGraphForGivenOrdering(BaseGraph baseGraph, IntArrayList newNodesByOldNodes, IntArrayList newEdgesByOldEdges) {
+        if (!ArrayUtil.isPermutation(newEdgesByOldEdges))
+            throw new IllegalStateException("New edges: not a permutation");
+        if (!ArrayUtil.isPermutation(newNodesByOldNodes))
+            throw new IllegalStateException("New nodes: not a permutation");
+        logger.info("sort graph for fixed ordering...");
+        StopWatch sw = new StopWatch().start();
+        baseGraph.sortEdges(newEdgesByOldEdges::get);
+        logger.info("sorting {} edges took: {}", Helper.nf(newEdgesByOldEdges.size()), sw.stop().getTimeString());
+        sw = new StopWatch().start();
+        baseGraph.relabelNodes(newNodesByOldNodes::get);
+        logger.info("sorting {} nodes took: {}", Helper.nf(newNodesByOldNodes.size()), sw.stop().getTimeString());
+    }
+
+    public static long latLonToHilbertIndex(double lat, double lon, int order) {
+        double nx = (lon + 180) / 360;
+        double ny = (90 - lat) / 180;
+        long size = 1L << order;
+        long x = (long) (nx * size);
+        long y = (long) (ny * size);
+        x = Math.max(0, Math.min(size - 1, x));
+        y = Math.max(0, Math.min(size - 1, y));
+        return xy2d(order, x, y);
+    }
+
+    public static long xy2d(int n, long x, long y) {
+        long d = 0;
+        for (long s = 1L << (n - 1); s > 0; s >>= 1) {
+            int rx = (x & s) > 0 ? 1 : 0;
+            int ry = (y & s) > 0 ? 1 : 0;
+            d += s * s * ((3 * rx) ^ ry);
+            // rotate
+            if (ry == 0) {
+                if (rx == 1) {
+                    x = s - 1 - x;
+                    y = s - 1 - y;
+                }
+                long tmp = x;
+                x = y;
+                y = tmp;
+            }
+        }
+        return d;
     }
 
     private void calculateUrbanDensity() {
@@ -1043,16 +1155,23 @@ public class GraphHopper {
                     .withTurnCosts(encodingManager.needsTurnCostsSupport())
                     .setSegmentSize(defaultSegmentSize)
                     .build();
-            baseGraph.loadExisting();
-            String storedProfiles = properties.get("profiles");
-            String configuredProfiles = getProfilesString();
-            if (!storedProfiles.equals(configuredProfiles))
-                throw new IllegalStateException("Profiles do not match:"
-                        + "\nGraphhopper config: " + configuredProfiles
-                        + "\nGraph: " + storedProfiles
-                        + "\nChange configuration to match the graph or delete " + baseGraph.getDirectory().getLocation());
             checkProfilesConsistency();
-
+            baseGraph.loadExisting();
+            String storedProfilesString = properties.get("profiles");
+            Map<String, Integer> storedProfileHashes = Arrays.stream(storedProfilesString.split(",")).map(s -> s.split("\\|", 2)).collect((Collectors.toMap(kv -> kv[0], kv -> Integer.parseInt(kv[1]))));
+            Map<String, Integer> configuredProfileHashes = getProfileHashes();
+            configuredProfileHashes.forEach((profile, hash) -> {
+                Integer storedHash = storedProfileHashes.get(profile);
+                if (storedHash == null)
+                    throw new IllegalStateException("You cannot add new profiles to the loaded graph. Profile '" + profile + "' is new."
+                            + "\nExisting profiles: " + String.join(",", storedProfileHashes.keySet())
+                            + "\nChange your configuration to match the graph or delete " + baseGraph.getDirectory().getLocation());
+                if (!hash.equals(storedHash))
+                    throw new IllegalStateException("Profile '" + profile + "' does not match."
+                            + "\nStored: " + storedHash
+                            + "\nConfigured: " + hash
+                            + "\nChange this profile to match the stored one or delete " + baseGraph.getDirectory().getLocation());
+            });
             postProcessing(false);
             directory.loadMMap();
             setFullyLoaded();
@@ -1063,8 +1182,16 @@ public class GraphHopper {
         }
     }
 
+    protected int getProfileHash(Profile profile) {
+        return profile.getVersion();
+    }
+
     private String getProfilesString() {
-        return profilesByName.values().stream().map(p -> p.getName() + "|" + p.getVersion()).collect(Collectors.joining(","));
+        return getProfileHashes().entrySet().stream().map(e -> e.getKey() + "|" + e.getValue()).collect(Collectors.joining(","));
+    }
+
+    private Map<String, Integer> getProfileHashes() {
+        return profilesByName.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> getProfileHash(e.getValue())));
     }
 
     public void checkProfilesConsistency() {
@@ -1314,7 +1441,7 @@ public class GraphHopper {
     protected void loadOrPrepareCH(boolean closeEarly) {
         for (CHProfile profile : chPreparationHandler.getCHProfiles())
             if (!getCHProfileVersion(profile.getProfile()).isEmpty()
-                    && !getCHProfileVersion(profile.getProfile()).equals("" + profilesByName.get(profile.getProfile()).getVersion()))
+                    && !getCHProfileVersion(profile.getProfile()).equals("" + getProfileHash(profilesByName.get(profile.getProfile()))))
                 throw new IllegalArgumentException("CH preparation of " + profile.getProfile() + " already exists in storage and doesn't match configuration");
 
         // we load ch graphs that already exist and prepare the other ones
@@ -1329,7 +1456,7 @@ public class GraphHopper {
             if (loaded.containsKey(profile.getProfile()) && prepared.containsKey(profile.getProfile()))
                 throw new IllegalStateException("CH graph should be either loaded or prepared, but not both: " + profile.getProfile());
             else if (prepared.containsKey(profile.getProfile())) {
-                setCHProfileVersion(profile.getProfile(), profilesByName.get(profile.getProfile()).getVersion());
+                setCHProfileVersion(profile.getProfile(), getProfileHash(profilesByName.get(profile.getProfile())));
                 PrepareContractionHierarchies.Result res = prepared.get(profile.getProfile());
                 chGraphs.put(profile.getProfile(), RoutingCHGraphImpl.fromGraph(baseGraph.getBaseGraph(), res.getCHStorage(), res.getCHConfig()));
             } else if (loaded.containsKey(profile.getProfile())) {
@@ -1337,6 +1464,10 @@ public class GraphHopper {
             } else
                 throw new IllegalStateException("CH graph should be either loaded or prepared: " + profile.getProfile());
         }
+        chGraphs.forEach((name, ch) -> {
+            CHStorage store = ((RoutingCHGraphImpl) ch).getCHStorage();
+            logger.info("CH available for profile {}, {}MB, {}, ({}MB)", name, Helper.nf(store.getCapacity() / Helper.MB), store.toDetailsString(), store.getMB());
+        });
     }
 
     protected Map<String, PrepareContractionHierarchies.Result> prepareCH(boolean closeEarly, List<CHConfig> configsToPrepare) {
@@ -1353,13 +1484,13 @@ public class GraphHopper {
     protected void loadOrPrepareLM(boolean closeEarly) {
         for (LMProfile profile : lmPreparationHandler.getLMProfiles())
             if (!getLMProfileVersion(profile.getProfile()).isEmpty()
-                    && !getLMProfileVersion(profile.getProfile()).equals("" + profilesByName.get(profile.getProfile()).getVersion()))
+                    && !getLMProfileVersion(profile.getProfile()).equals("" + getProfileHash(profilesByName.get(profile.getProfile()))))
                 throw new IllegalArgumentException("LM preparation of " + profile.getProfile() + " already exists in storage and doesn't match configuration");
 
         // we load landmark storages that already exist and prepare the other ones
         List<LMConfig> lmConfigs = createLMConfigs(lmPreparationHandler.getLMProfiles());
         List<LandmarkStorage> loaded = lmPreparationHandler.load(lmConfigs, baseGraph, encodingManager);
-        List<LMConfig> loadedConfigs = loaded.stream().map(LandmarkStorage::getLMConfig).collect(Collectors.toList());
+        List<LMConfig> loadedConfigs = loaded.stream().map(LandmarkStorage::getLMConfig).toList();
         List<LMConfig> configsToPrepare = lmConfigs.stream().filter(c -> !loadedConfigs.contains(c)).collect(Collectors.toList());
         List<PrepareLandmarks> prepared = prepareLM(closeEarly, configsToPrepare);
 
@@ -1373,7 +1504,7 @@ public class GraphHopper {
             if (loadedLMS.isPresent() && preparedLMS.isPresent())
                 throw new IllegalStateException("LM should be either loaded or prepared, but not both: " + prepProfile);
             else if (preparedLMS.isPresent()) {
-                setLMProfileVersion(lmp.getProfile(), profilesByName.get(lmp.getProfile()).getVersion());
+                setLMProfileVersion(lmp.getProfile(), getProfileHash(profilesByName.get(lmp.getProfile())));
                 landmarks.put(lmp.getProfile(), preparedLMS.get().getLandmarkStorage());
             } else
                 loadedLMS.ifPresent(landmarkStorage -> landmarks.put(lmp.getProfile(), landmarkStorage));
@@ -1484,11 +1615,15 @@ public class GraphHopper {
         if (!customAreasDirectory.isEmpty()) {
             ObjectMapper mapper = new ObjectMapper().registerModule(new JtsModule());
             try (DirectoryStream<Path> stream = Files.newDirectoryStream(Paths.get(customAreasDirectory), "*.{geojson,json}")) {
-                for (Path customAreaFile : stream) {
-                    try (BufferedReader reader = Files.newBufferedReader(customAreaFile, StandardCharsets.UTF_8)) {
-                        globalAreas.getFeatures().addAll(mapper.readValue(reader, JsonFeatureCollection.class).getFeatures());
-                    }
-                }
+                StreamSupport.stream(stream.spliterator(), false)
+                        .sorted(Comparator.comparing(Path::toString))
+                        .forEach(customAreaFile -> {
+                            try (BufferedReader reader = Files.newBufferedReader(customAreaFile, StandardCharsets.UTF_8)) {
+                                globalAreas.getFeatures().addAll(mapper.readValue(reader, JsonFeatureCollection.class).getFeatures());
+                            } catch (IOException e) {
+                                throw new UncheckedIOException(e);
+                            }
+                        });
                 logger.info("Will make " + globalAreas.getFeatures().size() + " areas available to all custom profiles. Found in " + customAreasDirectory);
             } catch (IOException e) {
                 throw new UncheckedIOException(e);

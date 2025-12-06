@@ -21,6 +21,7 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
+import com.graphhopper.routing.ev.MaxSpeed;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.StopWatch;
@@ -29,24 +30,25 @@ import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.*;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
+import jakarta.inject.Inject;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriInfo;
 import java.util.*;
 
-import static com.graphhopper.util.Parameters.Details.INTERSECTION;
+import static com.graphhopper.util.Parameters.Details.*;
 import static com.graphhopper.util.Parameters.Routing.*;
 
 /**
  * Provides an endpoint that is consumable with the Mapbox Navigation SDK. The Mapbox Navigation SDK consumes json
  * responses that follow the specification of the Mapbox API v5.
  * <p>
- * See: https://www.mapbox.com/api-documentation/#directions
+ * See: <a href="https://docs.mapbox.com/api/navigation/directions/">mapbox docs</a>.
  * <p>
  * The baseurl of this endpoint is: [YOUR-IP/HOST]/navigate
  * The version of this endpoint is: v5
@@ -54,7 +56,7 @@ import static com.graphhopper.util.Parameters.Routing.*;
  *
  * @author Robin Boldt
  */
-@Path("navigate/directions/v5/gh")
+@Path("navigate")
 public class NavigateResource {
 
     private static final Logger logger = LoggerFactory.getLogger(NavigateResource.class);
@@ -78,7 +80,7 @@ public class NavigateResource {
     }
 
     @GET
-    @Path("/{profile}/{coordinatesArray : .+}")
+    @Path("/directions/v5/gh/{profile}/{coordinatesArray : .+}")
     @Produces({MediaType.APPLICATION_JSON})
     public Response doGet(
             @Context HttpServletRequest httpReq,
@@ -95,10 +97,9 @@ public class NavigateResource {
             @QueryParam("language") @DefaultValue("en") String localeStr,
             @PathParam("profile") String mapboxProfile) {
 
-        /*
-            Currently, the NavigateResponseConverter is pretty limited.
-            Therefore, we enforce these values to make sure the client does not receive an unexpected answer.
-         */
+        StopWatch sw = new StopWatch().start();
+
+        // Make sure the client does not receive an unexpected answer as the NavigateResponseConverter is limited
         if (!geometries.equals("polyline6"))
             throw new IllegalArgumentException("Currently, we only support polyline6");
         if (!enableInstructions)
@@ -110,32 +111,20 @@ public class NavigateResource {
         if (!bannerInstructions)
             throw new IllegalArgumentException("You need to enable banner instructions right now");
 
-        double minPathPrecision = 1;
-        if (overview.equals("full"))
-            minPathPrecision = 0;
-
-        DistanceUtils.Unit unit;
-        if (voiceUnits.equals("metric")) {
-            unit = DistanceUtils.Unit.METRIC;
-        } else {
-            unit = DistanceUtils.Unit.IMPERIAL;
-        }
-
+        double minPathPrecision = overview.equals("full") ? 0 : 1;
         String ghProfile = resolverMap.getOrDefault(mapboxProfile, mapboxProfile);
         List<GHPoint> requestPoints = getPointsFromRequest(httpReq, mapboxProfile);
 
         List<Double> favoredHeadings = getBearing(bearings);
-        if (favoredHeadings.size() > 0 && favoredHeadings.size() != requestPoints.size()) {
+        if (!favoredHeadings.isEmpty() && favoredHeadings.size() != requestPoints.size()) {
             throw new IllegalArgumentException("Number of bearings and waypoints did not match");
         }
 
-        StopWatch sw = new StopWatch().start();
-
-        GHResponse ghResponse = calcRoute(favoredHeadings, requestPoints, ghProfile, localeStr, enableInstructions, minPathPrecision);
+        GHResponse ghResponse = calcRouteForGET(favoredHeadings, requestPoints, ghProfile, localeStr, enableInstructions, minPathPrecision);
 
         // Only do this, when there are more than 2 points, otherwise we use alternative routes
-        if (!ghResponse.hasErrors() && favoredHeadings.size() > 0) {
-            GHResponse noHeadingResponse = calcRoute(Collections.EMPTY_LIST, requestPoints, ghProfile, localeStr, enableInstructions, minPathPrecision);
+        if (!ghResponse.hasErrors() && !favoredHeadings.isEmpty()) {
+            GHResponse noHeadingResponse = calcRouteForGET(Collections.emptyList(), requestPoints, ghProfile, localeStr, enableInstructions, minPathPrecision);
             if (ghResponse.getBest().getDistance() != noHeadingResponse.getBest().getDistance()) {
                 ghResponse.getAll().add(noHeadingResponse.getBest());
             }
@@ -145,8 +134,6 @@ public class NavigateResource {
         String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
         String logStr = httpReq.getQueryString() + " " + infoStr + " " + requestPoints + ", took:"
                 + took + ", " + ghProfile;
-        Locale locale = Helper.getLocale(localeStr);
-        DistanceConfig config = new DistanceConfig(unit, translationMap, locale);
 
         if (ghResponse.hasErrors()) {
             logger.error(logStr + ", errors:" + ghResponse.getErrors());
@@ -155,6 +142,9 @@ public class NavigateResource {
                     header("X-GH-Took", "" + Math.round(took * 1000)).
                     build();
         } else {
+            DistanceUtils.Unit unit = voiceUnits.equals("metric") ? DistanceUtils.Unit.METRIC : DistanceUtils.Unit.IMPERIAL;
+            Locale locale = Helper.getLocale(localeStr);
+            DistanceConfig config = new DistanceConfig(unit, translationMap, locale, graphHopper.getNavigationMode(ghProfile));
             logger.info(logStr);
             return Response.ok(NavigateResponseConverter.convertFromGHResponse(ghResponse, translationMap, locale, config)).
                     header("X-GH-Took", "" + Math.round(took * 1000)).
@@ -162,28 +152,101 @@ public class NavigateResource {
         }
     }
 
-    private GHResponse calcRoute(List<Double> headings, List<GHPoint> requestPoints, String profileStr,
-                                 String localeStr, boolean enableInstructions, double minPathPrecision) {
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response doPost(@NotNull GHRequest request, @Context HttpServletRequest httpReq) {
+        StopWatch sw = new StopWatch().start();
+
+        // do not use routing.snap_preventions_default here as they are not always good for navigation
+
+        // request is a GraphHopper so reject mapbox parameters
+        if (request.getHints().has("geometries"))
+            throw new IllegalArgumentException("Do not set 'geometries'. Per default it is 'polyline6'.");
+        if (request.getHints().has("steps"))
+            throw new IllegalArgumentException("Do not set 'steps'. Per default it is true.");
+        if (request.getHints().has("roundabout_exits"))
+            throw new IllegalArgumentException("Do not set 'roundabout_exits'. Per default it is true.");
+        if (request.getHints().has("voice_instructions"))
+            throw new IllegalArgumentException("Do not set 'voice_instructions'. Per default it is true.");
+        if (request.getHints().has("banner_instructions"))
+            throw new IllegalArgumentException("Do not set 'banner_instructions'. Per default it is true.");
+        if (request.getHints().has("elevation"))
+            throw new IllegalArgumentException("Do not set 'elevation'. Per default it is false.");
+        if (request.getHints().has("overview"))
+            throw new IllegalArgumentException("Do not set 'overview'. Per default it is 'full'.");
+        if (request.getHints().has("language"))
+            throw new IllegalArgumentException("Instead of 'language' use 'locale'. Per default it is 'en'.");
+        if (request.getHints().has("points_encoded"))
+            throw new IllegalArgumentException("Do not set 'points_encoded'. Per default it is true.");
+        if (request.getHints().has("points_encoded_multiplier"))
+            throw new IllegalArgumentException("Do not set 'points_encoded_multiplier'. Per default it is 1e6.");
+        if (!request.getHints().getString("type", "").equals("mapbox"))
+            throw new IllegalArgumentException("Currently type=mapbox required.");
+
+        if (request.getPathDetails().isEmpty()) {
+            if (graphHopper.getEncodingManager().hasEncodedValue(MaxSpeed.KEY))
+                request.setPathDetails(List.of(INTERSECTION, MaxSpeed.KEY, DISTANCE, TIME, AVERAGE_SPEED));
+            else
+                request.setPathDetails(List.of(INTERSECTION));
+        }
+
+        GHResponse ghResponse = graphHopper.route(request);
+
+        double took = sw.stop().getMillisDouble();
+        String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
+        String logStr = infoStr + " " + request.getPoints().size() + ", took: "
+                + String.format("%.1f", took) + " ms, algo: " + request.getAlgorithm() + ", profile: " + request.getProfile()
+                + ", points: " + request.getPoints()
+                + ", custom_model: " + request.getCustomModel();
+
+        if (ghResponse.hasErrors()) {
+            logger.error(logStr + ", errors:" + ghResponse.getErrors());
+            // TODO Mapbox specifies 422 return type for input errors
+            return Response.status(422).entity(NavigateResponseConverter.convertFromGHResponseError(ghResponse)).
+                    header("X-GH-Took", "" + Math.round(took * 1000)).
+                    build();
+        } else {
+            DistanceUtils.Unit unit;
+            if (request.getHints().getString("voice_units", "metric").equals("metric")) {
+                unit = DistanceUtils.Unit.METRIC;
+            } else {
+                unit = DistanceUtils.Unit.IMPERIAL;
+            }
+
+            DistanceConfig config = new DistanceConfig(unit, translationMap, request.getLocale(), graphHopper.getNavigationMode(request.getProfile()));
+            logger.info(logStr);
+            return Response.ok(NavigateResponseConverter.convertFromGHResponse(ghResponse, translationMap, request.getLocale(), config)).
+                    header("X-GH-Took", "" + Math.round(took * 1000)).
+                    build();
+        }
+    }
+
+    private GHResponse calcRouteForGET(List<Double> headings, List<GHPoint> requestPoints, String profileStr,
+                                       String localeStr, boolean enableInstructions, double minPathPrecision) {
         GHRequest request = new GHRequest(requestPoints);
-        if (headings.size() > 0)
+        if (!headings.isEmpty())
             request.setHeadings(headings);
 
         request.setProfile(profileStr).
                 setLocale(localeStr).
                 // We force the intersection details here as we cannot easily add this to the URL
-                setPathDetails(Arrays.asList(INTERSECTION)).
+                setPathDetails(List.of(INTERSECTION)).
                 putHint(CALC_POINTS, true).
                 putHint(INSTRUCTIONS, enableInstructions).
-                putHint(WAY_POINT_MAX_DISTANCE, minPathPrecision).
-                putHint(Parameters.CH.DISABLE, true).
-                putHint(Parameters.Routing.PASS_THROUGH, false);
+                putHint(WAY_POINT_MAX_DISTANCE, minPathPrecision);
+
+        if (requestPoints.size() > 2 || !headings.isEmpty()) {
+            request.putHint(Parameters.CH.DISABLE, true).
+                    putHint(Parameters.Routing.PASS_THROUGH, true);
+        }
 
         return graphHopper.route(request);
     }
 
     /**
      * This method is parsing the request URL String. Unfortunately it seems that there is no better options right now.
-     * See: https://stackoverflow.com/q/51420380/1548788
+     * See: <a href="https://stackoverflow.com/q/51420380/1548788">...</a>
      * <p>
      * The url looks like: ".../{profile}/1.522438,42.504606;1.527209,42.504776;1.526113,42.505144;1.527218,42.50529?.."
      */
@@ -194,8 +257,8 @@ public class NavigateResource {
         url = url.substring(urlStart.length());
         String[] pointStrings = url.split(";");
         List<GHPoint> points = new ArrayList<>(pointStrings.length);
-        for (int i = 0; i < pointStrings.length; i++) {
-            points.add(GHPoint.fromStringLonLat(pointStrings[i]));
+        for (String pointString : pointStrings) {
+            points.add(GHPoint.fromStringLonLat(pointString));
         }
 
         return points;
@@ -203,13 +266,12 @@ public class NavigateResource {
 
     static List<Double> getBearing(String bearingString) {
         if (bearingString == null || bearingString.isEmpty())
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
 
         String[] bearingArray = bearingString.split(";", -1);
         List<Double> bearings = new ArrayList<>(bearingArray.length);
 
-        for (int i = 0; i < bearingArray.length; i++) {
-            String singleBearing = bearingArray[i];
+        for (String singleBearing : bearingArray) {
             if (singleBearing.isEmpty()) {
                 bearings.add(Double.NaN);
             } else {

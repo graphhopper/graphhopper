@@ -22,14 +22,14 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>directions-api-client-hc</artifactId>
-    <version>10.0-SNAPSHOT</version>
+    <version>12.0-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>GraphHopper Directions API hand-crafted Java Client.</name>
      
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>
-        <version>10.0-SNAPSHOT</version>
+        <version>12.0-SNAPSHOT</version>
     </parent>  
     
     <dependencies>
@@ -38,6 +38,7 @@
             <artifactId>graphhopper-web-api</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
+        <!-- use same kotlin stdlib version as we use in core -->
         <dependency>
             <groupId>com.squareup.okhttp3</groupId>
             <artifactId>okhttp</artifactId>

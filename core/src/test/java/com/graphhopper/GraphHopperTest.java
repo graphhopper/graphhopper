@@ -20,7 +20,6 @@ package com.graphhopper;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
-import com.graphhopper.config.TurnCostsConfig;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.dem.SkadiProvider;
@@ -105,8 +104,8 @@ public class GraphHopperTest {
             ASTAR + ",false,361",
             DIJKSTRA_BI + ",false,340",
             ASTAR_BI + ",false,192",
-            ASTAR_BI + ",true,46",
-            DIJKSTRA_BI + ",true,51"
+            DIJKSTRA_BI + ",true,45",
+            ASTAR_BI + ",true,43",
     })
     public void testMonacoDifferentAlgorithms(String algo, boolean withCH, int expectedVisitedNodes) {
         GraphHopper hopper = new GraphHopper().
@@ -158,7 +157,7 @@ public class GraphHopperTest {
                 setAlgorithm(ASTAR).setProfile(profile));
 
         // identify the number of counts to compare with CH foot route
-        assertEquals(1033, rsp.getHints().getLong("visited_nodes.sum", 0));
+        assertEquals(1040, rsp.getHints().getLong("visited_nodes.sum", 0));
 
         ResponsePath res = rsp.getBest();
         assertEquals(3536, res.getDistance(), 1);
@@ -214,20 +213,20 @@ public class GraphHopperTest {
         // no simplification
         hopper.getRouterConfig().setSimplifyResponse(false);
         GHResponse routeRsp = hopper.route(request);
-        assertEquals(8, routeRsp.getBest().getInstructions().size());
-        assertEquals(50, routeRsp.getBest().getPoints().size());
+        assertEquals(10, routeRsp.getBest().getInstructions().size());
+        assertEquals(52, routeRsp.getBest().getPoints().size());
 
         // with simplification
         hopper.getRouterConfig().setSimplifyResponse(true);
         routeRsp = hopper.route(request);
-        assertEquals(8, routeRsp.getBest().getInstructions().size());
-        assertEquals(46, routeRsp.getBest().getPoints().size());
+        assertEquals(10, routeRsp.getBest().getInstructions().size());
+        assertEquals(50, routeRsp.getBest().getPoints().size());
 
         // no instructions
         request.getHints().putObject("instructions", false);
         routeRsp = hopper.route(request);
         // the path is still simplified
-        assertEquals(46, routeRsp.getBest().getPoints().size());
+        assertEquals(50, routeRsp.getBest().getPoints().size());
     }
 
     @Test
@@ -254,7 +253,7 @@ public class GraphHopperTest {
             ResponsePath res = rsp.getBest();
             assertEquals(286, res.getDistance(), 1);
             // note that this includes the u-turn time for the second u-turn, but not the first, because it's a waypoint!
-            assertEquals(54358, res.getTime(), 1);
+            assertEquals(34358, res.getTime(), 1);
             // the route follows Avenue de l'Annonciade to the waypoint, u-turns there, then does a sharp right turn onto the parallel (dead-end) road,
             // does a u-turn at the dead-end and then arrives at the destination
             InstructionList il = res.getInstructions();
@@ -446,29 +445,27 @@ public class GraphHopperTest {
 
     @Test
     public void testAlternativeRoutesBike() {
-        final String profile = "profile";
-
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(BAYREUTH).
                 setEncodedValuesString("car_access, car_average_speed, bike_access, bike_priority, bike_average_speed").
-                setProfiles(TestProfiles.accessSpeedAndPriority(profile, "bike"));
+                setProfiles(TestProfiles.accessSpeedAndPriority("bike", "bike"));
         hopper.importOrLoad();
 
-        GHRequest req = new GHRequest(50.028917, 11.496506, 49.982089,11.599224).
-                setAlgorithm(ALT_ROUTE).setProfile(profile);
+        GHRequest req = new GHRequest(50.028917, 11.496506, 49.981979, 11.591156).
+                setAlgorithm(ALT_ROUTE).setProfile("bike");
 
         req.putHint("alternative_route.max_paths", 3);
         GHResponse rsp = hopper.route(req);
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
 
         assertEquals(3, rsp.getAll().size());
+        // via obergräfenthal
+        assertEquals(2651, rsp.getAll().get(0).getTime() / 1000);
         // via ramsenthal
-        assertEquals(2636, rsp.getAll().get(0).getTime() / 1000);
+        assertEquals(2771, rsp.getAll().get(1).getTime() / 1000);
         // via unterwaiz
-        assertEquals(2985, rsp.getAll().get(1).getTime() / 1000);
-        // via eselslohe -> theta; BTW: here smaller time as 2nd alternative due to priority influences time order
-        assertEquals(2783, rsp.getAll().get(2).getTime() / 1000);
+        assertEquals(2850, rsp.getAll().get(2).getTime() / 1000);
     }
 
     @Test
@@ -1283,11 +1280,11 @@ public class GraphHopperTest {
                 setProfile(bikeProfile));
         assertFalse(rsp.hasErrors());
         ResponsePath res = rsp.getBest();
-        assertEquals(6932.2, res.getDistance(), .1);
-        assertEquals(117, res.getPoints().size());
+        assertEquals(7007.7, res.getDistance(), .1);
+        assertEquals(136, res.getPoints().size());
 
         InstructionList il = res.getInstructions();
-        assertEquals(19, il.size());
+        assertEquals(25, il.size());
 
         assertEquals("continue onto Obere Landstraße", il.get(0).getTurnDescription(tr));
         assertEquals(69.28, (Double) il.get(0).getExtraInfoJSON().get("heading"), .01);
@@ -1298,12 +1295,9 @@ public class GraphHopperTest {
         assertEquals("keep left onto Hoher Markt", il.get(4).getTurnDescription(tr));
         assertEquals("turn right onto Wegscheid", il.get(6).getTurnDescription(tr));
         assertEquals("continue onto Wegscheid", il.get(7).getTurnDescription(tr));
-        assertEquals("turn right onto Ringstraße", il.get(8).getTurnDescription(tr));
-        assertEquals("keep left onto Eyblparkstraße", il.get(9).getTurnDescription(tr));
-        assertEquals("keep left onto Austraße", il.get(10).getTurnDescription(tr));
-        assertEquals("keep left onto Rechte Kremszeile", il.get(11).getTurnDescription(tr));
+        assertEquals("at roundabout, take exit 1 onto Hohensteinstraße", il.get(8).getTurnDescription(tr));
         //..
-        assertEquals("turn right onto Treppelweg", il.get(15).getTurnDescription(tr));
+        assertEquals("turn right onto Treppelweg", il.get(21).getTurnDescription(tr));
 
         rsp = hopper.route(new GHRequest(48.410987, 15.599492, 48.411172, 15.600371).
                 setAlgorithm(ASTAR).setProfile(footProfile));
@@ -1418,8 +1412,8 @@ public class GraphHopperTest {
                 .setProfile(bikeProfile));
         res = rsp.getBest();
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
-        assertEquals(536, res.getTime() / 1000f, 1);
-        assertEquals(2522, res.getDistance(), 1);
+        assertEquals(500, res.getTime() / 1000f, 1);
+        assertEquals(2211, res.getDistance(), 1);
 
         rsp = hopper.route(new GHRequest(43.73005, 7.415707, 43.741522, 7.42826)
                 .setProfile("profile3"));
@@ -1691,13 +1685,14 @@ public class GraphHopperTest {
         assertFalse(response.hasErrors(), response.getErrors().toString());
         assertEquals(3587, response.getBest().getDistance(), 1);
 
-        // currently required to disable LM for p2 too, see #1904 (default is LM for *all* profiles once LM preparation is enabled for any profile)
+        // p2 has no LM and so no lm.disable=true is required
         response = hopper.route(new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
                 setCustomModel(customModel).
                 setProfile("p2"));
-        assertTrue(response.getErrors().get(0).toString().contains("Cannot find LM preparation for the requested profile: 'p2'"), response.getErrors().toString());
-        assertEquals(IllegalArgumentException.class, response.getErrors().get(0).getClass());
+        assertFalse(response.hasErrors(), response.getErrors().toString());
+        assertEquals(3587, response.getBest().getDistance(), 1);
 
+        // but still works
         response = hopper.route(new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
                 setCustomModel(customModel).
                 setProfile("p2").putHint("lm.disable", true));
@@ -1749,21 +1744,21 @@ public class GraphHopperTest {
         GHRequest req = new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
                 setProfile(profile2);
 
-        // try with CH
+        // no CH or LM profile and so nothing can be ignored
         req.putHint(CH.DISABLE, false);
         req.putHint(Landmark.DISABLE, false);
         GHResponse res = hopper.route(req);
-        assertTrue(res.hasErrors(), res.getErrors().toString());
-        assertTrue(res.getErrors().get(0).getMessage().contains("Cannot find CH preparation for the requested profile: 'short_fast_profile'"), res.getErrors().toString());
+        assertFalse(res.hasErrors(), res.getErrors().toString());
+        assertEquals(3587, res.getBest().getDistance(), 1);
 
         // try with LM
         req.putHint(CH.DISABLE, true);
         req.putHint(Landmark.DISABLE, false);
         res = hopper.route(req);
-        assertTrue(res.hasErrors(), res.getErrors().toString());
-        assertTrue(res.getErrors().get(0).getMessage().contains("Cannot find LM preparation for the requested profile: 'short_fast_profile'"), res.getErrors().toString());
+        assertFalse(res.hasErrors(), res.getErrors().toString());
+        assertEquals(3587, res.getBest().getDistance(), 1);
 
-        // falling back to non-prepared algo works
+        // falling back to non-prepared algo
         req.putHint(CH.DISABLE, true);
         req.putHint(Landmark.DISABLE, true);
         res = hopper.route(req);
@@ -1833,6 +1828,9 @@ public class GraphHopperTest {
             assertEquals(path.hasErrors(), pathLM.hasErrors(), failMessage);
 
             if (!path.hasErrors()) {
+                assertEquals(path.getRouteWeight(), pathCH.getRouteWeight(), 1.e-1, failMessage);
+                assertEquals(path.getRouteWeight(), pathLM.getRouteWeight(), 1.e-1, failMessage);
+
                 assertEquals(path.getDistance(), pathCH.getDistance(), 0.1, failMessage);
                 assertEquals(path.getDistance(), pathLM.getDistance(), 0.1, failMessage);
 
@@ -1984,8 +1982,8 @@ public class GraphHopperTest {
 
     @Test
     public void testNodeBasedCHOnlyButTurnCostForNonCH() {
-        final String profile1 = "car_profile_tc";
-        final String profile2 = "car_profile_notc";
+        final String profile_tc = "car_profile_tc";
+        final String profile_no_tc = "car_profile_notc";
 
         // before edge-based CH was added a common case was to use edge-based without CH and CH for node-based
         GraphHopper hopper = new GraphHopper().
@@ -1993,35 +1991,32 @@ public class GraphHopperTest {
                 setOSMFile(MOSCOW).
                 setEncodedValuesString("car_access, car_average_speed").
                 setProfiles(List.of(
-                        TestProfiles.accessAndSpeed(profile1, "car").setTurnCostsConfig(TurnCostsConfig.car()),
-                        TestProfiles.accessAndSpeed(profile2, "car")
+                        TestProfiles.accessAndSpeed(profile_tc, "car").setTurnCostsConfig(TurnCostsConfig.car()),
+                        TestProfiles.accessAndSpeed(profile_no_tc, "car")
                 )).
                 setStoreOnFlush(true);
         hopper.getCHPreparationHandler()
                 // we only do the CH preparation for the profile without turn costs
-                .setCHProfiles(new CHProfile(profile2));
+                .setCHProfiles(new CHProfile(profile_no_tc));
         hopper.importOrLoad();
 
         GHRequest req = new GHRequest(55.813357, 37.5958585, 55.811042, 37.594689);
-        // without CH, turn turn costs on and off
+        // without CH and with tc
         req.putHint(CH.DISABLE, true);
-        req.setProfile(profile1);
+        req.setProfile(profile_tc);
         assertEquals(1044, hopper.route(req).getBest().getDistance(), 1);
-        req.setProfile(profile2);
+        // without CH and without tc
+        req.setProfile(profile_no_tc);
         assertEquals(400, hopper.route(req).getBest().getDistance(), 1);
 
-        // with CH, turn turn costs on and off, since turn costs not supported for CH throw an error
+        // with CH and without tc => since turn costs not supported for CH throw an error
         req.putHint(CH.DISABLE, false);
-        req.setProfile(profile2);
+        req.setProfile(profile_no_tc);
         assertEquals(400, hopper.route(req).getBest().getDistance(), 1);
-        req.setProfile(profile1);
+        // since there is no CH preparation for car_profile_tc the ch.disable parameter is ignored
+        req.setProfile(profile_tc);
         GHResponse rsp = hopper.route(req);
-        assertEquals(1, rsp.getErrors().size());
-        String expected = "Cannot find CH preparation for the requested profile: 'car_profile_tc'" +
-                "\nYou can try disabling CH using ch.disable=true" +
-                "\navailable CH profiles: [car_profile_notc]";
-        assertTrue(rsp.getErrors().toString().contains(expected), "unexpected error:\n" + rsp.getErrors().toString() + "\nwhen expecting an error containing:\n" + expected
-        );
+        assertEquals(1044, hopper.route(req).getBest().getDistance(), 1);
     }
 
     @Test
@@ -2077,34 +2072,6 @@ public class GraphHopperTest {
         rsp = hopper.route(req);
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(658, rsp.getBest().getDistance(), 1);
-    }
-
-    @Test
-    public void testTagParserProcessingOrder() {
-        // it does not matter when the OSMBikeNetworkTagParser is added (before or even after BikeCommonPriorityParser)
-        // as it is a different type but it is important that OSMSmoothnessParser is added before smoothnessEnc is used
-        // in BikeCommonAverageSpeedParser
-        GraphHopper hopper = new GraphHopper().
-                setGraphHopperLocation(GH_LOCATION).
-                setOSMFile(BAYREUTH).
-                setMinNetworkSize(0).
-                setEncodedValuesString("bike_access, bike_priority, bike_average_speed").
-                setProfiles(TestProfiles.accessSpeedAndPriority("bike"));
-
-        hopper.importOrLoad();
-        GHRequest req = new GHRequest(new GHPoint(49.98021, 11.50730), new GHPoint(49.98026, 11.50795));
-        req.setProfile("bike");
-        GHResponse rsp = hopper.route(req);
-        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
-        // due to smoothness=bad => 7 seconds longer
-        assertEquals(21, rsp.getBest().getTime() / 1000.0, 1);
-
-        req = new GHRequest(new GHPoint(50.015067, 11.502093), new GHPoint(50.014694, 11.499748));
-        req.setProfile("bike");
-        rsp = hopper.route(req);
-        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
-        // due to bike network (relation 2247905) a lower route weight => otherwise 29.0
-        assertEquals(23.2, rsp.getBest().getRouteWeight(), .1);
     }
 
     @Test
@@ -2261,7 +2228,7 @@ public class GraphHopperTest {
         assertFalse(res.hasErrors(), "routing should not fail but had errors: " + res.getErrors());
         assertEquals(242.5, res.getBest().getRouteWeight(), 0.1);
         assertEquals(1917, res.getBest().getDistance(), 1);
-        assertEquals(243000, res.getBest().getTime(), 1000);
+        assertEquals(163000, res.getBest().getTime(), 1000);
     }
 
     @Test

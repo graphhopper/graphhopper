@@ -40,7 +40,6 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URL;
 import java.util.*;
-import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -173,6 +172,10 @@ public class LMPreparationHandler {
      * Prepares the landmark data for all given configs
      */
     public List<PrepareLandmarks> prepare(List<LMConfig> lmConfigs, BaseGraph baseGraph, EncodingManager encodingManager, StorableProperties properties, LocationIndex locationIndex, final boolean closeEarly) {
+        if (lmConfigs.isEmpty()) {
+            LOGGER.info("There are no LMs to prepare");
+            return Collections.emptyList();
+        }
         List<PrepareLandmarks> preparations = createPreparations(lmConfigs, baseGraph, encodingManager, locationIndex);
         List<Runnable> prepareRunnables = new ArrayList<>();
         for (int i = 0; i < preparations.size(); i++) {

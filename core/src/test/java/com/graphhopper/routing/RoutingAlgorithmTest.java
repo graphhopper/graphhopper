@@ -236,8 +236,8 @@ public class RoutingAlgorithmTest {
     public void testCalcShortestPath_sourceEqualsTarget(Fixture f) {
         // 0-1-2
         BaseGraph graph = f.createGHStorage();
-        graph.edge(0, 1).setDistance(1).set(f.carSpeedEnc, 60, 60);
-        graph.edge(1, 2).setDistance(2).set(f.carSpeedEnc, 60, 60);
+        graph.edge(0, 1).setDistance(100).set(f.carSpeedEnc, 60, 60);
+        graph.edge(1, 2).setDistance(200).set(f.carSpeedEnc, 60, 60);
 
         Path p = f.calcPath(graph, 0, 0);
         assertPathFromEqualsTo(p, 0);
@@ -395,26 +395,26 @@ public class RoutingAlgorithmTest {
 
     // see test-graph.svg !
     static void initTestStorage(Graph graph, DecimalEncodedValue speedEnc) {
-        graph.edge(0, 1).setDistance(7).set(speedEnc, 60, 60);
-        graph.edge(0, 4).setDistance(6).set(speedEnc, 60, 60);
+        graph.edge(0, 1).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(0, 4).setDistance(0).set(speedEnc, 60, 60);
 
-        graph.edge(1, 4).setDistance(2).set(speedEnc, 60, 60);
-        graph.edge(1, 5).setDistance(8).set(speedEnc, 60, 60);
-        graph.edge(1, 2).setDistance(2).set(speedEnc, 60, 60);
+        graph.edge(1, 4).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(1, 5).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(1, 2).setDistance(0).set(speedEnc, 60, 60);
 
-        graph.edge(2, 5).setDistance(5).set(speedEnc, 60, 60);
-        graph.edge(2, 3).setDistance(2).set(speedEnc, 60, 60);
+        graph.edge(2, 5).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(2, 3).setDistance(0).set(speedEnc, 60, 60);
 
-        graph.edge(3, 5).setDistance(2).set(speedEnc, 60, 60);
-        graph.edge(3, 7).setDistance(10).set(speedEnc, 60, 60);
+        graph.edge(3, 5).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(3, 7).setDistance(0).set(speedEnc, 60, 60);
 
-        graph.edge(4, 6).setDistance(4).set(speedEnc, 60, 60);
-        graph.edge(4, 5).setDistance(7).set(speedEnc, 60, 60);
+        graph.edge(4, 6).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(4, 5).setDistance(0).set(speedEnc, 60, 60);
 
-        graph.edge(5, 6).setDistance(2).set(speedEnc, 60, 60);
-        graph.edge(5, 7).setDistance(1).set(speedEnc, 60, 60);
+        graph.edge(5, 6).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(5, 7).setDistance(0).set(speedEnc, 60, 60);
 
-        EdgeIteratorState edge6_7 = graph.edge(6, 7).setDistance(5).set(speedEnc, 60, 60);
+        EdgeIteratorState edge6_7 = graph.edge(6, 7).setDistance(0).set(speedEnc, 60, 60);
 
         updateDistancesFor(graph, 0, 0.0010, 0.00001);
         updateDistancesFor(graph, 1, 0.0008, 0.0000);
@@ -444,18 +444,18 @@ public class RoutingAlgorithmTest {
         // 7-5-6
         //  \|
         //   8
-        graph.edge(0, 1).setDistance(7).set(f.carSpeedEnc, 60, 60);
-        graph.edge(5, 6).setDistance(2).set(f.carSpeedEnc, 60, 60);
-        graph.edge(5, 7).setDistance(1).set(f.carSpeedEnc, 60, 60);
-        graph.edge(5, 8).setDistance(1).set(f.carSpeedEnc, 60, 60);
-        graph.edge(7, 8).setDistance(1).set(f.carSpeedEnc, 60, 60);
+        graph.edge(0, 1).setDistance(700).set(f.carSpeedEnc, 60, 60);
+        graph.edge(5, 6).setDistance(200).set(f.carSpeedEnc, 60, 60);
+        graph.edge(5, 7).setDistance(100).set(f.carSpeedEnc, 60, 60);
+        graph.edge(5, 8).setDistance(100).set(f.carSpeedEnc, 60, 60);
+        graph.edge(7, 8).setDistance(100).set(f.carSpeedEnc, 60, 60);
         assertFalse(f.calcPath(graph, 0, 5).isFound());
 
         // disconnected as directed graph
         // 2-0->1
         graph = f.createGHStorage();
-        graph.edge(0, 1).setDistance(1).set(f.carSpeedEnc, 60, 0);
-        graph.edge(0, 2).setDistance(1).set(f.carSpeedEnc, 60, 60);
+        graph.edge(0, 1).setDistance(100).set(f.carSpeedEnc, 60, 0);
+        graph.edge(0, 2).setDistance(100).set(f.carSpeedEnc, 60, 60);
         f.resetCH();
         assertFalse(f.calcPath(graph, 1, 2).isFound());
         assertTrue(f.calcPath(graph, 2, 1).isFound());
@@ -517,16 +517,16 @@ public class RoutingAlgorithmTest {
     //  7-6----5
     public static void initBiGraph(Graph graph, DecimalEncodedValue speedEnc) {
         // distance will be overwritten in second step as we need to calculate it from lat,lon
-        graph.edge(0, 1).setDistance(1).set(speedEnc, 60, 60);
-        graph.edge(1, 2).setDistance(1).set(speedEnc, 60, 60);
-        graph.edge(2, 3).setDistance(1).set(speedEnc, 60, 60);
-        graph.edge(3, 4).setDistance(1).set(speedEnc, 60, 60);
-        graph.edge(4, 5).setDistance(1).set(speedEnc, 60, 60);
-        graph.edge(5, 6).setDistance(1).set(speedEnc, 60, 60);
-        graph.edge(6, 7).setDistance(1).set(speedEnc, 60, 60);
-        graph.edge(7, 0).setDistance(1).set(speedEnc, 60, 60);
-        graph.edge(3, 8).setDistance(1).set(speedEnc, 60, 60);
-        graph.edge(8, 6).setDistance(1).set(speedEnc, 60, 60);
+        graph.edge(0, 1).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(1, 2).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(2, 3).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(3, 4).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(4, 5).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(5, 6).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(6, 7).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(7, 0).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(3, 8).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(8, 6).setDistance(0).set(speedEnc, 60, 60);
 
         // we need lat,lon for edge precise queries because the distances of snapped point
         // to adjacent nodes is calculated from lat,lon of the necessary points
@@ -552,16 +552,16 @@ public class RoutingAlgorithmTest {
         // \   /   /
         //  7-6-5-/
         BaseGraph graph = f.createGHStorage();
-        graph.edge(0, 1).setDistance(1).set(f.carSpeedEnc, 60, 60);
-        graph.edge(1, 2).setDistance(1).set(f.carSpeedEnc, 60, 60);
-        graph.edge(2, 3).setDistance(1).set(f.carSpeedEnc, 60, 60);
-        graph.edge(3, 4).setDistance(1).set(f.carSpeedEnc, 60, 60);
-        graph.edge(4, 5).setDistance(1).set(f.carSpeedEnc, 60, 60);
-        graph.edge(5, 6).setDistance(1).set(f.carSpeedEnc, 60, 60);
-        graph.edge(6, 7).setDistance(1).set(f.carSpeedEnc, 60, 60);
-        graph.edge(7, 0).setDistance(1).set(f.carSpeedEnc, 60, 60);
-        graph.edge(3, 8).setDistance(1).set(f.carSpeedEnc, 60, 60);
-        graph.edge(8, 6).setDistance(1).set(f.carSpeedEnc, 60, 60);
+        graph.edge(0, 1).setDistance(100).set(f.carSpeedEnc, 60, 60);
+        graph.edge(1, 2).setDistance(100).set(f.carSpeedEnc, 60, 60);
+        graph.edge(2, 3).setDistance(100).set(f.carSpeedEnc, 60, 60);
+        graph.edge(3, 4).setDistance(100).set(f.carSpeedEnc, 60, 60);
+        graph.edge(4, 5).setDistance(100).set(f.carSpeedEnc, 60, 60);
+        graph.edge(5, 6).setDistance(100).set(f.carSpeedEnc, 60, 60);
+        graph.edge(6, 7).setDistance(100).set(f.carSpeedEnc, 60, 60);
+        graph.edge(7, 0).setDistance(100).set(f.carSpeedEnc, 60, 60);
+        graph.edge(3, 8).setDistance(100).set(f.carSpeedEnc, 60, 60);
+        graph.edge(8, 6).setDistance(100).set(f.carSpeedEnc, 60, 60);
 
         // run the same query twice, this can be interesting because in the second call algorithms that pre-process
         // the graph might depend on the state of the graph after the first call 
@@ -590,7 +590,7 @@ public class RoutingAlgorithmTest {
         BaseGraph graph = f.createGHStorage();
         initBidirGraphManualDistances(graph, f.carSpeedEnc);
         Path p = f.calcPath(graph, 0, 4);
-        assertEquals(40, p.getDistance(), 1e-4, p.toString());
+        assertEquals(4000, p.getDistance(), 1e-4, p.toString());
         assertEquals(5, p.calcNodes().size(), p.toString());
         assertEquals(nodes(0, 7, 6, 5, 4), p.calcNodes());
     }
@@ -601,16 +601,16 @@ public class RoutingAlgorithmTest {
         // |    8  |
         // \   /   /
         //  7-6-5-/
-        graph.edge(0, 1).setDistance(100).set(speedEnc, 60, 60);
-        graph.edge(1, 2).setDistance(1).set(speedEnc, 60, 60);
-        graph.edge(2, 3).setDistance(1).set(speedEnc, 60, 60);
-        graph.edge(3, 4).setDistance(1).set(speedEnc, 60, 60);
-        graph.edge(4, 5).setDistance(20).set(speedEnc, 60, 60);
-        graph.edge(5, 6).setDistance(10).set(speedEnc, 60, 60);
-        graph.edge(6, 7).setDistance(5).set(speedEnc, 60, 60);
-        graph.edge(7, 0).setDistance(5).set(speedEnc, 60, 60);
-        graph.edge(3, 8).setDistance(20).set(speedEnc, 60, 60);
-        graph.edge(8, 6).setDistance(20).set(speedEnc, 60, 60);
+        graph.edge(0, 1).setDistance(10000).set(speedEnc, 60, 60);
+        graph.edge(1, 2).setDistance(100).set(speedEnc, 60, 60);
+        graph.edge(2, 3).setDistance(100).set(speedEnc, 60, 60);
+        graph.edge(3, 4).setDistance(100).set(speedEnc, 60, 60);
+        graph.edge(4, 5).setDistance(2000).set(speedEnc, 60, 60);
+        graph.edge(5, 6).setDistance(1000).set(speedEnc, 60, 60);
+        graph.edge(6, 7).setDistance(500).set(speedEnc, 60, 60);
+        graph.edge(7, 0).setDistance(500).set(speedEnc, 60, 60);
+        graph.edge(3, 8).setDistance(2000).set(speedEnc, 60, 60);
+        graph.edge(8, 6).setDistance(2000).set(speedEnc, 60, 60);
     }
 
     @ParameterizedTest
@@ -700,8 +700,8 @@ public class RoutingAlgorithmTest {
     public void testCannotCalculateSP(Fixture f) {
         // 0->1->2
         BaseGraph graph = f.createGHStorage();
-        graph.edge(0, 1).setDistance(1).set(f.carSpeedEnc, 60, 0);
-        graph.edge(1, 2).setDistance(1).set(f.carSpeedEnc, 60, 0);
+        graph.edge(0, 1).setDistance(100).set(f.carSpeedEnc, 60, 0);
+        graph.edge(1, 2).setDistance(100).set(f.carSpeedEnc, 60, 0);
         Path p = f.calcPath(graph, 0, 2);
         assertEquals(3, p.calcNodes().size(), p.toString());
     }
@@ -710,16 +710,16 @@ public class RoutingAlgorithmTest {
     @ArgumentsSource(FixtureProvider.class)
     public void testDirectedGraphBug1(Fixture f) {
         BaseGraph graph = f.createGHStorage();
-        graph.edge(0, 1).setDistance(3).set(f.carSpeedEnc, 60, 0);
-        graph.edge(1, 2).setDistance(2.99).set(f.carSpeedEnc, 60, 0);
+        graph.edge(0, 1).setDistance(300).set(f.carSpeedEnc, 60, 0);
+        graph.edge(1, 2).setDistance(299).set(f.carSpeedEnc, 60, 0);
 
-        graph.edge(0, 3).setDistance(2).set(f.carSpeedEnc, 60, 0);
-        graph.edge(3, 4).setDistance(3).set(f.carSpeedEnc, 60, 0);
-        graph.edge(4, 2).setDistance(1).set(f.carSpeedEnc, 60, 0);
+        graph.edge(0, 3).setDistance(200).set(f.carSpeedEnc, 60, 0);
+        graph.edge(3, 4).setDistance(300).set(f.carSpeedEnc, 60, 0);
+        graph.edge(4, 2).setDistance(100).set(f.carSpeedEnc, 60, 0);
 
         Path p = f.calcPath(graph, 0, 2);
         assertEquals(nodes(0, 1, 2), p.calcNodes(), p.toString());
-        assertEquals(5.99, p.getDistance(), 1e-4, p.toString());
+        assertEquals(599, p.getDistance(), 1, p.toString());
     }
 
     @ParameterizedTest
@@ -729,10 +729,10 @@ public class RoutingAlgorithmTest {
         //    | /
         //    3<
         BaseGraph graph = f.createGHStorage();
-        graph.edge(0, 1).setDistance(1).set(f.carSpeedEnc, 60, 0);
-        graph.edge(1, 2).setDistance(1).set(f.carSpeedEnc, 60, 0);
-        graph.edge(2, 3).setDistance(1).set(f.carSpeedEnc, 60, 0);
-        graph.edge(3, 1).setDistance(4).set(f.carSpeedEnc, 60, 60);
+        graph.edge(0, 1).setDistance(100).set(f.carSpeedEnc, 60, 0);
+        graph.edge(1, 2).setDistance(100).set(f.carSpeedEnc, 60, 0);
+        graph.edge(2, 3).setDistance(100).set(f.carSpeedEnc, 60, 0);
+        graph.edge(3, 1).setDistance(400).set(f.carSpeedEnc, 60, 60);
 
         Path p = f.calcPath(graph, 0, 3);
         assertEquals(nodes(0, 1, 2, 3), p.calcNodes());
@@ -747,21 +747,16 @@ public class RoutingAlgorithmTest {
     public void testWithCoordinates(Fixture f) {
         Weighting weighting = new SpeedWeighting(f.carSpeedEnc);
         BaseGraph graph = f.createGHStorage(false);
-        graph.edge(0, 1).setDistance(2).set(f.carSpeedEnc, 60, 60).
+        graph.edge(0, 1).setDistance(0).set(f.carSpeedEnc, 60, 60).
                 setWayGeometry(Helper.createPointList(1.5, 1));
-        graph.edge(2, 3).setDistance(2).set(f.carSpeedEnc, 60, 60).
+        graph.edge(2, 3).setDistance(0).set(f.carSpeedEnc, 60, 60).
                 setWayGeometry(Helper.createPointList(0, 1.5));
-        graph.edge(3, 4).setDistance(2).set(f.carSpeedEnc, 60, 60).
+        graph.edge(3, 4).setDistance(0).set(f.carSpeedEnc, 60, 60).
                 setWayGeometry(Helper.createPointList(0, 2));
-
-        // duplicate but the second edge is longer
-        graph.edge(0, 2).setDistance(1.2).set(f.carSpeedEnc, 60, 60);
-        graph.edge(0, 2).setDistance(1.5).set(f.carSpeedEnc, 60, 60).
-                setWayGeometry(Helper.createPointList(0.5, 0));
-
-        graph.edge(1, 3).setDistance(1.3).set(f.carSpeedEnc, 60, 60).
+        graph.edge(0, 2).setDistance(0).set(f.carSpeedEnc, 60, 60);
+        graph.edge(1, 3).setDistance(0).set(f.carSpeedEnc, 60, 60).
                 setWayGeometry(Helper.createPointList(0.5, 1.5));
-        graph.edge(1, 4).setDistance(1).set(f.carSpeedEnc, 60, 60);
+        graph.edge(1, 4).setDistance(0).set(f.carSpeedEnc, 60, 60);
 
         updateDistancesFor(graph, 0, 1, 0.6);
         updateDistancesFor(graph, 1, 1, 1.5);

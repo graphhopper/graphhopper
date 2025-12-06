@@ -24,7 +24,10 @@ import com.graphhopper.routing.util.AccessFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.storage.BaseGraph;
-import com.graphhopper.util.*;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
@@ -319,63 +322,63 @@ public class FootTagParserTest {
     public void testPriority() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "cycleway");
-        assertEquals(PriorityCode.UNCHANGED.getValue(), prioParser.handlePriority(way, null));
+        assertPriority(PriorityCode.UNCHANGED, way);
 
         way.setTag("highway", "primary");
-        assertEquals(PriorityCode.AVOID.getValue(), prioParser.handlePriority(way, null));
+        assertPriority(PriorityCode.AVOID, way);
 
         way.setTag("sidewalk", "yes");
-        assertEquals(PriorityCode.AVOID.getValue(), prioParser.handlePriority(way, null));
+        assertPriority(PriorityCode.AVOID, way);
 
         way.setTag("sidewalk", "no");
-        assertEquals(PriorityCode.BAD.getValue(), prioParser.handlePriority(way, null));
+        assertPriority(PriorityCode.BAD, way);
 
         way.clearTags();
         way.setTag("highway", "tertiary");
-        assertEquals(PriorityCode.UNCHANGED.getValue(), prioParser.handlePriority(way, null));
-        way.setTag("foot","use_sidepath");
-        assertEquals(PriorityCode.VERY_BAD.getValue(), prioParser.handlePriority(way, null));
+        assertPriority(PriorityCode.UNCHANGED, way);
+        way.setTag("foot", "use_sidepath");
+        assertPriority(PriorityCode.VERY_BAD, way);
 
         way.clearTags();
         way.setTag("highway", "tertiary");
         // tertiary without sidewalk is roughly like primary with sidewalk
         way.setTag("sidewalk", "no");
-        assertEquals(PriorityCode.AVOID.getValue(), prioParser.handlePriority(way, null));
+        assertPriority(PriorityCode.AVOID, way);
 
         way.setTag("highway", "track");
         way.setTag("bicycle", "official");
-        assertEquals(PriorityCode.SLIGHT_AVOID.getValue(), prioParser.handlePriority(way, null));
+        assertPriority(PriorityCode.SLIGHT_AVOID, way);
 
         way.setTag("highway", "track");
         way.setTag("bicycle", "designated");
-        assertEquals(PriorityCode.SLIGHT_AVOID.getValue(), prioParser.handlePriority(way, null));
+        assertPriority(PriorityCode.SLIGHT_AVOID, way);
 
         way.setTag("highway", "cycleway");
         way.setTag("bicycle", "designated");
         way.setTag("foot", "designated");
-        assertEquals(PriorityCode.PREFER.getValue(), prioParser.handlePriority(way, null));
+        assertPriority(PriorityCode.PREFER, way);
 
         way.clearTags();
         way.setTag("highway", "cycleway");
         way.setTag("sidewalk", "no");
-        assertEquals(PriorityCode.AVOID.getValue(), prioParser.handlePriority(way, null));
+        assertPriority(PriorityCode.AVOID, way);
 
         way.clearTags();
         way.setTag("highway", "road");
         way.setTag("bicycle", "official");
         way.setTag("sidewalk", "no");
-        assertEquals(PriorityCode.SLIGHT_AVOID.getValue(), prioParser.handlePriority(way, null));
+        assertPriority(PriorityCode.SLIGHT_AVOID, way);
 
         way.clearTags();
         way.setTag("highway", "secondary");
-        assertEquals(PriorityCode.AVOID.getValue(), prioParser.handlePriority(way, null));
+        assertPriority(PriorityCode.AVOID, way);
         way.setTag("highway", "trunk"); // secondary should be better to mostly avoid trunk e.g. here 46.9889,10.5664->47.0172,10.6059
-        assertEquals(PriorityCode.BAD.getValue(), prioParser.handlePriority(way, null));
+        assertPriority(PriorityCode.BAD, way);
 
         way.setTag("sidewalk", "no");
-        assertEquals(PriorityCode.REACH_DESTINATION.getValue(), prioParser.handlePriority(way, null));
+        assertPriority(PriorityCode.REACH_DESTINATION, way);
         way.setTag("sidewalk", "none");
-        assertEquals(PriorityCode.REACH_DESTINATION.getValue(), prioParser.handlePriority(way, null));
+        assertPriority(PriorityCode.REACH_DESTINATION, way);
 
         way.clearTags();
         way.setTag("highway", "residential");
@@ -385,7 +388,7 @@ public class FootTagParserTest {
         way.clearTags();
         way.setTag("highway", "residential");
         way.setTag("sidewalk", "yes");
-        assertEquals(PriorityCode.PREFER.getValue(), prioParser.handlePriority(way, null));
+        assertPriority(PriorityCode.PREFER, way);
 
         way.setTag("sidewalk", "no");
         assertEquals(PriorityCode.PREFER.getValue(), prioParser.handlePriority(way, null));
@@ -605,6 +608,7 @@ public class FootTagParserTest {
         // note that this test made more sense when we used encoders that defined a max speed.
         assertEquals(16, speedEnc.getNextStorableValue(15));
     }
+
     @Test
     public void temporalAccess() {
         int edgeId = 0;

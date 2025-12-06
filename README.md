@@ -31,15 +31,21 @@ to get started with contribution.
 
 To get started you can try [GraphHopper Maps](README.md#graphhopper-maps), read through [our documentation](./docs/index.md) and install GraphHopper including the Maps UI locally.
 
-* 9.x: [documentation](https://github.com/graphhopper/graphhopper/blob/9.x/docs/index.md)
-  , [web service jar](https://repo1.maven.org/maven2/com/graphhopper/graphhopper-web/9.1/graphhopper-web-9.1.jar)
-  , [announcement](https://www.graphhopper.com/blog/2024/04/23/graphhopper-routing-engine-9-0-released)
+* 11.x: [documentation](https://github.com/graphhopper/graphhopper/blob/11.x/docs/index.md)
+  , [web service jar](https://repo1.maven.org/maven2/com/graphhopper/graphhopper-web/11.0/graphhopper-web-11.0.jar)
+  , [announcement](https://www.graphhopper.com/blog/2025/10/14/graphhopper-routing-engine-11-0-released/)
 * unstable master: [documentation](https://github.com/graphhopper/graphhopper/blob/master/docs/index.md)
+
+See the [changelog file](./CHANGELOG.md) for Java API Changes.
 
 <details><summary>Click to see older releases</summary>
 
-* See our [changelog file](./CHANGELOG.md) for Java API Changes.
-
+* 10.x: [documentation](https://github.com/graphhopper/graphhopper/blob/10.x/docs/index.md)
+  , [web service jar](https://repo1.maven.org/maven2/com/graphhopper/graphhopper-web/10.0/graphhopper-web-10.0.jar)
+  , [announcement](https://www.graphhopper.com/blog/2024/11/05/graphhopper-routing-engine-10-0-released/)
+* 9.x: [documentation](https://github.com/graphhopper/graphhopper/blob/9.x/docs/index.md)
+  , [web service jar](https://repo1.maven.org/maven2/com/graphhopper/graphhopper-web/9.1/graphhopper-web-9.1.jar)
+  , [announcement](https://www.graphhopper.com/blog/2024/04/23/graphhopper-routing-engine-9-0-released)
 * 8.x: [documentation](https://github.com/graphhopper/graphhopper/blob/8.x/docs/index.md)
   , [web service jar](https://repo1.maven.org/maven2/com/graphhopper/graphhopper-web/8.0/graphhopper-web-8.0.jar)
   , [announcement](https://www.graphhopper.com/blog/2023/10/18/graphhopper-routing-engine-8-0-released/)
@@ -100,7 +106,9 @@ To get started you can try [GraphHopper Maps](README.md#graphhopper-maps), read 
 To install the [GraphHopper Maps](https://graphhopper.com/maps/) UI and the web service locally you [need a JVM](https://adoptium.net) (>= Java 17) and do:
 
 ```bash
-wget https://repo1.maven.org/maven2/com/graphhopper/graphhopper-web/9.1/graphhopper-web-9.1.jar https://raw.githubusercontent.com/graphhopper/graphhopper/9.x/config-example.yml http://download.geofabrik.de/europe/germany/berlin-latest.osm.pbf
+wget https://repo1.maven.org/maven2/com/graphhopper/graphhopper-web/11.0/graphhopper-web-11.0.jar \
+  https://raw.githubusercontent.com/graphhopper/graphhopper/11.x/config-example.yml \
+  http://download.geofabrik.de/europe/germany/berlin-latest.osm.pbf
 java -D"dw.graphhopper.datareader.file=berlin-latest.osm.pbf" -jar graphhopper*.jar server config-example.yml
 ```
 
@@ -116,18 +124,21 @@ The Docker images created by the community from the `master` branch can be found
 
 ## GraphHopper Maps
 
-To see the road routing feature of GraphHopper in action please go to [GraphHopper Maps](https://graphhopper.com/maps).
+The GraphHopper routing server uses GraphHopper Maps as web interface, which is also [open source](https://github.com/graphhopper/graphhopper-maps).
 
-[![GraphHopper Maps](https://www.graphhopper.com/wp-content/uploads/2022/10/maps2-1024x661.png)](https://graphhopper.com/maps)
+To see GraphHopper Maps in action go to [graphhopper.com/maps/](https://graphhopper.com/maps/),
+which is an instance of GraphHopper Maps and available for free, via encrypted connections and from German servers - for a nice and private route planning experience!
 
-GraphHopper Maps is an open source user interface, which you can find [here](https://github.com/graphhopper/graphhopper-maps).
-It can use this open source routing engine or the [GraphHopper Directions API](https://www.graphhopper.com),
-which provides the Routing API, a Route Optimization API (based on [jsprit](http://jsprit.github.io/)),
-a fast Matrix API and an address search (based on [photon](https://github.com/komoot/photon)). 
-The photon project is also supported by the GraphHopper GmbH. Additionally to the GraphHopper
-Directions API, map tiles from various providers are used, with the default being [Omniscale](http://omniscale.com/). 
+[![GraphHopper Maps](https://www.graphhopper.com/wp-content/uploads/2025/06/graphhopper-maps-2025.png)](https://graphhopper.com/maps)
 
-All this is available for free, via encrypted connections and from German servers - for a nice and private route planning experience!
+## GraphHopper Directions API
+
+The GraphHopper Directions API is [our](https://www.graphhopper.com/) commercial offering that provides
+[multiple APIs](https://docs.graphhopper.com) based on this open source routing engine: the Routing API, the Matrix API, the Isochrone API and the Map Matching API.
+
+It also provides the Route Optimization API, which is based on our open source [jsprit project](http://jsprit.github.io/) and uses the fast Matrix API behind the scenes.
+
+The address search is based on the open source [photon project](https://github.com/komoot/photon), which is supported by GraphHopper GmbH.
 
 ## Public Transit
 
@@ -139,7 +150,7 @@ All this is available for free, via encrypted connections and from German server
 
 ### Online
 
-There is a [web service](./navigation) that can be consumed by [our navigation Android client](https://github.com/graphhopper/graphhopper-navigation-example).
+There is the [/navigate web service](./navigation) that can be consumed by [the Maplibre Navigation SDK](https://github.com/maplibre/maplibre-navigation-android) or [the ferrostar SDK](https://github.com/stadiamaps/ferrostar).
 
 [<img src="https://raw.githubusercontent.com/maplibre/maplibre-navigation-android/main/.github/preview.png" width="400">](https://github.com/graphhopper/graphhopper-navigation-example)
 
@@ -155,7 +166,7 @@ with the Android demo and also see [this pull request](http://github.com/graphho
 
 Use isochrones to calculate and visualize the reachable area for a certain travel mode.
 
-You can try the debug user interface at http://localhost:8989/maps/isochrone to see the `/isochrone` and `/spt` endpoint in action.
+You can try the debug user interface at http://localhost:8989/maps/isochrone/ to see the `/isochrone` and `/spt` endpoint in action.
 
 ### [Isochrone Web API](./docs/web/api-doc.md#isochrone)
 

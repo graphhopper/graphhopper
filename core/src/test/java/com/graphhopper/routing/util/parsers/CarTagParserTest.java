@@ -110,6 +110,12 @@ public class CarTagParserTest {
         assertTrue(parser.getAccess(way).canSkip());
 
         way.clearTags();
+        way.setTag("highway", "service");
+        way.setTag("access", "no");
+        way.setTag("motor_vehicle", "unknown");
+        assertTrue(parser.getAccess(way).canSkip());
+
+        way.clearTags();
         way.setTag("highway", "track");
         way.setTag("motor_vehicle", "agricultural");
         assertTrue(parser.getAccess(way).canSkip());
@@ -130,6 +136,11 @@ public class CarTagParserTest {
 
         way.clearTags();
         way.setTag("highway", "service");
+        way.setTag("motor_vehicle", "service");
+        assertTrue(parser.getAccess(way).canSkip());
+
+        way.clearTags();
+        way.setTag("highway", "service");
         way.setTag("access", "emergency");
         assertTrue(parser.getAccess(way).canSkip());
 
@@ -142,6 +153,11 @@ public class CarTagParserTest {
         way.setTag("highway", "service");
         way.setTag("service", "emergency_access");
         assertTrue(parser.getAccess(way).canSkip());
+
+        way.clearTags();
+        way.setTag("highway", "unclassified");
+        way.setTag("motor_vehicle", "agricultural;destination;forestry");
+        assertFalse(parser.getAccess(way).canSkip());
     }
 
     @Test
@@ -276,7 +292,7 @@ public class CarTagParserTest {
         EdgeIntAccess edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
         int edgeId = 0;
         speedParser.handleWayTags(edgeId, edgeIntAccess, way);
-        assertEquals(140, avSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), 1e-1);
+        assertEquals(136, avSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), 1e-1);
 
         way = new ReaderWay(1);
         way.setTag("highway", "primary");
@@ -608,19 +624,6 @@ public class CarTagParserTest {
     }
 
     @Test
-    public void testSetToMaxSpeed() {
-        ReaderWay way = new ReaderWay(12);
-        way.setTag("maxspeed", "90");
-        assertEquals(90, AbstractAverageSpeedParser.getMaxSpeed(way, false), 1e-2);
-
-        way = new ReaderWay(12);
-        way.setTag("maxspeed", "90");
-        way.setTag("maxspeed:backward", "50");
-        assertEquals(90, AbstractAverageSpeedParser.getMaxSpeed(way, false), 1e-2);
-        assertEquals(50, AbstractAverageSpeedParser.getMaxSpeed(way, true), 1e-2);
-    }
-
-    @Test
     public void testCombination() {
         ReaderWay way = new ReaderWay(123);
         way.setTag("highway", "cycleway");
@@ -714,13 +717,31 @@ public class CarTagParserTest {
         way.setTag("motorcar:conditional", "yes @ (May - June)");
         parser.handleWayTags(edgeId, access, way, null);
         assertTrue(accessEnc.getBool(false, edgeId, access));
+
+        // Open access even if we can't parse the conditional
+        access = new ArrayEdgeIntAccess(1);
+        way = new ReaderWay(1);
+        way.setTag("highway", "primary");
+        way.setTag("access", "no");
+        way.setTag("motorcar:conditional", "yes @ (10:00 - 11:00)");
+        parser.handleWayTags(edgeId, access, way, null);
+        assertTrue(accessEnc.getBool(false, edgeId, access));
+
+        // ... but don't do the same for non-intended values
+        access = new ArrayEdgeIntAccess(1);
+        way = new ReaderWay(1);
+        way.setTag("highway", "primary");
+        way.setTag("access", "no");
+        way.setTag("motorcar:conditional", "private @ (10:00 - 11:00)");
+        parser.handleWayTags(edgeId, access, way, null);
+        assertFalse(accessEnc.getBool(false, edgeId, access));
     }
 
     @ParameterizedTest
     @ValueSource(strings = {"mofa", "moped", "motorcar", "motor_vehicle", "motorcycle"})
     void footway_etc_not_allowed_despite_vehicle_yes(String vehicle) {
         // these highways are blocked, even when we set one of the vehicles to yes
-        for (String highway : Arrays.asList("footway", "cycleway", "steps", "pedestrian")) {
+        for (String highway : Arrays.asList("footway", "cycleway", "steps")) {
             ReaderWay way = new ReaderWay(1);
             way.setTag("highway", highway);
             way.setTag(vehicle, "yes");
@@ -757,5 +778,44 @@ public class CarTagParserTest {
         speedParser.handleWayTags(0, edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags()), way);
         // unknown highways can be quite fast in combination with maxspeed!?
         assertEquals(90, avSpeedEnc.getDecimal(false, 0, edgeIntAccess), 1e-1);
+    }
+
+    @Test
+    void testPedestrianAccess() {
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "pedestrian");
+        assertTrue(parser.getAccess(way).canSkip());
+
+        way.clearTags();
+        way.setTag("highway", "pedestrian");
+        way.setTag("motor_vehicle", "no");
+        assertTrue(parser.getAccess(way).canSkip());
+
+        way.clearTags();
+        way.setTag("highway", "pedestrian");
+        way.setTag("motor_vehicle", "unknown");
+        assertTrue(parser.getAccess(way).canSkip());
+
+        way.clearTags();
+        way.setTag("highway", "pedestrian");
+        way.setTag("motor_vehicle", "destination");
+        assertTrue(parser.getAccess(way).isWay());
+
+        way.clearTags();
+        way.setTag("highway", "pedestrian");
+        way.setTag("motorcar", "no");
+        way.setTag("motor_vehicle", "destination");
+        assertTrue(parser.getAccess(way).canSkip());
+
+        way.clearTags();
+        way.setTag("highway", "pedestrian");
+        way.setTag("motor_vehicle:conditional", "destination @ ( 8:00 - 10:00 )");
+        assertTrue(parser.getAccess(way).isWay());
+
+        way.clearTags();
+        way.setTag("highway", "pedestrian");
+        way.setTag("access", "no");
+        way.setTag("motor_vehicle:conditional", "destination @ ( 8:00 - 10:00 )");
+        assertTrue(parser.getAccess(way).isWay());
     }
 }

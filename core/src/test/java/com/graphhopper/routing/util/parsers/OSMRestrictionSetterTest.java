@@ -415,6 +415,56 @@ public class OSMRestrictionSetterTest {
         assertEquals(NO_PATH, calcPath(3, 4));
     }
 
+    @Test
+    void multiFrom_viaWay() {
+        // 1 \       / 5
+        // 2 - 0 - 4 - 6
+        // 3 /
+        int e1_0 = edge(1, 0);
+        int e2_0 = edge(2, 0);
+        int e3_0 = edge(3, 0);
+        int e0_4 = edge(0, 4);
+        int e4_5 = edge(4, 5);
+        int e4_6 = edge(4, 6);
+        setRestrictions(List.of(
+                // "no_entry" via-way restrictions have multiple from edges
+                new Pair<>(RestrictionTopology.way(edges(e1_0, e2_0, e3_0), edges(e0_4), edges(e4_6), nodes(1, 4)), RestrictionType.NO)
+        ));
+        for (int s = 1; s <= 3; s++) {
+            assertEquals(nodes(s, 0, 4, 5), calcPath(s, 5));
+            assertEquals(NO_PATH, calcPath(s, 6));
+            assertEquals(nodes(5, 4, 0, s), calcPath(5, s));
+            assertEquals(nodes(6, 4, 0, s), calcPath(6, s));
+        }
+        assertEquals(nodes(1, 0, 2), calcPath(1, 2));
+        assertEquals(nodes(3, 0, 1), calcPath(3, 1));
+    }
+
+    @Test
+    void multiTo_viaWay() {
+        // 1 \       / 4
+        // 2 - 0 - 3 - 5
+        //           \ 6
+        int e1_0 = edge(1, 0);
+        int e2_0 = edge(2, 0);
+        int e0_3 = edge(0, 3);
+        int e3_4 = edge(3, 4);
+        int e3_5 = edge(3, 5);
+        int e3_6 = edge(3, 6);
+        setRestrictions(List.of(
+                // "no_exit" via-way restrictions have multiple to edges
+                new Pair<>(RestrictionTopology.way(edges(e1_0), edges(e0_3), edges(e3_4, e3_5, e3_6), nodes(0, 3)), RestrictionType.NO)
+        ));
+        for (int s = 4; s <= 6; s++) {
+            assertEquals(NO_PATH, calcPath(1, s));
+            assertEquals(nodes(2, 0, 3, s), calcPath(2, s));
+            assertEquals(nodes(s, 3, 0, 1), calcPath(s, 1));
+            assertEquals(nodes(s, 3, 0, 2), calcPath(s, 2));
+        }
+        assertEquals(nodes(4, 3, 5), calcPath(4, 5));
+        assertEquals(nodes(5, 3, 6), calcPath(5, 6));
+    }
+
     /**
      * Shorthand version that only sets restriction for the first turn restriction encoded value
      */
@@ -446,13 +496,6 @@ public class OSMRestrictionSetterTest {
         return calcPath(this.graph, from, to, turnRestrictionEnc);
     }
 
-    /**
-     * Shorthand version that calculates the path for the first turn restriction encoded value
-     */
-    private IntArrayList calcPath(Graph graph, int from, int to) {
-        return calcPath(graph, from, to, turnRestrictionEnc);
-    }
-
     private IntArrayList calcPath(Graph graph, int from, int to, BooleanEncodedValue turnRestrictionEnc) {
         return new IntArrayList(new Dijkstra(graph, graph.wrapWeighting(new SpeedWeighting(speedEnc, new TurnCostProvider() {
             @Override
@@ -466,6 +509,10 @@ public class OSMRestrictionSetterTest {
                 return Double.isInfinite(calcTurnWeight(inEdge, viaNode, outEdge)) ? Long.MAX_VALUE : 0L;
             }
         })), TraversalMode.EDGE_BASED).calcPath(from, to).calcNodes());
+    }
+
+    private IntArrayList edges(int... edges) {
+        return IntArrayList.from(edges);
     }
 
     private IntArrayList nodes(int... nodes) {
