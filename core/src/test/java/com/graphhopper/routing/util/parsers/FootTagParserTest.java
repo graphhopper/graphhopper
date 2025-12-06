@@ -382,8 +382,65 @@ public class FootTagParserTest {
 
         way.clearTags();
         way.setTag("highway", "residential");
+        way.setTag("foot", "use_sidepath");
+        assertPriority(PriorityCode.VERY_BAD, way);
+
+        way.clearTags();
+        way.setTag("highway", "residential");
         way.setTag("sidewalk", "yes");
         assertPriority(PriorityCode.PREFER, way);
+
+        way.setTag("sidewalk", "no");
+        assertPriority(PriorityCode.PREFER, way);
+
+        way.setTag("sidewalk", "separate");
+        assertPriority(PriorityCode.VERY_BAD, way);
+
+        way.setTag("sidewalk", "left");
+        assertPriority(PriorityCode.PREFER, way);
+
+        way.setTag("sidewalk", "right");
+        assertPriority(PriorityCode.PREFER, way);
+
+        way.setTag("sidewalk", "both");
+        assertPriority(PriorityCode.PREFER, way);
+
+        way.clearTags();
+        way.setTag("highway", "residential");
+        way.setTag("sidewalk:both", "yes");
+        assertPriority(PriorityCode.PREFER, way);
+
+        way.setTag("sidewalk:both", "no");
+        assertPriority(PriorityCode.PREFER, way);
+
+        way.setTag("sidewalk:both", "separate");
+        assertPriority(PriorityCode.VERY_BAD, way);
+
+        way.clearTags();
+        way.setTag("highway", "residential");
+        way.setTag("sidewalk:left", "yes");
+        way.setTag("sidewalk:right", "no");
+        assertPriority(PriorityCode.PREFER, way);
+
+        way.setTag("sidewalk:left", "no");
+        way.setTag("sidewalk:right", "yes");
+        assertPriority(PriorityCode.PREFER, way);
+
+        way.setTag("sidewalk:left", "separate");
+        way.setTag("sidewalk:right", "yes");
+        assertPriority(PriorityCode.PREFER, way);
+
+        way.setTag("sidewalk:left", "yes");
+        way.setTag("sidewalk:right", "separate");
+        assertPriority(PriorityCode.PREFER, way);
+
+        way.setTag("sidewalk:left", "separate");
+        way.setTag("sidewalk:right", "no");
+        assertPriority(PriorityCode.VERY_BAD, way);
+
+        way.setTag("sidewalk:left", "no");
+        way.setTag("sidewalk:right", "separate");
+        assertPriority(PriorityCode.VERY_BAD, way);
     }
 
     void assertPriority(PriorityCode code, ReaderWay way) {

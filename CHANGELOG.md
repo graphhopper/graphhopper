@@ -1,6 +1,6 @@
 ### 12.0 [not yet released]
 
-
+- prioritise separate sidewalks, #3042
 
 ### 11.0 [14 Oct 2025]
 
