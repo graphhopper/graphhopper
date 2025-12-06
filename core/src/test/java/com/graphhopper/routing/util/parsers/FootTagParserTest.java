@@ -443,6 +443,12 @@ public class FootTagParserTest {
         assertEquals(PriorityCode.VERY_BAD.getValue(), prioParser.handlePriority(way, null));
     }
 
+    void assertPriority(PriorityCode code, ReaderWay way) {
+        ArrayEdgeIntAccess access = new ArrayEdgeIntAccess(1);
+        prioParser.handleWayTags(0, access, way, null);
+        assertEquals(PriorityCode.getValue(code.getValue()), footPriorityEnc.getDecimal(false, 0, access), 0.01);
+    }
+
     @Test
     public void testSlowHiking() {
         ReaderWay way = new ReaderWay(1);
