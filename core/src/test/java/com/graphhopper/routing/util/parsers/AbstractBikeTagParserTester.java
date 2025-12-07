@@ -323,7 +323,7 @@ public abstract class AbstractBikeTagParserTester {
         assertPriority(1.2, osmWay);
 
         osmWay.setTag("tunnel", "yes");
-        assertPriority(1.0, osmWay);
+        assertPriority(0.9, osmWay);
 
         osmWay.setTag("highway", "secondary");
         osmWay.setTag("tunnel", "yes");
@@ -353,7 +353,7 @@ public abstract class AbstractBikeTagParserTester {
         assertPriorityAndSpeed(1.2, 12, way);
 
         way.setTag("service", "parking_aisle");
-        assertPriorityAndSpeed(0.9, 4, way);
+        assertPriorityAndSpeed(0.8, 4, way);
         way.setTag("bicycle", "designated");
         assertPriorityAndSpeed(1.3, 12, way);
     }
@@ -679,6 +679,18 @@ public abstract class AbstractBikeTagParserTester {
         way.setTag("cycleway:left:oneway","-1");
         way.setTag("cycleway:right:oneway","-1");
         assertAccess(way, true, true);
+    }
+
+    @Test
+    public void testFootwayVsTertiary() {
+        ReaderWay osmWay = new ReaderWay(1);
+        osmWay.setTag("highway", "tertiary");
+        assertPriorityAndSpeed(1.0, 18.0, osmWay);
+
+        osmWay = new ReaderWay(1);
+        osmWay.setTag("highway", "footway");
+        osmWay.setTag("bicycle", "yes");
+        assertPriorityAndSpeed(1.2, 12.0, osmWay);
     }
 
     private void assertAccess(ReaderWay way, boolean fwd, boolean bwd) {

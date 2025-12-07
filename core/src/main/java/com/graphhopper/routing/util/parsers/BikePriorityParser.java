@@ -15,12 +15,6 @@ public class BikePriorityParser extends BikeCommonPriorityParser {
     public BikePriorityParser(DecimalEncodedValue priorityEnc, DecimalEncodedValue speedEnc) {
         super(priorityEnc, speedEnc);
 
-        addPushingSection("path");
-
-        preferHighwayTags.add("service");
-        preferHighwayTags.add("residential");
-        preferHighwayTags.add("unclassified");
-
         setSpecificClassBicycle("touring");
     }
 }

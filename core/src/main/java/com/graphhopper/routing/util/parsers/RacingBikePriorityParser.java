@@ -16,21 +16,24 @@ public class RacingBikePriorityParser extends BikeCommonPriorityParser {
     protected RacingBikePriorityParser(DecimalEncodedValue priorityEnc, DecimalEncodedValue speedEnc) {
         super(priorityEnc, speedEnc);
 
-        addPushingSection("path");
+        highways.put("motorway", 0.5);
+        highways.put("motorway_link", 0.5);
+        highways.put("trunk", 0.5);
+        highways.put("trunk_link", 0.5);
+        highways.put("primary", 0.6);
+        highways.put("primary_link", 0.6);
 
-        preferHighwayTags.add("road");
-        preferHighwayTags.add("secondary");
-        preferHighwayTags.add("secondary_link");
-        preferHighwayTags.add("tertiary");
-        preferHighwayTags.add("tertiary_link");
-        preferHighwayTags.add("residential");
+        highways.put("secondary", 1.2);
+        highways.put("secondary_link", 1.2);
 
-        avoidHighwayTags.put("motorway", 0.5);
-        avoidHighwayTags.put("motorway_link", 0.5);
-        avoidHighwayTags.put("trunk", 0.5);
-        avoidHighwayTags.put("trunk_link", 0.5);
-        avoidHighwayTags.put("primary", 0.6);
-        avoidHighwayTags.put("primary_link", 0.6);
+        // TODO NOW shouldn't this be the default?
+        highways.put("road", 1.2);
+        highways.put("tertiary", 1.2);
+        highways.put("tertiary_link", 1.2);
+
+        // TODO NOW residential was in preferHighwayTags but at the same time after processing did: weightToPrioMap.put(40d, SLIGHT_AVOID);
+        highways.put("service", 0.7);
+        highways.put("residential", 1.0);
 
         setSpecificClassBicycle("roadcycling");
 
@@ -42,9 +45,7 @@ public class RacingBikePriorityParser extends BikeCommonPriorityParser {
         double prio = super.collect(way, wayTypeSpeed, bikeDesignated);
 
         String highway = way.getTag("highway");
-        if ("service".equals(highway) || "residential".equals(highway)) {
-            prio *= 0.7;
-        } else if ("track".equals(highway)) {
+        if ("track".equals(highway)) {
             String trackType = way.getTag("tracktype");
             if ("grade1".equals(trackType) || goodSurface.contains(way.getTag("surface", ""))) {
                 prio = Math.max(1.3, prio);

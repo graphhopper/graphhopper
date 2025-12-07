@@ -7,7 +7,10 @@ import com.graphhopper.routing.ev.MaxSpeed;
 import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.storage.IntsRef;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -18,17 +21,25 @@ public abstract class BikeCommonPriorityParser implements TagParser {
 
     // rare use case when a bicycle lane has access tag
     private static final List<String> CYCLEWAY_BICYCLE_KEYS = List.of("cycleway:bicycle", "cycleway:both:bicycle", "cycleway:left:bicycle", "cycleway:right:bicycle");
+    private final Set<String> bikeNotAllowed = Set.of("footway", "pedestrian", "platform");
+    private final Set<String> bikeNotAllowedAndBadSurface = Set.of("path", "track", "bridleway");
+    protected final Set<String> goodSurface = Set.of("paved", "asphalt", "concrete");
 
-    // pushing section highways are parts where you need to get off your bike and push it
-    protected final HashSet<String> pushingSectionsHighways = new HashSet<>();
-    protected final Set<String> preferHighwayTags = new HashSet<>();
-    protected final Map<String, Double> avoidHighwayTags = new HashMap<>();
+
+    // Conversion of class value to priority. See http://wiki.openstreetmap.org/wiki/Class:bicycle
+    private final Map<Integer, Double> bicycleClass = Map.of(3, 1.5,
+            2, 1.3,
+            1, 1.2,
+            -1, 0.8,
+            -2, 0.5,
+            -3, 0.1);
+
+    protected final HashMap<String, Double> highways = new HashMap<>();
 
     protected final DecimalEncodedValue avgSpeedEnc;
     protected final DecimalEncodedValue priorityEnc;
     // Car speed limit which switches the preference from UNCHANGED to AVOID_IF_POSSIBLE
     int avoidSpeedLimit;
-    protected final Set<String> goodSurface = Set.of("paved", "asphalt", "concrete");
 
     // This is the specific bicycle class
     private String classBicycleKey;
@@ -37,28 +48,48 @@ public abstract class BikeCommonPriorityParser implements TagParser {
         this.priorityEnc = priorityEnc;
         this.avgSpeedEnc = avgSpeedEnc;
 
-        addPushingSection("footway");
-        addPushingSection("pedestrian");
-        addPushingSection("steps");
-        addPushingSection("platform");
+        highways.put("motorway", 0.1);
+        highways.put("motorway_link", 0.1);
+        highways.put("trunk", 0.1);
+        highways.put("trunk_link", 0.1);
+        highways.put("primary", 0.5);
+        highways.put("primary_link", 0.5);
+        highways.put("secondary", 0.8);
+        highways.put("secondary_link", 0.8);
 
-        avoidHighwayTags.put("motorway", 0.1);
-        avoidHighwayTags.put("motorway_link", 0.1);
-        avoidHighwayTags.put("trunk", 0.1);
-        avoidHighwayTags.put("trunk_link", 0.1);
-        avoidHighwayTags.put("primary", 0.5);
-        avoidHighwayTags.put("primary_link", 0.5);
-        avoidHighwayTags.put("secondary", 0.8);
-        avoidHighwayTags.put("secondary_link", 0.8);
-        avoidHighwayTags.put("bridleway", 0.8);
+        highways.put("footway", 0.8);
+        highways.put("pedestrian", 0.8);
+        highways.put("steps", 0.8);
+        highways.put("platform", 0.8);
+        highways.put("bridleway", 0.8);
+
+        // TODO NOW remove as default is 1.0
+        //  why is 0.9 used in tests
+        highways.put("path", 0.8);
+        highways.put("track", 0.8);
+
+        highways.put("living_street", 1.0);
+
+        // See #3015 as why it shouldn't be preferred
+        highways.put("tertiary", 1.0);
+        highways.put("tertiary_link", 1.0);
+        highways.put("road", 1.0);
+
+        // TODO NOW but if we have it for tertiary we should do it for unclassified too!
+        highways.put("unclassified", 1.2);
+
+        highways.put("residential", 1.2);
+        highways.put("service", 1.2);
 
         avoidSpeedLimit = 71;
     }
 
     @Override
     public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
-        String highwayValue = way.getTag("highway");
-        if (highwayValue == null && !FerrySpeedCalculator.isFerry(way)) return;
+        if (!way.hasTag("highway") || FerrySpeedCalculator.isFerry(way)) {
+            priorityEnc.setDecimal(false, edgeId, edgeIntAccess, 1);
+            return;
+        }
 
         double maxSpeed = Math.max(avgSpeedEnc.getDecimal(false, edgeId, edgeIntAccess),
                 avgSpeedEnc.getDecimal(true, edgeId, edgeIntAccess));
@@ -66,64 +97,50 @@ public abstract class BikeCommonPriorityParser implements TagParser {
         priorityEnc.setDecimal(false, edgeId, edgeIntAccess, Math.min(1.5, Math.max(0, prio)));
     }
 
-    // Conversion of class value to priority. See http://wiki.openstreetmap.org/wiki/Class:bicycle
-    private double convertClassValueToPriority(String tagvalue) {
-        try {
-            return switch (Integer.parseInt(tagvalue)) {
-                case 3 -> 1.5;
-                case 2 -> 1.3;
-                case 1 -> 1.2;
-                case -1 -> 0.8;
-                case -2 -> 0.5;
-                case -3 -> 0.1;
-                default -> 1;
-            };
-        } catch (NumberFormatException e) {
-            return 1;
-        }
-    }
-
     double collect(ReaderWay way, double wayTypeSpeed, boolean bikeDesignated) {
-        double prio = 1;
+        double prio;
         String highway = way.getTag("highway");
 
         Set<String> cyclewayValues = Stream.of("cycleway", "cycleway:left", "cycleway:both", "cycleway:right").map(key -> way.getTag(key, "")).collect(Collectors.toSet());
         double maxSpeed = Math.max(OSMMaxSpeedParser.parseMaxSpeed(way, false), OSMMaxSpeedParser.parseMaxSpeed(way, true));
         boolean shareWithFoot = way.hasTag("foot", "yes") && !way.hasTag("segregated", "yes");
 
-        // 1 TODO NOW instead of pushingSectionsHighways, preferHighwayTags and avoidHighwayTags use just a single map and assign priority => 1 instead of 3 extra branches
-        // 2 TODO NOW according to wiki: bicycle=designated is not necessary on highway=footway + bicycle=yes or highway=pedestrian + bicycle=yes => do we handle this via preferHighwayTags?
+        // TODO according to wiki: bicycle=designated is not necessary on highway=footway + bicycle=yes or highway=pedestrian + bicycle=yes => do we handle this via preferHighwayTags?
+        boolean isGoodSurface = way.getTag("tracktype", "").equals("grade1") || goodSurface.contains(way.getTag("surface", ""));
 
         if ("steps".equals(highway)) {
             prio = 0.5;
         } else if ("cycleway".equals(highway) || cyclewayValues.contains("track") || bikeDesignated) {
-            boolean isBadSurfaceByDefault = "path".equals(highway) || "track".equals(highway) || "bridleway".equals(highway);
-            boolean isBadSurfaceRelevant = isBadSurfaceByDefault && !(way.getTag("tracktype", "").equals("grade1") || goodSurface.contains(way.getTag("surface", "")));
-            prio = shareWithFoot || isBadSurfaceRelevant ? 1.2 : 1.3;
+            prio = shareWithFoot || bikeNotAllowedAndBadSurface.contains(highway) && !isGoodSurface ? 1.2 : 1.3;
         } else if (Stream.of("lane", "opposite_track", "shared_lane", "share_busway", "shoulder").anyMatch(cyclewayValues::contains)) {
             prio = 1.1;
         } else if (way.hasTag("railway", "tram")) {
             prio = 0.6;
         } else if (way.hasTag("bicycle", "use_sidepath")) {
             prio = 0.1;
-        } else if (pushingSectionsHighways.contains(highway) || "parking_aisle".equals(way.getTag("service"))) {
-            if (way.hasTag("bicycle", INTENDED))
-                prio = 1.2;
-            else
-                prio = 0.9;
+        } else if (bikeNotAllowed.contains(highway) || "parking_aisle".equals(way.getTag("service")) || way.hasTag("bicycle", "dismount")) {
+            // TODO LATER more finegrained
+            //  prio = way.hasTag("bicycle", INTENDED) ? (shareWithFoot ? 1.1 : 1.2) : 0.9;
+            prio = way.hasTag("bicycle", INTENDED) ? 1.2 : 0.8;
 
-        } else if (preferHighwayTags.contains(highway) || maxSpeed <= 30) {
-            if (maxSpeed == MaxSpeed.MAXSPEED_MISSING || maxSpeed < avoidSpeedLimit) {
-                if (!way.hasTag("tunnel", INTENDED))
-                    prio = 1.2;
+        } else {
+            double prioFromHighwayTag = highways.getOrDefault(highway, 1.0);
+
+            if (bikeNotAllowedAndBadSurface.contains(highway)) {
+                if (way.hasTag("bicycle", INTENDED))
+                    prioFromHighwayTag = Math.max(prioFromHighwayTag, 1.1) + (isGoodSurface ? 0.1 : 0);
+                else if (isGoodSurface)
+                    prioFromHighwayTag *= 1.1; // make slightly better but not necessarily above 1.0
             }
 
-        } else if (avoidHighwayTags.containsKey(highway)
-                || (maxSpeed != MaxSpeed.MAXSPEED_MISSING && maxSpeed >= avoidSpeedLimit && !"track".equals(highway))) {
-            Double priorityCode = avoidHighwayTags.get(highway);
-            prio = priorityCode == null ? 0.8 : priorityCode;
             if (way.hasTag("tunnel", INTENDED)) {
-                prio = priorityCode == null ? 0.5 : Math.max(0.1, priorityCode - 0.3);
+                prio = Math.min(1, Math.max(0.1, prioFromHighwayTag - 0.3));
+            } else if (maxSpeed < 30) {
+                prio = Math.max(prioFromHighwayTag + 0.1, 1.1);
+            } else if (maxSpeed != MaxSpeed.MAXSPEED_MISSING && maxSpeed > avoidSpeedLimit && prioFromHighwayTag > 0.9) {
+                prio = 0.8; // keep avoiding even if highways map says otherwise
+            } else {
+                prio = prioFromHighwayTag;
             }
         }
 
@@ -131,9 +148,12 @@ public abstract class BikeCommonPriorityParser implements TagParser {
         String classBicycleValue = way.getTag(classBicycleKey);
         if (classBicycleValue == null) classBicycleValue = way.getTag("class:bicycle");
         if (classBicycleValue != null) {
-            double tmpPrio = convertClassValueToPriority(classBicycleValue);
-            // do not overwrite if e.g. already designated
-            if (tmpPrio > prio || prio == 1.0) prio = tmpPrio;
+            try {
+                Double tmpPrio = bicycleClass.get(Integer.parseInt(classBicycleValue));
+                // do not overwrite if e.g. already designated
+                if (tmpPrio != null && (tmpPrio > prio || prio == 1)) prio = tmpPrio;
+            } catch (NumberFormatException e) {
+            }
         }
 
         // Increase the priority for scenic routes or in case that maxspeed limits our average speed as compensation. See #630
@@ -151,10 +171,6 @@ public abstract class BikeCommonPriorityParser implements TagParser {
                 || way.hasTag("cyclestreet", "yes")
                 || CYCLEWAY_KEYS.stream().anyMatch(k -> way.getTag(k, "").equals("track"))
                 || way.hasTag(CYCLEWAY_BICYCLE_KEYS, "designated");
-    }
-
-    void addPushingSection(String highway) {
-        pushingSectionsHighways.add(highway);
     }
 
     void setSpecificClassBicycle(String subkey) {

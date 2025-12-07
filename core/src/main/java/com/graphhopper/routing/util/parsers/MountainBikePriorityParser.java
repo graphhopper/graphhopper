@@ -16,14 +16,13 @@ public class MountainBikePriorityParser extends BikeCommonPriorityParser {
     protected MountainBikePriorityParser(DecimalEncodedValue speedEnc, DecimalEncodedValue priorityEnc) {
         super(priorityEnc, speedEnc);
 
-        preferHighwayTags.add("road");
-        preferHighwayTags.add("track");
-        preferHighwayTags.add("path");
-        preferHighwayTags.add("service");
-        preferHighwayTags.add("tertiary");
-        preferHighwayTags.add("tertiary_link");
-        preferHighwayTags.add("residential");
-        preferHighwayTags.add("unclassified");
+        highways.put("track", 1.2);
+        highways.put("path", 1.2);
+
+        // TODO NOW shouldn't this be the default?
+//        highways.put("road", 1.2);
+//        highways.put("tertiary", 1.2);
+//        highways.put("tertiary_link", 1.2);
 
         setSpecificClassBicycle("mtb");
     }
