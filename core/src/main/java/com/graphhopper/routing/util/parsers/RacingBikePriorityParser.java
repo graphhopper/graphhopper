@@ -25,8 +25,6 @@ public class RacingBikePriorityParser extends BikeCommonPriorityParser {
 
         highways.put("secondary", 1.2);
         highways.put("secondary_link", 1.2);
-
-        // TODO NOW shouldn't this be the default?
         highways.put("road", 1.2);
         highways.put("tertiary", 1.2);
         highways.put("tertiary_link", 1.2);

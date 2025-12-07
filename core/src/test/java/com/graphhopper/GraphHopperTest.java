@@ -462,10 +462,10 @@ public class GraphHopperTest {
         assertEquals(3, rsp.getAll().size());
         // via obergräfenthal
         assertEquals(2651, rsp.getAll().get(0).getTime() / 1000);
-        // via unterwaiz
-        assertEquals(2850, rsp.getAll().get(1).getTime() / 1000);
-        // TODO NOW via ramsenthal?
-        assertEquals(2716, rsp.getAll().get(2).getTime() / 1000);
+        // TODO NOW via ?? (ramsenthal)
+        assertEquals(2764, rsp.getAll().get(1).getTime() / 1000);
+        // TODO NOW via ?? (unterwaiz)
+        assertEquals(2764, rsp.getAll().get(2).getTime() / 1000);
     }
 
     @Test
@@ -1280,11 +1280,11 @@ public class GraphHopperTest {
                 setProfile(bikeProfile));
         assertFalse(rsp.hasErrors());
         ResponsePath res = rsp.getBest();
-        assertEquals(6932.2, res.getDistance(), .1);
-        assertEquals(117, res.getPoints().size());
+        assertEquals(7008, res.getDistance(), 1);
+        assertEquals(136, res.getPoints().size());
 
         InstructionList il = res.getInstructions();
-        assertEquals(19, il.size());
+        assertEquals(25, il.size());
 
         assertEquals("continue onto Obere Landstraße", il.get(0).getTurnDescription(tr));
         assertEquals(69.28, (Double) il.get(0).getExtraInfoJSON().get("heading"), .01);
@@ -1295,9 +1295,9 @@ public class GraphHopperTest {
         assertEquals("keep left onto Hoher Markt", il.get(4).getTurnDescription(tr));
         assertEquals("turn right onto Wegscheid", il.get(6).getTurnDescription(tr));
         assertEquals("continue onto Wegscheid", il.get(7).getTurnDescription(tr));
-        assertEquals("turn right onto Ringstraße", il.get(8).getTurnDescription(tr));
+        assertEquals("at roundabout, take exit 1 onto Hohensteinstraße", il.get(8).getTurnDescription(tr));
         //..
-        assertEquals("turn right onto Treppelweg", il.get(15).getTurnDescription(tr));
+        assertEquals("turn right onto Treppelweg", il.get(21).getTurnDescription(tr));
 
         rsp = hopper.route(new GHRequest(48.410987, 15.599492, 48.411172, 15.600371).
                 setAlgorithm(ASTAR).setProfile(footProfile));
@@ -1412,8 +1412,8 @@ public class GraphHopperTest {
                 .setProfile(bikeProfile));
         res = rsp.getBest();
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
-        assertEquals(502, res.getTime() / 1000f, 1);
-        assertEquals(2233, res.getDistance(), 1);
+        assertEquals(500, res.getTime() / 1000f, 1);
+        assertEquals(2211, res.getDistance(), 1);
 
         rsp = hopper.route(new GHRequest(43.73005, 7.415707, 43.741522, 7.42826)
                 .setProfile("profile3"));

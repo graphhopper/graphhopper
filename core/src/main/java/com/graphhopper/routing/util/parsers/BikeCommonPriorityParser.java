@@ -74,12 +74,9 @@ public abstract class BikeCommonPriorityParser implements TagParser {
         highways.put("tertiary", 1.0);
         highways.put("tertiary_link", 1.0);
         highways.put("road", 1.0);
-
-        // TODO NOW but if we have it for tertiary we should do it for unclassified too!
-        highways.put("unclassified", 1.2);
-
-        highways.put("residential", 1.2);
-        highways.put("service", 1.2);
+        highways.put("unclassified", 1.0);
+        highways.put("residential", 1.0);
+        highways.put("service", 1.0);
 
         avoidSpeedLimit = 71;
     }
@@ -134,9 +131,9 @@ public abstract class BikeCommonPriorityParser implements TagParser {
             }
 
             if (way.hasTag("tunnel", INTENDED)) {
-                prio = Math.min(1, Math.max(0.1, prioFromHighwayTag - 0.3));
+                prio = Math.min(1, Math.max(0.1, prioFromHighwayTag * 0.8));
             } else if (maxSpeed < 30) {
-                prio = Math.max(prioFromHighwayTag + 0.1, 1.1);
+                prio = Math.max(prioFromHighwayTag * 1.1, 1.1);
             } else if (maxSpeed != MaxSpeed.MAXSPEED_MISSING && maxSpeed > avoidSpeedLimit && prioFromHighwayTag > 0.9) {
                 prio = 0.8; // keep avoiding even if highways map says otherwise
             } else {
