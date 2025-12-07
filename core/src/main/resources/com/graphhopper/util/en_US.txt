@@ -1,7 +1,7 @@
 # do not edit manually, instead use spreadsheet from translations.md and script ./core/files/update-translations.sh
 
 continue=continue
-continue_onto=continue onto %1$s
+continue_onto=continue on %1$s
 finish=arrive at destination
 keep_left=keep left
 keep_right=keep right

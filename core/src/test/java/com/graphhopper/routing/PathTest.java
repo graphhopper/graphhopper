@@ -155,7 +155,7 @@ public class PathTest {
         tmp = instr.get(0);
         assertEquals(2000.0, tmp.getDistance(), 0);
         assertEquals(40000L, tmp.getTime());
-        assertEquals("continue onto 2", tmp.getTurnDescription(tr));
+        assertEquals("continue on 2", tmp.getTurnDescription(tr));
         assertEquals(3, tmp.getLength());
 
         tmp = instr.get(1);
@@ -235,7 +235,7 @@ public class PathTest {
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, mixedEncodingManager, tr);
         // Test instructions
         List<String> tmpList = getTurnDescriptions(wayList);
-        assertEquals(List.of("continue onto MainStreet 1 2",
+        assertEquals(List.of("continue on MainStreet 1 2",
                         "at roundabout, take exit 3 onto 5-8",
                         "arrive at destination"),
                 tmpList);
@@ -249,7 +249,7 @@ public class PathTest {
                 calcPath(1, 7);
         wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, mixedEncodingManager, tr);
         tmpList = getTurnDescriptions(wayList);
-        assertEquals(List.of("continue onto MainStreet 1 2",
+        assertEquals(List.of("continue on MainStreet 1 2",
                         "at roundabout, take exit 2 onto MainStreet 4 7",
                         "arrive at destination"),
                 tmpList);
@@ -281,7 +281,7 @@ public class PathTest {
         assertTrue(p.isFound());
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, mixedEncodingManager, tr);
         List<String> tmpList = getTurnDescriptions(wayList);
-        assertEquals(List.of("continue onto 3-6",
+        assertEquals(List.of("continue on 3-6",
                         "at roundabout, take exit 3 onto 5-8",
                         "arrive at destination"),
                 tmpList);
@@ -531,7 +531,7 @@ public class PathTest {
         assertTrue(p.isFound());
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, mixedEncodingManager, tr);
         List<String> tmpList = getTurnDescriptions(wayList);
-        assertEquals(List.of("continue onto MainStreet 1 2",
+        assertEquals(List.of("continue on MainStreet 1 2",
                         "at roundabout, take exit 2 onto 5-8",
                         "arrive at destination"),
                 tmpList);
@@ -623,7 +623,7 @@ public class PathTest {
         assertTrue(p.isFound());
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, mixedEncodingManager, tr);
         List<String> tmpList = getTurnDescriptions(wayList);
-        assertEquals(List.of("continue onto MainStreet 1 2",
+        assertEquals(List.of("continue on MainStreet 1 2",
                         "at roundabout, take exit 1 onto 5-8",
                         "arrive at destination"),
                 tmpList);
@@ -749,7 +749,7 @@ public class PathTest {
         assertTrue(p.isFound());
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, carManager, tr);
         assertEquals(4, wayList.size());
-        assertEquals("continue onto A B", wayList.get(0).getTurnDescription(tr));
+        assertEquals("continue on A B", wayList.get(0).getTurnDescription(tr));
         assertEquals("Attention, take ferry (B C)", wayList.get(1).getTurnDescription(tr));
         assertEquals(Instruction.FERRY, wayList.get(1).getSign());
         assertEquals("leave ferry and turn right onto C D", wayList.get(2).getTurnDescription(tr));
@@ -1013,7 +1013,7 @@ public class PathTest {
         assertEquals(IntArrayList.from(1, 2, 5, 6), p.calcNodes());
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, carManager, tr);
 
-        assertEquals(List.of("continue onto Parramatta Road", "make a U-turn onto Parramatta Road", "arrive at destination"),
+        assertEquals(List.of("continue on Parramatta Road", "make a U-turn onto Parramatta Road", "arrive at destination"),
                 getTurnDescriptions(wayList));
         assertEquals(3, wayList.size());
         assertEquals(Instruction.U_TURN_RIGHT, wayList.get(1).getSign());
