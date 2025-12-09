@@ -38,7 +38,7 @@ public class HeightTileTest {
         DataAccess heights = new RAMDirectory().create("tmp");
         heights.create(2 * width * height);
         instance.setHeights(heights);
-        init(heights, width, height, 1);
+        fillGrid(heights, width, height, (short) 1);
 
         // x,y=1,7
         heights.setShort(2 * (17 * width + 1), (short) 70);
@@ -71,7 +71,7 @@ public class HeightTileTest {
         DataAccess heights = new RAMDirectory().create("tmp");
         heights.create(2 * 10 * 10);
         instance.setHeights(heights);
-        init(heights, width, width, 1);
+        fillGrid(heights, width, width, (short) 1);
 
         // x,y=1,7
         heights.setShort(2 * (7 * width + 1), (short) 70);
@@ -127,10 +127,10 @@ public class HeightTileTest {
         assertEquals(Double.NaN, instance.getHeight(5, 5), 1e-3);
     }
 
-    private void init(DataAccess da, int width, int height, int i) {
+    private void fillGrid(DataAccess da, int width, int height, short defaultHeight) {
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
-                set(da, width, x, y, (short) 1);
+                set(da, width, x, y, defaultHeight);
             }
         }
     }
