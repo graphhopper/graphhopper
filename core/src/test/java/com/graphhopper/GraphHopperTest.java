@@ -171,8 +171,8 @@ public class GraphHopperTest {
 
         // TODO roundabout fine tuning -> enter + leave roundabout (+ two roundabouts -> is it necessary if we do not leave the street?)
         Translation tr = hopper.getTranslationMap().getWithFallBack(Locale.US);
-        assertEquals("continue onto Avenue des Guelfes", il.get(0).getTurnDescription(tr));
-        assertEquals("continue onto Avenue des Papalins", il.get(1).getTurnDescription(tr));
+        assertEquals("continue on Avenue des Guelfes", il.get(0).getTurnDescription(tr));
+        assertEquals("continue on Avenue des Papalins", il.get(1).getTurnDescription(tr));
         assertEquals("turn sharp right onto Quai Jean-Charles Rey", il.get(4).getTurnDescription(tr));
         assertEquals("turn left", il.get(5).getTurnDescription(tr));
         assertEquals("turn right onto Avenue Albert II", il.get(6).getTurnDescription(tr));
@@ -764,8 +764,8 @@ public class GraphHopperTest {
 
         InstructionList il = res.getInstructions();
         assertEquals(30, il.size());
-        assertEquals("continue onto Avenue des Guelfes", il.get(0).getTurnDescription(tr));
-        assertEquals("continue onto Avenue des Papalins", il.get(1).getTurnDescription(tr));
+        assertEquals("continue on Avenue des Guelfes", il.get(0).getTurnDescription(tr));
+        assertEquals("continue on Avenue des Papalins", il.get(1).getTurnDescription(tr));
         assertEquals("turn sharp right onto Quai Jean-Charles Rey", il.get(4).getTurnDescription(tr));
         assertEquals("turn left", il.get(5).getTurnDescription(tr));
         assertEquals("turn right onto Avenue Albert II", il.get(6).getTurnDescription(tr));
@@ -773,11 +773,11 @@ public class GraphHopperTest {
         assertEquals("waypoint 1", il.get(15).getTurnDescription(tr));
         assertEquals(Instruction.U_TURN_UNKNOWN, il.get(16).getSign());
 
-        assertEquals("continue onto Avenue Albert II", il.get(23).getTurnDescription(tr));
+        assertEquals("continue on Avenue Albert II", il.get(23).getTurnDescription(tr));
         assertEquals("turn left", il.get(24).getTurnDescription(tr));
         assertEquals("turn right onto Quai Jean-Charles Rey", il.get(25).getTurnDescription(tr));
         assertEquals("turn sharp left onto Avenue des Papalins", il.get(26).getTurnDescription(tr));
-        assertEquals("continue onto Avenue des Guelfes", il.get(28).getTurnDescription(tr));
+        assertEquals("continue on Avenue des Guelfes", il.get(28).getTurnDescription(tr));
         assertEquals("arrive at destination", il.get(29).getTurnDescription(tr));
 
         assertEquals(11, il.get(0).getDistance(), 1);
@@ -1286,7 +1286,7 @@ public class GraphHopperTest {
         InstructionList il = res.getInstructions();
         assertEquals(25, il.size());
 
-        assertEquals("continue onto Obere Landstraße", il.get(0).getTurnDescription(tr));
+        assertEquals("continue on Obere Landstraße", il.get(0).getTurnDescription(tr));
         assertEquals(69.28, (Double) il.get(0).getExtraInfoJSON().get("heading"), .01);
         assertEquals("turn left onto Kirchengasse", il.get(1).getTurnDescription(tr));
 
@@ -1294,7 +1294,7 @@ public class GraphHopperTest {
         assertEquals("turn right onto Margarethenstraße", il.get(3).getTurnDescription(tr));
         assertEquals("keep left onto Hoher Markt", il.get(4).getTurnDescription(tr));
         assertEquals("turn right onto Wegscheid", il.get(6).getTurnDescription(tr));
-        assertEquals("continue onto Wegscheid", il.get(7).getTurnDescription(tr));
+        assertEquals("continue on Wegscheid", il.get(7).getTurnDescription(tr));
         assertEquals("at roundabout, take exit 1 onto Hohensteinstraße", il.get(8).getTurnDescription(tr));
         //..
         assertEquals("turn right onto Treppelweg", il.get(21).getTurnDescription(tr));
@@ -1303,7 +1303,7 @@ public class GraphHopperTest {
                 setAlgorithm(ASTAR).setProfile(footProfile));
         assertFalse(rsp.hasErrors());
         il = rsp.getBest().getInstructions();
-        assertEquals("continue onto Obere Landstraße", il.get(0).getTurnDescription(tr));
+        assertEquals("continue on Obere Landstraße", il.get(0).getTurnDescription(tr));
     }
 
     @Test
