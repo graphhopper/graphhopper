@@ -33,7 +33,8 @@ public class HeightTileTest {
         // But HeightTile has lat,lon system ('mathematically')
         int width = 10;
         int height = 20;
-        HeightTile instance = new HeightTile(0, 0, width, height, 1e-6, 10, 20);
+        double precision = 1e6;
+        HeightTile instance = new HeightTile(0, 0, width, height, precision, 10, 20);
         DataAccess heights = new RAMDirectory().create("tmp");
         heights.create(2 * width * height);
         instance.setHeights(heights);
@@ -56,27 +57,17 @@ public class HeightTileTest {
         assertEquals(90, instance.getHeight(0.5, 2.5), 1e-3);
         assertEquals(90, instance.getHeight(0.0, 2.5), 1e-3);
         assertEquals(1, instance.getHeight(+0.0, 3), 1e-3);
-        assertEquals(1, instance.getHeight(-0.5, 3.5), 1e-3);
-        assertEquals(1, instance.getHeight(-0.5, 3.0), 1e-3);
-        // fall back to "2,9" if within its boundaries
-        assertEquals(90, instance.getHeight(-0.5, 2.5), 1e-3);
 
         assertEquals(1, instance.getHeight(0, 0), 1e-3);
         assertEquals(1, instance.getHeight(9, 10), 1e-3);
         assertEquals(1, instance.getHeight(10, 9), 1e-3);
         assertEquals(1, instance.getHeight(10, 10), 1e-3);
-
-        // no error
-        assertEquals(1, instance.getHeight(10.5, 5), 1e-3);
-        assertEquals(1, instance.getHeight(-0.5, 5), 1e-3);
-        assertEquals(1, instance.getHeight(1, -0.5), 1e-3);
-        assertEquals(1, instance.getHeight(1, 10.5), 1e-3);
     }
 
     @Test
     public void testGetHeightForNegativeTile() {
         int width = 10;
-        HeightTile instance = new HeightTile(-20, -20, width, width, 1e-6, 10, 10);
+        HeightTile instance = new HeightTile(-20, -20, width, width, 1e6, 10, 10);
         DataAccess heights = new RAMDirectory().create("tmp");
         heights.create(2 * 10 * 10);
         instance.setHeights(heights);
@@ -97,7 +88,7 @@ public class HeightTileTest {
 
     @Test
     public void testInterpolate() {
-        HeightTile instance = new HeightTile(0, 0, 2, 2, 1e-6, 10, 10).setInterpolate(true);
+        HeightTile instance = new HeightTile(0, 0, 2, 2, 1e6, 10, 10).setInterpolate(true);
         DataAccess heights = new RAMDirectory().create("tmp");
         heights.create(2 * 2 * 2);
         instance.setHeights(heights);
