@@ -4,7 +4,6 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.OSMParsers;
-import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.BaseGraph;
@@ -28,8 +27,9 @@ public class HikeCustomModelTest {
         em = new EncodingManager.Builder().
                 add(VehicleAccess.create("foot")).
                 add(VehicleSpeed.create("foot", 4, 1, false)).
-                add(VehiclePriority.create("foot", 4, PriorityCode.getFactor(1), false)).
+                add(VehiclePriority.create("foot", 4, 0.1, false)).
                 add(FerrySpeed.create()).
+                add(RoadEnvironment.create()).
                 add(RouteNetwork.create(FootNetwork.KEY)).
                 add(FootRoadAccess.create()).
                 add(hikeRating).build();

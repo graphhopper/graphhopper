@@ -27,14 +27,12 @@ import com.graphhopper.util.PMap;
 import java.util.*;
 
 import static com.graphhopper.routing.ev.RouteNetwork.*;
-import static com.graphhopper.routing.util.PriorityCode.UNCHANGED;
 import static com.graphhopper.routing.util.parsers.OSMTemporalAccessParser.hasPermissiveTemporalRestriction;
 
 public class FootAccessParser extends AbstractAccessParser implements TagParser {
 
     final Set<String> allowedHighwayTags = new HashSet<>();
     protected HashSet<String> sidewalkValues = new HashSet<>(5);
-    protected Map<RouteNetwork, Integer> routeMap = new HashMap<>();
 
     public FootAccessParser(EncodedValueLookup lookup, PMap properties) {
         this(lookup.getBooleanEncodedValue(VehicleAccess.key("foot")));
@@ -73,11 +71,6 @@ public class FootAccessParser extends AbstractAccessParser implements TagParser 
         allowedHighwayTags.add("unclassified");
         allowedHighwayTags.add("road");
         allowedHighwayTags.add("bridleway");
-
-        routeMap.put(INTERNATIONAL, UNCHANGED.getValue());
-        routeMap.put(NATIONAL, UNCHANGED.getValue());
-        routeMap.put(REGIONAL, UNCHANGED.getValue());
-        routeMap.put(LOCAL, UNCHANGED.getValue());
     }
 
     /**

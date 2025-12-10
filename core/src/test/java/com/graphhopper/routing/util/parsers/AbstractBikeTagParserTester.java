@@ -23,13 +23,11 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.OSMParsers;
-import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static com.graphhopper.routing.util.PriorityCode.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -70,24 +68,24 @@ public abstract class AbstractBikeTagParserTester {
 
     protected abstract BikeCommonPriorityParser createPriorityParser(EncodedValueLookup lookup);
 
-    protected void assertPriority(PriorityCode expectedPrio, ReaderWay way) {
+    protected void assertPriority(double expectedPrio, ReaderWay way) {
         IntsRef relFlags = osmParsers.handleRelationTags(new ReaderRelation(0), osmParsers.createRelationFlags());
         ArrayEdgeIntAccess intAccess = ArrayEdgeIntAccess.createFromBytes(encodingManager.getBytesForFlags());
         int edgeId = 0;
         osmParsers.handleWayTags(edgeId, intAccess, way, relFlags);
-        assertEquals(PriorityCode.getValue(expectedPrio.getValue()), priorityEnc.getDecimal(false, edgeId, intAccess), 0.01);
+        assertEquals(expectedPrio, priorityEnc.getDecimal(false, edgeId, intAccess), 0.01);
     }
 
-    protected void assertPriorityAndSpeed(PriorityCode expectedPrio, double expectedSpeed, ReaderWay way) {
+    protected void assertPriorityAndSpeed(double expectedPrio, double expectedSpeed, ReaderWay way) {
         assertPriorityAndSpeed(expectedPrio, expectedSpeed, way, new ReaderRelation(0));
     }
 
-    protected void assertPriorityAndSpeed(PriorityCode expectedPrio, double expectedSpeed, ReaderWay way, ReaderRelation rel) {
+    protected void assertPriorityAndSpeed(double expectedPrio, double expectedSpeed, ReaderWay way, ReaderRelation rel) {
         IntsRef relFlags = osmParsers.handleRelationTags(rel, osmParsers.createRelationFlags());
         ArrayEdgeIntAccess intAccess = ArrayEdgeIntAccess.createFromBytes(encodingManager.getBytesForFlags());
         int edgeId = 0;
         osmParsers.handleWayTags(edgeId, intAccess, way, relFlags);
-        assertEquals(PriorityCode.getValue(expectedPrio.getValue()), priorityEnc.getDecimal(false, edgeId, intAccess), 0.01);
+        assertEquals(expectedPrio, priorityEnc.getDecimal(false, edgeId, intAccess), 0.01);
         assertEquals(expectedSpeed, avgSpeedEnc.getDecimal(false, edgeId, intAccess), 0.1);
         assertEquals(expectedSpeed, avgSpeedEnc.getDecimal(true, edgeId, intAccess), 0.1);
     }
@@ -322,17 +320,17 @@ public abstract class AbstractBikeTagParserTester {
     public void testAvoidTunnel() {
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "residential");
-        assertPriority(PREFER, osmWay);
+        assertPriority(1.2, osmWay);
 
         osmWay.setTag("tunnel", "yes");
-        assertPriority(UNCHANGED, osmWay);
+        assertPriority(1.0, osmWay);
 
         osmWay.setTag("highway", "secondary");
         osmWay.setTag("tunnel", "yes");
-        assertPriority(BAD, osmWay);
+        assertPriority(0.5, osmWay);
 
         osmWay.setTag("bicycle", "designated");
-        assertPriority(PREFER, osmWay);
+        assertPriority(1.2, osmWay);
     }
 
     @Test
@@ -341,33 +339,33 @@ public abstract class AbstractBikeTagParserTester {
         // very dangerous
         way.setTag("highway", "secondary");
         way.setTag("railway", "tram");
-        assertPriority(AVOID_MORE, way);
+        assertPriority(0.6, way);
 
         // should be safe now
         way.setTag("bicycle", "designated");
-        assertPriority(PREFER, way);
+        assertPriority(1.2, way);
     }
 
     @Test
     public void testService() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "service");
-        assertPriorityAndSpeed(PREFER, 12, way);
+        assertPriorityAndSpeed(1.2, 12, way);
 
         way.setTag("service", "parking_aisle");
-        assertPriorityAndSpeed(SLIGHT_AVOID, 4, way);
+        assertPriorityAndSpeed(0.9, 4, way);
         way.setTag("bicycle", "designated");
-        assertPriorityAndSpeed(VERY_NICE, 12, way);
+        assertPriorityAndSpeed(1.2, 12, way);
     }
 
     @Test
     public void testSteps() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "steps");
-        assertPriorityAndSpeed(BAD, 2, way);
+        assertPriorityAndSpeed(0.5, 2, way);
 
         way.setTag("bicycle", "designated");
-        assertPriorityAndSpeed(BAD, 2, way);
+        assertPriorityAndSpeed(0.5, 2, way);
     }
 
     @Test
@@ -385,7 +383,7 @@ public abstract class AbstractBikeTagParserTester {
         ArrayEdgeIntAccess intAccess = ArrayEdgeIntAccess.createFromBytes(encodingManager.getBytesForFlags());
         int edgeId = 0;
         priorityParser.handleWayTags(edgeId, intAccess, osmWay, null);
-        assertEquals(PriorityCode.getValue(VERY_NICE.getValue()), priorityEnc.getDecimal(false, edgeId, intAccess), 1e-3);
+        assertEquals(1.3, priorityEnc.getDecimal(false, edgeId, intAccess), 1e-3);
     }
 
     @Test
