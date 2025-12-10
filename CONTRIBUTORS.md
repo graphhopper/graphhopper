@@ -92,6 +92,7 @@ Here is an overview:
  * taulinger, hopefully more to come 
  * thehereward, code cleanups like #620
  * tyrasd, improved toll road handling in Austria #3190
+ * Vectorial1024, non-sovereign country issues like #3244
  * vvikas, ideas for many to many improvements and #616
  * zstadler, multiple fixes and car4wd
  * binora, fix mode in navigation response converter
