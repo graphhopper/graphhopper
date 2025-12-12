@@ -15,6 +15,7 @@
   ],
   "speed": [
     { "if": "true", "limit_to": "0.9 * car_average_speed" },
+    { "if": "true", "limit_to": "max_speed * 0.9" },
     { "if": "true", "limit_to": "120" },
     { "if": "surface==COBBLESTONE || surface==GRASS || surface==GRAVEL || surface==SAND || surface==PAVING_STONES || surface==DIRT || surface==GROUND || surface==UNPAVED || surface==COMPACTED",
       "limit_to": "30"
