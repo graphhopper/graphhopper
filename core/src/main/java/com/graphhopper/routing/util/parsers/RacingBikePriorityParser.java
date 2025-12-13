@@ -20,12 +20,16 @@ public class RacingBikePriorityParser extends BikeCommonPriorityParser {
 
         addPushingSection("path");
 
-        preferHighwayTags.add("road");
         preferHighwayTags.add("secondary");
         preferHighwayTags.add("secondary_link");
-        preferHighwayTags.add("tertiary");
-        preferHighwayTags.add("tertiary_link");
-        preferHighwayTags.add("residential");
+
+//        preferHighwayTags.add("road");
+//        preferHighwayTags.add("unclassified");
+//        preferHighwayTags.add("tertiary");
+//        preferHighwayTags.add("tertiary_link");
+
+        avoidHighwayTags.put("service", SLIGHT_AVOID);
+        avoidHighwayTags.put("residential", SLIGHT_AVOID);
 
         avoidHighwayTags.put("motorway", BAD);
         avoidHighwayTags.put("motorway_link", BAD);
@@ -44,9 +48,7 @@ public class RacingBikePriorityParser extends BikeCommonPriorityParser {
         super.collect(way, wayTypeSpeed, bikeDesignated, weightToPrioMap);
 
         String highway = way.getTag("highway");
-        if ("service".equals(highway) || "residential".equals(highway)) {
-            weightToPrioMap.put(40d, SLIGHT_AVOID);
-        } else if ("track".equals(highway)) {
+        if ("track".equals(highway)) {
             String trackType = way.getTag("tracktype");
             if ("grade1".equals(trackType) || goodSurface.contains(way.getTag("surface", "")))
                 weightToPrioMap.put(110d, VERY_NICE);
