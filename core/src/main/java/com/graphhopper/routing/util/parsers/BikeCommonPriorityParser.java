@@ -25,8 +25,6 @@ public abstract class BikeCommonPriorityParser implements TagParser {
     protected final HashSet<String> pushingSectionsHighways = new HashSet<>();
     protected final Set<String> preferHighwayTags = new HashSet<>();
     protected final Map<String, PriorityCode> avoidHighwayTags = new HashMap<>();
-    protected final Set<String> unpavedSurfaceTags = new HashSet<>();
-
     protected final DecimalEncodedValue avgSpeedEnc;
     protected final DecimalEncodedValue priorityEnc;
     // Car speed limit which switches the preference from UNCHANGED to AVOID_IF_POSSIBLE
@@ -44,21 +42,6 @@ public abstract class BikeCommonPriorityParser implements TagParser {
         addPushingSection("pedestrian");
         addPushingSection("steps");
         addPushingSection("platform");
-
-        unpavedSurfaceTags.add("unpaved");
-        unpavedSurfaceTags.add("gravel");
-        unpavedSurfaceTags.add("ground");
-        unpavedSurfaceTags.add("dirt");
-        unpavedSurfaceTags.add("grass");
-        unpavedSurfaceTags.add("compacted");
-        unpavedSurfaceTags.add("earth");
-        unpavedSurfaceTags.add("fine_gravel");
-        unpavedSurfaceTags.add("grass_paver");
-        unpavedSurfaceTags.add("ice");
-        unpavedSurfaceTags.add("mud");
-        unpavedSurfaceTags.add("salt");
-        unpavedSurfaceTags.add("sand");
-        unpavedSurfaceTags.add("wood");
 
         avoidHighwayTags.put("motorway", REACH_DESTINATION);
         avoidHighwayTags.put("motorway_link", REACH_DESTINATION);
