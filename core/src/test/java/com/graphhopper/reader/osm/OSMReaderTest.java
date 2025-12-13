@@ -33,7 +33,6 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
 import com.graphhopper.routing.util.parsers.CountryParser;
 import com.graphhopper.routing.util.parsers.OSMBikeNetworkTagParser;
-import com.graphhopper.routing.util.parsers.OSMMtbNetworkTagParser;
 import com.graphhopper.routing.util.parsers.OSMRoadAccessParser;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
@@ -479,8 +478,8 @@ public class OSMReaderTest {
         EnumEncodedValue<RouteNetwork> mtbNetworkEnc = new EnumEncodedValue<>(MtbNetwork.KEY, RouteNetwork.class);
         EncodingManager manager = new EncodingManager.Builder().add(mtbNetworkEnc).add(bikeNetworkEnc).build();
         OSMParsers osmParsers = new OSMParsers()
-                .addRelationTagParser(relConf -> new OSMBikeNetworkTagParser(bikeNetworkEnc, relConf))
-                .addRelationTagParser(relConf -> new OSMMtbNetworkTagParser(mtbNetworkEnc, relConf));
+                .addRelationTagParser(relConf -> new OSMBikeNetworkTagParser(bikeNetworkEnc, relConf, "bicycle"))
+                .addRelationTagParser(relConf -> new OSMBikeNetworkTagParser(mtbNetworkEnc, relConf, "mtb"));
 
         ReaderRelation osmRel = new ReaderRelation(1);
         osmRel.add(new ReaderRelation.Member(ReaderElement.Type.WAY, 1, ""));
@@ -518,7 +517,7 @@ public class OSMReaderTest {
 
         // this is pretty ugly: the mtb network parser writes to the edge flags we pass into it, but at a location we
         // don't know, so we need to get the internal enc to read the flags below
-        transformEnc = ((OSMMtbNetworkTagParser) osmParsers.getRelationTagParsers().get(1)).getTransformerRouteRelEnc();
+        transformEnc = ((OSMBikeNetworkTagParser) osmParsers.getRelationTagParsers().get(1)).getTransformerRouteRelEnc();
 
         osmRel.setTag("route", "mtb");
         osmRel.setTag("network", "lcn");
