@@ -166,8 +166,8 @@ public abstract class BikeCommonPriorityParser implements TagParser {
             );
         }
 
-        // Increase the priority for scenic routes or in case that maxspeed limits our average speed as compensation. See #630
-        if (way.hasTag("scenic", "yes") || maxSpeed > 0 && maxSpeed <= wayTypeSpeed) {
+        // Increase priority in case that maxspeed limits our average speed as compensation. See #630
+        if (maxSpeed > 0 && maxSpeed <= wayTypeSpeed) {
             PriorityCode lastEntryValue = weightToPrioMap.lastEntry().getValue();
             if (lastEntryValue.getValue() < BEST.getValue())
                 weightToPrioMap.put(110d, lastEntryValue.better());

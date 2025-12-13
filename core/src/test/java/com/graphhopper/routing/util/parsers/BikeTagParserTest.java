@@ -73,8 +73,9 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("highway", "primary");
         assertPriorityAndSpeed(BAD, 18, way);
 
+        // ignore scenic as it is a too generic indication and not for bike and can therefor lead to wrong suggestions
         way.setTag("scenic", "yes");
-        assertPriorityAndSpeed(AVOID_MORE, 18, way);
+        assertPriorityAndSpeed(BAD, 18, way);
 
         way.clearTags();
         way.setTag("highway", "living_street");
