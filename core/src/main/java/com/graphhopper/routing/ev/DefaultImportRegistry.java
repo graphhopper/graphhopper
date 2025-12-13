@@ -345,7 +345,7 @@ public class DefaultImportRegistry implements ImportRegistry {
         else if (VehiclePriority.key("mtb").equals(name))
             return ImportUnit.create(name, props -> VehiclePriority.create("mtb", 4, PriorityCode.getFactor(1), false),
                     (lookup, props) -> new MountainBikePriorityParser(lookup),
-                    VehicleSpeed.key("mtb"), BikeNetwork.KEY
+                    VehicleSpeed.key("mtb"), BikeNetwork.KEY, MtbNetwork.KEY
             );
         return null;
     }

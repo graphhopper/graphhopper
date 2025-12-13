@@ -1,6 +1,6 @@
 // to use this custom model you need to set the following option in the config.yml
 // graph.elevation.provider: srtm   # enables elevation
-// graph.encoded_values: mtb_priority, mtb_access, bike_network, roundabout, mtb_average_speed, bike_road_access, average_slope, mtb_rating, hike_rating, country, road_class
+// graph.encoded_values: mtb_priority, mtb_access, bike_network, mtb_network, roundabout, mtb_average_speed, bike_road_access, average_slope, mtb_rating, hike_rating, country, road_class
 // profiles:
 //    - name: mtb
 //      custom_model_files: [mtb.json, bike_elevation.json]
@@ -8,8 +8,8 @@
 {
   "priority": [
     { "if": "true",  "multiply_by": "mtb_priority" },
-    { "if": "bike_network == INTERNATIONAL || bike_network == NATIONAL",  "multiply_by": "1.8" },
-    { "else_if": "bike_network == REGIONAL || bike_network == LOCAL",  "multiply_by": "1.5" },
+    { "if": "bike_network == INTERNATIONAL || bike_network == NATIONAL || mtb_network == INTERNATIONAL || mtb_network == NATIONAL",  "multiply_by": "1.8" },
+    { "else_if": "bike_network == REGIONAL || bike_network == LOCAL    || mtb_network == REGIONAL      || mtb_network == LOCAL",     "multiply_by": "1.5" },
     { "if": "road_environment == FERRY", "multiply_by": "0.5" },
     { "if": "mtb_rating > 6",  "multiply_by": "0" },
     { "else_if": "mtb_rating > 3",  "multiply_by": "0.5" },
