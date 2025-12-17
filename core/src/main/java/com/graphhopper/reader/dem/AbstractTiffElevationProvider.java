@@ -48,7 +48,7 @@ public abstract class AbstractTiffElevationProvider extends TileBasedElevationPr
     public AbstractTiffElevationProvider(String baseUrl, String cacheDir, int width, int height, int latDegree, int lonDegree) {
         super(cacheDir);
         this.baseUrl = baseUrl;
-        this.downloader = new Downloader().setTimeout(10000);
+        this.downloader = new Downloader(10_000);
         this.WIDTH = width;
         this.HEIGHT = height;
         this.LAT_DEGREE = latDegree;

@@ -46,7 +46,7 @@ public abstract class AbstractSRTMElevationProvider extends TileBasedElevationPr
     public AbstractSRTMElevationProvider(String baseUrl, String cacheDir, int minLat, int maxLat, int defaultWidth) {
         super(cacheDir);
         this.baseUrl = baseUrl;
-        downloader = new Downloader().setTimeout(10000);
+        downloader = new Downloader(10_000);
         this.DEFAULT_WIDTH = defaultWidth;
         this.MIN_LAT = minLat;
         this.MAX_LAT = maxLat;

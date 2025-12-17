@@ -36,22 +36,23 @@ import java.util.zip.InflaterInputStream;
  */
 public class Downloader {
     private static final int BUFFER_SIZE = 8 * 1024;
+	private static final long DEFAULT_TIMEOUT = 4_000;
 
     private final HttpClient client;
+	private final Duration timeout;
 
     private boolean requestCompressed = true;
-    private long timeout = 4000;
 
-    public Downloader() {
+	public Downloader() {
+		this(DEFAULT_TIMEOUT);
+	}
+
+    public Downloader(long timeout) {
         this.client = HttpClient.newBuilder()
                 .followRedirects(HttpClient.Redirect.NORMAL)
                 .proxy(ProxySelector.getDefault())
                 .build();
-    }
-
-    public Downloader setTimeout(long timeout) {
-        this.timeout = timeout;
-        return this;
+		this.timeout = Duration.ofMillis(timeout);
     }
 
     public void setRequestCompressed(boolean requestCompressed) {
@@ -61,7 +62,7 @@ public class Downloader {
     public void downloadFile(String url, File toFile) throws IOException {
         var requestBuilder = HttpRequest.newBuilder()
                 .setHeader("User-Agent", "graphhopper/" + Constants.VERSION)
-                .timeout(Duration.ofMillis(timeout))
+                .timeout(timeout)
                 .uri(URI.create(url));
         if (requestCompressed) {
             requestBuilder.setHeader("Accept-Encoding", "gzip, deflate");
