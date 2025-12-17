@@ -23,14 +23,14 @@ import static com.graphhopper.util.Helper.close;
 
 /**
  * Sonny's LiDAR Digital Terrain Models contains elevation data for Europe with 1 arc second (~30m) accuracy.
- * The description is available at https://sonny.4lima.de/. Unfortunately the data is provided on a Google Drive
- * https://drive.google.com/drive/folders/0BxphPoRgwhnoWkRoTFhMbTM3RDA?resourcekey=0-wRe5bWl96pwvQ9tAfI9cQg
+ * The description is available at <a href="https://sonny.4lima.de/">https://sonny.4lima.de/</a>. Unfortunately the data is provided on a
+ * <a href="https://drive.google.com/drive/folders/0BxphPoRgwhnoWkRoTFhMbTM3RDA?resourcekey=0-wRe5bWl96pwvQ9tAfI9cQg">Google Drive</a>
  * Therefore, the data is not available via a direct URL and you have to download it manually. After downloading,
  * the data has to be unzipped and placed in the cache directory. The cache directory is expected to contain DTM
  * data files with the naming convention like "N49E011.hgt" for the area around 49°N and 11°E.
  * <p>
  * Please note that the data cannot be used for public hosting or redistribution due to the terms of use of the data. See
- * https://github.com/graphhopper/graphhopper/issues/2823
+ * @see <a href="https://github.com/graphhopper/graphhopper/issues/2823">https://github.com/graphhopper/graphhopper/issues/2823</a>
  * <p>
  *
  * @author ratrun
