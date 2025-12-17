@@ -28,7 +28,7 @@ public class GHMRequest {
     private List<String> snapPreventions;
     private final PMap hints = new PMap();
     private List<String> outArrays = Collections.EMPTY_LIST;
-    private boolean failFast = true;
+    private boolean failFast = false;
 
     public GHMRequest setProfile(String profile) {
         this.profile = profile;

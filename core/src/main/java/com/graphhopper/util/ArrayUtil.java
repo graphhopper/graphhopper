@@ -263,4 +263,17 @@ public class ArrayUtil {
         int sizeWithoutDuplicates = removeConsecutiveDuplicates(result, size);
         return Arrays.copyOf(result, sizeWithoutDuplicates);
     }
+
+    public static int getLast(IntArrayList list) {
+        if (list.isEmpty())
+            throw new IllegalArgumentException("Cannot get last element of an empty list");
+        return list.get(list.size() - 1);
+    }
+
+    public static int getLast(int[] array) {
+        if (array.length == 0)
+            throw new IllegalArgumentException("Cannot get last element of an empty array");
+        return array[array.length - 1];
+    }
+
 }

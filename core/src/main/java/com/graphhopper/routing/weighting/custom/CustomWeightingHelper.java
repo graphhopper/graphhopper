@@ -19,7 +19,10 @@ package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.json.MinMax;
 import com.graphhopper.json.Statement;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.Polygon;
@@ -47,19 +50,15 @@ public class CustomWeightingHelper {
     }
 
     public double getPriority(EdgeIteratorState edge, boolean reverse) {
-        return getRawPriority(edge, reverse);
+        return 1;
     }
 
     public double getSpeed(EdgeIteratorState edge, boolean reverse) {
-        return getRawSpeed(edge, reverse);
-    }
-
-    protected final double getRawSpeed(EdgeIteratorState edge, boolean reverse) {
         return 1;
     }
 
-    protected final double getRawPriority(EdgeIteratorState edge, boolean reverse) {
-        return 1;
+    public double getTurnPenalty(BaseGraph graph, EdgeIntAccess edgeIntAccess, int inEdge, int viaNode, int outEdge) {
+        return 0;
     }
 
     public final double calcMaxSpeed() {
@@ -99,5 +98,22 @@ public class CustomWeightingHelper {
         if (p.isRectangle() && polyBBOX.contains(edgeBBox))
             return true;
         return p.intersects(edge.fetchWayGeometry(FetchMode.ALL).makeImmutable()); // TODO PERF: cache bbox and edge wayGeometry for multiple area
+    }
+
+    public static double calcChangeAngle(EdgeIntAccess edgeIntAccess, DecimalEncodedValue orientationEnc,
+                                         int inEdge, boolean inEdgeReverse, int outEdge, boolean outEdgeReverse) {
+        double prevAzimuth = orientationEnc.getDecimal(inEdgeReverse, inEdge, edgeIntAccess);
+        double azimuth = orientationEnc.getDecimal(outEdgeReverse, outEdge, edgeIntAccess);
+        return calcChangeAngle(prevAzimuth, azimuth);
+    }
+
+    public static double calcChangeAngle(double prevAzimuth, double azimuth) {
+        // bring parallel to prevOrientation
+        azimuth = (azimuth + 180) % 360.0;
+
+        double changeAngle = azimuth - prevAzimuth;
+
+        // keep in [-180, 180]
+        return (changeAngle + 540.0) % 360.0 - 180.0;
     }
 }

@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 /**
  * Request object to perform routing with GraphHopper.
@@ -106,13 +107,15 @@ public class GHRequest {
     /**
      * Sets the headings, i.e. the direction the route should leave the starting point and the directions the route
      * should arrive from at the via-points and the end point. Each heading is given as north based azimuth (clockwise)
-     * in [0, 360) or NaN if no direction shall be specified.
+     * in [0, 360) or NaN or null if no direction shall be specified.
      * <p>
      * The number of headings must be zero (default), one (for the start point) or equal to the number of points
      * when sending the request.
      */
     public GHRequest setHeadings(List<Double> headings) {
-        this.headings = headings;
+        this.headings = headings.stream()
+                .map(d -> d == null ? Double.NaN : d)
+                .collect(Collectors.toList());
         return this;
     }
 

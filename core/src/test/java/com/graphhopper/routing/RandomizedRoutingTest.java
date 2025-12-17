@@ -57,7 +57,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * This test compares different routing algorithms with {@link DijkstraBidirectionRef}. Most prominently it uses
- * randomly create graphs to create all sorts of different situations.
+ * randomly created graphs to create all sorts of different situations.
  *
  * @author easbar
  * @see RandomCHRoutingTest - similar but only tests CH algorithms
@@ -243,7 +243,7 @@ public class RandomizedRoutingTest {
                     .calcPath(source, target);
             Path path = f.createAlgo()
                     .calcPath(source, target);
-            strictViolations.addAll(GHUtility.comparePaths(refPath, path, source, target, seed));
+            strictViolations.addAll(GHUtility.comparePaths(refPath, path, source, target, true, seed));
         }
         if (strictViolations.size() > 3) {
             for (String strictViolation : strictViolations) {
@@ -283,12 +283,13 @@ public class RandomizedRoutingTest {
 
             Path refPath = new DijkstraBidirectionRef(queryGraph, queryGraph.wrapWeighting(f.weighting), f.traversalMode).calcPath(source, target);
             Path path = f.createAlgo(queryGraph).calcPath(source, target);
-            strictViolations.addAll(GHUtility.comparePaths(refPath, path, source, target, seed));
+            strictViolations.addAll(GHUtility.comparePaths(refPath, path, source, target, true, seed));
         }
         // we do not do a strict check because there can be ambiguity, for example when there are zero weight loops.
         // however, when there are too many deviations we fail
         if (strictViolations.size() > 3) {
-            LOGGER.warn(strictViolations.toString());
+            for (String strictViolation : strictViolations)
+                LOGGER.warn("strict violation: " + strictViolation);
             fail("Too many strict violations: " + strictViolations.size() + " / " + numQueries + ", seed: " + seed);
         }
     }

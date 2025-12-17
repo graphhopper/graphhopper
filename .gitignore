@@ -44,3 +44,4 @@ local.properties
 .DS_Store
 /graph-cache
 package-lock.json
+.vscode/

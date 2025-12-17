@@ -36,7 +36,7 @@ public class RoutingExample {
         hopper.setGraphHopperLocation("target/routing-graph-cache");
 
         // add all encoded values that are used in the custom model, these are also available as path details or for client-side custom models
-        hopper.setEncodedValuesString("car_access, car_average_speed, road_access");
+        hopper.setEncodedValuesString("car_access, car_average_speed, road_access, max_speed");
         // see docs/core/profiles.md to learn more about profiles
         hopper.setProfiles(new Profile("car").setCustomModel(GHUtility.loadCustomModelFromJar("car.json")));
 
@@ -109,7 +109,7 @@ public class RoutingExample {
         GraphHopper hopper = new GraphHopper();
         hopper.setOSMFile(ghLoc);
         hopper.setGraphHopperLocation("target/routing-custom-graph-cache");
-        hopper.setEncodedValuesString("car_access, car_average_speed, road_access");
+        hopper.setEncodedValuesString("car_access, car_average_speed, road_access, max_speed");
         hopper.setProfiles(new Profile("car_custom").setCustomModel(GHUtility.loadCustomModelFromJar("car.json")));
 
         // The hybrid mode uses the "landmark algorithm" and is up to 15x faster than the flexible mode (Dijkstra).
@@ -126,7 +126,7 @@ public class RoutingExample {
         if (res.hasErrors())
             throw new RuntimeException(res.getErrors().toString());
 
-        assert Math.round(res.getBest().getTime() / 1000d) == 94;
+        assert Math.round(res.getBest().getTime() / 1000d) == 95;
 
         // 2. now avoid the secondary road and reduce the maximum speed, see docs/core/custom-models.md for an in-depth explanation
         // and also the blog posts https://www.graphhopper.com/?s=customizable+routing

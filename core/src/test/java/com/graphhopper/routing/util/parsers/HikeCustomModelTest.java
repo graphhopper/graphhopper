@@ -30,6 +30,7 @@ public class HikeCustomModelTest {
                 add(VehicleSpeed.create("foot", 4, 1, false)).
                 add(VehiclePriority.create("foot", 4, PriorityCode.getFactor(1), false)).
                 add(FerrySpeed.create()).
+                add(RoadEnvironment.create()).
                 add(RouteNetwork.create(FootNetwork.KEY)).
                 add(FootRoadAccess.create()).
                 add(hikeRating).build();

@@ -23,7 +23,7 @@ example the `AustriaCountryRule` changes the default accessibility for `highway=
 the `GermanyCountryRule` changes it to `access=destination`. More information about such country-specific rules can be
 found in the OSM wiki
 for [access restrictions](https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Access-Restrictions)
-and [maximum speeds](https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed#Motorcar). Feel free to add
+and [maximum speeds](https://wiki.openstreetmap.org/wiki/Default_speed_limits). Feel free to add
 country rules for your country and contribute to GraphHopper!
 
 # Note about the country rules used by GraphHopper

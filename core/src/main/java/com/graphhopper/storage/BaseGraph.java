@@ -152,6 +152,10 @@ public class BaseGraph implements Graph, Closeable {
         return store.getEdges();
     }
 
+    public int getEdgeKeys() {
+        return 2 * store.getEdges();
+    }
+
     @Override
     public NodeAccess getNodeAccess() {
         return nodeAccess;

@@ -50,8 +50,8 @@ public class EdgeElevationSmoothingRamerTest {
         pl2.add(0.002, 0.002, 20);
         EdgeElevationSmoothingRamer.smooth(pl2, 100);
         assertEquals(5, pl2.size());
-        assertEquals(190, pl2.getEle(1), 1); // modify as too small in interval [0,4]
-        assertEquals(210, pl2.getEle(2), 1); // modify as too small in interval [0,4]
+        assertEquals(182.5, pl2.getEle(1), 1); // modify as too small in interval [0,4]
+        assertEquals(201.3, pl2.getEle(2), 1); // modify as too small in interval [0,4]
         assertEquals(220, pl2.getEle(3), .1); // keep as it is bigger than maxElevationDelta in interval [0,4]
     }
 

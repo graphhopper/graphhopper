@@ -258,8 +258,8 @@ public class RoutingCHGraphImplTest {
         EncodingManager em = EncodingManager.start().add(speedEnc).build();
         BaseGraph graph = new BaseGraph.Builder(em).create();
 
-        graph.edge(0, 1).setDistance(1).set(speedEnc, 60);
-        graph.edge(1, 2).setDistance(1).set(speedEnc, 60);
+        graph.edge(0, 1).setDistance(100).set(speedEnc, 60);
+        graph.edge(1, 2).setDistance(100).set(speedEnc, 60);
 
         graph.freeze();
 
@@ -276,8 +276,8 @@ public class RoutingCHGraphImplTest {
         DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
         EncodingManager em = EncodingManager.start().add(speedEnc).build();
         BaseGraph graph = new BaseGraph.Builder(em).set3D(true).create();
-        graph.edge(0, 1).setDistance(1).set(speedEnc, 60);
-        graph.edge(1, 2).setDistance(3).set(speedEnc, 60);
+        graph.edge(0, 1).setDistance(100).set(speedEnc, 60);
+        graph.edge(1, 2).setDistance(300).set(speedEnc, 60);
         graph.freeze();
 
         Weighting weighting = new SpeedWeighting(speedEnc);
@@ -309,8 +309,8 @@ public class RoutingCHGraphImplTest {
         DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
         EncodingManager em = EncodingManager.start().add(speedEnc).build();
         BaseGraph graph = new BaseGraph.Builder(em).set3D(true).create();
-        graph.edge(0, 1).setDistance(1).set(speedEnc, 60);
-        graph.edge(1, 2).setDistance(1).set(speedEnc, 60);
+        graph.edge(0, 1).setDistance(100).set(speedEnc, 60);
+        graph.edge(1, 2).setDistance(100).set(speedEnc, 60);
         graph.freeze();
 
         Weighting weighting = new SpeedWeighting(speedEnc);

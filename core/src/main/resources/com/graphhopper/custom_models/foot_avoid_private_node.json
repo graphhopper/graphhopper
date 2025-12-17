@@ -1,0 +1,6 @@
+{
+  // prefer foot_avoid_private.json as this is less precise
+  "priority": [
+    { "if": "foot_road_access == PRIVATE", "multiply_by": "0.1" }
+  ]
+}

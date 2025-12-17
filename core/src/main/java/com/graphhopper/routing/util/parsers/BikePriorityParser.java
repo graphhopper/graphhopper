@@ -1,19 +1,19 @@
 package com.graphhopper.routing.util.parsers;
 
-import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.ev.VehiclePriority;
+import com.graphhopper.routing.ev.VehicleSpeed;
 
 public class BikePriorityParser extends BikeCommonPriorityParser {
 
     public BikePriorityParser(EncodedValueLookup lookup) {
-        this(
-                lookup.getDecimalEncodedValue(VehiclePriority.key("bike")),
-                lookup.getDecimalEncodedValue(VehicleSpeed.key("bike")),
-                lookup.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class)
-        );
+        this(lookup.getDecimalEncodedValue(VehiclePriority.key("bike")),
+                lookup.getDecimalEncodedValue(VehicleSpeed.key("bike")));
     }
 
-    public BikePriorityParser(DecimalEncodedValue priorityEnc, DecimalEncodedValue speedEnc, EnumEncodedValue<RouteNetwork> bikeRouteEnc) {
-        super(priorityEnc, speedEnc, bikeRouteEnc);
+    public BikePriorityParser(DecimalEncodedValue priorityEnc, DecimalEncodedValue speedEnc) {
+        super(priorityEnc, speedEnc);
 
         addPushingSection("path");
 

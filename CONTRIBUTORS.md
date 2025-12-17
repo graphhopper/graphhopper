@@ -72,6 +72,7 @@ Here is an overview:
  * osamaalmaani, added missing config option for graph.encoded_values in the config-example.yml file
  * oschlueter, fixes like #1185
  * otbutz, added multiple EncodedValues
+ * PabloaRuiz, pt_BR 1i8n improvements
  * pantsleftinwash, speed parsing improvements
  * PGWelch, shapefile reader #874
  * rafaelstelles, fix deserializer web-api
@@ -91,8 +92,10 @@ Here is an overview:
  * taulinger, hopefully more to come 
  * thehereward, code cleanups like #620
  * tyrasd, improved toll road handling in Austria #3190
+ * Vectorial1024, country-specific speed limit issues like #3244, #3248
  * vvikas, ideas for many to many improvements and #616
  * zstadler, multiple fixes and car4wd
+ * binora, fix mode in navigation response converter
 
 ## Translations
 

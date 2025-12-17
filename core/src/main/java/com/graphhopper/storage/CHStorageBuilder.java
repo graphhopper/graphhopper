@@ -62,8 +62,8 @@ public class CHStorageBuilder {
     /**
      * @param origKeyFirst The first original edge key that is skipped by this shortcut *in the direction of the shortcut*.
      *                     This definition assumes that edge-based shortcuts are one-directional, and they are.
-     *                     For example for the following shortcut edge from x to y: x->u->v->w->y ,
-     *                     which skips the shortcuts x->v and v->y the first original edge key would be the one of the edge x->u
+     *                     For example for the following shortcut edge from x to y: x->u->v->w->y,
+     *                     which skips the shortcuts x->v and v->y, the first original edge key would be the one of the edge x->u
      * @param origKeyLast  like origKeyFirst, but the last orig edge key, i.e. the key of w->y in above example
      */
     public int addShortcutEdgeBased(int a, int b, int accessFlags, double weight, int skippedEdge1, int skippedEdge2,

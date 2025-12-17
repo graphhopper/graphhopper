@@ -18,6 +18,7 @@
 
 package com.graphhopper.routing;
 
+import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.ResponsePath;
@@ -78,7 +79,7 @@ class HeadingRoutingTest {
                 setPathDetails(Collections.singletonList("edge_key"));
         GHResponse response = router.route(req);
         assertFalse(response.hasErrors(), response.getErrors().toString());
-        assertArrayEquals(new int[]{4, 5, 8, 3, 2}, calcNodes(graph, response.getAll().get(0)));
+        assertEquals(IntArrayList.from(4, 5, 8, 3, 2), calcNodes(graph, response.getAll().get(0)));
     }
 
     @Test
@@ -107,13 +108,13 @@ class HeadingRoutingTest {
                 setPathDetails(Collections.singletonList("edge_key"));
         GHResponse response = router.route(req);
         assertFalse(response.hasErrors());
-        assertArrayEquals(new int[]{4, 5, 8, 1, 2, 3}, calcNodes(graph, response.getAll().get(0)));
+        assertEquals(IntArrayList.from(4, 5, 8, 1, 2, 3), calcNodes(graph, response.getAll().get(0)));
 
         // Test uni-directional case
         req.setAlgorithm(DIJKSTRA);
         response = router.route(req);
         assertFalse(response.hasErrors(), response.getErrors().toString());
-        assertArrayEquals(new int[]{4, 5, 8, 1, 2, 3}, calcNodes(graph, response.getAll().get(0)));
+        assertEquals(IntArrayList.from(4, 5, 8, 1, 2, 3), calcNodes(graph, response.getAll().get(0)));
     }
 
     @Test
@@ -144,7 +145,7 @@ class HeadingRoutingTest {
                 setPathDetails(Collections.singletonList("edge_key"));
         GHResponse response = router.route(req);
         assertFalse(response.hasErrors());
-        assertArrayEquals(new int[]{4, 5, 6, 7, 7, 8, 3, 2}, calcNodes(graph, response.getAll().get(0)));
+        assertEquals(IntArrayList.from(4, 5, 6, 7, 7, 8, 3, 2), calcNodes(graph, response.getAll().get(0)));
     }
 
     @Test
@@ -176,7 +177,7 @@ class HeadingRoutingTest {
         GHResponse response = router.route(req);
         assertFalse(response.hasErrors());
         assertEquals(1, response.getAll().size());
-        assertArrayEquals(new int[]{5, 4, 3, 3, 8, 1, 2, 3}, calcNodes(graph, response.getAll().get(0)));
+        assertEquals(IntArrayList.from(5, 4, 3, 3, 8, 1, 2, 3), calcNodes(graph, response.getAll().get(0)));
     }
 
     @Test
@@ -208,7 +209,7 @@ class HeadingRoutingTest {
         req.putHint(Parameters.Routing.PASS_THROUGH, true);
         GHResponse response = router.route(req);
         assertFalse(response.hasErrors());
-        assertArrayEquals(new int[]{5, 4, 3, 8, 7, 7, 6, 5, 4, 3, 2}, calcNodes(graph, response.getBest()));
+        assertEquals(IntArrayList.from(5, 4, 3, 8, 7, 7, 6, 5, 4, 3, 2), calcNodes(graph, response.getBest()));
     }
 
     @Test
@@ -237,7 +238,7 @@ class HeadingRoutingTest {
         req.putHint(Parameters.Routing.PASS_THROUGH, true);
         GHResponse response = router.route(req);
         assertFalse(response.hasErrors());
-        assertArrayEquals(new int[]{8, 3, 2}, calcNodes(graph, response.getAll().get(0)));
+        assertEquals(IntArrayList.from(8, 3, 2), calcNodes(graph, response.getAll().get(0)));
 
         // same start + end but heading=0, parallel to 3-8-7
         req = new GHRequest().
@@ -248,7 +249,7 @@ class HeadingRoutingTest {
         req.putHint(Parameters.Routing.PASS_THROUGH, true);
         response = router.route(req);
         assertFalse(response.hasErrors());
-        assertArrayEquals(new int[]{8, 3, 2}, calcNodes(graph, response.getAll().get(0)));
+        assertEquals(IntArrayList.from(8, 3, 2), calcNodes(graph, response.getAll().get(0)));
 
         // heading=90 parallel to 1->5
         req = new GHRequest().
@@ -259,7 +260,7 @@ class HeadingRoutingTest {
         req.putHint(Parameters.Routing.PASS_THROUGH, true);
         response = router.route(req);
         assertFalse(response.hasErrors());
-        assertArrayEquals(new int[]{1, 5, 4, 3, 2}, calcNodes(graph, response.getAll().get(0)));
+        assertEquals(IntArrayList.from(1, 5, 4, 3, 2), calcNodes(graph, response.getAll().get(0)));
 
         for (double angle = 0; angle < 360; angle += 10) {
             // Ignore angles nearly parallel to 1->5. I.e. it should fallback to results with 8-3.. or 3-8..
@@ -274,9 +275,9 @@ class HeadingRoutingTest {
             response = router.route(req);
             assertFalse(response.hasErrors());
 
-            int[] expectedNodes = (angle >= 130 && angle <= 250) ? new int[]{3, 8, 7, 0, 1, 2, 3} : new int[]{8, 3, 2};
+            IntArrayList expectedNodes = (angle >= 130 && angle <= 250) ? IntArrayList.from(3, 8, 7, 0, 1, 2, 3) : IntArrayList.from(8, 3, 2);
             // System.out.println(Arrays.toString(calcNodes(graph, response.getAll().get(0))) + " angle:" + angle);
-            assertArrayEquals(expectedNodes, calcNodes(graph, response.getAll().get(0)), "angle: " + angle);
+            assertEquals(expectedNodes, calcNodes(graph, response.getAll().get(0)), "angle: " + angle);
         }
     }
 
@@ -306,7 +307,7 @@ class HeadingRoutingTest {
         req.putHint(Parameters.Routing.PASS_THROUGH, true);
         GHResponse response = router.route(req);
         assertFalse(response.hasErrors());
-        assertArrayEquals(new int[]{8, 3, 2}, calcNodes(graph, response.getAll().get(0)));
+        assertEquals(IntArrayList.from(8, 3, 2), calcNodes(graph, response.getAll().get(0)));
 
         req = new GHRequest().
                 setPoints(Arrays.asList(start, end)).
@@ -316,7 +317,7 @@ class HeadingRoutingTest {
         req.putHint(Parameters.Routing.PASS_THROUGH, true);
         response = router.route(req);
         assertFalse(response.hasErrors());
-        assertArrayEquals(new int[]{8, 3, 2}, calcNodes(graph, response.getAll().get(0)));
+        assertEquals(IntArrayList.from(8, 3, 2), calcNodes(graph, response.getAll().get(0)));
     }
 
     @Test
@@ -346,7 +347,7 @@ class HeadingRoutingTest {
                 setPathDetails(Collections.singletonList("edge_key"));
         GHResponse response = router.route(req);
         assertFalse(response.hasErrors());
-        assertArrayEquals(new int[]{0, 1, 2, 3, 4}, calcNodes(graph, response.getAll().get(0)));
+        assertEquals(IntArrayList.from(0, 1, 2, 3, 4), calcNodes(graph, response.getAll().get(0)));
     }
 
     private Router createRouter(BaseGraph graph, EncodingManager encodingManager) {
@@ -427,7 +428,7 @@ class HeadingRoutingTest {
         return g;
     }
 
-    private int[] calcNodes(Graph graph, ResponsePath responsePath) {
+    private IntArrayList calcNodes(Graph graph, ResponsePath responsePath) {
         List<PathDetail> edgeKeys = responsePath.getPathDetails().get("edge_key");
         int[] result = new int[edgeKeys.size() + 1];
         for (int i = 0; i < edgeKeys.size(); i++) {
@@ -436,6 +437,6 @@ class HeadingRoutingTest {
             // last entry needs an additional node:
             if (i == edgeKeys.size() - 1) result[edgeKeys.size()] = edgeIteratorState.getAdjNode();
         }
-        return result;
+        return IntArrayList.from(result);
     }
 }

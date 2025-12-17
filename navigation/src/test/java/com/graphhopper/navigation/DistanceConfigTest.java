@@ -42,4 +42,14 @@ public class DistanceConfigTest {
         assertEquals(1, biking.voiceInstructions.size());
     }
 
+    @Test
+    public void testModeMapping() {
+        // Test TransportationMode enum values
+        DistanceConfig car = new DistanceConfig(DistanceUtils.Unit.METRIC, null, null, TransportationMode.CAR);
+        assertEquals("driving", car.getMode());
+
+        DistanceConfig foot = new DistanceConfig(DistanceUtils.Unit.METRIC, null, null, TransportationMode.FOOT);
+        assertEquals("walking", foot.getMode());
+    }
+
 }

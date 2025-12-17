@@ -52,6 +52,8 @@ public class OSMBikeNetworkTagParser implements RelationTagParser {
         // just copy value into different bit range
         IntsRefEdgeIntAccess relIntAccess = new IntsRefEdgeIntAccess(relationFlags);
         RouteNetwork routeNetwork = transformerRouteRelEnc.getEnum(false, -1, relIntAccess);
+        if (routeNetwork == RouteNetwork.MISSING && way.hasTag("lcn", "yes"))
+            routeNetwork = RouteNetwork.LOCAL;
         bikeRouteEnc.setEnum(false, edgeId, edgeIntAccess, routeNetwork);
     }
 

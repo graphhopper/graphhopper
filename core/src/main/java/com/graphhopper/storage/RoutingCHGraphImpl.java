@@ -107,4 +107,9 @@ public class RoutingCHGraphImpl implements RoutingCHGraph {
         if (!baseGraph.isClosed()) baseGraph.close();
         chStorage.close();
     }
+
+    public CHStorage getCHStorage() {
+        return chStorage;
+    }
+
 }

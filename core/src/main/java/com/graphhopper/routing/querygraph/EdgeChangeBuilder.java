@@ -66,7 +66,7 @@ class EdgeChangeBuilder {
         //    these adjacent real nodes so we can use them in the next step
         for (int i = 0; i < getNumVirtualNodes(); i++) {
             // base node
-            EdgeIteratorState baseRevEdge = getVirtualEdge(i * 4 + SNAP_BASE);
+            VirtualEdgeIteratorState baseRevEdge = getVirtualEdge(i * 4 + SNAP_BASE);
             int towerNode = baseRevEdge.getAdjNode();
             if (!isVirtualNode(towerNode)) {
                 towerNodesToChange.add(towerNode);
@@ -74,7 +74,7 @@ class EdgeChangeBuilder {
             }
 
             // adj node
-            EdgeIteratorState adjEdge = getVirtualEdge(i * 4 + SNAP_ADJ);
+            VirtualEdgeIteratorState adjEdge = getVirtualEdge(i * 4 + SNAP_ADJ);
             towerNode = adjEdge.getAdjNode();
             if (!isVirtualNode(towerNode)) {
                 towerNodesToChange.add(towerNode);
@@ -100,7 +100,7 @@ class EdgeChangeBuilder {
             edgeChanges = new QueryOverlay.EdgeChanges(2, 2);
             edgeChangesAtRealNodes.put(node, edgeChanges);
         }
-        EdgeIteratorState edge = base
+        VirtualEdgeIteratorState edge = base
                 ? getVirtualEdge(virtNode * 4 + BASE_SNAP)
                 : getVirtualEdge(virtNode * 4 + ADJ_SNAP);
         edgeChanges.getAdditionalEdges().add(edge);
@@ -116,9 +116,9 @@ class EdgeChangeBuilder {
             throw new IllegalStateException("Node should not be virtual:" + towerNode + ", " + edgeChangesAtRealNodes);
 
         QueryOverlay.EdgeChanges edgeChanges = edgeChangesAtRealNodes.get(towerNode);
-        List<EdgeIteratorState> existingEdges = edgeChanges.getAdditionalEdges();
+        List<VirtualEdgeIteratorState> existingEdges = edgeChanges.getAdditionalEdges();
         IntArrayList removedEdges = edgeChanges.getRemovedEdges();
-        for (EdgeIteratorState existingEdge : existingEdges) {
+        for (VirtualEdgeIteratorState existingEdge : existingEdges) {
             removedEdges.add(getClosestEdge(existingEdge.getAdjNode()));
         }
     }

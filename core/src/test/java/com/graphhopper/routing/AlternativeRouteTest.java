@@ -77,7 +77,7 @@ public class AlternativeRouteTest {
         }
     }
 
-    public static void initTestGraph(Graph graph, DecimalEncodedValue speedEnc) {
+    private static void initTestGraph(Graph graph, DecimalEncodedValue speedEnc) {
         /* 9
          _/\
          1  2-3-4-10
@@ -85,17 +85,17 @@ public class AlternativeRouteTest {
          5--6-7---8
         
          */
-        graph.edge(1, 9).setDistance(1).set(speedEnc, 60, 60);
-        graph.edge(9, 2).setDistance(1).set(speedEnc, 60, 60);
-        graph.edge(2, 3).setDistance(1).set(speedEnc, 60, 60);
-        graph.edge(3, 4).setDistance(1).set(speedEnc, 60, 60);
-        graph.edge(4, 10).setDistance(1).set(speedEnc, 60, 60);
-        graph.edge(5, 6).setDistance(1).set(speedEnc, 60, 60);
-        graph.edge(6, 7).setDistance(1).set(speedEnc, 60, 60);
-        graph.edge(7, 8).setDistance(1).set(speedEnc, 60, 60);
-        graph.edge(1, 5).setDistance(2).set(speedEnc, 60, 60);
-        graph.edge(6, 3).setDistance(1).set(speedEnc, 60, 60);
-        graph.edge(4, 8).setDistance(1).set(speedEnc, 60, 60);
+        graph.edge(1, 9).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(9, 2).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(2, 3).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(3, 4).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(4, 10).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(5, 6).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(6, 7).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(7, 8).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(1, 5).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(6, 3).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(4, 8).setDistance(0).set(speedEnc, 60, 60);
 
         updateDistancesFor(graph, 5, 0.00, 0.05);
         updateDistancesFor(graph, 6, 0.00, 0.10);
@@ -103,7 +103,7 @@ public class AlternativeRouteTest {
         updateDistancesFor(graph, 8, 0.00, 0.25);
 
         updateDistancesFor(graph, 1, 0.05, 0.00);
-        updateDistancesFor(graph, 9, 0.10, 0.05);
+        updateDistancesFor(graph, 9, 0.07, 0.05);
         updateDistancesFor(graph, 2, 0.05, 0.10);
         updateDistancesFor(graph, 3, 0.05, 0.15);
         updateDistancesFor(graph, 4, 0.05, 0.25);
@@ -159,7 +159,9 @@ public class AlternativeRouteTest {
         assertEquals(IntArrayList.from(5, 6, 3, 4), pathInfos.get(0).getPath().calcNodes());
         assertEquals(IntArrayList.from(5, 6, 7, 8, 4), pathInfos.get(1).getPath().calcNodes());
         assertEquals(IntArrayList.from(5, 1, 9, 2, 3, 4), pathInfos.get(2).getPath().calcNodes());
-        assertEquals(671.1, pathInfos.get(2).getPath().getWeight(), .1);
+        assertEquals(409.0, pathInfos.get(0).getPath().getWeight(), .1);
+        assertEquals(463.4, pathInfos.get(1).getPath().getWeight(), .1);
+        assertEquals(608.6, pathInfos.get(2).getPath().getWeight(), .1);
     }
 
     private void checkAlternatives(List<AlternativeRoute.AlternativeInfo> alternativeInfos) {

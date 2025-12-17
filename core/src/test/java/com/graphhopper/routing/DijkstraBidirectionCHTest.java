@@ -118,18 +118,18 @@ public class DijkstraBidirectionCHTest {
     @Test
     public void testStallingNodesReducesNumberOfVisitedNodes() {
         BaseGraph graph = createGHStorage();
-        graph.edge(8, 9).setDistance(100).set(carSpeedEnc, 60, 0);
-        graph.edge(8, 3).setDistance(2).set(carSpeedEnc, 60, 0);
-        graph.edge(8, 5).setDistance(1).set(carSpeedEnc, 60, 0);
-        graph.edge(8, 6).setDistance(1).set(carSpeedEnc, 60, 0);
-        graph.edge(8, 7).setDistance(1).set(carSpeedEnc, 60, 0);
-        graph.edge(1, 2).setDistance(2).set(carSpeedEnc, 60, 0);
-        graph.edge(1, 8).setDistance(1).set(carSpeedEnc, 60, 0);
-        graph.edge(2, 3).setDistance(3).set(carSpeedEnc, 60, 0);
+        graph.edge(8, 9).setDistance(10000).set(carSpeedEnc, 60, 0);
+        graph.edge(8, 3).setDistance(200).set(carSpeedEnc, 60, 0);
+        graph.edge(8, 5).setDistance(100).set(carSpeedEnc, 60, 0);
+        graph.edge(8, 6).setDistance(100).set(carSpeedEnc, 60, 0);
+        graph.edge(8, 7).setDistance(100).set(carSpeedEnc, 60, 0);
+        graph.edge(1, 2).setDistance(200).set(carSpeedEnc, 60, 0);
+        graph.edge(1, 8).setDistance(100).set(carSpeedEnc, 60, 0);
+        graph.edge(2, 3).setDistance(300).set(carSpeedEnc, 60, 0);
         for (int i = 3; i < 7; ++i)
-            graph.edge(i, i + 1).setDistance(1).set(carSpeedEnc, 60, 0);
-        graph.edge(9, 0).setDistance(1).set(carSpeedEnc, 60, 0);
-        graph.edge(3, 9).setDistance(200).set(carSpeedEnc, 60, 0);
+            graph.edge(i, i + 1).setDistance(100).set(carSpeedEnc, 60, 0);
+        graph.edge(9, 0).setDistance(100).set(carSpeedEnc, 60, 0);
+        graph.edge(3, 9).setDistance(20000).set(carSpeedEnc, 60, 0);
         graph.freeze();
 
         Weighting weighting = new SpeedWeighting(carSpeedEnc);
@@ -145,14 +145,14 @@ public class DijkstraBidirectionCHTest {
         // node 3 will be stalled and nodes 4-7 won't be explored --> we visit 7 nodes
         // note that node 9 will be visited by both forward and backward searches
         assertEquals(7, algo.getVisitedNodes());
-        assertEquals(102, p.getDistance(), 1.e-3);
+        assertEquals(10200, p.getDistance(), 1.e-3);
         assertEquals(IntArrayList.from(1, 8, 9, 0), p.calcNodes(), p.toString());
 
         // without stalling we visit 11 nodes
         RoutingAlgorithm algoNoSod = createCHAlgo(routingCHGraph, false);
         Path pNoSod = algoNoSod.calcPath(1, 0);
         assertEquals(11, algoNoSod.getVisitedNodes());
-        assertEquals(102, pNoSod.getDistance(), 1.e-3);
+        assertEquals(10200, pNoSod.getDistance(), 1.e-3);
         assertEquals(IntArrayList.from(1, 8, 9, 0), pNoSod.calcNodes(), pNoSod.toString());
     }
 
@@ -179,8 +179,8 @@ public class DijkstraBidirectionCHTest {
     private void runTestWithDirectionDependentEdgeSpeed(double speed, double revSpeed, int from, int to,
                                                         IntArrayList expectedPath, DecimalEncodedValue speedEnc) {
         BaseGraph graph = createGHStorage();
-        graph.edge(0, 1).setDistance(2).set(speedEnc, speed, revSpeed);
-        graph.edge(1, 2).setDistance(1).set(speedEnc, 20, 20);
+        graph.edge(0, 1).setDistance(200).set(speedEnc, speed, revSpeed);
+        graph.edge(1, 2).setDistance(100).set(speedEnc, 20, 20);
         graph.freeze();
         Weighting weighting = new SpeedWeighting(speedEnc);
         CHConfig chConfig = CHConfig.nodeBased(weighting.getName(), weighting);
@@ -189,7 +189,7 @@ public class DijkstraBidirectionCHTest {
         RoutingCHGraph routingCHGraph = RoutingCHGraphImpl.fromGraph(graph, chStore, chConfig);
         RoutingAlgorithm algo = createCHAlgo(routingCHGraph, true);
         Path p = algo.calcPath(from, to);
-        assertEquals(3, p.getDistance(), 1.e-3);
+        assertEquals(300, p.getDistance(), 1.e-3);
         assertEquals(expectedPath, p.calcNodes(), p.toString());
     }
 

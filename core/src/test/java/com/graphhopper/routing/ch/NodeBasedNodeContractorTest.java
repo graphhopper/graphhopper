@@ -167,8 +167,8 @@ public class NodeBasedNodeContractorTest {
     @Test
     public void testContractNode_directed_shortcutRequired() {
         // 0 --> 1 --> 2
-        final EdgeIteratorState edge1 = graph.edge(0, 1).setDistance(1).set(speedEnc, 60, 0);
-        final EdgeIteratorState edge2 = graph.edge(1, 2).setDistance(2).set(speedEnc, 60, 0);
+        final EdgeIteratorState edge1 = graph.edge(0, 1).setDistance(100).set(speedEnc, 60, 0);
+        final EdgeIteratorState edge2 = graph.edge(1, 2).setDistance(200).set(speedEnc, 60, 0);
         freeze();
         setMaxLevelOnAllNodes();
         contractInOrder(1, 0, 2);
@@ -178,8 +178,8 @@ public class NodeBasedNodeContractorTest {
     @Test
     public void testContractNode_directed_shortcutRequired_reverse() {
         // 0 <-- 1 <-- 2
-        final EdgeIteratorState edge1 = graph.edge(2, 1).setDistance(1).set(speedEnc, 60, 0);
-        final EdgeIteratorState edge2 = graph.edge(1, 0).setDistance(2).set(speedEnc, 60, 0);
+        final EdgeIteratorState edge1 = graph.edge(2, 1).setDistance(100).set(speedEnc, 60, 0);
+        final EdgeIteratorState edge2 = graph.edge(1, 0).setDistance(200).set(speedEnc, 60, 0);
         freeze();
         setMaxLevelOnAllNodes();
         contractInOrder(1, 2, 0);
@@ -189,8 +189,8 @@ public class NodeBasedNodeContractorTest {
     @Test
     public void testContractNode_bidirected_shortcutsRequired() {
         // 0 -- 1 -- 2
-        final EdgeIteratorState edge1 = graph.edge(0, 1).setDistance(1).set(speedEnc, 60, 60);
-        final EdgeIteratorState edge2 = graph.edge(1, 2).setDistance(2).set(speedEnc, 60, 60);
+        final EdgeIteratorState edge1 = graph.edge(0, 1).setDistance(100).set(speedEnc, 60, 60);
+        final EdgeIteratorState edge2 = graph.edge(1, 2).setDistance(200).set(speedEnc, 60, 60);
         freeze();
         contractInOrder(1, 2, 0);
         checkShortcuts(expectedShortcut(2, 0, edge2, edge1, true, true));
@@ -200,9 +200,9 @@ public class NodeBasedNodeContractorTest {
     public void testContractNode_directed_withWitness() {
         // 0 --> 1 --> 2
         //  \_________/
-        graph.edge(0, 1).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(1, 2).setDistance(2).set(speedEnc, 60, 0);
-        graph.edge(0, 2).setDistance(1).set(speedEnc, 60, 0);
+        graph.edge(0, 1).setDistance(10).set(speedEnc, 60, 0);
+        graph.edge(1, 2).setDistance(200).set(speedEnc, 60, 0);
+        graph.edge(0, 2).setDistance(100).set(speedEnc, 60, 0);
         freeze();
         setMaxLevelOnAllNodes();
         createNodeContractor().contractNode(1);
