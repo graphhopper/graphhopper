@@ -44,7 +44,6 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
 import com.graphhopper.routing.util.parsers.OSMBikeNetworkTagParser;
 import com.graphhopper.routing.util.parsers.OSMFootNetworkTagParser;
-import com.graphhopper.routing.util.parsers.OSMMtbNetworkTagParser;
 import com.graphhopper.routing.util.parsers.TagParser;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomModelParser;
@@ -675,9 +674,9 @@ public class GraphHopper {
         }
 
         if (encodingManager.hasEncodedValue(BikeNetwork.KEY))
-            osmParsers.addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class), relConfig));
+            osmParsers.addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class), relConfig, "bicycle"));
         if (encodingManager.hasEncodedValue(MtbNetwork.KEY))
-            osmParsers.addRelationTagParser(relConfig -> new OSMMtbNetworkTagParser(encodingManager.getEnumEncodedValue(MtbNetwork.KEY, RouteNetwork.class), relConfig));
+            osmParsers.addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(encodingManager.getEnumEncodedValue(MtbNetwork.KEY, RouteNetwork.class), relConfig, "mtb"));
         if (encodingManager.hasEncodedValue(FootNetwork.KEY))
             osmParsers.addRelationTagParser(relConfig -> new OSMFootNetworkTagParser(encodingManager.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class), relConfig));
 

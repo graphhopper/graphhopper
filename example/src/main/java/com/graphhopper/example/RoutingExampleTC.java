@@ -39,7 +39,7 @@ public class RoutingExampleTC {
         GHRequest req = new GHRequest(42.50822, 1.533966, 42.506899, 1.525372).
                 setCurbsides(Arrays.asList(CURBSIDE_ANY, CURBSIDE_RIGHT)).
                 setProfile("car");
-        route(hopper, req, 1370, 88_000);
+        route(hopper, req, 1370, 89_500);
     }
 
     public static void routeWithTurnCostsAndCurbsidesAndOtherUTurnCosts(GraphHopper hopper) {
@@ -49,9 +49,9 @@ public class RoutingExampleTC {
                 // will be ignored and those set for our profile will be used.
                 .putHint(Parameters.CH.DISABLE, true)
                 .setProfile("car");
-        route(hopper, req.putHint(Parameters.Routing.U_TURN_COSTS, 10), 1370, 88_000);
-        route(hopper, req.putHint(Parameters.Routing.U_TURN_COSTS, 100), 1635, 120_000);
-        route(hopper, req.putHint(Parameters.Routing.U_TURN_COSTS, 200), 1635, 120_000);
+        route(hopper, req.putHint(Parameters.Routing.U_TURN_COSTS, 10), 1370, 89_500);
+        route(hopper, req.putHint(Parameters.Routing.U_TURN_COSTS, 100), 1730, 112_000);
+        route(hopper, req.putHint(Parameters.Routing.U_TURN_COSTS, 200), 1730, 112_000);
     }
 
     private static void route(GraphHopper hopper, GHRequest req, int expectedDistance, int expectedTime) {
@@ -72,7 +72,7 @@ public class RoutingExampleTC {
         hopper.setOSMFile(ghLoc);
         hopper.setGraphHopperLocation("target/routing-tc-graph-cache");
         // add all encoded values that are used in the custom model, these are also available as path details or for client-side custom models
-        hopper.setEncodedValuesString("car_access, car_average_speed, road_access");
+        hopper.setEncodedValuesString("car_access, car_average_speed, road_access, max_speed");
         Profile profile = new Profile("car").setCustomModel(GHUtility.loadCustomModelFromJar("car.json"))
                 // enabling turn costs means OSM turn restriction constraints like 'no_left_turn' will be taken into account for the specified access restrictions
                 // we can also set u_turn_costs (in seconds). i.e. we will consider u-turns at all junctions with a 40s time penalty

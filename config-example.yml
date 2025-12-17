@@ -109,7 +109,7 @@ graphhopper:
   #   car_access|block_private=false, bike_access|block_private=false
   # By default we add the necessary encoded values for car.json, bike.json and foot.json (remove them if you do not need them)
   graph.encoded_values: |
-    car_access, car_average_speed, country, road_class, roundabout,
+    car_access, car_average_speed, country, road_class, roundabout, max_speed,
     foot_access, foot_average_speed, foot_priority, foot_road_access, hike_rating, average_slope,
     bike_access, bike_average_speed, bike_priority, bike_road_access, bike_network, mtb_rating,
 

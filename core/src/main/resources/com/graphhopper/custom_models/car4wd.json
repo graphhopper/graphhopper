@@ -1,5 +1,5 @@
 // to use this custom model you need to set the following option in the config.yml
-// graph.encoded_values: car_access, car_average_speed, track_type, road_access
+// graph.encoded_values: car_access, car_average_speed, track_type, road_access, max_speed
 // profiles:
 //    - name: car4wd
 //      turn_costs:
@@ -19,7 +19,8 @@
     {
       "else": "",
       "limit_to": "car_average_speed"
-    }
+    },
+    { "if": "true", "limit_to": "max_speed * 0.9" }
   ]
 
 }
