@@ -19,6 +19,8 @@ package com.graphhopper.reader.dem;
 
 import java.io.*;
 
+import com.graphhopper.util.Downloader;
+
 import static com.graphhopper.util.Helper.close;
 
 /**
@@ -37,17 +39,27 @@ import static com.graphhopper.util.Helper.close;
  */
 public class SonnyProvider extends AbstractSRTMElevationProvider {
 
+	private static final String SONNY_DOWNLOAD_URL = "https://drive.google.com/drive/folders/0BxphPoRgwhnoWkRoTFhMbTM3RDA?resourcekey=0-wRe5bWl96pwvQ9tAfI9cQg";
+
     public SonnyProvider() {
         this("");
     }
 
     public SonnyProvider(String cacheDir) {
-        super("https://drive.google.com/drive/folders/0BxphPoRgwhnoWkRoTFhMbTM3RDA?resourcekey=0-wRe5bWl96pwvQ9tAfI9cQg/", // This base URL cannot be used, as the data is not available via a direct URL
+        super(SONNY_DOWNLOAD_URL + "/", // This base URL cannot be used, as the data is not available via a direct URL
                 cacheDir.isEmpty() ? "/tmp/sonny" : cacheDir,
                 -56,
                 90,
                 3601
         );
+		this.downloader = new Downloader() {
+			@Override
+			public void downloadFile(String url, File toFile) {
+				throw new RuntimeException("Sonny elevation data cannot be downloaded automatically. " +
+						"Please download the data manually from " + SONNY_DOWNLOAD_URL +
+						", unzip it and place the .hgt files in the cache directory: " + getCacheDir());
+			}
+		};
     }
 
     public static void main(String[] args) throws IOException {
