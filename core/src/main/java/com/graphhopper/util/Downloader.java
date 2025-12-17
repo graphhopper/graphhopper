@@ -33,6 +33,7 @@ import java.util.zip.InflaterInputStream;
 
 /**
  * @author Peter Karich
+ * @author Thomas Butz
  */
 public class Downloader {
     private static final int BUFFER_SIZE = 8 * 1024;
