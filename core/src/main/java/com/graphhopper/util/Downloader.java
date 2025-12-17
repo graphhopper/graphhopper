@@ -17,8 +17,6 @@
  */
 package com.graphhopper.util;
 
-import static java.nio.file.StandardOpenOption.*;
-
 import java.io.*;
 import java.net.*;
 import java.net.http.HttpClient;
@@ -26,6 +24,8 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.*;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.Inflater;
@@ -81,9 +81,12 @@ public class Downloader {
             throw new FileNotFoundException("Download of " + url + " failed, response code: " + response.statusCode());
         }
 
-        try (var in = response.body(); var out = Files.newOutputStream(toFile.toPath(), CREATE, WRITE)) {
+		Path target = toFile.toPath();
+	    Path tmpFile = target.resolveSibling(toFile.getName() + ".part");
+        try (var in = response.body(); var out = Files.newOutputStream(tmpFile)) {
             in.transferTo(out);
         }
+		Files.move(tmpFile, target, StandardCopyOption.ATOMIC_MOVE);
     }
 
     private static class UncompressHandler implements BodyHandler<InputStream> {
