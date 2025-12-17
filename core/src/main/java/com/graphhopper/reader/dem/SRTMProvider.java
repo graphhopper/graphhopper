@@ -52,7 +52,7 @@ public class SRTMProvider extends AbstractSRTMElevationProvider {
         );
         // move to explicit calls?
         init();
-        downloader.requestCompressed(false);
+        downloader.setRequestCompressed(false);
     }
 
     public static void main(String[] args) throws IOException {

@@ -54,9 +54,8 @@ public class Downloader {
         return this;
     }
 
-    public Downloader requestCompressed(boolean requestCompressed) {
+    public void setRequestCompressed(boolean requestCompressed) {
         this.requestCompressed = requestCompressed;
-        return this;
     }
 
     public void downloadFile(String url, File toFile) throws IOException {

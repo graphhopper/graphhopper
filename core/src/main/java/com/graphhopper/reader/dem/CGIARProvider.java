@@ -58,7 +58,7 @@ public class CGIARProvider extends AbstractTiffElevationProvider {
                 cacheDir.isEmpty() ? "/tmp/cgiar" : cacheDir,
                 6000, 6000,
                 5, 5);
-        downloader.requestCompressed(false);
+        downloader.setRequestCompressed(false);
     }
 
     public static void main(String[] args) {
