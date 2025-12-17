@@ -37,6 +37,7 @@ import java.util.zip.InflaterInputStream;
 public class Downloader {
     private static final int BUFFER_SIZE = 8 * 1024;
 	private static final long DEFAULT_TIMEOUT = 4_000;
+	private static final String USER_AGENT = "graphhopper/" + Constants.VERSION;
 
     private final HttpClient client;
 	private final Duration timeout;
@@ -61,7 +62,7 @@ public class Downloader {
 
     public void downloadFile(String url, File toFile) throws IOException {
         var requestBuilder = HttpRequest.newBuilder()
-                .setHeader("User-Agent", "graphhopper/" + Constants.VERSION)
+                .setHeader("User-Agent", USER_AGENT)
                 .timeout(timeout)
                 .uri(URI.create(url));
         if (requestCompressed) {
