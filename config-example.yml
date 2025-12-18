@@ -112,6 +112,7 @@ graphhopper:
     car_access, car_average_speed, country, road_class, roundabout, max_speed,
     foot_access, foot_average_speed, foot_priority, foot_road_access, hike_rating, average_slope,
     bike_access, bike_average_speed, bike_priority, bike_road_access, bike_network, mtb_rating,
+    road_environment,
 
   #### Speed, hybrid and flexible mode ####
 

@@ -1,0 +1,67 @@
+name: Update Docs
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  docs:
+    if: ${{ !startsWith(github.head_ref, 'docs/') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Cursor CLI
+        run: |
+          curl https://cursor.com/install -fsS | bash
+          echo "$HOME/.cursor/bin" >> $GITHUB_PATH
+
+      - name: Configure git
+        run: |
+          git config user.name "Cursor Agent"
+          git config user.email "cursoragent@cursor.com"
+
+      - name: Update docs
+        env:
+          MODEL: gpt-5
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH_PREFIX: docs
+        run: |
+          cursor-agent -p "You are operating in a GitHub Actions runner.
+
+          The GitHub CLI is available as `gh` and authenticated via `GH_TOKEN`. Git is available. You have write access to repository contents and can comment on pull requests, but you must not create or edit PRs.
+
+          # Context:
+          - Repo: ${{ github.repository }}
+          - Owner: ${{ github.repository_owner }}
+          - PR Number: ${{ github.event.pull_request.number }}
+          - Base Ref: ${{ github.base_ref }}
+          - Head Ref: ${{ github.head_ref }}
+          - Docs Branch Prefix: ${{ env.BRANCH_PREFIX }}
+
+          # Goal:
+          - Implement an end-to-end docs update flow driven by incremental changes to the original PR.
+
+          # Requirements:
+          1) Determine what changed in the original PR and, if there have been multiple pushes, compute the incremental diffs since the last successful docs update.
+          2) Update only the relevant docs based on those incremental changes.
+          3) Maintain the persistent docs branch for this PR head using the Docs Branch Prefix from Context. Create it if missing, update it otherwise, and push changes to origin.
+          4) You do NOT have permission to create PRs. Instead, post or update a single natural-language PR comment (1–2 sentences) that briefly explains the docs updates and includes an inline compare link to quick-create a PR
+
+          # Inputs and conventions:
+          - Use `gh pr diff` and git history to detect changes and derive incremental ranges since the last docs update.
+          - Do not attempt to create or edit PRs directly. Use the compare link format above.
+          - Keep changes minimal and consistent with repo style. If no doc updates are necessary, make no changes and post no comment.
+
+          # Deliverables when updates occur:
+          - Pushed commits to the persistent docs branch for this PR head.
+          - A single natural-language PR comment on the original PR that includes the inline compare link above. Avoid posting duplicates; update a previous bot comment if present.
+          " --force --model "$MODEL" --output-format=text
