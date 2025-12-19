@@ -380,33 +380,6 @@ public class OSMReaderTest {
     }
 
     @Test
-    public void testFords() {
-        GraphHopper hopper = new GraphHopper();
-        hopper.setEncodedValuesString("car_access|block_fords=true,car_average_speed");
-        hopper.setOSMFile(getClass().getResource("test-barriers3.xml").getFile()).
-                setGraphHopperLocation(dir).
-                setProfiles(TestProfiles.accessAndSpeed("car")).
-                setMinNetworkSize(0).
-                importOrLoad();
-        Graph graph = hopper.getBaseGraph();
-        // our way is split into five edges, because there are two ford nodes
-        assertEquals(5, graph.getEdges());
-        BooleanEncodedValue accessEnc = hopper.getEncodingManager().getBooleanEncodedValue(VehicleAccess.key("car"));
-        int blocked = 0;
-        int notBlocked = 0;
-        AllEdgesIterator edge = graph.getAllEdges();
-        while (edge.next()) {
-            if (!edge.get(accessEnc))
-                blocked++;
-            else
-                notBlocked++;
-        }
-        // two blocked edges and three accessible edges
-        assertEquals(2, blocked);
-        assertEquals(3, notBlocked);
-    }
-
-    @Test
     public void avoidsLoopEdges_1525() {
         // loops in OSM should be avoided by adding additional tower node (see #1525, #1531)
         //     C - D

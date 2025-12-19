@@ -37,7 +37,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class CarTagParserTest {
     private final EncodingManager em = createEncodingManager("car");
-    final CarAccessParser parser = createParser(em, new PMap("block_fords=true"));
+    final CarAccessParser parser = createParser(em, new PMap());
     final CarAverageSpeedParser speedParser = new CarAverageSpeedParser(em);
     private final BooleanEncodedValue roundaboutEnc = em.getBooleanEncodedValue(Roundabout.KEY);
     private final BooleanEncodedValue accessEnc = parser.getAccessEnc();
@@ -90,13 +90,6 @@ public class CarTagParserTest {
         way.setTag("highway", "service");
         way.setTag("access", "delivery");
         assertTrue(parser.getAccess(way).canSkip());
-
-        way.clearTags();
-        way.setTag("highway", "unclassified");
-        way.setTag("ford", "yes");
-        assertTrue(parser.getAccess(way).canSkip());
-        way.setTag("motorcar", "yes");
-        assertTrue(parser.getAccess(way).isWay());
 
         way.clearTags();
         way.setTag("access", "yes");
@@ -166,25 +159,6 @@ public class CarTagParserTest {
         way.setTag("highway", "track");
         way.setTag("access", "military");
         assertTrue(parser.getAccess(way).canSkip());
-    }
-
-    @Test
-    public void testFordAccess() {
-        ReaderNode node = new ReaderNode(0, 0.0, 0.0);
-        node.setTag("ford", "yes");
-
-        ReaderWay way = new ReaderWay(1);
-        way.setTag("highway", "unclassified");
-        way.setTag("ford", "yes");
-
-        // Node and way are initially blocking
-        assertTrue(parser.isBlockFords());
-        assertTrue(parser.getAccess(way).canSkip());
-        assertTrue(parser.isBarrier(node));
-
-        CarAccessParser tmpParser = new CarAccessParser(em, new PMap("block_fords=false"));
-        assertTrue(tmpParser.getAccess(way).isWay());
-        assertFalse(tmpParser.isBarrier(node));
     }
 
     @Test
