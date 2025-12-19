@@ -3,7 +3,7 @@
   // it is suitable for motor vehicles only.
   "turn_penalty": [
     {
-      "if": "prev_road_access != road_access && (road_access == DESTINATION || road_access == PRIVATE || road_access == DELIVERY || road_access == CUSTOMERS)",
+      "if": "prev_road_access != road_access && (road_access == DESTINATION || road_access == PRIVATE || road_access == DELIVERY || road_access == CUSTOMERS || road_access == MILITARY)",
       "add": "2000"
     }
   ]

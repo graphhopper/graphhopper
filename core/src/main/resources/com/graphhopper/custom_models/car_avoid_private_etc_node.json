@@ -1,0 +1,5 @@
+{
+  "priority": [
+    { "if": "road_access == DESTINATION || road_access == PRIVATE || road_access == DELIVERY || road_access == CUSTOMERS || road_access == MILITARY", "multiply_by": "0.1" }
+  ]
+}
