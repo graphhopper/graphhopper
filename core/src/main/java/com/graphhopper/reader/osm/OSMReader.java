@@ -36,8 +36,6 @@ import com.graphhopper.routing.util.AreaIndex;
 import com.graphhopper.routing.util.CustomArea;
 import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.routing.util.OSMParsers;
-import com.graphhopper.routing.util.countryrules.CountryRule;
-import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
 import com.graphhopper.routing.util.parsers.RestrictionSetter;
 import com.graphhopper.search.KVStorage;
 import com.graphhopper.storage.BaseGraph;
@@ -87,7 +85,6 @@ public class OSMReader {
     private final RestrictionSetter restrictionSetter;
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
     private AreaIndex<CustomArea> areaIndex;
-    private CountryRuleFactory countryRuleFactory = null;
     private File osmFile;
     private final RamerDouglasPeucker simplifyAlgo = new RamerDouglasPeucker();
     private int bugCounter = 0;
@@ -141,11 +138,6 @@ public class OSMReader {
             throw new IllegalStateException("Make sure you graph accepts 3D data");
 
         this.eleProvider = eleProvider;
-        return this;
-    }
-
-    public OSMReader setCountryRuleFactory(CountryRuleFactory countryRuleFactory) {
-        this.countryRuleFactory = countryRuleFactory;
         return this;
     }
 
@@ -295,12 +287,6 @@ public class OSMReader {
         }
         way.setTag("country", country);
         way.setTag("country_state", state);
-
-        if (countryRuleFactory != null) {
-            CountryRule countryRule = countryRuleFactory.getCountryRule(country);
-            if (countryRule != null)
-                way.setTag("country_rule", countryRule);
-        }
 
         // also add all custom areas as artificial tag
         way.setTag("custom_areas", customAreas);

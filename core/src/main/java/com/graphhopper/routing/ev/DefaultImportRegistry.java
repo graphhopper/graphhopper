@@ -56,7 +56,7 @@ public class DefaultImportRegistry implements ImportRegistry {
                     (lookup, props) -> new OSMRoadAccessParser<>(
                             lookup.getEnumEncodedValue(FootRoadAccess.KEY, FootRoadAccess.class),
                             OSMRoadAccessParser.toOSMRestrictions(TransportationMode.FOOT),
-                            (readerWay, accessValue) -> accessValue,
+                            OSMRoadAccessParser.FOOT_HANDLER,
                             FootRoadAccess::find)
             );
         else if (BikeRoadAccess.KEY.equals(name))
@@ -64,7 +64,7 @@ public class DefaultImportRegistry implements ImportRegistry {
                     (lookup, props) -> new OSMRoadAccessParser<>(
                             lookup.getEnumEncodedValue(BikeRoadAccess.KEY, BikeRoadAccess.class),
                             OSMRoadAccessParser.toOSMRestrictions(TransportationMode.BIKE),
-                            (readerWay, accessValue) -> accessValue,
+                            OSMRoadAccessParser.BIKE_HANDLER,
                             BikeRoadAccess::find)
             );
         else if (RoadAccess.KEY.equals(name))
@@ -72,7 +72,8 @@ public class DefaultImportRegistry implements ImportRegistry {
                     (lookup, props) -> new OSMRoadAccessParser<>(
                             lookup.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class),
                             OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR),
-                            RoadAccess::countryHook, RoadAccess::find)
+                            OSMRoadAccessParser.CAR_HANDLER,
+                            RoadAccess::find)
             );
         else if (MaxSpeed.KEY.equals(name))
             return ImportUnit.create(name, props -> MaxSpeed.create(),

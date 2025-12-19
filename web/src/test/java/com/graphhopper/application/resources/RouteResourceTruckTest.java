@@ -65,8 +65,8 @@ public class RouteResourceTruckTest {
         // ... but when we disable CH it works
         body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"truck\", \"custom_model\": {}, \"ch.disable\": true}";
         JsonNode path = query(body, 200).get("paths").get(0);
-        assertEquals(1008, path.get("distance").asDouble(), 10);
-        assertEquals(49_000, path.get("time").asLong(), 1_000);
+        assertEquals(1_500, path.get("distance").asDouble(), 10);
+        assertEquals(54_000, path.get("time").asLong(), 1_000);
     }
 
     private void assertMessageStartsWith(JsonNode jsonNode, String message) {
