@@ -1,5 +1,6 @@
 ### 12.0 [not yet released]
 
+- country rules were moved into parsers and are now enabled by default
 - speeds generated from highway class now respects country-specific default speed limits, but the max_speed encoded value is now required; see #3249
 
 ### 11.0 [14 Oct 2025]

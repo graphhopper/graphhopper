@@ -25,7 +25,6 @@ import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.ch.CHParameters;
-import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
 import com.graphhopper.util.MiniPerfTest;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.exceptions.ConnectionNotFoundException;
@@ -60,9 +59,6 @@ public class CHImportTest {
         config.putObject(CHParameters.MAX_POLL_FACTOR_CONTRACTION_NODE, map.getDouble("mpf_contr", 200));
         GraphHopper hopper = new GraphHopper();
         hopper.init(config);
-        if (map.getBool("use_country_rules", false))
-            // note that using this requires a new import of the base graph!
-            hopper.setCountryRuleFactory(new CountryRuleFactory());
         hopper.importOrLoad();
         runQueries(hopper, vehicle);
     }

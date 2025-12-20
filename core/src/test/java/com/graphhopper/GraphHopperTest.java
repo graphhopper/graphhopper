@@ -28,7 +28,6 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.DefaultSnapFilter;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
 import com.graphhopper.routing.util.parsers.OSMRoadEnvironmentParser;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.IntsRef;
@@ -2585,11 +2584,9 @@ public class GraphHopperTest {
         Profile p = TestProfiles.accessAndSpeed(profile, "car");
         p.getCustomModel().addToPriority(If("road_access == DESTINATION", MULTIPLY, ".1"));
 
-        // first we try without country rules (the default)
         GraphHopper hopper = new GraphHopper()
                 .setEncodedValuesString("car_access, car_average_speed, road_access")
                 .setProfiles(p)
-                .setCountryRuleFactory(null)
                 .setGraphHopperLocation(GH_LOCATION)
                 .setOSMFile(BAYREUTH);
         hopper.importOrLoad();
@@ -2598,24 +2595,7 @@ public class GraphHopperTest {
         GHResponse response = hopper.route(request);
         assertFalse(response.hasErrors());
         double distance = response.getBest().getDistance();
-        // The route takes a shortcut through the forest
-        assertEquals(1447, distance, 1);
-
-        // this time we enable country rules
-        hopper.clean();
-        hopper = new GraphHopper()
-                .setEncodedValuesString("car_access, car_average_speed, road_access")
-                .setProfiles(p)
-                .setGraphHopperLocation(GH_LOCATION)
-                .setCountryRuleFactory(new CountryRuleFactory())
-                .setOSMFile(BAYREUTH);
-        hopper.importOrLoad();
-        request = new GHRequest(50.010373, 11.51792, 50.005146, 11.516633);
-        request.setProfile(profile);
-        response = hopper.route(request);
-        assertFalse(response.hasErrors());
-        distance = response.getBest().getDistance();
-        // since GermanyCountryRule avoids TRACK roads the route will now be much longer as it goes around the forest
+        // by default TRACK roads are avoided in Germany
         assertEquals(4186, distance, 1);
     }
 

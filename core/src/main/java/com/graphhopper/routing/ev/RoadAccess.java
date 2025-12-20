@@ -17,9 +17,6 @@
  */
 package com.graphhopper.routing.ev;
 
-import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.util.TransportationMode;
-import com.graphhopper.routing.util.countryrules.CountryRule;
 import com.graphhopper.util.Helper;
 
 /**
@@ -52,10 +49,5 @@ public enum RoadAccess {
         } catch (IllegalArgumentException ex) {
             return YES;
         }
-    }
-
-    public static RoadAccess countryHook(ReaderWay readerWay, RoadAccess roadAccess) {
-        CountryRule countryRule = readerWay.getTag("country_rule", null);
-        return countryRule == null ? roadAccess : countryRule.getAccess(readerWay, TransportationMode.CAR, roadAccess == null ? RoadAccess.YES : roadAccess);
     }
 }
