@@ -342,6 +342,12 @@ public class DefaultImportRegistry implements ImportRegistry {
                     (lookup, props) -> new OSMLitParser(
                             lookup.getBooleanEncodedValue(Lit.KEY))
             );
+        else if (Scenic.KEY.equals(name))
+            return ImportUnit.create(name, props -> Scenic.create(),
+                    (lookup, props) -> new OSMScenicParser(
+                            lookup.getBooleanEncodedValue(Scenic.KEY))
+            );
+
         return null;
     }
 }
