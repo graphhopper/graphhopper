@@ -63,6 +63,10 @@ public class HeightTileTest {
         assertEquals(1, instance.getHeight(9, 10), 1e-3);
         assertEquals(1, instance.getHeight(10, 9), 1e-3);
         assertEquals(1, instance.getHeight(10, 10), 1e-3);
+
+        // no error
+        assertEquals(1, instance.getHeight(10.5, 5), 1e-3);
+        assertEquals(1, instance.getHeight(1, 10.5), 1e-3);
     }
 
 
