@@ -1,5 +1,5 @@
 // to use this custom model you need to set the following option in the config.yml
-// graph.encoded_values: road_access, car_access, hgv, max_width, max_height, car_average_speed, max_weight, max_weight_except
+// graph.encoded_values: road_access, car_access, hgv, max_width, max_height, car_average_speed, max_weight, max_weight_except, max_speed
 // profiles:
 //    - name: truck
 //      turn_costs:
@@ -17,6 +17,7 @@
   ],
   "speed": [
     { "if": "true", "limit_to": "car_average_speed * 0.9" },
+    { "if": "true", "limit_to": "max_speed * 0.9" },
     { "if": "true", "limit_to": "95" }
   ]
 }

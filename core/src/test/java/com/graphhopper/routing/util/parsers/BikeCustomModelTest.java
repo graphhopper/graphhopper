@@ -43,7 +43,9 @@ public class BikeCustomModelTest {
                 add(FerrySpeed.create()).
                 add(Country.create()).
                 add(RoadClass.create()).
+                add(RoadEnvironment.create()).
                 add(RouteNetwork.create(BikeNetwork.KEY)).
+                add(RouteNetwork.create(MtbNetwork.KEY)).
                 add(Roundabout.create()).
                 add(Smoothness.create()).
                 add(RoadAccess.create()).
@@ -54,22 +56,22 @@ public class BikeCustomModelTest {
 
         parsers = new OSMParsers().
                 addWayTagParser(new OSMMtbRatingParser(bikeRating)).
-                addWayTagParser(new OSMHikeRatingParser(hikeRating));
+                addWayTagParser(new OSMHikeRatingParser(hikeRating)).
+                addWayTagParser(new BikeAccessParser(em, new PMap())).
+                addWayTagParser(new MountainBikeAccessParser(em, new PMap())).
+                addWayTagParser(new RacingBikeAccessParser(em, new PMap())).
+                addWayTagParser(new BikeAverageSpeedParser(em)).
+                addWayTagParser(new MountainBikeAverageSpeedParser(em)).
+                addWayTagParser(new RacingBikeAverageSpeedParser(em)).
+                addWayTagParser(new BikePriorityParser(em)).
+                addWayTagParser(new MountainBikePriorityParser(em)).
+                addWayTagParser(new RacingBikePriorityParser(em)).
+                addWayTagParser(new OSMRoadAccessParser<>(bikeRA,
+                        OSMRoadAccessParser.toOSMRestrictions(TransportationMode.BIKE),
+                        (readerWay, accessValue) -> accessValue, BikeRoadAccess::find));
 
-        parsers.addWayTagParser(new BikeAccessParser(em, new PMap()));
-        parsers.addWayTagParser(new MountainBikeAccessParser(em, new PMap()));
-        parsers.addWayTagParser(new RacingBikeAccessParser(em, new PMap()));
-        parsers.addWayTagParser(new BikeAverageSpeedParser(em));
-        parsers.addWayTagParser(new MountainBikeAverageSpeedParser(em));
-        parsers.addWayTagParser(new RacingBikeAverageSpeedParser(em));
-        parsers.addWayTagParser(new BikePriorityParser(em));
-        parsers.addWayTagParser(new MountainBikePriorityParser(em));
-        parsers.addWayTagParser(new RacingBikePriorityParser(em));
-        parsers.addWayTagParser(new OSMRoadAccessParser<>(bikeRA,
-                OSMRoadAccessParser.toOSMRestrictions(TransportationMode.BIKE),
-                (readerWay, accessValue) -> accessValue, BikeRoadAccess::find));
-
-        parsers.addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(em.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class), relConfig));
+        parsers.addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(em.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class), relConfig, "bicycle")).
+                addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(em.getEnumEncodedValue(MtbNetwork.KEY, RouteNetwork.class), relConfig, "mtb"));
     }
 
     EdgeIteratorState createEdge(ReaderWay way, ReaderRelation... readerRelation) {
@@ -343,17 +345,17 @@ public class BikeCustomModelTest {
         rel.setTag("route", "mtb");
         rel.setTag("network", "lcn");
         edge = createEdge(way, rel);
-        assertEquals(1.2, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
+        assertEquals(1.8, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
         assertEquals(12, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
         rel.setTag("network", "rcn");
         edge = createEdge(way, rel);
-        assertEquals(1.2, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
+        assertEquals(1.8, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
         assertEquals(12, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
         rel.setTag("network", "ncn");
         edge = createEdge(way, rel);
-        assertEquals(1.2, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
+        assertEquals(2.16, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
         assertEquals(12, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
         way.clearTags();
@@ -362,7 +364,7 @@ public class BikeCustomModelTest {
         rel.setTag("route", "mtb");
         rel.setTag("network", "lcn");
         edge = createEdge(way, rel);
-        assertEquals(1.2, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
+        assertEquals(1.8, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
         assertEquals(18, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
     }
 

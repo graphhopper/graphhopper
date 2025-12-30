@@ -1,7 +1,9 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.ev.MaxSpeed;
 import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.storage.IntsRef;
@@ -23,8 +25,6 @@ public abstract class BikeCommonPriorityParser implements TagParser {
     protected final HashSet<String> pushingSectionsHighways = new HashSet<>();
     protected final Set<String> preferHighwayTags = new HashSet<>();
     protected final Map<String, PriorityCode> avoidHighwayTags = new HashMap<>();
-    protected final Set<String> unpavedSurfaceTags = new HashSet<>();
-
     protected final DecimalEncodedValue avgSpeedEnc;
     protected final DecimalEncodedValue priorityEnc;
     // Car speed limit which switches the preference from UNCHANGED to AVOID_IF_POSSIBLE
@@ -43,21 +43,6 @@ public abstract class BikeCommonPriorityParser implements TagParser {
         addPushingSection("steps");
         addPushingSection("platform");
 
-        unpavedSurfaceTags.add("unpaved");
-        unpavedSurfaceTags.add("gravel");
-        unpavedSurfaceTags.add("ground");
-        unpavedSurfaceTags.add("dirt");
-        unpavedSurfaceTags.add("grass");
-        unpavedSurfaceTags.add("compacted");
-        unpavedSurfaceTags.add("earth");
-        unpavedSurfaceTags.add("fine_gravel");
-        unpavedSurfaceTags.add("grass_paver");
-        unpavedSurfaceTags.add("ice");
-        unpavedSurfaceTags.add("mud");
-        unpavedSurfaceTags.add("salt");
-        unpavedSurfaceTags.add("sand");
-        unpavedSurfaceTags.add("wood");
-
         avoidHighwayTags.put("motorway", REACH_DESTINATION);
         avoidHighwayTags.put("motorway_link", REACH_DESTINATION);
         avoidHighwayTags.put("trunk", REACH_DESTINATION);
@@ -74,17 +59,10 @@ public abstract class BikeCommonPriorityParser implements TagParser {
     @Override
     public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
         String highwayValue = way.getTag("highway");
-        TreeMap<Double, PriorityCode> weightToPrioMap = new TreeMap<>();
-        if (highwayValue != null) {
-            weightToPrioMap.put(0d, UNCHANGED);
-        } else {
-            if (FerrySpeedCalculator.isFerry(way)) {
-                weightToPrioMap.put(110d, SLIGHT_AVOID);
-            } else {
-                return;
-            }
-        }
+        if (highwayValue == null && !FerrySpeedCalculator.isFerry(way)) return;
 
+        TreeMap<Double, PriorityCode> weightToPrioMap = new TreeMap<>();
+        weightToPrioMap.put(0d, UNCHANGED);
         double maxSpeed = Math.max(avgSpeedEnc.getDecimal(false, edgeId, edgeIntAccess),
                 avgSpeedEnc.getDecimal(true, edgeId, edgeIntAccess));
         collect(way, maxSpeed, isBikeDesignated(way), weightToPrioMap);
@@ -188,8 +166,8 @@ public abstract class BikeCommonPriorityParser implements TagParser {
             );
         }
 
-        // Increase the priority for scenic routes or in case that maxspeed limits our average speed as compensation. See #630
-        if (way.hasTag("scenic", "yes") || maxSpeed > 0 && maxSpeed <= wayTypeSpeed) {
+        // Increase priority in case that maxspeed limits our average speed as compensation. See #630
+        if (maxSpeed > 0 && maxSpeed <= wayTypeSpeed) {
             PriorityCode lastEntryValue = weightToPrioMap.lastEntry().getValue();
             if (lastEntryValue.getValue() < BEST.getValue())
                 weightToPrioMap.put(110d, lastEntryValue.better());

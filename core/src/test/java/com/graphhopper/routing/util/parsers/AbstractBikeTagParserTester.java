@@ -49,12 +49,12 @@ public abstract class AbstractBikeTagParserTester {
     @BeforeEach
     public void setUp() {
         encodingManager = createEncodingManager();
-        accessParser = createAccessParser(encodingManager, new PMap("block_fords=true"));
+        accessParser = createAccessParser(encodingManager, new PMap());
         speedParser = createAverageSpeedParser(encodingManager);
         priorityParser = createPriorityParser(encodingManager);
         osmParsers = new OSMParsers()
-                .addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class), relConfig))
-                .addRelationTagParser(relConfig -> new OSMMtbNetworkTagParser(encodingManager.getEnumEncodedValue(MtbNetwork.KEY, RouteNetwork.class), relConfig))
+                .addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class), relConfig, "bicycle"))
+                .addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(encodingManager.getEnumEncodedValue(MtbNetwork.KEY, RouteNetwork.class), relConfig, "mtb"))
                 .addWayTagParser(new OSMSmoothnessParser(encodingManager.getEnumEncodedValue(Smoothness.KEY, Smoothness.class)))
                 .addWayTagParser(accessParser).addWayTagParser(speedParser).addWayTagParser(priorityParser);
         priorityEnc = priorityParser.getPriorityEnc();
@@ -184,13 +184,6 @@ public abstract class AbstractBikeTagParserTester {
         way.setTag("highway", "tertiary");
         way.setTag("motorroad", "yes");
         assertTrue(accessParser.getAccess(way).canSkip());
-
-        way.clearTags();
-        way.setTag("highway", "track");
-        way.setTag("ford", "yes");
-        assertTrue(accessParser.getAccess(way).canSkip());
-        way.setTag("bicycle", "yes");
-        assertTrue(accessParser.getAccess(way).isWay());
 
         way.clearTags();
         way.setTag("highway", "secondary");
@@ -446,18 +439,6 @@ public abstract class AbstractBikeTagParserTester {
     }
 
     @Test
-    public void testBarrierAccessFord() {
-        ReaderNode node = new ReaderNode(1, -1, -1);
-        node.setTag("ford", "yes");
-        // barrier!
-        assertTrue(accessParser.isBarrier(node));
-
-        node.setTag("bicycle", "yes");
-        // no barrier!
-        assertFalse(accessParser.isBarrier(node));
-    }
-
-    @Test
     public void testFerries() {
         ReaderWay way = new ReaderWay(1);
 
@@ -509,19 +490,17 @@ public abstract class AbstractBikeTagParserTester {
     }
 
     @Test
-    void privateAndFords() {
-        // defaults: do not block fords, block private
+    void testPrivate() {
+        // defaults: block private
         BikeCommonAccessParser bike = createAccessParser(encodingManager, new PMap());
-        assertFalse(bike.isBlockFords());
         assertTrue(bike.restrictedValues.contains("private"));
         assertFalse(bike.allowedValues.contains("private"));
         ReaderNode node = new ReaderNode(1, 1, 1);
         node.setTag("access", "private");
         assertTrue(bike.isBarrier(node));
 
-        // block fords, unblock private
-        bike = createAccessParser(encodingManager, new PMap("block_fords=true|block_private=false"));
-        assertTrue(bike.isBlockFords());
+        // unblock private
+        bike = createAccessParser(encodingManager, new PMap("block_private=false"));
         assertFalse(bike.restrictedValues.contains("private"));
         assertTrue(bike.allowedValues.contains("private"));
         assertFalse(bike.isBarrier(node));

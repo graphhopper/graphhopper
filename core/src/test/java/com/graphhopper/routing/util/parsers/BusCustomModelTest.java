@@ -34,7 +34,7 @@ public class BusCustomModelTest {
                 add(busAccess).
                 add(VehicleSpeed.create("car", 5, 5, false)).
                 add(Roundabout.create()).add(RoadAccess.create()).add(roadClass).
-                add(maxWeight).add(maxWidth).add(maxHeight).
+                add(maxWeight).add(maxWidth).add(maxHeight).add(MaxSpeed.create()).
                 build();
 
         parsers = new OSMParsers().

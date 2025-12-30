@@ -37,7 +37,6 @@ public abstract class AbstractAccessParser implements TagParser {
     // http://wiki.openstreetmap.org/wiki/Mapfeatures#Barrier
     protected final Set<String> barriers = new HashSet<>(5);
     protected final BooleanEncodedValue accessEnc;
-    private boolean blockFords = true;
 
     protected AbstractAccessParser(BooleanEncodedValue accessEnc, List<String> restrictionKeys) {
         this.accessEnc = accessEnc;
@@ -54,14 +53,6 @@ public abstract class AbstractAccessParser implements TagParser {
         restrictedValues.add("private");
         restrictedValues.add("service");
         restrictedValues.add("permit");
-    }
-
-    public boolean isBlockFords() {
-        return blockFords;
-    }
-
-    protected void blockFords(boolean blockFords) {
-        this.blockFords = blockFords;
     }
 
     protected void blockPrivate(boolean blockPrivate) {
@@ -105,10 +96,8 @@ public abstract class AbstractAccessParser implements TagParser {
             return true;
         else if (allowedValues.contains(firstValue))
             return false;
-        else if (node.hasTag("barrier", barriers))
-            return true;
         else
-            return blockFords && node.hasTag("ford", "yes");
+            return node.hasTag("barrier", barriers);
     }
 
     public final BooleanEncodedValue getAccessEnc() {

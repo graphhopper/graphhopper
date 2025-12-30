@@ -20,7 +20,7 @@ package com.graphhopper.routing.ev;
 import com.graphhopper.util.Helper;
 
 public enum BikeRoadAccess {
-    MISSING, YES, DISMOUNT, DESIGNATED, DESTINATION, PRIVATE, USE_SIDEPATH, NO;
+    MISSING, YES, DESIGNATED, DISMOUNT, DESTINATION, PRIVATE, MILITARY, USE_SIDEPATH, NO;
 
     public static final String KEY = "bike_road_access";
 

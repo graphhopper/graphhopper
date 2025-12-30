@@ -53,7 +53,6 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
         restrictedValues.add("delivery");
 
         blockPrivate(properties.getBool("block_private", true));
-        blockFords(properties.getBool("block_fords", false));
 
         barriers.add("kissing_gate");
         barriers.add("fence");
@@ -126,9 +125,6 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
                     return WayAccess.CAN_SKIP;
             }
         }
-
-        if (isBlockFords() && ("ford".equals(highwayValue) || way.hasTag("ford")))
-            return WayAccess.CAN_SKIP;
 
         return WayAccess.WAY;
     }

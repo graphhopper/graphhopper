@@ -27,11 +27,14 @@ import static com.graphhopper.routing.util.EncodingManager.getKey;
 
 public class OSMBikeNetworkTagParser implements RelationTagParser {
     private final EnumEncodedValue<RouteNetwork> bikeRouteEnc;
-    // used only for internal transformation from relations into edge flags
-    private final EnumEncodedValue<RouteNetwork> transformerRouteRelEnc = new EnumEncodedValue<>(getKey("bike", "route_relation"), RouteNetwork.class);
+    private final String routeValue;
+    // used only for class internal transformation from relations into edge flags
+    private final EnumEncodedValue<RouteNetwork> transformerRouteRelEnc;
 
-    public OSMBikeNetworkTagParser(EnumEncodedValue<RouteNetwork> bikeRouteEnc, EncodedValue.InitializerConfig relConfig) {
+    public OSMBikeNetworkTagParser(EnumEncodedValue<RouteNetwork> bikeRouteEnc, EncodedValue.InitializerConfig relConfig, String routeValue) {
         this.bikeRouteEnc = bikeRouteEnc;
+        this.routeValue = routeValue;
+        this.transformerRouteRelEnc = new EnumEncodedValue<>(getKey(routeValue, "route_relation"), RouteNetwork.class);
         this.transformerRouteRelEnc.init(relConfig);
     }
 
@@ -39,7 +42,7 @@ public class OSMBikeNetworkTagParser implements RelationTagParser {
     public void handleRelationTags(IntsRef relFlags, ReaderRelation relation) {
         IntsRefEdgeIntAccess relIntAccess = new IntsRefEdgeIntAccess(relFlags);
         RouteNetwork oldBikeNetwork = transformerRouteRelEnc.getEnum(false, -1, relIntAccess);
-        if (relation.hasTag("route", "bicycle")) {
+        if (relation.hasTag("route", routeValue)) {
             String tag = Helper.toLowerCase(relation.getTag("network", ""));
             RouteNetwork newBikeNetwork = BikeNetworkParserHelper.determine(tag);
             if (oldBikeNetwork == RouteNetwork.MISSING || oldBikeNetwork.ordinal() > newBikeNetwork.ordinal())
@@ -52,7 +55,8 @@ public class OSMBikeNetworkTagParser implements RelationTagParser {
         // just copy value into different bit range
         IntsRefEdgeIntAccess relIntAccess = new IntsRefEdgeIntAccess(relationFlags);
         RouteNetwork routeNetwork = transformerRouteRelEnc.getEnum(false, -1, relIntAccess);
-        if (routeNetwork == RouteNetwork.MISSING && way.hasTag("lcn", "yes"))
+        // if lcn=yes is mapped in OSM way consider this as route=bicycle
+        if (routeValue.equals("bicycle") && routeNetwork == RouteNetwork.MISSING && way.hasTag("lcn", "yes"))
             routeNetwork = RouteNetwork.LOCAL;
         bikeRouteEnc.setEnum(false, edgeId, edgeIntAccess, routeNetwork);
     }
