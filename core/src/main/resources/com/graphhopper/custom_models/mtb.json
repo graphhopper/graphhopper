@@ -14,7 +14,7 @@
     { "if": "mtb_rating > 6",  "multiply_by": "0" },
     { "else_if": "mtb_rating > 3",  "multiply_by": "0.5" },
     { "if": "hike_rating > 4",  "multiply_by": "0" },
-    { "if": "country == DEU && road_class == BRIDLEWAY && bike_road_access != YES", "multiply_by": "0" },
+    { "if": "bike_road_access == NO", "multiply_by": "0" },
     { "if": "!mtb_access && (!backward_mtb_access || roundabout)",  "multiply_by": "0" },
     { "else_if": "!mtb_access && backward_mtb_access",  "multiply_by": "0.2" }
   ],

@@ -127,6 +127,33 @@ public class BikeCustomModelTest {
     }
 
     @Test
+    public void testCountryAccessDefault() {
+        CustomModel cm = GHUtility.loadCustomModelFromJar("bike.json");
+        ReaderWay way = new ReaderWay(0L);
+        way.setTag("highway", "bridleway");
+        EdgeIteratorState edge = createEdge(way);
+        CustomWeighting.Parameters p = CustomModelParser.createWeightingParameters(cm, em);
+        assertEquals(0.8, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
+
+        way.setTag("country", Country.DEU);
+        edge = createEdge(way);
+        p = CustomModelParser.createWeightingParameters(cm, em);
+        assertEquals(0, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
+
+        way.setTag("bicycle", "yes");
+        edge = createEdge(way);
+        p = CustomModelParser.createWeightingParameters(cm, em);
+        assertEquals(0.8, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
+
+        way = new ReaderWay(0L);
+        way.setTag("highway", "trunk_link");
+        way.setTag("country", Country.CHE);
+        edge = createEdge(way);
+        p = CustomModelParser.createWeightingParameters(cm, em);
+        assertEquals(0, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
+    }
+
+    @Test
     public void testCustomMtbBike() {
         CustomModel cm = GHUtility.loadCustomModelFromJar("mtb.json");
         ReaderWay way = new ReaderWay(0L);
