@@ -48,6 +48,8 @@ import static com.graphhopper.util.Parameters.Details.STREET_NAME;
  */
 public class BaseGraph implements Graph, Closeable {
     final static long MAX_UNSIGNED_INT = 0xFFFF_FFFFL;
+    private static final int MAX_PILLAR_NODES = 65535;
+    private static final int GEOMETRY_HEADER_BYTES = 2;
     final BaseGraphNodesAndEdges store;
     final NodeAccess nodeAccess;
     final KVStorage edgeKVStorage;
@@ -478,7 +480,7 @@ public class BaseGraph implements Graph, Closeable {
                     throw new IllegalStateException("This edge already has a way geometry so it cannot be changed to a bigger geometry, pointer=" + edgePointer);
                 }
             }
-            long nextGeoRef = nextGeoRef(3 + len * (8 + eleBytesPerCoord));
+            long nextGeoRef = nextGeoRef(GEOMETRY_HEADER_BYTES + len * (8 + eleBytesPerCoord));
             setWayGeometryAtGeoRef(pillarNodes, edgePointer, reverse, nextGeoRef);
         } else {
             store.setGeoRef(edgePointer, 0L);
@@ -498,16 +500,19 @@ public class BaseGraph implements Graph, Closeable {
 
     private byte[] createWayGeometryBytes(PointList pillarNodes, boolean reverse) {
         int len = pillarNodes.size();
-        int totalLen = 3 + len * (8 + eleBytesPerCoord);
-        if ((totalLen & 0xFF00_0000) != 0)
-            throw new IllegalArgumentException("too long way geometry " + totalLen + ", " + len);
+        if (len > MAX_PILLAR_NODES) throw new IllegalArgumentException("Too many pillar nodes: " + len);
+
+        // We use 2 bytes to store the node count (unsigned short)
+        // Per node we need 4 bytes for Latitude and Longitude, and possibly 3 bytes if we have elevation.
+        int totalLen = GEOMETRY_HEADER_BYTES + len * (8 + eleBytesPerCoord);
 
         byte[] bytes = new byte[totalLen];
-        bitUtil.fromUInt3(bytes, len, 0);
+        bitUtil.fromShort(bytes, (short) len, 0);
+
         if (reverse)
             pillarNodes.reverse();
 
-        int tmpOffset = 3;
+        int tmpOffset = GEOMETRY_HEADER_BYTES;
         boolean is3D = nodeAccess.is3D();
         for (int i = 0; i < len; i++) {
             double lat = pillarNodes.getLat(i);
@@ -525,7 +530,8 @@ public class BaseGraph implements Graph, Closeable {
     }
 
     private int getPillarCount(long geoRef) {
-        return (wayGeometry.getByte(geoRef + 2) & 0xFF << 16) | wayGeometry.getShort(geoRef);
+        // Read short as unsigned int
+        return wayGeometry.getShort(geoRef) & 0xFFFF;
     }
 
     private PointList fetchWayGeometry_(long edgePointer, boolean reverse, FetchMode mode, int baseNode, int adjNode) {
@@ -541,7 +547,7 @@ public class BaseGraph implements Graph, Closeable {
         byte[] bytes = null;
         if (geoRef > 0) {
             count = getPillarCount(geoRef);
-            geoRef += 3L;
+            geoRef += GEOMETRY_HEADER_BYTES;
             bytes = new byte[count * (8 + eleBytesPerCoord)];
             wayGeometry.getBytes(geoRef, bytes, bytes.length);
         } else if (mode == FetchMode.PILLAR_ONLY)
