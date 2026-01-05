@@ -21,12 +21,12 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.TransportationMode;
-import com.graphhopper.routing.util.countryrules.CountryRule;
 import com.graphhopper.storage.IntsRef;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 class OSMRoadAccessParserTest {
 
@@ -39,10 +39,8 @@ class OSMRoadAccessParserTest {
     public void setup() {
         roadAccessEnc.init(new EncodedValue.InitializerConfig());
         bikeRAEnc.init(new EncodedValue.InitializerConfig());
-        parser = new OSMRoadAccessParser<>(roadAccessEnc, OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR),
-                RoadAccess::countryHook, RoadAccess::find);
-        bikeRAParser = new OSMRoadAccessParser<>(bikeRAEnc, OSMRoadAccessParser.toOSMRestrictions(TransportationMode.BIKE),
-                (ignr, access) -> access, BikeRoadAccess::find);
+        parser = OSMRoadAccessParser.forCar(roadAccessEnc);
+        bikeRAParser = OSMRoadAccessParser.forBike(bikeRAEnc);
     }
 
     @Test
@@ -50,34 +48,26 @@ class OSMRoadAccessParserTest {
         IntsRef relFlags = new IntsRef(2);
         ReaderWay way = new ReaderWay(1L);
         way.setTag("highway", "track");
-        way.setTag("country_rule", new CountryRule() {
-            @Override
-            public RoadAccess getAccess(ReaderWay readerWay, TransportationMode transportationMode, RoadAccess currentRoadAccess) {
-                return RoadAccess.DESTINATION;
-            }
-        });
+
+        OSMRoadAccessParser<RoadAccess> tmpParser = new OSMRoadAccessParser<>(roadAccessEnc, OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR),
+                (readerWay, country) -> RoadAccess.DESTINATION, RoadAccess::find);
+
         EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
         int edgeId = 0;
-        parser.handleWayTags(edgeId, edgeIntAccess, way, relFlags);
+        tmpParser.handleWayTags(edgeId, edgeIntAccess, way, relFlags);
         assertEquals(RoadAccess.DESTINATION, roadAccessEnc.getEnum(false, edgeId, edgeIntAccess));
-
-        // if there is no country rule we get the default value
-        edgeIntAccess = new ArrayEdgeIntAccess(1);
-        way.removeTag("country_rule");
-        parser.handleWayTags(edgeId, edgeIntAccess, way, relFlags);
-        assertEquals(RoadAccess.YES, roadAccessEnc.getEnum(false, edgeId, edgeIntAccess));
 
         // prefer lower ordinal as this means less restriction
         way.setTag("motor_vehicle", "agricultural;destination;forestry");
-        parser.handleWayTags(edgeId, edgeIntAccess, way, relFlags);
+        tmpParser.handleWayTags(edgeId, edgeIntAccess, way, relFlags);
         assertEquals(RoadAccess.DESTINATION, roadAccessEnc.getEnum(false, edgeId, edgeIntAccess));
 
         way.setTag("motor_vehicle", "agricultural;forestry");
-        parser.handleWayTags(edgeId, edgeIntAccess, way, relFlags);
+        tmpParser.handleWayTags(edgeId, edgeIntAccess, way, relFlags);
         assertEquals(RoadAccess.AGRICULTURAL, roadAccessEnc.getEnum(false, edgeId, edgeIntAccess));
 
         way.setTag("motor_vehicle", "forestry;agricultural");
-        parser.handleWayTags(edgeId, edgeIntAccess, way, relFlags);
+        tmpParser.handleWayTags(edgeId, edgeIntAccess, way, relFlags);
         assertEquals(RoadAccess.AGRICULTURAL, roadAccessEnc.getEnum(false, edgeId, edgeIntAccess));
     }
 
@@ -127,4 +117,30 @@ class OSMRoadAccessParserTest {
         assertEquals(BikeRoadAccess.YES, bikeRAEnc.getEnum(false, edgeId, edgeIntAccess));
     }
 
+
+    @Test
+    void germany() {
+        assertEquals(RoadAccess.DESTINATION, OSMRoadAccessParser.CAR_HANDLER.getAccess(createReaderWay("track"), Country.DEU));
+        assertEquals(RoadAccess.YES, OSMRoadAccessParser.CAR_HANDLER.getAccess(createReaderWay("primary"), Country.DEU));
+    }
+
+    @Test
+    void austria() {
+        assertEquals(RoadAccess.FORESTRY, OSMRoadAccessParser.CAR_HANDLER.getAccess(createReaderWay("track"), Country.AUT));
+        assertEquals(RoadAccess.YES, OSMRoadAccessParser.CAR_HANDLER.getAccess(createReaderWay("primary"), Country.AUT));
+        assertEquals(RoadAccess.DESTINATION, OSMRoadAccessParser.CAR_HANDLER.getAccess(createReaderWay("living_street"), Country.AUT));
+    }
+
+    @Test
+    void hungary() {
+        assertEquals(RoadAccess.YES, OSMRoadAccessParser.CAR_HANDLER.getAccess(createReaderWay("primary"), Country.HUN));
+        assertEquals(RoadAccess.DESTINATION, OSMRoadAccessParser.CAR_HANDLER.getAccess(createReaderWay("living_street"), Country.HUN));
+        assertNull(OSMRoadAccessParser.BIKE_HANDLER.getAccess(createReaderWay("living_street"), Country.HUN));
+    }
+
+    private ReaderWay createReaderWay(String highway) {
+        ReaderWay readerWay = new ReaderWay(123L);
+        readerWay.setTag("highway", highway);
+        return readerWay;
+    }
 }

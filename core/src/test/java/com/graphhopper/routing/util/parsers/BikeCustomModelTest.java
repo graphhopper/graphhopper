@@ -66,9 +66,7 @@ public class BikeCustomModelTest {
                 addWayTagParser(new BikePriorityParser(em)).
                 addWayTagParser(new MountainBikePriorityParser(em)).
                 addWayTagParser(new RacingBikePriorityParser(em)).
-                addWayTagParser(new OSMRoadAccessParser<>(bikeRA,
-                        OSMRoadAccessParser.toOSMRestrictions(TransportationMode.BIKE),
-                        (readerWay, accessValue) -> accessValue, BikeRoadAccess::find));
+                addWayTagParser(OSMRoadAccessParser.forBike(bikeRA));
 
         parsers.addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(em.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class), relConfig, "bicycle")).
                 addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(em.getEnumEncodedValue(MtbNetwork.KEY, RouteNetwork.class), relConfig, "mtb"));

@@ -18,28 +18,28 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.EdgeIntAccess;
-import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.storage.IntsRef;
 
-import java.util.*;
-import java.util.function.BiFunction;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 public class OSMRoadAccessParser<T extends Enum> implements TagParser {
     protected final EnumEncodedValue<T> accessEnc;
     private final List<String> restrictions;
     private final Function<String, T> valueFinder;
-    private final BiFunction<ReaderWay, T, T> countryHook;
+    private final RoadAccessDefaultHandler<T> roadAccessDefaultHandler;
 
     public OSMRoadAccessParser(EnumEncodedValue<T> accessEnc, List<String> restrictions,
-                               BiFunction<ReaderWay, T, T> countryHook,
+                               RoadAccessDefaultHandler<T> roadAccessDefaultHandler,
                                Function<String, T> valueFinder) {
         this.accessEnc = accessEnc;
         this.restrictions = restrictions;
         this.valueFinder = valueFinder;
-        this.countryHook = countryHook;
+        this.roadAccessDefaultHandler = roadAccessDefaultHandler;
     }
 
     @Override
@@ -52,15 +52,19 @@ public class OSMRoadAccessParser<T extends Enum> implements TagParser {
             for (String restriction : restrictions) {
                 Object value = nodeTags.get(0).get(restriction);
                 accessValue = getRoadAccess((String) value, accessValue);
-                if(accessValue != null) break;
+                if (accessValue != null) break;
             }
 
         for (String restriction : restrictions) {
             accessValue = getRoadAccess(readerWay.getTag(restriction), accessValue);
-            if(accessValue != null) break;
+            if (accessValue != null) break;
         }
 
-        accessValue = countryHook.apply(readerWay, accessValue);
+        if (accessValue == null) {
+            Country country = readerWay.getTag("country", Country.MISSING);
+            accessValue = roadAccessDefaultHandler.getAccess(readerWay, country);
+        }
+
         if (accessValue != null)
             accessEnc.setEnum(false, edgeId, edgeIntAccess, accessValue);
     }
@@ -80,28 +84,62 @@ public class OSMRoadAccessParser<T extends Enum> implements TagParser {
         return accessValue;
     }
 
+    @FunctionalInterface
+    public interface RoadAccessDefaultHandler<T> {
+        T getAccess(ReaderWay readerWay, Country country);
+    }
+
+    public static RoadAccessDefaultHandler<RoadAccess> CAR_HANDLER = (ReaderWay readerWay, Country country) -> {
+        RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", ""));
+        return switch (country) {
+            case AUT -> switch (roadClass) {
+                case LIVING_STREET -> RoadAccess.DESTINATION;
+                case TRACK -> RoadAccess.FORESTRY;
+                case PATH, BRIDLEWAY, CYCLEWAY, FOOTWAY, PEDESTRIAN -> RoadAccess.NO;
+                default -> RoadAccess.YES;
+            };
+            case DEU -> switch (roadClass) {
+                case TRACK -> RoadAccess.DESTINATION;
+                case PATH, BRIDLEWAY, CYCLEWAY, FOOTWAY, PEDESTRIAN -> RoadAccess.NO;
+                default -> RoadAccess.YES;
+            };
+            case HUN -> {
+                if (roadClass == RoadClass.LIVING_STREET) yield RoadAccess.DESTINATION;
+                yield RoadAccess.YES;
+            }
+            default -> null;
+        };
+    };
+
+    public static RoadAccessDefaultHandler<FootRoadAccess> FOOT_HANDLER = (readerWay, country) -> null;
+
+    public static RoadAccessDefaultHandler<BikeRoadAccess> BIKE_HANDLER = (readerWay, country) -> null;
+
     public static List<String> toOSMRestrictions(TransportationMode mode) {
-        switch (mode) {
-            case FOOT:
-                return Arrays.asList("foot", "access");
-            case VEHICLE:
-                return Arrays.asList("vehicle", "access");
-            case BIKE:
-                return Arrays.asList("bicycle", "vehicle", "access");
-            case CAR:
-                return Arrays.asList("motorcar", "motor_vehicle", "vehicle", "access");
-            case MOTORCYCLE:
-                return Arrays.asList("motorcycle", "motor_vehicle", "vehicle", "access");
-            case HGV:
-                return Arrays.asList("hgv", "motor_vehicle", "vehicle", "access");
-            case PSV:
-                return Arrays.asList("psv", "motor_vehicle", "vehicle", "access");
-            case BUS:
-                return Arrays.asList("bus", "psv", "motor_vehicle", "vehicle", "access");
-            case HOV:
-                return Arrays.asList("hov", "motor_vehicle", "vehicle", "access");
-            default:
-                throw new IllegalArgumentException("Cannot convert TransportationMode " + mode + " to list of restrictions");
-        }
+        return switch (mode) {
+            case FOOT -> List.of("foot", "access");
+            case VEHICLE -> List.of("vehicle", "access");
+            case BIKE -> List.of("bicycle", "vehicle", "access");
+            case CAR -> List.of("motorcar", "motor_vehicle", "vehicle", "access");
+            case MOTORCYCLE -> List.of("motorcycle", "motor_vehicle", "vehicle", "access");
+            case HGV -> List.of("hgv", "motor_vehicle", "vehicle", "access");
+            case PSV -> List.of("psv", "motor_vehicle", "vehicle", "access");
+            case BUS -> List.of("bus", "psv", "motor_vehicle", "vehicle", "access");
+            case HOV -> List.of("hov", "motor_vehicle", "vehicle", "access");
+            default ->
+                    throw new IllegalArgumentException("Cannot convert TransportationMode " + mode + " to list of restrictions");
+        };
+    }
+
+    public static OSMRoadAccessParser<RoadAccess> forCar(EnumEncodedValue<RoadAccess> roadAccessEnc) {
+        return new OSMRoadAccessParser<>(roadAccessEnc, toOSMRestrictions(TransportationMode.CAR), CAR_HANDLER, RoadAccess::find);
+    }
+
+    public static OSMRoadAccessParser<BikeRoadAccess> forBike(EnumEncodedValue<BikeRoadAccess> roadAccessEnc) {
+        return new OSMRoadAccessParser<>(roadAccessEnc, toOSMRestrictions(TransportationMode.BIKE), BIKE_HANDLER, BikeRoadAccess::find);
+    }
+
+    public static OSMRoadAccessParser<FootRoadAccess> forFoot(EnumEncodedValue<FootRoadAccess> roadAccessEnc) {
+        return new OSMRoadAccessParser<>(roadAccessEnc, toOSMRestrictions(TransportationMode.FOOT), FOOT_HANDLER, FootRoadAccess::find);
     }
 }

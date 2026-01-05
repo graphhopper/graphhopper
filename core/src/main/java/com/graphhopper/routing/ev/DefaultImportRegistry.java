@@ -53,26 +53,18 @@ public class DefaultImportRegistry implements ImportRegistry {
             );
         else if (FootRoadAccess.KEY.equals(name))
             return ImportUnit.create(name, props -> FootRoadAccess.create(),
-                    (lookup, props) -> new OSMRoadAccessParser<>(
-                            lookup.getEnumEncodedValue(FootRoadAccess.KEY, FootRoadAccess.class),
-                            OSMRoadAccessParser.toOSMRestrictions(TransportationMode.FOOT),
-                            (readerWay, accessValue) -> accessValue,
-                            FootRoadAccess::find)
+                    (lookup, props) -> OSMRoadAccessParser.forFoot(
+                            lookup.getEnumEncodedValue(FootRoadAccess.KEY, FootRoadAccess.class))
             );
         else if (BikeRoadAccess.KEY.equals(name))
             return ImportUnit.create(name, props -> BikeRoadAccess.create(),
-                    (lookup, props) -> new OSMRoadAccessParser<>(
-                            lookup.getEnumEncodedValue(BikeRoadAccess.KEY, BikeRoadAccess.class),
-                            OSMRoadAccessParser.toOSMRestrictions(TransportationMode.BIKE),
-                            (readerWay, accessValue) -> accessValue,
-                            BikeRoadAccess::find)
+                    (lookup, props) -> OSMRoadAccessParser.forBike(
+                            lookup.getEnumEncodedValue(BikeRoadAccess.KEY, BikeRoadAccess.class))
             );
         else if (RoadAccess.KEY.equals(name))
             return ImportUnit.create(name, props -> RoadAccess.create(),
-                    (lookup, props) -> new OSMRoadAccessParser<>(
-                            lookup.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class),
-                            OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR),
-                            RoadAccess::countryHook, RoadAccess::find)
+                    (lookup, props) -> OSMRoadAccessParser.forCar(
+                            lookup.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class))
             );
         else if (MaxSpeed.KEY.equals(name))
             return ImportUnit.create(name, props -> MaxSpeed.create(),
