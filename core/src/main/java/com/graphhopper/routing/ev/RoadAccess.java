@@ -25,7 +25,7 @@ import com.graphhopper.util.Helper;
  * delivering. The NO value does not permit any access.
  */
 public enum RoadAccess {
-    YES, DESTINATION, CUSTOMERS, DELIVERY, PRIVATE, AGRICULTURAL, FORESTRY, NO;
+    YES, DESTINATION, CUSTOMERS, DELIVERY, PRIVATE, MILITARY, AGRICULTURAL, FORESTRY, NO;
 
     public static final String KEY = "road_access";
 

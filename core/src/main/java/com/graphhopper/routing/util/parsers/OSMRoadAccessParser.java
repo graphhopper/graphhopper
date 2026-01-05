@@ -85,6 +85,7 @@ public class OSMRoadAccessParser<T extends Enum> implements TagParser {
         return accessValue;
     }
 
+    @FunctionalInterface
     public interface RoadAccessDefaultHandler<T> {
         T getAccess(ReaderWay readerWay, Country country);
     }
@@ -321,5 +322,17 @@ public class OSMRoadAccessParser<T extends Enum> implements TagParser {
             default ->
                     throw new IllegalArgumentException("Cannot convert TransportationMode " + mode + " to list of restrictions");
         };
+    }
+
+    public static OSMRoadAccessParser<RoadAccess> forCar(EnumEncodedValue<RoadAccess> roadAccessEnc) {
+        return new OSMRoadAccessParser<>(roadAccessEnc, toOSMRestrictions(TransportationMode.CAR), CAR_HANDLER, RoadAccess::find);
+    }
+
+    public static OSMRoadAccessParser<BikeRoadAccess> forBike(EnumEncodedValue<BikeRoadAccess> roadAccessEnc) {
+        return new OSMRoadAccessParser<>(roadAccessEnc, toOSMRestrictions(TransportationMode.BIKE), BIKE_HANDLER, BikeRoadAccess::find);
+    }
+
+    public static OSMRoadAccessParser<FootRoadAccess> forFoot(EnumEncodedValue<FootRoadAccess> roadAccessEnc) {
+        return new OSMRoadAccessParser<>(roadAccessEnc, toOSMRestrictions(TransportationMode.FOOT), FOOT_HANDLER, FootRoadAccess::find);
     }
 }

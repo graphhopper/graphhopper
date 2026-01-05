@@ -908,8 +908,7 @@ public class OSMReaderTest {
         EnumEncodedValue<RoadAccess> roadAccessEnc = RoadAccess.create();
         EncodingManager em = new EncodingManager.Builder().add(roadAccessEnc).build();
         OSMParsers osmParsers = new OSMParsers();
-        osmParsers.addWayTagParser(new OSMRoadAccessParser<>(roadAccessEnc,
-                OSMRoadAccessParser.toOSMRestrictions(CAR), OSMRoadAccessParser.CAR_HANDLER, RoadAccess::find));
+        osmParsers.addWayTagParser(OSMRoadAccessParser.forCar(roadAccessEnc));
         BaseGraph graph = new BaseGraph.Builder(em).create();
         OSMReader reader = new OSMReader(graph, osmParsers, new OSMReaderConfig());
         reader.setAreaIndex(createCountryIndex());

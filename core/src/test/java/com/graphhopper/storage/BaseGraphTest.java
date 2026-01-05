@@ -407,4 +407,45 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
         assertThrows(IllegalArgumentException.class, () -> ne.setGeoRef(0, 1L << 39));
         graph.close();
     }
+
+    @Test
+    public void testMaxPillarNodes() {
+        // 1. Use -1 to use the default segment size (1MB).
+        BaseGraph graph = newGHStorage(new RAMDirectory(), false, -1);
+        graph.create(defaultSize);
+
+        // 2. Create the massive point list (65535 nodes)
+        int maxNodes = 65535;
+        PointList list = new PointList(maxNodes, false);
+        for (int i = 0; i < maxNodes; i++) {
+            list.add(1.0 + i * 0.0001, 2.0 + i * 0.0001);
+        }
+
+        // 3. Store and Fetch
+        EdgeIteratorState edge = graph.edge(0, 1).setDistance(100);
+        edge.setWayGeometry(list);
+
+        PointList fetched = edge.fetchWayGeometry(FetchMode.PILLAR_ONLY);
+        assertEquals(maxNodes, fetched.size());
+        assertEquals(1.0, fetched.getLat(0), 1e-6);
+        assertEquals(1.0 + (maxNodes - 1) * 0.0001, fetched.getLat(maxNodes - 1), 1e-6);
+
+        graph.close();
+    }
+
+    @Test
+    public void testPillarNodesOverflow() {
+        BaseGraph graph = createGHStorage();
+        int tooManyNodes = 65536;
+        PointList list = new PointList(tooManyNodes, false);
+        for (int i = 0; i < tooManyNodes; i++) {
+            list.add(1.0, 2.0);
+        }
+
+        EdgeIteratorState edge = graph.edge(0, 1);
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> {
+            edge.setWayGeometry(list);
+        });
+        assertTrue(e.getMessage().contains("Too many pillar nodes"));
+    }
 }
