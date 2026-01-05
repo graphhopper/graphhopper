@@ -39,10 +39,8 @@ class OSMRoadAccessParserTest {
     public void setup() {
         roadAccessEnc.init(new EncodedValue.InitializerConfig());
         bikeRAEnc.init(new EncodedValue.InitializerConfig());
-        parser = new OSMRoadAccessParser<>(roadAccessEnc, OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR),
-                OSMRoadAccessParser.CAR_HANDLER, RoadAccess::find);
-        bikeRAParser = new OSMRoadAccessParser<>(bikeRAEnc, OSMRoadAccessParser.toOSMRestrictions(TransportationMode.BIKE),
-                OSMRoadAccessParser.BIKE_HANDLER, BikeRoadAccess::find);
+        parser = OSMRoadAccessParser.forCar(roadAccessEnc);
+        bikeRAParser = OSMRoadAccessParser.forBike(bikeRAEnc);
     }
 
     @Test

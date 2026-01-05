@@ -22,7 +22,6 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.storage.IntsRef;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -85,6 +84,7 @@ public class OSMRoadAccessParser<T extends Enum> implements TagParser {
         return accessValue;
     }
 
+    @FunctionalInterface
     public interface RoadAccessDefaultHandler<T> {
         T getAccess(ReaderWay readerWay, Country country);
     }
@@ -117,17 +117,29 @@ public class OSMRoadAccessParser<T extends Enum> implements TagParser {
 
     public static List<String> toOSMRestrictions(TransportationMode mode) {
         return switch (mode) {
-            case FOOT -> Arrays.asList("foot", "access");
-            case VEHICLE -> Arrays.asList("vehicle", "access");
-            case BIKE -> Arrays.asList("bicycle", "vehicle", "access");
-            case CAR -> Arrays.asList("motorcar", "motor_vehicle", "vehicle", "access");
-            case MOTORCYCLE -> Arrays.asList("motorcycle", "motor_vehicle", "vehicle", "access");
-            case HGV -> Arrays.asList("hgv", "motor_vehicle", "vehicle", "access");
-            case PSV -> Arrays.asList("psv", "motor_vehicle", "vehicle", "access");
-            case BUS -> Arrays.asList("bus", "psv", "motor_vehicle", "vehicle", "access");
-            case HOV -> Arrays.asList("hov", "motor_vehicle", "vehicle", "access");
+            case FOOT -> List.of("foot", "access");
+            case VEHICLE -> List.of("vehicle", "access");
+            case BIKE -> List.of("bicycle", "vehicle", "access");
+            case CAR -> List.of("motorcar", "motor_vehicle", "vehicle", "access");
+            case MOTORCYCLE -> List.of("motorcycle", "motor_vehicle", "vehicle", "access");
+            case HGV -> List.of("hgv", "motor_vehicle", "vehicle", "access");
+            case PSV -> List.of("psv", "motor_vehicle", "vehicle", "access");
+            case BUS -> List.of("bus", "psv", "motor_vehicle", "vehicle", "access");
+            case HOV -> List.of("hov", "motor_vehicle", "vehicle", "access");
             default ->
                     throw new IllegalArgumentException("Cannot convert TransportationMode " + mode + " to list of restrictions");
         };
+    }
+
+    public static OSMRoadAccessParser<RoadAccess> forCar(EnumEncodedValue<RoadAccess> roadAccessEnc) {
+        return new OSMRoadAccessParser<>(roadAccessEnc, toOSMRestrictions(TransportationMode.CAR), CAR_HANDLER, RoadAccess::find);
+    }
+
+    public static OSMRoadAccessParser<BikeRoadAccess> forBike(EnumEncodedValue<BikeRoadAccess> roadAccessEnc) {
+        return new OSMRoadAccessParser<>(roadAccessEnc, toOSMRestrictions(TransportationMode.BIKE), BIKE_HANDLER, BikeRoadAccess::find);
+    }
+
+    public static OSMRoadAccessParser<FootRoadAccess> forFoot(EnumEncodedValue<FootRoadAccess> roadAccessEnc) {
+        return new OSMRoadAccessParser<>(roadAccessEnc, toOSMRestrictions(TransportationMode.BIKE), FOOT_HANDLER, FootRoadAccess::find);
     }
 }
