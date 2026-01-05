@@ -129,6 +129,8 @@ public abstract class BikeCommonPriorityParser implements TagParser {
 
         if (way.hasTag("bicycle", "use_sidepath")) {
             weightToPrioMap.put(100d, REACH_DESTINATION);
+        } else if (way.hasTag("bicycle", "optional_sidepath")) {
+            weightToPrioMap.put(100d, AVOID);
         }
 
         Set<String> cyclewayValues = Stream.of("cycleway", "cycleway:left", "cycleway:both", "cycleway:right").map(key -> way.getTag(key, "")).collect(Collectors.toSet());
