@@ -22,6 +22,7 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.storage.IntsRef;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -89,8 +90,13 @@ public class OSMRoadAccessParser<T extends Enum> implements TagParser {
         T getAccess(ReaderWay readerWay, Country country);
     }
 
+    public static RoadClass getRoadClass(ReaderWay readerWay) {
+        String hw = readerWay.getTag("highway", "");
+        return RoadClass.find(hw.endsWith("_link") ? hw.substring(0, hw.length() - 5) : hw);
+    }
+
     public static RoadAccessDefaultHandler<RoadAccess> CAR_HANDLER = (ReaderWay readerWay, Country country) -> {
-        RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", ""));
+        RoadClass roadClass = getRoadClass(readerWay);
         return switch (country) {
             case AUT -> switch (roadClass) {
                 case LIVING_STREET -> RoadAccess.DESTINATION;
@@ -111,21 +117,208 @@ public class OSMRoadAccessParser<T extends Enum> implements TagParser {
         };
     };
 
-    public static RoadAccessDefaultHandler<FootRoadAccess> FOOT_HANDLER = (readerWay, country) -> null;
+    // based on https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Access_restrictions
+    public static RoadAccessDefaultHandler<FootRoadAccess> FOOT_HANDLER = (readerWay, country) -> {
+        RoadClass roadClass = getRoadClass(readerWay);
+        boolean motorroad = readerWay.hasTag("motorroad", "yes");
 
-    public static RoadAccessDefaultHandler<BikeRoadAccess> BIKE_HANDLER = (readerWay, country) -> null;
+        switch (country) {
+            case AUT, CHE, FRA, HRV, SVK -> {
+                if (roadClass == RoadClass.TRUNK || roadClass == RoadClass.BRIDLEWAY)
+                    return FootRoadAccess.NO;
+            }
+            case BEL -> {
+                if (roadClass == RoadClass.TRUNK || roadClass == RoadClass.BUSWAY)
+                    return FootRoadAccess.NO;
+                else if (roadClass == RoadClass.CYCLEWAY)
+                    return FootRoadAccess.YES;
+            }
+            case BLR, RUS -> {
+                if (roadClass == RoadClass.BRIDLEWAY) return FootRoadAccess.NO;
+            }
+            case BRA -> {
+                if (roadClass == RoadClass.BUSWAY) return FootRoadAccess.NO;
+            }
+            case CHN -> {
+                if (roadClass == RoadClass.CYCLEWAY) return FootRoadAccess.YES;
+                else if (roadClass == RoadClass.BRIDLEWAY) return FootRoadAccess.NO;
+            }
+            case DEU -> {
+                if (motorroad || roadClass == RoadClass.BRIDLEWAY) return FootRoadAccess.NO;
+            }
+            case DNK -> {
+                if (roadClass == RoadClass.TRUNK || roadClass == RoadClass.BRIDLEWAY)
+                    return FootRoadAccess.NO;
+                else if (roadClass == RoadClass.CYCLEWAY)
+                    return FootRoadAccess.YES;
+            }
+            case ESP, UKR -> {
+                if (motorroad && roadClass == RoadClass.TRUNK
+                        || roadClass == RoadClass.BRIDLEWAY) return FootRoadAccess.NO;
+            }
+            case FIN -> {
+                if (roadClass == RoadClass.BRIDLEWAY) return FootRoadAccess.NO;
+                else if (roadClass == RoadClass.CYCLEWAY) return FootRoadAccess.YES;
+            }
+            case GBR, ISL, PHL, THA, USA -> {
+                if (roadClass == RoadClass.CYCLEWAY) return FootRoadAccess.YES;
+            }
+            case GRC -> {
+                if (motorroad && roadClass == RoadClass.TRUNK) return FootRoadAccess.NO;
+                else if (roadClass == RoadClass.CYCLEWAY) return FootRoadAccess.YES;
+            }
+            case HUN -> {
+                if (roadClass == RoadClass.TRUNK || roadClass == RoadClass.BRIDLEWAY)
+                    return FootRoadAccess.NO;
+                else if (roadClass == RoadClass.CYCLEWAY)
+                    return FootRoadAccess.YES;
+            }
+            case ITA, POL -> {
+                if (motorroad) return FootRoadAccess.NO;
+            }
+            case NLD -> {
+                if (motorroad && roadClass == RoadClass.TRUNK
+                        || roadClass == RoadClass.BUSWAY
+                        || roadClass == RoadClass.BRIDLEWAY) return FootRoadAccess.NO;
+                else if (roadClass == RoadClass.CYCLEWAY) return FootRoadAccess.YES;
+            }
+            case NOR -> {
+                if (motorroad) return FootRoadAccess.NO;
+                else if (roadClass == RoadClass.CYCLEWAY) return FootRoadAccess.YES;
+            }
+            case OMN -> {
+                if (roadClass == RoadClass.CYCLEWAY) return FootRoadAccess.DESIGNATED;
+            }
+            case SWE -> {
+                if (motorroad || roadClass == RoadClass.BUSWAY) return FootRoadAccess.NO;
+                else if (roadClass == RoadClass.CYCLEWAY) return FootRoadAccess.YES;
+            }
+        }
+        return null;
+    };
+
+    public static RoadAccessDefaultHandler<BikeRoadAccess> BIKE_HANDLER = (ReaderWay readerWay, Country country) -> {
+        RoadClass roadClass = getRoadClass(readerWay);
+        boolean motorroad = readerWay.hasTag("motorroad", "yes");
+
+        switch (country) {
+            case AUT, HRV -> {
+                if (roadClass == RoadClass.TRUNK || roadClass == RoadClass.BRIDLEWAY)
+                    return BikeRoadAccess.NO;
+            }
+            case BEL -> {
+                if (roadClass == RoadClass.TRUNK
+                        || roadClass == RoadClass.BUSWAY
+                        || roadClass == RoadClass.BRIDLEWAY
+                        || roadClass == RoadClass.FOOTWAY) return BikeRoadAccess.NO;
+                else if (roadClass == RoadClass.PEDESTRIAN) return BikeRoadAccess.YES;
+            }
+            case BLR -> {
+                if (roadClass == RoadClass.BRIDLEWAY) return BikeRoadAccess.NO;
+                else if (roadClass == RoadClass.PEDESTRIAN) return BikeRoadAccess.DESIGNATED;
+                else if (roadClass == RoadClass.FOOTWAY) return BikeRoadAccess.YES;
+            }
+            case BRA -> {
+                if (roadClass == RoadClass.BUSWAY) return BikeRoadAccess.NO;
+            }
+            case CHE, DNK, SVK -> {
+                if (roadClass == RoadClass.TRUNK
+                        || roadClass == RoadClass.BRIDLEWAY
+                        || roadClass == RoadClass.PEDESTRIAN
+                        || roadClass == RoadClass.FOOTWAY) return BikeRoadAccess.NO;
+            }
+            case CHN -> {
+                if (roadClass == RoadClass.BRIDLEWAY) return BikeRoadAccess.NO;
+                else if (roadClass == RoadClass.PEDESTRIAN) return BikeRoadAccess.YES;
+            }
+            case DEU -> {
+                if (motorroad || roadClass == RoadClass.BRIDLEWAY) return BikeRoadAccess.NO;
+            }
+            case ESP -> {
+                if (motorroad && roadClass == RoadClass.TRUNK
+                        || roadClass == RoadClass.BRIDLEWAY) return BikeRoadAccess.NO;
+                else if (roadClass == RoadClass.PEDESTRIAN) return BikeRoadAccess.YES;
+            }
+            case FIN -> {
+                if (roadClass == RoadClass.FOOTWAY || roadClass == RoadClass.BRIDLEWAY)
+                    return BikeRoadAccess.NO;
+                else if (roadClass == RoadClass.PEDESTRIAN) return BikeRoadAccess.YES;
+            }
+            case FRA -> {
+                if (roadClass == RoadClass.TRUNK
+                        || roadClass == RoadClass.BRIDLEWAY) return BikeRoadAccess.NO;
+                else if (roadClass == RoadClass.PEDESTRIAN) return BikeRoadAccess.YES;
+            }
+            case GRC -> {
+                if (motorroad && roadClass == RoadClass.TRUNK
+                        || roadClass == RoadClass.PEDESTRIAN
+                        || roadClass == RoadClass.FOOTWAY) return BikeRoadAccess.NO;
+            }
+            case GBR, HKG, IRL -> {
+                if (roadClass == RoadClass.PEDESTRIAN
+                        || roadClass == RoadClass.FOOTWAY) return BikeRoadAccess.NO;
+            }
+            case HUN -> {
+                if (roadClass == RoadClass.TRUNK
+                        || roadClass == RoadClass.BRIDLEWAY
+                        || roadClass == RoadClass.PEDESTRIAN) return BikeRoadAccess.NO;
+            }
+            case ISL -> {
+                if (roadClass == RoadClass.PEDESTRIAN
+                        || roadClass == RoadClass.FOOTWAY) return BikeRoadAccess.YES;
+            }
+            case ITA -> {
+                if (motorroad || roadClass == RoadClass.FOOTWAY) return BikeRoadAccess.NO;
+                else if (roadClass == RoadClass.PEDESTRIAN) return BikeRoadAccess.YES;
+            }
+
+            case NLD -> {
+                if (motorroad && roadClass == RoadClass.TRUNK
+                        || roadClass == RoadClass.BUSWAY
+                        || roadClass == RoadClass.BRIDLEWAY) return BikeRoadAccess.NO;
+            }
+            case NOR -> {
+                if (motorroad) return BikeRoadAccess.NO;
+                else if (roadClass == RoadClass.PEDESTRIAN || roadClass == RoadClass.FOOTWAY)
+                    return BikeRoadAccess.YES;
+            }
+            case OMN -> {
+                if (roadClass == RoadClass.MOTORWAY) return BikeRoadAccess.YES;
+                else if (roadClass == RoadClass.PEDESTRIAN || roadClass == RoadClass.FOOTWAY)
+                    return BikeRoadAccess.NO;
+            }
+            case PHL, THA, USA -> {
+                if (roadClass == RoadClass.PEDESTRIAN) return BikeRoadAccess.YES;
+            }
+            case POL -> {
+                if (motorroad) return BikeRoadAccess.NO;
+            }
+            case RUS, TUR -> {
+                if (roadClass == RoadClass.BRIDLEWAY) return BikeRoadAccess.NO;
+            }
+            case SWE -> {
+                if (motorroad) return BikeRoadAccess.NO;
+                else if (roadClass == RoadClass.PEDESTRIAN) return BikeRoadAccess.YES;
+            }
+            case UKR -> {
+                if (motorroad && roadClass == RoadClass.TRUNK
+                        || roadClass == RoadClass.BRIDLEWAY) return BikeRoadAccess.NO;
+            }
+        }
+        return null;
+    };
 
     public static List<String> toOSMRestrictions(TransportationMode mode) {
         return switch (mode) {
-            case FOOT -> List.of("foot", "access");
-            case VEHICLE -> List.of("vehicle", "access");
-            case BIKE -> List.of("bicycle", "vehicle", "access");
-            case CAR -> List.of("motorcar", "motor_vehicle", "vehicle", "access");
-            case MOTORCYCLE -> List.of("motorcycle", "motor_vehicle", "vehicle", "access");
-            case HGV -> List.of("hgv", "motor_vehicle", "vehicle", "access");
-            case PSV -> List.of("psv", "motor_vehicle", "vehicle", "access");
-            case BUS -> List.of("bus", "psv", "motor_vehicle", "vehicle", "access");
-            case HOV -> List.of("hov", "motor_vehicle", "vehicle", "access");
+            case FOOT -> Arrays.asList("foot", "access");
+            case VEHICLE -> Arrays.asList("vehicle", "access");
+            case BIKE -> Arrays.asList("bicycle", "vehicle", "access");
+            case CAR -> Arrays.asList("motorcar", "motor_vehicle", "vehicle", "access");
+            case MOTORCYCLE -> Arrays.asList("motorcycle", "motor_vehicle", "vehicle", "access");
+            case HGV -> Arrays.asList("hgv", "motor_vehicle", "vehicle", "access");
+            case PSV -> Arrays.asList("psv", "motor_vehicle", "vehicle", "access");
+            case BUS -> Arrays.asList("bus", "psv", "motor_vehicle", "vehicle", "access");
+            case HOV -> Arrays.asList("hov", "motor_vehicle", "vehicle", "access");
             default ->
                     throw new IllegalArgumentException("Cannot convert TransportationMode " + mode + " to list of restrictions");
         };
