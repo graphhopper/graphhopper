@@ -140,6 +140,6 @@ public class OSMRoadAccessParser<T extends Enum> implements TagParser {
     }
 
     public static OSMRoadAccessParser<FootRoadAccess> forFoot(EnumEncodedValue<FootRoadAccess> roadAccessEnc) {
-        return new OSMRoadAccessParser<>(roadAccessEnc, toOSMRestrictions(TransportationMode.BIKE), FOOT_HANDLER, FootRoadAccess::find);
+        return new OSMRoadAccessParser<>(roadAccessEnc, toOSMRestrictions(TransportationMode.FOOT), FOOT_HANDLER, FootRoadAccess::find);
     }
 }
