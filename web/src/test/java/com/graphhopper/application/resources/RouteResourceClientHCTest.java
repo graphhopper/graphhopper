@@ -214,7 +214,7 @@ public class RouteResourceClientHCTest {
 
         GHResponse res = gh.route(req);
         List<String> given = extractInstructionNames(res.getBest(), 5);
-        assertEquals(Arrays.asList("Continue onto Carrer de l'Aigüeta", "Turn right onto Carrer Pere d'Urg",
+        assertEquals(Arrays.asList("Continue on Carrer de l'Aigüeta", "Turn right onto Carrer Pere d'Urg",
                 "Turn right onto Carrer Bonaventura Armengol", "Keep right onto Avinguda Consell d'Europa", "At roundabout, take exit 4"
         ), given);
 
