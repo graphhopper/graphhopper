@@ -3,9 +3,11 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.ArrayEdgeIntAccess;
 import com.graphhopper.routing.ev.Curvature;
+import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.PointList;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CurvatureCalculatorTest {
@@ -33,6 +35,8 @@ class CurvatureCalculatorTest {
         PointList pointList = new PointList();
         pointList.add(50.9, 13.13);
         pointList.add(50.899, 13.13);
+
+        // setArtificialWayTags
         way.setTag("point_list", pointList);
         way.setTag("edge_distance", 100d);
         return way;
@@ -45,9 +49,29 @@ class CurvatureCalculatorTest {
         pointList.add(50.9, 13.13);
         pointList.add(50.899, 13.129);
         pointList.add(50.899, 13.13);
+
+        // setArtificialWayTags
         way.setTag("point_list", pointList);
         way.setTag("edge_distance", 160d);
         return way;
     }
 
+    @Test
+    public void testCurvatureWithElevation() {
+        ReaderWay straight = new ReaderWay(1);
+        straight.setTag("highway", "primary");
+        PointList pointList = new PointList(2, true);
+        pointList.add(50.9, 13.13, 0);
+        pointList.add(50.899, 13.13, 100);
+
+        // setArtificialWayTags
+        straight.setTag("point_list", pointList);
+        straight.setTag("edge_distance", DistanceCalcEarth.DIST_EARTH.calcDistance(pointList));
+
+        ArrayEdgeIntAccess intAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
+        new CurvatureCalculator(em.getDecimalEncodedValue(Curvature.KEY)).
+                handleWayTags(0, intAccess, straight, null);
+        double curvature = em.getDecimalEncodedValue(Curvature.KEY).getDecimal(false, 0, intAccess);
+        assertEquals(1, curvature, 0.01);
+    }
 }
