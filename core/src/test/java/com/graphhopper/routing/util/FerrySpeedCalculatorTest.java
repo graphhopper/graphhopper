@@ -99,7 +99,7 @@ class FerrySpeedCalculatorTest {
         // no speed_from_duration, but edge_distance is present
         // minimum speed for short ferries
         checkSpeed(null, 100.0, 5);
-        // unknown speed for longer ferries
+        // longer ferries...
         checkSpeed(null, 2_000.0, 15);
         checkSpeed(null, 40_000.0, 30);
 
