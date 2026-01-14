@@ -21,25 +21,17 @@ public class FerrySpeedCalculator implements TagParser {
 
     static double getSpeed(ReaderWay way) {
         double wayDistance = way.getTag("edge_distance", Double.NaN);
-        if (Double.isNaN(wayDistance))
-            throw new IllegalStateException("No 'edge_distance' set for edge created for way: " + way.getId());
 
         // OSMReader adds the artificial 'speed_from_duration' and 'way_distance' tags that we can
         // use to set the ferry speed. Otherwise we need to use fallback values.
         double speedInKmPerHour = way.getTag("speed_from_duration", Double.NaN);
         if (!Double.isNaN(speedInKmPerHour)) {
-            // we reduce the speed to account for waiting time
-            if (wayDistance < 1000) {
-                return Math.round(speedInKmPerHour / 1.5);
-            } else if (wayDistance < 30_000) {
-                return Math.round(speedInKmPerHour / 1.3);
-            } else {
-                return Math.round(speedInKmPerHour / 1.2);
-            }
+            return Math.round(speedInKmPerHour);
         } else {
             int shuttleFactor = way.hasTag("route", "shuttle_train") ? 2 : 1;
-            // we have no speed value to work with because there was no valid duration tag.
-            // we have to take a guess based on the distance.
+            if (Double.isNaN(wayDistance))
+                throw new IllegalStateException("No 'edge_distance' set for edge created for way: " + way.getId());
+            // When we have no speed value to work with we have to take a guess based on the distance.
             if (wayDistance < 1000) {
                 // Use the slowest possible speed for very short ferries. Note that sometimes these aren't really ferries
                 // that take you from one harbour to another, but rather ways that only represent the beginning of a

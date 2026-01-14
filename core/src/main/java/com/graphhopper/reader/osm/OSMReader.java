@@ -504,7 +504,8 @@ public class OSMReader {
             return;
         }
 
-        double speedInKmPerHour = distance / 1000 / (durationInSeconds / 60.0 / 60.0);
+        double waitingTime = 30 * 60;
+        double speedInKmPerHour = distance / 1000 / ((durationInSeconds + waitingTime) / 60.0 / 60.0);
         if (speedInKmPerHour < 0.1d) {
             // Often there are mapping errors like duration=30:00 (30h) instead of duration=00:30 (30min). In this case we
             // ignore the duration tag. If no such cases show up anymore, because they were fixed, maybe raise the limit to find some more.

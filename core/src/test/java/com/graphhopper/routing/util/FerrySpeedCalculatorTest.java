@@ -46,7 +46,7 @@ class FerrySpeedCalculatorTest {
         EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
         int edgeId = 0;
         calc.handleWayTags(edgeId, edgeIntAccess, way, IntsRef.EMPTY);
-        assertEquals(44, ferrySpeedEnc.getDecimal(false, edgeId, edgeIntAccess));
+        assertEquals(60, ferrySpeedEnc.getDecimal(false, edgeId, edgeIntAccess));
 
         way = new ReaderWay(1);
         way.setTag("route", "shuttle_train");
@@ -89,8 +89,8 @@ class FerrySpeedCalculatorTest {
     @Test
     void testRawSpeed() {
         // speed_from_duration is set (edge_distance is not even needed)
-        checkSpeed(30.0, null, Math.round(30 / 1.4));
-        checkSpeed(45.0, null, Math.round(45 / 1.4));
+        checkSpeed(30.0, null, 30);
+        checkSpeed(45.0, null, 45);
         // above max (when including waiting time) (capped to max)
         checkSpeed(100.0, null, ferrySpeedEnc.getMaxStorableDecimal());
         // below smallest storable non-zero value
