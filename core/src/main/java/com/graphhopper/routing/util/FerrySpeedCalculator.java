@@ -15,7 +15,6 @@ public class FerrySpeedCalculator implements TagParser {
 
     public static boolean isFerry(ReaderWay way) {
         return way.hasTag("route", "ferry") && !way.hasTag("ferry", "no") ||
-                // TODO shuttle_train is sometimes also used in relations, e.g. https://www.openstreetmap.org/relation/1932780
                 way.hasTag("route", "shuttle_train") && !way.hasTag("shuttle_train", "no");
     }
 

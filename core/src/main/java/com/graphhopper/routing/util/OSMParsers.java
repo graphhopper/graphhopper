@@ -21,8 +21,8 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.RestrictionTagParser;
-import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.util.parsers.RelationTagParser;
 import com.graphhopper.routing.util.parsers.TagParser;
 import com.graphhopper.storage.IntsRef;
@@ -75,8 +75,8 @@ public class OSMParsers {
         if (highway != null)
             return !ignoredHighways.contains(highway);
         else if (way.getTag("route") != null)
-            // we accept *all* ways with a 'route' tag and no 'highway' tag, because most of them are ferries
-            // (route=ferry), which we want, and there aren't so many such ways we do not want
+            // we accept *all* ways with a 'route' tag and no 'highway' tag. Most of them are ferries
+            // (route=ferry) or similar (route=shuttle_train) which we want, and there are not many ways we don't want
             // https://github.com/graphhopper/graphhopper/pull/2702#discussion_r1038093050
             return true;
         else if ("pier".equals(way.getTag("man_made")))
