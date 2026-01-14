@@ -232,8 +232,8 @@ public class OSMReaderTest {
         int n2 = AbstractGraphStorageTester.getIdOf(graph, 52.5180);
         int n3 = AbstractGraphStorageTester.getIdOf(graph, 52.5179);
 
-        assertEquals(36, GHUtility.getEdge(graph, n1, n2).get(carSpeedEnc));
-        assertEquals(36, GHUtility.getEdge(graph, n2, n3).get(carSpeedEnc));
+        assertEquals(16, GHUtility.getEdge(graph, n1, n2).get(carSpeedEnc));
+        assertEquals(30, GHUtility.getEdge(graph, n2, n3).get(carSpeedEnc));
     }
 
     @Test

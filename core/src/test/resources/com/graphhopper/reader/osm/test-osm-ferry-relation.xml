@@ -2,8 +2,8 @@
 <osm version="0.6">
     <!-- 1-2-3 -->
     <node id="1" version="1" lat="52.5181" lon="13.4419"/>
-    <node id="2" version="1" lat="52.5180" lon="13.4424"/>
-    <node id="3" version="1" lat="52.5179" lon="13.4428"/>
+    <node id="2" version="1" lat="52.5180" lon="13.5000"/>
+    <node id="3" version="1" lat="52.5179" lon="14.0000"/>
     <way id="1" version="1">
         <nd ref="1"/>
         <nd ref="2"/>

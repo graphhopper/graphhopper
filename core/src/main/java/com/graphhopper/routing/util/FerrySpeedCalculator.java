@@ -32,20 +32,22 @@ public class FerrySpeedCalculator implements TagParser {
             // we reduce the speed to account for waiting time (we increase the duration by 40%)
             return Math.round(speedInKmPerHour / 1.4);
         } else {
+            int shuttleFactor = way.hasTag("route", "shuttle_train") ? 2 : 1;
             // we have no speed value to work with because there was no valid duration tag.
             // we have to take a guess based on the distance.
             double wayDistance = way.getTag("edge_distance", Double.NaN);
-            if (Double.isNaN(wayDistance))
+            if (Double.isNaN(wayDistance)) {
                 throw new IllegalStateException("No 'edge_distance' set for edge created for way: " + way.getId());
-            else if (wayDistance < 500)
+            } else if (wayDistance < 1000) {
                 // Use the slowest possible speed for very short ferries. Note that sometimes these aren't really ferries
                 // that take you from one harbour to another, but rather ways that only represent the beginning of a
                 // longer ferry connection and that are used by multiple different connections, like here: https://www.openstreetmap.org/way/107913687
                 // It should not matter much which speed we use in this case, so we have no special handling for these.
-                return 1;
-            else {
-                // todo: distinguish speed based on the distance of the ferry, see #2532
-                return 6;
+                return 5 * shuttleFactor;
+            } else if (wayDistance < 30_000) {
+                return 15 * shuttleFactor;
+            } else {
+                return 30 * shuttleFactor;
             }
         }
     }
