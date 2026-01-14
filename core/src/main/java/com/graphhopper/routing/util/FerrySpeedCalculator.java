@@ -14,10 +14,13 @@ public class FerrySpeedCalculator implements TagParser {
     }
 
     public static boolean isFerry(ReaderWay way) {
-        return way.hasTag("route", "ferry") && !way.hasTag("ferry", "no") ||
-                // TODO shuttle_train is sometimes also used in relations, e.g. https://www.openstreetmap.org/relation/1932780
-                way.hasTag("route", "shuttle_train") && !way.hasTag("shuttle_train", "no");
+        return way.hasTag("route", "ferry") && !way.hasTag("ferry", "no") || isShuttleTrain(way);
     }
+
+	private static boolean isShuttleTrain(ReaderWay way) {
+		// TODO shuttle_train is sometimes also used in relations, e.g. https://www.openstreetmap.org/relation/1932780
+		return way.hasTag("route", "shuttle_train") && !way.hasTag("shuttle_train", "no");
+	}
 
     static double getSpeed(ReaderWay way) {
         // todo: We currently face two problems related to ferry speeds:
@@ -29,8 +32,11 @@ public class FerrySpeedCalculator implements TagParser {
         // use to set the ferry speed. Otherwise we need to use fallback values.
         double speedInKmPerHour = way.getTag("speed_from_duration", Double.NaN);
         if (!Double.isNaN(speedInKmPerHour)) {
-            // we reduce the speed to account for waiting time (we increase the duration by 40%)
-            return Math.round(speedInKmPerHour / 1.4);
+	        // we reduce the speed to account for waiting time (we increase the duration by 40%)
+	        return Math.round(speedInKmPerHour / 1.4);
+        } else if (isShuttleTrain(way)) {
+			// Shuttle trains are usually quite fast, so we pick a relatively high speed.
+			return 70;
         } else {
             // we have no speed value to work with because there was no valid duration tag.
             // we have to take a guess based on the distance.
