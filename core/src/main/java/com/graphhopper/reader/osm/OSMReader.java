@@ -504,9 +504,7 @@ public class OSMReader {
             return;
         }
 
-        double waitingTime = 30 * 60;
-        double speedInKmPerHour = distance / 1000 / ((durationInSeconds + waitingTime) / 60.0 / 60.0);
-        if (speedInKmPerHour < 0.1d) {
+        if (distance / 1000 / (durationInSeconds / 60.0 / 60.0) < 0.1d) {
             // Often there are mapping errors like duration=30:00 (30h) instead of duration=00:30 (30min). In this case we
             // ignore the duration tag. If no such cases show up anymore, because they were fixed, maybe raise the limit to find some more.
             OSM_WARNING_LOGGER.warn("Unrealistic low speed calculated from duration. Maybe the duration is too long, or it is applied to a way that only represents a part of the connection? OSM way: "
@@ -517,7 +515,7 @@ public class OSMReader {
         // tag will be present if 1) isCalculateWayDistance was true for this way, 2) no OSM nodes were missing
         // such that the distance could actually be calculated, 3) there was a duration tag we could parse, and 4) the
         // derived speed was not unrealistically slow.
-        way.setTag("speed_from_duration", speedInKmPerHour);
+        way.setTag("duration_in_seconds", durationInSeconds);
     }
 
     static String fixWayName(String str) {

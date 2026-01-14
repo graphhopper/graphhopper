@@ -20,25 +20,26 @@ public class FerrySpeedCalculator implements TagParser {
     }
 
     static double getSpeed(ReaderWay way) {
-        double wayDistance = way.getTag("edge_distance", Double.NaN);
-
-        // OSMReader adds the artificial 'speed_from_duration' and 'way_distance' tags that we can
+        // OSMReader adds the artificial 'duration_in_seconds' and 'way_distance' tags that we can
         // use to set the ferry speed. Otherwise we need to use fallback values.
-        double speedInKmPerHour = way.getTag("speed_from_duration", Double.NaN);
-        if (!Double.isNaN(speedInKmPerHour)) {
-            return Math.round(speedInKmPerHour);
+        long durationInSeconds = way.getTag("duration_in_seconds", 0L);
+        if (durationInSeconds > 0) {
+            double waitTime = 30 * 60;
+            double wayDistance = way.getTag("way_distance", Double.NaN);
+            return Math.round(wayDistance / 1000 / ((durationInSeconds + waitTime) / 60.0 / 60.0));
         } else {
+            double edgeDistance = way.getTag("edge_distance", Double.NaN);
             int shuttleFactor = way.hasTag("route", "shuttle_train") ? 2 : 1;
-            if (Double.isNaN(wayDistance))
+            if (Double.isNaN(edgeDistance))
                 throw new IllegalStateException("No 'edge_distance' set for edge created for way: " + way.getId());
             // When we have no speed value to work with we have to take a guess based on the distance.
-            if (wayDistance < 1000) {
+            if (edgeDistance < 1000) {
                 // Use the slowest possible speed for very short ferries. Note that sometimes these aren't really ferries
                 // that take you from one harbour to another, but rather ways that only represent the beginning of a
                 // longer ferry connection and that are used by multiple different connections, like here: https://www.openstreetmap.org/way/107913687
                 // It should not matter much which speed we use in this case, so we have no special handling for these.
                 return 5 * shuttleFactor;
-            } else if (wayDistance < 30_000) {
+            } else if (edgeDistance < 30_000) {
                 return 15 * shuttleFactor;
             } else {
                 return 30 * shuttleFactor;
