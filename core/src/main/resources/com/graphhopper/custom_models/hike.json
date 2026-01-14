@@ -1,6 +1,6 @@
 // to use this custom model you set the following option in the config.yml:
 // graph.elevation.provider: srtm   # enables elevation
-// graph.encoded_values: foot_access, foot_priority, foot_network, foot_average_speed, foot_road_access, hike_rating, average_slope
+// graph.encoded_values: foot_access, foot_priority, foot_network, foot_average_speed, foot_road_access, hike_rating, average_slope, ferry_speed
 // profiles:
 //    - name: hike
 //      custom_model_files: [hike.json, foot_elevation.json]

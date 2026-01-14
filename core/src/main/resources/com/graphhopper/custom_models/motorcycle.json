@@ -1,6 +1,6 @@
 // to use this custom model you need to set the following option in the config.yml
 // graph.urban_density.threads: 4 # expensive to calculate but very useful
-// graph.encoded_values: car_access, track_type, road_access, road_class, curvature, car_average_speed, surface, max_speed
+// graph.encoded_values: car_access, track_type, road_access, road_class, curvature, car_average_speed, surface, max_speed, ferry_speed
 // profiles:
 //    - name: motorcycle
 //      custom_model_files: [motorcycle.json,curvature.json]
