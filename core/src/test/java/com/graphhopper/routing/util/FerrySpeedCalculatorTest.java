@@ -83,7 +83,7 @@ class FerrySpeedCalculatorTest {
         way.setTag("edge_distance", 100.0);
         calc.handleWayTags(edgeId, edgeIntAccess, way, IntsRef.EMPTY);
         // we use the unknown speed
-        assertEquals(2, ferrySpeedEnc.getDecimal(false, edgeId, edgeIntAccess));
+        assertEquals(6, ferrySpeedEnc.getDecimal(false, edgeId, edgeIntAccess));
     }
 
     @Test
@@ -98,9 +98,10 @@ class FerrySpeedCalculatorTest {
 
         // no speed_from_duration, but edge_distance is present
         // minimum speed for short ferries
-        checkSpeed(null, 100.0, ferrySpeedEnc.getSmallestNonZeroValue());
-        // unknown speed for longer ones
-        checkSpeed(null, 1000.0, 6);
+        checkSpeed(null, 100.0, 5);
+        // unknown speed for longer ferries
+        checkSpeed(null, 2_000.0, 15);
+        checkSpeed(null, 40_000.0, 30);
 
         // no speed, no distance -> error. this should never happen as we always set the edge distance.
         assertThrows(IllegalStateException.class, () -> checkSpeed(null, null, 6));

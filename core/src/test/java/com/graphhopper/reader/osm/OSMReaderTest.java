@@ -206,34 +206,17 @@ public class OSMReaderTest {
         int n50 = AbstractGraphStorageTester.getIdOf(graph, 55.0);
         assertEquals(GHUtility.asSet(n40), GHUtility.getNeighbors(carAllExplorer.setBaseNode(n50)));
 
-        // no duration is given => slow speed only!
+        // no duration is given => speed depends on length
         int n80 = AbstractGraphStorageTester.getIdOf(graph, 54.1);
         EdgeIterator iter = carOutExplorer.setBaseNode(n80);
         iter.next();
-        assertEquals(6, iter.get(carSpeedEnc), 1e-1);
+        assertEquals(30, iter.get(carSpeedEnc), 1e-1);
 
         // duration 01:10 is given => more precise speed calculation!
         // ~111km (from 54.0,10.1 to 55.0,10.2) in duration=70 minutes => 95km/h => / 1.4 => 68km/h
         iter = carOutExplorer.setBaseNode(n40);
         iter.next();
         assertEquals(62, iter.get(carSpeedEnc), 1e-1);
-    }
-
-    @Test
-    public void testFerryRelationDuration() {
-        GraphHopper hopper = new GraphHopperFacade("test-osm-ferry-relation.xml") {
-            @Override
-            public void cleanUp() {
-            }
-        }.importOrLoad();
-        Graph graph = hopper.getBaseGraph();
-
-        int n1 = AbstractGraphStorageTester.getIdOf(graph, 52.5181);
-        int n2 = AbstractGraphStorageTester.getIdOf(graph, 52.5180);
-        int n3 = AbstractGraphStorageTester.getIdOf(graph, 52.5179);
-
-        assertEquals(16, GHUtility.getEdge(graph, n1, n2).get(carSpeedEnc));
-        assertEquals(30, GHUtility.getEdge(graph, n2, n3).get(carSpeedEnc));
     }
 
     @Test
