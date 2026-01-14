@@ -15,6 +15,7 @@
     { "if": "road_environment == FERRY", "multiply_by": "0.5" }
   ],
   "speed": [
-    { "if": "true", "limit_to": "foot_average_speed" }
+    { "if": "road_environment == FERRY", "limit_to": "ferry_speed" },
+    { "else": "", "limit_to": "foot_average_speed" }
   ]
 }

@@ -16,7 +16,8 @@
     { "if": "max_weight < 18 && max_weight_except == MISSING", "multiply_by": "0" }
   ],
   "speed": [
-    { "if": "true", "limit_to": "car_average_speed * 0.9" },
+    { "if": "road_environment == FERRY", "limit_to": "ferry_speed" },
+    { "else": "", "limit_to": "car_average_speed * 0.9" },
     { "if": "true", "limit_to": "max_speed * 0.9" },
     { "if": "true", "limit_to": "95" }
   ]

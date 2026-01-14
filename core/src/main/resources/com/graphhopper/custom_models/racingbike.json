@@ -19,7 +19,8 @@
     { "else_if": "!racingbike_access && backward_racingbike_access",  "multiply_by": "0.2" }
   ],
   "speed": [
-    { "if": "true", "limit_to": "racingbike_average_speed" },
+    { "if": "road_environment == FERRY", "limit_to": "ferry_speed" },
+    { "else": "", "limit_to": "racingbike_average_speed" },
     { "if": "!racingbike_access && backward_racingbike_access", "limit_to": "5" }
   ]
 }

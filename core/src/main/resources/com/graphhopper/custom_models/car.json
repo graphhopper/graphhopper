@@ -12,7 +12,8 @@
     { "if": "!car_access", "multiply_by": "0" }
   ],
   "speed": [
-    { "if": "true", "limit_to": "car_average_speed" },
+    { "if": "road_environment == FERRY", "limit_to": "ferry_speed" },
+    { "else": "", "limit_to": "car_average_speed" },
     { "if": "true", "limit_to": "max_speed * 0.9" }
   ]
 }

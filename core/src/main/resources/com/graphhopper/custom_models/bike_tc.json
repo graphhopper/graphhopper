@@ -26,7 +26,8 @@
     { "else_if": "!bike_access && backward_bike_access",  "multiply_by": "0.2" }
   ],
   "speed": [
-    { "if": "true", "limit_to": "bike_average_speed" },
+    { "if": "road_environment == FERRY", "limit_to": "ferry_speed" },
+    { "else": "", "limit_to": "bike_average_speed" },
     { "if": "!bike_access && backward_bike_access", "limit_to": "6" }
   ]
 }

@@ -626,29 +626,6 @@ public class CarTagParserTest {
     }
 
     @Test
-    public void testIssue_1256() {
-        ReaderWay way = new ReaderWay(1);
-        way.setTag("route", "ferry");
-        way.setTag("edge_distance", 257.0);
-
-        EdgeIntAccess edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
-        int edgeId = 0;
-        speedParser.handleWayTags(edgeId, edgeIntAccess, way);
-        assertEquals(2, speedParser.getAverageSpeedEnc().getDecimal(false, edgeId, edgeIntAccess), .1);
-
-        // for a smaller speed factor the minimum speed is also smaller
-        DecimalEncodedValueImpl lowFactorSpeedEnc = new DecimalEncodedValueImpl(VehicleSpeed.key("car"), 10, 1, false);
-        EncodingManager lowFactorEm = new EncodingManager.Builder()
-                .add(new SimpleBooleanEncodedValue(VehicleAccess.key("car"), true))
-                .add(lowFactorSpeedEnc)
-                .add(FerrySpeed.create())
-                .build();
-        edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(lowFactorEm.getBytesForFlags());
-        new CarAverageSpeedParser(lowFactorEm).handleWayTags(edgeId, edgeIntAccess, way);
-        assertEquals(1, lowFactorSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), .1);
-    }
-
-    @Test
     public void temporalAccess() {
         int edgeId = 0;
         ArrayEdgeIntAccess access = new ArrayEdgeIntAccess(1);

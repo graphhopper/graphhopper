@@ -21,6 +21,7 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperTest;
+import com.graphhopper.config.Profile;
 import com.graphhopper.reader.ReaderElement;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
@@ -49,7 +50,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
-import static com.graphhopper.routing.util.TransportationMode.CAR;
+import static com.graphhopper.json.Statement.Else;
+import static com.graphhopper.json.Statement.If;
+import static com.graphhopper.json.Statement.Op.LIMIT;
+import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static com.graphhopper.util.GHUtility.readCountries;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -207,17 +211,18 @@ public class OSMReaderTest {
         int n50 = AbstractGraphStorageTester.getIdOf(graph, 55.0);
         assertEquals(GHUtility.asSet(n40), GHUtility.getNeighbors(carAllExplorer.setBaseNode(n50)));
 
+        DecimalEncodedValue ferrySpeedEnc = hopper.getEncodingManager().getDecimalEncodedValue(FerrySpeed.KEY);
         // no duration is given => slow speed only!
         int n80 = AbstractGraphStorageTester.getIdOf(graph, 54.1);
         EdgeIterator iter = carOutExplorer.setBaseNode(n80);
         iter.next();
-        assertEquals(6, iter.get(carSpeedEnc), 1e-1);
+        assertEquals(6, iter.get(ferrySpeedEnc), 1e-1);
 
         // duration 01:10 is given => more precise speed calculation!
         // ~111km (from 54.0,10.1 to 55.0,10.2) in duration=70 minutes => 95km/h => / 1.4 => 68km/h
         iter = carOutExplorer.setBaseNode(n40);
         iter.next();
-        assertEquals(62, iter.get(carSpeedEnc), 1e-1);
+        assertEquals(62, iter.get(ferrySpeedEnc), 1e-1);
     }
 
     @Test
@@ -875,21 +880,24 @@ public class OSMReaderTest {
     }
 
     @Test
-    public void testRoadClassInfo() {
+    public void testRoadClassInfoAndFerry() {
         GraphHopper gh = new GraphHopper() {
             @Override
             protected File _getOSMFile() {
                 return new File(getClass().getResource(file2).getFile());
             }
         }.setOSMFile("dummy").
-                setEncodedValuesString("car_access,car_average_speed").
-                setProfiles(TestProfiles.accessAndSpeed("profile", "car")).
+                setEncodedValuesString("car_access,car_average_speed,road_environment,ferry_speed").
+                setProfiles(new Profile("car").setCustomModel(new CustomModel().
+                        addToPriority(If("!car_access", MULTIPLY, "0")).
+                        addToSpeed(If("road_environment == FERRY", LIMIT, "ferry_speed")).
+                        addToSpeed(Else(LIMIT, "car_average_speed")))).
                 setMinNetworkSize(0).
                 setGraphHopperLocation(dir).
                 importOrLoad();
 
         GHResponse response = gh.route(new GHRequest(51.2492152, 9.4317166, 52.133, 9.1)
-                .setProfile("profile")
+                .setProfile("car")
                 .setPathDetails(Collections.singletonList(RoadClass.KEY)));
         assertFalse(response.hasErrors(), response.getErrors().toString());
         List<PathDetail> list = response.getBest().getPathDetails().get(RoadClass.KEY);
@@ -897,7 +905,7 @@ public class OSMReaderTest {
         assertEquals("motorway", list.get(0).getValue());
 
         response = gh.route(new GHRequest(51.2492152, 9.4317166, 52.133, 9.1)
-                .setProfile("profile")
+                .setProfile("car")
                 .setPathDetails(Arrays.asList(Toll.KEY, Country.KEY)));
         Throwable ex = response.getErrors().get(0);
         assertEquals("Cannot find the path details: [toll, country]", ex.getMessage());
@@ -973,7 +981,7 @@ public class OSMReaderTest {
             setGraphHopperLocation(dir);
             setEncodedValuesString("max_width,max_height,max_weight,road_environment," +
                     "foot_access, foot_priority, foot_average_speed, " +
-                    "car_access, car_average_speed, bike_access, bike_priority, bike_average_speed");
+                    "car_access, car_average_speed, bike_access, bike_priority, bike_average_speed, ferry_speed");
             setProfiles(
                     TestProfiles.accessSpeedAndPriority("foot"),
                     TestProfiles.accessAndSpeed("car").setTurnCostsConfig(new TurnCostsConfig(List.of("motorcar", "motor_vehicle"))),
