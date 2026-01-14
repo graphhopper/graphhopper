@@ -1,0 +1,24 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<osm version="0.6">
+    <!-- 1-2-3 -->
+    <node id="1" version="1" lat="52.5181" lon="13.4419"/>
+    <node id="2" version="1" lat="52.5180" lon="13.4424"/>
+    <node id="3" version="1" lat="52.5179" lon="13.4428"/>
+    <way id="1" version="1">
+        <nd ref="1"/>
+        <nd ref="2"/>
+        <tag k="route" v="ferry"/>
+    </way>
+    <way id="2" version="1">
+        <nd ref="2"/>
+        <nd ref="3"/>
+        <tag k="route" v="ferry"/>
+    </way>
+    <relation id="1" version="1">
+        <member type="way" ref="1"/>
+        <member type="way" ref="2"/>
+        <tag k="route" v="ferry"/>
+        <tag k="type" v="route"/>
+        <tag k="duration" v="00:00:05"/>
+    </relation>
+</osm>

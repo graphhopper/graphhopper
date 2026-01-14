@@ -49,7 +49,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
-import static com.graphhopper.routing.util.TransportationMode.CAR;
 import static com.graphhopper.util.GHUtility.readCountries;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -218,6 +217,23 @@ public class OSMReaderTest {
         iter = carOutExplorer.setBaseNode(n40);
         iter.next();
         assertEquals(62, iter.get(carSpeedEnc), 1e-1);
+    }
+
+    @Test
+    public void testFerryRelationDuration() {
+        GraphHopper hopper = new GraphHopperFacade("test-osm-ferry-relation.xml") {
+            @Override
+            public void cleanUp() {
+            }
+        }.importOrLoad();
+        Graph graph = hopper.getBaseGraph();
+
+        int n1 = AbstractGraphStorageTester.getIdOf(graph, 52.5181);
+        int n2 = AbstractGraphStorageTester.getIdOf(graph, 52.5180);
+        int n3 = AbstractGraphStorageTester.getIdOf(graph, 52.5179);
+
+        assertEquals(36, GHUtility.getEdge(graph, n1, n2).get(carSpeedEnc));
+        assertEquals(36, GHUtility.getEdge(graph, n2, n3).get(carSpeedEnc));
     }
 
     @Test
