@@ -19,8 +19,6 @@ package com.graphhopper.reader.osm;
 
 import com.carrotsearch.hppc.BitSet;
 import com.carrotsearch.hppc.LongArrayList;
-import com.carrotsearch.hppc.LongIntHashMap;
-import com.carrotsearch.hppc.LongObjectHashMap;
 import com.graphhopper.coll.GHLongLongHashMap;
 import com.graphhopper.reader.ReaderElement;
 import com.graphhopper.reader.ReaderNode;
@@ -97,15 +95,6 @@ public class OSMReader {
     private GHLongLongHashMap osmWayIdToRelationFlagsMap = new GHLongLongHashMap(200, .5f);
     private WayToEdgesMap restrictedWaysToEdgesMap = new WayToEdgesMap();
     private List<ReaderRelation> restrictionRelations = new ArrayList<>();
-    private final LongObjectHashMap<LongArrayList> ferryWayNodes = new LongObjectHashMap<>();
-
-    private static class FerryRelationInfo {
-        long durationSeconds;
-        LongArrayList memberWayIds = new LongArrayList();
-    }
-
-    private final Map<Long, FerryRelationInfo> ferryRelations = new HashMap<>();
-    private final LongIntHashMap ferryWaySpeedInKmH = new LongIntHashMap();
 
     public OSMReader(BaseGraph baseGraph, OSMParsers osmParsers, OSMReaderConfig config) {
         this.baseGraph = baseGraph;
@@ -169,9 +158,7 @@ public class OSMReader {
                 .setElevationProvider(this::getElevation)
                 .setWayFilter(this::acceptWay)
                 .setSplitNodeFilter(this::isBarrierNode)
-                .setPass1WayPreprocessor(this::pass1WayPreprocessor)
                 .setWayPreprocessor(this::preprocessWay)
-                .setPostNodesCallback(this::postNodesCallback)
                 .setRelationPreprocessor(this::preprocessRelations)
                 .setRelationProcessor(this::processRelation)
                 .setEdgeHandler(this::addEdge)
@@ -228,7 +215,7 @@ public class OSMReader {
      * @return true if the length of the way shall be calculated and added as an artificial way tag
      */
     protected boolean isCalculateWayDistance(ReaderWay way) {
-        return isFerry(way) || ferryWaySpeedInKmH.containsKey(way.getId());
+        return isFerry(way);
     }
 
     private boolean isFerry(ReaderWay way) {
@@ -490,7 +477,7 @@ public class OSMReader {
         if (!isCalculateWayDistance(way))
             return;
 
-        double distance = calcDistance(way.getNodes(), coordinateSupplier);
+        double distance = calcDistance(way, coordinateSupplier);
         if (Double.isNaN(distance)) {
             // Some nodes were missing, and we cannot determine the distance. This can happen when ways are only
             // included partially in an OSM extract. In this case we cannot calculate the speed either, so we return.
@@ -504,11 +491,6 @@ public class OSMReader {
         // into edges.
         String durationTag = way.getTag("duration");
         if (durationTag == null) {
-            // no duration tag on the way -> check if we have a pre-calculated speed from a ferry relation
-            if (ferryWaySpeedInKmH.containsKey(way.getId())) {
-                way.setTag("speed_from_duration", (double) ferryWaySpeedInKmH.get(way.getId()));
-                return;
-            }
             // no duration tag -> we cannot derive speed. happens very frequently for short ferries, but also for some long ones, see: #2532
             if (isFerry(way) && distance > 500_000)
                 OSM_WARNING_LOGGER.warn("Long ferry OSM way without duration tag: " + way.getId() + ", distance: " + Math.round(distance / 1000.0) + " km");
@@ -547,7 +529,8 @@ public class OSMReader {
     /**
      * @return the distance of the given way or NaN if some nodes were missing
      */
-    private double calcDistance(LongArrayList nodes, WaySegmentParser.CoordinateSupplier coordinateSupplier) {
+    private double calcDistance(ReaderWay way, WaySegmentParser.CoordinateSupplier coordinateSupplier) {
+        LongArrayList nodes = way.getNodes();
         // every way has at least two nodes according to our acceptWay function
         GHPoint3D prevPoint = coordinateSupplier.getCoordinate(nodes.get(0));
         if (prevPoint == null)
@@ -559,7 +542,7 @@ public class OSMReader {
             if (point == null)
                 return Double.NaN;
             if (Double.isNaN(point.ele) == is3D)
-                throw new IllegalStateException("There should be elevation data for either all points or no points at all. " + point + ", node IDs:" + nodes);
+                throw new IllegalStateException("There should be elevation data for either all points or no points at all. OSM way: " + way.getId());
             distance += is3D
                     ? distCalc.calcDist3D(prevPoint.lat, prevPoint.lon, prevPoint.ele, point.lat, point.lon, point.ele)
                     : distCalc.calcDist(prevPoint.lat, prevPoint.lon, point.lat, point.lon);
@@ -569,84 +552,17 @@ public class OSMReader {
     }
 
     /**
-     * This method is called for each way during pass 1 of {@link WaySegmentParser}.
-     */
-    private void pass1WayPreprocessor(ReaderWay way) {
-        // consider route=train where name contains shuttle?
-        // https://www.openstreetmap.org/relation/11749967
-        if (way.hasTag("route", "ferry") || way.hasTag("route", "shuttle_train") || way.hasTag("service", "car_shuttle")) {
-            // coordinateSupplier not yet available: store all nodes instead of just the distance
-            ferryWayNodes.put(way.getId(), way.getNodes());
-        }
-    }
-
-    /**
-     * Called once in pass 2 after nodes are loaded but before ways are processed.
-     * Calculates speeds for all member ways of ferry relations based on total distance and duration.
-     */
-    private void postNodesCallback(WaySegmentParser.CoordinateSupplier coordinateSupplier) {
-        for (Map.Entry<Long, FerryRelationInfo> entry : ferryRelations.entrySet()) {
-            FerryRelationInfo info = entry.getValue();
-
-            double totalDistance = 0;
-            LongArrayList validWayIds = new LongArrayList();
-            for (int i = 0; i < info.memberWayIds.size(); i++) {
-                long wayId = info.memberWayIds.get(i);
-                if (info.memberWayIds.size() >= 2) {
-                    double distance = calcDistance(info.memberWayIds, coordinateSupplier);
-                    if (Double.isNaN(distance)) {
-                        LOGGER.warn("Could not determine distance for OSM way: " + wayId + " part of ferry relation");
-                    } else {
-                        totalDistance += distance;
-                        validWayIds.add(wayId);
-                    }
-                }
-            }
-
-            if (totalDistance > 0) {
-                // Calculate route speed: distance(m) / duration(s) -> km/h
-                double speedKmh = (totalDistance / 1000.0) / (info.durationSeconds / 3600.0);
-                for (int i = 0; i < validWayIds.size(); i++) {
-                    ferryWaySpeedInKmH.putIfAbsent(validWayIds.get(i), (int) Math.round(speedKmh));
-                }
-            }
-        }
-
-        // Clear temporary storage - no longer needed
-        ferryWayNodes.clear();
-        ferryRelations.clear();
-    }
-
-    /**
      * This method is called for each relation during the first pass of {@link WaySegmentParser}
      */
     protected void preprocessRelations(ReaderRelation relation) {
         if (!relation.isMetaRelation() && relation.hasTag("type", "route")) {
-            String durationTag = relation.getTag("duration");
-            FerryRelationInfo info = new FerryRelationInfo();
-
             // we keep track of all route relations, so they are available when we create edges later
             for (ReaderRelation.Member member : relation.getMembers()) {
                 if (member.getType() != ReaderElement.Type.WAY)
                     continue;
-
-                // store all members of ferry/shuttle_train relations where the relation has the duration tag
-                if (durationTag != null && (relation.hasTag("route", "ferry") || relation.hasTag("route", "shuttle_train")))
-                    info.memberWayIds.add(member.getRef());
-
                 IntsRef oldRelationFlags = getRelFlagsMap(member.getRef());
                 IntsRef newRelationFlags = osmParsers.handleRelationTags(relation, oldRelationFlags);
                 putRelFlagsMap(member.getRef(), newRelationFlags);
-            }
-
-            if (!info.memberWayIds.isEmpty()) {
-                try {
-                    info.durationSeconds = OSMReaderUtility.parseDuration(durationTag);
-                    if (info.durationSeconds > 0)
-                        ferryRelations.put(relation.getId(), info);
-                } catch (Exception e) {
-                    OSM_WARNING_LOGGER.warn("Could not parse duration tag '" + durationTag + "' in ferry relation: " + relation.getId());
-                }
             }
         }
 

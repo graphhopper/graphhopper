@@ -65,11 +65,6 @@ public class WaySegmentParser {
     private ToDoubleFunction<ReaderNode> elevationProvider = node -> 0d;
     private Predicate<ReaderWay> wayFilter = way -> true;
     private Predicate<ReaderNode> splitNodeFilter = node -> false;
-    // only called once in pass 2 after nodes are finished
-    private Consumer<CoordinateSupplier> postNodesCallback = coordinateSupplier -> {
-    };
-    private Consumer<ReaderWay> pass1WayPreprocessor = way -> {
-    };
     private WayPreprocessor wayPreprocessor = (way, coordinateSupplier, nodeTagSupplier) -> {
     };
     private Consumer<ReaderRelation> relationPreprocessor = relation -> {
@@ -147,8 +142,6 @@ public class WaySegmentParser {
             if (!wayFilter.test(way))
                 return;
             acceptedWays++;
-
-            pass1WayPreprocessor.accept(way);
 
             for (LongCursor node : way.getNodes()) {
                 final boolean isEnd = node.index == 0 || node.index == way.getNodes().size() - 1;
@@ -243,8 +236,6 @@ public class WaySegmentParser {
         public void handleWay(ReaderWay way) {
             if (!handledWays) {
                 LOGGER.info("pass2 - start reading OSM ways");
-                // Call preWayProcessor before processing the first way - coordinates are now available
-                postNodesCallback.accept(osmNodeId -> nodeData.getCoordinates(nodeData.getId(osmNodeId)));
                 handledWays = true;
             }
             if (handledRelations)
@@ -453,7 +444,7 @@ public class WaySegmentParser {
         }
 
         /**
-         * @param wayPreprocessor callback function that is called for each accepted OSM way during pass 2
+         * @param wayPreprocessor callback function that is called for each accepted OSM way during the second pass
          */
         public Builder setWayPreprocessor(WayPreprocessor wayPreprocessor) {
             waySegmentParser.wayPreprocessor = wayPreprocessor;
@@ -461,7 +452,7 @@ public class WaySegmentParser {
         }
 
         /**
-         * @param relationPreprocessor callback function that receives OSM relations during pass 1
+         * @param relationPreprocessor callback function that receives OSM relations during the first pass
          */
         public Builder setRelationPreprocessor(Consumer<ReaderRelation> relationPreprocessor) {
             waySegmentParser.relationPreprocessor = relationPreprocessor;
@@ -469,7 +460,7 @@ public class WaySegmentParser {
         }
 
         /**
-         * @param relationProcessor callback function that receives OSM relations during pass 2
+         * @param relationProcessor callback function that receives OSM relations during the second pass
          */
         public Builder setRelationProcessor(RelationProcessor relationProcessor) {
             waySegmentParser.relationProcessor = relationProcessor;
@@ -489,23 +480,6 @@ public class WaySegmentParser {
          */
         public Builder setWorkerThreads(int workerThreads) {
             waySegmentParser.workerThreads = workerThreads;
-            return this;
-        }
-
-        /**
-         * @param pass1WayPreprocessor callback function that receives OSM ways during the first pass.
-         *                         Useful for storing way data needed later (e.g., node lists for ferry relations).
-         */
-        public Builder setPass1WayPreprocessor(Consumer<ReaderWay> pass1WayPreprocessor) {
-            waySegmentParser.pass1WayPreprocessor = pass1WayPreprocessor;
-            return this;
-        }
-
-        /**
-         * @param postNodesCallback callback function called once after pass 2 nodes are loaded but before ways are processed.
-         */
-        public Builder setPostNodesCallback(Consumer<CoordinateSupplier> postNodesCallback) {
-            waySegmentParser.postNodesCallback = postNodesCallback;
             return this;
         }
 
