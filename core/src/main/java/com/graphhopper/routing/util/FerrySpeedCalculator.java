@@ -24,6 +24,7 @@ public class FerrySpeedCalculator implements TagParser {
         // use to set the ferry speed. Otherwise we need to use fallback values.
         long durationInSeconds = way.getTag("duration_in_seconds", 0L);
         if (durationInSeconds > 0) {
+            // a way can consist of multiple edges like https://www.openstreetmap.org/way/61215714 => use way_distance
             double waitTime = 30 * 60;
             double wayDistance = way.getTag("way_distance", Double.NaN);
             return Math.round(wayDistance / 1000 / ((durationInSeconds + waitTime) / 60.0 / 60.0));
