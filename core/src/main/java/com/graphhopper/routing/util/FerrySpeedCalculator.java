@@ -20,6 +20,8 @@ public class FerrySpeedCalculator implements TagParser {
     }
 
     static double getSpeed(ReaderWay way) {
+        // todo: We cannot account for waiting times for short ferries as speed is slower than the slowest we can store
+
         // OSMReader adds the artificial 'duration:seconds' and 'way_distance' tags that we can
         // use to set the ferry speed. Otherwise we need to use fallback values.
         long durationInSeconds = way.getTag("duration:seconds", 0L);
