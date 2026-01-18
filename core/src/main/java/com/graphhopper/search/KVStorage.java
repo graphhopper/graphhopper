@@ -269,7 +269,7 @@ public class KVStorage {
         long tmpPointer = entryPointer + 1;
         AtomicInteger sizeOfObject = new AtomicInteger();
         for (int i = 0; i < keyCount; i++) {
-            int currentKeyIndexRaw = vals.getShort(tmpPointer);
+            int currentKeyIndexRaw = Short.toUnsignedInt(vals.getShort(tmpPointer));
             boolean bwd = (currentKeyIndexRaw & 1) == 1;
             boolean fwd = (currentKeyIndexRaw & 2) == 2;
             int currentKeyIndex = currentKeyIndexRaw >>> 2;
@@ -307,7 +307,7 @@ public class KVStorage {
         long tmpPointer = entryPointer + 1;
         AtomicInteger sizeOfObject = new AtomicInteger();
         for (int i = 0; i < keyCount; i++) {
-            int currentKeyIndexRaw = vals.getShort(tmpPointer);
+            int currentKeyIndexRaw = Short.toUnsignedInt(vals.getShort(tmpPointer));
             int currentKeyIndex = currentKeyIndexRaw >>> 2;
             tmpPointer += 2;
 
@@ -422,7 +422,7 @@ public class KVStorage {
 
         long tmpPointer = entryPointer + 1;
         for (int i = 0; i < keyCount; i++) {
-            int currentKeyIndexRaw = vals.getShort(tmpPointer);
+            int currentKeyIndexRaw = Short.toUnsignedInt(vals.getShort(tmpPointer));
             boolean bwd = (currentKeyIndexRaw & 1) == 1;
             boolean fwd = (currentKeyIndexRaw & 2) == 2;
             int currentKeyIndex = currentKeyIndexRaw >>> 2;
