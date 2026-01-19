@@ -100,7 +100,7 @@ public class ViaRouting {
         if (!curbsides.isEmpty() && !headings.isEmpty())
             throw new IllegalArgumentException("You cannot use curbsides and headings or pass_through at the same time");
 
-        // Resolve AUTO curbsides based on road class, country, lanes, max_speed and one-way status
+        // Resolve AUTO curbsides based on road class, country and if one-way (later maybe lanes and max_speed)
         Function<Snap, String> curbsideAutoFunction = createCurbsideAutoFunction(directedEdgeFilter, em);
 
         final int legs = snaps.size() - 1;
