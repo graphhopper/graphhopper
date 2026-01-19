@@ -24,9 +24,7 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.routing.ev.Subnetwork;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.lm.LMRoutingAlgorithmFactory;
 import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.querygraph.QueryGraph;
@@ -249,7 +247,7 @@ public class Router {
             throw new IllegalArgumentException("Alternative paths do not support the " + CURBSIDE + " parameter yet");
 
         ViaRouting.Result result = ViaRouting.calcPaths(request.getPoints(), queryGraph, snaps, directedEdgeFilter,
-                pathCalculator, request.getCurbsides(), curbsideStrictness, request.getHeadings(), passThrough);
+                pathCalculator, request.getCurbsides(), curbsideStrictness, request.getHeadings(), passThrough, encodingManager);
         if (result.paths.isEmpty())
             throw new RuntimeException("Empty paths for alternative route calculation not expected");
 
@@ -279,7 +277,7 @@ public class Router {
         boolean passThrough = getPassThrough(request.getHints());
         String curbsideStrictness = getCurbsideStrictness(request.getHints());
         ViaRouting.Result result = ViaRouting.calcPaths(request.getPoints(), queryGraph, snaps, directedEdgeFilter,
-                pathCalculator, request.getCurbsides(), curbsideStrictness, request.getHeadings(), passThrough);
+                pathCalculator, request.getCurbsides(), curbsideStrictness, request.getHeadings(), passThrough, encodingManager);
 
         if (request.getPoints().size() != result.paths.size() + 1)
             throw new RuntimeException("There should be exactly one more point than paths. points:" + request.getPoints().size() + ", paths:" + result.paths.size());
