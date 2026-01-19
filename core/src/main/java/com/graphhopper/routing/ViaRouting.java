@@ -127,12 +127,17 @@ public class ViaRouting {
             }
 
             // enforce curbsides
-            final String fromCurbside = curbsides.isEmpty() ? CURBSIDE_ANY : curbsides.get(leg);
-            final String toCurbside = curbsides.isEmpty() ? CURBSIDE_ANY : curbsides.get(leg + 1);
+            String fromCurbside = curbsides.isEmpty() ? CURBSIDE_ANY : curbsides.get(leg);
+            String toCurbside = curbsides.isEmpty() ? CURBSIDE_ANY : curbsides.get(leg + 1);
+
+            if (CURBSIDE_AUTO.equals(fromCurbside))
+                fromCurbside = curbsideAutoFunction.apply(fromSnap);
+            if (CURBSIDE_AUTO.equals(toCurbside))
+                toCurbside = curbsideAutoFunction.apply(toSnap);
 
             EdgeRestrictions edgeRestrictions = buildEdgeRestrictions(queryGraph, fromSnap, toSnap,
                     fromHeading, toHeading, incomingEdge, passThrough,
-                    fromCurbside, toCurbside, directedEdgeFilter, curbsideAutoFunction);
+                    fromCurbside, toCurbside, directedEdgeFilter);
 
             edgeRestrictions.setSourceOutEdge(ignoreThrowOrAcceptImpossibleCurbsides(curbsides, edgeRestrictions.getSourceOutEdge(), leg, curbsideStrictness));
             edgeRestrictions.setTargetInEdge(ignoreThrowOrAcceptImpossibleCurbsides(curbsides, edgeRestrictions.getTargetInEdge(), leg + 1, curbsideStrictness));
@@ -211,8 +216,7 @@ public class ViaRouting {
     private static EdgeRestrictions buildEdgeRestrictions(
             QueryGraph queryGraph, Snap fromSnap, Snap toSnap,
             double fromHeading, double toHeading, int incomingEdge, boolean passThrough,
-            String fromCurbside, String toCurbside, DirectedEdgeFilter edgeFilter,
-            Function<Snap, String> curbsideAutoFunction) {
+            String fromCurbside, String toCurbside, DirectedEdgeFilter edgeFilter) {
         EdgeRestrictions edgeRestrictions = new EdgeRestrictions();
 
         // curbsides
@@ -226,12 +230,6 @@ public class ViaRouting {
                 } else
                     return edgeFilter.accept(edge, reverse);
             };
-
-            if (CURBSIDE_AUTO.equals(fromCurbside))
-                fromCurbside = curbsideAutoFunction.apply(fromSnap);
-
-            if (CURBSIDE_AUTO.equals(toCurbside))
-                toCurbside = curbsideAutoFunction.apply(toSnap);
 
             DirectionResolver directionResolver = new DirectionResolver(queryGraph, directedEdgeFilter);
             DirectionResolverResult fromDirection = directionResolver.resolveDirections(fromSnap.getClosestNode(), fromSnap.getQueryPoint());
