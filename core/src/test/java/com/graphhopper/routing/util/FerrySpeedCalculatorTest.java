@@ -42,7 +42,7 @@ class FerrySpeedCalculatorTest {
         ReaderWay way = new ReaderWay(1);
         way.setTag("route", "ferry");
         way.setTag("way_distance", 30_000.0);
-        way.setTag("duration:seconds", 1800L);
+        way.setTag("duration_in_seconds", 1800L);
 
         EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
         int edgeId = 0;
@@ -55,7 +55,7 @@ class FerrySpeedCalculatorTest {
         way.setTag("bicycle", "no");
 
         way.setTag("way_distance", 50000.0);
-        way.setTag("duration:seconds", 2100L);
+        way.setTag("duration_in_seconds", 2100L);
         edgeIntAccess = new ArrayEdgeIntAccess(1);
         calc.handleWayTags(edgeId, edgeIntAccess, way, IntsRef.EMPTY);
         assertEquals(46, ferrySpeedEnc.getDecimal(false, edgeId, edgeIntAccess));
@@ -65,7 +65,7 @@ class FerrySpeedCalculatorTest {
         way.setTag("route", "ferry");
         way.setTag("motorcar", "yes");
         way.setTag("way_distance", 100.0);
-        way.setTag("duration:seconds", 720L);
+        way.setTag("duration_in_seconds", 720L);
 
         // we can't store 0.5km/h, but we expect the lowest possible speed
         edgeIntAccess = new ArrayEdgeIntAccess(1);
@@ -95,7 +95,7 @@ class FerrySpeedCalculatorTest {
         // below smallest storable non-zero value
         checkSpeed(3600L, 1000.0, null, ferrySpeedEnc.getSmallestNonZeroValue());
 
-        // no duration:seconds, but edge_distance is present
+        // no duration_in_seconds, but edge_distance is present
         // minimum speed for short ferries
         checkSpeed(null, null, 100.0, 5);
         // longer ferries...
@@ -111,7 +111,7 @@ class FerrySpeedCalculatorTest {
         ReaderWay way = new ReaderWay(0L);
         if (durationInSeconds != null) {
             way.setTag("way_distance", wayDistance);
-            way.setTag("duration:seconds", durationInSeconds);
+            way.setTag("duration_in_seconds", durationInSeconds);
         }
         if (edgeDistance != null)
             way.setTag("edge_distance", edgeDistance);

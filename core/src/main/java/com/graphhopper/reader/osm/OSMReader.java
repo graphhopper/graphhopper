@@ -515,7 +515,7 @@ public class OSMReader {
         // tag will be present if 1) isCalculateWayDistance was true for this way, 2) no OSM nodes were missing
         // such that the distance could actually be calculated, 3) there was a duration tag we could parse, and 4) the
         // derived speed was not unrealistically slow.
-        way.setTag("duration:seconds", durationInSeconds);
+        way.setTag("duration_in_seconds", durationInSeconds);
     }
 
     static String fixWayName(String str) {
