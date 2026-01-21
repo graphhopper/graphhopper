@@ -91,11 +91,13 @@ public class JsonFeature {
 
     @Override
     public String toString() {
-        return "id:" + getId() + " with " + getGeometry().getCoordinates().length + " points: " + getGeometry();
+        int pointCount = getGeometry() == null ? 0 : getGeometry().getCoordinates().length;
+        return "id:" + getId() + " with " + pointCount + " points: " + getGeometry();
     }
 
     public static boolean isValidId(String name) {
-        if (name.length() <= 3 || !name.startsWith("in_") || SourceVersion.isKeyword(name)) return false;
+        if (name.length() <= 3 || !name.startsWith("in_") || SourceVersion.isKeyword(name))
+            return false;
 
         int underscoreCount = 0;
         for (int i = 1; i < name.length(); i++) {

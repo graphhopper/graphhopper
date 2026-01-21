@@ -212,11 +212,12 @@ public class OSMReaderTest {
         assertEquals(GHUtility.asSet(n40), GHUtility.getNeighbors(carAllExplorer.setBaseNode(n50)));
 
         DecimalEncodedValue ferrySpeedEnc = hopper.getEncodingManager().getDecimalEncodedValue(FerrySpeed.KEY);
-        // no duration is given => slow speed only!
+
+        // no duration is given => speed depends on length
         int n80 = AbstractGraphStorageTester.getIdOf(graph, 54.1);
         EdgeIterator iter = carOutExplorer.setBaseNode(n80);
         iter.next();
-        assertEquals(6, iter.get(ferrySpeedEnc), 1e-1);
+        assertEquals(30, iter.get(ferrySpeedEnc), 1e-1);
 
         // duration 01:10 is given => more precise speed calculation!
         // ~111km (from 54.0,10.1 to 55.0,10.2) in duration=70 minutes => 95km/h => / 1.4 => 68km/h

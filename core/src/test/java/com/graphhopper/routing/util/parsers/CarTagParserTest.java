@@ -472,7 +472,7 @@ public class CarTagParserTest {
         way.setTag("bicycle", "no");
         // Provide the duration value in seconds:
         way.setTag("way_distance", 50000.0);
-        way.setTag("speed_from_duration", 50 / (35.0 / 60));
+        way.setTag("duration_in_seconds", 35.0);
         assertTrue(parser.getAccess(way).isFerry());
 
         // test for very short and slow 0.5km/h still realistic ferry
@@ -480,7 +480,7 @@ public class CarTagParserTest {
         way.setTag("route", "ferry");
         way.setTag("motorcar", "yes");
         way.setTag("way_distance", 100.0);
-        way.setTag("speed_from_duration", 0.1 / (12.0 / 60));
+        way.setTag("duration_in_seconds", 12.0);
         assertTrue(parser.getAccess(way).isFerry());
 
         // test for missing duration

@@ -133,6 +133,44 @@ public class KVStorageTest {
     }
 
     @Test
+    public void testHighKeyIndicesUpToDesignLimit() {
+        // This test verifies that key indices >= 8192 work correctly.
+        // Previously there was a sign extension bug when reading shorts for key indices >= 8192
+        // because (keyIndex << 2) exceeds 32767 and becomes negative when stored as a signed short.
+        KVStorage index = create();
+
+        // Create MAX_UNIQUE_KEYS - 1 unique keys (index 0 is reserved for empty key)
+        // This gives us key indices from 1 to MAX_UNIQUE_KEYS - 1 (i.e., 1 to 16383)
+        List<Long> pointers = new ArrayList<>();
+        for (int i = 1; i < MAX_UNIQUE_KEYS; i++) {
+            long pointer = index.add(createMap("key" + i, "value" + i));
+            pointers.add(pointer);
+        }
+
+        // Verify we can read back entries that use high key indices (>= 8192)
+        // Key index 8192 is the first one that triggers the sign extension issue
+        for (int i = 8192; i < MAX_UNIQUE_KEYS; i++) {
+            long pointer = pointers.get(i - 1); // pointers list is 0-indexed, keys start at 1
+            String expectedKey = "key" + i;
+            String expectedValue = "value" + i;
+
+            // Test get() method
+            assertEquals(expectedValue, index.get(pointer, expectedKey, false),
+                    "get() failed for key index " + i);
+
+            // Test getMap() method
+            Map<String, Object> map = index.getMap(pointer);
+            assertEquals(expectedValue, map.get(expectedKey),
+                    "getMap() failed for key index " + i);
+
+            // Test getAll() method
+            Map<String, KValue> allMap = index.getAll(pointer);
+            assertEquals(expectedValue, allMap.get(expectedKey).getFwd(),
+                    "getAll() failed for key index " + i);
+        }
+    }
+
+    @Test
     public void testNoErrorOnLargeStringValue() {
         KVStorage index = create();
         String str = "";
