@@ -114,6 +114,9 @@ public class MapMatchingResource {
 
         StopWatch sw = new StopWatch().start();
 
+        Gpx.Trk track0 = gpx.trk.get(0);
+        List<Observation> measurements = GpxConversions.getEntries(track0);
+
         PMap hints = new PMap();
         RouteResource.initHints(hints, uriInfo.getQueryParameters());
 
@@ -122,75 +125,87 @@ public class MapMatchingResource {
         PMap profileResolverHints = new PMap(hints);
         profileResolverHints.putObject("profile", profile);
         profileResolverHints.putObject(Parameters.CH.DISABLE, true);
-        profile = profileResolver.resolveProfile(profileResolverHints);
-        hints.putObject("profile", profile);
+        hints.putObject("profile", profileResolver.resolveProfile(profileResolverHints));
         removeLegacyParameters(hints);
 
         MapMatching matching = new MapMatching(graphHopper.getBaseGraph(), (LocationIndexTree) graphHopper.getLocationIndex(), mapMatchingRouterFactory.createMapMatchingRouter(hints));
         matching.setMeasurementErrorSigma(gpsAccuracy);
 
-        List<Observation> measurements = GpxConversions.getEntries(gpx.trk.get(0));
         MatchResult matchResult = matching.match(measurements);
 
         sw.stop();
+        long took = Math.round(sw.getMillisDouble());
+        String tookStr = "" + took;
+
         logger.info(objectMapper.createObjectNode()
                 .put("duration", sw.getNanos())
-                .put("profile", profile)
+                .put("profile", hints.getString("profile", profile))
                 .put("observations", measurements.size())
                 .putPOJO("mapmatching", matching.getStatistics()).toString());
 
+
+        // early exit on the simplest return type
         if ("extended_json".equals(outType)) {
             return Response.ok(convertToTree(matchResult, enableElevation, pointsEncoded, pointsEncodedMultiplier)).
-                    header("X-GH-Took", "" + Math.round(sw.getMillisDouble())).
+                    header("X-GH-Took", tookStr).
                     build();
-        } else {
-            Translation tr = trMap.getWithFallBack(Helper.getLocale(localeStr));
-            RamerDouglasPeucker simplifyAlgo = new RamerDouglasPeucker().setMaxDistance(minPathPrecision);
-            PathMerger pathMerger = new PathMerger(matchResult.getGraph(), matchResult.getWeighting()).
-                    setEnableInstructions(instructions).
-                    setPathDetailsBuilders(graphHopper.getPathDetailsBuilderFactory(), pathDetails).
-                    setRamerDouglasPeucker(simplifyAlgo).
-                    setSimplifyResponse(minPathPrecision > 0);
-            ResponsePath responsePath = pathMerger.doWork(PointList.EMPTY, Collections.singletonList(matchResult.getMergedPath()),
-                    graphHopper.getEncodingManager(), tr);
-
-            // GraphHopper thinks an empty path is an invalid path, and further that an invalid path is still a path but
-            // marked with a non-empty list of Exception objects. I disagree, so I clear it.
-            responsePath.getErrors().clear();
-            GHResponse rsp = new GHResponse();
-            rsp.add(responsePath);
-
-            if (writeGPX) {
-                long time = gpx.trk.get(0).getStartTime()
-                        .map(Date::getTime)
-                        .orElse(System.currentTimeMillis());
-                return Response.ok(GpxConversions.createGPX(rsp.getBest().getInstructions(), gpx.trk.get(0).name != null ? gpx.trk.get(0).name : "", time, enableElevation, withRoute, withTrack, false, Constants.VERSION, tr), "application/gpx+xml").
-                        header("X-GH-Took", "" + Math.round(sw.getMillisDouble())).
-                        build();
-            } else {
-                ObjectNode map = ResponsePathSerializer.jsonObject(rsp, new ResponsePathSerializer.Info(config.getCopyrights(), Math.round(sw.getMillisDouble()), osmDate), instructions,
-                        calcPoints, enableElevation, pointsEncoded, pointsEncodedMultiplier);
-
-                Map<String, Object> matchStatistics = new HashMap<>();
-                matchStatistics.put("distance", matchResult.getMatchLength());
-                matchStatistics.put("time", matchResult.getMatchMillis());
-                matchStatistics.put("original_distance", matchResult.getGpxEntriesLength());
-                map.putPOJO("map_matching", matchStatistics);
-
-                if (enableTraversalKeys) {
-                    List<Integer> traversalKeylist = new ArrayList<>();
-                    for (EdgeMatch em : matchResult.getEdgeMatches()) {
-                        EdgeIteratorState edge = em.getEdgeState();
-                        // encode edges as traversal keys which includes orientation, decode simply by multiplying with 0.5
-                        traversalKeylist.add(edge.getEdgeKey());
-                    }
-                    map.putPOJO("traversal_keys", traversalKeylist);
-                }
-                return Response.ok(map).
-                        header("X-GH-Took", "" + Math.round(sw.getMillisDouble())).
-                        build();
-            }
         }
+
+        Translation tr = trMap.getWithFallBack(Helper.getLocale(localeStr));
+        RamerDouglasPeucker simplifyAlgo = new RamerDouglasPeucker().setMaxDistance(minPathPrecision);
+        PathMerger pathMerger = new PathMerger(matchResult.getGraph(), matchResult.getWeighting()).
+                setEnableInstructions(instructions).
+                setPathDetailsBuilders(graphHopper.getPathDetailsBuilderFactory(), pathDetails).
+                setRamerDouglasPeucker(simplifyAlgo).
+                setSimplifyResponse(minPathPrecision > 0);
+        ResponsePath responsePath = pathMerger.doWork(PointList.EMPTY, Collections.singletonList(matchResult.getMergedPath()),
+                graphHopper.getEncodingManager(), tr);
+
+        // GraphHopper thinks an empty path is an invalid path, and further that an invalid path is still a path but
+        // marked with a non-empty list of Exception objects. I disagree, so I clear it.
+        responsePath.getErrors().clear();
+        GHResponse rsp = new GHResponse();
+        rsp.add(responsePath);
+
+        // write out a gpx file
+        if (writeGPX) {
+            long startTime = track0.getStartTime()
+                    .map(Date::getTime)
+                    .orElse(System.currentTimeMillis());
+            String trackName = track0.name != null ? track0.name : "";
+            String gpxFile = GpxConversions.createGPX(rsp.getBest().getInstructions(),
+                    trackName, startTime, enableElevation, withRoute, withTrack, false,
+                    Constants.VERSION, tr);
+            return Response.ok(gpxFile, "application/gpx+xml").
+                    header("X-GH-Took", tookStr).
+                    build();
+        }
+
+
+        // default: write out json
+        ResponsePathSerializer.Info infoMetadata = new ResponsePathSerializer.Info(config.getCopyrights(), took, osmDate);
+        ObjectNode map = ResponsePathSerializer.jsonObject(rsp, infoMetadata, instructions,
+                calcPoints, enableElevation, pointsEncoded, pointsEncodedMultiplier);
+
+        Map<String, Object> matchStatistics = new HashMap<>();
+        matchStatistics.put("distance", matchResult.getMatchLength());
+        matchStatistics.put("time", matchResult.getMatchMillis());
+        matchStatistics.put("original_distance", matchResult.getGpxEntriesLength());
+        map.putPOJO("map_matching", matchStatistics);
+
+        if (enableTraversalKeys) {
+            List<Integer> traversalKeylist = new ArrayList<>();
+            for (EdgeMatch em : matchResult.getEdgeMatches()) {
+                EdgeIteratorState edge = em.getEdgeState();
+                // encode edges as traversal keys which includes orientation, decode simply by multiplying with 0.5
+                traversalKeylist.add(edge.getEdgeKey());
+            }
+            map.putPOJO("traversal_keys", traversalKeylist);
+        }
+
+        return Response.ok(map).
+                header("X-GH-Took", tookStr).
+                build();
     }
 
     public static JsonNode convertToTree(MatchResult result, boolean elevation, boolean pointsEncoded, double pointsEncodedMultiplier) {
