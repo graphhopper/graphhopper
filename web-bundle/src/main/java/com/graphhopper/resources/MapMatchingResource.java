@@ -32,8 +32,10 @@ import com.graphhopper.jackson.Gpx;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.jackson.ResponsePathSerializer;
 import com.graphhopper.matching.*;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.*;
+import com.graphhopper.util.details.PathDetailsBuilderFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -117,18 +119,11 @@ public class MapMatchingResource {
         Gpx.Trk track0 = gpx.trk.get(0);
         List<Observation> measurements = GpxConversions.getEntries(track0);
 
-        PMap hints = new PMap();
-        RouteResource.initHints(hints, uriInfo.getQueryParameters());
+        PMap hints = GetHints(uriInfo, profile);
 
-        // resolve profile and remove legacy vehicle/weighting parameters
-        // we need to explicitly disable CH here because map matching does not use it
-        PMap profileResolverHints = new PMap(hints);
-        profileResolverHints.putObject("profile", profile);
-        profileResolverHints.putObject(Parameters.CH.DISABLE, true);
-        hints.putObject("profile", profileResolver.resolveProfile(profileResolverHints));
-        removeLegacyParameters(hints);
-
-        MapMatching matching = new MapMatching(graphHopper.getBaseGraph(), (LocationIndexTree) graphHopper.getLocationIndex(), mapMatchingRouterFactory.createMapMatchingRouter(hints));
+        MapMatching matching = new MapMatching(graphHopper.getBaseGraph(),
+                (LocationIndexTree) graphHopper.getLocationIndex(),
+                mapMatchingRouterFactory.createMapMatchingRouter(hints));
         matching.setMeasurementErrorSigma(gpsAccuracy);
 
         MatchResult matchResult = matching.match(measurements);
@@ -152,20 +147,8 @@ public class MapMatchingResource {
         }
 
         Translation tr = trMap.getWithFallBack(Helper.getLocale(localeStr));
-        RamerDouglasPeucker simplifyAlgo = new RamerDouglasPeucker().setMaxDistance(minPathPrecision);
-        PathMerger pathMerger = new PathMerger(matchResult.getGraph(), matchResult.getWeighting()).
-                setEnableInstructions(instructions).
-                setPathDetailsBuilders(graphHopper.getPathDetailsBuilderFactory(), pathDetails).
-                setRamerDouglasPeucker(simplifyAlgo).
-                setSimplifyResponse(minPathPrecision > 0);
-        ResponsePath responsePath = pathMerger.doWork(PointList.EMPTY, Collections.singletonList(matchResult.getMergedPath()),
-                graphHopper.getEncodingManager(), tr);
-
-        // GraphHopper thinks an empty path is an invalid path, and further that an invalid path is still a path but
-        // marked with a non-empty list of Exception objects. I disagree, so I clear it.
-        responsePath.getErrors().clear();
-        GHResponse rsp = new GHResponse();
-        rsp.add(responsePath);
+        GHResponse rsp = GetGhResponse(minPathPrecision, instructions, pathDetails, matchResult, tr,
+                graphHopper.getPathDetailsBuilderFactory(), graphHopper.getEncodingManager());
 
         // write out a gpx file
         if (writeGPX) {
@@ -184,14 +167,38 @@ public class MapMatchingResource {
 
         // default: write out json
         ResponsePathSerializer.Info infoMetadata = new ResponsePathSerializer.Info(config.getCopyrights(), took, osmDate);
-        ObjectNode map = ResponsePathSerializer.jsonObject(rsp, infoMetadata, instructions,
+        ObjectNode jsonResponse = ResponsePathSerializer.jsonObject(rsp, infoMetadata, instructions,
                 calcPoints, enableElevation, pointsEncoded, pointsEncodedMultiplier);
 
+        DecorateWithStats(jsonResponse, matchResult, enableTraversalKeys);
+
+        return Response.ok(jsonResponse).
+                header("X-GH-Took", tookStr).
+                build();
+    }
+
+    // resolve profile and remove legacy vehicle/weighting parameters
+    public PMap GetHints(UriInfo uriInfo, String profile) {
+        PMap hints = new PMap();
+        RouteResource.initHints(hints, uriInfo.getQueryParameters());
+
+        // we need to explicitly disable CH here because map matching does not use it
+        PMap profileResolverHints = new PMap(hints);
+        profileResolverHints.putObject("profile", profile);
+        profileResolverHints.putObject(Parameters.CH.DISABLE, true);
+        hints.putObject("profile", profileResolver.resolveProfile(profileResolverHints));
+        removeLegacyParameters(hints);
+        return hints;
+    }
+
+    public static void DecorateWithStats(ObjectNode jsonResponse,
+                                         MatchResult matchResult,
+                                         boolean enableTraversalKeys) {
         Map<String, Object> matchStatistics = new HashMap<>();
         matchStatistics.put("distance", matchResult.getMatchLength());
         matchStatistics.put("time", matchResult.getMatchMillis());
         matchStatistics.put("original_distance", matchResult.getGpxEntriesLength());
-        map.putPOJO("map_matching", matchStatistics);
+        jsonResponse.putPOJO("map_matching", matchStatistics);
 
         if (enableTraversalKeys) {
             List<Integer> traversalKeylist = new ArrayList<>();
@@ -200,12 +207,32 @@ public class MapMatchingResource {
                 // encode edges as traversal keys which includes orientation, decode simply by multiplying with 0.5
                 traversalKeylist.add(edge.getEdgeKey());
             }
-            map.putPOJO("traversal_keys", traversalKeylist);
+            jsonResponse.putPOJO("traversal_keys", traversalKeylist);
         }
+    }
 
-        return Response.ok(map).
-                header("X-GH-Took", tookStr).
-                build();
+    public static GHResponse GetGhResponse(double minPathPrecision,
+                                           boolean instructions,
+                                           List<String> pathDetails,
+                                           MatchResult matchResult,
+                                           Translation tr,
+                                           PathDetailsBuilderFactory pathDetailsBuilderFactory,
+                                           EncodingManager encodingManager) {
+        RamerDouglasPeucker simplifyAlgo = new RamerDouglasPeucker().setMaxDistance(minPathPrecision);
+        PathMerger pathMerger = new PathMerger(matchResult.getGraph(), matchResult.getWeighting()).
+                setEnableInstructions(instructions).
+                setPathDetailsBuilders(pathDetailsBuilderFactory, pathDetails).
+                setRamerDouglasPeucker(simplifyAlgo).
+                setSimplifyResponse(minPathPrecision > 0);
+        ResponsePath responsePath = pathMerger.doWork(PointList.EMPTY, Collections.singletonList(matchResult.getMergedPath()),
+                encodingManager, tr);
+
+        // GraphHopper thinks an empty path is an invalid path, and further that an invalid path is still a path but
+        // marked with a non-empty list of Exception objects. I disagree, so I clear it.
+        responsePath.getErrors().clear();
+        GHResponse rsp = new GHResponse();
+        rsp.add(responsePath);
+        return rsp;
     }
 
     public static JsonNode convertToTree(MatchResult result, boolean elevation, boolean pointsEncoded, double pointsEncodedMultiplier) {
