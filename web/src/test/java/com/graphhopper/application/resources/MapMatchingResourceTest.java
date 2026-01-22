@@ -26,6 +26,7 @@ import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import jakarta.ws.rs.core.Form;
+import jakarta.ws.rs.core.MediaType;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,8 +39,10 @@ import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.Response;
 import java.io.File;
 import java.util.Arrays;
+import java.util.Base64;
 
 import static com.graphhopper.application.util.TestUtils.clientTarget;
+import static com.graphhopper.resources.MapMatchingResource.readWkbLineString;
 import static com.graphhopper.resources.MapMatchingResource.readWktLineString;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -95,6 +98,27 @@ public class MapMatchingResourceTest {
         JsonNode path = json.get("paths").get(0);
 
         LineString expectedGeometry = readWktLineString(wktLinestring);
+        LineString actualGeometry = ResponsePathDeserializerHelper.decodePolyline(path.get("points").asText(), 10, false, 1e5).toLineString(false);
+        assertEquals(0.0, DiscreteHausdorffDistance.distance(expectedGeometry, actualGeometry), 1E-4);
+        assertEquals(101, path.get("time").asLong() / 1000f, 1);
+        assertEquals(101, json.get("map_matching").get("time").asLong() / 1000f, 1);
+        assertEquals(812, path.get("distance").asDouble(), 1);
+        assertEquals(812, json.get("map_matching").get("distance").asDouble(), 1);
+    }
+
+    @Test
+    public void testWkb() {
+        //String wkbHex = "0102000000050000009b559fabadb828409ca223b9fcab4940edb60bcd75ba284072e1404816ac49404339d1ae42ba2840a3586e6935ac4940467c2766bdb82840554d10751fac49402827da5548b9284087dc0c37e0ab4940";
+        String wkbBase64 = "AQIAAAAFAAAAm1Wfq624KECcoiO5/KtJQO22C811uihAcuFASBasSUBDOdGuQrooQKNYbmk1rElARnwnZr24KEBVTRB1H6xJQCgn2lVIuShAh9wMN+CrSUA=";
+
+        byte[] wkbBytesFromBase64 = Base64.getDecoder().decode(wkbBase64);
+
+        JsonNode json = clientTarget(app, "/match/wkb?profile=fast_car")
+                .request()
+                .post(Entity.entity(wkbBytesFromBase64, MediaType.APPLICATION_OCTET_STREAM), JsonNode.class);
+        JsonNode path = json.get("paths").get(0);
+
+        LineString expectedGeometry = readWkbLineString(wkbBytesFromBase64);
         LineString actualGeometry = ResponsePathDeserializerHelper.decodePolyline(path.get("points").asText(), 10, false, 1e5).toLineString(false);
         assertEquals(0.0, DiscreteHausdorffDistance.distance(expectedGeometry, actualGeometry), 1E-4);
         assertEquals(101, path.get("time").asLong() / 1000f, 1);

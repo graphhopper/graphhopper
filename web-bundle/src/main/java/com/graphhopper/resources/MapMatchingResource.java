@@ -38,6 +38,7 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
 import com.graphhopper.util.shapes.GHPoint;
 import org.locationtech.jts.geom.LineString;
+import org.locationtech.jts.io.WKBReader;
 import org.locationtech.jts.io.WKTReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -153,6 +154,78 @@ public class MapMatchingResource {
         LineString expectedGeometry = null;
         try {
             expectedGeometry = (LineString) wktReader.read(wkt);
+        } catch (Exception e) {
+            logger.warn("could not parse wkt, got: {}", e.toString());
+            throw new IllegalArgumentException("Cannot parse input as WKT");
+        }
+        return expectedGeometry;
+    }
+
+    @POST
+    @Consumes(MediaType.APPLICATION_OCTET_STREAM)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/wkb")
+    public Response doWkb(
+            @Context UriInfo uriInfo,
+            final byte[] wkbBytes,
+            @QueryParam(WAY_POINT_MAX_DISTANCE) @DefaultValue("0.5") double minPathPrecision,
+            @QueryParam(INSTRUCTIONS) @DefaultValue("true") boolean instructions,
+            @QueryParam(CALC_POINTS) @DefaultValue("true") boolean calcPoints,
+            @QueryParam("elevation") @DefaultValue("false") boolean enableElevation,
+            @QueryParam("points_encoded") @DefaultValue("true") boolean pointsEncoded,
+            @QueryParam("points_encoded_multiplier") @DefaultValue("1e5") double pointsEncodedMultiplier,
+            @QueryParam("locale") @DefaultValue("en") String localeStr,
+            @QueryParam("profile") String profile,
+            @QueryParam(PATH_DETAILS) List<String> pathDetails,
+            @QueryParam("traversal_keys") @DefaultValue("false") boolean enableTraversalKeys,
+            @QueryParam("gps_accuracy") @DefaultValue("10") double gpsAccuracy) {
+
+        StopWatch sw = new StopWatch().start();
+
+        LineString fromWkb = readWkbLineString(wkbBytes);
+        List<Observation> measurements = Arrays.stream(fromWkb.getCoordinates())
+                .map(c -> new Observation(new GHPoint(c.y, c.x)))
+                .collect(Collectors.toList());
+
+        PMap hints = GetHints(uriInfo, profile);
+
+        MapMatching matching = new MapMatching(graphHopper.getBaseGraph(),
+                (LocationIndexTree) graphHopper.getLocationIndex(),
+                mapMatchingRouterFactory.createMapMatchingRouter(hints));
+        matching.setMeasurementErrorSigma(gpsAccuracy);
+
+        MatchResult matchResult = matching.match(measurements);
+
+        sw.stop();
+        long took = Math.round(sw.getMillisDouble());
+        String tookStr = "" + took;
+
+        logger.info(objectMapper.createObjectNode()
+                .put("duration", sw.getNanos())
+                .put("profile", hints.getString("profile", profile))
+                .put("observations", measurements.size())
+                .putPOJO("mapmatching", matching.getStatistics()).toString());
+
+        Translation tr = trMap.getWithFallBack(Helper.getLocale(localeStr));
+        GHResponse rsp = GetGhResponse(minPathPrecision, instructions, pathDetails, matchResult, tr,
+                graphHopper.getPathDetailsBuilderFactory(), graphHopper.getEncodingManager());
+
+        ResponsePathSerializer.Info infoMetadata = new ResponsePathSerializer.Info(config.getCopyrights(), took, osmDate);
+        ObjectNode jsonResponse = ResponsePathSerializer.jsonObject(rsp, infoMetadata, instructions,
+                calcPoints, enableElevation, pointsEncoded, pointsEncodedMultiplier);
+
+        DecorateWithStats(jsonResponse, matchResult, enableTraversalKeys);
+
+        return Response.ok(jsonResponse).
+                header("X-GH-Took", tookStr).
+                build();
+    }
+
+    public static LineString readWkbLineString(byte[] bytes) {
+        WKBReader wkbReader = new WKBReader();
+        LineString expectedGeometry = null;
+        try {
+            expectedGeometry = (LineString) wkbReader.read(bytes);
         } catch (Exception e) {
             logger.warn("could not parse wkt, got: {}", e.toString());
             throw new IllegalArgumentException("Cannot parse input as WKT");
