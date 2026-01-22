@@ -36,6 +36,9 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
+import com.graphhopper.util.shapes.GHPoint;
+import org.locationtech.jts.geom.LineString;
+import org.locationtech.jts.io.WKTReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,6 +50,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.graphhopper.resources.RouteResource.removeLegacyParameters;
 import static com.graphhopper.util.Parameters.Details.PATH_DETAILS;
@@ -82,6 +86,78 @@ public class MapMatchingResource {
         this.trMap = trMap;
         this.mapMatchingRouterFactory = mapMatchingRouterFactory;
         this.osmDate = graphHopper.getProperties().getAll().get("datareader.data.date");
+    }
+
+    @POST
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/wkt")
+    public Response doWkt(
+            @Context UriInfo uriInfo,
+            @FormParam("wkt") @DefaultValue("") String wkt,
+            @QueryParam(WAY_POINT_MAX_DISTANCE) @DefaultValue("0.5") double minPathPrecision,
+            @QueryParam(INSTRUCTIONS) @DefaultValue("true") boolean instructions,
+            @QueryParam(CALC_POINTS) @DefaultValue("true") boolean calcPoints,
+            @QueryParam("elevation") @DefaultValue("false") boolean enableElevation,
+            @QueryParam("points_encoded") @DefaultValue("true") boolean pointsEncoded,
+            @QueryParam("points_encoded_multiplier") @DefaultValue("1e5") double pointsEncodedMultiplier,
+            @QueryParam("locale") @DefaultValue("en") String localeStr,
+            @QueryParam("profile") String profile,
+            @QueryParam(PATH_DETAILS) List<String> pathDetails,
+            @QueryParam("traversal_keys") @DefaultValue("false") boolean enableTraversalKeys,
+            @QueryParam("gps_accuracy") @DefaultValue("10") double gpsAccuracy) {
+
+        StopWatch sw = new StopWatch().start();
+
+        LineString fromWkt = readWktLineString(wkt);
+        List<Observation> measurements = Arrays.stream(fromWkt.getCoordinates())
+                .map(c -> new Observation(new GHPoint(c.y, c.x)))
+                .collect(Collectors.toList());
+
+        PMap hints = GetHints(uriInfo, profile);
+
+        MapMatching matching = new MapMatching(graphHopper.getBaseGraph(),
+                (LocationIndexTree) graphHopper.getLocationIndex(),
+                mapMatchingRouterFactory.createMapMatchingRouter(hints));
+        matching.setMeasurementErrorSigma(gpsAccuracy);
+
+        MatchResult matchResult = matching.match(measurements);
+
+        sw.stop();
+        long took = Math.round(sw.getMillisDouble());
+        String tookStr = "" + took;
+
+        logger.info(objectMapper.createObjectNode()
+                .put("duration", sw.getNanos())
+                .put("profile", hints.getString("profile", profile))
+                .put("observations", measurements.size())
+                .putPOJO("mapmatching", matching.getStatistics()).toString());
+
+        Translation tr = trMap.getWithFallBack(Helper.getLocale(localeStr));
+        GHResponse rsp = GetGhResponse(minPathPrecision, instructions, pathDetails, matchResult, tr,
+                graphHopper.getPathDetailsBuilderFactory(), graphHopper.getEncodingManager());
+
+        ResponsePathSerializer.Info infoMetadata = new ResponsePathSerializer.Info(config.getCopyrights(), took, osmDate);
+        ObjectNode jsonResponse = ResponsePathSerializer.jsonObject(rsp, infoMetadata, instructions,
+                calcPoints, enableElevation, pointsEncoded, pointsEncodedMultiplier);
+
+        DecorateWithStats(jsonResponse, matchResult, enableTraversalKeys);
+
+        return Response.ok(jsonResponse).
+                header("X-GH-Took", tookStr).
+                build();
+    }
+
+    public static LineString readWktLineString(String wkt) {
+        WKTReader wktReader = new WKTReader();
+        LineString expectedGeometry = null;
+        try {
+            expectedGeometry = (LineString) wktReader.read(wkt);
+        } catch (Exception e) {
+            logger.warn("could not parse wkt, got: {}", e.toString());
+            throw new IllegalArgumentException("Cannot parse input as WKT");
+        }
+        return expectedGeometry;
     }
 
     @POST

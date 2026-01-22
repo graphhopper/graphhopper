@@ -25,6 +25,7 @@ import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
+import jakarta.ws.rs.core.Form;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,6 +40,7 @@ import java.io.File;
 import java.util.Arrays;
 
 import static com.graphhopper.application.util.TestUtils.clientTarget;
+import static com.graphhopper.resources.MapMatchingResource.readWktLineString;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -85,6 +87,23 @@ public class MapMatchingResourceTest {
     }
 
     @Test
+    public void testWkt() {
+        String wktLinestring = "LINESTRING (12.3607 51.34365, 12.36418 51.34443, 12.36379 51.34538, 12.36082 51.34471, 12.36188 51.34278)";
+        JsonNode json = clientTarget(app, "/match/wkt?profile=fast_car")
+                .request()
+                .post(Entity.form(new Form("wkt", wktLinestring)), JsonNode.class);
+        JsonNode path = json.get("paths").get(0);
+
+        LineString expectedGeometry = readWktLineString(wktLinestring);
+        LineString actualGeometry = ResponsePathDeserializerHelper.decodePolyline(path.get("points").asText(), 10, false, 1e5).toLineString(false);
+        assertEquals(0.0, DiscreteHausdorffDistance.distance(expectedGeometry, actualGeometry), 1E-4);
+        assertEquals(101, path.get("time").asLong() / 1000f, 1);
+        assertEquals(101, json.get("map_matching").get("time").asLong() / 1000f, 1);
+        assertEquals(812, path.get("distance").asDouble(), 1);
+        assertEquals(812, json.get("map_matching").get("distance").asDouble(), 1);
+    }
+
+    @Test
     public void testBike() throws ParseException {
         WKTReader wktReader = new WKTReader();
         final JsonNode json = clientTarget(app, "/match?profile=fast_bike")
@@ -122,15 +141,5 @@ public class MapMatchingResourceTest {
         }
     }
 
-    private LineString readWktLineString(String wkt) {
-        WKTReader wktReader = new WKTReader();
-        LineString expectedGeometry = null;
-        try {
-            expectedGeometry = (LineString) wktReader.read(wkt);
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-        return expectedGeometry;
-    }
 
 }
