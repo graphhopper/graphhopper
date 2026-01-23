@@ -30,6 +30,7 @@ import com.graphhopper.gpx.GpxConversions;
 import com.graphhopper.http.ProfileResolver;
 import com.graphhopper.jackson.Gpx;
 import com.graphhopper.jackson.Jackson;
+import com.graphhopper.jackson.ResponsePathDeserializerHelper;
 import com.graphhopper.jackson.ResponsePathSerializer;
 import com.graphhopper.matching.*;
 import com.graphhopper.routing.util.EncodingManager;
@@ -165,6 +166,40 @@ public class MapMatchingResource {
                 pointsEncodedMultiplier, enableTraversalKeys, sw.stop().getMillis());
     }
 
+    @POST
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/polyline")
+    public Response doPolyline(
+            @Context UriInfo uriInfo,
+            @FormParam("polyline") @DefaultValue("") String polyline,
+            @QueryParam("polyline_multiplier") @DefaultValue("1e5") double polylineMultiplier,
+            @QueryParam(WAY_POINT_MAX_DISTANCE) @DefaultValue("0.5") double minPathPrecision,
+            @QueryParam(INSTRUCTIONS) @DefaultValue("true") boolean instructions,
+            @QueryParam(CALC_POINTS) @DefaultValue("true") boolean calcPoints,
+            @QueryParam("elevation") @DefaultValue("false") boolean enableElevation,
+            @QueryParam("points_encoded") @DefaultValue("true") boolean pointsEncoded,
+            @QueryParam("points_encoded_multiplier") @DefaultValue("1e5") double pointsEncodedMultiplier,
+            @QueryParam("locale") @DefaultValue("en") String localeStr,
+            @QueryParam("profile") String profile,
+            @QueryParam(PATH_DETAILS) List<String> pathDetails,
+            @QueryParam("traversal_keys") @DefaultValue("false") boolean enableTraversalKeys,
+            @QueryParam("gps_accuracy") @DefaultValue("10") double gpsAccuracy) {
+
+        StopWatch sw = new StopWatch().start();
+        PMap hints = GetHints(uriInfo, profile);
+        boolean hasElevation = false;
+        PointList pointList = ResponsePathDeserializerHelper.decodePolyline(polyline, 10, hasElevation, polylineMultiplier);
+        List<Observation> measurements = getObservationsFromLineString(pointList.toLineString(hasElevation));
+        MatchResult matchResult = match(measurements, hints, gpsAccuracy);
+
+        Translation tr = trMap.getWithFallBack(Helper.getLocale(localeStr));
+        GHResponse rsp = GetGhResponse(minPathPrecision, instructions, pathDetails, matchResult, tr,
+                graphHopper.getPathDetailsBuilderFactory(), graphHopper.getEncodingManager());
+        return outputAsJson(rsp, matchResult, instructions, calcPoints, enableElevation, pointsEncoded,
+                pointsEncodedMultiplier, enableTraversalKeys, sw.stop().getMillis());
+    }
+
     public static LineString readWkbLineString(byte[] bytes) {
         WKBReader wkbReader = new WKBReader();
         LineString expectedGeometry = null;
@@ -285,6 +320,14 @@ public class MapMatchingResource {
         return Arrays.stream(lineString.getCoordinates())
                 .map(c -> new Observation(GHPoint.create(c)))
                 .collect(Collectors.toList());
+    }
+
+    private static List<Observation> getObservationsFromPointList(PointList pointList) {
+        List<Observation> observations = new ArrayList<>(pointList.size());
+        for (GHPoint p : pointList) {
+            observations.add(new Observation(p));
+        }
+        return observations;
     }
 
     // resolve profile and remove legacy vehicle/weighting parameters

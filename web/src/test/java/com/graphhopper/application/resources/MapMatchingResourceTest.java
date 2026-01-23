@@ -90,6 +90,40 @@ public class MapMatchingResourceTest {
     }
 
     @Test
+    public void testPolyline5() {
+        String polyline = "y`kxHkemjA{CwT}DlAdCpQ`KsE";
+        JsonNode json = clientTarget(app, "/match/polyline?profile=fast_car&polyline_multiplier=1e5")
+                .request()
+                .post(Entity.form(new Form("polyline", polyline)), JsonNode.class);
+        JsonNode path = json.get("paths").get(0);
+
+        LineString expectedGeometry = readWktLineString("LINESTRING (12.3607 51.34365, 12.36418 51.34443, 12.36379 51.34538, 12.36082 51.34471, 12.36188 51.34278)");
+        LineString actualGeometry = ResponsePathDeserializerHelper.decodePolyline(path.get("points").asText(), 10, false, 1e5).toLineString(false);
+        assertEquals(0.0, DiscreteHausdorffDistance.distance(expectedGeometry, actualGeometry), 1E-4);
+        assertEquals(101, path.get("time").asLong() / 1000f, 1);
+        assertEquals(101, json.get("map_matching").get("time").asLong() / 1000f, 1);
+        assertEquals(812, path.get("distance").asDouble(), 1);
+        assertEquals(812, json.get("map_matching").get("distance").asDouble(), 1);
+    }
+
+    @Test
+    public void testPolyline6() {
+        String polyline = "cqw|`Bw~lqVwo@oxEkz@jWzh@rxDrwBgaA";
+        JsonNode json = clientTarget(app, "/match/polyline?profile=fast_car&polyline_multiplier=1e6")
+                .request()
+                .post(Entity.form(new Form("polyline", polyline)), JsonNode.class);
+        JsonNode path = json.get("paths").get(0);
+
+        LineString expectedGeometry = readWktLineString("LINESTRING (12.3607 51.34365, 12.36418 51.34443, 12.36379 51.34538, 12.36082 51.34471, 12.36188 51.34278)");
+        LineString actualGeometry = ResponsePathDeserializerHelper.decodePolyline(path.get("points").asText(), 10, false, 1e5).toLineString(false);
+        assertEquals(0.0, DiscreteHausdorffDistance.distance(expectedGeometry, actualGeometry), 1E-4);
+        assertEquals(101, path.get("time").asLong() / 1000f, 1);
+        assertEquals(101, json.get("map_matching").get("time").asLong() / 1000f, 1);
+        assertEquals(812, path.get("distance").asDouble(), 1);
+        assertEquals(812, json.get("map_matching").get("distance").asDouble(), 1);
+    }
+
+    @Test
     public void testWkt() {
         String wktLinestring = "LINESTRING (12.3607 51.34365, 12.36418 51.34443, 12.36379 51.34538, 12.36082 51.34471, 12.36188 51.34278)";
         JsonNode json = clientTarget(app, "/match/wkt?profile=fast_car")
