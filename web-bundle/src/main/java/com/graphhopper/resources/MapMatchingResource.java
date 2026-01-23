@@ -109,44 +109,16 @@ public class MapMatchingResource {
             @QueryParam("gps_accuracy") @DefaultValue("10") double gpsAccuracy) {
 
         StopWatch sw = new StopWatch().start();
-
-        LineString fromWkt = readWktLineString(wkt);
-        List<Observation> measurements = Arrays.stream(fromWkt.getCoordinates())
-                .map(c -> new Observation(new GHPoint(c.y, c.x)))
-                .collect(Collectors.toList());
-
         PMap hints = GetHints(uriInfo, profile);
-
-        MapMatching matching = new MapMatching(graphHopper.getBaseGraph(),
-                (LocationIndexTree) graphHopper.getLocationIndex(),
-                mapMatchingRouterFactory.createMapMatchingRouter(hints));
-        matching.setMeasurementErrorSigma(gpsAccuracy);
-
-        MatchResult matchResult = matching.match(measurements);
-
-        sw.stop();
-        long took = Math.round(sw.getMillisDouble());
-        String tookStr = "" + took;
-
-        logger.info(objectMapper.createObjectNode()
-                .put("duration", sw.getNanos())
-                .put("profile", hints.getString("profile", profile))
-                .put("observations", measurements.size())
-                .putPOJO("mapmatching", matching.getStatistics()).toString());
+        LineString lineString = readWktLineString(wkt);
+        List<Observation> measurements = getObservationsFromLineString(lineString);
+        MatchResult matchResult = match(measurements, hints, gpsAccuracy);
 
         Translation tr = trMap.getWithFallBack(Helper.getLocale(localeStr));
         GHResponse rsp = GetGhResponse(minPathPrecision, instructions, pathDetails, matchResult, tr,
                 graphHopper.getPathDetailsBuilderFactory(), graphHopper.getEncodingManager());
-
-        ResponsePathSerializer.Info infoMetadata = new ResponsePathSerializer.Info(config.getCopyrights(), took, osmDate);
-        ObjectNode jsonResponse = ResponsePathSerializer.jsonObject(rsp, infoMetadata, instructions,
-                calcPoints, enableElevation, pointsEncoded, pointsEncodedMultiplier);
-
-        DecorateWithStats(jsonResponse, matchResult, enableTraversalKeys);
-
-        return Response.ok(jsonResponse).
-                header("X-GH-Took", tookStr).
-                build();
+        return outputAsJson(rsp, matchResult, instructions, calcPoints, enableElevation, pointsEncoded,
+                pointsEncodedMultiplier, enableTraversalKeys, sw.stop().getMillis());
     }
 
     public static LineString readWktLineString(String wkt) {
@@ -181,44 +153,16 @@ public class MapMatchingResource {
             @QueryParam("gps_accuracy") @DefaultValue("10") double gpsAccuracy) {
 
         StopWatch sw = new StopWatch().start();
-
-        LineString fromWkb = readWkbLineString(wkbBytes);
-        List<Observation> measurements = Arrays.stream(fromWkb.getCoordinates())
-                .map(c -> new Observation(new GHPoint(c.y, c.x)))
-                .collect(Collectors.toList());
-
         PMap hints = GetHints(uriInfo, profile);
-
-        MapMatching matching = new MapMatching(graphHopper.getBaseGraph(),
-                (LocationIndexTree) graphHopper.getLocationIndex(),
-                mapMatchingRouterFactory.createMapMatchingRouter(hints));
-        matching.setMeasurementErrorSigma(gpsAccuracy);
-
-        MatchResult matchResult = matching.match(measurements);
-
-        sw.stop();
-        long took = Math.round(sw.getMillisDouble());
-        String tookStr = "" + took;
-
-        logger.info(objectMapper.createObjectNode()
-                .put("duration", sw.getNanos())
-                .put("profile", hints.getString("profile", profile))
-                .put("observations", measurements.size())
-                .putPOJO("mapmatching", matching.getStatistics()).toString());
+        LineString lineString = readWkbLineString(wkbBytes);
+        List<Observation> measurements = getObservationsFromLineString(lineString);
+        MatchResult matchResult = match(measurements, hints, gpsAccuracy);
 
         Translation tr = trMap.getWithFallBack(Helper.getLocale(localeStr));
         GHResponse rsp = GetGhResponse(minPathPrecision, instructions, pathDetails, matchResult, tr,
                 graphHopper.getPathDetailsBuilderFactory(), graphHopper.getEncodingManager());
-
-        ResponsePathSerializer.Info infoMetadata = new ResponsePathSerializer.Info(config.getCopyrights(), took, osmDate);
-        ObjectNode jsonResponse = ResponsePathSerializer.jsonObject(rsp, infoMetadata, instructions,
-                calcPoints, enableElevation, pointsEncoded, pointsEncodedMultiplier);
-
-        DecorateWithStats(jsonResponse, matchResult, enableTraversalKeys);
-
-        return Response.ok(jsonResponse).
-                header("X-GH-Took", tookStr).
-                build();
+        return outputAsJson(rsp, matchResult, instructions, calcPoints, enableElevation, pointsEncoded,
+                pointsEncodedMultiplier, enableTraversalKeys, sw.stop().getMillis());
     }
 
     public static LineString readWkbLineString(byte[] bytes) {
@@ -264,57 +208,68 @@ public class MapMatchingResource {
         instructions = writeGPX || instructions;
 
         StopWatch sw = new StopWatch().start();
-
-        Gpx.Trk track0 = gpx.trk.get(0);
-        List<Observation> measurements = GpxConversions.getEntries(track0);
-
         PMap hints = GetHints(uriInfo, profile);
+        List<Observation> measurements = GpxConversions.getEntries(gpx.trk.get(0));
+        MatchResult matchResult = match(measurements, hints, gpsAccuracy);
+        long took = sw.stop().getMillis();
 
-        MapMatching matching = new MapMatching(graphHopper.getBaseGraph(),
-                (LocationIndexTree) graphHopper.getLocationIndex(),
-                mapMatchingRouterFactory.createMapMatchingRouter(hints));
-        matching.setMeasurementErrorSigma(gpsAccuracy);
-
-        MatchResult matchResult = matching.match(measurements);
-
-        sw.stop();
-        long took = Math.round(sw.getMillisDouble());
-        String tookStr = "" + took;
-
-        logger.info(objectMapper.createObjectNode()
-                .put("duration", sw.getNanos())
-                .put("profile", hints.getString("profile", profile))
-                .put("observations", measurements.size())
-                .putPOJO("mapmatching", matching.getStatistics()).toString());
-
-
-        // early exit on the simplest return type
         if ("extended_json".equals(outType)) {
-            return Response.ok(convertToTree(matchResult, enableElevation, pointsEncoded, pointsEncodedMultiplier)).
-                    header("X-GH-Took", tookStr).
-                    build();
+            return outputAsExtendedJson(matchResult, enableElevation, pointsEncoded, pointsEncodedMultiplier, took);
         }
 
         Translation tr = trMap.getWithFallBack(Helper.getLocale(localeStr));
         GHResponse rsp = GetGhResponse(minPathPrecision, instructions, pathDetails, matchResult, tr,
                 graphHopper.getPathDetailsBuilderFactory(), graphHopper.getEncodingManager());
 
-        // write out a gpx file
         if (writeGPX) {
-            long startTime = track0.getStartTime()
-                    .map(Date::getTime)
-                    .orElse(System.currentTimeMillis());
-            String trackName = track0.name != null ? track0.name : "";
-            String gpxFile = GpxConversions.createGPX(rsp.getBest().getInstructions(),
-                    trackName, startTime, enableElevation, withRoute, withTrack, false,
-                    Constants.VERSION, tr);
-            return Response.ok(gpxFile, "application/gpx+xml").
-                    header("X-GH-Took", tookStr).
-                    build();
+            return outputAsGpx(rsp, gpx.trk.get(0), withRoute, withTrack, enableElevation, tr, took);
         }
 
+        return outputAsJson(rsp, matchResult, instructions, calcPoints, enableElevation, pointsEncoded,
+                pointsEncodedMultiplier, enableTraversalKeys, took);
+    }
 
-        // default: write out json
+    private MatchResult match(List<Observation> measurements, PMap hints, double gpsAccuracy) {
+        StopWatch sw = new StopWatch().start();
+        MapMatching matching = new MapMatching(graphHopper.getBaseGraph(),
+                (LocationIndexTree) graphHopper.getLocationIndex(),
+                mapMatchingRouterFactory.createMapMatchingRouter(hints));
+        matching.setMeasurementErrorSigma(gpsAccuracy);
+        MatchResult matchResult = matching.match(measurements);
+
+        logger.info(objectMapper.createObjectNode()
+                .put("duration", sw.stop().getNanos())
+                .put("profile", hints.getString("profile", ""))
+                .put("observations", measurements.size())
+                .putPOJO("mapmatching", matching.getStatistics()).toString());
+        return matchResult;
+    }
+
+    private Response outputAsExtendedJson(MatchResult matchResult, boolean enableElevation, boolean pointsEncoded, double pointsEncodedMultiplier, long took) {
+        return Response.ok(convertToTree(matchResult, enableElevation, pointsEncoded, pointsEncodedMultiplier)).
+                header("X-GH-Took", "" + took).
+                build();
+    }
+
+    private Response outputAsGpx(GHResponse ghResponse, Gpx.Trk track, boolean withRoute, boolean withTrack, boolean enableElevation, Translation tr, long took) {
+        if (track == null)
+            throw new IllegalArgumentException("GPX output is not possible for this input format");
+        long startTime = track.getStartTime()
+                .map(Date::getTime)
+                .orElse(System.currentTimeMillis());
+        track.name = track.name != null ? track.name : "";
+        String gpxFile = GpxConversions.createGPX(ghResponse.getBest().getInstructions(),
+                track.name, startTime, enableElevation, withRoute, withTrack, false,
+                Constants.VERSION, tr);
+        return Response.ok(gpxFile, "application/gpx+xml").
+                header("X-GH-Took", "" + took).
+                build();
+    }
+
+    private Response outputAsJson(GHResponse rsp, MatchResult matchResult, boolean instructions, boolean calcPoints,
+                                  boolean enableElevation, boolean pointsEncoded, double pointsEncodedMultiplier,
+                                  boolean enableTraversalKeys, long took) {
+
         ResponsePathSerializer.Info infoMetadata = new ResponsePathSerializer.Info(config.getCopyrights(), took, osmDate);
         ObjectNode jsonResponse = ResponsePathSerializer.jsonObject(rsp, infoMetadata, instructions,
                 calcPoints, enableElevation, pointsEncoded, pointsEncodedMultiplier);
@@ -322,8 +277,14 @@ public class MapMatchingResource {
         DecorateWithStats(jsonResponse, matchResult, enableTraversalKeys);
 
         return Response.ok(jsonResponse).
-                header("X-GH-Took", tookStr).
+                header("X-GH-Took", "" + took).
                 build();
+    }
+
+    private static List<Observation> getObservationsFromLineString(LineString lineString) {
+        return Arrays.stream(lineString.getCoordinates())
+                .map(c -> new Observation(GHPoint.create(c)))
+                .collect(Collectors.toList());
     }
 
     // resolve profile and remove legacy vehicle/weighting parameters
