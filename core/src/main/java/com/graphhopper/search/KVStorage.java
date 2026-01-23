@@ -80,8 +80,9 @@ public class KVStorage {
     private final List<String> indexToKey = new ArrayList<>();
     private final BitUtil bitUtil = BitUtil.LITTLE;
     private long bytePointer = START_POINTER;
-    private long lastEntryPointer = -1;
-    private Map<String, KValue> lastEntries;
+    // Cache for deduplication: maps entry content to its pointer.
+    // This replaces the naive "last entry only" deduplication with full deduplication.
+    private final Map<Map<String, KValue>, Long> dedupCache = new HashMap<>();
 
     /**
      * Specify a larger cacheSize to reduce disk usage. Note that this increases the memory usage of this object.
@@ -222,9 +223,11 @@ public class KVStorage {
         else if (entries.size() > 200)
             throw new IllegalArgumentException("Cannot store more than 200 entries per entry");
 
-        // This is a very important "compression" mechanism because one OSM way is split into multiple edges and so we
-        // can often re-use the serialized key-value pairs of the previous edge.
-        if (entries.equals(lastEntries)) return lastEntryPointer;
+        // Check if we've already stored identical entries - this deduplicates across all additions,
+        // not just consecutive ones. Important because OSM ways split into edges often share identical
+        // key-value pairs even when not processed consecutively.
+        Long existingPointer = dedupCache.get(entries);
+        if (existingPointer != null) return existingPointer;
 
         int entryCount = 0;
         for (Map.Entry<String, KValue> kv : entries.entrySet()) {
@@ -246,14 +249,15 @@ public class KVStorage {
             }
         }
 
-        lastEntries = entries;
-        lastEntryPointer = bytePointer;
+        long entryPointer = bytePointer;
         vals.ensureCapacity(bytePointer + 1);
         vals.setByte(bytePointer, (byte) entryCount);
         bytePointer = setKVList(bytePointer, entries);
         if (bytePointer < 0)
             throw new IllegalStateException("Negative bytePointer in KVStorage");
-        return lastEntryPointer;
+
+        dedupCache.put(entries, entryPointer);
+        return entryPointer;
     }
 
     public Map<String, KValue> getAll(final long entryPointer) {
@@ -538,7 +542,10 @@ public class KVStorage {
 
         @Override
         public int hashCode() {
-            return Objects.hash(fwdValue, bwdValue, fwdBwdEqual);
+            // Must use Arrays.hashCode for byte[] to be consistent with equals()
+            int fwdHash = fwdValue instanceof byte[] ? Arrays.hashCode((byte[]) fwdValue) : Objects.hashCode(fwdValue);
+            int bwdHash = bwdValue instanceof byte[] ? Arrays.hashCode((byte[]) bwdValue) : Objects.hashCode(bwdValue);
+            return Objects.hash(fwdHash, bwdHash, fwdBwdEqual);
         }
 
         @Override

@@ -342,6 +342,24 @@ public class KVStorageTest {
     }
 
     @Test
+    public void testNonConsecutiveDeduplication() {
+        // Test that deduplication works even when identical entries are not added consecutively
+        KVStorage index = create();
+
+        long pointerA = index.add(createMap("name", "Main Street"));
+        long pointerB = index.add(createMap("name", "Other Road"));  // different
+        long pointerC = index.add(createMap("name", "Main Street")); // same as A, but not consecutive
+
+        assertNotEquals(pointerA, pointerB);
+        assertEquals(pointerA, pointerC, "Non-consecutive identical entries should return same pointer");
+
+        // Verify data integrity
+        assertEquals("Main Street", index.get(pointerA, "name", false));
+        assertEquals("Other Road", index.get(pointerB, "name", false));
+        assertEquals("Main Street", index.get(pointerC, "name", false));
+    }
+
+    @Test
     public void testUnknownValueClass() {
         KVStorage index = create();
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> index.add(createMap("mykey", new Object())));
