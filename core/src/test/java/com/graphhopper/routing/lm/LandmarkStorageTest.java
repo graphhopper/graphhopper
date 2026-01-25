@@ -27,9 +27,7 @@ import com.graphhopper.routing.util.AreaIndex;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.SpeedWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.BaseGraph;
-import com.graphhopper.storage.Directory;
-import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.storage.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -66,7 +64,7 @@ public class LandmarkStorageTest {
 
     @Test
     public void testInfiniteWeight() {
-        Directory dir = new RAMDirectory();
+        Directory dir = new GHDirectory("", DAType.RAM);
         graph.edge(0, 1);
         LandmarkStorage lms = new LandmarkStorage(graph, encodingManager, dir, new LMConfig("car", new SpeedWeighting(speedEnc)), 8).
                 setMaximumWeight(LandmarkStorage.PRECISION);
@@ -93,7 +91,7 @@ public class LandmarkStorageTest {
     @Test
     public void testSetGetWeight() {
         graph.edge(0, 1).set(speedEnc, 60, 60).setDistance(40.1);
-        Directory dir = new RAMDirectory();
+        Directory dir = new GHDirectory("", DAType.RAM);
         LandmarkStorage lms = new LandmarkStorage(graph, encodingManager, dir,
                 new LMConfig("c1", new SpeedWeighting(speedEnc)), 4).
                 setMaximumWeight(LandmarkStorage.PRECISION);
@@ -122,7 +120,7 @@ public class LandmarkStorageTest {
         // 1 means => 2 allowed edge keys => excludes the node 6
         subnetworkRemoval(weighting, 1);
 
-        LandmarkStorage storage = new LandmarkStorage(graph, encodingManager, new RAMDirectory(), new LMConfig("car", weighting), 2);
+        LandmarkStorage storage = new LandmarkStorage(graph, encodingManager, new GHDirectory("", DAType.RAM), new LMConfig("car", weighting), 2);
         storage.setMinimumNodes(2);
         storage.createLandmarks();
         assertEquals(3, storage.getSubnetworksWithLandmarks());
@@ -145,7 +143,7 @@ public class LandmarkStorageTest {
         // 3 nodes => 6 allowed edge keys but still do not exclude 3 & 4 as strongly connected and not a too small subnetwork!
         subnetworkRemoval(weighting, 4);
 
-        LandmarkStorage storage = new LandmarkStorage(graph, encodingManager, new RAMDirectory(), new LMConfig("car", weighting), 2);
+        LandmarkStorage storage = new LandmarkStorage(graph, encodingManager, new GHDirectory("", DAType.RAM), new LMConfig("car", weighting), 2);
         storage.setMinimumNodes(3);
         storage.createLandmarks();
         assertEquals(2, storage.getSubnetworksWithLandmarks());
@@ -175,7 +173,7 @@ public class LandmarkStorageTest {
         // 1 allowed node => 2 allowed edge keys (exclude 2 and 3 because they are separate too small oneway subnetworks)
         subnetworkRemoval(weighting, 1);
 
-        LandmarkStorage storage = new LandmarkStorage(graph, encodingManager, new RAMDirectory(), new LMConfig("car", weighting), 2);
+        LandmarkStorage storage = new LandmarkStorage(graph, encodingManager, new GHDirectory("", DAType.RAM), new LMConfig("car", weighting), 2);
         storage.setMinimumNodes(2);
         storage.createLandmarks();
 
@@ -192,7 +190,7 @@ public class LandmarkStorageTest {
         graph.edge(1, 2).setDistance(10).set(speedEnc, 30, 30);
         graph.edge(2, 3).setDistance(10.1).set(speedEnc, 0, 0);
 
-        LandmarkStorage storage = new LandmarkStorage(graph, encodingManager, new RAMDirectory(),
+        LandmarkStorage storage = new LandmarkStorage(graph, encodingManager, new GHDirectory("", DAType.RAM),
                 new LMConfig("car", new SpeedWeighting(speedEnc)), 2);
         storage.setMinimumNodes(2);
         storage.createLandmarks();
@@ -207,7 +205,7 @@ public class LandmarkStorageTest {
         graph.edge(2, 3).setDistance(10.1).set(speedEnc, 0, 0);
         graph.edge(2, 3).setDistance(10).set(speedEnc, 30, 30);
 
-        LandmarkStorage storage = new LandmarkStorage(graph, encodingManager, new RAMDirectory(),
+        LandmarkStorage storage = new LandmarkStorage(graph, encodingManager, new GHDirectory("", DAType.RAM),
                 new LMConfig("car", new SpeedWeighting(speedEnc)), 2);
         storage.setMinimumNodes(2);
         storage.createLandmarks();
@@ -221,7 +219,7 @@ public class LandmarkStorageTest {
     public void testWithBorderBlocking() {
         RoutingAlgorithmTest.initBiGraph(graph, speedEnc);
 
-        LandmarkStorage storage = new LandmarkStorage(graph, encodingManager, new RAMDirectory(),
+        LandmarkStorage storage = new LandmarkStorage(graph, encodingManager, new GHDirectory("", DAType.RAM),
                 new LMConfig("car", new SpeedWeighting(speedEnc)), 2);
         final SplitArea right = new SplitArea(emptyList());
         final SplitArea left = new SplitArea(emptyList());

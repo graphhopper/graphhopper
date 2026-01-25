@@ -23,10 +23,7 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.SpeedWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.BaseGraph;
-import com.graphhopper.storage.Directory;
-import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.storage.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -55,7 +52,7 @@ public class LMIssueTest {
 
     @BeforeEach
     public void init() {
-        dir = new RAMDirectory();
+        dir = new GHDirectory("", DAType.RAM);
         speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, true);
         DecimalEncodedValue turnCostEnc = TurnCost.create("car", 1);
         encodingManager = new EncodingManager.Builder().add(speedEnc).addTurnCostEncodedValue(turnCostEnc).add(Subnetwork.create("car")).build();
