@@ -41,6 +41,7 @@ import com.graphhopper.util.shapes.GHPoint;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.io.WKBReader;
 import org.locationtech.jts.io.WKTReader;
+import org.locationtech.jts.io.geojson.GeoJsonReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -88,6 +89,50 @@ public class MapMatchingResource {
         this.trMap = trMap;
         this.mapMatchingRouterFactory = mapMatchingRouterFactory;
         this.osmDate = graphHopper.getProperties().getAll().get("datareader.data.date");
+    }
+
+    @POST
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/geojson")
+    public Response doGeojson(
+            @Context UriInfo uriInfo,
+            @FormParam("geojson") @DefaultValue("") String geojson,
+            @QueryParam(WAY_POINT_MAX_DISTANCE) @DefaultValue("0.5") double minPathPrecision,
+            @QueryParam(INSTRUCTIONS) @DefaultValue("true") boolean instructions,
+            @QueryParam(CALC_POINTS) @DefaultValue("true") boolean calcPoints,
+            @QueryParam("elevation") @DefaultValue("false") boolean enableElevation,
+            @QueryParam("points_encoded") @DefaultValue("true") boolean pointsEncoded,
+            @QueryParam("points_encoded_multiplier") @DefaultValue("1e5") double pointsEncodedMultiplier,
+            @QueryParam("locale") @DefaultValue("en") String localeStr,
+            @QueryParam("profile") String profile,
+            @QueryParam(PATH_DETAILS) List<String> pathDetails,
+            @QueryParam("traversal_keys") @DefaultValue("false") boolean enableTraversalKeys,
+            @QueryParam("gps_accuracy") @DefaultValue("10") double gpsAccuracy) {
+
+        StopWatch sw = new StopWatch().start();
+        PMap hints = GetHints(uriInfo, profile);
+        LineString lineString = readGeojsonLineString(geojson);
+        List<Observation> measurements = getObservationsFromLineString(lineString);
+        MatchResult matchResult = match(measurements, hints, gpsAccuracy);
+
+        Translation tr = trMap.getWithFallBack(Helper.getLocale(localeStr));
+        GHResponse rsp = GetGhResponse(minPathPrecision, instructions, pathDetails, matchResult, tr,
+                graphHopper.getPathDetailsBuilderFactory(), graphHopper.getEncodingManager());
+        return outputAsJson(rsp, matchResult, instructions, calcPoints, enableElevation, pointsEncoded,
+                pointsEncodedMultiplier, enableTraversalKeys, sw.stop().getMillis());
+    }
+
+    public static LineString readGeojsonLineString(String s) {
+        GeoJsonReader geoJsonReader = new GeoJsonReader();
+        LineString expectedGeometry = null;
+        try {
+            expectedGeometry = (LineString) geoJsonReader.read(s);
+        } catch (Exception e) {
+            logger.warn("could not parse wkt, got: {}", e.toString());
+            throw new IllegalArgumentException("Cannot parse input as WKT");
+        }
+        return expectedGeometry;
     }
 
     @POST

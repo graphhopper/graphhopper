@@ -42,8 +42,7 @@ import java.util.Arrays;
 import java.util.Base64;
 
 import static com.graphhopper.application.util.TestUtils.clientTarget;
-import static com.graphhopper.resources.MapMatchingResource.readWkbLineString;
-import static com.graphhopper.resources.MapMatchingResource.readWktLineString;
+import static com.graphhopper.resources.MapMatchingResource.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -115,6 +114,23 @@ public class MapMatchingResourceTest {
         JsonNode path = json.get("paths").get(0);
 
         LineString expectedGeometry = readWktLineString("LINESTRING (12.3607 51.34365, 12.36418 51.34443, 12.36379 51.34538, 12.36082 51.34471, 12.36188 51.34278)");
+        LineString actualGeometry = ResponsePathDeserializerHelper.decodePolyline(path.get("points").asText(), 10, false, 1e5).toLineString(false);
+        assertEquals(0.0, DiscreteHausdorffDistance.distance(expectedGeometry, actualGeometry), 1E-4);
+        assertEquals(101, path.get("time").asLong() / 1000f, 1);
+        assertEquals(101, json.get("map_matching").get("time").asLong() / 1000f, 1);
+        assertEquals(812, path.get("distance").asDouble(), 1);
+        assertEquals(812, json.get("map_matching").get("distance").asDouble(), 1);
+    }
+
+    @Test
+    public void testGeojson() {
+        String geojsonLineString = "{\"type\":\"LineString\",\"coordinates\":[[12.3607,51.34365],[12.36418,51.34443],[12.36379,51.34538],[12.36082,51.34471],[12.36188,51.34278]]}";
+        JsonNode json = clientTarget(app, "/match/geojson?profile=fast_car")
+                .request()
+                .post(Entity.form(new Form("geojson", geojsonLineString)), JsonNode.class);
+        JsonNode path = json.get("paths").get(0);
+
+        LineString expectedGeometry = readGeojsonLineString(geojsonLineString);
         LineString actualGeometry = ResponsePathDeserializerHelper.decodePolyline(path.get("points").asText(), 10, false, 1e5).toLineString(false);
         assertEquals(0.0, DiscreteHausdorffDistance.distance(expectedGeometry, actualGeometry), 1E-4);
         assertEquals(101, path.get("time").asLong() / 1000f, 1);
