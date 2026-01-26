@@ -38,6 +38,7 @@ import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
 import com.graphhopper.util.shapes.GHPoint;
+import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.io.WKBReader;
 import org.locationtech.jts.io.WKTReader;
@@ -52,6 +53,7 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -109,30 +111,15 @@ public class MapMatchingResource {
             @QueryParam(PATH_DETAILS) List<String> pathDetails,
             @QueryParam("traversal_keys") @DefaultValue("false") boolean enableTraversalKeys,
             @QueryParam("gps_accuracy") @DefaultValue("10") double gpsAccuracy) {
-
-        StopWatch sw = new StopWatch().start();
         PMap hints = GetHints(uriInfo, profile);
         LineString lineString = readGeojsonLineString(geojson);
-        List<Observation> measurements = getObservationsFromLineString(lineString);
-        MatchResult matchResult = match(measurements, hints, gpsAccuracy);
-
-        Translation tr = trMap.getWithFallBack(Helper.getLocale(localeStr));
-        GHResponse rsp = GetGhResponse(minPathPrecision, instructions, pathDetails, matchResult, tr,
-                graphHopper.getPathDetailsBuilderFactory(), graphHopper.getEncodingManager());
-        return outputAsJson(rsp, matchResult, instructions, calcPoints, enableElevation, pointsEncoded,
-                pointsEncodedMultiplier, enableTraversalKeys, sw.stop().getMillis());
+        return getLinestringMapmatching(minPathPrecision, instructions, calcPoints, enableElevation,
+                pointsEncoded, pointsEncodedMultiplier, localeStr, pathDetails, enableTraversalKeys,
+                gpsAccuracy, hints, lineString);
     }
 
     public static LineString readGeojsonLineString(String s) {
-        GeoJsonReader geoJsonReader = new GeoJsonReader();
-        LineString expectedGeometry = null;
-        try {
-            expectedGeometry = (LineString) geoJsonReader.read(s);
-        } catch (Exception e) {
-            logger.warn("could not parse wkt, got: {}", e.toString());
-            throw new IllegalArgumentException("Cannot parse input as WKT");
-        }
-        return expectedGeometry;
+        return (LineString) readGeometry(s, new GeoJsonReader()::read, "GeoJSON");
     }
 
     @POST
@@ -153,30 +140,15 @@ public class MapMatchingResource {
             @QueryParam(PATH_DETAILS) List<String> pathDetails,
             @QueryParam("traversal_keys") @DefaultValue("false") boolean enableTraversalKeys,
             @QueryParam("gps_accuracy") @DefaultValue("10") double gpsAccuracy) {
-
-        StopWatch sw = new StopWatch().start();
         PMap hints = GetHints(uriInfo, profile);
         LineString lineString = readWktLineString(wkt);
-        List<Observation> measurements = getObservationsFromLineString(lineString);
-        MatchResult matchResult = match(measurements, hints, gpsAccuracy);
-
-        Translation tr = trMap.getWithFallBack(Helper.getLocale(localeStr));
-        GHResponse rsp = GetGhResponse(minPathPrecision, instructions, pathDetails, matchResult, tr,
-                graphHopper.getPathDetailsBuilderFactory(), graphHopper.getEncodingManager());
-        return outputAsJson(rsp, matchResult, instructions, calcPoints, enableElevation, pointsEncoded,
-                pointsEncodedMultiplier, enableTraversalKeys, sw.stop().getMillis());
+        return getLinestringMapmatching(minPathPrecision, instructions, calcPoints, enableElevation,
+                pointsEncoded, pointsEncodedMultiplier, localeStr, pathDetails, enableTraversalKeys,
+                gpsAccuracy, hints, lineString);
     }
 
     public static LineString readWktLineString(String wkt) {
-        WKTReader wktReader = new WKTReader();
-        LineString expectedGeometry = null;
-        try {
-            expectedGeometry = (LineString) wktReader.read(wkt);
-        } catch (Exception e) {
-            logger.warn("could not parse wkt, got: {}", e.toString());
-            throw new IllegalArgumentException("Cannot parse input as WKT");
-        }
-        return expectedGeometry;
+        return (LineString) readGeometry(wkt, new WKTReader()::read, "WKT");
     }
 
     @POST
@@ -197,18 +169,11 @@ public class MapMatchingResource {
             @QueryParam(PATH_DETAILS) List<String> pathDetails,
             @QueryParam("traversal_keys") @DefaultValue("false") boolean enableTraversalKeys,
             @QueryParam("gps_accuracy") @DefaultValue("10") double gpsAccuracy) {
-
-        StopWatch sw = new StopWatch().start();
         PMap hints = GetHints(uriInfo, profile);
         LineString lineString = readWkbLineString(wkbBytes);
-        List<Observation> measurements = getObservationsFromLineString(lineString);
-        MatchResult matchResult = match(measurements, hints, gpsAccuracy);
-
-        Translation tr = trMap.getWithFallBack(Helper.getLocale(localeStr));
-        GHResponse rsp = GetGhResponse(minPathPrecision, instructions, pathDetails, matchResult, tr,
-                graphHopper.getPathDetailsBuilderFactory(), graphHopper.getEncodingManager());
-        return outputAsJson(rsp, matchResult, instructions, calcPoints, enableElevation, pointsEncoded,
-                pointsEncodedMultiplier, enableTraversalKeys, sw.stop().getMillis());
+        return getLinestringMapmatching(minPathPrecision, instructions, calcPoints, enableElevation,
+                pointsEncoded, pointsEncodedMultiplier, localeStr, pathDetails, enableTraversalKeys,
+                gpsAccuracy, hints, lineString);
     }
 
     @POST
@@ -230,31 +195,57 @@ public class MapMatchingResource {
             @QueryParam(PATH_DETAILS) List<String> pathDetails,
             @QueryParam("traversal_keys") @DefaultValue("false") boolean enableTraversalKeys,
             @QueryParam("gps_accuracy") @DefaultValue("10") double gpsAccuracy) {
-
-        StopWatch sw = new StopWatch().start();
         PMap hints = GetHints(uriInfo, profile);
         boolean hasElevation = false;
         PointList pointList = ResponsePathDeserializerHelper.decodePolyline(polyline, 10, hasElevation, polylineMultiplier);
-        List<Observation> measurements = getObservationsFromLineString(pointList.toLineString(hasElevation));
+        return getLinestringMapmatching(minPathPrecision, instructions, calcPoints, enableElevation,
+                pointsEncoded, pointsEncodedMultiplier, localeStr, pathDetails, enableTraversalKeys,
+                gpsAccuracy, hints, pointList.toLineString(hasElevation));
+    }
+
+    private Response getLinestringMapmatching(
+            double minPathPrecision,
+            boolean instructions,
+            boolean calcPoints,
+            boolean enableElevation,
+            boolean pointsEncoded,
+            double pointsEncodedMultiplier,
+            String localeStr,
+            List<String> pathDetails,
+            boolean enableTraversalKeys,
+            double gpsAccuracy,
+            PMap hints,
+            LineString lineString
+    ) {
+        StopWatch sw = new StopWatch().start();
+        List<Observation> measurements = getObservationsFromLineString(lineString);
         MatchResult matchResult = match(measurements, hints, gpsAccuracy);
 
         Translation tr = trMap.getWithFallBack(Helper.getLocale(localeStr));
         GHResponse rsp = GetGhResponse(minPathPrecision, instructions, pathDetails, matchResult, tr,
                 graphHopper.getPathDetailsBuilderFactory(), graphHopper.getEncodingManager());
-        return outputAsJson(rsp, matchResult, instructions, calcPoints, enableElevation, pointsEncoded,
-                pointsEncodedMultiplier, enableTraversalKeys, sw.stop().getMillis());
+        return outputAsJson(rsp, matchResult, instructions, calcPoints, enableElevation,
+                pointsEncoded, pointsEncodedMultiplier, enableTraversalKeys, sw.stop().getMillis());
     }
 
     public static LineString readWkbLineString(byte[] bytes) {
-        WKBReader wkbReader = new WKBReader();
-        LineString expectedGeometry = null;
+        return (LineString) readGeometry(bytes, new WKBReader()::read, "WKB");
+    }
+
+    @FunctionalInterface
+    private interface ReaderFunction<T> {
+        Geometry read(T input) throws Exception;
+    }
+
+    private static <T> Geometry readGeometry(T input,
+                                             ReaderFunction<T> readerFunction,
+                                             String format) {
         try {
-            expectedGeometry = (LineString) wkbReader.read(bytes);
+            return readerFunction.read(input);
         } catch (Exception e) {
-            logger.warn("could not parse wkt, got: {}", e.toString());
-            throw new IllegalArgumentException("Cannot parse input as WKT");
+            logger.warn("could not parse {}, got: {}", format, e.toString());
+            throw new IllegalArgumentException("Cannot parse input as " + format);
         }
-        return expectedGeometry;
     }
 
     @POST
@@ -365,14 +356,6 @@ public class MapMatchingResource {
         return Arrays.stream(lineString.getCoordinates())
                 .map(c -> new Observation(GHPoint.create(c)))
                 .collect(Collectors.toList());
-    }
-
-    private static List<Observation> getObservationsFromPointList(PointList pointList) {
-        List<Observation> observations = new ArrayList<>(pointList.size());
-        for (GHPoint p : pointList) {
-            observations.add(new Observation(p));
-        }
-        return observations;
     }
 
     // resolve profile and remove legacy vehicle/weighting parameters
