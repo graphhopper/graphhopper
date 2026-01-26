@@ -254,18 +254,22 @@ class OSMNodeData {
             long pointer = nodeKVStorage.add(node.getTags().entrySet().stream().collect(
                     Collectors.toMap(Map.Entry::getKey, // same key
                             e -> new KVStorage.KValue(e.getValue() instanceof String ? KVStorage.cutString((String) e.getValue()) : e.getValue()))));
-            if (pointer > Integer.MAX_VALUE)
+            // Shift right to use 4x more address space (pointers are 4-byte aligned)
+            long shiftedPointer = pointer >> KVStorage.ALIGNMENT_SHIFT;
+            if (shiftedPointer > Integer.MAX_VALUE)
                 throw new IllegalStateException("Too many key value pairs are stored in node tags, was " + pointer);
-            nodeTagIndicesByOsmNodeIds.put(node.getId(), (int) pointer);
+            nodeTagIndicesByOsmNodeIds.put(node.getId(), (int) shiftedPointer);
         } else {
             throw new IllegalStateException("Cannot add tags twice, duplicate node OSM ID: " + node.getId());
         }
     }
 
     public Map<String, Object> getTags(long osmNodeId) {
-        int tagIndex = Math.toIntExact(nodeTagIndicesByOsmNodeIds.get(osmNodeId));
-        if (tagIndex < 0)
+        int shiftedIndex = Math.toIntExact(nodeTagIndicesByOsmNodeIds.get(osmNodeId));
+        if (shiftedIndex < 0)
             return Collections.emptyMap();
+        // Shift left to restore the actual byte offset
+        long tagIndex = (long) shiftedIndex << KVStorage.ALIGNMENT_SHIFT;
         return nodeKVStorage.getMap(tagIndex);
     }
 

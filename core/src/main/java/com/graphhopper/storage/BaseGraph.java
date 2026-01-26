@@ -1044,21 +1044,27 @@ public class BaseGraph implements Graph, Closeable {
         @Override
         public EdgeIteratorState setKeyValues(Map<String, KVStorage.KValue> entries) {
             long pointer = baseGraph.edgeKVStorage.add(entries);
-            if (pointer > MAX_UNSIGNED_INT)
-                throw new IllegalStateException("Too many key value pairs are stored, currently limited to " + MAX_UNSIGNED_INT + " was " + pointer);
-            store.setKeyValuesRef(edgePointer, BitUtil.toSignedInt(pointer));
+            // Shift right to use 4x more address space (pointers are 4-byte aligned)
+            long shiftedPointer = pointer >> KVStorage.ALIGNMENT_SHIFT;
+            if (shiftedPointer > MAX_UNSIGNED_INT)
+                throw new IllegalStateException("Too many key value pairs are stored, currently limited to " + (MAX_UNSIGNED_INT << KVStorage.ALIGNMENT_SHIFT) + " was " + pointer);
+            store.setKeyValuesRef(edgePointer, BitUtil.toSignedInt(shiftedPointer));
             return this;
         }
 
         @Override
         public Map<String, KVStorage.KValue> getKeyValues() {
-            long kvEntryRef = Integer.toUnsignedLong(store.getKeyValuesRef(edgePointer));
+            long shiftedRef = Integer.toUnsignedLong(store.getKeyValuesRef(edgePointer));
+            // Shift left to restore the actual byte offset
+            long kvEntryRef = shiftedRef << KVStorage.ALIGNMENT_SHIFT;
             return baseGraph.edgeKVStorage.getAll(kvEntryRef);
         }
 
         @Override
         public Object getValue(String key) {
-            long kvEntryRef = Integer.toUnsignedLong(store.getKeyValuesRef(edgePointer));
+            long shiftedRef = Integer.toUnsignedLong(store.getKeyValuesRef(edgePointer));
+            // Shift left to restore the actual byte offset
+            long kvEntryRef = shiftedRef << KVStorage.ALIGNMENT_SHIFT;
             return baseGraph.edgeKVStorage.get(kvEntryRef, key, reverse);
         }
 

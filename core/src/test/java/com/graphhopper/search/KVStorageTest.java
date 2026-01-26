@@ -89,15 +89,19 @@ public class KVStorageTest {
     @Test
     public void putEmpty() {
         KVStorage index = create();
-        assertEquals(1, index.add(createMap("", "")));
+        long emptyKeyPointer = index.add(createMap("", ""));
+        // First pointer should be at START_POINTER (aligned to 4)
+        assertEquals(4, emptyKeyPointer);
         // cannot store null (in its first version we accepted null once it was clear which type the value has, but this is inconsequential)
-        assertThrows(IllegalArgumentException.class, () -> assertEquals(5, index.add(createMap("", null))));
+        assertThrows(IllegalArgumentException.class, () -> index.add(createMap("", null)));
         assertThrows(IllegalArgumentException.class, () -> index.add(createMap("blup", null)));
         assertThrows(IllegalArgumentException.class, () -> index.add(createMap(null, null)));
 
         assertNull(index.get(0, "", false));
 
-        assertEquals(5, index.add(createMap("else", "else")));
+        long elsePointer = index.add(createMap("else", "else"));
+        assertTrue(elsePointer > emptyKeyPointer, "second pointer should be larger than first");
+        assertEquals("else", index.get(elsePointer, "else", false));
     }
 
     @Test
@@ -224,8 +228,17 @@ public class KVStorageTest {
         long longres = index.add(Map.of("longres", new KValue(4L)));
         long after4Inserts = index.add(Map.of("somenext", new KValue(0)));
 
-        // initial point is 1, then twice plus 1 + (2+4) and twice plus 1 + (2+8)
-        assertEquals(1 + 36, after4Inserts);
+        // Pointers should be sequential and increasing, aligned to 4-byte boundaries
+        assertTrue(intres < doubleres);
+        assertTrue(doubleres < floatres);
+        assertTrue(floatres < longres);
+        assertTrue(longres < after4Inserts);
+        // Verify all pointers are 4-byte aligned
+        assertEquals(0, intres % 4);
+        assertEquals(0, doubleres % 4);
+        assertEquals(0, floatres % 4);
+        assertEquals(0, longres % 4);
+        assertEquals(0, after4Inserts % 4);
 
         assertEquals(4f, index.get(floatres, "floatres", false));
         assertEquals(4L, index.get(longres, "longres", false));
@@ -245,8 +258,10 @@ public class KVStorageTest {
 
         long afterMapInsert = index.add(Map.of("somenext", new KValue(0)));
 
-        // 1 + 1 + (2+4) + (2+8) + (2+8) + (2+4)
-        assertEquals(1 + 1 + 32, afterMapInsert);
+        // Pointer should increase after adding more data, and both should be aligned
+        assertTrue(afterMapInsert > allInOne);
+        assertEquals(0, allInOne % 4);
+        assertEquals(0, afterMapInsert % 4);
 
         Map<String, KValue> resMap = index.getAll(allInOne);
         assertEquals(4, resMap.get("int").getFwd());
@@ -269,7 +284,9 @@ public class KVStorageTest {
         assertEquals("test", index.get(pointer, "", false));
         // make sure bytePointer is correctly set after loadExisting
         long newPointer = index.add(createMap("", "testing"));
-        assertEquals(pointer + 1 + 3 + "test".getBytes().length, newPointer, newPointer + ">" + pointer);
+        assertTrue(newPointer > pointer, "newPointer " + newPointer + " should be > pointer " + pointer);
+        assertEquals(0, newPointer % 4, "newPointer should be 4-byte aligned");
+        assertEquals("testing", index.get(newPointer, "", false));
         index.close();
 
         Helper.removeDir(new File(location));
