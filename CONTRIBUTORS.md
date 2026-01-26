@@ -63,6 +63,7 @@ Here is an overview:
  * michaz, one of the core developers
  * mprins, improvements for travis CI and regarding JDK9 #806
  * msbarry, fixes like #1733
+ * nakaner, documentation
  * naser13, fixes like #1923
  * njanakiev, fixes like #1560
  * NopMap, massive improvements regarding OSM, parsing and encoding, route relations
