@@ -22,6 +22,7 @@ import com.carrotsearch.hppc.LongScatterSet;
 import com.carrotsearch.hppc.LongSet;
 import com.graphhopper.coll.GHLongLongBTree;
 import com.graphhopper.coll.LongLongMap;
+import com.graphhopper.coll.StripedLongLongBTree;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.search.KVStorage;
 import com.graphhopper.storage.Directory;
@@ -83,7 +84,9 @@ class OSMNodeData {
         // We use a b-tree that can store as many entries as there are longs. A tree is also more
         // memory efficient, because there is no waste for empty entries, and it also avoids
         // allocating big arrays when growing the size.
-        idsByOsmNodeIds = new GHLongLongBTree(200, 5, EMPTY_NODE);
+        // StripedLongLongBTree allows concurrent access from multiple threads during pass 1.
+        int stripes = Runtime.getRuntime().availableProcessors();
+        idsByOsmNodeIds = new StripedLongLongBTree(stripes, 200, 5, EMPTY_NODE);
         towerNodes = nodeAccess;
         pillarNodes = new PillarInfo(towerNodes.is3D(), directory);
 

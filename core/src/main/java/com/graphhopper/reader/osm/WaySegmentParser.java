@@ -37,6 +37,7 @@ import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.function.*;
 
 import static com.graphhopper.reader.osm.OSMNodeData.*;
@@ -120,16 +121,24 @@ public class WaySegmentParser {
     }
 
     private class Pass1Handler implements ReaderElementHandler {
+        private static final int BATCH_SIZE = 10_000;
+
         private boolean handledWays;
         private boolean handledRelations;
         private long wayCounter = 0;
         private long acceptedWays = 0;
         private long relationsCounter = 0;
 
+        // Parallel processing infrastructure
+        private final int numThreads = Runtime.getRuntime().availableProcessors();
+        private final ExecutorService executor = Executors.newFixedThreadPool(numThreads);
+        private final List<Future<?>> pendingBatches = new ArrayList<>();
+        private List<ReaderWay> currentBatch = new ArrayList<>(BATCH_SIZE);
+
         @Override
         public void handleWay(ReaderWay way) {
             if (!handledWays) {
-                LOGGER.info("pass1 - start reading OSM ways");
+                LOGGER.info("pass1 - start reading OSM ways (parallel, " + numThreads + " threads)");
                 handledWays = true;
             }
             if (handledRelations)
@@ -143,19 +152,40 @@ public class WaySegmentParser {
                 return;
             acceptedWays++;
 
-            for (LongCursor node : way.getNodes()) {
-                final boolean isEnd = node.index == 0 || node.index == way.getNodes().size() - 1;
-                final long osmId = node.value;
-                nodeData.setOrUpdateNodeType(osmId,
-                        isEnd ? END_NODE : INTERMEDIATE_NODE,
-                        // connection nodes are those where (only) two OSM ways are connected at their ends
-                        prev -> prev == END_NODE && isEnd ? CONNECTION_NODE : JUNCTION_NODE);
+            currentBatch.add(way);
+            if (currentBatch.size() >= BATCH_SIZE) {
+                submitBatch(currentBatch);
+                currentBatch = new ArrayList<>(BATCH_SIZE);
+            }
+        }
+
+        private void submitBatch(List<ReaderWay> batch) {
+            // Remove completed futures to avoid memory buildup
+            pendingBatches.removeIf(Future::isDone);
+
+            Future<?> future = executor.submit(() -> processBatch(batch));
+            pendingBatches.add(future);
+        }
+
+        private void processBatch(List<ReaderWay> batch) {
+            for (ReaderWay way : batch) {
+                int size = way.getNodes().size();
+                for (LongCursor node : way.getNodes()) {
+                    final boolean isEnd = node.index == 0 || node.index == size - 1;
+                    final long osmId = node.value;
+                    nodeData.setOrUpdateNodeType(osmId,
+                            isEnd ? END_NODE : INTERMEDIATE_NODE,
+                            // connection nodes are those where (only) two OSM ways are connected at their ends
+                            prev -> prev == END_NODE && isEnd ? CONNECTION_NODE : JUNCTION_NODE);
+                }
             }
         }
 
         @Override
         public void handleRelation(ReaderRelation relation) {
             if (!handledRelations) {
+                // Before processing relations, ensure all way batches are complete
+                finishWayProcessing();
                 LOGGER.info("pass1 - start reading OSM relations");
                 handledRelations = true;
             }
@@ -173,9 +203,33 @@ public class WaySegmentParser {
 
         @Override
         public void onFinish() {
+            finishWayProcessing();
             LOGGER.info("pass1 - finished, processed ways: " + nf(wayCounter) + ", accepted ways: " +
                     nf(acceptedWays) + ", way nodes: " + nf(nodeData.getNodeCount()) + ", relations: " +
                     nf(relationsCounter) + ", " + Helper.getMemInfo());
+        }
+
+        private void finishWayProcessing() {
+            // Submit any remaining ways
+            if (!currentBatch.isEmpty()) {
+                submitBatch(currentBatch);
+                currentBatch = new ArrayList<>();
+            }
+
+            // Wait for all batches to complete
+            for (Future<?> future : pendingBatches) {
+                try {
+                    future.get();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException("Interrupted while waiting for batch processing", e);
+                } catch (ExecutionException e) {
+                    throw new RuntimeException("Error processing way batch", e.getCause());
+                }
+            }
+            pendingBatches.clear();
+
+            executor.shutdown();
         }
     }
 
