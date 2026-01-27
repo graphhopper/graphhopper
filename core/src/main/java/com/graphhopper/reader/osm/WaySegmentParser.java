@@ -397,8 +397,6 @@ public class WaySegmentParser {
             while ((elem = osmInput.getNext()) != null)
                 handler.handleElement(elem);
             handler.onFinish();
-            if (osmInput.getUnprocessedElements() > 0)
-                throw new IllegalStateException("There were some remaining elements in the reader queue " + osmInput.getUnprocessedElements());
         } catch (Exception e) {
             throw new RuntimeException("Could not parse OSM file: " + file.getAbsolutePath(), e);
         }

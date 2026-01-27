@@ -107,11 +107,6 @@ class OSMXmlInput implements OSMInput {
     }
 
     @Override
-    public int getUnprocessedElements() {
-        return 0;
-    }
-
-    @Override
     public void close() throws IOException {
         try {
             xmlParser.close();
