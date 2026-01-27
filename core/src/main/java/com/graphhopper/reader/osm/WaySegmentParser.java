@@ -459,7 +459,7 @@ public class WaySegmentParser {
     }
 
     protected OSMInput openOsmInputFile(File osmFile, SkipOptions skipOptions) throws XMLStreamException, IOException {
-        return new OSMInputFile(osmFile).setWorkerThreads(workerThreads).setSkipOptions(skipOptions).open();
+        return OSMInput.open(osmFile, workerThreads, skipOptions);
     }
 
     public static class Builder {
