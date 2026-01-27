@@ -119,11 +119,7 @@ class OSMNodeData {
     }
 
     public void setOrUpdateNodeType(long osmNodeId, long newNodeType, LongUnaryOperator nodeTypeUpdate) {
-        long curr = idsByOsmNodeIds.get(osmNodeId);
-        if (curr == EMPTY_NODE)
-            idsByOsmNodeIds.put(osmNodeId, newNodeType);
-        else
-            idsByOsmNodeIds.put(osmNodeId, nodeTypeUpdate.applyAsLong(curr));
+        idsByOsmNodeIds.putOrCompute(osmNodeId, newNodeType, nodeTypeUpdate);
     }
 
     /**
