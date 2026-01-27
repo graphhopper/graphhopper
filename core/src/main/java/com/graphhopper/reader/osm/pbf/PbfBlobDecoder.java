@@ -40,8 +40,8 @@ import java.util.zip.Inflater;
  * Synchronous PBF blob decoder that returns decoded entities directly.
  * This is a refactored version of PbfBlobDecoder that doesn't use callbacks.
  */
-public class PbfBlobDecoderSync {
-    private static final Logger log = LoggerFactory.getLogger(PbfBlobDecoderSync.class);
+public class PbfBlobDecoder {
+    private static final Logger log = LoggerFactory.getLogger(PbfBlobDecoder.class);
     private static final boolean CHECK_DATA = false;
 
     private final String blobType;
@@ -49,7 +49,7 @@ public class PbfBlobDecoderSync {
     private final SkipOptions skipOptions;
     private List<ReaderElement> decodedEntities;
 
-    public PbfBlobDecoderSync(String blobType, byte[] rawBlob, SkipOptions skipOptions) {
+    public PbfBlobDecoder(String blobType, byte[] rawBlob, SkipOptions skipOptions) {
         this.blobType = blobType;
         this.rawBlob = rawBlob;
         this.skipOptions = skipOptions;

@@ -18,6 +18,7 @@
 package com.graphhopper.reader.osm;
 
 import com.graphhopper.reader.ReaderElement;
+import com.graphhopper.reader.osm.pbf.PbfReader;
 
 import javax.xml.stream.XMLStreamException;
 import java.io.*;
@@ -44,10 +45,7 @@ public interface OSMInput extends AutoCloseable {
     static OSMInput open(File file, int workerThreads, SkipOptions skipOptions) throws IOException, XMLStreamException {
         DecodedInput decoded = decode(file);
         if (decoded.isBinary) {
-            return new OSMPbfInput(decoded.inputStream)
-                    .setWorkerThreads(workerThreads)
-                    .setSkipOptions(skipOptions)
-                    .open();
+            return new PbfReader(decoded.inputStream, workerThreads, skipOptions).start();
         } else {
             return new OSMXmlInput(decoded.inputStream).open();
         }
