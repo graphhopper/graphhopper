@@ -32,8 +32,6 @@ import java.util.zip.ZipInputStream;
 public interface OSMInput extends AutoCloseable {
     ReaderElement getNext() throws XMLStreamException;
 
-    int getUnprocessedElements();
-
     /**
      * Opens an OSM file, automatically detecting the format (PBF or XML) based on file contents.
      *

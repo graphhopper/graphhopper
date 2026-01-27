@@ -24,23 +24,18 @@ import com.graphhopper.reader.osm.SkipOptions;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.*;
 
 /**
- * Pipelined PBF reader implementing OSMInput interface.
+ * Pipelined PBF reader: blobs.map(decode).flatten
  * <p>
- * Architecture:
- * - Reader thread: reads blobs from stream, puts in queue (I/O bound)
- * - Coordinator thread: takes from queue, submits to workers, puts results in output queue
- * - Worker threads: decode blobs (CPU bound, parallelized)
- * - Consumer: calls getNext() to take from output queue
+ * - Reader thread: splits stream into blobs
+ * - Coordinator thread: submits blobs to workers, queues decoded results in order
+ * - Worker threads: decode blobs in parallel
+ * - Consumer: iterates through queued results via getNext()
  */
 public class PbfReader implements OSMInput {
-    private static final int MAX_BATCH_SIZE = 1_000;
     private static final PbfRawBlob END_OF_STREAM = new PbfRawBlob("END", new byte[0]);
 
     private final InputStream inputStream;
@@ -48,14 +43,14 @@ public class PbfReader implements OSMInput {
     private final SkipOptions skipOptions;
 
     private final BlockingQueue<PbfRawBlob> blobQueue;
-    private final BlockingQueue<ReaderElement> itemQueue;
-    private final Queue<ReaderElement> itemBatch;
+    private final BlockingQueue<List<ReaderElement>> resultQueue;
 
     private volatile Throwable readerException;
     private volatile Throwable coordinatorException;
     private volatile boolean coordinatorDone;
     private boolean eof;
 
+    private Iterator<ReaderElement> currentBatch = Collections.emptyIterator();
     private Thread readerThread;
     private Thread coordinatorThread;
     private ExecutorService decoderExecutor;
@@ -65,8 +60,7 @@ public class PbfReader implements OSMInput {
         this.workers = workers;
         this.skipOptions = skipOptions;
         this.blobQueue = new ArrayBlockingQueue<>(workers * 2);
-        this.itemQueue = new LinkedBlockingQueue<>(50_000);
-        this.itemBatch = new ArrayDeque<>(MAX_BATCH_SIZE);
+        this.resultQueue = new LinkedBlockingQueue<>(workers * 2);
     }
 
     public PbfReader start() {
@@ -83,52 +77,32 @@ public class PbfReader implements OSMInput {
         if (eof)
             throw new IllegalStateException("EOF reached");
 
-        ReaderElement item = getNextFromQueue();
-        if (item != null)
-            return item;
-
-        eof = true;
-        return null;
-    }
-
-    private ReaderElement getNextFromQueue() {
-        while (itemBatch.isEmpty()) {
-            if (coordinatorDone && itemQueue.isEmpty()) {
+        while (!currentBatch.hasNext()) {
+            if (coordinatorDone && resultQueue.isEmpty()) {
                 checkExceptions();
-                return null; // EOF
+                eof = true;
+                return null;
             }
-
-            if (itemQueue.drainTo(itemBatch, MAX_BATCH_SIZE) == 0) {
-                try {
-                    ReaderElement element = itemQueue.poll(100, TimeUnit.MILLISECONDS);
-                    if (element != null) {
-                        return element;
-                    }
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    return null;
+            try {
+                List<ReaderElement> batch = resultQueue.poll(100, TimeUnit.MILLISECONDS);
+                if (batch != null) {
+                    currentBatch = batch.iterator();
                 }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                eof = true;
+                return null;
             }
         }
-
-        return itemBatch.poll();
+        return currentBatch.next();
     }
 
-    @Override
-    public int getUnprocessedElements() {
-        return itemQueue.size() + itemBatch.size();
-    }
-
-    /**
-     * Reader thread: reads blobs and puts them in queue. Pure I/O, no coordination.
-     */
     private void runReader() {
         try {
             PbfStreamSplitter splitter = new PbfStreamSplitter(new DataInputStream(inputStream));
             try {
                 while (splitter.hasNext()) {
-                    PbfRawBlob blob = splitter.next();
-                    blobQueue.put(blob);
+                    blobQueue.put(splitter.next());
                 }
             } finally {
                 splitter.release();
@@ -146,41 +120,37 @@ public class PbfReader implements OSMInput {
         }
     }
 
-    /**
-     * Coordinator: takes blobs from queue, submits to workers, puts results in output queue.
-     */
     private void runCoordinator() {
         try {
-            Deque<Future<List<ReaderElement>>> pendingResults = new ArrayDeque<>();
+            Deque<Future<List<ReaderElement>>> pending = new ArrayDeque<>();
             int maxPending = workers + 1;
 
             while (true) {
-                while (pendingResults.size() < maxPending) {
+                // Fill pending queue
+                while (pending.size() < maxPending) {
                     PbfRawBlob blob = blobQueue.poll(50, TimeUnit.MILLISECONDS);
-
                     if (blob == null) {
                         checkReaderException();
                         break;
                     }
-
                     if (blob == END_OF_STREAM) {
-                        drainAllResults(pendingResults);
+                        drainAll(pending);
                         return;
                     }
-
-                    Future<List<ReaderElement>> future = decoderExecutor.submit(() -> {
-                        PbfBlobDecoder decoder = new PbfBlobDecoder(blob.getType(), blob.getData(), skipOptions);
-                        return decoder.decode();
-                    });
-                    pendingResults.addLast(future);
+                    pending.addLast(decoderExecutor.submit(() ->
+                            new PbfBlobDecoder(blob.getType(), blob.getData(), skipOptions).decode()));
                 }
 
                 checkReaderException();
-                sendCompletedResults(pendingResults);
 
-                if (pendingResults.size() >= maxPending && !pendingResults.isEmpty()) {
-                    Future<List<ReaderElement>> future = pendingResults.pollFirst();
-                    sendToQueue(future.get());
+                // Send completed results (in order)
+                while (!pending.isEmpty() && pending.peekFirst().isDone()) {
+                    resultQueue.put(pending.pollFirst().get());
+                }
+
+                // If full, block on first result
+                if (pending.size() >= maxPending && !pending.isEmpty()) {
+                    resultQueue.put(pending.pollFirst().get());
                 }
             }
         } catch (InterruptedException e) {
@@ -193,25 +163,10 @@ public class PbfReader implements OSMInput {
         }
     }
 
-    private void sendCompletedResults(Deque<Future<List<ReaderElement>>> pendingResults)
+    private void drainAll(Deque<Future<List<ReaderElement>>> pending)
             throws ExecutionException, InterruptedException {
-        while (!pendingResults.isEmpty() && pendingResults.peekFirst().isDone()) {
-            Future<List<ReaderElement>> future = pendingResults.pollFirst();
-            sendToQueue(future.get());
-        }
-    }
-
-    private void drainAllResults(Deque<Future<List<ReaderElement>>> pendingResults)
-            throws ExecutionException, InterruptedException {
-        while (!pendingResults.isEmpty()) {
-            Future<List<ReaderElement>> future = pendingResults.pollFirst();
-            sendToQueue(future.get());
-        }
-    }
-
-    private void sendToQueue(List<ReaderElement> entities) throws InterruptedException {
-        for (ReaderElement entity : entities) {
-            itemQueue.put(entity);
+        while (!pending.isEmpty()) {
+            resultQueue.put(pending.pollFirst().get());
         }
     }
 
