@@ -290,8 +290,7 @@ public class DefaultImportRegistry implements ImportRegistry {
         else if (VehicleSpeed.key("car").equals(name))
             return ImportUnit.create(name, props -> new DecimalEncodedValueImpl(
                             name, props.getInt("speed_bits", 7), props.getDouble("speed_factor", 2), true),
-                    (lookup, props) -> new CarAverageSpeedParser(lookup),
-                    "ferry_speed"
+                    (lookup, props) -> new CarAverageSpeedParser(lookup)
             );
         else if (VehicleSpeed.key("roads").equals(name))
             throw new IllegalArgumentException("roads_average_speed parser no longer necessary, see docs/migration/config-migration-08-09.md");
@@ -299,25 +298,24 @@ public class DefaultImportRegistry implements ImportRegistry {
             return ImportUnit.create(name, props -> new DecimalEncodedValueImpl(
                             name, props.getInt("speed_bits", 4), props.getDouble("speed_factor", 2), false),
                     (lookup, props) -> new BikeAverageSpeedParser(lookup),
-                    "ferry_speed", "smoothness"
+                    Smoothness.KEY
             );
         else if (VehicleSpeed.key("racingbike").equals(name))
             return ImportUnit.create(name, props -> new DecimalEncodedValueImpl(
                             name, props.getInt("speed_bits", 4), props.getDouble("speed_factor", 2), false),
                     (lookup, props) -> new RacingBikeAverageSpeedParser(lookup),
-                    "ferry_speed", "smoothness"
+                    Smoothness.KEY
             );
         else if (VehicleSpeed.key("mtb").equals(name))
             return ImportUnit.create(name, props -> new DecimalEncodedValueImpl(
                             name, props.getInt("speed_bits", 4), props.getDouble("speed_factor", 2), false),
                     (lookup, props) -> new MountainBikeAverageSpeedParser(lookup),
-                    "ferry_speed", "smoothness"
+                    Smoothness.KEY
             );
         else if (VehicleSpeed.key("foot").equals(name))
             return ImportUnit.create(name, props -> new DecimalEncodedValueImpl(
                             name, props.getInt("speed_bits", 4), props.getDouble("speed_factor", 1), false),
-                    (lookup, props) -> new FootAverageSpeedParser(lookup),
-                    "ferry_speed"
+                    (lookup, props) -> new FootAverageSpeedParser(lookup)
             );
         else if (VehiclePriority.key("foot").equals(name))
             return ImportUnit.create(name, props -> VehiclePriority.create("foot", 4, PriorityCode.getFactor(1), false),

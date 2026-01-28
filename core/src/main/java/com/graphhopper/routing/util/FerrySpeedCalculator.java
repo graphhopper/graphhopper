@@ -50,7 +50,7 @@ public class FerrySpeedCalculator implements TagParser {
         }
     }
 
-    public static double minmax(double speed, DecimalEncodedValue avgSpeedEnc) {
+    static double minmax(double speed, DecimalEncodedValue avgSpeedEnc) {
         return Math.max(avgSpeedEnc.getSmallestNonZeroValue(), Math.min(speed, avgSpeedEnc.getMaxStorableDecimal()));
     }
 
