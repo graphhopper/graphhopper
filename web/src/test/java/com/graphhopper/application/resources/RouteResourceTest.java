@@ -249,7 +249,7 @@ public class RouteResourceTest {
 
         InstructionList instructions = res.getInstructions();
         assertEquals(25, instructions.size());
-        assertEquals("Continue onto la Callisa", instructions.get(0).getTurnDescription(null));
+        assertEquals("Continue on la Callisa", instructions.get(0).getTurnDescription(null));
         assertEquals("At roundabout, take exit 2", instructions.get(4).getTurnDescription(null));
         assertEquals(true, instructions.get(4).getExtraInfoJSON().get("exited"));
         assertEquals(false, instructions.get(23).getExtraInfoJSON().get("exited"));
@@ -381,7 +381,7 @@ public class RouteResourceTest {
         request.setProfile("my_car");
         GHResponse rsp = hopper.route(request);
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
-        assertEquals("Continue onto Carrer Antoni Fiter i Rossell", rsp.getBest().getInstructions().get(3).getName());
+        assertEquals("Continue on Carrer Antoni Fiter i Rossell", rsp.getBest().getInstructions().get(3).getName());
 
         request.getHints().putObject("turn_description", false);
         rsp = hopper.route(request);
