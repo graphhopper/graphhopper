@@ -82,7 +82,7 @@
             <dependency>
                 <groupId>com.graphhopper.external</groupId>
                 <artifactId>jackson-datatype-jts</artifactId>
-                <version>2.19.2</version>
+                <version>2.21.0</version>
                 <exclusions>
                     <exclusion>
                         <groupId>com.fasterxml.jackson.core</groupId>
