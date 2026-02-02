@@ -483,7 +483,10 @@ public class NavigateResponseConverter {
             Instruction firstInstruction = instructions.get(index + 1);
             if (firstInstruction.getDistance() < VOICE_INSTRUCTION_MERGE_TRESHHOLD) {
                 Instruction secondInstruction = instructions.get(index + 2);
-                if (secondInstruction.getSign() != Instruction.REACHED_VIA)
+                if (secondInstruction.getSign() != Instruction.REACHED_VIA &&
+                        // USE_ROUNDABOUT already includes the exit number and street already, so do not merge them
+                        secondInstruction.getSign() != Instruction.EXIT_ROUNDABOUT)
+
                     return ", " + translationMap.getWithFallBack(locale).tr("navigate.then") + " "
                             + secondInstruction.getTurnDescription(translationMap.getWithFallBack(locale));
             }
