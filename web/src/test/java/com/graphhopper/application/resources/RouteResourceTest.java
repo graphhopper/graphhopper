@@ -251,7 +251,7 @@ public class RouteResourceTest {
         assertEquals(35, instructions.size());
         assertEquals("Continue onto la Callisa", instructions.get(0).getTurnDescription(null));
         assertEquals("At roundabout, take exit 2", instructions.get(4).getTurnDescription(null));
-        assertEquals(true, instructions.get(4).getExtraInfoJSON().get("exited"));
+        assertEquals(true, instructions.get(5).getExtraInfoJSON().get("exited"));
         assertNull(instructions.get(10).getExtraInfoJSON().get("exited"));
         assertEquals(false, instructions.get(33).getExtraInfoJSON().get("exited"));
     }

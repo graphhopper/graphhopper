@@ -1133,22 +1133,25 @@ public class PathTest {
         assertEquals("[7, 8, 9, 10]", p.calcNodes().toString());
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, manager, tr);
         assertEquals("at roundabout, take exit 1 onto Southeast in", wayList.get(1).getTurnDescription(tr));
+        assertEquals(15, wayList.stream().mapToDouble(Instruction::getDistance).sum());
 
         p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED).calcPath(10, 1);
         assertEquals("[10, 9, 5, 3, 2, 1]", p.calcNodes().toString());
         wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, manager, tr);
         assertEquals("at roundabout, take exit 2 onto Nordwest, foot-only", wayList.get(1).getTurnDescription(tr));
+        assertEquals(25, wayList.stream().mapToDouble(Instruction::getDistance).sum());
 
         p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED).calcPath(10, 4);
         assertEquals("[10, 9, 5, 3, 4]", p.calcNodes().toString());
         wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, manager, tr);
         assertEquals("at roundabout, take exit 1 onto Nordeast in", wayList.get(1).getTurnDescription(tr));
+        assertEquals(20, wayList.stream().mapToDouble(Instruction::getDistance).sum());
 
         p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED).calcPath(10, 6);
         assertEquals("[10, 9, 5, 6]", p.calcNodes().toString());
         wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, manager, tr);
         assertEquals("at roundabout, take exit 1 onto Nordeast out", wayList.get(1).getTurnDescription(tr));
-        assertEquals("at roundabout, take exit 1 onto Nordeast out", wayList.get(1).getTurnDescription(tr));
+        assertEquals(15, wayList.stream().mapToDouble(Instruction::getDistance).sum());
     }
 
     static class AccessWeighting implements Weighting {

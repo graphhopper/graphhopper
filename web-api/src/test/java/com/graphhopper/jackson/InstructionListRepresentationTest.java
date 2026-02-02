@@ -43,8 +43,7 @@ public class InstructionListRepresentationTest {
         RoundaboutInstruction instr = new RoundaboutInstruction(Instruction.USE_ROUNDABOUT, "streetname", pl)
                 .setDirOfRotation(-0.1)
                 .setRadian(-Math.PI + 1)
-                .setExitNumber(2)
-                .setExited();
+                .setExitNumber(2);
         il.add(instr);
         assertEquals(objectMapper.readTree(getClass().getClassLoader().getResourceAsStream("fixtures/roundabout1.json")).toString(), objectMapper.valueToTree(il).toString());
     }
@@ -62,8 +61,7 @@ public class InstructionListRepresentationTest {
         pl.add(52.514, 13.351);
         RoundaboutInstruction instr = new RoundaboutInstruction(Instruction.USE_ROUNDABOUT, "streetname", pl)
                 .setRadian(-Math.PI + 1)
-                .setExitNumber(2)
-                .setExited();
+                .setExitNumber(2);
         il.add(instr);
         assertEquals(objectMapper.readTree(getClass().getClassLoader().getResourceAsStream("fixtures/roundabout2.json")).toString(), objectMapper.valueToTree(il).toString());
     }

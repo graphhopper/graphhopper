@@ -560,9 +560,9 @@ public class NavigateResponseConverter {
         if (modifier != null)
             singleBannerInstruction.put("modifier", modifier);
 
-        if (instruction.getSign() == Instruction.USE_ROUNDABOUT || instruction.getSign() == Instruction.EXIT_ROUNDABOUT) {
-            if (instruction instanceof RoundaboutInstruction) {
-                double turnAngle = ((RoundaboutInstruction) instruction).getTurnAngle();
+        if (instruction.getSign() == Instruction.USE_ROUNDABOUT) {
+            if (instruction instanceof RoundaboutInstruction ri) {
+                double turnAngle = ri.getTurnAngle();
                 if (Double.isNaN(turnAngle)) {
                     singleBannerInstruction.putNull("degrees");
                 } else {
@@ -652,7 +652,7 @@ public class NavigateResponseConverter {
             case Instruction.TURN_SHARP_RIGHT:
                 return "sharp right";
             case Instruction.USE_ROUNDABOUT:
-                // TODO: This might be an issue in left-handed traffic, because there it schould
+                // TODO: This might be an issue in left-handed traffic, because there it should
                 // be left
                 return "right";
             default:

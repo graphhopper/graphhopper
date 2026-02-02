@@ -100,11 +100,6 @@ public class ResponsePathDeserializerHelper {
                             ri.setExitNumber(jsonObj.get("exit_number").asInt());
                         }
 
-                        if (jsonObj.has("exited")) {
-                            if (jsonObj.get("exited").asBoolean())
-                                ri.setExited();
-                        }
-
                         if (jsonObj.has("turn_angle")) {
                             // TODO provide setTurnAngle setter
                             double angle = jsonObj.get("turn_angle").asDouble();

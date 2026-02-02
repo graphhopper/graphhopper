@@ -27,16 +27,14 @@ public class RoundaboutInstruction extends Instruction {
     private int exitNumber = 0;
     // 0 undetermined, 1 clockwise, -1 counterclockwise, 2 inconsistent
     private int clockwise = 0;
-    private boolean exited = false;
     private double radian = Double.NaN;
 
     public RoundaboutInstruction(int sign, String name, PointList pl) {
         super(sign, name, pl);
     }
 
-    public RoundaboutInstruction increaseExitNumber() {
+    public void increaseExitNumber() {
         this.exitNumber += 1;
-        return this;
     }
 
     public RoundaboutInstruction setDirOfRotation(double deltaIn) {
@@ -51,18 +49,7 @@ public class RoundaboutInstruction extends Instruction {
         return this;
     }
 
-    public RoundaboutInstruction setExited() {
-        exited = true;
-        return this;
-    }
-
-    public boolean isExited() {
-        return exited;
-    }
-
     public int getExitNumber() {
-        if (exited && exitNumber == 0)
-            return 1; // special case: we leave at a way without car_access
         return exitNumber;
     }
 
@@ -98,7 +85,7 @@ public class RoundaboutInstruction extends Instruction {
     public Map<String, Object> getExtraInfoJSON() {
         Map<String, Object> tmpMap = new HashMap<>(3);
         if (getSign() == USE_ROUNDABOUT) tmpMap.put("exit_number", getExitNumber());
-        tmpMap.put("exited", this.exited);
+        tmpMap.put("exited", getSign() == EXIT_ROUNDABOUT);
         double tmpAngle = getTurnAngle();
         if (!Double.isNaN(tmpAngle))
             tmpMap.put("turn_angle", Helper.round(tmpAngle, 2));
@@ -116,7 +103,7 @@ public class RoundaboutInstruction extends Instruction {
         String streetName = _getName();
         int sign = getSign();
         if (sign == Instruction.USE_ROUNDABOUT) {
-            if (!exited) {
+            if (exitNumber == 0) {
                 str = tr.tr("roundabout_enter");
             } else {
                 str = Helper.isEmpty(streetName) ? tr.tr("roundabout_exit", getExitNumber())

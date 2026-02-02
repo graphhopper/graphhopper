@@ -223,7 +223,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                 }
             }
 
-        } else if (prevInRoundabout) //previously in roundabout but not anymore
+        } else if (prevInRoundabout) // exit roundabout
         {
             prevInstruction.setName(name);
             prevInstruction.setExtraInfo(STREET_REF, ref);
@@ -243,16 +243,18 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             orientation = AngleCalc.ANGLE_CALC.alignOrientation(recentOrientation, orientation);
             double deltaOut = (orientation - recentOrientation);
 
-            ((RoundaboutInstruction) prevInstruction)
-                    .setRadian(deltaInOut)
-                    .setDirOfRotation(deltaOut)
-                    .setExited();
+            RoundaboutInstruction rInstr = (RoundaboutInstruction) prevInstruction;
+            rInstr.setRadian(deltaInOut).setDirOfRotation(deltaOut);
 
-            prevInstruction = new RoundaboutInstruction(EXIT_ROUNDABOUT, name, new PointList(10, nodeAccess.is3D()))
-                    .setRadian(deltaInOut)
-                    .setDirOfRotation(deltaOut)
-                    .setExited();
+            // we use an exit that is not considered as it is inaccessible by car (#3081)
+            if(rInstr.getExitNumber() == 0) rInstr.increaseExitNumber();
+
+            prevInstruction = new RoundaboutInstruction(EXIT_ROUNDABOUT, name, new PointList(10, nodeAccess.is3D()));
+            // do not set radian and dir of rotation as exit should not have to know exit_number, turn_angle or dirOfRotation.
+
             ways.add(prevInstruction);
+            prevInstructionPrevOrientation = prevOrientation;
+            prevOrientation = orientation;
             prevInstructionName = prevName;
             prevName = name;
             prevRoadEnv = roadEnv;
@@ -304,7 +306,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                     prevInstruction.setName(name);
                 } else {
                     prevInstruction = new Instruction(sign, name, new PointList(10, nodeAccess.is3D()));
-                    // Remember the Orientation and name of the road, before doing this maneuver
+                    // Remember the orientation and name of the road, before doing this maneuver
                     prevInstructionPrevOrientation = prevOrientation;
                     prevInstructionName = prevName;
                     ways.add(prevInstruction);
@@ -348,7 +350,6 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             orientation = AngleCalc.ANGLE_CALC.alignOrientation(prevOrientation, orientation);
             double delta = (orientation - prevOrientation);
             ((RoundaboutInstruction) prevInstruction).setRadian(delta);
-
         }
 
         Instruction finishInstruction = new FinishInstruction(nodeAccess, prevEdge.getAdjNode());
