@@ -19,6 +19,7 @@ package com.graphhopper.util.shapes;
 
 import com.graphhopper.util.NumHelper;
 import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.geom.Coordinate;
 
 import java.util.Locale;
 
@@ -35,6 +36,10 @@ public class GHPoint {
     public GHPoint(double lat, double lon) {
         this.lat = lat;
         this.lon = lon;
+    }
+
+    public static GHPoint create(Coordinate coordinate) {
+        return new GHPoint(coordinate.y, coordinate.x);
     }
 
     public static GHPoint create(Point point) {
