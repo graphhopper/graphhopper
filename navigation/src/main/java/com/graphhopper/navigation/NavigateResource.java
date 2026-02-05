@@ -186,7 +186,7 @@ public class NavigateResource {
 
         if (request.getPathDetails().isEmpty()) {
             if (graphHopper.getEncodingManager().hasEncodedValue(MaxSpeed.KEY))
-                request.setPathDetails(List.of(INTERSECTION, MaxSpeed.KEY, DISTANCE, TIME, AVERAGE_SPEED));
+                request.setPathDetails(List.of(INTERSECTION, MaxSpeed.KEY, TIME, AVERAGE_SPEED));
             else
                 request.setPathDetails(List.of(INTERSECTION));
         }
