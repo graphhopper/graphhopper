@@ -130,7 +130,7 @@ public class NavigateResponseConverter {
                     case Instruction.REACHED_VIA, Instruction.FINISH:
                         maneuverType = ManeuverType.ARRIVE;
                         break;
-                    case Instruction.USE_ROUNDABOUT, Instruction.EXIT_ROUNDABOUT:
+                    case Instruction.ROUNDABOUT_USE, Instruction.ROUNDABOUT_EXIT:
                         maneuverType = ManeuverType.ROUNDABOUT;
                         break;
                     default:
@@ -509,8 +509,8 @@ public class NavigateResponseConverter {
             if (firstInstruction.getDistance() < VOICE_INSTRUCTION_MERGE_TRESHHOLD) {
                 Instruction secondInstruction = instructions.get(index + 2);
                 if (secondInstruction.getSign() != Instruction.REACHED_VIA &&
-                        // USE_ROUNDABOUT already includes the exit number and street already, so do not merge them
-                        secondInstruction.getSign() != Instruction.EXIT_ROUNDABOUT)
+                        // ROUNDABOUT_USE includes the exit number and street already, so do not merge them
+                        secondInstruction.getSign() != Instruction.ROUNDABOUT_EXIT)
                     return ", " + translationMap.getWithFallBack(locale).tr("navigate.then") + " "
                             + secondInstruction.getTurnDescription(translationMap.getWithFallBack(locale));
             }
@@ -587,7 +587,7 @@ public class NavigateResponseConverter {
         if (modifier != null)
             singleBannerInstruction.put("modifier", modifier);
 
-        if (instruction.getSign() == Instruction.USE_ROUNDABOUT
+        if (instruction.getSign() == Instruction.ROUNDABOUT_USE
                 && instruction instanceof RoundaboutInstruction ri) {
             double turnAngle = ri.getTurnAngle();
             if (Double.isNaN(turnAngle)) {
@@ -617,9 +617,11 @@ public class NavigateResponseConverter {
                 maneuver.put("type", "depart");
                 break;
             case ROUNDABOUT:
-                maneuver.put("type", "roundabout");
-                if (instruction.getSign() == Instruction.USE_ROUNDABOUT)
+                if (instruction.getSign() == Instruction.ROUNDABOUT_USE) {
                     maneuver.put("exit", ((RoundaboutInstruction) instruction).getExitNumber());
+                    maneuver.put("type", "roundabout");
+                } else
+                    maneuver.put("type", "exit roundabout");
                 break;
             default: // i.e. ManeuverType.TURN:
                 maneuver.put("type", "turn");
@@ -628,8 +630,8 @@ public class NavigateResponseConverter {
         if (modifier != null)
             maneuver.put("modifier", modifier);
         maneuver.put("instruction", instruction.getTurnDescription(translationMap.getWithFallBack(locale)));
-
     }
+
     /**
      * Relevant turn types for banners are:
      * turn (regular turns)
@@ -644,9 +646,9 @@ public class NavigateResponseConverter {
             case Instruction.FINISH:
             case Instruction.REACHED_VIA:
                 return "arrive";
-            case Instruction.USE_ROUNDABOUT:
+            case Instruction.ROUNDABOUT_USE:
                 return "roundabout";
-            case Instruction.EXIT_ROUNDABOUT:
+            case Instruction.ROUNDABOUT_EXIT:
                 return "exit roundabout";
             default:
                 return "turn";
@@ -681,7 +683,7 @@ public class NavigateResponseConverter {
                 return "right";
             case Instruction.TURN_SHARP_RIGHT:
                 return "sharp right";
-            case Instruction.USE_ROUNDABOUT:
+            case Instruction.ROUNDABOUT_EXIT, Instruction.ROUNDABOUT_USE:
                 // TODO: This might be an issue in left-handed traffic, because there it should
                 // be left
                 return "right";

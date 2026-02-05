@@ -1,5 +1,6 @@
 ### 12.0 [not yet released]
 
+- roundabout instruction is now split into two instructions: the first one has turn_angle and the second has exited==true
 - OSMReader no longer sets the artificial speed_from_duration tag but instead uses duration_in_seconds, when the duration tag is present (#3266)
 - country rules were moved into parsers and are now enabled by default
 - speeds generated from highway class now respects country-specific default speed limits, but the max_speed encoded value is now required; see #3249

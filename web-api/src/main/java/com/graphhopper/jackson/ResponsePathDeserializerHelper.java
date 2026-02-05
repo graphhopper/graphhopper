@@ -93,11 +93,16 @@ public class ResponsePathDeserializerHelper {
                     }
 
                     Instruction instr;
-                    if (sign == Instruction.USE_ROUNDABOUT || sign == Instruction.EXIT_ROUNDABOUT) {
+                    if (sign == Instruction.ROUNDABOUT_USE || sign == Instruction.ROUNDABOUT_EXIT) {
                         RoundaboutInstruction ri = new RoundaboutInstruction(sign, text, instPL);
 
                         if (jsonObj.has("exit_number")) {
                             ri.setExitNumber(jsonObj.get("exit_number").asInt());
+                        }
+
+                        if (jsonObj.has("exited")) {
+                            if (jsonObj.get("exited").asBoolean())
+                                ri.setExited();
                         }
 
                         if (jsonObj.has("turn_angle")) {

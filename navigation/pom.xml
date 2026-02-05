@@ -30,6 +30,12 @@
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-core</artifactId>
         </dependency>
+        <dependency>
+            <groupId>io.dropwizard</groupId>
+            <artifactId>dropwizard-testing</artifactId>
+            <version>5.0.1</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
 </project>

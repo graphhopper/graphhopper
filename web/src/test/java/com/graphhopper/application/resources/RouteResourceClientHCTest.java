@@ -192,10 +192,10 @@ public class RouteResourceClientHCTest {
         int counter = 0;
         for (Instruction i : res.getBest().getInstructions()) {
             if (i instanceof RoundaboutInstruction ri) {
-                if (ri.getSign() == USE_ROUNDABOUT) {
+                if (ri.getSign() == ROUNDABOUT_USE) {
                     counter++;
                     assertEquals(-5, ri.getTurnAngle(), 0.1, "turn_angle was incorrect:" + ri.getTurnAngle());
-                } else if (ri.getSign() == EXIT_ROUNDABOUT) {
+                } else if (ri.getSign() == ROUNDABOUT_EXIT) {
                     counter++;
                     // This route contains only one roundabout and no (via) point in a roundabout
                     assertTrue((Boolean) ri.getExtraInfoJSON().get("exited"), "exited was incorrect:" + ri.getExtraInfoJSON().get("exited"));

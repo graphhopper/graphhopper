@@ -40,14 +40,14 @@ public class InstructionListRepresentationTest {
         pl.add(52.514, 13.349);
         pl.add(52.5135, 13.35);
         pl.add(52.514, 13.351);
-        RoundaboutInstruction instr = new RoundaboutInstruction(Instruction.USE_ROUNDABOUT, "streetname", pl)
+        RoundaboutInstruction instr = new RoundaboutInstruction(Instruction.ROUNDABOUT_USE, "streetname", pl)
                 .setDirOfRotation(-0.1)
                 .setRadian(-Math.PI + 1)
-                .setExitNumber(2);
+                .setExitNumber(2)
+                .setExited();
         il.add(instr);
         assertEquals(objectMapper.readTree(getClass().getClassLoader().getResourceAsStream("fixtures/roundabout1.json")).toString(), objectMapper.valueToTree(il).toString());
     }
-
 
     // Roundabout with unknown dir of rotation
     @Test
@@ -59,9 +59,10 @@ public class InstructionListRepresentationTest {
         pl.add(52.514, 13.349);
         pl.add(52.5135, 13.35);
         pl.add(52.514, 13.351);
-        RoundaboutInstruction instr = new RoundaboutInstruction(Instruction.USE_ROUNDABOUT, "streetname", pl)
+        RoundaboutInstruction instr = new RoundaboutInstruction(Instruction.ROUNDABOUT_USE, "streetname", pl)
                 .setRadian(-Math.PI + 1)
-                .setExitNumber(2);
+                .setExitNumber(2)
+                .setExited();
         il.add(instr);
         assertEquals(objectMapper.readTree(getClass().getClassLoader().getResourceAsStream("fixtures/roundabout2.json")).toString(), objectMapper.valueToTree(il).toString());
     }

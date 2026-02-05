@@ -27,6 +27,7 @@ public class RoundaboutInstruction extends Instruction {
     private int exitNumber = 0;
     // 0 undetermined, 1 clockwise, -1 counterclockwise, 2 inconsistent
     private int clockwise = 0;
+    private boolean exited = false;
     private double radian = Double.NaN;
 
     public RoundaboutInstruction(int sign, String name, PointList pl) {
@@ -46,6 +47,11 @@ public class RoundaboutInstruction extends Instruction {
                 clockwise = 2;
             }
         }
+        return this;
+    }
+
+    public RoundaboutInstruction setExited() {
+        exited = true;
         return this;
     }
 
@@ -84,8 +90,8 @@ public class RoundaboutInstruction extends Instruction {
     @Override
     public Map<String, Object> getExtraInfoJSON() {
         Map<String, Object> tmpMap = new HashMap<>(3);
-        if (getSign() == USE_ROUNDABOUT) tmpMap.put("exit_number", getExitNumber());
-        tmpMap.put("exited", getSign() == EXIT_ROUNDABOUT);
+        if (getSign() == ROUNDABOUT_USE) tmpMap.put("exit_number", getExitNumber());
+        tmpMap.put("exited", this.exited);
         double tmpAngle = getTurnAngle();
         if (!Double.isNaN(tmpAngle))
             tmpMap.put("turn_angle", Helper.round(tmpAngle, 2));
@@ -102,14 +108,14 @@ public class RoundaboutInstruction extends Instruction {
         String str;
         String streetName = _getName();
         int sign = getSign();
-        if (sign == Instruction.USE_ROUNDABOUT) {
+        if (sign == Instruction.ROUNDABOUT_USE) {
             if (exitNumber == 0) {
                 str = tr.tr("roundabout_enter");
             } else {
                 str = Helper.isEmpty(streetName) ? tr.tr("roundabout_exit", getExitNumber())
                         : tr.tr("roundabout_exit_onto", getExitNumber(), streetName);
             }
-        } else if (sign == Instruction.EXIT_ROUNDABOUT) {
+        } else if (sign == Instruction.ROUNDABOUT_EXIT) {
             str = Helper.isEmpty(streetName) ? tr.tr("roundabout_exit_now")
                     : tr.tr("roundabout_exit_onto_now", streetName);
         } else {

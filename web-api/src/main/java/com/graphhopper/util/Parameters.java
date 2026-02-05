@@ -103,6 +103,7 @@ public class Parameters {
          * if true the response will contain turn instructions
          */
         public static final String INSTRUCTIONS = "instructions";
+        public static final String ROUNDABOUT_EXITS = "roundabout_exits";
         public static final String INIT_INSTRUCTIONS = ROUTING_INIT_PREFIX + "instructions";
         /**
          * if true the response will contain a point list

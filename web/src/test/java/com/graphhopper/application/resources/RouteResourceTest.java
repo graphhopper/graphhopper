@@ -67,24 +67,14 @@ import static org.junit.jupiter.api.Assertions.*;
 @ExtendWith(DropwizardExtensionsSupport.class)
 public class RouteResourceTest {
 
-    // for this test we use a non-standard profile name
-    private static final Map<String, String> mapboxResolver = new HashMap<String, String>() {
-        {
-            put("driving", "my_car");
-            put("driving-traffic", "my_car");
-        }
-    };
-
     private static final String DIR = "./target/andorra-gh/";
     private static final DropwizardAppExtension<GraphHopperServerConfiguration> app = new DropwizardAppExtension<>(GraphHopperApplication.class, createConfig());
 
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("profiles_mapbox", mapboxResolver).
                 putObject("prepare.min_network_size", 0).
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
-                putObject("graph.encoded_values", "road_class,surface,road_environment,max_speed,country").
                 putObject("max_speed_calculator.enabled", true).
                 putObject("graph.urban_density.threads", 1). // for max_speed_calculator
                 putObject("graph.urban_density.city_radius", 0).
@@ -146,15 +136,6 @@ public class RouteResourceTest {
         jsonStr = "{\"points\": [[1.536198,42.554851], [1.548128, 42.510071]], \"profile\": \"my_car\" }";
         json = clientTarget(app, "/route?vehicle=unknown&weighting=unknown").request().post(Entity.json(jsonStr), JsonNode.class);
         assertFalse(json.get("info").has("errors"));
-    }
-
-    @Test
-    public void testBasicNavigationQuery() {
-        JsonNode json = clientTarget(app, "/navigate/directions/v5/gh/driving/1.537174,42.507145;1.539116,42.511368?" +
-                "access_token=pk.my_api_key&alternatives=true&geometries=polyline6&overview=full&steps=true&continue_straight=true&" +
-                "annotations=congestion%2Cdistance&language=en&roundabout_exits=true&voice_instructions=true&banner_instructions=true&voice_units=metric").
-                request().get(JsonNode.class);
-        assertEquals(1256, json.get("routes").get(0).get("distance").asDouble(), 20);
     }
 
     @Test

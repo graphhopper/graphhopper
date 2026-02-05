@@ -27,7 +27,7 @@ public class Instruction {
     public static final int U_TURN_UNKNOWN = -98;
     public static final int U_TURN_LEFT = -8;
     public static final int KEEP_LEFT = -7;
-    public static final int EXIT_ROUNDABOUT = -6;
+    public static final int ROUNDABOUT_EXIT = -6;
     public static final int TURN_SHARP_LEFT = -3;
     public static final int TURN_LEFT = -2;
     public static final int TURN_SLIGHT_LEFT = -1;
@@ -37,7 +37,7 @@ public class Instruction {
     public static final int TURN_SHARP_RIGHT = 3;
     public static final int FINISH = 4;
     public static final int REACHED_VIA = 5;
-    public static final int USE_ROUNDABOUT = 6;
+    public static final int ROUNDABOUT_USE = 6;
     public static final int IGNORE = Integer.MIN_VALUE;
     public static final int KEEP_RIGHT = 7;
     public static final int U_TURN_RIGHT = 8;
