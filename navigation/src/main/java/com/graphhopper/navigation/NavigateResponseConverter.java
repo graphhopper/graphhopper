@@ -312,9 +312,9 @@ public class NavigateResponseConverter {
     }
 
     /**
-     * filter the IntersectionDetails.
+     * Merge the IntersectionDetails:
      * <p>
-     * first job is to find the interesting part in the interSectionDetails based on
+     * The first job is to find the interesting part in the interSectionDetails based on
      * pointIndexFrom and pointIndexTo.
      * <p>
      * Next job is to eliminate intersections colocated in the same point
@@ -442,10 +442,10 @@ public class NavigateResponseConverter {
         }
 
         // preprocess intersectionDetails
-        List<PathDetail> filteredIntersectionDetails = mergeIntersectionDetails(points, intersectionDetails,
+        List<PathDetail> mergedIntersectionDetails = mergeIntersectionDetails(points, intersectionDetails,
                 pointIndexFrom, pointIndexTo);
 
-        for (PathDetail intersectionDetail : filteredIntersectionDetails) {
+        for (PathDetail intersectionDetail : mergedIntersectionDetails) {
             ObjectNode intersection = intersections.addObject();
             Map<String, Object> intersectionValue = (Map<String, Object>) intersectionDetail.getValue();
             // Location
