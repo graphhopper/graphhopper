@@ -431,22 +431,29 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                     || InstructionsHelper.isSameName(otherContinue.getName(), prevName)
                     || !outgoingEdgesAreSlower) {
 
+                GHPoint tmpPoint = InstructionsHelper.getPointForOrientationCalculation(otherContinue, nodeAccess);
+                double otherDelta = InstructionsHelper.calculateOrientationDelta(prevLat, prevLon, tmpPoint.getLat(), tmpPoint.getLon(), prevOrientation);
+
                 final RoadClass roadClass = edge.get(roadClassEnc);
                 final RoadClass prevRoadClass = prevEdge.get(roadClassEnc);
                 final RoadClass otherRoadClass = otherContinue.get(roadClassEnc);
                 final boolean link = edge.get(roadClassLinkEnc);
                 final boolean prevLink = prevEdge.get(roadClassLinkEnc);
                 final boolean otherLink = otherContinue.get(roadClassLinkEnc);
+                final double OBVIOUS_EXIT = 0.22;
+
                 // We know this is a fork, but we only need an instruction if highways are actually changing,
                 // this approach only works for major roads, for minor roads it can be hard to differentiate easily in real life
                 if (roadClass == RoadClass.MOTORWAY || roadClass == RoadClass.TRUNK || roadClass == RoadClass.PRIMARY || roadClass == RoadClass.SECONDARY || roadClass == RoadClass.TERTIARY) {
                     if ((roadClass == prevRoadClass && link == prevLink) && (otherRoadClass != prevRoadClass || otherLink != prevLink)) {
-                        return Instruction.IGNORE;
+                        if (!(roadClass == RoadClass.MOTORWAY || roadClass == RoadClass.TRUNK)) {
+                            return Instruction.IGNORE;
+                        }
+                        if (Math.abs(otherDelta) > OBVIOUS_EXIT) {
+                            return Instruction.IGNORE;
+                        }
                     }
                 }
-
-                GHPoint tmpPoint = InstructionsHelper.getPointForOrientationCalculation(otherContinue, nodeAccess);
-                double otherDelta = InstructionsHelper.calculateOrientationDelta(prevLat, prevLon, tmpPoint.getLat(), tmpPoint.getLon(), prevOrientation);
 
                 // This is required to avoid keep left/right on the motorway at off-ramps/motorway_links
                 if (Math.abs(delta) < .1 && Math.abs(otherDelta) > .15 && InstructionsHelper.isSameName(name, prevName)) {
