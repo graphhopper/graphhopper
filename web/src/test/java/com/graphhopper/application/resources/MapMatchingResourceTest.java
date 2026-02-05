@@ -33,8 +33,8 @@ import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKTReader;
 
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.Response;
 import java.io.File;
 import java.util.Arrays;
 
@@ -77,7 +77,7 @@ public class MapMatchingResourceTest {
 
         LineString expectedGeometry = readWktLineString("LINESTRING (12.3607 51.34365, 12.36418 51.34443, 12.36379 51.34538, 12.36082 51.34471, 12.36188 51.34278)");
         LineString actualGeometry = ResponsePathDeserializerHelper.decodePolyline(path.get("points").asText(), 10, false, 1e5).toLineString(false);
-        assertEquals(DiscreteHausdorffDistance.distance(expectedGeometry, actualGeometry), 0.0, 1E-4);
+        assertEquals(0.0, DiscreteHausdorffDistance.distance(expectedGeometry, actualGeometry), 1E-4);
         assertEquals(101, path.get("time").asLong() / 1000f, 1);
         assertEquals(101, json.get("map_matching").get("time").asLong() / 1000f, 1);
         assertEquals(812, path.get("distance").asDouble(), 1);
@@ -94,7 +94,7 @@ public class MapMatchingResourceTest {
 
         LineString expectedGeometry = (LineString) wktReader.read("LINESTRING (12.3607 51.34365, 12.36418 51.34443, 12.36379 51.34538, 12.36082 51.34471, 12.36188 51.34278)");
         LineString actualGeometry = ResponsePathDeserializerHelper.decodePolyline(path.get("points").asText(), 10, false, 1e5).toLineString(false);
-        assertEquals(DiscreteHausdorffDistance.distance(expectedGeometry, actualGeometry), 0.0, 1E-4);
+        assertEquals(0.0, DiscreteHausdorffDistance.distance(expectedGeometry, actualGeometry), 1E-4);
 
         // ensure that is actually also is bike! (slower than car)
         assertEquals(162, path.get("time").asLong() / 1000f, 1);

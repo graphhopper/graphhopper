@@ -124,8 +124,8 @@ class QueryOverlayBuilder {
                 // we can expect at least one entry in the results
                 EdgeIteratorState closestEdge = results.get(0).getClosestEdge();
                 final PointList fullPL = closestEdge.fetchWayGeometry(FetchMode.ALL);
-                int baseNode = closestEdge.getBaseNode();
-                Collections.sort(results, new Comparator<Snap>() {
+                final int baseNode = closestEdge.getBaseNode();
+                results.sort(new Comparator<>() {
                     @Override
                     public int compare(Snap o1, Snap o2) {
                         int diff = Integer.compare(o1.getWayIndex(), o2.getWayIndex());
@@ -145,9 +145,9 @@ class QueryOverlayBuilder {
                 });
 
                 GHPoint3D prevPoint = fullPL.get(0);
-                int adjNode = closestEdge.getAdjNode();
-                int origEdgeKey = closestEdge.getEdgeKey();
-                int origRevEdgeKey = closestEdge.getReverseEdgeKey();
+                final int adjNode = closestEdge.getAdjNode();
+                final int origEdgeKey = closestEdge.getEdgeKey();
+                final int origRevEdgeKey = closestEdge.getReverseEdgeKey();
                 int prevWayIndex = 1;
                 int prevNodeId = baseNode;
                 int virtNodeId = queryOverlay.getVirtualNodes().size() + firstVirtualNodeId;

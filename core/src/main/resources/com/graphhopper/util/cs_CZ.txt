@@ -55,6 +55,7 @@ web.steep_sections=příkré úseky
 web.private_sections=soukromé úseky
 web.restricted_sections=
 web.challenging_sections=
+web.dangerous_sections=
 web.trunk_roads_warn=
 web.get_off_bike_for=Je třeba sesednout z kola a %1$s jej tlačit
 pt_transfer_to=přestupte na %1$s

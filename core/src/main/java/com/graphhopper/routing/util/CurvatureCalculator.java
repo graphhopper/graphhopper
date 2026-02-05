@@ -21,8 +21,10 @@ public class CurvatureCalculator implements TagParser {
         PointList pointList = way.getTag("point_list", null);
         Double edgeDistance = way.getTag("edge_distance", null);
         if (pointList != null && edgeDistance != null && !pointList.isEmpty()) {
-            double beeline = DistanceCalcEarth.DIST_EARTH.calcDist(pointList.getLat(0), pointList.getLon(0),
-                    pointList.getLat(pointList.size() - 1), pointList.getLon(pointList.size() - 1));
+            double lat0 = pointList.getLat(0), lon0 = pointList.getLon(0);
+            double latEnd = pointList.getLat(pointList.size() - 1), lonEnd = pointList.getLon(pointList.size() - 1);
+            double beeline = pointList.is3D() ? DistanceCalcEarth.DIST_EARTH.calcDist3D(lat0, lon0, pointList.getEle(0), latEnd, lonEnd, pointList.getEle(pointList.size() - 1))
+                    : DistanceCalcEarth.DIST_EARTH.calcDist(lat0, lon0, latEnd, lonEnd);
             // For now keep the formula simple. Maybe later use quadratic value as it might improve the "resolution"
             double curvature = beeline / edgeDistance;
             curvatureEnc.setDecimal(false, edgeId, edgeIntAccess, Math.max(curvatureEnc.getMinStorableDecimal(), Math.min(curvatureEnc.getMaxStorableDecimal(),

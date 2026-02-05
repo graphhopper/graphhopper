@@ -48,6 +48,8 @@ import static com.graphhopper.util.Parameters.Details.STREET_NAME;
  */
 public class BaseGraph implements Graph, Closeable {
     final static long MAX_UNSIGNED_INT = 0xFFFF_FFFFL;
+    private static final int MAX_PILLAR_NODES = 65535;
+    private static final int GEOMETRY_HEADER_BYTES = 2;
     final BaseGraphNodesAndEdges store;
     final NodeAccess nodeAccess;
     final KVStorage edgeKVStorage;
@@ -57,21 +59,19 @@ public class BaseGraph implements Graph, Closeable {
     // length | nodeA | nextNode | ... | nodeB
     private final DataAccess wayGeometry;
     private final Directory dir;
-    private final int segmentSize;
     private boolean initialized = false;
     private long minGeoRef;
     private long maxGeoRef;
     private final int eleBytesPerCoord;
 
-    public BaseGraph(Directory dir, boolean withElevation, boolean withTurnCosts, int segmentSize, int bytesForFlags) {
+    public BaseGraph(Directory dir, boolean withElevation, boolean withTurnCosts, int bytesForFlags) {
         this.dir = dir;
         this.bitUtil = BitUtil.LITTLE;
-        this.wayGeometry = dir.create("geometry", segmentSize);
+        this.wayGeometry = dir.create("geometry");
         this.edgeKVStorage = new KVStorage(dir, true);
-        this.store = new BaseGraphNodesAndEdges(dir, withElevation, withTurnCosts, segmentSize, bytesForFlags);
+        this.store = new BaseGraphNodesAndEdges(dir, withElevation, withTurnCosts, bytesForFlags);
         this.nodeAccess = new GHNodeAccess(store);
-        this.segmentSize = segmentSize;
-        this.turnCostStorage = withTurnCosts ? new TurnCostStorage(this, dir.create("turn_costs", dir.getDefaultType("turn_costs", true), segmentSize)) : null;
+        this.turnCostStorage = withTurnCosts ? new TurnCostStorage(this, dir.create("turn_costs", dir.getDefaultType("turn_costs", true))) : null;
         this.eleBytesPerCoord = (nodeAccess.getDimension() == 3 ? 3 : 0);
     }
 
@@ -150,6 +150,10 @@ public class BaseGraph implements Graph, Closeable {
     @Override
     public int getEdges() {
         return store.getEdges();
+    }
+
+    public int getEdgeKeys() {
+        return 2 * store.getEdges();
     }
 
     @Override
@@ -474,7 +478,7 @@ public class BaseGraph implements Graph, Closeable {
                     throw new IllegalStateException("This edge already has a way geometry so it cannot be changed to a bigger geometry, pointer=" + edgePointer);
                 }
             }
-            long nextGeoRef = nextGeoRef(3 + len * (8 + eleBytesPerCoord));
+            long nextGeoRef = nextGeoRef(GEOMETRY_HEADER_BYTES + len * (8 + eleBytesPerCoord));
             setWayGeometryAtGeoRef(pillarNodes, edgePointer, reverse, nextGeoRef);
         } else {
             store.setGeoRef(edgePointer, 0L);
@@ -494,16 +498,19 @@ public class BaseGraph implements Graph, Closeable {
 
     private byte[] createWayGeometryBytes(PointList pillarNodes, boolean reverse) {
         int len = pillarNodes.size();
-        int totalLen = 3 + len * (8 + eleBytesPerCoord);
-        if ((totalLen & 0xFF00_0000) != 0)
-            throw new IllegalArgumentException("too long way geometry " + totalLen + ", " + len);
+        if (len > MAX_PILLAR_NODES) throw new IllegalArgumentException("Too many pillar nodes: " + len);
+
+        // We use 2 bytes to store the node count (unsigned short)
+        // Per node we need 4 bytes for Latitude and Longitude, and possibly 3 bytes if we have elevation.
+        int totalLen = GEOMETRY_HEADER_BYTES + len * (8 + eleBytesPerCoord);
 
         byte[] bytes = new byte[totalLen];
-        bitUtil.fromUInt3(bytes, len, 0);
+        bitUtil.fromShort(bytes, (short) len, 0);
+
         if (reverse)
             pillarNodes.reverse();
 
-        int tmpOffset = 3;
+        int tmpOffset = GEOMETRY_HEADER_BYTES;
         boolean is3D = nodeAccess.is3D();
         for (int i = 0; i < len; i++) {
             double lat = pillarNodes.getLat(i);
@@ -521,7 +528,8 @@ public class BaseGraph implements Graph, Closeable {
     }
 
     private int getPillarCount(long geoRef) {
-        return (wayGeometry.getByte(geoRef + 2) & 0xFF << 16) | wayGeometry.getShort(geoRef);
+        // Read short as unsigned int
+        return wayGeometry.getShort(geoRef) & 0xFFFF;
     }
 
     private PointList fetchWayGeometry_(long edgePointer, boolean reverse, FetchMode mode, int baseNode, int adjNode) {
@@ -537,7 +545,7 @@ public class BaseGraph implements Graph, Closeable {
         byte[] bytes = null;
         if (geoRef > 0) {
             count = getPillarCount(geoRef);
-            geoRef += 3L;
+            geoRef += GEOMETRY_HEADER_BYTES;
             bytes = new byte[count * (8 + eleBytesPerCoord)];
             wayGeometry.getBytes(geoRef, bytes, bytes.length);
         } else if (mode == FetchMode.PILLAR_ONLY)
@@ -604,17 +612,12 @@ public class BaseGraph implements Graph, Closeable {
         return dir;
     }
 
-    public int getSegmentSize() {
-        return segmentSize;
-    }
-
     public static class Builder {
         private final int bytesForFlags;
-        private Directory directory = new RAMDirectory();
+        private Directory directory = new GHDirectory("", DAType.RAM);
         private boolean withElevation = false;
         private boolean withTurnCosts = false;
         private long bytes = 100;
-        private int segmentSize = -1;
 
         public Builder(EncodingManager em) {
             this(em.getBytesForFlags());
@@ -643,18 +646,13 @@ public class BaseGraph implements Graph, Closeable {
             return this;
         }
 
-        public Builder setSegmentSize(int segmentSize) {
-            this.segmentSize = segmentSize;
-            return this;
-        }
-
         public Builder setBytes(long bytes) {
             this.bytes = bytes;
             return this;
         }
 
         public BaseGraph build() {
-            return new BaseGraph(directory, withElevation, withTurnCosts, segmentSize, bytesForFlags);
+            return new BaseGraph(directory, withElevation, withTurnCosts, bytesForFlags);
         }
 
         public BaseGraph create() {
@@ -1046,21 +1044,27 @@ public class BaseGraph implements Graph, Closeable {
         @Override
         public EdgeIteratorState setKeyValues(Map<String, KVStorage.KValue> entries) {
             long pointer = baseGraph.edgeKVStorage.add(entries);
-            if (pointer > MAX_UNSIGNED_INT)
-                throw new IllegalStateException("Too many key value pairs are stored, currently limited to " + MAX_UNSIGNED_INT + " was " + pointer);
-            store.setKeyValuesRef(edgePointer, BitUtil.toSignedInt(pointer));
+            // Shift right to use 4x more address space (pointers are 4-byte aligned)
+            long shiftedPointer = pointer >> KVStorage.ALIGNMENT_SHIFT;
+            if (shiftedPointer > MAX_UNSIGNED_INT)
+                throw new IllegalStateException("Too many key value pairs are stored, currently limited to " + (MAX_UNSIGNED_INT << KVStorage.ALIGNMENT_SHIFT) + " was " + pointer);
+            store.setKeyValuesRef(edgePointer, BitUtil.toSignedInt(shiftedPointer));
             return this;
         }
 
         @Override
         public Map<String, KVStorage.KValue> getKeyValues() {
-            long kvEntryRef = Integer.toUnsignedLong(store.getKeyValuesRef(edgePointer));
+            long shiftedRef = Integer.toUnsignedLong(store.getKeyValuesRef(edgePointer));
+            // Shift left to restore the actual byte offset
+            long kvEntryRef = shiftedRef << KVStorage.ALIGNMENT_SHIFT;
             return baseGraph.edgeKVStorage.getAll(kvEntryRef);
         }
 
         @Override
         public Object getValue(String key) {
-            long kvEntryRef = Integer.toUnsignedLong(store.getKeyValuesRef(edgePointer));
+            long shiftedRef = Integer.toUnsignedLong(store.getKeyValuesRef(edgePointer));
+            // Shift left to restore the actual byte offset
+            long kvEntryRef = shiftedRef << KVStorage.ALIGNMENT_SHIFT;
             return baseGraph.edgeKVStorage.get(kvEntryRef, key, reverse);
         }
 

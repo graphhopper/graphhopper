@@ -46,9 +46,9 @@ import java.util.List;
 
 import static com.graphhopper.application.resources.Util.postWithStatus;
 import static com.graphhopper.application.util.TestUtils.clientTarget;
+import static com.graphhopper.json.Statement.ElseIf;
 import static com.graphhopper.json.Statement.If;
-import static com.graphhopper.json.Statement.Op.LIMIT;
-import static com.graphhopper.json.Statement.Op.MULTIPLY;
+import static com.graphhopper.json.Statement.Op.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(DropwizardExtensionsSupport.class)
@@ -65,18 +65,21 @@ public class RouteResourceCustomModelTest {
                 putObject("graph.location", DIR).
                 putObject("custom_areas.directory", "./src/test/resources/com/graphhopper/application/resources/areas").
                 putObject("import.osm.ignored_highways", "").
-                putObject("graph.encoded_values", "car_access, car_average_speed, road_access, " +
-                        "bike_access, bike_priority, bike_average_speed, bike_road_access, " +
+                putObject("graph.encoded_values", "car_access, car_average_speed, road_access, max_speed, " +
+                        "bike_access, bike_priority, bike_average_speed, bike_road_access, bike_network, " +
                         "foot_access, foot_priority, foot_average_speed, foot_road_access, " +
                         "max_height, max_weight, max_width, hazmat, toll, surface, track_type, hgv, " +
                         "average_slope, max_slope, bus_access, road_class, get_off_bike, roundabout, " +
-                        "country, orientation, mtb_rating, hike_rating").
+                        "country, orientation, mtb_rating, hike_rating, road_environment").
                 setProfiles(List.of(
                         TestProfiles.constantSpeed("roads", 120),
                         new Profile("car").setCustomModel(TestProfiles.accessAndSpeed("unused", "car").
                                 getCustomModel().setDistanceInfluence(70d)),
                         new Profile("car_tc_left").setCustomModel(TestProfiles.accessAndSpeed("car_tc_left", "car").
-                                getCustomModel().setDistanceInfluence(70d)).setTurnCostsConfig(new TurnCostsConfig(List.of("motor_vehicle")).setLeftTurnCosts(100.0).setSharpLeftTurnCosts(100.0)),
+                                        getCustomModel().setDistanceInfluence(70d).
+                                        addToTurnPenalty(If("change_angle <= -25 && change_angle > -80", ADD, "100")).
+                                        addToTurnPenalty(ElseIf("change_angle <= -80 && change_angle >= -180", ADD, "100"))).
+                                setTurnCostsConfig(new TurnCostsConfig(List.of("motor_vehicle"))),
                         new Profile("car_with_area").setCustomModel(TestProfiles.accessAndSpeed("unused", "car").
                                 getCustomModel().addToPriority(If("in_external_area52", MULTIPLY, "0.05"))),
                         TestProfiles.accessSpeedAndPriority("bike"),

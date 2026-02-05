@@ -1,4 +1,10 @@
-### 11.0 [not yet released]
+### 12.0 [not yet released]
+
+- OSMReader no longer sets the artificial speed_from_duration tag but instead uses duration_in_seconds, when the duration tag is present (#3266)
+- country rules were moved into parsers and are now enabled by default
+- speeds generated from highway class now respects country-specific default speed limits, but the max_speed encoded value is now required; see #3249
+
+### 11.0 [14 Oct 2025]
 
 - country-dependent toll rules are now always enabled. in the absence of explicit tags or special toll rules we use Toll.NO instead of Toll.MISSING #3111
 - max_weight_except: changed NONE to MISSING
@@ -7,6 +13,7 @@
 - car.json by default avoids private roads
 - maxspeed<5 is ignored, maxspeed=none is ignored with some exceptions, maxspeed parsing and related constants were renamed #3077
 - improved performance by sorting graph during import, #3177
+- trunk roads in Austria are no longer considered to be toll roads by default
 
 ### 10.0 [5 Nov 2024]
 

@@ -55,6 +55,7 @@ web.steep_sections=
 web.private_sections=
 web.restricted_sections=
 web.challenging_sections=
+web.dangerous_sections=
 web.trunk_roads_warn=
 web.get_off_bike_for=
 pt_transfer_to=%1$s(으)로 환승

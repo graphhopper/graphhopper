@@ -55,6 +55,7 @@ web.steep_sections=Stejle sektioner
 web.private_sections=
 web.restricted_sections=
 web.challenging_sections=
+web.dangerous_sections=
 web.trunk_roads_warn=
 web.get_off_bike_for=Føreren skal stige af og cyklen skal skubbes %1$s
 pt_transfer_to=omstigning til %1$s

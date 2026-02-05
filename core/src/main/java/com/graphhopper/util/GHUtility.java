@@ -573,7 +573,9 @@ public class GHUtility {
         return result;
     }
 
-    public static List<String> comparePaths(Path refPath, Path path, int source, int target, long seed) {
+    public static List<String> comparePaths(Path refPath, Path path, int source, int target, boolean checkNodes, long seed) {
+        if (path.getGraph() != refPath.getGraph())
+            fail("path and refPath graphs are different");
         List<String> strictViolations = new ArrayList<>();
         double refWeight = refPath.getWeight();
         double weight = path.getWeight();
@@ -589,15 +591,15 @@ public class GHUtility {
         if (Math.abs(path.getTime() - refPath.getTime()) > 50) {
             strictViolations.add("wrong time " + source + "->" + target + ", expected: " + refPath.getTime() + ", given: " + path.getTime());
         }
-        IntIndexedContainer refNodes = refPath.calcNodes();
-        IntIndexedContainer pathNodes = path.calcNodes();
-        if (!refNodes.equals(pathNodes)) {
-            // sometimes there are paths including an edge a-c that has the same distance as the two edges a-b-c. in this
-            // case both options are valid best paths. we only check for this most simple and frequent case here...
-            if (path.getGraph() != refPath.getGraph())
-                fail("path and refPath graphs are different");
-            if (!pathsEqualExceptOneEdge(path.getGraph(), refNodes, pathNodes))
-                strictViolations.add("wrong nodes " + source + "->" + target + "\nexpected: " + refNodes + "\ngiven:    " + pathNodes);
+        if (checkNodes) {
+            IntIndexedContainer refNodes = refPath.calcNodes();
+            IntIndexedContainer pathNodes = path.calcNodes();
+            if (!refNodes.equals(pathNodes)) {
+                // sometimes there are paths including an edge a-c that has the same distance as the two edges a-b-c. in this
+                // case both options are valid best paths. we only check for this most simple and frequent case here...
+                if (!pathsEqualExceptOneEdge(path.getGraph(), refNodes, pathNodes))
+                    strictViolations.add("wrong nodes " + source + "->" + target + "\nexpected: " + refNodes + "\ngiven:    " + pathNodes);
+            }
         }
         return strictViolations;
     }

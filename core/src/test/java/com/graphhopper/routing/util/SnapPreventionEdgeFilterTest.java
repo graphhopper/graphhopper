@@ -22,7 +22,7 @@ public class SnapPreventionEdgeFilterTest {
         EnumEncodedValue<RoadEnvironment> reEnc = em.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
         SnapPreventionEdgeFilter filter = new SnapPreventionEdgeFilter(trueFilter, rcEnc, reEnc, Arrays.asList("motorway", "ferry"));
         BaseGraph graph = new BaseGraph.Builder(em).create();
-        EdgeIteratorState edge = graph.edge(0, 1).setDistance(1);
+        EdgeIteratorState edge = graph.edge(0, 1).setDistance(100);
 
         assertTrue(filter.accept(edge));
         edge.set(reEnc, RoadEnvironment.FERRY);

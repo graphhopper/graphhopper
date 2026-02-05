@@ -19,7 +19,6 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.util.countryrules.CountryRule;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.Arrays;
@@ -57,7 +56,7 @@ public class OSMTollParser implements TagParser {
 
     private Toll getCountryDefault(Country country, ReaderWay readerWay) {
         switch (country) {
-            case AUT, ROU, SVK, SVN -> {
+            case ROU, SVK, SVN -> {
                 RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", ""));
                 if (roadClass == RoadClass.MOTORWAY || roadClass == RoadClass.TRUNK)
                     return Toll.ALL;
@@ -92,7 +91,7 @@ public class OSMTollParser implements TagParser {
                 else
                     return Toll.NO;
             }
-            case BEL, BLR, LUX, NLD, POL, SWE -> {
+            case BEL, BLR, LUX, POL, SWE -> {
                 RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", ""));
                 if (roadClass == RoadClass.MOTORWAY)
                     return Toll.HGV;

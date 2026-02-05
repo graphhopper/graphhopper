@@ -28,7 +28,7 @@ import java.util.*;
 public class Request {
     private List<GHLocation> points;
     private Instant earliestDepartureTime;
-    private int maxVisitedNodes = 1_000_000;
+    private int maxVisitedNodes = 4_000_000;
     private boolean profileQuery;
     private Boolean ignoreTransfers;
     private double betaTransfers = 0.0;
@@ -43,7 +43,7 @@ public class Request {
     private Locale locale = Helper.getLocale("en");
     private Duration limitTripTime;
     private Duration limitStreetTime;
-    private Duration maxProfileDuration = Duration.ofDays(1);
+    private Duration maxProfileDuration = Duration.ZERO;
     private List<String> pathDetails = new ArrayList<>();
     private String accessProfile = "foot";
     private String egressProfile = "foot";
@@ -220,4 +220,15 @@ public class Request {
     public void setBetaEgressTime(double betaEgressTime) {
         this.betaEgressTime = betaEgressTime;
     }
+
+    public boolean isFilter() {
+        return filter;
+    }
+
+    public void setFilter(boolean filter) {
+        this.filter = filter;
+    }
+
+    private boolean filter = false;
+
 }

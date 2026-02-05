@@ -1,0 +1,6 @@
+{
+  // prefer bike_avoid_private.json as this is less precise
+  "priority": [
+    { "if": "bike_road_access == PRIVATE", "multiply_by": "0.1" }
+  ]
+}

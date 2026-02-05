@@ -31,20 +31,17 @@ public class NavigateResponseConverterTest {
     private static GraphHopper hopper;
     private static final String profile = "my_car";
     private final TranslationMap trMap = hopper.getTranslationMap();
-    private final DistanceConfig distanceConfig = new DistanceConfig(DistanceUtils.Unit.METRIC, trMap, Locale.ENGLISH, TransportationMode.CAR);
+    private final DistanceConfig distanceConfig = new DistanceConfig(DistanceUtils.Unit.METRIC, trMap, Locale.ENGLISH,
+            TransportationMode.CAR);
 
     @BeforeAll
     public static void beforeClass() {
         // make sure we are using fresh files with correct vehicle
         Helper.removeDir(new File(graphFolder));
 
-        hopper = new GraphHopper().
-                setOSMFile(osmFile).
-                setStoreOnFlush(true).
-                setGraphHopperLocation(graphFolder).
-                setEncodedValuesString("car_access, car_average_speed").
-                setProfiles(TestProfiles.accessAndSpeed(profile, "car")).
-                importOrLoad();
+        hopper = new GraphHopper().setOSMFile(osmFile).setStoreOnFlush(true).setGraphHopperLocation(graphFolder)
+                .setEncodedValuesString("car_access, car_average_speed")
+                .setProfiles(TestProfiles.accessAndSpeed(profile, "car")).importOrLoad();
     }
 
     @AfterAll
@@ -54,10 +51,8 @@ public class NavigateResponseConverterTest {
 
     @Test
     public void basicTest() {
-
-        GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile(profile).
-                setPathDetails(Collections.singletonList("intersection")));
-
+        GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile(profile)
+                .setPathDetails(Collections.singletonList("intersection")));
         ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH, distanceConfig);
 
         JsonNode route = json.get("routes").get(0);
@@ -87,6 +82,9 @@ public class NavigateResponseConverterTest {
         assertEquals("la Callisa", step.get("name").asText());
         double instructionDistance = step.get("distance").asDouble();
         assertTrue(instructionDistance < routeDistance);
+
+        // Check that the mode is correctly set to "driving" for car profile
+        assertEquals("driving", step.get("mode").asText());
 
         JsonNode voiceInstructions = step.get("voiceInstructions");
         assertEquals(1, voiceInstructions.size());
@@ -120,7 +118,6 @@ public class NavigateResponseConverterTest {
         assertEquals(2, waypointsJson.size());
         JsonNode waypointLoc = waypointsJson.get(0).get("location");
         assertEquals(1.536198, waypointLoc.get(0).asDouble(), .001);
-
     }
 
     @Test
@@ -137,6 +134,13 @@ public class NavigateResponseConverterTest {
         String encodedExpected = ResponsePathSerializer.encodePolyline(expectedArrivePointList, false, 1e6);
 
         assertEquals(encodedExpected, steps.get(idx).get("geometry").asText());
+    }
+
+    @Test
+    public void departureArrivalTest() {
+        GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile(profile));
+        NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH, distanceConfig);
+        // don't crash and we are happy
     }
 
     @Test
@@ -331,7 +335,8 @@ public class NavigateResponseConverterTest {
         rsp = hopper.route(
                 new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile(profile).setLocale(Locale.GERMAN));
 
-        DistanceConfig distanceConfigGerman = new DistanceConfig(DistanceUtils.Unit.METRIC, trMap, Locale.GERMAN, TransportationMode.CAR);
+        DistanceConfig distanceConfigGerman = new DistanceConfig(DistanceUtils.Unit.METRIC, trMap, Locale.GERMAN,
+                TransportationMode.CAR);
 
         json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.GERMAN, distanceConfigGerman);
 
@@ -479,7 +484,7 @@ public class NavigateResponseConverterTest {
         request.addPoint(new GHPoint(42.504776, 1.527209));
         request.addPoint(new GHPoint(42.505144, 1.526113));
         request.addPoint(new GHPoint(42.50529, 1.527218));
-        request.setProfile(profile);
+        request.setProfile(profile).setPathDetails(Collections.singletonList("intersection"));
 
         GHResponse rsp = hopper.route(request);
 
@@ -516,17 +521,51 @@ public class NavigateResponseConverterTest {
             distance += leg.get("distance").asDouble();
 
             JsonNode steps = leg.get("steps");
-            JsonNode maneuver = steps.get(0).get("maneuver");
+            JsonNode step = steps.get(0);
+            JsonNode maneuver = step.get("maneuver");
             assertEquals("depart", maneuver.get("type").asText());
 
             maneuver = steps.get(steps.size() - 1).get("maneuver");
             assertEquals("arrive", maneuver.get("type").asText());
+
+            JsonNode lastStep = steps.get(steps.size() - 1); // last step
+            JsonNode intersections = lastStep.get("intersections");
+            assertNotEquals(null, intersections);
         }
 
         // Check if the duration and distance of the legs sum up to the overall route
         // distance and duration
         assertEquals(route.get("duration").asDouble(), duration, 1);
         assertEquals(route.get("distance").asDouble(), distance, 1);
+    }
+
+    @Test
+    public void testMultipleWaypointsAndLastDuplicate() {
+
+        GHRequest request = new GHRequest();
+        request.addPoint(new GHPoint(42.505144, 1.526113));
+        request.addPoint(new GHPoint(42.50529, 1.527218));
+        request.addPoint(new GHPoint(42.50529, 1.527218));
+        request.setProfile(profile).setPathDetails(Collections.singletonList("intersection"));
+
+        GHResponse rsp = hopper.route(request);
+
+        ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH, distanceConfig);
+
+        // Check that all waypoints are there and in the right order
+        JsonNode waypointsJson = json.get("waypoints");
+        assertEquals(3, waypointsJson.size());
+
+        // Check that there are 2 legs
+        JsonNode route = json.get("routes").get(0);
+        JsonNode legs = route.get("legs");
+        assertEquals(2, legs.size());
+
+        // check last leg
+        JsonNode leg = legs.get(1);
+
+        JsonNode summary = leg.get("summary");
+        assertNotNull(summary);
     }
 
     @Test
@@ -537,6 +576,35 @@ public class NavigateResponseConverterTest {
 
         assertEquals("InvalidInput", json.get("code").asText());
         assertTrue(json.get("message").asText().startsWith("Point 0 is out of bounds: 42.554851,111.536198"));
+    }
+
+    @Test
+    public void testTransportationModeInSteps() {
+        GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile(profile));
+
+        // Test walking mode
+        DistanceConfig walkingConfig = new DistanceConfig(DistanceUtils.Unit.METRIC, trMap, Locale.ENGLISH, TransportationMode.FOOT);
+        ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH, walkingConfig);
+        JsonNode steps = json.get("routes").get(0).get("legs").get(0).get("steps");
+
+        // Check first non-ferry step has walking mode
+        for (int i = 0; i < steps.size(); i++) {
+            JsonNode step = steps.get(i);
+            String expectedMode = "walking";
+            // Ferry instructions should override to "ferry" mode
+            // We don't have ferry in this test data, but this shows the expected behavior
+            assertEquals(expectedMode, step.get("mode").asText(), "Step " + i + " should have mode 'walking'");
+        }
+
+        // Test cycling mode
+        DistanceConfig cyclingConfig = new DistanceConfig(DistanceUtils.Unit.METRIC, trMap, Locale.ENGLISH, TransportationMode.BIKE);
+        json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH, cyclingConfig);
+        steps = json.get("routes").get(0).get("legs").get(0).get("steps");
+
+        for (int i = 0; i < steps.size(); i++) {
+            JsonNode step = steps.get(i);
+            assertEquals("cycling", step.get("mode").asText(), "Step " + i + " should have mode 'cycling'");
+        }
     }
 
 }

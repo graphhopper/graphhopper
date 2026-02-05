@@ -27,6 +27,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.stream.Stream;
 
+import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class RestrictionSetterTest {
@@ -776,15 +777,14 @@ public class RestrictionSetterTest {
         int e2_5 = edge(2, 5);
         int e2_6 = edge(2, 6);
         int e3_7 = edge(3, 7);
-        NodeAccess na = graph.getNodeAccess();
-        na.setNode(0, 40.03, 5.03);
-        na.setNode(1, 40.02, 5.01);
-        na.setNode(2, 40.02, 5.02);
-        na.setNode(3, 40.02, 5.03);
-        na.setNode(4, 40.02, 5.04);
-        na.setNode(5, 40.01, 5.02);
-        na.setNode(6, 40.03, 5.02);
-        na.setNode(7, 40.01, 5.03);
+        updateDistancesFor(graph, 0, 40.03, 5.03);
+        updateDistancesFor(graph, 1, 40.02, 5.01);
+        updateDistancesFor(graph, 2, 40.02, 5.02);
+        updateDistancesFor(graph, 3, 40.02, 5.03);
+        updateDistancesFor(graph, 4, 40.02, 5.04);
+        updateDistancesFor(graph, 5, 40.01, 5.02);
+        updateDistancesFor(graph, 6, 40.03, 5.02);
+        updateDistancesFor(graph, 7, 40.01, 5.03);
         assertPath(1, 0, nodes(1, 2, 3, 0));
         assertPath(1, 4, nodes(1, 2, 3, 4));
         assertPath(5, 0, nodes(5, 2, 3, 0));
@@ -832,13 +832,12 @@ public class RestrictionSetterTest {
         int e3_4 = edge(3, 4);
         int e4_5 = edge(4, 5);
         int e5_6 = edge(5, 6);
-        NodeAccess na = graph.getNodeAccess();
-        na.setNode(1, 40.02, 5.01);
-        na.setNode(2, 40.02, 5.02);
-        na.setNode(3, 40.02, 5.03);
-        na.setNode(4, 40.02, 5.04);
-        na.setNode(5, 40.02, 5.05);
-        na.setNode(6, 40.02, 5.06);
+        updateDistancesFor(graph, 1, 40.02, 5.01);
+        updateDistancesFor(graph, 2, 40.02, 5.02);
+        updateDistancesFor(graph, 3, 40.02, 5.03);
+        updateDistancesFor(graph, 4, 40.02, 5.04);
+        updateDistancesFor(graph, 5, 40.02, 5.05);
+        updateDistancesFor(graph, 6, 40.02, 5.06);
         assertPath(1, 4, nodes(1, 2, 3, 4));
         assertPath(2, 4, nodes(2, 3, 4));
         assertPath(2, 5, nodes(2, 3, 4, 5));

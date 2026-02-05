@@ -39,7 +39,7 @@ import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Polygon;
 
-import javax.ws.rs.client.WebTarget;
+import jakarta.ws.rs.client.WebTarget;
 import java.io.File;
 import java.util.Arrays;
 
@@ -147,18 +147,18 @@ public class IsochroneResourceTest {
 
         long limit = 10 * 60;
 
-        JsonFeatureCollection distanceLimitFeatureCollection = commonTarget
+        JsonFeatureCollection timeLimitFeatureCollection = commonTarget
                 .queryParam("time_limit", limit)
                 .request().get(JsonFeatureCollection.class);
-        Geometry distanceLimitPolygon = distanceLimitFeatureCollection.getFeatures().get(0).getGeometry();
+        Geometry timeLimitPolygon = timeLimitFeatureCollection.getFeatures().get(0).getGeometry();
 
         JsonFeatureCollection weightLimitFeatureCollection = commonTarget
                 .queryParam("weight_limit", limit)
                 .request().get(JsonFeatureCollection.class);
         Geometry weightLimitPolygon = weightLimitFeatureCollection.getFeatures().get(0).getGeometry();
 
-        assertEquals(distanceLimitPolygon.getNumPoints(), weightLimitPolygon.getNumPoints());
-        assertTrue(weightLimitPolygon.equalsTopo(distanceLimitPolygon));
+        assertEquals(timeLimitPolygon.getNumPoints(), weightLimitPolygon.getNumPoints());
+        assertTrue(weightLimitPolygon.equalsTopo(timeLimitPolygon));
     }
 
     @Test

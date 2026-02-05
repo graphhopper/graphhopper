@@ -49,7 +49,7 @@ Here is an overview:
  * jessLryan, max elevation can now be negative
  * joe-akeem, improvements like #2158
  * JohannesPelzer, improved GPX information and various other things
- * karololszacki, introduce `navigation_transport_mode` option for Profiles to easily set which Voice Guidance distances to use
+ * karololszacki, introduce `navigation_mode` option for Profiles to easily set which Voice Guidance distances to use
  * karussell, one of the core developers
  * khuebner, initial turn costs support
  * kodonnell, adding support for CH and other algorithms (#60) and penalizing inner-link U-turns (#88)
@@ -63,6 +63,7 @@ Here is an overview:
  * michaz, one of the core developers
  * mprins, improvements for travis CI and regarding JDK9 #806
  * msbarry, fixes like #1733
+ * nakaner, documentation
  * naser13, fixes like #1923
  * njanakiev, fixes like #1560
  * NopMap, massive improvements regarding OSM, parsing and encoding, route relations
@@ -72,6 +73,7 @@ Here is an overview:
  * osamaalmaani, added missing config option for graph.encoded_values in the config-example.yml file
  * oschlueter, fixes like #1185
  * otbutz, added multiple EncodedValues
+ * PabloaRuiz, pt_BR 1i8n improvements
  * pantsleftinwash, speed parsing improvements
  * PGWelch, shapefile reader #874
  * rafaelstelles, fix deserializer web-api
@@ -90,8 +92,12 @@ Here is an overview:
  * Svantulden, improved documentation and nearest API
  * taulinger, hopefully more to come 
  * thehereward, code cleanups like #620
+ * tyrasd, improved toll road handling in Austria #3190
+ * Vectorial1024, country-specific speed limit issues like #3244, #3248
  * vvikas, ideas for many to many improvements and #616
  * zstadler, multiple fixes and car4wd
+ * binora, fix mode in navigation response converter
+ * jwltrr, fixed pillar node limits
 
 ## Translations
 

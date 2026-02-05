@@ -43,6 +43,8 @@ public class PathDetailsBuilderFactory {
             builders.add(new ConstantDetailsBuilder(LEG_DISTANCE, path.getDistance()));
         if (requestedPathDetails.contains(LEG_WEIGHT))
             builders.add(new ConstantDetailsBuilder(LEG_WEIGHT, path.getWeight()));
+        if (requestedPathDetails.contains(CHANGE_ANGLE))
+            builders.add(new ChangeAngleDetails(evl.getDecimalEncodedValue(Orientation.KEY)));
 
         for (String key : requestedPathDetails) {
             if (key.endsWith("_conditional"))

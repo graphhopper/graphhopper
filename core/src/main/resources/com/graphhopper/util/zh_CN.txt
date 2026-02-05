@@ -55,6 +55,7 @@ web.steep_sections=陡峭路段
 web.private_sections=私人路段
 web.restricted_sections=
 web.challenging_sections=
+web.dangerous_sections=
 web.trunk_roads_warn=路线中可能包含潜在危险的主干道或其他更糟糕的道路条件
 web.get_off_bike_for=骑行者必须下车并推行自行车 %1$s
 pt_transfer_to=换乘%1$s

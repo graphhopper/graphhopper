@@ -22,6 +22,8 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
+import com.graphhopper.config.Profile;
+import com.graphhopper.gtfs.Request;
 import com.graphhopper.resources.InfoResource;
 import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.BodyAndStatus;
@@ -33,7 +35,9 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import jakarta.ws.rs.core.Response;
 import java.io.File;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static com.graphhopper.application.resources.Util.getWithStatus;
@@ -165,6 +169,23 @@ public class PtRouteResourceTest {
         assertEquals(400, response.getStatus());
         JsonNode json = response.getBody();
         assertEquals("query param pt.earliest_departure_time must be in a ISO-8601 format.", json.get("message").asText());
+    }
+
+    @Test
+    public void testProfileQuery() {
+        final Response response = clientTarget(app, "/route")
+                .queryParam("point", "36.91311729030539,-116.76769495010377")
+                .queryParam("point", "36.91260259593356,-116.76149368286134")
+                .queryParam("profile", "pt")
+                .queryParam("pt.earliest_departure_time", "2007-01-01T06:40:00-08:00")
+                .queryParam("pt.profile", true)
+                .queryParam("pt.profile_duration", "PT180M")
+                .request().buildGet().invoke();
+
+        JsonNode json = response.readEntity(JsonNode.class);
+        for (JsonNode path : json.at("/paths")) {
+            System.out.printf("%s %s %s %s\n", path.at("/time"), path.at("/legs/0/departure_time"), path.at("/legs/1/stops/0/stop_id"), path.at("/legs/2/arrival_time"));
+        }
     }
 
     @Test

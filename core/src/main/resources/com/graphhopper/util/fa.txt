@@ -55,6 +55,7 @@ web.steep_sections=هشدار: این مسیر دارای شیب تند رو ب�
 web.private_sections=
 web.restricted_sections=
 web.challenging_sections=
+web.dangerous_sections=
 web.trunk_roads_warn=
 web.get_off_bike_for=
 pt_transfer_to=مسیر را به %1$s تغییر دهید

@@ -30,15 +30,15 @@ import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.constraints.NotNull;
-import javax.ws.rs.*;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
+import jakarta.inject.Inject;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriInfo;
 import java.util.*;
 
 import static com.graphhopper.util.Parameters.Details.*;
@@ -144,7 +144,7 @@ public class NavigateResource {
         } else {
             DistanceUtils.Unit unit = voiceUnits.equals("metric") ? DistanceUtils.Unit.METRIC : DistanceUtils.Unit.IMPERIAL;
             Locale locale = Helper.getLocale(localeStr);
-            DistanceConfig config = new DistanceConfig(unit, translationMap, locale, graphHopper.getProfile(ghProfile));
+            DistanceConfig config = new DistanceConfig(unit, translationMap, locale, graphHopper.getNavigationMode(ghProfile));
             logger.info(logStr);
             return Response.ok(NavigateResponseConverter.convertFromGHResponse(ghResponse, translationMap, locale, config)).
                     header("X-GH-Took", "" + Math.round(took * 1000)).
@@ -214,7 +214,7 @@ public class NavigateResource {
                 unit = DistanceUtils.Unit.IMPERIAL;
             }
 
-            DistanceConfig config = new DistanceConfig(unit, translationMap, request.getLocale(), graphHopper.getProfile(request.getProfile()));
+            DistanceConfig config = new DistanceConfig(unit, translationMap, request.getLocale(), graphHopper.getNavigationMode(request.getProfile()));
             logger.info(logStr);
             return Response.ok(NavigateResponseConverter.convertFromGHResponse(ghResponse, translationMap, request.getLocale(), config)).
                     header("X-GH-Took", "" + Math.round(took * 1000)).

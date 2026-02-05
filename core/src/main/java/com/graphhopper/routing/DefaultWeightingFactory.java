@@ -20,14 +20,11 @@ package com.graphhopper.routing;
 
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.Orientation;
 import com.graphhopper.routing.ev.TurnRestriction;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.CustomModel;
@@ -36,6 +33,7 @@ import com.graphhopper.util.Parameters;
 import com.graphhopper.util.TurnCostsConfig;
 
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
+import static com.graphhopper.routing.weighting.custom.CustomModelParser.createWeightingParameters;
 import static com.graphhopper.util.Helper.toLowerCase;
 
 public class DefaultWeightingFactory implements WeightingFactory {
@@ -57,21 +55,6 @@ public class DefaultWeightingFactory implements WeightingFactory {
         hints.putAll(profile.getHints());
         hints.putAll(requestHints);
 
-        TurnCostProvider turnCostProvider;
-        if (profile.hasTurnCosts() && !disableTurnCosts) {
-            BooleanEncodedValue turnRestrictionEnc = encodingManager.getTurnBooleanEncodedValue(TurnRestriction.key(profile.getName()));
-            if (turnRestrictionEnc == null)
-                throw new IllegalArgumentException("Cannot find turn restriction encoded value for " + profile.getName());
-            DecimalEncodedValue oEnc = encodingManager.hasEncodedValue(Orientation.KEY) ? encodingManager.getDecimalEncodedValue(Orientation.KEY) : null;
-            if (profile.getTurnCostsConfig().hasLeftRightStraightCosts() && oEnc == null)
-                throw new IllegalArgumentException("Using left_turn_costs,sharp_left_turn_costs,right_turn_costs,sharp_right_turn_costs or straight_costs for turn_costs requires 'orientation' in graph.encoded_values");
-            int uTurnCosts = hints.getInt(Parameters.Routing.U_TURN_COSTS, profile.getTurnCostsConfig().getUTurnCosts());
-            TurnCostsConfig tcConfig = new TurnCostsConfig(profile.getTurnCostsConfig()).setUTurnCosts(uTurnCosts);
-            turnCostProvider = new DefaultTurnCostProvider(turnRestrictionEnc, oEnc, graph, tcConfig);
-        } else {
-            turnCostProvider = NO_TURN_COST_PROVIDER;
-        }
-
         String weightingStr = toLowerCase(profile.getWeighting());
         if (weightingStr.isEmpty())
             throw new IllegalArgumentException("You have to specify a weighting");
@@ -79,15 +62,28 @@ public class DefaultWeightingFactory implements WeightingFactory {
         Weighting weighting = null;
         if (CustomWeighting.NAME.equalsIgnoreCase(weightingStr)) {
             final CustomModel queryCustomModel = requestHints.getObject(CustomModel.KEY, null);
+            if (profile.getTurnCostsConfig() != null && !profile.getTurnCostsConfig().isAllowTurnPenaltyInRequest() && queryCustomModel != null && !queryCustomModel.getTurnPenalty().isEmpty())
+                throw new IllegalArgumentException("The turn_penalty feature is not supported per request for " + profile.getName() + ". Set 'allow_turn_penalty_in_request' to true in the 'turn_costs' option in the config.yml.");
+
             final CustomModel mergedCustomModel = CustomModel.merge(profile.getCustomModel(), queryCustomModel);
             if (requestHints.has(Parameters.Routing.HEADING_PENALTY))
                 mergedCustomModel.setHeadingPenalty(requestHints.getDouble(Parameters.Routing.HEADING_PENALTY, Parameters.Routing.DEFAULT_HEADING_PENALTY));
-            if (hints.has("cm_version")) {
-                if (!hints.getString("cm_version", "").equals("2"))
-                    throw new IllegalArgumentException("cm_version: \"2\" is required");
-                weighting = CustomModelParser.createWeighting2(encodingManager, turnCostProvider, mergedCustomModel);
-            } else
-                weighting = CustomModelParser.createWeighting(encodingManager, turnCostProvider, mergedCustomModel);
+
+            CustomWeighting.Parameters parameters = createWeightingParameters(mergedCustomModel, encodingManager);
+            final TurnCostProvider turnCostProvider;
+            if (profile.hasTurnCosts() && !disableTurnCosts) {
+                BooleanEncodedValue turnRestrictionEnc = encodingManager.getTurnBooleanEncodedValue(TurnRestriction.key(profile.getName()));
+                if (turnRestrictionEnc == null)
+                    throw new IllegalArgumentException("Cannot find turn restriction encoded value for " + profile.getName());
+                int uTurnCosts = hints.getInt(Parameters.Routing.U_TURN_COSTS, profile.getTurnCostsConfig().getUTurnCosts());
+                TurnCostsConfig tcConfig = new TurnCostsConfig(profile.getTurnCostsConfig()).setUTurnCosts(uTurnCosts);
+                turnCostProvider = new DefaultTurnCostProvider(turnRestrictionEnc, graph, tcConfig, parameters.getTurnPenaltyMapping());
+            } else {
+                if (!mergedCustomModel.getTurnPenalty().isEmpty() && !disableTurnCosts)
+                    throw new IllegalArgumentException("The turn_penalty feature is not supported for " + profile.getName() + ". You have to enable this in 'turn_costs' in config.yml.");
+                turnCostProvider = NO_TURN_COST_PROVIDER;
+            }
+            weighting = new CustomWeighting(turnCostProvider, parameters);
 
         } else if ("shortest".equalsIgnoreCase(weightingStr)) {
             throw new IllegalArgumentException("Instead of weighting=shortest use weighting=custom with a high distance_influence");
@@ -105,5 +101,4 @@ public class DefaultWeightingFactory implements WeightingFactory {
 
         return weighting;
     }
-
 }

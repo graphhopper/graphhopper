@@ -13,18 +13,11 @@ public class MountainBikePriorityParser extends BikeCommonPriorityParser {
 
     public MountainBikePriorityParser(EncodedValueLookup lookup) {
         this(lookup.getDecimalEncodedValue(VehicleSpeed.key("mtb")),
-                lookup.getDecimalEncodedValue(VehiclePriority.key("mtb")),
-                lookup.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class));
+                lookup.getDecimalEncodedValue(VehiclePriority.key("mtb")));
     }
 
-    protected MountainBikePriorityParser(DecimalEncodedValue speedEnc, DecimalEncodedValue priorityEnc,
-                                         EnumEncodedValue<RouteNetwork> bikeRouteEnc) {
-        super(priorityEnc, speedEnc, bikeRouteEnc);
-
-        routeMap.put(INTERNATIONAL, PREFER.getValue());
-        routeMap.put(NATIONAL, PREFER.getValue());
-        routeMap.put(REGIONAL, PREFER.getValue());
-        routeMap.put(LOCAL, BEST.getValue());
+    protected MountainBikePriorityParser(DecimalEncodedValue speedEnc, DecimalEncodedValue priorityEnc) {
+        super(priorityEnc, speedEnc);
 
         preferHighwayTags.add("road");
         preferHighwayTags.add("track");
@@ -39,8 +32,8 @@ public class MountainBikePriorityParser extends BikeCommonPriorityParser {
     }
 
     @Override
-    void collect(ReaderWay way, double wayTypeSpeed, TreeMap<Double, PriorityCode> weightToPrioMap) {
-        super.collect(way, wayTypeSpeed, weightToPrioMap);
+    void collect(ReaderWay way, double wayTypeSpeed, boolean bikeDesignated, TreeMap<Double, PriorityCode> weightToPrioMap) {
+        super.collect(way, wayTypeSpeed, bikeDesignated, weightToPrioMap);
 
         String highway = way.getTag("highway");
         if ("track".equals(highway)) {

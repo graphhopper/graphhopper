@@ -28,7 +28,8 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.SpeedWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.BaseGraph;
-import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.storage.DAType;
+import com.graphhopper.storage.GHDirectory;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
@@ -76,7 +77,7 @@ public class RoundTripRoutingTest {
         PMap hints = new PMap();
         hints.putObject(Parameters.Algorithms.RoundTrip.POINTS, numPoints);
         hints.putObject(Parameters.Algorithms.RoundTrip.DISTANCE, roundTripDistance);
-        LocationIndex locationIndex = new LocationIndexTree(g, new RAMDirectory()).prepareIndex();
+        LocationIndex locationIndex = new LocationIndexTree(g, new GHDirectory("", DAType.RAM)).prepareIndex();
         List<Snap> stagePoints = RoundTripRouting.lookup(Collections.singletonList(start),
                 new FiniteWeightFilter(weighting), locationIndex,
                 new RoundTripRouting.Params(hints, heading, 3));
@@ -98,7 +99,7 @@ public class RoundTripRoutingTest {
     public void testCalcRoundTrip() {
         BaseGraph g = createTestGraph();
 
-        LocationIndex locationIndex = new LocationIndexTree(g, new RAMDirectory()).prepareIndex();
+        LocationIndex locationIndex = new LocationIndexTree(g, new GHDirectory("", DAType.RAM)).prepareIndex();
         Snap snap4 = locationIndex.findClosest(0.05, 0.25, EdgeFilter.ALL_EDGES);
         assertEquals(4, snap4.getClosestNode());
         Snap snap5 = locationIndex.findClosest(0.00, 0.05, EdgeFilter.ALL_EDGES);
@@ -126,7 +127,36 @@ public class RoundTripRoutingTest {
 
     private BaseGraph createTestGraph() {
         BaseGraph graph = new BaseGraph.Builder(em).withTurnCosts(true).create();
-        AlternativeRouteTest.initTestGraph(graph, speedEnc);
+        /* 9
+         _/\
+         1  2-3-4-10
+         \   /   \
+         5--6-7---8
+
+         */
+        graph.edge(1, 9).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(9, 2).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(2, 3).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(3, 4).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(4, 10).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(5, 6).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(6, 7).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(7, 8).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(1, 5).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(6, 3).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(4, 8).setDistance(0).set(speedEnc, 60, 60);
+
+        updateDistancesFor(graph, 5, 0.00, 0.05);
+        updateDistancesFor(graph, 6, 0.00, 0.10);
+        updateDistancesFor(graph, 7, 0.00, 0.15);
+        updateDistancesFor(graph, 8, 0.00, 0.25);
+
+        updateDistancesFor(graph, 1, 0.05, 0.00);
+        updateDistancesFor(graph, 9, 0.10, 0.05);
+        updateDistancesFor(graph, 2, 0.05, 0.10);
+        updateDistancesFor(graph, 3, 0.05, 0.15);
+        updateDistancesFor(graph, 4, 0.05, 0.25);
+        updateDistancesFor(graph, 10, 0.05, 0.30);
         return graph;
     }
 

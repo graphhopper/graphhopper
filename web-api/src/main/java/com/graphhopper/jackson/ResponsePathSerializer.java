@@ -96,6 +96,7 @@ public class ResponsePathSerializer {
             jsonPath.put("weight", Helper.round6(p.getRouteWeight()));
             jsonPath.put("time", p.getTime());
             jsonPath.put("transfers", p.getNumChanges());
+            jsonPath.putPOJO("legs", p.getLegs());
             if (!p.getDescription().isEmpty()) {
                 jsonPath.putPOJO("description", p.getDescription());
             }
@@ -110,7 +111,6 @@ public class ResponsePathSerializer {
                 if (enableInstructions) {
                     jsonPath.putPOJO("instructions", p.getInstructions());
                 }
-                jsonPath.putPOJO("legs", p.getLegs());
                 jsonPath.putPOJO("details", p.getPathDetails());
                 jsonPath.put("ascend", p.getAscend());
                 jsonPath.put("descend", p.getDescend());

@@ -192,7 +192,7 @@ public class AlternativeRouteEdgeCHTest {
         graph.edge(0, 1).setDistance(500).set(speedEnc, 60);
         graph.edge(1, 2).setDistance(500).set(speedEnc, 60);
         graph.edge(2, 3).setDistance(500).set(speedEnc, 60);
-        graph.edge(2, 5).setDistance(1000).set(speedEnc, 60);
+        graph.edge(2, 5).setDistance(950).set(speedEnc, 60);
         graph.edge(3, 7).setDistance(1500).set(speedEnc, 60);
         graph.edge(5, 6).setDistance(500).set(speedEnc, 60);
         graph.edge(6, 7).setDistance(500).set(speedEnc, 60);
@@ -208,13 +208,13 @@ public class AlternativeRouteEdgeCHTest {
         PMap hints = new PMap();
         AlternativeRouteEdgeCH altDijkstra = new AlternativeRouteEdgeCH(routingCHGraph, hints);
         List<AlternativeRouteEdgeCH.AlternativeInfo> pathInfos = altDijkstra.calcAlternatives(s, t);
-        assertTrue(pathInfos.size() > 1, "the graph, contraction order and alternative route algorith must be such that " +
-                "there is at least one alternative path, otherwise this test makes no sense");
         AlternativeRouteEdgeCH.AlternativeInfo best = pathInfos.get(0);
-        assertEquals(3500, best.path.getDistance());
-        assertEquals(58.3333, best.path.getWeight(), 1.e-3);
-        assertEquals(58333, best.path.getTime(), 10);
+        assertEquals(3450, best.path.getDistance());
+        assertEquals(57.500, best.path.getWeight(), 1.e-3);
+        assertEquals(57498, best.path.getTime(), 10);
         assertEquals(IntArrayList.from(0, 1, 2, 5, 6, 7, 8), best.path.calcNodes());
+        assertTrue(pathInfos.size() > 1, "the graph, contraction order and alternative route algorithm must be such that " +
+                "there is at least one alternative path, otherwise this test makes no sense");
         for (int j = 1; j < pathInfos.size(); j++) {
             Path alternative = pathInfos.get(j).path;
             assertEquals(3500, alternative.getDistance());

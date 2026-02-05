@@ -24,7 +24,8 @@ import com.graphhopper.storage.IntsRef;
 
 /**
  * Parses the mountain biking difficulty.
- * A mapping mtb:scale=0 corresponds to 1 and mtb:scale=1 to 2 until 7.
+ * Note that the tag mtb:scale=0 corresponds to mtb_rating=1 because mtb_rating=0 is the default,
+ * i.e. mtb_rating goes until 7.
  *
  * @see <a href="https://wiki.openstreetmap.org/wiki/Key:mtb:scale">Key:mtb:scale</a> for details on OSM mountain biking difficulties.
  * @see <a href="http://www.singletrail-skala.de/">Single Trail Scale</a>

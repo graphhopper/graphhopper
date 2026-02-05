@@ -55,6 +55,7 @@ web.steep_sections=strome fragmenty
 web.private_sections=tereny prywatne
 web.restricted_sections=
 web.challenging_sections=
+web.dangerous_sections=
 web.trunk_roads_warn=
 web.get_off_bike_for=piechotą przez %1$s
 pt_transfer_to=przesiądź się na %1$s

@@ -7,23 +7,27 @@ public class RacingBikeAverageSpeedParser extends BikeCommonAverageSpeedParser {
     public RacingBikeAverageSpeedParser(EncodedValueLookup lookup) {
         this(lookup.getDecimalEncodedValue(VehicleSpeed.key("racingbike")),
                 lookup.getEnumEncodedValue(Smoothness.KEY, Smoothness.class),
-                lookup.getDecimalEncodedValue(FerrySpeed.KEY));
+                lookup.getDecimalEncodedValue(FerrySpeed.KEY),
+                lookup.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class));
     }
 
-    protected RacingBikeAverageSpeedParser(DecimalEncodedValue speedEnc, EnumEncodedValue<Smoothness> smoothnessEnc, DecimalEncodedValue ferrySpeedEnc) {
-        super(speedEnc, smoothnessEnc, ferrySpeedEnc);
+    protected RacingBikeAverageSpeedParser(DecimalEncodedValue speedEnc,
+                                           EnumEncodedValue<Smoothness> smoothnessEnc,
+                                           DecimalEncodedValue ferrySpeedEnc,
+                                           EnumEncodedValue<RouteNetwork> bikeRouteEnc) {
+        super(speedEnc, smoothnessEnc, ferrySpeedEnc, bikeRouteEnc);
 
-        setTrackTypeSpeed("grade1", 20); // paved
+        setTrackTypeSpeed("grade1", 24); // paved
         setTrackTypeSpeed("grade2", 10); // now unpaved ...
         setTrackTypeSpeed("grade3", PUSHING_SECTION_SPEED);
         setTrackTypeSpeed("grade4", PUSHING_SECTION_SPEED);
         setTrackTypeSpeed("grade5", PUSHING_SECTION_SPEED);
 
-        setSurfaceSpeed("paved", 20);
-        setSurfaceSpeed("asphalt", 20);
-        setSurfaceSpeed("concrete", 20);
-        setSurfaceSpeed("concrete:lanes", 16);
-        setSurfaceSpeed("concrete:plates", 16);
+        setSurfaceSpeed("paved", 24);
+        setSurfaceSpeed("asphalt", 24);
+        setSurfaceSpeed("concrete", 24);
+        setSurfaceSpeed("concrete:lanes", 20);
+        setSurfaceSpeed("concrete:plates", 20);
         setSurfaceSpeed("unpaved", MIN_SPEED);
         setSurfaceSpeed("compacted", MIN_SPEED);
         setSurfaceSpeed("dirt", MIN_SPEED);
@@ -41,25 +45,22 @@ public class RacingBikeAverageSpeedParser extends BikeCommonAverageSpeedParser {
         setSurfaceSpeed("sand", MIN_SPEED);
         setSurfaceSpeed("wood", MIN_SPEED);
 
-        setHighwaySpeed("path", 8);
-        setHighwaySpeed("footway", PUSHING_SECTION_SPEED);
         setHighwaySpeed("track", MIN_SPEED); // assume unpaved
 
-        setHighwaySpeed("trunk", 20);
-        setHighwaySpeed("trunk_link", 20);
-        setHighwaySpeed("primary", 20);
-        setHighwaySpeed("primary_link", 20);
-        setHighwaySpeed("secondary", 20);
-        setHighwaySpeed("secondary_link", 20);
-        setHighwaySpeed("tertiary", 20);
-        setHighwaySpeed("tertiary_link", 20);
+        setHighwaySpeed("trunk", 24);
+        setHighwaySpeed("trunk_link", 24);
+        setHighwaySpeed("primary", 24);
+        setHighwaySpeed("primary_link", 24);
+        setHighwaySpeed("secondary", 24);
+        setHighwaySpeed("secondary_link", 24);
+        setHighwaySpeed("tertiary", 24);
+        setHighwaySpeed("tertiary_link", 24);
+        setHighwaySpeed("cycleway", 24);
 
-        addPushingSection("path");
-
-        // overwite map from BikeCommon
-        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.EXCELLENT, 1.2d);
-        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.VERY_BAD, 0.1);
-        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.HORRIBLE, 0.1);
-        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.VERY_HORRIBLE, 0.1);
+        // overwrite map from BikeCommon
+        setSmoothnessSpeedFactor(Smoothness.EXCELLENT, 1.2d);
+        setSmoothnessSpeedFactor(Smoothness.VERY_BAD, 0.1);
+        setSmoothnessSpeedFactor(Smoothness.HORRIBLE, 0.1);
+        setSmoothnessSpeedFactor(Smoothness.VERY_HORRIBLE, 0.1);
     }
 }

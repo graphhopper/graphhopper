@@ -34,31 +34,6 @@ import static org.junit.jupiter.api.Assertions.*;
 public class EncodingManagerTest {
 
     @Test
-    public void testSupportFords() {
-        EncodingManager manager = new EncodingManager.Builder()
-                .add(VehicleAccess.create("car"))
-                .add(VehicleAccess.create("bike"))
-                .add(VehicleAccess.create("foot"))
-                .add(Roundabout.create())
-                .build();
-
-        // 1) default -> no block fords
-        assertFalse(new CarAccessParser(manager, new PMap()).isBlockFords());
-        assertFalse(new BikeAccessParser(manager, new PMap()).isBlockFords());
-        assertFalse(new FootAccessParser(manager, new PMap()).isBlockFords());
-
-        // 2) true
-        assertTrue(new CarAccessParser(manager, new PMap("block_fords=true")).isBlockFords());
-        assertTrue(new BikeAccessParser(manager, new PMap("block_fords=true")).isBlockFords());
-        assertTrue(new FootAccessParser(manager, new PMap("block_fords=true")).isBlockFords());
-
-        // 3) false
-        assertFalse(new CarAccessParser(manager, new PMap("block_fords=false")).isBlockFords());
-        assertFalse(new BikeAccessParser(manager, new PMap("block_fords=false")).isBlockFords());
-        assertFalse(new FootAccessParser(manager, new PMap("block_fords=false")).isBlockFords());
-    }
-
-    @Test
     public void testRegisterOnlyOnceAllowed() {
         DecimalEncodedValueImpl speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
         EncodingManager.start().add(speedEnc).build();

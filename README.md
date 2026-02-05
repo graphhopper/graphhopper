@@ -31,15 +31,18 @@ to get started with contribution.
 
 To get started you can try [GraphHopper Maps](README.md#graphhopper-maps), read through [our documentation](./docs/index.md) and install GraphHopper including the Maps UI locally.
 
-* 10.x: [documentation](https://github.com/graphhopper/graphhopper/blob/10.x/docs/index.md)
-  , [web service jar](https://repo1.maven.org/maven2/com/graphhopper/graphhopper-web/10.0/graphhopper-web-10.0.jar)
-  , [announcement](https://www.graphhopper.com/blog/2024/11/05/graphhopper-routing-engine-10-0-released/)
+* 11.x: [documentation](https://github.com/graphhopper/graphhopper/blob/11.x/docs/index.md)
+  , [web service jar](https://repo1.maven.org/maven2/com/graphhopper/graphhopper-web/11.0/graphhopper-web-11.0.jar)
+  , [announcement](https://www.graphhopper.com/blog/2025/10/14/graphhopper-routing-engine-11-0-released/)
 * unstable master: [documentation](https://github.com/graphhopper/graphhopper/blob/master/docs/index.md)
 
 See the [changelog file](./CHANGELOG.md) for Java API Changes.
 
 <details><summary>Click to see older releases</summary>
 
+* 10.x: [documentation](https://github.com/graphhopper/graphhopper/blob/10.x/docs/index.md)
+  , [web service jar](https://repo1.maven.org/maven2/com/graphhopper/graphhopper-web/10.0/graphhopper-web-10.0.jar)
+  , [announcement](https://www.graphhopper.com/blog/2024/11/05/graphhopper-routing-engine-10-0-released/)
 * 9.x: [documentation](https://github.com/graphhopper/graphhopper/blob/9.x/docs/index.md)
   , [web service jar](https://repo1.maven.org/maven2/com/graphhopper/graphhopper-web/9.1/graphhopper-web-9.1.jar)
   , [announcement](https://www.graphhopper.com/blog/2024/04/23/graphhopper-routing-engine-9-0-released)
@@ -103,8 +106,8 @@ See the [changelog file](./CHANGELOG.md) for Java API Changes.
 To install the [GraphHopper Maps](https://graphhopper.com/maps/) UI and the web service locally you [need a JVM](https://adoptium.net) (>= Java 17) and do:
 
 ```bash
-wget https://repo1.maven.org/maven2/com/graphhopper/graphhopper-web/10.0/graphhopper-web-10.0.jar \
-  https://raw.githubusercontent.com/graphhopper/graphhopper/10.x/config-example.yml \
+wget https://repo1.maven.org/maven2/com/graphhopper/graphhopper-web/11.0/graphhopper-web-11.0.jar \
+  https://raw.githubusercontent.com/graphhopper/graphhopper/11.x/config-example.yml \
   http://download.geofabrik.de/europe/germany/berlin-latest.osm.pbf
 java -D"dw.graphhopper.datareader.file=berlin-latest.osm.pbf" -jar graphhopper*.jar server config-example.yml
 ```
@@ -147,7 +150,7 @@ The address search is based on the open source [photon project](https://github.c
 
 ### Online
 
-There is a [web service](./navigation) that can be consumed by [our navigation Android client](https://github.com/graphhopper/graphhopper-navigation-example).
+There is the [/navigate web service](./navigation) that can be consumed by [the Maplibre Navigation SDK](https://github.com/maplibre/maplibre-navigation-android) or [the ferrostar SDK](https://github.com/stadiamaps/ferrostar).
 
 [<img src="https://raw.githubusercontent.com/maplibre/maplibre-navigation-android/main/.github/preview.png" width="400">](https://github.com/graphhopper/graphhopper-navigation-example)
 

@@ -1,0 +1,10 @@
+{
+  // Note, 'turn_penalty' requires enabled turn_costs in profile and due to the use of road_access
+  // it is suitable for motor vehicles only.
+  "turn_penalty": [
+    {
+      "if": "prev_road_access != road_access && (road_access == DESTINATION || road_access == PRIVATE || road_access == DELIVERY || road_access == CUSTOMERS || road_access == MILITARY)",
+      "add": "2000"
+    }
+  ]
+}

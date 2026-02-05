@@ -55,6 +55,7 @@ web.steep_sections=קטעים תלולים
 web.private_sections=קטעים פרטיים
 web.restricted_sections=
 web.challenging_sections=
+web.dangerous_sections=
 web.trunk_roads_warn=המסלול כולל דרכי עפר שיכולות להיות מסוכנות ואף גרוע מכך.
 web.get_off_bike_for=יש לרדת מהאופניים למשך %1$s
 pt_transfer_to=להחליף ל%1$s

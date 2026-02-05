@@ -99,7 +99,7 @@ public class CHPreparationHandler {
         Map<String, RoutingCHGraph> loaded = Collections.synchronizedMap(new LinkedHashMap<>());
         Stream<Runnable> runnables = chConfigs.stream()
                 .map(c -> () -> {
-                    CHStorage chStorage = new CHStorage(graph.getDirectory(), c.getName(), graph.getSegmentSize(), c.isEdgeBased());
+                    CHStorage chStorage = new CHStorage(graph.getDirectory(), c.getName(), c.isEdgeBased());
                     if (chStorage.loadExisting())
                         loaded.put(c.getName(), RoutingCHGraphImpl.fromGraph(graph, chStorage, c));
                     else {

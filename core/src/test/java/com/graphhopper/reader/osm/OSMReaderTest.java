@@ -30,10 +30,8 @@ import com.graphhopper.routing.OSMReaderConfig;
 import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.*;
-import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
 import com.graphhopper.routing.util.parsers.CountryParser;
 import com.graphhopper.routing.util.parsers.OSMBikeNetworkTagParser;
-import com.graphhopper.routing.util.parsers.OSMMtbNetworkTagParser;
 import com.graphhopper.routing.util.parsers.OSMRoadAccessParser;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
@@ -51,7 +49,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
-import static com.graphhopper.routing.util.TransportationMode.CAR;
 import static com.graphhopper.util.GHUtility.readCountries;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -209,11 +206,11 @@ public class OSMReaderTest {
         int n50 = AbstractGraphStorageTester.getIdOf(graph, 55.0);
         assertEquals(GHUtility.asSet(n40), GHUtility.getNeighbors(carAllExplorer.setBaseNode(n50)));
 
-        // no duration is given => slow speed only!
+        // no duration is given => speed depends on length
         int n80 = AbstractGraphStorageTester.getIdOf(graph, 54.1);
         EdgeIterator iter = carOutExplorer.setBaseNode(n80);
         iter.next();
-        assertEquals(6, iter.get(carSpeedEnc), 1e-1);
+        assertEquals(30, iter.get(carSpeedEnc), 1e-1);
 
         // duration 01:10 is given => more precise speed calculation!
         // ~111km (from 54.0,10.1 to 55.0,10.2) in duration=70 minutes => 95km/h => / 1.4 => 68km/h
@@ -381,33 +378,6 @@ public class OSMReaderTest {
     }
 
     @Test
-    public void testFords() {
-        GraphHopper hopper = new GraphHopper();
-        hopper.setEncodedValuesString("car_access|block_fords=true,car_average_speed");
-        hopper.setOSMFile(getClass().getResource("test-barriers3.xml").getFile()).
-                setGraphHopperLocation(dir).
-                setProfiles(TestProfiles.accessAndSpeed("car")).
-                setMinNetworkSize(0).
-                importOrLoad();
-        Graph graph = hopper.getBaseGraph();
-        // our way is split into five edges, because there are two ford nodes
-        assertEquals(5, graph.getEdges());
-        BooleanEncodedValue accessEnc = hopper.getEncodingManager().getBooleanEncodedValue(VehicleAccess.key("car"));
-        int blocked = 0;
-        int notBlocked = 0;
-        AllEdgesIterator edge = graph.getAllEdges();
-        while (edge.next()) {
-            if (!edge.get(accessEnc))
-                blocked++;
-            else
-                notBlocked++;
-        }
-        // two blocked edges and three accessible edges
-        assertEquals(2, blocked);
-        assertEquals(3, notBlocked);
-    }
-
-    @Test
     public void avoidsLoopEdges_1525() {
         // loops in OSM should be avoided by adding additional tower node (see #1525, #1531)
         //     C - D
@@ -479,8 +449,8 @@ public class OSMReaderTest {
         EnumEncodedValue<RouteNetwork> mtbNetworkEnc = new EnumEncodedValue<>(MtbNetwork.KEY, RouteNetwork.class);
         EncodingManager manager = new EncodingManager.Builder().add(mtbNetworkEnc).add(bikeNetworkEnc).build();
         OSMParsers osmParsers = new OSMParsers()
-                .addRelationTagParser(relConf -> new OSMBikeNetworkTagParser(bikeNetworkEnc, relConf))
-                .addRelationTagParser(relConf -> new OSMMtbNetworkTagParser(mtbNetworkEnc, relConf));
+                .addRelationTagParser(relConf -> new OSMBikeNetworkTagParser(bikeNetworkEnc, relConf, "bicycle"))
+                .addRelationTagParser(relConf -> new OSMBikeNetworkTagParser(mtbNetworkEnc, relConf, "mtb"));
 
         ReaderRelation osmRel = new ReaderRelation(1);
         osmRel.add(new ReaderRelation.Member(ReaderElement.Type.WAY, 1, ""));
@@ -518,7 +488,7 @@ public class OSMReaderTest {
 
         // this is pretty ugly: the mtb network parser writes to the edge flags we pass into it, but at a location we
         // don't know, so we need to get the internal enc to read the flags below
-        transformEnc = ((OSMMtbNetworkTagParser) osmParsers.getRelationTagParsers().get(1)).getTransformerRouteRelEnc();
+        transformEnc = ((OSMBikeNetworkTagParser) osmParsers.getRelationTagParsers().get(1)).getTransformerRouteRelEnc();
 
         osmRel.setTag("route", "mtb");
         osmRel.setTag("network", "lcn");
@@ -937,11 +907,9 @@ public class OSMReaderTest {
         EnumEncodedValue<RoadAccess> roadAccessEnc = RoadAccess.create();
         EncodingManager em = new EncodingManager.Builder().add(roadAccessEnc).build();
         OSMParsers osmParsers = new OSMParsers();
-        osmParsers.addWayTagParser(new OSMRoadAccessParser<>(roadAccessEnc,
-                OSMRoadAccessParser.toOSMRestrictions(CAR), RoadAccess::countryHook, RoadAccess::find));
+        osmParsers.addWayTagParser(OSMRoadAccessParser.forCar(roadAccessEnc));
         BaseGraph graph = new BaseGraph.Builder(em).create();
         OSMReader reader = new OSMReader(graph, osmParsers, new OSMReaderConfig());
-        reader.setCountryRuleFactory(new CountryRuleFactory());
         reader.setAreaIndex(createCountryIndex());
         // there are two edges, both with highway=track, one in Berlin, one in Paris
         reader.setFile(new File(getClass().getResource("test-osm11.xml").getFile()));
@@ -974,7 +942,6 @@ public class OSMReaderTest {
                 .addWayTagParser(new CountryParser(countryEnc));
         BaseGraph graph = new BaseGraph.Builder(em).create();
         OSMReader reader = new OSMReader(graph, osmParsers, new OSMReaderConfig());
-        reader.setCountryRuleFactory(new CountryRuleFactory());
         reader.setAreaIndex(createCountryIndex());
         reader.setFile(new File(getClass().getResource("test-osm12.xml").getFile()));
         reader.readGraph();
@@ -1003,8 +970,9 @@ public class OSMReaderTest {
             setStoreOnFlush(false);
             setOSMFile(osmFile);
             setGraphHopperLocation(dir);
-            String str = "max_width,max_height,max_weight,foot_access, foot_priority, foot_average_speed, car_access, car_average_speed, bike_access, bike_priority, bike_average_speed";
-            setEncodedValuesString(str);
+            setEncodedValuesString("max_width,max_height,max_weight,road_environment," +
+                    "foot_access, foot_priority, foot_average_speed, " +
+                    "car_access, car_average_speed, bike_access, bike_priority, bike_average_speed");
             setProfiles(
                     TestProfiles.accessSpeedAndPriority("foot"),
                     TestProfiles.accessAndSpeed("car").setTurnCostsConfig(new TurnCostsConfig(List.of("motorcar", "motor_vehicle"))),
