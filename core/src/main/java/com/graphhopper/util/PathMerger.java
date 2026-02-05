@@ -50,6 +50,7 @@ public class PathMerger {
     private final Weighting weighting;
 
     private boolean enableInstructions = true;
+    private boolean includeRoundaboutExitInstruction = true;
     private boolean simplifyResponse = true;
     private RamerDouglasPeucker ramerDouglasPeucker = RDP;
     private boolean calcPoints = true;
@@ -88,6 +89,11 @@ public class PathMerger {
         return this;
     }
 
+    public PathMerger setIncludeRoundaboutExitInstruction(boolean includeRoundaboutExitInstruction) {
+        this.includeRoundaboutExitInstruction = includeRoundaboutExitInstruction;
+        return this;
+    }
+
     public ResponsePath doWork(PointList waypoints, List<Path> paths, EncodedValueLookup evLookup, Translation tr) {
         ResponsePath responsePath = new ResponsePath();
         int origPoints = 0;
@@ -111,7 +117,7 @@ public class PathMerger {
             fullDistance += path.getDistance();
             fullWeight += path.getWeight();
             if (enableInstructions) {
-                InstructionList il = InstructionsFromEdges.calcInstructions(path, graph, weighting, evLookup, tr);
+                InstructionList il = InstructionsFromEdges.calcInstructions(path, graph, weighting, evLookup, tr, includeRoundaboutExitInstruction);
 
                 if (!il.isEmpty()) {
                     fullInstructions.addAll(il);

@@ -212,13 +212,13 @@ public class GraphHopperTest {
         // no simplification
         hopper.getRouterConfig().setSimplifyResponse(false);
         GHResponse routeRsp = hopper.route(request);
-        assertEquals(10, routeRsp.getBest().getInstructions().size());
+        assertEquals(11, routeRsp.getBest().getInstructions().size());
         assertEquals(52, routeRsp.getBest().getPoints().size());
 
         // with simplification
         hopper.getRouterConfig().setSimplifyResponse(true);
         routeRsp = hopper.route(request);
-        assertEquals(10, routeRsp.getBest().getInstructions().size());
+        assertEquals(11, routeRsp.getBest().getInstructions().size());
         assertEquals(50, routeRsp.getBest().getPoints().size());
 
         // no instructions
@@ -1283,7 +1283,7 @@ public class GraphHopperTest {
         assertEquals(136, res.getPoints().size());
 
         InstructionList il = res.getInstructions();
-        assertEquals(25, il.size());
+        assertEquals(26, il.size());
 
         assertEquals("continue onto Obere Landstraße", il.get(0).getTurnDescription(tr));
         assertEquals(69.28, (Double) il.get(0).getExtraInfoJSON().get("heading"), .01);
@@ -1296,7 +1296,7 @@ public class GraphHopperTest {
         assertEquals("continue onto Wegscheid", il.get(7).getTurnDescription(tr));
         assertEquals("at roundabout, take exit 1 onto Hohensteinstraße", il.get(8).getTurnDescription(tr));
         //..
-        assertEquals("turn right onto Treppelweg", il.get(21).getTurnDescription(tr));
+        assertEquals("turn right onto Treppelweg", il.get(22).getTurnDescription(tr));
 
         rsp = hopper.route(new GHRequest(48.410987, 15.599492, 48.411172, 15.600371).
                 setAlgorithm(ASTAR).setProfile(footProfile));

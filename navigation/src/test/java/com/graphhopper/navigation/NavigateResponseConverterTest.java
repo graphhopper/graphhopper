@@ -51,10 +51,8 @@ public class NavigateResponseConverterTest {
 
     @Test
     public void basicTest() {
-
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile(profile)
                 .setPathDetails(Collections.singletonList("intersection")));
-
         ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH, distanceConfig);
 
         JsonNode route = json.get("routes").get(0);
@@ -120,64 +118,52 @@ public class NavigateResponseConverterTest {
         assertEquals(2, waypointsJson.size());
         JsonNode waypointLoc = waypointsJson.get(0).get("location");
         assertEquals(1.536198, waypointLoc.get(0).asDouble(), .001);
-
     }
 
     @Test
     public void arriveGeometryTest() {
-
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile(profile));
-
         ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH, distanceConfig);
-
         JsonNode steps = json.get("routes").get(0).get("legs").get(0).get("steps");
 
-        // Step 17 is the last before arrival
-        JsonNode step = steps.get(17);
-
-        PointList expectedArrivePointList = rsp.getBest().getInstructions().get(17).getPoints().clone(false);
-        PointList ghArrive = rsp.getBest().getInstructions().get(18).getPoints();
-        // We expect that the Mapbox compatible response builds the geometry to the
-        // arrival coordinate
+        int idx = rsp.getBest().getInstructions().size() - 2; // one before arrival
+        PointList expectedArrivePointList = rsp.getBest().getInstructions().get(idx).getPoints().clone(false);
+        PointList ghArrive = rsp.getBest().getInstructions().get(idx + 1).getPoints();
+        // We expect that the Mapbox compatible response builds the geometry to the arrival coordinate
         expectedArrivePointList.add(ghArrive);
         String encodedExpected = ResponsePathSerializer.encodePolyline(expectedArrivePointList, false, 1e6);
 
-        assertEquals(encodedExpected, step.get("geometry").asText());
+        assertEquals(encodedExpected, steps.get(idx).get("geometry").asText());
     }
 
     @Test
     public void departureArrivalTest() {
-
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile(profile));
-
         NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH, distanceConfig);
-
         // don't crash and we are happy
     }
 
     @Test
     public void voiceInstructionsTest() {
-
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile(profile));
-
         ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH, distanceConfig);
-
         JsonNode steps = json.get("routes").get(0).get("legs").get(0).get("steps");
 
-        // Step 4 is about 240m long
-        JsonNode step = steps.get(4);
-
-        JsonNode voiceInstructions = step.get("voiceInstructions");
+        JsonNode voiceInstructions = steps.get(5).get("voiceInstructions");
         assertEquals(2, voiceInstructions.size());
         JsonNode voiceInstruction = voiceInstructions.get(0);
         assertEquals(200, voiceInstruction.get("distanceAlongGeometry").asDouble(), 1);
-        assertEquals("In 200 meters at roundabout, take exit 2 onto CS-340, then at roundabout, take exit 2 onto CG-3",
+        assertEquals("In 200 meters at roundabout, take exit 2 onto CS-340",
                 voiceInstruction.get("announcement").asText());
 
-        // Step 14 is over 3km long
-        step = steps.get(14);
+        voiceInstructions = steps.get(6).get("voiceInstructions");
+        assertEquals(1, voiceInstructions.size());
+        voiceInstruction = voiceInstructions.get(0);
+        assertEquals(16, voiceInstruction.get("distanceAlongGeometry").asDouble(), 1);
+        assertEquals("exit the roundabout, then at roundabout, take exit 2 onto CG-3",
+                voiceInstruction.get("announcement").asText());
 
-        voiceInstructions = step.get("voiceInstructions");
+        voiceInstructions = steps.get(21).get("voiceInstructions");
         assertEquals(4, voiceInstructions.size());
         voiceInstruction = voiceInstructions.get(0);
         assertEquals(2000, voiceInstruction.get("distanceAlongGeometry").asDouble(), 1);
@@ -189,36 +175,26 @@ public class NavigateResponseConverterTest {
 
     @Test
     public void voiceInstructionsImperialTest() {
-
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile(profile));
-
         ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH,
                 new DistanceConfig(DistanceUtils.Unit.IMPERIAL, trMap, Locale.ENGLISH, TransportationMode.CAR));
 
         JsonNode steps = json.get("routes").get(0).get("legs").get(0).get("steps");
 
-        // Step 4 is about 240m long
-        JsonNode step = steps.get(4);
-        JsonNode maneuver = step.get("maneuver");
-
-        JsonNode voiceInstructions = step.get("voiceInstructions");
+        JsonNode voiceInstructions = steps.get(5).get("voiceInstructions");
         assertEquals(2, voiceInstructions.size());
         JsonNode voiceInstruction = voiceInstructions.get(0);
         assertEquals(200, voiceInstruction.get("distanceAlongGeometry").asDouble(), 1);
-        assertEquals("In 600 feet at roundabout, take exit 2 onto CS-340, then at roundabout, take exit 2 onto CG-3",
+        assertEquals("In 600 feet at roundabout, take exit 2 onto CS-340",
                 voiceInstruction.get("announcement").asText());
 
-        // Step 14 is over 3km long
-        step = steps.get(14);
-        maneuver = step.get("maneuver");
-
-        voiceInstructions = step.get("voiceInstructions");
-        assertEquals(4, voiceInstructions.size());
+        voiceInstructions = steps.get(21).get("voiceInstructions");
+        assertEquals(3, voiceInstructions.size());
         voiceInstruction = voiceInstructions.get(0);
-        assertEquals(3220, voiceInstruction.get("distanceAlongGeometry").asDouble(), 1);
-        assertEquals("In 2 miles keep right", voiceInstruction.get("announcement").asText());
+        assertEquals(1610, voiceInstruction.get("distanceAlongGeometry").asDouble(), 1);
+        assertEquals("In 1 mile keep right", voiceInstruction.get("announcement").asText());
 
-        voiceInstruction = voiceInstructions.get(3);
+        voiceInstruction = voiceInstructions.get(2);
         assertEquals("keep right", voiceInstruction.get("announcement").asText());
     }
 
@@ -232,22 +208,14 @@ public class NavigateResponseConverterTest {
 
         JsonNode steps = json.get("routes").get(0).get("legs").get(0).get("steps");
 
-        // Step 4 is about 240m long
-        JsonNode step = steps.get(4);
-        JsonNode maneuver = step.get("maneuver");
-
-        JsonNode voiceInstructions = step.get("voiceInstructions");
+        JsonNode voiceInstructions = steps.get(5).get("voiceInstructions");
         assertEquals(2, voiceInstructions.size());
         JsonNode voiceInstruction = voiceInstructions.get(0);
         assertEquals(50, voiceInstruction.get("distanceAlongGeometry").asDouble(), 1);
-        assertEquals("In 50 meters at roundabout, take exit 2 onto CS-340, then at roundabout, take exit 2 onto CG-3",
+        assertEquals("In 50 meters at roundabout, take exit 2 onto CS-340",
                 voiceInstruction.get("announcement").asText());
 
-        // Step 14 is over 3km long
-        step = steps.get(14);
-        maneuver = step.get("maneuver");
-
-        voiceInstructions = step.get("voiceInstructions");
+        voiceInstructions = steps.get(21).get("voiceInstructions");
         assertEquals(2, voiceInstructions.size());
         voiceInstruction = voiceInstructions.get(0);
         assertEquals(50, voiceInstruction.get("distanceAlongGeometry").asDouble(), 1);
@@ -267,22 +235,14 @@ public class NavigateResponseConverterTest {
 
         JsonNode steps = json.get("routes").get(0).get("legs").get(0).get("steps");
 
-        // Step 4 is about 240m long
-        JsonNode step = steps.get(4);
-        JsonNode maneuver = step.get("maneuver");
-
-        JsonNode voiceInstructions = step.get("voiceInstructions");
+        JsonNode voiceInstructions = steps.get(5).get("voiceInstructions");
         assertEquals(2, voiceInstructions.size());
         JsonNode voiceInstruction = voiceInstructions.get(0);
         assertEquals(50, voiceInstruction.get("distanceAlongGeometry").asDouble(), 1);
-        assertEquals("In 150 feet at roundabout, take exit 2 onto CS-340, then at roundabout, take exit 2 onto CG-3",
+        assertEquals("In 150 feet at roundabout, take exit 2 onto CS-340",
                 voiceInstruction.get("announcement").asText());
 
-        // Step 14 is over 3km long
-        step = steps.get(14);
-        maneuver = step.get("maneuver");
-
-        voiceInstructions = step.get("voiceInstructions");
+        voiceInstructions = steps.get(21).get("voiceInstructions");
         assertEquals(2, voiceInstructions.size());
         voiceInstruction = voiceInstructions.get(0);
         assertEquals(50, voiceInstruction.get("distanceAlongGeometry").asDouble(), 1);
@@ -302,22 +262,14 @@ public class NavigateResponseConverterTest {
 
         JsonNode steps = json.get("routes").get(0).get("legs").get(0).get("steps");
 
-        // Step 4 is about 240m long
-        JsonNode step = steps.get(4);
-        JsonNode maneuver = step.get("maneuver");
-
-        JsonNode voiceInstructions = step.get("voiceInstructions");
+        JsonNode voiceInstructions = steps.get(5).get("voiceInstructions");
         assertEquals(2, voiceInstructions.size());
         JsonNode voiceInstruction = voiceInstructions.get(0);
         assertEquals(150, voiceInstruction.get("distanceAlongGeometry").asDouble(), 1);
-        assertEquals("In 150 meters at roundabout, take exit 2 onto CS-340, then at roundabout, take exit 2 onto CG-3",
+        assertEquals("In 150 meters at roundabout, take exit 2 onto CS-340",
                 voiceInstruction.get("announcement").asText());
 
-        // Step 14 is over 3km long
-        step = steps.get(14);
-        maneuver = step.get("maneuver");
-
-        voiceInstructions = step.get("voiceInstructions");
+        voiceInstructions = steps.get(21).get("voiceInstructions");
         assertEquals(2, voiceInstructions.size());
         voiceInstruction = voiceInstructions.get(0);
         assertEquals(150, voiceInstruction.get("distanceAlongGeometry").asDouble(), 1);
@@ -337,22 +289,14 @@ public class NavigateResponseConverterTest {
 
         JsonNode steps = json.get("routes").get(0).get("legs").get(0).get("steps");
 
-        // Step 4 is about 240m long
-        JsonNode step = steps.get(4);
-        JsonNode maneuver = step.get("maneuver");
-
-        JsonNode voiceInstructions = step.get("voiceInstructions");
+        JsonNode voiceInstructions = steps.get(5).get("voiceInstructions");
         assertEquals(2, voiceInstructions.size());
         JsonNode voiceInstruction = voiceInstructions.get(0);
         assertEquals(150, voiceInstruction.get("distanceAlongGeometry").asDouble(), 1);
-        assertEquals("In 500 feet at roundabout, take exit 2 onto CS-340, then at roundabout, take exit 2 onto CG-3",
+        assertEquals("In 500 feet at roundabout, take exit 2 onto CS-340",
                 voiceInstruction.get("announcement").asText());
 
-        // Step 14 is over 3km long
-        step = steps.get(14);
-        maneuver = step.get("maneuver");
-
-        voiceInstructions = step.get("voiceInstructions");
+        voiceInstructions = steps.get(21).get("voiceInstructions");
         assertEquals(2, voiceInstructions.size());
         voiceInstruction = voiceInstructions.get(0);
         assertEquals(150, voiceInstruction.get("distanceAlongGeometry").asDouble(), 1);
@@ -382,13 +326,10 @@ public class NavigateResponseConverterTest {
 
     @Test
     public void voiceInstructionTranslationTest() {
-
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile(profile));
-
         ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH, distanceConfig);
-
         JsonNode steps = json.get("routes").get(0).get("legs").get(0).get("steps");
-        JsonNode voiceInstruction = steps.get(14).get("voiceInstructions").get(0);
+        JsonNode voiceInstruction = steps.get(21).get("voiceInstructions").get(0);
         assertEquals("In 2 kilometers keep right", voiceInstruction.get("announcement").asText());
 
         rsp = hopper.route(
@@ -400,42 +341,33 @@ public class NavigateResponseConverterTest {
         json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.GERMAN, distanceConfigGerman);
 
         steps = json.get("routes").get(0).get("legs").get(0).get("steps");
-        voiceInstruction = steps.get(14).get("voiceInstructions").get(0);
+        voiceInstruction = steps.get(21).get("voiceInstructions").get(0);
         assertEquals("In 2 Kilometern rechts halten", voiceInstruction.get("announcement").asText());
     }
 
     @Test
     public void roundaboutDegreesTest() {
-
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile(profile));
-
         ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH, distanceConfig);
-
         JsonNode steps = json.get("routes").get(0).get("legs").get(0).get("steps");
 
-        JsonNode step = steps.get(5);
-        JsonNode bannerInstructions = step.get("bannerInstructions");
+        JsonNode bannerInstructions = steps.get(7).get("bannerInstructions");
         JsonNode primary = bannerInstructions.get(0).get("primary");
 
         assertEquals("roundabout", primary.get("type").asText());
         assertEquals("At roundabout, take exit 2 onto CG-3", primary.get("text").asText());
         assertEquals("right", primary.get("modifier").asText());
         assertEquals(222, primary.get("degrees").asDouble(), 1);
-
     }
 
     @Test
     public void intersectionTest() {
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile(profile)
                 .setPathDetails(Collections.singletonList("intersection")));
-
         ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH, distanceConfig);
-
         JsonNode steps = json.get("routes").get(0).get("legs").get(0).get("steps");
 
-        JsonNode step = steps.get(0);
-
-        JsonNode intersection = step.get("intersections").get(0);
+        JsonNode intersection = steps.get(0).get("intersections").get(0);
 
         assertFalse(intersection.has("in"));
         assertEquals(0, intersection.get("out").asInt());
@@ -445,8 +377,7 @@ public class NavigateResponseConverterTest {
         assertEquals(rsp.getBest().getWaypoints().get(0).lon, location.get(0).asDouble(), .000001);
         assertEquals(rsp.getBest().getWaypoints().get(0).lat, location.get(1).asDouble(), .000001);
 
-        step = steps.get(4);
-        intersection = step.get("intersections").get(3);
+        intersection = steps.get(5).get("intersections").get(1);
         assertEquals(2, intersection.get("in").asInt());
         assertEquals(0, intersection.get("out").asInt());
         location = intersection.get("location");
@@ -466,13 +397,9 @@ public class NavigateResponseConverterTest {
         // There is a barrier https://www.openstreetmap.org/node/2206610569 on the route
         GHResponse rsp = hopper.route(new GHRequest(42.601991, 1.687227, 42.601616, 1.687888).setProfile(profile)
                 .setPathDetails(Collections.singletonList("intersection")));
-
         ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH, distanceConfig);
-
         JsonNode steps = json.get("routes").get(0).get("legs").get(0).get("steps");
-
         JsonNode step = steps.get(1);
-
         JsonNode intersection = step.get("intersections").get(1);
 
         // checking order of entries
@@ -480,14 +407,14 @@ public class NavigateResponseConverterTest {
 
         JsonNode location = intersection.get("location");
         // The location of the barrier
-        assertEquals(location.get(0).asDouble(), 1.6878903, .000001);
-        assertEquals(location.get(1).asDouble(), 42.601764, .000001);
+        assertEquals(1.6878903, location.get(0).asDouble(), .000001);
+        assertEquals(42.601764, location.get(1).asDouble(), .000001);
 
         int inPosition = intersection.get("in").asInt();
         int outPosition = intersection.get("out").asInt();
         JsonNode entry = intersection.get("entry");
-        assertEquals(false, entry.get(inPosition).asBoolean());
-        assertEquals(true, entry.get(outPosition).asBoolean());
+        assertFalse(entry.get(inPosition).asBoolean());
+        assertTrue(entry.get(outPosition).asBoolean());
 
         JsonNode bearings = intersection.get("bearings");
         double inBearing = bearings.get(inPosition).asDouble();
@@ -498,7 +425,7 @@ public class NavigateResponseConverterTest {
         assertEquals(171, outBearing);
 
         // and no additional intersection
-        assertEquals(step.get("intersections").size(), 2);
+        assertEquals(2, step.get("intersections").size());
     }
 
     @Test
@@ -513,19 +440,19 @@ public class NavigateResponseConverterTest {
 
         JsonNode steps = json.get("routes").get(0).get("legs").get(0).get("steps");
         // expecting an departure and arrival node
-        assertEquals(steps.size(), 2);
+        assertEquals(2, steps.size());
         JsonNode step = steps.get(0);
         JsonNode intersections = step.get("intersections");
-        assertEquals(intersections.size(), 1);
+        assertEquals(1, intersections.size());
         JsonNode intersection = intersections.get(0);
 
         // Departure should have only one out node, even for a barrier!
         assertEquals(0, intersection.get("out").asInt());
-        assertEquals(null, intersection.get("in"));
+        assertNull(intersection.get("in"));
         JsonNode location = intersection.get("location");
         // The location of the barrier
-        assertEquals(location.get(0).asDouble(), 1.687890, .000001);
-        assertEquals(location.get(1).asDouble(), 42.601764, .000001);
+        assertEquals(1.687890, location.get(0).asDouble(), .000001);
+        assertEquals(42.601764, location.get(1).asDouble(), .000001);
 
         JsonNode bearings = intersection.get("bearings");
 
@@ -536,9 +463,8 @@ public class NavigateResponseConverterTest {
 
         // Second step has an arrival intersection, with one in no out
         // The location of the arrival intersection should be different from barrier
-        JsonNode step2 = steps.get(1);
-        JsonNode intersections2 = step2.get("intersections");
-        assertEquals(intersections2.size(), 1);
+        JsonNode intersections2 = steps.get(1).get("intersections");
+        assertEquals(1, intersections2.size());
         JsonNode intersection2 = intersections2.get(0);
 
         JsonNode location2 = intersection2.get("location");
@@ -547,8 +473,7 @@ public class NavigateResponseConverterTest {
         assertNotEquals(location.get(1).asDouble(), location2.get(1).asDouble(), .0000001);
         // checking order of entries
         assertEquals(0, intersection2.get("in").asInt());
-        assertEquals(null, intersection2.get("out"));
-
+        assertNull(intersection2.get("out"));
     }
 
     @Test
@@ -605,7 +530,7 @@ public class NavigateResponseConverterTest {
 
             JsonNode lastStep = steps.get(steps.size() - 1); // last step
             JsonNode intersections = lastStep.get("intersections");
-            assertNotEquals(intersections, null);
+            assertNotEquals(null, intersections);
         }
 
         // Check if the duration and distance of the legs sum up to the overall route
@@ -613,7 +538,6 @@ public class NavigateResponseConverterTest {
         assertEquals(route.get("duration").asDouble(), duration, 1);
         assertEquals(route.get("distance").asDouble(), distance, 1);
     }
-
 
     @Test
     public void testMultipleWaypointsAndLastDuplicate() {

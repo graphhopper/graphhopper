@@ -24,6 +24,7 @@ import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 
+import static com.graphhopper.util.Instruction.ROUNDABOUT_EXIT;
 import static com.graphhopper.util.Parameters.Details.*;
 
 /**
@@ -39,6 +40,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
     private final NodeAccess nodeAccess;
 
     private final InstructionList ways;
+    private final boolean includeRoundaboutExits;
     private final EdgeExplorer outEdgeExplorer;
     private final EdgeExplorer allExplorer;
     private final BooleanEncodedValue roundaboutEnc;
@@ -85,7 +87,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
     private static final int MAX_U_TURN_DISTANCE = 35;
 
     public InstructionsFromEdges(Graph graph, Weighting weighting, EncodedValueLookup evLookup,
-                                 InstructionList ways) {
+                                 InstructionList ways, boolean includeRoundaboutExits) {
         this.weighting = weighting;
         this.roundaboutEnc = evLookup.getBooleanEncodedValue(Roundabout.KEY);
         this.roadEnvEnc = evLookup.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
@@ -95,6 +97,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         this.lanesEnc = evLookup.hasEncodedValue(Lanes.KEY) ? evLookup.getIntEncodedValue(Lanes.KEY) : null;
         this.nodeAccess = graph.getNodeAccess();
         this.ways = ways;
+        this.includeRoundaboutExits = includeRoundaboutExits;
         prevNode = -1;
         prevInRoundabout = false;
         prevName = null;
@@ -105,16 +108,20 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         allExplorer = graph.createEdgeExplorer();
     }
 
-    /**
-     * @return the list of instructions for this path.
-     */
-    public static InstructionList calcInstructions(Path path, Graph graph, Weighting weighting, EncodedValueLookup evLookup, final Translation tr) {
+    public static InstructionList calcInstructions(Path path, Graph graph, Weighting weighting,
+                                                   EncodedValueLookup evLookup, final Translation tr) {
+        return calcInstructions(path, graph, weighting, evLookup, tr, true);
+    }
+
+    public static InstructionList calcInstructions(Path path, Graph graph, Weighting weighting,
+                                                   EncodedValueLookup evLookup, final Translation tr,
+                                                   boolean includeRoundaboutExits) {
         final InstructionList ways = new InstructionList(tr);
         if (path.isFound()) {
             if (path.getEdgeCount() == 0) {
                 ways.add(new FinishInstruction(graph.getNodeAccess(), path.getEndNode()));
             } else {
-                path.forEveryEdge(new InstructionsFromEdges(graph, weighting, evLookup, ways));
+                path.forEveryEdge(new InstructionsFromEdges(graph, weighting, evLookup, ways, includeRoundaboutExits));
             }
         }
         return ways;
@@ -178,8 +185,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             // remark: names and annotations within roundabout are ignored
             if (!prevInRoundabout) //just entered roundabout
             {
-                int sign = Instruction.USE_ROUNDABOUT;
-                RoundaboutInstruction roundaboutInstruction = new RoundaboutInstruction(sign, name,
+                RoundaboutInstruction roundaboutInstruction = new RoundaboutInstruction(Instruction.ROUNDABOUT_USE, name,
                         new PointList(10, nodeAccess.is3D()));
                 prevInstructionPrevOrientation = prevOrientation;
                 if (prevInstruction != null) {
@@ -223,7 +229,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                 }
             }
 
-        } else if (prevInRoundabout) //previously in roundabout but not anymore
+        } else if (prevInRoundabout) // exit roundabout
         {
             prevInstruction.setName(name);
             prevInstruction.setExtraInfo(STREET_REF, ref);
@@ -243,11 +249,22 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             orientation = AngleCalc.ANGLE_CALC.alignOrientation(recentOrientation, orientation);
             double deltaOut = (orientation - recentOrientation);
 
-            prevInstruction = ((RoundaboutInstruction) prevInstruction)
-                    .setRadian(deltaInOut)
-                    .setDirOfRotation(deltaOut)
-                    .setExited();
+            RoundaboutInstruction rInstr = (RoundaboutInstruction) prevInstruction;
+            rInstr.setRadian(deltaInOut).setDirOfRotation(deltaOut);
 
+            // we use an exit that is not considered as it is inaccessible by car (#3081)
+            if (rInstr.getExitNumber() == 0) rInstr.increaseExitNumber();
+
+            if (includeRoundaboutExits) {
+                prevInstruction = new RoundaboutInstruction(ROUNDABOUT_EXIT, name, new PointList(10, nodeAccess.is3D()));
+                // do not set radian and dir of rotation as exit should not have to know exit_number, turn_angle or dirOfRotation.
+
+                ways.add(prevInstruction);
+            }
+
+            ((RoundaboutInstruction) prevInstruction).setExited();
+            prevInstructionPrevOrientation = prevOrientation;
+            prevOrientation = orientation;
             prevInstructionName = prevName;
             prevName = name;
             prevRoadEnv = roadEnv;
@@ -299,7 +316,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                     prevInstruction.setName(name);
                 } else {
                     prevInstruction = new Instruction(sign, name, new PointList(10, nodeAccess.is3D()));
-                    // Remember the Orientation and name of the road, before doing this maneuver
+                    // Remember the orientation and name of the road, before doing this maneuver
                     prevInstructionPrevOrientation = prevOrientation;
                     prevInstructionName = prevName;
                     ways.add(prevInstruction);
@@ -343,7 +360,6 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             orientation = AngleCalc.ANGLE_CALC.alignOrientation(prevOrientation, orientation);
             double delta = (orientation - prevOrientation);
             ((RoundaboutInstruction) prevInstruction).setRadian(delta);
-
         }
 
         Instruction finishInstruction = new FinishInstruction(nodeAccess, prevEdge.getAdjNode());

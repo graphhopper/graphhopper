@@ -27,9 +27,6 @@ import com.graphhopper.util.Parameters;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.TranslationMap;
 import com.graphhopper.util.shapes.GHPoint;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import jakarta.inject.Inject;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.NotNull;
@@ -39,6 +36,9 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.*;
 
 import static com.graphhopper.util.Parameters.Details.*;
@@ -104,8 +104,6 @@ public class NavigateResource {
             throw new IllegalArgumentException("Currently, we only support polyline6");
         if (!enableInstructions)
             throw new IllegalArgumentException("Currently, you need to enable steps");
-        if (!roundaboutExits)
-            throw new IllegalArgumentException("Roundabout exits have to be enabled right now");
         if (!voiceInstructions)
             throw new IllegalArgumentException("You need to enable voice instructions right now");
         if (!bannerInstructions)
@@ -115,16 +113,27 @@ public class NavigateResource {
         String ghProfile = resolverMap.getOrDefault(mapboxProfile, mapboxProfile);
         List<GHPoint> requestPoints = getPointsFromRequest(httpReq, mapboxProfile);
 
+        GHRequest request = new GHRequest(requestPoints).
+                setProfile(ghProfile).
+                setLocale(localeStr).
+                // We force the intersection details here as we cannot easily add this to the URL
+                        setPathDetails(List.of(INTERSECTION)).
+                putHint(ROUNDABOUT_EXITS, roundaboutExits).
+                putHint(CALC_POINTS, true).
+                putHint(INSTRUCTIONS, enableInstructions).
+                putHint(WAY_POINT_MAX_DISTANCE, minPathPrecision);
+
         List<Double> favoredHeadings = getBearing(bearings);
         if (!favoredHeadings.isEmpty() && favoredHeadings.size() != requestPoints.size()) {
             throw new IllegalArgumentException("Number of bearings and waypoints did not match");
         }
 
-        GHResponse ghResponse = calcRouteForGET(favoredHeadings, requestPoints, ghProfile, localeStr, enableInstructions, minPathPrecision);
+        GHResponse ghResponse = calcRouteForGET(request, favoredHeadings, requestPoints);
 
         // Only do this, when there are more than 2 points, otherwise we use alternative routes
         if (!ghResponse.hasErrors() && !favoredHeadings.isEmpty()) {
-            GHResponse noHeadingResponse = calcRouteForGET(Collections.emptyList(), requestPoints, ghProfile, localeStr, enableInstructions, minPathPrecision);
+            request.setHeadings(Collections.emptyList());
+            GHResponse noHeadingResponse = calcRouteForGET(request, Collections.emptyList(), requestPoints);
             if (ghResponse.getBest().getDistance() != noHeadingResponse.getBest().getDistance()) {
                 ghResponse.getAll().add(noHeadingResponse.getBest());
             }
@@ -165,8 +174,6 @@ public class NavigateResource {
             throw new IllegalArgumentException("Do not set 'geometries'. Per default it is 'polyline6'.");
         if (request.getHints().has("steps"))
             throw new IllegalArgumentException("Do not set 'steps'. Per default it is true.");
-        if (request.getHints().has("roundabout_exits"))
-            throw new IllegalArgumentException("Do not set 'roundabout_exits'. Per default it is true.");
         if (request.getHints().has("voice_instructions"))
             throw new IllegalArgumentException("Do not set 'voice_instructions'. Per default it is true.");
         if (request.getHints().has("banner_instructions"))
@@ -190,6 +197,9 @@ public class NavigateResource {
             else
                 request.setPathDetails(List.of(INTERSECTION));
         }
+
+        if (!request.getHints().has(ROUNDABOUT_EXITS))
+            request.getHints().putObject(ROUNDABOUT_EXITS, false); // same default as GET
 
         GHResponse ghResponse = graphHopper.route(request);
 
@@ -222,20 +232,8 @@ public class NavigateResource {
         }
     }
 
-    private GHResponse calcRouteForGET(List<Double> headings, List<GHPoint> requestPoints, String profileStr,
-                                       String localeStr, boolean enableInstructions, double minPathPrecision) {
-        GHRequest request = new GHRequest(requestPoints);
-        if (!headings.isEmpty())
-            request.setHeadings(headings);
-
-        request.setProfile(profileStr).
-                setLocale(localeStr).
-                // We force the intersection details here as we cannot easily add this to the URL
-                setPathDetails(List.of(INTERSECTION)).
-                putHint(CALC_POINTS, true).
-                putHint(INSTRUCTIONS, enableInstructions).
-                putHint(WAY_POINT_MAX_DISTANCE, minPathPrecision);
-
+    private GHResponse calcRouteForGET(GHRequest request, List<Double> headings, List<GHPoint> requestPoints) {
+        request.setHeadings(headings);
         if (requestPoints.size() > 2 || !headings.isEmpty()) {
             request.putHint(Parameters.CH.DISABLE, true).
                     putHint(Parameters.Routing.PASS_THROUGH, true);
@@ -264,7 +262,7 @@ public class NavigateResource {
         return points;
     }
 
-    static List<Double> getBearing(String bearingString) {
+    public static List<Double> getBearing(String bearingString) {
         if (bearingString == null || bearingString.isEmpty())
             return Collections.emptyList();
 
