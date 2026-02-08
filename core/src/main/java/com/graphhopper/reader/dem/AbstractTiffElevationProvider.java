@@ -24,7 +24,7 @@ import javax.net.ssl.SSLException;
 import java.awt.image.Raster;
 import java.io.File;
 import java.io.IOException;
-import java.net.SocketTimeoutException;
+import java.net.http.HttpTimeoutException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -45,10 +45,10 @@ public abstract class AbstractTiffElevationProvider extends TileBasedElevationPr
     // Degrees of longitude covered by this tile
     final int LON_DEGREE;
 
-    public AbstractTiffElevationProvider(String baseUrl, String cacheDir, String downloaderName, int width, int height, int latDegree, int lonDegree) {
+    public AbstractTiffElevationProvider(String baseUrl, String cacheDir, int width, int height, int latDegree, int lonDegree) {
         super(cacheDir);
         this.baseUrl = baseUrl;
-        this.downloader = new Downloader(downloaderName).setTimeout(10000);
+        this.downloader = new Downloader(10_000);
         this.WIDTH = width;
         this.HEIGHT = height;
         this.LAT_DEGREE = latDegree;
@@ -167,9 +167,9 @@ public abstract class AbstractTiffElevationProvider extends TileBasedElevationPr
             int max = 3;
             for (int trial = 0; trial < max; trial++) {
                 try {
-                    downloader.downloadFile(url, downloadFile.getAbsolutePath());
+                    downloader.downloadFile(url, downloadFile);
                     return;
-                } catch (SocketTimeoutException ex) {
+                } catch (HttpTimeoutException ex) {
                     if (trial >= max - 1)
                         throw new RuntimeException(ex);
                     try {

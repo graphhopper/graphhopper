@@ -19,36 +19,47 @@ package com.graphhopper.reader.dem;
 
 import java.io.*;
 
+import com.graphhopper.util.Downloader;
+
 import static com.graphhopper.util.Helper.close;
 
 /**
  * Sonny's LiDAR Digital Terrain Models contains elevation data for Europe with 1 arc second (~30m) accuracy.
- * The description is available at https://sonny.4lima.de/. Unfortunately the data is provided on a Google Drive
- * https://drive.google.com/drive/folders/0BxphPoRgwhnoWkRoTFhMbTM3RDA?resourcekey=0-wRe5bWl96pwvQ9tAfI9cQg
+ * The description is available at <a href="https://sonny.4lima.de/">https://sonny.4lima.de/</a>. Unfortunately the data is provided on a
+ * <a href="https://drive.google.com/drive/folders/0BxphPoRgwhnoWkRoTFhMbTM3RDA?resourcekey=0-wRe5bWl96pwvQ9tAfI9cQg">Google Drive</a>
  * Therefore, the data is not available via a direct URL and you have to download it manually. After downloading,
  * the data has to be unzipped and placed in the cache directory. The cache directory is expected to contain DTM
  * data files with the naming convention like "N49E011.hgt" for the area around 49°N and 11°E.
  * <p>
  * Please note that the data cannot be used for public hosting or redistribution due to the terms of use of the data. See
- * https://github.com/graphhopper/graphhopper/issues/2823
+ * @see <a href="https://github.com/graphhopper/graphhopper/issues/2823">https://github.com/graphhopper/graphhopper/issues/2823</a>
  * <p>
  *
  * @author ratrun
  */
 public class SonnyProvider extends AbstractSRTMElevationProvider {
 
+	private static final String SONNY_DOWNLOAD_URL = "https://drive.google.com/drive/folders/0BxphPoRgwhnoWkRoTFhMbTM3RDA?resourcekey=0-wRe5bWl96pwvQ9tAfI9cQg";
+
     public SonnyProvider() {
         this("");
     }
 
     public SonnyProvider(String cacheDir) {
-        super("https://drive.google.com/drive/folders/0BxphPoRgwhnoWkRoTFhMbTM3RDA?resourcekey=0-wRe5bWl96pwvQ9tAfI9cQg/", // This base URL cannot be used, as the data is not available via a direct URL
+        super(SONNY_DOWNLOAD_URL + "/", // This base URL cannot be used, as the data is not available via a direct URL
                 cacheDir.isEmpty() ? "/tmp/sonny" : cacheDir,
-                "GraphHopper SonnyReader",
                 -56,
                 90,
                 3601
         );
+		this.downloader = new Downloader() {
+			@Override
+			public void downloadFile(String url, File toFile) {
+				throw new RuntimeException("Sonny elevation data cannot be downloaded automatically. " +
+						"Please download the data manually from " + SONNY_DOWNLOAD_URL +
+						", unzip it and place the .hgt files in the cache directory: " + getCacheDir());
+			}
+		};
     }
 
     public static void main(String[] args) throws IOException {

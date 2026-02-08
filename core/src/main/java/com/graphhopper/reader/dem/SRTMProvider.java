@@ -46,13 +46,13 @@ public class SRTMProvider extends AbstractSRTMElevationProvider {
         super(
                 "https://srtm.kurviger.de/SRTM3/",
                 cacheDir.isEmpty()? "/tmp/srtm": cacheDir,
-                "GraphHopper SRTMReader",
                 -56,
                 60,
                 1201
         );
         // move to explicit calls?
         init();
+        downloader.setRequestCompressed(false);
     }
 
     public static void main(String[] args) throws IOException {

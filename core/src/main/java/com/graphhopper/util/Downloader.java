@@ -18,117 +18,99 @@
 package com.graphhopper.util;
 
 import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.function.LongConsumer;
+import java.net.*;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.net.http.HttpResponse.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.time.Duration;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
 
 /**
  * @author Peter Karich
+ * @author Thomas Butz
  */
 public class Downloader {
     private static final int BUFFER_SIZE = 8 * 1024;
-    private final String userAgent;
-    private String referrer = "http://graphhopper.com";
-    private String acceptEncoding = "gzip, deflate";
-    private int timeout = 4000;
+	private static final long DEFAULT_TIMEOUT = 4_000;
+	private static final String USER_AGENT = "graphhopper/" + Constants.VERSION;
 
-    public Downloader(String userAgent) {
-        this.userAgent = userAgent;
+    private final HttpClient client;
+	private final Duration timeout;
+
+    private boolean requestCompressed = true;
+
+	public Downloader() {
+		this(DEFAULT_TIMEOUT);
+	}
+
+    public Downloader(long timeout) {
+        this.client = HttpClient.newBuilder()
+                .followRedirects(HttpClient.Redirect.NORMAL)
+                .proxy(ProxySelector.getDefault())
+                .build();
+		this.timeout = Duration.ofMillis(timeout);
     }
 
-    public static void main(String[] args) throws IOException {
-        new Downloader("GraphHopper Downloader").downloadAndUnzip("http://graphhopper.com/public/maps/0.1/europe_germany_berlin.ghz", "somefolder",
-                val -> System.out.println("progress:" + val));
+    public void setRequestCompressed(boolean requestCompressed) {
+        this.requestCompressed = requestCompressed;
     }
 
-    public Downloader setTimeout(int timeout) {
-        this.timeout = timeout;
-        return this;
-    }
-
-    public Downloader setReferrer(String referrer) {
-        this.referrer = referrer;
-        return this;
-    }
-
-    /**
-     * This method initiates a connect call of the provided connection and returns the response
-     * stream. It only returns the error stream if it is available and readErrorStreamNoException is
-     * true otherwise it throws an IOException if an error happens. Furthermore it wraps the stream
-     * to decompress it if the connection content encoding is specified.
-     */
-    public InputStream fetch(HttpURLConnection connection, boolean readErrorStreamNoException) throws IOException {
-        // create connection but before reading get the correct inputstream based on the compression and if error
-        connection.connect();
-
-        InputStream is;
-        if (readErrorStreamNoException && connection.getResponseCode() >= 400 && connection.getErrorStream() != null)
-            is = connection.getErrorStream();
-        else
-            is = connection.getInputStream();
-
-        if (is == null)
-            throw new IOException("Stream is null. Message:" + connection.getResponseMessage());
-
-        // wrap
-        try {
-            String encoding = connection.getContentEncoding();
-            if (encoding != null && encoding.equalsIgnoreCase("gzip"))
-                is = new GZIPInputStream(is, BUFFER_SIZE);
-            else if (encoding != null && encoding.equalsIgnoreCase("deflate"))
-                is = new InflaterInputStream(is, new Inflater(true), BUFFER_SIZE);
-        } catch (IOException ex) {
+    public void downloadFile(String url, File toFile) throws IOException {
+        var requestBuilder = HttpRequest.newBuilder()
+                .setHeader("User-Agent", USER_AGENT)
+                .timeout(timeout)
+                .uri(URI.create(url));
+        if (requestCompressed) {
+            requestBuilder.setHeader("Accept-Encoding", "gzip, deflate");
         }
 
-        return is;
-    }
-
-    public InputStream fetch(String url) throws IOException {
-        return fetch(createConnection(url), false);
-    }
-
-    public HttpURLConnection createConnection(String urlStr) throws IOException {
-        URL url = new URL(urlStr);
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        // Will yield in a POST request: conn.setDoOutput(true);
-        conn.setDoInput(true);
-        conn.setUseCaches(true);
-        conn.setRequestProperty("Referrer", referrer);
-        conn.setRequestProperty("User-Agent", userAgent);
-        // suggest respond to be gzipped or deflated (which is just another compression)
-        // http://stackoverflow.com/q/3932117
-        conn.setRequestProperty("Accept-Encoding", acceptEncoding);
-        conn.setReadTimeout(timeout);
-        conn.setConnectTimeout(timeout);
-        return conn;
-    }
-
-    public void downloadFile(String url, String toFile) throws IOException {
-        HttpURLConnection conn = createConnection(url);
-        InputStream iStream = fetch(conn, false);
-        BufferedOutputStream writer = new BufferedOutputStream(new FileOutputStream(toFile), BUFFER_SIZE);
-        InputStream in = new BufferedInputStream(iStream, BUFFER_SIZE);
+        HttpResponse<InputStream> response;
         try {
-            in.transferTo(writer);
-        } finally {
-            Helper.close(iStream);
-            Helper.close(writer);
-            Helper.close(in);
+            response = client.send(requestBuilder.build(), new UncompressHandler());
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
+
+        if (response.statusCode() != 200) {
+            throw new FileNotFoundException("Download of " + url + " failed, response code: " + response.statusCode());
+        }
+
+		Path target = toFile.toPath();
+	    Path tmpFile = target.resolveSibling(toFile.getName() + ".part");
+        try (var in = response.body(); var out = Files.newOutputStream(tmpFile)) {
+            in.transferTo(out);
+        }
+		Files.move(tmpFile, target, StandardCopyOption.ATOMIC_MOVE);
     }
 
-    public void downloadAndUnzip(String url, String toFolder, final LongConsumer progressListener) throws IOException {
-        HttpURLConnection conn = createConnection(url);
-        final int length = conn.getContentLength();
-        InputStream iStream = fetch(conn, false);
+    private static class UncompressHandler implements BodyHandler<InputStream> {
+        @Override
+        public BodySubscriber<InputStream> apply(ResponseInfo responseInfo) {
+            if (responseInfo.statusCode() != 200) {
+                return BodySubscribers.replacing(null);
+            }
+            String encoding = responseInfo.headers().firstValue("Content-Encoding")
+                    .map(String::toLowerCase).orElse("");
 
-        new Unzipper().unzip(iStream, new File(toFolder), sumBytes -> progressListener.accept((int) (100 * sumBytes / length)));
-    }
-
-    public String downloadAsString(String url, boolean readErrorStreamNoException) throws IOException {
-        return Helper.isToString(fetch(createConnection(url), readErrorStreamNoException));
+            var subscriber = BodySubscribers.ofInputStream();
+            return switch (encoding) {
+                case "deflate" -> BodySubscribers.mapping(subscriber,
+                        in -> new InflaterInputStream(in, new Inflater(true), BUFFER_SIZE));
+                case "gzip" -> BodySubscribers.mapping(subscriber, in -> {
+                    try {
+                        return new GZIPInputStream(in, BUFFER_SIZE);
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                });
+                default -> subscriber;
+            };
+        }
     }
 }
