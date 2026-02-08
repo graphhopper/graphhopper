@@ -9,11 +9,9 @@ import com.graphhopper.storage.IntsRef;
 public abstract class AbstractAverageSpeedParser implements TagParser {
     // http://wiki.openstreetmap.org/wiki/Mapfeatures#Barrier
     protected final DecimalEncodedValue avgSpeedEnc;
-    protected final DecimalEncodedValue ferrySpeedEnc;
 
-    protected AbstractAverageSpeedParser(DecimalEncodedValue speedEnc, DecimalEncodedValue ferrySpeedEnc) {
+    protected AbstractAverageSpeedParser(DecimalEncodedValue speedEnc) {
         this.avgSpeedEnc = speedEnc;
-        this.ferrySpeedEnc = ferrySpeedEnc;
     }
 
     public final DecimalEncodedValue getAverageSpeedEnc() {
