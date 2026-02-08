@@ -2167,6 +2167,16 @@ public class GraphHopperTest {
         assertCurbsidesPath(h, p, q, asList(CURBSIDE_RIGHT, CURBSIDE_LEFT), 463, asList(boulevard, avenue), "soft");
         assertCurbsidesPath(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_RIGHT), 463, asList(boulevard, avenue), "soft");
         assertCurbsidesPath(h, p, q, asList(CURBSIDE_LEFT, CURBSIDE_LEFT), 463, asList(boulevard, avenue), "soft");
+
+        // curbside AUTO in monaco (right-hand side traffic) will be set to 'right' due to PRIMARY road class (to avoid crossing).
+        p = new GHPoint(43.738783, 7.420465);
+        q = new GHPoint(43.739207, 7.4216);
+        final String princess = "Boulevard Princesse Charlotte";
+        final String roq = "Avenue de Roqueville";
+        final String berc = "Avenue du Berceau";
+        assertCurbsidesPath(h, p, q, asList(CURBSIDE_AUTO, CURBSIDE_LEFT), 102, List.of(princess));
+        assertCurbsidesPath(h, p, q, asList(CURBSIDE_AUTO, CURBSIDE_RIGHT), 513, List.of(princess, berc, berc, berc, roq, princess));
+        assertCurbsidesPath(h, p, q, asList(CURBSIDE_AUTO, CURBSIDE_AUTO), 513, asList(princess, berc, berc, berc, roq, princess));
     }
 
     private void assertCurbsidesPath(GraphHopper hopper, GHPoint source, GHPoint target, List<String> curbsides,
