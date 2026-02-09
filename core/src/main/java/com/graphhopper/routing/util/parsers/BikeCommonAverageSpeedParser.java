@@ -41,7 +41,7 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         setSurfaceSpeed("asphalt", 18);
         setSurfaceSpeed("cobblestone", 8);
         setSurfaceSpeed("cobblestone:flattened", 10);
-        setSurfaceSpeed("sett", 10);
+        setSurfaceSpeed("sett", 12);
         setSurfaceSpeed("concrete", 18);
         setSurfaceSpeed("concrete:lanes", 16);
         setSurfaceSpeed("concrete:plates", 16);
@@ -172,6 +172,10 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
                         speed = Math.max(speed, highwaySpeeds.get("cycleway"));
                     else if (bikeAllowed)
                         speed = Math.max(speed, 12);
+                case "living_street":
+                    if(bikeAllowed)
+                        // if explicitly allowed then allow speeds above limit to get more realistic routes and ETAs
+                        speed = bikeDesignated ? Math.max(speed, 12) : Math.max(speed, 10);
             }
         }
 
