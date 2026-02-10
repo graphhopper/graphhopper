@@ -227,6 +227,32 @@ public class OSMReaderTest {
     }
 
     @Test
+    public void testPathDetailsOfFerry() {
+        GraphHopper hopper = new GraphHopperFacade(file2) {
+            @Override
+            protected List<Profile> createProfiles() {
+                return List.of(new Profile("car").setCustomModel(new CustomModel().
+                        addToPriority(If("!car_access", MULTIPLY, "0")).
+                        addToSpeed(If("road_environment == FERRY", LIMIT, "ferry_speed")).
+                        addToSpeed(Else(LIMIT, "car_average_speed"))));
+            }
+        }.importOrLoad();
+
+        GHResponse rsp = hopper.route(new GHRequest(55.0, 10.2, 54.0, 10.1).
+                setProfile("car").
+                setPathDetails(List.of("average_speed", "car_average_speed", "road_environment")));
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
+        List<PathDetail> list = rsp.getBest().getPathDetails().get("average_speed");
+        assertEquals(62.0, list.get(0).getValue());
+
+        list = rsp.getBest().getPathDetails().get("car_average_speed");
+        assertEquals(0.0, list.get(0).getValue());
+
+        list = rsp.getBest().getPathDetails().get("road_environment");
+        assertEquals("ferry", list.get(0).getValue());
+    }
+
+    @Test
     public void testMaxSpeed() {
         GraphHopper hopper = new GraphHopperFacade(file2) {
             @Override
@@ -983,13 +1009,15 @@ public class OSMReaderTest {
             setEncodedValuesString("max_width,max_height,max_weight,road_environment," +
                     "foot_access, foot_priority, foot_average_speed, " +
                     "car_access, car_average_speed, bike_access, bike_priority, bike_average_speed, ferry_speed");
-            setProfiles(
-                    TestProfiles.accessSpeedAndPriority("foot"),
+            setProfiles(createProfiles());
+            getReaderConfig().setPreferredLanguage(prefLang);
+        }
+
+        protected List<Profile> createProfiles() {
+            return List.of(TestProfiles.accessSpeedAndPriority("foot"),
                     TestProfiles.accessAndSpeed("car").setTurnCostsConfig(new TurnCostsConfig(List.of("motorcar", "motor_vehicle"))),
                     TestProfiles.accessSpeedAndPriority("bike").setTurnCostsConfig(new TurnCostsConfig(List.of("bicycle"))),
-                    TestProfiles.constantSpeed("truck", 100).setTurnCostsConfig(new TurnCostsConfig(List.of("hgv", "motor_vehicle")))
-            );
-            getReaderConfig().setPreferredLanguage(prefLang);
+                    TestProfiles.constantSpeed("truck", 100).setTurnCostsConfig(new TurnCostsConfig(List.of("hgv", "motor_vehicle"))));
         }
 
         @Override
