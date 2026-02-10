@@ -167,8 +167,6 @@ public class ViaRouting {
 
     private static Function<Snap, String> createCurbsideAutoFunction(final DirectedEdgeFilter edgeFilter, final EncodingManager em) {
         EnumEncodedValue<RoadClass> roadClassEnc = em.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
-//        DecimalEncodedValue maxSpeedEnc = em.getDecimalEncodedValue(MaxSpeed.KEY);
-//        IntEncodedValue lanesEnc = em.hasEncodedValue(Lanes.KEY) ? em.getIntEncodedValue(Lanes.KEY) : null;
         EnumEncodedValue<Country> countryEnc = em.hasEncodedValue(Country.KEY) ? em.getEnumEncodedValue(Country.KEY, Country.class) : null;
 
         return snap -> {
@@ -176,7 +174,7 @@ public class ViaRouting {
 
             // do not force curbside for 'smaller roads' (for now not configurable)
             RoadClass roadClass = edge.get(roadClassEnc);
-            if (roadClass != RoadClass.PRIMARY && roadClass != RoadClass.SECONDARY && roadClass != RoadClass.TRUNK && roadClass != RoadClass.MOTORWAY)
+            if (roadClass != RoadClass.PRIMARY && roadClass != RoadClass.SECONDARY && roadClass != RoadClass.TRUNK)
                 return CURBSIDE_ANY;
 
             // do not force curbside for one-ways
@@ -185,7 +183,7 @@ public class ViaRouting {
 
             // do not force curbside for 'smaller roads' regarding lanes and max_speed
             // note: lane count in OSM is for the entire road - not just for one direction
-            // TODO: 'lanes' is 1 if OSM tag is missing, which might be rather misleading in this case
+            // TODO LATER: 'lanes' is 1 if OSM tag is missing, which might be rather misleading in this case
 //            if (lanesEnc != null && edge.get(lanesEnc) < 2 && maxSpeedEnc != null && edge.get(maxSpeedEnc) <= 50)
 //                return CURBSIDE_ANY;
 
