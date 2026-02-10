@@ -225,6 +225,16 @@ public class FootTagParserTest {
         way.setTag("foot", "designated");
         way.setTag("access", "private");
         assertTrue(accessParser.getAccess(way).canSkip());
+
+        // speed for ferry is moved out of the encoded value, i.e. it is 0
+        way = new ReaderWay(0L);
+        way.setTag("route", "ferry");
+        assertTrue(accessParser.getAccess(way).isFerry());
+
+        EdgeIntAccess edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(encodingManager.getBytesForFlags());
+        int edgeId = 0;
+        accessParser.handleWayTags(edgeId, edgeIntAccess, way);
+        assertEquals(0, bikeAvgSpeedEnc.getDecimal(false, edgeId, edgeIntAccess));
     }
 
     @Test

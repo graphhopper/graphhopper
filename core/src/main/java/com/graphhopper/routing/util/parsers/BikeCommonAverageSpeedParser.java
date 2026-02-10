@@ -25,9 +25,8 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
 
     protected BikeCommonAverageSpeedParser(DecimalEncodedValue speedEnc,
                                            EnumEncodedValue<Smoothness> smoothnessEnc,
-                                           DecimalEncodedValue ferrySpeedEnc,
                                            EnumEncodedValue<RouteNetwork> bikeRouteEnc) {
-        super(speedEnc, ferrySpeedEnc);
+        super(speedEnc);
         this.bikeRouteEnc = bikeRouteEnc;
         this.smoothnessEnc = smoothnessEnc;
 
@@ -122,13 +121,7 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
     public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way) {
         String highwayValue = way.getTag("highway", "");
         if (highwayValue.isEmpty()) {
-            if (FerrySpeedCalculator.isFerry(way)) {
-                double ferrySpeed = FerrySpeedCalculator.minmax(ferrySpeedEnc.getDecimal(false, edgeId, edgeIntAccess), avgSpeedEnc);
-                setSpeed(false, edgeId, edgeIntAccess, ferrySpeed);
-                if (avgSpeedEnc.isStoreTwoDirections())
-                    setSpeed(true, edgeId, edgeIntAccess, ferrySpeed);
-            }
-            if (!way.hasTag("railway", "platform") && !way.hasTag("man_made", "pier"))
+            if (FerrySpeedCalculator.isFerry(way) || !way.hasTag("railway", "platform") && !way.hasTag("man_made", "pier"))
                 return;
         }
 

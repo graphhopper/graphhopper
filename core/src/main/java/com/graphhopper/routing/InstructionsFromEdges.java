@@ -422,8 +422,6 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             return Instruction.CONTINUE_ON_STREET;
 
         // This state is bad! Two streets are going more or less straight
-        // Happens a lot for trunk_links
-        // For _links, comparing flags works quite good, as links usually have different speeds => different flags
         if (otherContinue != null) {
             // We are at a fork
             if (!InstructionsHelper.isSameName(name, prevName)
