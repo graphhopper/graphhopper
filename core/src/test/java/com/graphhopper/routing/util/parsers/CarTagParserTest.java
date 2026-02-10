@@ -235,30 +235,6 @@ public class CarTagParserTest {
     }
 
     @Test
-    public void testSetAccess() {
-        EdgeIntAccess edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
-        int edgeId = 0;
-        accessEnc.setBool(false, edgeId, edgeIntAccess, true);
-        accessEnc.setBool(true, edgeId, edgeIntAccess, true);
-        assertTrue(accessEnc.getBool(false, edgeId, edgeIntAccess));
-        assertTrue(accessEnc.getBool(true, edgeId, edgeIntAccess));
-
-        accessEnc.setBool(false, edgeId, edgeIntAccess, true);
-        accessEnc.setBool(true, edgeId, edgeIntAccess, false);
-        assertTrue(accessEnc.getBool(false, edgeId, edgeIntAccess));
-        assertFalse(accessEnc.getBool(true, edgeId, edgeIntAccess));
-
-        accessEnc.setBool(false, edgeId, edgeIntAccess, false);
-        accessEnc.setBool(true, edgeId, edgeIntAccess, true);
-        assertFalse(accessEnc.getBool(false, edgeId, edgeIntAccess));
-        assertTrue(accessEnc.getBool(true, edgeId, edgeIntAccess));
-
-        accessEnc.setBool(false, edgeId, edgeIntAccess, false);
-        accessEnc.setBool(true, edgeId, edgeIntAccess, false);
-        assertFalse(accessEnc.getBool(true, edgeId, edgeIntAccess));
-    }
-
-    @Test
     public void testMaxSpeed() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "trunk");

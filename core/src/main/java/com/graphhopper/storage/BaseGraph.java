@@ -59,21 +59,19 @@ public class BaseGraph implements Graph, Closeable {
     // length | nodeA | nextNode | ... | nodeB
     private final DataAccess wayGeometry;
     private final Directory dir;
-    private final int segmentSize;
     private boolean initialized = false;
     private long minGeoRef;
     private long maxGeoRef;
     private final int eleBytesPerCoord;
 
-    public BaseGraph(Directory dir, boolean withElevation, boolean withTurnCosts, int segmentSize, int bytesForFlags) {
+    public BaseGraph(Directory dir, boolean withElevation, boolean withTurnCosts, int bytesForFlags) {
         this.dir = dir;
         this.bitUtil = BitUtil.LITTLE;
-        this.wayGeometry = dir.create("geometry", segmentSize);
+        this.wayGeometry = dir.create("geometry");
         this.edgeKVStorage = new KVStorage(dir, true);
-        this.store = new BaseGraphNodesAndEdges(dir, withElevation, withTurnCosts, segmentSize, bytesForFlags);
+        this.store = new BaseGraphNodesAndEdges(dir, withElevation, withTurnCosts, bytesForFlags);
         this.nodeAccess = new GHNodeAccess(store);
-        this.segmentSize = segmentSize;
-        this.turnCostStorage = withTurnCosts ? new TurnCostStorage(this, dir.create("turn_costs", dir.getDefaultType("turn_costs", true), segmentSize)) : null;
+        this.turnCostStorage = withTurnCosts ? new TurnCostStorage(this, dir.create("turn_costs", dir.getDefaultType("turn_costs", true))) : null;
         this.eleBytesPerCoord = (nodeAccess.getDimension() == 3 ? 3 : 0);
     }
 
@@ -614,17 +612,12 @@ public class BaseGraph implements Graph, Closeable {
         return dir;
     }
 
-    public int getSegmentSize() {
-        return segmentSize;
-    }
-
     public static class Builder {
         private final int bytesForFlags;
-        private Directory directory = new RAMDirectory();
+        private Directory directory = new GHDirectory("", DAType.RAM);
         private boolean withElevation = false;
         private boolean withTurnCosts = false;
         private long bytes = 100;
-        private int segmentSize = -1;
 
         public Builder(EncodingManager em) {
             this(em.getBytesForFlags());
@@ -653,18 +646,13 @@ public class BaseGraph implements Graph, Closeable {
             return this;
         }
 
-        public Builder setSegmentSize(int segmentSize) {
-            this.segmentSize = segmentSize;
-            return this;
-        }
-
         public Builder setBytes(long bytes) {
             this.bytes = bytes;
             return this;
         }
 
         public BaseGraph build() {
-            return new BaseGraph(directory, withElevation, withTurnCosts, segmentSize, bytesForFlags);
+            return new BaseGraph(directory, withElevation, withTurnCosts, bytesForFlags);
         }
 
         public BaseGraph create() {
@@ -1056,21 +1044,27 @@ public class BaseGraph implements Graph, Closeable {
         @Override
         public EdgeIteratorState setKeyValues(Map<String, KVStorage.KValue> entries) {
             long pointer = baseGraph.edgeKVStorage.add(entries);
-            if (pointer > MAX_UNSIGNED_INT)
-                throw new IllegalStateException("Too many key value pairs are stored, currently limited to " + MAX_UNSIGNED_INT + " was " + pointer);
-            store.setKeyValuesRef(edgePointer, BitUtil.toSignedInt(pointer));
+            // Shift right to use 4x more address space (pointers are 4-byte aligned)
+            long shiftedPointer = pointer >> KVStorage.ALIGNMENT_SHIFT;
+            if (shiftedPointer > MAX_UNSIGNED_INT)
+                throw new IllegalStateException("Too many key value pairs are stored, currently limited to " + (MAX_UNSIGNED_INT << KVStorage.ALIGNMENT_SHIFT) + " was " + pointer);
+            store.setKeyValuesRef(edgePointer, BitUtil.toSignedInt(shiftedPointer));
             return this;
         }
 
         @Override
         public Map<String, KVStorage.KValue> getKeyValues() {
-            long kvEntryRef = Integer.toUnsignedLong(store.getKeyValuesRef(edgePointer));
+            long shiftedRef = Integer.toUnsignedLong(store.getKeyValuesRef(edgePointer));
+            // Shift left to restore the actual byte offset
+            long kvEntryRef = shiftedRef << KVStorage.ALIGNMENT_SHIFT;
             return baseGraph.edgeKVStorage.getAll(kvEntryRef);
         }
 
         @Override
         public Object getValue(String key) {
-            long kvEntryRef = Integer.toUnsignedLong(store.getKeyValuesRef(edgePointer));
+            long shiftedRef = Integer.toUnsignedLong(store.getKeyValuesRef(edgePointer));
+            // Shift left to restore the actual byte offset
+            long kvEntryRef = shiftedRef << KVStorage.ALIGNMENT_SHIFT;
             return baseGraph.edgeKVStorage.get(kvEntryRef, key, reverse);
         }
 

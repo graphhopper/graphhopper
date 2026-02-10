@@ -42,22 +42,18 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
     @Override
     public BaseGraph createGHStorage(String location, boolean enabled3D) {
         // reduce segment size in order to test the case where multiple segments come into the game
-        BaseGraph gs = newGHStorage(new RAMDirectory(location), enabled3D, defaultSize / 2);
+        BaseGraph gs = newGHStorage(new GHDirectory(location, DAType.RAM), enabled3D);
         gs.create(defaultSize);
         return gs;
     }
 
     protected BaseGraph newGHStorage(Directory dir, boolean enabled3D) {
-        return newGHStorage(dir, enabled3D, -1);
-    }
-
-    protected BaseGraph newGHStorage(Directory dir, boolean enabled3D, int segmentSize) {
-        return new BaseGraph.Builder(encodingManager).setDir(dir).set3D(enabled3D).setSegmentSize(segmentSize).build();
+        return new BaseGraph.Builder(encodingManager).setDir(dir).set3D(enabled3D).build();
     }
 
     @Test
     public void testSave_and_fileFormat() {
-        graph = newGHStorage(new RAMDirectory(defaultGraphLoc, true), true).create(defaultSize);
+        graph = newGHStorage(new GHDirectory(defaultGraphLoc, DAType.RAM_STORE), true).create(defaultSize);
         NodeAccess na = graph.getNodeAccess();
         assertTrue(na.is3D());
         na.setNode(0, 10, 10, 0);
@@ -87,7 +83,7 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
         graph.flush();
         graph.close();
 
-        graph = newGHStorage(new MMapDirectory(defaultGraphLoc), true);
+        graph = newGHStorage(new GHDirectory(defaultGraphLoc, DAType.MMAP), true);
         graph.loadExisting();
 
         assertEquals(12, graph.getNodes());
@@ -114,14 +110,14 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
 
     @Test
     public void testSave_and_Freeze() {
-        graph = newGHStorage(new RAMDirectory(defaultGraphLoc, true), true).create(defaultSize);
+        graph = newGHStorage(new GHDirectory(defaultGraphLoc, DAType.RAM_STORE), true).create(defaultSize);
         graph.edge(1, 0);
         graph.freeze();
 
         graph.flush();
         graph.close();
 
-        graph = newGHStorage(new MMapDirectory(defaultGraphLoc), true);
+        graph = newGHStorage(new GHDirectory(defaultGraphLoc, DAType.MMAP), true);
         graph.loadExisting();
         assertEquals(2, graph.getNodes());
         assertTrue(graph.isFrozen());
@@ -170,12 +166,12 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
 
     @Test
     public void testDoThrowExceptionIfDimDoesNotMatch() {
-        graph = newGHStorage(new RAMDirectory(defaultGraphLoc, true), false);
+        graph = newGHStorage(new GHDirectory(defaultGraphLoc, DAType.RAM_STORE), false);
         graph.create(1000);
         graph.flush();
         graph.close();
 
-        graph = newGHStorage(new RAMDirectory(defaultGraphLoc, true), true);
+        graph = newGHStorage(new GHDirectory(defaultGraphLoc, DAType.RAM_STORE), true);
         assertThrows(Exception.class, () -> graph.loadExisting());
     }
 
@@ -411,7 +407,7 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
     @Test
     public void testMaxPillarNodes() {
         // 1. Use -1 to use the default segment size (1MB).
-        BaseGraph graph = newGHStorage(new RAMDirectory(), false, -1);
+        BaseGraph graph = newGHStorage(new GHDirectory("", DAType.RAM), false);
         graph.create(defaultSize);
 
         // 2. Create the massive point list (65535 nodes)

@@ -100,7 +100,7 @@ public class DirectedRoutingTest {
             this.prepareCH = prepareCH;
             this.prepareLM = prepareLM;
 
-            dir = new RAMDirectory();
+            dir = new GHDirectory("", DAType.RAM);
             maxTurnCosts = 10;
             speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, true);
             turnCostEnc = TurnCost.create("car", maxTurnCosts);

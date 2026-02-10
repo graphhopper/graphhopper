@@ -25,10 +25,7 @@ import com.graphhopper.ResponsePath;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.storage.BaseGraph;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
@@ -351,7 +348,7 @@ class HeadingRoutingTest {
     }
 
     private Router createRouter(BaseGraph graph, EncodingManager encodingManager) {
-        LocationIndexTree locationIndex = new LocationIndexTree(graph, new RAMDirectory());
+        LocationIndexTree locationIndex = new LocationIndexTree(graph, new GHDirectory("", DAType.RAM));
         locationIndex.prepareIndex();
         Map<String, Profile> profilesByName = new HashMap<>();
         profilesByName.put("profile", TestProfiles.accessAndSpeed("profile", "car"));

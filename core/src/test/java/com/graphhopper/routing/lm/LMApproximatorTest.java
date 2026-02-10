@@ -27,9 +27,7 @@ import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.*;
-import com.graphhopper.storage.BaseGraph;
-import com.graphhopper.storage.Directory;
-import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
 import org.junit.jupiter.api.RepeatedTest;
@@ -47,7 +45,7 @@ public class LMApproximatorTest {
     }
 
     private void run(long seed) {
-        Directory dir = new RAMDirectory();
+        Directory dir = new GHDirectory("", DAType.RAM);
         DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, true);
         DecimalEncodedValue turnCostEnc = TurnCost.create("car", 1);
         EncodingManager encodingManager = new EncodingManager.Builder().add(speedEnc).addTurnCostEncodedValue(turnCostEnc).add(Subnetwork.create("car")).build();

@@ -96,7 +96,7 @@ public class GraphHopper {
     private StorableProperties properties;
     protected EncodingManager encodingManager;
     private OSMParsers osmParsers;
-    private int defaultSegmentSize = -1;
+    private int defaultSegmentSize = AbstractDataAccess.SEGMENT_SIZE_DEFAULT;
     private String ghLocation = "";
     private DAType dataAccessDefaultType = DAType.RAM_STORE;
     private final LinkedHashMap<String, String> dataAccessConfig = new LinkedHashMap<>();
@@ -808,13 +808,12 @@ public class GraphHopper {
         prepareImport();
         if (encodingManager == null)
             throw new IllegalStateException("The EncodingManager must be created in `prepareImport()`");
-        GHDirectory directory = new GHDirectory(ghLocation, dataAccessDefaultType);
+        GHDirectory directory = new GHDirectory(ghLocation, dataAccessDefaultType, defaultSegmentSize);
         directory.configure(dataAccessConfig);
         baseGraph = new BaseGraph.Builder(getEncodingManager())
                 .setDir(directory)
                 .set3D(hasElevation())
                 .withTurnCosts(encodingManager.needsTurnCostsSupport())
-                .setSegmentSize(defaultSegmentSize)
                 .build();
         properties = new StorableProperties(directory);
         checkProfilesConsistency();
@@ -1130,7 +1129,6 @@ public class GraphHopper {
                     .setDir(directory)
                     .set3D(hasElevation())
                     .withTurnCosts(encodingManager.needsTurnCostsSupport())
-                    .setSegmentSize(defaultSegmentSize)
                     .build();
             checkProfilesConsistency();
             baseGraph.loadExisting();

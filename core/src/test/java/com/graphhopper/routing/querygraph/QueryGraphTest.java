@@ -363,7 +363,7 @@ public class QueryGraphTest {
         updateDistancesFor(g, 0, 49.000000, 11.00100);
         updateDistancesFor(g, 1, 49.000000, 11.00200);
         updateDistancesFor(g, 2, 49.000300, 11.00200);
-        LocationIndexTree locationIndex = new LocationIndexTree(g, new RAMDirectory());
+        LocationIndexTree locationIndex = new LocationIndexTree(g, new GHDirectory("", DAType.RAM));
         locationIndex.prepareIndex();
         Snap snap = locationIndex.findClosest(49.0000010, 11.00800, EdgeFilter.ALL_EDGES);
         // Our query point is quite far away from the edge and further away from the tower node than from the crossing
@@ -681,7 +681,7 @@ public class QueryGraphTest {
         updateDistancesFor(g, 0, 0, 0);
         updateDistancesFor(g, 1, 0.3, 0.3);
 
-        LocationIndexTree locationIndex = new LocationIndexTree(g, new RAMDirectory());
+        LocationIndexTree locationIndex = new LocationIndexTree(g, new GHDirectory("", DAType.RAM));
         locationIndex.prepareIndex();
         Snap snap = locationIndex.findClosest(0.15, 0.15, EdgeFilter.ALL_EDGES);
         assertTrue(snap.isValid());
@@ -722,7 +722,7 @@ public class QueryGraphTest {
         updateDistancesFor(g, 0, 0, 0);
         updateDistancesFor(g, 1, 0.5, 0.1);
 
-        LocationIndexTree locationIndex = new LocationIndexTree(g, new RAMDirectory());
+        LocationIndexTree locationIndex = new LocationIndexTree(g, new GHDirectory("", DAType.RAM));
         locationIndex.prepareIndex();
         Snap snap = locationIndex.findClosest(0.2, 0.21, EdgeFilter.ALL_EDGES);
         assertTrue(snap.isValid());
@@ -761,7 +761,7 @@ public class QueryGraphTest {
         updateDistancesFor(g, 1, 0, 1);
         // dummy node to make sure graph bounds are valid
         updateDistancesFor(g, 2, 2, 2);
-        LocationIndexTree index = new LocationIndexTree(g, new RAMDirectory());
+        LocationIndexTree index = new LocationIndexTree(g, new GHDirectory("", DAType.RAM));
         index.prepareIndex();
         Snap snap = index.findClosest(1.01, 0.7, EdgeFilter.ALL_EDGES);
         QueryGraph queryGraph = lookup(snap);
@@ -1027,7 +1027,7 @@ public class QueryGraphTest {
         assertEquals("world", origEdge.detach(true).getValue("b"));
         assertNull(origEdge.getValue("b"));
 
-        LocationIndexTree index = new LocationIndexTree(g, new RAMDirectory());
+        LocationIndexTree index = new LocationIndexTree(g, new GHDirectory("", DAType.RAM));
         index.prepareIndex();
         Snap snap = index.findClosest(1.01, 0.7, EdgeFilter.ALL_EDGES);
         QueryGraph queryGraph = lookup(snap);
@@ -1065,7 +1065,7 @@ public class QueryGraphTest {
         // ... and closer to node 1 than to node 0
         assertTrue(distCrossingTo1 < distCrossingTo0);
 
-        LocationIndexTree index = new LocationIndexTree(g, new RAMDirectory());
+        LocationIndexTree index = new LocationIndexTree(g, new GHDirectory("", DAType.RAM));
         index.prepareIndex();
         Snap snap = index.findClosest(queryLat, queryLon, EdgeFilter.ALL_EDGES);
         // Although this is technically an 'edge-snap', we snap to the tower node, because the **crossing** point

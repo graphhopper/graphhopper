@@ -375,11 +375,7 @@ public final class MMapDataAccess extends AbstractDataAccess {
 
     @Override
     public long getCapacity() {
-        long cap = 0;
-        for (ByteBuffer bb : segments) {
-            cap += bb.capacity();
-        }
-        return cap;
+        return (long) getSegments() * segmentSizeInBytes;
     }
 
     @Override

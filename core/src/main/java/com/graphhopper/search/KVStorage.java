@@ -34,7 +34,17 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class KVStorage {
 
-    private static final long EMPTY_POINTER = 0, START_POINTER = 1;
+    private static final long EMPTY_POINTER = 0;
+    // Align entries to 4-byte boundaries. This allows callers to store pointer >> 2 externally,
+    // giving 4x the addressable space when storing pointers as unsigned int (~16GB instead of ~4GB).
+    // Callers are expected to shift the pointer themselves: >> 2 when storing, << 2 when retrieving.
+    private static final int ALIGNMENT = 4;
+    /**
+     * The alignment shift for pointers returned by {@link #add}. Callers should use
+     * {@code pointer >> ALIGNMENT_SHIFT} when storing and {@code pointer << ALIGNMENT_SHIFT} when retrieving.
+     */
+    public static final int ALIGNMENT_SHIFT = 2;
+    private static final long START_POINTER = ALIGNMENT;
     // Store the key index in 2 bytes. Use first 2 bits for marking fwd+bwd existence.
     static final int MAX_UNIQUE_KEYS = (1 << 14);
     // Store string value as byte array and store the length into 1 byte
@@ -253,6 +263,10 @@ public class KVStorage {
         bytePointer = setKVList(bytePointer, entries);
         if (bytePointer < 0)
             throw new IllegalStateException("Negative bytePointer in KVStorage");
+        // Pad to next alignment boundary
+        long remainder = bytePointer % ALIGNMENT;
+        if (remainder != 0)
+            bytePointer += ALIGNMENT - remainder;
         return lastEntryPointer;
     }
 
