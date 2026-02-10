@@ -321,6 +321,17 @@ class CustomModelParserTest {
     }
 
     @Test
+    public void testStatements() {
+        CustomModel customModel = new CustomModel();
+        customModel.addToPriority(If("true", MULTIPLY, "0.5"));
+        customModel.addToPriority(Else(LIMIT, "0.7"));
+        customModel.addToSpeed(If("true", LIMIT, "100"));
+        Exception ret = assertThrows(IllegalArgumentException.class,
+                () -> CustomModelParser.createWeightingParameters(customModel, encodingManager));
+        assertTrue(ret.getMessage().contains("Only one statement allowed for an unconditional statement"), ret.getMessage());
+    }
+
+    @Test
     void testBackwardFunction() {
         CustomModel customModel = new CustomModel();
         customModel.addToPriority(If("backward_car_access != car_access", MULTIPLY, "0.5"));
