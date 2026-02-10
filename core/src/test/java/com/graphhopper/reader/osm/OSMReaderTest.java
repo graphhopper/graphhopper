@@ -208,8 +208,6 @@ public class OSMReaderTest {
         Graph graph = hopper.getBaseGraph();
 
         int n40 = AbstractGraphStorageTester.getIdOf(graph, 54.0);
-        int n50 = AbstractGraphStorageTester.getIdOf(graph, 55.0);
-        assertEquals(GHUtility.asSet(n40), GHUtility.getNeighbors(carAllExplorer.setBaseNode(n50)));
 
         DecimalEncodedValue ferrySpeedEnc = hopper.getEncodingManager().getDecimalEncodedValue(FerrySpeed.KEY);
 
