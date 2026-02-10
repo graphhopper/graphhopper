@@ -6,7 +6,10 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TransportationMode;
 import org.junit.jupiter.api.Test;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -28,6 +31,31 @@ class ModeAccessParserTest {
         parser.handleWayTags(edgeId, edgeIntAccess, way, null);
         assertTrue(busAccessEnc.getBool(false, edgeId, edgeIntAccess));
         assertTrue(busAccessEnc.getBool(true, edgeId, edgeIntAccess));
+    }
+
+    @Test
+    public void testFerry() {
+        // by default do not allow ferry
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("route", "ferry");
+        EdgeIntAccess edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
+        int edgeId = 0;
+        parser.handleWayTags(edgeId, edgeIntAccess, way, null);
+        assertFalse(busAccessEnc.getBool(false, edgeId, edgeIntAccess));
+        assertFalse(busAccessEnc.getBool(true, edgeId, edgeIntAccess));
+
+        way.setTag("vehicle", "yes");
+        edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
+        parser.handleWayTags(edgeId, edgeIntAccess, way, null);
+        assertTrue(busAccessEnc.getBool(false, edgeId, edgeIntAccess));
+        assertTrue(busAccessEnc.getBool(true, edgeId, edgeIntAccess));
+
+        // issue #1432
+        way.setTag("oneway", "yes");
+        edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
+        parser.handleWayTags(edgeId, edgeIntAccess, way, null);
+        assertTrue(busAccessEnc.getBool(false, edgeId, edgeIntAccess));
+        assertFalse(busAccessEnc.getBool(true, edgeId, edgeIntAccess));
     }
 
     @Test

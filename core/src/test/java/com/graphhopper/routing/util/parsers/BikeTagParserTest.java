@@ -23,7 +23,6 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.PriorityCode;
-import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
@@ -688,5 +687,25 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         assertPriorityAndSpeed(PREFER, 18, way);
         way.setTag("bicycle", "yes");
         assertPriorityAndSpeed(PREFER, 18, way);
+    }
+
+    @Test
+    public void testFerry() {
+        ReaderWay way = new ReaderWay(1);
+        way.clearTags();
+        way.setTag("route", "ferry");
+        assertTrue(accessParser.getAccess(way).isFerry());
+        way.setTag("bicycle", "no");
+        assertTrue(accessParser.getAccess(way).canSkip());
+
+        // issue #1432
+        way.clearTags();
+        way.setTag("route", "ferry");
+        way.setTag("oneway", "yes");
+        EdgeIntAccess edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(encodingManager.getBytesForFlags());
+        int edgeId = 0;
+        accessParser.handleWayTags(edgeId, edgeIntAccess, way);
+        assertTrue(accessEnc.getBool(false, edgeId, edgeIntAccess));
+        assertFalse(accessEnc.getBool(true, edgeId, edgeIntAccess));
     }
 }

@@ -74,20 +74,22 @@ public class ModeAccessParser implements TagParser {
                     || isCar && firstValue.isEmpty() && !way.hasTag("foot") && !way.hasTag("bicycle")
                     // if hgv is allowed then smaller trucks and cars are allowed too even if not specified
                     || isCar && way.hasTag("hgv", "yes")) {
-                accessEnc.setBool(false, edgeId, edgeIntAccess, true);
-                accessEnc.setBool(true, edgeId, edgeIntAccess, true);
-            }
-        } else {
-            boolean isRoundabout = roundaboutEnc.getBool(false, edgeId, edgeIntAccess);
-            boolean ignoreOneway = "no".equals(way.getFirstValue(ignoreOnewayKeys));
-            boolean isBwd = isBackwardOneway(way);
-            if (!ignoreOneway && (isBwd || isRoundabout || isForwardOneway(way))) {
-                accessEnc.setBool(isBwd, edgeId, edgeIntAccess, true);
+                // ferry is allowed via explicit tag
             } else {
-                accessEnc.setBool(false, edgeId, edgeIntAccess, true);
-                accessEnc.setBool(true, edgeId, edgeIntAccess, true);
+                return;
             }
         }
+
+        boolean isRoundabout = roundaboutEnc.getBool(false, edgeId, edgeIntAccess);
+        boolean ignoreOneway = "no".equals(way.getFirstValue(ignoreOnewayKeys));
+        boolean isBwd = isBackwardOneway(way);
+        if (!ignoreOneway && (isBwd || isRoundabout || isForwardOneway(way))) {
+            accessEnc.setBool(isBwd, edgeId, edgeIntAccess, true);
+        } else {
+            accessEnc.setBool(false, edgeId, edgeIntAccess, true);
+            accessEnc.setBool(true, edgeId, edgeIntAccess, true);
+        }
+
     }
 
     private static String getFirstPriorityNodeTag(Map<String, Object> nodeTags, List<String> restrictionKeys) {

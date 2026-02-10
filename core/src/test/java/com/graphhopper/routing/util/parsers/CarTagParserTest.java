@@ -489,6 +489,16 @@ public class CarTagParserTest {
         assertTrue(parser.getAccess(way).canSkip());
         way.setTag("vehicle", "yes");
         assertTrue(parser.getAccess(way).isFerry());
+
+        // issue #1432
+        way.clearTags();
+        way.setTag("route", "ferry");
+        way.setTag("oneway", "yes");
+        EdgeIntAccess edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
+        int edgeId = 0;
+        parser.handleWayTags(edgeId, edgeIntAccess, way);
+        assertTrue(accessEnc.getBool(false, edgeId, edgeIntAccess));
+        assertFalse(accessEnc.getBool(true, edgeId, edgeIntAccess));
     }
 
     @Test
