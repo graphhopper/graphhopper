@@ -607,7 +607,7 @@ public class NavigateResponseConverterTest {
         request.addPoint(new GHPoint(42.504776, 1.527209));
         request.addPoint(new GHPoint(42.505144, 1.526113));
         request.setProfile(profile);
-        request.setPathDetails(Arrays.asList("max_speed", "distance", "time", "intersection"));
+        request.setPathDetails(Arrays.asList("max_speed", "time", "intersection"));
 
         GHResponse rsp = hopper.route(request);
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
