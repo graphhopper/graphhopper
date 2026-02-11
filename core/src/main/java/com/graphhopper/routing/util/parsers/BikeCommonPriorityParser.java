@@ -122,7 +122,7 @@ public abstract class BikeCommonPriorityParser implements TagParser {
             PriorityCode priorityCode = avoidHighwayTags.get(highway);
             weightToPrioMap.put(50d, priorityCode == null ? AVOID : priorityCode);
             if (way.hasTag("tunnel", INTENDED)) {
-                PriorityCode worse = priorityCode == null ? BAD : priorityCode.worse().worse();
+                PriorityCode worse = priorityCode == null ? BAD : priorityCode.worse();
                 weightToPrioMap.put(50d, worse == EXCLUDE ? REACH_DESTINATION : worse);
             }
         }
