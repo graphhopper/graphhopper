@@ -468,6 +468,21 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             return sign;
         }
 
+        if (outgoingEdgesAreSlower) {
+            EdgeIterator iter = allExplorer.setBaseNode(baseNode);
+            while (iter.next()) {
+                if (iter.getEdge() == edge.getEdge())
+                    continue;
+                if (iter.getAdjNode() == prevNode)
+                    continue;
+                GHPoint tmpPoint = InstructionsHelper.getPointForOrientationCalculation(iter, nodeAccess);
+                double otherDelta = InstructionsHelper.calculateOrientationDelta(prevLat, prevLon, tmpPoint.getLat(), tmpPoint.getLon(), prevOrientation);
+                if (Math.abs(otherDelta) < 1.3) {
+                    return sign;
+                }
+            }
+        }
+
         return Instruction.IGNORE;
     }
 
