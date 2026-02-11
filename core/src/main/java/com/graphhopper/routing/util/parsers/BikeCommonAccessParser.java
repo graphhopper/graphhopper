@@ -106,20 +106,6 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
         if (access.canSkip())
             return;
 
-        if (access.isFerry()) {
-            accessEnc.setBool(false, edgeId, edgeIntAccess, true);
-            accessEnc.setBool(true, edgeId, edgeIntAccess, true);
-        } else {
-            handleAccess(edgeId, edgeIntAccess, way);
-        }
-
-        if (way.hasTag("gh:barrier_edge")) {
-            List<Map<String, Object>> nodeTags = way.getTag("node_tags", Collections.emptyList());
-            handleBarrierEdge(edgeId, edgeIntAccess, nodeTags.get(0));
-        }
-    }
-
-    protected void handleAccess(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way) {
         // handle oneways. The value -1 means it is a oneway but for reverse direction of stored geometry.
         // The tagging oneway:bicycle=no or cycleway:right:oneway=no or cycleway:left:oneway=no lifts the generic oneway restriction of the way for bike
         boolean isOneway = way.hasTag("oneway", ONEWAYS) && !way.hasTag("oneway", "-1") && !way.hasTag("bicycle:backward", allowedValues)
@@ -151,6 +137,11 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
         } else {
             accessEnc.setBool(true, edgeId, edgeIntAccess, true);
             accessEnc.setBool(false, edgeId, edgeIntAccess, true);
+        }
+
+        if (way.hasTag("gh:barrier_edge")) {
+            List<Map<String, Object>> nodeTags = way.getTag("node_tags", Collections.emptyList());
+            handleBarrierEdge(edgeId, edgeIntAccess, nodeTags.get(0));
         }
     }
 }

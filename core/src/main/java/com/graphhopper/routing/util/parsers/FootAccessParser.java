@@ -148,7 +148,7 @@ public class FootAccessParser extends AbstractAccessParser implements TagParser 
 
         if (way.hasTag("oneway:foot", ONEWAYS) || way.hasTag("foot:backward") || way.hasTag("foot:forward")
                 || way.hasTag("oneway", ONEWAYS) && way.hasTag("highway", "steps") // outdated mapping style
-        ) {
+                || access.isFerry()) {
             boolean reverse = way.hasTag("oneway:foot", "-1") || way.hasTag("foot:backward", "yes") || way.hasTag("foot:forward", "no");
             accessEnc.setBool(reverse, edgeId, edgeIntAccess, true);
         } else {

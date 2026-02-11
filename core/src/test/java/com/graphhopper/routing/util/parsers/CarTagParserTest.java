@@ -490,9 +490,18 @@ public class CarTagParserTest {
         way.setTag("vehicle", "yes");
         assertTrue(parser.getAccess(way).isFerry());
 
-        // speed for ferry is moved out of the encoded value, i.e. it is 0
+        // issue #1432
+        way.clearTags();
+        way.setTag("route", "ferry");
+        way.setTag("oneway", "yes");
         EdgeIntAccess edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
         int edgeId = 0;
+        parser.handleWayTags(edgeId, edgeIntAccess, way);
+        assertTrue(accessEnc.getBool(false, edgeId, edgeIntAccess));
+        assertFalse(accessEnc.getBool(true, edgeId, edgeIntAccess));
+
+        // speed for ferry is moved out of the encoded value, i.e. it is 0
+        edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
         parser.handleWayTags(edgeId, edgeIntAccess, way);
         assertEquals(0, avSpeedEnc.getDecimal(false, edgeId, edgeIntAccess));
     }
