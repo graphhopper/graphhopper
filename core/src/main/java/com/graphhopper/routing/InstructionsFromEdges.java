@@ -356,6 +356,9 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         if (edge.getEdge() == prevEdge.getEdge())
             // this is the simplest turn to recognize, a plain u-turn.
             return Instruction.U_TURN_UNKNOWN;
+        RoadEnvironment roadEnv = edge.get(roadEnvEnc);
+        if (InstructionsHelper.isToFerry(roadEnv, prevRoadEnv)) return Instruction.FERRY;
+
         GHPoint point = InstructionsHelper.getPointForOrientationCalculation(edge, nodeAccess);
         double lat = point.getLat();
         double lon = point.getLon();
@@ -365,17 +368,15 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         InstructionsOutgoingEdges outgoingEdges = new InstructionsOutgoingEdges(prevEdge, edge, weighting, maxSpeedEnc,
                 roadClassEnc, roadClassLinkEnc, lanesEnc, allExplorer, nodeAccess, prevNode, baseNode, adjNode);
         int nrOfPossibleTurns = outgoingEdges.getAllowedTurns();
-        RoadEnvironment roadEnv = edge.get(roadEnvEnc);
 
         // there is no other turn possible
         if (nrOfPossibleTurns <= 1) {
-            if (InstructionsHelper.isToFerry(roadEnv, prevRoadEnv)) return Instruction.FERRY;
             if (Math.abs(sign) > 1 && outgoingEdges.getVisibleTurns() > 1 && !outgoingEdges.mergedOrSplitWay()
                     || InstructionsHelper.isFromFerry(roadEnv, prevRoadEnv)) {
                 // This is an actual turn because |sign| > 1
                 // There could be some confusion, if we would not create a turn instruction, even though it is the only
                 // possible turn, also see #1048
-                // TODO if we see issue with this approach we could consider checking if the edge is a oneway
+                // TODO for motorways or trunks: merge left/right onto A4
                 return sign;
             }
             return Instruction.IGNORE;
@@ -383,7 +384,6 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
 
         // Very certain, this is a turn
         if (Math.abs(sign) > 1) {
-            if (InstructionsHelper.isToFerry(roadEnv, prevRoadEnv)) return Instruction.FERRY;
             // Don't show an instruction if the user is following a street, even though the street is
             // bending. We should only do this, if following the street is the obvious choice.
             if (InstructionsHelper.isSameName(name, prevName) && outgoingEdges.outgoingEdgesAreSlowerByFactor(2)
@@ -416,9 +416,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         // Signs provide too less detail, so we use the delta for a precise comparison
         double delta = InstructionsHelper.calculateOrientationDelta(prevLat, prevLon, lat, lon, prevOrientation);
 
-        if (InstructionsHelper.isToFerry(roadEnv, prevRoadEnv))
-            return Instruction.FERRY;
-        else if (InstructionsHelper.isFromFerry(roadEnv, prevRoadEnv))
+        if (InstructionsHelper.isFromFerry(roadEnv, prevRoadEnv))
             return Instruction.CONTINUE_ON_STREET;
 
         // This state is bad! Two streets are going more or less straight
@@ -447,7 +445,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                 double otherDelta = InstructionsHelper.calculateOrientationDelta(prevLat, prevLon, tmpPoint.getLat(), tmpPoint.getLon(), prevOrientation);
 
                 // This is required to avoid keep left/right on the motorway at off-ramps/motorway_links
-                if (Math.abs(delta) < .1 && Math.abs(otherDelta) > .15 && InstructionsHelper.isSameName(name, prevName)) {
+                if (Math.abs(delta) < .1 /* ~5.7° */ && Math.abs(otherDelta) > .15 /* ~8.6° */ && InstructionsHelper.isSameName(name, prevName)) {
                     return Instruction.CONTINUE_ON_STREET;
                 }
 
