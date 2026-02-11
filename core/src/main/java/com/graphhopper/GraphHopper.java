@@ -569,6 +569,9 @@ public class GraphHopper {
         osmReaderConfig.setPreferredLanguage(ghConfig.getString("datareader.preferred_language", osmReaderConfig.getPreferredLanguage()));
         osmReaderConfig.setMaxWayPointDistance(ghConfig.getDouble(Routing.INIT_WAY_POINT_MAX_DISTANCE, osmReaderConfig.getMaxWayPointDistance()));
         osmReaderConfig.setWorkerThreads(ghConfig.getInt("datareader.worker_threads", osmReaderConfig.getWorkerThreads()));
+        String storedTagsStr = ghConfig.getString("graph.stored_tags", "");
+        if (!storedTagsStr.isEmpty())
+            osmReaderConfig.setStoredTags(new LinkedHashSet<>(Arrays.asList(storedTagsStr.split(","))));
 
         // index
         preciseIndexResolution = ghConfig.getInt("index.high_resolution", preciseIndexResolution);

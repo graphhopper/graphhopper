@@ -27,6 +27,8 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.Polygon;
 
+import com.graphhopper.search.KVStorage;
+
 import java.util.List;
 import java.util.Map;
 
@@ -105,6 +107,13 @@ public class CustomWeightingHelper {
         double prevAzimuth = orientationEnc.getDecimal(inEdgeReverse, inEdge, edgeIntAccess);
         double azimuth = orientationEnc.getDecimal(outEdgeReverse, outEdge, edgeIntAccess);
         return calcChangeAngle(prevAzimuth, azimuth);
+    }
+
+    public static Object kvGet(Map<String, KVStorage.KValue> kv, String key, boolean reverse) {
+        if (kv == null) return null;
+        KVStorage.KValue v = kv.get(key);
+        if (v == null) return null;
+        return reverse ? v.getBwd() : v.getFwd();
     }
 
     public static double calcChangeAngle(double prevAzimuth, double azimuth) {

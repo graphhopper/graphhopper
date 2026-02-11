@@ -30,10 +30,9 @@ import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
+import com.graphhopper.search.KVStorage;
+
+import java.util.*;
 
 import static com.graphhopper.json.Statement.*;
 import static com.graphhopper.json.Statement.Op.*;
@@ -371,5 +370,56 @@ class CustomModelParserTest {
         //, {"if": "true", "multiply_by": foot_priority}, {"if": "foot_network == INTERNATIONAL || foot_network == NATIONAL", "multiply_by": 1.7}, {"else_if": "foot_network == REGIONAL || foot_network == LOCAL", "multiply_by": 1.5}]|areas=[]|turnCostsConfig=transportationMode=null, restrictions=false, uTurnCosts=-1
         List<String> variables = findVariablesForEncodedValuesString(customModel, s -> new DefaultImportRegistry().createImportUnit(s) != null, s -> "");
         assertEquals(List.of("foot_access", "hike_rating", "road_access"), variables);
+    }
+
+    @Test
+    void testTagGet() {
+        CustomModel customModel = new CustomModel();
+        customModel.addToPriority(If("tag.get('cycleway') == 'lane'", MULTIPLY, "0.5"));
+        customModel.addToSpeed(If("true", LIMIT, "100"));
+        CustomWeighting.Parameters parameters = CustomModelParser.createWeightingParameters(customModel, encodingManager);
+
+        BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
+
+        EdgeIteratorState edgeWithLane = graph.edge(0, 1).setDistance(100).set(avgSpeedEnc, 60).set(accessEnc, true, true);
+        edgeWithLane.setKeyValues(Map.of("cycleway", new KVStorage.KValue("lane")));
+
+        EdgeIteratorState edgeWithTrack = graph.edge(1, 2).setDistance(100).set(avgSpeedEnc, 60).set(accessEnc, true, true);
+        edgeWithTrack.setKeyValues(Map.of("cycleway", new KVStorage.KValue("track")));
+
+        EdgeIteratorState edgeWithout = graph.edge(2, 3).setDistance(100).set(avgSpeedEnc, 60).set(accessEnc, true, true);
+
+        assertEquals(0.5, parameters.getEdgeToPriorityMapping().get(edgeWithLane, false), 1.e-6);
+        assertEquals(1.0, parameters.getEdgeToPriorityMapping().get(edgeWithTrack, false), 1.e-6);
+        assertEquals(1.0, parameters.getEdgeToPriorityMapping().get (edgeWithout, false), 1.e-6);
+
+        // white spaces
+        customModel = new CustomModel();
+        customModel.addToPriority(If("tag.get( 'cycleway'  )   ==  'lane' ", MULTIPLY, "0.5"));
+        customModel.addToSpeed(If("true", LIMIT, "100"));
+        parameters = CustomModelParser.createWeightingParameters(customModel, encodingManager);
+
+        assertEquals(0.5, parameters.getEdgeToPriorityMapping().get(edgeWithLane, false), 1.e-6);
+        assertEquals(1.0, parameters.getEdgeToPriorityMapping().get(edgeWithTrack, false), 1.e-6);
+        assertEquals(1.0, parameters.getEdgeToPriorityMapping().get(edgeWithout, false), 1.e-6);
+
+        // null comparison
+        customModel = new CustomModel();
+        customModel.addToPriority(If("tag.get('cycleway') == null", MULTIPLY, "0.3"));
+        customModel.addToSpeed(If("true", LIMIT, "100"));
+        parameters = CustomModelParser.createWeightingParameters(customModel, encodingManager);
+
+        assertEquals(1.0, parameters.getEdgeToPriorityMapping().get(edgeWithTrack, false), 1.e-6);
+        assertEquals(0.3, parameters.getEdgeToPriorityMapping().get(edgeWithout, false), 1.e-6);
+
+        // unequal
+        customModel = new CustomModel();
+        customModel.addToPriority(If("tag.get('cycleway') != 'lane'", MULTIPLY, "0.5"));
+        customModel.addToSpeed(If("true", LIMIT, "100"));
+        parameters = CustomModelParser.createWeightingParameters(customModel, encodingManager);
+
+        assertEquals(1.0, parameters.getEdgeToPriorityMapping().get(edgeWithLane, false), 1.e-6);
+        assertEquals(0.5, parameters.getEdgeToPriorityMapping().get(edgeWithTrack, false), 1.e-6);
+        assertEquals(0.5, parameters.getEdgeToPriorityMapping().get(edgeWithout, false), 1.e-6);
     }
 }
