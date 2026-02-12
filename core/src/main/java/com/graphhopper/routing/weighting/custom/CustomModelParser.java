@@ -72,6 +72,23 @@ public class CustomModelParser {
     }
 
     /**
+     * Sanitizes an OSM key (e.g. "cycleway:left") to a valid Java identifier for use as a field name.
+     * Should be also accepted from IntEncodedValueImpl.isValidEncodedValue but not necessary as
+     * KVStorageEncodedValue is implemented independent of this.
+     */
+    static String kvFieldName(String osmKey) {
+        StringBuilder sb = new StringBuilder("kv_");
+        for (int i = 0; i < osmKey.length(); i++) {
+            char c = osmKey.charAt(i);
+            if (c >= 'a' && c <= 'z' || c >= '0' && c <= '9' || c == '_')
+                sb.append(c);
+            else
+                sb.append('_');
+        }
+        return sb.toString();
+    }
+
+    /**
      * This method creates a weighting from a CustomModel that must limit the speed. Either as an
      * unconditional statement <code>{ "if": "true", "limit_to": "car_average_speed" }<code/> or as
      * an if-elseif-else group.
@@ -467,6 +484,15 @@ public class CustomModelParser {
             } else {
                 if (!arg.startsWith(IN_AREA_PREFIX))
                     throw new IllegalArgumentException("Variable not supported: " + arg);
+            }
+        }
+
+        // Generate fields and init code for KVStorageEncodedValue instances
+        for (EncodedValue ev : lookup.getEncodedValues()) {
+            if (ev instanceof KVStorageEncodedValue) {
+                String fieldName = kvFieldName(ev.getName());
+                classSourceCode.append("protected KVStorageEncodedValue " + fieldName + "_enc;\n");
+                initSourceCode.append("this." + fieldName + "_enc = (KVStorageEncodedValue) lookup.getEncodedValue(\"" + ev.getName() + "\", EncodedValue.class);\n");
             }
         }
 

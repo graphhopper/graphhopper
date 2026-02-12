@@ -114,6 +114,16 @@ graphhopper:
     foot_access, foot_average_speed, foot_priority, foot_road_access, hike_rating, average_slope,
     bike_access, bike_average_speed, bike_priority, bike_road_access, bike_network, mtb_rating, ferry_speed
 
+  # Tags are a more flexible and 'raw' approach as no source code needs to be changed to add them.
+  # However, there have the following downsides:
+  #   1. value is string, i.e. only == and != as operator possible in the custom model
+  #   2. slower access, i.e. slower non-CH routing,
+  #   3. not directional, i.e. the values with xy:forward/xy:backward are separate and have no meaning (check against edge.isForward())
+  #   4. values not normalized, checked or corrected
+  #   5. space/memory usage is heavier if a frequent tag and/or lots of unique and long values, but can be even lower, especially for rare tags like conditional tags
+  # You can use them via tag.get('cycleway') == 'lanes' in a condition of a custom model.
+  graph.stored_tags: cycleway, cycleway:left, cycleway:left:oneway, cycleway:right, cycleway:right:oneway, lit, sidewalk
+
   #### Speed, hybrid and flexible mode ####
 
   # To make CH preparation faster for multiple profiles you can increase the default threads if you have enough RAM.

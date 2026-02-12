@@ -48,6 +48,7 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.routing.weighting.custom.NameValidator;
+import com.graphhopper.search.KVStorage;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -619,6 +620,9 @@ public class GraphHopper {
 
         EncodingManager.Builder emBuilder = new EncodingManager.Builder();
         encodedValues.forEach(emBuilder::add);
+        for (String tag : osmReaderConfig.getStoredTags()) {
+            emBuilder.add(new KVStorageEncodedValue(tag));
+        }
         restrictionVehicleTypesByProfile.entrySet().stream()
                 .filter(e -> !e.getValue().isEmpty())
                 .forEach(e -> emBuilder.addTurnCostEncodedValue(TurnRestriction.create(e.getKey())));
@@ -939,6 +943,7 @@ public class GraphHopper {
         logger.info("using " + getBaseGraphString() + ", memory:" + getMemInfo());
 
         createBaseGraphAndProperties();
+        initKVStorageEncodedValues();
 
         try {
             reader.readGraph();
@@ -957,6 +962,16 @@ public class GraphHopper {
         properties.create(100);
         if (maxSpeedCalculator != null)
             maxSpeedCalculator.createDataAccessForParser(baseGraph.getDirectory());
+    }
+
+    private void initKVStorageEncodedValues() {
+        KVStorage kvStorage = baseGraph.getEdgeKVStorage();
+        for (EncodedValue ev : encodingManager.getEncodedValues()) {
+            if (ev instanceof KVStorageEncodedValue kvEnc) {
+                int index = kvStorage.reserveKey(kvEnc.getName(), String.class);
+                kvEnc.setKeyIndex(index);
+            }
+        }
     }
 
     public static void sortGraphAlongHilbertCurve(BaseGraph graph) {
@@ -1135,6 +1150,7 @@ public class GraphHopper {
                     .build();
             checkProfilesConsistency();
             baseGraph.loadExisting();
+            initKVStorageEncodedValues();
             String storedProfilesString = properties.get("profiles");
             Map<String, Integer> storedProfileHashes = Arrays.stream(storedProfilesString.split(",")).map(s -> s.split("\\|", 2)).collect((Collectors.toMap(kv -> kv[0], kv -> Integer.parseInt(kv[1]))));
             Map<String, Integer> configuredProfileHashes = getProfileHashes();

@@ -158,12 +158,12 @@ public class ConditionalExpressionVisitorTest {
         // basic tag.get == test
         ParseResult result = parse("tag.get('cycleway') == 'lane'", validVariable, k -> "");
         assertTrue(result.ok);
-        assertTrue(result.converted.toString().contains("\"lane\".equals(edge.getValue(\"cycleway\"))"));
+        assertTrue(result.converted.toString().contains("\"lane\".equals(edge.get(this.kv_cycleway_enc))"));
 
         // tag.get != test
         result = parse("tag.get('lit') != 'yes'", validVariable, k -> "");
         assertTrue(result.ok);
-        assertTrue(result.converted.toString().contains("!\"yes\".equals(edge.getValue(\"lit\"))"));
+        assertTrue(result.converted.toString().contains("!\"yes\".equals(edge.get(this.kv_lit_enc))"));
 
         // compound expression with tag.get and regular encoded value
         result = parse("tag.get('cycleway') == 'lane' || road_class == PRIMARY", validVariable, k -> "RoadClass");
@@ -174,22 +174,22 @@ public class ConditionalExpressionVisitorTest {
         result = parse("tag.get('cycleway') == 'lane' || tag.get('cycleway') == 'track'", validVariable, k -> "");
         assertTrue(result.ok);
         String converted = result.converted.toString();
-        assertTrue(converted.contains("\"lane\".equals(edge.getValue(\"cycleway\"))"), converted);
-        assertTrue(converted.contains("\"track\".equals(edge.getValue(\"cycleway\"))"), converted);
+        assertTrue(converted.contains("\"lane\".equals(edge.get(this.kv_cycleway_enc))"), converted);
+        assertTrue(converted.contains("\"track\".equals(edge.get(this.kv_cycleway_enc))"), converted);
 
         // tag.get == null
         result = parse("tag.get('lit') == null", validVariable, k -> "");
         assertTrue(result.ok);
-        assertTrue(result.converted.toString().contains("edge.getValue(\"lit\") == null"));
+        assertTrue(result.converted.toString().contains("edge.get(this.kv_lit_enc) == null"));
 
         // tag.get != null
         result = parse("tag.get('lit') != null", validVariable, k -> "");
         assertTrue(result.ok);
-        assertTrue(result.converted.toString().contains("edge.getValue(\"lit\") != null"));
+        assertTrue(result.converted.toString().contains("edge.get(this.kv_lit_enc) != null"));
 
         // reversed: literal on left, tag.get on right
         result = parse("'lane' == tag.get('cycleway')", validVariable, k -> "");
         assertTrue(result.ok);
-        assertTrue(result.converted.toString().contains("\"lane\".equals(edge.getValue(\"cycleway\"))"));
+        assertTrue(result.converted.toString().contains("\"lane\".equals(edge.get(this.kv_cycleway_enc))"));
     }
 }

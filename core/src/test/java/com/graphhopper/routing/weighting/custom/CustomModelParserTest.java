@@ -62,10 +62,21 @@ class CustomModelParserTest {
         countryEnc = Country.create();
         stateEnc = State.create();
         encodingManager = new EncodingManager.Builder().add(accessEnc).add(avgSpeedEnc).add(new EnumEncodedValue<>("bus", MyBus.class))
-                .add(stateEnc).add(countryEnc).add(MaxSpeed.create()).add(Surface.create()).add(RoadClass.create()).add(RoadEnvironment.create()).build();
+                .add(stateEnc).add(countryEnc).add(MaxSpeed.create()).add(Surface.create()).add(RoadClass.create()).add(RoadEnvironment.create())
+                .add(new KVStorageEncodedValue("cycleway")).build();
         graph = new BaseGraph.Builder(encodingManager).create();
+        initKVStorageEncodedValues(graph);
         roadClassEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         maxSpeed = 140;
+    }
+
+    private void initKVStorageEncodedValues(BaseGraph bg) {
+        for (EncodedValue ev : encodingManager.getEncodedValues()) {
+            if (ev instanceof KVStorageEncodedValue kvEnc) {
+                int index = bg.getEdgeKVStorage().reserveKey(kvEnc.getName(), String.class);
+                kvEnc.setKeyIndex(index);
+            }
+        }
     }
 
     @Test
@@ -380,6 +391,7 @@ class CustomModelParserTest {
         CustomWeighting.Parameters parameters = CustomModelParser.createWeightingParameters(customModel, encodingManager);
 
         BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
+        initKVStorageEncodedValues(graph);
 
         EdgeIteratorState edgeWithLane = graph.edge(0, 1).setDistance(100).set(avgSpeedEnc, 60).set(accessEnc, true, true);
         edgeWithLane.setKeyValues(Map.of("cycleway", new KVStorage.KValue("lane")));

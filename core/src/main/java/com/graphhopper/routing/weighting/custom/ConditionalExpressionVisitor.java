@@ -141,14 +141,14 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
                     int exprStart = Math.min(tagGetStart, otherStart);
                     int exprEnd = Math.max(tagGetEnd, otherEnd);
 
-                    String getValueCall = "edge.getValue(\"" + key + "\")";
+                    String getCall = "edge.get(this." + CustomModelParser.kvFieldName(key) + "_enc)";
                     String newExpr;
                     if (isNull) {
-                        newExpr = getValueCall + " " + binOp.operator + " null";
+                        newExpr = getCall + " " + binOp.operator + " null";
                     } else {
                         String value = extractStringLiteralValue(((Java.Literal) other).value);
                         String prefix = binOp.operator.equals("!=") ? "!" : "";
-                        newExpr = prefix + "\"" + value + "\".equals(" + getValueCall + ")";
+                        newExpr = prefix + "\"" + value + "\".equals(" + getCall + ")";
                     }
 
                     replacements.put(exprStart, new Replacement(exprStart, exprEnd - exprStart, newExpr));
