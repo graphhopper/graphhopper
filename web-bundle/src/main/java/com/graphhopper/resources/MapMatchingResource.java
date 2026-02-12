@@ -30,10 +30,19 @@ import com.graphhopper.gpx.GpxConversions;
 import com.graphhopper.http.ProfileResolver;
 import com.graphhopper.jackson.Gpx;
 import com.graphhopper.jackson.Jackson;
+import com.graphhopper.jackson.ResponsePathDeserializerHelper;
 import com.graphhopper.jackson.ResponsePathSerializer;
 import com.graphhopper.matching.*;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.*;
+import com.graphhopper.util.details.PathDetailsBuilderFactory;
+import com.graphhopper.util.shapes.GHPoint;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.LineString;
+import org.locationtech.jts.io.WKBReader;
+import org.locationtech.jts.io.WKTReader;
+import org.locationtech.jts.io.geojson.GeoJsonReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,7 +53,9 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
+
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.graphhopper.resources.RouteResource.removeLegacyParameters;
 import static com.graphhopper.util.Parameters.Details.PATH_DETAILS;
@@ -83,6 +94,161 @@ public class MapMatchingResource {
     }
 
     @POST
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/geojson")
+    public Response doGeojson(
+            @Context UriInfo uriInfo,
+            @FormParam("geojson") @DefaultValue("") String geojson,
+            @QueryParam(WAY_POINT_MAX_DISTANCE) @DefaultValue("0.5") double minPathPrecision,
+            @QueryParam(INSTRUCTIONS) @DefaultValue("true") boolean instructions,
+            @QueryParam(CALC_POINTS) @DefaultValue("true") boolean calcPoints,
+            @QueryParam("elevation") @DefaultValue("false") boolean enableElevation,
+            @QueryParam("points_encoded") @DefaultValue("true") boolean pointsEncoded,
+            @QueryParam("points_encoded_multiplier") @DefaultValue("1e5") double pointsEncodedMultiplier,
+            @QueryParam("locale") @DefaultValue("en") String localeStr,
+            @QueryParam("profile") String profile,
+            @QueryParam(PATH_DETAILS) List<String> pathDetails,
+            @QueryParam("traversal_keys") @DefaultValue("false") boolean enableTraversalKeys,
+            @QueryParam("gps_accuracy") @DefaultValue("10") double gpsAccuracy) {
+        PMap hints = GetHints(uriInfo, profile);
+        LineString lineString = readGeojsonLineString(geojson);
+        return getLinestringMapmatching(minPathPrecision, instructions, calcPoints, enableElevation,
+                pointsEncoded, pointsEncodedMultiplier, localeStr, pathDetails, enableTraversalKeys,
+                gpsAccuracy, hints, lineString);
+    }
+
+    public static LineString readGeojsonLineString(String s) {
+        return (LineString) readGeometry(s, new GeoJsonReader()::read, "GeoJSON");
+    }
+
+    @POST
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/wkt")
+    public Response doWkt(
+            @Context UriInfo uriInfo,
+            @FormParam("wkt") @DefaultValue("") String wkt,
+            @QueryParam(WAY_POINT_MAX_DISTANCE) @DefaultValue("0.5") double minPathPrecision,
+            @QueryParam(INSTRUCTIONS) @DefaultValue("true") boolean instructions,
+            @QueryParam(CALC_POINTS) @DefaultValue("true") boolean calcPoints,
+            @QueryParam("elevation") @DefaultValue("false") boolean enableElevation,
+            @QueryParam("points_encoded") @DefaultValue("true") boolean pointsEncoded,
+            @QueryParam("points_encoded_multiplier") @DefaultValue("1e5") double pointsEncodedMultiplier,
+            @QueryParam("locale") @DefaultValue("en") String localeStr,
+            @QueryParam("profile") String profile,
+            @QueryParam(PATH_DETAILS) List<String> pathDetails,
+            @QueryParam("traversal_keys") @DefaultValue("false") boolean enableTraversalKeys,
+            @QueryParam("gps_accuracy") @DefaultValue("10") double gpsAccuracy) {
+        PMap hints = GetHints(uriInfo, profile);
+        LineString lineString = readWktLineString(wkt);
+        return getLinestringMapmatching(minPathPrecision, instructions, calcPoints, enableElevation,
+                pointsEncoded, pointsEncodedMultiplier, localeStr, pathDetails, enableTraversalKeys,
+                gpsAccuracy, hints, lineString);
+    }
+
+    public static LineString readWktLineString(String wkt) {
+        return (LineString) readGeometry(wkt, new WKTReader()::read, "WKT");
+    }
+
+    @POST
+    @Consumes(MediaType.APPLICATION_OCTET_STREAM)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/wkb")
+    public Response doWkb(
+            @Context UriInfo uriInfo,
+            final byte[] wkbBytes,
+            @QueryParam(WAY_POINT_MAX_DISTANCE) @DefaultValue("0.5") double minPathPrecision,
+            @QueryParam(INSTRUCTIONS) @DefaultValue("true") boolean instructions,
+            @QueryParam(CALC_POINTS) @DefaultValue("true") boolean calcPoints,
+            @QueryParam("elevation") @DefaultValue("false") boolean enableElevation,
+            @QueryParam("points_encoded") @DefaultValue("true") boolean pointsEncoded,
+            @QueryParam("points_encoded_multiplier") @DefaultValue("1e5") double pointsEncodedMultiplier,
+            @QueryParam("locale") @DefaultValue("en") String localeStr,
+            @QueryParam("profile") String profile,
+            @QueryParam(PATH_DETAILS) List<String> pathDetails,
+            @QueryParam("traversal_keys") @DefaultValue("false") boolean enableTraversalKeys,
+            @QueryParam("gps_accuracy") @DefaultValue("10") double gpsAccuracy) {
+        PMap hints = GetHints(uriInfo, profile);
+        LineString lineString = readWkbLineString(wkbBytes);
+        return getLinestringMapmatching(minPathPrecision, instructions, calcPoints, enableElevation,
+                pointsEncoded, pointsEncodedMultiplier, localeStr, pathDetails, enableTraversalKeys,
+                gpsAccuracy, hints, lineString);
+    }
+
+    @POST
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/polyline")
+    public Response doPolyline(
+            @Context UriInfo uriInfo,
+            @FormParam("polyline") @DefaultValue("") String polyline,
+            @QueryParam("polyline_multiplier") @DefaultValue("1e5") double polylineMultiplier,
+            @QueryParam(WAY_POINT_MAX_DISTANCE) @DefaultValue("0.5") double minPathPrecision,
+            @QueryParam(INSTRUCTIONS) @DefaultValue("true") boolean instructions,
+            @QueryParam(CALC_POINTS) @DefaultValue("true") boolean calcPoints,
+            @QueryParam("elevation") @DefaultValue("false") boolean enableElevation,
+            @QueryParam("points_encoded") @DefaultValue("true") boolean pointsEncoded,
+            @QueryParam("points_encoded_multiplier") @DefaultValue("1e5") double pointsEncodedMultiplier,
+            @QueryParam("locale") @DefaultValue("en") String localeStr,
+            @QueryParam("profile") String profile,
+            @QueryParam(PATH_DETAILS) List<String> pathDetails,
+            @QueryParam("traversal_keys") @DefaultValue("false") boolean enableTraversalKeys,
+            @QueryParam("gps_accuracy") @DefaultValue("10") double gpsAccuracy) {
+        PMap hints = GetHints(uriInfo, profile);
+        boolean hasElevation = false;
+        PointList pointList = ResponsePathDeserializerHelper.decodePolyline(polyline, 10, hasElevation, polylineMultiplier);
+        return getLinestringMapmatching(minPathPrecision, instructions, calcPoints, enableElevation,
+                pointsEncoded, pointsEncodedMultiplier, localeStr, pathDetails, enableTraversalKeys,
+                gpsAccuracy, hints, pointList.toLineString(hasElevation));
+    }
+
+    private Response getLinestringMapmatching(
+            double minPathPrecision,
+            boolean instructions,
+            boolean calcPoints,
+            boolean enableElevation,
+            boolean pointsEncoded,
+            double pointsEncodedMultiplier,
+            String localeStr,
+            List<String> pathDetails,
+            boolean enableTraversalKeys,
+            double gpsAccuracy,
+            PMap hints,
+            LineString lineString
+    ) {
+        StopWatch sw = new StopWatch().start();
+        List<Observation> measurements = getObservationsFromLineString(lineString);
+        MatchResult matchResult = match(measurements, hints, gpsAccuracy);
+
+        Translation tr = trMap.getWithFallBack(Helper.getLocale(localeStr));
+        GHResponse rsp = GetGhResponse(minPathPrecision, instructions, pathDetails, matchResult, tr,
+                graphHopper.getPathDetailsBuilderFactory(), graphHopper.getEncodingManager());
+        return outputAsJson(rsp, matchResult, instructions, calcPoints, enableElevation,
+                pointsEncoded, pointsEncodedMultiplier, enableTraversalKeys, sw.stop().getMillis());
+    }
+
+    public static LineString readWkbLineString(byte[] bytes) {
+        return (LineString) readGeometry(bytes, new WKBReader()::read, "WKB");
+    }
+
+    @FunctionalInterface
+    private interface ReaderFunction<T> {
+        Geometry read(T input) throws Exception;
+    }
+
+    private static <T> Geometry readGeometry(T input,
+                                             ReaderFunction<T> readerFunction,
+                                             String format) {
+        try {
+            return readerFunction.read(input);
+        } catch (Exception e) {
+            logger.warn("could not parse {}, got: {}", format, e.toString());
+            throw new IllegalArgumentException("Cannot parse input as " + format);
+        }
+    }
+
+    @POST
     @Consumes({MediaType.APPLICATION_XML, "application/gpx+xml"})
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, "application/gpx+xml"})
     public Response match(
@@ -113,84 +279,141 @@ public class MapMatchingResource {
         instructions = writeGPX || instructions;
 
         StopWatch sw = new StopWatch().start();
+        PMap hints = GetHints(uriInfo, profile);
+        List<Observation> measurements = GpxConversions.getEntries(gpx.trk.get(0));
+        MatchResult matchResult = match(measurements, hints, gpsAccuracy);
+        long took = sw.stop().getMillis();
 
+        if ("extended_json".equals(outType)) {
+            return outputAsExtendedJson(matchResult, enableElevation, pointsEncoded, pointsEncodedMultiplier, took);
+        }
+
+        Translation tr = trMap.getWithFallBack(Helper.getLocale(localeStr));
+        GHResponse rsp = GetGhResponse(minPathPrecision, instructions, pathDetails, matchResult, tr,
+                graphHopper.getPathDetailsBuilderFactory(), graphHopper.getEncodingManager());
+
+        if (writeGPX) {
+            return outputAsGpx(rsp, gpx.trk.get(0), withRoute, withTrack, enableElevation, tr, took);
+        }
+
+        return outputAsJson(rsp, matchResult, instructions, calcPoints, enableElevation, pointsEncoded,
+                pointsEncodedMultiplier, enableTraversalKeys, took);
+    }
+
+    private MatchResult match(List<Observation> measurements, PMap hints, double gpsAccuracy) {
+        StopWatch sw = new StopWatch().start();
+        MapMatching matching = new MapMatching(graphHopper.getBaseGraph(),
+                (LocationIndexTree) graphHopper.getLocationIndex(),
+                mapMatchingRouterFactory.createMapMatchingRouter(hints));
+        matching.setMeasurementErrorSigma(gpsAccuracy);
+        MatchResult matchResult = matching.match(measurements);
+
+        logger.info(objectMapper.createObjectNode()
+                .put("duration", sw.stop().getNanos())
+                .put("profile", hints.getString("profile", ""))
+                .put("observations", measurements.size())
+                .putPOJO("mapmatching", matching.getStatistics()).toString());
+        return matchResult;
+    }
+
+    private Response outputAsExtendedJson(MatchResult matchResult, boolean enableElevation, boolean pointsEncoded, double pointsEncodedMultiplier, long took) {
+        return Response.ok(convertToTree(matchResult, enableElevation, pointsEncoded, pointsEncodedMultiplier)).
+                header("X-GH-Took", "" + took).
+                build();
+    }
+
+    private Response outputAsGpx(GHResponse ghResponse, Gpx.Trk track, boolean withRoute, boolean withTrack, boolean enableElevation, Translation tr, long took) {
+        if (track == null)
+            throw new IllegalArgumentException("GPX output is not possible for this input format");
+        long startTime = track.getStartTime()
+                .map(Date::getTime)
+                .orElse(System.currentTimeMillis());
+        track.name = track.name != null ? track.name : "";
+        String gpxFile = GpxConversions.createGPX(ghResponse.getBest().getInstructions(),
+                track.name, startTime, enableElevation, withRoute, withTrack, false,
+                Constants.VERSION, tr);
+        return Response.ok(gpxFile, "application/gpx+xml").
+                header("X-GH-Took", "" + took).
+                build();
+    }
+
+    private Response outputAsJson(GHResponse rsp, MatchResult matchResult, boolean instructions, boolean calcPoints,
+                                  boolean enableElevation, boolean pointsEncoded, double pointsEncodedMultiplier,
+                                  boolean enableTraversalKeys, long took) {
+
+        ResponsePathSerializer.Info infoMetadata = new ResponsePathSerializer.Info(config.getCopyrights(), took, osmDate);
+        ObjectNode jsonResponse = ResponsePathSerializer.jsonObject(rsp, infoMetadata, instructions,
+                calcPoints, enableElevation, pointsEncoded, pointsEncodedMultiplier);
+
+        DecorateWithStats(jsonResponse, matchResult, enableTraversalKeys);
+
+        return Response.ok(jsonResponse).
+                header("X-GH-Took", "" + took).
+                build();
+    }
+
+    private static List<Observation> getObservationsFromLineString(LineString lineString) {
+        return Arrays.stream(lineString.getCoordinates())
+                .map(c -> new Observation(GHPoint.create(c)))
+                .collect(Collectors.toList());
+    }
+
+    // resolve profile and remove legacy vehicle/weighting parameters
+    public PMap GetHints(UriInfo uriInfo, String profile) {
         PMap hints = new PMap();
         RouteResource.initHints(hints, uriInfo.getQueryParameters());
 
-        // resolve profile and remove legacy vehicle/weighting parameters
         // we need to explicitly disable CH here because map matching does not use it
         PMap profileResolverHints = new PMap(hints);
         profileResolverHints.putObject("profile", profile);
         profileResolverHints.putObject(Parameters.CH.DISABLE, true);
-        profile = profileResolver.resolveProfile(profileResolverHints);
-        hints.putObject("profile", profile);
+        hints.putObject("profile", profileResolver.resolveProfile(profileResolverHints));
         removeLegacyParameters(hints);
+        return hints;
+    }
 
-        MapMatching matching = new MapMatching(graphHopper.getBaseGraph(), (LocationIndexTree) graphHopper.getLocationIndex(), mapMatchingRouterFactory.createMapMatchingRouter(hints));
-        matching.setMeasurementErrorSigma(gpsAccuracy);
+    public static void DecorateWithStats(ObjectNode jsonResponse,
+                                         MatchResult matchResult,
+                                         boolean enableTraversalKeys) {
+        Map<String, Object> matchStatistics = new HashMap<>();
+        matchStatistics.put("distance", matchResult.getMatchLength());
+        matchStatistics.put("time", matchResult.getMatchMillis());
+        matchStatistics.put("original_distance", matchResult.getGpxEntriesLength());
+        jsonResponse.putPOJO("map_matching", matchStatistics);
 
-        List<Observation> measurements = GpxConversions.getEntries(gpx.trk.get(0));
-        MatchResult matchResult = matching.match(measurements);
-
-        sw.stop();
-        logger.info(objectMapper.createObjectNode()
-                .put("duration", sw.getNanos())
-                .put("profile", profile)
-                .put("observations", measurements.size())
-                .putPOJO("mapmatching", matching.getStatistics()).toString());
-
-        if ("extended_json".equals(outType)) {
-            return Response.ok(convertToTree(matchResult, enableElevation, pointsEncoded, pointsEncodedMultiplier)).
-                    header("X-GH-Took", "" + Math.round(sw.getMillisDouble())).
-                    build();
-        } else {
-            Translation tr = trMap.getWithFallBack(Helper.getLocale(localeStr));
-            RamerDouglasPeucker simplifyAlgo = new RamerDouglasPeucker().setMaxDistance(minPathPrecision);
-            PathMerger pathMerger = new PathMerger(matchResult.getGraph(), matchResult.getWeighting()).
-                    setEnableInstructions(instructions).
-                    setPathDetailsBuilders(graphHopper.getPathDetailsBuilderFactory(), pathDetails).
-                    setRamerDouglasPeucker(simplifyAlgo).
-                    setSimplifyResponse(minPathPrecision > 0);
-            ResponsePath responsePath = pathMerger.doWork(PointList.EMPTY, Collections.singletonList(matchResult.getMergedPath()),
-                    graphHopper.getEncodingManager(), tr);
-
-            // GraphHopper thinks an empty path is an invalid path, and further that an invalid path is still a path but
-            // marked with a non-empty list of Exception objects. I disagree, so I clear it.
-            responsePath.getErrors().clear();
-            GHResponse rsp = new GHResponse();
-            rsp.add(responsePath);
-
-            if (writeGPX) {
-                long time = gpx.trk.get(0).getStartTime()
-                        .map(Date::getTime)
-                        .orElse(System.currentTimeMillis());
-                return Response.ok(GpxConversions.createGPX(rsp.getBest().getInstructions(), gpx.trk.get(0).name != null ? gpx.trk.get(0).name : "", time, enableElevation, withRoute, withTrack, false, Constants.VERSION, tr), "application/gpx+xml").
-                        header("X-GH-Took", "" + Math.round(sw.getMillisDouble())).
-                        build();
-            } else {
-                ObjectNode map = ResponsePathSerializer.jsonObject(rsp, new ResponsePathSerializer.Info(config.getCopyrights(), Math.round(sw.getMillisDouble()), osmDate), instructions,
-                        calcPoints, enableElevation, pointsEncoded, pointsEncodedMultiplier);
-
-                Map<String, Object> matchStatistics = new HashMap<>();
-                matchStatistics.put("distance", matchResult.getMatchLength());
-                matchStatistics.put("time", matchResult.getMatchMillis());
-                matchStatistics.put("original_distance", matchResult.getGpxEntriesLength());
-                map.putPOJO("map_matching", matchStatistics);
-
-                if (enableTraversalKeys) {
-                    List<Integer> traversalKeylist = new ArrayList<>();
-                    for (EdgeMatch em : matchResult.getEdgeMatches()) {
-                        EdgeIteratorState edge = em.getEdgeState();
-                        // encode edges as traversal keys which includes orientation, decode simply by multiplying with 0.5
-                        traversalKeylist.add(edge.getEdgeKey());
-                    }
-                    map.putPOJO("traversal_keys", traversalKeylist);
-                }
-                return Response.ok(map).
-                        header("X-GH-Took", "" + Math.round(sw.getMillisDouble())).
-                        build();
+        if (enableTraversalKeys) {
+            List<Integer> traversalKeylist = new ArrayList<>();
+            for (EdgeMatch em : matchResult.getEdgeMatches()) {
+                EdgeIteratorState edge = em.getEdgeState();
+                // encode edges as traversal keys which includes orientation, decode simply by multiplying with 0.5
+                traversalKeylist.add(edge.getEdgeKey());
             }
+            jsonResponse.putPOJO("traversal_keys", traversalKeylist);
         }
+    }
+
+    public static GHResponse GetGhResponse(double minPathPrecision,
+                                           boolean instructions,
+                                           List<String> pathDetails,
+                                           MatchResult matchResult,
+                                           Translation tr,
+                                           PathDetailsBuilderFactory pathDetailsBuilderFactory,
+                                           EncodingManager encodingManager) {
+        RamerDouglasPeucker simplifyAlgo = new RamerDouglasPeucker().setMaxDistance(minPathPrecision);
+        PathMerger pathMerger = new PathMerger(matchResult.getGraph(), matchResult.getWeighting()).
+                setEnableInstructions(instructions).
+                setPathDetailsBuilders(pathDetailsBuilderFactory, pathDetails).
+                setRamerDouglasPeucker(simplifyAlgo).
+                setSimplifyResponse(minPathPrecision > 0);
+        ResponsePath responsePath = pathMerger.doWork(PointList.EMPTY, Collections.singletonList(matchResult.getMergedPath()),
+                encodingManager, tr);
+
+        // GraphHopper thinks an empty path is an invalid path, and further that an invalid path is still a path but
+        // marked with a non-empty list of Exception objects. I disagree, so I clear it.
+        responsePath.getErrors().clear();
+        GHResponse rsp = new GHResponse();
+        rsp.add(responsePath);
+        return rsp;
     }
 
     public static JsonNode convertToTree(MatchResult result, boolean elevation, boolean pointsEncoded, double pointsEncodedMultiplier) {
