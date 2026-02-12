@@ -144,61 +144,52 @@ public class ConditionalExpressionVisitorTest {
 
     @Test
     public void testConvertSingleToDoubleQuotes() {
-        // no single quotes -> same string returned
         assertEquals("road_class == PRIMARY", convertSingleToDoubleQuotes("road_class == PRIMARY"));
-
-        // simple conversion
         assertEquals("tag.get(\"cycleway\") == \"lane\"", convertSingleToDoubleQuotes("tag.get('cycleway') == 'lane'"));
-
-        // escaped single quote inside string
         assertEquals("tag.get(\"name\") == \"O'Brien\"", convertSingleToDoubleQuotes("tag.get('name') == 'O\\'Brien'"));
-
-        // unmatched quotes
         assertThrows(IllegalArgumentException.class, () -> convertSingleToDoubleQuotes("tag.get('cycleway)"));
+        assertThrows(IllegalArgumentException.class, () -> convertSingleToDoubleQuotes("tag.get(\"cycleway\")"));
     }
 
     @Test
     public void testTagGetExpression() {
-        NameValidator validVariable = s -> s.equals("__kv") || Helper.toUpperCase(s).equals(s) || s.equals("road_class");
+        NameValidator validVariable = s -> Helper.toUpperCase(s).equals(s) || s.equals("road_class");
 
         // basic tag.get == test
         ParseResult result = parse("tag.get('cycleway') == 'lane'", validVariable, k -> "");
         assertTrue(result.ok);
-        assertTrue(result.guessedVariables.contains("__kv"));
-        assertTrue(result.converted.toString().contains("\"lane\".equals(CustomWeightingHelper.kvGet(__kv, \"cycleway\", reverse))"));
+        assertTrue(result.converted.toString().contains("\"lane\".equals(edge.getValue(\"cycleway\"))"));
 
         // tag.get != test
         result = parse("tag.get('lit') != 'yes'", validVariable, k -> "");
         assertTrue(result.ok);
-        assertTrue(result.converted.toString().contains("!\"yes\".equals(CustomWeightingHelper.kvGet(__kv, \"lit\", reverse))"));
+        assertTrue(result.converted.toString().contains("!\"yes\".equals(edge.getValue(\"lit\"))"));
 
         // compound expression with tag.get and regular encoded value
         result = parse("tag.get('cycleway') == 'lane' || road_class == PRIMARY", validVariable, k -> "RoadClass");
         assertTrue(result.ok);
-        assertTrue(result.guessedVariables.contains("__kv"));
         assertTrue(result.guessedVariables.contains("road_class"));
 
         // compound: two tag.get expressions
         result = parse("tag.get('cycleway') == 'lane' || tag.get('cycleway') == 'track'", validVariable, k -> "");
         assertTrue(result.ok);
         String converted = result.converted.toString();
-        assertTrue(converted.contains("\"lane\".equals(CustomWeightingHelper.kvGet(__kv, \"cycleway\", reverse))"), converted);
-        assertTrue(converted.contains("\"track\".equals(CustomWeightingHelper.kvGet(__kv, \"cycleway\", reverse))"), converted);
+        assertTrue(converted.contains("\"lane\".equals(edge.getValue(\"cycleway\"))"), converted);
+        assertTrue(converted.contains("\"track\".equals(edge.getValue(\"cycleway\"))"), converted);
 
         // tag.get == null
         result = parse("tag.get('lit') == null", validVariable, k -> "");
         assertTrue(result.ok);
-        assertTrue(result.converted.toString().contains("CustomWeightingHelper.kvGet(__kv, \"lit\", reverse) == null"));
+        assertTrue(result.converted.toString().contains("edge.getValue(\"lit\") == null"));
 
         // tag.get != null
         result = parse("tag.get('lit') != null", validVariable, k -> "");
         assertTrue(result.ok);
-        assertTrue(result.converted.toString().contains("CustomWeightingHelper.kvGet(__kv, \"lit\", reverse) != null"));
+        assertTrue(result.converted.toString().contains("edge.getValue(\"lit\") != null"));
 
         // reversed: literal on left, tag.get on right
         result = parse("'lane' == tag.get('cycleway')", validVariable, k -> "");
         assertTrue(result.ok);
-        assertTrue(result.guessedVariables.contains("__kv"));
-        assertTrue(result.converted.toString().contains("\"lane\".equals(CustomWeightingHelper.kvGet(__kv, \"cycleway\", reverse))"));
+        assertTrue(result.converted.toString().contains("\"lane\".equals(edge.getValue(\"cycleway\"))"));
     }
 }

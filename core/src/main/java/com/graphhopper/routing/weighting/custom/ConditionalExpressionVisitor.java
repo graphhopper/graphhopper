@@ -18,8 +18,8 @@
 package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.util.Helper;
-import org.codehaus.janino.Scanner;
 import org.codehaus.janino.*;
+import org.codehaus.janino.Scanner;
 
 import java.io.StringReader;
 import java.util.*;
@@ -141,18 +141,17 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
                     int exprStart = Math.min(tagGetStart, otherStart);
                     int exprEnd = Math.max(tagGetEnd, otherEnd);
 
-                    String kvGetCall = CustomWeightingHelper.class.getSimpleName() + ".kvGet(__kv, \"" + key + "\", reverse)";
+                    String getValueCall = "edge.getValue(\"" + key + "\")";
                     String newExpr;
                     if (isNull) {
-                        newExpr = kvGetCall + " " + binOp.operator + " null";
+                        newExpr = getValueCall + " " + binOp.operator + " null";
                     } else {
                         String value = extractStringLiteralValue(((Java.Literal) other).value);
                         String prefix = binOp.operator.equals("!=") ? "!" : "";
-                        newExpr = prefix + "\"" + value + "\".equals(" + kvGetCall + ")";
+                        newExpr = prefix + "\"" + value + "\".equals(" + getValueCall + ")";
                     }
 
                     replacements.put(exprStart, new Replacement(exprStart, exprEnd - exprStart, newExpr));
-                    result.guessedVariables.add("__kv");
                     return true;
                 }
             }
@@ -194,7 +193,8 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
     private static boolean isTagGetCall(Java.Rvalue rvalue) {
         if (!(rvalue instanceof Java.MethodInvocation)) return false;
         Java.MethodInvocation mi = (Java.MethodInvocation) rvalue;
-        if (!"get".equals(mi.methodName) || mi.target == null || mi.arguments.length != 1) return false;
+        if (!"get".equals(mi.methodName) || mi.target == null || mi.arguments.length != 1)
+            return false;
         if (!(mi.arguments[0] instanceof Java.Literal)) return false;
         Java.Rvalue target = mi.target.toRvalue();
         if (!(target instanceof Java.AmbiguousName)) return false;
@@ -223,6 +223,8 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
     static String convertSingleToDoubleQuotes(String expression) {
         boolean hasSingleQuotes = false;
         for (int i = 0; i < expression.length(); i++) {
+            if (expression.charAt(i) == '"')
+                throw new IllegalArgumentException("Double quotes are not allowed in expression: " + expression);
             if (expression.charAt(i) == '\'' && (i == 0 || expression.charAt(i - 1) != '\\')) {
                 hasSingleQuotes = true;
                 break;
