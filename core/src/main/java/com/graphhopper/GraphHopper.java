@@ -975,12 +975,17 @@ public class GraphHopper {
         KVStorage kvStorage = baseGraph.getEdgeKVStorage();
         for (EncodedValue ev : encodingManager.getEncodedValues()) {
             if (ev instanceof KVStorageEncodedValue kvEnc) {
-                int index = create
-                        ? kvStorage.reserveKey(kvEnc.getRawTagName(), String.class)
-                        : kvStorage.getKeyIndex(kvEnc.getRawTagName());
-                if (index < 0)
-                    throw new IllegalArgumentException("Index must not be negative, but was for " + kvEnc.getRawTagName());
-                kvEnc.setKeyIndex(index);
+                String rawTag = kvEnc.getRawTagName();
+                if (create) {
+                    kvEnc.setKeyIndex(kvStorage.reserveKey(rawTag, String.class));
+                } else {
+                    int index = kvStorage.getKeyIndex(rawTag);
+                    if (index < 0)
+                        throw new IllegalArgumentException("KVStorage key not found for " + rawTag);
+                    if (kvEnc.getKeyIndex() != index)
+                        throw new IllegalStateException("Stored keyIndex " + kvEnc.getKeyIndex()
+                                + " for " + rawTag + " does not match currently configured index: " + index);
+                }
             }
         }
     }
