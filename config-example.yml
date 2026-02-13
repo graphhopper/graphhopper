@@ -116,7 +116,7 @@ graphhopper:
 
   # Tags are a more flexible and 'raw' approach as no source code needs to be changed to add them.
   # However, there have the following downsides:
-  #   1. value is string, i.e. only == and != as operator possible in the custom model
+  #   1. value is string and currently only == and != as operator possible in the custom model (TODO: contains, startsWith)
   #   2. slower access, i.e. slower non-CH routing,
   #   3. not directional, i.e. the values with xy:forward/xy:backward are separate and have no meaning (check against is_forward)
   #   4. values not normalized, checked or corrected
