@@ -116,30 +116,27 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
             Java.BinaryOperation binOp = (Java.BinaryOperation) rv;
             int startRH = binOp.rhs.getLocation().getColumnNumber() - 1;
 
-            // Handle tag.get("key") compared to a string or null, in either order
-            Java.MethodInvocation tagGet = isTagGetCall(binOp.lhs) ? (Java.MethodInvocation) binOp.lhs
-                    : isTagGetCall(binOp.rhs) ? (Java.MethodInvocation) binOp.rhs : null;
-            Java.Rvalue other = tagGet == binOp.lhs ? binOp.rhs : binOp.lhs;
-            if (tagGet != null && other instanceof Java.Literal) {
+            // Handle tag("key") or tag.get("key") compared to a string or null, in either order
+            Java.MethodInvocation tagCall = isTagCall(binOp.lhs) ? (Java.MethodInvocation) binOp.lhs
+                    : isTagCall(binOp.rhs) ? (Java.MethodInvocation) binOp.rhs : null;
+            Java.Rvalue other = tagCall == binOp.lhs ? binOp.rhs : binOp.lhs;
+            if (tagCall != null && other instanceof Java.Literal) {
                 boolean isNull = isNullLiteral(other);
                 boolean isString = isStringLiteral(other);
                 if (isNull || isString) {
                     if (!binOp.operator.equals("==") && !binOp.operator.equals("!="))
-                        throw new IllegalArgumentException("Only == and != allowed for tag.get() comparison");
+                        throw new IllegalArgumentException("Only == and != allowed for tag() comparison");
 
-                    String key = extractStringLiteralValue(((Java.Literal) tagGet.arguments[0]).value);
-                    Java.AmbiguousName targetName = (Java.AmbiguousName) tagGet.target.toRvalue();
+                    String key = extractStringLiteralValue(((Java.Literal) tagCall.arguments[0]).value);
 
-                    // Janino's MethodInvocation location points to "get", not "tag",
-                    // so subtract the target name + dot. For the end, use the argument literal + 1 for ')'.
-                    int tagGetStart = tagGet.getLocation().getColumnNumber() - 1 - targetName.identifiers[0].length() - 1;
-                    Java.Literal argLiteral = (Java.Literal) tagGet.arguments[0];
-                    int tagGetEnd = argLiteral.getLocation().getColumnNumber() - 1 + argLiteral.value.length() + 1;
+                    int tagCallStart = tagCall.getLocation().getColumnNumber() - 1;
+                    Java.Literal argLiteral = (Java.Literal) tagCall.arguments[0];
+                    int tagCallEnd = argLiteral.getLocation().getColumnNumber() - 1 + argLiteral.value.length() + 1;
                     int otherStart = other.getLocation().getColumnNumber() - 1;
                     int otherEnd = otherStart + ((Java.Literal) other).value.length();
 
-                    int exprStart = Math.min(tagGetStart, otherStart);
-                    int exprEnd = Math.max(tagGetEnd, otherEnd);
+                    int exprStart = Math.min(tagCallStart, otherStart);
+                    int exprEnd = Math.max(tagCallEnd, otherEnd);
 
                     String getCall = "edge.get(this." + CustomModelParser.kvFieldName(key) + "_enc)";
                     String newExpr;
@@ -190,16 +187,11 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
         return false;
     }
 
-    private static boolean isTagGetCall(Java.Rvalue rvalue) {
+    private static boolean isTagCall(Java.Rvalue rvalue) {
         if (!(rvalue instanceof Java.MethodInvocation)) return false;
         Java.MethodInvocation mi = (Java.MethodInvocation) rvalue;
-        if (!"get".equals(mi.methodName) || mi.target == null || mi.arguments.length != 1)
-            return false;
-        if (!(mi.arguments[0] instanceof Java.Literal)) return false;
-        Java.Rvalue target = mi.target.toRvalue();
-        if (!(target instanceof Java.AmbiguousName)) return false;
-        Java.AmbiguousName n = (Java.AmbiguousName) target;
-        return (n.identifiers.length == 1 || n.identifiers.length == 2) && "tag".equals(n.identifiers[0]);
+        if (mi.arguments.length != 1 || !(mi.arguments[0] instanceof Java.Literal)) return false;
+        return "tag".equals(mi.methodName) && mi.target == null;
     }
 
     private static boolean isStringLiteral(Java.Rvalue rvalue) {

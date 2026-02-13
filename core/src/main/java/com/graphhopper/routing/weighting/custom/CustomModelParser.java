@@ -47,6 +47,7 @@ public class CustomModelParser {
     static final String BACKWARD_PREFIX = "backward_";
     static final String PREV_PREFIX = "prev_";
     static final String CHANGE_ANGLE = "change_angle";
+    static final String IS_FORWARD = "is_forward";
     private static final boolean JANINO_DEBUG = Boolean.getBoolean(Scanner.SYSTEM_PROPERTY_SOURCE_DEBUGGING_ENABLE);
     private static final String SCRIPT_FILE_DIR = System.getProperty(Scanner.SYSTEM_PROPERTY_SOURCE_DEBUGGING_DIR, "./src/main/java/com/graphhopper/routing/weighting/custom");
 
@@ -343,7 +344,9 @@ public class CustomModelParser {
      * or if an area contains the current edge.
      */
     private static String getVariableDeclaration(EncodedValueLookup lookup, final String arg) {
-        if (lookup.hasEncodedValue(arg)) {
+        if (arg.equals(IS_FORWARD)) {
+            return "boolean " + IS_FORWARD + " = !reverse;\n";
+        } else if (lookup.hasEncodedValue(arg)) {
             // parameters in method getPriority or getSpeed are: EdgeIteratorState edge, boolean reverse
             EncodedValue enc = lookup.getEncodedValue(arg, EncodedValue.class);
             return getReturnType(enc) + " " + arg + " = (" + getReturnType(enc) + ") (reverse ? " +
@@ -481,6 +484,8 @@ public class CustomModelParser {
                 classSourceCode.append("protected " + Polygon.class.getSimpleName() + " " + arg + ";\n");
                 initSourceCode.append("JsonFeature feature_" + id + " = (JsonFeature) areas.get(\"" + id + "\");\n");
                 initSourceCode.append("this." + arg + " = new Polygon(new PreparedPolygon((Polygonal) feature_" + id + ".getGeometry()));\n");
+            } else if (arg.equals(IS_FORWARD)) {
+                // no class field needed — handled as local variable in getVariableDeclaration
             } else {
                 if (!arg.startsWith(IN_AREA_PREFIX))
                     throw new IllegalArgumentException("Variable not supported: " + arg);
@@ -536,7 +541,8 @@ public class CustomModelParser {
                                                                List<Statement> list, EncodedValueLookup lookup) throws Exception {
         // allow variables, all encoded values, constants and special variables like in_xyarea or backward_car_access
         NameValidator nameInConditionValidator = name -> lookup.hasEncodedValue(name)
-                || name.toUpperCase(Locale.ROOT).equals(name) || name.startsWith(IN_AREA_PREFIX) || name.equals(CHANGE_ANGLE)
+                || name.toUpperCase(Locale.ROOT).equals(name) || name.startsWith(IN_AREA_PREFIX)
+                || name.equals(CHANGE_ANGLE) || name.equals(IS_FORWARD)
                 || name.startsWith(BACKWARD_PREFIX) && lookup.hasEncodedValue(name.substring(BACKWARD_PREFIX.length()))
                 || name.startsWith(PREV_PREFIX) && lookup.hasEncodedValue(name.substring(PREV_PREFIX.length()));
         Function<String, EncodedValue> fct = createSimplifiedLookup(lookup);

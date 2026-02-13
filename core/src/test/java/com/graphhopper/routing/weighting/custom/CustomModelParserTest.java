@@ -386,7 +386,7 @@ class CustomModelParserTest {
     @Test
     void testTagGet() {
         CustomModel customModel = new CustomModel();
-        customModel.addToPriority(If("tag.get('cycleway') == 'lane'", MULTIPLY, "0.5"));
+        customModel.addToPriority(If("tag('cycleway') == 'lane'", MULTIPLY, "0.5"));
         customModel.addToSpeed(If("true", LIMIT, "100"));
         CustomWeighting.Parameters parameters = CustomModelParser.createWeightingParameters(customModel, encodingManager);
 
@@ -407,7 +407,7 @@ class CustomModelParserTest {
 
         // white spaces
         customModel = new CustomModel();
-        customModel.addToPriority(If("tag.get( 'cycleway'  )   ==  'lane' ", MULTIPLY, "0.5"));
+        customModel.addToPriority(If("tag( 'cycleway'  )   ==  'lane' ", MULTIPLY, "0.5"));
         customModel.addToSpeed(If("true", LIMIT, "100"));
         parameters = CustomModelParser.createWeightingParameters(customModel, encodingManager);
 
@@ -417,7 +417,7 @@ class CustomModelParserTest {
 
         // null comparison
         customModel = new CustomModel();
-        customModel.addToPriority(If("tag.get('cycleway') == null", MULTIPLY, "0.3"));
+        customModel.addToPriority(If("tag('cycleway') == null", MULTIPLY, "0.3"));
         customModel.addToSpeed(If("true", LIMIT, "100"));
         parameters = CustomModelParser.createWeightingParameters(customModel, encodingManager);
 
@@ -426,12 +426,29 @@ class CustomModelParserTest {
 
         // unequal
         customModel = new CustomModel();
-        customModel.addToPriority(If("tag.get('cycleway') != 'lane'", MULTIPLY, "0.5"));
+        customModel.addToPriority(If("tag('cycleway') != 'lane'", MULTIPLY, "0.5"));
         customModel.addToSpeed(If("true", LIMIT, "100"));
         parameters = CustomModelParser.createWeightingParameters(customModel, encodingManager);
 
         assertEquals(1.0, parameters.getEdgeToPriorityMapping().get(edgeWithLane, false), 1.e-6);
         assertEquals(0.5, parameters.getEdgeToPriorityMapping().get(edgeWithTrack, false), 1.e-6);
         assertEquals(0.5, parameters.getEdgeToPriorityMapping().get(edgeWithout, false), 1.e-6);
+    }
+
+    @Test
+    void testIsForward() {
+        CustomModel customModel = new CustomModel();
+        customModel.addToPriority(If("is_forward", MULTIPLY, "0.5"));
+        customModel.addToSpeed(If("true", LIMIT, "100"));
+        CustomWeighting.Parameters parameters = CustomModelParser.createWeightingParameters(customModel, encodingManager);
+
+        BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
+        initKVStorageEncodedValues(graph);
+        EdgeIteratorState edge = graph.edge(0, 1).setDistance(100).set(avgSpeedEnc, 60).set(accessEnc, true, true);
+
+        // forward: is_forward=true, so multiply by 0.5
+        assertEquals(0.5, parameters.getEdgeToPriorityMapping().get(edge, false), 1.e-6);
+        // reverse: is_forward=false, so no multiply
+        assertEquals(1.0, parameters.getEdgeToPriorityMapping().get(edge, true), 1.e-6);
     }
 }
