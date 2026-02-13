@@ -943,7 +943,7 @@ public class GraphHopper {
         logger.info("using " + getBaseGraphString() + ", memory:" + getMemInfo());
 
         createBaseGraphAndProperties();
-        initKVStorageEncodedValues();
+        initKVStorageEncodedValues(true);
 
         try {
             reader.readGraph();
@@ -964,11 +964,15 @@ public class GraphHopper {
             maxSpeedCalculator.createDataAccessForParser(baseGraph.getDirectory());
     }
 
-    private void initKVStorageEncodedValues() {
+    private void initKVStorageEncodedValues(boolean create) {
         KVStorage kvStorage = baseGraph.getEdgeKVStorage();
         for (EncodedValue ev : encodingManager.getEncodedValues()) {
             if (ev instanceof KVStorageEncodedValue kvEnc) {
-                int index = kvStorage.reserveKey(kvEnc.getName(), String.class);
+                int index = create
+                        ? kvStorage.reserveKey(kvEnc.getName(), String.class)
+                        : kvStorage.getKeyIndex(kvEnc.getName());
+                if (index < 0)
+                    throw new IllegalArgumentException("Index must not be negative, but was for " + kvEnc.getName());
                 kvEnc.setKeyIndex(index);
             }
         }
@@ -1150,7 +1154,7 @@ public class GraphHopper {
                     .build();
             checkProfilesConsistency();
             baseGraph.loadExisting();
-            initKVStorageEncodedValues();
+            initKVStorageEncodedValues(false);
             String storedProfilesString = properties.get("profiles");
             Map<String, Integer> storedProfileHashes = Arrays.stream(storedProfilesString.split(",")).map(s -> s.split("\\|", 2)).collect((Collectors.toMap(kv -> kv[0], kv -> Integer.parseInt(kv[1]))));
             Map<String, Integer> configuredProfileHashes = getProfileHashes();

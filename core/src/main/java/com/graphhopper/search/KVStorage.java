@@ -468,7 +468,7 @@ public class KVStorage {
         return null;
     }
 
-    int getKeyIndex(String key) {
+    public int getKeyIndex(String key) {
         return keyToIndex.getOrDefault(key, -1);
     }
 

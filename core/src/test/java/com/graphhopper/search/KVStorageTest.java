@@ -527,4 +527,26 @@ public class KVStorageTest {
         assertEquals("lane", index.get(pointer, "cycleway", false));
         assertEquals("lane", index.get(pointer, keyIndex, false));
     }
+
+    @Test
+    public void testGetByKeyIndexAfterLoad() {
+        Helper.removeDir(new File(location));
+
+        KVStorage index = new KVStorage(new GHDirectory(location, DAType.RAM_STORE).create(), true).create(1000);
+        index.reserveKey("cycleway", String.class);
+        long pointer = index.add(createMap("cycleway", "lane"));
+        assertEquals("lane", index.get(pointer, index.getKeyIndex("cycleway"), false));
+        index.flush();
+        index.close();
+
+        KVStorage loaded = new KVStorage(new GHDirectory(location, DAType.RAM_STORE), true);
+        assertTrue(loaded.loadExisting());
+        // not possible
+        assertThrows(IllegalArgumentException.class, () -> loaded.reserveKey("cycleway", String.class));
+        int keyIndex = loaded.getKeyIndex("cycleway");
+        assertEquals("lane", loaded.get(pointer, keyIndex, false));
+        loaded.close();
+
+        Helper.removeDir(new File(location));
+    }
 }
