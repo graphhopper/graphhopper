@@ -623,6 +623,11 @@ public class GraphHopper {
         for (String tag : osmReaderConfig.getStoredTags()) {
             emBuilder.add(new KVStorageEncodedValue(tag));
         }
+        // TODO NOW: better integrate with existing data in KVStorage
+        // probably we should also change street_name into name to make it easier to use
+        emBuilder.add(new KVStorageEncodedValue(Parameters.Details.STREET_NAME));
+        emBuilder.add(new KVStorageEncodedValue(Parameters.Details.STREET_REF));
+
         restrictionVehicleTypesByProfile.entrySet().stream()
                 .filter(e -> !e.getValue().isEmpty())
                 .forEach(e -> emBuilder.addTurnCostEncodedValue(TurnRestriction.create(e.getKey())));
