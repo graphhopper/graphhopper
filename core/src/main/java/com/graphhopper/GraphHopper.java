@@ -624,9 +624,11 @@ public class GraphHopper {
             emBuilder.add(new KVStorageEncodedValue(tag));
         }
         // TODO NOW: better integrate with existing data in KVStorage
-        // probably we should also change street_name into name to make it easier to use
-        emBuilder.add(new KVStorageEncodedValue(Parameters.Details.STREET_NAME));
-        emBuilder.add(new KVStorageEncodedValue(Parameters.Details.STREET_REF));
+        if (!osmReaderConfig.getStoredTags().isEmpty()) {
+            // probably we should also change street_name into name to make it easier to use
+            emBuilder.add(new KVStorageEncodedValue(Parameters.Details.STREET_NAME));
+            emBuilder.add(new KVStorageEncodedValue(Parameters.Details.STREET_REF));
+        }
 
         restrictionVehicleTypesByProfile.entrySet().stream()
                 .filter(e -> !e.getValue().isEmpty())
@@ -974,10 +976,10 @@ public class GraphHopper {
         for (EncodedValue ev : encodingManager.getEncodedValues()) {
             if (ev instanceof KVStorageEncodedValue kvEnc) {
                 int index = create
-                        ? kvStorage.reserveKey(kvEnc.getName(), String.class)
-                        : kvStorage.getKeyIndex(kvEnc.getName());
+                        ? kvStorage.reserveKey(kvEnc.getRawTagName(), String.class)
+                        : kvStorage.getKeyIndex(kvEnc.getRawTagName());
                 if (index < 0)
-                    throw new IllegalArgumentException("Index must not be negative, but was for " + kvEnc.getName());
+                    throw new IllegalArgumentException("Index must not be negative, but was for " + kvEnc.getRawTagName());
                 kvEnc.setKeyIndex(index);
             }
         }

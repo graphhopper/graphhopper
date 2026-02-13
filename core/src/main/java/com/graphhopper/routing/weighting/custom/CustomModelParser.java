@@ -48,6 +48,7 @@ public class CustomModelParser {
     static final String PREV_PREFIX = "prev_";
     static final String CHANGE_ANGLE = "change_angle";
     static final String IS_FORWARD = "is_forward";
+    private static final String KV_PREFIX = "kv_";
     private static final boolean JANINO_DEBUG = Boolean.getBoolean(Scanner.SYSTEM_PROPERTY_SOURCE_DEBUGGING_ENABLE);
     private static final String SCRIPT_FILE_DIR = System.getProperty(Scanner.SYSTEM_PROPERTY_SOURCE_DEBUGGING_DIR, "./src/main/java/com/graphhopper/routing/weighting/custom");
 
@@ -70,23 +71,6 @@ public class CustomModelParser {
 
     private CustomModelParser() {
         // utility class
-    }
-
-    /**
-     * Sanitizes an OSM key (e.g. "cycleway:left") to a valid Java identifier for use as a field name.
-     * Should be also accepted from IntEncodedValueImpl.isValidEncodedValue but not necessary as
-     * KVStorageEncodedValue is implemented independent of this.
-     */
-    static String kvFieldName(String osmKey) {
-        StringBuilder sb = new StringBuilder("kv_");
-        for (int i = 0; i < osmKey.length(); i++) {
-            char c = osmKey.charAt(i);
-            if (c >= 'a' && c <= 'z' || c >= '0' && c <= '9' || c == '_')
-                sb.append(c);
-            else
-                sb.append('_');
-        }
-        return sb.toString();
     }
 
     /**
@@ -344,7 +328,9 @@ public class CustomModelParser {
      * or if an area contains the current edge.
      */
     private static String getVariableDeclaration(EncodedValueLookup lookup, final String arg) {
-        if (arg.equals(IS_FORWARD)) {
+        if (arg.startsWith(KV_PREFIX)) {
+            return ""; // currently no local variable is introduced assuming that is is more likely to be used once
+        } else if (arg.equals(IS_FORWARD)) {
             return "boolean " + IS_FORWARD + " = edge.get(EdgeIteratorState.REVERSE_STATE);\n";
         } else if (lookup.hasEncodedValue(arg)) {
             // parameters in method getPriority or getSpeed are: EdgeIteratorState edge, boolean reverse
@@ -453,7 +439,10 @@ public class CustomModelParser {
             set.add(speedVar.startsWith(PREV_PREFIX) ? speedVar.substring(PREV_PREFIX.length()) : speedVar);
 
         for (String arg : set) {
-            if (lookup.hasEncodedValue(arg)) {
+            if (arg.startsWith(KV_PREFIX)) {
+                classSourceCode.append("protected KVStorageEncodedValue " + arg + "_enc;\n");
+                initSourceCode.append("this." + arg + "_enc = (KVStorageEncodedValue) lookup.getEncodedValue(\"" + arg + "\", EncodedValue.class);\n");
+            } else if (lookup.hasEncodedValue(arg)) {
                 EncodedValue enc = lookup.getEncodedValue(arg, EncodedValue.class);
                 classSourceCode.append("protected " + getInterface(enc) + " " + arg + "_enc;\n");
                 initSourceCode.append("this." + arg + "_enc = (" + getInterface(enc)
@@ -489,16 +478,6 @@ public class CustomModelParser {
             } else {
                 if (!arg.startsWith(IN_AREA_PREFIX))
                     throw new IllegalArgumentException("Variable not supported: " + arg);
-            }
-        }
-
-        // Generate fields and init code for KVStorageEncodedValue instances
-        // TODO NOW add even unused ones?
-        for (EncodedValue ev : lookup.getEncodedValues()) {
-            if (ev instanceof KVStorageEncodedValue) {
-                String fieldName = kvFieldName(ev.getName());
-                classSourceCode.append("protected KVStorageEncodedValue " + fieldName + "_enc;\n");
-                initSourceCode.append("this." + fieldName + "_enc = (KVStorageEncodedValue) lookup.getEncodedValue(\"" + ev.getName() + "\", EncodedValue.class);\n");
             }
         }
 

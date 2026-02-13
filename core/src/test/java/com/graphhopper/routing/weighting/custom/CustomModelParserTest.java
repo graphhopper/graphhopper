@@ -74,9 +74,10 @@ class CustomModelParserTest {
         for (EncodedValue ev : encodingManager.getEncodedValues()) {
             if (ev instanceof KVStorageEncodedValue kvEnc) {
                 KVStorage kvStorage = bg.getEdgeKVStorage();
-                int index = kvStorage.getKeyIndex(kvEnc.getName());
+                String rawTag = kvEnc.getRawTagName();
+                int index = kvStorage.getKeyIndex(rawTag);
                 if (index < 0)
-                    index = kvStorage.reserveKey(kvEnc.getName(), String.class);
+                    index = kvStorage.reserveKey(rawTag, String.class);
                 kvEnc.setKeyIndex(index);
             }
         }

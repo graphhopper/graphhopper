@@ -18,20 +18,42 @@
 package com.graphhopper.routing.ev;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * An EncodedValue that represents a key-value tag stored in KVStorage. Unlike other EncodedValues,
  * this does not use any bits in the edge flags. Instead, it holds a pre-resolved key index for fast
  * KVStorage lookups, avoiding the HashMap lookup on every edge access.
+ * <p>
+ * The {@link #getName()} returns the sanitized field name (e.g. "kv_cycleway_left") while
+ * {@link #getRawTagName()} returns the original OSM key (e.g. "cycleway:left").
  */
 public class KVStorageEncodedValue implements EncodedValue {
+    @JsonIgnore
     private final String name;
+    private final String rawTagName;
     private int keyIndex = -1;
 
     @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
-    public KVStorageEncodedValue(@JsonProperty("name") String name) {
-        this.name = name;
+    public KVStorageEncodedValue(@JsonProperty("raw_tag_name") String rawTagName) {
+        this.rawTagName = rawTagName;
+        this.name = toFieldName(rawTagName);
+    }
+
+    /**
+     * Sanitizes an OSM key (e.g. "cycleway:left") to a valid Java identifier (e.g. "kv_cycleway_left").
+     */
+    public static String toFieldName(String osmKey) {
+        StringBuilder sb = new StringBuilder("kv_");
+        for (int i = 0; i < osmKey.length(); i++) {
+            char c = osmKey.charAt(i);
+            if (c >= 'a' && c <= 'z' || c >= '0' && c <= '9' || c == '_')
+                sb.append(c);
+            else
+                sb.append('_');
+        }
+        return sb.toString();
     }
 
     @Override
@@ -43,6 +65,13 @@ public class KVStorageEncodedValue implements EncodedValue {
     @Override
     public String getName() {
         return name;
+    }
+
+    /**
+     * @return the original OSM key (e.g. "cycleway:left") used for KVStorage operations
+     */
+    public String getRawTagName() {
+        return rawTagName;
     }
 
     @Override

@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.weighting.custom;
 
+import com.graphhopper.routing.ev.KVStorageEncodedValue;
 import com.graphhopper.util.Helper;
 import org.codehaus.janino.*;
 import org.codehaus.janino.Scanner;
@@ -128,6 +129,8 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
                         throw new IllegalArgumentException("Only == and != allowed for tag() comparison");
 
                     String key = extractStringLiteralValue(((Java.Literal) tagCall.arguments[0]).value);
+                    String fieldName = KVStorageEncodedValue.toFieldName(key);
+                    result.guessedVariables.add(fieldName);
 
                     int tagCallStart = tagCall.getLocation().getColumnNumber() - 1;
                     Java.Literal argLiteral = (Java.Literal) tagCall.arguments[0];
@@ -138,7 +141,7 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
                     int exprStart = Math.min(tagCallStart, otherStart);
                     int exprEnd = Math.max(tagCallEnd, otherEnd);
 
-                    String getCall = "edge.get(this." + CustomModelParser.kvFieldName(key) + "_enc)";
+                    String getCall = "edge.get(this." + fieldName + "_enc)";
                     String newExpr;
                     if (isNull) {
                         newExpr = getCall + " " + binOp.operator + " null";
