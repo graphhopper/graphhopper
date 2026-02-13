@@ -345,7 +345,7 @@ public class CustomModelParser {
      */
     private static String getVariableDeclaration(EncodedValueLookup lookup, final String arg) {
         if (arg.equals(IS_FORWARD)) {
-            return "boolean " + IS_FORWARD + " = !reverse;\n";
+            return "boolean " + IS_FORWARD + " = edge.get(EdgeIteratorState.REVERSE_STATE);\n";
         } else if (lookup.hasEncodedValue(arg)) {
             // parameters in method getPriority or getSpeed are: EdgeIteratorState edge, boolean reverse
             EncodedValue enc = lookup.getEncodedValue(arg, EncodedValue.class);
@@ -493,6 +493,7 @@ public class CustomModelParser {
         }
 
         // Generate fields and init code for KVStorageEncodedValue instances
+        // TODO NOW add even unused ones?
         for (EncodedValue ev : lookup.getEncodedValues()) {
             if (ev instanceof KVStorageEncodedValue) {
                 String fieldName = kvFieldName(ev.getName());
