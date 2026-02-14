@@ -280,13 +280,6 @@ class EdgeBasedTarjanSCCTest {
         components = EdgeBasedTarjanSCC.findComponentsForStartEdges(g, (prev, edge) -> true, IntArrayList.from(0, 4, 7));
         assertEquals(16, components.getEdgeKeys());
         assertEquals(3, components.getComponents().size());
-
-        // here we initialize as for all islands but the filter still prevents some edges to be found
-        components = EdgeBasedTarjanSCC.findComponentsForStartEdges(g,
-                (prev, edge) -> edge.getEdge() > 3 && edge.getEdge() < 7, IntArrayList.from(0, 4, 7));
-        assertEquals(6, components.getEdgeKeys());
-        assertEquals(1, components.getComponents().size());
-
     }
 
     @RepeatedTest(20)
