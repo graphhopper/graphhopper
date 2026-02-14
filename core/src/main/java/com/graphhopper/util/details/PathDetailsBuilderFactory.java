@@ -96,6 +96,8 @@ public class PathDetailsBuilderFactory {
                 builders.add(new StringDetails(pathDetail, (StringEncodedValue) ev));
             else if (ev instanceof IntEncodedValue)
                 builders.add(new IntDetails(pathDetail, (IntEncodedValue) ev));
+            else if( ev instanceof KVStorageEncodedValue)
+                continue; // TODO: make it working via a new KVDetails? but skip street_name
             else
                 throw new IllegalArgumentException("unknown EncodedValue class " + ev.getClass().getName());
         }

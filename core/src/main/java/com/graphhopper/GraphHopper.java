@@ -48,6 +48,7 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.routing.weighting.custom.NameValidator;
+import com.graphhopper.search.KVStorage;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -569,6 +570,9 @@ public class GraphHopper {
         osmReaderConfig.setPreferredLanguage(ghConfig.getString("datareader.preferred_language", osmReaderConfig.getPreferredLanguage()));
         osmReaderConfig.setMaxWayPointDistance(ghConfig.getDouble(Routing.INIT_WAY_POINT_MAX_DISTANCE, osmReaderConfig.getMaxWayPointDistance()));
         osmReaderConfig.setWorkerThreads(ghConfig.getInt("datareader.worker_threads", osmReaderConfig.getWorkerThreads()));
+        String storedTagsStr = ghConfig.getString("graph.stored_tags", "");
+        if (!storedTagsStr.isEmpty())
+            osmReaderConfig.setStoredTags(new LinkedHashSet<>(Arrays.asList(storedTagsStr.split(","))));
 
         // index
         preciseIndexResolution = ghConfig.getInt("index.high_resolution", preciseIndexResolution);
@@ -616,6 +620,16 @@ public class GraphHopper {
 
         EncodingManager.Builder emBuilder = new EncodingManager.Builder();
         encodedValues.forEach(emBuilder::add);
+        for (String tag : osmReaderConfig.getStoredTags()) {
+            emBuilder.add(new KVStorageEncodedValue(tag));
+        }
+        // TODO NOW: better integrate with existing data in KVStorage
+        if (!osmReaderConfig.getStoredTags().isEmpty()) {
+            // probably we should also change street_name into name to make it easier to use
+            emBuilder.add(new KVStorageEncodedValue(Parameters.Details.STREET_NAME));
+            emBuilder.add(new KVStorageEncodedValue(Parameters.Details.STREET_REF));
+        }
+
         restrictionVehicleTypesByProfile.entrySet().stream()
                 .filter(e -> !e.getValue().isEmpty())
                 .forEach(e -> emBuilder.addTurnCostEncodedValue(TurnRestriction.create(e.getKey())));
@@ -936,6 +950,7 @@ public class GraphHopper {
         logger.info("using " + getBaseGraphString() + ", memory:" + getMemInfo());
 
         createBaseGraphAndProperties();
+        initKVStorageEncodedValues(true);
 
         try {
             reader.readGraph();
@@ -954,6 +969,25 @@ public class GraphHopper {
         properties.create(100);
         if (maxSpeedCalculator != null)
             maxSpeedCalculator.createDataAccessForParser(baseGraph.getDirectory());
+    }
+
+    private void initKVStorageEncodedValues(boolean create) {
+        KVStorage kvStorage = baseGraph.getEdgeKVStorage();
+        for (EncodedValue ev : encodingManager.getEncodedValues()) {
+            if (ev instanceof KVStorageEncodedValue kvEnc) {
+                String rawTag = kvEnc.getRawTagName();
+                if (create) {
+                    kvEnc.setKeyIndex(kvStorage.reserveKey(rawTag, String.class));
+                } else {
+                    int index = kvStorage.getKeyIndex(rawTag);
+                    if (index < 0)
+                        throw new IllegalArgumentException("KVStorage key not found for " + rawTag);
+                    if (kvEnc.getKeyIndex() != index)
+                        throw new IllegalStateException("Stored keyIndex " + kvEnc.getKeyIndex()
+                                + " for " + rawTag + " does not match currently configured index: " + index);
+                }
+            }
+        }
     }
 
     public static void sortGraphAlongHilbertCurve(BaseGraph graph) {
@@ -1132,6 +1166,7 @@ public class GraphHopper {
                     .build();
             checkProfilesConsistency();
             baseGraph.loadExisting();
+            initKVStorageEncodedValues(false);
             String storedProfilesString = properties.get("profiles");
             Map<String, Integer> storedProfileHashes = Arrays.stream(storedProfilesString.split(",")).map(s -> s.split("\\|", 2)).collect((Collectors.toMap(kv -> kv[0], kv -> Integer.parseInt(kv[1]))));
             Map<String, Integer> configuredProfileHashes = getProfileHashes();
