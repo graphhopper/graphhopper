@@ -147,9 +147,11 @@ public class RandomGraph {
                     fwdSpeed = 0;
                 if (rnd.nextDouble() < pSpeedZero)
                     bwdSpeed = 0;
-                edge.set(speedEnc, fwdSpeed);
-                if (speedEnc.isStoreTwoDirections())
-                    edge.setReverse(speedEnc, bwdSpeed);
+                if (speedEnc != null) {
+                    edge.set(speedEnc, fwdSpeed);
+                    if (speedEnc.isStoreTwoDirections())
+                        edge.setReverse(speedEnc, bwdSpeed);
+                }
             }
         }
 
