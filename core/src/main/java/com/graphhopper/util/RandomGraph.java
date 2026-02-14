@@ -48,6 +48,7 @@ public class RandomGraph {
         private double curviness = 0.0;
         private double speedMean = 16;
         private double speedStdDev = 8;
+        private double pSpeedZero = 0;
 
         private final double centerLat = 50.0;
         private final double centerLon = 10.0;
@@ -141,6 +142,11 @@ public class RandomGraph {
                 // if an explicit speed is given we discard the random speeds and use the given one instead
                 if (speed != null)
                     fwdSpeed = bwdSpeed = speed;
+                // zero speeds are possible even if an explicit speed is given
+                if (rnd.nextDouble() < pSpeedZero)
+                    fwdSpeed = 0;
+                if (rnd.nextDouble() < pSpeedZero)
+                    bwdSpeed = 0;
                 edge.set(speedEnc, fwdSpeed);
                 if (speedEnc.isStoreTwoDirections())
                     edge.setReverse(speedEnc, bwdSpeed);
@@ -240,6 +246,11 @@ public class RandomGraph {
 
         public Builder speedStdDev(double v) {
             speedStdDev = v;
+            return this;
+        }
+
+        public Builder speedZero(double v) {
+            pSpeedZero = v;
             return this;
         }
 

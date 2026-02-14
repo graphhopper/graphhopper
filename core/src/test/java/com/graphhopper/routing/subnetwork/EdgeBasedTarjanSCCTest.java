@@ -28,10 +28,10 @@ import com.graphhopper.routing.subnetwork.TarjanSCCTest.IntWithArray;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.RandomGraph;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 
-import java.util.Random;
 import java.util.Set;
 
 import static com.graphhopper.routing.subnetwork.TarjanSCCTest.buildComponentSet;
@@ -51,7 +51,6 @@ class EdgeBasedTarjanSCCTest {
         g = new BaseGraph.Builder(evConf.getRequiredBytes()).create();
         fwdAccessFilter = (prev, edge) -> edge.get(speedEnc) > 0;
     }
-
 
     @Test
     public void linearSingle() {
@@ -239,16 +238,19 @@ class EdgeBasedTarjanSCCTest {
         }
     }
 
-    @RepeatedTest(20)
-    public void implicitVsExplicitRecursion() {
+    @RepeatedTest(10)
+    public void implicitVsExplicitRecursionExcludeSingle() {
         doImplicitVsExplicit(true);
+    }
+
+    @RepeatedTest(10)
+    public void implicitVsExplicitRecursion() {
         doImplicitVsExplicit(false);
     }
 
     private void doImplicitVsExplicit(boolean excludeSingle) {
         long seed = System.nanoTime();
-        Random rnd = new Random(seed);
-        GHUtility.buildRandomGraph(g, rnd, 500, 2, true, speedEnc, 60d, 0.7, 0);
+        RandomGraph.start().seed(seed).nodes(500).speed(10d).speedZero(0.1).fill(g, speedEnc);
         ConnectedComponents implicit = EdgeBasedTarjanSCC.findComponentsRecursive(g, fwdAccessFilter, excludeSingle);
         ConnectedComponents explicit = EdgeBasedTarjanSCC.findComponents(g, fwdAccessFilter, excludeSingle);
         assertEquals(2 * g.getEdges(), implicit.getEdgeKeys(), "total number of edge keys in connected components should equal twice the number of edges in graph");
@@ -286,8 +288,7 @@ class EdgeBasedTarjanSCCTest {
     public void withStartEdges_comparison() {
         // we test the case where we specify all start edges (in this case the behavior should be the same for both methods)
         long seed = System.nanoTime();
-        Random rnd = new Random(seed);
-        GHUtility.buildRandomGraph(g, rnd, 500, 2, true, speedEnc, 60d, 0.7, 0);
+        RandomGraph.start().seed(seed).nodes(500).speed(10d).speedZero(0.1).fill(g, speedEnc);
         ConnectedComponents components = EdgeBasedTarjanSCC.findComponents(g, fwdAccessFilter, true);
         IntArrayList edges = new IntArrayList();
         AllEdgesIterator iter = g.getAllEdges();
