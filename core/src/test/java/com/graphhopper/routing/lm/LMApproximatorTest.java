@@ -51,7 +51,7 @@ public class LMApproximatorTest {
         EncodingManager encodingManager = new EncodingManager.Builder().add(speedEnc).addTurnCostEncodedValue(turnCostEnc).add(Subnetwork.create("car")).build();
         BaseGraph graph = new BaseGraph.Builder(encodingManager).setDir(dir).withTurnCosts(true).create();
 
-        RandomGraph.start().seed(seed).nodes(50).speedZero(0.1).fill(graph, speedEnc);
+        RandomGraph.start().seed(seed).nodes(50).curviness(0.1).speedZero(0.1).fill(graph, speedEnc);
 
         Weighting weighting = new SpeedWeighting(speedEnc);
 

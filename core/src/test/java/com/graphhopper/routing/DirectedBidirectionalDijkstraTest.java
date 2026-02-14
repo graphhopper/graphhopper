@@ -14,19 +14,17 @@ import com.graphhopper.routing.weighting.SpeedWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.RandomGraph;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Random;
+import java.util.*;
 
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
@@ -353,15 +351,25 @@ public class DirectedBidirectionalDijkstraTest {
 
     @RepeatedTest(10)
     public void compare_standard_dijkstra() {
-        compare_with_dijkstra(weighting);
+        compare_with_dijkstra(weighting, false);
     }
 
     @RepeatedTest(10)
     public void compare_standard_dijkstra_finite_uturn_costs() {
-        compare_with_dijkstra(createWeighting(40));
+        compare_with_dijkstra(createWeighting(40), false);
     }
 
-    private void compare_with_dijkstra(Weighting w) {
+    @RepeatedTest(10)
+    public void compare_standard_dijkstra_strict() {
+        compare_with_dijkstra(weighting, true);
+    }
+
+    @RepeatedTest(10)
+    public void compare_standard_dijkstra_finite_uturn_costs_strict() {
+        compare_with_dijkstra(createWeighting(40), true);
+    }
+
+    private void compare_with_dijkstra(Weighting w, boolean tree) {
         // if we do not use start/target edge restrictions we should get the same result as with Dijkstra.
         // basically this test should cover all kinds of interesting cases except the ones where we restrict the
         // start/target edges.
@@ -370,28 +378,18 @@ public class DirectedBidirectionalDijkstraTest {
 
         Random rnd = new Random(seed);
         int numNodes = 100;
-        GHUtility.buildRandomGraph(graph, rnd, numNodes, 2.2, true, speedEnc, null, 0.8, 0.8);
+        RandomGraph.start().seed(seed).nodes(numNodes).curviness(0.1).speedZero(tree ? 0 : 0.1).tree(tree).fill(graph, speedEnc);
         GHUtility.addRandomTurnCosts(graph, seed, null, turnCostEnc, maxTurnCosts, turnCostStorage);
 
-        long numStrictViolations = 0;
         for (int i = 0; i < numQueries; i++) {
             int source = rnd.nextInt(numNodes);
             int target = rnd.nextInt(numNodes);
             Path dijkstraPath = new Dijkstra(graph, w, TraversalMode.EDGE_BASED).calcPath(source, target);
             Path path = calcPath(source, target, ANY_EDGE, ANY_EDGE, w);
             assertEquals(dijkstraPath.isFound(), path.isFound(), "dijkstra found/did not find a path, from: " + source + ", to: " + target + ", seed: " + seed);
-            assertEquals(dijkstraPath.getWeight(), path.getWeight(), 1.e-6, "weight does not match dijkstra, from: " + source + ", to: " + target + ", seed: " + seed);
-            // we do not do a strict check because there can be ambiguity, for example when there are zero weight loops.
-            // however, when there are too many deviations we fail
-            if (
-                    Math.abs(dijkstraPath.getDistance() - path.getDistance()) > 1.e-6
-                            || Math.abs(dijkstraPath.getTime() - path.getTime()) > 10
-                            || !dijkstraPath.calcNodes().equals(path.calcNodes())) {
-                numStrictViolations++;
-            }
-        }
-        if (numStrictViolations > Math.max(1, 0.05 * numQueries)) {
-            fail("Too many strict violations, seed: " + seed + " - " + numStrictViolations + " / " + numQueries);
+            List<String> strictViolations = GHUtility.comparePaths(dijkstraPath, path, source, target, true, seed);
+            if (tree && !strictViolations.isEmpty())
+                fail(strictViolations.toString());
         }
     }
 

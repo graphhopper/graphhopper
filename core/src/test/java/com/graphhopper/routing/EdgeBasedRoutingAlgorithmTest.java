@@ -30,6 +30,7 @@ import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.RandomGraph;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -149,17 +150,26 @@ public class EdgeBasedRoutingAlgorithmTest {
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
     public void testRandomGraph(String algoStr) {
+        run_testRandomGraph(algoStr, false);
+    }
+
+    @ParameterizedTest
+    @ArgumentsSource(FixtureProvider.class)
+    public void testRandomGraph_strict(String algoStr) {
+        run_testRandomGraph(algoStr, true);
+    }
+
+    private void run_testRandomGraph(String algoStr, boolean tree) {
         long seed = System.nanoTime();
         final int numQueries = 100;
         Random rnd = new Random(seed);
         EncodingManager em = createEncodingManager(false);
         BaseGraph g = createStorage(em);
-        GHUtility.buildRandomGraph(g, rnd, 50, 2.2, true, speedEnc, null, 0.8, 0.8);
+        RandomGraph.start().seed(seed).nodes(50).curviness(0.1).speedZero(tree ? 0 : 0.1).tree(tree).fill(g, speedEnc);
         GHUtility.addRandomTurnCosts(g, seed, null, turnCostEnc, 3, tcs);
         g.freeze();
         int numPathsNotFound = 0;
         // todo: reduce redundancy with RandomCHRoutingTest
-        List<String> strictViolations = new ArrayList<>();
         for (int i = 0; i < numQueries; i++) {
             int from = rnd.nextInt(g.getNodes());
             int to = rnd.nextInt(g.getNodes());
@@ -176,27 +186,12 @@ public class EdgeBasedRoutingAlgorithmTest {
             if (!path.isFound()) {
                 fail("path not found for " + from + "->" + to + ", expected weight: " + refWeight);
             }
-
-            double weight = path.getWeight();
-            if (Math.abs(refWeight - weight) > 1.e-2) {
-                LOGGER.warn("expected: " + refPath.calcNodes());
-                LOGGER.warn("given:    " + path.calcNodes());
-                fail("wrong weight: " + from + "->" + to + ", dijkstra: " + refWeight + " vs. " + algoStr + ": " + path.getWeight());
-            }
-            if (Math.abs(path.getDistance() - refPath.getDistance()) > 1.e-1) {
-                strictViolations.add("wrong distance " + from + "->" + to + ", expected: " + refPath.getDistance() + ", given: " + path.getDistance());
-            }
-            if (Math.abs(path.getTime() - refPath.getTime()) > 50) {
-                strictViolations.add("wrong time " + from + "->" + to + ", expected: " + refPath.getTime() + ", given: " + path.getTime());
-            }
+            List<String> strictViolations = GHUtility.comparePaths(refPath, path, from, to, false, seed);
+            if (tree && !strictViolations.isEmpty())
+                fail(strictViolations.toString());
         }
-        if (numPathsNotFound > 0.9 * numQueries) {
+        if (numPathsNotFound > 0.9 * numQueries)
             fail("Too many paths not found: " + numPathsNotFound + "/" + numQueries);
-        }
-        if (strictViolations.size() > 0.05 * numQueries) {
-            fail("Too many strict violations: " + strictViolations.size() + "/" + numQueries + "\n" +
-                    String.join("\n", strictViolations));
-        }
     }
 
     @ParameterizedTest
