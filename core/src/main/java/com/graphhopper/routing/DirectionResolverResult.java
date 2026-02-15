@@ -72,7 +72,7 @@ public class DirectionResolverResult {
             case CURBSIDE_ANY:
                 return ANY_EDGE;
             default:
-                throw new IllegalArgumentException("Unknown value for " + CURBSIDE + " : '" + curbside + "'. allowed: " + CURBSIDE_LEFT + ", " + CURBSIDE_RIGHT + ", " + CURBSIDE_ANY);
+                throw new IllegalArgumentException("Unknown value for " + CURBSIDE + " : '" + curbside + "'. allowed: " + CURBSIDE_LEFT + ", " + CURBSIDE_RIGHT + ", " + CURBSIDE_ANY + ", " + CURBSIDE_AUTO);
         }
     }
 
@@ -88,7 +88,7 @@ public class DirectionResolverResult {
             case CURBSIDE_ANY:
                 return ANY_EDGE;
             default:
-                throw new IllegalArgumentException("Unknown value for '" + CURBSIDE + " : " + curbside + "'. allowed: " + CURBSIDE_LEFT + ", " + CURBSIDE_RIGHT + ", " + CURBSIDE_ANY);
+                throw new IllegalArgumentException("Unknown value for '" + CURBSIDE + " : " + curbside + "'. allowed: " + CURBSIDE_LEFT + ", " + CURBSIDE_RIGHT + ", " + CURBSIDE_ANY + ", " + CURBSIDE_AUTO);
         }
     }
 
