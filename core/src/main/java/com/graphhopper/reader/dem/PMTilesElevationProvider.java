@@ -15,7 +15,6 @@ public class PMTilesElevationProvider implements ElevationProvider {
 
     public enum TerrainEncoding {MAPBOX, TERRARIUM}
 
-    private final String filePath;
     private final TerrainEncoding encoding;
     private final boolean interpolate;
     private final int preferredZoom;
@@ -23,7 +22,7 @@ public class PMTilesElevationProvider implements ElevationProvider {
     private final PMTilesReader reader = new PMTilesReader();
 
     private static final int CACHE_SIZE = 8192; // 2^13
-    // LongObjectHashMap and are significantly slower ConcurrentHashMap
+    // LongObjectHashMap and ConcurrentHashMap are slower
     private final Map<Long, short[]> tileCache = new LinkedHashMap<>(CACHE_SIZE, 0.75f, true) {
         @Override
         protected boolean removeEldestEntry(Map.Entry<Long, short[]> eldest) {
@@ -40,10 +39,15 @@ public class PMTilesElevationProvider implements ElevationProvider {
      */
     public PMTilesElevationProvider(String filePath, TerrainEncoding encoding,
                                     boolean interpolate, int preferredZoom) {
-        this.filePath = filePath;
         this.encoding = encoding;
         this.interpolate = interpolate;
         this.preferredZoom = preferredZoom;
+        try {
+            reader.open(filePath);
+            reader.checkWebPSupport();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     // =========================================================================
@@ -53,7 +57,6 @@ public class PMTilesElevationProvider implements ElevationProvider {
     @Override
     public double getEle(double lat, double lon) {
         try {
-            ensureOpen();
             // Auto-select zoom: use preferredZoom if set, otherwise cap at 10.
             // Zoom 10 with 512px tiles ≈ 19m resolution.
             // Zoom 12 would need 16× more tiles (also increasing cache access by a lot) for marginal benefit.
@@ -170,10 +173,5 @@ public class PMTilesElevationProvider implements ElevationProvider {
             }
         }
         return elev;
-    }
-
-    private void ensureOpen() throws IOException {
-        reader.open(filePath);
-        reader.checkWebPSupport();
     }
 }
