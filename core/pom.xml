@@ -82,6 +82,13 @@
                 </exclusion>
             </exclusions>
         </dependency>
+
+        <!-- for using elevation data from pmtiles
+        or com.twelvemonkeys.imageio:imageio-webp:3.13.0 or MrNanko/webp4j  -->
+        <dependency>
+            <groupId>com.github.usefulness</groupId>
+            <artifactId>webp-imageio</artifactId>
+        </dependency>
         <dependency>
             <groupId>de.westnordost</groupId>
             <artifactId>osm-legal-default-speeds-jvm</artifactId>

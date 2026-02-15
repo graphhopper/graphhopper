@@ -720,6 +720,9 @@ public class GraphHopper {
             elevationProvider = new SonnyProvider(cacheDirStr);
         } else if (eleProviderStr.equalsIgnoreCase("multi3")) {
             elevationProvider = new MultiSource3ElevationProvider(cacheDirStr);
+        } else if (eleProviderStr.equalsIgnoreCase("pmtiles")) {
+            elevationProvider = new PMTilesElevationProvider(ghConfig.getString("graph.elevation.pmfiles.location", "/tmp/planet.pmtiles"));
+                    // , cacheDirStr);
         }
 
         if (elevationProvider instanceof TileBasedElevationProvider) {
