@@ -17,10 +17,18 @@ class PMTilesReader implements Closeable {
     static final int HEADER_LEN = 127;
     static final int COMPRESS_GZIP = 2;
 
+    private static final int LEAF_CACHE_SIZE = 64;
+
     private RandomAccessFile raf;
     private FileChannel channel;
     Header header;
     List<DirEntry> rootDir;
+    private final Map<Long, List<DirEntry>> leafCache = new LinkedHashMap<>(LEAF_CACHE_SIZE, 0.75f, true) {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<Long, List<DirEntry>> eldest) {
+            return size() > LEAF_CACHE_SIZE;
+        }
+    };
 
     void open(String filePath) throws IOException {
         if (header != null) return;
@@ -35,6 +43,7 @@ class PMTilesReader implements Closeable {
     public void close() {
         rootDir = null;
         header = null;
+        leafCache.clear();
         try {
             if (channel != null) channel.close();
             if (raf != null) raf.close();
@@ -75,7 +84,7 @@ class PMTilesReader implements Closeable {
                 if (e.runLength > 0) {
                     return readBytes(header.tileDataOffset + e.offset, (int) e.length);
                 } else {
-                    List<DirEntry> leafDir = readDirectory(header.leafDirsOffset + e.offset, e.length);
+                    List<DirEntry> leafDir = readLeafDirectory(e.offset, e.length);
                     return findTile(tileId, leafDir, depth + 1);
                 }
             }
@@ -87,7 +96,7 @@ class PMTilesReader implements Closeable {
                 return readBytes(header.tileDataOffset + e.offset, (int) e.length);
             }
             if (e.tileId < tileId && e.runLength == 0) {
-                List<DirEntry> leafDir = readDirectory(header.leafDirsOffset + e.offset, e.length);
+                List<DirEntry> leafDir = readLeafDirectory(e.offset, e.length);
                 return findTile(tileId, leafDir, depth + 1);
             }
             if (e.tileId < tileId) break;
@@ -194,6 +203,14 @@ class PMTilesReader implements Closeable {
     // =========================================================================
     // Directory parsing
     // =========================================================================
+
+    private List<DirEntry> readLeafDirectory(long offset, long length) throws IOException {
+        List<DirEntry> cached = leafCache.get(offset);
+        if (cached != null) return cached;
+        List<DirEntry> entries = readDirectory(header.leafDirsOffset + offset, length);
+        leafCache.put(offset, entries);
+        return entries;
+    }
 
     private List<DirEntry> readDirectory(long offset, long length) throws IOException {
         byte[] raw = readBytes(offset, (int) length);

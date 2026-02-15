@@ -33,7 +33,7 @@ public class PMTilesElevationProvider implements ElevationProvider {
     private int tileSize;
 
     /**
-     * @param preferredZoom e.g. 10 means ~76m at equator and ~49m in Germany.
+     * @param preferredZoom 10 means ~76m at equator and ~49m in Germany (default).
      *                      11 means ~38m at equator and ~25m in Germany.
      *                      12 means ~19m at equator and ~12m in Germany.
      */
@@ -168,7 +168,7 @@ public class PMTilesElevationProvider implements ElevationProvider {
                 } else {
                     e = (r * 256.0 + g + b / 256.0) - 32768.0;
                 }
-                // Clamp to short range — covers -32768m to +32767m, plenty for Earth
+                // Clamp to short range which covers -32768m to +32767m, plenty for Earth
                 elev[y * w + x] = (short) Math.max(-32768, Math.min(32767, Math.round(e)));
             }
         }
