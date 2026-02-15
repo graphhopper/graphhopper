@@ -83,8 +83,7 @@
             </exclusions>
         </dependency>
 
-        <!-- for using elevation data from pmtiles
-        or com.twelvemonkeys.imageio:imageio-webp:3.13.0 or MrNanko/webp4j  -->
+        <!-- for using elevation data from pmtiles -->
         <dependency>
             <groupId>com.github.usefulness</groupId>
             <artifactId>webp-imageio</artifactId>

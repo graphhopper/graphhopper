@@ -58,14 +58,6 @@ public class PMTilesElevationProvider implements ElevationProvider {
     private int tileSize; // pixels per tile (detected from first decoded tile)
 
     /**
-     * Create a provider with default settings (Terrarium encoding, bilinear interpolation,
-     * zoom auto-detected from file).
-     */
-    public PMTilesElevationProvider(String filePath) {
-        this(filePath, TerrainEncoding.TERRARIUM, true, -1);
-    }
-
-    /**
      * Create a provider with full control.
      *
      * @param filePath      path to the .pmtiles file
@@ -90,136 +82,14 @@ public class PMTilesElevationProvider implements ElevationProvider {
         try {
             ensureOpen();
             // Auto-select zoom: use preferredZoom if set, otherwise cap at 10.
-            // Zoom 10 with 512px tiles ≈ 19m resolution — plenty for routing.
-            // Zoom 12 would need 16× more tiles for marginal benefit.
+            // Zoom 10 with 512px tiles ≈ 19m resolution.
+            // Zoom 12 would need 16× more tiles (also increasing cache access by a lot) for marginal benefit.
             int zoom = preferredZoom > 0 ? preferredZoom : Math.min(header.maxZoom, 10);
             return sampleElevation(lat, lon, zoom);
         } catch (Exception e) {
             System.err.println("PMTilesElevationProvider.getEle(" + lat + ", " + lon + ") failed: " + e.getMessage());
             return Double.NaN;
         }
-    }
-
-    // =========================================================================
-    // Diagnostic entry point — run this standalone to debug tile reading
-    // =========================================================================
-
-    /**
-     * Run: java PMTilesElevationProvider /path/to/file.pmtiles [lat lon]
-     */
-    public static void main(String[] args) throws Exception {
-        if (args.length < 1) {
-            System.out.println("Usage: PMTilesElevationProvider <file.pmtiles> [lat lon]");
-            return;
-        }
-        String path = args[0];
-        double testLat = args.length >= 3 ? Double.parseDouble(args[1]) : 0;
-        double testLon = args.length >= 3 ? Double.parseDouble(args[2]) : 0;
-
-        System.out.println("=== PMTiles Diagnostic ===");
-        System.out.println("File: " + path);
-        System.out.println("File size: " + new File(path).length() + " bytes");
-
-        // Check available ImageIO readers
-        String[] formats = javax.imageio.ImageIO.getReaderFormatNames();
-        System.out.println("\nImageIO supported formats: " + String.join(", ", formats));
-        boolean hasWebP = false;
-        for (String f : formats) if (f.equalsIgnoreCase("webp")) hasWebP = true;
-        System.out.println("WebP support: " + (hasWebP ? "YES" : "NO — add com.github.usefulness:webp-imageio:0.8.1 to classpath!"));
-
-        PMTilesElevationProvider provider = new PMTilesElevationProvider(path, TerrainEncoding.TERRARIUM, true, -1);
-        provider.ensureOpen();
-
-        PMTilesHeader h = provider.header;
-        System.out.println("\n--- Header ---");
-        System.out.println("Version:         " + h.version);
-        System.out.println("Tile type:       " + h.tileType + " (1=mvt, 2=png, 3=jpeg, 4=webp, 5=avif)");
-        System.out.println("Tile compress:   " + h.tileCompression + " (1=none, 2=gzip, 3=brotli, 4=zstd)");
-        System.out.println("Internal comp:   " + h.internalCompression);
-        System.out.println("Zoom:            " + h.minZoom + " – " + h.maxZoom);
-        System.out.println("Bounds:          lon=[" + h.minLonE7/1e7 + ", " + h.maxLonE7/1e7 +
-                "], lat=[" + h.minLatE7/1e7 + ", " + h.maxLatE7/1e7 + "]");
-        System.out.println("Root dir entries: " + (provider.rootDir != null ? provider.rootDir.size() : "null"));
-
-        if (provider.rootDir != null && !provider.rootDir.isEmpty()) {
-            System.out.println("\n--- Root directory (first 10 entries) ---");
-            for (int i = 0; i < Math.min(10, provider.rootDir.size()); i++) {
-                DirEntry e = provider.rootDir.get(i);
-                System.out.printf("  [%d] tileId=%d runLength=%d offset=%d length=%d%n",
-                        i, e.tileId, e.runLength, e.offset, e.length);
-            }
-        }
-
-        // Use center of bounds if no test point given
-        if (args.length < 3) {
-            testLat = (h.minLatE7 + h.maxLatE7) / 2.0 / 1e7;
-            testLon = (h.minLonE7 + h.maxLonE7) / 2.0 / 1e7;
-        }
-        System.out.println("\n--- Tile lookup test at lat=" + testLat + ", lon=" + testLon + " ---");
-
-        int zoom = h.maxZoom;
-        int n = 1 << zoom;
-        int tileX = (int) ((testLon + 180.0) / 360.0 * n);
-        double latRad = Math.toRadians(testLat);
-        int tileY = (int) ((1.0 - Math.log(Math.tan(latRad) + 1.0 / Math.cos(latRad)) / Math.PI) / 2.0 * n);
-        tileX = Math.max(0, Math.min(n - 1, tileX));
-        tileY = Math.max(0, Math.min(n - 1, tileY));
-
-        long tileId = zxyToTileId(zoom, tileX, tileY);
-        System.out.println("z=" + zoom + " x=" + tileX + " y=" + tileY + " → tileId=" + tileId);
-
-        // Try to get the tile bytes
-        byte[] tileBytes = provider.getTileBytes(zoom, tileX, tileY);
-        if (tileBytes == null) {
-            System.out.println("FAIL: getTileBytes returned null — tile not found in directory");
-
-            // Debug: try a few different zoom levels
-            System.out.println("\nTrying all zoom levels...");
-            for (int z = h.minZoom; z <= h.maxZoom; z++) {
-                int nn = 1 << z;
-                int tx = (int) ((testLon + 180.0) / 360.0 * nn);
-                int ty = (int) ((1.0 - Math.log(Math.tan(latRad) + 1.0 / Math.cos(latRad)) / Math.PI) / 2.0 * nn);
-                tx = Math.max(0, Math.min(nn - 1, tx));
-                ty = Math.max(0, Math.min(nn - 1, ty));
-                long tid = zxyToTileId(z, tx, ty);
-                byte[] tb = provider.getTileBytes(z, tx, ty);
-                System.out.printf("  z=%2d x=%5d y=%5d tileId=%10d → %s%n",
-                        z, tx, ty, tid, tb != null ? tb.length + " bytes" : "null");
-            }
-            return;
-        }
-
-        System.out.println("Tile bytes: " + tileBytes.length + " bytes");
-        System.out.print("First 12 bytes: ");
-        for (int i = 0; i < Math.min(12, tileBytes.length); i++) {
-            System.out.printf("%02X ", tileBytes[i] & 0xFF);
-        }
-        System.out.println();
-
-        // Try to decode
-        try {
-            short[] elev = provider.decodeTerrain(tileBytes);
-            if (elev == null) {
-                System.out.println("FAIL: decodeTerrain returned null — ImageIO could not decode the tile");
-            } else {
-                int s = provider.tileSize;
-                System.out.println("Decoded: " + s + "×" + s + " pixels");
-                int cx = s / 2, cy = s / 2;
-                System.out.println("Center pixel elevation: " + elev[cy * s + cx] + "m");
-
-                short min = Short.MAX_VALUE, max = Short.MIN_VALUE;
-                for (short v : elev) { if (v < min) min = v; if (v > max) max = v; }
-                System.out.println("Elevation range: [" + min + ", " + max + "]m");
-            }
-        } catch (Exception e) {
-            System.out.println("FAIL: decodeTerrain threw: " + e.getClass().getSimpleName() + ": " + e.getMessage());
-        }
-
-        // Try getEle
-        double ele = provider.getEle(testLat, testLon);
-        System.out.println("\ngetEle(" + testLat + ", " + testLon + ") = " + ele + "m");
-
-        provider.release();
     }
 
     @Override
@@ -284,6 +154,7 @@ public class PMTilesElevationProvider implements ElevationProvider {
     // =========================================================================
 
     private short[] getDecodedTile(int z, int x, int y) throws IOException {
+        // cheap alternative to new TileKey(z, x, y) that avoids object allocation and GC pressure on every cache lookup.
         long key = ((long) z << 50) | ((long) x << 25) | y;
         short[] cached = tileCache.get(key);
         if (cached != null) return cached;
@@ -492,7 +363,7 @@ public class PMTilesElevationProvider implements ElevationProvider {
      *   - lengths
      *   - offsets (with delta encoding for clustered archives)
      */
-    private List<DirEntry> deserializeEntries(byte[] data) throws IOException {
+    private List<DirEntry> deserializeEntries(byte[] data) {
         VarintReader r = new VarintReader(data);
 
         int numEntries = (int) r.readVarint();
