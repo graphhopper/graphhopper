@@ -36,6 +36,8 @@ class PMTilesReader implements Closeable {
         raf = new RandomAccessFile(filePath, "r");
         channel = raf.getChannel();
         header = readHeader();
+        if (header.tileCompression > 1)
+            throw new IOException("PMTiles tile compression not supported for elevation data, got compression=" + header.tileCompression);
         rootDir = readDirectory(header.rootDirOffset, header.rootDirLength);
     }
 
