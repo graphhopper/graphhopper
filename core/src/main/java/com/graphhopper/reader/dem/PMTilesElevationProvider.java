@@ -2,8 +2,10 @@ package com.graphhopper.reader.dem;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * GraphHopper ElevationProvider that reads elevation data directly from a
@@ -11,7 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class PMTilesElevationProvider implements ElevationProvider {
 
-    public enum TerrainEncoding { MAPBOX, TERRARIUM }
+    public enum TerrainEncoding {MAPBOX, TERRARIUM}
 
     private final String filePath;
     private final TerrainEncoding encoding;
@@ -19,9 +21,23 @@ public class PMTilesElevationProvider implements ElevationProvider {
     private final int preferredZoom;
 
     private final PMTilesReader reader = new PMTilesReader();
-    private final ConcurrentHashMap<Long, short[]> tileCache = new ConcurrentHashMap<>();
+
+    private static final int CACHE_SIZE = 8192; // 2^13
+    // LongObjectHashMap and are significantly slower ConcurrentHashMap
+    private final Map<Long, short[]> tileCache = new LinkedHashMap<>(CACHE_SIZE, 0.75f, true) {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<Long, short[]> eldest) {
+            return size() > CACHE_SIZE;
+        }
+    };
+
     private int tileSize;
 
+    /**
+     * @param preferredZoom e.g. 10 means ~76m at equator and ~49m in Germany.
+     *                      11 means ~38m at equator and ~25m in Germany.
+     *                      12 means ~19m at equator and ~12m in Germany.
+     */
     public PMTilesElevationProvider(String filePath, TerrainEncoding encoding,
                                     boolean interpolate, int preferredZoom) {
         this.filePath = filePath;
