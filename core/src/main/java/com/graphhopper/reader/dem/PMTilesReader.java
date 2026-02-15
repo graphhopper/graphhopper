@@ -72,36 +72,29 @@ class PMTilesReader implements Closeable {
     private byte[] findTile(long tileId, List<DirEntry> dir, int depth) throws IOException {
         if (dir == null || dir.isEmpty() || depth > 5) return null;
 
-        int lo = 0, hi = dir.size() - 1;
+        // Find the last entry where entry.tileId <= tileId
+        int lo = 0, hi = dir.size() - 1, idx = -1;
         while (lo <= hi) {
             int mid = (lo + hi) >>> 1;
-            DirEntry e = dir.get(mid);
-            if (tileId < e.tileId) {
-                hi = mid - 1;
-            } else if (e.runLength > 0 && tileId >= e.tileId + e.runLength) {
+            if (dir.get(mid).tileId <= tileId) {
+                idx = mid;
                 lo = mid + 1;
             } else {
-                if (e.runLength > 0) {
-                    return readBytes(header.tileDataOffset + e.offset, (int) e.length);
-                } else {
-                    List<DirEntry> leafDir = readLeafDirectory(e.offset, e.length);
-                    return findTile(tileId, leafDir, depth + 1);
-                }
+                hi = mid - 1;
             }
         }
+        if (idx < 0) return null;
 
-        for (int i = dir.size() - 1; i >= 0; i--) {
-            DirEntry e = dir.get(i);
-            if (e.tileId <= tileId && e.runLength > 0 && tileId < e.tileId + e.runLength) {
+        DirEntry e = dir.get(idx);
+        if (e.runLength > 0) {
+            if (tileId < e.tileId + e.runLength) {
                 return readBytes(header.tileDataOffset + e.offset, (int) e.length);
             }
-            if (e.tileId < tileId && e.runLength == 0) {
-                List<DirEntry> leafDir = readLeafDirectory(e.offset, e.length);
-                return findTile(tileId, leafDir, depth + 1);
-            }
-            if (e.tileId < tileId) break;
+            return null;
+        } else {
+            List<DirEntry> leafDir = readLeafDirectory(e.offset, e.length);
+            return findTile(tileId, leafDir, depth + 1);
         }
-        return null;
     }
 
     // =========================================================================
