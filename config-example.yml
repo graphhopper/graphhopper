@@ -18,6 +18,7 @@ graphhopper:
   # - turn_costs (optional):
   #     vehicle_types: [motorcar, motor_vehicle] (vehicle types used for vehicle-specific turn restrictions)
   #     u_turn_costs: 60 (time-penalty for doing a u-turn in seconds)
+  #     allow_turn_penalty_in_request: true (enable custom turn_penalty for requests at runtime)
   #
   # Depending on the above fields there are other properties that can be used, e.g.
   # - custom_model_files: when you specified "weighting: custom" you need to set one or more json files which are searched in
@@ -111,7 +112,7 @@ graphhopper:
   graph.encoded_values: |
     car_access, car_average_speed, country, road_class, roundabout, max_speed,
     foot_access, foot_average_speed, foot_priority, foot_road_access, hike_rating, average_slope,
-    bike_access, bike_average_speed, bike_priority, bike_road_access, bike_network, mtb_rating,
+    bike_access, bike_average_speed, bike_priority, bike_road_access, bike_network, mtb_rating, ferry_speed
 
   #### Speed, hybrid and flexible mode ####
 

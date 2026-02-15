@@ -39,10 +39,7 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
-import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.PMap;
+import com.graphhopper.util.*;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -100,7 +97,7 @@ public class DirectedRoutingTest {
             this.prepareCH = prepareCH;
             this.prepareLM = prepareLM;
 
-            dir = new RAMDirectory();
+            dir = new GHDirectory("", DAType.RAM);
             maxTurnCosts = 10;
             speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, true);
             turnCostEnc = TurnCost.create("car", maxTurnCosts);
@@ -214,14 +211,23 @@ public class DirectedRoutingTest {
     @ParameterizedTest
     @ArgumentsSource(RepeatedFixtureProvider.class)
     public void randomGraph(Fixture f) {
+        run_randomGraph(f, false);
+    }
+
+    @ParameterizedTest
+    @ArgumentsSource(RepeatedFixtureProvider.class)
+    public void randomGraph_strict(Fixture f) {
+        run_randomGraph(f, true);
+    }
+
+    private void run_randomGraph(Fixture f, boolean tree) {
         final long seed = System.nanoTime();
-        final int numQueries = 50;
+        final int numQueries = 30;
         Random rnd = new Random(seed);
-        GHUtility.buildRandomGraph(f.graph, rnd, 100, 2.2, true, f.speedEnc, null, 0.8, 0.8);
+        RandomGraph.start().seed(seed).nodes(100).curviness(0.1).speedZero(tree ? 0 : 0.1).tree(tree).fill(f.graph, f.speedEnc);
         GHUtility.addRandomTurnCosts(f.graph, seed, null, f.turnCostEnc, f.maxTurnCosts, f.turnCostStorage);
 //        GHUtility.printGraphForUnitTest(f.graph, f.encoder);
         f.preProcessGraph();
-        List<String> strictViolations = new ArrayList<>();
         for (int i = 0; i < numQueries; i++) {
             int source = f.getRandom(rnd);
             int target = f.getRandom(rnd);
@@ -232,16 +238,10 @@ public class DirectedRoutingTest {
                     .calcPath(source, target, sourceOutEdge, targetInEdge);
             Path path = f.createAlgo()
                     .calcPath(source, target, sourceOutEdge, targetInEdge);
-            // do not check nodes, because there can be ambiguity when there are zero weight loops
-            strictViolations.addAll(comparePaths(refPath, path, source, target, false, seed));
-        }
-        // sometimes there are multiple best paths with different distance/time, if this happens too often something
-        // is wrong and we fail
-        if (strictViolations.size() > Math.max(1, 0.05 * numQueries)) {
-            for (String strictViolation : strictViolations) {
-                LOGGER.info("strict violation: " + strictViolation);
-            }
-            fail("Too many strict violations, with seed: " + seed + " - " + strictViolations.size() + " / " + numQueries);
+
+            List<String> strictViolations = comparePaths(refPath, path, source, target, false, seed);
+            if (tree && !strictViolations.isEmpty())
+                fail(strictViolations.toString());
         }
     }
 
@@ -251,20 +251,29 @@ public class DirectedRoutingTest {
     @ParameterizedTest
     @ArgumentsSource(RepeatedFixtureProvider.class)
     public void randomGraph_withQueryGraph(Fixture f) {
-        final long seed = System.nanoTime();
-        final int numQueries = 50;
+        run_randomGraph_withQueryGraph(f, false);
+    }
 
-        // we may not use an offset when query graph is involved, otherwise traveling via virtual edges will not be
-        // the same as taking the direct edge!
-        double pOffset = 0;
+    @ParameterizedTest
+    @ArgumentsSource(RepeatedFixtureProvider.class)
+    public void randomGraph_withQueryGraph_strict(Fixture f) {
+        run_randomGraph_withQueryGraph(f, true);
+    }
+
+    private void run_randomGraph_withQueryGraph(Fixture f, boolean tree) {
+        final long seed = System.nanoTime();
+        final int numQueries = 30;
         Random rnd = new Random(seed);
-        GHUtility.buildRandomGraph(f.graph, rnd, 50, 2.2, true, f.speedEnc, null, 0.8, pOffset);
+        // curviness must be zero, because directed routing can require traveling back to the start
+        // node for example. with curviness the sum of virtual edge distances will be smaller than
+        // original edge distance
+        double curviness = 0;
+        RandomGraph.start().seed(seed).nodes(50).curviness(curviness).speedZero(tree ? 0 : 0.1).tree(tree).fill(f.graph, f.speedEnc);
         GHUtility.addRandomTurnCosts(f.graph, seed, null, f.turnCostEnc, f.maxTurnCosts, f.turnCostStorage);
 //        GHUtility.printGraphForUnitTest(f.graph, f.speedEnc);
         f.preProcessGraph();
         LocationIndexTree index = new LocationIndexTree(f.graph, f.dir);
         index.prepareIndex();
-        List<String> strictViolations = new ArrayList<>();
         for (int i = 0; i < numQueries; i++) {
             List<Snap> snaps = createRandomSnaps(f.graph.getBounds(), index, rnd, 2, true, EdgeFilter.ALL_EDGES);
             QueryGraph queryGraph = QueryGraph.create(f.graph, snaps);
@@ -278,18 +287,15 @@ public class DirectedRoutingTest {
             int chSourceOutEdge = getSourceOutEdge(tmpRnd2, source, queryGraph);
             int chTargetInEdge = getTargetInEdge(tmpRnd2, target, queryGraph);
 
-            Path refPath = new DijkstraBidirectionRef(queryGraph, ((Graph) queryGraph).wrapWeighting(f.weighting), TraversalMode.EDGE_BASED)
+            Path refPath = new DijkstraBidirectionRef(queryGraph, queryGraph.wrapWeighting(f.weighting), TraversalMode.EDGE_BASED)
                     .calcPath(source, target, sourceOutEdge, targetInEdge);
             Path path = f.createAlgo(queryGraph)
                     .calcPath(source, target, chSourceOutEdge, chTargetInEdge);
 
-            // do not check nodes, because there can be ambiguity when there are zero weight loops
-            strictViolations.addAll(comparePaths(refPath, path, source, target, false, seed));
-        }
-        // sometimes there are multiple best paths with different distance/time, if this happens too often something
-        // is wrong and we fail
-        if (strictViolations.size() > Math.max(1, 0.05 * numQueries)) {
-            fail("Too many strict violations, with seed: " + seed + " - " + strictViolations.size() + " / " + numQueries);
+            List<String> strictViolations = comparePaths(refPath, path, source, target, false, seed);
+            // trees have unique paths, so we can do strict checking to test distance/time/nodes
+            if (tree && !strictViolations.isEmpty())
+                fail(strictViolations.toString());
         }
     }
 

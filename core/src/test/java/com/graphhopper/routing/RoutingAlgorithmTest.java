@@ -29,7 +29,9 @@ import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.*;
+import com.graphhopper.routing.weighting.SpeedWeighting;
+import com.graphhopper.routing.weighting.TurnCostProvider;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -45,10 +47,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.Stream;
 
 import static com.graphhopper.routing.util.TraversalMode.EDGE_BASED;
@@ -181,13 +180,15 @@ public class RoutingAlgorithmTest {
             return res;
         }
 
-        private void compareWithRef(Weighting weighting, BaseGraph graph, PathCalculator refCalculator, GHPoint from, GHPoint to, long seed) {
+        private void compareWithRef(Weighting weighting, BaseGraph graph, PathCalculator refCalculator, GHPoint from, GHPoint to, long seed, boolean strict) {
             Path path = calcPath(graph, weighting, from, to);
             Path refPath = refCalculator.calcPath(graph, weighting, traversalMode, defaultMaxVisitedNodes, from, to);
-            assertEquals(refPath.getWeight(), path.getWeight(), 1.e-1, "wrong weight, " + weighting + ", seed: " + seed);
-            assertEquals(refPath.calcNodes(), path.calcNodes(), "wrong nodes, " + weighting + ", seed: " + seed);
-            assertEquals(refPath.getDistance(), path.getDistance(), 1.e-1, "wrong distance, " + weighting + ", seed: " + seed);
-            assertEquals(refPath.getTime(), path.getTime(), 100, "wrong time, " + weighting + ", seed: " + seed);
+            IntArrayList refPathNodes = (IntArrayList) refPath.calcNodes();
+            int source = refPathNodes.isEmpty() ? -1 : refPathNodes.get(0);
+            int target = refPathNodes.isEmpty() ? -1 : ArrayUtil.getLast(refPathNodes);
+            List<String> strictViolations = GHUtility.comparePaths(refPath, path, source, target, true, seed);
+            if (strict)
+                assertTrue(strictViolations.isEmpty());
         }
 
         public void resetCH() {
@@ -976,22 +977,35 @@ public class RoutingAlgorithmTest {
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
     public void testRandomGraph(Fixture f) {
+        doTestRandomGraph(f, false);
+    }
+
+    @ParameterizedTest
+    @ArgumentsSource(FixtureProvider.class)
+    public void testRandomTree(Fixture f) {
+        doTestRandomGraph(f, true);
+    }
+
+    private void doTestRandomGraph(Fixture f, boolean tree) {
         Weighting weighting = new SpeedWeighting(f.carSpeedEnc);
         BaseGraph graph = f.createGHStorage(false);
         final long seed = System.nanoTime();
         LOGGER.info("testRandomGraph - using seed: " + seed);
         Random rnd = new Random(seed);
-        GHUtility.buildRandomGraph(graph, rnd, 10, 2.0, true, f.carSpeedEnc, null, 0.7, 0.7);
+        RandomGraph.start().seed(seed).nodes(20).curviness(0.1).speedZero(tree ? 0 : 0.1).tree(tree).fill(graph, f.carSpeedEnc);
         final PathCalculator refCalculator = new DijkstraCalculator();
         int numRuns = 100;
         for (int i = 0; i < numRuns; i++) {
-            BBox bounds = graph.getBounds();
-            double latFrom = bounds.minLat + rnd.nextDouble() * (bounds.maxLat - bounds.minLat);
-            double lonFrom = bounds.minLon + rnd.nextDouble() * (bounds.maxLon - bounds.minLon);
-            double latTo = bounds.minLat + rnd.nextDouble() * (bounds.maxLat - bounds.minLat);
-            double lonTo = bounds.minLon + rnd.nextDouble() * (bounds.maxLon - bounds.minLon);
-            f.compareWithRef(weighting, graph, refCalculator, new GHPoint(latFrom, lonFrom), new GHPoint(latTo, lonTo), seed);
+            GHPoint from = createRandomPoint(rnd, graph.getBounds());
+            GHPoint to = createRandomPoint(rnd, graph.getBounds());
+            f.compareWithRef(weighting, graph, refCalculator, from, to, seed, tree);
         }
+    }
+
+    private GHPoint createRandomPoint(Random rnd, BBox bounds) {
+        double lat = GHUtility.randomDoubleInRange(rnd, bounds.minLat, bounds.maxLat);
+        double lon = GHUtility.randomDoubleInRange(rnd, bounds.minLon, bounds.maxLon);
+        return new GHPoint(lat, lon);
     }
 
     @ParameterizedTest
@@ -1109,7 +1123,7 @@ public class RoutingAlgorithmTest {
 
         @Override
         public Path calcPath(BaseGraph graph, Weighting weighting, TraversalMode traversalMode, int maxVisitedNodes, GHPoint from, GHPoint to) {
-            LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
+            LocationIndexTree index = new LocationIndexTree(graph, new GHDirectory("", DAType.RAM));
             index.prepareIndex();
             Snap fromSnap = index.findClosest(from.getLat(), from.getLon(), EdgeFilter.ALL_EDGES);
             Snap toSnap = index.findClosest(to.getLat(), to.getLon(), EdgeFilter.ALL_EDGES);
@@ -1210,7 +1224,7 @@ public class RoutingAlgorithmTest {
 
         @Override
         public Path calcPath(BaseGraph graph, Weighting weighting, TraversalMode traversalMode, int maxVisitedNodes, GHPoint from, GHPoint to) {
-            LocationIndexTree locationIndex = new LocationIndexTree(graph, new RAMDirectory());
+            LocationIndexTree locationIndex = new LocationIndexTree(graph, new GHDirectory("", DAType.RAM));
             LocationIndex index = locationIndex.prepareIndex();
             Snap fromSnap = index.findClosest(from.getLat(), from.getLon(), EdgeFilter.ALL_EDGES);
             Snap toSnap = index.findClosest(to.getLat(), to.getLon(), EdgeFilter.ALL_EDGES);

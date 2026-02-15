@@ -13,8 +13,8 @@ class CHStorageTest {
 
     @Test
     void setAndGetLevels() {
-        RAMDirectory dir = new RAMDirectory();
-        CHStorage store = new CHStorage(dir, "ch1", -1, false);
+        GHDirectory dir = new GHDirectory("", DAType.RAM);
+        CHStorage store = new CHStorage(dir, "ch1", false);
         store.create(30, 5);
         assertEquals(0, store.getLevel(store.toNodePointer(10)));
         store.setLevel(store.toNodePointer(10), 100);
@@ -27,7 +27,7 @@ class CHStorageTest {
     void createAndLoad(@TempDir Path path) {
         {
             GHDirectory dir = new GHDirectory(path.toAbsolutePath().toString(), DAType.RAM_INT_STORE);
-            CHStorage chStorage = new CHStorage(dir, "car", -1, false);
+            CHStorage chStorage = new CHStorage(dir, "car", false);
             // we have to call create, because we want to create a new storage not load an existing one
             chStorage.create(5, 3);
             assertEquals(0, chStorage.shortcutNodeBased(0, 1, PrepareEncoder.getScFwdDir(), 10, 3, 5));
@@ -42,7 +42,7 @@ class CHStorageTest {
         }
         {
             GHDirectory dir = new GHDirectory(path.toAbsolutePath().toString(), DAType.RAM_INT_STORE);
-            CHStorage chStorage = new CHStorage(dir, "car", -1, false);
+            CHStorage chStorage = new CHStorage(dir, "car", false);
             // this time we load from disk
             chStorage.loadExisting();
             assertEquals(4, chStorage.getShortcuts());
@@ -58,7 +58,7 @@ class CHStorageTest {
 
     @Test
     public void testBigWeight() {
-        CHStorage g = new CHStorage(new RAMDirectory(), "abc", 1024, false);
+        CHStorage g = new CHStorage(new GHDirectory("", DAType.RAM), "abc", false);
         g.shortcutNodeBased(0, 0, 0, 10, 0, 1);
 
         g.setWeight(0, Integer.MAX_VALUE / 1000d + 1000);

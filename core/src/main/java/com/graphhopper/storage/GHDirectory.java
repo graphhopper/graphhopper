@@ -36,8 +36,13 @@ public class GHDirectory implements Directory {
     private final Map<String, DAType> defaultTypes = new LinkedHashMap<>();
     private final Map<String, Integer> mmapPreloads = new LinkedHashMap<>();
     private final Map<String, DataAccess> map = Collections.synchronizedMap(new HashMap<>());
+    private final int defaultSegmentSize;
 
     public GHDirectory(String _location, DAType defaultType) {
+        this(_location, defaultType, AbstractDataAccess.SEGMENT_SIZE_DEFAULT);
+    }
+
+    public GHDirectory(String _location, DAType defaultType, int defaultSegmentSize) {
         this.typeFallback = defaultType;
         if (isEmpty(_location))
             _location = new File("").getAbsolutePath();
@@ -49,6 +54,8 @@ public class GHDirectory implements Directory {
         File dir = new File(location);
         if (dir.exists() && !dir.isDirectory())
             throw new RuntimeException("file '" + dir + "' exists but is not a directory");
+
+        this.defaultSegmentSize = defaultSegmentSize;
     }
 
     /**
@@ -113,7 +120,7 @@ public class GHDirectory implements Directory {
 
     @Override
     public DataAccess create(String name, DAType type) {
-        return create(name, type, -1);
+        return create(name, type, defaultSegmentSize);
     }
 
     @Override

@@ -46,7 +46,7 @@ public class LowLevelAPIExample {
             BooleanEncodedValue accessEnc = VehicleAccess.create("car");
             DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 7, 2, false);
             EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
-            BaseGraph graph = new BaseGraph.Builder(em).setDir(new RAMDirectory(graphLocation, true)).create();
+            BaseGraph graph = new BaseGraph.Builder(em).setDir(new GHDirectory(graphLocation, DAType.RAM_STORE)).create();
             // Make a weighted edge between two nodes and set average speed to 50km/h
             EdgeIteratorState edge = graph.edge(0, 1).setDistance(1234).set(speedEnc, 50);
 
@@ -71,7 +71,7 @@ public class LowLevelAPIExample {
             BooleanEncodedValue accessEnc = VehicleAccess.create("car");
             DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 7, 2, false);
             EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
-            BaseGraph graph = new BaseGraph.Builder(em).setDir(new RAMDirectory(graphLocation, true)).build();
+            BaseGraph graph = new BaseGraph.Builder(em).setDir(new GHDirectory(graphLocation, DAType.RAM_STORE)).build();
             graph.loadExisting();
 
             // Load the location index
@@ -100,7 +100,7 @@ public class LowLevelAPIExample {
         DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 7, 2, false);
         EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
         BaseGraph graph = new BaseGraph.Builder(em)
-                .setDir(new RAMDirectory(graphLocation, true))
+                .setDir(new GHDirectory(graphLocation, DAType.RAM_STORE))
                 .create();
         graph.flush();
         Weighting weighting = CustomModelParser.createWeighting(em, TurnCostProvider.NO_TURN_COST_PROVIDER,

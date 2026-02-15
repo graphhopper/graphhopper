@@ -36,8 +36,6 @@ import com.graphhopper.routing.util.AreaIndex;
 import com.graphhopper.routing.util.CustomArea;
 import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.routing.util.OSMParsers;
-import com.graphhopper.routing.util.countryrules.CountryRule;
-import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
 import com.graphhopper.routing.util.parsers.RestrictionSetter;
 import com.graphhopper.search.KVStorage;
 import com.graphhopper.storage.BaseGraph;
@@ -87,7 +85,6 @@ public class OSMReader {
     private final RestrictionSetter restrictionSetter;
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
     private AreaIndex<CustomArea> areaIndex;
-    private CountryRuleFactory countryRuleFactory = null;
     private File osmFile;
     private final RamerDouglasPeucker simplifyAlgo = new RamerDouglasPeucker();
     private int bugCounter = 0;
@@ -141,11 +138,6 @@ public class OSMReader {
             throw new IllegalStateException("Make sure you graph accepts 3D data");
 
         this.eleProvider = eleProvider;
-        return this;
-    }
-
-    public OSMReader setCountryRuleFactory(CountryRuleFactory countryRuleFactory) {
-        this.countryRuleFactory = countryRuleFactory;
         return this;
     }
 
@@ -295,12 +287,6 @@ public class OSMReader {
         }
         way.setTag("country", country);
         way.setTag("country_state", state);
-
-        if (countryRuleFactory != null) {
-            CountryRule countryRule = countryRuleFactory.getCountryRule(country);
-            if (countryRule != null)
-                way.setTag("country_rule", countryRule);
-        }
 
         // also add all custom areas as artificial tag
         way.setTag("custom_areas", customAreas);
@@ -518,8 +504,7 @@ public class OSMReader {
             return;
         }
 
-        double speedInKmPerHour = distance / 1000 / (durationInSeconds / 60.0 / 60.0);
-        if (speedInKmPerHour < 0.1d) {
+        if (distance / 1000 / (durationInSeconds / 60.0 / 60.0) < 0.1d) {
             // Often there are mapping errors like duration=30:00 (30h) instead of duration=00:30 (30min). In this case we
             // ignore the duration tag. If no such cases show up anymore, because they were fixed, maybe raise the limit to find some more.
             OSM_WARNING_LOGGER.warn("Unrealistic low speed calculated from duration. Maybe the duration is too long, or it is applied to a way that only represents a part of the connection? OSM way: "
@@ -530,7 +515,7 @@ public class OSMReader {
         // tag will be present if 1) isCalculateWayDistance was true for this way, 2) no OSM nodes were missing
         // such that the distance could actually be calculated, 3) there was a duration tag we could parse, and 4) the
         // derived speed was not unrealistically slow.
-        way.setTag("speed_from_duration", speedInKmPerHour);
+        way.setTag("duration_in_seconds", durationInSeconds);
     }
 
     static String fixWayName(String str) {

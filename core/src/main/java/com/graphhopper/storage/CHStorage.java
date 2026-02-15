@@ -80,7 +80,7 @@ public class CHStorage {
         boolean edgeBased = chConfig.isEdgeBased();
         if (!baseGraph.isFrozen())
             throw new IllegalStateException("graph must be frozen before we can create ch graphs");
-        CHStorage store = new CHStorage(baseGraph.getDirectory(), name, baseGraph.getSegmentSize(), edgeBased);
+        CHStorage store = new CHStorage(baseGraph.getDirectory(), name, edgeBased);
         store.setLowWeightShortcutConsumer(s -> {
             // we just log these to find mapping errors
             NodeAccess nodeAccess = baseGraph.getNodeAccess();
@@ -105,10 +105,10 @@ public class CHStorage {
         return store;
     }
 
-    public CHStorage(Directory dir, String name, int segmentSize, boolean edgeBased) {
+    public CHStorage(Directory dir, String name, boolean edgeBased) {
         this.edgeBased = edgeBased;
-        this.nodesCH = dir.create("nodes_ch_" + name, dir.getDefaultType("nodes_ch_" + name, true), segmentSize);
-        this.shortcuts = dir.create("shortcuts_" + name, dir.getDefaultType("shortcuts_" + name, true), segmentSize);
+        this.nodesCH = dir.create("nodes_ch_" + name, dir.getDefaultType("nodes_ch_" + name, true));
+        this.shortcuts = dir.create("shortcuts_" + name, dir.getDefaultType("shortcuts_" + name, true));
         // shortcuts are stored consecutively using this layout (the last two entries only exist for edge-based):
         // NODEA | NODEB | WEIGHT | SKIP_EDGE1 | SKIP_EDGE2 | S_ORIG_FIRST | S_ORIG_LAST
         S_NODEA = 0;

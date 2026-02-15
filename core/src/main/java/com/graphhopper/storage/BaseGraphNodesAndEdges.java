@@ -62,9 +62,9 @@ class BaseGraphNodesAndEdges implements EdgeIntAccess {
     public final BBox bounds;
     private boolean frozen;
 
-    public BaseGraphNodesAndEdges(Directory dir, boolean withElevation, boolean withTurnCosts, int segmentSize, int bytesForFlags) {
-        nodes = dir.create("nodes", dir.getDefaultType("nodes", true), segmentSize);
-        edges = dir.create("edges", dir.getDefaultType("edges", false), segmentSize);
+    public BaseGraphNodesAndEdges(Directory dir, boolean withElevation, boolean withTurnCosts, int bytesForFlags) {
+        nodes = dir.create("nodes", dir.getDefaultType("nodes", true));
+        edges = dir.create("edges", dir.getDefaultType("edges", false));
         this.bytesForFlags = bytesForFlags;
         this.withTurnCosts = withTurnCosts;
         this.withElevation = withElevation;

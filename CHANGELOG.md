@@ -1,5 +1,7 @@
 ### 12.0 [not yet released]
 
+- OSMReader no longer sets the artificial speed_from_duration tag but instead uses duration_in_seconds, when the duration tag is present (#3266)
+- country rules were moved into parsers and are now enabled by default
 - speeds generated from highway class now respects country-specific default speed limits, but the max_speed encoded value is now required; see #3249
 
 ### 11.0 [14 Oct 2025]

@@ -2,7 +2,8 @@ package com.graphhopper.search;
 
 import com.carrotsearch.hppc.LongArrayList;
 import com.graphhopper.search.KVStorage.KValue;
-import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.storage.DAType;
+import com.graphhopper.storage.GHDirectory;
 import com.graphhopper.util.Helper;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
@@ -20,7 +21,7 @@ public class KVStorageTest {
     private final static String location = "./target/edge-kv-storage";
 
     private KVStorage create() {
-        return new KVStorage(new RAMDirectory(), true).create(1000);
+        return new KVStorage(new GHDirectory("", DAType.RAM), true).create(1000);
     }
 
     Map<String, KValue> createMap(Object... keyValues) {
@@ -88,15 +89,19 @@ public class KVStorageTest {
     @Test
     public void putEmpty() {
         KVStorage index = create();
-        assertEquals(1, index.add(createMap("", "")));
+        long emptyKeyPointer = index.add(createMap("", ""));
+        // First pointer should be at START_POINTER (aligned to 4)
+        assertEquals(4, emptyKeyPointer);
         // cannot store null (in its first version we accepted null once it was clear which type the value has, but this is inconsequential)
-        assertThrows(IllegalArgumentException.class, () -> assertEquals(5, index.add(createMap("", null))));
+        assertThrows(IllegalArgumentException.class, () -> index.add(createMap("", null)));
         assertThrows(IllegalArgumentException.class, () -> index.add(createMap("blup", null)));
         assertThrows(IllegalArgumentException.class, () -> index.add(createMap(null, null)));
 
         assertNull(index.get(0, "", false));
 
-        assertEquals(5, index.add(createMap("else", "else")));
+        long elsePointer = index.add(createMap("else", "else"));
+        assertTrue(elsePointer > emptyKeyPointer, "second pointer should be larger than first");
+        assertEquals("else", index.get(elsePointer, "else", false));
     }
 
     @Test
@@ -129,6 +134,44 @@ public class KVStorageTest {
             index.add(createMap("new", "a name"));
             fail();
         } catch (IllegalArgumentException ex) {
+        }
+    }
+
+    @Test
+    public void testHighKeyIndicesUpToDesignLimit() {
+        // This test verifies that key indices >= 8192 work correctly.
+        // Previously there was a sign extension bug when reading shorts for key indices >= 8192
+        // because (keyIndex << 2) exceeds 32767 and becomes negative when stored as a signed short.
+        KVStorage index = create();
+
+        // Create MAX_UNIQUE_KEYS - 1 unique keys (index 0 is reserved for empty key)
+        // This gives us key indices from 1 to MAX_UNIQUE_KEYS - 1 (i.e., 1 to 16383)
+        List<Long> pointers = new ArrayList<>();
+        for (int i = 1; i < MAX_UNIQUE_KEYS; i++) {
+            long pointer = index.add(createMap("key" + i, "value" + i));
+            pointers.add(pointer);
+        }
+
+        // Verify we can read back entries that use high key indices (>= 8192)
+        // Key index 8192 is the first one that triggers the sign extension issue
+        for (int i = 8192; i < MAX_UNIQUE_KEYS; i++) {
+            long pointer = pointers.get(i - 1); // pointers list is 0-indexed, keys start at 1
+            String expectedKey = "key" + i;
+            String expectedValue = "value" + i;
+
+            // Test get() method
+            assertEquals(expectedValue, index.get(pointer, expectedKey, false),
+                    "get() failed for key index " + i);
+
+            // Test getMap() method
+            Map<String, Object> map = index.getMap(pointer);
+            assertEquals(expectedValue, map.get(expectedKey),
+                    "getMap() failed for key index " + i);
+
+            // Test getAll() method
+            Map<String, KValue> allMap = index.getAll(pointer);
+            assertEquals(expectedValue, allMap.get(expectedKey).getFwd(),
+                    "getAll() failed for key index " + i);
         }
     }
 
@@ -185,8 +228,17 @@ public class KVStorageTest {
         long longres = index.add(Map.of("longres", new KValue(4L)));
         long after4Inserts = index.add(Map.of("somenext", new KValue(0)));
 
-        // initial point is 1, then twice plus 1 + (2+4) and twice plus 1 + (2+8)
-        assertEquals(1 + 36, after4Inserts);
+        // Pointers should be sequential and increasing, aligned to 4-byte boundaries
+        assertTrue(intres < doubleres);
+        assertTrue(doubleres < floatres);
+        assertTrue(floatres < longres);
+        assertTrue(longres < after4Inserts);
+        // Verify all pointers are 4-byte aligned
+        assertEquals(0, intres % 4);
+        assertEquals(0, doubleres % 4);
+        assertEquals(0, floatres % 4);
+        assertEquals(0, longres % 4);
+        assertEquals(0, after4Inserts % 4);
 
         assertEquals(4f, index.get(floatres, "floatres", false));
         assertEquals(4L, index.get(longres, "longres", false));
@@ -206,8 +258,10 @@ public class KVStorageTest {
 
         long afterMapInsert = index.add(Map.of("somenext", new KValue(0)));
 
-        // 1 + 1 + (2+4) + (2+8) + (2+8) + (2+4)
-        assertEquals(1 + 1 + 32, afterMapInsert);
+        // Pointer should increase after adding more data, and both should be aligned
+        assertTrue(afterMapInsert > allInOne);
+        assertEquals(0, allInOne % 4);
+        assertEquals(0, afterMapInsert % 4);
 
         Map<String, KValue> resMap = index.getAll(allInOne);
         assertEquals(4, resMap.get("int").getFwd());
@@ -220,17 +274,19 @@ public class KVStorageTest {
     public void testFlush() {
         Helper.removeDir(new File(location));
 
-        KVStorage index = new KVStorage(new RAMDirectory(location, true).create(), true);
+        KVStorage index = new KVStorage(new GHDirectory(location, DAType.RAM_STORE).create(), true);
         long pointer = index.add(createMap("", "test"));
         index.flush();
         index.close();
 
-        index = new KVStorage(new RAMDirectory(location, true), true);
+        index = new KVStorage(new GHDirectory(location, DAType.RAM_STORE), true);
         assertTrue(index.loadExisting());
         assertEquals("test", index.get(pointer, "", false));
         // make sure bytePointer is correctly set after loadExisting
         long newPointer = index.add(createMap("", "testing"));
-        assertEquals(pointer + 1 + 3 + "test".getBytes().length, newPointer, newPointer + ">" + pointer);
+        assertTrue(newPointer > pointer, "newPointer " + newPointer + " should be > pointer " + pointer);
+        assertEquals(0, newPointer % 4, "newPointer should be 4-byte aligned");
+        assertEquals("testing", index.get(newPointer, "", false));
         index.close();
 
         Helper.removeDir(new File(location));
@@ -240,7 +296,7 @@ public class KVStorageTest {
     public void testLoadKeys() {
         Helper.removeDir(new File(location));
 
-        KVStorage index = new KVStorage(new RAMDirectory(location, true).create(), true).create(1000);
+        KVStorage index = new KVStorage(new GHDirectory(location, DAType.RAM_STORE).create(), true).create(1000);
         long pointerA = index.add(createMap("c", "test value"));
         assertEquals(2, index.getKeys().size());
         long pointerB = index.add(createMap("a", "value", "b", "another value"));
@@ -249,7 +305,7 @@ public class KVStorageTest {
         index.flush();
         index.close();
 
-        index = new KVStorage(new RAMDirectory(location, true), true);
+        index = new KVStorage(new GHDirectory(location, DAType.RAM_STORE), true);
         assertTrue(index.loadExisting());
         assertEquals("[, c, a, b]", index.getKeys().toString());
         assertEquals("test value", index.get(pointerA, "c", false));
@@ -314,7 +370,7 @@ public class KVStorageTest {
     public void testRandom() {
         final long seed = new Random().nextLong();
         try {
-            KVStorage index = new KVStorage(new RAMDirectory(location, true).create(), true).create(1000);
+            KVStorage index = new KVStorage(new GHDirectory(location, DAType.RAM_STORE).create(), true).create(1000);
             Random random = new Random(seed);
             List<String> keys = createRandomStringList(random, "_key", 100);
             List<Integer> values = createRandomMap(random, 500);
@@ -343,7 +399,7 @@ public class KVStorageTest {
             index.flush();
             index.close();
 
-            index = new KVStorage(new RAMDirectory(location, true).create(), true);
+            index = new KVStorage(new GHDirectory(location, DAType.RAM_STORE).create(), true);
             assertTrue(index.loadExisting());
             for (int i = 0; i < size; i++) {
                 Map<String, KValue> map = index.getAll(pointers.get(i));

@@ -3,6 +3,7 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.routing.util.OSMParsers;
 import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.routing.weighting.custom.CustomModelParser;
@@ -33,7 +34,8 @@ public class BusCustomModelTest {
         em = new EncodingManager.Builder().
                 add(busAccess).
                 add(VehicleSpeed.create("car", 5, 5, false)).
-                add(Roundabout.create()).add(RoadAccess.create()).add(roadClass).
+                add(RoadEnvironment.create()).
+                add(Roundabout.create()).add(RoadAccess.create()).add(roadClass).add(FerrySpeed.create()).
                 add(maxWeight).add(maxWidth).add(maxHeight).add(MaxSpeed.create()).
                 build();
 
@@ -55,7 +57,7 @@ public class BusCustomModelTest {
     }
 
     @Test
-    public void testHikePrivate() {
+    public void testBus() {
         CustomModel cm = GHUtility.loadCustomModelFromJar("bus.json");
         ReaderWay way = new ReaderWay(0L);
         way.setTag("highway", "steps");

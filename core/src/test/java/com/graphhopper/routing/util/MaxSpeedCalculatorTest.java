@@ -4,7 +4,8 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.parsers.OSMMaxSpeedParser;
 import com.graphhopper.storage.BaseGraph;
-import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.storage.DAType;
+import com.graphhopper.storage.GHDirectory;
 import com.graphhopper.util.EdgeIteratorState;
 import de.westnordost.osm_legal_default_speeds.LegalDefaultSpeeds;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,7 +49,7 @@ class MaxSpeedCalculatorTest {
         parsers.addWayTagParser(new OSMMaxSpeedParser(maxSpeedEnc));
         parsers.addWayTagParser(calc.getParser());
 
-        calc.createDataAccessForParser(new RAMDirectory());
+        calc.createDataAccessForParser(new GHDirectory("", DAType.RAM));
     }
 
     @Test

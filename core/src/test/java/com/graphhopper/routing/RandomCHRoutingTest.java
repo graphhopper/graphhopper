@@ -20,6 +20,7 @@ import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
+import com.graphhopper.util.RandomGraph;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -28,7 +29,6 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Stream;
@@ -94,23 +94,32 @@ public class RandomCHRoutingTest {
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
     public void random(Fixture f) {
+        run_random(f, false);
+    }
+
+    @ParameterizedTest
+    @ArgumentsSource(FixtureProvider.class)
+    public void random_strict(Fixture f) {
+        run_random(f, true);
+    }
+
+    private void run_random(Fixture f, boolean tree) {
         // you might have to keep this test running in an infinite loop for several minutes to find potential routing
         // bugs (e.g. use intellij 'run until stop/failure').
         int numNodes = 50;
         long seed = System.nanoTime();
         LOGGER.info("seed: " + seed);
         Random rnd = new Random(seed);
-        // we may not use an offset when query graph is involved, otherwise traveling via virtual edges will not be
-        // the same as taking the direct edge!
-        double pOffset = 0;
-        GHUtility.buildRandomGraph(f.graph, rnd, numNodes, 2.5, true, f.speedEnc, null, 0.9, pOffset);
-        if (f.traversalMode.isEdgeBased()) {
+        // curviness must be zero, because otherwise traveling via intermediate virtual nodes won't
+        // give the same results as using the original edge
+        double curviness = 0;
+        RandomGraph.start().seed(seed).nodes(numNodes).curviness(curviness).speedZero(tree ? 0 : 0.1).tree(tree).fill(f.graph, f.speedEnc);
+        if (f.traversalMode.isEdgeBased())
             GHUtility.addRandomTurnCosts(f.graph, seed, null, f.turnCostEnc, f.maxTurnCosts, f.graph.getTurnCostStorage());
-        }
-        runRandomTest(f, rnd, seed);
+        runRandomTest(f, rnd, seed, tree);
     }
 
-    private void runRandomTest(Fixture f, Random rnd, long seed) {
+    private void runRandomTest(Fixture f, Random rnd, long seed, boolean strict) {
         LocationIndexTree locationIndex = new LocationIndexTree(f.graph, f.graph.getDirectory());
         locationIndex.prepareIndex();
 
@@ -129,7 +138,6 @@ public class RandomCHRoutingTest {
 
             int numQueries = 100;
             int numPathsNotFound = 0;
-            List<String> strictViolations = new ArrayList<>();
             for (int i = 0; i < numQueries; i++) {
                 int from = rnd.nextInt(queryGraph.getNodes());
                 int to = rnd.nextInt(queryGraph.getNodes());
@@ -151,15 +159,12 @@ public class RandomCHRoutingTest {
                     continue;
                 }
 
-                // todo: to check nodes as well we would have to ignore intermediate virtual nodes
-                strictViolations.addAll(comparePaths(refPath, path, from, to, false, seed));
+                List<String> strictViolations = comparePaths(refPath, path, from, to, false, seed);
+                if (strict && !strictViolations.isEmpty())
+                    fail(strictViolations.toString());
             }
             if (numPathsNotFound > 0.9 * numQueries) {
                 fail("Too many paths not found: " + numPathsNotFound + "/" + numQueries);
-            }
-            if (strictViolations.size() > 0.05 * numQueries) {
-                fail("Too many strict violations: " + strictViolations.size() + "/" + numQueries + "\n" +
-                        String.join("\n", strictViolations));
             }
         }
     }

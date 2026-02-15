@@ -32,7 +32,7 @@ public abstract class AbstractDataAccess implements DataAccess {
     // reserve some space for downstream usage (in classes using/extending this)
     protected static final int HEADER_OFFSET = 20 * 4 + 20;
     protected static final byte[] EMPTY = new byte[1024];
-    private static final int SEGMENT_SIZE_DEFAULT = 1 << 20;
+    public static final int SEGMENT_SIZE_DEFAULT = 1 << 20;
     protected final ByteOrder byteOrder = ByteOrder.LITTLE_ENDIAN;
     protected final BitUtil bitUtil = BitUtil.LITTLE;
     private final String location;

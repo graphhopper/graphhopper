@@ -53,26 +53,18 @@ public class DefaultImportRegistry implements ImportRegistry {
             );
         else if (FootRoadAccess.KEY.equals(name))
             return ImportUnit.create(name, props -> FootRoadAccess.create(),
-                    (lookup, props) -> new OSMRoadAccessParser<>(
-                            lookup.getEnumEncodedValue(FootRoadAccess.KEY, FootRoadAccess.class),
-                            OSMRoadAccessParser.toOSMRestrictions(TransportationMode.FOOT),
-                            (readerWay, accessValue) -> accessValue,
-                            FootRoadAccess::find)
+                    (lookup, props) -> OSMRoadAccessParser.forFoot(
+                            lookup.getEnumEncodedValue(FootRoadAccess.KEY, FootRoadAccess.class))
             );
         else if (BikeRoadAccess.KEY.equals(name))
             return ImportUnit.create(name, props -> BikeRoadAccess.create(),
-                    (lookup, props) -> new OSMRoadAccessParser<>(
-                            lookup.getEnumEncodedValue(BikeRoadAccess.KEY, BikeRoadAccess.class),
-                            OSMRoadAccessParser.toOSMRestrictions(TransportationMode.BIKE),
-                            (readerWay, accessValue) -> accessValue,
-                            BikeRoadAccess::find)
+                    (lookup, props) -> OSMRoadAccessParser.forBike(
+                            lookup.getEnumEncodedValue(BikeRoadAccess.KEY, BikeRoadAccess.class))
             );
         else if (RoadAccess.KEY.equals(name))
             return ImportUnit.create(name, props -> RoadAccess.create(),
-                    (lookup, props) -> new OSMRoadAccessParser<>(
-                            lookup.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class),
-                            OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR),
-                            RoadAccess::countryHook, RoadAccess::find)
+                    (lookup, props) -> OSMRoadAccessParser.forCar(
+                            lookup.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class))
             );
         else if (MaxSpeed.KEY.equals(name))
             return ImportUnit.create(name, props -> MaxSpeed.create(),
@@ -298,8 +290,7 @@ public class DefaultImportRegistry implements ImportRegistry {
         else if (VehicleSpeed.key("car").equals(name))
             return ImportUnit.create(name, props -> new DecimalEncodedValueImpl(
                             name, props.getInt("speed_bits", 7), props.getDouble("speed_factor", 2), true),
-                    (lookup, props) -> new CarAverageSpeedParser(lookup),
-                    "ferry_speed"
+                    (lookup, props) -> new CarAverageSpeedParser(lookup)
             );
         else if (VehicleSpeed.key("roads").equals(name))
             throw new IllegalArgumentException("roads_average_speed parser no longer necessary, see docs/migration/config-migration-08-09.md");
@@ -307,25 +298,24 @@ public class DefaultImportRegistry implements ImportRegistry {
             return ImportUnit.create(name, props -> new DecimalEncodedValueImpl(
                             name, props.getInt("speed_bits", 4), props.getDouble("speed_factor", 2), false),
                     (lookup, props) -> new BikeAverageSpeedParser(lookup),
-                    "ferry_speed", "smoothness"
+                    Smoothness.KEY
             );
         else if (VehicleSpeed.key("racingbike").equals(name))
             return ImportUnit.create(name, props -> new DecimalEncodedValueImpl(
                             name, props.getInt("speed_bits", 4), props.getDouble("speed_factor", 2), false),
                     (lookup, props) -> new RacingBikeAverageSpeedParser(lookup),
-                    "ferry_speed", "smoothness"
+                    Smoothness.KEY
             );
         else if (VehicleSpeed.key("mtb").equals(name))
             return ImportUnit.create(name, props -> new DecimalEncodedValueImpl(
                             name, props.getInt("speed_bits", 4), props.getDouble("speed_factor", 2), false),
                     (lookup, props) -> new MountainBikeAverageSpeedParser(lookup),
-                    "ferry_speed", "smoothness"
+                    Smoothness.KEY
             );
         else if (VehicleSpeed.key("foot").equals(name))
             return ImportUnit.create(name, props -> new DecimalEncodedValueImpl(
                             name, props.getInt("speed_bits", 4), props.getDouble("speed_factor", 1), false),
-                    (lookup, props) -> new FootAverageSpeedParser(lookup),
-                    "ferry_speed"
+                    (lookup, props) -> new FootAverageSpeedParser(lookup)
             );
         else if (VehiclePriority.key("foot").equals(name))
             return ImportUnit.create(name, props -> VehiclePriority.create("foot", 4, PriorityCode.getFactor(1), false),

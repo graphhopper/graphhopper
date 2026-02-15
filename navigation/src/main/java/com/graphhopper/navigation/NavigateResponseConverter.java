@@ -36,13 +36,14 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.graphhopper.util.Parameters.Details.INTERSECTION;
+import static com.graphhopper.util.Parameters.Details.TIME;
 
 enum ManeuverType {
     ARRIVE,
     DEPART,
     TURN,
     ROUNDABOUT
-} ;
+};
 
 public class NavigateResponseConverter {
     private static final Logger LOGGER = LoggerFactory.getLogger(NavigateResponseConverter.class);
@@ -104,41 +105,43 @@ public class NavigateResponseConverter {
         Map<String, List<PathDetail>> pathDetails = path.getPathDetails();
         List<PathDetail> intersectionDetails = pathDetails.getOrDefault(INTERSECTION, Collections.emptyList());
 
-        ObjectNode annotation = null;
-        ArrayNode maxSpeedArray = null;
-        if (pathDetails.containsKey(MaxSpeed.KEY)) {
-            annotation = legJson.putObject("annotation");
-            maxSpeedArray = annotation.putArray("maxspeed");
-        }
+        ObjectNode annotation = pathDetails.isEmpty() ? null : legJson.putObject("annotation");
+        ArrayNode maxSpeedArray = pathDetails.containsKey(MaxSpeed.KEY) ? annotation.putArray("maxspeed") : null;
+        ArrayNode durationArray = pathDetails.containsKey(TIME) ? annotation.putArray("duration") : null;
+        // The "distance" is a special case as we can calculate it without previously calculated path
+        // details and should be available as soon as maxspeed is requested e.g. the maplibre SDK requires this to use maxspeed.
+        ArrayNode distanceArray = pathDetails.isEmpty() ? null : annotation.putArray("distance");
 
         for (int i = 0; i < instructions.size(); i++) {
             ObjectNode stepJson = steps.addObject();
             Instruction instruction = instructions.get(i);
-            // pointIndexTo is the same as ShallowCopy of the path Points toPoint member
-            int pointIndexTo = pointIndexFrom + instruction.getPoints().size();
+            int pointIndexTo = pointIndexFrom + instruction.getLength();
 
             ManeuverType maneuverType;
             if (isDepartInstruction) {
                 maneuverType = ManeuverType.DEPART;
                 fixDepartIntersectionDetail(intersectionDetails, i);
-                // if the depart is on a REACHED_VIA or FINISH node, add the summary
+                // if DEPART is on a REACHED_VIA or FINISH node, add the summary
                 if (instruction.getSign() == Instruction.REACHED_VIA || instruction.getSign() == Instruction.FINISH) {
                     putLegInformation(legJson, path, routeNr, time, distance);
                 }
             } else {
-                switch (instruction.getSign()) {
-                    case Instruction.REACHED_VIA, Instruction.FINISH:
-                        maneuverType = ManeuverType.ARRIVE;
-                        break;
-                    case Instruction.USE_ROUNDABOUT :
-                        maneuverType = ManeuverType.ROUNDABOUT;
-                        break;
-                    default :
-                        maneuverType = ManeuverType.TURN;
-                }
+                maneuverType = switch (instruction.getSign()) {
+                    case Instruction.REACHED_VIA, Instruction.FINISH -> ManeuverType.ARRIVE;
+                    case Instruction.USE_ROUNDABOUT -> ManeuverType.ROUNDABOUT;
+                    default -> ManeuverType.TURN;
+                };
             }
-            if (annotation != null)
-                putAnnotation(maxSpeedArray, pathDetails, pointIndexFrom, pointIndexTo, distanceConfig.unit);
+
+            // important: OSRM annotations are per-segment (N-1 entries for N coordinates) and so
+            // we have to skip all instructions (like ARRIVE) with length == 0 and this is implicitly
+            // done because then pointIndexTo == pointIndexFrom.
+            if (maxSpeedArray != null)
+                putMaxSpeedAnnotation(maxSpeedArray, pathDetails.get(MaxSpeed.KEY), distanceConfig.unit, pointIndexFrom, pointIndexTo);
+            if (durationArray != null)
+                putDurationAnnotation(durationArray, pathDetails.get(TIME), path.getPoints(), pointIndexFrom, pointIndexTo);
+            if (!pathDetails.isEmpty())
+                putDistanceAnnotation(distanceArray, path.getPoints(), pointIndexFrom, pointIndexTo);
             putInstruction(path.getPoints(), instructions, i, locale, translationMap, stepJson,
                     maneuverType, distanceConfig, intersectionDetails, pointIndexFrom, pointIndexTo);
             pointIndexFrom = pointIndexTo;
@@ -153,7 +156,10 @@ public class NavigateResponseConverter {
                     steps = legJson.putArray("steps");
                     if (annotation != null) {
                         annotation = legJson.putObject("annotation");
-                        maxSpeedArray = annotation.putArray("maxspeed");
+                        maxSpeedArray = pathDetails.containsKey(MaxSpeed.KEY) ? annotation.putArray("maxspeed") : null;
+                        durationArray = pathDetails.containsKey(TIME) ? annotation.putArray("duration") : null;
+                        // "distance" is always available when any path details are requested
+                        distanceArray = annotation.putArray("distance");
                     }
                     isDepartInstruction = true;
                     time = 0;
@@ -169,41 +175,93 @@ public class NavigateResponseConverter {
         pathJson.put("voiceLocale", locale.toLanguageTag());
     }
 
-    private static void putAnnotation(ArrayNode maxSpeedArray, Map<String, List<PathDetail>> pathDetails,
-                                      final int fromIdx, final int toIdx, DistanceUtils.Unit metric) {
+    private static void putMaxSpeedAnnotation(ArrayNode maxSpeedArray, List<PathDetail> maxSpeeds,
+                                              DistanceUtils.Unit metric,
+                                              final int fromIdx, final int toIdx) {
+        if (maxSpeeds.isEmpty()) return;
 
-        List<PathDetail> maxSpeeds = pathDetails.get(MaxSpeed.KEY);
         String unitValue = metric == DistanceUtils.Unit.METRIC ? "km/h" : "mph";
-
-        // loop through indices to ensure that number of entries in maxSpeedArray are exactly the same
         int nextPDIdx = 0;
-        if (!maxSpeeds.isEmpty())
-            for (int idx = fromIdx; idx < toIdx; ) {
-                for (; nextPDIdx < maxSpeeds.size(); nextPDIdx++) {
-                    PathDetail pd = maxSpeeds.get(nextPDIdx);
-                    if (idx >= pd.getFirst() && idx <= pd.getLast()) break;
-                }
-                if (nextPDIdx >= maxSpeeds.size()) break; // should not happen
-
+        for (int idx = fromIdx; idx < toIdx; ) {
+            for (; nextPDIdx < maxSpeeds.size(); nextPDIdx++) {
                 PathDetail pd = maxSpeeds.get(nextPDIdx);
-                long value = pd.getValue() == null ? Math.round(MaxSpeed.MAXSPEED_150)
-                        : (metric == DistanceUtils.Unit.METRIC
-                        ? Math.round(((Number) pd.getValue()).doubleValue())
-                        : Math.round(((Number) pd.getValue()).doubleValue() / DistanceCalcEarth.KM_MILE));
+                if (idx >= pd.getFirst() && idx < pd.getLast()) break;
+            }
+            if (nextPDIdx >= maxSpeeds.size()) break; // should not happen
 
-                // one entry for every point
-                for (; idx <= Math.min(toIdx, pd.getLast()); idx++) {
+            PathDetail pd = maxSpeeds.get(nextPDIdx);
+            // max_speed boundaries might exceed instruction boundaries (unlike 'time' path detail, which is created for every edge)
+            int until = Math.min(toIdx, pd.getLast());
+            if (pd.getValue() == null) {
+                for (; idx < until; idx++) {
+                    maxSpeedArray.addObject().put("unknown", true);
+                }
+            } else if (((Number) pd.getValue()).doubleValue() == MaxSpeed.MAXSPEED_150) {
+                for (; idx < until; idx++) {
+                    maxSpeedArray.addObject().put("none", true);
+                }
+            } else {
+                long value = metric == DistanceUtils.Unit.METRIC
+                        ? Math.round(((Number) pd.getValue()).doubleValue())
+                        : Math.round(((Number) pd.getValue()).doubleValue() / DistanceCalcEarth.KM_MILE);
+                for (; idx < until; idx++) {
                     ObjectNode object = maxSpeedArray.addObject();
                     object.put("speed", value);
                     object.put("unit", unitValue);
                 }
             }
+        }
+    }
 
+    private static void putDistanceAnnotation(ArrayNode distanceArray, PointList points,
+                                              final int fromIdx, final int toIdx) {
+        for (int idx = fromIdx; idx < toIdx; idx++) {
+            double dist = DistanceCalcEarth.DIST_EARTH.calcDist(
+                    points.getLat(idx), points.getLon(idx),
+                    points.getLat(idx + 1), points.getLon(idx + 1));
+            distanceArray.add(Helper.round(dist, 1));
+        }
+    }
 
-        // TODO what purpose?
-//        "speed":[24.7, 24.7, 24.7, 24.7, 24.7, 24.7, 24.7, 24.7, 24.7],
-//        "distance":[23.6, 14.9, 9.6, 13.2, 25, 28.1, 38.1, 41.6, 90],
-//        "duration":[0.956, 0.603, 0.387, 0.535, 1.011, 1.135, 1.539, 1.683, 3.641]
+    private static void putDurationAnnotation(ArrayNode durationArray, List<PathDetail> timeDetails,
+                                              PointList points, final int fromIdx, final int toIdx) {
+        if (timeDetails.isEmpty()) return;
+
+        int nextPDIdx = 0;
+        for (int idx = fromIdx; idx < toIdx; ) {
+            for (; nextPDIdx < timeDetails.size(); nextPDIdx++) {
+                PathDetail pd = timeDetails.get(nextPDIdx);
+                if (idx >= pd.getFirst() && idx < pd.getLast()) break;
+            }
+            if (nextPDIdx >= timeDetails.size()) break; // should not happen
+
+            PathDetail pd = timeDetails.get(nextPDIdx);
+            if (pd.getValue() != null) {
+                double totalTimeSeconds = convertToSeconds(((Number) pd.getValue()).doubleValue());
+
+                // compute total distance for this edge from the geometry
+                double totalDist = 0;
+                for (int j = pd.getFirst(); j < pd.getLast(); j++) {
+                    totalDist += DistanceCalcEarth.DIST_EARTH.calcDist(
+                            points.getLat(j), points.getLon(j),
+                            points.getLat(j + 1), points.getLon(j + 1));
+                }
+
+                if (toIdx < pd.getLast())
+                    throw new IllegalStateException("toIdx " + toIdx + " is smaller than pd.getLast() " + pd.getLast()
+                            + ". 'time' path detail is only for one edge and so instruction boundaries should align.");
+                for (; idx < pd.getLast(); idx++) {
+                    if (totalDist > 0) {
+                        double segDist = DistanceCalcEarth.DIST_EARTH.calcDist(
+                                points.getLat(idx), points.getLon(idx),
+                                points.getLat(idx + 1), points.getLon(idx + 1));
+                        durationArray.add(Helper.round(totalTimeSeconds * segDist / totalDist, 1));
+                    } else {
+                        durationArray.add(0);
+                    }
+                }
+            }
+        }
     }
 
     private static void putLegInformation(ObjectNode legJson, ResponsePath path, int i, long time, double distance) {
@@ -223,7 +281,7 @@ public class NavigateResponseConverter {
     }
 
     /**
-     * fix the first IntersectionDetail which is an Depart
+     * fix the first IntersectionDetail which is a Depart
      * <p>
      * Departs should only have one "bearings" and one
      * "out" entry
@@ -254,13 +312,13 @@ public class NavigateResponseConverter {
     }
 
     /**
-     * filter the IntersectionDetails.
+     * Merge the IntersectionDetails:
      * <p>
-     * first job is to find the interesting part in the interSectionDetails based on
+     * The first job is to find the interesting part in the interSectionDetails based on
      * pointIndexFrom and pointIndexTo.
      * <p>
-     * Next job is to eleminate intersections colocated in the same point
-     * since Mapbox chokes on geometries with intersections lying ontop of
+     * Next job is to eliminate intersections colocated in the same point
+     * since Mapbox chokes on geometries with intersections laying ontop of
      * each other.
      * <p>
      * These type of intersections is used for barrier nodes
@@ -270,8 +328,8 @@ public class NavigateResponseConverter {
      * removing the connecting zero length edge.
      * Care has to be taken that the result is sorted by bearing
      */
-    private static List<PathDetail> filterIntersectionDetails(PointList points, List<PathDetail> intersectionDetails,
-                                                              int pointIndexFrom, int pointIndexTo) {
+    private static List<PathDetail> mergeIntersectionDetails(PointList points, List<PathDetail> intersectionDetails,
+                                                             int pointIndexFrom, int pointIndexTo) {
         List<PathDetail> list = new ArrayList<>();
 
         // job1: find out the interesting part of the intersectionDetails
@@ -350,8 +408,8 @@ public class NavigateResponseConverter {
     private static void putInstruction(PointList points, InstructionList instructions, int instructionIndex,
                                        Locale locale,
                                        TranslationMap translationMap, ObjectNode stepJson, ManeuverType maneuverType,
-                                       DistanceConfig distanceConfig, List<PathDetail> intersectionDetails, int pointIndexFrom,
-                                       int pointIndexTo) {
+                                       DistanceConfig distanceConfig, List<PathDetail> intersectionDetails,
+                                       int pointIndexFrom, int pointIndexTo) {
         Instruction instruction = instructions.get(instructionIndex);
         ArrayNode intersections = stepJson.putArray("intersections");
 
@@ -366,8 +424,7 @@ public class NavigateResponseConverter {
             pointList.add(nextPoints.getLat(0), nextPoints.getLon(0), nextPoints.getEle(0));
         } else {
             // we are at the arrival (or via point arrival instruction)
-            // Duplicate the last point in the arrival instruction, which does has only one
-            // point
+            // Duplicate the last point in the arrival instruction, which has only one point
             pointList.add(pointList.getLat(0), pointList.getLon(0), pointList.getEle(0));
 
             // Add an arrival intersection with only one enty
@@ -385,10 +442,10 @@ public class NavigateResponseConverter {
         }
 
         // preprocess intersectionDetails
-        List<PathDetail> filteredIntersectionDetails = filterIntersectionDetails(points, intersectionDetails,
+        List<PathDetail> mergedIntersectionDetails = mergeIntersectionDetails(points, intersectionDetails,
                 pointIndexFrom, pointIndexTo);
 
-        for (PathDetail intersectionDetail : filteredIntersectionDetails) {
+        for (PathDetail intersectionDetail : mergedIntersectionDetails) {
             ObjectNode intersection = intersections.addObject();
             Map<String, Object> intersectionValue = (Map<String, Object>) intersectionDetail.getValue();
             // Location
@@ -628,6 +685,7 @@ public class NavigateResponseConverter {
         maneuver.put("instruction", instruction.getTurnDescription(translationMap.getWithFallBack(locale)));
 
     }
+
     /**
      * Relevant turn types for banners are:
      * turn (regular turns)

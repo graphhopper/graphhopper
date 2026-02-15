@@ -28,9 +28,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.SpeedWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.BaseGraph;
-import com.graphhopper.storage.Directory;
-import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.Helper;
@@ -92,7 +90,7 @@ public class PrepareLandmarksTest {
                 updateDistancesFor(graph, node, -hIndex / 50.0, wIndex / 50.0);
             }
         }
-        Directory dir = new RAMDirectory();
+        Directory dir = new GHDirectory("", DAType.RAM);
         LocationIndexTree index = new LocationIndexTree(graph, dir);
         index.prepareIndex();
 
@@ -135,7 +133,7 @@ public class PrepareLandmarksTest {
         // TODO should better select 0 and 224?
         assertEquals(Arrays.asList(224, 70), list);
 
-        PrepareLandmarks prepare = new PrepareLandmarks(new RAMDirectory(), graph, encodingManager, lmConfig, 4);
+        PrepareLandmarks prepare = new PrepareLandmarks(new GHDirectory("", DAType.RAM), graph, encodingManager, lmConfig, 4);
         prepare.setMinimumNodes(2);
         prepare.doWork();
         LandmarkStorage lms = prepare.getLandmarkStorage();
@@ -187,7 +185,7 @@ public class PrepareLandmarksTest {
         String fileStr = "./target/tmp-lm";
         Helper.removeDir(new File(fileStr));
 
-        Directory dir = new RAMDirectory(fileStr, true).create();
+        Directory dir = new GHDirectory(fileStr, DAType.RAM_STORE).create();
         Weighting weighting = new SpeedWeighting(speedEnc);
         LMConfig lmConfig = new LMConfig("car", weighting);
         PrepareLandmarks plm = new PrepareLandmarks(dir, graph, encodingManager, lmConfig, 2);
@@ -201,7 +199,7 @@ public class PrepareLandmarksTest {
         }), Arrays.toString(plm.getLandmarkStorage().getLandmarks(1)));
         assertEquals(1333, Math.round(plm.getLandmarkStorage().getFromWeight(0, 1) * expectedFactor));
 
-        dir = new RAMDirectory(fileStr, true);
+        dir = new GHDirectory(fileStr, DAType.RAM_STORE);
         plm = new PrepareLandmarks(dir, graph, encodingManager, lmConfig, 2);
         assertTrue(plm.loadExisting());
         assertEquals(expectedFactor, plm.getLandmarkStorage().getFactor(), 1e-6);

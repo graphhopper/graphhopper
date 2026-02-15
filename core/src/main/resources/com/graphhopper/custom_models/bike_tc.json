@@ -5,7 +5,7 @@
 //
 // To use this custom model you need to set the following option in the config.yml
 // graph.elevation.provider: srtm   # enables elevation
-// graph.encoded_values: bike_priority, bike_access, roundabout, bike_average_speed, bike_road_access, average_slope, orientation
+// graph.encoded_values: bike_priority, bike_access, roundabout, bike_average_speed, bike_road_access, average_slope, orientation, ferry_speed
 // profiles:
 //    - name: bike
 //      turn_costs:
@@ -21,12 +21,13 @@
     { "if": "road_environment == FERRY", "multiply_by": "0.5" },
     { "if": "mtb_rating > 2",  "multiply_by": "0" },
     { "if": "hike_rating > 1",  "multiply_by": "0" },
-    { "if": "country == DEU && road_class == BRIDLEWAY && bike_road_access != YES", "multiply_by": "0" },
+    { "if": "bike_road_access == NO", "multiply_by": "0" },
     { "if": "!bike_access && (!backward_bike_access || roundabout)",  "multiply_by": "0" },
     { "else_if": "!bike_access && backward_bike_access",  "multiply_by": "0.2" }
   ],
   "speed": [
-    { "if": "true", "limit_to": "bike_average_speed" },
+    { "if": "road_environment == FERRY", "limit_to": "ferry_speed" },
+    { "else": "", "limit_to": "bike_average_speed" },
     { "if": "!bike_access && backward_bike_access", "limit_to": "6" }
   ]
 }

@@ -41,7 +41,6 @@ import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks.PrepareJob;
 import com.graphhopper.routing.util.*;
-import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
 import com.graphhopper.routing.util.parsers.OSMBikeNetworkTagParser;
 import com.graphhopper.routing.util.parsers.OSMFootNetworkTagParser;
 import com.graphhopper.routing.util.parsers.TagParser;
@@ -90,8 +89,6 @@ public class GraphHopper {
     private final TranslationMap trMap = new TranslationMap().doImport();
     boolean removeZipped = true;
     boolean calcChecksums = false;
-    // for country rules:
-    private CountryRuleFactory countryRuleFactory = null;
     // for custom areas:
     private String customAreasDirectory = "";
     // for graph:
@@ -99,7 +96,7 @@ public class GraphHopper {
     private StorableProperties properties;
     protected EncodingManager encodingManager;
     private OSMParsers osmParsers;
-    private int defaultSegmentSize = -1;
+    private int defaultSegmentSize = AbstractDataAccess.SEGMENT_SIZE_DEFAULT;
     private String ghLocation = "";
     private DAType dataAccessDefaultType = DAType.RAM_STORE;
     private final LinkedHashMap<String, String> dataAccessConfig = new LinkedHashMap<>();
@@ -454,18 +451,6 @@ public class GraphHopper {
     }
 
     /**
-     * Sets the factory used to create country rules. Use `null` to disable country rules
-     */
-    public GraphHopper setCountryRuleFactory(CountryRuleFactory countryRuleFactory) {
-        this.countryRuleFactory = countryRuleFactory;
-        return this;
-    }
-
-    public CountryRuleFactory getCountryRuleFactory() {
-        return this.countryRuleFactory;
-    }
-
-    /**
      * Reads the configuration from a {@link GraphHopperConfig} object which can be manually filled, or more typically
      * is read from `config.yml`.
      * <p>
@@ -499,7 +484,6 @@ public class GraphHopper {
         }
         ghLocation = graphHopperFolder;
 
-        countryRuleFactory = ghConfig.getBool("country_rules.enabled", false) ? new CountryRuleFactory() : null;
         customAreasDirectory = ghConfig.getString("custom_areas.directory", customAreasDirectory);
 
         defaultSegmentSize = ghConfig.getInt("graph.dataaccess.segment_size", defaultSegmentSize);
@@ -824,13 +808,12 @@ public class GraphHopper {
         prepareImport();
         if (encodingManager == null)
             throw new IllegalStateException("The EncodingManager must be created in `prepareImport()`");
-        GHDirectory directory = new GHDirectory(ghLocation, dataAccessDefaultType);
+        GHDirectory directory = new GHDirectory(ghLocation, dataAccessDefaultType, defaultSegmentSize);
         directory.configure(dataAccessConfig);
         baseGraph = new BaseGraph.Builder(getEncodingManager())
                 .setDir(directory)
                 .set3D(hasElevation())
                 .withTurnCosts(encodingManager.needsTurnCostsSupport())
-                .setSegmentSize(defaultSegmentSize)
                 .build();
         properties = new StorableProperties(directory);
         checkProfilesConsistency();
@@ -945,17 +928,11 @@ public class GraphHopper {
         }
 
         AreaIndex<CustomArea> areaIndex = new AreaIndex<>(customAreas);
-        if (countryRuleFactory == null || countryRuleFactory.getCountryToRuleMap().isEmpty()) {
-            logger.info("No country rules available");
-        } else {
-            logger.info("Applying rules for the following countries: {}", countryRuleFactory.getCountryToRuleMap().keySet());
-        }
 
         logger.info("start creating graph from " + osmFile);
         OSMReader reader = new OSMReader(baseGraph.getBaseGraph(), osmParsers, osmReaderConfig).setFile(_getOSMFile()).
                 setAreaIndex(areaIndex).
-                setElevationProvider(eleProvider).
-                setCountryRuleFactory(countryRuleFactory);
+                setElevationProvider(eleProvider);
         logger.info("using " + getBaseGraphString() + ", memory:" + getMemInfo());
 
         createBaseGraphAndProperties();
@@ -1152,7 +1129,6 @@ public class GraphHopper {
                     .setDir(directory)
                     .set3D(hasElevation())
                     .withTurnCosts(encodingManager.needsTurnCostsSupport())
-                    .setSegmentSize(defaultSegmentSize)
                     .build();
             checkProfilesConsistency();
             baseGraph.loadExisting();

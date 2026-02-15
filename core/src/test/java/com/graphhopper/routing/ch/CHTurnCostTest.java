@@ -777,7 +777,7 @@ public class CHTurnCostTest {
         // cannot go 3-4-1
         setRestriction(edge0, edge3, 4);
         graph.freeze();
-        LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
+        LocationIndexTree index = new LocationIndexTree(graph, new GHDirectory("", DAType.RAM));
         index.prepareIndex();
         List<GHPoint> points = Arrays.asList(
                 // 8 (on edge4)
@@ -839,7 +839,7 @@ public class CHTurnCostTest {
 
         // we have to pay attention when there are virtual nodes: turning from the shortcut 3-5 onto the
         // virtual edge 5-x should be forbidden.
-        LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
+        LocationIndexTree index = new LocationIndexTree(graph, new GHDirectory("", DAType.RAM));
         index.prepareIndex();
         Snap snap = index.findClosest(0.1, 0.15, EdgeFilter.ALL_EDGES);
         QueryGraph queryGraph = QueryGraph.create(graph, snap);
@@ -862,7 +862,7 @@ public class CHTurnCostTest {
         updateDistancesFor(graph, 2, 0.03, 0.03);
         graph.freeze();
         automaticPrepareCH();
-        LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
+        LocationIndexTree index = new LocationIndexTree(graph, new GHDirectory("", DAType.RAM));
         index.prepareIndex();
         Snap snap = index.findClosest(0.01, 0.01, EdgeFilter.ALL_EDGES);
         QueryGraph queryGraph = QueryGraph.create(graph, snap);
@@ -890,7 +890,7 @@ public class CHTurnCostTest {
         updateDistancesFor(graph, 2, 0.00, 0.02);
         graph.freeze();
         automaticPrepareCH();
-        LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
+        LocationIndexTree index = new LocationIndexTree(graph, new GHDirectory("", DAType.RAM));
         index.prepareIndex();
         Snap snap = index.findClosest(0.01, 0.01, EdgeFilter.ALL_EDGES);
         QueryGraph queryGraph = QueryGraph.create(graph, snap);
@@ -928,7 +928,7 @@ public class CHTurnCostTest {
         graph.freeze();
         chConfig = chConfigs.get(2);
         prepareCH(0, 1, 2, 3, 4, 5, 6);
-        LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
+        LocationIndexTree index = new LocationIndexTree(graph, new GHDirectory("", DAType.RAM));
         index.prepareIndex();
         GHPoint virtualPoint = new GHPoint(0.1, 0.35);
         Snap snap = index.findClosest(virtualPoint.lat, virtualPoint.lon, EdgeFilter.ALL_EDGES);
@@ -1080,8 +1080,7 @@ public class CHTurnCostTest {
 
     private void compareWithDijkstraOnRandomGraph(long seed) {
         final Random rnd = new Random(seed);
-        // for larger graphs preparation takes much longer the higher the degree is!
-        GHUtility.buildRandomGraph(graph, rnd, 20, 3.0, true, speedEnc, null, 0.9, 0.8);
+        RandomGraph.start().seed(seed).nodes(20).curviness(0.1).speedZero(0.1).fill(graph, speedEnc);
         GHUtility.addRandomTurnCosts(graph, seed, null, turnCostEnc, maxCost, turnCostStorage);
         graph.freeze();
         checkStrict = false;
@@ -1108,7 +1107,7 @@ public class CHTurnCostTest {
     }
 
     private void compareWithDijkstraOnRandomGraph_heuristic(long seed) {
-        GHUtility.buildRandomGraph(graph, new Random(seed), 20, 3.0, true, speedEnc, null, 0.9, 0.8);
+        RandomGraph.start().seed(seed).nodes(20).curviness(0.1).speedZero(0.1).fill(graph, speedEnc);
         GHUtility.addRandomTurnCosts(graph, seed, null, turnCostEnc, maxCost, turnCostStorage);
         graph.freeze();
         checkStrict = false;

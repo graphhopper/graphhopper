@@ -79,7 +79,7 @@ public class LocationIndexTreeTest {
     }
 
     private LocationIndexTree createIndexNoPrepare(Graph g, int resolution) {
-        Directory dir = new RAMDirectory();
+        Directory dir = new GHDirectory("", DAType.RAM);
         LocationIndexTree tmpIDX = new LocationIndexTree(g, dir);
         tmpIDX.setResolution(resolution);
         return tmpIDX;
