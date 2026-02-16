@@ -10,6 +10,7 @@ import java.util.Map;
 /**
  * GraphHopper ElevationProvider that reads elevation data directly from a
  * PMTiles v3 archive containing terrain-RGB encoded tiles.
+ * Not thread-safe due to the LinkedHashMap caches.
  */
 public class PMTilesElevationProvider implements ElevationProvider {
 
@@ -21,7 +22,9 @@ public class PMTilesElevationProvider implements ElevationProvider {
 
     private final PMTilesReader reader = new PMTilesReader();
 
-    private static final int CACHE_SIZE = 8192; // 2^13
+    // Increasing further than this could mean hundreds of MB more are required (for zoom=11).
+    // But decreasing means it will be much slower (10 million nodes will take >30s instead of 3).
+    private static final int CACHE_SIZE = 4096;
     // LongObjectHashMap and ConcurrentHashMap are slower
     private final Map<Long, short[]> tileCache = new LinkedHashMap<>(CACHE_SIZE, 0.75f, true) {
         @Override
