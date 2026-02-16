@@ -19,6 +19,7 @@ package com.graphhopper.reader.dem;
 
 import com.graphhopper.storage.DAType;
 import com.graphhopper.storage.DataAccess;
+import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.GHDirectory;
 import org.junit.jupiter.api.Test;
 
@@ -76,7 +77,7 @@ public class HeightTileTest {
         int height = 10;
         // Tile covers 0 to 10 degrees lat/lon
         HeightTile instance = new HeightTile(0, 0, width, height, 1e7, 10, 10);
-        DataAccess heights = new RAMDirectory().create("tmp");
+        DataAccess heights = new GHDirectory("", DAType.RAM).create("tmp");
         heights.create(2 * width * height);
         instance.setHeights(heights);
         fillGrid(heights, width, height, (short) 0);
@@ -136,7 +137,7 @@ public class HeightTileTest {
         int width = 10;
         // Tile starting at lat 10, lon 10
         HeightTile instance = new HeightTile(10, 10, width, width, 1e6, 10, 10);
-        DataAccess heights = new RAMDirectory().create("tmp");
+        DataAccess heights = new GHDirectory("", DAType.RAM).create("tmp");
         heights.create(2 * width * width);
         instance.setHeights(heights);
 
@@ -157,16 +158,14 @@ public class HeightTileTest {
         assertThrows(IllegalStateException.class, () -> {
             instance.getHeight(20.5, 9.5);
         });
-
     }
-
 
     @Test
     public void testOutOfBoundsNegativeCoordsThrowsException() {
         int width = 10;
         // Tile starting at lat 10, lon 10
         HeightTile instance = new HeightTile(-10, -10, width, width, 1e6, 10, 10);
-        DataAccess heights = new RAMDirectory().create("tmp");
+        DataAccess heights = new GHDirectory("", DAType.RAM).create("tmp");
         heights.create(2 * width * width);
         instance.setHeights(heights);
 
@@ -179,7 +178,6 @@ public class HeightTileTest {
             instance.getHeight(-10.5, -9.5); // -10.5 is below minLon -10
         });
 
-
         assertThrows(IllegalStateException.class, () -> {
             instance.getHeight(-9.5, 0.5);
         });
@@ -187,7 +185,6 @@ public class HeightTileTest {
         assertThrows(IllegalStateException.class, () -> {
             instance.getHeight(0.5, -9.5);
         });
-
     }
 
     @Test
@@ -196,10 +193,7 @@ public class HeightTileTest {
         DataAccess heights = new GHDirectory("", DAType.RAM).create("tmp");
         heights.create(2 * 2 * 2);
         instance.setHeights(heights);
-        double topLeft = 0;
-        double topRight = 1;
-        double bottomLeft = 2;
-        double bottomRight = 3;
+        double topLeft = 0, topRight = 1, bottomLeft = 2, bottomRight = 3;
         set(heights, 2, 0, 0, (short) topLeft);
         set(heights, 2, 1, 0, (short) topRight);
         set(heights, 2, 0, 1, (short) bottomLeft);
