@@ -19,7 +19,6 @@ package com.graphhopper.reader.dem;
 
 import com.graphhopper.storage.DAType;
 import com.graphhopper.storage.DataAccess;
-import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.GHDirectory;
 import org.junit.jupiter.api.Test;
 
