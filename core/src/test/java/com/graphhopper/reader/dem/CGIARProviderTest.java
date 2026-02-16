@@ -22,11 +22,13 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
+import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -36,10 +38,12 @@ import static org.junit.jupiter.api.Assertions.*;
 public class CGIARProviderTest {
     private double precision = .1;
     CGIARProvider instance;
+    @TempDir
+    Path tempDir;
 
     @BeforeEach
     public void setUp() {
-        instance = new CGIARProvider();
+        instance = new CGIARProvider(tempDir.toString());
     }
 
     @AfterEach
