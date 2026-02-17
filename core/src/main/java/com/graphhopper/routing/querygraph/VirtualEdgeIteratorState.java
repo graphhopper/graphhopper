@@ -57,11 +57,7 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
         this.edgeKey = edgeKey;
         this.baseNode = baseNode;
         this.adjNode = adjNode;
-        if (distance < 0)
-            throw new IllegalArgumentException("distances must be non-negative, got: " + distance);
-        if (distance > MAX_DIST_METERS)
-            distance = MAX_DIST_METERS;
-        this.distance_mm = Math.round(distance * 1000);
+        setDistance(distance);
         this.edgeFlags = edgeFlags;
         this.edgeIntAccess = new IntsRefEdgeIntAccess(edgeFlags);
         this.keyValues = keyValues;
@@ -142,7 +138,12 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
 
     @Override
     public EdgeIteratorState setDistance(double distance) {
-        this.distance_mm = Math.round(distance * 1000.0);
+        if (distance < 0)
+            throw new IllegalArgumentException("distances must be non-negative, got: " + distance);
+        if (distance > MAX_DIST_METERS)
+            distance = MAX_DIST_METERS;
+        long distance_mm = Math.round(distance * 1000);
+        setDistance_mm(distance_mm);
         return this;
     }
 
@@ -153,6 +154,10 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
 
     @Override
     public EdgeIteratorState setDistance_mm(long distance_mm) {
+        if (distance_mm < 0)
+            throw new IllegalArgumentException("distances must be non-negative, got: " + distance_mm);
+        if (distance_mm > Integer.MAX_VALUE)
+            distance_mm = Integer.MAX_VALUE;
         this.distance_mm = distance_mm;
         return this;
     }
