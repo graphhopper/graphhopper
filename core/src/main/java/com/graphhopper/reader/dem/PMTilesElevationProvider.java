@@ -10,8 +10,6 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -193,40 +191,32 @@ public class PMTilesElevationProvider implements ElevationProvider {
             return MISSING;
         }
 
-        short[] elev = decodeTerrain(raw);
-        if (elev == null) {
+        byte[] elevBytes = decodeTerrain(raw);
+        if (elevBytes == null) {
             tileOffsets.put(key, MISSING);
             return MISSING;
         }
-
-        // Check if entire tile is at or below sea level — skip storing it
-        boolean allSeaLevel = true;
-        for (short s : elev) {
-            if (s > 0) {
-                allSeaLevel = false;
-                break;
-            }
-        }
-        if (allSeaLevel) {
+        if (elevBytes.length == 0) {
             tileOffsets.put(key, SEA_LEVEL);
             return SEA_LEVEL;
         }
 
         long off = nextOffset;
-        long byteLen = (long) elev.length * 2;
-        tileData.ensureCapacity(off + byteLen);
-
-        // TODO necessary? convert short[] to byte[]
-        byte[] bytes = new byte[(int) byteLen];
-        ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().put(elev);
-        tileData.setBytes(off, bytes, bytes.length);
+        tileData.ensureCapacity(off + elevBytes.length);
+        tileData.setBytes(off, elevBytes, elevBytes.length);
 
         tileOffsets.put(key, off);
-        nextOffset += byteLen;
+        nextOffset += elevBytes.length;
         return off;
     }
 
-    short[] decodeTerrain(byte[] imageBytes) throws IOException {
+    /**
+     * Decodes terrain-RGB image bytes into a little-endian byte[] of short elevation values,
+     * ready to be written directly into DataAccess.
+     *
+     * @return byte[] with LE-encoded shorts, empty byte[] if all elevations are <= 0 (sea level), or null on decode failure.
+     */
+    byte[] decodeTerrain(byte[] imageBytes) throws IOException {
         BufferedImage img = ImageIO.read(new ByteArrayInputStream(imageBytes));
         if (img == null) {
             // Check if it's a WebP file (RIFF....WEBP magic)
@@ -244,7 +234,8 @@ public class PMTilesElevationProvider implements ElevationProvider {
         int w = img.getWidth(), h = img.getHeight();
         if (tileSize == 0) tileSize = w; // record on first decode
 
-        short[] elev = new short[h * w];
+        byte[] elev = new byte[h * w * 2];
+        boolean allSeaLevel = true;
         for (int y = 0; y < h; y++) {
             for (int x = 0; x < w; x++) {
                 int rgb = img.getRGB(x, y);
@@ -258,10 +249,15 @@ public class PMTilesElevationProvider implements ElevationProvider {
                 } else {
                     e = (r * 256.0 + g + b / 256.0) - 32768.0;
                 }
-                // Clamp to short range which covers -32768m to +32767m, plenty for Earth
-                elev[y * w + x] = (short) Math.max(-32768, Math.min(32767, Math.round(e)));
+                short s = (short) Math.max(-32768, Math.min(32767, Math.round(e)));
+                if (s > 0) allSeaLevel = false;
+
+                // little-endian, matching DataAccess byte order
+                int idx = (y * w + x) * 2;
+                elev[idx] = (byte) (s & 0xFF);
+                elev[idx + 1] = (byte) ((s >> 8) & 0xFF);
             }
         }
-        return elev;
+        return allSeaLevel ? new byte[0] : elev;
     }
 }
