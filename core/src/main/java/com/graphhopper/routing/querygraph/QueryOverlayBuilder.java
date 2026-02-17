@@ -218,11 +218,14 @@ class QueryOverlayBuilder {
         });
     }
 
-    private void adjustDistances(List<VirtualEdgeIteratorState> virtualEdges, long fullDistance) {
+    private void adjustDistances(List<VirtualEdgeIteratorState> virtualEdges, long originalDistance) {
+        // the sum of virtual edge distances can differ from the distance of the original edge:
+        // - we use dist_plane instead of dist_earth in OSMReader (not entirely sure why)
+        // - virtual edge distances include numeric errors 
         long sum = 0;
         for (VirtualEdgeIteratorState v : virtualEdges)
             sum += v.getDistance_mm();
-        long difference = fullDistance - sum;
+        long difference = originalDistance - sum;
         long baseIncrement = difference / virtualEdges.size();
         long remainder = difference % virtualEdges.size();
         for (int i = 0; i < virtualEdges.size(); i++) {
@@ -236,7 +239,7 @@ class QueryOverlayBuilder {
         for (VirtualEdgeIteratorState v : virtualEdges)
             sum += v.getDistance_mm();
         // todonow: maybe be a bit less defensive first
-        if (sum != fullDistance)
+        if (sum != originalDistance)
             throw new IllegalStateException("Virtual edge distance sum does not match original distance, even after adjustment");
     }
 
