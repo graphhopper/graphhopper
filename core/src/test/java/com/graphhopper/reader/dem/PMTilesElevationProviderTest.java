@@ -93,7 +93,7 @@ public class PMTilesElevationProviderTest {
     @Test
     public void testRealPMTilesWithZoom10() {
         instance = new PMTilesElevationProvider("./files/near-badschandau-z10-11.pmtiles",
-                PMTilesElevationProvider.TerrainEncoding.TERRARIUM, false, 10);
+                PMTilesElevationProvider.TerrainEncoding.TERRARIUM, false, 10, 1024);
 
         // Elbe
         assertEquals(118, instance.getEle(50.905488,14.204129), 1);
@@ -109,7 +109,7 @@ public class PMTilesElevationProviderTest {
     @Test
     public void testRealPMTilesWithZoom11() {
         instance = new PMTilesElevationProvider("./files/near-badschandau-z10-11.pmtiles",
-                PMTilesElevationProvider.TerrainEncoding.TERRARIUM, false, 11);
+                PMTilesElevationProvider.TerrainEncoding.TERRARIUM, false, 11, 1024);
 
         // Elbe
         assertEquals(118, instance.getEle(50.905488,14.204129), 1);
@@ -124,7 +124,7 @@ public class PMTilesElevationProviderTest {
     @Test
     public void testOutsideArea() {
         instance = new PMTilesElevationProvider("./files/near-badschandau-z10-11.pmtiles",
-                PMTilesElevationProvider.TerrainEncoding.MAPBOX, false, 10);
+                PMTilesElevationProvider.TerrainEncoding.MAPBOX, false, 10, 1024);
 
         // Point far outside the extract — should return NaN
         double ele = instance.getEle(0, 0);

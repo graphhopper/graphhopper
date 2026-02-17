@@ -22,16 +22,7 @@ public class PMTilesElevationProvider implements ElevationProvider {
 
     private final PMTilesReader reader = new PMTilesReader();
 
-    // Increasing further than this could mean hundreds of MB more are required (for zoom=11).
-    // But decreasing means it will be much slower (10 million nodes will take >30s instead of 3).
-    private static final int CACHE_SIZE = 4096;
-    // LongObjectHashMap and ConcurrentHashMap are slower
-    private final Map<Long, short[]> tileCache = new LinkedHashMap<>(CACHE_SIZE, 0.75f, true) {
-        @Override
-        protected boolean removeEldestEntry(Map.Entry<Long, short[]> eldest) {
-            return size() > CACHE_SIZE;
-        }
-    };
+    private final Map<Long, short[]> tileCache;
 
     private int tileSize;
 
@@ -41,7 +32,7 @@ public class PMTilesElevationProvider implements ElevationProvider {
      *                      12 means ~19m at equator and ~12m in Germany.
      */
     public PMTilesElevationProvider(String filePath, TerrainEncoding encoding,
-                                    boolean interpolate, int preferredZoom) {
+                                    boolean interpolate, int preferredZoom, final int cacheSize) {
         this.encoding = encoding;
         this.interpolate = interpolate;
         this.preferredZoom = preferredZoom;
@@ -51,6 +42,17 @@ public class PMTilesElevationProvider implements ElevationProvider {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+
+        // Increasing cacheSize further than 4k could mean hundreds of MB more are required (for zoom=11).
+        // But decreasing means it will be much slower (10 million nodes will take >30s instead of 3).
+        //
+        // LongObjectHashMap and ConcurrentHashMap are slower
+        tileCache = new LinkedHashMap<>(cacheSize, 0.75f, true) {
+            @Override
+            protected boolean removeEldestEntry(Map.Entry<Long, short[]> eldest) {
+                return size() > cacheSize;
+            }
+        };
     }
 
     // =========================================================================
