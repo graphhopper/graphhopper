@@ -34,11 +34,8 @@ import static com.graphhopper.util.Helper.nf;
  * instances. Nodes and edges are simply stored sequentially, see the memory layout in the constructor.
  */
 class BaseGraphNodesAndEdges implements EdgeIntAccess {
-    // Currently distances are stored as 4 byte integers. using a conversion factor of 1000 the minimum distance
-    // that is not considered zero is 0.0005m (=0.5mm) and the maximum distance per edge is about 2.147.483m=2147km.
-    // See OSMReader.addEdge and #1871.
-    private static final double INT_DIST_FACTOR = 1000d;
-    static double MAX_DIST = Integer.MAX_VALUE / INT_DIST_FACTOR;
+    // Distances are stored as 4-byte signed integers representing mm -> max ~2147km
+    static final double MAX_DIST_MM = Integer.MAX_VALUE;
 
     // nodes
     private final DataAccess nodes;
@@ -428,8 +425,16 @@ class BaseGraphNodesAndEdges implements EdgeIntAccess {
         edges.setInt(edgePointer + E_LINKB, linkB);
     }
 
-    public void setDist(long edgePointer, double distance) {
-        edges.setInt(edgePointer + E_DIST, distToInt(distance));
+    public int getDistMM(long pointer) {
+        return edges.getInt(pointer + E_DIST);
+    }
+
+    public void setDistMM(long pointer, int distanceMM) {
+        if (distanceMM < 0)
+            throw new IllegalArgumentException("distances must be non-negative, got: " + distanceMM);
+        if (distanceMM > MAX_DIST_MM)
+            throw new IllegalArgumentException("distances must not exceed " + MAX_DIST_MM + "mm, got: " + distanceMM);
+        edges.setInt(pointer + E_DIST, distanceMM);
     }
 
     public void setGeoRef(long edgePointer, long geoRef) {
@@ -460,12 +465,6 @@ class BaseGraphNodesAndEdges implements EdgeIntAccess {
 
     public int getLinkB(long edgePointer) {
         return edges.getInt(edgePointer + E_LINKB);
-    }
-
-    public double getDist(long pointer) {
-        int val = edges.getInt(pointer + E_DIST);
-        // do never return infinity even if INT MAX, see #435
-        return val / INT_DIST_FACTOR;
     }
 
     public long getGeoRef(long edgePointer) {
@@ -530,7 +529,7 @@ class BaseGraphNodesAndEdges implements EdgeIntAccess {
     public void debugPrint() {
         final int printMax = 100;
         System.out.println("nodes:");
-        String formatNodes = "%12s | %12s | %12s | %12s | %12s | %12s\n";
+        String formatNodes = "%12s | %12s | %12s | %12s | %12s | %15s\n";
         System.out.format(Locale.ROOT, formatNodes, "#", "N_EDGE_REF", "N_LAT", "N_LON", "N_ELE", "N_TC");
         for (int i = 0; i < Math.min(nodeCount, printMax); ++i) {
             long nodePointer = toNodePointer(i);
@@ -540,7 +539,7 @@ class BaseGraphNodesAndEdges implements EdgeIntAccess {
             System.out.format(Locale.ROOT, " ... %d more nodes\n", nodeCount - printMax);
         }
         System.out.println("edges:");
-        String formatEdges = "%12s | %12s | %12s | %12s | %12s | %12s | %12s \n";
+        String formatEdges = "%12s | %12s | %12s | %12s | %12s | %12s | %15s \n";
         System.out.format(Locale.ROOT, formatEdges, "#", "E_NODEA", "E_NODEB", "E_LINKA", "E_LINKB", "E_FLAGS", "E_DIST");
         IntsRef edgeFlags = createEdgeFlags();
         for (int i = 0; i < Math.min(edgeCount, printMax); ++i) {
@@ -552,23 +551,13 @@ class BaseGraphNodesAndEdges implements EdgeIntAccess {
                     getLinkA(edgePointer),
                     getLinkB(edgePointer),
                     edgeFlags,
-                    getDist(edgePointer));
+                    getDistMM(edgePointer));
         }
         if (edgeCount > printMax) {
             System.out.printf(Locale.ROOT, " ... %d more edges", edgeCount - printMax);
         }
     }
 
-    private int distToInt(double distance) {
-        if (distance < 0)
-            throw new IllegalArgumentException("Distance cannot be negative: " + distance);
-        if (distance > MAX_DIST) {
-            distance = MAX_DIST;
-        }
-        int intDist = (int) Math.round(distance * INT_DIST_FACTOR);
-        assert intDist >= 0 : "distance out of range";
-        return intDist;
-    }
 
     public String toDetailsString() {
         return "edges: " + nf(edgeCount) + "(" + edges.getCapacity() / Helper.MB + "MB), "

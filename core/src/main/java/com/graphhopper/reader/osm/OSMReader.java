@@ -341,7 +341,7 @@ public class OSMReader {
             distance = 0.001;
         }
 
-        double maxDistance = (Integer.MAX_VALUE - 1) / 1000d;
+        double maxDistance = BaseGraph.MAX_DIST_METERS;
         if (Double.isNaN(distance)) {
             LOGGER.warn("Bug in OSM or GraphHopper (" + bugCounter++ + "). Illegal tower node distance " + distance + " reset to 1m, osm way " + way.getId());
             distance = 1;

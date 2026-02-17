@@ -111,6 +111,16 @@ class VirtualEdgeIterator implements EdgeIterator {
     }
 
     @Override
+    public double getDistanceMM() {
+        return getCurrentEdge().getDistanceMM();
+    }
+
+    @Override
+    public EdgeIteratorState setDistanceMM(double distMM) {
+        return getCurrentEdge().setDistanceMM(distMM);
+    }
+
+    @Override
     public IntsRef getFlags() {
         return getCurrentEdge().getFlags();
     }

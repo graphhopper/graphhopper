@@ -142,6 +142,17 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
     }
 
     @Override
+    public double getDistanceMM() {
+        return Math.round(distance * 1000);
+    }
+
+    @Override
+    public EdgeIteratorState setDistanceMM(double distMM) {
+        this.distance = distMM / 1000.0;
+        return this;
+    }
+
+    @Override
     public IntsRef getFlags() {
         return edgeFlags;
     }
@@ -360,7 +371,7 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
             // TODO copy pointList (geometry) too
             reverseEdge.setFlags(getFlags());
             reverseEdge.setKeyValues(getKeyValues());
-            reverseEdge.setDistance(getDistance());
+            reverseEdge.setDistanceMM(getDistanceMM());
             return reverseEdge;
         } else {
             return this;
