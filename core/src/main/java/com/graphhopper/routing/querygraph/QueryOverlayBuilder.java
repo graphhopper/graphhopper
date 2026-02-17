@@ -208,8 +208,6 @@ class QueryOverlayBuilder {
                             fullPL.get(fullPL.size() - 1), fullPL.size() - 2,
                             fullPL, closestEdge, virtNodeId - 1, adjNode);
 
-                // todonow: should we really adjust distances even when addedEdges=false? then again addedEdges is never false in any of our tests?!
-                //          when is it even supposed to be false?
                 adjustDistances(virtualEdgesFwdForSnap, closestEdge.getDistance_mm());
                 adjustDistances(virtualEdgesBwdForSnap, closestEdge.getDistance_mm());
 
@@ -221,7 +219,10 @@ class QueryOverlayBuilder {
     private void adjustDistances(List<VirtualEdgeIteratorState> virtualEdges, long originalDistance) {
         // the sum of virtual edge distances can differ from the distance of the original edge:
         // - we use dist_plane instead of dist_earth in OSMReader (not entirely sure why)
-        // - virtual edge distances include numeric errors 
+        // - virtual edge distances include numeric errors (regardless of the dist calc)
+        if (virtualEdges.isEmpty())
+            // early exit & prevent division by zero below
+            return;
         long sum = 0;
         for (VirtualEdgeIteratorState v : virtualEdges)
             sum += v.getDistance_mm();
