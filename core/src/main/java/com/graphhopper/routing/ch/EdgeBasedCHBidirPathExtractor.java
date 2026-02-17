@@ -60,7 +60,7 @@ public class EdgeBasedCHBidirPathExtractor extends DefaultBidirPathExtractor {
 
     private ShortcutUnpacker createShortcutUnpacker() {
         return new ShortcutUnpacker(routingGraph, (edge, reverse, prevOrNextEdgeId) -> {
-            path.addDistance(edge.getDistance());
+            path.addDistanceMM(edge.getDistanceMM());
             path.addTime(GHUtility.calcMillisWithTurnMillis(weighting, edge, reverse, prevOrNextEdgeId));
             path.addEdge(edge.getEdge());
         }, true);

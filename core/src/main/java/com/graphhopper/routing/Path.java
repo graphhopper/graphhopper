@@ -43,7 +43,7 @@ public class Path {
     final Graph graph;
     private final NodeAccess nodeAccess;
     private double weight = Double.MAX_VALUE;
-    private double distance;
+    private double distanceMM;
     private long time;
     private IntArrayList edgeIds = new IntArrayList();
     private int fromNode = -1;
@@ -125,13 +125,8 @@ public class Path {
         return this;
     }
 
-    public Path setDistance(double distance) {
-        this.distance = distance;
-        return this;
-    }
-
-    public Path addDistance(double distance) {
-        this.distance += distance;
+    public Path addDistanceMM(double distanceMM) {
+        this.distanceMM += distanceMM;
         return this;
     }
 
@@ -139,7 +134,11 @@ public class Path {
      * @return distance in meter
      */
     public double getDistance() {
-        return distance;
+        return distanceMM / 1000.0;
+    }
+
+    public double getDistanceMM() {
+        return distanceMM;
     }
 
     /**
@@ -300,7 +299,7 @@ public class Path {
 
     @Override
     public String toString() {
-        return "found: " + found + ", weight: " + weight + ", time: " + time + ", distance: " + distance + ", edges: " + edgeIds.size();
+        return "found: " + found + ", weight: " + weight + ", time: " + time + ", distance: " + distanceMM + ", edges: " + edgeIds.size();
     }
 
     /**

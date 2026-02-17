@@ -257,7 +257,7 @@ public class AlternativeRouteEdgeCH extends DijkstraBidirectionEdgeCHNoSOD {
         EdgeIteratorState vuEdgeState = graph.getEdgeIteratorState(uvEdge, uvtPath.getFromNode());
         path.setEndNode(uvtPath.getEndNode());
         path.setWeight(suvPath.getWeight() + uvtPath.getWeight() - weighting.calcEdgeWeight(vuEdgeState, true));
-        path.setDistance(suvPath.getDistance() + uvtPath.getDistance() - vuEdgeState.getDistance());
+        path.addDistanceMM(suvPath.getDistanceMM() + uvtPath.getDistanceMM() - vuEdgeState.getDistanceMM());
         path.addTime(suvPath.getTime() + uvtPath.getTime() - weighting.calcEdgeMillis(vuEdgeState, true));
         path.setFound(true);
         return path;
