@@ -102,7 +102,7 @@ public class RandomGraph {
         private LongArrayList generateKnnEdges(Random rnd, int n, double[] lats, double[] lons) {
             record Pair(int j, double d) {
             }
-            var edges = new LongHashSet();
+            var edges = new LongScatterSet();
             for (int i = 0; i < n; i++) {
                 int ki = kMin + rnd.nextInt(kMax - kMin + 1);
                 var list = new ArrayList<Pair>();
@@ -197,7 +197,7 @@ public class RandomGraph {
             visited[center] = true;
             var queue = new ArrayDeque<Integer>();
             queue.add(center);
-            LongSet treeEdges = new LongHashSet();
+            LongSet treeEdges = new LongScatterSet();
             while (!queue.isEmpty()) {
                 int cur = queue.poll();
                 for (int nb : adjNodes.getOrDefault(cur, List.of())) {
