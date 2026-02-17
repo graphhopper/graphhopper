@@ -239,9 +239,7 @@ class QueryOverlayBuilder {
         sum = 0;
         for (VirtualEdgeIteratorState v : virtualEdges)
             sum += v.getDistance_mm();
-        // todonow: maybe be a bit less defensive first
-        if (sum != originalDistance)
-            throw new IllegalStateException("Virtual edge distance sum does not match original distance, even after adjustment");
+        assert sum == originalDistance : "Virtual edge distance sum does not match original distance, even after adjustment";
     }
 
     private void createEdges(int origEdgeKey, int origRevEdgeKey,
