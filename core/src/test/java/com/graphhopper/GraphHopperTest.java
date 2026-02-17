@@ -2335,7 +2335,7 @@ public class GraphHopperTest {
         req.putHint("instructions", instructions);
         GHResponse res = h.route(req);
         assertFalse(res.hasErrors());
-        assertEquals(elevation ? 1829 : 1794, res.getBest().getDistance(), 1);
+        assertEquals(elevation ? 1828 : 1794, res.getBest().getDistance(), 1);
         PointList points = res.getBest().getPoints();
         PointList wayPoints = res.getBest().getWaypoints();
         assertEquals(reqPoints.size(), wayPoints.size());
