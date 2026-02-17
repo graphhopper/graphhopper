@@ -283,7 +283,7 @@ public class BaseGraph implements Graph, Closeable {
         store.writeFlags(edgePointer, from.getFlags());
 
         // copy the rest with higher level API
-        to.setDistanceMM(from.getDistanceMM()).
+        to.setDistance_mm(from.getDistance_mm()).
                 setKeyValues(from.getKeyValues()).
                 setWayGeometry(from.fetchWayGeometry(FetchMode.PILLAR_ONLY));
 
@@ -324,7 +324,7 @@ public class BaseGraph implements Graph, Closeable {
         EdgeIteratorStateImpl edgeState = (EdgeIteratorStateImpl) getEdgeIteratorState(edge, Integer.MIN_VALUE);
         EdgeIteratorStateImpl newEdge = (EdgeIteratorStateImpl) edge(edgeState.getBaseNode(), edgeState.getAdjNode())
                 .setFlags(edgeState.getFlags())
-                .setDistanceMM(edgeState.getDistanceMM())
+                .setDistance_mm(edgeState.getDistance_mm())
                 .setKeyValues(edgeState.getKeyValues());
         if (reuseGeometry) {
             // We use the same geo ref for the copied edge. This saves memory because we are not duplicating
@@ -836,8 +836,8 @@ public class BaseGraph implements Graph, Closeable {
 
         @Override
         public double getDistance() {
-            // never return infinity even if distMM is INT MAX, see #435
-            return getDistanceMM() / 1000.0;
+            // never return infinity even if dist_mm is INT MAX, see #435
+            return getDistance_mm() / 1000.0;
         }
 
         @Override
@@ -848,8 +848,8 @@ public class BaseGraph implements Graph, Closeable {
             if (dist > MAX_DIST_METERS)
                 dist = MAX_DIST_METERS;
             // distances below 0.5mm are rounded down to zero
-            long distMM = Math.round(dist * 1000);
-            setDistanceMM(distMM);
+            long dist_mm = Math.round(dist * 1000);
+            setDistance_mm(dist_mm);
             return this;
         }
 
@@ -858,19 +858,19 @@ public class BaseGraph implements Graph, Closeable {
          * up to 2^53, so summing mm values is lossless.
          */
         @Override
-        public double getDistanceMM() {
-            return store.getDistMM(edgePointer);
+        public double getDistance_mm() {
+            return store.getDist_mm(edgePointer);
         }
 
         @Override
-        public EdgeIteratorState setDistanceMM(double distMM) {
-            if (distMM < 0)
-                throw new IllegalArgumentException("distances must be non-negative, got: " + distMM);
-            if (distMM % 1 != 0)
-                throw new IllegalArgumentException("distances must be given in whole-number doubles, got: " + distMM);
-            if (distMM > BaseGraphNodesAndEdges.MAX_DIST_MM)
-                distMM = BaseGraphNodesAndEdges.MAX_DIST_MM;
-            store.setDistMM(edgePointer, (int) distMM);
+        public EdgeIteratorState setDistance_mm(double distance_mm) {
+            if (distance_mm < 0)
+                throw new IllegalArgumentException("distances must be non-negative, got: " + distance_mm);
+            if (distance_mm % 1 != 0)
+                throw new IllegalArgumentException("distances must be given in whole-number doubles, got: " + distance_mm);
+            if (distance_mm > BaseGraphNodesAndEdges.MAX_DIST_MM)
+                distance_mm = BaseGraphNodesAndEdges.MAX_DIST_MM;
+            store.setDist_mm(edgePointer, (int) distance_mm);
             return this;
         }
 

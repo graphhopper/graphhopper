@@ -210,8 +210,8 @@ class QueryOverlayBuilder {
 
                 // todonow: should we really adjust distances even when addedEdges=false? then again addedEdges is never false in any of our tests?!
                 //          when is it even supposed to be false?
-                adjustDistances(virtualEdgesFwdForSnap, closestEdge.getDistanceMM());
-                adjustDistances(virtualEdgesBwdForSnap, closestEdge.getDistanceMM());
+                adjustDistances(virtualEdgesFwdForSnap, closestEdge.getDistance_mm());
+                adjustDistances(virtualEdgesBwdForSnap, closestEdge.getDistance_mm());
 
                 return true;
             }
@@ -221,7 +221,7 @@ class QueryOverlayBuilder {
     private void adjustDistances(List<VirtualEdgeIteratorState> virtualEdges, double fullDistance) {
         double sum = 0;
         for (VirtualEdgeIteratorState v : virtualEdges)
-            sum += v.getDistanceMM();
+            sum += v.getDistance_mm();
         double difference = fullDistance - sum;
         int units = (int) Math.round(difference);
         int baseIncrement = units / virtualEdges.size();
@@ -229,13 +229,13 @@ class QueryOverlayBuilder {
         for (int i = 0; i < virtualEdges.size(); i++) {
             VirtualEdgeIteratorState v = virtualEdges.get(i);
             int adjustment = baseIncrement + (i < Math.abs(remainder) ? Integer.signum(remainder) : 0);
-            v.setDistanceMM(v.getDistanceMM() + adjustment);
+            v.setDistance_mm(v.getDistance_mm() + adjustment);
         }
 
         // verify
         sum = 0;
         for (VirtualEdgeIteratorState v : virtualEdges)
-            sum += v.getDistanceMM();
+            sum += v.getDistance_mm();
         if (sum != fullDistance)
             throw new IllegalStateException();
     }

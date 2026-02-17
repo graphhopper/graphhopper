@@ -425,16 +425,16 @@ class BaseGraphNodesAndEdges implements EdgeIntAccess {
         edges.setInt(edgePointer + E_LINKB, linkB);
     }
 
-    public int getDistMM(long pointer) {
+    public int getDist_mm(long pointer) {
         return edges.getInt(pointer + E_DIST);
     }
 
-    public void setDistMM(long pointer, int distanceMM) {
-        if (distanceMM < 0)
-            throw new IllegalArgumentException("distances must be non-negative, got: " + distanceMM);
-        if (distanceMM > MAX_DIST_MM)
-            throw new IllegalArgumentException("distances must not exceed " + MAX_DIST_MM + "mm, got: " + distanceMM);
-        edges.setInt(pointer + E_DIST, distanceMM);
+    public void setDist_mm(long pointer, int distance_mm) {
+        if (distance_mm < 0)
+            throw new IllegalArgumentException("distances must be non-negative, got: " + distance_mm);
+        if (distance_mm > MAX_DIST_MM)
+            throw new IllegalArgumentException("distances must not exceed " + MAX_DIST_MM + "mm, got: " + distance_mm);
+        edges.setInt(pointer + E_DIST, distance_mm);
     }
 
     public void setGeoRef(long edgePointer, long geoRef) {
@@ -551,7 +551,7 @@ class BaseGraphNodesAndEdges implements EdgeIntAccess {
                     getLinkA(edgePointer),
                     getLinkB(edgePointer),
                     edgeFlags,
-                    getDistMM(edgePointer));
+                    getDist_mm(edgePointer));
         }
         if (edgeCount > printMax) {
             System.out.printf(Locale.ROOT, " ... %d more edges", edgeCount - printMax);

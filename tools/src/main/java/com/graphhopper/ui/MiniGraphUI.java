@@ -392,7 +392,7 @@ public class MiniGraphUI {
             prevLat = lat;
             prevLon = lon;
         }
-        logger.info("dist:" + tmpPath.getDistanceMM() + "mm, path points(" + list.size() + ")");
+        logger.info("dist:" + tmpPath.getDistance_mm() + "mm, path points(" + list.size() + ")");
         return tmpPath;
     }
 

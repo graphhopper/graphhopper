@@ -131,57 +131,57 @@ public abstract class AbstractGraphStorageTester {
     }
 
     @Test
-    public void testGetSetDistanceMM() {
+    public void testGetSetDistance_mm() {
         graph = createGHStorage();
 
-        // basic round-trip: setDistanceMM -> getDistanceMM is lossless
-        EdgeIteratorState edge = graph.edge(0, 1).setDistanceMM(123456);
-        assertEquals(123456, edge.getDistanceMM());
+        // basic round-trip: setDistance_mm -> getDistance_mm is lossless
+        EdgeIteratorState edge = graph.edge(0, 1).setDistance_mm(123456);
+        assertEquals(123456, edge.getDistance_mm());
         // getDistance returns meters
         assertEquals(123.456, edge.getDistance(), 1e-9);
 
         // zero distance
-        edge.setDistanceMM(0);
-        assertEquals(0, edge.getDistanceMM());
+        edge.setDistance_mm(0);
+        assertEquals(0, edge.getDistance_mm());
         assertEquals(0, edge.getDistance(), 1e-9);
 
         // single millimeter
-        edge.setDistanceMM(1);
-        assertEquals(1, edge.getDistanceMM());
+        edge.setDistance_mm(1);
+        assertEquals(1, edge.getDistance_mm());
         assertEquals(0.001, edge.getDistance(), 1e-9);
 
-        // setDistance -> getDistanceMM should give the rounded mm value
+        // setDistance -> getDistance_mm should give the rounded mm value
         edge.setDistance(1.2345);
         // 1.2345 * 1000 = 1234.5 -> rounds to 1235
-        assertEquals(1235, edge.getDistanceMM());
+        assertEquals(1235, edge.getDistance_mm());
         assertEquals(1.235, edge.getDistance(), 1e-9);
 
-        // setDistanceMM -> setDistanceMM copy is lossless (the whole point of the API)
+        // setDistance_mm -> setDistance_mm copy is lossless (the whole point of the API)
         EdgeIteratorState edge2 = graph.edge(0, 2);
-        edge2.setDistanceMM(edge.getDistanceMM());
-        assertEquals(edge.getDistanceMM(), edge2.getDistanceMM());
+        edge2.setDistance_mm(edge.getDistance_mm());
+        assertEquals(edge.getDistance_mm(), edge2.getDistance_mm());
         assertEquals(edge.getDistance(), edge2.getDistance(), 1e-9);
     }
 
     @Test
-    public void testDistanceMMCapping() {
+    public void testDistance_mmCapping() {
         graph = createGHStorage();
 
         // distances at MAX_DIST_MM are stored exactly
-        EdgeIteratorState edge = graph.edge(0, 1).setDistanceMM(BaseGraphNodesAndEdges.MAX_DIST_MM);
-        assertEquals(BaseGraphNodesAndEdges.MAX_DIST_MM, edge.getDistanceMM());
+        EdgeIteratorState edge = graph.edge(0, 1).setDistance_mm(BaseGraphNodesAndEdges.MAX_DIST_MM);
+        assertEquals(BaseGraphNodesAndEdges.MAX_DIST_MM, edge.getDistance_mm());
 
         // values larger than MAX_DIST_MM are capped
-        EdgeIteratorState edge2 = graph.edge(0, 2).setDistanceMM(BaseGraphNodesAndEdges.MAX_DIST_MM + 1);
-        assertEquals(BaseGraphNodesAndEdges.MAX_DIST_MM, edge2.getDistanceMM());
+        EdgeIteratorState edge2 = graph.edge(0, 2).setDistance_mm(BaseGraphNodesAndEdges.MAX_DIST_MM + 1);
+        assertEquals(BaseGraphNodesAndEdges.MAX_DIST_MM, edge2.getDistance_mm());
     }
 
     @Test
-    public void testDistanceMMArguments() {
+    public void testDistance_mmArguments() {
         graph = createGHStorage();
         EdgeIteratorState edge = graph.edge(0, 1);
-        assertThrows(IllegalArgumentException.class, () -> edge.setDistanceMM(-1));
-        assertThrows(IllegalArgumentException.class, () -> edge.setDistanceMM(1.5));
+        assertThrows(IllegalArgumentException.class, () -> edge.setDistance_mm(-1));
+        assertThrows(IllegalArgumentException.class, () -> edge.setDistance_mm(1.5));
     }
 
     @Test

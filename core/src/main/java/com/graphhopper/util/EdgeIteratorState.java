@@ -163,9 +163,9 @@ public interface EdgeIteratorState {
      * @return the distance of the current edge in millimeters as a whole-number double.
      * Whole-number doubles are exact up to 2^53, so summing mm values is lossless.
      */
-    double getDistanceMM();
+    double getDistance_mm();
 
-    EdgeIteratorState setDistanceMM(double distMM);
+    EdgeIteratorState setDistance_mm(double distance_mm);
 
     /**
      * Returns edge properties stored in direction of the raw database layout. So do not use it directly, instead
