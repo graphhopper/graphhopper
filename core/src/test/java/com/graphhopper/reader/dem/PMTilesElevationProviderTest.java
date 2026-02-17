@@ -17,6 +17,8 @@
  */
 package com.graphhopper.reader.dem;
 
+import com.graphhopper.storage.DAType;
+import com.graphhopper.storage.GHDirectory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
@@ -93,38 +95,41 @@ public class PMTilesElevationProviderTest {
     @Test
     public void testRealPMTilesWithZoom10() {
         instance = new PMTilesElevationProvider("./files/near-badschandau-z10-11.pmtiles",
-                PMTilesElevationProvider.TerrainEncoding.TERRARIUM, false, 10, 1024);
+                PMTilesElevationProvider.TerrainEncoding.TERRARIUM, false, 10,
+                new GHDirectory("", DAType.RAM));
 
         // Elbe
-        assertEquals(118, instance.getEle(50.905488,14.204129), 1);
+        assertEquals(118, instance.getEle(50.905488, 14.204129), 1);
 
         // Schrammsteine
-        assertEquals(384, instance.getEle(50.912142,14.2076), 1);
+        assertEquals(384, instance.getEle(50.912142, 14.2076), 1);
         // Very close but on the path
-        assertEquals(377, instance.getEle(50.911849,14.208042), 1);
-        assertEquals(384, instance.getEle(50.9119,14.207466), 1);
+        assertEquals(377, instance.getEle(50.911849, 14.208042), 1);
+        assertEquals(384, instance.getEle(50.9119, 14.207466), 1);
     }
 
     // called pmtiles with --bbox=14.203657,50.905387,14.208871,50.912341 --minzoom=10 --maxzoom=11
     @Test
     public void testRealPMTilesWithZoom11() {
         instance = new PMTilesElevationProvider("./files/near-badschandau-z10-11.pmtiles",
-                PMTilesElevationProvider.TerrainEncoding.TERRARIUM, false, 11, 1024);
+                PMTilesElevationProvider.TerrainEncoding.TERRARIUM, false, 11,
+                new GHDirectory("", DAType.RAM));
 
         // Elbe
-        assertEquals(118, instance.getEle(50.905488,14.204129), 1);
+        assertEquals(118, instance.getEle(50.905488, 14.204129), 1);
 
         // Schrammsteine
-        assertEquals(390, instance.getEle(50.912142,14.2076), 1);
+        assertEquals(390, instance.getEle(50.912142, 14.2076), 1);
         // Very close but on the path
-        assertEquals(381, instance.getEle(50.911849,14.208042), 1);
-        assertEquals(361, instance.getEle(50.9119,14.207466), 1);
+        assertEquals(381, instance.getEle(50.911849, 14.208042), 1);
+        assertEquals(361, instance.getEle(50.9119, 14.207466), 1);
     }
 
     @Test
     public void testOutsideArea() {
         instance = new PMTilesElevationProvider("./files/near-badschandau-z10-11.pmtiles",
-                PMTilesElevationProvider.TerrainEncoding.MAPBOX, false, 10, 1024);
+                PMTilesElevationProvider.TerrainEncoding.MAPBOX, false, 10,
+                new GHDirectory("", DAType.RAM));
 
         // Point far outside the extract — should return NaN
         double ele = instance.getEle(0, 0);

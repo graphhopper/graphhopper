@@ -726,13 +726,11 @@ public class GraphHopper {
             elevationProvider = new MultiSource3ElevationProvider(cacheDirStr);
         } else if (eleProviderStr.equalsIgnoreCase("pmtiles")) {
             int zoom = ghConfig.getInt("graph.elevation.pmtiles.zoom", -1);
-            int tileCacheSize = ghConfig.getInt("graph.elevation.pmtiles.tile_cache_size", 8 * 1024);
             String terrainEncoding = ghConfig.getString("graph.elevation.pmtiles.terrain_encoding", "terrarium");
-            // cacheDir not used
             elevationProvider = new PMTilesElevationProvider(
                     ghConfig.getString("graph.elevation.pmfiles.location", "/tmp/planet.pmtiles"),
                     PMTilesElevationProvider.TerrainEncoding.valueOf(terrainEncoding.toUpperCase(Locale.ROOT)),
-                    interpolate, zoom, tileCacheSize);
+                    interpolate, zoom, cacheDirStr);
         }
 
         if (elevationProvider instanceof TileBasedElevationProvider) {

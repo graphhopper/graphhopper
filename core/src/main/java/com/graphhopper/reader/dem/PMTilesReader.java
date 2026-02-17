@@ -49,14 +49,18 @@ class PMTilesReader implements Closeable {
         try {
             if (channel != null) channel.close();
             if (raf != null) raf.close();
-        } catch (IOException ignored) {}
+        } catch (IOException ignored) {
+        }
     }
 
     void checkWebPSupport() throws IOException {
         if (header.tileType == 4) {
             boolean hasWebP = false;
             for (String f : ImageIO.getReaderFormatNames())
-                if (f.equalsIgnoreCase("webp")) { hasWebP = true; break; }
+                if (f.equalsIgnoreCase("webp")) {
+                    hasWebP = true;
+                    break;
+                }
             if (!hasWebP) throw new IOException(
                     "PMTiles contains WebP tiles but no WebP ImageIO plugin found. " +
                             "Add com.github.usefulness:webp-imageio:0.10.2 to your classpath.");
@@ -132,8 +136,13 @@ class PMTilesReader implements Closeable {
             long ry = (y & s) > 0 ? 1 : 0;
             d += s * (long) s * ((3 * rx) ^ ry);
             if (ry == 0) {
-                if (rx == 1) { x = s - 1 - x; y = s - 1 - y; }
-                long t = x; x = y; y = t;
+                if (rx == 1) {
+                    x = s - 1 - x;
+                    y = s - 1 - y;
+                }
+                long t = x;
+                x = y;
+                y = t;
             }
         }
         return d;
@@ -145,8 +154,13 @@ class PMTilesReader implements Closeable {
             long rx = (d / 2) & 1;
             long ry = (d ^ rx) & 1;
             if (ry == 0) {
-                if (rx == 1) { x = s - 1 - x; y = s - 1 - y; }
-                long t = x; x = y; y = t;
+                if (rx == 1) {
+                    x = s - 1 - x;
+                    y = s - 1 - y;
+                }
+                long t = x;
+                x = y;
+                y = t;
             }
             x += s * rx;
             y += s * ry;
@@ -173,10 +187,14 @@ class PMTilesReader implements Closeable {
         if (h.version != 3)
             throw new IOException("Only PMTiles v3 supported, got v" + h.version);
 
-        h.rootDirOffset = bb.getLong();   h.rootDirLength = bb.getLong();
-        h.metadataOffset = bb.getLong();  h.metadataLength = bb.getLong();
-        h.leafDirsOffset = bb.getLong();  h.leafDirsLength = bb.getLong();
-        h.tileDataOffset = bb.getLong();  h.tileDataLength = bb.getLong();
+        h.rootDirOffset = bb.getLong();
+        h.rootDirLength = bb.getLong();
+        h.metadataOffset = bb.getLong();
+        h.metadataLength = bb.getLong();
+        h.leafDirsOffset = bb.getLong();
+        h.leafDirsLength = bb.getLong();
+        h.tileDataOffset = bb.getLong();
+        h.tileDataLength = bb.getLong();
         h.numAddressedTiles = bb.getLong();
         h.numTileEntries = bb.getLong();
         h.numTileContents = bb.getLong();
@@ -187,8 +205,10 @@ class PMTilesReader implements Closeable {
         h.tileType = bb.get() & 0xFF;
         h.minZoom = bb.get() & 0xFF;
         h.maxZoom = bb.get() & 0xFF;
-        h.minLonE7 = bb.getInt();  h.minLatE7 = bb.getInt();
-        h.maxLonE7 = bb.getInt();  h.maxLatE7 = bb.getInt();
+        h.minLonE7 = bb.getInt();
+        h.minLatE7 = bb.getInt();
+        h.maxLonE7 = bb.getInt();
+        h.maxLatE7 = bb.getInt();
         h.centerZoom = bb.get() & 0xFF;
         h.centerLonE7 = bb.getInt();
         h.centerLatE7 = bb.getInt();
@@ -210,7 +230,9 @@ class PMTilesReader implements Closeable {
     private List<DirEntry> readDirectory(long offset, long length) throws IOException {
         byte[] raw = readBytes(offset, (int) length);
         if (header.internalCompression == COMPRESS_GZIP) {
-            try { raw = gunzip(raw); } catch (IOException e) { /* try as-is */ }
+            try {
+                raw = gunzip(raw);
+            } catch (IOException e) { /* try as-is */ }
         }
         return deserializeEntries(raw);
     }
@@ -222,7 +244,10 @@ class PMTilesReader implements Closeable {
 
         long[] tileIds = new long[numEntries];
         long lastId = 0;
-        for (int i = 0; i < numEntries; i++) { lastId += readVarint(data, pos); tileIds[i] = lastId; }
+        for (int i = 0; i < numEntries; i++) {
+            lastId += readVarint(data, pos);
+            tileIds[i] = lastId;
+        }
 
         long[] runLengths = new long[numEntries];
         for (int i = 0; i < numEntries; i++) runLengths[i] = readVarint(data, pos);
@@ -300,9 +325,12 @@ class PMTilesReader implements Closeable {
 
     static class DirEntry {
         final long tileId, runLength, offset, length;
+
         DirEntry(long tileId, long runLength, long offset, long length) {
-            this.tileId = tileId; this.runLength = runLength;
-            this.offset = offset; this.length = length;
+            this.tileId = tileId;
+            this.runLength = runLength;
+            this.offset = offset;
+            this.length = length;
         }
     }
 }
