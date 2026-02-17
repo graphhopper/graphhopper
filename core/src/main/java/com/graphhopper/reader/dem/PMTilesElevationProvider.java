@@ -159,25 +159,22 @@ public class PMTilesElevationProvider implements ElevationProvider {
         int w = img.getWidth(), h = img.getHeight();
         if (tileSize == 0) tileSize = w; // record on first decode
 
-        int[] rgbPixels = img.getRGB(0, 0, w, h, null, 0, w);
-        short[] elev = new short[rgbPixels.length];
-        if (encoding == TerrainEncoding.MAPBOX) {
-            for (int i = 0; i < rgbPixels.length; i++) {
-                int px = rgbPixels[i];
-                int r = (px >> 16) & 0xFF;
-                int g = (px >> 8) & 0xFF;
-                int b = px & 0xFF;
-                elev[i] = (short) Math.max(-32768, Math.min(32767,
-                        Math.round(-10000.0 + (r * 65536 + g * 256 + b) * 0.1)));
-            }
-        } else {
-            for (int i = 0; i < rgbPixels.length; i++) {
-                int px = rgbPixels[i];
-                int r = (px >> 16) & 0xFF;
-                int g = (px >> 8) & 0xFF;
-                int b = px & 0xFF;
-                elev[i] = (short) Math.max(-32768, Math.min(32767,
-                        Math.round((r * 256.0 + g + b / 256.0) - 32768.0)));
+        short[] elev = new short[h * w];
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                int rgb = img.getRGB(x, y);
+                int r = (rgb >> 16) & 0xFF;
+                int g = (rgb >> 8) & 0xFF;
+                int b = rgb & 0xFF;
+
+                double e;
+                if (encoding == TerrainEncoding.MAPBOX) {
+                    e = -10000.0 + (r * 65536 + g * 256 + b) * 0.1;
+                } else {
+                    e = (r * 256.0 + g + b / 256.0) - 32768.0;
+                }
+                // Clamp to short range which covers -32768m to +32767m, plenty for Earth
+                elev[y * w + x] = (short) Math.max(-32768, Math.min(32767, Math.round(e)));
             }
         }
         return elev;
