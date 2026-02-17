@@ -218,17 +218,16 @@ class QueryOverlayBuilder {
         });
     }
 
-    private void adjustDistances(List<VirtualEdgeIteratorState> virtualEdges, double fullDistance) {
-        double sum = 0;
+    private void adjustDistances(List<VirtualEdgeIteratorState> virtualEdges, long fullDistance) {
+        long sum = 0;
         for (VirtualEdgeIteratorState v : virtualEdges)
             sum += v.getDistance_mm();
-        double difference = fullDistance - sum;
-        int units = (int) Math.round(difference);
-        int baseIncrement = units / virtualEdges.size();
-        int remainder = units % virtualEdges.size();
+        long difference = fullDistance - sum;
+        long baseIncrement = difference / virtualEdges.size();
+        long remainder = difference % virtualEdges.size();
         for (int i = 0; i < virtualEdges.size(); i++) {
             VirtualEdgeIteratorState v = virtualEdges.get(i);
-            int adjustment = baseIncrement + (i < Math.abs(remainder) ? Integer.signum(remainder) : 0);
+            long adjustment = baseIncrement + (i < Math.abs(remainder) ? Long.signum(remainder) : 0);
             v.setDistance_mm(v.getDistance_mm() + adjustment);
         }
 

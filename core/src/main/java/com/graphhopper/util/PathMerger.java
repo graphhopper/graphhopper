@@ -93,7 +93,7 @@ public class PathMerger {
         int origPoints = 0;
         long fullTimeInMillis = 0;
         double fullWeight = 0;
-        double fullDistance_mm = 0;
+        long fullDistance_mm = 0;
         boolean allFound = true;
 
         InstructionList fullInstructions = new InstructionList(tr);

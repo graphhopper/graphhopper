@@ -43,7 +43,7 @@ public class Path {
     final Graph graph;
     private final NodeAccess nodeAccess;
     private double weight = Double.MAX_VALUE;
-    private double distance_mm;
+    private long distance_mm;
     private long time;
     private IntArrayList edgeIds = new IntArrayList();
     private int fromNode = -1;
@@ -125,7 +125,7 @@ public class Path {
         return this;
     }
 
-    public Path addDistance_mm(double distance_mm) {
+    public Path addDistance_mm(long distance_mm) {
         this.distance_mm += distance_mm;
         return this;
     }
@@ -137,7 +137,7 @@ public class Path {
         return distance_mm / 1000.0;
     }
 
-    public double getDistance_mm() {
+    public long getDistance_mm() {
         return distance_mm;
     }
 

@@ -35,7 +35,11 @@ import static com.graphhopper.util.Helper.nf;
  */
 class BaseGraphNodesAndEdges implements EdgeIntAccess {
     // Distances are stored as 4-byte signed integers representing mm -> max ~2147km
-    static final double MAX_DIST_MM = Integer.MAX_VALUE;
+    // We could quite easily use unsigned 4-byte integers to raise the max to ~4294km,
+    // but if we ever wanted to use 4 instead of 8 bytes to represent (accumulated) distances
+    // downstream, we would either have to lower the limit again, deal with unsigned arithmetic
+    // everywhere, or increase the precision from 1mm to, say, 10mm
+    static final long MAX_DIST_MM = Integer.MAX_VALUE;
 
     // nodes
     private final DataAccess nodes;
@@ -425,16 +429,16 @@ class BaseGraphNodesAndEdges implements EdgeIntAccess {
         edges.setInt(edgePointer + E_LINKB, linkB);
     }
 
-    public int getDist_mm(long pointer) {
+    public long getDist_mm(long pointer) {
         return edges.getInt(pointer + E_DIST);
     }
 
-    public void setDist_mm(long pointer, int distance_mm) {
+    public void setDist_mm(long pointer, long distance_mm) {
         if (distance_mm < 0)
             throw new IllegalArgumentException("distances must be non-negative, got: " + distance_mm);
         if (distance_mm > MAX_DIST_MM)
             throw new IllegalArgumentException("distances must not exceed " + MAX_DIST_MM + "mm, got: " + distance_mm);
-        edges.setInt(pointer + E_DIST, distance_mm);
+        edges.setInt(pointer + E_DIST, (int) distance_mm);
     }
 
     public void setGeoRef(long edgePointer, long geoRef) {

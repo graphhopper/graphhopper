@@ -142,12 +142,12 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
     }
 
     @Override
-    public double getDistance_mm() {
+    public long getDistance_mm() {
         return Math.round(distance * 1000);
     }
 
     @Override
-    public EdgeIteratorState setDistance_mm(double distance_mm) {
+    public EdgeIteratorState setDistance_mm(long distance_mm) {
         this.distance = distance_mm / 1000.0;
         return this;
     }

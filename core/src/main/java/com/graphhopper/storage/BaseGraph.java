@@ -854,23 +854,20 @@ public class BaseGraph implements Graph, Closeable {
         }
 
         /**
-         * Returns the distance in millimeters as a whole-number double. Whole-number doubles are exact
-         * up to 2^53, so summing mm values is lossless.
+         * Returns the distance in millimeters
          */
         @Override
-        public double getDistance_mm() {
+        public long getDistance_mm() {
             return store.getDist_mm(edgePointer);
         }
 
         @Override
-        public EdgeIteratorState setDistance_mm(double distance_mm) {
+        public EdgeIteratorState setDistance_mm(long distance_mm) {
             if (distance_mm < 0)
                 throw new IllegalArgumentException("distances must be non-negative, got: " + distance_mm);
-            if (distance_mm % 1 != 0)
-                throw new IllegalArgumentException("distances must be given in whole-number doubles, got: " + distance_mm);
             if (distance_mm > BaseGraphNodesAndEdges.MAX_DIST_MM)
                 distance_mm = BaseGraphNodesAndEdges.MAX_DIST_MM;
-            store.setDist_mm(edgePointer, (int) distance_mm);
+            store.setDist_mm(edgePointer, distance_mm);
             return this;
         }
 

@@ -164,12 +164,12 @@ class PtGraphAsAdjacencyList implements Graph {
             }
 
             @Override
-            public double getDistance_mm() {
+            public long getDistance_mm() {
                 throw new RuntimeException();
             }
 
             @Override
-            public EdgeIteratorState setDistance_mm(double distance_mm) {
+            public EdgeIteratorState setDistance_mm(long distance_mm) {
                 throw new RuntimeException();
             }
 

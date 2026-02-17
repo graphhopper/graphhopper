@@ -181,7 +181,7 @@ public abstract class AbstractGraphStorageTester {
         graph = createGHStorage();
         EdgeIteratorState edge = graph.edge(0, 1);
         assertThrows(IllegalArgumentException.class, () -> edge.setDistance_mm(-1));
-        assertThrows(IllegalArgumentException.class, () -> edge.setDistance_mm(1.5));
+        assertThrows(IllegalArgumentException.class, () -> edge.setDistance_mm(BaseGraphNodesAndEdges.MAX_DIST_MM + 1L));
     }
 
     @Test
