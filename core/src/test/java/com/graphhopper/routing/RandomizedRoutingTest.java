@@ -18,7 +18,9 @@
 
 package com.graphhopper.routing;
 
+import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
+import com.graphhopper.routing.ch.NodeOrderingProvider;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.lm.*;
@@ -32,9 +34,11 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
+import com.graphhopper.util.BaseGraphVisualizer;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.RandomGraph;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -54,7 +58,9 @@ import static com.graphhopper.routing.util.TraversalMode.NODE_BASED;
 import static com.graphhopper.util.GHUtility.createRandomSnaps;
 import static com.graphhopper.util.Parameters.Algorithms.*;
 import static com.graphhopper.util.Parameters.Routing.ALGORITHM;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.util.Collections;
 
 /**
  * This test compares different routing algorithms with {@link DijkstraBidirectionRef}. Most prominently it uses
@@ -95,7 +101,7 @@ public class RandomizedRoutingTest {
         private final String name;
 
         static FixtureSupplier create(Algo algo, boolean prepareCH, boolean prepareLM, TraversalMode traversalMode) {
-            return new FixtureSupplier(() -> new Fixture(algo, prepareCH, prepareLM, traversalMode), algo.toString());
+            return new FixtureSupplier(() -> new Fixture(algo, prepareCH, prepareLM, traversalMode), algo.toString() + "_" + traversalMode.name());
         }
 
         public FixtureSupplier(Supplier<Fixture> supplier, String name) {
@@ -146,6 +152,10 @@ public class RandomizedRoutingTest {
         }
 
         private void preProcessGraph() {
+            preProcessGraph(null);
+        }
+
+        private void preProcessGraph(NodeOrderingProvider nodeOrderingProvider) {
             graph.freeze();
             weighting = traversalMode.isEdgeBased()
                     ? new SpeedWeighting(speedEnc, turnCostEnc, graph.getTurnCostStorage(), Double.POSITIVE_INFINITY)
@@ -153,6 +163,7 @@ public class RandomizedRoutingTest {
             if (prepareCH) {
                 CHConfig chConfig = traversalMode.isEdgeBased() ? CHConfig.edgeBased("p", weighting) : CHConfig.nodeBased("p", weighting);
                 PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraph(graph, chConfig);
+                pch.useFixedNodeOrdering(nodeOrderingProvider);
                 PrepareContractionHierarchies.Result res = pch.doWork();
                 routingCHGraph = RoutingCHGraphImpl.fromGraph(graph, res.getCHStorage(), res.getCHConfig());
             }
@@ -301,4 +312,40 @@ public class RandomizedRoutingTest {
                 fail(strictViolations.toString());
         }
     }
+
+    @ParameterizedTest
+    @ArgumentsSource(FixtureProvider.class)
+    void distanceViaVirtualNodeIsTheSameAsViaOriginalEdge(FixtureSupplier s) {
+        Fixture f = s.supplier.get();
+        //    2---x (3)
+        //   /     \
+        //  0-------1
+        f.graph.edge(1, 0).set(f.speedEnc, 20, 0);
+        f.graph.edge(2, 1).set(f.speedEnc, 5, 5);
+        f.graph.edge(2, 0).set(f.speedEnc, 10, 15);
+        GHUtility.updateDistancesFor(f.graph, 0, 49.999686, 9.999129);
+        GHUtility.updateDistancesFor(f.graph, 1, 49.999279, 10.000405);
+        GHUtility.updateDistancesFor(f.graph, 2, 50.000728, 9.999568);
+        f.preProcessGraph(NodeOrderingProvider.fromArray(2, 0, 1));
+        LocationIndexTree index = new LocationIndexTree(f.graph, f.graph.getDirectory());
+        index.prepareIndex();
+
+        Snap snap = index.findClosest(50.00024, 9.99985, e -> true);
+        QueryGraph queryGraph = QueryGraph.create(f.graph, Collections.singletonList(snap));
+        Path dijkstra = new Dijkstra(queryGraph, queryGraph.wrapWeighting(f.weighting), f.traversalMode).calcPath(0, 1);
+        Path path = f.createAlgo(queryGraph).calcPath(0, 1);
+
+        assertTrue(dijkstra.isFound() && path.isFound());
+        // Usually we would travel from 2 to 1 via the virtual node 3, but CH takes the shortcut 0-1(via 2) and skips the virtual node
+        assertEquals(IntArrayList.from(0, 2, 3, 1), dijkstra.calcNodes());
+        if (f.prepareCH)
+            assertEquals(IntArrayList.from(0, 2, 1), path.calcNodes());
+        else
+            assertEquals(IntArrayList.from(0, 2, 3, 1), path.calcNodes());
+        // ... but the times/distances/weights should still be the same!
+        assertEquals(dijkstra.getTime(), path.getTime());
+        assertEquals(dijkstra.getDistance(), path.getDistance());
+//        assertEquals(dijkstra.getWeight(), path.getWeight());
+    }
+
 }
