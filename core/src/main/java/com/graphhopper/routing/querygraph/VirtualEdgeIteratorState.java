@@ -137,7 +137,7 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
 
     @Override
     public double getDistance() {
-        return distance_mm * 1000.0;
+        return distance_mm / 1000.0;
     }
 
     @Override
