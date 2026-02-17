@@ -27,6 +27,7 @@ import com.graphhopper.util.PointList;
 
 import java.util.Map;
 
+import static com.graphhopper.storage.BaseGraph.MAX_DIST_METERS;
 import static com.graphhopper.util.Parameters.Details.STREET_NAME;
 
 /**
@@ -41,8 +42,7 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
     private final int baseNode;
     private final int adjNode;
     private final int originalEdgeKey;
-    // todonow: our issue should not be fixed until this is an exact mm value, but let's write a failing test first
-    private double distance;
+    private long distance_mm;
     private IntsRef edgeFlags;
     private EdgeIntAccess edgeIntAccess;
     private Map<String, KVStorage.KValue> keyValues;
@@ -57,7 +57,11 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
         this.edgeKey = edgeKey;
         this.baseNode = baseNode;
         this.adjNode = adjNode;
-        this.distance = distance;
+        if (distance < 0)
+            throw new IllegalArgumentException("distances must be non-negative, got: " + distance);
+        if (distance > MAX_DIST_METERS)
+            distance = MAX_DIST_METERS;
+        this.distance_mm = Math.round(distance * 1000);
         this.edgeFlags = edgeFlags;
         this.edgeIntAccess = new IntsRefEdgeIntAccess(edgeFlags);
         this.keyValues = keyValues;
@@ -133,23 +137,23 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
 
     @Override
     public double getDistance() {
-        return distance;
+        return distance_mm * 1000.0;
     }
 
     @Override
-    public EdgeIteratorState setDistance(double dist) {
-        this.distance = dist;
+    public EdgeIteratorState setDistance(double distance) {
+        this.distance_mm = Math.round(distance * 1000.0);
         return this;
     }
 
     @Override
     public long getDistance_mm() {
-        return Math.round(distance * 1000);
+        return distance_mm;
     }
 
     @Override
     public EdgeIteratorState setDistance_mm(long distance_mm) {
-        this.distance = distance_mm / 1000.0;
+        this.distance_mm = distance_mm;
         return this;
     }
 
