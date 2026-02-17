@@ -41,6 +41,7 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
     private final int baseNode;
     private final int adjNode;
     private final int originalEdgeKey;
+    // todonow: our issue should not be fixed until this is an exact mm value, but let's write a failing test first
     private double distance;
     private IntsRef edgeFlags;
     private EdgeIntAccess edgeIntAccess;

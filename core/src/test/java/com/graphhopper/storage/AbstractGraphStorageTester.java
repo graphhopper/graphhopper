@@ -181,7 +181,12 @@ public abstract class AbstractGraphStorageTester {
         graph = createGHStorage();
         EdgeIteratorState edge = graph.edge(0, 1);
         assertThrows(IllegalArgumentException.class, () -> edge.setDistance_mm(-1));
-        assertThrows(IllegalArgumentException.class, () -> edge.setDistance_mm(BaseGraphNodesAndEdges.MAX_DIST_MM + 1L));
+        // if the distance exceeds the limit it will be capped silently! debatable, but this is what
+        // we've been doing for a long time in setDistance.
+        edge.setDistance_mm(BaseGraphNodesAndEdges.MAX_DIST_MM + 1L);
+        assertEquals(BaseGraphNodesAndEdges.MAX_DIST_MM, edge.getDistance_mm());
+        edge.setDistance(BaseGraph.MAX_DIST_METERS + 1L);
+        assertEquals(BaseGraph.MAX_DIST_METERS, edge.getDistance());
     }
 
     @Test
