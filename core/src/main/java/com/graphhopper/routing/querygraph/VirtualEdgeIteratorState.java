@@ -27,6 +27,7 @@ import com.graphhopper.util.PointList;
 
 import java.util.Map;
 
+import static com.graphhopper.storage.BaseGraph.MAX_DIST_METERS;
 import static com.graphhopper.util.Parameters.Details.STREET_NAME;
 
 /**
@@ -41,7 +42,7 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
     private final int baseNode;
     private final int adjNode;
     private final int originalEdgeKey;
-    private double distance;
+    private long distance_mm;
     private IntsRef edgeFlags;
     private EdgeIntAccess edgeIntAccess;
     private Map<String, KVStorage.KValue> keyValues;
@@ -56,7 +57,7 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
         this.edgeKey = edgeKey;
         this.baseNode = baseNode;
         this.adjNode = adjNode;
-        this.distance = distance;
+        setDistance(distance);
         this.edgeFlags = edgeFlags;
         this.edgeIntAccess = new IntsRefEdgeIntAccess(edgeFlags);
         this.keyValues = keyValues;
@@ -132,12 +133,32 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
 
     @Override
     public double getDistance() {
-        return distance;
+        return distance_mm / 1000.0;
     }
 
     @Override
-    public EdgeIteratorState setDistance(double dist) {
-        this.distance = dist;
+    public EdgeIteratorState setDistance(double distance) {
+        if (distance < 0)
+            throw new IllegalArgumentException("distances must be non-negative, got: " + distance);
+        if (distance > MAX_DIST_METERS)
+            distance = MAX_DIST_METERS;
+        long distance_mm = Math.round(distance * 1000);
+        setDistance_mm(distance_mm);
+        return this;
+    }
+
+    @Override
+    public long getDistance_mm() {
+        return distance_mm;
+    }
+
+    @Override
+    public EdgeIteratorState setDistance_mm(long distance_mm) {
+        if (distance_mm < 0)
+            throw new IllegalArgumentException("distances must be non-negative, got: " + distance_mm);
+        if (distance_mm > Integer.MAX_VALUE)
+            distance_mm = Integer.MAX_VALUE;
+        this.distance_mm = distance_mm;
         return this;
     }
 
@@ -360,7 +381,7 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
             // TODO copy pointList (geometry) too
             reverseEdge.setFlags(getFlags());
             reverseEdge.setKeyValues(getKeyValues());
-            reverseEdge.setDistance(getDistance());
+            reverseEdge.setDistance_mm(getDistance_mm());
             return reverseEdge;
         } else {
             return this;

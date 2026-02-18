@@ -109,7 +109,7 @@ public class PrepareContractionHierarchies {
      * This will speed up CH preparation, but might lead to slower queries.
      */
     public PrepareContractionHierarchies useFixedNodeOrdering(NodeOrderingProvider nodeOrderingProvider) {
-        if (nodeOrderingProvider.getNumNodes() != nodes) {
+        if (nodeOrderingProvider != null && nodeOrderingProvider.getNumNodes() != nodes) {
             throw new IllegalArgumentException(
                     "contraction order size (" + nodeOrderingProvider.getNumNodes() + ")" +
                             " must be equal to number of nodes in graph (" + nodes + ").");

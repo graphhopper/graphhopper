@@ -164,6 +164,16 @@ class PtGraphAsAdjacencyList implements Graph {
             }
 
             @Override
+            public long getDistance_mm() {
+                throw new RuntimeException();
+            }
+
+            @Override
+            public EdgeIteratorState setDistance_mm(long distance_mm) {
+                throw new RuntimeException();
+            }
+
+            @Override
             public IntsRef getFlags() {
                 throw new RuntimeException();
             }

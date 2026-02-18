@@ -1,5 +1,13 @@
 package com.graphhopper.util;
 
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.util.AllEdgesIterator;
+import com.graphhopper.routing.weighting.SpeedWeighting;
+import com.graphhopper.storage.BaseGraph;
+import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.util.shapes.BBox;
+
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
@@ -7,13 +15,6 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
-import javax.swing.*;
-
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.util.AllEdgesIterator;
-import com.graphhopper.storage.BaseGraph;
-import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.shapes.BBox;
 
 public class BaseGraphVisualizer {
 
@@ -68,12 +69,16 @@ public class BaseGraphVisualizer {
         private int hoveredAdjNode = -1;
         private int mouseX, mouseY;
         private final Set<Integer> clickedEdges = new HashSet<>();
-        private double sumDist, sumFwdTime;
+        private final SpeedWeighting speedWeighting;
+        private long sumDist;
+        private long sumFwdTime;
+        private double sumFwdWeight;
 
         GraphPanel(BaseGraph graph, DecimalEncodedValue speedEnc) {
             this.graph = graph;
             this.na = graph.getNodeAccess();
             this.speedEnc = speedEnc;
+            this.speedWeighting = speedEnc != null ? new SpeedWeighting(speedEnc) : null;
             setPreferredSize(new Dimension(W, H));
             setBackground(new Color(20, 20, 30));
             this.bounds = computeBounds();
@@ -92,10 +97,10 @@ public class BaseGraphVisualizer {
                     if (e.isShiftDown() && SwingUtilities.isLeftMouseButton(e) && hoveredEdge >= 0) {
                         if (clickedEdges.add(hoveredEdge)) {
                             EdgeIteratorState edge = graph.getEdgeIteratorState(hoveredEdge, hoveredAdjNode);
-                            sumDist += edge.getDistance();
+                            sumDist += edge.getDistance_mm();
                             if (speedEnc != null) {
-                                double speed = edge.get(speedEnc);
-                                if (speed > 0) sumFwdTime += edge.getDistance() / speed;
+                                sumFwdTime += speedWeighting.calcEdgeMillis(edge, false);
+                                sumFwdWeight += speedWeighting.calcEdgeWeight(edge, false);
                             }
                             repaint();
                         }
@@ -104,6 +109,7 @@ public class BaseGraphVisualizer {
                         clickedEdges.clear();
                         sumDist = 0;
                         sumFwdTime = 0;
+                        sumFwdWeight = 0;
                         repaint();
                     }
                 }
@@ -113,12 +119,13 @@ public class BaseGraphVisualizer {
         private String computeStats() {
             String stats = graph.getNodes() + " nodes \u00b7 " + graph.getEdges() + " edges";
             if (graph.getEdges() > 0) {
-                double minDist = Double.MAX_VALUE, maxDist = 0;
-                double minSpeed = Double.MAX_VALUE, maxSpeed = 0;
-                double minTime = Double.MAX_VALUE, maxTime = 0;
+                long minDist = Long.MAX_VALUE, maxDist = Long.MIN_VALUE;
+                double minSpeed = Double.MAX_VALUE, maxSpeed = Double.MIN_VALUE;
+                long minTime = Long.MAX_VALUE, maxTime = Long.MIN_VALUE;
+                double minWeight = Double.MAX_VALUE, maxWeight = Double.MIN_VALUE;
                 AllEdgesIterator iter = graph.getAllEdges();
                 while (iter.next()) {
-                    double d = iter.getDistance();
+                    long d = iter.getDistance_mm();
                     minDist = Math.min(minDist, d);
                     maxDist = Math.max(maxDist, d);
                     if (speedEnc != null) {
@@ -126,21 +133,23 @@ public class BaseGraphVisualizer {
                         double speedBwd = iter.getReverse(speedEnc);
                         minSpeed = Math.min(minSpeed, Math.min(speedFwd, speedBwd));
                         maxSpeed = Math.max(maxSpeed, Math.max(speedFwd, speedBwd));
-                        if (speedFwd > 0) {
-                            double t = d / speedFwd;
-                            minTime = Math.min(minTime, t);
-                            maxTime = Math.max(maxTime, t);
-                        }
-                        if (speedBwd > 0) {
-                            double t = d / speedBwd;
-                            minTime = Math.min(minTime, t);
-                            maxTime = Math.max(maxTime, t);
+                        for (boolean reverse : new boolean[]{true, false}) {
+                            long t = speedWeighting.calcEdgeMillis(iter, reverse);
+                            if (t < Long.MAX_VALUE) {
+                                minTime = Math.min(minTime, t);
+                                maxTime = Math.max(maxTime, t);
+                            }
+                            double w = speedWeighting.calcEdgeWeight(iter, reverse);
+                            if (Double.isFinite(w)) {
+                                minWeight = Math.min(minWeight, w);
+                                maxWeight = Math.max(maxWeight, w);
+                            }
                         }
                     }
                 }
-                stats += String.format(L, " \u00b7 dist: %.0f..%.0fm", minDist, maxDist);
+                stats += String.format(L, " \u00b7 dist: %d..%dmm", minDist, maxDist);
                 if (speedEnc != null) {
-                    stats += String.format(L, " \u00b7 speed: %.0f..%.0fm/s \u00b7 time: %.1f..%.1fs", minSpeed, maxSpeed, minTime, maxTime);
+                    stats += String.format(L, " \u00b7 speed: %.0f..%.0fm/s \u00b7 time: %d..%dms  \u00b7 weight: %.1f..%.1f", minSpeed, maxSpeed, minTime, maxTime, minWeight, maxWeight);
                 }
             }
             return stats;
@@ -273,16 +282,20 @@ public class BaseGraphVisualizer {
                 EdgeIteratorState e = graph.getEdgeIteratorState(hoveredEdge, hoveredAdjNode);
                 var lines = new ArrayList<String>();
                 lines.add(String.format(L, "Edge %d: %d -> %d", e.getEdge(), e.getBaseNode(), e.getAdjNode()));
-                lines.add(String.format(L, "Distance: %.0f m", e.getDistance()));
+                lines.add(String.format(L, "Distance: %dmm", e.getDistance_mm()));
                 if (speedEnc != null) {
                     double fwdSpeed = e.get(speedEnc);
                     double bwdSpeed = e.getReverse(speedEnc);
                     lines.add(String.format(L, "Speed-Fwd: %.1f m/s (%.0f km/h)", fwdSpeed, fwdSpeed * 3.6));
                     lines.add(String.format(L, "Speed-Bwd: %.1f m/s (%.0f km/h)", bwdSpeed, bwdSpeed * 3.6));
-                    double fwdTime = fwdSpeed > 0 ? e.getDistance() / fwdSpeed : 0;
-                    double bwdTime = bwdSpeed > 0 ? e.getDistance() / bwdSpeed : 0;
-                    lines.add(String.format(L, "Time-Fwd: %.2f s", fwdTime));
-                    lines.add(String.format(L, "Time-Bwd: %.2f s", bwdTime));
+                    long fwdTime = speedWeighting.calcEdgeMillis(e, false);
+                    long bwdTime = speedWeighting.calcEdgeMillis(e, true);
+                    lines.add(String.format(L, "Time-Fwd: %dms", fwdTime));
+                    lines.add(String.format(L, "Time-Bwd: %dms", bwdTime));
+                    double fwdWeight = speedWeighting.calcEdgeWeight(e, false);
+                    double bwdWeight = speedWeighting.calcEdgeWeight(e, true);
+                    lines.add(String.format(L, "Weight-Fwd: %.3f", fwdWeight));
+                    lines.add(String.format(L, "Weight-Bwd: %.3f", bwdWeight));
                 }
                 drawTooltip(g, tx, ty, lines);
             }
@@ -298,9 +311,10 @@ public class BaseGraphVisualizer {
             if (!clickedEdges.isEmpty()) {
                 g.setFont(LABEL_FONT);
                 g.setColor(new Color(34, 197, 94));
-                String sumInfo = String.format(L, "Sum (%d edges): Distance=%.0fm", clickedEdges.size(), sumDist);
+                String sumInfo = String.format(L, "Sum (%d edges): Distance=%dmm", clickedEdges.size(), sumDist);
                 if (speedEnc != null) {
-                    sumInfo += String.format(L, ", Time-Fwd=%.2fs", sumFwdTime);
+                    sumInfo += String.format(L, ", Time-Fwd=%dms", sumFwdTime);
+                    sumInfo += String.format(L, ", Weight-Fwd=%.3f", sumFwdWeight);
                 }
                 FontMetrics fm = g.getFontMetrics();
                 g.drawString(sumInfo, getWidth() - fm.stringWidth(sumInfo) - 10, 20);
