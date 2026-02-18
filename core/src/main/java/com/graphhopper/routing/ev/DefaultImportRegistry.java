@@ -342,6 +342,21 @@ public class DefaultImportRegistry implements ImportRegistry {
                     (lookup, props) -> new OSMLitParser(
                             lookup.getBooleanEncodedValue(Lit.KEY))
             );
+        else if (Kerb.KEY.equals(name))
+            return ImportUnit.create(name, props -> Kerb.create(),
+                    (lookup, props) -> new OSMKerbParser(
+                            lookup.getEnumEncodedValue(Kerb.KEY, Kerb.class))
+            );
+        else if (TactilePaving.KEY.equals(name))
+            return ImportUnit.create(name, props -> TactilePaving.create(),
+                    (lookup, props) -> new OSMTactilePavingParser(
+                            lookup.getEnumEncodedValue(TactilePaving.KEY, TactilePaving.class))
+            );
+        else if (TrafficSignalsSound.KEY.equals(name))
+            return ImportUnit.create(name, props -> TrafficSignalsSound.create(),
+                    (lookup, props) -> new OSMTrafficSignalsSoundParser(
+                            lookup.getEnumEncodedValue(TrafficSignalsSound.KEY, TrafficSignalsSound.class))
+            );
         return null;
     }
 }
