@@ -73,7 +73,9 @@ public class SpeedWeighting implements Weighting {
 
     @Override
     public long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse) {
-        return (long) (1000 * calcEdgeWeight(edgeState, reverse));
+        double speed = reverse ? edgeState.getReverse(speedEnc) : edgeState.get(speedEnc);
+        if (speed == 0) return Long.MAX_VALUE;
+        return (long) (1000 * (edgeState.getDistance() / speed));
     }
 
     @Override
