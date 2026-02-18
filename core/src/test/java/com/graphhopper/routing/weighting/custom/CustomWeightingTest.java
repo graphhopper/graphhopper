@@ -72,8 +72,8 @@ class CustomWeightingTest {
                 .setDistanceInfluence(0d);
         Weighting weighting = createWeighting(customModel);
 
-        assertEquals(72, weighting.calcEdgeWeight(edge, false), 1.e-6);
-        assertEquals(36, weighting.calcEdgeWeight(edge, true), 1.e-6);
+        assertEquals(720, weighting.calcEdgeWeight(edge, false));
+        assertEquals(360, weighting.calcEdgeWeight(edge, true));
     }
 
     @Test
@@ -87,18 +87,18 @@ class CustomWeightingTest {
                 set(roadClassEnc, SECONDARY);
 
         Weighting weighting = createWeighting(createSpeedCustomModel(avSpeedEnc));
-        assertEquals(144, weighting.calcEdgeWeight(slow, false), .1);
-        assertEquals(72, weighting.calcEdgeWeight(medium, false), .1);
-        assertEquals(36, weighting.calcEdgeWeight(fast, false), .1);
+        assertEquals(1440, weighting.calcEdgeWeight(slow, false));
+        assertEquals(720, weighting.calcEdgeWeight(medium, false));
+        assertEquals(360, weighting.calcEdgeWeight(fast, false));
 
         // if we reduce the priority we get higher edge weights
         weighting = CustomModelParser.createWeighting(encodingManager, NO_TURN_COST_PROVIDER,
                 createSpeedCustomModel(avSpeedEnc)
                         .addToPriority(If("road_class == SECONDARY", MULTIPLY, "0.5"))
         );
-        assertEquals(2 * 144, weighting.calcEdgeWeight(slow, false), .1);
-        assertEquals(2 * 72, weighting.calcEdgeWeight(medium, false), .1);
-        assertEquals(2 * 36, weighting.calcEdgeWeight(fast, false), .1);
+        assertEquals(2 * 1440, weighting.calcEdgeWeight(slow, false));
+        assertEquals(2 * 720, weighting.calcEdgeWeight(medium, false));
+        assertEquals(2 * 360, weighting.calcEdgeWeight(fast, false));
     }
 
     @Test
@@ -106,34 +106,34 @@ class CustomWeightingTest {
         EdgeIteratorState edge1 = graph.edge(0, 1).setDistance(10_000).set(avSpeedEnc, 50);
         EdgeIteratorState edge2 = graph.edge(0, 1).setDistance(5_000).set(avSpeedEnc, 25);
         Weighting weighting = createWeighting(createSpeedCustomModel(avSpeedEnc).setDistanceInfluence(0d));
-        assertEquals(720, weighting.calcEdgeWeight(edge1, false), .1);
-        assertEquals(720_000, weighting.calcEdgeMillis(edge1, false), .1);
+        assertEquals(7200, weighting.calcEdgeWeight(edge1, false));
+        assertEquals(720_000, weighting.calcEdgeMillis(edge1, false));
         // we can also imagine a shorter but slower road that takes the same time
-        assertEquals(720, weighting.calcEdgeWeight(edge2, false), .1);
-        assertEquals(720_000, weighting.calcEdgeMillis(edge2, false), .1);
+        assertEquals(7200, weighting.calcEdgeWeight(edge2, false));
+        assertEquals(720_000, weighting.calcEdgeMillis(edge2, false));
 
         // distance_influence=30 means that for every kilometer we get additional costs of 30s, so +300s here
         weighting = createWeighting(createSpeedCustomModel(avSpeedEnc).setDistanceInfluence(30d));
-        assertEquals(1020, weighting.calcEdgeWeight(edge1, false), .1);
+        assertEquals(10200, weighting.calcEdgeWeight(edge1, false));
         // for the shorter but slower edge the distance influence also increases the weight, but not as much because it is shorter
-        assertEquals(870, weighting.calcEdgeWeight(edge2, false), .1);
+        assertEquals(8700, weighting.calcEdgeWeight(edge2, false));
         // ... the travelling times stay the same
-        assertEquals(720_000, weighting.calcEdgeMillis(edge1, false), .1);
-        assertEquals(720_000, weighting.calcEdgeMillis(edge2, false), .1);
+        assertEquals(720_000, weighting.calcEdgeMillis(edge1, false));
+        assertEquals(720_000, weighting.calcEdgeMillis(edge2, false));
     }
 
     @Test
     public void testSpeedFactorBooleanEV() {
         EdgeIteratorState edge = graph.edge(0, 1).set(avSpeedEnc, 15, 15).setDistance(10);
         Weighting weighting = createWeighting(createSpeedCustomModel(avSpeedEnc).setDistanceInfluence(70d));
-        assertEquals(3.1, weighting.calcEdgeWeight(edge, false), 0.01);
+        assertEquals(31, weighting.calcEdgeWeight(edge, false));
         // here we increase weight for edges that are road class links
         weighting = createWeighting(createSpeedCustomModel(avSpeedEnc)
                 .setDistanceInfluence(70d)
                 .addToPriority(If(RoadClassLink.KEY, MULTIPLY, "0.5")));
         BooleanEncodedValue rcLinkEnc = encodingManager.getBooleanEncodedValue(RoadClassLink.KEY);
-        assertEquals(3.1, weighting.calcEdgeWeight(edge.set(rcLinkEnc, false), false), 0.01);
-        assertEquals(5.5, weighting.calcEdgeWeight(edge.set(rcLinkEnc, true), false), 0.01);
+        assertEquals(31, weighting.calcEdgeWeight(edge.set(rcLinkEnc, false), false));
+        assertEquals(55, weighting.calcEdgeWeight(edge.set(rcLinkEnc, true), false));
     }
 
     @Test
@@ -146,13 +146,13 @@ class CustomWeightingTest {
         EdgeIteratorState edge = graph.edge(0, 1).set(specialEnc, false, true).set(avSpeedEnc, 15).setDistance(10);
 
         Weighting weighting = createWeighting(createSpeedCustomModel(avSpeedEnc).setDistanceInfluence(70d));
-        assertEquals(3.1, weighting.calcEdgeWeight(edge, false), 0.01);
+        assertEquals(31, weighting.calcEdgeWeight(edge, false));
         weighting = createWeighting(createSpeedCustomModel(avSpeedEnc)
                 .setDistanceInfluence(70d)
                 .addToPriority(If("special == true", MULTIPLY, "0.8"))
                 .addToPriority(If("special == false", MULTIPLY, "0.4")));
-        assertEquals(6.7, weighting.calcEdgeWeight(edge, false), 0.01);
-        assertEquals(3.7, weighting.calcEdgeWeight(edge, true), 0.01);
+        assertEquals(67, weighting.calcEdgeWeight(edge, false));
+        assertEquals(37, weighting.calcEdgeWeight(edge, true));
     }
 
     @Test
@@ -166,16 +166,16 @@ class CustomWeightingTest {
                 addToPriority(If("road_class != PRIMARY", MULTIPLY, "0.5")).
                 addToSpeed(If("road_class != PRIMARY", MULTIPLY, "0.9"));
         Weighting weighting = createWeighting(customModel);
-        assertEquals(1.15, weighting.calcEdgeWeight(primary, false), 0.01);
-        assertEquals(1.84, weighting.calcEdgeWeight(secondary, false), 0.01);
+        assertEquals(12, weighting.calcEdgeWeight(primary, false));
+        assertEquals(18, weighting.calcEdgeWeight(secondary, false));
 
         customModel = createSpeedCustomModel(avSpeedEnc).setDistanceInfluence(70d).
                 addToPriority(If("road_class == PRIMARY", MULTIPLY, "1.0")).
                 addToPriority(Else(MULTIPLY, "0.5")).
                 addToSpeed(If("road_class != PRIMARY", MULTIPLY, "0.9"));
         weighting = createWeighting(customModel);
-        assertEquals(1.15, weighting.calcEdgeWeight(primary, false), 0.01);
-        assertEquals(1.84, weighting.calcEdgeWeight(secondary, false), 0.01);
+        assertEquals(12, weighting.calcEdgeWeight(primary, false));
+        assertEquals(18, weighting.calcEdgeWeight(secondary, false));
     }
 
     @Test
@@ -188,15 +188,15 @@ class CustomWeightingTest {
                 addToSpeed(If("toll == HGV || toll == ALL", MULTIPLY, "0.8")).
                 addToSpeed(If("hazmat != NO", MULTIPLY, "0.8"));
         Weighting weighting = createWeighting(customModel);
-        assertEquals(1.26, weighting.calcEdgeWeight(withToll, false), 0.01);
-        assertEquals(1.26, weighting.calcEdgeWeight(noToll, false), 0.01);
+        assertEquals(13, weighting.calcEdgeWeight(withToll, false));
+        assertEquals(13, weighting.calcEdgeWeight(noToll, false));
 
         customModel = createSpeedCustomModel(avSpeedEnc);
         customModel.setDistanceInfluence(70d).
                 addToSpeed(If("bike_network != OTHER", MULTIPLY, "0.8"));
         weighting = createWeighting(customModel);
-        assertEquals(1.26, weighting.calcEdgeWeight(withToll, false), 0.01);
-        assertEquals(1.26, weighting.calcEdgeWeight(noToll, false), 0.01);
+        assertEquals(13, weighting.calcEdgeWeight(withToll, false));
+        assertEquals(13, weighting.calcEdgeWeight(noToll, false));
     }
 
     @Test
@@ -209,15 +209,15 @@ class CustomWeightingTest {
         CustomModel customModel = createSpeedCustomModel(avSpeedEnc).setDistanceInfluence(70d).
                 addToSpeed(If("road_class == PRIMARY", MULTIPLY, "0.8"));
         Weighting weighting = createWeighting(customModel);
-        assertEquals(1.26, weighting.calcEdgeWeight(primary, false), 0.01);
-        assertEquals(1.21, weighting.calcEdgeWeight(secondary, false), 0.01);
+        assertEquals(13, weighting.calcEdgeWeight(primary, false));
+        assertEquals(12, weighting.calcEdgeWeight(secondary, false));
 
         customModel.addToPriority(If("road_class == PRIMARY", MULTIPLY, "0.9"));
         customModel.addToPriority(ElseIf("road_class == SECONDARY", MULTIPLY, "0.8"));
 
         weighting = createWeighting(customModel);
-        assertEquals(1.33, weighting.calcEdgeWeight(primary, false), 0.01);
-        assertEquals(1.34, weighting.calcEdgeWeight(secondary, false), 0.01);
+        assertEquals(13, weighting.calcEdgeWeight(primary, false));
+        assertEquals(13, weighting.calcEdgeWeight(secondary, false));
     }
 
     @Test
@@ -229,8 +229,8 @@ class CustomWeightingTest {
                 addToPriority(If("car_average_speed > 40", MULTIPLY, "0.5"));
         Weighting weighting = createWeighting(customModel);
 
-        assertEquals(1.60, weighting.calcEdgeWeight(edge40, false), 0.01);
-        assertEquals(2.14, weighting.calcEdgeWeight(edge50, false), 0.01);
+        assertEquals(16, weighting.calcEdgeWeight(edge40, false));
+        assertEquals(21, weighting.calcEdgeWeight(edge50, false));
     }
 
     @Test
@@ -242,8 +242,8 @@ class CustomWeightingTest {
         CustomModel customModel = createSpeedCustomModel(avSpeedEnc).setDistanceInfluence(70d).
                 addToPriority(If("road_class == PRIMARY", MULTIPLY, "0.5"));
         Weighting weighting = createWeighting(customModel);
-        assertEquals(1.6, weighting.calcEdgeWeight(primary, false), 0.01);
-        assertEquals(1.15, weighting.calcEdgeWeight(secondary, false), 0.01);
+        assertEquals(16, weighting.calcEdgeWeight(primary, false));
+        assertEquals(12, weighting.calcEdgeWeight(secondary, false));
     }
 
     @Test
@@ -267,23 +267,23 @@ class CustomWeightingTest {
 
         Weighting weighting = createWeighting(customModel);
         // edge1 is located within the area custom1, edge2 is not
-        assertEquals(1.6, weighting.calcEdgeWeight(edge1, false), 0.01);
-        assertEquals(1.15, weighting.calcEdgeWeight(edge2, false), 0.01);
+        assertEquals(16, weighting.calcEdgeWeight(edge1, false));
+        assertEquals(12, weighting.calcEdgeWeight(edge2, false));
     }
 
     @Test
     public void testMaxSpeed() {
         assertEquals(155, avSpeedEnc.getMaxOrMaxStorableDecimal(), 0.1);
 
-        assertEquals(1d / 72 * 3.6, createWeighting(createSpeedCustomModel(avSpeedEnc).
+        assertEquals(10d / 72 * 3.6, createWeighting(createSpeedCustomModel(avSpeedEnc).
                 addToSpeed(If("true", LIMIT, "72"))).calcMinWeightPerDistance(), .001);
 
         // ignore too big limit to let custom model compatibility not break when max speed of encoded value later decreases
-        assertEquals(1d / 155 * 3.6, createWeighting(createSpeedCustomModel(avSpeedEnc).
+        assertEquals(10d / 155 * 3.6, createWeighting(createSpeedCustomModel(avSpeedEnc).
                 addToSpeed(If("true", LIMIT, "180"))).calcMinWeightPerDistance(), .001);
 
         // reduce speed only a bit
-        assertEquals(1d / 150 * 3.6, createWeighting(createSpeedCustomModel(avSpeedEnc).
+        assertEquals(10d / 150 * 3.6, createWeighting(createSpeedCustomModel(avSpeedEnc).
                 addToSpeed(If("road_class == SERVICE", MULTIPLY, "1.5")).
                 addToSpeed(If("true", LIMIT, "150"))).calcMinWeightPerDistance(), .001);
     }
@@ -292,26 +292,26 @@ class CustomWeightingTest {
     public void testMaxPriority() {
         double maxSpeed = 155;
         assertEquals(maxSpeed, avSpeedEnc.getMaxOrMaxStorableDecimal(), 0.1);
-        assertEquals(1d / maxSpeed / 0.5 * 3.6, createWeighting(createSpeedCustomModel(avSpeedEnc).
+        assertEquals(10d / maxSpeed / 0.5 * 3.6, createWeighting(createSpeedCustomModel(avSpeedEnc).
                 addToPriority(If("true", MULTIPLY, "0.5"))).calcMinWeightPerDistance(), 1.e-6);
 
         // ignore too big limit
-        assertEquals(1d / maxSpeed / 1.0 * 3.6, createWeighting(createSpeedCustomModel(avSpeedEnc).
+        assertEquals(10d / maxSpeed / 1.0 * 3.6, createWeighting(createSpeedCustomModel(avSpeedEnc).
                 addToPriority(If("true", LIMIT, "2.0"))).calcMinWeightPerDistance(), 1.e-6);
 
         // priority bigger 1 is fine (if CustomModel not in query)
-        assertEquals(1d / maxSpeed / 2.0 * 3.6, createWeighting(createSpeedCustomModel(avSpeedEnc).
+        assertEquals(10d / maxSpeed / 2.0 * 3.6, createWeighting(createSpeedCustomModel(avSpeedEnc).
                 addToPriority(If("true", MULTIPLY, "3.0")).
                 addToPriority(If("true", LIMIT, "2.0"))).calcMinWeightPerDistance(), 1.e-6);
-        assertEquals(1d / maxSpeed / 1.5 * 3.6, createWeighting(createSpeedCustomModel(avSpeedEnc).
+        assertEquals(10d / maxSpeed / 1.5 * 3.6, createWeighting(createSpeedCustomModel(avSpeedEnc).
                 addToPriority(If("true", MULTIPLY, "1.5"))).calcMinWeightPerDistance(), 1.e-6);
 
         // pick maximum priority from value even if this is for a special case
-        assertEquals(1d / maxSpeed / 3.0 * 3.6, createWeighting(createSpeedCustomModel(avSpeedEnc).
+        assertEquals(10d / maxSpeed / 3.0 * 3.6, createWeighting(createSpeedCustomModel(avSpeedEnc).
                 addToPriority(If("road_class == SERVICE", MULTIPLY, "3.0"))).calcMinWeightPerDistance(), 1.e-6);
 
         // do NOT pick maximum priority when it is for a special case
-        assertEquals(1d / maxSpeed / 1.0 * 3.6, createWeighting(createSpeedCustomModel(avSpeedEnc).
+        assertEquals(10d / maxSpeed / 1.0 * 3.6, createWeighting(createSpeedCustomModel(avSpeedEnc).
                 addToPriority(If("road_class == SERVICE", MULTIPLY, "0.5"))).calcMinWeightPerDistance(), 1.e-6);
     }
 
@@ -324,7 +324,7 @@ class CustomWeightingTest {
                 .addToSpeed(If("road_class == MOTORWAY", Statement.Op.MULTIPLY, "0.7"))
                 .addToSpeed(Else(LIMIT, "30"));
         Weighting weighting = createWeighting(customModel);
-        assertEquals(1.3429, weighting.calcEdgeWeight(motorway, false), 1e-4);
+        assertEquals(13, weighting.calcEdgeWeight(motorway, false));
         assertEquals(10 / (80 * 0.7 / 3.6) * 1000, weighting.calcEdgeMillis(motorway, false), 1);
     }
 
@@ -341,10 +341,10 @@ class CustomWeightingTest {
 
     @Test
     public void testMinWeightHasSameUnitAs_getWeight() {
-        EdgeIteratorState edge = graph.edge(0, 1).set(avSpeedEnc, 140, 0).setDistance(10);
+        EdgeIteratorState edge = graph.edge(0, 1).set(avSpeedEnc, 140, 0).setDistance(1000);
         CustomModel customModel = createSpeedCustomModel(avSpeedEnc);
         Weighting weighting = createWeighting(customModel);
-        assertEquals(weighting.calcMinWeightPerDistance() * 10, weighting.calcEdgeWeight(edge, false), 1e-8);
+        assertEquals(weighting.calcMinWeightPerDistance() * 1000, weighting.calcEdgeWeight(edge, false));
     }
 
     @Test
@@ -360,19 +360,19 @@ class CustomWeightingTest {
 
         virtEdge.setUnfavored(true);
         // heading penalty on edge
-        assertEquals(time + 100, weighting.calcEdgeWeight(virtEdge, false), 1e-8);
+        assertEquals(time + 1000, weighting.calcEdgeWeight(virtEdge, false));
         // only after setting it
         virtEdge.setUnfavored(true);
-        assertEquals(time + 100, weighting.calcEdgeWeight(virtEdge, true), 1e-8);
+        assertEquals(time + 1000, weighting.calcEdgeWeight(virtEdge, true));
         // but not after releasing it
         virtEdge.setUnfavored(false);
-        assertEquals(time, weighting.calcEdgeWeight(virtEdge, true), 1e-8);
+        assertEquals(time, weighting.calcEdgeWeight(virtEdge, true));
 
         // test default penalty
         virtEdge.setUnfavored(true);
         customModel = createSpeedCustomModel(avSpeedEnc);
         weighting = createWeighting(customModel);
-        assertEquals(time + Parameters.Routing.DEFAULT_HEADING_PENALTY, weighting.calcEdgeWeight(virtEdge, false), 1e-8);
+        assertEquals(time + 10 * Parameters.Routing.DEFAULT_HEADING_PENALTY, weighting.calcEdgeWeight(virtEdge, false));
     }
 
     @Test
@@ -421,7 +421,7 @@ class CustomWeightingTest {
         Weighting weighting = CustomModelParser.createWeighting(encodingManager,
                 new DefaultTurnCostProvider(turnRestrictionEnc, graph, new TurnCostsConfig().setUTurnCosts(40), null), customModel);
         EdgeIteratorState edge = graph.edge(0, 1).set(avSpeedEnc, 60, 60).setDistance(100);
-        assertEquals(6 + 40, GHUtility.calcWeightWithTurnWeight(weighting, edge, false, 0), 1.e-6);
+        assertEquals(60 + 400, GHUtility.calcWeightWithTurnWeight(weighting, edge, false, 0), 1.e-6);
         assertEquals(6 * 1000, GHUtility.calcMillisWithTurnMillis(weighting, edge, false, 0), 1.e-6);
     }
 
@@ -444,13 +444,13 @@ class CustomWeightingTest {
         Weighting bikeWeighting = CustomModelParser.createWeighting(em, NO_TURN_COST_PROVIDER, bikeCustomModel);
 
         edge.set(roadAccessEnc, RoadAccess.YES);
-        assertEquals(60, weighting.calcEdgeWeight(edge, false), 1.e-6);
-        assertEquals(200, bikeWeighting.calcEdgeWeight(edge, false), 1.e-6);
+        assertEquals(600, weighting.calcEdgeWeight(edge, false));
+        assertEquals(2000, bikeWeighting.calcEdgeWeight(edge, false));
 
         // the destination tag does not change the weight for the bike weighting
         edge.set(roadAccessEnc, RoadAccess.DESTINATION);
-        assertEquals(600, weighting.calcEdgeWeight(edge, false), 0.1);
-        assertEquals(200, bikeWeighting.calcEdgeWeight(edge, false), 0.1);
+        assertEquals(6000, weighting.calcEdgeWeight(edge, false));
+        assertEquals(2000, bikeWeighting.calcEdgeWeight(edge, false));
     }
 
     @Test
@@ -476,12 +476,12 @@ class CustomWeightingTest {
         way.setTag("highway", "secondary");
 
         edge.set(roadAccessEnc, RoadAccess.YES);
-        assertEquals(60, weighting.calcEdgeWeight(edge, false), .01);
-        assertEquals(200, bikeWeighting.calcEdgeWeight(edge, false), .01);
+        assertEquals(600, weighting.calcEdgeWeight(edge, false));
+        assertEquals(2000, bikeWeighting.calcEdgeWeight(edge, false));
 
         edge.set(roadAccessEnc, RoadAccess.PRIVATE);
-        assertEquals(600, weighting.calcEdgeWeight(edge, false), .01);
+        assertEquals(6000, weighting.calcEdgeWeight(edge, false));
         // private should influence bike only slightly
-        assertEquals(240, bikeWeighting.calcEdgeWeight(edge, false), .01);
+        assertEquals(2400, bikeWeighting.calcEdgeWeight(edge, false));
     }
 }

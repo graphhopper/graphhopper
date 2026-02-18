@@ -122,7 +122,7 @@ public class RouteResourceClientHCTest {
         isBetween(2900, 3000, res.getDistance());
         isBetween(110, 120, res.getAscend());
         isBetween(75, 85, res.getDescend());
-        isBetween(190, 200, res.getRouteWeight());
+        isBetween(1900, 2000, res.getRouteWeight());
 
         // change vehicle
         rsp = gh.route(new GHRequest(42.5093, 1.5274, 42.5126, 1.5410).

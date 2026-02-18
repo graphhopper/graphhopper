@@ -481,11 +481,11 @@ public class QueryGraphTest {
         Weighting weighting = new SpeedWeighting(speedEnc, turnCostEnc, graphWithTurnCosts.getTurnCostStorage(), Double.POSITIVE_INFINITY);
 
         // no turn costs initially
-        assertEquals(0, weighting.calcTurnWeight(edge0.getEdge(), 1, edge1.getEdge()), .1);
+        assertEquals(0, weighting.calcTurnWeight(edge0.getEdge(), 1, edge1.getEdge()));
 
         // now use turn costs
         turnExt.set(turnCostEnc, edge0.getEdge(), 1, edge1.getEdge(), 10);
-        assertEquals(10, weighting.calcTurnWeight(edge0.getEdge(), 1, edge1.getEdge()), .1);
+        assertEquals(100, weighting.calcTurnWeight(edge0.getEdge(), 1, edge1.getEdge()));
 
         // now use turn costs with query graph
         Snap res1 = createLocationResult(0.000, 0.005, edge0, 0, Snap.Position.EDGE);
@@ -496,7 +496,7 @@ public class QueryGraphTest {
         int fromQueryEdge = GHUtility.getEdge(qGraph, res1.getClosestNode(), 1).getEdge();
         int toQueryEdge = GHUtility.getEdge(qGraph, res2.getClosestNode(), 1).getEdge();
 
-        assertEquals(10, weighting.calcTurnWeight(fromQueryEdge, 1, toQueryEdge), .1);
+        assertEquals(100, weighting.calcTurnWeight(fromQueryEdge, 1, toQueryEdge));
 
         graphWithTurnCosts.close();
     }

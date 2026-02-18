@@ -138,7 +138,7 @@ public class AlternativeRouteTest {
         // so which alternative is better? longer plateau.weight with bigger path.weight or smaller path.weight with smaller plateau.weight
         // assertEquals(IntArrayList.from(5, 1, 9, 2, 3, 4), secondAlt.calcNodes());
         assertEquals(IntArrayList.from(5, 6, 7, 8, 4), secondAlt.calcNodes());
-        assertEquals(463.3, secondAlt.getWeight(), .1);
+        assertEquals(4634, secondAlt.getWeight());
     }
 
     @ParameterizedTest
@@ -159,9 +159,9 @@ public class AlternativeRouteTest {
         assertEquals(IntArrayList.from(5, 6, 3, 4), pathInfos.get(0).getPath().calcNodes());
         assertEquals(IntArrayList.from(5, 6, 7, 8, 4), pathInfos.get(1).getPath().calcNodes());
         assertEquals(IntArrayList.from(5, 1, 9, 2, 3, 4), pathInfos.get(2).getPath().calcNodes());
-        assertEquals(409.0, pathInfos.get(0).getPath().getWeight(), .1);
-        assertEquals(463.4, pathInfos.get(1).getPath().getWeight(), .1);
-        assertEquals(608.6, pathInfos.get(2).getPath().getWeight(), .1);
+        assertEquals(4090, pathInfos.get(0).getPath().getWeight());
+        assertEquals(4634, pathInfos.get(1).getPath().getWeight());
+        assertEquals(6086, pathInfos.get(2).getPath().getWeight());
     }
 
     private void checkAlternatives(List<AlternativeRoute.AlternativeInfo> alternativeInfos) {

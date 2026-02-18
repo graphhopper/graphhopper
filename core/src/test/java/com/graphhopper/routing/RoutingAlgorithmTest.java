@@ -890,8 +890,8 @@ public class RoutingAlgorithmTest {
         // of the speed and read 0 => infinity weight => overflow of millis => negative millis!
         Path p = f.calcPath(graph, weighting, 0, 10);
         assertEquals(23645657, p.getTime());
-        assertEquals(425622, p.getDistance(), 1);
-        assertEquals(23646, p.getWeight(), 1);
+        assertEquals(425_621_860, p.getDistance_mm());
+        assertEquals(236457, p.getWeight());
     }
 
     @ParameterizedTest
