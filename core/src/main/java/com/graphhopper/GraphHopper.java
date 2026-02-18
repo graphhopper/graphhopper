@@ -965,7 +965,7 @@ public class GraphHopper {
             maxSpeedCalculator.createDataAccessForParser(baseGraph.getDirectory());
     }
 
-    private static void sortGraphAlongHilbertCurve(BaseGraph graph) {
+    public static void sortGraphAlongHilbertCurve(BaseGraph graph) {
         logger.info("sorting graph along Hilbert curve...");
         StopWatch sw = StopWatch.started();
         NodeAccess na = graph.getNodeAccess();
@@ -993,7 +993,7 @@ public class GraphHopper {
         sortGraphForGivenOrdering(graph, newNodesByOldNodes, newEdgesByOldEdges);
     }
 
-    private static void sortGraphForGivenOrdering(BaseGraph baseGraph, IntArrayList newNodesByOldNodes, IntArrayList newEdgesByOldEdges) {
+    public static void sortGraphForGivenOrdering(BaseGraph baseGraph, IntArrayList newNodesByOldNodes, IntArrayList newEdgesByOldEdges) {
         if (!ArrayUtil.isPermutation(newEdgesByOldEdges))
             throw new IllegalStateException("New edges: not a permutation");
         if (!ArrayUtil.isPermutation(newNodesByOldNodes))
@@ -1007,7 +1007,7 @@ public class GraphHopper {
         logger.info("sorting {} nodes took: {}", Helper.nf(newNodesByOldNodes.size()), sw.stop().getTimeString());
     }
 
-    private static long latLonToHilbertIndex(double lat, double lon, int order) {
+    public static long latLonToHilbertIndex(double lat, double lon, int order) {
         double nx = (lon + 180) / 360;
         double ny = (90 - lat) / 180;
         long size = 1L << order;
@@ -1018,7 +1018,7 @@ public class GraphHopper {
         return xy2d(order, x, y);
     }
 
-    private static long xy2d(int n, long x, long y) {
+    public static long xy2d(int n, long x, long y) {
         long d = 0;
         for (long s = 1L << (n - 1); s > 0; s >>= 1) {
             int rx = (x & s) > 0 ? 1 : 0;
