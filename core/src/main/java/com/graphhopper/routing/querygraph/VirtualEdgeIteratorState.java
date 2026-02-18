@@ -393,6 +393,11 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
         throw new RuntimeException("Not supported.");
     }
 
+    @Override
+    public boolean isVirtual() {
+        return true;
+    }
+
     public void setReverseEdge(EdgeIteratorState reverseEdge) {
         this.reverseEdge = reverseEdge;
     }

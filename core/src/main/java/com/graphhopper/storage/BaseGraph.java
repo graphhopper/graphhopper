@@ -1120,6 +1120,11 @@ public class BaseGraph implements Graph, Closeable {
         }
 
         @Override
+        public boolean isVirtual() {
+            return false;
+        }
+
+        @Override
         public final String toString() {
             return getEdge() + " " + getBaseNode() + "-" + getAdjNode();
         }
