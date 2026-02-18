@@ -216,7 +216,7 @@ public class PMTilesElevationProvider implements ElevationProvider {
     /**
      * Decodes terrain-RGB image bytes into a little-endian byte[] of short elevation values.
      *
-     * @return byte[] with LE-encoded shorts, empty byte[] if all elevations are <= 0 (sea level), or null on decode failure.
+     * @return byte[] with LE-encoded shorts, empty byte[] if all elevations are exactly 0 (sea level), or null on decode failure.
      */
     byte[] decodeTerrain(byte[] imageBytes) throws IOException {
         BufferedImage img = ImageIO.read(new ByteArrayInputStream(imageBytes));
@@ -252,7 +252,7 @@ public class PMTilesElevationProvider implements ElevationProvider {
                     e = (r * 256.0 + g + b / 256.0) - 32768.0;
                 }
                 short s = (short) Math.max(-32768, Math.min(32767, Math.round(e)));
-                if (s > 0) allSeaLevel = false;
+                if (s != 0) allSeaLevel = false;
 
                 // little-endian, matching ByteBuffer.LITTLE_ENDIAN order
                 int idx = (y * w + x) * 2;
