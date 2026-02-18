@@ -40,6 +40,8 @@ public class HelperTest {
         assertEquals(Double.MAX_VALUE, Helper.uIntToEle(Helper.eleToUInt(11_000)));
         assertEquals(Double.MAX_VALUE, Helper.uIntToEle(Helper.eleToUInt(Double.MAX_VALUE)));
 
+        assertEquals(0, Helper.eleToUInt(-1100));
+
         assertThrows(IllegalArgumentException.class, () -> Helper.eleToUInt(Double.NaN));
     }
 
