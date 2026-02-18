@@ -264,7 +264,7 @@ public class CHTurnCostTest {
         // we contract the graph such that only a few shortcuts are created and that the fwd/bwd searches for the
         // 0-8 query meet at node 4 (make sure we include all three cases where turn cost times might come to play:
         // fwd/bwd search and meeting point)
-        checkPathUsingCH(ArrayUtil.iota(9), 8, 9, 0, 8, new int[]{1, 3, 5, 7, 0, 8, 2, 6, 4});
+        checkPathUsingCH(ArrayUtil.iota(9), 80, 90, 0, 8, new int[]{1, 3, 5, 7, 0, 8, 2, 6, 4});
     }
 
     @Test
@@ -297,11 +297,11 @@ public class CHTurnCostTest {
 
         Path pathFwd = createAlgo().calcPath(0, 6);
         assertEquals(IntArrayList.from(0, 1, 2, 3, 4, 5, 6), pathFwd.calcNodes());
-        assertEquals(6 + 15, pathFwd.getWeight(), 1.e-6);
+        assertEquals(60 + 150, pathFwd.getWeight(), 1.e-6);
 
         Path pathBwd = createAlgo().calcPath(6, 0);
         assertEquals(IntArrayList.from(6, 5, 4, 3, 2, 1, 0), pathBwd.calcNodes());
-        assertEquals(6 + 10, pathBwd.getWeight(), 1.e-6);
+        assertEquals(60 + 100, pathBwd.getWeight(), 1.e-6);
     }
 
 
@@ -910,12 +910,12 @@ public class CHTurnCostTest {
         // 4->3->2->1-x-0
         //          |
         //          5->6
-        graph.edge(4, 3).setDistance(00).set(speedEnc, 10, 0);
-        graph.edge(3, 2).setDistance(00).set(speedEnc, 10, 0);
-        graph.edge(2, 1).setDistance(00).set(speedEnc, 10, 0);
-        graph.edge(1, 0).setDistance(00).set(speedEnc, 10, 10);
-        graph.edge(1, 5).setDistance(00).set(speedEnc, 10, 0);
-        graph.edge(5, 6).setDistance(00).set(speedEnc, 10, 0);
+        graph.edge(4, 3).setDistance(0).set(speedEnc, 10, 0);
+        graph.edge(3, 2).setDistance(0).set(speedEnc, 10, 0);
+        graph.edge(2, 1).setDistance(0).set(speedEnc, 10, 0);
+        graph.edge(1, 0).setDistance(0).set(speedEnc, 10, 10);
+        graph.edge(1, 5).setDistance(0).set(speedEnc, 10, 0);
+        graph.edge(5, 6).setDistance(0).set(speedEnc, 10, 0);
         updateDistancesFor(graph, 4, 0.1, 0.0);
         updateDistancesFor(graph, 3, 0.1, 0.1);
         updateDistancesFor(graph, 2, 0.1, 0.2);
@@ -1129,15 +1129,17 @@ public class CHTurnCostTest {
     }
 
     private void checkPath(IntArrayList expectedPath, int expectedEdgeWeight, int expectedTurnCosts, int from, int to, int[] contractionOrder) {
-        checkPathUsingDijkstra(expectedPath, expectedEdgeWeight, expectedTurnCosts, from, to);
-        checkPathUsingCH(expectedPath, expectedEdgeWeight, expectedTurnCosts, from, to, contractionOrder);
+        // todonow: move out x10
+        checkPathUsingDijkstra(expectedPath, expectedEdgeWeight * 10, expectedTurnCosts * 10, from, to);
+        checkPathUsingCH(expectedPath, expectedEdgeWeight * 10, expectedTurnCosts * 10, from, to, contractionOrder);
     }
 
     private void checkPathUsingDijkstra(IntArrayList expectedPath, int expectedEdgeWeight, int expectedTurnCosts, int from, int to) {
         Path dijkstraPath = findPathUsingDijkstra(from, to);
         int expectedWeight = expectedEdgeWeight + expectedTurnCosts;
-        int expectedDistance = expectedEdgeWeight * 10;
-        int expectedTime = (expectedEdgeWeight + expectedTurnCosts) * 1000;
+        int expectedDistance = expectedEdgeWeight;
+        // todonow: move out x10
+        int expectedTime = (expectedEdgeWeight / 10 + expectedTurnCosts / 10) * 1000;
         assertEquals(expectedPath, dijkstraPath.calcNodes(), "Normal Dijkstra did not find expected path.");
         assertEquals(expectedWeight, dijkstraPath.getWeight(), 1.e-6, "Normal Dijkstra did not calculate expected weight.");
         assertEquals(expectedDistance, dijkstraPath.getDistance(), 1.e-6, "Normal Dijkstra did not calculate expected distance.");
@@ -1147,8 +1149,9 @@ public class CHTurnCostTest {
     private void checkPathUsingCH(IntArrayList expectedPath, int expectedEdgeWeight, int expectedTurnCosts, int from, int to, int[] contractionOrder) {
         Path chPath = findPathUsingCH(from, to, contractionOrder);
         int expectedWeight = expectedEdgeWeight + expectedTurnCosts;
-        int expectedDistance = expectedEdgeWeight * 10;
-        int expectedTime = (expectedEdgeWeight + expectedTurnCosts) * 1000;
+        int expectedDistance = expectedEdgeWeight;
+        // todonow: move out x10
+        int expectedTime = (expectedEdgeWeight / 10 + expectedTurnCosts / 10) * 1000;
         assertEquals(expectedPath, chPath.calcNodes(), "Contraction Hierarchies did not find expected path. contraction order=" + Arrays.toString(contractionOrder));
         assertEquals(expectedWeight, chPath.getWeight(), 1.e-6, "Contraction Hierarchies did not calculate expected weight.");
         assertEquals(expectedDistance, chPath.getDistance(), 1.e-6, "Contraction Hierarchies did not calculate expected distance.");

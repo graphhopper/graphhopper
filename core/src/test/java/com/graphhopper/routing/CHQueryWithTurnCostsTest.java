@@ -85,7 +85,8 @@ public class CHQueryWithTurnCostsTest {
 
         private void addShortcut(int from, int to, int firstOrigEdgeKey, int lastOrigEdgeKey, int skipped1, int skipped2, double weight, boolean reverse) {
             int flags = reverse ? PrepareEncoder.getScBwdDir() : PrepareEncoder.getScFwdDir();
-            chBuilder.addShortcutEdgeBased(from, to, flags, weight, skipped1, skipped2, firstOrigEdgeKey, lastOrigEdgeKey);
+            // todonow: move x10 out of here
+            chBuilder.addShortcutEdgeBased(from, to, flags, 10 * weight, skipped1, skipped2, firstOrigEdgeKey, lastOrigEdgeKey);
         }
 
         private void setIdentityLevels() {
@@ -117,7 +118,8 @@ public class CHQueryWithTurnCostsTest {
         }
 
         private void testPathCalculation(int from, int to, int expectedEdgeWeight, IntArrayList expectedNodes, int expectedTurnCost) {
-            int expectedWeight = expectedEdgeWeight + expectedTurnCost;
+            // todonow: move x10 out of here
+            int expectedWeight = expectedEdgeWeight * 10 + expectedTurnCost * 10;
             int expectedDistance = expectedEdgeWeight * 10;
             int expectedTime = (expectedEdgeWeight + expectedTurnCost) * 1000;
             AbstractBidirectionEdgeCHNoSOD algo = createAlgo();
@@ -197,7 +199,7 @@ public class CHQueryWithTurnCostsTest {
 
         // also check if distance and times (including turn costs) are calculated correctly
         Path path = f.createAlgo().calcPath(0, 1);
-        assertEquals(40, path.getWeight(), 1.e-3, "wrong weight");
+        assertEquals(400, path.getWeight(), 1.e-3, "wrong weight");
         assertEquals(260, path.getDistance(), 1.e-3, "wrong distance");
         double weightPerMeter = 0.1;
         assertEquals((260 * weightPerMeter + 14) * 1000, path.getTime(), 1.e-3, "wrong time");

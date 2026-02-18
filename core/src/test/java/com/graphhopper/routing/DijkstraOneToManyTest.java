@@ -139,15 +139,15 @@ public class DijkstraOneToManyTest {
         initGraphWeightLimit(graph, speedEnc);
 
         DijkstraOneToMany algo = createAlgo(graph);
-        algo.setWeightLimit(30);
+        algo.setWeightLimit(300);
         Path p = algo.calcPath(0, 4);
         assertTrue(p.isFound());
-        assertEquals(30.0, p.getWeight(), 1e-6);
+        assertEquals(300.0, p.getWeight());
 
         algo = createAlgo(graph);
         p = algo.calcPath(0, 3);
         assertTrue(p.isFound());
-        assertEquals(30.0, p.getWeight(), 1e-6);
+        assertEquals(300.0, p.getWeight());
     }
 
     @Test

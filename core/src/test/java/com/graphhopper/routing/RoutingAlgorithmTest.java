@@ -891,8 +891,8 @@ public class RoutingAlgorithmTest {
         // of the speed and read 0 => infinity weight => overflow of millis => negative millis!
         Path p = f.calcPath(graph, weighting, 0, 10);
         assertEquals(23645657, p.getTime());
-        assertEquals(425622, p.getDistance(), 1);
-        assertEquals(23646, p.getWeight(), 1);
+        assertEquals(425_621_860, p.getDistance_mm());
+        assertEquals(236457, p.getWeight());
     }
 
     @ParameterizedTest
@@ -970,9 +970,9 @@ public class RoutingAlgorithmTest {
         initEleGraph(graph, 60, f.carSpeedEnc);
         p = f.calcPath(graph, fakeWeighting, 3, 0, 10, 9);
         assertEquals(nodes(12, 0, 1, 2, 11, 7, 10, 13), p.calcNodes());
-        assertEquals(10280445, p.getTime());
-        assertEquals(616827, p.getDistance(), 1);
-        assertEquals(493462, p.getWeight(), 1);
+        assertEquals(10280446, p.getTime());
+        assertEquals(616827059, p.getDistance_mm());
+        assertEquals(4934615, p.getWeight());
     }
 
     @ParameterizedTest
