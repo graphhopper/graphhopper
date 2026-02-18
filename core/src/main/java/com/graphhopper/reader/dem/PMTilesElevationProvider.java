@@ -124,16 +124,20 @@ public class PMTilesElevationProvider implements ElevationProvider {
             int x0 = Math.max(0, Math.min(w - 2, (int) Math.floor(px)));
             int y0 = Math.max(0, Math.min(h - 2, (int) Math.floor(py)));
             double fx = px - x0, fy = py - y0;
-            double v00 = tile.getShort((y0 * w + x0) * 2);
-            double v10 = tile.getShort((y0 * w + Math.min(x0 + 1, w - 1)) * 2);
-            double v01 = tile.getShort((Math.min(y0 + 1, h - 1) * w + x0) * 2);
-            double v11 = tile.getShort((Math.min(y0 + 1, h - 1) * w + Math.min(x0 + 1, w - 1)) * 2);
+            short v00 = tile.getShort((y0 * w + x0) * 2);
+            short v10 = tile.getShort((y0 * w + Math.min(x0 + 1, w - 1)) * 2);
+            short v01 = tile.getShort((Math.min(y0 + 1, h - 1) * w + x0) * 2);
+            short v11 = tile.getShort((Math.min(y0 + 1, h - 1) * w + Math.min(x0 + 1, w - 1)) * 2);
+            if (v00 == Short.MIN_VALUE || v10 == Short.MIN_VALUE || v01 == Short.MIN_VALUE || v11 == Short.MIN_VALUE)
+                return Double.NaN;
             return v00 * (1 - fx) * (1 - fy) + v10 * fx * (1 - fy)
                     + v01 * (1 - fx) * fy + v11 * fx * fy;
         } else {
             int ix = Math.max(0, Math.min(w - 1, (int) Math.round(px)));
             int iy = Math.max(0, Math.min(h - 1, (int) Math.round(py)));
-            return tile.getShort((iy * w + ix) * 2);
+            short val = tile.getShort((iy * w + ix) * 2);
+            if (val == Short.MIN_VALUE) return Double.NaN;
+            return val;
         }
     }
 
@@ -251,7 +255,10 @@ public class PMTilesElevationProvider implements ElevationProvider {
                 } else {
                     e = (r * 256.0 + g + b / 256.0) - 32768.0;
                 }
-                short s = (short) Math.max(-32768, Math.min(32767, Math.round(e)));
+                // Mapbox uses rgb(0,0,0) = -10000 and Terrarium rgb(0,0,0) = -32768 for
+                // no-data/ocean. No real place is below -1000m, so treat as no-data sentinel.
+                short s = e < -1000 ? Short.MIN_VALUE
+                        : (short) Math.max(-32768, Math.min(32767, Math.round(e)));
                 if (s != 0) allSeaLevel = false;
 
                 // little-endian, matching ByteBuffer.LITTLE_ENDIAN order
