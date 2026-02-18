@@ -25,6 +25,7 @@ android/libs/graphhopper-*-android.jar
 /web/dependency-reduced-pom.xml
 *.pbf
 !/core/src/test/resources/com/graphhopper/reader/osm/*.pbf
+!/web-bundle/src/test/resources/no/ecc/vectortile/*.pbf
 *.dem
 *.log
 /logs

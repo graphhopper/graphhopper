@@ -26,7 +26,7 @@ The core module includes the following additional software:
 reader-gtfs:
 
  * some files from com.conveyal:gtfs-lib (BSD 2-clause license)
- * com.google.transit:gtfs-realtime-bindings (Apache license)
+ * gtfs-realtime.proto (Apache license)
  * com.google.guava:guava (Apache license)
  * net.sourceforge.javacsv:javacsv (LGPL license)
  * commons-io:commons-io (Apache license)
@@ -45,6 +45,7 @@ web:
  * org.eclipse.jetty:jetty-server (Apache License)
  * Dropwizard and dependencies (Apache license)
  * classes in no.ecc are a copy of no.ecc.vectortile:java-vector-tile, see #2698 (Apache license)
+ * vector_tile.proto (CC BY 3.0 US)
 
 ## Data
 

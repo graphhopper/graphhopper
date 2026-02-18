@@ -1,7 +1,7 @@
 // This software is released into the Public Domain.  See copying.txt for details.
 package com.graphhopper.reader.osm.pbf;
 
-import org.openstreetmap.osmosis.osmbinary.Osmformat;
+import crosby.binary.Osmformat;
 
 import java.util.Date;
 
