@@ -1786,11 +1786,13 @@ public class GraphHopperTest {
 
         req.putHint(Landmark.DISABLE, false);
         GHResponse res = hopper.route(req);
-        assertTrue(res.getHints().getInt("visited_nodes.sum", 0) < 150);
+        int visited = res.getHints().getInt("visited_nodes.sum", 0);
+        assertTrue(visited < 150, "too many visited nodes: " + visited);
 
         req.putHint(Landmark.DISABLE, true);
         res = hopper.route(req);
-        assertTrue(res.getHints().getInt("visited_nodes.sum", 0) > 170);
+        visited = res.getHints().getInt("visited_nodes.sum", 0);
+        assertTrue(visited > 170, "not enough visited nodes: " + visited);
     }
 
     @ParameterizedTest
