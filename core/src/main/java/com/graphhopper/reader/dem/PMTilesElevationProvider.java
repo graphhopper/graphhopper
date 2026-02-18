@@ -14,9 +14,9 @@ import java.util.Map;
  * GraphHopper ElevationProvider that reads elevation data directly from a
  * PMTiles v3 archive containing terrain-RGB encoded tiles.
  * <p>
- * If a directory of pre-decoded .ele files exists (created by pmtiles_to_ele.py),
- * each file is memory-mapped directly — no image decoding, no copying.
- * Otherwise tiles are decoded from PMTiles on first access and written as .ele
+ * If a directory of pre-decoded .tile files exists (created from previously runs),
+ * each file is memory-mapped directly and there is no image decoding, no copying happening.
+ * Otherwise tiles are decoded from PMTiles on first access and written as .tile
  * files so subsequent runs skip decoding.
  * <p>
  * Not thread-safe.
@@ -31,7 +31,7 @@ public class PMTilesElevationProvider implements ElevationProvider {
 
     private final PMTilesReader reader = new PMTilesReader();
 
-    // Tile key -> memory-mapped ByteBuffer (one per tile, each a direct mmap of the .ele file).
+    // Tile key -> memory-mapped ByteBuffer (one per tile, each a direct mmap of the .tile file).
     // No need for DataAccess as every file is rather small, and we can change to in-memory too.
     // Sentinels MISSING_BUF / SEA_LEVEL_BUF for tiles without elevation data.
     private final Map<Long, ByteBuffer> tileBuffers = new HashMap<>();
@@ -40,20 +40,20 @@ public class PMTilesElevationProvider implements ElevationProvider {
 
     private int tileSize;
 
-    // Directory for .ele files. If non-null and writable, decoded tiles are persisted
+    // Directory for .tile files. If non-null and writable, decoded tiles are persisted
     // there so subsequent runs can mmap them without re-decoding.
-    private File eleDir;
-    private boolean clearEleFiles = true;
+    private File tileDir;
+    private boolean clearTileFiles = true;
 
     /**
      * @param preferredZoom 10 means ~76m at equator and ~49m in Germany (default).
      *                      11 means ~38m at equator and ~25m in Germany.
      *                      12 means ~19m at equator and ~12m in Germany.
-     * @param eleDir        directory for .ele tile cache files. Pre-populated by pmtiles_to_ele.py
+     * @param tileDir        directory for .tile tile cache files. Pre-populated by pmtiles_to_ele.py
      *                      or built lazily on first access. If null, decoded tiles are kept on heap only.
      */
     public PMTilesElevationProvider(String filePath, TerrainEncoding encoding,
-                                    boolean interpolate, int preferredZoom, String eleDir) {
+                                    boolean interpolate, int preferredZoom, String tileDir) {
         this.encoding = encoding;
         this.interpolate = interpolate;
         this.preferredZoom = preferredZoom;
@@ -64,14 +64,14 @@ public class PMTilesElevationProvider implements ElevationProvider {
             throw new RuntimeException(e);
         }
 
-        if (eleDir != null && !eleDir.isEmpty()) {
-            this.eleDir = new File(eleDir);
-            this.eleDir.mkdirs();
+        if (tileDir != null && !tileDir.isEmpty()) {
+            this.tileDir = new File(tileDir);
+            this.tileDir.mkdirs();
         }
     }
 
-    public PMTilesElevationProvider setAutoRemoveTemporaryFiles(boolean clearEleFiles) {
-        this.clearEleFiles = clearEleFiles;
+    public PMTilesElevationProvider setAutoRemoveTemporaryFiles(boolean clearTileFiles) {
+        this.clearTileFiles = clearTileFiles;
         return this;
     }
 
@@ -98,8 +98,8 @@ public class PMTilesElevationProvider implements ElevationProvider {
     public void release() {
         tileBuffers.clear(); // MappedByteBuffers are unmapped by GC
         reader.close();
-        if (clearEleFiles && eleDir != null) {
-            File[] files = eleDir.listFiles((dir, name) -> name.endsWith(".ele"));
+        if (clearTileFiles && tileDir != null) {
+            File[] files = tileDir.listFiles((dir, name) -> name.endsWith(".tile"));
             if (files != null)
                 for (File f : files) f.delete();
         }
@@ -143,8 +143,8 @@ public class PMTilesElevationProvider implements ElevationProvider {
         ByteBuffer existing = tileBuffers.get(tileId);
         if (existing != null) return existing;
 
-        // Try pre-decoded .ele file first
-        ByteBuffer buf = tryMmapEleFile(tileId);
+        // Try pre-decoded .tile file first
+        ByteBuffer buf = tryMmapTileFile(tileId);
         if (buf != null) {
             tileBuffers.put(tileId, buf);
             return buf;
@@ -167,40 +167,40 @@ public class PMTilesElevationProvider implements ElevationProvider {
             return SEA_LEVEL_BUF;
         }
 
-        // Persist as .ele file and mmap, or wrap as heap buffer if no eleDir
+        // Persist as .tile file and mmap, or wrap as heap buffer if no tileDir
         buf = persistAndMmap(tileId, elevBytes);
         tileBuffers.put(tileId, buf);
         return buf;
     }
 
     /**
-     * Try to mmap an existing .ele file. Returns the mmap'd ByteBuffer if the file exists,
-     * or null if not found (either no eleDir or file not yet decoded).
+     * Try to mmap an existing .tile file. Returns the mmap'd ByteBuffer if the file exists,
+     * or null if not found (either no tileDir or file not yet decoded).
      */
-    private ByteBuffer tryMmapEleFile(long tileId) throws IOException {
-        if (eleDir == null) return null;
-        File f = eleFile(tileId);
+    private ByteBuffer tryMmapTileFile(long tileId) throws IOException {
+        if (tileDir == null) return null;
+        File f = tileFile(tileId);
         if (!f.exists()) return null;
         return mmapFile(f);
     }
 
     /**
-     * Write decoded bytes to an .ele file and mmap it, or wrap as heap buffer if no eleDir.
+     * Write decoded bytes to an .tile file and mmap it, or wrap as heap buffer if no tileDir.
      */
     private ByteBuffer persistAndMmap(long tileId, byte[] elevBytes) throws IOException {
-        if (eleDir != null) {
-            File f = eleFile(tileId);
+        if (tileDir != null) {
+            File f = tileFile(tileId);
             try (FileOutputStream fos = new FileOutputStream(f)) {
                 fos.write(elevBytes);
             }
             return mmapFile(f);
         }
-        // No eleDir — wrap as heap buffer (tests, small regions)
+        // No tileDir — wrap as heap buffer (tests, small regions)
         return ByteBuffer.wrap(elevBytes).order(ByteOrder.LITTLE_ENDIAN);
     }
 
-    private File eleFile(long tileId) {
-        return new File(eleDir, tileId + ".ele");
+    private File tileFile(long tileId) {
+        return new File(tileDir, tileId + ".tile");
     }
 
     private ByteBuffer mmapFile(File f) throws IOException {
