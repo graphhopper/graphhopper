@@ -72,4 +72,12 @@ public interface Weighting {
 
         return name.matches("[\\|_a-z]+");
     }
+
+    static double roundWeight(double w) {
+        if (w < 0) throw new IllegalArgumentException("weights should be >= 0");
+        if (Double.isInfinite(w)) return Double.POSITIVE_INFINITY;
+        if (w % 1 != 0 && w < 0.5)
+            return 1;
+        return Math.round(w);
+    }
 }
