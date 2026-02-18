@@ -17,8 +17,6 @@
  */
 package com.graphhopper.reader.dem;
 
-import com.graphhopper.storage.DAType;
-import com.graphhopper.storage.GHDirectory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
@@ -96,7 +94,7 @@ public class PMTilesElevationProviderTest {
     public void testRealPMTilesWithZoom10() {
         instance = new PMTilesElevationProvider("./files/near-badschandau-z10-11.pmtiles",
                 PMTilesElevationProvider.TerrainEncoding.TERRARIUM, false, 10,
-                new GHDirectory("", DAType.RAM));
+                null);
 
         // Elbe
         assertEquals(118, instance.getEle(50.905488, 14.204129), 1);
@@ -113,7 +111,7 @@ public class PMTilesElevationProviderTest {
     public void testRealPMTilesWithZoom11() {
         instance = new PMTilesElevationProvider("./files/near-badschandau-z10-11.pmtiles",
                 PMTilesElevationProvider.TerrainEncoding.TERRARIUM, false, 11,
-                new GHDirectory("", DAType.RAM));
+                null);
 
         // Elbe
         assertEquals(118, instance.getEle(50.905488, 14.204129), 1);
@@ -129,7 +127,7 @@ public class PMTilesElevationProviderTest {
     public void testOutsideArea() {
         instance = new PMTilesElevationProvider("./files/near-badschandau-z10-11.pmtiles",
                 PMTilesElevationProvider.TerrainEncoding.MAPBOX, false, 10,
-                new GHDirectory("", DAType.RAM));
+                null);
 
         // Point far outside the extract — should return NaN
         double ele = instance.getEle(0, 0);

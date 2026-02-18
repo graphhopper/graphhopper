@@ -1,15 +1,12 @@
 package com.graphhopper.reader.dem;
 
-import com.graphhopper.storage.DAType;
-import com.graphhopper.storage.DataAccess;
-import com.graphhopper.storage.Directory;
-import com.graphhopper.storage.GHDirectory;
-
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.channels.FileChannel;
+import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -17,9 +14,10 @@ import java.util.Map;
  * GraphHopper ElevationProvider that reads elevation data directly from a
  * PMTiles v3 archive containing terrain-RGB encoded tiles.
  * <p>
- * Decoded tiles are stored in a memory-mapped file (via DataAccess) so the OS
- * page cache manages what stays in RAM. The Java heap only holds a small offset
- * index (~50-80 MB for 1M tiles at planet scale).
+ * If a directory of pre-decoded .ele files exists (created by pmtiles_to_ele.py),
+ * each file is memory-mapped directly — no image decoding, no copying.
+ * Otherwise tiles are decoded from PMTiles on first access and written as .ele
+ * files so subsequent runs skip decoding.
  * <p>
  * Not thread-safe.
  */
@@ -33,41 +31,31 @@ public class PMTilesElevationProvider implements ElevationProvider {
 
     private final PMTilesReader reader = new PMTilesReader();
 
-    // Tile key -> byte offset in tileData. -1 sentinel not stored; absence means not yet decoded.
-    private final Map<Long, Long> tileOffsets = new HashMap<>();
-    private final boolean ownDir;
-    private Directory dir;
-    private DataAccess tileData;
-    private long nextOffset = 0;
+    // Tile key -> memory-mapped ByteBuffer (one per tile, each a direct mmap of the .ele file).
+    // Sentinels MISSING_BUF / SEA_LEVEL_BUF for tiles without elevation data.
+    private final Map<Long, ByteBuffer> tileBuffers = new HashMap<>();
+    private static final ByteBuffer MISSING_BUF = ByteBuffer.allocate(0);
+    private static final ByteBuffer SEA_LEVEL_BUF = ByteBuffer.allocate(1);
 
     private int tileSize;
+
+    // Directory for .ele files. If non-null and writable, decoded tiles are persisted
+    // there so subsequent runs can mmap them without re-decoding.
+    private File eleDir;
+    private boolean clearEleFiles = true;
 
     /**
      * @param preferredZoom 10 means ~76m at equator and ~49m in Germany (default).
      *                      11 means ~38m at equator and ~25m in Germany.
      *                      12 means ~19m at equator and ~12m in Germany.
-     * @param cacheDir      directory for the memory-mapped tile cache file. If null, derived from filePath's parent.
+     * @param eleDir        directory for .ele tile cache files. Pre-populated by pmtiles_to_ele.py
+     *                      or built lazily on first access. If null, decoded tiles are kept on heap only.
      */
     public PMTilesElevationProvider(String filePath, TerrainEncoding encoding,
-                                    boolean interpolate, int preferredZoom, String cacheDir) {
-        this(filePath, encoding, interpolate, preferredZoom, createDir(filePath, cacheDir), true);
-    }
-
-    /**
-     * Constructor accepting an explicit Directory (e.g. a RAM-backed directory for tests).
-     */
-    public PMTilesElevationProvider(String filePath, TerrainEncoding encoding,
-                                    boolean interpolate, int preferredZoom, Directory dir) {
-        this(filePath, encoding, interpolate, preferredZoom, dir, false);
-    }
-
-    private PMTilesElevationProvider(String filePath, TerrainEncoding encoding,
-                                     boolean interpolate, int preferredZoom, Directory dir, boolean ownDir) {
+                                    boolean interpolate, int preferredZoom, String eleDir) {
         this.encoding = encoding;
         this.interpolate = interpolate;
         this.preferredZoom = preferredZoom;
-        this.dir = dir;
-        this.ownDir = ownDir;
         try {
             reader.open(filePath);
             reader.checkWebPSupport();
@@ -75,16 +63,15 @@ public class PMTilesElevationProvider implements ElevationProvider {
             throw new RuntimeException(e);
         }
 
-        tileData = dir.create("pmtiles_elev_cache");
-        tileData.create(1_000_000);
+        if (eleDir != null && !eleDir.isEmpty()) {
+            this.eleDir = new File(eleDir);
+            this.eleDir.mkdirs();
+        }
     }
 
-    private static Directory createDir(String filePath, String cacheDir) {
-        if (cacheDir == null || cacheDir.isEmpty()) {
-            File parent = new File(filePath).getAbsoluteFile().getParentFile();
-            cacheDir = parent != null ? parent.getAbsolutePath() : ".";
-        }
-        return new GHDirectory(cacheDir, DAType.MMAP);
+    public PMTilesElevationProvider setAutoRemoveTemporaryFiles(boolean clearEleFiles) {
+        this.clearEleFiles = clearEleFiles;
+        return this;
     }
 
     // =========================================================================
@@ -112,20 +99,12 @@ public class PMTilesElevationProvider implements ElevationProvider {
 
     @Override
     public void release() {
-        tileOffsets.clear();
-        nextOffset = 0;
+        tileBuffers.clear(); // MappedByteBuffers are unmapped by GC
         reader.close();
-
-        // TODO NOW similar to cgiar provider make this configurable which will make it much faster for next import
-        if (tileData != null) {
-            tileData.close();
-            tileData = null;
-        }
-
-        if (dir != null) {
-            if (ownDir) dir.clear();
-            else dir.close();
-            dir = null;
+        if (clearEleFiles && eleDir != null) {
+            File[] files = eleDir.listFiles((dir, name) -> name.endsWith(".ele"));
+            if (files != null)
+                for (File f : files) f.delete();
         }
     }
 
@@ -142,9 +121,9 @@ public class PMTilesElevationProvider implements ElevationProvider {
         int tileX = Math.max(0, Math.min(n - 1, (int) Math.floor(xTileD)));
         int tileY = Math.max(0, Math.min(n - 1, (int) Math.floor(yTileD)));
 
-        long offset = getDecodedTileOffset(zoom, tileX, tileY);
-        if (offset == MISSING) return Double.NaN;
-        if (offset == SEA_LEVEL) return 0;
+        ByteBuffer tile = getTileBuffer(zoom, tileX, tileY);
+        if (tile == MISSING_BUF) return Double.NaN;
+        if (tile == SEA_LEVEL_BUF) return 0;
 
         int w = tileSize, h = tileSize;
         double px = (xTileD - tileX) * (w - 1);
@@ -154,65 +133,103 @@ public class PMTilesElevationProvider implements ElevationProvider {
             int x0 = Math.max(0, Math.min(w - 2, (int) Math.floor(px)));
             int y0 = Math.max(0, Math.min(h - 2, (int) Math.floor(py)));
             double fx = px - x0, fy = py - y0;
-            double v00 = tileData.getShort(offset + (long) (y0 * w + x0) * 2);
-            double v10 = tileData.getShort(offset + (long) (y0 * w + Math.min(x0 + 1, w - 1)) * 2);
-            double v01 = tileData.getShort(offset + (long) (Math.min(y0 + 1, h - 1) * w + x0) * 2);
-            double v11 = tileData.getShort(offset + (long) (Math.min(y0 + 1, h - 1) * w + Math.min(x0 + 1, w - 1)) * 2);
+            double v00 = tile.getShort((y0 * w + x0) * 2);
+            double v10 = tile.getShort((y0 * w + Math.min(x0 + 1, w - 1)) * 2);
+            double v01 = tile.getShort((Math.min(y0 + 1, h - 1) * w + x0) * 2);
+            double v11 = tile.getShort((Math.min(y0 + 1, h - 1) * w + Math.min(x0 + 1, w - 1)) * 2);
             return v00 * (1 - fx) * (1 - fy) + v10 * fx * (1 - fy)
                     + v01 * (1 - fx) * fy + v11 * fx * fy;
         } else {
             int ix = Math.max(0, Math.min(w - 1, (int) Math.round(px)));
             int iy = Math.max(0, Math.min(h - 1, (int) Math.round(py)));
-            return tileData.getShort(offset + (long) (iy * w + ix) * 2);
+            return tile.getShort((iy * w + ix) * 2);
         }
     }
 
     // =========================================================================
-    // Tile decode + mmap cache
+    // Tile loading: mmap .ele files or decode from PMTiles
     // =========================================================================
 
-    /**
-     * Tile absent from the archive.
-     */
-    private static final long MISSING = -1;
-    /**
-     * Tile decoded but all elevations are <= 0 (sea level).
-     */
-    private static final long SEA_LEVEL = -2;
-
-    private long getDecodedTileOffset(int z, int x, int y) throws IOException {
+    private ByteBuffer getTileBuffer(int z, int x, int y) throws IOException {
         long key = ((long) z << 50) | ((long) x << 25) | y;
-        Long existing = tileOffsets.get(key);
+        ByteBuffer existing = tileBuffers.get(key);
         if (existing != null) return existing;
 
+        // Try pre-decoded .ele file first
+        ByteBuffer buf = tryMmapEleFile(z, x, y);
+        if (buf != null) {
+            tileBuffers.put(key, buf);
+            return buf;
+        }
+
+        // Decode from PMTiles
         byte[] raw = reader.getTileBytes(z, x, y);
         if (raw == null) {
-            tileOffsets.put(key, MISSING);
-            return MISSING;
+            tileBuffers.put(key, MISSING_BUF);
+            return MISSING_BUF;
         }
 
         byte[] elevBytes = decodeTerrain(raw);
         if (elevBytes == null) {
-            tileOffsets.put(key, MISSING);
-            return MISSING;
+            tileBuffers.put(key, MISSING_BUF);
+            return MISSING_BUF;
         }
         if (elevBytes.length == 0) {
-            tileOffsets.put(key, SEA_LEVEL);
-            return SEA_LEVEL;
+            tileBuffers.put(key, SEA_LEVEL_BUF);
+            return SEA_LEVEL_BUF;
         }
 
-        long off = nextOffset;
-        tileData.ensureCapacity(off + elevBytes.length);
-        tileData.setBytes(off, elevBytes, elevBytes.length);
-
-        tileOffsets.put(key, off);
-        nextOffset += elevBytes.length;
-        return off;
+        // Persist as .ele file and mmap, or wrap as heap buffer if no eleDir
+        buf = persistAndMmap(z, x, y, elevBytes);
+        tileBuffers.put(key, buf);
+        return buf;
     }
 
     /**
-     * Decodes terrain-RGB image bytes into a little-endian byte[] of short elevation values,
-     * ready to be written directly into DataAccess.
+     * Try to mmap an existing .ele file. Returns the mmap'd ByteBuffer if the file exists,
+     * or null if not found (either no eleDir or file not yet decoded).
+     */
+    private ByteBuffer tryMmapEleFile(int z, int x, int y) throws IOException {
+        if (eleDir == null) return null;
+        File f = eleFile(z, x, y);
+        if (!f.exists()) return null;
+        return mmapFile(f);
+    }
+
+    /**
+     * Write decoded bytes to an .ele file and mmap it, or wrap as heap buffer if no eleDir.
+     */
+    private ByteBuffer persistAndMmap(int z, int x, int y, byte[] elevBytes) throws IOException {
+        if (eleDir != null) {
+            File f = eleFile(z, x, y);
+            try (FileOutputStream fos = new FileOutputStream(f)) {
+                fos.write(elevBytes);
+            }
+            return mmapFile(f);
+        }
+        // No eleDir — wrap as heap buffer (tests, small regions)
+        return ByteBuffer.wrap(elevBytes).order(ByteOrder.LITTLE_ENDIAN);
+    }
+
+    private File eleFile(int z, int x, int y) {
+        long tileId = PMTilesReader.zxyToTileId(z, x, y);
+        return new File(eleDir, "z" + z + "_" + tileId + ".ele");
+    }
+
+    private ByteBuffer mmapFile(File f) throws IOException {
+        if (tileSize == 0) {
+            // Derive tile size from file: fileLength = tileSize * tileSize * 2
+            tileSize = (int) Math.sqrt(f.length() / 2);
+        }
+        try (FileChannel ch = FileChannel.open(f.toPath(), StandardOpenOption.READ)) {
+            ByteBuffer buf = ch.map(FileChannel.MapMode.READ_ONLY, 0, f.length());
+            buf.order(ByteOrder.LITTLE_ENDIAN);
+            return buf;
+        }
+    }
+
+    /**
+     * Decodes terrain-RGB image bytes into a little-endian byte[] of short elevation values.
      *
      * @return byte[] with LE-encoded shorts, empty byte[] if all elevations are <= 0 (sea level), or null on decode failure.
      */
@@ -252,7 +269,7 @@ public class PMTilesElevationProvider implements ElevationProvider {
                 short s = (short) Math.max(-32768, Math.min(32767, Math.round(e)));
                 if (s > 0) allSeaLevel = false;
 
-                // little-endian, matching DataAccess byte order
+                // little-endian, matching ByteBuffer.LITTLE_ENDIAN order
                 int idx = (y * w + x) * 2;
                 elev[idx] = (byte) (s & 0xFF);
                 elev[idx + 1] = (byte) ((s >> 8) & 0xFF);
