@@ -63,7 +63,7 @@ class PMTilesExtract {
             ty = Math.max(0, Math.min(n - 1, ty));
 
             long tileId = PMTilesReader.zxyToTileId(z, tx, ty);
-            byte[] data = reader.getTileBytes(z, tx, ty);
+            byte[] data = reader.getTileBytes(tileId);
 
             if (data == null) {
                 System.out.printf("  z=%2d x=%5d y=%5d tileId=%10d -> NOT FOUND%n", z, tx, ty, tileId);
@@ -89,7 +89,7 @@ class PMTilesExtract {
         int extracted = 0;
         for (long tileId = base; tileId < endId; tileId++) {
             int[] zxy = PMTilesReader.tileIdToZxy(tileId);
-            byte[] data = reader.getTileBytes(zxy[0], zxy[1], zxy[2]);
+            byte[] data = reader.getTileBytes(tileId);
             if (data == null) continue;
 
             BufferedImage img = decodeImage(data);

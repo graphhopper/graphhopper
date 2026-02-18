@@ -32,6 +32,7 @@ public class PMTilesElevationProvider implements ElevationProvider {
     private final PMTilesReader reader = new PMTilesReader();
 
     // Tile key -> memory-mapped ByteBuffer (one per tile, each a direct mmap of the .ele file).
+    // No need for DataAccess as every file is rather small, and we can change to in-memory too.
     // Sentinels MISSING_BUF / SEA_LEVEL_BUF for tiles without elevation data.
     private final Map<Long, ByteBuffer> tileBuffers = new HashMap<>();
     private static final ByteBuffer MISSING_BUF = ByteBuffer.allocate(0);
@@ -74,10 +75,6 @@ public class PMTilesElevationProvider implements ElevationProvider {
         return this;
     }
 
-    // =========================================================================
-    // ElevationProvider interface
-    // =========================================================================
-
     @Override
     public double getEle(double lat, double lon) {
         try {
@@ -108,10 +105,6 @@ public class PMTilesElevationProvider implements ElevationProvider {
         }
     }
 
-    // =========================================================================
-    // Core elevation sampling
-    // =========================================================================
-
     private double sampleElevation(double lat, double lon, int zoom) throws IOException {
         int n = 1 << zoom;
         double xTileD = (lon + 180.0) / 360.0 * n;
@@ -121,7 +114,7 @@ public class PMTilesElevationProvider implements ElevationProvider {
         int tileX = Math.max(0, Math.min(n - 1, (int) Math.floor(xTileD)));
         int tileY = Math.max(0, Math.min(n - 1, (int) Math.floor(yTileD)));
 
-        ByteBuffer tile = getTileBuffer(zoom, tileX, tileY);
+        ByteBuffer tile = getTileBuffer(PMTilesReader.zxyToTileId(zoom, tileX, tileY));
         if (tile == MISSING_BUF) return Double.NaN;
         if (tile == SEA_LEVEL_BUF) return 0;
 
@@ -146,42 +139,37 @@ public class PMTilesElevationProvider implements ElevationProvider {
         }
     }
 
-    // =========================================================================
-    // Tile loading: mmap .ele files or decode from PMTiles
-    // =========================================================================
-
-    private ByteBuffer getTileBuffer(int z, int x, int y) throws IOException {
-        long key = ((long) z << 50) | ((long) x << 25) | y;
-        ByteBuffer existing = tileBuffers.get(key);
+    private ByteBuffer getTileBuffer(long tileId) throws IOException {
+        ByteBuffer existing = tileBuffers.get(tileId);
         if (existing != null) return existing;
 
         // Try pre-decoded .ele file first
-        ByteBuffer buf = tryMmapEleFile(z, x, y);
+        ByteBuffer buf = tryMmapEleFile(tileId);
         if (buf != null) {
-            tileBuffers.put(key, buf);
+            tileBuffers.put(tileId, buf);
             return buf;
         }
 
         // Decode from PMTiles
-        byte[] raw = reader.getTileBytes(z, x, y);
+        byte[] raw = reader.getTileBytes(tileId);
         if (raw == null) {
-            tileBuffers.put(key, MISSING_BUF);
+            tileBuffers.put(tileId, MISSING_BUF);
             return MISSING_BUF;
         }
 
         byte[] elevBytes = decodeTerrain(raw);
         if (elevBytes == null) {
-            tileBuffers.put(key, MISSING_BUF);
+            tileBuffers.put(tileId, MISSING_BUF);
             return MISSING_BUF;
         }
         if (elevBytes.length == 0) {
-            tileBuffers.put(key, SEA_LEVEL_BUF);
+            tileBuffers.put(tileId, SEA_LEVEL_BUF);
             return SEA_LEVEL_BUF;
         }
 
         // Persist as .ele file and mmap, or wrap as heap buffer if no eleDir
-        buf = persistAndMmap(z, x, y, elevBytes);
-        tileBuffers.put(key, buf);
+        buf = persistAndMmap(tileId, elevBytes);
+        tileBuffers.put(tileId, buf);
         return buf;
     }
 
@@ -189,9 +177,9 @@ public class PMTilesElevationProvider implements ElevationProvider {
      * Try to mmap an existing .ele file. Returns the mmap'd ByteBuffer if the file exists,
      * or null if not found (either no eleDir or file not yet decoded).
      */
-    private ByteBuffer tryMmapEleFile(int z, int x, int y) throws IOException {
+    private ByteBuffer tryMmapEleFile(long tileId) throws IOException {
         if (eleDir == null) return null;
-        File f = eleFile(z, x, y);
+        File f = eleFile(tileId);
         if (!f.exists()) return null;
         return mmapFile(f);
     }
@@ -199,9 +187,9 @@ public class PMTilesElevationProvider implements ElevationProvider {
     /**
      * Write decoded bytes to an .ele file and mmap it, or wrap as heap buffer if no eleDir.
      */
-    private ByteBuffer persistAndMmap(int z, int x, int y, byte[] elevBytes) throws IOException {
+    private ByteBuffer persistAndMmap(long tileId, byte[] elevBytes) throws IOException {
         if (eleDir != null) {
-            File f = eleFile(z, x, y);
+            File f = eleFile(tileId);
             try (FileOutputStream fos = new FileOutputStream(f)) {
                 fos.write(elevBytes);
             }
@@ -211,9 +199,8 @@ public class PMTilesElevationProvider implements ElevationProvider {
         return ByteBuffer.wrap(elevBytes).order(ByteOrder.LITTLE_ENDIAN);
     }
 
-    private File eleFile(int z, int x, int y) {
-        long tileId = PMTilesReader.zxyToTileId(z, x, y);
-        return new File(eleDir, "z" + z + "_" + tileId + ".ele");
+    private File eleFile(long tileId) {
+        return new File(eleDir, tileId + ".ele");
     }
 
     private ByteBuffer mmapFile(File f) throws IOException {

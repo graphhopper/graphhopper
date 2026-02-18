@@ -67,12 +67,8 @@ class PMTilesReader implements Closeable {
         }
     }
 
-    // =========================================================================
-    // Tile retrieval
-    // =========================================================================
-
-    byte[] getTileBytes(int z, int x, int y) throws IOException {
-        return findTile(zxyToTileId(z, x, y), rootDir, 0);
+    byte[] getTileBytes(long tileId) throws IOException {
+        return findTile(tileId, rootDir, 0);
     }
 
     private byte[] findTile(long tileId, List<DirEntry> dir, int depth) throws IOException {
