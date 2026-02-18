@@ -1080,8 +1080,7 @@ public class CHTurnCostTest {
 
     private void compareWithDijkstraOnRandomGraph(long seed) {
         final Random rnd = new Random(seed);
-        // for larger graphs preparation takes much longer the higher the degree is!
-        GHUtility.buildRandomGraph(graph, rnd, 20, 3.0, true, speedEnc, null, 0.9, 0.8);
+        RandomGraph.start().seed(seed).nodes(20).curviness(0.1).speedZero(0.1).fill(graph, speedEnc);
         GHUtility.addRandomTurnCosts(graph, seed, null, turnCostEnc, maxCost, turnCostStorage);
         graph.freeze();
         checkStrict = false;
@@ -1108,7 +1107,7 @@ public class CHTurnCostTest {
     }
 
     private void compareWithDijkstraOnRandomGraph_heuristic(long seed) {
-        GHUtility.buildRandomGraph(graph, new Random(seed), 20, 3.0, true, speedEnc, null, 0.9, 0.8);
+        RandomGraph.start().seed(seed).nodes(20).curviness(0.1).speedZero(0.1).fill(graph, speedEnc);
         GHUtility.addRandomTurnCosts(graph, seed, null, turnCostEnc, maxCost, turnCostStorage);
         graph.freeze();
         checkStrict = false;

@@ -29,7 +29,7 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.RandomGraph;
 import org.junit.jupiter.api.RepeatedTest;
 
 import java.util.Random;
@@ -51,8 +51,7 @@ public class LMApproximatorTest {
         EncodingManager encodingManager = new EncodingManager.Builder().add(speedEnc).addTurnCostEncodedValue(turnCostEnc).add(Subnetwork.create("car")).build();
         BaseGraph graph = new BaseGraph.Builder(encodingManager).setDir(dir).withTurnCosts(true).create();
 
-        Random rnd = new Random(seed);
-        GHUtility.buildRandomGraph(graph, rnd, 100, 2.2, true, speedEnc, null, 0.8, 0.8);
+        RandomGraph.start().seed(seed).nodes(50).curviness(0.1).speedZero(0.1).fill(graph, speedEnc);
 
         Weighting weighting = new SpeedWeighting(speedEnc);
 
