@@ -32,7 +32,7 @@ public class PMTilesElevationProvider implements ElevationProvider {
     private final PMTilesReader reader = new PMTilesReader();
 
     // Tile key -> memory-mapped ByteBuffer (one per tile, each a direct mmap of the .tile file).
-    // No need for DataAccess as every file is rather small, and we can change to in-memory too.
+    // No need for DataAccess as every file is rather small, and we can change to in-memory too via tileDir=null.
     // Sentinels MISSING_BUF / SEA_LEVEL_BUF for tiles without elevation data.
     private final Map<Long, ByteBuffer> tileBuffers = new HashMap<>();
     private static final ByteBuffer MISSING_BUF = ByteBuffer.allocate(0);
@@ -78,10 +78,8 @@ public class PMTilesElevationProvider implements ElevationProvider {
     @Override
     public double getEle(double lat, double lon) {
         try {
-            // Auto-select zoom: use preferredZoom if set, otherwise cap at 10.
-            // Zoom 10 with 512px tiles ≈ 19m resolution.
-            // Zoom 12 would need 16× more tiles (also increasing cache access by a lot) for marginal benefit.
-            int zoom = preferredZoom > 0 ? preferredZoom : Math.min(reader.header.maxZoom, 10);
+            // Auto-select zoom: use preferredZoom if set, otherwise cap at 11.
+            int zoom = preferredZoom > 0 ? preferredZoom : Math.min(reader.header.maxZoom, 11);
             return sampleElevation(lat, lon, zoom);
         } catch (Exception e) {
             System.err.println("PMTilesElevationProvider.getEle(" + lat + ", " + lon + ") failed: " + e.getMessage());
