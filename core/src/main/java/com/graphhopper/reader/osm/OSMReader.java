@@ -375,7 +375,7 @@ public class OSMReader {
             edge.setWayGeometry(pointList.shallowCopy(1, pointList.size() - 1, false));
         }
 
-        checkDistance(edge);
+        checkDistance(way.getId(), edge);
         restrictedWaysToEdgesMap.putIfReserved(way.getId(), edge.getEdge());
     }
 
@@ -385,17 +385,19 @@ public class OSMReader {
             throw new IllegalStateException("Suspicious coordinates for node " + nodeIndex + ": (" + nodeAccess.getLat(nodeIndex) + "," + nodeAccess.getLon(nodeIndex) + ") vs. (" + point + ")");
     }
 
-    private void checkDistance(EdgeIteratorState edge) {
+    private void checkDistance(long readerWayId, EdgeIteratorState edge) {
         final double tolerance = 1;
         final double edgeDistance = edge.getDistance();
-        final double geometryDistance = distCalc.calcDistance(edge.fetchWayGeometry(FetchMode.ALL));
+        PointList pointList = edge.fetchWayGeometry(FetchMode.ALL);
+        final double geometryDistance = distCalc.calcDistance(pointList);
         if (Double.isInfinite(edgeDistance))
-            throw new IllegalStateException("Infinite edge distance should never occur, as we are supposed to limit each distance to the maximum distance we can store, #435");
+            throw new IllegalStateException("Infinite edge distance should never occur, as we are supposed to limit each distance to the maximum distance we can store, #435. wayId=" + readerWayId);
         else if (edgeDistance > 2_000_000)
-            LOGGER.warn("Very long edge detected: " + edge + " dist: " + edgeDistance);
+            LOGGER.warn("Very long edge detected: " + edge + " ( wayId=" + readerWayId + "), dist: " + edgeDistance);
         else if (Math.abs(edgeDistance - geometryDistance) > tolerance)
-            throw new IllegalStateException("Suspicious distance for edge: " + edge + " " + edgeDistance + " vs. " + geometryDistance
-                    + ", difference: " + (edgeDistance - geometryDistance));
+            throw new IllegalStateException("Suspicious distance for edge: " + edge
+                    + " ( wayId=" + readerWayId + ") " + edgeDistance + " vs. " + geometryDistance
+                    + ", difference: " + (edgeDistance - geometryDistance) + ", geometry: " + pointList);
     }
 
     /**
