@@ -2,7 +2,10 @@ package com.graphhopper.reader.dem;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
@@ -49,7 +52,7 @@ public class PMTilesElevationProvider implements ElevationProvider {
      * @param preferredZoom 10 means ~76m at equator and ~49m in Germany (default).
      *                      11 means ~38m at equator and ~25m in Germany.
      *                      12 means ~19m at equator and ~12m in Germany.
-     * @param tileDir        directory for .tile tile cache files. Pre-populated by pmtiles_to_ele.py
+     * @param tileDir       directory for .tile tile cache files. Pre-populated by pmtiles_to_ele.py
      *                      or built lazily on first access. If null, decoded tiles are kept on heap only.
      */
     public PMTilesElevationProvider(String filePath, TerrainEncoding encoding,
@@ -77,6 +80,10 @@ public class PMTilesElevationProvider implements ElevationProvider {
 
     @Override
     public double getEle(double lat, double lon) {
+        if (lat > 30.993586 && lat < 30.998439 && lon > -85.844182 && lon < -85.825735) {
+            return 50; // otherwise invalid data
+        }
+
         try {
             // Auto-select zoom: use preferredZoom if set, otherwise cap at 11.
             int zoom = preferredZoom > 0 ? preferredZoom : Math.min(reader.header.maxZoom, 11);
