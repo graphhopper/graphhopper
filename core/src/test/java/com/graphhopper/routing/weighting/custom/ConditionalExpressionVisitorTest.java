@@ -1,6 +1,7 @@
 package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.routing.ev.ArrayEdgeIntAccess;
+import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.routing.ev.StringEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.Helper;
@@ -8,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
+import java.util.Set;
 
 import static com.graphhopper.routing.weighting.custom.ConditionalExpressionVisitor.parse;
 import static org.junit.jupiter.api.Assertions.*;
@@ -125,6 +127,75 @@ public class ConditionalExpressionVisitorTest {
         ParseResult result = parse("Math.abs(average_slope) < -0.5", "average_slope"::equals, k -> "");
         assertTrue(result.ok);
         assertEquals("[average_slope]", result.guessedVariables.toString());
+    }
+
+    @Test
+    public void testConvertCondition() {
+        NameValidator validVariable = s -> Helper.toUpperCase(s).equals(s) || s.equals("road_class") || s.equals("road_environment") || s.equals("max_speed") || s.equals("bike_road_access") || s.equals("prev_bike_road_access");
+        ClassHelper helper = k -> k.equals("road_class") ? "RoadClass" : k.equals("road_environment") ? "RoadEnvironment" : k.equals("max_speed") ? "MaxSpeed" : "BikeRoadAccess";
+
+        // use case should read like "road_class is in set_of(SECONDARY,PRIMARY)
+        ParseResult result = parse("road_class == SECONDARY || PRIMARY", validVariable, helper);
+        assertTrue(result.ok);
+        assertEquals("[road_class]", result.guessedVariables.toString());
+        assertEquals("road_class == RoadClass.SECONDARY || road_class == RoadClass.PRIMARY", result.converted.toString());
+
+        // still support old explicit way
+        result = parse("road_class == SECONDARY || road_class == PRIMARY", validVariable, helper);
+        assertTrue(result.ok);
+        assertEquals("road_class == RoadClass.SECONDARY || road_class == RoadClass.PRIMARY", result.converted.toString());
+
+        // try different use case like 'not in set_of(SECONDARY,PRIMARY)'
+        result = parse("road_class != SECONDARY && PRIMARY", validVariable, helper);
+        assertTrue(result.ok);
+        assertEquals("road_class != RoadClass.SECONDARY && road_class != RoadClass.PRIMARY", result.converted.toString());
+
+        // and more than 2 arguments
+        result = parse("road_class == SECONDARY || PRIMARY|| TERTIARY", validVariable, helper);
+        assertTrue(result.ok);
+        assertEquals("road_class == RoadClass.SECONDARY || road_class == RoadClass.PRIMARY|| road_class == RoadClass.TERTIARY", result.converted.toString());
+
+        // || and && should both work
+        result = parse("road_class == SECONDARY && PRIMARY && TERTIARY || RESIDENTIAL", validVariable, helper);
+        assertTrue(result.ok);
+        assertEquals("road_class == RoadClass.SECONDARY && road_class == RoadClass.PRIMARY && road_class == RoadClass.TERTIARY || road_class == RoadClass.RESIDENTIAL", result.converted.toString());
+
+        // but no variable inclusion outside of parenthesis (parsing here works but later compiling obviously not)
+        result = parse("(road_class == SECONDARY && PRIMARY) && TERTIARY || RESIDENTIAL", validVariable, helper);
+        assertTrue(result.ok);
+        assertEquals("(road_class == RoadClass.SECONDARY && road_class == RoadClass.PRIMARY) && TERTIARY || RESIDENTIAL", result.converted.toString());
+
+        // also such mixed constructs won't work
+        result = parse("road_class == SECONDARY || PRIMARY && road_environment == TUNNEL || BRIDGE || ROAD", validVariable, helper);
+        assertTrue(result.ok);
+        assertEquals("road_class == RoadClass.SECONDARY || PRIMARY && road_environment == RoadEnvironment.TUNNEL || BRIDGE || ROAD", result.converted.toString());
+
+        // when combining multiple conditions with different variables you need to put brackets around them ...
+        result = parse("(road_class == SECONDARY || PRIMARY) && (road_environment == TUNNEL || BRIDGE || ROAD)", validVariable, helper);
+        assertTrue(result.ok);
+        assertEquals("(road_class == RoadClass.SECONDARY || road_class == RoadClass.PRIMARY) && (road_environment == RoadEnvironment.TUNNEL || road_environment == RoadEnvironment.BRIDGE || road_environment == RoadEnvironment.ROAD)", result.converted.toString());
+
+        // ... or use the natural preference of &&
+        result = parse("road_class == SECONDARY && PRIMARY || road_environment == TUNNEL && BRIDGE && ROAD", validVariable, helper);
+        assertTrue(result.ok);
+        assertEquals("road_class == RoadClass.SECONDARY && road_class == RoadClass.PRIMARY || road_environment == RoadEnvironment.TUNNEL && road_environment == RoadEnvironment.BRIDGE && road_environment == RoadEnvironment.ROAD", result.converted.toString());
+
+        // no automatic bracket placement => no working replacement mechanism
+        result = parse("road_environment == TUNNEL && road_class == SECONDARY || PRIMARY", validVariable, helper);
+        assertTrue(result.ok);
+        assertEquals("road_environment == RoadEnvironment.TUNNEL && road_class == RoadClass.SECONDARY || PRIMARY", result.converted.toString());
+        result = parse("road_environment == TUNNEL && (road_class == SECONDARY || PRIMARY)", validVariable, helper);
+        assertTrue(result.ok);
+        assertEquals("road_environment == RoadEnvironment.TUNNEL && (road_class == RoadClass.SECONDARY || road_class == RoadClass.PRIMARY)", result.converted.toString());
+
+        // 'variable include' currently won't work for numbers, but has no practical relevance at the moment
+        result = parse("max_speed == 90 || 100", validVariable, helper);
+        assertTrue(result.ok);
+        assertEquals("max_speed == 90 || 100", result.converted.toString());
+
+        result = parse("prev_bike_road_access != bike_road_access && (bike_road_access == DESTINATION || PRIVATE)", validVariable, helper);
+        assertTrue(result.ok);
+        assertEquals("prev_bike_road_access != bike_road_access && (bike_road_access == BikeRoadAccess.DESTINATION || bike_road_access == BikeRoadAccess.PRIVATE)", result.converted.toString());
     }
 
     @Test
