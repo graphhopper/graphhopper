@@ -80,10 +80,6 @@ public class PMTilesElevationProvider implements ElevationProvider {
 
     @Override
     public double getEle(double lat, double lon) {
-        if (lat > 30.993586 && lat < 30.998439 && lon > -85.844182 && lon < -85.825735) {
-            return 50; // otherwise invalid data
-        }
-
         try {
             // Auto-select zoom: use preferredZoom if set, otherwise cap at 11.
             int zoom = preferredZoom > 0 ? preferredZoom : Math.min(reader.header.maxZoom, 11);
