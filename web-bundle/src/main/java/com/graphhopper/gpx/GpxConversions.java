@@ -217,7 +217,7 @@ public class GpxConversions {
         ArrayList<Observation> gpxEntries = new ArrayList<>();
         for (Gpx.Trkseg t : trk.trkseg) {
             for (Gpx.Trkpt trkpt : t.trkpt) {
-                gpxEntries.add(new Observation(new GHPoint3D(trkpt.lat, trkpt.lon, trkpt.ele)));
+                gpxEntries.add(new Observation(new GHPoint3D(trkpt.lat, trkpt.lon, trkpt.ele), trkpt.time));
             }
         }
         return gpxEntries;

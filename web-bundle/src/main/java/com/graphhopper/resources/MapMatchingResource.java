@@ -34,6 +34,7 @@ import com.graphhopper.jackson.ResponsePathSerializer;
 import com.graphhopper.matching.*;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.*;
+import com.graphhopper.util.details.PathDetail;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -159,6 +160,76 @@ public class MapMatchingResource {
             responsePath.getErrors().clear();
             GHResponse rsp = new GHResponse();
             rsp.add(responsePath);
+
+            // if we had timestamps in the gpx input, change the meaning of the time details!
+            Map<String, List<PathDetail>> details = responsePath.getPathDetails();
+            if (details.containsKey("edge_id") &&
+                    details.containsKey("time") &&
+                    details.containsKey("osm_way_id") &&
+                    matchResult.getEdgeMatches().size() > 0 &&
+                    matchResult.getEdgeMatches().get(0).getStates().size() > 0 &&
+                    matchResult.getEdgeMatches().get(0).getStates().get(0).getEntry().getTime().toInstant().getEpochSecond() > 0
+            ) {
+                List<PathDetail> edges = details.get("edge_id");
+                List<PathDetail> times = details.get("time");
+                List<PathDetail> osmWays = details.get("osm_way_id");
+                List<PathDetail> directedOsmWays = new ArrayList<PathDetail>(0);
+
+                assert edges.size() == times.size();
+                int currentEdgeMatchIdx = 0;
+                int currentTimeIdx = 0;
+                List<EdgeMatch> edgeMatches = matchResult.getEdgeMatches();
+
+                State currentState = edgeMatches.get(0).getStates().get(0);
+
+                int latestOsmDetailIdx = 0;
+                PathDetail currentOsmDetail = osmWays.get(latestOsmDetailIdx);
+                PathDetail newOsmIdDetail = null;
+
+                for (PathDetail edge : edges) {
+                    // edge id as per edge path detail
+                    int edgeId = (int) edge.getValue();
+
+                    // we need to find the fitting EdgeMatch and its state with the observation
+                    while(edgeId != edgeMatches.get(currentEdgeMatchIdx).getEdgeState().getEdge()) {
+                        currentEdgeMatchIdx += 1;
+                    }
+                    if (edgeMatches.get(currentEdgeMatchIdx).getStates().size() > 0) {
+                        currentState = edgeMatches.get(currentEdgeMatchIdx).getStates().get(0);
+                    }
+
+                    while (currentOsmDetail.getLast() < edge.getLast()) {
+                        latestOsmDetailIdx++;
+                        currentOsmDetail = osmWays.get(latestOsmDetailIdx);
+                    }
+
+                    // Negate OSM Ids if driven in opposite direction
+                    int edgeKey = edgeMatches.get(currentEdgeMatchIdx).getEdgeState().getEdgeKey();
+                    Integer newOsmId = null;
+                    if (edgeKey % 2 == 1) {
+                        newOsmId = -1 * (Integer) currentOsmDetail.getValue();
+                    } else {
+                        newOsmId = (Integer) (currentOsmDetail.getValue());
+                    }
+                    if (newOsmIdDetail == null || ((Integer)newOsmIdDetail.getValue()).intValue() != newOsmId.intValue()) {
+                        newOsmIdDetail = new PathDetail(newOsmId);
+                        newOsmIdDetail.setFirst(edge.getFirst());
+                        newOsmIdDetail.setLast(edge.getLast());
+                        directedOsmWays.add(newOsmIdDetail);
+                    } else {
+                        newOsmIdDetail.setLast(edge.getLast());
+                    }
+
+                    // Update the time
+                    Observation currentObs = currentState.getEntry();
+                    PathDetail mmTime = new PathDetail(currentObs.getTime().toInstant().toString());
+                    mmTime.setFirst(edge.getFirst());
+                    mmTime.setLast(edge.getLast());
+                    times.set(currentTimeIdx, mmTime);
+                    currentTimeIdx += 1;
+                }
+                details.put("osm_way_id", directedOsmWays);
+            }
 
             if (writeGPX) {
                 long time = gpx.trk.get(0).getStartTime()
