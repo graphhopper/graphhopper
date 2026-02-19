@@ -48,7 +48,7 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
             if (FerrySpeedCalculator.isFerry(way)) {
                 // if bike is NOT explicitly tagged allow bike but only if foot is not specified either
                 String bikeTag = way.getTag("bicycle");
-                if (bikeTag == null && !way.hasTag("foot") || allowedValues.contains(bikeTag))
+                if (bikeTag == null && !way.hasTag("foot") || allowedValues.contains(bikeTag) || "dismount".equals(bikeTag))
                     access = WayAccess.FERRY;
             }
 
