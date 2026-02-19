@@ -170,7 +170,7 @@ public class PrepareLandmarksTest {
                 new AlgorithmOptions().setAlgorithm(ASTAR).setTraversalMode(tm).setHints(hints));
         path = qGraphOneDirAlgo.calcPath(fromSnap.getClosestNode(), toSnap.getClosestNode());
 
-        expectedAlgo = new AStar(qGraph, weighting, tm);
+        expectedAlgo = new AStar(qGraph, qGraph.wrapWeighting(weighting), tm);
         expectedPath = expectedAlgo.calcPath(fromSnap.getClosestNode(), toSnap.getClosestNode());
         assertEquals(expectedPath.getWeight(), path.getWeight(), .1);
         assertEquals(expectedPath.calcNodes(), path.calcNodes());
