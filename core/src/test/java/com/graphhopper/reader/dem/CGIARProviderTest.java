@@ -139,6 +139,31 @@ public class CGIARProviderTest {
         assertEquals(0, instance.getEle(60.251, 18.805), precision);
     }
 
+    @Test
+    public void testFileNameConsistentWithMinLatLon() {
+        // Verify getFileName is consistent with getMinLatForTile/getMinLonForTile at tile boundaries.
+        // With 7-decimal truncation (as done in getEle), values like 44.9999999 are within floating-point
+        // rounding distance of the 45-degree tile boundary. getFileName must place them in the same tile
+        // as getMinLatForTile, otherwise a cached tile from a previous query can cause:
+        // "latitude not in boundary of this file"
+        double[] boundaryLats = {44.9999999, 49.9999999, 39.9999999, -0.0000001, -5.0000001, -50.0000001};
+        double[] boundaryLons = {-101.2347957, -100.0000001, -105.0000001, 9.9999999, -0.0000001};
+        for (double lat : boundaryLats) {
+            for (double lon : boundaryLons) {
+                if (instance.isOutsideSupportedArea(lat, lon)) continue;
+                int minLat = instance.down(lat);
+                int minLon = instance.down(lon);
+                int expectedLatInt = (60 - minLat) / instance.LAT_DEGREE;
+                int expectedLonInt = 1 + (minLon + 180) / instance.LAT_DEGREE;
+                String expectedLon = (expectedLonInt < 10 ? "0" : "") + expectedLonInt;
+                String expectedLat = (expectedLatInt < 10 ? "_0" : "_") + expectedLatInt;
+                String expected = "srtm_" + expectedLon + expectedLat;
+                assertEquals(expected, instance.getFileName(lat, lon),
+                        "getFileName inconsistent with down() for lat=" + lat + " lon=" + lon);
+            }
+        }
+    }
+
     @Disabled
     @Test
     public void testGetEleVerticalBorder() {

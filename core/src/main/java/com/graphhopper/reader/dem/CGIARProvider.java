@@ -131,13 +131,10 @@ public class CGIARProvider extends AbstractTiffElevationProvider {
     }
 
     protected String getFileName(double lat, double lon) {
-        lon = 1 + (180 + lon) / LAT_DEGREE;
-        int lonInt = (int) lon;
-        lat = 1 + (60 - lat) / LAT_DEGREE;
-        int latInt = (int) lat;
-
-        if (Math.abs(latInt - lat) < invPrecision / LAT_DEGREE)
-            latInt--;
+        int minLat = down(lat);
+        int minLon = down(lon);
+        int lonInt = 1 + (minLon + 180) / LAT_DEGREE;
+        int latInt = (60 - minLat) / LAT_DEGREE;
 
         // replace String.format as it seems to be slow
         // String.format("srtm_%02d_%02d", lonInt, latInt);
