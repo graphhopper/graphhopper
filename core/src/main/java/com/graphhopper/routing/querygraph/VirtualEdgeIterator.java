@@ -32,7 +32,8 @@ import java.util.Map;
 /**
  * @author Peter Karich
  */
-class VirtualEdgeIterator implements EdgeIterator {
+// todonow: instead of making it public we might be able to move into querygraph package
+public class VirtualEdgeIterator implements EdgeIterator {
     private final EdgeFilter edgeFilter;
     private List<EdgeIteratorState> edges;
     private int current;

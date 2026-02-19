@@ -19,9 +19,12 @@
 package com.graphhopper.routing.querygraph;
 
 import com.carrotsearch.hppc.IntArrayList;
+import com.carrotsearch.hppc.IntDoubleHashMap;
+import com.carrotsearch.hppc.IntDoubleMap;
 import com.carrotsearch.hppc.IntObjectMap;
 import com.graphhopper.coll.GHIntObjectHashMap;
-import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.PointList;
 
 import java.util.ArrayList;
@@ -74,6 +77,11 @@ class QueryOverlay {
 
     IntArrayList getClosestEdges() {
         return closestEdges;
+    }
+
+    public static IntDoubleMap calcAdjustedVirtualWeights(QueryOverlay queryOverlay, BaseGraph baseGraph, Weighting weighting) {
+        // todo: calc adjusted virtual weights
+        return new IntDoubleHashMap();
     }
 
     static class EdgeChanges {

@@ -18,6 +18,7 @@
 package com.graphhopper.routing.querygraph;
 
 import com.carrotsearch.hppc.IntArrayList;
+import com.carrotsearch.hppc.IntDoubleMap;
 import com.carrotsearch.hppc.IntObjectMap;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.carrotsearch.hppc.procedures.IntObjectProcedure;
@@ -279,7 +280,8 @@ public class QueryGraph implements Graph {
         if (weighting instanceof QueryGraphWeighting)
             // todonow: well, it could have been wrapped with another query graph...
             return weighting;
-        return new QueryGraphWeighting(baseGraph, weighting, queryOverlay.getClosestEdges());
+        IntDoubleMap virtualWeightsByEdgeKey = QueryOverlay.calcAdjustedVirtualWeights(queryOverlay, baseGraph, weighting);
+        return new QueryGraphWeighting(baseGraph, weighting, queryOverlay.getClosestEdges(), virtualWeightsByEdgeKey);
     }
 
     @Override
