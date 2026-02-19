@@ -105,6 +105,7 @@ class PMTilesReader implements Closeable {
 
     static long zxyToTileId(int z, int x, int y) {
         if (z == 0) return 0;
+        // TODO might be replaced with base = ((1L << (2 * z)) - 1) / 3 but will be more cryptic
         long base = 0;
         for (int i = 0; i < z; i++) base += (1L << (2 * i));
         return base + xyToHilbertD(z, x, y);
@@ -125,7 +126,7 @@ class PMTilesReader implements Closeable {
         }
     }
 
-    private static long xyToHilbertD(int order, long x, long y) {
+    static long xyToHilbertD(int order, long x, long y) {
         long d = 0;
         for (int s = (1 << (order - 1)); s > 0; s >>= 1) {
             long rx = (x & s) > 0 ? 1 : 0;

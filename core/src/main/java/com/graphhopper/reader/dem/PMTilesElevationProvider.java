@@ -30,7 +30,9 @@ public class PMTilesElevationProvider implements ElevationProvider {
 
     private final TerrainEncoding encoding;
     private final boolean interpolate;
-    private final int preferredZoom;
+    private final int zoom;
+    private final long hilbertBase;
+    private final int n; // 1 << zoom
 
     private final PMTilesReader reader = new PMTilesReader();
 
@@ -40,6 +42,10 @@ public class PMTilesElevationProvider implements ElevationProvider {
     private final Map<Long, ByteBuffer> tileBuffers = new HashMap<>();
     private static final ByteBuffer MISSING_BUF = ByteBuffer.allocate(0);
     private static final ByteBuffer SEA_LEVEL_BUF = ByteBuffer.allocate(1);
+
+    // Last-tile cache: consecutive getEle() calls typically hit the same tile.
+    private long lastTileId = -1;
+    private ByteBuffer lastTileBuf;
 
     private int tileSize;
 
@@ -59,13 +65,18 @@ public class PMTilesElevationProvider implements ElevationProvider {
                                     boolean interpolate, int preferredZoom, String tileDir) {
         this.encoding = encoding;
         this.interpolate = interpolate;
-        this.preferredZoom = preferredZoom;
         try {
             reader.open(filePath);
             reader.checkWebPSupport();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+
+        this.zoom = preferredZoom > 0 ? preferredZoom : Math.min(reader.header.maxZoom, 11);
+        long base = 0;
+        for (int i = 0; i < zoom; i++) base += (1L << (2 * i));
+        this.hilbertBase = base;
+        this.n = 1 << zoom;
 
         if (tileDir != null && !tileDir.isEmpty()) {
             this.tileDir = new File(tileDir);
@@ -81,9 +92,7 @@ public class PMTilesElevationProvider implements ElevationProvider {
     @Override
     public double getEle(double lat, double lon) {
         try {
-            // Auto-select zoom: use preferredZoom if set, otherwise cap at 11.
-            int zoom = preferredZoom > 0 ? preferredZoom : Math.min(reader.header.maxZoom, 11);
-            return sampleElevation(lat, lon, zoom);
+            return sampleElevation(lat, lon);
         } catch (Exception e) {
             System.err.println("PMTilesElevationProvider.getEle(" + lat + ", " + lon + ") failed: " + e.getMessage());
             return Double.NaN;
@@ -98,6 +107,8 @@ public class PMTilesElevationProvider implements ElevationProvider {
     @Override
     public void release() {
         tileBuffers.clear(); // MappedByteBuffers are unmapped by GC
+        lastTileId = -1;
+        lastTileBuf = null;
         reader.close();
         if (clearTileFiles && tileDir != null) {
             File[] files = tileDir.listFiles((dir, name) -> name.endsWith(".tile"));
@@ -106,8 +117,11 @@ public class PMTilesElevationProvider implements ElevationProvider {
         }
     }
 
-    private double sampleElevation(double lat, double lon, int zoom) throws IOException {
-        int n = 1 << zoom;
+    private long zxyToTileId(int x, int y) {
+        return hilbertBase + PMTilesReader.xyToHilbertD(zoom, x, y);
+    }
+
+    private double sampleElevation(double lat, double lon) throws IOException {
         double xTileD = (lon + 180.0) / 360.0 * n;
         double latRad = Math.toRadians(lat);
         double yTileD = (1.0 - Math.log(Math.tan(latRad) + 1.0 / Math.cos(latRad)) / Math.PI) / 2.0 * n;
@@ -115,7 +129,7 @@ public class PMTilesElevationProvider implements ElevationProvider {
         int tileX = Math.max(0, Math.min(n - 1, (int) Math.floor(xTileD)));
         int tileY = Math.max(0, Math.min(n - 1, (int) Math.floor(yTileD)));
 
-        ByteBuffer tile = getTileBuffer(PMTilesReader.zxyToTileId(zoom, tileX, tileY));
+        ByteBuffer tile = getTileBuffer(zxyToTileId(tileX, tileY));
         if (tile == MISSING_BUF) return Double.NaN;
         if (tile == SEA_LEVEL_BUF) return 0;
 
@@ -145,36 +159,38 @@ public class PMTilesElevationProvider implements ElevationProvider {
     }
 
     private ByteBuffer getTileBuffer(long tileId) throws IOException {
+        if (tileId == lastTileId) return lastTileBuf;
+
         ByteBuffer existing = tileBuffers.get(tileId);
-        if (existing != null) return existing;
+        if (existing != null) {
+            lastTileId = tileId;
+            lastTileBuf = existing;
+            return existing;
+        }
 
         // Try pre-decoded .tile file first
         ByteBuffer buf = tryMmapTileFile(tileId);
-        if (buf != null) {
-            tileBuffers.put(tileId, buf);
-            return buf;
+        if (buf == null) {
+            // Decode from PMTiles
+            byte[] raw = reader.getTileBytes(tileId);
+            if (raw == null) {
+                buf = MISSING_BUF;
+            } else {
+                byte[] elevBytes = decodeTerrain(raw);
+                if (elevBytes == null) {
+                    buf = MISSING_BUF;
+                } else if (elevBytes.length == 0) {
+                    buf = SEA_LEVEL_BUF;
+                } else {
+                    // Persist as .tile file and mmap, or wrap as heap buffer if no tileDir
+                    buf = persistAndMmap(tileId, elevBytes);
+                }
+            }
         }
 
-        // Decode from PMTiles
-        byte[] raw = reader.getTileBytes(tileId);
-        if (raw == null) {
-            tileBuffers.put(tileId, MISSING_BUF);
-            return MISSING_BUF;
-        }
-
-        byte[] elevBytes = decodeTerrain(raw);
-        if (elevBytes == null) {
-            tileBuffers.put(tileId, MISSING_BUF);
-            return MISSING_BUF;
-        }
-        if (elevBytes.length == 0) {
-            tileBuffers.put(tileId, SEA_LEVEL_BUF);
-            return SEA_LEVEL_BUF;
-        }
-
-        // Persist as .tile file and mmap, or wrap as heap buffer if no tileDir
-        buf = persistAndMmap(tileId, elevBytes);
         tileBuffers.put(tileId, buf);
+        lastTileId = tileId;
+        lastTileBuf = buf;
         return buf;
     }
 
