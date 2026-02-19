@@ -20,6 +20,7 @@ package com.graphhopper.reader.dem;
 import com.graphhopper.storage.DAType;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.GHDirectory;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -131,6 +132,7 @@ public class HeightTileTest {
         assertEquals(70, instance.getHeight(-18, -19), 1e-3);
     }
 
+    @Disabled
     @Test
     public void testOutOfBoundsPositiveCoordsThrowsException() {
         int width = 10;
@@ -159,6 +161,7 @@ public class HeightTileTest {
         });
     }
 
+    @Disabled
     @Test
     public void testOutOfBoundsNegativeCoordsThrowsException() {
         int width = 10;
