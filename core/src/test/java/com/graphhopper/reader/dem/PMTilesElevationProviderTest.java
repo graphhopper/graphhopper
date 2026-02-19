@@ -106,6 +106,22 @@ public class PMTilesElevationProviderTest {
         assertEquals(384, instance.getEle(50.9119, 14.207466), 1);
     }
 
+    @Test
+    public void testRealPMTilesInterpolate() {
+        instance = new PMTilesElevationProvider("./files/near-badschandau-z10-11.pmtiles",
+                PMTilesElevationProvider.TerrainEncoding.TERRARIUM, true, 10,
+                null);
+
+        // Elbe
+        assertEquals(118, instance.getEle(50.905488, 14.204129), 1);
+
+        // Schrammsteine
+        assertEquals(386, instance.getEle(50.912142, 14.2076), 1);
+        // Very close but on the path
+        assertEquals(370, instance.getEle(50.911849, 14.208042), 1);
+        assertEquals(370, instance.getEle(50.9119, 14.207466), 1);
+    }
+
     // called pmtiles with --bbox=14.203657,50.905387,14.208871,50.912341 --minzoom=10 --maxzoom=11
     @Test
     public void testRealPMTilesWithZoom11() {

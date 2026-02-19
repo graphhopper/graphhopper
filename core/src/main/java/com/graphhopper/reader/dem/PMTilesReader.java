@@ -17,7 +17,7 @@ class PMTilesReader implements Closeable {
     static final int HEADER_LEN = 127;
     static final int COMPRESS_GZIP = 2;
 
-    private static final int LEAF_CACHE_SIZE = 256; // here larger counts do not increase memory usage much
+    private static final int LEAF_CACHE_SIZE = 1024 * 8; // here larger counts do not increase memory usage much
 
     private RandomAccessFile raf;
     private FileChannel channel;
