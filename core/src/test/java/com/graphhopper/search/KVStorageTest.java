@@ -472,4 +472,81 @@ public class KVStorageTest {
         assertTrue(storedPointer < 0);
         assertEquals(pointer + 100, Integer.toUnsignedLong(storedPointer));
     }
+
+    @Test
+    public void testGetByKeyIndex() {
+        KVStorage index = create();
+        long pointer = index.add(createMap("a", "a value", "b", "b value"));
+
+        int keyIndexA = index.getKeyIndex("a");
+        int keyIndexB = index.getKeyIndex("b");
+        int keyIndexUnknown = index.getKeyIndex("unknown");
+
+        assertTrue(keyIndexA >= 0);
+        assertTrue(keyIndexB >= 0);
+        assertEquals(-1, keyIndexUnknown);
+
+        // int-based get should match string-based get
+        assertEquals(index.get(pointer, "a", false), index.get(pointer, keyIndexA, false));
+        assertEquals(index.get(pointer, "b", false), index.get(pointer, keyIndexB, false));
+        assertNull(index.get(pointer, keyIndexUnknown, false));
+    }
+
+    @Test
+    public void testGetByKeyIndexDirectional() {
+        KVStorage index = create();
+        Map<String, KValue> map = new LinkedHashMap<>();
+        map.put("keyA", new KValue("FORWARD", null));
+        map.put("keyB", new KValue(null, "BACKWARD"));
+        map.put("keyC", new KValue("BOTH"));
+        long pointer = index.add(map);
+
+        int idxA = index.getKeyIndex("keyA");
+        int idxB = index.getKeyIndex("keyB");
+        int idxC = index.getKeyIndex("keyC");
+
+        assertEquals("FORWARD", index.get(pointer, idxA, false));
+        assertNull(index.get(pointer, idxA, true));
+        assertNull(index.get(pointer, idxB, false));
+        assertEquals("BACKWARD", index.get(pointer, idxB, true));
+        assertEquals("BOTH", index.get(pointer, idxC, false));
+        assertEquals("BOTH", index.get(pointer, idxC, true));
+    }
+
+    @Test
+    public void testReserveKey() {
+        KVStorage index = create();
+        assertEquals(-1, index.getKeyIndex("cycleway"));
+
+        index.reserveKey("cycleway", String.class);
+        int keyIndex = index.getKeyIndex("cycleway");
+        assertTrue(keyIndex >= 0);
+
+        // now add data using the reserved key
+        long pointer = index.add(createMap("cycleway", "lane"));
+        assertEquals("lane", index.get(pointer, "cycleway", false));
+        assertEquals("lane", index.get(pointer, keyIndex, false));
+    }
+
+    @Test
+    public void testGetByKeyIndexAfterLoad() {
+        Helper.removeDir(new File(location));
+
+        KVStorage index = new KVStorage(new GHDirectory(location, DAType.RAM_STORE).create(), true).create(1000);
+        index.reserveKey("cycleway", String.class);
+        long pointer = index.add(createMap("cycleway", "lane"));
+        assertEquals("lane", index.get(pointer, index.getKeyIndex("cycleway"), false));
+        index.flush();
+        index.close();
+
+        KVStorage loaded = new KVStorage(new GHDirectory(location, DAType.RAM_STORE), true);
+        assertTrue(loaded.loadExisting());
+        // not possible
+        assertThrows(IllegalArgumentException.class, () -> loaded.reserveKey("cycleway", String.class));
+        int keyIndex = loaded.getKeyIndex("cycleway");
+        assertEquals("lane", loaded.get(pointer, keyIndex, false));
+        loaded.close();
+
+        Helper.removeDir(new File(location));
+    }
 }
