@@ -1133,7 +1133,7 @@ public class RoutingAlgorithmTest {
         @Override
         public Path calcPath(BaseGraph graph, Weighting weighting, TraversalMode traversalMode, int maxVisitedNodes, Snap from, Snap to) {
             QueryGraph queryGraph = QueryGraph.create(graph, from, to);
-            RoutingAlgorithm algo = createAlgo(queryGraph, weighting, traversalMode);
+            RoutingAlgorithm algo = createAlgo(queryGraph, queryGraph.wrapWeighting(weighting), traversalMode);
             algo.setMaxVisitedNodes(maxVisitedNodes);
             return algo.calcPath(from.getClosestNode(), to.getClosestNode());
         }
