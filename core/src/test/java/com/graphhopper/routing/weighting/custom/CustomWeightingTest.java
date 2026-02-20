@@ -20,6 +20,7 @@ import static com.graphhopper.json.Statement.Op.LIMIT;
 import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static com.graphhopper.routing.ev.RoadClass.*;
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
+import static com.graphhopper.routing.weighting.Weighting.roundWeight;
 import static com.graphhopper.util.GHUtility.getEdge;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -344,7 +345,7 @@ class CustomWeightingTest {
         EdgeIteratorState edge = graph.edge(0, 1).set(avSpeedEnc, 140, 0).setDistance(1000);
         CustomModel customModel = createSpeedCustomModel(avSpeedEnc);
         Weighting weighting = createWeighting(customModel);
-        assertEquals(weighting.calcMinWeightPerDistance() * 1000, weighting.calcEdgeWeight(edge, false));
+        assertEquals(roundWeight(weighting.calcMinWeightPerDistance() * 1000), weighting.calcEdgeWeight(edge, false));
     }
 
     @Test
