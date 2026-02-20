@@ -583,13 +583,13 @@ public class GHUtility {
             LOGGER.warn("expected: " + refPath.calcNodes());
             LOGGER.warn("given:    " + path.calcNodes());
             LOGGER.warn("seed: " + seed);
-            fail("wrong weight: " + source + "->" + target + "\nexpected: " + refWeight + "\ngiven:    " + weight + "\nseed: " + seed);
+            fail("wrong weight: " + source + "->" + target + "\nexpected: " + refWeight + "\ngiven:    " + weight + "\nseed: " + seed + "L");
         }
         if (path.getDistance_mm() != refPath.getDistance_mm()) {
-            strictViolations.add("wrong distance: " + source + "->" + target + "\nexpected: " + refPath.getDistance_mm() + "\n given: " + path.getDistance_mm() + "\nseed: " + seed);
+            strictViolations.add("wrong distance: " + source + "->" + target + "\nexpected: " + refPath.getDistance_mm() + "\ngiven:    " + path.getDistance_mm() + "\nseed: " + seed + "L");
         }
         if (Math.abs(path.getTime() - refPath.getTime()) > 50) {
-            strictViolations.add("wrong time: " + source + "->" + target + "\nexpected: " + refPath.getTime() + "\ngiven: " + path.getTime() + "\nseed: " + seed);
+            strictViolations.add("wrong time: " + source + "->" + target + "\nexpected: " + refPath.getTime() + "\ngiven: " + path.getTime() + "\nseed: " + seed + "L");
         }
         if (checkNodes) {
             IntIndexedContainer refNodes = refPath.calcNodes();
