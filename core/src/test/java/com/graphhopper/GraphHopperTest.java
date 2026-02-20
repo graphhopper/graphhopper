@@ -1554,7 +1554,7 @@ public class GraphHopperTest {
                 setCHProfiles(new CHProfile(profile));
 
         hopper.getLMPreparationHandler().
-                setLMProfiles(new LMProfile(profile).setMaximumLMWeight(2000));
+                setLMProfiles(new LMProfile(profile).setMaximumLMWeight(20000));
 
         hopper.importOrLoad();
 
@@ -1736,7 +1736,7 @@ public class GraphHopperTest {
                 setCHProfiles(new CHProfile(profile1));
 
         hopper.getLMPreparationHandler().
-                setLMProfiles(new LMProfile(profile1).setMaximumLMWeight(2000));
+                setLMProfiles(new LMProfile(profile1).setMaximumLMWeight(20000));
 
         hopper.importOrLoad();
         // request a profile that was not prepared
@@ -1777,7 +1777,7 @@ public class GraphHopperTest {
                 setProfiles(TestProfiles.constantSpeed("car")).
                 setStoreOnFlush(true);
         hopper.getLMPreparationHandler().
-                setLMProfiles(new LMProfile("car").setMaximumLMWeight(2000));
+                setLMProfiles(new LMProfile("car").setMaximumLMWeight(20000));
         hopper.importOrLoad();
 
         // we can switch LM on/off
