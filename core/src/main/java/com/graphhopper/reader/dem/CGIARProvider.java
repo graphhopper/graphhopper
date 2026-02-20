@@ -46,7 +46,6 @@ import java.util.zip.ZipInputStream;
  * @author Peter Karich
  */
 public class CGIARProvider extends AbstractTiffElevationProvider {
-    private final double invPrecision = 1 / precision;
 
     public CGIARProvider() {
         this("");
@@ -117,12 +116,8 @@ public class CGIARProvider extends AbstractTiffElevationProvider {
     }
 
     int down(double val) {
-        // 'rounding' to closest 5
-        int intVal = (int) (val / LAT_DEGREE) * LAT_DEGREE;
-        if (!(val >= 0 || intVal - val < invPrecision))
-            intVal = intVal - LAT_DEGREE;
-
-        return intVal;
+        // floor to nearest multiple of LAT_DEGREE
+        return (int) (Math.floor(val / LAT_DEGREE)) * LAT_DEGREE;
     }
 
     @Override

@@ -61,6 +61,13 @@ public class CGIARProviderTest {
         assertEquals(-10, instance.down(-5.1));
         assertEquals(50, instance.down(50));
         assertEquals(45, instance.down(49));
+
+        // values after 7-decimal truncation at negative tile boundaries
+        assertEquals(-20, instance.down(-15.0000001));
+        assertEquals(-15, instance.down(-15.0));
+        assertEquals(-15, instance.down(-14.9999999));
+        assertEquals(-5, instance.down(-0.0000001));
+        assertEquals(40, instance.down(44.9999999));
     }
 
     @Test
