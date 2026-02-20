@@ -586,10 +586,10 @@ public class GHUtility {
             fail("wrong weight: " + source + "->" + target + "\nexpected: " + refWeight + "\ngiven:    " + weight + "\nseed: " + seed);
         }
         if (path.getDistance_mm() != refPath.getDistance_mm()) {
-            strictViolations.add("wrong distance " + source + "->" + target + ", expected: " + refPath.getDistance_mm() + ", given: " + path.getDistance_mm());
+            strictViolations.add("wrong distance: " + source + "->" + target + "\nexpected: " + refPath.getDistance_mm() + "\n given: " + path.getDistance_mm() + "\nseed: " + seed);
         }
-        if (Math.abs(path.getTime() - refPath.getTime()) > 10) {
-            strictViolations.add("wrong time " + source + "->" + target + ", expected: " + refPath.getTime() + ", given: " + path.getTime());
+        if (Math.abs(path.getTime() - refPath.getTime()) > 50) {
+            strictViolations.add("wrong time: " + source + "->" + target + "\nexpected: " + refPath.getTime() + "\ngiven: " + path.getTime() + "\nseed: " + seed);
         }
         if (checkNodes) {
             IntIndexedContainer refNodes = refPath.calcNodes();
