@@ -52,6 +52,7 @@ import java.util.stream.Stream;
 
 import static com.graphhopper.routing.util.TraversalMode.EDGE_BASED;
 import static com.graphhopper.routing.util.TraversalMode.NODE_BASED;
+import static com.graphhopper.routing.weighting.Weighting.roundWeight;
 import static com.graphhopper.util.DistanceCalcEarth.DIST_EARTH;
 import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
@@ -903,7 +904,7 @@ public class RoutingAlgorithmTest {
 
             @Override
             public double calcMinWeightPerDistance() {
-                return 0.8;
+                return 8.0;
             }
 
             @Override
@@ -920,13 +921,13 @@ public class RoutingAlgorithmTest {
 
                 // a 'hill' at node 6
                 if (adj == 6)
-                    return 3 * edgeState.getDistance();
+                    return roundWeight(10 * 3 * edgeState.getDistance());
                 else if (base == 6)
-                    return edgeState.getDistance() * 0.9;
+                    return roundWeight(10 * edgeState.getDistance() * 0.9);
                 else if (adj == 4)
-                    return 2 * edgeState.getDistance();
+                    return roundWeight(10 * 2 * edgeState.getDistance());
 
-                return edgeState.getDistance() * 0.8;
+                return roundWeight(10 * edgeState.getDistance() * 0.8);
             }
 
             @Override
@@ -936,7 +937,7 @@ public class RoutingAlgorithmTest {
 
             @Override
             public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
-                return tmpW.calcTurnWeight(inEdge, viaNode, outEdge);
+                return roundWeight(10 * tmpW.calcTurnWeight(inEdge, viaNode, outEdge));
             }
 
             @Override
@@ -970,8 +971,8 @@ public class RoutingAlgorithmTest {
         p = f.calcPath(graph, fakeWeighting, 3, 0, 10, 9);
         assertEquals(nodes(12, 0, 1, 2, 11, 7, 10, 13), p.calcNodes());
         assertEquals(10280445, p.getTime());
-        assertEquals(616827, p.getDistance(), 1);
-        assertEquals(493462, p.getWeight(), 1);
+        assertEquals(616827059, p.getDistance_mm());
+        assertEquals(4934615, p.getWeight());
     }
 
     @ParameterizedTest

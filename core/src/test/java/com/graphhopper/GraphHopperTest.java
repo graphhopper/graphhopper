@@ -1632,18 +1632,18 @@ public class GraphHopperTest {
         // flex
         testCrossQueryAssert(profile1, hopper, 5255, 196, true);
         testCrossQueryAssert(profile2, hopper, 6330, 198, true);
-        testCrossQueryAssert(profile3, hopper, 8125, 198, true);
+        testCrossQueryAssert(profile3, hopper, 8126, 198, true);
 
         // LM (should be the same as flex, but with less visited nodes!)
         testCrossQueryAssert(profile1, hopper, 5255, 108, false);
         testCrossQueryAssert(profile2, hopper, 6330, 126, false);
-        testCrossQueryAssert(profile3, hopper, 8125, 192, false);
+        testCrossQueryAssert(profile3, hopper, 8126, 192, false);
     }
 
     private void testCrossQueryAssert(String profile, GraphHopper hopper, double expectedWeight, int expectedVisitedNodes, boolean disableLM) {
         GHResponse response = hopper.route(new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
                 setProfile(profile).putHint("lm.disable", disableLM));
-        assertEquals(expectedWeight, response.getBest().getRouteWeight(), 0.1);
+        assertEquals(expectedWeight, response.getBest().getRouteWeight());
         int visitedNodes = response.getHints().getInt("visited_nodes.sum", 0);
         assertEquals(expectedVisitedNodes, visitedNodes);
     }
