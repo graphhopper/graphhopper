@@ -95,11 +95,11 @@ To learn about all available encoded values you can query the `/info` endpoint
 Besides this kind of categories, which can take multiple different string values, there are also some that represent a
 boolean value (they are either true or false for a given road segment), like:
 
-- lit
 - get_off_bike
+- lit
 - road_class_link
-- scenic
 - roundabout
+- scenic 
 - with postfix `_access` contains the access (as boolean) for a specific vehicle
 
 There are also some that take on a numeric value, like:
