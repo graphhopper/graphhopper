@@ -701,6 +701,10 @@ public class GraphHopper {
         if (cacheDirStr.isEmpty() && ghConfig.has("graph.elevation.cachedir"))
             throw new IllegalArgumentException("use graph.elevation.cache_dir not cachedir in configuration");
 
+        boolean interpolate = ghConfig.has("graph.elevation.interpolate")
+                ? "bilinear".equals(ghConfig.getString("graph.elevation.interpolate", "none"))
+                : ghConfig.getBool("graph.elevation.calc_mean", false);
+
         ElevationProvider elevationProvider = ElevationProvider.NOOP;
         if (eleProviderStr.equalsIgnoreCase("hgt")) {
             elevationProvider = new HGTProvider(cacheDirStr);
@@ -720,6 +724,15 @@ public class GraphHopper {
             elevationProvider = new SonnyProvider(cacheDirStr);
         } else if (eleProviderStr.equalsIgnoreCase("multi3")) {
             elevationProvider = new MultiSource3ElevationProvider(cacheDirStr);
+        } else if (eleProviderStr.equalsIgnoreCase("pmtiles")) {
+            int zoom = ghConfig.getInt("graph.elevation.pmtiles.zoom", -1);
+            String terrainEncoding = ghConfig.getString("graph.elevation.pmtiles.terrain_encoding", "terrarium");
+            boolean removeTempEleFiles = ghConfig.getBool("graph.elevation.pmtiles.clear", true);
+            elevationProvider = new PMTilesElevationProvider(
+                    ghConfig.getString("graph.elevation.pmtiles.location", "/tmp/planet.pmtiles"),
+                    PMTilesElevationProvider.TerrainEncoding.valueOf(terrainEncoding.toUpperCase(Locale.ROOT)),
+                    interpolate, zoom, cacheDirStr)
+                    .setAutoRemoveTemporaryFiles(removeTempEleFiles);
         }
 
         if (elevationProvider instanceof TileBasedElevationProvider) {
@@ -730,10 +743,6 @@ public class GraphHopper {
                 throw new IllegalArgumentException("use graph.elevation.base_url not baseurl in configuration");
 
             DAType elevationDAType = DAType.fromString(ghConfig.getString("graph.elevation.dataaccess", "MMAP"));
-
-            boolean interpolate = ghConfig.has("graph.elevation.interpolate")
-                    ? "bilinear".equals(ghConfig.getString("graph.elevation.interpolate", "none"))
-                    : ghConfig.getBool("graph.elevation.calc_mean", false);
 
             boolean removeTempElevationFiles = ghConfig.getBool("graph.elevation.cgiar.clear", true);
             removeTempElevationFiles = ghConfig.getBool("graph.elevation.clear", removeTempElevationFiles);
