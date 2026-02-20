@@ -310,9 +310,9 @@ public class PrepareContractionHierarchiesTest {
         // the problem is very intricate and a combination of all these things:
         // * contraction hierarchies
         // * stall-on-demand (without sod there is no problem, at least in this test)
-        // * shortcuts weight rounding
+        // * shortcuts weight rounding (now gone)
         // * via nodes/virtual edges and the associated weight precision (without virtual nodes between source and target
-        //   there is no problem, but this can happen for via routes
+        //   there is no problem, but this can happen for via routes)
         // * the fact that the CHLevelEdgeFilter always accepts virtual nodes
         // here we will construct a special case where a connection is not found without the fix in #1574.
 
@@ -353,7 +353,7 @@ public class PrepareContractionHierarchiesTest {
         // the weight of edge 3-1 is chosen such that node 2 gets stalled in the forward search via the incoming shortcut
         // at node 2 coming from 3. this happens because due to the virtual node x between 3 and 1, the weight of the
         // spt entry at 2 is different to the sum of the weights of the spt entry at node 3 and the shortcut edge. this
-        // is due to different floating point rounding arithmetic of shortcuts and virtual edges on the query graph.
+        // is (no: was!) due to different floating point rounding arithmetic of shortcuts and virtual edges on the query graph.
         edge31.set(speedEnc, 12, 12);
 
         // just stalling node 2 alone would not lead to connection not found, because the shortcut 3-4 still finds node
@@ -379,17 +379,9 @@ public class PrepareContractionHierarchiesTest {
 
         QueryGraph queryGraph = QueryGraph.create(g, snap);
 
-        // we make sure our weight fine tunings do what they are supposed to
-        double weight03 = getWeight(queryGraph, weighting, 0, 3);
-        double scWeight23 = weight03 + getEdge(routingCHGraph, 2, 3, true).getWeight(false);
-        double scWeight34 = weight03 + getEdge(routingCHGraph, 3, 4, false).getWeight(false);
-        double sptWeight2 = weight03 + getWeight(queryGraph, weighting, 3, 8) + getWeight(queryGraph, weighting, 8, 1) + getWeight(queryGraph, weighting, 1, 2);
-        double sptWeight4 = sptWeight2 + getWeight(queryGraph, weighting, 2, 4);
-        assertTrue(scWeight23 < sptWeight2, "incoming shortcut weight 3->2 should be smaller than sptWeight at node 2 to make sure 2 gets stalled");
-        assertTrue(sptWeight4 < scWeight34, "sptWeight at node 4 should be smaller than shortcut weight 3->4 to make sure node 4 gets stalled");
-
+        // we used to make sure our weight fine tunings do what they were supposed to do, but since we got rid of shortcut weight rounding altogether this no longer makes sense
         Path path = new CHRoutingAlgorithmFactory(routingCHGraph, queryGraph).createAlgo(new PMap()).calcPath(0, 7);
-        assertEquals(IntArrayList.from(0, 3, 8, 1, 2, 4, 5, 6, 7), path.calcNodes(), "wrong or no path found");
+        assertEquals(IntArrayList.from(0, 3, 1, 2, 4, 5, 6, 7), path.calcNodes(), "wrong or no path found");
     }
 
     private double getWeight(Graph graph, Weighting w, int from, int to) {
