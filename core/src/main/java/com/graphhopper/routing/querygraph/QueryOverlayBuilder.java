@@ -18,6 +18,7 @@
 
 package com.graphhopper.routing.querygraph;
 
+import com.carrotsearch.hppc.LongArrayList;
 import com.carrotsearch.hppc.predicates.IntObjectPredicate;
 import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.search.KVStorage;
@@ -223,22 +224,21 @@ class QueryOverlayBuilder {
         if (virtualEdges.isEmpty())
             // early exit & prevent division by zero below
             return;
+        LongArrayList virtualDistances = new LongArrayList();
         long sum = 0;
-        for (VirtualEdgeIteratorState v : virtualEdges)
+        for (VirtualEdgeIteratorState v : virtualEdges) {
+            virtualDistances.add(v.getDistance_mm());
             sum += v.getDistance_mm();
-        long difference = originalDistance - sum;
-        long baseIncrement = difference / virtualEdges.size();
-        long remainder = difference % virtualEdges.size();
-        for (int i = 0; i < virtualEdges.size(); i++) {
-            VirtualEdgeIteratorState v = virtualEdges.get(i);
-            long adjustment = baseIncrement + (i < Math.abs(remainder) ? Long.signum(remainder) : 0);
-            v.setDistance_mm(v.getDistance_mm() + adjustment);
         }
+        // five passes means each edge distance is adjusted by at most 5mm, only 1mm might not be enought bc of dist_plane vs. dist_earth difference
+        final long passes = 5;
+        QueryOverlay.adjustValues(virtualDistances, originalDistance, passes);
 
-        // verify
         sum = 0;
-        for (VirtualEdgeIteratorState v : virtualEdges)
-            sum += v.getDistance_mm();
+        for (int i = 0; i < virtualEdges.size(); i++) {
+            virtualEdges.get(i).setDistance_mm(virtualDistances.get(i));
+            sum += virtualEdges.get(i).getDistance_mm();
+        }
         assert sum == originalDistance : "Virtual edge distance sum does not match original distance, even after adjustment";
     }
 
