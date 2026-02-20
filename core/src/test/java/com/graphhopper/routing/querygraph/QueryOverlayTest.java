@@ -17,17 +17,7 @@
  */
 package com.graphhopper.routing.querygraph;
 
-import com.carrotsearch.hppc.IntDoubleMap;
 import com.carrotsearch.hppc.LongArrayList;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.weighting.SpeedWeighting;
-import com.graphhopper.storage.BaseGraph;
-import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.PointList;
 import org.junit.jupiter.api.Test;
 
 import java.util.*;
