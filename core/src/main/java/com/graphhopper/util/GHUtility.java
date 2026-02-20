@@ -579,7 +579,7 @@ public class GHUtility {
         List<String> strictViolations = new ArrayList<>();
         double refWeight = refPath.getWeight();
         double weight = path.getWeight();
-        if (Math.abs(refWeight - weight) > 1.e-2) {
+        if (refWeight != weight) {
             LOGGER.warn("expected: " + refPath.calcNodes());
             LOGGER.warn("given:    " + path.calcNodes());
             LOGGER.warn("seed: " + seed);
@@ -588,7 +588,7 @@ public class GHUtility {
         if (path.getDistance_mm() != refPath.getDistance_mm()) {
             strictViolations.add("wrong distance " + source + "->" + target + ", expected: " + refPath.getDistance_mm() + ", given: " + path.getDistance_mm());
         }
-        if (Math.abs(path.getTime() - refPath.getTime()) > 50) {
+        if (Math.abs(path.getTime() - refPath.getTime()) > 10) {
             strictViolations.add("wrong time " + source + "->" + target + ", expected: " + refPath.getTime() + ", given: " + path.getTime());
         }
         if (checkNodes) {
