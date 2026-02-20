@@ -150,18 +150,18 @@ public class RoutingCHGraphImplTest {
         CHStorage chStore = CHStorage.fromGraph(ghStorage, chConfig);
         CHStorageBuilder chBuilder = new CHStorageBuilder(chStore);
         chBuilder.setIdentityLevels();
-        int sc1 = ghStorage.getEdges() + chBuilder.addShortcutNodeBased(0, 1, PrepareEncoder.getScFwdDir(), 100.123, NO_EDGE, NO_EDGE);
+        int sc1 = ghStorage.getEdges() + chBuilder.addShortcutNodeBased(0, 1, PrepareEncoder.getScFwdDir(), 100, NO_EDGE, NO_EDGE);
         RoutingCHGraph lg = RoutingCHGraphImpl.fromGraph(ghStorage, chStore, chConfig);
         assertEquals(1, lg.getEdgeIteratorState(sc1, 1).getAdjNode());
         assertEquals(0, lg.getEdgeIteratorState(sc1, 1).getBaseNode());
-        assertEquals(100.123, lg.getEdgeIteratorState(sc1, 1).getWeight(false), 1e-3);
-        assertEquals(100.123, lg.getEdgeIteratorState(sc1, 0).getWeight(false), 1e-3);
+        assertEquals(100, lg.getEdgeIteratorState(sc1, 1).getWeight(false));
+        assertEquals(100, lg.getEdgeIteratorState(sc1, 0).getWeight(false));
 
-        int sc2 = ghStorage.getEdges() + chBuilder.addShortcutNodeBased(2, 3, PrepareEncoder.getScDirMask(), 1.011011, NO_EDGE, NO_EDGE);
+        int sc2 = ghStorage.getEdges() + chBuilder.addShortcutNodeBased(2, 3, PrepareEncoder.getScDirMask(), 1, NO_EDGE, NO_EDGE);
         assertEquals(3, lg.getEdgeIteratorState(sc2, 3).getAdjNode());
         assertEquals(2, lg.getEdgeIteratorState(sc2, 3).getBaseNode());
-        assertEquals(1.011011, lg.getEdgeIteratorState(sc2, 2).getWeight(false), 1e-3);
-        assertEquals(1.011011, lg.getEdgeIteratorState(sc2, 3).getWeight(false), 1e-3);
+        assertEquals(1.0, lg.getEdgeIteratorState(sc2, 2).getWeight(false));
+        assertEquals(1.0, lg.getEdgeIteratorState(sc2, 3).getWeight(false));
     }
 
     @Test
@@ -178,14 +178,13 @@ public class RoutingCHGraphImplTest {
         CHStorageBuilder chBuilder = new CHStorageBuilder(store);
         chBuilder.setIdentityLevels();
 
-        // we just make up some weights, they do not really have to be related to our previous edges.
-        // 1.004+1.006 = 2.09999999999. we make sure this does not become 2.09 instead of 2.10 (due to truncation)
-        double x1 = 1.004;
-        double x2 = 1.006;
+        // this test used to be a lot more interesting. now that we are calculating only with whole number doubles it became trivial
+        double x1 = 1;
+        double x2 = 2;
         RoutingCHGraph rg = RoutingCHGraphImpl.fromGraph(graph, store, chConfig);
         chBuilder.addShortcutNodeBased(0, 2, PrepareEncoder.getScFwdDir(), x1 + x2, 0, 1);
         RoutingCHEdgeIteratorState sc = rg.getEdgeIteratorState(2, 2);
-        assertEquals(2.01, sc.getWeight(false), 1.e-6);
+        assertEquals(3, sc.getWeight(false));
     }
 
     @Test
