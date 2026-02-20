@@ -38,6 +38,9 @@ class QueryOverlayBuilder {
     private final boolean is3D;
     private QueryOverlay queryOverlay;
 
+    private final List<VirtualEdgeIteratorState> virtualEdgesFwdForSnap = new ArrayList<>();
+    private final List<VirtualEdgeIteratorState> virtualEdgesBwdForSnap = new ArrayList<>();
+
     public static QueryOverlay build(Graph graph, List<Snap> snaps) {
         return build(graph.getNodes(), graph.getEdges(), graph.getNodeAccess().is3D(), snaps);
     }
@@ -121,6 +124,8 @@ class QueryOverlayBuilder {
         edge2res.forEach(new IntObjectPredicate<List<Snap>>() {
             @Override
             public boolean apply(int edgeId, List<Snap> results) {
+                virtualEdgesFwdForSnap.clear();
+                virtualEdgesBwdForSnap.clear();
                 // we can expect at least one entry in the results
                 EdgeIteratorState closestEdge = results.get(0).getClosestEdge();
                 final PointList fullPL = closestEdge.fetchWayGeometry(FetchMode.ALL);
@@ -203,9 +208,38 @@ class QueryOverlayBuilder {
                             fullPL.get(fullPL.size() - 1), fullPL.size() - 2,
                             fullPL, closestEdge, virtNodeId - 1, adjNode);
 
+                adjustDistances(virtualEdgesFwdForSnap, closestEdge.getDistance_mm());
+                adjustDistances(virtualEdgesBwdForSnap, closestEdge.getDistance_mm());
+
                 return true;
             }
         });
+    }
+
+    private void adjustDistances(List<VirtualEdgeIteratorState> virtualEdges, long originalDistance) {
+        // the sum of virtual edge distances can differ from the distance of the original edge:
+        // - we use dist_plane instead of dist_earth in OSMReader (not entirely sure why)
+        // - virtual edge distances include numeric errors (regardless of the dist calc)
+        if (virtualEdges.isEmpty())
+            // early exit & prevent division by zero below
+            return;
+        long sum = 0;
+        for (VirtualEdgeIteratorState v : virtualEdges)
+            sum += v.getDistance_mm();
+        long difference = originalDistance - sum;
+        long baseIncrement = difference / virtualEdges.size();
+        long remainder = difference % virtualEdges.size();
+        for (int i = 0; i < virtualEdges.size(); i++) {
+            VirtualEdgeIteratorState v = virtualEdges.get(i);
+            long adjustment = baseIncrement + (i < Math.abs(remainder) ? Long.signum(remainder) : 0);
+            v.setDistance_mm(v.getDistance_mm() + adjustment);
+        }
+
+        // verify
+        sum = 0;
+        for (VirtualEdgeIteratorState v : virtualEdges)
+            sum += v.getDistance_mm();
+        assert sum == originalDistance : "Virtual edge distance sum does not match original distance, even after adjustment";
     }
 
     private void createEdges(int origEdgeKey, int origRevEdgeKey,
@@ -240,6 +274,9 @@ class QueryOverlayBuilder {
         baseReverseEdge.setReverseEdge(baseEdge);
         queryOverlay.addVirtualEdge(baseEdge);
         queryOverlay.addVirtualEdge(baseReverseEdge);
+        // we collect the unique virtual edges separately here, so it is easier to adjust their distances afterwards
+        virtualEdgesFwdForSnap.add(baseEdge);
+        virtualEdgesBwdForSnap.add(baseReverseEdge);
     }
 
     private void buildEdgeChangesAtRealNodes() {

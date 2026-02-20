@@ -585,8 +585,8 @@ public class GHUtility {
             LOGGER.warn("seed: " + seed);
             fail("wrong weight: " + source + "->" + target + "\nexpected: " + refWeight + "\ngiven:    " + weight + "\nseed: " + seed);
         }
-        if (Math.abs(path.getDistance() - refPath.getDistance()) > 1.e-1) {
-            strictViolations.add("wrong distance " + source + "->" + target + ", expected: " + refPath.getDistance() + ", given: " + path.getDistance());
+        if (path.getDistance_mm() != refPath.getDistance_mm()) {
+            strictViolations.add("wrong distance " + source + "->" + target + ", expected: " + refPath.getDistance_mm() + ", given: " + path.getDistance_mm());
         }
         if (Math.abs(path.getTime() - refPath.getTime()) > 50) {
             strictViolations.add("wrong time " + source + "->" + target + ", expected: " + refPath.getTime() + ", given: " + path.getTime());

@@ -251,13 +251,13 @@ public class RoutingAlgorithmTest {
         //    |  |
         //    3--4
         BaseGraph graph = f.createGHStorage();
-        graph.edge(0, 2).setDistance(9).set(f.carSpeedEnc, 60, 60);
-        graph.edge(2, 1).setDistance(2).set(f.carSpeedEnc, 60, 60);
-        graph.edge(2, 3).setDistance(11).set(f.carSpeedEnc, 60, 60);
-        graph.edge(3, 4).setDistance(6).set(f.carSpeedEnc, 60, 60);
-        graph.edge(4, 1).setDistance(9).set(f.carSpeedEnc, 60, 60);
+        graph.edge(0, 2).setDistance(90).set(f.carSpeedEnc, 10, 10);
+        graph.edge(2, 1).setDistance(20).set(f.carSpeedEnc, 10, 10);
+        graph.edge(2, 3).setDistance(110).set(f.carSpeedEnc, 10, 10);
+        graph.edge(3, 4).setDistance(60).set(f.carSpeedEnc, 10, 10);
+        graph.edge(4, 1).setDistance(90).set(f.carSpeedEnc, 10, 10);
         Path p = f.calcPath(graph, 0, 4);
-        assertEquals(20, p.getDistance(), 1e-4, p.toString());
+        assertEquals(200, p.getDistance(), p.toString());
         assertEquals(nodes(0, 2, 1, 4), p.calcNodes());
     }
 
@@ -396,26 +396,26 @@ public class RoutingAlgorithmTest {
 
     // see test-graph.svg !
     static void initTestStorage(Graph graph, DecimalEncodedValue speedEnc) {
-        graph.edge(0, 1).setDistance(0).set(speedEnc, 60, 60);
-        graph.edge(0, 4).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(0, 1).setDistance(0).set(speedEnc, 10, 10);
+        graph.edge(0, 4).setDistance(0).set(speedEnc, 10, 10);
 
-        graph.edge(1, 4).setDistance(0).set(speedEnc, 60, 60);
-        graph.edge(1, 5).setDistance(0).set(speedEnc, 60, 60);
-        graph.edge(1, 2).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(1, 4).setDistance(0).set(speedEnc, 10, 10);
+        graph.edge(1, 5).setDistance(0).set(speedEnc, 10, 10);
+        graph.edge(1, 2).setDistance(0).set(speedEnc, 10, 10);
 
-        graph.edge(2, 5).setDistance(0).set(speedEnc, 60, 60);
-        graph.edge(2, 3).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(2, 5).setDistance(0).set(speedEnc, 10, 10);
+        graph.edge(2, 3).setDistance(0).set(speedEnc, 10, 10);
 
-        graph.edge(3, 5).setDistance(0).set(speedEnc, 60, 60);
-        graph.edge(3, 7).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(3, 5).setDistance(0).set(speedEnc, 10, 10);
+        graph.edge(3, 7).setDistance(0).set(speedEnc, 10, 10);
 
-        graph.edge(4, 6).setDistance(0).set(speedEnc, 60, 60);
-        graph.edge(4, 5).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(4, 6).setDistance(0).set(speedEnc, 10, 10);
+        graph.edge(4, 5).setDistance(0).set(speedEnc, 10, 10);
 
-        graph.edge(5, 6).setDistance(0).set(speedEnc, 60, 60);
-        graph.edge(5, 7).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(5, 6).setDistance(0).set(speedEnc, 10, 10);
+        graph.edge(5, 7).setDistance(0).set(speedEnc, 10, 10);
 
-        EdgeIteratorState edge6_7 = graph.edge(6, 7).setDistance(0).set(speedEnc, 60, 60);
+        EdgeIteratorState edge6_7 = graph.edge(6, 7).setDistance(0).set(speedEnc, 10, 10);
 
         updateDistancesFor(graph, 0, 0.0010, 0.00001);
         updateDistancesFor(graph, 1, 0.0008, 0.0000);
@@ -469,7 +469,7 @@ public class RoutingAlgorithmTest {
         initWikipediaTestGraph(graph, f.carSpeedEnc);
         Path p = f.calcPath(graph, 0, 4);
         assertEquals(nodes(0, 2, 5, 4), p.calcNodes(), p.toString());
-        assertEquals(20, p.getDistance(), 1e-4, p.toString());
+        assertEquals(200, p.getDistance(), p.toString());
     }
 
     @ParameterizedTest
@@ -484,15 +484,15 @@ public class RoutingAlgorithmTest {
 
     // see wikipedia-graph.svg !
     private void initWikipediaTestGraph(Graph graph, DecimalEncodedValue speedEnc) {
-        graph.edge(0, 1).setDistance(7).set(speedEnc, 60, 60);
-        graph.edge(0, 2).setDistance(9).set(speedEnc, 60, 60);
-        graph.edge(0, 5).setDistance(14).set(speedEnc, 60, 60);
-        graph.edge(1, 2).setDistance(10).set(speedEnc, 60, 60);
-        graph.edge(1, 3).setDistance(15).set(speedEnc, 60, 60);
-        graph.edge(2, 5).setDistance(2).set(speedEnc, 60, 60);
-        graph.edge(2, 3).setDistance(11).set(speedEnc, 60, 60);
-        graph.edge(3, 4).setDistance(6).set(speedEnc, 60, 60);
-        graph.edge(4, 5).setDistance(9).set(speedEnc, 60, 60);
+        graph.edge(0, 1).setDistance(70).set(speedEnc, 20, 20);
+        graph.edge(0, 2).setDistance(90).set(speedEnc, 20, 20);
+        graph.edge(0, 5).setDistance(140).set(speedEnc, 20, 20);
+        graph.edge(1, 2).setDistance(100).set(speedEnc, 20, 20);
+        graph.edge(1, 3).setDistance(150).set(speedEnc, 20, 20);
+        graph.edge(2, 5).setDistance(20).set(speedEnc, 20, 20);
+        graph.edge(2, 3).setDistance(110).set(speedEnc, 20, 20);
+        graph.edge(3, 4).setDistance(60).set(speedEnc, 20, 20);
+        graph.edge(4, 5).setDistance(90).set(speedEnc, 20, 20);
     }
 
     @ParameterizedTest
@@ -655,7 +655,7 @@ public class RoutingAlgorithmTest {
                     float dist = 5 + Math.abs(rand.nextInt(5));
                     if (print)
                         System.out.print(" " + (int) dist + "\t           ");
-                    tmpGraph.edge(matrix[w][h], matrix[w][h - 1]).setDistance(dist).set(speedEnc, 60, 60);
+                    tmpGraph.edge(matrix[w][h], matrix[w][h - 1]).setDistance(dist).set(speedEnc, 10, 10);
                 }
             }
             if (print) {
@@ -673,7 +673,7 @@ public class RoutingAlgorithmTest {
                     float dist = 5 + Math.abs(rand.nextInt(5));
                     if (print)
                         System.out.print("-- " + (int) dist + "\t-- ");
-                    tmpGraph.edge(matrix[w][h], matrix[w - 1][h]).setDistance(dist).set(speedEnc, 60, 60);
+                    tmpGraph.edge(matrix[w][h], matrix[w - 1][h]).setDistance(dist).set(speedEnc, 10, 10);
                 }
                 if (print)
                     System.out.print("(" + matrix[w][h] + ")\t");
@@ -711,12 +711,12 @@ public class RoutingAlgorithmTest {
     @ArgumentsSource(FixtureProvider.class)
     public void testDirectedGraphBug1(Fixture f) {
         BaseGraph graph = f.createGHStorage();
-        graph.edge(0, 1).setDistance(300).set(f.carSpeedEnc, 60, 0);
-        graph.edge(1, 2).setDistance(299).set(f.carSpeedEnc, 60, 0);
+        graph.edge(0, 1).setDistance(300).set(f.carSpeedEnc, 10, 0);
+        graph.edge(1, 2).setDistance(299).set(f.carSpeedEnc, 10, 0);
 
-        graph.edge(0, 3).setDistance(200).set(f.carSpeedEnc, 60, 0);
-        graph.edge(3, 4).setDistance(300).set(f.carSpeedEnc, 60, 0);
-        graph.edge(4, 2).setDistance(100).set(f.carSpeedEnc, 60, 0);
+        graph.edge(0, 3).setDistance(200).set(f.carSpeedEnc, 10, 0);
+        graph.edge(3, 4).setDistance(300).set(f.carSpeedEnc, 10, 0);
+        graph.edge(4, 2).setDistance(100).set(f.carSpeedEnc, 10, 0);
 
         Path p = f.calcPath(graph, 0, 2);
         assertEquals(nodes(0, 1, 2), p.calcNodes(), p.toString());

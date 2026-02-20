@@ -155,9 +155,22 @@ public interface EdgeIteratorState {
     /**
      * @return the distance of the current edge in meter
      */
+    // todonow: check if we should replace more usages with getDistance_mm. also remove tolerances in tests, but maybe postpone
     double getDistance();
 
     EdgeIteratorState setDistance(double dist);
+
+    /**
+     * Returns the distance of the current edge in millimeters. This should be used wherever exact
+     * distance summation is desired.
+     */
+    long getDistance_mm();
+
+    /**
+     * Sets the distance in mm. This should be used wherever exact distance summation is desired.
+     * Distances above the storage limit will be capped!
+     */
+    EdgeIteratorState setDistance_mm(long distance_mm);
 
     /**
      * Returns edge properties stored in direction of the raw database layout. So do not use it directly, instead
@@ -266,4 +279,7 @@ public interface EdgeIteratorState {
      * @return the specified edge e
      */
     EdgeIteratorState copyPropertiesFrom(EdgeIteratorState e);
+
+    boolean isVirtual();
+
 }

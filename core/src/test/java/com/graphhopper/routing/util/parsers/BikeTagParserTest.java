@@ -698,6 +698,12 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("bicycle", "no");
         assertTrue(accessParser.getAccess(way).canSkip());
 
+        way.clearTags();
+        way.setTag("route", "ferry");
+        assertTrue(accessParser.getAccess(way).isFerry());
+        way.setTag("bicycle", "dismount");
+        assertTrue(accessParser.getAccess(way).isFerry());
+
         // issue #1432
         way.clearTags();
         way.setTag("route", "ferry");

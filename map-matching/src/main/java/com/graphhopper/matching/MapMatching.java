@@ -550,7 +550,7 @@ public class MapMatching {
             super(graph);
             int prevEdge = EdgeIterator.NO_EDGE;
             for (EdgeIteratorState edge : edges) {
-                addDistance(edge.getDistance());
+                addDistance_mm(edge.getDistance_mm());
                 addTime(GHUtility.calcMillisWithTurnMillis(weighting, edge, false, prevEdge));
                 addEdge(edge.getEdge());
                 prevEdge = edge.getEdge();

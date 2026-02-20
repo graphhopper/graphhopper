@@ -47,6 +47,10 @@ import static com.graphhopper.util.Parameters.Details.STREET_NAME;
  * loadExisting, (4) usage, (5) flush, (6) close
  */
 public class BaseGraph implements Graph, Closeable {
+    /**
+     * Maximum distance per edge in meters (~2147 km).
+     */
+    public static final double MAX_DIST_METERS = BaseGraphNodesAndEdges.MAX_DIST_MM / 1000.0;
     final static long MAX_UNSIGNED_INT = 0xFFFF_FFFFL;
     private static final int MAX_PILLAR_NODES = 65535;
     private static final int GEOMETRY_HEADER_BYTES = 2;
@@ -279,7 +283,7 @@ public class BaseGraph implements Graph, Closeable {
         store.writeFlags(edgePointer, from.getFlags());
 
         // copy the rest with higher level API
-        to.setDistance(from.getDistance()).
+        to.setDistance_mm(from.getDistance_mm()).
                 setKeyValues(from.getKeyValues()).
                 setWayGeometry(from.fetchWayGeometry(FetchMode.PILLAR_ONLY));
 
@@ -320,7 +324,7 @@ public class BaseGraph implements Graph, Closeable {
         EdgeIteratorStateImpl edgeState = (EdgeIteratorStateImpl) getEdgeIteratorState(edge, Integer.MIN_VALUE);
         EdgeIteratorStateImpl newEdge = (EdgeIteratorStateImpl) edge(edgeState.getBaseNode(), edgeState.getAdjNode())
                 .setFlags(edgeState.getFlags())
-                .setDistance(edgeState.getDistance())
+                .setDistance_mm(edgeState.getDistance_mm())
                 .setKeyValues(edgeState.getKeyValues());
         if (reuseGeometry) {
             // We use the same geo ref for the copied edge. This saves memory because we are not duplicating
@@ -832,12 +836,38 @@ public class BaseGraph implements Graph, Closeable {
 
         @Override
         public double getDistance() {
-            return store.getDist(edgePointer);
+            // never return infinity even if dist_mm is INT MAX, see #435
+            return getDistance_mm() / 1000.0;
         }
 
         @Override
         public EdgeIteratorState setDistance(double dist) {
-            store.setDist(edgePointer, dist);
+            if (dist < 0)
+                throw new IllegalArgumentException("distances must be non-negative, got: " + dist);
+            // distances above ~2147km are capped
+            if (dist > MAX_DIST_METERS)
+                dist = MAX_DIST_METERS;
+            // distances below 0.5mm are rounded down to zero
+            long dist_mm = Math.round(dist * 1000);
+            setDistance_mm(dist_mm);
+            return this;
+        }
+
+        /**
+         * Returns the distance in millimeters
+         */
+        @Override
+        public long getDistance_mm() {
+            return store.getDist_mm(edgePointer);
+        }
+
+        @Override
+        public EdgeIteratorState setDistance_mm(long distance_mm) {
+            if (distance_mm < 0)
+                throw new IllegalArgumentException("distances must be non-negative, got: " + distance_mm);
+            if (distance_mm > BaseGraphNodesAndEdges.MAX_DIST_MM)
+                distance_mm = BaseGraphNodesAndEdges.MAX_DIST_MM;
+            store.setDist_mm(edgePointer, distance_mm);
             return this;
         }
 
@@ -1087,6 +1117,11 @@ public class BaseGraph implements Graph, Closeable {
                 edge.reverse = !reverse;
             }
             return edge;
+        }
+
+        @Override
+        public boolean isVirtual() {
+            return false;
         }
 
         @Override

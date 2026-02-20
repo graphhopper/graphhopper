@@ -231,12 +231,19 @@ public class FootTagParserTest {
         way.setTag("access", "private");
         assertTrue(accessParser.getAccess(way).canSkip());
 
+        way.clearTags();
+        way.setTag("route", "ferry");
+        EdgeIntAccess edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(encodingManager.getBytesForFlags());
+        int edgeId = 0;
+        accessParser.handleWayTags(edgeId, edgeIntAccess, way);
+        assertTrue(footAccessEnc.getBool(false, edgeId, edgeIntAccess));
+        assertTrue(footAccessEnc.getBool(true, edgeId, edgeIntAccess));
+
         // issue #1432
         way.clearTags();
         way.setTag("route", "ferry");
         way.setTag("oneway", "yes");
-        EdgeIntAccess edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(encodingManager.getBytesForFlags());
-        int edgeId = 0;
+        edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(encodingManager.getBytesForFlags());
         accessParser.handleWayTags(edgeId, edgeIntAccess, way);
         assertTrue(footAccessEnc.getBool(false, edgeId, edgeIntAccess));
         assertFalse(footAccessEnc.getBool(true, edgeId, edgeIntAccess));

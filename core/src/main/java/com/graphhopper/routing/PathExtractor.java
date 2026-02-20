@@ -74,7 +74,7 @@ public class PathExtractor {
 
     protected void onEdge(int edge, int adjNode, int prevEdge) {
         EdgeIteratorState edgeState = graph.getEdgeIteratorState(edge, adjNode);
-        path.addDistance(edgeState.getDistance());
+        path.addDistance_mm(edgeState.getDistance_mm());
         path.addTime(GHUtility.calcMillisWithTurnMillis(weighting, edgeState, false, prevEdge));
         path.addEdge(edge);
     }

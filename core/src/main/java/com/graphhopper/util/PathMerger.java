@@ -93,7 +93,7 @@ public class PathMerger {
         int origPoints = 0;
         long fullTimeInMillis = 0;
         double fullWeight = 0;
-        double fullDistance = 0;
+        long fullDistance_mm = 0;
         boolean allFound = true;
 
         InstructionList fullInstructions = new InstructionList(tr);
@@ -108,7 +108,7 @@ public class PathMerger {
             }
             description.addAll(path.getDescription());
             fullTimeInMillis += path.getTime();
-            fullDistance += path.getDistance();
+            fullDistance_mm += path.getDistance_mm();
             fullWeight += path.getWeight();
             if (enableInstructions) {
                 InstructionList il = InstructionsFromEdges.calcInstructions(path, graph, weighting, evLookup, tr);
@@ -170,7 +170,7 @@ public class PathMerger {
         responsePath.setDescription(description).
                 setPoints(fullPoints).
                 setRouteWeight(fullWeight).
-                setDistance(fullDistance).
+                setDistance(fullDistance_mm / 1000.0).
                 setTime(fullTimeInMillis).
                 setWaypoints(waypoints).
                 setWaypointIndices(wayPointIndices);

@@ -18,6 +18,8 @@
 package com.graphhopper.reader.dem;
 
 import com.graphhopper.storage.DataAccess;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -32,6 +34,8 @@ import java.io.IOException;
  * @author Peter Karich
  */
 public class HeightTile {
+
+    private final Logger logger = LoggerFactory.getLogger(getClass());
     private final int minLat;
     private final int minLon;
     private final int width;
@@ -93,12 +97,12 @@ public class HeightTile {
     }
 
     public double getHeight(double lat, double lon) {
-        double deltaLat = Math.abs(lat - minLat);
-        double deltaLon = Math.abs(lon - minLon);
+        double deltaLat = lat - minLat;
+        double deltaLon = lon - minLon;
         if (deltaLat > latHigherBound || deltaLat < lowerBound)
-            throw new IllegalStateException("latitude not in boundary of this file:" + lat + "," + lon + ", this:" + this.toString());
+            logger.error("latitude not in boundary of this file:" + lat + "," + lon + ", this:" + this.toString());
         if (deltaLon > lonHigherBound || deltaLon < lowerBound)
-            throw new IllegalStateException("longitude not in boundary of this file:" + lat + "," + lon + ", this:" + this.toString());
+            logger.error("longitude not in boundary of this file:" + lat + "," + lon + ", this:" + this.toString());
 
         double elevation;
         if (interpolate) {
