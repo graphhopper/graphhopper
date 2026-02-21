@@ -155,7 +155,6 @@ public class OSMReader {
             throw new IllegalStateException("BaseGraph must be initialize before we can read OSM");
 
         WaySegmentParser waySegmentParser = new WaySegmentParser.Builder(baseGraph.getNodeAccess(), baseGraph.getDirectory())
-                .setElevationProvider(this::getElevation)
                 .setWayFilter(this::acceptWay)
                 .setSplitNodeFilter(this::isBarrierNode)
                 .setWayPreprocessor(this::preprocessWay)
@@ -184,6 +183,11 @@ public class OSMReader {
 
     protected double getElevation(ReaderNode node) {
         double ele = eleProvider.getEle(node);
+        return Double.isNaN(ele) ? config.getDefaultElevation() : ele;
+    }
+
+    private double lookupElevation(double lat, double lon) {
+        double ele = eleProvider.getEle(lat, lon);
         return Double.isNaN(ele) ? config.getDefaultElevation() : ele;
     }
 
@@ -310,16 +314,23 @@ public class OSMReader {
         if (pointList.size() != nodeTags.size())
             throw new AssertionError("there should be as many maps of node tags as there are points. node tags: " + nodeTags.size() + ", points: " + pointList.size());
 
-        // todo: in principle it should be possible to delay elevation calculation so we do not need to store
-        // elevations during import (saves memory in pillar info during import). also note that we already need to
-        // to do some kind of elevation processing (bridge+tunnel interpolation in GraphHopper class, maybe this can
-        // go together
-
         if (pointList.is3D()) {
-            // fill in pillar elevations that were deferred during import
-            for (int i = 1; i < pointList.size() - 1; i++) {
-                double ele = eleProvider.getEle(pointList.getLat(i), pointList.getLon(i));
-                pointList.setElevation(i, Double.isNaN(ele) ? config.getDefaultElevation() : ele);
+            // fill in all elevations (deferred from node scanning for cache-friendliness in elevation provider)
+            int last = pointList.size() - 1;
+            for (int i = 0; i <= last; i++) {
+                double ele;
+                if (i == 0 || i == last) {
+                    // tower node: reuse elevation if already looked up by a previous edge
+                    int towerIndex = i == 0 ? fromIndex : toIndex;
+                    ele = nodeAccess.getEle(towerIndex);
+                    if (ele == Double.MAX_VALUE) {
+                        ele = lookupElevation(pointList.getLat(i), pointList.getLon(i));
+                        nodeAccess.setNode(towerIndex, pointList.getLat(i), pointList.getLon(i), ele);
+                    }
+                } else {
+                    ele = lookupElevation(pointList.getLat(i), pointList.getLon(i));
+                }
+                pointList.setElevation(i, ele);
             }
             // sample points along long edges
             if (config.getLongEdgeSamplingDistance() < Double.MAX_VALUE && !isFerry(way))

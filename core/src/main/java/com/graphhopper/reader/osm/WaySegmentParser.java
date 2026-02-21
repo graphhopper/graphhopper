@@ -62,7 +62,6 @@ public class WaySegmentParser {
     private static final Logger LOGGER = LoggerFactory.getLogger(WaySegmentParser.class);
     private static final Set<String> INCLUDE_IF_NODE_TAGS = new HashSet<>(Arrays.asList("barrier", "highway", "railway", "crossing", "ford"));
 
-    private ToDoubleFunction<ReaderNode> elevationProvider = node -> 0d;
     private Predicate<ReaderWay> wayFilter = way -> true;
     private Predicate<ReaderNode> splitNodeFilter = node -> false;
     private WayPreprocessor wayPreprocessor = (way, coordinateSupplier, nodeTagSupplier) -> {
@@ -203,7 +202,7 @@ public class WaySegmentParser {
                 LOGGER.info("pass2 - processed nodes: " + nf(nodeCounter) + ", accepted nodes: " + nf(acceptedNodes) +
                         ", " + Helper.getMemInfo());
 
-            long nodeType = nodeData.addCoordinatesIfMapped(node.getId(), node.getLat(), node.getLon(), () -> elevationProvider.applyAsDouble(node));
+            long nodeType = nodeData.addCoordinatesIfMapped(node.getId(), node.getLat(), node.getLon());
             if (nodeType == EMPTY_NODE)
                 return;
 
@@ -349,12 +348,7 @@ public class WaySegmentParser {
                 if (!isNodeId(id))
                     throw new IllegalStateException("Invalid id for node: " + node.osmNodeId + " when handling segment " + segment + " for way: " + way.getId());
                 if (isPillarNode(id) && (i == 0 || i == segment.size() - 1)) {
-                    double ele = Double.NaN;
-                    if (nodeData.is3D()) {
-                        GHPoint3D coords = nodeData.getCoordinates(id);
-                        ele = elevationProvider.applyAsDouble(new ReaderNode(0, coords.getLat(), coords.getLon()));
-                    }
-                    id = nodeData.convertPillarToTowerNode(id, node.osmNodeId, ele);
+                    id = nodeData.convertPillarToTowerNode(id, node.osmNodeId);
                     node.id = id;
                 }
 
@@ -420,14 +414,6 @@ public class WaySegmentParser {
          */
         public Builder(PointAccess pointAccess, Directory directory) {
             waySegmentParser = new WaySegmentParser(new OSMNodeData(pointAccess, directory));
-        }
-
-        /**
-         * @param elevationProvider used to determine the elevation of an OSM node
-         */
-        public Builder setElevationProvider(ToDoubleFunction<ReaderNode> elevationProvider) {
-            waySegmentParser.elevationProvider = elevationProvider;
-            return this;
         }
 
         /**

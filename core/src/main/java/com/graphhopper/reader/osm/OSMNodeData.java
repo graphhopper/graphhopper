@@ -31,7 +31,6 @@ import com.graphhopper.util.shapes.GHPoint3D;
 
 import java.util.Collections;
 import java.util.Map;
-import java.util.function.DoubleSupplier;
 import java.util.function.LongUnaryOperator;
 import java.util.stream.Collectors;
 
@@ -142,16 +141,16 @@ class OSMNodeData {
 
     /**
      * Stores the given coordinates for the given OSM node ID, but only if a non-empty node type was set for this
-     * OSM node ID previously.
+     * OSM node ID previously. Elevation is not stored here — it is looked up later during edge creation.
      *
      * @return the node type this OSM node was associated with before this method was called
      */
-    public long addCoordinatesIfMapped(long osmNodeId, double lat, double lon, DoubleSupplier getEle) {
+    public long addCoordinatesIfMapped(long osmNodeId, double lat, double lon) {
         long nodeType = idsByOsmNodeIds.get(osmNodeId);
         if (nodeType == EMPTY_NODE)
             return nodeType;
         else if (nodeType == JUNCTION_NODE || nodeType == CONNECTION_NODE)
-            addTowerNode(osmNodeId, lat, lon, getEle.getAsDouble());
+            addTowerNode(osmNodeId, lat, lon);
         else if (nodeType == INTERMEDIATE_NODE || nodeType == END_NODE)
             addPillarNode(osmNodeId, lat, lon);
         else
@@ -159,8 +158,8 @@ class OSMNodeData {
         return nodeType;
     }
 
-    private long addTowerNode(long osmId, double lat, double lon, double ele) {
-        towerNodes.setNode(nextTowerId, lat, lon, ele);
+    private long addTowerNode(long osmId, double lat, double lon) {
+        towerNodes.setNode(nextTowerId, lat, lon, Double.MAX_VALUE);
         long id = towerNodeToId(nextTowerId);
         idsByOsmNodeIds.put(osmId, id);
         nextTowerId++;
@@ -196,7 +195,7 @@ class OSMNodeData {
         return new SegmentNode(newOsmId, id, node.tags);
     }
 
-    long convertPillarToTowerNode(long id, long osmNodeId, double ele) {
+    long convertPillarToTowerNode(long id, long osmNodeId) {
         if (!isPillarNode(id))
             throw new IllegalArgumentException("Not a pillar node: " + id);
         long pillar = idToPillarNode(id);
@@ -206,15 +205,13 @@ class OSMNodeData {
             throw new IllegalStateException("Pillar node was already converted to tower node: " + id);
 
         pillarNodes.setNode(pillar, Double.MAX_VALUE, Double.MAX_VALUE);
-        return addTowerNode(osmNodeId, lat, lon, ele);
+        return addTowerNode(osmNodeId, lat, lon);
     }
 
     public GHPoint3D getCoordinates(long id) {
         if (isTowerNode(id)) {
             int tower = idToTowerNode(id);
-            return towerNodes.is3D()
-                    ? new GHPoint3D(towerNodes.getLat(tower), towerNodes.getLon(tower), towerNodes.getEle(tower))
-                    : new GHPoint3D(towerNodes.getLat(tower), towerNodes.getLon(tower), Double.NaN);
+            return new GHPoint3D(towerNodes.getLat(tower), towerNodes.getLon(tower), Double.NaN);
         } else if (isPillarNode(id)) {
             long pillar = idToPillarNode(id);
             return new GHPoint3D(pillarNodes.getLat(pillar), pillarNodes.getLon(pillar), Double.NaN);
@@ -224,21 +221,18 @@ class OSMNodeData {
 
     public void addCoordinatesToPointList(long id, PointList pointList) {
         double lat, lon;
-        double ele = Double.NaN;
         if (isTowerNode(id)) {
             int tower = idToTowerNode(id);
             lat = towerNodes.getLat(tower);
             lon = towerNodes.getLon(tower);
-            if (towerNodes.is3D())
-                ele = towerNodes.getEle(tower);
         } else if (isPillarNode(id)) {
             long pillar = idToPillarNode(id);
             lat = pillarNodes.getLat(pillar);
             lon = pillarNodes.getLon(pillar);
-            // ele stays Double.NaN — caller fills it in later
         } else
             throw new IllegalArgumentException();
-        pointList.add(lat, lon, ele);
+        // elevation is NaN — filled in later during edge creation
+        pointList.add(lat, lon, Double.NaN);
     }
 
     public void setTags(ReaderNode node) {
