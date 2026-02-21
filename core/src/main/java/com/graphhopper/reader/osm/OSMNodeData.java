@@ -25,6 +25,7 @@ import com.graphhopper.coll.LongLongMap;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.search.KVStorage;
 import com.graphhopper.storage.Directory;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointAccess;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.GHPoint3D;
@@ -58,11 +59,11 @@ class OSMNodeData {
     static final long INTERMEDIATE_NODE = 1;
     static final long CONNECTION_NODE = 2;
 
-    // this map stores our internal node id for each OSM node
+    // this map stores our internal node id for each OSM node.
+    // For tower nodes, the value is a negative id (see towerNodeToId).
+    // For pillar nodes, the value is a packed lat/lon long (see packLatLon).
     private final LongLongMap idsByOsmNodeIds;
 
-    // here we store node coordinates, separated for pillar and tower nodes
-    private final PillarInfo pillarNodes;
     private final PointAccess towerNodes;
 
     // this map stores an index for each OSM node we keep the node tags of. a value of -1 means there is no entry yet.
@@ -74,7 +75,6 @@ class OSMNodeData {
     private final LongSet nodesToBeSplit;
 
     private int nextTowerId = 0;
-    private long nextPillarId = 0;
     // we use negative ids to create artificial OSM node ids
     private long nextArtificialOSMNodeId = -Long.MAX_VALUE;
 
@@ -82,9 +82,9 @@ class OSMNodeData {
         // We use a b-tree that can store as many entries as there are longs. A tree is also more
         // memory efficient, because there is no waste for empty entries, and it also avoids
         // allocating big arrays when growing the size.
-        idsByOsmNodeIds = new GHLongLongBTree(200, 5, EMPTY_NODE);
+        // 8 bytes per value to hold packed lat/lon for pillar nodes (and negative tower IDs)
+        idsByOsmNodeIds = new GHLongLongBTree(200, 8, EMPTY_NODE);
         towerNodes = nodeAccess;
-        pillarNodes = new PillarInfo(directory);
 
         nodeTagIndicesByOsmNodeIds = new GHLongLongBTree(200, 4, -1);
         nodesToBeSplit = new LongScatterSet();
@@ -168,14 +168,34 @@ class OSMNodeData {
         return id;
     }
 
-    private long addPillarNode(long osmId, double lat, double lon) {
-        long id = pillarNodeToId(nextPillarId);
-        if (id > idsByOsmNodeIds.getMaxValue())
-            throw new IllegalStateException("id for pillar node cannot be bigger than " + idsByOsmNodeIds.getMaxValue());
+    /**
+     * Packs lat/lon into a single positive long. The offsets ensure the packed value is always
+     * positive and always > 2^32, which avoids collision with tower IDs (negative) and special
+     * markers (-2 to 2).
+     */
+    static long packLatLon(double lat, double lon) {
+        // degreeToInt(lat) is in [-900_000_000, 900_000_000], offset to [1, 1_800_000_001] (fits 31 bits)
+        long latUnsigned = Helper.degreeToInt(lat) + 900_000_001L;
+        // degreeToInt(lon) is in [-1_800_000_000, 1_800_000_000], offset to [1, 3_600_000_001] (fits 32 bits)
+        long lonUnsigned = Helper.degreeToInt(lon) + 1_800_000_001L;
+        return (latUnsigned << 32) | lonUnsigned;
+    }
 
-        pillarNodes.setNode(nextPillarId, lat, lon);
+    static double unpackLat(long packed) {
+        // latUnsigned fits in 31 bits, so (int) cast is safe
+        int latInt = (int) (packed >>> 32) - 900_000_001;
+        return Helper.intToDegree(latInt);
+    }
+
+    static double unpackLon(long packed) {
+        // lonUnsigned can exceed Integer.MAX_VALUE, so subtract in long space first
+        int lonInt = (int) ((packed & 0xFFFFFFFFL) - 1_800_000_001L);
+        return Helper.intToDegree(lonInt);
+    }
+
+    private long addPillarNode(long osmId, double lat, double lon) {
+        long id = packLatLon(lat, lon);
         idsByOsmNodeIds.put(osmId, id);
-        nextPillarId++;
         return id;
     }
 
@@ -189,22 +209,21 @@ class OSMNodeData {
         if (point == null)
             throw new IllegalStateException("Cannot copy node : " + node.osmNodeId + ", because it is missing");
         final long newOsmId = nextArtificialOSMNodeId++;
-        if (idsByOsmNodeIds.put(newOsmId, INTERMEDIATE_NODE) != EMPTY_NODE)
+        long id = packLatLon(point.getLat(), point.getLon());
+        if (idsByOsmNodeIds.put(newOsmId, id) != EMPTY_NODE)
             throw new IllegalStateException("Artificial osm node id already exists: " + newOsmId);
-        long id = addPillarNode(newOsmId, point.getLat(), point.getLon());
         return new SegmentNode(newOsmId, id, node.tags);
     }
 
     long convertPillarToTowerNode(long id, long osmNodeId) {
         if (!isPillarNode(id))
             throw new IllegalArgumentException("Not a pillar node: " + id);
-        long pillar = idToPillarNode(id);
-        double lat = pillarNodes.getLat(pillar);
-        double lon = pillarNodes.getLon(pillar);
-        if (lat == Double.MAX_VALUE || lon == Double.MAX_VALUE)
+        // Check if already converted: look up current value in BTree
+        long current = idsByOsmNodeIds.get(osmNodeId);
+        if (isTowerNode(current))
             throw new IllegalStateException("Pillar node was already converted to tower node: " + id);
-
-        pillarNodes.setNode(pillar, Double.MAX_VALUE, Double.MAX_VALUE);
+        double lat = unpackLat(id);
+        double lon = unpackLon(id);
         return addTowerNode(osmNodeId, lat, lon);
     }
 
@@ -213,8 +232,7 @@ class OSMNodeData {
             int tower = idToTowerNode(id);
             return new GHPoint3D(towerNodes.getLat(tower), towerNodes.getLon(tower), Double.NaN);
         } else if (isPillarNode(id)) {
-            long pillar = idToPillarNode(id);
-            return new GHPoint3D(pillarNodes.getLat(pillar), pillarNodes.getLon(pillar), Double.NaN);
+            return new GHPoint3D(unpackLat(id), unpackLon(id), Double.NaN);
         } else
             return null;
     }
@@ -226,9 +244,8 @@ class OSMNodeData {
             lat = towerNodes.getLat(tower);
             lon = towerNodes.getLon(tower);
         } else if (isPillarNode(id)) {
-            long pillar = idToPillarNode(id);
-            lat = pillarNodes.getLat(pillar);
-            lon = pillarNodes.getLon(pillar);
+            lat = unpackLat(id);
+            lon = unpackLon(id);
         } else
             throw new IllegalArgumentException();
         // elevation is NaN — filled in later during edge creation
@@ -262,7 +279,6 @@ class OSMNodeData {
 
     public void release() {
         idsByOsmNodeIds.clear();
-        pillarNodes.clear();
         nodeTagIndicesByOsmNodeIds.clear();
         nodeKVStorage.clear();
         nodesToBeSplit.clear();
@@ -276,14 +292,6 @@ class OSMNodeData {
         if (-id - 3L > Integer.MAX_VALUE)
             throw new IllegalStateException("Invalid tower node id: " + id + ", limit exceeded");
         return Math.toIntExact(-id - 3);
-    }
-
-    public long pillarNodeToId(long pillarId) {
-        return pillarId + 3;
-    }
-
-    public long idToPillarNode(long id) {
-        return id - 3;
     }
 
     public boolean setSplitNode(long osmNodeId) {
