@@ -323,7 +323,7 @@ public class OSMReader {
                     // tower node: reuse elevation if already looked up by a previous edge
                     int towerIndex = i == 0 ? fromIndex : toIndex;
                     ele = nodeAccess.getEle(towerIndex);
-                    if (ele == Double.MAX_VALUE) {
+                    if (ele == Helper.ELE_UNKNOWN) {
                         ele = lookupElevation(pointList.getLat(i), pointList.getLon(i));
                         nodeAccess.setNode(towerIndex, pointList.getLat(i), pointList.getLon(i), ele);
                     }

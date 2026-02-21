@@ -36,7 +36,11 @@ public class Helper {
     public static final long MB = 1L << 20;
     // we keep the first seven decimal places of lat/lon coordinates. this corresponds to ~1cm precision ('pointing to waldo on a page')
     private static final float DEGREE_FACTOR = 10_000_000;
-    // milli meter is a bit extreme but we have 3 bytes
+    /**
+     * Marker value indicating that elevation has not been looked up yet (deferred elevation).
+     */
+    public static final double ELE_UNKNOWN = Double.MAX_VALUE;
+    // milli meter is a bit extreme, but we have 3 bytes
     private static final float ELE_FACTOR = 1000f;
     private static final int MAX_ELE_UINT = (int) ((10_000 + 1000) * ELE_FACTOR);
 
@@ -275,7 +279,7 @@ public class Helper {
      */
     public static double uIntToEle(int integEle) {
         if (integEle >= MAX_ELE_UINT)
-            return Double.MAX_VALUE;
+            return ELE_UNKNOWN;
         return integEle / ELE_FACTOR - 1000;
     }
 

@@ -159,7 +159,7 @@ class OSMNodeData {
     }
 
     private long addTowerNode(long osmId, double lat, double lon) {
-        towerNodes.setNode(nextTowerId, lat, lon, Double.MAX_VALUE);
+        towerNodes.setNode(nextTowerId, lat, lon, Helper.ELE_UNKNOWN);
         long id = towerNodeToId(nextTowerId);
         idsByOsmNodeIds.put(osmId, id);
         nextTowerId++;
@@ -177,6 +177,7 @@ class OSMNodeData {
         // degreeToInt(lat) is in [-900_000_000, 900_000_000], offset to [1, 1_800_000_001] (fits 31 bits)
         long latUnsigned = Helper.degreeToInt(lat) + 900_000_001L;
         // degreeToInt(lon) is in [-1_800_000_000, 1_800_000_000], offset to [1, 3_600_000_001] (fits 32 bits)
+        // +1 not really necessary but is there for symmetry
         long lonUnsigned = Helper.degreeToInt(lon) + 1_800_000_001L;
         return (latUnsigned << 32) | lonUnsigned;
     }
