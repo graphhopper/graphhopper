@@ -20,6 +20,10 @@ package com.graphhopper.reader.dem;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.ShortBuffer;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -137,6 +141,78 @@ public class PMTilesElevationProviderTest {
         // Very close but on the path
         assertEquals(381, instance.getEle(50.911849, 14.208042), 1);
         assertEquals(361, instance.getEle(50.9119, 14.207466), 1);
+    }
+
+    @Test
+    public void testFillGaps() {
+        // 4x4 grid of shorts, with two gap pixels
+        //   100  100  MIN  100
+        //   100  MIN  100  100
+        //   100  100  100  100
+        //   100  100  100  100
+        int w = 4, h = 4;
+        short[][] grid = {
+                {100, 100, Short.MIN_VALUE, 100},
+                {100, Short.MIN_VALUE, 100, 100},
+                {100, 100, 100, 100},
+                {100, 100, 100, 100},
+        };
+        byte[] data = new byte[w * h * 2];
+        ByteBuffer bb = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN);
+        for (int y = 0; y < h; y++)
+            for (int x = 0; x < w; x++)
+                bb.putShort((y * w + x) * 2, grid[y][x]);
+
+        PMTilesElevationProvider.fillGaps(data, w);
+
+        ShortBuffer shorts = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer();
+        // Both gap pixels should now be 100 (average of all-100 neighbors)
+        assertEquals(100, shorts.get(0 * w + 2), "gap at (2,0) should be filled");
+        assertEquals(100, shorts.get(1 * w + 1), "gap at (1,1) should be filled");
+        // All other pixels unchanged
+        for (int y = 0; y < h; y++)
+            for (int x = 0; x < w; x++)
+                if (!((x == 2 && y == 0) || (x == 1 && y == 1)))
+                    assertEquals(100, shorts.get(y * w + x), "pixel (" + x + "," + y + ") should be unchanged");
+    }
+
+    @Test
+    public void testFillGapsPropagatesToInterior() {
+        // 5x1 strip: 200 MIN MIN MIN 200
+        // After fill: 200 200 200 200 200
+        int w = 5;
+        byte[] data = new byte[w * 2];
+        ByteBuffer bb = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN);
+        bb.putShort(0, (short) 200);
+        bb.putShort(2, Short.MIN_VALUE);
+        bb.putShort(4, Short.MIN_VALUE);
+        bb.putShort(6, Short.MIN_VALUE);
+        bb.putShort(8, (short) 200);
+
+        PMTilesElevationProvider.fillGaps(data, w);
+
+        ShortBuffer shorts = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer();
+        assertEquals(200, shorts.get(0));
+        assertEquals(200, shorts.get(1)); // filled from left neighbor
+        assertEquals(200, shorts.get(2)); // filled from both propagated neighbors
+        assertEquals(200, shorts.get(3)); // filled from right neighbor
+        assertEquals(200, shorts.get(4));
+    }
+
+    @Test
+    public void testFillGapsIsolatedGapUnchanged() {
+        // 3x3 grid, all MIN_VALUE — no valid data to propagate from
+        int w = 3;
+        byte[] data = new byte[w * w * 2];
+        ByteBuffer bb = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN);
+        for (int i = 0; i < w * w; i++)
+            bb.putShort(i * 2, Short.MIN_VALUE);
+
+        PMTilesElevationProvider.fillGaps(data, w);
+
+        ShortBuffer shorts = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer();
+        for (int i = 0; i < w * w; i++)
+            assertEquals(Short.MIN_VALUE, shorts.get(i), "isolated gap at index " + i + " should remain MIN_VALUE");
     }
 
     @Test

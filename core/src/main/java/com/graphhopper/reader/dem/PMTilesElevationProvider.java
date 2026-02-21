@@ -1,5 +1,7 @@
 package com.graphhopper.reader.dem;
 
+import org.slf4j.LoggerFactory;
+
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
@@ -8,8 +10,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.ShortBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -182,6 +186,8 @@ public class PMTilesElevationProvider implements ElevationProvider {
                 } else if (elevBytes.length == 0) {
                     buf = SEA_LEVEL_BUF;
                 } else {
+                    // Fill gaps before persisting
+                    fillGaps(elevBytes, tileSize);
                     // Persist as .tile file and mmap, or wrap as heap buffer if no tileDir
                     buf = persistAndMmap(tileId, elevBytes);
                 }
@@ -233,6 +239,68 @@ public class PMTilesElevationProvider implements ElevationProvider {
             ByteBuffer buf = ch.map(FileChannel.MapMode.READ_ONLY, 0, f.length());
             buf.order(ByteOrder.LITTLE_ENDIAN);
             return buf;
+        }
+    }
+
+    /**
+     * BFS wavefront fill: replaces Short.MIN_VALUE gap pixels with the average of their
+     * valid 4-connected neighbors, propagating inward. Only gap pixels reachable from valid
+     * data are filled; isolated gaps remain as Short.MIN_VALUE.
+     * See <a href="ttps://github.com/mapterhorn/mapterhorn/discussions/217">discussion</a>
+     */
+    static void fillGaps(byte[] data, int w) {
+        ShortBuffer shorts = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer();
+        int total = shorts.capacity();
+        int h = total / w;
+        int[] DX = {-1, 1, 0, 0};
+        int[] DY = {0, 0, -1, 1};
+
+        // Seed: gap pixels bordering valid data
+        boolean[] queued = new boolean[total];
+        ArrayDeque<Integer> queue = new ArrayDeque<>();
+        for (int i = 0; i < total; i++) {
+            if (shorts.get(i) != Short.MIN_VALUE) continue;
+            int x = i % w, y = i / w;
+            for (int d = 0; d < 4; d++) {
+                int nx = x + DX[d], ny = y + DY[d];
+                if (nx >= 0 && nx < w && ny >= 0 && ny < h
+                        && shorts.get(ny * w + nx) != Short.MIN_VALUE) {
+                    queue.add(i);
+                    queued[i] = true;
+                    break;
+                }
+            }
+        }
+
+        if(!queue.isEmpty()) {
+            LoggerFactory.getLogger(PMTilesElevationProvider.class).warn("Have to call fillGaps:" + queue.size());
+        }
+
+        // BFS: fill each gap pixel with average of valid neighbors
+        while (!queue.isEmpty()) {
+            int i = queue.poll();
+            if (shorts.get(i) != Short.MIN_VALUE) continue;
+            int x = i % w, y = i / w;
+            int sum = 0, cnt = 0;
+            for (int d = 0; d < 4; d++) {
+                int nx = x + DX[d], ny = y + DY[d];
+                if (nx >= 0 && nx < w && ny >= 0 && ny < h) {
+                    short v = shorts.get(ny * w + nx);
+                    if (v != Short.MIN_VALUE) { sum += v; cnt++; }
+                }
+            }
+            if (cnt == 0) continue;
+            shorts.put(i, (short) Math.round((double) sum / cnt));
+            for (int d = 0; d < 4; d++) {
+                int nx = x + DX[d], ny = y + DY[d];
+                if (nx >= 0 && nx < w && ny >= 0 && ny < h) {
+                    int ni = ny * w + nx;
+                    if (shorts.get(ni) == Short.MIN_VALUE && !queued[ni]) {
+                        queue.add(ni);
+                        queued[ni] = true;
+                    }
+                }
+            }
         }
     }
 
