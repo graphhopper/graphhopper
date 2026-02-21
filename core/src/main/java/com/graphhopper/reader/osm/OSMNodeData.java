@@ -85,7 +85,7 @@ class OSMNodeData {
         // allocating big arrays when growing the size.
         idsByOsmNodeIds = new GHLongLongBTree(200, 5, EMPTY_NODE);
         towerNodes = nodeAccess;
-        pillarNodes = new PillarInfo(towerNodes.is3D(), directory);
+        pillarNodes = new PillarInfo(directory);
 
         nodeTagIndicesByOsmNodeIds = new GHLongLongBTree(200, 4, -1);
         nodesToBeSplit = new LongScatterSet();
@@ -153,7 +153,7 @@ class OSMNodeData {
         else if (nodeType == JUNCTION_NODE || nodeType == CONNECTION_NODE)
             addTowerNode(osmNodeId, lat, lon, getEle.getAsDouble());
         else if (nodeType == INTERMEDIATE_NODE || nodeType == END_NODE)
-            addPillarNode(osmNodeId, lat, lon, getEle.getAsDouble());
+            addPillarNode(osmNodeId, lat, lon);
         else
             throw new IllegalStateException("Unknown node type: " + nodeType + ", or coordinates already set. Possibly duplicate OSM node ID: " + osmNodeId);
         return nodeType;
@@ -169,12 +169,12 @@ class OSMNodeData {
         return id;
     }
 
-    private long addPillarNode(long osmId, double lat, double lon, double ele) {
+    private long addPillarNode(long osmId, double lat, double lon) {
         long id = pillarNodeToId(nextPillarId);
         if (id > idsByOsmNodeIds.getMaxValue())
             throw new IllegalStateException("id for pillar node cannot be bigger than " + idsByOsmNodeIds.getMaxValue());
 
-        pillarNodes.setNode(nextPillarId, lat, lon, ele);
+        pillarNodes.setNode(nextPillarId, lat, lon);
         idsByOsmNodeIds.put(osmId, id);
         nextPillarId++;
         return id;
@@ -192,21 +192,20 @@ class OSMNodeData {
         final long newOsmId = nextArtificialOSMNodeId++;
         if (idsByOsmNodeIds.put(newOsmId, INTERMEDIATE_NODE) != EMPTY_NODE)
             throw new IllegalStateException("Artificial osm node id already exists: " + newOsmId);
-        long id = addPillarNode(newOsmId, point.getLat(), point.getLon(), point.getEle());
+        long id = addPillarNode(newOsmId, point.getLat(), point.getLon());
         return new SegmentNode(newOsmId, id, node.tags);
     }
 
-    long convertPillarToTowerNode(long id, long osmNodeId) {
+    long convertPillarToTowerNode(long id, long osmNodeId, double ele) {
         if (!isPillarNode(id))
             throw new IllegalArgumentException("Not a pillar node: " + id);
         long pillar = idToPillarNode(id);
         double lat = pillarNodes.getLat(pillar);
         double lon = pillarNodes.getLon(pillar);
-        double ele = pillarNodes.getEle(pillar);
         if (lat == Double.MAX_VALUE || lon == Double.MAX_VALUE)
             throw new IllegalStateException("Pillar node was already converted to tower node: " + id);
 
-        pillarNodes.setNode(pillar, Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
+        pillarNodes.setNode(pillar, Double.MAX_VALUE, Double.MAX_VALUE);
         return addTowerNode(osmNodeId, lat, lon, ele);
     }
 
@@ -218,9 +217,7 @@ class OSMNodeData {
                     : new GHPoint3D(towerNodes.getLat(tower), towerNodes.getLon(tower), Double.NaN);
         } else if (isPillarNode(id)) {
             long pillar = idToPillarNode(id);
-            return pillarNodes.is3D()
-                    ? new GHPoint3D(pillarNodes.getLat(pillar), pillarNodes.getLon(pillar), pillarNodes.getEle(pillar))
-                    : new GHPoint3D(pillarNodes.getLat(pillar), pillarNodes.getLon(pillar), Double.NaN);
+            return new GHPoint3D(pillarNodes.getLat(pillar), pillarNodes.getLon(pillar), Double.NaN);
         } else
             return null;
     }
@@ -238,8 +235,7 @@ class OSMNodeData {
             long pillar = idToPillarNode(id);
             lat = pillarNodes.getLat(pillar);
             lon = pillarNodes.getLon(pillar);
-            if (pillarNodes.is3D())
-                ele = pillarNodes.getEle(pillar);
+            // ele stays Double.NaN — caller fills it in later
         } else
             throw new IllegalArgumentException();
         pointList.add(lat, lon, ele);

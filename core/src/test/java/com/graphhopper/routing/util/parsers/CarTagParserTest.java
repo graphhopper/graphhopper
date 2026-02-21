@@ -447,7 +447,7 @@ public class CarTagParserTest {
         way.setTag("motorcar", "yes");
         way.setTag("bicycle", "no");
         // Provide the duration value in seconds:
-        way.setTag("way_distance", 50000.0);
+        way.setTag("way_distance_2d", 50000.0);
         way.setTag("duration_in_seconds", 35.0);
         assertTrue(parser.getAccess(way).isFerry());
 
@@ -455,7 +455,7 @@ public class CarTagParserTest {
         way = new ReaderWay(1);
         way.setTag("route", "ferry");
         way.setTag("motorcar", "yes");
-        way.setTag("way_distance", 100.0);
+        way.setTag("way_distance_2d", 100.0);
         way.setTag("duration_in_seconds", 12.0);
         assertTrue(parser.getAccess(way).isFerry());
 

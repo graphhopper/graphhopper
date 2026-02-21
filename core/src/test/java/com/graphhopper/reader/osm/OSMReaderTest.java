@@ -39,6 +39,7 @@ import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetail;
+import com.graphhopper.util.shapes.GHPoint3D;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -989,6 +990,37 @@ public class OSMReaderTest {
     public void testFixWayName() {
         assertEquals("B8, B12", OSMReader.fixWayName("B8;B12"));
         assertEquals("B8, B12", OSMReader.fixWayName("B8; B12"));
+    }
+
+    @Test
+    public void testCalc2DDistanceWithMixedElevation() {
+        // Simulate the scenario where tower nodes have elevation but pillar nodes return NaN
+        // (because pillar elevation is deferred to edge creation time).
+        // calc2DDistance should use 2D distance and not throw.
+        ReaderWay way = new ReaderWay(1);
+        way.getNodes().add(1, 2, 3);
+
+        // node 1 = tower (has elevation), node 2 = pillar (NaN elevation), node 3 = tower (has elevation)
+        GHPoint3D tower1 = new GHPoint3D(49.0, 11.0, 400.0);
+        GHPoint3D pillar = new GHPoint3D(49.001, 11.001, Double.NaN);
+        GHPoint3D tower2 = new GHPoint3D(49.002, 11.002, 410.0);
+
+        double distance = OSMReader.calc2DDistance(way, osmNodeId -> {
+            if (osmNodeId == 1) return tower1;
+            if (osmNodeId == 2) return pillar;
+            if (osmNodeId == 3) return tower2;
+            return null;
+        });
+
+        // Should be a valid 2D distance, not NaN and not throw
+        assertFalse(Double.isNaN(distance));
+        assertTrue(distance > 0);
+
+        // Verify it returns NaN when a node is missing
+        ReaderWay way2 = new ReaderWay(2);
+        way2.getNodes().add(1, 99);
+        double distMissing = OSMReader.calc2DDistance(way2, osmNodeId -> osmNodeId == 1 ? tower1 : null);
+        assertTrue(Double.isNaN(distMissing));
     }
 
     private AreaIndex<CustomArea> createCountryIndex() {

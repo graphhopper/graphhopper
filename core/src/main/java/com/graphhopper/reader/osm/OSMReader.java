@@ -316,6 +316,11 @@ public class OSMReader {
         // go together
 
         if (pointList.is3D()) {
+            // fill in pillar elevations that were deferred during import
+            for (int i = 1; i < pointList.size() - 1; i++) {
+                double ele = eleProvider.getEle(pointList.getLat(i), pointList.getLon(i));
+                pointList.setElevation(i, Double.isNaN(ele) ? config.getDefaultElevation() : ele);
+            }
             // sample points along long edges
             if (config.getLongEdgeSamplingDistance() < Double.MAX_VALUE && !isFerry(way))
                 pointList = EdgeSampling.sample(pointList, config.getLongEdgeSamplingDistance(), distCalc, eleProvider);
@@ -479,14 +484,14 @@ public class OSMReader {
         if (!isCalculateWayDistance(way))
             return;
 
-        double distance = calcDistance(way, coordinateSupplier);
+        double distance = calc2DDistance(way, coordinateSupplier);
         if (Double.isNaN(distance)) {
             // Some nodes were missing, and we cannot determine the distance. This can happen when ways are only
             // included partially in an OSM extract. In this case we cannot calculate the speed either, so we return.
             LOGGER.warn("Could not determine distance for OSM way: " + way.getId());
             return;
         }
-        way.setTag("way_distance", distance);
+        way.setTag("way_distance_2d", distance);
 
         // For ways with a duration tag we determine the average speed. This is needed for e.g. ferry routes, because
         // the duration tag is only valid for the entire way, and it would be wrong to use it after splitting the way
@@ -528,25 +533,21 @@ public class OSMReader {
     }
 
     /**
-     * @return the distance of the given way or NaN if some nodes were missing
+     * @return the 2D distance of the given way or NaN if some nodes were missing
      */
-    private double calcDistance(ReaderWay way, WaySegmentParser.CoordinateSupplier coordinateSupplier) {
+    static double calc2DDistance(ReaderWay way, WaySegmentParser.CoordinateSupplier coordinateSupplier) {
         LongArrayList nodes = way.getNodes();
         // every way has at least two nodes according to our acceptWay function
         GHPoint3D prevPoint = coordinateSupplier.getCoordinate(nodes.get(0));
         if (prevPoint == null)
             return Double.NaN;
-        boolean is3D = !Double.isNaN(prevPoint.ele);
+        // Use 2D distance: pillar node elevation is not yet available during preprocessing
         double distance = 0;
         for (int i = 1; i < nodes.size(); i++) {
             GHPoint3D point = coordinateSupplier.getCoordinate(nodes.get(i));
             if (point == null)
                 return Double.NaN;
-            if (Double.isNaN(point.ele) == is3D)
-                throw new IllegalStateException("There should be elevation data for either all points or no points at all. OSM way: " + way.getId());
-            distance += is3D
-                    ? distCalc.calcDist3D(prevPoint.lat, prevPoint.lon, prevPoint.ele, point.lat, point.lon, point.ele)
-                    : distCalc.calcDist(prevPoint.lat, prevPoint.lon, point.lat, point.lon);
+            distance += DistanceCalcEarth.DIST_EARTH.calcDist(prevPoint.lat, prevPoint.lon, point.lat, point.lon);
             prevPoint = point;
         }
         return distance;

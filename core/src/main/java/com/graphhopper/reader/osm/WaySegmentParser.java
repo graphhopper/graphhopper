@@ -349,7 +349,12 @@ public class WaySegmentParser {
                 if (!isNodeId(id))
                     throw new IllegalStateException("Invalid id for node: " + node.osmNodeId + " when handling segment " + segment + " for way: " + way.getId());
                 if (isPillarNode(id) && (i == 0 || i == segment.size() - 1)) {
-                    id = nodeData.convertPillarToTowerNode(id, node.osmNodeId);
+                    double ele = Double.NaN;
+                    if (nodeData.is3D()) {
+                        GHPoint3D coords = nodeData.getCoordinates(id);
+                        ele = elevationProvider.applyAsDouble(new ReaderNode(0, coords.getLat(), coords.getLon()));
+                    }
+                    id = nodeData.convertPillarToTowerNode(id, node.osmNodeId, ele);
                     node.id = id;
                 }
 

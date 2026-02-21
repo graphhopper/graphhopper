@@ -22,64 +22,42 @@ import com.graphhopper.storage.Directory;
 import com.graphhopper.util.Helper;
 
 /**
- * This class helps to store lat,lon,ele for every node parsed in OSMReader
- * <p>
+ * This class stores lat,lon for every pillar node parsed in OSMReader.
+ * Elevation is not stored here — it is looked up at edge creation time.
  *
  * @author Peter Karich
  */
 public class PillarInfo {
-    private static final int LAT = 0 * 4, LON = 1 * 4, ELE = 2 * 4;
-    private final boolean enabled3D;
+    private static final int LAT = 0 * 4, LON = 1 * 4;
+    private static final int ROW_SIZE_IN_BYTES = 8;
     private final DataAccess da;
-    private final int rowSizeInBytes;
     private final Directory dir;
 
-    public PillarInfo(boolean enabled3D, Directory dir) {
-        this.enabled3D = enabled3D;
+    public PillarInfo(Directory dir) {
         this.dir = dir;
         this.da = dir.create("tmp_pillar_info").create(100);
-        this.rowSizeInBytes = getDimension() * 4;
-    }
-
-    public boolean is3D() {
-        return enabled3D;
-    }
-
-    public int getDimension() {
-        return enabled3D ? 3 : 2;
     }
 
     public void ensureNode(long nodeId) {
-        long tmp = nodeId * rowSizeInBytes;
-        da.ensureCapacity(tmp + rowSizeInBytes);
+        long tmp = nodeId * ROW_SIZE_IN_BYTES;
+        da.ensureCapacity(tmp + ROW_SIZE_IN_BYTES);
     }
 
-    public void setNode(long nodeId, double lat, double lon, double ele) {
+    public void setNode(long nodeId, double lat, double lon) {
         ensureNode(nodeId);
-        long tmp = nodeId * rowSizeInBytes;
+        long tmp = nodeId * ROW_SIZE_IN_BYTES;
         da.setInt(tmp + LAT, Helper.degreeToInt(lat));
         da.setInt(tmp + LON, Helper.degreeToInt(lon));
-
-        if (is3D())
-            da.setInt(tmp + ELE, Helper.eleToUInt(ele));
     }
 
     public double getLat(long id) {
-        int intVal = da.getInt(id * rowSizeInBytes + LAT);
+        int intVal = da.getInt(id * ROW_SIZE_IN_BYTES + LAT);
         return Helper.intToDegree(intVal);
     }
 
     public double getLon(long id) {
-        int intVal = da.getInt(id * rowSizeInBytes + LON);
+        int intVal = da.getInt(id * ROW_SIZE_IN_BYTES + LON);
         return Helper.intToDegree(intVal);
-    }
-
-    public double getEle(long id) {
-        if (!is3D())
-            return Double.NaN;
-
-        int intVal = da.getInt(id * rowSizeInBytes + ELE);
-        return Helper.uIntToEle(intVal);
     }
 
     public void clear() {
