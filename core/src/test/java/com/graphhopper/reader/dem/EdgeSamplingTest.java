@@ -7,7 +7,13 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class EdgeSamplingTest {
-    private final ElevationProvider elevation = new ElevationProvider() {
+    private final ElevationProvider CONST_ELE = new ElevationProvider() {
+
+        @Override
+        public ElevationProvider init() {
+            return this;
+        }
+
         @Override
         public double getEle(double lat, double lon) {
             return 10;
@@ -45,7 +51,7 @@ public class EdgeSamplingTest {
                 in,
                 DistanceCalcEarth.METERS_PER_DEGREE,
                 new DistanceCalcEarth(),
-                elevation
+                CONST_ELE
         );
 
         assertEquals("(0.0,0.0,0.0), (1.4,0.0,0.0)", round(out).toString());
@@ -61,7 +67,7 @@ public class EdgeSamplingTest {
                 in,
                 DistanceCalcEarth.METERS_PER_DEGREE / 2,
                 new DistanceCalcEarth(),
-                elevation
+                CONST_ELE
         );
 
         assertEquals("(0.0,0.0,0.0), (0.4,0.0,10.0), (0.8,0.0,0.0)", round(out).toString());
@@ -77,7 +83,7 @@ public class EdgeSamplingTest {
                 in,
                 DistanceCalcEarth.METERS_PER_DEGREE / 3,
                 new DistanceCalcEarth(),
-                elevation
+                CONST_ELE
         );
 
         assertEquals("(0.0,0.0,0.0), (0.4,0.0,10.0), (0.8,0.0,0.0)", round(out).toString());
@@ -93,7 +99,7 @@ public class EdgeSamplingTest {
                 in,
                 DistanceCalcEarth.METERS_PER_DEGREE / 4,
                 new DistanceCalcEarth(),
-                elevation
+                CONST_ELE
         );
 
         assertEquals("(0.0,0.0,0.0), (0.25,0.0,10.0), (0.5,0.0,10.0), (0.75,0.0,0.0)", round(out).toString());
@@ -109,7 +115,7 @@ public class EdgeSamplingTest {
                 in,
                 DistanceCalcEarth.METERS_PER_DEGREE,
                 new DistanceCalcEarth(),
-                elevation
+                CONST_ELE
         );
 
         assertEquals("(0.0,-178.5,0.0), (0.0,-179.5,10.0), (0.0,179.5,10.0), (0.0,178.5,0.0)", round(out).toString());
@@ -125,7 +131,7 @@ public class EdgeSamplingTest {
                 in,
                 DistanceCalcEarth.METERS_PER_DEGREE,
                 new DistanceCalcEarth(),
-                elevation
+                CONST_ELE
         );
 
         assertEquals("(88.5,-90.0,0.0), (89.5,-90.0,10.0), (89.5,90.0,10.0), (88.5,90.0,0.0)", round(out).toString());

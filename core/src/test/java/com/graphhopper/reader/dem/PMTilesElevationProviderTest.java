@@ -36,7 +36,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class PMTilesElevationProviderTest {
 
-    private PMTilesElevationProvider instance;
+    private ElevationProvider instance;
 
     @AfterEach
     public void tearDown() {
@@ -98,8 +98,7 @@ public class PMTilesElevationProviderTest {
     public void testRealPMTilesWithZoom10() {
         instance = new PMTilesElevationProvider("./files/near-badschandau-z10-11.pmtiles",
                 PMTilesElevationProvider.TerrainEncoding.TERRARIUM, false, 10,
-                null);
-
+                null).init();
         // Elbe
         assertEquals(118, instance.getEle(50.905488, 14.204129), 1);
 
@@ -114,8 +113,7 @@ public class PMTilesElevationProviderTest {
     public void testRealPMTilesInterpolate() {
         instance = new PMTilesElevationProvider("./files/near-badschandau-z10-11.pmtiles",
                 PMTilesElevationProvider.TerrainEncoding.TERRARIUM, true, 10,
-                null);
-
+                null).init();
         // Elbe
         assertEquals(118, instance.getEle(50.905488, 14.204129), 1);
 
@@ -131,7 +129,7 @@ public class PMTilesElevationProviderTest {
     public void testRealPMTilesWithZoom11() {
         instance = new PMTilesElevationProvider("./files/near-badschandau-z10-11.pmtiles",
                 PMTilesElevationProvider.TerrainEncoding.TERRARIUM, false, 11,
-                null);
+                null).init();
 
         // Elbe
         assertEquals(118, instance.getEle(50.905488, 14.204129), 1);
@@ -219,7 +217,7 @@ public class PMTilesElevationProviderTest {
     public void testOutsideArea() {
         instance = new PMTilesElevationProvider("./files/near-badschandau-z10-11.pmtiles",
                 PMTilesElevationProvider.TerrainEncoding.MAPBOX, false, 10,
-                null);
+                null).init();
 
         // Point far outside the extract — should return NaN
         double ele = instance.getEle(0, 0);

@@ -44,6 +44,7 @@ public class GMTEDProviderTest {
     @BeforeEach
     public void setUp() {
         instance = new GMTEDProvider(tempDir.toString());
+        instance.init();
     }
 
     @AfterEach

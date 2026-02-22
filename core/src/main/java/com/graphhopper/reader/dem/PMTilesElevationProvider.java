@@ -34,9 +34,10 @@ public class PMTilesElevationProvider implements ElevationProvider {
 
     private final TerrainEncoding encoding;
     private final boolean interpolate;
-    private final int zoom;
-    private final long hilbertBase;
-    private final int n; // 1 << zoom
+    private final int preferredZoom;
+    private int zoom;
+    private long hilbertBase;
+    private int n; // 1 << zoom
 
     private final PMTilesReader reader = new PMTilesReader();
 
@@ -56,8 +57,11 @@ public class PMTilesElevationProvider implements ElevationProvider {
     // Directory for .tile files. If non-null and writable, decoded tiles are persisted
     // there so subsequent runs can mmap them without re-decoding.
     private File tileDir;
+    private final String tileDirStr;
+
     private boolean clearTileFiles = true;
 
+    private final String pmFileStr;
     /**
      * @param preferredZoom 10 means ~76m at equator and ~49m in Germany (default).
      *                      11 means ~38m at equator and ~25m in Germany.
@@ -65,12 +69,19 @@ public class PMTilesElevationProvider implements ElevationProvider {
      * @param tileDir       directory for .tile tile cache files. Pre-populated by pmtiles_to_ele.py
      *                      or built lazily on first access. If null, decoded tiles are kept on heap only.
      */
-    public PMTilesElevationProvider(String filePath, TerrainEncoding encoding,
+    public PMTilesElevationProvider(String pmFile, TerrainEncoding encoding,
                                     boolean interpolate, int preferredZoom, String tileDir) {
         this.encoding = encoding;
         this.interpolate = interpolate;
+        this.preferredZoom = preferredZoom;
+        this.pmFileStr = pmFile;
+        this.tileDirStr = tileDir;
+    }
+
+    @Override
+    public ElevationProvider init() {
         try {
-            reader.open(filePath);
+            reader.open(pmFileStr);
             reader.checkWebPSupport();
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -82,10 +93,11 @@ public class PMTilesElevationProvider implements ElevationProvider {
         this.hilbertBase = base;
         this.n = 1 << zoom;
 
-        if (tileDir != null && !tileDir.isEmpty()) {
-            this.tileDir = new File(tileDir);
+        if (tileDirStr != null && !tileDirStr.isEmpty()) {
+            this.tileDir = new File(tileDirStr);
             this.tileDir.mkdirs();
         }
+        return this;
     }
 
     public PMTilesElevationProvider setAutoRemoveTemporaryFiles(boolean clearTileFiles) {

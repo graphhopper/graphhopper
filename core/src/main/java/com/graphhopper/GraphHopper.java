@@ -938,6 +938,7 @@ public class GraphHopper {
 
         AreaIndex<CustomArea> areaIndex = new AreaIndex<>(customAreas);
 
+        eleProvider.init();
         logger.info("start creating graph from " + osmFile);
         OSMReader reader = new OSMReader(baseGraph.getBaseGraph(), osmParsers, osmReaderConfig).setFile(_getOSMFile()).
                 setAreaIndex(areaIndex).
