@@ -53,6 +53,10 @@ public class QueryOverlayTest {
         checkAdjustValues(from(0, 0, 0), 0, 1, from(0, 0, 0));
         // partial addition
         checkAdjustValues(from(3, 3, 4), 12, 1, from(4, 4, 4));
+        // infeasible: first must increase to 1, but third can only decrease by 1, giving min_sum=4 > target=3
+        checkAdjustValues(from(0, 0, 4), 3, 1, from(0, 0, 4));
+        // reduce to zero
+        checkAdjustValues(from(1, 1), 1, 1, from(1, 0));
 
         // diff=+6
         checkAdjustValues(from(3, 3, 4), 16, 2, from(5, 5, 6));
@@ -62,6 +66,8 @@ public class QueryOverlayTest {
         checkAdjustValues(from(1, 1, 1), 7, 2, from(3, 3, 1));
         // subtract evenly
         checkAdjustValues(from(4, 4, 4), 6, 2, from(2, 2, 2));
+        // infeasible: first must increase to 1, elements 1,2 can decrease by at most 2 each giving min_sum=2 > target=1
+        checkAdjustValues(from(0, 3, 2), 1, 2, from(0, 3, 2));
         // infeasible: elements can decrease by at most 4 each giving min_sum=4 > target=1
         checkAdjustValues(from(8, 3, 2), 1, 4, from(8, 3, 2));
         // single element, diff=2 fits
@@ -73,6 +79,7 @@ public class QueryOverlayTest {
         // feasible
         checkAdjustValues(from(1, 3, 3, 3), 3, 2, from(0, 1, 1, 1));
         // infeasible
+        checkAdjustValues(from(1, 5), 3, 2, from(1, 5));
         checkAdjustValues(from(1, 3, 3, 3), 2, 2, from(1, 3, 3, 3));
     }
 
