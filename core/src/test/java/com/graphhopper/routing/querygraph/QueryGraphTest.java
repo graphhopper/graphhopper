@@ -1109,11 +1109,11 @@ public class QueryGraphTest {
         assertEquals(sumFwd, edge.getDistance_mm());
         assertEquals(sumBwd, edge.getDistance_mm());
         assertEquals(4, virtualEdges.size());
-        // the short edge got even shorter, and even zero, but not negative
-        assertEquals(0, virtualEdges.get(0).getDistance_mm());
-        assertEquals(0, virtualEdges.get(1).getDistance_mm());
-        assertEquals(originalDistance, virtualEdges.get(2).getDistance_mm());
-        assertEquals(originalDistance, virtualEdges.get(3).getDistance_mm());
+        // the short edge got even shorter, but not negative, and not zero
+        assertEquals(1, virtualEdges.get(0).getDistance_mm());
+        assertEquals(1, virtualEdges.get(1).getDistance_mm());
+        assertEquals(originalDistance - 1, virtualEdges.get(2).getDistance_mm());
+        assertEquals(originalDistance - 1, virtualEdges.get(3).getDistance_mm());
     }
 
     private QueryGraph lookup(Snap res) {

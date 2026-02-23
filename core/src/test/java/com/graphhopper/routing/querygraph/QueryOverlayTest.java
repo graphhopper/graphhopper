@@ -77,8 +77,9 @@ public class QueryOverlayTest {
         // greedy
         checkAdjustValues(from(3, 3, 3), 13, 2, from(5, 5, 3));
         // feasible
-        checkAdjustValues(from(1, 3, 3, 3), 3, 2, from(0, 1, 1, 1));
+        checkAdjustValues(from(1, 3, 3, 3), 4, 2, from(1, 1, 1, 1));
         // infeasible
+        checkAdjustValues(from(1, 3, 3, 3), 3, 2, from(1, 3, 3, 3));
         checkAdjustValues(from(1, 5), 3, 2, from(1, 5));
         checkAdjustValues(from(1, 3, 3, 3), 2, 2, from(1, 3, 3, 3));
     }
