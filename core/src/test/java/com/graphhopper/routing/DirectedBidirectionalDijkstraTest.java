@@ -352,25 +352,29 @@ public class DirectedBidirectionalDijkstraTest {
 
     @RepeatedTest(10)
     public void compare_standard_dijkstra() {
-        compare_with_dijkstra(weighting, false);
+        compare_with_dijkstra(weighting, false, false);
     }
 
     @RepeatedTest(10)
     public void compare_standard_dijkstra_finite_uturn_costs() {
-        compare_with_dijkstra(createWeighting(40), false);
+        compare_with_dijkstra(createWeighting(40), false, false);
     }
 
     @RepeatedTest(10)
     public void compare_standard_dijkstra_strict() {
-        compare_with_dijkstra(weighting, true);
+        compare_with_dijkstra(weighting, false, true);
     }
 
     @RepeatedTest(10)
     public void compare_standard_dijkstra_finite_uturn_costs_strict() {
-        compare_with_dijkstra(createWeighting(40), true);
+        // with finite u-turn costs paths on a tree are not unique: we can do a necessary u-turn in
+        // different tree branches. u-turns can be necessary even without restricted start/target edges due to
+        // one-ways or turn restrictions
+        compare_with_dijkstra(createWeighting(40), true, false);
     }
 
-    private void compare_with_dijkstra(Weighting w, boolean tree) {
+    private void compare_with_dijkstra(Weighting w, boolean chain, boolean tree) {
+        assertFalse(chain && tree);
         // if we do not use start/target edge restrictions we should get the same result as with Dijkstra.
         // basically this test should cover all kinds of interesting cases except the ones where we restrict the
         // start/target edges.
@@ -379,7 +383,7 @@ public class DirectedBidirectionalDijkstraTest {
 
         Random rnd = new Random(seed);
         int numNodes = 100;
-        RandomGraph.start().seed(seed).nodes(numNodes).curviness(0.1).speedZero(tree ? 0 : 0.1).tree(tree).fill(graph, speedEnc);
+        RandomGraph.start().seed(seed).nodes(numNodes).curviness(0.1).speedZero((tree || chain) ? 0 : 0.1).chain(chain).tree(tree).fill(graph, speedEnc);
         GHUtility.addRandomTurnCosts(graph, seed, null, turnCostEnc, maxTurnCosts, turnCostStorage);
 
         for (int i = 0; i < numQueries; i++) {
@@ -389,7 +393,7 @@ public class DirectedBidirectionalDijkstraTest {
             Path path = calcPath(source, target, ANY_EDGE, ANY_EDGE, w);
             assertEquals(dijkstraPath.isFound(), path.isFound(), "dijkstra found/did not find a path, from: " + source + ", to: " + target + ", seed: " + seed);
             List<String> strictViolations = GHUtility.comparePaths(dijkstraPath, path, source, target, true, seed);
-            if (tree && !strictViolations.isEmpty())
+            if ((tree || chain) && !strictViolations.isEmpty())
                 fail(strictViolations.toString());
         }
     }

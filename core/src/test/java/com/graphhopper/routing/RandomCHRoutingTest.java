@@ -94,16 +94,21 @@ public class RandomCHRoutingTest {
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
     public void random(Fixture f) {
-        run_random(f, false);
+        run_random(f, false, false);
     }
 
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
     public void random_strict(Fixture f) {
-        run_random(f, true);
+        // with finite u-turn costs paths on a tree are not unique: we can do a necessary u-turn in
+        // different tree branches. u-turns can be necessary even without restricted start/target edges due to
+        // one-ways or turn restrictions
+        boolean chain = Double.isFinite(f.uTurnCosts);
+        boolean tree = !chain;
+        run_random(f, chain, tree);
     }
 
-    private void run_random(Fixture f, boolean tree) {
+    private void run_random(Fixture f, boolean chain, boolean tree) {
         // you might have to keep this test running in an infinite loop for several minutes to find potential routing
         // bugs (e.g. use intellij 'run until stop/failure').
         int numNodes = 50;
@@ -113,10 +118,10 @@ public class RandomCHRoutingTest {
         // curviness must be zero, because otherwise traveling via intermediate virtual nodes won't
         // give the same results as using the original edge
         double curviness = 0;
-        RandomGraph.start().seed(seed).nodes(numNodes).curviness(curviness).speedZero(tree ? 0 : 0.1).tree(tree).fill(f.graph, f.speedEnc);
+        RandomGraph.start().seed(seed).nodes(numNodes).curviness(curviness).speedZero((chain || tree) ? 0 : 0.1).chain(chain).tree(tree).fill(f.graph, f.speedEnc);
         if (f.traversalMode.isEdgeBased())
             GHUtility.addRandomTurnCosts(f.graph, seed, null, f.turnCostEnc, f.maxTurnCosts, f.graph.getTurnCostStorage());
-        runRandomTest(f, rnd, seed, tree);
+        runRandomTest(f, rnd, seed, chain || tree);
     }
 
     private void runRandomTest(Fixture f, Random rnd, long seed, boolean strict) {
