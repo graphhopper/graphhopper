@@ -76,8 +76,6 @@ class OSMNodeData {
 
     private int nextTowerId = 0;
     private long nextPillarId = 0;
-    // we use negative ids to create artificial OSM node ids
-    private long nextArtificialOSMNodeId = -Long.MAX_VALUE;
 
     public OSMNodeData(PointAccess nodeAccess, Directory directory) {
         // We use a b-tree that can store as many entries as there are longs. A tree is also more
@@ -181,19 +179,20 @@ class OSMNodeData {
     }
 
     /**
-     * Creates a copy of the coordinates stored for the given node ID
-     *
-     * @return the (artificial) OSM node ID created for the copied node and the associated ID
+     * Creates a copy of the given node as a new tower node. Barrier copies are always at segment
+     * boundaries, so they always become tower nodes — we create them directly as tower nodes
+     * instead of going through the pillar→tower roundtrip.
      */
     SegmentNode addCopyOfNode(SegmentNode node) {
         GHPoint3D point = getCoordinates(node.id);
         if (point == null)
             throw new IllegalStateException("Cannot copy node : " + node.osmNodeId + ", because it is missing");
-        final long newOsmId = nextArtificialOSMNodeId++;
-        if (idsByOsmNodeIds.put(newOsmId, INTERMEDIATE_NODE) != EMPTY_NODE)
-            throw new IllegalStateException("Artificial osm node id already exists: " + newOsmId);
-        long id = addPillarNode(newOsmId, point.getLat(), point.getLon(), point.getEle());
-        return new SegmentNode(newOsmId, id, node.tags);
+        towerNodes.setNode(nextTowerId, point.getLat(), point.getLon(), point.getEle());
+        long id = towerNodeToId(nextTowerId);
+        nextTowerId++;
+        if (nextTowerId == Integer.MAX_VALUE)
+            throw new IllegalStateException("Tower node id overflow, too many tower nodes");
+        return new SegmentNode(node.osmNodeId, id, node.tags);
     }
 
     long convertPillarToTowerNode(long id, long osmNodeId) {
