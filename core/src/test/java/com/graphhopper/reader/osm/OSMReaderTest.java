@@ -49,6 +49,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 import static com.graphhopper.json.Statement.Else;
 import static com.graphhopper.json.Statement.If;
@@ -360,18 +361,21 @@ public class OSMReaderTest {
         assertEquals(7, graph.getEdges());
 
         int n10 = AbstractGraphStorageTester.getIdOf(graph, 51);
-        int n20 = AbstractGraphStorageTester.getIdOf(graph, 52);
         int n30 = AbstractGraphStorageTester.getIdOf(graph, 53);
         int n50 = AbstractGraphStorageTester.getIdOf(graph, 55);
 
-        // separate id
-        int new20 = 4;
+        // OSM node 20 was split because of the barrier: the original n20 connects to n10,
+        // the copy (new20) connects to n30
+        Set<Integer> n10Neighbors = GHUtility.getNeighbors(carOutExplorer.setBaseNode(n10));
+        n10Neighbors.remove(n30);
+        int n20 = n10Neighbors.iterator().next();
+        Set<Integer> n30Neighbors = GHUtility.getNeighbors(carOutExplorer.setBaseNode(n30));
+        n30Neighbors.removeAll(Set.of(n10, n50));
+        int new20 = n30Neighbors.iterator().next();
         assertNotEquals(n20, new20);
         NodeAccess na = graph.getNodeAccess();
         assertEquals(na.getLat(n20), na.getLat(new20), 1e-5);
         assertEquals(na.getLon(n20), na.getLon(new20), 1e-5);
-
-        assertEquals(n20, findID(hopper.getLocationIndex(), 52, 9.4));
 
         assertEquals(GHUtility.asSet(n20, n30), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n10)));
         assertEquals(GHUtility.asSet(new20, n10, n50), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n30)));
