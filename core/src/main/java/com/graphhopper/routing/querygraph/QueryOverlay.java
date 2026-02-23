@@ -135,6 +135,12 @@ class QueryOverlay {
             // casting to long is safe since we checked weights are whole numbers
             LongArrayList virtualWeightsLong = new LongArrayList(virtualWeights.size());
             for (DoubleCursor vw : virtualWeights) virtualWeightsLong.add((long) vw.value);
+
+            // We do not adjust the weights if the difference is more than rounding errors.
+            // For example, when we snap onto an edge only partially covered by an avoided area,
+            // only one of the virtual edges might intersect the area. In this case we do not want to
+            // penalize the virtual edges that are outside the area. This means that the sum of the
+            // virtual edges' weights does not equal the weight of the original edge.
             adjustValues(virtualWeightsLong, (long) originalWeight, 1);
             adjustValues(virtualTimes, originalTime, 200);
             for (int i = 0; i < c.value.size(); i++) {
@@ -148,6 +154,7 @@ class QueryOverlay {
     /**
      * Adjusts values so they sum to target, changing each by at most maxPerElement.
      * The first element is kept >= 1 to avoid zero-weight virtual edges at tower nodes.
+     * Zero-weight virtual edges at tower node introduce unique path ambiguity.
      * If the target is unreachable within these constraints, values are left untouched.
      */
     static void adjustValues(LongArrayList values, long target, long maxPerElement) {
@@ -172,7 +179,7 @@ class QueryOverlay {
         for (int i = 0; i < values.size(); i++) {
             long adjustment = sign * Math.min(Math.abs(diff), maxPerElement);
             // The first element must stay > 0: a zero-weight first virtual edge (leaving the
-            // tower node) can cause CH/Dijkstra mismatches.
+            // tower node) introduces unique path ambiguity.
             long floor = (i == 0) ? 1 : 0;
             if (values.get(i) + adjustment < floor) adjustment = floor - values.get(i);
             values.set(i, values.get(i) + adjustment);
