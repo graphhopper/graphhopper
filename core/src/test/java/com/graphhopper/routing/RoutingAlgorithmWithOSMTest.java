@@ -318,7 +318,7 @@ public class RoutingAlgorithmWithOSMTest {
     public void testMonacoBike3D() {
         List<Query> queries = new ArrayList<>();
         // 1. alternative: go over steps 'Rampe Major' => 1.7km vs. around 2.7km
-        queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 2702, 111));
+        queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 2670, 118));
         // 2.
         queries.add(new Query(43.728499, 7.417907, 43.74958, 7.436566, 4220, 233));
         // 3.
@@ -329,7 +329,7 @@ public class RoutingAlgorithmWithOSMTest {
         // try reverse direction
         // 1.
         queries.add(new Query(43.727687, 7.418737, 43.730864, 7.420771, 2598, 115));
-        queries.add(new Query(43.74958, 7.436566, 43.728499, 7.417907, 4250, 165));
+        queries.add(new Query(43.74958, 7.436566, 43.728499, 7.417907, 3977, 181));
         queries.add(new Query(43.739213, 7.427806, 43.728677, 7.41016, 2806, 145));
         // 4. avoid tunnel(s)!
         queries.add(new Query(43.739662, 7.424355, 43.733802, 7.413433, 1901, 116));
@@ -337,6 +337,7 @@ public class RoutingAlgorithmWithOSMTest {
         GraphHopper hopper = createHopper(MONACO,
                 new Profile("bike").setCustomModel(CustomModel.merge(getCustomModel("bike.json"), getCustomModel("bike_elevation.json")).
                         addToPriority(If("!bike_access", MULTIPLY, "0"))));
+        hopper.setEncodedValuesString("average_slope, max_slope, " + hopper.getEncodedValuesString());
         hopper.setElevationProvider(new SRTMProvider(DIR));
         hopper.importOrLoad();
         checkQueries(hopper, queries);
@@ -590,6 +591,7 @@ public class RoutingAlgorithmWithOSMTest {
 
         GraphHopper hopper = createHopper(BAYREUTH, new Profile("bike").setCustomModel(
                 CustomModel.merge(getCustomModel("bike.json"), getCustomModel("bike_elevation.json"))));
+        hopper.setEncodedValuesString("average_slope, max_slope, " + hopper.getEncodedValuesString());
         hopper.setElevationProvider(new SRTMProvider(DIR));
         hopper.importOrLoad();
         checkQueries(hopper, list);
@@ -705,7 +707,7 @@ public class RoutingAlgorithmWithOSMTest {
                 setStoreOnFlush(false).
                 setOSMFile(osmFile).
                 setProfiles(profiles).
-                setEncodedValuesString("average_slope, max_slope, hike_rating, car_access, car_average_speed, " +
+                setEncodedValuesString("hike_rating, car_access, car_average_speed, " +
                         "foot_access, foot_priority, foot_average_speed, foot_network, " +
                         "bike_access, bike_priority, bike_average_speed, bike_network, roundabout, " +
                         "mtb_access, mtb_priority, mtb_average_speed, mtb_rating, " +
