@@ -17,6 +17,8 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.util.Helper;
+
 /**
  * @author Peter Karich
  */
@@ -41,7 +43,9 @@ class GHNodeAccess implements NodeAccess {
         if (store.withElevation()) {
             // meter precision is sufficient for now
             store.setEle(store.toNodePointer(nodeId), ele);
-            store.bounds.update(lat, lon, ele);
+            // Helper.ELE_UNKNOWN is a marker value for deferred elevation, don't let it poison bounds
+            if (ele != Helper.ELE_UNKNOWN)
+                store.bounds.update(lat, lon, ele);
         } else {
             store.bounds.update(lat, lon);
         }

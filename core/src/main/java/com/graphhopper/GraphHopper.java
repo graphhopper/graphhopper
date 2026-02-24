@@ -733,6 +733,8 @@ public class GraphHopper {
                     PMTilesElevationProvider.TerrainEncoding.valueOf(terrainEncoding.toUpperCase(Locale.ROOT)),
                     interpolate, zoom, cacheDirStr)
                     .setAutoRemoveTemporaryFiles(removeTempEleFiles);
+        } else if (!eleProviderStr.isEmpty() && !eleProviderStr.equalsIgnoreCase("noop")) {
+            throw new IllegalArgumentException("Did not find elevation provider: " + eleProviderStr);
         }
 
         if (elevationProvider instanceof TileBasedElevationProvider) {
@@ -743,7 +745,6 @@ public class GraphHopper {
                 throw new IllegalArgumentException("use graph.elevation.base_url not baseurl in configuration");
 
             DAType elevationDAType = DAType.fromString(ghConfig.getString("graph.elevation.dataaccess", "MMAP"));
-
             boolean removeTempElevationFiles = ghConfig.getBool("graph.elevation.cgiar.clear", true);
             removeTempElevationFiles = ghConfig.getBool("graph.elevation.clear", removeTempElevationFiles);
 
@@ -919,8 +920,25 @@ public class GraphHopper {
         if (hasElevation())
             interpolateBridgesTunnelsAndFerries();
 
+        calculateSlope();
+
+        if (encodingManager.hasEncodedValue(Curvature.KEY))
+            new CurvatureCalculator(encodingManager.getDecimalEncodedValue(Curvature.KEY)).execute(baseGraph.getBaseGraph());
+
         if (sortGraph)
             sortGraphAlongHilbertCurve(baseGraph);
+    }
+
+    private void calculateSlope() {
+        if (encodingManager.hasEncodedValue(AverageSlope.KEY) || encodingManager.hasEncodedValue(MaxSlope.KEY)) {
+            if (!hasElevation())
+                throw new IllegalArgumentException("average_slope and max_slope encoded values require elevation, but no elevation provider is configured");
+            DecimalEncodedValue maxSlopeEnc = encodingManager.hasEncodedValue(MaxSlope.KEY)
+                    ? encodingManager.getDecimalEncodedValue(MaxSlope.KEY) : null;
+            DecimalEncodedValue averageSlopeEnc = encodingManager.hasEncodedValue(AverageSlope.KEY)
+                    ? encodingManager.getDecimalEncodedValue(AverageSlope.KEY) : null;
+            new SlopeCalculator(maxSlopeEnc, averageSlopeEnc).execute(baseGraph.getBaseGraph());
+        }
     }
 
     protected void importOSM() {

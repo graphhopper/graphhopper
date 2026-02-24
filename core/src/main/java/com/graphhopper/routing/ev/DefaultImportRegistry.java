@@ -202,20 +202,11 @@ public class DefaultImportRegistry implements ImportRegistry {
                     (lookup, props) -> new FerrySpeedCalculator(
                             lookup.getDecimalEncodedValue(FerrySpeed.KEY)));
         else if (Curvature.KEY.equals(name))
-            return ImportUnit.create(name, props -> Curvature.create(),
-                    (lookup, props) -> new CurvatureCalculator(
-                            lookup.getDecimalEncodedValue(Curvature.KEY))
-            );
+            return ImportUnit.create(name, props -> Curvature.create(), null);
         else if (AverageSlope.KEY.equals(name))
-            return ImportUnit.create(name, props -> AverageSlope.create(), null, "slope_calculator");
+            return ImportUnit.create(name, props -> AverageSlope.create(), null);
         else if (MaxSlope.KEY.equals(name))
-            return ImportUnit.create(name, props -> MaxSlope.create(), null, "slope_calculator");
-        else if ("slope_calculator".equals(name))
-            return ImportUnit.create(name, null,
-                    (lookup, props) -> new SlopeCalculator(
-                            lookup.hasEncodedValue(MaxSlope.KEY) ? lookup.getDecimalEncodedValue(MaxSlope.KEY) : null,
-                            lookup.hasEncodedValue(AverageSlope.KEY) ? lookup.getDecimalEncodedValue(AverageSlope.KEY) : null
-                    ));
+            return ImportUnit.create(name, props -> MaxSlope.create(), null);
         else if (BikeNetwork.KEY.equals(name) || MtbNetwork.KEY.equals(name) || FootNetwork.KEY.equals(name))
             return ImportUnit.create(name, props -> RouteNetwork.create(name), null);
 

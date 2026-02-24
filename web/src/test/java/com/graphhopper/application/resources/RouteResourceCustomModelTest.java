@@ -63,6 +63,8 @@ public class RouteResourceCustomModelTest {
                 putObject("prepare.min_network_size", 200).
                 putObject("datareader.file", "../core/files/north-bayreuth.osm.gz").
                 putObject("graph.location", DIR).
+                putObject("graph.elevation.provider", "srtm").
+                putObject("graph.elevation.cache_dir", "../core/files/").
                 putObject("custom_areas.directory", "./src/test/resources/com/graphhopper/application/resources/areas").
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.encoded_values", "car_access, car_average_speed, road_access, max_speed, " +
@@ -218,7 +220,7 @@ public class RouteResourceCustomModelTest {
     }
 
     @ParameterizedTest
-    @CsvSource(value = {"0.05,3073", "0.5,1498"})
+    @CsvSource(value = {"0.05,3093", "0.5,1498"})
     public void testAvoidArea(double priority, double expectedDistance) {
         String bodyFragment = "\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"car\", \"ch.disable\": true";
         JsonNode path = getPath("{" + bodyFragment + ", \"custom_model\": {}}");
@@ -246,7 +248,7 @@ public class RouteResourceCustomModelTest {
     @Test
     public void testAvoidArea() {
         JsonNode path = getPath("{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"car_with_area\", \"ch.disable\": true, \"custom_model\": {}}");
-        assertEquals(path.get("distance").asDouble(), 3073, 10);
+        assertEquals(path.get("distance").asDouble(), 3093, 10);
     }
 
     @Test
@@ -290,7 +292,7 @@ public class RouteResourceCustomModelTest {
                 "}";
         JsonNode path = getPath(jsonQuery);
         double expectedDistance = path.get("distance").asDouble();
-        assertEquals(4819, expectedDistance, 10);
+        assertEquals(4833, expectedDistance, 10);
     }
 
     @Test
@@ -313,14 +315,14 @@ public class RouteResourceCustomModelTest {
                 " \"ch.disable\": true" +
                 "}";
         JsonNode path = getPath(body);
-        assertEquals(8754, path.get("distance").asDouble(), 5);
+        assertEquals(8772, path.get("distance").asDouble(), 10);
 
         // CH
         body = "{\"points\": [[11.556416,50.007739], [11.528864,50.021638]]," +
                 " \"profile\": \"car_no_unclassified\"" +
                 "}";
         path = getPath(body);
-        assertEquals(8754, path.get("distance").asDouble(), 5);
+        assertEquals(8772, path.get("distance").asDouble(), 10);
 
         // different profile
         body = "{\"points\": [[11.494446, 50.027814], [11.511483, 49.987628]]," +
@@ -328,7 +330,7 @@ public class RouteResourceCustomModelTest {
                 " \"ch.disable\": true" +
                 "}";
         path = getPath(body);
-        assertEquals(5827, path.get("distance").asDouble(), 5);
+        assertEquals(5838, path.get("distance").asDouble(), 10);
     }
 
     @Test
@@ -373,15 +375,15 @@ public class RouteResourceCustomModelTest {
                 "   \"speed\": [{\"if\":\"true\", \"limit_to\":\"car_average_speed * 0.9\"}], \n" +
                 "   \"priority\": [{\"if\": \"car_access == false || hgv == NO || max_width < 3 || max_height < 4\", \"multiply_by\": \"0\"}]}}";
         JsonNode path = getPath(body);
-        assertEquals(7314, path.get("distance").asDouble(), 10);
-        assertEquals(944 * 1000, path.get("time").asLong(), 1_000);
+        assertEquals(7350, path.get("distance").asDouble(), 10);
+        assertEquals(952 * 1000, path.get("time").asLong(), 1_000);
     }
 
     @Test
     public void testTurnCosts() {
         String body = "{\"points\": [[11.508198,50.015441], [11.505063,50.01737]], \"profile\": \"car_tc_left\", \"ch.disable\":true }";
         JsonNode path = getPath(body);
-        assertEquals(1067, path.get("distance").asDouble(), 10);
+        assertEquals(1083, path.get("distance").asDouble(), 10);
     }
 
     @Test

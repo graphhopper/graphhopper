@@ -1085,6 +1085,37 @@ public class QueryGraphTest {
         assertEquals(0, snap.getWayIndex());
     }
 
+    @Test
+    void adjustDistances_noNegativeVirtualEdgeDistance() {
+        EdgeIteratorState edge = g.edge(0, 1).setDistance(0).set(speedEnc, 10, 10);
+        updateDistancesFor(g, 0, 60.0, 10.0);
+        updateDistancesFor(g, 1, 60.0, 11.0);
+        long originalDistance = 55596934;
+        assertEquals(originalDistance, edge.getDistance_mm());
+        // snap very close to point 0 -> very short virtual edge
+        // since the edge is long the required plane/earth correction is large -> make sure we do not shorten the short edge too much
+        Snap snap = createLocationResult(60.01, 10.000002, edge, 0, EDGE);
+        QueryGraph queryGraph = lookup(snap);
+        long sumFwd = 0, sumBwd = 0;
+        List<VirtualEdgeIteratorState> virtualEdges = queryGraph.getVirtualEdges();
+        for (int i = 0; i < virtualEdges.size(); i++) {
+            EdgeIteratorState ve = virtualEdges.get(i);
+            assertTrue(ve.getDistance_mm() >= 0, "virtual edge distance must not be negative, got: " + ve.getDistance_mm());
+            if (i % 2 == 0)
+                sumFwd += ve.getDistance_mm();
+            else
+                sumBwd += ve.getDistance_mm();
+        }
+        assertEquals(sumFwd, edge.getDistance_mm());
+        assertEquals(sumBwd, edge.getDistance_mm());
+        assertEquals(4, virtualEdges.size());
+        // the short edge got even shorter, and even zero, but not negative
+        assertEquals(0, virtualEdges.get(0).getDistance_mm());
+        assertEquals(0, virtualEdges.get(1).getDistance_mm());
+        assertEquals(originalDistance, virtualEdges.get(2).getDistance_mm());
+        assertEquals(originalDistance, virtualEdges.get(3).getDistance_mm());
+    }
+
     private QueryGraph lookup(Snap res) {
         return lookup(Collections.singletonList(res));
     }

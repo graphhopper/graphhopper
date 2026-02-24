@@ -225,11 +225,23 @@ graphhopper:
   # import.osm.ignored_highways: footway,construction,cycleway,path,steps # use if you only have motorized-only vehicle profiles
   # import.osm.ignored_highways: motorway,trunk # use if you only have non-motorized vehicle profiles
 
+  # will write way names in the preferred language (language code as defined in ISO 639-1 or ISO 639-2):
+  # datareader.preferred_language: en
+
   # configure the memory access, use RAM_STORE for well equipped servers (default and recommended)
   graph.dataaccess.default_type: RAM_STORE
 
-  # will write way names in the preferred language (language code as defined in ISO 639-1 or ISO 639-2):
-  # datareader.preferred_language: en
+  # If MMAP is not suited for everything you can use it for selected files e.g. while import to reduce heap usage (see #2440):
+  # graph.dataaccess.type.geometry: MMAP
+  # graph.dataaccess.type.edges: MMAP
+  # graph.dataaccess.type.nodes: MMAP
+  # graph.dataaccess.type.nodes_ch.*: MMAP
+  # graph.dataaccess.type.shortcuts_.*: MMAP
+
+  # If also for routing the environment is heap constrained and you can sacrify speed, then you can also use MMAP but maybe preload them:
+  # first rule matches
+  # graph.dataaccess.mmap.preload.nodes_ch_car.*: 100
+  # graph.dataaccess.mmap.preload.nodes_ch.*: 30
 
   #### Custom Areas ####
 

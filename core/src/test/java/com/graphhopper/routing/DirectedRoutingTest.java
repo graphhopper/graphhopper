@@ -57,6 +57,7 @@ import java.util.stream.Stream;
 
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
+import static com.graphhopper.util.GHUtility.comparePaths;
 import static com.graphhopper.util.GHUtility.createRandomSnaps;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
@@ -343,27 +344,6 @@ public class DirectedRoutingTest {
         Path path = f.createAlgo(queryGraph)
                 .calcPath(source, target, sourceOutEdge, targetInEdge);
         assertTrue(comparePaths(refPath, path, source, target, false, -1).isEmpty());
-    }
-
-    private List<String> comparePaths(Path refPath, Path path, int source, int target, boolean checkNodes, long seed) {
-        List<String> strictViolations = new ArrayList<>();
-        double refWeight = refPath.getWeight();
-        double weight = path.getWeight();
-        if (Math.abs(refWeight - weight) > 1.e-2) {
-            LOGGER.warn("expected: " + refPath.calcNodes());
-            LOGGER.warn("given:    " + path.calcNodes());
-            fail("wrong weight: " + source + "->" + target + ", expected: " + refWeight + ", given: " + weight + ", seed: " + seed);
-        }
-        if (Math.abs(path.getDistance() - refPath.getDistance()) > 1.e-1) {
-            strictViolations.add("wrong distance " + source + "->" + target + ", expected: " + refPath.getDistance() + ", given: " + path.getDistance());
-        }
-        if (Math.abs(path.getTime() - refPath.getTime()) > 50) {
-            strictViolations.add("wrong time " + source + "->" + target + ", expected: " + refPath.getTime() + ", given: " + path.getTime());
-        }
-        if (checkNodes && !refPath.calcNodes().equals(path.calcNodes())) {
-            strictViolations.add("wrong nodes " + source + "->" + target + "\nexpected: " + refPath.calcNodes() + "\ngiven:    " + path.calcNodes());
-        }
-        return strictViolations;
     }
 
     private int getTargetInEdge(Random rnd, int node, Graph graph) {

@@ -18,12 +18,12 @@
 
 package com.graphhopper.util;
 
-import java.util.*;
-
 import com.carrotsearch.hppc.*;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.NodeAccess;
+
+import java.util.*;
 
 /**
  * Creates random graphs for testing purposes. Nodes are aligned on a grid (+jitter), and connected
@@ -43,6 +43,7 @@ public class RandomGraph {
         private long seed = 42;
         private int nodes = 10;
         private boolean tree = false;
+        private boolean chain = false;
         private Double speed = null;
         private double duplicateEdges = 0.05;
         private double curviness = 0.0;
@@ -64,14 +65,18 @@ public class RandomGraph {
         public void fill(BaseGraph graph, DecimalEncodedValue speedEnc) {
             if (graph.getNodes() > 0 || graph.getEdges() > 0)
                 throw new IllegalStateException("BaseGraph should be empty");
-            if (!tree)
-                buildGraph(graph, speedEnc, seed);
-            else
+            if (chain && tree)
+                throw new IllegalArgumentException("chain and tree are mutually exclusive");
+            if (chain)
+                buildChain(graph, speedEnc);
+            else if (tree)
                 buildTree(graph, speedEnc);
+            else
+                buildGraph(graph, speedEnc);
         }
 
-        private void buildGraph(BaseGraph graph, DecimalEncodedValue speedEnc, long useSeed) {
-            var rnd = new Random(useSeed);
+        private void buildGraph(BaseGraph graph, DecimalEncodedValue speedEnc) {
+            var rnd = new Random(seed);
             TmpGraph g = generateTmpGraph(nodes, rnd);
             fillBaseGraph(graph, speedEnc, rnd, g);
         }
@@ -177,6 +182,39 @@ public class RandomGraph {
             throw new IllegalStateException("Could not generate a spanning tree after 1000 attempts");
         }
 
+        private void buildChain(BaseGraph graph, DecimalEncodedValue speedEnc) {
+            Random rnd = new Random(seed);
+            double[] lats = new double[nodes];
+            double[] lons = new double[nodes];
+            generateNodePositions(rnd, nodes, lats, lons);
+
+            // connect nodes in serpentine order so consecutive chain nodes are grid-neighbors
+            int cols = Math.max(1, (int) Math.round(Math.sqrt(nodes / rowFactor)));
+            int rows = (int) Math.ceil((double) nodes / cols);
+            int[] order = new int[nodes];
+            int idx = 0;
+            for (int r = 0; r < rows; r++) {
+                int start = r * cols;
+                int end = Math.min(start + cols, nodes);
+                if (r % 2 == 0) {
+                    for (int c = start; c < end; c++)
+                        order[idx++] = c;
+                } else {
+                    for (int c = end - 1; c >= start; c--)
+                        order[idx++] = c;
+                }
+            }
+
+            LongArrayList edges = new LongArrayList();
+            for (int i = 0; i < nodes - 1; i++) {
+                int a = Math.min(order[i], order[i + 1]);
+                int b = Math.max(order[i], order[i + 1]);
+                edges.add(BitUtil.LITTLE.toLong(a, b));
+            }
+            var g = new TmpGraph(lats, lons, edges);
+            fillBaseGraph(graph, speedEnc, rnd, g);
+        }
+
         private LongArrayList findBFSTreeEdgesFromCenter(TmpGraph g) {
             var adjNodes = new HashMap<Integer, List<Integer>>();
             for (var e : g.edges) {
@@ -223,6 +261,11 @@ public class RandomGraph {
 
         public Builder tree(boolean v) {
             tree = v;
+            return this;
+        }
+
+        public Builder chain(boolean v) {
+            chain = v;
             return this;
         }
 

@@ -20,6 +20,7 @@ package com.graphhopper.routing.querygraph;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntObjectMap;
+import com.carrotsearch.hppc.LongArrayList;
 import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PointList;
@@ -74,6 +75,35 @@ class QueryOverlay {
 
     IntArrayList getClosestEdges() {
         return closestEdges;
+    }
+
+    /**
+     * Adjusts values so they sum to target, changing each by at most maxPerElement.
+     * If the target is unreachable within these constraints, values are left untouched.
+     */
+    static void adjustValues(LongArrayList values, long target, long maxPerElement) {
+        if (values.isEmpty()) return;
+        if (target < 0) throw new IllegalArgumentException("target cannot be negative: " + target);
+        if (maxPerElement < 0)
+            throw new IllegalArgumentException("maxPerElement cannot be negative: " + maxPerElement);
+        if (target == 0) return;
+        long minTarget = 0, maxTarget = 0, diff = target;
+        for (int i = 0; i < values.size(); i++) {
+            diff -= values.get(i);
+            minTarget += Math.max(0, values.get(i) - maxPerElement);
+            maxTarget += values.get(i) + maxPerElement;
+        }
+        if (diff == 0) return;
+        // Check if the target is reachable given maxPerElement, no element must be negative.
+        // If not, we leave the array untouched since we only want to account for small numerical errors.
+        if (target < minTarget || target > maxTarget) return;
+        int sign = diff > 0 ? 1 : -1;
+        for (int i = 0; i < values.size(); i++) {
+            long adjustment = sign * Math.min(Math.abs(diff), maxPerElement);
+            if (values.get(i) + adjustment < 0) adjustment = -values.get(i);
+            values.set(i, values.get(i) + adjustment);
+            diff -= adjustment;
+        }
     }
 
     static class EdgeChanges {
