@@ -161,7 +161,7 @@ public class PMTilesElevationProviderTest {
             for (int x = 0; x < w; x++)
                 bb.putShort((y * w + x) * 2, grid[y][x]);
 
-        PMTilesElevationProvider.fillGaps(data, w);
+        PMTilesElevationProvider.fillGaps(data, w, 0, 0, 1);
 
         ShortBuffer shorts = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer();
         // Both gap pixels should now be 100 (average of all-100 neighbors)
@@ -187,7 +187,7 @@ public class PMTilesElevationProviderTest {
         bb.putShort(6, Short.MIN_VALUE);
         bb.putShort(8, (short) 200);
 
-        PMTilesElevationProvider.fillGaps(data, w);
+        PMTilesElevationProvider.fillGaps(data, w, 0, 0, 1);
 
         ShortBuffer shorts = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer();
         assertEquals(200, shorts.get(0));
@@ -206,7 +206,7 @@ public class PMTilesElevationProviderTest {
         for (int i = 0; i < w * w; i++)
             bb.putShort(i * 2, Short.MIN_VALUE);
 
-        PMTilesElevationProvider.fillGaps(data, w);
+        PMTilesElevationProvider.fillGaps(data, w, 0, 0, 1);
 
         ShortBuffer shorts = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer();
         for (int i = 0; i < w * w; i++)

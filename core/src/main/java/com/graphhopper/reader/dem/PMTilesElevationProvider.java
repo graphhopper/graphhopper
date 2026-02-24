@@ -197,7 +197,7 @@ public class PMTilesElevationProvider implements ElevationProvider {
         int tileX = Math.max(0, Math.min(n - 1, (int) Math.floor(xTileD)));
         int tileY = Math.max(0, Math.min(n - 1, (int) Math.floor(yTileD)));
 
-        PackedTileData tile = getTileBuffer(zxyToTileId(tileX, tileY));
+        PackedTileData tile = getTileBuffer(zxyToTileId(tileX, tileY), tileX, tileY);
         if (tile == MISSING_TILE) return Double.NaN;
         if (tile == SEA_LEVEL_TILE) return 0;
 
@@ -226,7 +226,7 @@ public class PMTilesElevationProvider implements ElevationProvider {
         }
     }
 
-    private PackedTileData getTileBuffer(long tileId) throws IOException {
+    private PackedTileData getTileBuffer(long tileId, int tileX, int tileY) throws IOException {
         if (tileId == lastTileId) return lastTileBuf;
 
         PackedTileData existing = tileBuffers.get(tileId);
@@ -251,7 +251,7 @@ public class PMTilesElevationProvider implements ElevationProvider {
                     buf = SEA_LEVEL_TILE;
                 } else {
                     // Fill gaps before persisting
-                    fillGaps(elevBytes, tileSize);
+                    fillGaps(elevBytes, tileSize, tileX, tileY, n);
                     // Persist as .tile file and mmap, or wrap as heap buffer if no tileDir
                     buf = persistAndLoad(tileId, elevBytes);
                 }
@@ -320,12 +320,48 @@ public class PMTilesElevationProvider implements ElevationProvider {
      * data are filled; isolated gaps remain as Short.MIN_VALUE.
      * See <a href="ttps://github.com/mapterhorn/mapterhorn/discussions/217">discussion</a>
      */
-    static void fillGaps(byte[] data, int w) {
+    static void fillGaps(byte[] data, int w, int tileX, int tileY, int n) {
         ShortBuffer shorts = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer();
         int total = shorts.capacity();
         int h = total / w;
         int[] DX = {-1, 1, 0, 0};
         int[] DY = {0, 0, -1, 1};
+
+        // Log one line per connected gap area with its lat/lon centroid
+        boolean[] visited = new boolean[total];
+        for (int i = 0; i < total; i++) {
+            if (shorts.get(i) != Short.MIN_VALUE || visited[i]) continue;
+            ArrayDeque<Integer> comp = new ArrayDeque<>();
+            comp.add(i);
+            visited[i] = true;
+            int count = 0;
+            long sumPx = 0, sumPy = 0;
+            while (!comp.isEmpty()) {
+                int ci = comp.poll();
+                count++;
+                sumPx += ci % w;
+                sumPy += ci / w;
+                int cx = ci % w, cy = ci / w;
+                for (int d = 0; d < 4; d++) {
+                    int nx = cx + DX[d], ny = cy + DY[d];
+                    if (nx >= 0 && nx < w && ny >= 0 && ny < h) {
+                        int ni = ny * w + nx;
+                        if (shorts.get(ni) == Short.MIN_VALUE && !visited[ni]) {
+                            visited[ni] = true;
+                            comp.add(ni);
+                        }
+                    }
+                }
+            }
+            double cx = (double) sumPx / count;
+            double cy = (double) sumPy / count;
+            double lon = ((tileX + cx / w) / n) * 360.0 - 180.0;
+            double yNorm = (tileY + cy / h) / n;
+            double lat = Math.toDegrees(Math.atan(Math.sinh(Math.PI * (1 - 2 * yNorm))));
+            LoggerFactory.getLogger(PMTilesElevationProvider.class)
+                    .warn("fillGaps: {} pixels at lat={}, lon={}", count,
+                            String.format("%.5f", lat), String.format("%.5f", lon));
+        }
 
         // Seed: gap pixels bordering valid data
         boolean[] queued = new boolean[total];
@@ -342,10 +378,6 @@ public class PMTilesElevationProvider implements ElevationProvider {
                     break;
                 }
             }
-        }
-
-        if(!queue.isEmpty()) {
-            LoggerFactory.getLogger(PMTilesElevationProvider.class).warn("Have to call fillGaps:" + queue.size());
         }
 
         // BFS: fill each gap pixel with average of valid neighbors
