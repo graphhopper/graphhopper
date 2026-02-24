@@ -6,12 +6,12 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.ShortBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayDeque;
 import java.util.HashMap;
@@ -32,6 +32,61 @@ public class PMTilesElevationProvider implements ElevationProvider {
 
     public enum TerrainEncoding {MAPBOX, TERRARIUM}
 
+    private static class PackedTileData {
+        private final ByteBuffer data;
+        private final int blockSize;
+        private final int blocksPerAxis;
+        private final int[] blockOffsets;
+        private final int payloadOffset;
+
+        PackedTileData(ByteBuffer data, int blockSize, int blocksPerAxis, int[] blockOffsets, int payloadOffset) {
+            this.data = data;
+            this.blockSize = blockSize;
+            this.blocksPerAxis = blocksPerAxis;
+            if (blockOffsets.length != blocksPerAxis * blocksPerAxis + 1)
+                throw new IllegalArgumentException("Invalid packed block table length");
+            this.blockOffsets = blockOffsets;
+            this.payloadOffset = payloadOffset;
+        }
+
+        public short get(int x, int y) {
+            int blockX = x / blockSize;
+            int blockY = y / blockSize;
+            int blockIndex = blockY * blocksPerAxis + blockX;
+            int blockStart = payloadOffset + blockOffsets[blockIndex];
+            int localX = x - blockX * blockSize;
+            int localY = y - blockY * blockSize;
+            int idx = localY * blockSize + localX;
+            int type = data.get(blockStart) & 0xFF;
+
+            if (type == PMTilesTileCodec.TYPE_SEA) {
+                return 0;
+            } else if (type == PMTilesTileCodec.TYPE_CONST) {
+                return data.getShort(blockStart + 1);
+            } else if (type == PMTilesTileCodec.TYPE_DELTA8) {
+                short base = data.getShort(blockStart + 1);
+                int delta = data.get(blockStart + 3 + idx) & 0xFF;
+                return (short) (base + delta);
+            } else if (type == PMTilesTileCodec.TYPE_RAW16) {
+                return data.getShort(blockStart + 1 + idx * 2);
+            }
+            throw new IllegalStateException("Unknown packed block type: " + type);
+        }
+    }
+
+    private static final PackedTileData MISSING_TILE = new PackedTileData(null, 1, 1, new int[]{0, 0}, 0) {
+        @Override
+        public short get(int x, int y) {
+            return Short.MIN_VALUE;
+        }
+    };
+    private static final PackedTileData SEA_LEVEL_TILE = new PackedTileData(null, 1, 1, new int[]{0, 0}, 0) {
+        @Override
+        public short get(int x, int y) {
+            return 0;
+        }
+    };
+
     private final TerrainEncoding encoding;
     private final boolean interpolate;
     private final int preferredZoom;
@@ -41,16 +96,13 @@ public class PMTilesElevationProvider implements ElevationProvider {
 
     private final PMTilesReader reader = new PMTilesReader();
 
-    // Tile key -> memory-mapped ByteBuffer (one per tile, each a direct mmap of the .tile file).
-    // No need for DataAccess as every file is rather small, and we can change to in-memory too via tileDir=null.
-    // Sentinels MISSING_BUF / SEA_LEVEL_BUF for tiles without elevation data.
-    private final Map<Long, ByteBuffer> tileBuffers = new HashMap<>();
-    private static final ByteBuffer MISSING_BUF = ByteBuffer.allocate(0);
-    private static final ByteBuffer SEA_LEVEL_BUF = ByteBuffer.allocate(1);
+    // Cache of packed tiles, keyed by Hilbert tile ID. Missing (or all-sea) tiles use marker objects.
+    // On-disk .tile files use the packed block format defined in PMTilesTileCodec.
+    private final Map<Long, PackedTileData> tileBuffers = new HashMap<>();
 
     // Last-tile cache: consecutive getEle() calls typically hit the same tile.
     private long lastTileId = -1;
-    private ByteBuffer lastTileBuf;
+    private PackedTileData lastTileBuf;
 
     private int tileSize;
 
@@ -122,7 +174,7 @@ public class PMTilesElevationProvider implements ElevationProvider {
 
     @Override
     public void release() {
-        tileBuffers.clear(); // MappedByteBuffers are unmapped by GC
+        tileBuffers.clear();
         lastTileId = -1;
         lastTileBuf = null;
         reader.close();
@@ -145,9 +197,9 @@ public class PMTilesElevationProvider implements ElevationProvider {
         int tileX = Math.max(0, Math.min(n - 1, (int) Math.floor(xTileD)));
         int tileY = Math.max(0, Math.min(n - 1, (int) Math.floor(yTileD)));
 
-        ByteBuffer tile = getTileBuffer(zxyToTileId(tileX, tileY));
-        if (tile == MISSING_BUF) return Double.NaN;
-        if (tile == SEA_LEVEL_BUF) return 0;
+        PackedTileData tile = getTileBuffer(zxyToTileId(tileX, tileY));
+        if (tile == MISSING_TILE) return Double.NaN;
+        if (tile == SEA_LEVEL_TILE) return 0;
 
         int w = tileSize, h = tileSize;
         double px = (xTileD - tileX) * (w - 1);
@@ -157,10 +209,10 @@ public class PMTilesElevationProvider implements ElevationProvider {
             int x0 = Math.max(0, Math.min(w - 2, (int) Math.floor(px)));
             int y0 = Math.max(0, Math.min(h - 2, (int) Math.floor(py)));
             double fx = px - x0, fy = py - y0;
-            short v00 = tile.getShort((y0 * w + x0) * 2);
-            short v10 = tile.getShort((y0 * w + Math.min(x0 + 1, w - 1)) * 2);
-            short v01 = tile.getShort((Math.min(y0 + 1, h - 1) * w + x0) * 2);
-            short v11 = tile.getShort((Math.min(y0 + 1, h - 1) * w + Math.min(x0 + 1, w - 1)) * 2);
+            short v00 = tile.get(x0, y0);
+            short v10 = tile.get(Math.min(x0 + 1, w - 1), y0);
+            short v01 = tile.get(x0, Math.min(y0 + 1, h - 1));
+            short v11 = tile.get(Math.min(x0 + 1, w - 1), Math.min(y0 + 1, h - 1));
             if (v00 == Short.MIN_VALUE || v10 == Short.MIN_VALUE || v01 == Short.MIN_VALUE || v11 == Short.MIN_VALUE)
                 return Double.NaN;
             return v00 * (1 - fx) * (1 - fy) + v10 * fx * (1 - fy)
@@ -168,16 +220,16 @@ public class PMTilesElevationProvider implements ElevationProvider {
         } else {
             int ix = Math.max(0, Math.min(w - 1, (int) Math.round(px)));
             int iy = Math.max(0, Math.min(h - 1, (int) Math.round(py)));
-            short val = tile.getShort((iy * w + ix) * 2);
+            short val = tile.get(ix, iy);
             if (val == Short.MIN_VALUE) return Double.NaN;
             return val;
         }
     }
 
-    private ByteBuffer getTileBuffer(long tileId) throws IOException {
+    private PackedTileData getTileBuffer(long tileId) throws IOException {
         if (tileId == lastTileId) return lastTileBuf;
 
-        ByteBuffer existing = tileBuffers.get(tileId);
+        PackedTileData existing = tileBuffers.get(tileId);
         if (existing != null) {
             lastTileId = tileId;
             lastTileBuf = existing;
@@ -185,23 +237,23 @@ public class PMTilesElevationProvider implements ElevationProvider {
         }
 
         // Try pre-decoded .tile file first
-        ByteBuffer buf = tryMmapTileFile(tileId);
+        PackedTileData buf = tryMmapTileFile(tileId);
         if (buf == null) {
             // Decode from PMTiles
             byte[] raw = reader.getTileBytes(tileId);
             if (raw == null) {
-                buf = MISSING_BUF;
+                buf = MISSING_TILE;
             } else {
                 byte[] elevBytes = decodeTerrain(raw);
                 if (elevBytes == null) {
-                    buf = MISSING_BUF;
+                    buf = MISSING_TILE;
                 } else if (elevBytes.length == 0) {
-                    buf = SEA_LEVEL_BUF;
+                    buf = SEA_LEVEL_TILE;
                 } else {
                     // Fill gaps before persisting
                     fillGaps(elevBytes, tileSize);
                     // Persist as .tile file and mmap, or wrap as heap buffer if no tileDir
-                    buf = persistAndMmap(tileId, elevBytes);
+                    buf = persistAndLoad(tileId, elevBytes);
                 }
             }
         }
@@ -213,45 +265,53 @@ public class PMTilesElevationProvider implements ElevationProvider {
     }
 
     /**
-     * Try to mmap an existing .tile file. Returns the mmap'd ByteBuffer if the file exists,
+     * Try to mmap an existing .tile file. Returns tile data if the file exists,
      * or null if not found (either no tileDir or file not yet decoded).
      */
-    private ByteBuffer tryMmapTileFile(long tileId) throws IOException {
+    private PackedTileData tryMmapTileFile(long tileId) throws IOException {
         if (tileDir == null) return null;
         File f = tileFile(tileId);
         if (!f.exists()) return null;
-        return mmapFile(f);
+        return loadTileData(f);
     }
 
     /**
-     * Write decoded bytes to an .tile file and mmap it, or wrap as heap buffer if no tileDir.
+     * Write decoded bytes to a packed .tile file and load it, or keep packed bytes on heap if no tileDir.
      */
-    private ByteBuffer persistAndMmap(long tileId, byte[] elevBytes) throws IOException {
+    private PackedTileData persistAndLoad(long tileId, byte[] elevBytes) throws IOException {
+        byte[] packed = PMTilesTileCodec.encodePacked(elevBytes, tileSize, PMTilesTileCodec.DEFAULT_BLOCK_SIZE);
         if (tileDir != null) {
             File f = tileFile(tileId);
-            try (FileOutputStream fos = new FileOutputStream(f)) {
-                fos.write(elevBytes);
-            }
-            return mmapFile(f);
+            Files.write(f.toPath(), packed);
+            return loadTileData(f);
         }
-        // No tileDir — wrap as heap buffer (tests, small regions)
-        return ByteBuffer.wrap(elevBytes).order(ByteOrder.LITTLE_ENDIAN);
+        // ByteBuffer in heap
+        ByteBuffer buf = ByteBuffer.wrap(packed).order(ByteOrder.LITTLE_ENDIAN);
+        return toPackedTileData(buf);
     }
 
     private File tileFile(long tileId) {
         return new File(tileDir, tileId + ".tile");
     }
 
-    private ByteBuffer mmapFile(File f) throws IOException {
-        if (tileSize == 0) {
-            // Derive tile size from file: fileLength = tileSize * tileSize * 2
-            tileSize = (int) Math.sqrt(f.length() / 2);
-        }
+    private PackedTileData loadTileData(File f) throws IOException {
         try (FileChannel ch = FileChannel.open(f.toPath(), StandardOpenOption.READ)) {
             ByteBuffer buf = ch.map(FileChannel.MapMode.READ_ONLY, 0, f.length());
             buf.order(ByteOrder.LITTLE_ENDIAN);
-            return buf;
+            if (!PMTilesTileCodec.isPackedTile(buf)) {
+                throw new IOException("Unsupported legacy raw .tile format in " + f
+                        + ". Remove cached .tile files so they can be regenerated as packed tiles.");
+            }
+            return toPackedTileData(buf);
         }
+    }
+
+    private PackedTileData toPackedTileData(ByteBuffer buf) {
+        PMTilesTileCodec.PackedHeader h = PMTilesTileCodec.readPackedHeader(buf);
+        if (tileSize == 0) tileSize = h.tileSize();
+        else if (tileSize != h.tileSize())
+            throw new IllegalStateException("Inconsistent packed tile size: expected " + tileSize + " but got " + h.tileSize());
+        return new PackedTileData(buf, h.blockSize(), h.blocksPerAxis(), h.blockOffsets(), h.payloadOffset());
     }
 
     /**
@@ -337,7 +397,14 @@ public class PMTilesElevationProvider implements ElevationProvider {
         }
 
         int w = img.getWidth(), h = img.getHeight();
+        if (w != h)
+            throw new IOException("Unsupported non-square elevation tile: " + w + "x" + h + ". Expected square terrain tiles.");
         if (tileSize == 0) tileSize = w; // record on first decode
+        else if (tileSize != w)
+            throw new IOException("Inconsistent terrain tile size: expected " + tileSize + " but got " + w);
+        if (tileSize % PMTilesTileCodec.DEFAULT_BLOCK_SIZE != 0)
+            throw new IOException("tileSize must be a multiple of blockSize: tileSize=" + tileSize
+                    + ", blockSize=" + PMTilesTileCodec.DEFAULT_BLOCK_SIZE);
 
         byte[] elev = new byte[h * w * 2];
         boolean allSeaLevel = true;
@@ -355,7 +422,7 @@ public class PMTilesElevationProvider implements ElevationProvider {
                     e = (r * 256.0 + g + b / 256.0) - 32768.0;
                 }
                 // Mapbox uses rgb(0,0,0) = -10000 and Terrarium rgb(0,0,0) = -32768 for
-                // no-data/ocean. No real place is below -1000m, so treat as no-data sentinel.
+                // no-data/ocean. No real place is below -1000m, so treat as no-data marker.
                 short s = e < -1000 ? Short.MIN_VALUE
                         : (short) Math.max(-32768, Math.min(32767, Math.round(e)));
                 if (s != 0) allSeaLevel = false;
