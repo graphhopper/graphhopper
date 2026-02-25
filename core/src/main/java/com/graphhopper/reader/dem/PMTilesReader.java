@@ -55,6 +55,9 @@ class PMTilesReader implements Closeable {
         header = readHeader();
         if (header.tileCompression > 1)
             throw new IOException("PMTiles tile compression not supported for elevation data, got compression=" + header.tileCompression);
+        if (header.internalCompression != 0 && header.internalCompression != 1 && header.internalCompression != COMPRESS_GZIP)
+            throw new IOException("PMTiles internal compression not supported, got compression=" + header.internalCompression
+                    + ". Only none (1) and gzip (2) are supported.");
         rootDir = readDirectory(header.rootDirOffset, header.rootDirLength);
     }
 
