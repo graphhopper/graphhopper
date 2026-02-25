@@ -306,7 +306,7 @@ public class PMTilesElevationProvider implements ElevationProvider {
     }
 
     private File tileFile(long tileId) {
-        return new File(tileDir, tileId + ".tile");
+        return new File(tileDir, tileId + "_" + zoom + ".tile");
     }
 
     private PackedTileData loadTileData(File f) throws IOException {
