@@ -274,11 +274,15 @@ class PMTilesReader implements Closeable {
         long[] lengths = new long[numEntries];
         for (int i = 0; i < numEntries; i++) lengths[i] = readVarint(data, pos);
 
+        // offsets are stored as offset + 1 to make the offset==0 is available and means "continue from previous entry"
         long[] offsets = new long[numEntries];
         for (int i = 0; i < numEntries; i++) {
             long v = readVarint(data, pos);
             if (v == 0 && i > 0) offsets[i] = offsets[i - 1] + lengths[i - 1];
-            else offsets[i] = v - 1;
+            else if (v < 1) // v==0 only valid if there is a previous entry
+                throw new IllegalStateException("Invalid directory entry offset at index " + i + ": varint value " + v);
+            else
+                offsets[i] = v - 1;
         }
 
         List<DirEntry> entries = new ArrayList<>(numEntries);
