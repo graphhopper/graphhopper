@@ -97,8 +97,7 @@ class PMTilesExtract {
     }
 
     private static int extractAllAtZoom(PMTilesReader reader, int zoom, File outDir) throws IOException {
-        long base = 0;
-        for (int i = 0; i < zoom; i++) base += (1L << (2 * i));
+        long base = PMTilesReader.hilbertBase(zoom);
         long count = 1L << (2 * zoom);
         long endId = base + count;
         System.out.printf("  TileId range for z=%d: [%d, %d) (%d tiles)%n", zoom, base, endId, count);

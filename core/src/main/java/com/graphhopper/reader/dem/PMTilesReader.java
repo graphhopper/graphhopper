@@ -123,12 +123,16 @@ class PMTilesReader implements Closeable {
     // Hilbert curve: Z/X/Y <-> TileID
     // =========================================================================
 
+    static long hilbertBase(int z) {
+        long base = 0;
+        // TODO might be replaced with base = ((1L << (2 * z)) - 1) / 3 but will be more cryptic
+        for (int i = 0; i < z; i++) base += (1L << (2 * i));
+        return base;
+    }
+
     static long zxyToTileId(int z, int x, int y) {
         if (z == 0) return 0;
-        // TODO might be replaced with base = ((1L << (2 * z)) - 1) / 3 but will be more cryptic
-        long base = 0;
-        for (int i = 0; i < z; i++) base += (1L << (2 * i));
-        return base + xyToHilbertD(z, x, y);
+        return hilbertBase(z) + xyToHilbertD(z, x, y);
     }
 
     static int[] tileIdToZxy(long tileId) {

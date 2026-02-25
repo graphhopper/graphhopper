@@ -159,9 +159,7 @@ public class PMTilesElevationProvider implements ElevationProvider {
         this.zoom = preferredZoom > 0 ? preferredZoom : Math.min(reader.header.maxZoom, 11);
         if (this.zoom < 1)
             throw new IllegalArgumentException("Zoom level must be at least 1, got " + this.zoom);
-        long base = 0;
-        for (int i = 0; i < zoom; i++) base += (1L << (2 * i));
-        this.hilbertBase = base;
+        this.hilbertBase = PMTilesReader.hilbertBase(zoom);
         this.n = 1 << zoom;
 
         if (tileDirStr != null && !tileDirStr.isEmpty()) {
