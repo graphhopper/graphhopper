@@ -247,9 +247,7 @@ class PMTilesReader implements Closeable {
     private List<DirEntry> readDirectory(long offset, long length) throws IOException {
         byte[] raw = readBytes(offset, (int) length);
         if (header.internalCompression == COMPRESS_GZIP) {
-            try {
-                raw = gunzip(raw);
-            } catch (IOException e) { /* try as-is */ }
+            raw = gunzip(raw);
         }
         return deserializeEntries(raw);
     }
