@@ -63,6 +63,7 @@ public class RouteResourceClientHCTest {
         config.getGraphHopperConfiguration().
                 putObject("prepare.min_network_size", 0).
                 putObject("graph.elevation.provider", "srtm").
+                putObject("graph.elevation.clear", true).
                 putObject("graph.elevation.cache_dir", "../core/files/").
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("graph.encoded_values", "road_class,surface,road_environment,max_speed").

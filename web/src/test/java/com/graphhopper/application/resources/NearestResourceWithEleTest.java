@@ -49,6 +49,7 @@ public class NearestResourceWithEleTest {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
                 putObject("graph.elevation.provider", "srtm").
+                putObject("graph.elevation.clear", true).
                 putObject("graph.elevation.cache_dir", "../core/files/").
                 putObject("prepare.min_network_size", 0).
                 putObject("datareader.file", "../core/files/monaco.osm.gz").

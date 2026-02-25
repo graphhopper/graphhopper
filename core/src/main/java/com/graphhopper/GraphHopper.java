@@ -704,6 +704,8 @@ public class GraphHopper {
         boolean interpolate = ghConfig.has("graph.elevation.interpolate")
                 ? "bilinear".equals(ghConfig.getString("graph.elevation.interpolate", "none"))
                 : ghConfig.getBool("graph.elevation.calc_mean", false);
+        boolean removeTempElevationFiles = ghConfig.getBool("graph.elevation.clear",
+                ghConfig.getBool("graph.elevation.cgiar.clear", false));
 
         ElevationProvider elevationProvider = ElevationProvider.NOOP;
         if (eleProviderStr.equalsIgnoreCase("hgt")) {
@@ -727,12 +729,11 @@ public class GraphHopper {
         } else if (eleProviderStr.equalsIgnoreCase("pmtiles")) {
             int zoom = ghConfig.getInt("graph.elevation.pmtiles.zoom", -1);
             String terrainEncoding = ghConfig.getString("graph.elevation.pmtiles.terrain_encoding", "terrarium");
-            boolean removeTempEleFiles = ghConfig.getBool("graph.elevation.pmtiles.clear", false);
             elevationProvider = new PMTilesElevationProvider(
                     ghConfig.getString("graph.elevation.pmtiles.location", "/tmp/planet.pmtiles"),
                     PMTilesElevationProvider.TerrainEncoding.valueOf(terrainEncoding.toUpperCase(Locale.ROOT)),
                     interpolate, zoom, cacheDirStr)
-                    .setAutoRemoveTemporaryFiles(removeTempEleFiles);
+                    .setAutoRemoveTemporaryFiles(removeTempElevationFiles);
         } else if (!eleProviderStr.isEmpty() && !eleProviderStr.equalsIgnoreCase("noop")) {
             throw new IllegalArgumentException("Did not find elevation provider: " + eleProviderStr);
         }
@@ -745,8 +746,6 @@ public class GraphHopper {
                 throw new IllegalArgumentException("use graph.elevation.base_url not baseurl in configuration");
 
             DAType elevationDAType = DAType.fromString(ghConfig.getString("graph.elevation.dataaccess", "MMAP"));
-            boolean removeTempElevationFiles = ghConfig.getBool("graph.elevation.cgiar.clear", false);
-            removeTempElevationFiles = ghConfig.getBool("graph.elevation.clear", removeTempElevationFiles);
 
             provider
                     .setAutoRemoveTemporaryFiles(removeTempElevationFiles)

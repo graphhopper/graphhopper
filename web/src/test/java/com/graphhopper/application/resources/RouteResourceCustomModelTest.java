@@ -64,6 +64,7 @@ public class RouteResourceCustomModelTest {
                 putObject("datareader.file", "../core/files/north-bayreuth.osm.gz").
                 putObject("graph.location", DIR).
                 putObject("graph.elevation.provider", "srtm").
+                putObject("graph.elevation.clear", true).
                 putObject("graph.elevation.cache_dir", "../core/files/").
                 putObject("custom_areas.directory", "./src/test/resources/com/graphhopper/application/resources/areas").
                 putObject("import.osm.ignored_highways", "").
