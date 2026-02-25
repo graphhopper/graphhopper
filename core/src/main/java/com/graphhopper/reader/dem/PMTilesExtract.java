@@ -132,7 +132,7 @@ class PMTilesExtract {
         else if (data.length > 4 && data[0] == (byte) 0x89 && data[1] == 'P') fmt = "PNG";
 
         throw new IOException(fmt + " tile but ImageIO can't decode it (" + data.length + " bytes). "
-                + "Add to pom.xml: com.github.usefulness:webp-imageio:0.10.2");
+                + "Add to pom.xml: com.github.usefulness:webp-imageio");
     }
 
     /** Decode Terrarium-encoded terrain-RGB to 16-bit grayscale. Black=low, white=high. */

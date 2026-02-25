@@ -83,7 +83,7 @@ class PMTilesReader implements Closeable {
                 }
             if (!hasWebP) throw new IOException(
                     "PMTiles contains WebP tiles but no WebP ImageIO plugin found. " +
-                            "Add com.github.usefulness:webp-imageio:0.10.2 to your classpath.");
+                            "Add com.github.usefulness:webp-imageio to your classpath.");
         }
     }
 
