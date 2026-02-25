@@ -229,9 +229,9 @@ public class PMTilesElevationProvider implements ElevationProvider {
             int y0 = Math.max(0, Math.min(h - 2, (int) Math.floor(py)));
             double fx = px - x0, fy = py - y0;
             short v00 = tile.get(x0, y0);
-            short v10 = tile.get(Math.min(x0 + 1, w - 1), y0);
-            short v01 = tile.get(x0, Math.min(y0 + 1, h - 1));
-            short v11 = tile.get(Math.min(x0 + 1, w - 1), Math.min(y0 + 1, h - 1));
+            short v10 = tile.get(x0 + 1, y0);
+            short v01 = tile.get(x0, y0 + 1);
+            short v11 = tile.get(x0 + 1, y0 + 1);
             if (v00 == Short.MIN_VALUE || v10 == Short.MIN_VALUE || v01 == Short.MIN_VALUE || v11 == Short.MIN_VALUE)
                 return Double.NaN;
             return v00 * (1 - fx) * (1 - fy) + v10 * fx * (1 - fy)
@@ -328,6 +328,8 @@ public class PMTilesElevationProvider implements ElevationProvider {
         if (tileSize == 0) tileSize = h.tileSize();
         else if (tileSize != h.tileSize())
             throw new IllegalStateException("Inconsistent packed tile size: expected " + tileSize + " but got " + h.tileSize());
+        if (tileSize < PMTilesTileCodec.DEFAULT_BLOCK_SIZE)
+            throw new IllegalStateException("tileSize must be at least " + PMTilesTileCodec.DEFAULT_BLOCK_SIZE + ", got " + tileSize);
         return new PackedTileData(buf, h.blockSize(), h.blocksPerAxis(), h.blockOffsets(), h.payloadOffset());
     }
 
