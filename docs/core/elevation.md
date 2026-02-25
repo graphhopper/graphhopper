@@ -50,6 +50,18 @@ The mapterhorn project did an exceptional work and created a pipeline to collect
 tiles in a convenient single file (protomaps tiles). As it contains many
 sources the attribution is a longer list that you can find [here](https://mapterhorn.com/attribution/).
 
+When you downloaded the file you specify it in the config.yml like this:
+
+```
+graph.elevation.provider: pmtiles
+graph.elevation.pmtiles.location: /data/pmtiles.pmtiles
+graph.elevation.pmtiles.zoom: 11
+graph.elevation.cache_dir: /tmp/pmtiles-cache
+```
+
+You can also cut a geographical area using the official pmtiles tool or cut out certain
+zoom levels with [a simple go script](https://gist.github.com/karussell/e6ad9918b6cd9913ddba998af43860a2#file-trim_pmtiles-go) to reduce file size by a lot.
+
 ## Sonny's LiDAR Digital Terrain Models
 Sonny's LiDAR Digital Terrain Models are available for Europe only, see https://sonny.4lima.de/. 
 It is a very high resolution elevation data set, but it is **not free** to use! See the discussion at
