@@ -76,15 +76,15 @@ public class PMTilesElevationProvider implements ElevationProvider {
             int idx = localY * blockSize + localX;
             int type = data.get(blockStart) & 0xFF;
 
-            if (type == PMTilesTileCodec.TYPE_SEA) {
+            if (type == PackedTileCodec.TYPE_SEA) {
                 return 0;
-            } else if (type == PMTilesTileCodec.TYPE_CONST) {
+            } else if (type == PackedTileCodec.TYPE_CONST) {
                 return data.getShort(blockStart + 1);
-            } else if (type == PMTilesTileCodec.TYPE_DELTA8) {
+            } else if (type == PackedTileCodec.TYPE_DELTA8) {
                 short base = data.getShort(blockStart + 1);
                 int delta = data.get(blockStart + 3 + idx) & 0xFF;
                 return (short) (base + delta);
-            } else if (type == PMTilesTileCodec.TYPE_RAW16) {
+            } else if (type == PackedTileCodec.TYPE_RAW16) {
                 return data.getShort(blockStart + 1 + idx * 2);
             }
             throw new IllegalStateException("Unknown packed block type: " + type);
@@ -114,7 +114,7 @@ public class PMTilesElevationProvider implements ElevationProvider {
     private final PMTilesReader reader = new PMTilesReader();
 
     // Cache of packed tiles, keyed by Hilbert tile ID. Missing (or all-sea) tiles use marker objects.
-    // On-disk .tile files use the packed block format defined in PMTilesTileCodec.
+    // On-disk .tile files use the packed block format defined in PackedTileCodex.
     private final Map<Long, PackedTileData> tileBuffers = new HashMap<>();
 
     // Last-tile cache: consecutive getEle() calls typically hit the same tile.
@@ -294,7 +294,7 @@ public class PMTilesElevationProvider implements ElevationProvider {
      * Write decoded bytes to a packed .tile file and load it, or keep packed bytes on heap if no tileDir.
      */
     private PackedTileData persistAndLoad(long tileId, byte[] elevBytes) throws IOException {
-        byte[] packed = PMTilesTileCodec.encodePacked(elevBytes, tileSize, PMTilesTileCodec.DEFAULT_BLOCK_SIZE);
+        byte[] packed = PackedTileCodec.encodePacked(elevBytes, tileSize, PackedTileCodec.DEFAULT_BLOCK_SIZE);
         if (tileDir != null) {
             File f = tileFile(tileId);
             Files.write(f.toPath(), packed);
@@ -313,7 +313,7 @@ public class PMTilesElevationProvider implements ElevationProvider {
         try (FileChannel ch = FileChannel.open(f.toPath(), StandardOpenOption.READ)) {
             ByteBuffer buf = ch.map(FileChannel.MapMode.READ_ONLY, 0, f.length());
             buf.order(ByteOrder.LITTLE_ENDIAN);
-            if (!PMTilesTileCodec.isPackedTile(buf)) {
+            if (!PackedTileCodec.isPackedTile(buf)) {
                 throw new IOException("Unsupported legacy raw .tile format in " + f
                         + ". Remove cached .tile files so they can be regenerated as packed tiles.");
             }
@@ -322,12 +322,12 @@ public class PMTilesElevationProvider implements ElevationProvider {
     }
 
     private PackedTileData toPackedTileData(ByteBuffer buf) {
-        PMTilesTileCodec.PackedHeader h = PMTilesTileCodec.readPackedHeader(buf);
+        PackedTileCodec.PackedHeader h = PackedTileCodec.readPackedHeader(buf);
         if (tileSize == 0) tileSize = h.tileSize(); // tileSize is set when tile comes from cache
         else if (tileSize != h.tileSize())
             throw new IllegalStateException("Inconsistent packed tile size: expected " + tileSize + " but got " + h.tileSize());
-        if (tileSize < PMTilesTileCodec.DEFAULT_BLOCK_SIZE)
-            throw new IllegalStateException("tileSize must be at least " + PMTilesTileCodec.DEFAULT_BLOCK_SIZE + ", got " + tileSize);
+        if (tileSize < PackedTileCodec.DEFAULT_BLOCK_SIZE)
+            throw new IllegalStateException("tileSize must be at least " + PackedTileCodec.DEFAULT_BLOCK_SIZE + ", got " + tileSize);
         return new PackedTileData(buf, h.blockSize(), h.blocksPerAxis(), h.blockOffsets(), h.payloadOffset());
     }
 
@@ -451,9 +451,9 @@ public class PMTilesElevationProvider implements ElevationProvider {
         if (tileSize == 0) tileSize = w; // tileSize set on first decode
         else if (tileSize != w)
             throw new IOException("Inconsistent terrain tile size: expected " + tileSize + " but got " + w);
-        if (tileSize % PMTilesTileCodec.DEFAULT_BLOCK_SIZE != 0)
+        if (tileSize % PackedTileCodec.DEFAULT_BLOCK_SIZE != 0)
             throw new IOException("tileSize must be a multiple of blockSize: tileSize=" + tileSize
-                    + ", blockSize=" + PMTilesTileCodec.DEFAULT_BLOCK_SIZE);
+                    + ", blockSize=" + PackedTileCodec.DEFAULT_BLOCK_SIZE);
 
         byte[] elev = new byte[h * w * 2];
         boolean allSeaLevel = true;

@@ -7,7 +7,7 @@ import java.nio.ByteOrder;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class PMTilesTileCodecTest {
+public class PackedTileCodecTest {
 
     @Test
     public void testPackedRoundTripBlockTypes() {
@@ -37,10 +37,10 @@ public class PMTilesTileCodecTest {
         }
 
         byte[] raw = toLeBytes(values);
-        byte[] packed = PMTilesTileCodec.encodePacked(raw, tileSize, 16);
+        byte[] packed = PackedTileCodec.encodePacked(raw, tileSize, 16);
         ByteBuffer packedBuf = ByteBuffer.wrap(packed).order(ByteOrder.LITTLE_ENDIAN);
-        assertTrue(PMTilesTileCodec.isPackedTile(packedBuf));
-        PMTilesTileCodec.PackedHeader h = PMTilesTileCodec.readPackedHeader(packedBuf);
+        assertTrue(PackedTileCodec.isPackedTile(packedBuf));
+        PackedTileCodec.PackedHeader h = PackedTileCodec.readPackedHeader(packedBuf);
 
         assertEquals(tileSize, h.tileSize());
         assertEquals(16, h.blockSize());
@@ -70,7 +70,7 @@ public class PMTilesTileCodecTest {
         return bb.array();
     }
 
-    private static short samplePacked(ByteBuffer data, PMTilesTileCodec.PackedHeader h, int x, int y) {
+    private static short samplePacked(ByteBuffer data, PackedTileCodec.PackedHeader h, int x, int y) {
         int blockX = x / h.blockSize();
         int blockY = y / h.blockSize();
         int blockIndex = blockY * h.blocksPerAxis() + blockX;
@@ -80,14 +80,14 @@ public class PMTilesTileCodecTest {
         int idx = localY * h.blockSize() + localX;
         int type = data.get(blockStart) & 0xFF;
 
-        if (type == PMTilesTileCodec.TYPE_SEA) return 0;
-        if (type == PMTilesTileCodec.TYPE_CONST) return data.getShort(blockStart + 1);
-        if (type == PMTilesTileCodec.TYPE_DELTA8) {
+        if (type == PackedTileCodec.TYPE_SEA) return 0;
+        if (type == PackedTileCodec.TYPE_CONST) return data.getShort(blockStart + 1);
+        if (type == PackedTileCodec.TYPE_DELTA8) {
             short base = data.getShort(blockStart + 1);
             int delta = data.get(blockStart + 3 + idx) & 0xFF;
             return (short) (base + delta);
         }
-        if (type == PMTilesTileCodec.TYPE_RAW16) return data.getShort(blockStart + 1 + idx * 2);
+        if (type == PackedTileCodec.TYPE_RAW16) return data.getShort(blockStart + 1 + idx * 2);
         throw new IllegalStateException("Unknown type " + type);
     }
 }

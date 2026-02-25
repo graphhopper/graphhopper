@@ -24,9 +24,9 @@ import java.nio.ByteOrder;
 /**
  * This class stores a square tile (default 256x256) in a compressed block format (16x16).
  * It is not necessary to decompress before reading as only the type and base value is necessary to
- * read a pixel value.
+ * read a pixel value. Currently only used for pmtiles but could be used for srtm or cgiar too.
  */
-final class PMTilesTileCodec {
+final class PackedTileCodec {
     /**
      * Block type: every elevation sample in this block is 0.
      * Block payload size: 1 byte (type only).
@@ -71,7 +71,7 @@ final class PMTilesTileCodec {
                         int payloadOffset) {
     }
 
-    private PMTilesTileCodec() {
+    private PackedTileCodec() {
     }
 
     static boolean isPackedTile(ByteBuffer data) {
