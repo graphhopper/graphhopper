@@ -294,6 +294,8 @@ class PMTilesReader implements Closeable {
             if (n < 0) break;
             read += n;
         }
+        if (read < length)
+            throw new IOException("Short read at offset " + offset + ": expected " + length + " bytes but got " + read);
         return buf.array();
     }
 
