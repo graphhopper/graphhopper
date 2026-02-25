@@ -124,10 +124,9 @@ class PMTilesReader implements Closeable {
     // =========================================================================
 
     static long hilbertBase(int z) {
-        long base = 0;
-        // TODO might be replaced with base = ((1L << (2 * z)) - 1) / 3 but will be more cryptic
-        for (int i = 0; i < z; i++) base += (1L << (2 * i));
-        return base;
+        // this is the closed form of:
+        // for (int i = 0; i < z; i++) base += (1L << (2 * i));
+        return ((1L << (2 * z)) - 1) / 3;
     }
 
     static long zxyToTileId(int z, int x, int y) {
