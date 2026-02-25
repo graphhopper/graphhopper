@@ -323,7 +323,7 @@ public class PMTilesElevationProvider implements ElevationProvider {
 
     private PackedTileData toPackedTileData(ByteBuffer buf) {
         PMTilesTileCodec.PackedHeader h = PMTilesTileCodec.readPackedHeader(buf);
-        if (tileSize == 0) tileSize = h.tileSize();
+        if (tileSize == 0) tileSize = h.tileSize(); // tileSize is set when tile comes from cache
         else if (tileSize != h.tileSize())
             throw new IllegalStateException("Inconsistent packed tile size: expected " + tileSize + " but got " + h.tileSize());
         if (tileSize < PMTilesTileCodec.DEFAULT_BLOCK_SIZE)
@@ -448,7 +448,7 @@ public class PMTilesElevationProvider implements ElevationProvider {
         int w = img.getWidth(), h = img.getHeight();
         if (w != h)
             throw new IOException("Unsupported non-square elevation tile: " + w + "x" + h + ". Expected square terrain tiles.");
-        if (tileSize == 0) tileSize = w; // record on first decode
+        if (tileSize == 0) tileSize = w; // tileSize set on first decode
         else if (tileSize != w)
             throw new IOException("Inconsistent terrain tile size: expected " + tileSize + " but got " + w);
         if (tileSize % PMTilesTileCodec.DEFAULT_BLOCK_SIZE != 0)
