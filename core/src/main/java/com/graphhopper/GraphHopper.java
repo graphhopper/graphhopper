@@ -727,7 +727,7 @@ public class GraphHopper {
         } else if (eleProviderStr.equalsIgnoreCase("pmtiles")) {
             int zoom = ghConfig.getInt("graph.elevation.pmtiles.zoom", -1);
             String terrainEncoding = ghConfig.getString("graph.elevation.pmtiles.terrain_encoding", "terrarium");
-            boolean removeTempEleFiles = ghConfig.getBool("graph.elevation.pmtiles.clear", true);
+            boolean removeTempEleFiles = ghConfig.getBool("graph.elevation.pmtiles.clear", false);
             elevationProvider = new PMTilesElevationProvider(
                     ghConfig.getString("graph.elevation.pmtiles.location", "/tmp/planet.pmtiles"),
                     PMTilesElevationProvider.TerrainEncoding.valueOf(terrainEncoding.toUpperCase(Locale.ROOT)),
@@ -745,7 +745,7 @@ public class GraphHopper {
                 throw new IllegalArgumentException("use graph.elevation.base_url not baseurl in configuration");
 
             DAType elevationDAType = DAType.fromString(ghConfig.getString("graph.elevation.dataaccess", "MMAP"));
-            boolean removeTempElevationFiles = ghConfig.getBool("graph.elevation.cgiar.clear", true);
+            boolean removeTempElevationFiles = ghConfig.getBool("graph.elevation.cgiar.clear", false);
             removeTempElevationFiles = ghConfig.getBool("graph.elevation.clear", removeTempElevationFiles);
 
             provider
