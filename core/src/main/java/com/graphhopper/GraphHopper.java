@@ -984,7 +984,7 @@ public class GraphHopper {
     }
 
     public static void sortGraphAlongHilbertCurve(BaseGraph graph) {
-        logger.info("sorting graph along Hilbert curve...");
+        logger.info("sorting graph along Hilbert curve.... (memory:" + getMemInfo() + ")");
         StopWatch sw = StopWatch.started();
         NodeAccess na = graph.getNodeAccess();
         final int order = 31; // using 15 would allow us to use ints for sortIndices, but this would result in (marginally) slower routing
@@ -1007,7 +1007,7 @@ public class GraphHopper {
         }
         IntArrayList newEdgesByOldEdges = ArrayUtil.invert(edgeOrder);
         IntArrayList newNodesByOldNodes = IntArrayList.from(ArrayUtil.invert(nodeOrder));
-        logger.info("calculating sort order took: " + sw.stop().getTimeString());
+        logger.info("calculating sort order took: " + sw.stop().getTimeString() + ", memory:" + getMemInfo());
         sortGraphForGivenOrdering(graph, newNodesByOldNodes, newEdgesByOldEdges);
     }
 

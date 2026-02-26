@@ -108,7 +108,8 @@ public class WaySegmentParser {
         LOGGER.info("Finished reading OSM file." +
                 " pass1: " + (int) sw1.getSeconds() + "s, " +
                 " pass2: " + (int) sw2.getSeconds() + "s, " +
-                " total: " + (int) (sw1.getSeconds() + sw2.getSeconds()) + "s");
+                " total: " + (int) (sw1.getSeconds() + sw2.getSeconds()) + "s" +
+                " memory: " + Helper.getMemInfo());
     }
 
     /**
