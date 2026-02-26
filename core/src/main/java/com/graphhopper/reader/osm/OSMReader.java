@@ -181,11 +181,6 @@ public class OSMReader {
         return osmDataDate;
     }
 
-    protected double getElevation(ReaderNode node) {
-        double ele = eleProvider.getEle(node);
-        return Double.isNaN(ele) ? config.getDefaultElevation() : ele;
-    }
-
     private double lookupElevation(double lat, double lon) {
         double ele = eleProvider.getEle(lat, lon);
         return Double.isNaN(ele) ? config.getDefaultElevation() : ele;

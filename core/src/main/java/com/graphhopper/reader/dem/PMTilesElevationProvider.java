@@ -17,6 +17,7 @@
  */
 package com.graphhopper.reader.dem;
 
+import com.graphhopper.storage.MMapDataAccess;
 import org.slf4j.LoggerFactory;
 
 import javax.imageio.ImageIO;
@@ -50,10 +51,10 @@ public class PMTilesElevationProvider implements ElevationProvider {
     public enum TerrainEncoding {MAPBOX, TERRARIUM}
 
     private static class PackedTileData {
-        private final ByteBuffer data;
+        private ByteBuffer data;
         private final int blockSize;
         private final int blocksPerAxis;
-        private final int[] blockOffsets;
+        private int[] blockOffsets;
         private final int payloadOffset;
 
         PackedTileData(ByteBuffer data, int blockSize, int blocksPerAxis, int[] blockOffsets, int payloadOffset) {
@@ -88,6 +89,13 @@ public class PMTilesElevationProvider implements ElevationProvider {
                 return data.getShort(blockStart + 1 + idx * 2);
             }
             throw new IllegalStateException("Unknown packed block type: " + type);
+        }
+
+        void release() {
+            if (data != null && data.isDirect()) // ensure it is not MISSING or SEA or heap allocated
+                MMapDataAccess.cleanMappedByteBuffer(data);
+            data = null;
+            blockOffsets = null;
         }
     }
 
@@ -131,6 +139,7 @@ public class PMTilesElevationProvider implements ElevationProvider {
     private boolean clearTileFiles = true;
 
     private final String pmFileStr;
+
     /**
      * @param preferredZoom 10 means ~76m at equator and ~49m in Germany (default).
      *                      11 means ~38m at equator and ~25m in Germany.
@@ -191,6 +200,9 @@ public class PMTilesElevationProvider implements ElevationProvider {
 
     @Override
     public void release() {
+        for (PackedTileData p : tileBuffers.values()) {
+            p.release();
+        }
         tileBuffers.clear();
         lastTileId = -1;
         lastTileBuf = null;
@@ -407,7 +419,10 @@ public class PMTilesElevationProvider implements ElevationProvider {
                 int nx = x + DX[d], ny = y + DY[d];
                 if (nx >= 0 && nx < w && ny >= 0 && ny < h) {
                     short v = shorts.get(ny * w + nx);
-                    if (v != Short.MIN_VALUE) { sum += v; cnt++; }
+                    if (v != Short.MIN_VALUE) {
+                        sum += v;
+                        cnt++;
+                    }
                 }
             }
             if (cnt == 0) continue;

@@ -28,11 +28,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests for PMTilesElevationProvider and PMTilesReader.
- * <p>
- * The elevation tests require a PMTiles extract for Saxony (zoom 10-12). Create it via:
- * <pre>
- * pmtiles extract input.pmtiles files/saxony-z10-12.pmtiles --bbox=11.8,50.1,15.1,51.7 --minzoom=10 --maxzoom=12
- * </pre>
  */
 public class PMTilesElevationProviderTest {
 
@@ -43,10 +38,6 @@ public class PMTilesElevationProviderTest {
         if (instance != null)
             instance.release();
     }
-
-    // =========================================================================
-    // Unit tests (no PMTiles file needed)
-    // =========================================================================
 
     @Test
     public void testHilbertRoundTrip() {
@@ -124,12 +115,12 @@ public class PMTilesElevationProviderTest {
         assertEquals(370, instance.getEle(50.9119, 14.207466), 1);
     }
 
-    // called pmtiles with --bbox=14.203657,50.905387,14.208871,50.912341 --minzoom=10 --maxzoom=11
     @Test
     public void testRealPMTilesWithZoom11() {
+        // created this file via pmtiles and --bbox=14.203657,50.905387,14.208871,50.912341 --minzoom=10 --maxzoom=11
         instance = new PMTilesElevationProvider("./files/near-badschandau-z10-11.pmtiles",
-                PMTilesElevationProvider.TerrainEncoding.TERRARIUM, false, 11,
-                null).init();
+                PMTilesElevationProvider.TerrainEncoding.TERRARIUM, false, 11, null).
+                init();
 
         // Elbe
         assertEquals(118, instance.getEle(50.905488, 14.204129), 1);
@@ -139,6 +130,17 @@ public class PMTilesElevationProviderTest {
         // Very close but on the path
         assertEquals(381, instance.getEle(50.911849, 14.208042), 1);
         assertEquals(361, instance.getEle(50.9119, 14.207466), 1);
+    }
+
+    @Test
+    public void testOutsideArea() {
+        instance = new PMTilesElevationProvider("./files/near-badschandau-z10-11.pmtiles",
+                PMTilesElevationProvider.TerrainEncoding.TERRARIUM, false, 10, null).
+                init();
+
+        // Point far outside the extract — should return NaN
+        double ele = instance.getEle(0, 0);
+        assertTrue(Double.isNaN(ele), "expected NaN for point outside extract, got " + ele);
     }
 
     @Test
@@ -211,16 +213,5 @@ public class PMTilesElevationProviderTest {
         ShortBuffer shorts = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer();
         for (int i = 0; i < w * w; i++)
             assertEquals(Short.MIN_VALUE, shorts.get(i), "isolated gap at index " + i + " should remain MIN_VALUE");
-    }
-
-    @Test
-    public void testOutsideArea() {
-        instance = new PMTilesElevationProvider("./files/near-badschandau-z10-11.pmtiles",
-                PMTilesElevationProvider.TerrainEncoding.MAPBOX, false, 10,
-                null).init();
-
-        // Point far outside the extract — should return NaN
-        double ele = instance.getEle(0, 0);
-        assertTrue(Double.isNaN(ele), "expected NaN for point outside extract, got " + ele);
     }
 }
