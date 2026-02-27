@@ -17,6 +17,8 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <maven.compiler.target>17</maven.compiler.target>
+        <!-- this needs to match the protobuf-java version pulled in by osmpbf -->
+        <protobuf.version>4.28.3</protobuf.version>
 
         <!-- We always had this disabled as it is disabled by default in debian JDK builds, but when we
              switched to another JDK on travis it was enabled implicitly. Our javadocs are not ready for this
@@ -127,18 +129,6 @@
                 <artifactId>mapdb</artifactId>
                 <version>1.0.8</version>
             </dependency>
-            <dependency>
-                <groupId>org.mobilitydata</groupId>
-                <artifactId>gtfs-realtime-bindings</artifactId>
-                <version>0.0.8</version>
-                <exclusions>
-                    <exclusion>
-                        <!-- use newer protobuf version  -->
-                        <groupId>com.google.protobuf</groupId>
-                        <artifactId>protobuf-java</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
             <!-- for reader-gtfs -->
             <dependency>
                 <groupId>jakarta.inject</groupId>
@@ -214,6 +204,14 @@
                 <plugin>
                     <artifactId>maven-antrun-plugin</artifactId>
                     <version>3.2.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>io.github.ascopes</groupId>
+                    <artifactId>protobuf-maven-plugin</artifactId>
+                    <version>3.8.1</version>
+                    <configuration>
+                        <protocVersion>${protobuf.version}</protocVersion>
+                    </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>

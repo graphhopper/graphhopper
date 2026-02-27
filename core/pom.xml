@@ -106,9 +106,9 @@
         </dependency>
 
         <dependency>
-            <groupId>org.openstreetmap.osmosis</groupId>
-            <artifactId>osmosis-osm-binary</artifactId>
-            <version>0.48.3</version>
+            <groupId>org.openstreetmap.pbf</groupId>
+            <artifactId>osmpbf</artifactId>
+            <version>1.6.0</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
