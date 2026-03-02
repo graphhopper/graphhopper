@@ -33,7 +33,7 @@ public class MultiSourceElevationProvider extends TileBasedElevationProvider {
     private final TileBasedElevationProvider globalProvider;
 
     public MultiSourceElevationProvider(TileBasedElevationProvider srtmProvider, TileBasedElevationProvider globalProvider) {
-        super(srtmProvider.cacheDir.getAbsolutePath());
+        super("_ignored_");
         this.srtmProvider = srtmProvider;
         this.globalProvider = globalProvider;
     }
@@ -44,6 +44,13 @@ public class MultiSourceElevationProvider extends TileBasedElevationProvider {
 
     public MultiSourceElevationProvider(String cacheDir) {
         this(new CGIARProvider(cacheDir), new GMTEDProvider(cacheDir));
+    }
+
+    @Override
+    public ElevationProvider init() {
+        srtmProvider.init();
+        globalProvider.init();
+        return this;
     }
 
     @Override

@@ -44,6 +44,7 @@ public class CGIARProviderTest {
     @BeforeEach
     public void setUp() {
         instance = new CGIARProvider(tempDir.toString());
+        instance.init();
     }
 
     @AfterEach

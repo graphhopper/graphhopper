@@ -27,6 +27,7 @@ import com.graphhopper.routing.weighting.SpeedWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.search.KVStorage;
 import com.graphhopper.storage.*;
+import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.*;
@@ -1114,6 +1115,27 @@ public class QueryGraphTest {
         assertEquals(1, virtualEdges.get(1).getDistance_mm());
         assertEquals(originalDistance - 1, virtualEdges.get(2).getDistance_mm());
         assertEquals(originalDistance - 1, virtualEdges.get(3).getDistance_mm());
+    }
+
+    @Test
+    public void testEleInterpolation() {
+        g = new BaseGraph.Builder(encodingManager).set3D(true).create();
+        g.edge(0, 1);
+
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(0, 40.0000, 10.0000, 300.0);
+        na.setNode(1, 40.0005, 10.0005, 500.0);
+
+        LocationIndex index = new LocationIndexTree(g, g.getDirectory()).prepareIndex();
+        Snap snap1 = index.findClosest(40.0002, 10.0002, EdgeFilter.ALL_EDGES);
+        Snap snap2 = index.findClosest(40.0003, 10.0003, EdgeFilter.ALL_EDGES);
+        Snap snap3 = index.findClosest(40.0004, 10.0004, EdgeFilter.ALL_EDGES);
+
+        QueryGraph queryGraph = lookup(Arrays.asList(snap1, snap2, snap3));
+        // we expect linear elevation interpolation between the adjacent points
+        assertEquals(300 + 0.4 * 200, queryGraph.getNodeAccess().getEle(g.getNodes() + 0), 1.e-1);
+        assertEquals(300 + 0.6 * 200, queryGraph.getNodeAccess().getEle(g.getNodes() + 1), 1.e-1);
+        assertEquals(300 + 0.8 * 200, queryGraph.getNodeAccess().getEle(g.getNodes() + 2), 1.e-1);
     }
 
     private QueryGraph lookup(Snap res) {

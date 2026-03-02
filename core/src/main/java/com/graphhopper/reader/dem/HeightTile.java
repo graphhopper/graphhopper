@@ -100,9 +100,9 @@ public class HeightTile {
         double deltaLat = lat - minLat;
         double deltaLon = lon - minLon;
         if (deltaLat > latHigherBound || deltaLat < lowerBound)
-            logger.error("latitude not in boundary of this file:" + lat + "," + lon + ", this:" + this.toString());
+            throw new IllegalStateException("latitude not in boundary of this file:" + lat + "," + lon + ", this:" + this.toString());
         if (deltaLon > lonHigherBound || deltaLon < lowerBound)
-            logger.error("longitude not in boundary of this file:" + lat + "," + lon + ", this:" + this.toString());
+            throw new IllegalStateException("longitude not in boundary of this file:" + lat + "," + lon + ", this:" + this.toString());
 
         double elevation;
         if (interpolate) {

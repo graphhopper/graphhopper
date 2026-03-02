@@ -132,7 +132,6 @@ public class HeightTileTest {
         assertEquals(70, instance.getHeight(-18, -19), 1e-3);
     }
 
-    @Disabled
     @Test
     public void testOutOfBoundsPositiveCoordsThrowsException() {
         int width = 10;
@@ -161,7 +160,6 @@ public class HeightTileTest {
         });
     }
 
-    @Disabled
     @Test
     public void testOutOfBoundsNegativeCoordsThrowsException() {
         int width = 10;

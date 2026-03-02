@@ -24,6 +24,8 @@ However after the import, for serving the routing requests GCs like ZGC or Shena
 They can be enabled with `-XX:+UseZGC` or `-XX:+UseShenandoahGC`. Please note that especially ZGC and G1 require quite a
 bit memory additionally to the heap and so sometimes overall speed could be increased when lowering the `Xmx` value.
 
+We do not recommend the default G1 GC for GraphHopper, as without careful alignment of the segment size in DataAccess (`graph.dataaccess.segment_size`) and the heap region size, G1's humongous allocations can waste large amounts of memory on filler objects. See for example: https://www.oracle.com/technical-resources/articles/java/g1gc.html 
+
 If you want to support none-CH requests you should consider enabling landmarks or limit requests to a
 certain distance via `routing.non_ch.max_waypoint_distance` (in meter, default is 1) or
 to a node count via `routing.max_visited_nodes`.

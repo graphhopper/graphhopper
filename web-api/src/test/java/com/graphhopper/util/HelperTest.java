@@ -37,8 +37,8 @@ public class HelperTest {
         assertEquals(0, Helper.uIntToEle(Helper.eleToUInt(0)), .1);
         assertEquals(-432.3, Helper.uIntToEle(Helper.eleToUInt(-432.3)), .1);
 
-        assertEquals(Double.MAX_VALUE, Helper.uIntToEle(Helper.eleToUInt(11_000)));
-        assertEquals(Double.MAX_VALUE, Helper.uIntToEle(Helper.eleToUInt(Double.MAX_VALUE)));
+        assertEquals(Helper.ELE_UNKNOWN, Helper.uIntToEle(Helper.eleToUInt(11_000)));
+        assertEquals(Helper.ELE_UNKNOWN, Helper.uIntToEle(Helper.eleToUInt(Helper.ELE_UNKNOWN)));
 
         assertEquals(0, Helper.eleToUInt(-1100));
 

@@ -1,14 +1,12 @@
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EdgeIntAccess;
-import com.graphhopper.routing.util.parsers.TagParser;
-import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.Graph;
 import com.graphhopper.util.DistanceCalcEarth;
+import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.PointList;
 
-public class SlopeCalculator implements TagParser {
+public class SlopeCalculator {
     private final DecimalEncodedValue maxSlopeEnc;
     private final DecimalEncodedValue averageSlopeEnc;
     // the elevation data fluctuates a lot and so the slope is not that precise for short edges.
@@ -19,36 +17,37 @@ public class SlopeCalculator implements TagParser {
         this.averageSlopeEnc = averageEnc;
     }
 
-    @Override
-    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
-        PointList pointList = way.getTag("point_list", null);
-        if (pointList != null) {
-            if (pointList.isEmpty() || !pointList.is3D()) {
+    public void execute(Graph graph) {
+        AllEdgesIterator iter = graph.getAllEdges();
+        while (iter.next()) {
+            PointList pointList = iter.fetchWayGeometry(FetchMode.ALL);
+            if (!pointList.is3D())
+                throw new IllegalArgumentException("Cannot calculate slope for 2D PointList " + pointList);
+            if (pointList.isEmpty()) {
                 if (maxSlopeEnc != null)
-                    maxSlopeEnc.setDecimal(false, edgeId, edgeIntAccess, 0);
+                    iter.set(maxSlopeEnc, 0);
                 if (averageSlopeEnc != null)
-                    averageSlopeEnc.setDecimal(false, edgeId, edgeIntAccess, 0);
-                return;
+                    iter.set(averageSlopeEnc, 0);
+                continue;
             }
             // Calculate 2d distance, although pointList might be 3D.
-            // This calculation is a bit expensive and edge_distance is available already, but this would be in 3D
             double distance2D = DistanceCalcEarth.calcDistance(pointList, false);
             if (distance2D < MIN_LENGTH) {
                 if (averageSlopeEnc != null)
-                    // default is minimum of average_slope is negative so we have to explicitly set it to 0
-                    averageSlopeEnc.setDecimal(false, edgeId, edgeIntAccess, 0);
-                return;
+                    // default minimum of average_slope is negative so we have to explicitly set it to 0
+                    iter.set(averageSlopeEnc, 0);
+                continue;
             }
 
             double towerNodeSlope = calcSlope(pointList.getEle(pointList.size() - 1) - pointList.getEle(0), distance2D);
             if (Double.isNaN(towerNodeSlope))
-                throw new IllegalArgumentException("average_slope was NaN for OSM way ID " + way.getId());
+                throw new IllegalArgumentException("average_slope was NaN for edge " + iter.getEdge() + " " + pointList);
 
             if (averageSlopeEnc != null) {
                 if (towerNodeSlope >= 0)
-                    averageSlopeEnc.setDecimal(false, edgeId, edgeIntAccess, Math.min(towerNodeSlope, averageSlopeEnc.getMaxStorableDecimal()));
+                    iter.set(averageSlopeEnc, Math.min(towerNodeSlope, averageSlopeEnc.getMaxStorableDecimal()));
                 else
-                    averageSlopeEnc.setDecimal(true, edgeId, edgeIntAccess, Math.min(Math.abs(towerNodeSlope), averageSlopeEnc.getMaxStorableDecimal()));
+                    iter.setReverse(averageSlopeEnc, Math.min(Math.abs(towerNodeSlope), averageSlopeEnc.getMaxStorableDecimal()));
             }
 
             if (maxSlopeEnc != null) {
@@ -67,23 +66,18 @@ public class SlopeCalculator implements TagParser {
                     prevLon = pointList.getLon(i);
                 }
 
-                // For tunnels and bridges we cannot trust the pillar node elevation and ignore all changes.
-                // Probably we should somehow recalculate even the average_slope after elevation interpolation? See EdgeElevationInterpolator
-                if (way.hasTag("tunnel", "yes") || way.hasTag("bridge", "yes") || way.hasTag("highway", "steps"))
-                    maxSlope = towerNodeSlope;
-                else
-                    maxSlope = Math.abs(towerNodeSlope) > Math.abs(maxSlope) ? towerNodeSlope : maxSlope;
+                maxSlope = Math.abs(towerNodeSlope) > Math.abs(maxSlope) ? towerNodeSlope : maxSlope;
 
                 if (Double.isNaN(maxSlope))
-                    throw new IllegalArgumentException("max_slope was NaN for OSM way ID " + way.getId());
+                    throw new IllegalArgumentException("max_slope was NaN for edge " + iter.getEdge() + " " + pointList);
 
                 double val = Math.max(maxSlope, maxSlopeEnc.getMinStorableDecimal());
-                maxSlopeEnc.setDecimal(false, edgeId, edgeIntAccess, Math.min(maxSlopeEnc.getMaxStorableDecimal(), val));
+                iter.set(maxSlopeEnc, Math.min(maxSlopeEnc.getMaxStorableDecimal(), val));
             }
         }
     }
 
-    static double calcSlope(double eleDelta, double distance2D) {
+    private static double calcSlope(double eleDelta, double distance2D) {
         return eleDelta * 100 / distance2D;
     }
 }

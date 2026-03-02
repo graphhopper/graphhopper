@@ -1,6 +1,8 @@
 ### 12.0 [not yet released]
 
 - weightings are now expected to return whole numbers, the built-in weightings (most importantly CustomWeighting) now return x10 their previous value (#xxx) 
+- the default value for `graph.elevation.clear` changed to false as is much better when the cached tiles can be reused
+- artificial tag way_distance does no longer include the elevation => renamed to way_distance_2d
 - new edge.getDistance_mm/setDistance_mm methods for exact millimeter distances; distance accumulation now uses exact long arithmetic instead of lossy double summation (#3286)
 - OSMReader no longer sets the artificial speed_from_duration tag but instead uses duration_in_seconds, when the duration tag is present (#3266)
 - country rules were moved into parsers and are now enabled by default
