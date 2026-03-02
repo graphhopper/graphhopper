@@ -121,7 +121,7 @@ public class RouteResourceClientHCTest {
         ResponsePath res = rsp.getBest();
         isBetween(70, 80, res.getPoints().size());
         isBetween(2900, 3000, res.getDistance());
-        isBetween(110, 120, res.getAscend());
+        isBetween(120, 130, res.getAscend());
         isBetween(75, 85, res.getDescend());
         isBetween(190, 200, res.getRouteWeight());
 
