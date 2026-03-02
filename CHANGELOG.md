@@ -1,6 +1,6 @@
 ### 12.0 [not yet released]
 
-- weightings are now expected to return whole numbers, the built-in weightings (most importantly CustomWeighting) now return x10 their previous value (#xxx) 
+- weightings are now expected to return whole numbers, the built-in weightings (most importantly CustomWeighting) now return x10 their previous value (#3297) 
 - the default value for `graph.elevation.clear` changed to false as is much better when the cached tiles can be reused
 - artificial tag way_distance does no longer include the elevation => renamed to way_distance_2d
 - new edge.getDistance_mm/setDistance_mm methods for exact millimeter distances; distance accumulation now uses exact long arithmetic instead of lossy double summation (#3286)
