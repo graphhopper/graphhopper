@@ -1129,7 +1129,7 @@ public class CHTurnCostTest {
     }
 
     private void checkPath(IntArrayList expectedPath, int expectedEdgeWeight, int expectedTurnCosts, int from, int to, int[] contractionOrder) {
-        // todonow: move out x10
+        // todo: move out x10
         checkPathUsingDijkstra(expectedPath, expectedEdgeWeight * 10, expectedTurnCosts * 10, from, to);
         checkPathUsingCH(expectedPath, expectedEdgeWeight * 10, expectedTurnCosts * 10, from, to, contractionOrder);
     }
@@ -1138,7 +1138,7 @@ public class CHTurnCostTest {
         Path dijkstraPath = findPathUsingDijkstra(from, to);
         int expectedWeight = expectedEdgeWeight + expectedTurnCosts;
         int expectedDistance = expectedEdgeWeight;
-        // todonow: move out x10
+        // todo: move out x10
         int expectedTime = (expectedEdgeWeight / 10 + expectedTurnCosts / 10) * 1000;
         assertEquals(expectedPath, dijkstraPath.calcNodes(), "Normal Dijkstra did not find expected path.");
         assertEquals(expectedWeight, dijkstraPath.getWeight(), 1.e-6, "Normal Dijkstra did not calculate expected weight.");
@@ -1150,7 +1150,7 @@ public class CHTurnCostTest {
         Path chPath = findPathUsingCH(from, to, contractionOrder);
         int expectedWeight = expectedEdgeWeight + expectedTurnCosts;
         int expectedDistance = expectedEdgeWeight;
-        // todonow: move out x10
+        // todo: move out x10
         int expectedTime = (expectedEdgeWeight / 10 + expectedTurnCosts / 10) * 1000;
         assertEquals(expectedPath, chPath.calcNodes(), "Contraction Hierarchies did not find expected path. contraction order=" + Arrays.toString(contractionOrder));
         assertEquals(expectedWeight, chPath.getWeight(), 1.e-6, "Contraction Hierarchies did not calculate expected weight.");

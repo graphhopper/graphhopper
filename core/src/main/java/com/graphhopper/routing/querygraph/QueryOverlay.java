@@ -142,7 +142,7 @@ class QueryOverlay {
             // penalize the virtual edges that are outside the area. This means that the sum of the
             // virtual edges' weights does not equal the weight of the original edge.
             adjustValues(virtualWeightsLong, (long) originalWeight, 1);
-            adjustValues(virtualTimes, originalTime, 200);
+            adjustValues(virtualTimes, originalTime, 20);
             for (int i = 0; i < c.value.size(); i++) {
                 weights.put(c.value.get(i).getEdgeKey(), virtualWeightsLong.get(i));
                 times.put(c.value.get(i).getEdgeKey(), virtualTimes.get(i));

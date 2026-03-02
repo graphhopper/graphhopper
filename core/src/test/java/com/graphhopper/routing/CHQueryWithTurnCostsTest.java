@@ -85,7 +85,7 @@ public class CHQueryWithTurnCostsTest {
 
         private void addShortcut(int from, int to, int firstOrigEdgeKey, int lastOrigEdgeKey, int skipped1, int skipped2, double weight, boolean reverse) {
             int flags = reverse ? PrepareEncoder.getScBwdDir() : PrepareEncoder.getScFwdDir();
-            // todonow: move x10 out of here
+            // todo: move x10 out of here
             chBuilder.addShortcutEdgeBased(from, to, flags, 10 * weight, skipped1, skipped2, firstOrigEdgeKey, lastOrigEdgeKey);
         }
 
@@ -118,7 +118,7 @@ public class CHQueryWithTurnCostsTest {
         }
 
         private void testPathCalculation(int from, int to, int expectedEdgeWeight, IntArrayList expectedNodes, int expectedTurnCost) {
-            // todonow: move x10 out of here
+            // todo: move x10 out of here
             int expectedWeight = expectedEdgeWeight * 10 + expectedTurnCost * 10;
             int expectedDistance = expectedEdgeWeight * 10;
             int expectedTime = (expectedEdgeWeight + expectedTurnCost) * 1000;
