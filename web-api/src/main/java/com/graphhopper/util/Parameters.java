@@ -138,6 +138,11 @@ public class Parameters {
         public static final String CURBSIDE_LEFT = "left";
         public static final String CURBSIDE_RIGHT = "right";
         public static final String CURBSIDE_ANY = "any";
+        /**
+         * This option automatically avoids crossing the street for bigger roads (PRIMARY, SECONDARY)
+         * i.e. forces 'right' for right-hand traffic.
+         */
+        public static final String CURBSIDE_AUTO = "auto";
     }
 
     /**
