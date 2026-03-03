@@ -75,6 +75,7 @@ public interface Weighting {
     }
 
     static double roundWeight(double w) {
+        if (Double.isNaN(w)) throw new IllegalArgumentException("weights should not be NaN");
         if (w < 0) throw new IllegalArgumentException("weights should be >= 0");
         if (Double.isInfinite(w)) return Double.POSITIVE_INFINITY;
         if (w % 1 != 0 && w < 0.5)

@@ -421,6 +421,7 @@ public class CHStorage {
     }
 
     private int weightFromDouble(double weight) {
+        if (Double.isInfinite(weight) || Double.isNaN(weight)) throw new IllegalArgumentException("weight should not be: " + weight);
         if (weight < 0)
             throw new IllegalArgumentException("weight cannot be negative but was " + weight);
         if (weight % 1 != 0)
