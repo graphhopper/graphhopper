@@ -445,22 +445,6 @@ public class CHStorage {
         return weightLong;
     }
 
-    public static class LowWeightShortcut {
-        int nodeA;
-        int nodeB;
-        int shortcut;
-        double weight;
-        double minWeight;
-
-        public LowWeightShortcut(int nodeA, int nodeB, int shortcut, double weight, double minWeight) {
-            this.nodeA = nodeA;
-            this.nodeB = nodeB;
-            this.shortcut = shortcut;
-            this.weight = weight;
-            this.minWeight = minWeight;
-        }
-    }
-
     public static class HighWeightShortcut {
         int nodeA;
         int nodeB;
