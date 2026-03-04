@@ -179,11 +179,9 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("tracktype", "grade5");
         assertEquals(4, getSpeedFromFlags(way), 0.01);
 
-        way.setTag("smoothness", "bad");
-        assertEquals(MIN_SPEED, getSpeedFromFlags(way), 0.01);
-
+        // ignore smoothness if tracktype is set
         way.setTag("smoothness", "impassable");
-        assertEquals(MIN_SPEED, getSpeedFromFlags(way), 0.01);
+        assertEquals(4, getSpeedFromFlags(way), 0.01);
     }
 
     @Test

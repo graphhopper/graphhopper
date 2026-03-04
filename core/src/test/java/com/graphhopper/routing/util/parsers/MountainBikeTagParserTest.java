@@ -116,19 +116,18 @@ public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("surface", "ground");
         assertEquals(14, getSpeedFromFlags(way), 0.01);
 
+        // ignored smoothness if surface is set
         way.setTag("smoothness", "bad");
-        assertEquals(10, getSpeedFromFlags(way), 0.01);
+        assertEquals(14, getSpeedFromFlags(way), 0.01);
 
         way.clearTags();
         way.setTag("highway", "track");
         way.setTag("tracktype", "grade4");
         assertEquals(8, getSpeedFromFlags(way), 0.01);
 
-        way.setTag("smoothness", "bad");
-        assertEquals(6, getSpeedFromFlags(way), 0.01);
-
+        // ignored smoothness if surface is set
         way.setTag("smoothness", "impassable");
-        assertEquals(MIN_SPEED, getSpeedFromFlags(way), 0.01);
+        assertEquals(8, getSpeedFromFlags(way), 0.01);
     }
 
     // Issue 407 : Always block kissing_gate except for mountainbikes

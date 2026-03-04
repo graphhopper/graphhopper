@@ -183,7 +183,7 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("highway", "footway");
         way.setTag("tracktype", "grade4");
         way.setTag("bicycle", "designated");
-        assertPriorityAndSpeed(VERY_NICE, 6, way);
+        assertPriorityAndSpeed(VERY_NICE, 10, way);
 
         way.clearTags();
         way.setTag("highway", "steps");
@@ -262,7 +262,7 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("highway", "path");
         way.setTag("bicycle", "designated");
         way.setTag("tracktype", "grade4");
-        assertPriorityAndSpeed(VERY_NICE, 6, way);
+        assertPriorityAndSpeed(VERY_NICE, 10, way);
 
         way.clearTags();
         way.setTag("highway", "cycleway");
@@ -320,12 +320,12 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
 
         way.setTag("highway", "track");
         way.setTag("tracktype", "grade2");
-        assertPriorityAndSpeed(UNCHANGED, 12, way);
+        assertPriorityAndSpeed(UNCHANGED, 14, way);
 
         // test speed for allowed get off the bike types
         way.setTag("highway", "track");
         way.setTag("bicycle", "yes");
-        assertPriorityAndSpeed(UNCHANGED, 12, way);
+        assertPriorityAndSpeed(UNCHANGED, 14, way);
 
         way.clearTags();
         way.setTag("highway", "track");
@@ -372,16 +372,19 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         assertEquals(10, getSpeedFromFlags(way), 0.01);
 
         way.setTag("smoothness", "bad");
-        assertEquals(8, getSpeedFromFlags(way), 0.01);
+        assertEquals(10, getSpeedFromFlags(way), 0.01);
 
         way.clearTags();
         way.setTag("highway", "track");
         way.setTag("tracktype", "grade5");
         assertEquals(4, getSpeedFromFlags(way), 0.01);
 
-        way.setTag("smoothness", "bad");
-        assertEquals(2, getSpeedFromFlags(way), 0.01);
+        // ignore smoothness
+        way.setTag("smoothness", "impassable");
+        assertEquals(PUSHING_SECTION_SPEED, getSpeedFromFlags(way), 0.01);
 
+        way.clearTags();
+        way.setTag("highway", "track");
         way.setTag("smoothness", "impassable");
         assertEquals(MIN_SPEED, getSpeedFromFlags(way), 0.01);
     }
