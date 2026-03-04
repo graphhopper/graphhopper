@@ -376,15 +376,16 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
 
         way.clearTags();
         way.setTag("highway", "track");
-        way.setTag("tracktype", "grade5");
-        assertEquals(4, getSpeedFromFlags(way), 0.01);
+        way.setTag("tracktype", "grade4");
+        assertEquals(10, getSpeedFromFlags(way), 0.01);
 
-        // ignore smoothness
-        way.setTag("smoothness", "impassable");
-        assertEquals(PUSHING_SECTION_SPEED, getSpeedFromFlags(way), 0.01);
+        // pick smallest
+        way.setTag("smoothness", "intermediate");
+        assertEquals(10, getSpeedFromFlags(way), 0.01);
 
-        way.clearTags();
-        way.setTag("highway", "track");
+        way.setTag("smoothness", "bad");
+        assertEquals(8, getSpeedFromFlags(way), 0.01);
+
         way.setTag("smoothness", "impassable");
         assertEquals(MIN_SPEED, getSpeedFromFlags(way), 0.01);
     }
