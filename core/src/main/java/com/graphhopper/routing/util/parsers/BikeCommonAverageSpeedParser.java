@@ -170,14 +170,15 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
                         // if explicitly allowed then allow speeds above limit to get more realistic routes and ETAs
                         speed = bikeDesignated ? Math.max(speed, 12) : Math.max(speed, 10);
             }
+
+            // speed reduction if bad surface
+            if (surfaceSpeed != null)
+                speed = Math.min(surfaceSpeed, speed);
+
+            Smoothness smoothness = smoothnessEnc.getEnum(false, edgeId, edgeIntAccess);
+            speed = Math.max(MIN_SPEED, smoothnessFactor.get(smoothness) * speed);
         }
 
-        // speed reduction if bad surface
-        if (surfaceSpeed != null)
-            speed = Math.min(surfaceSpeed, speed);
-
-        Smoothness smoothness = smoothnessEnc.getEnum(false, edgeId, edgeIntAccess);
-        speed = Math.max(MIN_SPEED, smoothnessFactor.get(smoothness) * speed);
         setSpeed(false, edgeId, edgeIntAccess, applyMaxSpeed(way, speed, false));
         if (avgSpeedEnc.isStoreTwoDirections())
             setSpeed(true, edgeId, edgeIntAccess, applyMaxSpeed(way, speed, true));

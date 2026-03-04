@@ -106,6 +106,14 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("bicycle", "dismount");
         assertPriorityAndSpeed(AVOID, PUSHING_SECTION_SPEED, way);
 
+        // if already pushing the bike the surface should not matter much
+        way.clearTags();
+        way.setTag("highway", "path");
+        way.setTag("bicycle", "dismount");
+        way.setTag("smoothness", "bad");
+        way.setTag("surface", "fine_gravel");
+        assertPriorityAndSpeed(SLIGHT_AVOID, PUSHING_SECTION_SPEED, way);
+
         way.clearTags();
         way.setTag("highway", "primary");
         way.setTag("surface", "fine_gravel");
@@ -377,7 +385,7 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.clearTags();
         way.setTag("highway", "track");
         way.setTag("tracktype", "grade5");
-        assertEquals(4, getSpeedFromFlags(way), 0.01);
+        assertEquals(PUSHING_SECTION_SPEED, getSpeedFromFlags(way), 0.01);
 
         way.setTag("smoothness", "bad");
         assertEquals(2, getSpeedFromFlags(way), 0.01);

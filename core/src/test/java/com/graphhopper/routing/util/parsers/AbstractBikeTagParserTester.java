@@ -30,6 +30,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static com.graphhopper.routing.util.PriorityCode.*;
+import static com.graphhopper.routing.util.parsers.BikeCommonAverageSpeedParser.PUSHING_SECTION_SPEED;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -288,7 +289,7 @@ public abstract class AbstractBikeTagParserTester {
         int edgeId = 0;
         accessParser.handleWayTags(edgeId, intAccess, way, null);
         speedParser.handleWayTags(edgeId, intAccess, way, null);
-        assertEquals(4.0, avgSpeedEnc.getDecimal(false, edgeId, intAccess));
+        assertEquals(PUSHING_SECTION_SPEED, avgSpeedEnc.getDecimal(false, edgeId, intAccess));
         assertTrue(accessEnc.getBool(false, edgeId, intAccess));
 
         way = new ReaderWay(1);
@@ -298,7 +299,7 @@ public abstract class AbstractBikeTagParserTester {
         assertTrue(accessEnc.getBool(false, edgeId, intAccess));
 
         speedParser.handleWayTags(edgeId, intAccess, way, null);
-        assertEquals(4, avgSpeedEnc.getDecimal(false, edgeId, intAccess));
+        assertEquals(PUSHING_SECTION_SPEED, avgSpeedEnc.getDecimal(false, edgeId, intAccess));
 
         way = new ReaderWay(1);
         way.setTag("highway", "track");
@@ -348,7 +349,7 @@ public abstract class AbstractBikeTagParserTester {
         assertPriorityAndSpeed(PREFER, 12, way);
 
         way.setTag("service", "parking_aisle");
-        assertPriorityAndSpeed(SLIGHT_AVOID, 4, way);
+        assertPriorityAndSpeed(SLIGHT_AVOID, PUSHING_SECTION_SPEED, way);
         way.setTag("bicycle", "designated");
         assertPriorityAndSpeed(VERY_NICE, 12, way);
     }
