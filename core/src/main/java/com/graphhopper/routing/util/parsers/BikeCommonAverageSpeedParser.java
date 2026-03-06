@@ -31,9 +31,9 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         this.smoothnessEnc = smoothnessEnc;
 
         setTrackTypeSpeed("grade1", 18); // paved
-        setTrackTypeSpeed("grade2", 12); // now unpaved ...
-        setTrackTypeSpeed("grade3", 8);
-        setTrackTypeSpeed("grade4", 6);
+        setTrackTypeSpeed("grade2", 14); // like compacted
+        setTrackTypeSpeed("grade3", 12); // like unpaved
+        setTrackTypeSpeed("grade4", 10); // better than grass, more like dirt ("hard or compacted materials mixed in")
         setTrackTypeSpeed("grade5", PUSHING_SECTION_SPEED); // like sand
 
         setSurfaceSpeed("paved", 18);
@@ -166,18 +166,22 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
                     else if (bikeAllowed)
                         speed = Math.max(speed, 12);
                 case "living_street":
-                    if(bikeAllowed)
+                    if (bikeAllowed)
                         // if explicitly allowed then allow speeds above limit to get more realistic routes and ETAs
                         speed = bikeDesignated ? Math.max(speed, 12) : Math.max(speed, 10);
             }
+
+            double smoothSpeed = smoothnessFactor.get(smoothnessEnc.getEnum(false, edgeId, edgeIntAccess)) * speed;
+
+            // speed reduction if bad surface
+            if (surfaceSpeed != null) {
+                // pick the smallest of smoothness<->surface, if both are present
+                speed = Math.max(MIN_SPEED, Math.min(Math.min(surfaceSpeed, speed), smoothSpeed));
+            } else {
+                speed = Math.max(MIN_SPEED, smoothSpeed);
+            }
         }
 
-        // speed reduction if bad surface
-        if (surfaceSpeed != null)
-            speed = Math.min(surfaceSpeed, speed);
-
-        Smoothness smoothness = smoothnessEnc.getEnum(false, edgeId, edgeIntAccess);
-        speed = Math.max(MIN_SPEED, smoothnessFactor.get(smoothness) * speed);
         setSpeed(false, edgeId, edgeIntAccess, applyMaxSpeed(way, speed, false));
         if (avgSpeedEnc.isStoreTwoDirections())
             setSpeed(true, edgeId, edgeIntAccess, applyMaxSpeed(way, speed, true));
