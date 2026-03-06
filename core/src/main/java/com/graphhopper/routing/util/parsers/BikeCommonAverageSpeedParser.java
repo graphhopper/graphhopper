@@ -171,11 +171,11 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
                         speed = bikeDesignated ? Math.max(speed, 12) : Math.max(speed, 10);
             }
 
-            // pick the smallest of smoothness<->surface, if both are present
             double smoothSpeed = smoothnessFactor.get(smoothnessEnc.getEnum(false, edgeId, edgeIntAccess)) * speed;
 
             // speed reduction if bad surface
             if (surfaceSpeed != null) {
+                // pick the smallest of smoothness<->surface, if both are present
                 speed = Math.max(MIN_SPEED, Math.min(Math.min(surfaceSpeed, speed), smoothSpeed));
             } else {
                 speed = Math.max(MIN_SPEED, smoothSpeed);

@@ -116,7 +116,7 @@ public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("surface", "ground");
         assertEquals(14, getSpeedFromFlags(way), 0.01);
 
-        // pick smallest
+        // pick smallest of highway, tracktype, and applied smoothness speed
         way.setTag("smoothness", "bad");
         assertEquals(12, getSpeedFromFlags(way), 0.01);
 
