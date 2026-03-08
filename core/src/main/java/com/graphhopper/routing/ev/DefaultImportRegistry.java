@@ -162,6 +162,11 @@ public class DefaultImportRegistry implements ImportRegistry {
                     (lookup, props) -> new OSMFootwayParser(
                             lookup.getEnumEncodedValue(Footway.KEY, Footway.class))
             );
+        else if (Cycleway.KEY.equals(name))
+            return ImportUnit.create(name, props -> Cycleway.create(),
+                    (lookup, props) -> new OSMCyclewayParser(
+                            lookup.getEnumEncodedValue(Cycleway.KEY, Cycleway.class))
+            );
         else if (OSMWayID.KEY.equals(name))
             return ImportUnit.create(name, props -> OSMWayID.create(),
                     (lookup, props) -> new OSMWayIDParser(

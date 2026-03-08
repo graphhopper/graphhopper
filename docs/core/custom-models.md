@@ -78,6 +78,9 @@ encoded values are the following (some of their possible values are given in bra
 - road_environment: (ROAD, FERRY, BRIDGE, TUNNEL, ...)
 - road_access: (DESTINATION, DELIVERY, PRIVATE, NO, ...)
 - surface: (PAVED, DIRT, SAND, GRAVEL, ...)
+- cycleway: (TRACK, LANE, SHARED_LANE, SHOULDER, SEPARATE, NO, ...). Stores two directions:
+  cycleway:right maps to forward, cycleway:left to reverse. The deprecated opposite_lane/opposite_track values are
+  stored as LANE/TRACK in the reverse direction.
 - smoothness: (EXCELLENT, GOOD, INTERMEDIATE, ...)
 - toll: (MISSING, NO, HGV, ALL)
 - bike_network, foot_network: (MISSING, INTERNATIONAL, NATIONAL, REGIONAL, LOCAL, OTHER)
