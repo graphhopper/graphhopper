@@ -50,6 +50,7 @@ public class PathMerger {
     private final Weighting weighting;
 
     private boolean enableInstructions = true;
+    private boolean enableViaPointInstructions = true;
     private boolean simplifyResponse = true;
     private RamerDouglasPeucker ramerDouglasPeucker = RDP;
     private boolean calcPoints = true;
@@ -85,6 +86,11 @@ public class PathMerger {
 
     public PathMerger setEnableInstructions(boolean enableInstructions) {
         this.enableInstructions = enableInstructions;
+        return this;
+    }
+
+    public PathMerger setEnableViaPointInstructions(boolean enableViaPointInstructions) {
+        this.enableViaPointInstructions = enableViaPointInstructions;
         return this;
     }
 
@@ -205,6 +211,11 @@ public class PathMerger {
             }
 
             if (instruction.getSign() == Instruction.REACHED_VIA) {
+                if(!enableViaPointInstructions) {
+                    instructions.remove(i);
+                    i--;
+                    continue;
+                }
                 nextInstruction = instructions.get(i + 1);
                 if (nextInstruction.getSign() != Instruction.CONTINUE_ON_STREET
                         || !instruction.extraInfo.containsKey("last_heading")
