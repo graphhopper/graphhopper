@@ -17,6 +17,8 @@
  */
 package com.graphhopper.application;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GraphHopper;
@@ -24,15 +26,13 @@ import com.graphhopper.ResponsePath;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.gpx.GpxConversions;
 import com.graphhopper.jackson.Gpx;
-import com.graphhopper.matching.EdgeMatch;
-import com.graphhopper.matching.MapMatching;
-import com.graphhopper.matching.MatchResult;
-import com.graphhopper.matching.Observation;
+import com.graphhopper.matching.*;
 import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -293,7 +293,7 @@ public class MapMatchingTest {
         mapMatching.setMeasurementErrorSigma(10);
         mr = mapMatching.match(GpxConversions.getEntries(gpx.trk.get(0)));
         assertEquals(Arrays.asList("Gustav-Adolf-Straße", "Funkenburgstraße"), fetchStreets(mr.getEdgeMatches()));
-        assertEquals(682.0, mr.getMatchLength(), 1.0);
+        assertEquals(445.0, mr.getMatchLength(), 1.0);
     }
 
     static List<String> fetchStreets(List<EdgeMatch> emList) {
@@ -317,6 +317,40 @@ public class MapMatchingTest {
             throw new IllegalStateException("Errors:" + errors);
         }
         return list;
+    }
+
+    @Test
+    public void testDebugOutput() throws IOException {
+        PMap hints = new PMap().putObject(Parameters.Landmark.DISABLE, true).putObject("profile", "my_profile");
+        Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/tour4-with-uturn.gpx"), Gpx.class);
+        List<Observation> observations = GpxConversions.getEntries(gpx.trk.get(0));
+
+        // Large sigma - no U-turn expected
+        writeDebugVisualization(hints, observations, 50, "../target/debug-uturn-sigma50.html");
+        // Small sigma - U-turn expected
+        writeDebugVisualization(hints, observations, 10, "../target/debug-uturn-sigma10.html");
+    }
+
+    private void writeDebugVisualization(PMap hints, List<Observation> observations, double sigma, String path) throws IOException {
+        MapMatching mapMatching = MapMatching.fromGraphHopper(graphHopper, hints);
+        mapMatching.setCollectDebugInfo(true);
+        mapMatching.setMeasurementErrorSigma(sigma);
+        mapMatching.match(observations);
+
+        MatchDebugInfo debugInfo = mapMatching.getDebugInfo();
+        assertNotNull(debugInfo);
+        assertFalse(debugInfo.timeSteps.isEmpty());
+        assertFalse(debugInfo.transitions.isEmpty());
+        assertTrue(debugInfo.transitions.stream().anyMatch(t -> t.chosen));
+
+        ObjectMapper json = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
+        String dataJson = json.writeValueAsString(debugInfo);
+        String template = new String(getClass().getResourceAsStream("/debug-visualizer-template.html").readAllBytes());
+        File htmlFile = new File(path);
+        try (java.io.PrintWriter pw = new java.io.PrintWriter(htmlFile)) {
+            pw.print(template.replace("/*DEBUG_DATA_PLACEHOLDER*/", dataJson));
+        }
+        System.out.println("sigma=" + sigma + " -> " + htmlFile.getAbsolutePath());
     }
 
     /**

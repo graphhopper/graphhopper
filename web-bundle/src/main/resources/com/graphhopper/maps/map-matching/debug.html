@@ -1,0 +1,370 @@
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>MapMatching Debug Visualizer</title>
+    <script type="text/javascript" src="/webjars/jquery/2.2.3/jquery.min.js"></script>
+    <script src="/webjars/leaflet/1.5.1/leaflet.js"></script>
+    <link rel="stylesheet" href="/webjars/leaflet/1.5.1/leaflet.css"/>
+    <script type="text/javascript" src='js/togeojson.js'></script>
+    <script type="text/javascript" src='js/GHUtil.js'></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 13px; }
+        #map { position: absolute; top: 0; left: 300px; right: 0; bottom: 0; }
+        #sidebar { position: absolute; top: 0; left: 0; width: 300px; bottom: 0; overflow-y: auto;
+                   background: #f8f8f8; border-right: 1px solid #ccc; padding: 10px; }
+        #sidebar h2 { font-size: 15px; margin-bottom: 8px; }
+        #sidebar h3 { font-size: 13px; margin: 10px 0 4px 0; color: #555; }
+
+        .controls { margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #ddd; }
+        .controls label { display: block; margin: 4px 0; cursor: pointer; }
+        .controls input[type=file] { margin: 6px 0; }
+
+        .timestep { padding: 6px 8px; margin: 2px 0; border-radius: 4px; cursor: pointer; }
+        .timestep:hover { background: #e0e0e0; }
+        .timestep.active { background: #d0e8ff; }
+        .candidate { padding: 2px 8px 2px 16px; font-size: 12px; color: #444; }
+        .candidate.chosen { font-weight: bold; color: #006600; }
+
+        .info-panel { margin-top: 10px; padding: 8px; background: white; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; }
+        .info-panel dt { font-weight: bold; float: left; width: 140px; }
+        .info-panel dd { margin-left: 145px; margin-bottom: 2px; }
+
+        .legend { margin-top: 10px; font-size: 11px; }
+        .legend-item { display: flex; align-items: center; margin: 2px 0; }
+        .legend-dot { width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; flex-shrink: 0; }
+        .legend-line { width: 20px; height: 3px; margin-right: 6px; flex-shrink: 0; }
+
+        #load-section { margin-bottom: 10px; }
+        #load-section select, #load-section input { width: 100%; margin: 3px 0; }
+        button { padding: 4px 10px; cursor: pointer; }
+    </style>
+</head>
+<body>
+<div id="sidebar">
+    <h2>MapMatching Debug</h2>
+
+    <div class="controls" id="load-section">
+        <b>Load debug data:</b><br>
+        <div style="margin-top:6px;">
+            <label>From GPX file (posts to /match?type=debug):</label>
+            <input type="text" value="car" id="vehicle-input" placeholder="profile" style="width:100px;"/>
+            GPS accuracy: <input type="number" value="20" id="accuracy-input" style="width:60px;"/>
+            <input type="file" id="gpx-file-input" accept=".gpx,.xml"/>
+        </div>
+        <div style="margin-top:6px;">
+            <label>From JSON debug dump:</label>
+            <input type="file" id="json-file-input" accept=".json"/>
+        </div>
+    </div>
+
+    <div class="controls">
+        <b>Layers:</b>
+        <label><input type="checkbox" id="show-original" checked/> Original observations</label>
+        <label><input type="checkbox" id="show-filtered" checked/> Filtered observations</label>
+        <label><input type="checkbox" id="show-candidates" checked/> Candidate snaps</label>
+        <label><input type="checkbox" id="show-snap-lines" checked/> Snap lines (obs &rarr; candidate)</label>
+        <label><input type="checkbox" id="show-transitions" /> All transitions</label>
+        <label><input type="checkbox" id="show-chosen-transitions" checked/> Chosen transitions</label>
+        <label><input type="checkbox" id="show-matched-route" checked/> Matched route</label>
+    </div>
+
+    <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#888;"></div> Original GPS points</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#0066ff;"></div> Filtered observations</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#cc0000;"></div> Candidate snaps</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#00cc00; border:2px solid #006600;"></div> Chosen candidates</div>
+        <div class="legend-item"><div class="legend-line" style="background:#cccccc;"></div> All transitions</div>
+        <div class="legend-item"><div class="legend-line" style="background:#00cc00;"></div> Chosen transitions</div>
+        <div class="legend-item"><div class="legend-line" style="background:#0066ff;"></div> Matched route</div>
+    </div>
+
+    <div id="params-panel" class="info-panel" style="display:none;">
+        <h3>Parameters</h3>
+        <dl>
+            <dt>sigma</dt><dd id="p-sigma"></dd>
+            <dt>beta</dt><dd id="p-beta"></dd>
+            <dt>original obs</dt><dd id="p-orig"></dd>
+            <dt>filtered obs</dt><dd id="p-filt"></dd>
+            <dt>transitions</dt><dd id="p-trans"></dd>
+        </dl>
+    </div>
+
+    <h3>Time Steps</h3>
+    <div id="timestep-list"></div>
+
+    <div id="detail-panel" class="info-panel" style="display:none;">
+        <h3 id="detail-title"></h3>
+        <div id="detail-content"></div>
+    </div>
+</div>
+<div id="map"></div>
+
+<script>
+var map = L.map('map').setView([50.9, 13.4], 9);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors',
+    maxZoom: 19
+}).addTo(map);
+
+var layers = {
+    originalObs: L.layerGroup().addTo(map),
+    filteredObs: L.layerGroup().addTo(map),
+    candidates: L.layerGroup().addTo(map),
+    snapLines: L.layerGroup().addTo(map),
+    transitions: L.layerGroup(),
+    chosenTransitions: L.layerGroup().addTo(map),
+    matchedRoute: L.layerGroup().addTo(map),
+    highlight: L.layerGroup().addTo(map)
+};
+
+var debugData = null;
+var activeTimeStep = null;
+
+// Layer toggle checkboxes
+$('#show-original').change(function() { toggleLayer(layers.originalObs, this.checked); });
+$('#show-filtered').change(function() { toggleLayer(layers.filteredObs, this.checked); });
+$('#show-candidates').change(function() { toggleLayer(layers.candidates, this.checked); });
+$('#show-snap-lines').change(function() { toggleLayer(layers.snapLines, this.checked); });
+$('#show-transitions').change(function() { toggleLayer(layers.transitions, this.checked); });
+$('#show-chosen-transitions').change(function() { toggleLayer(layers.chosenTransitions, this.checked); });
+$('#show-matched-route').change(function() { toggleLayer(layers.matchedRoute, this.checked); });
+
+function toggleLayer(layer, show) {
+    if (show) map.addLayer(layer); else map.removeLayer(layer);
+}
+
+// Load from GPX file
+$('#gpx-file-input').on('change', function(e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        var vehicle = $('#vehicle-input').val() || 'car';
+        var accuracy = $('#accuracy-input').val() || 20;
+        $.ajax({
+            url: '/match?profile=' + vehicle + '&gps_accuracy=' + accuracy + '&type=debug',
+            type: 'POST',
+            contentType: 'application/xml',
+            data: e.target.result,
+            timeout: 60000
+        }).done(function(json) {
+            loadDebugData(json);
+        }).fail(function(jqXHR) {
+            alert('Error: ' + (jqXHR.responseJSON ? jqXHR.responseJSON.message : jqXHR.statusText));
+        });
+    };
+    reader.readAsText(file);
+});
+
+// Load from JSON file
+$('#json-file-input').on('change', function(e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        loadDebugData(JSON.parse(e.target.result));
+    };
+    reader.readAsText(file);
+});
+
+function loadDebugData(data) {
+    debugData = data;
+    clearAll();
+    renderData();
+}
+
+function clearAll() {
+    Object.keys(layers).forEach(function(k) { layers[k].clearLayers(); });
+    $('#timestep-list').empty();
+    activeTimeStep = null;
+}
+
+function renderData() {
+    if (!debugData) return;
+    var d = debugData;
+
+    // Params panel
+    $('#p-sigma').text(d.measurementErrorSigma);
+    $('#p-beta').text(d.transitionProbabilityBeta);
+    $('#p-orig').text(d.originalObservations.length);
+    $('#p-filt').text(d.filteredObservations.length);
+    $('#p-trans').text(d.transitions.length);
+    $('#params-panel').show();
+
+    // Original observations
+    var bounds = L.latLngBounds([]);
+    d.originalObservations.forEach(function(pt, i) {
+        L.circleMarker([pt[0], pt[1]], {radius: 3, color: '#888', fillColor: '#888', fillOpacity: 0.5, weight: 1})
+            .bindTooltip('Original #' + i + '<br>' + pt[0].toFixed(6) + ', ' + pt[1].toFixed(6))
+            .addTo(layers.originalObs);
+        bounds.extend([pt[0], pt[1]]);
+    });
+
+    // Filtered observations
+    d.filteredObservations.forEach(function(pt, i) {
+        L.circleMarker([pt[0], pt[1]], {radius: 5, color: '#0066ff', fillColor: '#0066ff', fillOpacity: 0.7, weight: 2})
+            .bindTooltip('Filtered #' + i + '<br>' + pt[0].toFixed(6) + ', ' + pt[1].toFixed(6))
+            .addTo(layers.filteredObs);
+    });
+
+    // Candidates and snap lines
+    d.timeSteps.forEach(function(ts) {
+        var obsLatLng = [ts.observationLat, ts.observationLon];
+        ts.candidates.forEach(function(c) {
+            var candLatLng = [c.snappedLat, c.snappedLon];
+            var color = c.chosen ? '#00cc00' : '#cc0000';
+            var radius = c.chosen ? 6 : 4;
+            var weight = c.chosen ? 3 : 1;
+
+            L.circleMarker(candLatLng, {radius: radius, color: color, fillColor: color, fillOpacity: 0.7, weight: weight})
+                .bindTooltip(candidateTooltip(ts, c))
+                .addTo(layers.candidates);
+
+            // Snap line from observation to candidate
+            var lineColor = c.chosen ? '#00cc00' : '#cc000066';
+            L.polyline([obsLatLng, candLatLng], {color: lineColor, weight: 1, dashArray: '3,3', opacity: 0.6})
+                .addTo(layers.snapLines);
+        });
+    });
+
+    // Transitions
+    d.transitions.forEach(function(t) {
+        if (t.routeGeometry && t.routeGeometry.length > 1) {
+            var latlngs = t.routeGeometry.map(function(pt) { return [pt[0], pt[1]]; });
+            if (t.chosen) {
+                L.polyline(latlngs, {color: '#00cc00', weight: 4, opacity: 0.8})
+                    .bindTooltip(transitionTooltip(t))
+                    .addTo(layers.chosenTransitions);
+            }
+            L.polyline(latlngs, {color: '#999', weight: 2, opacity: 0.3})
+                .bindTooltip(transitionTooltip(t))
+                .addTo(layers.transitions);
+        }
+    });
+
+    // Matched route
+    if (d.matchedRoute && d.matchedRoute.length > 1) {
+        var latlngs = d.matchedRoute.map(function(pt) { return [pt[0], pt[1]]; });
+        L.polyline(latlngs, {color: '#0066ff', weight: 5, opacity: 0.6}).addTo(layers.matchedRoute);
+    }
+
+    // Time step list
+    d.timeSteps.forEach(function(ts, i) {
+        var chosenCount = ts.candidates.filter(function(c) { return c.chosen; }).length;
+        var div = $('<div class="timestep" data-index="' + i + '"></div>');
+        div.html('<b>Step ' + i + '</b> (' + ts.candidates.length + ' candidates, ' + chosenCount + ' chosen)');
+        ts.candidates.forEach(function(c) {
+            var cdiv = $('<div class="candidate' + (c.chosen ? ' chosen' : '') + '"></div>');
+            cdiv.text('#' + c.candidateIndex + ': dist=' + c.queryDistance.toFixed(1) + 'm, emLogP=' + c.emissionLogProbability.toFixed(2) +
+                       (c.directed ? ' [dir]' : ' [undir]') + (c.chosen ? ' CHOSEN' : ''));
+            div.append(cdiv);
+        });
+        div.on('click', function() { selectTimeStep(i); });
+        $('#timestep-list').append(div);
+    });
+
+    if (bounds.isValid()) {
+        map.fitBounds(bounds.pad(0.1));
+    }
+}
+
+function selectTimeStep(index) {
+    activeTimeStep = index;
+    $('.timestep').removeClass('active');
+    $('.timestep[data-index=' + index + ']').addClass('active');
+
+    layers.highlight.clearLayers();
+    var ts = debugData.timeSteps[index];
+
+    // Highlight observation
+    L.circleMarker([ts.observationLat, ts.observationLon], {radius: 10, color: '#ff6600', fillColor: '#ff6600', fillOpacity: 0.3, weight: 3})
+        .addTo(layers.highlight);
+
+    // Highlight candidates
+    ts.candidates.forEach(function(c) {
+        L.circleMarker([c.snappedLat, c.snappedLon], {radius: 8, color: c.chosen ? '#00ff00' : '#ff0000', fillOpacity: 0.3, weight: 3})
+            .addTo(layers.highlight);
+    });
+
+    // Highlight transitions from/to this time step
+    debugData.transitions.forEach(function(t) {
+        if ((t.fromTimeStep === index || t.toTimeStep === index) && t.routeGeometry && t.routeGeometry.length > 1) {
+            var latlngs = t.routeGeometry.map(function(pt) { return [pt[0], pt[1]]; });
+            var color = t.chosen ? '#00ff00' : '#ff6600';
+            L.polyline(latlngs, {color: color, weight: 3, opacity: 0.7})
+                .bindTooltip(transitionTooltip(t))
+                .addTo(layers.highlight);
+        }
+    });
+
+    // Detail panel
+    var html = '<table style="font-size:11px; width:100%;">';
+    html += '<tr><th>Cand</th><th>Dist</th><th>EmLogP</th><th>Type</th><th></th></tr>';
+    ts.candidates.forEach(function(c) {
+        var style = c.chosen ? 'font-weight:bold; color:#006600;' : '';
+        html += '<tr style="' + style + '">';
+        html += '<td>#' + c.candidateIndex + '</td>';
+        html += '<td>' + c.queryDistance.toFixed(1) + 'm</td>';
+        html += '<td>' + c.emissionLogProbability.toFixed(3) + '</td>';
+        html += '<td>' + (c.directed ? 'dir' : 'undir') + '</td>';
+        html += '<td>' + (c.chosen ? 'CHOSEN' : '') + '</td>';
+        html += '</tr>';
+    });
+    html += '</table>';
+
+    // Transitions from this time step
+    var fromTransitions = debugData.transitions.filter(function(t) { return t.fromTimeStep === index; });
+    if (fromTransitions.length > 0) {
+        html += '<br><b>Transitions out (' + fromTransitions.length + '):</b>';
+        html += '<table style="font-size:11px; width:100%;">';
+        html += '<tr><th>From</th><th>To</th><th>Route</th><th>Linear</th><th>TransLogP</th><th></th></tr>';
+        fromTransitions.forEach(function(t) {
+            var style = t.chosen ? 'font-weight:bold; color:#006600;' : '';
+            html += '<tr style="' + style + '">';
+            html += '<td>' + t.fromTimeStep + ':' + t.fromCandidateIndex + '</td>';
+            html += '<td>' + t.toTimeStep + ':' + t.toCandidateIndex + '</td>';
+            html += '<td>' + t.routeDistance.toFixed(1) + '</td>';
+            html += '<td>' + t.linearDistance.toFixed(1) + '</td>';
+            html += '<td>' + t.transitionLogProbability.toFixed(3) + '</td>';
+            html += '<td>' + (t.chosen ? 'CHOSEN' : '') + '</td>';
+            html += '</tr>';
+        });
+        html += '</table>';
+    }
+
+    $('#detail-title').text('Time Step ' + index);
+    $('#detail-content').html(html);
+    $('#detail-panel').show();
+
+    // Zoom to time step area
+    var lats = [ts.observationLat];
+    var lons = [ts.observationLon];
+    ts.candidates.forEach(function(c) { lats.push(c.snappedLat); lons.push(c.snappedLon); });
+    var b = L.latLngBounds(
+        [Math.min.apply(null, lats) - 0.001, Math.min.apply(null, lons) - 0.001],
+        [Math.max.apply(null, lats) + 0.001, Math.max.apply(null, lons) + 0.001]
+    );
+    map.fitBounds(b);
+}
+
+function candidateTooltip(ts, c) {
+    return '<b>Step ' + ts.index + ', Candidate #' + c.candidateIndex + '</b><br>' +
+           'Snap dist: ' + c.queryDistance.toFixed(2) + 'm<br>' +
+           'Emission logP: ' + c.emissionLogProbability.toFixed(4) + '<br>' +
+           'Node: ' + c.closestNode + '<br>' +
+           (c.directed ? 'Directed' : 'Undirected') + '<br>' +
+           (c.chosen ? '<b>CHOSEN</b>' : '');
+}
+
+function transitionTooltip(t) {
+    return '<b>Transition ' + t.fromTimeStep + ':' + t.fromCandidateIndex +
+           ' &rarr; ' + t.toTimeStep + ':' + t.toCandidateIndex + '</b><br>' +
+           'Route dist: ' + t.routeDistance.toFixed(1) + 'm<br>' +
+           'Linear dist: ' + t.linearDistance.toFixed(1) + 'm<br>' +
+           'Transition logP: ' + t.transitionLogProbability.toFixed(4) + '<br>' +
+           (t.chosen ? '<b>CHOSEN</b>' : '');
+}
+</script>
+</body>
+</html>
