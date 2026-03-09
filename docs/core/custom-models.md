@@ -78,7 +78,8 @@ encoded values are the following (some of their possible values are given in bra
 - road_environment: (ROAD, FERRY, BRIDGE, TUNNEL, ...)
 - road_access: (DESTINATION, DELIVERY, PRIVATE, NO, ...)
 - surface: (PAVED, DIRT, SAND, GRAVEL, ...)
-- sidewalk: (YES, SEPARATE, NO) stores two directions
+- sidewalk: (YES, SEPARATE, NO, ...) stores two directions
+- cycleway: (TRACK, LANE, SEPARATE, NO, ...) stores two directions
 - smoothness: (EXCELLENT, GOOD, INTERMEDIATE, ...)
 - toll: (MISSING, NO, HGV, ALL)
 - bike_network, foot_network: (MISSING, INTERNATIONAL, NATIONAL, REGIONAL, LOCAL, OTHER)
