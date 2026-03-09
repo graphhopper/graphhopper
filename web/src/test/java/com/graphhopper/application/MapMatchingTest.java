@@ -281,10 +281,6 @@ public class MapMatchingTest {
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
     public void testUTurns(PMap hints) throws IOException {
-        hints = new PMap(hints)
-                // Reduce penalty to allow U-turns
-                .putObject(Parameters.Routing.HEADING_PENALTY, 50);
-
         MapMatching mapMatching = MapMatching.fromGraphHopper(graphHopper, hints);
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/tour4-with-uturn.gpx"), Gpx.class);
 
@@ -292,11 +288,12 @@ public class MapMatchingTest {
         mapMatching.setMeasurementErrorSigma(50);
         MatchResult mr = mapMatching.match(GpxConversions.getEntries(gpx.trk.get(0)));
         assertEquals(Arrays.asList("Gustav-Adolf-Straße", "Funkenburgstraße"), fetchStreets(mr.getEdgeMatches()));
-
+        assertEquals(385.0, mr.getMatchLength(), 1.0);
         // with small measurement error, we expect the U-turn
         mapMatching.setMeasurementErrorSigma(10);
         mr = mapMatching.match(GpxConversions.getEntries(gpx.trk.get(0)));
         assertEquals(Arrays.asList("Gustav-Adolf-Straße", "Funkenburgstraße"), fetchStreets(mr.getEdgeMatches()));
+        assertEquals(682.0, mr.getMatchLength(), 1.0);
     }
 
     static List<String> fetchStreets(List<EdgeMatch> emList) {
