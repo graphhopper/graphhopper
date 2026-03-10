@@ -35,7 +35,7 @@ class RAMIntDataAccess extends AbstractDataAccess {
     private boolean store;
     private int segmentSizeIntsPower;
 
-    RAMIntDataAccess(String name, String location, boolean store, int segmentSize) {
+    public RAMIntDataAccess(String name, String location, boolean store, int segmentSize) {
         super(name, location, segmentSize);
         this.store = store;
     }

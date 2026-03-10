@@ -52,7 +52,7 @@ public final class MMapDataAccess extends AbstractDataAccess {
     private RandomAccessFile raFile;
     private final List<MappedByteBuffer> segments = new ArrayList<>();
 
-    MMapDataAccess(String name, String location, boolean allowWrites, int segmentSize) {
+    public MMapDataAccess(String name, String location, boolean allowWrites, int segmentSize) {
         super(name, location, segmentSize);
         this.allowWrites = allowWrites;
     }
