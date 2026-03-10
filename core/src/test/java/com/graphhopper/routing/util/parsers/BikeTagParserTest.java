@@ -473,7 +473,9 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.clearTags();
         way.setTag("highway", "cycleway");
         way.setTag("access", "no");
-        assertTrue(accessParser.getAccess(way).canSkip());
+        // assume tagging mistake (if highway=cycleway)
+        assertTrue(accessParser.getAccess(way).isWay());
+        // only if explicitly forbidden we follow
         way.setTag("bicycle", "no");
         assertTrue(accessParser.getAccess(way).canSkip());
 
@@ -501,6 +503,26 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("vehicle", "forestry");
         assertTrue(accessParser.getAccess(way).isWay());
         way.setTag("vehicle", "agricultural;forestry");
+        assertTrue(accessParser.getAccess(way).isWay());
+
+        // with access=agricultural we are rather strict (with vehicle=agricultural we can push the bike)
+        way.clearTags();
+        way.setTag("highway", "tertiary");
+        way.setTag("access", "agricultural");
+        assertFalse(accessParser.getAccess(way).isWay());
+        way.setTag("bicycle", "yes");
+        assertTrue(accessParser.getAccess(way).isWay());
+
+        way.clearTags();
+        way.setTag("highway", "tertiary");
+        way.setTag("access", "agricultural");
+        way.setTag("bicycle_road", "yes");
+        assertTrue(accessParser.getAccess(way).isWay());
+
+        // ignore access restriction for highway=cycleway
+        way.clearTags();
+        way.setTag("highway", "cycleway");
+        way.setTag("access", "agricultural");
         assertTrue(accessParser.getAccess(way).isWay());
     }
 
