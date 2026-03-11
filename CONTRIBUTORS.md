@@ -98,6 +98,7 @@ Here is an overview:
  * zstadler, multiple fixes and car4wd
  * binora, fix mode in navigation response converter
  * jwltrr, fixed pillar node limits
+ * SkitArgDuva, added via_point_instructions parameter
 
 ## Translations
 
