@@ -17,6 +17,10 @@
  */
 package com.graphhopper.storage;
 
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 /**
  * @author Peter Karich
  */
@@ -28,11 +32,52 @@ public class RAMIntDataAccessTest extends DataAccessTest {
 
     @Override
     public void testSet_GetBytes() {
-        // should we implement this?
+        // setBytes/getBytes still unsupported for RAMIntDataAccess
     }
 
-    @Override
-    public void testSet_GetByte() {
-        // should we implement this?
+    @Test
+    public void testSetByte_AllOffsetsWithinInt() {
+        DataAccess da = createDataAccess(name);
+        da.create(300);
+        // write an int, then verify each byte individually
+        da.setInt(8, 0x04030201);
+        assertEquals((byte) 0x01, da.getByte(8));
+        assertEquals((byte) 0x02, da.getByte(9));
+        assertEquals((byte) 0x03, da.getByte(10));
+        assertEquals((byte) 0x04, da.getByte(11));
+
+        // write individual bytes, then read back the int
+        da.setByte(16, (byte) 0xAA);
+        da.setByte(17, (byte) 0xBB);
+        da.setByte(18, (byte) 0xCC);
+        da.setByte(19, (byte) 0xDD);
+        assertEquals(0xDDCCBBAA, da.getInt(16));
+        da.close();
+    }
+
+    @Test
+    public void testFiveByteIntegerPattern() {
+        DataAccess da = createDataAccess(name);
+        da.create(300);
+        // simulate the geo_ref pattern: setInt for low 4 bytes, setByte for 5th byte
+        long geoRef = 0x1F_ABCD_1234L;
+        int pos = 20;
+        da.setInt(pos, (int) geoRef);
+        da.setByte(pos + 4, (byte) (geoRef >> 32));
+        // read back
+        int low = da.getInt(pos);
+        byte high = da.getByte(pos + 4);
+        long result = ((long) high << 32) | (low & 0xFFFF_FFFFL);
+        assertEquals(geoRef, result);
+
+        // negative geo_ref
+        geoRef = -42L;
+        da.setInt(pos, (int) geoRef);
+        da.setByte(pos + 4, (byte) (geoRef >> 32));
+        low = da.getInt(pos);
+        high = da.getByte(pos + 4);
+        result = ((long) high << 32) | (low & 0xFFFF_FFFFL);
+        assertEquals(geoRef, result);
+        da.close();
     }
 }

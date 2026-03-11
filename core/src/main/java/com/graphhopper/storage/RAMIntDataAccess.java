@@ -223,13 +223,24 @@ class RAMIntDataAccess extends AbstractDataAccess {
     }
 
     @Override
-    public byte getByte(long bytePos) {
-        throw new UnsupportedOperationException(toString() + " does not support byte based acccess. Use RAMDataAccess instead");
+    public final byte getByte(long bytePos) {
+        assert segments.length > 0 : "call create or loadExisting before usage!";
+        int byteOffset = (int) (bytePos & 3);
+        bytePos >>>= 2;
+        int bufferIndex = (int) (bytePos >>> segmentSizeIntsPower);
+        int index = (int) (bytePos & indexDivisor);
+        return (byte) (segments[bufferIndex][index] >>> (byteOffset << 3));
     }
 
     @Override
-    public void setByte(long bytePos, byte value) {
-        throw new UnsupportedOperationException(toString() + " does not support byte based acccess. Use RAMDataAccess instead");
+    public final void setByte(long bytePos, byte value) {
+        assert segments.length > 0 : "call create or loadExisting before usage!";
+        int byteOffset = (int) (bytePos & 3);
+        bytePos >>>= 2;
+        int bufferIndex = (int) (bytePos >>> segmentSizeIntsPower);
+        int index = (int) (bytePos & indexDivisor);
+        int shift = byteOffset << 3;
+        segments[bufferIndex][index] = (segments[bufferIndex][index] & ~(0xFF << shift)) | ((value & 0xFF) << shift);
     }
 
     @Override
