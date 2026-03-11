@@ -211,11 +211,12 @@ public class PathMerger {
             }
 
             if (instruction.getSign() == Instruction.REACHED_VIA) {
-                if(!enableViaPointInstructions) {
-                    instructions.remove(i);
-                    i--;
+                // Remove the Via Point Instruction
+                if (!enableViaPointInstructions) {
+                    instructions.remove(i--);
                     continue;
                 }
+
                 nextInstruction = instructions.get(i + 1);
                 if (nextInstruction.getSign() != Instruction.CONTINUE_ON_STREET
                         || !instruction.extraInfo.containsKey("last_heading")
