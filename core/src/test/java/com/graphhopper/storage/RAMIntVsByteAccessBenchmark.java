@@ -9,8 +9,11 @@ import java.util.Random;
 public class RAMIntVsByteAccessBenchmark {
     // 8 bytes per entry: 4 (int) + 1 (byte) = 5 used bytes, padded to 8 for int alignment
     private static final int ENTRY_BYTES = 8;
+    // 5 bytes per entry: tightly packed for set5Bytes/get5Bytes benchmarks
+    private static final int ENTRY_BYTES_PACKED = 5;
     private static final long TOTAL_BYTES = 2L * 1024 * 1024 * 1024; // 2 GB
     private static final int NUM_ENTRIES = (int) (TOTAL_BYTES / ENTRY_BYTES);
+    private static final int NUM_ENTRIES_PACKED = (int) (TOTAL_BYTES / ENTRY_BYTES_PACKED);
     private static final int OPS_PER_ROUND = 10_000_000;
     private static final int WARMUP_ROUNDS = 5;
     private static final int MEASURE_ROUNDS = 10;
@@ -26,6 +29,10 @@ public class RAMIntVsByteAccessBenchmark {
         int[] positions = new int[OPS_PER_ROUND];
         for (int i = 0; i < OPS_PER_ROUND; i++) {
             positions[i] = rng.nextInt(NUM_ENTRIES);
+        }
+        int[] positionsPacked = new int[OPS_PER_ROUND];
+        for (int i = 0; i < OPS_PER_ROUND; i++) {
+            positionsPacked[i] = rng.nextInt(NUM_ENTRIES_PACKED);
         }
 
         System.out.println("--- Allocating RAMIntDataAccess ---");
@@ -55,6 +62,22 @@ public class RAMIntVsByteAccessBenchmark {
         System.out.println("=== MIXED: write then read back (5-byte integer) ===");
         benchMixed("RAMIntDataAccess", intDA, positions);
         benchMixed("RAMDataAccess   ", byteDA, positions);
+        System.out.println();
+
+        // set5Bytes / get5Bytes benchmark (5-byte packed entries, not 8-byte aligned)
+        System.out.println("=== WRITE: set5Bytes (packed) ===");
+        benchWrite5Bytes("RAMIntDataAccess", intDA, positionsPacked);
+        benchWrite5Bytes("RAMDataAccess   ", byteDA, positionsPacked);
+        System.out.println();
+
+        System.out.println("=== READ: get5Bytes (packed) ===");
+        benchRead5Bytes("RAMIntDataAccess", intDA, positionsPacked);
+        benchRead5Bytes("RAMDataAccess   ", byteDA, positionsPacked);
+        System.out.println();
+
+        System.out.println("=== MIXED: set5Bytes then get5Bytes (packed) ===");
+        benchMixed5Bytes("RAMIntDataAccess", intDA, positionsPacked);
+        benchMixed5Bytes("RAMDataAccess   ", byteDA, positionsPacked);
         System.out.println();
 
         // setInt-only benchmark (for reference)
@@ -196,6 +219,77 @@ public class RAMIntVsByteAccessBenchmark {
             for (int i = 0; i < positions.length; i++) {
                 long bytePos = (long) positions[i] * ENTRY_BYTES;
                 dummy += da.getInt(bytePos);
+            }
+            times[r] = System.nanoTime() - start;
+        }
+        printResults(label, times, dummy);
+    }
+
+    private static void benchWrite5Bytes(String label, DataAccess da, int[] positions) {
+        long dummy = 0;
+        for (int r = 0; r < WARMUP_ROUNDS; r++) {
+            for (int i = 0; i < positions.length; i++) {
+                long bytePos = (long) positions[i] * ENTRY_BYTES_PACKED;
+                long val = (long) i * 7 + 13;
+                da.set5Bytes(bytePos, val);
+            }
+            dummy += da.getInt(0);
+        }
+
+        long[] times = new long[MEASURE_ROUNDS];
+        for (int r = 0; r < MEASURE_ROUNDS; r++) {
+            long start = System.nanoTime();
+            for (int i = 0; i < positions.length; i++) {
+                long bytePos = (long) positions[i] * ENTRY_BYTES_PACKED;
+                long val = (long) i * 7 + 13;
+                da.set5Bytes(bytePos, val);
+            }
+            times[r] = System.nanoTime() - start;
+            dummy += da.getInt(0);
+        }
+        printResults(label, times, dummy);
+    }
+
+    private static void benchRead5Bytes(String label, DataAccess da, int[] positions) {
+        long dummy = 0;
+        for (int r = 0; r < WARMUP_ROUNDS; r++) {
+            for (int i = 0; i < positions.length; i++) {
+                long bytePos = (long) positions[i] * ENTRY_BYTES_PACKED;
+                dummy += da.get5Bytes(bytePos);
+            }
+        }
+
+        long[] times = new long[MEASURE_ROUNDS];
+        for (int r = 0; r < MEASURE_ROUNDS; r++) {
+            long start = System.nanoTime();
+            for (int i = 0; i < positions.length; i++) {
+                long bytePos = (long) positions[i] * ENTRY_BYTES_PACKED;
+                dummy += da.get5Bytes(bytePos);
+            }
+            times[r] = System.nanoTime() - start;
+        }
+        printResults(label, times, dummy);
+    }
+
+    private static void benchMixed5Bytes(String label, DataAccess da, int[] positions) {
+        long dummy = 0;
+        for (int r = 0; r < WARMUP_ROUNDS; r++) {
+            for (int i = 0; i < positions.length; i++) {
+                long bytePos = (long) positions[i] * ENTRY_BYTES_PACKED;
+                long val = (long) i * 7 + 13;
+                da.set5Bytes(bytePos, val);
+                dummy += da.get5Bytes(bytePos);
+            }
+        }
+
+        long[] times = new long[MEASURE_ROUNDS];
+        for (int r = 0; r < MEASURE_ROUNDS; r++) {
+            long start = System.nanoTime();
+            for (int i = 0; i < positions.length; i++) {
+                long bytePos = (long) positions[i] * ENTRY_BYTES_PACKED;
+                long val = (long) i * 7 + 13;
+                da.set5Bytes(bytePos, val);
+                dummy += da.get5Bytes(bytePos);
             }
             times[r] = System.nanoTime() - start;
         }

@@ -38,6 +38,7 @@ public class RAMDataAccess extends AbstractDataAccess {
     // we could also use UNSAFE but it is not really faster (see #3005)
     private static final VarHandle INT = MethodHandles.byteArrayViewVarHandle(int[].class, ByteOrder.LITTLE_ENDIAN).withInvokeExactBehavior();
     private static final VarHandle SHORT = MethodHandles.byteArrayViewVarHandle(short[].class, ByteOrder.LITTLE_ENDIAN).withInvokeExactBehavior();
+    private static final VarHandle LONG = MethodHandles.byteArrayViewVarHandle(long[].class, ByteOrder.LITTLE_ENDIAN).withInvokeExactBehavior();
 
     public RAMDataAccess(String name, String location, boolean store, int segmentSize) {
         super(name, location, segmentSize);
@@ -277,6 +278,46 @@ public class RAMDataAccess extends AbstractDataAccess {
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
         return segments[bufferIndex][index];
+    }
+
+    @Override
+    public final void set5Bytes(long bytePos, long value) {
+        assert segments.length > 0 : "call create or loadExisting before usage!";
+        int bufferIndex = (int) (bytePos >>> segmentSizePower);
+        int index = (int) (bytePos & indexDivisor);
+        if (index + 5 <= segmentSizeInBytes) {
+            INT.set(segments[bufferIndex], index, (int) value);
+            segments[bufferIndex][index + 4] = (byte) (value >>> 32);
+        } else {
+            // spans segment boundary
+            for (int i = 0; i < 5; i++) {
+                int bi = (int) ((bytePos + i) >>> segmentSizePower);
+                int idx = (int) ((bytePos + i) & indexDivisor);
+                segments[bi][idx] = (byte) (value >>> (i * 8));
+            }
+        }
+    }
+
+    @Override
+    public final long get5Bytes(long bytePos) {
+        assert segments.length > 0 : "call create or loadExisting before usage!";
+        int bufferIndex = (int) (bytePos >>> segmentSizePower);
+        int index = (int) (bytePos & indexDivisor);
+        if (index + 8 <= segmentSizeInBytes) {
+            return (long) LONG.get(segments[bufferIndex], index) & 0xFF_FFFF_FFFFL;
+        } else if (index + 5 <= segmentSizeInBytes) {
+            return ((int) INT.get(segments[bufferIndex], index) & 0xFFFFFFFFL)
+                    | ((long) (segments[bufferIndex][index + 4] & 0xFF) << 32);
+        } else {
+            // spans segment boundary
+            long val = 0;
+            for (int i = 0; i < 5; i++) {
+                int bi = (int) ((bytePos + i) >>> segmentSizePower);
+                int idx = (int) ((bytePos + i) & indexDivisor);
+                val |= (long) (segments[bi][idx] & 0xFF) << (i * 8);
+            }
+            return val;
+        }
     }
 
     @Override

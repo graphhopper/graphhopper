@@ -258,6 +258,62 @@ public abstract class DataAccessTest {
     }
 
     @Test
+    public void testSet_Get5Bytes() {
+        DataAccess da = createDataAccess(name);
+        da.create(300);
+
+        // test at 4-byte-aligned position (byteOffset == 0)
+        long val = 0x1F_ABCD_1234L;
+        da.set5Bytes(20, val);
+        assertEquals(val, da.get5Bytes(20));
+
+        // test that only 5 bytes (40 bits) are stored, upper bits ignored
+        da.set5Bytes(20, 0xFFFF_FF_ABCD_1234L);
+        assertEquals(0xFF_ABCD_1234L, da.get5Bytes(20));
+
+        // test all byte offsets within an int (0, 1, 2, 3)
+        long[] testValues = {0x1F_ABCD_1234L, 0xFF_FFFF_FFFFL, 0x00_0000_0001L, 0x80_0000_0000L, 0L};
+        for (long tv : testValues) {
+            for (int offset = 0; offset < 4; offset++) {
+                int pos = 40 + offset;
+                da.set5Bytes(pos, tv);
+                assertEquals(tv, da.get5Bytes(pos), "offset=" + offset + " value=0x" + Long.toHexString(tv));
+            }
+        }
+
+        // test that neighboring bytes are not corrupted
+        da.setByte(80, (byte) 0xAA);
+        da.setByte(86, (byte) 0xBB);
+        da.set5Bytes(81, 0x12_3456_7890L);
+        assertEquals(0x12_3456_7890L, da.get5Bytes(81));
+        assertEquals((byte) 0xAA, da.getByte(80));
+        assertEquals((byte) 0xBB, da.getByte(86));
+
+        da.close();
+    }
+
+    @Test
+    public void testSet_Get5Bytes_SegmentBoundary() {
+        // use small segment size to easily hit the boundary
+        DataAccess da = createDataAccess(name, 128);
+        da.create(300);
+        int segSize = da.getSegmentSize();
+
+        // test all byte offsets at positions that put the second int in the next segment
+        long[] testValues = {0x1F_ABCD_1234L, 0xFF_FFFF_FFFFL, 1L};
+        for (long tv : testValues) {
+            for (int offset = 0; offset < 5; offset++) {
+                // position such that some of the 5 bytes spill into the next segment
+                int pos = segSize - 4 + offset;
+                da.set5Bytes(pos, tv);
+                assertEquals(tv, da.get5Bytes(pos),
+                        "segBoundary offset=" + offset + " value=0x" + Long.toHexString(tv));
+            }
+        }
+        da.close();
+    }
+
+    @Test
     public void testPadding() {
         DataAccess da = createDataAccess(name);
         da.create(10);

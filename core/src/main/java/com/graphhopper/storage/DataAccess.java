@@ -68,6 +68,21 @@ public interface DataAccess extends Closeable {
     byte getByte(long currentPointer);
 
     /**
+     * Set 5 bytes at position 'bytePos' to the lower 40 bits of the specified long value
+     */
+    default void set5Bytes(long bytePos, long value) {
+        setInt(bytePos, (int) value);
+        setByte(bytePos + 4, (byte) (value >>> 32));
+    }
+
+    /**
+     * Get 5 bytes from position 'bytePos' as a long (lower 40 bits)
+     */
+    default long get5Bytes(long bytePos) {
+        return (getInt(bytePos) & 0xFFFFFFFFL) | ((long) (getByte(bytePos + 4) & 0xFF) << 32);
+    }
+
+    /**
      * Set 4 bytes at the header space index to the specified value
      */
     void setHeader(int bytePos, int value);

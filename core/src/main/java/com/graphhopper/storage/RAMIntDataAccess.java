@@ -163,6 +163,9 @@ class RAMIntDataAccess extends AbstractDataAccess {
         }
     }
 
+    /**
+     * bytePos must be 4-byte aligned.
+     */
     @Override
     public final void setInt(long bytePos, int value) {
         assert segments.length > 0 : "call create or loadExisting before usage!";
@@ -172,6 +175,9 @@ class RAMIntDataAccess extends AbstractDataAccess {
         segments[bufferIndex][index] = value;
     }
 
+    /**
+     * bytePos must be 4-byte aligned.
+     */
     @Override
     public final int getInt(long bytePos) {
         assert segments.length > 0 : "call create or loadExisting before usage!";
@@ -241,6 +247,76 @@ class RAMIntDataAccess extends AbstractDataAccess {
         int index = (int) (bytePos & indexDivisor);
         int shift = byteOffset << 3;
         segments[bufferIndex][index] = (segments[bufferIndex][index] & ~(0xFF << shift)) | ((value & 0xFF) << shift);
+    }
+
+    /**
+     * bytePos allows arbitrary byte alignment.
+     */
+    @Override
+    public final void set5Bytes(long bytePos, long value) {
+        assert segments.length > 0 : "call create or loadExisting before usage!";
+        int byteOffset = (int) (bytePos & 3);
+        long intIndex = bytePos >>> 2;
+        int bufferIndex = (int) (intIndex >>> segmentSizeIntsPower);
+        int index = (int) (intIndex & indexDivisor);
+        int[] seg2;
+        int index2;
+        if (index < indexDivisor) {
+            seg2 = segments[bufferIndex];
+            index2 = index + 1;
+        } else {
+            seg2 = segments[bufferIndex + 1];
+            index2 = 0;
+        }
+        if (byteOffset == 0) {
+            segments[bufferIndex][index] = (int) value;
+            seg2[index2] = (seg2[index2] & 0xFFFFFF00) | ((int) (value >>> 32) & 0xFF);
+        } else {
+            // first int: write upper (4 - byteOffset) bytes, preserve lower byteOffset bytes
+            int shift1 = byteOffset << 3;
+            int mask1 = (1 << shift1) - 1;
+            segments[bufferIndex][index] = (segments[bufferIndex][index] & mask1) | ((int) value << shift1);
+            // second int: write lower (byteOffset + 1) bytes, preserve upper (3 - byteOffset) bytes
+            int bitsInFirst = (4 - byteOffset) << 3;
+            int secondValue = (int) (value >>> bitsInFirst);
+            int bitsInSecond = (byteOffset + 1) << 3;
+            if (bitsInSecond >= 32) {
+                seg2[index2] = secondValue;
+            } else {
+                int mask2 = -1 << bitsInSecond;
+                seg2[index2] = (seg2[index2] & mask2) | (secondValue & ~mask2);
+            }
+        }
+    }
+
+    /**
+     * bytePos allows arbitrary byte alignment.
+     */
+    @Override
+    public final long get5Bytes(long bytePos) {
+        assert segments.length > 0 : "call create or loadExisting before usage!";
+        int byteOffset = (int) (bytePos & 3);
+        long intIndex = bytePos >>> 2;
+        int bufferIndex = (int) (intIndex >>> segmentSizeIntsPower);
+        int index = (int) (intIndex & indexDivisor);
+        int[] seg2;
+        int index2;
+        if (index < indexDivisor) {
+            seg2 = segments[bufferIndex];
+            index2 = index + 1;
+        } else {
+            seg2 = segments[bufferIndex + 1];
+            index2 = 0;
+        }
+        if (byteOffset == 0) {
+            return (segments[bufferIndex][index] & 0xFFFFFFFFL)
+                    | ((long) (seg2[index2] & 0xFF) << 32);
+        } else {
+            int bitsInFirst = (4 - byteOffset) << 3;
+            long low = (segments[bufferIndex][index] >>> (byteOffset << 3)) & ((1L << bitsInFirst) - 1);
+            long high = seg2[index2] & 0xFFFFFFFFL;
+            return (low | (high << bitsInFirst)) & 0xFF_FFFF_FFFFL;
+        }
     }
 
     @Override
