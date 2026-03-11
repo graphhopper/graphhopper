@@ -165,10 +165,12 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
                         speed = Math.max(speed, highwaySpeeds.get("cycleway"));
                     else if (bikeAllowed)
                         speed = Math.max(speed, 12);
+                    break;
                 case "living_street":
                     if (bikeAllowed)
                         // if explicitly allowed then allow speeds above limit to get more realistic routes and ETAs
                         speed = bikeDesignated ? Math.max(speed, 12) : Math.max(speed, 10);
+                    break;
             }
 
             double smoothSpeed = smoothnessFactor.get(smoothnessEnc.getEnum(false, edgeId, edgeIntAccess)) * speed;
