@@ -91,7 +91,7 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         assertPriorityAndSpeed(SLIGHT_AVOID, 12, way);
 
         way.setTag("service", "parking_aisle");
-        assertPriorityAndSpeed(SLIGHT_AVOID, 4, way);
+        assertPriorityAndSpeed(SLIGHT_AVOID, 8, way);
     }
 
     @Test

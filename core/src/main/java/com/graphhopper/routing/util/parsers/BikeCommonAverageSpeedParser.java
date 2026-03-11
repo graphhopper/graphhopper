@@ -139,8 +139,7 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         if (way.hasTag("surface") && surfaceSpeed == null
                 || way.hasTag("bicycle", "dismount")
                 || way.hasTag("railway", "platform")
-                || pushingRestriction && !way.hasTag("bicycle", INTENDED)
-                || way.hasTag("service") && !bikeDesignated) {
+                || pushingRestriction && !way.hasTag("bicycle", INTENDED)) {
             speed = PUSHING_SECTION_SPEED;
 
         } else {
@@ -172,6 +171,9 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
                         speed = bikeDesignated ? Math.max(speed, 12) : Math.max(speed, 10);
                     break;
             }
+
+            if (way.hasTag("service", "parking_aisle") && !bikeDesignated)
+                speed = Math.min(speed, 8);
 
             double smoothSpeed = smoothnessFactor.get(smoothnessEnc.getEnum(false, edgeId, edgeIntAccess)) * speed;
 
