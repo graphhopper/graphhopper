@@ -56,6 +56,7 @@ public class PathMerger {
     private PathDetailsBuilderFactory pathBuilderFactory;
     private List<String> requestedPathDetails = Collections.emptyList();
     private double favoredHeading = Double.NaN;
+    private boolean ignoreViaPointsForInstructions = false;
 
     public PathMerger(Graph graph, Weighting weighting) {
         this.graph = graph;
@@ -85,6 +86,11 @@ public class PathMerger {
 
     public PathMerger setEnableInstructions(boolean enableInstructions) {
         this.enableInstructions = enableInstructions;
+        return this;
+    }
+
+    public PathMerger setIgnoreViaPointsForInstructions(boolean ignoreVia) {
+        this.ignoreViaPointsForInstructions = ignoreVia;
         return this;
     }
 
@@ -118,9 +124,13 @@ public class PathMerger {
 
                     // for all paths except the last replace the FinishInstruction with a ViaInstruction
                     if (pathIndex + 1 < paths.size()) {
-                        ViaInstruction newInstr = new ViaInstruction(fullInstructions.get(fullInstructions.size() - 1));
-                        newInstr.setViaCount(pathIndex + 1);
-                        fullInstructions.set(fullInstructions.size() - 1, newInstr);
+                        if (ignoreViaPointsForInstructions) {
+                            fullInstructions.remove(fullInstructions.size() - 1);
+                        } else {
+                            ViaInstruction newInstr = new ViaInstruction(fullInstructions.get(fullInstructions.size() - 1));
+                            newInstr.setViaCount(pathIndex + 1);
+                            fullInstructions.set(fullInstructions.size() - 1, newInstr);
+                        }
                     }
                 }
 

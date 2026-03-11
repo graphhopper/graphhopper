@@ -129,6 +129,10 @@ public class Parameters {
          */
         public static final double DEFAULT_HEADING_PENALTY = 300;
         public static final String HEADING_PENALTY = "heading_penalty";
+        /**
+         * if true, turn instructions for via points will be suppressed
+         */
+        public static final String IGNORE_VIA_POINTS_FOR_INSTRUCTIONS = "ignore_via_points_for_instructions";
     }
 
     /**

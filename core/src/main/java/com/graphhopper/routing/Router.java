@@ -298,6 +298,7 @@ public class Router {
         boolean calcPoints = request.getHints().getBool(Parameters.Routing.CALC_POINTS, routerConfig.isCalcPoints());
         double wayPointMaxDistance = request.getHints().getDouble(Parameters.Routing.WAY_POINT_MAX_DISTANCE, 0.5);
         double elevationWayPointMaxDistance = request.getHints().getDouble(ELEVATION_WAY_POINT_MAX_DISTANCE, routerConfig.getElevationWayPointMaxDistance());
+        boolean ignoreViaPoints = request.getHints().getBool(Parameters.Routing.IGNORE_VIA_POINTS_FOR_INSTRUCTIONS, false);
 
         RamerDouglasPeucker peucker = new RamerDouglasPeucker().
                 setMaxDistance(wayPointMaxDistance).
@@ -307,7 +308,8 @@ public class Router {
                 setRamerDouglasPeucker(peucker).
                 setEnableInstructions(enableInstructions).
                 setPathDetailsBuilders(pathDetailsBuilderFactory, request.getPathDetails()).
-                setSimplifyResponse(routerConfig.isSimplifyResponse() && wayPointMaxDistance > 0);
+                setSimplifyResponse(routerConfig.isSimplifyResponse() && wayPointMaxDistance > 0).
+                setIgnoreViaPointsForInstructions(ignoreViaPoints);
 
         if (!request.getHeadings().isEmpty())
             pathMerger.setFavoredHeading(request.getHeadings().get(0));
