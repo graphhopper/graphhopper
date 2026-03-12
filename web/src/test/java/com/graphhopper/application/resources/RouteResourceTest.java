@@ -185,6 +185,31 @@ public class RouteResourceTest {
     }
 
     @Test
+    public void testIgnoreViaPointsForInstructions() {
+        String urlBase = "/route?profile=my_car" +
+                "&point=42.554851,1.536198" +
+                "&point=42.510071,1.548128" +
+                "&point=42.50654,1.52835";
+
+        JsonNode jsonDefault = clientTarget(app, urlBase).request().get(JsonNode.class);
+        JsonNode instructionsDefault = jsonDefault.get("paths").get(0).get("instructions");
+        boolean foundVia = false;
+        for (JsonNode instruction : instructionsDefault) {
+            if (instruction.get("sign").asInt() == 5) {
+                foundVia = true;
+                break;
+            }
+        }
+        assertTrue(foundVia, "Default route should contain a REACHED_VIA instruction");
+
+        JsonNode jsonIgnored = clientTarget(app, urlBase + "&ignore_via_points_for_instructions=true").request().get(JsonNode.class);
+        JsonNode instructionsIgnored = jsonIgnored.get("paths").get(0).get("instructions");
+        for (JsonNode instruction : instructionsIgnored) {
+            assertNotEquals(5, instruction.get("sign").asInt(), "REACHED_VIA instruction should be suppressed when parameter is true");
+        }
+    }
+
+    @Test
     public void testCHWithHeading_error() {
         // There are special cases where heading works with node-based CH, but generally it leads to wrong results -> we expect an error
         BodyAndStatus response = getWithStatus(clientTarget(app, "/route?profile=my_car&"
