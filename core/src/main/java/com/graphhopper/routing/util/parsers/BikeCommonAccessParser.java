@@ -75,6 +75,10 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
         if (way.hasTag("bicycle", "dismount"))
             return WayAccess.WAY;
 
+        // if bicycle=* is missing we assume access
+        if ((way.hasTag("bicycle_road", "yes") || way.hasTag("highway", "cycleway")) && !way.hasTag("bicycle"))
+            return WayAccess.WAY;
+
         int firstIndex = way.getFirstIndex(restrictionKeys);
         if (firstIndex >= 0) {
             String firstValue = way.getTag(restrictionKeys.get(firstIndex), "");
