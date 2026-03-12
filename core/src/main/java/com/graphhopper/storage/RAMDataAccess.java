@@ -155,6 +155,7 @@ public class RAMDataAccess extends AbstractDataAccess {
                     byte[] area = segments[s];
                     raFile.write(area);
                 }
+                raFile.setLength(HEADER_OFFSET + len);
             }
         } catch (Exception ex) {
             throw new RuntimeException("Couldn't store bytes to " + toString(), ex);
@@ -277,6 +278,21 @@ public class RAMDataAccess extends AbstractDataAccess {
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
         return segments[bufferIndex][index];
+    }
+
+    @Override
+    public void trimTo(long capacity) {
+        if (capacity < 0)
+            throw new IllegalArgumentException("capacity must not be negative");
+        if (capacity > getCapacity())
+            throw new IllegalArgumentException("capacity cannot be larger than the current capacity: " + capacity + " > " + getCapacity());
+
+        int newSegmentCount = (int) (capacity / segmentSizeInBytes);
+        if (capacity % segmentSizeInBytes != 0)
+            newSegmentCount++;
+
+        if (newSegmentCount < segments.length)
+            segments = Arrays.copyOf(segments, newSegmentCount);
     }
 
     @Override

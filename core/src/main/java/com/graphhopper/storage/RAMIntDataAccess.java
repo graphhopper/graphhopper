@@ -157,6 +157,7 @@ public class RAMIntDataAccess extends AbstractDataAccess {
                     }
                     raFile.write(byteArea);
                 }
+                raFile.setLength(HEADER_OFFSET + len);
             }
         } catch (Exception ex) {
             throw new RuntimeException("Couldn't store integers to " + toString(), ex);
@@ -233,6 +234,21 @@ public class RAMIntDataAccess extends AbstractDataAccess {
     }
 
     @Override
+    public void trimTo(long capacity) {
+        if (capacity < 0)
+            throw new IllegalArgumentException("capacity must not be negative");
+        if (capacity > getCapacity())
+            throw new IllegalArgumentException("capacity cannot be larger than the current capacity: " + capacity + " > " + getCapacity());
+
+        int newSegmentCount = (int) (capacity / segmentSizeInBytes);
+        if (capacity % segmentSizeInBytes != 0)
+            newSegmentCount++;
+
+        if (newSegmentCount < segments.length)
+            segments = Arrays.copyOf(segments, newSegmentCount);
+    }
+
+    @Override
     public void close() {
         super.close();
         segments = new int[0][];
@@ -255,11 +271,6 @@ public class RAMIntDataAccess extends AbstractDataAccess {
         segmentSizeIntsPower = (int) (Math.log(segmentSizeInBytes / 4) / Math.log(2));
         indexDivisor = segmentSizeInBytes / 4 - 1;
         return this;
-    }
-
-    boolean releaseSegment(int segNumber) {
-        segments[segNumber] = null;
-        return true;
     }
 
     @Override
