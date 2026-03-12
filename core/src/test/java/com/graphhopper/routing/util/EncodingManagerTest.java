@@ -53,4 +53,27 @@ public class EncodingManagerTest {
         assertEquals(Arrays.asList("bike", "hike"), em.getVehicles());
     }
 
+    @Test
+    public void getTurnEncodedValue_returnsValueWhenKeyExists() {
+        BooleanEncodedValue carTurnRestriction = TurnRestriction.create("car");
+        EncodingManager em = EncodingManager.start()
+                .addTurnCostEncodedValue(carTurnRestriction)
+                .build();
+
+        assertSame(carTurnRestriction, em.getTurnEncodedValue("car_turn_restriction", BooleanEncodedValue.class));
+        assertTrue(em.hasTurnEncodedValue("car_turn_restriction"));
+    }
+
+    @Test
+    public void getTurnEncodedValue_throwsWithMessageContainingTurnEncodedValueKeysWhenKeyMissing() {
+        BooleanEncodedValue carTurnRestriction = TurnRestriction.create("car");
+        EncodingManager em = EncodingManager.start()
+                .addTurnCostEncodedValue(carTurnRestriction)
+                .build();
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> em.getTurnEncodedValue("bike_turn_restriction", BooleanEncodedValue.class));
+
+        assertEquals("Cannot find Turn-EncodedValue bike_turn_restriction in collection: [car_turn_restriction]", ex.getMessage());
+    }
 }
