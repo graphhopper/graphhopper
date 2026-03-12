@@ -258,6 +258,105 @@ public abstract class DataAccessTest {
     }
 
     @Test
+    public void testTrimTo() {
+        DataAccess da = createDataAccess(name, 128);
+        da.create(128);
+        // fill 4 segments
+        da.ensureCapacity(4 * 128);
+        assertEquals(4, da.getSegments());
+        assertEquals(4 * 128, da.getCapacity());
+
+        // write data in first two segments
+        da.setInt(0, 111);
+        da.setInt(100, 222);
+        da.setInt(200, 333);
+
+        // trim to 2 segments
+        da.trimTo(2 * 128);
+        assertEquals(2, da.getSegments());
+        assertEquals(2 * 128, da.getCapacity());
+
+        // data in kept segments survives
+        assertEquals(111, da.getInt(0));
+        assertEquals(222, da.getInt(100));
+
+        // flush, close, reload — verify data and capacity persist
+        da.flush();
+        da.close();
+
+        da = createDataAccess(name, 128);
+        assertTrue(da.loadExisting());
+        assertEquals(2, da.getSegments());
+        assertEquals(2 * 128, da.getCapacity());
+        assertEquals(111, da.getInt(0));
+        assertEquals(222, da.getInt(100));
+
+        // verify file is actually truncated
+        File file = new File(directory + name);
+        if (file.exists()) {
+            long expectedMaxFileSize = AbstractDataAccess.HEADER_OFFSET + 2 * 128;
+            assertTrue(file.length() <= expectedMaxFileSize,
+                    "file should be truncated but was " + file.length() + " > " + expectedMaxFileSize);
+        }
+        da.close();
+    }
+
+    @Test
+    public void testTrimToRoundsUpToSegmentBoundary() {
+        DataAccess da = createDataAccess(name, 128);
+        da.create(128);
+        da.ensureCapacity(4 * 128);
+        assertEquals(4, da.getSegments());
+
+        // trimTo with a non-segment-aligned value should round up
+        da.trimTo(128 + 1);
+        assertEquals(2, da.getSegments());
+        assertEquals(2 * 128, da.getCapacity());
+        da.close();
+    }
+
+    @Test
+    public void testTrimToSameCapacityIsNoop() {
+        DataAccess da = createDataAccess(name, 128);
+        da.create(128);
+        da.ensureCapacity(2 * 128);
+        da.setInt(0, 42);
+        da.trimTo(2 * 128);
+        assertEquals(2, da.getSegments());
+        assertEquals(42, da.getInt(0));
+        da.close();
+    }
+
+    @Test
+    public void testTrimToLargerCapacityThrows() {
+        DataAccess da = createDataAccess(name, 128);
+        da.create(128);
+        assertThrows(IllegalArgumentException.class, () -> da.trimTo(da.getCapacity() + 1));
+        da.close();
+    }
+
+    @Test
+    public void testTrimToZero() {
+        DataAccess da = createDataAccess(name, 128);
+        da.create(128);
+        da.ensureCapacity(3 * 128);
+        assertEquals(3, da.getSegments());
+
+        da.trimTo(0);
+        assertEquals(0, da.getSegments());
+        assertEquals(0, da.getCapacity());
+        da.close();
+    }
+
+    @Test
+    public void testTrimToThrowsOnNegative() {
+        DataAccess da = createDataAccess(name, 128);
+        da.create(128);
+        assertThrows(IllegalArgumentException.class, () -> da.trimTo(-1));
+        da.close();
+    }
+
+    @Test
     public void testPadding() {
         DataAccess da = createDataAccess(name);
         da.create(10);

@@ -243,6 +243,28 @@ public final class MMapDataAccess extends AbstractDataAccess {
     }
 
     @Override
+    public void trimTo(long capacity) {
+        if (capacity < 0)
+            throw new IllegalArgumentException("capacity must not be negative");
+        if (capacity > getCapacity())
+            throw new IllegalArgumentException("capacity cannot be larger than the current capacity: " + capacity + " > " + getCapacity());
+
+        int newSegmentCount = (int) (capacity / segmentSizeInBytes);
+        if (capacity % segmentSizeInBytes != 0)
+            newSegmentCount++;
+
+        if (newSegmentCount < segments.size()) {
+            clean(newSegmentCount, segments.size());
+            segments.subList(newSegmentCount, segments.size()).clear();
+            try {
+                raFile.setLength(HEADER_OFFSET + getCapacity());
+            } catch (IOException ex) {
+                throw new RuntimeException("Failed to truncate file " + getFullName(), ex);
+            }
+        }
+    }
+
+    @Override
     public void close() {
         super.close();
         clean(0, segments.size());
