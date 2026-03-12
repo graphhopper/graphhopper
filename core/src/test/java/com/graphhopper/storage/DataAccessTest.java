@@ -328,10 +328,11 @@ public abstract class DataAccessTest {
     }
 
     @Test
-    public void testTrimToLargerCapacityThrows() {
+    public void testTrimToIllegal() {
         DataAccess da = createDataAccess(name, 128);
         da.create(128);
         assertThrows(IllegalArgumentException.class, () -> da.trimTo(da.getCapacity() + 1));
+        assertThrows(IllegalArgumentException.class, () -> da.trimTo(-1));
         da.close();
     }
 
@@ -345,14 +346,6 @@ public abstract class DataAccessTest {
         da.trimTo(0);
         assertEquals(0, da.getSegments());
         assertEquals(0, da.getCapacity());
-        da.close();
-    }
-
-    @Test
-    public void testTrimToThrowsOnNegative() {
-        DataAccess da = createDataAccess(name, 128);
-        da.create(128);
-        assertThrows(IllegalArgumentException.class, () -> da.trimTo(-1));
         da.close();
     }
 
