@@ -29,7 +29,7 @@ import java.util.Arrays;
  *
  * @author Peter Karich
  */
-class RAMIntDataAccess extends AbstractDataAccess {
+public class RAMIntDataAccess extends AbstractDataAccess {
     private int[][] segments = new int[0][];
     private boolean closed = false;
     private boolean store;
