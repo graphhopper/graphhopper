@@ -421,8 +421,8 @@ public class MapMatching {
     }
 
     public List<Snap> findCandidateSnaps(final double queryLat, final double queryLon) {
-        double rLon = (measurementErrorSigma * 360.0 / DistanceCalcEarth.DIST_EARTH.calcCircumference(queryLat));
-        double rLat = measurementErrorSigma / DistanceCalcEarth.METERS_PER_DEGREE;
+        double rLon = (2 * measurementErrorSigma * 360.0 / DistanceCalcEarth.DIST_EARTH.calcCircumference(queryLat));
+        double rLat = 2 * measurementErrorSigma / DistanceCalcEarth.METERS_PER_DEGREE;
         Envelope envelope = new Envelope(queryLon, queryLon, queryLat, queryLat);
         for (int i = 0; i < 50; i++) {
             envelope.expandBy(rLon, rLat);
