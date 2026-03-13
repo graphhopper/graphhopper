@@ -30,10 +30,9 @@ import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
+import com.graphhopper.search.KVStorage;
+
+import java.util.*;
 
 import static com.graphhopper.json.Statement.*;
 import static com.graphhopper.json.Statement.Op.*;
@@ -63,10 +62,25 @@ class CustomModelParserTest {
         countryEnc = Country.create();
         stateEnc = State.create();
         encodingManager = new EncodingManager.Builder().add(accessEnc).add(avgSpeedEnc).add(new EnumEncodedValue<>("bus", MyBus.class))
-                .add(stateEnc).add(countryEnc).add(MaxSpeed.create()).add(Surface.create()).add(RoadClass.create()).add(RoadEnvironment.create()).build();
+                .add(stateEnc).add(countryEnc).add(MaxSpeed.create()).add(Surface.create()).add(RoadClass.create()).add(RoadEnvironment.create())
+                .add(new KVStorageEncodedValue("cycleway")).build();
         graph = new BaseGraph.Builder(encodingManager).create();
+        initKVStorageEncodedValues(graph);
         roadClassEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         maxSpeed = 140;
+    }
+
+    private void initKVStorageEncodedValues(BaseGraph bg) {
+        for (EncodedValue ev : encodingManager.getEncodedValues()) {
+            if (ev instanceof KVStorageEncodedValue kvEnc) {
+                KVStorage kvStorage = bg.getEdgeKVStorage();
+                String rawTag = kvEnc.getRawTagName();
+                int index = kvStorage.getKeyIndex(rawTag);
+                if (index < 0)
+                    index = kvStorage.reserveKey(rawTag, String.class);
+                kvEnc.setKeyIndex(index);
+            }
+        }
     }
 
     @Test
@@ -371,5 +385,73 @@ class CustomModelParserTest {
         //, {"if": "true", "multiply_by": foot_priority}, {"if": "foot_network == INTERNATIONAL || foot_network == NATIONAL", "multiply_by": 1.7}, {"else_if": "foot_network == REGIONAL || foot_network == LOCAL", "multiply_by": 1.5}]|areas=[]|turnCostsConfig=transportationMode=null, restrictions=false, uTurnCosts=-1
         List<String> variables = findVariablesForEncodedValuesString(customModel, s -> new DefaultImportRegistry().createImportUnit(s) != null, s -> "");
         assertEquals(List.of("foot_access", "hike_rating", "road_access"), variables);
+    }
+
+    @Test
+    void testTagGet() {
+        CustomModel customModel = new CustomModel();
+        customModel.addToPriority(If("tag('cycleway') == 'lane'", MULTIPLY, "0.5"));
+        customModel.addToSpeed(If("true", LIMIT, "100"));
+        CustomWeighting.Parameters parameters = CustomModelParser.createWeightingParameters(customModel, encodingManager);
+
+        BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
+        initKVStorageEncodedValues(graph);
+
+        EdgeIteratorState edgeWithLane = graph.edge(0, 1).setDistance(100).set(avgSpeedEnc, 60).set(accessEnc, true, true);
+        edgeWithLane.setKeyValues(Map.of("cycleway", new KVStorage.KValue("lane")));
+
+        EdgeIteratorState edgeWithTrack = graph.edge(1, 2).setDistance(100).set(avgSpeedEnc, 60).set(accessEnc, true, true);
+        edgeWithTrack.setKeyValues(Map.of("cycleway", new KVStorage.KValue("track")));
+
+        EdgeIteratorState edgeWithout = graph.edge(2, 3).setDistance(100).set(avgSpeedEnc, 60).set(accessEnc, true, true);
+
+        assertEquals(0.5, parameters.getEdgeToPriorityMapping().get(edgeWithLane, false), 1.e-6);
+        assertEquals(1.0, parameters.getEdgeToPriorityMapping().get(edgeWithTrack, false), 1.e-6);
+        assertEquals(1.0, parameters.getEdgeToPriorityMapping().get (edgeWithout, false), 1.e-6);
+
+        // white spaces
+        customModel = new CustomModel();
+        customModel.addToPriority(If("tag( 'cycleway'  )   ==  'lane' ", MULTIPLY, "0.5"));
+        customModel.addToSpeed(If("true", LIMIT, "100"));
+        parameters = CustomModelParser.createWeightingParameters(customModel, encodingManager);
+
+        assertEquals(0.5, parameters.getEdgeToPriorityMapping().get(edgeWithLane, false), 1.e-6);
+        assertEquals(1.0, parameters.getEdgeToPriorityMapping().get(edgeWithTrack, false), 1.e-6);
+        assertEquals(1.0, parameters.getEdgeToPriorityMapping().get(edgeWithout, false), 1.e-6);
+
+        // null comparison
+        customModel = new CustomModel();
+        customModel.addToPriority(If("tag('cycleway') == null", MULTIPLY, "0.3"));
+        customModel.addToSpeed(If("true", LIMIT, "100"));
+        parameters = CustomModelParser.createWeightingParameters(customModel, encodingManager);
+
+        assertEquals(1.0, parameters.getEdgeToPriorityMapping().get(edgeWithTrack, false), 1.e-6);
+        assertEquals(0.3, parameters.getEdgeToPriorityMapping().get(edgeWithout, false), 1.e-6);
+
+        // unequal
+        customModel = new CustomModel();
+        customModel.addToPriority(If("tag('cycleway') != 'lane'", MULTIPLY, "0.5"));
+        customModel.addToSpeed(If("true", LIMIT, "100"));
+        parameters = CustomModelParser.createWeightingParameters(customModel, encodingManager);
+
+        assertEquals(1.0, parameters.getEdgeToPriorityMapping().get(edgeWithLane, false), 1.e-6);
+        assertEquals(0.5, parameters.getEdgeToPriorityMapping().get(edgeWithTrack, false), 1.e-6);
+        assertEquals(0.5, parameters.getEdgeToPriorityMapping().get(edgeWithout, false), 1.e-6);
+    }
+
+    @Test
+    void testIsForward() {
+        CustomModel customModel = new CustomModel();
+        customModel.addToPriority(If("is_forward", MULTIPLY, "0.5"));
+        customModel.addToSpeed(If("true", LIMIT, "100"));
+        CustomWeighting.Parameters parameters = CustomModelParser.createWeightingParameters(customModel, encodingManager);
+
+        BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
+        initKVStorageEncodedValues(graph);
+        EdgeIteratorState edge = graph.edge(0, 1).setDistance(100).set(avgSpeedEnc, 60).set(accessEnc, true, true);
+
+        assertEquals(1.0, parameters.getEdgeToPriorityMapping().get(edge, false), 1.e-6);
+        assertEquals(1.0, parameters.getEdgeToPriorityMapping().get(edge, true), 1.e-6);
+        assertEquals(0.5, parameters.getEdgeToPriorityMapping().get(edge.detach(true), true), 1.e-6);
     }
 }
