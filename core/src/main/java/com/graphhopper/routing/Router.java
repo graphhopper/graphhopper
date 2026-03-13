@@ -293,6 +293,7 @@ public class Router {
 
     private PathMerger createPathMerger(GHRequest request, Weighting weighting, Graph graph) {
         boolean enableInstructions = request.getHints().getBool(Parameters.Routing.INSTRUCTIONS, routerConfig.isInstructionsEnabled());
+        boolean enableViaPointInstructions = request.getHints().getBool(Parameters.Routing.VIA_POINT_INSTRUCTIONS, routerConfig.isViaPointInstructionsEnabled());
         boolean calcPoints = request.getHints().getBool(Parameters.Routing.CALC_POINTS, routerConfig.isCalcPoints());
         double wayPointMaxDistance = request.getHints().getDouble(Parameters.Routing.WAY_POINT_MAX_DISTANCE, 0.5);
         double elevationWayPointMaxDistance = request.getHints().getDouble(ELEVATION_WAY_POINT_MAX_DISTANCE, routerConfig.getElevationWayPointMaxDistance());
@@ -304,6 +305,7 @@ public class Router {
                 setCalcPoints(calcPoints).
                 setRamerDouglasPeucker(peucker).
                 setEnableInstructions(enableInstructions).
+                setEnableViaPointInstructions(enableViaPointInstructions).
                 setPathDetailsBuilders(pathDetailsBuilderFactory, request.getPathDetails()).
                 setSimplifyResponse(routerConfig.isSimplifyResponse() && wayPointMaxDistance > 0);
 
