@@ -60,14 +60,14 @@ public class QueryGraphWeighting implements Weighting {
 
     @Override
     public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
-        if (isVirtualEdge(edgeState.getEdge()) && !edgeState.get(EdgeIteratorState.UNFAVORED_EDGE)) {
-            if (edgeState instanceof VirtualEdgeIteratorState v)
-                return virtualWeightsByEdgeKey.get(reverse ? v.getReverseEdgeKey() : v.getEdgeKey());
-            else if (edgeState instanceof VirtualEdgeIterator v)
-                return virtualWeightsByEdgeKey.get(reverse ? v.getReverseEdgeKey() : v.getEdgeKey());
-            else
-                throw new IllegalStateException("Unexpected virtual edge state: " + edgeState);
-        }
+//        if (isVirtualEdge(edgeState.getEdge()) && !edgeState.get(EdgeIteratorState.UNFAVORED_EDGE)) {
+//            if (edgeState instanceof VirtualEdgeIteratorState v)
+//                return virtualWeightsByEdgeKey.get(reverse ? v.getReverseEdgeKey() : v.getEdgeKey());
+//            else if (edgeState instanceof VirtualEdgeIterator v)
+//                return virtualWeightsByEdgeKey.get(reverse ? v.getReverseEdgeKey() : v.getEdgeKey());
+//            else
+//                throw new IllegalStateException("Unexpected virtual edge state: " + edgeState);
+//        }
         return weighting.calcEdgeWeight(edgeState, reverse);
     }
 
@@ -138,14 +138,14 @@ public class QueryGraphWeighting implements Weighting {
 
     @Override
     public long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse) {
-        if (isVirtualEdge(edgeState.getEdge()) && !edgeState.get(EdgeIteratorState.UNFAVORED_EDGE)) {
-            if (edgeState instanceof VirtualEdgeIteratorState v)
-                return virtualTimesByEdgeKey.get(reverse ? v.getReverseEdgeKey() : v.getEdgeKey());
-            else if (edgeState instanceof VirtualEdgeIterator v)
-                return virtualTimesByEdgeKey.get(reverse ? v.getReverseEdgeKey() : v.getEdgeKey());
-            else
-                throw new IllegalStateException("Unexpected virtual edge state: " + edgeState);
-        }
+//        if (isVirtualEdge(edgeState.getEdge()) && !edgeState.get(EdgeIteratorState.UNFAVORED_EDGE)) {
+//            if (edgeState instanceof VirtualEdgeIteratorState v)
+//                return virtualTimesByEdgeKey.get(reverse ? v.getReverseEdgeKey() : v.getEdgeKey());
+//            else if (edgeState instanceof VirtualEdgeIterator v)
+//                return virtualTimesByEdgeKey.get(reverse ? v.getReverseEdgeKey() : v.getEdgeKey());
+//            else
+//                throw new IllegalStateException("Unexpected virtual edge state: " + edgeState);
+//        }
         return weighting.calcEdgeMillis(edgeState, reverse);
     }
 
