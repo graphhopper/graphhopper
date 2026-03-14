@@ -93,7 +93,7 @@ class AStarBidirectionTest {
             // long edge 4-5, but it makes the approximator infeasible, because
             // d(10, 2) + h(2) = 100 + 0 = 100 and h(10) = 1000, so it does not hold that d(10, 2) + h(2) >= h(10)
             if (currentNode == 10)
-                return 1000;
+                return 10 * 1000;
             else
                 return 0;
         }

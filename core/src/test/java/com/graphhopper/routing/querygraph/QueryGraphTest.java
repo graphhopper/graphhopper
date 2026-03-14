@@ -482,11 +482,11 @@ public class QueryGraphTest {
         Weighting weighting = new SpeedWeighting(speedEnc, turnCostEnc, graphWithTurnCosts.getTurnCostStorage(), Double.POSITIVE_INFINITY);
 
         // no turn costs initially
-        assertEquals(0, weighting.calcTurnWeight(edge0.getEdge(), 1, edge1.getEdge()), .1);
+        assertEquals(0, weighting.calcTurnWeight(edge0.getEdge(), 1, edge1.getEdge()));
 
         // now use turn costs
         turnExt.set(turnCostEnc, edge0.getEdge(), 1, edge1.getEdge(), 10);
-        assertEquals(10, weighting.calcTurnWeight(edge0.getEdge(), 1, edge1.getEdge()), .1);
+        assertEquals(100, weighting.calcTurnWeight(edge0.getEdge(), 1, edge1.getEdge()));
 
         // now use turn costs with query graph
         Snap res1 = createLocationResult(0.000, 0.005, edge0, 0, Snap.Position.EDGE);
@@ -497,7 +497,7 @@ public class QueryGraphTest {
         int fromQueryEdge = GHUtility.getEdge(qGraph, res1.getClosestNode(), 1).getEdge();
         int toQueryEdge = GHUtility.getEdge(qGraph, res2.getClosestNode(), 1).getEdge();
 
-        assertEquals(10, weighting.calcTurnWeight(fromQueryEdge, 1, toQueryEdge), .1);
+        assertEquals(100, weighting.calcTurnWeight(fromQueryEdge, 1, toQueryEdge));
 
         graphWithTurnCosts.close();
     }
@@ -1094,7 +1094,6 @@ public class QueryGraphTest {
         long originalDistance = 55596934;
         assertEquals(originalDistance, edge.getDistance_mm());
         // snap very close to point 0 -> very short virtual edge
-        // since the edge is long the required plane/earth correction is large -> make sure we do not shorten the short edge too much
         Snap snap = createLocationResult(60.01, 10.000002, edge, 0, EDGE);
         QueryGraph queryGraph = lookup(snap);
         long sumFwd = 0, sumBwd = 0;
@@ -1107,14 +1106,16 @@ public class QueryGraphTest {
             else
                 sumBwd += ve.getDistance_mm();
         }
-        assertEquals(sumFwd, edge.getDistance_mm());
-        assertEquals(sumBwd, edge.getDistance_mm());
+        // since the edge is long there is around 0.5m difference between the original distance calculated by dist_earth and
+        // the virtual edge distance sum calculated by dist_plane -> make sure we do not shorten the short edge too much
+        assertEquals(edge.getDistance_mm() + 529, sumFwd);
+        assertEquals(edge.getDistance_mm() + 529, sumBwd);
         assertEquals(4, virtualEdges.size());
-        // the short edge got even shorter, and even zero, but not negative
-        assertEquals(0, virtualEdges.get(0).getDistance_mm());
-        assertEquals(0, virtualEdges.get(1).getDistance_mm());
-        assertEquals(originalDistance, virtualEdges.get(2).getDistance_mm());
-        assertEquals(originalDistance, virtualEdges.get(3).getDistance_mm());
+        // no correction since it is above limits
+        assertEquals(111, virtualEdges.get(0).getDistance_mm());
+        assertEquals(111, virtualEdges.get(1).getDistance_mm());
+        assertEquals(sumFwd - 111, virtualEdges.get(2).getDistance_mm());
+        assertEquals(sumBwd - 111, virtualEdges.get(3).getDistance_mm());
     }
 
     @Test

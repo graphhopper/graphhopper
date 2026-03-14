@@ -99,9 +99,9 @@ public class GraphHopperTest {
 
     @ParameterizedTest
     @CsvSource({
-            DIJKSTRA + ",false,703",
-            ASTAR + ",false,361",
-            DIJKSTRA_BI + ",false,340",
+            DIJKSTRA + ",false,705",
+            ASTAR + ",false,362",
+            DIJKSTRA_BI + ",false,342",
             ASTAR_BI + ",false,192",
             DIJKSTRA_BI + ",true,45",
             ASTAR_BI + ",true,43",
@@ -923,14 +923,14 @@ public class GraphHopperTest {
         GHResponse rsp = hopper.route(req);
         assertFalse(rsp.hasErrors());
         assertEquals(138, rsp.getBest().getDistance(), 1);
-        assertEquals(17, rsp.getBest().getRouteWeight(), 1);
+        assertEquals(166, rsp.getBest().getRouteWeight());
         assertEquals(17000, rsp.getBest().getTime(), 1000);
         // with heading
         req.setHeadings(Arrays.asList(100., 0.));
         rsp = hopper.route(req);
         assertFalse(rsp.hasErrors());
         assertEquals(138, rsp.getBest().getDistance(), 1);
-        assertEquals(317, rsp.getBest().getRouteWeight(), 1);
+        assertEquals(3166, rsp.getBest().getRouteWeight());
         assertEquals(17000, rsp.getBest().getTime(), 1000);
     }
 
@@ -1554,7 +1554,7 @@ public class GraphHopperTest {
                 setCHProfiles(new CHProfile(profile));
 
         hopper.getLMPreparationHandler().
-                setLMProfiles(new LMProfile(profile).setMaximumLMWeight(2000));
+                setLMProfiles(new LMProfile(profile).setMaximumLMWeight(20000));
 
         hopper.importOrLoad();
 
@@ -1630,20 +1630,20 @@ public class GraphHopperTest {
         hopper.importOrLoad();
 
         // flex
-        testCrossQueryAssert(profile1, hopper, 525.3, 196, true);
-        testCrossQueryAssert(profile2, hopper, 633.0, 198, true);
-        testCrossQueryAssert(profile3, hopper, 812.4, 198, true);
+        testCrossQueryAssert(profile1, hopper, 5255, 196, true);
+        testCrossQueryAssert(profile2, hopper, 6330, 198, true);
+        testCrossQueryAssert(profile3, hopper, 8126, 198, true);
 
         // LM (should be the same as flex, but with less visited nodes!)
-        testCrossQueryAssert(profile1, hopper, 525.3, 108, false);
-        testCrossQueryAssert(profile2, hopper, 633.0, 126, false);
-        testCrossQueryAssert(profile3, hopper, 812.4, 192, false);
+        testCrossQueryAssert(profile1, hopper, 5255, 108, false);
+        testCrossQueryAssert(profile2, hopper, 6330, 126, false);
+        testCrossQueryAssert(profile3, hopper, 8126, 192, false);
     }
 
     private void testCrossQueryAssert(String profile, GraphHopper hopper, double expectedWeight, int expectedVisitedNodes, boolean disableLM) {
         GHResponse response = hopper.route(new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
                 setProfile(profile).putHint("lm.disable", disableLM));
-        assertEquals(expectedWeight, response.getBest().getRouteWeight(), 0.1);
+        assertEquals(expectedWeight, response.getBest().getRouteWeight());
         int visitedNodes = response.getHints().getInt("visited_nodes.sum", 0);
         assertEquals(expectedVisitedNodes, visitedNodes);
     }
@@ -1710,11 +1710,11 @@ public class GraphHopperTest {
 
         // if we do not pass u_turn_costs with the request hints we get those from the profile
         Weighting w = hopper.createWeighting(hopper.getProfiles().get(0), new PMap());
-        assertEquals(123.0, w.calcTurnWeight(5, 6, 5));
+        assertEquals(1230, w.calcTurnWeight(5, 6, 5));
 
         // we can no longer overwrite the u_turn_costs
         w = hopper.createWeighting(hopper.getProfiles().get(0), new PMap().putObject(U_TURN_COSTS, 46));
-        assertEquals(46.0, w.calcTurnWeight(5, 6, 5));
+        assertEquals(460, w.calcTurnWeight(5, 6, 5));
     }
 
     @Test
@@ -1736,7 +1736,7 @@ public class GraphHopperTest {
                 setCHProfiles(new CHProfile(profile1));
 
         hopper.getLMPreparationHandler().
-                setLMProfiles(new LMProfile(profile1).setMaximumLMWeight(2000));
+                setLMProfiles(new LMProfile(profile1).setMaximumLMWeight(20000));
 
         hopper.importOrLoad();
         // request a profile that was not prepared
@@ -1777,7 +1777,7 @@ public class GraphHopperTest {
                 setProfiles(TestProfiles.constantSpeed("car")).
                 setStoreOnFlush(true);
         hopper.getLMPreparationHandler().
-                setLMProfiles(new LMProfile("car").setMaximumLMWeight(2000));
+                setLMProfiles(new LMProfile("car").setMaximumLMWeight(20000));
         hopper.importOrLoad();
 
         // we can switch LM on/off
@@ -1829,8 +1829,8 @@ public class GraphHopperTest {
             assertEquals(path.hasErrors(), pathLM.hasErrors(), failMessage);
 
             if (!path.hasErrors()) {
-                assertEquals(path.getRouteWeight(), pathCH.getRouteWeight(), 1.e-1, failMessage);
-                assertEquals(path.getRouteWeight(), pathLM.getRouteWeight(), 1.e-1, failMessage);
+                assertEquals(path.getRouteWeight(), pathCH.getRouteWeight(), failMessage);
+                assertEquals(path.getRouteWeight(), pathLM.getRouteWeight(), failMessage);
 
                 assertEquals(path.getDistance(), pathCH.getDistance(), 0.1, failMessage);
                 assertEquals(path.getDistance(), pathLM.getDistance(), 0.1, failMessage);
@@ -2237,7 +2237,7 @@ public class GraphHopperTest {
         req.setCurbsides(Arrays.asList("right", "right"));
         GHResponse res = h.route(req);
         assertFalse(res.hasErrors(), "routing should not fail but had errors: " + res.getErrors());
-        assertEquals(242.5, res.getBest().getRouteWeight(), 0.1);
+        assertEquals(2423, res.getBest().getRouteWeight());
         assertEquals(1917, res.getBest().getDistance(), 1);
         assertEquals(163000, res.getBest().getTime(), 1000);
     }
