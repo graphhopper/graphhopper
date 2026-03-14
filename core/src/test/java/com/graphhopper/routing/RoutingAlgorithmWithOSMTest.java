@@ -320,11 +320,11 @@ public class RoutingAlgorithmWithOSMTest {
         // 1. alternative: go over steps 'Rampe Major' => 1.7km vs. around 2.7km after BridgeTunnelTowerCorrection
         queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 2665, 118));
         // 2.
-        queries.add(new Query(43.728499, 7.417907, 43.74958, 7.436566, 4224, 233));
+        queries.add(new Query(43.728499, 7.417907, 43.74958, 7.436566, 4212, 231));
         // 3.
-        queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 2776, 167));
+        queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 2839, 145));
         // 4.
-        queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 1593, 85));
+        queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 1566, 83));
 
         // try reverse direction
         // 1.

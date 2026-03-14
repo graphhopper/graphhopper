@@ -47,7 +47,7 @@ graphhopper:
 #   Uncomment the following in-built profiles if you want more profiles. After you start GraphHopper it will print which encoded values you'll have to add to graph.encoded_values in this config file.
 #
 #    - name: racingbike
-#      custom_model_files: [racingbike.json, bike_elevation.json]
+#      custom_model_files: [racingbike.json, racingbike_elevation.json]
 #
 #    - name: mtb
 #      custom_model_files: [mtb.json, bike_elevation.json]
