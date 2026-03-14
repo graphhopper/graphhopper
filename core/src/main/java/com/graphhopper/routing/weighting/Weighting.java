@@ -75,10 +75,10 @@ public interface Weighting {
     }
 
     static double roundWeight(double w) {
-        if (Double.isNaN(w)) throw new IllegalArgumentException("weights should not be NaN");
-        if (w < 0) throw new IllegalArgumentException("weights should be >= 0");
+        assert !Double.isNaN(w) : "weights should not be NaN";
+        assert w >= 0 : "weights should be >= 0, got: " + w;
         if (Double.isInfinite(w)) return Double.POSITIVE_INFINITY;
-        if (w % 1 != 0 && w < 0.5)
+        if (w != 0 && w < 0.5)
             // we round up to weight 1, because weight 0 introduces ambiguity for shortest paths
             return 1;
         return Math.round(w);
