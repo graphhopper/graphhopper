@@ -17,8 +17,6 @@
  */
 package com.graphhopper.application;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GraphHopper;
@@ -325,16 +323,9 @@ public class MapMatchingTest {
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/tour4-with-uturn.gpx"), Gpx.class);
         List<Observation> observations = GpxConversions.getEntries(gpx.trk.get(0));
 
-        // Large sigma - no U-turn expected
-        writeDebugVisualization(hints, observations, 50, "../target/debug-uturn-sigma50.html");
-        // Small sigma - U-turn expected
-        writeDebugVisualization(hints, observations, 10, "../target/debug-uturn-sigma10.html");
-    }
-
-    private void writeDebugVisualization(PMap hints, List<Observation> observations, double sigma, String path) throws IOException {
         MapMatching mapMatching = MapMatching.fromGraphHopper(graphHopper, hints);
         mapMatching.setCollectDebugInfo(true);
-        mapMatching.setMeasurementErrorSigma(sigma);
+        mapMatching.setMeasurementErrorSigma(10);
         mapMatching.match(observations);
 
         MatchDebugInfo debugInfo = mapMatching.getDebugInfo();
@@ -342,15 +333,6 @@ public class MapMatchingTest {
         assertFalse(debugInfo.timeSteps.isEmpty());
         assertFalse(debugInfo.transitions.isEmpty());
         assertTrue(debugInfo.transitions.stream().anyMatch(t -> t.chosen));
-
-        ObjectMapper json = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
-        String dataJson = json.writeValueAsString(debugInfo);
-        String template = new String(getClass().getResourceAsStream("/debug-visualizer-template.html").readAllBytes());
-        File htmlFile = new File(path);
-        try (java.io.PrintWriter pw = new java.io.PrintWriter(htmlFile)) {
-            pw.print(template.replace("/*DEBUG_DATA_PLACEHOLDER*/", dataJson));
-        }
-        System.out.println("sigma=" + sigma + " -> " + htmlFile.getAbsolutePath());
     }
 
     /**
