@@ -33,9 +33,11 @@ public class SlopeCalculator {
             // Calculate 2d distance, although pointList might be 3D.
             double distance2D = DistanceCalcEarth.calcDistance(pointList, false);
             if (distance2D < MIN_LENGTH) {
+                // default minimum of average_slope and max_slope is negative => set it explicitly to 0
                 if (averageSlopeEnc != null)
-                    // default minimum of average_slope is negative so we have to explicitly set it to 0
                     iter.set(averageSlopeEnc, 0);
+                if (maxSlopeEnc != null)
+                    iter.set(maxSlopeEnc, 0);
                 continue;
             }
 
