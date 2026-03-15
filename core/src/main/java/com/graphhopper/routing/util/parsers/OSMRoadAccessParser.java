@@ -227,9 +227,13 @@ public class OSMRoadAccessParser<T extends Enum> implements TagParser {
                         || roadClass == RoadClass.BRIDLEWAY) return BikeRoadAccess.NO;
                 else if (roadClass == RoadClass.PEDESTRIAN) return BikeRoadAccess.YES;
             }
-            case GRC, GBR, HKG, IRL -> {
+            case GRC, GBR, IRL -> {
                 if (roadClass == RoadClass.PEDESTRIAN
                         || roadClass == RoadClass.FOOTWAY) return BikeRoadAccess.NO;
+            }
+            case HKG -> {
+                if (roadClass == RoadClass.PEDESTRIAN
+                        || roadClass == RoadClass.FOOTWAY) return BikeRoadAccess.DISMOUNT;
             }
             case HUN -> {
                 if (roadClass == RoadClass.TRUNK
