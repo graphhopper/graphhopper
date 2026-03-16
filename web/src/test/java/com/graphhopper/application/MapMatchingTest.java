@@ -24,15 +24,13 @@ import com.graphhopper.ResponsePath;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.gpx.GpxConversions;
 import com.graphhopper.jackson.Gpx;
-import com.graphhopper.matching.EdgeMatch;
-import com.graphhopper.matching.MapMatching;
-import com.graphhopper.matching.MatchResult;
-import com.graphhopper.matching.Observation;
+import com.graphhopper.matching.*;
 import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -281,10 +279,6 @@ public class MapMatchingTest {
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
     public void testUTurns(PMap hints) throws IOException {
-        hints = new PMap(hints)
-                // Reduce penalty to allow U-turns
-                .putObject(Parameters.Routing.HEADING_PENALTY, 50);
-
         MapMatching mapMatching = MapMatching.fromGraphHopper(graphHopper, hints);
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/tour4-with-uturn.gpx"), Gpx.class);
 
@@ -292,11 +286,12 @@ public class MapMatchingTest {
         mapMatching.setMeasurementErrorSigma(50);
         MatchResult mr = mapMatching.match(GpxConversions.getEntries(gpx.trk.get(0)));
         assertEquals(Arrays.asList("Gustav-Adolf-Straße", "Funkenburgstraße"), fetchStreets(mr.getEdgeMatches()));
-
+        assertEquals(385.0, mr.getMatchLength(), 1.0);
         // with small measurement error, we expect the U-turn
         mapMatching.setMeasurementErrorSigma(10);
         mr = mapMatching.match(GpxConversions.getEntries(gpx.trk.get(0)));
         assertEquals(Arrays.asList("Gustav-Adolf-Straße", "Funkenburgstraße"), fetchStreets(mr.getEdgeMatches()));
+        assertEquals(445.0, mr.getMatchLength(), 1.0);
     }
 
     static List<String> fetchStreets(List<EdgeMatch> emList) {
@@ -320,6 +315,24 @@ public class MapMatchingTest {
             throw new IllegalStateException("Errors:" + errors);
         }
         return list;
+    }
+
+    @Test
+    public void testDebugOutput() throws IOException {
+        PMap hints = new PMap().putObject(Parameters.Landmark.DISABLE, true).putObject("profile", "my_profile");
+        Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/tour4-with-uturn.gpx"), Gpx.class);
+        List<Observation> observations = GpxConversions.getEntries(gpx.trk.get(0));
+
+        MapMatching mapMatching = MapMatching.fromGraphHopper(graphHopper, hints);
+        mapMatching.setCollectDebugInfo(true);
+        mapMatching.setMeasurementErrorSigma(10);
+        mapMatching.match(observations);
+
+        MatchDebugInfo debugInfo = mapMatching.getDebugInfo();
+        assertNotNull(debugInfo);
+        assertFalse(debugInfo.timeSteps.isEmpty());
+        assertFalse(debugInfo.transitions.isEmpty());
+        assertTrue(debugInfo.transitions.stream().anyMatch(t -> t.chosen));
     }
 
     /**

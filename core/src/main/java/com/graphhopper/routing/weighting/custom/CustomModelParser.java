@@ -47,6 +47,7 @@ public class CustomModelParser {
     static final String BACKWARD_PREFIX = "backward_";
     static final String PREV_PREFIX = "prev_";
     static final String CHANGE_ANGLE = "change_angle";
+    static final String STREET_NAME = "street_name";
     private static final boolean JANINO_DEBUG = Boolean.getBoolean(Scanner.SYSTEM_PROPERTY_SOURCE_DEBUGGING_ENABLE);
     private static final String SCRIPT_FILE_DIR = System.getProperty(Scanner.SYSTEM_PROPERTY_SOURCE_DEBUGGING_DIR, "./src/main/java/com/graphhopper/routing/weighting/custom");
 
@@ -354,6 +355,10 @@ public class CustomModelParser {
         // The variables outEdgeReverse and inEdgeReverse are provided from initial calls if needTwoDirections is true.
         if (arg.equals(CHANGE_ANGLE)) {
             return "double change_angle = CustomWeightingHelper.calcChangeAngle(edgeIntAccess, this.orientation_enc, inEdge, inEdgeReverse, outEdge, outEdgeReverse);\n";
+        } else if (arg.equals(STREET_NAME)) {
+            return "String street_name = graph.getEdgeIteratorState(outEdge, Integer.MIN_VALUE).getName();\n";
+        } else if (arg.equals(PREV_PREFIX + STREET_NAME)) {
+            return "String prev_street_name = graph.getEdgeIteratorState(inEdge, Integer.MIN_VALUE).getName();\n";
         } else if (lookup.hasEncodedValue(arg)) {
             EncodedValue enc = lookup.getEncodedValue(arg, EncodedValue.class);
             if (!(enc instanceof EnumEncodedValue<?>))
@@ -464,6 +469,8 @@ public class CustomModelParser {
                 classSourceCode.append("protected " + Polygon.class.getSimpleName() + " " + arg + ";\n");
                 initSourceCode.append("JsonFeature feature_" + id + " = (JsonFeature) areas.get(\"" + id + "\");\n");
                 initSourceCode.append("this." + arg + " = new Polygon(new PreparedPolygon((Polygonal) feature_" + id + ".getGeometry()));\n");
+            } else if (arg.equals(STREET_NAME)) {
+                // street_name is resolved at runtime from graph KV storage, no class field needed
             } else {
                 if (!arg.startsWith(IN_AREA_PREFIX))
                     throw new IllegalArgumentException("Variable not supported: " + arg);
@@ -511,6 +518,7 @@ public class CustomModelParser {
         // allow variables, all encoded values, constants and special variables like in_xyarea or backward_car_access
         NameValidator nameInConditionValidator = name -> lookup.hasEncodedValue(name)
                 || name.toUpperCase(Locale.ROOT).equals(name) || name.startsWith(IN_AREA_PREFIX) || name.equals(CHANGE_ANGLE)
+                || name.equals(STREET_NAME) || name.equals(PREV_PREFIX + STREET_NAME)
                 || name.startsWith(BACKWARD_PREFIX) && lookup.hasEncodedValue(name.substring(BACKWARD_PREFIX.length()))
                 || name.startsWith(PREV_PREFIX) && lookup.hasEncodedValue(name.substring(PREV_PREFIX.length()));
         Function<String, EncodedValue> fct = createSimplifiedLookup(lookup);
@@ -528,11 +536,13 @@ public class CustomModelParser {
 
     private static Function<String, EncodedValue> createSimplifiedLookup(EncodedValueLookup lookup) {
         return key -> {
-            if (key.startsWith(BACKWARD_PREFIX))
-                return lookup.getEncodedValue(key.substring(BACKWARD_PREFIX.length()), EncodedValue.class);
-            else if (key.startsWith(PREV_PREFIX))
-                return lookup.getEncodedValue(key.substring(PREV_PREFIX.length()), EncodedValue.class);
-            else if (lookup.hasEncodedValue(key))
+            if (key.startsWith(BACKWARD_PREFIX)) {
+                String base = key.substring(BACKWARD_PREFIX.length());
+                return lookup.hasEncodedValue(base) ? lookup.getEncodedValue(base, EncodedValue.class) : null;
+            } else if (key.startsWith(PREV_PREFIX)) {
+                String base = key.substring(PREV_PREFIX.length());
+                return lookup.hasEncodedValue(base) ? lookup.getEncodedValue(base, EncodedValue.class) : null;
+            } else if (lookup.hasEncodedValue(key))
                 return lookup.getEncodedValue(key, EncodedValue.class);
             else return null;
         };

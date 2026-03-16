@@ -52,7 +52,7 @@ public final class MMapDataAccess extends AbstractDataAccess {
     private RandomAccessFile raFile;
     private final List<MappedByteBuffer> segments = new ArrayList<>();
 
-    MMapDataAccess(String name, String location, boolean allowWrites, int segmentSize) {
+    public MMapDataAccess(String name, String location, boolean allowWrites, int segmentSize) {
         super(name, location, segmentSize);
         this.allowWrites = allowWrites;
     }
@@ -239,6 +239,28 @@ public final class MMapDataAccess extends AbstractDataAccess {
         int max = Math.round(segments.size() * percentage / 100f);
         for (int i = 0; i < max; i++) {
             segments.get(i).load();
+        }
+    }
+
+    @Override
+    public void trimTo(long capacity) {
+        if (capacity < 0)
+            throw new IllegalArgumentException("capacity must not be negative");
+        if (capacity > getCapacity())
+            throw new IllegalArgumentException("capacity cannot be larger than the current capacity: " + capacity + " > " + getCapacity());
+
+        int newSegmentCount = (int) (capacity / segmentSizeInBytes);
+        if (capacity % segmentSizeInBytes != 0)
+            newSegmentCount++;
+
+        if (newSegmentCount < segments.size()) {
+            clean(newSegmentCount, segments.size());
+            segments.subList(newSegmentCount, segments.size()).clear();
+            try {
+                raFile.setLength(HEADER_OFFSET + getCapacity());
+            } catch (IOException ex) {
+                throw new RuntimeException("Failed to truncate file " + getFullName(), ex);
+            }
         }
     }
 

@@ -19,7 +19,7 @@ public class CurvatureCalculator {
         while (iter.next()) {
             PointList pointList = iter.fetchWayGeometry(FetchMode.ALL);
             double edgeDistance = iter.getDistance();
-            if (!pointList.isEmpty() && edgeDistance > 0) {
+            if (!pointList.isEmpty() && edgeDistance > 0.1) {
                 double lat0 = pointList.getLat(0), lon0 = pointList.getLon(0);
                 double latEnd = pointList.getLat(pointList.size() - 1), lonEnd = pointList.getLon(pointList.size() - 1);
                 double beeline = pointList.is3D() ? DistanceCalcEarth.DIST_EARTH.calcDist3D(lat0, lon0, pointList.getEle(0), latEnd, lonEnd, pointList.getEle(pointList.size() - 1))

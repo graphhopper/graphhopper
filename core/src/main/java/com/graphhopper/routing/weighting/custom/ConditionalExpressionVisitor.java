@@ -33,7 +33,7 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
 
     private static final Set<String> allowedMethodParents = new HashSet<>(Arrays.asList("edge", "Math", "country"));
     private static final Set<String> allowedMethods = new HashSet<>(Arrays.asList("ordinal", "getDistance", "getName",
-            "contains", "sqrt", "abs", "isRightHandTraffic"));
+            "contains", "sqrt", "abs", "isRightHandTraffic", "equals"));
     private final ParseResult result;
     private final TreeMap<Integer, Replacement> replacements = new TreeMap<>();
     private final NameValidator variableValidator;
@@ -104,6 +104,10 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
                         if (mi.arguments.length == 0) {
                             result.guessedVariables.add(n.identifiers[0]); // return road_class
                             return true;
+                        } else if (mi.arguments.length == 1) {
+                            // prev_street_name.equals(street_name)
+                            result.guessedVariables.add(n.identifiers[0]);
+                            return mi.arguments[0].accept(this);
                         }
                     }
                 }
