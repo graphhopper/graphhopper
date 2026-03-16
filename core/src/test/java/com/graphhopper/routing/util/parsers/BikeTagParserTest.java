@@ -23,6 +23,7 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.PriorityCode;
+import com.graphhopper.routing.util.WayAccess;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
@@ -473,7 +474,16 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.clearTags();
         way.setTag("highway", "cycleway");
         way.setTag("access", "no");
+        // Tagging mistake and bikes should have access to their cycleway
+        // And if it would be a constructions: should be mapped as highway=construction
+        assertTrue(accessParser.getAccess(way).isWay());
+        way.setTag("bicycle", "no");
         assertTrue(accessParser.getAccess(way).canSkip());
+
+        way.clearTags();
+        way.setTag("highway", "cycleway");
+        way.setTag("access", "agricultural");
+        assertTrue(accessParser.getAccess(way).isWay());
         way.setTag("bicycle", "no");
         assertTrue(accessParser.getAccess(way).canSkip());
 
