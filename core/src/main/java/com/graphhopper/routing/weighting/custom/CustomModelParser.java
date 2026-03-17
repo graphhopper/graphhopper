@@ -356,9 +356,9 @@ public class CustomModelParser {
         if (arg.equals(CHANGE_ANGLE)) {
             return "double change_angle = CustomWeightingHelper.calcChangeAngle(edgeIntAccess, this.orientation_enc, inEdge, inEdgeReverse, outEdge, outEdgeReverse);\n";
         } else if (arg.equals(STREET_NAME)) {
-            return "String street_name = graph.getEdgeIteratorState(outEdge, Integer.MIN_VALUE).getName();\n";
+            return "String street_name = graph.getEdgeIteratorState(outEdge, Integer.MIN_VALUE).getName();\n"; // TODO PERF: get ref into KVStorage without creation of EdgeIteratorState
         } else if (arg.equals(PREV_PREFIX + STREET_NAME)) {
-            return "String prev_street_name = graph.getEdgeIteratorState(inEdge, Integer.MIN_VALUE).getName();\n";
+            return "String prev_street_name = graph.getEdgeIteratorState(inEdge, Integer.MIN_VALUE).getName();\n"; // TODO PERF
         } else if (lookup.hasEncodedValue(arg)) {
             EncodedValue enc = lookup.getEncodedValue(arg, EncodedValue.class);
             if (!(enc instanceof EnumEncodedValue<?>))
@@ -536,13 +536,13 @@ public class CustomModelParser {
 
     private static Function<String, EncodedValue> createSimplifiedLookup(EncodedValueLookup lookup) {
         return key -> {
-            if (key.startsWith(BACKWARD_PREFIX)) {
-                String base = key.substring(BACKWARD_PREFIX.length());
-                return lookup.hasEncodedValue(base) ? lookup.getEncodedValue(base, EncodedValue.class) : null;
-            } else if (key.startsWith(PREV_PREFIX)) {
-                String base = key.substring(PREV_PREFIX.length());
-                return lookup.hasEncodedValue(base) ? lookup.getEncodedValue(base, EncodedValue.class) : null;
-            } else if (lookup.hasEncodedValue(key))
+            if (key.equals(STREET_NAME) || key.equals(PREV_PREFIX + STREET_NAME))
+                return null;
+            else if (key.startsWith(BACKWARD_PREFIX))
+                return lookup.getEncodedValue(key.substring(BACKWARD_PREFIX.length()), EncodedValue.class);
+            else if (key.startsWith(PREV_PREFIX))
+                return lookup.getEncodedValue(key.substring(PREV_PREFIX.length()), EncodedValue.class);
+            else if (lookup.hasEncodedValue(key))
                 return lookup.getEncodedValue(key, EncodedValue.class);
             else return null;
         };
