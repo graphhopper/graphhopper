@@ -20,9 +20,9 @@ package com.graphhopper.storage;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
+import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
 
@@ -30,6 +30,9 @@ import java.util.Arrays;
  * Off-heap DataAccess using an array of native {@link MemorySegment}s, mirroring the segment
  * architecture of {@link RAMDataAccess} ({@code MemorySegment[]} instead of {@code byte[][]}).
  * This isolates the effect of off-heap vs on-heap from the effect of removing segmentation.
+ * <p>
+ * Each segment is backed by a {@link ByteBuffer#allocateDirect direct ByteBuffer} wrapped as a
+ * MemorySegment. This avoids the per-access scope/liveness checks of arena-allocated segments.
  * <p>
  * Requires Java 22+.
  */
@@ -41,12 +44,16 @@ public class ForeignMemorySegmentedDataAccess extends AbstractDataAccess {
     private static final ValueLayout.OfByte BYTE_LAYOUT = ValueLayout.JAVA_BYTE;
 
     private MemorySegment[] segments = new MemorySegment[0];
-    private Arena arena;
     private boolean store;
 
     public ForeignMemorySegmentedDataAccess(String name, String location, boolean store, int segmentSize) {
         super(name, location, segmentSize);
         this.store = store;
+    }
+
+    private static MemorySegment allocateNativeSegment(int size) {
+        ByteBuffer bb = ByteBuffer.allocateDirect(size);
+        return MemorySegment.ofBuffer(bb);
     }
 
     @Override
@@ -72,14 +79,9 @@ public class ForeignMemorySegmentedDataAccess extends AbstractDataAccess {
             segmentsToCreate++;
 
         try {
-            if (arena == null)
-                arena = Arena.ofConfined();
-
             MemorySegment[] newSegs = Arrays.copyOf(segments, segments.length + segmentsToCreate);
             for (int i = segments.length; i < newSegs.length; i++) {
-                MemorySegment seg = arena.allocate(1 << segmentSizePower);
-                seg.fill((byte) 0);
-                newSegs[i] = seg;
+                newSegs[i] = allocateNativeSegment(1 << segmentSizePower);
             }
             segments = newSegs;
         } catch (OutOfMemoryError err) {
@@ -114,15 +116,13 @@ public class ForeignMemorySegmentedDataAccess extends AbstractDataAccess {
                 if (byteCount % segmentSizeInBytes != 0)
                     segmentCount++;
 
-                arena = Arena.ofConfined();
                 segments = new MemorySegment[segmentCount];
                 byte[] buffer = new byte[segmentSizeInBytes];
                 for (int s = 0; s < segmentCount; s++) {
                     int read = raFile.read(buffer);
                     if (read <= 0)
                         throw new IllegalStateException("segment " + s + " is empty? " + toString());
-                    MemorySegment seg = arena.allocate(segmentSizeInBytes);
-                    seg.fill((byte) 0);
+                    MemorySegment seg = allocateNativeSegment(segmentSizeInBytes);
                     MemorySegment.copy(buffer, 0, seg, BYTE_LAYOUT, 0, read);
                     segments[s] = seg;
                 }
@@ -174,7 +174,6 @@ public class ForeignMemorySegmentedDataAccess extends AbstractDataAccess {
                 b1.set(SHORT_LE, index, (short) value);
                 b2.set(SHORT_LE, 0, (short) (value >>> 16));
             } else {
-                // index + 3 >= segmentSizeInBytes
                 b1.set(BYTE_LAYOUT, index, (byte) value);
                 b1.set(BYTE_LAYOUT, index + 1, (byte) (value >>> 8));
                 b1.set(BYTE_LAYOUT, index + 2, (byte) (value >>> 16));
@@ -198,7 +197,6 @@ public class ForeignMemorySegmentedDataAccess extends AbstractDataAccess {
             if (index + 2 >= segmentSizeInBytes)
                 return (b2.get(BYTE_LAYOUT, 1) & 0xFF) << 24 | (b2.get(BYTE_LAYOUT, 0) & 0xFF) << 16
                         | (b1.get(BYTE_LAYOUT, index + 1) & 0xFF) << 8 | (b1.get(BYTE_LAYOUT, index) & 0xFF);
-            // index + 3 >= segmentSizeInBytes
             return (b2.get(BYTE_LAYOUT, 0) & 0xFF) << 24 | (b1.get(BYTE_LAYOUT, index + 2) & 0xFF) << 16
                     | (b1.get(BYTE_LAYOUT, index + 1) & 0xFF) << 8 | (b1.get(BYTE_LAYOUT, index) & 0xFF);
         }
@@ -298,10 +296,6 @@ public class ForeignMemorySegmentedDataAccess extends AbstractDataAccess {
     public void close() {
         super.close();
         segments = new MemorySegment[0];
-        if (arena != null) {
-            arena.close();
-            arena = null;
-        }
     }
 
     @Override
