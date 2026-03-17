@@ -27,15 +27,24 @@ public class DataAccessBenchmark {
     private static final int ITERATIONS = 30;
 
     public static void main(String[] args) {
-        int segmentSize = 1 << 20;
+        int segmentSize = 1 << 25;      // 32 MB
+        int largeSegmentSize = 1 << 28;  // 256 MB
         System.out.println("DataAccess Benchmark");
         System.out.println("====================");
         System.out.println("Size: " + (SIZE / 1_000_000) + "MB, Iterations: " + ITERATIONS);
         System.out.println();
 
-        benchmarkImpl("RAMDataAccess", new RAMDataAccess("bench_ram", "", false, segmentSize));
+        // --- Single-segment / contiguous implementations ---
+        benchmarkImpl("RAM1SegmentDataAccess", new RAM1SegmentDataAccess("bench_ram1", "", false, segmentSize));
         benchmarkImpl("ForeignMemoryDataAccess", new ForeignMemoryDataAccess("bench_foreign", "", false, segmentSize));
-        benchmarkImpl("ForeignMemorySegmentedDataAccess", new ForeignMemorySegmentedDataAccess("bench_native", "", false, segmentSize));
+
+        // --- Segmented implementations: small segments ---
+        benchmarkImpl("RAMDataAccess (32MB seg)", new RAMDataAccess("bench_ram", "", false, segmentSize));
+        benchmarkImpl("ForeignMemorySegmentedDataAccess (32MB seg)", new ForeignMemorySegmentedDataAccess("bench_native", "", false, segmentSize));
+
+        // --- Segmented implementations: large segments ---
+        benchmarkImpl("RAMDataAccess (256MB seg)", new RAMDataAccess("bench_ram_lg", "", false, largeSegmentSize));
+        benchmarkImpl("ForeignMemorySegmentedDataAccess (256MB seg)", new ForeignMemorySegmentedDataAccess("bench_native_lg", "", false, largeSegmentSize));
     }
 
     private static void benchmarkImpl(String name, DataAccess da) {
