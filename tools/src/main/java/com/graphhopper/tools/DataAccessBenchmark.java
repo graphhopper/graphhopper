@@ -23,8 +23,8 @@ import com.graphhopper.util.MiniPerfTest;
 import java.util.Random;
 
 public class DataAccessBenchmark {
-    private static final int SIZE = 10_000_000;
-    private static final int ITERATIONS = 1000;
+    private static final int SIZE = 1_000_000_000;
+    private static final int ITERATIONS = 30;
 
     public static void main(String[] args) {
         int segmentSize = 1 << 20;
@@ -41,20 +41,24 @@ public class DataAccessBenchmark {
     private static void benchmarkImpl(String name, DataAccess da) {
         da.create(SIZE);
         int intCount = SIZE / 4;
+        // Access every 10th int — still covers the full address range but 10x fewer ops
+        int stride = 10;
+        int opsPerIter = intCount / stride;
 
         // Pre-compute random positions to avoid Random overhead during measurement
         Random random = new Random(42);
-        int[] randomPositions = new int[intCount];
-        for (int i = 0; i < intCount; i++)
+        int[] randomPositions = new int[opsPerIter];
+        for (int i = 0; i < opsPerIter; i++)
             randomPositions[i] = random.nextInt(intCount) * 4;
 
-        System.out.println(name + ":");
+        System.out.println(name + " (" + (opsPerIter / 1_000_000) + "M ops/iter):");
 
         // Sequential int write
         MiniPerfTest seqWrite = new MiniPerfTest().setIterations(ITERATIONS).start((warmup, run) -> {
             int sum = 0;
-            for (int i = 0; i < intCount; i++) {
-                da.setInt((long) i * 4, i);
+            for (int i = 0; i < opsPerIter; i++) {
+                long pos = (long) i * stride * 4;
+                da.setInt(pos, i);
                 sum += i;
             }
             return sum;
@@ -64,8 +68,8 @@ public class DataAccessBenchmark {
         // Sequential int read
         MiniPerfTest seqRead = new MiniPerfTest().setIterations(ITERATIONS).start((warmup, run) -> {
             int sum = 0;
-            for (int i = 0; i < intCount; i++) {
-                sum += da.getInt((long) i * 4);
+            for (int i = 0; i < opsPerIter; i++) {
+                sum += da.getInt((long) i * stride * 4);
             }
             return sum;
         });
@@ -74,7 +78,7 @@ public class DataAccessBenchmark {
         // Random int write
         MiniPerfTest randWrite = new MiniPerfTest().setIterations(ITERATIONS).start((warmup, run) -> {
             int sum = 0;
-            for (int i = 0; i < intCount; i++) {
+            for (int i = 0; i < opsPerIter; i++) {
                 da.setInt(randomPositions[i], i);
                 sum += i;
             }
@@ -85,7 +89,7 @@ public class DataAccessBenchmark {
         // Random int read
         MiniPerfTest randRead = new MiniPerfTest().setIterations(ITERATIONS).start((warmup, run) -> {
             int sum = 0;
-            for (int i = 0; i < intCount; i++) {
+            for (int i = 0; i < opsPerIter; i++) {
                 sum += da.getInt(randomPositions[i]);
             }
             return sum;
