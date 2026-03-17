@@ -35,14 +35,17 @@ public class DataAccessBenchmark {
         System.out.println();
 
         // --- Single-segment / contiguous implementations ---
-        benchmarkImpl("RAM1SegmentDataAccess", new RAM1SegmentDataAccess("bench_ram1", "", false, segmentSize));
+        benchmarkImpl("RAM1SegmentDataAccess (byte[])", new RAM1SegmentDataAccess("bench_ram1", "", false, segmentSize));
+        benchmarkImpl("RAMLongDataAccess (long[])", new RAMLongDataAccess("bench_long", "", false, segmentSize));
         benchmarkImpl("ForeignMemoryDataAccess", new ForeignMemoryDataAccess("bench_foreign", "", false, segmentSize));
 
         // --- Segmented implementations: small segments ---
+        benchmarkImpl("RAMIntDataAccess (32MB seg)", new RAMIntDataAccess("bench_int", "", false, segmentSize));
         benchmarkImpl("RAMDataAccess (32MB seg)", new RAMDataAccess("bench_ram", "", false, segmentSize));
         benchmarkImpl("ForeignMemorySegmentedDataAccess (32MB seg)", new ForeignMemorySegmentedDataAccess("bench_native", "", false, segmentSize));
 
         // --- Segmented implementations: large segments ---
+        benchmarkImpl("RAMIntDataAccess (256MB seg)", new RAMIntDataAccess("bench_int_lg", "", false, largeSegmentSize));
         benchmarkImpl("RAMDataAccess (256MB seg)", new RAMDataAccess("bench_ram_lg", "", false, largeSegmentSize));
         benchmarkImpl("ForeignMemorySegmentedDataAccess (256MB seg)", new ForeignMemorySegmentedDataAccess("bench_native_lg", "", false, largeSegmentSize));
     }
