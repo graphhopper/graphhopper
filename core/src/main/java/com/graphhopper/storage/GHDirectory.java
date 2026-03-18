@@ -79,7 +79,7 @@ public class GHDirectory implements Directory {
                 }
             else {
                 String pattern = kv.getKey();
-                defaultTypes.put(pattern, DAType.fromString(value));
+                defaultTypes.put(pattern, DAType.valueOf(value));
             }
         }
         return this;
@@ -137,21 +137,18 @@ public class GHDirectory implements Directory {
             throw new IllegalStateException("DataAccess " + name + " has already been created");
 
         DataAccess da;
-        if (type.isForeignMemory()) {
-            if (type.isMMap())
-                da = new MMapForeignMemoryDataAccess(name, location, type.isAllowWrites(), segmentSize);
-            else
-                da = new ForeignMemoryDataAccess(name, location, type.isStoring(), segmentSize);
+        if (type == DAType.MMAP_OLD) {
+            da = new MMapDataAccess(name, location, type.isAllowWrites(), segmentSize);
+        } else if (type.isMMap()) {
+            da = new MMapForeignMemoryDataAccess(name, location, type.isAllowWrites(), segmentSize);
         } else if (type.isInMemory()) {
             if (type.isInteg()) {
                 da = new RAMIntDataAccess(name, location, type.isStoring(), segmentSize);
             } else {
                 da = new RAMDataAccess(name, location, type.isStoring(), segmentSize);
             }
-        } else if (type.isMMap()) {
-            da = new MMapDataAccess(name, location, type.isAllowWrites(), segmentSize);
         } else {
-            throw new IllegalArgumentException("DAType not supported " + type);
+            da = new ForeignMemoryDataAccess(name, location, type.isStoring(), segmentSize);
         }
 
         map.put(name, da);
