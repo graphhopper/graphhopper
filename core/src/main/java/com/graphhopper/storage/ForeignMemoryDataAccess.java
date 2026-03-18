@@ -72,7 +72,7 @@ public class ForeignMemoryDataAccess extends AbstractDataAccess {
         long newCapacity = (long) segmentsNeeded * segmentSizeInBytes;
 
         try {
-            Arena newArena = Arena.ofConfined();
+            Arena newArena = Arena.ofShared();
             MemorySegment newSegment = newArena.allocate(newCapacity);
             newSegment.fill((byte) 0);
 
@@ -118,7 +118,7 @@ public class ForeignMemoryDataAccess extends AbstractDataAccess {
                     segmentCount++;
                 long totalCapacity = (long) segmentCount * segmentSizeInBytes;
 
-                arena = Arena.ofConfined();
+                arena = Arena.ofShared();
                 segment = arena.allocate(totalCapacity);
                 segment.fill((byte) 0);
                 capacity = totalCapacity;
@@ -230,7 +230,7 @@ public class ForeignMemoryDataAccess extends AbstractDataAccess {
                 segment = MemorySegment.NULL;
                 this.capacity = 0;
             } else {
-                Arena newArena = Arena.ofConfined();
+                Arena newArena = Arena.ofShared();
                 MemorySegment newSegment = newArena.allocate(newCapacity);
                 MemorySegment.copy(segment, 0, newSegment, 0, newCapacity);
                 arena.close();

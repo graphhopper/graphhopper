@@ -18,20 +18,13 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.util.Helper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.FileDescriptor;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.lang.foreign.Arena;
-import java.lang.foreign.FunctionDescriptor;
-import java.lang.foreign.Linker;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
-import java.lang.invoke.MethodHandle;
-import java.lang.reflect.Field;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 
@@ -46,41 +39,11 @@ import java.nio.channels.FileChannel;
  * Requires Java 22+.
  */
 public class MMapForeignMemoryDataAccess extends AbstractDataAccess {
-    private static final Logger logger = LoggerFactory.getLogger(MMapForeignMemoryDataAccess.class);
     private static final ValueLayout.OfInt INT_LE =
             ValueLayout.JAVA_INT.withOrder(ByteOrder.LITTLE_ENDIAN).withByteAlignment(1);
     private static final ValueLayout.OfShort SHORT_LE =
             ValueLayout.JAVA_SHORT.withOrder(ByteOrder.LITTLE_ENDIAN).withByteAlignment(1);
     private static final ValueLayout.OfByte BYTE_LAYOUT = ValueLayout.JAVA_BYTE;
-
-    private static final MethodHandle FALLOCATE;
-    private static final MethodHandle GET_FD;
-
-    static {
-        // posix_fallocate(int fd, off_t offset, off_t len) -> int
-        // Pre-allocates disk blocks for a file region, avoiding sparse-file penalties on first write.
-        // Without this, mmap'd writes to a newly created (sparse) file trigger per-page filesystem
-        // block allocation (ext4 journal + bitmap + inode updates), which is orders of magnitude
-        // slower than writing to pre-allocated blocks or pure RAM.
-        MethodHandle fallocate = null;
-        MethodHandle getFd = null;
-        try {
-            Linker linker = Linker.nativeLinker();
-            fallocate = linker.downcallHandle(
-                    linker.defaultLookup().find("posix_fallocate").orElseThrow(),
-                    FunctionDescriptor.of(ValueLayout.JAVA_INT,
-                            ValueLayout.JAVA_INT, ValueLayout.JAVA_LONG, ValueLayout.JAVA_LONG)
-            );
-            // Extract the native fd int from java.io.FileDescriptor via reflection
-            Field fdField = FileDescriptor.class.getDeclaredField("fd");
-            fdField.setAccessible(true);
-            getFd = java.lang.invoke.MethodHandles.lookup().unreflectGetter(fdField);
-        } catch (Throwable t) {
-            // Not on Linux or reflection blocked — fallocate will be skipped
-        }
-        FALLOCATE = fallocate;
-        GET_FD = getFd;
-    }
 
     private Arena arena;
     private MemorySegment segment = MemorySegment.NULL;
@@ -103,28 +66,6 @@ public class MMapForeignMemoryDataAccess extends AbstractDataAccess {
         return this;
     }
 
-    /**
-     * Calls posix_fallocate to pre-allocate actual disk blocks for the file region.
-     * This avoids the costly per-page block allocation that otherwise happens on the first
-     * write to each page of a sparse file (ext4 journal + bitmap + inode metadata updates).
-     * On tmpfs or non-Linux systems this is a no-op.
-     */
-    private void fallocate(long offset, long length) {
-        if (FALLOCATE == null || GET_FD == null)
-            return;
-        try {
-            int fd = (int) GET_FD.invokeExact(raFile.getFD());
-            int ret = (int) FALLOCATE.invokeExact(fd, offset, length);
-            if (ret != 0 && ret != 95 /* EOPNOTSUPP, e.g. on tmpfs */)
-                throw new IOException("posix_fallocate returned error " + ret);
-        } catch (IOException ex) {
-            throw new RuntimeException("fallocate failed for " + getFullName(), ex);
-        } catch (Throwable t) {
-            logger.warn("posix_fallocate not available ({}), writes to new mmap files may be significantly slower "
-                    + "due to per-page filesystem block allocation", t.getMessage());
-        }
-    }
-
     private void initRandomAccessFile() {
         if (raFile != null)
             return;
@@ -140,7 +81,7 @@ public class MMapForeignMemoryDataAccess extends AbstractDataAccess {
             if (arena != null)
                 arena.close();
 
-            arena = Arena.ofConfined();
+            arena = Arena.ofShared();
             FileChannel.MapMode mode = allowWrites ? FileChannel.MapMode.READ_WRITE : FileChannel.MapMode.READ_ONLY;
             segment = raFile.getChannel().map(mode, offset, size, arena);
             capacity = size;
@@ -180,11 +121,7 @@ public class MMapForeignMemoryDataAccess extends AbstractDataAccess {
             if (capacity > 0)
                 segment.force();
 
-            // Pre-allocate disk blocks to avoid per-page block allocation on first write.
-            // Falls back to setLength (sparse file) if fallocate is unavailable.
-            long fileSize = HEADER_OFFSET + newCapacity;
-            fallocate(0, fileSize);
-            raFile.setLength(fileSize);
+            raFile.setLength(HEADER_OFFSET + newCapacity);
             mapSegment(HEADER_OFFSET, newCapacity);
             return true;
         } catch (IOException ex) {

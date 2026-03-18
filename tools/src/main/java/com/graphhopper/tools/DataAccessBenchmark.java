@@ -20,34 +20,37 @@ package com.graphhopper.tools;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.MiniPerfTest;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Random;
 
 public class DataAccessBenchmark {
     private static final int SIZE = 1_000_000_000;
     private static final int ITERATIONS = 30;
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         int segmentSize = 1 << 25;      // 32 MB
-        int largeSegmentSize = 1 << 28;  // 256 MB
         System.out.println("DataAccess Benchmark");
         System.out.println("====================");
         System.out.println("Size: " + (SIZE / 1_000_000) + "MB, Iterations: " + ITERATIONS);
         System.out.println();
 
         // --- Single-segment / contiguous implementations ---
-        benchmarkImpl("RAM1SegmentDataAccess (byte[])", new RAM1SegmentDataAccess("bench_ram1", "", false, segmentSize));
-        benchmarkImpl("RAMLongDataAccess (long[])", new RAMLongDataAccess("bench_long", "", false, segmentSize));
+//        benchmarkImpl("RAM1SegmentDataAccess (byte[])", new RAM1SegmentDataAccess("bench_ram1", "", false, segmentSize));
+//        benchmarkImpl("RAMLongDataAccess (long[])", new RAMLongDataAccess("bench_long", "", false, segmentSize));
         benchmarkImpl("ForeignMemoryDataAccess", new ForeignMemoryDataAccess("bench_foreign", "", false, segmentSize));
 
         // --- Segmented implementations: small segments ---
-        benchmarkImpl("RAMIntDataAccess (32MB seg)", new RAMIntDataAccess("bench_int", "", false, segmentSize));
-        benchmarkImpl("RAMDataAccess (32MB seg)", new RAMDataAccess("bench_ram", "", false, segmentSize));
-        benchmarkImpl("ForeignMemorySegmentedDataAccess (32MB seg)", new ForeignMemorySegmentedDataAccess("bench_native", "", false, segmentSize));
+//        benchmarkImpl("RAMIntDataAccess (32MB seg)", new RAMIntDataAccess("bench_int", "", false, segmentSize));
+//        benchmarkImpl("RAMDataAccess (32MB seg)", new RAMDataAccess("bench_ram", "", false, segmentSize));
+//        benchmarkImpl("ForeignMemorySegmentedDataAccess (32MB seg)", new ForeignMemorySegmentedDataAccess("bench_native", "", false, segmentSize));
 
-        // --- Segmented implementations: large segments ---
-        benchmarkImpl("RAMIntDataAccess (256MB seg)", new RAMIntDataAccess("bench_int_lg", "", false, largeSegmentSize));
-        benchmarkImpl("RAMDataAccess (256MB seg)", new RAMDataAccess("bench_ram_lg", "", false, largeSegmentSize));
-        benchmarkImpl("ForeignMemorySegmentedDataAccess (256MB seg)", new ForeignMemorySegmentedDataAccess("bench_native_lg", "", false, largeSegmentSize));
+        // --- MMAP via Foreign Memory (on tmpfs) ---
+        Path tmpDir = Files.createTempDirectory(Path.of("/dev/shm"), "gh_bench_");
+        String tmpLoc = tmpDir.toString() + "/";
+//        benchmarkImpl("MMapForeignMemoryDataAccess", new MMapForeignMemoryDataAccess("bench_mmap", tmpLoc, true, segmentSize));
+//        benchmarkImpl("MMapForeignMemoryDataAccess (preload)", new MMapForeignMemoryDataAccess("bench_mmap_pre", tmpLoc, true, segmentSize).setPreload(true));
     }
 
     private static void benchmarkImpl(String name, DataAccess da) {
