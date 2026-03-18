@@ -264,6 +264,6 @@ public class MMapForeignMemoryDataAccess extends AbstractDataAccess {
 
     @Override
     public DAType getType() {
-        return DAType.MMAP;
+        return DAType.FOREIGN_MEMORY_MMAP;
     }
 }

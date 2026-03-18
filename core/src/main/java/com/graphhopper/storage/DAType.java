@@ -21,7 +21,7 @@ import static com.graphhopper.util.Helper.toUpperCase;
 
 /**
  * Defines how a DataAccess object is created.
- * <p>
+ * TODO NOW: rework this class to better integrate "ForeignMemory" (with another MMAP kind)
  *
  * @author Peter Karich
  */
@@ -29,44 +29,49 @@ public class DAType {
     /**
      * The DA object is hold entirely in-memory. Loading and flushing is a no-op. See RAMDataAccess.
      */
-    public static final DAType RAM = new DAType(MemRef.HEAP, false, false, true);
+    public static final DAType RAM = new DAType(MemRef.HEAP, false, false, true, false);
     /**
      * Optimized RAM DA type for integer access. The set and getBytes methods cannot be used.
      */
-    public static final DAType RAM_INT = new DAType(MemRef.HEAP, false, true, true);
+    public static final DAType RAM_INT = new DAType(MemRef.HEAP, false, true, true, false);
     /**
      * The DA object is hold entirely in-memory. It will read load disc and flush to it if they
      * equivalent methods are called. See RAMDataAccess.
      */
-    public static final DAType RAM_STORE = new DAType(MemRef.HEAP, true, false, true);
+    public static final DAType RAM_STORE = new DAType(MemRef.HEAP, true, false, true, false);
     /**
      * Optimized RAM_STORE DA type for integer access. The set and getBytes methods cannot be used.
      */
-    public static final DAType RAM_INT_STORE = new DAType(MemRef.HEAP, true, true, true);
+    public static final DAType RAM_INT_STORE = new DAType(MemRef.HEAP, true, true, true, false);
     /**
      * Memory mapped DA object. See MMapDataAccess.
      */
-    public static final DAType MMAP = new DAType(MemRef.MMAP, true, false, true);
+    public static final DAType MMAP = new DAType(MemRef.MMAP, true, false, true, false);
 
     /**
      * Read-only memory mapped DA object. To avoid write access useful for reading on mobile or
      * embedded data stores.
      */
-    public static final DAType MMAP_RO = new DAType(MemRef.MMAP, true, false, false);
+    public static final DAType MMAP_RO = new DAType(MemRef.MMAP, true, false, false, false);
+    public static final DAType FOREIGN_MEMORY_STORE = new DAType(MemRef.OFFHEAP, true, false, true, true);
+    public static final DAType FOREIGN_MEMORY = new DAType(MemRef.OFFHEAP, false, false, true, true);
+    public static final DAType FOREIGN_MEMORY_MMAP = new DAType(MemRef.MMAP, true, false, true, true);
     private final MemRef memRef;
     private final boolean storing;
     private final boolean integ;
     private final boolean allowWrites;
+    private boolean foreign;
 
     public DAType(DAType type) {
-        this(type.getMemRef(), type.isStoring(), type.isInteg(), type.isAllowWrites());
+        this(type.getMemRef(), type.isStoring(), type.isInteg(), type.isAllowWrites(), false);
     }
 
-    public DAType(MemRef memRef, boolean storing, boolean integ, boolean allowWrites) {
+    public DAType(MemRef memRef, boolean storing, boolean integ, boolean allowWrites, boolean foreign) {
         this.memRef = memRef;
         this.storing = storing;
         this.integ = integ;
         this.allowWrites = allowWrites;
+        this.foreign = foreign;
     }
 
     public static DAType fromString(String dataAccess) {
@@ -82,6 +87,12 @@ public class DAType {
             throw new IllegalArgumentException("UNSAFE option is no longer supported, see #1620");
         else if (dataAccess.equals("RAM"))
             type = DAType.RAM;
+        else if (dataAccess.equals("FOREIGN_MEMORY"))
+            type = DAType.FOREIGN_MEMORY;
+        else if (dataAccess.equals("FOREIGN_MEMORY_STORE"))
+            type = DAType.FOREIGN_MEMORY_STORE;
+        else if (dataAccess.equals("FOREIGN_MEMORY_MMAP"))
+            type = DAType.FOREIGN_MEMORY_MMAP;
         else
             type = DAType.RAM_STORE;
         return type;
@@ -116,6 +127,10 @@ public class DAType {
         return storing;
     }
 
+    public boolean isForeignMemory() {
+        return foreign;
+    }
+
     /**
      * Optimized for integer values? default is false
      */
@@ -126,7 +141,9 @@ public class DAType {
     @Override
     public String toString() {
         String str;
-        if (getMemRef() == MemRef.MMAP)
+        if (isForeignMemory())
+            str = getMemRef() == MemRef.MMAP ? "FOREIGN_MEMORY_MMAP" : "FOREIGN_MEMORY";
+        else if (getMemRef() == MemRef.MMAP)
             str = "MMAP";
         else
             str = "RAM";
@@ -164,6 +181,6 @@ public class DAType {
     }
 
     public enum MemRef {
-        HEAP, MMAP
+        HEAP, MMAP, OFFHEAP
     }
 }

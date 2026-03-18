@@ -18,7 +18,10 @@
 package com.graphhopper.storage;
 
 import java.io.File;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import static com.graphhopper.storage.DAType.RAM_INT;
 import static com.graphhopper.storage.DAType.RAM_INT_STORE;
@@ -134,16 +137,17 @@ public class GHDirectory implements Directory {
             throw new IllegalStateException("DataAccess " + name + " has already been created");
 
         DataAccess da;
-        if (type.isInMemory()) {
-            if (type.isInteg()) {
-                if (type.isStoring())
-                    da = new RAMIntDataAccess(name, location, true, segmentSize);
-                else
-                    da = new RAMIntDataAccess(name, location, false, segmentSize);
-            } else if (type.isStoring())
-                da = new RAMDataAccess(name, location, true, segmentSize);
+        if (type.isForeignMemory()) {
+            if (type.isMMap())
+                da = new MMapForeignMemoryDataAccess(name, location, type.isAllowWrites(), segmentSize);
             else
-                da = new RAMDataAccess(name, location, false, segmentSize);
+                da = new ForeignMemoryDataAccess(name, location, type.isStoring(), segmentSize);
+        } else if (type.isInMemory()) {
+            if (type.isInteg()) {
+                da = new RAMIntDataAccess(name, location, type.isStoring(), segmentSize);
+            } else {
+                da = new RAMDataAccess(name, location, type.isStoring(), segmentSize);
+            }
         } else if (type.isMMap()) {
             da = new MMapDataAccess(name, location, type.isAllowWrites(), segmentSize);
         } else {
