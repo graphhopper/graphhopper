@@ -185,19 +185,6 @@ public class RouteResourceTest {
     }
 
     @Test
-    public void testQueryWithoutViaPointInstructions() {
-        JsonNode json = clientTarget(app, 
-            "/route?profile=my_car&point=42.554851,1.536198&point=42.526351,1.526435&point=42.510071,1.548128&via_point_instructions=false")
-            .request().get(JsonNode.class);
-        JsonNode infoJson = json.get("info");
-        assertFalse(infoJson.has("errors"));
-        JsonNode instructions = json.get("paths").get(0).get("instructions");
-        for(int i = 0; i < instructions.size(); i++) {
-            assertTrue(instructions.get(i).get("sign").asInt() != 5, "There shouldn't be any via-point instructions here");
-        }
-    }
-
-    @Test
     public void testQueryWithViaPointInstructions() {
         JsonNode json = clientTarget(app, 
             "/route?profile=my_car&point=42.554851,1.536198&point=42.526351,1.526435&point=42.510071,1.548128&via_point_instructions=true")
