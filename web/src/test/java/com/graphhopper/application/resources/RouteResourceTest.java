@@ -256,6 +256,20 @@ public class RouteResourceTest {
     }
 
     @Test
+    public void testSkipViaInstructions() {
+        JsonNode json = clientTarget(app, "/route?profile=my_car&" +
+                "point=42.554851,1.536198&point=42.531896,1.553278&point=42.510071,1.548128&skip_via_instructions=true")
+                .request()
+                .get(JsonNode.class);
+        JsonNode path = json.get("paths").get(0);
+        JsonNode instructions = path.get("instructions");
+        assertTrue(instructions.size() > 0);
+        for (int i = 0; i < instructions.size(); i++) {
+            assertNotEquals(REACHED_VIA, instructions.get(i).get("sign").asInt());
+        }
+    }
+
+    @Test
     public void testPathDetailsRoadClass() {
         GraphHopperWeb client = new GraphHopperWeb(clientUrl(app, "/route"));
         GHRequest request = new GHRequest(42.546757, 1.528645, 42.520573, 1.557999).setProfile("my_car");

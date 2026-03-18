@@ -94,6 +94,7 @@ public class NavigateResource {
             @QueryParam("overview") @DefaultValue("simplified") String overview,
             @QueryParam("geometries") @DefaultValue("polyline") String geometries,
             @QueryParam("bearings") @DefaultValue("") String bearings,
+            @QueryParam(Parameters.Routing.SKIP_VIA_INSTRUCTIONS) @DefaultValue("false") boolean skipViaInstructions,
             @QueryParam("language") @DefaultValue("en") String localeStr,
             @PathParam("profile") String mapboxProfile) {
 
@@ -120,11 +121,11 @@ public class NavigateResource {
             throw new IllegalArgumentException("Number of bearings and waypoints did not match");
         }
 
-        GHResponse ghResponse = calcRouteForGET(favoredHeadings, requestPoints, ghProfile, localeStr, enableInstructions, minPathPrecision);
+        GHResponse ghResponse = calcRouteForGET(favoredHeadings, requestPoints, ghProfile, localeStr, enableInstructions, minPathPrecision, skipViaInstructions);
 
         // Only do this, when there are more than 2 points, otherwise we use alternative routes
         if (!ghResponse.hasErrors() && !favoredHeadings.isEmpty()) {
-            GHResponse noHeadingResponse = calcRouteForGET(Collections.emptyList(), requestPoints, ghProfile, localeStr, enableInstructions, minPathPrecision);
+            GHResponse noHeadingResponse = calcRouteForGET(Collections.emptyList(), requestPoints, ghProfile, localeStr, enableInstructions, minPathPrecision, skipViaInstructions);
             if (ghResponse.getBest().getDistance() != noHeadingResponse.getBest().getDistance()) {
                 ghResponse.getAll().add(noHeadingResponse.getBest());
             }
@@ -223,7 +224,7 @@ public class NavigateResource {
     }
 
     private GHResponse calcRouteForGET(List<Double> headings, List<GHPoint> requestPoints, String profileStr,
-                                       String localeStr, boolean enableInstructions, double minPathPrecision) {
+                                       String localeStr, boolean enableInstructions, double minPathPrecision, boolean skipViaInstructions) {
         GHRequest request = new GHRequest(requestPoints);
         if (!headings.isEmpty())
             request.setHeadings(headings);
@@ -234,6 +235,7 @@ public class NavigateResource {
                 setPathDetails(List.of(INTERSECTION)).
                 putHint(CALC_POINTS, true).
                 putHint(INSTRUCTIONS, enableInstructions).
+                putHint(Parameters.Routing.SKIP_VIA_INSTRUCTIONS, skipViaInstructions).
                 putHint(WAY_POINT_MAX_DISTANCE, minPathPrecision);
 
         if (requestPoints.size() > 2 || !headings.isEmpty()) {

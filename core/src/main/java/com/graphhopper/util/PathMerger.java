@@ -53,6 +53,7 @@ public class PathMerger {
     private boolean simplifyResponse = true;
     private RamerDouglasPeucker ramerDouglasPeucker = RDP;
     private boolean calcPoints = true;
+    private boolean skipViaInstructions = false;
     private PathDetailsBuilderFactory pathBuilderFactory;
     private List<String> requestedPathDetails = Collections.emptyList();
     private double favoredHeading = Double.NaN;
@@ -85,6 +86,11 @@ public class PathMerger {
 
     public PathMerger setEnableInstructions(boolean enableInstructions) {
         this.enableInstructions = enableInstructions;
+        return this;
+    }
+
+    public PathMerger setSkipViaInstructions(boolean skipViaInstructions) {
+        this.skipViaInstructions = skipViaInstructions;
         return this;
     }
 
@@ -151,6 +157,8 @@ public class PathMerger {
 
         if (enableInstructions) {
             fullInstructions = updateInstructionsWithContext(fullInstructions);
+            if (skipViaInstructions)
+                fullInstructions = removeViaInstructions(fullInstructions);
             responsePath.setInstructions(fullInstructions);
         }
 
@@ -179,6 +187,15 @@ public class PathMerger {
             PathSimplification.simplify(responsePath, ramerDouglasPeucker, enableInstructions);
         }
         return responsePath;
+    }
+
+    private static InstructionList removeViaInstructions(InstructionList instructions) {
+        InstructionList result = new InstructionList(instructions.size(), instructions.getTr());
+        for (Instruction instruction : instructions) {
+            if (instruction.getSign() != Instruction.REACHED_VIA)
+                result.add(instruction);
+        }
+        return result;
     }
 
     /**

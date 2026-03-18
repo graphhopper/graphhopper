@@ -629,6 +629,18 @@ public class GraphHopperOSMTest {
         assertEquals(4, rsp.getPoints().size());
         assertEquals(5, rsp.getInstructions().size());
         assertEquals(Instruction.REACHED_VIA, rsp.getInstructions().get(1).getSign());
+
+        GHRequest skipViaRequest = new GHRequest(Arrays.asList(first, second, third))
+                .setProfile(profile);
+        skipViaRequest.getHints().putObject(Parameters.Routing.SKIP_VIA_INSTRUCTIONS, true);
+        GHResponse skipViaResponse = instance.route(skipViaRequest);
+        assertFalse(skipViaResponse.hasErrors(), "should find 1->2->3 with skip_via_instructions");
+        ResponsePath skipViaPath = skipViaResponse.getBest();
+        assertEquals(4, skipViaPath.getPoints().size());
+        assertEquals(4, skipViaPath.getInstructions().size());
+        for (Instruction instruction : skipViaPath.getInstructions()) {
+            assertNotEquals(Instruction.REACHED_VIA, instruction.getSign());
+        }
     }
 
     @Test

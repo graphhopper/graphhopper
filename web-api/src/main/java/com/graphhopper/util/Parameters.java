@@ -109,6 +109,10 @@ public class Parameters {
          */
         public static final String CALC_POINTS = "calc_points";
         /**
+         * If true the response instructions will not contain via-point instructions (Instruction.REACHED_VIA).
+         */
+        public static final String SKIP_VIA_INSTRUCTIONS = "skip_via_instructions";
+        /**
          * configure simplification of returned point list
          */
         public static final String WAY_POINT_MAX_DISTANCE = "way_point_max_distance";
