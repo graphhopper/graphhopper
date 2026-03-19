@@ -225,7 +225,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
 
         } else if (prevInRoundabout) //previously in roundabout but not anymore
         {
-            prevInstruction.setName(name);
+            prevInstruction.setName(name == null ? "" : name);
             prevInstruction.setExtraInfo(STREET_REF, ref);
             prevInstruction.setExtraInfo(STREET_DESTINATION, destination);
             prevInstruction.setExtraInfo(STREET_DESTINATION_REF, destinationRef);
