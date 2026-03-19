@@ -74,7 +74,7 @@ public class ForeignMemoryDataAccess extends AbstractDataAccess {
         try {
             Arena newArena = Arena.ofShared();
             MemorySegment newSegment = newArena.allocate(newCapacity);
-            newSegment.fill((byte) 0);
+            newSegment.fill((byte) 0); // no automatic zeroing happens
 
             if (capacity > 0) {
                 MemorySegment.copy(segment, 0, newSegment, 0, capacity);
