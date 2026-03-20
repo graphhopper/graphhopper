@@ -72,14 +72,18 @@ public class PrepareContractionHierarchies {
     private boolean prepared = false;
 
     public static PrepareContractionHierarchies fromGraph(BaseGraph graph, CHConfig chConfig) {
-        return new PrepareContractionHierarchies(graph.getBaseGraph(), chConfig);
+        return new PrepareContractionHierarchies(graph.getBaseGraph(), chConfig, CHStorage.fromGraph(graph.getBaseGraph(), chConfig));
     }
 
-    private PrepareContractionHierarchies(BaseGraph graph, CHConfig chConfig) {
+    public static PrepareContractionHierarchies fromGraphWithExistingStorage(BaseGraph graph, CHConfig chConfig, CHStorage chStorage) {
+        return new PrepareContractionHierarchies(graph.getBaseGraph(), chConfig, CHStorage.fromGraph(graph.getBaseGraph(), chStorage));
+    }
+
+    private PrepareContractionHierarchies(BaseGraph graph, CHConfig chConfig, CHStorage chStore) {
         if (!graph.isFrozen())
             throw new IllegalStateException("BaseGraph must be frozen before creating CHs");
         this.graph = graph;
-        chStore = CHStorage.fromGraph(graph, chConfig);
+        this.chStore = chStore;
         chBuilder = new CHStorageBuilder(chStore);
         this.chConfig = chConfig;
         params = Params.forTraversalMode(chConfig.getTraversalMode());

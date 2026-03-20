@@ -76,11 +76,15 @@ public class CHStorage {
     private double maxValidWeight = Double.NEGATIVE_INFINITY;
 
     public static CHStorage fromGraph(BaseGraph baseGraph, CHConfig chConfig) {
-        String name = chConfig.getName();
-        boolean edgeBased = chConfig.isEdgeBased();
+        return fromGraph(baseGraph, new CHStorage(baseGraph.getDirectory(), chConfig.getName(), chConfig.isEdgeBased()));
+    }
+
+    /**
+     * Prepares the given storage for writing by setting up shortcut weight consumers and allocating memory.
+     */
+    public static CHStorage fromGraph(BaseGraph baseGraph, CHStorage store) {
         if (!baseGraph.isFrozen())
             throw new IllegalStateException("graph must be frozen before we can create ch graphs");
-        CHStorage store = new CHStorage(baseGraph.getDirectory(), name, edgeBased);
         store.setLowWeightShortcutConsumer(s -> {
             // we just log these to find mapping errors
             NodeAccess nodeAccess = baseGraph.getNodeAccess();

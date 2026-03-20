@@ -120,9 +120,9 @@ public class Measurement {
 
         GraphHopper hopper = new GraphHopper() {
             @Override
-            protected Map<String, PrepareContractionHierarchies.Result> prepareCH(boolean closeEarly, List<CHConfig> configsToPrepare) {
+            protected Map<String, PrepareContractionHierarchies.Result> prepareCH(boolean closeEarly, Map<CHConfig, CHStorage> storagesToPrepare) {
                 StopWatch sw = new StopWatch().start();
-                Map<String, PrepareContractionHierarchies.Result> result = super.prepareCH(closeEarly, configsToPrepare);
+                Map<String, PrepareContractionHierarchies.Result> result = super.prepareCH(closeEarly, storagesToPrepare);
                 // note that we measure the total time of all (possibly edge&node) CH preparations
                 put(Parameters.CH.PREPARE + "time", sw.stop().getMillis());
                 if (result.get("profile_no_tc") != null) {

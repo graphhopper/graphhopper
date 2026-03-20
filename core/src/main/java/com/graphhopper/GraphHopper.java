@@ -1448,9 +1448,9 @@ public class GraphHopper {
 
         // we load ch graphs that already exist and prepare the other ones
         List<CHConfig> chConfigs = createCHConfigs(chPreparationHandler.getCHProfiles());
-        Map<String, RoutingCHGraph> loaded = chPreparationHandler.load(baseGraph.getBaseGraph(), chConfigs);
-        List<CHConfig> configsToPrepare = chConfigs.stream().filter(c -> !loaded.containsKey(c.getName())).collect(Collectors.toList());
-        Map<String, PrepareContractionHierarchies.Result> prepared = prepareCH(closeEarly, configsToPrepare);
+        Map<CHConfig, CHStorage> notLoadedCH = new LinkedHashMap<>();
+        Map<String, RoutingCHGraph> loaded = chPreparationHandler.load(baseGraph.getBaseGraph(), chConfigs, notLoadedCH);
+        Map<String, PrepareContractionHierarchies.Result> prepared = prepareCH(closeEarly, notLoadedCH);
 
         // we map all profile names for which there is CH support to the according CH graphs
         chGraphs = new LinkedHashMap<>();
@@ -1472,12 +1472,12 @@ public class GraphHopper {
         });
     }
 
-    protected Map<String, PrepareContractionHierarchies.Result> prepareCH(boolean closeEarly, List<CHConfig> configsToPrepare) {
-        if (!configsToPrepare.isEmpty())
+    protected Map<String, PrepareContractionHierarchies.Result> prepareCH(boolean closeEarly, Map<CHConfig, CHStorage> storagesToPrepare) {
+        if (!storagesToPrepare.isEmpty())
             ensureWriteAccess();
         if (!baseGraph.isFrozen())
             baseGraph.freeze();
-        return chPreparationHandler.prepare(baseGraph, properties, configsToPrepare, closeEarly);
+        return chPreparationHandler.prepare(baseGraph, properties, storagesToPrepare, closeEarly);
     }
 
     /**
