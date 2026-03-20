@@ -8,6 +8,8 @@ import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.SpeedWeighting;
 import com.graphhopper.storage.BaseGraph;
+import com.graphhopper.storage.DAType;
+import com.graphhopper.storage.GHDirectory;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -36,11 +38,15 @@ public class LMPreparationHandlerTest {
         );
         DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
         EncodingManager em = EncodingManager.start().add(speedEnc).build();
+        BaseGraph graph = new BaseGraph.Builder(em).build();
         List<LMConfig> lmConfigs = Arrays.asList(
                 new LMConfig("conf1", new SpeedWeighting(speedEnc)),
                 new LMConfig("conf2", new SpeedWeighting(speedEnc))
         );
-        List<PrepareLandmarks> preparations = handler.createPreparations(lmConfigs, new BaseGraph.Builder(em).build(), em, null);
+        List<LandmarkStorage> storages = lmConfigs.stream()
+                .map(c -> new LandmarkStorage(graph, em, new GHDirectory("", DAType.RAM), c, 16))
+                .toList();
+        List<PrepareLandmarks> preparations = handler.createPreparations(storages, graph, null);
         assertEquals(1, preparations.get(0).getLandmarkStorage().getFactor(), .1);
         assertEquals(0.3, preparations.get(1).getLandmarkStorage().getFactor(), .1);
     }

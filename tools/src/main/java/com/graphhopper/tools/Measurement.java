@@ -29,7 +29,7 @@ import com.graphhopper.jackson.Jackson;
 import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.lm.LMConfig;
+import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.Weighting;
@@ -139,8 +139,8 @@ public class Measurement {
             }
 
             @Override
-            protected List<PrepareLandmarks> prepareLM(boolean closeEarly, List<LMConfig> configsToPrepare) {
-                List<PrepareLandmarks> prepareLandmarks = super.prepareLM(closeEarly, configsToPrepare);
+            protected List<PrepareLandmarks> prepareLM(boolean closeEarly, List<LandmarkStorage> storagesToPrepare) {
+                List<PrepareLandmarks> prepareLandmarks = super.prepareLM(closeEarly, storagesToPrepare);
                 for (PrepareLandmarks plm : prepareLandmarks) {
                     put(Landmark.PREPARE + "time", plm.getTotalPrepareTime());
                 }

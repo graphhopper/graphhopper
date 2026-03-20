@@ -1491,10 +1491,9 @@ public class GraphHopper {
 
         // we load landmark storages that already exist and prepare the other ones
         List<LMConfig> lmConfigs = createLMConfigs(lmPreparationHandler.getLMProfiles());
-        List<LandmarkStorage> loaded = lmPreparationHandler.load(lmConfigs, baseGraph, encodingManager);
-        List<LMConfig> loadedConfigs = loaded.stream().map(LandmarkStorage::getLMConfig).toList();
-        List<LMConfig> configsToPrepare = lmConfigs.stream().filter(c -> !loadedConfigs.contains(c)).collect(Collectors.toList());
-        List<PrepareLandmarks> prepared = prepareLM(closeEarly, configsToPrepare);
+        List<LandmarkStorage> notLoaded = new ArrayList<>();
+        List<LandmarkStorage> loaded = lmPreparationHandler.load(lmConfigs, baseGraph, encodingManager, notLoaded);
+        List<PrepareLandmarks> prepared = prepareLM(closeEarly, notLoaded);
 
         // we map all profile names for which there is LM support to the according LM storages
         landmarks = new LinkedHashMap<>();
@@ -1513,12 +1512,12 @@ public class GraphHopper {
         }
     }
 
-    protected List<PrepareLandmarks> prepareLM(boolean closeEarly, List<LMConfig> configsToPrepare) {
-        if (!configsToPrepare.isEmpty())
+    protected List<PrepareLandmarks> prepareLM(boolean closeEarly, List<LandmarkStorage> storagesToPrepare) {
+        if (!storagesToPrepare.isEmpty())
             ensureWriteAccess();
         if (!baseGraph.isFrozen())
             baseGraph.freeze();
-        return lmPreparationHandler.prepare(configsToPrepare, baseGraph, encodingManager, properties, locationIndex, closeEarly);
+        return lmPreparationHandler.prepare(storagesToPrepare, baseGraph, properties, locationIndex, closeEarly);
     }
 
     /**
