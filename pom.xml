@@ -58,7 +58,7 @@
     </issueManagement>
 
     <modules>
-        <module>graphhopper-api</module>
+        <module>api</module>
         <module>core</module>
         <module>reader-gtfs</module>
         <module>tools</module>
