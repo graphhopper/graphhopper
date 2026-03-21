@@ -20,6 +20,10 @@ package com.graphhopper.util;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.function.LongConsumer;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.Inflater;
@@ -108,16 +112,12 @@ public class Downloader {
 
     public void downloadFile(String url, String toFile) throws IOException {
         HttpURLConnection conn = createConnection(url);
-        InputStream iStream = fetch(conn, false);
-        BufferedOutputStream writer = new BufferedOutputStream(new FileOutputStream(toFile), BUFFER_SIZE);
-        InputStream in = new BufferedInputStream(iStream, BUFFER_SIZE);
-        try {
-            in.transferTo(writer);
-        } finally {
-            Helper.close(iStream);
-            Helper.close(writer);
-            Helper.close(in);
+        Path target = Paths.get(toFile);
+        Path tmpFile = target.resolveSibling(target.getFileName().toString() + ".part");
+        try (var in = fetch(conn, false); var out = Files.newOutputStream(tmpFile)) {
+            in.transferTo(out);
         }
+        Files.move(tmpFile, target, StandardCopyOption.ATOMIC_MOVE);
     }
 
     public void downloadAndUnzip(String url, String toFolder, final LongConsumer progressListener) throws IOException {
