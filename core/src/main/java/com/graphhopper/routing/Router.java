@@ -155,7 +155,7 @@ public class Router {
             throw new IllegalArgumentException("The number of 'heading' parameters must be zero, one "
                     + "or equal to the number of points (" + request.getPoints().size() + ")");
         for (int i = 0; i < request.getHeadings().size(); i++)
-            if (!GHRequest.isAzimuthValue(request.getHeadings().get(i)))
+            if (!request.isValidHeading(i))
                 throw new IllegalArgumentException("Heading for point " + i + " must be in range [0,360) or NaN, but was: " + request.getHeadings().get(i));
     }
 

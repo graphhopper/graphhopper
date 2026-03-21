@@ -123,9 +123,17 @@ public class GHRequest {
         return headings;
     }
 
+    /**
+     * @deprecated Use {@link #isValidHeading(int)} instead.
+     */
+    @Deprecated
     public static boolean isAzimuthValue(double heading) {
         // heading must be in [0, 360) or NaN
         return Double.isNaN(heading) || (Double.compare(heading, 360) < 0 && Double.compare(heading, 0) >= 0);
+    }
+
+    public boolean isValidHeading(int index) {
+        return isAzimuthValue(headings.get(index));
     }
 
     public String getAlgorithm() {

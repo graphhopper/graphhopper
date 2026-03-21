@@ -24,7 +24,11 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -59,6 +63,22 @@ public class GHRequestTest {
 
         instance = new GHRequest(lat0, lon0, lat1, lon1);
         comparePoints(instance, points.subList(0, 2));
+    }
+
+    @ParameterizedTest
+    @ValueSource(doubles = {0.0, 180.0, 359.9, Double.NaN})
+    public void testIsValidHeading(double heading) {
+        GHRequest request = new GHRequest(10, 12, 12, 10);
+        request.setHeadings(List.of(heading));
+        assertTrue(request.isValidHeading(0));
+    }
+
+    @ParameterizedTest
+    @ValueSource(doubles = {-1.0, 360.0, 400.0})
+    public void testIsInvalidHeading(double heading) {
+        GHRequest request = new GHRequest(10, 12, 12, 10);
+        request.setHeadings(List.of(heading));
+        assertFalse(request.isValidHeading(0));
     }
 
     private void comparePoints(GHRequest request, List<GHPoint> points) {
