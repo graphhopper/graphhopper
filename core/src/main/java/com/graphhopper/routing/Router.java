@@ -91,7 +91,7 @@ public class Router {
             checkNoLegacyParameters(request);
             checkAtLeastOnePoint(request);
             checkIfPointsAreInBoundsAndNotNull(request.getPoints());
-            checkHeadings(request);
+            request.checkHeadings();
             checkPointHints(request);
             checkCurbsides(request);
             checkNoBlockArea(request);
@@ -148,10 +148,6 @@ public class Router {
             if (!bounds.contains(point.getLat(), point.getLon()))
                 throw new PointOutOfBoundsException("Point " + i + " is out of bounds: " + point + ", the bounds are: " + bounds, i);
         }
-    }
-
-    private void checkHeadings(GHRequest request) {
-        request.checkHeadings();
     }
 
     private void checkPointHints(GHRequest request) {
