@@ -91,6 +91,7 @@ public class GraphHopper {
     boolean calcChecksums = false;
     // for custom areas:
     private String customAreasDirectory = "";
+    private CustomAreasProvider customAreasProvider = null;
     // for graph:
     private BaseGraph baseGraph;
     private StorableProperties properties;
@@ -448,6 +449,11 @@ public class GraphHopper {
 
     public String getCustomAreasDirectory() {
         return this.customAreasDirectory;
+    }
+
+    public GraphHopper setCustomAreasProvider(CustomAreasProvider customAreasProvider) {
+        this.customAreasProvider = customAreasProvider;
+        return this;
     }
 
     /**
@@ -946,11 +952,14 @@ public class GraphHopper {
                     + " but also cannot use file for DataReader as it wasn't specified!");
 
         List<CustomArea> customAreas = readCountries();
-        if (isEmpty(customAreasDirectory)) {
+        CustomAreasProvider provider = customAreasProvider != null
+                ? customAreasProvider
+                : isEmpty(customAreasDirectory) ? null : new DefaultCustomAreasProvider(customAreasDirectory);
+        if (provider == null) {
             logger.info("No custom areas are used, custom_areas.directory not given");
         } else {
             logger.info("Creating custom area index, reading custom areas from: '" + customAreasDirectory + "'");
-            customAreas.addAll(readCustomAreas());
+            customAreas.addAll(provider.loadAreas());
         }
 
         AreaIndex<CustomArea> areaIndex = new AreaIndex<>(customAreas);
@@ -1072,26 +1081,6 @@ public class GraphHopper {
 
     private void writeEncodingManagerToProperties() {
         EncodingManager.putEncodingManagerIntoProperties(encodingManager, properties);
-    }
-
-    private List<CustomArea> readCustomAreas() {
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JtsModule());
-        final Path bordersDirectory = Paths.get(customAreasDirectory);
-        List<JsonFeatureCollection> jsonFeatureCollections = new ArrayList<>();
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(bordersDirectory, "*.{geojson,json}")) {
-            for (Path borderFile : stream) {
-                try (BufferedReader reader = Files.newBufferedReader(borderFile, StandardCharsets.UTF_8)) {
-                    JsonFeatureCollection jsonFeatureCollection = objectMapper.readValue(reader, JsonFeatureCollection.class);
-                    jsonFeatureCollections.add(jsonFeatureCollection);
-                }
-            }
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-        return jsonFeatureCollections.stream().flatMap(j -> j.getFeatures().stream())
-                .map(CustomArea::fromJsonFeature)
-                .collect(Collectors.toList());
     }
 
     /**
