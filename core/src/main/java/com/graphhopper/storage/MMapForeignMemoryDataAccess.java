@@ -39,7 +39,7 @@ import java.nio.channels.FileChannel;
  * <p>
  * Requires Java 22+.
  */
-public class MMapForeignMemoryDataAccess extends AbstractDataAccess {
+public final class MMapForeignMemoryDataAccess extends AbstractDataAccess {
     private static final ValueLayout.OfInt INT_LE =
             ValueLayout.JAVA_INT.withOrder(ByteOrder.LITTLE_ENDIAN).withByteAlignment(1);
     private static final ValueLayout.OfShort SHORT_LE =

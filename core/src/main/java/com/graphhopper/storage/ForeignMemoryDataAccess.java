@@ -32,7 +32,7 @@ import java.nio.ByteOrder;
  * <p>
  * Requires Java 21 with {@code --enable-preview} (or Java 22+).
  */
-public class ForeignMemoryDataAccess extends AbstractDataAccess {
+public final class ForeignMemoryDataAccess extends AbstractDataAccess {
     private static final ValueLayout.OfInt INT_LE =
             ValueLayout.JAVA_INT.withOrder(ByteOrder.LITTLE_ENDIAN).withByteAlignment(1);
     private static final ValueLayout.OfShort SHORT_LE =
