@@ -1,0 +1,7 @@
+{
+  // for bike profile: an additionaly hill penalty is good
+  // as the downhill speedup in bike_elevation.json decreases the hill avoidance too much
+  "priority": [
+    { "if":  "average_slope >= 6", "multiply_by": "0.75" }
+  ]
+}
