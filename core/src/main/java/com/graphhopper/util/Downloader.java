@@ -34,17 +34,13 @@ import java.util.zip.InflaterInputStream;
  */
 public class Downloader {
     private static final int BUFFER_SIZE = 8 * 1024;
-    private final String userAgent;
+    private static final String USER_AGENT = "graphhopper/" + Constants.VERSION;
     private String referrer = "http://graphhopper.com";
     private String acceptEncoding = "gzip, deflate";
     private int timeout = 4000;
 
-    public Downloader(String userAgent) {
-        this.userAgent = userAgent;
-    }
-
     public static void main(String[] args) throws IOException {
-        new Downloader("GraphHopper Downloader").downloadAndUnzip("http://graphhopper.com/public/maps/0.1/europe_germany_berlin.ghz", "somefolder",
+        new Downloader().downloadAndUnzip("http://graphhopper.com/public/maps/0.1/europe_germany_berlin.ghz", "somefolder",
                 val -> System.out.println("progress:" + val));
     }
 
@@ -101,7 +97,7 @@ public class Downloader {
         conn.setDoInput(true);
         conn.setUseCaches(true);
         conn.setRequestProperty("Referrer", referrer);
-        conn.setRequestProperty("User-Agent", userAgent);
+        conn.setRequestProperty("User-Agent", USER_AGENT);
         // suggest respond to be gzipped or deflated (which is just another compression)
         // http://stackoverflow.com/q/3932117
         conn.setRequestProperty("Accept-Encoding", acceptEncoding);
