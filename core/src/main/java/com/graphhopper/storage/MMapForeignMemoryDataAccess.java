@@ -25,6 +25,7 @@ import java.io.RandomAccessFile;
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
+import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 
@@ -44,6 +45,9 @@ public class MMapForeignMemoryDataAccess extends AbstractDataAccess {
     private static final ValueLayout.OfShort SHORT_LE =
             ValueLayout.JAVA_SHORT.withOrder(ByteOrder.LITTLE_ENDIAN).withByteAlignment(1);
     private static final ValueLayout.OfByte BYTE_LAYOUT = ValueLayout.JAVA_BYTE;
+    private static final VarHandle INT_VH = INT_LE.varHandle();
+    private static final VarHandle SHORT_VH = SHORT_LE.varHandle();
+    private static final VarHandle BYTE_VH = BYTE_LAYOUT.varHandle();
 
     private Arena arena;
     private MemorySegment segment = MemorySegment.NULL;
@@ -174,22 +178,22 @@ public class MMapForeignMemoryDataAccess extends AbstractDataAccess {
 
     @Override
     public final void setInt(long bytePos, int value) {
-        segment.set(INT_LE, bytePos, value);
+        INT_VH.set(segment, bytePos, value);
     }
 
     @Override
     public final int getInt(long bytePos) {
-        return segment.get(INT_LE, bytePos);
+        return (int) INT_VH.get(segment, bytePos);
     }
 
     @Override
     public final void setShort(long bytePos, short value) {
-        segment.set(SHORT_LE, bytePos, value);
+        SHORT_VH.set(segment, bytePos, value);
     }
 
     @Override
     public final short getShort(long bytePos) {
-        return segment.get(SHORT_LE, bytePos);
+        return (short) SHORT_VH.get(segment, bytePos);
     }
 
     @Override
@@ -204,12 +208,12 @@ public class MMapForeignMemoryDataAccess extends AbstractDataAccess {
 
     @Override
     public final void setByte(long bytePos, byte value) {
-        segment.set(BYTE_LAYOUT, bytePos, value);
+        BYTE_VH.set(segment, bytePos, value);
     }
 
     @Override
     public final byte getByte(long bytePos) {
-        return segment.get(BYTE_LAYOUT, bytePos);
+        return (byte) BYTE_VH.get(segment, bytePos);
     }
 
     @Override

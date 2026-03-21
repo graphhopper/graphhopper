@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
+import java.lang.invoke.VarHandle;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
@@ -42,6 +43,9 @@ public class ForeignMemorySegmentedDataAccess extends AbstractDataAccess {
     private static final ValueLayout.OfShort SHORT_LE =
             ValueLayout.JAVA_SHORT.withOrder(ByteOrder.LITTLE_ENDIAN).withByteAlignment(1);
     private static final ValueLayout.OfByte BYTE_LAYOUT = ValueLayout.JAVA_BYTE;
+    private static final VarHandle INT_VH = INT_LE.varHandle();
+    private static final VarHandle SHORT_VH = SHORT_LE.varHandle();
+    private static final VarHandle BYTE_VH = BYTE_LAYOUT.varHandle();
 
     private MemorySegment[] segments = new MemorySegment[0];
     private boolean store;
@@ -166,21 +170,21 @@ public class ForeignMemorySegmentedDataAccess extends AbstractDataAccess {
         if (index + 3 >= segmentSizeInBytes) {
             MemorySegment b1 = segments[bufferIndex], b2 = segments[bufferIndex + 1];
             if (index + 1 >= segmentSizeInBytes) {
-                b1.set(BYTE_LAYOUT, index, (byte) value);
-                b2.set(BYTE_LAYOUT, 0, (byte) (value >>> 8));
-                b2.set(BYTE_LAYOUT, 1, (byte) (value >>> 16));
-                b2.set(BYTE_LAYOUT, 2, (byte) (value >>> 24));
+                BYTE_VH.set(b1, (long) index, (byte) value);
+                BYTE_VH.set(b2, 0L, (byte) (value >>> 8));
+                BYTE_VH.set(b2, 1L, (byte) (value >>> 16));
+                BYTE_VH.set(b2, 2L, (byte) (value >>> 24));
             } else if (index + 2 >= segmentSizeInBytes) {
-                b1.set(SHORT_LE, index, (short) value);
-                b2.set(SHORT_LE, 0, (short) (value >>> 16));
+                SHORT_VH.set(b1, (long) index, (short) value);
+                SHORT_VH.set(b2, 0L, (short) (value >>> 16));
             } else {
-                b1.set(BYTE_LAYOUT, index, (byte) value);
-                b1.set(BYTE_LAYOUT, index + 1, (byte) (value >>> 8));
-                b1.set(BYTE_LAYOUT, index + 2, (byte) (value >>> 16));
-                b2.set(BYTE_LAYOUT, 0, (byte) (value >>> 24));
+                BYTE_VH.set(b1, (long) index, (byte) value);
+                BYTE_VH.set(b1, (long) (index + 1), (byte) (value >>> 8));
+                BYTE_VH.set(b1, (long) (index + 2), (byte) (value >>> 16));
+                BYTE_VH.set(b2, 0L, (byte) (value >>> 24));
             }
         } else {
-            segments[bufferIndex].set(INT_LE, index, value);
+            INT_VH.set(segments[bufferIndex], (long) index, value);
         }
     }
 
@@ -192,15 +196,15 @@ public class ForeignMemorySegmentedDataAccess extends AbstractDataAccess {
         if (index + 3 >= segmentSizeInBytes) {
             MemorySegment b1 = segments[bufferIndex], b2 = segments[bufferIndex + 1];
             if (index + 1 >= segmentSizeInBytes)
-                return (b2.get(BYTE_LAYOUT, 2) & 0xFF) << 24 | (b2.get(BYTE_LAYOUT, 1) & 0xFF) << 16
-                        | (b2.get(BYTE_LAYOUT, 0) & 0xFF) << 8 | (b1.get(BYTE_LAYOUT, index) & 0xFF);
+                return ((byte) BYTE_VH.get(b2, 2L) & 0xFF) << 24 | ((byte) BYTE_VH.get(b2, 1L) & 0xFF) << 16
+                        | ((byte) BYTE_VH.get(b2, 0L) & 0xFF) << 8 | ((byte) BYTE_VH.get(b1, (long) index) & 0xFF);
             if (index + 2 >= segmentSizeInBytes)
-                return (b2.get(BYTE_LAYOUT, 1) & 0xFF) << 24 | (b2.get(BYTE_LAYOUT, 0) & 0xFF) << 16
-                        | (b1.get(BYTE_LAYOUT, index + 1) & 0xFF) << 8 | (b1.get(BYTE_LAYOUT, index) & 0xFF);
-            return (b2.get(BYTE_LAYOUT, 0) & 0xFF) << 24 | (b1.get(BYTE_LAYOUT, index + 2) & 0xFF) << 16
-                    | (b1.get(BYTE_LAYOUT, index + 1) & 0xFF) << 8 | (b1.get(BYTE_LAYOUT, index) & 0xFF);
+                return ((byte) BYTE_VH.get(b2, 1L) & 0xFF) << 24 | ((byte) BYTE_VH.get(b2, 0L) & 0xFF) << 16
+                        | ((byte) BYTE_VH.get(b1, (long) (index + 1)) & 0xFF) << 8 | ((byte) BYTE_VH.get(b1, (long) index) & 0xFF);
+            return ((byte) BYTE_VH.get(b2, 0L) & 0xFF) << 24 | ((byte) BYTE_VH.get(b1, (long) (index + 2)) & 0xFF) << 16
+                    | ((byte) BYTE_VH.get(b1, (long) (index + 1)) & 0xFF) << 8 | ((byte) BYTE_VH.get(b1, (long) index) & 0xFF);
         }
-        return segments[bufferIndex].get(INT_LE, index);
+        return (int) INT_VH.get(segments[bufferIndex], (long) index);
     }
 
     @Override
@@ -209,10 +213,10 @@ public class ForeignMemorySegmentedDataAccess extends AbstractDataAccess {
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
         if (index + 1 >= segmentSizeInBytes) {
-            segments[bufferIndex].set(BYTE_LAYOUT, index, (byte) (value));
-            segments[bufferIndex + 1].set(BYTE_LAYOUT, 0, (byte) (value >>> 8));
+            BYTE_VH.set(segments[bufferIndex], (long) index, (byte) (value));
+            BYTE_VH.set(segments[bufferIndex + 1], 0L, (byte) (value >>> 8));
         } else {
-            segments[bufferIndex].set(SHORT_LE, index, value);
+            SHORT_VH.set(segments[bufferIndex], (long) index, value);
         }
     }
 
@@ -222,9 +226,9 @@ public class ForeignMemorySegmentedDataAccess extends AbstractDataAccess {
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
         if (index + 1 >= segmentSizeInBytes)
-            return (short) ((segments[bufferIndex + 1].get(BYTE_LAYOUT, 0) & 0xFF) << 8
-                    | (segments[bufferIndex].get(BYTE_LAYOUT, index) & 0xFF));
-        return segments[bufferIndex].get(SHORT_LE, index);
+            return (short) (((byte) BYTE_VH.get(segments[bufferIndex + 1], 0L) & 0xFF) << 8
+                    | ((byte) BYTE_VH.get(segments[bufferIndex], (long) index) & 0xFF));
+        return (short) SHORT_VH.get(segments[bufferIndex], (long) index);
     }
 
     @Override
@@ -266,7 +270,7 @@ public class ForeignMemorySegmentedDataAccess extends AbstractDataAccess {
         assert segments.length > 0 : "call create or loadExisting before usage!";
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
-        segments[bufferIndex].set(BYTE_LAYOUT, index, value);
+        BYTE_VH.set(segments[bufferIndex], (long) index, value);
     }
 
     @Override
@@ -274,7 +278,7 @@ public class ForeignMemorySegmentedDataAccess extends AbstractDataAccess {
         assert segments.length > 0 : "call create or loadExisting before usage!";
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
-        return segments[bufferIndex].get(BYTE_LAYOUT, index);
+        return (byte) BYTE_VH.get(segments[bufferIndex], (long) index);
     }
 
     @Override
