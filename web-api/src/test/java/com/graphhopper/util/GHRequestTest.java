@@ -27,8 +27,9 @@ import java.util.List;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -67,18 +68,25 @@ public class GHRequestTest {
 
     @ParameterizedTest
     @ValueSource(doubles = {0.0, 180.0, 359.9, Double.NaN})
-    public void testIsValidHeading(double heading) {
+    public void headingIsAcceptedWhenInValidAzimuthRange(double heading) {
         GHRequest request = new GHRequest(10, 12, 12, 10);
         request.setHeadings(List.of(heading));
-        assertTrue(request.isValidHeading(0));
+        assertDoesNotThrow(request::checkHeadings);
     }
 
     @ParameterizedTest
     @ValueSource(doubles = {-1.0, 360.0, 400.0})
-    public void testIsInvalidHeading(double heading) {
+    public void headingIsRejectedWhenOutOfAzimuthRange(double heading) {
         GHRequest request = new GHRequest(10, 12, 12, 10);
         request.setHeadings(List.of(heading));
-        assertFalse(request.isValidHeading(0));
+        assertThrows(IllegalArgumentException.class, request::checkHeadings);
+    }
+
+    @Test
+    public void headingsAreRejectedWhenCountDoesNotMatchPoints() {
+        GHRequest request = new GHRequest(10, 12, 12, 10);
+        request.setHeadings(List.of(90.0, 180.0, 270.0));
+        assertThrows(IllegalArgumentException.class, request::checkHeadings);
     }
 
     private void comparePoints(GHRequest request, List<GHPoint> points) {

@@ -151,12 +151,7 @@ public class Router {
     }
 
     private void checkHeadings(GHRequest request) {
-        if (request.getHeadings().size() > 1 && request.getHeadings().size() != request.getPoints().size())
-            throw new IllegalArgumentException("The number of 'heading' parameters must be zero, one "
-                    + "or equal to the number of points (" + request.getPoints().size() + ")");
-        for (int i = 0; i < request.getHeadings().size(); i++)
-            if (!request.isValidHeading(i))
-                throw new IllegalArgumentException("Heading for point " + i + " must be in range [0,360) or NaN, but was: " + request.getHeadings().get(i));
+        request.checkHeadings();
     }
 
     private void checkPointHints(GHRequest request) {

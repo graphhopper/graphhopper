@@ -124,7 +124,7 @@ public class GHRequest {
     }
 
     /**
-     * @deprecated Use {@link #isValidHeading(int)} instead.
+     * @deprecated Use {@link #checkHeadings()} instead.
      */
     @Deprecated
     public static boolean isAzimuthValue(double heading) {
@@ -132,7 +132,16 @@ public class GHRequest {
         return Double.isNaN(heading) || (Double.compare(heading, 360) < 0 && Double.compare(heading, 0) >= 0);
     }
 
-    public boolean isValidHeading(int index) {
+    public void checkHeadings() {
+        if (headings.size() > 1 && headings.size() != points.size())
+            throw new IllegalArgumentException("The number of 'heading' parameters must be zero, one "
+                    + "or equal to the number of points (" + points.size() + ")");
+        for (int i = 0; i < headings.size(); i++)
+            if (!isHeadingInRange(i))
+                throw new IllegalArgumentException("Heading for point " + i + " must be in range [0,360) or NaN, but was: " + headings.get(i));
+    }
+
+    private boolean isHeadingInRange(int index) {
         return isAzimuthValue(headings.get(index));
     }
 
