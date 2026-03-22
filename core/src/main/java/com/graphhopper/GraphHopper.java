@@ -514,7 +514,7 @@ public class GraphHopper {
         String customAreasDirectory = ghConfig.getString("custom_areas.directory", "");
         JsonFeatureCollection globalAreas = GraphHopper.resolveCustomAreas(customAreasDirectory);
         String customModelFolder = ghConfig.getString("custom_models.directory", ghConfig.getString("custom_model_folder", ""));
-        setProfiles(GraphHopper.resolveCustomModelFiles(customModelFolder, ghConfig.getProfiles(), globalAreas));
+        setProfiles(new CustomModelResolver(customModelFolder, globalAreas).resolveAll(ghConfig.getProfiles()));
 
         if (ghConfig.has("graph.vehicles"))
             throw new IllegalArgumentException("The option graph.vehicles is no longer supported. Use the appropriate turn_costs and custom_model instead, see docs/migration/config-migration-08-09.md");
@@ -1634,6 +1634,7 @@ public class GraphHopper {
         return globalAreas;
     }
 
+    @Deprecated
     public static List<Profile> resolveCustomModelFiles(String customModelFolder, List<Profile> profiles, JsonFeatureCollection globalAreas) {
         ObjectMapper jsonOM = Jackson.newObjectMapper();
         List<Profile> newProfiles = new ArrayList<>();
