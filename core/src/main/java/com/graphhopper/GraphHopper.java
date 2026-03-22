@@ -1729,6 +1729,9 @@ public class GraphHopper {
         return globalAreas;
     }
 
+    /**
+     * @deprecated Use {@link CustomModelResolver#resolveAll(List)} instead.
+     */
     @Deprecated
     public static List<Profile> resolveCustomModelFiles(String customModelFolder, List<Profile> profiles, JsonFeatureCollection globalAreas) {
         return new CustomModelResolver(customModelFolder, globalAreas).resolveAll(profiles);
