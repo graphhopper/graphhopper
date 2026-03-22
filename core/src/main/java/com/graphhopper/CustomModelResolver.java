@@ -68,7 +68,7 @@ class CustomModelResolver {
                 Object cm = profile.getCustomModel();
                 try {
                     // custom_model can be an object tree (read from config) or an object (e.g. from tests)
-                    customModel = jsonOM.readValue(jsonOM.writeValueAsBytes(cm), CustomModel.class);
+                    customModel = jsonOM.convertValue(cm, CustomModel.class);
                     newProfiles.add(profile.setCustomModel(customModel));
                 } catch (Exception ex) {
                     throw new RuntimeException("Cannot load custom_model from " + cm + " for profile " + profile.getName()
