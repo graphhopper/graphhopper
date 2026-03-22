@@ -19,6 +19,7 @@ package com.graphhopper;
 
 import com.graphhopper.config.Profile;
 import com.graphhopper.util.CustomModel;
+import com.graphhopper.util.JsonFeature;
 import com.graphhopper.util.JsonFeatureCollection;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -152,6 +153,20 @@ class CustomModelResolverTest {
         profile.getHints().putObject("custom_model_files", List.of("car.yaml"));
 
         assertThrows(IllegalArgumentException.class, () -> sut.resolveAll(List.of(profile)));
+    }
+
+    @Test
+    void globalAreas_areAddedToResolvedCustomModel() {
+        JsonFeature area = new JsonFeature();
+        area.setId("test_area");
+        JsonFeatureCollection globalAreas = new JsonFeatureCollection();
+        globalAreas.getFeatures().add(area);
+
+        Profile profile = new Profile("car").setWeighting("custom");
+
+        List<Profile> result = new CustomModelResolver("", globalAreas).resolveAll(List.of(profile));
+
+        assertEquals(1, result.get(0).getCustomModel().getAreas().getFeatures().size());
     }
 
     @Test
