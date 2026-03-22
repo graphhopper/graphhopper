@@ -42,19 +42,19 @@ import static com.graphhopper.util.Helper.readJSONFileWithoutComments;
  * Resolves {@link CustomModel} instances for profiles that use {@link CustomWeighting}.
  * Supports loading custom models inline from config or from files (built-in jar resources or external directory).
  */
-class CustomModelResolver {
+public class CustomModelResolver {
 
     private final String customModelFolder;
     private final JsonFeatureCollection globalAreas;
     private final ObjectMapper jsonOM;
 
-    CustomModelResolver(String customModelFolder, JsonFeatureCollection globalAreas) {
+    public CustomModelResolver(String customModelFolder, JsonFeatureCollection globalAreas) {
         this.customModelFolder = customModelFolder;
         this.globalAreas = globalAreas;
         this.jsonOM = Jackson.newObjectMapper();
     }
 
-    List<Profile> resolveAll(List<Profile> profiles) {
+    public List<Profile> resolveAll(List<Profile> profiles) {
         List<Profile> newProfiles = new ArrayList<>();
         for (Profile profile : profiles) {
             if (!CustomWeighting.NAME.equals(profile.getWeighting())) {
