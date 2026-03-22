@@ -12,7 +12,7 @@ Here is an overview:
  * b3nn0, Android improvements
  * baumboi, path detail and landmark improvements
  * baybatu, improved error for EncodingManager
- * cezarysanecki, refactoring to decouple core from web-api
+ * cezarysanecki, refactoring for better maintainability through tests and clearer responsibilities
  * boldtrn, one of the core developers with motorcycle knowledge :)
  * bt90, fixes like #2786
  * cgarreau, increase of routing success rate via subnetwork cleanup
