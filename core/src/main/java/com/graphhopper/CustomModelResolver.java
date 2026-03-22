@@ -61,11 +61,11 @@ class CustomModelResolver {
                 newProfiles.add(profile);
                 continue;
             }
-            Object cm = profile.getHints().getObject(CustomModel.KEY, null);
             CustomModel customModel;
-            if (cm != null) {
+            if (profile.hasCustomModel()) {
                 if (!profile.getHints().getObject("custom_model_files", Collections.emptyList()).isEmpty())
                     throw new IllegalArgumentException("Do not use custom_model_files and custom_model together");
+                Object cm = profile.getCustomModel();
                 try {
                     // custom_model can be an object tree (read from config) or an object (e.g. from tests)
                     customModel = jsonOM.readValue(jsonOM.writeValueAsBytes(cm), CustomModel.class);

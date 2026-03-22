@@ -106,6 +106,10 @@ public class Profile {
         return getHints().getObject(CustomModel.KEY, null);
     }
 
+    public boolean hasCustomModel() {
+        return getHints().getObject(CustomModel.KEY, null) != null;
+    }
+
     public boolean hasTurnCosts() {
         return turnCostsConfig != null;
     }
