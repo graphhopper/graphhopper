@@ -88,7 +88,6 @@ public class GMTEDProvider extends AbstractTiffElevationProvider {
     public GMTEDProvider(String cacheDir) {
         super("https://edcintl.cr.usgs.gov/downloads/sciweb1/shared/topo/downloads/GMTED/Global_tiles_GMTED/075darcsec/mea/",
                 cacheDir.isEmpty() ? "/tmp/gmted" : cacheDir,
-                "GraphHopper GMTEDReader",
                 14400, 9600,
                 20, 30);
     }
