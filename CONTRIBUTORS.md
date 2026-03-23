@@ -11,6 +11,7 @@ Here is an overview:
  * Anvoker, fixes like #1614 and helped with JUnit 5 migration #1632 
  * b3nn0, Android improvements
  * baumboi, path detail and landmark improvements
+ * baybatu, improved error for EncodingManager
  * boldtrn, one of the core developers with motorcycle knowledge :)
  * bt90, fixes like #2786
  * cgarreau, increase of routing success rate via subnetwork cleanup
