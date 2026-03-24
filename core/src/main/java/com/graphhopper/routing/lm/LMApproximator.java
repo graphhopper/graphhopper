@@ -185,7 +185,7 @@ public class LMApproximator implements WeightApproximator {
     }
 
     private void findClosestRealNode(int t) {
-        Dijkstra dijkstra = new Dijkstra(graph, lmWeighting, TraversalMode.NODE_BASED) {
+        Dijkstra dijkstra = new Dijkstra(graph, graph.wrapWeighting(lmWeighting), TraversalMode.NODE_BASED) {
             @Override
             protected boolean finished() {
                 towerNodeNextToT = currEdge.adjNode;

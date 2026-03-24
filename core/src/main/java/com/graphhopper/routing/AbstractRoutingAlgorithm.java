@@ -17,7 +17,9 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.weighting.QueryGraphWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
@@ -49,6 +51,8 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
     public AbstractRoutingAlgorithm(Graph graph, Weighting weighting, TraversalMode traversalMode) {
         if (weighting.hasTurnCosts() && !traversalMode.isEdgeBased())
             throw new IllegalStateException("Weightings supporting turn costs cannot be used with node-based traversal mode");
+        if (graph instanceof QueryGraph && !(weighting instanceof QueryGraphWeighting))
+            throw new IllegalStateException("Weighting must use QueryGraphWeighting");
         this.weighting = weighting;
         this.traversalMode = traversalMode;
         this.graph = graph;
