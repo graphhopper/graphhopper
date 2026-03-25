@@ -44,7 +44,7 @@ public class DAType {
      */
     public static final DAType RAM_INT_STORE = new DAType(MemRef.HEAP, true, true, true);
     /**
-     * Like RAM_INT_STORE, but backed by a single contiguous int[] for maximum read speed.
+     * Like RAM_INT, but backed by a single contiguous int[] for maximum read speed.
      * Not a good fit if the array needs to be resized frequently. Limited to Integer.MAX_VALUE ints
      * No support for short,byte and bytes.
      */

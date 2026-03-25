@@ -56,6 +56,8 @@ public class RAMInt1SegmentDataAccess extends AbstractDataAccess {
         long newCap = bytes;
         if (newCap % segmentSizeInBytes != 0)
             newCap = (newCap / segmentSizeInBytes + 1) * segmentSizeInBytes;
+        if (newCap / 4 > Integer.MAX_VALUE)
+            throw new RuntimeException("Cannot ensure capacity for " + bytes + " bytes using RAMInt1SegmentDataAccess. Max: " + (Integer.MAX_VALUE * 4L));
 
         try {
             data = Arrays.copyOf(data, (int) (newCap / 4));
@@ -95,6 +97,9 @@ public class RAMInt1SegmentDataAccess extends AbstractDataAccess {
                     segmentCount++;
 
                 int intsPerSegment = segmentSizeInBytes / 4;
+                long totalInts = (long) segmentCount * intsPerSegment;
+                if (totalInts > Integer.MAX_VALUE)
+                    throw new RuntimeException("File " + getFullName() + " is too large to be loaded with RAMInt1SegmentDataAccess. total ints: " + totalInts);
                 data = new int[segmentCount * intsPerSegment];
                 for (int s = 0; s < segmentCount; s++) {
                     int read = raFile.read(bytes) / 4;
@@ -143,11 +148,13 @@ public class RAMInt1SegmentDataAccess extends AbstractDataAccess {
 
     @Override
     public final void setInt(long bytePos, int value) {
+        assert data.length > 0 : "call create or loadExisting before usage!";
         data[(int) (bytePos >>> 2)] = value;
     }
 
     @Override
     public final int getInt(long bytePos) {
+        assert data.length > 0 : "call create or loadExisting before usage!";
         return data[(int) (bytePos >>> 2)];
     }
 
