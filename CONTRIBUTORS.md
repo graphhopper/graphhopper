@@ -75,6 +75,7 @@ Here is an overview:
  * otbutz, added multiple EncodedValues
  * PabloaRuiz, pt_BR 1i8n improvements
  * pantsleftinwash, speed parsing improvements
+ * pgrigolli, pedestrian roads conditional accesses fix
  * PGWelch, shapefile reader #874
  * rafaelstelles, fix deserializer web-api
  * rajanski, script to do routing via PostGIS

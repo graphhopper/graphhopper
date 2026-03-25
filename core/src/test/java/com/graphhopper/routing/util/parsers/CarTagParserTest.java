@@ -752,7 +752,13 @@ public class CarTagParserTest {
         way.clearTags();
         way.setTag("highway", "pedestrian");
         way.setTag("motor_vehicle:conditional", "destination @ ( 8:00 - 10:00 )");
-        assertTrue(parser.getAccess(way).isWay());
+        assertTrue(parser.getAccess(way).canSkip());
+
+        way.clearTags();
+        way.setTag("highway", "pedestrian");
+        way.setTag("motor_vehicle:conditional", "delivery @ (Mo-Fr 06:00-11:00, 19:00-21:00; Sa 06:00-09:30; PH off)");
+        way.setTag("bicycle", "yes");
+        assertTrue(parser.getAccess(way).canSkip());
 
         way.clearTags();
         way.setTag("highway", "pedestrian");
