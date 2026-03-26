@@ -158,6 +158,10 @@ public class RAMInt1SegmentDataAccess extends AbstractDataAccess {
         return data[(int) (bytePos >>> 2)];
     }
 
+    public final int getIntRaw(int index) {
+        return data[index];
+    }
+
     @Override
     public final void setShort(long bytePos, short value) {
         throw new UnsupportedOperationException(this + " does not support short access. Use RAMDataAccess instead");
