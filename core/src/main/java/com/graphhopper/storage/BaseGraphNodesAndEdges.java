@@ -403,14 +403,27 @@ class BaseGraphNodesAndEdges implements EdgeIntAccess {
         }
     }
 
+    // Cache the last edgeId-to-edgePointer mapping to avoid repeated multiplication
+    // in the hot path where multiple encoded values are read from the same edge.
+    private int cachedEdgeId = -1;
+    private long cachedEdgePointer2 = -1;
+
+    private long cachedEdgePointer(int edgeId) {
+        if (edgeId != cachedEdgeId) {
+            cachedEdgeId = edgeId;
+            cachedEdgePointer2 = toEdgePointer(edgeId);
+        }
+        return cachedEdgePointer2;
+    }
+
     @Override
     public int getInt(int edgeId, int index) {
-        return getFlagInt(toEdgePointer(edgeId), index * 4);
+        return getFlagInt(cachedEdgePointer(edgeId), index * 4);
     }
 
     @Override
     public void setInt(int edgeId, int index, int value) {
-        setFlagInt(toEdgePointer(edgeId), index * 4, value);
+        setFlagInt(cachedEdgePointer(edgeId), index * 4, value);
     }
 
     public void setNodeA(long edgePointer, int nodeA) {
