@@ -72,7 +72,7 @@ public class WaySegmentParser {
     };
     private EdgeHandler edgeHandler = (from, to, pointList, way, nodeTags) ->
             System.out.println("edge " + from + "->" + to + " (" + pointList.size() + " points)");
-    private int workerThreads = 2;
+    private int workerThreads = Math.max(2, Math.min(8, Runtime.getRuntime().availableProcessors()));
 
     private final OSMNodeData nodeData;
     private Date timestamp;

@@ -54,7 +54,7 @@ public interface OSMInput extends AutoCloseable {
 
         InputStream ips;
         try {
-            ips = new BufferedInputStream(new FileInputStream(file), 50000);
+            ips = new BufferedInputStream(new FileInputStream(file), 1 << 20);
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
         }
