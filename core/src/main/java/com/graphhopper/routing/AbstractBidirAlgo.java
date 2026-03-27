@@ -25,6 +25,7 @@ import com.graphhopper.util.EdgeIterator;
 import java.util.Collections;
 import java.util.List;
 import java.util.PriorityQueue;
+import com.graphhopper.coll.BinaryHeapWithDuplicates;
 
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 
@@ -45,8 +46,8 @@ public abstract class AbstractBidirAlgo implements EdgeToEdgeRoutingAlgorithm {
     protected int maxVisitedNodes = Integer.MAX_VALUE;
     protected long timeoutMillis = Long.MAX_VALUE;
     private long finishTimeMillis = Long.MAX_VALUE;
-    PriorityQueue<SPTEntry> pqOpenSetFrom;
-    PriorityQueue<SPTEntry> pqOpenSetTo;
+    BinaryHeapWithDuplicates<SPTEntry> pqOpenSetFrom;
+    BinaryHeapWithDuplicates<SPTEntry> pqOpenSetTo;
     protected boolean updateBestPath = true;
     protected boolean finishedFrom;
     protected boolean finishedTo;
@@ -61,10 +62,10 @@ public abstract class AbstractBidirAlgo implements EdgeToEdgeRoutingAlgorithm {
     }
 
     protected void initCollections(int size) {
-        pqOpenSetFrom = new PriorityQueue<>(size);
+        pqOpenSetFrom = new BinaryHeapWithDuplicates<>(size);
         bestWeightMapFrom = new GHIntObjectHashMap<>(size);
 
-        pqOpenSetTo = new PriorityQueue<>(size);
+        pqOpenSetTo = new BinaryHeapWithDuplicates<>(size);
         bestWeightMapTo = new GHIntObjectHashMap<>(size);
     }
 
@@ -106,7 +107,7 @@ public abstract class AbstractBidirAlgo implements EdgeToEdgeRoutingAlgorithm {
     protected void initFrom(int from, double weight) {
         this.from = from;
         currFrom = createStartEntry(from, weight, false);
-        pqOpenSetFrom.add(currFrom);
+        pqOpenSetFrom.add(currFrom, currFrom.weight);
         if (!traversalMode.isEdgeBased()) {
             bestWeightMapFrom.put(from, currFrom);
         }
@@ -115,7 +116,7 @@ public abstract class AbstractBidirAlgo implements EdgeToEdgeRoutingAlgorithm {
     protected void initTo(int to, double weight) {
         this.to = to;
         currTo = createStartEntry(to, weight, true);
-        pqOpenSetTo.add(currTo);
+        pqOpenSetTo.add(currTo, currTo.weight);
         if (!traversalMode.isEdgeBased()) {
             bestWeightMapTo.put(to, currTo);
         }
