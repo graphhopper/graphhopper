@@ -1139,6 +1139,56 @@ public class QueryGraphTest {
         assertEquals(300 + 0.8 * 200, queryGraph.getNodeAccess().getEle(g.getNodes() + 2), 1.e-1);
     }
 
+    @Test
+    public void testUTurnAtVirtualNodesOnLongBidirectionalEdge() {
+        // Create a single long bidirectional edge: 0 --- 1
+        // with pillar nodes so we can snap along the way
+        //
+        //  0 ---(snap A)---(snap B)---(snap C)--- 1
+        //
+        EdgeIteratorState edge = g.edge(0, 1).setDistance(0).set(speedEnc, 60, 60)
+                .setWayGeometry(Helper.createPointList(1, 1, 1, 2, 1, 3));
+        updateDistancesFor(g, 0, 1, 0);
+        updateDistancesFor(g, 1, 1, 4);
+
+        // Snap three points along the edge in EDGE mode
+        Snap snapA = createLocationResult(1, 0.5, edge, 0, EDGE);
+        Snap snapB = createLocationResult(1, 1.5, edge, 1, EDGE);
+        Snap snapC = createLocationResult(1, 2.5, edge, 2, EDGE);
+
+        QueryGraph queryGraph = QueryGraph.create(g, Arrays.asList(snapA, snapB, snapC));
+        int nodeA = snapA.getClosestNode();
+        int nodeB = snapB.getClosestNode();
+        int nodeC = snapC.getClosestNode();
+
+        // All three snaps should have created virtual nodes
+        assertEquals(5, queryGraph.getNodes()); // 2 real + 3 virtual
+
+        // Each virtual node should have exactly 2 edges (toward base side and toward adj side)
+        EdgeExplorer explorer = queryGraph.createEdgeExplorer();
+        assertEquals(2, GHUtility.count(explorer.setBaseNode(nodeA)));
+        assertEquals(2, GHUtility.count(explorer.setBaseNode(nodeB)));
+        assertEquals(2, GHUtility.count(explorer.setBaseNode(nodeC)));
+
+        // Now test turn costs at virtual nodes via QueryGraphWeighting
+        Weighting baseWeighting = new SpeedWeighting(speedEnc);
+        Weighting weighting = queryGraph.wrapWeighting(baseWeighting);
+
+        // At virtual node B: get the two edges
+        EdgeIteratorState edgeBtowardA = GHUtility.getEdge(queryGraph, nodeB, nodeA);
+        EdgeIteratorState edgeBtowardC = GHUtility.getEdge(queryGraph, nodeB, nodeC);
+        assertNotNull(edgeBtowardA);
+        assertNotNull(edgeBtowardC);
+
+        // Going straight through B (A->B->C or C->B->A) should have zero turn cost
+        assertEquals(0, weighting.calcTurnWeight(edgeBtowardA.getEdge(), nodeB, edgeBtowardC.getEdge()));
+        assertEquals(0, weighting.calcTurnWeight(edgeBtowardC.getEdge(), nodeB, edgeBtowardA.getEdge()));
+
+        // U-turn at B (coming from A side, going back toward A) should be infinite
+        assertEquals(Double.POSITIVE_INFINITY, weighting.calcTurnWeight(edgeBtowardA.getEdge(), nodeB, edgeBtowardA.getEdge()));
+        assertEquals(Double.POSITIVE_INFINITY, weighting.calcTurnWeight(edgeBtowardC.getEdge(), nodeB, edgeBtowardC.getEdge()));
+    }
+
     private QueryGraph lookup(Snap res) {
         return lookup(Collections.singletonList(res));
     }
