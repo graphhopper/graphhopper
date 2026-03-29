@@ -367,6 +367,63 @@ public class PathTest {
     }
 
     @Test
+    public void testWeightDetailsIncludeTurnCostsOnCorrectSegment() {
+        // Turn cost of 50 (raw) = 500 after SpeedWeighting's 10x scaling, applied at specific transitions
+        final int TURN_COST_EDGE_0_TO_1 = 50;  // turn from edge 0 to edge 1
+        TurnCostProvider tcp = new TurnCostProvider() {
+            @Override
+            public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
+                if (inEdge == outEdge) return 1000;
+                // Apply a known turn cost only for the transition from edge 0 to edge 1
+                if (inEdge == 0 && outEdge == 1) return TURN_COST_EDGE_0_TO_1;
+                return 0;
+            }
+
+            @Override
+            public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
+                return (long) (1000 * calcTurnWeight(inEdge, viaNode, outEdge));
+            }
+        };
+        Weighting weighting = new SpeedWeighting(carAvSpeedEnc, tcp);
+
+        BaseGraph graph = new BaseGraph.Builder(carManager).withTurnCosts(true).create();
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(1, 52.514, 13.348);
+        na.setNode(2, 52.514, 13.349);
+        na.setNode(3, 52.514, 13.350);
+        na.setNode(4, 52.515, 13.349);
+        // All edges same speed/distance so the base edge weight is identical
+        graph.edge(1, 2).set(carAvSpeedEnc, 45, 45).setDistance(500);  // edge 0
+        graph.edge(2, 3).set(carAvSpeedEnc, 45, 45).setDistance(500);  // edge 1
+        graph.edge(3, 4).set(carAvSpeedEnc, 45, 45).setDistance(500);  // edge 2
+
+        // Path: 1 -> 2 -> 3 -> 4, edges: [0, 1, 2]
+        Path p = new Dijkstra(graph, weighting, TraversalMode.EDGE_BASED).calcPath(1, 4);
+        assertTrue(p.isFound());
+
+        Map<String, List<PathDetail>> details = PathDetailsFromEdges.calcDetails(p, carManager, weighting,
+                List.of(WEIGHT), new PathDetailsBuilderFactory(), 0, graph);
+        List<PathDetail> weightDetails = details.get(WEIGHT);
+        assertEquals(3, weightDetails.size());
+
+        double baseEdgeWeight = (double) weightDetails.get(0).getValue();
+
+        // First segment (edge 0): no previous edge, so no turn cost — just edge weight
+        assertEquals(baseEdgeWeight, (double) weightDetails.get(0).getValue(), 1.e-6);
+
+        // Second segment (edge 1): includes turn cost from edge 0 -> edge 1
+        double expectedTurnWeight = Weighting.roundWeight(10.0 * TURN_COST_EDGE_0_TO_1);
+        assertEquals(baseEdgeWeight + expectedTurnWeight, (double) weightDetails.get(1).getValue(), 1.e-6);
+
+        // Third segment (edge 2): transition from edge 1 -> edge 2 has zero turn cost
+        assertEquals(baseEdgeWeight, (double) weightDetails.get(2).getValue(), 1.e-6);
+
+        // Total weight details should match path weight
+        double totalDetails = weightDetails.stream().mapToDouble(wd -> (double) wd.getValue()).sum();
+        assertEquals(p.getWeight(), totalDetails, 1.e-3);
+    }
+
+    @Test
     public void testCalcAverageSpeedDetailsWithShortDistances_issue1848() {
         Weighting weighting = new SpeedWeighting(carAvSpeedEnc);
         Path p = new Dijkstra(pathDetailGraph, weighting, TraversalMode.NODE_BASED).calcPath(1, 6);
