@@ -25,6 +25,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.util.parsers.OrientationCalculator;
 import com.graphhopper.routing.weighting.SpeedWeighting;
+import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
@@ -311,6 +312,58 @@ public class PathTest {
         assertEquals(2, averageSpeedDetails.get(2).getFirst());
         assertEquals(3, averageSpeedDetails.get(3).getFirst());
         assertEquals(4, averageSpeedDetails.get(3).getLast());
+    }
+
+    @Test
+    public void testWeightDetailsDoNotIncludeSpuriousUTurnCosts() {
+        // Use a weighting with turn costs: u-turn costs = 1000s so they're easy to spot
+        TurnCostProvider tcp = new TurnCostProvider() {
+            @Override
+            public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
+                if (inEdge == outEdge) return 1000;
+                return 0;
+            }
+
+            @Override
+            public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
+                return (long) (1000 * calcTurnWeight(inEdge, viaNode, outEdge));
+            }
+        };
+        Weighting weighting = new SpeedWeighting(carAvSpeedEnc, tcp);
+
+        // Build a graph with turn costs enabled for edge-based traversal
+        BaseGraph graph = new BaseGraph.Builder(carManager).withTurnCosts(true).create();
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(1, 52.514, 13.348);
+        na.setNode(2, 52.514, 13.349);
+        na.setNode(3, 52.514, 13.350);
+        na.setNode(4, 52.515, 13.349);
+        na.setNode(5, 52.516, 13.3452);
+        graph.edge(1, 2).set(carAvSpeedEnc, 45, 45).setDistance(500);
+        graph.edge(2, 3).set(carAvSpeedEnc, 90, 90).setDistance(500);
+        graph.edge(3, 4).set(carAvSpeedEnc, 45, 45).setDistance(500);
+        graph.edge(4, 5).set(carAvSpeedEnc, 45, 45).setDistance(500);
+
+        Path p = new Dijkstra(graph, weighting, TraversalMode.EDGE_BASED).calcPath(1, 5);
+        assertTrue(p.isFound());
+
+        Map<String, List<PathDetail>> details = PathDetailsFromEdges.calcDetails(p, carManager, weighting,
+                List.of(WEIGHT), new PathDetailsBuilderFactory(), 0, graph);
+
+        List<PathDetail> weightDetails = details.get(WEIGHT);
+        assertEquals(4, weightDetails.size());
+
+        // Weight details should not include u-turn costs (edge matching itself).
+        double totalWeight = 0;
+        for (PathDetail wd : weightDetails) {
+            double w = (double) wd.getValue();
+            // No single edge in this small graph should have weight >= 1000 (the u-turn cost)
+            assertTrue(w < 1000, "Weight detail " + w + " includes spurious u-turn cost");
+            totalWeight += w;
+        }
+
+        // The sum of weight details should approximate the path weight
+        assertEquals(p.getWeight(), totalWeight, 1.e-3);
     }
 
     @Test
