@@ -784,6 +784,80 @@ public class RoutingAlgorithmWithOSMTest {
         );
     }
 
+    @Test
+    public void testHarsdorfRouteQuality() {
+        // The old testHarsdorf TODO said "somehow the bigger road is taken". With bumped cycleway
+        // priorities, the route now correctly uses Unterloher Weg and the following cycleway segment,
+        // which is what the commented-out expected route (6931m) was intended to verify.
+        Helper.removeDir(new File(GH_LOCATION));
+        Profile bike = TestProfiles.accessSpeedAndPriority("bike");
+        bike.getCustomModel().setDistanceInfluence(1.0);
+        GraphHopper hopper = createHopper(BAYREUTH, bike);
+        hopper.importOrLoad();
+
+        GHRequest req = new GHRequest(50.004333, 11.600254, 50.044449, 11.543434)
+                .setProfile("bike")
+                .setPathDetails(Arrays.asList("road_class", "bike_priority", "street_name"))
+                .putHint("ch.disable", true).putHint("lm.disable", true);
+        GHResponse rsp = hopper.route(req);
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
+        ResponsePath path = rsp.getBest();
+
+        var roadClassDetails = path.getPathDetails().get("road_class");
+        var streetNameDetails = path.getPathDetails().get("street_name");
+        var bikePriorityDetails = path.getPathDetails().get("bike_priority");
+
+        // The route should go via Unterloher Weg and then a cycleway segment
+        assertTrue(streetNameDetails.stream().anyMatch(d -> String.valueOf(d.getValue()).contains("Unterloher")),
+                "Expected route via Unterloher Weg, streets: " +
+                        streetNameDetails.stream().map(d -> d.getValue() + "(" + (d.getLast()-d.getFirst()) + ")").toList());
+        assertTrue(roadClassDetails.stream().anyMatch(d -> "cycleway".equalsIgnoreCase(String.valueOf(d.getValue()))),
+                "Expected route to include a cycleway segment, road classes: " +
+                        roadClassDetails.stream().map(d -> d.getValue() + "(" + (d.getLast()-d.getFirst()) + ")").toList());
+
+        // The cycleway segment should have VERY_NICE (1.3) priority
+        assertTrue(bikePriorityDetails.stream()
+                        .anyMatch(d -> ((Number) d.getValue()).doubleValue() >= 1.3 && d.getLast() - d.getFirst() > 10),
+                "Expected a substantial cycleway segment with priority >= 1.3");
+    }
+
+    @Test
+    public void testKremsRouteQuality() {
+        // The Krems route mostly follows cycleways (70% of points). The route got slightly longer
+        // (12493→12573m) because residential streets are no longer preferred, so the router picks
+        // a marginally different path through town — but it's still overwhelmingly on cycleways.
+        Helper.removeDir(new File(GH_LOCATION));
+        Profile bikeProfile = new Profile("bike").setCustomModel(new CustomModel().
+                addToPriority(If("bike_access", MULTIPLY, "bike_priority")).
+                addToPriority(ElseIf("bike_network != MISSING", MULTIPLY, "1.8")).
+                addToPriority(Else(MULTIPLY, "0")).
+                addToSpeed(If("true", LIMIT, "bike_average_speed")));
+
+        GraphHopper hopper = createHopper(KREMS, bikeProfile);
+        hopper.importOrLoad();
+
+        GHRequest req = new GHRequest(48.409523, 15.602394, 48.375466, 15.72916)
+                .setProfile("bike")
+                .setPathDetails(Arrays.asList("road_class", "bike_priority"))
+                .putHint("ch.disable", true).putHint("lm.disable", true);
+        GHResponse rsp = hopper.route(req);
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
+        ResponsePath path = rsp.getBest();
+
+        var roadClassDetails = path.getPathDetails().get("road_class");
+        // Count cycleway points
+        int cyclewayPoints = roadClassDetails.stream()
+                .filter(d -> "cycleway".equalsIgnoreCase(String.valueOf(d.getValue())))
+                .mapToInt(d -> d.getLast() - d.getFirst())
+                .sum();
+        int totalPoints = path.getPoints().size();
+        var roadClassSummary = new java.util.LinkedHashMap<String, Integer>();
+        for (var d : roadClassDetails) roadClassSummary.merge(String.valueOf(d.getValue()), d.getLast() - d.getFirst(), Integer::sum);
+        assertTrue(cyclewayPoints > totalPoints / 2,
+                "Expected majority of Krems route on cycleways, but only " +
+                        cyclewayPoints + "/" + totalPoints + " points were on cycleways. Road classes: " + roadClassSummary);
+    }
+
     private GHRequest createRequest(Query query) {
         GHRequest req = new GHRequest();
         for (ViaPoint assumption : query.points) {
