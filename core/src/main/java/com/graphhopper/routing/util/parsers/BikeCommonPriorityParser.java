@@ -135,9 +135,9 @@ public abstract class BikeCommonPriorityParser implements TagParser {
 
         Set<String> cyclewayValues = Stream.of("cycleway", "cycleway:left", "cycleway:both", "cycleway:right").map(key -> way.getTag(key, "")).collect(Collectors.toSet());
         if (cyclewayValues.contains("track")) {
-            weightToPrioMap.put(100d, PREFER);
+            weightToPrioMap.put(100d, VERY_NICE);
         } else if (Stream.of("lane", "opposite_track", "shared_lane", "share_busway", "shoulder").anyMatch(cyclewayValues::contains)) {
-            weightToPrioMap.put(100d, SLIGHT_PREFER);
+            weightToPrioMap.put(100d, PREFER);
         } else if (pushingSectionsHighways.contains(highway) || "parking_aisle".equals(way.getTag("service"))) {
             PriorityCode pushingSectionPrio = SLIGHT_AVOID;
             if (way.hasTag("highway", "steps"))
