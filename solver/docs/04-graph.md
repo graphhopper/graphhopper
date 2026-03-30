@@ -1,6 +1,6 @@
-# solver-graph — Graph implementations
+# solver-graph — Graph Implementations
 
-The `solver-graph` module provides concrete implementations of `Graph<N, E>` from solver-api.
+The `solver-graph` module provides concrete implementations of `FiniteGraph<N, E>` from solver-api.
 It depends **exclusively** on `solver-api`.
 
 Package: `pl.cezarysanecki.solver.graph`
@@ -15,15 +15,18 @@ based on `Map<N, List<Edge<N, E>>>`.
 ```java
 /**
  * Graph based on an adjacency list.
- * Immutable after construction — built via Builder.
+ * Immutable after construction — built by Builder.
  *
  * @param <N> node type
  * @param <E> edge data type
  */
-public class AdjacencyListGraph<N, E> implements Graph<N, E> {
+public class AdjacencyListGraph<N, E> implements FiniteGraph<N, E> {
 
     @Override
     public Set<N> nodes();
+
+    @Override
+    public boolean containsNode(N node);
 
     @Override
     public Iterable<Edge<N, E>> neighbors(N node);
@@ -42,7 +45,7 @@ public class AdjacencyListGraph<N, E> implements Graph<N, E> {
         /** Adds an undirected edge (two directed edges). */
         public Builder<N, E> addUndirectedEdge(N source, N target, E data);
 
-        /** Builds the immutable graph. */
+        /** Builds an immutable graph. */
         public AdjacencyListGraph<N, E> build();
     }
 }
@@ -53,7 +56,7 @@ public class AdjacencyListGraph<N, E> implements Graph<N, E> {
 | Operation | Complexity |
 |-----------|-----------|
 | `nodes()` | O(1) — returns a view |
-| `neighbors(n)` | O(1) — returns a list |
+| `neighbors(n)` | O(1) — returns the list |
 | `containsNode(n)` | O(1) — HashMap.containsKey |
 | Memory | O(V + E) |
 
@@ -95,10 +98,10 @@ Does not store edges in memory — generates neighbors on-the-fly.
  * Edges generated dynamically (4 or 8 neighbors).
  * Optional predicate for blocking cells (maze walls).
  *
- * N = GridNode (record: row, col)
+ * N = GridNode (interface: row(), col())
  * E = GridEdge (record: direction, e.g. UP/DOWN/LEFT/RIGHT)
  */
-public class GridGraph implements Graph<GridNode, GridEdge> {
+public class GridGraph implements FiniteGraph<GridNode, GridEdge> {
 
     public GridGraph(int rows, int cols, Connectivity connectivity);
     public GridGraph(int rows, int cols, Connectivity connectivity,
@@ -108,7 +111,13 @@ public class GridGraph implements Graph<GridNode, GridEdge> {
     public Set<GridNode> nodes();
 
     @Override
+    public boolean containsNode(GridNode node);  // O(1) — isInBounds + isPassable
+
+    @Override
     public Iterable<Edge<GridNode, GridEdge>> neighbors(GridNode node);
+
+    /** Creates a node compatible with this graph. */
+    public GridNode node(int row, int col);
 
     public enum Connectivity {
         FOUR,   // up, down, left, right
@@ -116,7 +125,15 @@ public class GridGraph implements Graph<GridNode, GridEdge> {
     }
 }
 
-public record GridNode(int row, int col) {}
+/**
+ * Grid node — interface, not record.
+ * GridGraph internally uses a private Cell record.
+ * In tests you can use SimpleGridNode (test-only) for heuristics.
+ */
+public interface GridNode {
+    int row();
+    int col();
+}
 
 public record GridEdge(Direction direction) {
     public enum Direction {
@@ -132,6 +149,7 @@ public record GridEdge(Direction direction) {
 |-----------|-----------|
 | `nodes()` | O(rows × cols) — generated |
 | `neighbors(n)` | O(1) — max 4 or 8 neighbors, generated on-the-fly |
+| `containsNode(n)` | O(1) — `isInBounds() && isPassable()` |
 | Memory | O(1) — zero stored edges (plus predicate if provided) |
 
 ### Example: maze
@@ -153,23 +171,46 @@ var maze = new GridGraph(5, 5, Connectivity.FOUR,
 CostFunction<GridNode, GridEdge, Integer> unitCost = edge -> 1;
 
 var dijkstra = new Dijkstra<>(maze, unitCost, IntAlgebra.INSTANCE);
-var path = dijkstra.solve(new GridNode(0, 0), new GridNode(4, 4));
+var path = dijkstra.solve(maze.node(0, 0), maze.node(4, 4));
 ```
 
-### Manhattan/Euclidean heuristic
+### Heuristics — GridHeuristics factory
 
-GridGraph works naturally with geometric heuristics:
+The `pl.cezarysanecki.solver.graph.heuristics` package provides ready-made geometric
+heuristics for `GridNode`:
 
 ```java
-// Manhattan distance (admissible for 4-connectivity)
-Heuristic<GridNode, Integer> manhattan = (from, to) ->
-    Math.abs(from.row() - to.row()) + Math.abs(from.col() - to.col());
+/**
+ * Heuristics factory for GridNode.
+ * Returns Heuristic<GridNode, Double>.
+ */
+public final class GridHeuristics {
 
-// Euclidean distance (admissible for 8-connectivity)
-Heuristic<GridNode, Double> euclidean = (from, to) ->
-    Math.hypot(from.row() - to.row(), from.col() - to.col());
+    /** Manhattan distance — admissible for FOUR connectivity. */
+    public static Heuristic<GridNode, Double> manhattan();
 
-var astar = new AStar<>(maze, unitCost, IntAlgebra.INSTANCE, manhattan);
+    /** Chebyshev distance — admissible for EIGHT connectivity. */
+    public static Heuristic<GridNode, Double> chebyshev();
+
+    /** Octile distance — admissible for EIGHT connectivity with sqrt(2) weights on diagonals. */
+    public static Heuristic<GridNode, Double> octile();
+
+    /** Euclidean distance — admissible for both connectivities (but looser). */
+    public static Heuristic<GridNode, Double> euclidean();
+}
+```
+
+Usage example with A*:
+
+```java
+var maze = new GridGraph(5, 5, Connectivity.FOUR,
+    node -> !walls[node.row()][node.col()]);
+
+CostFunction<GridNode, GridEdge, Double> unitCost = edge -> 1.0;
+
+var astar = new AStar<>(maze, unitCost, DoubleAlgebra.INSTANCE,
+    GridHeuristics.manhattan());
+var path = astar.solve(maze.node(0, 0), maze.node(4, 4));
 ```
 
 ---
@@ -179,28 +220,31 @@ var astar = new AStar<>(maze, unitCost, IntAlgebra.INSTANCE, manhattan);
 An adapter that reverses edge directions — needed for BidirectionalDijkstra
 on directed graphs.
 
+Accepts `FiniteGraph` (not `Graph`), because it must iterate over all
+nodes to build the reversed adjacency list.
+
 ```java
 /**
  * A view of the graph with reversed edges.
- * Delegates to the original graph, but neighbors(n) returns edges
- * incoming to n (instead of outgoing).
- *
- * Requires the original graph to be built with incoming edge information
- * (AdjacencyListGraph builds this automatically).
+ * Requires a one-time scan of the original graph (in the constructor).
+ * Therefore it accepts FiniteGraph — it needs nodes() for iteration.
  */
-public class ReversedGraph<N, E> implements Graph<N, E> {
+public class ReversedGraph<N, E> implements FiniteGraph<N, E> {
 
-    public ReversedGraph(Graph<N, E> original);
+    public ReversedGraph(FiniteGraph<N, E> original);
 
     @Override
     public Set<N> nodes();
+
+    @Override
+    public boolean containsNode(N node);
 
     @Override
     public Iterable<Edge<N, E>> neighbors(N node);
 }
 ```
 
-For undirected graphs, `ReversedGraph` is not needed —
+For undirected graphs `ReversedGraph` is not needed —
 `addUndirectedEdge` adds edges in both directions.
 
 ---
@@ -211,4 +255,7 @@ For undirected graphs, `ReversedGraph` is not needed —
 |---------------|---|---|--------|----------|
 | `AdjacencyListGraph` | any | any | O(V+E) | General graphs, road networks, social graphs |
 | `GridGraph` | `GridNode` | `GridEdge` | O(1) | Mazes, tile maps, BFS on a grid |
-| `ReversedGraph` | any | any | O(1) wrapper | Bidirectional search on directed graphs |
+| `ReversedGraph` | any | any | O(V+E) | Bidirectional search on directed graphs |
+
+**Note:** All implementations implement `FiniteGraph<N, E>` (not just `Graph`),
+so they expose `nodes()`, `containsNode()`, and `neighbors()`.

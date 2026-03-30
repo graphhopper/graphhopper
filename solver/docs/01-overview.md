@@ -9,19 +9,19 @@ between algorithms and storage.
 
 ## Motivation — why not GraphHopper
 
-GraphHopper is a powerful routing engine, but its core has architectural issues
+GraphHopper is a powerful routing engine, but its core has architectural problems
 that prevent easy extraction and reuse of algorithms:
 
 | Problem | Details |
 |---------|---------|
 | `EdgeIteratorState` — God Object | 37+ methods. A routing algorithm needs **4**. The rest is import, instructions, raw storage. |
-| `Graph.getBaseGraph()` | Returns a concrete class `BaseGraph` — makes swapping implementations impossible. |
+| `Graph.getBaseGraph()` | Returns a concrete `BaseGraph` class — prevents swapping implementations. |
 | `GraphHopper.java` | 1705 lines — a facade holding absolutely everything. |
-| Encoded values + Janino | 76 types of bit-packed properties + runtime bytecode compilation. Powerful, but overkill for many use cases. |
+| Encoded values + Janino | 76 types of bit-packed properties + runtime bytecode compilation. Powerful, but excessive for many use cases. |
 | CH/LM preprocessing | Coupled with `BaseGraph` (concrete class), not with a graph interface. |
 
-Our solver addresses these problems through:
-- **Minimal interfaces** — `Graph<N, E>` has 3 methods, not 14
+Our solver addresses these problems by:
+- **Minimal interfaces** — `Graph<N, E>` has 2 methods, `FiniteGraph` adds 1
 - **Zero coupling** — the algorithm knows nothing about storage
 - **Full genericity** — works with any node, edge, and weight type
 
@@ -29,11 +29,11 @@ Our solver addresses these problems through:
 
 ## Type parameters `<N, E, W>`
 
-Solver is fully parameterized with three types:
+The solver is fully parameterized with three types:
 
 | Parameter | Meaning | Requirements |
 |-----------|---------|--------------|
-| `N` | **Node** — node type | `equals()` + `hashCode()` (key in maps) |
+| `N` | **Node** — node type | `equals()` + `hashCode()` (map key) |
 | `E` | **Edge data** — data on the edge | Solver does not look inside — CostFunction reads E |
 | `W` | **Weight** — weight type | `Comparable<W>` — linear ordering |
 
@@ -41,7 +41,7 @@ Solver is fully parameterized with three types:
 
 The graph stores **topology and edge data**. Weight is **computed** by `CostFunction<N, E, W>`,
 not stored in the graph. The same graph can be used with different cost functions
-(e.g., distance vs time vs toll costs).
+(e.g., distance vs time vs toll cost).
 
 ### Simplification: linear ordering of weights
 
@@ -64,7 +64,7 @@ We chose "Path C":
 2. **Optimize later** — when performance on large graphs requires specialization
 3. **Int-based fast-path** — `IntGraphSolver` (N=int, W=double, zero boxing) with an adapter from the generic model
 
-Why not the other way around (start with int)?
+Why not the other way around (start from int)?
 - The generic model enforces good interfaces from the start
 - It's easier to specialize a good abstraction than to generalize optimized code
 - For graphs with <100k nodes, the generic model is fast enough
@@ -84,8 +84,9 @@ solver-int       (int-based specialization — future)
 ```
 
 ### solver-api
-Pure Java interfaces: `Graph`, `Edge`, `CostFunction`, `WeightAlgebra`,
-`Heuristic`, `Path`, `ShortestPathSolver`. Zero implementations, zero dependencies.
+Pure Java interfaces: `Graph`, `FiniteGraph`, `Edge`, `CostFunction`, `WeightAlgebra`,
+`Heuristic`, `Path`, `ShortestPathSolver`. Zero algorithm implementations, zero dependencies.
+`Graph` = minimal contract (2 methods), `FiniteGraph` adds node enumeration.
 
 ### solver-core
 Algorithms operating **exclusively** on interfaces from solver-api:
@@ -110,7 +111,7 @@ Adapter from the generic model. Not implemented in Phase 1.
 | Aspect | GraphHopper | Solver |
 |--------|-------------|--------|
 | Edge interface | 37+ methods (God Object) | `Edge<N,E>` record — 3 fields |
-| Graph interface | 14 methods + concrete leak | 3 methods, clean generics |
+| Graph interface | 14 methods + concrete leak | 2 methods (Graph) + 1 (FiniteGraph), clean generics |
 | Node type | always `int` | any `N` with equals/hashCode |
 | Weight type | always `double` | any `W extends Comparable<W>` |
 | Algorithm knows about storage? | Yes (`IntsRef`, `EncodedValue`) | No |

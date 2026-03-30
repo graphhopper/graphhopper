@@ -1,7 +1,7 @@
 # solver-api — Interfaces
 
 The `solver-api` module defines pure interfaces without any implementations
-and without any runtime dependencies. These are the contracts on which algorithms operate.
+and without any runtime dependencies. These are the contracts that algorithms operate on.
 
 Package: `pl.cezarysanecki.solver.api`
 
@@ -9,7 +9,7 @@ Package: `pl.cezarysanecki.solver.api`
 
 ## Edge\<N, E\> — graph edge
 
-A record representing an edge. Solver treats `data` (`E`) as opaque —
+A record representing an edge. The solver treats `data` (`E`) as opaque —
 it does not look inside. Only `CostFunction` knows how to read edge data.
 
 ```java
@@ -43,26 +43,22 @@ public record Edge<N, E>(N source, N target, E data) {
 
 ---
 
-## Graph\<N, E\> — graph (topology + edge data)
+## Graph\<N, E\> — graph (minimal contract)
 
 ```java
 package pl.cezarysanecki.solver.api;
-
-import java.util.Set;
 
 /**
  * Read-only graph — topology + edge data.
  * Has no W parameter — weight is computed by CostFunction, not stored.
  *
- * @param <N> node type (must have proper equals/hashCode)
+ * Minimal contract: neighbors() + containsNode().
+ * Does not require enumeration of all nodes — that is FiniteGraph's role.
+ *
+ * @param <N> node type (must have correct equals/hashCode)
  * @param <E> edge data type
  */
 public interface Graph<N, E> {
-
-    /**
-     * Returns the set of all nodes in the graph.
-     */
-    Set<N> nodes();
 
     /**
      * Returns the neighbors (outgoing edges) of a given node.
@@ -73,9 +69,7 @@ public interface Graph<N, E> {
     /**
      * Checks whether the graph contains a given node.
      */
-    default boolean containsNode(N node) {
-        return nodes().contains(node);
-    }
+    boolean containsNode(N node);
 }
 ```
 
@@ -86,9 +80,51 @@ public interface Graph<N, E> {
    used with different cost functions.
 
 2. **`Iterable` instead of `List`/`Collection`** — allows lazy generation
-   of neighbors (e.g., GridGraph generates neighbors on-the-fly, does not hold them in memory).
+   of neighbors (e.g., GridGraph generates neighbors on-the-fly, not storing them in memory).
 
-3. **`Set<N> nodes()`** — needed for validation and iteration. Can be a lazy view.
+3. **No `nodes()`** — algorithms (Dijkstra, A*, BidirectionalDijkstra) never
+   need enumeration of all nodes. Requiring `nodes()` in the minimal
+   contract would force materialization of the node set (expensive for GridGraph).
+   Enumeration is in `FiniteGraph`.
+
+---
+
+## FiniteGraph\<N, E\> — graph with enumerable nodes
+
+```java
+package pl.cezarysanecki.solver.api;
+
+import java.util.Set;
+
+/**
+ * Graph with enumerable nodes — extension of Graph.
+ *
+ * Adds nodes() — the set of all nodes.
+ * Use this interface when you need to iterate over all nodes
+ * (e.g., reversing edges in ReversedGraph).
+ *
+ * Algorithms (Dijkstra, A*, Bidirectional) accept Graph —
+ * they do not require nodes().
+ *
+ * @param <N> node type (must have correct equals/hashCode)
+ * @param <E> edge data type
+ */
+public interface FiniteGraph<N, E> extends Graph<N, E> {
+
+    /**
+     * Returns the set of all nodes in the graph.
+     */
+    Set<N> nodes();
+}
+```
+
+### When Graph, when FiniteGraph?
+
+| Consumer | Interface | Why |
+|----------|-----------|-----|
+| Algorithms (Dijkstra, A*, Bidir) | `Graph<N,E>` | They only need `neighbors()` + `containsNode()` |
+| `ReversedGraph` (constructor) | `FiniteGraph<N,E>` | Must iterate `nodes()` to reverse edges |
+| Graph implementations | `FiniteGraph<N,E>` | AdjacencyListGraph, GridGraph, ReversedGraph |
 
 ---
 
@@ -99,7 +135,7 @@ package pl.cezarysanecki.solver.api;
 
 /**
  * Computes the cost (weight) of traversing an edge.
- * This is the only place that "looks inside" edge data E
+ * This is the only place that "looks into" edge data E
  * and produces a weight W.
  *
  * @param <N> node type
@@ -112,7 +148,7 @@ public interface CostFunction<N, E, W> {
     /**
      * Computes the weight of traversing a given edge.
      *
-     * @param edge the edge to price
+     * @param edge edge to price
      * @return weight (cost) of traversal — must be non-negative
      */
     W cost(Edge<N, E> edge);
@@ -150,7 +186,7 @@ import java.util.Comparator;
  * - infinity() is the absorbing element: add(infinity(), w) == infinity()
  * - add is associative: add(add(a, b), c) == add(a, add(b, c))
  * - ordering is linear (total): for any a, b: a <= b or b <= a
- * - weights are non-negative: compare(w, zero()) >= 0 for every w
+ * - non-negative weights: compare(w, zero()) >= 0 for every w
  *
  * @param <W> weight type
  */
@@ -231,7 +267,7 @@ public enum IntAlgebra implements WeightAlgebra<Integer> {
 package pl.cezarysanecki.solver.api;
 
 /**
- * A heuristic estimating the lower bound of cost from a node to the target.
+ * A heuristic estimating a lower bound on the cost from a node to the target.
  * Used by A* to speed up the search.
  *
  * Requirement (admissibility): estimate(n, target) <= realCost(n, target)
@@ -244,7 +280,7 @@ package pl.cezarysanecki.solver.api;
 public interface Heuristic<N, W> {
 
     /**
-     * Estimates the lower bound of cost from {@code from} to {@code to}.
+     * Estimates a lower bound on the cost of traversal from {@code from} to {@code to}.
      */
     W estimate(N from, N to);
 }
@@ -324,13 +360,14 @@ public interface ShortestPathSolver<N, E, W> {
 ## Interface summary
 
 | Interface | Parameters | Methods | Role |
-|-----------|------------|---------|------|
+|-----------|-----------|---------|------|
 | `Edge<N,E>` | N, E | record — 3 fields | Edge value |
-| `Graph<N,E>` | N, E | 3 | Topology + edge data |
+| `Graph<N,E>` | N, E | 2 | Minimal contract: topology + membership |
+| `FiniteGraph<N,E>` | N, E | 1 (+ 2 from Graph) | Adds node enumeration |
 | `CostFunction<N,E,W>` | N, E, W | 1 | Edge → Weight |
-| `WeightAlgebra<W>` | W | 5 + convenience | Weight operations |
-| `Heuristic<N,W>` | N, W | 1 | Lower bound of cost (A*) |
+| `WeightAlgebra<W>` | W | 5 + convenience | Operations on weights |
+| `Heuristic<N,W>` | N, W | 1 | Lower bound on cost (A*) |
 | `Path<N,E,W>` | N, E, W | 4 | Search result |
 | `ShortestPathSolver<N,E,W>` | N, E, W | 1 | Solver contract |
 
-Total: **7 types, ~15 methods**. For comparison, `EdgeIteratorState` in GH alone has 37+ methods.
+Total: **8 types, ~16 methods**. For comparison, `EdgeIteratorState` in GH alone has 37+ methods.

@@ -33,41 +33,55 @@ solver/
 │   ├── build.gradle.kts
 │   └── src/
 │       └── main/java/pl/cezarysanecki/solver/api/
-│           ├── Edge.java
-│           ├── Graph.java
 │           ├── CostFunction.java
-│           ├── WeightAlgebra.java
+│           ├── DoubleAlgebra.java
+│           ├── Edge.java
+│           ├── FiniteGraph.java
+│           ├── Graph.java
 │           ├── Heuristic.java
+│           ├── IntAlgebra.java
+│           ├── LongAlgebra.java
 │           ├── Path.java
-│           └── ShortestPathSolver.java
+│           ├── ShortestPathSolver.java
+│           └── WeightAlgebra.java
 │
 ├── solver-core/
 │   ├── build.gradle.kts
 │   └── src/
 │       ├── main/java/pl/cezarysanecki/solver/core/
+│       │   ├── AStar.java
+│       │   ├── BidirectionalDijkstra.java
+│       │   ├── Dijkstra.java
 │       │   ├── MinHeap.java
 │       │   ├── SimplePath.java
-│       │   ├── Dijkstra.java
-│       │   ├── AStar.java
-│       │   └── BidirectionalDijkstra.java
+│       │   └── package-info.java
 │       └── test/java/pl/cezarysanecki/solver/core/
-│           ├── MinHeapTest.java
-│           ├── DijkstraTest.java
+│           ├── AlgorithmComparisonTest.java
 │           ├── AStarTest.java
-│           └── BidirectionalDijkstraTest.java
+│           ├── BidirectionalDijkstraTest.java
+│           ├── DijkstraTest.java
+│           └── MinHeapTest.java
 │
 ├── solver-graph/
 │   ├── build.gradle.kts
 │   └── src/
 │       ├── main/java/pl/cezarysanecki/solver/graph/
 │       │   ├── AdjacencyListGraph.java
+│       │   ├── GridEdge.java
 │       │   ├── GridGraph.java
 │       │   ├── GridNode.java
-│       │   ├── GridEdge.java
-│       │   └── ReversedGraph.java
+│       │   ├── ReversedGraph.java
+│       │   ├── package-info.java
+│       │   └── heuristics/
+│       │       ├── GridHeuristics.java
+│       │       └── package-info.java
 │       └── test/java/pl/cezarysanecki/solver/graph/
 │           ├── AdjacencyListGraphTest.java
-│           └── GridGraphTest.java
+│           ├── GridGraphTest.java
+│           ├── ReversedGraphTest.java
+│           ├── SimpleGridNode.java
+│           └── heuristics/
+│               └── GridHeuristicsTest.java
 │
 └── solver-int/                  # EMPTY — future
     ├── build.gradle.kts
