@@ -12,6 +12,7 @@ import pl.cezarysanecki.solver.graph.GridEdge;
 import pl.cezarysanecki.solver.graph.GridGraph;
 import pl.cezarysanecki.solver.graph.GridGraph.Connectivity;
 import pl.cezarysanecki.solver.graph.GridNode;
+import pl.cezarysanecki.solver.graph.SimpleGridNode;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -315,6 +316,6 @@ class GridHeuristicsTest {
     // --- utility ---
 
     private static GridNode node(int row, int col) {
-        return new GridNode(row, col);
+        return new SimpleGridNode(row, col);
     }
 }

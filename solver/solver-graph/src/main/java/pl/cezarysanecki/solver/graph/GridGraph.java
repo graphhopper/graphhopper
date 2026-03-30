@@ -12,9 +12,9 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 /**
- * 2D grid graph — nodes are (row, col) pairs.
+ * A 2D grid graph — vertices are (row, col) pairs.
  * Edges are generated dynamically (4 or 8 neighbors).
- * Optional predicate to block cells (maze walls).
+ * Optional predicate for blocking cells (maze walls).
  * <p>
  * Does not store edges in memory — generates neighbors on-the-fly.
  * Memory: O(1) plus the predicate if provided.
@@ -36,7 +36,7 @@ public class GridGraph implements Graph<GridNode, GridEdge> {
     private final Predicate<GridNode> isPassable;
 
     /**
-     * Creates a GridGraph without obstacles (all cells are passable).
+     * Creates a GridGraph without obstacles (all cells passable).
      */
     public GridGraph(int rows, int cols, Connectivity connectivity) {
         this(rows, cols, connectivity, node -> true);
@@ -63,7 +63,7 @@ public class GridGraph implements Graph<GridNode, GridEdge> {
         Set<GridNode> result = new HashSet<>();
         for (int r = 0; r < rows; r++) {
             for (int c = 0; c < cols; c++) {
-                GridNode node = new GridNode(r, c);
+                GridNode node = new SimpleGridNode(r, c);
                 if (isPassable.test(node))
                     result.add(node);
             }
@@ -80,7 +80,7 @@ public class GridGraph implements Graph<GridNode, GridEdge> {
         for (Direction dir : directions) {
             int nr = node.row() + dir.dRow();
             int nc = node.col() + dir.dCol();
-            GridNode neighbor = new GridNode(nr, nc);
+            GridNode neighbor = new SimpleGridNode(nr, nc);
             if (isInBounds(neighbor) && isPassable.test(neighbor)) {
                 result.add(new Edge<>(node, neighbor, new GridEdge(dir)));
             }
