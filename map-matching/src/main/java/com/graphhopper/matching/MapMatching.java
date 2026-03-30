@@ -130,6 +130,7 @@ public class MapMatching {
         Router router = new Router() {
             QueryGraph queryGraph;
             Weighting queryGraphWeighting;
+            Weighting wrappedLMWeights;
 
             @Override
             public EdgeFilter getSnapFilter() {
@@ -145,6 +146,7 @@ public class MapMatching {
             public void setQueryGraph(QueryGraph queryGraph, Weighting queryGraphWeighting) {
                 this.queryGraph = queryGraph;
                 this.queryGraphWeighting = queryGraphWeighting;
+                this.wrappedLMWeights = landmarks == null ? null : queryGraph.wrapWeighting(landmarks.getWeighting());
             }
 
             @Override
@@ -166,7 +168,7 @@ public class MapMatching {
                         }
                     };
                     int activeLM = Math.min(8, landmarks.getLandmarkCount());
-                    LMApproximator lmApproximator = LMApproximator.forLandmarks(queryGraph, queryGraphWeighting, landmarks, activeLM);
+                    LMApproximator lmApproximator = new LMApproximator(queryGraph, landmarks.getWeighting(), wrappedLMWeights, queryGraphWeighting, landmarks, activeLM, false);
                     aStarBidirection.setApproximation(lmApproximator);
                     aStarBidirection.setMaxVisitedNodes(maxVisitedNodes);
                     return aStarBidirection.calcPath(fromNode, toNode, fromOutEdge, toInEdge);
