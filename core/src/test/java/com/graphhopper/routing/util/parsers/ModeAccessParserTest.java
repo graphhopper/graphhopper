@@ -236,6 +236,33 @@ class ModeAccessParserTest {
     }
 
     @Test
+    public void testBarrierWithBusYes() {
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "secondary");
+        way.setTag("gh:barrier_edge", true);
+
+        way.setTag("node_tags", List.of(Map.of("barrier", "bollard", "access", "no", "motor_vehicle", "permit", "bus", "yes"), Map.of()));
+        EdgeIntAccess access = new ArrayEdgeIntAccess(1);
+        int edgeId = 0;
+        parser.handleWayTags(edgeId, access, way, null);
+        assertTrue(busAccessEnc.getBool(false, edgeId, access));
+    }
+
+    @Test
+    public void testBarrierBusYesDoesNotOverrideWayRestriction() {
+        // bus=yes on a barrier node must not unblock a way that itself restricts bus access
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "secondary");
+        way.setTag("bus", "no");
+        way.setTag("gh:barrier_edge", true);
+        way.setTag("node_tags", List.of(Map.of("barrier", "bollard", "bus", "yes"), Map.of()));
+        EdgeIntAccess access = new ArrayEdgeIntAccess(1);
+        int edgeId = 0;
+        parser.handleWayTags(edgeId, access, way, null);
+        assertFalse(busAccessEnc.getBool(false, edgeId, access));
+    }
+
+    @Test
     public void testPsvYes() {
         EdgeIntAccess access = new ArrayEdgeIntAccess(1);
         ReaderWay way = new ReaderWay(0);

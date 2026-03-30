@@ -62,8 +62,11 @@ public class ModeAccessParser implements TagParser {
             // a barrier edge has the restriction in both nodes and the tags are the same -> get(0)
             firstValue = getFirstPriorityNodeTag(firstNodeTags, restrictionKeys);
             String barrierValue = firstNodeTags.containsKey("barrier") ? (String) firstNodeTags.get("barrier") : "";
-            if (restrictedValues.contains(firstValue) || barriers.contains(barrierValue)
-                    || "yes".equals(firstNodeTags.get("locked")) && !INTENDED.contains(firstValue))
+            if (restrictedValues.contains(firstValue))
+                return;
+            if ("yes".equals(firstNodeTags.get("locked")) && !INTENDED.contains(firstValue))
+                return;
+            if (!INTENDED.contains(firstValue) && barriers.contains(barrierValue))
                 return;
         }
 
