@@ -556,15 +556,15 @@ public class RoutingAlgorithmWithOSMTest {
     public void testHarsdorf() {
         List<Query> queries = new ArrayList<>();
         // TODO somehow the bigger road is take even if we make it less preferred (e.g. introduce AVOID AT ALL costs for lanes=2&&maxspeed>50)
-        queries.add(new Query(50.004333, 11.600254, 50.044449, 11.543434, 6951, 190));
+        queries.add(new Query(50.004333, 11.600254, 50.044449, 11.543434, 6815, 195));
 
         // choose Unterloher Weg and the following residential + cycleway
         // list.add(new OneRun(50.004333, 11.600254, 50.044449, 11.543434, 6931, 184));
-        GraphHopper hopper = createHopper(BAYREUTH, TestProfiles.accessSpeedAndPriority("bike"));
+        Profile bike = TestProfiles.accessSpeedAndPriority("bike");
+        bike.getCustomModel().setDistanceInfluence(1.0); // there's an exactly equal-weighted alternative, break ties
+        GraphHopper hopper = createHopper(BAYREUTH, bike);
         hopper.importOrLoad();
-        // TODO CH finds a different (shorter) route here (6815m), suggesting two routes are very close in cost.
-        // Only test non-CH algorithms for now.
-        checkQueriesWithoutCH(hopper, queries);
+        checkQueries(hopper, queries);
     }
 
     @Test
@@ -757,20 +757,6 @@ public class RoutingAlgorithmWithOSMTest {
         // We check the number of points to make sure we found the expected route.
         // There are real world instances where A-B-C is identical to A-C (in meter precision).
         assertEquals(query.getPoints().stream().mapToInt(a -> a.expectedPoints).sum(), responsePath.getPoints().size(), 1, "unexpected point list size, " + expectedAlgo);
-    }
-
-    private void checkQueriesWithoutCH(GraphHopper hopper, List<Query> queries) {
-        for (Function<Query, GHRequest> requestFactory : createRequestFactories()) {
-            for (Query query : queries) {
-                GHRequest request = requestFactory.apply(query);
-                if (!request.getHints().has("ch.disable")) continue;
-                Profile profile = hopper.getProfiles().get(0);
-                request.setProfile(profile.getName());
-                GHResponse res = hopper.route(request);
-                String expectedAlgo = request.getHints().getString("expected_algo", "no_expected_algo");
-                checkResponse(expectedAlgo, res, query);
-            }
-        }
     }
 
     private List<Function<Query, GHRequest>> createRequestFactories() {
