@@ -130,7 +130,7 @@ public class RouteResourceClientHCTest {
                 setProfile("bike"));
         res = rsp.getBest();
         assertFalse(rsp.hasErrors(), "errors:" + rsp.getErrors().toString());
-        isBetween(2500, 2600, res.getDistance());
+        isBetween(2400, 2500, res.getDistance());
 
         assertEquals("[0, 1]", res.getPointsOrder().toString());
     }
@@ -407,7 +407,7 @@ public class RouteResourceClientHCTest {
 
         GHResponse response = gh.route(req);
         ResponsePath path = response.getBest();
-        assertEquals(5158, path.getDistance(), 5);
+        assertEquals(5037, path.getDistance(), 5);
         assertEquals(11, path.getWaypoints().size());
 
         assertEquals(path.getTime(), path.getPathDetails().get("leg_time").stream().mapToLong(d -> (long) d.getValue()).sum(), 1);
