@@ -88,6 +88,7 @@ Here is an overview:
  * sguill, fixes like #1683
  * shunfan-shao, fix potential flaky tests
  * skienzl, imperial units for /navigate, related to #2071
+ * SkitArgDuva, added via_point_instructions parameter
  * stefanholder, Stefan Holder, BMW AG, creating and integrating the hmm-lib (#49, #66, #69) and penalizing inner-link U-turns (#88, #91), refactored unfavoring of virtual edges #885
  * stevensnoeijen, fixes like #1568 
  * Svantulden, improved documentation and nearest API
