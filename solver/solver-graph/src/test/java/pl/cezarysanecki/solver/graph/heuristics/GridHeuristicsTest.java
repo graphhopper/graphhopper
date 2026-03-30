@@ -3,7 +3,6 @@ package pl.cezarysanecki.solver.graph.heuristics;
 import org.junit.jupiter.api.Test;
 import pl.cezarysanecki.solver.api.CostFunction;
 import pl.cezarysanecki.solver.api.DoubleAlgebra;
-import pl.cezarysanecki.solver.api.Edge;
 import pl.cezarysanecki.solver.api.Heuristic;
 import pl.cezarysanecki.solver.api.Path;
 import pl.cezarysanecki.solver.core.AStar;
@@ -184,8 +183,8 @@ class GridHeuristicsTest {
         var dijkstra = new Dijkstra<>(grid, cost, DoubleAlgebra.INSTANCE);
         var astar = new AStar<>(grid, cost, DoubleAlgebra.INSTANCE, GridHeuristics.manhattan());
 
-        var source = node(0, 0);
-        var target = node(7, 7);
+        var source = grid.node(0, 0);
+        var target = grid.node(7, 7);
 
         Path<GridNode, GridEdge, Double> dp = dijkstra.solve(source, target);
         Path<GridNode, GridEdge, Double> ap = astar.solve(source, target);
@@ -212,8 +211,8 @@ class GridHeuristicsTest {
         var dijkstra = new Dijkstra<>(grid, cost, DoubleAlgebra.INSTANCE);
         var astar = new AStar<>(grid, cost, DoubleAlgebra.INSTANCE, GridHeuristics.octile());
 
-        var source = node(0, 0);
-        var target = node(7, 7);
+        var source = grid.node(0, 0);
+        var target = grid.node(7, 7);
 
         Path<GridNode, GridEdge, Double> dp = dijkstra.solve(source, target);
         Path<GridNode, GridEdge, Double> ap = astar.solve(source, target);
@@ -237,8 +236,8 @@ class GridHeuristicsTest {
         var dijkstra = new Dijkstra<>(grid, cost, DoubleAlgebra.INSTANCE);
         var astar = new AStar<>(grid, cost, DoubleAlgebra.INSTANCE, GridHeuristics.chebyshev());
 
-        var source = node(0, 0);
-        var target = node(7, 7);
+        var source = grid.node(0, 0);
+        var target = grid.node(7, 7);
 
         Path<GridNode, GridEdge, Double> dp = dijkstra.solve(source, target);
         Path<GridNode, GridEdge, Double> ap = astar.solve(source, target);
@@ -259,8 +258,8 @@ class GridHeuristicsTest {
         var dijkstra = new Dijkstra<>(grid, cost, DoubleAlgebra.INSTANCE);
         var astar = new AStar<>(grid, cost, DoubleAlgebra.INSTANCE, GridHeuristics.euclidean());
 
-        var source = node(0, 0);
-        var target = node(7, 7);
+        var source = grid.node(0, 0);
+        var target = grid.node(7, 7);
 
         Path<GridNode, GridEdge, Double> dp = dijkstra.solve(source, target);
         Path<GridNode, GridEdge, Double> ap = astar.solve(source, target);
@@ -296,8 +295,8 @@ class GridHeuristicsTest {
         var dijkstra = new Dijkstra<>(maze, cost, DoubleAlgebra.INSTANCE);
         var astar = new AStar<>(maze, cost, DoubleAlgebra.INSTANCE, GridHeuristics.manhattan());
 
-        var source = node(0, 0);
-        var target = node(4, 4);
+        var source = maze.node(0, 0);
+        var target = maze.node(4, 4);
 
         Path<GridNode, GridEdge, Double> dp = dijkstra.solve(source, target);
         Path<GridNode, GridEdge, Double> ap = astar.solve(source, target);
@@ -315,6 +314,9 @@ class GridHeuristicsTest {
 
     // --- utility ---
 
+    /**
+     * Creates a GridNode for heuristic value tests (does not traverse the graph).
+     */
     private static GridNode node(int row, int col) {
         return new SimpleGridNode(row, col);
     }

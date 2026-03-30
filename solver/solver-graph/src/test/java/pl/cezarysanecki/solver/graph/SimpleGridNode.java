@@ -1,9 +1,7 @@
 package pl.cezarysanecki.solver.graph;
 
 /**
- * Default implementation of {@link GridNode} — an immutable grid vertex.
- * <p>
- * Used internally by {@link GridGraph}.
+ * Simple implementation of {@link GridNode} for use in tests.
  *
  * @param row row (0-indexed)
  * @param col column (0-indexed)

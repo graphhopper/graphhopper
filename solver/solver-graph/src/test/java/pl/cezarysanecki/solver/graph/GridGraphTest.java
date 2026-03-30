@@ -37,11 +37,11 @@ class GridGraphTest {
         var grid = new GridGraph(3, 3, Connectivity.FOUR);
 
         // Corner (0,0) → 2 neighbors
-        assertEquals(2, neighborCount(grid, new SimpleGridNode(0, 0)));
+        assertEquals(2, neighborCount(grid, grid.node(0, 0)));
         // Edge (0,1) → 3 neighbors
-        assertEquals(3, neighborCount(grid, new SimpleGridNode(0, 1)));
+        assertEquals(3, neighborCount(grid, grid.node(0, 1)));
         // Center (1,1) → 4 neighbors
-        assertEquals(4, neighborCount(grid, new SimpleGridNode(1, 1)));
+        assertEquals(4, neighborCount(grid, grid.node(1, 1)));
     }
 
     // -----------------------------------------------------------
@@ -51,9 +51,9 @@ class GridGraphTest {
     void shouldHaveCorrectNeighborCountEightConnectivity() {
         var grid = new GridGraph(3, 3, Connectivity.EIGHT);
 
-        assertEquals(3, neighborCount(grid, new SimpleGridNode(0, 0)));
-        assertEquals(5, neighborCount(grid, new SimpleGridNode(0, 1)));
-        assertEquals(8, neighborCount(grid, new SimpleGridNode(1, 1)));
+        assertEquals(3, neighborCount(grid, grid.node(0, 0)));
+        assertEquals(5, neighborCount(grid, grid.node(0, 1)));
+        assertEquals(8, neighborCount(grid, grid.node(1, 1)));
     }
 
     // -----------------------------------------------------------
@@ -72,11 +72,11 @@ class GridGraphTest {
 
         // (1,1) is not passable → missing from nodes
         assertEquals(8, grid.nodes().size());
-        assertFalse(grid.containsNode(new SimpleGridNode(1, 1)));
+        assertFalse(grid.containsNode(grid.node(1, 1)));
 
         // Neighbors of (0,1) do not include (1,1)
-        var neighbors = toList(grid.neighbors(new SimpleGridNode(0, 1)));
-        assertTrue(neighbors.stream().noneMatch(e -> e.target().equals(new SimpleGridNode(1, 1))));
+        var neighbors = toList(grid.neighbors(grid.node(0, 1)));
+        assertTrue(neighbors.stream().noneMatch(e -> e.target().equals(grid.node(1, 1))));
         assertEquals(2, neighbors.size()); // (0,0) and (0,2)
     }
 
@@ -88,7 +88,7 @@ class GridGraphTest {
         var grid = new GridGraph(3, 3, Connectivity.FOUR,
                 node -> !(node.row() == 1 && node.col() == 1));
 
-        var neighbors = toList(grid.neighbors(new SimpleGridNode(1, 1)));
+        var neighbors = toList(grid.neighbors(grid.node(1, 1)));
         assertTrue(neighbors.isEmpty());
     }
 
@@ -99,10 +99,10 @@ class GridGraphTest {
     void shouldReturnEmptyNeighborsForOutOfBoundsNode() {
         var grid = new GridGraph(3, 3, Connectivity.FOUR);
 
-        var neighbors = toList(grid.neighbors(new SimpleGridNode(-1, 0)));
+        var neighbors = toList(grid.neighbors(grid.node(-1, 0)));
         assertTrue(neighbors.isEmpty());
 
-        var neighbors2 = toList(grid.neighbors(new SimpleGridNode(5, 5)));
+        var neighbors2 = toList(grid.neighbors(grid.node(5, 5)));
         assertTrue(neighbors2.isEmpty());
     }
 
@@ -113,7 +113,7 @@ class GridGraphTest {
     void shouldHaveCorrectDirectionInEdgeData() {
         var grid = new GridGraph(3, 3, Connectivity.FOUR);
 
-        var neighbors = toList(grid.neighbors(new SimpleGridNode(1, 1)));
+        var neighbors = toList(grid.neighbors(grid.node(1, 1)));
         var directions = neighbors.stream()
                 .map(e -> e.data().direction())
                 .toList();
@@ -154,13 +154,13 @@ class GridGraphTest {
 
         var dijkstra = new Dijkstra<>(grid, e -> 1, IntAlgebra.INSTANCE);
         Path<GridNode, GridEdge, Integer> path = dijkstra.solve(
-                new SimpleGridNode(0, 0), new SimpleGridNode(2, 2));
+                grid.node(0, 0), grid.node(2, 2));
 
         assertTrue(path.isFound());
         assertEquals(4, path.totalWeight());
         assertEquals(5, path.nodes().size()); // 4 edges + 1
-        assertEquals(new SimpleGridNode(0, 0), path.nodes().get(0));
-        assertEquals(new SimpleGridNode(2, 2), path.nodes().get(path.nodes().size() - 1));
+        assertEquals(grid.node(0, 0), path.nodes().get(0));
+        assertEquals(grid.node(2, 2), path.nodes().get(path.nodes().size() - 1));
     }
 
     // -----------------------------------------------------------
@@ -193,11 +193,11 @@ class GridGraphTest {
 
         var astar = new AStar<>(maze, e -> 1, IntAlgebra.INSTANCE, manhattan);
         Path<GridNode, GridEdge, Integer> path = astar.solve(
-                new SimpleGridNode(0, 0), new SimpleGridNode(4, 4));
+                maze.node(0, 0), maze.node(4, 4));
 
         assertTrue(path.isFound());
-        assertEquals(new SimpleGridNode(0, 0), path.nodes().get(0));
-        assertEquals(new SimpleGridNode(4, 4), path.nodes().get(path.nodes().size() - 1));
+        assertEquals(maze.node(0, 0), path.nodes().get(0));
+        assertEquals(maze.node(4, 4), path.nodes().get(path.nodes().size() - 1));
 
         // Verify path only goes through passable cells
         for (GridNode node : path.nodes()) {
@@ -208,7 +208,7 @@ class GridGraphTest {
         // Also run Dijkstra to compare
         var dijkstra = new Dijkstra<>(maze, e -> 1, IntAlgebra.INSTANCE);
         Path<GridNode, GridEdge, Integer> dijkstraPath = dijkstra.solve(
-                new SimpleGridNode(0, 0), new SimpleGridNode(4, 4));
+                maze.node(0, 0), maze.node(4, 4));
 
         assertEquals(dijkstraPath.totalWeight(), path.totalWeight());
 
@@ -234,7 +234,7 @@ class GridGraphTest {
 
         var dijkstra = new Dijkstra<>(grid, e -> 1, IntAlgebra.INSTANCE);
         Path<GridNode, GridEdge, Integer> path = dijkstra.solve(
-                new SimpleGridNode(0, 0), new SimpleGridNode(1, 1));
+                grid.node(0, 0), grid.node(1, 1));
 
         assertFalse(path.isFound());
     }
@@ -250,7 +250,7 @@ class GridGraphTest {
 
         var dijkstra = new Dijkstra<>(grid, e -> 1, IntAlgebra.INSTANCE);
         Path<GridNode, GridEdge, Integer> path = dijkstra.solve(
-                new SimpleGridNode(0, 0), new SimpleGridNode(2, 2));
+                grid.node(0, 0), grid.node(2, 2));
 
         assertTrue(path.isFound());
         assertEquals(2, path.totalWeight()); // 2 diagonal steps
@@ -266,11 +266,11 @@ class GridGraphTest {
 
         var dijkstra = new Dijkstra<>(grid, e -> 1, IntAlgebra.INSTANCE);
         Path<GridNode, GridEdge, Integer> path = dijkstra.solve(
-                new SimpleGridNode(0, 0), new SimpleGridNode(0, 0));
+                grid.node(0, 0), grid.node(0, 0));
 
         assertTrue(path.isFound());
         assertEquals(0, path.totalWeight());
-        assertEquals(List.of(new SimpleGridNode(0, 0)), path.nodes());
+        assertEquals(List.of(grid.node(0, 0)), path.nodes());
     }
 
     // --- utility ---

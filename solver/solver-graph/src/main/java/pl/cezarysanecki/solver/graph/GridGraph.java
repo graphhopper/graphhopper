@@ -63,7 +63,7 @@ public class GridGraph implements Graph<GridNode, GridEdge> {
         Set<GridNode> result = new HashSet<>();
         for (int r = 0; r < rows; r++) {
             for (int c = 0; c < cols; c++) {
-                GridNode node = new SimpleGridNode(r, c);
+                GridNode node = cell(r, c);
                 if (isPassable.test(node))
                     result.add(node);
             }
@@ -73,19 +73,24 @@ public class GridGraph implements Graph<GridNode, GridEdge> {
 
     @Override
     public Iterable<Edge<GridNode, GridEdge>> neighbors(GridNode node) {
-        if (!isInBounds(node) || !isPassable.test(node))
+        GridNode normalized = cell(node.row(), node.col());
+        if (!isInBounds(normalized) || !isPassable.test(normalized))
             return List.of();
 
         List<Edge<GridNode, GridEdge>> result = new ArrayList<>(directions.length);
         for (Direction dir : directions) {
-            int nr = node.row() + dir.dRow();
-            int nc = node.col() + dir.dCol();
-            GridNode neighbor = new SimpleGridNode(nr, nc);
+            int nr = normalized.row() + dir.dRow();
+            int nc = normalized.col() + dir.dCol();
+            GridNode neighbor = cell(nr, nc);
             if (isInBounds(neighbor) && isPassable.test(neighbor)) {
-                result.add(new Edge<>(node, neighbor, new GridEdge(dir)));
+                result.add(new Edge<>(normalized, neighbor, new GridEdge(dir)));
             }
         }
         return result;
+    }
+
+    private static GridNode cell(int row, int col) {
+        return new Cell(row, col);
     }
 
     private boolean isInBounds(GridNode node) {
@@ -102,6 +107,16 @@ public class GridGraph implements Graph<GridNode, GridEdge> {
     }
 
     /**
+     * Creates a node compatible with this graph.
+     * <p>
+     * Use this instead of custom {@link GridNode} implementations
+     * when passing nodes to the solver (source/target).
+     */
+    public GridNode node(int row, int col) {
+        return cell(row, col);
+    }
+
+    /**
      * Grid connectivity type.
      */
     public enum Connectivity {
@@ -110,4 +125,7 @@ public class GridGraph implements Graph<GridNode, GridEdge> {
         /** 8 directions: 4 cardinal + diagonals. */
         EIGHT
     }
+
+    /** Internal GridNode implementation — not part of the public API. */
+    private record Cell(int row, int col) implements GridNode {}
 }
