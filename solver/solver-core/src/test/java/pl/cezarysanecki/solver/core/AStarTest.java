@@ -9,7 +9,6 @@ import pl.cezarysanecki.solver.api.Path;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -23,8 +22,8 @@ class AStarTest {
     static <N> Graph<N, Double> graphOf(Map<N, List<Edge<N, Double>>> adjacency) {
         return new Graph<>() {
             @Override
-            public Set<N> nodes() {
-                return adjacency.keySet();
+            public boolean containsNode(N node) {
+                return adjacency.containsKey(node);
             }
 
             @Override
@@ -38,7 +37,7 @@ class AStarTest {
         return new Edge<>(from, to, weight);
     }
 
-    /** Zero heuristic — admissible, degrades A* to Dijkstra. */
+    /** Zero heuristic — admissible, reduces A* to Dijkstra. */
     static final Heuristic<String, Double> ZERO_HEURISTIC = (from, to) -> 0.0;
 
     // -----------------------------------------------------------
@@ -177,7 +176,7 @@ class AStarTest {
     }
 
     // -----------------------------------------------------------
-    //  Test: graph with a cycle — A* does not enter an infinite loop
+    //  Test: graph with cycle — A* does not enter an infinite loop
     //
     //    A --1--> B --1--> C
     //    ^                 |
@@ -212,7 +211,7 @@ class AStarTest {
     //  Heuristic: "hops to target" distance (admissible)
     //  S=3, A=2, B=1, T=0, X=2, Y=1
     //
-    //  Dijkstra explores both directions, A* with heuristic prefers
+    //  Dijkstra explores both directions, A* with the heuristic prefers
     //  the shorter path to T.
     // -----------------------------------------------------------
     @Test
@@ -254,7 +253,7 @@ class AStarTest {
     }
 
     // -----------------------------------------------------------
-    //  Test: A* with zero heuristic gives identical result to Dijkstra
+    //  Test: A* with zero heuristic produces the same result as Dijkstra
     // -----------------------------------------------------------
     @Test
     void shouldProduceSameResultAsDijkstraWithZeroHeuristic() {
@@ -278,7 +277,7 @@ class AStarTest {
     }
 
     // -----------------------------------------------------------
-    //  Test: null source/target/heuristic → NPE
+    //  Test: null source/target/heuristic → NullPointerException
     // -----------------------------------------------------------
     @Test
     void shouldThrowNullPointerForNullArguments() {

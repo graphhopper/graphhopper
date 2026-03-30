@@ -1,7 +1,7 @@
 package pl.cezarysanecki.solver.graph;
 
 import pl.cezarysanecki.solver.api.Edge;
-import pl.cezarysanecki.solver.api.Graph;
+import pl.cezarysanecki.solver.api.FiniteGraph;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -20,7 +20,7 @@ import java.util.Set;
  * @param <N> node type
  * @param <E> edge data type
  */
-public class AdjacencyListGraph<N, E> implements Graph<N, E> {
+public class AdjacencyListGraph<N, E> implements FiniteGraph<N, E> {
 
     private final Map<N, List<Edge<N, E>>> adjacency;
 
@@ -31,6 +31,11 @@ public class AdjacencyListGraph<N, E> implements Graph<N, E> {
     @Override
     public Set<N> nodes() {
         return adjacency.keySet();
+    }
+
+    @Override
+    public boolean containsNode(N node) {
+        return adjacency.containsKey(node);
     }
 
     @Override
@@ -67,7 +72,7 @@ public class AdjacencyListGraph<N, E> implements Graph<N, E> {
         }
 
         /**
-         * Adds a directed edge source → target.
+         * Adds a directed edge from source to target.
          */
         public Builder<N, E> addEdge(N source, N target, E data) {
             Objects.requireNonNull(source, "source");

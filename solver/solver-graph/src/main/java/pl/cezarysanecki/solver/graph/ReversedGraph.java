@@ -1,7 +1,7 @@
 package pl.cezarysanecki.solver.graph;
 
 import pl.cezarysanecki.solver.api.Edge;
-import pl.cezarysanecki.solver.api.Graph;
+import pl.cezarysanecki.solver.api.FiniteGraph;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -11,26 +11,27 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * Graph view with reversed edges.
+ * A graph view with reversed edges.
  * <p>
  * For a directed graph: if the original graph has an edge A→B,
  * then ReversedGraph has an edge B→A.
  * <p>
  * Requires a one-time scan of the original graph (in the constructor)
  * to build the reversed adjacency list.
+ * Therefore it accepts {@link FiniteGraph} — it needs {@code nodes()} for iteration.
  * <p>
- * Needed by {@link pl.cezarysanecki.solver.core.BidirectionalDijkstra}
+ * Needed for {@link pl.cezarysanecki.solver.core.BidirectionalDijkstra}
  * on directed graphs.
  *
  * @param <N> node type
  * @param <E> edge data type
  */
-public class ReversedGraph<N, E> implements Graph<N, E> {
+public class ReversedGraph<N, E> implements FiniteGraph<N, E> {
 
-    private final Graph<N, E> original;
+    private final FiniteGraph<N, E> original;
     private final Map<N, List<Edge<N, E>>> reversedAdjacency;
 
-    public ReversedGraph(Graph<N, E> original) {
+    public ReversedGraph(FiniteGraph<N, E> original) {
         Objects.requireNonNull(original, "original");
         this.original = original;
         this.reversedAdjacency = buildReversed(original);
@@ -42,11 +43,16 @@ public class ReversedGraph<N, E> implements Graph<N, E> {
     }
 
     @Override
+    public boolean containsNode(N node) {
+        return original.containsNode(node);
+    }
+
+    @Override
     public Iterable<Edge<N, E>> neighbors(N node) {
         return reversedAdjacency.getOrDefault(node, List.of());
     }
 
-    private static <N, E> Map<N, List<Edge<N, E>>> buildReversed(Graph<N, E> graph) {
+    private static <N, E> Map<N, List<Edge<N, E>>> buildReversed(FiniteGraph<N, E> graph) {
         Map<N, List<Edge<N, E>>> reversed = new HashMap<>();
         for (N node : graph.nodes()) {
             reversed.putIfAbsent(node, new ArrayList<>());

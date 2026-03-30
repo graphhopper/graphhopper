@@ -10,7 +10,6 @@ import pl.cezarysanecki.solver.api.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -24,8 +23,8 @@ class DijkstraTest {
     static <N> Graph<N, Double> graphOf(Map<N, List<Edge<N, Double>>> adjacency) {
         return new Graph<>() {
             @Override
-            public Set<N> nodes() {
-                return adjacency.keySet();
+            public boolean containsNode(N node) {
+                return adjacency.containsKey(node);
             }
 
             @Override
@@ -40,7 +39,7 @@ class DijkstraTest {
     }
 
     // -----------------------------------------------------------
-    //  Test: Linear graph A → B → C → D
+    //  Test: linear graph A → B → C → D
     //
     //    A --1.0--> B --2.0--> C --3.0--> D
     // -----------------------------------------------------------
@@ -65,7 +64,7 @@ class DijkstraTest {
     }
 
     // -----------------------------------------------------------
-    //  Test: Multiple paths — Dijkstra picks the optimal one
+    //  Test: graph with multiple paths — optimality verification
     //
     //    A --10--> B --1--> D
     //    |                  ^
@@ -92,7 +91,7 @@ class DijkstraTest {
     }
 
     // -----------------------------------------------------------
-    //  Test: Unreachable target
+    //  Test: unreachable target
     //
     //    A --1--> B     C (disconnected)
     // -----------------------------------------------------------
@@ -115,7 +114,7 @@ class DijkstraTest {
     }
 
     // -----------------------------------------------------------
-    //  Test: source == target → path of length 0
+    //  Test: source == target → zero-length path
     // -----------------------------------------------------------
     @Test
     void shouldReturnZeroCostPathWhenSourceEqualsTarget() {
@@ -135,7 +134,7 @@ class DijkstraTest {
     }
 
     // -----------------------------------------------------------
-    //  Test: Empty graph → node does not exist
+    //  Test: empty graph → node does not exist
     // -----------------------------------------------------------
     @Test
     void shouldThrowForNodeNotInGraph() {
@@ -147,7 +146,7 @@ class DijkstraTest {
     }
 
     // -----------------------------------------------------------
-    //  Test: Diamond graph — verify that Dijkstra explores correctly
+    //  Test: diamond graph — verify that Dijkstra explores correctly
     //
     //        B
     //       / \
@@ -190,8 +189,8 @@ class DijkstraTest {
         );
         Graph<String, Integer> graph = new Graph<>() {
             @Override
-            public Set<String> nodes() {
-                return adjacency.keySet();
+            public boolean containsNode(String node) {
+                return adjacency.containsKey(node);
             }
 
             @Override
@@ -209,7 +208,7 @@ class DijkstraTest {
     }
 
     // -----------------------------------------------------------
-    //  Test: Graph with a cycle — Dijkstra does not fall into an infinite loop
+    //  Test: graph with cycle — Dijkstra does not enter an infinite loop
     //
     //    A --1--> B --1--> C
     //    ^                 |
@@ -253,8 +252,8 @@ class DijkstraTest {
 
         Graph<String, Road> graph = new Graph<>() {
             @Override
-            public Set<String> nodes() {
-                return adjacency.keySet();
+            public boolean containsNode(String node) {
+                return adjacency.containsKey(node);
             }
 
             @Override

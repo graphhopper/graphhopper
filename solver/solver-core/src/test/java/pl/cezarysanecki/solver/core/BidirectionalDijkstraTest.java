@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -24,8 +23,8 @@ class BidirectionalDijkstraTest {
     static <N> Graph<N, Double> graphOf(Map<N, List<Edge<N, Double>>> adjacency) {
         return new Graph<>() {
             @Override
-            public Set<N> nodes() {
-                return adjacency.keySet();
+            public boolean containsNode(N node) {
+                return adjacency.containsKey(node);
             }
 
             @Override
@@ -58,7 +57,7 @@ class BidirectionalDijkstraTest {
      */
     static Graph<String, Double> reversedGraphOf(Map<String, List<Edge<String, Double>>> adjacency) {
         Map<String, List<Edge<String, Double>>> reversed = new HashMap<>();
-        // First add all nodes (even without edges)
+        // First add all nodes (even those without edges)
         for (String node : adjacency.keySet()) {
             reversed.putIfAbsent(node, new ArrayList<>());
         }
@@ -73,7 +72,7 @@ class BidirectionalDijkstraTest {
     }
 
     // -----------------------------------------------------------
-    //  Test: undirected linear graph A - B - C - D
+    //  Test: undirected graph — linear A - B - C - D
     //
     //    A --1-- B --2-- C --3-- D
     //
@@ -160,7 +159,7 @@ class BidirectionalDijkstraTest {
         var graph = undirectedGraphOf(List.of(
                 edge("A", "B", 1.0)
         ));
-        // Add C as isolated node
+        // Add C as an isolated node
         Map<String, List<Edge<String, Double>>> adj = new HashMap<>();
         adj.put("A", List.of(edge("A", "B", 1.0)));
         adj.put("B", List.of(edge("B", "A", 1.0)));
@@ -238,7 +237,7 @@ class BidirectionalDijkstraTest {
     }
 
     // -----------------------------------------------------------
-    //  Test: results consistency with Dijkstra on an undirected graph
+    //  Test: result consistency with Dijkstra on an undirected graph
     //
     //     A --2-- B --3-- E
     //     |       |       |
@@ -300,7 +299,7 @@ class BidirectionalDijkstraTest {
     }
 
     // -----------------------------------------------------------
-    //  Test: null arguments → NPE
+    //  Test: null arguments → NullPointerException
     // -----------------------------------------------------------
     @Test
     void shouldThrowNullPointerForNullArguments() {
@@ -316,7 +315,7 @@ class BidirectionalDijkstraTest {
     }
 
     // -----------------------------------------------------------
-    //  Test: directed multi-path graph with reversed graph
+    //  Test: directed graph — multiple paths with reversed graph
     //
     //    A --10--> B --1--> D
     //    |                  ^

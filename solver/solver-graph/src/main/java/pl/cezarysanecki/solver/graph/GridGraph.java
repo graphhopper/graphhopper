@@ -1,7 +1,7 @@
 package pl.cezarysanecki.solver.graph;
 
 import pl.cezarysanecki.solver.api.Edge;
-import pl.cezarysanecki.solver.api.Graph;
+import pl.cezarysanecki.solver.api.FiniteGraph;
 import pl.cezarysanecki.solver.graph.GridEdge.Direction;
 
 import java.util.ArrayList;
@@ -12,17 +12,17 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 /**
- * A 2D grid graph — vertices are (row, col) pairs.
- * Edges are generated dynamically (4 or 8 neighbors).
+ * 2D grid graph — nodes are (row, col) pairs.
+ * Edges generated dynamically (4 or 8 neighbors).
  * Optional predicate for blocking cells (maze walls).
  * <p>
  * Does not store edges in memory — generates neighbors on-the-fly.
- * Memory: O(1) plus the predicate if provided.
+ * Memory: O(1) plus predicate if provided.
  *
  * @see GridNode
  * @see GridEdge
  */
-public class GridGraph implements Graph<GridNode, GridEdge> {
+public class GridGraph implements FiniteGraph<GridNode, GridEdge> {
 
     private static final Direction[] FOUR_DIRS = {
             Direction.UP, Direction.DOWN, Direction.LEFT, Direction.RIGHT
@@ -69,6 +69,12 @@ public class GridGraph implements Graph<GridNode, GridEdge> {
             }
         }
         return result;
+    }
+
+    @Override
+    public boolean containsNode(GridNode node) {
+        GridNode normalized = cell(node.row(), node.col());
+        return isInBounds(normalized) && isPassable.test(normalized);
     }
 
     @Override

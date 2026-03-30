@@ -14,17 +14,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Comparison test (property-based) — generates a random undirected graph,
+ * Comparative test (property-based) — generates a random undirected graph,
  * runs all 3 algorithms (Dijkstra, A*, Bidirectional Dijkstra)
  * and verifies that they return the same optimal weight.
  * <p>
- * A* heuristic = zero (admissible, degrades to Dijkstra).
+ * A* heuristic = zero (admissible, degenerates to Dijkstra).
  * Bidirectional: forwardGraph == backwardGraph (undirected).
  */
 class AlgorithmComparisonTest {
@@ -56,8 +55,8 @@ class AlgorithmComparisonTest {
         }
         return new Graph<>() {
             @Override
-            public Set<Integer> nodes() {
-                return adjacency.keySet();
+            public boolean containsNode(Integer node) {
+                return adjacency.containsKey(node);
             }
 
             @Override
@@ -71,7 +70,7 @@ class AlgorithmComparisonTest {
     //  Repeated test: generate a random graph, run 3 algorithms,
     //  compare totalWeight.
     //
-    //  @RepeatedTest(50) — 50 random graphs, sufficient for confidence.
+    //  @RepeatedTest(50) — 50 random graphs, enough for confidence.
     // -----------------------------------------------------------
     @RepeatedTest(50)
     void allThreeAlgorithmsShouldAgreeTotalWeight() {
@@ -110,7 +109,7 @@ class AlgorithmComparisonTest {
             assertEquals(dp.totalWeight(), bp.totalWeight(), 1e-9,
                     "Dijkstra vs Bidir: totalWeight mismatch");
 
-            // Paths should have correct structure
+            // Paths should have a valid structure
             assertTrue(dp.nodes().size() >= 2);
             assertTrue(ap.nodes().size() >= 2);
             assertTrue(bp.nodes().size() >= 2);
@@ -123,7 +122,7 @@ class AlgorithmComparisonTest {
     }
 
     // -----------------------------------------------------------
-    //  Test: dense graph (almost complete) — verification on a larger instance
+    //  Test: dense graph (nearly complete) — verification on a larger instance
     // -----------------------------------------------------------
     @Test
     void shouldAgreeOnDenseGraph() {
