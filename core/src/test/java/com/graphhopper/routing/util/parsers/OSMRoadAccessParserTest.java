@@ -141,7 +141,12 @@ class OSMRoadAccessParserTest {
     @Test
     void testFoot() {
         assertEquals(FootRoadAccess.YES, OSMRoadAccessParser.FOOT_HANDLER.getAccess(createReaderWay("cycleway"), Country.BEL));
-
+    }
+ 
+    @Test
+    void germany() {
+        assertEquals(RoadAccess.DESTINATION, OSMRoadAccessParser.CAR_HANDLER.getAccess(createReaderWay("track"), Country.DEU));
+        assertEquals(RoadAccess.YES, OSMRoadAccessParser.CAR_HANDLER.getAccess(createReaderWay("primary"), Country.DEU));
     }
 
     @Test
