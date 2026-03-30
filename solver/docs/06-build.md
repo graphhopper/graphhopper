@@ -83,6 +83,14 @@ solver/
 │           └── heuristics/
 │               └── GridHeuristicsTest.java
 │
+├── solver-example/              # examples with main() — demo for the reviewer
+│   ├── build.gradle.kts
+│   └── src/
+│       └── main/java/pl/cezarysanecki/solver/example/
+│           ├── BidirectionalExample.java
+│           ├── DijkstraExample.java
+│           └── MazeExample.java
+│
 └── solver-int/                  # EMPTY — future
     ├── build.gradle.kts
     └── src/
@@ -101,6 +109,7 @@ include("solver-api")
 include("solver-core")
 include("solver-graph")
 include("solver-int")
+include("solver-example")
 ```
 
 ---
@@ -143,10 +152,10 @@ subprojects {
 ## Gradle — solver-api/build.gradle.kts
 
 ```kotlin
-// solver-api: zero dependencies (neither runtime nor from other modules)
+// solver-api: zero dependencies (neither runtime, nor from other modules)
 ```
 
-File empty or with minimal settings — solver-api depends on nothing.
+Empty file or with minimal settings — solver-api depends on nothing.
 
 ---
 
@@ -183,6 +192,27 @@ dependencies {
 
 ---
 
+## Gradle — solver-example/build.gradle.kts
+
+```kotlin
+plugins {
+    application
+}
+
+dependencies {
+    implementation(project(":solver-api"))
+    implementation(project(":solver-core"))
+    implementation(project(":solver-graph"))
+}
+
+application {
+    mainClass.set(providers.gradleProperty("mainClass")
+            .orElse("pl.cezarysanecki.solver.example.DijkstraExample"))
+}
+```
+
+---
+
 ## Commands
 
 ```bash
@@ -206,6 +236,13 @@ dependencies {
 
 # Build without tests
 ./gradlew build -x test
+
+# Run an example (default: DijkstraExample)
+./gradlew :solver-example:run
+
+# Run a specific example
+./gradlew :solver-example:run -PmainClass=pl.cezarysanecki.solver.example.MazeExample
+./gradlew :solver-example:run -PmainClass=pl.cezarysanecki.solver.example.BidirectionalExample
 ```
 
 ---
@@ -219,8 +256,10 @@ solver-core      ← depends on solver-api
      ↑
 solver-graph     ← depends on solver-api (test scope: solver-core)
 
+solver-example   ← depends on solver-api + solver-core + solver-graph
 solver-int       ← depends on solver-api (future)
 ```
 
 Rule: **solver-core does not depend on solver-graph** (and vice versa in compile scope).
 Algorithms operate on interfaces, not on implementations.
+`solver-example` depends on all — it is the only place that combines API + algorithms + graphs.
