@@ -21,39 +21,50 @@ public class OSMTollParserTest {
 
     @Test
     public void testSimpleTags() {
-        ReaderWay readerWay = new ReaderWay(1);
         IntsRef relFlags = new IntsRef(2);
-        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
         int edgeId = 0;
+
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        ReaderWay readerWay = new ReaderWay(1);
         readerWay.setTag("highway", "primary");
         parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
         assertEquals(Toll.NO, tollEnc.getEnum(false, edgeId, edgeIntAccess));
+        assertEquals(Toll.NO, tollEnc.getEnum(true, edgeId, edgeIntAccess));
 
         edgeIntAccess = new ArrayEdgeIntAccess(1);
+        readerWay = new ReaderWay(1);
         readerWay.setTag("highway", "primary");
         readerWay.setTag("toll:hgv", "yes");
         parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
         assertEquals(Toll.HGV, tollEnc.getEnum(false, edgeId, edgeIntAccess));
+        assertEquals(Toll.HGV, tollEnc.getEnum(true, edgeId, edgeIntAccess));
 
         edgeIntAccess = new ArrayEdgeIntAccess(1);
+        readerWay = new ReaderWay(1);
         readerWay.setTag("highway", "primary");
         readerWay.setTag("toll:N2", "yes");
         parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
         assertEquals(Toll.HGV, tollEnc.getEnum(false, edgeId, edgeIntAccess));
+        assertEquals(Toll.HGV, tollEnc.getEnum(true, edgeId, edgeIntAccess));
 
         edgeIntAccess = new ArrayEdgeIntAccess(1);
+        readerWay = new ReaderWay(1);
         readerWay.setTag("highway", "primary");
         readerWay.setTag("toll:N3", "yes");
         parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
         assertEquals(Toll.HGV, tollEnc.getEnum(false, edgeId, edgeIntAccess));
+        assertEquals(Toll.HGV, tollEnc.getEnum(true, edgeId, edgeIntAccess));
 
         edgeIntAccess = new ArrayEdgeIntAccess(1);
+        readerWay = new ReaderWay(1);
         readerWay.setTag("highway", "primary");
         readerWay.setTag("toll", "yes");
         parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
         assertEquals(Toll.ALL, tollEnc.getEnum(false, edgeId, edgeIntAccess));
+        assertEquals(Toll.ALL, tollEnc.getEnum(true, edgeId, edgeIntAccess));
 
         edgeIntAccess = new ArrayEdgeIntAccess(1);
+        readerWay = new ReaderWay(1);
         readerWay.setTag("highway", "primary");
         readerWay.setTag("toll", "yes");
         readerWay.setTag("toll:hgv", "yes");
@@ -61,6 +72,61 @@ public class OSMTollParserTest {
         readerWay.setTag("toll:N3", "yes");
         parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
         assertEquals(Toll.ALL, tollEnc.getEnum(false, edgeId, edgeIntAccess));
+        assertEquals(Toll.ALL, tollEnc.getEnum(true, edgeId, edgeIntAccess));
+    }
+
+    @Test
+    public void testDirectionalToll() {
+        IntsRef relFlags = new IntsRef(2);
+        int edgeId = 0;
+
+        // toll:backward=yes should only apply to backward direction
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        ReaderWay readerWay = new ReaderWay(1);
+        readerWay.setTag("highway", "primary");
+        readerWay.setTag("toll:backward", "yes");
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(Toll.NO, tollEnc.getEnum(false, edgeId, edgeIntAccess));
+        assertEquals(Toll.ALL, tollEnc.getEnum(true, edgeId, edgeIntAccess));
+
+        // toll:forward=yes should only apply to forward direction
+        edgeIntAccess = new ArrayEdgeIntAccess(1);
+        readerWay = new ReaderWay(1);
+        readerWay.setTag("highway", "primary");
+        readerWay.setTag("toll:forward", "yes");
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(Toll.ALL, tollEnc.getEnum(false, edgeId, edgeIntAccess));
+        assertEquals(Toll.NO, tollEnc.getEnum(true, edgeId, edgeIntAccess));
+
+        // both toll:forward and toll:backward
+        edgeIntAccess = new ArrayEdgeIntAccess(1);
+        readerWay = new ReaderWay(1);
+        readerWay.setTag("highway", "primary");
+        readerWay.setTag("toll:forward", "yes");
+        readerWay.setTag("toll:backward", "yes");
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(Toll.ALL, tollEnc.getEnum(false, edgeId, edgeIntAccess));
+        assertEquals(Toll.ALL, tollEnc.getEnum(true, edgeId, edgeIntAccess));
+
+        // toll:backward=no overrides toll=yes for backward direction
+        edgeIntAccess = new ArrayEdgeIntAccess(1);
+        readerWay = new ReaderWay(1);
+        readerWay.setTag("highway", "primary");
+        readerWay.setTag("toll", "yes");
+        readerWay.setTag("toll:forward", "yes");
+        readerWay.setTag("toll:backward", "no");
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(Toll.ALL, tollEnc.getEnum(false, edgeId, edgeIntAccess));
+        assertEquals(Toll.NO, tollEnc.getEnum(true, edgeId, edgeIntAccess));
+
+        // toll:forward=hgv
+        edgeIntAccess = new ArrayEdgeIntAccess(1);
+        readerWay = new ReaderWay(1);
+        readerWay.setTag("highway", "primary");
+        readerWay.setTag("toll:forward", "hgv");
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(Toll.HGV, tollEnc.getEnum(false, edgeId, edgeIntAccess));
+        assertEquals(Toll.NO, tollEnc.getEnum(true, edgeId, edgeIntAccess));
     }
 
     @Test

@@ -20,6 +20,7 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.IntsRef;
+import com.graphhopper.util.Helper;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -36,22 +37,42 @@ public class OSMTollParser implements TagParser {
 
     @Override
     public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay readerWay, IntsRef relationFlags) {
-        Toll toll;
-        if (readerWay.hasTag("toll", "yes")) {
-            toll = Toll.ALL;
-        } else if (readerWay.hasTag(HGV_TAGS, "yes")) {
-            toll = Toll.HGV;
-        } else if (readerWay.hasTag("toll", "no")) {
-            toll = Toll.NO;
-        } else {
-            toll = Toll.MISSING;
-        }
+        Toll toll = parseToll(readerWay);
 
         if (toll == Toll.MISSING) {
             Country country = readerWay.getTag("country", Country.MISSING);
             toll = getCountryDefault(country, readerWay);
         }
-        tollEnc.setEnum(false, edgeId, edgeIntAccess, toll);
+
+        Toll tollFwd = parseDirectionalToll(readerWay.getTag("toll:forward"), toll);
+        Toll tollBwd = parseDirectionalToll(readerWay.getTag("toll:backward"), toll);
+
+        tollEnc.setEnum(false, edgeId, edgeIntAccess, tollFwd);
+        tollEnc.setEnum(true, edgeId, edgeIntAccess, tollBwd);
+    }
+
+    private static Toll parseDirectionalToll(String value, Toll defaultToll) {
+        if (value == null) return defaultToll;
+        if ("yes".equals(value)) return Toll.ALL;
+        if ("no".equals(value)) return Toll.NO;
+        // e.g. toll:forward=hgv
+        try {
+            return Toll.valueOf(Helper.toUpperCase(value));
+        } catch (IllegalArgumentException e) {
+            return defaultToll;
+        }
+    }
+
+    private static Toll parseToll(ReaderWay readerWay) {
+        if (readerWay.hasTag("toll", "yes")) {
+            return Toll.ALL;
+        } else if (readerWay.hasTag(HGV_TAGS, "yes")) {
+            return Toll.HGV;
+        } else if (readerWay.hasTag("toll", "no")) {
+            return Toll.NO;
+        } else {
+            return Toll.MISSING;
+        }
     }
 
     private Toll getCountryDefault(Country country, ReaderWay readerWay) {
