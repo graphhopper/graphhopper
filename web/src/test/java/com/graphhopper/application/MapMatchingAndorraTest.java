@@ -34,7 +34,7 @@ public class MapMatchingAndorraTest {
     public static void setup() {
         Helper.removeDir(new File(GH_LOCATION));
         graphHopper = new GraphHopper();
-        graphHopper.setOSMFile("../core/files/andorra-latest.osm.pbf");
+        graphHopper.setOSMFile("../core/files/andorra.osm.pbf");
         graphHopper.setGraphHopperLocation(GH_LOCATION);
         graphHopper.setEncodedValuesString("bike_access, bike_average_speed, bike_priority");
         graphHopper.setProfiles(TestProfiles.accessSpeedAndPriority("bike"));
