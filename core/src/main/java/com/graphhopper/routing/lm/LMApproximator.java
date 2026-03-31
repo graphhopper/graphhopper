@@ -36,7 +36,6 @@ public class LMApproximator implements WeightApproximator {
     private final LandmarkStorage lms;
     // the weighting used for the LM preparation
     private final Weighting lmWeighting;
-    private final Weighting wrappedLMWeighting;
     // the weighting used for the current path calculation
     private final Weighting routingWeighting;
     private final int[] activeLandmarkIndices;
@@ -54,7 +53,15 @@ public class LMApproximator implements WeightApproximator {
     private final WeightApproximator beelineApproximation;
     private boolean fallback = false;
 
-    public LMApproximator(Graph graph, Weighting lmWeighting, Weighting wrappedLMWeighting, Weighting routingWeighting, LandmarkStorage lms, int activeCount,
+    /**
+     * @param lmWeighting the weighting used for the LM preparation, but wrapped for the given graph.
+     *                    Essentially graph.wrapWeighting(lms.getWeighting()), and just lms.getWeighting()
+     *                    unless graph is the QueryGraph
+     * @param routingWeighting the weighting used for the current path calculation, not necessarily
+     *                         the same we used for the LM preparation. All edge weights must be larger
+     *                         or equal compared to those used for the preparation.
+     */
+    public LMApproximator(Graph graph, Weighting lmWeighting, Weighting routingWeighting, LandmarkStorage lms, int activeCount,
                           boolean reverse) {
         this.reverse = reverse;
         this.lms = lms;
@@ -70,9 +77,8 @@ public class LMApproximator implements WeightApproximator {
 
         this.graph = graph;
         this.lmWeighting = lmWeighting;
-        this.wrappedLMWeighting = wrappedLMWeighting;
         this.routingWeighting = routingWeighting;
-        this.fallBackApproximation = new BeelineWeightApproximator(graph.getNodeAccess(), lmWeighting);
+        this.fallBackApproximation = new BeelineWeightApproximator(graph.getNodeAccess(), routingWeighting);
         this.beelineApproximation = new BeelineWeightApproximator(graph.getNodeAccess(), routingWeighting);
         this.maxBaseNodes = lms.getBaseNodes();
     }
@@ -179,7 +185,7 @@ public class LMApproximator implements WeightApproximator {
     }
 
     private void findClosestRealNode(int t) {
-        Dijkstra dijkstra = new Dijkstra(graph, wrappedLMWeighting, TraversalMode.NODE_BASED) {
+        Dijkstra dijkstra = new Dijkstra(graph, lmWeighting, TraversalMode.NODE_BASED) {
             @Override
             protected boolean finished() {
                 towerNodeNextToT = currEdge.adjNode;
@@ -198,7 +204,7 @@ public class LMApproximator implements WeightApproximator {
 
     @Override
     public WeightApproximator reverse() {
-        return new LMApproximator(graph, lmWeighting, wrappedLMWeighting, routingWeighting, lms, activeLandmarkIndices.length, !reverse);
+        return new LMApproximator(graph, lmWeighting, routingWeighting, lms, activeLandmarkIndices.length, !reverse);
     }
 
     @Override
