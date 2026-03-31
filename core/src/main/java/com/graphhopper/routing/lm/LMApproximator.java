@@ -18,8 +18,10 @@
 package com.graphhopper.routing.lm;
 
 import com.graphhopper.routing.Dijkstra;
+import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.BeelineWeightApproximator;
+import com.graphhopper.routing.weighting.QueryGraphWeighting;
 import com.graphhopper.routing.weighting.WeightApproximator;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
@@ -63,6 +65,8 @@ public class LMApproximator implements WeightApproximator {
      */
     public LMApproximator(Graph graph, Weighting lmWeighting, Weighting routingWeighting, LandmarkStorage lms, int activeCount,
                           boolean reverse) {
+        if (graph instanceof QueryGraph && (!(lmWeighting instanceof QueryGraphWeighting) || (!(routingWeighting instanceof QueryGraphWeighting))))
+            throw new IllegalStateException("Weighting must use QueryGraphWeighting");
         this.reverse = reverse;
         this.lms = lms;
         this.factor = lms.getFactor();
