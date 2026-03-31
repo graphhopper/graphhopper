@@ -179,18 +179,20 @@ public class OSMRoadAccessParser<T extends Enum> implements TagParser {
     };
 
     public static RoadAccessDefaultHandler<BikeRoadAccess> BIKE_HANDLER = (ReaderWay readerWay, Country country) -> {
+        // Unfortunately in practise bicycle=no is not distinguishable from bicycle=dismount
+        // and so we use the implicit 'dismount' for footway and pedestrian for all countries,
+        // except countries with an explicit 'yes'.
         RoadClass roadClass = getRoadClass(readerWay);
         switch (country) {
-            case AUT, HRV -> {
+            case AUT, HRV, HUN, CHE, DNK, SVK -> {
                 if (roadClass == RoadClass.TRUNK || roadClass == RoadClass.BRIDLEWAY)
                     return BikeRoadAccess.NO;
             }
             case BEL -> {
                 if (roadClass == RoadClass.TRUNK /* bicycle=no implied for highway=trunk without motorroad=yes? */
-                        || roadClass == RoadClass.BUSWAY
-                        || roadClass == RoadClass.BRIDLEWAY
-                        || roadClass == RoadClass.FOOTWAY) return BikeRoadAccess.NO;
-                else if (roadClass == RoadClass.PEDESTRIAN) return BikeRoadAccess.YES;
+                        || roadClass == RoadClass.BUSWAY || roadClass == RoadClass.BRIDLEWAY)
+                    return BikeRoadAccess.NO;
+                if (roadClass == RoadClass.PEDESTRIAN) return BikeRoadAccess.YES;
             }
             case BLR -> {
                 if (roadClass == RoadClass.BRIDLEWAY) return BikeRoadAccess.NO;
@@ -199,12 +201,6 @@ public class OSMRoadAccessParser<T extends Enum> implements TagParser {
             }
             case BRA -> {
                 if (roadClass == RoadClass.BUSWAY) return BikeRoadAccess.NO;
-            }
-            case CHE, DNK, SVK -> {
-                if (roadClass == RoadClass.TRUNK
-                        || roadClass == RoadClass.BRIDLEWAY
-                        || roadClass == RoadClass.PEDESTRIAN
-                        || roadClass == RoadClass.FOOTWAY) return BikeRoadAccess.NO;
             }
             case CHN -> {
                 if (roadClass == RoadClass.BRIDLEWAY) return BikeRoadAccess.NO;
@@ -218,43 +214,27 @@ public class OSMRoadAccessParser<T extends Enum> implements TagParser {
                 else if (roadClass == RoadClass.PEDESTRIAN) return BikeRoadAccess.YES;
             }
             case FIN -> {
-                if (roadClass == RoadClass.FOOTWAY || roadClass == RoadClass.BRIDLEWAY)
-                    return BikeRoadAccess.NO;
+                if (roadClass == RoadClass.BRIDLEWAY) return BikeRoadAccess.NO;
                 else if (roadClass == RoadClass.PEDESTRIAN) return BikeRoadAccess.YES;
             }
             case FRA -> {
-                if (roadClass == RoadClass.TRUNK
-                        || roadClass == RoadClass.BRIDLEWAY) return BikeRoadAccess.NO;
+                if (roadClass == RoadClass.TRUNK || roadClass == RoadClass.BRIDLEWAY)
+                    return BikeRoadAccess.NO;
                 else if (roadClass == RoadClass.PEDESTRIAN) return BikeRoadAccess.YES;
-            }
-            case GRC, GBR, HKG, IRL -> {
-                if (roadClass == RoadClass.PEDESTRIAN
-                        || roadClass == RoadClass.FOOTWAY) return BikeRoadAccess.NO;
-            }
-            case HUN -> {
-                if (roadClass == RoadClass.TRUNK
-                        || roadClass == RoadClass.BRIDLEWAY
-                        || roadClass == RoadClass.PEDESTRIAN) return BikeRoadAccess.NO;
             }
             case ISL, NOR -> {
-                if (roadClass == RoadClass.PEDESTRIAN
-                        || roadClass == RoadClass.FOOTWAY) return BikeRoadAccess.YES;
+                if (roadClass == RoadClass.PEDESTRIAN || roadClass == RoadClass.FOOTWAY)
+                    return BikeRoadAccess.YES;
             }
-            case ITA -> {
-                if (roadClass == RoadClass.FOOTWAY) return BikeRoadAccess.NO;
-                else if (roadClass == RoadClass.PEDESTRIAN) return BikeRoadAccess.YES;
+            case ITA, PHL, THA, USA, SWE -> {
+                if (roadClass == RoadClass.PEDESTRIAN) return BikeRoadAccess.YES;
             }
             case NLD -> {
-                if (roadClass == RoadClass.BUSWAY
-                        || roadClass == RoadClass.BRIDLEWAY) return BikeRoadAccess.NO;
+                if (roadClass == RoadClass.BUSWAY || roadClass == RoadClass.BRIDLEWAY)
+                    return BikeRoadAccess.NO;
             }
             case OMN -> {
                 if (roadClass == RoadClass.MOTORWAY) return BikeRoadAccess.YES;
-                else if (roadClass == RoadClass.PEDESTRIAN || roadClass == RoadClass.FOOTWAY)
-                    return BikeRoadAccess.NO;
-            }
-            case PHL, THA, USA, SWE -> {
-                if (roadClass == RoadClass.PEDESTRIAN) return BikeRoadAccess.YES;
             }
         }
         return null;
