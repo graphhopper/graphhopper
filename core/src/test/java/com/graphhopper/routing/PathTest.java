@@ -724,6 +724,107 @@ public class PathTest {
                 tmpList);
     }
 
+    /**
+     * Issue #3215: exiting a named roundabout onto an unnamed road should NOT inherit roundabout name.
+     * Issue #3213: destination tags should be used as fallback when exit road has no name.
+     */
+    @Test
+    public void testRoundaboutExitUnnamedRoadUsesDestination() {
+        final BaseGraph graph = new BaseGraph.Builder(carManager).create();
+        final NodeAccess na = graph.getNodeAccess();
+        BooleanEncodedValue carAccessEnc = carManager.getBooleanEncodedValue(VehicleAccess.key("car"));
+        BooleanEncodedValue rdEnc = carManager.getBooleanEncodedValue(Roundabout.KEY);
+
+        //  1 --- 2 (roundabout) --- 3 (unnamed, has destination)
+        //         \
+        //          4 (exit with name==ref, has destination)
+        na.setNode(1, 52.514, 13.348);
+        na.setNode(2, 52.514, 13.349);
+        na.setNode(3, 52.5135, 13.350);
+        na.setNode(4, 52.514, 13.351);
+        na.setNode(5, 52.5145, 13.351);
+
+        // approach road
+        graph.edge(1, 2).set(carAvSpeedEnc, 60, 60).set(carAccessEnc, true, true).setDistance(5)
+                .setKeyValues(Map.of(STREET_NAME, new KValue("Bonner Weg")));
+
+        // roundabout edges (named "Magic Circle")
+        EdgeIteratorState rb1 = graph.edge(3, 2).set(carAvSpeedEnc, 60, 0).set(carAccessEnc, true, false).setDistance(5)
+                .setKeyValues(Map.of(STREET_NAME, new KValue("Magic Circle")));
+        rb1.set(rdEnc, true);
+        EdgeIteratorState rb2 = graph.edge(4, 3).set(carAvSpeedEnc, 60, 0).set(carAccessEnc, true, false).setDistance(5)
+                .setKeyValues(Map.of(STREET_NAME, new KValue("Magic Circle")));
+        rb2.set(rdEnc, true);
+        EdgeIteratorState rb3 = graph.edge(5, 4).set(carAvSpeedEnc, 60, 0).set(carAccessEnc, true, false).setDistance(5)
+                .setKeyValues(Map.of(STREET_NAME, new KValue("Magic Circle")));
+        rb3.set(rdEnc, true);
+        EdgeIteratorState rb4 = graph.edge(2, 5).set(carAvSpeedEnc, 60, 0).set(carAccessEnc, true, false).setDistance(5)
+                .setKeyValues(Map.of(STREET_NAME, new KValue("Magic Circle")));
+        rb4.set(rdEnc, true);
+
+        // exit road: unnamed, with destination tag (tests #3215 + #3213)
+        graph.edge(4, 6).set(carAvSpeedEnc, 60, 60).set(carAccessEnc, true, true).setDistance(5)
+                .setKeyValues(Map.of(STREET_DESTINATION, new KValue("Euskirchen, BN-Hardtberg")));
+        na.setNode(6, 52.514, 13.352);
+
+        Weighting weighting = new SpeedWeighting(carAvSpeedEnc);
+        Path p = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED).calcPath(1, 6);
+        assertTrue(p.isFound());
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, carManager, tr);
+        List<String> descriptions = getTurnDescriptions(wayList);
+
+        // #3215: must NOT say "onto Magic Circle"
+        // #3213: must use destination fallback
+        assertEquals("at roundabout, take exit 1 toward Euskirchen, BN-Hardtberg", descriptions.get(1),
+                "Expected destination fallback, not roundabout name leak");
+    }
+
+    /**
+     * Issue #3213: when exit road name equals ref, destination should be preferred.
+     */
+    @Test
+    public void testRoundaboutExitNameEqualsRefUsesDestination() {
+        final BaseGraph graph = new BaseGraph.Builder(carManager).create();
+        final NodeAccess na = graph.getNodeAccess();
+        BooleanEncodedValue carAccessEnc = carManager.getBooleanEncodedValue(VehicleAccess.key("car"));
+        BooleanEncodedValue rdEnc = carManager.getBooleanEncodedValue(Roundabout.KEY);
+
+        na.setNode(1, 52.514, 13.348);
+        na.setNode(2, 52.514, 13.349);
+        na.setNode(3, 52.5135, 13.350);
+        na.setNode(4, 52.514, 13.351);
+        na.setNode(5, 52.5145, 13.351);
+        na.setNode(6, 52.514, 13.352);
+
+        graph.edge(1, 2).set(carAvSpeedEnc, 60, 60).set(carAccessEnc, true, true).setDistance(5)
+                .setKeyValues(Map.of(STREET_NAME, new KValue("Bonner Weg")));
+
+        EdgeIteratorState rb1 = graph.edge(3, 2).set(carAvSpeedEnc, 60, 0).set(carAccessEnc, true, false).setDistance(5);
+        rb1.set(rdEnc, true);
+        EdgeIteratorState rb2 = graph.edge(4, 3).set(carAvSpeedEnc, 60, 0).set(carAccessEnc, true, false).setDistance(5);
+        rb2.set(rdEnc, true);
+        EdgeIteratorState rb3 = graph.edge(5, 4).set(carAvSpeedEnc, 60, 0).set(carAccessEnc, true, false).setDistance(5);
+        rb3.set(rdEnc, true);
+        EdgeIteratorState rb4 = graph.edge(2, 5).set(carAvSpeedEnc, 60, 0).set(carAccessEnc, true, false).setDistance(5);
+        rb4.set(rdEnc, true);
+
+        // exit road: name == ref ("L 113"), with destination
+        graph.edge(4, 6).set(carAvSpeedEnc, 60, 60).set(carAccessEnc, true, true).setDistance(5)
+                .setKeyValues(Map.of(
+                        STREET_NAME, new KValue("L 113"),
+                        STREET_REF, new KValue("L 113"),
+                        STREET_DESTINATION, new KValue("Euskirchen")));
+
+        Weighting weighting = new SpeedWeighting(carAvSpeedEnc);
+        Path p = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED).calcPath(1, 6);
+        assertTrue(p.isFound());
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, carManager, tr);
+        List<String> descriptions = getTurnDescriptions(wayList);
+
+        assertEquals("at roundabout, take exit 1 toward Euskirchen", descriptions.get(1),
+                "When name==ref, destination should be preferred over raw ref");
+    }
+
     @Test
     public void testCalcInstructionsRoundaboutClockwise() {
         roundaboutGraph.setRoundabout(true);
