@@ -306,6 +306,56 @@ class ModeAccessParserTest {
     }
 
     @Test
+    public void testHov() {
+        BooleanEncodedValue hovAccessEnc = new SimpleBooleanEncodedValue("hov_access", true);
+        EncodingManager hovEM = new EncodingManager.Builder().add(hovAccessEnc).add(Roundabout.create()).build();
+        ModeAccessParser hovParser = new ModeAccessParser(OSMRoadAccessParser.toOSMRestrictions(TransportationMode.HOV),
+                hovAccessEnc, true,
+                hovEM.getBooleanEncodedValue(Roundabout.KEY), Set.of(), Set.of());
+
+        int edgeId = 0;
+
+        // normal road: accessible
+        EdgeIntAccess access = new ArrayEdgeIntAccess(1);
+        ReaderWay way = new ReaderWay(0);
+        way.setTag("highway", "primary");
+        hovParser.handleWayTags(edgeId, access, way, null);
+        assertTrue(hovAccessEnc.getBool(false, edgeId, access));
+
+        // footway: blocked via implied motor_vehicle=no
+        access = new ArrayEdgeIntAccess(1);
+        way = new ReaderWay(0);
+        way.setTag("highway", "footway");
+        hovParser.handleWayTags(edgeId, access, way, null);
+        assertFalse(hovAccessEnc.getBool(false, edgeId, access));
+
+        // busway: blocked via implied access=no (hov is not bus)
+        access = new ArrayEdgeIntAccess(1);
+        way = new ReaderWay(0);
+        way.setTag("highway", "busway");
+        hovParser.handleWayTags(edgeId, access, way, null);
+        assertFalse(hovAccessEnc.getBool(false, edgeId, access));
+
+        // motor_vehicle=no but hov=designated: accessible
+        access = new ArrayEdgeIntAccess(1);
+        way = new ReaderWay(0);
+        way.setTag("highway", "tertiary");
+        way.setTag("motor_vehicle", "no");
+        way.setTag("hov", "designated");
+        hovParser.handleWayTags(edgeId, access, way, null);
+        assertTrue(hovAccessEnc.getBool(false, edgeId, access));
+
+        // bus_trap: blocked (hov vehicles are not buses)
+        access = new ArrayEdgeIntAccess(1);
+        way = new ReaderWay(0);
+        way.setTag("highway", "residential");
+        way.setTag("gh:barrier_edge", true);
+        way.setTag("node_tags", List.of(Map.of("barrier", "bus_trap"), Map.of()));
+        hovParser.handleWayTags(edgeId, access, way, null);
+        assertFalse(hovAccessEnc.getBool(false, edgeId, access));
+    }
+
+    @Test
     public void temporalAccess() {
         int edgeId = 0;
         ArrayEdgeIntAccess access = new ArrayEdgeIntAccess(1);
