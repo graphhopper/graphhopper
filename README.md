@@ -119,8 +119,8 @@ See the [documentation](./docs/index.md) that contains e.g. [the elevation guide
 
 ### Docker
 
-The Docker images created by the community from the `master` branch can be found [here](https://hub.docker.com/r/israelhikingmap/graphhopper)
-(currently daily). See the [Dockerfile](https://github.com/IsraelHikingMap/graphhopper-docker-image-push) for more details.
+The Docker images created by the community from the `master` branch can be found [here](https://github.com/simonneutert/graphhopper-docker-image-push/pkgs/container/graphhopper)
+(currently daily). See the [Dockerfile](https://github.com/simonneutert/graphhopper-docker-image-push) for more details.
 
 ## GraphHopper Maps
 
@@ -185,19 +185,19 @@ There is the map matching subproject to snap GPX traces to the road.
 
 # Technical Overview
 
-GraphHopper supports several routing algorithms, such as 
-<a href="https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm">Dijkstra</a> and 
-<a href="https://en.wikipedia.org/wiki/A*_search_algorithm">A</a>`*` and its bidirectional variants. 
-Furthermore, it allows you to use 
-<a href="https://en.wikipedia.org/wiki/Contraction_hierarchies">Contraction Hierarchies</a> (CH) 
+GraphHopper supports several routing algorithms, such as
+<a href="https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm">Dijkstra</a> and
+<a href="https://en.wikipedia.org/wiki/A*_search_algorithm">A</a>`*` and its bidirectional variants.
+Furthermore, it allows you to use
+<a href="https://en.wikipedia.org/wiki/Contraction_hierarchies">Contraction Hierarchies</a> (CH)
 very easily. We call this **speed mode**; without this CH preparation, we call it **flexible mode**.
 
-The speed mode comes with very fast and lightweight (less RAM) responses and it does not use heuristics. 
+The speed mode comes with very fast and lightweight (less RAM) responses and it does not use heuristics.
 However, only predefined vehicle profiles are possible and this additional CH preparation is time and resource consuming.
 
 Then there is the **hybrid mode** which also requires more time and memory for the preparation,
-but it is much more flexible regarding changing properties per request or e.g. integrating traffic data. 
-Furthermore, this hybrid mode is slower than the speed mode, but it is an 
+but it is much more flexible regarding changing properties per request or e.g. integrating traffic data.
+Furthermore, this hybrid mode is slower than the speed mode, but it is an
 order of magnitude faster than the flexible mode and uses less RAM for one request.
 
 If the preparations exist you can switch between all modes at request time.
@@ -212,7 +212,7 @@ We suggest that you contribute back your changes, as GraphHopper evolves fast.
 ## OpenStreetMap Support
 
 OpenStreetMap is directly supported by GraphHopper. Without the amazing data from
-OpenStreetMap, GraphHopper wouldn't be possible at all. 
+OpenStreetMap, GraphHopper wouldn't be possible at all.
 Other map data will need a custom import procedure, see e.g. <a href="https://github.com/graphhopper/graphhopper/issues/277">Ordnance Survey</a>,
 <a href="https://github.com/graphhopper/graphhopper-reader-shp">Shapefile like ESRI</a> or <a href="https://github.com/OPTITOOL/morituri">Navteq</a>.
 
@@ -241,8 +241,8 @@ You can customize GraphHopper with Java knowledge (with a high and low level API
 ### Web API
 
 With the web module, we provide code to query GraphHopper over HTTP and decrease bandwidth usage as much as possible.
-For that we use an efficient polyline encoding, the Ramer–Douglas–Peucker algorithm, and a simple 
-GZIP servlet filter.                 
+For that we use an efficient polyline encoding, the Ramer–Douglas–Peucker algorithm, and a simple
+GZIP servlet filter.
 
 On the client side, we provide a [Java](./client-hc) and [JavaScript](https://github.com/graphhopper/directions-api-js-client)
 client.
