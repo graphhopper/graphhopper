@@ -63,8 +63,6 @@ public class QueryGraph implements Graph {
     private final IntObjectMap<List<EdgeIteratorState>> virtualEdgesAtRealNodes;
     private final List<List<EdgeIteratorState>> virtualEdgesAtVirtualNodes;
 
-    private final IdentityHashMap<Weighting, Weighting> wrappedWeightings = new IdentityHashMap<>();
-
     public static QueryGraph create(BaseGraph graph, Snap snap) {
         return QueryGraph.create(graph, Collections.singletonList(snap));
     }
@@ -280,13 +278,8 @@ public class QueryGraph implements Graph {
     public Weighting wrapWeighting(Weighting weighting) {
         if (weighting instanceof QueryGraphWeighting)
             return weighting;
-        Weighting cached = wrappedWeightings.get(weighting);
-        if (cached != null)
-            return cached;
         QueryOverlay.WeightsAndTimes result = QueryOverlay.calcAdjustedVirtualWeightsAndTimes(queryOverlay, baseGraph, weighting);
-        Weighting wrapped = new QueryGraphWeighting(baseGraph, weighting, queryOverlay.getClosestEdges(), result.weights(), result.times());
-        wrappedWeightings.put(weighting, wrapped);
-        return wrapped;
+        return new QueryGraphWeighting(baseGraph, weighting, queryOverlay.getClosestEdges(), result.weights(), result.times());
     }
 
     @Override
