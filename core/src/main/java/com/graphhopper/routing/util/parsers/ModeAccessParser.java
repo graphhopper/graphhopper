@@ -6,6 +6,7 @@ import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.storage.IntsRef;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -18,6 +19,25 @@ public class ModeAccessParser implements TagParser {
             "bollard", "stile", "turnstile", "cycle_barrier", "motorcycle_barrier", "block",
             "bus_trap", "sump_buster", "jersey_barrier");
     private static final Set<String> INTENDED = Set.of("yes", "designated", "official", "permissive", "private", "permit");
+    static final Map<String, Map<String, String>> HIGHWAY_TYPE_DEFAULTS;
+    static final Map<String, Map<String, String>> BARRIER_TYPE_DEFAULTS;
+
+    static {
+        Map<String, Map<String, String>> m = new HashMap<>();
+        m.put("steps", Map.of("access", "no"));
+        m.put("footway", Map.of("motor_vehicle", "no"));
+        m.put("cycleway", Map.of("motor_vehicle", "no"));
+        m.put("pedestrian", Map.of("motor_vehicle", "no"));
+        m.put("path", Map.of("motor_vehicle", "no"));
+        m.put("bridleway", Map.of("motor_vehicle", "no"));
+        m.put("busway", Map.of("access", "no", "bus", "designated"));
+        HIGHWAY_TYPE_DEFAULTS = Map.copyOf(m);
+
+        Map<String, Map<String, String>> b = new HashMap<>();
+        b.put("bus_trap", Map.of("motor_vehicle", "no", "bus", "yes"));
+        b.put("sump_buster", Map.of("motor_vehicle", "no", "bus", "yes"));
+        BARRIER_TYPE_DEFAULTS = Map.copyOf(b);
+    }
     private static final Set<String> ONEWAYS_FW = Set.of("yes", "true", "1");
     private final Set<String> restrictedValues;
     private final List<String> restrictionKeys;
@@ -51,22 +71,50 @@ public class ModeAccessParser implements TagParser {
         if (skipEmergency && "service".equals(highwayValue) && "emergency_access".equals(way.getTag("service")))
             return;
 
-        int firstIndex = way.getFirstIndex(restrictionKeys);
-        String firstValue = firstIndex < 0 ? "" : way.getTag(restrictionKeys.get(firstIndex), "");
+        Map<String, String> defaults = highwayValue == null ? Map.of() : HIGHWAY_TYPE_DEFAULTS.getOrDefault(highwayValue, Map.of());
+        int firstIndex = -1;
+        String firstValue = "";
+        for (int i = 0; i < restrictionKeys.size(); i++) {
+            String key = restrictionKeys.get(i);
+            String explicit = way.getTag(key);
+            if (explicit != null) {
+                firstIndex = i;
+                firstValue = explicit;
+                break;
+            }
+            String implied = defaults.get(key);
+            if (implied != null) {
+                firstValue = implied;
+                break;
+            }
+        }
         if (restrictedValues.contains(firstValue) && !hasPermissiveTemporalRestriction(way, firstIndex, restrictionKeys, INTENDED))
             return;
 
         if (way.hasTag("gh:barrier_edge") && way.hasTag("node_tags")) {
             List<Map<String, Object>> nodeTags = way.getTag("node_tags", null);
             Map<String, Object> firstNodeTags = nodeTags.get(0);
-            // a barrier edge has the restriction in both nodes and the tags are the same -> get(0)
-            firstValue = getFirstPriorityNodeTag(firstNodeTags, restrictionKeys);
             String barrierValue = firstNodeTags.containsKey("barrier") ? (String) firstNodeTags.get("barrier") : "";
-            if (restrictedValues.contains(firstValue))
+            Map<String, String> barrierDefaults = BARRIER_TYPE_DEFAULTS.getOrDefault(barrierValue, Map.of());
+            // Walk restriction keys checking explicit node tags and barrier type defaults
+            String nodeValue = "";
+            for (String key : restrictionKeys) {
+                String explicit = (String) firstNodeTags.get(key);
+                if (explicit != null) {
+                    nodeValue = explicit;
+                    break;
+                }
+                String implied = barrierDefaults.get(key);
+                if (implied != null) {
+                    nodeValue = implied;
+                    break;
+                }
+            }
+            if (restrictedValues.contains(nodeValue))
                 return;
-            if ("yes".equals(firstNodeTags.get("locked")) && !INTENDED.contains(firstValue))
+            if ("yes".equals(firstNodeTags.get("locked")) && !INTENDED.contains(nodeValue))
                 return;
-            if (!INTENDED.contains(firstValue) && barriers.contains(barrierValue))
+            if (!INTENDED.contains(nodeValue) && barriers.contains(barrierValue))
                 return;
         }
 
@@ -93,14 +141,6 @@ public class ModeAccessParser implements TagParser {
             accessEnc.setBool(true, edgeId, edgeIntAccess, true);
         }
 
-    }
-
-    private static String getFirstPriorityNodeTag(Map<String, Object> nodeTags, List<String> restrictionKeys) {
-        for (String key : restrictionKeys) {
-            String val = (String) nodeTags.get(key);
-            if (val != null) return val;
-        }
-        return "";
     }
 
     protected boolean isBackwardOneway(ReaderWay way) {
