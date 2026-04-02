@@ -125,8 +125,8 @@ public class RouteResourceCustomModelTest {
         // the bus profile is a custom profile and we can use its CH preparation as long as we do not add a custom model
         String body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"bus\"}";
         JsonNode path = getPath(body);
-        assertEquals(1501, path.get("distance").asDouble(), 10);
-        assertEquals(162_000, path.get("time").asLong(), 5_000);
+        assertEquals(611, path.get("distance").asDouble(), 10);
+        assertEquals(27_000, path.get("time").asLong(), 1_000);
     }
 
     @Test

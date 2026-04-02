@@ -80,6 +80,13 @@ public class BusCustomModelTest {
     }
 
     @Test
+    public void testTrack() {
+        ReaderWay way = new ReaderWay(0L);
+        way.setTag("highway", "track");
+        assertEquals(0, priority(way), 0.01);
+    }
+
+    @Test
     public void testBusway() {
         ReaderWay way = new ReaderWay(0L);
         way.setTag("highway", "busway");
