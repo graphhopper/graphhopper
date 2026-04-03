@@ -294,6 +294,13 @@ class CarModeAccessParserTest {
         way.setTag("motor_vehicle", "yes");
         parser.handleWayTags(edgeId, access, way, null);
         assertTrue(carAccessEnc.getBool(false, edgeId, access));
+
+        way.clearTags();
+        access = new ArrayEdgeIntAccess(1);
+        way.setTag("highway", "pedestrian");
+        way.setTag("motor_vehicle", "delivery");
+        parser.handleWayTags(edgeId, access, way, null);
+        assertTrue(carAccessEnc.getBool(false, edgeId, access));
     }
 
 }
