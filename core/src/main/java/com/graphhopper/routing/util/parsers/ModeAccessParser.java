@@ -167,9 +167,10 @@ public class ModeAccessParser implements TagParser {
         }
 
         boolean isRoundabout = roundaboutEnc.getBool(false, edgeId, edgeIntAccess);
+        boolean isMotorway = way.hasTag("highway", "motorway", "motorway_link");
         boolean ignoreOneway = "no".equals(way.getFirstValue(ignoreOnewayKeys));
         boolean isBwd = isBackwardOneway(way);
-        if (!ignoreOneway && (isBwd || isRoundabout || isForwardOneway(way))) {
+        if (!ignoreOneway && (isBwd || isRoundabout || isMotorway || isForwardOneway(way))) {
             accessEnc.setBool(isBwd, edgeId, edgeIntAccess, true);
         } else {
             accessEnc.setBool(false, edgeId, edgeIntAccess, true);

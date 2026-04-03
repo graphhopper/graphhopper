@@ -324,4 +324,15 @@ class BusModeAccessParserTest {
         parser.handleWayTags(edgeId, access, way, null);
         assertTrue(busAccessEnc.getBool(false, edgeId, access));
     }
+
+    @Test
+    public void motorwayImpliesOneway() {
+        int edgeId = 0;
+        ArrayEdgeIntAccess access = new ArrayEdgeIntAccess(1);
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "motorway");
+        parser.handleWayTags(edgeId, access, way, null);
+        assertTrue(busAccessEnc.getBool(false, edgeId, access));
+        assertFalse(busAccessEnc.getBool(true, edgeId, access));
+    }
 }
