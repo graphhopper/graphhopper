@@ -19,7 +19,7 @@ class CarModeAccessParserTest {
     private final EncodingManager em = new EncodingManager.Builder().add(Roundabout.create()).add(new SimpleBooleanEncodedValue("car_access", true)).build();
     private final ModeAccessParser parser = new ModeAccessParser(OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR),
             em.getBooleanEncodedValue("car_access"), true,
-            em.getBooleanEncodedValue(Roundabout.KEY), Set.of(), Set.of());
+            em.getBooleanEncodedValue(Roundabout.KEY), Set.of());
     private final BooleanEncodedValue carAccessEnc = em.getBooleanEncodedValue("car_access");
 
     @Test
@@ -181,7 +181,7 @@ class CarModeAccessParserTest {
         EncodingManager hovEM = new EncodingManager.Builder().add(hovAccessEnc).add(Roundabout.create()).build();
         ModeAccessParser hovParser = new ModeAccessParser(OSMRoadAccessParser.toOSMRestrictions(TransportationMode.HOV),
                 hovAccessEnc, true,
-                hovEM.getBooleanEncodedValue(Roundabout.KEY), Set.of(), Set.of());
+                hovEM.getBooleanEncodedValue(Roundabout.KEY), Set.of());
 
         int edgeId = 0;
 

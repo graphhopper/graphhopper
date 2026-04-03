@@ -18,7 +18,7 @@ class HovModeAccessParserTest {
     private final EncodingManager em = new EncodingManager.Builder().add(Roundabout.create()).add(BusAccess.create()).build();
     private final ModeAccessParser parser = new ModeAccessParser(OSMRoadAccessParser.toOSMRestrictions(TransportationMode.HOV),
             em.getBooleanEncodedValue(BusAccess.KEY), true,
-            em.getBooleanEncodedValue(Roundabout.KEY), Set.of(), Set.of());
+            em.getBooleanEncodedValue(Roundabout.KEY), Set.of());
     private final BooleanEncodedValue hovAccessEnc = em.getBooleanEncodedValue(BusAccess.KEY);
 
     @Test

@@ -48,7 +48,7 @@ public class BusCustomModelTest {
                 addWayTagParser(new OSMMaxWeightParser(maxWeight)).
                 addWayTagParser(new ModeAccessParser(OSMRoadAccessParser.toOSMRestrictions(TransportationMode.BUS),
                         busAccess, true, em.getBooleanEncodedValue(Roundabout.KEY),
-                        Set.of(), Set.of()));
+                        Set.of()));
 
         CustomModel cm = GHUtility.loadCustomModelFromJar("bus.json");
         params = CustomModelParser.createWeightingParameters(cm, em);

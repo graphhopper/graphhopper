@@ -15,27 +15,44 @@ import static com.graphhopper.routing.util.parsers.OSMTemporalAccessParser.hasPe
 
 public class ModeAccessParser implements TagParser {
 
-    private static final Set<String> CAR_BARRIERS = Set.of("kissing_gate", "fence",
-            "bollard", "stile", "turnstile", "cycle_barrier", "motorcycle_barrier", "block",
-            "bus_trap", "sump_buster", "jersey_barrier");
     private static final Set<String> INTENDED = Set.of("yes", "designated", "official", "permissive", "private", "permit");
     static final Map<String, Map<String, String>> HIGHWAY_TYPE_DEFAULTS;
     static final Map<String, Map<String, String>> BARRIER_TYPE_DEFAULTS;
 
     static {
+        // https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Access_restrictions
         Map<String, Map<String, String>> m = new HashMap<>();
-        m.put("steps", Map.of("access", "no"));
-        m.put("footway", Map.of("motor_vehicle", "no"));
-        m.put("cycleway", Map.of("motor_vehicle", "no"));
-        m.put("pedestrian", Map.of("motor_vehicle", "no"));
-        m.put("path", Map.of("motor_vehicle", "no"));
-        m.put("bridleway", Map.of("motor_vehicle", "no"));
+        m.put("steps", Map.of("motor_vehicle", "no", "bicycle", "no", "foot", "designated"));
+        m.put("footway", Map.of("motor_vehicle", "no", "bicycle", "no", "foot", "designated"));
+        m.put("cycleway", Map.of("motor_vehicle", "no", "bicycle", "designated", "foot", "no"));
+        m.put("pedestrian", Map.of("motor_vehicle", "no", "bicycle", "no", "foot", "designated"));
+        m.put("path", Map.of("motor_vehicle", "no", "foot", "yes", "bicycle", "yes"));
+        m.put("bridleway", Map.of("motor_vehicle", "no", "foot", "yes", "bicycle", "no"));
         m.put("busway", Map.of("access", "no", "bus", "designated"));
         HIGHWAY_TYPE_DEFAULTS = Map.copyOf(m);
 
+        // https://wiki.openstreetmap.org/wiki/Key:barrier
         Map<String, Map<String, String>> b = new HashMap<>();
-        b.put("bus_trap", Map.of("motor_vehicle", "no", "bus", "yes"));
-        b.put("sump_buster", Map.of("motor_vehicle", "no", "bus", "yes"));
+        b.put("fence", Map.of("access", "no"));
+        b.put("wall", Map.of("access", "no"));
+        b.put("hedge", Map.of("access", "no"));
+        b.put("retaining_wall", Map.of("access", "no"));
+        b.put("city_wall", Map.of("access", "no"));
+        b.put("ditch", Map.of("access", "no"));
+        b.put("kerb", Map.of("vehicle", "yes", "foot", "yes"));
+        b.put("cattle_grid", Map.of("motor_vehicle", "yes", "foot", "yes", "bicycle", "yes"));
+        b.put("bollard", Map.of("motor_vehicle", "no", "foot", "yes", "bicycle", "yes"));
+        b.put("block", Map.of("motor_vehicle", "no", "foot", "yes", "bicycle", "yes"));
+        b.put("log", Map.of("motor_vehicle", "no", "foot", "yes", "bicycle", "yes"));
+        b.put("chain", Map.of("motor_vehicle", "no", "foot", "yes", "bicycle", "yes"));
+        b.put("jersey_barrier", Map.of("motor_vehicle", "no", "foot", "yes", "bicycle", "yes"));
+        b.put("cycle_barrier", Map.of("motor_vehicle", "no", "foot", "yes", "bicycle", "yes"));
+        b.put("motorcycle_barrier", Map.of("motor_vehicle", "no", "foot", "yes", "bicycle", "yes"));
+        b.put("bus_trap", Map.of("motor_vehicle", "no", "bus", "yes", "foot", "yes", "bicycle", "yes"));
+        b.put("sump_buster", Map.of("motor_vehicle", "no", "bus", "yes", "foot", "yes", "bicycle", "yes"));
+        b.put("kissing_gate", Map.of("vehicle", "no", "foot", "yes"));
+        b.put("stile", Map.of("vehicle", "no", "foot", "yes"));
+        b.put("turnstile", Map.of("vehicle", "no", "foot", "yes"));
         BARRIER_TYPE_DEFAULTS = Map.copyOf(b);
     }
     private static final Set<String> ONEWAYS_FW = Set.of("yes", "true", "1");
@@ -47,11 +64,10 @@ public class ModeAccessParser implements TagParser {
     private final BooleanEncodedValue accessEnc;
     private final BooleanEncodedValue roundaboutEnc;
     private final boolean skipEmergency;
-    private final Set<String> barriers;
 
     public ModeAccessParser(List<String> restrictionKeys, BooleanEncodedValue accessEnc,
                             boolean skipEmergency, BooleanEncodedValue roundaboutEnc,
-                            Set<String> restrictions, Set<String> barriers) {
+                            Set<String> restrictions) {
         this.accessEnc = accessEnc;
         this.roundaboutEnc = roundaboutEnc;
         this.restrictionKeys = restrictionKeys;
@@ -59,7 +75,6 @@ public class ModeAccessParser implements TagParser {
         vehicleBackward = restrictionKeys.stream().map(r -> r + ":backward").toList();
         ignoreOnewayKeys = restrictionKeys.stream().map(r -> "oneway:" + r).toList();
         restrictedValues = restrictions.isEmpty() ? Set.of("no", "restricted", "military", "emergency") : restrictions;
-        this.barriers = barriers.isEmpty() ? CAR_BARRIERS : barriers;
         if (restrictedValues.contains(""))
             throw new IllegalArgumentException("restriction values cannot contain empty string");
         this.skipEmergency = skipEmergency;
@@ -113,8 +128,6 @@ public class ModeAccessParser implements TagParser {
             if (restrictedValues.contains(nodeValue))
                 return;
             if ("yes".equals(firstNodeTags.get("locked")) && !INTENDED.contains(nodeValue))
-                return;
-            if (!INTENDED.contains(nodeValue) && barriers.contains(barrierValue))
                 return;
         }
 
