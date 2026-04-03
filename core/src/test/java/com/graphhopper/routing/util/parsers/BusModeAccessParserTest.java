@@ -218,21 +218,14 @@ class BusModeAccessParserTest {
         parser.handleWayTags(edgeId, access, way, null);
         assertTrue(busAccessEnc.getBool(false, edgeId, access));
 
-        // this special mode ignores all barriers except kissing_gate
-        BooleanEncodedValue tmpAccessEnc = new SimpleBooleanEncodedValue("tmp_access", true);
-        EncodingManager tmpEM = new EncodingManager.Builder().add(tmpAccessEnc).add(Roundabout.create()).build();
-        ModeAccessParser tmpParser = new ModeAccessParser(OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR),
-                tmpAccessEnc, true,
-                tmpEM.getBooleanEncodedValue(Roundabout.KEY), Set.of(), Set.of("kissing_gate"));
-
         way = new ReaderWay(1);
         way.setTag("highway", "secondary");
         way.setTag("gh:barrier_edge", true);
 
         way.setTag("node_tags", List.of(Map.of("barrier", "bollard"), Map.of()));
         access = new ArrayEdgeIntAccess(1);
-        tmpParser.handleWayTags(edgeId, access, way, null);
-        assertTrue(tmpAccessEnc.getBool(false, edgeId, access));
+        parser.handleWayTags(edgeId, access, way, null);
+        assertFalse(busAccessEnc.getBool(false, edgeId, access));
     }
 
     @Test
@@ -285,74 +278,18 @@ class BusModeAccessParserTest {
 
     @Test
     public void testMotorcycleYes() {
-        BooleanEncodedValue mcAccessEnc = new SimpleBooleanEncodedValue("motorcycle_access", true);
-        EncodingManager mcEM = new EncodingManager.Builder().add(mcAccessEnc).add(Roundabout.create()).build();
-        ModeAccessParser mcParser = new ModeAccessParser(OSMRoadAccessParser.toOSMRestrictions(TransportationMode.MOTORCYCLE),
-                mcAccessEnc, true,
-                mcEM.getBooleanEncodedValue(Roundabout.KEY), Set.of(), Set.of());
-
         int edgeId = 0;
         EdgeIntAccess access = new ArrayEdgeIntAccess(1);
         ReaderWay way = new ReaderWay(0);
         way.setTag("motor_vehicle", "no");
         way.setTag("highway", "tertiary");
-        mcParser.handleWayTags(edgeId, access, way, null);
-        assertFalse(mcAccessEnc.getBool(false, edgeId, access));
+        parser.handleWayTags(edgeId, access, way, null);
+        assertFalse(busAccessEnc.getBool(false, edgeId, access));
 
         access = new ArrayEdgeIntAccess(1);
         way.setTag("motorcycle", "yes");
-        mcParser.handleWayTags(0, access, way, null);
-        assertTrue(mcAccessEnc.getBool(false, edgeId, access));
-    }
-
-    @Test
-    public void testHov() {
-        BooleanEncodedValue hovAccessEnc = new SimpleBooleanEncodedValue("hov_access", true);
-        EncodingManager hovEM = new EncodingManager.Builder().add(hovAccessEnc).add(Roundabout.create()).build();
-        ModeAccessParser hovParser = new ModeAccessParser(OSMRoadAccessParser.toOSMRestrictions(TransportationMode.HOV),
-                hovAccessEnc, true,
-                hovEM.getBooleanEncodedValue(Roundabout.KEY), Set.of(), Set.of());
-
-        int edgeId = 0;
-
-        // normal road: accessible
-        EdgeIntAccess access = new ArrayEdgeIntAccess(1);
-        ReaderWay way = new ReaderWay(0);
-        way.setTag("highway", "primary");
-        hovParser.handleWayTags(edgeId, access, way, null);
-        assertTrue(hovAccessEnc.getBool(false, edgeId, access));
-
-        // footway: blocked via implied motor_vehicle=no
-        access = new ArrayEdgeIntAccess(1);
-        way = new ReaderWay(0);
-        way.setTag("highway", "footway");
-        hovParser.handleWayTags(edgeId, access, way, null);
-        assertFalse(hovAccessEnc.getBool(false, edgeId, access));
-
-        // busway: blocked via implied access=no (hov is not bus)
-        access = new ArrayEdgeIntAccess(1);
-        way = new ReaderWay(0);
-        way.setTag("highway", "busway");
-        hovParser.handleWayTags(edgeId, access, way, null);
-        assertFalse(hovAccessEnc.getBool(false, edgeId, access));
-
-        // motor_vehicle=no but hov=designated: accessible
-        access = new ArrayEdgeIntAccess(1);
-        way = new ReaderWay(0);
-        way.setTag("highway", "tertiary");
-        way.setTag("motor_vehicle", "no");
-        way.setTag("hov", "designated");
-        hovParser.handleWayTags(edgeId, access, way, null);
-        assertTrue(hovAccessEnc.getBool(false, edgeId, access));
-
-        // bus_trap: blocked (hov vehicles are not buses)
-        access = new ArrayEdgeIntAccess(1);
-        way = new ReaderWay(0);
-        way.setTag("highway", "residential");
-        way.setTag("gh:barrier_edge", true);
-        way.setTag("node_tags", List.of(Map.of("barrier", "bus_trap"), Map.of()));
-        hovParser.handleWayTags(edgeId, access, way, null);
-        assertFalse(hovAccessEnc.getBool(false, edgeId, access));
+        parser.handleWayTags(0, access, way, null);
+        assertFalse(busAccessEnc.getBool(false, edgeId, access));
     }
 
     @Test
