@@ -118,6 +118,7 @@ public class ModeAccessParser implements TagParser {
             }
             String implied = defaults.get(key);
             if (implied != null) {
+                firstIndex = i;
                 firstValue = implied;
                 break;
             }

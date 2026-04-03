@@ -282,12 +282,13 @@ class CarModeAccessParserTest {
         parser.handleWayTags(edgeId, access, way, null);
         assertTrue(carAccessEnc.getBool(false, edgeId, access));
 
+        // conditional yes unblocks the implied motor_vehicle=no
         way.clearTags();
         access = new ArrayEdgeIntAccess(1);
         way.setTag("highway", "pedestrian");
         way.setTag("motor_vehicle:conditional", "yes @ ( 8:00 - 10:00 )");
         parser.handleWayTags(edgeId, access, way, null);
-        assertFalse(carAccessEnc.getBool(false, edgeId, access));
+        assertTrue(carAccessEnc.getBool(false, edgeId, access));
     }
 
     @Test
