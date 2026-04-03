@@ -65,8 +65,8 @@ class BusModeAccessParserTest {
         EdgeIntAccess edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
         int edgeId = 0;
         parser.handleWayTags(edgeId, edgeIntAccess, way, null);
-        assertTrue(busAccessEnc.getBool(false, edgeId, edgeIntAccess));
-        assertTrue(busAccessEnc.getBool(true, edgeId, edgeIntAccess));
+        assertFalse(busAccessEnc.getBool(false, edgeId, edgeIntAccess));
+        assertFalse(busAccessEnc.getBool(true, edgeId, edgeIntAccess));
     }
 
     @Test

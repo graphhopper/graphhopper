@@ -15,9 +15,9 @@ import static com.graphhopper.routing.util.parsers.OSMTemporalAccessParser.hasPe
 
 public class ModeAccessParser implements TagParser {
 
-    private static final Set<String> INTENDED = Set.of("yes", "designated", "official", "permissive", "private", "permit", "destination");
+    private static final Set<String> INTENDED = Set.of("yes", "designated", "official", "permissive", "destination");
     private static final Set<String> RESTRICTED = Set.of("no", "restricted", "military", "emergency",
-            "delivery", "customers", "agricultural", "forestry", "service");
+            "private", "permit", "service", "delivery", "customers", "agricultural", "forestry");
     static final Map<String, Map<String, String>> HIGHWAY_TYPE_DEFAULTS;
     static final Map<String, Map<String, String>> BARRIER_TYPE_DEFAULTS;
 

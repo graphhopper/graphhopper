@@ -40,8 +40,8 @@ class CarModeAccessParserTest {
         EdgeIntAccess edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
         int edgeId = 0;
         parser.handleWayTags(edgeId, edgeIntAccess, way, null);
-        assertTrue(carAccessEnc.getBool(false, edgeId, edgeIntAccess));
-        assertTrue(carAccessEnc.getBool(true, edgeId, edgeIntAccess));
+        assertFalse(carAccessEnc.getBool(false, edgeId, edgeIntAccess));
+        assertFalse(carAccessEnc.getBool(true, edgeId, edgeIntAccess));
     }
 
     @Test
@@ -121,11 +121,12 @@ class CarModeAccessParserTest {
         way.setTag("highway", "secondary");
         way.setTag("gh:barrier_edge", true);
 
+        // motor_vehicle=permit is restricted — car is blocked even though bus=yes
         way.setTag("node_tags", List.of(Map.of("barrier", "bollard", "access", "no", "motor_vehicle", "permit", "bus", "yes"), Map.of()));
         EdgeIntAccess access = new ArrayEdgeIntAccess(1);
         int edgeId = 0;
         parser.handleWayTags(edgeId, access, way, null);
-        assertTrue(carAccessEnc.getBool(false, edgeId, access));
+        assertFalse(carAccessEnc.getBool(false, edgeId, access));
     }
 
     @Test
