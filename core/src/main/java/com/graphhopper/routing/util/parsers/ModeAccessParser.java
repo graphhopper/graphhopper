@@ -21,6 +21,8 @@ public class ModeAccessParser implements TagParser {
     static {
         // https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Access_restrictions
         Map<String, Map<String, String>> m = new HashMap<>();
+        m.put("motorway", Map.of("motor_vehicle", "designated", "foot", "no", "bicycle", "no"));
+        m.put("motorway_link", Map.of("motor_vehicle", "designated", "foot", "no", "bicycle", "no"));
         m.put("steps", Map.of("motor_vehicle", "no", "bicycle", "no", "foot", "designated"));
         m.put("footway", Map.of("motor_vehicle", "no", "bicycle", "no", "foot", "designated"));
         m.put("cycleway", Map.of("motor_vehicle", "no", "bicycle", "designated", "foot", "no"));

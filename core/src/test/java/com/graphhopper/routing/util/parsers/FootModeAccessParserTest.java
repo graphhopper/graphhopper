@@ -158,4 +158,17 @@ class FootModeAccessParserTest {
         parser.handleWayTags(edgeId, access, way, null);
         assertTrue(footAccessEnc.getBool(false, edgeId, access));
     }
+
+
+    @Test
+    public void motorwayImpliesOneway() {
+        int edgeId = 0;
+        ArrayEdgeIntAccess access = new ArrayEdgeIntAccess(1);
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "motorway");
+        parser.handleWayTags(edgeId, access, way, null);
+        assertFalse(footAccessEnc.getBool(false, edgeId, access));
+        assertFalse(footAccessEnc.getBool(true, edgeId, access));
+    }
+
 }
