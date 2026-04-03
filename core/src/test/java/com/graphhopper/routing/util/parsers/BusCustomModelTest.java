@@ -16,7 +16,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -47,8 +46,7 @@ public class BusCustomModelTest {
                 addWayTagParser(new OSMMaxWidthParser(maxWidth)).
                 addWayTagParser(new OSMMaxWeightParser(maxWeight)).
                 addWayTagParser(new ModeAccessParser(OSMRoadAccessParser.toOSMRestrictions(TransportationMode.BUS),
-                        busAccess, true, em.getBooleanEncodedValue(Roundabout.KEY),
-                        Set.of()));
+                        busAccess, true, em.getBooleanEncodedValue(Roundabout.KEY)));
 
         CustomModel cm = GHUtility.loadCustomModelFromJar("bus.json");
         params = CustomModelParser.createWeightingParameters(cm, em);

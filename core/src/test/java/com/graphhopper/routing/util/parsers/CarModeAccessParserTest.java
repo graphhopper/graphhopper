@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -19,7 +18,7 @@ class CarModeAccessParserTest {
     private final EncodingManager em = new EncodingManager.Builder().add(Roundabout.create()).add(new SimpleBooleanEncodedValue("car_access", true)).build();
     private final ModeAccessParser parser = new ModeAccessParser(OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR),
             em.getBooleanEncodedValue("car_access"), true,
-            em.getBooleanEncodedValue(Roundabout.KEY), Set.of());
+            em.getBooleanEncodedValue(Roundabout.KEY));
     private final BooleanEncodedValue carAccessEnc = em.getBooleanEncodedValue("car_access");
 
     @Test
@@ -181,7 +180,7 @@ class CarModeAccessParserTest {
         EncodingManager hovEM = new EncodingManager.Builder().add(hovAccessEnc).add(Roundabout.create()).build();
         ModeAccessParser hovParser = new ModeAccessParser(OSMRoadAccessParser.toOSMRestrictions(TransportationMode.HOV),
                 hovAccessEnc, true,
-                hovEM.getBooleanEncodedValue(Roundabout.KEY), Set.of());
+                hovEM.getBooleanEncodedValue(Roundabout.KEY));
 
         int edgeId = 0;
 
@@ -286,6 +285,36 @@ class CarModeAccessParserTest {
         access = new ArrayEdgeIntAccess(1);
         way.setTag("highway", "pedestrian");
         way.setTag("motor_vehicle:conditional", "yes @ ( 8:00 - 10:00 )");
+        parser.handleWayTags(edgeId, access, way, null);
+        assertFalse(carAccessEnc.getBool(false, edgeId, access));
+    }
+
+    @Test
+    void testUnknownValueIsTransparent() {
+        int edgeId = 0;
+
+        // unknown value on an open road: road stays open (doesn't close it)
+        ArrayEdgeIntAccess access = new ArrayEdgeIntAccess(1);
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "residential");
+        way.setTag("motor_vehicle", "pupsaffe");
+        parser.handleWayTags(edgeId, access, way, null);
+        assertTrue(carAccessEnc.getBool(false, edgeId, access));
+
+        // unknown value on a blocked road: road stays blocked (doesn't open it)
+        access = new ArrayEdgeIntAccess(1);
+        way.clearTags();
+        way.setTag("highway", "pedestrian");
+        way.setTag("motor_vehicle", "pupsaffe");
+        parser.handleWayTags(edgeId, access, way, null);
+        assertFalse(carAccessEnc.getBool(false, edgeId, access));
+
+        // unknown on a more specific key, recognized value on a less specific key: recognized value wins
+        access = new ArrayEdgeIntAccess(1);
+        way.clearTags();
+        way.setTag("highway", "residential");
+        way.setTag("motorcar", "pupsaffe");
+        way.setTag("motor_vehicle", "no");
         parser.handleWayTags(edgeId, access, way, null);
         assertFalse(carAccessEnc.getBool(false, edgeId, access));
     }

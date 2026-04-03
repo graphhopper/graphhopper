@@ -15,7 +15,9 @@ import static com.graphhopper.routing.util.parsers.OSMTemporalAccessParser.hasPe
 
 public class ModeAccessParser implements TagParser {
 
-    private static final Set<String> INTENDED = Set.of("yes", "designated", "official", "permissive", "private", "permit");
+    private static final Set<String> INTENDED = Set.of("yes", "designated", "official", "permissive", "private", "permit", "destination");
+    private static final Set<String> RESTRICTED = Set.of("no", "restricted", "military", "emergency",
+            "delivery", "customers", "agricultural", "forestry", "service");
     static final Map<String, Map<String, String>> HIGHWAY_TYPE_DEFAULTS;
     static final Map<String, Map<String, String>> BARRIER_TYPE_DEFAULTS;
 
@@ -56,7 +58,6 @@ public class ModeAccessParser implements TagParser {
         BARRIER_TYPE_DEFAULTS = Map.copyOf(b);
     }
     private static final Set<String> ONEWAYS_FW = Set.of("yes", "true", "1");
-    private final Set<String> restrictedValues;
     private final List<String> restrictionKeys;
     private final List<String> vehicleForward;
     private final List<String> vehicleBackward;
@@ -66,17 +67,13 @@ public class ModeAccessParser implements TagParser {
     private final boolean skipEmergency;
 
     public ModeAccessParser(List<String> restrictionKeys, BooleanEncodedValue accessEnc,
-                            boolean skipEmergency, BooleanEncodedValue roundaboutEnc,
-                            Set<String> restrictions) {
+                            boolean skipEmergency, BooleanEncodedValue roundaboutEnc) {
         this.accessEnc = accessEnc;
         this.roundaboutEnc = roundaboutEnc;
         this.restrictionKeys = restrictionKeys;
         vehicleForward = restrictionKeys.stream().map(r -> r + ":forward").toList();
         vehicleBackward = restrictionKeys.stream().map(r -> r + ":backward").toList();
         ignoreOnewayKeys = restrictionKeys.stream().map(r -> "oneway:" + r).toList();
-        restrictedValues = restrictions.isEmpty() ? Set.of("no", "restricted", "military", "emergency") : restrictions;
-        if (restrictedValues.contains(""))
-            throw new IllegalArgumentException("restriction values cannot contain empty string");
         this.skipEmergency = skipEmergency;
     }
 
@@ -93,9 +90,12 @@ public class ModeAccessParser implements TagParser {
             String key = restrictionKeys.get(i);
             String explicit = way.getTag(key);
             if (explicit != null) {
-                firstIndex = i;
-                firstValue = explicit;
-                break;
+                if (INTENDED.contains(explicit) || RESTRICTED.contains(explicit)) {
+                    firstIndex = i;
+                    firstValue = explicit;
+                    break;
+                }
+                // unknown value — fall through to implied default for same key, then keep looking
             }
             String implied = defaults.get(key);
             if (implied != null) {
@@ -103,7 +103,7 @@ public class ModeAccessParser implements TagParser {
                 break;
             }
         }
-        if (restrictedValues.contains(firstValue) && !hasPermissiveTemporalRestriction(way, firstIndex, restrictionKeys, INTENDED))
+        if (RESTRICTED.contains(firstValue) && !hasPermissiveTemporalRestriction(way, firstIndex, restrictionKeys, INTENDED))
             return;
 
         if (way.hasTag("gh:barrier_edge") && way.hasTag("node_tags")) {
@@ -116,8 +116,10 @@ public class ModeAccessParser implements TagParser {
             for (String key : restrictionKeys) {
                 String explicit = (String) firstNodeTags.get(key);
                 if (explicit != null) {
-                    nodeValue = explicit;
-                    break;
+                    if (INTENDED.contains(explicit) || RESTRICTED.contains(explicit)) {
+                        nodeValue = explicit;
+                        break;
+                    }
                 }
                 String implied = barrierDefaults.get(key);
                 if (implied != null) {
@@ -125,7 +127,7 @@ public class ModeAccessParser implements TagParser {
                     break;
                 }
             }
-            if (restrictedValues.contains(nodeValue))
+            if (RESTRICTED.contains(nodeValue))
                 return;
             if ("yes".equals(firstNodeTags.get("locked")) && !INTENDED.contains(nodeValue))
                 return;

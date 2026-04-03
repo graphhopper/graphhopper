@@ -223,16 +223,14 @@ public class DefaultImportRegistry implements ImportRegistry {
         else if (BusAccess.KEY.equals(name))
             return ImportUnit.create(name, props -> BusAccess.create(),
                     (lookup, props) -> new ModeAccessParser(OSMRoadAccessParser.toOSMRestrictions(TransportationMode.BUS),
-                            lookup.getBooleanEncodedValue(name), true, lookup.getBooleanEncodedValue(Roundabout.KEY),
-                            PMap.toSet(props.getString("restrictions", ""))),
+                            lookup.getBooleanEncodedValue(name), true, lookup.getBooleanEncodedValue(Roundabout.KEY)),
                     "roundabout"
             );
 
         else if (HovAccess.KEY.equals(name))
             return ImportUnit.create(name, props -> HovAccess.create(),
                     (lookup, props) -> new ModeAccessParser(OSMRoadAccessParser.toOSMRestrictions(TransportationMode.HOV),
-                            lookup.getBooleanEncodedValue(name), true, lookup.getBooleanEncodedValue(Roundabout.KEY),
-                            PMap.toSet(props.getString("restrictions", ""))),
+                            lookup.getBooleanEncodedValue(name), true, lookup.getBooleanEncodedValue(Roundabout.KEY)),
                     "roundabout"
             );
         else if (FootTemporalAccess.KEY.equals(name))

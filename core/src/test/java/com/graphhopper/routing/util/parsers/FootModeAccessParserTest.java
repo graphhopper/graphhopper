@@ -8,8 +8,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -18,7 +16,7 @@ class FootModeAccessParserTest {
     private final EncodingManager em = new EncodingManager.Builder().add(Roundabout.create()).add(new SimpleBooleanEncodedValue("foot_access", true)).build();
     private final ModeAccessParser parser = new ModeAccessParser(OSMRoadAccessParser.toOSMRestrictions(TransportationMode.FOOT),
             em.getBooleanEncodedValue("foot_access"), false,
-            em.getBooleanEncodedValue(Roundabout.KEY), Set.of());
+            em.getBooleanEncodedValue(Roundabout.KEY));
     private final BooleanEncodedValue footAccessEnc = em.getBooleanEncodedValue("foot_access");
 
     @Test

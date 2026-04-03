@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -18,7 +17,7 @@ class HovModeAccessParserTest {
     private final EncodingManager em = new EncodingManager.Builder().add(Roundabout.create()).add(BusAccess.create()).build();
     private final ModeAccessParser parser = new ModeAccessParser(OSMRoadAccessParser.toOSMRestrictions(TransportationMode.HOV),
             em.getBooleanEncodedValue(BusAccess.KEY), true,
-            em.getBooleanEncodedValue(Roundabout.KEY), Set.of());
+            em.getBooleanEncodedValue(Roundabout.KEY));
     private final BooleanEncodedValue hovAccessEnc = em.getBooleanEncodedValue(BusAccess.KEY);
 
     @Test
