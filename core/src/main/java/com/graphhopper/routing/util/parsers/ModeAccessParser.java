@@ -15,6 +15,7 @@ public class ModeAccessParser implements TagParser {
     private static final Set<String> INTENDED = Set.of("yes", "designated", "official", "permissive", "destination");
     private static final Set<String> RESTRICTED = Set.of("no", "restricted", "military", "emergency",
             "private", "permit", "service", "delivery", "customers", "agricultural", "forestry");
+    private static final Map<String, String> MOTORROAD_DEFAULTS = Map.of("foot", "no", "bicycle", "no");
     static final Map<String, Map<String, String>> HIGHWAY_TYPE_DEFAULTS;
     static final Map<String, Map<String, String>> BARRIER_TYPE_DEFAULTS;
 
@@ -30,6 +31,11 @@ public class ModeAccessParser implements TagParser {
         m.put("path", Map.of("motor_vehicle", "no", "foot", "yes", "bicycle", "yes"));
         m.put("bridleway", Map.of("motor_vehicle", "no", "foot", "yes", "bicycle", "no"));
         m.put("busway", Map.of("access", "no", "bus", "designated"));
+        m.put("construction", Map.of("access", "no"));
+        m.put("proposed", Map.of("access", "no"));
+        m.put("raceway", Map.of("access", "no"));
+        m.put("corridor", Map.of("motor_vehicle", "no", "bicycle", "no", "foot", "yes"));
+        m.put("platform", Map.of("motor_vehicle", "no", "bicycle", "no", "foot", "yes"));
         HIGHWAY_TYPE_DEFAULTS = Map.copyOf(m);
 
         // https://wiki.openstreetmap.org/wiki/Key:barrier
@@ -105,6 +111,14 @@ public class ModeAccessParser implements TagParser {
             return;
 
         Map<String, String> defaults = highwayValue == null ? Map.of() : HIGHWAY_TYPE_DEFAULTS.getOrDefault(highwayValue, Map.of());
+        // motorroad=yes is an annoying special case: it's not a highway=* value but a separate tag
+        // that implies foot=no, bicycle=no. If we find more tags like this, we'll need a more
+        // general mechanism for non-highway implied defaults.
+        if (way.hasTag("motorroad", "yes")) {
+            Map<String, String> merged = new HashMap<>(defaults);
+            MOTORROAD_DEFAULTS.forEach(merged::putIfAbsent);
+            defaults = merged;
+        }
         int firstIndex = -1;
         String firstValue = "";
         for (int i = 0; i < restrictionKeys.size(); i++) {

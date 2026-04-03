@@ -171,4 +171,32 @@ class FootModeAccessParserTest {
         assertFalse(footAccessEnc.getBool(true, edgeId, access));
     }
 
+    @Test
+    void testMotorroad() {
+        // motorroad=yes implies foot=no, even on a trunk road
+        int edgeId = 0;
+        ArrayEdgeIntAccess access = new ArrayEdgeIntAccess(1);
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "trunk");
+        way.setTag("motorroad", "yes");
+        parser.handleWayTags(edgeId, access, way, null);
+        assertFalse(footAccessEnc.getBool(false, edgeId, access));
+
+        // explicit foot=yes overrides motorroad
+        access = new ArrayEdgeIntAccess(1);
+        way.setTag("foot", "yes");
+        parser.handleWayTags(edgeId, access, way, null);
+        assertTrue(footAccessEnc.getBool(false, edgeId, access));
+    }
+
+    @Test
+    void testConstruction() {
+        int edgeId = 0;
+        ArrayEdgeIntAccess access = new ArrayEdgeIntAccess(1);
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "construction");
+        parser.handleWayTags(edgeId, access, way, null);
+        assertFalse(footAccessEnc.getBool(false, edgeId, access));
+    }
+
 }

@@ -321,4 +321,14 @@ class CarModeAccessParserTest {
         assertFalse(carAccessEnc.getBool(false, edgeId, access));
     }
 
+    @Test
+    void testConstruction() {
+        int edgeId = 0;
+        ArrayEdgeIntAccess access = new ArrayEdgeIntAccess(1);
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "construction");
+        parser.handleWayTags(edgeId, access, way, null);
+        assertFalse(carAccessEnc.getBool(false, edgeId, access));
+    }
+
 }
