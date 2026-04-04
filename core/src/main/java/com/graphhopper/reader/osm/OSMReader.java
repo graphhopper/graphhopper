@@ -563,7 +563,7 @@ public class OSMReader {
      * This method is called for each relation during the first pass of {@link WaySegmentParser}
      */
     protected void preprocessRelations(ReaderRelation relation) {
-        if (!relation.isMetaRelation() && relation.hasTag("type", "route")) {
+        if (relation.hasTag("type", "route")) {
             // we keep track of all route relations, so they are available when we create edges later
             for (ReaderRelation.Member member : relation.getMembers()) {
                 if (member.getType() != ReaderElement.Type.WAY)

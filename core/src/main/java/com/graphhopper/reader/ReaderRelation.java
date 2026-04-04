@@ -47,16 +47,6 @@ public class ReaderRelation extends ReaderElement {
         return members;
     }
 
-    public boolean isMetaRelation() {
-        if (members != null)
-            for (Member member : members) {
-                if (member.getType() == Type.RELATION) {
-                    return true;
-                }
-            }
-        return false;
-    }
-
     public void add(Member member) {
         if (members == null)
             members = new ArrayList<>(3);
