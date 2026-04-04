@@ -22,12 +22,6 @@ public class MountainBikePriorityParser extends BikeCommonPriorityParser {
         preferHighwayTags.add("road");
         preferHighwayTags.add("track");
         preferHighwayTags.add("path");
-        preferHighwayTags.add("service");
-        preferHighwayTags.add("tertiary");
-        preferHighwayTags.add("tertiary_link");
-        preferHighwayTags.add("residential");
-        preferHighwayTags.add("unclassified");
-
         setSpecificClassBicycle("mtb");
     }
 

@@ -67,7 +67,7 @@ public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
         assertPriorityAndSpeed(BAD, 18, way);
 
         way.setTag("highway", "residential");
-        assertPriorityAndSpeed(PREFER, 18, way);
+        assertPriorityAndSpeed(UNCHANGED, 18, way);
 
         // Test pushing section speeds
         way.setTag("highway", "footway");
@@ -84,10 +84,10 @@ public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("tracktype", "grade3");
         assertPriorityAndSpeed(VERY_NICE, 12, way);
         way.setTag("tracktype", "grade1");
-        assertPriorityAndSpeed(SLIGHT_PREFER, 18, way);
+        assertPriorityAndSpeed(PREFER, 18, way);
 
         way.setTag("surface", "paved");
-        assertPriorityAndSpeed(SLIGHT_PREFER, 18, way);
+        assertPriorityAndSpeed(PREFER, 18, way);
 
         way.clearTags();
         way.setTag("highway", "path");
@@ -156,9 +156,13 @@ public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
     }
 
     @Test
-    public void testPreferenceForSlowSpeed() {
+    public void testBicycleInfrastructure() {
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "tertiary");
+        assertPriority(UNCHANGED, osmWay);
+        osmWay.setTag("cycleway", "lane");
+        assertPriority(SLIGHT_PREFER, osmWay);
+        osmWay.setTag("cycleway", "track");
         assertPriority(PREFER, osmWay);
     }
 }
