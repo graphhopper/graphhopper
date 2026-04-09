@@ -497,10 +497,11 @@ public class InstructionListTest {
         List<String> descriptions = getTurnDescriptions(wayList);
 
         assertEquals(3, wayList.size());
-        assertEquals("Purple Heart Trail (I-40)", wayList.get(1).getName());
+        assertEquals("Purple Heart Trail", wayList.get(1).getName());
+        assertEquals("I-40", wayList.get(1).getExtraInfoJSON().get(STREET_REF));
         assertEquals(Arrays.asList(
                 "continue onto West Beale Street",
-                "turn left onto Purple Heart Trail (I-40)",
+                "turn left onto Purple Heart Trail",
                 "arrive at destination"
         ), descriptions);
     }

@@ -280,7 +280,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                     && hasUsableRoadLabel(name, ref)
                     && !hasDestinationInfo(prevInstruction)) {
 
-                prevInstruction.setName(buildRoadLabel(name, ref));
+                prevInstruction.setName(name);
                 prevInstruction.setExtraInfo(STREET_REF, ref);
                 prevInstructionNeedsNameFallback = false;
             }
@@ -337,7 +337,6 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                     prevInstructionName = prevName;
                     ways.add(prevInstruction);
 
-                    prevInstruction.setExtraInfo(STREET_REF, ref);
                     prevInstructionNeedsNameFallback = needsDeferredFallback;
                 }
                 prevInstruction.setExtraInfo(STREET_REF, ref);
@@ -515,16 +514,6 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             prevInstruction.setTime(GHUtility.calcMillisWithTurnMillis(weighting, edge, false, prevEdge.getEdge()) + prevInstruction.getTime());
         else
             prevInstruction.setTime(weighting.calcEdgeMillis(edge, false) + prevInstruction.getTime());
-    }
-
-    private String buildRoadLabel(String name, String ref) {
-        boolean hasName = name != null && !name.isBlank();
-        boolean hasRef = ref != null && !ref.isBlank();
-
-        if (hasName && hasRef) return name + " (" + ref + ")";
-        if (hasRef) return ref;
-        if (hasName) return name;
-        return "";
     }
 
     private boolean isLinkRoad(EdgeIteratorState edge) {
