@@ -429,6 +429,8 @@ public class OSMReader {
                 name = fixWayName(way.getTag("name"));
             if (name.isEmpty())
                 name = fixWayName(way.getTag("is_sidepath:of:name"));
+            if (name.isEmpty())
+                name = fixWayName(way.getTag("street:name"));
             if (!name.isEmpty())
                 map.put(STREET_NAME, new KValue(name));
 

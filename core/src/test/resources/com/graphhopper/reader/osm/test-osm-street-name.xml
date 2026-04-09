@@ -1,0 +1,33 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<osm version="0.6" generator="test">
+    <node id="1" lat="49.0" lon="11.0" version="1"/>
+    <node id="2" lat="49.001" lon="11.001" version="1"/>
+    <node id="3" lat="49.002" lon="11.002" version="1"/>
+    <node id="4" lat="49.003" lon="11.003" version="1"/>
+
+    <!-- way with only street:name tag (no name, no is_sidepath:of:name) -->
+    <way id="1" version="1">
+        <nd ref="1"/>
+        <nd ref="2"/>
+        <tag k="highway" v="cycleway"/>
+        <tag k="street:name" v="Main Street"/>
+    </way>
+
+    <!-- way with is_sidepath:of:name and street:name (is_sidepath:of:name should win) -->
+    <way id="2" version="1">
+        <nd ref="2"/>
+        <nd ref="3"/>
+        <tag k="highway" v="footway"/>
+        <tag k="is_sidepath:of:name" v="Sidepath Road"/>
+        <tag k="street:name" v="Street Name Road"/>
+    </way>
+
+    <!-- way with name and street:name (name should win) -->
+    <way id="3" version="1">
+        <nd ref="3"/>
+        <nd ref="4"/>
+        <tag k="highway" v="cycleway"/>
+        <tag k="name" v="Explicit Name"/>
+        <tag k="street:name" v="Fallback Street"/>
+    </way>
+</osm>
