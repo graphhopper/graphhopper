@@ -163,6 +163,65 @@ class OSMRoadAccessParserTest {
         assertNull(OSMRoadAccessParser.BIKE_HANDLER.getAccess(createReaderWay("living_street"), Country.HUN));
     }
 
+    @Test
+    void conditionalDelivery() {
+        ArrayEdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        int edgeId = 0;
+        ReaderWay way = new ReaderWay(1L);
+        way.setTag("highway", "pedestrian");
+        way.setTag("motor_vehicle:conditional", "delivery @ (Mo-Fr 06:00-11:00)");
+        parser.handleWayTags(edgeId, edgeIntAccess, way, new IntsRef(1));
+        assertEquals(RoadAccess.DELIVERY, roadAccessEnc.getEnum(false, edgeId, edgeIntAccess));
+    }
+
+    @Test
+    void conditionalDestination() {
+        ArrayEdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        int edgeId = 0;
+        ReaderWay way = new ReaderWay(1L);
+        way.setTag("highway", "residential");
+        way.setTag("vehicle:conditional", "destination @ (Mo-Fr 06:00-18:00)");
+        parser.handleWayTags(edgeId, edgeIntAccess, way, new IntsRef(1));
+        assertEquals(RoadAccess.DESTINATION, roadAccessEnc.getEnum(false, edgeId, edgeIntAccess));
+    }
+
+    @Test
+    void conditionalOverridesBlockingBaseTag() {
+        // motor_vehicle=no blocks, but conditional says delivery @ time — qualification should be DELIVERY
+        ArrayEdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        int edgeId = 0;
+        ReaderWay way = new ReaderWay(1L);
+        way.setTag("highway", "residential");
+        way.setTag("motor_vehicle", "no");
+        way.setTag("motor_vehicle:conditional", "delivery @ (Mo-Fr 06:00-11:00)");
+        parser.handleWayTags(edgeId, edgeIntAccess, way, new IntsRef(1));
+        assertEquals(RoadAccess.DELIVERY, roadAccessEnc.getEnum(false, edgeId, edgeIntAccess));
+    }
+
+    @Test
+    void conditionalDoesNotOverrideLessRestrictiveBaseTag() {
+        // motor_vehicle=destination is less restrictive than delivery — base tag wins
+        ArrayEdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        int edgeId = 0;
+        ReaderWay way = new ReaderWay(1L);
+        way.setTag("highway", "residential");
+        way.setTag("motor_vehicle", "destination");
+        way.setTag("motor_vehicle:conditional", "delivery @ (Mo-Fr 06:00-11:00)");
+        parser.handleWayTags(edgeId, edgeIntAccess, way, new IntsRef(1));
+        assertEquals(RoadAccess.DESTINATION, roadAccessEnc.getEnum(false, edgeId, edgeIntAccess));
+    }
+
+    @Test
+    void conditionalNonTemporalIgnored() {
+        ArrayEdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        int edgeId = 0;
+        ReaderWay way = new ReaderWay(1L);
+        way.setTag("highway", "residential");
+        way.setTag("access:conditional", "yes @ weight < 3.5");
+        parser.handleWayTags(edgeId, edgeIntAccess, way, new IntsRef(1));
+        assertEquals(RoadAccess.YES, roadAccessEnc.getEnum(false, edgeId, edgeIntAccess));
+    }
+
     private ReaderWay createReaderWay(String highway) {
         ReaderWay readerWay = new ReaderWay(123L);
         readerWay.setTag("highway", highway);

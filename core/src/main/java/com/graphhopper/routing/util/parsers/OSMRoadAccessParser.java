@@ -61,6 +61,17 @@ public class OSMRoadAccessParser<T extends Enum> implements TagParser {
             if (accessValue != null) break;
         }
 
+        // Also check conditional tags — if e.g. motor_vehicle=no but motor_vehicle:conditional=delivery @ (time),
+        // the qualification should be DELIVERY, not NO. Use the same "least restrictive wins" logic as base tags.
+        for (String restriction : restrictions) {
+            T conditionalValue = getConditionalRoadAccess(readerWay.getTag(restriction + ":conditional"));
+            if (conditionalValue != null) {
+                if (accessValue == null || conditionalValue.ordinal() < accessValue.ordinal())
+                    accessValue = conditionalValue;
+                break;
+            }
+        }
+
         if (accessValue == null) {
             Country country = readerWay.getTag("country", Country.MISSING);
             accessValue = roadAccessDefaultHandler.getAccess(readerWay, country);
@@ -68,6 +79,15 @@ public class OSMRoadAccessParser<T extends Enum> implements TagParser {
 
         if (accessValue != null)
             accessEnc.setEnum(false, edgeId, edgeIntAccess, accessValue);
+    }
+
+    private T getConditionalRoadAccess(String tagValue) {
+        if (tagValue == null) return null;
+        String[] strs = tagValue.split("@");
+        if (strs.length == 2 && OSMTemporalAccessParser.hasTemporalSpec(strs[1])) {
+            return valueFinder.apply(strs[0].trim());
+        }
+        return null;
     }
 
     private T getRoadAccess(String tagValue, T accessValue) {
