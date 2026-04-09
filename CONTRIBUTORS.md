@@ -36,6 +36,7 @@ Here is an overview:
  * fredao, translations 
  * gberaudo, improvements regarding elevation
  * GProbo, fixes like #2241
+ * gulbalasalamov, fix for instruction generation when unnamed link roads continue onto named major roads (#3337) 
  * HarelM, improvements regarding elevation
  * HelgeKrueger, modularization of javascript, #590
  * henningvs, doc improvements

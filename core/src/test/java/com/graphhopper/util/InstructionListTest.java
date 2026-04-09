@@ -40,6 +40,7 @@ import java.util.*;
 import static com.graphhopper.json.Statement.If;
 import static com.graphhopper.search.KVStorage.KValue;
 import static com.graphhopper.util.Parameters.Details.STREET_NAME;
+import static com.graphhopper.util.Parameters.Details.STREET_REF;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -427,6 +428,81 @@ public class InstructionListTest {
         assertEquals(Arrays.asList("continue onto myroad", "keep left onto myroad", "arrive at destination"), tmpList);
         assertEquals(3, wayList.size());
         assertEquals(20, wayList.get(1).getDistance());
+    }
+
+    @Test
+    public void testUnnamedLinkInstructionUsesFollowingMajorRoadName() {
+        EnumEncodedValue<RoadClass> roadClassEnc = carManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
+        BooleanEncodedValue roadClassLinkEnc = carManager.getBooleanEncodedValue(RoadClassLink.KEY);
+
+        BaseGraph g = new BaseGraph.Builder(carManager).create();
+        NodeAccess na = g.getNodeAccess();
+
+        // 0 ---- 1 ---- 4
+        //        |
+        //        2
+        //        |
+        //        3
+        //
+        // Path: 0 -> 1 -> 2 -> 3
+        //
+        // 0-1: named local road
+        // 1-2: unnamed motorway_link
+        // 2-3: named motorway "Purple Heart Trail" ref "I-40"
+        //
+        // The important part is:
+        // - a turn instruction is created at 1
+        // - no new instruction is created at 2
+        // - therefore the same instruction should pick up the following motorway name/ref
+
+        na.setNode(0, 0.0000, 0.0000);
+        na.setNode(1, 0.0000, 0.0010);
+        na.setNode(2, 0.0010, 0.0010);
+        na.setNode(3, 0.0100, 0.0010);
+        na.setNode(4, 0.0000, 0.0020);
+
+        g.edge(0, 1)
+                .setDistance(100)
+                .set(speedEnc, 60, 60)
+                .set(roadClassEnc, RoadClass.PRIMARY)
+                .setKeyValues(Map.of(STREET_NAME, new KValue("West Beale Street")));
+
+        g.edge(1, 4)
+                .setDistance(100)
+                .set(speedEnc, 60, 60)
+                .set(roadClassEnc, RoadClass.PRIMARY)
+                .setKeyValues(Map.of(STREET_NAME, new KValue("West Beale Street")));
+
+        g.edge(1, 2)
+                .setDistance(80)
+                .set(speedEnc, 60, 60)
+                .set(roadClassEnc, RoadClass.MOTORWAY)
+                .set(roadClassLinkEnc, true);
+
+        g.edge(2, 3)
+                .setDistance(500)
+                .set(speedEnc, 90, 90)
+                .set(roadClassEnc, RoadClass.MOTORWAY)
+                .setKeyValues(Map.of(
+                        STREET_NAME, new KValue("Purple Heart Trail"),
+                        STREET_REF, new KValue("I-40")
+                ));
+
+        Weighting weighting = new SpeedWeighting(speedEnc);
+        Path p = new Dijkstra(g, weighting, tMode).calcPath(0, 3);
+
+        assertEquals(IntArrayList.from(0, 1, 2, 3), p.calcNodes());
+
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR);
+        List<String> descriptions = getTurnDescriptions(wayList);
+
+        assertEquals(3, wayList.size());
+        assertEquals("Purple Heart Trail (I-40)", wayList.get(1).getName());
+        assertEquals(Arrays.asList(
+                "continue onto West Beale Street",
+                "turn left onto Purple Heart Trail (I-40)",
+                "arrive at destination"
+        ), descriptions);
     }
 
     @Test
