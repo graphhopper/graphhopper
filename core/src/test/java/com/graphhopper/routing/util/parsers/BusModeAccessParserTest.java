@@ -137,12 +137,33 @@ class BusModeAccessParserTest {
         assertTrue(busAccessEnc.getBool(false, edgeId, access));
         assertTrue(busAccessEnc.getBool(true, edgeId, access));
 
+        // oneway:bus=yes on an otherwise bidirectional street makes it oneway for buses
         access = new ArrayEdgeIntAccess(1);
-        way.setTag("oneway:psv", "no");
+        way = new ReaderWay(0);
+        way.setTag("highway", "primary");
         way.setTag("oneway:bus", "yes");
         parser.handleWayTags(edgeId, access, way, null);
         assertTrue(busAccessEnc.getBool(false, edgeId, access));
         assertFalse(busAccessEnc.getBool(true, edgeId, access));
+
+        // oneway:bus=-1 reverses the direction for buses
+        access = new ArrayEdgeIntAccess(1);
+        way = new ReaderWay(0);
+        way.setTag("highway", "primary");
+        way.setTag("oneway:bus", "-1");
+        parser.handleWayTags(edgeId, access, way, null);
+        assertFalse(busAccessEnc.getBool(false, edgeId, access));
+        assertTrue(busAccessEnc.getBool(true, edgeId, access));
+
+        // oneway:bus=-1 overrides a generic oneway=yes
+        access = new ArrayEdgeIntAccess(1);
+        way = new ReaderWay(0);
+        way.setTag("highway", "primary");
+        way.setTag("oneway", "yes");
+        way.setTag("oneway:bus", "-1");
+        parser.handleWayTags(edgeId, access, way, null);
+        assertFalse(busAccessEnc.getBool(false, edgeId, access));
+        assertTrue(busAccessEnc.getBool(true, edgeId, access));
     }
 
     @Test
@@ -333,6 +354,35 @@ class BusModeAccessParserTest {
         way.setTag("highway", "motorway");
         parser.handleWayTags(edgeId, access, way, null);
         assertTrue(busAccessEnc.getBool(false, edgeId, access));
+        assertFalse(busAccessEnc.getBool(true, edgeId, access));
+    }
+
+    @Test
+    public void onewayNoOverridesMotorwayImpliedOneway() {
+        // Motorways imply oneway, but oneway=no is a legitimate override for
+        // single-carriageway motorway sections with oncoming traffic (exists in OSM).
+        int edgeId = 0;
+        ArrayEdgeIntAccess access = new ArrayEdgeIntAccess(1);
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "motorway");
+        way.setTag("oneway", "no");
+        parser.handleWayTags(edgeId, access, way, null);
+        assertTrue(busAccessEnc.getBool(false, edgeId, access));
+        assertTrue(busAccessEnc.getBool(true, edgeId, access));
+    }
+
+    @Test
+    public void busForwardNoOnOnewayStreetBlocksBusEntirely() {
+        // oneway=yes already closes backward for everyone; bus:forward=no closes the
+        // only remaining direction for buses. Net effect: buses cannot traverse this way.
+        int edgeId = 0;
+        ArrayEdgeIntAccess access = new ArrayEdgeIntAccess(1);
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "primary");
+        way.setTag("oneway", "yes");
+        way.setTag("bus:forward", "no");
+        parser.handleWayTags(edgeId, access, way, null);
+        assertFalse(busAccessEnc.getBool(false, edgeId, access));
         assertFalse(busAccessEnc.getBool(true, edgeId, access));
     }
 }

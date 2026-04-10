@@ -68,7 +68,7 @@ public class ModeAccessParser implements TagParser {
     private final List<String> restrictionKeys;
     private final List<String> vehicleForward;
     private final List<String> vehicleBackward;
-    private final List<String> ignoreOnewayKeys;
+    private final List<String> onewayModeKeys;
     private final BooleanEncodedValue accessEnc;
     private final BooleanEncodedValue roundaboutEnc;
     private final boolean skipEmergency;
@@ -81,7 +81,7 @@ public class ModeAccessParser implements TagParser {
         this.restrictionKeys = restrictionKeys;
         vehicleForward = restrictionKeys.stream().map(r -> r + ":forward").toList();
         vehicleBackward = restrictionKeys.stream().map(r -> r + ":backward").toList();
-        ignoreOnewayKeys = restrictionKeys.stream().map(r -> "oneway:" + r).toList();
+        onewayModeKeys = restrictionKeys.stream().map(r -> "oneway:" + r).toList();
         this.skipEmergency = skipEmergency;
 
         this.intended = new HashSet<>(INTENDED);
@@ -183,25 +183,48 @@ public class ModeAccessParser implements TagParser {
         }
 
         boolean isRoundabout = roundaboutEnc.getBool(false, edgeId, edgeIntAccess);
-        boolean isMotorway = way.hasTag("highway", "motorway", "motorway_link");
-        boolean ignoreOneway = "no".equals(way.getFirstValue(ignoreOnewayKeys));
-        boolean isBwd = isBackwardOneway(way);
-        if (!ignoreOneway && (isBwd || isRoundabout || isMotorway || isForwardOneway(way))) {
-            accessEnc.setBool(isBwd, edgeId, edgeIntAccess, true);
-        } else {
+        if (isForwardAccessible(way))
             accessEnc.setBool(false, edgeId, edgeIntAccess, true);
+        if (isBackwardAccessible(way, isRoundabout))
             accessEnc.setBool(true, edgeId, edgeIntAccess, true);
-        }
-
     }
 
-    protected boolean isBackwardOneway(ReaderWay way) {
-        // vehicle:forward=no is like oneway=-1
-        return way.hasTag("oneway", "-1") || "no".equals(way.getFirstValue(vehicleForward));
+    /**
+     * The two directions are computed independently so that blockings from different
+     * tag families stack: e.g. oneway=yes closing backward plus bus:forward=no closing
+     * forward leaves a bus with nowhere to go, rather than being treated as a single
+     * backward-oneway by the dominant rule.
+     * <p>
+     * Within each direction, rules are evaluated top-to-bottom; the first rule that
+     * matches wins. More-specific tags come first, so a mode-specific tag always beats
+     * a generic one.
+     */
+    private boolean isForwardAccessible(ReaderWay way) {
+        String modeOneway = way.getFirstValue(onewayModeKeys);
+        // 1. explicit per-mode oneway override: oneway:<mode>=yes/-1/no
+        if ("no".equals(modeOneway)) return true;
+        if (ONEWAYS_FW.contains(modeOneway)) return true;
+        if ("-1".equals(modeOneway)) return false;
+        // 2. mode-specific directional prohibition: <mode>:forward=no
+        if ("no".equals(way.getFirstValue(vehicleForward))) return false;
+        // 3. generic oneway tag (forward direction is only closed by oneway=-1;
+        //    motorway/roundabout imply forward-oneway, which leaves forward open)
+        return !way.hasTag("oneway", "-1");
     }
 
-    protected boolean isForwardOneway(ReaderWay way) {
-        // vehicle:backward=no is like oneway=yes
-        return way.hasTag("oneway", ONEWAYS_FW) || "no".equals(way.getFirstValue(vehicleBackward));
+    private boolean isBackwardAccessible(ReaderWay way, boolean isRoundabout) {
+        String modeOneway = way.getFirstValue(onewayModeKeys);
+        // 1. explicit per-mode oneway override
+        if ("no".equals(modeOneway)) return true;
+        if (ONEWAYS_FW.contains(modeOneway)) return false;
+        if ("-1".equals(modeOneway)) return true;
+        // 2. mode-specific directional prohibition: <mode>:backward=no
+        if ("no".equals(way.getFirstValue(vehicleBackward))) return false;
+        // 3. generic oneway tag, then implied oneway from highway type / roundabout.
+        //    oneway=no explicitly relaxes the motorway/roundabout implication.
+        if (way.hasTag("oneway", ONEWAYS_FW)) return false;
+        if (way.hasTag("oneway", "no")) return true;
+        if (way.hasTag("highway", "motorway", "motorway_link")) return false;
+        return !isRoundabout;
     }
 }
