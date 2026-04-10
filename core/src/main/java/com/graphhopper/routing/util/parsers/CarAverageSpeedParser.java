@@ -89,6 +89,10 @@ public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements
         defaultSpeedMap.put("road", 20);
         // forestry stuff
         defaultSpeedMap.put("track", 15);
+        // seasonal roads passable only in winter (#3339)
+        defaultSpeedMap.put("winter_road", 25);
+        // roads built on ice — stricter real-world speed limits apply (#3339)
+        defaultSpeedMap.put("ice_road", 20);
 
         trackTypeSpeedMap.put("grade1", 20); // paved
         trackTypeSpeedMap.put("grade2", 15); // now unpaved - gravel mixed with ...

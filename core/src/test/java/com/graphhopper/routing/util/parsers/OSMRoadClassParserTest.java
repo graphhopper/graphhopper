@@ -45,6 +45,18 @@ public class OSMRoadClassParserTest {
         intAccess = new ArrayEdgeIntAccess(1);
         parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
         assertEquals(RoadClass.CYCLEWAY, rcEnc.getEnum(false, edgeId, intAccess));
+
+        readerWay = new ReaderWay(1);
+        readerWay.setTag("highway", "winter_road");
+        intAccess = new ArrayEdgeIntAccess(1);
+        parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
+        assertEquals(RoadClass.WINTER_ROAD, rcEnc.getEnum(false, edgeId, intAccess));
+
+        readerWay = new ReaderWay(1);
+        readerWay.setTag("highway", "ice_road");
+        intAccess = new ArrayEdgeIntAccess(1);
+        parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
+        assertEquals(RoadClass.ICE_ROAD, rcEnc.getEnum(false, edgeId, intAccess));
     }
 
     @Test
