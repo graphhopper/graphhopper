@@ -68,7 +68,8 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
 
         highwayValues.addAll(Arrays.asList("motorway", "motorway_link", "trunk", "trunk_link",
                 "primary", "primary_link", "secondary", "secondary_link", "tertiary", "tertiary_link",
-                "unclassified", "residential", "living_street", "service", "road", "track", "pedestrian"));
+                "unclassified", "residential", "living_street", "service", "road", "track", "pedestrian",
+                "winter_road", "ice_road"));
 
         trackTypeValues.addAll(Arrays.asList("grade1", "grade2", "grade3", null));
     }

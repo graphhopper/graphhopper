@@ -760,4 +760,48 @@ public class CarTagParserTest {
         way.setTag("motor_vehicle:conditional", "destination @ ( 8:00 - 10:00 )");
         assertTrue(parser.getAccess(way).isWay());
     }
+
+    @Test
+    void testWinterRoadAccess() {
+        // highway=winter_road must be routable by car; without an explicit entry in
+        // CarAccessParser.highwayValues, getAccess() returns CAN_SKIP and the speed
+        // entries added in CarAverageSpeedParser become unreachable dead code.
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "winter_road");
+        assertTrue(parser.getAccess(way).isWay());
+    }
+
+    @Test
+    void testIceRoadAccess() {
+        // Same as testWinterRoadAccess for ice_road — roads whose surface is frozen water.
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "ice_road");
+        assertTrue(parser.getAccess(way).isWay());
+    }
+
+    @Test
+    void testWinterRoadSpeed() {
+        // winter_road=24 km/h in CarAverageSpeedParser.
+        // VehicleSpeed uses factor=2 (even-number encoding); 24 is the correct stored value.
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "winter_road");
+        int edgeId = 0;
+        EdgeIntAccess edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
+        parser.handleWayTags(edgeId, edgeIntAccess, way);
+        speedParser.handleWayTags(edgeId, edgeIntAccess, way, em.createRelationFlags());
+        assertEquals(24, avSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), 1e-1);
+    }
+
+    @Test
+    void testIceRoadSpeed() {
+        // ice_road=20 km/h — roads on frozen water carry higher catastrophic-failure risk
+        // than winter_road; the 4 km/h differential encodes a meaningful hazard distinction.
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "ice_road");
+        int edgeId = 0;
+        EdgeIntAccess edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
+        parser.handleWayTags(edgeId, edgeIntAccess, way);
+        speedParser.handleWayTags(edgeId, edgeIntAccess, way, em.createRelationFlags());
+        assertEquals(20, avSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), 1e-1);
+    }
 }
