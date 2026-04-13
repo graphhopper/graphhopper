@@ -361,20 +361,16 @@ public class CustomModelParser {
             return "String prev_street_name = graph.getEdgeIteratorState(inEdge, Integer.MIN_VALUE).getName();\n"; // TODO PERF
         } else if (lookup.hasEncodedValue(arg)) {
             EncodedValue enc = lookup.getEncodedValue(arg, EncodedValue.class);
-            if (!(enc instanceof EnumEncodedValue<?>))
-                throw new IllegalArgumentException("Currently only EnumEncodedValues are supported: " + arg);
-
+            String reverseExpr = needTwoDirections ? "outEdgeReverse" : "false";
             return getReturnType(enc) + " " + arg + " = (" + getReturnType(enc) + ") " +
-                    "this." + arg + "_enc.getEnum(" + (needTwoDirections ? "outEdgeReverse" : "false") + ", outEdge, edgeIntAccess);\n";
+                    getTurnPenaltyAccessor(enc, arg, reverseExpr, "outEdge") + ";\n";
         } else if (arg.startsWith(PREV_PREFIX)) {
             final String argSubstr = arg.substring(PREV_PREFIX.length());
             if (lookup.hasEncodedValue(argSubstr)) {
                 EncodedValue enc = lookup.getEncodedValue(argSubstr, EncodedValue.class);
-                if (!(enc instanceof EnumEncodedValue<?>))
-                    throw new IllegalArgumentException("Currently only EnumEncodedValues are supported: " + arg);
-
+                String reverseExpr = needTwoDirections ? "inEdgeReverse" : "false";
                 return getReturnType(enc) + " " + arg + " = (" + getReturnType(enc) + ") " +
-                        "this." + argSubstr + "_enc.getEnum(" + (needTwoDirections ? "inEdgeReverse" : "false") + ", inEdge, edgeIntAccess);\n";
+                        getTurnPenaltyAccessor(enc, argSubstr, reverseExpr, "inEdge") + ";\n";
             } else {
                 throw new IllegalArgumentException("Not supported for prev: " + argSubstr);
             }
@@ -392,6 +388,22 @@ public class CustomModelParser {
         if (enc instanceof StringEncodedValue) return IntEncodedValue.class.getSimpleName();
         if (enc.getClass().getInterfaces().length == 0) return enc.getClass().getSimpleName();
         return enc.getClass().getInterfaces()[0].getSimpleName();
+    }
+
+    /**
+     * @return the accessor method call for the given EncodedValue used in turn penalty code, e.g.
+     * "this.road_class_enc.getEnum(reverse, edgeId, edgeIntAccess)" for EnumEncodedValue.
+     */
+    private static String getTurnPenaltyAccessor(EncodedValue enc, String fieldName, String reverseExpr, String edgeExpr) {
+        String method;
+        // order is important: EnumEncodedValue and BooleanEncodedValue extend IntEncodedValueImpl
+        if (enc instanceof EnumEncodedValue) method = "getEnum";
+        else if (enc instanceof BooleanEncodedValue) method = "getBool";
+        else if (enc instanceof DecimalEncodedValue) method = "getDecimal";
+        else if (enc instanceof IntEncodedValue) method = "getInt";
+        else throw new IllegalArgumentException("Unsupported EncodedValue for turn penalty: " + enc.getClass());
+
+        return "this." + fieldName + "_enc." + method + "(" + reverseExpr + ", " + edgeExpr + ", edgeIntAccess)";
     }
 
     private static String getReturnType(EncodedValue encodedValue) {
