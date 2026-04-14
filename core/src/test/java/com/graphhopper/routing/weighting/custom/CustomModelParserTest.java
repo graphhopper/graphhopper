@@ -365,6 +365,42 @@ class CustomModelParserTest {
     }
 
     @Test
+    void testBooleanTurnPenalty() {
+        CustomModel customModel = new CustomModel();
+        customModel.addToSpeed(If("true", LIMIT, "100"));
+        customModel.addToTurnPenalty(If("!prev_car_access || !car_access", ADD, "100"));
+        CustomWeighting.TurnPenaltyMapping turnPenaltyMapping = CustomModelParser.createWeightingParameters(customModel, encodingManager).
+                getTurnPenaltyMapping();
+
+        BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
+        EdgeIteratorState edge1 = graph.edge(0, 1).setDistance(100).set(accessEnc, true, true);
+        EdgeIteratorState edge2 = graph.edge(1, 2).setDistance(100).set(accessEnc, true, true);
+        EdgeIteratorState edge3 = graph.edge(2, 3).setDistance(100).set(accessEnc, false, false);
+
+        assertEquals(0, turnPenaltyMapping.get(graph, graph.getEdgeAccess(), edge1.getEdge(), 1, edge2.getEdge()));
+        assertEquals(100, turnPenaltyMapping.get(graph, graph.getEdgeAccess(), edge2.getEdge(), 2, edge3.getEdge()));
+    }
+
+    @Test
+    void testDirectionalBooleanTurnPenalty() {
+        CustomModel customModel = new CustomModel();
+        customModel.addToSpeed(If("true", LIMIT, "100"));
+        // penalize entering an edge we can't traverse in our direction of travel
+        customModel.addToTurnPenalty(If("!car_access", ADD, "100"));
+        CustomWeighting.TurnPenaltyMapping turnPenaltyMapping = CustomModelParser.createWeightingParameters(customModel, encodingManager).
+                getTurnPenaltyMapping();
+
+        BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
+        EdgeIteratorState edge1 = graph.edge(0, 1).setDistance(100).set(accessEnc, true, true);
+        // edge2 stored 1->2: accessible in the forward (1->2) direction only
+        EdgeIteratorState edge2 = graph.edge(1, 2).setDistance(100).set(accessEnc, true, false);
+
+        // Turn at node 1: we go 0 -> 1 (edge1) -> 2 (edge2, forward direction).
+        // edge2 is accessible in that direction, so no penalty should apply.
+        assertEquals(0, turnPenaltyMapping.get(graph, graph.getEdgeAccess(), edge1.getEdge(), 1, edge2.getEdge()));
+    }
+
+    @Test
     void testStreetNameTurnPenalty() {
         CustomModel customModel = new CustomModel();
         customModel.addToSpeed(If("true", LIMIT, "100"));

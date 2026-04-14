@@ -304,7 +304,7 @@ public class CustomModelParser {
             // but is slightly less safe as it cannot check that at least one node must be
             // identical (the case where getEdgeIteratorState returns null)
             turnPenaltyMethodStartBlock += "boolean inEdgeReverse = !graph.isAdjNode(inEdge, viaNode);\n" +
-                    "boolean outEdgeReverse = !graph.isAdjNode(outEdge, viaNode);\n";
+                    "boolean outEdgeReverse = graph.isAdjNode(outEdge, viaNode);\n";
         }
 
         for (String arg : turnPenaltyVariables) {
@@ -354,7 +354,9 @@ public class CustomModelParser {
         // parameters in method getTurnPenalty are: int inEdge, int viaNode, int outEdge.
         // The variables outEdgeReverse and inEdgeReverse are provided from initial calls if needTwoDirections is true.
         if (arg.equals(CHANGE_ANGLE)) {
-            return "double change_angle = CustomWeightingHelper.calcChangeAngle(edgeIntAccess, this.orientation_enc, inEdge, inEdgeReverse, outEdge, outEdgeReverse);\n";
+            // calcChangeAngle expects the orientation slot at the viaNode side of outEdge (see OrientationCalculator);
+            // since outEdgeReverse now means direction of travel, invert it here.
+            return "double change_angle = CustomWeightingHelper.calcChangeAngle(edgeIntAccess, this.orientation_enc, inEdge, inEdgeReverse, outEdge, !outEdgeReverse);\n";
         } else if (arg.equals(STREET_NAME)) {
             return "String street_name = graph.getEdgeIteratorState(outEdge, Integer.MIN_VALUE).getName();\n"; // TODO PERF: get ref into KVStorage without creation of EdgeIteratorState
         } else if (arg.equals(PREV_PREFIX + STREET_NAME)) {
