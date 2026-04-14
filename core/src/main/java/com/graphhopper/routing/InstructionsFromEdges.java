@@ -48,6 +48,13 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
     private final IntEncodedValue lanesEnc;
     private final DecimalEncodedValue maxSpeedEnc;
 
+    /**
+     * True when the current instruction started on an unnamed link road and we want to
+     * replace its blank name later with the first suitable named non-link major road
+     * encountered on the actual routed continuation of the same instruction.
+     */
+    private boolean prevInstructionNeedsNameFallback;
+
     /*
      * We need three points to make directions
      *
@@ -99,6 +106,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         prevInRoundabout = false;
         prevName = null;
         prevRoadEnv = null;
+        prevInstructionNeedsNameFallback = false;
 
         BooleanEncodedValue carAccessEnc = evLookup.getBooleanEncodedValue(VehicleAccess.key("car"));
         outEdgeExplorer = graph.createEdgeExplorer(edge -> edge.get(carAccessEnc));
@@ -170,6 +178,10 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             double heading = AngleCalc.ANGLE_CALC.calcAzimuth(startLat, startLon, latitude, longitude);
             prevInstruction.setExtraInfo("heading", Helper.round(heading, 2));
             ways.add(prevInstruction);
+
+            // If the route starts on an unnamed link road, keep a deferred fallback pending.
+            prevInstructionNeedsNameFallback = isBlank(name) && isLinkRoad(edge);
+
             prevName = name;
             prevRoadEnv = roadEnv;
             prevDestinationAndRef = destination + destinationRef;
@@ -213,6 +225,9 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                 ways.add(prevInstruction);
             }
 
+            // once in roundabout, deferred fallback should not leak into roundabout instructions
+            prevInstructionNeedsNameFallback = false;
+
             // Add passed exits to instruction. A node is counted if there is at least one outgoing edge
             // out of the roundabout
             EdgeIterator edgeIter = outEdgeExplorer.setBaseNode(edge.getAdjNode());
@@ -225,7 +240,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
 
         } else if (prevInRoundabout) //previously in roundabout but not anymore
         {
-            prevInstruction.setName(name);
+            prevInstruction.setName(name == null ? "" : name);
             prevInstruction.setExtraInfo(STREET_REF, ref);
             prevInstruction.setExtraInfo(STREET_DESTINATION, destination);
             prevInstruction.setExtraInfo(STREET_DESTINATION_REF, destinationRef);
@@ -248,6 +263,9 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                     .setDirOfRotation(deltaOut)
                     .setExited();
 
+            // exiting roundabout: no deferred fallback from previous instruction
+            prevInstructionNeedsNameFallback = false;
+
             prevInstructionName = prevName;
             prevName = name;
             prevRoadEnv = roadEnv;
@@ -255,6 +273,18 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
 
         } else {
             int sign = getTurn(edge, baseNode, prevNode, adjNode, name, destination + destinationRef);
+
+            if (prevInstructionNeedsNameFallback
+                    && sign == Instruction.IGNORE
+                    && isMajorNonLinkRoad(edge)
+                    && hasUsableRoadLabel(name, ref)
+                    && !hasDestinationInfo(prevInstruction)) {
+
+                prevInstruction.setName(name);
+                prevInstruction.setExtraInfo(STREET_REF, ref);
+                prevInstructionNeedsNameFallback = false;
+            }
+
             if (sign != Instruction.IGNORE) {
                 /*
                     Check if the next instruction is likely to only be a short connector to execute a u-turn
@@ -297,12 +327,17 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                 if (isUTurn) {
                     prevInstruction.setSign(uTurnType);
                     prevInstruction.setName(name);
+                    prevInstructionNeedsNameFallback = false;
                 } else {
+                    boolean needsDeferredFallback = isBlank(name) && isLinkRoad(edge);
+
                     prevInstruction = new Instruction(sign, name, new PointList(10, nodeAccess.is3D()));
                     // Remember the Orientation and name of the road, before doing this maneuver
                     prevInstructionPrevOrientation = prevOrientation;
                     prevInstructionName = prevName;
                     ways.add(prevInstruction);
+
+                    prevInstructionNeedsNameFallback = needsDeferredFallback;
                 }
                 prevInstruction.setExtraInfo(STREET_REF, ref);
                 prevInstruction.setExtraInfo(STREET_DESTINATION, destination);
@@ -479,6 +514,37 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             prevInstruction.setTime(GHUtility.calcMillisWithTurnMillis(weighting, edge, false, prevEdge.getEdge()) + prevInstruction.getTime());
         else
             prevInstruction.setTime(weighting.calcEdgeMillis(edge, false) + prevInstruction.getTime());
+    }
+
+    private boolean isLinkRoad(EdgeIteratorState edge) {
+        return edge.get(roadClassLinkEnc);
+    }
+
+    private boolean hasUsableRoadLabel(String name, String ref) {
+        return !isBlank(name) || !isBlank(ref);
+    }
+
+    private boolean isMajorNonLinkRoad(EdgeIteratorState edge) {
+        if (edge.get(roadClassLinkEnc)) return false;
+
+        RoadClass rc = edge.get(roadClassEnc);
+        return rc == RoadClass.MOTORWAY
+                || rc == RoadClass.TRUNK
+                || rc == RoadClass.PRIMARY
+                || rc == RoadClass.SECONDARY
+                || rc == RoadClass.TERTIARY;
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.isBlank();
+    }
+
+    private boolean hasDestinationInfo(Instruction instruction) {
+        String destination = (String) instruction.getExtraInfoJSON().get(STREET_DESTINATION);
+        String destinationRef = (String) instruction.getExtraInfoJSON().get(STREET_DESTINATION_REF);
+        String motorwayJunction = (String) instruction.getExtraInfoJSON().get(MOTORWAY_JUNCTION);
+
+        return !isBlank(destination) || !isBlank(destinationRef) || !isBlank(motorwayJunction);
     }
 
 }

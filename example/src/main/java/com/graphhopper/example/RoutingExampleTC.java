@@ -50,7 +50,7 @@ public class RoutingExampleTC {
                 .putHint(Parameters.CH.DISABLE, true)
                 .setProfile("car");
         route(hopper, req.putHint(Parameters.Routing.U_TURN_COSTS, 10), 1370, 89_500);
-        route(hopper, req.putHint(Parameters.Routing.U_TURN_COSTS, 100), 1730, 112_000);
+        route(hopper, req.putHint(Parameters.Routing.U_TURN_COSTS, 100), 1730, 112_000);  // be aware there is a shorter (but slower) alternative with very similar weight via Avinguda de Tarragona
         route(hopper, req.putHint(Parameters.Routing.U_TURN_COSTS, 200), 1730, 112_000);
     }
 

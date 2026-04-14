@@ -185,6 +185,22 @@ public class RouteResourceTest {
     }
 
     @Test
+    public void testQueryWithViaPointInstructions() {
+        JsonNode json = clientTarget(app, 
+            "/route?profile=my_car&point=42.554851,1.536198&point=42.526351,1.526435&point=42.510071,1.548128&via_point_instructions=true")
+            .request().get(JsonNode.class);
+        JsonNode infoJson = json.get("info");
+        assertFalse(infoJson.has("errors"));
+        JsonNode instructions = json.get("paths").get(0).get("instructions");
+        boolean foundViaPointInstruction = false;
+        for(int i = 0; i < instructions.size(); i++) {
+            if(instructions.get(i).get("sign").asInt() == 5) foundViaPointInstruction = true;
+        }
+        
+        assertTrue(foundViaPointInstruction, "No via point instructions were found");
+    }
+
+    @Test
     public void testCHWithHeading_error() {
         // There are special cases where heading works with node-based CH, but generally it leads to wrong results -> we expect an error
         BodyAndStatus response = getWithStatus(clientTarget(app, "/route?profile=my_car&"

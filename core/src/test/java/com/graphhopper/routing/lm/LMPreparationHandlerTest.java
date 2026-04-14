@@ -33,8 +33,8 @@ public class LMPreparationHandlerTest {
     public void maximumLMWeight() {
         LMPreparationHandler handler = new LMPreparationHandler();
         handler.setLMProfiles(
-                new LMProfile("conf1").setMaximumLMWeight(65_000),
-                new LMProfile("conf2").setMaximumLMWeight(20_000)
+                new LMProfile("conf1").setMaximumLMWeight(650_000),
+                new LMProfile("conf2").setMaximumLMWeight(200_000)
         );
         DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
         EncodingManager em = EncodingManager.start().add(speedEnc).build();
@@ -46,9 +46,9 @@ public class LMPreparationHandlerTest {
         List<LandmarkStorage> storages = lmConfigs.stream()
                 .map(c -> new LandmarkStorage(graph, em, new GHDirectory("", DAType.RAM), c, 16))
                 .toList();
-        List<PrepareLandmarks> preparations = handler.createPreparations(storages, graph, null);
-        assertEquals(1, preparations.get(0).getLandmarkStorage().getFactor(), .1);
-        assertEquals(0.3, preparations.get(1).getLandmarkStorage().getFactor(), .1);
+        List<PrepareLandmarks> preparations = handler.createPreparations(storages, new BaseGraph.Builder(em).build(), null);
+        assertEquals(10, preparations.get(0).getLandmarkStorage().getFactor(), .1);
+        assertEquals(3, preparations.get(1).getLandmarkStorage().getFactor(), .1);
     }
 
     @Test
