@@ -76,7 +76,7 @@ public class PrepareContractionHierarchies {
     }
 
     public static PrepareContractionHierarchies fromGraphWithExistingStorage(BaseGraph graph, CHConfig chConfig, CHStorage chStorage) {
-        return new PrepareContractionHierarchies(graph.getBaseGraph(), chConfig, CHStorage.fromGraph(graph.getBaseGraph(), chStorage));
+        return new PrepareContractionHierarchies(graph.getBaseGraph(), chConfig, chStorage);
     }
 
     private PrepareContractionHierarchies(BaseGraph graph, CHConfig chConfig, CHStorage chStore) {

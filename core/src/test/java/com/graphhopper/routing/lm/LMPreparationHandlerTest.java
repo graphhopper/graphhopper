@@ -46,7 +46,7 @@ public class LMPreparationHandlerTest {
         List<LandmarkStorage> storages = lmConfigs.stream()
                 .map(c -> new LandmarkStorage(graph, em, new GHDirectory("", DAType.RAM), c, 16))
                 .toList();
-        List<PrepareLandmarks> preparations = handler.createPreparations(storages, new BaseGraph.Builder(em).build(), null);
+        List<PrepareLandmarks> preparations = handler.createPreparations(storages, graph, null);
         assertEquals(10, preparations.get(0).getLandmarkStorage().getFactor(), .1);
         assertEquals(3, preparations.get(1).getLandmarkStorage().getFactor(), .1);
     }

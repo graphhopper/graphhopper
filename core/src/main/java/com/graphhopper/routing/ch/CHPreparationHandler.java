@@ -109,7 +109,7 @@ public class CHPreparationHandler {
                     if (chStorage.loadExisting())
                         loaded.put(c.getName(), RoutingCHGraphImpl.fromGraph(graph, chStorage, c));
                     else
-                        notLoadedSync.put(c, chStorage);
+                        notLoadedSync.put(c, CHStorage.fromGraph(graph, chStorage));
                 });
         GHUtility.runConcurrently(runnables, preparationThreads);
         return loaded;
@@ -146,11 +146,5 @@ public class CHPreparationHandler {
         GHUtility.runConcurrently(runnables.stream(), preparationThreads);
         LOGGER.info("Finished CH preparation, {}", getMemInfo());
         return results;
-    }
-
-    private PrepareContractionHierarchies createCHPreparation(BaseGraph graph, CHConfig chConfig) {
-        PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraph(graph, chConfig);
-        pch.setParams(pMap);
-        return pch;
     }
 }
