@@ -107,6 +107,13 @@ public class ModeAccessParser implements TagParser {
     @Override
     public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
         String highwayValue = way.getTag("highway");
+        if (highwayValue != null || FerrySpeedCalculator.isFerry(way)) {
+            handleHighwayAndFerryTags(edgeId, edgeIntAccess, way, highwayValue);
+        }
+        // don't want platforms and other random stuff here for now
+    }
+
+    private void handleHighwayAndFerryTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, String highwayValue) {
         if (skipEmergency && "service".equals(highwayValue) && "emergency_access".equals(way.getTag("service")))
             return;
 
