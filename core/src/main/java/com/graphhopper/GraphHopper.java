@@ -21,6 +21,7 @@ import com.bedatadriven.jackson.datatype.jts.JtsModule;
 import com.carrotsearch.hppc.BitSet;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.LongArrayList;
+import com.carrotsearch.hppc.cursors.IntCursor;
 import com.carrotsearch.hppc.sorting.IndirectSort;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.config.CHProfile;
@@ -38,6 +39,7 @@ import com.graphhopper.routing.lm.LMConfig;
 import com.graphhopper.routing.lm.LMPreparationHandler;
 import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.lm.PrepareLandmarks;
+import com.graphhopper.routing.subnetwork.EdgeBasedTarjanSCC;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks.PrepareJob;
 import com.graphhopper.routing.util.*;
@@ -911,6 +913,8 @@ public class GraphHopper {
         // must also be applied to the corresponding artificial edge.
         calculateUrbanDensity();
 
+        calculateSoftblocks();
+
         if (maxSpeedCalculator != null) {
             maxSpeedCalculator.fillMaxSpeed(getBaseGraph(), encodingManager);
             maxSpeedCalculator.close();
@@ -926,6 +930,60 @@ public class GraphHopper {
 
         if (sortGraph)
             sortGraphAlongHilbertCurve(baseGraph);
+    }
+
+    private void calculateSoftblocks() {
+        if (encodingManager.hasEncodedValue(IsSoftblockedAtEntry.KEY) && encodingManager.hasEncodedValue(RoadAccess.KEY) && encodingManager.hasEncodedValue(VehicleAccess.key("car"))) {
+            calculateSoftblocks1(RoadAccess.DELIVERY);
+            calculateSoftblocks1(RoadAccess.DESTINATION);
+        }
+    }
+
+    private void calculateSoftblocks1(RoadAccess access) {
+        BooleanEncodedValue isSoftblockedAtEntry = encodingManager.getBooleanEncodedValue(IsSoftblockedAtEntry.KEY);
+        EnumEncodedValue<RoadAccess> roadAccess = encodingManager.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
+        BooleanEncodedValue carAccess = encodingManager.getBooleanEncodedValue(VehicleAccess.key("car"));
+
+        logger.info("Setting {}-captured edges to {}", access, access);
+        EdgeBasedTarjanSCC.ConnectedComponents components = EdgeBasedTarjanSCC.findComponents(baseGraph, (prevEdge, edgeState) -> edgeState.get(roadAccess) != access, false);
+        BitSet singleEdgeComponents = components.getSingleEdgeComponents();
+        AllEdgesIterator allEdges = baseGraph.getAllEdges();
+        while (allEdges.next()) {
+            if (singleEdgeComponents.get(allEdges.getEdge() * 2) || singleEdgeComponents.get(allEdges.getEdge() * 2 + 1))
+                allEdges.set(roadAccess, access);
+        }
+        for (IntArrayList component : components.getComponents()) {
+            logger.info("Size {} component", component.size());
+            if (component.size() < 100) {
+                for (IntCursor edgeKey : component) {
+                    EdgeIteratorState edge = baseGraph.getEdgeIteratorStateForKey( (edgeKey.value / 2) * 2);
+                    edge.set(roadAccess, access);
+                }
+            }
+        }
+
+        logger.info("Softblocking {} edges by setting an entry penalty bit", access);
+        allEdges = baseGraph.getAllEdges();
+        while (allEdges.next()) {
+            if (allEdges.get(roadAccess) == access) {
+                EdgeExplorer edgeExplorer = baseGraph.createEdgeExplorer();
+                EdgeIterator edgeIterator = edgeExplorer.setBaseNode(allEdges.getBaseNode());
+                boolean fwdNeedsSoftblockAtEntry = needsSoftblock(edgeIterator, roadAccess, carAccess);
+                edgeIterator = edgeExplorer.setBaseNode(allEdges.getAdjNode());
+                boolean bwdNeedsSoftblockAtEntry = needsSoftblock(edgeIterator, roadAccess, carAccess);
+                allEdges.set(isSoftblockedAtEntry, fwdNeedsSoftblockAtEntry, bwdNeedsSoftblockAtEntry);
+            }
+        }
+        logger.info("Done.");
+    }
+
+    private static boolean needsSoftblock(EdgeIterator edgeIterator, EnumEncodedValue<RoadAccess> roadAccess, BooleanEncodedValue carAccess) {
+        while (edgeIterator.next()) {
+            if (edgeIterator.get(carAccess) && edgeIterator.get(roadAccess) != RoadAccess.DESTINATION) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void calculateSlope() {
