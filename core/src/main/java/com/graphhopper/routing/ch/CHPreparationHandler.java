@@ -109,7 +109,7 @@ public class CHPreparationHandler {
                     if (chStorage.loadExisting())
                         loaded.put(c.getName(), RoutingCHGraphImpl.fromGraph(graph, chStorage, c));
                     else
-                        notLoadedSync.put(c, CHStorage.fromGraph(graph, chStorage));
+                        notLoadedSync.put(c, chStorage);
                 });
         GHUtility.runConcurrently(runnables, preparationThreads);
         return loaded;
