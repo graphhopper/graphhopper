@@ -18,12 +18,22 @@ public class ModeAccessParser implements TagParser {
     private static final Set<String> CAR_BARRIERS = Set.of("kissing_gate", "fence",
             "bollard", "stile", "turnstile", "cycle_barrier", "motorcycle_barrier", "block",
             "bus_trap", "sump_buster", "jersey_barrier");
-    private static final Set<String> INTENDED = Set.of("yes", "designated", "official", "permissive", "private", "permit");
+    private static final Set<String> INTENDED = Set.of("yes", "designated", "official", "permissive", "private", "permit", "destination");
     static final Map<String, Map<String, String>> HIGHWAY_TYPE_DEFAULTS;
     static final Map<String, Map<String, String>> BARRIER_TYPE_DEFAULTS;
 
+    // default implied access for unknown highway types
+    private static final Map<String, String> UNKNOWN_HIGHWAY_DEFAULT = Map.of("access", "no");
+
     static {
         Map<String, Map<String, String>> m = new HashMap<>();
+        // routable highway types with no special access defaults (empty map = fully accessible)
+        for (String hw : List.of("motorway", "motorway_link", "trunk", "trunk_link",
+                "primary", "primary_link", "secondary", "secondary_link",
+                "tertiary", "tertiary_link", "unclassified", "residential",
+                "living_street", "service", "road", "track"))
+            m.put(hw, Map.of());
+        // routable highway types with specific access defaults
         m.put("steps", Map.of("access", "no"));
         m.put("footway", Map.of("motor_vehicle", "no"));
         m.put("cycleway", Map.of("motor_vehicle", "no"));
@@ -68,10 +78,12 @@ public class ModeAccessParser implements TagParser {
     @Override
     public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
         String highwayValue = way.getTag("highway");
+        if (highwayValue == null && !FerrySpeedCalculator.isFerry(way))
+            return;
         if (skipEmergency && "service".equals(highwayValue) && "emergency_access".equals(way.getTag("service")))
             return;
 
-        Map<String, String> defaults = highwayValue == null ? Map.of() : HIGHWAY_TYPE_DEFAULTS.getOrDefault(highwayValue, Map.of());
+        Map<String, String> defaults = highwayValue == null ? Map.of() : HIGHWAY_TYPE_DEFAULTS.getOrDefault(highwayValue, UNKNOWN_HIGHWAY_DEFAULT);
         int firstIndex = -1;
         String firstValue = "";
         for (int i = 0; i < restrictionKeys.size(); i++) {
@@ -84,11 +96,12 @@ public class ModeAccessParser implements TagParser {
             }
             String implied = defaults.get(key);
             if (implied != null) {
+                firstIndex = i;
                 firstValue = implied;
                 break;
             }
         }
-        if (restrictedValues.contains(firstValue) && !hasPermissiveTemporalRestriction(way, firstIndex, restrictionKeys, INTENDED))
+        if (isRestricted(firstValue) && !hasPermissiveTemporalRestriction(way, firstIndex, restrictionKeys, INTENDED))
             return;
 
         if (way.hasTag("gh:barrier_edge") && way.hasTag("node_tags")) {
@@ -151,5 +164,22 @@ public class ModeAccessParser implements TagParser {
     protected boolean isForwardOneway(ReaderWay way) {
         // vehicle:backward=no is like oneway=yes
         return way.hasTag("oneway", ONEWAYS_FW) || "no".equals(way.getFirstValue(vehicleBackward));
+    }
+
+    /**
+     * Handles semicolon-separated restriction values like "agricultural;forestry".
+     * Returns true (restricted) only if no part is an INTENDED value, and at least one part is restricted.
+     */
+    private boolean isRestricted(String value) {
+        if (value.isEmpty()) return false;
+        if (!value.contains(";")) return restrictedValues.contains(value);
+        String[] parts = value.split(";");
+        for (String part : parts) {
+            if (INTENDED.contains(part)) return false;
+        }
+        for (String part : parts) {
+            if (restrictedValues.contains(part)) return true;
+        }
+        return false;
     }
 }

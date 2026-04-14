@@ -54,6 +54,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @ExtendWith(DropwizardExtensionsSupport.class)
 public class RouteResourceCustomModelTest {
 
+    private static final String CAR_TRACK_RULE = "road_class == TRACK && track_type != MISSING && track_type != GRADE1 && track_type != GRADE2 && track_type != GRADE3";
     private static final String DIR = "./target/north-bayreuth-gh/";
     private static final DropwizardAppExtension<GraphHopperServerConfiguration> app = new DropwizardAppExtension<>(GraphHopperApplication.class, createConfig());
 
@@ -77,21 +78,25 @@ public class RouteResourceCustomModelTest {
                 setProfiles(List.of(
                         TestProfiles.constantSpeed("roads", 120),
                         new Profile("car").setCustomModel(TestProfiles.accessAndSpeed("unused", "car").
-                                getCustomModel().setDistanceInfluence(70d)),
+                                getCustomModel().setDistanceInfluence(70d).
+                                addToPriority(If(CAR_TRACK_RULE, MULTIPLY, "0"))),
                         new Profile("car_tc_left").setCustomModel(TestProfiles.accessAndSpeed("car_tc_left", "car").
                                         getCustomModel().setDistanceInfluence(70d).
+                                        addToPriority(If(CAR_TRACK_RULE, MULTIPLY, "0")).
                                         addToTurnPenalty(If("change_angle <= -25 && change_angle > -80", ADD, "100")).
                                         addToTurnPenalty(ElseIf("change_angle <= -80 && change_angle >= -180", ADD, "100"))).
                                 setTurnCostsConfig(new TurnCostsConfig(List.of("motor_vehicle"))),
                         new Profile("car_with_area").setCustomModel(TestProfiles.accessAndSpeed("unused", "car").
-                                getCustomModel().addToPriority(If("in_external_area52", MULTIPLY, "0.05"))),
+                                getCustomModel().addToPriority(If("in_external_area52", MULTIPLY, "0.05")).
+                                addToPriority(If(CAR_TRACK_RULE, MULTIPLY, "0"))),
                         TestProfiles.accessSpeedAndPriority("bike"),
                         new Profile("bus").setCustomModel(null).putHint("custom_model_files", List.of("bus.json")),
                         new Profile("cargo_bike").setCustomModel(null).putHint("custom_model_files", List.of("cargo_bike.json")),
                         new Profile("json_bike").setCustomModel(null).putHint("custom_model_files", List.of("bike.json", "bike_elevation.json")),
                         TestProfiles.accessSpeedAndPriority("foot_profile", "foot"),
                         new Profile("car_no_unclassified").setCustomModel(TestProfiles.accessAndSpeed("unused", "car").getCustomModel().
-                                addToPriority(If("road_class == UNCLASSIFIED", LIMIT, "0"))),
+                                addToPriority(If("road_class == UNCLASSIFIED", LIMIT, "0")).
+                                addToPriority(If(CAR_TRACK_RULE, MULTIPLY, "0"))),
                         new Profile("custom_bike").
                                 setCustomModel(TestProfiles.accessSpeedAndPriority("unused", "bike").getCustomModel().
                                         addToSpeed(If("road_class == PRIMARY", LIMIT, "28")).

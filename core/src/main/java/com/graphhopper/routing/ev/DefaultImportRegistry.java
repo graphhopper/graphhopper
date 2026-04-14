@@ -22,6 +22,8 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.parsers.*;
 import com.graphhopper.util.PMap;
 
+import java.util.Set;
+
 public class DefaultImportRegistry implements ImportRegistry {
     @Override
     public ImportUnit createImportUnit(String name) {
@@ -264,7 +266,19 @@ public class DefaultImportRegistry implements ImportRegistry {
 
         else if (VehicleAccess.key("car").equals(name))
             return ImportUnit.create(name, props -> VehicleAccess.create("car"),
-                    CarAccessParser::new,
+                    (lookup, props) -> {
+                        boolean blockPrivate = props.getBool("block_private", true);
+                        Set<String> defaultRestrictions = new java.util.HashSet<>(Set.of(
+                                "no", "restricted", "military", "emergency",
+                                "agricultural", "forestry", "delivery", "unknown"));
+                        if (blockPrivate)
+                            defaultRestrictions.addAll(Set.of("private", "permit", "service"));
+                        Set<String> restrictions = PMap.toSet(props.getString("restrictions", ""));
+                        return new ModeAccessParser(OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR),
+                                lookup.getBooleanEncodedValue(name), true, lookup.getBooleanEncodedValue(Roundabout.KEY),
+                                restrictions.isEmpty() ? defaultRestrictions : restrictions,
+                                PMap.toSet(props.getString("barriers", "")));
+                    },
                     "roundabout"
             );
         else if (VehicleAccess.key("roads").equals(name))

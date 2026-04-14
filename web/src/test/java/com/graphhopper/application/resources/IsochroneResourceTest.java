@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
+import com.graphhopper.config.Profile;
 import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.BodyAndStatus;
 import com.graphhopper.util.Helper;
@@ -45,6 +46,8 @@ import java.util.Arrays;
 
 import static com.graphhopper.application.resources.Util.getWithStatus;
 import static com.graphhopper.application.util.TestUtils.clientTarget;
+import static com.graphhopper.json.Statement.If;
+import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(DropwizardExtensionsSupport.class)
@@ -71,6 +74,11 @@ public class IsochroneResourceTest {
     @AfterAll
     public static void cleanUp() {
         Helper.removeDir(new File(DIR));
+    }
+
+    private static Profile addCarTrackRule(Profile p) {
+        p.getCustomModel().addToPriority(If("road_class == TRACK && track_type != MISSING && track_type != GRADE1 && track_type != GRADE2 && track_type != GRADE3", MULTIPLY, "0"));
+        return p;
     }
 
     private final GeometryFactory geometryFactory = new GeometryFactory();

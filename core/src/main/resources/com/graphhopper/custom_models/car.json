@@ -1,5 +1,5 @@
 // to use this custom model you need to set the following option in the config.yml
-// graph.encoded_values: car_access|block_private=false, car_average_speed, road_access, max_speed, ferry_speed
+// graph.encoded_values: car_access, car_average_speed, road_access, track_type, max_speed, ferry_speed
 // profiles:
 //    - name: car
 //      turn_costs:
@@ -9,7 +9,8 @@
 {
   "distance_influence": 90,
   "priority": [
-    { "if": "!car_access", "multiply_by": "0" }
+    { "if": "!car_access", "multiply_by": "0" },
+    { "if": "road_class == TRACK && track_type != MISSING && track_type != GRADE1 && track_type != GRADE2 && track_type != GRADE3", "multiply_by": "0" }
   ],
   "speed": [
     { "if": "road_environment == FERRY", "limit_to": "ferry_speed" },

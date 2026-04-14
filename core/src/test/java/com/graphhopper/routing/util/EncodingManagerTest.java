@@ -19,7 +19,6 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.parsers.BikeAccessParser;
-import com.graphhopper.routing.util.parsers.CarAccessParser;
 import com.graphhopper.routing.util.parsers.FootAccessParser;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;

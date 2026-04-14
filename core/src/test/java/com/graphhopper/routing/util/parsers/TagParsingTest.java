@@ -24,12 +24,14 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.OSMParsers;
 import com.graphhopper.routing.util.PriorityCode;
+import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -57,7 +59,8 @@ class TagParsingTest {
         BooleanEncodedValue roundaboutEnc = manager.getBooleanEncodedValue(Roundabout.KEY);
         List<TagParser> tagParsers = Arrays.asList(
                 new OSMRoundaboutParser(roundaboutEnc),
-                new CarAccessParser(manager, new PMap()),
+                new ModeAccessParser(OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR),
+                        carAccessEnc, true, roundaboutEnc, Set.of(), Set.of()),
                 new FootAccessParser(manager, new PMap()),
                 new BikeAccessParser(manager, new PMap()),
                 new MountainBikeAccessParser(manager, new PMap())

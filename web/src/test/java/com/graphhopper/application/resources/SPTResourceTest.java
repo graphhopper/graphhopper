@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
+import com.graphhopper.config.Profile;
 import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.BodyAndStatus;
 import com.graphhopper.util.Helper;
@@ -39,10 +40,17 @@ import java.util.List;
 
 import static com.graphhopper.application.resources.Util.getWithStatus;
 import static com.graphhopper.application.util.TestUtils.clientTarget;
+import static com.graphhopper.json.Statement.If;
+import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(DropwizardExtensionsSupport.class)
 public class SPTResourceTest {
+    private static Profile addCarTrackRule(Profile p) {
+        p.getCustomModel().addToPriority(If("road_class == TRACK && track_type != MISSING && track_type != GRADE1 && track_type != GRADE2 && track_type != GRADE3", MULTIPLY, "0"));
+        return p;
+    }
+
     private static final String DIR = "./target/spt-gh/";
     private static final DropwizardAppExtension<GraphHopperServerConfiguration> app = new DropwizardAppExtension<>(GraphHopperApplication.class, createConfig());
 
@@ -53,10 +61,10 @@ public class SPTResourceTest {
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR).
-                putObject("graph.encoded_values", "car_access, car_average_speed").
+                putObject("graph.encoded_values", "car_access, car_average_speed, road_class, track_type").
                 setProfiles(List.of(
-                        TestProfiles.accessAndSpeed("car_without_turncosts", "car"),
-                        TestProfiles.accessAndSpeed("car_with_turncosts", "car").setTurnCostsConfig(TurnCostsConfig.car())
+                        addCarTrackRule(TestProfiles.accessAndSpeed("car_without_turncosts", "car")),
+                        addCarTrackRule(TestProfiles.accessAndSpeed("car_with_turncosts", "car")).setTurnCostsConfig(TurnCostsConfig.car())
                 ));
         return config;
     }

@@ -23,6 +23,7 @@ import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.config.CHProfile;
+import com.graphhopper.config.Profile;
 import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.BodyAndStatus;
 import com.graphhopper.util.Helper;
@@ -42,12 +43,19 @@ import java.util.Random;
 
 import static com.graphhopper.application.resources.Util.getWithStatus;
 import static com.graphhopper.application.util.TestUtils.clientTarget;
+import static com.graphhopper.json.Statement.If;
+import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static com.graphhopper.util.Parameters.Algorithms.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ExtendWith(DropwizardExtensionsSupport.class)
 public class RouteResourceLeipzigTest {
+    private static Profile addCarTrackRule(Profile p) {
+        p.getCustomModel().addToPriority(If("road_class == TRACK && track_type != MISSING && track_type != GRADE1 && track_type != GRADE2 && track_type != GRADE3", MULTIPLY, "0"));
+        return p;
+    }
+
     private static final String DIR = "./target/route-resource-leipzig-gh/";
     private static final DropwizardAppExtension<GraphHopperServerConfiguration> app = new DropwizardAppExtension<>(GraphHopperApplication.class, createConfig());
 
@@ -58,8 +66,8 @@ public class RouteResourceLeipzigTest {
                 putObject("datareader.file", "../map-matching/files/leipzig_germany.osm.pbf").
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR).
-                putObject("graph.encoded_values", "car_access, car_average_speed").
-                setProfiles(List.of(TestProfiles.accessAndSpeed("my_car", "car"))).
+                putObject("graph.encoded_values", "car_access, car_average_speed, road_class, track_type").
+                setProfiles(List.of(addCarTrackRule(TestProfiles.accessAndSpeed("my_car", "car")))).
                 setCHProfiles(Collections.singletonList(new CHProfile("my_car")));
         return config;
     }
@@ -80,12 +88,12 @@ public class RouteResourceLeipzigTest {
 
     @ParameterizedTest
     @CsvSource(value = {
-            "88,-1,algorithm=" + DIJKSTRA_BI,
-            "106,-1,algorithm=" + ASTAR_BI,
-            "30756,1,ch.disable=true&algorithm=" + DIJKSTRA,
-            "21147,1,ch.disable=true&algorithm=" + ASTAR,
-            "14860,1,ch.disable=true&algorithm=" + DIJKSTRA_BI,
-            "10536,1,ch.disable=true&algorithm=" + ASTAR_BI
+            "79,-1,algorithm=" + DIJKSTRA_BI,
+            "105,-1,algorithm=" + ASTAR_BI,
+            "30782,1,ch.disable=true&algorithm=" + DIJKSTRA,
+            "21160,1,ch.disable=true&algorithm=" + ASTAR,
+            "14916,1,ch.disable=true&algorithm=" + DIJKSTRA_BI,
+            "10598,1,ch.disable=true&algorithm=" + ASTAR_BI
     })
     void testTimeout(int expectedVisitedNodes, int timeout, String args) {
         {
