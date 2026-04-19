@@ -91,6 +91,7 @@ public class GraphHopper {
     private final TranslationMap trMap = new TranslationMap().doImport();
     boolean removeZipped = true;
     boolean calcChecksums = false;
+    private boolean skipProfileMatchCheck = false;
     // for custom areas:
     private String customAreasDirectory = "";
     // for graph:
@@ -596,6 +597,7 @@ public class GraphHopper {
         routerConfig.setActiveLandmarkCount(activeLandmarkCount);
 
         calcChecksums = ghConfig.getBool("graph.calc_checksums", false);
+        skipProfileMatchCheck = ghConfig.getBool("graph.skip_profile_match_check", false);
 
         return this;
     }
@@ -1217,21 +1219,23 @@ public class GraphHopper {
                     .build();
             checkProfilesConsistency();
             baseGraph.loadExisting();
-            String storedProfilesString = properties.get("profiles");
-            Map<String, Integer> storedProfileHashes = Arrays.stream(storedProfilesString.split(",")).map(s -> s.split("\\|", 2)).collect((Collectors.toMap(kv -> kv[0], kv -> Integer.parseInt(kv[1]))));
-            Map<String, Integer> configuredProfileHashes = getProfileHashes();
-            configuredProfileHashes.forEach((profile, hash) -> {
-                Integer storedHash = storedProfileHashes.get(profile);
-                if (storedHash == null)
-                    throw new IllegalStateException("You cannot add new profiles to the loaded graph. Profile '" + profile + "' is new."
-                            + "\nExisting profiles: " + String.join(",", storedProfileHashes.keySet())
-                            + "\nChange your configuration to match the graph or delete " + baseGraph.getDirectory().getLocation());
-                if (!hash.equals(storedHash))
-                    throw new IllegalStateException("Profile '" + profile + "' does not match."
-                            + "\nStored: " + storedHash
-                            + "\nConfigured: " + hash
-                            + "\nChange this profile to match the stored one or delete " + baseGraph.getDirectory().getLocation());
-            });
+            if (!skipProfileMatchCheck) {
+                String storedProfilesString = properties.get("profiles");
+                Map<String, Integer> storedProfileHashes = Arrays.stream(storedProfilesString.split(",")).map(s -> s.split("\\|", 2)).collect((Collectors.toMap(kv -> kv[0], kv -> Integer.parseInt(kv[1]))));
+                Map<String, Integer> configuredProfileHashes = getProfileHashes();
+                configuredProfileHashes.forEach((profile, hash) -> {
+                    Integer storedHash = storedProfileHashes.get(profile);
+                    if (storedHash == null)
+                        throw new IllegalStateException("You cannot add new profiles to the loaded graph. Profile '" + profile + "' is new."
+                                + "\nExisting profiles: " + String.join(",", storedProfileHashes.keySet())
+                                + "\nChange your configuration to match the graph or delete " + baseGraph.getDirectory().getLocation());
+                    if (!hash.equals(storedHash))
+                        throw new IllegalStateException("Profile '" + profile + "' does not match."
+                                + "\nStored: " + storedHash
+                                + "\nConfigured: " + hash
+                                + "\nChange this profile to match the stored one or delete " + baseGraph.getDirectory().getLocation());
+                });
+            }
             postProcessing(false);
             directory.loadMMap();
             setFullyLoaded();
