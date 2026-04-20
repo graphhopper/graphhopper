@@ -27,6 +27,7 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 
 import java.io.Closeable;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.IntConsumer;
@@ -53,7 +54,10 @@ public class BaseGraph implements Graph, Closeable {
     public static final double MAX_DIST_METERS = BaseGraphNodesAndEdges.MAX_DIST_MM / 1000.0;
     final static long MAX_UNSIGNED_INT = 0xFFFF_FFFFL;
     private static final int MAX_PILLAR_NODES = 65535;
-    private static final int GEOMETRY_HEADER_BYTES = 2;
+    // Geometry record header: 2 B unsigned pillar count + 4 B payload-bytes (int).
+    // Payload-bytes is required because the delta+varint payload is variable length.
+    // 4 bytes (not 2) so that MAX_PILLAR_NODES with worst-case 5-byte varints (~1 MB) fits.
+    private static final int GEOMETRY_HEADER_BYTES = 6;
     final BaseGraphNodesAndEdges store;
     final NodeAccess nodeAccess;
     final KVStorage edgeKVStorage;
@@ -472,18 +476,29 @@ public class BaseGraph implements Graph, Closeable {
                 // longer possible to find the copies corresponding to an edge, so we deny this
                 throw new IllegalStateException("This edge has already been copied so we can no longer change the geometry, pointer=" + edgePointer);
 
-            int len = pillarNodes.size();
+            byte[] bytes = createWayGeometryBytes(pillarNodes, reverse);
+            int newPayloadBytes = bytes.length - GEOMETRY_HEADER_BYTES;
+
             if (existingGeoRef > 0) {
-                final int count = getPillarCount(existingGeoRef);
-                if (len <= count) {
-                    setWayGeometryAtGeoRef(pillarNodes, edgePointer, reverse, existingGeoRef);
+                int existingPayloadBytes = wayGeometry.getInt(existingGeoRef + 2);
+                if (newPayloadBytes <= existingPayloadBytes) {
+                    // fits in the existing slot; overwrite (the new payload-length in the
+                    // header keeps reads correct even though we don't shrink the slot)
+                    wayGeometry.setBytes(existingGeoRef, bytes, bytes.length);
                     return;
-                } else {
-                    throw new IllegalStateException("This edge already has a way geometry so it cannot be changed to a bigger geometry, pointer=" + edgePointer);
                 }
+                // new payload doesn't fit in the existing slot. With the old fixed-width
+                // encoding, equal pillar count meant equal byte size, so overwrite-in-place
+                // always worked. With varint-delta encoding, the compressed size depends on
+                // the coord deltas, so an update can grow (e.g. SRTM adds non-zero elevation
+                // deltas). Allocate a fresh slot; the old slot becomes unreachable bytes in
+                // the wayGeometry DataAccess (cost: storage is slightly larger until a full
+                // rebuild — no correctness issue).
             }
-            long nextGeoRef = nextGeoRef(GEOMETRY_HEADER_BYTES + len * (8 + eleBytesPerCoord));
-            setWayGeometryAtGeoRef(pillarNodes, edgePointer, reverse, nextGeoRef);
+            long geoRef = nextGeoRef(bytes.length);
+            wayGeometry.ensureCapacity(geoRef + bytes.length);
+            wayGeometry.setBytes(geoRef, bytes, bytes.length);
+            store.setGeoRef(edgePointer, geoRef);
         } else {
             store.setGeoRef(edgePointer, 0L);
         }
@@ -493,42 +508,64 @@ public class BaseGraph implements Graph, Closeable {
         return store;
     }
 
-    private void setWayGeometryAtGeoRef(PointList pillarNodes, long edgePointer, boolean reverse, long geoRef) {
-        byte[] wayGeometryBytes = createWayGeometryBytes(pillarNodes, reverse);
-        wayGeometry.ensureCapacity(geoRef + wayGeometryBytes.length);
-        wayGeometry.setBytes(geoRef, wayGeometryBytes, wayGeometryBytes.length);
-        store.setGeoRef(edgePointer, geoRef);
-    }
-
     private byte[] createWayGeometryBytes(PointList pillarNodes, boolean reverse) {
         int len = pillarNodes.size();
         if (len > MAX_PILLAR_NODES) throw new IllegalArgumentException("Too many pillar nodes: " + len);
+        if (reverse) pillarNodes.reverse();
 
-        // We use 2 bytes to store the node count (unsigned short)
-        // Per node we need 4 bytes for Latitude and Longitude, and possibly 3 bytes if we have elevation.
-        int totalLen = GEOMETRY_HEADER_BYTES + len * (8 + eleBytesPerCoord);
+        // Header (4 B): count (u16) + payloadBytes (u16). Payload: for each pillar a
+        // zig-zag varint of delta-lat, delta-lon, (delta-ele if 3D). Worst case per signed
+        // 32-bit varint = 5 B, so 2D pillar ≤ 10 B, 3D pillar ≤ 15 B.
+        int perPillarMax = nodeAccess.is3D() ? 15 : 10;
+        byte[] bytes = new byte[GEOMETRY_HEADER_BYTES + len * perPillarMax];
 
-        byte[] bytes = new byte[totalLen];
-        bitUtil.fromShort(bytes, (short) len, 0);
-
-        if (reverse)
-            pillarNodes.reverse();
-
-        int tmpOffset = GEOMETRY_HEADER_BYTES;
+        int offset = GEOMETRY_HEADER_BYTES;
+        int prevLat = 0, prevLon = 0, prevEle = 0;
         boolean is3D = nodeAccess.is3D();
         for (int i = 0; i < len; i++) {
-            double lat = pillarNodes.getLat(i);
-            bitUtil.fromInt(bytes, Helper.degreeToInt(lat), tmpOffset);
-            tmpOffset += 4;
-            bitUtil.fromInt(bytes, Helper.degreeToInt(pillarNodes.getLon(i)), tmpOffset);
-            tmpOffset += 4;
-
+            int lat = Helper.degreeToInt(pillarNodes.getLat(i));
+            int lon = Helper.degreeToInt(pillarNodes.getLon(i));
+            offset = writeZigZagVarInt(bytes, offset, lat - prevLat);
+            offset = writeZigZagVarInt(bytes, offset, lon - prevLon);
+            prevLat = lat;
+            prevLon = lon;
             if (is3D) {
-                bitUtil.fromUInt3(bytes, Helper.eleToUInt(pillarNodes.getEle(i)), tmpOffset);
-                tmpOffset += 3;
+                int ele = Helper.eleToUInt(pillarNodes.getEle(i));
+                offset = writeZigZagVarInt(bytes, offset, ele - prevEle);
+                prevEle = ele;
             }
         }
-        return bytes;
+
+        int payloadBytes = offset - GEOMETRY_HEADER_BYTES;
+        bitUtil.fromShort(bytes, (short) len, 0);
+        bitUtil.fromInt(bytes, payloadBytes, 2);
+
+        return offset == bytes.length ? bytes : Arrays.copyOf(bytes, offset);
+    }
+
+    private static int writeZigZagVarInt(byte[] bytes, int offset, int value) {
+        int zz = (value << 1) ^ (value >> 31);
+        while ((zz & ~0x7F) != 0) {
+            bytes[offset++] = (byte) ((zz & 0x7F) | 0x80);
+            zz >>>= 7;
+        }
+        bytes[offset++] = (byte) zz;
+        return offset;
+    }
+
+    // Returns the decoded signed int; advances pos[0] past the varint bytes.
+    private static int readZigZagVarInt(byte[] bytes, int[] pos) {
+        int p = pos[0];
+        int raw = 0;
+        int shift = 0;
+        byte b;
+        do {
+            b = bytes[p++];
+            raw |= (b & 0x7F) << shift;
+            shift += 7;
+        } while ((b & 0x80) != 0);
+        pos[0] = p;
+        return (raw >>> 1) ^ -(raw & 1);
     }
 
     private int getPillarCount(long geoRef) {
@@ -549,9 +586,9 @@ public class BaseGraph implements Graph, Closeable {
         byte[] bytes = null;
         if (geoRef > 0) {
             count = getPillarCount(geoRef);
-            geoRef += GEOMETRY_HEADER_BYTES;
-            bytes = new byte[count * (8 + eleBytesPerCoord)];
-            wayGeometry.getBytes(geoRef, bytes, bytes.length);
+            int payloadBytes = wayGeometry.getInt(geoRef + 2);
+            bytes = new byte[payloadBytes];
+            wayGeometry.getBytes(geoRef + GEOMETRY_HEADER_BYTES, bytes, payloadBytes);
         } else if (mode == FetchMode.PILLAR_ONLY)
             return PointList.EMPTY;
 
@@ -562,15 +599,17 @@ public class BaseGraph implements Graph, Closeable {
         } else if (mode == FetchMode.ALL || mode == FetchMode.BASE_AND_PILLAR)
             pillarNodes.add(nodeAccess, baseNode);
 
-        int index = 0;
+        int[] pos = {0};
+        int curLat = 0, curLon = 0, curEle = 0;
+        boolean is3D = nodeAccess.is3D();
         for (int i = 0; i < count; i++) {
-            double lat = Helper.intToDegree(bitUtil.toInt(bytes, index));
-            index += 4;
-            double lon = Helper.intToDegree(bitUtil.toInt(bytes, index));
-            index += 4;
-            if (nodeAccess.is3D()) {
-                pillarNodes.add(lat, lon, Helper.uIntToEle(bitUtil.toUInt3(bytes, index)));
-                index += 3;
+            curLat += readZigZagVarInt(bytes, pos);
+            curLon += readZigZagVarInt(bytes, pos);
+            double lat = Helper.intToDegree(curLat);
+            double lon = Helper.intToDegree(curLon);
+            if (is3D) {
+                curEle += readZigZagVarInt(bytes, pos);
+                pillarNodes.add(lat, lon, Helper.uIntToEle(curEle));
             } else {
                 pillarNodes.add(lat, lon);
             }
