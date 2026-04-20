@@ -124,7 +124,10 @@ public final class CustomWeighting implements Weighting {
         if (edgeState.get(EdgeIteratorState.UNFAVORED_EDGE)) seconds += headingPenaltySeconds;
         double distanceCosts = distance * distanceInfluence;
         if (Double.isInfinite(distanceCosts)) return Double.POSITIVE_INFINITY;
-        return roundWeight(10 * (seconds / priority + distanceCosts));
+        double costs = seconds / priority;
+        // we limit the weight increase due to priority to 1M (i.e. ~28h). this guards against
+        // tiny priority factors (for example applying 0.001 multiple times to the same edge)
+        return roundWeight(10 * (Math.min(costs, seconds + 100_000) + distanceCosts));
     }
 
     double calcSeconds(double distance, EdgeIteratorState edgeState, boolean reverse) {
