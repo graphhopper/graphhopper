@@ -27,8 +27,7 @@ import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 
 /**
  * A DataAccess implementation using a memory-mapped file, i.e. a facility of the
@@ -50,7 +49,7 @@ public final class MMapDataAccess extends AbstractDataAccess {
 
     private final boolean allowWrites;
     private RandomAccessFile raFile;
-    private final List<MappedByteBuffer> segments = new ArrayList<>();
+    private MappedByteBuffer[] segments = new MappedByteBuffer[0];
 
     public MMapDataAccess(String name, String location, boolean allowWrites, int segmentSize) {
         super(name, location, segmentSize);
@@ -91,7 +90,7 @@ public final class MMapDataAccess extends AbstractDataAccess {
 
     @Override
     public MMapDataAccess create(long bytes) {
-        if (!segments.isEmpty()) {
+        if (segments.length > 0) {
             throw new IllegalThreadStateException("already created");
         }
         initRandomAccessFile();
@@ -133,14 +132,17 @@ public final class MMapDataAccess extends AbstractDataAccess {
             // This approach is probably problematic but a bit faster if done often.
             // Here we rely on the OS+file system that increasing the file
             // size has no effect on the old mappings!
-            bufferStart += segments.size() * longSegmentSize;
-            newSegments = segmentsToMap - segments.size();
+            int existing = segments.length;
+            bufferStart += (long) existing * longSegmentSize;
+            newSegments = segmentsToMap - existing;
             // rely on automatically increasing when mapping
             // raFile.setLength(newFileLength);
+            MappedByteBuffer[] newSegs = Arrays.copyOf(segments, segmentsToMap);
             for (; i < newSegments; i++) {
-                segments.add(newByteBuffer(bufferStart, longSegmentSize));
+                newSegs[existing + i] = newByteBuffer(bufferStart, longSegmentSize);
                 bufferStart += longSegmentSize;
             }
+            segments = newSegs;
             return true;
         } catch (IOException ex) {
             // we could get an exception here if buffer is too small and area too large
@@ -187,7 +189,7 @@ public final class MMapDataAccess extends AbstractDataAccess {
 
     @Override
     public boolean loadExisting() {
-        if (segments.size() > 0)
+        if (segments.length > 0)
             throw new IllegalStateException("already initialized");
 
         if (isClosed())
@@ -236,9 +238,9 @@ public final class MMapDataAccess extends AbstractDataAccess {
     public void load(int percentage) {
         if (percentage < 0 || percentage > 100)
             throw new IllegalArgumentException("Percentage for MMapDataAccess.load for " + getName() + " must be in [0,100] but was " + percentage);
-        int max = Math.round(segments.size() * percentage / 100f);
+        int max = Math.round(segments.length * percentage / 100f);
         for (int i = 0; i < max; i++) {
-            segments.get(i).load();
+            segments[i].load();
         }
     }
 
@@ -253,9 +255,9 @@ public final class MMapDataAccess extends AbstractDataAccess {
         if (capacity % segmentSizeInBytes != 0)
             newSegmentCount++;
 
-        if (newSegmentCount < segments.size()) {
-            clean(newSegmentCount, segments.size());
-            segments.subList(newSegmentCount, segments.size()).clear();
+        if (newSegmentCount < segments.length) {
+            clean(newSegmentCount, segments.length);
+            segments = Arrays.copyOf(segments, newSegmentCount);
             try {
                 raFile.setLength(HEADER_OFFSET + getCapacity());
             } catch (IOException ex) {
@@ -267,8 +269,8 @@ public final class MMapDataAccess extends AbstractDataAccess {
     @Override
     public void close() {
         super.close();
-        clean(0, segments.size());
-        segments.clear();
+        clean(0, segments.length);
+        segments = new MappedByteBuffer[0];
         Helper.close(raFile);
     }
 
@@ -276,10 +278,10 @@ public final class MMapDataAccess extends AbstractDataAccess {
     public void setInt(long bytePos, int value) {
         int bufferIndex = (int) (bytePos >> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
-        ByteBuffer b1 = segments.get(bufferIndex);
+        MappedByteBuffer b1 = segments[bufferIndex];
         if (index + 3 >= segmentSizeInBytes) {
             // seldom and special case if int has to be written into two separate segments
-            ByteBuffer b2 = segments.get(bufferIndex + 1);
+            MappedByteBuffer b2 = segments[bufferIndex + 1];
             if (index + 1 >= segmentSizeInBytes) {
                 b2.putShort(1, (short) (value >>> 16));
                 b2.put(0, (byte) (value >>> 8));
@@ -302,9 +304,9 @@ public final class MMapDataAccess extends AbstractDataAccess {
     public int getInt(long bytePos) {
         int bufferIndex = (int) (bytePos >> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
-        ByteBuffer b1 = segments.get(bufferIndex);
+        MappedByteBuffer b1 = segments[bufferIndex];
         if (index + 3 >= segmentSizeInBytes) {
-            ByteBuffer b2 = segments.get(bufferIndex + 1);
+            MappedByteBuffer b2 = segments[bufferIndex + 1];
             if (index + 1 >= segmentSizeInBytes)
                 return (b2.getShort(1) & 0xFFFF) << 16 | (b2.get(0) & 0xFF) << 8 | (b1.get(index) & 0xFF);
             if (index + 2 >= segmentSizeInBytes)
@@ -319,9 +321,9 @@ public final class MMapDataAccess extends AbstractDataAccess {
     public void setShort(long bytePos, short value) {
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
-        ByteBuffer byteBuffer = segments.get(bufferIndex);
+        MappedByteBuffer byteBuffer = segments[bufferIndex];
         if (index + 1 >= segmentSizeInBytes) {
-            ByteBuffer byteBufferNext = segments.get(bufferIndex + 1);
+            MappedByteBuffer byteBufferNext = segments[bufferIndex + 1];
             // seldom and special case if short has to be written into two separate segments
             byteBuffer.put(index, (byte) value);
             byteBufferNext.put(0, (byte) (value >>> 8));
@@ -334,9 +336,9 @@ public final class MMapDataAccess extends AbstractDataAccess {
     public short getShort(long bytePos) {
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
-        ByteBuffer byteBuffer = segments.get(bufferIndex);
+        MappedByteBuffer byteBuffer = segments[bufferIndex];
         if (index + 1 >= segmentSizeInBytes) {
-            ByteBuffer byteBufferNext = segments.get(bufferIndex + 1);
+            MappedByteBuffer byteBufferNext = segments[bufferIndex + 1];
             return (short) ((byteBufferNext.get(0) & 0xFF) << 8 | byteBuffer.get(index) & 0xFF);
         }
         return byteBuffer.getShort(index);
@@ -348,7 +350,7 @@ public final class MMapDataAccess extends AbstractDataAccess {
         final int bufferIndex = (int) (bytePos >>> segmentSizePower);
         final int index = (int) (bytePos & indexDivisor);
         final int delta = index + length - segmentSizeInBytes;
-        final ByteBuffer bb1 = segments.get(bufferIndex);
+        final MappedByteBuffer bb1 = segments[bufferIndex];
         if (delta > 0) {
             length -= delta;
             bb1.put(index, values, 0, length);
@@ -356,7 +358,7 @@ public final class MMapDataAccess extends AbstractDataAccess {
             bb1.put(index, values, 0, length);
         }
         if (delta > 0) {
-            final ByteBuffer bb2 = segments.get(bufferIndex + 1);
+            final MappedByteBuffer bb2 = segments[bufferIndex + 1];
             bb2.put(0, values, length, delta);
         }
     }
@@ -367,12 +369,12 @@ public final class MMapDataAccess extends AbstractDataAccess {
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
         int delta = index + length - segmentSizeInBytes;
-        final ByteBuffer bb1 = segments.get(bufferIndex);
+        final MappedByteBuffer bb1 = segments[bufferIndex];
         if (delta > 0) {
             length -= delta;
             bb1.get(index, values, 0, length);
 
-            final ByteBuffer bb2 = segments.get(bufferIndex + 1);
+            final MappedByteBuffer bb2 = segments[bufferIndex + 1];
             bb2.get(0, values, length, delta);
         } else {
             bb1.get(index, values, 0, length);
@@ -383,7 +385,7 @@ public final class MMapDataAccess extends AbstractDataAccess {
     public void setByte(long bytePos, byte value) {
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
-        final ByteBuffer bb1 = segments.get(bufferIndex);
+        final MappedByteBuffer bb1 = segments[bufferIndex];
         bb1.put(index, value);
     }
 
@@ -391,7 +393,7 @@ public final class MMapDataAccess extends AbstractDataAccess {
     public byte getByte(long bytePos) {
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
-        final ByteBuffer bb1 = segments.get(bufferIndex);
+        final MappedByteBuffer bb1 = segments[bufferIndex];
         return bb1.get(index);
     }
 
@@ -402,7 +404,7 @@ public final class MMapDataAccess extends AbstractDataAccess {
 
     @Override
     public int getSegments() {
-        return segments.size();
+        return segments.length;
     }
 
     /**
@@ -415,9 +417,9 @@ public final class MMapDataAccess extends AbstractDataAccess {
      */
     private void clean(int from, int to) {
         for (int i = from; i < to; i++) {
-            ByteBuffer bb = segments.get(i);
+            ByteBuffer bb = segments[i];
             cleanMappedByteBuffer(bb);
-            segments.set(i, null);
+            segments[i] = null;
         }
     }
 
