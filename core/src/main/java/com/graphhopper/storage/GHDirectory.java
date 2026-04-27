@@ -76,7 +76,7 @@ public class GHDirectory implements Directory {
                 }
             else {
                 String pattern = kv.getKey();
-                defaultTypes.put(pattern, DAType.fromString(value));
+                defaultTypes.put(pattern, DAType.valueOf(value));
             }
         }
         return this;

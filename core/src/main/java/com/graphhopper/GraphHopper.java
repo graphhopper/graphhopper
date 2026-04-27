@@ -489,7 +489,7 @@ public class GraphHopper {
         defaultSegmentSize = ghConfig.getInt("graph.dataaccess.segment_size", defaultSegmentSize);
 
         String daTypeString = ghConfig.getString("graph.dataaccess.default_type", ghConfig.getString("graph.dataaccess", "RAM_STORE"));
-        dataAccessDefaultType = DAType.fromString(daTypeString);
+        dataAccessDefaultType = DAType.valueOf(daTypeString);
         for (Map.Entry<String, Object> entry : ghConfig.asPMap().toMap().entrySet()) {
             if (entry.getKey().startsWith("graph.dataaccess.type."))
                 dataAccessConfig.put(entry.getKey().substring("graph.dataaccess.type.".length()), entry.getValue().toString());
@@ -745,7 +745,7 @@ public class GraphHopper {
             if (baseURL.isEmpty() && ghConfig.has("graph.elevation.baseurl"))
                 throw new IllegalArgumentException("use graph.elevation.base_url not baseurl in configuration");
 
-            DAType elevationDAType = DAType.fromString(ghConfig.getString("graph.elevation.dataaccess", "MMAP"));
+            DAType elevationDAType = DAType.valueOf(ghConfig.getString("graph.elevation.dataaccess", "MMAP"));
 
             provider
                     .setAutoRemoveTemporaryFiles(removeTempElevationFiles)
