@@ -51,6 +51,8 @@ public enum DAType {
      * Memory mapped DA object. See MMapDataAccess.
      */
     MMAP(MemRef.MMAP, true, false, true),
+    // MMAP is MMAP_STORE
+    MMAP_STORE(MemRef.MMAP, true, false, true),
 
     /**
      * Read-only memory mapped DA object. To avoid write access useful for reading on mobile or
