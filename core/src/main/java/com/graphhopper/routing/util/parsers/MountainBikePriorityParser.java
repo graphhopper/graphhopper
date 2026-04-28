@@ -12,12 +12,11 @@ import static com.graphhopper.routing.util.PriorityCode.*;
 public class MountainBikePriorityParser extends BikeCommonPriorityParser {
 
     public MountainBikePriorityParser(EncodedValueLookup lookup) {
-        this(lookup.getDecimalEncodedValue(VehicleSpeed.key("mtb")),
-                lookup.getDecimalEncodedValue(VehiclePriority.key("mtb")));
+        this(lookup.getDecimalEncodedValue(VehiclePriority.key("mtb")));
     }
 
-    protected MountainBikePriorityParser(DecimalEncodedValue speedEnc, DecimalEncodedValue priorityEnc) {
-        super(priorityEnc, speedEnc);
+    protected MountainBikePriorityParser(DecimalEncodedValue priorityEnc) {
+        super(priorityEnc);
 
         preferHighwayTags.add("road");
         preferHighwayTags.add("track");
@@ -32,8 +31,8 @@ public class MountainBikePriorityParser extends BikeCommonPriorityParser {
     }
 
     @Override
-    void collect(ReaderWay way, double wayTypeSpeed, boolean bikeDesignated, TreeMap<Double, PriorityCode> weightToPrioMap) {
-        super.collect(way, wayTypeSpeed, bikeDesignated, weightToPrioMap);
+    void collect(ReaderWay way, boolean bikeDesignated, TreeMap<Double, PriorityCode> weightToPrioMap) {
+        super.collect(way, bikeDesignated, weightToPrioMap);
 
         String highway = way.getTag("highway");
         if ("track".equals(highway)) {

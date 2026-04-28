@@ -615,7 +615,7 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         assertPriority(VERY_NICE, way);
 
         way.setTag("maxspeed", "15");
-        assertPriority(BEST, way);
+        assertPriority(VERY_NICE, way);
 
         // do not overwrite better priority
         way = new ReaderWay(1);

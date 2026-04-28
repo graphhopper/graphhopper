@@ -11,12 +11,11 @@ import static com.graphhopper.routing.util.PriorityCode.*;
 public class RacingBikePriorityParser extends BikeCommonPriorityParser {
 
     public RacingBikePriorityParser(EncodedValueLookup lookup) {
-        this(lookup.getDecimalEncodedValue(VehiclePriority.key("racingbike")),
-                lookup.getDecimalEncodedValue(VehicleSpeed.key("racingbike")));
+        this(lookup.getDecimalEncodedValue(VehiclePriority.key("racingbike")));
     }
 
-    protected RacingBikePriorityParser(DecimalEncodedValue priorityEnc, DecimalEncodedValue speedEnc) {
-        super(priorityEnc, speedEnc);
+    protected RacingBikePriorityParser(DecimalEncodedValue priorityEnc) {
+        super(priorityEnc);
 
         addPushingSection("path");
 
@@ -40,8 +39,8 @@ public class RacingBikePriorityParser extends BikeCommonPriorityParser {
     }
 
     @Override
-    void collect(ReaderWay way, double wayTypeSpeed, boolean bikeDesignated, TreeMap<Double, PriorityCode> weightToPrioMap) {
-        super.collect(way, wayTypeSpeed, bikeDesignated, weightToPrioMap);
+    void collect(ReaderWay way, boolean bikeDesignated, TreeMap<Double, PriorityCode> weightToPrioMap) {
+        super.collect(way, bikeDesignated, weightToPrioMap);
 
         String highway = way.getTag("highway");
         if ("service".equals(highway) || "residential".equals(highway)) {
