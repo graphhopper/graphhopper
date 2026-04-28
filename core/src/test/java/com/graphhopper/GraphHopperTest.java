@@ -464,7 +464,7 @@ public class GraphHopperTest {
         // via ramsenthal
         assertEquals(2658, rsp.getAll().get(1).getTime() / 1000);
         // via unterwaiz
-        assertEquals(2782, rsp.getAll().get(2).getTime() / 1000);
+        assertEquals(2667, rsp.getAll().get(2).getTime() / 1000);
     }
 
     @Test

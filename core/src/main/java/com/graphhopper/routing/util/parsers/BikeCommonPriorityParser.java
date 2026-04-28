@@ -113,7 +113,7 @@ public abstract class BikeCommonPriorityParser implements TagParser {
         double maxSpeed = Math.max(OSMMaxSpeedParser.parseMaxSpeed(way, false), OSMMaxSpeedParser.parseMaxSpeed(way, true));
         if (preferHighwayTags.contains(highway) || maxSpeed <= 30) {
             if (maxSpeed == MaxSpeed.MAXSPEED_MISSING || maxSpeed < avoidSpeedLimit) {
-                weightToPrioMap.put(40d, PREFER);
+                weightToPrioMap.put(40d, SLIGHT_PREFER);
                 if (way.hasTag("tunnel", INTENDED))
                     weightToPrioMap.put(40d, UNCHANGED);
             }
@@ -137,7 +137,7 @@ public abstract class BikeCommonPriorityParser implements TagParser {
         if (cyclewayValues.contains("track")) {
             weightToPrioMap.put(100d, VERY_NICE);
         } else if (Stream.of("lane", "opposite_track", "shared_lane", "share_busway", "shoulder").anyMatch(cyclewayValues::contains)) {
-            weightToPrioMap.put(100d, PREFER);
+            weightToPrioMap.put(100d, SLIGHT_PREFER);
         } else if (pushingSectionsHighways.contains(highway) || "parking_aisle".equals(way.getTag("service"))) {
             PriorityCode pushingSectionPrio = SLIGHT_AVOID;
             if (way.hasTag("highway", "steps"))

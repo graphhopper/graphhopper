@@ -315,7 +315,7 @@ public abstract class AbstractBikeTagParserTester {
     public void testAvoidTunnel() {
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "residential");
-        assertPriority(PREFER, osmWay);
+        assertPriority(SLIGHT_PREFER, osmWay);
 
         osmWay.setTag("tunnel", "yes");
         assertPriority(UNCHANGED, osmWay);
@@ -345,7 +345,7 @@ public abstract class AbstractBikeTagParserTester {
     public void testService() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "service");
-        assertPriorityAndSpeed(PREFER, 12, way);
+        assertPriorityAndSpeed(SLIGHT_PREFER, 12, way);
 
         way.setTag("service", "parking_aisle");
         assertPriorityAndSpeed(SLIGHT_AVOID, 8, way);
@@ -355,7 +355,7 @@ public abstract class AbstractBikeTagParserTester {
         way.clearTags();
         way.setTag("highway", "residential");
         way.setTag("service", "alley");
-        assertPriorityAndSpeed(PREFER, 18, way);
+        assertPriorityAndSpeed(SLIGHT_PREFER, 18, way);
     }
 
     @Test

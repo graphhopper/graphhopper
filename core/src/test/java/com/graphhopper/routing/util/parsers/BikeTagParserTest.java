@@ -409,19 +409,19 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.clearTags();
         way.setTag("highway", "primary");
         way.setTag("cycleway:left", "lane");
-        assertPriority(PREFER, way);
+        assertPriority(SLIGHT_PREFER, way);
 
         way.clearTags();
         way.setTag("highway", "primary");
         way.setTag("cycleway:right", "lane");
-        assertPriority(PREFER, way);
+        assertPriority(SLIGHT_PREFER, way);
         way.setTag("cycleway:left", "no");
-        assertPriority(PREFER, way);
+        assertPriority(SLIGHT_PREFER, way);
 
         way.clearTags();
         way.setTag("highway", "primary");
         way.setTag("cycleway:both", "lane");
-        assertPriority(PREFER, way);
+        assertPriority(SLIGHT_PREFER, way);
 
         way.clearTags();
         way.setTag("highway", "primary");
@@ -433,7 +433,7 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("highway", "primary");
         way.setTag("oneway", "yes");
         way.setTag("cycleway", "opposite_track");
-        assertPriority(PREFER, way);
+        assertPriority(SLIGHT_PREFER, way);
 
         way.clearTags();
         way.setTag("highway", "primary");
@@ -454,7 +454,7 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("highway", "secondary");
         way.setTag("cycleway", "lane");
         way.setTag("cycleway:lane", "advisory");
-        assertPriority(PREFER, way);
+        assertPriority(SLIGHT_PREFER, way);
     }
 
     @Test
@@ -548,13 +548,13 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way = new ReaderWay(1);
         way.setTag("highway", "secondary");
         way.setTag("maxspeed", "10");
-        assertPriorityAndSpeed(VERY_NICE, 10, way);
+        assertPriorityAndSpeed(PREFER, 10, way);
 
         way = new ReaderWay(1);
         way.setTag("highway", "residential");
         way.setTag("maxspeed", "15");
         // todo: speed is larger than maxspeed tag due to rounding and storable max speed is 30
-        assertPriorityAndSpeed(VERY_NICE, 16, way);
+        assertPriorityAndSpeed(PREFER, 16, way);
     }
 
     // Issue 407 : Always block kissing_gate except for mountainbikes
