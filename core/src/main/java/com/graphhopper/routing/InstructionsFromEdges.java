@@ -480,14 +480,20 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                         if (!(roadClass == RoadClass.MOTORWAY || roadClass == RoadClass.TRUNK)) {
                             return Instruction.IGNORE;
                         }
+
+                        if (!otherLink && otherRoadClass != roadClass) {
+                            return Instruction.IGNORE;
+                        }
+
                         if (Math.abs(otherDelta) > OBVIOUS_EXIT) {
                             return Instruction.IGNORE;
                         }
                     }
                 }
 
+                double continueThreshold = (roadClass == RoadClass.MOTORWAY || roadClass == RoadClass.TRUNK) ? 0.22 : 0.15;
                 // This is required to avoid keep left/right on the motorway at off-ramps/motorway_links
-                if (Math.abs(delta) < .1 /* ~5.7° */ && Math.abs(otherDelta) > .15 /* ~8.6° */ && InstructionsHelper.isSameName(name, prevName)) {
+                if (Math.abs(delta) < .1 /* ~5.7° */ && Math.abs(otherDelta) > continueThreshold && InstructionsHelper.isSameName(name, prevName)) {
                     return Instruction.CONTINUE_ON_STREET;
                 }
 
