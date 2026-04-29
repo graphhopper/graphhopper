@@ -21,7 +21,6 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
      * contains "vehicle". But here we want to allow walking via dismount.
      */
     private static final List<String> RESTRICTIONS = Arrays.asList("bicycle", "access");
-    private static final Collection<String> FWDONEWAYS = Arrays.asList("yes", "true", "1");
 
     protected BikeCommonAccessParser(BooleanEncodedValue accessEnc, BooleanEncodedValue roundaboutEnc) {
         super(accessEnc, RESTRICTIONS);
@@ -107,12 +106,12 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
             return;
 
         // handle oneways. The value -1 means it is a oneway but for reverse direction of stored geometry.
-        // The tagging oneway:bicycle=no or cycleway:right:oneway=no or cycleway:left:oneway=no lifts the generic oneway restriction of the way for bike
+        // The tagging oneway:bicycle=no or cycleway:right:oneway=no or cycleway:left:oneway=no lifts the generic oneway restriction of the way for bike.
+        // cycleway:*:oneway describes the cycle facility, not the carriageway, so it does not by itself
+        // make the road oneway for bikes — it only modifies the bike direction when the carriageway is oneway (handled below).
         boolean isOneway = way.hasTag("oneway", ONEWAYS) && !way.hasTag("oneway", "-1") && !way.hasTag("bicycle:backward", allowedValues)
                 || way.hasTag("oneway", "-1") && !way.hasTag("bicycle:forward", allowedValues)
                 || way.hasTag("oneway:bicycle", ONEWAYS)
-                || way.hasTag("cycleway:left:oneway", FWDONEWAYS) && !way.hasTag("cycleway:right:oneway", "-1")
-                || way.hasTag("cycleway:right:oneway", FWDONEWAYS) && !way.hasTag("cycleway:left:oneway", "-1")
                 || way.hasTag("vehicle:backward", restrictedValues) && !way.hasTag("bicycle:forward", allowedValues)
                 || way.hasTag("vehicle:forward", restrictedValues) && !way.hasTag("bicycle:backward", allowedValues)
                 || way.hasTag("bicycle:forward", restrictedValues)

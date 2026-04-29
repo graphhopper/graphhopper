@@ -667,6 +667,24 @@ public abstract class AbstractBikeTagParserTester {
         assertAccess(way, true, true);
     }
 
+    @Test
+    public void testCyclewayOnewayDoesNotImplyCarriagewayOneway() {
+        // OSM way 1425755347 (Bergmannstraße, Berlin): a bidirectional residential street
+        // (no oneway=*) with a one-way cycle facility on the right. cycleway:right:oneway=yes
+        // describes the cycleway, not the carriageway — bikes must remain bidirectional.
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "residential");
+        way.setTag("cycleway:left", "no");
+        way.setTag("cycleway:right", "crossing");
+        way.setTag("cycleway:right:oneway", "yes");
+        assertAccess(way, true, true);
+
+        way.clearTags();
+        way.setTag("highway", "residential");
+        way.setTag("cycleway:left:oneway", "yes");
+        assertAccess(way, true, true);
+    }
+
     private void assertAccess(ReaderWay way, boolean fwd, boolean bwd) {
         EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
         int edge = 0;
