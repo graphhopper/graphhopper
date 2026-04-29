@@ -1,0 +1,8 @@
+{
+  "turn_penalty": [
+    {
+      "if": "is_softblocked_at_entry",
+      "add": "2000"
+    }
+  ]
+}

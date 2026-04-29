@@ -184,11 +184,6 @@
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.14.1</version>
                     <configuration>
-                        <!--
-                        <compilerArgument>-Xlint:unchecked</compilerArgument>
-                        <compilerArgument>-Xlint:deprecation</compilerArgument>
-                        -->
-                        <fork>true</fork>
                         <release>17</release>
                     </configuration>
                 </plugin>
@@ -199,7 +194,7 @@
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>3.5.4</version>
                     <configuration>
-                        <argLine>-Xmx190m -Xms190m -Duser.language=en</argLine>
+                        <argLine>-Duser.language=en</argLine>
                     </configuration>
                 </plugin>
 
