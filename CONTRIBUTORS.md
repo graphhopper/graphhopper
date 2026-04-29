@@ -11,6 +11,7 @@ Here is an overview:
  * Anvoker, fixes like #1614 and helped with JUnit 5 migration #1632 
  * b3nn0, Android improvements
  * baumboi, path detail and landmark improvements
+ * baybatu, improved error for EncodingManager
  * boldtrn, one of the core developers with motorcycle knowledge :)
  * bt90, fixes like #2786
  * cgarreau, increase of routing success rate via subnetwork cleanup
@@ -35,6 +36,7 @@ Here is an overview:
  * fredao, translations 
  * gberaudo, improvements regarding elevation
  * GProbo, fixes like #2241
+ * gulbalasalamov, fix for instruction generation when unnamed link roads continue onto named major roads (#3337) 
  * HarelM, improvements regarding elevation
  * HelgeKrueger, modularization of javascript, #590
  * henningvs, doc improvements
@@ -64,6 +66,7 @@ Here is an overview:
  * michaz, one of the core developers
  * mprins, improvements for travis CI and regarding JDK9 #806
  * msbarry, fixes like #1733
+ * nakaner, documentation
  * naser13, fixes like #1923
  * njanakiev, fixes like #1560
  * NopMap, massive improvements regarding OSM, parsing and encoding, route relations
@@ -87,6 +90,7 @@ Here is an overview:
  * sguill, fixes like #1683
  * shunfan-shao, fix potential flaky tests
  * skienzl, imperial units for /navigate, related to #2071
+ * SkitArgDuva, added via_point_instructions parameter
  * stefanholder, Stefan Holder, BMW AG, creating and integrating the hmm-lib (#49, #66, #69) and penalizing inner-link U-turns (#88, #91), refactored unfavoring of virtual edges #885
  * stevensnoeijen, fixes like #1568 
  * Svantulden, improved documentation and nearest API

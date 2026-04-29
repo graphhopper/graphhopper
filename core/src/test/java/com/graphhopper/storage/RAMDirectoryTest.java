@@ -23,6 +23,6 @@ package com.graphhopper.storage;
 public class RAMDirectoryTest extends AbstractDirectoryTester {
     @Override
     Directory createDir() {
-        return new RAMDirectory(location, true).create();
+        return new GHDirectory(location, DAType.RAM_STORE).create();
     }
 }

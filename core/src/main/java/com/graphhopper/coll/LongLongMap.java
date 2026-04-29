@@ -17,11 +17,22 @@
  */
 package com.graphhopper.coll;
 
+import java.util.function.LongUnaryOperator;
+
 /**
  * @author Peter Karich
  */
 public interface LongLongMap {
     long put(long key, long value);
+
+    /**
+     * If the key is absent, inserts valueIfAbsent.
+     * If the key is present, updates it with computeIfPresent.applyAsLong(currentValue).
+     * This is done in a single traversal.
+     *
+     * @return the previous value, or the empty value if the key was absent
+     */
+    long putOrCompute(long key, long valueIfAbsent, LongUnaryOperator computeIfPresent);
 
     long get(long key);
 

@@ -26,6 +26,7 @@ import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.RandomGraph;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 
@@ -185,16 +186,19 @@ class TarjanSCCTest {
         assertEquals(IntArrayList.from(8, 7, 6, 3, 4, 9, 10, 11, 2, 1, 0), scc.getComponents().get(1));
     }
 
-    @RepeatedTest(30)
+    @RepeatedTest(10)
     public void implicitVsExplicitRecursion() {
-        doImplicitVsExplicit(true);
         doImplicitVsExplicit(false);
+    }
+
+    @RepeatedTest(10)
+    public void implicitVsExplicitRecursionExcludeSingle() {
+        doImplicitVsExplicit(true);
     }
 
     private void doImplicitVsExplicit(boolean excludeSingle) {
         long seed = System.nanoTime();
-        Random rnd = new Random(seed);
-        GHUtility.buildRandomGraph(graph, rnd, 1_000, 2, true, speedEnc, 60d, 0.7, 0);
+        RandomGraph.start().seed(seed).nodes(500).speed(10d).speedZero(0.1).fill(graph, speedEnc);
         TarjanSCC.ConnectedComponents implicit = TarjanSCC.findComponentsRecursive(graph, edgeFilter, excludeSingle);
         TarjanSCC.ConnectedComponents explicit = TarjanSCC.findComponents(graph, edgeFilter, excludeSingle);
 

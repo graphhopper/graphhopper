@@ -217,6 +217,57 @@ public class GHLongLongBTreeTest {
     }
 
     @Test
+    public void testPutOrCompute() {
+        GHLongLongBTree instance = new GHLongLongBTree(3, 4, -1);
+
+        // When key is absent, insert valueIfAbsent
+        long result = instance.putOrCompute(1, 10, old -> old + 100);
+        assertEquals(-1, result); // returns empty value when absent
+        assertEquals(10, instance.get(1)); // valueIfAbsent was inserted
+        assertEquals(1, instance.getSize());
+
+        // When key is present, apply computeIfPresent
+        result = instance.putOrCompute(1, 10, old -> old + 100);
+        assertEquals(10, result); // returns the old value
+        assertEquals(110, instance.get(1)); // old + 100
+        assertEquals(1, instance.getSize()); // size unchanged
+
+        // Verify it works with multiple keys and tree splits
+        for (int i = 2; i <= 20; i++) {
+            instance.putOrCompute(i, i, old -> old * 2);
+        }
+        assertEquals(20, instance.getSize());
+
+        // Update all values
+        for (int i = 1; i <= 20; i++) {
+            instance.putOrCompute(i, 0, old -> old + 1);
+        }
+        assertEquals(20, instance.getSize());
+
+        // Verify final values
+        assertEquals(111, instance.get(1)); // 110 + 1
+        for (int i = 2; i <= 20; i++) {
+            assertEquals(i + 1, instance.get(i)); // i + 1
+        }
+    }
+
+    @Test
+    public void testPutOrComputeValidation() {
+        GHLongLongBTree instance = new GHLongLongBTree(3, 4, -1);
+
+        // valueIfAbsent cannot be the empty value
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> instance.putOrCompute(1, -1, old -> old));
+        assertTrue(ex.getMessage().contains("Value cannot be the 'empty value' -1"));
+
+        // computed value cannot be the empty value
+        instance.put(1, 10);
+        ex = assertThrows(IllegalArgumentException.class,
+                () -> instance.putOrCompute(1, 5, old -> -1));
+        assertTrue(ex.getMessage().contains("Computed value cannot be the 'empty value' -1"));
+    }
+
+    @Test
     public void testRandom() {
         final long seed = System.nanoTime();
         Random rand = new Random(seed);

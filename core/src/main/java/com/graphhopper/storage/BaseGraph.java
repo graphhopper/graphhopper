@@ -47,6 +47,10 @@ import static com.graphhopper.util.Parameters.Details.STREET_NAME;
  * loadExisting, (4) usage, (5) flush, (6) close
  */
 public class BaseGraph implements Graph, Closeable {
+    /**
+     * Maximum distance per edge in meters (~2147 km).
+     */
+    public static final double MAX_DIST_METERS = BaseGraphNodesAndEdges.MAX_DIST_MM / 1000.0;
     final static long MAX_UNSIGNED_INT = 0xFFFF_FFFFL;
     private static final int MAX_PILLAR_NODES = 65535;
     private static final int GEOMETRY_HEADER_BYTES = 2;
@@ -59,21 +63,19 @@ public class BaseGraph implements Graph, Closeable {
     // length | nodeA | nextNode | ... | nodeB
     private final DataAccess wayGeometry;
     private final Directory dir;
-    private final int segmentSize;
     private boolean initialized = false;
     private long minGeoRef;
     private long maxGeoRef;
     private final int eleBytesPerCoord;
 
-    public BaseGraph(Directory dir, boolean withElevation, boolean withTurnCosts, int segmentSize, int bytesForFlags) {
+    public BaseGraph(Directory dir, boolean withElevation, boolean withTurnCosts, int bytesForFlags) {
         this.dir = dir;
         this.bitUtil = BitUtil.LITTLE;
-        this.wayGeometry = dir.create("geometry", segmentSize);
+        this.wayGeometry = dir.create("geometry");
         this.edgeKVStorage = new KVStorage(dir, true);
-        this.store = new BaseGraphNodesAndEdges(dir, withElevation, withTurnCosts, segmentSize, bytesForFlags);
+        this.store = new BaseGraphNodesAndEdges(dir, withElevation, withTurnCosts, bytesForFlags);
         this.nodeAccess = new GHNodeAccess(store);
-        this.segmentSize = segmentSize;
-        this.turnCostStorage = withTurnCosts ? new TurnCostStorage(this, dir.create("turn_costs", dir.getDefaultType("turn_costs", true), segmentSize)) : null;
+        this.turnCostStorage = withTurnCosts ? new TurnCostStorage(this, dir.create("turn_costs", dir.getDefaultType("turn_costs", true))) : null;
         this.eleBytesPerCoord = (nodeAccess.getDimension() == 3 ? 3 : 0);
     }
 
@@ -281,7 +283,7 @@ public class BaseGraph implements Graph, Closeable {
         store.writeFlags(edgePointer, from.getFlags());
 
         // copy the rest with higher level API
-        to.setDistance(from.getDistance()).
+        to.setDistance_mm(from.getDistance_mm()).
                 setKeyValues(from.getKeyValues()).
                 setWayGeometry(from.fetchWayGeometry(FetchMode.PILLAR_ONLY));
 
@@ -322,7 +324,7 @@ public class BaseGraph implements Graph, Closeable {
         EdgeIteratorStateImpl edgeState = (EdgeIteratorStateImpl) getEdgeIteratorState(edge, Integer.MIN_VALUE);
         EdgeIteratorStateImpl newEdge = (EdgeIteratorStateImpl) edge(edgeState.getBaseNode(), edgeState.getAdjNode())
                 .setFlags(edgeState.getFlags())
-                .setDistance(edgeState.getDistance())
+                .setDistance_mm(edgeState.getDistance_mm())
                 .setKeyValues(edgeState.getKeyValues());
         if (reuseGeometry) {
             // We use the same geo ref for the copied edge. This saves memory because we are not duplicating
@@ -614,17 +616,12 @@ public class BaseGraph implements Graph, Closeable {
         return dir;
     }
 
-    public int getSegmentSize() {
-        return segmentSize;
-    }
-
     public static class Builder {
         private final int bytesForFlags;
-        private Directory directory = new RAMDirectory();
+        private Directory directory = new GHDirectory("", DAType.RAM);
         private boolean withElevation = false;
         private boolean withTurnCosts = false;
         private long bytes = 100;
-        private int segmentSize = -1;
 
         public Builder(EncodingManager em) {
             this(em.getBytesForFlags());
@@ -653,18 +650,13 @@ public class BaseGraph implements Graph, Closeable {
             return this;
         }
 
-        public Builder setSegmentSize(int segmentSize) {
-            this.segmentSize = segmentSize;
-            return this;
-        }
-
         public Builder setBytes(long bytes) {
             this.bytes = bytes;
             return this;
         }
 
         public BaseGraph build() {
-            return new BaseGraph(directory, withElevation, withTurnCosts, segmentSize, bytesForFlags);
+            return new BaseGraph(directory, withElevation, withTurnCosts, bytesForFlags);
         }
 
         public BaseGraph create() {
@@ -844,12 +836,38 @@ public class BaseGraph implements Graph, Closeable {
 
         @Override
         public double getDistance() {
-            return store.getDist(edgePointer);
+            // never return infinity even if dist_mm is INT MAX, see #435
+            return getDistance_mm() / 1000.0;
         }
 
         @Override
         public EdgeIteratorState setDistance(double dist) {
-            store.setDist(edgePointer, dist);
+            if (dist < 0)
+                throw new IllegalArgumentException("distances must be non-negative, got: " + dist);
+            // distances above ~2147km are capped
+            if (dist > MAX_DIST_METERS)
+                dist = MAX_DIST_METERS;
+            // distances below 0.5mm are rounded down to zero
+            long dist_mm = Math.round(dist * 1000);
+            setDistance_mm(dist_mm);
+            return this;
+        }
+
+        /**
+         * Returns the distance in millimeters
+         */
+        @Override
+        public long getDistance_mm() {
+            return store.getDist_mm(edgePointer);
+        }
+
+        @Override
+        public EdgeIteratorState setDistance_mm(long distance_mm) {
+            if (distance_mm < 0)
+                throw new IllegalArgumentException("distances must be non-negative, got: " + distance_mm);
+            if (distance_mm > BaseGraphNodesAndEdges.MAX_DIST_MM)
+                distance_mm = BaseGraphNodesAndEdges.MAX_DIST_MM;
+            store.setDist_mm(edgePointer, distance_mm);
             return this;
         }
 
@@ -1056,21 +1074,27 @@ public class BaseGraph implements Graph, Closeable {
         @Override
         public EdgeIteratorState setKeyValues(Map<String, KVStorage.KValue> entries) {
             long pointer = baseGraph.edgeKVStorage.add(entries);
-            if (pointer > MAX_UNSIGNED_INT)
-                throw new IllegalStateException("Too many key value pairs are stored, currently limited to " + MAX_UNSIGNED_INT + " was " + pointer);
-            store.setKeyValuesRef(edgePointer, BitUtil.toSignedInt(pointer));
+            // Shift right to use 4x more address space (pointers are 4-byte aligned)
+            long shiftedPointer = pointer >> KVStorage.ALIGNMENT_SHIFT;
+            if (shiftedPointer > MAX_UNSIGNED_INT)
+                throw new IllegalStateException("Too many key value pairs are stored, currently limited to " + (MAX_UNSIGNED_INT << KVStorage.ALIGNMENT_SHIFT) + " was " + pointer);
+            store.setKeyValuesRef(edgePointer, BitUtil.toSignedInt(shiftedPointer));
             return this;
         }
 
         @Override
         public Map<String, KVStorage.KValue> getKeyValues() {
-            long kvEntryRef = Integer.toUnsignedLong(store.getKeyValuesRef(edgePointer));
+            long shiftedRef = Integer.toUnsignedLong(store.getKeyValuesRef(edgePointer));
+            // Shift left to restore the actual byte offset
+            long kvEntryRef = shiftedRef << KVStorage.ALIGNMENT_SHIFT;
             return baseGraph.edgeKVStorage.getAll(kvEntryRef);
         }
 
         @Override
         public Object getValue(String key) {
-            long kvEntryRef = Integer.toUnsignedLong(store.getKeyValuesRef(edgePointer));
+            long shiftedRef = Integer.toUnsignedLong(store.getKeyValuesRef(edgePointer));
+            // Shift left to restore the actual byte offset
+            long kvEntryRef = shiftedRef << KVStorage.ALIGNMENT_SHIFT;
             return baseGraph.edgeKVStorage.get(kvEntryRef, key, reverse);
         }
 
@@ -1093,6 +1117,11 @@ public class BaseGraph implements Graph, Closeable {
                 edge.reverse = !reverse;
             }
             return edge;
+        }
+
+        @Override
+        public boolean isVirtual() {
+            return false;
         }
 
         @Override

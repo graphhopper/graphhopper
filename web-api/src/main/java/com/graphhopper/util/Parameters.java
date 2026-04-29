@@ -105,6 +105,10 @@ public class Parameters {
         public static final String INSTRUCTIONS = "instructions";
         public static final String INIT_INSTRUCTIONS = ROUTING_INIT_PREFIX + "instructions";
         /**
+         * if true the response will contain any potential via-point instructions
+         */ 
+        public static final String VIA_POINT_INSTRUCTIONS = "via_point_instructions";
+        /**
          * if true the response will contain a point list
          */
         public static final String CALC_POINTS = "calc_points";
@@ -138,6 +142,11 @@ public class Parameters {
         public static final String CURBSIDE_LEFT = "left";
         public static final String CURBSIDE_RIGHT = "right";
         public static final String CURBSIDE_ANY = "any";
+        /**
+         * This option automatically avoids crossing the street for bigger roads (PRIMARY, SECONDARY)
+         * i.e. forces 'right' for right-hand traffic.
+         */
+        public static final String CURBSIDE_AUTO = "auto";
     }
 
     /**

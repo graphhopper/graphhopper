@@ -25,10 +25,11 @@ import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.IntEncodedValue;
 import org.codehaus.commons.compiler.CompileException;
 import org.codehaus.janino.*;
-import org.codehaus.janino.Scanner;
 
 import java.io.StringReader;
-import java.util.*;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 import static com.graphhopper.json.Statement.Keyword.IF;
 
@@ -162,17 +163,22 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
 
         Statement first = group.get(0);
         if (first.condition().trim().equals("true")) {
-            if(first.isBlock()) {
+            if (first.isBlock()) {
                 List<List<Statement>> groups = CustomModelParser.splitIntoGroup(first.doBlock());
-                for (List<Statement> subGroup : groups) findVariablesForGroup(createdObjects, subGroup, lookup);
+                for (List<Statement> subGroup : groups)
+                    findVariablesForGroup(createdObjects, subGroup, lookup);
             } else {
                 createdObjects.addAll(ValueExpressionVisitor.findVariables(first.value(), lookup));
             }
+
+            if (group.size() > 1)
+                throw new IllegalArgumentException("Only one statement allowed for an unconditional statement");
         } else {
             for (Statement st : group) {
-                if(st.isBlock()) {
+                if (st.isBlock()) {
                     List<List<Statement>> groups = CustomModelParser.splitIntoGroup(st.doBlock());
-                    for (List<Statement> subGroup : groups) findVariablesForGroup(createdObjects, subGroup, lookup);
+                    for (List<Statement> subGroup : groups)
+                        findVariablesForGroup(createdObjects, subGroup, lookup);
                 } else {
                     createdObjects.addAll(ValueExpressionVisitor.findVariables(st.value(), lookup));
                 }
@@ -267,14 +273,17 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
     }
 
     static double getMin(EncodedValue enc) {
-        if (enc instanceof DecimalEncodedValue) return ((DecimalEncodedValue) enc).getMinStorableDecimal();
+        if (enc instanceof DecimalEncodedValue)
+            return ((DecimalEncodedValue) enc).getMinStorableDecimal();
         else if (enc instanceof IntEncodedValue) return ((IntEncodedValue) enc).getMinStorableInt();
         throw new IllegalArgumentException("Cannot use non-number data '" + enc.getName() + "' in value expression");
     }
 
     static double getMax(EncodedValue enc) {
-        if (enc instanceof DecimalEncodedValue) return ((DecimalEncodedValue) enc).getMaxOrMaxStorableDecimal();
-        else if (enc instanceof IntEncodedValue) return ((IntEncodedValue) enc).getMaxOrMaxStorableInt();
+        if (enc instanceof DecimalEncodedValue)
+            return ((DecimalEncodedValue) enc).getMaxOrMaxStorableDecimal();
+        else if (enc instanceof IntEncodedValue)
+            return ((IntEncodedValue) enc).getMaxOrMaxStorableInt();
         throw new IllegalArgumentException("Cannot use non-number data '" + enc.getName() + "' in value expression");
     }
 

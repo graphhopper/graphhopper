@@ -26,9 +26,7 @@ import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.AccessFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.storage.BaseGraph;
-import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.*;
@@ -312,7 +310,7 @@ public class DirectionResolverOnQueryGraphTest {
     }
 
     private void init() {
-        locationIndex = new LocationIndexTree(graph, new RAMDirectory());
+        locationIndex = new LocationIndexTree(graph, new GHDirectory("", DAType.RAM));
         locationIndex.prepareIndex();
     }
 

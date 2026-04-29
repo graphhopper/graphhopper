@@ -135,18 +135,12 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
         if (access.canSkip())
             return;
 
-        if (!access.isFerry()) {
-            boolean isRoundabout = roundaboutEnc.getBool(false, edgeId, edgeIntAccess);
-            if (isOneway(way) || isRoundabout) {
-                if (isForwardOneway(way))
-                    accessEnc.setBool(false, edgeId, edgeIntAccess, true);
-                if (isBackwardOneway(way))
-                    accessEnc.setBool(true, edgeId, edgeIntAccess, true);
-            } else {
+        boolean isRoundabout = roundaboutEnc.getBool(false, edgeId, edgeIntAccess);
+        if (isOneway(way) || isRoundabout) {
+            if (isForwardOneway(way))
                 accessEnc.setBool(false, edgeId, edgeIntAccess, true);
+            if (isBackwardOneway(way))
                 accessEnc.setBool(true, edgeId, edgeIntAccess, true);
-            }
-
         } else {
             accessEnc.setBool(false, edgeId, edgeIntAccess, true);
             accessEnc.setBool(true, edgeId, edgeIntAccess, true);

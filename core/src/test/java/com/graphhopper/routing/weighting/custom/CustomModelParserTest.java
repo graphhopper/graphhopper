@@ -20,6 +20,7 @@ package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.search.KVStorage;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.EdgeIteratorState;
@@ -30,10 +31,9 @@ import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
+
+import static com.graphhopper.util.Parameters.Details.STREET_NAME;
 
 import static com.graphhopper.json.Statement.*;
 import static com.graphhopper.json.Statement.Op.*;
@@ -321,6 +321,17 @@ class CustomModelParserTest {
     }
 
     @Test
+    public void testStatements() {
+        CustomModel customModel = new CustomModel();
+        customModel.addToPriority(If("true", MULTIPLY, "0.5"));
+        customModel.addToPriority(Else(LIMIT, "0.7"));
+        customModel.addToSpeed(If("true", LIMIT, "100"));
+        Exception ret = assertThrows(IllegalArgumentException.class,
+                () -> CustomModelParser.createWeightingParameters(customModel, encodingManager));
+        assertTrue(ret.getMessage().contains("Only one statement allowed for an unconditional statement"), ret.getMessage());
+    }
+
+    @Test
     void testBackwardFunction() {
         CustomModel customModel = new CustomModel();
         customModel.addToPriority(If("backward_car_access != car_access", MULTIPLY, "0.5"));
@@ -348,6 +359,23 @@ class CustomModelParserTest {
         EdgeIteratorState edge1 = graph.edge(0, 1).setDistance(100).set(roadClassEnc, SECONDARY);
         EdgeIteratorState edge2 = graph.edge(1, 2).setDistance(100).set(roadClassEnc, PRIMARY);
         EdgeIteratorState edge3 = graph.edge(2, 3).setDistance(100).set(roadClassEnc, PRIMARY);
+
+        assertEquals(100, turnPenaltyMapping.get(graph, graph.getEdgeAccess(), edge1.getEdge(), 1, edge2.getEdge()));
+        assertEquals(0, turnPenaltyMapping.get(graph, graph.getEdgeAccess(), edge2.getEdge(), 2, edge3.getEdge()));
+    }
+
+    @Test
+    void testStreetNameTurnPenalty() {
+        CustomModel customModel = new CustomModel();
+        customModel.addToSpeed(If("true", LIMIT, "100"));
+        customModel.addToTurnPenalty(If("prev_street_name.equals(street_name)", ADD, "100"));
+        CustomWeighting.TurnPenaltyMapping turnPenaltyMapping = CustomModelParser.createWeightingParameters(customModel, encodingManager).
+                getTurnPenaltyMapping();
+
+        BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
+        EdgeIteratorState edge1 = graph.edge(0, 1).setDistance(100).setKeyValues(Map.of(STREET_NAME, new KVStorage.KValue("Main St")));
+        EdgeIteratorState edge2 = graph.edge(1, 2).setDistance(100).setKeyValues(Map.of(STREET_NAME, new KVStorage.KValue("Main St")));
+        EdgeIteratorState edge3 = graph.edge(2, 3).setDistance(100).setKeyValues(Map.of(STREET_NAME, new KVStorage.KValue("Oak Ave")));
 
         assertEquals(100, turnPenaltyMapping.get(graph, graph.getEdgeAccess(), edge1.getEdge(), 1, edge2.getEdge()));
         assertEquals(0, turnPenaltyMapping.get(graph, graph.getEdgeAccess(), edge2.getEdge(), 2, edge3.getEdge()));

@@ -272,7 +272,6 @@ A fast and production-ready map visualization for the Desktop can be implemented
  * Supports [turn costs and restrictions](./docs/core/turn-restrictions.md).
  * Offers country-specific routing via country rules.
  * Allows customizing routing behavior using custom areas.
- * The core uses only a few dependencies (hppc, jts, janino and slf4j).
  * Scales from small indoor-sized to world-wide-sized graphs.
  * Finds nearest point on street e.g. to get elevation or 'snap to road' or being used as spatial index (see [#1485](https://github.com/graphhopper/graphhopper/pull/1485)).
  * Calculates isochrones and [shortest path trees](https://github.com/graphhopper/graphhopper/pull/1577).

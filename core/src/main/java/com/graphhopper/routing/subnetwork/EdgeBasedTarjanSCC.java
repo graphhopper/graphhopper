@@ -219,8 +219,6 @@ public class EdgeBasedTarjanSCC {
         for (IntCursor edge : startEdges) {
             // todo: using getEdgeIteratorState here is not efficient
             EdgeIteratorState edgeState = graph.getEdgeIteratorState(edge.value, Integer.MIN_VALUE);
-            if (!edgeTransitionFilter.accept(NO_EDGE, edgeState))
-                continue;
             findComponentsForEdgeState(edgeState);
         }
         return components;

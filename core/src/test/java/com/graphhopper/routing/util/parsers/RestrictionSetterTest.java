@@ -871,7 +871,8 @@ public class RestrictionSetterTest {
         assertPath(queryGraph, 1, 4, nodes(1, 2, x, 3, 4));
         assertPath(queryGraph, 2, 4, nodes(2, x, 3, 4));
         assertPath(queryGraph, 2, 5, nodes(2, x, 3, y, 4, 5));
-        assertPath(queryGraph, 3, 5, nodes(3, y, 4, 5));
+        // interestingly this used to go 4-5 instead of 4-z-5 bc we use dist_earth in osmreader and dist_plane in query overlay
+        assertPath(queryGraph, 3, 5, nodes(3, y, 4, z, 5));
         assertPath(queryGraph, 3, 6, nodes(3, y, 4, z, 5, 6));
         assertPath(queryGraph, 4, 6, nodes(4, z, 5, 6));
         // turning between the virtual nodes is still possible

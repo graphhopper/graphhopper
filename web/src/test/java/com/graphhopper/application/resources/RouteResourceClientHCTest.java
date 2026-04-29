@@ -63,6 +63,7 @@ public class RouteResourceClientHCTest {
         config.getGraphHopperConfiguration().
                 putObject("prepare.min_network_size", 0).
                 putObject("graph.elevation.provider", "srtm").
+                putObject("graph.elevation.clear", true).
                 putObject("graph.elevation.cache_dir", "../core/files/").
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("graph.encoded_values", "road_class,surface,road_environment,max_speed").
@@ -120,9 +121,9 @@ public class RouteResourceClientHCTest {
         ResponsePath res = rsp.getBest();
         isBetween(70, 80, res.getPoints().size());
         isBetween(2900, 3000, res.getDistance());
-        isBetween(110, 120, res.getAscend());
+        isBetween(120, 130, res.getAscend());
         isBetween(75, 85, res.getDescend());
-        isBetween(190, 200, res.getRouteWeight());
+        isBetween(1900, 2000, res.getRouteWeight());
 
         // change vehicle
         rsp = gh.route(new GHRequest(42.5093, 1.5274, 42.5126, 1.5410).

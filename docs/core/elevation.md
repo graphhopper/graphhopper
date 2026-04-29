@@ -1,13 +1,14 @@
 # Elevation
 
-Per default elevation is disabled. But you can easily enable it e.g. via
-`graph.elevation.provider: cgiar`. Or use other possibilities `srtm`, `gmted`, `sonny`, 
-`multi` (combined cgiar and gmted), or `multi3` (combined cgiar, gmted and sonny).
+Per default elevation is `srtm` and if you remove the config line you
+automatically disable it and reduce storange and RAM usage a bit.
+You can also change it to `graph.elevation.provider: cgiar`. Or use other possibilities `srtm`, `gmted`, `sonny`,
+`multi` (combined cgiar and gmted), `multi3` (combined cgiar, gmted and sonny) or `pmtiles`.
 
-Then GraphHopper will automatically download the necessary data for the area and include elevation 
-for all vehicles except when using `sonny` - making also the distances a bit more precise. 
+Then GraphHopper will automatically download the necessary data for the area
+(except for `sonny` and `pmtiles`) and include elevation for all vehicles making also the distances a bit more precise.
 
-The default cache directory `/tmp/<provider name>` will be used. For large areas it is highly recommended to 
+The default cache directory `/tmp/<provider name>` will be used. For large areas it is highly recommended to
 use a SSD disc, thus you need to specify the cache directory:
 `graph.elevation.cache_dir: /myssd/ele_cache/`
 
@@ -17,9 +18,17 @@ The `average_slope` and `max_slope` attributes of a road segment can be used to 
 elevation-aware, i.e. to prefer or avoid, to speed up or slow down your vehicle based on the elevation
 change. See the [custom model](custom-models.md) feature.
 
+## Cache
+
+All elevation providers create an internal custom storage format for faster
+access while import. The default behaviour is that these cache files are not
+deleted after GraphHopper finishes because on a new import they can be
+reused. To change this behaviour and delete them before exit specify:
+`graph.elevation.clear: true`
+
 ## What to download and where to store it?
 
-Except when using `sonny` all should work automatically, but you can tune certain settings like the location where the files are 
+All should work automatically, but you can tune certain settings like the location where the files are
 downloaded and e.g. if the servers are not reachable, then you set:
 `graph.elevation.base_url`
 
@@ -29,12 +38,29 @@ and this is only accessibly if you specify the [full zip file](https://srtm.csi.
 If the geographical area is small and you need a faster import you can change the default MMAP setting to:
 `graph.elevation.dataaccess: RAM_STORE`
 
-## CGIAR vs. SRTM
+### Manual Download Required
 
-The CGIAR data is preferred because of the quality but is in general not public domain. 
-But we got a license for our and our users' usage: https://graphhopper.com/public/license/CGIAR.txt
+For `sonny` and `pmtiles` you need to download the data first. Read more
+about the details in [this pull request](https://github.com/graphhopper/graphhopper/pull/3183) for `sonny`
+and [this pull request](https://github.com/graphhopper/graphhopper/pull/3287) for `pmtiles`.
 
-Using SRTM instead CGIAR has the minor advantage of a faster download, especially for smaller areas.
+## PMTiles
+
+The mapterhorn project did an exceptional work and created a pipeline to collect many raster
+tiles in a convenient single file (protomaps tiles). As it contains many
+sources the attribution is a longer list that you can find [here](https://mapterhorn.com/attribution/).
+
+When you downloaded the file you specify it in the config.yml like this:
+
+```
+graph.elevation.provider: pmtiles
+graph.elevation.pmtiles.location: /data/pmtiles.pmtiles
+graph.elevation.pmtiles.zoom: 11
+graph.elevation.cache_dir: /tmp/pmtiles-cache
+```
+
+You can also cut a geographical area using the official pmtiles tool or cut out certain
+zoom levels with [a simple go script](https://gist.github.com/karussell/e6ad9918b6cd9913ddba998af43860a2#file-trim_pmtiles-go) to reduce file size by a lot.
 
 ## Sonny's LiDAR Digital Terrain Models
 Sonny's LiDAR Digital Terrain Models are available for Europe only, see https://sonny.4lima.de/. 
@@ -51,6 +77,6 @@ data area does not match your graphhopper coverage area, make sure to use the `m
 
 ## Custom Elevation Data
 
-Integrating your own elevation data is easy and just requires you to implement the
+Integrating your own elevation data requires you to implement the
 ElevationProvider interface and then specify it via GraphHopper.setElevationProvider.
 Have a look in the existing implementations for a simple overview of caching and DataAccess usage.

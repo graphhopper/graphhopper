@@ -46,7 +46,6 @@ import java.util.zip.ZipInputStream;
  * @author Peter Karich
  */
 public class CGIARProvider extends AbstractTiffElevationProvider {
-    private final double invPrecision = 1 / precision;
 
     public CGIARProvider() {
         this("");
@@ -56,7 +55,6 @@ public class CGIARProvider extends AbstractTiffElevationProvider {
         // Alternative URLs for the CGIAR data can be found in #346
         super("https://srtm.csi.cgiar.org/wp-content/uploads/files/srtm_5x5/TIFF/",
                 cacheDir.isEmpty() ? "/tmp/cgiar" : cacheDir,
-                "GraphHopper CGIARReader",
                 6000, 6000,
                 5, 5);
     }
@@ -117,12 +115,8 @@ public class CGIARProvider extends AbstractTiffElevationProvider {
     }
 
     int down(double val) {
-        // 'rounding' to closest 5
-        int intVal = (int) (val / LAT_DEGREE) * LAT_DEGREE;
-        if (!(val >= 0 || intVal - val < invPrecision))
-            intVal = intVal - LAT_DEGREE;
-
-        return intVal;
+        // floor to nearest multiple of LAT_DEGREE
+        return (int) (Math.floor(val / LAT_DEGREE)) * LAT_DEGREE;
     }
 
     @Override
@@ -131,13 +125,10 @@ public class CGIARProvider extends AbstractTiffElevationProvider {
     }
 
     protected String getFileName(double lat, double lon) {
-        lon = 1 + (180 + lon) / LAT_DEGREE;
-        int lonInt = (int) lon;
-        lat = 1 + (60 - lat) / LAT_DEGREE;
-        int latInt = (int) lat;
-
-        if (Math.abs(latInt - lat) < invPrecision / LAT_DEGREE)
-            latInt--;
+        int minLat = down(lat);
+        int minLon = down(lon);
+        int lonInt = 1 + (minLon + 180) / LAT_DEGREE;
+        int latInt = (60 - minLat) / LAT_DEGREE;
 
         // replace String.format as it seems to be slow
         // String.format("srtm_%02d_%02d", lonInt, latInt);

@@ -121,13 +121,72 @@ public abstract class AbstractGraphStorageTester {
     public void testSetTooBigDistance_435() {
         graph = createGHStorage();
 
-        double maxDist = BaseGraphNodesAndEdges.MAX_DIST;
+        double maxDist = BaseGraph.MAX_DIST_METERS;
         EdgeIteratorState edge1 = graph.edge(0, 1).setDistance(maxDist);
         assertEquals(maxDist, edge1.getDistance(), 1);
 
         // max out should NOT lead to infinity as this leads fast to NaN! -> we set dist to the maximum if its larger than desired
         EdgeIteratorState edge2 = graph.edge(0, 2).setDistance(maxDist + 1);
         assertEquals(maxDist, edge2.getDistance(), 1);
+    }
+
+    @Test
+    public void testGetSetDistance_mm() {
+        graph = createGHStorage();
+
+        // basic round-trip: setDistance_mm -> getDistance_mm is lossless
+        EdgeIteratorState edge = graph.edge(0, 1).setDistance_mm(123456);
+        assertEquals(123456, edge.getDistance_mm());
+        // getDistance returns meters
+        assertEquals(123.456, edge.getDistance(), 1e-9);
+
+        // zero distance
+        edge.setDistance_mm(0);
+        assertEquals(0, edge.getDistance_mm());
+        assertEquals(0, edge.getDistance(), 1e-9);
+
+        // single millimeter
+        edge.setDistance_mm(1);
+        assertEquals(1, edge.getDistance_mm());
+        assertEquals(0.001, edge.getDistance(), 1e-9);
+
+        // setDistance -> getDistance_mm should give the rounded mm value
+        edge.setDistance(1.2345);
+        // 1.2345 * 1000 = 1234.5 -> rounds to 1235
+        assertEquals(1235, edge.getDistance_mm());
+        assertEquals(1.235, edge.getDistance(), 1e-9);
+
+        // setDistance_mm -> setDistance_mm copy is lossless (the whole point of the API)
+        EdgeIteratorState edge2 = graph.edge(0, 2);
+        edge2.setDistance_mm(edge.getDistance_mm());
+        assertEquals(edge.getDistance_mm(), edge2.getDistance_mm());
+        assertEquals(edge.getDistance(), edge2.getDistance(), 1e-9);
+    }
+
+    @Test
+    public void testDistance_mmCapping() {
+        graph = createGHStorage();
+
+        // distances at MAX_DIST_MM are stored exactly
+        EdgeIteratorState edge = graph.edge(0, 1).setDistance_mm(BaseGraphNodesAndEdges.MAX_DIST_MM);
+        assertEquals(BaseGraphNodesAndEdges.MAX_DIST_MM, edge.getDistance_mm());
+
+        // values larger than MAX_DIST_MM are capped
+        EdgeIteratorState edge2 = graph.edge(0, 2).setDistance_mm(BaseGraphNodesAndEdges.MAX_DIST_MM + 1);
+        assertEquals(BaseGraphNodesAndEdges.MAX_DIST_MM, edge2.getDistance_mm());
+    }
+
+    @Test
+    public void testDistance_mmArguments() {
+        graph = createGHStorage();
+        EdgeIteratorState edge = graph.edge(0, 1);
+        assertThrows(IllegalArgumentException.class, () -> edge.setDistance_mm(-1));
+        // if the distance exceeds the limit it will be capped silently! debatable, but this is what
+        // we've been doing for a long time in setDistance.
+        edge.setDistance_mm(BaseGraphNodesAndEdges.MAX_DIST_MM + 1L);
+        assertEquals(BaseGraphNodesAndEdges.MAX_DIST_MM, edge.getDistance_mm());
+        edge.setDistance(BaseGraph.MAX_DIST_METERS + 1L);
+        assertEquals(BaseGraph.MAX_DIST_METERS, edge.getDistance());
     }
 
     @Test

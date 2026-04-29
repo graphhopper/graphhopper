@@ -215,6 +215,7 @@ class InstructionsOutgoingEdges {
         if (!InstructionsHelper.isSameName(name, prevEdge.getName()) || roadClass != prevEdge.get(roadClassEnc))
             return false;
 
+        // search another edge with the same name where at least one direction is accessible
         EdgeIterator edgeIter = allExplorer.setBaseNode(baseNode);
         EdgeIteratorState otherEdge = null;
         while (edgeIter.next()) {

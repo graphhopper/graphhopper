@@ -23,6 +23,6 @@ package com.graphhopper.storage;
 public class MMapDirectoryTest extends AbstractDirectoryTester {
     @Override
     Directory createDir() {
-        return new MMapDirectory(location).create();
+        return new GHDirectory(location, DAType.MMAP).create();
     }
 }

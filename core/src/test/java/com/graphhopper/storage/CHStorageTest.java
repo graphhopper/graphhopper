@@ -6,15 +6,14 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class CHStorageTest {
 
     @Test
     void setAndGetLevels() {
-        RAMDirectory dir = new RAMDirectory();
-        CHStorage store = new CHStorage(dir, "ch1", -1, false);
+        GHDirectory dir = new GHDirectory("", DAType.RAM);
+        CHStorage store = new CHStorage(dir, "ch1", false);
         store.create(30, 5);
         assertEquals(0, store.getLevel(store.toNodePointer(10)));
         store.setLevel(store.toNodePointer(10), 100);
@@ -27,7 +26,7 @@ class CHStorageTest {
     void createAndLoad(@TempDir Path path) {
         {
             GHDirectory dir = new GHDirectory(path.toAbsolutePath().toString(), DAType.RAM_INT_STORE);
-            CHStorage chStorage = new CHStorage(dir, "car", -1, false);
+            CHStorage chStorage = new CHStorage(dir, "car", false);
             // we have to call create, because we want to create a new storage not load an existing one
             chStorage.create(5, 3);
             assertEquals(0, chStorage.shortcutNodeBased(0, 1, PrepareEncoder.getScFwdDir(), 10, 3, 5));
@@ -42,7 +41,7 @@ class CHStorageTest {
         }
         {
             GHDirectory dir = new GHDirectory(path.toAbsolutePath().toString(), DAType.RAM_INT_STORE);
-            CHStorage chStorage = new CHStorage(dir, "car", -1, false);
+            CHStorage chStorage = new CHStorage(dir, "car", false);
             // this time we load from disk
             chStorage.loadExisting();
             assertEquals(4, chStorage.getShortcuts());
@@ -58,21 +57,28 @@ class CHStorageTest {
 
     @Test
     public void testBigWeight() {
-        CHStorage g = new CHStorage(new RAMDirectory(), "abc", 1024, false);
+        CHStorage g = new CHStorage(new GHDirectory("", DAType.RAM), "abc", false);
         g.shortcutNodeBased(0, 0, 0, 10, 0, 1);
 
-        g.setWeight(0, Integer.MAX_VALUE / 1000d + 1000);
-        assertEquals(Integer.MAX_VALUE / 1000d + 1000, g.getWeight(0));
+        g.setWeight(0, (1L << 32) - 3);
+        assertEquals((1L << 32) - 3, g.getWeight(0));
 
-        g.setWeight(0, ((long) Integer.MAX_VALUE << 1) / 1000d - 0.001);
-        assertEquals(((long) Integer.MAX_VALUE << 1) / 1000d - 0.001, g.getWeight(0), 0.001);
+        g.setWeight(0, (1L << 32) - 2);
+        assertTrue(Double.isInfinite(g.getWeight(0)));
 
-        g.setWeight(0, ((long) Integer.MAX_VALUE << 1) / 1000d);
+        g.setWeight(0, 5.e9);
         assertTrue(Double.isInfinite(g.getWeight(0)));
-        g.setWeight(0, ((long) Integer.MAX_VALUE << 1) / 1000d + 1);
-        assertTrue(Double.isInfinite(g.getWeight(0)));
-        g.setWeight(0, ((long) Integer.MAX_VALUE << 1) / 1000d + 100);
-        assertTrue(Double.isInfinite(g.getWeight(0)));
+
+        g.setWeight(0, 0);
+        assertEquals(0, g.getWeight(0));
+
+        assertThrows(IllegalArgumentException.class, () -> g.setWeight(0, 0.0000001));
+        assertThrows(IllegalArgumentException.class, () -> g.setWeight(0, 0.0001));
+        assertThrows(IllegalArgumentException.class, () -> g.setWeight(0, 0.1));
+        assertThrows(IllegalArgumentException.class, () -> g.setWeight(0, -0.1));
+        assertThrows(IllegalArgumentException.class, () -> g.setWeight(0, -1));
+
+
     }
 
     @Test

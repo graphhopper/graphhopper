@@ -101,7 +101,7 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
             }
             PotentialAlternativeInfo potentialAlternativeInfo = new PotentialAlternativeInfo();
             potentialAlternativeInfo.v = v;
-            potentialAlternativeInfo.weight = 2 * (fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath()) + preliminaryShare;
+            potentialAlternativeInfo.weight = 0.2 * (fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath()) + preliminaryShare;
             potentialAlternativeInfos.add(potentialAlternativeInfo);
             return true;
         });
@@ -235,7 +235,7 @@ public class AlternativeRouteCH extends DijkstraBidirectionCHNoSOD {
         path.setFromNode(svPath.calcNodes().get(0));
         path.setEndNode(vtPath.getEndNode());
         path.setWeight(svPath.getWeight() + vtPath.getWeight());
-        path.setDistance(svPath.getDistance() + vtPath.getDistance());
+        path.addDistance_mm(svPath.getDistance_mm() + vtPath.getDistance_mm());
         path.addTime(svPath.getTime() + vtPath.getTime());
         path.setFound(true);
         return path;

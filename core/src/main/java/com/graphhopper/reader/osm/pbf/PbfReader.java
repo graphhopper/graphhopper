@@ -1,68 +1,198 @@
-// This software is released into the Public Domain.  See copying.txt for details.
+/*
+ *  Licensed to GraphHopper GmbH under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for
+ *  additional information regarding copyright ownership.
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
+ *  compliance with the License. You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package com.graphhopper.reader.osm.pbf;
 
+import com.graphhopper.reader.ReaderElement;
+import com.graphhopper.reader.osm.OSMInput;
 import com.graphhopper.reader.osm.SkipOptions;
 
 import java.io.DataInputStream;
+import java.io.IOException;
 import java.io.InputStream;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.*;
+import java.util.concurrent.*;
 
 /**
- * An OSM data source reading from a PBF file. The entire contents of the file are read.
+ * Pipelined PBF reader: blobs.map(decode).flatten
  * <p>
- *
- * @author Brett Henderson
+ * - Reader thread: splits stream into blobs
+ * - Coordinator thread: submits blobs to workers, queues decoded results in order
+ * - Worker threads: decode blobs in parallel
+ * - Consumer: iterates through queued results via getNext()
  */
-public class PbfReader implements Runnable {
-    private Throwable throwable;
+public class PbfReader implements OSMInput {
+    private static final PbfRawBlob END_OF_STREAM = new PbfRawBlob("END", new byte[0]);
+
     private final InputStream inputStream;
-    private final Sink sink;
     private final int workers;
     private final SkipOptions skipOptions;
 
-    /**
-     * Creates a new instance.
-     * <p>
-     *
-     * @param in      The file to read.
-     * @param workers The number of worker threads for decoding PBF blocks.
-     */
-    public PbfReader(InputStream in, Sink sink, int workers, SkipOptions skipOptions) {
+    private final BlockingQueue<PbfRawBlob> blobQueue;
+    private final BlockingQueue<List<ReaderElement>> resultQueue;
+
+    private volatile Throwable readerException;
+    private volatile Throwable coordinatorException;
+    private volatile boolean coordinatorDone;
+    private boolean eof;
+
+    private Iterator<ReaderElement> currentBatch = Collections.emptyIterator();
+    private Thread readerThread;
+    private Thread coordinatorThread;
+    private ExecutorService decoderExecutor;
+
+    public PbfReader(InputStream in, int workers, SkipOptions skipOptions) {
         this.inputStream = in;
-        this.sink = sink;
         this.workers = workers;
         this.skipOptions = skipOptions;
+        this.blobQueue = new ArrayBlockingQueue<>(workers * 2);
+        this.resultQueue = new LinkedBlockingQueue<>(workers * 2);
+    }
+
+    public PbfReader start() {
+        decoderExecutor = Executors.newFixedThreadPool(workers);
+        readerThread = new Thread(this::runReader, "PBF-IO-Reader");
+        coordinatorThread = new Thread(this::runCoordinator, "PBF-Coordinator");
+        readerThread.start();
+        coordinatorThread.start();
+        return this;
     }
 
     @Override
-    public void run() {
-        ExecutorService executorService = Executors.newFixedThreadPool(workers);
-        // Create a stream splitter to break the PBF stream into blobs.
-        PbfStreamSplitter streamSplitter = new PbfStreamSplitter(new DataInputStream(inputStream));
+    public ReaderElement getNext() {
+        if (eof)
+            throw new IllegalStateException("EOF reached");
 
+        while (!currentBatch.hasNext()) {
+            if (coordinatorDone && resultQueue.isEmpty()) {
+                checkExceptions();
+                eof = true;
+                return null;
+            }
+            try {
+                List<ReaderElement> batch = resultQueue.poll(100, TimeUnit.MILLISECONDS);
+                if (batch != null) {
+                    currentBatch = batch.iterator();
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                eof = true;
+                return null;
+            }
+        }
+        return currentBatch.next();
+    }
+
+    private void runReader() {
         try {
-            // Process all blobs of data in the stream using threads from the
-            // executor service. We allow the decoder to issue an extra blob
-            // than there are workers to ensure there is another blob
-            // immediately ready for processing when a worker thread completes.
-            // The main thread is responsible for splitting blobs from the
-            // request stream, and sending decoded entities to the sink.
-            PbfDecoder pbfDecoder = new PbfDecoder(streamSplitter, executorService, workers + 1, sink, skipOptions);
-            pbfDecoder.run();
-
+            PbfStreamSplitter splitter = new PbfStreamSplitter(new DataInputStream(inputStream));
+            try {
+                while (splitter.hasNext()) {
+                    blobQueue.put(splitter.next());
+                }
+            } finally {
+                splitter.release();
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         } catch (Throwable t) {
-            // properly propagate exception inside Thread, #2269
-            throwable = t;
+            readerException = t;
         } finally {
-            sink.complete();
-            executorService.shutdownNow();
-            streamSplitter.release();
+            try {
+                blobQueue.put(END_OF_STREAM);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
         }
     }
 
-    public void close() {
-        if (throwable != null)
-            throw new RuntimeException("Unable to read PBF file.", throwable);
+    private void runCoordinator() {
+        try {
+            Deque<Future<List<ReaderElement>>> pending = new ArrayDeque<>();
+            int maxPending = workers + 1;
+
+            while (true) {
+                // Fill pending queue
+                while (pending.size() < maxPending) {
+                    PbfRawBlob blob = blobQueue.poll(50, TimeUnit.MILLISECONDS);
+                    if (blob == null) {
+                        checkReaderException();
+                        break;
+                    }
+                    if (blob == END_OF_STREAM) {
+                        drainAll(pending);
+                        return;
+                    }
+                    pending.addLast(decoderExecutor.submit(() ->
+                            new PbfBlobDecoder(blob.getType(), blob.getData(), skipOptions).decode()));
+                }
+
+                checkReaderException();
+
+                // Send completed results (in order)
+                while (!pending.isEmpty() && pending.peekFirst().isDone()) {
+                    resultQueue.put(pending.pollFirst().get());
+                }
+
+                // If full, block on first result
+                if (pending.size() >= maxPending && !pending.isEmpty()) {
+                    resultQueue.put(pending.pollFirst().get());
+                }
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (Throwable t) {
+            coordinatorException = t;
+        } finally {
+            coordinatorDone = true;
+            decoderExecutor.shutdownNow();
+        }
+    }
+
+    private void drainAll(Deque<Future<List<ReaderElement>>> pending)
+            throws ExecutionException, InterruptedException {
+        while (!pending.isEmpty()) {
+            resultQueue.put(pending.pollFirst().get());
+        }
+    }
+
+    private void checkReaderException() {
+        if (readerException != null) {
+            throw new RuntimeException("PBF reader thread failed", readerException);
+        }
+    }
+
+    private void checkExceptions() {
+        if (readerException != null) {
+            throw new RuntimeException("Unable to read PBF file.", readerException);
+        }
+        if (coordinatorException != null) {
+            throw new RuntimeException("Unable to read PBF file.", coordinatorException);
+        }
+    }
+
+    @Override
+    public void close() throws IOException {
+        checkExceptions();
+        eof = true;
+        if (readerThread != null && readerThread.isAlive())
+            readerThread.interrupt();
+        if (coordinatorThread != null && coordinatorThread.isAlive())
+            coordinatorThread.interrupt();
+        inputStream.close();
     }
 }

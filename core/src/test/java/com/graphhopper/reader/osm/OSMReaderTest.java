@@ -21,6 +21,7 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperTest;
+import com.graphhopper.config.Profile;
 import com.graphhopper.reader.ReaderElement;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
@@ -38,6 +39,7 @@ import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetail;
+import com.graphhopper.util.shapes.GHPoint3D;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -49,6 +51,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
+import static com.graphhopper.json.Statement.Else;
+import static com.graphhopper.json.Statement.If;
+import static com.graphhopper.json.Statement.Op.LIMIT;
+import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static com.graphhopper.util.GHUtility.readCountries;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -203,20 +209,46 @@ public class OSMReaderTest {
         Graph graph = hopper.getBaseGraph();
 
         int n40 = AbstractGraphStorageTester.getIdOf(graph, 54.0);
-        int n50 = AbstractGraphStorageTester.getIdOf(graph, 55.0);
-        assertEquals(GHUtility.asSet(n40), GHUtility.getNeighbors(carAllExplorer.setBaseNode(n50)));
+
+        DecimalEncodedValue ferrySpeedEnc = hopper.getEncodingManager().getDecimalEncodedValue(FerrySpeed.KEY);
 
         // no duration is given => speed depends on length
         int n80 = AbstractGraphStorageTester.getIdOf(graph, 54.1);
         EdgeIterator iter = carOutExplorer.setBaseNode(n80);
         iter.next();
-        assertEquals(30, iter.get(carSpeedEnc), 1e-1);
+        assertEquals(30, iter.get(ferrySpeedEnc), 1e-1);
 
         // duration 01:10 is given => more precise speed calculation!
         // ~111km (from 54.0,10.1 to 55.0,10.2) in duration=70 minutes => 95km/h => / 1.4 => 68km/h
         iter = carOutExplorer.setBaseNode(n40);
         iter.next();
-        assertEquals(62, iter.get(carSpeedEnc), 1e-1);
+        assertEquals(62, iter.get(ferrySpeedEnc), 1e-1);
+    }
+
+    @Test
+    public void testPathDetailsOfFerry() {
+        GraphHopper hopper = new GraphHopperFacade(file2) {
+            @Override
+            protected List<Profile> createProfiles() {
+                return List.of(new Profile("car").setCustomModel(new CustomModel().
+                        addToPriority(If("!car_access", MULTIPLY, "0")).
+                        addToSpeed(If("road_environment == FERRY", LIMIT, "ferry_speed")).
+                        addToSpeed(Else(LIMIT, "car_average_speed"))));
+            }
+        }.importOrLoad();
+
+        GHResponse rsp = hopper.route(new GHRequest(55.0, 10.2, 54.0, 10.1).
+                setProfile("car").
+                setPathDetails(List.of("average_speed", "car_average_speed", "road_environment")));
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
+        List<PathDetail> list = rsp.getBest().getPathDetails().get("average_speed");
+        assertEquals(62.0, list.get(0).getValue());
+
+        list = rsp.getBest().getPathDetails().get("car_average_speed");
+        assertEquals(0.0, list.get(0).getValue());
+
+        list = rsp.getBest().getPathDetails().get("road_environment");
+        assertEquals("ferry", list.get(0).getValue());
     }
 
     @Test
@@ -874,21 +906,24 @@ public class OSMReaderTest {
     }
 
     @Test
-    public void testRoadClassInfo() {
+    public void testRoadClassInfoAndFerry() {
         GraphHopper gh = new GraphHopper() {
             @Override
             protected File _getOSMFile() {
                 return new File(getClass().getResource(file2).getFile());
             }
         }.setOSMFile("dummy").
-                setEncodedValuesString("car_access,car_average_speed").
-                setProfiles(TestProfiles.accessAndSpeed("profile", "car")).
+                setEncodedValuesString("car_access,car_average_speed,road_environment,ferry_speed").
+                setProfiles(new Profile("car").setCustomModel(new CustomModel().
+                        addToPriority(If("!car_access", MULTIPLY, "0")).
+                        addToSpeed(If("road_environment == FERRY", LIMIT, "ferry_speed")).
+                        addToSpeed(Else(LIMIT, "car_average_speed")))).
                 setMinNetworkSize(0).
                 setGraphHopperLocation(dir).
                 importOrLoad();
 
         GHResponse response = gh.route(new GHRequest(51.2492152, 9.4317166, 52.133, 9.1)
-                .setProfile("profile")
+                .setProfile("car")
                 .setPathDetails(Collections.singletonList(RoadClass.KEY)));
         assertFalse(response.hasErrors(), response.getErrors().toString());
         List<PathDetail> list = response.getBest().getPathDetails().get(RoadClass.KEY);
@@ -896,7 +931,7 @@ public class OSMReaderTest {
         assertEquals("motorway", list.get(0).getValue());
 
         response = gh.route(new GHRequest(51.2492152, 9.4317166, 52.133, 9.1)
-                .setProfile("profile")
+                .setProfile("car")
                 .setPathDetails(Arrays.asList(Toll.KEY, Country.KEY)));
         Throwable ex = response.getErrors().get(0);
         assertEquals("Cannot find the path details: [toll, country]", ex.getMessage());
@@ -957,6 +992,63 @@ public class OSMReaderTest {
         assertEquals("B8, B12", OSMReader.fixWayName("B8; B12"));
     }
 
+    @Test
+    public void testStreetNameFallback() throws IOException {
+        // Test that street:name is used as a fallback when name and is_sidepath:of:name are not present
+        EncodingManager em = EncodingManager.start()
+                .add(VehicleSpeed.create("bike", 4, 2, false)).add(VehicleAccess.create("bike"))
+                .build();
+        OSMParsers osmParsers = new OSMParsers();
+        BaseGraph graph = new BaseGraph.Builder(em).create();
+        OSMReader reader = new OSMReader(graph, osmParsers, new OSMReaderConfig());
+        reader.setFile(new File(getClass().getResource("test-osm-street-name.xml").getFile()));
+        reader.readGraph();
+
+        assertEquals(3, graph.getEdges());
+        // way 1: only street:name -> should use street:name
+        EdgeIteratorState edge0 = graph.getEdgeIteratorState(0, Integer.MIN_VALUE);
+        assertEquals("Main Street", edge0.getName());
+
+        // way 2: is_sidepath:of:name and street:name -> is_sidepath:of:name should take priority
+        EdgeIteratorState edge1 = graph.getEdgeIteratorState(1, Integer.MIN_VALUE);
+        assertEquals("Sidepath Road", edge1.getName());
+
+        // way 3: name and street:name -> name should take priority
+        EdgeIteratorState edge2 = graph.getEdgeIteratorState(2, Integer.MIN_VALUE);
+        assertEquals("Explicit Name", edge2.getName());
+    }
+
+    @Test
+    public void testCalc2DDistanceWithMixedElevation() {
+        // Simulate the scenario where tower nodes have elevation but pillar nodes return NaN
+        // (because pillar elevation is deferred to edge creation time).
+        // calc2DDistance should use 2D distance and not throw.
+        ReaderWay way = new ReaderWay(1);
+        way.getNodes().add(1, 2, 3);
+
+        // node 1 = tower (has elevation), node 2 = pillar (NaN elevation), node 3 = tower (has elevation)
+        GHPoint3D tower1 = new GHPoint3D(49.0, 11.0, 400.0);
+        GHPoint3D pillar = new GHPoint3D(49.001, 11.001, Double.NaN);
+        GHPoint3D tower2 = new GHPoint3D(49.002, 11.002, 410.0);
+
+        double distance = OSMReader.calc2DDistance(way, osmNodeId -> {
+            if (osmNodeId == 1) return tower1;
+            if (osmNodeId == 2) return pillar;
+            if (osmNodeId == 3) return tower2;
+            return null;
+        });
+
+        // Should be a valid 2D distance, not NaN and not throw
+        assertFalse(Double.isNaN(distance));
+        assertTrue(distance > 0);
+
+        // Verify it returns NaN when a node is missing
+        ReaderWay way2 = new ReaderWay(2);
+        way2.getNodes().add(1, 99);
+        double distMissing = OSMReader.calc2DDistance(way2, osmNodeId -> osmNodeId == 1 ? tower1 : null);
+        assertTrue(Double.isNaN(distMissing));
+    }
+
     private AreaIndex<CustomArea> createCountryIndex() {
         return new AreaIndex<>(readCountries());
     }
@@ -972,14 +1064,16 @@ public class OSMReaderTest {
             setGraphHopperLocation(dir);
             setEncodedValuesString("max_width,max_height,max_weight,road_environment," +
                     "foot_access, foot_priority, foot_average_speed, " +
-                    "car_access, car_average_speed, bike_access, bike_priority, bike_average_speed");
-            setProfiles(
-                    TestProfiles.accessSpeedAndPriority("foot"),
+                    "car_access, car_average_speed, bike_access, bike_priority, bike_average_speed, ferry_speed");
+            setProfiles(createProfiles());
+            getReaderConfig().setPreferredLanguage(prefLang);
+        }
+
+        protected List<Profile> createProfiles() {
+            return List.of(TestProfiles.accessSpeedAndPriority("foot"),
                     TestProfiles.accessAndSpeed("car").setTurnCostsConfig(new TurnCostsConfig(List.of("motorcar", "motor_vehicle"))),
                     TestProfiles.accessSpeedAndPriority("bike").setTurnCostsConfig(new TurnCostsConfig(List.of("bicycle"))),
-                    TestProfiles.constantSpeed("truck", 100).setTurnCostsConfig(new TurnCostsConfig(List.of("hgv", "motor_vehicle")))
-            );
-            getReaderConfig().setPreferredLanguage(prefLang);
+                    TestProfiles.constantSpeed("truck", 100).setTurnCostsConfig(new TurnCostsConfig(List.of("hgv", "motor_vehicle"))));
         }
 
         @Override

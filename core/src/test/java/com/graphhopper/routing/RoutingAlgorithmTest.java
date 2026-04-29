@@ -19,6 +19,7 @@ package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
+import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
@@ -29,7 +30,11 @@ import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.*;
+import com.graphhopper.routing.weighting.SpeedWeighting;
+import com.graphhopper.routing.weighting.TurnCostProvider;
+import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.routing.weighting.custom.CustomModelParser;
+import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -42,17 +47,17 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.Stream;
 
 import static com.graphhopper.routing.util.TraversalMode.EDGE_BASED;
 import static com.graphhopper.routing.util.TraversalMode.NODE_BASED;
+import static com.graphhopper.routing.weighting.Weighting.roundWeight;
 import static com.graphhopper.util.DistanceCalcEarth.DIST_EARTH;
 import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
@@ -181,13 +186,15 @@ public class RoutingAlgorithmTest {
             return res;
         }
 
-        private void compareWithRef(Weighting weighting, BaseGraph graph, PathCalculator refCalculator, GHPoint from, GHPoint to, long seed) {
+        private void compareWithRef(Weighting weighting, BaseGraph graph, PathCalculator refCalculator, GHPoint from, GHPoint to, long seed, boolean strict) {
             Path path = calcPath(graph, weighting, from, to);
             Path refPath = refCalculator.calcPath(graph, weighting, traversalMode, defaultMaxVisitedNodes, from, to);
-            assertEquals(refPath.getWeight(), path.getWeight(), 1.e-1, "wrong weight, " + weighting + ", seed: " + seed);
-            assertEquals(refPath.calcNodes(), path.calcNodes(), "wrong nodes, " + weighting + ", seed: " + seed);
-            assertEquals(refPath.getDistance(), path.getDistance(), 1.e-1, "wrong distance, " + weighting + ", seed: " + seed);
-            assertEquals(refPath.getTime(), path.getTime(), 100, "wrong time, " + weighting + ", seed: " + seed);
+            IntArrayList refPathNodes = (IntArrayList) refPath.calcNodes();
+            int source = refPathNodes.isEmpty() ? -1 : refPathNodes.get(0);
+            int target = refPathNodes.isEmpty() ? -1 : ArrayUtil.getLast(refPathNodes);
+            List<String> strictViolations = GHUtility.comparePaths(refPath, path, source, target, true, seed);
+            if (strict)
+                assertTrue(strictViolations.isEmpty());
         }
 
         public void resetCH() {
@@ -250,13 +257,13 @@ public class RoutingAlgorithmTest {
         //    |  |
         //    3--4
         BaseGraph graph = f.createGHStorage();
-        graph.edge(0, 2).setDistance(9).set(f.carSpeedEnc, 60, 60);
-        graph.edge(2, 1).setDistance(2).set(f.carSpeedEnc, 60, 60);
-        graph.edge(2, 3).setDistance(11).set(f.carSpeedEnc, 60, 60);
-        graph.edge(3, 4).setDistance(6).set(f.carSpeedEnc, 60, 60);
-        graph.edge(4, 1).setDistance(9).set(f.carSpeedEnc, 60, 60);
+        graph.edge(0, 2).setDistance(90).set(f.carSpeedEnc, 10, 10);
+        graph.edge(2, 1).setDistance(20).set(f.carSpeedEnc, 10, 10);
+        graph.edge(2, 3).setDistance(110).set(f.carSpeedEnc, 10, 10);
+        graph.edge(3, 4).setDistance(60).set(f.carSpeedEnc, 10, 10);
+        graph.edge(4, 1).setDistance(90).set(f.carSpeedEnc, 10, 10);
         Path p = f.calcPath(graph, 0, 4);
-        assertEquals(20, p.getDistance(), 1e-4, p.toString());
+        assertEquals(200, p.getDistance(), p.toString());
         assertEquals(nodes(0, 2, 1, 4), p.calcNodes());
     }
 
@@ -395,26 +402,26 @@ public class RoutingAlgorithmTest {
 
     // see test-graph.svg !
     static void initTestStorage(Graph graph, DecimalEncodedValue speedEnc) {
-        graph.edge(0, 1).setDistance(0).set(speedEnc, 60, 60);
-        graph.edge(0, 4).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(0, 1).setDistance(0).set(speedEnc, 10, 10);
+        graph.edge(0, 4).setDistance(0).set(speedEnc, 10, 10);
 
-        graph.edge(1, 4).setDistance(0).set(speedEnc, 60, 60);
-        graph.edge(1, 5).setDistance(0).set(speedEnc, 60, 60);
-        graph.edge(1, 2).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(1, 4).setDistance(0).set(speedEnc, 10, 10);
+        graph.edge(1, 5).setDistance(0).set(speedEnc, 10, 10);
+        graph.edge(1, 2).setDistance(0).set(speedEnc, 10, 10);
 
-        graph.edge(2, 5).setDistance(0).set(speedEnc, 60, 60);
-        graph.edge(2, 3).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(2, 5).setDistance(0).set(speedEnc, 10, 10);
+        graph.edge(2, 3).setDistance(0).set(speedEnc, 10, 10);
 
-        graph.edge(3, 5).setDistance(0).set(speedEnc, 60, 60);
-        graph.edge(3, 7).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(3, 5).setDistance(0).set(speedEnc, 10, 10);
+        graph.edge(3, 7).setDistance(0).set(speedEnc, 10, 10);
 
-        graph.edge(4, 6).setDistance(0).set(speedEnc, 60, 60);
-        graph.edge(4, 5).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(4, 6).setDistance(0).set(speedEnc, 10, 10);
+        graph.edge(4, 5).setDistance(0).set(speedEnc, 10, 10);
 
-        graph.edge(5, 6).setDistance(0).set(speedEnc, 60, 60);
-        graph.edge(5, 7).setDistance(0).set(speedEnc, 60, 60);
+        graph.edge(5, 6).setDistance(0).set(speedEnc, 10, 10);
+        graph.edge(5, 7).setDistance(0).set(speedEnc, 10, 10);
 
-        EdgeIteratorState edge6_7 = graph.edge(6, 7).setDistance(0).set(speedEnc, 60, 60);
+        EdgeIteratorState edge6_7 = graph.edge(6, 7).setDistance(0).set(speedEnc, 10, 10);
 
         updateDistancesFor(graph, 0, 0.0010, 0.00001);
         updateDistancesFor(graph, 1, 0.0008, 0.0000);
@@ -468,7 +475,7 @@ public class RoutingAlgorithmTest {
         initWikipediaTestGraph(graph, f.carSpeedEnc);
         Path p = f.calcPath(graph, 0, 4);
         assertEquals(nodes(0, 2, 5, 4), p.calcNodes(), p.toString());
-        assertEquals(20, p.getDistance(), 1e-4, p.toString());
+        assertEquals(200, p.getDistance(), p.toString());
     }
 
     @ParameterizedTest
@@ -483,15 +490,15 @@ public class RoutingAlgorithmTest {
 
     // see wikipedia-graph.svg !
     private void initWikipediaTestGraph(Graph graph, DecimalEncodedValue speedEnc) {
-        graph.edge(0, 1).setDistance(7).set(speedEnc, 60, 60);
-        graph.edge(0, 2).setDistance(9).set(speedEnc, 60, 60);
-        graph.edge(0, 5).setDistance(14).set(speedEnc, 60, 60);
-        graph.edge(1, 2).setDistance(10).set(speedEnc, 60, 60);
-        graph.edge(1, 3).setDistance(15).set(speedEnc, 60, 60);
-        graph.edge(2, 5).setDistance(2).set(speedEnc, 60, 60);
-        graph.edge(2, 3).setDistance(11).set(speedEnc, 60, 60);
-        graph.edge(3, 4).setDistance(6).set(speedEnc, 60, 60);
-        graph.edge(4, 5).setDistance(9).set(speedEnc, 60, 60);
+        graph.edge(0, 1).setDistance(70).set(speedEnc, 20, 20);
+        graph.edge(0, 2).setDistance(90).set(speedEnc, 20, 20);
+        graph.edge(0, 5).setDistance(140).set(speedEnc, 20, 20);
+        graph.edge(1, 2).setDistance(100).set(speedEnc, 20, 20);
+        graph.edge(1, 3).setDistance(150).set(speedEnc, 20, 20);
+        graph.edge(2, 5).setDistance(20).set(speedEnc, 20, 20);
+        graph.edge(2, 3).setDistance(110).set(speedEnc, 20, 20);
+        graph.edge(3, 4).setDistance(60).set(speedEnc, 20, 20);
+        graph.edge(4, 5).setDistance(90).set(speedEnc, 20, 20);
     }
 
     @ParameterizedTest
@@ -654,7 +661,7 @@ public class RoutingAlgorithmTest {
                     float dist = 5 + Math.abs(rand.nextInt(5));
                     if (print)
                         System.out.print(" " + (int) dist + "\t           ");
-                    tmpGraph.edge(matrix[w][h], matrix[w][h - 1]).setDistance(dist).set(speedEnc, 60, 60);
+                    tmpGraph.edge(matrix[w][h], matrix[w][h - 1]).setDistance(dist).set(speedEnc, 10, 10);
                 }
             }
             if (print) {
@@ -672,7 +679,7 @@ public class RoutingAlgorithmTest {
                     float dist = 5 + Math.abs(rand.nextInt(5));
                     if (print)
                         System.out.print("-- " + (int) dist + "\t-- ");
-                    tmpGraph.edge(matrix[w][h], matrix[w - 1][h]).setDistance(dist).set(speedEnc, 60, 60);
+                    tmpGraph.edge(matrix[w][h], matrix[w - 1][h]).setDistance(dist).set(speedEnc, 10, 10);
                 }
                 if (print)
                     System.out.print("(" + matrix[w][h] + ")\t");
@@ -710,12 +717,12 @@ public class RoutingAlgorithmTest {
     @ArgumentsSource(FixtureProvider.class)
     public void testDirectedGraphBug1(Fixture f) {
         BaseGraph graph = f.createGHStorage();
-        graph.edge(0, 1).setDistance(300).set(f.carSpeedEnc, 60, 0);
-        graph.edge(1, 2).setDistance(299).set(f.carSpeedEnc, 60, 0);
+        graph.edge(0, 1).setDistance(300).set(f.carSpeedEnc, 10, 0);
+        graph.edge(1, 2).setDistance(299).set(f.carSpeedEnc, 10, 0);
 
-        graph.edge(0, 3).setDistance(200).set(f.carSpeedEnc, 60, 0);
-        graph.edge(3, 4).setDistance(300).set(f.carSpeedEnc, 60, 0);
-        graph.edge(4, 2).setDistance(100).set(f.carSpeedEnc, 60, 0);
+        graph.edge(0, 3).setDistance(200).set(f.carSpeedEnc, 10, 0);
+        graph.edge(3, 4).setDistance(300).set(f.carSpeedEnc, 10, 0);
+        graph.edge(4, 2).setDistance(100).set(f.carSpeedEnc, 10, 0);
 
         Path p = f.calcPath(graph, 0, 2);
         assertEquals(nodes(0, 1, 2), p.calcNodes(), p.toString());
@@ -867,6 +874,52 @@ public class RoutingAlgorithmTest {
 
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
+    public void testBlockArea(Fixture f) {
+        // 1 -y- 2
+        // |  5  |
+        // x 4   |  the area around node 1 is expensive (node 4 is outside this area)
+        // |     |
+        // 0 --- 3
+        BaseGraph graph = f.createGHStorage();
+        graph.edge(0, 1).set(f.carSpeedEnc, 10, 10);
+        graph.edge(1, 2).set(f.carSpeedEnc, 10, 10);
+        graph.edge(2, 3).set(f.carSpeedEnc, 10, 10);
+        graph.edge(3, 0).set(f.carSpeedEnc, 10, 10);
+        updateDistancesFor(graph, 0, 40.000, 10.000);
+        updateDistancesFor(graph, 1, 40.001, 10.000);
+        updateDistancesFor(graph, 2, 40.001, 10.001);
+        updateDistancesFor(graph, 3, 40.000, 10.001);
+
+        JsonFeatureCollection areas = new JsonFeatureCollection();
+        Coordinate[] blockArea = new Coordinate[]{
+                new Coordinate(9.9997, 40.0007),
+                new Coordinate(9.9997, 40.0013),
+                new Coordinate(10.0003, 40.0013),
+                new Coordinate(10.0003, 40.0007),
+                new Coordinate(9.9997, 40.0007)
+        };
+        areas.getFeatures().add(new JsonFeature("expensive",
+                "Feature",
+                null,
+                new GeometryFactory().createPolygon(blockArea),
+                new HashMap<>()));
+        CustomModel customModel = new CustomModel()
+                .addToSpeed(Statement.If("true", Statement.Op.LIMIT, "10"))
+                .addToPriority(Statement.If("in_expensive", Statement.Op.MULTIPLY, "0.1"));
+        customModel.addAreas(areas);
+
+        CustomWeighting weighting = CustomModelParser.createWeighting(f.encodingManager, TurnCostProvider.NO_TURN_COST_PROVIDER, customModel);
+
+        // We route from x(4) to y(5). The virtual edges adjacent to node 1 are in the area and thus expensive,
+        // so we need to take the detour via 3. But x-0 and y-2 are not. If QueryOverlay#adjustWeights distributed
+        // the weight difference between the original edges 0-1 and 1-2 (penalized all the way) equally to the
+        // virtual edges also x-0 and y-2 would carry the penalty and the route would go through the expensive area.
+        Path path = f.calcPath(graph, weighting, new GHPoint(40.0006, 10.000), new GHPoint(40.001, 10.0004));
+        assertEquals(nodes(4, 0, 3, 2, 5), path.calcNodes());
+    }
+
+    @ParameterizedTest
+    @ArgumentsSource(FixtureProvider.class)
     public void testQueryGraphAndFastest(Fixture f) {
         Weighting weighting = new SpeedWeighting(f.carSpeedEnc);
         BaseGraph graph = f.createGHStorage(false);
@@ -889,8 +942,8 @@ public class RoutingAlgorithmTest {
         // of the speed and read 0 => infinity weight => overflow of millis => negative millis!
         Path p = f.calcPath(graph, weighting, 0, 10);
         assertEquals(23645657, p.getTime());
-        assertEquals(425622, p.getDistance(), 1);
-        assertEquals(23646, p.getWeight(), 1);
+        assertEquals(425_621_860, p.getDistance_mm());
+        assertEquals(236457, p.getWeight());
     }
 
     @ParameterizedTest
@@ -902,7 +955,7 @@ public class RoutingAlgorithmTest {
 
             @Override
             public double calcMinWeightPerDistance() {
-                return 0.8;
+                return 8.0;
             }
 
             @Override
@@ -919,13 +972,13 @@ public class RoutingAlgorithmTest {
 
                 // a 'hill' at node 6
                 if (adj == 6)
-                    return 3 * edgeState.getDistance();
+                    return roundWeight(10 * 3 * edgeState.getDistance());
                 else if (base == 6)
-                    return edgeState.getDistance() * 0.9;
+                    return roundWeight(10 * edgeState.getDistance() * 0.9);
                 else if (adj == 4)
-                    return 2 * edgeState.getDistance();
+                    return roundWeight(10 * 2 * edgeState.getDistance());
 
-                return edgeState.getDistance() * 0.8;
+                return roundWeight(10 * edgeState.getDistance() * 0.8);
             }
 
             @Override
@@ -935,7 +988,7 @@ public class RoutingAlgorithmTest {
 
             @Override
             public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
-                return tmpW.calcTurnWeight(inEdge, viaNode, outEdge);
+                return roundWeight(10 * tmpW.calcTurnWeight(inEdge, viaNode, outEdge));
             }
 
             @Override
@@ -968,30 +1021,43 @@ public class RoutingAlgorithmTest {
         initEleGraph(graph, 60, f.carSpeedEnc);
         p = f.calcPath(graph, fakeWeighting, 3, 0, 10, 9);
         assertEquals(nodes(12, 0, 1, 2, 11, 7, 10, 13), p.calcNodes());
-        assertEquals(10280445, p.getTime());
-        assertEquals(616827, p.getDistance(), 1);
-        assertEquals(493462, p.getWeight(), 1);
+        assertEquals(10280446, p.getTime());
+        assertEquals(616827059, p.getDistance_mm());
+        assertEquals(4934615, p.getWeight());
     }
 
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
     public void testRandomGraph(Fixture f) {
+        doTestRandomGraph(f, false);
+    }
+
+    @ParameterizedTest
+    @ArgumentsSource(FixtureProvider.class)
+    public void testRandomTree(Fixture f) {
+        doTestRandomGraph(f, true);
+    }
+
+    private void doTestRandomGraph(Fixture f, boolean tree) {
         Weighting weighting = new SpeedWeighting(f.carSpeedEnc);
         BaseGraph graph = f.createGHStorage(false);
         final long seed = System.nanoTime();
         LOGGER.info("testRandomGraph - using seed: " + seed);
         Random rnd = new Random(seed);
-        GHUtility.buildRandomGraph(graph, rnd, 10, 2.0, true, f.carSpeedEnc, null, 0.7, 0.7);
+        RandomGraph.start().seed(seed).nodes(20).curviness(0.1).speedZero(tree ? 0 : 0.1).tree(tree).fill(graph, f.carSpeedEnc);
         final PathCalculator refCalculator = new DijkstraCalculator();
         int numRuns = 100;
         for (int i = 0; i < numRuns; i++) {
-            BBox bounds = graph.getBounds();
-            double latFrom = bounds.minLat + rnd.nextDouble() * (bounds.maxLat - bounds.minLat);
-            double lonFrom = bounds.minLon + rnd.nextDouble() * (bounds.maxLon - bounds.minLon);
-            double latTo = bounds.minLat + rnd.nextDouble() * (bounds.maxLat - bounds.minLat);
-            double lonTo = bounds.minLon + rnd.nextDouble() * (bounds.maxLon - bounds.minLon);
-            f.compareWithRef(weighting, graph, refCalculator, new GHPoint(latFrom, lonFrom), new GHPoint(latTo, lonTo), seed);
+            GHPoint from = createRandomPoint(rnd, graph.getBounds());
+            GHPoint to = createRandomPoint(rnd, graph.getBounds());
+            f.compareWithRef(weighting, graph, refCalculator, from, to, seed, tree);
         }
+    }
+
+    private GHPoint createRandomPoint(Random rnd, BBox bounds) {
+        double lat = GHUtility.randomDoubleInRange(rnd, bounds.minLat, bounds.maxLat);
+        double lon = GHUtility.randomDoubleInRange(rnd, bounds.minLon, bounds.maxLon);
+        return new GHPoint(lat, lon);
     }
 
     @ParameterizedTest
@@ -1109,7 +1175,7 @@ public class RoutingAlgorithmTest {
 
         @Override
         public Path calcPath(BaseGraph graph, Weighting weighting, TraversalMode traversalMode, int maxVisitedNodes, GHPoint from, GHPoint to) {
-            LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
+            LocationIndexTree index = new LocationIndexTree(graph, new GHDirectory("", DAType.RAM));
             index.prepareIndex();
             Snap fromSnap = index.findClosest(from.getLat(), from.getLon(), EdgeFilter.ALL_EDGES);
             Snap toSnap = index.findClosest(to.getLat(), to.getLon(), EdgeFilter.ALL_EDGES);
@@ -1119,7 +1185,7 @@ public class RoutingAlgorithmTest {
         @Override
         public Path calcPath(BaseGraph graph, Weighting weighting, TraversalMode traversalMode, int maxVisitedNodes, Snap from, Snap to) {
             QueryGraph queryGraph = QueryGraph.create(graph, from, to);
-            RoutingAlgorithm algo = createAlgo(queryGraph, weighting, traversalMode);
+            RoutingAlgorithm algo = createAlgo(queryGraph, queryGraph.wrapWeighting(weighting), traversalMode);
             algo.setMaxVisitedNodes(maxVisitedNodes);
             return algo.calcPath(from.getClosestNode(), to.getClosestNode());
         }
@@ -1210,7 +1276,7 @@ public class RoutingAlgorithmTest {
 
         @Override
         public Path calcPath(BaseGraph graph, Weighting weighting, TraversalMode traversalMode, int maxVisitedNodes, GHPoint from, GHPoint to) {
-            LocationIndexTree locationIndex = new LocationIndexTree(graph, new RAMDirectory());
+            LocationIndexTree locationIndex = new LocationIndexTree(graph, new GHDirectory("", DAType.RAM));
             LocationIndex index = locationIndex.prepareIndex();
             Snap fromSnap = index.findClosest(from.getLat(), from.getLon(), EdgeFilter.ALL_EDGES);
             Snap toSnap = index.findClosest(to.getLat(), to.getLon(), EdgeFilter.ALL_EDGES);

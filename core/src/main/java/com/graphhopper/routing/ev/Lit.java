@@ -15,15 +15,13 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.reader.osm.pbf;
+package com.graphhopper.routing.ev;
 
-import com.graphhopper.reader.ReaderElement;
+public class Lit {
+    public final static String KEY = "lit";
 
-/**
- * @author Nop
- */
-public interface Sink {
-    void process(ReaderElement item);
+    public static BooleanEncodedValue create() {
+        return new SimpleBooleanEncodedValue(KEY, false);
+    }
 
-    void complete();
 }

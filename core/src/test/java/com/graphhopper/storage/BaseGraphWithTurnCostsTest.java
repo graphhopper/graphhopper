@@ -51,19 +51,14 @@ public class BaseGraphWithTurnCostsTest extends BaseGraphTest {
     }
 
     @Override
-    protected BaseGraph newGHStorage(Directory dir, boolean is3D) {
-        return newGHStorage(dir, is3D, -1);
-    }
-
-    @Override
-    protected BaseGraph newGHStorage(Directory dir, boolean enabled3D, int segmentSize) {
-        return new BaseGraph.Builder(encodingManager).setDir(dir).set3D(enabled3D).withTurnCosts(true).setSegmentSize(segmentSize).build();
+    protected BaseGraph newGHStorage(Directory dir, boolean enabled3D) {
+        return new BaseGraph.Builder(encodingManager).setDir(dir).set3D(enabled3D).withTurnCosts(true).build();
     }
 
     @Override
     @Test
     public void testSave_and_fileFormat() {
-        graph = newGHStorage(new RAMDirectory(defaultGraphLoc, true), true).create(defaultSize);
+        graph = newGHStorage(new GHDirectory(defaultGraphLoc, DAType.RAM_STORE), true).create(defaultSize);
         NodeAccess na = graph.getNodeAccess();
         assertTrue(na.is3D());
         na.setNode(0, 10, 10, 0);
@@ -89,7 +84,7 @@ public class BaseGraphWithTurnCostsTest extends BaseGraphTest {
         graph.flush();
         graph.close();
 
-        graph = newGHStorage(new MMapDirectory(defaultGraphLoc), true);
+        graph = newGHStorage(new GHDirectory(defaultGraphLoc, DAType.MMAP), true);
         graph.loadExisting();
 
         assertEquals(12, graph.getNodes());
@@ -110,12 +105,10 @@ public class BaseGraphWithTurnCostsTest extends BaseGraphTest {
 
     @Test
     public void testEnsureCapacity() {
-        graph = newGHStorage(new MMapDirectory(defaultGraphLoc), false, 128);
+        graph = newGHStorage(new GHDirectory(defaultGraphLoc, DAType.MMAP), false);
         graph.create(100); // 100 is the minimum size
 
         TurnCostStorage turnCostStorage = graph.getTurnCostStorage();
-        // assert that turnCostStorage can hold 104 turn cost entries at the beginning
-        assertEquals(128, turnCostStorage.getCapacity());
 
         Random r = new Random();
 
@@ -141,16 +134,12 @@ public class BaseGraphWithTurnCostsTest extends BaseGraphTest {
             setTurnCost(edgeId + 50, 50, edgeId, 1337);
         }
 
-        assertEquals(104, turnCostStorage.getCapacity() / 16); // we are still good here
-
         setTurnCost(0, 50, 2, 1337);
-        // A new segment should be added, which will support 128 / 16 = 8 more entries.
-        assertEquals(112, turnCostStorage.getCapacity() / 16);
     }
 
     @Test
     public void testInitializeTurnCost() {
-        graph = newGHStorage(new RAMDirectory(defaultGraphLoc, false), true).create(defaultSize);
+        graph = newGHStorage(new GHDirectory(defaultGraphLoc, DAType.RAM), true).create(defaultSize);
         NodeAccess na = graph.getNodeAccess();
 
         // turn cost index is initialized in BaseGraph.initNodeRefs

@@ -71,8 +71,12 @@ public class MapMatching {
     private final LocationIndexTree locationIndex;
     private double measurementErrorSigma = 10.0;
     private double transitionProbabilityBeta = 2.0;
+    private double uTurnCost = 40.0;
     private final DistanceCalc distanceCalc = new DistancePlaneProjection();
     private QueryGraph queryGraph;
+    private boolean collectDebugInfo = false;
+    private MatchDebugInfo debugInfo;
+    private List<MatchDebugInfo.TransitionInfo> debugTransitions;
 
     private Map<String, Object> statistics = new HashMap<>();
 
@@ -124,23 +128,38 @@ public class MapMatching {
         int maxVisitedNodes = hints.getInt(Parameters.Routing.MAX_VISITED_NODES, Integer.MAX_VALUE);
 
         Router router = new Router() {
+            QueryGraph queryGraph;
+            Weighting queryGraphWeighting;
+            Weighting queryGraphLMWeighting;
+
             @Override
             public EdgeFilter getSnapFilter() {
                 return snapFilter;
             }
 
             @Override
-            public List<Path> calcPaths(QueryGraph queryGraph, int fromNode, int fromOutEdge, int[] toNodes, int[] toInEdges) {
+            public Weighting getWeighting() {
+                return weighting;
+            }
+
+            @Override
+            public void setQueryGraph(QueryGraph queryGraph, Weighting queryGraphWeighting) {
+                this.queryGraph = queryGraph;
+                this.queryGraphWeighting = queryGraphWeighting;
+                this.queryGraphLMWeighting = landmarks == null ? null : queryGraph.wrapWeighting(landmarks.getWeighting());
+            }
+
+            @Override
+            public List<Path> calcPaths(int fromNode, int fromOutEdge, int[] toNodes, int[] toInEdges) {
                 assert (toNodes.length == toInEdges.length);
                 List<Path> result = new ArrayList<>();
                 for (int i = 0; i < toNodes.length; i++) {
-                    result.add(calcOnePath(queryGraph, fromNode, toNodes[i], fromOutEdge, toInEdges[i]));
+                    result.add(calcOnePath(fromNode, toNodes[i], fromOutEdge, toInEdges[i]));
                 }
                 return result;
             }
 
-            private Path calcOnePath(QueryGraph queryGraph, int fromNode, int toNode, int fromOutEdge, int toInEdge) {
-                Weighting queryGraphWeighting = queryGraph.wrapWeighting(weighting);
+            private Path calcOnePath(int fromNode, int toNode, int fromOutEdge, int toInEdge) {
                 if (landmarks != null) {
                     AStarBidirection aStarBidirection = new AStarBidirection(queryGraph, queryGraphWeighting, TraversalMode.EDGE_BASED) {
                         @Override
@@ -149,7 +168,7 @@ public class MapMatching {
                         }
                     };
                     int activeLM = Math.min(8, landmarks.getLandmarkCount());
-                    LMApproximator lmApproximator = LMApproximator.forLandmarks(queryGraph, queryGraphWeighting, landmarks, activeLM);
+                    LMApproximator lmApproximator = new LMApproximator(queryGraph, queryGraphLMWeighting, queryGraphWeighting, landmarks, activeLM, false);
                     aStarBidirection.setApproximation(lmApproximator);
                     aStarBidirection.setMaxVisitedNodes(maxVisitedNodes);
                     return aStarBidirection.calcPath(fromNode, toNode, fromOutEdge, toInEdge);
@@ -165,10 +184,6 @@ public class MapMatching {
                 }
             }
 
-            @Override
-            public Weighting getWeighting() {
-                return weighting;
-            }
         };
         return router;
     }
@@ -195,6 +210,18 @@ public class MapMatching {
         this.measurementErrorSigma = measurementErrorSigma;
     }
 
+    public void setUTurnCost(double uTurnCost) {
+        this.uTurnCost = uTurnCost;
+    }
+
+    public void setCollectDebugInfo(boolean collectDebugInfo) {
+        this.collectDebugInfo = collectDebugInfo;
+    }
+
+    public MatchDebugInfo getDebugInfo() {
+        return debugInfo;
+    }
+
     public MatchResult match(List<Observation> observations) {
         List<Observation> filteredObservations = filterObservations(observations);
         statistics.put("filteredObservations", filteredObservations.size());
@@ -208,6 +235,8 @@ public class MapMatching {
         // Create the query graph, containing split edges so that all the places where an observation might have happened
         // are a node. This modifies the Snap objects and puts the new node numbers into them.
         queryGraph = QueryGraph.create(graph, snapsPerObservation.stream().flatMap(Collection::stream).collect(Collectors.toList()));
+        Weighting queryGraphWeighting = queryGraph.wrapWeighting(router.getWeighting());
+        router.setQueryGraph(queryGraph, queryGraphWeighting);
 
         // Creates candidates from the Snaps of all observations (a candidate is basically a
         // Snap + direction).
@@ -215,23 +244,151 @@ public class MapMatching {
 
         // Compute the most likely sequence of map matching candidates:
         List<SequenceState<State, Observation, Path>> seq = computeViterbiSequence(timeSteps);
+        // For statistics, deduplicate to one entry per time step (U-turns create multiple entries per step).
+        // Keep the last entry for each observation (the final state after any U-turns).
+        List<SequenceState<State, Observation, Path>> seqPerTimeStep = new ArrayList<>();
+        for (int i = 0; i < seq.size(); i++) {
+            if (i == seq.size() - 1 || seq.get(i).observation != seq.get(i + 1).observation) {
+                seqPerTimeStep.add(seq.get(i));
+            }
+        }
         statistics.put("transitionDistances", seq.stream().filter(s -> s.transitionDescriptor != null).mapToLong(s -> Math.round(s.transitionDescriptor.getDistance())).toArray());
         statistics.put("visitedNodes", router.getVisitedNodes());
-        statistics.put("snapDistanceRanks", IntStream.range(0, seq.size()).map(i -> snapsPerObservation.get(i).indexOf(seq.get(i).state.getSnap())).toArray());
-        statistics.put("snapDistances", seq.stream().mapToDouble(s -> s.state.getSnap().getQueryDistance()).toArray());
-        statistics.put("maxSnapDistances", IntStream.range(0, seq.size()).mapToDouble(i -> snapsPerObservation.get(i).stream().mapToDouble(Snap::getQueryDistance).max().orElse(-1.0)).toArray());
+        statistics.put("snapDistanceRanks", IntStream.range(0, seqPerTimeStep.size()).map(i -> snapsPerObservation.get(i).indexOf(seqPerTimeStep.get(i).state.getSnap())).toArray());
+        statistics.put("snapDistances", seqPerTimeStep.stream().mapToDouble(s -> s.state.getSnap().getQueryDistance()).toArray());
+        statistics.put("maxSnapDistances", IntStream.range(0, seqPerTimeStep.size()).mapToDouble(i -> snapsPerObservation.get(i).stream().mapToDouble(Snap::getQueryDistance).max().orElse(-1.0)).toArray());
 
         List<EdgeIteratorState> path = seq.stream().filter(s1 -> s1.transitionDescriptor != null).flatMap(s1 -> s1.transitionDescriptor.calcEdges().stream()).collect(Collectors.toList());
 
         MatchResult result = new MatchResult(prepareEdgeMatches(seq));
-        Weighting queryGraphWeighting = queryGraph.wrapWeighting(router.getWeighting());
         result.setMergedPath(new MapMatchedPath(queryGraph, queryGraphWeighting, path));
         result.setMatchMillis(seq.stream().filter(s -> s.transitionDescriptor != null).mapToLong(s -> s.transitionDescriptor.getTime()).sum());
         result.setMatchLength(seq.stream().filter(s -> s.transitionDescriptor != null).mapToDouble(s -> s.transitionDescriptor.getDistance()).sum());
         result.setGPXEntriesLength(gpxLength(observations));
         result.setGraph(queryGraph);
         result.setWeighting(queryGraphWeighting);
+
+        if (collectDebugInfo) {
+            buildDebugInfo(observations, filteredObservations, timeSteps, seq);
+        }
+
         return result;
+    }
+
+    private void buildDebugInfo(List<Observation> originalObservations, List<Observation> filteredObservations,
+                                List<ObservationWithCandidateStates> timeSteps,
+                                List<SequenceState<State, Observation, Path>> seq) {
+        HmmProbabilities probabilities = new HmmProbabilities(measurementErrorSigma, transitionProbabilityBeta);
+
+        // Build set of chosen states for marking
+        Set<State> chosenStates = seq.stream().map(s -> s.state).collect(Collectors.toSet());
+
+        // Build a map from State -> (timeStep, candidateIndex)
+        Map<State, int[]> stateIndex = new HashMap<>();
+        for (int t = 0; t < timeSteps.size(); t++) {
+            List<State> cands = timeSteps.get(t).candidates;
+            for (int c = 0; c < cands.size(); c++) {
+                stateIndex.put(cands.get(c), new int[]{t, c});
+            }
+        }
+
+        // Build set of chosen transition keys
+        Set<String> chosenTransitionKeys = new HashSet<>();
+        for (int i = 1; i < seq.size(); i++) {
+            int[] fromIdx = stateIndex.get(seq.get(i - 1).state);
+            int[] toIdx = stateIndex.get(seq.get(i).state);
+            if (fromIdx != null && toIdx != null) {
+                chosenTransitionKeys.add(fromIdx[0] + ":" + fromIdx[1] + "->" + toIdx[0] + ":" + toIdx[1]);
+            }
+        }
+
+        // Mark chosen transitions
+        if (debugTransitions != null) {
+            List<MatchDebugInfo.TransitionInfo> marked = new ArrayList<>();
+            for (MatchDebugInfo.TransitionInfo ti : debugTransitions) {
+                String key = ti.fromTimeStep + ":" + ti.fromCandidateIndex + "->" + ti.toTimeStep + ":" + ti.toCandidateIndex;
+                if (chosenTransitionKeys.contains(key)) {
+                    marked.add(new MatchDebugInfo.TransitionInfo(
+                            ti.fromTimeStep, ti.fromCandidateIndex, ti.toTimeStep, ti.toCandidateIndex,
+                            ti.transitionLogProbability, ti.routeDistance, ti.linearDistance,
+                            true, ti.routeGeometry, ti.uTurn, ti.uTurnCost
+                    ));
+                } else {
+                    marked.add(ti);
+                }
+            }
+            debugTransitions = marked;
+        }
+
+        // Add chosen U-turn transitions (same-timestep transitions in the sequence)
+        for (int i = 1; i < seq.size(); i++) {
+            int[] fromIdx = stateIndex.get(seq.get(i - 1).state);
+            int[] toIdx = stateIndex.get(seq.get(i).state);
+            if (fromIdx != null && toIdx != null && fromIdx[0] == toIdx[0]) {
+                // Same time step = U-turn
+                State fromState = seq.get(i - 1).state;
+                double[] snapPt = new double[]{fromState.getSnap().getSnappedPoint().lat, fromState.getSnap().getSnappedPoint().lon};
+                debugTransitions.add(new MatchDebugInfo.TransitionInfo(
+                        fromIdx[0], fromIdx[1], toIdx[0], toIdx[1],
+                        0.0, 0.0, 0.0,
+                        true, Arrays.asList(snapPt, snapPt), true, uTurnCost
+                ));
+            }
+        }
+
+        // Original observations
+        List<double[]> origObs = originalObservations.stream()
+                .map(o -> new double[]{o.getPoint().lat, o.getPoint().lon})
+                .collect(Collectors.toList());
+
+        // Filtered observations
+        List<double[]> filtObs = filteredObservations.stream()
+                .map(o -> new double[]{o.getPoint().lat, o.getPoint().lon})
+                .collect(Collectors.toList());
+
+        // Time steps with candidates
+        List<MatchDebugInfo.TimeStepInfo> timeStepInfos = new ArrayList<>();
+        for (int t = 0; t < timeSteps.size(); t++) {
+            ObservationWithCandidateStates ts = timeSteps.get(t);
+            List<MatchDebugInfo.Candidate> candidates = new ArrayList<>();
+            for (int c = 0; c < ts.candidates.size(); c++) {
+                State state = ts.candidates.get(c);
+                double distance = state.getSnap().getQueryDistance();
+                candidates.add(new MatchDebugInfo.Candidate(
+                        t, c,
+                        state.getSnap().getSnappedPoint().lat,
+                        state.getSnap().getSnappedPoint().lon,
+                        distance,
+                        probabilities.emissionLogProbability(distance),
+                        state.isOnDirectedEdge(),
+                        state.getSnap().getClosestNode(),
+                        chosenStates.contains(state)
+                ));
+            }
+            timeStepInfos.add(new MatchDebugInfo.TimeStepInfo(
+                    t,
+                    ts.observation.getPoint().lat,
+                    ts.observation.getPoint().lon,
+                    candidates
+            ));
+        }
+
+        // Matched route geometry
+        List<double[]> matchedRoute = new ArrayList<>();
+        for (SequenceState<State, Observation, Path> s : seq) {
+            if (s.transitionDescriptor != null) {
+                PointList pl = s.transitionDescriptor.calcPoints();
+                for (int i = 0; i < pl.size(); i++) {
+                    matchedRoute.add(new double[]{pl.getLat(i), pl.getLon(i)});
+                }
+            }
+        }
+
+        debugInfo = new MatchDebugInfo(
+                measurementErrorSigma, transitionProbabilityBeta,
+                origObs, filtObs, timeStepInfos,
+                debugTransitions, matchedRoute
+        );
     }
 
     /**
@@ -276,8 +433,8 @@ public class MapMatching {
     }
 
     public List<Snap> findCandidateSnaps(final double queryLat, final double queryLon) {
-        double rLon = (measurementErrorSigma * 360.0 / DistanceCalcEarth.DIST_EARTH.calcCircumference(queryLat));
-        double rLat = measurementErrorSigma / DistanceCalcEarth.METERS_PER_DEGREE;
+        double rLon = (2 * measurementErrorSigma * 360.0 / DistanceCalcEarth.DIST_EARTH.calcCircumference(queryLat));
+        double rLat = 2 * measurementErrorSigma / DistanceCalcEarth.METERS_PER_DEGREE;
         Envelope envelope = new Envelope(queryLon, queryLon, queryLat, queryLat);
         for (int i = 0; i < 50; i++) {
             envelope.expandBy(rLon, rLat);
@@ -384,6 +541,39 @@ public class MapMatching {
             return Collections.emptyList();
         }
 
+        if (collectDebugInfo) {
+            debugTransitions = new ArrayList<>();
+        }
+
+        // Build state-to-index mapping for debug
+        final Map<State, int[]> stateToIndex = collectDebugInfo ? new HashMap<>() : null;
+        if (collectDebugInfo) {
+            for (int t = 0; t < timeSteps.size(); t++) {
+                List<State> cands = timeSteps.get(t).candidates;
+                for (int c = 0; c < cands.size(); c++) {
+                    stateToIndex.put(cands.get(c), new int[]{t, c});
+                }
+            }
+        }
+
+        // Build U-turn pair map: for each directed candidate, find its opposite-direction twin
+        // (same snap point, swapped incoming/outgoing edges)
+        final Map<State, State> uTurnPairs = new HashMap<>();
+        for (ObservationWithCandidateStates ts : timeSteps) {
+            for (int a = 0; a < ts.candidates.size(); a++) {
+                State sa = ts.candidates.get(a);
+                if (!sa.isOnDirectedEdge()) continue;
+                for (int b = a + 1; b < ts.candidates.size(); b++) {
+                    State sb = ts.candidates.get(b);
+                    if (!sb.isOnDirectedEdge()) continue;
+                    if (sa.getSnap().getClosestNode() == sb.getSnap().getClosestNode()) {
+                        uTurnPairs.put(sa, sb);
+                        uTurnPairs.put(sb, sa);
+                    }
+                }
+            }
+        }
+
         final HmmProbabilities probabilities = new HmmProbabilities(measurementErrorSigma, transitionProbabilityBeta);
         final Map<State, Label> labels = new HashMap<>();
         Map<Transition<State>, Path> roadPaths = new HashMap<>();
@@ -406,6 +596,25 @@ public class MapMatching {
             if (qe.timeStep == timeSteps.size() - 1)
                 break;
             State from = qe.state;
+
+            // U-turn edge: transition to opposite-direction candidate at same snap point, same time step
+            State uTurnTarget = uTurnPairs.get(from);
+            if (uTurnTarget != null) {
+                double uTurnMinusLogProbability = qe.minusLogProbability + uTurnCost;
+                Label existingLabel = labels.get(uTurnTarget);
+                if (existingLabel == null || uTurnMinusLogProbability < existingLabel.minusLogProbability) {
+                    q.stream().filter(oldQe -> !oldQe.isDeleted && oldQe.state == uTurnTarget).findFirst().ifPresent(oldQe -> oldQe.isDeleted = true);
+                    Label label = new Label();
+                    label.state = uTurnTarget;
+                    label.timeStep = qe.timeStep;
+                    label.back = qe;
+                    label.minusLogProbability = uTurnMinusLogProbability;
+                    q.add(label);
+                    labels.put(uTurnTarget, label);
+                    roadPaths.put(new Transition<>(from, uTurnTarget), new Path(queryGraph));
+                }
+            }
+
             ObservationWithCandidateStates timeStep = timeSteps.get(qe.timeStep);
             ObservationWithCandidateStates nextTimeStep = timeSteps.get(qe.timeStep + 1);
             final double linearDistance = distanceCalc.calcDist(timeStep.observation.getPoint().lat, timeStep.observation.getPoint().lon,
@@ -415,7 +624,7 @@ public class MapMatching {
             int fromOutEdge = from.isOnDirectedEdge() ? from.getOutgoingVirtualEdge().getEdge() : EdgeIterator.ANY_EDGE;
             int[] toNodes = nextTimeStep.candidates.stream().mapToInt(c -> c.getSnap().getClosestNode()).toArray();
             int[] toInEdges = nextTimeStep.candidates.stream().mapToInt(to -> to.isOnDirectedEdge() ? to.getIncomingVirtualEdge().getEdge() : EdgeIterator.ANY_EDGE).toArray();
-            List<Path> paths = router.calcPaths(queryGraph, fromNode, fromOutEdge, toNodes, toInEdges);
+            List<Path> paths = router.calcPaths(fromNode, fromOutEdge, toNodes, toInEdges);
             for (int i = 0; i < nextTimeStep.candidates.size(); i++) {
                 State to = nextTimeStep.candidates.get(i);
                 Path path = paths.get(i);
@@ -424,6 +633,21 @@ public class MapMatching {
                     Transition<State> transition = new Transition<>(from, to);
                     roadPaths.put(transition, path);
                     double minusLogProbability = qe.minusLogProbability - probabilities.emissionLogProbability(to.getSnap().getQueryDistance()) - transitionLogProbability;
+
+                    if (collectDebugInfo) {
+                        int[] fromIdx = stateToIndex.get(from);
+                        int[] toIdx = stateToIndex.get(to);
+                        List<double[]> routeGeom = new ArrayList<>();
+                        PointList pl = path.calcPoints();
+                        for (int j = 0; j < pl.size(); j++) {
+                            routeGeom.add(new double[]{pl.getLat(j), pl.getLon(j)});
+                        }
+                        debugTransitions.add(new MatchDebugInfo.TransitionInfo(
+                                fromIdx[0], fromIdx[1], toIdx[0], toIdx[1],
+                                transitionLogProbability, path.getDistance(), linearDistance,
+                                false, routeGeom, false, 0.0
+                        ));
+                    }
                     Label label1 = labels.get(to);
                     if (label1 == null || minusLogProbability < label1.minusLogProbability) {
                         q.stream().filter(oldQe -> !oldQe.isDeleted && oldQe.state == to).findFirst().ifPresent(oldQe -> oldQe.isDeleted = true);
@@ -550,7 +774,7 @@ public class MapMatching {
             super(graph);
             int prevEdge = EdgeIterator.NO_EDGE;
             for (EdgeIteratorState edge : edges) {
-                addDistance(edge.getDistance());
+                addDistance_mm(edge.getDistance_mm());
                 addTime(GHUtility.calcMillisWithTurnMillis(weighting, edge, false, prevEdge));
                 addEdge(edge.getEdge());
                 prevEdge = edge.getEdge();
@@ -567,9 +791,11 @@ public class MapMatching {
     public interface Router {
         EdgeFilter getSnapFilter();
 
-        List<Path> calcPaths(QueryGraph queryGraph, int fromNode, int fromOutEdge, int[] toNodes, int[] toInEdges);
-
         Weighting getWeighting();
+
+        void setQueryGraph(QueryGraph queryGraph, Weighting queryGraphWeighting);
+
+        List<Path> calcPaths(int fromNode, int fromOutEdge, int[] toNodes, int[] toInEdges);
 
         default long getVisitedNodes() {
             return 0L;

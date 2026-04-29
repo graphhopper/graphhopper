@@ -25,8 +25,9 @@ import com.graphhopper.storage.IntsRef;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 class OSMRoadAccessParserTest {
 
@@ -97,7 +98,7 @@ class OSMRoadAccessParserTest {
     }
 
     @Test
-    public void testBike() {
+    public void testBikePrivate() {
         ArrayEdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
         int edgeId = 0;
         ReaderWay way = new ReaderWay(1L);
@@ -117,7 +118,31 @@ class OSMRoadAccessParserTest {
         assertEquals(BikeRoadAccess.YES, bikeRAEnc.getEnum(false, edgeId, edgeIntAccess));
     }
 
+    @Test
+    void testBike() {
+        for (String highway : List.of("trunk", "busway", "bridleway", "footway", "pedestrian")) {
+            for (Country country : Country.values()) {
+                BikeRoadAccess ra = OSMRoadAccessParser.BIKE_HANDLER.getAccess(createReaderWay(highway), country);
+                FootRoadAccess footRA = OSMRoadAccessParser.FOOT_HANDLER.getAccess(createReaderWay(highway), country);
+                if (footRA != null) {
+                    if (ra == BikeRoadAccess.DISMOUNT)
+                        assertEquals(FootRoadAccess.YES, footRA, "country: " + country + ", highway: " + highway);
+                    else if (ra == BikeRoadAccess.NO)
+                        assertEquals(FootRoadAccess.NO, footRA, "country: " + country + ", highway: " + highway);
+                }
+            }
+        }
 
+        assertEquals(BikeRoadAccess.NO, OSMRoadAccessParser.BIKE_HANDLER.getAccess(createReaderWay("trunk"), Country.DNK));
+        assertNull(OSMRoadAccessParser.BIKE_HANDLER.getAccess(createReaderWay("footway"), Country.ITA));
+        assertEquals(BikeRoadAccess.NO, OSMRoadAccessParser.BIKE_HANDLER.getAccess(createReaderWay("bridleway"), Country.RUS));
+    }
+
+    @Test
+    void testFoot() {
+        assertEquals(FootRoadAccess.YES, OSMRoadAccessParser.FOOT_HANDLER.getAccess(createReaderWay("cycleway"), Country.BEL));
+    }
+ 
     @Test
     void germany() {
         assertEquals(RoadAccess.DESTINATION, OSMRoadAccessParser.CAR_HANDLER.getAccess(createReaderWay("track"), Country.DEU));
@@ -136,6 +161,65 @@ class OSMRoadAccessParserTest {
         assertEquals(RoadAccess.YES, OSMRoadAccessParser.CAR_HANDLER.getAccess(createReaderWay("primary"), Country.HUN));
         assertEquals(RoadAccess.DESTINATION, OSMRoadAccessParser.CAR_HANDLER.getAccess(createReaderWay("living_street"), Country.HUN));
         assertNull(OSMRoadAccessParser.BIKE_HANDLER.getAccess(createReaderWay("living_street"), Country.HUN));
+    }
+
+    @Test
+    void conditionalDelivery() {
+        ArrayEdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        int edgeId = 0;
+        ReaderWay way = new ReaderWay(1L);
+        way.setTag("highway", "pedestrian");
+        way.setTag("motor_vehicle:conditional", "delivery @ (Mo-Fr 06:00-11:00)");
+        parser.handleWayTags(edgeId, edgeIntAccess, way, new IntsRef(1));
+        assertEquals(RoadAccess.DELIVERY, roadAccessEnc.getEnum(false, edgeId, edgeIntAccess));
+    }
+
+    @Test
+    void conditionalDestination() {
+        ArrayEdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        int edgeId = 0;
+        ReaderWay way = new ReaderWay(1L);
+        way.setTag("highway", "residential");
+        way.setTag("vehicle:conditional", "destination @ (Mo-Fr 06:00-18:00)");
+        parser.handleWayTags(edgeId, edgeIntAccess, way, new IntsRef(1));
+        assertEquals(RoadAccess.DESTINATION, roadAccessEnc.getEnum(false, edgeId, edgeIntAccess));
+    }
+
+    @Test
+    void conditionalOverridesBlockingBaseTag() {
+        // motor_vehicle=no blocks, but conditional says delivery @ time — qualification should be DELIVERY
+        ArrayEdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        int edgeId = 0;
+        ReaderWay way = new ReaderWay(1L);
+        way.setTag("highway", "residential");
+        way.setTag("motor_vehicle", "no");
+        way.setTag("motor_vehicle:conditional", "delivery @ (Mo-Fr 06:00-11:00)");
+        parser.handleWayTags(edgeId, edgeIntAccess, way, new IntsRef(1));
+        assertEquals(RoadAccess.DELIVERY, roadAccessEnc.getEnum(false, edgeId, edgeIntAccess));
+    }
+
+    @Test
+    void conditionalDoesNotOverrideLessRestrictiveBaseTag() {
+        // motor_vehicle=destination is less restrictive than delivery — base tag wins
+        ArrayEdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        int edgeId = 0;
+        ReaderWay way = new ReaderWay(1L);
+        way.setTag("highway", "residential");
+        way.setTag("motor_vehicle", "destination");
+        way.setTag("motor_vehicle:conditional", "delivery @ (Mo-Fr 06:00-11:00)");
+        parser.handleWayTags(edgeId, edgeIntAccess, way, new IntsRef(1));
+        assertEquals(RoadAccess.DESTINATION, roadAccessEnc.getEnum(false, edgeId, edgeIntAccess));
+    }
+
+    @Test
+    void conditionalNonTemporalIgnored() {
+        ArrayEdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        int edgeId = 0;
+        ReaderWay way = new ReaderWay(1L);
+        way.setTag("highway", "residential");
+        way.setTag("access:conditional", "yes @ weight < 3.5");
+        parser.handleWayTags(edgeId, edgeIntAccess, way, new IntsRef(1));
+        assertEquals(RoadAccess.YES, roadAccessEnc.getEnum(false, edgeId, edgeIntAccess));
     }
 
     private ReaderWay createReaderWay(String highway) {

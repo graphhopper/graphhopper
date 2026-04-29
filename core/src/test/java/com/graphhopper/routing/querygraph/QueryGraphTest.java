@@ -27,6 +27,7 @@ import com.graphhopper.routing.weighting.SpeedWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.search.KVStorage;
 import com.graphhopper.storage.*;
+import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.*;
@@ -363,7 +364,7 @@ public class QueryGraphTest {
         updateDistancesFor(g, 0, 49.000000, 11.00100);
         updateDistancesFor(g, 1, 49.000000, 11.00200);
         updateDistancesFor(g, 2, 49.000300, 11.00200);
-        LocationIndexTree locationIndex = new LocationIndexTree(g, new RAMDirectory());
+        LocationIndexTree locationIndex = new LocationIndexTree(g, new GHDirectory("", DAType.RAM));
         locationIndex.prepareIndex();
         Snap snap = locationIndex.findClosest(49.0000010, 11.00800, EdgeFilter.ALL_EDGES);
         // Our query point is quite far away from the edge and further away from the tower node than from the crossing
@@ -481,11 +482,11 @@ public class QueryGraphTest {
         Weighting weighting = new SpeedWeighting(speedEnc, turnCostEnc, graphWithTurnCosts.getTurnCostStorage(), Double.POSITIVE_INFINITY);
 
         // no turn costs initially
-        assertEquals(0, weighting.calcTurnWeight(edge0.getEdge(), 1, edge1.getEdge()), .1);
+        assertEquals(0, weighting.calcTurnWeight(edge0.getEdge(), 1, edge1.getEdge()));
 
         // now use turn costs
         turnExt.set(turnCostEnc, edge0.getEdge(), 1, edge1.getEdge(), 10);
-        assertEquals(10, weighting.calcTurnWeight(edge0.getEdge(), 1, edge1.getEdge()), .1);
+        assertEquals(100, weighting.calcTurnWeight(edge0.getEdge(), 1, edge1.getEdge()));
 
         // now use turn costs with query graph
         Snap res1 = createLocationResult(0.000, 0.005, edge0, 0, Snap.Position.EDGE);
@@ -496,7 +497,7 @@ public class QueryGraphTest {
         int fromQueryEdge = GHUtility.getEdge(qGraph, res1.getClosestNode(), 1).getEdge();
         int toQueryEdge = GHUtility.getEdge(qGraph, res2.getClosestNode(), 1).getEdge();
 
-        assertEquals(10, weighting.calcTurnWeight(fromQueryEdge, 1, toQueryEdge), .1);
+        assertEquals(100, weighting.calcTurnWeight(fromQueryEdge, 1, toQueryEdge));
 
         graphWithTurnCosts.close();
     }
@@ -681,7 +682,7 @@ public class QueryGraphTest {
         updateDistancesFor(g, 0, 0, 0);
         updateDistancesFor(g, 1, 0.3, 0.3);
 
-        LocationIndexTree locationIndex = new LocationIndexTree(g, new RAMDirectory());
+        LocationIndexTree locationIndex = new LocationIndexTree(g, new GHDirectory("", DAType.RAM));
         locationIndex.prepareIndex();
         Snap snap = locationIndex.findClosest(0.15, 0.15, EdgeFilter.ALL_EDGES);
         assertTrue(snap.isValid());
@@ -722,7 +723,7 @@ public class QueryGraphTest {
         updateDistancesFor(g, 0, 0, 0);
         updateDistancesFor(g, 1, 0.5, 0.1);
 
-        LocationIndexTree locationIndex = new LocationIndexTree(g, new RAMDirectory());
+        LocationIndexTree locationIndex = new LocationIndexTree(g, new GHDirectory("", DAType.RAM));
         locationIndex.prepareIndex();
         Snap snap = locationIndex.findClosest(0.2, 0.21, EdgeFilter.ALL_EDGES);
         assertTrue(snap.isValid());
@@ -761,7 +762,7 @@ public class QueryGraphTest {
         updateDistancesFor(g, 1, 0, 1);
         // dummy node to make sure graph bounds are valid
         updateDistancesFor(g, 2, 2, 2);
-        LocationIndexTree index = new LocationIndexTree(g, new RAMDirectory());
+        LocationIndexTree index = new LocationIndexTree(g, new GHDirectory("", DAType.RAM));
         index.prepareIndex();
         Snap snap = index.findClosest(1.01, 0.7, EdgeFilter.ALL_EDGES);
         QueryGraph queryGraph = lookup(snap);
@@ -1027,7 +1028,7 @@ public class QueryGraphTest {
         assertEquals("world", origEdge.detach(true).getValue("b"));
         assertNull(origEdge.getValue("b"));
 
-        LocationIndexTree index = new LocationIndexTree(g, new RAMDirectory());
+        LocationIndexTree index = new LocationIndexTree(g, new GHDirectory("", DAType.RAM));
         index.prepareIndex();
         Snap snap = index.findClosest(1.01, 0.7, EdgeFilter.ALL_EDGES);
         QueryGraph queryGraph = lookup(snap);
@@ -1065,7 +1066,7 @@ public class QueryGraphTest {
         // ... and closer to node 1 than to node 0
         assertTrue(distCrossingTo1 < distCrossingTo0);
 
-        LocationIndexTree index = new LocationIndexTree(g, new RAMDirectory());
+        LocationIndexTree index = new LocationIndexTree(g, new GHDirectory("", DAType.RAM));
         index.prepareIndex();
         Snap snap = index.findClosest(queryLat, queryLon, EdgeFilter.ALL_EDGES);
         // Although this is technically an 'edge-snap', we snap to the tower node, because the **crossing** point
@@ -1083,6 +1084,109 @@ public class QueryGraphTest {
         // also the distance should be correct
         assertEquals(queryTo0, snap.getQueryDistance());
         assertEquals(0, snap.getWayIndex());
+    }
+
+    @Test
+    void adjustDistances_noNegativeVirtualEdgeDistance() {
+        EdgeIteratorState edge = g.edge(0, 1).setDistance(0).set(speedEnc, 10, 10);
+        updateDistancesFor(g, 0, 60.0, 10.0);
+        updateDistancesFor(g, 1, 60.0, 11.0);
+        long originalDistance = 55596934;
+        assertEquals(originalDistance, edge.getDistance_mm());
+        // snap very close to point 0 -> very short virtual edge
+        Snap snap = createLocationResult(60.01, 10.000002, edge, 0, EDGE);
+        QueryGraph queryGraph = lookup(snap);
+        long sumFwd = 0, sumBwd = 0;
+        List<VirtualEdgeIteratorState> virtualEdges = queryGraph.getVirtualEdges();
+        for (int i = 0; i < virtualEdges.size(); i++) {
+            EdgeIteratorState ve = virtualEdges.get(i);
+            assertTrue(ve.getDistance_mm() >= 0, "virtual edge distance must not be negative, got: " + ve.getDistance_mm());
+            if (i % 2 == 0)
+                sumFwd += ve.getDistance_mm();
+            else
+                sumBwd += ve.getDistance_mm();
+        }
+        // since the edge is long there is around 0.5m difference between the original distance calculated by dist_earth and
+        // the virtual edge distance sum calculated by dist_plane -> make sure we do not shorten the short edge too much
+        assertEquals(edge.getDistance_mm() + 529, sumFwd);
+        assertEquals(edge.getDistance_mm() + 529, sumBwd);
+        assertEquals(4, virtualEdges.size());
+        // no correction since it is above limits
+        assertEquals(111, virtualEdges.get(0).getDistance_mm());
+        assertEquals(111, virtualEdges.get(1).getDistance_mm());
+        assertEquals(sumFwd - 111, virtualEdges.get(2).getDistance_mm());
+        assertEquals(sumBwd - 111, virtualEdges.get(3).getDistance_mm());
+    }
+
+    @Test
+    public void testEleInterpolation() {
+        g = new BaseGraph.Builder(encodingManager).set3D(true).create();
+        g.edge(0, 1);
+
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(0, 40.0000, 10.0000, 300.0);
+        na.setNode(1, 40.0005, 10.0005, 500.0);
+
+        LocationIndex index = new LocationIndexTree(g, g.getDirectory()).prepareIndex();
+        Snap snap1 = index.findClosest(40.0002, 10.0002, EdgeFilter.ALL_EDGES);
+        Snap snap2 = index.findClosest(40.0003, 10.0003, EdgeFilter.ALL_EDGES);
+        Snap snap3 = index.findClosest(40.0004, 10.0004, EdgeFilter.ALL_EDGES);
+
+        QueryGraph queryGraph = lookup(Arrays.asList(snap1, snap2, snap3));
+        // we expect linear elevation interpolation between the adjacent points
+        assertEquals(300 + 0.4 * 200, queryGraph.getNodeAccess().getEle(g.getNodes() + 0), 1.e-1);
+        assertEquals(300 + 0.6 * 200, queryGraph.getNodeAccess().getEle(g.getNodes() + 1), 1.e-1);
+        assertEquals(300 + 0.8 * 200, queryGraph.getNodeAccess().getEle(g.getNodes() + 2), 1.e-1);
+    }
+
+    @Test
+    public void testUTurnAtVirtualNodesOnLongBidirectionalEdge() {
+        // Create a single long bidirectional edge: 0 --- 1
+        // with pillar nodes so we can snap along the way
+        //
+        //  0 ---(snap A)---(snap B)---(snap C)--- 1
+        //
+        EdgeIteratorState edge = g.edge(0, 1).setDistance(0).set(speedEnc, 60, 60)
+                .setWayGeometry(Helper.createPointList(1, 1, 1, 2, 1, 3));
+        updateDistancesFor(g, 0, 1, 0);
+        updateDistancesFor(g, 1, 1, 4);
+
+        // Snap three points along the edge in EDGE mode
+        Snap snapA = createLocationResult(1, 0.5, edge, 0, EDGE);
+        Snap snapB = createLocationResult(1, 1.5, edge, 1, EDGE);
+        Snap snapC = createLocationResult(1, 2.5, edge, 2, EDGE);
+
+        QueryGraph queryGraph = QueryGraph.create(g, Arrays.asList(snapA, snapB, snapC));
+        int nodeA = snapA.getClosestNode();
+        int nodeB = snapB.getClosestNode();
+        int nodeC = snapC.getClosestNode();
+
+        // All three snaps should have created virtual nodes
+        assertEquals(5, queryGraph.getNodes()); // 2 real + 3 virtual
+
+        // Each virtual node should have exactly 2 edges (toward base side and toward adj side)
+        EdgeExplorer explorer = queryGraph.createEdgeExplorer();
+        assertEquals(2, GHUtility.count(explorer.setBaseNode(nodeA)));
+        assertEquals(2, GHUtility.count(explorer.setBaseNode(nodeB)));
+        assertEquals(2, GHUtility.count(explorer.setBaseNode(nodeC)));
+
+        // Now test turn costs at virtual nodes via QueryGraphWeighting
+        Weighting baseWeighting = new SpeedWeighting(speedEnc);
+        Weighting weighting = queryGraph.wrapWeighting(baseWeighting);
+
+        // At virtual node B: get the two edges
+        EdgeIteratorState edgeBtowardA = GHUtility.getEdge(queryGraph, nodeB, nodeA);
+        EdgeIteratorState edgeBtowardC = GHUtility.getEdge(queryGraph, nodeB, nodeC);
+        assertNotNull(edgeBtowardA);
+        assertNotNull(edgeBtowardC);
+
+        // Going straight through B (A->B->C or C->B->A) should have zero turn cost
+        assertEquals(0, weighting.calcTurnWeight(edgeBtowardA.getEdge(), nodeB, edgeBtowardC.getEdge()));
+        assertEquals(0, weighting.calcTurnWeight(edgeBtowardC.getEdge(), nodeB, edgeBtowardA.getEdge()));
+
+        // U-turn at B (coming from A side, going back toward A) should be infinite
+        assertEquals(Double.POSITIVE_INFINITY, weighting.calcTurnWeight(edgeBtowardA.getEdge(), nodeB, edgeBtowardA.getEdge()));
+        assertEquals(Double.POSITIVE_INFINITY, weighting.calcTurnWeight(edgeBtowardC.getEdge(), nodeB, edgeBtowardC.getEdge()));
     }
 
     private QueryGraph lookup(Snap res) {

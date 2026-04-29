@@ -118,14 +118,22 @@ public class OSMTemporalAccessParser implements TagParser {
         if (value == null) return false;
         String[] strs = value.split("@");
         if (strs.length == 2)
-            try {
-                String conditionalValue = strs[1].replace('(', ' ').replace(')', ' ').trim();
-                return accepted.contains(strs[0].trim()) &&
-                        (strs[1].contains(":") // time
-                                || DateRangeParser.getRange(conditionalValue    ) != null // date
-                        );
-            } catch (ParseException ex) {
-            }
+            return accepted.contains(strs[0].trim()) && hasTemporalSpec(strs[1]);
         return false;
+    }
+
+    /**
+     * Returns true if the given string (the part after '@' in a conditional tag) looks like a
+     * temporal specification (time-of-day or date range), as opposed to e.g. a weight restriction.
+     */
+    public static boolean hasTemporalSpec(String conditionalPart) {
+        if (conditionalPart.contains(";")) return false;
+        try {
+            String cleaned = conditionalPart.replace('(', ' ').replace(')', ' ').trim();
+            return conditionalPart.contains(":") // time
+                    || DateRangeParser.getRange(cleaned) != null; // date
+        } catch (ParseException ex) {
+            return false;
+        }
     }
 }

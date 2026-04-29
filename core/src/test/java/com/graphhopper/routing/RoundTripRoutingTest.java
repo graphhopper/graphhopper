@@ -28,7 +28,8 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.SpeedWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.BaseGraph;
-import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.storage.DAType;
+import com.graphhopper.storage.GHDirectory;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
@@ -76,7 +77,7 @@ public class RoundTripRoutingTest {
         PMap hints = new PMap();
         hints.putObject(Parameters.Algorithms.RoundTrip.POINTS, numPoints);
         hints.putObject(Parameters.Algorithms.RoundTrip.DISTANCE, roundTripDistance);
-        LocationIndex locationIndex = new LocationIndexTree(g, new RAMDirectory()).prepareIndex();
+        LocationIndex locationIndex = new LocationIndexTree(g, new GHDirectory("", DAType.RAM)).prepareIndex();
         List<Snap> stagePoints = RoundTripRouting.lookup(Collections.singletonList(start),
                 new FiniteWeightFilter(weighting), locationIndex,
                 new RoundTripRouting.Params(hints, heading, 3));
@@ -98,7 +99,7 @@ public class RoundTripRoutingTest {
     public void testCalcRoundTrip() {
         BaseGraph g = createTestGraph();
 
-        LocationIndex locationIndex = new LocationIndexTree(g, new RAMDirectory()).prepareIndex();
+        LocationIndex locationIndex = new LocationIndexTree(g, new GHDirectory("", DAType.RAM)).prepareIndex();
         Snap snap4 = locationIndex.findClosest(0.05, 0.25, EdgeFilter.ALL_EDGES);
         assertEquals(4, snap4.getClosestNode());
         Snap snap5 = locationIndex.findClosest(0.00, 0.05, EdgeFilter.ALL_EDGES);

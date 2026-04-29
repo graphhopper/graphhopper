@@ -155,7 +155,6 @@ public class OSMReader {
             throw new IllegalStateException("BaseGraph must be initialize before we can read OSM");
 
         WaySegmentParser waySegmentParser = new WaySegmentParser.Builder(baseGraph.getNodeAccess(), baseGraph.getDirectory())
-                .setElevationProvider(this::getElevation)
                 .setWayFilter(this::acceptWay)
                 .setSplitNodeFilter(this::isBarrierNode)
                 .setWayPreprocessor(this::preprocessWay)
@@ -182,8 +181,8 @@ public class OSMReader {
         return osmDataDate;
     }
 
-    protected double getElevation(ReaderNode node) {
-        double ele = eleProvider.getEle(node);
+    private double lookupElevation(double lat, double lon) {
+        double ele = eleProvider.getEle(lat, lon);
         return Double.isNaN(ele) ? config.getDefaultElevation() : ele;
     }
 
@@ -310,12 +309,24 @@ public class OSMReader {
         if (pointList.size() != nodeTags.size())
             throw new AssertionError("there should be as many maps of node tags as there are points. node tags: " + nodeTags.size() + ", points: " + pointList.size());
 
-        // todo: in principle it should be possible to delay elevation calculation so we do not need to store
-        // elevations during import (saves memory in pillar info during import). also note that we already need to
-        // to do some kind of elevation processing (bridge+tunnel interpolation in GraphHopper class, maybe this can
-        // go together
-
         if (pointList.is3D()) {
+            // fill in all elevations (deferred from node scanning for cache-friendliness in elevation provider)
+            int last = pointList.size() - 1;
+            for (int i = 0; i <= last; i++) {
+                double ele;
+                if (i == 0 || i == last) {
+                    // tower node: reuse elevation if already looked up by a previous edge
+                    int towerIndex = i == 0 ? fromIndex : toIndex;
+                    ele = nodeAccess.getEle(towerIndex);
+                    if (ele == Helper.ELE_UNKNOWN) {
+                        ele = lookupElevation(pointList.getLat(i), pointList.getLon(i));
+                        nodeAccess.setNode(towerIndex, pointList.getLat(i), pointList.getLon(i), ele);
+                    }
+                } else {
+                    ele = lookupElevation(pointList.getLat(i), pointList.getLon(i));
+                }
+                pointList.setElevation(i, ele);
+            }
             // sample points along long edges
             if (config.getLongEdgeSamplingDistance() < Double.MAX_VALUE && !isFerry(way))
                 pointList = EdgeSampling.sample(pointList, config.getLongEdgeSamplingDistance(), distCalc, eleProvider);
@@ -341,7 +352,7 @@ public class OSMReader {
             distance = 0.001;
         }
 
-        double maxDistance = (Integer.MAX_VALUE - 1) / 1000d;
+        double maxDistance = BaseGraph.MAX_DIST_METERS;
         if (Double.isNaN(distance)) {
             LOGGER.warn("Bug in OSM or GraphHopper (" + bugCounter++ + "). Illegal tower node distance " + distance + " reset to 1m, osm way " + way.getId());
             distance = 1;
@@ -375,7 +386,7 @@ public class OSMReader {
             edge.setWayGeometry(pointList.shallowCopy(1, pointList.size() - 1, false));
         }
 
-        checkDistance(edge);
+        checkDistance(way.getId(), edge);
         restrictedWaysToEdgesMap.putIfReserved(way.getId(), edge.getEdge());
     }
 
@@ -385,17 +396,19 @@ public class OSMReader {
             throw new IllegalStateException("Suspicious coordinates for node " + nodeIndex + ": (" + nodeAccess.getLat(nodeIndex) + "," + nodeAccess.getLon(nodeIndex) + ") vs. (" + point + ")");
     }
 
-    private void checkDistance(EdgeIteratorState edge) {
+    private void checkDistance(long readerWayId, EdgeIteratorState edge) {
         final double tolerance = 1;
         final double edgeDistance = edge.getDistance();
-        final double geometryDistance = distCalc.calcDistance(edge.fetchWayGeometry(FetchMode.ALL));
+        PointList pointList = edge.fetchWayGeometry(FetchMode.ALL);
+        final double geometryDistance = distCalc.calcDistance(pointList);
         if (Double.isInfinite(edgeDistance))
-            throw new IllegalStateException("Infinite edge distance should never occur, as we are supposed to limit each distance to the maximum distance we can store, #435");
+            throw new IllegalStateException("Infinite edge distance should never occur, as we are supposed to limit each distance to the maximum distance we can store, #435. wayId=" + readerWayId);
         else if (edgeDistance > 2_000_000)
-            LOGGER.warn("Very long edge detected: " + edge + " dist: " + edgeDistance);
+            LOGGER.warn("Very long edge detected: " + edge + " ( wayId=" + readerWayId + "), dist: " + edgeDistance);
         else if (Math.abs(edgeDistance - geometryDistance) > tolerance)
-            throw new IllegalStateException("Suspicious distance for edge: " + edge + " " + edgeDistance + " vs. " + geometryDistance
-                    + ", difference: " + (edgeDistance - geometryDistance));
+            throw new IllegalStateException("Suspicious distance for edge: " + edge
+                    + " ( wayId=" + readerWayId + ") " + edgeDistance + " vs. " + geometryDistance
+                    + ", difference: " + (edgeDistance - geometryDistance) + ", geometry: " + pointList);
     }
 
     /**
@@ -416,6 +429,8 @@ public class OSMReader {
                 name = fixWayName(way.getTag("name"));
             if (name.isEmpty())
                 name = fixWayName(way.getTag("is_sidepath:of:name"));
+            if (name.isEmpty())
+                name = fixWayName(way.getTag("street:name"));
             if (!name.isEmpty())
                 map.put(STREET_NAME, new KValue(name));
 
@@ -477,14 +492,14 @@ public class OSMReader {
         if (!isCalculateWayDistance(way))
             return;
 
-        double distance = calcDistance(way, coordinateSupplier);
+        double distance = calc2DDistance(way, coordinateSupplier);
         if (Double.isNaN(distance)) {
             // Some nodes were missing, and we cannot determine the distance. This can happen when ways are only
             // included partially in an OSM extract. In this case we cannot calculate the speed either, so we return.
             LOGGER.warn("Could not determine distance for OSM way: " + way.getId());
             return;
         }
-        way.setTag("way_distance", distance);
+        way.setTag("way_distance_2d", distance);
 
         // For ways with a duration tag we determine the average speed. This is needed for e.g. ferry routes, because
         // the duration tag is only valid for the entire way, and it would be wrong to use it after splitting the way
@@ -526,25 +541,21 @@ public class OSMReader {
     }
 
     /**
-     * @return the distance of the given way or NaN if some nodes were missing
+     * @return the 2D distance of the given way or NaN if some nodes were missing
      */
-    private double calcDistance(ReaderWay way, WaySegmentParser.CoordinateSupplier coordinateSupplier) {
+    static double calc2DDistance(ReaderWay way, WaySegmentParser.CoordinateSupplier coordinateSupplier) {
         LongArrayList nodes = way.getNodes();
         // every way has at least two nodes according to our acceptWay function
         GHPoint3D prevPoint = coordinateSupplier.getCoordinate(nodes.get(0));
         if (prevPoint == null)
             return Double.NaN;
-        boolean is3D = !Double.isNaN(prevPoint.ele);
+        // Use 2D distance: pillar node elevation is not yet available during preprocessing
         double distance = 0;
         for (int i = 1; i < nodes.size(); i++) {
             GHPoint3D point = coordinateSupplier.getCoordinate(nodes.get(i));
             if (point == null)
                 return Double.NaN;
-            if (Double.isNaN(point.ele) == is3D)
-                throw new IllegalStateException("There should be elevation data for either all points or no points at all. OSM way: " + way.getId());
-            distance += is3D
-                    ? distCalc.calcDist3D(prevPoint.lat, prevPoint.lon, prevPoint.ele, point.lat, point.lon, point.ele)
-                    : distCalc.calcDist(prevPoint.lat, prevPoint.lon, point.lat, point.lon);
+            distance += DistanceCalcEarth.DIST_EARTH.calcDist(prevPoint.lat, prevPoint.lon, point.lat, point.lon);
             prevPoint = point;
         }
         return distance;
@@ -554,7 +565,7 @@ public class OSMReader {
      * This method is called for each relation during the first pass of {@link WaySegmentParser}
      */
     protected void preprocessRelations(ReaderRelation relation) {
-        if (!relation.isMetaRelation() && relation.hasTag("type", "route")) {
+        if (relation.hasTag("type", "route")) {
             // we keep track of all route relations, so they are available when we create edges later
             for (ReaderRelation.Member member : relation.getMembers()) {
                 if (member.getType() != ReaderElement.Type.WAY)

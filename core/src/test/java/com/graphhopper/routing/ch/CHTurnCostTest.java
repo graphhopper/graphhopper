@@ -264,7 +264,7 @@ public class CHTurnCostTest {
         // we contract the graph such that only a few shortcuts are created and that the fwd/bwd searches for the
         // 0-8 query meet at node 4 (make sure we include all three cases where turn cost times might come to play:
         // fwd/bwd search and meeting point)
-        checkPathUsingCH(ArrayUtil.iota(9), 8, 9, 0, 8, new int[]{1, 3, 5, 7, 0, 8, 2, 6, 4});
+        checkPathUsingCH(ArrayUtil.iota(9), 80, 90, 0, 8, new int[]{1, 3, 5, 7, 0, 8, 2, 6, 4});
     }
 
     @Test
@@ -297,11 +297,11 @@ public class CHTurnCostTest {
 
         Path pathFwd = createAlgo().calcPath(0, 6);
         assertEquals(IntArrayList.from(0, 1, 2, 3, 4, 5, 6), pathFwd.calcNodes());
-        assertEquals(6 + 15, pathFwd.getWeight(), 1.e-6);
+        assertEquals(60 + 150, pathFwd.getWeight(), 1.e-6);
 
         Path pathBwd = createAlgo().calcPath(6, 0);
         assertEquals(IntArrayList.from(6, 5, 4, 3, 2, 1, 0), pathBwd.calcNodes());
-        assertEquals(6 + 10, pathBwd.getWeight(), 1.e-6);
+        assertEquals(60 + 100, pathBwd.getWeight(), 1.e-6);
     }
 
 
@@ -777,7 +777,7 @@ public class CHTurnCostTest {
         // cannot go 3-4-1
         setRestriction(edge0, edge3, 4);
         graph.freeze();
-        LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
+        LocationIndexTree index = new LocationIndexTree(graph, new GHDirectory("", DAType.RAM));
         index.prepareIndex();
         List<GHPoint> points = Arrays.asList(
                 // 8 (on edge4)
@@ -839,7 +839,7 @@ public class CHTurnCostTest {
 
         // we have to pay attention when there are virtual nodes: turning from the shortcut 3-5 onto the
         // virtual edge 5-x should be forbidden.
-        LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
+        LocationIndexTree index = new LocationIndexTree(graph, new GHDirectory("", DAType.RAM));
         index.prepareIndex();
         Snap snap = index.findClosest(0.1, 0.15, EdgeFilter.ALL_EDGES);
         QueryGraph queryGraph = QueryGraph.create(graph, snap);
@@ -862,7 +862,7 @@ public class CHTurnCostTest {
         updateDistancesFor(graph, 2, 0.03, 0.03);
         graph.freeze();
         automaticPrepareCH();
-        LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
+        LocationIndexTree index = new LocationIndexTree(graph, new GHDirectory("", DAType.RAM));
         index.prepareIndex();
         Snap snap = index.findClosest(0.01, 0.01, EdgeFilter.ALL_EDGES);
         QueryGraph queryGraph = QueryGraph.create(graph, snap);
@@ -890,7 +890,7 @@ public class CHTurnCostTest {
         updateDistancesFor(graph, 2, 0.00, 0.02);
         graph.freeze();
         automaticPrepareCH();
-        LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
+        LocationIndexTree index = new LocationIndexTree(graph, new GHDirectory("", DAType.RAM));
         index.prepareIndex();
         Snap snap = index.findClosest(0.01, 0.01, EdgeFilter.ALL_EDGES);
         QueryGraph queryGraph = QueryGraph.create(graph, snap);
@@ -910,12 +910,12 @@ public class CHTurnCostTest {
         // 4->3->2->1-x-0
         //          |
         //          5->6
-        graph.edge(4, 3).setDistance(00).set(speedEnc, 10, 0);
-        graph.edge(3, 2).setDistance(00).set(speedEnc, 10, 0);
-        graph.edge(2, 1).setDistance(00).set(speedEnc, 10, 0);
-        graph.edge(1, 0).setDistance(00).set(speedEnc, 10, 10);
-        graph.edge(1, 5).setDistance(00).set(speedEnc, 10, 0);
-        graph.edge(5, 6).setDistance(00).set(speedEnc, 10, 0);
+        graph.edge(4, 3).setDistance(0).set(speedEnc, 10, 0);
+        graph.edge(3, 2).setDistance(0).set(speedEnc, 10, 0);
+        graph.edge(2, 1).setDistance(0).set(speedEnc, 10, 0);
+        graph.edge(1, 0).setDistance(0).set(speedEnc, 10, 10);
+        graph.edge(1, 5).setDistance(0).set(speedEnc, 10, 0);
+        graph.edge(5, 6).setDistance(0).set(speedEnc, 10, 0);
         updateDistancesFor(graph, 4, 0.1, 0.0);
         updateDistancesFor(graph, 3, 0.1, 0.1);
         updateDistancesFor(graph, 2, 0.1, 0.2);
@@ -928,7 +928,7 @@ public class CHTurnCostTest {
         graph.freeze();
         chConfig = chConfigs.get(2);
         prepareCH(0, 1, 2, 3, 4, 5, 6);
-        LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
+        LocationIndexTree index = new LocationIndexTree(graph, new GHDirectory("", DAType.RAM));
         index.prepareIndex();
         GHPoint virtualPoint = new GHPoint(0.1, 0.35);
         Snap snap = index.findClosest(virtualPoint.lat, virtualPoint.lon, EdgeFilter.ALL_EDGES);
@@ -1080,8 +1080,7 @@ public class CHTurnCostTest {
 
     private void compareWithDijkstraOnRandomGraph(long seed) {
         final Random rnd = new Random(seed);
-        // for larger graphs preparation takes much longer the higher the degree is!
-        GHUtility.buildRandomGraph(graph, rnd, 20, 3.0, true, speedEnc, null, 0.9, 0.8);
+        RandomGraph.start().seed(seed).nodes(20).curviness(0.1).speedZero(0.1).fill(graph, speedEnc);
         GHUtility.addRandomTurnCosts(graph, seed, null, turnCostEnc, maxCost, turnCostStorage);
         graph.freeze();
         checkStrict = false;
@@ -1108,7 +1107,7 @@ public class CHTurnCostTest {
     }
 
     private void compareWithDijkstraOnRandomGraph_heuristic(long seed) {
-        GHUtility.buildRandomGraph(graph, new Random(seed), 20, 3.0, true, speedEnc, null, 0.9, 0.8);
+        RandomGraph.start().seed(seed).nodes(20).curviness(0.1).speedZero(0.1).fill(graph, speedEnc);
         GHUtility.addRandomTurnCosts(graph, seed, null, turnCostEnc, maxCost, turnCostStorage);
         graph.freeze();
         checkStrict = false;
@@ -1130,15 +1129,17 @@ public class CHTurnCostTest {
     }
 
     private void checkPath(IntArrayList expectedPath, int expectedEdgeWeight, int expectedTurnCosts, int from, int to, int[] contractionOrder) {
-        checkPathUsingDijkstra(expectedPath, expectedEdgeWeight, expectedTurnCosts, from, to);
-        checkPathUsingCH(expectedPath, expectedEdgeWeight, expectedTurnCosts, from, to, contractionOrder);
+        // todo: move out x10
+        checkPathUsingDijkstra(expectedPath, expectedEdgeWeight * 10, expectedTurnCosts * 10, from, to);
+        checkPathUsingCH(expectedPath, expectedEdgeWeight * 10, expectedTurnCosts * 10, from, to, contractionOrder);
     }
 
     private void checkPathUsingDijkstra(IntArrayList expectedPath, int expectedEdgeWeight, int expectedTurnCosts, int from, int to) {
         Path dijkstraPath = findPathUsingDijkstra(from, to);
         int expectedWeight = expectedEdgeWeight + expectedTurnCosts;
-        int expectedDistance = expectedEdgeWeight * 10;
-        int expectedTime = (expectedEdgeWeight + expectedTurnCosts) * 1000;
+        int expectedDistance = expectedEdgeWeight;
+        // todo: move out x10
+        int expectedTime = (expectedEdgeWeight / 10 + expectedTurnCosts / 10) * 1000;
         assertEquals(expectedPath, dijkstraPath.calcNodes(), "Normal Dijkstra did not find expected path.");
         assertEquals(expectedWeight, dijkstraPath.getWeight(), 1.e-6, "Normal Dijkstra did not calculate expected weight.");
         assertEquals(expectedDistance, dijkstraPath.getDistance(), 1.e-6, "Normal Dijkstra did not calculate expected distance.");
@@ -1148,8 +1149,9 @@ public class CHTurnCostTest {
     private void checkPathUsingCH(IntArrayList expectedPath, int expectedEdgeWeight, int expectedTurnCosts, int from, int to, int[] contractionOrder) {
         Path chPath = findPathUsingCH(from, to, contractionOrder);
         int expectedWeight = expectedEdgeWeight + expectedTurnCosts;
-        int expectedDistance = expectedEdgeWeight * 10;
-        int expectedTime = (expectedEdgeWeight + expectedTurnCosts) * 1000;
+        int expectedDistance = expectedEdgeWeight;
+        // todo: move out x10
+        int expectedTime = (expectedEdgeWeight / 10 + expectedTurnCosts / 10) * 1000;
         assertEquals(expectedPath, chPath.calcNodes(), "Contraction Hierarchies did not find expected path. contraction order=" + Arrays.toString(contractionOrder));
         assertEquals(expectedWeight, chPath.getWeight(), 1.e-6, "Contraction Hierarchies did not calculate expected weight.");
         assertEquals(expectedDistance, chPath.getDistance(), 1.e-6, "Contraction Hierarchies did not calculate expected distance.");

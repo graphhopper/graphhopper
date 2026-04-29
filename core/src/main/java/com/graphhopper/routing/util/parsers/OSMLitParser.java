@@ -15,23 +15,30 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.storage;
+
+package com.graphhopper.routing.util.parsers;
+
+import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.storage.IntsRef;
 
 /**
- * Manages memory mapped DataAccess objects.
- * <p>
- *
- * @author Peter Karich
- * @see MMapDataAccess
+ * https://wiki.openstreetmap.org/wiki/Key:lit
  */
-public class MMapDirectory extends GHDirectory {
-    // reserve the empty constructor for direct mapped memory
-    private MMapDirectory() {
-        this("");
-        throw new IllegalStateException("reserved for direct mapped memory");
+public class OSMLitParser implements TagParser {
+    private final BooleanEncodedValue litEnc;
+
+    public OSMLitParser(BooleanEncodedValue litEnc) {
+        this.litEnc = litEnc;
     }
 
-    public MMapDirectory(String _location) {
-        super(_location, DAType.MMAP);
+    @Override
+    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
+        Boolean litValue = false;
+        if (way.hasTag("lit", "yes") || way.hasTag("lit", "24/7") || way.hasTag("lit", "automatic") ) {
+            litValue = true;
+        }
+        litEnc.setBool(false, edgeId, edgeIntAccess, litValue);
     }
 }

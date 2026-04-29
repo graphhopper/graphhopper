@@ -41,7 +41,7 @@ class FerrySpeedCalculatorTest {
     testSpeed() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("route", "ferry");
-        way.setTag("way_distance", 30_000.0);
+        way.setTag("way_distance_2d", 30_000.0);
         way.setTag("duration_in_seconds", 1800L);
 
         EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
@@ -54,7 +54,7 @@ class FerrySpeedCalculatorTest {
         way.setTag("motorcar", "yes");
         way.setTag("bicycle", "no");
 
-        way.setTag("way_distance", 50000.0);
+        way.setTag("way_distance_2d", 50000.0);
         way.setTag("duration_in_seconds", 2100L);
         edgeIntAccess = new ArrayEdgeIntAccess(1);
         calc.handleWayTags(edgeId, edgeIntAccess, way, IntsRef.EMPTY);
@@ -64,7 +64,7 @@ class FerrySpeedCalculatorTest {
         way = new ReaderWay(1);
         way.setTag("route", "ferry");
         way.setTag("motorcar", "yes");
-        way.setTag("way_distance", 100.0);
+        way.setTag("way_distance_2d", 100.0);
         way.setTag("duration_in_seconds", 720L);
 
         // we can't store 0.5km/h, but we expect the lowest possible speed
@@ -110,7 +110,7 @@ class FerrySpeedCalculatorTest {
     private void checkSpeed(Long durationInSeconds, Double wayDistance, Double edgeDistance, double expected) {
         ReaderWay way = new ReaderWay(0L);
         if (durationInSeconds != null) {
-            way.setTag("way_distance", wayDistance);
+            way.setTag("way_distance_2d", wayDistance);
             way.setTag("duration_in_seconds", durationInSeconds);
         }
         if (edgeDistance != null)

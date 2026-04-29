@@ -32,8 +32,12 @@ public class BooleanEncodedValueTest {
         int edgeId = 0;
         bool.setBool(false, edgeId, edgeIntAccess, false);
         bool.setBool(true, edgeId, edgeIntAccess, true);
-
         assertFalse(bool.getBool(false, edgeId, edgeIntAccess));
         assertTrue(bool.getBool(true, edgeId, edgeIntAccess));
+
+        bool.setBool(false, edgeId, edgeIntAccess, true);
+        bool.setBool(true, edgeId, edgeIntAccess, false);
+        assertTrue(bool.getBool(false, edgeId, edgeIntAccess));
+        assertFalse(bool.getBool(true, edgeId, edgeIntAccess));
     }
 }
