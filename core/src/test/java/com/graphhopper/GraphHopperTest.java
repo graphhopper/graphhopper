@@ -690,6 +690,29 @@ public class GraphHopperTest {
         assertTrue(rsp.hasErrors(), "expected errors");
         assertEquals(1, rsp.getErrors().size());
         assertTrue(rsp.getErrors().get(0) instanceof ConnectionNotFoundException);
+
+        // Block a road in one direction only
+        CustomModel customModelDirected = new CustomModel().addToPriority(If("in_blocked_circle && !is_forward", MULTIPLY, "0"));
+        customModelDirected.getAreas().getFeatures().add(createCircle("blocked_circle", 50.0138917, 11.4895574, 5));
+        req = new GHRequest(50.006347,11.49674, 50.027614,11.49716).
+                        setProfile(profile);
+        // route without custom model
+        rsp = hopper.route(req);
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
+        assertEquals(2684.275, rsp.getBest().getDistance(), 10);
+        assertEquals(114663, rsp.getBest().getTime(), 10);
+        // with custom model
+        req.setCustomModel(customModelDirected);
+        rsp = hopper.route(req);
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
+        assertEquals(2787.087, rsp.getBest().getDistance(), 10);
+        assertEquals(201875, rsp.getBest().getTime(), 10);
+        // reverse direction should not use the detour
+        Collections.reverse(req.getPoints());
+        rsp = hopper.route(req);
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
+        assertEquals(2684.275, rsp.getBest().getDistance(), 10);
+        assertEquals(114663, rsp.getBest().getTime(), 10);
     }
 
     @Test
