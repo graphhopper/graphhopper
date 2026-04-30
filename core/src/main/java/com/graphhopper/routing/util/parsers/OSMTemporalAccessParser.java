@@ -101,6 +101,14 @@ public class OSMTemporalAccessParser implements TagParser {
         return null;
     }
 
+    public static boolean hasPermissiveTemporalRestrictionForPedestrian(ReaderWay way, int firstIndex,
+                                                                List<String> restrictionKeys, Collection<String> allowedValues) {
+        // only consider conditional tags if there is an explicit restriction
+        String access = way.getTag("access");
+        String motorVehicle = way.getTag("motor_vehicle");
+        if (!"no".equals(access) && !"no".equals(motorVehicle)) return false;
+        return hasPermissiveTemporalRestriction(way, firstIndex, restrictionKeys, allowedValues);
+    }
     /**
      * This method checks the conditional restrictions starting from firstIndex and returns
      * true if the access value is in the "accepted" collection AND the conditional value describes
@@ -108,6 +116,7 @@ public class OSMTemporalAccessParser implements TagParser {
      */
     public static boolean hasPermissiveTemporalRestriction(ReaderWay way, int firstIndex,
                                                            List<String> restrictionKeys, Collection<String> accepted) {
+
         for (int i = firstIndex; i >= 0; i--) {
             String value = way.getTag(restrictionKeys.get(i) + ":conditional");
             if (acceptedAndInRange(value, accepted)) return true;

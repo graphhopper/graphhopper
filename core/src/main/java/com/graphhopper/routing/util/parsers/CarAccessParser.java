@@ -27,6 +27,7 @@ import com.graphhopper.util.PMap;
 import java.util.*;
 
 import static com.graphhopper.routing.util.parsers.OSMTemporalAccessParser.hasPermissiveTemporalRestriction;
+import static com.graphhopper.routing.util.parsers.OSMTemporalAccessParser.hasPermissiveTemporalRestrictionForPedestrian;
 
 public class CarAccessParser extends AbstractAccessParser implements TagParser {
 
@@ -94,7 +95,7 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
 
         if ("pedestrian".equals(highwayValue)
                 && !allowedValues.contains(firstValue)
-                && !hasPermissiveTemporalRestriction(way, restrictionKeys.size() - 1, restrictionKeys, allowedValues)) {
+                && !hasPermissiveTemporalRestrictionForPedestrian(way, restrictionKeys.size() - 1, restrictionKeys, allowedValues)) {
             // allow pedestrian if explicitly tagged
             return WayAccess.CAN_SKIP;
         }
