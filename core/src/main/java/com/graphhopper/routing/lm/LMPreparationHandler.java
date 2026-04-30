@@ -23,7 +23,6 @@ import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.util.AreaIndex;
-import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.storage.index.LocationIndex;
@@ -140,50 +139,43 @@ public class LMPreparationHandler {
     }
 
     /**
-     * Loads the landmark data for all given configs if available.
+     * Creates landmark storages for all given configs and tries to load existing data.
      *
+     * @param notLoaded storages that could not be loaded are added to this list, so they can be reused for preparation
      * @return the loaded landmark storages
      */
-    public List<LandmarkStorage> load(List<LMConfig> lmConfigs, BaseGraph baseGraph, EncodedValueLookup encodedValueLookup) {
+    public List<LandmarkStorage> load(List<LMConfig> lmConfigs, BaseGraph baseGraph, EncodedValueLookup encodedValueLookup,
+                                      List<LandmarkStorage> notLoaded) {
         List<LandmarkStorage> loaded = Collections.synchronizedList(new ArrayList<>());
+        List<LandmarkStorage> notLoadedSync = Collections.synchronizedList(notLoaded);
         Stream<Runnable> loadingRunnables = lmConfigs.stream()
                 .map(lmConfig -> () -> {
-                    // todo: specifying ghStorage and landmarkCount should not be necessary, because all we want to do
-                    //       is load the landmark data and these parameters are only needed to calculate the landmarks.
-                    //       we should also work towards a separation of the storage and preparation related code in
-                    //       landmark storage
                     LandmarkStorage lms = new LandmarkStorage(baseGraph, encodedValueLookup, baseGraph.getDirectory(), lmConfig, landmarkCount);
                     if (lms.loadExisting())
                         loaded.add(lms);
-                    else {
-                        // todo: this is very ugly. all we wanted to do was see if the landmarks exist already, but now
-                        //       we need to remove the DAs from the directory. This is because otherwise we cannot
-                        //       create these DataAccess again when we actually prepare the landmarks that don't exist
-                        //       yet.
-                        baseGraph.getDirectory().remove("landmarks_" + lmConfig.getName());
-                        baseGraph.getDirectory().remove("landmarks_subnetwork_" + lmConfig.getName());
-                    }
+                    else
+                        notLoadedSync.add(lms);
                 });
         GHUtility.runConcurrently(loadingRunnables, preparationThreads);
         return loaded;
     }
 
     /**
-     * Prepares the landmark data for all given configs
+     * Prepares the landmark data for all given storages
      */
-    public List<PrepareLandmarks> prepare(List<LMConfig> lmConfigs, BaseGraph baseGraph, EncodingManager encodingManager, StorableProperties properties, LocationIndex locationIndex, final boolean closeEarly) {
-        if (lmConfigs.isEmpty()) {
+    public List<PrepareLandmarks> prepare(List<LandmarkStorage> landmarkStorages, BaseGraph baseGraph, StorableProperties properties, LocationIndex locationIndex, final boolean closeEarly) {
+        if (landmarkStorages.isEmpty()) {
             LOGGER.info("There are no LMs to prepare");
             return Collections.emptyList();
         }
-        List<PrepareLandmarks> preparations = createPreparations(lmConfigs, baseGraph, encodingManager, locationIndex);
+        List<PrepareLandmarks> preparations = createPreparations(landmarkStorages, baseGraph, locationIndex);
         List<Runnable> prepareRunnables = new ArrayList<>();
         for (int i = 0; i < preparations.size(); i++) {
             PrepareLandmarks prepare = preparations.get(i);
             final int count = i + 1;
             final String name = prepare.getLMConfig().getName();
             prepareRunnables.add(() -> {
-                LOGGER.info(count + "/" + lmConfigs.size() + " calling LM prepare.doWork for " + prepare.getLMConfig().getName() + " ... (" + getMemInfo() + ")");
+                LOGGER.info(count + "/" + landmarkStorages.size() + " calling LM prepare.doWork for " + prepare.getLMConfig().getName() + " ... (" + getMemInfo() + ")");
                 Thread.currentThread().setName(name);
                 prepare.doWork();
                 if (closeEarly)
@@ -198,9 +190,9 @@ public class LMPreparationHandler {
     }
 
     /**
-     * This method creates the landmark storages ready for landmark creation.
+     * This method creates the PrepareLandmarks instances ready for landmark creation, reusing the given LandmarkStorages.
      */
-    List<PrepareLandmarks> createPreparations(List<LMConfig> lmConfigs, BaseGraph graph, EncodedValueLookup encodedValueLookup, LocationIndex locationIndex) {
+    List<PrepareLandmarks> createPreparations(List<LandmarkStorage> landmarkStorages, BaseGraph graph, LocationIndex locationIndex) {
         LOGGER.info("Creating LM preparations, {}", getMemInfo());
         List<LandmarkSuggestion> lmSuggestions = new ArrayList<>(lmSuggestionsLocations.size());
         if (!lmSuggestionsLocations.isEmpty()) {
@@ -214,14 +206,14 @@ public class LMPreparationHandler {
         }
 
         List<PrepareLandmarks> preparations = new ArrayList<>();
-        for (LMConfig lmConfig : lmConfigs) {
+        for (LandmarkStorage lms : landmarkStorages) {
+            LMConfig lmConfig = lms.getLMConfig();
             Double maximumWeight = maximumWeights.get(lmConfig.getName());
             if (maximumWeight == null)
                 throw new IllegalStateException("maximumWeight cannot be null. Default should be just negative. " +
                         "Couldn't find " + lmConfig.getName() + " in " + maximumWeights);
 
-            PrepareLandmarks prepareLandmarks = new PrepareLandmarks(graph.getDirectory(), graph, encodedValueLookup,
-                    lmConfig, landmarkCount).
+            PrepareLandmarks prepareLandmarks = new PrepareLandmarks(graph, lms, lmConfig).
                     setLandmarkSuggestions(lmSuggestions).
                     setMaximumWeight(maximumWeight).
                     setLogDetails(logDetails);

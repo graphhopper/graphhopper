@@ -95,40 +95,45 @@ public class CHPreparationHandler {
         this.preparationThreads = preparationThreads;
     }
 
-    public Map<String, RoutingCHGraph> load(BaseGraph graph, List<CHConfig> chConfigs) {
+    /**
+     * Creates CH storages for all given configs and tries to load existing data.
+     *
+     * @param notLoaded configs and their storages that could not be loaded are added to this map, so they can be reused for preparation
+     */
+    public Map<String, RoutingCHGraph> load(BaseGraph graph, List<CHConfig> chConfigs, Map<CHConfig, CHStorage> notLoaded) {
         Map<String, RoutingCHGraph> loaded = Collections.synchronizedMap(new LinkedHashMap<>());
+        Map<CHConfig, CHStorage> notLoadedSync = Collections.synchronizedMap(notLoaded);
         Stream<Runnable> runnables = chConfigs.stream()
                 .map(c -> () -> {
                     CHStorage chStorage = new CHStorage(graph.getDirectory(), c.getName(), c.isEdgeBased());
                     if (chStorage.loadExisting())
                         loaded.put(c.getName(), RoutingCHGraphImpl.fromGraph(graph, chStorage, c));
-                    else {
-                        // todo: this is ugly, see comments in LMPreparationHandler
-                        graph.getDirectory().remove("nodes_ch_" + c.getName());
-                        graph.getDirectory().remove("shortcuts_" + c.getName());
-                    }
+                    else
+                        notLoadedSync.put(c, chStorage);
                 });
         GHUtility.runConcurrently(runnables, preparationThreads);
         return loaded;
     }
 
-    public Map<String, PrepareContractionHierarchies.Result> prepare(BaseGraph baseGraph, StorableProperties properties, List<CHConfig> chConfigs, final boolean closeEarly) {
-        if (chConfigs.isEmpty()) {
+    public Map<String, PrepareContractionHierarchies.Result> prepare(BaseGraph baseGraph, StorableProperties properties, Map<CHConfig, CHStorage> chStorages, final boolean closeEarly) {
+        if (chStorages.isEmpty()) {
             LOGGER.info("There are no CHs to prepare");
             return Collections.emptyMap();
         }
         LOGGER.info("Creating CH preparations, {}", getMemInfo());
         Map<String, PrepareContractionHierarchies.Result> results = Collections.synchronizedMap(new LinkedHashMap<>());
-        List<Runnable> runnables = new ArrayList<>(chConfigs.size());
-        for (int i = 0; i < chConfigs.size(); ++i) {
-            CHConfig chConfig = chConfigs.get(i);
-            LOGGER.info((i + 1) + "/" + chConfigs.size() + " Setting up CH preparation for profile " +
+        List<Map.Entry<CHConfig, CHStorage>> entries = new ArrayList<>(chStorages.entrySet());
+        List<Runnable> runnables = new ArrayList<>(entries.size());
+        for (int i = 0; i < entries.size(); ++i) {
+            CHConfig chConfig = entries.get(i).getKey();
+            CHStorage chStorage = entries.get(i).getValue();
+            LOGGER.info((i + 1) + "/" + entries.size() + " Setting up CH preparation for profile " +
                     "'" + chConfig.getName() + "' " + chConfig.getTraversalMode() + " ... (" + getMemInfo() + ")");
             runnables.add(() -> {
                 final String name = chConfig.getName();
                 // toString is not taken into account so we need to cheat, see http://stackoverflow.com/q/6113746/194609 for other options
                 Thread.currentThread().setName(name);
-                PrepareContractionHierarchies prepare = PrepareContractionHierarchies.fromGraph(baseGraph, chConfig);
+                PrepareContractionHierarchies prepare = PrepareContractionHierarchies.fromGraphWithExistingStorage(baseGraph, chConfig, chStorage);
                 prepare.setParams(pMap);
                 PrepareContractionHierarchies.Result result = prepare.doWork();
                 results.put(name, result);
@@ -141,11 +146,5 @@ public class CHPreparationHandler {
         GHUtility.runConcurrently(runnables.stream(), preparationThreads);
         LOGGER.info("Finished CH preparation, {}", getMemInfo());
         return results;
-    }
-
-    private PrepareContractionHierarchies createCHPreparation(BaseGraph graph, CHConfig chConfig) {
-        PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraph(graph, chConfig);
-        pch.setParams(pMap);
-        return pch;
     }
 }
