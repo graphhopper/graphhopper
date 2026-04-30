@@ -14,6 +14,7 @@ Here is an overview:
  * baybatu, improved error for EncodingManager
  * boldtrn, one of the core developers with motorcycle knowledge :)
  * bt90, fixes like #2786
+ * CClerger, added encoded values for accessibility
  * cgarreau, increase of routing success rate via subnetwork cleanup
  * chollemans, fixes like #1482
  * ChristianSeitzer, motorcycle improvements
