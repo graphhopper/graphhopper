@@ -23,7 +23,6 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.PriorityCode;
-import com.graphhopper.routing.util.WayAccess;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
@@ -124,7 +123,7 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.clearTags();
         way.setTag("highway", "residential");
         way.setTag("surface", "asphalt");
-        assertPriorityAndSpeed(PREFER, 18, way);
+        assertPriorityAndSpeed(UNCHANGED, 18, way);
 
         way.clearTags();
         way.setTag("highway", "motorway");
@@ -452,9 +451,12 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
 
         way.clearTags();
         way.setTag("highway", "secondary");
+        assertPriority(AVOID, way);
         way.setTag("cycleway", "lane");
         way.setTag("cycleway:lane", "advisory");
         assertPriority(SLIGHT_PREFER, way);
+        way.setTag("cycleway", "track");
+        assertPriority(PREFER, way);
     }
 
     @Test
@@ -547,14 +549,16 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         // here we are limited by the maxspeed
         way = new ReaderWay(1);
         way.setTag("highway", "secondary");
+        way.setTag("maxspeed", "20");
+        assertPriorityAndSpeed(AVOID, 18, way);
         way.setTag("maxspeed", "10");
-        assertPriorityAndSpeed(VERY_NICE, 10, way);
+        assertPriorityAndSpeed(SLIGHT_AVOID, 10, way);
 
-        way = new ReaderWay(1);
+        way.clearTags();
         way.setTag("highway", "residential");
         way.setTag("maxspeed", "15");
         // todo: speed is larger than maxspeed tag due to rounding and storable max speed is 30
-        assertPriorityAndSpeed(VERY_NICE, 16, way);
+        assertPriorityAndSpeed(PREFER, 16, way);
     }
 
     // Issue 407 : Always block kissing_gate except for mountainbikes

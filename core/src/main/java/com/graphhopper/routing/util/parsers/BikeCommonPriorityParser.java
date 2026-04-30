@@ -104,19 +104,19 @@ public abstract class BikeCommonPriorityParser implements TagParser {
         }
 
         if ("cycleway".equals(highway)) {
-            if (way.hasTag("foot", INTENDED) && !way.hasTag("segregated", "yes"))
+            if (way.hasTag("foot", INTENDED) && !way.hasTag("segregated", "yes")) {
                 weightToPrioMap.put(100d, PREFER);
-            else
+            }
+            else {
                 weightToPrioMap.put(100d, VERY_NICE);
+            }
         }
 
         double maxSpeed = Math.max(OSMMaxSpeedParser.parseMaxSpeed(way, false), OSMMaxSpeedParser.parseMaxSpeed(way, true));
-        if (preferHighwayTags.contains(highway) || maxSpeed <= 30) {
-            if (maxSpeed == MaxSpeed.MAXSPEED_MISSING || maxSpeed < avoidSpeedLimit) {
-                weightToPrioMap.put(40d, PREFER);
-                if (way.hasTag("tunnel", INTENDED))
-                    weightToPrioMap.put(40d, UNCHANGED);
-            }
+        if (preferHighwayTags.contains(highway)) {
+            weightToPrioMap.put(100d, PREFER);
+            if (way.hasTag("tunnel", INTENDED))
+                weightToPrioMap.put(40d, UNCHANGED);
         } else if (avoidHighwayTags.containsKey(highway)
                 || (maxSpeed != MaxSpeed.MAXSPEED_MISSING && maxSpeed >= avoidSpeedLimit && !"track".equals(highway))) {
             PriorityCode priorityCode = avoidHighwayTags.get(highway);
@@ -125,6 +125,13 @@ public abstract class BikeCommonPriorityParser implements TagParser {
                 PriorityCode worse = priorityCode == null ? BAD : priorityCode.worse().worse();
                 weightToPrioMap.put(50d, worse == EXCLUDE ? REACH_DESTINATION : worse);
             }
+        } else if ((maxSpeed <= 30) || (maxSpeed < avoidSpeedLimit)) {
+            weightToPrioMap.put(100d, SLIGHT_PREFER);
+            if (way.hasTag("tunnel", INTENDED)) {
+                weightToPrioMap.put(40d, UNCHANGED);
+            }
+        } else if (way.hasTag("tunnel", INTENDED)) {
+            weightToPrioMap.put(40d, AVOID);
         }
 
         if (way.hasTag("bicycle", "use_sidepath")) {
@@ -140,8 +147,9 @@ public abstract class BikeCommonPriorityParser implements TagParser {
             weightToPrioMap.put(100d, SLIGHT_PREFER);
         } else if (pushingSectionsHighways.contains(highway) || "parking_aisle".equals(way.getTag("service"))) {
             PriorityCode pushingSectionPrio = SLIGHT_AVOID;
-            if (way.hasTag("highway", "steps"))
-                pushingSectionPrio = BAD;
+            if (way.hasTag("highway", "steps")) {
+                pushingSectionPrio = PriorityCode.BAD;
+            }
             else if (way.hasTag("bicycle", "yes") || way.hasTag("bicycle", "permissive"))
                 pushingSectionPrio = PREFER;
             else if (bikeDesignated)

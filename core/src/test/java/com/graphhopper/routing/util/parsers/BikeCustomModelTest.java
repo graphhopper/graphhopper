@@ -357,7 +357,7 @@ public class BikeCustomModelTest {
         rel.setTag("route", "bicycle");
         rel.setTag("network", "lcn");
         edge = createEdge(way, rel);
-        assertEquals(1.56, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
+        assertEquals(1.3, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
         assertEquals(18, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
         way.clearTags();
@@ -389,7 +389,7 @@ public class BikeCustomModelTest {
         rel.setTag("route", "mtb");
         rel.setTag("network", "lcn");
         edge = createEdge(way, rel);
-        assertEquals(1.56, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
+        assertEquals(1.3, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
         assertEquals(18, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
     }
 

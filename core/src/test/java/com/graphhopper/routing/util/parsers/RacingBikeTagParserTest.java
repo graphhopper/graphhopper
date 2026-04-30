@@ -77,10 +77,16 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
 
         osmWay.setTag("highway", "secondary");
         osmWay.setTag("tunnel", "yes");
-        assertPriorityAndSpeed(UNCHANGED, 24, osmWay);
-
+        assertPriorityAndSpeed(BAD, 24, osmWay);
+        osmWay.setTag("maxspeed", "30");
+        assertPriorityAndSpeed(BAD, 24, osmWay);
+        osmWay.setTag("maxspeed", "20");
+        assertPriorityAndSpeed(AVOID_MORE, 20, osmWay);
+        osmWay.setTag("maxspeed", "30");
         osmWay.setTag("bicycle", "designated");
         assertPriorityAndSpeed(PREFER, 24, osmWay);
+        osmWay.setTag("maxspeed", "20");
+        assertPriorityAndSpeed(VERY_NICE, 20, osmWay);
     }
 
     @Test
@@ -244,19 +250,19 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "tertiary");
         osmWay.setTag("maxspeed", "50");
-        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, PREFER, 24, osmWay);
+        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, SLIGHT_PREFER, 24, osmWay);
 
         osmWay.setTag("maxspeed", "60");
-        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, PREFER, 24, osmWay);
+        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, SLIGHT_PREFER, 24, osmWay);
 
         osmWay.setTag("maxspeed", "80");
-        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, PREFER, 24, osmWay);
+        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, SLIGHT_PREFER, 24, osmWay);
 
         osmWay.setTag("maxspeed", "90");
-        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, UNCHANGED, 24, osmWay);
+        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, AVOID, 24, osmWay);
 
         osmWay.setTag("maxspeed", "120");
-        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, UNCHANGED, 24, osmWay);
+        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, AVOID, 24, osmWay);
 
         osmWay.setTag("highway", "motorway");
         assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, BAD, 18, osmWay);
@@ -285,7 +291,7 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         osmWay.clearTags();
         osmWay.setTag("highway", "notdefined");
         osmWay.setTag("maxspeed", "50");
-        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, UNCHANGED, PUSHING_SECTION_SPEED, osmWay);
+        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, SLIGHT_PREFER, PUSHING_SECTION_SPEED, osmWay);
     }
 
     private void assertPriorityAndSpeed(EncodingManager encodingManager, DecimalEncodedValue priorityEnc, DecimalEncodedValue speedEnc,
@@ -312,6 +318,17 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
     public void testPreferenceForSlowSpeed() {
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "tertiary");
+        assertPriority(UNCHANGED, osmWay);
+        osmWay.setTag("cycleway", "lane");
+        assertPriority(SLIGHT_PREFER, osmWay);
+        osmWay.setTag("maxspeed", "30");
+        assertPriority(SLIGHT_PREFER, osmWay);
+        osmWay.setTag("highway", "primary");
+        assertPriority(SLIGHT_PREFER, osmWay);
+        osmWay.setTag("cycleway", "track");
         assertPriority(PREFER, osmWay);
+        osmWay.clearTags();
+        osmWay.setTag("highway", "primary");
+        assertPriority(AVOID_MORE, osmWay);
     }
 }
