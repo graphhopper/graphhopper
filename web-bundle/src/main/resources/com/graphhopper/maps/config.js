@@ -19,9 +19,5 @@ const config = {
         ],
         snapPreventions: ['ferry'],
     },
-    profiles: {
-        bike:   { details: ['cycleway', 'bike_network'] },
-        foot:   { details: ['sidewalk', 'foot_network'] },
-    },
     profile_group_mapping: {},
 }
