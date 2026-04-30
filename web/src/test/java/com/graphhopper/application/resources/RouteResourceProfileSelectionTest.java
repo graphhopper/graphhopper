@@ -85,7 +85,7 @@ public class RouteResourceProfileSelectionTest {
     @ValueSource(strings = {"CH", "LM", "flex"})
     public void selectUsingProfile(String mode) {
         assertDistance("my_car", mode, 3563);
-        assertDistance("my_bike", mode, 3700);
+        assertDistance("my_bike", mode, 3296);
         assertDistance("my_feet", mode, 3158);
         assertError("my_pink_car", mode, "The requested profile 'my_pink_car' does not exist");
     }

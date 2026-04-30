@@ -17,10 +17,6 @@ public class BikePriorityParser extends BikeCommonPriorityParser {
 
         addPushingSection("path");
 
-        preferHighwayTags.add("service");
-        preferHighwayTags.add("residential");
-        preferHighwayTags.add("unclassified");
-
         setSpecificClassBicycle("touring");
     }
 }
