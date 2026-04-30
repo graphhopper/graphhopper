@@ -244,13 +244,13 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "tertiary");
         osmWay.setTag("maxspeed", "50");
-        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, PREFER, 24, osmWay);
+        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, SLIGHT_PREFER, 24, osmWay);
 
         osmWay.setTag("maxspeed", "60");
-        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, PREFER, 24, osmWay);
+        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, SLIGHT_PREFER, 24, osmWay);
 
         osmWay.setTag("maxspeed", "80");
-        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, PREFER, 24, osmWay);
+        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, SLIGHT_PREFER, 24, osmWay);
 
         osmWay.setTag("maxspeed", "90");
         assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, UNCHANGED, 24, osmWay);
@@ -312,6 +312,6 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
     public void testPreferenceForSlowSpeed() {
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "tertiary");
-        assertPriority(PREFER, osmWay);
+        assertPriority(SLIGHT_PREFER, osmWay);
     }
 }

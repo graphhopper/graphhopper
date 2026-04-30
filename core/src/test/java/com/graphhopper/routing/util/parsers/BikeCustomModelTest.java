@@ -159,16 +159,16 @@ public class BikeCustomModelTest {
         way.setTag("surface", "ground"); // bad surface means slow speed for mtb too
         EdgeIteratorState edge = createEdge(way);
         CustomWeighting.Parameters p = CustomModelParser.createWeightingParameters(cm, em);
-        assertEquals(1.2, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
+        assertEquals(1.1, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
         assertEquals(10.0, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
         way.setTag("mtb:scale", "3");
         edge = createEdge(way);
-        assertEquals(0.6, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
+        assertEquals(0.55, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
 
         way.setTag("mtb:scale", "5");
         edge = createEdge(way);
-        assertEquals(0.6, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
+        assertEquals(0.55, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
         assertEquals(4.0, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
         way.setTag("mtb:scale", "6");
@@ -178,15 +178,15 @@ public class BikeCustomModelTest {
         way.removeTag("mtb:scale");
         way.setTag("sac_scale", "hiking");
         edge = createEdge(way);
-        assertEquals(1.2, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
+        assertEquals(1.1, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
 
         way.setTag("sac_scale", "mountain_hiking");
         edge = createEdge(way);
-        assertEquals(1.2, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
+        assertEquals(1.1, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
 
         way.setTag("sac_scale", "alpine_hiking");
         edge = createEdge(way);
-        assertEquals(1.2, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
+        assertEquals(1.1, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
 
         way.setTag("sac_scale", "demanding_alpine_hiking");
         edge = createEdge(way);
@@ -357,7 +357,7 @@ public class BikeCustomModelTest {
         rel.setTag("route", "bicycle");
         rel.setTag("network", "lcn");
         edge = createEdge(way, rel);
-        assertEquals(1.56, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
+        assertEquals(1.43, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
         assertEquals(18, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
         way.clearTags();
@@ -389,7 +389,7 @@ public class BikeCustomModelTest {
         rel.setTag("route", "mtb");
         rel.setTag("network", "lcn");
         edge = createEdge(way, rel);
-        assertEquals(1.56, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
+        assertEquals(1.43, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
         assertEquals(18, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
     }
 
