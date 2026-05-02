@@ -20,7 +20,6 @@ package com.graphhopper.routing;
 import com.carrotsearch.hppc.IntSet;
 import com.carrotsearch.hppc.predicates.IntObjectPredicate;
 import com.graphhopper.coll.GHIntHashSet;
-import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
@@ -30,8 +29,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.graphhopper.util.Parameters.Algorithms.AltRoute.*;
@@ -228,8 +225,17 @@ public class AlternativeRoute extends AStarBidirection implements RoutingAlgorit
                                                   final double maxShareFactor, final double shareInfluence,
                                                   final double minPlateauFactor, final double plateauInfluence) {
         final double maxWeight = maxWeightFactor * bestWeight;
-        final GHIntObjectHashMap<IntSet> traversalIdMap = new GHIntObjectHashMap<>();
-        final AtomicInteger startTID = addToMap(traversalIdMap, bestPath);
+        // Edge IDs of the best path - used to compute share by counting actual shared
+        // edges on each candidate (analogous to AlternativeRouteCH.sharedDistance).
+        final IntSet bestPathEdges = new GHIntHashSet(bestPath.getEdges());
+
+        final int startTID;
+        if (traversalMode.isEdgeBased()) {
+            startTID = bestPath.getEdges().isEmpty() ? -1
+                    : traversalMode.createTraversalId(bestPath.calcEdges().get(0), false);
+        } else {
+            startTID = bestPath.getFromNode();
+        }
 
         // find all 'good' alternatives from forward-SPT matching the backward-SPT and optimize by
         // small total weight (1), small share and big plateau (3a+b) and do these expensive calculations
@@ -323,10 +329,18 @@ public class AlternativeRoute extends AStarBidirection implements RoutingAlgorit
                 if (fromSPTEntry.parent == null)
                     throw new IllegalStateException("not implemented yet. in case of an edge based traversal the parent of fromSPTEntry could be null");
 
-                // (3b) calculate share
-                SPTEntry fromEE = getFirstShareEE(fromSPTEntry.parent, true);
-                SPTEntry toEE = getFirstShareEE(toSPTEntry.parent, false);
-                double shareWeight = fromEE.getWeightOfVisitedPath() + toEE.getWeightOfVisitedPath();
+                // (3b) Calculate share by walking the candidate's parent chains and summing the
+                // weight of every edge that is also on the best path. This catches duplicates of
+                // the best path naturally (share == bestWeight) and gives the true share for
+                // partial overlaps - unlike the prior heuristic which only considered the first
+                // shared edge on each side and missed any heavy shared edge in the middle.
+                double shareWeight = 0;
+                for (SPTEntry e = fromSPTEntry; e.parent != null; e = e.parent)
+                    if (bestPathEdges.contains(e.edge))
+                        shareWeight += e.getWeightOfVisitedPath() - e.parent.getWeightOfVisitedPath();
+                for (SPTEntry e = toSPTEntry; e.parent != null; e = e.parent)
+                    if (bestPathEdges.contains(e.edge))
+                        shareWeight += e.getWeightOfVisitedPath() - e.parent.getWeightOfVisitedPath();
                 boolean smallShare = shareWeight / bestWeight < maxShareFactor;
                 if (smallShare) {
                     List<String> altNames = getAltNames(graph, fromSPTEntry);
@@ -336,17 +350,11 @@ public class AlternativeRoute extends AStarBidirection implements RoutingAlgorit
 
                     if (sortBy < worstSortBy || alternatives.size() < maxPaths) {
                         Path path = DefaultBidirPathExtractor.extractPath(graph, weighting, fromSPTEntry, toSPTEntry, weight);
-                        // Defence against duplicates of the best path itself: the SPT-structure-based
-                        // plateau-start filter (2) above can fail open when one side never polled a
-                        // node along the best path (e.g. on short routes dominated by a single heavy
-                        // edge near the meeting). Compare extracted edges directly to be sure.
-                        if (path.getEdges().equals(bestPath.getEdges()))
-                            return true;
 
                         // for now do not add alternatives to set, if we do we need to remove then on alternatives.clear too (see below)
                         // AtomicInteger tid = addToMap(traversalIDMap, path);
                         // int tid = traversalMode.createTraversalId(path.calcEdges().get(0), false);
-                        alternatives.add(new AlternativeInfo(sortBy, path, fromEE, toEE, shareWeight, altNames));
+                        alternatives.add(new AlternativeInfo(sortBy, path, null, null, shareWeight, altNames));
 
                         Collections.sort(alternatives, ALT_COMPARATOR);
                         if (alternatives.get(0) != bestAlt)
@@ -361,42 +369,6 @@ public class AlternativeRoute extends AStarBidirection implements RoutingAlgorit
             }
 
             /**
-             * Extract path until we stumble over an existing traversal id
-             */
-            SPTEntry getFirstShareEE(SPTEntry startEE, boolean reverse) {
-                while (startEE.parent != null) {
-                    // TODO we could make use of traversal ID directly if stored in SPTEntry
-                    int tid = traversalMode.createTraversalId(graph.getEdgeIteratorState(startEE.edge, startEE.parent.adjNode), reverse);
-                    if (isAlreadyExisting(tid))
-                        return startEE;
-
-                    startEE = startEE.parent;
-                }
-
-                return startEE;
-            }
-
-            /**
-             * This method returns true if the specified tid is already existent in the
-             * traversalIDMap
-             */
-            boolean isAlreadyExisting(final int tid) {
-                final AtomicBoolean exists = new AtomicBoolean(false);
-                traversalIdMap.forEach(new IntObjectPredicate<IntSet>() {
-                    @Override
-                    public boolean apply(int key, IntSet set) {
-                        if (set.contains(tid)) {
-                            exists.set(true);
-                            return false;
-                        }
-                        return true;
-                    }
-                });
-
-                return exists.get();
-            }
-
-            /**
              * Return the current worst weight for all alternatives
              */
             double getWorstSortBy() {
@@ -405,10 +377,10 @@ public class AlternativeRoute extends AStarBidirection implements RoutingAlgorit
                 return alternatives.get(alternatives.size() - 1).sortBy;
             }
 
-            // returns true if fromSPTEntry is identical to the specified best path
+            // returns true if fromSPTEntry is the root of the forward SPT (the start of the best path)
             boolean isStartOfFwdSPT(SPTEntry fromSPTEntry) {
                 if (traversalMode.isEdgeBased()) {
-                    if (GHUtility.getEdgeFromEdgeKey(startTID.get()) == fromSPTEntry.edge) {
+                    if (GHUtility.getEdgeFromEdgeKey(startTID) == fromSPTEntry.edge) {
                         if (fromSPTEntry.parent == null)
                             throw new IllegalStateException("best path must have no parent but was non-null: " + fromSPTEntry);
                         if (bestEntry.get() != null && bestEntry.get().edge != fromSPTEntry.edge)
@@ -419,7 +391,7 @@ public class AlternativeRoute extends AStarBidirection implements RoutingAlgorit
                     }
 
                 } else if (fromSPTEntry.parent == null) {
-                    if (startTID.get() != fromSPTEntry.adjNode)
+                    if (startTID != fromSPTEntry.adjNode)
                         throw new IllegalStateException("Start traversal ID has to be identical to root edge entry "
                                 + "which is the plateau start of the best path but was: " + startTID + " vs. adjNode: " + fromSPTEntry.adjNode);
                     if (bestEntry.get() != null)
@@ -434,28 +406,5 @@ public class AlternativeRoute extends AStarBidirection implements RoutingAlgorit
         });
 
         return alternatives;
-    }
-
-    /**
-     * This method adds the traversal IDs of the specified path as set to the specified map.
-     */
-    AtomicInteger addToMap(GHIntObjectHashMap<IntSet> map, Path path) {
-        IntSet set = new GHIntHashSet();
-        final AtomicInteger startTID = new AtomicInteger(-1);
-        for (EdgeIteratorState iterState : path.calcEdges()) {
-            int tid = traversalMode.createTraversalId(iterState, false);
-            set.add(tid);
-            if (startTID.get() < 0) {
-                // for node based traversal we need to explicitly add base node as starting node and to list
-                if (!traversalMode.isEdgeBased()) {
-                    tid = iterState.getBaseNode();
-                    set.add(tid);
-                }
-
-                startTID.set(tid);
-            }
-        }
-        map.put(startTID.get(), set);
-        return startTID;
     }
 }
