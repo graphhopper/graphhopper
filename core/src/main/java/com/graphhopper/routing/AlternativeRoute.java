@@ -147,32 +147,19 @@ public class AlternativeRoute extends AStarBidirection implements RoutingAlgorit
     public static class AlternativeInfo {
         private final double sortBy;
         private final Path path;
-        private final SPTEntry shareStart;
-        private final SPTEntry shareEnd;
         private final double shareWeight;
         private final List<String> names;
 
-        public AlternativeInfo(double sortBy, Path path, SPTEntry shareStart, SPTEntry shareEnd,
-                               double shareWeight, List<String> altNames) {
+        public AlternativeInfo(double sortBy, Path path, double shareWeight, List<String> altNames) {
             this.names = altNames;
             this.sortBy = sortBy;
             this.path = path;
             this.path.setDescription(names);
-            this.shareStart = shareStart;
-            this.shareEnd = shareEnd;
             this.shareWeight = shareWeight;
         }
 
         public Path getPath() {
             return path;
-        }
-
-        public SPTEntry getShareStart() {
-            return shareStart;
-        }
-
-        public SPTEntry getShareEnd() {
-            return shareEnd;
         }
 
         public double getShareWeight() {
@@ -248,8 +235,7 @@ public class AlternativeRoute extends AStarBidirection implements RoutingAlgorit
                 shareInfluence, bestShare,
                 plateauInfluence, bestPlateau);
 
-        final AlternativeInfo bestAlt = new AlternativeInfo(sortBy, bestPath,
-                bestFwdEntry, bestBwdEntry, bestShare, getAltNames(graph, bestFwdEntry));
+        final AlternativeInfo bestAlt = new AlternativeInfo(sortBy, bestPath, bestShare, getAltNames(graph, bestFwdEntry));
         alternatives.add(bestAlt);
         AtomicReference<SPTEntry> bestEntry = new AtomicReference<>();
 
@@ -354,7 +340,7 @@ public class AlternativeRoute extends AStarBidirection implements RoutingAlgorit
                         // for now do not add alternatives to set, if we do we need to remove then on alternatives.clear too (see below)
                         // AtomicInteger tid = addToMap(traversalIDMap, path);
                         // int tid = traversalMode.createTraversalId(path.calcEdges().get(0), false);
-                        alternatives.add(new AlternativeInfo(sortBy, path, null, null, shareWeight, altNames));
+                        alternatives.add(new AlternativeInfo(sortBy, path, shareWeight, altNames));
 
                         Collections.sort(alternatives, ALT_COMPARATOR);
                         if (alternatives.get(0) != bestAlt)
