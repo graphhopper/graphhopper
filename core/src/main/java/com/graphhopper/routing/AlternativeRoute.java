@@ -269,10 +269,11 @@ public class AlternativeRoute extends AStarBidirection implements RoutingAlgorit
                 if (weight > maxWeight)
                     return true;
 
-                if (isBestPath(fromSPTEntry))
+                // (2a)
+                if (isStartOfFwdSPT(fromSPTEntry))
                     return true;
 
-                // For edge based traversal we need the next entry to find out the plateau start
+                // (2b) For edge based traversal we need the next entry to find out the plateau start
                 SPTEntry tmpFromEntry = traversalMode.isEdgeBased() ? fromSPTEntry.parent : fromSPTEntry;
                 if (tmpFromEntry == null || tmpFromEntry.parent == null) {
                     // we can be here only if edge based and only if entry is not part of the best path
@@ -333,9 +334,14 @@ public class AlternativeRoute extends AStarBidirection implements RoutingAlgorit
                     double sortBy = calcSortBy(weightInfluence, weight, shareInfluence, shareWeight, plateauInfluence, plateauWeight);
                     double worstSortBy = getWorstSortBy();
 
-                    // plateaus.add(new PlateauInfo(altName, plateauEdges));
                     if (sortBy < worstSortBy || alternatives.size() < maxPaths) {
                         Path path = DefaultBidirPathExtractor.extractPath(graph, weighting, fromSPTEntry, toSPTEntry, weight);
+                        // Defence against duplicates of the best path itself: the SPT-structure-based
+                        // plateau-start filter (2) above can fail open when one side never polled a
+                        // node along the best path (e.g. on short routes dominated by a single heavy
+                        // edge near the meeting). Compare extracted edges directly to be sure.
+                        if (path.getEdges().equals(bestPath.getEdges()))
+                            return true;
 
                         // for now do not add alternatives to set, if we do we need to remove then on alternatives.clear too (see below)
                         // AtomicInteger tid = addToMap(traversalIDMap, path);
@@ -400,7 +406,7 @@ public class AlternativeRoute extends AStarBidirection implements RoutingAlgorit
             }
 
             // returns true if fromSPTEntry is identical to the specified best path
-            boolean isBestPath(SPTEntry fromSPTEntry) {
+            boolean isStartOfFwdSPT(SPTEntry fromSPTEntry) {
                 if (traversalMode.isEdgeBased()) {
                     if (GHUtility.getEdgeFromEdgeKey(startTID.get()) == fromSPTEntry.edge) {
                         if (fromSPTEntry.parent == null)
