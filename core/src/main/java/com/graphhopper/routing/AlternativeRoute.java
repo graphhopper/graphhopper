@@ -216,13 +216,10 @@ public class AlternativeRoute extends AStarBidirection implements RoutingAlgorit
         // edges on each candidate (analogous to AlternativeRouteCH.sharedDistance).
         final IntSet bestPathEdges = new GHIntHashSet(bestPath.getEdges());
 
-        final int startTID;
-        if (traversalMode.isEdgeBased()) {
-            startTID = bestPath.getEdges().isEmpty() ? -1
-                    : traversalMode.createTraversalId(bestPath.calcEdges().get(0), false);
-        } else {
-            startTID = bestPath.getFromNode();
-        }
+        // For edge-based this is the first edge id of the best path, for node-based the from node.
+        final int startEdgeOrNode = traversalMode.isEdgeBased()
+                ? (bestPath.getEdges().isEmpty() ? -1 : bestPath.getEdges().get(0))
+                : bestPath.getFromNode();
 
         // find all 'good' alternatives from forward-SPT matching the backward-SPT and optimize by
         // small total weight (1), small share and big plateau (3a+b) and do these expensive calculations
@@ -319,7 +316,7 @@ public class AlternativeRoute extends AStarBidirection implements RoutingAlgorit
                 // weight of every edge that is also on the best path. This catches duplicates of
                 // the best path naturally (share == bestWeight) and gives the true share for
                 // partial overlaps - unlike the prior heuristic which only considered the first
-                // shared edge on each side and missed any heavy shared edge in the middle.
+                // shared edge on each side and could miss heavy-weight shared edge in the middle.
                 double shareWeight = 0;
                 for (SPTEntry e = fromSPTEntry; e.parent != null; e = e.parent)
                     if (bestPathEdges.contains(e.edge))
@@ -336,10 +333,6 @@ public class AlternativeRoute extends AStarBidirection implements RoutingAlgorit
 
                     if (sortBy < worstSortBy || alternatives.size() < maxPaths) {
                         Path path = DefaultBidirPathExtractor.extractPath(graph, weighting, fromSPTEntry, toSPTEntry, weight);
-
-                        // for now do not add alternatives to set, if we do we need to remove then on alternatives.clear too (see below)
-                        // AtomicInteger tid = addToMap(traversalIDMap, path);
-                        // int tid = traversalMode.createTraversalId(path.calcEdges().get(0), false);
                         alternatives.add(new AlternativeInfo(sortBy, path, shareWeight, altNames));
 
                         Collections.sort(alternatives, ALT_COMPARATOR);
@@ -366,7 +359,7 @@ public class AlternativeRoute extends AStarBidirection implements RoutingAlgorit
             // returns true if fromSPTEntry is the root of the forward SPT (the start of the best path)
             boolean isStartOfFwdSPT(SPTEntry fromSPTEntry) {
                 if (traversalMode.isEdgeBased()) {
-                    if (GHUtility.getEdgeFromEdgeKey(startTID) == fromSPTEntry.edge) {
+                    if (startEdgeOrNode == fromSPTEntry.edge) {
                         if (fromSPTEntry.parent == null)
                             throw new IllegalStateException("best path must have no parent but was non-null: " + fromSPTEntry);
                         if (bestEntry.get() != null && bestEntry.get().edge != fromSPTEntry.edge)
@@ -377,9 +370,9 @@ public class AlternativeRoute extends AStarBidirection implements RoutingAlgorit
                     }
 
                 } else if (fromSPTEntry.parent == null) {
-                    if (startTID != fromSPTEntry.adjNode)
-                        throw new IllegalStateException("Start traversal ID has to be identical to root edge entry "
-                                + "which is the plateau start of the best path but was: " + startTID + " vs. adjNode: " + fromSPTEntry.adjNode);
+                    if (startEdgeOrNode != fromSPTEntry.adjNode)
+                        throw new IllegalStateException("Start node has to be identical to root edge entry "
+                                + "which is the plateau start of the best path but was: " + startEdgeOrNode + " vs. adjNode: " + fromSPTEntry.adjNode);
                     if (bestEntry.get() != null)
                         throw new IllegalStateException("there can be only one best entry but was " + fromSPTEntry + " vs old: " + bestEntry.get()
                                 + " " + graph.getEdgeIteratorState(fromSPTEntry.edge, fromSPTEntry.adjNode).fetchWayGeometry(FetchMode.ALL));
