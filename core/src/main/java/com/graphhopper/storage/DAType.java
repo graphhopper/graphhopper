@@ -45,8 +45,10 @@ public enum DAType {
     RAM_INT_STORE(false, false, true, true, true),
     MMAP(true, true, true, false, true),
     /**
-     * Read-only memory mapped DA object. To avoid write access useful for reading on mobile or
-     * embedded data stores.
+     * Read-only memory mapped DA object backed by a fixed-size foreign-memory mapping. The
+     * file is mapped once with all-final fields. See MMapForeignReadOnlyDataAccess.
+     * Requires all backing files to already exist on disk — there is no
+     * {@code loadExisting()-returns-false} state.
      */
     MMAP_RO(true, true, true, false, false),
     /**

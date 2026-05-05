@@ -139,6 +139,10 @@ public class GHDirectory implements Directory {
         DataAccess da;
         if (type == DAType.MMAP_OLD) {
             da = new MMapDataAccess(name, location, type.isAllowWrites(), segmentSize);
+        } else if (type == DAType.MMAP_RO) {
+            // Fast read-only path with all-final fields. The file must already exist on disk;
+            // there is no "loadExisting returned false" state — the constructor fails fast.
+            da = MMapForeignReadOnlyDataAccess.load(name, location, segmentSize, false);
         } else if (type.isMMap()) {
             da = new MMapForeignMemoryDataAccess(name, location, type.isAllowWrites(), segmentSize);
         } else if (type.isInMemory()) {
@@ -197,7 +201,9 @@ public class GHDirectory implements Directory {
      * method returns e.g. RAM_INT if the type of the specified DataAccess is RAM.
      */
     public DAType getDefaultType(String dataAccess, boolean preferInts) {
-        // TODO NOW: revert this
+//        DAType type = getDefault(dataAccess, typeFallback);
+//        if (preferInts && type.isInMemory())
+//            return type.isStoring() ? RAM_INT_STORE : RAM_INT;
         return typeFallback;
     }
 

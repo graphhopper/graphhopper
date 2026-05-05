@@ -37,6 +37,18 @@ import java.nio.channels.FileChannel;
  * Optionally forces all pages into physical RAM via {@link MemorySegment#load()} to avoid
  * page faults during access (similar to {@code mlock}/{@code MAP_POPULATE}).
  * <p>
+ * <b>Concurrency contract:</b> hot read/write paths go through a
+ * {@code MemorySegment.ofAddress(...).reinterpret(...)} view (see {@link #mapSegment}) to skip
+ * the per-access scope check that {@link Arena#ofShared()} would otherwise impose. The arena
+ * still owns the {@code munmap} lifecycle, but the reinterpreted segment carries no liveness
+ * check of its own. As a result, no other thread may access this DataAccess while a remap is
+ * in flight ({@link #ensureCapacity}, {@link #trimTo}, {@link #close}) — these close the old
+ * arena and unmap the underlying memory, and any concurrent access touches unmapped virtual
+ * memory and crashes the JVM with SIGSEGV instead of throwing {@code IllegalStateException}.
+ * Concurrent reads from multiple threads are safe as long as no remap can occur during them;
+ * if remaps and reads can interleave, callers must coordinate externally (e.g. a read/write
+ * lock).
+ * <p>
  * Requires Java 22+.
  */
 public final class MMapForeignMemoryDataAccess extends AbstractDataAccess {
@@ -50,6 +62,10 @@ public final class MMapForeignMemoryDataAccess extends AbstractDataAccess {
     private static final VarHandle BYTE_VH = BYTE_LAYOUT.varHandle();
 
     private Arena arena;
+    // Mapped segment owned by the arena; used only for force()/load() which require a mapped scope.
+    private MemorySegment mappedSegment = MemorySegment.NULL;
+    // Global-scope reinterpret of mappedSegment used by all hot read/write paths.
+    // See class Javadoc for the concurrency contract this relies on.
     private MemorySegment segment = MemorySegment.NULL;
     private long capacity;
     private RandomAccessFile raFile;
@@ -87,11 +103,12 @@ public final class MMapForeignMemoryDataAccess extends AbstractDataAccess {
 
             arena = Arena.ofShared();
             FileChannel.MapMode mode = allowWrites ? FileChannel.MapMode.READ_WRITE : FileChannel.MapMode.READ_ONLY;
-            segment = raFile.getChannel().map(mode, offset, size, arena);
+            mappedSegment = raFile.getChannel().map(mode, offset, size, arena);
+            segment = MemorySegment.ofAddress(mappedSegment.address()).reinterpret(size);
             capacity = size;
 
             if (preload)
-                segment.load();
+                mappedSegment.load();
         } catch (IOException ex) {
             throw new RuntimeException("Couldn't map " + size + " bytes at offset " + offset
                     + " for " + getFullName(), ex);
@@ -123,7 +140,7 @@ public final class MMapForeignMemoryDataAccess extends AbstractDataAccess {
         try {
             // Flush dirty pages before remapping
             if (capacity > 0)
-                segment.force();
+                mappedSegment.force();
 
             raFile.setLength(HEADER_OFFSET + newCapacity);
             mapSegment(HEADER_OFFSET, newCapacity);
@@ -168,7 +185,7 @@ public final class MMapForeignMemoryDataAccess extends AbstractDataAccess {
             throw new IllegalStateException("already closed");
 
         try {
-            segment.force();
+            mappedSegment.force();
             writeHeader(raFile, HEADER_OFFSET + capacity, segmentSizeInBytes);
             raFile.getFD().sync();
         } catch (Exception ex) {
@@ -230,7 +247,7 @@ public final class MMapForeignMemoryDataAccess extends AbstractDataAccess {
 
         if (newCapacity < this.capacity) {
             try {
-                segment.force();
+                mappedSegment.force();
                 mapSegment(HEADER_OFFSET, newCapacity);
                 raFile.setLength(HEADER_OFFSET + newCapacity);
             } catch (IOException ex) {
@@ -247,6 +264,7 @@ public final class MMapForeignMemoryDataAccess extends AbstractDataAccess {
             arena = null;
         }
         segment = MemorySegment.NULL;
+        mappedSegment = MemorySegment.NULL;
         capacity = 0;
         Helper.close(raFile);
         raFile = null;
@@ -268,6 +286,6 @@ public final class MMapForeignMemoryDataAccess extends AbstractDataAccess {
 
     @Override
     public DAType getType() {
-        return allowWrites ? DAType.MMAP : DAType.MMAP_RO;
+        return DAType.MMAP;
     }
 }
