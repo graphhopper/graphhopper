@@ -345,17 +345,12 @@ public abstract class AbstractBikeTagParserTester {
     public void testService() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "service");
-        assertPriorityAndSpeed(PREFER, 12, way);
+        assertPriorityAndSpeed(PREFER, 18, way);
 
         way.setTag("service", "parking_aisle");
         assertPriorityAndSpeed(SLIGHT_AVOID, 8, way);
         way.setTag("bicycle", "designated");
-        assertPriorityAndSpeed(VERY_NICE, 12, way);
-
-        way.clearTags();
-        way.setTag("highway", "residential");
-        way.setTag("service", "alley");
-        assertPriorityAndSpeed(PREFER, 18, way);
+        assertPriorityAndSpeed(VERY_NICE, 18, way);
     }
 
     @Test

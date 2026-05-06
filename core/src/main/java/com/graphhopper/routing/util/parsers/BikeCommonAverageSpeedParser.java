@@ -63,7 +63,6 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         setSurfaceSpeed("sand", PUSHING_SECTION_SPEED);
         setSurfaceSpeed("wood", PUSHING_SECTION_SPEED);
 
-        setHighwaySpeed("living_street", 6);
         setHighwaySpeed("steps", MIN_SPEED);
 
         setHighwaySpeed("cycleway", 18);
@@ -73,13 +72,12 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         setHighwaySpeed("pedestrian", 6);
         setHighwaySpeed("bridleway", 6);
         setHighwaySpeed("track", 12);
-        setHighwaySpeed("service", 12);
-        setHighwaySpeed("residential", 18);
-        // no other highway applies:
-        setHighwaySpeed("unclassified", 16);
-        // unknown road:
-        setHighwaySpeed("road", 12);
 
+        setHighwaySpeed("living_street", 12);
+        setHighwaySpeed("service", 18);
+        setHighwaySpeed("residential", 18);
+        setHighwaySpeed("unclassified", 18);
+        setHighwaySpeed("road", 18);
         setHighwaySpeed("trunk", 18);
         setHighwaySpeed("trunk_link", 18);
         setHighwaySpeed("primary", 18);
@@ -164,11 +162,6 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
                         speed = Math.max(speed, highwaySpeeds.get("cycleway"));
                     else if (bikeAllowed)
                         speed = Math.max(speed, 12);
-                    break;
-                case "living_street":
-                    if (bikeAllowed)
-                        // if explicitly allowed then allow speeds above limit to get more realistic routes and ETAs
-                        speed = bikeDesignated ? Math.max(speed, 12) : Math.max(speed, 10);
                     break;
             }
 

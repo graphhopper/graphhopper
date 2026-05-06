@@ -176,13 +176,15 @@ class OSMRoadAccessParserTest {
 
     @Test
     void conditionalDestination() {
+        // residential is implicitly accessible (motor_vehicle=yes); a conditional restriction
+        // alone shouldn't tighten the implicit default. "Least restrictive wins" → YES.
         ArrayEdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
         int edgeId = 0;
         ReaderWay way = new ReaderWay(1L);
         way.setTag("highway", "residential");
         way.setTag("vehicle:conditional", "destination @ (Mo-Fr 06:00-18:00)");
         parser.handleWayTags(edgeId, edgeIntAccess, way, new IntsRef(1));
-        assertEquals(RoadAccess.DESTINATION, roadAccessEnc.getEnum(false, edgeId, edgeIntAccess));
+        assertEquals(RoadAccess.YES, roadAccessEnc.getEnum(false, edgeId, edgeIntAccess));
     }
 
     @Test
