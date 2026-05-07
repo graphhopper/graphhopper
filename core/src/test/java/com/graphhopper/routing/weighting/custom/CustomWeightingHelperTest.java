@@ -108,8 +108,8 @@ class CustomWeightingHelperTest {
     public static double calcChangeAngle(BaseGraph graph, EdgeIntAccess edgeIntAccess, DecimalEncodedValue orientationEnc,
                                          int inEdge, int viaNode, int outEdge) {
         boolean inEdgeReverse = !graph.isAdjNode(inEdge, viaNode);
-        boolean outEdgeReverse = !graph.isAdjNode(outEdge, viaNode);
-        return CustomWeightingHelper.calcChangeAngle(edgeIntAccess, orientationEnc, inEdge, inEdgeReverse, outEdge, outEdgeReverse);
+        boolean outEdgeReverse = graph.isAdjNode(outEdge, viaNode);
+        return CustomWeightingHelper.calcChangeAngle(edgeIntAccess, orientationEnc, inEdge, inEdgeReverse, outEdge, !outEdgeReverse);
     }
 
     @Test

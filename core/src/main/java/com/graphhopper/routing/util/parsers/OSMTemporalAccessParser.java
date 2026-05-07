@@ -30,6 +30,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * This parser fills the different XYTemporalAccess enums from the OSM conditional
@@ -122,18 +123,21 @@ public class OSMTemporalAccessParser implements TagParser {
         return false;
     }
 
+    // An OSM conditional is temporal if it mentions any of: a time-of-day range, an OSM
+    // day-of-week abbreviation, or an OSM month abbreviation. We don't care about structure
+    // (how many rules, in what order) — one recognizable token anywhere is enough to say
+    // "there is some time at which this applies."
+    private static final Pattern TEMPORAL_TOKEN = Pattern.compile(
+            "\\d{1,2}:\\d{2}\\s*-\\s*\\d{1,2}:\\d{2}"                        // time range
+                    + "|\\b(?:Mo|Tu|We|Th|Fr|Sa|Su)\\b"                      // day-of-week
+                    + "|\\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\\b" // month
+    );
+
     /**
-     * Returns true if the given string (the part after '@' in a conditional tag) looks like a
-     * temporal specification (time-of-day or date range), as opposed to e.g. a weight restriction.
+     * Returns true if the given string (the part after '@' in a conditional tag) mentions a
+     * time-of-day range, an OSM day-of-week abbreviation, or an OSM month abbreviation.
      */
     public static boolean hasTemporalSpec(String conditionalPart) {
-        if (conditionalPart.contains(";")) return false;
-        try {
-            String cleaned = conditionalPart.replace('(', ' ').replace(')', ' ').trim();
-            return conditionalPart.contains(":") // time
-                    || DateRangeParser.getRange(cleaned) != null; // date
-        } catch (ParseException ex) {
-            return false;
-        }
+        return TEMPORAL_TOKEN.matcher(conditionalPart).find();
     }
 }

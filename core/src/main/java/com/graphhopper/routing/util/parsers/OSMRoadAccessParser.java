@@ -56,25 +56,44 @@ public class OSMRoadAccessParser<T extends Enum> implements TagParser {
                 if (accessValue != null) break;
             }
 
+        // Resolve the base access value in this priority order:
+        //   1. explicit way tag (most specific)
+        //   2. country-specific default (e.g. France allows bikes on pedestrian streets)
+        //   3. universal OSM-wiki implied default (e.g. pedestrian implies motor_vehicle=no)
+        // Steps 2 and 3 only fire if the previous step found nothing.
         for (String restriction : restrictions) {
             accessValue = getRoadAccess(readerWay.getTag(restriction), accessValue);
             if (accessValue != null) break;
         }
-
-        // Also check conditional tags — if e.g. motor_vehicle=no but motor_vehicle:conditional=delivery @ (time),
-        // the qualification should be DELIVERY, not NO. Use the same "least restrictive wins" logic as base tags.
-        for (String restriction : restrictions) {
-            T conditionalValue = getConditionalRoadAccess(readerWay.getTag(restriction + ":conditional"));
-            if (conditionalValue != null) {
-                if (accessValue == null || conditionalValue.ordinal() < accessValue.ordinal())
-                    accessValue = conditionalValue;
-                break;
-            }
-        }
-
         if (accessValue == null) {
             Country country = readerWay.getTag("country", Country.MISSING);
             accessValue = roadAccessDefaultHandler.getAccess(readerWay, country);
+        }
+        if (accessValue == null) {
+            String highwayValue = readerWay.getTag("highway");
+            Map<String, String> impliedDefaults = highwayValue == null
+                    ? Map.of()
+                    : ModeAccessParser.HIGHWAY_TYPE_DEFAULTS.getOrDefault(highwayValue, Map.of());
+            for (String restriction : restrictions) {
+                String implied = impliedDefaults.get(restriction);
+                if (implied != null) {
+                    accessValue = getRoadAccess(implied, accessValue);
+                    if (accessValue != null) break;
+                }
+            }
+        }
+
+        // Also check conditional tags. "Least restrictive wins": a conditional value can only
+        // relax a base, not tighten an implicit default — e.g. motor_vehicle=no plus
+        // motor_vehicle:conditional=delivery @ (time) qualifies as DELIVERY, but a conditional
+        // alone (no base) must not turn an otherwise-accessible road into a restricted one.
+        for (String restriction : restrictions) {
+            T conditionalValue = getConditionalRoadAccess(readerWay.getTag(restriction + ":conditional"));
+            if (conditionalValue != null) {
+                if (accessValue != null && conditionalValue.ordinal() < accessValue.ordinal())
+                    accessValue = conditionalValue;
+                break;
+            }
         }
 
         if (accessValue != null)

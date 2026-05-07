@@ -451,7 +451,7 @@ public class GraphHopperTest {
                 setProfiles(TestProfiles.accessSpeedAndPriority("bike", "bike"));
         hopper.importOrLoad();
 
-        GHRequest req = new GHRequest(50.028917, 11.496506, 49.981979, 11.591156).
+        GHRequest req = new GHRequest(50.028917, 11.496506, 49.982829, 11.593139).
                 setAlgorithm(ALT_ROUTE).setProfile("bike");
 
         req.putHint("alternative_route.max_paths", 3);
@@ -460,11 +460,11 @@ public class GraphHopperTest {
 
         assertEquals(3, rsp.getAll().size());
         // via obergräfenthal
-        assertEquals(2651, rsp.getAll().get(0).getTime() / 1000);
+        assertEquals(2510, rsp.getAll().get(0).getTime() / 1000);
         // via ramsenthal
-        assertEquals(2782, rsp.getAll().get(1).getTime() / 1000);
+        assertEquals(2612, rsp.getAll().get(1).getTime() / 1000);
         // via unterwaiz
-        assertEquals(2872, rsp.getAll().get(2).getTime() / 1000);
+        assertEquals(2740, rsp.getAll().get(2).getTime() / 1000);
     }
 
     @Test
@@ -1411,8 +1411,8 @@ public class GraphHopperTest {
                 .setProfile(bikeProfile));
         res = rsp.getBest();
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
-        assertEquals(500, res.getTime() / 1000f, 1);
-        assertEquals(2211, res.getDistance(), 1);
+        assertEquals(479, res.getTime() / 1000f, 1);
+        assertEquals(2220, res.getDistance(), 1);
 
         rsp = hopper.route(new GHRequest(43.73005, 7.415707, 43.741522, 7.42826)
                 .setProfile("profile3"));

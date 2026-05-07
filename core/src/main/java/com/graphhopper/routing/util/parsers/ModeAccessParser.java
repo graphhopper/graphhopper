@@ -22,20 +22,29 @@ public class ModeAccessParser implements TagParser {
     static {
         // https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Access_restrictions
         Map<String, Map<String, String>> m = new HashMap<>();
+        // For implied bicycle defaults we use "dismount" rather than "no" on highways where
+        // pushing a bike is physically reasonable (pedestrian streets, footways, stairs, indoor
+        // corridors, station platforms). Our routing layer treats DISMOUNT as "can push" —
+        // usable but qualified — whereas NO is treated as a hard block. motorway/motorway_link
+        // keep "no" because bikes are legally prohibited even on foot. Explicit bicycle=no tags
+        // on a way still resolve to NO; only the implicit highway-type defaults become DISMOUNT.
         m.put("motorway", Map.of("motor_vehicle", "designated", "foot", "no", "bicycle", "no"));
         m.put("motorway_link", Map.of("motor_vehicle", "designated", "foot", "no", "bicycle", "no"));
-        m.put("steps", Map.of("motor_vehicle", "no", "bicycle", "no", "foot", "designated"));
-        m.put("footway", Map.of("motor_vehicle", "no", "bicycle", "no", "foot", "designated"));
+        m.put("steps", Map.of("motor_vehicle", "no", "bicycle", "dismount", "foot", "designated"));
+        m.put("footway", Map.of("motor_vehicle", "no", "bicycle", "dismount", "foot", "designated"));
         m.put("cycleway", Map.of("motor_vehicle", "no", "bicycle", "designated", "foot", "no"));
-        m.put("pedestrian", Map.of("motor_vehicle", "no", "bicycle", "no", "foot", "designated"));
+        m.put("pedestrian", Map.of("motor_vehicle", "no", "bicycle", "dismount", "foot", "designated"));
         m.put("path", Map.of("motor_vehicle", "no", "foot", "yes", "bicycle", "yes"));
-        m.put("bridleway", Map.of("motor_vehicle", "no", "foot", "yes", "bicycle", "no"));
+        m.put("bridleway", Map.of("motor_vehicle", "no", "foot", "yes", "bicycle", "yes"));
         m.put("busway", Map.of("access", "no", "bus", "designated"));
         m.put("construction", Map.of("access", "no"));
         m.put("proposed", Map.of("access", "no"));
         m.put("raceway", Map.of("access", "no"));
+        // corridor stays bicycle=no (not "dismount") because BikeCommonAccessParser doesn't list
+        // it in allowedHighways — bike_access is already false there. Marking road_access as
+        // DISMOUNT would suggest "can push" while access says "can't use it at all".
         m.put("corridor", Map.of("motor_vehicle", "no", "bicycle", "no", "foot", "yes"));
-        m.put("platform", Map.of("motor_vehicle", "no", "bicycle", "no", "foot", "yes"));
+        m.put("platform", Map.of("motor_vehicle", "no", "bicycle", "dismount", "foot", "yes"));
         HIGHWAY_TYPE_DEFAULTS = Map.copyOf(m);
 
         // https://wiki.openstreetmap.org/wiki/Key:barrier
@@ -107,6 +116,13 @@ public class ModeAccessParser implements TagParser {
     @Override
     public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
         String highwayValue = way.getTag("highway");
+        if (highwayValue != null || FerrySpeedCalculator.isFerry(way)) {
+            handleHighwayAndFerryTags(edgeId, edgeIntAccess, way, highwayValue);
+        }
+        // don't want platforms and other random stuff here for now
+    }
+
+    private void handleHighwayAndFerryTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, String highwayValue) {
         if (skipEmergency && "service".equals(highwayValue) && "emergency_access".equals(way.getTag("service")))
             return;
 
