@@ -361,7 +361,7 @@ public class AlternativeRoute extends AStarBidirection implements RoutingAlgorit
                 if (traversalMode.isEdgeBased()) {
                     if (startEdgeOrNode == fromSPTEntry.edge) {
                         if (fromSPTEntry.parent == null)
-                            throw new IllegalStateException("best path must have no parent but was non-null: " + fromSPTEntry);
+                            throw new IllegalStateException("best path entry must have a parent but was null: " + fromSPTEntry);
                         if (bestEntry.get() != null && bestEntry.get().edge != fromSPTEntry.edge)
                             throw new IllegalStateException("there can be only one best entry but was " + fromSPTEntry + " vs old: " + bestEntry.get()
                                     + " " + graph.getEdgeIteratorState(fromSPTEntry.edge, fromSPTEntry.adjNode).fetchWayGeometry(FetchMode.ALL));
