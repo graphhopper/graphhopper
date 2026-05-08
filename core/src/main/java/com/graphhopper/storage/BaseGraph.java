@@ -27,7 +27,6 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 
 import java.io.Closeable;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.IntConsumer;
@@ -68,6 +67,10 @@ public class BaseGraph implements Graph, Closeable {
     private boolean initialized = false;
     private long minGeoRef;
     private long maxGeoRef;
+
+    /** A byte buffer plus the prefix length actually used (the buffer may be over-allocated). */
+    private record EncodedBytes(byte[] bytes, int length) {
+    }
 
     public BaseGraph(Directory dir, boolean withElevation, boolean withTurnCosts, int bytesForFlags) {
         this.dir = dir;
@@ -472,31 +475,22 @@ public class BaseGraph implements Graph, Closeable {
                 // longer possible to find the copies corresponding to an edge, so we deny this
                 throw new IllegalStateException("This edge has already been copied so we can no longer change the geometry, pointer=" + edgePointer);
 
-            byte[] bytes = createWayGeometryBytes(pillarNodes, reverse);
+            EncodedBytes encoded = createWayGeometryBytes(pillarNodes, reverse);
 
             if (existingGeoRef > 0) {
-                // We don't store a slot length anywhere, so we have to walk the existing
-                // entry's varints to discover its byte size. That's slower than the previous
-                // encoding (where a 4-byte payload-length was read directly), but only happens
-                // on geometry updates, which are rare (mainly the elevation interpolator).
-                int existingByteSize = computeEntryByteSize(existingGeoRef);
-                if (bytes.length <= existingByteSize) {
-                    // Fits in the existing slot. The new entry's varint count tells the reader
-                    // when to stop, so any leftover bytes after the new entry are harmless.
-                    wayGeometry.setBytes(existingGeoRef, bytes, bytes.length);
+                int existingByteSize = readEntryByteSize(existingGeoRef);
+                if (encoded.length <= existingByteSize) {
+                    // Fits in the existing slot. The new entry's length header tells the
+                    // reader when to stop, so any leftover bytes are harmless.
+                    wayGeometry.setBytes(existingGeoRef, encoded.bytes, encoded.length);
                     return;
                 }
-                // New payload doesn't fit. With the old fixed-width encoding, equal pillar
-                // count meant equal byte size, so overwrite-in-place always worked. With
-                // varint-delta encoding, the compressed size depends on the coord deltas, so
-                // updates can grow (e.g. SRTM adds non-zero elevation deltas). Allocate a
-                // fresh slot; the old slot becomes unreachable bytes in the wayGeometry
-                // DataAccess (cost: storage is slightly larger until a full rebuild —
-                // no correctness issue).
+                // New pillar-node bytes don't fit. Allocate a fresh slot; the old slot becomes
+                // unreachable bytes in the wayGeometry DataAccess.
             }
-            long geoRef = nextGeoRef(bytes.length);
-            wayGeometry.ensureCapacity(geoRef + bytes.length);
-            wayGeometry.setBytes(geoRef, bytes, bytes.length);
+            long geoRef = nextGeoRef(encoded.length);
+            wayGeometry.ensureCapacity(geoRef + encoded.length);
+            wayGeometry.setBytes(geoRef, encoded.bytes, encoded.length);
             store.setGeoRef(edgePointer, geoRef);
         } else {
             store.setGeoRef(edgePointer, 0L);
@@ -507,19 +501,24 @@ public class BaseGraph implements Graph, Closeable {
         return store;
     }
 
-    private byte[] createWayGeometryBytes(PointList pillarNodes, boolean reverse) {
+    /**
+     * Encodes the geometry. Layout: 1-byte pillar-bytes length L if L < 0xFF, else 0xFF + 4-byte
+     * int length. Pillar bytes: for each pillar, zig-zag varint Δlat, Δlon, (Δele if 3D). No
+     * inline count — the decoder consumes pillars until exhausted. The returned buffer may be
+     * over-allocated; only the first {@code length} bytes are the encoded entry.
+     */
+    private EncodedBytes createWayGeometryBytes(PointList pillarNodes, boolean reverse) {
         int len = pillarNodes.size();
         if (len > MAX_PILLAR_NODES) throw new IllegalArgumentException("Too many pillar nodes: " + len);
         if (reverse) pillarNodes.reverse();
 
-        // Layout: unsigned varint(count) followed by, for each pillar, zig-zag varint
-        // delta-lat, delta-lon, (delta-ele if 3D). No fixed-size header — the count varint
-        // tells the reader how many pillar varints to consume.
-        // Worst case: count varint ≤ 3 B (count ≤ 65535), per-pillar ≤ 10 B (2D) / 15 B (3D).
         int perPillarMax = nodeAccess.is3D() ? 3 * MAX_VARINT_BYTES : 2 * MAX_VARINT_BYTES;
-        byte[] bytes = new byte[MAX_VARINT_BYTES + len * perPillarMax];
+        // Reserve worst case = 5-byte header + pillar bytes. We write pillar bytes starting
+        // at offset 1 (the optimistic 1-byte-header position); if they fit in the 1-byte
+        // length, no shift is needed. Otherwise we shift to make room for the 5-byte header.
+        byte[] bytes = new byte[5 + len * perPillarMax];
 
-        int offset = writeUnsignedVarInt(bytes, 0, len);
+        int offset = 1;
         int prevLat = 0, prevLon = 0, prevEle = 0;
         boolean is3D = nodeAccess.is3D();
         for (int i = 0; i < len; i++) {
@@ -535,17 +534,16 @@ public class BaseGraph implements Graph, Closeable {
                 prevEle = ele;
             }
         }
-
-        return offset == bytes.length ? bytes : Arrays.copyOf(bytes, offset);
-    }
-
-    private static int writeUnsignedVarInt(byte[] bytes, int offset, int value) {
-        while ((value & ~0x7F) != 0) {
-            bytes[offset++] = (byte) ((value & 0x7F) | 0x80);
-            value >>>= 7;
+        int pillarBytesLen = offset - 1;
+        if (pillarBytesLen < 0xFF) {
+            bytes[0] = (byte) pillarBytesLen;
+            return new EncodedBytes(bytes, 1 + pillarBytesLen);
         }
-        bytes[offset++] = (byte) value;
-        return offset;
+        // Rare fallback: shift pillar bytes 4 positions to make room for [0xFF | int len].
+        System.arraycopy(bytes, 1, bytes, 5, pillarBytesLen);
+        bytes[0] = (byte) 0xFF;
+        bitUtil.fromInt(bytes, pillarBytesLen, 1);
+        return new EncodedBytes(bytes, 5 + pillarBytesLen);
     }
 
     private static int writeZigZagVarInt(byte[] bytes, int offset, int value) {
@@ -573,28 +571,10 @@ public class BaseGraph implements Graph, Closeable {
         return (raw >>> 1) ^ -(raw & 1);
     }
 
-    // Walks an existing geometry entry directly in DataAccess (without a temporary array),
-    // returning its total byte size. Used by setWayGeometry to decide if a new entry can be
-    // overwritten in place. Slower than reading a fixed-size header — that's the trade-off
-    // for not storing one.
-    private int computeEntryByteSize(long geoRef) {
-        long p = geoRef;
-        // unsigned varint count
-        int count = 0, shift = 0;
-        byte b;
-        do {
-            b = wayGeometry.getByte(p++);
-            count |= (b & 0x7F) << shift;
-            shift += 7;
-        } while ((b & 0x80) != 0);
-        int varintsPerPillar = nodeAccess.is3D() ? 3 : 2;
-        int totalVarints = count * varintsPerPillar;
-        for (int i = 0; i < totalVarints; i++) {
-            do {
-                b = wayGeometry.getByte(p++);
-            } while ((b & 0x80) != 0);
-        }
-        return (int) (p - geoRef);
+    // Total byte size of the entry stored at geoRef (header + pillar bytes).
+    private int readEntryByteSize(long geoRef) {
+        int header = wayGeometry.getByte(geoRef) & 0xFF;
+        return header < 0xFF ? 1 + header : 5 + wayGeometry.getInt(geoRef + 1);
     }
 
     private PointList fetchWayGeometry_(long edgePointer, boolean reverse, FetchMode mode, int baseNode, int adjNode) {
@@ -606,37 +586,29 @@ public class BaseGraph implements Graph, Closeable {
             return pillarNodes;
         }
         long geoRef = store.getGeoRef(edgePointer);
-        int count = 0;
         byte[] bytes = null;
-        int[] pos = null;
+        int pillarBytesLen = 0;
         boolean is3D = nodeAccess.is3D();
         if (geoRef > 0) {
-            // Decode the count varint via per-byte reads (1-3 reads). We could skip these
-            // by scanning a pre-fetched chunk, but the count tells us the exact upper-bound
-            // payload size for the subsequent batch read, so it's worth knowing first.
-            long p = geoRef;
-            int rawCount = 0, shift = 0;
-            byte b;
-            do {
-                b = wayGeometry.getByte(p++);
-                rawCount |= (b & 0x7F) << shift;
-                shift += 7;
-            } while ((b & 0x80) != 0);
-            count = rawCount;
-
-            // Single batch read of the worst-case payload size. Reading slightly past the
-            // logical entry end is fine: the loop below stops after `count` pillars and
-            // ignores trailing bytes.
-            int perPillarMax = is3D ? 3 * MAX_VARINT_BYTES : 2 * MAX_VARINT_BYTES;
-            long capacity = wayGeometry.getCapacity();
-            int toRead = (int) Math.min((long) count * perPillarMax, capacity - p);
-            bytes = new byte[toRead];
-            wayGeometry.getBytes(p, bytes, toRead);
-            pos = new int[]{0};
+            int header = wayGeometry.getByte(geoRef) & 0xFF;
+            long pillarBytesStart;
+            if (header < 0xFF) {
+                pillarBytesLen = header;
+                pillarBytesStart = geoRef + 1;
+            } else {
+                pillarBytesLen = wayGeometry.getInt(geoRef + 1);
+                pillarBytesStart = geoRef + 5;
+            }
+            bytes = new byte[pillarBytesLen];
+            wayGeometry.getBytes(pillarBytesStart, bytes, pillarBytesLen);
         } else if (mode == FetchMode.PILLAR_ONLY)
             return PointList.EMPTY;
 
-        PointList pillarNodes = new PointList(getPointListLength(count, mode), is3D);
+        // Pillar count isn't stored — estimate from pillar-bytes size for an initial
+        // PointList capacity hint (each pillar takes ≥ 2 B in 2D / ≥ 3 B in 3D, since each
+        // varint is ≥ 1 B). Over-allocation is harmless; PointList grows on demand.
+        int countEstimate = is3D ? pillarBytesLen / 3 : pillarBytesLen / 2;
+        PointList pillarNodes = new PointList(getPointListLength(countEstimate, mode), is3D);
         if (reverse) {
             if (mode == FetchMode.ALL || mode == FetchMode.PILLAR_AND_ADJ)
                 pillarNodes.add(nodeAccess, adjNode);
@@ -644,7 +616,8 @@ public class BaseGraph implements Graph, Closeable {
             pillarNodes.add(nodeAccess, baseNode);
 
         int curLat = 0, curLon = 0, curEle = 0;
-        for (int i = 0; i < count; i++) {
+        int[] pos = {0};
+        while (pos[0] < pillarBytesLen) {
             curLat += readZigZagVarInt(bytes, pos);
             curLon += readZigZagVarInt(bytes, pos);
             double lat = Helper.intToDegree(curLat);
