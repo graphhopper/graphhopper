@@ -795,8 +795,8 @@ public abstract class AbstractGraphStorageTester {
         assertEquals(refAfterFirst, baseGraph.getMaxGeoRef());
         iter2.setWayGeometry(Helper.createPointList3D(1, 2, 3));
         assertEquals(refAfterFirst, baseGraph.getMaxGeoRef());
-        // growing the geometry past the existing slot now allocates a fresh slot (the old slot
-        // is abandoned in wayGeometry; no correctness issue)
+        // growing past the existing slot allocates a fresh slot (the old slot becomes
+        // abandoned bytes in wayGeometry; no correctness issue).
         iter2.setWayGeometry(Helper.createPointList3D(1.5, 1, 0, 2, 3, 0));
         long refAfterGrow = baseGraph.getMaxGeoRef();
         assertTrue(refAfterGrow > refAfterFirst);

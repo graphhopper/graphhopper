@@ -67,8 +67,7 @@ public class BaseGraph implements Graph, Closeable {
     private boolean initialized = false;
     private long minGeoRef;
     private long maxGeoRef;
-
-    /** A byte buffer plus the prefix length actually used (the buffer may be over-allocated). */
+    // stores a byte array plus the length of actually used bytes (the array may be over-allocated)
     private record EncodedBytes(byte[] bytes, int length) {
     }
 
@@ -485,8 +484,9 @@ public class BaseGraph implements Graph, Closeable {
                     wayGeometry.setBytes(existingGeoRef, encoded.bytes, encoded.length);
                     return;
                 }
-                // New pillar-node bytes don't fit. Allocate a fresh slot; the old slot becomes
-                // unreachable bytes in the wayGeometry DataAccess.
+                // Abandon the slot and allocate a fresh one. The old bytes become unreachable.
+                // As we just need this for EdgeElevationInterpolator this is currently rare (<0.03%).
+                // It is a bit of work but we could avoid it: do edge.setWayGeometry in OSMReader after post-import edge interpolation.
             }
             long geoRef = nextGeoRef(encoded.length);
             wayGeometry.ensureCapacity(geoRef + encoded.length);
@@ -502,10 +502,10 @@ public class BaseGraph implements Graph, Closeable {
     }
 
     /**
-     * Encodes the geometry. Layout: 1-byte pillar-bytes length L if L < 0xFF, else 0xFF + 4-byte
-     * int length. Pillar bytes: for each pillar, zig-zag varint Δlat, Δlon, (Δele if 3D). No
-     * inline count — the decoder consumes pillars until exhausted. The returned buffer may be
-     * over-allocated; only the first {@code length} bytes are the encoded entry.
+     * Creates bytes from the geometry for storage. First comes 1 byte for the bytes length L if L < 0xFF.
+     * If more bytes are required then L == 0xFF and 4 more bytes are required.
+     * Then come the pillar bytes: for each coordinate the zigzag-varint Δlat, Δlon, (Δele if 3D) is calculated.
+     * @return The bytes in EncodedBytes may be over-allocated, i.e. use EncodedBytes.length and not EncodedBytes.bytes.length.
      */
     private EncodedBytes createWayGeometryBytes(PointList pillarNodes, boolean reverse) {
         int len = pillarNodes.size();
@@ -513,9 +513,9 @@ public class BaseGraph implements Graph, Closeable {
         if (reverse) pillarNodes.reverse();
 
         int perPillarMax = nodeAccess.is3D() ? 3 * MAX_VARINT_BYTES : 2 * MAX_VARINT_BYTES;
-        // Reserve worst case = 5-byte header + pillar bytes. We write pillar bytes starting
-        // at offset 1 (the optimistic 1-byte-header position); if they fit in the 1-byte
-        // length, no shift is needed. Otherwise we shift to make room for the 5-byte header.
+        // Reserve worst case = byte count header (5 bytes) + pillar bytes. We write pillar bytes
+        // starting at offset 1 (the optimistic 1-byte-header position); if they fit in 1 byte then
+        // no shift is needed. Otherwise we shift to make room for the 5 bytes header.
         byte[] bytes = new byte[5 + len * perPillarMax];
 
         int offset = 1;
@@ -539,7 +539,7 @@ public class BaseGraph implements Graph, Closeable {
             bytes[0] = (byte) pillarBytesLen;
             return new EncodedBytes(bytes, 1 + pillarBytesLen);
         }
-        // Rare fallback: shift pillar bytes 4 positions to make room for [0xFF | int len].
+        // Rare fallback for long PointLists (0.1%): shift pillar bytes 4 positions to make room for [0xFF | int len].
         System.arraycopy(bytes, 1, bytes, 5, pillarBytesLen);
         bytes[0] = (byte) 0xFF;
         bitUtil.fromInt(bytes, pillarBytesLen, 1);
@@ -604,9 +604,7 @@ public class BaseGraph implements Graph, Closeable {
         } else if (mode == FetchMode.PILLAR_ONLY)
             return PointList.EMPTY;
 
-        // Pillar count isn't stored — estimate from pillar-bytes size for an initial
-        // PointList capacity hint (each pillar takes ≥ 2 B in 2D / ≥ 3 B in 3D, since each
-        // varint is ≥ 1 B). Over-allocation is harmless; PointList grows on demand.
+        // Estimate pillar node count from pillar-bytes size. PointList grows on demand.
         int countEstimate = is3D ? pillarBytesLen / 3 : pillarBytesLen / 2;
         PointList pillarNodes = new PointList(getPointListLength(countEstimate, mode), is3D);
         if (reverse) {
