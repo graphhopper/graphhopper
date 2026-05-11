@@ -30,6 +30,8 @@ class CarAccessAndRoadAccessTest {
         return Stream.of(
                 //        highway        extra tags                                                               access  road_access
                 Arguments.of("residential", "",                                                                   true,  RoadAccess.YES),
+                Arguments.of("residential", "motor_vehicle:conditional=no @ (06:00-11:00)",                       true,  RoadAccess.YES),
+                Arguments.of("residential", "motor_vehicle:conditional=destination @ (06:00-11:00)",              true,  RoadAccess.YES),
                 Arguments.of("residential", "motor_vehicle=destination",                                          true,  RoadAccess.DESTINATION),
                 Arguments.of("residential", "motor_vehicle=private",                                              false, RoadAccess.PRIVATE),
                 Arguments.of("residential", "motor_vehicle=delivery",                                             false, RoadAccess.DELIVERY),
@@ -38,7 +40,7 @@ class CarAccessAndRoadAccessTest {
                 Arguments.of("residential", "motor_vehicle=no|motor_vehicle:conditional=yes @ (May - June)", true, RoadAccess.YES),
                 Arguments.of("residential", "motor_vehicle=no|motor_vehicle:conditional=yes @ pupsaffe", false, RoadAccess.NO),
                 Arguments.of("residential", "motor_vehicle=no|motor_vehicle:conditional=delivery @ (06:00-11:00)", false, RoadAccess.DELIVERY),
-                Arguments.of("pedestrian",  "",                                                                   false, RoadAccess.YES),
+                Arguments.of("pedestrian",  "",                                                                   false, RoadAccess.NO),
                 Arguments.of("pedestrian",  "motor_vehicle:conditional=delivery @ (Mo-Fr 06:00-11:00)",           false, RoadAccess.DELIVERY)
         );
     }
@@ -64,10 +66,10 @@ class CarAccessAndRoadAccessTest {
                 Arguments.of("residential", "motor_vehicle=delivery",                                             true,  RoadAccess.DELIVERY),
                 Arguments.of("residential", "motor_vehicle=no",                                                   false, RoadAccess.NO),
                 Arguments.of("residential", "motor_vehicle=no|motor_vehicle:conditional=delivery @ (06:00-11:00)", true,  RoadAccess.DELIVERY),
-                Arguments.of("pedestrian",  "",                                                                   false, RoadAccess.YES),
+                Arguments.of("pedestrian",  "",                                                                   false, RoadAccess.NO),
                 Arguments.of("pedestrian",  "motor_vehicle:conditional=delivery @ (Mo-Fr 06:00-11:00)",           true,  RoadAccess.DELIVERY),
                 Arguments.of("pedestrian",  "motor_vehicle:conditional=delivery @ (May - June)",                  true, RoadAccess.DELIVERY),
-                Arguments.of("pedestrian",  "motor_vehicle:conditional=delivery @ pupsaffe",                  false, RoadAccess.YES),
+                Arguments.of("pedestrian",  "motor_vehicle:conditional=delivery @ pupsaffe",                  false, RoadAccess.NO),
                 Arguments.of("pedestrian",  "motor_vehicle:conditional=delivery @ (Mo-Fr 06:00-11:00,19:00-21:00; Sa 06:00-09:30)",                  true, RoadAccess.DELIVERY),
                 Arguments.of("pedestrian",  "motor_vehicle=destination",                                          true,  RoadAccess.DESTINATION)
         );

@@ -180,6 +180,47 @@ public class AlternativeRouteTest {
 
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
+    public void testNoDuplicateBestPathWhenSPTStopsEarly(Fixture f) {
+        // Regression test: when the bidirectional search terminates before one side has
+        // popped (and therefore expanded) the meeting node, the SPT map is missing the
+        // entry one hop further along the best path. The plateau-start candidate filter
+        // in calcAlternatives then fails open and the algorithm returns the best path
+        // again as an "alternative". In production this happens on short routes dominated
+        // by a single heavy edge (e.g. a bike route with a ferry).
+        // Linear path 0-1-2-3-4-5 with edge 1-2 dominating the weight; side branches
+        // at start/end so the SPT priority queues have cheap nodes to pop.
+        f.graph.edge(0, 1).setDistance(10).set(f.speedEnc, 30, 30);
+        f.graph.edge(1, 2).setDistance(150).set(f.speedEnc, 5, 5);
+        f.graph.edge(2, 3).setDistance(10).set(f.speedEnc, 30, 30);
+        f.graph.edge(3, 4).setDistance(10).set(f.speedEnc, 30, 30);
+        f.graph.edge(4, 5).setDistance(10).set(f.speedEnc, 30, 30);
+        f.graph.edge(0, 10).setDistance(20).set(f.speedEnc, 30, 30);
+        f.graph.edge(5, 11).setDistance(20).set(f.speedEnc, 30, 30);
+        // Coordinates: 0 close to 1; 2..5 cluster on the far side of the heavy edge,
+        // so the balanced heuristic gives the meeting node very different heap weights
+        // on each side.
+        updateDistancesFor(f.graph, 0, 0, 0);
+        updateDistancesFor(f.graph, 1, 0, 1e-4);
+        updateDistancesFor(f.graph, 2, 0, 1e-3);
+        updateDistancesFor(f.graph, 3, 0, 1.1e-3);
+        updateDistancesFor(f.graph, 4, 0, 1.2e-3);
+        updateDistancesFor(f.graph, 5, 0, 1.3e-3);
+        updateDistancesFor(f.graph, 10, 0, -1e-4);
+        updateDistancesFor(f.graph, 11, 0, 1.4e-3);
+
+        PMap hints = new PMap().putObject("alternative_route.max_exploration_factor", 1.0);
+        AlternativeRoute alt = new AlternativeRoute(f.graph, f.weighting, f.traversalMode, hints);
+        List<AlternativeRoute.AlternativeInfo> infos = alt.calcAlternatives(0, 5);
+
+        // No two returned alternatives may share the same edge sequence.
+        for (int i = 0; i < infos.size(); i++)
+            for (int j = i + 1; j < infos.size(); j++)
+                assertFalse(infos.get(i).getPath().getEdges().equals(infos.get(j).getPath().getEdges()),
+                        "duplicate alternatives returned: alt " + i + " == alt " + j);
+    }
+
+    @ParameterizedTest
+    @ArgumentsSource(FixtureProvider.class)
     public void testDisconnectedAreas(Fixture f) {
         initTestGraph(f.graph, f.speedEnc);
 

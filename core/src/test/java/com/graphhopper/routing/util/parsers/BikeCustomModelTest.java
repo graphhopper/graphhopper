@@ -264,7 +264,7 @@ public class BikeCustomModelTest {
         way.setTag("lcn", "yes");
         edge = createEdge(way);
         assertEquals(1.2, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(12, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        assertEquals(18, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
         // relation code is VERY_NICE
         ReaderRelation rel = new ReaderRelation(1);
@@ -273,30 +273,30 @@ public class BikeCustomModelTest {
         way.setTag("highway", "road");
         edge = createEdge(way, rel);
         assertEquals(1.2, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(12, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        assertEquals(18, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
         rel.setTag("network", "lcn");
         edge = createEdge(way, rel);
         assertEquals(1.2, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(12, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        assertEquals(18, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
         // relation code is NICE
         rel.setTag("network", "rcn");
         edge = createEdge(way, rel);
         assertEquals(1.2, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(12, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        assertEquals(18, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
         // no "double boosting" due because way lcn=yes is only considered if no route relation
         way.setTag("lcn", "yes");
         edge = createEdge(way, rel);
         assertEquals(1.2, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(12, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        assertEquals(18, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
         // relation code is BEST
         rel.setTag("network", "ncn");
         edge = createEdge(way, rel);
         assertEquals(1.4, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(12, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        assertEquals(18, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
         // PREFER relation, but tertiary road => no get off the bike but road wayTypeCode and faster
         way.clearTags();
