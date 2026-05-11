@@ -599,6 +599,10 @@ public class BaseGraph implements Graph, Closeable {
                 pillarBytesLen = wayGeometry.getInt(geoRef + 1);
                 pillarBytesStart = geoRef + 5;
             }
+            int maxPillarBytesLen = MAX_PILLAR_NODES * (is3D ? 3 : 2) * MAX_VARINT_BYTES;
+            if (pillarBytesLen < 0 || pillarBytesLen > maxPillarBytesLen)
+                throw new IllegalStateException("Invalid pillar bytes length " + pillarBytesLen + " for edge at geoRef " + geoRef
+                        + ". Expected [0, " + maxPillarBytesLen + "].");
             bytes = new byte[pillarBytesLen];
             wayGeometry.getBytes(pillarBytesStart, bytes, pillarBytesLen);
         } else if (mode == FetchMode.PILLAR_ONLY)
