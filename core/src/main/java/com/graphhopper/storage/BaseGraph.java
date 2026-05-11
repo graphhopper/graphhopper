@@ -519,13 +519,16 @@ public class BaseGraph implements Graph, Closeable {
         byte[] bytes = new byte[5 + len * perPillarMax];
 
         int offset = 1;
-        int prevLat = 0, prevLon = 0, prevEle = 0;
+        // Use long to avoid int overflow when computing deltas near the anti-meridian (e.g. 179.9 -> -179.9).
+        // The varint encoder/decoder receives the lower 32 bits (int cast), so the round-trip is exact.
+        long prevLat = 0, prevLon = 0;
+        int prevEle = 0;
         boolean is3D = nodeAccess.is3D();
         for (int i = 0; i < len; i++) {
-            int lat = Helper.degreeToInt(pillarNodes.getLat(i));
-            int lon = Helper.degreeToInt(pillarNodes.getLon(i));
-            offset = writeZigZagVarInt(bytes, offset, lat - prevLat);
-            offset = writeZigZagVarInt(bytes, offset, lon - prevLon);
+            long lat = Helper.degreeToInt(pillarNodes.getLat(i));
+            long lon = Helper.degreeToInt(pillarNodes.getLon(i));
+            offset = writeZigZagVarInt(bytes, offset, (int) (lat - prevLat));
+            offset = writeZigZagVarInt(bytes, offset, (int) (lon - prevLon));
             prevLat = lat;
             prevLon = lon;
             if (is3D) {
@@ -617,13 +620,15 @@ public class BaseGraph implements Graph, Closeable {
         } else if (mode == FetchMode.ALL || mode == FetchMode.BASE_AND_PILLAR)
             pillarNodes.add(nodeAccess, baseNode);
 
-        int curLat = 0, curLon = 0, curEle = 0;
+        // Use long accumulators to mirror the encode path and avoid implicit int overflow near the anti-meridian.
+        long curLat = 0, curLon = 0;
+        int curEle = 0;
         int[] pos = {0};
         while (pos[0] < pillarBytesLen) {
-            curLat += readZigZagVarInt(bytes, pos);
-            curLon += readZigZagVarInt(bytes, pos);
-            double lat = Helper.intToDegree(curLat);
-            double lon = Helper.intToDegree(curLon);
+            curLat = (int) (curLat + readZigZagVarInt(bytes, pos));
+            curLon = (int) (curLon + readZigZagVarInt(bytes, pos));
+            double lat = Helper.intToDegree((int) curLat);
+            double lon = Helper.intToDegree((int) curLon);
             if (is3D) {
                 curEle += readZigZagVarInt(bytes, pos);
                 pillarNodes.add(lat, lon, Helper.uIntToEle(curEle));
