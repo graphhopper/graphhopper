@@ -45,3 +45,4 @@ local.properties
 package-lock.json
 .vscode/
 .claude/
+core/geometry
