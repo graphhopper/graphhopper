@@ -74,7 +74,7 @@ public class BaseGraph implements Graph, Closeable {
     public BaseGraph(Directory dir, boolean withElevation, boolean withTurnCosts, int bytesForFlags) {
         this.dir = dir;
         this.bitUtil = BitUtil.LITTLE;
-        this.wayGeometry = dir.create("geometry", DAType.MMAP);
+        this.wayGeometry = dir.create("geometry", dir.getDefaultType().isStoring() ? DAType.MMAP : dir.getDefaultType());
         this.edgeKVStorage = new KVStorage(dir, true);
         this.store = new BaseGraphNodesAndEdges(dir, withElevation, withTurnCosts, bytesForFlags);
         this.nodeAccess = new GHNodeAccess(store);
