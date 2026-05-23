@@ -79,17 +79,18 @@ public class PrepareRoutingSubnetworksTest {
         EncodingManager em = EncodingManager.start().add(speedEnc).add(subnetworkEnc).build();
         BaseGraph g = createSubnetworkTestStorage(em, speedEnc, null);
         PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, Collections.singletonList(createJob(subnetworkEnc, speedEnc)));
-        // this will make the upper small network a subnetwork
+        // this will make the upper small network a subnetwork (it has only three edges)
         instance.setMinNetworkSize(4);
-        assertEquals(3, instance.doWork());
-        assertEquals(IntArrayList.from(7, 8, 9), getSubnetworkEdges(g, subnetworkEnc));
+        assertEquals(3 + 1, instance.doWork());
+        assertEquals(IntArrayList.from(0, 7, 8, 9), getSubnetworkEdges(g, subnetworkEnc));
 
         // this time we lower the threshold and the upper network won't be set to be a subnetwork
         g = createSubnetworkTestStorage(em, speedEnc, null);
         instance = new PrepareRoutingSubnetworks(g, Collections.singletonList(createJob(subnetworkEnc, speedEnc)));
         instance.setMinNetworkSize(3);
-        assertEquals(0, instance.doWork());
-        assertEquals(IntArrayList.from(), getSubnetworkEdges(g, subnetworkEnc));
+        // only the single (blocked) edge 0 is a subnetwork
+        assertEquals(1, instance.doWork());
+        assertEquals(IntArrayList.from(0), getSubnetworkEdges(g, subnetworkEnc));
     }
 
     @Test
@@ -114,8 +115,8 @@ public class PrepareRoutingSubnetworksTest {
         );
         PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, prepareJobs);
         instance.setMinNetworkSize(5);
-        assertEquals(3, instance.doWork());
-        assertEquals(IntArrayList.from(7, 8, 9), getSubnetworkEdges(g, carSubnetworkEnc));
+        assertEquals(4, instance.doWork());
+        assertEquals(IntArrayList.from(0, 7, 8, 9), getSubnetworkEdges(g, carSubnetworkEnc));
         assertEquals(IntArrayList.from(), getSubnetworkEdges(g, bikeSubnetworkEnc));
 
         // now we block the edge for both vehicles -> there should be a subnetwork for both vehicles
@@ -125,9 +126,9 @@ public class PrepareRoutingSubnetworksTest {
         edge.set(bikeSpeedEnc, 0, 0);
         instance = new PrepareRoutingSubnetworks(g, prepareJobs);
         instance.setMinNetworkSize(5);
-        assertEquals(6, instance.doWork());
-        assertEquals(IntArrayList.from(7, 8, 9), getSubnetworkEdges(g, carSubnetworkEnc));
-        assertEquals(IntArrayList.from(7, 8, 9), getSubnetworkEdges(g, bikeSubnetworkEnc));
+        assertEquals(8, instance.doWork());
+        assertEquals(IntArrayList.from(0, 7, 8, 9), getSubnetworkEdges(g, carSubnetworkEnc));
+        assertEquals(IntArrayList.from(0, 7, 8, 9), getSubnetworkEdges(g, bikeSubnetworkEnc));
     }
 
     @Test
@@ -142,8 +143,8 @@ public class PrepareRoutingSubnetworksTest {
         PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, Collections.singletonList(
                 createJob(subnetworkEnc, speedEnc, turnCostEnc, g.getTurnCostStorage(), 0)));
         instance.setMinNetworkSize(4);
-        assertEquals(3, instance.doWork());
-        assertEquals(IntArrayList.from(7, 8, 9), getSubnetworkEdges(g, subnetworkEnc));
+        assertEquals(4, instance.doWork());
+        assertEquals(IntArrayList.from(0, 7, 8, 9), getSubnetworkEdges(g, subnetworkEnc));
 
         // if we open the edge it won't be a subnetwork anymore
         g = createSubnetworkTestStorage(em, speedEnc, null);

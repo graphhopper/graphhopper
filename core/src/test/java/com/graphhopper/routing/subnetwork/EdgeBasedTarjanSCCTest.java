@@ -95,6 +95,22 @@ class EdgeBasedTarjanSCCTest {
     }
 
     @Test
+    public void linearOneWayRing() {
+        // 0 -> 1 -> 2
+        //   <------
+        g.edge(0, 1).setDistance(1).set(speedEnc, 10, 0);
+        g.edge(1, 2).setDistance(1).set(speedEnc, 10, 0);
+        g.edge(2, 0).setDistance(1).set(speedEnc, 10, 0);
+        ConnectedComponents result = EdgeBasedTarjanSCC.findComponentsRecursive(g, fwdAccessFilter, false);
+        assertEquals(6, result.getEdgeKeys());
+        assertEquals(4, result.getTotalComponents());
+        // the (clock-wise) ring is our main component, plus three blocked single edges
+        assertEquals(1, result.getComponents().size());
+        assertEquals(3, result.getSingleEdgeComponents().cardinality());
+        assertEquals(IntArrayList.from(4, 2, 0), result.getBiggestComponent());
+    }
+
+    @Test
     public void linearBidirectionalEdge() {
         // 0 -> 1 - 2 <- 3
         g.edge(0, 1).setDistance(1).set(speedEnc, 10, 0);
