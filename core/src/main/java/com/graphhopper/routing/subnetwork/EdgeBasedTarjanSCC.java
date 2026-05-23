@@ -53,8 +53,7 @@ public class EdgeBasedTarjanSCC {
     private final IntArrayDeque tarjanStack;
     private final LongArrayDeque dfsStackPQ;
     private final IntArrayDeque dfsStackAdj;
-    private final ConnectedComponents components;
-    private final boolean excludeSingleEdgeComponents;
+    private final SCCConsumer consumer;
     private TarjanIntIntMap edgeKeyIndex;
     private TarjanIntIntMap edgeKeyLowLink;
     private TarjanIntSet edgeKeyOnStack;
@@ -76,7 +75,9 @@ public class EdgeBasedTarjanSCC {
      *                                    which can be useful to save some memory.
      */
     public static ConnectedComponents findComponents(Graph graph, EdgeTransitionFilter edgeTransitionFilter, boolean excludeSingleEdgeComponents) {
-        return new EdgeBasedTarjanSCC(graph, edgeTransitionFilter, excludeSingleEdgeComponents).findComponents();
+        MaterializingConsumer c = new MaterializingConsumer(2 * graph.getEdges(), excludeSingleEdgeComponents);
+        new EdgeBasedTarjanSCC(graph, edgeTransitionFilter, c).findComponents();
+        return c.components;
     }
 
     /**
@@ -86,7 +87,9 @@ public class EdgeBasedTarjanSCC {
      * set to true).
      */
     public static ConnectedComponents findComponentsForStartEdges(Graph graph, EdgeTransitionFilter edgeTransitionFilter, IntContainer edges) {
-        return new EdgeBasedTarjanSCC(graph, edgeTransitionFilter, true).findComponentsForStartEdges(edges);
+        MaterializingConsumer c = new MaterializingConsumer(2 * edges.size(), true);
+        new EdgeBasedTarjanSCC(graph, edgeTransitionFilter, c).findComponentsForStartEdges(edges);
+        return c.components;
     }
 
     /**
@@ -97,18 +100,29 @@ public class EdgeBasedTarjanSCC {
      * @see #findComponents(Graph, EdgeTransitionFilter, boolean)
      */
     public static ConnectedComponents findComponentsRecursive(Graph graph, EdgeTransitionFilter edgeTransitionFilter, boolean excludeSingleEdgeComponents) {
-        return new EdgeBasedTarjanSCC(graph, edgeTransitionFilter, excludeSingleEdgeComponents).findComponentsRecursive();
+        MaterializingConsumer c = new MaterializingConsumer(2 * graph.getEdges(), excludeSingleEdgeComponents);
+        new EdgeBasedTarjanSCC(graph, edgeTransitionFilter, c).findComponentsRecursive();
+        return c.components;
     }
 
-    private EdgeBasedTarjanSCC(Graph graph, EdgeTransitionFilter edgeTransitionFilter, boolean excludeSingleEdgeComponents) {
+    /**
+     * Streaming variant of {@link #findComponents(Graph, EdgeTransitionFilter, boolean)}: SCCs are delivered to
+     * the supplied {@link SCCConsumer} as they are discovered, and nothing is retained inside Tarjan beyond what
+     * the algorithm itself needs. Use this when the caller wants to process (or discard) each component on the fly
+     * — most notably to avoid materializing the giant main component.
+     */
+    public static void findComponentsStreaming(Graph graph, EdgeTransitionFilter edgeTransitionFilter, SCCConsumer consumer) {
+        new EdgeBasedTarjanSCC(graph, edgeTransitionFilter, consumer).findComponents();
+    }
+
+    private EdgeBasedTarjanSCC(Graph graph, EdgeTransitionFilter edgeTransitionFilter, SCCConsumer consumer) {
         this.graph = graph;
         this.edgeTransitionFilter = edgeTransitionFilter;
         this.explorer = graph.createEdgeExplorer();
         tarjanStack = new IntArrayDeque();
         dfsStackPQ = new LongArrayDeque();
         dfsStackAdj = new IntArrayDeque();
-        components = new ConnectedComponents(excludeSingleEdgeComponents ? -1 : 2 * graph.getEdges());
-        this.excludeSingleEdgeComponents = excludeSingleEdgeComponents;
+        this.consumer = consumer;
     }
 
     private void initForEntireGraph() {
@@ -131,7 +145,7 @@ public class EdgeBasedTarjanSCC {
         BUILD_COMPONENT
     }
 
-    private ConnectedComponents findComponentsRecursive() {
+    private void findComponentsRecursive() {
         initForEntireGraph();
         AllEdgesIterator iter = graph.getAllEdges();
         while (iter.next()) {
@@ -142,7 +156,6 @@ public class EdgeBasedTarjanSCC {
             if (!edgeKeyIndex.has(edgeKeyBwd))
                 findComponentForEdgeKey(edgeKeyBwd, iter.getAdjNode());
         }
-        return components;
     }
 
     private void findComponentForEdgeKey(int p, int adjNode) {
@@ -181,47 +194,36 @@ public class EdgeBasedTarjanSCC {
             if (tarjanStack.getLast() == p) {
                 tarjanStack.removeLast();
                 edgeKeyOnStack.remove(p);
-                components.numComponents++;
-                components.numEdgeKeys++;
-                if (!excludeSingleEdgeComponents)
-                    components.singleEdgeComponents.set(p);
+                consumer.singleEdgeComponent(p);
             } else {
-                IntArrayList component = new IntArrayList();
+                consumer.beginComponent();
                 while (true) {
                     int q = tarjanStack.removeLast();
-                    component.add(q);
                     edgeKeyOnStack.remove(q);
+                    consumer.edgeKey(q);
                     if (q == p)
                         break;
                 }
-                component.trimToSize();
-                assert component.size() > 1;
-                components.numComponents++;
-                components.numEdgeKeys += component.size();
-                components.components.add(component);
-                if (component.size() > components.biggestComponent.size())
-                    components.biggestComponent = component;
+                consumer.endComponent();
             }
         }
     }
 
-    private ConnectedComponents findComponents() {
+    private void findComponents() {
         initForEntireGraph();
         AllEdgesIterator iter = graph.getAllEdges();
         while (iter.next()) {
             findComponentsForEdgeState(iter);
         }
-        return components;
     }
 
-    private ConnectedComponents findComponentsForStartEdges(IntContainer startEdges) {
+    private void findComponentsForStartEdges(IntContainer startEdges) {
         initForStartEdges(startEdges.size());
         for (IntCursor edge : startEdges) {
             // todo: using getEdgeIteratorState here is not efficient
             EdgeIteratorState edgeState = graph.getEdgeIteratorState(edge.value, Integer.MIN_VALUE);
             findComponentsForEdgeState(edgeState);
         }
-        return components;
     }
 
     private void findComponentsForEdgeState(EdgeIteratorState edge) {
@@ -515,6 +517,68 @@ public class EdgeBasedTarjanSCC {
         @Override
         public void remove(int key) {
             set.remove(key);
+        }
+    }
+
+    /**
+     * Streaming sink for SCCs discovered by {@link #findComponentsStreaming(Graph, EdgeTransitionFilter, SCCConsumer)}.
+     * Multi-edge components are delivered as a sequence of {@link #beginComponent()}, one or more
+     * {@link #edgeKey(int)} calls, and a closing {@link #endComponent()}. Single-edge components arrive as a
+     * single {@link #singleEdgeComponent(int)} call. The order of edge keys within a multi-edge component is
+     * unspecified; the order of components is unspecified.
+     */
+    public interface SCCConsumer {
+        default void beginComponent() {}
+
+        void edgeKey(int edgeKey);
+
+        default void endComponent() {}
+
+        default void singleEdgeComponent(int edgeKey) {}
+    }
+
+    /**
+     * Internal consumer that reproduces the legacy materialized {@link ConnectedComponents} output used by the
+     * non-streaming public static methods.
+     */
+    private static class MaterializingConsumer implements SCCConsumer {
+        final ConnectedComponents components;
+        final boolean excludeSingleEdgeComponents;
+        IntArrayList current;
+
+        MaterializingConsumer(int edgeKeyCapacity, boolean excludeSingleEdgeComponents) {
+            this.components = new ConnectedComponents(excludeSingleEdgeComponents ? -1 : edgeKeyCapacity);
+            this.excludeSingleEdgeComponents = excludeSingleEdgeComponents;
+        }
+
+        @Override
+        public void beginComponent() {
+            current = new IntArrayList();
+        }
+
+        @Override
+        public void edgeKey(int edgeKey) {
+            current.add(edgeKey);
+        }
+
+        @Override
+        public void endComponent() {
+            current.trimToSize();
+            assert current.size() > 1;
+            components.numComponents++;
+            components.numEdgeKeys += current.size();
+            components.components.add(current);
+            if (current.size() > components.biggestComponent.size())
+                components.biggestComponent = current;
+            current = null;
+        }
+
+        @Override
+        public void singleEdgeComponent(int edgeKey) {
+            components.numComponents++;
+            components.numEdgeKeys++;
+            if (!excludeSingleEdgeComponents)
+                components.singleEdgeComponents.set(edgeKey);
         }
     }
 

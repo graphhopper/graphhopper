@@ -947,25 +947,53 @@ public class GraphHopper {
         BooleanEncodedValue carAccess = encodingManager.getBooleanEncodedValue(VehicleAccess.key("car"));
 
         logger.info("Setting {}-captured edges to {}", access, access);
-        EdgeBasedTarjanSCC.ConnectedComponents components = EdgeBasedTarjanSCC.findComponents(baseGraph, (prevEdge, edgeState) -> edgeState.get(roadAccess) != access, false);
-        BitSet singleEdgeComponents = components.getSingleEdgeComponents();
-        AllEdgesIterator allEdges = baseGraph.getAllEdges();
-        while (allEdges.next()) {
-            if (singleEdgeComponents.get(allEdges.getEdge() * 2) || singleEdgeComponents.get(allEdges.getEdge() * 2 + 1))
-                allEdges.set(roadAccess, access);
-        }
-        for (IntArrayList component : components.getComponents()) {
-            logger.info("Size {} component", component.size());
-            if (component.size() < 100) {
-                for (IntCursor edgeKey : component) {
-                    EdgeIteratorState edge = baseGraph.getEdgeIteratorStateForKey( (edgeKey.value / 2) * 2);
-                    edge.set(roadAccess, access);
-                }
-            }
-        }
+        EdgeBasedTarjanSCC.findComponentsStreaming(baseGraph,
+                (prevEdge, edgeState) -> edgeState.get(roadAccess) != access,
+                new EdgeBasedTarjanSCC.SCCConsumer() {
+                    IntArrayList buffer;
+                    boolean overflowed;
+                    int currentSize;
+
+                    @Override
+                    public void beginComponent() {
+                        buffer = new IntArrayList();
+                        overflowed = false;
+                        currentSize = 0;
+                    }
+
+                    @Override
+                    public void edgeKey(int key) {
+                        currentSize++;
+                        if (!overflowed) {
+                            buffer.add(key);
+                            if (buffer.size() >= 100) {
+                                buffer = null;
+                                overflowed = true;
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void endComponent() {
+                        logger.info("Size {} component", currentSize);
+                        if (buffer != null) {
+                            for (IntCursor edgeKey : buffer) {
+                                EdgeIteratorState edge = baseGraph.getEdgeIteratorStateForKey((edgeKey.value / 2) * 2);
+                                edge.set(roadAccess, access);
+                            }
+                        }
+                        buffer = null;
+                    }
+
+                    @Override
+                    public void singleEdgeComponent(int key) {
+                        EdgeIteratorState edge = baseGraph.getEdgeIteratorStateForKey((key / 2) * 2);
+                        edge.set(roadAccess, access);
+                    }
+                });
 
         logger.info("Softblocking {} edges by setting an entry penalty bit", access);
-        allEdges = baseGraph.getAllEdges();
+        AllEdgesIterator allEdges = baseGraph.getAllEdges();
         while (allEdges.next()) {
             if (allEdges.get(roadAccess) == access) {
                 EdgeExplorer edgeExplorer = baseGraph.createEdgeExplorer();
