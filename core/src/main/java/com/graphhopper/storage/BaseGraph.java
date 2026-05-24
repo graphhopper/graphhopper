@@ -431,6 +431,15 @@ public class BaseGraph implements Graph, Closeable {
         return new AllEdgeIterator(this);
     }
 
+    /**
+     * Like {@link #getAllEdges()} but restricted to edge ids in {@code [from, toExclusive)}.
+     * Enables splitting an all-edges traversal across threads without each thread fast-forwarding
+     * from edge 0.
+     */
+    public AllEdgesIterator getAllEdges(int from, int toExclusive) {
+        return new AllEdgeIterator(this, from, toExclusive);
+    }
+
     @Override
     public TurnCostStorage getTurnCostStorage() {
         return turnCostStorage;
@@ -781,19 +790,27 @@ public class BaseGraph implements Graph, Closeable {
      * Include all edges of this storage in the iterator.
      */
     protected static class AllEdgeIterator extends EdgeIteratorStateImpl implements AllEdgesIterator {
+        private final int toExclusive;
+
         public AllEdgeIterator(BaseGraph baseGraph) {
+            this(baseGraph, 0, baseGraph.store.getEdges());
+        }
+
+        public AllEdgeIterator(BaseGraph baseGraph, int from, int toExclusive) {
             super(baseGraph);
+            this.edgeId = from - 1;
+            this.toExclusive = toExclusive;
         }
 
         @Override
         public int length() {
-            return store.getEdges();
+            return toExclusive;
         }
 
         @Override
         public boolean next() {
             edgeId++;
-            if (edgeId >= store.getEdges())
+            if (edgeId >= toExclusive)
                 return false;
             edgePointer = store.toEdgePointer(edgeId);
             baseNode = store.getNodeA(edgePointer);
