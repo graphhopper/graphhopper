@@ -5,12 +5,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.jupiter.api.Test;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -34,14 +33,14 @@ public abstract class AbstractGHMatrixWebTester {
                 new GHPoint(51.521241, -0.171833),
                 new GHPoint(51.473685, -0.211487)
         ));
-        req.setOutArrays(Arrays.asList("weights"));
+        req.setOutArrays(List.of("weights"));
         req.setProfile("car");
         return req;
     }
 
     @Test
     public void testReadingMatrixWithError() throws IOException {
-        String ghMatrix = readFile(new InputStreamReader(getClass().getResourceAsStream("matrix_error.json")));
+        String ghMatrix = readFile("matrix_error.json");
         GraphHopperMatrixWeb matrixWeb = createMatrixClient(ghMatrix, 400);
 
         GHMRequest req = createRequest();
@@ -53,7 +52,7 @@ public abstract class AbstractGHMatrixWebTester {
 
     @Test
     public void testReadingWeights() throws IOException {
-        String ghMatrix = readFile(new InputStreamReader(getClass().getResourceAsStream("matrix-weights-only.json")));
+        String ghMatrix = readFile("matrix-weights-only.json");
         GraphHopperMatrixWeb matrixWeb = createMatrixClient(ghMatrix, 400);
 
         GHMRequest req = createRequest();
@@ -62,16 +61,12 @@ public abstract class AbstractGHMatrixWebTester {
 
         assertEquals(885.9, rsp.getWeight(0, 1), .1);
 
-        try {
-            assertEquals(0., rsp.getDistance(0, 1), .1);
-            fail("there should have been an exception");
-        } catch (Exception ex) {
-        }
+        assertThrows(IllegalStateException.class, () -> rsp.getDistance(0, 1));
     }
 
     @Test
     public void testReadingMatrixConnectionsNotFound_noFailFast() throws IOException {
-        String ghMatrix = readFile(new InputStreamReader(getClass().getResourceAsStream("matrix-connection-not-found-fail-fast.json")));
+        String ghMatrix = readFile("matrix-connection-not-found-fail-fast.json");
         GraphHopperMatrixWeb matrixWeb = createMatrixClient(ghMatrix, 400);
 
         GHMRequest req = new GHMRequest();
@@ -102,7 +97,7 @@ public abstract class AbstractGHMatrixWebTester {
 
     @Test
     public void testReadingMatrixPointsNotFound_noFailFast() throws IOException {
-        String ghMatrix = readFile(new InputStreamReader(getClass().getResourceAsStream("matrix-point-not-found-fail-fast.json")));
+        String ghMatrix = readFile("matrix-point-not-found-fail-fast.json");
         GraphHopperMatrixWeb matrixWeb = createMatrixClient(ghMatrix, 400);
 
         GHMRequest req = new GHMRequest();
@@ -160,7 +155,7 @@ public abstract class AbstractGHMatrixWebTester {
 
     @Test
     public void testReadingGoogleThrowsException() throws IOException {
-        String ghMatrix = readFile(new InputStreamReader(getClass().getResourceAsStream("google-matrix1.json")));
+        String ghMatrix = readFile("google-matrix1.json");
         GraphHopperMatrixWeb matrixWeb = createMatrixClient(ghMatrix, 400);
         GHMRequest req = createRequest();
         MatrixResponse rsp = matrixWeb.route(req);
@@ -170,7 +165,7 @@ public abstract class AbstractGHMatrixWebTester {
 
     @Test
     public void testReadingWeights_TimesAndDistances() throws IOException {
-        String ghMatrix = readFile(new InputStreamReader(getClass().getResourceAsStream("matrix.json")));
+        String ghMatrix = readFile("matrix.json");
         GraphHopperMatrixWeb matrixWeb = createMatrixClient(ghMatrix, 200);
 
         GHMRequest req = createRequest();
@@ -226,14 +221,9 @@ public abstract class AbstractGHMatrixWebTester {
         assertTrue(ex.getMessage().contains("use setProfile"), ex.getMessage());
     }
 
-    public static String readFile(Reader simpleReader) throws IOException {
-        try (BufferedReader reader = new BufferedReader(simpleReader)) {
-            String res = "";
-            String line;
-            while ((line = reader.readLine()) != null) {
-                res += line;
-            }
-            return res;
+    public String readFile(String resourceName) throws IOException {
+        try (InputStream inputStream = getClass().getResourceAsStream(resourceName)) {
+            return new String(inputStream.readAllBytes());
         }
     }
 }
