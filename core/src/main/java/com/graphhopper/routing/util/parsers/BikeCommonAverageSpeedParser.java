@@ -180,8 +180,13 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         }
 
         setSpeed(false, edgeId, edgeIntAccess, applyMaxSpeed(way, speed, false));
-        if (avgSpeedEnc.isStoreTwoDirections())
-            setSpeed(true, edgeId, edgeIntAccess, applyMaxSpeed(way, speed, true));
+if (avgSpeedEnc.isStoreTwoDirections()) {
+    // If bicycle:backward=dismount, the cyclist must push in reverse direction
+    // regardless of what speed was calculated above
+    String bicycleBackward = way.getTag("bicycle:backward");
+    double backwardSpeed = "dismount".equals(bicycleBackward) ? PUSHING_SECTION_SPEED : speed;
+    setSpeed(true, edgeId, edgeIntAccess, applyMaxSpeed(way, backwardSpeed, true));
+}
     }
 
     void setHighwaySpeed(String highway, int speed) {
