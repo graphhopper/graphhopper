@@ -93,6 +93,7 @@ Here is an overview:
  * stefanholder, Stefan Holder, BMW AG, creating and integrating the hmm-lib (#49, #66, #69) and penalizing inner-link U-turns (#88, #91), refactored unfavoring of virtual edges #885
  * stevensnoeijen, fixes like #1568 
  * Svantulden, improved documentation and nearest API
+* suhanikhanna31, fix wrong speed for bicycle:backward=dismount on oneways #3354
  * taulinger, hopefully more to come 
  * thehereward, code cleanups like #620
  * tyrasd, improved toll road handling in Austria #3190
