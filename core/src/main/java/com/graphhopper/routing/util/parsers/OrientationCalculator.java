@@ -41,9 +41,8 @@ public class OrientationCalculator implements TagParser {
             return;
 
         // Zero-length "barrier" edges have identical endpoints so their orientation cannot be
-        // derived from the edge geometry alone. In that case WaySegmentParser passes the
-        // surrounding way nodes as transient tags; splice them in so the orientation is aligned
-        // with the road the barrier sits on.
+        // derived from the point_list alone. In that case WaySegmentParser passes the
+        // surrounding way nodes (gh:barrier_prev/next_point).
         GHPoint prev = way.getTag("gh:barrier_prev_point", null);
         GHPoint next = way.getTag("gh:barrier_next_point", null);
         if (prev != null || next != null) {
@@ -58,11 +57,14 @@ public class OrientationCalculator implements TagParser {
 
         int last = points.size() - 1;
         // store orientation in degrees and use the end of the edge
-        orientationEnc.setDecimal(false, edgeId, edgeIntAccess, ANGLE_CALC.calcAzimuth(
-                points.getLat(last - 1), points.getLon(last - 1), points.getLat(last), points.getLon(last)));
+        double azimuth = ANGLE_CALC.calcAzimuth(
+                points.getLat(last - 1), points.getLon(last - 1), points.getLat(last), points.getLon(last));
+        orientationEnc.setDecimal(false, edgeId, edgeIntAccess, azimuth);
+
         // same for the opposite direction
-        orientationEnc.setDecimal(true, edgeId, edgeIntAccess, ANGLE_CALC.calcAzimuth(
-                points.getLat(1), points.getLon(1), points.getLat(0), points.getLon(0)));
+        double revAzimuth  = ANGLE_CALC.calcAzimuth(
+                points.getLat(1), points.getLon(1), points.getLat(0), points.getLon(0));
+        orientationEnc.setDecimal(true, edgeId, edgeIntAccess, revAzimuth);
     }
 }
 
