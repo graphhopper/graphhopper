@@ -323,10 +323,19 @@ public class WaySegmentParser {
 
                     // mark barrier edge
                     way.setTag("gh:barrier_edge", true);
+                    // a barrier edge has two identical endpoints, so its geometry alone is not
+                    // enough to derive an orientation. Pass the coordinates of the surrounding
+                    // way nodes as transient tags so OrientationCalculator can use them.
+                    if (i > 0)
+                        way.setTag("gh:barrier_prev_point", nodeData.getCoordinates(parentSegment.get(i - 1).id));
+                    if (i < parentSegment.size() - 1)
+                        way.setTag("gh:barrier_next_point", nodeData.getCoordinates(parentSegment.get(i + 1).id));
                     segment.add(barrierFrom);
                     segment.add(barrierTo);
                     handleSegment(segment, way);
                     way.removeTag("gh:barrier_edge");
+                    way.removeTag("gh:barrier_prev_point");
+                    way.removeTag("gh:barrier_next_point");
 
                     segment = new ArrayList<>();
                     segment.add(barrierTo);
