@@ -201,9 +201,12 @@ class CustomWeightingHelperTest {
         assertEquals(Orientation.UNDEFINED, orientationEnc.getDecimal(false, edge23.getEdge(), edgeIntAccess));
         assertEquals(Orientation.UNDEFINED, orientationEnc.getDecimal(true, edge23.getEdge(), edgeIntAccess));
 
-        // entering and leaving the barrier on a straight road must both yield ~0
+        // entering the barrier from the west: change angle should be ~0 (straight)
         assertEquals(0, calcChangeAngle(graph, edgeIntAccess, orientationEnc, edge12.getEdge(), 2, edge23.getEdge()), 1);
+        // leaving the barrier to the east: change angle should be ~0 (straight)
         assertEquals(0, calcChangeAngle(graph, edgeIntAccess, orientationEnc, edge23.getEdge(), 3, edge34.getEdge()), 1);
+
+        // same the other way round
         assertEquals(0, calcChangeAngle(graph, edgeIntAccess, orientationEnc, edge34.getEdge(), 3, edge23.getEdge()), 1);
         assertEquals(0, calcChangeAngle(graph, edgeIntAccess, orientationEnc, edge23.getEdge(), 2, edge12.getEdge()), 1);
     }
