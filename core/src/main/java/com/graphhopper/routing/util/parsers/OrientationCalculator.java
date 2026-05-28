@@ -20,9 +20,9 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.ev.Orientation;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PointList;
-import com.graphhopper.util.shapes.GHPoint;
 
 import static com.graphhopper.util.AngleCalc.ANGLE_CALC;
 
@@ -38,35 +38,24 @@ public class OrientationCalculator implements TagParser {
     public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
         PointList pointList = way.getTag("point_list", null);
         if (pointList != null) {
-            // Zero-length "barrier" edges have identical endpoints so their orientation cannot be
-            // derived from the point_list alone. In that case WaySegmentParser passes the
-            // surrounding way nodes (gh:barrier_prev/next_point) which we splice in here.
-            GHPoint prev = way.getTag("gh:barrier_prev_point", null);
-            GHPoint next = way.getTag("gh:barrier_next_point", null);
-            if (prev != null || next != null) {
-                if (next == null) next = prev;
-                if (prev == null) prev = next;
-                PointList replaced = new PointList(3, false);
-                replaced.add(prev.getLat(), prev.getLon());
-                replaced.add(pointList.getLat(0), pointList.getLon(0));
-                replaced.add(next.getLat(), next.getLon());
-                pointList = replaced;
+            // Zero-length "barrier" edges have identical endpoints, so atan2(0, 0) would otherwise
+            // produce a misleading constant azimuth. Mark such edges with the UNDEFINED sentinel
+            // so calcChangeAngle can treat the transition as straight.
+            int last = pointList.size() - 1;
+            if (pointList.getLat(0) == pointList.getLat(last) && pointList.getLon(0) == pointList.getLon(last)) {
+                orientationEnc.setDecimal(false, edgeId, edgeIntAccess, Orientation.UNDEFINED);
+                orientationEnc.setDecimal(true, edgeId, edgeIntAccess, Orientation.UNDEFINED);
+                return;
             }
 
             // store orientation in degrees and use the end of the edge
             double azimuth = ANGLE_CALC.calcAzimuth(pointList.getLat(pointList.size() - 2), pointList.getLon(pointList.size() - 2),
                     pointList.getLat(pointList.size() - 1), pointList.getLon(pointList.size() - 1));
+            orientationEnc.setDecimal(false, edgeId, edgeIntAccess, azimuth);
+
             // same for the opposite direction
             double revAzimuth = ANGLE_CALC.calcAzimuth(pointList.getLat(1), pointList.getLon(1),
                     pointList.getLat(0), pointList.getLon(0));
-
-            // consecutive barrier edges or similar degenerated situations are now very unlikely
-            // but if they occur fall back to a fixed pair of azimuths 180° apart => two such edges in a row yield change_angle = 0
-            if (azimuth == revAzimuth) {
-                azimuth = 0;
-                revAzimuth = 180;
-            }
-            orientationEnc.setDecimal(false, edgeId, edgeIntAccess, azimuth);
             orientationEnc.setDecimal(true, edgeId, edgeIntAccess, revAzimuth);
         }
     }

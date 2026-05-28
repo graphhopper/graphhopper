@@ -86,7 +86,9 @@ public class PathDetailsBuilderFactory {
                 continue; // path details like "time" won't be found
 
             EncodedValue ev = evl.getEncodedValue(pathDetail, EncodedValue.class);
-            if (ev instanceof DecimalEncodedValue)
+            if (Orientation.KEY.equals(pathDetail))
+                builders.add(new OrientationDetails((DecimalEncodedValue) ev));
+            else if (ev instanceof DecimalEncodedValue)
                 builders.add(new DecimalDetails(pathDetail, (DecimalEncodedValue) ev));
             else if (ev instanceof BooleanEncodedValue)
                 builders.add(new BooleanDetails(pathDetail, (BooleanEncodedValue) ev));

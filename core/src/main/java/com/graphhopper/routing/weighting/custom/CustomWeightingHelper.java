@@ -22,6 +22,7 @@ import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.ev.Orientation;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
@@ -108,6 +109,11 @@ public class CustomWeightingHelper {
     }
 
     public static double calcChangeAngle(double prevAzimuth, double azimuth) {
+        // edges whose orientation could not be derived from their geometry (e.g. zero-length
+        // barrier edges) are marked with the UNDEFINED sentinel; treat them as a straight pass-through
+        if (prevAzimuth >= Orientation.UNDEFINED || azimuth >= Orientation.UNDEFINED)
+            return 0;
+
         // bring parallel to prevOrientation
         azimuth = (azimuth + 180) % 360.0;
 

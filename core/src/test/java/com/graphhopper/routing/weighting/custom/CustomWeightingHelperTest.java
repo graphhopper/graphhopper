@@ -9,7 +9,6 @@ import com.graphhopper.routing.util.parsers.OrientationCalculator;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.*;
-import com.graphhopper.util.shapes.GHPoint3D;
 import com.graphhopper.util.shapes.Polygon;
 import org.junit.jupiter.api.Test;
 
@@ -179,8 +178,8 @@ class CustomWeightingHelperTest {
     @Test
     public void testCalcChangeAngleBarrierEdge() {
         // a "barrier" edge has two endpoints at exactly the same lat/lon (see
-        // WaySegmentParser#splitSegmentAtSplitNodes). The change angle when entering or leaving
-        // such an edge on an otherwise straight road must still be ~0, not a U-turn.
+        // WaySegmentParser#splitSegmentAtSplitNodes). Such an edge must never produce a turn —
+        // OrientationCalculator stores the UNDEFINED sentinel and calcChangeAngle returns 0.
         EncodingManager encodingManager = new EncodingManager.Builder().add(Orientation.create()).build();
         DecimalEncodedValue orientationEnc = encodingManager.getDecimalEncodedValue(Orientation.KEY);
         OrientationCalculator calc = new OrientationCalculator(orientationEnc);
@@ -189,31 +188,22 @@ class CustomWeightingHelperTest {
         // straight road with a barrier node in the middle that is duplicated (nodes 2 and 3
         // share the same coordinates) — matches the example reported at
         // https://graphhopper.com/maps/?point=52.527237%2C5.432981&point=52.527133%2C5.435938
-        double prevLat = 52.527237, prevLon = 5.432981;
-        double barrierLat = 52.527185, barrierLon = 5.434460;
-        double nextLat = 52.527133, nextLon = 5.435938;
-        graph.getNodeAccess().setNode(1, prevLat, prevLon);
-        graph.getNodeAccess().setNode(2, barrierLat, barrierLon);
-        graph.getNodeAccess().setNode(3, barrierLat, barrierLon);
-        graph.getNodeAccess().setNode(4, nextLat, nextLon);
+        graph.getNodeAccess().setNode(1, 52.527237, 5.432981);
+        graph.getNodeAccess().setNode(2, 52.527185, 5.434460);
+        graph.getNodeAccess().setNode(3, 52.527185, 5.434460);
+        graph.getNodeAccess().setNode(4, 52.527133, 5.435938);
 
         EdgeIntAccess edgeIntAccess = graph.getEdgeAccess();
         EdgeIteratorState edge12 = handleWayTags(edgeIntAccess, calc, graph.edge(1, 2), List.of());
-        // simulate the transient tags that WaySegmentParser attaches for barrier edges
-        ReaderWay barrierWay = new ReaderWay(2);
-        barrierWay.setTag("gh:barrier_prev_point", new GHPoint3D(prevLat, prevLon, Double.NaN));
-        barrierWay.setTag("gh:barrier_next_point", new GHPoint3D(nextLat, nextLon, Double.NaN));
-        EdgeIteratorState edge23 = graph.edge(2, 3);
-        barrierWay.setTag("point_list", edge23.fetchWayGeometry(FetchMode.ALL));
-        calc.handleWayTags(edge23.getEdge(), edgeIntAccess, barrierWay, null);
+        EdgeIteratorState edge23 = handleWayTags(edgeIntAccess, calc, graph.edge(2, 3), List.of()); // barrier edge
         EdgeIteratorState edge34 = handleWayTags(edgeIntAccess, calc, graph.edge(3, 4), List.of());
 
-        // entering the barrier from the west: change angle should be ~0 (straight)
-        assertEquals(0, calcChangeAngle(graph, edgeIntAccess, orientationEnc, edge12.getEdge(), 2, edge23.getEdge()), 1);
-        // leaving the barrier to the east: change angle should be ~0 (straight)
-        assertEquals(0, calcChangeAngle(graph, edgeIntAccess, orientationEnc, edge23.getEdge(), 3, edge34.getEdge()), 1);
+        assertEquals(Orientation.UNDEFINED, orientationEnc.getDecimal(false, edge23.getEdge(), edgeIntAccess));
+        assertEquals(Orientation.UNDEFINED, orientationEnc.getDecimal(true, edge23.getEdge(), edgeIntAccess));
 
-        // same the other way round
+        // entering and leaving the barrier on a straight road must both yield ~0
+        assertEquals(0, calcChangeAngle(graph, edgeIntAccess, orientationEnc, edge12.getEdge(), 2, edge23.getEdge()), 1);
+        assertEquals(0, calcChangeAngle(graph, edgeIntAccess, orientationEnc, edge23.getEdge(), 3, edge34.getEdge()), 1);
         assertEquals(0, calcChangeAngle(graph, edgeIntAccess, orientationEnc, edge34.getEdge(), 3, edge23.getEdge()), 1);
         assertEquals(0, calcChangeAngle(graph, edgeIntAccess, orientationEnc, edge23.getEdge(), 2, edge12.getEdge()), 1);
     }

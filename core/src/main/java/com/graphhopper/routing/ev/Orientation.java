@@ -20,6 +20,12 @@ package com.graphhopper.routing.ev;
 public class Orientation {
     public static final String KEY = "orientation";
 
+    // Sentinel value used to mark edges whose orientation cannot be derived from their geometry
+    // (e.g. zero-length barrier edges). Real azimuths are always in [0, 360); 372° is the next
+    // storable value above that range (5 bits × factor 12 → max storable = 372), so it can never
+    // collide with a real azimuth.
+    public static final double UNDEFINED = 372;
+
     // Due to pillar nodes we need 2 values: the orientation at the adjacent node and the reverse
     // value for orientation at the base node. Store in degrees.
     public static DecimalEncodedValue create() {

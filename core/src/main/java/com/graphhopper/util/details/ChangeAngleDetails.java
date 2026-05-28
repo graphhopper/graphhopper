@@ -1,6 +1,7 @@
 package com.graphhopper.util.details;
 
 import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.Orientation;
 import com.graphhopper.routing.weighting.custom.CustomWeightingHelper;
 import com.graphhopper.util.EdgeIteratorState;
 
@@ -28,19 +29,25 @@ public class ChangeAngleDetails extends AbstractPathDetailsBuilder {
 
     @Override
     public boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge) {
+        double fwd = edge.get(orientationEv);
+        // edges with undefined orientation (e.g. zero-length barrier edges) should not pollute
+        // the running prevAzimuth nor emit a change_angle entry of their own
+        if (fwd >= Orientation.UNDEFINED)
+            return false;
+
         if (prevAzimuth != null) {
             double azimuth = edge.getReverse(orientationEv);
             double tmp = CustomWeightingHelper.calcChangeAngle(prevAzimuth, azimuth);
             double tmpRound = Math.round(tmp);
 
             if (changeAngle == null || Math.abs(tmpRound - changeAngle) > 0) {
-                prevAzimuth = edge.get(orientationEv);
+                prevAzimuth = fwd;
                 changeAngle = tmpRound;
                 return true;
             }
         }
 
-        prevAzimuth = edge.get(orientationEv);
+        prevAzimuth = fwd;
         return changeAngle == null;
     }
 }
