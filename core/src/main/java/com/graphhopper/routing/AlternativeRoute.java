@@ -211,6 +211,11 @@ public class AlternativeRoute extends AStarBidirection implements RoutingAlgorit
                                                   double maxWeightFactor, final double weightInfluence,
                                                   final double maxShareFactor, final double shareInfluence,
                                                   final double minPlateauFactor, final double plateauInfluence) {
+        if (!bestPath.isFound()) {
+            List<AlternativeInfo> notFound = new ArrayList<>(1);
+            notFound.add(new AlternativeInfo(0, bestPath, 0, Collections.emptyList()));
+            return notFound;
+        }
         final double maxWeight = maxWeightFactor * bestWeight;
         // Edge IDs of the best path - used to compute share by counting actual shared
         // edges on each candidate (analogous to AlternativeRouteCH.sharedDistance).
