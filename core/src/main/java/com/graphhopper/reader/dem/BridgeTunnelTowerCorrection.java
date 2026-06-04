@@ -81,17 +81,20 @@ public class BridgeTunnelTowerCorrection {
 
         StopWatch sw = new StopWatch().start();
 
-        BitSet isEdgeStructuredBitSet = new BitSet(numNodes);
+        // pendingNodes starts as the set of structure-touching towers, i.e. candidates where we
+        // might correct the elevation. During the correction loop, we clear() any candidate that
+        // ended up not actually corrected (skipped or IDW ≈ obs). After the loop, a set bit means
+        // "this node's elevation was changed", which is what the pillar loop needs.
+        BitSet pendingNodes = new BitSet(numNodes);
         AllEdgesIterator allIter = graph.getAllEdges();
         while (allIter.next()) {
-            boolean isStructureEdge = isStructureEdge(allIter);
-            if (isStructureEdge) {
-                isEdgeStructuredBitSet.set(allIter.getBaseNode(), true);
-                isEdgeStructuredBitSet.set(allIter.getAdjNode(), true);
+            if (isStructureEdge(allIter)) {
+                pendingNodes.set(allIter.getBaseNode());
+                pendingNodes.set(allIter.getAdjNode());
             }
         }
 
-        float init = sw.stop().getSeconds();
+        float initTime = sw.stop().getSeconds();
         sw = new StopWatch().start();
 
         // For every structure-touching tower, collect elevation samples via BFS and decide
@@ -105,14 +108,9 @@ public class BridgeTunnelTowerCorrection {
         GHBitSet visited = new GHTBitSet();
         IntDoubleHashMap distFromStart = new IntDoubleHashMap();
         IntArrayDeque fifo = new IntArrayDeque();
-        // Important performance tweak: track which nodes actually had their elevation changed
-        // => only re-interpolate ramps whose endpoints moved.
-        // We could misuse isEdgeStructuredBitSet for this information too, but it might be too
-        // confusing and not worth the memory savings.
-        BitSet correctedNodes = new BitSet(numNodes);
         int corrected = 0, skipped = 0;
         for (int n = 0; n < numNodes; n++) {
-            if (!isEdgeStructuredBitSet.get(n)) continue;
+            if (!pendingNodes.get(n)) continue;
             sampleEles.clear();
             sampleDists.clear();
             visited.clear();
@@ -121,6 +119,7 @@ public class BridgeTunnelTowerCorrection {
             bfsCollectRoadSamples(n, nodeAccess, explorer, sampleEles, sampleDists,
                     visited, distFromStart, fifo);
             if (sampleEles.size() < MIN_ROAD_SAMPLES) {
+                pendingNodes.clear(n);
                 skipped++;
                 continue;
             }
@@ -131,12 +130,13 @@ public class BridgeTunnelTowerCorrection {
             double obs = nodeAccess.getEle(n);
             if (Math.abs(newZ - obs) > 1e-6) {
                 nodeAccess.setNode(n, nodeAccess.getLat(n), nodeAccess.getLon(n), newZ);
-                correctedNodes.set(n);
                 corrected++;
+            } else {
+                pendingNodes.clear(n);
             }
         }
 
-        float whileLoop = sw.stop().getSeconds();
+        float bfsTime = sw.stop().getSeconds();
         sw = new StopWatch().start();
 
         // Re-interpolate pillars only on ramp edges whose tower endpoints actually moved.
@@ -146,14 +146,14 @@ public class BridgeTunnelTowerCorrection {
         AllEdgesIterator edgeIter = graph.getAllEdges();
         while (edgeIter.next()) {
             if (isStructureEdge(edgeIter)) continue;
-            if (correctedNodes.get(edgeIter.getBaseNode())
-                    || correctedNodes.get(edgeIter.getAdjNode()))
+            if (pendingNodes.get(edgeIter.getBaseNode())
+                    || pendingNodes.get(edgeIter.getAdjNode()))
                 reinterpolatePillars(edgeIter, nodeAccess, elevationInterpolator);
         }
 
         LOGGER.info("BridgeTunnelTowerCorrection: corrected {} towers, skipped {} (insufficient road samples). " +
-                        "init {}s, while loop {}s, interpolate {}s",
-                corrected, skipped, (int) init, (int) whileLoop, (int) sw.stop().getSeconds());
+                        "init {}s, bfs {}s, interpolate {}s",
+                corrected, skipped, (int) initTime, (int) bfsTime, (int) sw.stop().getSeconds());
     }
 
     /**
