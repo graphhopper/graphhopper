@@ -99,7 +99,7 @@ public class BridgeTunnelTowerCorrectionTest {
         na.setNode(1, 1, 0, 100);
         na.setNode(2, 2, 0, 100);
         na.setNode(3, 3, 0, 100);  // ramp tower right before the bridge
-        na.setNode(4, 4, 0, 100);  // bridge outer (correct)
+        na.setNode(4, 4, 0, 80);   // bridge outer with bad DEM — gets lifted to 100
         na.setNode(5, 5, 0, 100);
         na.setNode(6, 6, 0, 100);
 
@@ -124,8 +124,9 @@ public class BridgeTunnelTowerCorrectionTest {
 
         new BridgeTunnelTowerCorrection(graph, roadEnvEnc).execute();
 
-        // The ramp edge connects tower 3 (= bridge outer, was already correct at 100)
-        // and tower 4 — so its pillar should be re-interpolated between 100 and 100.
+        // Tower 4 was corrected from 80 to ~100 via IDW, so the ramp edge (3-4) gets
+        // its pillar re-interpolated linearly between 100 and ~100 → pillar at ~100
+        // instead of its original bad DEM value of 85.
         PointList pl = e34.fetchWayGeometry(FetchMode.ALL);
         assertEquals(3, pl.size());
         assertEquals(100, pl.getEle(1), 0.5);

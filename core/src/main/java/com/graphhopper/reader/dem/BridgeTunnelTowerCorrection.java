@@ -17,18 +17,22 @@
  */
 package com.graphhopper.reader.dem;
 
-import  com.carrotsearch.hppc.DoubleArrayList;
+import com.carrotsearch.hppc.DoubleArrayList;
+import com.carrotsearch.hppc.IntArrayDeque;
 import com.carrotsearch.hppc.IntDoubleHashMap;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RoadEnvironment;
+import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.BitSet;
 
 /**
  * Corrects elevations of bridge/tunnel/ferry tower-end nodes from the surrounding road
@@ -73,21 +77,49 @@ public class BridgeTunnelTowerCorrection {
     public void execute() {
         final NodeAccess nodeAccess = graph.getNodeAccess();
         final EdgeExplorer explorer = graph.createEdgeExplorer();
-        // Second explorer used purely for the touchesStructure check — keeps its iterator
-        // state independent of the BFS / pillar-loop explorer.
-        final EdgeExplorer touchExplorer = graph.createEdgeExplorer();
         final int numNodes = graph.getNodes();
+
+        StopWatch sw = new StopWatch().start();
+
+        BitSet isEdgeStructuredBitSet = new BitSet(numNodes);
+        AllEdgesIterator allIter = graph.getAllEdges();
+        while (allIter.next()) {
+            boolean isStructureEdge = isStructureEdge(allIter);
+            if (isStructureEdge) {
+                isEdgeStructuredBitSet.set(allIter.getBaseNode(), true);
+                isEdgeStructuredBitSet.set(allIter.getAdjNode(), true);
+            }
+        }
+
+        float init = sw.stop().getSeconds();
+        sw = new StopWatch().start();
 
         // For every structure-touching tower, collect elevation samples via BFS and decide
         // the corrected elevation. Apply in place — the BFS only samples pure-ground nodes
         // (those that do not touch any structure edge), so already-corrected neighbouring
         // towers cannot contaminate later BFS results.
+        // Scratch buffers allocated once and clear()ed per BFS — saves ~5 allocations per
+        // candidate tower (hundreds of thousands on a country graph).
+        DoubleArrayList sampleEles = new DoubleArrayList();
+        DoubleArrayList sampleDists = new DoubleArrayList();
+        GHBitSet visited = new GHTBitSet();
+        IntDoubleHashMap distFromStart = new IntDoubleHashMap();
+        IntArrayDeque fifo = new IntArrayDeque();
+        // Important performance tweak: track which nodes actually had their elevation changed
+        // => only re-interpolate ramps whose endpoints moved.
+        // We could misuse isEdgeStructuredBitSet for this information too, but it might be too
+        // confusing and not worth the memory savings.
+        BitSet correctedNodes = new BitSet(numNodes);
         int corrected = 0, skipped = 0;
         for (int n = 0; n < numNodes; n++) {
-            if (!touchesStructure(n, touchExplorer)) continue;
-            DoubleArrayList sampleEles = new DoubleArrayList();
-            DoubleArrayList sampleDists = new DoubleArrayList();
-            bfsCollectRoadSamples(n, nodeAccess, explorer, sampleEles, sampleDists);
+            if (!isEdgeStructuredBitSet.get(n)) continue;
+            sampleEles.clear();
+            sampleDists.clear();
+            visited.clear();
+            distFromStart.clear();
+            fifo.clear();
+            bfsCollectRoadSamples(n, nodeAccess, explorer, sampleEles, sampleDists,
+                    visited, distFromStart, fifo);
             if (sampleEles.size() < MIN_ROAD_SAMPLES) {
                 skipped++;
                 continue;
@@ -99,53 +131,47 @@ public class BridgeTunnelTowerCorrection {
             double obs = nodeAccess.getEle(n);
             if (Math.abs(newZ - obs) > 1e-6) {
                 nodeAccess.setNode(n, nodeAccess.getLat(n), nodeAccess.getLon(n), newZ);
+                correctedNodes.set(n);
                 corrected++;
             }
         }
 
-        // Run for ALL structure-touching towers, not only the corrected ones — a ramp
-        // pillar can have bad DEM even when its tower endpoints don't.
+        float whileLoop = sw.stop().getSeconds();
+        sw = new StopWatch().start();
+
+        // Re-interpolate pillars only on ramp edges whose tower endpoints actually moved.
+        // If neither endpoint changed, the stored geometry is still consistent — re-running
+        // linear interpolation would just destroy any real DEM variation along the ramp.
         ElevationInterpolator elevationInterpolator = new ElevationInterpolator();
-        GHIntHashSet processedEdges = new GHIntHashSet();
-        for (int n = 0; n < numNodes; n++) {
-            if (!touchesStructure(n, touchExplorer)) continue;
-            EdgeIterator it = explorer.setBaseNode(n);
-            while (it.next()) {
-                if (isStructureEdge(it)) continue;
-                if (processedEdges.contains(it.getEdge())) continue;
-                processedEdges.add(it.getEdge());
-                reinterpolatePillars(it, nodeAccess, elevationInterpolator);
-            }
+        AllEdgesIterator edgeIter = graph.getAllEdges();
+        while (edgeIter.next()) {
+            if (isStructureEdge(edgeIter)) continue;
+            if (correctedNodes.get(edgeIter.getBaseNode())
+                    || correctedNodes.get(edgeIter.getAdjNode()))
+                reinterpolatePillars(edgeIter, nodeAccess, elevationInterpolator);
         }
 
-        LOGGER.info("BridgeTunnelTowerCorrection: corrected {} towers, skipped {} (insufficient road samples)",
-                corrected, skipped);
+        LOGGER.info("BridgeTunnelTowerCorrection: corrected {} towers, skipped {} (insufficient road samples). " +
+                        "init {}s, while loop {}s, interpolate {}s",
+                corrected, skipped, (int) init, (int) whileLoop, (int) sw.stop().getSeconds());
     }
 
-    private boolean touchesStructure(int node, EdgeExplorer explorer) {
-        EdgeIterator it = explorer.setBaseNode(node);
-        while (it.next()) {
-            if (isStructureEdge(it)) return true;
-        }
-        return false;
-    }
-
-    /** Sample pure-ground node elevations via BFS — see class doc. The
-     *  "n touches structure" check is done inline at dequeue time, so no
-     *  precomputed array is needed. */
+    /**
+     * Sample pure-ground node elevations via BFS — see class doc. The
+     * "n touches structure" check is done inline at dequeue time, so no
+     * precomputed array is needed.
+     */
     private void bfsCollectRoadSamples(int startTower,
                                        NodeAccess nodeAccess, EdgeExplorer explorer,
-                                       DoubleArrayList sampleEles, DoubleArrayList sampleDists) {
-        GHBitSet visited = new GHTBitSet();
+                                       DoubleArrayList sampleEles, DoubleArrayList sampleDists,
+                                       GHBitSet visited, IntDoubleHashMap distFromStart,
+                                       IntArrayDeque fifo) {
         visited.add(startTower);
-        SimpleIntDeque fifo = new SimpleIntDeque();
-        fifo.push(startTower);
-
-        IntDoubleHashMap distFromStart = new IntDoubleHashMap();
+        fifo.addLast(startTower);
         distFromStart.put(startTower, 0.0);
 
         while (!fifo.isEmpty()) {
-            int n = fifo.pop();
+            int n = fifo.removeFirst();
             double dN = distFromStart.get(n);
             EdgeIterator it = explorer.setBaseNode(n);
             boolean nodeTouchesStructure = false;
@@ -175,7 +201,7 @@ public class BridgeTunnelTowerCorrection {
                 // PARALLEL bridges/tunnels sharing this node, common on multi-way bridges
                 // like the Albertbrücke — don't terminate the BFS. Whether they get sampled
                 // is decided when they themselves are dequeued.
-                fifo.push(adj);
+                fifo.addLast(adj);
             }
             // Sample the elevation of current node n only if it's pure ground. The start tower is itself
             // structure-touching by construction, so it's naturally excluded.
@@ -186,10 +212,12 @@ public class BridgeTunnelTowerCorrection {
         }
     }
 
-    /** Inverse-distance-squared weighting. Closer neighbours dominate the result —
-     *  important on terrain that climbs or descends steadily through the BFS window,
-     *  where a plain 1/d would still let far samples drag the answer away from the
-     *  road that is immediately adjacent to the bridge end. */
+    /**
+     * Inverse-distance-squared weighting. Closer neighbours dominate the result —
+     * important on terrain that climbs or descends steadily through the BFS window,
+     * where a plain 1/d would still let far samples drag the answer away from the
+     * road that is immediately adjacent to the bridge end.
+     */
     private static double inverseDistanceWeightedMean(DoubleArrayList eles, DoubleArrayList dists) {
         double weightedSum = 0, totalWeight = 0;
         for (int i = 0; i < eles.size(); i++) {
@@ -201,9 +229,11 @@ public class BridgeTunnelTowerCorrection {
         return weightedSum / totalWeight;
     }
 
-    /** Sample the elevation at a given distance along an edge's way-geometry,
-     *  linearly interpolating between the two surrounding pillar/tower points.
-     *  Returns NaN if the edge geometry is unusable. */
+    /**
+     * Sample the elevation at a given distance along an edge's way-geometry,
+     * linearly interpolating between the two surrounding pillar/tower points.
+     * Returns NaN if the edge geometry is unusable.
+     */
     private double sampleEleAlongEdge(EdgeIteratorState edge, double distAlongEdge) {
         PointList pl = edge.fetchWayGeometry(FetchMode.ALL);
         if (pl.size() < 2) return Double.NaN;
@@ -220,11 +250,13 @@ public class BridgeTunnelTowerCorrection {
         return pl.getEle(pl.size() - 1);
     }
 
-    /** Re-interpolate pillar nodes on a non-structure edge linearly between its two
-     *  tower endpoints. Mirrors {@link EdgeElevationInterpolator}'s Phase 2 for
-     *  bridge/tunnel edges. Also recomputes the edge distance. We build a fresh mutable
-     *  PointList because the one returned by {@code fetchWayGeometry} via an EdgeExplorer
-     *  iterator is immutable. */
+    /**
+     * Re-interpolate pillar nodes on a non-structure edge linearly between its two
+     * tower endpoints. Mirrors {@link EdgeElevationInterpolator}'s Phase 2 for
+     * bridge/tunnel edges. Also recomputes the edge distance. We build a fresh mutable
+     * PointList because the one returned by {@code fetchWayGeometry} via an EdgeExplorer
+     * iterator is immutable.
+     */
     private void reinterpolatePillars(EdgeIteratorState edge, NodeAccess nodeAccess,
                                       ElevationInterpolator elevationInterpolator) {
         int firstNodeId = edge.getBaseNode();
@@ -236,26 +268,21 @@ public class BridgeTunnelTowerCorrection {
         double lon1 = nodeAccess.getLon(secondNodeId);
         double ele1 = nodeAccess.getEle(secondNodeId);
 
-        PointList original = edge.fetchWayGeometry(FetchMode.ALL);
-        int count = original.size();
-        if (count <= 2) return;
-        // Build a fresh mutable PointList of the new pillar elevations to hand to
-        // setWayGeometry (which expects pillars only, no tower endpoints).
-        PointList newPillars = new PointList(count - 2, true);
-        // Also keep a full geometry list (tower + pillars + tower) for the distance recompute.
-        PointList full = new PointList(count, true);
-        full.add(lat0, lon0, ele0);
+        // Mutate the fetched PointList in place (mirrors EdgeElevationInterpolator).
+        // The distance is always recomputed (even on a 2-point edge with no pillars),
+        // because a tower endpoint's elevation may have changed in the correction pass and needs an update.
+        PointList pointList = edge.fetchWayGeometry(FetchMode.ALL);
+        int count = pointList.size();
         for (int index = 1; index < count - 1; index++) {
-            double lat = original.getLat(index);
-            double lon = original.getLon(index);
+            double lat = pointList.getLat(index);
+            double lon = pointList.getLon(index);
             double ele = elevationInterpolator.calculateElevationBasedOnTwoPoints(lat, lon,
                     lat0, lon0, ele0, lat1, lon1, ele1);
-            newPillars.add(lat, lon, ele);
-            full.add(lat, lon, ele);
+            pointList.set(index, lat, lon, ele);
         }
-        full.add(lat1, lon1, ele1);
-        edge.setWayGeometry(newPillars);
-        edge.setDistance(DistanceCalcEarth.DIST_EARTH.calcDistance(full));
+        if (count > 2)
+            edge.setWayGeometry(pointList.shallowCopy(1, count - 1, false));
+        edge.setDistance(DistanceCalcEarth.DIST_EARTH.calcDistance(pointList));
     }
 
     private boolean isStructureEdge(EdgeIteratorState edge) {
