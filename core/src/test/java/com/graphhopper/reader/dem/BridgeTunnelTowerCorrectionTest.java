@@ -29,8 +29,8 @@ import com.graphhopper.util.PointList;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import static com.graphhopper.routing.ev.RoadEnvironment.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class BridgeTunnelTowerCorrectionTest {
 
@@ -61,21 +61,13 @@ public class BridgeTunnelTowerCorrectionTest {
         na.setNode(5, 5, 0, 100);
         na.setNode(6, 6, 0, 100);
 
-        EdgeIteratorState e01, e12, e23, e34, e45, e56;
         GHUtility.setSpeed(60, 60, accessEnc, speedEnc,
-                e01 = graph.edge(0, 1).setDistance(15),
-                e12 = graph.edge(1, 2).setDistance(15),
-                e23 = graph.edge(2, 3).setDistance(15),
-                e34 = graph.edge(3, 4).setDistance(15), // BRIDGE
-                e45 = graph.edge(4, 5).setDistance(15),
-                e56 = graph.edge(5, 6).setDistance(15));
-
-        e01.set(roadEnvEnc, RoadEnvironment.ROAD);
-        e12.set(roadEnvEnc, RoadEnvironment.ROAD);
-        e23.set(roadEnvEnc, RoadEnvironment.ROAD);
-        e34.set(roadEnvEnc, RoadEnvironment.BRIDGE);
-        e45.set(roadEnvEnc, RoadEnvironment.ROAD);
-        e56.set(roadEnvEnc, RoadEnvironment.ROAD);
+                graph.edge(0, 1).setDistance(15).set(roadEnvEnc, ROAD),
+                graph.edge(1, 2).setDistance(15).set(roadEnvEnc, ROAD),
+                graph.edge(2, 3).setDistance(15).set(roadEnvEnc, ROAD),
+                graph.edge(3, 4).setDistance(15).set(roadEnvEnc, BRIDGE),
+                graph.edge(4, 5).setDistance(15).set(roadEnvEnc, ROAD),
+                graph.edge(5, 6).setDistance(15).set(roadEnvEnc, ROAD));
 
         new BridgeTunnelTowerCorrection(graph, roadEnvEnc).execute();
 
@@ -103,24 +95,17 @@ public class BridgeTunnelTowerCorrectionTest {
         na.setNode(5, 5, 0, 100);
         na.setNode(6, 6, 0, 100);
 
-        EdgeIteratorState e01, e12, e23, e34, e45, e56;
+        EdgeIteratorState e34;
         GHUtility.setSpeed(60, 60, accessEnc, speedEnc,
-                e01 = graph.edge(0, 1).setDistance(15),
-                e12 = graph.edge(1, 2).setDistance(15),
-                e23 = graph.edge(2, 3).setDistance(15),
-                e34 = graph.edge(3, 4).setDistance(15), // ramp edge with bad pillar
-                e45 = graph.edge(4, 5).setDistance(15), // BRIDGE
-                e56 = graph.edge(5, 6).setDistance(15));
+                graph.edge(0, 1).setDistance(15).set(roadEnvEnc, ROAD),
+                graph.edge(1, 2).setDistance(15).set(roadEnvEnc, ROAD),
+                graph.edge(2, 3).setDistance(15).set(roadEnvEnc, ROAD),
+                e34 = graph.edge(3, 4).setDistance(15).set(roadEnvEnc, ROAD), // ramp edge with bad pillar
+                graph.edge(4, 5).setDistance(15).set(roadEnvEnc, BRIDGE),
+                graph.edge(5, 6).setDistance(15).set(roadEnvEnc, ROAD));
 
         // Pillar mid-ramp at bad DEM 85.
         e34.setWayGeometry(Helper.createPointList3D(3.5, 0, 85));
-
-        e01.set(roadEnvEnc, RoadEnvironment.ROAD);
-        e12.set(roadEnvEnc, RoadEnvironment.ROAD);
-        e23.set(roadEnvEnc, RoadEnvironment.ROAD);
-        e34.set(roadEnvEnc, RoadEnvironment.ROAD);
-        e45.set(roadEnvEnc, RoadEnvironment.BRIDGE);
-        e56.set(roadEnvEnc, RoadEnvironment.ROAD);
 
         new BridgeTunnelTowerCorrection(graph, roadEnvEnc).execute();
 
@@ -145,21 +130,13 @@ public class BridgeTunnelTowerCorrectionTest {
         na.setNode(5, 5, 0, 100);
         na.setNode(6, 6, 0, 100);
 
-        EdgeIteratorState e01, e12, e23, e34, e45, e56;
         GHUtility.setSpeed(60, 60, accessEnc, speedEnc,
-                e01 = graph.edge(0, 1).setDistance(15),
-                e12 = graph.edge(1, 2).setDistance(15),
-                e23 = graph.edge(2, 3).setDistance(15),
-                e34 = graph.edge(3, 4).setDistance(15), // TUNNEL
-                e45 = graph.edge(4, 5).setDistance(15),
-                e56 = graph.edge(5, 6).setDistance(15));
-
-        e01.set(roadEnvEnc, RoadEnvironment.ROAD);
-        e12.set(roadEnvEnc, RoadEnvironment.ROAD);
-        e23.set(roadEnvEnc, RoadEnvironment.ROAD);
-        e34.set(roadEnvEnc, RoadEnvironment.TUNNEL);
-        e45.set(roadEnvEnc, RoadEnvironment.ROAD);
-        e56.set(roadEnvEnc, RoadEnvironment.ROAD);
+                graph.edge(0, 1).setDistance(15).set(roadEnvEnc, ROAD),
+                graph.edge(1, 2).setDistance(15).set(roadEnvEnc, ROAD),
+                graph.edge(2, 3).setDistance(15).set(roadEnvEnc, ROAD),
+                graph.edge(3, 4).setDistance(15).set(roadEnvEnc, TUNNEL),
+                graph.edge(4, 5).setDistance(15).set(roadEnvEnc, ROAD),
+                graph.edge(5, 6).setDistance(15).set(roadEnvEnc, ROAD));
 
         new BridgeTunnelTowerCorrection(graph, roadEnvEnc).execute();
 
@@ -179,21 +156,13 @@ public class BridgeTunnelTowerCorrectionTest {
         na.setNode(5, 5, 0, 100);
         na.setNode(6, 6, 0, 100);
 
-        EdgeIteratorState e01, e12, e23, e34, e45, e56;
         GHUtility.setSpeed(60, 60, accessEnc, speedEnc,
-                e01 = graph.edge(0, 1).setDistance(15),
-                e12 = graph.edge(1, 2).setDistance(15),
-                e23 = graph.edge(2, 3).setDistance(15),
-                e34 = graph.edge(3, 4).setDistance(15),
-                e45 = graph.edge(4, 5).setDistance(15),
-                e56 = graph.edge(5, 6).setDistance(15));
-
-        e01.set(roadEnvEnc, RoadEnvironment.ROAD);
-        e12.set(roadEnvEnc, RoadEnvironment.ROAD);
-        e23.set(roadEnvEnc, RoadEnvironment.ROAD);
-        e34.set(roadEnvEnc, RoadEnvironment.BRIDGE);
-        e45.set(roadEnvEnc, RoadEnvironment.ROAD);
-        e56.set(roadEnvEnc, RoadEnvironment.ROAD);
+                graph.edge(0, 1).setDistance(15).set(roadEnvEnc, ROAD),
+                graph.edge(1, 2).setDistance(15).set(roadEnvEnc, ROAD),
+                graph.edge(2, 3).setDistance(15).set(roadEnvEnc, ROAD),
+                graph.edge(3, 4).setDistance(15).set(roadEnvEnc, BRIDGE),
+                graph.edge(4, 5).setDistance(15).set(roadEnvEnc, ROAD),
+                graph.edge(5, 6).setDistance(15).set(roadEnvEnc, ROAD));
 
         new BridgeTunnelTowerCorrection(graph, roadEnvEnc).execute();
 
@@ -216,23 +185,14 @@ public class BridgeTunnelTowerCorrectionTest {
         na.setNode(6, 6, 0, 100); // tunnel outer
         na.setNode(7, 7, 0, 100); // road
 
-        EdgeIteratorState e01, e12, e23, e34, e45, e56, e67;
         GHUtility.setSpeed(60, 60, accessEnc, speedEnc,
-                e01 = graph.edge(0, 1).setDistance(50),
-                e12 = graph.edge(1, 2).setDistance(50),
-                e23 = graph.edge(2, 3).setDistance(50),
-                e34 = graph.edge(3, 4).setDistance(50), // BRIDGE
-                e45 = graph.edge(4, 5).setDistance(50),
-                e56 = graph.edge(5, 6).setDistance(50),
-                e67 = graph.edge(6, 7).setDistance(50));
-
-        e01.set(roadEnvEnc, RoadEnvironment.ROAD);
-        e12.set(roadEnvEnc, RoadEnvironment.TUNNEL);
-        e23.set(roadEnvEnc, RoadEnvironment.TUNNEL);
-        e34.set(roadEnvEnc, RoadEnvironment.BRIDGE);
-        e45.set(roadEnvEnc, RoadEnvironment.TUNNEL);
-        e56.set(roadEnvEnc, RoadEnvironment.TUNNEL);
-        e67.set(roadEnvEnc, RoadEnvironment.ROAD);
+                graph.edge(0, 1).setDistance(50).set(roadEnvEnc, ROAD),
+                graph.edge(1, 2).setDistance(50).set(roadEnvEnc, TUNNEL),
+                graph.edge(2, 3).setDistance(50).set(roadEnvEnc, TUNNEL),
+                graph.edge(3, 4).setDistance(50).set(roadEnvEnc, BRIDGE),
+                graph.edge(4, 5).setDistance(50).set(roadEnvEnc, TUNNEL),
+                graph.edge(5, 6).setDistance(50).set(roadEnvEnc, TUNNEL),
+                graph.edge(6, 7).setDistance(50).set(roadEnvEnc, ROAD));
 
         new BridgeTunnelTowerCorrection(graph, roadEnvEnc).execute();
 
