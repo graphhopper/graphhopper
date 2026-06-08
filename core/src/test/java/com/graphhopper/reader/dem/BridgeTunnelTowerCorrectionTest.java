@@ -71,7 +71,7 @@ public class BridgeTunnelTowerCorrectionTest {
 
         new BridgeTunnelTowerCorrection(graph, roadEnvEnc).execute();
 
-        // Tower 3 should now be the median of nearby road nodes — 100.
+        // Tower 3 should now be close to the inverse-distance-weighted mean (IDW) of nearby road nodes — 100.
         assertEquals(100, na.getEle(3), 0.5);
         // Tower 4 has plenty of good neighbours too, stays at 100.
         assertEquals(100, na.getEle(4), 0.5);
