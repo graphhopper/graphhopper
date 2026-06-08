@@ -201,8 +201,8 @@ public class BridgeTunnelTowerCorrectionTest {
         assertEquals(1000, na.getEle(3), 0.5);
         assertEquals(1000, na.getEle(4), 0.5);
         // Tunnel outer 1 IS reachable from road (one non-structure edge to road tower 0,
-        // which is itself pure ground). But MIN_ROAD_SAMPLES=3 — only one road sample,
-        // so left at DEM.
+        // which is itself pure ground). With MIN_ROAD_SAMPLES=1 there is enough data, but
+        // the inferred elevation equals the current value, so it remains unchanged.
         assertEquals(200, na.getEle(1), 0.5);
     }
 
