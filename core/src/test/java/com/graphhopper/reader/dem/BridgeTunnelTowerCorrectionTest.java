@@ -144,7 +144,7 @@ public class BridgeTunnelTowerCorrectionTest {
     }
 
     /** A bridge tower whose DEM is already consistent with nearby road must not be moved
-     *  (median ≈ tower's own elevation). Real terrain at the bridge level. */
+     *  (IDW mean ≈ tower's own elevation). Real terrain at the bridge level. */
     @Test
     public void doesNotMoveTowerWhenAlreadyConsistent() {
         NodeAccess na = graph.getNodeAccess();
