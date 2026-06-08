@@ -252,9 +252,7 @@ public class BridgeTunnelTowerCorrection {
     /**
      * Re-interpolate pillar nodes on a non-structure edge linearly between its two
      * tower endpoints. Mirrors {@link EdgeElevationInterpolator}'s Phase 2 for
-     * bridge/tunnel edges. Also recomputes the edge distance. We build a fresh mutable
-     * PointList because the one returned by {@code fetchWayGeometry} via an EdgeExplorer
-     * iterator is immutable.
+     * bridge/tunnel edges. Also recomputes the edge distance.
      */
     private void reinterpolatePillars(EdgeIteratorState edge, NodeAccess nodeAccess,
                                       ElevationInterpolator elevationInterpolator) {
