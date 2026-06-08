@@ -21,7 +21,6 @@ import com.carrotsearch.hppc.DoubleArrayList;
 import com.carrotsearch.hppc.IntArrayDeque;
 import com.carrotsearch.hppc.IntDoubleHashMap;
 import com.graphhopper.coll.GHBitSet;
-import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RoadEnvironment;
