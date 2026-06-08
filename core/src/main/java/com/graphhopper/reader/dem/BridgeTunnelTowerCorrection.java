@@ -41,7 +41,7 @@ import java.util.PriorityQueue;
  * DEM at a bridge end often samples the valley/river below the deck (too low); at a tunnel
  * end the surface above (too high). The surrounding road is on solid ground at the right
  * level, so its elevations are the correct anchor. For each structure-touching tower we
- * run Dijkstra outward (≤ {@link #BFS_MAX_DIST_M}) over non-structure edges, sample only
+ * run Dijkstra outward (≤ {@link #MAX_DIST_M}) over non-structure edges, sample only
  * pure-ground nodes (no structure incidence) — walking *past* other structure-touching
  * nodes so that parallel bridges/tunnels sharing the tower don't terminate the traversal —
  * and replace the tower's elevation with the inverse-distance-weighted mean of the samples
@@ -63,7 +63,7 @@ public class BridgeTunnelTowerCorrection {
     private static final Logger LOGGER = LoggerFactory.getLogger(BridgeTunnelTowerCorrection.class);
 
     // How far outward to search via Dijkstra (in meter).
-    private static final double BFS_MAX_DIST_M = 50.0;
+    private static final double MAX_DIST_M = 50.0;
     // Minimum number of pure-ground samples required before we trust the inferred elevation.
     private static final int MIN_ROAD_SAMPLES = 1;
 
@@ -137,7 +137,7 @@ public class BridgeTunnelTowerCorrection {
             }
         }
 
-        float bfsTime = sw.stop().getSeconds();
+        float dijkstraTime = sw.stop().getSeconds();
         sw = new StopWatch().start();
 
         // Re-interpolate pillars only on ramp edges whose tower endpoints actually moved.
@@ -154,14 +154,14 @@ public class BridgeTunnelTowerCorrection {
 
         LOGGER.info("BridgeTunnelTowerCorrection: corrected {} towers, skipped {} (insufficient road samples). " +
                         "init {}s, dijkstra {}s, interpolate {}s",
-                corrected, skipped, (int) initTime, (int) bfsTime, (int) sw.stop().getSeconds());
+                corrected, skipped, (int) initTime, (int) dijkstraTime, (int) sw.stop().getSeconds());
     }
 
     /**
-     * Sample pure-ground node elevations via Dijkstra — see class doc. Using a
+     * Sample pure-ground node elevations via Dijkstra. Using a
      * priority queue ordered by accumulated distance guarantees that {@code distFromStart}
      * holds the true shortest-path distances, so the IDW weights and the
-     * {@link #BFS_MAX_DIST_M} cutoff are always based on the nearest approach to each node.
+     * {@link #MAX_DIST_M} cutoff are always based on the nearest approach to each node.
      * The "n touches structure" check is done inline at settle time, so no
      * precomputed array is needed.
      */
@@ -191,9 +191,9 @@ public class BridgeTunnelTowerCorrection {
                 int adj = it.getAdjNode();
                 double edgeDist = it.getDistance();
                 double newDist = dN + edgeDist;
-                if (newDist > BFS_MAX_DIST_M) {
+                if (newDist > MAX_DIST_M) {
                     // Edge overshoots — sample along way-geometry at the budget cutoff.
-                    double remaining = BFS_MAX_DIST_M - dN;
+                    double remaining = MAX_DIST_M - dN;
                     if (remaining > 0) {
                         double virtualEle = sampleEleAlongEdge(it, remaining);
                         if (!Double.isNaN(virtualEle)) {
@@ -224,7 +224,7 @@ public class BridgeTunnelTowerCorrection {
 
     /**
      * Inverse-distance-squared weighting. Closer neighbours dominate the result —
-     * important on terrain that climbs or descends steadily through the BFS window,
+     * important on terrain that climbs or descends steadily through the Dijkstra window,
      * where a plain 1/d would still let far samples drag the answer away from the
      * road that is immediately adjacent to the bridge end.
      */
