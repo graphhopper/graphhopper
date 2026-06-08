@@ -18,7 +18,6 @@
 package com.graphhopper.reader.dem;
 
 import com.carrotsearch.hppc.DoubleArrayList;
-import com.carrotsearch.hppc.IntArrayDeque;
 import com.carrotsearch.hppc.IntDoubleHashMap;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHTBitSet;
@@ -32,6 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.BitSet;
+import java.util.PriorityQueue;
 
 /**
  * Corrects elevations of bridge/tunnel/ferry tower-end nodes from the surrounding road
@@ -41,10 +41,12 @@ import java.util.BitSet;
  * DEM at a bridge end often samples the valley/river below the deck (too low); at a tunnel
  * end the surface above (too high). The surrounding road is on solid ground at the right
  * level, so its elevations are the correct anchor. For each structure-touching tower we
- * BFS outward (≤ {@link #BFS_MAX_DIST_M}) over non-structure edges, sample only pure-ground
- * nodes (no structure incidence) — walking *past* other structure-touching nodes so that
- * parallel bridges/tunnels sharing the tower don't terminate the BFS — and replace the
- * tower's elevation with the inverse-distance-weighted mean of the samples (Shepard's IDW).
+ * run Dijkstra outward (≤ {@link #BFS_MAX_DIST_M}) over non-structure edges, sample only
+ * pure-ground nodes (no structure incidence) — walking *past* other structure-touching
+ * nodes so that parallel bridges/tunnels sharing the tower don't terminate the traversal —
+ * and replace the tower's elevation with the inverse-distance-weighted mean of the samples
+ * (Shepard's IDW). Using shortest-path distances ensures the distance budget and IDW weights
+ * are always correct regardless of traversal order.
  * If a single edge would overshoot the budget, we sample along its way-geometry at the
  * cutoff so sparse graphs still produce a representative sample.
  * <p>
@@ -60,7 +62,7 @@ public class BridgeTunnelTowerCorrection {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BridgeTunnelTowerCorrection.class);
 
-    // How far outward to search via BFS (in meter).
+    // How far outward to search via Dijkstra (in meter).
     private static final double BFS_MAX_DIST_M = 50.0;
     // Minimum number of pure-ground samples required before we trust the inferred elevation.
     private static final int MIN_ROAD_SAMPLES = 1;
@@ -96,27 +98,27 @@ public class BridgeTunnelTowerCorrection {
         float initTime = sw.stop().getSeconds();
         sw = new StopWatch().start();
 
-        // For every structure-touching tower, collect elevation samples via BFS and decide
-        // the corrected elevation. Apply in place — the BFS only samples pure-ground nodes
+        // For every structure-touching tower, collect elevation samples via Dijkstra and decide
+        // the corrected elevation. Apply in place — the traversal only samples pure-ground nodes
         // (those that do not touch any structure edge), so already-corrected neighbouring
-        // towers cannot contaminate later BFS results.
-        // Scratch buffers allocated once and clear()ed per BFS — saves ~5 allocations per
+        // towers cannot contaminate later results.
+        // Scratch buffers allocated once and clear()ed per run — saves ~5 allocations per
         // candidate tower (hundreds of thousands on a country graph).
         DoubleArrayList sampleEles = new DoubleArrayList();
         DoubleArrayList sampleDists = new DoubleArrayList();
-        GHBitSet visited = new GHTBitSet();
+        GHBitSet settled = new GHTBitSet();
         IntDoubleHashMap distFromStart = new IntDoubleHashMap();
-        IntArrayDeque fifo = new IntArrayDeque();
+        PriorityQueue<double[]> pq = new PriorityQueue<>((a, b) -> Double.compare(a[0], b[0]));
         int corrected = 0, skipped = 0;
         for (int n = 0; n < numNodes; n++) {
             if (!pendingNodes.get(n)) continue;
             sampleEles.clear();
             sampleDists.clear();
-            visited.clear();
+            settled.clear();
             distFromStart.clear();
-            fifo.clear();
-            bfsCollectRoadSamples(n, nodeAccess, explorer, sampleEles, sampleDists,
-                    visited, distFromStart, fifo);
+            pq.clear();
+            dijkstraCollectRoadSamples(n, nodeAccess, explorer, sampleEles, sampleDists,
+                    settled, distFromStart, pq);
             if (sampleEles.size() < MIN_ROAD_SAMPLES) {
                 pendingNodes.clear(n);
                 skipped++;
@@ -151,27 +153,34 @@ public class BridgeTunnelTowerCorrection {
         }
 
         LOGGER.info("BridgeTunnelTowerCorrection: corrected {} towers, skipped {} (insufficient road samples). " +
-                        "init {}s, bfs {}s, interpolate {}s",
+                        "init {}s, dijkstra {}s, interpolate {}s",
                 corrected, skipped, (int) initTime, (int) bfsTime, (int) sw.stop().getSeconds());
     }
 
     /**
-     * Sample pure-ground node elevations via BFS — see class doc. The
-     * "n touches structure" check is done inline at dequeue time, so no
+     * Sample pure-ground node elevations via Dijkstra — see class doc. Using a
+     * priority queue ordered by accumulated distance guarantees that {@code distFromStart}
+     * holds the true shortest-path distances, so the IDW weights and the
+     * {@link #BFS_MAX_DIST_M} cutoff are always based on the nearest approach to each node.
+     * The "n touches structure" check is done inline at settle time, so no
      * precomputed array is needed.
      */
-    private void bfsCollectRoadSamples(int startTower,
-                                       NodeAccess nodeAccess, EdgeExplorer explorer,
-                                       DoubleArrayList sampleEles, DoubleArrayList sampleDists,
-                                       GHBitSet visited, IntDoubleHashMap distFromStart,
-                                       IntArrayDeque fifo) {
-        visited.add(startTower);
-        fifo.addLast(startTower);
+    private void dijkstraCollectRoadSamples(int startTower,
+                                            NodeAccess nodeAccess, EdgeExplorer explorer,
+                                            DoubleArrayList sampleEles, DoubleArrayList sampleDists,
+                                            GHBitSet settled, IntDoubleHashMap distFromStart,
+                                            PriorityQueue<double[]> pq) {
         distFromStart.put(startTower, 0.0);
+        pq.offer(new double[]{0.0, startTower});
 
-        while (!fifo.isEmpty()) {
-            int n = fifo.removeFirst();
-            double dN = distFromStart.get(n);
+        while (!pq.isEmpty()) {
+            double[] top = pq.poll();
+            double dN = top[0];
+            int n = (int) top[1];
+
+            if (settled.contains(n)) continue; // stale entry — a shorter path was found later
+            settled.add(n);
+
             EdgeIterator it = explorer.setBaseNode(n);
             boolean nodeTouchesStructure = false;
             while (it.next()) {
@@ -181,7 +190,8 @@ public class BridgeTunnelTowerCorrection {
                 }
                 int adj = it.getAdjNode();
                 double edgeDist = it.getDistance();
-                if (dN + edgeDist > BFS_MAX_DIST_M) {
+                double newDist = dN + edgeDist;
+                if (newDist > BFS_MAX_DIST_M) {
                     // Edge overshoots — sample along way-geometry at the budget cutoff.
                     double remaining = BFS_MAX_DIST_M - dN;
                     if (remaining > 0) {
@@ -193,14 +203,15 @@ public class BridgeTunnelTowerCorrection {
                     }
                     continue;
                 }
-                if (visited.contains(adj)) continue;
-                visited.add(adj);
-                distFromStart.put(adj, dN + edgeDist);
-                // Always queue (= walk past), so that structure-touching nodes — outers of
-                // PARALLEL bridges/tunnels sharing this node, common on multi-way bridges
-                // like the Albertbrücke — don't terminate the BFS. Whether they get sampled
-                // is decided when they themselves are dequeued.
-                fifo.addLast(adj);
+                if (!settled.contains(adj)
+                        && (!distFromStart.containsKey(adj) || newDist < distFromStart.get(adj))) {
+                    distFromStart.put(adj, newDist);
+                    // Always enqueue (= walk past), so that structure-touching nodes — outers of
+                    // PARALLEL bridges/tunnels sharing this node, common on multi-way bridges
+                    // like the Albertbrücke — don't terminate the traversal. Whether they get
+                    // sampled is decided when they themselves are settled.
+                    pq.offer(new double[]{newDist, adj});
+                }
             }
             // Sample the elevation of current node n only if it's pure ground. The start tower is itself
             // structure-touching by construction, so it's naturally excluded.
