@@ -49,12 +49,7 @@ import java.util.PriorityQueue;
  * are always correct regardless of traversal order.
  * If a single edge would overshoot the budget, we sample along its way-geometry at the
  * cutoff so sparse graphs still produce a representative sample.
- * <p>
- * After tower correction, we re-interpolate the pillar nodes on each adjacent ramp edge
- * linearly between the two endpoints — this kills the slope artifact at the approach when
- * ramp pillars had bad DEM.
- * <p>
- * {@link EdgeElevationInterpolator} should run AFTER this class — it interpolates the
+ * {@link EdgeElevationInterpolator} should run AFTER this class as it interpolates the
  * structure interior (bridge/tunnel pillars, inner tower nodes) from the now-correct
  * outer values.
  */
@@ -99,11 +94,10 @@ public class BridgeTunnelTowerCorrection {
         sw = new StopWatch().start();
 
         // For every structure-touching tower, collect elevation samples via Dijkstra and decide
-        // the corrected elevation. Apply in place — the traversal only samples pure-ground nodes
-        // (those that do not touch any structure edge), so already-corrected neighbouring
-        // towers cannot contaminate later results.
-        // Scratch buffers allocated once and clear()ed per run — saves ~5 allocations per
-        // candidate tower (hundreds of thousands on a country graph).
+        // the corrected elevation. Apply in place to reduce memory usage and as the traversal only
+        // samples pure-ground nodes (those that do not touch any structure edge) the
+        // already-corrected neighboring towers cannot contaminate later results.
+        // Scratch buffers allocated once and clear()ed per run to reduce GC pressure.
         DoubleArrayList sampleEles = new DoubleArrayList();
         DoubleArrayList sampleDists = new DoubleArrayList();
         GHBitSet settled = new GHTBitSet();
@@ -140,9 +134,7 @@ public class BridgeTunnelTowerCorrection {
         float dijkstraTime = sw.stop().getSeconds();
         sw = new StopWatch().start();
 
-        // Re-interpolate pillars only on ramp edges whose tower endpoints actually moved.
-        // If neither endpoint changed, the stored geometry is still consistent — re-running
-        // linear interpolation would just destroy any real DEM variation along the ramp.
+        // Re-interpolate pillars only on ramp edges whose tower endpoints actually moved (very important filter for performance).
         ElevationInterpolator elevationInterpolator = new ElevationInterpolator();
         AllEdgesIterator edgeIter = graph.getAllEdges();
         while (edgeIter.next()) {
@@ -158,10 +150,10 @@ public class BridgeTunnelTowerCorrection {
     }
 
     /**
-     * Sample pure-ground node elevations via Dijkstra. Using a
-     * priority queue ordered by accumulated distance guarantees that {@code distFromStart}
-     * holds the true shortest-path distances, so the IDW weights and the
-     * {@link #MAX_DIST_M} cutoff are always based on the nearest approach to each node.
+     * Sample pure-ground node elevations via Dijkstra. BFS us also possible but Dijkstra leads
+     * to slightly more correct result as the {@code distFromStart} holds the true shortest-path
+     * distances and so the IDW weights and the {@link #MAX_DIST_M} cutoff are always based on
+     * the nearest approach to each node.
      * The "n touches structure" check is done inline at settle time, so no
      * precomputed array is needed.
      */
@@ -178,7 +170,7 @@ public class BridgeTunnelTowerCorrection {
             double dN = top[0];
             int n = (int) top[1];
 
-            if (settled.contains(n)) continue; // stale entry — a shorter path was found later
+            if (settled.contains(n)) continue; // stale entry — n was already settled via a shorter path
             settled.add(n);
 
             EdgeIterator it = explorer.setBaseNode(n);
@@ -192,7 +184,7 @@ public class BridgeTunnelTowerCorrection {
                 double edgeDist = it.getDistance();
                 double newDist = dN + edgeDist;
                 if (newDist > MAX_DIST_M) {
-                    // Edge overshoots — sample along way-geometry at the budget cutoff.
+                    // Edge overshoots: sample along way-geometry at the budget cutoff.
                     double remaining = MAX_DIST_M - dN;
                     if (remaining > 0) {
                         double virtualEle = sampleEleAlongEdge(it, remaining);
@@ -208,7 +200,7 @@ public class BridgeTunnelTowerCorrection {
                     distFromStart.put(adj, newDist);
                     // Always enqueue (= walk past), so that structure-touching nodes — outers of
                     // PARALLEL bridges/tunnels sharing this node, common on multi-way bridges
-                    // like the Albertbrücke — don't terminate the traversal. Whether they get
+                    // like the Albertbrücke (Dresden) — don't terminate the traversal. Whether they get
                     // sampled is decided when they themselves are settled.
                     pq.offer(new double[]{newDist, adj});
                 }
@@ -223,7 +215,7 @@ public class BridgeTunnelTowerCorrection {
     }
 
     /**
-     * Inverse-distance-squared weighting. Closer neighbours dominate the result —
+     * Inverse-distance-squared weighting. Closer neighbors dominate the result —
      * important on terrain that climbs or descends steadily through the Dijkstra window,
      * where a plain 1/d would still let far samples drag the answer away from the
      * road that is immediately adjacent to the bridge end.
