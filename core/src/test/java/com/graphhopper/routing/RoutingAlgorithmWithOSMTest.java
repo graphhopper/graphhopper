@@ -110,11 +110,11 @@ public class RoutingAlgorithmWithOSMTest {
     @Test
     public void testMonacoMotorcycleCurvature() {
         List<Query> queries = new ArrayList<>();
-        queries.add(new Query(43.730729, 7.42135, 43.727697, 7.419199, 2675, 117));
+        queries.add(new Query(43.730729, 7.42135, 43.727697, 7.419199, 2669, 117));
         queries.add(new Query(43.727687, 7.418737, 43.74958, 7.436566, 3730, 170));
-        queries.add(new Query(43.728677, 7.41016, 43.739213, 7.4277, 2769, 167));
-        queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 2373, 137));
-        queries.add(new Query(43.730949, 7.412338, 43.739643, 7.424542, 2203, 116));
+        queries.add(new Query(43.728677, 7.41016, 43.739213, 7.4277, 2732, 167));
+        queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 2368, 137));
+        queries.add(new Query(43.730949, 7.412338, 43.739643, 7.424542, 2198, 116));
         queries.add(new Query(43.727592, 7.419333, 43.727712, 7.419333, 0, 1));
         GraphHopper hopper = createHopper(MONACO, new Profile("car").setCustomModel(
                 CustomModel.merge(getCustomModel("motorcycle.json"), getCustomModel("curvature.json"))));
@@ -265,9 +265,9 @@ public class RoutingAlgorithmWithOSMTest {
     public void testMonacoFoot3D() {
         // most routes have same number of points as testMonaceFoot results but longer distance due to elevation difference
         List<Query> queries = createMonacoFoot();
-        queries.get(0).getPoints().get(1).expectedDistance = 1624;
-        queries.get(2).getPoints().get(1).expectedDistance = 2250;
-        queries.get(3).getPoints().get(1).expectedDistance = 1482;
+        queries.get(0).getPoints().get(1).expectedDistance = 1603;
+        queries.get(2).getPoints().get(1).expectedDistance = 2234;
+        queries.get(3).getPoints().get(1).expectedDistance = 1478;
 
         // or slightly longer tour with less nodes: list.get(1).setDistance(1, 3610);
         queries.get(1).getPoints().get(1).expectedDistance = 3576;
@@ -317,20 +317,20 @@ public class RoutingAlgorithmWithOSMTest {
     @Test
     public void testMonacoBike3D() {
         List<Query> queries = new ArrayList<>();
-        // 1. alternative: go over steps 'Rampe Major' => 1.7km vs. around 2.7km
-        queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 2670, 118));
+        // 1. alternative: go over steps 'Rampe Major' => 1.7km vs. around 2.4km after BridgeTunnelTowerCorrection
+        queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 2373, 111));
         // 2.
-        queries.add(new Query(43.728499, 7.417907, 43.74958, 7.436566, 4223, 233));
+        queries.add(new Query(43.728499, 7.417907, 43.74958, 7.436566, 4224, 233));
         // 3.
-        queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 2776, 167));
+        queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 2739, 167));
         // 4.
-        queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 1593, 85));
+        queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 1589, 85));
 
         // try reverse direction
         // 1.
-        queries.add(new Query(43.727687, 7.418737, 43.730864, 7.420771, 2598, 115));
-        queries.add(new Query(43.74958, 7.436566, 43.728499, 7.417907, 3982, 181));
-        queries.add(new Query(43.739213, 7.427806, 43.728677, 7.41016, 2806, 145));
+        queries.add(new Query(43.727687, 7.418737, 43.730864, 7.420771, 2585, 115));
+        queries.add(new Query(43.74958, 7.436566, 43.728499, 7.417907, 3976, 181));
+        queries.add(new Query(43.739213, 7.427806, 43.728677, 7.41016, 2773, 145));
         // 4. avoid tunnel(s)!
         queries.add(new Query(43.739662, 7.424355, 43.733802, 7.413433, 1901, 116));
         // tests here still assert that reverse oneways are excluded
@@ -569,7 +569,7 @@ public class RoutingAlgorithmWithOSMTest {
     public void testNeudrossenfeld() {
         List<Query> list = new ArrayList<>();
         // choose cycleway (Dreschenauer Straße)
-        list.add(new Query(49.987132, 11.510496, 50.018839, 11.505024, 3985, 106));
+        list.add(new Query(49.987132, 11.510496, 50.018839, 11.505024, 3983, 106));
 
         GraphHopper hopper = createHopper(BAYREUTH, TestProfiles.accessSpeedAndPriority("bike"));
         hopper.setElevationProvider(new SRTMProvider(DIR));

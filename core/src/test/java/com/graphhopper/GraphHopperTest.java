@@ -1086,7 +1086,7 @@ public class GraphHopperTest {
                 setAlgorithm(ASTAR).setProfile(profile));
 
         ResponsePath res = rsp.getBest();
-        assertEquals(1616.8, res.getDistance(), .1);
+        assertEquals(1601.7, res.getDistance(), .1);
         assertEquals(68, res.getPoints().size());
         assertTrue(res.getPoints().is3D());
 
@@ -1103,20 +1103,20 @@ public class GraphHopperTest {
                 43.7319676, 7.4206159, 19.0, 43.732038, 7.4203936, 20.0, 43.732173, 7.4198886, 20.0, 43.7322266, 7.4196414, 26.0,
                 43.732266, 7.4194654, 26.0, 43.7323236, 7.4192656, 26.0, 43.7323374, 7.4191503, 26.0, 43.7323374, 7.4190461, 26.0,
                 43.7323875, 7.4189195, 26.0, 43.7323444, 7.4188579, 26.0, 43.731974, 7.4181688, 29.0, 43.7316421, 7.4173042, 23.0,
-                43.7315686, 7.4170356, 31.0, 43.7314269, 7.4166815, 31.0, 43.7312401, 7.4163184, 49.0, 43.7308286, 7.4157613, 29.4000244140625,
-                43.730662, 7.4155599, 22.0, 43.7303643, 7.4151193, 51.0, 43.729579, 7.4137274, 40.0, 43.7295167, 7.4137244, 40.0, 43.7294669, 7.4137725, 40.0,
+                43.7315686, 7.4170356, 25.0899658203125, 43.7314269, 7.4166815, 27.93994140625, 43.7312401, 7.4163184, 31.0, 43.7308286, 7.4157613, 45.4300537109375,
+                43.730662, 7.4155599, 50.8759765625, 43.7303643, 7.4151193, 48.0799560546875, 43.729579, 7.4137274, 40.0, 43.7295167, 7.4137244, 40.0, 43.7294669, 7.4137725, 40.0,
                 43.7285987, 7.4149068, 23.0, 43.7285167, 7.4149272, 22.0, 43.7283974, 7.4148646, 22.0, 43.7285619, 7.4151365, 23.0, 43.7285774, 7.4152444, 23.0,
                 43.7285863, 7.4157656, 21.0, 43.7285763, 7.4159759, 21.0, 43.7285238, 7.4161982, 20.0, 43.7284592, 7.4163655, 18.0, 43.72838, 7.4165003, 18.0,
                 43.7281669, 7.4168192, 18.0, 43.7281442, 7.4169449, 18.0, 43.7281477, 7.4170695, 18.0, 43.7281684, 7.4172435, 14.0, 43.7282784, 7.4179606, 14.0,
                 43.7282757, 7.418175, 11.0, 43.7282319, 7.4183683, 11.0, 43.7281482, 7.4185473, 11.0, 43.7280654, 7.4186535, 11.0, 43.727926, 7.418748, 11.0,
-                43.7278398, 7.4187697, 11.0, 43.727779, 7.4187731, 11.0, 43.7276825, 7.4190072, 11.0, 43.72767974015672, 7.419198523220426, 11.0), res.getPoints());
+                43.7278398, 7.4187697, 11.0, 43.727779, 7.4187731, 11.0, 43.7276825, 7.4190072, 11.0, 43.72767974015672, 7.419198523220426, 11.416705816245472), res.getPoints());
 
-        assertEquals(82.3, res.getAscend(), 1e-1);
-        assertEquals(135, res.getDescend(), 1e-1);
+        assertEquals(55.5, res.getAscend(), 1e-1);
+        assertEquals(107.9, res.getDescend(), 1e-1);
 
         assertEquals(68, res.getPoints().size());
         assertEquals(new GHPoint3D(43.73068455771767, 7.421283689825812, 63.74379211), res.getPoints().get(0));
-        assertEquals(new GHPoint3D(43.727679637988224, 7.419198521975086, 11.0), res.getPoints().get(res.getPoints().size() - 1));
+        assertEquals(new GHPoint3D(43.72767974015672, 7.419198523220426, 11.416705816245472), res.getPoints().get(res.getPoints().size() - 1));
 
         assertEquals(63.74, res.getPoints().get(0).getEle(), 1e-2);
         assertEquals(66, res.getPoints().get(1).getEle(), 1e-2);
@@ -1171,13 +1171,13 @@ public class GraphHopperTest {
         assertTrue(pointList.is3D());
 
         if (withTunnelInterpolation) {
-            assertEquals(351.8, res.getDistance(), .1);
+            assertEquals(351.5, res.getDistance(), .1);
             assertEquals(17, pointList.getEle(0), .1);
-            assertEquals(19.04, pointList.getEle(1), .1);
-            assertEquals(21.67, pointList.getEle(2), .1);
-            assertEquals(25.03, pointList.getEle(3), .1);
-            assertEquals(28.65, pointList.getEle(4), .1);
-            assertEquals(34.00, pointList.getEle(5), .1);
+            assertEquals(17.44, pointList.getEle(1), .1);
+            assertEquals(18.01, pointList.getEle(2), .1);
+            assertEquals(18.73, pointList.getEle(3), .1);
+            assertEquals(19.51, pointList.getEle(4), .1);
+            assertEquals(20.66, pointList.getEle(5), .1);
         } else {
             assertEquals(358.3, res.getDistance(), .1);
             assertEquals(17.0, pointList.getEle(0), .1);
@@ -1214,19 +1214,19 @@ public class GraphHopperTest {
 
         ResponsePath arsp = rsp.getBest();
         assertEquals(1570, arsp.getDistance(), 1);
-        assertEquals(74, arsp.getPoints().size());
+        assertEquals(70, arsp.getPoints().size());
         assertTrue(arsp.getPoints().is3D());
 
         InstructionList il = arsp.getInstructions();
         assertEquals(12, il.size());
         assertTrue(il.get(0).getPoints().is3D());
 
-        assertEquals(22.8, arsp.getAscend(), 1e-1);
-        assertEquals(67.4, arsp.getDescend(), 1e-1);
+        assertEquals(16.3, arsp.getAscend(), 1e-1);
+        assertEquals(61.2, arsp.getDescend(), 1e-1);
 
-        assertEquals(74, arsp.getPoints().size());
+        assertEquals(70, arsp.getPoints().size());
         assertEquals(new GHPoint3D(43.73068455771767, 7.421283689825812, 56.68), arsp.getPoints().get(0));
-        assertEquals(new GHPoint3D(43.727679637988224, 7.419198521975086, 12.11), arsp.getPoints().get(arsp.getPoints().size() - 1));
+        assertEquals(new GHPoint3D(43.72767974015672, 7.419198523220426, 11.79), arsp.getPoints().get(arsp.getPoints().size() - 1));
 
         assertEquals(56.68, arsp.getPoints().get(0).getEle(), 1e-2);
         assertEquals(57.78, arsp.getPoints().get(1).getEle(), 1e-2);

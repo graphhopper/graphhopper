@@ -76,11 +76,11 @@ public class EdgeElevationInterpolator {
     }
 
     public void execute() {
-        interpolateElevationsOfTowerNodes();
+        interpolateElevationsOfInnerTowerNodes();
         interpolateElevationsOfPillarNodes();
     }
 
-    private void interpolateElevationsOfTowerNodes() {
+    private void interpolateElevationsOfInnerTowerNodes() {
         final AllEdgesIterator edge = graph.getAllEdges();
         final GHBitSet visitedEdgeIds = new GHBitSetImpl(edge.length());
         final EdgeExplorer edgeExplorer = graph.createEdgeExplorer();
