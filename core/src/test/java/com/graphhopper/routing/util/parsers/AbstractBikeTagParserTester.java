@@ -201,7 +201,6 @@ public abstract class AbstractBikeTagParserTester {
         way.setTag("bicycle", "no");
         assertTrue(accessParser.getAccess(way).canSkip());
 
-
         way.clearTags();
         way.setTag("highway", "cycleway");
         way.setTag("cycleway", "track");
@@ -371,7 +370,7 @@ public abstract class AbstractBikeTagParserTester {
     }
 
     @Test
-    public void testHandleWayTagsCallsHandlePriority() {
+    public void testCycleway() {
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "cycleway");
 

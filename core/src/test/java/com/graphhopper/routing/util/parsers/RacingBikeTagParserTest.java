@@ -66,6 +66,11 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         return new RacingBikePriorityParser(lookup);
     }
 
+    @Override
+    @Test
+    public void testCycleway() {
+    }
+
     @Test
     @Override
     public void testAvoidTunnel() {

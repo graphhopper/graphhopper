@@ -30,8 +30,6 @@ public class RacingBikePriorityParser extends BikeCommonPriorityParser {
         avoidHighwayTags.put("motorway_link", BAD);
         avoidHighwayTags.put("trunk", BAD);
         avoidHighwayTags.put("trunk_link", BAD);
-        avoidHighwayTags.put("primary", AVOID_MORE);
-        avoidHighwayTags.put("primary_link", AVOID_MORE);
 
         setSpecificClassBicycle("roadcycling");
 

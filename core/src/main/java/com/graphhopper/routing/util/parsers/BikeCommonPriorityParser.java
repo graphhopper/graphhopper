@@ -45,8 +45,6 @@ public abstract class BikeCommonPriorityParser implements TagParser {
         avoidHighwayTags.put("motorway_link", REACH_DESTINATION);
         avoidHighwayTags.put("trunk", REACH_DESTINATION);
         avoidHighwayTags.put("trunk_link", REACH_DESTINATION);
-        avoidHighwayTags.put("primary", BAD);
-        avoidHighwayTags.put("primary_link", BAD);
         avoidHighwayTags.put("secondary", AVOID);
         avoidHighwayTags.put("secondary_link", AVOID);
         avoidHighwayTags.put("bridleway", AVOID);
@@ -99,15 +97,13 @@ public abstract class BikeCommonPriorityParser implements TagParser {
                 weightToPrioMap.put(100d, PREFER);
         }
 
-        if ("cycleway".equals(highway)) {
+        double maxSpeed = Math.max(OSMMaxSpeedParser.parseMaxSpeed(way, false), OSMMaxSpeedParser.parseMaxSpeed(way, true));
+        if ("cycleway".equals(highway) && preferHighwayTags.contains(highway)) {
             if (way.hasTag("foot", INTENDED) && !way.hasTag("segregated", "yes"))
                 weightToPrioMap.put(100d, PREFER);
             else
                 weightToPrioMap.put(100d, VERY_NICE);
-        }
-
-        double maxSpeed = Math.max(OSMMaxSpeedParser.parseMaxSpeed(way, false), OSMMaxSpeedParser.parseMaxSpeed(way, true));
-        if (preferHighwayTags.contains(highway) || maxSpeed <= 30) {
+        } else if (preferHighwayTags.contains(highway) || maxSpeed <= 30) {
             if (maxSpeed == MaxSpeed.MAXSPEED_MISSING || maxSpeed < avoidSpeedLimit) {
                 weightToPrioMap.put(40d, SLIGHT_PREFER);
                 if (way.hasTag("tunnel", INTENDED))
