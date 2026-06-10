@@ -25,7 +25,6 @@ public class RacingBikePriorityParser extends BikeCommonPriorityParser {
         preferHighwayTags.add("secondary_link");
         preferHighwayTags.add("tertiary");
         preferHighwayTags.add("tertiary_link");
-        preferHighwayTags.add("residential"); // TODO NOW: remove as conflict with collect method
 
         avoidHighwayTags.put("motorway", BAD);
         avoidHighwayTags.put("motorway_link", BAD);
