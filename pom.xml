@@ -144,6 +144,12 @@
                     </exclusion>
                 </exclusions>
             </dependency>
+            <!-- fix for CVE-2026-1605 -->
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-server</artifactId>
+                <version>12.1.8</version>
+            </dependency>
             <!-- for reader-gtfs -->
             <dependency>
                 <groupId>jakarta.inject</groupId>
