@@ -102,6 +102,7 @@ public interface GraphHopperMultimodalIT<T extends PtRouter> {
     }
 
     class TripBasedPtRouterMultimodalTest implements GraphHopperMultimodalIT<PtRouterTripBasedImpl> {
+        private static final String TRIP_BASED_GRAPH_LOC = GRAPH_LOC + "_trip_based";
         private static GraphHopperGtfs graphHopperGtfs;
         private static PtRouterTripBasedImpl graphHopper;
 
@@ -113,13 +114,13 @@ public interface GraphHopperMultimodalIT<T extends PtRouter> {
             ghConfig.putObject("gtfs.file", "files/sample-feed");
             ghConfig.putObject("gtfs.trip_based", true);
             ghConfig.putObject("gtfs.schedule_day", "2007-01-01");
-            ghConfig.putObject("graph.location", GRAPH_LOC);
+            ghConfig.putObject("graph.location", TRIP_BASED_GRAPH_LOC);    
             ghConfig.putObject("graph.encoded_values", "foot_access, foot_priority, foot_average_speed, car_access, car_average_speed");
             ghConfig.setProfiles(Arrays.asList(
                     TestProfiles.accessSpeedAndPriority("foot"),
                     TestProfiles.accessAndSpeed("car_default", "car"),
                     TestProfiles.accessAndSpeed("car_custom","car")));
-            Helper.removeDir(new File(GRAPH_LOC));
+            Helper.removeDir(new File(TRIP_BASED_GRAPH_LOC));
             graphHopperGtfs = new GraphHopperGtfs(ghConfig);
             graphHopperGtfs.init(ghConfig);
             graphHopperGtfs.importOrLoad();

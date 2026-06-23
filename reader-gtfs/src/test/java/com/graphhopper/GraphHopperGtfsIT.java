@@ -63,14 +63,15 @@ public interface GraphHopperGtfsIT<T extends PtRouter> {
 
     class TripBasedPtRouterTest implements GraphHopperGtfsIT<PtRouterTripBasedImpl> {
 
+        private static final String TRIP_BASED_GRAPH_LOC = GRAPH_LOC + "_trip_based";
         private static GraphHopperGtfs graphHopperGtfs;
         static PtRouterTripBasedImpl ptRouter;
 
         @BeforeAll
         static void init() {
-            Helper.removeDir(new File(GRAPH_LOC));
+            Helper.removeDir(new File(TRIP_BASED_GRAPH_LOC));
             GraphHopperConfig ghConfig = new GraphHopperConfig();
-            ghConfig.putObject("graph.location", GRAPH_LOC);
+            ghConfig.putObject("graph.location", TRIP_BASED_GRAPH_LOC);
             ghConfig.putObject("import.osm.ignored_highways", "");
             ghConfig.putObject("gtfs.file", "files/sample-feed");
             ghConfig.putObject("gtfs.trip_based", true);

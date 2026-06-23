@@ -254,13 +254,14 @@ public final class MMapDataAccess extends AbstractDataAccess {
             newSegmentCount++;
 
         if (newSegmentCount < segments.size()) {
-            clean(newSegmentCount, segments.size());
-            segments.subList(newSegmentCount, segments.size()).clear();
+            clean(0, segments.size());
+            segments.clear();
             try {
-                raFile.setLength(HEADER_OFFSET + getCapacity());
+                raFile.setLength(HEADER_OFFSET + (long) newSegmentCount * segmentSizeInBytes);
             } catch (IOException ex) {
                 throw new RuntimeException("Failed to truncate file " + getFullName(), ex);
             }
+            mapIt(HEADER_OFFSET, (long) newSegmentCount * segmentSizeInBytes);
         }
     }
 

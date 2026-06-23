@@ -2,11 +2,12 @@ name: Build and Test
 on: push
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         java-version: [ 26, 27-ea ]
+        os: [ ubuntu-latest, windows-latest, macos-latest ]
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-java@v5
@@ -22,4 +23,3 @@ jobs:
             ${{ runner.os }}-maven-
       - name: Build ${{ matrix.java-version }}
         run: mvn -B clean test
-

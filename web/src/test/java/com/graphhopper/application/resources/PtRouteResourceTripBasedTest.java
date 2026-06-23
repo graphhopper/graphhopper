@@ -46,7 +46,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 @ExtendWith(DropwizardExtensionsSupport.class)
 public class PtRouteResourceTripBasedTest {
-    private static final String DIR = "./target/gtfs-app-gh/";
+    private static final String DIR = "./target/gtfs-app-gh-trip-based/";
     public static final DropwizardAppExtension<GraphHopperServerConfiguration> app = new DropwizardAppExtension<>(GraphHopperApplication.class, createConfig());
 
     private static GraphHopperServerConfiguration createConfig() {
