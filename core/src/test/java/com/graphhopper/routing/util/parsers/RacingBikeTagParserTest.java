@@ -106,7 +106,7 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("bicycle", "yes");
         assertPriorityAndSpeed(AVOID_MORE, 2, way);
         way.setTag("surface", "asphalt");
-        assertPriorityAndSpeed(PREFER, 24, way);
+        assertPriorityAndSpeed(UNCHANGED, 24, way);
 
         way.clearTags();
         way.setTag("highway", "track");
@@ -114,9 +114,9 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("segregated","no");
         assertPriorityAndSpeed(AVOID_MORE, 2, way);
         way.setTag("surface", "asphalt");
-        assertPriorityAndSpeed(PREFER, 24, way);
+        assertPriorityAndSpeed(UNCHANGED, 24, way);
         way.setTag("tracktype","grade1");
-        assertPriorityAndSpeed(PREFER, 24, way);
+        assertPriorityAndSpeed(UNCHANGED, 24, way);
     }
 
     @Test
@@ -209,7 +209,7 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
 
         // Now we assume bicycle=yes, and paved
         osmWay.setTag("tracktype", "grade1");
-        assertPriorityAndSpeed(PREFER, 24, osmWay, osmRel);
+        assertPriorityAndSpeed(UNCHANGED, 24, osmWay, osmRel);
 
         // Now we assume bicycle=yes, and unpaved and as part of a cycle relation
         osmWay.setTag("tracktype", "grade2");
@@ -220,7 +220,7 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         osmWay.clearTags();
         osmWay.setTag("highway", "track");
         osmWay.setTag("surface", "asphalt");
-        assertPriorityAndSpeed(PREFER, 24, osmWay, osmRel);
+        assertPriorityAndSpeed(UNCHANGED, 24, osmWay, osmRel);
 
         // Now we assume bicycle=yes, and unpaved and not part of a cycle relation
         osmWay.clearTags();
@@ -258,10 +258,10 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, SLIGHT_PREFER, 24, osmWay);
 
         osmWay.setTag("maxspeed", "90");
-        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, UNCHANGED, 24, osmWay);
+        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, SLIGHT_PREFER, 24, osmWay);
 
         osmWay.setTag("maxspeed", "120");
-        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, UNCHANGED, 24, osmWay);
+        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, SLIGHT_PREFER, 24, osmWay);
 
         osmWay.setTag("highway", "motorway");
         assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, BAD, 18, osmWay);
@@ -285,7 +285,7 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         osmWay.setTag("highway", "notdefined");
         osmWay.setTag("tunnel", "yes");
         osmWay.setTag("maxspeed", "120");
-        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, BAD, PUSHING_SECTION_SPEED, osmWay);
+        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, UNCHANGED, PUSHING_SECTION_SPEED, osmWay);
 
         osmWay.clearTags();
         osmWay.setTag("highway", "notdefined");
