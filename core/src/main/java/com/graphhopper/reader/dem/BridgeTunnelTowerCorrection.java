@@ -40,8 +40,9 @@ import java.util.BitSet;
  * Fixes the DEM elevation of bridge/tunnel/ferry tower-end nodes from the surrounding road,
  * then re-interpolates the pillars on the adjacent ramp edges.
  * <p>
- * The DEM at a bridge end often hits the valley/river below the deck (too low), at a tunnel end
- * the surface above (too high); the surrounding road is the correct anchor. For each
+ * The DEM at a bridge end often hits the valley/river below the structure (the deck) and reads
+ * too low, at a tunnel end the surface above and reads too high; the surrounding road is the
+ * correct anchor. For each
  * structure-touching tower we run Dijkstra (≤ {@link #MAX_DIST_M}) over non-structure edges,
  * sampling only pure-ground nodes — walking past other structure nodes so shared/parallel bridges
  * don't stop the search — and set the tower to the inverse-distance-weighted mean (IDW) of those
@@ -49,7 +50,7 @@ import java.util.BitSet;
  * <p>
  * An IDW mean cannot leave the sample range, so a tower at the bottom (or top) of a real gradient
  * would be dragged towards its one-sided samples and spike. We therefore apply a correction only
- * if it does not steepen the road or the deck (see {@link #steepensIncidentEdges}).
+ * if it does not steepen the road or the structure (see {@link #steepensIncidentEdges}).
  * <p>
  * {@link EdgeElevationInterpolator} runs after this and fills the structure interior (pillars,
  * inner towers) from the corrected outer towers.
@@ -60,8 +61,6 @@ public class BridgeTunnelTowerCorrection {
 
     // How far outward to search via Dijkstra (in meter).
     private static final double MAX_DIST_M = 50.0;
-    // Minimum number of pure-ground samples required before we trust the inferred elevation.
-    private static final int MIN_ROAD_SAMPLES = 1;
 
     private final BaseGraph graph;
     private final EnumEncodedValue<RoadEnvironment> roadEnvEnc;
@@ -78,12 +77,12 @@ public class BridgeTunnelTowerCorrection {
 
         StopWatch sw = new StopWatch().start();
 
-        // pendingNodes: structure-touching towers = correction candidates. Bits are cleared for the
-        // ones we don't change (skipped, IDW ≈ DEM, or rejected by the guard), so afterwards a set
-        // bit means "elevation changed" — which is what the pillar loop needs.
-        // groundTouching: nodes with >=1 non-structure edge. Inner towers of a multi-edge structure
-        // have none; their DEM is meaningless (re-interpolated later), so the guard ignores them.
+        // structure-touching tower nodes are correction candidates. Later a bit is
+        // cleared if the elevation doesn't change (too few ground samples, the computed value equals
+        // the DEM, or the guard rejected it), so afterwards a set bit means "elevation changed" —
+        // which is what the pillar loop needs.
         BitSet pendingNodes = new BitSet(numNodes);
+        // nodes with at least one non-structure edge.
         BitSet groundTouching = new BitSet(numNodes);
         AllEdgesIterator allIter = graph.getAllEdges();
         while (allIter.next()) {
@@ -119,7 +118,7 @@ public class BridgeTunnelTowerCorrection {
             heap.clear();
             dijkstraCollectRoadSamples(n, nodeAccess, explorer, sampleEles, sampleDists,
                     settled, distFromStart, heap);
-            if (sampleEles.size() < MIN_ROAD_SAMPLES) {
+            if (sampleEles.isEmpty()) {
                 pendingNodes.clear(n);
                 skipped++;
                 continue;
@@ -134,17 +133,27 @@ public class BridgeTunnelTowerCorrection {
                 pendingNodes.clear(n);
         }
 
-        // Guard: drop any correction that would steepen the road/deck (see steepensIncidentEdges).
+        // Guard: drop any correction that would steepen the ramp or structure (see steepensIncidentEdges).
         // Decisions use the full set of proposals (collect first, then remove) so they don't depend
-        // on node order — a valley viaduct's two towers are still lifted together.
+        // on node order — a valley viaduct's two towers are still lifted together. Removing one tower
+        // can make a neighbour that was only accepted thanks to that tower's lift now steepen against
+        // the reverted DEM, so we repeat until a pass rejects nothing. Removals only ever add
+        // rejections, so this reaches a fixed point.
+        int rejectedCount = 0;
         IntArrayList rejected = new IntArrayList();
-        for (IntDoubleCursor c : newEles)
-            if (steepensIncidentEdges(c.key, c.value, nodeAccess, explorer, newEles, groundTouching))
-                rejected.add(c.key);
-        for (IntCursor c : rejected) {
-            newEles.remove(c.value);
-            pendingNodes.clear(c.value);
-        }
+        boolean changed;
+        do {
+            rejected.clear();
+            for (IntDoubleCursor c : newEles)
+                if (steepensIncidentEdges(c.key, c.value, nodeAccess, explorer, newEles, groundTouching))
+                    rejected.add(c.key);
+            changed = !rejected.isEmpty();
+            for (IntCursor c : rejected) {
+                newEles.remove(c.value);
+                pendingNodes.clear(c.value);
+            }
+            rejectedCount += rejected.size();
+        } while (changed);
         for (IntDoubleCursor c : newEles)
             nodeAccess.setNode(c.key, nodeAccess.getLat(c.key), nodeAccess.getLon(c.key), c.value);
         int corrected = newEles.size();
@@ -164,7 +173,7 @@ public class BridgeTunnelTowerCorrection {
 
         LOGGER.info("BridgeTunnelTowerCorrection: corrected {} towers, skipped {} (insufficient road samples), " +
                         "rejected {} (would steepen the road network). init {}s, dijkstra {}s, interpolate {}s",
-                corrected, skipped, rejected.size(), (int) initTime, (int) dijkstraTime, (int) sw.stop().getSeconds());
+                corrected, skipped, rejectedCount, (int) initTime, (int) dijkstraTime, (int) sw.stop().getSeconds());
     }
 
     /**
@@ -174,9 +183,9 @@ public class BridgeTunnelTowerCorrection {
      * are uphill, and the IDW pulls a self-consistent tower up.
      * <p>
      * Rejected if the lift increases the steepest slope over either (a) all incident edges, or
-     * (b) the deck edges alone. Test (b) is needed because the lift flattens the steep ramp under
-     * such a tower, which would hide the deck steepening if only (a) were checked (the Gsollstraße
-     * bridges near the B115). Both compare the steepest edge before/after, so a deck whose DEM is
+     * (b) the structure edges alone. Test (b) is needed because the lift flattens the steep ramp under
+     * such a tower, which would hide the structure steepening if only (a) were checked (the Gsollstraße
+     * bridges near the B115). Both compare the steepest edge before/after, so a structure whose DEM is
      * already spiky can still be smoothed (a Monaco hillside tunnel), and (a) still keeps a tower
      * whose lift would steepen the uphill ramp.
      * <p>
@@ -187,12 +196,15 @@ public class BridgeTunnelTowerCorrection {
     private boolean steepensIncidentEdges(int node, double newZ, NodeAccess nodeAccess, EdgeExplorer explorer,
                                           IntDoubleHashMap newEles, BitSet groundTouching) {
         double obs = nodeAccess.getEle(node);
-        double maxBefore = 0, maxAfter = 0, maxDeckBefore = 0, maxDeckAfter = 0;
+        double maxBefore = 0, maxAfter = 0, maxStructureBefore = 0, maxStructureAfter = 0;
         EdgeIterator it = explorer.setBaseNode(node);
         while (it.next()) {
             double dist = it.getDistance();
             if (dist < 1) continue;
             int adj = it.getAdjNode();
+            // Skip inner towers (no ground touching edges, e.g. B in a bridge A-B-C): B is not lifted but
+            // interpolated later, so judging A and C against B's stale elevation would wrongly reject both.
+            // Not caught: A lifted while C lowered worsens the combined A-C slope, but we accept it.
             if (!groundTouching.get(adj)) continue;
             double adjObs = nodeAccess.getEle(adj);
             double adjNew = newEles.getOrDefault(adj, adjObs);
@@ -201,11 +213,11 @@ public class BridgeTunnelTowerCorrection {
             maxBefore = Math.max(maxBefore, slopeBefore);
             maxAfter = Math.max(maxAfter, slopeAfter);
             if (isStructureEdge(it)) {
-                maxDeckBefore = Math.max(maxDeckBefore, slopeBefore);
-                maxDeckAfter = Math.max(maxDeckAfter, slopeAfter);
+                maxStructureBefore = Math.max(maxStructureBefore, slopeBefore);
+                maxStructureAfter = Math.max(maxStructureAfter, slopeAfter);
             }
         }
-        return maxAfter > maxBefore + 1e-9 || maxDeckAfter > maxDeckBefore + 1e-9;
+        return maxAfter > maxBefore + 1e-9 || maxStructureAfter > maxStructureBefore + 1e-9;
     }
 
     /**
