@@ -61,6 +61,7 @@ Here is an overview:
  * matkoniecz, tweaking documentation
  * manueltimita, fixes like #1651
  * mathstpierre, fixes like #1753
+ * modhtom, fixes like #3135, #3213, #3215
  * michalmac, fixes like #1467
  * michaz, one of the core developers
  * mprins, improvements for travis CI and regarding JDK9 #806
