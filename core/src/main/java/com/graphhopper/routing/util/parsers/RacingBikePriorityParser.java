@@ -43,10 +43,8 @@ public class RacingBikePriorityParser extends BikeCommonPriorityParser {
         String highway = way.getTag("highway");
         double maxSpeed = Math.max(OSMMaxSpeedParser.parseMaxSpeed(way, false), OSMMaxSpeedParser.parseMaxSpeed(way, true));
 
-        if (bikeDesignated) {
-            boolean isGoodSurface = "grade1".equals(way.getTag("tracktype")) || goodSurface.contains(way.getTag("surface", ""));
-            weightToPrioMap.put(100d, "path".equals(highway) || "track".equals(highway) && isGoodSurface ? VERY_NICE : PREFER);
-        }
+        if (bikeDesignated)
+            weightToPrioMap.put(100d, PREFER);
 
         if ("track".equals(highway)) {
             String trackType = way.getTag("tracktype");
