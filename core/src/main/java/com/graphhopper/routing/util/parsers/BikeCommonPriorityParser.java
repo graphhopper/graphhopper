@@ -94,23 +94,23 @@ public abstract class BikeCommonPriorityParser implements TagParser {
         }
 
         double maxSpeed = Math.max(OSMMaxSpeedParser.parseMaxSpeed(way, false), OSMMaxSpeedParser.parseMaxSpeed(way, true));
-        if ("cycleway".equals(highway) && preferHighwayTags.contains(highway)) {
+        boolean highSpeed = maxSpeed != MaxSpeed.MAXSPEED_MISSING && maxSpeed >= 71;
+        if ("cycleway".equals(highway)) {
             if (way.hasTag("foot", INTENDED) && !way.hasTag("segregated", "yes"))
                 weightToPrioMap.put(100d, PREFER);
             else
                 weightToPrioMap.put(100d, VERY_NICE);
         } else if (preferHighwayTags.contains(highway) || maxSpeed <= 30) {
-            if (maxSpeed == MaxSpeed.MAXSPEED_MISSING || maxSpeed < 71) {
+            if (!highSpeed) {
                 weightToPrioMap.put(40d, SLIGHT_PREFER);
                 if (way.hasTag("tunnel", INTENDED))
                     weightToPrioMap.put(40d, UNCHANGED);
             }
-        } else if (avoidHighwayTags.containsKey(highway)
-                || (maxSpeed != MaxSpeed.MAXSPEED_MISSING && maxSpeed >= 71 && !"track".equals(highway))) {
-            PriorityCode priorityCode = avoidHighwayTags.get(highway);
-            weightToPrioMap.put(50d, priorityCode == null ? AVOID : priorityCode);
+        } else if (avoidHighwayTags.containsKey(highway) || highSpeed && !"track".equals(highway)) {
+            PriorityCode priorityCode = avoidHighwayTags.getOrDefault(highway, AVOID);
+            weightToPrioMap.put(50d, priorityCode);
             if (way.hasTag("tunnel", INTENDED)) {
-                PriorityCode worse = priorityCode == null ? BAD : priorityCode.worse().worse();
+                PriorityCode worse = priorityCode.worse().worse();
                 weightToPrioMap.put(50d, worse == EXCLUDE ? REACH_DESTINATION : worse);
             }
         }
