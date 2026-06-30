@@ -33,49 +33,43 @@ public class RacingBikePriorityParser extends BikeCommonPriorityParser {
         avoidHighwayTags.put("motorway_link", BAD);
         avoidHighwayTags.put("trunk", BAD);
         avoidHighwayTags.put("trunk_link", BAD);
-
-        setSpecificClassBicycle("roadcycling");
-
-        avoidSpeedLimit = Double.POSITIVE_INFINITY;
+        avoidHighwayTags.put("service", SLIGHT_AVOID);
+        avoidHighwayTags.put("residential", SLIGHT_AVOID);
+        avoidHighwayTags.put("unclassified", SLIGHT_AVOID);
     }
 
     @Override
     void collect(ReaderWay way, boolean bikeDesignated, TreeMap<Double, PriorityCode> weightToPrioMap) {
         String highway = way.getTag("highway");
+        double maxSpeed = Math.max(OSMMaxSpeedParser.parseMaxSpeed(way, false), OSMMaxSpeedParser.parseMaxSpeed(way, true));
+
         if (bikeDesignated) {
-            boolean isGoodSurface = way.getTag("tracktype", "").equals("grade1") || goodSurface.contains(way.getTag("surface", ""));
-            if ("path".equals(highway) || "track".equals(highway) && isGoodSurface)
-                weightToPrioMap.put(100d, VERY_NICE);
-            else
-                weightToPrioMap.put(100d, PREFER);
+            boolean isGoodSurface = "grade1".equals(way.getTag("tracktype")) || goodSurface.contains(way.getTag("surface", ""));
+            weightToPrioMap.put(100d, "path".equals(highway) || "track".equals(highway) && isGoodSurface ? VERY_NICE : PREFER);
         }
 
-        double maxSpeed = Math.max(OSMMaxSpeedParser.parseMaxSpeed(way, false), OSMMaxSpeedParser.parseMaxSpeed(way, true));
-        if ("cycleway".equals(highway) && preferHighwayTags.contains(highway)) {
-            if (way.hasTag("foot", INTENDED) && !way.hasTag("segregated", "yes"))
-                weightToPrioMap.put(100d, PREFER);
-            else
-                weightToPrioMap.put(100d, VERY_NICE);
+        if ("track".equals(highway)) {
+            String trackType = way.getTag("tracktype");
+            if ("grade1".equals(trackType) || goodSurface.contains(way.getTag("surface", "")))
+                weightToPrioMap.put(110d, UNCHANGED);
+            else if (trackType == null || trackType.startsWith("grade"))
+                weightToPrioMap.put(110d, AVOID_MORE);
         } else if (preferHighwayTags.contains(highway) || maxSpeed <= 30) {
-            if (maxSpeed == MaxSpeed.MAXSPEED_MISSING || maxSpeed < avoidSpeedLimit) {
-                weightToPrioMap.put(40d, SLIGHT_PREFER);
-                if (way.hasTag("tunnel", INTENDED))
-                    weightToPrioMap.put(40d, UNCHANGED);
-            }
-        } else if (avoidHighwayTags.containsKey(highway)
-                || (maxSpeed != MaxSpeed.MAXSPEED_MISSING && maxSpeed >= avoidSpeedLimit && !"track".equals(highway))) {
-            PriorityCode priorityCode = avoidHighwayTags.get(highway);
-            weightToPrioMap.put(50d, priorityCode == null ? AVOID : priorityCode);
-            if (way.hasTag("tunnel", INTENDED)) {
-                PriorityCode worse = priorityCode == null ? BAD : priorityCode.worse().worse();
+            weightToPrioMap.put(40d, SLIGHT_PREFER);
+            if (way.hasTag("tunnel", INTENDED))
+                weightToPrioMap.put(40d, UNCHANGED);
+        } else if (avoidHighwayTags.containsKey(highway) || way.hasTag("foot", INTENDED)) {
+            PriorityCode priorityCode = avoidHighwayTags.getOrDefault(highway, AVOID);
+            weightToPrioMap.put(50d, priorityCode);
+            // tunnels are only dangerous on the high-speed roads we strongly avoid
+            if (way.hasTag("tunnel", INTENDED) && priorityCode == BAD) {
+                PriorityCode worse = priorityCode.worse().worse();
                 weightToPrioMap.put(50d, worse == EXCLUDE ? REACH_DESTINATION : worse);
             }
         }
 
         if (way.hasTag("bicycle", "use_sidepath")) {
             weightToPrioMap.put(100d, REACH_DESTINATION);
-        } else if (way.hasTag("bicycle", "optional_sidepath")) {
-            weightToPrioMap.put(100d, AVOID);
         }
 
         Set<String> cyclewayValues = Stream.of("cycleway", "cycleway:left", "cycleway:both", "cycleway:right").map(key -> way.getTag(key, "")).collect(Collectors.toSet());
@@ -89,22 +83,16 @@ public class RacingBikePriorityParser extends BikeCommonPriorityParser {
             PriorityCode pushingSectionPrio = SLIGHT_AVOID;
             if (way.hasTag("highway", "steps"))
                 pushingSectionPrio = BAD;
-            else if (way.hasTag("bicycle", "yes") || way.hasTag("bicycle", "permissive"))
-                pushingSectionPrio = PREFER;
-            else if (bikeDesignated)
-                pushingSectionPrio = VERY_NICE;
-
-            if (way.hasTag("foot", "yes") && !way.hasTag("segregated", "yes"))
+            else if (way.hasTag("foot", "yes"))
                 pushingSectionPrio = pushingSectionPrio.worse();
 
             weightToPrioMap.put(100d, pushingSectionPrio);
         }
 
-        if (way.hasTag("railway", "tram"))
-            weightToPrioMap.put(50d, AVOID_MORE);
+        if (way.hasTag("railway", "tram") && !bikeDesignated)
+            weightToPrioMap.put(100d, AVOID_MORE);
 
         String classBicycleValue = way.getTag("class:bicycle:roadcycling");
-        if (classBicycleValue == null) classBicycleValue = way.getTag("class:bicycle");
 
         // We assume that humans are better in classifying preferences compared to our algorithm above
         if (classBicycleValue != null) {
@@ -113,18 +101,6 @@ public class RacingBikePriorityParser extends BikeCommonPriorityParser {
             weightToPrioMap.compute(100d, (key, existing) ->
                     existing == null || existing.getValue() < prio.getValue() ? prio : existing
             );
-        }
-
-        if (way.hasTag("foot", INTENDED)) {
-            weightToPrioMap.put(100d, AVOID);
-        } else if ("service".equals(highway) || "residential".equals(highway) || "unclassified".equals(highway)) {
-            weightToPrioMap.put(40d, SLIGHT_AVOID);
-        } else if ("track".equals(highway)) {
-            String trackType = way.getTag("tracktype");
-            if ("grade1".equals(trackType) || goodSurface.contains(way.getTag("surface", "")))
-                weightToPrioMap.put(110d, UNCHANGED);
-            else if (trackType == null || trackType.startsWith("grade"))
-                weightToPrioMap.put(110d, AVOID_MORE);
         }
     }
 }

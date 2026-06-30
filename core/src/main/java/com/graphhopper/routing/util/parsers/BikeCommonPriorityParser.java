@@ -26,7 +26,6 @@ public abstract class BikeCommonPriorityParser implements TagParser {
     protected final Set<String> preferHighwayTags = new HashSet<>();
     protected final Map<String, PriorityCode> avoidHighwayTags = new HashMap<>();
     protected final DecimalEncodedValue priorityEnc;
-    double avoidSpeedLimit = 71;
     protected final Set<String> goodSurface = Set.of("paved", "asphalt", "concrete");
 
     // This is the specific bicycle class
@@ -101,13 +100,13 @@ public abstract class BikeCommonPriorityParser implements TagParser {
             else
                 weightToPrioMap.put(100d, VERY_NICE);
         } else if (preferHighwayTags.contains(highway) || maxSpeed <= 30) {
-            if (maxSpeed == MaxSpeed.MAXSPEED_MISSING || maxSpeed < avoidSpeedLimit) {
+            if (maxSpeed == MaxSpeed.MAXSPEED_MISSING || maxSpeed < 71) {
                 weightToPrioMap.put(40d, SLIGHT_PREFER);
                 if (way.hasTag("tunnel", INTENDED))
                     weightToPrioMap.put(40d, UNCHANGED);
             }
         } else if (avoidHighwayTags.containsKey(highway)
-                || (maxSpeed != MaxSpeed.MAXSPEED_MISSING && maxSpeed >= avoidSpeedLimit && !"track".equals(highway))) {
+                || (maxSpeed != MaxSpeed.MAXSPEED_MISSING && maxSpeed >= 71 && !"track".equals(highway))) {
             PriorityCode priorityCode = avoidHighwayTags.get(highway);
             weightToPrioMap.put(50d, priorityCode == null ? AVOID : priorityCode);
             if (way.hasTag("tunnel", INTENDED)) {
