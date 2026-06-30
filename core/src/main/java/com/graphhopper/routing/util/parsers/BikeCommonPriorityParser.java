@@ -64,7 +64,7 @@ public abstract class BikeCommonPriorityParser implements TagParser {
     }
 
     // Conversion of class value to priority. See http://wiki.openstreetmap.org/wiki/Class:bicycle
-    private PriorityCode convertClassValueToPriority(String tagvalue) {
+    PriorityCode convertClassValueToPriority(String tagvalue) {
         try {
             return switch (Integer.parseInt(tagvalue)) {
                 case 3 -> BEST;
