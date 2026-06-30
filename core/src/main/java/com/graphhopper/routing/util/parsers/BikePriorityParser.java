@@ -4,6 +4,8 @@ import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.VehiclePriority;
 
+import static com.graphhopper.routing.util.PriorityCode.BAD;
+
 public class BikePriorityParser extends BikeCommonPriorityParser {
 
     public BikePriorityParser(EncodedValueLookup lookup) {
@@ -15,9 +17,13 @@ public class BikePriorityParser extends BikeCommonPriorityParser {
 
         addPushingSection("path");
 
+        avoidHighwayTags.put("primary", BAD);
+        avoidHighwayTags.put("primary_link", BAD);
+
         preferHighwayTags.add("service");
         preferHighwayTags.add("residential");
         preferHighwayTags.add("unclassified");
+        preferHighwayTags.add("cycleway");
 
         setSpecificClassBicycle("touring");
     }

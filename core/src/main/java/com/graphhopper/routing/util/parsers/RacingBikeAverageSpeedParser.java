@@ -54,6 +54,8 @@ public class RacingBikeAverageSpeedParser extends BikeCommonAverageSpeedParser {
         setHighwaySpeed("tertiary", 24);
         setHighwaySpeed("tertiary_link", 24);
         setHighwaySpeed("cycleway", 24);
+        setHighwaySpeed("residential", 24);
+        setHighwaySpeed("unclassified", 24);
 
         // overwrite map from BikeCommon
         setSmoothnessSpeedFactor(Smoothness.EXCELLENT, 1.2d);

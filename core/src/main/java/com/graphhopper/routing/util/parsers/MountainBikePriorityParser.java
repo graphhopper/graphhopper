@@ -18,6 +18,9 @@ public class MountainBikePriorityParser extends BikeCommonPriorityParser {
     protected MountainBikePriorityParser(DecimalEncodedValue priorityEnc) {
         super(priorityEnc);
 
+        avoidHighwayTags.put("primary", BAD);
+        avoidHighwayTags.put("primary_link", BAD);
+
         preferHighwayTags.add("road");
         preferHighwayTags.add("track");
         preferHighwayTags.add("path");
@@ -26,6 +29,7 @@ public class MountainBikePriorityParser extends BikeCommonPriorityParser {
         preferHighwayTags.add("tertiary_link");
         preferHighwayTags.add("residential");
         preferHighwayTags.add("unclassified");
+        preferHighwayTags.add("cycleway");
 
         setSpecificClassBicycle("mtb");
     }
