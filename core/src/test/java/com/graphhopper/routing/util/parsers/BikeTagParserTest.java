@@ -726,4 +726,40 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         assertTrue(accessEnc.getBool(false, edgeId, edgeIntAccess));
         assertFalse(accessEnc.getBool(true, edgeId, edgeIntAccess));
     }
+
+    @Test
+    @Override
+    public void testHandleWayPriorityforSurface() {
+        ArrayEdgeIntAccess intAccess =
+            ArrayEdgeIntAccess.createFromBytes(encodingManager.getBytesForFlags());
+        int edgeId = 0;
+        ReaderWay osmWay = new ReaderWay(1);
+
+        osmWay.setTag("highway", "path");
+        osmWay.setTag("surface", "sand");
+        osmWay.setTag("bicycle", "designated");
+        priorityParser.handleWayTags(edgeId, intAccess, osmWay, null);
+        // because a path is a pushing section
+        assertEquals(PriorityCode.getValue(VERY_NICE.getValue()), priorityEnc.getDecimal(false, edgeId, intAccess), 1e-3);
+
+        osmWay = new ReaderWay(1);
+        osmWay.setTag("highway", "path");
+        osmWay.setTag("surface", "concrete");
+        osmWay.setTag("bicycle", "designated");
+        priorityParser.handleWayTags(edgeId, intAccess, osmWay, null);
+        assertEquals(PriorityCode.getValue(VERY_NICE.getValue()), priorityEnc.getDecimal(false, edgeId, intAccess), 1e-3);
+
+        osmWay.setTag("highway", "track");
+        osmWay.setTag("surface", "sand");
+        osmWay.setTag("bicycle", "designated");
+        priorityParser.handleWayTags(edgeId, intAccess, osmWay, null);
+        assertEquals(PriorityCode.getValue(PREFER.getValue()), priorityEnc.getDecimal(false, edgeId, intAccess), 1e-3);
+
+        osmWay = new ReaderWay(1);
+        osmWay.setTag("highway", "track");
+        osmWay.setTag("surface", "concrete");
+        osmWay.setTag("bicycle", "designated");
+        priorityParser.handleWayTags(edgeId, intAccess, osmWay, null);
+        assertEquals(PriorityCode.getValue(VERY_NICE.getValue()), priorityEnc.getDecimal(false, edgeId, intAccess), 1e-3);
+    }
 }

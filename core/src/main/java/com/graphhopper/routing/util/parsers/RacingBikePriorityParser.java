@@ -18,8 +18,6 @@ public class RacingBikePriorityParser extends BikeCommonPriorityParser {
     protected RacingBikePriorityParser(DecimalEncodedValue priorityEnc) {
         super(priorityEnc);
 
-        addPushingSection("path");
-
         preferHighwayTags.add("road");
         preferHighwayTags.add("secondary");
         preferHighwayTags.add("secondary_link");
