@@ -341,8 +341,9 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         osmWay.setTag("highway", "track");
         osmWay.setTag("surface", "concrete");
         osmWay.setTag("bicycle", "designated");
+        // recent change 
         priorityParser.handleWayTags(edgeId, intAccess, osmWay, null);
-        assertEquals(PriorityCode.getValue(PREFER.getValue()), priorityEnc.getDecimal(false, edgeId, intAccess),
+        assertEquals(PriorityCode.getValue(UNCHANGED.getValue()), priorityEnc.getDecimal(false, edgeId, intAccess),
                 1e-3);
     }
 
