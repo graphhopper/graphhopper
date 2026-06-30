@@ -49,14 +49,14 @@ public class BridgeTunnelTowerCorrectionTest {
     }
 
     /** Bridge tower-end has bad DEM (way too low). Surrounding road is at the correct
-     *  deck level. The tower must be lifted to ~the road's elevation. */
+     *  structure level. The tower must be lifted to ~the road's elevation. */
     @Test
     public void liftsBridgeTowerFromValleyDemToSurroundingRoad() {
         NodeAccess na = graph.getNodeAccess();
         na.setNode(0, 0, 0, 100);
         na.setNode(1, 1, 0, 100);
         na.setNode(2, 2, 0, 100);
-        na.setNode(3, 3, 0, 80);   // BRIDGE outer, bad DEM (valley below deck)
+        na.setNode(3, 3, 0, 80);   // BRIDGE outer, bad DEM (valley below structure)
         na.setNode(4, 4, 0, 100);  // bridge outer (good)
         na.setNode(5, 5, 0, 100);
         na.setNode(6, 6, 0, 100);
@@ -168,6 +168,176 @@ public class BridgeTunnelTowerCorrectionTest {
 
         assertEquals(100, na.getEle(3), 0.5);
         assertEquals(100, na.getEle(4), 0.5);
+    }
+
+    /** A short bridge at the bottom of a real road gradient (B115 Vordernberger Straße,
+     *  Eisenerz: the road descends to a 26 m bridge over a stream). The DEM is self-consistent,
+     *  but all Dijkstra samples lie uphill on one side, so the raw IDW would lift the towers by
+     *  several metres and turn the gentle structure into a >15% spike (which made racingbike avoid the
+     *  bridge). Such a correction increases the structure gradient and must be rejected. */
+    @Test
+    public void doesNotLiftTowerAtTheBottomOfARealRoadGradient() {
+        NodeAccess na = graph.getNodeAccess();
+        // real-world elevations of the B115 case
+        na.setNode(0, 0, 0, 801.16); // ground, road keeps climbing
+        na.setNode(1, 1, 0, 799.81); // ground
+        na.setNode(2, 2, 0, 796.05); // bridge tower at the bottom of the descent
+        na.setNode(3, 3, 0, 795.44); // bridge tower
+        na.setNode(4, 4, 0, 796.58); // ground
+        na.setNode(5, 5, 0, 796.60); // ground
+
+        GHUtility.setSpeed(60, 60, accessEnc, speedEnc,
+                graph.edge(0, 1).setDistance(15).set(roadEnvEnc, ROAD),
+                graph.edge(1, 2).setDistance(35).set(roadEnvEnc, ROAD),
+                graph.edge(2, 3).setDistance(26).set(roadEnvEnc, BRIDGE),
+                graph.edge(3, 4).setDistance(35).set(roadEnvEnc, ROAD),
+                graph.edge(4, 5).setDistance(15).set(roadEnvEnc, ROAD));
+
+        new BridgeTunnelTowerCorrection(graph, roadEnvEnc).execute();
+
+        // Without the steepening guard the IDW of the one-sided uphill samples (~800) would
+        // replace tower 2 and create a ~16% structure where the DEM says only ~-2.3%.
+        assertEquals(796.05, na.getEle(2), 0.1);
+        // The structure must stay gentle.
+        assertEquals(0, Math.abs(na.getEle(2) - na.getEle(3)) / 26, 0.05);
+        // Ground untouched.
+        assertEquals(799.81, na.getEle(1), 1e-3);
+        assertEquals(796.58, na.getEle(4), 1e-3);
+    }
+
+    /** A viaduct over a valley where BOTH towers sit in the valley DEM (Klausenbachviadukt,
+     *  Lenzkirch: 47 m structure, towers ~8/11 m too low). Each tower's correction alone would steepen
+     *  the structure against the other tower's old elevation, but lifted together the structure flattens and
+     *  both ramps drop to ~0%. The guard must evaluate the towers' proposed elevations jointly. */
+    @Test
+    public void liftsBothViaductTowersTogether() {
+        NodeAccess na = graph.getNodeAccess();
+        // real-world elevations of the Klausenbachviadukt case
+        na.setNode(0, 0, 0, 807.50); // ground
+        na.setNode(1, 1, 0, 807.28); // ground
+        na.setNode(2, 2, 0, 799.39); // viaduct tower, valley DEM (too low)
+        na.setNode(3, 3, 0, 794.50); // viaduct tower, valley DEM (too low)
+        na.setNode(4, 4, 0, 805.87); // ground
+        na.setNode(5, 5, 0, 806.00); // ground
+
+        GHUtility.setSpeed(60, 60, accessEnc, speedEnc,
+                graph.edge(0, 1).setDistance(15).set(roadEnvEnc, ROAD),
+                graph.edge(1, 2).setDistance(42).set(roadEnvEnc, ROAD),
+                graph.edge(2, 3).setDistance(47).set(roadEnvEnc, BRIDGE),
+                graph.edge(3, 4).setDistance(35).set(roadEnvEnc, ROAD),
+                graph.edge(4, 5).setDistance(15).set(roadEnvEnc, ROAD));
+
+        new BridgeTunnelTowerCorrection(graph, roadEnvEnc).execute();
+
+        // Both towers lifted to ~the surrounding road level, the structure nearly level instead of
+        // dropping ~5 m into the valley.
+        assertEquals(807.3, na.getEle(2), 0.6);
+        assertEquals(805.9, na.getEle(3), 0.6);
+        assertEquals(0, Math.abs(na.getEle(2) - na.getEle(3)) / 47, 0.05);
+    }
+
+    /** Like {@link #liftsBothViaductTowersTogether()}, but the structure consists of THREE edges (a long
+     *  bridge split into several OSM ways), so there are two inner towers. Inner towers have no road
+     *  samples and are re-interpolated between the outer towers by EdgeElevationInterpolator
+     *  afterwards — so their stale valley DEM must not make the guard reject the outer towers' lift. */
+    @Test
+    public void liftsOuterTowersOfMultiEdgeViaduct() {
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(0, 0, 0, 807.50); // ground
+        na.setNode(1, 1, 0, 807.28); // ground
+        na.setNode(2, 2, 0, 799.39); // outer viaduct tower, valley DEM (too low)
+        na.setNode(3, 3, 0, 785.00); // inner viaduct tower, deep valley DEM
+        na.setNode(4, 4, 0, 786.00); // inner viaduct tower, deep valley DEM
+        na.setNode(5, 5, 0, 794.50); // outer viaduct tower, valley DEM (too low)
+        na.setNode(6, 6, 0, 805.87); // ground
+        na.setNode(7, 7, 0, 806.00); // ground
+
+        GHUtility.setSpeed(60, 60, accessEnc, speedEnc,
+                graph.edge(0, 1).setDistance(15).set(roadEnvEnc, ROAD),
+                graph.edge(1, 2).setDistance(42).set(roadEnvEnc, ROAD),
+                graph.edge(2, 3).setDistance(30).set(roadEnvEnc, BRIDGE),
+                graph.edge(3, 4).setDistance(30).set(roadEnvEnc, BRIDGE),
+                graph.edge(4, 5).setDistance(30).set(roadEnvEnc, BRIDGE),
+                graph.edge(5, 6).setDistance(35).set(roadEnvEnc, ROAD),
+                graph.edge(6, 7).setDistance(15).set(roadEnvEnc, ROAD));
+
+        new BridgeTunnelTowerCorrection(graph, roadEnvEnc).execute();
+
+        // Outer towers lifted to ~the surrounding road level, inner towers untouched here
+        // (EdgeElevationInterpolator interpolates them from the outers afterwards).
+        assertEquals(807.3, na.getEle(2), 0.6);
+        assertEquals(805.9, na.getEle(5), 0.6);
+        assertEquals(785.0, na.getEle(3), 0.5);
+        assertEquals(786.0, na.getEle(4), 0.5);
+    }
+
+    /** The steepening guard must judge the structure edges only, not the ramps. A bridge
+     *  tower sits at the bottom of a STEEP approach ramp but has a flat, self-consistent DEM structure.
+     *  Lifting the tower (one-sided IDW ~112) would flatten the steep ramp while turning the flat
+     *  structure into a ~20% spike — a net the old "max over all incident edges" guard wrongly accepted,
+     *  because the ramp improvement masked the structure getting steeper. Judging the structure alone keeps it
+     *  flat. */
+    @Test
+    public void doesNotTradeASteepRampForASteepStructure() {
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(0, 0, 0, 120); // ground, steep ramp up
+        na.setNode(1, 1, 0, 110); // ground, steep ramp up
+        na.setNode(2, 2, 0, 100); // bridge tower at the bottom, flat DEM structure (correct)
+        na.setNode(3, 3, 0, 100); // bridge tower, flat DEM structure (correct)
+        na.setNode(4, 4, 0, 100); // ground, flat
+        na.setNode(5, 5, 0, 100); // ground, flat
+
+        GHUtility.setSpeed(60, 60, accessEnc, speedEnc,
+                graph.edge(0, 1).setDistance(20).set(roadEnvEnc, ROAD),
+                graph.edge(1, 2).setDistance(20).set(roadEnvEnc, ROAD),
+                graph.edge(2, 3).setDistance(60).set(roadEnvEnc, BRIDGE),
+                graph.edge(3, 4).setDistance(20).set(roadEnvEnc, ROAD),
+                graph.edge(4, 5).setDistance(20).set(roadEnvEnc, ROAD));
+
+        new BridgeTunnelTowerCorrection(graph, roadEnvEnc).execute();
+
+        // The flat structure must be kept flat, not steepened by the one-sided uphill IDW.
+        assertEquals(100, na.getEle(2), 0.5);
+        assertEquals(100, na.getEle(3), 0.5);
+        assertEquals(0, Math.abs(na.getEle(2) - na.getEle(3)) / 60, 0.02);
+    }
+
+    /** The guard judges every tower against the full set of proposals, then removes the rejected
+     *  ones. A tower can be accepted only because a neighbour's proposed lift made their shared
+     *  structure look gentle; if that neighbour is then rejected and reverts to its DEM, the kept
+     *  correction is left steeper than the raw DEM — the very spike the guard exists to prevent. So
+     *  rejection must iterate to a fixed point.
+     *  <p>
+     *  Bridge A(2)-B(3): A sits in a dip (DEM 90) with a real road at ~113, so IDW lifts it to 113.
+     *  B (DEM 100) sits on flat ground next to a rise, so IDW lifts it only to ~104 — but that turns
+     *  B's flat ramp 3-4 into a ~14% bump, so B is rejected. A was accepted judging the structure
+     *  against B=104 (~9%), but with B reverted to 100 the structure becomes |100-113|/100 = 13% >
+     *  the DEM's 10%. The fixed-point guard must reject A too, leaving the structure at the raw DEM. */
+    @Test
+    public void iteratesGuardToFixedPointWhenNeighbourRejected() {
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(0, 0, 0, 113); // A's ground (far)
+        na.setNode(1, 1, 0, 113); // A's ground (near) — real road level
+        na.setNode(2, 2, 0, 90);  // bridge tower A, DEM in a dip (too low)
+        na.setNode(3, 3, 0, 100); // bridge tower B
+        na.setNode(4, 4, 0, 100); // B's ground, flat next to B
+        na.setNode(5, 5, 0, 110); // B's ground, a rise just beyond node 4
+
+        GHUtility.setSpeed(60, 60, accessEnc, speedEnc,
+                graph.edge(0, 1).setDistance(20).set(roadEnvEnc, ROAD),
+                graph.edge(1, 2).setDistance(20).set(roadEnvEnc, ROAD),
+                graph.edge(2, 3).setDistance(100).set(roadEnvEnc, BRIDGE),
+                graph.edge(3, 4).setDistance(30).set(roadEnvEnc, ROAD),
+                graph.edge(4, 5).setDistance(5).set(roadEnvEnc, ROAD));
+
+        new BridgeTunnelTowerCorrection(graph, roadEnvEnc).execute();
+
+        // Both towers kept at their DEM: B because its lift bumps the flat ramp, A because once B
+        // stays at 100 lifting A to 113 would steepen the structure beyond the raw DEM.
+        assertEquals(90, na.getEle(2), 0.5);
+        assertEquals(100, na.getEle(3), 0.5);
+        // Structure no steeper than the raw DEM (10%).
+        assertEquals(0.10, Math.abs(na.getEle(2) - na.getEle(3)) / 100, 1e-6);
     }
 
     /** Tower with fewer than MIN_ROAD_SAMPLES pure-ground neighbours (deep inside a
