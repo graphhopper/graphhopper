@@ -146,7 +146,8 @@ public class GHDirectory implements Directory {
             } else {
                 // Fast read-only path with all-final fields. The file must already exist on disk;
                 // there is no "loadExisting returned false" state — the constructor fails fast.
-                da = MMapForeignReadOnlyDataAccess.load(name, location, segmentSize, false);
+                // The RO mapping preloads in its constructor, so pass the configured preload here.
+                da = MMapForeignReadOnlyDataAccess.load(name, location, segmentSize, getPreload(name) > 0);
             }
         } else if (type.isInMemory()) {
             if (type.isInteg()) {

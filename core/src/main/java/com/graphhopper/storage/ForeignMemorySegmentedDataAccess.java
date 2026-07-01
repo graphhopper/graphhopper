@@ -317,8 +317,9 @@ public final class ForeignMemorySegmentedDataAccess extends AbstractDataAccess {
 
     @Override
     public DAType getType() {
+        // off-heap native memory (segmented); there is no dedicated segmented-native constant
         if (isStoring())
-            return DAType.RAM_STORE;
-        return DAType.RAM;
+            return DAType.NATIVE_STORE;
+        return DAType.NATIVE;
     }
 }
