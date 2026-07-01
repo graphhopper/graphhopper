@@ -154,12 +154,8 @@ public class DAType {
         boolean singleSegment = dataAccess.contains("1SEG") || longBacked;
         boolean allowWrites = !dataAccess.contains("_RO");
         // mmap always persists to its file; on heap/native memory storing must be requested explicitly
-        boolean storing = isMMap(memRef) || dataAccess.contains("STORE");
+        boolean storing = memRef == MemRef.MMAP || memRef == MemRef.MMAP_OLD || dataAccess.contains("STORE");
         return new DAType(memRef, storing, integ, allowWrites, singleSegment, longBacked);
-    }
-
-    private static boolean isMMap(MemRef memRef) {
-        return memRef == MemRef.MMAP || memRef == MemRef.MMAP_OLD;
     }
 
     /**
@@ -182,7 +178,7 @@ public class DAType {
     }
 
     public boolean isMMap() {
-        return isMMap(memRef);
+        return memRef == MemRef.MMAP || memRef == MemRef.MMAP_OLD;
     }
 
     /**
@@ -232,7 +228,9 @@ public class DAType {
             str += "_1SEG";
         if (isLongBacked())
             str += "_LONG";
-        if (isStoring())
+        if (!isAllowWrites())
+            str += "_RO";
+        else if (isStoring())
             str += "_STORE";
         return str;
     }
@@ -245,6 +243,7 @@ public class DAType {
         hash = 59 * hash + (this.integ ? 1 : 0);
         hash = 59 * hash + (this.singleSegment ? 1 : 0);
         hash = 59 * hash + (this.longBacked ? 1 : 0);
+        hash = 59 * hash + (this.allowWrites ? 1 : 0);
         return hash;
     }
 
@@ -264,6 +263,8 @@ public class DAType {
         if (this.singleSegment != other.singleSegment)
             return false;
         if (this.longBacked != other.longBacked)
+            return false;
+        if (this.allowWrites != other.allowWrites)
             return false;
         return true;
     }
