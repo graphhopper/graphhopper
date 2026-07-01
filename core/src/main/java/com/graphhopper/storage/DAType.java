@@ -44,6 +44,16 @@ public class DAType {
      */
     public static final DAType RAM_INT_STORE = new DAType(MemRef.HEAP, true, true, true);
     /**
+     * Like RAM_INT, but backed by a single contiguous int[] for maximum read speed.
+     * Not a good fit if the array needs to be resized frequently. Limited to Integer.MAX_VALUE ints
+     * No support for short,byte and bytes.
+     */
+    public static final DAType RAM_INT_1SEG = new DAType(MemRef.HEAP, false, true, true, true);
+    /**
+     * See RAM_INT_1SEG
+     */
+    public static final DAType RAM_INT_1SEG_STORE = new DAType(MemRef.HEAP, true, true, true, true);
+    /**
      * Memory mapped DA object. See MMapDataAccess.
      */
     public static final DAType MMAP = new DAType(MemRef.MMAP, true, false, true);
@@ -57,16 +67,22 @@ public class DAType {
     private final boolean storing;
     private final boolean integ;
     private final boolean allowWrites;
+    private final boolean singleSegment;
 
     public DAType(DAType type) {
-        this(type.getMemRef(), type.isStoring(), type.isInteg(), type.isAllowWrites());
+        this(type.getMemRef(), type.isStoring(), type.isInteg(), type.isAllowWrites(), type.isSingleSegment());
     }
 
     public DAType(MemRef memRef, boolean storing, boolean integ, boolean allowWrites) {
+        this(memRef, storing, integ, allowWrites, false);
+    }
+
+    public DAType(MemRef memRef, boolean storing, boolean integ, boolean allowWrites, boolean singleSegment) {
         this.memRef = memRef;
         this.storing = storing;
         this.integ = integ;
         this.allowWrites = allowWrites;
+        this.singleSegment = singleSegment;
     }
 
     public static DAType fromString(String dataAccess) {
@@ -123,6 +139,13 @@ public class DAType {
         return integ;
     }
 
+    /**
+     * Backed by a single contiguous array (no segment math)? default is false
+     */
+    public boolean isSingleSegment() {
+        return singleSegment;
+    }
+
     @Override
     public String toString() {
         String str;
@@ -133,6 +156,8 @@ public class DAType {
 
         if (isInteg())
             str += "_INT";
+        if (isSingleSegment())
+            str += "_1SEG";
         if (isStoring())
             str += "_STORE";
         return str;
@@ -144,6 +169,7 @@ public class DAType {
         hash = 59 * hash + 37 * this.memRef.hashCode();
         hash = 59 * hash + (this.storing ? 1 : 0);
         hash = 59 * hash + (this.integ ? 1 : 0);
+        hash = 59 * hash + (this.singleSegment ? 1 : 0);
         return hash;
     }
 
@@ -159,6 +185,8 @@ public class DAType {
         if (this.storing != other.storing)
             return false;
         if (this.integ != other.integ)
+            return false;
+        if (this.singleSegment != other.singleSegment)
             return false;
         return true;
     }

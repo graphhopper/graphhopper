@@ -136,14 +136,12 @@ public class GHDirectory implements Directory {
         DataAccess da;
         if (type.isInMemory()) {
             if (type.isInteg()) {
-                if (type.isStoring())
-                    da = new RAMIntDataAccess(name, location, true, segmentSize);
+                if (type.isSingleSegment())
+                    da = new RAMInt1SegmentDataAccess(name, location, type.isStoring(), segmentSize);
                 else
-                    da = new RAMIntDataAccess(name, location, false, segmentSize);
-            } else if (type.isStoring())
-                da = new RAMDataAccess(name, location, true, segmentSize);
-            else
-                da = new RAMDataAccess(name, location, false, segmentSize);
+                    da = new RAMIntDataAccess(name, location, type.isStoring(), segmentSize);
+            } else
+                da = new RAMDataAccess(name, location, type.isStoring(), segmentSize);
         } else if (type.isMMap()) {
             da = new MMapDataAccess(name, location, type.isAllowWrites(), segmentSize);
         } else {
