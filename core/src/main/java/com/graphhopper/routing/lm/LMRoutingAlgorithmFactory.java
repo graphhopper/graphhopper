@@ -76,6 +76,6 @@ public class LMRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
     }
 
     private LMApproximator getApproximator(Graph g, Weighting weighting, int activeLM, double epsilon) {
-        return LMApproximator.forLandmarks(g, weighting, lms, activeLM).setEpsilon(epsilon);
+        return new LMApproximator(g, g.wrapWeighting(lms.getWeighting()), weighting, lms, activeLM, false).setEpsilon(epsilon);
     }
 }

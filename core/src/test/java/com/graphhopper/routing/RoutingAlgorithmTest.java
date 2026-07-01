@@ -19,6 +19,7 @@ package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
+import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
@@ -32,6 +33,8 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.SpeedWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.routing.weighting.custom.CustomModelParser;
+import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -44,6 +47,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,6 +57,7 @@ import java.util.stream.Stream;
 
 import static com.graphhopper.routing.util.TraversalMode.EDGE_BASED;
 import static com.graphhopper.routing.util.TraversalMode.NODE_BASED;
+import static com.graphhopper.routing.weighting.Weighting.roundWeight;
 import static com.graphhopper.util.DistanceCalcEarth.DIST_EARTH;
 import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
@@ -868,6 +874,52 @@ public class RoutingAlgorithmTest {
 
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
+    public void testBlockArea(Fixture f) {
+        // 1 -y- 2
+        // |  5  |
+        // x 4   |  the area around node 1 is expensive (node 4 is outside this area)
+        // |     |
+        // 0 --- 3
+        BaseGraph graph = f.createGHStorage();
+        graph.edge(0, 1).set(f.carSpeedEnc, 10, 10);
+        graph.edge(1, 2).set(f.carSpeedEnc, 10, 10);
+        graph.edge(2, 3).set(f.carSpeedEnc, 10, 10);
+        graph.edge(3, 0).set(f.carSpeedEnc, 10, 10);
+        updateDistancesFor(graph, 0, 40.000, 10.000);
+        updateDistancesFor(graph, 1, 40.001, 10.000);
+        updateDistancesFor(graph, 2, 40.001, 10.001);
+        updateDistancesFor(graph, 3, 40.000, 10.001);
+
+        JsonFeatureCollection areas = new JsonFeatureCollection();
+        Coordinate[] blockArea = new Coordinate[]{
+                new Coordinate(9.9997, 40.0007),
+                new Coordinate(9.9997, 40.0013),
+                new Coordinate(10.0003, 40.0013),
+                new Coordinate(10.0003, 40.0007),
+                new Coordinate(9.9997, 40.0007)
+        };
+        areas.getFeatures().add(new JsonFeature("expensive",
+                "Feature",
+                null,
+                new GeometryFactory().createPolygon(blockArea),
+                new HashMap<>()));
+        CustomModel customModel = new CustomModel()
+                .addToSpeed(Statement.If("true", Statement.Op.LIMIT, "10"))
+                .addToPriority(Statement.If("in_expensive", Statement.Op.MULTIPLY, "0.1"));
+        customModel.addAreas(areas);
+
+        CustomWeighting weighting = CustomModelParser.createWeighting(f.encodingManager, TurnCostProvider.NO_TURN_COST_PROVIDER, customModel);
+
+        // We route from x(4) to y(5). The virtual edges adjacent to node 1 are in the area and thus expensive,
+        // so we need to take the detour via 3. But x-0 and y-2 are not. If QueryOverlay#adjustWeights distributed
+        // the weight difference between the original edges 0-1 and 1-2 (penalized all the way) equally to the
+        // virtual edges also x-0 and y-2 would carry the penalty and the route would go through the expensive area.
+        Path path = f.calcPath(graph, weighting, new GHPoint(40.0006, 10.000), new GHPoint(40.001, 10.0004));
+        assertEquals(nodes(4, 0, 3, 2, 5), path.calcNodes());
+    }
+
+    @ParameterizedTest
+    @ArgumentsSource(FixtureProvider.class)
     public void testQueryGraphAndFastest(Fixture f) {
         Weighting weighting = new SpeedWeighting(f.carSpeedEnc);
         BaseGraph graph = f.createGHStorage(false);
@@ -890,8 +942,8 @@ public class RoutingAlgorithmTest {
         // of the speed and read 0 => infinity weight => overflow of millis => negative millis!
         Path p = f.calcPath(graph, weighting, 0, 10);
         assertEquals(23645657, p.getTime());
-        assertEquals(425622, p.getDistance(), 1);
-        assertEquals(23646, p.getWeight(), 1);
+        assertEquals(425_621_860, p.getDistance_mm());
+        assertEquals(236457, p.getWeight());
     }
 
     @ParameterizedTest
@@ -903,7 +955,7 @@ public class RoutingAlgorithmTest {
 
             @Override
             public double calcMinWeightPerDistance() {
-                return 0.8;
+                return 8.0;
             }
 
             @Override
@@ -920,13 +972,13 @@ public class RoutingAlgorithmTest {
 
                 // a 'hill' at node 6
                 if (adj == 6)
-                    return 3 * edgeState.getDistance();
+                    return roundWeight(10 * 3 * edgeState.getDistance());
                 else if (base == 6)
-                    return edgeState.getDistance() * 0.9;
+                    return roundWeight(10 * edgeState.getDistance() * 0.9);
                 else if (adj == 4)
-                    return 2 * edgeState.getDistance();
+                    return roundWeight(10 * 2 * edgeState.getDistance());
 
-                return edgeState.getDistance() * 0.8;
+                return roundWeight(10 * edgeState.getDistance() * 0.8);
             }
 
             @Override
@@ -936,7 +988,7 @@ public class RoutingAlgorithmTest {
 
             @Override
             public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
-                return tmpW.calcTurnWeight(inEdge, viaNode, outEdge);
+                return roundWeight(10 * tmpW.calcTurnWeight(inEdge, viaNode, outEdge));
             }
 
             @Override
@@ -969,9 +1021,9 @@ public class RoutingAlgorithmTest {
         initEleGraph(graph, 60, f.carSpeedEnc);
         p = f.calcPath(graph, fakeWeighting, 3, 0, 10, 9);
         assertEquals(nodes(12, 0, 1, 2, 11, 7, 10, 13), p.calcNodes());
-        assertEquals(10280445, p.getTime());
-        assertEquals(616827, p.getDistance(), 1);
-        assertEquals(493462, p.getWeight(), 1);
+        assertEquals(10280446, p.getTime());
+        assertEquals(616827059, p.getDistance_mm());
+        assertEquals(4934615, p.getWeight());
     }
 
     @ParameterizedTest
@@ -1133,7 +1185,7 @@ public class RoutingAlgorithmTest {
         @Override
         public Path calcPath(BaseGraph graph, Weighting weighting, TraversalMode traversalMode, int maxVisitedNodes, Snap from, Snap to) {
             QueryGraph queryGraph = QueryGraph.create(graph, from, to);
-            RoutingAlgorithm algo = createAlgo(queryGraph, weighting, traversalMode);
+            RoutingAlgorithm algo = createAlgo(queryGraph, queryGraph.wrapWeighting(weighting), traversalMode);
             algo.setMaxVisitedNodes(maxVisitedNodes);
             return algo.calcPath(from.getClosestNode(), to.getClosestNode());
         }

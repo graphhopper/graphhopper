@@ -1,21 +1,19 @@
 version: '{build}'
 skip_tags: true
 clone_depth: 10
-image: Visual Studio 2022
+
+# TODO somehow this config is ignored and defaults from account are used
+image: Visual Studio 2026
 environment:
   MAVEN_OPTS: -Xmx1g
   JAVA_OPTS: -Xmx1g
-  JAVA_HOME: C:\Program Files\Java\jdk17
 install:
   - java -version
   - mvn --version
-branches:
-  only:
-    - master      
 build_script:
   - mvn clean install -DskipTests=true -B
 test_script:
-  - mvn test verify -B && mvn checkstyle:check forbiddenapis:check -B
+  - mvn verify -B && mvn checkstyle:check forbiddenapis:check -B
 cache:
   - C:\maven\
   - C:\Users\appveyor\.m2

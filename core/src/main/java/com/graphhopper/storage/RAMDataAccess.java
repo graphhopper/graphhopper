@@ -148,7 +148,7 @@ public class RAMDataAccess extends AbstractDataAccess {
         try {
             try (RandomAccessFile raFile = new RandomAccessFile(getFullName(), "rw")) {
                 long len = getCapacity();
-                writeHeader(raFile, len, segmentSizeInBytes);
+                writeHeader(raFile, HEADER_OFFSET + len, segmentSizeInBytes);
                 raFile.seek(HEADER_OFFSET);
                 // raFile.writeInt() <- too slow, so copy into byte array
                 for (int s = 0; s < segments.length; s++) {

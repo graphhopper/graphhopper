@@ -123,7 +123,7 @@ public class RouteResourceClientHCTest {
         isBetween(2900, 3000, res.getDistance());
         isBetween(120, 130, res.getAscend());
         isBetween(75, 85, res.getDescend());
-        isBetween(190, 200, res.getRouteWeight());
+        isBetween(1900, 2000, res.getRouteWeight());
 
         // change vehicle
         rsp = gh.route(new GHRequest(42.5093, 1.5274, 42.5126, 1.5410).
@@ -374,7 +374,7 @@ public class RouteResourceClientHCTest {
                 putHint("ch.disable", true);
         GHResponse rsp = gh.route(req);
         assertFalse(rsp.hasErrors(), "errors:" + rsp.getErrors().toString());
-        assertEquals(1_614_000, rsp.getBest().getTime(), 1000);
+        assertEquals(1_613_000, rsp.getBest().getTime(), 1000);
 
         // ... and again without the custom model, using the tunnel -> we are much faster
         req.setCustomModel(null);
@@ -407,7 +407,7 @@ public class RouteResourceClientHCTest {
 
         GHResponse response = gh.route(req);
         ResponsePath path = response.getBest();
-        assertEquals(5158, path.getDistance(), 5);
+        assertEquals(5112, path.getDistance(), 5);
         assertEquals(11, path.getWaypoints().size());
 
         assertEquals(path.getTime(), path.getPathDetails().get("leg_time").stream().mapToLong(d -> (long) d.getValue()).sum(), 1);

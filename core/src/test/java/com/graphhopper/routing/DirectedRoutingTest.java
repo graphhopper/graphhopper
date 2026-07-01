@@ -212,20 +212,25 @@ public class DirectedRoutingTest {
     @ParameterizedTest
     @ArgumentsSource(RepeatedFixtureProvider.class)
     public void randomGraph(Fixture f) {
-        run_randomGraph(f, false);
+        run_randomGraph(f, false, false);
     }
 
     @ParameterizedTest
     @ArgumentsSource(RepeatedFixtureProvider.class)
     public void randomGraph_strict(Fixture f) {
-        run_randomGraph(f, true);
+        // with finite u-turn costs paths on a tree are not unique: we can do a necessary u-turn in
+        // different tree branches. u-turns can be necessary even without restricted start/target edges due to
+        // one-ways or turn restrictions
+        boolean chain = Double.isFinite(f.uTurnCosts);
+        boolean tree = !chain;
+        run_randomGraph(f, chain, tree);
     }
 
-    private void run_randomGraph(Fixture f, boolean tree) {
+    private void run_randomGraph(Fixture f, boolean chain, boolean tree) {
         final long seed = System.nanoTime();
         final int numQueries = 30;
         Random rnd = new Random(seed);
-        RandomGraph.start().seed(seed).nodes(100).curviness(0.1).speedZero(tree ? 0 : 0.1).tree(tree).fill(f.graph, f.speedEnc);
+        RandomGraph.start().seed(seed).nodes(100).curviness(0.1).speedZero((chain || tree) ? 0 : 0.1).chain(chain).tree(tree).fill(f.graph, f.speedEnc);
         GHUtility.addRandomTurnCosts(f.graph, seed, null, f.turnCostEnc, f.maxTurnCosts, f.turnCostStorage);
 //        GHUtility.printGraphForUnitTest(f.graph, f.encoder);
         f.preProcessGraph();
@@ -241,7 +246,7 @@ public class DirectedRoutingTest {
                     .calcPath(source, target, sourceOutEdge, targetInEdge);
 
             List<String> strictViolations = comparePaths(refPath, path, source, target, false, seed);
-            if (tree && !strictViolations.isEmpty())
+            if ((chain || tree) && !strictViolations.isEmpty())
                 fail(strictViolations.toString());
         }
     }
@@ -252,16 +257,18 @@ public class DirectedRoutingTest {
     @ParameterizedTest
     @ArgumentsSource(RepeatedFixtureProvider.class)
     public void randomGraph_withQueryGraph(Fixture f) {
-        run_randomGraph_withQueryGraph(f, false);
+        run_randomGraph_withQueryGraph(f, false, false);
     }
 
     @ParameterizedTest
     @ArgumentsSource(RepeatedFixtureProvider.class)
     public void randomGraph_withQueryGraph_strict(Fixture f) {
-        run_randomGraph_withQueryGraph(f, true);
+        boolean chain = Double.isFinite(f.uTurnCosts);
+        boolean tree = !chain;
+        run_randomGraph_withQueryGraph(f, chain, tree);
     }
 
-    private void run_randomGraph_withQueryGraph(Fixture f, boolean tree) {
+    private void run_randomGraph_withQueryGraph(Fixture f, boolean chain, boolean tree) {
         final long seed = System.nanoTime();
         final int numQueries = 30;
         Random rnd = new Random(seed);
@@ -269,7 +276,7 @@ public class DirectedRoutingTest {
         // node for example. with curviness the sum of virtual edge distances will be smaller than
         // original edge distance
         double curviness = 0;
-        RandomGraph.start().seed(seed).nodes(50).curviness(curviness).speedZero(tree ? 0 : 0.1).tree(tree).fill(f.graph, f.speedEnc);
+        RandomGraph.start().seed(seed).nodes(50).curviness(curviness).speedZero((chain || tree) ? 0 : 0.1).chain(chain).tree(tree).fill(f.graph, f.speedEnc);
         GHUtility.addRandomTurnCosts(f.graph, seed, null, f.turnCostEnc, f.maxTurnCosts, f.turnCostStorage);
 //        GHUtility.printGraphForUnitTest(f.graph, f.speedEnc);
         f.preProcessGraph();
@@ -295,7 +302,7 @@ public class DirectedRoutingTest {
 
             List<String> strictViolations = comparePaths(refPath, path, source, target, false, seed);
             // trees have unique paths, so we can do strict checking to test distance/time/nodes
-            if (tree && !strictViolations.isEmpty())
+            if ((chain || tree) && !strictViolations.isEmpty())
                 fail(strictViolations.toString());
         }
     }

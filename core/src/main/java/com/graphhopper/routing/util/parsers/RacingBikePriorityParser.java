@@ -7,16 +7,16 @@ import com.graphhopper.routing.util.PriorityCode;
 import java.util.TreeMap;
 
 import static com.graphhopper.routing.util.PriorityCode.*;
+import static com.graphhopper.routing.util.parsers.AbstractAccessParser.INTENDED;
 
 public class RacingBikePriorityParser extends BikeCommonPriorityParser {
 
     public RacingBikePriorityParser(EncodedValueLookup lookup) {
-        this(lookup.getDecimalEncodedValue(VehiclePriority.key("racingbike")),
-                lookup.getDecimalEncodedValue(VehicleSpeed.key("racingbike")));
+        this(lookup.getDecimalEncodedValue(VehiclePriority.key("racingbike")));
     }
 
-    protected RacingBikePriorityParser(DecimalEncodedValue priorityEnc, DecimalEncodedValue speedEnc) {
-        super(priorityEnc, speedEnc);
+    protected RacingBikePriorityParser(DecimalEncodedValue priorityEnc) {
+        super(priorityEnc);
 
         addPushingSection("path");
 
@@ -25,31 +25,30 @@ public class RacingBikePriorityParser extends BikeCommonPriorityParser {
         preferHighwayTags.add("secondary_link");
         preferHighwayTags.add("tertiary");
         preferHighwayTags.add("tertiary_link");
-        preferHighwayTags.add("residential");
 
         avoidHighwayTags.put("motorway", BAD);
         avoidHighwayTags.put("motorway_link", BAD);
         avoidHighwayTags.put("trunk", BAD);
         avoidHighwayTags.put("trunk_link", BAD);
-        avoidHighwayTags.put("primary", AVOID_MORE);
-        avoidHighwayTags.put("primary_link", AVOID_MORE);
 
         setSpecificClassBicycle("roadcycling");
 
-        avoidSpeedLimit = 81;
+        avoidSpeedLimit = Double.POSITIVE_INFINITY;
     }
 
     @Override
-    void collect(ReaderWay way, double wayTypeSpeed, boolean bikeDesignated, TreeMap<Double, PriorityCode> weightToPrioMap) {
-        super.collect(way, wayTypeSpeed, bikeDesignated, weightToPrioMap);
+    void collect(ReaderWay way, boolean bikeDesignated, TreeMap<Double, PriorityCode> weightToPrioMap) {
+        super.collect(way, bikeDesignated, weightToPrioMap);
 
         String highway = way.getTag("highway");
-        if ("service".equals(highway) || "residential".equals(highway)) {
+        if (way.hasTag("foot", INTENDED)) {
+            weightToPrioMap.put(100d, AVOID);
+        } else if ("service".equals(highway) || "residential".equals(highway) || "unclassified".equals(highway)) {
             weightToPrioMap.put(40d, SLIGHT_AVOID);
         } else if ("track".equals(highway)) {
             String trackType = way.getTag("tracktype");
             if ("grade1".equals(trackType) || goodSurface.contains(way.getTag("surface", "")))
-                weightToPrioMap.put(110d, VERY_NICE);
+                weightToPrioMap.put(110d, UNCHANGED);
             else if (trackType == null || trackType.startsWith("grade"))
                 weightToPrioMap.put(110d, AVOID_MORE);
         }

@@ -79,11 +79,7 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
 
         way.clearTags();
         way.setTag("highway", "living_street");
-        assertPriorityAndSpeed(UNCHANGED, 6, way);
-        way.setTag("bicycle", "yes");
-        assertPriorityAndSpeed(UNCHANGED, 10, way);
-        way.setTag("bicycle", "designated");
-        assertPriorityAndSpeed(PREFER, 12, way);
+        assertPriorityAndSpeed(UNCHANGED, 12, way);
 
         // Pushing section: this is fine as we obey the law!
         way.clearTags();
@@ -124,7 +120,7 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.clearTags();
         way.setTag("highway", "residential");
         way.setTag("surface", "asphalt");
-        assertPriorityAndSpeed(PREFER, 18, way);
+        assertPriorityAndSpeed(SLIGHT_PREFER, 18, way);
 
         way.clearTags();
         way.setTag("highway", "motorway");
@@ -404,24 +400,24 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("surface", "paved");
         assertPriority(BAD, way);
         way.setTag("cycleway", "track");
-        assertPriority(PREFER, way);
+        assertPriority(VERY_NICE, way);
 
         way.clearTags();
         way.setTag("highway", "primary");
         way.setTag("cycleway:left", "lane");
-        assertPriority(SLIGHT_PREFER, way);
+        assertPriority(AVOID_MORE, way);
 
         way.clearTags();
         way.setTag("highway", "primary");
         way.setTag("cycleway:right", "lane");
-        assertPriority(SLIGHT_PREFER, way);
+        assertPriority(AVOID_MORE, way);
         way.setTag("cycleway:left", "no");
-        assertPriority(SLIGHT_PREFER, way);
+        assertPriority(AVOID_MORE, way);
 
         way.clearTags();
         way.setTag("highway", "primary");
         way.setTag("cycleway:both", "lane");
-        assertPriority(SLIGHT_PREFER, way);
+        assertPriority(AVOID_MORE, way);
 
         way.clearTags();
         way.setTag("highway", "primary");
@@ -433,7 +429,7 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("highway", "primary");
         way.setTag("oneway", "yes");
         way.setTag("cycleway", "opposite_track");
-        assertPriority(SLIGHT_PREFER, way);
+        assertPriority(AVOID_MORE, way);
 
         way.clearTags();
         way.setTag("highway", "primary");
@@ -454,7 +450,7 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("highway", "secondary");
         way.setTag("cycleway", "lane");
         way.setTag("cycleway:lane", "advisory");
-        assertPriority(SLIGHT_PREFER, way);
+        assertPriority(SLIGHT_AVOID, way);
     }
 
     @Test
@@ -548,13 +544,13 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way = new ReaderWay(1);
         way.setTag("highway", "secondary");
         way.setTag("maxspeed", "10");
-        assertPriorityAndSpeed(VERY_NICE, 10, way);
+        assertPriorityAndSpeed(SLIGHT_PREFER, 10, way);
 
         way = new ReaderWay(1);
         way.setTag("highway", "residential");
         way.setTag("maxspeed", "15");
         // todo: speed is larger than maxspeed tag due to rounding and storable max speed is 30
-        assertPriorityAndSpeed(VERY_NICE, 16, way);
+        assertPriorityAndSpeed(SLIGHT_PREFER, 16, way);
     }
 
     // Issue 407 : Always block kissing_gate except for mountainbikes
@@ -615,7 +611,7 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         assertPriority(VERY_NICE, way);
 
         way.setTag("maxspeed", "15");
-        assertPriority(BEST, way);
+        assertPriority(VERY_NICE, way);
 
         // do not overwrite better priority
         way = new ReaderWay(1);
@@ -700,9 +696,9 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.clearTags();
         way.setTag("highway", "pedestrian");
         way.setTag("cycleway:right", "track");
-        assertPriorityAndSpeed(PREFER, 18, way);
+        assertPriorityAndSpeed(VERY_NICE, 18, way);
         way.setTag("bicycle", "yes");
-        assertPriorityAndSpeed(PREFER, 18, way);
+        assertPriorityAndSpeed(VERY_NICE, 18, way);
     }
 
     @Test

@@ -165,13 +165,23 @@ class RestrictionTagParserTest {
     }
 
     @Test
-    void exceptBus() throws OSMRestrictionException {
+    void exceptPsv() throws OSMRestrictionException {
         tags.put("restriction", "only_right_turn");
-        // todo: how should we handle except=bus? should it be excluded for psv?
         tags.put("except", "psv");
         RestrictionTagParser.Result res = parseForVehicleTypes("motorcar", "motor_vehicle", "vehicle");
         assertEquals("only_right_turn", res.getRestriction());
         assertEquals(ONLY, res.getRestrictionType());
-        assertNull(parseForVehicleTypes("psv"));
+        assertNull(parseForVehicleTypes("bus", "psv"));
+    }
+
+    @Test
+    void exceptOtherPsv() throws OSMRestrictionException {
+        tags.put("restriction", "only_right_turn");
+        tags.put("except", "bus");
+        RestrictionTagParser.Result res = parseForVehicleTypes("motorcar", "motor_vehicle", "vehicle");
+        assertEquals("only_right_turn", res.getRestriction());
+        assertEquals(ONLY, res.getRestrictionType());
+        res = parseForVehicleTypes("taxi", "psv");
+        assertEquals(ONLY, res.getRestrictionType());
     }
 }

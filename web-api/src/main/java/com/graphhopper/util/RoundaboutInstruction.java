@@ -20,6 +20,9 @@ package com.graphhopper.util;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.graphhopper.util.Parameters.Details.STREET_DESTINATION;
+import static com.graphhopper.util.Parameters.Details.STREET_REF;
+
 /**
  * @author jansoe
  */
@@ -114,13 +117,27 @@ public class RoundaboutInstruction extends Instruction {
 
         String str;
         String streetName = _getName();
+
+        String destination = extraInfo != null ? (String) extraInfo.get(STREET_DESTINATION) : null;
+        String ref = extraInfo != null ? (String) extraInfo.get(STREET_REF) : null;
         int indi = getSign();
         if (indi == Instruction.USE_ROUNDABOUT) {
             if (!exited) {
                 str = tr.tr("roundabout_enter");
             } else {
-                str = Helper.isEmpty(streetName) ? tr.tr("roundabout_exit", getExitNumber())
-                        : tr.tr("roundabout_exit_onto", getExitNumber(), streetName);
+                if (!Helper.isEmpty(streetName) && !streetName.equals(ref)) {
+                    str = tr.tr("roundabout_exit_onto", getExitNumber(), streetName);
+                } else if (!Helper.isEmpty(destination)) {
+                    String towardStr = tr.tr("toward");
+                    towardStr = towardStr.equals("toward") ? "toward" : towardStr;
+                    str = tr.tr("roundabout_exit", getExitNumber()) + " " + towardStr + " " + destination;
+                } else if (!Helper.isEmpty(ref)) {
+                    str = tr.tr("roundabout_exit_onto", getExitNumber(), ref);
+                } else if (!Helper.isEmpty(streetName)) {
+                    str = tr.tr("roundabout_exit_onto", getExitNumber(), streetName);
+                } else {
+                    str = tr.tr("roundabout_exit", getExitNumber());
+                }
             }
         } else {
             throw new IllegalStateException(indi + "no roundabout indication");

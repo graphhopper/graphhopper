@@ -18,8 +18,10 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntObjectMap;
+import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.weighting.QueryGraphWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
@@ -48,6 +50,8 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
 
     public AbstractNonCHBidirAlgo(Graph graph, Weighting weighting, TraversalMode tMode) {
         super(tMode);
+        if (graph instanceof QueryGraph && !(weighting instanceof QueryGraphWeighting))
+            throw new IllegalStateException("Weighting must use QueryGraphWeighting");
         this.weighting = weighting;
         if (weighting.hasTurnCosts() && !tMode.isEdgeBased())
             throw new IllegalStateException("Weightings supporting turn costs cannot be used with node-based traversal mode");

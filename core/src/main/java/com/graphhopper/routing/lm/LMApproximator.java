@@ -18,8 +18,10 @@
 package com.graphhopper.routing.lm;
 
 import com.graphhopper.routing.Dijkstra;
+import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.BeelineWeightApproximator;
+import com.graphhopper.routing.weighting.QueryGraphWeighting;
 import com.graphhopper.routing.weighting.WeightApproximator;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
@@ -54,18 +56,20 @@ public class LMApproximator implements WeightApproximator {
     private boolean fallback = false;
 
     /**
-     * @param weighting the weighting used for the current path calculation, not necessarily the same that we used for the LM preparation.
-     *                  All edge weights must be larger or equal compared to those used for the preparation.
+     * @param lmWeighting the weighting used for the LM preparation, but wrapped for the given graph.
+     *                    Essentially graph.wrapWeighting(lms.getWeighting()), and just lms.getWeighting()
+     *                    unless graph is the QueryGraph
+     * @param routingWeighting the weighting used for the current path calculation, not necessarily
+     *                         the same we used for the LM preparation. All edge weights must be larger
+     *                         or equal compared to those used for the preparation.
      */
-    public static LMApproximator forLandmarks(Graph g, Weighting weighting, LandmarkStorage lms, int activeLM) {
-        return new LMApproximator(g, lms.getWeighting(), weighting, lms.getBaseNodes(), lms, activeLM, lms.getFactor(), false);
-    }
-
-    public LMApproximator(Graph graph, Weighting lmWeighting, Weighting routingWeighting, int maxBaseNodes, LandmarkStorage lms, int activeCount,
-                          double factor, boolean reverse) {
+    public LMApproximator(Graph graph, Weighting lmWeighting, Weighting routingWeighting, LandmarkStorage lms, int activeCount,
+                          boolean reverse) {
+        if (graph instanceof QueryGraph && (!(lmWeighting instanceof QueryGraphWeighting) || (!(routingWeighting instanceof QueryGraphWeighting))))
+            throw new IllegalStateException("Weighting must use QueryGraphWeighting");
         this.reverse = reverse;
         this.lms = lms;
-        this.factor = factor;
+        this.factor = lms.getFactor();
         if (activeCount > lms.getLandmarkCount())
             throw new IllegalArgumentException("Active landmarks " + activeCount
                     + " should be lower or equals to landmark count " + lms.getLandmarkCount());
@@ -78,9 +82,9 @@ public class LMApproximator implements WeightApproximator {
         this.graph = graph;
         this.lmWeighting = lmWeighting;
         this.routingWeighting = routingWeighting;
-        this.fallBackApproximation = new BeelineWeightApproximator(graph.getNodeAccess(), lmWeighting);
+        this.fallBackApproximation = new BeelineWeightApproximator(graph.getNodeAccess(), routingWeighting);
         this.beelineApproximation = new BeelineWeightApproximator(graph.getNodeAccess(), routingWeighting);
-        this.maxBaseNodes = maxBaseNodes;
+        this.maxBaseNodes = lms.getBaseNodes();
     }
 
     /**
@@ -204,7 +208,7 @@ public class LMApproximator implements WeightApproximator {
 
     @Override
     public WeightApproximator reverse() {
-        return new LMApproximator(graph, lmWeighting, routingWeighting, maxBaseNodes, lms, activeLandmarkIndices.length, factor, !reverse);
+        return new LMApproximator(graph, lmWeighting, routingWeighting, lms, activeLandmarkIndices.length, !reverse);
     }
 
     @Override

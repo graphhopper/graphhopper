@@ -228,8 +228,8 @@ class QueryOverlayBuilder {
         for (VirtualEdgeIteratorState v : virtualEdges)
             virtualDistances.add(v.getDistance_mm());
 
-        // we allow adjustments up to 1m. this should be enough to account for dist_plane vs. dist_earth differences
-        final long maxPerElement = 1000;
+        // we allow adjustments up to 1mm. this should be enough to account for dist_plane vs. dist_earth for most segments including the ones we create in random graph tests
+        final long maxPerElement = 1;
         QueryOverlay.adjustValues(virtualDistances, originalDistance, maxPerElement);
         for (int i = 0; i < virtualEdges.size(); i++)
             virtualEdges.get(i).setDistance_mm(virtualDistances.get(i));

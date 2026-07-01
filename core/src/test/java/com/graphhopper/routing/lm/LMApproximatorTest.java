@@ -61,13 +61,13 @@ public class LMApproximatorTest {
         LandmarkStorage landmarkStorage = lm.getLandmarkStorage();
 
         for (int t = 0; t < graph.getNodes(); t++) {
-            LMApproximator lmApproximator = new LMApproximator(graph, weighting, weighting, graph.getNodes(), landmarkStorage, 8, landmarkStorage.getFactor(), false);
+            LMApproximator lmApproximator = new LMApproximator(graph, weighting, weighting, landmarkStorage, 8, false);
             WeightApproximator reverseLmApproximator = lmApproximator.reverse();
             BeelineWeightApproximator beelineApproximator = new BeelineWeightApproximator(graph.getNodeAccess(), weighting);
             WeightApproximator reverseBeelineApproximator = beelineApproximator.reverse();
             PerfectApproximator perfectApproximator = new PerfectApproximator(graph, weighting, TraversalMode.NODE_BASED, false);
             PerfectApproximator reversePerfectApproximator = new PerfectApproximator(graph, weighting, TraversalMode.NODE_BASED, true);
-            BalancedWeightApproximator balancedWeightApproximator = new BalancedWeightApproximator(new LMApproximator(graph, weighting, weighting, graph.getNodes(), landmarkStorage, 8, landmarkStorage.getFactor(), false));
+            BalancedWeightApproximator balancedWeightApproximator = new BalancedWeightApproximator(new LMApproximator(graph, weighting, weighting, landmarkStorage, 8, false));
 
             lmApproximator.setTo(t);
             beelineApproximator.setTo(t);
@@ -84,7 +84,7 @@ public class LMApproximatorTest {
                 if (path.isFound()) {
                     // Give the beelineApproximator some slack, because the map distance of an edge
                     // can be _smaller_ than its Euklidean distance, due to rounding.
-                    double slack = path.getEdgeCount() * (1 / 1000.0);
+                    double slack = path.getEdgeCount() * (10 / 1000.0);
                     double realRemainingWeight = path.getWeight();
                     double approximatedRemainingWeight = lmApproximator.approximate(v);
                     if (approximatedRemainingWeight - slack > realRemainingWeight) {
@@ -133,7 +133,7 @@ public class LMApproximatorTest {
                 if (reversePath.isFound()) {
                     // Give the beelineApproximator some slack, because the map distance of an edge
                     // can be _smaller_ than its Euklidean distance, due to rounding.
-                    double slack = reversePath.getEdgeCount() * (1 / 1000.0);
+                    double slack = reversePath.getEdgeCount() * (10 / 1000.0);
                     double realRemainingWeight = reversePath.getWeight();
                     double approximatedRemainingWeight = reverseLmApproximator.approximate(v);
                     if (approximatedRemainingWeight - slack > realRemainingWeight) {

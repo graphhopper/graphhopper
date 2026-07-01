@@ -128,23 +128,38 @@ public class MapMatching {
         int maxVisitedNodes = hints.getInt(Parameters.Routing.MAX_VISITED_NODES, Integer.MAX_VALUE);
 
         Router router = new Router() {
+            QueryGraph queryGraph;
+            Weighting queryGraphWeighting;
+            Weighting queryGraphLMWeighting;
+
             @Override
             public EdgeFilter getSnapFilter() {
                 return snapFilter;
             }
 
             @Override
-            public List<Path> calcPaths(QueryGraph queryGraph, int fromNode, int fromOutEdge, int[] toNodes, int[] toInEdges) {
+            public Weighting getWeighting() {
+                return weighting;
+            }
+
+            @Override
+            public void setQueryGraph(QueryGraph queryGraph, Weighting queryGraphWeighting) {
+                this.queryGraph = queryGraph;
+                this.queryGraphWeighting = queryGraphWeighting;
+                this.queryGraphLMWeighting = landmarks == null ? null : queryGraph.wrapWeighting(landmarks.getWeighting());
+            }
+
+            @Override
+            public List<Path> calcPaths(int fromNode, int fromOutEdge, int[] toNodes, int[] toInEdges) {
                 assert (toNodes.length == toInEdges.length);
                 List<Path> result = new ArrayList<>();
                 for (int i = 0; i < toNodes.length; i++) {
-                    result.add(calcOnePath(queryGraph, fromNode, toNodes[i], fromOutEdge, toInEdges[i]));
+                    result.add(calcOnePath(fromNode, toNodes[i], fromOutEdge, toInEdges[i]));
                 }
                 return result;
             }
 
-            private Path calcOnePath(QueryGraph queryGraph, int fromNode, int toNode, int fromOutEdge, int toInEdge) {
-                Weighting queryGraphWeighting = queryGraph.wrapWeighting(weighting);
+            private Path calcOnePath(int fromNode, int toNode, int fromOutEdge, int toInEdge) {
                 if (landmarks != null) {
                     AStarBidirection aStarBidirection = new AStarBidirection(queryGraph, queryGraphWeighting, TraversalMode.EDGE_BASED) {
                         @Override
@@ -153,7 +168,7 @@ public class MapMatching {
                         }
                     };
                     int activeLM = Math.min(8, landmarks.getLandmarkCount());
-                    LMApproximator lmApproximator = LMApproximator.forLandmarks(queryGraph, queryGraphWeighting, landmarks, activeLM);
+                    LMApproximator lmApproximator = new LMApproximator(queryGraph, queryGraphLMWeighting, queryGraphWeighting, landmarks, activeLM, false);
                     aStarBidirection.setApproximation(lmApproximator);
                     aStarBidirection.setMaxVisitedNodes(maxVisitedNodes);
                     return aStarBidirection.calcPath(fromNode, toNode, fromOutEdge, toInEdge);
@@ -169,10 +184,6 @@ public class MapMatching {
                 }
             }
 
-            @Override
-            public Weighting getWeighting() {
-                return weighting;
-            }
         };
         return router;
     }
@@ -224,6 +235,8 @@ public class MapMatching {
         // Create the query graph, containing split edges so that all the places where an observation might have happened
         // are a node. This modifies the Snap objects and puts the new node numbers into them.
         queryGraph = QueryGraph.create(graph, snapsPerObservation.stream().flatMap(Collection::stream).collect(Collectors.toList()));
+        Weighting queryGraphWeighting = queryGraph.wrapWeighting(router.getWeighting());
+        router.setQueryGraph(queryGraph, queryGraphWeighting);
 
         // Creates candidates from the Snaps of all observations (a candidate is basically a
         // Snap + direction).
@@ -248,7 +261,6 @@ public class MapMatching {
         List<EdgeIteratorState> path = seq.stream().filter(s1 -> s1.transitionDescriptor != null).flatMap(s1 -> s1.transitionDescriptor.calcEdges().stream()).collect(Collectors.toList());
 
         MatchResult result = new MatchResult(prepareEdgeMatches(seq));
-        Weighting queryGraphWeighting = queryGraph.wrapWeighting(router.getWeighting());
         result.setMergedPath(new MapMatchedPath(queryGraph, queryGraphWeighting, path));
         result.setMatchMillis(seq.stream().filter(s -> s.transitionDescriptor != null).mapToLong(s -> s.transitionDescriptor.getTime()).sum());
         result.setMatchLength(seq.stream().filter(s -> s.transitionDescriptor != null).mapToDouble(s -> s.transitionDescriptor.getDistance()).sum());
@@ -612,7 +624,7 @@ public class MapMatching {
             int fromOutEdge = from.isOnDirectedEdge() ? from.getOutgoingVirtualEdge().getEdge() : EdgeIterator.ANY_EDGE;
             int[] toNodes = nextTimeStep.candidates.stream().mapToInt(c -> c.getSnap().getClosestNode()).toArray();
             int[] toInEdges = nextTimeStep.candidates.stream().mapToInt(to -> to.isOnDirectedEdge() ? to.getIncomingVirtualEdge().getEdge() : EdgeIterator.ANY_EDGE).toArray();
-            List<Path> paths = router.calcPaths(queryGraph, fromNode, fromOutEdge, toNodes, toInEdges);
+            List<Path> paths = router.calcPaths(fromNode, fromOutEdge, toNodes, toInEdges);
             for (int i = 0; i < nextTimeStep.candidates.size(); i++) {
                 State to = nextTimeStep.candidates.get(i);
                 Path path = paths.get(i);
@@ -779,9 +791,11 @@ public class MapMatching {
     public interface Router {
         EdgeFilter getSnapFilter();
 
-        List<Path> calcPaths(QueryGraph queryGraph, int fromNode, int fromOutEdge, int[] toNodes, int[] toInEdges);
-
         Weighting getWeighting();
+
+        void setQueryGraph(QueryGraph queryGraph, Weighting queryGraphWeighting);
+
+        List<Path> calcPaths(int fromNode, int fromOutEdge, int[] toNodes, int[] toInEdges);
 
         default long getVisitedNodes() {
             return 0L;

@@ -272,7 +272,7 @@ public class EncodingManager implements EncodedValueLookup {
         EncodedValue ev = turnEncodedValueMap.get(key);
         // todo: why do we not just return null when EV is missing? just like java.util.Map? -> https://github.com/graphhopper/graphhopper/pull/2561#discussion_r859770067
         if (ev == null)
-            throw new IllegalArgumentException("Cannot find Turn-EncodedValue " + key + " in collection: " + encodedValueMap.keySet());
+            throw new IllegalArgumentException("Cannot find Turn-EncodedValue " + key + " in collection: " + turnEncodedValueMap.keySet());
         return (T) ev;
     }
 

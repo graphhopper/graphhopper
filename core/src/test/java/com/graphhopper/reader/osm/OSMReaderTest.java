@@ -993,6 +993,32 @@ public class OSMReaderTest {
     }
 
     @Test
+    public void testStreetNameFallback() throws IOException {
+        // Test that street:name is used as a fallback when name and is_sidepath:of:name are not present
+        EncodingManager em = EncodingManager.start()
+                .add(VehicleSpeed.create("bike", 4, 2, false)).add(VehicleAccess.create("bike"))
+                .build();
+        OSMParsers osmParsers = new OSMParsers();
+        BaseGraph graph = new BaseGraph.Builder(em).create();
+        OSMReader reader = new OSMReader(graph, osmParsers, new OSMReaderConfig());
+        reader.setFile(new File(getClass().getResource("test-osm-street-name.xml").getFile()));
+        reader.readGraph();
+
+        assertEquals(3, graph.getEdges());
+        // way 1: only street:name -> should use street:name
+        EdgeIteratorState edge0 = graph.getEdgeIteratorState(0, Integer.MIN_VALUE);
+        assertEquals("Main Street", edge0.getName());
+
+        // way 2: is_sidepath:of:name and street:name -> is_sidepath:of:name should take priority
+        EdgeIteratorState edge1 = graph.getEdgeIteratorState(1, Integer.MIN_VALUE);
+        assertEquals("Sidepath Road", edge1.getName());
+
+        // way 3: name and street:name -> name should take priority
+        EdgeIteratorState edge2 = graph.getEdgeIteratorState(2, Integer.MIN_VALUE);
+        assertEquals("Explicit Name", edge2.getName());
+    }
+
+    @Test
     public void testCalc2DDistanceWithMixedElevation() {
         // Simulate the scenario where tower nodes have elevation but pillar nodes return NaN
         // (because pillar elevation is deferred to edge creation time).

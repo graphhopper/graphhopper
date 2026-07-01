@@ -16,7 +16,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-        <maven.compiler.target>22</maven.compiler.target>
+        <maven.compiler.target>25</maven.compiler.target>
 
         <!-- We always had this disabled as it is disabled by default in debian JDK builds, but when we
              switched to another JDK on travis it was enabled implicitly. Our javadocs are not ready for this
@@ -75,7 +75,7 @@
             <dependency>
                 <groupId>io.dropwizard</groupId>
                 <artifactId>dropwizard-dependencies</artifactId>
-                <version>5.0.1</version>
+                <version>5.0.2</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -144,6 +144,12 @@
                     </exclusion>
                 </exclusions>
             </dependency>
+            <!-- fix for CVE-2026-1605 -->
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-server</artifactId>
+                <version>12.1.8</version>
+            </dependency>
             <!-- for reader-gtfs -->
             <dependency>
                 <groupId>jakarta.inject</groupId>
@@ -184,15 +190,7 @@
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.14.1</version>
                     <configuration>
-                        <!--
-                        <compilerArgument>-Xlint:unchecked</compilerArgument>
-                        <compilerArgument>-Xlint:deprecation</compilerArgument>
-                        -->
-                        <fork>true</fork>
-                        <release>22</release>
-                        <jdkToolchain>
-                            <version>[22,)</version>
-                        </jdkToolchain>
+                        <release>25</release>
                     </configuration>
                 </plugin>
 
@@ -202,7 +200,7 @@
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>3.5.4</version>
                     <configuration>
-                        <argLine>-Xmx190m -Xms190m -Duser.language=en</argLine>
+                        <argLine>-Duser.language=en</argLine>
                     </configuration>
                 </plugin>
 

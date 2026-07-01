@@ -136,10 +136,11 @@ public class MapMatchingResource {
 
         sw.stop();
         logger.info(objectMapper.createObjectNode()
-                .put("duration", sw.getNanos())
+                .put("took", sw.getMillisDouble())
                 .put("profile", profile)
                 .put("observations", measurements.size())
-                .putPOJO("mapmatching", matching.getStatistics()).toString());
+                .put("original_distance", matchResult.getGpxEntriesLength())
+                .put("distance", matchResult.getMatchLength()).toString());
 
         if (debugMode) {
             return Response.ok(matching.getDebugInfo()).

@@ -31,6 +31,7 @@ public class MiniPerfTest {
     private static final double NS_PER_US = 1e3;
 
     private int counts = 100;
+    private int warmups = -1;
     private long fullTime = 0;
     private long max;
     private long min = Long.MAX_VALUE;
@@ -41,7 +42,7 @@ public class MiniPerfTest {
      * by the JVM. Either use {@link #getDummySum()} or {@link #getReport()} after running this method.
      */
     public MiniPerfTest start(Task m) {
-        int warmupCount = Math.max(1, counts / 3);
+        int warmupCount = warmups >= 0 ? warmups : Math.max(1, counts / 3);
         for (int i = 0; i < warmupCount; i++) {
             dummySum += m.doCalc(true, i);
         }
@@ -67,6 +68,11 @@ public class MiniPerfTest {
          * optimize (away) the call or within the call something.
          */
         int doCalc(boolean warmup, int run);
+    }
+
+    public MiniPerfTest setWarmups(int warmups) {
+        this.warmups = warmups;
+        return this;
     }
 
     public MiniPerfTest setIterations(int counts) {

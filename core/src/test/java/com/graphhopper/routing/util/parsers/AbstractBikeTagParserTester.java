@@ -201,7 +201,6 @@ public abstract class AbstractBikeTagParserTester {
         way.setTag("bicycle", "no");
         assertTrue(accessParser.getAccess(way).canSkip());
 
-
         way.clearTags();
         way.setTag("highway", "cycleway");
         way.setTag("cycleway", "track");
@@ -315,7 +314,7 @@ public abstract class AbstractBikeTagParserTester {
     public void testAvoidTunnel() {
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "residential");
-        assertPriority(PREFER, osmWay);
+        assertPriority(SLIGHT_PREFER, osmWay);
 
         osmWay.setTag("tunnel", "yes");
         assertPriority(UNCHANGED, osmWay);
@@ -345,17 +344,12 @@ public abstract class AbstractBikeTagParserTester {
     public void testService() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "service");
-        assertPriorityAndSpeed(PREFER, 12, way);
+        assertPriorityAndSpeed(SLIGHT_PREFER, 18, way);
 
         way.setTag("service", "parking_aisle");
         assertPriorityAndSpeed(SLIGHT_AVOID, 8, way);
         way.setTag("bicycle", "designated");
-        assertPriorityAndSpeed(VERY_NICE, 12, way);
-
-        way.clearTags();
-        way.setTag("highway", "residential");
-        way.setTag("service", "alley");
-        assertPriorityAndSpeed(PREFER, 18, way);
+        assertPriorityAndSpeed(VERY_NICE, 18, way);
     }
 
     @Test
@@ -376,7 +370,7 @@ public abstract class AbstractBikeTagParserTester {
     }
 
     @Test
-    public void testHandleWayTagsCallsHandlePriority() {
+    public void testCycleway() {
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "cycleway");
 
@@ -664,6 +658,24 @@ public abstract class AbstractBikeTagParserTester {
         // most likely a tagging error, allowing both directions:
         way.setTag("cycleway:left:oneway","-1");
         way.setTag("cycleway:right:oneway","-1");
+        assertAccess(way, true, true);
+    }
+
+    @Test
+    public void testCyclewayOnewayDoesNotImplyCarriagewayOneway() {
+        // OSM way 1425755347 (Bergmannstraße, Berlin): a bidirectional residential street
+        // (no oneway=*) with a one-way cycle facility on the right. cycleway:right:oneway=yes
+        // describes the cycleway, not the carriageway — bikes must remain bidirectional.
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "residential");
+        way.setTag("cycleway:left", "no");
+        way.setTag("cycleway:right", "crossing");
+        way.setTag("cycleway:right:oneway", "yes");
+        assertAccess(way, true, true);
+
+        way.clearTags();
+        way.setTag("highway", "residential");
+        way.setTag("cycleway:left:oneway", "yes");
         assertAccess(way, true, true);
     }
 

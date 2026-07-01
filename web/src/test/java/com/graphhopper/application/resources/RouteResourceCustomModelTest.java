@@ -125,7 +125,7 @@ public class RouteResourceCustomModelTest {
         // the bus profile is a custom profile and we can use its CH preparation as long as we do not add a custom model
         String body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"bus\"}";
         JsonNode path = getPath(body);
-        assertEquals(610, path.get("distance").asDouble(), 10);
+        assertEquals(611, path.get("distance").asDouble(), 10);
         assertEquals(27_000, path.get("time").asLong(), 1_000);
     }
 
@@ -331,7 +331,7 @@ public class RouteResourceCustomModelTest {
                 " \"ch.disable\": true" +
                 "}";
         path = getPath(body);
-        assertEquals(5838, path.get("distance").asDouble(), 10);
+        assertEquals(5542, path.get("distance").asDouble(), 10);
     }
 
     @Test
@@ -398,8 +398,7 @@ public class RouteResourceCustomModelTest {
         JsonNode json = query(body, 200);
         assertFalse(json.get("info").has("errors"));
 
-        // TODO LATER: alternative route bug as the two routes are identical!?
-        assertEquals(2, json.get("paths").size());
+        assertEquals(1, json.get("paths").size());
         assertEquals(545, json.get("paths").get(0).get("distance").asDouble(), 10);
     }
 

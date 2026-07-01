@@ -137,21 +137,30 @@ public class GHDirectory implements Directory {
             throw new IllegalStateException("DataAccess " + name + " has already been created");
 
         DataAccess da;
-        if (type == DAType.MMAP_OLD) {
-            da = new MMapDataAccess(name, location, type.isAllowWrites(), segmentSize);
-        } else if (type == DAType.MMAP_RO) {
-            // Fast read-only path with all-final fields. The file must already exist on disk;
-            // there is no "loadExisting returned false" state — the constructor fails fast.
-            da = MMapForeignReadOnlyDataAccess.load(name, location, segmentSize, false);
-        } else if (type.isMMap()) {
-            da = new MMapForeignMemoryDataAccess(name, location, type.isAllowWrites(), segmentSize);
+        if (type.isMMap()) {
+            if (type.getMemRef() == DAType.MemRef.MMAP_OLD) {
+                // Legacy ByteBuffer-based mmap, kept as a fallback / for comparison.
+                da = new MMapDataAccess(name, location, type.isAllowWrites(), segmentSize);
+            } else if (type.isAllowWrites()) {
+                da = new MMapForeignMemoryDataAccess(name, location, true, segmentSize);
+            } else {
+                // Fast read-only path with all-final fields. The file must already exist on disk;
+                // there is no "loadExisting returned false" state — the constructor fails fast.
+                da = MMapForeignReadOnlyDataAccess.load(name, location, segmentSize, false);
+            }
         } else if (type.isInMemory()) {
             if (type.isInteg()) {
-                da = new RAMIntDataAccess(name, location, type.isStoring(), segmentSize);
+                if (type.isSingleSegment())
+                    da = new RAMInt1SegmentDataAccess(name, location, type.isStoring(), segmentSize);
+                else
+                    da = new RAMIntDataAccess(name, location, type.isStoring(), segmentSize);
+            } else if (type.isSingleSegment()) {
+                da = new RAM1SegmentDataAccess(name, location, type.isStoring(), segmentSize);
             } else {
                 da = new RAMDataAccess(name, location, type.isStoring(), segmentSize);
             }
         } else {
+            // MemRef.NATIVE: off-heap foreign memory (single contiguous MemorySegment, long-indexed)
             da = new ForeignMemoryDataAccess(name, location, type.isStoring(), segmentSize);
         }
 
@@ -201,10 +210,10 @@ public class GHDirectory implements Directory {
      * method returns e.g. RAM_INT if the type of the specified DataAccess is RAM.
      */
     public DAType getDefaultType(String dataAccess, boolean preferInts) {
-//        DAType type = getDefault(dataAccess, typeFallback);
-//        if (preferInts && type.isInMemory())
-//            return type.isStoring() ? RAM_INT_STORE : RAM_INT;
-        return typeFallback;
+        DAType type = getDefault(dataAccess, typeFallback);
+        if (preferInts && type.isInMemory())
+            return type.isStoring() ? RAM_INT_STORE : RAM_INT;
+        return type;
     }
 
     public boolean isStoring() {
