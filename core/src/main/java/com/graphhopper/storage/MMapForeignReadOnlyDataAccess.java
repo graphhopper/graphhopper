@@ -48,8 +48,6 @@ import java.nio.channels.FileChannel;
  * path — accesses go through a global-scope reinterpret to skip the per-call scope check.
  * Because there is no remap, concurrent reads from many threads are safe; the only operation
  * that invalidates the mapping is {@link #close}, which callers must not race with reads.
- * <p>
- * Requires Java 22+.
  */
 public final class MMapForeignReadOnlyDataAccess extends AbstractDataAccess {
     private static final ValueLayout.OfInt INT_LE =

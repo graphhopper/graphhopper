@@ -32,7 +32,7 @@ import java.nio.channels.FileChannel;
 /**
  * Memory-mapped DataAccess backed by a single contiguous {@link MemorySegment} via the Foreign
  * Memory API's {@link FileChannel#map(FileChannel.MapMode, long, long, Arena)} method.
- * No segment boundary logic — direct long-indexed access.
+ * No segment boundary logic and instead direct long-indexed access.
  * <p>
  * Optionally forces all pages into physical RAM via {@link MemorySegment#load()} to avoid
  * page faults during access (similar to {@code mlock}/{@code MAP_POPULATE}).
@@ -48,8 +48,6 @@ import java.nio.channels.FileChannel;
  * Concurrent reads from multiple threads are safe as long as no remap can occur during them;
  * if remaps and reads can interleave, callers must coordinate externally (e.g. a read/write
  * lock).
- * <p>
- * Requires Java 22+.
  */
 public final class MMapForeignMemoryDataAccess extends AbstractDataAccess {
     private static final ValueLayout.OfInt INT_LE =

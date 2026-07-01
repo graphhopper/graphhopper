@@ -34,8 +34,6 @@ import java.util.Arrays;
  * <p>
  * Each segment is backed by a {@link ByteBuffer#allocateDirect direct ByteBuffer} wrapped as a
  * MemorySegment. This avoids the per-access scope/liveness checks of arena-allocated segments.
- * <p>
- * Requires Java 22+.
  */
 public final class ForeignMemorySegmentedDataAccess extends AbstractDataAccess {
     private static final ValueLayout.OfInt INT_LE =

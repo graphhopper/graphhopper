@@ -28,9 +28,7 @@ import java.nio.ByteOrder;
 
 /**
  * Off-heap DataAccess backed by a single contiguous {@link MemorySegment} via the Foreign Memory API.
- * Direct equivalent of the old UnsafeDataAccess: long-indexed access, no segment boundary logic.
- * <p>
- * Requires Java 21 with {@code --enable-preview} (or Java 22+).
+ * It has a long-indexed access and no segment boundary logic.
  */
 public final class ForeignMemoryDataAccess extends AbstractDataAccess {
     private static final ValueLayout.OfInt INT_LE =
