@@ -88,7 +88,7 @@ public abstract class BikeCommonPriorityParser implements TagParser {
         String highway = way.getTag("highway");
         if (bikeDesignated) {
             boolean isGoodSurface = way.getTag("tracktype", "").equals("grade1") || goodSurface.contains(way.getTag("surface", ""));
-            if ("path".equals(highway) || "track".equals(highway) && isGoodSurface)
+            if (("path".equals(highway) || "track".equals(highway)) && isGoodSurface)
                 weightToPrioMap.put(100d, VERY_NICE);
             else
                 weightToPrioMap.put(100d, PREFER);

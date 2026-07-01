@@ -73,7 +73,8 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("highway", "primary");
         assertPriorityAndSpeed(BAD, 18, way);
 
-        // ignore scenic as it is a too generic indication and not for bike and can therefor lead to wrong suggestions
+        // ignore scenic as it is a too generic indication and not for bike and can
+        // therefor lead to wrong suggestions
         way.setTag("scenic", "yes");
         assertPriorityAndSpeed(BAD, 18, way);
 
@@ -208,7 +209,8 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("highway", "path");
         assertPriorityAndSpeed(SLIGHT_AVOID, 6, way);
 
-        // Make sure that "highway=cycleway" and "highway=path" with "bicycle=designated" give the same result
+        // Make sure that "highway=cycleway" and "highway=path" with
+        // "bicycle=designated" give the same result
         way.clearTags();
         way.setTag("highway", "path");
         way.setTag("bicycle", "designated");
@@ -285,7 +287,8 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.clearTags();
         way.setTag("highway", "track");
         way.setTag("bicycle", "designated");
-        // lower speed might be better as no surface tag, but strange tagging anyway and rare in real world
+        // lower speed might be better as no surface tag, but strange tagging anyway and
+        // rare in real world
         assertPriorityAndSpeed(PREFER, 18, way);
         way.setTag("segregated", "no");
         assertPriorityAndSpeed(PREFER, 18, way);
@@ -549,7 +552,8 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way = new ReaderWay(1);
         way.setTag("highway", "residential");
         way.setTag("maxspeed", "15");
-        // todo: speed is larger than maxspeed tag due to rounding and storable max speed is 30
+        // todo: speed is larger than maxspeed tag due to rounding and storable max
+        // speed is 30
         assertPriorityAndSpeed(SLIGHT_PREFER, 16, way);
     }
 
@@ -725,5 +729,43 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         accessParser.handleWayTags(edgeId, edgeIntAccess, way);
         assertTrue(accessEnc.getBool(false, edgeId, edgeIntAccess));
         assertFalse(accessEnc.getBool(true, edgeId, edgeIntAccess));
+    }
+
+    @Test
+    @Override
+    public void testHandleWayPriorityforSurface() {
+        ArrayEdgeIntAccess intAccess = ArrayEdgeIntAccess.createFromBytes(encodingManager.getBytesForFlags());
+        int edgeId = 0;
+        ReaderWay osmWay = new ReaderWay(1);
+
+        osmWay.setTag("highway", "path");
+        osmWay.setTag("surface", "sand");
+        osmWay.setTag("bicycle", "designated");
+        priorityParser.handleWayTags(edgeId, intAccess, osmWay, null);
+        // because a path is a pushing section
+        assertEquals(PriorityCode.getValue(VERY_NICE.getValue()), priorityEnc.getDecimal(false, edgeId, intAccess),
+                1e-3);
+
+        osmWay = new ReaderWay(1);
+        osmWay.setTag("highway", "path");
+        osmWay.setTag("surface", "concrete");
+        osmWay.setTag("bicycle", "designated");
+        priorityParser.handleWayTags(edgeId, intAccess, osmWay, null);
+        assertEquals(PriorityCode.getValue(VERY_NICE.getValue()), priorityEnc.getDecimal(false, edgeId, intAccess),
+                1e-3);
+
+        osmWay.setTag("highway", "track");
+        osmWay.setTag("surface", "sand");
+        osmWay.setTag("bicycle", "designated");
+        priorityParser.handleWayTags(edgeId, intAccess, osmWay, null);
+        assertEquals(PriorityCode.getValue(PREFER.getValue()), priorityEnc.getDecimal(false, edgeId, intAccess), 1e-3);
+
+        osmWay = new ReaderWay(1);
+        osmWay.setTag("highway", "track");
+        osmWay.setTag("surface", "concrete");
+        osmWay.setTag("bicycle", "designated");
+        priorityParser.handleWayTags(edgeId, intAccess, osmWay, null);
+        assertEquals(PriorityCode.getValue(VERY_NICE.getValue()), priorityEnc.getDecimal(false, edgeId, intAccess),
+                1e-3);
     }
 }
