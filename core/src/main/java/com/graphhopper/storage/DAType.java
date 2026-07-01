@@ -64,6 +64,15 @@ public class DAType {
      */
     public static final DAType RAM_1SEG_STORE = new DAType(MemRef.HEAP, true, false, true, true);
     /**
+     * Like RAM_1SEG (single contiguous heap array, full byte access), but backed by a {@code long[]}
+     * instead of a {@code byte[]} to allow up to ~16GB. See RAMLongDataAccess.
+     */
+    public static final DAType RAM_LONG = new DAType(MemRef.HEAP, false, false, true, true, true);
+    /**
+     * See RAM_LONG
+     */
+    public static final DAType RAM_LONG_STORE = new DAType(MemRef.HEAP, true, false, true, true, true);
+    /**
      * Off-heap DA object backed by native (foreign) memory - the equivalent of RAM but outside the
      * JVM heap. Loading and flushing is a no-op. See ForeignMemoryDataAccess.
      */
@@ -93,21 +102,27 @@ public class DAType {
     private final boolean integ;
     private final boolean allowWrites;
     private final boolean singleSegment;
+    private final boolean longBacked;
 
     public DAType(DAType type) {
-        this(type.getMemRef(), type.isStoring(), type.isInteg(), type.isAllowWrites(), type.isSingleSegment());
+        this(type.getMemRef(), type.isStoring(), type.isInteg(), type.isAllowWrites(), type.isSingleSegment(), type.isLongBacked());
     }
 
     public DAType(MemRef memRef, boolean storing, boolean integ, boolean allowWrites) {
-        this(memRef, storing, integ, allowWrites, false);
+        this(memRef, storing, integ, allowWrites, false, false);
     }
 
     public DAType(MemRef memRef, boolean storing, boolean integ, boolean allowWrites, boolean singleSegment) {
+        this(memRef, storing, integ, allowWrites, singleSegment, false);
+    }
+
+    public DAType(MemRef memRef, boolean storing, boolean integ, boolean allowWrites, boolean singleSegment, boolean longBacked) {
         this.memRef = memRef;
         this.storing = storing;
         this.integ = integ;
         this.allowWrites = allowWrites;
         this.singleSegment = singleSegment;
+        this.longBacked = longBacked;
     }
 
     /**
@@ -134,11 +149,13 @@ public class DAType {
             memRef = MemRef.HEAP;
 
         boolean integ = dataAccess.contains("INT");
-        boolean singleSegment = dataAccess.contains("1SEG");
+        boolean longBacked = dataAccess.contains("LONG");
+        // a long[] backing is always a single contiguous array
+        boolean singleSegment = dataAccess.contains("1SEG") || longBacked;
         boolean allowWrites = !dataAccess.contains("_RO");
         // mmap always persists to its file; on heap/native memory storing must be requested explicitly
         boolean storing = isMMap(memRef) || dataAccess.contains("STORE");
-        return new DAType(memRef, storing, integ, allowWrites, singleSegment);
+        return new DAType(memRef, storing, integ, allowWrites, singleSegment, longBacked);
     }
 
     private static boolean isMMap(MemRef memRef) {
@@ -189,6 +206,14 @@ public class DAType {
         return singleSegment;
     }
 
+    /**
+     * Backed by a single contiguous {@code long[]} (instead of {@code byte[]}) to allow a larger
+     * capacity? Implies a single segment. default is false
+     */
+    public boolean isLongBacked() {
+        return longBacked;
+    }
+
     @Override
     public String toString() {
         String str;
@@ -203,8 +228,10 @@ public class DAType {
 
         if (isInteg())
             str += "_INT";
-        if (isSingleSegment())
+        if (isSingleSegment() && !isLongBacked())
             str += "_1SEG";
+        if (isLongBacked())
+            str += "_LONG";
         if (isStoring())
             str += "_STORE";
         return str;
@@ -217,6 +244,7 @@ public class DAType {
         hash = 59 * hash + (this.storing ? 1 : 0);
         hash = 59 * hash + (this.integ ? 1 : 0);
         hash = 59 * hash + (this.singleSegment ? 1 : 0);
+        hash = 59 * hash + (this.longBacked ? 1 : 0);
         return hash;
     }
 
@@ -234,6 +262,8 @@ public class DAType {
         if (this.integ != other.integ)
             return false;
         if (this.singleSegment != other.singleSegment)
+            return false;
+        if (this.longBacked != other.longBacked)
             return false;
         return true;
     }

@@ -154,6 +154,8 @@ public class GHDirectory implements Directory {
                     da = new RAMInt1SegmentDataAccess(name, location, type.isStoring(), segmentSize);
                 else
                     da = new RAMIntDataAccess(name, location, type.isStoring(), segmentSize);
+            } else if (type.isLongBacked()) {
+                da = new RAMLongDataAccess(name, location, type.isStoring(), segmentSize);
             } else if (type.isSingleSegment()) {
                 da = new RAM1SegmentDataAccess(name, location, type.isStoring(), segmentSize);
             } else {
