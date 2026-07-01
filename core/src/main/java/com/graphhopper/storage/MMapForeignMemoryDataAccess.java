@@ -68,7 +68,6 @@ public final class MMapForeignMemoryDataAccess extends AbstractDataAccess {
     private long capacity;
     private RandomAccessFile raFile;
     private final boolean allowWrites;
-    private boolean preload;
 
     public MMapForeignMemoryDataAccess(String name, String location, boolean allowWrites, int segmentSize) {
         super(name, location, segmentSize);
@@ -76,12 +75,17 @@ public final class MMapForeignMemoryDataAccess extends AbstractDataAccess {
     }
 
     /**
-     * If true, forces all mapped pages into physical RAM after mapping.
-     * This avoids page faults during access at the cost of upfront loading time.
+     * Forces the first {@code percentage}% of the mapped pages into physical RAM to avoid page
+     * faults on later access. Called via {@link GHDirectory#loadMMap()}.
      */
-    public MMapForeignMemoryDataAccess setPreload(boolean preload) {
-        this.preload = preload;
-        return this;
+    public void load(int percentage) {
+        if (percentage < 0 || percentage > 100)
+            throw new IllegalArgumentException("Percentage for load for " + getName() + " must be in [0,100] but was " + percentage);
+        if (capacity == 0)
+            return;
+        long bytes = Math.round(capacity * percentage / 100f);
+        if (bytes > 0)
+            mappedSegment.asSlice(0, bytes).load();
     }
 
     private void initRandomAccessFile() {
@@ -104,9 +108,6 @@ public final class MMapForeignMemoryDataAccess extends AbstractDataAccess {
             mappedSegment = raFile.getChannel().map(mode, offset, size, arena);
             segment = MemorySegment.ofAddress(mappedSegment.address()).reinterpret(size);
             capacity = size;
-
-            if (preload)
-                mappedSegment.load();
         } catch (IOException ex) {
             throw new RuntimeException("Couldn't map " + size + " bytes at offset " + offset
                     + " for " + getFullName(), ex);

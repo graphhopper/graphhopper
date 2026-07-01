@@ -97,11 +97,13 @@ public class GHDirectory implements Directory {
 
     public void loadMMap() {
         for (DataAccess da : map.values()) {
-            if (!(da instanceof MMapDataAccess))
-                continue;
             int preload = getPreload(da.getName());
-            if (preload > 0)
+            if (preload <= 0)
+                continue;
+            if (da instanceof MMapDataAccess)
                 ((MMapDataAccess) da).load(preload);
+            else if (da instanceof MMapForeignMemoryDataAccess)
+                ((MMapForeignMemoryDataAccess) da).load(preload);
         }
     }
 
