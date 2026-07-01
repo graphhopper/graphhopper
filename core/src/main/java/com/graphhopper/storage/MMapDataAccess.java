@@ -423,6 +423,6 @@ public final class MMapDataAccess extends AbstractDataAccess {
 
     @Override
     public DAType getType() {
-        return DAType.MMAP;
+        return DAType.MMAP_OLD;
     }
 }

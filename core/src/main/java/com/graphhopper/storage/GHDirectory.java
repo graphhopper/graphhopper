@@ -18,7 +18,10 @@
 package com.graphhopper.storage;
 
 import java.io.File;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import static com.graphhopper.storage.DAType.RAM_INT;
 import static com.graphhopper.storage.DAType.RAM_INT_STORE;
@@ -76,7 +79,7 @@ public class GHDirectory implements Directory {
                 }
             else {
                 String pattern = kv.getKey();
-                defaultTypes.put(pattern, DAType.fromString(value));
+                defaultTypes.put(pattern, DAType.valueOf(value));
             }
         }
         return this;
@@ -94,11 +97,13 @@ public class GHDirectory implements Directory {
 
     public void loadMMap() {
         for (DataAccess da : map.values()) {
-            if (!(da instanceof MMapDataAccess))
-                continue;
             int preload = getPreload(da.getName());
-            if (preload > 0)
+            if (preload <= 0)
+                continue;
+            if (da instanceof MMapDataAccess)
                 ((MMapDataAccess) da).load(preload);
+            else if (da instanceof MMapForeignMemoryDataAccess)
+                ((MMapForeignMemoryDataAccess) da).load(preload);
         }
     }
 
@@ -134,18 +139,34 @@ public class GHDirectory implements Directory {
             throw new IllegalStateException("DataAccess " + name + " has already been created");
 
         DataAccess da;
-        if (type.isInMemory()) {
+        if (type.isMMap()) {
+            if (type.getMemRef() == DAType.MemRef.MMAP_OLD) {
+                // Legacy ByteBuffer-based mmap, kept as a fallback / for comparison.
+                da = new MMapDataAccess(name, location, type.isAllowWrites(), segmentSize);
+            } else if (type.isAllowWrites()) {
+                da = new MMapForeignMemoryDataAccess(name, location, true, segmentSize);
+            } else {
+                // Fast read-only path with all-final fields. The file must already exist on disk;
+                // there is no "loadExisting returned false" state — the constructor fails fast.
+                // The RO mapping preloads in its constructor, so pass the configured preload here.
+                da = MMapForeignReadOnlyDataAccess.load(name, location, segmentSize, getPreload(name) > 0);
+            }
+        } else if (type.isInMemory()) {
             if (type.isInteg()) {
                 if (type.isSingleSegment())
                     da = new RAMInt1SegmentDataAccess(name, location, type.isStoring(), segmentSize);
                 else
                     da = new RAMIntDataAccess(name, location, type.isStoring(), segmentSize);
-            } else
+            } else if (type.isLongBacked()) {
+                da = new RAMLongDataAccess(name, location, type.isStoring(), segmentSize);
+            } else if (type.isSingleSegment()) {
+                da = new RAM1SegmentDataAccess(name, location, type.isStoring(), segmentSize);
+            } else {
                 da = new RAMDataAccess(name, location, type.isStoring(), segmentSize);
-        } else if (type.isMMap()) {
-            da = new MMapDataAccess(name, location, type.isAllowWrites(), segmentSize);
+            }
         } else {
-            throw new IllegalArgumentException("DAType not supported " + type);
+            // MemRef.NATIVE: off-heap foreign memory (single contiguous MemorySegment, long-indexed)
+            da = new ForeignMemoryDataAccess(name, location, type.isStoring(), segmentSize);
         }
 
         map.put(name, da);

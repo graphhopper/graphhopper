@@ -20,7 +20,8 @@ package com.graphhopper.storage;
 import static com.graphhopper.util.Helper.toUpperCase;
 
 /**
- * Defines how a DataAccess object is created.
+ * Defines how a DataAccess object is created. This is an extensible value object (not an enum) so
+ * that downstream projects can introduce further combinations or new backings.
  * <p>
  *
  * @author Peter Karich
@@ -54,57 +55,112 @@ public class DAType {
      */
     public static final DAType RAM_INT_1SEG_STORE = new DAType(MemRef.HEAP, true, true, true, true);
     /**
-     * Memory mapped DA object. See MMapDataAccess.
+     * Like RAM, but backed by a single contiguous byte[] (no segment math). Limited to ~2GB.
+     * The on-heap equivalent of NATIVE. See RAM1SegmentDataAccess.
+     */
+    public static final DAType RAM_1SEG = new DAType(MemRef.HEAP, false, false, true, true);
+    /**
+     * See RAM_1SEG
+     */
+    public static final DAType RAM_1SEG_STORE = new DAType(MemRef.HEAP, true, false, true, true);
+    /**
+     * Like RAM_1SEG (single contiguous heap array, full byte access), but backed by a {@code long[]}
+     * instead of a {@code byte[]} to allow up to ~16GB. See RAMLongDataAccess.
+     */
+    public static final DAType RAM_LONG = new DAType(MemRef.HEAP, false, false, true, true, true);
+    /**
+     * See RAM_LONG
+     */
+    public static final DAType RAM_LONG_STORE = new DAType(MemRef.HEAP, true, false, true, true, true);
+    /**
+     * Off-heap DA object backed by native (foreign) memory - the equivalent of RAM but outside the
+     * JVM heap. Loading and flushing is a no-op. See ForeignMemoryDataAccess.
+     */
+    public static final DAType NATIVE = new DAType(MemRef.NATIVE, false, false, true);
+    /**
+     * Like NATIVE but loads from and flushes to disc. See ForeignMemoryDataAccess.
+     */
+    public static final DAType NATIVE_STORE = new DAType(MemRef.NATIVE, true, false, true);
+    /**
+     * Memory mapped DA object. See MMapForeignMemoryDataAccess.
      */
     public static final DAType MMAP = new DAType(MemRef.MMAP, true, false, true);
 
     /**
      * Read-only memory mapped DA object. To avoid write access useful for reading on mobile or
-     * embedded data stores.
+     * embedded data stores. See MMapForeignReadOnlyDataAccess.
      */
     public static final DAType MMAP_RO = new DAType(MemRef.MMAP, true, false, false);
+
+    /**
+     * Legacy memory mapped DA object backed by ByteBuffers instead of the Foreign Memory API.
+     * Kept usable as a fallback and for comparison. See MMapDataAccess.
+     */
+    public static final DAType MMAP_OLD = new DAType(MemRef.MMAP_OLD, true, false, true);
     private final MemRef memRef;
     private final boolean storing;
     private final boolean integ;
     private final boolean allowWrites;
     private final boolean singleSegment;
+    private final boolean longBacked;
 
     public DAType(DAType type) {
-        this(type.getMemRef(), type.isStoring(), type.isInteg(), type.isAllowWrites(), type.isSingleSegment());
+        this(type.getMemRef(), type.isStoring(), type.isInteg(), type.isAllowWrites(), type.isSingleSegment(), type.isLongBacked());
     }
 
     public DAType(MemRef memRef, boolean storing, boolean integ, boolean allowWrites) {
-        this(memRef, storing, integ, allowWrites, false);
+        this(memRef, storing, integ, allowWrites, false, false);
     }
 
     public DAType(MemRef memRef, boolean storing, boolean integ, boolean allowWrites, boolean singleSegment) {
+        this(memRef, storing, integ, allowWrites, singleSegment, false);
+    }
+
+    public DAType(MemRef memRef, boolean storing, boolean integ, boolean allowWrites, boolean singleSegment, boolean longBacked) {
         this.memRef = memRef;
         this.storing = storing;
         this.integ = integ;
         this.allowWrites = allowWrites;
         this.singleSegment = singleSegment;
-    }
-
-    public static DAType fromString(String dataAccess) {
-        dataAccess = toUpperCase(dataAccess);
-        DAType type;
-        if (dataAccess.contains("SYNC"))
-            throw new IllegalArgumentException("SYNC option is no longer supported, see #982");
-        else if (dataAccess.contains("MMAP_RO"))
-            type = DAType.MMAP_RO;
-        else if (dataAccess.contains("MMAP"))
-            type = DAType.MMAP;
-        else if (dataAccess.contains("UNSAFE"))
-            throw new IllegalArgumentException("UNSAFE option is no longer supported, see #1620");
-        else if (dataAccess.equals("RAM"))
-            type = DAType.RAM;
-        else
-            type = DAType.RAM_STORE;
-        return type;
+        this.longBacked = longBacked;
     }
 
     /**
-     * Memory mapped or purely in memory? default is HEAP
+     * Parses a DAType from its {@link #toString()} form, e.g. "RAM", "RAM_INT_1SEG_STORE", "MMAP",
+     * "MMAP_RO", "MMAP_OLD" or "NATIVE_STORE". The individual tokens (memory backing plus the
+     * INT / 1SEG / RO / STORE modifiers) are combined so that every valid combination is reachable
+     * from config, not only the predefined constants.
+     */
+    public static DAType valueOf(String dataAccess) {
+        dataAccess = toUpperCase(dataAccess);
+        if (dataAccess.contains("SYNC"))
+            throw new IllegalArgumentException("SYNC option is no longer supported, see #982");
+        if (dataAccess.contains("UNSAFE"))
+            throw new IllegalArgumentException("UNSAFE option is no longer supported, see #1620");
+
+        MemRef memRef;
+        if (dataAccess.contains("MMAP_OLD"))
+            memRef = MemRef.MMAP_OLD;
+        else if (dataAccess.contains("MMAP"))
+            memRef = MemRef.MMAP;
+        else if (dataAccess.contains("NATIVE"))
+            memRef = MemRef.NATIVE;
+        else
+            memRef = MemRef.HEAP;
+
+        boolean integ = dataAccess.contains("INT");
+        boolean longBacked = dataAccess.contains("LONG");
+        // a long[] backing is always a single contiguous array
+        boolean singleSegment = dataAccess.contains("1SEG") || longBacked;
+        boolean allowWrites = !dataAccess.contains("_RO");
+        // mmap always persists to its file; on heap/native memory storing must be requested explicitly
+        boolean storing = memRef == MemRef.MMAP || memRef == MemRef.MMAP_OLD || dataAccess.contains("STORE");
+        return new DAType(memRef, storing, integ, allowWrites, singleSegment, longBacked);
+    }
+
+    /**
+     * Where the data resides: on the JVM heap, off-heap in native memory or memory mapped.
+     * default is HEAP
      */
     MemRef getMemRef() {
         return memRef;
@@ -122,7 +178,7 @@ public class DAType {
     }
 
     public boolean isMMap() {
-        return memRef == MemRef.MMAP;
+        return memRef == MemRef.MMAP || memRef == MemRef.MMAP_OLD;
     }
 
     /**
@@ -146,19 +202,35 @@ public class DAType {
         return singleSegment;
     }
 
+    /**
+     * Backed by a single contiguous {@code long[]} (instead of {@code byte[]}) to allow a larger
+     * capacity? Implies a single segment. default is false
+     */
+    public boolean isLongBacked() {
+        return longBacked;
+    }
+
     @Override
     public String toString() {
         String str;
-        if (getMemRef() == MemRef.MMAP)
+        if (getMemRef() == MemRef.MMAP_OLD)
+            str = "MMAP_OLD";
+        else if (getMemRef() == MemRef.MMAP)
             str = "MMAP";
+        else if (getMemRef() == MemRef.NATIVE)
+            str = "NATIVE";
         else
             str = "RAM";
 
         if (isInteg())
             str += "_INT";
-        if (isSingleSegment())
+        if (isSingleSegment() && !isLongBacked())
             str += "_1SEG";
-        if (isStoring())
+        if (isLongBacked())
+            str += "_LONG";
+        if (!isAllowWrites())
+            str += "_RO";
+        else if (isStoring())
             str += "_STORE";
         return str;
     }
@@ -170,6 +242,8 @@ public class DAType {
         hash = 59 * hash + (this.storing ? 1 : 0);
         hash = 59 * hash + (this.integ ? 1 : 0);
         hash = 59 * hash + (this.singleSegment ? 1 : 0);
+        hash = 59 * hash + (this.longBacked ? 1 : 0);
+        hash = 59 * hash + (this.allowWrites ? 1 : 0);
         return hash;
     }
 
@@ -188,10 +262,14 @@ public class DAType {
             return false;
         if (this.singleSegment != other.singleSegment)
             return false;
+        if (this.longBacked != other.longBacked)
+            return false;
+        if (this.allowWrites != other.allowWrites)
+            return false;
         return true;
     }
 
     public enum MemRef {
-        HEAP, MMAP
+        HEAP, NATIVE, MMAP, MMAP_OLD
     }
 }
