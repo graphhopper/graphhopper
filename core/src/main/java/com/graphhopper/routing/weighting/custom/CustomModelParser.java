@@ -48,6 +48,7 @@ public class CustomModelParser {
     static final String PREV_PREFIX = "prev_";
     static final String CHANGE_ANGLE = "change_angle";
     static final String STREET_NAME = "street_name";
+    static final String IS_FORWARD = "is_forward";
     private static final boolean JANINO_DEBUG = Boolean.getBoolean(Scanner.SYSTEM_PROPERTY_SOURCE_DEBUGGING_ENABLE);
     private static final String SCRIPT_FILE_DIR = System.getProperty(Scanner.SYSTEM_PROPERTY_SOURCE_DEBUGGING_DIR, "./src/main/java/com/graphhopper/routing/weighting/custom");
 
@@ -185,7 +186,7 @@ public class CustomModelParser {
             // some literals are no variables and would throw an exception (encoded value not found)
             if (Character.isUpperCase(s.charAt(0)) || s.startsWith(IN_AREA_PREFIX))
                 return true;
-            if (nameValidator.isValid(s)) {
+            if (nameValidator.isValid(s) || s.equals(IS_FORWARD)) {
                 variables.add(s);
                 return true;
             }
@@ -343,6 +344,11 @@ public class CustomModelParser {
             } else {
                 throw new IllegalArgumentException("Not supported for backward: " + argSubstr);
             }
+        } else if (arg.equals(IS_FORWARD)) {
+            // If edge key is even, the EdgeIteratorState is points in the same direction as the edge in the graph.
+            // We also have to take the "reverse" argument into account because it is true the weight of an edge
+            // is calcuated as part of the reverse search starting at the destination node.
+            return "boolean is_forward = (edge.getEdgeKey() % 2 == 0) ^ reverse;";
         } else if (arg.startsWith(IN_AREA_PREFIX)) {
             return "";
         } else {
@@ -486,7 +492,7 @@ public class CustomModelParser {
             } else if (arg.equals(STREET_NAME)) {
                 // street_name is resolved at runtime from graph KV storage, no class field needed
             } else {
-                if (!arg.startsWith(IN_AREA_PREFIX))
+                if (!arg.startsWith(IN_AREA_PREFIX) && !arg.equals(IS_FORWARD))
                     throw new IllegalArgumentException("Variable not supported: " + arg);
             }
         }
@@ -533,6 +539,7 @@ public class CustomModelParser {
         NameValidator nameInConditionValidator = name -> lookup.hasEncodedValue(name)
                 || name.toUpperCase(Locale.ROOT).equals(name) || name.startsWith(IN_AREA_PREFIX) || name.equals(CHANGE_ANGLE)
                 || name.equals(STREET_NAME) || name.equals(PREV_PREFIX + STREET_NAME)
+                || name.equals(IS_FORWARD)
                 || name.startsWith(BACKWARD_PREFIX) && lookup.hasEncodedValue(name.substring(BACKWARD_PREFIX.length()))
                 || name.startsWith(PREV_PREFIX) && lookup.hasEncodedValue(name.substring(PREV_PREFIX.length()));
         Function<String, EncodedValue> fct = createSimplifiedLookup(lookup);
@@ -541,7 +548,6 @@ public class CustomModelParser {
             if (ev == null) throw new IllegalArgumentException("Couldn't find class for " + key);
             return getReturnType(ev);
         };
-
         parseExpressions(expressions, nameInConditionValidator, info, createObjects, list, helper, "");
         expressions.append("return value;\n");
         return new Parser(new org.codehaus.janino.Scanner(info, new StringReader(expressions.toString()))).
