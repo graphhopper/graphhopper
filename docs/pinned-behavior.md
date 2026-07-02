@@ -51,6 +51,17 @@ independently of that migration.
   Test: `core/.../util/UtilPinnedBehaviorTest.java#countOccurenceUsesJavaSplitSemantics`.
   (2026-07-02)
 
+- **Encoded-value enum constant names and ORDER are persisted in stored graphs** (ordinals via
+  EnumEncodedValue) — reordering or renaming silently corrupts graph loading. No test locked
+  this before. All 23 small ev enums pinned name-by-name in order; Country/State pinned by
+  count + reference constants; plus the deliberate toString asymmetries (HazmatTunnel "A",
+  Country alpha3 "DEU"/"---", State "US-CA"/"-") and find() default asymmetries
+  (RoadAccess unknown→YES but "permit"→PRIVATE; Surface alias map + colon stripping;
+  Smoothness unknown→OTHER but empty→MISSING; Country.find unknown→null NOT MISSING).
+  Expected values extracted from the pre-migration Java implementation.
+  Test: `core/.../routing/ev/EvEnumOrderPinnedTest.java`. Appending new constants at the END
+  is safe; any other failure must not be "fixed" by updating literals. (2026-07-02)
+
 ## Recorded only (not externally observable)
 
 - **Unzipper accumulates progress via Java's compound assignment** `sumBytes += len * factor`,
