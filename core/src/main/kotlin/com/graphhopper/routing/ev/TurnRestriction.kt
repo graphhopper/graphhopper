@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.ev
 
-import com.graphhopper.routing.util.EncodingManager.getKey
+import com.graphhopper.routing.util.EncodingManager.Companion.getKey
 
 object TurnRestriction {
 

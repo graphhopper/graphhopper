@@ -15,20 +15,23 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util;
+package com.graphhopper.routing.util
 
-import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.EdgeIteratorState
 
 /**
  * Class used to traverse a graph.
  *
  * @author Peter Karich
  */
-public interface EdgeFilter {
-    EdgeFilter ALL_EDGES = edgeState -> true;
-
+fun interface EdgeFilter {
     /**
      * @return true if the current edge should be processed and false otherwise.
      */
-    boolean accept(EdgeIteratorState edgeState);
+    fun accept(edgeState: EdgeIteratorState): Boolean
+
+    companion object {
+        @JvmField
+        val ALL_EDGES: EdgeFilter = EdgeFilter { true }
+    }
 }

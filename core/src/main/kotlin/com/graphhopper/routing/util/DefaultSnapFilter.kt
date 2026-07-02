@@ -15,28 +15,22 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util;
+package com.graphhopper.routing.util
 
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.routing.ev.BooleanEncodedValue
+import com.graphhopper.routing.weighting.Weighting
+import com.graphhopper.util.EdgeIteratorState
 
 /**
  * This EdgeFilter combines the weighting result and the 'subnetwork' EncodedValue to consider the subnetwork removal
  * in LocationIndex lookup. In future the 'subnetwork' EncodedValue could be moved into the Weighting.
  */
-public class DefaultSnapFilter implements EdgeFilter {
-    private final Weighting weighting;
-    private final BooleanEncodedValue inSubnetworkEnc;
+class DefaultSnapFilter(
+    private val weighting: Weighting,
+    private val inSubnetworkEnc: BooleanEncodedValue
+) : EdgeFilter {
 
-    public DefaultSnapFilter(Weighting weighting, BooleanEncodedValue inSubnetworkEnc) {
-        this.weighting = weighting;
-        this.inSubnetworkEnc = inSubnetworkEnc;
-    }
-
-    @Override
-    public boolean accept(EdgeIteratorState edgeState) {
-        return !edgeState.get(inSubnetworkEnc) && (Double.isFinite(weighting.calcEdgeWeight(edgeState, false)) ||
-                Double.isFinite(weighting.calcEdgeWeight(edgeState, true)));
-    }
+    override fun accept(edgeState: EdgeIteratorState): Boolean =
+        !edgeState.get(inSubnetworkEnc) && (weighting.calcEdgeWeight(edgeState, false).isFinite() ||
+                weighting.calcEdgeWeight(edgeState, true).isFinite())
 }

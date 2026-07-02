@@ -15,10 +15,17 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util;
+package com.graphhopper.routing.util
 
-import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.routing.weighting.Weighting
+import com.graphhopper.util.EdgeIteratorState
 
-public interface DirectedEdgeFilter {
-    boolean accept(EdgeIteratorState edgeState, boolean reverse);
+/**
+ * An [EdgeFilter] that only accepts edges with finite weight (in either direction)
+ */
+class FiniteWeightFilter(private val weighting: Weighting) : EdgeFilter {
+
+    override fun accept(edgeState: EdgeIteratorState): Boolean =
+        weighting.calcEdgeWeight(edgeState, false).isFinite() ||
+                weighting.calcEdgeWeight(edgeState, true).isFinite()
 }

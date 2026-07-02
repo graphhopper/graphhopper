@@ -15,57 +15,45 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util;
+package com.graphhopper.routing.util
 
-import com.graphhopper.storage.RoutingCHEdgeIteratorState;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
+import com.graphhopper.storage.RoutingCHEdgeIteratorState
+import com.graphhopper.util.EdgeIteratorState
+import com.graphhopper.util.GHUtility
 
 /**
  * @author Peter Karich
  */
-public enum TraversalMode {
+enum class TraversalMode(val isEdgeBased: Boolean) {
     NODE_BASED(false),
     EDGE_BASED(true);
-
-    private final boolean edgeBased;
-
-    TraversalMode(boolean edgeBased) {
-        this.edgeBased = edgeBased;
-    }
 
     /**
      * Returns the identifier to access the map of the shortest path tree according to the traversal
      * mode. E.g. returning the adjacent node id in node-based behavior whilst returning the edge id
      * in edge-based behavior
-     * <p>
      *
-     * @param edgeState the current {@link EdgeIteratorState}
-     * @param reverse   <code>true</code>, if traversal in backward direction. Will be true only for
+     * @param edgeState the current [EdgeIteratorState]
+     * @param reverse   `true`, if traversal in backward direction. Will be true only for
      *                  backward searches in bidirectional algorithms.
      * @return the identifier to access the shortest path tree
      */
-    public final int createTraversalId(EdgeIteratorState edgeState, boolean reverse) {
-        if (edgeBased)
-            return reverse ? edgeState.getReverseEdgeKey() : edgeState.getEdgeKey();
-        return edgeState.getAdjNode();
+    fun createTraversalId(edgeState: EdgeIteratorState, reverse: Boolean): Int {
+        if (isEdgeBased)
+            return if (reverse) edgeState.reverseEdgeKey else edgeState.edgeKey
+        return edgeState.adjNode
     }
 
-    public final int createTraversalId(RoutingCHEdgeIteratorState chEdgeState, boolean reverse) {
-        if (edgeBased) {
-            int key = reverse ? chEdgeState.getOrigEdgeKeyFirst() : chEdgeState.getOrigEdgeKeyLast();
+    fun createTraversalId(chEdgeState: RoutingCHEdgeIteratorState, reverse: Boolean): Int {
+        if (isEdgeBased) {
+            var key = if (reverse) chEdgeState.origEdgeKeyFirst else chEdgeState.origEdgeKeyLast
             // For reverse traversal we need to revert the edge key, but not for shortcuts.
             // Why? Because of our definition of the first/last edge keys: they do not depend on the
             // 'state' of the edge state, but are defined in terms of the direction of the (always directed) shortcut.
-            if (reverse && !chEdgeState.isShortcut() && chEdgeState.getBaseNode() != chEdgeState.getAdjNode())
-                key = GHUtility.reverseEdgeKey(key);
-            return key;
+            if (reverse && !chEdgeState.isShortcut && chEdgeState.baseNode != chEdgeState.adjNode)
+                key = GHUtility.reverseEdgeKey(key)
+            return key
         }
-        return chEdgeState.getAdjNode();
+        return chEdgeState.adjNode
     }
-
-    public boolean isEdgeBased() {
-        return edgeBased;
-    }
-
 }

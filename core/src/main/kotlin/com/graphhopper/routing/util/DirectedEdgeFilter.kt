@@ -15,16 +15,10 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util;
+package com.graphhopper.routing.util
 
-import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState
 
-/**
- * @author Peter Karich
- */
-public interface AllEdgesIterator extends EdgeIterator {
-    /**
-     * @return the maximum edgeId in the graph plus 1
-     */
-    int length();
+fun interface DirectedEdgeFilter {
+    fun accept(edgeState: EdgeIteratorState, reverse: Boolean): Boolean
 }

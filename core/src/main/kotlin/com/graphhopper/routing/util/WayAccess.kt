@@ -15,25 +15,16 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+package com.graphhopper.routing.util
 
-package com.graphhopper.routing.util;
-
-public enum WayAccess {
+enum class WayAccess {
     WAY, FERRY, OTHER, CAN_SKIP;
 
-    public boolean isFerry() {
-        return this.ordinal() == FERRY.ordinal();
-    }
+    fun isFerry(): Boolean = ordinal == FERRY.ordinal
 
-    public boolean isWay() {
-        return this.ordinal() == WAY.ordinal();
-    }
+    fun isWay(): Boolean = ordinal == WAY.ordinal
 
-    public boolean isOther() {
-        return this.ordinal() == OTHER.ordinal();
-    }
+    fun isOther(): Boolean = ordinal == OTHER.ordinal
 
-    public boolean canSkip() {
-        return this.ordinal() == CAN_SKIP.ordinal();
-    }
+    fun canSkip(): Boolean = ordinal == CAN_SKIP.ordinal
 }

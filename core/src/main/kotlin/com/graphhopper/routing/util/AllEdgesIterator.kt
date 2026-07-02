@@ -15,25 +15,16 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+package com.graphhopper.routing.util
 
-package com.graphhopper.routing.util;
-
-import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.EdgeIterator
 
 /**
- * An {@link EdgeFilter} that only accepts edges with finite weight (in either direction)
+ * @author Peter Karich
  */
-public class FiniteWeightFilter implements EdgeFilter {
-    private final Weighting weighting;
-
-    public FiniteWeightFilter(Weighting weighting) {
-        this.weighting = weighting;
-    }
-
-    @Override
-    public final boolean accept(EdgeIteratorState edgeState) {
-        return Double.isFinite(weighting.calcEdgeWeight(edgeState, false)) ||
-                Double.isFinite(weighting.calcEdgeWeight(edgeState, true));
-    }
+interface AllEdgesIterator : EdgeIterator {
+    /**
+     * @return the maximum edgeId in the graph plus 1
+     */
+    fun length(): Int
 }

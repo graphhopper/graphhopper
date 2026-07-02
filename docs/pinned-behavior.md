@@ -83,6 +83,11 @@ independently of that migration.
   storage-format review since existing graphs could contain such values.
   Test: `core/.../search/KVStoragePinnedBehaviorTest.java`. (2026-07-02)
 
+- **PriorityCode.valueOf(int) maps gaps upward via ceilingEntry and falls back to BEST above
+  15; worse()/better() saturate at EXCLUDE/BEST** — feeds the priority encoded values; no
+  PriorityCode test existed. Verified against the pre-migration Java implementation.
+  Test: `core/.../routing/util/PriorityCodePinnedBehaviorTest.java`. (2026-07-02)
+
 ## Recorded only (not externally observable)
 
 - **Location-index on-disk format quirks preserved verbatim** (guarded by the germany
