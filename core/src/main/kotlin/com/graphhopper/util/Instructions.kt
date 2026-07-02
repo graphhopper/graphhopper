@@ -15,72 +15,70 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+package com.graphhopper.util
 
-package com.graphhopper.util;
-
-public class Instructions {
-
+object Instructions {
     /**
      * This method is useful for navigation devices to find the next instruction for the specified
      * coordinate (e.g. the current position).
-     * <p>
      *
      * @param instructions the instructions to query
      * @param maxDistance the maximum acceptable distance to the instruction (in meter)
      * @return the next Instruction or null if too far away.
      */
-    public static Instruction find(InstructionList instructions, double lat, double lon, double maxDistance) {
+    @JvmStatic
+    fun find(instructions: InstructionList, lat: Double, lon: Double, maxDistance: Double): Instruction? {
         // handle special cases
-        if (instructions.size() == 0) {
-            return null;
+        if (instructions.size == 0) {
+            return null
         }
-        PointList points = instructions.get(0).getPoints();
-        double prevLat = points.getLat(0);
-        double prevLon = points.getLon(0);
-        DistanceCalc distCalc = DistanceCalcEarth.DIST_EARTH;
-        double foundMinDistance = distCalc.calcNormalizedDist(lat, lon, prevLat, prevLon);
-        int foundInstruction = 0;
+        var points = instructions[0].points
+        var prevLat = points.getLat(0)
+        var prevLon = points.getLon(0)
+        val distCalc: DistanceCalc = DistanceCalcEarth.DIST_EARTH
+        var foundMinDistance = distCalc.calcNormalizedDist(lat, lon, prevLat, prevLon)
+        var foundInstruction = 0
 
         // Search the closest edge to the query point
-        if (instructions.size() > 1) {
-            for (int instructionIndex = 0; instructionIndex < instructions.size(); instructionIndex++) {
-                points = instructions.get(instructionIndex).getPoints();
-                for (int pointIndex = 0; pointIndex < points.size(); pointIndex++) {
-                    double currLat = points.getLat(pointIndex);
-                    double currLon = points.getLon(pointIndex);
+        if (instructions.size > 1) {
+            for (instructionIndex in 0 until instructions.size) {
+                points = instructions[instructionIndex].points
+                for (pointIndex in 0 until points.size()) {
+                    val currLat = points.getLat(pointIndex)
+                    val currLon = points.getLon(pointIndex)
 
                     if (!(instructionIndex == 0 && pointIndex == 0)) {
                         // calculate the distance from the point to the edge
-                        double distance;
-                        int index = instructionIndex;
+                        val distance: Double
+                        var index = instructionIndex
                         if (distCalc.validEdgeDistance(lat, lon, currLat, currLon, prevLat, prevLon)) {
-                            distance = distCalc.calcNormalizedEdgeDistance(lat, lon, currLat, currLon, prevLat, prevLon);
+                            distance = distCalc.calcNormalizedEdgeDistance(lat, lon, currLat, currLon, prevLat, prevLon)
                             if (pointIndex > 0)
-                                index++;
+                                index++
                         } else {
-                            distance = distCalc.calcNormalizedDist(lat, lon, currLat, currLon);
+                            distance = distCalc.calcNormalizedDist(lat, lon, currLat, currLon)
                             if (pointIndex > 0)
-                                index++;
+                                index++
                         }
 
                         if (distance < foundMinDistance) {
-                            foundMinDistance = distance;
-                            foundInstruction = index;
+                            foundMinDistance = distance
+                            foundInstruction = index
                         }
                     }
-                    prevLat = currLat;
-                    prevLon = currLon;
+                    prevLat = currLat
+                    prevLon = currLon
                 }
             }
         }
 
         if (distCalc.calcDenormalizedDist(foundMinDistance) > maxDistance)
-            return null;
+            return null
 
         // special case finish condition
-        if (foundInstruction == instructions.size())
-            foundInstruction--;
+        if (foundInstruction == instructions.size)
+            foundInstruction--
 
-        return instructions.get(foundInstruction);
+        return instructions[foundInstruction]
     }
 }

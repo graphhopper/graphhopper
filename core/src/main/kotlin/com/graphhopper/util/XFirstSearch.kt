@@ -15,29 +15,25 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.util;
+package com.graphhopper.util
 
-import com.graphhopper.coll.GHBitSet;
+import com.graphhopper.coll.GHBitSet
 
 /**
  * This abstract class defines commonalities for BFS and DFS
  *
  * @author Jan Sölter
  */
-public abstract class XFirstSearch {
+abstract class XFirstSearch {
     /**
-     * Pick the BitSet implementation wisely. Use {@link com.graphhopper.coll.GHBitSetImpl} only if we are sure you visit a large portion of the graph.
-     * And if you choose {@link com.graphhopper.coll.GHTBitSet} the initial capacity can be also important for performance.
+     * Pick the BitSet implementation wisely. Use [com.graphhopper.coll.GHBitSetImpl] only if we are sure you visit a large portion of the graph.
+     * And if you choose [com.graphhopper.coll.GHTBitSet] the initial capacity can be also important for performance.
      */
-    protected abstract GHBitSet createBitSet();
+    protected abstract fun createBitSet(): GHBitSet
 
-    public abstract void start(EdgeExplorer explorer, int startNode);
+    abstract fun start(explorer: EdgeExplorer, startNode: Int)
 
-    protected boolean goFurther(int nodeId) {
-        return true;
-    }
+    protected open fun goFurther(nodeId: Int): Boolean = true
 
-    protected boolean checkAdjacent(EdgeIteratorState edge) {
-        return true;
-    }
+    protected open fun checkAdjacent(edge: EdgeIteratorState): Boolean = true
 }

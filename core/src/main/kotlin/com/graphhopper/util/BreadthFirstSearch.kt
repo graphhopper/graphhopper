@@ -15,34 +15,31 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.util;
-
-import com.graphhopper.coll.GHBitSet;
+package com.graphhopper.util
 
 /**
  * Implementation of breadth first search (BFS)
  *
  * @author Peter Karich
  */
-public abstract class BreadthFirstSearch extends XFirstSearch {
-    @Override
-    public void start(EdgeExplorer explorer, int startNode) {
-        SimpleIntDeque fifo = new SimpleIntDeque();
-        GHBitSet visited = createBitSet();
-        visited.add(startNode);
-        fifo.push(startNode);
-        int current;
+abstract class BreadthFirstSearch : XFirstSearch() {
+    override fun start(explorer: EdgeExplorer, startNode: Int) {
+        val fifo = SimpleIntDeque()
+        val visited = createBitSet()
+        visited.add(startNode)
+        fifo.push(startNode)
+        var current: Int
         while (!fifo.isEmpty()) {
-            current = fifo.pop();
+            current = fifo.pop()
             if (!goFurther(current))
-                continue;
+                continue
 
-            EdgeIterator iter = explorer.setBaseNode(current);
+            val iter = explorer.setBaseNode(current)
             while (iter.next()) {
-                int connectedId = iter.getAdjNode();
+                val connectedId = iter.adjNode
                 if (checkAdjacent(iter) && !visited.contains(connectedId)) {
-                    visited.add(connectedId);
-                    fifo.push(connectedId);
+                    visited.add(connectedId)
+                    fifo.push(connectedId)
                 }
             }
         }

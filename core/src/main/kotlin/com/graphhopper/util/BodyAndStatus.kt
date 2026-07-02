@@ -15,25 +15,8 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+package com.graphhopper.util
 
-package com.graphhopper.util;
+import com.fasterxml.jackson.databind.JsonNode
 
-import com.fasterxml.jackson.databind.JsonNode;
-
-public class BodyAndStatus {
-    private final JsonNode body;
-    private final int status;
-
-    public BodyAndStatus(JsonNode body, int status) {
-        this.body = body;
-        this.status = status;
-    }
-
-    public JsonNode getBody() {
-        return body;
-    }
-
-    public int getStatus() {
-        return status;
-    }
-}
+class BodyAndStatus(val body: JsonNode?, val status: Int)

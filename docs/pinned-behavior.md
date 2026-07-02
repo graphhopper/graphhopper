@@ -38,7 +38,40 @@ independently of that migration.
   NaN. Untested before; message text pinned.
   Test: `core/.../util/UtilPinnedBehaviorTest.java`. (2026-07-02)
 
+- **Unzipper's progress listener reports one cumulative byte count for the whole archive** —
+  never reset between entries — and stays silent for directories and empty files. Untested
+  before (UnzipperTest never passed a listener).
+  Test: `core/.../util/UtilPinnedBehaviorTest.java#unzipperProgressAccumulatesAcrossEntries`.
+  (2026-07-02)
+
+- **TranslationMap.countOccurence uses java.lang.String.split semantics**: trailing empty
+  strings are dropped, leading ones kept, and `Helper.isEmpty` trims so whitespace-only input
+  returns 0. Kotlin's `String.split(Regex)` keeps trailing empties, so the Kotlin version must
+  keep delegating to `java.lang.String.split`. Untested before.
+  Test: `core/.../util/UtilPinnedBehaviorTest.java#countOccurenceUsesJavaSplitSemantics`.
+  (2026-07-02)
+
 ## Recorded only (not externally observable)
+
+- **Unzipper accumulates progress via Java's compound assignment** `sumBytes += len * factor`,
+  i.e. `(long) (sumBytes + len * factor)` — truncation towards zero after scaling by
+  compressedSize/size. Preserved with an explicit `.toLong()` in Kotlin; the fractional-factor
+  truncation is not pinned by a test because the only fixture (test.zip) contains stored
+  (factor==1) entries; the cumulative sequence itself IS pinned (see above). (2026-07-02)
+
+- **Downloader.downloadAndUnzip reports percentages as** `(int) (100 * sumBytes / length)`
+  widened back to long — long division truncation, and a server not sending Content-Length
+  (length == -1) yields negative "percentages". Not testable without an HTTP fixture.
+  (2026-07-02)
+
+- **MiniPerfTest.formatDuration picks units at 1e7/1e4 ns**, so everything above 10 ms is
+  already printed in (fractional) seconds and 10 µs–10 ms in ms. Only observable through the
+  timing-dependent getReport() string. (2026-07-02)
+
+- **RamerDouglasPeucker.setMaxDistance normalizes with the DistanceCalc active at call time**:
+  a later setApproximation(...) switches the calculator but does NOT recompute normedMaxDist,
+  so the effective tolerance depends on the configuration call order. Preserved verbatim.
+  (2026-07-02)
 
 - **IntFloatBinaryHeap.trimTo has an empty fill range** (`Arrays.fill(elements, toSize+1,
   size+1, 0)` runs after `size = toSize`, so start == end): `clear()` never zeroes the arrays

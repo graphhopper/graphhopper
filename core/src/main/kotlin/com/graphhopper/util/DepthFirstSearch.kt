@@ -15,10 +15,9 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.util;
+package com.graphhopper.util
 
-import com.carrotsearch.hppc.IntArrayDeque;
-import com.graphhopper.coll.GHBitSet;
+import com.carrotsearch.hppc.IntArrayDeque
 
 /**
  * Implementation of depth first search (DFS) by LIFO queue
@@ -26,31 +25,29 @@ import com.graphhopper.coll.GHBitSet;
  * @author Peter Karich
  * @author Jan Sölter
  */
-public abstract class DepthFirstSearch extends XFirstSearch {
+abstract class DepthFirstSearch : XFirstSearch() {
     /**
      * beginning with startNode add all following nodes to LIFO queue. If node has been already
      * explored before, skip reexploration.
      */
-    @Override
-    public void start(EdgeExplorer explorer, int startNode) {
-        IntArrayDeque stack = new IntArrayDeque();
+    override fun start(explorer: EdgeExplorer, startNode: Int) {
+        val stack = IntArrayDeque()
 
-        GHBitSet explored = createBitSet();
-        stack.addLast(startNode);
-        int current;
+        val explored = createBitSet()
+        stack.addLast(startNode)
+        var current: Int
         while (stack.size() > 0) {
-            current = stack.removeLast();
+            current = stack.removeLast()
             if (!explored.contains(current) && goFurther(current)) {
-                EdgeIterator iter = explorer.setBaseNode(current);
+                val iter = explorer.setBaseNode(current)
                 while (iter.next()) {
-                    int connectedId = iter.getAdjNode();
+                    val connectedId = iter.adjNode
                     if (checkAdjacent(iter)) {
-                        stack.addLast(connectedId);
+                        stack.addLast(connectedId)
                     }
                 }
-                explored.add(current);
+                explored.add(current)
             }
         }
     }
-
 }

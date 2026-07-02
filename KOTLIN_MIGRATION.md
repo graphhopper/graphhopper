@@ -179,6 +179,9 @@ Timing references (MMAP on 7GB/4-core box — compare like-for-like only):
    `@Throws` for checked exceptions Java callers catch, keep getters as properties — Java sees
    `getX()`).
 3. `mvn -q -pl core test` must be green. At phase milestones: `mvn -B clean test` (full repo).
+   Batch-final verification must use `clean` — incremental compilation can mask missing `open`
+   modifiers against stale subclass classfiles (bit us with Downloader's anonymous test
+   subclasses: first test-compile passed, clean run threw IncompatibleClassChangeError).
 4. Commit: `kotlin: convert <package or classes>` — one conversion per commit for rollback.
 5. Never edit a test's assertions; if a test won't compile against Kotlin (e.g. SAM/overload
    resolution), adapt syntax minimally, preserving meaning — and note it in the commit message.
