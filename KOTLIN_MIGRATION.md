@@ -157,6 +157,10 @@ java -cp tools/target/graphhopper-tools-*-jar-with-dependencies.jar \
 4. Commit: `kotlin: convert <package or classes>` — one conversion per commit for rollback.
 5. Never edit a test's assertions; if a test won't compile against Kotlin (e.g. SAM/overload
    resolution), adapt syntax minimally, preserving meaning — and note it in the commit message.
+5b. (Peter 2026-07-02) When conversion work uncovers additional behavior that must be pinned
+   but is NOT covered by existing tests (subtle numeric semantics, iteration order, overflow/
+   sign behavior, initialization order, ...): write a NEW test that locks it in, and record the
+   finding in the "Pinned behavior discovered during conversion" section below.
 6. Test conversion to Kotlin is OPTIONAL/later; Java tests keep working against Kotlin classes
    and are a stronger interop check. (Open question Q4.)
 
@@ -229,6 +233,16 @@ triangulation/QuadEdge — Spatial K has NO equivalent), `AreaIndex`, `CustomAre
 `InMemConstructionIndex`, `PixelGridTraversal`. Plan: keep JTS for triangulation and spatial
 indexing (JVM-only anyway); consider Spatial K for GeoJSON-ish/simple geometry types only if it
 doesn't force API breaks — decide when reaching `util.shapes` (early) and `isochrone` (late).
+
+## Pinned behavior discovered during conversion
+
+Behaviors found during conversion that existing tests did not cover, now locked by new tests
+(rule 5b in the protocol). Format: what, why it matters, which new test pins it.
+
+- (none yet — candidates already known but still test-covered elsewhere: JaroWinkler computes in
+  float precision; SpatialKeyAlgo.encode can overflow into the int sign bit before widening;
+  GH* hash maps rely on deterministic iteration order — the latter WILL get a dedicated canary
+  test with the androidx.collection switch.)
 
 ## Progress log
 
