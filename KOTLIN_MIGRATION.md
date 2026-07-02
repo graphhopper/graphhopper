@@ -266,10 +266,14 @@ doesn't force API breaks — decide when reaching `util.shapes` (early) and `iso
 Behaviors found during conversion that existing tests did not cover, now locked by new tests
 (rule 5b in the protocol). Format: what, why it matters, which new test pins it.
 
-- (none yet — candidates already known but still test-covered elsewhere: JaroWinkler computes in
-  float precision; SpatialKeyAlgo.encode can overflow into the int sign bit before widening;
-  GH* hash maps rely on deterministic iteration order — the latter WILL get a dedicated canary
-  test with the androidx.collection switch.)
+- **Hash container iteration order must be reproducible across JVM runs** (stored graphs +
+  several tests depend on it; hppc pinned it via HashOrderMixing.constant). For
+  androidx.collection 1.6.0 this holds (fixed hash constant, no seed) but is NOT an API
+  guarantee → pinned by `core/.../coll/AndroidxCollectionDeterminismTest.java` with exact
+  observed sequences. If it fails after a version bump: re-baseline deliberately, don't just
+  fix the literals. (2026-07-02)
+- Still-open candidates (currently covered indirectly): JaroWinkler computes in float
+  precision; SpatialKeyAlgo.encode can overflow into the int sign bit before widening to long.
 
 ## Progress log
 
