@@ -85,6 +85,13 @@ independently of that migration.
 
 ## Recorded only (not externally observable)
 
+- **Location-index on-disk format quirks preserved verbatim** (guarded by the germany
+  load-gate): store() advances the write pointer even for null subtree entries; leaf cells
+  encode single entries as -edgeId-1 vs an exclusive end pointer for multi-entry cells; tree
+  geometry derives from long-accumulated parts via Math.round(sqrt) int truncation. Also:
+  Snap.getSnappedPoint() throws ISE when uncalculated but toString() NPEs (field read);
+  findClosest marks edges seen BEFORE the filter accepts them. (2026-07-02)
+
 - **Graph binary-format quirks preserved verbatim in the Kotlin storage layer** (guarded
   end-to-end by the germany load-gate rather than unit pins): 40-bit signed geoRef whose 5th
   byte is deliberately NOT masked (sign-extension for negative refs, #2985); partial-int flag

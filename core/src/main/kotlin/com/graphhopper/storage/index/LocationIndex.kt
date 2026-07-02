@@ -15,10 +15,10 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.storage.index;
+package com.graphhopper.storage.index
 
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.routing.util.EdgeFilter
+import com.graphhopper.util.shapes.BBox
 
 /**
  * Provides a way to map real world data "lat,lon" to internal ids/indices of a memory efficient graph
@@ -29,8 +29,7 @@ import com.graphhopper.util.shapes.BBox;
  *
  * @author Peter Karich
  */
-public interface LocationIndex {
-
+interface LocationIndex {
     /**
      * This method returns the closest Snap for the specified location (lat, lon) and only if
      * the filter accepts the edge as valid candidate (e.g. filtering away car-only results for bike
@@ -44,68 +43,58 @@ public interface LocationIndex {
      * has at least one edge which is accepted by the specified edgeFilter. If nothing is found
      * the method Snap.isValid will return false.
      */
-    Snap findClosest(double lat, double lon, EdgeFilter edgeFilter);
+    fun findClosest(lat: Double, lon: Double, edgeFilter: EdgeFilter): Snap
 
     /**
      * This method explores the LocationIndex with the specified Visitor. It visits only the stored edges (and only once)
      * and limited by the queryBBox. Also (a few) more edges slightly outside of queryBBox could be
      * returned that you can avoid via doing an explicit BBox check of the coordinates.
      */
-    default void query(BBox queryBBox, Visitor function) {
-        query(createBBoxTileFilter(queryBBox), function);
+    fun query(queryBBox: BBox?, function: Visitor) {
+        query(createBBoxTileFilter(queryBBox), function)
     }
 
-    void query(TileFilter tileFilter, Visitor function);
+    fun query(tileFilter: TileFilter?, function: Visitor)
 
-    void close();
-
+    fun close()
 
     interface TileFilter {
-
         /**
          * @return true if all edges within the given bounding box shall be accepted
          */
-        boolean acceptAll(BBox tile);
+        fun acceptAll(tile: BBox): Boolean
 
         /**
          * @return true if edges within the given bounding box shall potentially be accepted. In this
          * case the tile filter will be applied again for smaller bounding boxes on a lower level.
          * If this is the lowest level already simply all edges will be accepted.
          */
-        boolean acceptPartially(BBox tile);
-    }
-
-    static TileFilter createBBoxTileFilter(BBox queryBBox) {
-        return queryBBox == null ? null : new TileFilter() {
-            @Override
-            public boolean acceptAll(BBox tile) {
-                return queryBBox.contains(tile);
-            }
-
-            @Override
-            public boolean acceptPartially(BBox tile) {
-                return queryBBox.intersects(tile);
-            }
-        };
+        fun acceptPartially(tile: BBox): Boolean
     }
 
     /**
      * This interface allows to visit edges stored in the LocationIndex.
      */
-    @FunctionalInterface
-    interface Visitor {
+    fun interface Visitor {
+        fun onEdge(edgeId: Int)
 
-        void onEdge(int edgeId);
-
-        default boolean isTileInfo() {
-            return false;
-        }
+        fun isTileInfo(): Boolean = false
 
         /**
          * This method is called if isTileInfo returns true.
          */
-        default void onTile(BBox bbox, int depth) {
+        fun onTile(bbox: BBox, depth: Int) {
         }
     }
 
+    companion object {
+        @JvmStatic
+        fun createBBoxTileFilter(queryBBox: BBox?): TileFilter? {
+            return if (queryBBox == null) null else object : TileFilter {
+                override fun acceptAll(tile: BBox): Boolean = queryBBox.contains(tile)
+
+                override fun acceptPartially(tile: BBox): Boolean = queryBBox.intersects(tile)
+            }
+        }
+    }
 }
