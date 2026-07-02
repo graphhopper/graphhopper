@@ -15,38 +15,34 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.coll;
+package com.graphhopper.coll
+
+import java.util.function.LongUnaryOperator
 
 /**
- * Wrapper interface of an integer container for different implementations like OpenBitset, BitSet,
- * ...
- * <p>
- * Loop via<br/>
- * <code>for (int i = set.next(0); i >= 0; i = set.next(i + 1)) {...}</code>
- *
  * @author Peter Karich
  */
-public interface GHBitSet {
-    boolean contains(int index);
-
-    void add(int index);
-
-    void remove(int index);
-
-    int getCardinality();
-
-    void clear();
+interface LongLongMap {
+    fun put(key: Long, value: Long): Long
 
     /**
-     * Searches for a greater or equal entry and returns it.
-     * <p>
+     * If the key is absent, inserts valueIfAbsent.
+     * If the key is present, updates it with computeIfPresent.applyAsLong(currentValue).
+     * This is done in a single traversal.
      *
-     * @return -1 if nothing found
+     * @return the previous value, or the empty value if the key was absent
      */
-    int next(int index);
+    fun putOrCompute(key: Long, valueIfAbsent: Long, computeIfPresent: LongUnaryOperator): Long
 
-    /**
-     * @return the specified MyBitSet bs
-     */
-    GHBitSet copyTo(GHBitSet bs);
+    fun get(key: Long): Long
+
+    val size: Long
+
+    val maxValue: Long
+
+    fun optimize()
+
+    val memoryUsage: Int
+
+    fun clear()
 }
