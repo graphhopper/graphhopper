@@ -142,6 +142,10 @@ java -cp tools/target/graphhopper-tools-*-jar-with-dependencies.jar \
 - ALWAYS pipe Measurement output through `tee measurements/<label>.log` so the run is
   live-tailable (the 2026-07-02 java-baseline germany run lacks this — logs only via file-size
   progress + final JSON).
+- Benchmark cadence (Peter 2026-07-02): full germany Measurement at ~30%, ~60% and 100% of
+  converted classes (plus a load-only run against the java-written germany graph as a storage
+  format compatibility check). Cheap alsace/sachsen spot-checks after hot-path phases only
+  (HPPC→androidx switch, storage, routing, CH/LM) — normal commits are gated by tests alone.
 - Deterministic equivalence beyond timing: CH shortcut counts, LM landmark data, visited-node
   counts, and identical route distances/times for a fixed random seed — compare JSON outputs.
 - Real-world spot checks: run web server (`config-example.yml`) on a real pbf, compare a fixed
