@@ -37,6 +37,7 @@ mkdir -p ${SUMMARY_DIR}
 # actually run the benchmarks:
 echo "1 - small map: node- and edge-based CH + landmarks (edge- & node-based for LM) + slow routing"
 java -cp tools/target/graphhopper-tools-*-jar-with-dependencies.jar \
+-XX:+UseTransparentHugePages -XX:+AlwaysPreTouch \
 -XX:+UseParallelGC -Xmx20g -Xms20g \
 com.graphhopper.tools.Measurement \
 datareader.file=${SMALL_OSM_MAP} \
@@ -64,6 +65,7 @@ measurement.use_measurement_time_as_ref_time=${USE_MEASUREMENT_TIME_AS_REF_TIME}
 
 echo "2 - big map: node-based CH + landmarks (edge- & node-based for LM) + slow routing"
 java -cp tools/target/graphhopper-tools-*-jar-with-dependencies.jar \
+-XX:+UseTransparentHugePages -XX:+AlwaysPreTouch \
 -XX:+UseParallelGC -Xmx20g -Xms20g \
 com.graphhopper.tools.Measurement \
 datareader.file=${BIG_OSM_MAP} \
@@ -92,6 +94,7 @@ measurement.use_measurement_time_as_ref_time=${USE_MEASUREMENT_TIME_AS_REF_TIME}
 echo "3 - big map with a custom model that is 'very customized', i.e. has many custom weighting rules"
 echo "node-based CH + LM + slow routing"
 java -cp tools/target/graphhopper-tools-*-jar-with-dependencies.jar \
+-XX:+UseTransparentHugePages -XX:+AlwaysPreTouch \
 -XX:+UseParallelGC -Xmx20g -Xms20g \
 com.graphhopper.tools.Measurement \
 datareader.file=${BIG_OSM_MAP} \
@@ -122,6 +125,7 @@ measurement.use_measurement_time_as_ref_time=${USE_MEASUREMENT_TIME_AS_REF_TIME}
 
 echo "4 - big map, outdoor: node-based CH + landmarks (edge- & node-based for LM)"
 java -cp tools/target/graphhopper-tools-*-jar-with-dependencies.jar \
+-XX:+UseTransparentHugePages -XX:+AlwaysPreTouch \
 -XX:+UseParallelGC -Xmx20g -Xms20g \
 com.graphhopper.tools.Measurement \
 datareader.file=${BIG_OSM_MAP} \
