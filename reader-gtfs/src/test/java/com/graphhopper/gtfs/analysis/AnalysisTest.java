@@ -35,7 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class AnalysisTest {
 
-    private static final String GRAPH_LOC = "target/AnotherAgencyIT";
+    private static final String GRAPH_LOC = "target/AnalysisTest";
     private static GraphHopperGtfs graphHopperGtfs;
 
     @BeforeAll
