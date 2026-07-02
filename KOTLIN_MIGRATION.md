@@ -283,7 +283,14 @@ new discoveries get a pinning test AND an entry there.
 - [x] 2026-07-02 Research + this plan; baseline: full core suite green on `kotlin` branch.
 - [x] 2026-07-02 Phase 0: mixed build + StringUtils, JaroWinkler, SpatialKeyAlgo converted; full repo green.
 - [x] 2026-07-02 Measurement baseline (germany, MMAP) recorded — see "Java baseline" section.
-- [ ] Phases 1–14 per order above (check off per package, one commit each).
+- [ ] Phases 1–14 per order above (check off per package, one commit each). Done so far:
+  vendored+geohash+shapes+config (1,2,4), coll interfaces/BTree/heaps (3, GH*-hppc wrappers
+  deferred to collection switch), util graph-free classes (5), routing.ev complete (6).
+- [x] 2026-07-02 STORAGE-COMPAT GATE PASSED at 24.9%: kotlin core loaded the java-written
+  germany graph (nodes/edges match anchors exactly), identical route checksum + visited nodes
+  across runs; warm routingCH 4.31ms vs 3.77ms baseline (non-like-for-like, verdict at 30%
+  checkpoint). Graph copy kept at measurements/germany-gh-compat for future gates;
+  results: measurements/kotlin25-compat*.json
 - [ ] Vendored HPPC Kotlin port + tests + attribution; drop hppc dependency from core.
 - [ ] Final: full `mvn -B clean test`, Measurement comparison, real-route diff report.
 
