@@ -42,15 +42,19 @@ public class DataAccessBenchmark {
         benchmarkImpl("ForeignMemoryDataAccess", new ForeignMemoryDataAccess("bench_foreign", "", false, segmentSize));
 
         // --- Segmented implementations: small segments ---
-//        benchmarkImpl("RAMIntDataAccess (32MB seg)", new RAMIntDataAccess("bench_int", "", false, segmentSize));
+        benchmarkImpl("RAMIntDataAccess (32MB seg)", new RAMIntDataAccess("bench_int", "", false, segmentSize));
 //        benchmarkImpl("RAMDataAccess (32MB seg)", new RAMDataAccess("bench_ram", "", false, segmentSize));
 //        benchmarkImpl("ForeignMemorySegmentedDataAccess (32MB seg)", new ForeignMemorySegmentedDataAccess("bench_native", "", false, segmentSize));
 
-        // --- MMAP via Foreign Memory (on tmpfs) ---
-        Path tmpDir = Files.createTempDirectory(Path.of("/dev/shm"), "gh_bench_");
+        // --- MMAP via Foreign Memory (on tmpfs where available) ---
+        // /dev/shm is a Linux-only tmpfs; on macOS/Windows it doesn't exist, so fall
+        // back to the default temp dir (java.io.tmpdir).
+        Path shm = Path.of("/dev/shm");
+        Path tmpDir = Files.isDirectory(shm)
+                ? Files.createTempDirectory(shm, "gh_bench_")
+                : Files.createTempDirectory("gh_bench_");
         String tmpLoc = tmpDir.toString() + "/";
-//        benchmarkImpl("MMapForeignMemoryDataAccess", new MMapForeignMemoryDataAccess("bench_mmap", tmpLoc, true, segmentSize));
-//        benchmarkImpl("MMapForeignMemoryDataAccess (preload)", new MMapForeignMemoryDataAccess("bench_mmap_pre", tmpLoc, true, segmentSize).setPreload(true));
+        benchmarkImpl("MMapForeignMemoryDataAccess", new MMapForeignMemoryDataAccess("bench_mmap", tmpLoc, true, segmentSize));
     }
 
     private static void benchmarkImpl(String name, DataAccess da) {

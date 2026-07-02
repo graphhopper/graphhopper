@@ -43,7 +43,7 @@ public final class ForeignMemoryDataAccess extends AbstractDataAccess {
     private Arena arena;
     private MemorySegment segment = MemorySegment.NULL;
     private long capacity;
-    private boolean store;
+    private final boolean store;
 
     public ForeignMemoryDataAccess(String name, String location, boolean store, int segmentSize) {
         super(name, location, segmentSize);
@@ -63,21 +63,17 @@ public final class ForeignMemoryDataAccess extends AbstractDataAccess {
         if (bytes < 0)
             throw new IllegalArgumentException("new capacity has to be strictly positive");
 
-        long newBytes = bytes - capacity;
-        if (newBytes <= 0)
+        if (bytes <= capacity)
             return false;
 
-        long totalNeeded = bytes;
-        int segmentsNeeded = (int) (totalNeeded / segmentSizeInBytes);
-        if (totalNeeded % segmentSizeInBytes != 0)
+        int segmentsNeeded = (int) (bytes / segmentSizeInBytes);
+        if (bytes % segmentSizeInBytes != 0)
             segmentsNeeded++;
         long newCapacity = (long) segmentsNeeded * segmentSizeInBytes;
 
         try {
             Arena newArena = Arena.ofShared();
-            MemorySegment newSegment = newArena.allocate(newCapacity);
-            newSegment.fill((byte) 0); // no automatic zeroing happens
-
+            MemorySegment newSegment = newArena.allocate(newCapacity); // zero-initialized by the FFM API
             if (capacity > 0) {
                 MemorySegment.copy(segment, 0, newSegment, 0, capacity);
                 arena.close();
@@ -88,8 +84,7 @@ public final class ForeignMemoryDataAccess extends AbstractDataAccess {
             capacity = newCapacity;
         } catch (OutOfMemoryError err) {
             throw new OutOfMemoryError(err.getMessage() + " - problem when allocating new memory. Old capacity: "
-                    + capacity + ", new bytes:" + newBytes + ", segmentSizeIntsPower:" + segmentSizePower
-                    + ", requested:" + newCapacity);
+                    + capacity + ", requested bytes:" + bytes + ", new capacity:" + newCapacity);
         }
         return true;
     }
@@ -121,8 +116,7 @@ public final class ForeignMemoryDataAccess extends AbstractDataAccess {
                 long totalCapacity = (long) segmentCount * segmentSizeInBytes;
 
                 arena = Arena.ofShared();
-                segment = arena.allocate(totalCapacity);
-                segment.fill((byte) 0);
+                segment = arena.allocate(totalCapacity); // zero-initialized by the FFM API
                 capacity = totalCapacity;
 
                 byte[] buffer = new byte[segmentSizeInBytes];
@@ -166,25 +160,25 @@ public final class ForeignMemoryDataAccess extends AbstractDataAccess {
     }
 
     @Override
-    public final void setInt(long bytePos, int value) {
+    public void setInt(long bytePos, int value) {
         assert capacity > 0 : "call create or loadExisting before usage!";
         INT_VH.set(segment, bytePos, value);
     }
 
     @Override
-    public final int getInt(long bytePos) {
+    public int getInt(long bytePos) {
         assert capacity > 0 : "call create or loadExisting before usage!";
         return (int) INT_VH.get(segment, bytePos);
     }
 
     @Override
-    public final void setShort(long bytePos, short value) {
+    public void setShort(long bytePos, short value) {
         assert capacity > 0 : "call create or loadExisting before usage!";
         SHORT_VH.set(segment, bytePos, value);
     }
 
     @Override
-    public final short getShort(long bytePos) {
+    public short getShort(long bytePos) {
         assert capacity > 0 : "call create or loadExisting before usage!";
         return (short) SHORT_VH.get(segment, bytePos);
     }
@@ -202,13 +196,13 @@ public final class ForeignMemoryDataAccess extends AbstractDataAccess {
     }
 
     @Override
-    public final void setByte(long bytePos, byte value) {
+    public void setByte(long bytePos, byte value) {
         assert capacity > 0 : "call create or loadExisting before usage!";
         BYTE_VH.set(segment, bytePos, value);
     }
 
     @Override
-    public final byte getByte(long bytePos) {
+    public byte getByte(long bytePos) {
         assert capacity > 0 : "call create or loadExisting before usage!";
         return (byte) BYTE_VH.get(segment, bytePos);
     }

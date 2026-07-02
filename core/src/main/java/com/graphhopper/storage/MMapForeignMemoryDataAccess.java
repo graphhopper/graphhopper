@@ -137,10 +137,8 @@ public final class MMapForeignMemoryDataAccess extends AbstractDataAccess {
         long newCapacity = (long) segmentsNeeded * segmentSizeInBytes;
 
         try {
-            // Flush dirty pages before remapping
-            if (capacity > 0)
-                mappedSegment.force();
-
+            // no force() before remapping: the pages are file-backed, so unmapping (in mapSegment)
+            // leaves them in the OS page cache; only flush() must force to disk
             raFile.setLength(HEADER_OFFSET + newCapacity);
             mapSegment(HEADER_OFFSET, newCapacity);
             return true;
@@ -246,7 +244,7 @@ public final class MMapForeignMemoryDataAccess extends AbstractDataAccess {
 
         if (newCapacity < this.capacity) {
             try {
-                mappedSegment.force();
+                // no force() before remap (see ensureCapacity); the retained region stays file-backed
                 mapSegment(HEADER_OFFSET, newCapacity);
                 raFile.setLength(HEADER_OFFSET + newCapacity);
             } catch (IOException ex) {

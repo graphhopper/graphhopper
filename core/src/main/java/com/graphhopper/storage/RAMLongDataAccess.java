@@ -59,11 +59,12 @@ public class RAMLongDataAccess extends AbstractDataAccess {
         if (newCap % segmentSizeInBytes != 0)
             newCap = (newCap / segmentSizeInBytes + 1) * segmentSizeInBytes;
 
-        int newLongCount = (int) (newCap / 8);
-        if (newCap % 8 != 0) newLongCount++;
+        long newLongCount = newCap / 8 + (newCap % 8 != 0 ? 1 : 0);
+        if (newLongCount > Integer.MAX_VALUE)
+            throw new RuntimeException("Cannot ensure capacity for " + bytes + " bytes using RAMLongDataAccess. Max: " + ((long) Integer.MAX_VALUE * 8));
 
         try {
-            data = Arrays.copyOf(data, newLongCount);
+            data = Arrays.copyOf(data, (int) newLongCount);
         } catch (OutOfMemoryError err) {
             throw new OutOfMemoryError(err.getMessage() + " - problem when allocating new memory. Old capacity: "
                     + cap + ", requested bytes:" + bytes);
