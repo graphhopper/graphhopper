@@ -15,21 +15,21 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util.parsers;
+package com.graphhopper.routing.util.parsers
 
-import com.graphhopper.reader.ReaderRelation;
-import com.graphhopper.storage.IntsRef;
+import com.graphhopper.reader.ReaderRelation
+import com.graphhopper.storage.IntsRef
 
 /**
  * This interface serves the purpose of creating relation flags (max. 64 bits) from ReaderRelation in handleRelationTags
  * and then allows converting the relation flags into the edge flags. A direct conversion of ReaderRelation into edge
  * flags is not yet possible yet due to storage limitation of the 'supervisor' OSMReader. See #1775.
  */
-public interface RelationTagParser extends TagParser {
+interface RelationTagParser : TagParser {
 
     /**
      * Analyze the tags of a relation and create the routing flags for the second read step.
      * In the pre-parsing step this method will be called to determine the useful relation tags.
      */
-    void handleRelationTags(IntsRef relFlags, ReaderRelation relation);
+    fun handleRelationTags(relFlags: IntsRef, relation: ReaderRelation)
 }
