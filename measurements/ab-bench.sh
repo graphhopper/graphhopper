@@ -11,24 +11,29 @@
 set -e
 cd "$(dirname "$0")/.."
 ROUNDS=${1:-3}
+MAP=${GH_MAP:-/home/peter/maps/germany-260621.osm.pbf}
+GRAPH=${GH_GRAPH:-measurements/germany-gh-compat}
+XMX=${GH_XMX:-3g}
+DATAACCESS=${GH_DATAACCESS:-MMAP}
+COUNT=${GH_COUNT:-5000}
 STAMP=$(date +%Y%m%d-%H%M)
 mkdir -p measurements/ab
 
-JAVA_JAR=$(ls /home/peter/gh-java-baseline/tools/target/graphhopper-tools-*-jar-with-dependencies.jar)
-KOTLIN_JAR=$(ls tools/target/graphhopper-tools-*-jar-with-dependencies.jar)
+JAVA_JAR=${GH_JAVA_JAR:-$(ls /home/peter/gh-java-baseline/tools/target/graphhopper-tools-*-jar-with-dependencies.jar)}
+KOTLIN_JAR=${GH_KOTLIN_JAR:-$(ls tools/target/graphhopper-tools-*-jar-with-dependencies.jar)}
 
 run() { # $1 label $2 jar $3 round
-  java -cp "$2" -XX:+UseParallelGC -Xmx3g -Xms3g com.graphhopper.tools.Measurement \
-    datareader.file=/home/peter/maps/germany-260621.osm.pbf \
+  java -cp "$2" -XX:+UseParallelGC -Xmx$XMX -Xms$XMX com.graphhopper.tools.Measurement \
+    datareader.file=$MAP \
     measurement.name="$1-r$3" measurement.folder=measurements/ab/ \
     measurement.filename="$STAMP-$1-$3.json" \
     measurement.clean=false measurement.stop_on_error=true measurement.json=true \
-    measurement.count=5000 measurement.repeats=1 measurement.run_slow_routing=false \
+    measurement.count=$COUNT measurement.repeats=1 measurement.run_slow_routing=false \
     measurement.ch.node=true measurement.lm=true "measurement.lm.active_counts=[8]" \
     measurement.vehicle=car measurement.turn_costs=true \
-    graph.dataaccess.default_type=MMAP \
+    graph.dataaccess.default_type=$DATAACCESS \
     import.osm.ignored_highways=footway,cycleway,path,pedestrian,bridleway \
-    prepare.min_network_size=10000 graph.location=measurements/germany-gh-compat \
+    prepare.min_network_size=10000 graph.location=$GRAPH \
     2>&1 | tee "measurements/ab/$STAMP-$1-$3.log" | grep -E "routingCH:|routingLM8:" || true
 }
 

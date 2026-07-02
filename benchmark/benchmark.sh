@@ -22,6 +22,19 @@ defaultSmallMap=map-matching/files/leipzig_germany.osm.pbf
 defaultBigMap=map-matching/files/leipzig_germany.osm.pbf
 defaultUseMeasurementTimeAsRefTime=false
 
+# optional env-var overrides (defaults keep the historic behavior, so CI stays unaffected):
+#   GH_TOOLS_JAR    path to the tools jar (e.g. a jar built from another branch/checkout)
+#   GH_JAVA_OPTS    JVM options (default: -XX:+UseParallelGC -Xmx20g -Xms20g)
+#   GH_CLEAN        true/false: false reuses an existing graph in <graph_dir> and skips
+#                   import+preparation - graph-compatibility + query-speed comparison only
+#   GH_COUNT        number of measured routing queries per mode (default 5000)
+#   GH_DATAACCESS   e.g. MMAP to benchmark on machines with little RAM (default RAM_STORE)
+GH_TOOLS_JAR=${GH_TOOLS_JAR:-$(ls tools/target/graphhopper-tools-*-jar-with-dependencies.jar 2>/dev/null | head -1)}
+GH_JAVA_OPTS=${GH_JAVA_OPTS:--XX:+UseParallelGC -Xmx20g -Xms20g}
+GH_CLEAN=${GH_CLEAN:-true}
+GH_COUNT=${GH_COUNT:-5000}
+GH_DATAACCESS=${GH_DATAACCESS:-RAM_STORE}
+
 GRAPH_DIR=${1:-$defaultGraphDir}
 RESULTS_DIR=${2:-$defaultResultsDir}
 SUMMARY_DIR=${3:-$defaultSummaryDir}
@@ -36,14 +49,13 @@ mkdir -p ${SUMMARY_DIR}
 
 # actually run the benchmarks:
 echo "1 - small map: node- and edge-based CH + landmarks (edge- & node-based for LM) + slow routing"
-java -cp tools/target/graphhopper-tools-*-jar-with-dependencies.jar \
--XX:+UseParallelGC -Xmx20g -Xms20g \
+java -cp ${GH_TOOLS_JAR} ${GH_JAVA_OPTS} \
 com.graphhopper.tools.Measurement \
 datareader.file=${SMALL_OSM_MAP} \
 datareader.date_range_parser_day=2019-11-01 \
 measurement.name=small_map \
 measurement.folder=${RESULTS_DIR} \
-measurement.clean=true \
+measurement.clean=${GH_CLEAN} \
 measurement.stop_on_error=true \
 measurement.summaryfile=${SUMMARY_DIR}summary_small.dat \
 measurement.repeats=1 \
@@ -58,19 +70,19 @@ import.osm.ignored_highways=footway,cycleway,path,pedestrian,bridleway \
 measurement.turn_costs=true \
 graph.location=${GRAPH_DIR}measurement-small-gh \
 prepare.min_network_size=10000 \
+graph.dataaccess.default_type=${GH_DATAACCESS} \
 measurement.json=true \
-measurement.count=5000 \
+measurement.count=${GH_COUNT} \
 measurement.use_measurement_time_as_ref_time=${USE_MEASUREMENT_TIME_AS_REF_TIME}
 
 echo "2 - big map: node-based CH + landmarks (edge- & node-based for LM) + slow routing"
-java -cp tools/target/graphhopper-tools-*-jar-with-dependencies.jar \
--XX:+UseParallelGC -Xmx20g -Xms20g \
+java -cp ${GH_TOOLS_JAR} ${GH_JAVA_OPTS} \
 com.graphhopper.tools.Measurement \
 datareader.file=${BIG_OSM_MAP} \
 datareader.date_range_parser_day=2019-11-01 \
 measurement.name=big_map \
 measurement.folder=${RESULTS_DIR} \
-measurement.clean=true \
+measurement.clean=${GH_CLEAN} \
 measurement.stop_on_error=true \
 measurement.summaryfile=${SUMMARY_DIR}summary_big.dat \
 measurement.repeats=1 \
@@ -85,20 +97,20 @@ import.osm.ignored_highways=footway,cycleway,path,pedestrian,bridleway \
 measurement.turn_costs=true \
 graph.location=${GRAPH_DIR}measurement-big-gh \
 prepare.min_network_size=10000 \
+graph.dataaccess.default_type=${GH_DATAACCESS} \
 measurement.json=true \
-measurement.count=5000 \
+measurement.count=${GH_COUNT} \
 measurement.use_measurement_time_as_ref_time=${USE_MEASUREMENT_TIME_AS_REF_TIME}
 
 echo "3 - big map with a custom model that is 'very customized', i.e. has many custom weighting rules"
 echo "node-based CH + LM + slow routing"
-java -cp tools/target/graphhopper-tools-*-jar-with-dependencies.jar \
--XX:+UseParallelGC -Xmx20g -Xms20g \
+java -cp ${GH_TOOLS_JAR} ${GH_JAVA_OPTS} \
 com.graphhopper.tools.Measurement \
 datareader.file=${BIG_OSM_MAP} \
 datareader.date_range_parser_day=2019-11-01 \
 measurement.name=big_map_very_custom \
 measurement.folder=${RESULTS_DIR} \
-measurement.clean=true \
+measurement.clean=${GH_CLEAN} \
 measurement.stop_on_error=true \
 measurement.summaryfile=${SUMMARY_DIR}summary_big_very_custom.dat \
 measurement.repeats=1 \
@@ -116,19 +128,19 @@ import.osm.ignored_highways=footway,cycleway,path,pedestrian,bridleway \
 measurement.turn_costs=true \
 graph.location=${GRAPH_DIR}measurement-big-very-custom-gh \
 prepare.min_network_size=10000 \
+graph.dataaccess.default_type=${GH_DATAACCESS} \
 measurement.json=true \
-measurement.count=5000 \
+measurement.count=${GH_COUNT} \
 measurement.use_measurement_time_as_ref_time=${USE_MEASUREMENT_TIME_AS_REF_TIME}
 
 echo "4 - big map, outdoor: node-based CH + landmarks (edge- & node-based for LM)"
-java -cp tools/target/graphhopper-tools-*-jar-with-dependencies.jar \
--XX:+UseParallelGC -Xmx20g -Xms20g \
+java -cp ${GH_TOOLS_JAR} ${GH_JAVA_OPTS} \
 com.graphhopper.tools.Measurement \
 datareader.file=${BIG_OSM_MAP} \
 datareader.date_range_parser_day=2019-11-01 \
 measurement.name=big_map_outdoor \
 measurement.folder=${RESULTS_DIR} \
-measurement.clean=true \
+measurement.clean=${GH_CLEAN} \
 measurement.stop_on_error=true \
 measurement.summaryfile=${SUMMARY_DIR}summary_big_outdoor.dat \
 measurement.repeats=1 \
@@ -143,6 +155,7 @@ import.osm.ignored_highways= \
 measurement.turn_costs=false \
 graph.location=${GRAPH_DIR}measurement-big-outdoor-gh \
 prepare.min_network_size=10000 \
+graph.dataaccess.default_type=${GH_DATAACCESS} \
 measurement.json=true \
-measurement.count=5000 \
+measurement.count=${GH_COUNT} \
 measurement.use_measurement_time_as_ref_time=${USE_MEASUREMENT_TIME_AS_REF_TIME}
