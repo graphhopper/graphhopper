@@ -1,0 +1,52 @@
+/*
+ *  Licensed to GraphHopper GmbH under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for
+ *  additional information regarding copyright ownership.
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
+ *  compliance with the License. You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+package com.graphhopper.routing.ev
+
+import com.graphhopper.util.Helper
+
+/**
+ * This enum defines the road access of an edge. Most edges are accessible from everyone and so the
+ * default value is YES. But some have restrictions like "accessible only for customers" or when
+ * delivering. The NO value does not permit any access.
+ */
+enum class RoadAccess {
+    YES, DESTINATION, CUSTOMERS, DELIVERY, PRIVATE, MILITARY, AGRICULTURAL, FORESTRY, NO;
+
+    override fun toString(): String = Helper.toLowerCase(super.toString())
+
+    companion object {
+        const val KEY = "road_access"
+
+        @JvmStatic
+        fun create(): EnumEncodedValue<RoadAccess> = EnumEncodedValue(KEY, RoadAccess::class.java)
+
+        @JvmStatic
+        fun find(name: String?): RoadAccess {
+            if (name == null)
+                return YES
+            if (name.equals("permit", ignoreCase = true) || name.equals("service", ignoreCase = true))
+                return PRIVATE
+            return try {
+                // public and permissive will be converted into "yes"
+                valueOf(Helper.toUpperCase(name))
+            } catch (ex: IllegalArgumentException) {
+                YES
+            }
+        }
+    }
+}
