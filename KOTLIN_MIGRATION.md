@@ -147,6 +147,24 @@ java -cp tools/target/graphhopper-tools-*-jar-with-dependencies.jar \
 - Real-world spot checks: run web server (`config-example.yml`) on a real pbf, compare a fixed
   set of routes (distance/time/points) between master build and kotlin build.
 
+## Java baseline (germany, MMAP -Xmx3g, 2026-07-02, commit d384d65c8 state, 3h23m total)
+
+Full JSON: `measurements/java-baseline-germany-2026-07-02.json` (+summary.dat). Graph kept at
+`/home/peter/gh-java-baseline/measurements/germany-gh` for load-only + format-compat checks.
+
+DETERMINISTIC anchors (must be bit-identical for the Kotlin build, seed 123, count 5000):
+- graph.nodes = 17,902,936 · graph.edges = 20,878,050 · graph.size_in_MB = 1250
+- prepare.ch.node.shortcuts = 9,252,034 · prepare.ch.edge.shortcuts = 28,589,795
+- routingCH.visited_nodes_mean = 430.8604 (max 713) · routingCH_edge.visited_nodes_mean = 1527.9792
+- routingLM8.visited_nodes_mean = 97,846.28 · routing.visited_nodes_mean = 1,272,633.6
+- routing.distance_mean = 403,103.84 m
+
+Timing references (MMAP on 7GB/4-core box — compare like-for-like only):
+- import 354 s · prepare CH node 171 s · prepare CH edge 2667 s · prepare LM 2405 s
+- routingCH 3.77 ms · routingCH_no_instr 1.96 ms · routingCH_full 6.17 ms · routingCH_edge 7.91 ms
+- routingLM8 146 ms · flexible routing 1746 ms · routing_edge 6943 ms
+- unit_testsCH.out_edge_next 0.867 µs · unit_tests.get_edge_state 0.277 µs
+
 ## Per-package conversion protocol
 
 1. `git switch kotlin`; one package (or coherent class cluster) at a time.
@@ -256,8 +274,8 @@ Behaviors found during conversion that existing tests did not cover, now locked 
 ## Progress log
 
 - [x] 2026-07-02 Research + this plan; baseline: full core suite green on `kotlin` branch.
-- [ ] Phase 0: kotlin-maven-plugin mixed build in core; trivial first class converted; full repo green.
-- [ ] Measurement baseline (germany) recorded on pre-conversion tip.
+- [x] 2026-07-02 Phase 0: mixed build + StringUtils, JaroWinkler, SpatialKeyAlgo converted; full repo green.
+- [x] 2026-07-02 Measurement baseline (germany, MMAP) recorded — see "Java baseline" section.
 - [ ] Phases 1–14 per order above (check off per package, one commit each).
 - [ ] Vendored HPPC Kotlin port + tests + attribution; drop hppc dependency from core.
 - [ ] Final: full `mvn -B clean test`, Measurement comparison, real-route diff report.
