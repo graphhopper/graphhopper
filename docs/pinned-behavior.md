@@ -90,6 +90,12 @@ independently of that migration.
 
 ## Recorded only (not externally observable)
 
+- **Turn-restriction write order depends on HPPC scatter-map iteration order**
+  (RestrictionSetter.forEach over LongIntScatterMap) and **MultiPointTour consumes one RNG draw
+  in its NaN-heading constructor** — both affect seeded reproducibility of round trips and
+  restriction layouts; preserved bit-identically via unchanged HPPC types and draw order.
+  (2026-07-02)
+
 - **Location-index on-disk format quirks preserved verbatim** (guarded by the germany
   load-gate): store() advances the write pointer even for null subtree entries; leaf cells
   encode single entries as -edgeId-1 vs an exclusive end pointer for multi-entry cells; tree

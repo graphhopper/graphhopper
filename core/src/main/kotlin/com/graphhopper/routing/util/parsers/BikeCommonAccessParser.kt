@@ -5,7 +5,7 @@ import com.graphhopper.routing.ev.BooleanEncodedValue
 import com.graphhopper.routing.ev.EdgeIntAccess
 import com.graphhopper.routing.util.FerrySpeedCalculator
 import com.graphhopper.routing.util.WayAccess
-import com.graphhopper.routing.util.parsers.OSMTemporalAccessParser.hasPermissiveTemporalRestriction
+import com.graphhopper.routing.util.parsers.OSMTemporalAccessParser.Companion.hasPermissiveTemporalRestriction
 
 abstract class BikeCommonAccessParser protected constructor(
     accessEnc: BooleanEncodedValue,

@@ -26,7 +26,7 @@ import com.graphhopper.routing.ev.VehicleAccess
 import com.graphhopper.routing.util.FerrySpeedCalculator
 import com.graphhopper.routing.util.TransportationMode
 import com.graphhopper.routing.util.WayAccess
-import com.graphhopper.routing.util.parsers.OSMTemporalAccessParser.hasPermissiveTemporalRestriction
+import com.graphhopper.routing.util.parsers.OSMTemporalAccessParser.Companion.hasPermissiveTemporalRestriction
 import com.graphhopper.util.PMap
 
 open class CarAccessParser(
