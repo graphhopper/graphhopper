@@ -15,22 +15,21 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.storage;
+package com.graphhopper.storage
 
 /**
  * A write lock interface. Influenced by Lucene code
- * <p>
  *
  * @author Peter Karich
  */
-public interface GHLock {
-    String getName();
+interface GHLock {
+    fun getName(): String
 
-    boolean tryLock();
+    fun tryLock(): Boolean
 
-    boolean isLocked();
+    fun isLocked(): Boolean
 
-    void release();
+    fun release()
 
-    Exception getObtainFailedReason();
+    fun getObtainFailedReason(): Exception?
 }

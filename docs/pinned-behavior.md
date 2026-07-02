@@ -75,6 +75,14 @@ independently of that migration.
   kotlin.math.round's half-even would silently change them for *.5 weights. No test hit a tie
   before. Test: `core/.../routing/weighting/WeightingPinnedBehaviorTest.java`. (2026-07-02)
 
+- **KVStorage.get() derails on stored byte[] values of 251–255 bytes**: the skip expression
+  `1 + b & 0xFF` parses as `(1 + b) & 0xFF`, so a 255-byte value advances the pointer by 0 and
+  subsequent keys misparse (AssertionError under -ea, IndexOutOfBoundsException without).
+  Strings are safe (cutString caps at 250); only raw byte[] values can trigger it. Candidate
+  for a real upstream fix (`1 + (b & 0xFF)`) outside the migration — would need a
+  storage-format review since existing graphs could contain such values.
+  Test: `core/.../search/KVStoragePinnedBehaviorTest.java`. (2026-07-02)
+
 ## Recorded only (not externally observable)
 
 - **Unzipper accumulates progress via Java's compound assignment** `sumBytes += len * factor`,

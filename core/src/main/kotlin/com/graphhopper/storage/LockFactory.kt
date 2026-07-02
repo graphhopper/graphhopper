@@ -15,26 +15,26 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.storage;
+package com.graphhopper.storage
 
-import java.io.File;
+import java.io.File
 
 /**
  * @author Peter Karich
  */
-public interface LockFactory {
-    void setLockDir(File lockDir);
+interface LockFactory {
+    fun setLockDir(lockDir: File)
 
     /**
      * This creates a file for write or read locks depending on the specified writeAccess property.
      * Important note: even for read locks we need write access to the underlying filesystem in
      * order to avoid writes from other processes.
      */
-    GHLock create(String fileName, boolean writeAccess);
+    fun create(fileName: String, writeAccess: Boolean): GHLock
 
     /**
      * Removes the specified lock. Note: on windows we cannot forcefully remove an unreleased native
      * lock
      */
-    void forceRemove(String fileName, boolean writeAccess);
+    fun forceRemove(fileName: String, writeAccess: Boolean)
 }

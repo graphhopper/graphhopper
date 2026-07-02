@@ -15,9 +15,9 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.storage;
+package com.graphhopper.storage
 
-import java.io.Closeable;
+import java.io.Closeable
 
 /**
  * Life cycle: (1) object creation, (2) configuration (e.g. segment size), (3) create or
@@ -25,89 +25,88 @@ import java.io.Closeable;
  *
  * @author Peter Karich
  */
-public interface DataAccess extends Closeable {
+interface DataAccess : Closeable {
     /**
      * The logical identification of this object.
      */
-    String getName();
+    val name: String
 
     /**
      * Set 4 bytes at position 'bytePos' to the specified value
      */
-    void setInt(long bytePos, int value);
+    fun setInt(bytePos: Long, value: Int)
 
     /**
      * Get 4 bytes from position 'bytePos'
      */
-    int getInt(long bytePos);
+    fun getInt(bytePos: Long): Int
 
     /**
      * Set 2 bytes at position 'index' to the specified value
      */
-    void setShort(long bytePos, short value);
+    fun setShort(bytePos: Long, value: Short)
 
     /**
      * Get 2 bytes from position 'index'
      */
-    short getShort(long bytePos);
+    fun getShort(bytePos: Long): Short
 
     /**
      * Set bytes from position 'index' to the specified values
      */
-    void setBytes(long bytePos, byte[] values, int length);
+    fun setBytes(bytePos: Long, values: ByteArray, length: Int)
 
     /**
      * Get bytes from position 'index'
      *
      * @param values acts as output
      */
-    void getBytes(long bytePos, byte[] values, int length);
+    fun getBytes(bytePos: Long, values: ByteArray, length: Int)
 
-    void setByte(long currentPointer, byte value);
+    fun setByte(currentPointer: Long, value: Byte)
 
-    byte getByte(long currentPointer);
+    fun getByte(currentPointer: Long): Byte
 
     /**
      * Set 4 bytes at the header space index to the specified value
      */
-    void setHeader(int bytePos, int value);
+    fun setHeader(bytePos: Int, value: Int)
 
     /**
      * Get 4 bytes from the header at 'index'
      */
-    int getHeader(int bytePos);
+    fun getHeader(bytePos: Int): Int
 
     /**
      * The first time you use a DataAccess object after configuring it you need to call this method.
      * After that first call you have to use ensureCapacity to ensure that enough space is reserved.
      */
-    DataAccess create(long bytes);
+    fun create(bytes: Long): DataAccess
 
     /**
      * This method makes sure that the underlying data is written to the storage. Keep in mind that
      * a disc normally has an IO cache so that flush() is (less) probably not save against power
      * loses.
      */
-    void flush();
+    fun flush()
 
     /**
      * This method makes sure that the underlying used resources are released. WARNING: it does NOT
      * flush on close!
      */
-    @Override
-    void close();
+    override fun close()
 
-    boolean isClosed();
+    val isClosed: Boolean
 
     /**
      * @return true if successfully loaded from persistent storage.
      */
-    boolean loadExisting();
+    fun loadExisting(): Boolean
 
     /**
      * @return the allocated storage size in bytes
      */
-    long getCapacity();
+    val capacity: Long
 
     /**
      * Ensures that the capacity of this object is at least the specified bytes. The first time you
@@ -117,27 +116,27 @@ public interface DataAccess extends Closeable {
      * @return true if size was increased
      * @see #create(long)
      */
-    boolean ensureCapacity(long bytes);
+    fun ensureCapacity(bytes: Long): Boolean
 
     /**
      * Reduces the capacity to the specified number of bytes (rounded up to the next segment
      * boundary). The specified capacity must be less than or equal to the current capacity.
      * A capacity of zero releases all segments.
      */
-    void trimTo(long capacity);
+    fun trimTo(capacity: Long)
 
     /**
      * @return the size of one segment in bytes
      */
-    int getSegmentSize();
+    val segmentSize: Int
 
     /**
      * @return the number of segments.
      */
-    int getSegments();
+    fun getSegments(): Int
 
     /**
      * @return the data access type of this object.
      */
-    DAType getType();
+    val type: DAType
 }

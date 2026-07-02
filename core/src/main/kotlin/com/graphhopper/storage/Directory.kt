@@ -15,62 +15,59 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.storage;
-
-import java.util.Map;
+package com.graphhopper.storage
 
 /**
  * Maintains a collection of DataAccess objects stored at the same location. One GraphStorage per
  * Directory as we need one to maintain one DataAccess object for nodes, edges and location2id
  * index.
- * <p>
  *
  * @author Peter Karich
  */
-public interface Directory {
+interface Directory {
     /**
      * @return an id or location in the local filesystem.
      */
-    String getLocation();
+    val location: String
 
     /**
      * Creates a new DataAccess object with the given name in the location of this Directory. Each name can only
      * be used once.
      */
-    DataAccess create(String name);
+    fun create(name: String): DataAccess
 
     /**
      * @param segmentSize segment size in bytes or -1 to use the default of the corresponding DataAccess implementation
      */
-    DataAccess create(String name, int segmentSize);
+    fun create(name: String, segmentSize: Int): DataAccess
 
-    DataAccess create(String name, DAType type);
+    fun create(name: String, type: DAType): DataAccess
 
-    DataAccess create(String name, DAType type, int segmentSize);
+    fun create(name: String, type: DAType, segmentSize: Int): DataAccess
 
     /**
      * Removes the specified object from the directory.
      */
-    void remove(String name);
+    fun remove(name: String)
 
     /**
      * @return the default type of a newly created DataAccess object
      */
-    DAType getDefaultType();
+    val defaultType: DAType
 
-    DAType getDefaultType(String dataAccess, boolean preferInts);
+    fun getDefaultType(dataAccess: String, preferInts: Boolean): DAType
 
     /**
      * Removes all contained objects from the directory and releases its resources.
      */
-    void clear();
+    fun clear()
 
     /**
      * Releases all allocated resources from the directory without removing backing files.
      */
-    void close();
+    fun close()
 
-    Directory create();
+    fun create(): Directory
 
-    Map<String, DataAccess> getDAs();
+    fun getDAs(): Map<String, DataAccess>
 }
