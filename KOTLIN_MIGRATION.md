@@ -263,25 +263,9 @@ doesn't force API breaks — decide when reaching `util.shapes` (early) and `iso
 
 ## Pinned behavior discovered during conversion
 
-Behaviors found during conversion that existing tests did not cover, now locked by new tests
-(rule 5b in the protocol). Format: what, why it matters, which new test pins it.
-
-- **Hash container iteration order must be reproducible across JVM runs** (stored graphs +
-  several tests depend on it; hppc pinned it via HashOrderMixing.constant). For
-  androidx.collection 1.6.0 this holds (fixed hash constant, no seed) but is NOT an API
-  guarantee → pinned by `core/.../coll/AndroidxCollectionDeterminismTest.java` with exact
-  observed sequences. If it fails after a version bump: re-baseline deliberately, don't just
-  fix the literals. (2026-07-02)
-- **GHLongLongBTree splits leaves at an even maxLeafEntries value while splitIndex/factor derive
-  from the value+1** (constructor assigns the field before the even→odd adjustment). Observable
-  as tree height; verified identical against the compiled Java baseline (height=4 for
-  maxLeafEntries=4, 100 inserts) → pinned by `GHLongLongBTreePinnedBehaviorTest`. (2026-07-02)
-- Recorded but NOT pinned (not externally observable): IntFloatBinaryHeap.trimTo's fill range is
-  empty so clear() never zeroes the arrays (stale values stay but size-bounded access hides
-  them); GHLongLongBTree.getMemoryUsage does long/long integer division BEFORE float rounding.
-  Preserved branch-for-branch in the Kotlin ports.
-- Still-open candidates (currently covered indirectly): JaroWinkler computes in float
-  precision; SpatialKeyAlgo.encode can overflow into the int sign bit before widening to long.
+Moved to the durable, migration-independent document **`docs/pinned-behavior.md`** (Peter: these
+findings are "a test for our tests" and must outlive this migration doc). Rule 5b still applies:
+new discoveries get a pinning test AND an entry there.
 
 ## Progress log
 
