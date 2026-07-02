@@ -182,6 +182,10 @@ Timing references (MMAP on 7GB/4-core box — compare like-for-like only):
    Batch-final verification must use `clean` — incremental compilation can mask missing `open`
    modifiers against stale subclass classfiles (bit us with Downloader's anonymous test
    subclasses: first test-compile passed, clean run threw IncompatibleClassChangeError).
+   NEVER run two maven builds concurrently on this checkout: a delegated agent's verification
+   run overlapping the reviewer's produced phantom failures (clean wiped resources mid-test,
+   "No input stream found in class path"). Check `ps aux | grep maven` before building;
+   delegated agents must finish their gate in the foreground before returning.
 4. Commit: `kotlin: convert <package or classes>` — one conversion per commit for rollback.
 5. Never edit a test's assertions; if a test won't compile against Kotlin (e.g. SAM/overload
    resolution), adapt syntax minimally, preserving meaning — and note it in the commit message.
