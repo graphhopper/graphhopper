@@ -15,9 +15,9 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.geohash;
+package com.graphhopper.geohash
 
-import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.util.shapes.BBox
 
 /**
  * This class implements the idea of a geohash but without a string representation - to avoid confusion, this is
@@ -26,13 +26,12 @@ import com.graphhopper.util.shapes.BBox;
  * Detailed information is available in this blog post:
  *
  * http://karussell.wordpress.com/2012/05/23/spatial-keys-memory-efficient-geohashes/
- * <p>
+ *
  * The hash can be used as a key for hash tables. When you organize the grid as a quad tree,
  * it resembles the path down the tree to reach the cell that it encodes. That's how it is used in
  * LocationIndexTree.
- * <p>
+ *
  * A 32 bit representation has a precision of approx 600 meters = 40000/2^16
- * <p>
  *
  * Implementation:
  * - From the query point and the grid parameters, calculate (integer) coordinates (x,y) of the cell
@@ -46,7 +45,7 @@ import com.graphhopper.util.shapes.BBox;
  */
 
 // A 2 bit (per axis) spatial key could look like
-// 
+//
 //  |----|----|----|----|
 //  |1010|1011|1110|1111|
 //  |----|----|----|----|  lat0 == 1
@@ -58,59 +57,85 @@ import com.graphhopper.util.shapes.BBox;
 //  |----|----|----|----|
 //            |
 //  lon0 == 0 | lon0 == 1
-public class SpatialKeyAlgo {
-    private final int parts;
-    private final int allBits;
-    private final BBox bbox;
-    private final double deltaY;
-    private final double deltaX;
+class SpatialKeyAlgo(allBits: Int, bounds: BBox) {
+    private val parts: Int
+    private val allBits: Int
+    private val bbox: BBox
+    private val deltaY: Double
+    private val deltaX: Double
 
-    /**
-     * @param allBits how many bits should be used for the spatial key when encoding/decoding
-     */
-    public SpatialKeyAlgo(int allBits, BBox bounds) {
-        if (allBits > 48)
-            throw new IllegalStateException("allBits is too big for this implementation");
+    init {
+        check(allBits <= 48) { "allBits is too big for this implementation" }
+        check(allBits > 0) { "allBits must be positive" }
 
-        if (allBits <= 0)
-            throw new IllegalStateException("allBits must be positive");
-
-        this.allBits = allBits;
-        parts = (int) Math.pow(2, allBits / 2);
-        bbox = bounds;
-        deltaY = (bbox.maxLat - bbox.minLat) / parts;
-        deltaX = (bbox.maxLon - bbox.minLon) / parts;
+        this.allBits = allBits
+        parts = Math.pow(2.0, (allBits / 2).toDouble()).toInt()
+        bbox = bounds
+        deltaY = (bbox.maxLat - bbox.minLat) / parts
+        deltaX = (bbox.maxLon - bbox.minLon) / parts
     }
 
     /**
      * @return the number of involved bits
      */
-    public int getBits() {
-        return allBits;
-    }
+    val bits: Int
+        get() = allBits
 
-    public final long encodeLatLon(double lat, double lon) {
-        return encode(x(lon), y(lat));
-    }
+    fun encodeLatLon(lat: Double, lon: Double): Long = encode(x(lon), y(lat))
 
-    public int y(double lat) {
+    fun y(lat: Double): Int {
         // Bounding this with parts - 1 or 0 only concerns the case where we are exactly on the bounding box.
         // (The next cell would already start there..)
         // (Or other situations, mostly in tests, where we actually run out of the bounding box.)
-        return Math.max(0, Math.min((int) ((lat - bbox.minLat) / deltaY), parts - 1));
+        return maxOf(0, minOf(((lat - bbox.minLat) / deltaY).toInt(), parts - 1))
     }
 
-    public int x(double lon) {
+    fun x(lon: Double): Int {
         // Bounding this with parts - 1 or 0 only concerns the case where we are exactly on the bounding box.
         // (The next cell would already start there..)
         // (Or other situations, mostly in tests, where we actually run out of the bounding box.)
-        return Math.max(0, Math.min((int) ((lon - bbox.minLon) / deltaX), parts - 1));
+        return maxOf(0, minOf(((lon - bbox.minLon) / deltaX).toInt(), parts - 1))
     }
 
-    // https://github.com/eren-ck/MortonLib/blob/master/src/main/java/com/erenck/mortonlib/Morton2D.java
+    fun encode(x: Int, y: Int): Long {
+        // the int arithmetic (incl. possible overflow into the sign bit before widening to
+        // Long) matches the original Java implementation
+        return (MORTON_TABLE_256[(y shr 8) and EIGHT_BIT_MASK] shl 17
+                or (MORTON_TABLE_256[(x shr 8) and EIGHT_BIT_MASK] shl 16)
+                or (MORTON_TABLE_256[y and EIGHT_BIT_MASK] shl 1)
+                or MORTON_TABLE_256[x and EIGHT_BIT_MASK]).toLong()
+    }
 
-    private final int MortonTable256[]
-            = {
+    fun decode(z: Long): IntArray {
+        val result = IntArray(2)
+        // Morton codes up to 48 bits
+        if (z < Math.pow(2.0, 48.0)) {
+            result[0] = decodeHelper(z, MORTON_TABLE_256_DECODE_X)
+            result[1] = decodeHelper(z, MORTON_TABLE_256_DECODE_Y)
+        }
+        return result
+    }
+
+    // https://en.wikipedia.org/wiki/Z-order_curve
+
+    fun up(z: Long): Long = (((z or LON_BITS) + 1) and LAT_BITS) or (z and LON_BITS)
+
+    fun down(z: Long): Long = (((z and LAT_BITS) - 1) and LAT_BITS) or (z and LON_BITS)
+
+    fun right(z: Long): Long = (((z or LAT_BITS) + 1) and LON_BITS) or (z and LAT_BITS)
+
+    fun left(z: Long): Long = (((z and LON_BITS) - 1) and LON_BITS) or (z and LAT_BITS)
+
+    companion object {
+        private const val EIGHT_BIT_MASK = 0xff
+
+        // the interleaved lon (even, 0b0101...) and lat (odd, 0b1010...) bits of a spatial key
+        private const val LON_BITS = 0x5555555555555555L
+        private val LAT_BITS = LON_BITS.inv()
+
+        // https://github.com/eren-ck/MortonLib/blob/master/src/main/java/com/erenck/mortonlib/Morton2D.java
+
+        private val MORTON_TABLE_256 = intArrayOf(
             0x0000, 0x0001, 0x0004, 0x0005, 0x0010, 0x0011, 0x0014, 0x0015,
             0x0040, 0x0041, 0x0044, 0x0045, 0x0050, 0x0051, 0x0054, 0x0055,
             0x0100, 0x0101, 0x0104, 0x0105, 0x0110, 0x0111, 0x0114, 0x0115,
@@ -143,9 +168,9 @@ public class SpatialKeyAlgo {
             0x5440, 0x5441, 0x5444, 0x5445, 0x5450, 0x5451, 0x5454, 0x5455,
             0x5500, 0x5501, 0x5504, 0x5505, 0x5510, 0x5511, 0x5514, 0x5515,
             0x5540, 0x5541, 0x5544, 0x5545, 0x5550, 0x5551, 0x5554, 0x5555
-    };
+        )
 
-    private final int MortonTable256DecodeX[] = {
+        private val MORTON_TABLE_256_DECODE_X = intArrayOf(
             0, 1, 0, 1, 2, 3, 2, 3, 0, 1, 0, 1, 2, 3, 2, 3,
             4, 5, 4, 5, 6, 7, 6, 7, 4, 5, 4, 5, 6, 7, 6, 7,
             0, 1, 0, 1, 2, 3, 2, 3, 0, 1, 0, 1, 2, 3, 2, 3,
@@ -162,9 +187,9 @@ public class SpatialKeyAlgo {
             12, 13, 12, 13, 14, 15, 14, 15, 12, 13, 12, 13, 14, 15, 14, 15,
             8, 9, 8, 9, 10, 11, 10, 11, 8, 9, 8, 9, 10, 11, 10, 11,
             12, 13, 12, 13, 14, 15, 14, 15, 12, 13, 12, 13, 14, 15, 14, 15
-    };
+        )
 
-    private final int MortonTable256DecodeY[] = {
+        private val MORTON_TABLE_256_DECODE_Y = intArrayOf(
             0, 0, 1, 1, 0, 0, 1, 1, 2, 2, 3, 3, 2, 2, 3, 3,
             0, 0, 1, 1, 0, 0, 1, 1, 2, 2, 3, 3, 2, 2, 3, 3,
             4, 4, 5, 5, 4, 4, 5, 5, 6, 6, 7, 7, 6, 6, 7, 7,
@@ -181,56 +206,15 @@ public class SpatialKeyAlgo {
             8, 8, 9, 9, 8, 8, 9, 9, 10, 10, 11, 11, 10, 10, 11, 11,
             12, 12, 13, 13, 12, 12, 13, 13, 14, 14, 15, 15, 14, 14, 15, 15,
             12, 12, 13, 13, 12, 12, 13, 13, 14, 14, 15, 15, 14, 14, 15, 15
-    };
+        )
 
-    public long encode(int x, int y) {
-        int EIGHTBITMASK = 0xff;
-        return (MortonTable256[(y >> 8) & EIGHTBITMASK] << 17
-                | MortonTable256[(x >> 8) & EIGHTBITMASK] << 16
-                | MortonTable256[y & EIGHTBITMASK] << 1
-                | MortonTable256[x & EIGHTBITMASK]);
-    }
-
-    public int[] decode(long z) {
-        int[] result = new int[2];
-        // Morton codes up to 48 bits
-        if (z < Math.pow(2, 48)) {
-            result[0] = decodeHelper(z, MortonTable256DecodeX);
-            result[1] = decodeHelper(z, MortonTable256DecodeY);
+        private fun decodeHelper(z: Long, coord: IntArray): Int {
+            var a = 0
+            // 7 lookups of 8 bits each cover the up to 48 bits of a spatial key
+            for (i in 0 until 7) {
+                a = a or (coord[((z shr (i * 8)) and 0xffL).toInt()] shl (4 * i))
+            }
+            return a
         }
-        return result;
     }
-
-    private static int decodeHelper(long z, int coord[]) {
-        long a = 0;
-        long EIGHTBITMASK = 0x000000ff;
-        long loops = (long) Math.floor(64.0f / 9.0f);
-        for (long i = 0; i < loops; ++i) {
-            a |= (coord[(int) ((z >> (i * 8)) & EIGHTBITMASK)] << (4 * i));
-        }
-        return (int) a;
-    }
-
-    // https://en.wikipedia.org/wiki/Z-order_curve
-
-    public long up(long z) {
-        return (((z | 0b0101010101010101010101010101010101010101010101010101010101010101L) + 1) &
-                0b1010101010101010101010101010101010101010101010101010101010101010L) | (z & 0b0101010101010101010101010101010101010101010101010101010101010101L);
-    }
-
-    public long down(long z) {
-        return (((z & 0b1010101010101010101010101010101010101010101010101010101010101010L) - 1) &
-                0b1010101010101010101010101010101010101010101010101010101010101010L) | (z & 0b0101010101010101010101010101010101010101010101010101010101010101L);
-    }
-
-    public long right(long z) {
-        return (((z | 0b1010101010101010101010101010101010101010101010101010101010101010L) + 1)
-                & 0b0101010101010101010101010101010101010101010101010101010101010101L) | (z & 0b1010101010101010101010101010101010101010101010101010101010101010L);
-    }
-
-    public long left(long z) {
-        return (((z & 0b0101010101010101010101010101010101010101010101010101010101010101L) - 1) &
-                0b0101010101010101010101010101010101010101010101010101010101010101L) | (z & 0b1010101010101010101010101010101010101010101010101010101010101010L);
-    }
-
 }
