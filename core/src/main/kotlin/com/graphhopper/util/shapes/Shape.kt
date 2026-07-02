@@ -15,25 +15,25 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.util.shapes;
+package com.graphhopper.util.shapes
 
-import com.graphhopper.util.PointList;
+import com.graphhopper.util.PointList
 
 /**
  * A shape interface to implement circles, polygons or rectangles.
  *
  * @author Peter Karich
  */
-public interface Shape {
-    boolean intersects(PointList pointList);
+interface Shape {
+    fun intersects(pointList: PointList): Boolean
 
     /**
      * @return true only if lat and lon are inside (or on the edge) of this shape
      */
-    boolean contains(double lat, double lon);
+    fun contains(lat: Double, lon: Double): Boolean
 
     /**
      * @return the minimal rectangular bounding box of this shape
      */
-    BBox getBounds();
+    val bounds: BBox
 }
