@@ -27,6 +27,21 @@
         <builddate>${maven.build.timestamp}</builddate>
         <kotlin.version>2.4.0</kotlin.version>
     </properties>
+    <repositories>
+        <!-- androidx.collection (KMP primitive collections, replaces hppc) is published on
+             Google Maven only, not on Maven Central -->
+        <repository>
+            <id>google</id>
+            <url>https://maven.google.com</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
     <licenses>
         <license>
             <name>The Apache Software License, Version 2.0</name>
@@ -44,6 +59,15 @@
         <dependency>
             <groupId>com.carrotsearch</groupId>
             <artifactId>hppc</artifactId>
+        </dependency>
+        <!-- unboxed primitive collections, pure Kotlin and multiplatform; gradually replaces
+             hppc. The exact version is load-bearing: iteration order of its hash containers is
+             deterministic per version but not guaranteed across versions, see
+             AndroidxCollectionDeterminismTest -->
+        <dependency>
+            <groupId>androidx.collection</groupId>
+            <artifactId>collection-jvm</artifactId>
+            <version>1.6.0</version>
         </dependency>
         <dependency>
             <groupId>org.codehaus.janino</groupId>
