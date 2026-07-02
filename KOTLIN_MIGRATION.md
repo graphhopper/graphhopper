@@ -187,6 +187,22 @@ java -cp tools/target/graphhopper-tools-*-jar-with-dependencies.jar \
   no java.nio in common logic); MMapDataAccess stays explicitly JVM-only; GHDirectory remains the
   single DAType→implementation factory = future expect/actual point. Preserve today's DataAccess
   contract exactly so existing ports keep working.
+- **graphhopper-ios findings (2026-07-02, repo researched)**: dormant (tracks GH 1.0 via
+  `ios_compatibility` branch, last push Oct 2021); whole-source j2objc 2.5 translation, NOT
+  hand-ported. There is NO custom MMapDataAccess — j2objc's libcore-based JRE emulation provides
+  java.nio FileChannel.map/MappedByteBuffer over real mmap(2); the app uses `forMobile()` →
+  DAType.MMAP with a desktop-prebuilt `.osm-gh` bundle. What they actually had to change
+  (only 13 files!) = the true platform-seam list, adopt for KMP-readiness:
+  1. Helper's memory introspection (ManagementFactory/Runtime) — make injectable or isolate.
+  2. Classpath resources (TranslationMap) — keep constructor-injectable, no
+     Class.getResourceAsStream in converted common logic.
+  3. Import pipeline (reader.osm, reader.dem) cleanly excludable from the routing runtime —
+     preserve that package separation strictly.
+  4. DataAccess stays the expect/actual boundary (KMP has no libcore emulation, unlike j2objc).
+  5. SLF4J was faked, Jackson reduced to annotations — keep converted code loosely coupled to
+     both.
+  Their DataAccess contract = the standard interface, nothing iOS-shaped → preserving today's
+  contract is sufficient; no signature alignment needed with the (outdated) port.
 - **Janino / custom models**: runtime classloading is impossible on Android (no DEX at runtime)
   and iOS (AOT). Janino is BOTH the codegen AND the parser/validator of condition expressions
   (ConditionalExpressionVisitor/ValueExpressionVisitor walk Janino's AST).
