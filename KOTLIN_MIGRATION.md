@@ -64,16 +64,25 @@ Incrementally rewrite the `core` module (~61k LOC, 466 main + 200 test files) in
   tools/map-matching/reader-gtfs (allowed mechanical edits).
 - Vendoring estimate: ~45–55 classes if scatter variants are folded into the deterministic GH
   hash maps; ~70–95 if copied 1:1. Precedent: `com.graphhopper.apache.commons.collections.IntFloatBinaryHeap`.
-- Options (Peter: prefer an existing no-boxing library over copy+rewrite if one fits):
-  a) **androidx.collection** ≥1.4 — pure Kotlin, KMP, unboxed (MutableIntList, IntIntMap,
-     IntObjectMap, IntSet/ScatterSet, ...), Apache 2.0. Verify: Double variants, deques,
-     deterministic iteration order, growth/perf characteristics, indirect sort.
-  b) Port the needed HPPC subset to pure Kotlin (KMP-capable) under `com.graphhopper.coll`,
-     with ported/new unit tests and Apache-2.0 attribution headers + NOTICE.md entry.
-  c) Hybrid: library for the common types, small Kotlin ports for gaps (DoubleArrayList,
-     IndirectSort, deterministic-order maps).
-  Whatever the choice, the deterministic iteration order requirement and hot-path perf decide it
-  (verify with tests + Measurement before committing to the switch).
+- **DECISION (2026-07-02, research verified at source level): androidx.collection 1.6.0**
+  (`androidx.collection:collection`, pure-Kotlin KMP, Apache 2.0, Google-maintained) replaces
+  HPPC in core, plus ~4 small Kotlin gap-fillers ported from HPPC with attribution:
+  growable BitSet (~150 lines, 8 call sites), IndirectSort (~80 lines, 5 call sites),
+  IntDoubleMap via Double.toRawBits over MutableIntLongMap (2 call sites), LongArrayDeque
+  mirroring CircularIntArray (1 call site). IntArrayDeque → CircularIntArray.
+  - Determinism verified in ScatterMap.kt source: fixed MurmurHash constant, no per-instance/
+    per-run seed → iteration reproducible across runs (like HashOrderMixing.constant today).
+    It is an implementation property, NOT an API guarantee → pin the version and add a canary
+    test asserting a known iteration order, so upgrades that permute order are caught.
+  - Cursors → inline forEach lambdas (zero allocation). Object-keyed maps need stable hashCode
+    (String — same constraint as HPPC).
+  - Perf gate: benchmark CH preparation + routing (Measurement) before/after the switch.
+  - Fallback if blocked: HPPC 0.10 upgrade + override nextIterationSeed() in GH* wrappers
+    (JVM-only bridge; HPPC 0.9 removed HashOrderMixing and randomizes iteration per-iterator).
+  - Rejected: fastutil/Eclipse Collections/Agrona (Java-only), koloboke (dead),
+    korlibs-datastructure (single-maintainer risk), kotlinx (no primitive collections exist).
+  - Migration is gradual: HPPC stays as a dependency until the last core usage is converted;
+    reader-gtfs keeps using HPPC (declare its own dep when core drops it).
 
 ### Package migration order (leaf → hub); cross-package cycles noted
 1. `apache.commons.*`, `debatty` (vendored, self-contained) — warm-up.
@@ -124,6 +133,10 @@ java -cp tools/target/graphhopper-tools-*-jar-with-dependencies.jar \
   prepare.min_network_size=10000 graph.location=measurements/<label>-gh
 ```
 - Quick iteration variant: alsace or sachsen pbf, lower -Xmx, count=2000.
+- **Machine constraint (checked 2026-07-02): 7 GB RAM, 4 cores, ~20 GB free disk.** Germany
+  (4.8 GB pbf) with -Xmx20g is impossible here → use **austria-260621.osm.pbf with -Xmx4500m**
+  as the primary Measurement map; alsace/sachsen for quick iterations. Germany run = open
+  question (bigger machine, or MMAP + patience).
 - Deterministic equivalence beyond timing: CH shortcut counts, LM landmark data, visited-node
   counts, and identical route distances/times for a fixed random seed — compare JSON outputs.
 - Real-world spot checks: run web server (`config-example.yml`) on a real pbf, compare a fixed
@@ -181,6 +194,16 @@ doesn't force API breaks — decide when reaching `util.shapes` (early) and `iso
 - [ ] Phases 1–14 per order above (check off per package, one commit each).
 - [ ] Vendored HPPC Kotlin port + tests + attribution; drop hppc dependency from core.
 - [ ] Final: full `mvn -B clean test`, Measurement comparison, real-route diff report.
+
+## Adopted working defaults (2026-07-02, Peter AFK — override anytime)
+
+- Perf budget: within noise (~±3%) on Measurement vs Java baseline; deterministic counts
+  (CH shortcuts, visited nodes, routes) must be identical.
+- Tests stay in Java permanently — strongest behavior lock + continuous interop check.
+- Style: idiomatic-where-safe in one pass; hot paths stay primitive/loop-based; public surface
+  Java-friendly.
+- Other modules: mechanical edits allowed (imports, build wiring, minimal test syntax), each in
+  its own commit, no logic rewrites.
 
 ## Open questions for Peter
 

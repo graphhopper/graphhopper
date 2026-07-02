@@ -25,6 +25,7 @@
         -->
         <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ss'Z'</maven.build.timestamp.format>
         <builddate>${maven.build.timestamp}</builddate>
+        <kotlin.version>2.4.0</kotlin.version>
     </properties>
     <licenses>
         <license>
@@ -104,11 +105,12 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        <!-- use same kotlin version as okhttp uses in client-hc -->
+        <!-- core is compiled with this kotlin version; the stdlib is backwards compatible with
+             the older versions expected by okhttp (client-hc) and osm-legal-default-speeds -->
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-stdlib</artifactId>
-            <version>2.2.21</version>
+            <version>${kotlin.version}</version>
         </dependency>
 
         <dependency>
@@ -153,6 +155,44 @@
         </pluginManagement>
 
         <plugins>
+            <!-- mixed Java/Kotlin compilation: kotlinc runs before javac and sees both source
+                 trees, javac then compiles the remaining java against the kotlin classes -->
+            <plugin>
+                <groupId>org.jetbrains.kotlin</groupId>
+                <artifactId>kotlin-maven-plugin</artifactId>
+                <version>${kotlin.version}</version>
+                <executions>
+                    <execution>
+                        <id>compile</id>
+                        <phase>process-sources</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <configuration>
+                            <sourceDirs>
+                                <sourceDir>${project.basedir}/src/main/kotlin</sourceDir>
+                                <sourceDir>${project.basedir}/src/main/java</sourceDir>
+                            </sourceDirs>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>test-compile</id>
+                        <phase>process-test-sources</phase>
+                        <goals>
+                            <goal>test-compile</goal>
+                        </goals>
+                        <configuration>
+                            <sourceDirs>
+                                <sourceDir>${project.basedir}/src/test/kotlin</sourceDir>
+                                <sourceDir>${project.basedir}/src/test/java</sourceDir>
+                            </sourceDirs>
+                        </configuration>
+                    </execution>
+                </executions>
+                <configuration>
+                    <jvmTarget>${maven.compiler.target}</jvmTarget>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>pl.project13.maven</groupId>
                 <artifactId>git-commit-id-plugin</artifactId>
