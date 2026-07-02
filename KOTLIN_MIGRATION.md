@@ -225,6 +225,12 @@ java -cp tools/target/graphhopper-tools-*-jar-with-dependencies.jar \
   Perf: Measurement custom-model scenario per backend. Scheduled directly after the
   routing.weighting.custom conversion (phase 7): parser first, then backends, tests throughout.
   Core provides generator + registry + runnable tool; app-side Gradle wiring is out of scope.
+  **Attribution (Peter 2026-07-02): if the new parser/back-ends use code OR ideas from Janino**
+  (BSD-3-Clause, Arno Unkrig / janino-compiler.github.io), add a BSD attribution header to the
+  affected files and an entry in NOTICE.md — same as the HPPC-derived gap-fillers get for
+  Apache 2.0. This applies also to code derived from GraphHopper's existing Janino-AST visitors
+  (ConditionalExpressionVisitor/ValueExpressionVisitor) insofar as their logic mirrors Janino
+  API concepts.
 
 ## Geometry / Spatial K evaluation
 
