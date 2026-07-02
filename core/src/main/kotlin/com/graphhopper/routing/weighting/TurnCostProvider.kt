@@ -16,34 +16,34 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.routing.weighting;
+package com.graphhopper.routing.weighting
 
 /**
  * Implementations of this interface define how turn costs and turn times are calculated.
  */
-public interface TurnCostProvider {
+interface TurnCostProvider {
     /**
-     * @return the turn weight of a transitions from the edge with id {@param inEdge} to the edge with id
-     * {@param outEdge} at the node with id {@param viaNode}
+     * @return the turn weight of a transitions from the edge with id `inEdge` to the edge with id
+     * `outEdge` at the node with id `viaNode`
      */
-    double calcTurnWeight(int inEdge, int viaNode, int outEdge);
+    fun calcTurnWeight(inEdge: Int, viaNode: Int, outEdge: Int): Double
 
     /**
      * @return the time it takes to take a turn in milli-seconds
-     * @see #calcTurnWeight(int, int, int)
+     * @see calcTurnWeight
      */
-    long calcTurnMillis(int inEdge, int viaNode, int outEdge);
+    fun calcTurnMillis(inEdge: Int, viaNode: Int, outEdge: Int): Long
 
-    TurnCostProvider NO_TURN_COST_PROVIDER = new TurnCostProvider() {
-        @Override
-        public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
-            return 0;
+    companion object {
+        @JvmField
+        val NO_TURN_COST_PROVIDER: TurnCostProvider = object : TurnCostProvider {
+            override fun calcTurnWeight(inEdge: Int, viaNode: Int, outEdge: Int): Double {
+                return 0.0
+            }
+
+            override fun calcTurnMillis(inEdge: Int, viaNode: Int, outEdge: Int): Long {
+                return 0
+            }
         }
-
-        @Override
-        public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
-            return 0;
-        }
-
-    };
+    }
 }

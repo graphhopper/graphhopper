@@ -71,6 +71,10 @@ independently of that migration.
   ExternalBooleanEncodedValue serializes its hppc BitSet field (which can never deserialize).
   Test: `core/.../routing/ev/EncodedValueSerializerPinnedTest.java`. (2026-07-02)
 
+- **Weighting.roundWeight rounds half-UP (Math.round)** — CH stores rounded weights, and
+  kotlin.math.round's half-even would silently change them for *.5 weights. No test hit a tie
+  before. Test: `core/.../routing/weighting/WeightingPinnedBehaviorTest.java`. (2026-07-02)
+
 ## Recorded only (not externally observable)
 
 - **Unzipper accumulates progress via Java's compound assignment** `sumBytes += len * factor`,

@@ -15,16 +15,16 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.weighting;
+package com.graphhopper.routing.weighting
 
-import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.EdgeIteratorState
 
 /**
  * Specifies how the best route is calculated.
  *
  * @author Peter Karich
  */
-public interface Weighting {
+interface Weighting {
 
     /**
      * Used only for the heuristic estimation in A*
@@ -32,10 +32,10 @@ public interface Weighting {
      * @return minimal weight per meter. E.g. if you calculate the fastest way the return value
      * is '1/max_velocity' or a shortest weighting would return 1.
      */
-    double calcMinWeightPerDistance();
+    fun calcMinWeightPerDistance(): Double
 
     /**
-     * This method calculates the weight of a given {@link EdgeIteratorState}. E.g. a high value indicates that the edge
+     * This method calculates the weight of a given [EdgeIteratorState]. E.g. a high value indicates that the edge
      * should be avoided during shortest path search. Make sure that this method is very fast and optimized as this is
      * called potentially millions of times for one route or a lot more for nearly any preprocessing phase.
      *
@@ -43,44 +43,56 @@ public interface Weighting {
      * @param reverse   if the specified edge is specified in reverse direction e.g. from the reverse
      *                  case of a bidirectional search.
      * @return the calculated weight with the specified velocity has to be in the range of 0 and
-     * +Infinity. GraphHopper expects weights to be whole numbers only. Consider using {@link Weighting#roundWeight(double)}
+     * +Infinity. GraphHopper expects weights to be whole numbers only. Consider using [Weighting.roundWeight]
      * to post-process all weights. Make sure your method does not return NaN which can e.g. occur for 0/0.
      */
-    double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse);
+    fun calcEdgeWeight(edgeState: EdgeIteratorState, reverse: Boolean): Double
 
     /**
      * This method calculates the time taken (in milliseconds) to travel along the specified edgeState.
      * It is typically used for post-processing and on only a few thousand edges.
      */
-    long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse);
+    fun calcEdgeMillis(edgeState: EdgeIteratorState, reverse: Boolean): Long
 
-    double calcTurnWeight(int inEdge, int viaNode, int outEdge);
+    fun calcTurnWeight(inEdge: Int, viaNode: Int, outEdge: Int): Double
 
-    long calcTurnMillis(int inEdge, int viaNode, int outEdge);
+    fun calcTurnMillis(inEdge: Int, viaNode: Int, outEdge: Int): Long
 
     /**
      * This method can be used to check whether or not this weighting returns turn costs (or if they are all zero).
      * This is sometimes needed to do safety checks as not all graph algorithms can be run edge-based and might yield
      * wrong results when turn costs are applied while running node-based.
      */
-    boolean hasTurnCosts();
+    fun hasTurnCosts(): Boolean
 
-    String getName();
+    val name: String
 
-    static boolean isValidName(String name) {
-        if (name == null || name.isEmpty())
-            return false;
+    companion object {
+        // mirrors the Java `assert` statements this method had: the checks only run when
+        // assertions are enabled (-ea) for this class, and the condition is not even
+        // evaluated otherwise (hot path)
+        private val ASSERTIONS_ENABLED = Weighting::class.java.desiredAssertionStatus()
 
-        return name.matches("[\\|_a-z]+");
-    }
+        @JvmStatic
+        fun isValidName(name: String?): Boolean {
+            if (name == null || name.isEmpty())
+                return false
 
-    static double roundWeight(double w) {
-        assert !Double.isNaN(w) : "weights should not be NaN";
-        assert w >= 0 : "weights should be >= 0, got: " + w;
-        if (Double.isInfinite(w)) return Double.POSITIVE_INFINITY;
-        if (w != 0 && w < 0.5)
-            // we round up to weight 1, because weight 0 introduces ambiguity for shortest paths
-            return 1;
-        return Math.round(w);
+            return name.matches("[\\|_a-z]+".toRegex())
+        }
+
+        @JvmStatic
+        fun roundWeight(w: Double): Double {
+            if (ASSERTIONS_ENABLED) {
+                if (w.isNaN()) throw AssertionError("weights should not be NaN")
+                if (w < 0) throw AssertionError("weights should be >= 0, got: $w")
+            }
+            if (w.isInfinite()) return Double.POSITIVE_INFINITY
+            if (w != 0.0 && w < 0.5)
+                // we round up to weight 1, because weight 0 introduces ambiguity for shortest paths
+                return 1.0
+            // Math.round (floor(w + 0.5)) on purpose: kotlin.math.round uses half-even ties
+            return Math.round(w).toDouble()
+        }
     }
 }

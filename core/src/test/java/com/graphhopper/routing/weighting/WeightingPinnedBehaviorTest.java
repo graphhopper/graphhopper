@@ -17,28 +17,21 @@
  */
 package com.graphhopper.routing.weighting;
 
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 /**
- * Specifies a weight approximation between an node and the goalNode according to the specified
- * weighting.
- *
- * @author jansoe
- * @author Peter Karich
+ * Pins behavior discovered during the Kotlin conversion. See docs/pinned-behavior.md.
  */
-public interface WeightApproximator {
-    /**
-     * @return minimal weight of the specified currentNode to the 'to' node
-     */
-    double approximate(int currentNode);
+public class WeightingPinnedBehaviorTest {
 
-    void setTo(int to);
-
-    /**
-     * Makes a 'reverse' copy of itself to make it possible using the two objects independent e.g.
-     * on different threads. Do not copy state depending on the current approximate calls. 'reverse'
-     * means the WeightApproximator should handle approximate calls towards the 'from' instead
-     * towards the 'to'.
-     */
-    WeightApproximator reverse();
-
-    double getSlack();
+    @Test
+    public void roundWeightRoundsHalfUp() {
+        // Math.round semantics (floor(w + 0.5)); kotlin.math.round would round half-even
+        // (2.5 -> 2.0) and silently change stored CH weights
+        assertEquals(3.0, Weighting.roundWeight(2.5));
+        assertEquals(2.0, Weighting.roundWeight(1.5));
+        assertEquals(2.0, Weighting.roundWeight(2.4));
+    }
 }

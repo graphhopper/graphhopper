@@ -15,7 +15,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.weighting;
+package com.graphhopper.routing.weighting
 
 /**
  * Turns an unidirectional weight Approximation into a bidirectional balanced one.
@@ -28,7 +28,6 @@ package com.graphhopper.routing.weighting;
  *
  * Most literature uses balanced for the property that this class is about.
  *
- * <p>
  * [1] Ikeda, T., Hsu, M.-Y., Imai, H., Nishimura, S., Shimoura, H., Hashimoto, T., Tenmoku, K., and
  * Mitoh, K. (1994). A fast algorithm for finding better routes by ai search techniques. In VNIS,
  * pages 291–296.
@@ -39,47 +38,44 @@ package com.graphhopper.routing.weighting;
  * @author jansoe
  * @author Peter Karich
  */
-public class BalancedWeightApproximator {
+class BalancedWeightApproximator(weightApprox: WeightApproximator?) {
 
-    private final WeightApproximator uniDirApproximatorForward, uniDirApproximatorReverse;
+    private val uniDirApproximatorForward: WeightApproximator
+    private val uniDirApproximatorReverse: WeightApproximator
 
     // Constants to shift the estimate (reverse estimate) so that it is actually 0 at the destination (source).
-    double fromOffset, toOffset;
+    private var fromOffset = 0.0
+    private var toOffset = 0.0
 
-    public BalancedWeightApproximator(WeightApproximator weightApprox) {
-        if (weightApprox == null)
-            throw new IllegalArgumentException("WeightApproximator cannot be null");
-
-        uniDirApproximatorForward = weightApprox;
-        uniDirApproximatorReverse = weightApprox.reverse();
+    init {
+        requireNotNull(weightApprox) { "WeightApproximator cannot be null" }
+        uniDirApproximatorForward = weightApprox
+        uniDirApproximatorReverse = weightApprox.reverse()
     }
 
-    public WeightApproximator getApproximation() {
-        return uniDirApproximatorForward;
+    val approximation: WeightApproximator
+        get() = uniDirApproximatorForward
+
+    fun setFromTo(from: Int, to: Int) {
+        uniDirApproximatorReverse.setTo(from)
+        uniDirApproximatorForward.setTo(to)
+        fromOffset = 0.5 * uniDirApproximatorForward.approximate(from)
+        toOffset = 0.5 * uniDirApproximatorReverse.approximate(to)
     }
 
-    public void setFromTo(int from, int to) {
-        uniDirApproximatorReverse.setTo(from);
-        uniDirApproximatorForward.setTo(to);
-        fromOffset = 0.5 * uniDirApproximatorForward.approximate(from);
-        toOffset = 0.5 * uniDirApproximatorReverse.approximate(to);
-    }
-
-    public double approximate(int node, boolean reverse) {
-        double weightApproximation = 0.5 * (uniDirApproximatorForward.approximate(node) - uniDirApproximatorReverse.approximate(node));
-        if (reverse) {
-            return fromOffset - weightApproximation;
+    fun approximate(node: Int, reverse: Boolean): Double {
+        val weightApproximation = 0.5 * (uniDirApproximatorForward.approximate(node) - uniDirApproximatorReverse.approximate(node))
+        return if (reverse) {
+            fromOffset - weightApproximation
         } else {
-            return toOffset + weightApproximation;
+            toOffset + weightApproximation
         }
     }
 
-    public double getSlack() {
-        return uniDirApproximatorForward.getSlack();
-    }
+    val slack: Double
+        get() = uniDirApproximatorForward.slack
 
-    @Override
-    public String toString() {
-        return uniDirApproximatorForward.toString();
+    override fun toString(): String {
+        return uniDirApproximatorForward.toString()
     }
 }
