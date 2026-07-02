@@ -139,6 +139,9 @@ java -cp tools/target/graphhopper-tools-*-jar-with-dependencies.jar \
   austria/alsace/sachsen with RAM + -Xmx4500m for quicker iterations.
 - Benchmark hygiene on this small box: never run Measurement concurrently with builds/tests;
   compare only like-for-like runs from the same machine state.
+- ALWAYS pipe Measurement output through `tee measurements/<label>.log` so the run is
+  live-tailable (the 2026-07-02 java-baseline germany run lacks this — logs only via file-size
+  progress + final JSON).
 - Deterministic equivalence beyond timing: CH shortcut counts, LM landmark data, visited-node
   counts, and identical route distances/times for a fixed random seed — compare JSON outputs.
 - Real-world spot checks: run web server (`config-example.yml`) on a real pbf, compare a fixed
