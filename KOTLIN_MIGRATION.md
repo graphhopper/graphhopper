@@ -142,10 +142,15 @@ java -cp tools/target/graphhopper-tools-*-jar-with-dependencies.jar \
 - ALWAYS pipe Measurement output through `tee measurements/<label>.log` so the run is
   live-tailable (the 2026-07-02 java-baseline germany run lacks this — logs only via file-size
   progress + final JSON).
-- Benchmark cadence (Peter 2026-07-02): full germany Measurement at ~30%, ~60% and 100% of
-  converted classes (plus a load-only run against the java-written germany graph as a storage
-  format compatibility check). Cheap alsace/sachsen spot-checks after hot-path phases only
-  (HPPC→androidx switch, storage, routing, CH/LM) — normal commits are gated by tests alone.
+- Benchmark cadence + methodology (Peter 2026-07-02, updated): checkpoints (~30%, ~60%) REUSE
+  the java-written germany graph copy (measurements/germany-gh-compat) — no import/prep, checks
+  1. graph compatibility 2. query speed. Run `measurements/ab-bench.sh` (paired, alternating
+  java-jar/kotlin-jar rounds on the same graph, median over >=3 rounds each) to separate VM
+  noise from real differences — this small VM is noisy; single runs are not comparable.
+  Full import benchmark only at 100% (and on the dedicated machine via benchmark/benchmark.sh,
+  which now supports GH_TOOLS_JAR/GH_JAVA_OPTS/GH_CLEAN/GH_COUNT/GH_DATAACCESS env overrides
+  with historic defaults). Cheap spot-checks after hot-path phases only; commits gated by
+  tests alone.
 - Deterministic equivalence beyond timing: CH shortcut counts, LM landmark data, visited-node
   counts, and identical route distances/times for a fixed random seed — compare JSON outputs.
 - Real-world spot checks: run web server (`config-example.yml`) on a real pbf, compare a fixed
