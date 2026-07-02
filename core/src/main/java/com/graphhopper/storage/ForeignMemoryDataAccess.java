@@ -17,14 +17,23 @@
  */
 package com.graphhopper.storage;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.lang.foreign.Arena;
+import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.Linker;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
+import java.lang.invoke.MethodHandle;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import static java.lang.foreign.ValueLayout.*;
 
 /**
  * Off-heap DataAccess backed by a single contiguous {@link MemorySegment} via the Foreign Memory API.
@@ -40,6 +49,33 @@ public final class ForeignMemoryDataAccess extends AbstractDataAccess {
     private static final VarHandle SHORT_VH = SHORT_LE.varHandle();
     private static final VarHandle BYTE_VH = BYTE_LAYOUT.varHandle();
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(ForeignMemoryDataAccess.class);
+    // -XX:+UseTransparentHugePages only covers the Java heap, not FFM/native allocations. For those
+    // we mmap the memory ourselves, align it to the huge page size and madvise(MADV_HUGEPAGE)
+    // before it is first touched, so the kernel backs it with transparent huge pages right at
+    // fault time, in both the "madvise" and the "always" THP mode. Arena.allocate would not work
+    // here: it zero-fills the memory and thereby faults it in as regular 4K pages before we could
+    // give the advice.
+    private static final long HUGE_PAGE_SIZE = 2L * 1024 * 1024;
+    private static final int MADV_HUGEPAGE = 14, PROT_READ = 1, PROT_WRITE = 2, MAP_PRIVATE = 2, MAP_ANONYMOUS = 0x20; // linux/mman.h
+    private static final MethodHandle MMAP = link("mmap",
+            FunctionDescriptor.of(ADDRESS, ADDRESS, JAVA_LONG, JAVA_INT, JAVA_INT, JAVA_INT, JAVA_LONG));
+    private static final MethodHandle MUNMAP = link("munmap", FunctionDescriptor.of(JAVA_INT, ADDRESS, JAVA_LONG));
+    private static final MethodHandle MADVISE = link("madvise", FunctionDescriptor.of(JAVA_INT, ADDRESS, JAVA_LONG, JAVA_INT));
+    private static final AtomicBoolean MADVISE_LOGGED = new AtomicBoolean();
+
+    private static MethodHandle link(String name, FunctionDescriptor descriptor) {
+        if (!System.getProperty("os.name", "").startsWith("Linux") || "false".equals(System.getProperty("graphhopper.thp")))
+            return null;
+        try {
+            Linker linker = Linker.nativeLinker();
+            return linker.downcallHandle(linker.defaultLookup().find(name).orElseThrow(), descriptor);
+        } catch (Throwable t) {
+            LOGGER.warn("Could not link " + name + ", transparent huge pages unavailable for off-heap memory", t);
+            return null;
+        }
+    }
+
     private Arena arena;
     private MemorySegment segment = MemorySegment.NULL;
     private long capacity;
@@ -48,6 +84,54 @@ public final class ForeignMemoryDataAccess extends AbstractDataAccess {
     public ForeignMemoryDataAccess(String name, String location, boolean store, int segmentSize) {
         super(name, location, segmentSize);
         this.store = store;
+    }
+
+    /**
+     * Allocates a zero-initialized native segment. On Linux it is allocated via mmap, aligned to
+     * the 2MB huge page size and advised with MADV_HUGEPAGE before it is first touched, so it can
+     * be backed by transparent huge pages; the mapping is released when the given arena is closed.
+     * On other platforms it falls back to {@link Arena#allocate}. Disable with -Dgraphhopper.thp=false.
+     */
+    private static MemorySegment allocate(Arena arena, long byteCount) {
+        if (MMAP == null || MUNMAP == null || MADVISE == null)
+            return arena.allocate(byteCount);
+        try {
+            // Huge pages require a 2MB-aligned start, but mmap only guarantees base-page (4K)
+            // alignment, so we over-map by one huge page and use the first 2MB boundary inside
+            // the mapping. The skipped head (up to ~2MB, depending on where mmap placed us) and
+            // the unused tail are never touched, i.e. they cost only virtual address space, and
+            // are released together with the rest of the mapping when the arena is closed:
+            //
+            // raw (from mmap, 4K-aligned)                                  raw + mapLength
+            //  v                                                            v
+            //  |-- head, up to ~2MB --|========== advisedLength ==========|-- tail --|
+            //                         ^
+            //                         aligned (first 2MB boundary >= raw)
+            long advisedLength = Math.ceilDiv(byteCount, HUGE_PAGE_SIZE) * HUGE_PAGE_SIZE;
+            long mapLength = advisedLength + HUGE_PAGE_SIZE;
+            MemorySegment raw = (MemorySegment) MMAP.invokeExact(MemorySegment.NULL, mapLength,
+                    PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0L);
+            if (raw.address() == -1L)
+                throw new OutOfMemoryError("mmap of " + mapLength + " bytes failed");
+            long aligned = Math.ceilDiv(raw.address(), HUGE_PAGE_SIZE) * HUGE_PAGE_SIZE;
+            int res = (int) MADVISE.invokeExact(MemorySegment.ofAddress(aligned), advisedLength, MADV_HUGEPAGE);
+            if (MADVISE_LOGGED.compareAndSet(false, true))
+                LOGGER.info("madvise(MADV_HUGEPAGE) " + (res == 0
+                        ? "succeeded, off-heap memory can use transparent huge pages"
+                        : "failed, is THP disabled in the kernel?"));
+            return MemorySegment.ofAddress(aligned).reinterpret(byteCount, arena, seg -> {
+                try {
+                    int ignored = (int) MUNMAP.invokeExact(raw, mapLength);
+                } catch (Throwable t) {
+                    LOGGER.warn("munmap failed", t);
+                }
+            });
+        } catch (OutOfMemoryError err) {
+            throw err;
+        } catch (Throwable t) {
+            LOGGER.warn("mmap-based allocation failed, falling back to Arena.allocate", t);
+            return arena.allocate(byteCount);
+        }
     }
 
     @Override
@@ -73,7 +157,7 @@ public final class ForeignMemoryDataAccess extends AbstractDataAccess {
 
         try {
             Arena newArena = Arena.ofShared();
-            MemorySegment newSegment = newArena.allocate(newCapacity); // zero-initialized by the FFM API
+            MemorySegment newSegment = allocate(newArena, newCapacity); // zero-initialized by the FFM API
             if (capacity > 0) {
                 MemorySegment.copy(segment, 0, newSegment, 0, capacity);
                 arena.close();
@@ -116,7 +200,7 @@ public final class ForeignMemoryDataAccess extends AbstractDataAccess {
                 long totalCapacity = (long) segmentCount * segmentSizeInBytes;
 
                 arena = Arena.ofShared();
-                segment = arena.allocate(totalCapacity); // zero-initialized by the FFM API
+                segment = allocate(arena, totalCapacity); // zero-initialized by the FFM API
                 capacity = totalCapacity;
 
                 byte[] buffer = new byte[segmentSizeInBytes];
@@ -227,7 +311,7 @@ public final class ForeignMemoryDataAccess extends AbstractDataAccess {
                 this.capacity = 0;
             } else {
                 Arena newArena = Arena.ofShared();
-                MemorySegment newSegment = newArena.allocate(newCapacity);
+                MemorySegment newSegment = allocate(newArena, newCapacity);
                 MemorySegment.copy(segment, 0, newSegment, 0, newCapacity);
                 arena.close();
                 arena = newArena;
