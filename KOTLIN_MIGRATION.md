@@ -133,10 +133,12 @@ java -cp tools/target/graphhopper-tools-*-jar-with-dependencies.jar \
   prepare.min_network_size=10000 graph.location=measurements/<label>-gh
 ```
 - Quick iteration variant: alsace or sachsen pbf, lower -Xmx, count=2000.
-- **Machine constraint (checked 2026-07-02): 7 GB RAM, 4 cores, ~20 GB free disk.** Germany
-  (4.8 GB pbf) with -Xmx20g is impossible here → use **austria-260621.osm.pbf with -Xmx4500m**
-  as the primary Measurement map; alsace/sachsen for quick iterations. Germany run = open
-  question (bigger machine, or MMAP + patience).
+- **Machine constraint (checked 2026-07-02): 7 GB RAM, 4 cores, ~20 GB free disk.** -Xmx20g is
+  impossible here. Peter: **germany works via MMAP** — add `graph.dataaccess.default_type=MMAP`
+  and lower `-Xmx` to 2–3g. Use that for the germany Measurement runs (slow but fine);
+  austria/alsace/sachsen with RAM + -Xmx4500m for quicker iterations.
+- Benchmark hygiene on this small box: never run Measurement concurrently with builds/tests;
+  compare only like-for-like runs from the same machine state.
 - Deterministic equivalence beyond timing: CH shortcut counts, LM landmark data, visited-node
   counts, and identical route distances/times for a fixed random seed — compare JSON outputs.
 - Real-world spot checks: run web server (`config-example.yml`) on a real pbf, compare a fixed
