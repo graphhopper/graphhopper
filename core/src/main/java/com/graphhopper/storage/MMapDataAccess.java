@@ -17,6 +17,7 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.util.Constants;
 import com.graphhopper.util.Helper;
 
 import java.io.File;
@@ -254,10 +255,24 @@ public final class MMapDataAccess extends AbstractDataAccess {
             newSegmentCount++;
 
         if (newSegmentCount < segments.size()) {
-            clean(newSegmentCount, segments.size());
-            segments.subList(newSegmentCount, segments.size()).clear();
             try {
-                raFile.setLength(HEADER_OFFSET + getCapacity());
+                if (Constants.WINDOWS) {
+                    // Windows refuses setLength while any mapping on the file is open, so unmap
+                    // all segments before truncating and remap the remaining ones afterwards.
+                    // Might be slightly slower so do this only for Windows.
+                    clean(0, segments.size());
+                    segments.clear();
+                    raFile.setLength(HEADER_OFFSET + (long) newSegmentCount * segmentSizeInBytes);
+                    long bufferStart = HEADER_OFFSET;
+                    for (int i = 0; i < newSegmentCount; i++) {
+                        segments.add(newByteBuffer(bufferStart, segmentSizeInBytes));
+                        bufferStart += segmentSizeInBytes;
+                    }
+                } else {
+                    clean(newSegmentCount, segments.size());
+                    segments.subList(newSegmentCount, segments.size()).clear();
+                    raFile.setLength(HEADER_OFFSET + getCapacity());
+                }
             } catch (IOException ex) {
                 throw new RuntimeException("Failed to truncate file " + getFullName(), ex);
             }
