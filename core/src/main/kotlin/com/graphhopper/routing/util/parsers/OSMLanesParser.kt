@@ -30,7 +30,7 @@ class OSMLanesParser(private val lanesEnc: IntEncodedValue) : TagParser {
     override fun handleWayTags(edgeId: Int, edgeIntAccess: EdgeIntAccess, way: ReaderWay, relationFlags: IntsRef?) {
         var laneCount = 1
         if (way.hasTag("lanes")) {
-            val noLanes = way.getTag("lanes")
+            val noLanes = way.getTag("lanes")!!
             // like Java's String.split: trailing empty strings are removed
             val noLanesTok = noLanes.split(";", ".").dropLastWhile { it.isEmpty() }
             if (noLanesTok.isNotEmpty()) {

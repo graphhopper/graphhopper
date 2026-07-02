@@ -65,7 +65,8 @@ abstract class AbstractAccessParser protected constructor(
 
     protected fun handleBarrierEdge(edgeId: Int, edgeIntAccess: EdgeIntAccess, nodeTags: Map<String, Any>) {
         // for now we just create a dummy reader node, because our encoders do not make use of the coordinates anyway
-        val readerNode = ReaderNode(0, 0.0, 0.0, nodeTags)
+        @Suppress("UNCHECKED_CAST")
+        val readerNode = ReaderNode(0, 0.0, 0.0, nodeTags as MutableMap<String, Any>)
         // block access for barriers
         if (isBarrier(readerNode)) {
             accessEnc.setBool(false, edgeId, edgeIntAccess, false)

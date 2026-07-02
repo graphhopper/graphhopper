@@ -90,6 +90,11 @@ independently of that migration.
 
 ## Recorded only (not externally observable)
 
+- **PbfBlobDecoder.processNodes (non-dense path) decodes the longitude with decodeLatitude**
+  — an Osmosis-era bug, dormant because real-world PBFs use dense nodes; preserved verbatim
+  with a comment. Clear upstream-fix candidate (with a non-dense fixture test) outside the
+  migration. (2026-07-02)
+
 - **Turn-restriction write order depends on HPPC scatter-map iteration order**
   (RestrictionSetter.forEach over LongIntScatterMap) and **MultiPointTour consumes one RNG draw
   in its NaN-heading constructor** — both affect seeded reproducibility of round trips and

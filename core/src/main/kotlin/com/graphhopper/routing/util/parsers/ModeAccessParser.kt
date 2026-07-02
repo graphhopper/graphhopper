@@ -82,7 +82,7 @@ class ModeAccessParser @JvmOverloads constructor(
             return
 
         if (way.hasTag("gh:barrier_edge") && way.hasTag("node_tags")) {
-            val nodeTags: List<Map<String, Any>> = way.getTag("node_tags", null)
+            val nodeTags: List<Map<String, Any>> = way.getTag<List<Map<String, Any>>?>("node_tags", null)!!
             val firstNodeTags = nodeTags[0]
             val barrierValue = if (firstNodeTags.containsKey("barrier")) firstNodeTags["barrier"] as String else ""
             val barrierDefaults = BARRIER_TYPE_DEFAULTS.getOrDefault(barrierValue, emptyMap())

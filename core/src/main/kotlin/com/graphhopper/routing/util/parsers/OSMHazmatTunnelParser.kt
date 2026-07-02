@@ -10,10 +10,10 @@ class OSMHazmatTunnelParser(private val hazTunnelEnc: EnumEncodedValue<HazmatTun
 
     override fun handleWayTags(edgeId: Int, edgeIntAccess: EdgeIntAccess, way: ReaderWay, relationFlags: IntsRef?) {
         if (way.hasTag("hazmat:adr_tunnel_cat", *TUNNEL_CATEGORY_NAMES)) {
-            val code = HazmatTunnel.valueOf(way.getTag("hazmat:adr_tunnel_cat"))
+            val code = HazmatTunnel.valueOf(way.getTag("hazmat:adr_tunnel_cat")!!)
             hazTunnelEnc.setEnum(false, edgeId, edgeIntAccess, code)
         } else if (way.hasTag("hazmat:tunnel_cat", *TUNNEL_CATEGORY_NAMES)) {
-            val code = HazmatTunnel.valueOf(way.getTag("hazmat:tunnel_cat"))
+            val code = HazmatTunnel.valueOf(way.getTag("hazmat:tunnel_cat")!!)
             hazTunnelEnc.setEnum(false, edgeId, edgeIntAccess, code)
         } else if (way.hasTag("tunnel", "yes")) {
             val codes = HazmatTunnel.entries

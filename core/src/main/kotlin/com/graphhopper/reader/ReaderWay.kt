@@ -15,29 +15,18 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.reader;
+package com.graphhopper.reader
 
-import com.carrotsearch.hppc.LongArrayList;
+import com.carrotsearch.hppc.LongArrayList
 
 /**
  * Represents a way received from the reader.
- * <p>
  *
  * @author Nop
  */
-public class ReaderWay extends ReaderElement {
-    protected final LongArrayList nodes = new LongArrayList(5);
+class ReaderWay(id: Long) : ReaderElement(id, Type.WAY) {
+    val nodes: LongArrayList = LongArrayList(5)
 
-    public ReaderWay(long id) {
-        super(id, Type.WAY);
-    }
-
-    public LongArrayList getNodes() {
-        return nodes;
-    }
-
-    @Override
-    public String toString() {
-        return "Way id:" + getId() + ", nodes:" + nodes.size() + ", tags:" + super.toString();
-    }
+    override fun toString(): String =
+        "Way id:" + id + ", nodes:" + nodes.size() + ", tags:" + super.toString()
 }

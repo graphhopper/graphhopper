@@ -15,19 +15,34 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util.parsers
+package com.graphhopper.reader
 
-import com.graphhopper.reader.ReaderWay
-import com.graphhopper.routing.ev.BooleanEncodedValue
-import com.graphhopper.routing.ev.EdgeIntAccess
-import com.graphhopper.storage.IntsRef
-import com.graphhopper.util.Helper
+/**
+ * Represents a node received from the reader.
+ *
+ * @author Nop
+ */
+class ReaderNode(
+    id: Long,
+    val lat: Double,
+    val lon: Double,
+    tags: MutableMap<String, Any>
+) : ReaderElement(id, Type.NODE, tags) {
 
-class OSMRoadClassLinkParser(private val linkEnc: BooleanEncodedValue) : TagParser {
+    constructor(id: Long, lat: Double, lon: Double) : this(id, lat, lon, LinkedHashMap(4))
 
-    override fun handleWayTags(edgeId: Int, edgeIntAccess: EdgeIntAccess, way: ReaderWay, relationFlags: IntsRef?) {
-        val highwayTag = way.getTag("highway")
-        if (!Helper.isEmpty(highwayTag) && highwayTag!!.endsWith("_link"))
-            linkEnc.setBool(false, edgeId, edgeIntAccess, true)
+    override fun toString(): String {
+        val txt = StringBuilder()
+        txt.append("Node: ")
+        txt.append(id)
+        txt.append(" lat=")
+        txt.append(lat)
+        txt.append(" lon=")
+        txt.append(lon)
+        if (hasTags()) {
+            txt.append("\n")
+            txt.append(tagsToString())
+        }
+        return txt.toString()
     }
 }

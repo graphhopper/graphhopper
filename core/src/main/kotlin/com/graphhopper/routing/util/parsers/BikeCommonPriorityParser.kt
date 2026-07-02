@@ -157,7 +157,7 @@ abstract class BikeCommonPriorityParser protected constructor(
         if (way.hasTag("railway", "tram"))
             weightToPrioMap[50.0] = AVOID_MORE
 
-        var classBicycleValue = way.getTag(classBicycleKey)
+        var classBicycleValue = classBicycleKey?.let { way.getTag(it) }
         if (classBicycleValue == null) classBicycleValue = way.getTag("class:bicycle")
 
         // We assume that humans are better in classifying preferences compared to our algorithm above
