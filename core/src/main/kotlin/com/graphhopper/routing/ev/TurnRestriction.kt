@@ -15,18 +15,15 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+package com.graphhopper.routing.ev
 
-package com.graphhopper.routing.ev;
+import com.graphhopper.routing.util.EncodingManager.getKey
 
-import com.graphhopper.routing.util.EncodingManager;
+object TurnRestriction {
 
-public class VehicleSpeed {
+    @JvmStatic
+    fun key(prefix: String): String = getKey(prefix, "turn_restriction")
 
-    public static String key(String name) {
-        return EncodingManager.getKey(name, "average_speed");
-    }
-
-    public static DecimalEncodedValue create(String name, int speedBits, double speedFactor, boolean storeTwoDirections) {
-        return new DecimalEncodedValueImpl(key(name), speedBits, speedFactor, storeTwoDirections);
-    }
+    @JvmStatic
+    fun create(name: String): BooleanEncodedValue = SimpleBooleanEncodedValue(key(name), false)
 }

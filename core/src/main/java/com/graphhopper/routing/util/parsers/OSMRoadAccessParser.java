@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-public class OSMRoadAccessParser<T extends Enum> implements TagParser {
+public class OSMRoadAccessParser<T extends Enum<?>> implements TagParser {
     protected final EnumEncodedValue<T> accessEnc;
     private final List<String> restrictions;
     private final Function<String, T> valueFinder;

@@ -20,7 +20,7 @@ package com.graphhopper.util.details;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.util.EdgeIteratorState;
 
-public class EnumDetails<E extends Enum> extends AbstractPathDetailsBuilder {
+public class EnumDetails<E extends Enum<?>> extends AbstractPathDetailsBuilder {
 
     private final EnumEncodedValue<E> ev;
     private E objVal;

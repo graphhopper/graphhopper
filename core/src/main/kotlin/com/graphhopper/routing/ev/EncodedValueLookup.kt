@@ -15,25 +15,23 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.ev;
+package com.graphhopper.routing.ev
 
-import java.util.List;
+interface EncodedValueLookup {
 
-public interface EncodedValueLookup {
+    val encodedValues: List<EncodedValue>
 
-    List<EncodedValue> getEncodedValues();
+    fun <T : EncodedValue> getEncodedValue(key: String, encodedValueType: Class<T>): T
 
-    <T extends EncodedValue> T getEncodedValue(String key, Class<T> encodedValueType);
+    fun getBooleanEncodedValue(key: String): BooleanEncodedValue
 
-    BooleanEncodedValue getBooleanEncodedValue(String key);
+    fun getIntEncodedValue(key: String): IntEncodedValue
 
-    IntEncodedValue getIntEncodedValue(String key);
+    fun getDecimalEncodedValue(key: String): DecimalEncodedValue
 
-    DecimalEncodedValue getDecimalEncodedValue(String key);
+    fun <T : Enum<*>> getEnumEncodedValue(key: String, enumType: Class<T>): EnumEncodedValue<T>
 
-    <T extends Enum<?>> EnumEncodedValue<T> getEnumEncodedValue(String key, Class<T> enumType);
-    
-    StringEncodedValue getStringEncodedValue(String key);
+    fun getStringEncodedValue(key: String): StringEncodedValue
 
-    boolean hasEncodedValue(String key);
+    fun hasEncodedValue(key: String): Boolean
 }

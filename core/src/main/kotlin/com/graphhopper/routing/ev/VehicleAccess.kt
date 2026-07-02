@@ -15,18 +15,15 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+package com.graphhopper.routing.ev
 
-package com.graphhopper.routing.ev;
+import com.graphhopper.routing.util.EncodingManager
 
-import com.graphhopper.routing.util.EncodingManager;
+object VehicleAccess {
 
-public class VehiclePriority {
+    @JvmStatic
+    fun key(name: String): String = EncodingManager.getKey(name, "access")
 
-    public static String key(String name) {
-        return EncodingManager.getKey(name, "priority");
-    }
-
-    public static DecimalEncodedValue create(String name, int speedBits, double speedFactor, boolean storeTwoDirections) {
-        return new DecimalEncodedValueImpl(key(name), speedBits, speedFactor, storeTwoDirections);
-    }
+    @JvmStatic
+    fun create(name: String): BooleanEncodedValue = SimpleBooleanEncodedValue(key(name), true)
 }

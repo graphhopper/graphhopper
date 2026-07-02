@@ -15,18 +15,14 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+package com.graphhopper.routing.ev
 
-package com.graphhopper.routing.ev;
+import com.graphhopper.storage.IntsRef
 
-import com.graphhopper.routing.util.EncodingManager;
+open class IntsRefEdgeIntAccess(private val intsRef: IntsRef) : EdgeIntAccess {
+    override fun getInt(edgeId: Int, index: Int): Int = intsRef.ints[index]
 
-public class VehicleAccess {
-
-    public static String key(String name) {
-        return EncodingManager.getKey(name, "access");
-    }
-
-    public static BooleanEncodedValue create(String name) {
-        return new SimpleBooleanEncodedValue(key(name), true);
+    override fun setInt(edgeId: Int, index: Int, value: Int) {
+        intsRef.ints[index] = value
     }
 }

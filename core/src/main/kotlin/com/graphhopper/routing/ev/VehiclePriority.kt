@@ -15,9 +15,16 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+package com.graphhopper.routing.ev
 
-package com.graphhopper.routing.ev;
+import com.graphhopper.routing.util.EncodingManager
 
-public interface ImportRegistry {
-    ImportUnit createImportUnit(String name);
+object VehiclePriority {
+
+    @JvmStatic
+    fun key(name: String): String = EncodingManager.getKey(name, "priority")
+
+    @JvmStatic
+    fun create(name: String, speedBits: Int, speedFactor: Double, storeTwoDirections: Boolean): DecimalEncodedValue =
+            DecimalEncodedValueImpl(key(name), speedBits, speedFactor, storeTwoDirections)
 }

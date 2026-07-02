@@ -1,4 +1,4 @@
-package com.graphhopper.routing.ev;
+package com.graphhopper.routing.ev
 
 /**
  * This class defines how and where to store an unsigned integer. It is important to note that: 1. the range of the
@@ -7,27 +7,27 @@ package com.graphhopper.routing.ev;
  *
  * @see IntEncodedValueImpl
  */
-public interface IntEncodedValue extends EncodedValue {
+interface IntEncodedValue : EncodedValue {
 
     /**
      * This method restores the integer value from the specified 'flags' taken from the storage.
      */
-    int getInt(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess);
+    fun getInt(reverse: Boolean, edgeId: Int, edgeIntAccess: EdgeIntAccess): Int
 
     /**
      * This method stores the specified integer value in the specified IntsRef.
      */
-    void setInt(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess, int value);
+    fun setInt(reverse: Boolean, edgeId: Int, edgeIntAccess: EdgeIntAccess, value: Int)
 
     /**
      * The maximum int value this EncodedValue accepts for setInt without throwing an exception.
      */
-    int getMaxStorableInt();
+    val maxStorableInt: Int
 
     /**
      * The minimum int value this EncodedValue accepts for setInt without throwing an exception.
      */
-    int getMinStorableInt();
+    val minStorableInt: Int
 
     /**
      * Returns the maximum value set using this encoded value or the physical storage limit if no value has been set
@@ -35,10 +35,10 @@ public interface IntEncodedValue extends EncodedValue {
      * the graph if values are set multiple times for the same edge and they are decreasing. However, the returned value
      * will always be equal to or larger than the global maximum.
      */
-    int getMaxOrMaxStorableInt();
+    val maxOrMaxStorableInt: Int
 
     /**
      * @return true if this EncodedValue can store a different value for its reverse direction
      */
-    boolean isStoreTwoDirections();
+    override val isStoreTwoDirections: Boolean
 }

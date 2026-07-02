@@ -15,25 +15,16 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+package com.graphhopper.routing.ev
 
-package com.graphhopper.routing.ev;
+import com.graphhopper.routing.util.EncodingManager
 
-import com.graphhopper.storage.IntsRef;
+object VehicleSpeed {
 
-public class IntsRefEdgeIntAccess implements EdgeIntAccess {
-    private final IntsRef intsRef;
+    @JvmStatic
+    fun key(name: String): String = EncodingManager.getKey(name, "average_speed")
 
-    public IntsRefEdgeIntAccess(IntsRef intsRef) {
-        this.intsRef = intsRef;
-    }
-
-    @Override
-    public int getInt(int edgeId, int index) {
-        return intsRef.ints[index];
-    }
-
-    @Override
-    public void setInt(int edgeId, int index, int value) {
-        intsRef.ints[index] = value;
-    }
+    @JvmStatic
+    fun create(name: String, speedBits: Int, speedFactor: Double, storeTwoDirections: Boolean): DecimalEncodedValue =
+            DecimalEncodedValueImpl(key(name), speedBits, speedFactor, storeTwoDirections)
 }

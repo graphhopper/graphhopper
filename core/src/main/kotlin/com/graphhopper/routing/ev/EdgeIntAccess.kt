@@ -15,18 +15,16 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+package com.graphhopper.routing.ev
 
-package com.graphhopper.routing.ev;
+interface EdgeIntAccess {
+    /**
+     * Gets the int value at the given index for the given edgeId
+     */
+    fun getInt(edgeId: Int, index: Int): Int
 
-import static com.graphhopper.routing.util.EncodingManager.getKey;
-
-public class TurnRestriction {
-
-    public static String key(String prefix) {
-        return getKey(prefix, "turn_restriction");
-    }
-
-    public static BooleanEncodedValue create(String name) {
-        return new SimpleBooleanEncodedValue(key(name), false);
-    }
+    /**
+     * Sets the int value at the given index for the given edgeId
+     */
+    fun setInt(edgeId: Int, index: Int, value: Int)
 }

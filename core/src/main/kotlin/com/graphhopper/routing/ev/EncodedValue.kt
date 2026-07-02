@@ -15,9 +15,9 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.ev;
+package com.graphhopper.routing.ev
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.JsonTypeInfo
 
 /**
  * This interface defines how to store and read values from a list of integers
@@ -25,59 +25,63 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
  * @see com.graphhopper.storage.IntsRef
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "className")
-public interface EncodedValue {
+interface EncodedValue {
 
     /**
      * This method sets the dataIndex and shift of this EncodedValue object and potentially changes the submitted init
      * object afterwards via calling next
      *
      * @return used bits
-     * @see InitializerConfig#next(int)
+     * @see InitializerConfig.next
      */
-    int init(InitializerConfig init);
+    fun init(init: InitializerConfig): Int
 
     /**
      * This method returns the hierarchical name like vehicle.type of this EncodedValue
      */
-    String getName();
+    val name: String
 
     /**
      * @return true if this EncodedValue can store a different value for its reverse direction
      */
-    boolean isStoreTwoDirections();
+    val isStoreTwoDirections: Boolean
 
     class InitializerConfig {
-        int dataIndex = -1;
-        int shift = 32;
-        int nextShift = 32;
-        int bitMask = 0;
+        @JvmField
+        internal var dataIndex = -1
+
+        @JvmField
+        internal var shift = 32
+
+        @JvmField
+        internal var nextShift = 32
+
+        @JvmField
+        internal var bitMask = 0
 
         /**
          * This method determines a space of the specified bits and sets shift and dataIndex accordingly
          */
-        void next(int usedBits) {
-            shift = nextShift;
+        internal fun next(usedBits: Int) {
+            shift = nextShift
             if ((shift - 1 + usedBits) / 32 > (shift - 1) / 32) {
-                dataIndex++;
-                shift = 0;
+                dataIndex++
+                shift = 0
             }
 
             // we need 1L as otherwise it'll fail for usedBits==32
-            bitMask = (int) ((1L << usedBits) - 1);
-            bitMask <<= shift;
-            nextShift = shift + usedBits;
+            bitMask = ((1L shl usedBits) - 1).toInt()
+            bitMask = bitMask shl shift
+            nextShift = shift + usedBits
         }
 
-        private int getRequiredBits() {
-            return (dataIndex) * 32 + nextShift;
-        }
+        private val requiredBits: Int
+            get() = dataIndex * 32 + nextShift
 
-        public int getRequiredInts() {
-            return (int) Math.ceil((double) getRequiredBits() / 32.0);
-        }
+        val requiredInts: Int
+            get() = Math.ceil(requiredBits / 32.0).toInt()
 
-        public int getRequiredBytes() {
-            return (int) Math.ceil((double) getRequiredBits() / 8.0);
-        }
+        val requiredBytes: Int
+            get() = Math.ceil(requiredBits / 8.0).toInt()
     }
 }

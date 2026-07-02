@@ -1,4 +1,4 @@
-package com.graphhopper.routing.ev;
+package com.graphhopper.routing.ev
 
 /**
  * This class defines how and where to store an unsigned decimal value. It is important to note that:
@@ -8,40 +8,39 @@ package com.graphhopper.routing.ev;
  *
  * @see DecimalEncodedValueImpl
  */
-public interface DecimalEncodedValue extends EncodedValue {
+interface DecimalEncodedValue : EncodedValue {
 
     /**
      * This method stores the specified double value (rounding with a previously defined factor) into the IntsRef.
      *
-     * @see #getMaxStorableDecimal()
+     * @see maxStorableDecimal
      */
-    void setDecimal(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess, double value);
+    fun setDecimal(reverse: Boolean, edgeId: Int, edgeIntAccess: EdgeIntAccess, value: Double)
 
-    double getDecimal(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess);
+    fun getDecimal(reverse: Boolean, edgeId: Int, edgeIntAccess: EdgeIntAccess): Double
 
     /**
      * The maximum double value this EncodedValue accepts for setDecimal without throwing an exception.
      */
-    double getMaxStorableDecimal();
+    val maxStorableDecimal: Double
 
     /**
      * The minimum double value this EncodedValue accepts for setDecimal without throwing an exception.
      */
-    double getMinStorableDecimal();
+    val minStorableDecimal: Double
 
     /**
-     * @see IntEncodedValue#getMaxOrMaxStorableInt()
+     * @see IntEncodedValue.maxOrMaxStorableInt
      */
-    double getMaxOrMaxStorableDecimal();
+    val maxOrMaxStorableDecimal: Double
 
     /**
      * @return the smallest decimal value that is larger or equal to the given value and that can be stored exactly,
-     * i.e. for which {@link #getDecimal} returns the same value that we put in using {@link #setDecimal}.
+     * i.e. for which [getDecimal] returns the same value that we put in using [setDecimal].
      * For example if the internal scaling factor is 3 calling getDecimal after setDecimal(reverse, ref, 5) will return
      * 6 not 5! The value returned by this method is guaranteed to be storable without such a modification.
      */
-    double getNextStorableValue(double value);
+    fun getNextStorableValue(value: Double): Double
 
-    double getSmallestNonZeroValue();
-
+    val smallestNonZeroValue: Double
 }

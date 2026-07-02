@@ -62,6 +62,15 @@ independently of that migration.
   Test: `core/.../routing/ev/EvEnumOrderPinnedTest.java`. Appending new constants at the END
   is safe; any other failure must not be "fixed" by updating literals. (2026-07-02)
 
+- **EncodedValue JSON is FIELD-based storage format**: the serializer uses
+  `PropertyAccessor.FIELD=ANY` with getters invisible, so private backing-field names and
+  @JsonCreator parameter order ARE the stored-graph format — renaming even a private field
+  breaks loading of existing graphs. Only Int/Decimal/SimpleBoolean were pinned before;
+  Enum/String/ExternalBoolean formats now pinned with strings extracted from the pre-migration
+  Java implementation (round-trip included). Includes the pre-existing quirk that
+  ExternalBooleanEncodedValue serializes its hppc BitSet field (which can never deserialize).
+  Test: `core/.../routing/ev/EncodedValueSerializerPinnedTest.java`. (2026-07-02)
+
 ## Recorded only (not externally observable)
 
 - **Unzipper accumulates progress via Java's compound assignment** `sumBytes += len * factor`,

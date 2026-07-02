@@ -15,17 +15,8 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+package com.graphhopper.routing.ev
 
-package com.graphhopper.routing.ev;
-
-public interface EdgeIntAccess {
-    /**
-     * Gets the int value at the given index for the given edgeId
-     */
-    int getInt(int edgeId, int index);
-
-    /**
-     * Sets the int value at the given index for the given edgeId
-     */
-    void setInt(int edgeId, int index, int value);
+fun interface ImportRegistry {
+    fun createImportUnit(name: String): ImportUnit?
 }
