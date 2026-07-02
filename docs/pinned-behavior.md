@@ -28,6 +28,16 @@ independently of that migration.
   Java implementation (height=4 for maxLeafEntries=4 after 100 inserts).
   Test: `core/.../coll/GHLongLongBTreePinnedBehaviorTest.java`. (2026-07-02)
 
+- **BitUtil.toBitString(byte[]) narrows the shift result back to byte per iteration**, so bits
+  never leak between bytes, and the LITTLE variant emits bytes in reversed order. Untested
+  before; verified against the pre-migration Java implementation.
+  Test: `core/.../util/UtilPinnedBehaviorTest.java`. (2026-07-02)
+
+- **AngleCalc.convertAzimuth2xaxisAngle rejects NaN** because the range check uses
+  `Double.compare` — a plain `<`/`>` comparison (a tempting "cleanup") would silently accept
+  NaN. Untested before; message text pinned.
+  Test: `core/.../util/UtilPinnedBehaviorTest.java`. (2026-07-02)
+
 ## Recorded only (not externally observable)
 
 - **IntFloatBinaryHeap.trimTo has an empty fill range** (`Arrays.fill(elements, toSize+1,
@@ -39,6 +49,14 @@ independently of that migration.
 - **GHLongLongBTree.getMemoryUsage rounds after long/long integer division** — the quotient is
   truncated before `Math.round(float)`, so the reported MB value is a truncated, not rounded,
   figure. (2026-07-02)
+
+- **Constants' static init order and fallbacks** (system props → version → builddate → gitinfo;
+  `"${project.version}"` → `VERSION="0.0", SNAPSHOT=true`; gitinfo rejected unless exactly 6
+  lines) — preserved verbatim in the Kotlin object; hard to unit-test without resource
+  manipulation, so recorded here instead. (2026-07-02)
+- **StopWatch.getTimeString() formats with the default locale** (decimal comma under de_DE) —
+  behavior preserved; flagged for a deliberate Locale decision in a later cleanup, outside the
+  migration. (2026-07-02)
 
 ## Open candidates (currently covered only indirectly)
 

@@ -15,48 +15,48 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.util;
+package com.graphhopper.util
 
-import com.graphhopper.util.shapes.BBox;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.util.shapes.BBox
+import com.graphhopper.util.shapes.GHPoint
 
 /**
  * Calculates the distance of two points or one point and an edge on earth via haversine formula.
  * Allows subclasses to implement less or more precise calculations.
- * <p>
+ *
  * See http://en.wikipedia.org/wiki/Haversine_formula
  *
  * @author Peter Karich
  */
-public interface DistanceCalc {
-    BBox createBBox(double lat, double lon, double radiusInMeter);
+interface DistanceCalc {
+    fun createBBox(lat: Double, lon: Double, radiusInMeter: Double): BBox
 
-    double calcCircumference(double lat);
+    fun calcCircumference(lat: Double): Double
 
     /**
      * Calculates distance of (from, to) in meter.
      */
-    double calcDist(double fromLat, double fromLon, double toLat, double toLon);
+    fun calcDist(fromLat: Double, fromLon: Double, toLat: Double, toLon: Double): Double
 
     /**
      * Calculates 3d distance of (from, to) in meter.
      */
-    double calcDist3D(double fromLat, double fromLon, double fromEle, double toLat, double toLon, double toEle);
+    fun calcDist3D(fromLat: Double, fromLon: Double, fromEle: Double, toLat: Double, toLon: Double, toEle: Double): Double
 
     /**
      * Returns the specified length in normalized meter.
      */
-    double calcNormalizedDist(double dist);
+    fun calcNormalizedDist(dist: Double): Double
 
     /**
      * Inverse to calcNormalizedDist. Returned the length in meter.
      */
-    double calcDenormalizedDist(double normedDist);
+    fun calcDenormalizedDist(normedDist: Double): Double
 
     /**
      * Calculates in normalized meter
      */
-    double calcNormalizedDist(double fromLat, double fromLon, double toLat, double toLon);
+    fun calcNormalizedDist(fromLat: Double, fromLon: Double, toLat: Double, toLon: Double): Double
 
     /**
      * This method decides for case 1: if we should use distance(r to edge) where r=(lat,lon) or
@@ -77,54 +77,53 @@ public interface DistanceCalc {
      *
      * @return true for case 1 which is "on edge" or the special case of 90° to the edge
      */
-    boolean validEdgeDistance(double r_lat_deg, double r_lon_deg,
-                              double a_lat_deg, double a_lon_deg,
-                              double b_lat_deg, double b_lon_deg);
+    fun validEdgeDistance(r_lat_deg: Double, r_lon_deg: Double,
+                          a_lat_deg: Double, a_lon_deg: Double,
+                          b_lat_deg: Double, b_lon_deg: Double): Boolean
 
     /**
      * This method calculates the distance from r to edge (a, b) where the crossing point is c
      *
      * @return the distance in normalized meter
      */
-    double calcNormalizedEdgeDistance(double r_lat_deg, double r_lon_deg,
-                                      double a_lat_deg, double a_lon_deg,
-                                      double b_lat_deg, double b_lon_deg);
+    fun calcNormalizedEdgeDistance(r_lat_deg: Double, r_lon_deg: Double,
+                                   a_lat_deg: Double, a_lon_deg: Double,
+                                   b_lat_deg: Double, b_lon_deg: Double): Double
 
     /**
      * This method calculates the distance from r to edge (a, b) where the crossing point is c including elevation
      *
      * @return the distance in normalized meter
      */
-    double calcNormalizedEdgeDistance3D(double r_lat_deg, double r_lon_deg, double r_ele_m,
-                                        double a_lat_deg, double a_lon_deg, double a_ele_m,
-                                        double b_lat_deg, double b_lon_deg, double b_ele_m);
+    fun calcNormalizedEdgeDistance3D(r_lat_deg: Double, r_lon_deg: Double, r_ele_m: Double,
+                                     a_lat_deg: Double, a_lon_deg: Double, a_ele_m: Double,
+                                     b_lat_deg: Double, b_lon_deg: Double, b_ele_m: Double): Double
 
     /**
      * @return the crossing point c of the vertical line from r to line (a, b)
      */
-    GHPoint calcCrossingPointToEdge(double r_lat_deg, double r_lon_deg,
-                                    double a_lat_deg, double a_lon_deg,
-                                    double b_lat_deg, double b_lon_deg);
+    fun calcCrossingPointToEdge(r_lat_deg: Double, r_lon_deg: Double,
+                                a_lat_deg: Double, a_lon_deg: Double,
+                                b_lat_deg: Double, b_lon_deg: Double): GHPoint
 
     /**
      * This methods creates a point (lat, lon in degrees) in a certain distance and direction from the specified
      * point (lat, lon in degrees). The heading is measured clockwise from north in degrees. The distance is passed in meter.
      */
-    GHPoint projectCoordinate(double lat, double lon,
-                              double distanceInMeter, double headingClockwiseFromNorth);
+    fun projectCoordinate(lat: Double, lon: Double,
+                          distanceInMeter: Double, headingClockwiseFromNorth: Double): GHPoint
 
     /**
      * This methods creates a point (lat, lon in degrees) a fraction of the distance along the path from (lat1, lon1)
      * to (lat2, lon2).
      */
-    GHPoint intermediatePoint(double f, double lat1, double lon1, double lat2, double lon2);
+    fun intermediatePoint(f: Double, lat1: Double, lon1: Double, lat2: Double, lon2: Double): GHPoint
 
     /*
      * Simple heuristic to detect if the specified two points are crossing the boundary +-180°. See
      * #667
      */
-    boolean isCrossBoundary(double lon1, double lon2);
+    fun isCrossBoundary(lon1: Double, lon2: Double): Boolean
 
-    double calcDistance(PointList pointList);
-
+    fun calcDistance(pointList: PointList): Double
 }

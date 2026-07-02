@@ -15,31 +15,29 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.util;
+package com.graphhopper.util
 
 /**
  * This class implements a rather quick solution to calculate 3D distances on earth using euclidean
  * geometry mixed with Haversine formula used for the on earth distance. The haversine formula makes
  * not so much sense as it is only important for large distances where then the rather smallish
  * heights would becomes neglectable.
- * <p>
  *
  * @author Peter Karich
  */
-public class DistanceCalc3D extends DistanceCalcEarth {
+class DistanceCalc3D : DistanceCalcEarth() {
     /**
      * @param fromHeight in meters above 0
      * @param toHeight   in meters above 0
      */
-    public double calcDist(double fromLat, double fromLon, double fromHeight,
-                           double toLat, double toLon, double toHeight) {
-        double len = super.calcDist(fromLat, fromLon, toLat, toLon);
-        double delta = Math.abs(toHeight - fromHeight);
-        return Math.sqrt(delta * delta + len * len);
+    fun calcDist(fromLat: Double, fromLon: Double, fromHeight: Double,
+                 toLat: Double, toLon: Double, toHeight: Double): Double {
+        val len = super.calcDist(fromLat, fromLon, toLat, toLon)
+        val delta = Math.abs(toHeight - fromHeight)
+        return Math.sqrt(delta * delta + len * len)
     }
 
-    @Override
-    public String toString() {
-        return "EXACT3D";
+    override fun toString(): String {
+        return "EXACT3D"
     }
 }
