@@ -16,11 +16,8 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.storage;
+package com.graphhopper.storage
 
-public interface CHEdgeFilter {
-
-    CHEdgeFilter ALL_EDGES = edgeState -> true;
-
-    boolean accept(RoutingCHEdgeIteratorState edgeState);
+interface RoutingCHEdgeIterator : RoutingCHEdgeIteratorState {
+    fun next(): Boolean
 }

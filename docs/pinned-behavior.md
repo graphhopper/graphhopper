@@ -85,6 +85,15 @@ independently of that migration.
 
 ## Recorded only (not externally observable)
 
+- **Graph binary-format quirks preserved verbatim in the Kotlin storage layer** (guarded
+  end-to-end by the germany load-gate rather than unit pins): 40-bit signed geoRef whose 5th
+  byte is deliberately NOT masked (sign-extension for negative refs, #2985); partial-int flag
+  storage shift/mask combos; CH weightFromDouble rejects non-integer weights with message
+  "weight must be an exact multiple of 1" and uses an unsigned 0xFFFFFFFF sentinel round-trip;
+  TurnCostStorage.loadExisting prints getHeader(0) in the mismatch message while comparing
+  getHeader(4); edge linked-list prepend order determines iterator order and therefore
+  visited-node counts. (2026-07-02)
+
 - **Unzipper accumulates progress via Java's compound assignment** `sumBytes += len * factor`,
   i.e. `(long) (sumBytes + len * factor)` — truncation towards zero after scaling by
   compressedSize/size. Preserved with an explicit `.toLong()` in Kotlin; the fractional-factor

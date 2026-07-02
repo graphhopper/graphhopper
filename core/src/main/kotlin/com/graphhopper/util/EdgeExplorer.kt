@@ -15,18 +15,17 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.util;
+package com.graphhopper.util
 
 /**
  * Class to get an EdgeIterator. Create it via graph.createEdgeExplorer() use one instance per
  * thread.
- * <p>
  *
  * @author Peter Karich
  * @see EdgeIterator
  * @see EdgeIteratorState
  */
-public interface EdgeExplorer {
+interface EdgeExplorer {
     /**
      * This method sets the base node for iteration through neighboring edges (EdgeIteratorStates).
      *
@@ -34,5 +33,5 @@ public interface EdgeExplorer {
      * instance or a reused instance returned in a previous call. So be sure you do not use the
      * EdgeExplorer from multiple threads or in a nested loop.
      */
-    EdgeIterator setBaseNode(int baseNode);
+    fun setBaseNode(baseNode: Int): EdgeIterator
 }

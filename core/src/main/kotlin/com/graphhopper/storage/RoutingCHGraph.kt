@@ -16,49 +16,48 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.storage;
+package com.graphhopper.storage
 
-import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.routing.weighting.Weighting
 
-public interface RoutingCHGraph {
-    int getNodes();
+interface RoutingCHGraph {
+    val nodes: Int
 
-    int getEdges();
+    val edges: Int
 
-    int getShortcuts();
+    val shortcuts: Int
 
     /**
      * Traverses the base edges and shortcuts at a given node. This will only include shortcuts coming from higher
      * level nodes, but *all* base edges with finite weight.
      */
-    RoutingCHEdgeExplorer createInEdgeExplorer();
+    fun createInEdgeExplorer(): RoutingCHEdgeExplorer
 
     /**
-     * @see #createInEdgeExplorer() but here the shortcuts/edges are going out of the given node.
+     * @see createInEdgeExplorer but here the shortcuts/edges are going out of the given node.
      */
-    RoutingCHEdgeExplorer createOutEdgeExplorer();
+    fun createOutEdgeExplorer(): RoutingCHEdgeExplorer
 
-    RoutingCHEdgeIteratorState getEdgeIteratorState(int chEdge, int adjNode);
+    fun getEdgeIteratorState(chEdge: Int, adjNode: Int): RoutingCHEdgeIteratorState?
 
-    int getLevel(int node);
+    fun getLevel(node: Int): Int
 
-    double getTurnWeight(int inEdge, int viaNode, int outEdge);
+    fun getTurnWeight(inEdge: Int, viaNode: Int, outEdge: Int): Double
 
     /**
-     * @return the graph this CH graph is based on, i.e. a the base {@link Graph} or a {@link QueryGraph} on top of the
-     * base graph
+     * @return the graph this CH graph is based on, i.e. a the base [Graph] or a [com.graphhopper.routing.querygraph.QueryGraph]
+     * on top of the base graph
      * todo: maybe it would be better to remove this method and use a direct reference to the base graph when it is
      * needed
      */
-    Graph getBaseGraph();
+    val baseGraph: Graph
 
-    boolean hasTurnCosts();
+    fun hasTurnCosts(): Boolean
 
-    boolean isEdgeBased();
+    val isEdgeBased: Boolean
 
-    Weighting getWeighting();
+    val weighting: Weighting
 
     // todo: would like to get rid of this
-    void close();
+    fun close()
 }

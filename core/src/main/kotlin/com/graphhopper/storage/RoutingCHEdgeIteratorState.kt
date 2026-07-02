@@ -16,21 +16,21 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.storage;
+package com.graphhopper.storage
 
-import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIterator
 
-public interface RoutingCHEdgeIteratorState {
+interface RoutingCHEdgeIteratorState {
     /**
-     * The CH edge ID of this edge state. This is generally not the same as {@link #getOrigEdge()}
+     * The CH edge ID of this edge state. This is generally not the same as [origEdge]
      */
-    int getEdge();
+    val edge: Int
 
     /**
-     * The original/base/query graph edge ID of the edge this CH edge state represents or {@link EdgeIterator#NO_EDGE}
+     * The original/base/query graph edge ID of the edge this CH edge state represents or [EdgeIterator.NO_EDGE]
      * if this is edge state is a shortcut
      */
-    int getOrigEdge();
+    val origEdge: Int
 
     /**
      * For shortcuts of an edge-based CH graph this is the key of the first original edge of this edge state
@@ -41,31 +41,30 @@ public interface RoutingCHEdgeIteratorState {
      * (the one stored first or second). For shortcut edges we use the direction of the shortcut to define the direction
      * of the first/last original edge key.
      */
-    int getOrigEdgeKeyFirst();
+    val origEdgeKeyFirst: Int
 
     /**
-     * @see #getOrigEdgeKeyFirst(), but for the last edge, i.e. the one the shortcut points to.
+     * @see origEdgeKeyFirst, but for the last edge, i.e. the one the shortcut points to.
      * For shortcuts of an edge-based CH graph this is the key of the last original edge of this edge state, otherwise
      * it is the key of the original/base/query graph edge this CH edge state represents.
      */
-    int getOrigEdgeKeyLast();
+    val origEdgeKeyLast: Int
 
-    int getBaseNode();
+    val baseNode: Int
 
-    int getAdjNode();
+    val adjNode: Int
 
-    boolean isShortcut();
+    val isShortcut: Boolean
 
     /**
      * The CH edge ID of the first skipped edge/shortcut of this edge state
      */
-    int getSkippedEdge1();
+    val skippedEdge1: Int
 
     /**
      * The CH edge ID of the second skipped edge/shortcut of this edge state
      */
-    int getSkippedEdge2();
+    val skippedEdge2: Int
 
-    double getWeight(boolean reverse);
-
+    fun getWeight(reverse: Boolean): Double
 }

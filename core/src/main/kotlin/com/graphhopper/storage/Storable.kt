@@ -15,32 +15,24 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.storage;
+package com.graphhopper.storage
 
-import java.io.Closeable;
+import java.io.Closeable
 
 /**
  * Interface for a storage abstraction. Currently is serves just the purpose to ensure the same
  * methods and names through all kind of 'storable' things in graphhopper.
- * <p>
+ *
  * Then the lifecycle is identical for all such objects:
- * <ol>
- * <li>object creation via new</li>
- * <li>optional configuration via additional setters and getters which are not in this
- * interface</li>
- * <li>if(!storable.loadExisting()) storable.create()</li>
- * <li>usage storable and optional flush() calls in-between. Keep in mind that some data structure
- * could require a call to increase memory while usage. E.g. DataAccess.ensureCapacity()</li>
- * <li>Finally do close() which does no flush()</li>
- * </ol>
- * <p>
+ *  1. object creation via new
+ *  2. optional configuration via additional setters and getters which are not in this interface
+ *  3. if(!storable.loadExisting()) storable.create()
+ *  4. usage storable and optional flush() calls in-between. Keep in mind that some data structure
+ *     could require a call to increase memory while usage. E.g. DataAccess.ensureCapacity()
+ *  5. Finally do close() which does no flush()
  *
  * @author Peter Karich
  */
-public interface Storable<T> extends Closeable {
-
-
-    boolean isClosed();
-
-
+interface Storable<T> : Closeable {
+    val isClosed: Boolean
 }

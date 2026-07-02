@@ -16,8 +16,13 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.storage;
+package com.graphhopper.storage
 
-public interface RoutingCHEdgeIterator extends RoutingCHEdgeIteratorState {
-    boolean next();
+fun interface CHEdgeFilter {
+    fun accept(edgeState: RoutingCHEdgeIteratorState): Boolean
+
+    companion object {
+        @JvmField
+        val ALL_EDGES: CHEdgeFilter = CHEdgeFilter { true }
+    }
 }

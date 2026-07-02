@@ -15,32 +15,30 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.storage;
+package com.graphhopper.storage
 
-import com.graphhopper.util.PointAccess;
+import com.graphhopper.util.PointAccess
 
 /**
  * This interface specifies how to access properties of the nodes in the graph. Similar to
  * EdgeExplorer as it needs multiple instances for different threads or loops but without the need
  * for an additional iterator.
- * <p>
  *
  * @author Peter Karich
  */
-public interface NodeAccess extends PointAccess {
+interface NodeAccess : PointAccess {
     /**
-     * @return the index used to retrieve turn cost information for this node, can be {@link TurnCostStorage#NO_TURN_ENTRY}
-     *         in case no turn costs were stored for this node
+     * @return the index used to retrieve turn cost information for this node, can be [TurnCostStorage.NO_TURN_ENTRY]
+     * in case no turn costs were stored for this node
      * @throws AssertionError if, and only if, the underlying storage does not support turn costs
      */
-    int getTurnCostIndex(int nodeId);
+    fun getTurnCostIndex(nodeId: Int): Int
 
     /**
-     * Sets the turn cost index for this node, using {@link TurnCostStorage#NO_TURN_ENTRY} means there
+     * Sets the turn cost index for this node, using [TurnCostStorage.NO_TURN_ENTRY] means there
      * are no turn costs at this node.
-     * <p>
      *
      * @throws AssertionError if, and only if, the underlying storage does not support turn costs
      */
-    void setTurnCostIndex(int nodeId, int additionalValue);
+    fun setTurnCostIndex(nodeId: Int, additionalValue: Int)
 }

@@ -16,8 +16,8 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.storage;
+package com.graphhopper.storage
 
-public interface RoutingCHEdgeExplorer {
-    RoutingCHEdgeIterator setBaseNode(int baseNode);
+interface RoutingCHEdgeExplorer {
+    fun setBaseNode(baseNode: Int): RoutingCHEdgeIterator
 }

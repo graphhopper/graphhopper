@@ -15,7 +15,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.util;
+package com.graphhopper.util
 
 /**
  * Iterates through all edges of one node. Avoids object creation in-between via direct access
@@ -32,41 +32,41 @@ package com.graphhopper.util;
  *   ...
  * }
  * </pre>
- * <p>
  *
  * @author Peter Karich
  * @see EdgeIteratorState
  * @see EdgeExplorer
  */
-public interface EdgeIterator extends EdgeIteratorState {
-    /**
-     * Integer value used in places where normally an edge would be expected, but none is given. For example in the
-     * shortest path tree of route calculations every child element should have an incoming edge, but for the root item
-     * there is no parent so we would use this value instead.
-     */
-    int NO_EDGE = -1;
-
-    /**
-     * Integer value used in places where normally an edge would be expected, but no specific edge shall be specified.
-     */
-    int ANY_EDGE = -2;
-
+interface EdgeIterator : EdgeIteratorState {
     /**
      * To be called to go to the next edge state.
-     * <p>
      *
      * @return true if an edge state is available
      */
-    boolean next();
+    fun next(): Boolean
 
     class Edge {
-        /**
-         * Checks if a given integer edge ID is valid or not. Edge IDs >= 0 are considered valid, while negative
-         * values are considered as invalid. However, some negative values are used as special values, e.g. {@link
-         * #NO_EDGE}.
-         */
-        public static boolean isValid(int edgeId) {
-            return edgeId >= 0;
+        companion object {
+            /**
+             * Checks if a given integer edge ID is valid or not. Edge IDs >= 0 are considered valid, while negative
+             * values are considered as invalid. However, some negative values are used as special values, e.g. [NO_EDGE].
+             */
+            @JvmStatic
+            fun isValid(edgeId: Int): Boolean = edgeId >= 0
         }
+    }
+
+    companion object {
+        /**
+         * Integer value used in places where normally an edge would be expected, but none is given. For example in the
+         * shortest path tree of route calculations every child element should have an incoming edge, but for the root item
+         * there is no parent so we would use this value instead.
+         */
+        const val NO_EDGE: Int = -1
+
+        /**
+         * Integer value used in places where normally an edge would be expected, but no specific edge shall be specified.
+         */
+        const val ANY_EDGE: Int = -2
     }
 }
