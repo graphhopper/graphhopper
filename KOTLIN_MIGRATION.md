@@ -297,7 +297,12 @@ new discoveries get a pinning test AND an entry there.
   checkpoint). Graph copy kept at measurements/germany-gh-compat for future gates;
   results: measurements/kotlin25-compat*.json
 - [ ] Vendored HPPC Kotlin port + tests + attribution; drop hppc dependency from core.
-- [ ] Final: full `mvn -B clean test`, Measurement comparison, real-route diff report.
+- [x] 2026-07-02 ~30% CHECKPOINT PASSED (at 27.0%, after ev machinery + weighting):
+  paired A/B (3 rounds each, java-written germany graph, count=5000): routingCH median
+  4.11ms(J)/4.07ms(K), CH_edge 8.07/8.02, LM8 129.2/127.7 — parity within noise; route
+  checksum 27749812 and visited-node means bit-identical J vs K and vs baseline anchors.
+  Results: measurements/ab/20260702-*.json
+- [ ] Final: full `mvn -B clean test`, Measurement comparison (full import), real-route diff report.
 
 ## Adopted working defaults (2026-07-02, Peter AFK — override anytime)
 
