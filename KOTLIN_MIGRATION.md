@@ -273,9 +273,13 @@ Timing references (MMAP on 7GB/4-core box — compare like-for-like only):
 
 JTS usage: `util/shapes/{Polygon,BBox}`, `GHUtility`, `isochrone.algorithm` (Delaunay
 triangulation/QuadEdge — Spatial K has NO equivalent), `AreaIndex`, `CustomArea`, `SplitArea`,
-`InMemConstructionIndex`, `PixelGridTraversal`. Plan: keep JTS for triangulation and spatial
-indexing (JVM-only anyway); consider Spatial K for GeoJSON-ish/simple geometry types only if it
-doesn't force API breaks — decide when reaching `util.shapes` (early) and `isochrone` (late).
+`InMemConstructionIndex`, `PixelGridTraversal`.
+**DECISION (2026-07-03, at the isochrone phase): keep JTS everywhere for this migration.**
+Spatial K offers no Delaunay/QuadEdge (isochrone's core need), JTS prepared-geometry types are
+part of the public API (Polygon/AreaIndex/CustomArea), and swapping the simple-geometry cases
+would be an API break for zero KMP gain while the module remains JVM-only. Spatial K remains
+the candidate for a FUTURE true-KMP split (common geometry types in commonMain with JTS as the
+JVM actual) — revisit then.
 
 ## Pinned behavior discovered during conversion
 
