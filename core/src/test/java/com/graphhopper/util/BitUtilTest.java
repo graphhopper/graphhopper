@@ -163,4 +163,15 @@ public class BitUtilTest {
         bitUtil.fromUInt3(bytes, -12345678, 0);
         assertEquals(-12345678 & 0x00FF_FFFF, bitUtil.toUInt3(bytes, 0));
     }
+
+    /**
+     * Pins behavior discovered during the Kotlin conversion, verified against the pre-migration
+     * java implementation. See docs/pinned-behavior.md.
+     */
+    @Test
+    public void toBitStringTruncatesShiftedBytes() {
+        // the shift-and-narrow per bit must not leak into neighbor bytes; little-endian
+        // ordering reverses the byte order
+        assertEquals("0000111110101010", BitUtil.LITTLE.toBitString(new byte[]{(byte) 0xAA, 0x0F}));
+    }
 }

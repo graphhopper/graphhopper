@@ -77,4 +77,21 @@ public class TranslationMapTest {
         Translation ptMap = SINGLETON.get("pt");
         assertTrue(ptMap.tr("roundabout_exit_onto", "1", "somestreet").contains("somestreet"));
     }
+
+    /**
+     * Pins behavior discovered during the Kotlin conversion, verified against the pre-migration
+     * java implementation. See docs/pinned-behavior.md.
+     */
+    @Test
+    public void countOccurenceUsesJavaSplitSemantics() {
+        assertEquals(0, TranslationMap.countOccurence(null, "\\%"));
+        assertEquals(0, TranslationMap.countOccurence("", "\\%"));
+        // Helper.isEmpty trims, so a whitespace-only phrase never reaches the split
+        assertEquals(0, TranslationMap.countOccurence("   ", "\\%"));
+        // java.lang.String.split drops trailing empty strings ...
+        assertEquals(2, TranslationMap.countOccurence("a%b%", "\\%"));
+        // ... but keeps leading empty strings
+        assertEquals(2, TranslationMap.countOccurence("%a", "\\%"));
+        assertEquals(3, TranslationMap.countOccurence("hello %1$s, %2$s", "\\%"));
+    }
 }

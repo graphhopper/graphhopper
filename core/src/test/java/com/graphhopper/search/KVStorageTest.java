@@ -15,6 +15,9 @@ import static com.graphhopper.search.KVStorage.MAX_UNIQUE_KEYS;
 import static com.graphhopper.search.KVStorage.cutString;
 import static com.graphhopper.util.Helper.UTF_CS;
 import static org.junit.jupiter.api.Assertions.*;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class KVStorageTest {
 
@@ -471,5 +474,41 @@ public class KVStorageTest {
         int storedPointer = (int) (pointer + 100);
         assertTrue(storedPointer < 0);
         assertEquals(pointer + 100, Integer.toUnsignedLong(storedPointer));
+    }
+
+    /**
+     * Pins behavior discovered during the Kotlin conversion, verified against the pre-migration
+     * java implementation. See docs/pinned-behavior.md.
+     *
+     * KVStorage.get() skips non-matching dynamic-length values with '1 + b & 0xFF' which parses as
+     * '(1 + b) & 0xFF' - for a stored byte[] of exactly 255 bytes the pointer advances by 0 and
+     * parsing derails. Strings are capped at 250 bytes by cutString, so only byte[] values of
+     * length 251-255 can trigger it.
+     */
+    private long addBlobAndName(KVStorage kv, int blobLen) {
+        byte[] big = new byte[blobLen];
+        Arrays.fill(big, (byte) 7);
+        Map<String, KValue> m = new LinkedHashMap<>();
+        m.put("blob", new KValue(big));
+        m.put("name", new KValue("hello"));
+        return kv.add(m);
+    }
+
+    @Test
+    public void valuesUpTo250BytesRoundTrip() {
+        KVStorage kv = new KVStorage(new GHDirectory("", DAType.RAM), true).create(1000);
+        long p = addBlobAndName(kv, 250);
+        assertEquals("hello", kv.get(p, "name", false));
+        assertEquals(250, ((byte[]) kv.get(p, "blob", false)).length);
+    }
+
+    @Test
+    public void keyAfter255ByteValueDerails() {
+        KVStorage kv = new KVStorage(new GHDirectory("", DAType.RAM), true).create(1000);
+        long p = addBlobAndName(kv, 255);
+        // the length-skip wraps to 0 and get() misparses - like the original java version:
+        // AssertionError under -ea (tests), IndexOutOfBoundsException without assertions
+        AssertionError e = assertThrows(AssertionError.class, () -> kv.get(p, "name", false));
+        assertTrue(e.getMessage().startsWith("invalid key index"));
     }
 }

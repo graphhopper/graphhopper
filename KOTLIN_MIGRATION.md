@@ -303,8 +303,14 @@ new discoveries get a pinning test AND an entry there.
   across runs; warm routingCH 4.31ms vs 3.77ms baseline (non-like-for-like, verdict at 30%
   checkpoint). Graph copy kept at measurements/germany-gh-compat for future gates;
   results: measurements/kotlin25-compat*.json
-- [ ] REMAINING WORK: (1) 100% checkpoint marathon (A/B + full fresh germany import vs
-  baseline anchors — RUNNING 2026-07-03); (2) custom-model stages 2-5 (backend seam, shared
+- [x] 2026-07-03 100% CHECKPOINT PASSED — full fresh germany import with the kotlin core:
+  EVERY deterministic anchor EXACT vs java baseline (nodes 17,902,936; edges 20,878,050;
+  1250MB; shortcuts 9,252,034 node / 28,589,795 edge; all visited-node means; distance mean).
+  Final A/B: query parity or better (CH 3.72 vs 4.01ms median, LM8 dead even — watch-flag
+  RESOLVED as noise). Import 318s (java 354s). Prep times +5-8% single-run/unpaired —
+  INCONCLUSIVE on this VM; recommend one paired GH_CLEAN=true comparison on the dedicated
+  machine. Results: measurements/kotlin100-fullimport.json, measurements/ab/ (third stamp).
+- [ ] REMAINING WORK: (1) (2) custom-model stages 2-5 (backend seam, shared
   condition parser, closure composer + differential tests, build-time kotlin source generator —
   Peter approved scope); (3) HPPC→androidx.collection call-site switch + gap-fillers + canary +
   perf gate, then drop hppc from core (reader-gtfs declares its own); (4) NOTICE.md attribution

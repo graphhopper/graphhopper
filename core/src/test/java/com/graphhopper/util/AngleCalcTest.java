@@ -20,6 +20,7 @@ package com.graphhopper.util;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * @author Johannes Pelzer
@@ -148,5 +149,27 @@ public class AngleCalcTest {
             this.x = x;
             this.y = y;
         }
+    }
+
+    /**
+     * Pins behavior discovered during the Kotlin conversion, verified against the pre-migration
+     * java implementation. See docs/pinned-behavior.md.
+     */
+    @Test
+    public void nanAzimuthThrows() {
+        // Double.compare-based checks make NaN throw - a plain '<'/'>' comparison would
+        // silently accept NaN
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> new AngleCalc().convertAzimuth2xaxisAngle(Double.NaN));
+        assertEquals("Azimuth NaN must be in (0, 360)", e.getMessage());
+    }
+
+    /**
+     * Pins behavior discovered during the Kotlin conversion, verified against the pre-migration
+     * java implementation. See docs/pinned-behavior.md.
+     */
+    @Test
+    public void azimuthConversionReference() {
+        assertEquals(0.0, new AngleCalc().convertAzimuth2xaxisAngle(90), 1e-12);
     }
 }

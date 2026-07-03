@@ -26,29 +26,29 @@ independently of that migration.
   the even→odd adjustment). All pre-existing tests used odd values, so the even case was
   untested. Observable via tree height; verified identical against the compiled pre-migration
   Java implementation (height=4 for maxLeafEntries=4 after 100 inserts).
-  Test: `core/.../coll/GHLongLongBTreePinnedBehaviorTest.java`. (2026-07-02)
+  Test: `core/.../coll/GHLongLongBTreeTest.java#evenMaxLeafEntriesTreeShape`. (2026-07-02)
 
 - **BitUtil.toBitString(byte[]) narrows the shift result back to byte per iteration**, so bits
   never leak between bytes, and the LITTLE variant emits bytes in reversed order. Untested
   before; verified against the pre-migration Java implementation.
-  Test: `core/.../util/UtilPinnedBehaviorTest.java`. (2026-07-02)
+  Test: `core/.../util/BitUtilTest.java#toBitStringTruncatesShiftedBytes`. (2026-07-02)
 
 - **AngleCalc.convertAzimuth2xaxisAngle rejects NaN** because the range check uses
   `Double.compare` — a plain `<`/`>` comparison (a tempting "cleanup") would silently accept
   NaN. Untested before; message text pinned.
-  Test: `core/.../util/UtilPinnedBehaviorTest.java`. (2026-07-02)
+  Test: `core/.../util/AngleCalcTest.java#nanAzimuthThrows`. (2026-07-02)
 
 - **Unzipper's progress listener reports one cumulative byte count for the whole archive** —
   never reset between entries — and stays silent for directories and empty files. Untested
   before (UnzipperTest never passed a listener).
-  Test: `core/.../util/UtilPinnedBehaviorTest.java#unzipperProgressAccumulatesAcrossEntries`.
+  Test: `core/.../util/UnzipperTest.java#unzipperProgressAccumulatesAcrossEntries`.
   (2026-07-02)
 
 - **TranslationMap.countOccurence uses java.lang.String.split semantics**: trailing empty
   strings are dropped, leading ones kept, and `Helper.isEmpty` trims so whitespace-only input
   returns 0. Kotlin's `String.split(Regex)` keeps trailing empties, so the Kotlin version must
   keep delegating to `java.lang.String.split`. Untested before.
-  Test: `core/.../util/UtilPinnedBehaviorTest.java#countOccurenceUsesJavaSplitSemantics`.
+  Test: `core/.../util/TranslationMapTest.java#countOccurenceUsesJavaSplitSemantics`.
   (2026-07-02)
 
 - **Encoded-value enum constant names and ORDER are persisted in stored graphs** (ordinals via
@@ -69,7 +69,7 @@ independently of that migration.
   Enum/String/ExternalBoolean formats now pinned with strings extracted from the pre-migration
   Java implementation (round-trip included). Includes the pre-existing quirk that
   ExternalBooleanEncodedValue serializes its hppc BitSet field (which can never deserialize).
-  Test: `core/.../routing/ev/EncodedValueSerializerPinnedTest.java`. (2026-07-02)
+  Test: `core/.../routing/ev/EncodedValueSerializerTest.java (pinned-format tests)`. (2026-07-02)
 
 - **Weighting.roundWeight rounds half-UP (Math.round)** — CH stores rounded weights, and
   kotlin.math.round's half-even would silently change them for *.5 weights. No test hit a tie
@@ -81,7 +81,7 @@ independently of that migration.
   Strings are safe (cutString caps at 250); only raw byte[] values can trigger it. Candidate
   for a real upstream fix (`1 + (b & 0xFF)`) outside the migration — would need a
   storage-format review since existing graphs could contain such values.
-  Test: `core/.../search/KVStoragePinnedBehaviorTest.java`. (2026-07-02)
+  Test: `core/.../search/KVStorageTest.java (keyAfter255ByteValueDerails)`. (2026-07-02)
 
 - **PriorityCode.valueOf(int) maps gaps upward via ceilingEntry and falls back to BEST above
   15; worse()/better() saturate at EXCLUDE/BEST** — feeds the priority encoded values; no
@@ -96,7 +96,7 @@ independently of that migration.
   the on-disk quantization of all landmark weights. Expected value verified identical against
   the pre-migration Java implementation (worktree A/B, 0.238849365234375 on the
   PrepareLandmarksTest grid).
-  Test: `core/.../routing/lm/LmPinnedBehaviorTest.java`. (2026-07-03)
+  Test: `core/.../routing/lm/PrepareLandmarksTest.java` (landmark-factor pin). (2026-07-03)
 
 - **CustomArea.properties may be null** — a GeoJSON feature is not required to carry a
   "properties" member, and `CustomArea.fromJsonFeature` must accept such features:
@@ -207,7 +207,7 @@ independently of that migration.
   equal weights (bridge-path ties are decided by PriorityQueue order) and its exact toString,
   and the `PrepareEncoder` direction bits (fwd=0x1, bwd=0x2, mask=0x3) which are part of the
   stored CH format.
-  Test: `core/.../routing/ch/CHPreparationPinnedBehaviorTest.java` (2026-07-03)
+  Test: `core/.../routing/ch/CHPreparationGraphTest.java` (pinned CH-prep tests) (2026-07-03)
 
 ## Open candidates (currently covered only indirectly)
 

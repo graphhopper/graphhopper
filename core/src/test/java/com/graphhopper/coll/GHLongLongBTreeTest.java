@@ -24,6 +24,7 @@ import java.util.Random;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Peter Karich
@@ -300,6 +301,27 @@ public class GHLongLongBTreeTest {
                     i++;
                 }
             }
+        }
+    }
+
+    /**
+     * Pins behavior discovered during the Kotlin conversion (see KOTLIN_MIGRATION.md, rule 5b):
+     * for an EVEN maxLeafEntries the constructor stores the given value (leaves split when reaching
+     * it) while splitIndex/factor/initLeafSize are derived from the value incremented to odd. The
+     * resulting tree shape for even values must not change silently.
+     */
+    @Test
+    public void evenMaxLeafEntriesTreeShape() {
+        GHLongLongBTree tree = new GHLongLongBTree(4, 8, -1);
+        for (long i = 0; i < 100; i++) {
+            tree.put(i * 3, i);
+        }
+        assertEquals(100, tree.getSize());
+        // observed with the original java implementation: even maxLeafEntries=4 splits at 4
+        // entries while splitIndex derives from 5 -> height 4 after 100 inserts
+        assertEquals(4, tree.height());
+        for (long i = 0; i < 100; i++) {
+            assertEquals(i, tree.get(i * 3));
         }
     }
 }
