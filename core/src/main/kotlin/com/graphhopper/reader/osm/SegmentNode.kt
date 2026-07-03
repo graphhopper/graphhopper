@@ -16,19 +16,10 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.reader.osm;
+package com.graphhopper.reader.osm
 
-public class OSMRestrictionException extends Exception {
-
-    public static OSMRestrictionException withoutWarning() {
-        return new OSMRestrictionException("");
-    }
-
-    public OSMRestrictionException(String message) {
-        super(message);
-    }
-
-    public boolean isWithoutWarning() {
-        return getMessage().isEmpty();
-    }
-}
+internal class SegmentNode(
+    @JvmField val osmNodeId: Long,
+    @JvmField var id: Long,
+    @JvmField val tags: Map<String, Any>
+)

@@ -16,18 +16,10 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.reader.osm;
+package com.graphhopper.reader.osm
 
-import java.util.Map;
-
-class SegmentNode {
-    long osmNodeId;
-    long id;
-    Map<String, Object> tags;
-
-    public SegmentNode(long osmNodeId, long id, Map<String, Object> tags) {
-        this.osmNodeId = osmNodeId;
-        this.id = id;
-        this.tags = tags;
-    }
-}
+class Triple<F, S, T>(
+    @JvmField var first: F,
+    @JvmField var second: S,
+    @JvmField var third: T
+)

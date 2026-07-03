@@ -16,8 +16,8 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.reader.osm;
+package com.graphhopper.reader.osm
 
-public enum RestrictionType {
+enum class RestrictionType {
     NO, ONLY
 }

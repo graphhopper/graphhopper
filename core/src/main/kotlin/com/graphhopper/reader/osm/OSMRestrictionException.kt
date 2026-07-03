@@ -16,32 +16,15 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.reader.osm;
+package com.graphhopper.reader.osm
 
-public class SkipOptions {
-    private final boolean skipNodes;
-    private final boolean skipWays;
-    private final boolean skipRelations;
+class OSMRestrictionException(message: String) : Exception(message) {
 
-    public static SkipOptions none() {
-        return new SkipOptions(false, false, false);
-    }
+    val isWithoutWarning: Boolean
+        get() = message!!.isEmpty()
 
-    public SkipOptions(boolean skipNodes, boolean skipWays, boolean skipRelations) {
-        this.skipNodes = skipNodes;
-        this.skipWays = skipWays;
-        this.skipRelations = skipRelations;
-    }
-
-    public boolean isSkipNodes() {
-        return skipNodes;
-    }
-
-    public boolean isSkipWays() {
-        return skipWays;
-    }
-
-    public boolean isSkipRelations() {
-        return skipRelations;
+    companion object {
+        @JvmStatic
+        fun withoutWarning(): OSMRestrictionException = OSMRestrictionException("")
     }
 }

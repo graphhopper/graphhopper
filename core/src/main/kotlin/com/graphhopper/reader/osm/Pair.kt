@@ -16,16 +16,9 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.reader.osm;
+package com.graphhopper.reader.osm
 
-public class Triple<F, S, T> {
-    public F first;
-    public S second;
-    public T third;
-
-    public Triple(F first, S second, T third) {
-        this.first = first;
-        this.second = second;
-        this.third = third;
-    }
-}
+class Pair<F, S>(
+    @JvmField var first: F,
+    @JvmField var second: S
+)

@@ -16,14 +16,15 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.reader.osm;
+package com.graphhopper.reader.osm
 
-public class Pair<F, S> {
-    public F first;
-    public S second;
-
-    public Pair(F first, S second) {
-        this.first = first;
-        this.second = second;
+class SkipOptions(
+    val isSkipNodes: Boolean,
+    val isSkipWays: Boolean,
+    val isSkipRelations: Boolean
+) {
+    companion object {
+        @JvmStatic
+        fun none(): SkipOptions = SkipOptions(false, false, false)
     }
 }
