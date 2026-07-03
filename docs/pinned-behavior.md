@@ -88,6 +88,16 @@ independently of that migration.
   PriorityCode test existed. Verified against the pre-migration Java implementation.
   Test: `core/.../routing/util/PriorityCodePinnedBehaviorTest.java`. (2026-07-02)
 
+- **LM automatic maximum-weight estimation is exact-value-sensitive**: the persisted landmark
+  'factor' derives from `estimateMaxWeight`'s sampling with `java.util.Random(0)` (the JDK
+  sequence, not kotlin.random), an exploration of exactly 3 temporary test landmarks, the final
+  `* 1.008` slack and `factor = maxWeight / 2^16`. Existing tests only assert
+  factor-multiplied weight products, which survive small factor drift — but the factor decides
+  the on-disk quantization of all landmark weights. Expected value verified identical against
+  the pre-migration Java implementation (worktree A/B, 0.238849365234375 on the
+  PrepareLandmarksTest grid).
+  Test: `core/.../routing/lm/LmPinnedBehaviorTest.java`. (2026-07-03)
+
 ## Recorded only (not externally observable)
 
 - **PbfBlobDecoder.processNodes (non-dense path) decodes the longitude with decodeLatitude**
@@ -131,6 +141,15 @@ independently of that migration.
 - **MiniPerfTest.formatDuration picks units at 1e7/1e4 ns**, so everything above 10 ms is
   already printed in (fractional) seconds and 10 µs–10 ms in ms. Only observable through the
   timing-dependent getReport() string. (2026-07-02)
+
+- **LM package quirks preserved verbatim** (guarded end-to-end by the germany LM load-gate):
+  `LandmarkStorage.findBorderEdgeIds` compares SplitAreas by REFERENCE (Java `!=` → Kotlin
+  `!==`; SplitArea must never become a data class / gain equals); `getFromWeight` computes the
+  offset with `landmarkIndex * 4L` while `getToWeight` uses int `* 4` (asymmetry kept, no
+  overflow possible); `chooseActiveLandmarks` relies on stable `Collections.sort` so weight
+  ties keep ascending landmark-index order; `LandmarkExplorer.getLastEntry()` depends on the
+  side effect of `finished()` assigning lastEntry; `setWeight` narrows double→short via the
+  JLS double→int→short chain (`toInt().toShort()` in Kotlin). (2026-07-03)
 
 - **RamerDouglasPeucker.setMaxDistance normalizes with the DistanceCalc active at call time**:
   a later setApproximation(...) switches the calculator but does NOT recompute normedMaxDist,
