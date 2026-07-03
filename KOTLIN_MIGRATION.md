@@ -317,11 +317,28 @@ new discoveries get a pinning test AND an entry there.
   CustomWeightingBackends.default @Volatile registry). Public CustomModelParser entry
   points route through the seam; DefaultWeightingFactory wired directly.
   CustomWeightingBackendTest added. Gates green (core 3216, web 215).
-- [ ] REMAINING WORK: (1) (2) custom-model stages 3-5 (shared
-  condition parser, closure composer + differential tests, build-time kotlin source generator —
-  Peter approved scope); (3) HPPC→androidx.collection call-site switch + gap-fillers + canary +
-  perf gate, then drop hppc from core (reader-gtfs declares its own); (4) NOTICE.md attribution
-  review; (5) final real-route diff report.
+- [ ] REMAINING WORK: (1) (2) custom-model stages 4-5 (closure composer + differential tests,
+  build-time kotlin source generator — Peter approved scope); (3) HPPC→androidx.collection
+  call-site switch + gap-fillers + canary + perf gate, then drop hppc from core (reader-gtfs
+  declares its own); (4) NOTICE.md attribution review; (5) final real-route diff report.
+- [x] 2026-07-03 custom-model STAGE 3 DONE: shared expression FRONT-END in new KMP-clean
+  package core/.../weighting/custom/expression/ (hand-rolled ExpressionLexer + recursive-descent
+  ExpressionParser -> ExprNode sealed AST; ExpressionValidator with (a) parse-level walkers
+  transcribing the Janino visitors 1:1 and (b) a strict layer mirroring what the janino
+  pipeline only rejects at codegen/compile time: enum-constant membership per EV, area refs
+  (isValidId mirror), variable declarability per context EDGE/TURN_PENALTY, single-EV +
+  non-negativity of values via double eval at EV range endpoints; ExpressionScopes = the only
+  JVM-touching adapter from EncodedValueLookup). Janino quirks pinned empirically and
+  reproduced: line comment at EOF rejected but newline-terminated accepted, block comments
+  skipped anywhere, octal literal digit validation ("09" rejected, "010" ok), "_" separator
+  rules, Math.sqrt() (0-arg) guessing "Math", enum-comparison throw for non-==/!=,
+  "Infinity" only valid for op add with the exact string. ExpressionParserDifferentialTest:
+  case-by-case accept/reject parity (parse-level vs visitors incl. guessedVariables+operators
+  order: 134+119 conditions, 66+135 values; full-pipeline vs janino compile: all 23 bundled
+  models + ~60 valid/invalid condition/value/area cases with pinned expected verdicts).
+  Attribution: BSD-3-Clause idea-derivation headers on the 4 parser-package files + NOTICE.md
+  entry (no janino source copied). Janino path untouched. Gates green (core clean test 3223,
+  web -am test-compile).
 - [x] 2026-07-02 ~30% CHECKPOINT PASSED (at 27.0%, after ev machinery + weighting):
   paired A/B (3 rounds each, java-written germany graph, count=5000): routingCH median
   4.11ms(J)/4.07ms(K), CH_edge 8.07/8.02, LM8 129.2/127.7 — parity within noise; route

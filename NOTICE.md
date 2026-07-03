@@ -19,6 +19,10 @@ The core module includes the following additional software:
  * org.locationtech:jts (EDL)
  * AngleCalc.atan2 from Jim Shima, 1999 (public domain)
  * janino compiler (BSD-3-Clause license)
+ * the custom-model expression front-end (com.graphhopper.routing.weighting.custom.expression) re-implements the
+   expression grammar and lexical behavior of the janino Scanner/Parser and mirrors janino AST concepts to stay
+   accept/reject compatible with the janino back-end — ideas derived from janino (BSD-3-Clause license,
+   Copyright (c) 2001-2010 Arno Unkrig, Copyright (c) 2015-2016 TIBCO Software Inc.), no source code copied
  * osm-legal-default-speeds-jvm (BSD-3-Clause license)
  * kotlin stdlib (Apache License)
  * protobuf from Google - (BSD-3-Clause license)
