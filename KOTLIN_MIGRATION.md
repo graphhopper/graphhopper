@@ -424,8 +424,15 @@ new discoveries get a pinning test AND an entry there.
 
 ## HPPC → androidx.collection switch plan
 
-**SIGN-OFFS (Peter 2026-07-03):** Option A (hybrid with exact-layout ports, zero checksum
-changes) confirmed as the approach. Public-API surface switch (batch H5) EXPLICITLY sanctioned
+**SIGN-OFFS (Peter 2026-07-03, superseding):** iteration-order identity is NOT required —
+different order/bytes in newly written graphs are acceptable. Acceptance bar: semantic quality
+only — shortcut counts / visited-node means "not completely off" (working tolerance ~±2% vs the
+baseline anchors) and the full suite green. Consequence: Option A's exact-layout hash ports and
+order-harvest tests are DROPPED (H2 reduced to nothing; H1 gap-fillers remain); androidx is
+used directly everywhere, including the 9 order-sensitive sites. Where an existing migration-
+created pin test literally pins an order artifact (androidx canary etc.) it gets re-baselined
+deliberately; original behavior-lock tests stay untouched unless a tie-dependent expectation
+makes an edit strictly necessary (flag each case). Public-API surface switch (batch H5) EXPLICITLY sanctioned
 incl. mechanical consumer edits (tools Measurement/MiniGraphUI, map-matching MapMatching, the
 API-forced BitSetIterator loop in reader-gtfs Analysis.java) and the 40 core-test mechanical
 import/construction updates (assertions untouched). H8 (drop hppc from core; reader-gtfs
