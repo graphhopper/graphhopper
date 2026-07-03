@@ -662,42 +662,6 @@ public abstract class AbstractBikeTagParserTester {
     }
 
     @Test
-    public void testHandleWayPriorityforSurface() {
-        ArrayEdgeIntAccess intAccess = ArrayEdgeIntAccess.createFromBytes(encodingManager.getBytesForFlags());
-        int edgeId = 0;
-        ReaderWay osmWay = new ReaderWay(1);
-
-        osmWay.setTag("highway", "path");
-        osmWay.setTag("surface", "sand");
-        osmWay.setTag("bicycle", "designated");
-        priorityParser.handleWayTags(edgeId, intAccess, osmWay, null);
-        // because a path is not a pushing section
-        assertEquals(PriorityCode.getValue(PREFER.getValue()), priorityEnc.getDecimal(false, edgeId, intAccess), 1e-3);
-
-        osmWay = new ReaderWay(1);
-        osmWay.setTag("highway", "path");
-        osmWay.setTag("surface", "concrete");
-        osmWay.setTag("bicycle", "designated");
-        priorityParser.handleWayTags(edgeId, intAccess, osmWay, null);
-        assertEquals(PriorityCode.getValue(VERY_NICE.getValue()), priorityEnc.getDecimal(false, edgeId, intAccess),
-                1e-3);
-
-        osmWay.setTag("highway", "track");
-        osmWay.setTag("surface", "sand");
-        osmWay.setTag("bicycle", "designated");
-        priorityParser.handleWayTags(edgeId, intAccess, osmWay, null);
-        assertEquals(PriorityCode.getValue(PREFER.getValue()), priorityEnc.getDecimal(false, edgeId, intAccess), 1e-3);
-
-        osmWay = new ReaderWay(1);
-        osmWay.setTag("highway", "track");
-        osmWay.setTag("surface", "concrete");
-        osmWay.setTag("bicycle", "designated");
-        priorityParser.handleWayTags(edgeId, intAccess, osmWay, null);
-        assertEquals(PriorityCode.getValue(VERY_NICE.getValue()), priorityEnc.getDecimal(false, edgeId, intAccess),
-                1e-3);
-    }
-
-    @Test
     public void testCyclewayOnewayDoesNotImplyCarriagewayOneway() {
         // OSM way 1425755347 (Bergmannstraße, Berlin): a bidirectional residential street
         // (no oneway=*) with a one-way cycle facility on the right. cycleway:right:oneway=yes

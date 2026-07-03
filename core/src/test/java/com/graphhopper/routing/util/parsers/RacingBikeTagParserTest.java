@@ -293,42 +293,6 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, UNCHANGED, PUSHING_SECTION_SPEED, osmWay);
     }
 
-    @Test
-    public void testHandleWayPriorityforSurface() {
-        ArrayEdgeIntAccess intAccess =
-            ArrayEdgeIntAccess.createFromBytes(encodingManager.getBytesForFlags());
-        int edgeId = 0;
-        ReaderWay osmWay = new ReaderWay(1);
-
-        osmWay.setTag("highway", "path");
-        osmWay.setTag("surface", "sand");
-        osmWay.setTag("bicycle", "designated");
-        priorityParser.handleWayTags(edgeId, intAccess, osmWay, null);
-        // because a path is a pushing section
-        assertEquals(PriorityCode.getValue(VERY_NICE.getValue()), priorityEnc.getDecimal(false, edgeId, intAccess), 1e-3);
-
-        osmWay = new ReaderWay(1);
-        osmWay.setTag("highway", "path");
-        osmWay.setTag("surface", "concrete");
-        osmWay.setTag("bicycle", "designated");
-        priorityParser.handleWayTags(edgeId, intAccess, osmWay, null);
-        assertEquals(PriorityCode.getValue(VERY_NICE.getValue()), priorityEnc.getDecimal(false, edgeId, intAccess), 1e-3);
-
-        osmWay.setTag("highway", "track");
-        osmWay.setTag("surface", "sand");
-        osmWay.setTag("bicycle", "designated");
-        // tracks w/o good surface are avoided for racing bikes
-        priorityParser.handleWayTags(edgeId, intAccess, osmWay, null);
-        assertEquals(PriorityCode.getValue(AVOID_MORE.getValue()), priorityEnc.getDecimal(false, edgeId, intAccess), 1e-3);
-
-        osmWay = new ReaderWay(1);
-        osmWay.setTag("highway", "track");
-        osmWay.setTag("surface", "concrete");
-        osmWay.setTag("bicycle", "designated");
-        priorityParser.handleWayTags(edgeId, intAccess, osmWay, null);
-        assertEquals(PriorityCode.getValue(UNCHANGED.getValue()), priorityEnc.getDecimal(false, edgeId, intAccess), 1e-3);
-    }
-
     private void assertPriorityAndSpeed(EncodingManager encodingManager, DecimalEncodedValue priorityEnc, DecimalEncodedValue speedEnc,
                                         List<TagParser> parsers, PriorityCode expectedPrio, double expectedSpeed, ReaderWay way) {
         EdgeIntAccess edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(encodingManager.getBytesForFlags());

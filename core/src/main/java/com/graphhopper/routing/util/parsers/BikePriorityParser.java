@@ -15,6 +15,8 @@ public class BikePriorityParser extends BikeCommonPriorityParser {
     public BikePriorityParser(DecimalEncodedValue priorityEnc) {
         super(priorityEnc);
 
+        addPushingSection("path");
+
         avoidHighwayTags.put("primary", BAD);
         avoidHighwayTags.put("primary_link", BAD);
 
