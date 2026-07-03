@@ -310,7 +310,14 @@ new discoveries get a pinning test AND an entry there.
   RESOLVED as noise). Import 318s (java 354s). Prep times +5-8% single-run/unpaired —
   INCONCLUSIVE on this VM; recommend one paired GH_CLEAN=true comparison on the dedicated
   machine. Results: measurements/kotlin100-fullimport.json, measurements/ab/ (third stamp).
-- [ ] REMAINING WORK: (1) (2) custom-model stages 2-5 (backend seam, shared
+- [x] 2026-07-03 custom-model STAGE 2 DONE: CustomWeightingBackend seam cut
+  (fun interface CustomModel+EncodedValueLookup -> CustomWeighting.Parameters, mirrors
+  createWeightingParameters 1:1; JaninoBackend object delegates to the moved-verbatim
+  createJaninoWeightingParameters — caches untouched in CustomModelParser;
+  CustomWeightingBackends.default @Volatile registry). Public CustomModelParser entry
+  points route through the seam; DefaultWeightingFactory wired directly.
+  CustomWeightingBackendTest added. Gates green (core 3216, web 215).
+- [ ] REMAINING WORK: (1) (2) custom-model stages 3-5 (shared
   condition parser, closure composer + differential tests, build-time kotlin source generator —
   Peter approved scope); (3) HPPC→androidx.collection call-site switch + gap-fillers + canary +
   perf gate, then drop hppc from core (reader-gtfs declares its own); (4) NOTICE.md attribution
