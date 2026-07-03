@@ -569,15 +569,14 @@ new discoveries get a pinning test AND an entry there.
 
 ## HPPC → androidx.collection switch plan
 
-**SIGN-OFFS (Peter 2026-07-03, superseding):** iteration-order identity is NOT required —
-different order/bytes in newly written graphs are acceptable. Acceptance bar: semantic quality
-only — shortcut counts / visited-node means "not completely off" (working tolerance ~±2% vs the
-baseline anchors) and the full suite green. Consequence: Option A's exact-layout hash ports and
-order-harvest tests are DROPPED (H2 reduced to nothing; H1 gap-fillers remain); androidx is
-used directly everywhere, including the 9 order-sensitive sites. Where an existing migration-
-created pin test literally pins an order artifact (androidx canary etc.) it gets re-baselined
-deliberately; original behavior-lock tests stay untouched unless a tie-dependent expectation
-makes an edit strictly necessary (flag each case). Public-API surface switch (batch H5) EXPLICITLY sanctioned
+**SIGN-OFFS (Peter 2026-07-03, FINAL):** Option A hybrid — bit-identical iteration order via
+exact-layout Kotlin ports of hppc for the order-load-bearing sites (GH* wrappers + scatter
+types + list/deque/BitSet ports), androidx.collection for the ~85% order-insensitive sites.
+Result achieved: ZERO checksum changes across all batches H3-H8 (every germany load-gate
+bit-identical to the pre-switch anchor). Public-API switch (H5) sanctioned incl. consumer
+edits (tools/map-matching/reader-gtfs) and ~42 mechanical test-import updates (assertions
+untouched). hppc fully removed from core (H8); reader-gtfs keeps its own hppc dep for its
+5-file internal usage (full reader-gtfs removal deferred, "core first"). Public-API surface switch (batch H5) EXPLICITLY sanctioned
 incl. mechanical consumer edits (tools Measurement/MiniGraphUI, map-matching MapMatching, the
 API-forced BitSetIterator loop in reader-gtfs Analysis.java) and the 40 core-test mechanical
 import/construction updates (assertions untouched). H8 (drop hppc from core; reader-gtfs
