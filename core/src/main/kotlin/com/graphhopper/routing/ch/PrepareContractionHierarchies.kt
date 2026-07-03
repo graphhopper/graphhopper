@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.ch
 
-import com.carrotsearch.hppc.IntContainer
+import com.graphhopper.coll.primitive.IntScatterSet
 import com.graphhopper.coll.MinHeapWithUpdate
 import com.graphhopper.routing.ch.CHParameters.CONTRACTED_NODES
 import com.graphhopper.routing.ch.CHParameters.LAST_LAZY_NODES_UPDATES
@@ -293,12 +293,14 @@ class PrepareContractionHierarchies private constructor(graph: BaseGraph, chConf
 
             var neighborCount = 0
             // there might be multiple edges going to the same neighbor nodes -> only calculate priority once per node
-            for (neighbor in neighbors) {
+            // hppc cursor-iterator order (was a for-each over the container's cursors): one RNG
+            // draw per neighbor in iteration order -> contraction order -> shortcut counts
+            neighbors.forEachInIteratorOrder { neighbor ->
                 if (neighborUpdate && (params.maxNeighborUpdates < 0 || neighborCount < params.maxNeighborUpdates) && rand.nextInt(100) < params.neighborUpdatePercentage) {
                     neighborCount++
                     neighborUpdateSW.start()
-                    val priority = calculatePriority(neighbor.value)
-                    sortedNodes.update(neighbor.value, priority)
+                    val priority = calculatePriority(neighbor)
+                    sortedNodes.update(neighbor, priority)
                     neighborUpdateSW.stop()
                 }
             }
@@ -349,7 +351,7 @@ class PrepareContractionHierarchies private constructor(graph: BaseGraph, chConf
         }
     }
 
-    private fun contractNode(node: Int, level: Int): IntContainer {
+    private fun contractNode(node: Int, level: Int): IntScatterSet {
         if (isContracted(node))
             throw IllegalArgumentException("Node $node was contracted already")
         contractionSW.start()

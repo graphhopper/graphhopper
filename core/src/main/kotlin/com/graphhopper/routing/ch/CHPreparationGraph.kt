@@ -19,9 +19,7 @@
 package com.graphhopper.routing.ch
 
 import com.carrotsearch.hppc.IntArrayList
-import com.carrotsearch.hppc.IntContainer
-import com.carrotsearch.hppc.IntScatterSet
-import com.carrotsearch.hppc.IntSet
+import com.graphhopper.coll.primitive.IntScatterSet
 import com.carrotsearch.hppc.sorting.IndirectComparator
 import com.carrotsearch.hppc.sorting.IndirectSort
 import com.graphhopper.routing.weighting.Weighting
@@ -56,7 +54,7 @@ class CHPreparationGraph private constructor(
 
     // todo: maybe we can get rid of this
     private var degrees: IntArray? = IntArray(nodes)
-    private var neighborSet: IntSet? = IntScatterSet()
+    private var neighborSet: IntScatterSet? = IntScatterSet()
     private var origGraph: OrigGraph? = null
     private var origGraphBuilder: OrigGraph.Builder? = if (edgeBased) OrigGraph.Builder() else null
     private var nextShortcutId: Int = edges
@@ -202,7 +200,7 @@ class CHPreparationGraph private constructor(
     fun getTurnWeight(inEdgeKey: Int, viaNode: Int, outEdgeKey: Int): Double =
         turnCostFunction.getTurnWeight(GHUtility.getEdgeFromEdgeKey(inEdgeKey), viaNode, GHUtility.getEdgeFromEdgeKey(outEdgeKey))
 
-    fun disconnect(node: Int): IntContainer {
+    fun disconnect(node: Int): IntScatterSet {
         checkReady()
         val prepareEdgesOut = prepareEdgesOut!!
         val prepareEdgesIn = prepareEdgesIn!!

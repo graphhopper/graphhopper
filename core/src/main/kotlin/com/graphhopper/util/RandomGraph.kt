@@ -21,8 +21,7 @@ package com.graphhopper.util
 import com.carrotsearch.hppc.IntHashSet
 import com.carrotsearch.hppc.IntSet
 import com.carrotsearch.hppc.LongArrayList
-import com.carrotsearch.hppc.LongScatterSet
-import com.carrotsearch.hppc.LongSet
+import com.graphhopper.coll.primitive.LongScatterSet
 import com.graphhopper.routing.ev.DecimalEncodedValue
 import com.graphhopper.storage.BaseGraph
 import java.util.ArrayDeque
@@ -131,7 +130,10 @@ class RandomGraph private constructor() {
                     edges.add(BitUtil.LITTLE.toLong(a, b))
                 }
             }
-            return LongArrayList(edges)
+            // hppc LongArrayList(LongContainer) materialized the set in cursor-iterator order
+            val result = LongArrayList(edges.size())
+            edges.forEachInIteratorOrder { e -> result.add(e) }
+            return result
         }
 
         private fun fillBaseGraph(graph: BaseGraph, speedEnc: DecimalEncodedValue?, rnd: Random, g: TmpGraph) {
@@ -246,7 +248,7 @@ class RandomGraph private constructor() {
             visited[center] = true
             val queue = ArrayDeque<Int>()
             queue.add(center)
-            val treeEdges: LongSet = LongScatterSet()
+            val treeEdges = LongScatterSet()
             while (!queue.isEmpty()) {
                 val cur = queue.poll()
                 for (nb in adjNodes.getOrDefault(cur, listOf())) {
@@ -257,7 +259,10 @@ class RandomGraph private constructor() {
                     }
                 }
             }
-            return LongArrayList(treeEdges)
+            // hppc LongArrayList(LongContainer) materialized the set in cursor-iterator order
+            val result = LongArrayList(treeEdges.size())
+            treeEdges.forEachInIteratorOrder { e -> result.add(e) }
+            return result
         }
 
         fun seed(v: Long): Builder {

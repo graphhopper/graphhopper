@@ -17,9 +17,9 @@
  */
 package com.graphhopper.routing.ev
 
-import com.carrotsearch.hppc.BitSet
 import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.graphhopper.coll.GrowableBitSet
 
 /**
  * Works like a normal encoded value, but the underlying data is not stored within the graph
@@ -31,7 +31,9 @@ open class ExternalBooleanEncodedValue @JsonCreator(mode = JsonCreator.Mode.PROP
     // field names are part of the storage format — do not rename!
     override val name: String = name
     private val storeTwoDirections: Boolean = storeTwoDirections
-    private val bits: BitSet = BitSet()
+    // GrowableBitSet keeps the exact hppc-BitSet field layout {"bits":[...],"wlen":N} this
+    // class is FIELD-serialized with (pinned in EncodedValueSerializerTest)
+    private val bits: GrowableBitSet = GrowableBitSet()
 
     override fun setBool(reverse: Boolean, edgeId: Int, edgeIntAccess: EdgeIntAccess, value: Boolean) {
         // it'll grow as we go

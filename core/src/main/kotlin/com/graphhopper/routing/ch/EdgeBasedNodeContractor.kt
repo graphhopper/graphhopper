@@ -17,11 +17,11 @@
  */
 package com.graphhopper.routing.ch
 
-import com.carrotsearch.hppc.IntContainer
 import com.carrotsearch.hppc.IntHashSet
 import com.carrotsearch.hppc.IntSet
 import com.carrotsearch.hppc.LongHashSet
 import com.carrotsearch.hppc.LongSet
+import com.graphhopper.coll.primitive.IntScatterSet
 import com.graphhopper.routing.ch.CHParameters.EDGE_QUOTIENT_WEIGHT
 import com.graphhopper.routing.ch.CHParameters.HIERARCHY_DEPTH_WEIGHT
 import com.graphhopper.routing.ch.CHParameters.MAX_POLL_FACTOR_CONTRACTION_EDGE
@@ -140,7 +140,7 @@ internal class EdgeBasedNodeContractor(
         return priority
     }
 
-    override fun contractNode(node: Int): IntContainer {
+    override fun contractNode(node: Int): IntScatterSet {
         activeStats = addingStats
         stats().stopWatch.start()
         findAndHandlePrepareShortcuts(node, this::addShortcutsToPrepareGraph, (meanDegree * params.maxPollFactorContraction).toInt(), wpsStatsContr)
@@ -286,13 +286,13 @@ internal class EdgeBasedNodeContractor(
         }
     }
 
-    private fun updateHierarchyDepthsOfNeighbors(node: Int, neighbors: IntContainer) {
+    private fun updateHierarchyDepthsOfNeighbors(node: Int, neighbors: IntScatterSet) {
         val hierarchyDepths = hierarchyDepths!!
         val level = hierarchyDepths[node]
-        for (n in neighbors) {
-            if (n.value == node)
-                continue
-            hierarchyDepths[n.value] = max(hierarchyDepths[n.value], level + 1)
+        // hppc cursor-iterator order (was a for-each over the container's cursors)
+        neighbors.forEachInIteratorOrder { n ->
+            if (n != node)
+                hierarchyDepths[n] = max(hierarchyDepths[n], level + 1)
         }
     }
 

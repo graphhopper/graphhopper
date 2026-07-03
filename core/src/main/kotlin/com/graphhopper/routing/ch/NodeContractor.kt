@@ -18,7 +18,7 @@
 
 package com.graphhopper.routing.ch
 
-import com.carrotsearch.hppc.IntContainer
+import com.graphhopper.coll.primitive.IntScatterSet
 
 interface NodeContractor {
     fun initFromGraph()
@@ -35,7 +35,7 @@ interface NodeContractor {
      *
      * @return the set of nodes adjacent to this node (before contraction)
      */
-    fun contractNode(node: Int): IntContainer
+    fun contractNode(node: Int): IntScatterSet
 
     fun finishContraction()
 

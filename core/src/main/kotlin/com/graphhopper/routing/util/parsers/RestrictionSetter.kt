@@ -19,15 +19,11 @@ package com.graphhopper.routing.util.parsers
 
 import com.carrotsearch.hppc.BitSet
 import com.carrotsearch.hppc.IntArrayList
-import com.carrotsearch.hppc.IntHashSet
 import com.carrotsearch.hppc.IntObjectMap
 import com.carrotsearch.hppc.IntObjectScatterMap
-import com.carrotsearch.hppc.IntScatterSet
-import com.carrotsearch.hppc.IntSet
-import com.carrotsearch.hppc.LongIntMap
-import com.carrotsearch.hppc.LongIntScatterMap
-import com.carrotsearch.hppc.procedures.IntProcedure
-import com.carrotsearch.hppc.procedures.LongIntProcedure
+import com.graphhopper.coll.primitive.IntHashSet
+import com.graphhopper.coll.primitive.IntScatterSet
+import com.graphhopper.coll.primitive.LongIntScatterMap
 import com.graphhopper.reader.osm.Pair
 import com.graphhopper.routing.ev.BooleanEncodedValue
 import com.graphhopper.storage.BaseGraph
@@ -55,8 +51,8 @@ class RestrictionSetter(
             throw IllegalArgumentException("There must be as many encBits as restrictions. Got: " + encBits.size + " and " + restrictions.size)
         val internalRestrictions = restrictions.map { convertToInternal(it) }
         disableRedundantRestrictions(internalRestrictions, encBits)
-        val artificialEdgeKeysByIncViaPairs: LongIntMap = LongIntScatterMap()
-        val artificialEdgesByEdge: IntObjectMap<IntSet> = IntObjectScatterMap()
+        val artificialEdgeKeysByIncViaPairs = LongIntScatterMap()
+        val artificialEdgesByEdge: IntObjectMap<IntHashSet> = IntObjectScatterMap()
         for (i in internalRestrictions.indices) {
             if (encBits[i].cardinality() < 1) continue
             val restriction = internalRestrictions[i]
@@ -75,13 +71,14 @@ class RestrictionSetter(
                     val artificialEdge = artificialEdgeState.edge
                     if (artificialEdgesByEdge.containsKey(viaEdge)) {
                         val artificialEdges = artificialEdgesByEdge.get(viaEdge)
-                        artificialEdges.forEach(IntProcedure { a ->
+                        // hppc forEach(procedure) order
+                        artificialEdges.forEach { a ->
                             for (turnRestrictionEnc in turnRestrictionEncs)
                                 restrictTurnsBetweenEdges(turnRestrictionEnc, artificialEdgeState, a)
-                        })
+                        }
                         artificialEdges.add(artificialEdge)
                     } else {
-                        val artificialEdges: IntSet = IntScatterSet()
+                        val artificialEdges = IntScatterSet()
                         artificialEdges.add(artificialEdge)
                         artificialEdgesByEdge.put(viaEdge, artificialEdges)
                     }
@@ -96,7 +93,9 @@ class RestrictionSetter(
                 incomingEdge = GHUtility.getEdgeFromEdgeKey(artificialEdgeKey)
             }
         }
-        artificialEdgeKeysByIncViaPairs.forEach(LongIntProcedure { incViaPair, artificialEdgeKey ->
+        // hppc forEach(procedure) order: the empty key (0) first, then slots ascending — the
+        // turn-cost creation order here is part of the stored-graph turn-cost layout
+        artificialEdgeKeysByIncViaPairs.forEach { incViaPair, artificialEdgeKey ->
             val incomingEdge = BitUtil.LITTLE.getIntLow(incViaPair)
             val viaEdgeKey = BitUtil.LITTLE.getIntHigh(incViaPair)
             val viaEdge = GHUtility.getEdgeFromEdgeKey(viaEdgeKey)
@@ -106,12 +105,13 @@ class RestrictionSetter(
             for (turnRestrictionEnc in turnRestrictionEncs)
                 restrictTurn(turnRestrictionEnc, incomingEdge, node, viaEdge)
             val artificialEdges = artificialEdgesByEdge.get(viaEdge)
-            artificialEdges.forEach(IntProcedure { a ->
+            // hppc forEach(procedure) order
+            artificialEdges.forEach { a ->
                 if (a != GHUtility.getEdgeFromEdgeKey(artificialEdgeKey))
                     for (turnRestrictionEnc in turnRestrictionEncs)
                         restrictTurn(turnRestrictionEnc, incomingEdge, node, a)
-            })
-        })
+            }
+        }
         for (i in internalRestrictions.indices) {
             if (encBits[i].cardinality() < 1) continue
             val restriction = internalRestrictions[i]
@@ -123,11 +123,12 @@ class RestrictionSetter(
                 for (j in turnRestrictionEncs.indices) {
                     val turnRestrictionEnc = turnRestrictionEncs[j]
                     if (encBits[i].get(j)) {
-                        fromEdges.forEach(IntProcedure { from ->
-                            toEdges.forEach(IntProcedure { to ->
+                        // nested hppc forEach(procedure) order
+                        fromEdges.forEach { from ->
+                            toEdges.forEach { to ->
                                 restrictTurn(turnRestrictionEnc, from, restriction.viaNodes.get(0), to)
-                            })
-                        })
+                            }
+                        }
                     }
                 }
             } else {
@@ -142,9 +143,9 @@ class RestrictionSetter(
                     if (encBits[i].get(j)) {
                         restrictTurn(turnRestrictionEnc, viaEdge, node, restriction.toEdge)
                         // also restrict the turns to the artificial edges corresponding to the to-edge
-                        artificialEdgesByEdge.getOrDefault(restriction.toEdge, EMPTY_SET).forEach(
-                            IntProcedure { toEdge -> restrictTurn(turnRestrictionEnc, viaEdge, node, toEdge) }
-                        )
+                        // (hppc forEach(procedure) order)
+                        artificialEdgesByEdge.getOrDefault(restriction.toEdge, EMPTY_SET)
+                            .forEach { toEdge -> restrictTurn(turnRestrictionEnc, viaEdge, node, toEdge) }
                     }
                 }
             }
@@ -309,7 +310,7 @@ class RestrictionSetter(
     }
 
     companion object {
-        private val EMPTY_SET: IntSet = IntHashSet.from()
+        private val EMPTY_SET: IntHashSet = IntHashSet.from()
 
         @JvmStatic
         fun createViaNodeRestriction(fromEdge: Int, viaNode: Int, toEdge: Int): Restriction {

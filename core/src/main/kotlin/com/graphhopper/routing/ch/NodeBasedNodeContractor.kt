@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.ch
 
-import com.carrotsearch.hppc.IntContainer
+import com.graphhopper.coll.primitive.IntScatterSet
 import com.graphhopper.routing.ch.CHParameters.EDGE_DIFFERENCE_WEIGHT
 import com.graphhopper.routing.ch.CHParameters.MAX_POLL_FACTOR_CONTRACTION_NODE
 import com.graphhopper.routing.ch.CHParameters.MAX_POLL_FACTOR_HEURISTIC_NODE
@@ -114,7 +114,7 @@ internal class NodeBasedNodeContractor(
         //       maybe use hierarchy-depths heuristic as in edge-based?
     }
 
-    override fun contractNode(node: Int): IntContainer {
+    override fun contractNode(node: Int): IntScatterSet {
         val degree = findAndHandleShortcuts(node, this::addOrUpdateShortcut, (meanDegree * params.maxPollFactorContraction).toInt())
         insertShortcuts(node)
         // put weight factor on meanDegree instead of taking the average => meanDegree is more stable

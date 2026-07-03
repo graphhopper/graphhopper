@@ -354,6 +354,29 @@ new discoveries get a pinning test AND an entry there.
   core clean test green (3289), web/tools/map-matching/reader-gtfs -am test-compile green,
   germany load-gate (count=1000, MMAP, Xmx3g, clean=false) checksums BIT-IDENTICAL:
   routingCH dummy 5603941, routingLM8 dummy 270582 (log: measurements/h3-gate.log).
+- [x] 2026-07-03 HPPC switch batch H4 DONE (remaining order-critical scatter call sites, per
+  the plan's H4 list — the other §4 sites were already covered by H3's GH* rewire):
+  RestrictionSetter (LongIntScatterMap + IntScatterSet → ports; forEach(procedure) →
+  port forEach [empty key FIRST] at the LongIntProcedure site ≈L96 [turn-cost creation order =
+  stored turn-cost layout] and the 4 nested IntSet.forEach sites; artificialEdgesByEdge value
+  type hppc IntSet → port IntHashSet, map itself stays hppc IntObjectScatterMap [keyed-only,
+  H7]; EMPTY_SET → port IntHashSet.from()); CHPreparationGraph.neighborSet IntScatterSet →
+  port + the disconnect()/NodeContractor.contractNode() IntContainer seam typed as port
+  IntScatterSet (NodeContractor, NodeBased/EdgeBasedNodeContractor,
+  PrepareContractionHierarchies) — the PCH neighbor loop and
+  EdgeBasedNodeContractor.updateHierarchyDepthsOfNeighbors were hppc cursor for-eaches →
+  forEachInIteratorOrder [empty key LAST; per-neighbor RNG draw order → contraction order →
+  shortcut counts]; RandomGraph LongScatterSet ×2 → port, and the hppc
+  LongArrayList(LongContainer) materializations → explicit forEachInIteratorOrder copy
+  (cursor order, identical); ExternalBooleanEncodedValue hppc BitSet → GrowableBitSet
+  (identical {"bits":[...],"wlen":N} FIELD serialization, EncodedValueSerializerTest green
+  unchanged). ZERO test files edited. Gates: core clean test green (3289),
+  web/tools/map-matching/reader-gtfs -am test-compile green, germany load-gate (count=1000,
+  MMAP, Xmx3g, clean=false) checksums BIT-IDENTICAL: routingCH dummy 5603941, routingLM8
+  dummy 270582, all other dummies equal to h3-gate.log (log: measurements/h4-gate.log).
+  Still-hppc scatter usages left for H6/H7 by design: WayToEdgesMap, OSMNodeData,
+  EdgeBasedTarjanSCC:448, QueryOverlay.edgesSet, RoadDensityCalculator (all keyed/membership
+  per the §2 audit).
 - [ ] REMAINING WORK: (3) HPPC→androidx.collection
   call-site switch + gap-fillers + canary + perf gate, then drop hppc from core (reader-gtfs
   declares its own) — SCOPED 2026-07-03, full execution plan in section
