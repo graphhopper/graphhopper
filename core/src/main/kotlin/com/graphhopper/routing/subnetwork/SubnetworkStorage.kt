@@ -15,9 +15,9 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.subnetwork;
+package com.graphhopper.routing.subnetwork
 
-import com.graphhopper.storage.DataAccess;
+import com.graphhopper.storage.DataAccess
 
 /**
  * This class handles storage of subnetwork ids for every node. Useful to pick the correct set of
@@ -25,55 +25,43 @@ import com.graphhopper.storage.DataAccess;
  *
  * @author Peter Karich
  */
-public class SubnetworkStorage {
-    final DataAccess da;
-
-    public SubnetworkStorage(DataAccess da) {
-        this.da = da;
-    }
-
+class SubnetworkStorage(private val da: DataAccess) {
     /**
      * Returns the subnetwork ID for the specified nodeId or 0 if non is associated e.g. because the
      * subnetwork is too small.
      */
-    public int getSubnetwork(int nodeId) {
-        return da.getByte(nodeId);
-    }
+    fun getSubnetwork(nodeId: Int): Int = da.getByte(nodeId.toLong()).toInt()
 
     /**
      * This method sets the subnetwork if of the specified nodeId. Default is 0 and means subnetwork
      * was too small to be useful to be stored.
      */
-    public void setSubnetwork(int nodeId, int subnetwork) {
+    fun setSubnetwork(nodeId: Int, subnetwork: Int) {
         if (subnetwork > 127)
-            throw new IllegalArgumentException("Number of subnetworks is currently limited to 127 but requested " + subnetwork);
+            throw IllegalArgumentException("Number of subnetworks is currently limited to 127 but requested $subnetwork")
 
-        da.setByte(nodeId, (byte) subnetwork);
+        da.setByte(nodeId.toLong(), subnetwork.toByte())
     }
 
-    public boolean loadExisting() {
-        return da.loadExisting();
+    fun loadExisting(): Boolean = da.loadExisting()
+
+    fun create(byteCount: Long): SubnetworkStorage {
+        da.create(2000)
+        da.ensureCapacity(byteCount)
+        return this
     }
 
-    public SubnetworkStorage create(long byteCount) {
-        da.create(2000);
-        da.ensureCapacity(byteCount);
-        return this;
+    fun flush() {
+        da.flush()
     }
 
-    public void flush() {
-        da.flush();
+    fun close() {
+        da.close()
     }
 
-    public void close() {
-        da.close();
-    }
+    val isClosed: Boolean
+        get() = da.isClosed
 
-    public boolean isClosed() {
-        return da.isClosed();
-    }
-
-    public long getCapacity() {
-        return da.getCapacity();
-    }
+    val capacity: Long
+        get() = da.capacity
 }
