@@ -15,35 +15,19 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+package com.graphhopper.routing
 
-package com.graphhopper.routing;
+import com.graphhopper.util.EdgeIterator
 
-import com.carrotsearch.hppc.IntArrayList;
-
-import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
-
-public class EdgeRestrictions {
-    private int sourceOutEdge = ANY_EDGE;
-    private int targetInEdge = ANY_EDGE;
-    private final IntArrayList unfavoredEdges = IntArrayList.from();
-
-    public int getSourceOutEdge() {
-        return sourceOutEdge;
-    }
-
-    public void setSourceOutEdge(int sourceOutEdge) {
-        this.sourceOutEdge = sourceOutEdge;
-    }
-
-    public int getTargetInEdge() {
-        return targetInEdge;
-    }
-
-    public void setTargetInEdge(int targetInEdge) {
-        this.targetInEdge = targetInEdge;
-    }
-
-    public IntArrayList getUnfavoredEdges() {
-        return unfavoredEdges;
-    }
+interface EdgeToEdgeRoutingAlgorithm : RoutingAlgorithm {
+    /**
+     * like [calcPath], but this method also allows to strictly restrict the edge the
+     * path will begin with and the edge it will end with.
+     *
+     * @param fromOutEdge the edge id of the first edge of the path. using [EdgeIterator.ANY_EDGE] means
+     *                    not enforcing the first edge of the path
+     * @param toInEdge    the edge id of the last edge of the path. using [EdgeIterator.ANY_EDGE] means
+     *                    not enforcing the last edge of the path
+     */
+    fun calcPath(from: Int, to: Int, fromOutEdge: Int, toInEdge: Int): Path
 }

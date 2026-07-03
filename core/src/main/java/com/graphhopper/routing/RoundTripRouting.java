@@ -125,10 +125,10 @@ public class RoundTripRouting {
 
             Path path = roundTripCalculator.calcPath(startNode, endNode);
             if (snapIndex == 1) {
-                result.wayPoints = new PointList(snaps.size(), path.graph.getNodeAccess().is3D());
-                result.wayPoints.add(path.graph.getNodeAccess(), startNode);
+                result.wayPoints = new PointList(snaps.size(), path.getGraph().getNodeAccess().is3D());
+                result.wayPoints.add(path.getGraph().getNodeAccess(), startNode);
             }
-            result.wayPoints.add(path.graph.getNodeAccess(), endNode);
+            result.wayPoints.add(path.getGraph().getNodeAccess(), endNode);
             result.visitedNodes += pathCalculator.getVisitedNodes();
             result.paths.add(path);
         }

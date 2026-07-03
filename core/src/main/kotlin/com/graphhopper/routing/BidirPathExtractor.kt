@@ -16,8 +16,8 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.routing;
+package com.graphhopper.routing
 
-public interface BidirPathExtractor {
-    Path extract(SPTEntry fwdEntry, SPTEntry bwdEntry, double bestWeight);
+fun interface BidirPathExtractor {
+    fun extract(fwdEntry: SPTEntry?, bwdEntry: SPTEntry?, bestWeight: Double): Path
 }

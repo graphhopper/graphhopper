@@ -16,19 +16,18 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.routing;
+package com.graphhopper.routing
 
-import com.carrotsearch.hppc.IntArrayList;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.util.*;
+import com.carrotsearch.hppc.IntArrayList
+import com.graphhopper.storage.Graph
+import com.graphhopper.util.AngleCalc
+import com.graphhopper.util.EdgeExplorer
+import com.graphhopper.util.FetchMode
+import kotlin.math.abs
 
-public class HeadingResolver {
-    private final EdgeExplorer edgeExplorer;
-    private double toleranceRad = Math.toRadians(100);
-
-    public HeadingResolver(Graph graph) {
-        this.edgeExplorer = graph.createEdgeExplorer();
-    }
+class HeadingResolver(graph: Graph) {
+    private val edgeExplorer: EdgeExplorer = graph.createEdgeExplorer()
+    private var toleranceRad = Math.toRadians(100.0)
 
     /**
      * Returns a list of edge IDs of edges adjacent to the given base node that do *not* have the same or a similar
@@ -37,33 +36,33 @@ public class HeadingResolver {
      * the direction of the first segment of an edge (adjacent and facing away from the base node).
      *
      * @param heading north based azimuth, between 0 and 360 degrees
-     * @see #setTolerance
+     * @see setTolerance
      */
-    public IntArrayList getEdgesWithDifferentHeading(int baseNode, double heading) {
-        double xAxisAngle = AngleCalc.ANGLE_CALC.convertAzimuth2xaxisAngle(heading);
-        IntArrayList edges = new IntArrayList(1);
-        EdgeIterator iter = edgeExplorer.setBaseNode(baseNode);
+    fun getEdgesWithDifferentHeading(baseNode: Int, heading: Double): IntArrayList {
+        val xAxisAngle = AngleCalc.ANGLE_CALC.convertAzimuth2xaxisAngle(heading)
+        val edges = IntArrayList(1)
+        val iter = edgeExplorer.setBaseNode(baseNode)
         while (iter.next()) {
-            PointList points = iter.fetchWayGeometry(FetchMode.ALL);
-            double orientation = AngleCalc.ANGLE_CALC.calcOrientation(
-                    points.getLat(0), points.getLon(0),
-                    points.getLat(1), points.getLon(1)
-            );
+            val points = iter.fetchWayGeometry(FetchMode.ALL)
+            var orientation = AngleCalc.ANGLE_CALC.calcOrientation(
+                points.getLat(0), points.getLon(0),
+                points.getLat(1), points.getLon(1)
+            )
 
-            orientation = AngleCalc.ANGLE_CALC.alignOrientation(xAxisAngle, orientation);
-            double diff = Math.abs(orientation - xAxisAngle);
+            orientation = AngleCalc.ANGLE_CALC.alignOrientation(xAxisAngle, orientation)
+            val diff = abs(orientation - xAxisAngle)
 
             if (diff > toleranceRad)
-                edges.add(iter.getEdge());
+                edges.add(iter.edge)
         }
-        return edges;
+        return edges
     }
 
     /**
-     * Sets the tolerance for {@link #getEdgesWithDifferentHeading} in degrees.
+     * Sets the tolerance for [getEdgesWithDifferentHeading] in degrees.
      */
-    public HeadingResolver setTolerance(double tolerance) {
-        this.toleranceRad = Math.toRadians(tolerance);
-        return this;
+    fun setTolerance(tolerance: Double): HeadingResolver {
+        this.toleranceRad = Math.toRadians(tolerance)
+        return this
     }
 }

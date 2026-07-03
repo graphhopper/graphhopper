@@ -15,48 +15,45 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing;
-
-import java.util.List;
+package com.graphhopper.routing
 
 /**
  * Calculates the shortest path from the specified node ids. Can be used only once.
- * <p>
  *
  * @author Peter Karich
  */
-public interface RoutingAlgorithm {
+interface RoutingAlgorithm {
     /**
      * Calculates the best path between the specified nodes.
      *
      * @return the path. Call the method found() to make sure that the path is valid.
      */
-    Path calcPath(int from, int to);
+    fun calcPath(from: Int, to: Int): Path
 
     /**
      * Calculates multiple possibilities for a path.
      *
-     * @see #calcPath(int, int)
+     * @see calcPath
      */
-    List<Path> calcPaths(int from, int to);
+    fun calcPaths(from: Int, to: Int): List<Path>
 
     /**
      * Limit the search to numberOfNodes. See #681
      */
-    void setMaxVisitedNodes(int numberOfNodes);
+    fun setMaxVisitedNodes(numberOfNodes: Int)
 
     /**
      * Limit the search to the given time in milliseconds
      */
-    void setTimeoutMillis(long timeoutMillis);
+    fun setTimeoutMillis(timeoutMillis: Long)
 
     /**
      * @return name of this algorithm
      */
-    String getName();
+    fun getName(): String
 
     /**
      * Returns the visited nodes after searching. Useful for debugging.
      */
-    int getVisitedNodes();
+    fun getVisitedNodes(): Int
 }

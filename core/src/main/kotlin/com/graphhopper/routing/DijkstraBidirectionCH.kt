@@ -15,12 +15,11 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing;
+package com.graphhopper.routing
 
-import com.carrotsearch.hppc.IntObjectMap;
-import com.graphhopper.storage.RoutingCHEdgeExplorer;
-import com.graphhopper.storage.RoutingCHEdgeIterator;
-import com.graphhopper.storage.RoutingCHGraph;
+import com.carrotsearch.hppc.IntObjectMap
+import com.graphhopper.storage.RoutingCHEdgeExplorer
+import com.graphhopper.storage.RoutingCHGraph
 
 /**
  * Uses a very simple version of stall-on-demand (SOD) for CH queries to prevent exploring nodes that can not be part
@@ -30,46 +29,39 @@ import com.graphhopper.storage.RoutingCHGraph;
  *
  * @author easbar
  */
-public class DijkstraBidirectionCH extends DijkstraBidirectionCHNoSOD {
+open class DijkstraBidirectionCH(graph: RoutingCHGraph) : DijkstraBidirectionCHNoSOD(graph) {
 
-    public DijkstraBidirectionCH(RoutingCHGraph graph) {
-        super(graph);
+    override fun fromEntryCanBeSkipped(): Boolean {
+        return entryIsStallable(currFrom!!, bestWeightMapFrom, inEdgeExplorer, false)
     }
 
-    @Override
-    protected boolean fromEntryCanBeSkipped() {
-        return entryIsStallable(currFrom, bestWeightMapFrom, inEdgeExplorer, false);
+    override fun toEntryCanBeSkipped(): Boolean {
+        return entryIsStallable(currTo!!, bestWeightMapTo, outEdgeExplorer, true)
     }
 
-    @Override
-    protected boolean toEntryCanBeSkipped() {
-        return entryIsStallable(currTo, bestWeightMapTo, outEdgeExplorer, true);
-    }
-
-    private boolean entryIsStallable(SPTEntry entry, IntObjectMap<SPTEntry> bestWeightMap, RoutingCHEdgeExplorer edgeExplorer,
-                                     boolean reverse) {
-        // We check for all 'incoming' edges if we can prove that the current node (that is about to be settled) is 
+    private fun entryIsStallable(
+        entry: SPTEntry, bestWeightMap: IntObjectMap<SPTEntry>, edgeExplorer: RoutingCHEdgeExplorer,
+        reverse: Boolean
+    ): Boolean {
+        // We check for all 'incoming' edges if we can prove that the current node (that is about to be settled) is
         // reached via a suboptimal path. We do this regardless of the CH level of the adjacent nodes.
-        RoutingCHEdgeIterator iter = edgeExplorer.setBaseNode(entry.adjNode);
+        val iter = edgeExplorer.setBaseNode(entry.adjNode)
         while (iter.next()) {
             // no need to inspect the edge we are coming from
-            if (iter.getEdge() == entry.edge) {
-                continue;
+            if (iter.edge == entry.edge) {
+                continue
             }
-            SPTEntry adjNode = bestWeightMap.get(iter.getAdjNode());
+            val adjNode = bestWeightMap.get(iter.adjNode)
             // we have to be careful because of rounded shortcut weights in combination with virtual via nodes, see #1574
-            final double precision = 0.001;
+            val precision = 0.001
             if (adjNode != null &&
-                    adjNode.weight + calcWeight(iter, !reverse, getIncomingEdge(entry)) - entry.weight < -precision) {
-                return true;
+                adjNode.weight + calcWeight(iter, !reverse, getIncomingEdge(entry)) - entry.weight < -precision
+            ) {
+                return true
             }
         }
-        return false;
+        return false
     }
 
-    @Override
-    public String getName() {
-        return "dijkstrabi|ch";
-    }
-
+    override fun getName(): String = "dijkstrabi|ch"
 }

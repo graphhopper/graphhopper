@@ -15,19 +15,28 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing;
 
-import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.Graph;
+package com.graphhopper.routing
 
-/**
- * This interface manages RoutingAlgorithm creation.
- *
- * @author Peter Karich
- */
-public interface RoutingAlgorithmFactory {
-    /**
-     * This method creates an algorithm out of this factory based on the specified opts and graph.
-     */
-    RoutingAlgorithm createAlgo(Graph g, Weighting w, AlgorithmOptions opts);
+import com.carrotsearch.hppc.IntArrayList
+import com.graphhopper.util.EdgeIterator
+
+class EdgeRestrictions {
+    private var sourceOutEdge = EdgeIterator.ANY_EDGE
+    private var targetInEdge = EdgeIterator.ANY_EDGE
+    private val unfavoredEdges: IntArrayList = IntArrayList.from()
+
+    fun getSourceOutEdge(): Int = sourceOutEdge
+
+    fun setSourceOutEdge(sourceOutEdge: Int) {
+        this.sourceOutEdge = sourceOutEdge
+    }
+
+    fun getTargetInEdge(): Int = targetInEdge
+
+    fun setTargetInEdge(targetInEdge: Int) {
+        this.targetInEdge = targetInEdge
+    }
+
+    fun getUnfavoredEdges(): IntArrayList = unfavoredEdges
 }

@@ -155,6 +155,16 @@ independently of that migration.
   behavior preserved; flagged for a deliberate Locale decision in a later cleanup, outside the
   migration. (2026-07-02)
 
+- **AlgorithmOptions' copy constructor does not copy timeoutMillis** — a copied options object
+  silently falls back to "no timeout" (Long.MAX_VALUE) while algorithm/traversal mode/
+  maxVisitedNodes/hints are copied (hints deep-copied via `new PMap(...)`). Also pinned:
+  `SPTEntry.compareTo` returns 0 on equal weights (no tie-breaking, no NaN/-0 handling — heap
+  order for ties is left to PriorityQueue), the exact `SPTEntry.toString` format, the exact
+  "Create a new instance per call" / "fromNode < 0 should not happen" IllegalStateException
+  messages, and that `DijkstraOneToMany` (unlike every other algorithm) is deliberately
+  reusable across calcPath calls (it caches its arrays between runs).
+  Test: `core/.../routing/RoutingAlgorithmPinnedBehaviorTest.java` (2026-07-03)
+
 ## Open candidates (currently covered only indirectly)
 
 - JaroWinkler similarity computes intermediate results in **float** precision (not double);
@@ -163,3 +173,8 @@ independently of that migration.
 - SpatialKeyAlgo.encode performs int shifts that can **overflow into the sign bit before
   widening to long** for coordinates near the 16-bit-per-axis boundary. Exercised indirectly via
   location-index tests.
+- Dijkstra and AStar (node-based) **put a null value into fromMap for the start node**
+  (`fromMap.put(from, currEdge)` runs while currEdge is still null), so a search returning to
+  the start via a loop treats it as unseen and creates a fresh entry. Preserved verbatim in the
+  Kotlin conversion (the maps are typed with nullable values exactly for this). Exercised
+  indirectly by the routing algorithm test suite. (2026-07-03)

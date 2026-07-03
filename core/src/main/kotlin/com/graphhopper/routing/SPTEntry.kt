@@ -15,66 +15,49 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing;
+package com.graphhopper.routing
 
-import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIterator
 
 /**
  * This class is used to create the shortest-path-tree from linked entities.
- * <p>
  *
  * @author Peter Karich
  */
-public class SPTEntry implements Comparable<SPTEntry> {
-    public int edge;
-    public int adjNode;
-    public double weight;
-    public SPTEntry parent;
-    public boolean deleted;
+open class SPTEntry(
+    @JvmField var edge: Int,
+    @JvmField var adjNode: Int,
+    @JvmField var weight: Double,
+    @JvmField var parent: SPTEntry?
+) : Comparable<SPTEntry> {
 
-    public SPTEntry(int node, double weight) {
-        this(EdgeIterator.NO_EDGE, node, weight, null);
+    @JvmField
+    var deleted = false
+
+    constructor(node: Int, weight: Double) : this(EdgeIterator.NO_EDGE, node, weight, null)
+
+    fun setDeleted() {
+        deleted = true
     }
 
-    public SPTEntry(int edgeId, int adjNode, double weight, SPTEntry parent) {
-        this.edge = edgeId;
-        this.adjNode = adjNode;
-        this.weight = weight;
-        this.parent = parent;
-    }
-
-    public void setDeleted() {
-        deleted = true;
-    }
-
-    public boolean isDeleted() {
-        return deleted;
-    }
+    fun isDeleted(): Boolean = deleted
 
     /**
      * This method returns the weight to the origin e.g. to the start for the forward SPT and to the
      * destination for the backward SPT. Where the variable 'weight' is used to let heap select
      * smallest *full* weight (from start to destination).
      */
-    public double getWeightOfVisitedPath() {
-        return weight;
+    open fun getWeightOfVisitedPath(): Double = weight
+
+    open fun getParent(): SPTEntry? = parent
+
+    override fun compareTo(other: SPTEntry): Int {
+        if (weight < other.weight)
+            return -1
+
+        // assumption no NaN and no -0
+        return if (weight > other.weight) 1 else 0
     }
 
-    public SPTEntry getParent() {
-        return parent;
-    }
-
-    @Override
-    public int compareTo(SPTEntry o) {
-        if (weight < o.weight)
-            return -1;
-
-        // assumption no NaN and no -0        
-        return weight > o.weight ? 1 : 0;
-    }
-
-    @Override
-    public String toString() {
-        return adjNode + " (" + edge + ") weight: " + weight;
-    }
+    override fun toString(): String = "$adjNode ($edge) weight: $weight"
 }
