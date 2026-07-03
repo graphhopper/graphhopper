@@ -319,7 +319,10 @@ new discoveries get a pinning test AND an entry there.
   CustomWeightingBackendTest added. Gates green (core 3216, web 215).
 - [ ] REMAINING WORK: (3) HPPC→androidx.collection
   call-site switch + gap-fillers + canary + perf gate, then drop hppc from core (reader-gtfs
-  declares its own); (4) NOTICE.md attribution review; (5) final real-route diff report.
+  declares its own) — SCOPED 2026-07-03, full execution plan in section
+  "HPPC → androidx.collection switch plan" (hybrid: androidx + hppc-layout ports for 9
+  order-critical sites, zero checksum changes, batches H1–H9);
+  (4) NOTICE.md attribution review; (5) final real-route diff report.
 - [x] 2026-07-03 custom-model STAGE 5 DONE (custom-model platform work COMPLETE): build-time
   Kotlin source generation + registry in core/.../weighting/custom/generate/.
   `CustomWeightingSourceGenerator` unparses the validated stage-3 AST into a Kotlin class
@@ -418,6 +421,272 @@ new discoveries get a pinning test AND an entry there.
   had K faster; WATCH LM8 at the 100% checkpoint, profile if it reproduces).
   Results: measurements/ab/ (second stamp).
 - [ ] Final: full `mvn -B clean test`, Measurement comparison (full import), real-route diff report.
+
+## HPPC → androidx.collection switch plan (2026-07-03, scoping — no code changed yet)
+
+Execution plan for the remaining item "(3) HPPC→androidx.collection". Sources: full grep
+inventory + per-site iteration-order audit of all 75 hppc-using main files, all 40 hppc-using
+test files, and the 4 consumer modules. Supersedes the DECISION section's estimate where noted.
+
+### Headline finding — determinism is not enough, ORDER IDENTITY is required
+
+androidx.collection iterates hash containers in a deterministic order, but a DIFFERENT order
+than hppc (both scatter layout and HashOrderMixing.constant). Every site where hash-iteration
+order leaks into stored graphs or pinned test outputs would produce *different-but-deterministic*
+results after a naive switch → germany anchors (turn-cost bytes, elevations, 9,252,034/28,589,795
+shortcut counts, QueryGraphTest's pinned virtual node ids) would legitimately differ. The audit
+found the order leaks are FEW (9 sites, listed in §4) and all flow through a handful of container
+classes. Therefore the plan is a HYBRID:
+
+- androidx.collection for all lists, deques (via CircularIntArray), and every hash container
+  whose iteration order is provably unobserved (keyed access / membership / order-independent
+  aggregation) — the large majority of the 166 imports.
+- a small Kotlin port of hppc's exact hash layout (same bit mixer, load factor, probing,
+  iteration = table-slot order) for the ~5 order-critical container classes, with Apache-2.0
+  attribution — this achieves the ZERO-checksum goal. Option B (accept androidx order +
+  re-baseline germany + edit pinned tests) is listed per site in §4 for Peter's signoff, but
+  NOT recommended: it would re-baseline 5 anchors and touch pinned test literals.
+
+### 1. Inventory (core/src/main/kotlin: 166 hppc imports in 75 files)
+
+By type (import count): IntArrayList 30 · IntObjectMap 11 · LongArrayList 9 · IntSet 9 ·
+BitSet 9 · IntHashSet 8 · IntContainer 7 · HashOrderMixingStrategy 7 · IntObjectPredicate 5 ·
+IntScatterSet 5 · IntObjectHashMap 5 · IntIndexedContainer 5 · LongHashSet 4 · IntArrayDeque 4 ·
+IndirectSort/IndirectComparator 6 · IntObjectProcedure 3 · LongSet 3 · IntObjectScatterMap 3 ·
+IntCursor 3 · IntProcedure 2 · LongScatterSet 2 · LongIntScatterMap 2 · LongIntMap 2 ·
+LongArrayDeque 2 · IntLongMap 2 · IntDoubleMap 2 · IntDoubleHashMap 2 · HashOrderMixing 2 ·
+DoubleArrayList 2 · singles: LongIntProcedure, ObjectIntHashMap, ObjectIntAssociativeContainer,
+LongObjectHashMap, LongLongHashMap, LongIndexedContainer, IntLongScatterMap, IntLongHashMap,
+IntIntScatterMap, IntDoubleScatterMap.
+
+By package (files): routing 15 · routing/ch 8 · reader/osm 7+1 · coll 7 · util 5 ·
+routing/querygraph 5 · storage/index 4 · routing/subnetwork 3 · reader/dem 3 · storage 2 ·
+routing/weighting 2 · routing/ev 2 · isochrone/algorithm 2 · routing/util(+parsers) 2 ·
+routing/lm 1 · reader 1 · GraphHopper.kt 1.
+
+Classification:
+- (a) internal-only: ~60 of 75 files — no hppc type escapes the file/package.
+- (b) leaks into public API consumed by other modules:
+  - `Path.getEdges()/setEdges(): IntArrayList`, `Path.calcNodes(): IntIndexedContainer` —
+    consumed by tools/ui/MiniGraphUI.java:377 (`IntIndexedContainer nodes = tmpPath.calcNodes()`).
+  - `TarjanSCC.ConnectedComponents.getComponents(): List<IntArrayList>` and
+    `.getSingleNodeComponents(): hppc BitSet` — consumed by
+    reader-gtfs/.../gtfs/analysis/Analysis.java:20-36 (incl. a `BitSetIterator` loop!) via
+    PtGraphAsAdjacencyList. reader-gtfs keeps hppc for its own maps, but THIS coupling forces a
+    mechanical edit there (BitSetIterator → nextSetBit-style loop on our BitSet port).
+  - `ReaderWay.getNodes(): LongArrayList`, `ArrayUtil` (~16 public IntArrayList-typed helpers),
+    `GHUtility` (private-only hppc use, no leak), `MultiplePointsNotFoundException.pointsNotFound:
+    IntArrayList`, `AvoidEdgesWeighting.setAvoidedEdges(IntSet)`, `QueryOverlay.adjustValues(
+    LongArrayList,...)`, `EdgeRestrictions.getUnfavoredEdges(): IntArrayList`,
+    `WayToEdgeConverter(LongFunction<Iterator<IntCursor>>)` (cursor type in a signature),
+    `HeadingResolver.getEdgesWithDifferentHeading(): IntArrayList`.
+  - Consumers constructing hppc types locally (no core-API coupling): tools/Measurement.java:541
+    (IntArrayList), map-matching/MapMatching.java:452-453 (IntHashSet ×2, membership only).
+  - web / web-api / web-bundle / navigation: ZERO hppc usage (PtIsochroneResource consumes the
+    hppc-free ReadableTriangulation surface).
+- (c) test-only: 40 Java test files import hppc (36× IntArrayList, 4× LongArrayList,
+  4× IntCursor, 3× IntIndexedContainer, 3× IntHashSet, 2× IntSet, 2× BitSet, 1× IntObjectMap,
+  1× DoubleArrayList) — see §5 for the minimal edit footprint.
+
+### 2. Iteration-order audit — what is actually order-sensitive
+
+Audited every forEach/cursor/values()/toArray() on a hash container in core main. Result:
+almost everything is keyed access, membership, or order-independent aggregation (per-key writes,
+max/min/count). The complete list of ORDER-SENSITIVE sites is in §4. Notable SAFE-by-audit sites
+(for the record, so nobody re-audits): WayToEdgesMap (LongIntScatterMap keyed via
+indexOf/indexGet/indexReplace; getEdges() returns insertion-ordered slices), OSMNodeData
+LongScatterSet (membership), TarjanSCC + EdgeBasedTarjanSCC (scatter map/set keyed-only; DFS and
+component order are graph-traversal-driven — component output is hash-independent),
+PrepareRoutingSubnetworks, LandmarkStorage (both forEach sites do per-node keyed writes;
+landmark selection is heap-driven), EdgeBasedNodeContractor's own sets (once-guard/dedup
+membership), NodeBased CH prep entirely, RoadDensityCalculator (FP sum ordered by BFS deque, set
+is membership-only), dem IntDoubleHashMap cursors (keyed writes; rejection loop collects-then-
+removes), EdgeElevationSmoothingMovingAverage (keyed), QueryGraph/QueryRoutingCHGraph/
+EdgeChangeBuilder (keyed copies), storage/index dedup sets, Dijkstra/AStar/bidir SPT maps during
+search (PQ-driven), GraphHopper.kt (IndirectSort by Hilbert key, stable, hash-free).
+Already-nondeterministic-today (default-mixed hppc = randomized per instance; androidx makes
+them deterministic, no regression): LocationIndexTree/LineIntIndex dedup sets, Triangulation's
+vertex maps — all keyed/membership anyway.
+
+### 3. Type mapping table
+
+| hppc | androidx / replacement | care needed |
+|---|---|---|
+| IntArrayList | MutableIntList | `.buffer`→`.content`, `.elementsCount`→`._size` (both PUBLIC in androidx — direct pokes in ArrayUtil, CHPreparationGraph.sortAndTrim/build, ArrayEdgeIntAccess, DijkstraOneToMany reset, EdgeBasedWitnessPathSearcher reset, WayToEdgeConverter map fine). `from(...)`→`mutableIntListOf(...)` (Java: `IntListKt.mutableIntListOf`). `toString()` format identical ("[1, 2]"). equals content-based both. **final class**: InMemConstructionIndex.InMemLeafEntry and DijkstraOneToMany.IntArrayListWithCap EXTEND IntArrayList → rewrite as composition (2 small refactors). No `remove(index)`→`removeAt`; `trimToSize`→`trim` |
+| LongArrayList / DoubleArrayList | MutableLongList / MutableDoubleList (exists in 1.6.0 — DECISION section said no doubles; wrong, no gap needed) | same notes as IntArrayList |
+| IntIndexedContainer / LongIndexedContainer | IntList / LongList (read-only base class) | calcNodes() etc. return types |
+| IntContainer (CH contractNode returns) | IntSet (androidx base) at the NodeContractor seam — except the neighborSet itself, see §4 | iteration via forEach |
+| IntHashSet / LongHashSet / IntScatterSet / LongScatterSet / IntIntScatterMap / IntObjectScatterMap / IntLongScatterMap / LongObjectHashMap / LongLongHashMap / IntLongHashMap / ObjectIntHashMap (keyed/membership sites only) | MutableIntSet / MutableLongSet / MutableIntIntMap / MutableIntObjectMap / MutableIntLongMap / MutableLongObjectMap / MutableLongLongMap / MutableObjectIntMap | `removeAll(key)->count` (OSMNodeData)→`remove():Boolean`; `release()`→`clear()` (keeps capacity! CH contractors call release to FREE memory — use fresh instance or accept retention, decide per site); `getOrDefault` exists; `putOrAdd/addTo`→`put(k, getOrDefault+..)`; `indexOf/indexGet/indexInsert/indexReplace` (WayToEdgesMap, RestrictionSetter) → plain containsKey/get/put (one extra probe, cold paths); `IntHashSet.from(...)`→`mutableIntSetOf` |
+| GH* wrappers (GHIntObjectHashMap, GHIntHashSet, GHLongObjectHashMap, GHIntLongHashMap, GHLongLongHashMap, GHLongHashSet, GHObjectIntHashMap) + order-critical scatter sites | **Kotlin port of hppc hash layout** (same BitMixer, 0.75/0.5 load factors, same resize/probing ⇒ bit-identical iteration order), seed constant inlined; FQCNs unchanged so ~15 call-site files and 5 GH*-using test files need NO edit. Keyed-only wrappers (GHLongLongHashMap in OSMReader, GHLongObjectHashMap/GHIntLongHashMap/GHObjectIntHashMap/GHLongHashSet) MAY alternatively become thin androidx delegates — but the port skeleton is shared, uniformity is cheaper than a second review of "is it really keyed-only" | this is the §4 zero-checksum strategy; surface = only the methods actually used (audited); cursors → inline `forEach(k,v)`; `ObjectIntAssociativeContainer` param (GHObjectIntHashMap.putAll) → drop/narrow |
+| BitSet | **gap-filler port `com.graphhopper.coll.GrowableBitSet`** (hppc BitSet is growable; java.util.BitSet's is too but field layout matters, androidx has none) | MUST keep exactly the Jackson-visible fields `bits: long[]` + `wlen: int` — ExternalBooleanEncodedValue's field is FIELD-serialized into stored graphs as `{"bits":[...],"wlen":N}` (pinned in EncodedValueSerializerTest). hppc-BitSet port satisfies this for free. Also update the two "Was meant to be hppc BitSet" ISE guards in TarjanSCC/EdgeBasedTarjanSCC (message text = type check, meaning preserved). reader-gtfs Analysis.java BitSetIterator loop → port's nextSetBit loop |
+| IntArrayDeque | CircularIntArray (addLast/popFirst/popLast) | RoadDensityCalculator pokes `deque.head/tail` directly to clear → `clear()` (private fields in androidx); DepthFirstSearch uses addLast/removeLast → popLast |
+| LongArrayDeque | **gap-filler port** (androidx has no CircularLongArray) — TarjanSCC + EdgeBasedTarjanSCC dfs stacks | hot during import (subnetwork prep on full graph) — keep array-backed like the hppc original |
+| IntDoubleMap / IntDoubleHashMap / IntDoubleScatterMap | **gap-filler shim** over MutableIntLongMap via Double.toRawLongBits (no double-valued maps in androidx) | sites: QueryOverlay.WeightsAndTimes + QueryGraphWeighting (keyed), BridgeTunnelTowerCorrection ×2 + EdgeElevationSmoothingMovingAverage (keyed + order-safe cursor loops → forEach) |
+| IndirectSort + IndirectComparator | **gap-filler port** (~80 lines, stable mergesort) | sites: ArrayUtil.calcSortOrder (public API takes IndirectComparator — replace param with a GH-owned `fun interface`), GraphHopper.sortGraphAlongHilbertCurve, CHPreparationGraph.build (AscendingIntComparator) |
+| cursors (IntCursor...) / procedures / predicates | inline forEach lambdas (zero alloc from Kotlin); WayToEdgesMap/WayToEdgeConverter's public `Iterator<IntCursor>` seam → GH-owned primitive iterator or `LongFunction<IntList>` (small internal API redesign, 2 tests touch it) | AlternativeRoute*/QueryOverlayBuilder predicates always return true (audited: no early termination anywhere) → plain forEach |
+| HashOrderMixing / HashOrderMixingStrategy | disappears into the port (seed constants 123321123321123312L and BridgePathFinder's 123 inlined/parameterized) | — |
+
+### 4. Order-critical sites (each would alter deterministic outputs on a naive switch)
+
+Zero-checksum strategy per site = use the hppc-layout port (§3). "Option B" = switch to androidx
+order anyway and re-baseline — requires Peter signoff PER SITE; the germany gate would then
+legitimately differ and pinned tests would need literal updates (conflicts with the
+never-change-tests rule, hence not recommended).
+
+STORED-GRAPH (checksum) sites:
+1. **RestrictionSetter.kt** — `artificialEdgeKeysByIncViaPairs.forEach(LongIntProcedure)` (≈L99)
+   + 4 nested `IntSet.forEach` sites (≈L78/109/126/145): turn-restriction CREATION order feeds
+   TurnCostStorage's `turnCostsCount++` index + per-node linked-list prepend ⇒ on-disk turn-cost
+   layout. Already documented in docs/pinned-behavior.md. → port LongIntScatterMap + IntScatterSet.
+2. **EdgeElevationInterpolator.kt:98** — `outerNodeIds.toArray()` (GHIntHashSet) order feeds FP
+   weighted-sum interpolation (ElevationInterpolator pointList loop) ⇒ stored tower-node
+   elevations wherever a bridge/tunnel has ≥2 outer nodes. NEW finding (not in
+   pinned-behavior.md yet — add entry when the batch lands). → GHIntHashSet port.
+3. **CHPreparationGraph.kt:59** `neighborSet: IntScatterSet` — returned from `disconnect()`
+   (code comment says it exists to guarantee deterministic order) and iterated at
+   PrepareContractionHierarchies.kt:296 where `rand.nextInt(100)` is drawn PER NEIGHBOR in
+   iteration order with capped updates ⇒ contraction order ⇒ node+edge shortcut counts/bytes.
+   → IntScatterSet port.
+4. **BridgePathFinder.kt:51** — result map is `IntObjectHashMap(16, 0.5,
+   HashOrderMixing.constant(123))` — the constant exists precisely to pin its iteration order;
+   iterated at EdgeBasedNodeContractor.kt:195 driving shortcut creation/dedup/ID assignment ⇒
+   edge-based shortcut count 28,589,795. → seeded hash-map port (seed 123, loadFactor 0.5).
+
+QUERY/TEST-VISIBLE sites (no stored bytes, but pinned tests / response content):
+5. **QueryOverlayBuilder** — `edge2res.forEach(IntObjectPredicate)` (GHIntObjectHashMap)
+   assigns virtual node ids SEQUENTIALLY per iterated edge ⇒ multi-snap requests get permuted
+   virtual node ids; QueryGraphTest pins ids. → GHIntObjectHashMap port (site then needs no edit).
+6. **AlternativeRoute.kt / AlternativeRouteCH.kt / AlternativeRouteEdgeCH.kt** — forEach over the
+   bidir SPT maps collects candidates; later weight-sorts are STABLE ⇒ equal-weight tie order =
+   map order; EdgeCH additionally builds a last-write-wins map by adjNode. → covered by the
+   GHIntObjectHashMap port automatically (SPT maps in AbstractBidirAlgo/Dijkstra stay GH*).
+7. **ShortestPathTree.kt** (isochrone) — `for (cursor in fromMap.values())` builds the isochrone
+   edge list ⇒ polygon assembly input order. → covered by GHIntObjectHashMap port.
+8. **RandomGraph.kt** — `LongArrayList(treeEdges)` materializes a LongScatterSet in hash order ⇒
+   generated random test graphs change shape ⇒ randomized differential tests still valid but
+   explore different cases (meaning preserved, coverage shifts). → LongScatterSet port (cheap,
+   shares skeleton) keeps even this identical.
+9. **ExternalBooleanEncodedValue.bits** — not order but FORMAT: nested JSON `{"bits":[..],
+   "wlen":N}` is pinned stored-graph metadata → GrowableBitSet port with identical field names
+   (see §3). No signoff needed — zero-diff by construction.
+
+Port list therefore: seeded int-keyed hash map (generic value) + seeded IntHashSet +
+IntScatterSet + LongIntScatterMap + LongScatterSet + GrowableBitSet + IndirectSort +
+LongArrayDeque + IntDouble shim. Shared probing/mixing skeleton; estimate ~1.2–1.8k lines Kotlin
+incl. KDoc + attribution headers, plus ~600–900 lines of new unit tests (each port gets an
+iteration-order pin test whose expected literals are GENERATED FROM CURRENT HPPC BEHAVIOR before
+the switch — this is the mechanical proof of order identity, complementing
+AndroidxCollectionDeterminismTest which guards the androidx side).
+
+### 5. Test footprint (core/src/test — never-change-tests rule)
+
+All 40 files need mechanical edits (every one both imports AND constructs hppc types); ZERO can
+stay untouched, but NONE changes meaning:
+- 30 files: import swap + construction swap only (`IntArrayList.from(...)` →
+  `mutableIntListOf(...)`, `new IntArrayList()` → `new MutableIntList()`); includes the
+  set-equality asserts (content-based equals on both sides — order-independent, meaning intact).
+- 4 files need small loop/buffer rewrites: EdgeBasedRoutingAlgorithmTest (1 IntCursor loop),
+  EdgeBasedTarjanSCCTest (5 cursor loops), TarjanSCCTest (cursor loop + `Arrays.sort(c.buffer)`
+  → `.content` slice or toArray), ArrayUtilTest (5× `.buffer` → `.content`/size-bounded).
+- 1 cast fix: RoutingAlgorithmTest (`(IntArrayList) refPath.calcNodes()`).
+- 2 files (WayToEdgeConverterTest, WayToEdgesMapTest) follow the `Iterator<IntCursor>` seam
+  redesign; RestrictionSetterTest + OSMRestrictionSetterTest construct `new BitSet(n)` →
+  GrowableBitSet (same ctor/set surface).
+- toString pin QueryGraphTest `getRemovedEdges().toString()=="[1]"` — androidx format identical,
+  no edit. GH-owned bitset toString pins (AbstractMyBitSetTest "{1, 12}", GHTBitSetTest) —
+  GHBitSet family keeps its own toString, unaffected.
+- 5 GH*-wrapper-using tests (elevation interpolator tests, GHUtilityTest, GraphHopperOSMTest,
+  BreadthFirst/DepthFirstSearchTest) need NO edit under the port strategy (FQCNs stable).
+- Every touched test file gets its own commit note per protocol rule 5.
+
+### 6. Consumer-module footprint (mechanical, one commit each)
+
+- tools: Measurement.java:541 local IntArrayList → MutableIntList; MiniGraphUI.java:377
+  IntIndexedContainer → IntList (GHBitSet/GHTBitSet imports unaffected).
+- map-matching: MapMatching.java:452-453 IntHashSet ×2 → MutableIntSet (membership only).
+- reader-gtfs: pom gains its own `com.carrotsearch:hppc` dependency (currently inherited from
+  core). Analysis.java: TarjanSCC results → List<MutableIntList> + GrowableBitSet loop rewrite
+  (the ONLY logic-shaped consumer edit; still mechanical iteration).
+- web/web-api/web-bundle/navigation: nothing.
+- root pom: hppc stays in dependencyManagement for reader-gtfs; core/pom.xml drops it at the end.
+
+### 7. Batch plan (each batch = one commit, gated; NEVER two maven runs concurrently)
+
+Gates: G1 = `mvn -B -pl core test` green; G2 = full `mvn -B clean test`; G3 = germany LOAD gate
+(kotlin core loads measurements/germany-gh-compat, anchors + route checksum 27749812 exact);
+G4 = paired A/B query bench (measurements/ab-bench.sh); G5 = full fresh germany import,
+ALL anchors exact.
+
+- **H1 — gap-fillers, no call sites** (GrowableBitSet, IndirectSort+comparator fun-interface,
+  LongArrayDeque, IntDouble shim) + unit tests + NOTICE.md entries. Gate G1.
+  Risk: low. Checksum impact: none (unused).
+- **H2 — hppc-layout hash ports, no call sites** (shared skeleton; seeded IntObject map +
+  IntHashSet; scatter IntSet/LongSet/LongIntMap) + order-pin tests with literals harvested from
+  live hppc (write the harvest test FIRST, commit the literals). Gate G1.
+  Risk: medium (subtle layout math) — but fully unit-testable against hppc side-by-side while
+  both are on the classpath. Checksum impact: none yet.
+- **H3 — rewire GH* wrappers onto the H2 ports** (FQCNs unchanged; drop hppc inheritance,
+  expose the audited method surface incl. inline forEach; BridgePathFinder result map → seeded
+  port(123)). Touches ~15 main files' imports at most. Gates G1+G2+G3.
+  Risk: THE critical batch — everything order-sensitive flips here in one reviewable step.
+  Checksum impact: ZERO expected; G3 proves it (turn costs + routes exercised by load-gate).
+- **H4 — order-critical scatter call sites** (RestrictionSetter, CHPreparationGraph.neighborSet,
+  RandomGraph, ExternalBooleanEncodedValue→GrowableBitSet + serializer test green). Gates
+  G1+G2+G3. Checksum impact: zero expected; if G3 differs → bisect within batch.
+- **H5 — lists** (IntArrayList/Long/Double/IndexedContainer → androidx across ~50 files incl.
+  public API Path/ReaderWay/ArrayUtil/TarjanSCC-results/QueryOverlay + the two
+  extends-IntArrayList refactors + `Iterator<IntCursor>` seam) + consumer edits (tools,
+  map-matching, reader-gtfs Analysis) + the 40 test files. Largest but most mechanical batch;
+  may split H5a core-internal / H5b public-API+consumers+tests. Gates G1 then G2.
+  Risk: medium (volume; `.content/._size` pokes; hot-path `Path.addEdge` etc.) — lists are
+  insertion-ordered, NO checksum risk by construction. Perf note: IntList.forEach/get inline
+  from Kotlin; hot loops already indexed.
+- **H6 — deques + BitSet call sites** (DepthFirstSearch, RoadDensityCalculator,
+  TarjanSCC/EdgeBasedTarjanSCC deques+bitsets+ISE guards, OSMReader encBits,
+  PrepareRoutingSubnetworks, BaseGraphNodesAndEdges, GraphHopper.kt, ArrayUtil.isPermutation).
+  Gates G1+G2. Checksum: none (bit arrays index-ordered).
+- **H7 — keyed-only hash sites → androidx** (OSMNodeData, WayToEdgesMap, storage/index sets,
+  RoundTripRouting, LandmarkStorage sets+forEach, EdgeBasedNodeContractor sets (+release()
+  decision), BridgePathFinder internal map, EdgeBasedTarjanSCC start-edge maps, QueryOverlay
+  scatter maps→shim, dem maps→shim, Triangulation, GHTBitSet internals). Gates G1+G2+G3.
+  Risk: medium — this batch bets on the §2 "keyed-only" audit; G3 catches a wrong verdict.
+- **H8 — drop hppc from core** (core/pom.xml removal; grep proves zero com.carrotsearch in
+  core; reader-gtfs own dep; NOTICE.md final review — hppc entry now covers the derived ports).
+  Gates G2 + G4 (paired A/B: CH prep + queries) + **G5 full fresh germany import — every
+  deterministic anchor EXACT** + spot `-Dtest=GraphHopperTest` before starting G5.
+- **H9 — docs**: pinned-behavior.md entries (elevation-interpolation order finding; "hash-port
+  iteration order = stored-graph format" rule), progress log update, real-route diff report
+  feeds the existing final checklist item.
+
+Batches expected to change deterministic outputs: NONE (that is the point of H2–H4). If any G3/G5
+gate differs, the offending site gets isolated into its own commit with an explicit
+"changes stored output — needs Peter signoff" callout before proceeding.
+
+### 8. Effort / risk estimate
+
+- New code: ~2–2.5k lines (ports + shims) + ~1k lines new tests. Call-site edits: ~75 main
+  files, 40 test files, 4 consumer files — mostly mechanical.
+- Sessions: H1+H2 ≈ 2, H3+H4 ≈ 1.5 (careful review + gates), H5 ≈ 2, H6+H7 ≈ 1.5, H8+H9 ≈ 1
+  (G5 germany import ≈ 5.5h wall-clock on this box, MMAP). Total ≈ 8 working sessions.
+- Perf: SPT maps and all order-critical containers keep hppc's exact algorithm (ported) → hot
+  routing paths are perf-neutral by construction; androidx sites are lists/keyed maps where
+  androidx's layout is comparable or better; G4 gates it. Budget stays ±3%/identical counts.
+- Biggest risks: (1) port-layout fidelity — mitigated by harvest-from-hppc order-pin tests in
+  H2 while hppc is still on the classpath; (2) the keyed-only audit being wrong somewhere —
+  mitigated by G3 after H3/H4/H7; (3) volume errors in H5 — mitigated by G2 and per-batch
+  commits for rollback.
+- Deviation from the earlier DECISION section (androidx + only 4 gap-fillers): the audit shows
+  order-identity, not just determinism, is required at 9 sites → hash-layout ports added.
+  DoubleArrayList gap turned out unnecessary (MutableDoubleList exists). IntArrayDeque count was
+  4 files not 1. This keeps Peter's androidx decision for ~85% of usages and confines the
+  hppc-derived code to `com.graphhopper.coll` with attribution, canary + order-pin tests.
+
+### 9. Signoff needed from Peter before H3
+
+- Confirm hybrid (Option A, zero-checksum) over Option B (accept androidx order + re-baseline
+  germany anchors + update pinned tests) — per-site list in §4.
+- `release()` semantics in CH contractors (free memory vs androidx clear-keeps-capacity).
+- reader-gtfs: own hppc dep (planned) — confirm.
 
 ## Adopted working defaults (2026-07-02, Peter AFK — override anytime)
 
