@@ -15,44 +15,36 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.util.details;
+package com.graphhopper.util.details
 
-import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.EdgeIteratorState
 
 /**
  * Return a String value from the key-values
  *
  * @author Robin Boldt
  */
-public class KVStringDetails extends AbstractPathDetailsBuilder {
+class KVStringDetails(name: String) : AbstractPathDetailsBuilder(name) {
 
-    private String curString;
-    private boolean initial = true;
+    private var curString: String? = null
+    private var initial = true
 
-    public KVStringDetails(String name) {
-        super(name);
-    }
-
-    @Override
-    public boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge) {
-        String value = (String) edge.getValue(getName());
+    override fun isEdgeDifferentToLastEdge(edge: EdgeIteratorState): Boolean {
+        val value = edge.getValue(name) as String?
         if (initial) {
-            curString = value;
-            initial = false;
-            return true;
+            curString = value
+            initial = false
+            return true
         } else if (curString == null) {
-            curString = value;
+            curString = value
             // do not create separate details if value stays null
-            return value != null;
-        } else if (!curString.equals(value)) {
-            curString = value;
-            return true;
+            return value != null
+        } else if (curString != value) {
+            curString = value
+            return true
         }
-        return false;
+        return false
     }
 
-    @Override
-    public Object getCurrentValue() {
-        return this.curString;
-    }
+    public override fun getCurrentValue(): Any? = curString
 }

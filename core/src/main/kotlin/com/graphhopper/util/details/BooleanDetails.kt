@@ -15,33 +15,23 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.util.details;
+package com.graphhopper.util.details
 
-import com.graphhopper.routing.ev.IntEncodedValue;
-import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.routing.ev.BooleanEncodedValue
+import com.graphhopper.util.EdgeIteratorState
 
-public class IntDetails extends AbstractPathDetailsBuilder {
+class BooleanDetails(name: String, private val boolEnc: BooleanEncodedValue) : AbstractPathDetailsBuilder(name) {
 
-    private final IntEncodedValue ev;
-    private Integer intVal;
+    private var boolValue: Boolean? = null
 
-    public IntDetails(String name, IntEncodedValue ev) {
-        super(name);
-        this.ev = ev;
-    }
-
-    @Override
-    protected Object getCurrentValue() {
-        return intVal;
-    }
-
-    @Override
-    public boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge) {
-        int val = edge.get(ev);
-        if (intVal == null || val != intVal) {
-            this.intVal = val;
-            return true;
+    override fun isEdgeDifferentToLastEdge(edge: EdgeIteratorState): Boolean {
+        val tmpVal = edge.get(boolEnc)
+        if (tmpVal != boolValue) {
+            this.boolValue = tmpVal
+            return true
         }
-        return false;
+        return false
     }
+
+    public override fun getCurrentValue(): Any? = boolValue
 }

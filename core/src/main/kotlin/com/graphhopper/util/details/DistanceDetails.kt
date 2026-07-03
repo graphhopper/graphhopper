@@ -15,33 +15,19 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.util.details;
+package com.graphhopper.util.details
 
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.EdgeIteratorState
+import com.graphhopper.util.Parameters.Details.DISTANCE
 
-public class BooleanDetails extends AbstractPathDetailsBuilder {
+class DistanceDetails : AbstractPathDetailsBuilder(DISTANCE) {
 
-    private final BooleanEncodedValue boolEnc;
-    private Boolean boolValue;
+    private var distance = 0.0
 
-    public BooleanDetails(String name, BooleanEncodedValue boolEnc) {
-        super(name);
-        this.boolEnc = boolEnc;
+    override fun isEdgeDifferentToLastEdge(edge: EdgeIteratorState): Boolean {
+        distance = edge.distance
+        return true
     }
 
-    @Override
-    public boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge) {
-        boolean tmpVal = edge.get(boolEnc);
-        if (boolValue == null || tmpVal != boolValue) {
-            this.boolValue = tmpVal;
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    public Object getCurrentValue() {
-        return this.boolValue;
-    }
+    public override fun getCurrentValue(): Any = distance
 }

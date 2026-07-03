@@ -111,7 +111,7 @@ open class DefaultBidirPathExtractor internal constructor(
     protected open fun onEdge(edge: Int, adjNode: Int, reverse: Boolean, prevOrNextEdge: Int) {
         val edgeState = graph.getEdgeIteratorState(edge, adjNode)!!
         path.addDistance_mm(edgeState.distance_mm)
-        path.addTime(GHUtility.calcMillisWithTurnMillis(weighting, edgeState, reverse, prevOrNextEdge))
+        path.addTime(GHUtility.calcMillisWithTurnMillis(weighting!!, edgeState, reverse, prevOrNextEdge))
         path.addEdge(edge)
     }
 

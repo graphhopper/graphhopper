@@ -16,58 +16,43 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.util.details;
+package com.graphhopper.util.details
 
-import com.graphhopper.coll.MapEntry;
-import com.graphhopper.util.EdgeIteratorState;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import com.graphhopper.coll.MapEntry
+import com.graphhopper.util.EdgeIteratorState
 
 /**
  * Simply returns the same value everywhere, useful to represent values that are the same between two (via-)points
  */
-public class ConstantDetailsBuilder extends AbstractPathDetailsBuilder {
-    private final Object value;
-    private boolean firstEdge = true;
-    private int lastIndex = -1;
+class ConstantDetailsBuilder(name: String, private val value: Any?) : AbstractPathDetailsBuilder(name) {
 
-    public ConstantDetailsBuilder(String name, Object value) {
-        super(name);
-        this.value = value;
-    }
+    private var firstEdge = true
+    private var lastIndex = -1
 
-    @Override
-    protected Object getCurrentValue() {
-        return value;
-    }
+    override fun getCurrentValue(): Any? = value
 
-    @Override
-    public boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge) {
+    override fun isEdgeDifferentToLastEdge(edge: EdgeIteratorState): Boolean {
         if (firstEdge) {
-            firstEdge = false;
-            return true;
+            firstEdge = false
+            return true
         } else
-            return false;
+            return false
     }
 
-    @Override
-    public void endInterval(int lastIndex) {
-        this.lastIndex = lastIndex;
-        super.endInterval(lastIndex);
+    override fun endInterval(lastIndex: Int) {
+        this.lastIndex = lastIndex
+        super.endInterval(lastIndex)
     }
 
-    @Override
-    public Map.Entry<String, List<PathDetail>> build() {
+    override fun build(): Map.Entry<String, List<PathDetail>> {
         if (firstEdge) {
             // #2915 if there was no edge at all we need to add a single entry manually here
             // #3007 we need to set the value but also the (empty) interval (first/last)
-            PathDetail p = new PathDetail(value);
-            p.setFirst(lastIndex);
-            p.setLast(lastIndex);
-            return new MapEntry<>(getName(), new ArrayList<>(List.of(p)));
+            val p = PathDetail(value)
+            p.first = lastIndex
+            p.last = lastIndex
+            return MapEntry(name, arrayListOf(p))
         }
-        return super.build();
+        return super.build()
     }
 }

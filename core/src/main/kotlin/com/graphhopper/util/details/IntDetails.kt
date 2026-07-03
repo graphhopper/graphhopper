@@ -15,34 +15,23 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.util.details;
+package com.graphhopper.util.details
 
-import com.graphhopper.routing.ev.StringEncodedValue;
-import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.routing.ev.IntEncodedValue
+import com.graphhopper.util.EdgeIteratorState
 
-public class StringDetails extends AbstractPathDetailsBuilder {
+class IntDetails(name: String, private val ev: IntEncodedValue) : AbstractPathDetailsBuilder(name) {
 
-    private final StringEncodedValue ev;
-    private String currentVal;
+    private var intVal: Int? = null
 
-    public StringDetails(String name, StringEncodedValue ev) {
-        super(name);
-        this.ev = ev;
-    }
+    override fun getCurrentValue(): Any? = intVal
 
-    @Override
-    protected Object getCurrentValue() {
-        return currentVal;
-    }
-
-    @Override
-    public boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge) {
-        String val = edge.get(ev);
-        // we can use the reference equality here
-        if (!val.equals(currentVal)) {
-            this.currentVal = val;
-            return true;
+    override fun isEdgeDifferentToLastEdge(edge: EdgeIteratorState): Boolean {
+        val value = edge.get(ev)
+        if (value != intVal) {
+            this.intVal = value
+            return true
         }
-        return false;
+        return false
     }
 }

@@ -15,51 +15,40 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.util.details;
+package com.graphhopper.util.details
 
-import com.graphhopper.coll.MapEntry;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import com.graphhopper.coll.MapEntry
 
 /**
  * Builds a PathDetail list, from values and intervals of a Path.
  *
  * @author Robin Boldt
  */
-public abstract class AbstractPathDetailsBuilder implements PathDetailsBuilder {
+abstract class AbstractPathDetailsBuilder(override val name: String) : PathDetailsBuilder {
 
-    private final String name;
-    private boolean isOpen = false;
-    private PathDetail currentDetail;
-    private final List<PathDetail> pathDetails = new ArrayList<>();
-
-    public AbstractPathDetailsBuilder(String name) {
-        this.name = name;
-    }
-
+    private var isOpen = false
+    private var currentDetail: PathDetail? = null
+    private val pathDetails = ArrayList<PathDetail>()
 
     /**
      * The value of the Path at this moment, that should be stored in the PathDetail when calling startInterval
      */
-    protected abstract Object getCurrentValue();
+    protected abstract fun getCurrentValue(): Any?
 
     /**
-     * It is only possible to open one interval at a time. Calling <code>startInterval</code> when
+     * It is only possible to open one interval at a time. Calling `startInterval` when
      * the interval is already open results in an Exception.
      *
      * @param firstIndex the index the PathDetail starts
      */
-    public void startInterval(int firstIndex) {
-        Object value = getCurrentValue();
+    override fun startInterval(firstIndex: Int) {
+        val value = getCurrentValue()
         if (isOpen)
-            throw new IllegalStateException("PathDetailsBuilder is already in an open state with value: " + currentDetail.getValue()
-                    + " trying to open a new one with value: " + value);
+            throw IllegalStateException("PathDetailsBuilder is already in an open state with value: " + currentDetail!!.value
+                    + " trying to open a new one with value: " + value)
 
-        currentDetail = new PathDetail(value);
-        currentDetail.setFirst(firstIndex);
-        isOpen = true;
+        currentDetail = PathDetail(value).also { it.first = firstIndex }
+        isOpen = true
     }
 
     /**
@@ -68,25 +57,16 @@ public abstract class AbstractPathDetailsBuilder implements PathDetailsBuilder {
      *
      * @param lastIndex the index the PathDetail ends
      */
-    public void endInterval(int lastIndex) {
+    override fun endInterval(lastIndex: Int) {
         if (isOpen) {
-            currentDetail.setLast(lastIndex);
-            pathDetails.add(currentDetail);
+            val detail = currentDetail!!
+            detail.last = lastIndex
+            pathDetails.add(detail)
         }
-        isOpen = false;
+        isOpen = false
     }
 
-    public Map.Entry<String, List<PathDetail>> build() {
-        return new MapEntry<>(getName(), pathDetails);
-    }
+    override fun build(): Map.Entry<String, List<PathDetail>> = MapEntry(name, pathDetails)
 
-    @Override
-    public String getName() {
-        return name;
-    }
-
-    @Override
-    public String toString() {
-        return getName();
-    }
+    override fun toString(): String = name
 }

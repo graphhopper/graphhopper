@@ -15,34 +15,24 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.util.details;
+package com.graphhopper.util.details
 
-import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
-import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState
+import com.graphhopper.util.EdgeIteratorState
+import com.graphhopper.util.Parameters.Details.EDGE_KEY
 
-import static com.graphhopper.util.Parameters.Details.EDGE_KEY;
+class EdgeKeyDetails : AbstractPathDetailsBuilder(EDGE_KEY) {
 
-public class EdgeKeyDetails extends AbstractPathDetailsBuilder {
+    private var edgeKey = -1
 
-    private int edgeKey = -1;
-
-    public EdgeKeyDetails() {
-        super(EDGE_KEY);
-    }
-
-    @Override
-    public boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge) {
-        int newKey = edge instanceof VirtualEdgeIteratorState
-                ? ((VirtualEdgeIteratorState) edge).getOriginalEdgeKey() : edge.getEdgeKey();
+    override fun isEdgeDifferentToLastEdge(edge: EdgeIteratorState): Boolean {
+        val newKey = if (edge is VirtualEdgeIteratorState) edge.originalEdgeKey else edge.edgeKey
         if (newKey != edgeKey) { // do not duplicate path detail if going over via point (two virtual edges)
-            edgeKey = newKey;
-            return true;
+            edgeKey = newKey
+            return true
         }
-        return false;
+        return false
     }
 
-    @Override
-    public Object getCurrentValue() {
-        return this.edgeKey;
-    }
+    public override fun getCurrentValue(): Any = edgeKey
 }

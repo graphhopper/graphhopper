@@ -15,34 +15,24 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.util.details;
+package com.graphhopper.util.details
 
-import com.graphhopper.routing.ev.EnumEncodedValue;
-import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.routing.ev.StringEncodedValue
+import com.graphhopper.util.EdgeIteratorState
 
-public class EnumDetails<E extends Enum<?>> extends AbstractPathDetailsBuilder {
+class StringDetails(name: String, private val ev: StringEncodedValue) : AbstractPathDetailsBuilder(name) {
 
-    private final EnumEncodedValue<E> ev;
-    private E objVal;
+    private var currentVal: String? = null
 
-    public EnumDetails(String name, EnumEncodedValue<E> ev) {
-        super(name);
-        this.ev = ev;
-    }
+    override fun getCurrentValue(): Any? = currentVal
 
-    @Override
-    protected Object getCurrentValue() {
-        return objVal.toString();
-    }
-
-    @Override
-    public boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge) {
-        E val = edge.get(ev);
-        // we can use the reference equality here
-        if (val != objVal) {
-            this.objVal = val;
-            return true;
+    override fun isEdgeDifferentToLastEdge(edge: EdgeIteratorState): Boolean {
+        // !! throws an NPE for a null value, just like value.equals(...) did in Java
+        val value: String = edge.get(ev)!!
+        if (value != currentVal) {
+            this.currentVal = value
+            return true
         }
-        return false;
+        return false
     }
 }

@@ -15,28 +15,24 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.util.details;
+package com.graphhopper.util.details
 
-import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.routing.ev.EnumEncodedValue
+import com.graphhopper.util.EdgeIteratorState
 
-import static com.graphhopper.util.Parameters.Details.DISTANCE;
+class EnumDetails<E : Enum<*>>(name: String, private val ev: EnumEncodedValue<E>) : AbstractPathDetailsBuilder(name) {
 
-public class DistanceDetails extends AbstractPathDetailsBuilder {
+    private var objVal: E? = null
 
-    private double distance = 0;
+    override fun getCurrentValue(): Any = objVal!!.toString()
 
-    public DistanceDetails() {
-        super(DISTANCE);
-    }
-
-    @Override
-    public boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge) {
-        distance = edge.getDistance();
-        return true;
-    }
-
-    @Override
-    public Object getCurrentValue() {
-        return this.distance;
+    override fun isEdgeDifferentToLastEdge(edge: EdgeIteratorState): Boolean {
+        val value = edge.get(ev)
+        // we can use the reference equality here
+        if (value !== objVal) {
+            this.objVal = value
+            return true
+        }
+        return false
     }
 }

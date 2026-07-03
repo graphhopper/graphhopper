@@ -15,12 +15,9 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.util.details;
+package com.graphhopper.util.details
 
-import com.graphhopper.util.EdgeIteratorState;
-
-import java.util.List;
-import java.util.Map;
+import com.graphhopper.util.EdgeIteratorState
 
 /**
  * Calculate details for a path and keeps the AbstractPathDetailsBuilder corresponding to this detail.
@@ -29,16 +26,15 @@ import java.util.Map;
  *
  * @author Robin Boldt
  */
-public interface PathDetailsBuilder {
+interface PathDetailsBuilder {
 
-    boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge);
+    fun isEdgeDifferentToLastEdge(edge: EdgeIteratorState): Boolean
 
-    Map.Entry<String, List<PathDetail>> build();
+    fun build(): Map.Entry<String, List<PathDetail>>
 
-    void startInterval(int firstIndex);
+    fun startInterval(firstIndex: Int)
 
-    void endInterval(int lastIndex);
+    fun endInterval(lastIndex: Int)
 
-    String getName();
-
+    val name: String
 }
