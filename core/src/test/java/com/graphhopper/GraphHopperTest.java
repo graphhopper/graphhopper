@@ -2396,7 +2396,7 @@ public class GraphHopperTest {
         {
             GraphHopper hopper = new GraphHopper() {
                 @Override
-                void interpolateBridgesTunnelsAndFerries() {
+                protected void interpolateBridgesTunnelsAndFerries() {
                     counter.incrementAndGet();
                     super.interpolateBridgesTunnelsAndFerries();
                 }
@@ -2414,7 +2414,7 @@ public class GraphHopperTest {
         {
             GraphHopper hopper = new GraphHopper() {
                 @Override
-                void interpolateBridgesTunnelsAndFerries() {
+                protected void interpolateBridgesTunnelsAndFerries() {
                     counter.incrementAndGet();
                     super.interpolateBridgesTunnelsAndFerries();
                 }

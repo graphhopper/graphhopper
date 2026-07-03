@@ -98,6 +98,16 @@ independently of that migration.
   PrepareLandmarksTest grid).
   Test: `core/.../routing/lm/LmPinnedBehaviorTest.java`. (2026-07-03)
 
+- **CustomArea.properties may be null** — a GeoJSON feature is not required to carry a
+  "properties" member, and `CustomArea.fromJsonFeature` must accept such features:
+  `GraphHopper#readCustomAreas` feeds every feature of `custom_areas.directory` files through it
+  (web's RouteResourceCustomModelTest area file has one), and `OSMReader` explicitly
+  null-checks `customArea.getProperties()` when matching country subdivisions. The Kotlin
+  conversion of `CustomArea` had tightened the field to non-null, which crashed server startup
+  with such area files; no core test covered it (only a web HTTP test caught it at the 100%
+  full-repo gate).
+  Test: `core/.../routing/util/CustomAreaTest.java`. (2026-07-03)
+
 ## Recorded only (not externally observable)
 
 - **GHTBitSet passes the float literal 0.7f into a double load-factor parameter** — the

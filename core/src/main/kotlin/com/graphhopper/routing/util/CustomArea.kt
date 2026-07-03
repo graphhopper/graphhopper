@@ -21,7 +21,9 @@ import com.graphhopper.util.JsonFeature
 import org.locationtech.jts.geom.Polygon
 
 class CustomArea(
-    val properties: Map<String, Any>,
+    // may be null: JsonFeatures without a "properties" member are allowed (matches the old Java contract,
+    // OSMReader skips such areas)
+    val properties: Map<String, Any>?,
     override val borders: List<Polygon>
 ) : AreaIndex.Area {
 

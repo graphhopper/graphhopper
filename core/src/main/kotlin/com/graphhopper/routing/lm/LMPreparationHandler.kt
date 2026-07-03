@@ -77,7 +77,7 @@ class LMPreparationHandler {
         logDetails = ghConfig.getBool(Landmark.PREPARE + "log_details", false)
         minNodes = ghConfig.getInt(Landmark.PREPARE + "min_network_size", -1)
 
-        for (loc in ghConfig.getString(Landmark.PREPARE + "suggestions_location", "").split(",")) {
+        for (loc in ghConfig.getString(Landmark.PREPARE + "suggestions_location", "")!!.split(",")) {
             if (!loc.trim().isEmpty())
                 lmSuggestionsLocations.add(loc.trim())
         }
@@ -85,7 +85,7 @@ class LMPreparationHandler {
         if (!isEnabled())
             return
 
-        val splitAreaLocation = ghConfig.getString(Landmark.PREPARE + "split_area_location", "")
+        val splitAreaLocation = ghConfig.getString(Landmark.PREPARE + "split_area_location", "")!!
         val landmarkSplittingFeatureCollection = loadLandmarkSplittingFeatureCollection(splitAreaLocation)
         if (landmarkSplittingFeatureCollection != null && !landmarkSplittingFeatureCollection.features.isEmpty()) {
             val splitAreas = landmarkSplittingFeatureCollection.features
