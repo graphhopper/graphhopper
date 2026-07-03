@@ -352,6 +352,14 @@ new discoveries get a pinning test AND an entry there.
   our own AST (idea-level janino attribution stays where it was: expression package +
   NOTICE.md). App-side gradle wiring out of scope (documented in the tool's KDoc). Gates
   green (core clean test, web -am test-compile).
+- [x] 2026-07-03 follow-up: ClosureBackendDifferentialTest now reuses Stage5Fixtures'
+  createRandomGraph/setRandomValue (Stage5Fixtures made public) so its int/decimal EV fill
+  uses the STORABLE range too — the old maxOrMaxStorable-based fill shrank the range to the
+  running max, collapsing int EVs toward their minimum over the edge sequence (partial teeth
+  only: an int-division mutation probe was caught, but only via early edges). Seeds unchanged.
+  Mutation probe re-run after the change (int/int DIV promoted to double in TypedCompiler):
+  caught by conditionTypingParity (<hike_rating / 2 == 1>) + randomModels; reverted. Gate
+  green (core clean test 3239).
 - [x] 2026-07-03 custom-model STAGE 3 DONE: shared expression FRONT-END in new KMP-clean
   package core/.../weighting/custom/expression/ (hand-rolled ExpressionLexer + recursive-descent
   ExpressionParser -> ExprNode sealed AST; ExpressionValidator with (a) parse-level walkers

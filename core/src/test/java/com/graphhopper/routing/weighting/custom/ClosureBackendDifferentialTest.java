@@ -24,9 +24,8 @@ import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.search.KVStorage;
+import com.graphhopper.routing.weighting.custom.generate.Stage5Fixtures;
 import com.graphhopper.storage.BaseGraph;
-import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -60,8 +59,7 @@ public class ClosureBackendDifferentialTest {
 
     static final long GRAPH_SEED = 123L;
     static final long MODEL_SEED = 20260703L;
-    static final int NODES = 40;
-    static final int EDGES = 120;
+    static final int NODES = Stage5Fixtures.NODES;
     static final int RANDOM_MODELS = 120;
 
     static EncodingManager em;
@@ -98,65 +96,16 @@ public class ClosureBackendDifferentialTest {
                 .add(BikeRoadAccess.create()).add(FootRoadAccess.create())
                 .add(HikeRating.create()).add(MtbRating.create())
                 .build();
-        graph = createRandomGraph(new Random(GRAPH_SEED));
+        // Stage5Fixtures fills int/decimal EVs across their STORABLE range — a
+        // maxOrMaxStorable-based fill would shrink the range to the running max and
+        // collapse int EVs toward their minimum, under-exercising the int-division/
+        // comparison corners of the corpus.
+        graph = Stage5Fixtures.createRandomGraph(em, new Random(GRAPH_SEED));
     }
 
     @AfterEach
     void restoreDefaultBackend() {
         CustomWeightingBackends.setDefault(JaninoBackend.INSTANCE);
-    }
-
-    static BaseGraph createRandomGraph(Random rnd) {
-        BaseGraph g = new BaseGraph.Builder(em).create();
-        NodeAccess na = g.getNodeAccess();
-        for (int i = 0; i < NODES; i++)
-            na.setNode(i, 48.0 + rnd.nextDouble() * 0.3, 11.2 + rnd.nextDouble() * 0.7);
-        String[] names = {"Main St", "Oak Ave", "Elm St", "Hauptstrasse"};
-        int created = 0;
-        while (created < EDGES) {
-            int a = rnd.nextInt(NODES), b = rnd.nextInt(NODES);
-            if (a == b) continue;
-            EdgeIteratorState edge = g.edge(a, b).setDistance(10 + rnd.nextInt(990));
-            for (EncodedValue ev : em.getEncodedValues())
-                setRandomValue(edge, ev, rnd);
-            if (rnd.nextInt(3) > 0)
-                edge.setKeyValues(Map.of(Parameters.Details.STREET_NAME, new KVStorage.KValue(names[rnd.nextInt(names.length)])));
-            created++;
-        }
-        return g;
-    }
-
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    static void setRandomValue(EdgeIteratorState edge, EncodedValue ev, Random rnd) {
-        // order matters: enum/boolean/decimal implementations also implement IntEncodedValue
-        if (ev instanceof EnumEncodedValue) {
-            EnumEncodedValue ee = (EnumEncodedValue) ev;
-            Object[] values = ee.getValues();
-            if (ee.isStoreTwoDirections())
-                edge.set(ee, (Enum) values[rnd.nextInt(values.length)], (Enum) values[rnd.nextInt(values.length)]);
-            else
-                edge.set(ee, (Enum) values[rnd.nextInt(values.length)]);
-        } else if (ev instanceof BooleanEncodedValue) {
-            BooleanEncodedValue be = (BooleanEncodedValue) ev;
-            if (be.isStoreTwoDirections()) edge.set(be, rnd.nextBoolean(), rnd.nextBoolean());
-            else edge.set(be, rnd.nextBoolean());
-        } else if (ev instanceof DecimalEncodedValue) {
-            DecimalEncodedValue de = (DecimalEncodedValue) ev;
-            double min = de.getMinStorableDecimal();
-            double max = de.getMaxOrMaxStorableDecimal();
-            if (Double.isInfinite(max)) max = 150;
-            max = Math.min(max, 150);
-            double v1 = min + rnd.nextDouble() * (max - min);
-            if (de.isStoreTwoDirections()) edge.set(de, v1, min + rnd.nextDouble() * (max - min));
-            else edge.set(de, v1);
-        } else if (ev instanceof IntEncodedValue) {
-            IntEncodedValue ie = (IntEncodedValue) ev;
-            int min = Math.max(ie.getMinStorableInt(), -100);
-            int max = Math.min(ie.getMaxOrMaxStorableInt(), 100);
-            int v1 = min + rnd.nextInt(max - min + 1);
-            if (ie.isStoreTwoDirections()) edge.set(ie, v1, min + rnd.nextInt(max - min + 1));
-            else edge.set(ie, v1);
-        }
     }
 
     // ------------------------------------------------------------------

@@ -38,13 +38,13 @@ import static com.graphhopper.json.Statement.Op.*;
  * Shared fixtures for the stage-5 tests (SourceGeneratorTest + RegistryBackendDifferentialTest):
  * the encoding manager both the checked-in pre-generated classes and the golden sources were
  * generated against, the "kitchen sink" custom model covering the typed-emission corners, and
- * the randomized-but-seeded graph of the differential harness (mirrors
- * ClosureBackendDifferentialTest's graph construction).
+ * the randomized-but-seeded graph construction of the differential harnesses (also reused by
+ * ClosureBackendDifferentialTest — the fill must stay STORABLE-range based, see setRandomValue).
  */
-class Stage5Fixtures {
+public class Stage5Fixtures {
 
     static final long GRAPH_SEED = 123L;
-    static final int NODES = 40;
+    public static final int NODES = 40;
     static final int EDGES = 120;
 
     static EncodingManager createEncodingManager() {
@@ -108,8 +108,8 @@ class Stage5Fixtures {
         return collection;
     }
 
-    /** Mirrors ClosureBackendDifferentialTest.createRandomGraph (fixed seed). */
-    static BaseGraph createRandomGraph(EncodingManager em, Random rnd) {
+    /** The shared random-graph construction of the differential harnesses (fixed seed). */
+    public static BaseGraph createRandomGraph(EncodingManager em, Random rnd) {
         BaseGraph g = new BaseGraph.Builder(em).create();
         NodeAccess na = g.getNodeAccess();
         for (int i = 0; i < NODES; i++)
@@ -130,7 +130,7 @@ class Stage5Fixtures {
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    static void setRandomValue(EdgeIteratorState edge, EncodedValue ev, Random rnd) {
+    public static void setRandomValue(EdgeIteratorState edge, EncodedValue ev, Random rnd) {
         // order matters: enum/boolean/decimal implementations also implement IntEncodedValue
         if (ev instanceof EnumEncodedValue) {
             EnumEncodedValue ee = (EnumEncodedValue) ev;
