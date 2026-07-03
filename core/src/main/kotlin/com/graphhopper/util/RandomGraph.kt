@@ -20,7 +20,7 @@ package com.graphhopper.util
 
 import com.carrotsearch.hppc.IntHashSet
 import com.carrotsearch.hppc.IntSet
-import com.carrotsearch.hppc.LongArrayList
+import com.graphhopper.coll.primitive.LongArrayList
 import com.graphhopper.coll.primitive.LongScatterSet
 import com.graphhopper.routing.ev.DecimalEncodedValue
 import com.graphhopper.storage.BaseGraph

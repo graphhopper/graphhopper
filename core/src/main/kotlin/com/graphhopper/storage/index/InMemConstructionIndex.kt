@@ -17,7 +17,7 @@
  */
 package com.graphhopper.storage.index
 
-import com.carrotsearch.hppc.IntArrayList
+import com.graphhopper.coll.primitive.IntArrayList
 import com.graphhopper.geohash.SpatialKeyAlgo
 import com.graphhopper.util.DistancePlaneProjection.Companion.DIST_PLANE
 import org.locationtech.jts.geom.Coordinate

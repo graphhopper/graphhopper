@@ -18,7 +18,7 @@
 
 package com.graphhopper.coll;
 
-import com.carrotsearch.hppc.IntArrayList;
+import com.graphhopper.coll.primitive.IntArrayList;
 import com.carrotsearch.hppc.IntHashSet;
 import com.carrotsearch.hppc.IntSet;
 import org.junit.jupiter.api.Test;

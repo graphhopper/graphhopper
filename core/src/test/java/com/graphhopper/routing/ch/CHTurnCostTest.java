@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.ch;
 
-import com.carrotsearch.hppc.IntArrayList;
+import com.graphhopper.coll.primitive.IntArrayList;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.DijkstraBidirectionEdgeCHNoSOD;
 import com.graphhopper.routing.Path;

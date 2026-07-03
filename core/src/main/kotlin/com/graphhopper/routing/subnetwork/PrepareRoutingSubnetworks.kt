@@ -18,7 +18,7 @@
 package com.graphhopper.routing.subnetwork
 
 import com.carrotsearch.hppc.BitSet
-import com.carrotsearch.hppc.IntArrayList
+import com.graphhopper.coll.primitive.IntArrayList
 import com.graphhopper.routing.ev.BooleanEncodedValue
 import com.graphhopper.routing.weighting.Weighting
 import com.graphhopper.storage.BaseGraph

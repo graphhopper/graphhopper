@@ -19,8 +19,8 @@ package com.graphhopper
 
 import com.bedatadriven.jackson.datatype.jts.JtsModule
 import com.carrotsearch.hppc.BitSet
-import com.carrotsearch.hppc.IntArrayList
-import com.carrotsearch.hppc.LongArrayList
+import com.graphhopper.coll.primitive.IntArrayList
+import com.graphhopper.coll.primitive.LongArrayList
 import com.carrotsearch.hppc.sorting.IndirectComparator
 import com.carrotsearch.hppc.sorting.IndirectSort
 import com.fasterxml.jackson.databind.ObjectMapper

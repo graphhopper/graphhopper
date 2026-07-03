@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.ev
 
-import com.carrotsearch.hppc.IntArrayList
+import com.graphhopper.coll.primitive.IntArrayList
 
 open class ArrayEdgeIntAccess(private val intsPerEdge: Int) : EdgeIntAccess {
     private val arr = IntArrayList()

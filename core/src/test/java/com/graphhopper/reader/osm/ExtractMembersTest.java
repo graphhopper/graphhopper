@@ -18,7 +18,7 @@
 
 package com.graphhopper.reader.osm;
 
-import com.carrotsearch.hppc.LongArrayList;
+import com.graphhopper.coll.primitive.LongArrayList;
 import com.graphhopper.reader.ReaderRelation;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

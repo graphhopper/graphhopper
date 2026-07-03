@@ -17,8 +17,8 @@
  */
 package com.graphhopper.routing
 
-import com.carrotsearch.hppc.IntArrayList
-import com.carrotsearch.hppc.IntIndexedContainer
+import com.graphhopper.coll.primitive.IntArrayList
+import com.graphhopper.coll.primitive.IntIndexedContainer
 import com.graphhopper.storage.Graph
 import com.graphhopper.storage.NodeAccess
 import com.graphhopper.util.EdgeIterator

@@ -18,7 +18,7 @@
 
 package com.graphhopper.routing;
 
-import com.carrotsearch.hppc.IntArrayList;
+import com.graphhopper.coll.primitive.IntArrayList;
 import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;

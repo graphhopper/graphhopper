@@ -18,10 +18,10 @@
 
 package com.graphhopper.reader.osm
 
-import com.carrotsearch.hppc.IntArrayList
-import com.carrotsearch.hppc.LongArrayList
+import com.graphhopper.coll.primitive.IntArrayList
+import com.graphhopper.coll.primitive.LongArrayList
 import com.carrotsearch.hppc.LongHashSet
-import com.carrotsearch.hppc.cursors.IntCursor
+import com.graphhopper.coll.primitive.IntCursor
 import com.graphhopper.reader.ReaderElement
 import com.graphhopper.reader.ReaderRelation
 import com.graphhopper.reader.osm.RestrictionType.NO
@@ -97,7 +97,9 @@ object OSMRestrictionConverter {
 
     private fun containsDuplicateWays(restrictionMembers: RestrictionMembers): Boolean {
         val allWays = restrictionMembers.getAllWays()
-        val uniqueWays = LongHashSet(allWays)
+        val uniqueWays = LongHashSet(allWays.size())
+        for (c in allWays)
+            uniqueWays.add(c.value)
         return uniqueWays.size() != allWays.size()
     }
 

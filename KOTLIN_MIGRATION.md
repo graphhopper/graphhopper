@@ -377,6 +377,41 @@ new discoveries get a pinning test AND an entry there.
   Still-hppc scatter usages left for H6/H7 by design: WayToEdgesMap, OSMNodeData,
   EdgeBasedTarjanSCC:448, QueryOverlay.edgesSet, RoadDensityCalculator (all keyed/membership
   per the §2 audit).
+- [x] 2026-07-03 HPPC switch batch H5 DONE (insertion-ordered list family + public API).
+  ArrayUtil STRATEGY: because the H5-CORRECTION confirmed androidx MutableIntList's
+  `content`/`_size` are `internal` (inaccessible) and it lacks `reverse`/`subList`/public
+  buffer/`release`, the LEAST-fragile path is exact hppc-layout ports in coll.primitive rather
+  than androidx: NEW `IntArrayList`/`LongArrayList`/`DoubleArrayList` (public `buffer`/
+  `elementsCount`, `release()`, `from`, iterator→port `IntCursor`/`LongCursor`/`DoubleCursor`,
+  and the exact BoundedProportionalArraySizingStrategy growth so ArrayUtilTest's `buffer.length`
+  asserts hold) + read-interfaces `IntContainer`/`IntIndexedContainer`/`LongContainer`/
+  `LongIndexedContainer`. Consequence: migration is mechanical import swaps — ArrayUtil's
+  buffer-pokes, `curr.elementsCount-=2`, `.buffer`/cursor test loops, and `.release()` sites all
+  compile UNCHANGED (release() preserved on the port ⇒ no clear() swap needed, identical
+  semantics); the two extends-IntArrayList classes stay `: IntArrayList(...)` (port is `open`).
+  Migrated (main, 38 import-swaps + seams): Path.getEdges/setEdges/calcNodes, ReaderWay.getNodes,
+  ArrayUtil (all 16 helpers), GHUtility, WayToEdgeConverter+WayToEdgesMap (Iterator<IntCursor>
+  seam kept, cursor type→port; WayToEdgesMap's LongIntScatterMap stays hppc/H7),
+  MultiplePointsNotFoundException, QueryOverlay.adjustValues, AvoidEdgesWeighting.setAvoidedEdges
+  (IntSet→port IntHashSet) + RoundTripRouting, TarjanSCC/EdgeBasedTarjanSCC ConnectedComponents
+  (components List<IntArrayList>→port; singleNode/EdgeComponents BitSet→coll.GrowableBitSet + ISE
+  guards updated to check GrowableBitSet), CHPreparationGraph/witness searchers/DijkstraOneToMany/
+  ArrayEdgeIntAccess/TurnCostStorage/InMem*Index/RestrictionSetter/LandmarkStorage/QueryGraph*/
+  PbfBlobDecoder/Bridge*/Restriction*/Heading/EdgeRestrictions/ViaRouting/GraphHopper.kt/etc.
+  DECISION: IntArrayDeque, LongArrayDeque, and the INTERNAL TarjanSCC bitsets (nodeOnStack,
+  TarjanArrayIntSet) stay hppc (plan's H6) — only the ConnectedComponents public BitSet leak
+  (consumed by reader-gtfs Analysis's iterator loop) moved. Consumers (mechanical): tools
+  Measurement (IntArrayList) + MiniGraphUI (IntIndexedContainer), map-matching MapMatching
+  (IntHashSet→port), reader-gtfs Analysis (IntArrayList/IntCursor→port, BitSetIterator→
+  GrowableBitSetIterator). 40 core test files: pure import swaps (incl. 2 static `from` imports;
+  HashPortHppcParityTest/GapFillerHppcParityTest KEPT on hppc). ASSERTIONS UNTOUCHED — `.buffer`/
+  cursor-loop/`Arrays.sort(c.buffer)` test code needed no rewrite thanks to the port shape. NEW
+  ListPortHppcParityTest (differential vs live hppc: growth/buffer.length, from, toArray,
+  toString, hashCode, iteration, insert/set/remove — dies in H8). Gates: core clean test green
+  (211 report files, 0 failures/errors); web/tools/map-matching/reader-gtfs/web-bundle/navigation
+  -am test-compile green; reader-gtfs+web test green (AnalysisTest exercises GrowableBitSetIterator);
+  germany load-gate (germany-gh-compat, count=1000, MMAP, -Xmx3g, clean=false) ALL 30 checksums
+  BIT-IDENTICAL to h4-gate.log — routingCH 5603941, routingLM8 270582 (log: measurements/h5-gate.log).
 - [ ] REMAINING WORK: (3) HPPC→androidx.collection
   call-site switch + gap-fillers + canary + perf gate, then drop hppc from core (reader-gtfs
   declares its own) — SCOPED 2026-07-03, full execution plan in section

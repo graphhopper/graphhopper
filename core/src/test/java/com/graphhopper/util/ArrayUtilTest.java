@@ -18,13 +18,13 @@
 
 package com.graphhopper.util;
 
-import com.carrotsearch.hppc.IntArrayList;
+import com.graphhopper.coll.primitive.IntArrayList;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Random;
 
-import static com.carrotsearch.hppc.IntArrayList.from;
+import static com.graphhopper.coll.primitive.IntArrayList.from;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ArrayUtilTest {

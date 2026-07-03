@@ -18,8 +18,8 @@
 
 package com.graphhopper.routing.querygraph
 
-import com.carrotsearch.hppc.DoubleArrayList
-import com.carrotsearch.hppc.IntArrayList
+import com.graphhopper.coll.primitive.DoubleArrayList
+import com.graphhopper.coll.primitive.IntArrayList
 import com.carrotsearch.hppc.IntDoubleMap
 import com.carrotsearch.hppc.IntDoubleScatterMap
 import com.carrotsearch.hppc.IntLongMap
@@ -28,7 +28,7 @@ import com.carrotsearch.hppc.IntObjectMap
 import com.carrotsearch.hppc.IntObjectScatterMap
 import com.carrotsearch.hppc.IntScatterSet
 import com.carrotsearch.hppc.IntSet
-import com.carrotsearch.hppc.LongArrayList
+import com.graphhopper.coll.primitive.LongArrayList
 import com.graphhopper.coll.GHIntObjectHashMap
 import com.graphhopper.routing.weighting.Weighting
 import com.graphhopper.storage.BaseGraph

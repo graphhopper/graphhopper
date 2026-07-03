@@ -10,7 +10,9 @@ The core module includes the following additional software:
  * com.carrotsearch:hppc (Apache license); additionally, com.graphhopper.coll.GrowableBitSet and most
    classes in com.graphhopper.coll.primitive are Kotlin ports of HPPC 0.8.1 code: BitSet/BitSetIterator
    (themselves derived from Apache Lucene's OpenBitSet, Apache license), IndirectSort/IndirectComparator,
-   LongArrayDeque including the BoundedProportionalArraySizingStrategy growth policy, and the hash
+   the insertion-ordered array lists Int/Long/DoubleArrayList with their Int/Long/DoubleCursor and
+   Int/Long container interfaces, LongArrayDeque — all sharing hppc's
+   BoundedProportionalArraySizingStrategy growth policy — and the hash
    containers Int/LongObjectHashMap, IntLong/LongLongHashMap, ObjectIntHashMap, Int/LongHashSet,
    Int/LongScatterSet, LongIntScatterMap plus their shared internals (BitMixer, HashContainers,
    HashOrderMixing) — ported with hppc's exact layout so hash-iteration order stays bit-identical

@@ -1,8 +1,8 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.carrotsearch.hppc.BitSet;
-import com.carrotsearch.hppc.IntArrayList;
-import com.carrotsearch.hppc.IntIndexedContainer;
+import com.graphhopper.coll.primitive.IntArrayList;
+import com.graphhopper.coll.primitive.IntIndexedContainer;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.ev.BooleanEncodedValue;

@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.ch
 
-import com.carrotsearch.hppc.IntArrayList
+import com.graphhopper.coll.primitive.IntArrayList
 import com.graphhopper.apache.commons.collections.IntFloatBinaryHeap
 import com.graphhopper.util.Helper
 

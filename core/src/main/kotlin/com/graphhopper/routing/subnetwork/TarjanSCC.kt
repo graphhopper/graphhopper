@@ -20,7 +20,8 @@ package com.graphhopper.routing.subnetwork
 
 import com.carrotsearch.hppc.BitSet
 import com.carrotsearch.hppc.IntArrayDeque
-import com.carrotsearch.hppc.IntArrayList
+import com.graphhopper.coll.GrowableBitSet
+import com.graphhopper.coll.primitive.IntArrayList
 import com.carrotsearch.hppc.LongArrayDeque
 import com.graphhopper.routing.util.EdgeFilter
 import com.graphhopper.storage.Graph
@@ -260,7 +261,7 @@ class TarjanSCC private constructor(
          * The set of nodes that form their own (single-node) component. If [TarjanSCC.excludeSingleNodeComponents]
          * is enabled this set will be empty.
          */
-        val singleNodeComponents: BitSet = BitSet(max(nodes, 0).toLong())
+        val singleNodeComponents: GrowableBitSet = GrowableBitSet(max(nodes, 0).toLong())
 
         /**
          * A reference to the biggest component contained in [components] or an empty list if there are
@@ -274,8 +275,8 @@ class TarjanSCC private constructor(
         internal var numNodes = 0
 
         init {
-            if (!singleNodeComponents.javaClass.name.contains("hppc"))
-                throw IllegalStateException("Was meant to be hppc BitSet")
+            if (!singleNodeComponents.javaClass.name.contains("GrowableBitSet"))
+                throw IllegalStateException("Was meant to be a growable bit set")
         }
 
         /**

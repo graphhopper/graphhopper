@@ -17,7 +17,7 @@
  */
 package com.graphhopper.storage;
 
-import com.carrotsearch.hppc.IntArrayList;
+import com.graphhopper.coll.primitive.IntArrayList;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.search.KVStorage.KValue;

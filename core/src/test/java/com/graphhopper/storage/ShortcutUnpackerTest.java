@@ -1,7 +1,7 @@
 package com.graphhopper.storage;
 
-import com.carrotsearch.hppc.DoubleArrayList;
-import com.carrotsearch.hppc.IntArrayList;
+import com.graphhopper.coll.primitive.DoubleArrayList;
+import com.graphhopper.coll.primitive.IntArrayList;
 import com.graphhopper.routing.ch.PrepareEncoder;
 import com.graphhopper.routing.ch.ShortcutUnpacker;
 import com.graphhopper.routing.ev.DecimalEncodedValue;

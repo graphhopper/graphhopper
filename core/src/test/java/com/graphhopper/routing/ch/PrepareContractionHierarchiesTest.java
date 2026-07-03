@@ -17,8 +17,8 @@
  */
 package com.graphhopper.routing.ch;
 
-import com.carrotsearch.hppc.IntArrayList;
-import com.carrotsearch.hppc.IntIndexedContainer;
+import com.graphhopper.coll.primitive.IntArrayList;
+import com.graphhopper.coll.primitive.IntIndexedContainer;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;

@@ -17,7 +17,7 @@
  */
 package com.graphhopper.coll
 
-import com.carrotsearch.hppc.IntContainer
+import com.graphhopper.coll.primitive.IntContainer
 import com.graphhopper.coll.primitive.IntHashSet
 
 /**

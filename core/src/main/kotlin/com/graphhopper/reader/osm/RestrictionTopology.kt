@@ -18,7 +18,7 @@
 
 package com.graphhopper.reader.osm
 
-import com.carrotsearch.hppc.IntArrayList
+import com.graphhopper.coll.primitive.IntArrayList
 
 /**
  * Basically an OSM restriction, but in 'graph-representation', i.e. it is expressed in terms of graph node/edge IDs

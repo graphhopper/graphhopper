@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.querygraph
 
-import com.carrotsearch.hppc.IntArrayList
+import com.graphhopper.coll.primitive.IntArrayList
 import com.graphhopper.coll.GHIntObjectHashMap
 import com.graphhopper.routing.util.AllEdgesIterator
 import com.graphhopper.routing.util.EdgeFilter

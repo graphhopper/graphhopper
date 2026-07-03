@@ -17,8 +17,7 @@
  */
 package com.graphhopper.routing.weighting
 
-import com.carrotsearch.hppc.IntHashSet
-import com.carrotsearch.hppc.IntSet
+import com.graphhopper.coll.primitive.IntHashSet
 import com.graphhopper.util.EdgeIteratorState
 
 /**
@@ -30,7 +29,7 @@ import com.graphhopper.util.EdgeIteratorState
 open class AvoidEdgesWeighting(superWeighting: Weighting?) : AbstractAdjustedWeighting(superWeighting) {
     // contains the edge IDs of the already visited edges
     @JvmField
-    protected var avoidedEdges: IntSet = IntHashSet()
+    protected var avoidedEdges: IntHashSet = IntHashSet()
     private var edgePenaltyFactor = 5.0
 
     fun setEdgePenaltyFactor(edgePenaltyFactor: Double): AvoidEdgesWeighting {
@@ -38,7 +37,7 @@ open class AvoidEdgesWeighting(superWeighting: Weighting?) : AbstractAdjustedWei
         return this
     }
 
-    fun setAvoidedEdges(avoidedEdges: IntSet): AvoidEdgesWeighting {
+    fun setAvoidedEdges(avoidedEdges: IntHashSet): AvoidEdgesWeighting {
         this.avoidedEdges = avoidedEdges
         return this
     }

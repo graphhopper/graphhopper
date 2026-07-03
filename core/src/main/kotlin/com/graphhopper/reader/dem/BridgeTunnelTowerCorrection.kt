@@ -17,8 +17,8 @@
  */
 package com.graphhopper.reader.dem
 
-import com.carrotsearch.hppc.DoubleArrayList
-import com.carrotsearch.hppc.IntArrayList
+import com.graphhopper.coll.primitive.DoubleArrayList
+import com.graphhopper.coll.primitive.IntArrayList
 import com.carrotsearch.hppc.IntDoubleHashMap
 import com.graphhopper.apache.commons.collections.IntFloatBinaryHeap
 import com.graphhopper.coll.GHBitSet

@@ -18,8 +18,8 @@
 package com.graphhopper.util
 
 import com.bedatadriven.jackson.datatype.jts.JtsModule
-import com.carrotsearch.hppc.IntArrayList
-import com.carrotsearch.hppc.IntIndexedContainer
+import com.graphhopper.coll.primitive.IntArrayList
+import com.graphhopper.coll.primitive.IntIndexedContainer
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.graphhopper.jackson.Jackson
 import com.graphhopper.routing.Path

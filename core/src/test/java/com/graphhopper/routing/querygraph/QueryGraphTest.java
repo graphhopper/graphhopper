@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.querygraph;
 
-import com.carrotsearch.hppc.IntArrayList;
+import com.graphhopper.coll.primitive.IntArrayList;
 import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.HeadingResolver;
 import com.graphhopper.routing.ev.*;

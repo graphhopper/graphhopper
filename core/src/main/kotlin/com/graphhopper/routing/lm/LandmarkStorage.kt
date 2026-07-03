@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.lm
 
-import com.carrotsearch.hppc.IntArrayList
+import com.graphhopper.coll.primitive.IntArrayList
 import com.carrotsearch.hppc.IntHashSet
 import com.graphhopper.coll.MapEntry
 import com.graphhopper.routing.DijkstraBidirectionRef

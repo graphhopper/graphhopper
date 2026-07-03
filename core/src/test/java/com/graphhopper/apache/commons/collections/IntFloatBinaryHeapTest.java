@@ -1,6 +1,6 @@
 package com.graphhopper.apache.commons.collections;
 
-import com.carrotsearch.hppc.IntArrayList;
+import com.graphhopper.coll.primitive.IntArrayList;
 import com.graphhopper.coll.BinaryHeapTestInterface;
 import org.junit.jupiter.api.Test;
 

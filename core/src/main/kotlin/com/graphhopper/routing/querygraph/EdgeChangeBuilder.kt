@@ -18,7 +18,7 @@
 
 package com.graphhopper.routing.querygraph
 
-import com.carrotsearch.hppc.IntArrayList
+import com.graphhopper.coll.primitive.IntArrayList
 import com.graphhopper.coll.GHIntHashSet
 import com.graphhopper.coll.GHIntObjectHashMap
 import com.graphhopper.routing.querygraph.QueryGraph.Companion.ADJ_SNAP

@@ -1,6 +1,6 @@
 package com.graphhopper.search;
 
-import com.carrotsearch.hppc.LongArrayList;
+import com.graphhopper.coll.primitive.LongArrayList;
 import com.graphhopper.search.KVStorage.KValue;
 import com.graphhopper.storage.DAType;
 import com.graphhopper.storage.GHDirectory;

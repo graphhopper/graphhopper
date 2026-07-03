@@ -18,7 +18,7 @@
 
 package com.graphhopper.reader.osm
 
-import com.carrotsearch.hppc.LongArrayList
+import com.graphhopper.coll.primitive.LongArrayList
 
 class RestrictionMembers private constructor(
     val isViaWay: Boolean,

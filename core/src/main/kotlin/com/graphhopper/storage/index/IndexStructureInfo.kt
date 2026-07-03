@@ -1,6 +1,6 @@
 package com.graphhopper.storage.index
 
-import com.carrotsearch.hppc.IntArrayList
+import com.graphhopper.coll.primitive.IntArrayList
 import com.graphhopper.geohash.SpatialKeyAlgo
 import com.graphhopper.util.DistanceCalcEarth
 import com.graphhopper.util.DistanceCalcEarth.Companion.DIST_EARTH

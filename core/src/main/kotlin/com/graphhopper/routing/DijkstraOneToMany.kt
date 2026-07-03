@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing
 
-import com.carrotsearch.hppc.IntArrayList
+import com.graphhopper.coll.primitive.IntArrayList
 import com.graphhopper.apache.commons.collections.IntFloatBinaryHeap
 import com.graphhopper.routing.util.TraversalMode
 import com.graphhopper.routing.weighting.Weighting

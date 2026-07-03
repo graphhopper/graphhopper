@@ -17,6 +17,6 @@
  */
 package com.graphhopper.routing
 
-import com.carrotsearch.hppc.IntArrayList
+import com.graphhopper.coll.primitive.IntArrayList
 
 internal class MultiplePointsNotFoundException(val pointsNotFound: IntArrayList) : RuntimeException()

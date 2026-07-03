@@ -17,7 +17,7 @@
  */
 package com.graphhopper.reader
 
-import com.carrotsearch.hppc.LongArrayList
+import com.graphhopper.coll.primitive.LongArrayList
 
 /**
  * Represents a way received from the reader.

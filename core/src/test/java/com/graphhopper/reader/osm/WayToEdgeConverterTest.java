@@ -18,9 +18,9 @@
 
 package com.graphhopper.reader.osm;
 
-import com.carrotsearch.hppc.IntArrayList;
-import com.carrotsearch.hppc.LongArrayList;
-import com.carrotsearch.hppc.cursors.IntCursor;
+import com.graphhopper.coll.primitive.IntArrayList;
+import com.graphhopper.coll.primitive.LongArrayList;
+import com.graphhopper.coll.primitive.IntCursor;
 import com.graphhopper.storage.BaseGraph;
 import org.junit.jupiter.api.Test;
 

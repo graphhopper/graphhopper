@@ -18,7 +18,7 @@
 
 package com.graphhopper.routing.ch
 
-import com.carrotsearch.hppc.IntArrayList
+import com.graphhopper.coll.primitive.IntArrayList
 import com.graphhopper.coll.primitive.IntScatterSet
 import com.carrotsearch.hppc.sorting.IndirectComparator
 import com.carrotsearch.hppc.sorting.IndirectSort

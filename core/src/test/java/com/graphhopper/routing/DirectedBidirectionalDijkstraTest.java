@@ -1,7 +1,7 @@
 package com.graphhopper.routing;
 
-import com.carrotsearch.hppc.IntArrayList;
-import com.carrotsearch.hppc.IntHashSet;
+import com.graphhopper.coll.primitive.IntArrayList;
+import com.graphhopper.coll.primitive.IntHashSet;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
 import com.graphhopper.routing.ev.TurnCost;

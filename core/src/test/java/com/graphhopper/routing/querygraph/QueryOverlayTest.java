@@ -17,10 +17,10 @@
  */
 package com.graphhopper.routing.querygraph;
 
-import com.carrotsearch.hppc.LongArrayList;
+import com.graphhopper.coll.primitive.LongArrayList;
 import org.junit.jupiter.api.Test;
 
-import static com.carrotsearch.hppc.LongArrayList.from;
+import static com.graphhopper.coll.primitive.LongArrayList.from;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class QueryOverlayTest {

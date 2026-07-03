@@ -1,7 +1,7 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.carrotsearch.hppc.BitSet;
-import com.carrotsearch.hppc.IntArrayList;
+import com.graphhopper.coll.primitive.IntArrayList;
 import com.graphhopper.reader.osm.Pair;
 import com.graphhopper.reader.osm.RestrictionTopology;
 import com.graphhopper.reader.osm.RestrictionType;

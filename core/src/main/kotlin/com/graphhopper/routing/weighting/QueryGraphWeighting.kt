@@ -18,7 +18,7 @@
 
 package com.graphhopper.routing.weighting
 
-import com.carrotsearch.hppc.IntArrayList
+import com.graphhopper.coll.primitive.IntArrayList
 import com.carrotsearch.hppc.IntDoubleMap
 import com.carrotsearch.hppc.IntLongMap
 import com.graphhopper.routing.querygraph.QueryGraph

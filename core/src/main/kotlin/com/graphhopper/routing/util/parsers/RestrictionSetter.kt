@@ -18,7 +18,7 @@
 package com.graphhopper.routing.util.parsers
 
 import com.carrotsearch.hppc.BitSet
-import com.carrotsearch.hppc.IntArrayList
+import com.graphhopper.coll.primitive.IntArrayList
 import com.carrotsearch.hppc.IntObjectMap
 import com.carrotsearch.hppc.IntObjectScatterMap
 import com.graphhopper.coll.primitive.IntHashSet

@@ -20,8 +20,9 @@ package com.graphhopper.routing.subnetwork
 
 import com.carrotsearch.hppc.BitSet
 import com.carrotsearch.hppc.IntArrayDeque
-import com.carrotsearch.hppc.IntArrayList
-import com.carrotsearch.hppc.IntContainer
+import com.graphhopper.coll.GrowableBitSet
+import com.graphhopper.coll.primitive.IntArrayList
+import com.graphhopper.coll.primitive.IntContainer
 import com.carrotsearch.hppc.IntIntScatterMap
 import com.carrotsearch.hppc.IntScatterSet
 import com.carrotsearch.hppc.LongArrayDeque
@@ -346,7 +347,7 @@ class EdgeBasedTarjanSCC private constructor(
          * The set of edge-keys that form their own (single-edge key) component. If the excludeSingleEdgeComponents
          * option is enabled this set will be empty.
          */
-        val singleEdgeComponents: BitSet = BitSet(max(edgeKeys, 0).toLong())
+        val singleEdgeComponents: GrowableBitSet = GrowableBitSet(max(edgeKeys, 0).toLong())
 
         /**
          * A reference to the biggest component contained in [components] or an empty list if there are
@@ -360,8 +361,8 @@ class EdgeBasedTarjanSCC private constructor(
         internal var numEdgeKeys = 0
 
         init {
-            if (!singleEdgeComponents.javaClass.name.contains("hppc"))
-                throw IllegalStateException("Was meant to be hppc BitSet")
+            if (!singleEdgeComponents.javaClass.name.contains("GrowableBitSet"))
+                throw IllegalStateException("Was meant to be a growable bit set")
         }
 
         /**

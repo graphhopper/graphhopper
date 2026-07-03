@@ -18,10 +18,10 @@
 
 package com.graphhopper.reader.osm
 
-import com.carrotsearch.hppc.IntArrayList
+import com.graphhopper.coll.primitive.IntArrayList
 import com.carrotsearch.hppc.LongIntMap
 import com.carrotsearch.hppc.LongIntScatterMap
-import com.carrotsearch.hppc.cursors.IntCursor
+import com.graphhopper.coll.primitive.IntCursor
 import java.util.Collections.emptyIterator
 
 /**

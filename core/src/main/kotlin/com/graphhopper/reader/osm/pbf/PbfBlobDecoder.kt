@@ -17,7 +17,7 @@
  */
 package com.graphhopper.reader.osm.pbf
 
-import com.carrotsearch.hppc.LongIndexedContainer
+import com.graphhopper.coll.primitive.LongIndexedContainer
 import com.google.protobuf.InvalidProtocolBufferException
 import com.graphhopper.reader.ReaderElement
 import com.graphhopper.reader.ReaderNode

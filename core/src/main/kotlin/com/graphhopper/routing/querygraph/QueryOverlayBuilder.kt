@@ -18,7 +18,7 @@
 
 package com.graphhopper.routing.querygraph
 
-import com.carrotsearch.hppc.LongArrayList
+import com.graphhopper.coll.primitive.LongArrayList
 import com.graphhopper.coll.GHIntObjectHashMap
 import com.graphhopper.search.KVStorage
 import com.graphhopper.storage.Graph

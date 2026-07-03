@@ -17,7 +17,7 @@
  */
 package com.graphhopper.ui;
 
-import com.carrotsearch.hppc.IntIndexedContainer;
+import com.graphhopper.coll.primitive.IntIndexedContainer;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.coll.GHBitSet;

@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing
 
-import com.carrotsearch.hppc.IntHashSet
+import com.graphhopper.coll.primitive.IntHashSet
 import com.graphhopper.routing.util.EdgeFilter
 import com.graphhopper.routing.util.tour.MultiPointTour
 import com.graphhopper.routing.util.tour.TourStrategy

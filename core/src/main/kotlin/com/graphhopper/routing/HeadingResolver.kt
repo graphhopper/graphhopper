@@ -18,7 +18,7 @@
 
 package com.graphhopper.routing
 
-import com.carrotsearch.hppc.IntArrayList
+import com.graphhopper.coll.primitive.IntArrayList
 import com.graphhopper.storage.Graph
 import com.graphhopper.util.AngleCalc
 import com.graphhopper.util.EdgeExplorer

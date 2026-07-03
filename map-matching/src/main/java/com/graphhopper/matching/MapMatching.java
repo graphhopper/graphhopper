@@ -17,7 +17,7 @@
  */
 package com.graphhopper.matching;
 
-import com.carrotsearch.hppc.IntHashSet;
+import com.graphhopper.coll.primitive.IntHashSet;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.AStarBidirection;

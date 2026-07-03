@@ -1,8 +1,8 @@
 package com.graphhopper.gtfs.analysis;
 
-import com.carrotsearch.hppc.BitSetIterator;
-import com.carrotsearch.hppc.IntArrayList;
-import com.carrotsearch.hppc.cursors.IntCursor;
+import com.graphhopper.coll.GrowableBitSetIterator;
+import com.graphhopper.coll.primitive.IntArrayList;
+import com.graphhopper.coll.primitive.IntCursor;
 import com.graphhopper.gtfs.GtfsStorage;
 import com.graphhopper.gtfs.PtGraph;
 import com.graphhopper.routing.subnetwork.TarjanSCC;
@@ -28,7 +28,7 @@ public class Analysis {
                 stronglyConnectedComponentsOfStopGraph.add(stopsOfComponent);
             }
         }
-        BitSetIterator iter = components.getSingleNodeComponents().iterator();
+        GrowableBitSetIterator iter = components.getSingleNodeComponents().iterator();
         for (int i = iter.nextSetBit(); i >= 0; i = iter.nextSetBit()) {
             List<GtfsStorage.FeedIdWithStopId> stopsForNode = getStopsForNode(ptGraph, i);
             if (!stopsForNode.isEmpty()) {
