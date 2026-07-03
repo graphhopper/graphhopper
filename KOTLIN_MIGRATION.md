@@ -422,7 +422,15 @@ new discoveries get a pinning test AND an entry there.
   Results: measurements/ab/ (second stamp).
 - [ ] Final: full `mvn -B clean test`, Measurement comparison (full import), real-route diff report.
 
-## HPPC → androidx.collection switch plan (2026-07-03, scoping — no code changed yet)
+## HPPC → androidx.collection switch plan
+
+**SIGN-OFFS (Peter 2026-07-03):** Option A (hybrid with exact-layout ports, zero checksum
+changes) confirmed as the approach. Public-API surface switch (batch H5) EXPLICITLY sanctioned
+incl. mechanical consumer edits (tools Measurement/MiniGraphUI, map-matching MapMatching, the
+API-forced BitSetIterator loop in reader-gtfs Analysis.java) and the 40 core-test mechanical
+import/construction updates (assertions untouched). H8 (drop hppc from core; reader-gtfs
+declares its own hppc dep for its 5-file internal usage) unblocked. Full hppc removal from
+reader-gtfs itself stays DEFERRED ("core first"). (2026-07-03, scoping — no code changed yet)
 
 Execution plan for the remaining item "(3) HPPC→androidx.collection". Sources: full grep
 inventory + per-site iteration-order audit of all 75 hppc-using main files, all 40 hppc-using
