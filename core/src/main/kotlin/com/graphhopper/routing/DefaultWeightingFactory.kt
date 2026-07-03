@@ -66,7 +66,7 @@ class DefaultWeightingFactory(private val graph: BaseGraph, private val encoding
                     ?: throw IllegalArgumentException("Cannot find turn restriction encoded value for " + profile.getName())
                 val uTurnCosts = mergedHints.getInt(Parameters.Routing.U_TURN_COSTS, profile.getTurnCostsConfig()!!.getUTurnCosts())
                 val tcConfig = TurnCostsConfig(profile.getTurnCostsConfig()).setUTurnCosts(uTurnCosts)
-                turnCostProvider = DefaultTurnCostProvider(turnRestrictionEnc, graph, tcConfig, parameters.getTurnPenaltyMapping())
+                turnCostProvider = DefaultTurnCostProvider(turnRestrictionEnc, graph, tcConfig, parameters.turnPenaltyMapping)
             } else {
                 if (!mergedCustomModel.getTurnPenalty().isEmpty() && !disableTurnCosts)
                     throw IllegalArgumentException("The turn_penalty feature is not supported for " + profile.getName() + ". You have to enable this in 'turn_costs' in config.yml.")
