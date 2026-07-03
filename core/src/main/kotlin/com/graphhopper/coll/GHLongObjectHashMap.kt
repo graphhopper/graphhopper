@@ -15,30 +15,16 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.coll;
+package com.graphhopper.coll
 
-import com.carrotsearch.hppc.HashOrderMixingStrategy;
-import com.carrotsearch.hppc.LongObjectHashMap;
-
-import static com.graphhopper.coll.GHIntObjectHashMap.DETERMINISTIC;
+import com.carrotsearch.hppc.HashOrderMixingStrategy
+import com.carrotsearch.hppc.LongObjectHashMap
 
 /**
  * @author Peter Karich
  */
-public class GHLongObjectHashMap<T> extends LongObjectHashMap<T> {
-    public GHLongObjectHashMap() {
-        super(10, 0.75, DETERMINISTIC);
-    }
-
-    public GHLongObjectHashMap(int capacity) {
-        super(capacity, 0.75, DETERMINISTIC);
-    }
-
-    public GHLongObjectHashMap(int capacity, double loadFactor) {
-        super(capacity, loadFactor, DETERMINISTIC);
-    }
-
-    public GHLongObjectHashMap(int capacity, double loadFactor, HashOrderMixingStrategy hashOrderMixer) {
-        super(capacity, loadFactor, hashOrderMixer);
-    }
-}
+class GHLongObjectHashMap<T> @JvmOverloads constructor(
+    capacity: Int = 10,
+    loadFactor: Double = 0.75,
+    hashOrderMixer: HashOrderMixingStrategy = GHIntObjectHashMap.DETERMINISTIC
+) : LongObjectHashMap<T>(capacity, loadFactor, hashOrderMixer)

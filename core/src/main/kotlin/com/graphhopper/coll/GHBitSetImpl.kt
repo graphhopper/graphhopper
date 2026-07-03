@@ -15,66 +15,50 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.coll;
+package com.graphhopper.coll
 
-import java.util.BitSet;
+import java.util.BitSet
 
 /**
  * This implementation stores the bits inside the values of a long-array. Be aware that the size of this array grows
  * depending on the values you pass into this set. If you only want to add a few (possibly large) integers you should
- * use {@link GHTBitSet} instead.
+ * use [GHTBitSet] instead.
  *
  * @author Peter Karich
  */
-public class GHBitSetImpl extends BitSet implements GHBitSet {
-    public GHBitSetImpl() {
-        super();
+class GHBitSetImpl : BitSet, GHBitSet {
+    constructor() : super()
+
+    constructor(nbits: Int) : super(nbits)
+
+    override fun contains(index: Int): Boolean = get(index)
+
+    override fun add(index: Int) {
+        set(index)
     }
 
-    public GHBitSetImpl(int nbits) {
-        super(nbits);
+    override val cardinality: Int
+        get() = super.cardinality()
+
+    override fun next(index: Int): Int = nextSetBit(index)
+
+    fun nextClear(index: Int): Int = nextClearBit(index)
+
+    override fun remove(index: Int) {
+        clear(index)
     }
 
-    @Override
-    public final boolean contains(int index) {
-        return super.get(index);
-    }
-
-    @Override
-    public final void add(int index) {
-        super.set(index);
-    }
-
-    @Override
-    public final int getCardinality() {
-        return super.cardinality();
-    }
-
-    @Override
-    public final int next(int index) {
-        return super.nextSetBit(index);
-    }
-
-    public final int nextClear(int index) {
-        return super.nextClearBit(index);
-    }
-
-    @Override
-    public void remove(int index) {
-        super.clear(index);
-    }
-
-    @Override
-    public final GHBitSet copyTo(GHBitSet bs) {
-        bs.clear();
-        if (bs instanceof GHBitSetImpl) {
-            ((GHBitSetImpl) bs).or(this);
+    override fun copyTo(bs: GHBitSet): GHBitSet {
+        bs.clear()
+        if (bs is GHBitSetImpl) {
+            bs.or(this)
         } else {
-            for (int index = super.nextSetBit(0); index >= 0;
-                 index = super.nextSetBit(index + 1)) {
-                bs.add(index);
+            var index = nextSetBit(0)
+            while (index >= 0) {
+                bs.add(index)
+                index = nextSetBit(index + 1)
             }
         }
-        return bs;
+        return bs
     }
 }

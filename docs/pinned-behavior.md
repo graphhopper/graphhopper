@@ -100,6 +100,11 @@ independently of that migration.
 
 ## Recorded only (not externally observable)
 
+- **GHTBitSet passes the float literal 0.7f into a double load-factor parameter** — the
+  effective value is 0.699999988079071, not 0.7; hash-container resize thresholds (and thus
+  iteration order after growth) depend on the exact value. Preserved via 0.7f.toDouble() with
+  a comment. (2026-07-03)
+
 - **PbfBlobDecoder.processNodes (non-dense path) decodes the longitude with decodeLatitude**
   — an Osmosis-era bug, dormant because real-world PBFs use dense nodes; preserved verbatim
   with a comment. Clear upstream-fix candidate (with a non-dense fixture test) outside the

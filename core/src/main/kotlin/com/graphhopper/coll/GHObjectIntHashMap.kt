@@ -15,30 +15,22 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.coll;
+package com.graphhopper.coll
 
-import com.carrotsearch.hppc.HashOrderMixingStrategy;
-import com.carrotsearch.hppc.LongHashSet;
-
-import static com.graphhopper.coll.GHIntObjectHashMap.DETERMINISTIC;
+import com.carrotsearch.hppc.HashOrderMixingStrategy
+import com.carrotsearch.hppc.ObjectIntAssociativeContainer
+import com.carrotsearch.hppc.ObjectIntHashMap
 
 /**
  * @author Peter Karich
  */
-public class GHLongHashSet extends LongHashSet {
-    public GHLongHashSet() {
-        super(10, 0.75, DETERMINISTIC);
-    }
+class GHObjectIntHashMap<T> @JvmOverloads constructor(
+    capacity: Int = 10,
+    loadFactor: Double = 0.75,
+    hashOrderMixer: HashOrderMixingStrategy = GHIntObjectHashMap.DETERMINISTIC
+) : ObjectIntHashMap<T>(capacity, loadFactor, hashOrderMixer) {
 
-    public GHLongHashSet(int capacity) {
-        super(capacity, 0.75, DETERMINISTIC);
-    }
-
-    public GHLongHashSet(int capacity, double loadFactor) {
-        super(capacity, loadFactor, DETERMINISTIC);
-    }
-
-    public GHLongHashSet(int capacity, double loadFactor, HashOrderMixingStrategy hashOrderMixer) {
-        super(capacity, loadFactor, hashOrderMixer);
+    constructor(container: ObjectIntAssociativeContainer<out T>) : this(container.size()) {
+        putAll(container)
     }
 }

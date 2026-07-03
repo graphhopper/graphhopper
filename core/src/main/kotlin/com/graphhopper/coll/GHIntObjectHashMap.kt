@@ -15,10 +15,11 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.coll;
+package com.graphhopper.coll
 
-import com.carrotsearch.hppc.HashOrderMixing;
-import com.carrotsearch.hppc.HashOrderMixingStrategy;
+import com.carrotsearch.hppc.HashOrderMixing
+import com.carrotsearch.hppc.HashOrderMixingStrategy
+import com.carrotsearch.hppc.IntObjectHashMap
 
 /**
  * We often do not mix maps but really need to avoid randomness or that threads can influence each
@@ -26,22 +27,14 @@ import com.carrotsearch.hppc.HashOrderMixingStrategy;
  *
  * @author Peter Karich
  */
-public class GHIntObjectHashMap<T> extends com.carrotsearch.hppc.IntObjectHashMap<T> {
-    static final HashOrderMixingStrategy DETERMINISTIC = HashOrderMixing.constant(123321123321123312L);
+class GHIntObjectHashMap<T> @JvmOverloads constructor(
+    capacity: Int = 10,
+    loadFactor: Double = 0.75,
+    hashOrderMixer: HashOrderMixingStrategy = DETERMINISTIC
+) : IntObjectHashMap<T>(capacity, loadFactor, hashOrderMixer) {
 
-    public GHIntObjectHashMap() {
-        super(10, 0.75, DETERMINISTIC);
-    }
-
-    public GHIntObjectHashMap(int capacity) {
-        super(capacity, 0.75, DETERMINISTIC);
-    }
-
-    public GHIntObjectHashMap(int capacity, double loadFactor) {
-        super(capacity, loadFactor, DETERMINISTIC);
-    }
-
-    public GHIntObjectHashMap(int capacity, double loadFactor, HashOrderMixingStrategy hashOrderMixer) {
-        super(capacity, loadFactor, hashOrderMixer);
+    companion object {
+        @JvmField
+        internal val DETERMINISTIC: HashOrderMixingStrategy = HashOrderMixing.constant(123321123321123312L)
     }
 }
