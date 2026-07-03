@@ -399,12 +399,22 @@ object TypedCompiler {
     // Java literal typing
     // ------------------------------------------------------------------
 
+    private fun numericLiteral(rawText: String, negated: Boolean): Typed =
+            when (val v = parseJavaNumericLiteral(rawText, negated)) {
+                is Int -> Typed(SemType.INT, IntConst(v))
+                is Long -> Typed(SemType.LONG, LongConst(v))
+                is Float -> Typed(SemType.FLOAT, FloatConst(v))
+                else -> Typed(SemType.DOUBLE, DoubleConst(v as Double))
+            }
+
     /**
-     * Parses a Java numeric literal with exact Java typing. [negated] implements the JLS
-     * special case that `-2147483648` / `-9223372036854775808L` are valid literals; for all
-     * other values the negation is simply folded into the constant.
+     * Parses a Java numeric literal with exact Java typing; returns a boxed Int, Long, Float
+     * or Double. [negated] implements the JLS special case that `-2147483648` /
+     * `-9223372036854775808L` are valid literals; for all other values the negation is simply
+     * folded into the constant. Internal so the stage-5 Kotlin source generator applies the
+     * identical literal typing.
      */
-    private fun numericLiteral(rawText: String, negated: Boolean): Typed {
+    internal fun parseJavaNumericLiteral(rawText: String, negated: Boolean): Any {
         val text = rawText.replace("_", "")
         fun fail(): Nothing = err("invalid numeric literal: $rawText")
 
@@ -420,26 +430,26 @@ object TypedCompiler {
             val v = body.toULongOrNull(radix) ?: fail()
             if (isLong) {
                 val value = v.toLong() // full unsigned 64-bit range wraps, like Java
-                return Typed(SemType.LONG, LongConst(if (negated) -value else value))
+                return if (negated) -value else value
             }
             if (v > 0xFFFF_FFFFuL) fail() // int hex/binary literals allow the unsigned 32-bit range
             val value = v.toUInt().toInt()
-            return Typed(SemType.INT, IntConst(if (negated) -value else value))
+            return if (negated) -value else value
         }
 
         // float / double
         val last = text.last()
         if (last == 'f' || last == 'F') {
             val v = text.dropLast(1).toFloatOrNull() ?: fail()
-            return Typed(SemType.FLOAT, FloatConst(if (negated) -v else v))
+            return if (negated) -v else v
         }
         if (last == 'd' || last == 'D') {
             val v = text.dropLast(1).toDoubleOrNull() ?: fail()
-            return Typed(SemType.DOUBLE, DoubleConst(if (negated) -v else v))
+            return if (negated) -v else v
         }
         if (text.contains('.') || text.contains('e') || text.contains('E')) {
             val v = text.toDoubleOrNull() ?: fail()
-            return Typed(SemType.DOUBLE, DoubleConst(if (negated) -v else v))
+            return if (negated) -v else v
         }
 
         // decimal / octal integrals
@@ -454,31 +464,31 @@ object TypedCompiler {
             val v = body.toULongOrNull(8) ?: fail()
             if (isLong) {
                 val value = v.toLong()
-                return Typed(SemType.LONG, LongConst(if (negated) -value else value))
+                return if (negated) -value else value
             }
             if (v > 0xFFFF_FFFFuL) fail()
             val value = v.toUInt().toInt()
-            return Typed(SemType.INT, IntConst(if (negated) -value else value))
+            return if (negated) -value else value
         }
         val v = body.toULongOrNull() ?: fail()
         if (isLong) {
             if (negated) {
                 if (v > Long.MIN_VALUE.toULong()) fail()
-                return Typed(SemType.LONG, LongConst(if (v == Long.MIN_VALUE.toULong()) Long.MIN_VALUE else -v.toLong()))
+                return if (v == Long.MIN_VALUE.toULong()) Long.MIN_VALUE else -v.toLong()
             }
             if (v > Long.MAX_VALUE.toULong()) fail()
-            return Typed(SemType.LONG, LongConst(v.toLong()))
+            return v.toLong()
         }
         if (negated) {
             if (v > 2147483648uL) fail()
-            return Typed(SemType.INT, IntConst(if (v == 2147483648uL) Int.MIN_VALUE else -v.toInt()))
+            return if (v == 2147483648uL) Int.MIN_VALUE else -v.toInt()
         }
         if (v > Int.MAX_VALUE.toULong()) fail()
-        return Typed(SemType.INT, IntConst(v.toInt()))
+        return v.toInt()
     }
 
     /** Unescapes a Java string/char literal body (the lexer already validated the escapes). */
-    private fun unescape(s: String): String {
+    internal fun unescape(s: String): String {
         if (!s.contains('\\')) return s
         val sb = StringBuilder(s.length)
         var i = 0

@@ -155,7 +155,7 @@ object ClosureBackend : CustomWeightingBackend {
     // its group-structure rules)
     // ------------------------------------------------------------------
 
-    private fun validateValues(statements: List<Statement>, valueScope: ExpressionScope) {
+    internal fun validateValues(statements: List<Statement>, valueScope: ExpressionScope) {
         for (group in CustomModelParser.splitIntoGroup(statements)) validateValuesForGroup(group, valueScope)
     }
 
@@ -221,7 +221,7 @@ object ClosureBackend : CustomWeightingBackend {
     }
 
     /** Mirrors CustomModelParser.createSimplifiedLookup. */
-    private fun simplifiedEncodedValue(lookup: EncodedValueLookup, key: String): EncodedValue? = when {
+    internal fun simplifiedEncodedValue(lookup: EncodedValueLookup, key: String): EncodedValue? = when {
         key == CustomModelParser.STREET_NAME || key == CustomModelParser.PREV_PREFIX + CustomModelParser.STREET_NAME -> null
         key.startsWith(CustomModelParser.BACKWARD_PREFIX) ->
             lookup.getEncodedValue(key.substring(CustomModelParser.BACKWARD_PREFIX.length), EncodedValue::class.java)
@@ -235,7 +235,7 @@ object ClosureBackend : CustomWeightingBackend {
      * Validates all conditions/values of the section and returns the union of their guessed
      * variables — the set the Janino back-end declares at the start of the generated method.
      */
-    private fun collectVariables(statements: List<Statement>, conditionScope: ExpressionScope,
+    internal fun collectVariables(statements: List<Statement>, conditionScope: ExpressionScope,
                                  valueScope: ExpressionScope, context: ExpressionContext, info: String): LinkedHashSet<String> {
         val variables = LinkedHashSet<String>()
         fun walk(list: List<Statement>) {
@@ -582,7 +582,7 @@ object ClosureBackend : CustomWeightingBackend {
     // FindMinMax, with the Janino-free stage-3 evaluator instead of ExpressionEvaluator
     // ------------------------------------------------------------------
 
-    private fun calcMaxSpeed(customModel: CustomModel, lookup: EncodedValueLookup): Double {
+    internal fun calcMaxSpeed(customModel: CustomModel, lookup: EncodedValueLookup): Double {
         val minMaxSpeed = MinMax(0.0, CustomWeightingHelper.GLOBAL_MAX_SPEED)
         findMinMax(minMaxSpeed, customModel.getSpeed(), lookup)
         if (minMaxSpeed.min < 0)
@@ -594,7 +594,7 @@ object ClosureBackend : CustomWeightingBackend {
         return minMaxSpeed.max
     }
 
-    private fun calcMaxPriority(customModel: CustomModel, lookup: EncodedValueLookup): Double {
+    internal fun calcMaxPriority(customModel: CustomModel, lookup: EncodedValueLookup): Double {
         val minMaxPriority = MinMax(0.0, CustomWeightingHelper.GLOBAL_PRIORITY)
         val statements = customModel.getPriority()
         if (statements.isNotEmpty() && "true" == statements[0].condition()) {

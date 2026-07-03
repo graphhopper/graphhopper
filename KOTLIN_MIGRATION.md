@@ -317,11 +317,41 @@ new discoveries get a pinning test AND an entry there.
   CustomWeightingBackends.default @Volatile registry). Public CustomModelParser entry
   points route through the seam; DefaultWeightingFactory wired directly.
   CustomWeightingBackendTest added. Gates green (core 3216, web 215).
-- [ ] REMAINING WORK: (1) custom-model stage 5 (build-time kotlin source generator +
-  profile-name registry — Peter approved scope; can reuse stage 4's typed lowering, see the
-  stage-4 entry); (3) HPPC→androidx.collection
+- [ ] REMAINING WORK: (3) HPPC→androidx.collection
   call-site switch + gap-fillers + canary + perf gate, then drop hppc from core (reader-gtfs
   declares its own); (4) NOTICE.md attribution review; (5) final real-route diff report.
+- [x] 2026-07-03 custom-model STAGE 5 DONE (custom-model platform work COMPLETE): build-time
+  Kotlin source generation + registry in core/.../weighting/custom/generate/.
+  `CustomWeightingSourceGenerator` unparses the validated stage-3 AST into a Kotlin class
+  extending CustomWeightingHelper (init(lookup) EV field binding, getSpeed/getPriority/
+  getTurnPenalty if/else chains mirroring createClassTemplate/parseExpressions 1:1) with
+  TypedCompiler's promotion rules made EXPLICIT (`.toDouble()` insertions, int/int stays Int,
+  literals re-typed via the shared `TypedCompiler.parseJavaNumericLiteral` and folded — Kotlin
+  has no octal and types -2147483648 as Long; String== -> `===`, & | ^ -> and/or/xor, shifts
+  -> shl/shr/ushr with Int distance, Math.* -> kotlin.math.*). Validation reuses ClosureBackend's
+  internal helpers (validateValues/collectVariables/calcMax*) so build-time accept/reject ==
+  the differentially-proven backends. `GeneratedWeightingRegistry` keys on
+  customModel.toString() (same identity as the janino cache — no profile name needed);
+  `RegistryBackend : CustomWeightingBackend` instantiates per request like janino and throws a
+  clear registration hint otherwise. `GenerateCustomWeightingMain` (key=value args) builds an
+  EncodingManager from a `graph.encoded_values` string via DefaultImportRegistry (NO graph
+  needed), writes one .kt per model + GeneratedCustomWeightings.registerAll() snippet with the
+  captured keys; exercised end-to-end on car.json (output byte-identical to the checked-in
+  golden). Verification (golden + semantic, no runtime kotlinc): SourceGeneratorTest asserts
+  generator output == the TWO pre-generated classes checked into core/src/test/kotlin
+  (car.json + a kitchen-sink model covering int-division/shift/bitwise/literal-typing/enum/
+  area/backward_/change_angle/street-name/Infinity corners) + 10 build-time rejection cases;
+  RegistryBackendDifferentialTest compiles those classes in the normal test build, registers
+  them and proves janino vs registry EXACT-equal per edge (both directions, weights+millis),
+  per incident turn pair, calcMinWeightPerDistance and DI/HP defaults on a seeded random
+  graph. Two mutation probes confirmed the harness catches int-division and
+  change_angle-direction deviations (an initial probe exposed that the fixture's
+  maxORMaxStorable-based random fill degenerated int EVs to 0 — Stage5Fixtures fills the
+  STORABLE range instead). Default backend unchanged (Janino). No Janino attribution needed:
+  the emitted template mirrors GraphHopper's own janino template, and the generator consumes
+  our own AST (idea-level janino attribution stays where it was: expression package +
+  NOTICE.md). App-side gradle wiring out of scope (documented in the tool's KDoc). Gates
+  green (core clean test, web -am test-compile).
 - [x] 2026-07-03 custom-model STAGE 3 DONE: shared expression FRONT-END in new KMP-clean
   package core/.../weighting/custom/expression/ (hand-rolled ExpressionLexer + recursive-descent
   ExpressionParser -> ExprNode sealed AST; ExpressionValidator with (a) parse-level walkers
