@@ -15,58 +15,49 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.reader.dem;
+package com.graphhopper.reader.dem
 
-import com.graphhopper.reader.ReaderNode;
+import com.graphhopper.reader.ReaderNode
 
 /**
  * @author Peter Karich
  */
-public interface ElevationProvider {
-    ElevationProvider NOOP = new ElevationProvider() {
+interface ElevationProvider {
 
-        @Override
-        public ElevationProvider init() {
-            return this;
-        }
-
-        @Override
-        public double getEle(double lat, double lon) {
-            return Double.NaN;
-        }
-
-        @Override
-        public void release() {
-        }
-
-        @Override
-        public boolean canInterpolate() {
-            return false;
-        }
-    };
-
-    ElevationProvider init();
+    fun init(): ElevationProvider
 
     /**
      * @return returns the height in meters or Double.NaN if invalid
      */
-    double getEle(double lat, double lon);
+    fun getEle(lat: Double, lon: Double): Double
 
     /**
      * @param node Node to read
      * @return returns the height in meters or Double.NaN if invalid
      */
-    default double getEle(ReaderNode node) {
-        return getEle(node.getLat(), node.getLon());
-    }
+    fun getEle(node: ReaderNode): Double = getEle(node.lat, node.lon)
 
     /**
      * Returns true if bilinear interpolation is enabled.
      */
-    boolean canInterpolate();
+    fun canInterpolate(): Boolean
 
     /**
      * Release resources.
      */
-    void release();
+    fun release()
+
+    companion object {
+        @JvmField
+        val NOOP: ElevationProvider = object : ElevationProvider {
+            override fun init(): ElevationProvider = this
+
+            override fun getEle(lat: Double, lon: Double): Double = Double.NaN
+
+            override fun release() {
+            }
+
+            override fun canInterpolate(): Boolean = false
+        }
+    }
 }
