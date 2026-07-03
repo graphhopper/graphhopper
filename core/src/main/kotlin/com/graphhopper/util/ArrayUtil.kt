@@ -22,8 +22,8 @@ import com.graphhopper.coll.GrowableBitSet
 import com.graphhopper.coll.primitive.IntArrayList
 import com.graphhopper.coll.primitive.IntIndexedContainer
 import com.graphhopper.coll.primitive.LongArrayList
-import com.carrotsearch.hppc.sorting.IndirectComparator
-import com.carrotsearch.hppc.sorting.IndirectSort
+import com.graphhopper.coll.primitive.IndirectComparator
+import com.graphhopper.coll.primitive.IndirectSort
 import java.util.Arrays
 import java.util.Random
 

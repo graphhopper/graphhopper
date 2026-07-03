@@ -56,14 +56,10 @@
             <artifactId>graphhopper-web-api</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
-        <dependency>
-            <groupId>com.carrotsearch</groupId>
-            <artifactId>hppc</artifactId>
-        </dependency>
-        <!-- unboxed primitive collections, pure Kotlin and multiplatform; gradually replaces
-             hppc. The exact version is load-bearing: iteration order of its hash containers is
-             deterministic per version but not guaranteed across versions, see
-             AndroidxCollectionDeterminismTest -->
+        <!-- unboxed primitive collections, pure Kotlin and multiplatform; replaced hppc in core
+             (the last hppc usages became com.graphhopper.coll gap-fillers/ports). The exact
+             version is load-bearing: iteration order of its hash containers is deterministic per
+             version but not guaranteed across versions, see AndroidxCollectionDeterminismTest -->
         <dependency>
             <groupId>androidx.collection</groupId>
             <artifactId>collection-jvm</artifactId>

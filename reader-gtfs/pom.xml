@@ -19,6 +19,13 @@
             <artifactId>graphhopper-core</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
+        <!-- reader-gtfs uses hppc directly in its own maps (RealtimeFeed, Trips, GtfsStorage,
+             PtLocationSnapper); it used to come transitively from core, which dropped hppc.
+             Version managed by the root pom's dependencyManagement. -->
+        <dependency>
+            <groupId>com.carrotsearch</groupId>
+            <artifactId>hppc</artifactId>
+        </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>

@@ -448,12 +448,26 @@ new discoveries get a pinning test AND an entry there.
   web/tools/map-matching/reader-gtfs -am test-compile green; germany load-gate (germany-gh-compat,
   count=1000, MMAP, -Xmx3g, clean=false) ALL 30 dummies BIT-IDENTICAL to h5-gate.log — routingCH
   5603941, routingLM8 270582 (log: measurements/h67-gate.log).
-- [ ] REMAINING WORK: (3) HPPC→androidx.collection
-  call-site switch + gap-fillers + canary + perf gate, then drop hppc from core (reader-gtfs
-  declares its own) — SCOPED 2026-07-03, full execution plan in section
-  "HPPC → androidx.collection switch plan" (hybrid: androidx + hppc-layout ports for 9
-  order-critical sites, zero checksum changes, batches H1–H9);
-  (4) NOTICE.md attribution review; (5) final real-route diff report.
+- [x] 2026-07-03 HPPC switch batch H8 DONE — hppc REMOVED from core entirely. (1) Last hppc
+  imports (IndirectSort/IndirectComparator, 3 files: util/ArrayUtil.kt, GraphHopper.kt,
+  routing/ch/CHPreparationGraph.kt) swapped to the H1/H2 exact-layout ports
+  com.graphhopper.coll.primitive.IndirectSort/IndirectComparator (identical API incl.
+  AscendingIntComparator ⇒ import-only edit, no checksum risk). (2) Tests: DELETED the 3
+  differential parity tests that compared ports vs live hppc (ListPortHppcParityTest,
+  GapFillerHppcParityTest, HashPortHppcParityTest — order now permanently pinned by the hppc-free
+  HashPortOrderPinTest); SWAPPED the 2 remaining (BinaryHeapTestInterface + RoutingCHGraphImplTest:
+  hppc IntHashSet/IntSet → coll.primitive IntHashSet, IntSet var type → IntHashSet; ASSERTIONS
+  UNTOUCHED). (3) core/pom.xml drops the com.carrotsearch:hppc dependency. (4) reader-gtfs/pom.xml
+  gains its own hppc dep (version from root dependencyManagement) for its 5 internal-use files
+  previously inheriting it transitively; tools+map-matching verified hppc-free (no dep added).
+  (5) `grep -rl "import com.carrotsearch" core/src` EMPTY (remaining com.carrotsearch strings in
+  coll/primitive/* + coll/GrowableBitSet are attribution COMMENTS only). Gates: core -am install
+  green; core clean test green (3275 tests, 0 fail/err, 20 skip); FULL repo `mvn -B clean test`
+  BUILD SUCCESS all 11 modules (core 3275, reader-gtfs incl. AnalysisTest exercising its own hppc,
+  web 215, all others green); germany load-gate (germany-gh-compat, count=1000, MMAP, -Xmx3g,
+  clean=false) ALL 30 dummies BIT-IDENTICAL to h67-gate.log — routingCH 5603941, routingLM8 270582,
+  routingCH_edge 5601235 (log: measurements/h8-gate.log). HPPC removal item (3) COMPLETE.
+- [ ] REMAINING WORK: (4) NOTICE.md attribution review; (5) final real-route diff report.
 - [x] 2026-07-03 custom-model STAGE 5 DONE (custom-model platform work COMPLETE): build-time
   Kotlin source generation + registry in core/.../weighting/custom/generate/.
   `CustomWeightingSourceGenerator` unparses the validated stage-3 AST into a Kotlin class

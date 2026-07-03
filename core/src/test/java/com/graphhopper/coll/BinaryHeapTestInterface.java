@@ -19,8 +19,7 @@
 package com.graphhopper.coll;
 
 import com.graphhopper.coll.primitive.IntArrayList;
-import com.carrotsearch.hppc.IntHashSet;
-import com.carrotsearch.hppc.IntSet;
+import com.graphhopper.coll.primitive.IntHashSet;
 import org.junit.jupiter.api.Test;
 
 import java.util.PriorityQueue;
@@ -147,7 +146,7 @@ public interface BinaryHeapTestInterface {
         int size = 1 + rnd.nextInt(100);
         PriorityQueue<Entry> pq = new PriorityQueue<>(size);
         create(size);
-        IntSet set = new IntHashSet();
+        IntHashSet set = new IntHashSet();
         while (pq.size() < size) {
             int id = rnd.nextInt(size);
             if (!set.add(id))
@@ -171,7 +170,7 @@ public interface BinaryHeapTestInterface {
         int size = 1 + rnd.nextInt(100);
         PriorityQueue<Entry> pq = new PriorityQueue<>(size);
         create(size);
-        IntSet set = new IntHashSet();
+        IntHashSet set = new IntHashSet();
         int pushCount = 0;
         for (int i = 0; i < 1000; i++) {
             boolean push = pq.isEmpty() || (rnd.nextBoolean());

@@ -21,8 +21,8 @@ import com.bedatadriven.jackson.datatype.jts.JtsModule
 import com.graphhopper.coll.GrowableBitSet
 import com.graphhopper.coll.primitive.IntArrayList
 import com.graphhopper.coll.primitive.LongArrayList
-import com.carrotsearch.hppc.sorting.IndirectComparator
-import com.carrotsearch.hppc.sorting.IndirectSort
+import com.graphhopper.coll.primitive.IndirectComparator
+import com.graphhopper.coll.primitive.IndirectSort
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.graphhopper.config.CHProfile
 import com.graphhopper.config.LMProfile

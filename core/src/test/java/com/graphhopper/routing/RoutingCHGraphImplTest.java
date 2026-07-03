@@ -18,8 +18,7 @@
 
 package com.graphhopper.routing;
 
-import com.carrotsearch.hppc.IntHashSet;
-import com.carrotsearch.hppc.IntSet;
+import com.graphhopper.coll.primitive.IntHashSet;
 import com.graphhopper.routing.ch.PrepareEncoder;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
@@ -369,8 +368,8 @@ public class RoutingCHGraphImplTest {
         RoutingCHEdgeExplorer outExplorer = chGraph.createOutEdgeExplorer();
         RoutingCHEdgeExplorer inExplorer = chGraph.createInEdgeExplorer();
 
-        IntSet inEdges = new IntHashSet();
-        IntSet outEdges = new IntHashSet();
+        IntHashSet inEdges = new IntHashSet();
+        IntHashSet outEdges = new IntHashSet();
         RoutingCHEdgeIterator outIter = outExplorer.setBaseNode(0);
         while (outIter.next()) {
             outEdges.add(outIter.getEdge());
