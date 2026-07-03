@@ -110,6 +110,17 @@ independently of that migration.
 
 ## Recorded only (not externally observable)
 
+- **CustomModelParser swallows the precise enum-operator error**: ConditionalExpressionVisitor
+  throws IllegalArgumentException("Operator X not allowed for enum") inside accept(), but
+  parse()'s empty catch(Exception) swallows it, so the user gets a generic "invalid expression"
+  message instead of the precise one. Upstream-fix candidate: catch and surface the message
+  (would need a small web-test expectation update). (2026-07-03)
+
+- **CustomModelParser's cache-overflow warning always reports size 0** — the warn message reads
+  INTERNAL_CACHE.size after clear(). Log-only. Also recorded: the class cache is deliberately
+  non-atomic (two threads may compile the same model concurrently; last put wins — benign).
+  (2026-07-03)
+
 - **GHTBitSet passes the float literal 0.7f into a double load-factor parameter** — the
   effective value is 0.699999988079071, not 0.7; hash-container resize thresholds (and thus
   iteration order after growth) depend on the exact value. Preserved via 0.7f.toDouble() with
