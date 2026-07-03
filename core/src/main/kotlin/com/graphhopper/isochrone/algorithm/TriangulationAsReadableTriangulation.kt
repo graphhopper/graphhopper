@@ -15,33 +15,19 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+package com.graphhopper.isochrone.algorithm
 
-package com.graphhopper.isochrone.algorithm;
+class TriangulationAsReadableTriangulation(
+    private val triangulation: Triangulation
+) : ReadableTriangulation {
 
-import org.locationtech.jts.triangulate.quadedge.Vertex;
+    override fun getEdges(): Collection<ReadableQuadEdge> = triangulation.getEdges()
 
-public interface ReadableQuadEdge {
+    override fun getEdge(v1: Int, v2: Int): ReadableQuadEdge =
+        ReadableQuadEdge.wrap(triangulation.getEdge(v1, v2))
 
-    ReadableQuadEdge getPrimary();
-
-    Vertex orig();
-
-    Vertex dest();
-
-    ReadableQuadEdge oNext();
-
-    ReadableQuadEdge oPrev();
-
-    ReadableQuadEdge dPrev();
-
-    ReadableQuadEdge dNext();
-
-    ReadableQuadEdge lNext();
-
-    ReadableQuadEdge sym();
-
-    static QuadEdgeAsReadableQuadEdge wrap(org.locationtech.jts.triangulate.quadedge.QuadEdge edge) {
-        return new QuadEdgeAsReadableQuadEdge(edge);
+    override fun getVertexQuadEdge(v: Int): ReadableQuadEdge? {
+        val edge = triangulation.vertexQuadEdges.get(v)
+        return if (edge != null) ReadableQuadEdge.wrap(edge) else null
     }
-
 }

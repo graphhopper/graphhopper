@@ -15,26 +15,26 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+package com.graphhopper.isochrone.algorithm
 
-package com.graphhopper.isochrone.algorithm;
+import org.locationtech.jts.triangulate.quadedge.QuadEdge
+import org.locationtech.jts.triangulate.quadedge.QuadEdgeSubdivision
 
-import org.locationtech.jts.triangulate.quadedge.QuadEdgeSubdivision;
+class QuadEdgeSubdivisionAsReadableTriangulation(
+    private val delegate: QuadEdgeSubdivision
+) : ReadableTriangulation {
 
-import java.util.Collection;
-
-public interface ReadableTriangulation {
-
-    Collection<ReadableQuadEdge> getEdges();
-
-    static ReadableTriangulation wrap(Triangulation triangulation) {
-        return new TriangulationAsReadableTriangulation(triangulation);
+    override fun getEdges(): Collection<ReadableQuadEdge> {
+        @Suppress("UNCHECKED_CAST")
+        val delegateEdges = delegate.edges as Collection<QuadEdge>
+        return delegateEdges.map { ReadableQuadEdge.wrap(it) }
     }
 
-    static ReadableTriangulation wrap(QuadEdgeSubdivision quadEdgeSubdivision) {
-        return new QuadEdgeSubdivisionAsReadableTriangulation(quadEdgeSubdivision);
+    override fun getEdge(v1: Int, v2: Int): ReadableQuadEdge {
+        throw UnsupportedOperationException()
     }
 
-    ReadableQuadEdge getEdge(int v1, int v2);
-
-    public ReadableQuadEdge getVertexQuadEdge(int v);
+    override fun getVertexQuadEdge(v: Int): ReadableQuadEdge {
+        throw UnsupportedOperationException()
+    }
 }

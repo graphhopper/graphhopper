@@ -15,29 +15,24 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+package com.graphhopper.isochrone.algorithm
 
-package com.graphhopper.isochrone.algorithm;
+import com.graphhopper.routing.querygraph.QueryGraph
+import com.graphhopper.storage.index.Snap
+import java.util.function.ToDoubleFunction
 
-import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.storage.index.Snap;
+interface Triangulator {
 
-import java.util.Collection;
-import java.util.function.ToDoubleFunction;
+    class Result(
+        @JvmField val triangulation: ReadableTriangulation,
+        @JvmField val seedEdges: Collection<ReadableQuadEdge>
+    )
 
-public interface Triangulator {
-
-    class Result {
-
-        public final ReadableTriangulation triangulation;
-        public final Collection<ReadableQuadEdge> seedEdges;
-
-        public Result(ReadableTriangulation triangulation, Collection<ReadableQuadEdge> seedEdges) {
-            this.triangulation = triangulation;
-            this.seedEdges = seedEdges;
-        }
-
-    }
-
-    Result triangulate(Snap snap, QueryGraph queryGraph, ShortestPathTree shortestPathTree, ToDoubleFunction<ShortestPathTree.IsoLabel> fz, double tolerance);
-
+    fun triangulate(
+        snap: Snap,
+        queryGraph: QueryGraph,
+        shortestPathTree: ShortestPathTree,
+        fz: ToDoubleFunction<ShortestPathTree.IsoLabel>,
+        tolerance: Double
+    ): Result
 }
