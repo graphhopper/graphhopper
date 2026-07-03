@@ -787,3 +787,18 @@ gate differs, the offending site gets isolated into its own commit with an expli
 - Q5 Kotlin style depth: mechanical-but-safe conversion with idiomatic internals immediately,
   or a second idiomatic pass per package?
 - Q6 Spatial K: adopt where it fits, or JTS-only until a dedicated later decision?
+
+### H5 CORRECTION (2026-07-03, after a rolled-back first attempt)
+The plan's H5 assumption that hppc buffer-pokes "map to androidx's public content/_size" is WRONG:
+in androidx.collection `IntList`/`MutableIntList`, both `content` (backing array) and `_size` are
+`internal` — inaccessible from GraphHopper code. Also: androidx list `size` is a property (not
+`size()`), `isEmpty()` exists but `size()` does not, and there is NO `release()` (hppc frees the
+buffer; androidx has only `clear()`/`trim()`). Redo must handle explicitly:
+- ArrayUtil helpers that hppc-poke `buffer`/`elementsCount` (zero/constant/iota/range/reverse/
+  shuffle via direct array writes) — use androidx public API, or keep those specific helpers on a
+  small IntArrayList-shaped structure. Investigate androidx's real public surface FIRST.
+- `.release()` call sites (CH witness searchers) → map to `clear()` (verify semantics: release
+  frees memory but the object is reused after; clear keeps capacity — for per-search reuse that's
+  equivalent or better; confirm no capacity-dependent behavior).
+- Do the main-source migration AND consumer AND test edits AND gate all in ONE batch so it either
+  fully compiles+passes or isn't committed. First attempt was cut off after main-only (broken).
