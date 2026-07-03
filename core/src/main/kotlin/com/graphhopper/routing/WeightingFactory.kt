@@ -15,14 +15,13 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+package com.graphhopper.routing
 
-package com.graphhopper.routing;
+import com.graphhopper.config.Profile
+import com.graphhopper.routing.weighting.Weighting
+import com.graphhopper.util.PMap
 
-import com.graphhopper.config.Profile;
-import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.util.PMap;
-
-public interface WeightingFactory {
+interface WeightingFactory {
     /**
      * @param profile          The profile for which the weighting shall be created
      * @param hints            Additional hints that can be used to further specify the weighting that shall be created
@@ -30,5 +29,5 @@ public interface WeightingFactory {
      *                         needed when the weighting shall be used by some algorithm that can or should only be run
      *                         with node-based graph traversal, like LM preparation
      */
-    Weighting createWeighting(Profile profile, PMap hints, boolean disableTurnCosts);
+    fun createWeighting(profile: Profile, hints: PMap, disableTurnCosts: Boolean): Weighting
 }

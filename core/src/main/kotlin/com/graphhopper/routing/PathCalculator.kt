@@ -15,20 +15,15 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+package com.graphhopper.routing
 
-package com.graphhopper.routing;
+/**
+ * Implementations of this class allow repeatedly calculating paths for different start/target nodes and edge restrictions
+ */
+interface PathCalculator {
+    fun calcPaths(from: Int, to: Int, edgeRestrictions: EdgeRestrictions): List<Path>
 
-import com.carrotsearch.hppc.IntArrayList;
+    fun getDebugString(): String?
 
-class MultiplePointsNotFoundException extends RuntimeException {
-
-    private final IntArrayList pointsNotFound;
-
-    MultiplePointsNotFoundException(IntArrayList pointsNotFound) {
-        this.pointsNotFound = pointsNotFound;
-    }
-
-    IntArrayList getPointsNotFound() {
-        return pointsNotFound;
-    }
+    fun getVisitedNodes(): Int
 }

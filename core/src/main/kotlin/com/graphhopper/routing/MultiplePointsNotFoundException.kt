@@ -15,19 +15,8 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+package com.graphhopper.routing
 
-package com.graphhopper.routing;
+import com.carrotsearch.hppc.IntArrayList
 
-import java.util.List;
-
-/**
- * Implementations of this class allow repeatedly calculating paths for different start/target nodes and edge restrictions
- */
-public interface PathCalculator {
-    List<Path> calcPaths(int from, int to, EdgeRestrictions edgeRestrictions);
-
-    String getDebugString();
-
-    int getVisitedNodes();
-
-}
+internal class MultiplePointsNotFoundException(val pointsNotFound: IntArrayList) : RuntimeException()

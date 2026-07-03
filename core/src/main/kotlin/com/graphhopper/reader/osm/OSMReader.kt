@@ -95,8 +95,8 @@ open class OSMReader(private val baseGraph: BaseGraph, private val osmParsers: O
     init {
         restrictionSetter = RestrictionSetter(baseGraph, osmParsers.restrictionTagParsers.map { it.turnRestrictionEnc!! })
 
-        simplifyAlgo.setMaxDistance(config.maxWayPointDistance)
-        simplifyAlgo.setElevationMaxDistance(config.elevationMaxWayPointDistance)
+        simplifyAlgo.setMaxDistance(config.getMaxWayPointDistance())
+        simplifyAlgo.setElevationMaxDistance(config.getElevationMaxWayPointDistance())
 
         tempRelFlags = osmParsers.createRelationFlags()
         if (tempRelFlags.length != 2)
@@ -152,7 +152,7 @@ open class OSMReader(private val baseGraph: BaseGraph, private val osmParsers: O
             .setRelationPreprocessor { relation -> preprocessRelations(relation) }
             .setRelationProcessor { relation, map -> processRelation(relation, map) }
             .setEdgeHandler { from, to, pointList, way, nodeTags -> addEdge(from, to, pointList, way, nodeTags) }
-            .setWorkerThreads(config.workerThreads)
+            .setWorkerThreads(config.getWorkerThreads())
             .build()
         waySegmentParser.readOSM(osmFile)
         osmDataDate = waySegmentParser.getTimestamp()
@@ -172,7 +172,7 @@ open class OSMReader(private val baseGraph: BaseGraph, private val osmParsers: O
 
     private fun lookupElevation(lat: Double, lon: Double): Double {
         val ele = eleProvider.getEle(lat, lon)
-        return if (ele.isNaN()) config.defaultElevation else ele
+        return if (ele.isNaN()) config.getDefaultElevation() else ele
     }
 
     /**
@@ -315,19 +315,19 @@ open class OSMReader(private val baseGraph: BaseGraph, private val osmParsers: O
                 pointList.setElevation(i, ele)
             }
             // sample points along long edges
-            if (config.longEdgeSamplingDistance < Double.MAX_VALUE && !isFerry(way))
-                pointList = EdgeSampling.sample(pointList, config.longEdgeSamplingDistance, distCalc, eleProvider)
+            if (config.getLongEdgeSamplingDistance() < Double.MAX_VALUE && !isFerry(way))
+                pointList = EdgeSampling.sample(pointList, config.getLongEdgeSamplingDistance(), distCalc, eleProvider)
 
             // smooth the elevation before calculating the distance because the distance will be incorrect if calculated afterwards
-            if (config.elevationSmoothing == "ramer")
-                EdgeElevationSmoothingRamer.smooth(pointList, config.elevationSmoothingRamerMax.toDouble())
-            else if (config.elevationSmoothing == "moving_average")
-                EdgeElevationSmoothingMovingAverage.smooth(pointList, config.smoothElevationAverageWindowSize)
-            else if (!config.elevationSmoothing.isEmpty())
-                throw AssertionError("Unsupported elevation smoothing algorithm: '" + config.elevationSmoothing + "'")
+            if (config.getElevationSmoothing() == "ramer")
+                EdgeElevationSmoothingRamer.smooth(pointList, config.getElevationSmoothingRamerMax().toDouble())
+            else if (config.getElevationSmoothing() == "moving_average")
+                EdgeElevationSmoothingMovingAverage.smooth(pointList, config.getSmoothElevationAverageWindowSize())
+            else if (!config.getElevationSmoothing().isEmpty())
+                throw AssertionError("Unsupported elevation smoothing algorithm: '" + config.getElevationSmoothing() + "'")
         }
 
-        if (config.maxWayPointDistance > 0 && pointList.size() > 2)
+        if (config.getMaxWayPointDistance() > 0 && pointList.size() > 2)
             simplifyAlgo.simplify(pointList)
 
         var distance = distCalc.calcDistance(pointList)
@@ -407,11 +407,11 @@ open class OSMReader(private val baseGraph: BaseGraph, private val osmParsers: O
     protected open fun preprocessWay(way: ReaderWay, coordinateSupplier: WaySegmentParser.CoordinateSupplier,
                                      nodeTagSupplier: WaySegmentParser.NodeTagSupplier) {
         val map = LinkedHashMap<String, KValue>()
-        if (config.isParseWayNames) {
+        if (config.isParseWayNames()) {
             // http://wiki.openstreetmap.org/wiki/Key:name
             var name = ""
-            if (!config.preferredLanguage.isEmpty())
-                name = fixWayName(way.getTag("name:" + config.preferredLanguage))
+            if (!config.getPreferredLanguage().isEmpty())
+                name = fixWayName(way.getTag("name:" + config.getPreferredLanguage()))
             if (name.isEmpty())
                 name = fixWayName(way.getTag("name"))
             if (name.isEmpty())
