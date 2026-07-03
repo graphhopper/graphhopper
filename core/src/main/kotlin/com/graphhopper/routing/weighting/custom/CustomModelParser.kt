@@ -101,11 +101,20 @@ object CustomModelParser {
     }
 
     /**
-     * This method compiles a new subclass of CustomWeightingHelper composed of the provided CustomModel caches this
-     * and returns an instance.
+     * This method creates the CustomWeighting.Parameters for the provided CustomModel via the currently
+     * registered [CustomWeightingBackends.default] backend (by default the Janino-based [JaninoBackend]).
      */
     @JvmStatic
     fun createWeightingParameters(customModel: CustomModel, lookup: EncodedValueLookup): CustomWeighting.Parameters {
+        return CustomWeightingBackends.default.createParameters(customModel, lookup)
+    }
+
+    /**
+     * This method compiles a new subclass of CustomWeightingHelper composed of the provided CustomModel caches this
+     * and returns an instance. This is the [JaninoBackend] implementation - use
+     * [createWeightingParameters] to go through the configurable backend seam.
+     */
+    internal fun createJaninoWeightingParameters(customModel: CustomModel, lookup: EncodedValueLookup): CustomWeighting.Parameters {
         val key = customModel.toString()
         var clazz: Class<*>? = if (customModel.isInternal()) INTERNAL_CACHE[key] else null
         if (CACHE_SIZE > 0 && clazz == null)

@@ -24,8 +24,8 @@ import com.graphhopper.routing.weighting.DefaultTurnCostProvider
 import com.graphhopper.routing.weighting.TurnCostProvider
 import com.graphhopper.routing.weighting.TurnCostProvider.Companion.NO_TURN_COST_PROVIDER
 import com.graphhopper.routing.weighting.Weighting
-import com.graphhopper.routing.weighting.custom.CustomModelParser.createWeightingParameters
 import com.graphhopper.routing.weighting.custom.CustomWeighting
+import com.graphhopper.routing.weighting.custom.CustomWeightingBackends
 import com.graphhopper.storage.BaseGraph
 import com.graphhopper.util.CustomModel
 import com.graphhopper.util.Helper.toLowerCase
@@ -59,7 +59,7 @@ class DefaultWeightingFactory(private val graph: BaseGraph, private val encoding
             if (requestHints.has(Parameters.Routing.HEADING_PENALTY))
                 mergedCustomModel.setHeadingPenalty(requestHints.getDouble(Parameters.Routing.HEADING_PENALTY, Parameters.Routing.DEFAULT_HEADING_PENALTY))
 
-            val parameters = createWeightingParameters(mergedCustomModel, encodingManager)
+            val parameters = CustomWeightingBackends.default.createParameters(mergedCustomModel, encodingManager)
             val turnCostProvider: TurnCostProvider
             if (profile.hasTurnCosts() && !disableTurnCosts) {
                 val turnRestrictionEnc = encodingManager.getTurnBooleanEncodedValue(TurnRestriction.key(profile.getName()!!))
