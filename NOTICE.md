@@ -7,7 +7,10 @@ Copyright 2012 - 2026 GraphHopper GmbH
 The core module includes the following additional software:
 
  * slf4j.org - SLF4J distributed under the MIT license. 
- * com.carrotsearch:hppc (Apache license)
+ * com.carrotsearch:hppc (Apache license); additionally, com.graphhopper.coll.GrowableBitSet and several
+   classes in com.graphhopper.coll.primitive are Kotlin ports of HPPC 0.8.1 code: BitSet/BitSetIterator
+   (themselves derived from Apache Lucene's OpenBitSet, Apache license), IndirectSort/IndirectComparator,
+   LongArrayDeque including the BoundedProportionalArraySizingStrategy growth policy
  * Snippets regarding mmap, vint/vlong and compression from Lucene (Apache license)
  * XMLGraphics-Commons for CGIAR elevation files (Apache License)
  * libwebp from Google for PMTiles (BSD-3-Clause license)
