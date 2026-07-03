@@ -317,6 +317,19 @@ new discoveries get a pinning test AND an entry there.
   CustomWeightingBackends.default @Volatile registry). Public CustomModelParser entry
   points route through the seam; DefaultWeightingFactory wired directly.
   CustomWeightingBackendTest added. Gates green (core 3216, web 215).
+- [x] 2026-07-03 HPPC switch batches H1+H2 DONE (pure additions, no call sites changed):
+  H1 gap-fillers (com.graphhopper.coll.GrowableBitSet with the Jackson-pinned bits/wlen field
+  layout + GrowableBitSetIterator; coll.primitive IndirectSort/IndirectComparator, LongArrayDeque,
+  IntDoubleHashMap androidx shim) with semantic tests + GapFillerHppcParityTest (differential,
+  dies in H8). H2 exact-layout hash ports (IntObjectHashMap, LongObjectHashMap, IntLongHashMap,
+  LongLongHashMap, ObjectIntHashMap, IntHashSet, LongHashSet + scatter IntScatterSet,
+  LongScatterSet, LongIntScatterMap; shared HashPort internals; constant order-mixing inlined as
+  `seed` ctor param, default = the GH 123321123321123312L seed). Order identity PROVEN two ways:
+  HashPortHppcParityTest (element-by-element vs live hppc, sizes 5..30k across resize boundaries,
+  empty keys, removals, ensureCapacity path, GH/default/BridgePathFinder(16,0.5,123) ctor
+  variants — dies in H8) and HashPortOrderPinTest (absolute literals harvested from live hppc,
+  incl. the forEach-vs-iterator empty-key order asymmetry — survives H8, NEVER regenerate from
+  the ports). NOTICE.md updated. Gates green (core clean test, web -am test-compile).
 - [ ] REMAINING WORK: (3) HPPC→androidx.collection
   call-site switch + gap-fillers + canary + perf gate, then drop hppc from core (reader-gtfs
   declares its own) — SCOPED 2026-07-03, full execution plan in section
