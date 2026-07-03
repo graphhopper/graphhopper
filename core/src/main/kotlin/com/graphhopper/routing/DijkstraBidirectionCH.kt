@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing
 
-import com.carrotsearch.hppc.IntObjectMap
+import com.graphhopper.coll.GHIntObjectHashMap
 import com.graphhopper.storage.RoutingCHEdgeExplorer
 import com.graphhopper.storage.RoutingCHGraph
 
@@ -40,7 +40,7 @@ open class DijkstraBidirectionCH(graph: RoutingCHGraph) : DijkstraBidirectionCHN
     }
 
     private fun entryIsStallable(
-        entry: SPTEntry, bestWeightMap: IntObjectMap<SPTEntry>, edgeExplorer: RoutingCHEdgeExplorer,
+        entry: SPTEntry, bestWeightMap: GHIntObjectHashMap<SPTEntry>, edgeExplorer: RoutingCHEdgeExplorer,
         reverse: Boolean
     ): Boolean {
         // We check for all 'incoming' edges if we can prove that the current node (that is about to be settled) is

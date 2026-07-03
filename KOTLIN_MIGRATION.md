@@ -330,6 +330,30 @@ new discoveries get a pinning test AND an entry there.
   variants — dies in H8) and HashPortOrderPinTest (absolute literals harvested from live hppc,
   incl. the forEach-vs-iterator empty-key order asymmetry — survives H8, NEVER regenerate from
   the ports). NOTICE.md updated. Gates green (core clean test, web -am test-compile).
+- [x] 2026-07-03 HPPC switch batch H3 DONE (THE order-critical batch): all GH* wrappers rewired
+  from hppc supertypes onto the coll.primitive exact-layout ports (GHIntObjectHashMap,
+  GHIntHashSet [+temporary hppc-IntContainer bridge ctor for Path.getEdges, dies in H5/H8],
+  GHLongObjectHashMap, GHIntLongHashMap, GHLongLongHashMap, GHLongHashSet, GHObjectIntHashMap
+  [hppc putAll ctor dropped, no callers]; FQCNs + ctor shapes unchanged, seed = port default);
+  BridgePathFinder result map → seeded port(16, 0.5, seed 123). Call-site order decisions per
+  hppc code path: cursor/values() iteration → forEachInIteratorOrder (ShortestPathTree,
+  EdgeBasedNodeContractor bridge-path loop, GHTBitSet.copyTo, GHSortedCollection via new
+  firstInIteratorOrder); forEach(procedure) → forEach [empty key FIRST] (QueryGraph,
+  QueryRoutingCHGraph, EdgeChangeBuilder, LandmarkStorage.initLandmarkWeights);
+  forEach(predicate) → forEachWhile [empty key FIRST, early exit] (AlternativeRoute/CH/EdgeCH,
+  QueryOverlayBuilder, LandmarkStorage.setSubnetworks). Leaked-supertype signatures adapted
+  core-internally: bestWeightMap*/fromMap now GHIntObjectHashMap across
+  AbstractBidirAlgo/NonCH/CH/DijkstraBidirectionCH/Dijkstra; QueryOverlay.edgeChangesAtRealNodes
+  + EdgeChangeBuilder.build; EdgeElevationInterpolator gatherOuterAndInnerNodeIds param
+  IntSet→GHIntHashSet (tests pass GHIntHashSet, unaffected). AvoidEdgesWeighting keeps its
+  public hppc-IntSet surface (H5); only the default field init became plain hppc IntHashSet
+  (empty + membership-only ⇒ behavior identical). Port surface additions: IntHashSet.addAll(
+  IntHashSet), IntHashSet.firstInIteratorOrder(). ONE test file edited (flagged per rule 5):
+  QueryGraphTest — mechanical import/type swap IntObjectMap→GHIntObjectHashMap forced by the
+  supertype leak in QueryOverlay.getEdgeChangesAtRealNodes(); assertions untouched. Gates:
+  core clean test green (3289), web/tools/map-matching/reader-gtfs -am test-compile green,
+  germany load-gate (count=1000, MMAP, Xmx3g, clean=false) checksums BIT-IDENTICAL:
+  routingCH dummy 5603941, routingLM8 dummy 270582 (log: measurements/h3-gate.log).
 - [ ] REMAINING WORK: (3) HPPC→androidx.collection
   call-site switch + gap-fillers + canary + perf gate, then drop hppc from core (reader-gtfs
   declares its own) — SCOPED 2026-07-03, full execution plan in section

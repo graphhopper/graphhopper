@@ -17,30 +17,37 @@
  */
 package com.graphhopper.coll
 
-import com.carrotsearch.hppc.HashOrderMixingStrategy
 import com.carrotsearch.hppc.IntContainer
-import com.carrotsearch.hppc.IntHashSet
+import com.graphhopper.coll.primitive.IntHashSet
 
 /**
  * Prefer GHTBitSet or GHBitSetImpl over this class.
+ *
+ * Since the HPPC switch this extends the hppc-layout port in [com.graphhopper.coll.primitive]
+ * (default seed = the historic GH constant) — iteration order is bit-identical to the old
+ * hppc-based implementation.
  *
  * @author Peter Karich
  */
 class GHIntHashSet @JvmOverloads constructor(
     capacity: Int = 10,
-    loadFactor: Double = 0.75,
-    hashOrderMixer: HashOrderMixingStrategy = GHIntObjectHashMap.DETERMINISTIC
-) : IntHashSet(capacity, loadFactor, hashOrderMixer) {
+    loadFactor: Double = 0.75
+) : IntHashSet(capacity, loadFactor) {
 
+    /**
+     * Bridge constructor for hppc containers (mirrors the old hppc `IntHashSet(IntContainer)`:
+     * capacity from `container.size()`, then adds in the container's iterator order).
+     * Dies with the hppc dependency in batch H5/H8 of the collection switch.
+     */
     constructor(container: IntContainer) : this(container.size()) {
-        addAll(container)
+        for (cursor in container)
+            add(cursor.value)
     }
 
     companion object {
-        // The Java original declared the return type as IntHashSet, hiding IntHashSet.from(int...).
-        // Kotlin rejects a static with the identical JVM signature ("accidental override"), so the
-        // return type is covariantly narrowed to GHIntHashSet - Java call sites are unaffected and
-        // IntHashSet.from(int...) remains hidden.
+        // The Java original declared the return type as IntHashSet, hiding IntHashSet.from(int...);
+        // the return type stays covariantly narrowed to GHIntHashSet - Java call sites see
+        // GHIntHashSet.from(int...) exactly as before.
         @JvmStatic
         fun from(vararg elements: Int): GHIntHashSet {
             val set = GHIntHashSet(elements.size)

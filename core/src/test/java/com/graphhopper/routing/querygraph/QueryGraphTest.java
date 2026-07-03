@@ -18,7 +18,7 @@
 package com.graphhopper.routing.querygraph;
 
 import com.carrotsearch.hppc.IntArrayList;
-import com.carrotsearch.hppc.IntObjectMap;
+import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.HeadingResolver;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EdgeFilter;
@@ -164,7 +164,7 @@ public class QueryGraphTest {
 
         Snap snap = createLocationResult(2, 1.7, edgeWithGeo, 1, PILLAR);
         QueryOverlay queryOverlay = QueryOverlayBuilder.build(g, Collections.singletonList(snap));
-        IntObjectMap<QueryOverlay.EdgeChanges> realNodeModifications = queryOverlay.getEdgeChangesAtRealNodes();
+        GHIntObjectHashMap<QueryOverlay.EdgeChanges> realNodeModifications = queryOverlay.getEdgeChangesAtRealNodes();
         assertEquals(2, realNodeModifications.size());
         assertEquals("[1->4]", realNodeModifications.get(1).getAdditionalEdges().toString());
         assertEquals("[1]", realNodeModifications.get(1).getRemovedEdges().toString());

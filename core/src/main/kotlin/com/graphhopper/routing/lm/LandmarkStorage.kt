@@ -19,8 +19,6 @@ package com.graphhopper.routing.lm
 
 import com.carrotsearch.hppc.IntArrayList
 import com.carrotsearch.hppc.IntHashSet
-import com.carrotsearch.hppc.predicates.IntObjectPredicate
-import com.carrotsearch.hppc.procedures.IntObjectProcedure
 import com.graphhopper.coll.MapEntry
 import com.graphhopper.routing.DijkstraBidirectionRef
 import com.graphhopper.routing.SPTEntry
@@ -797,7 +795,7 @@ class LandmarkStorage(graph: BaseGraph, encodedValueLookup: EncodedValueLookup, 
 
             var failed = false
             val map = if (reverse) bestWeightMapTo else bestWeightMapFrom
-            map.forEach(IntObjectPredicate<SPTEntry> { nodeId, _ ->
+            map.forEachWhile { nodeId, _ ->
                 val sn = subnetworks[nodeId].toInt()
                 if (sn != subnetworkId) {
                     if (sn != UNSET_SUBNETWORK && sn != UNCLEAR_SUBNETWORK) {
@@ -806,13 +804,13 @@ class LandmarkStorage(graph: BaseGraph, encodedValueLookup: EncodedValueLookup, 
                                 + " (" + createPoint(graph, nodeId) + ") already set (" + sn + "). " + "Cannot change to " + subnetworkId)
 
                         failed = true
-                        return@IntObjectPredicate false
+                        return@forEachWhile false
                     }
 
                     subnetworks[nodeId] = subnetworkId.toByte()
                 }
                 true
-            })
+            }
             return failed
         }
 
@@ -821,12 +819,12 @@ class LandmarkStorage(graph: BaseGraph, encodedValueLookup: EncodedValueLookup, 
             var maxedout = 0
             var finalMaxWeight = 0.0
 
-            map.forEach(IntObjectProcedure<SPTEntry> { nodeId, b ->
+            map.forEach { nodeId, b ->
                 if (!lms.setWeight(nodeId * rowSize + lmIdx * 4 + offset, b.weight)) {
                     maxedout++
                     finalMaxWeight = Math.max(b.weight, finalMaxWeight)
                 }
-            })
+            }
 
             if (maxedout.toDouble() / map.size() > 0.1) {
                 LOGGER.warn("landmark " + lmIdx + " (" + nodeAccess.getLat(lmNodeId) + "," + nodeAccess.getLon(lmNodeId) + "): " +

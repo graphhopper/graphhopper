@@ -17,7 +17,6 @@
  */
 package com.graphhopper.routing
 
-import com.carrotsearch.hppc.IntObjectMap
 import com.graphhopper.coll.GHIntObjectHashMap
 import com.graphhopper.routing.util.TraversalMode
 import com.graphhopper.util.EdgeIterator
@@ -38,12 +37,12 @@ abstract class AbstractBidirAlgo(@JvmField protected val traversalMode: Traversa
     @JvmField
     protected var toInEdge: Int = ANY_EDGE
 
-    protected lateinit var bestWeightMapFrom: IntObjectMap<SPTEntry>
+    protected lateinit var bestWeightMapFrom: GHIntObjectHashMap<SPTEntry>
 
-    protected lateinit var bestWeightMapTo: IntObjectMap<SPTEntry>
+    protected lateinit var bestWeightMapTo: GHIntObjectHashMap<SPTEntry>
 
     @JvmField
-    protected var bestWeightMapOther: IntObjectMap<SPTEntry>? = null
+    protected var bestWeightMapOther: GHIntObjectHashMap<SPTEntry>? = null
 
     @JvmField
     protected var currFrom: SPTEntry? = null
@@ -239,11 +238,11 @@ abstract class AbstractBidirAlgo(@JvmField protected val traversalMode: Traversa
 
     protected open fun getCurrentToWeight(): Double = currTo!!.weight
 
-    internal fun getBestFromMap(): IntObjectMap<SPTEntry> = bestWeightMapFrom
+    internal fun getBestFromMap(): GHIntObjectHashMap<SPTEntry> = bestWeightMapFrom
 
-    internal fun getBestToMap(): IntObjectMap<SPTEntry> = bestWeightMapTo
+    internal fun getBestToMap(): GHIntObjectHashMap<SPTEntry> = bestWeightMapTo
 
-    internal fun setBestOtherMap(other: IntObjectMap<SPTEntry>) {
+    internal fun setBestOtherMap(other: GHIntObjectHashMap<SPTEntry>) {
         bestWeightMapOther = other
     }
 

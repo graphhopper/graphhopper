@@ -109,6 +109,20 @@ open class IntHashSet @JvmOverloads constructor(
     }
 
     /**
+     * Adds all elements of [container] — mirrors hppc's `addAll(IntContainer)`:
+     * `ensureCapacity(container.size())` first, then adds in the container's iterator order
+     * (slots ascending, empty key last). Returns how many were actually added.
+     */
+    fun addAll(container: IntHashSet): Int {
+        ensureCapacity(container.size())
+        var count = 0
+        container.forEachInIteratorOrder { e ->
+            if (add(e)) count++
+        }
+        return count
+    }
+
+    /**
      * All keys, in hppc's `IntHashSet.toArray()` order: the empty key (0) FIRST, then slots in
      * ascending order.
      */
@@ -267,6 +281,21 @@ open class IntHashSet @JvmOverloads constructor(
             }
             slot++
         }
+    }
+
+    /**
+     * The first key in hppc's cursor-iterator order (slots ascending, then the empty key last) —
+     * the equivalent of hppc's `iterator().next().value`, including the
+     * [NoSuchElementException] on an empty set.
+     */
+    fun firstInIteratorOrder(): Int {
+        val keys = this.keys
+        for (slot in 0..mask) {
+            val existing = keys[slot]
+            if (existing != 0) return existing
+        }
+        if (hasEmptyKey) return 0
+        throw NoSuchElementException("set is empty")
     }
 
     /** hppc cursor-iterator order: slots ascending, then the empty key (0) LAST. */

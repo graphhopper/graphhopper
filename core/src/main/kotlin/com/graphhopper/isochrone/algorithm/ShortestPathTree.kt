@@ -17,7 +17,6 @@
  */
 package com.graphhopper.isochrone.algorithm
 
-import com.carrotsearch.hppc.IntObjectHashMap
 import com.graphhopper.coll.GHIntObjectHashMap
 import com.graphhopper.routing.AbstractRoutingAlgorithm
 import com.graphhopper.routing.Path
@@ -74,7 +73,7 @@ class ShortestPathTree(
         }
     }
 
-    private val fromMap: IntObjectHashMap<IsoLabel> = GHIntObjectHashMap(1000)
+    private val fromMap: GHIntObjectHashMap<IsoLabel> = GHIntObjectHashMap(1000)
     private val queueByWeighting: PriorityQueue<IsoLabel> = // a.k.a. the Dijkstra queue
         PriorityQueue(1000, comparingDouble { l: IsoLabel -> l.weight })
     private var queueByZ: PriorityQueue<IsoLabel> = PriorityQueue(1000) // so we know when we are finished
@@ -165,8 +164,8 @@ class ShortestPathTree(
 
     fun getIsochroneEdges(z: Double): ArrayList<IsoLabel> {
         val result = ArrayList<IsoLabel>()
-        for (cursor in fromMap.values()) {
-            val label = cursor.value
+        // hppc values() cursor-iterator order (slots ascending, empty key last)
+        fromMap.forEachInIteratorOrder { _, label ->
             val parent = label.parent
             if (parent != null &&
                 ((getExploreValue(label) > z) xor (getExploreValue(parent) > z))) {

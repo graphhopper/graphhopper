@@ -55,9 +55,9 @@ class GHTBitSet(private val tHash: GHIntHashSet) : GHBitSet {
         if (bs is GHTBitSet) {
             bs.tHash.addAll(this.tHash)
         } else {
-            val iter = tHash.iterator()
-            while (iter.hasNext()) {
-                bs.add(iter.next().value)
+            // hppc cursor-iterator order (slots ascending, empty key last)
+            tHash.forEachInIteratorOrder { value ->
+                bs.add(value)
             }
         }
         return bs

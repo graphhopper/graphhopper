@@ -19,7 +19,6 @@
 package com.graphhopper.routing
 
 import com.carrotsearch.hppc.IntIndexedContainer
-import com.carrotsearch.hppc.predicates.IntObjectPredicate
 import com.graphhopper.routing.weighting.Weighting
 import com.graphhopper.storage.Graph
 import com.graphhopper.storage.RoutingCHGraph
@@ -71,16 +70,16 @@ open class AlternativeRouteEdgeCH(graph: RoutingCHGraph, hints: PMap) : Dijkstra
         val potentialAlternativeInfos = ArrayList<PotentialAlternativeInfo>()
 
         val bestWeightMapByNode = HashMap<Int, SPTEntry>()
-        bestWeightMapTo.forEach(IntObjectPredicate<SPTEntry> { key, value ->
+        bestWeightMapTo.forEachWhile { key, value ->
             bestWeightMapByNode.put(value.adjNode, value)
             true
-        })
+        }
 
-        bestWeightMapFrom.forEach(IntObjectPredicate<SPTEntry> { wurst, fromSPTEntry ->
-            val toSPTEntry = bestWeightMapByNode.get(fromSPTEntry.adjNode) ?: return@IntObjectPredicate true
+        bestWeightMapFrom.forEachWhile { wurst, fromSPTEntry ->
+            val toSPTEntry = bestWeightMapByNode.get(fromSPTEntry.adjNode) ?: return@forEachWhile true
 
             if (fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath() > bestPath.getWeight() * maxWeightFactor)
-                return@IntObjectPredicate true
+                return@forEachWhile true
 
             // This gives us a path s -> v -> t, but since we are using contraction hierarchies,
             // s -> v and v -> t need not be shortest paths. In fact, they can sometimes be pretty strange.
@@ -89,7 +88,7 @@ open class AlternativeRouteEdgeCH(graph: RoutingCHGraph, hints: PMap) : Dijkstra
             val preliminaryRoute = createPathExtractor().extract(fromSPTEntry, toSPTEntry, fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath())
             val preliminaryShare = calculateShare(preliminaryRoute)
             if (preliminaryShare > maxShareFactor) {
-                return@IntObjectPredicate true
+                return@forEachWhile true
             }
             assert(fromSPTEntry.adjNode == toSPTEntry.adjNode)
             val potentialAlternativeInfo = PotentialAlternativeInfo()
@@ -98,7 +97,7 @@ open class AlternativeRouteEdgeCH(graph: RoutingCHGraph, hints: PMap) : Dijkstra
             potentialAlternativeInfo.weight = 0.2 * (fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath()) + preliminaryShare
             potentialAlternativeInfos.add(potentialAlternativeInfo)
             true
-        })
+        }
 
         potentialAlternativeInfos.sortWith(Comparator.comparingDouble { o: PotentialAlternativeInfo -> o.weight })
 

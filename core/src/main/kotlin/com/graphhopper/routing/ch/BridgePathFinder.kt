@@ -18,10 +18,9 @@
 
 package com.graphhopper.routing.ch
 
-import com.carrotsearch.hppc.HashOrderMixing
-import com.carrotsearch.hppc.IntObjectHashMap
 import com.carrotsearch.hppc.IntObjectMap
 import com.carrotsearch.hppc.IntObjectScatterMap
+import com.graphhopper.coll.primitive.IntObjectHashMap
 import com.graphhopper.util.EdgeIterator.Companion.NO_EDGE
 import java.util.PriorityQueue
 
@@ -45,10 +44,12 @@ class BridgePathFinder(private val graph: CHPreparationGraph) {
      * @return a mapping between the target edge keys we can reach via bridge paths and information about the
      * corresponding bridge path
      */
-    fun find(startInEdgeKey: Int, startNode: Int, centerNode: Int): IntObjectMap<BridePathEntry> {
+    fun find(startInEdgeKey: Int, startNode: Int, centerNode: Int): IntObjectHashMap<BridePathEntry> {
         queue.clear()
         map.clear()
-        val result: IntObjectMap<BridePathEntry> = IntObjectHashMap(16, 0.5, HashOrderMixing.constant(123))
+        // seed 123 pins the iteration order of the result map (formerly HashOrderMixing.constant(123)),
+        // which drives shortcut creation order in EdgeBasedNodeContractor
+        val result = IntObjectHashMap<BridePathEntry>(16, 0.5, 123L)
         val startEntry = PrepareCHEntry(NO_EDGE, startInEdgeKey, startInEdgeKey, startNode, 0.0, 0)
         map.put(startInEdgeKey, startEntry)
         queue.add(startEntry)

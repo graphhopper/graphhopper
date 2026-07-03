@@ -17,8 +17,6 @@
  */
 package com.graphhopper.routing
 
-import com.carrotsearch.hppc.IntSet
-import com.carrotsearch.hppc.predicates.IntObjectPredicate
 import com.graphhopper.coll.GHIntHashSet
 import com.graphhopper.routing.util.TraversalMode
 import com.graphhopper.routing.weighting.Weighting
@@ -210,7 +208,7 @@ class AlternativeRoute(graph: Graph, weighting: Weighting, traversalMode: Traver
         val maxWeight = maxWeightFactor * bestWeight
         // Edge IDs of the best path - used to compute share by counting actual shared
         // edges on each candidate (analogous to AlternativeRouteCH.sharedDistance).
-        val bestPathEdges: IntSet = GHIntHashSet(bestPath.getEdges())
+        val bestPathEdges = GHIntHashSet(bestPath.getEdges())
 
         // For edge-based this is the first edge id of the best path, for node-based the from node.
         val startEdgeOrNode = if (traversalMode.isEdgeBased)
@@ -235,8 +233,9 @@ class AlternativeRoute(graph: Graph, weighting: Weighting, traversalMode: Traver
         alternatives.add(bestAlt)
         val bestEntry = AtomicReference<SPTEntry>()
 
-        bestWeightMapFrom.forEach(object : IntObjectPredicate<SPTEntry> {
-            override fun apply(traversalId: Int, fromSPTEntry: SPTEntry): Boolean {
+        // hppc forEach(predicate) order: empty key (0) first, then slots ascending, early exit on false
+        val explorationPredicate = object {
+            fun apply(traversalId: Int, fromSPTEntry: SPTEntry): Boolean {
                 var toSPTEntry: SPTEntry = bestWeightMapTo.get(traversalId) ?: return true
 
                 // Using the parent is required to avoid duplicate edge in Path.
@@ -396,7 +395,10 @@ class AlternativeRoute(graph: Graph, weighting: Weighting, traversalMode: Traver
 
                 return false
             }
-        })
+        }
+        bestWeightMapFrom.forEachWhile { traversalId, fromSPTEntry ->
+            explorationPredicate.apply(traversalId, fromSPTEntry)
+        }
 
         return alternatives
     }

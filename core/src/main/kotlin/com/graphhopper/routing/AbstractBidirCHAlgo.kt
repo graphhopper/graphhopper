@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing
 
-import com.carrotsearch.hppc.IntObjectMap
+import com.graphhopper.coll.GHIntObjectHashMap
 import com.graphhopper.routing.ch.NodeBasedCHBidirPathExtractor
 import com.graphhopper.routing.util.TraversalMode
 import com.graphhopper.storage.CHEdgeFilter
@@ -189,7 +189,7 @@ abstract class AbstractBidirCHAlgo(graph: RoutingCHGraph, tMode: TraversalMode) 
 
     private fun fillEdges(
         currEdge: SPTEntry, prioQueue: PriorityQueue<SPTEntry>,
-        bestWeightMap: IntObjectMap<SPTEntry>, explorer: RoutingCHEdgeExplorer, reverse: Boolean
+        bestWeightMap: GHIntObjectHashMap<SPTEntry>, explorer: RoutingCHEdgeExplorer, reverse: Boolean
     ) {
         val iter = explorer.setBaseNode(currEdge.adjNode)
         while (iter.next()) {

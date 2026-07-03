@@ -19,7 +19,6 @@
 package com.graphhopper.routing.querygraph
 
 import com.carrotsearch.hppc.LongArrayList
-import com.carrotsearch.hppc.predicates.IntObjectPredicate
 import com.graphhopper.coll.GHIntObjectHashMap
 import com.graphhopper.search.KVStorage
 import com.graphhopper.storage.Graph
@@ -118,7 +117,8 @@ internal class QueryOverlayBuilder private constructor(
         // Phase 2 - now it is clear which points cut one edge
         // 1. create point lists
         // 2. create virtual edges between virtual nodes and its neighbor (virtual or normal nodes)
-        edge2res.forEach(IntObjectPredicate<MutableList<Snap>> { edgeId, results ->
+        // hppc forEach(predicate) order: empty key (0) first, then slots ascending
+        edge2res.forEachWhile { edgeId, results ->
             virtualEdgesFwdForSnap.clear()
             virtualEdgesBwdForSnap.clear()
             // we can expect at least one entry in the results
@@ -206,7 +206,7 @@ internal class QueryOverlayBuilder private constructor(
             adjustDistances(virtualEdgesBwdForSnap, closestEdge.distance_mm)
 
             true
-        })
+        }
     }
 
     private fun adjustDistances(virtualEdges: List<VirtualEdgeIteratorState>, originalDistance: Long) {

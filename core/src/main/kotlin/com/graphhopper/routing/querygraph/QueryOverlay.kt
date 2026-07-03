@@ -51,7 +51,7 @@ internal class QueryOverlay(numVirtualNodes: Int, is3D: Boolean) {
     val virtualEdges: MutableList<VirtualEdgeIteratorState> = ArrayList(numVirtualNodes * 2)
 
     // stores the changes that need to be done to the real nodes
-    val edgeChangesAtRealNodes: IntObjectMap<EdgeChanges> = GHIntObjectHashMap(numVirtualNodes * 3)
+    val edgeChangesAtRealNodes: GHIntObjectHashMap<EdgeChanges> = GHIntObjectHashMap(numVirtualNodes * 3)
 
     val numVirtualEdges: Int
         get() = virtualEdges.size

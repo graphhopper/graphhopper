@@ -20,7 +20,6 @@ package com.graphhopper.routing.querygraph
 
 import com.carrotsearch.hppc.IntObjectHashMap
 import com.carrotsearch.hppc.IntObjectMap
-import com.carrotsearch.hppc.procedures.IntObjectProcedure
 import com.graphhopper.routing.querygraph.QueryGraph.Companion.SNAP_ADJ
 import com.graphhopper.routing.querygraph.QueryGraph.Companion.SNAP_BASE
 import com.graphhopper.routing.weighting.Weighting
@@ -137,7 +136,8 @@ class QueryRoutingCHGraph(private val routingCHGraph: RoutingCHGraph, private va
     private fun buildVirtualEdgesAtRealNodes(explorer: RoutingCHEdgeExplorer): IntObjectMap<List<RoutingCHEdgeIteratorState>> {
         val virtualEdgesAtRealNodes: IntObjectMap<List<RoutingCHEdgeIteratorState>> =
             IntObjectHashMap(queryOverlay.edgeChangesAtRealNodes.size())
-        queryOverlay.edgeChangesAtRealNodes.forEach(IntObjectProcedure<QueryOverlay.EdgeChanges> { node, edgeChanges ->
+        // hppc forEach(procedure) order: empty key (0) first, then slots ascending
+        queryOverlay.edgeChangesAtRealNodes.forEach { node, edgeChanges ->
             val virtualEdges: MutableList<RoutingCHEdgeIteratorState> = ArrayList()
             for (v in edgeChanges.additionalEdges) {
                 assert(v.baseNode == node)
@@ -161,7 +161,7 @@ class QueryRoutingCHGraph(private val routingCHGraph: RoutingCHGraph, private va
                 }
             }
             virtualEdgesAtRealNodes.put(node, virtualEdges)
-        })
+        }
         return virtualEdgesAtRealNodes
     }
 

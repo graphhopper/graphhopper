@@ -18,8 +18,6 @@
 package com.graphhopper.routing.querygraph
 
 import com.carrotsearch.hppc.IntArrayList
-import com.carrotsearch.hppc.IntObjectMap
-import com.carrotsearch.hppc.procedures.IntObjectProcedure
 import com.graphhopper.coll.GHIntObjectHashMap
 import com.graphhopper.routing.util.AllEdgesIterator
 import com.graphhopper.routing.util.EdgeFilter
@@ -60,7 +58,7 @@ class QueryGraph private constructor(graph: BaseGraph, snaps: List<Snap>) : Grap
 
     // Use LinkedHashSet for predictable iteration order.
     private val unfavoredEdges: MutableSet<VirtualEdgeIteratorState> = LinkedHashSet(5)
-    private val virtualEdgesAtRealNodes: IntObjectMap<List<EdgeIteratorState>>
+    private val virtualEdgesAtRealNodes: GHIntObjectHashMap<List<EdgeIteratorState>>
     private val virtualEdgesAtVirtualNodes: List<List<EdgeIteratorState>>
 
     init {
@@ -191,10 +189,11 @@ class QueryGraph private constructor(graph: BaseGraph, snaps: List<Snap>) : Grap
         }
     }
 
-    private fun buildVirtualEdgesAtRealNodes(mainExplorer: EdgeExplorer): IntObjectMap<List<EdgeIteratorState>> {
-        val virtualEdgesAtRealNodes: IntObjectMap<List<EdgeIteratorState>> =
+    private fun buildVirtualEdgesAtRealNodes(mainExplorer: EdgeExplorer): GHIntObjectHashMap<List<EdgeIteratorState>> {
+        val virtualEdgesAtRealNodes: GHIntObjectHashMap<List<EdgeIteratorState>> =
             GHIntObjectHashMap(queryOverlay.edgeChangesAtRealNodes.size())
-        queryOverlay.edgeChangesAtRealNodes.forEach(IntObjectProcedure<QueryOverlay.EdgeChanges> { node, edgeChanges ->
+        // hppc forEach(procedure) order: empty key (0) first, then slots ascending
+        queryOverlay.edgeChangesAtRealNodes.forEach { node, edgeChanges ->
             val virtualEdges: MutableList<EdgeIteratorState> = ArrayList(edgeChanges.additionalEdges)
             val mainIter = mainExplorer.setBaseNode(node)
             while (mainIter.next()) {
@@ -203,7 +202,7 @@ class QueryGraph private constructor(graph: BaseGraph, snaps: List<Snap>) : Grap
                 }
             }
             virtualEdgesAtRealNodes.put(node, virtualEdges)
-        })
+        }
         return virtualEdgesAtRealNodes
     }
 

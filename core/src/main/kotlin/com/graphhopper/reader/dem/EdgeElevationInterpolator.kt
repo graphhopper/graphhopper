@@ -17,7 +17,6 @@
  */
 package com.graphhopper.reader.dem
 
-import com.carrotsearch.hppc.IntSet
 import com.graphhopper.coll.GHBitSet
 import com.graphhopper.coll.GHBitSetImpl
 import com.graphhopper.coll.GHIntHashSet
@@ -92,7 +91,7 @@ open class EdgeElevationInterpolator(
 
     private fun interpolateEdge(interpolatableEdge: EdgeIteratorState,
                                 visitedEdgeIds: GHBitSet, edgeExplorer: EdgeExplorer) {
-        val outerNodeIds: IntSet = GHIntHashSet()
+        val outerNodeIds = GHIntHashSet()
         val innerNodeIds = GHIntHashSet()
         gatherOuterAndInnerNodeIds(edgeExplorer, interpolatableEdge, visitedEdgeIds, outerNodeIds, innerNodeIds)
         nodeElevationInterpolator.interpolateElevationsOfInnerNodes(outerNodeIds.toArray(), innerNodeIds.toArray())
@@ -100,7 +99,7 @@ open class EdgeElevationInterpolator(
 
     fun gatherOuterAndInnerNodeIds(edgeExplorer: EdgeExplorer,
                                    interpolatableEdge: EdgeIteratorState, visitedEdgesIds: GHBitSet,
-                                   outerNodeIds: IntSet, innerNodeIds: GHIntHashSet) {
+                                   outerNodeIds: GHIntHashSet, innerNodeIds: GHIntHashSet) {
         val gatherOuterAndInnerNodeIdsSearch = object : BreadthFirstSearch() {
             override fun createBitSet(): GHBitSet {
                 return GHTBitSet()

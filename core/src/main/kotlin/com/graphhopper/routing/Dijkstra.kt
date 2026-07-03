@@ -17,7 +17,6 @@
  */
 package com.graphhopper.routing
 
-import com.carrotsearch.hppc.IntObjectMap
 import com.graphhopper.coll.GHIntObjectHashMap
 import com.graphhopper.routing.util.TraversalMode
 import com.graphhopper.routing.weighting.Weighting
@@ -36,7 +35,7 @@ import java.util.PriorityQueue
 open class Dijkstra(graph: Graph, weighting: Weighting, tMode: TraversalMode) :
     AbstractRoutingAlgorithm(graph, weighting, tMode) {
 
-    protected lateinit var fromMap: IntObjectMap<SPTEntry?>
+    protected lateinit var fromMap: GHIntObjectHashMap<SPTEntry?>
     protected lateinit var fromHeap: PriorityQueue<SPTEntry>
 
     @JvmField

@@ -17,20 +17,16 @@
  */
 package com.graphhopper.coll
 
-import com.carrotsearch.hppc.HashOrderMixingStrategy
-import com.carrotsearch.hppc.ObjectIntAssociativeContainer
-import com.carrotsearch.hppc.ObjectIntHashMap
+import com.graphhopper.coll.primitive.ObjectIntHashMap
 
 /**
+ * Extends the hppc-layout port (default seed = the historic GH constant) — iteration order is
+ * bit-identical to the old hppc-based implementation. The hppc `ObjectIntAssociativeContainer`
+ * copy constructor was dropped with the hppc inheritance (it had no callers).
+ *
  * @author Peter Karich
  */
 class GHObjectIntHashMap<T> @JvmOverloads constructor(
     capacity: Int = 10,
-    loadFactor: Double = 0.75,
-    hashOrderMixer: HashOrderMixingStrategy = GHIntObjectHashMap.DETERMINISTIC
-) : ObjectIntHashMap<T>(capacity, loadFactor, hashOrderMixer) {
-
-    constructor(container: ObjectIntAssociativeContainer<out T>) : this(container.size()) {
-        putAll(container)
-    }
-}
+    loadFactor: Double = 0.75
+) : ObjectIntHashMap<T>(capacity, loadFactor)

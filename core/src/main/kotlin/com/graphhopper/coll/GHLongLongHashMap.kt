@@ -17,14 +17,15 @@
  */
 package com.graphhopper.coll
 
-import com.carrotsearch.hppc.HashOrderMixingStrategy
-import com.carrotsearch.hppc.LongLongHashMap
+import com.graphhopper.coll.primitive.LongLongHashMap
 
 /**
+ * Extends the hppc-layout port (default seed = the historic GH constant) — iteration order is
+ * bit-identical to the old hppc-based implementation.
+ *
  * @author Peter Karich
  */
 class GHLongLongHashMap @JvmOverloads constructor(
     capacity: Int = 10,
-    loadFactor: Double = 0.75,
-    hashOrderMixer: HashOrderMixingStrategy = GHIntObjectHashMap.DETERMINISTIC
-) : LongLongHashMap(capacity, loadFactor, hashOrderMixer)
+    loadFactor: Double = 0.75
+) : LongLongHashMap(capacity, loadFactor)

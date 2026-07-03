@@ -19,9 +19,8 @@
 package com.graphhopper.routing.querygraph
 
 import com.carrotsearch.hppc.IntArrayList
-import com.carrotsearch.hppc.IntObjectMap
-import com.carrotsearch.hppc.procedures.IntProcedure
 import com.graphhopper.coll.GHIntHashSet
+import com.graphhopper.coll.GHIntObjectHashMap
 import com.graphhopper.routing.querygraph.QueryGraph.Companion.ADJ_SNAP
 import com.graphhopper.routing.querygraph.QueryGraph.Companion.BASE_SNAP
 import com.graphhopper.routing.querygraph.QueryGraph.Companion.SNAP_ADJ
@@ -36,12 +35,12 @@ internal class EdgeChangeBuilder private constructor(
     private val closestEdges: IntArrayList,
     private val virtualEdges: List<VirtualEdgeIteratorState>,
     private val firstVirtualNodeId: Int,
-    edgeChangesAtRealNodes: IntObjectMap<QueryOverlay.EdgeChanges>
+    edgeChangesAtRealNodes: GHIntObjectHashMap<QueryOverlay.EdgeChanges>
 ) {
-    private val edgeChangesAtRealNodes: IntObjectMap<QueryOverlay.EdgeChanges>
+    private val edgeChangesAtRealNodes: GHIntObjectHashMap<QueryOverlay.EdgeChanges>
 
     init {
-        if (!edgeChangesAtRealNodes.isEmpty) {
+        if (!edgeChangesAtRealNodes.isEmpty()) {
             throw IllegalArgumentException("real node modifications need to be empty")
         }
         this.edgeChangesAtRealNodes = edgeChangesAtRealNodes
@@ -55,7 +54,7 @@ internal class EdgeChangeBuilder private constructor(
          *                               be added to it
          */
         @JvmStatic
-        fun build(closestEdges: IntArrayList, virtualEdges: List<VirtualEdgeIteratorState>, firstVirtualNodeId: Int, edgeChangesAtRealNodes: IntObjectMap<QueryOverlay.EdgeChanges>) {
+        fun build(closestEdges: IntArrayList, virtualEdges: List<VirtualEdgeIteratorState>, firstVirtualNodeId: Int, edgeChangesAtRealNodes: GHIntObjectHashMap<QueryOverlay.EdgeChanges>) {
             EdgeChangeBuilder(closestEdges, virtualEdges, firstVirtualNodeId, edgeChangesAtRealNodes).build()
         }
     }
@@ -84,9 +83,10 @@ internal class EdgeChangeBuilder private constructor(
         }
 
         // 2. build the list of removed edges for all real nodes adjacent to virtual ones
-        towerNodesToChange.forEach(IntProcedure { value ->
+        // hppc forEach(procedure) order: empty key (0) first, then slots ascending
+        towerNodesToChange.forEach { value ->
             addRemovedEdges(value)
-        })
+        }
     }
 
     /**
@@ -114,7 +114,7 @@ internal class EdgeChangeBuilder private constructor(
         if (isVirtualNode(towerNode))
             throw IllegalStateException("Node should not be virtual:$towerNode, $edgeChangesAtRealNodes")
 
-        val edgeChanges = edgeChangesAtRealNodes.get(towerNode)
+        val edgeChanges = edgeChangesAtRealNodes.get(towerNode)!!
         val existingEdges = edgeChanges.additionalEdges
         val removedEdges = edgeChanges.removedEdges
         for (existingEdge in existingEdges) {

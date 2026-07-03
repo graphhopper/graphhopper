@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing
 
-import com.carrotsearch.hppc.IntObjectMap
+import com.graphhopper.coll.GHIntObjectHashMap
 import com.graphhopper.routing.querygraph.QueryGraph
 import com.graphhopper.routing.util.EdgeFilter
 import com.graphhopper.routing.util.TraversalMode
@@ -161,7 +161,7 @@ abstract class AbstractNonCHBidirAlgo(graph: Graph, weighting: Weighting, tMode:
         return true
     }
 
-    private fun fillEdges(currEdge: SPTEntry, prioQueue: PriorityQueue<SPTEntry>, bestWeightMap: IntObjectMap<SPTEntry>, reverse: Boolean) {
+    private fun fillEdges(currEdge: SPTEntry, prioQueue: PriorityQueue<SPTEntry>, bestWeightMap: GHIntObjectHashMap<SPTEntry>, reverse: Boolean) {
         val iter = edgeExplorer.setBaseNode(currEdge.adjNode)
         while (iter.next()) {
             if (!accept(iter, currEdge.edge))

@@ -46,7 +46,7 @@ class GHSortedCollection {
                     + " - did you insert " + key + "," + value + " before?")
         }
         size--
-        if (set.isEmpty) {
+        if (set.isEmpty()) {
             map.remove(value)
         }
     }
@@ -75,7 +75,7 @@ class GHSortedCollection {
             throw IllegalStateException("collection is already empty!?")
         }
         val e = map.firstEntry()
-        if (e.value.isEmpty) {
+        if (e.value.isEmpty()) {
             throw IllegalStateException("internal set is already empty!?")
         }
         return map.firstEntry().key
@@ -86,10 +86,10 @@ class GHSortedCollection {
             throw IllegalStateException("collection is already empty!?")
         }
         val set = map.firstEntry().value
-        if (set.isEmpty) {
+        if (set.isEmpty()) {
             throw IllegalStateException("internal set is already empty!?")
         }
-        return set.iterator().next().value
+        return set.firstInIteratorOrder()
     }
 
     /**
@@ -103,14 +103,13 @@ class GHSortedCollection {
 
         val e = map.firstEntry()
         val set = e.value
-        if (set.isEmpty) {
+        if (set.isEmpty()) {
             throw IllegalStateException("internal set is already empty!?")
         }
 
-        val iter = set.iterator()
-        val value = iter.next().value
+        val value = set.firstInIteratorOrder()
         set.remove(value)
-        if (set.isEmpty) {
+        if (set.isEmpty()) {
             map.remove(e.key)
         }
         return value

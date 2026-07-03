@@ -19,7 +19,6 @@
 package com.graphhopper.routing
 
 import com.carrotsearch.hppc.IntIndexedContainer
-import com.carrotsearch.hppc.predicates.IntObjectPredicate
 import com.graphhopper.storage.Graph
 import com.graphhopper.storage.RoutingCHGraph
 import com.graphhopper.util.PMap
@@ -67,11 +66,11 @@ open class AlternativeRouteCH(graph: RoutingCHGraph, hints: PMap) : DijkstraBidi
 
         val potentialAlternativeInfos = ArrayList<PotentialAlternativeInfo>()
 
-        bestWeightMapFrom.forEach(IntObjectPredicate<SPTEntry> { v, fromSPTEntry ->
-            val toSPTEntry = bestWeightMapTo.get(v) ?: return@IntObjectPredicate true
+        bestWeightMapFrom.forEachWhile { v, fromSPTEntry ->
+            val toSPTEntry = bestWeightMapTo.get(v) ?: return@forEachWhile true
 
             if (fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath() > bestPath.getWeight() * maxWeightFactor)
-                return@IntObjectPredicate true
+                return@forEachWhile true
 
             // This gives us a path s -> v -> t, but since we are using contraction hierarchies,
             // s -> v and v -> t need not be shortest paths. In fact, they can sometimes be pretty strange.
@@ -80,14 +79,14 @@ open class AlternativeRouteCH(graph: RoutingCHGraph, hints: PMap) : DijkstraBidi
             val preliminaryRoute = createPathExtractor().extract(fromSPTEntry, toSPTEntry, fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath())
             val preliminaryShare = calculateShare(preliminaryRoute)
             if (preliminaryShare > maxShareFactor) {
-                return@IntObjectPredicate true
+                return@forEachWhile true
             }
             val potentialAlternativeInfo = PotentialAlternativeInfo()
             potentialAlternativeInfo.v = v
             potentialAlternativeInfo.weight = 0.2 * (fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath()) + preliminaryShare
             potentialAlternativeInfos.add(potentialAlternativeInfo)
             true
-        })
+        }
 
         potentialAlternativeInfos.sortWith(Comparator.comparingDouble { o: PotentialAlternativeInfo -> o.weight })
 

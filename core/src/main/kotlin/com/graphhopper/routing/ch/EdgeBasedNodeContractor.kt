@@ -189,33 +189,34 @@ internal class EdgeBasedNodeContractor(
                 val origInKey = reverseEdgeKey(origInIter.getOrigEdgeKeyLast())
                 // we search 'bridge paths' leading to the target edges
                 val bridgePaths = bridgePathFinder!!.find(origInKey, sourceNode, node)
-                if (bridgePaths.isEmpty)
+                if (bridgePaths.isEmpty())
                     continue
                 witnessPathSearcher!!.initSearch(origInKey, sourceNode, node, wpsStats)
-                for (bridgePath in bridgePaths) {
-                    if (!bridgePath.value.weight.isFinite())
+                // hppc cursor-iterator order (slots ascending, empty key last) — this order drives
+                // shortcut creation/dedup/ID assignment and is pinned by the seeded result map
+                bridgePaths.forEachInIteratorOrder { targetEdgeKey, bridgePath ->
+                    if (!bridgePath.weight.isFinite())
                         throw IllegalStateException("Bridge entry weights should always be finite")
-                    val targetEdgeKey = bridgePath.key
                     dijkstraSW.start()
-                    val weight = witnessPathSearcher!!.runSearch(bridgePath.value.chEntry.adjNode, targetEdgeKey, bridgePath.value.weight, maxPolls)
+                    val weight = witnessPathSearcher!!.runSearch(bridgePath.chEntry.adjNode, targetEdgeKey, bridgePath.weight, maxPolls)
                     dijkstraSW.stop()
-                    if (weight <= bridgePath.value.weight)
+                    if (weight <= bridgePath.weight)
                         // we found a witness, nothing to do
-                        continue
-                    var root = bridgePath.value.chEntry
+                        return@forEachInIteratorOrder
+                    var root = bridgePath.chEntry
                     while (EdgeIterator.Edge.isValid(root.parent!!.prepareEdge))
                         root = root.parent!!
                     // we make sure to add each shortcut only once. when we are actually adding shortcuts we check for existing
                     // shortcuts anyway, but at least this is important when we *count* shortcuts.
-                    val addedShortcutKey = BitUtil.LITTLE.toLong(root.firstEdgeKey, bridgePath.value.chEntry.incEdgeKey)
+                    val addedShortcutKey = BitUtil.LITTLE.toLong(root.firstEdgeKey, bridgePath.chEntry.incEdgeKey)
                     if (!addedShortcuts.add(addedShortcutKey))
-                        continue
+                        return@forEachInIteratorOrder
                     val initialTurnCost = prepareGraph.getTurnWeight(origInKey, sourceNode, root.firstEdgeKey)
-                    bridgePath.value.chEntry.weight -= initialTurnCost
-                    LOGGER.trace("Adding shortcuts for target entry {}", bridgePath.value.chEntry)
+                    bridgePath.chEntry.weight -= initialTurnCost
+                    LOGGER.trace("Adding shortcuts for target entry {}", bridgePath.chEntry)
                     // todo: re-implement loop-avoidance heuristic as it existed in GH 1.0? it did not work the
                     //       way it was implemented so it was removed at some point
-                    shortcutHandler.handleShortcut(root, bridgePath.value.chEntry, bridgePath.value.chEntry.origEdges)
+                    shortcutHandler.handleShortcut(root, bridgePath.chEntry, bridgePath.chEntry.origEdges)
                 }
                 witnessPathSearcher!!.finishSearch()
             }

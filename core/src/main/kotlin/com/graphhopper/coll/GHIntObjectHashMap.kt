@@ -17,24 +17,20 @@
  */
 package com.graphhopper.coll
 
-import com.carrotsearch.hppc.HashOrderMixing
-import com.carrotsearch.hppc.HashOrderMixingStrategy
-import com.carrotsearch.hppc.IntObjectHashMap
+import com.graphhopper.coll.primitive.IntObjectHashMap
 
 /**
  * We often do not mix maps but really need to avoid randomness or that threads can influence each
  * other and so we do not use the default HashOrderMixing employed in HPPC (which does this in a thread-safe manner).
  *
+ * Since the HPPC switch this extends the hppc-layout port in [com.graphhopper.coll.primitive],
+ * whose default seed IS the historic GH constant
+ * ([com.graphhopper.coll.primitive.HashPort.DETERMINISTIC_SEED]) — iteration order is
+ * bit-identical to the old hppc-based implementation.
+ *
  * @author Peter Karich
  */
 class GHIntObjectHashMap<T> @JvmOverloads constructor(
     capacity: Int = 10,
-    loadFactor: Double = 0.75,
-    hashOrderMixer: HashOrderMixingStrategy = DETERMINISTIC
-) : IntObjectHashMap<T>(capacity, loadFactor, hashOrderMixer) {
-
-    companion object {
-        @JvmField
-        internal val DETERMINISTIC: HashOrderMixingStrategy = HashOrderMixing.constant(123321123321123312L)
-    }
-}
+    loadFactor: Double = 0.75
+) : IntObjectHashMap<T>(capacity, loadFactor)
