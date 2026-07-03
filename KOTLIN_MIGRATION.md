@@ -317,8 +317,9 @@ new discoveries get a pinning test AND an entry there.
   CustomWeightingBackends.default @Volatile registry). Public CustomModelParser entry
   points route through the seam; DefaultWeightingFactory wired directly.
   CustomWeightingBackendTest added. Gates green (core 3216, web 215).
-- [ ] REMAINING WORK: (1) (2) custom-model stages 4-5 (closure composer + differential tests,
-  build-time kotlin source generator — Peter approved scope); (3) HPPC→androidx.collection
+- [ ] REMAINING WORK: (1) custom-model stage 5 (build-time kotlin source generator +
+  profile-name registry — Peter approved scope; can reuse stage 4's typed lowering, see the
+  stage-4 entry); (3) HPPC→androidx.collection
   call-site switch + gap-fillers + canary + perf gate, then drop hppc from core (reader-gtfs
   declares its own); (4) NOTICE.md attribution review; (5) final real-route diff report.
 - [x] 2026-07-03 custom-model STAGE 3 DONE: shared expression FRONT-END in new KMP-clean
@@ -339,6 +340,35 @@ new discoveries get a pinning test AND an entry there.
   Attribution: BSD-3-Clause idea-derivation headers on the 4 parser-package files + NOTICE.md
   entry (no janino source copied). Janino path untouched. Gates green (core clean test 3223,
   web -am test-compile).
+- [x] 2026-07-03 custom-model STAGE 4 DONE: closure-composer backend `ClosureBackend`
+  (function-object DAG, NO Janino/runtime classloading; default backend UNCHANGED — Janino
+  stays production, closure selected only via CustomWeightingBackends.default in tests).
+  KMP-clean evaluation core in expression/: Evaluators.kt (primitive-returning typed nodes +
+  cells + StatementProgram runtime — zero allocation per evaluated edge) and TypedCompiler.kt
+  (stage-3 ExprNode -> typed nodes with exact JAVA semantics: literal typing incl.
+  hex/octal/binary/`_`/suffixes and the -2147483648 JLS special case, int/int division stays
+  int, promotion int->long->float->double, boolean-only conditions, `& | ^` boolean vs
+  bitwise, integral-only shifts, enum==CONSTANT of the LHS type via ordinal, String `==`
+  identity with per-program literal pooling, equals/contains, Math.sqrt/abs overload
+  resolution — composition-time rejection of everything janino only rejects at compile time).
+  JVM glue ClosureBackend.kt mirrors createClazz 1:1 (check order, group structure, area
+  geometry checks, backward_/prev_ prefixes, street_name/prev_street_name/change_angle,
+  needTwoDirections + inEdgeReverse/outEdgeReverse, per-request fresh mutable cells =
+  janino's per-request instance) + janino-free calcMaxSpeed/calcMaxPriority via new
+  ExpressionScopes.minMaxScope (FindMinMax's stricter no-"Infinity" validator).
+  ClosureBackendDifferentialTest (seeds: graph 123, models 20260703): 23 bundled models,
+  ~25 handcrafted, 60/26 accepted/rejected edge conditions, 18/6/2 turn conditions,
+  12/9 values, area + DI/heading-penalty defaulting (incl. unfavored virtual edge),
+  120 random models — bit-identical (==, no epsilon) calcEdgeWeight+calcEdgeMillis on all
+  120 random-graph edges in both directions, all incident turn pairs, and
+  calcMinWeightPerDistance (or both throw). Two mutation probes confirmed the harness
+  catches int-division and turn-direction deviations. Documented divergence: String
+  concatenation `+` is rejected by the closure backend though janino compiles it (useless
+  for weights; kept out of the corpus). Stage 5 note: the source generator should reuse
+  TypedCompiler's typing rules by emitting per-SemType Kotlin expressions from the same
+  typed lowering (or simply unparse the validated ExprNode with the enum-constant
+  qualification, mirroring parseExpressions). Gates green (core clean test, web -am
+  test-compile).
 - [x] 2026-07-02 ~30% CHECKPOINT PASSED (at 27.0%, after ev machinery + weighting):
   paired A/B (3 rounds each, java-written germany graph, count=5000): routingCH median
   4.11ms(J)/4.07ms(K), CH_edge 8.07/8.02, LM8 129.2/127.7 — parity within noise; route

@@ -66,6 +66,18 @@ object ExpressionScopes {
                     isValidName = { name -> lookup.hasEncodedValue(name) || name.contains("Infinity") },
                     encodedValue = { name -> toMeta(lookup, name) })
 
+    /**
+     * Scope for min/max evaluation of value expressions; the name whitelist mirrors the
+     * validator of ValueExpressionVisitor.findMinMax 1:1 (encoded values ONLY — unlike
+     * [valueScope] there is no "Infinity" allowance, so `add: "Infinity"` statements that
+     * compile are still rejected when a min/max is requested, exactly like the Janino path).
+     */
+    @JvmStatic
+    fun minMaxScope(lookup: EncodedValueLookup): ExpressionScope =
+            ExpressionScope(
+                    isValidName = { name -> lookup.hasEncodedValue(name) },
+                    encodedValue = { name -> toMeta(lookup, name) })
+
     private fun toMeta(lookup: EncodedValueLookup, name: String): EvMeta? {
         if (!lookup.hasEncodedValue(name)) return null
         val enc = lookup.getEncodedValue(name, EncodedValue::class.java)
