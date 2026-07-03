@@ -302,6 +302,11 @@ new discoveries get a pinning test AND an entry there.
   4.11ms(J)/4.07ms(K), CH_edge 8.07/8.02, LM8 129.2/127.7 — parity within noise; route
   checksum 27749812 and visited-node means bit-identical J vs K and vs baseline anchors.
   Results: measurements/ab/20260702-*.json
+- [x] 2026-07-03 ~60% CHECKPOINT PASSED (at 68.2%, after readers): checksums bit-identical
+  (27749812, all 6 runs); medians J/K: routingCH 4.05/3.73ms, CH_edge 8.21/7.26 (kotlin
+  ~8-12% faster), LM8 119.1/124.1 (+4.2% — borderline, ranges nearly overlap, 30% checkpoint
+  had K faster; WATCH LM8 at the 100% checkpoint, profile if it reproduces).
+  Results: measurements/ab/ (second stamp).
 - [ ] Final: full `mvn -B clean test`, Measurement comparison (full import), real-route diff report.
 
 ## Adopted working defaults (2026-07-02, Peter AFK — override anytime)
