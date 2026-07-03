@@ -15,34 +15,35 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+package com.graphhopper.routing.ch
 
-package com.graphhopper.routing.ch;
-
-import com.carrotsearch.hppc.IntContainer;
-
-public interface NodeContractor {
-    void initFromGraph();
-
-    void close();
+/**
+ * The flags are stored differently for shortcuts: just one weight and the two direction bits which is handled by this
+ * class for now as static methods.
+ *
+ * @author Peter Karich
+ */
+object PrepareEncoder {
+    // shortcut goes in one or both directions is also possible if weight is identical
+    private const val scFwdDir = 0x1
+    private const val scBwdDir = 0x2
+    private const val scDirMask = 0x3
 
     /**
-     * Calculates the priority of a node without changing the graph. Lower (!!) priority nodes are contracted first.
+     * A bitmask for two directions
      */
-    float calculatePriority(int node);
+    @JvmStatic
+    fun getScDirMask(): Int = scDirMask
 
     /**
-     * Adds the required shortcuts for the given node.
-     *
-     * @return the set of nodes adjacent to this node (before contraction)
+     * The bit for forward direction
      */
-    IntContainer contractNode(int node);
+    @JvmStatic
+    fun getScFwdDir(): Int = scFwdDir
 
-    void finishContraction();
-
-    long getAddedShortcutsCount();
-
-    String getStatisticsString();
-
-    float getDijkstraSeconds();
-
+    /**
+     * The bit for backward direction
+     */
+    @JvmStatic
+    fun getScBwdDir(): Int = scBwdDir
 }

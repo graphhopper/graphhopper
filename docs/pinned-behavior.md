@@ -165,6 +165,16 @@ independently of that migration.
   reusable across calcPath calls (it caches its arrays between runs).
   Test: `core/.../routing/RoutingAlgorithmPinnedBehaviorTest.java` (2026-07-03)
 
+- **CH preparation numeric semantics (routing.ch conversion)** — `CHPreparationGraph.addEdge`
+  deliberately narrows base-edge weights to **float** (`(float) weightFwd/weightBwd` in
+  `PrepareBaseEdge`, widened back to double on read), while shortcut weights stay full double.
+  This narrowing feeds every witness search and priority calculation and therefore determines
+  the exact (pinned) shortcut counts. Also pinned: `PrepareCHEntry.compareTo` returns 0 on
+  equal weights (bridge-path ties are decided by PriorityQueue order) and its exact toString,
+  and the `PrepareEncoder` direction bits (fwd=0x1, bwd=0x2, mask=0x3) which are part of the
+  stored CH format.
+  Test: `core/.../routing/ch/CHPreparationPinnedBehaviorTest.java` (2026-07-03)
+
 ## Open candidates (currently covered only indirectly)
 
 - JaroWinkler similarity computes intermediate results in **float** precision (not double);

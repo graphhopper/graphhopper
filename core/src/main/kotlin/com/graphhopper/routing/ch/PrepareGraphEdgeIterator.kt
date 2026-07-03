@@ -16,8 +16,34 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.routing.ch;
+package com.graphhopper.routing.ch
 
-public interface PrepareGraphOrigEdgeExplorer {
-    PrepareGraphOrigEdgeIterator setBaseNode(int node);
+interface PrepareGraphEdgeIterator {
+    fun next(): Boolean
+
+    fun getBaseNode(): Int
+
+    fun getAdjNode(): Int
+
+    fun getPrepareEdge(): Int
+
+    fun isShortcut(): Boolean
+
+    fun getOrigEdgeKeyFirst(): Int
+
+    fun getOrigEdgeKeyLast(): Int
+
+    fun getSkipped1(): Int
+
+    fun getSkipped2(): Int
+
+    fun getWeight(): Double
+
+    fun getOrigEdgeCount(): Int
+
+    fun setSkippedEdges(skipped1: Int, skipped2: Int)
+
+    fun setWeight(weight: Double)
+
+    fun setOrigEdgeCount(origEdgeCount: Int)
 }

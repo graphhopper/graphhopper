@@ -16,34 +16,21 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.routing.ch;
+package com.graphhopper.routing.ch
 
-public interface PrepareGraphEdgeIterator {
-    boolean next();
+import com.graphhopper.routing.SPTEntry
+import com.graphhopper.util.EdgeIterator
 
-    int getBaseNode();
+class AStarCHEntry(edge: Int, incEdge: Int, adjNode: Int, heapWeight: Double, weightOfVisitedPath: Double, parent: SPTEntry?) :
+    CHEntry(edge, incEdge, adjNode, heapWeight, parent) {
 
-    int getAdjNode();
+    @JvmField
+    var weightOfVisitedPath: Double = weightOfVisitedPath
 
-    int getPrepareEdge();
+    constructor(node: Int, heapWeight: Double, weightOfVisitedPath: Double) :
+            this(EdgeIterator.NO_EDGE, EdgeIterator.NO_EDGE, node, heapWeight, weightOfVisitedPath, null)
 
-    boolean isShortcut();
+    override fun getParent(): AStarCHEntry? = super.getParent() as AStarCHEntry?
 
-    int getOrigEdgeKeyFirst();
-
-    int getOrigEdgeKeyLast();
-
-    int getSkipped1();
-
-    int getSkipped2();
-
-    double getWeight();
-
-    int getOrigEdgeCount();
-
-    void setSkippedEdges(int skipped1, int skipped2);
-
-    void setWeight(double weight);
-
-    void setOrigEdgeCount(int origEdgeCount);
+    override fun getWeightOfVisitedPath(): Double = weightOfVisitedPath
 }

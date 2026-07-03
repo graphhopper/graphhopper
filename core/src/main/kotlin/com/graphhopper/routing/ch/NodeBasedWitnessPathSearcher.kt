@@ -15,45 +15,34 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.ch;
+package com.graphhopper.routing.ch
 
-import com.carrotsearch.hppc.IntArrayList;
-import com.carrotsearch.hppc.cursors.IntCursor;
-import com.graphhopper.apache.commons.collections.IntFloatBinaryHeap;
-import com.graphhopper.util.Helper;
-
-import java.util.Arrays;
+import com.carrotsearch.hppc.IntArrayList
+import com.graphhopper.apache.commons.collections.IntFloatBinaryHeap
+import com.graphhopper.util.Helper
 
 /**
  * Used to perform witness searches during node-based CH preparation. Witness searches at node B determine if there is a
  * path between two neighbor nodes A and C when we exclude B and check if this path is shorter than or equal to A-B-C.
  */
-public class NodeBasedWitnessPathSearcher {
-    private final PrepareGraphEdgeExplorer outEdgeExplorer;
-    private final double[] weights;
-    private final IntArrayList changedNodes;
-    private final IntFloatBinaryHeap heap;
-    private int ignoreNode = -1;
-    private int settledNodes = 0;
-
-    public NodeBasedWitnessPathSearcher(CHPreparationGraph graph) {
-        outEdgeExplorer = graph.createOutEdgeExplorer();
-        weights = new double[graph.getNodes()];
-        Arrays.fill(weights, Double.POSITIVE_INFINITY);
-        heap = new IntFloatBinaryHeap(1000);
-        changedNodes = new IntArrayList();
-    }
+class NodeBasedWitnessPathSearcher(graph: CHPreparationGraph) {
+    private val outEdgeExplorer: PrepareGraphEdgeExplorer = graph.createOutEdgeExplorer()
+    private val weights = DoubleArray(graph.getNodes()) { Double.POSITIVE_INFINITY }
+    private val changedNodes = IntArrayList()
+    private val heap = IntFloatBinaryHeap(1000)
+    private var ignoreNode = -1
+    private var settledNodes = 0
 
     /**
      * Sets up a search for given start node and an ignored node. The shortest path tree will be re-used for different
      * target nodes until this method is called again.
      */
-    public void init(int startNode, int ignoreNode) {
-        reset();
-        this.ignoreNode = ignoreNode;
-        weights[startNode] = 0;
-        changedNodes.add(startNode);
-        heap.insert(0, startNode);
+    fun init(startNode: Int, ignoreNode: Int) {
+        reset()
+        this.ignoreNode = ignoreNode
+        weights[startNode] = 0.0
+        changedNodes.add(startNode)
+        heap.insert(0.0, startNode)
     }
 
     /**
@@ -70,9 +59,9 @@ public class NodeBasedWitnessPathSearcher {
      *                        path we found.
      * @param maxSettledNodes once the number of settled nodes exceeds this number we return the currently found best
      *                        weight path. in this case we might not have found a path at all.
-     * @return the weight of the found path or {@link Double#POSITIVE_INFINITY} if no path was found
+     * @return the weight of the found path or [Double.POSITIVE_INFINITY] if no path was found
      */
-    public double findUpperBound(int targetNode, double acceptedWeight, int maxSettledNodes) {
+    fun findUpperBound(targetNode: Int, acceptedWeight: Double, maxSettledNodes: Int): Double {
         // todo: for historic reasons we count the number of settled nodes for each call of this method
         //       *not* the total number of settled nodes since starting the search (which corresponds
         //       to the size of the settled part of the shortest path tree). it's probably worthwhile
@@ -80,55 +69,53 @@ public class NodeBasedWitnessPathSearcher {
         while (!heap.isEmpty() && settledNodes < maxSettledNodes && heap.peekKey() <= acceptedWeight) {
             if (weights[targetNode] <= acceptedWeight)
                 // we found *a* path to the target node (not necessarily the shortest), and the weight is acceptable, so we stop
-                return weights[targetNode];
-            int node = heap.poll();
-            PrepareGraphEdgeIterator iter = outEdgeExplorer.setBaseNode(node);
+                return weights[targetNode]
+            val node = heap.poll()
+            val iter = outEdgeExplorer.setBaseNode(node)
             while (iter.next()) {
-                int adjNode = iter.getAdjNode();
+                val adjNode = iter.getAdjNode()
                 if (adjNode == ignoreNode)
-                    continue;
-                double weight = weights[node] + iter.getWeight();
-                if (Double.isInfinite(weight))
-                    continue;
-                double adjWeight = weights[adjNode];
+                    continue
+                val weight = weights[node] + iter.getWeight()
+                if (weight.isInfinite())
+                    continue
+                val adjWeight = weights[adjNode]
                 if (adjWeight == Double.POSITIVE_INFINITY) {
-                    weights[adjNode] = weight;
-                    heap.insert(weight, adjNode);
-                    changedNodes.add(adjNode);
+                    weights[adjNode] = weight
+                    heap.insert(weight, adjNode)
+                    changedNodes.add(adjNode)
                 } else if (weight < adjWeight) {
-                    weights[adjNode] = weight;
-                    heap.update(weight, adjNode);
+                    weights[adjNode] = weight
+                    heap.update(weight, adjNode)
                 }
             }
-            settledNodes++;
+            settledNodes++
             if (node == targetNode)
                 // we have settled the target node, we now know the exact weight of the shortest path and return
-                return weights[node];
+                return weights[node]
         }
 
-        return weights[targetNode];
+        return weights[targetNode]
     }
 
-    public int getSettledNodes() {
-        return settledNodes;
-    }
+    fun getSettledNodes(): Int = settledNodes
 
-    private void reset() {
-        for (IntCursor c : changedNodes)
-            weights[c.value] = Double.POSITIVE_INFINITY;
-        changedNodes.elementsCount = 0;
-        heap.clear();
-        ignoreNode = -1;
-        settledNodes = 0;
+    private fun reset() {
+        for (c in changedNodes)
+            weights[c.value] = Double.POSITIVE_INFINITY
+        changedNodes.elementsCount = 0
+        heap.clear()
+        ignoreNode = -1
+        settledNodes = 0
     }
 
     /**
      * @return currently used memory in MB (approximately)
      */
-    public String getMemoryUsageAsString() {
-        return (8L * weights.length
-                + changedNodes.buffer.length * 4L
+    fun getMemoryUsageAsString(): String {
+        return ((8L * weights.size
+                + changedNodes.buffer.size * 4L
                 + heap.getMemoryUsage()
-        ) / Helper.MB + "MB";
+                ) / Helper.MB).toString() + "MB"
     }
 }

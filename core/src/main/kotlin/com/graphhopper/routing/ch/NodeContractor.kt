@@ -15,38 +15,33 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.ch;
 
-/**
- * The flags are stored differently for shortcuts: just one weight and the two direction bits which is handled by this
- * class for now as static methods.
- *
- * @author Peter Karich
- */
-public class PrepareEncoder {
-    // shortcut goes in one or both directions is also possible if weight is identical    
-    private static final int scFwdDir = 0x1;
-    private static final int scBwdDir = 0x2;
-    private static final int scDirMask = 0x3;
+package com.graphhopper.routing.ch
+
+import com.carrotsearch.hppc.IntContainer
+
+interface NodeContractor {
+    fun initFromGraph()
+
+    fun close()
 
     /**
-     * A bitmask for two directions
+     * Calculates the priority of a node without changing the graph. Lower (!!) priority nodes are contracted first.
      */
-    public static int getScDirMask() {
-        return scDirMask;
-    }
+    fun calculatePriority(node: Int): Float
 
     /**
-     * The bit for forward direction
+     * Adds the required shortcuts for the given node.
+     *
+     * @return the set of nodes adjacent to this node (before contraction)
      */
-    public static int getScFwdDir() {
-        return scFwdDir;
-    }
+    fun contractNode(node: Int): IntContainer
 
-    /**
-     * The bit for backward direction
-     */
-    public static int getScBwdDir() {
-        return scBwdDir;
-    }
+    fun finishContraction()
+
+    fun getAddedShortcutsCount(): Long
+
+    fun getStatisticsString(): String
+
+    fun getDijkstraSeconds(): Float
 }

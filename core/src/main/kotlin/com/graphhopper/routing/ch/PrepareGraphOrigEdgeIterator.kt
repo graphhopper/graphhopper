@@ -15,42 +15,17 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.ch;
 
-/**
- * Helper class for mean and variance calculation of a running sample
- * For reference see:
- * https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance
- */
-class OnFlyStatisticsCalculator {
+package com.graphhopper.routing.ch
 
-    private long count;
-    private double mean;
-    private double varianceHelper;
+interface PrepareGraphOrigEdgeIterator {
+    fun next(): Boolean
 
-    void addObservation(long value) {
-        count++;
-        double delta = value - mean;
-        mean += delta / count;
-        double newDelta = value - mean;
-        varianceHelper += delta * newDelta;
-    }
+    fun getBaseNode(): Int
 
-    public long getCount() {
-        return count;
-    }
+    fun getAdjNode(): Int
 
-    double getMean() {
-        return mean;
-    }
+    fun getOrigEdgeKeyFirst(): Int
 
-    double getVariance() {
-        return varianceHelper / count;
-    }
-
-    void reset() {
-        count = 0;
-        mean = 0;
-        varianceHelper = 0;
-    }
+    fun getOrigEdgeKeyLast(): Int
 }

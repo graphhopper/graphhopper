@@ -16,8 +16,8 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.routing.ch;
+package com.graphhopper.routing.ch
 
-public interface PrepareGraphEdgeExplorer {
-    PrepareGraphEdgeIterator setBaseNode(int node);
+interface PrepareGraphEdgeExplorer {
+    fun setBaseNode(node: Int): PrepareGraphEdgeIterator
 }
