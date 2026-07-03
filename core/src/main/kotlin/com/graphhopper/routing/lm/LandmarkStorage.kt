@@ -18,7 +18,7 @@
 package com.graphhopper.routing.lm
 
 import com.graphhopper.coll.primitive.IntArrayList
-import com.carrotsearch.hppc.IntHashSet
+import androidx.collection.MutableIntSet
 import com.graphhopper.coll.MapEntry
 import com.graphhopper.routing.DijkstraBidirectionRef
 import com.graphhopper.routing.SPTEntry
@@ -229,7 +229,7 @@ class LandmarkStorage(graph: BaseGraph, encodedValueLookup: EncodedValueLookup, 
 
         // Exclude edges that we previously marked in PrepareRoutingSubnetworks to avoid problems like "connection not found".
         val edgeInSubnetworkEnc = encodedValueLookup.getBooleanEncodedValue(snKey)
-        val blockedEdges: IntHashSet
+        val blockedEdges: MutableIntSet
         // We use the areaIndex to split certain areas from each other but do not permanently change the base graph
         // so that other algorithms still can route through these regions. This is done to increase the density of
         // landmarks for an area like Europe+Asia, which improves the query speed.
@@ -238,9 +238,9 @@ class LandmarkStorage(graph: BaseGraph, encodedValueLookup: EncodedValueLookup, 
             val sw = StopWatch().start()
             blockedEdges = findBorderEdgeIds(areaIndex)
             if (logDetails)
-                LOGGER.info("Made " + blockedEdges.size() + " edges inaccessible. Calculated country cut in " + sw.stop().getSeconds() + "s, " + Helper.getMemInfo())
+                LOGGER.info("Made " + blockedEdges.size + " edges inaccessible. Calculated country cut in " + sw.stop().getSeconds() + "s, " + Helper.getMemInfo())
         } else {
-            blockedEdges = IntHashSet()
+            blockedEdges = MutableIntSet()
         }
 
         val accessFilter = EdgeFilter { edge -> !edge.get(edgeInSubnetworkEnc) && !blockedEdges.contains(edge.edge) }
@@ -470,9 +470,9 @@ class LandmarkStorage(graph: BaseGraph, encodedValueLookup: EncodedValueLookup, 
      * This method makes edges crossing the specified border inaccessible to split a bigger area into smaller subnetworks.
      * This is important for the world wide use case to limit the maximum distance and also to detect unreasonable routes faster.
      */
-    protected fun findBorderEdgeIds(areaIndex: AreaIndex<SplitArea>): IntHashSet {
+    protected fun findBorderEdgeIds(areaIndex: AreaIndex<SplitArea>): MutableIntSet {
         val allEdgesIterator = graph.allEdges
-        val inaccessible = IntHashSet()
+        val inaccessible = MutableIntSet()
         while (allEdgesIterator.next()) {
             val adjNode = allEdgesIterator.adjNode
             var areas = areaIndex.query(na.getLat(adjNode), na.getLon(adjNode))
@@ -578,8 +578,8 @@ class LandmarkStorage(graph: BaseGraph, encodedValueLookup: EncodedValueLookup, 
         Collections.sort(list, SORT_BY_WEIGHT)
 
         if (activeLandmarkIndices[0] >= 0) {
-            val set = IntHashSet(activeLandmarkIndices.size)
-            set.addAll(*activeLandmarkIndices)
+            val set = MutableIntSet(activeLandmarkIndices.size)
+            set.addAll(activeLandmarkIndices)
             var existingLandmarkCounter = 0
             val COUNT = Math.min(activeLandmarkIndices.size - 2, 2)
             for (i in activeLandmarkIndices.indices) {

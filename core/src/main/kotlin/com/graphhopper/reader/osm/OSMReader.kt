@@ -17,7 +17,7 @@
  */
 package com.graphhopper.reader.osm
 
-import com.carrotsearch.hppc.BitSet
+import com.graphhopper.coll.GrowableBitSet
 import com.graphhopper.coll.GHLongLongHashMap
 import com.graphhopper.reader.ReaderElement
 import com.graphhopper.reader.ReaderNode
@@ -580,10 +580,10 @@ open class OSMReader(private val baseGraph: BaseGraph, private val osmParsers: O
         // sure the resulting turn restrictions do not interfere.
         val restrictions = ArrayList<RestrictionSetter.Restriction>()
         // For every restriction we set flags that indicate the validity for the different parsers
-        val encBits = ArrayList<BitSet>()
+        val encBits = ArrayList<GrowableBitSet>()
         for (r in restrictionRelationsWithTopology) {
             try {
-                val bits = BitSet(osmParsers.restrictionTagParsers.size.toLong())
+                val bits = GrowableBitSet(osmParsers.restrictionTagParsers.size.toLong())
                 var restrictionType: RestrictionType? = null
                 for (i in 0 until osmParsers.restrictionTagParsers.size) {
                     val restrictionTagParser = osmParsers.restrictionTagParsers[i]

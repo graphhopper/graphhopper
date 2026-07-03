@@ -412,6 +412,42 @@ new discoveries get a pinning test AND an entry there.
   -am test-compile green; reader-gtfs+web test green (AnalysisTest exercises GrowableBitSetIterator);
   germany load-gate (germany-gh-compat, count=1000, MMAP, -Xmx3g, clean=false) ALL 30 checksums
   BIT-IDENTICAL to h4-gate.log — routingCH 5603941, routingLM8 270582 (log: measurements/h5-gate.log).
+- [x] 2026-07-03 HPPC switch batches H6+H7 DONE (order-INSENSITIVE call sites → androidx +
+  existing gap-fillers; keyed/membership/insertion-ordered per the §2 audit ⇒ checksums cannot
+  move). H6 — deques + remaining internal bitsets: IntArrayDeque → androidx CircularIntArray
+  (DepthFirstSearch removeLast→popLast; RoadDensityCalculator head/tail-poke clear → clear(),
+  isEmpty/removeFirst → isEmpty()/popFirst; TarjanSCC.tarjanStack + EdgeBasedTarjanSCC.tarjanStack/
+  dfsStackAdj, last→.last property, removeLast→popLast); hppc LongArrayDeque → coll.primitive
+  LongArrayDeque port (TarjanSCC/EdgeBasedTarjanSCC dfs stacks); hppc BitSet → coll.GrowableBitSet
+  at TarjanSCC.nodeOnStack + EdgeBasedTarjanSCC.TarjanArrayIntSet (both ISE guards retargeted to
+  "GrowableBitSet"), PrepareRoutingSubnetworks flags, BaseGraphNodesAndEdges visited, OSMReader
+  encBits (+RestrictionSetter.setRestrictions/disableRedundantRestrictions/copyEncBits param+field
+  BitSet→GrowableBitSet, the {bits,wlen} fields line up), ArrayUtil.isPermutation, GraphHopper
+  sortGraphAlongHilbertCurve edgesFound. H7 — keyed/membership hash sites → androidx: OSMNodeData
+  LongScatterSet→MutableLongSet (removeAll(k)→remove():Boolean); WayToEdgesMap LongIntScatterMap→
+  MutableLongIntMap (indexOf/indexGet/indexReplace → containsKey/get/put/getOrDefault); RestrictionSetter
+  artificialEdgesByEdge + disableRedundantRestrictions map → MutableIntObjectMap (get()!! where
+  hppc returned platform-nullable; the ORDER-CRITICAL LongIntScatterMap/IntScatterSet value sets
+  stay on the H4 ports); EdgeBasedNodeContractor sourceNodes/targetNodes/addedShortcuts → Mutable
+  Int/LongSet (release()→clear(), reused per-contraction so equivalent); LandmarkStorage blockedEdges/
+  findBorderEdgeIds/dedup set → MutableIntSet (size()→size, addAll(*arr)→addAll(arr)); LineIntIndex/
+  LocationIndexTree/RandomGraph dedup sets → MutableIntSet; BaseGraphVisualizer/OSMRestrictionConverter
+  → MutableLongSet; BridgePathFinder internal working map → MutableIntObjectMap (seeded RESULT map
+  stays the coll.primitive port, §4 order-critical); EdgeBasedTarjanSCC start-edge TarjanHash maps →
+  MutableIntIntMap/MutableIntSet; Triangulation vertices/vertexQuadEdges → MutableIntObjectMap;
+  QueryRoutingCHGraph virtual*EdgesAtRealNodes → MutableIntObjectMap; QueryOverlay WeightsAndTimes +
+  QueryGraphWeighting (IntDouble→coll.primitive IntDoubleHashMap shim, IntLong→MutableIntLongMap with
+  getOrDefault(...,0L) to keep hppc's absent=0; edgesSet→MutableIntSet; virtualEdgesByOriginalKey
+  cursor-loop→forEach, continue→return@forEach); reader/dem BridgeTunnelTowerCorrection +
+  EdgeElevationSmoothingMovingAverage IntDoubleHashMap→shim (cursor loops → forEach, all keyed/order-
+  safe). Order confirmed unobserved per site (pure put/get/contains, or aggregation into keyed maps).
+  Out of H6/H7 scope, LEFT on hppc: the IndirectSort/IndirectComparator sites (ArrayUtil.calcSortOrder,
+  GraphHopper Hilbert sort, CHPreparationGraph.build) — not a deque/bitset/hash container. Test edits
+  (assertions untouched): RestrictionSetterTest + OSMRestrictionSetterTest encBits helper
+  BitSet→GrowableBitSet (import+ctor+type only). Gates: core clean test green (211 reports, 0 fail);
+  web/tools/map-matching/reader-gtfs -am test-compile green; germany load-gate (germany-gh-compat,
+  count=1000, MMAP, -Xmx3g, clean=false) ALL 30 dummies BIT-IDENTICAL to h5-gate.log — routingCH
+  5603941, routingLM8 270582 (log: measurements/h67-gate.log).
 - [ ] REMAINING WORK: (3) HPPC→androidx.collection
   call-site switch + gap-fillers + canary + perf gate, then drop hppc from core (reader-gtfs
   declares its own) — SCOPED 2026-07-03, full execution plan in section

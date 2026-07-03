@@ -18,7 +18,7 @@
 
 package com.graphhopper.util
 
-import com.carrotsearch.hppc.BitSet
+import com.graphhopper.coll.GrowableBitSet
 import com.graphhopper.coll.primitive.IntArrayList
 import com.graphhopper.coll.primitive.IntIndexedContainer
 import com.graphhopper.coll.primitive.LongArrayList
@@ -86,7 +86,7 @@ object ArrayUtil {
 
     @JvmStatic
     fun isPermutation(arr: IntArrayList): Boolean {
-        val present = BitSet(arr.size().toLong())
+        val present = GrowableBitSet(arr.size().toLong())
         for (e in arr) {
             if (e.value >= arr.size() || e.value < 0)
                 return false

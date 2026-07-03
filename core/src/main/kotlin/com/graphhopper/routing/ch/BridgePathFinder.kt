@@ -18,8 +18,7 @@
 
 package com.graphhopper.routing.ch
 
-import com.carrotsearch.hppc.IntObjectMap
-import com.carrotsearch.hppc.IntObjectScatterMap
+import androidx.collection.MutableIntObjectMap
 import com.graphhopper.coll.primitive.IntObjectHashMap
 import com.graphhopper.util.EdgeIterator.Companion.NO_EDGE
 import java.util.PriorityQueue
@@ -36,7 +35,7 @@ class BridgePathFinder(private val graph: CHPreparationGraph) {
     private val outExplorer: PrepareGraphEdgeExplorer = graph.createOutEdgeExplorer()
     private val origOutExplorer: PrepareGraphOrigEdgeExplorer = graph.createOutOrigEdgeExplorer()
     private val queue: PriorityQueue<PrepareCHEntry> = PriorityQueue()
-    private val map: IntObjectMap<PrepareCHEntry> = IntObjectScatterMap()
+    private val map: MutableIntObjectMap<PrepareCHEntry> = MutableIntObjectMap()
 
     /**
      * Finds all bridge paths starting at a given node and starting edge key.

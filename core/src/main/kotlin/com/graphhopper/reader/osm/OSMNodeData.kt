@@ -18,8 +18,7 @@
 
 package com.graphhopper.reader.osm
 
-import com.carrotsearch.hppc.LongScatterSet
-import com.carrotsearch.hppc.LongSet
+import androidx.collection.MutableLongSet
 import com.graphhopper.coll.GHLongLongBTree
 import com.graphhopper.coll.LongLongMap
 import com.graphhopper.reader.ReaderNode
@@ -64,7 +63,7 @@ internal class OSMNodeData(nodeAccess: PointAccess, directory: Directory) {
     private val nodeKVStorage: KVStorage
 
     // collect all nodes that should be split and a barrier edge should be created between them.
-    private val nodesToBeSplit: LongSet
+    private val nodesToBeSplit: MutableLongSet
 
     private var nextTowerId = 0
 
@@ -80,7 +79,7 @@ internal class OSMNodeData(nodeAccess: PointAccess, directory: Directory) {
         towerNodes = nodeAccess
 
         nodeTagIndicesByOsmNodeIds = GHLongLongBTree(200, 4, -1)
-        nodesToBeSplit = LongScatterSet()
+        nodesToBeSplit = MutableLongSet()
         nodeKVStorage = KVStorage(directory, false).create(100)
     }
 
@@ -241,8 +240,8 @@ internal class OSMNodeData(nodeAccess: PointAccess, directory: Directory) {
     fun setSplitNode(osmNodeId: Long): Boolean = nodesToBeSplit.add(osmNodeId)
 
     fun unsetSplitNode(osmNodeId: Long) {
-        val removed = nodesToBeSplit.removeAll(osmNodeId)
-        if (removed == 0)
+        val removed = nodesToBeSplit.remove(osmNodeId)
+        if (!removed)
             throw IllegalStateException("Node $osmNodeId was not a split node")
     }
 

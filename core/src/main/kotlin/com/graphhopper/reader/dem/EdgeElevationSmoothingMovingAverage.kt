@@ -1,6 +1,6 @@
 package com.graphhopper.reader.dem
 
-import com.carrotsearch.hppc.IntDoubleHashMap
+import com.graphhopper.coll.primitive.IntDoubleHashMap
 import com.graphhopper.util.DistancePlaneProjection
 import com.graphhopper.util.PointList
 
@@ -113,8 +113,8 @@ object EdgeElevationSmoothingMovingAverage {
         }
 
         // after all pillar nodes got an averaged elevation, elevations are overwritten
-        for (c in averagedElevations) {
-            geometry.setElevation(c.key, c.value)
+        averagedElevations.forEach { key, value ->
+            geometry.setElevation(key, value)
         }
     }
 }

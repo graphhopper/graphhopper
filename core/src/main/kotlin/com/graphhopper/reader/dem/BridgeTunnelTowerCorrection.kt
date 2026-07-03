@@ -19,7 +19,7 @@ package com.graphhopper.reader.dem
 
 import com.graphhopper.coll.primitive.DoubleArrayList
 import com.graphhopper.coll.primitive.IntArrayList
-import com.carrotsearch.hppc.IntDoubleHashMap
+import com.graphhopper.coll.primitive.IntDoubleHashMap
 import com.graphhopper.apache.commons.collections.IntFloatBinaryHeap
 import com.graphhopper.coll.GHBitSet
 import com.graphhopper.coll.GHTBitSet
@@ -135,9 +135,10 @@ class BridgeTunnelTowerCorrection(
         var changed: Boolean
         do {
             rejected.clear()
-            for (c in newEles)
-                if (steepensIncidentEdges(c.key, c.value, nodeAccess, explorer, newEles, groundTouching))
-                    rejected.add(c.key)
+            newEles.forEach { key, value ->
+                if (steepensIncidentEdges(key, value, nodeAccess, explorer, newEles, groundTouching))
+                    rejected.add(key)
+            }
             changed = !rejected.isEmpty
             for (c in rejected) {
                 newEles.remove(c.value)
@@ -145,8 +146,9 @@ class BridgeTunnelTowerCorrection(
             }
             rejectedCount += rejected.size()
         } while (changed)
-        for (c in newEles)
-            nodeAccess.setNode(c.key, nodeAccess.getLat(c.key), nodeAccess.getLon(c.key), c.value)
+        newEles.forEach { key, value ->
+            nodeAccess.setNode(key, nodeAccess.getLat(key), nodeAccess.getLon(key), value)
+        }
         val corrected = newEles.size()
 
         val dijkstraTime = sw.stop().getSeconds()

@@ -18,9 +18,8 @@
 
 package com.graphhopper.reader.osm
 
+import androidx.collection.MutableLongIntMap
 import com.graphhopper.coll.primitive.IntArrayList
-import com.carrotsearch.hppc.LongIntMap
-import com.carrotsearch.hppc.LongIntScatterMap
 import com.graphhopper.coll.primitive.IntCursor
 import java.util.Collections.emptyIterator
 
@@ -30,7 +29,7 @@ import java.util.Collections.emptyIterator
  * position of the associated edges in this array.
  */
 class WayToEdgesMap {
-    private val offsetIndexByWay: LongIntMap = LongIntScatterMap()
+    private val offsetIndexByWay: MutableLongIntMap = MutableLongIntMap()
     private val offsets = IntArrayList()
     private val edges = IntArrayList()
     private var lastWay = -1L
@@ -47,14 +46,13 @@ class WayToEdgesMap {
         if (edge < 0)
             throw IllegalArgumentException("edge must be >= 0, but was: $edge")
         if (way != lastWay) {
-            val idx = offsetIndexByWay.indexOf(way)
-            if (idx < 0)
+            if (!offsetIndexByWay.containsKey(way))
                 // not reserved yet
                 return
-            if (offsetIndexByWay.indexGet(idx) != RESERVED)
+            if (offsetIndexByWay.get(way) != RESERVED)
                 // already taken
                 throw IllegalArgumentException("You need to add all edges for way: $way consecutively")
-            offsetIndexByWay.indexReplace(idx, offsets.size())
+            offsetIndexByWay.put(way, offsets.size())
             offsets.add(this.edges.size())
             lastWay = way
         }
@@ -62,10 +60,7 @@ class WayToEdgesMap {
     }
 
     fun getEdges(way: Long): Iterator<IntCursor> {
-        val idx = offsetIndexByWay.indexOf(way)
-        if (idx < 0)
-            return emptyIterator()
-        val offsetIndex = offsetIndexByWay.indexGet(idx)
+        val offsetIndex = offsetIndexByWay.getOrDefault(way, RESERVED)
         if (offsetIndex == RESERVED)
             // we reserved this, but did not put a value later
             return emptyIterator()

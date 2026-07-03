@@ -17,7 +17,7 @@
  */
 package com.graphhopper.storage.index
 
-import com.carrotsearch.hppc.IntHashSet
+import androidx.collection.MutableIntSet
 import com.graphhopper.routing.util.EdgeFilter
 import com.graphhopper.storage.Directory
 import com.graphhopper.storage.Graph
@@ -263,7 +263,7 @@ class LocationIndexTree(g: Graph, dir: Directory) : LocationIndex {
             throw IllegalStateException("You need to create a new LocationIndex instance as it is already closed")
 
         val closestMatch = Snap(queryLat, queryLon)
-        val seenEdges = IntHashSet()
+        val seenEdges = MutableIntSet()
         for (iteration in 0 until maxRegionSearch) {
             lineIntIndex.findEdgeIdsInNeighborhood(queryLat, queryLon, iteration) { edgeId ->
                 val edgeIteratorState = graph.getEdgeIteratorStateForKey(edgeId * 2)

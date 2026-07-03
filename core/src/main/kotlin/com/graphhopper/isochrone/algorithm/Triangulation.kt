@@ -17,7 +17,7 @@
  */
 package com.graphhopper.isochrone.algorithm
 
-import com.carrotsearch.hppc.IntObjectHashMap
+import androidx.collection.MutableIntObjectMap
 import org.locationtech.jts.triangulate.quadedge.QuadEdge
 import org.locationtech.jts.triangulate.quadedge.Vertex
 import org.locationtech.jts.util.Assert
@@ -26,9 +26,9 @@ class Triangulation {
 
     internal val edges: MutableMap<String, QuadEdge> = HashMap()
 
-    val vertices: IntObjectHashMap<Vertex> = IntObjectHashMap()
+    val vertices: MutableIntObjectMap<Vertex> = MutableIntObjectMap()
 
-    val vertexQuadEdges: IntObjectHashMap<QuadEdge> = IntObjectHashMap()
+    val vertexQuadEdges: MutableIntObjectMap<QuadEdge> = MutableIntObjectMap()
 
     fun getEdge(o: Int, d: Int): QuadEdge? {
         return if (o < d) {

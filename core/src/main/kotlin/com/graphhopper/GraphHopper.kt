@@ -18,7 +18,7 @@
 package com.graphhopper
 
 import com.bedatadriven.jackson.datatype.jts.JtsModule
-import com.carrotsearch.hppc.BitSet
+import com.graphhopper.coll.GrowableBitSet
 import com.graphhopper.coll.primitive.IntArrayList
 import com.graphhopper.coll.primitive.LongArrayList
 import com.carrotsearch.hppc.sorting.IndirectComparator
@@ -1646,7 +1646,7 @@ open class GraphHopper {
             val explorer = graph.createEdgeExplorer()
             val edges = graph.edges
             val edgeOrder = IntArrayList()
-            val edgesFound = BitSet(edges.toLong())
+            val edgesFound = GrowableBitSet(edges.toLong())
             for (node in nodeOrder) {
                 val iter = explorer.setBaseNode(node)
                 while (iter.next()) {

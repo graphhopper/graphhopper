@@ -17,9 +17,8 @@
  */
 package com.graphhopper.routing.util
 
-import com.carrotsearch.hppc.IntArrayDeque
-import com.carrotsearch.hppc.IntScatterSet
-import com.carrotsearch.hppc.IntSet
+import androidx.collection.CircularIntArray
+import androidx.collection.MutableIntSet
 import com.graphhopper.storage.Graph
 import com.graphhopper.storage.NodeAccess
 import com.graphhopper.util.DistancePlaneProjection.Companion.DIST_PLANE
@@ -33,8 +32,8 @@ import java.util.stream.Stream
 
 class RoadDensityCalculator(private val graph: Graph) {
     private val edgeExplorer = graph.createEdgeExplorer()
-    private val visited: IntSet = IntScatterSet()
-    private val deque: IntArrayDeque = IntArrayDeque(100)
+    private val visited: MutableIntSet = MutableIntSet()
+    private val deque: CircularIntArray = CircularIntArray(100)
 
     /**
      * @param radius         in meters
@@ -43,8 +42,7 @@ class RoadDensityCalculator(private val graph: Graph) {
      */
     fun calcRoadDensity(edge: EdgeIteratorState, radius: Double, calcRoadFactor: ToDoubleFunction<EdgeIteratorState>): Double {
         visited.clear()
-        deque.tail = 0
-        deque.head = deque.tail
+        deque.clear()
         var totalRoadWeight = 0.0
         val na = graph.nodeAccess
         val baseNode = edge.baseNode
@@ -60,8 +58,8 @@ class RoadDensityCalculator(private val graph: Graph) {
         // center is larger than the radius it is important to continue the search even outside the radius
         val minPolls = (radius / 2).toInt()
         var polls = 0
-        while (!deque.isEmpty) {
-            val node = deque.removeFirst()
+        while (!deque.isEmpty()) {
+            val node = deque.popFirst()
             polls++
             val distance = DIST_PLANE.calcNormalizedDist(center.lat, center.lon, na.getLat(node), na.getLon(node))
             if (polls > minPolls && distance > radiusNormalized)

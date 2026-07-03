@@ -17,10 +17,10 @@
  */
 package com.graphhopper.routing.util.parsers
 
-import com.carrotsearch.hppc.BitSet
+import androidx.collection.IntObjectMap
+import androidx.collection.MutableIntObjectMap
+import com.graphhopper.coll.GrowableBitSet
 import com.graphhopper.coll.primitive.IntArrayList
-import com.carrotsearch.hppc.IntObjectMap
-import com.carrotsearch.hppc.IntObjectScatterMap
 import com.graphhopper.coll.primitive.IntHashSet
 import com.graphhopper.coll.primitive.IntScatterSet
 import com.graphhopper.coll.primitive.LongIntScatterMap
@@ -46,13 +46,13 @@ class RestrictionSetter(
     private val turnRestrictionEncs: List<BooleanEncodedValue>
 ) {
 
-    fun setRestrictions(restrictions: List<Restriction>, encBits: List<BitSet>) {
+    fun setRestrictions(restrictions: List<Restriction>, encBits: List<GrowableBitSet>) {
         if (restrictions.size != encBits.size)
             throw IllegalArgumentException("There must be as many encBits as restrictions. Got: " + encBits.size + " and " + restrictions.size)
         val internalRestrictions = restrictions.map { convertToInternal(it) }
         disableRedundantRestrictions(internalRestrictions, encBits)
         val artificialEdgeKeysByIncViaPairs = LongIntScatterMap()
-        val artificialEdgesByEdge: IntObjectMap<IntHashSet> = IntObjectScatterMap()
+        val artificialEdgesByEdge: MutableIntObjectMap<IntHashSet> = MutableIntObjectMap()
         for (i in internalRestrictions.indices) {
             if (encBits[i].cardinality() < 1) continue
             val restriction = internalRestrictions[i]
@@ -70,7 +70,7 @@ class RestrictionSetter(
                     val artificialEdgeState = baseGraph.copyEdge(viaEdge, true)
                     val artificialEdge = artificialEdgeState.edge
                     if (artificialEdgesByEdge.containsKey(viaEdge)) {
-                        val artificialEdges = artificialEdgesByEdge.get(viaEdge)
+                        val artificialEdges = artificialEdgesByEdge.get(viaEdge)!!
                         // hppc forEach(procedure) order
                         artificialEdges.forEach { a ->
                             for (turnRestrictionEnc in turnRestrictionEncs)
@@ -104,7 +104,7 @@ class RestrictionSetter(
             // i.e. we force turning onto the artificial edge we created for this in-edge
             for (turnRestrictionEnc in turnRestrictionEncs)
                 restrictTurn(turnRestrictionEnc, incomingEdge, node, viaEdge)
-            val artificialEdges = artificialEdgesByEdge.get(viaEdge)
+            val artificialEdges = artificialEdgesByEdge.get(viaEdge)!!
             // hppc forEach(procedure) order
             artificialEdges.forEach { a ->
                 if (a != GHUtility.getEdgeFromEdgeKey(artificialEdgeKey))
@@ -152,7 +152,7 @@ class RestrictionSetter(
         }
     }
 
-    private fun disableRedundantRestrictions(restrictions: List<InternalRestriction>, encBits: List<BitSet>) {
+    private fun disableRedundantRestrictions(restrictions: List<InternalRestriction>, encBits: List<GrowableBitSet>) {
         for (encIdx in turnRestrictionEncs.indices) {
             // first we disable all duplicates
             val uniqueRestrictions = HashSet<InternalRestriction>()
@@ -163,19 +163,19 @@ class RestrictionSetter(
                     encBits[i].clear(encIdx.toLong())
             }
             // build an index of restrictions to quickly find all restrictions containing a given edge key
-            val restrictionsByEdgeKeys = IntObjectScatterMap<MutableList<InternalRestriction>>()
+            val restrictionsByEdgeKeys = MutableIntObjectMap<MutableList<InternalRestriction>>()
             for (i in restrictions.indices) {
                 if (!encBits[i].get(encIdx))
                     continue
                 val restriction = restrictions[i]
                 for (edgeKey in restriction.edgeKeys) {
-                    val idx = restrictionsByEdgeKeys.indexOf(edgeKey.value)
-                    if (idx < 0) {
+                    val existing = restrictionsByEdgeKeys.get(edgeKey.value)
+                    if (existing == null) {
                         val list = ArrayList<InternalRestriction>()
                         list.add(restriction)
-                        restrictionsByEdgeKeys.indexInsert(idx, edgeKey.value, list)
+                        restrictionsByEdgeKeys.put(edgeKey.value, list)
                     } else {
-                        restrictionsByEdgeKeys.indexGet(idx).add(restriction)
+                        existing.add(restriction)
                     }
                 }
             }
@@ -192,7 +192,7 @@ class RestrictionSetter(
 
     private fun containsAnotherRestriction(restriction: InternalRestriction, restrictionsByEdgeKeys: IntObjectMap<MutableList<InternalRestriction>>): Boolean {
         for (edgeKey in restriction.edgeKeys) {
-            val restrictionsWithThisEdgeKey = restrictionsByEdgeKeys.get(edgeKey.value)
+            val restrictionsWithThisEdgeKey = restrictionsByEdgeKeys.get(edgeKey.value)!!
             for (r in restrictionsWithThisEdgeKey) {
                 if (r === restriction) continue
                 if (r == restriction)
@@ -325,8 +325,8 @@ class RestrictionSetter(
         }
 
         @JvmStatic
-        fun copyEncBits(encBits: BitSet): BitSet {
-            return BitSet(Arrays.copyOf(encBits.bits, encBits.bits.size), encBits.wlen)
+        fun copyEncBits(encBits: GrowableBitSet): GrowableBitSet {
+            return GrowableBitSet(Arrays.copyOf(encBits.bits, encBits.bits.size), encBits.wlen)
         }
 
         private fun isSubsetOf(candidate: IntArrayList, array: IntArrayList): Boolean {

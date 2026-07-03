@@ -1,6 +1,6 @@
 package com.graphhopper.util
 
-import com.carrotsearch.hppc.LongHashSet
+import androidx.collection.MutableLongSet
 import com.graphhopper.routing.ev.DecimalEncodedValue
 import com.graphhopper.routing.weighting.SpeedWeighting
 import com.graphhopper.storage.BaseGraph
@@ -251,7 +251,7 @@ class BaseGraphVisualizer private constructor() {
             g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
 
             // draw edges (duplicate edges between the same node pair get a thicker stroke)
-            val seenPairs = LongHashSet()
+            val seenPairs = MutableLongSet()
             val iter = graph.allEdges
             while (iter.next()) {
                 val base = iter.baseNode

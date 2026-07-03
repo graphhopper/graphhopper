@@ -18,14 +18,13 @@
 
 package com.graphhopper.routing.subnetwork
 
-import com.carrotsearch.hppc.BitSet
-import com.carrotsearch.hppc.IntArrayDeque
+import androidx.collection.CircularIntArray
+import androidx.collection.MutableIntIntMap
+import androidx.collection.MutableIntSet
 import com.graphhopper.coll.GrowableBitSet
 import com.graphhopper.coll.primitive.IntArrayList
 import com.graphhopper.coll.primitive.IntContainer
-import com.carrotsearch.hppc.IntIntScatterMap
-import com.carrotsearch.hppc.IntScatterSet
-import com.carrotsearch.hppc.LongArrayDeque
+import com.graphhopper.coll.primitive.LongArrayDeque
 import com.graphhopper.routing.util.TraversalMode
 import com.graphhopper.storage.Graph
 import com.graphhopper.util.BitUtil
@@ -53,9 +52,9 @@ class EdgeBasedTarjanSCC private constructor(
 ) {
     private val explorer = graph.createEdgeExplorer()
     private val bitUtil = BitUtil.LITTLE
-    private val tarjanStack = IntArrayDeque()
+    private val tarjanStack = CircularIntArray()
     private val dfsStackPQ = LongArrayDeque()
-    private val dfsStackAdj = IntArrayDeque()
+    private val dfsStackAdj = CircularIntArray()
     private lateinit var edgeKeyIndex: TarjanIntIntMap
     private lateinit var edgeKeyLowLink: TarjanIntIntMap
     private lateinit var edgeKeyOnStack: TarjanIntSet
@@ -194,13 +193,13 @@ class EdgeBasedTarjanSCC private constructor(
     private fun buildComponent(p: Int) {
         if (edgeKeyLowLink.get(p) == edgeKeyIndex.get(p)) {
             if (tarjanStack.last == p) {
-                tarjanStack.removeLast()
+                tarjanStack.popLast()
                 edgeKeyOnStack.remove(p)
                 consumer.singleEdgeComponent(p)
             } else {
                 consumer.beginComponent()
                 while (true) {
-                    val q = tarjanStack.removeLast()
+                    val q = tarjanStack.popLast()
                     edgeKeyOnStack.remove(q)
                     consumer.edgeKey(q)
                     if (q == p)
@@ -279,7 +278,7 @@ class EdgeBasedTarjanSCC private constructor(
 
     private fun pop() {
         val l = dfsStackPQ.removeLast()
-        val a = dfsStackAdj.removeLast()
+        val a = dfsStackAdj.popLast()
         // We are maintaining two stacks to hold four kinds of information: two edge keys (p&q), the adj node and the
         // kind of code ('state') we want to execute for a given stack item. The following code combined with the pushXYZ
         // methods does the fwd/bwd conversion between this information and the values on our stack(s).
@@ -402,7 +401,7 @@ class EdgeBasedTarjanSCC private constructor(
     }
 
     private class TarjanHashIntIntMap(keys: Int) : TarjanIntIntMap {
-        private val map = IntIntScatterMap(keys)
+        private val map = MutableIntIntMap(keys)
 
         override fun set(key: Int, value: Int) {
             map.put(key, value)
@@ -427,11 +426,11 @@ class EdgeBasedTarjanSCC private constructor(
     }
 
     private class TarjanArrayIntSet(keys: Int) : TarjanIntSet {
-        private val set = BitSet(keys.toLong())
+        private val set = GrowableBitSet(keys.toLong())
 
         init {
-            if (!set.javaClass.name.contains("hppc"))
-                throw IllegalStateException("Was meant to be hppc BitSet")
+            if (!set.javaClass.name.contains("GrowableBitSet"))
+                throw IllegalStateException("Was meant to be a growable bit set")
         }
 
         override fun add(key: Int) {
@@ -446,7 +445,7 @@ class EdgeBasedTarjanSCC private constructor(
     }
 
     private class TarjanHashIntSet(keys: Int) : TarjanIntSet {
-        private val set = IntScatterSet(keys)
+        private val set = MutableIntSet(keys)
 
         override fun add(key: Int) {
             set.add(key)

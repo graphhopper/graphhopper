@@ -1,6 +1,6 @@
 package com.graphhopper.routing.util.parsers;
 
-import com.carrotsearch.hppc.BitSet;
+import com.graphhopper.coll.GrowableBitSet;
 import com.graphhopper.coll.primitive.IntArrayList;
 import com.graphhopper.reader.osm.Pair;
 import com.graphhopper.reader.osm.RestrictionTopology;
@@ -472,14 +472,14 @@ public class OSMRestrictionSetterTest {
         setRestrictions(osmRestrictions, osmRestrictions.stream().map(r -> encBits(1)).toList());
     }
 
-    private void setRestrictions(List<Pair<RestrictionTopology, RestrictionType>> osmRestrictions, List<BitSet> osmEncBits) {
+    private void setRestrictions(List<Pair<RestrictionTopology, RestrictionType>> osmRestrictions, List<GrowableBitSet> osmEncBits) {
         List<RestrictionSetter.Restriction> restrictions = new ArrayList<>();
-        List<BitSet> encBits = new ArrayList<>();
+        List<GrowableBitSet> encBits = new ArrayList<>();
         for (int i = 0; i < osmRestrictions.size(); i++) {
             Pair<RestrictionTopology, RestrictionType> p = osmRestrictions.get(i);
             List<RestrictionSetter.Restriction> tmpRestrictions = buildRestrictionsForOSMRestriction(graph, p.first, p.second);
             restrictions.addAll(tmpRestrictions);
-            final BitSet e = osmEncBits.get(i);
+            final GrowableBitSet e = osmEncBits.get(i);
             tmpRestrictions.forEach(__ -> encBits.add(RestrictionSetter.copyEncBits(e)));
         }
         r.setRestrictions(restrictions, encBits);
@@ -519,8 +519,8 @@ public class OSMRestrictionSetterTest {
         return IntArrayList.from(nodes);
     }
 
-    private BitSet encBits(int... bits) {
-        BitSet b = new BitSet(bits.length);
+    private GrowableBitSet encBits(int... bits) {
+        GrowableBitSet b = new GrowableBitSet(bits.length);
         for (int i = 0; i < bits.length; i++) {
             if (bits[i] != 0 && bits[i] != 1)
                 throw new IllegalArgumentException("bits must be 0 or 1");

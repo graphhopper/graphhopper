@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.subnetwork
 
-import com.carrotsearch.hppc.BitSet
+import com.graphhopper.coll.GrowableBitSet
 import com.graphhopper.coll.primitive.IntArrayList
 import com.graphhopper.routing.ev.BooleanEncodedValue
 import com.graphhopper.routing.weighting.Weighting
@@ -88,7 +88,7 @@ class PrepareRoutingSubnetworks(private val graph: BaseGraph, private val prepar
         logger.info("Start marking subnetworks, prepare.min_network_size: " + minNetworkSize + ", threads: " + threads + ", nodes: " +
                 Helper.nf(graph.nodes.toLong()) + ", edges: " + Helper.nf(graph.edges.toLong()) + ", jobs: " + prepareJobs + ", " + Helper.getMemInfo())
         val total = AtomicInteger(0)
-        val flags: List<BitSet> = Stream.generate { BitSet(graph.edges.toLong()) }.limit(prepareJobs.size.toLong()).collect(Collectors.toList())
+        val flags: List<GrowableBitSet> = Stream.generate { GrowableBitSet(graph.edges.toLong()) }.limit(prepareJobs.size.toLong()).collect(Collectors.toList())
         val runnables: Stream<Runnable> = IntStream.range(0, prepareJobs.size).mapToObj { i ->
             Runnable {
                 val job = prepareJobs[i]
@@ -107,7 +107,7 @@ class PrepareRoutingSubnetworks(private val graph: BaseGraph, private val prepar
         return total.get()
     }
 
-    private fun setSubnetworks(weighting: Weighting, jobName: String, subnetworkFlags: BitSet): Int {
+    private fun setSubnetworks(weighting: Weighting, jobName: String, subnetworkFlags: GrowableBitSet): Int {
         // partition graph into strongly connected components using Tarjan's algorithm; stream the
         // components so we never materialize the giant main component. We still need to keep the
         // biggest component "alive" until we know we're not going to mark it, hence the explicit
@@ -235,7 +235,7 @@ class PrepareRoutingSubnetworks(private val graph: BaseGraph, private val prepar
         return c.markedEdges
     }
 
-    private fun setSubnetworkEdge(edgeKey: Int, weighting: Weighting, subnetworkFlags: BitSet): Int {
+    private fun setSubnetworkEdge(edgeKey: Int, weighting: Weighting, subnetworkFlags: GrowableBitSet): Int {
         // edges that are not accessible anyway are not marked as subnetworks additionally
         if (!weighting.calcEdgeWeight(graph.getEdgeIteratorStateForKey(edgeKey), false).isFinite())
             return 0

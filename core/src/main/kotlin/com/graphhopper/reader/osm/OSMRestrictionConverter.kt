@@ -20,7 +20,7 @@ package com.graphhopper.reader.osm
 
 import com.graphhopper.coll.primitive.IntArrayList
 import com.graphhopper.coll.primitive.LongArrayList
-import com.carrotsearch.hppc.LongHashSet
+import androidx.collection.MutableLongSet
 import com.graphhopper.coll.primitive.IntCursor
 import com.graphhopper.reader.ReaderElement
 import com.graphhopper.reader.ReaderRelation
@@ -97,10 +97,10 @@ object OSMRestrictionConverter {
 
     private fun containsDuplicateWays(restrictionMembers: RestrictionMembers): Boolean {
         val allWays = restrictionMembers.getAllWays()
-        val uniqueWays = LongHashSet(allWays.size())
+        val uniqueWays = MutableLongSet(allWays.size())
         for (c in allWays)
             uniqueWays.add(c.value)
-        return uniqueWays.size() != allWays.size()
+        return uniqueWays.size != allWays.size()
     }
 
     private fun membersExist(members: RestrictionMembers, edgesByWay: LongFunction<Iterator<IntCursor>>, relation: ReaderRelation): Boolean {

@@ -19,8 +19,8 @@
 package com.graphhopper.routing.weighting
 
 import com.graphhopper.coll.primitive.IntArrayList
-import com.carrotsearch.hppc.IntDoubleMap
-import com.carrotsearch.hppc.IntLongMap
+import androidx.collection.MutableIntLongMap
+import com.graphhopper.coll.primitive.IntDoubleHashMap
 import com.graphhopper.routing.querygraph.QueryGraph
 import com.graphhopper.routing.querygraph.VirtualEdgeIterator
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState
@@ -37,8 +37,8 @@ class QueryGraphWeighting(
     private val graph: BaseGraph,
     private val weighting: Weighting,
     private val closestEdges: IntArrayList,
-    private val virtualWeightsByEdgeKey: IntDoubleMap,
-    private val virtualTimesByEdgeKey: IntLongMap
+    private val virtualWeightsByEdgeKey: IntDoubleHashMap,
+    private val virtualTimesByEdgeKey: MutableIntLongMap
 ) : Weighting {
     private val firstVirtualNodeId: Int = graph.nodes
     private val firstVirtualEdgeId: Int = graph.edges
@@ -126,9 +126,9 @@ class QueryGraphWeighting(
     override fun calcEdgeMillis(edgeState: EdgeIteratorState, reverse: Boolean): Long {
         if (isVirtualEdge(edgeState.edge) && !edgeState.get(EdgeIteratorState.UNFAVORED_EDGE)) {
             return if (edgeState is VirtualEdgeIteratorState)
-                virtualTimesByEdgeKey.get(if (reverse) edgeState.reverseEdgeKey else edgeState.edgeKey)
+                virtualTimesByEdgeKey.getOrDefault(if (reverse) edgeState.reverseEdgeKey else edgeState.edgeKey, 0L)
             else if (edgeState is VirtualEdgeIterator)
-                virtualTimesByEdgeKey.get(if (reverse) edgeState.reverseEdgeKey else edgeState.edgeKey)
+                virtualTimesByEdgeKey.getOrDefault(if (reverse) edgeState.reverseEdgeKey else edgeState.edgeKey, 0L)
             else
                 throw IllegalStateException("Unexpected virtual edge state: $edgeState")
         }

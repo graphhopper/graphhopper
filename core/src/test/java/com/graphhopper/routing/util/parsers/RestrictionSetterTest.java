@@ -1,6 +1,6 @@
 package com.graphhopper.routing.util.parsers;
 
-import com.carrotsearch.hppc.BitSet;
+import com.graphhopper.coll.GrowableBitSet;
 import com.graphhopper.coll.primitive.IntArrayList;
 import com.graphhopper.coll.primitive.IntIndexedContainer;
 import com.graphhopper.routing.Dijkstra;
@@ -752,7 +752,7 @@ public class RestrictionSetterTest {
                 createViaEdgeRestriction(e1_2, e1_4, e4_5),
                 createViaEdgeRestriction(e3_4, e1_4, e0_1)
         );
-        List<BitSet> encBits = List.of(
+        List<GrowableBitSet> encBits = List.of(
                 encBits(1, 1),
                 encBits(1, 1)
         );
@@ -899,7 +899,7 @@ public class RestrictionSetterTest {
         setRestrictions(List.of(restrictions), Stream.of(restrictions).map(r -> encBits(1, 0)).toList());
     }
 
-    private void setRestrictions(List<RestrictionSetter.Restriction> restrictions, List<BitSet> encBits) {
+    private void setRestrictions(List<RestrictionSetter.Restriction> restrictions, List<GrowableBitSet> encBits) {
         r.setRestrictions(restrictions, encBits);
     }
 
@@ -952,8 +952,8 @@ public class RestrictionSetterTest {
         return IntArrayList.from(nodes);
     }
 
-    private BitSet encBits(int... bits) {
-        BitSet b = new BitSet(bits.length);
+    private GrowableBitSet encBits(int... bits) {
+        GrowableBitSet b = new GrowableBitSet(bits.length);
         for (int i = 0; i < bits.length; i++) {
             if (bits[i] != 0 && bits[i] != 1)
                 throw new IllegalArgumentException("bits must be 0 or 1");

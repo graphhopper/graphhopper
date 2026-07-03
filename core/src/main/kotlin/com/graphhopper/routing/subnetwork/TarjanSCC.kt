@@ -18,11 +18,10 @@
 
 package com.graphhopper.routing.subnetwork
 
-import com.carrotsearch.hppc.BitSet
-import com.carrotsearch.hppc.IntArrayDeque
+import androidx.collection.CircularIntArray
 import com.graphhopper.coll.GrowableBitSet
 import com.graphhopper.coll.primitive.IntArrayList
-import com.carrotsearch.hppc.LongArrayDeque
+import com.graphhopper.coll.primitive.LongArrayDeque
 import com.graphhopper.routing.util.EdgeFilter
 import com.graphhopper.storage.Graph
 import com.graphhopper.util.BitUtil
@@ -55,8 +54,8 @@ class TarjanSCC private constructor(
     private val bitUtil = BitUtil.LITTLE
     private val nodeIndex = IntArray(graph.nodes) { -1 }
     private val nodeLowLink = IntArray(graph.nodes) { -1 }
-    private val nodeOnStack = BitSet(graph.nodes.toLong())
-    private val tarjanStack = IntArrayDeque()
+    private val nodeOnStack = GrowableBitSet(graph.nodes.toLong())
+    private val tarjanStack = CircularIntArray()
     private val dfsStack = LongArrayDeque()
     private val components = ConnectedComponents(if (excludeSingleNodeComponents) -1 else graph.nodes)
 
@@ -66,8 +65,8 @@ class TarjanSCC private constructor(
     private lateinit var dfsState: State
 
     init {
-        if (!nodeOnStack.javaClass.name.contains("hppc"))
-            throw IllegalStateException("Was meant to be hppc BitSet")
+        if (!nodeOnStack.javaClass.name.contains("GrowableBitSet"))
+            throw IllegalStateException("Was meant to be a growable bit set")
     }
 
     companion object {
@@ -137,7 +136,7 @@ class TarjanSCC private constructor(
     private fun buildComponent(v: Int) {
         if (nodeLowLink[v] == nodeIndex[v]) {
             if (tarjanStack.last == v) {
-                tarjanStack.removeLast()
+                tarjanStack.popLast()
                 nodeOnStack.clear(v.toLong())
                 components.numComponents++
                 components.numNodes++
@@ -146,7 +145,7 @@ class TarjanSCC private constructor(
             } else {
                 val component = IntArrayList()
                 while (true) {
-                    val w = tarjanStack.removeLast()
+                    val w = tarjanStack.popLast()
                     component.add(w)
                     nodeOnStack.clear(w.toLong())
                     if (w == v)

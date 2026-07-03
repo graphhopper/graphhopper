@@ -17,7 +17,7 @@
  */
 package com.graphhopper.util
 
-import com.carrotsearch.hppc.IntArrayDeque
+import androidx.collection.CircularIntArray
 
 /**
  * Implementation of depth first search (DFS) by LIFO queue
@@ -31,13 +31,13 @@ abstract class DepthFirstSearch : XFirstSearch() {
      * explored before, skip reexploration.
      */
     override fun start(explorer: EdgeExplorer, startNode: Int) {
-        val stack = IntArrayDeque()
+        val stack = CircularIntArray()
 
         val explored = createBitSet()
         stack.addLast(startNode)
         var current: Int
         while (stack.size() > 0) {
-            current = stack.removeLast()
+            current = stack.popLast()
             if (!explored.contains(current) && goFurther(current)) {
                 val iter = explorer.setBaseNode(current)
                 while (iter.next()) {

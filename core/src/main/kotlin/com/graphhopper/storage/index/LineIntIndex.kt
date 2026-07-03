@@ -18,7 +18,7 @@
 
 package com.graphhopper.storage.index
 
-import com.carrotsearch.hppc.IntHashSet
+import androidx.collection.MutableIntSet
 import com.graphhopper.geohash.SpatialKeyAlgo
 import com.graphhopper.storage.DAType
 import com.graphhopper.storage.DataAccess
@@ -166,7 +166,7 @@ class LineIntIndex @JvmOverloads constructor(
     }
 
     fun query(tileFilter: LocationIndex.TileFilter?, function: LocationIndex.Visitor) {
-        val set = IntHashSet()
+        val set = MutableIntSet()
         query(START_POINTER, tileFilter,
                 bounds.minLat, bounds.minLon, bounds.maxLat - bounds.minLat, bounds.maxLon - bounds.minLon,
                 object : LocationIndex.Visitor {

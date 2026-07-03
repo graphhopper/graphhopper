@@ -18,8 +18,7 @@
 
 package com.graphhopper.util
 
-import com.carrotsearch.hppc.IntHashSet
-import com.carrotsearch.hppc.IntSet
+import androidx.collection.MutableIntSet
 import com.graphhopper.coll.primitive.LongArrayList
 import com.graphhopper.coll.primitive.LongScatterSet
 import com.graphhopper.routing.ev.DecimalEncodedValue
@@ -178,14 +177,14 @@ class RandomGraph private constructor() {
                 val rnd = Random(trySeed)
                 val g = generateTmpGraph(nodes, rnd)
                 val treeEdges = findBFSTreeEdgesFromCenter(g)
-                val nodesInTree: IntSet = IntHashSet()
+                val nodesInTree: MutableIntSet = MutableIntSet()
                 for (e in treeEdges) {
                     nodesInTree.add(BitUtil.LITTLE.getIntHigh(e.value))
                     nodesInTree.add(BitUtil.LITTLE.getIntLow(e.value))
                 }
                 // we wait until we find a graph that is fully connected to make sure our tree has the
                 // desired number of nodes
-                if (nodesInTree.size() == nodes) {
+                if (nodesInTree.size == nodes) {
                     val tree = TmpGraph(g.lats, g.lons, treeEdges)
                     fillBaseGraph(graph, speedEnc, rnd, tree)
                     return

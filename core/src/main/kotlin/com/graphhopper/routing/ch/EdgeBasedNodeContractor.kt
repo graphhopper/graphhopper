@@ -17,10 +17,8 @@
  */
 package com.graphhopper.routing.ch
 
-import com.carrotsearch.hppc.IntHashSet
-import com.carrotsearch.hppc.IntSet
-import com.carrotsearch.hppc.LongHashSet
-import com.carrotsearch.hppc.LongSet
+import androidx.collection.MutableIntSet
+import androidx.collection.MutableLongSet
 import com.graphhopper.coll.primitive.IntScatterSet
 import com.graphhopper.routing.ch.CHParameters.EDGE_QUOTIENT_WEIGHT
 import com.graphhopper.routing.ch.CHParameters.HIERARCHY_DEPTH_WEIGHT
@@ -65,9 +63,9 @@ internal class EdgeBasedNodeContractor(
     private val dijkstraSW = StopWatch()
 
     // temporary data used during node contraction
-    private val sourceNodes: IntSet = IntHashSet(10)
-    private val targetNodes: IntSet = IntHashSet(10)
-    private val addedShortcuts: LongSet = LongHashSet()
+    private val sourceNodes: MutableIntSet = MutableIntSet(10)
+    private val targetNodes: MutableIntSet = MutableIntSet(10)
+    private val addedShortcuts: MutableLongSet = MutableLongSet()
     private val addingStats = Stats()
     private val countingStats = Stats()
     private var activeStats: Stats? = null
@@ -368,9 +366,9 @@ internal class EdgeBasedNodeContractor(
         sourceNodeOrigInEdgeExplorer = null
         chBuilder = null
         witnessPathSearcher!!.close()
-        sourceNodes.release()
-        targetNodes.release()
-        addedShortcuts.release()
+        sourceNodes.clear()
+        targetNodes.clear()
+        addedShortcuts.clear()
         hierarchyDepths = null
     }
 

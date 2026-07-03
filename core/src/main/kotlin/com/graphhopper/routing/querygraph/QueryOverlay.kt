@@ -18,16 +18,12 @@
 
 package com.graphhopper.routing.querygraph
 
+import androidx.collection.MutableIntLongMap
+import androidx.collection.MutableIntObjectMap
+import androidx.collection.MutableIntSet
 import com.graphhopper.coll.primitive.DoubleArrayList
 import com.graphhopper.coll.primitive.IntArrayList
-import com.carrotsearch.hppc.IntDoubleMap
-import com.carrotsearch.hppc.IntDoubleScatterMap
-import com.carrotsearch.hppc.IntLongMap
-import com.carrotsearch.hppc.IntLongScatterMap
-import com.carrotsearch.hppc.IntObjectMap
-import com.carrotsearch.hppc.IntObjectScatterMap
-import com.carrotsearch.hppc.IntScatterSet
-import com.carrotsearch.hppc.IntSet
+import com.graphhopper.coll.primitive.IntDoubleHashMap
 import com.graphhopper.coll.primitive.LongArrayList
 import com.graphhopper.coll.GHIntObjectHashMap
 import com.graphhopper.routing.weighting.Weighting
@@ -62,7 +58,7 @@ internal class QueryOverlay(numVirtualNodes: Int, is3D: Boolean) {
 
     fun getVirtualEdge(edgeId: Int): VirtualEdgeIteratorState = virtualEdges[edgeId]
 
-    class WeightsAndTimes(val weights: IntDoubleMap, val times: IntLongMap)
+    class WeightsAndTimes(val weights: IntDoubleHashMap, val times: MutableIntLongMap)
 
     companion object {
         @JvmStatic
@@ -71,11 +67,11 @@ internal class QueryOverlay(numVirtualNodes: Int, is3D: Boolean) {
 
         @JvmStatic
         fun calcAdjustedVirtualWeightsAndTimes(virtualEdges: List<VirtualEdgeIteratorState>, baseGraph: BaseGraph, weighting: Weighting): WeightsAndTimes {
-            val weights = IntDoubleScatterMap(virtualEdges.size)
-            val times = IntLongScatterMap(virtualEdges.size)
+            val weights = IntDoubleHashMap(virtualEdges.size)
+            val times = MutableIntLongMap(virtualEdges.size)
 
-            val virtualEdgesByOriginalKey: IntObjectMap<MutableList<VirtualEdgeIteratorState>> = IntObjectScatterMap()
-            val edgesSet: IntSet = IntScatterSet()
+            val virtualEdgesByOriginalKey: MutableIntObjectMap<MutableList<VirtualEdgeIteratorState>> = MutableIntObjectMap()
+            val edgesSet: MutableIntSet = MutableIntSet()
             for (v in virtualEdges) {
                 var edges = virtualEdgesByOriginalKey.get(v.originalEdgeKey)
                 if (edges == null) {
@@ -87,11 +83,11 @@ internal class QueryOverlay(numVirtualNodes: Int, is3D: Boolean) {
                     edges.add(v)
             }
 
-            for (c in virtualEdgesByOriginalKey) {
-                val virtualWeights = DoubleArrayList(c.value.size)
-                val virtualTimes = LongArrayList(c.value.size)
+            virtualEdgesByOriginalKey.forEach { key, value ->
+                val virtualWeights = DoubleArrayList(value.size)
+                val virtualTimes = LongArrayList(value.size)
                 var hasInfiniteVirtualEdge = false
-                for (v in c.value) {
+                for (v in value) {
                     val w = weighting.calcEdgeWeight(v, false)
                     if (w.isInfinite())
                         hasInfiniteVirtualEdge = true
@@ -102,17 +98,17 @@ internal class QueryOverlay(numVirtualNodes: Int, is3D: Boolean) {
                     val t = weighting.calcEdgeMillis(v, false)
                     virtualTimes.add(t)
                 }
-                val originalEdge = baseGraph.getEdgeIteratorStateForKey(c.key)
+                val originalEdge = baseGraph.getEdgeIteratorStateForKey(key)
                 val originalWeight = weighting.calcEdgeWeight(originalEdge, false)
                 val originalTime = weighting.calcEdgeMillis(originalEdge, false)
 
                 if (originalWeight.isInfinite() || hasInfiniteVirtualEdge) {
                     // we don't adjust anything
-                    for (i in 0 until c.value.size) {
-                        weights.put(c.value[i].edgeKey, virtualWeights.get(i))
-                        times.put(c.value[i].edgeKey, virtualTimes.get(i))
+                    for (i in 0 until value.size) {
+                        weights.put(value[i].edgeKey, virtualWeights.get(i))
+                        times.put(value[i].edgeKey, virtualTimes.get(i))
                     }
-                    continue
+                    return@forEach
                 } else if (originalWeight < 0 || originalWeight % 1 != 0.0)
                     throw IllegalArgumentException("weight must be non-negative whole number, got: $originalWeight")
 
@@ -127,9 +123,9 @@ internal class QueryOverlay(numVirtualNodes: Int, is3D: Boolean) {
                 // virtual edges' weights does not equal the weight of the original edge.
                 adjustValues(virtualWeightsLong, originalWeight.toLong(), 1)
                 adjustValues(virtualTimes, originalTime, 20)
-                for (i in 0 until c.value.size) {
-                    weights.put(c.value[i].edgeKey, virtualWeightsLong.get(i).toDouble())
-                    times.put(c.value[i].edgeKey, virtualTimes.get(i))
+                for (i in 0 until value.size) {
+                    weights.put(value[i].edgeKey, virtualWeightsLong.get(i).toDouble())
+                    times.put(value[i].edgeKey, virtualTimes.get(i))
                 }
             }
             return WeightsAndTimes(weights, times)

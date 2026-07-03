@@ -18,7 +18,7 @@
 
 package com.graphhopper.storage
 
-import com.carrotsearch.hppc.BitSet
+import com.graphhopper.coll.GrowableBitSet
 import com.graphhopper.routing.ev.EdgeIntAccess
 import com.graphhopper.util.BitUtil
 import com.graphhopper.util.Constants
@@ -207,7 +207,7 @@ internal class BaseGraphNodesAndEdges(
     }
 
     fun sortEdges(getNewEdgeForOldEdge: IntUnaryOperator) {
-        val visited = BitSet(getEdges().toLong())
+        val visited = GrowableBitSet(getEdges().toLong())
         for (edge in 0 until getEdges()) {
             if (visited.get(edge.toLong())) continue
             var curr = edge
@@ -273,7 +273,7 @@ internal class BaseGraphNodesAndEdges(
             setNodeA(pointer, getNewNodeForOldNode.applyAsInt(getNodeA(pointer)))
             setNodeB(pointer, getNewNodeForOldNode.applyAsInt(getNodeB(pointer)))
         }
-        val visited = BitSet(getNodes().toLong())
+        val visited = GrowableBitSet(getNodes().toLong())
         for (node in 0 until getNodes()) {
             if (visited.get(node.toLong())) continue
 
