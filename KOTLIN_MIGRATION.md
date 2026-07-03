@@ -292,15 +292,23 @@ new discoveries get a pinning test AND an entry there.
 - [x] 2026-07-02 Research + this plan; baseline: full core suite green on `kotlin` branch.
 - [x] 2026-07-02 Phase 0: mixed build + StringUtils, JaroWinkler, SpatialKeyAlgo converted; full repo green.
 - [x] 2026-07-02 Measurement baseline (germany, MMAP) recorded — see "Java baseline" section.
-- [ ] Phases 1–14 per order above (check off per package, one commit each). Done so far:
-  vendored+geohash+shapes+config (1,2,4), coll interfaces/BTree/heaps (3, GH*-hppc wrappers
-  deferred to collection switch), util graph-free classes (5), routing.ev complete (6).
+- [x] 2026-07-03 ALL 14 PHASES COMPLETE — core/src/main/java is EMPTY: 466/466 classes
+  Kotlin. Full repo green (mvn -B clean test, all 11 modules; core 3214 tests incl. 259-assert
+  GraphHopperTest; web 215 HTTP tests). Ten germany load-gates passed with bit-identical
+  checksums; 30% and 60% A/B checkpoints passed (CH faster in kotlin, LM8 within noise/flagged).
+  One flagged test edit (GraphHopperTest: 2 anonymous overrides gained 'protected' because
+  kotlin cannot emit package-private).
 - [x] 2026-07-02 STORAGE-COMPAT GATE PASSED at 24.9%: kotlin core loaded the java-written
   germany graph (nodes/edges match anchors exactly), identical route checksum + visited nodes
   across runs; warm routingCH 4.31ms vs 3.77ms baseline (non-like-for-like, verdict at 30%
   checkpoint). Graph copy kept at measurements/germany-gh-compat for future gates;
   results: measurements/kotlin25-compat*.json
-- [ ] Vendored HPPC Kotlin port + tests + attribution; drop hppc dependency from core.
+- [ ] REMAINING WORK: (1) 100% checkpoint marathon (A/B + full fresh germany import vs
+  baseline anchors — RUNNING 2026-07-03); (2) custom-model stages 2-5 (backend seam, shared
+  condition parser, closure composer + differential tests, build-time kotlin source generator —
+  Peter approved scope); (3) HPPC→androidx.collection call-site switch + gap-fillers + canary +
+  perf gate, then drop hppc from core (reader-gtfs declares its own); (4) NOTICE.md attribution
+  review; (5) final real-route diff report.
 - [x] 2026-07-02 ~30% CHECKPOINT PASSED (at 27.0%, after ev machinery + weighting):
   paired A/B (3 rounds each, java-written germany graph, count=5000): routingCH median
   4.11ms(J)/4.07ms(K), CH_edge 8.07/8.02, LM8 129.2/127.7 — parity within noise; route
