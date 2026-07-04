@@ -37,6 +37,9 @@ import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.routing.weighting.custom.CustomWeightingBackends;
 import com.graphhopper.routing.weighting.custom.ClosureBackend;
 import com.graphhopper.routing.weighting.custom.JaninoBackend;
+import com.graphhopper.routing.weighting.custom.generate.GeneratedWeightingRegistry;
+import com.graphhopper.routing.weighting.custom.generate.RegistryBackend;
+import com.graphhopper.tools.weighting.generated.GeneratedCustomWeightings;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.*;
@@ -106,8 +109,24 @@ public class Measurement {
             case "closure":
                 CustomWeightingBackends.setDefault(ClosureBackend.INSTANCE);
                 break;
+            case "kotlinsource":
+                // build-compiled, pre-generated Kotlin weighting (NO runtime code generation).
+                // The generated class + registration are produced at build time by
+                // GenerateCustomWeightingMain from the benchmark's custom models (see tools/pom.xml)
+                // and keyed by each model's identity (CustomModel.toString()). The benchmark MUST
+                // therefore load the SAME model JSON so the runtime model identity matches a key.
+                if (args.getString("measurement.custom_model_file", "").isEmpty())
+                    throw new IllegalArgumentException("measurement.custom_weighting_backend=kotlinsource requires "
+                            + "measurement.custom_model_file=<one of the build-time generated models, e.g. "
+                            + "core/src/main/resources/com/graphhopper/custom_models/car.json> "
+                            + "- the pre-generated weighting only exists for the models it was generated from at build time");
+                GeneratedCustomWeightings.registerAll();
+                CustomWeightingBackends.setDefault(RegistryBackend.INSTANCE);
+                logger.info("using kotlinsource (build-time generated Kotlin) custom weighting backend, "
+                        + GeneratedWeightingRegistry.size() + " generated weighting(s) registered");
+                break;
             default:
-                throw new IllegalArgumentException("measurement.custom_weighting_backend must be 'janino' or 'closure', got: " + backend);
+                throw new IllegalArgumentException("measurement.custom_weighting_backend must be 'janino', 'closure' or 'kotlinsource', got: " + backend);
         }
         put("measurement.custom_weighting_backend", backend);
 

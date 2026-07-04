@@ -14,6 +14,8 @@
     </parent>
     <properties>
         <assembly-phase>package</assembly-phase>
+        <!-- must match core/pom.xml: tools compiles the build-time generated Kotlin weighting -->
+        <kotlin.version>2.4.0</kotlin.version>
     </properties>
 
     <dependencies>
@@ -55,6 +57,70 @@
     </dependencies>
     <build>
         <plugins>
+            <!-- kotlinsource weighting backend (measurement.custom_weighting_backend=kotlinsource):
+                 generate build-compiled Kotlin CustomWeightings from the benchmark's custom models
+                 (core's car.json + benchmark/very_custom.json) so the benchmark can route with the
+                 AOT/no-runtime-compiler path. The generated .kt files are THROWAWAY build artifacts
+                 under target/ (gitignored, regenerated from the models every build - never committed,
+                 never stale). This adds one codegen step + a Kotlin compile pass to every tools build.
+                 encoded_values is the UNION of both models' referenced EVs. -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.1.1</version>
+                <executions>
+                    <execution>
+                        <id>generate-registry-weighting</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                        <configuration>
+                            <mainClass>com.graphhopper.routing.weighting.custom.generate.GenerateCustomWeightingMain</mainClass>
+                            <arguments>
+                                <argument>custom_models=${project.parent.basedir}/core/src/main/resources/com/graphhopper/custom_models/car.json,${project.parent.basedir}/benchmark/very_custom.json</argument>
+                                <argument>encoded_values=car_access,car_average_speed,road_environment,max_speed,ferry_speed,road_class,road_access,toll,hazmat,max_height,max_width</argument>
+                                <argument>output=${project.build.directory}/generated-sources/customweightings</argument>
+                                <argument>package=com.graphhopper.tools.weighting.generated</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- compile the generated Kotlin before javac (mirrors core/pom.xml); the generated
+                 dir is the only Kotlin source root, tools' own sources stay Java -->
+            <plugin>
+                <groupId>org.jetbrains.kotlin</groupId>
+                <artifactId>kotlin-maven-plugin</artifactId>
+                <version>${kotlin.version}</version>
+                <executions>
+                    <execution>
+                        <id>compile</id>
+                        <phase>process-sources</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <configuration>
+                            <sourceDirs>
+                                <sourceDir>${project.build.directory}/generated-sources/customweightings</sourceDir>
+                                <sourceDir>${project.basedir}/src/main/java</sourceDir>
+                            </sourceDirs>
+                        </configuration>
+                    </execution>
+                </executions>
+                <configuration>
+                    <jvmTarget>${maven.compiler.target}</jvmTarget>
+                </configuration>
+            </plugin>
+            <!-- the default useIncrementalCompilation=true wipes the whole output directory on
+                 stale sources (MCOMPILER-209), deleting the classes kotlinc just wrote -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <useIncrementalCompilation>false</useIncrementalCompilation>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>

@@ -144,7 +144,8 @@ java -cp tools/target/graphhopper-tools-*-jar-with-dependencies.jar \
   progress + final JSON).
 - Benchmark cadence + methodology (Peter 2026-07-02, updated): checkpoints (~30%, ~60%) REUSE
   the java-written germany graph copy (measurements/germany-gh-compat) — no import/prep, checks
-  1. graph compatibility 2. query speed. Run `measurements/ab-bench.sh` (paired, alternating
+  1. graph compatibility 2. query speed. Run paired A/B via benchmark.sh with GH_CUSTOM_BACKEND
+  and matched configs (alternating
   java-jar/kotlin-jar rounds on the same graph, median over >=3 rounds each) to separate VM
   noise from real differences — this small VM is noisy; single runs are not comparable.
   Full import benchmark only at 100% (and on the dedicated machine via benchmark/benchmark.sh,
@@ -773,7 +774,8 @@ stay untouched, but NONE changes meaning:
 
 Gates: G1 = `mvn -B -pl core test` green; G2 = full `mvn -B clean test`; G3 = germany LOAD gate
 (kotlin core loads measurements/germany-gh-compat, anchors + route checksum 27749812 exact);
-G4 = paired A/B query bench (measurements/ab-bench.sh); G5 = full fresh germany import,
+G4 = paired A/B query bench (benchmark.sh with matched configs; ab-bench.sh removed 48e0a3557);
+G5 = full fresh germany import,
 ALL anchors exact.
 
 - **H1 — gap-fillers, no call sites** (GrowableBitSet, IndirectSort+comparator fun-interface,

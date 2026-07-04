@@ -29,13 +29,35 @@ defaultUseMeasurementTimeAsRefTime=false
 #                   import+preparation - graph-compatibility + query-speed comparison only
 #   GH_COUNT        number of measured routing queries per mode (default 5000)
 #   GH_DATAACCESS   e.g. MMAP to benchmark on machines with little RAM (default RAM_STORE)
-#   GH_CUSTOM_BACKEND janino|closure custom-model weighting backend (default closure)
+#   GH_CUSTOM_BACKEND janino|closure|kotlinsource custom-model weighting backend (default kotlinsource).
+#                     kotlinsource = build-time generated Kotlin weighting (compiled into the tools
+#                     jar, no runtime code generation); it can only route the models its classes were
+#                     generated from (core's car.json + benchmark/very_custom.json), so the car
+#                     scenarios are auto-switched to car.json when kotlinsource is selected, and the
+#                     very_custom scenario already routes very_custom.json.
 GH_TOOLS_JAR=${GH_TOOLS_JAR:-$(ls tools/target/graphhopper-tools-*-jar-with-dependencies.jar 2>/dev/null | head -1)}
 GH_JAVA_OPTS=${GH_JAVA_OPTS:--XX:+UseParallelGC -Xmx20g -Xms20g}
 GH_CLEAN=${GH_CLEAN:-true}
 GH_COUNT=${GH_COUNT:-5000}
 GH_DATAACCESS=${GH_DATAACCESS:-RAM_STORE}
-GH_CUSTOM_BACKEND=${GH_CUSTOM_BACKEND:-closure}
+GH_CUSTOM_BACKEND=${GH_CUSTOM_BACKEND:-kotlinsource}
+
+# the kotlinsource backend only has generated weightings for the models it was built from; route the
+# car scenarios with that exact car.json so the runtime custom-model identity matches a generated key.
+CUSTOM_MODEL_ARG=""
+if [ "${GH_CUSTOM_BACKEND}" = "kotlinsource" ]; then
+  GH_CUSTOM_MODEL_FILE=${GH_CUSTOM_MODEL_FILE:-core/src/main/resources/com/graphhopper/custom_models/car.json}
+  # car.json references these EVs which the benchmark does not auto-add for the car vehicle
+  CUSTOM_MODEL_ARG="measurement.weighting=custom measurement.custom_model_file=${GH_CUSTOM_MODEL_FILE} graph.encoded_values=road_environment,ferry_speed,max_speed"
+fi
+
+# scenario 4 (foot/outdoor) uses no custom weighting, so the custom-weighting backend is a no-op for
+# its measurements; but the kotlinsource backend refuses to start without a custom model, so fall it
+# back to janino there (no custom weighting is evaluated, so the measured numbers are unaffected).
+NON_CUSTOM_BACKEND=${GH_CUSTOM_BACKEND}
+if [ "${GH_CUSTOM_BACKEND}" = "kotlinsource" ]; then
+  NON_CUSTOM_BACKEND=janino
+fi
 
 GRAPH_DIR=${1:-$defaultGraphDir}
 RESULTS_DIR=${2:-$defaultResultsDir}
@@ -74,6 +96,7 @@ graph.location=${GRAPH_DIR}measurement-small-gh \
 prepare.min_network_size=10000 \
 graph.dataaccess.default_type=${GH_DATAACCESS} \
 measurement.custom_weighting_backend=${GH_CUSTOM_BACKEND} \
+${CUSTOM_MODEL_ARG} \
 measurement.json=true \
 measurement.count=${GH_COUNT} \
 measurement.use_measurement_time_as_ref_time=${USE_MEASUREMENT_TIME_AS_REF_TIME}
@@ -102,6 +125,7 @@ graph.location=${GRAPH_DIR}measurement-big-gh \
 prepare.min_network_size=10000 \
 graph.dataaccess.default_type=${GH_DATAACCESS} \
 measurement.custom_weighting_backend=${GH_CUSTOM_BACKEND} \
+${CUSTOM_MODEL_ARG} \
 measurement.json=true \
 measurement.count=${GH_COUNT} \
 measurement.use_measurement_time_as_ref_time=${USE_MEASUREMENT_TIME_AS_REF_TIME}
@@ -161,7 +185,7 @@ measurement.turn_costs=false \
 graph.location=${GRAPH_DIR}measurement-big-outdoor-gh \
 prepare.min_network_size=10000 \
 graph.dataaccess.default_type=${GH_DATAACCESS} \
-measurement.custom_weighting_backend=${GH_CUSTOM_BACKEND} \
+measurement.custom_weighting_backend=${NON_CUSTOM_BACKEND} \
 measurement.json=true \
 measurement.count=${GH_COUNT} \
 measurement.use_measurement_time_as_ref_time=${USE_MEASUREMENT_TIME_AS_REF_TIME}
