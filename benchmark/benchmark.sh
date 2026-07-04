@@ -29,11 +29,13 @@ defaultUseMeasurementTimeAsRefTime=false
 #                   import+preparation - graph-compatibility + query-speed comparison only
 #   GH_COUNT        number of measured routing queries per mode (default 5000)
 #   GH_DATAACCESS   e.g. MMAP to benchmark on machines with little RAM (default RAM_STORE)
+#   GH_CUSTOM_BACKEND janino|closure custom-model weighting backend (default closure)
 GH_TOOLS_JAR=${GH_TOOLS_JAR:-$(ls tools/target/graphhopper-tools-*-jar-with-dependencies.jar 2>/dev/null | head -1)}
 GH_JAVA_OPTS=${GH_JAVA_OPTS:--XX:+UseParallelGC -Xmx20g -Xms20g}
 GH_CLEAN=${GH_CLEAN:-true}
 GH_COUNT=${GH_COUNT:-5000}
 GH_DATAACCESS=${GH_DATAACCESS:-RAM_STORE}
+GH_CUSTOM_BACKEND=${GH_CUSTOM_BACKEND:-closure}
 
 GRAPH_DIR=${1:-$defaultGraphDir}
 RESULTS_DIR=${2:-$defaultResultsDir}
@@ -71,6 +73,7 @@ measurement.turn_costs=true \
 graph.location=${GRAPH_DIR}measurement-small-gh \
 prepare.min_network_size=10000 \
 graph.dataaccess.default_type=${GH_DATAACCESS} \
+measurement.custom_weighting_backend=${GH_CUSTOM_BACKEND} \
 measurement.json=true \
 measurement.count=${GH_COUNT} \
 measurement.use_measurement_time_as_ref_time=${USE_MEASUREMENT_TIME_AS_REF_TIME}
@@ -98,6 +101,7 @@ measurement.turn_costs=true \
 graph.location=${GRAPH_DIR}measurement-big-gh \
 prepare.min_network_size=10000 \
 graph.dataaccess.default_type=${GH_DATAACCESS} \
+measurement.custom_weighting_backend=${GH_CUSTOM_BACKEND} \
 measurement.json=true \
 measurement.count=${GH_COUNT} \
 measurement.use_measurement_time_as_ref_time=${USE_MEASUREMENT_TIME_AS_REF_TIME}
@@ -129,6 +133,7 @@ measurement.turn_costs=true \
 graph.location=${GRAPH_DIR}measurement-big-very-custom-gh \
 prepare.min_network_size=10000 \
 graph.dataaccess.default_type=${GH_DATAACCESS} \
+measurement.custom_weighting_backend=${GH_CUSTOM_BACKEND} \
 measurement.json=true \
 measurement.count=${GH_COUNT} \
 measurement.use_measurement_time_as_ref_time=${USE_MEASUREMENT_TIME_AS_REF_TIME}
@@ -156,6 +161,7 @@ measurement.turn_costs=false \
 graph.location=${GRAPH_DIR}measurement-big-outdoor-gh \
 prepare.min_network_size=10000 \
 graph.dataaccess.default_type=${GH_DATAACCESS} \
+measurement.custom_weighting_backend=${GH_CUSTOM_BACKEND} \
 measurement.json=true \
 measurement.count=${GH_COUNT} \
 measurement.use_measurement_time_as_ref_time=${USE_MEASUREMENT_TIME_AS_REF_TIME}

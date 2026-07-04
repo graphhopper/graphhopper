@@ -16,6 +16,7 @@ GRAPH=${GH_GRAPH:-measurements/germany-gh-compat}
 XMX=${GH_XMX:-3g}
 DATAACCESS=${GH_DATAACCESS:-MMAP}
 COUNT=${GH_COUNT:-5000}
+BACKEND=${GH_CUSTOM_BACKEND:-closure}
 STAMP=$(date +%Y%m%d-%H%M)
 mkdir -p measurements/ab
 
@@ -32,6 +33,7 @@ run() { # $1 label $2 jar $3 round
     measurement.ch.node=true measurement.lm=true "measurement.lm.active_counts=[8]" \
     measurement.vehicle=car measurement.turn_costs=true \
     graph.dataaccess.default_type=$DATAACCESS \
+    measurement.custom_weighting_backend=$BACKEND \
     import.osm.ignored_highways=footway,cycleway,path,pedestrian,bridleway \
     prepare.min_network_size=10000 graph.location=$GRAPH \
     2>&1 | tee "measurements/ab/$STAMP-$1-$3.log" | grep -E "routingCH:|routingLM8:" || true

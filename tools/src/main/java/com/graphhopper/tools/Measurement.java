@@ -34,6 +34,9 @@ import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
+import com.graphhopper.routing.weighting.custom.CustomWeightingBackends;
+import com.graphhopper.routing.weighting.custom.ClosureBackend;
+import com.graphhopper.routing.weighting.custom.JaninoBackend;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.*;
@@ -90,6 +93,24 @@ public class Measurement {
         final boolean useJson = args.getBool("measurement.json", false);
         boolean cleanGraph = args.getBool("measurement.clean", false);
         stopOnError = args.getBool("measurement.stop_on_error", false);
+
+        // select the custom-model weighting backend before any graph/weighting is built.
+        // janino = runtime code generation (server default); closure = the portable
+        // (Android/iOS-capable) evaluator. Both produce bit-identical weights - this is for
+        // comparing their performance.
+        String backend = args.getString("measurement.custom_weighting_backend", "janino").toLowerCase();
+        switch (backend) {
+            case "janino":
+                CustomWeightingBackends.setDefault(JaninoBackend.INSTANCE);
+                break;
+            case "closure":
+                CustomWeightingBackends.setDefault(ClosureBackend.INSTANCE);
+                break;
+            default:
+                throw new IllegalArgumentException("measurement.custom_weighting_backend must be 'janino' or 'closure', got: " + backend);
+        }
+        put("measurement.custom_weighting_backend", backend);
+
         String summaryLocation = args.getString("measurement.summaryfile", "");
         final String timestamp = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss").format(new Date());
         put("measurement.timestamp", timestamp);
