@@ -57,7 +57,7 @@ public class RacingBikePriorityParser extends BikeCommonPriorityParser {
             if (way.hasTag("tunnel", INTENDED))
                 weightToPrioMap.put(40d, UNCHANGED);
         } else if (avoidHighwayTags.containsKey(highway) || way.hasTag("foot", INTENDED)) {
-            PriorityCode priorityCode = avoidHighwayTags.getOrDefault(highway, AVOID);
+            PriorityCode priorityCode = avoidHighwayTags.getOrDefault(highway, SLIGHT_AVOID);
             weightToPrioMap.put(50d, priorityCode);
             // tunnels are only dangerous on the high-speed roads we strongly avoid
             if (way.hasTag("tunnel", INTENDED) && priorityCode == BAD) {
