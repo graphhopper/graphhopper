@@ -1,0 +1,14 @@
+// The light "access + speed" car custom model used by benchmark scenarios 1 & 2.
+// Mirrors TestProfiles.accessAndSpeed("car") 1:1 (priority: block where !car_access,
+// speed: car_average_speed), so these scenarios stay comparable to the master baseline
+// while also being routable by the build-time-generated kotlinsource backend, which can
+// only serve models generated from a JSON file at build time. Uses only the standard car
+// encoded values (car_access, car_average_speed), so no extra graph.encoded_values needed.
+{
+  "priority": [
+    { "if": "!car_access", "multiply_by": "0" }
+  ],
+  "speed": [
+    { "if": "true", "limit_to": "car_average_speed" }
+  ]
+}

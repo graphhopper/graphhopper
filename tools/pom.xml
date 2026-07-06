@@ -78,7 +78,7 @@
                         <configuration>
                             <mainClass>com.graphhopper.routing.weighting.custom.generate.GenerateCustomWeightingMain</mainClass>
                             <arguments>
-                                <argument>custom_models=${project.parent.basedir}/core/src/main/resources/com/graphhopper/custom_models/car.json,${project.parent.basedir}/benchmark/very_custom.json</argument>
+                                <argument>custom_models=${project.parent.basedir}/benchmark/car_access_speed.json,${project.parent.basedir}/core/src/main/resources/com/graphhopper/custom_models/car.json,${project.parent.basedir}/benchmark/very_custom.json</argument>
                                 <argument>encoded_values=car_access,car_average_speed,road_environment,max_speed,ferry_speed,road_class,road_access,toll,hazmat,max_height,max_width</argument>
                                 <argument>output=${project.build.directory}/generated-sources/customweightings</argument>
                                 <argument>package=com.graphhopper.tools.weighting.generated</argument>
