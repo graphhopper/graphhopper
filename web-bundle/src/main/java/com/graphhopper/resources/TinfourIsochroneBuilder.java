@@ -38,9 +38,7 @@ import org.tinfour.contour.ContourRegion;
 import org.tinfour.standard.IncrementalTin;
 import org.tinfour.utils.HilbertSort;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.function.ToDoubleFunction;
 
@@ -49,10 +47,10 @@ import java.util.function.ToDoubleFunction;
  * Delaunay triangulation + {@link com.graphhopper.isochrone.algorithm.ContourBuilder} pipeline.
  * <p>
  * Tinfour builds the TIN and traces closed contour regions directly. In benchmarks it is roughly
- * 2-3.5x faster than the JTS path <em>provided the vertices are Hilbert-sorted before insertion</em>
- * (Tinfour's incremental insertion uses a walk-based point locator that degrades badly when the
- * insertion order is not spatially coherent, which is the case for shortest-path-tree order). See
- * the {@code hilbert} flag.
+ * 2-3.5x faster than the JTS path and uses about a third less heap. The vertices are Hilbert-sorted
+ * before insertion because Tinfour's incremental insertion uses a walk-based point locator that
+ * degrades badly (~O(n^2)) when the insertion order is not spatially coherent -- which is the case for
+ * the shortest-path-tree order the sites are produced in.
  * <p>
  * This is a "good enough to compare" implementation: each bucket returns the reachable regions as a
  * MultiPolygon; interior holes (unreachable pockets) are not punched out. Selected via the
@@ -62,62 +60,26 @@ public class TinfourIsochroneBuilder {
 
     private final GeometryFactory geometryFactory = new GeometryFactory();
 
-    /**
-     * Vertex insertion order for the TIN. Tinfour's walk-based point locator degrades to ~O(n^2) when the
-     * insertion order is not spatially coherent, so the order matters a lot for build time (see benchmarks):
-     * <ul>
-     *   <li>{@code NONE}    -- shortest-path-tree pop order (Dijkstra by time). A radial time-wavefront, i.e.
-     *                          spatially scattered -- the worst case (3-10x slower than JTS). For comparison only.</li>
-     *   <li>{@code HILBERT} -- Hilbert space-filling-curve sort before insertion (Tinfour's documented remedy).</li>
-     *   <li>{@code DFS}     -- shortest-path-tree pre-order: each node inserted right after its parent, which is
-     *                          one road edge (hence spatially) away. Matches/beats HILBERT and needs no sort pass.</li>
-     * </ul>
-     */
-    public enum Sorting {NONE, HILBERT, DFS}
-
-    public static Sorting parseSorting(String value) {
-        switch (value == null ? "" : value.trim().toLowerCase()) {
-            case "none": return Sorting.NONE;
-            case "dfs": return Sorting.DFS;
-            case "":
-            case "hilbert": return Sorting.HILBERT;
-            default: throw new IllegalArgumentException("Unknown sorting '" + value + "'. Use none, hilbert or dfs.");
-        }
-    }
+    // Per-request timing breakdown (ms) and vertex count, populated by computeIsolines() for debugging/comparison.
+    public long searchMillis, sortMillis, tinBuildMillis, contourMillis;
+    public int vertexCount;
 
     /**
      * Runs the shortest-path-tree search and returns one MultiPolygon per z-level (same order as {@code zs}).
      */
-    // Per-request timing breakdown (ms) and vertex count, populated by computeIsolines() for debugging/comparison.
-    public long searchMillis, reorderMillis, sortMillis, tinBuildMillis, contourMillis;
-    public int vertexCount;
-
     public List<Geometry> computeIsolines(Snap snap, QueryGraph queryGraph, ShortestPathTree spt,
-                                          ToDoubleFunction<IsoLabel> fz, List<Double> zs, Sorting sorting) {
+                                          ToDoubleFunction<IsoLabel> fz, List<Double> zs) {
         final NodeAccess na = queryGraph.getNodeAccess();
         final List<Vertex> vertices = new ArrayList<>();
         StopWatch sw = new StopWatch().start();
-        if (sorting == Sorting.DFS) {
-            // DFS needs the labels+parent links to reorder, so collect them, then reorder, then build vertices.
-            List<IsoLabel> labels = new ArrayList<>();
-            spt.search(snap.getClosestNode(), labels::add);
-            searchMillis = sw.stop().getMillis();
-            sw = new StopWatch().start();
-            List<IsoLabel> ordered = treePreOrder(labels);
-            reorderMillis = sw.stop().getMillis();
-            for (IsoLabel label : ordered)
-                collectVertices(vertices, na, queryGraph, label, fz);
-        } else {
-            // HILBERT/NONE don't need label order, so build vertices directly in the search callback -- this avoids
-            // holding a second reachable-set-sized list (the labels), lowering peak memory on large isochrones.
-            spt.search(snap.getClosestNode(), label -> collectVertices(vertices, na, queryGraph, label, fz));
-            searchMillis = sw.stop().getMillis();
-        }
+        // Build vertices directly in the search callback so we never hold a second reachable-set-sized list,
+        // which keeps peak memory down on large isochrones.
+        spt.search(snap.getClosestNode(), label -> collectVertices(vertices, na, queryGraph, label, fz));
+        searchMillis = sw.stop().getMillis();
         vertexCount = vertices.size();
 
         sw = new StopWatch().start();
-        if (sorting == Sorting.HILBERT)
-            new HilbertSort().sort(vertices);
+        new HilbertSort().sort(vertices);
         sortMillis = sw.stop().getMillis();
 
         // Tinfour derives its coincidence/degeneracy thresholds from a "nominal point spacing" that
@@ -150,36 +112,6 @@ public class TinfourIsochroneBuilder {
         }
         contourMillis = sw.stop().getMillis();
         return isolines;
-    }
-
-    /**
-     * Shortest-path-tree pre-order (DFS over parent links): each label is emitted right after its parent.
-     * Since a label's parent is one graph edge away, consecutive vertices are spatially adjacent, which is
-     * exactly what Tinfour's walk-based insertion wants -- without paying for a Hilbert sort.
-     */
-    static List<IsoLabel> treePreOrder(List<IsoLabel> labels) {
-        IdentityHashMap<IsoLabel, List<IsoLabel>> children = new IdentityHashMap<>();
-        IsoLabel root = null;
-        for (IsoLabel label : labels) {
-            if (label.parent == null)
-                root = label;
-            else
-                children.computeIfAbsent(label.parent, k -> new ArrayList<>()).add(label);
-        }
-        if (root == null)
-            return labels;
-        List<IsoLabel> out = new ArrayList<>(labels.size());
-        ArrayDeque<IsoLabel> stack = new ArrayDeque<>();
-        stack.push(root);
-        while (!stack.isEmpty()) {
-            IsoLabel current = stack.pop();
-            out.add(current);
-            List<IsoLabel> kids = children.get(current);
-            if (kids != null)
-                for (IsoLabel kid : kids)
-                    stack.push(kid);
-        }
-        return out;
     }
 
     private static double estimateNominalSpacing(List<Vertex> vertices) {

@@ -80,8 +80,7 @@ public class IsochroneResource {
             @QueryParam("type") @DefaultValue("json") ResponseType respType,
             @QueryParam("tolerance") @DefaultValue("0") double toleranceInMeter,
             @QueryParam("full_geometry") @DefaultValue("false") boolean fullGeometry,
-            @QueryParam("algorithm") @DefaultValue("jts") String algorithm,
-            @QueryParam("sorting") @DefaultValue("hilbert") String sorting) {
+            @QueryParam("algorithm") @DefaultValue("jts") String algorithm) {
         StopWatch sw = new StopWatch().start();
         PMap hintsMap = new PMap();
         RouteResource.initHints(hintsMap, uriInfo.getQueryParameters());
@@ -137,12 +136,9 @@ public class IsochroneResource {
         List<Geometry> rawIsolines;
         if ("tinfour".equalsIgnoreCase(algorithm)) {
             TinfourIsochroneBuilder builder = new TinfourIsochroneBuilder();
-            rawIsolines = builder.computeIsolines(snap, queryGraph, shortestPathTree, fz, zs,
-                    TinfourIsochroneBuilder.parseSorting(sorting));
-            debug.put("sorting", sorting);
+            rawIsolines = builder.computeIsolines(snap, queryGraph, shortestPathTree, fz, zs);
             debug.put("sites", builder.vertexCount);
             debug.put("search_ms", builder.searchMillis);
-            debug.put("reorder_ms", builder.reorderMillis);
             debug.put("sort_ms", builder.sortMillis);
             debug.put("tin_build_ms", builder.tinBuildMillis);
             debug.put("contour_ms", builder.contourMillis);
