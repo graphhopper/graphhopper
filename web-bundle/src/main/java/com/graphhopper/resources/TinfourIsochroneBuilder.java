@@ -32,9 +32,11 @@ import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LinearRing;
 import org.locationtech.jts.geom.Polygon;
+import org.tinfour.common.IIncrementalTin;
 import org.tinfour.common.Vertex;
 import org.tinfour.contour.ContourBuilderForTin;
 import org.tinfour.contour.ContourRegion;
+import org.tinfour.semivirtual.SemiVirtualIncrementalTin;
 import org.tinfour.standard.IncrementalTin;
 import org.tinfour.utils.HilbertSort;
 
@@ -59,10 +61,24 @@ import java.util.function.ToDoubleFunction;
 public class TinfourIsochroneBuilder {
 
     private final GeometryFactory geometryFactory = new GeometryFactory();
+    private final boolean semiVirtual;
 
     // Per-request timing breakdown (ms) and vertex count, populated by computeIsolines() for debugging/comparison.
     public long searchMillis, sortMillis, tinBuildMillis, contourMillis;
     public int vertexCount;
+
+    public TinfourIsochroneBuilder() {
+        this(false);
+    }
+
+    /**
+     * @param semiVirtual if true use {@link SemiVirtualIncrementalTin} (about half the TIN memory and far fewer
+     *                    objects -> less GC pressure, at ~30% more insertion CPU) instead of the standard
+     *                    object-based {@link IncrementalTin}. Both need the vertices Hilbert-sorted.
+     */
+    public TinfourIsochroneBuilder(boolean semiVirtual) {
+        this.semiVirtual = semiVirtual;
+    }
 
     /**
      * Runs the shortest-path-tree search and returns one MultiPolygon per z-level (same order as {@code zs}).
@@ -86,7 +102,8 @@ public class TinfourIsochroneBuilder {
         // defaults to 1.0 -- wrong for lon/lat degrees (spacing ~1e-4), which makes it treat all points
         // as coincident and fail to bootstrap. Estimate the spacing from the data extent + vertex count.
         sw = new StopWatch().start();
-        IncrementalTin tin = new IncrementalTin(estimateNominalSpacing(vertices));
+        double spacing = estimateNominalSpacing(vertices);
+        IIncrementalTin tin = semiVirtual ? new SemiVirtualIncrementalTin(spacing) : new IncrementalTin(spacing);
         tin.add(vertices, null);
         tinBuildMillis = sw.stop().getMillis();
         if (!tin.isBootstrapped())

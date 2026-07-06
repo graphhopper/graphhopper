@@ -131,11 +131,13 @@ public class IsochroneResource {
         // or via the Tinfour library (algorithm=tinfour). Both consume the same shortest-path-tree.
         // A per-phase timing breakdown is collected so JTS vs Tinfour (and the Tinfour sorting options) can be
         // compared directly from the response (see 'info.debug' / the X-GH-Iso-* headers).
+        boolean semiTinfour = "semitinfour".equalsIgnoreCase(algorithm);
+        boolean tinfour = semiTinfour || "tinfour".equalsIgnoreCase(algorithm);
         ObjectNode debug = JsonNodeFactory.instance.objectNode();
-        debug.put("algorithm", "tinfour".equalsIgnoreCase(algorithm) ? "tinfour" : "jts");
+        debug.put("algorithm", tinfour ? (semiTinfour ? "semitinfour" : "tinfour") : "jts");
         List<Geometry> rawIsolines;
-        if ("tinfour".equalsIgnoreCase(algorithm)) {
-            TinfourIsochroneBuilder builder = new TinfourIsochroneBuilder();
+        if (tinfour) {
+            TinfourIsochroneBuilder builder = new TinfourIsochroneBuilder(semiTinfour);
             rawIsolines = builder.computeIsolines(snap, queryGraph, shortestPathTree, fz, zs);
             debug.put("sites", builder.vertexCount);
             debug.put("search_ms", builder.searchMillis);

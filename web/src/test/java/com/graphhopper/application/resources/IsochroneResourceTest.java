@@ -34,6 +34,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -96,15 +98,16 @@ public class IsochroneResourceTest {
         assertFalse(polygon1.contains(geometryFactory.createPoint(new Coordinate(1.635246, 42.53841))));
     }
 
-    @Test
-    public void requestByTimeLimitTinfour() {
+    @ParameterizedTest
+    @ValueSource(strings = {"tinfour", "semitinfour"})
+    public void requestByTimeLimitTinfour(String algorithm) {
         JsonFeatureCollection featureCollection = clientTarget(app, "/isochrone")
                 .queryParam("profile", "fast_car")
                 .queryParam("point", "42.531073,1.573792")
                 .queryParam("time_limit", 5 * 60)
                 .queryParam("buckets", 2)
                 .queryParam("type", "geojson")
-                .queryParam("algorithm", "tinfour")
+                .queryParam("algorithm", algorithm)
                 .request().get(JsonFeatureCollection.class);
 
         assertEquals(2, featureCollection.getFeatures().size());
