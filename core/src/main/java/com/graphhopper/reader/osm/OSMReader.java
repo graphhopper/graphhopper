@@ -655,7 +655,7 @@ public class OSMReader {
     private static void warnOfRestriction(ReaderRelation restrictionRelation, OSMRestrictionException e) {
         // we do not log exceptions with an empty message
         if (!e.isWithoutWarning()) {
-            restrictionRelation.getTags().remove("graphhopper:via_node");
+            restrictionRelation.removeTag("graphhopper:via_node");
             List<String> members = restrictionRelation.getMembers().stream().map(m -> m.getRole() + " " + m.getType().toString().toLowerCase() + " " + m.getRef()).collect(Collectors.toList());
             OSM_WARNING_LOGGER.warn("Restriction relation " + restrictionRelation.getId() + " " + e.getMessage() + ". tags: " + restrictionRelation.getTags() + ", members: " + members + ". Relation ignored.");
         }

@@ -18,10 +18,10 @@
 package com.graphhopper.reader;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 /**
  * Base class for all network objects
@@ -38,12 +38,17 @@ public abstract class ReaderElement {
         FILEHEADER;
     }
 
+    private static final Map<String, Object> EMPTY = Collections.emptyMap();
+
     private final long id;
     private final Type type;
-    private final Map<String, Object> properties;
+    // Lazily allocated: untagged elements (the vast majority of OSM nodes) share the immutable
+    // EMPTY map and only allocate a real map when the first tag is added. This avoids on the order
+    // of hundreds of millions of throwaway LinkedHashMap allocations during a large import.
+    private Map<String, Object> properties;
 
     protected ReaderElement(long id, Type type) {
-        this(id, type, new LinkedHashMap<>(4));
+        this(id, type, EMPTY);
     }
 
     protected ReaderElement(long id, Type type, Map<String, Object> properties) {
@@ -78,11 +83,13 @@ public abstract class ReaderElement {
     }
 
     public void setTags(Map<String, Object> newTags) {
-        properties.clear();
-        if (newTags != null)
-            for (Entry<String, Object> e : newTags.entrySet()) {
-                setTag(e.getKey(), e.getValue());
-            }
+        if (newTags == null || newTags.isEmpty()) {
+            properties = EMPTY;
+            return;
+        }
+        // copy in the source's iteration order, matching the previous per-entry copy so the
+        // resulting tag order (and thus KVStorage serialization order) is unchanged
+        properties = new LinkedHashMap<>(newTags);
     }
 
     public boolean hasTags() {
@@ -102,6 +109,8 @@ public abstract class ReaderElement {
     }
 
     public void setTag(String name, Object value) {
+        if (properties == EMPTY)
+            properties = new LinkedHashMap<>(4);
         properties.put(name, value);
     }
 
@@ -189,11 +198,12 @@ public abstract class ReaderElement {
     }
 
     public void removeTag(String name) {
-        properties.remove(name);
+        if (properties != EMPTY)
+            properties.remove(name);
     }
 
     public void clearTags() {
-        properties.clear();
+        properties = EMPTY;
     }
 
     public Type getType() {
