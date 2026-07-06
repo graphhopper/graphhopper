@@ -24,9 +24,9 @@ import com.graphhopper.routing.weighting.custom.CustomWeightingBackend
 import com.graphhopper.routing.weighting.custom.CustomWeightingBackends
 import com.graphhopper.routing.weighting.custom.CustomWeightingHelper
 import com.graphhopper.util.CustomModel
+import com.graphhopper.util.JsonFeature
 import com.graphhopper.util.Parameters as GHParameters
 import java.util.concurrent.ConcurrentHashMap
-import java.util.function.Supplier
 
 /**
  * Registry of build-time generated [CustomWeightingHelper] classes (stage 5, see
@@ -41,23 +41,23 @@ import java.util.function.Supplier
  * byte-compatible with the one used at build time):
  *
  * ```
- * GeneratedWeightingRegistry.register(customModel, Supplier { GeneratedCarCustomWeighting() })
+ * GeneratedWeightingRegistry.register(customModel, ::GeneratedCarCustomWeighting)
  * CustomWeightingBackends.setDefault(RegistryBackend)
  * ```
  */
 object GeneratedWeightingRegistry {
 
-    private val factories = ConcurrentHashMap<String, Supplier<CustomWeightingHelper>>()
+    private val factories = ConcurrentHashMap<String, GeneratedWeightingFactory>()
 
     /** Registers a generated class for the given custom model (keyed by its `toString()`). */
     @JvmStatic
-    fun register(customModel: CustomModel, factory: Supplier<CustomWeightingHelper>) {
+    fun register(customModel: CustomModel, factory: GeneratedWeightingFactory) {
         register(customModel.toString(), factory)
     }
 
     /** Registers by the raw key (`CustomModel.toString()` captured at generation time). */
     @JvmStatic
-    fun register(key: String, factory: Supplier<CustomWeightingHelper>) {
+    fun register(key: String, factory: GeneratedWeightingFactory) {
         factories[key] = factory
     }
 
@@ -69,7 +69,20 @@ object GeneratedWeightingRegistry {
     @JvmStatic
     fun size(): Int = factories.size
 
-    internal fun factoryFor(key: String): Supplier<CustomWeightingHelper>? = factories[key]
+    internal fun factoryFor(key: String): GeneratedWeightingFactory? = factories[key]
+}
+
+/**
+ * Factory for a build-time generated [CustomWeightingHelper]: unlike a no-arg supplier, it
+ * receives the `(customModel, lookup, areas)` at CONSTRUCTION so the generated class can bind
+ * its encoded values as non-null final `val`s in its constructor (a plain constructor
+ * reference `::GeneratedXxxCustomWeighting` satisfies this interface). This makes the hot
+ * getSpeed/getPriority reads of those fields check-free — matching the Janino back-end's plain
+ * final fields — instead of Kotlin `lateinit var` reads that each emit a null-check.
+ */
+fun interface GeneratedWeightingFactory {
+    fun create(customModel: CustomModel?, lookup: EncodedValueLookup?,
+               areas: Map<String, @JvmSuppressWildcards JsonFeature>?): CustomWeightingHelper
 }
 
 /**
@@ -93,9 +106,10 @@ object RegistryBackend : CustomWeightingBackend {
                                 "(" + GeneratedWeightingRegistry.size() + " registered). Generate a class with " +
                                 "GenerateCustomWeightingMain at build time and register it at startup via " +
                                 "GeneratedWeightingRegistry.register(customModel, factory). Lookup key: " + key)
-        // like Janino's helper: one instance per request, no thread-safety required
-        val helper = factory.get()
-        helper.init(customModel, lookup, CustomModel.getAreasAsMap(customModel.getAreas()))
+        // like Janino's helper: one instance per request, no thread-safety required. The
+        // encoded values are bound in the generated class's constructor (final vals), so no
+        // separate init(...) call is needed here.
+        val helper = factory.create(customModel, lookup, CustomModel.getAreasAsMap(customModel.getAreas()))
         return CustomWeighting.Parameters(
                 helper::getSpeed, { ClosureBackend.calcMaxSpeed(customModel, lookup) },
                 helper::getPriority, { ClosureBackend.calcMaxPriority(customModel, lookup) },
