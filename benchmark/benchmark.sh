@@ -32,9 +32,10 @@ defaultUseMeasurementTimeAsRefTime=false
 #   GH_CUSTOM_BACKEND janino|closure|kotlinsource custom-model weighting backend (default kotlinsource).
 #                     kotlinsource = build-time generated Kotlin weighting (compiled into the tools
 #                     jar, no runtime code generation); it can only route the models its classes were
-#                     generated from (core's car.json + benchmark/very_custom.json), so the car
-#                     scenarios are auto-switched to car.json when kotlinsource is selected, and the
-#                     very_custom scenario already routes very_custom.json.
+#                     generated from (core's car.json + benchmark/very_custom.json). To keep the three
+#                     backends comparable, scenarios 1-3 always run a custom model for EVERY backend
+#                     (car.json for scenarios 1 & 2, very_custom.json for scenario 3), so switching the
+#                     backend changes only how that model is evaluated, not what work is measured.
 GH_TOOLS_JAR=${GH_TOOLS_JAR:-$(ls tools/target/graphhopper-tools-*-jar-with-dependencies.jar 2>/dev/null | head -1)}
 GH_JAVA_OPTS=${GH_JAVA_OPTS:--XX:+UseParallelGC -Xmx20g -Xms20g}
 GH_CLEAN=${GH_CLEAN:-true}
@@ -42,14 +43,15 @@ GH_COUNT=${GH_COUNT:-5000}
 GH_DATAACCESS=${GH_DATAACCESS:-RAM_STORE}
 GH_CUSTOM_BACKEND=${GH_CUSTOM_BACKEND:-kotlinsource}
 
-# the kotlinsource backend only has generated weightings for the models it was built from; route the
-# car scenarios with that exact car.json so the runtime custom-model identity matches a generated key.
-CUSTOM_MODEL_ARG=""
-if [ "${GH_CUSTOM_BACKEND}" = "kotlinsource" ]; then
-  GH_CUSTOM_MODEL_FILE=${GH_CUSTOM_MODEL_FILE:-core/src/main/resources/com/graphhopper/custom_models/car.json}
-  # car.json references these EVs which the benchmark does not auto-add for the car vehicle
-  CUSTOM_MODEL_ARG="measurement.weighting=custom measurement.custom_model_file=${GH_CUSTOM_MODEL_FILE} graph.encoded_values=road_environment,ferry_speed,max_speed"
-fi
+# Scenarios 1 & 2 run the SAME car.json custom weighting for EVERY backend, so janino / closure /
+# kotlinsource are compared on an identical graph and identical workload - the only variable is the
+# backend. (Previously the custom model was applied only for kotlinsource, so janino/closure fell back
+# to the plain accessAndSpeed weighting and never engaged the backend at all; that made kotlinsource
+# look "slower" when it was in fact the only backend doing custom-model work.) kotlinsource additionally
+# requires the model to be one it was generated from at build time, which car.json is.
+GH_CUSTOM_MODEL_FILE=${GH_CUSTOM_MODEL_FILE:-core/src/main/resources/com/graphhopper/custom_models/car.json}
+# car.json references these EVs which the benchmark does not auto-add for the car vehicle
+CUSTOM_MODEL_ARG="measurement.weighting=custom measurement.custom_model_file=${GH_CUSTOM_MODEL_FILE} graph.encoded_values=road_environment,ferry_speed,max_speed"
 
 # scenario 4 (foot/outdoor) uses no custom weighting, so the custom-weighting backend is a no-op for
 # its measurements; but the kotlinsource backend refuses to start without a custom model, so fall it
