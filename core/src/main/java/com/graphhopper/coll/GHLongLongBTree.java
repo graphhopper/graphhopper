@@ -438,7 +438,7 @@ public class GHLongLongBTree implements LongLongMap {
             toChild.entrySize = count;
         }
 
-        void insertKeyValue(int index, long key, byte[] newValueFromIdx0) {
+        void insertKeyValue(int index, long key, long value) {
             ensureSize(entrySize + 1);
             int count = entrySize - index;
             if (count > 0) {
@@ -450,7 +450,7 @@ public class GHLongLongBTree implements LongLongMap {
             }
 
             keys[index] = key;
-            System.arraycopy(newValueFromIdx0, 0, values, index * bytesPerValue, bytesPerValue);
+            fromLong(values, value, index * bytesPerValue);
             entrySize++;
         }
 
@@ -473,7 +473,7 @@ public class GHLongLongBTree implements LongLongMap {
         }
 
         void insertTree(int index, BTreeEntry tree) {
-            insertKeyValue(index, tree.keys[0], tree.values);
+            insertKeyValue(index, tree.keys[0], toLong(tree.values, 0));
             if (!isLeaf) {
                 // overwrite children
                 children[index] = tree.children[0];
