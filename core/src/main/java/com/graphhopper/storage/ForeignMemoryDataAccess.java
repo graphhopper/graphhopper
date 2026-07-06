@@ -86,13 +86,17 @@ public final class ForeignMemoryDataAccess extends AbstractDataAccess {
         this.store = store;
     }
 
+    private static MemorySegment allocate(Arena arena, long byteCount) {
+        return arena.allocate(byteCount);
+    }
+
     /**
      * Allocates a zero-initialized native segment. On Linux it is allocated via mmap, aligned to
      * the 2MB huge page size and advised with MADV_HUGEPAGE before it is first touched, so it can
      * be backed by transparent huge pages; the mapping is released when the given arena is closed.
      * On other platforms it falls back to {@link Arena#allocate}. Disable with -Dgraphhopper.thp=false.
      */
-    private static MemorySegment allocate(Arena arena, long byteCount) {
+    private static MemorySegment allocateTHP(Arena arena, long byteCount) {
         if (MMAP == null || MUNMAP == null || MADVISE == null)
             return arena.allocate(byteCount);
         try {
