@@ -219,4 +219,17 @@ public class ShortestPathTree extends AbstractRoutingAlgorithm {
     public int getVisitedNodes() {
         return visitedNodes;
     }
+
+    /**
+     * Releases the memory held by the internal search structures (the label map and the two queues) so their
+     * {@link IsoLabel}s can be garbage-collected. Call this once the search results have been fully consumed
+     * (e.g. after the isochrone sites/vertices have been collected) to lower peak memory before heavy
+     * post-processing such as triangulation. {@link #getVisitedNodes()} keeps working afterwards, but the
+     * labels must not be searched again or iterated after calling this.
+     */
+    public void clear() {
+        fromMap.release();
+        queueByWeighting.clear();
+        queueByZ.clear();
+    }
 }

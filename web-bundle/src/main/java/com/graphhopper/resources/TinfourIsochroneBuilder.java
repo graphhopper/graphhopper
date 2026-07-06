@@ -94,6 +94,10 @@ public class TinfourIsochroneBuilder {
         searchMillis = sw.stop().getMillis();
         vertexCount = vertices.size();
 
+        // We have all the vertices now; free the shortest-path-tree's label map + queues before the memory-heavy
+        // TIN build so their (potentially millions of) IsoLabels can be collected. getVisitedNodes() still works.
+        spt.clear();
+
         sw = new StopWatch().start();
         new HilbertSort().sort(vertices);
         sortMillis = sw.stop().getMillis();
