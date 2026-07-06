@@ -17,9 +17,6 @@
  */
 package com.graphhopper.storage;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -27,17 +24,29 @@ import java.lang.foreign.Arena;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.Linker;
 import java.lang.foreign.MemorySegment;
+import java.lang.foreign.SymbolLookup;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.lang.foreign.ValueLayout.*;
 
 /**
  * Off-heap DataAccess backed by a single contiguous {@link MemorySegment} via the Foreign Memory API.
  * It has a long-indexed access and no segment boundary logic.
+ * <p>
+ * Growing in {@link #ensureCapacity} never copies the existing data. On Linux the backing region is
+ * an anonymous {@code mmap} that is enlarged in place with {@code mremap(MREMAP_MAYMOVE)} — the kernel
+ * remaps page tables instead of copying bytes, so growth is O(1)-amortized and never needs 2x peak
+ * memory. Where {@code mremap} is unavailable (e.g. macOS) a mmap-new + copy + munmap-old fallback is
+ * used, and where {@code mmap} itself is unavailable (e.g. Windows) it falls back to a portable
+ * {@link Arena}-backed allocate + copy. Anonymous memory is zero-initialized by the OS, matching the
+ * previous {@code Arena.allocate} behaviour.
+ * <p>
+ * <b>Concurrency contract:</b> the base address may change on grow/shrink, so no other thread may
+ * access this DataAccess while {@link #ensureCapacity}, {@link #trimTo} or {@link #close} is in
+ * flight — a concurrent access could touch memory that was just unmapped and crash the JVM.
  */
 public final class ForeignMemoryDataAccess extends AbstractDataAccess {
     private static final ValueLayout.OfInt INT_LE =
@@ -49,6 +58,56 @@ public final class ForeignMemoryDataAccess extends AbstractDataAccess {
     private static final VarHandle SHORT_VH = SHORT_LE.varHandle();
     private static final VarHandle BYTE_VH = BYTE_LAYOUT.varHandle();
 
+    // POSIX mmap/mremap/munmap bindings. Resolved once; MMAP/MREMAP are null when the symbol is
+    // absent on this platform, in which case we fall back to the portable Arena path (see USE_MMAP).
+    private static final MethodHandle MMAP;
+    private static final MethodHandle MREMAP;
+    private static final MethodHandle MUNMAP;
+    private static final boolean USE_MMAP;
+    private static final boolean CAN_MREMAP;
+
+    private static final int PROT_READ = 0x1;
+    private static final int PROT_WRITE = 0x2;
+    private static final int MAP_PRIVATE = 0x02;
+    private static final int MAP_ANONYMOUS; // 0x20 on Linux, 0x1000 on macOS
+    private static final int MREMAP_MAYMOVE = 1;
+    private static final long MAP_FAILED = -1L; // (void *) -1
+
+    static {
+        MethodHandle mmap = null, mremap = null, munmap = null;
+        int mapAnon = 0x20;
+        try {
+            Linker linker = Linker.nativeLinker();
+            SymbolLookup std = linker.defaultLookup();
+            // void *mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset)
+            mmap = std.find("mmap").map(seg -> linker.downcallHandle(seg, FunctionDescriptor.of(
+                    ADDRESS, ADDRESS, JAVA_LONG, JAVA_INT, JAVA_INT, JAVA_INT, JAVA_LONG))).orElse(null);
+            // int munmap(void *addr, size_t length)
+            munmap = std.find("munmap").map(seg -> linker.downcallHandle(seg, FunctionDescriptor.of(
+                    JAVA_INT, ADDRESS, JAVA_LONG))).orElse(null);
+            // void *mremap(void *old, size_t oldSize, size_t newSize, int flags) — Linux only.
+            // Called only without MREMAP_FIXED, so the variadic new_address argument is never passed.
+            mremap = std.find("mremap").map(seg -> linker.downcallHandle(seg, FunctionDescriptor.of(
+                    ADDRESS, ADDRESS, JAVA_LONG, JAVA_LONG, JAVA_INT))).orElse(null);
+            String os = System.getProperty("os.name", "").toLowerCase();
+            if (os.contains("mac") || os.contains("darwin"))
+                mapAnon = 0x1000;
+        } catch (Throwable t) {
+            mmap = null;
+            mremap = null;
+            munmap = null;
+        }
+        MMAP = mmap;
+        MREMAP = mremap;
+        MUNMAP = munmap;
+        MAP_ANONYMOUS = mapAnon;
+        USE_MMAP = mmap != null && munmap != null;
+        CAN_MREMAP = mremap != null;
+    }
+
+    // Native-mmap path: base address of the current mapping (0 when unallocated).
+    private long address;
+    // Portable fallback path: owns the Arena-allocated segment (null when USE_MMAP is true).
     private Arena arena;
     private MemorySegment segment = MemorySegment.NULL;
     private long capacity;
@@ -81,15 +140,31 @@ public final class ForeignMemoryDataAccess extends AbstractDataAccess {
         long newCapacity = (long) segmentsNeeded * segmentSizeInBytes;
 
         try {
-            Arena newArena = Arena.ofShared();
-            MemorySegment newSegment = newArena.allocate(newCapacity); // zero-initialized by the FFM API
-            if (capacity > 0) {
-                MemorySegment.copy(segment, 0, newSegment, 0, capacity);
-                arena.close();
+            if (USE_MMAP) {
+                long newAddress;
+                if (capacity == 0) {
+                    newAddress = mmapAnon(newCapacity);
+                } else if (CAN_MREMAP) {
+                    // grow in place, no copy: the kernel remaps page tables (may relocate virtually)
+                    newAddress = mremapMove(address, capacity, newCapacity);
+                } else {
+                    newAddress = mmapAnon(newCapacity);
+                    MemorySegment dst = MemorySegment.ofAddress(newAddress).reinterpret(newCapacity);
+                    MemorySegment.copy(segment, 0, dst, 0, capacity);
+                    munmap(address, capacity);
+                }
+                address = newAddress;
+                segment = MemorySegment.ofAddress(address).reinterpret(newCapacity);
+            } else {
+                Arena newArena = Arena.ofShared();
+                MemorySegment newSegment = newArena.allocate(newCapacity); // zero-initialized by the FFM API
+                if (capacity > 0) {
+                    MemorySegment.copy(segment, 0, newSegment, 0, capacity);
+                    arena.close();
+                }
+                arena = newArena;
+                segment = newSegment;
             }
-
-            arena = newArena;
-            segment = newSegment;
             capacity = newCapacity;
         } catch (OutOfMemoryError err) {
             throw new OutOfMemoryError(err.getMessage() + " - problem when allocating new memory. Old capacity: "
@@ -124,8 +199,13 @@ public final class ForeignMemoryDataAccess extends AbstractDataAccess {
                     segmentCount++;
                 long totalCapacity = (long) segmentCount * segmentSizeInBytes;
 
-                arena = Arena.ofShared();
-                segment = arena.allocate(totalCapacity); // zero-initialized by the FFM API
+                if (USE_MMAP) {
+                    address = mmapAnon(totalCapacity);
+                    segment = MemorySegment.ofAddress(address).reinterpret(totalCapacity);
+                } else {
+                    arena = Arena.ofShared();
+                    segment = arena.allocate(totalCapacity); // zero-initialized by the FFM API
+                }
                 capacity = totalCapacity;
 
                 byte[] buffer = new byte[segmentSizeInBytes];
@@ -230,10 +310,20 @@ public final class ForeignMemoryDataAccess extends AbstractDataAccess {
 
         if (newCapacity < this.capacity) {
             if (newCapacity == 0) {
-                if (arena != null) arena.close();
-                arena = null;
-                segment = MemorySegment.NULL;
+                releaseMemory();
                 this.capacity = 0;
+            } else if (USE_MMAP) {
+                if (CAN_MREMAP) {
+                    address = mremapMove(address, this.capacity, newCapacity);
+                } else {
+                    long newAddress = mmapAnon(newCapacity);
+                    MemorySegment dst = MemorySegment.ofAddress(newAddress).reinterpret(newCapacity);
+                    MemorySegment.copy(segment, 0, dst, 0, newCapacity);
+                    munmap(address, this.capacity);
+                    address = newAddress;
+                }
+                segment = MemorySegment.ofAddress(address).reinterpret(newCapacity);
+                this.capacity = newCapacity;
             } else {
                 Arena newArena = Arena.ofShared();
                 MemorySegment newSegment = newArena.allocate(newCapacity);
@@ -249,12 +339,62 @@ public final class ForeignMemoryDataAccess extends AbstractDataAccess {
     @Override
     public void close() {
         super.close();
-        if (arena != null) {
+        releaseMemory();
+        capacity = 0;
+    }
+
+    private void releaseMemory() {
+        if (USE_MMAP) {
+            if (address != 0 && capacity > 0)
+                munmap(address, capacity);
+            address = 0;
+        } else if (arena != null) {
             arena.close();
             arena = null;
         }
         segment = MemorySegment.NULL;
-        capacity = 0;
+    }
+
+    private static long mmapAnon(long size) {
+        try {
+            MemorySegment res = (MemorySegment) MMAP.invokeExact(
+                    MemorySegment.NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0L);
+            long addr = res.address();
+            if (addr == MAP_FAILED)
+                throw new OutOfMemoryError("mmap failed for " + size + " bytes");
+            return addr;
+        } catch (OutOfMemoryError | RuntimeException e) {
+            throw e;
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
+    }
+
+    private static long mremapMove(long oldAddress, long oldSize, long newSize) {
+        try {
+            MemorySegment res = (MemorySegment) MREMAP.invokeExact(
+                    MemorySegment.ofAddress(oldAddress), oldSize, newSize, MREMAP_MAYMOVE);
+            long addr = res.address();
+            if (addr == MAP_FAILED)
+                throw new OutOfMemoryError("mremap failed for " + oldSize + " -> " + newSize + " bytes");
+            return addr;
+        } catch (OutOfMemoryError | RuntimeException e) {
+            throw e;
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
+    }
+
+    private static void munmap(long addr, long size) {
+        try {
+            int res = (int) MUNMAP.invokeExact(MemorySegment.ofAddress(addr), size);
+            if (res != 0)
+                throw new IllegalStateException("munmap failed for address " + addr + ", size " + size);
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
     }
 
     @Override
