@@ -7,16 +7,18 @@ import com.graphhopper.routing.ev.MaxWeightExcept;
 import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.IntsRef;
+import com.graphhopper.util.NumHelper;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor.stringToTons;
 
 public class MaxWeightExceptParser implements TagParser {
     private final EnumEncodedValue<MaxWeightExcept> mweEnc;
+    private static final List<String> MAX_WEIGHT_RESTRICTIONS = OSMMaxWeightParser.MAX_WEIGHT_TAGS.stream()
+            .map(e -> e + ":conditional").toList();
     private static final List<String> HGV_RESTRICTIONS = OSMRoadAccessParser.toOSMRestrictions(TransportationMode.HGV).stream()
-            .map(e -> e + ":conditional").collect(Collectors.toList());
+            .map(e -> e + ":conditional").toList();
 
     public MaxWeightExceptParser(EnumEncodedValue<MaxWeightExcept> mweEnc) {
         this.mweEnc = mweEnc;
@@ -24,7 +26,7 @@ public class MaxWeightExceptParser implements TagParser {
 
     public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
         // tagging like maxweight:conditional=no/none @ destination/delivery/forestry/service
-        String condValue = way.getTag("maxweight:conditional", "");
+        String condValue = way.getFirstValue(MAX_WEIGHT_RESTRICTIONS);
         if (!condValue.isEmpty()) {
             String[] values = condValue.split("@");
             if (values.length == 2) {
@@ -45,15 +47,29 @@ public class MaxWeightExceptParser implements TagParser {
             int atIndex = value.indexOf("@");
             if (atIndex > 0) {
                 double dec = OSMValueExtractor.conditionalWeightToTons(value);
+                if (Double.isNaN(dec)) {
+                    break;
+                }
                 // set it only if the weight value is the same as in max_weight
-                if (!Double.isNaN(dec)
-                        && (stringToTons(way.getTag("maxweight", "")) == dec
-                        || stringToTons(way.getTag("maxweightrating:hgv", "")) == dec
-                        || stringToTons(way.getTag("maxgcweight", "")) == dec)) {
+                if (NumHelper.equalsEps(dec, getMaxWeight(way))) {
                     mweEnc.setEnum(false, edgeId, edgeIntAccess, MaxWeightExcept.find(value.substring(0, atIndex).trim()));
                     break;
                 }
             }
         }
+    }
+
+    private double getMaxWeight(ReaderWay way) {
+        for (String key : OSMMaxWeightParser.MAX_WEIGHT_TAGS) {
+            String value = way.getTag(key, "");
+            if (value.isEmpty()) {
+                continue;
+            }
+            double weight = stringToTons(value);
+            if (!Double.isNaN(weight)) {
+                return weight;
+            }
+        }
+        return Double.NaN;
     }
 }
