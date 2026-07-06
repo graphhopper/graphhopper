@@ -43,6 +43,14 @@ public class GHLongLongBTree implements LongLongMap {
     private final int bytesPerValue;
     private final long maxValue;
 
+    // Scratch state used to make put/putOrCompute allocation-free: instead of allocating a
+    // ReturnValue (and a byte[] for the old/new value) on every insert, the recursive BTreeEntry
+    // methods write their results into these fields. Safe because writes are single-threaded
+    // (the tree is already not thread-safe: put mutates root/size/height without synchronization).
+    private BTreeEntry splitResult;   // a new sub tree to graft one level up, or null
+    private boolean keyExisted;       // whether the key was already present (i.e. an update)
+    private long oldValueResult;      // the previous value, valid only when keyExisted
+
     public GHLongLongBTree(int maxLeafEntries, int bytesPerValue, long emptyValue) {
         this.maxLeafEntries = maxLeafEntries;
         this.bytesPerValue = bytesPerValue;
@@ -105,18 +113,22 @@ public class GHLongLongBTree implements LongLongMap {
         if (value == emptyValue)
             throw new IllegalArgumentException("Value cannot be the 'empty value' " + emptyValue);
 
-        ReturnValue rv = root.put(key, value);
-        if (rv.tree != null) {
+        splitResult = null;
+        keyExisted = false;
+        root.put(key, value);
+        if (splitResult != null) {
             height++;
-            root = rv.tree;
+            root = splitResult;
+            splitResult = null;
         }
-        if (rv.oldValue == null) {
+        if (!keyExisted) {
             // successfully inserted
             size++;
             if (size % 1000000 == 0)
                 optimize();
+            return emptyValue;
         }
-        return rv.oldValue == null ? emptyValue : toLong(rv.oldValue);
+        return oldValueResult;
     }
 
     @Override
@@ -127,18 +139,22 @@ public class GHLongLongBTree implements LongLongMap {
         if (valueIfAbsent == emptyValue)
             throw new IllegalArgumentException("Value cannot be the 'empty value' " + emptyValue);
 
-        ReturnValue rv = root.putOrCompute(key, valueIfAbsent, computeIfPresent);
-        if (rv.tree != null) {
+        splitResult = null;
+        keyExisted = false;
+        root.putOrCompute(key, valueIfAbsent, computeIfPresent);
+        if (splitResult != null) {
             height++;
-            root = rv.tree;
+            root = splitResult;
+            splitResult = null;
         }
-        if (rv.oldValue == null) {
+        if (!keyExisted) {
             // successfully inserted (was absent)
             size++;
             if (size % 1000000 == 0)
                 optimize();
+            return emptyValue;
         }
-        return rv.oldValue == null ? emptyValue : toLong(rv.oldValue);
+        return oldValueResult;
     }
 
     @Override
@@ -201,15 +217,6 @@ public class GHLongLongBTree implements LongLongMap {
 
     void print() {
         logger.info(root.toString(1));
-    }
-
-    static class ReturnValue {
-        byte[] oldValue;
-        BTreeEntry tree;
-
-        public ReturnValue(byte[] oldValue) {
-            this.oldValue = oldValue;
-        }
     }
 
     long toLong(byte[] b) {
@@ -282,64 +289,64 @@ public class GHLongLongBTree implements LongLongMap {
          * @return the old value which was associated with the specified key or if no update it
          * returns noNumberValue
          */
-        ReturnValue put(long key, long newValue) {
+        void put(long key, long newValue) {
             int index = binarySearch(keys, 0, entrySize, key);
             if (index >= 0) {
                 // update
-                byte[] oldValue = new byte[bytesPerValue];
-                System.arraycopy(values, index * bytesPerValue, oldValue, 0, bytesPerValue);
+                oldValueResult = toLong(values, index * bytesPerValue);
+                keyExisted = true;
                 // copy newValue to values
                 fromLong(values, newValue, index * bytesPerValue);
-                return new ReturnValue(oldValue);
+                splitResult = null;
+                return;
             }
 
             index = ~index;
-            ReturnValue downTreeRV;
             if (isLeaf || children[index] == null) {
                 // insert
-                downTreeRV = new ReturnValue(null);
-                downTreeRV.tree = checkSplitEntry();
-                if (downTreeRV.tree == null) {
-                    insertKeyValue(index, key, fromLong(newValue));
+                keyExisted = false;
+                BTreeEntry split = checkSplitEntry();
+                if (split == null) {
+                    insertKeyValue(index, key, newValue);
                 } else if (index <= splitIndex) {
-                    downTreeRV.tree.children[0].insertKeyValue(index, key, fromLong(newValue));
+                    split.children[0].insertKeyValue(index, key, newValue);
                 } else {
-                    downTreeRV.tree.children[1].insertKeyValue(index - splitIndex - 1, key, fromLong(newValue));
+                    split.children[1].insertKeyValue(index - splitIndex - 1, key, newValue);
                 }
-                return downTreeRV;
+                splitResult = split;
+                return;
             }
 
-            downTreeRV = children[index].put(key, newValue);
-            if (downTreeRV.oldValue != null) // only update
-                return downTreeRV;
+            children[index].put(key, newValue);
+            if (keyExisted) // only update happened below
+                return;
 
-            if (downTreeRV.tree != null) {
+            BTreeEntry childSplit = splitResult;
+            if (childSplit != null) {
                 // split this treeEntry if it is too big
-                BTreeEntry returnTree, downTree = returnTree = checkSplitEntry();
-                if (downTree == null) {
-                    insertTree(index, downTreeRV.tree);
+                BTreeEntry split = checkSplitEntry();
+                if (split == null) {
+                    insertTree(index, childSplit);
                 } else if (index <= splitIndex) {
-                    downTree.children[0].insertTree(index, downTreeRV.tree);
+                    split.children[0].insertTree(index, childSplit);
                 } else {
-                    downTree.children[1].insertTree(index - splitIndex - 1, downTreeRV.tree);
+                    split.children[1].insertTree(index - splitIndex - 1, childSplit);
                 }
 
-                downTreeRV.tree = returnTree;
+                splitResult = split;
             }
-            return downTreeRV;
+            // else childSplit == null: splitResult is already null from the insert below
         }
 
         /**
          * Like put, but uses valueIfAbsent when key is not found, and computeIfPresent when key is found.
          * This avoids a separate get+put traversal.
          */
-        ReturnValue putOrCompute(long key, long valueIfAbsent, LongUnaryOperator computeIfPresent) {
+        void putOrCompute(long key, long valueIfAbsent, LongUnaryOperator computeIfPresent) {
             int index = binarySearch(keys, 0, entrySize, key);
             if (index >= 0) {
                 // key exists: compute new value from old value
-                byte[] oldValue = new byte[bytesPerValue];
-                System.arraycopy(values, index * bytesPerValue, oldValue, 0, bytesPerValue);
-                long oldLong = toLong(oldValue);
+                long oldLong = toLong(values, index * bytesPerValue);
                 long newValue = computeIfPresent.applyAsLong(oldLong);
                 if (newValue > maxValue)
                     throw new IllegalArgumentException("Computed value " + newValue + " exceeded max value: " + maxValue
@@ -347,44 +354,48 @@ public class GHLongLongBTree implements LongLongMap {
                 if (newValue == emptyValue)
                     throw new IllegalArgumentException("Computed value cannot be the 'empty value' " + emptyValue);
                 fromLong(values, newValue, index * bytesPerValue);
-                return new ReturnValue(oldValue);
+                oldValueResult = oldLong;
+                keyExisted = true;
+                splitResult = null;
+                return;
             }
 
             // key does not exist: insert valueIfAbsent
             index = ~index;
-            ReturnValue downTreeRV;
             if (isLeaf || children[index] == null) {
                 // insert
-                downTreeRV = new ReturnValue(null);
-                downTreeRV.tree = checkSplitEntry();
-                if (downTreeRV.tree == null) {
-                    insertKeyValue(index, key, fromLong(valueIfAbsent));
+                keyExisted = false;
+                BTreeEntry split = checkSplitEntry();
+                if (split == null) {
+                    insertKeyValue(index, key, valueIfAbsent);
                 } else if (index <= splitIndex) {
-                    downTreeRV.tree.children[0].insertKeyValue(index, key, fromLong(valueIfAbsent));
+                    split.children[0].insertKeyValue(index, key, valueIfAbsent);
                 } else {
-                    downTreeRV.tree.children[1].insertKeyValue(index - splitIndex - 1, key, fromLong(valueIfAbsent));
+                    split.children[1].insertKeyValue(index - splitIndex - 1, key, valueIfAbsent);
                 }
-                return downTreeRV;
+                splitResult = split;
+                return;
             }
 
-            downTreeRV = children[index].putOrCompute(key, valueIfAbsent, computeIfPresent);
-            if (downTreeRV.oldValue != null) // only update
-                return downTreeRV;
+            children[index].putOrCompute(key, valueIfAbsent, computeIfPresent);
+            if (keyExisted) // only update happened below
+                return;
 
-            if (downTreeRV.tree != null) {
+            BTreeEntry childSplit = splitResult;
+            if (childSplit != null) {
                 // split this treeEntry if it is too big
-                BTreeEntry returnTree, downTree = returnTree = checkSplitEntry();
-                if (downTree == null) {
-                    insertTree(index, downTreeRV.tree);
+                BTreeEntry split = checkSplitEntry();
+                if (split == null) {
+                    insertTree(index, childSplit);
                 } else if (index <= splitIndex) {
-                    downTree.children[0].insertTree(index, downTreeRV.tree);
+                    split.children[0].insertTree(index, childSplit);
                 } else {
-                    downTree.children[1].insertTree(index - splitIndex - 1, downTreeRV.tree);
+                    split.children[1].insertTree(index - splitIndex - 1, childSplit);
                 }
 
-                downTreeRV.tree = returnTree;
+                splitResult = split;
             }
-            return downTreeRV;
+            // else childSplit == null: splitResult is already null from the insert below
         }
 
         /**
@@ -440,6 +451,24 @@ public class GHLongLongBTree implements LongLongMap {
 
             keys[index] = key;
             System.arraycopy(newValueFromIdx0, 0, values, index * bytesPerValue, bytesPerValue);
+            entrySize++;
+        }
+
+        // Same as above but writes the value directly from a long, avoiding a temporary byte[]
+        // allocation on the (very hot) leaf-insert path.
+        void insertKeyValue(int index, long key, long value) {
+            ensureSize(entrySize + 1);
+            int count = entrySize - index;
+            if (count > 0) {
+                System.arraycopy(keys, index, keys, index + 1, count);
+                System.arraycopy(values, index * bytesPerValue, values, index * bytesPerValue + bytesPerValue, count * bytesPerValue);
+                if (!isLeaf) {
+                    System.arraycopy(children, index + 1, children, index + 2, count);
+                }
+            }
+
+            keys[index] = key;
+            fromLong(values, value, index * bytesPerValue);
             entrySize++;
         }
 
