@@ -41,7 +41,7 @@ GH_JAVA_OPTS=${GH_JAVA_OPTS:--XX:+UseParallelGC -Xmx20g -Xms20g}
 GH_CLEAN=${GH_CLEAN:-true}
 GH_COUNT=${GH_COUNT:-5000}
 GH_DATAACCESS=${GH_DATAACCESS:-RAM_STORE}
-GH_CUSTOM_BACKEND=${GH_CUSTOM_BACKEND:-kotlinsource}
+GH_CUSTOM_BACKEND=${GH_CUSTOM_BACKEND:-janino}
 
 # Scenarios 1 & 2 run the SAME car.json custom weighting for EVERY backend, so janino / closure /
 # kotlinsource are compared on an identical graph and identical workload - the only variable is the
