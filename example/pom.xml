@@ -31,6 +31,11 @@
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.tinfour</groupId>
+            <artifactId>TinfourCore</artifactId>
+            <version>2.1.9</version>
+        </dependency>
     </dependencies>
 
 </project>

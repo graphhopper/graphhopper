@@ -34,6 +34,7 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.OptionalInt;
 import java.util.OptionalLong;
 import java.util.function.ToDoubleFunction;
@@ -78,7 +79,9 @@ public class IsochroneResource {
             @QueryParam("weight_limit") @DefaultValue("-1") OptionalLong weightLimit,
             @QueryParam("type") @DefaultValue("json") ResponseType respType,
             @QueryParam("tolerance") @DefaultValue("0") double toleranceInMeter,
-            @QueryParam("full_geometry") @DefaultValue("false") boolean fullGeometry) {
+            @QueryParam("full_geometry") @DefaultValue("false") boolean fullGeometry,
+            @QueryParam("algorithm") @DefaultValue("jts") String algorithm,
+            @QueryParam("sorting") @DefaultValue("hilbert") String sorting) {
         StopWatch sw = new StopWatch().start();
         PMap hintsMap = new PMap();
         RouteResource.initHints(hintsMap, uriInfo.getQueryParameters());
@@ -125,13 +128,42 @@ public class IsochroneResource {
             zs.add((i + 1) * delta);
         }
 
-        Triangulator.Result result = triangulator.triangulate(snap, queryGraph, shortestPathTree, fz, degreesFromMeters(toleranceInMeter));
+        // one MultiPolygon per bucket, built either via the JTS Delaunay+ContourBuilder pipeline (default)
+        // or via the Tinfour library (algorithm=tinfour). Both consume the same shortest-path-tree.
+        // A per-phase timing breakdown is collected so JTS vs Tinfour (and the Tinfour sorting options) can be
+        // compared directly from the response (see 'info.debug' / the X-GH-Iso-* headers).
+        ObjectNode debug = JsonNodeFactory.instance.objectNode();
+        debug.put("algorithm", "tinfour".equalsIgnoreCase(algorithm) ? "tinfour" : "jts");
+        List<Geometry> rawIsolines;
+        if ("tinfour".equalsIgnoreCase(algorithm)) {
+            TinfourIsochroneBuilder builder = new TinfourIsochroneBuilder();
+            rawIsolines = builder.computeIsolines(snap, queryGraph, shortestPathTree, fz, zs,
+                    TinfourIsochroneBuilder.parseSorting(sorting));
+            debug.put("sorting", sorting);
+            debug.put("sites", builder.vertexCount);
+            debug.put("search_ms", builder.searchMillis);
+            debug.put("reorder_ms", builder.reorderMillis);
+            debug.put("sort_ms", builder.sortMillis);
+            debug.put("tin_build_ms", builder.tinBuildMillis);
+            debug.put("contour_ms", builder.contourMillis);
+        } else {
+            StopWatch swTriangulate = new StopWatch().start();
+            Triangulator.Result result = triangulator.triangulate(snap, queryGraph, shortestPathTree, fz, degreesFromMeters(toleranceInMeter));
+            debug.put("triangulate_ms", swTriangulate.stop().getMillis());
+            ContourBuilder contourBuilder = new ContourBuilder(result.triangulation);
+            rawIsolines = new ArrayList<>(zs.size());
+            StopWatch swContour = new StopWatch().start();
+            for (Double z : zs) {
+                logger.info("Building contour z={}", z);
+                rawIsolines.add(contourBuilder.computeIsoline(z, result.seedEdges));
+            }
+            debug.put("contour_ms", swContour.stop().getMillis());
+        }
+        debug.put("visited_nodes", shortestPathTree.getVisitedNodes());
 
-        ContourBuilder contourBuilder = new ContourBuilder(result.triangulation);
         ArrayList<Geometry> isochrones = new ArrayList<>();
-        for (Double z : zs) {
-            logger.info("Building contour z={}", z);
-            MultiPolygon isochrone = contourBuilder.computeIsoline(z, result.seedEdges);
+        for (Geometry rawIsoline : rawIsolines) {
+            MultiPolygon isochrone = (MultiPolygon) rawIsoline;
             if (fullGeometry) {
                 isochrones.add(isochrone);
             } else {
@@ -164,13 +196,16 @@ public class IsochroneResource {
             final ObjectNode info = json.putObject("info");
             info.putPOJO("copyrights", config.getCopyrights());
             info.put("took", Math.round((float) sw.getMillis()));
+            info.set("debug", debug);
             if (!osmDate.isEmpty()) info.put("road_data_timestamp", osmDate);
             finalJson = json;
         }
 
-        logger.info("took: " + sw.getSeconds() + ", visited nodes:" + shortestPathTree.getVisitedNodes());
-        return Response.ok(finalJson).header("X-GH-Took", "" + sw.getSeconds() * 1000).
-                build();
+        logger.info("took: " + sw.getSeconds() + ", visited nodes:" + shortestPathTree.getVisitedNodes() + ", debug:" + debug);
+        // expose the timing breakdown as headers too, so it is visible for any response type (e.g. geojson)
+        Response.ResponseBuilder responseBuilder = Response.ok(finalJson).header("X-GH-Took", "" + sw.getSeconds() * 1000);
+        debug.fields().forEachRemaining(e -> responseBuilder.header("X-GH-Iso-" + e.getKey(), e.getValue().asText()));
+        return responseBuilder.build();
     }
 
     private Polygon heuristicallyFindMainConnectedComponent(MultiPolygon multiPolygon, Point point) {

@@ -33,6 +33,8 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
@@ -89,6 +91,31 @@ public class IsochroneResourceTest {
         Geometry polygon0 = featureCollection.getFeatures().get(0).getGeometry();
         Geometry polygon1 = featureCollection.getFeatures().get(1).getGeometry();
 
+        assertTrue(polygon0.contains(geometryFactory.createPoint(new Coordinate(1.587224, 42.5386))));
+        assertFalse(polygon0.contains(geometryFactory.createPoint(new Coordinate(1.589756, 42.558012))));
+
+        assertTrue(polygon1.contains(geometryFactory.createPoint(new Coordinate(1.589756, 42.558012))));
+        assertFalse(polygon1.contains(geometryFactory.createPoint(new Coordinate(1.635246, 42.53841))));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"hilbert", "dfs", "none"})
+    public void requestByTimeLimitTinfour(String sorting) {
+        JsonFeatureCollection featureCollection = clientTarget(app, "/isochrone")
+                .queryParam("profile", "fast_car")
+                .queryParam("point", "42.531073,1.573792")
+                .queryParam("time_limit", 5 * 60)
+                .queryParam("buckets", 2)
+                .queryParam("type", "geojson")
+                .queryParam("algorithm", "tinfour")
+                .queryParam("sorting", sorting)
+                .request().get(JsonFeatureCollection.class);
+
+        assertEquals(2, featureCollection.getFeatures().size());
+        Geometry polygon0 = featureCollection.getFeatures().get(0).getGeometry();
+        Geometry polygon1 = featureCollection.getFeatures().get(1).getGeometry();
+
+        // same containment expectations as the JTS path in requestByTimeLimit(), regardless of insertion order
         assertTrue(polygon0.contains(geometryFactory.createPoint(new Coordinate(1.587224, 42.5386))));
         assertFalse(polygon0.contains(geometryFactory.createPoint(new Coordinate(1.589756, 42.558012))));
 
@@ -233,6 +260,25 @@ public class IsochroneResourceTest {
 
     private static void assertIs2D(Geometry geometry) {
         assertAll(Arrays.stream(geometry.getCoordinates()).map(coord -> () -> assertTrue(Double.isNaN(coord.z))));
+    }
+
+    @Test
+    public void debugTimingsInInfo() {
+        // JTS default path exposes triangulate/contour timings
+        JsonNode jts = getWithStatus(clientTarget(app, "/isochrone?profile=fast_car&point=42.531073,1.573792&time_limit=300")).getBody();
+        JsonNode jtsDebug = jts.path("info").path("debug");
+        assertEquals("jts", jtsDebug.path("algorithm").asText());
+        assertTrue(jtsDebug.has("triangulate_ms"), "expected triangulate_ms, got: " + jtsDebug);
+        assertTrue(jtsDebug.has("contour_ms"));
+
+        // Tinfour path exposes the sorting and the per-phase breakdown incl. the DFS reorder cost
+        JsonNode tin = getWithStatus(clientTarget(app, "/isochrone?profile=fast_car&point=42.531073,1.573792&time_limit=300&algorithm=tinfour&sorting=dfs")).getBody();
+        JsonNode tinDebug = tin.path("info").path("debug");
+        assertEquals("tinfour", tinDebug.path("algorithm").asText());
+        assertEquals("dfs", tinDebug.path("sorting").asText());
+        assertTrue(tinDebug.has("reorder_ms"), "expected reorder_ms, got: " + tinDebug);
+        assertTrue(tinDebug.has("tin_build_ms"));
+        assertTrue(tinDebug.path("sites").asInt() > 0);
     }
 
     @Test
