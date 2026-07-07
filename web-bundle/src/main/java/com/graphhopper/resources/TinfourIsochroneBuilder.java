@@ -60,6 +60,8 @@ import java.util.function.ToDoubleFunction;
  */
 public class TinfourIsochroneBuilder {
 
+    // full double precision: Tinfour already interpolates contour vertices exactly, and snapping to a grid could
+    // collapse two distinct points into a degenerate ring
     private final GeometryFactory geometryFactory = new GeometryFactory();
     private final boolean semiVirtual;
 
@@ -122,10 +124,12 @@ public class TinfourIsochroneBuilder {
             ContourBuilderForTin cbt = new ContourBuilderForTin(tin, null, new double[]{z}, true);
             List<Polygon> polygons = new ArrayList<>();
             for (ContourRegion region : cbt.getRegions()) {
-                // regionIndex 0 == below the contour value == reachable within z
+                // regionIndex 0 == below the contour value == reachable within z. Its enclosed (nested) regions
+                // are the unreachable pockets -> punch them out as holes (an island inside a hole is itself an
+                // index-0 region and gets its own polygon when we reach it in this same loop).
                 if (region.getRegionIndex() != 0)
                     continue;
-                Polygon polygon = toPolygon(region.getXY());
+                Polygon polygon = toPolygon(region);
                 if (polygon != null)
                     polygons.add(polygon);
             }
@@ -147,7 +151,24 @@ public class TinfourIsochroneBuilder {
         return Math.sqrt(area / Math.max(1, vertices.size()));
     }
 
-    private Polygon toPolygon(double[] xy) {
+    private Polygon toPolygon(ContourRegion region) {
+        LinearRing shell = toRing(region.getXY());
+        if (shell == null)
+            return null;
+        List<LinearRing> holes = new ArrayList<>();
+        for (ContourRegion enclosed : region.getEnclosedRegions()) {
+            LinearRing hole = toRing(enclosed.getXY());
+            if (hole != null)
+                holes.add(hole);
+        }
+        try {
+            return geometryFactory.createPolygon(shell, holes.toArray(new LinearRing[0]));
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    private LinearRing toRing(double[] xy) {
         int n = xy.length / 2;
         if (n < 3)
             return null;
@@ -160,8 +181,7 @@ public class TinfourIsochroneBuilder {
         if (coords.length < 4)
             return null;
         try {
-            LinearRing ring = geometryFactory.createLinearRing(coords);
-            return geometryFactory.createPolygon(ring);
+            return geometryFactory.createLinearRing(coords);
         } catch (IllegalArgumentException e) {
             // degenerate ring (e.g. zero-length segments) -- skip for this "good enough" comparison path
             return null;
