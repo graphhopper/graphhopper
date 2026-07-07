@@ -133,8 +133,8 @@ public class IsochroneResource {
         List<Geometry> rawIsolines;
         if ("tinfour".equalsIgnoreCase(algorithm)) {
             boolean semiVirtual = true;
-            // according to javadocs SemiVirtualIncrementalTin is 30% slower per insert
-            // but in practise is nearly as fast as normal one but uses a lot less memory and waste.
+            // according to javadocs SemiVirtualIncrementalTin is 30% slower per insert but in
+            // practise is nearly as fast and uses a lot less memory (and produces less garbage).
             TinfourIsochroneBuilder builder = new TinfourIsochroneBuilder(semiVirtual);
             rawIsolines = builder.computeIsolines(snap, queryGraph, shortestPathTree, fz, zs);
             debug.put("sites", builder.vertexCount);

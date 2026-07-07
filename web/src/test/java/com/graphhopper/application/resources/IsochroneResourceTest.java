@@ -98,16 +98,14 @@ public class IsochroneResourceTest {
         assertFalse(polygon1.contains(geometryFactory.createPoint(new Coordinate(1.635246, 42.53841))));
     }
 
-    @ParameterizedTest
-    @ValueSource(strings = {"tinfour", "semitinfour"})
-    public void requestByTimeLimitTinfour(String algorithm) {
+    @Test
+    public void requestByTimeLimitTinfour() {
         JsonFeatureCollection featureCollection = clientTarget(app, "/isochrone")
                 .queryParam("profile", "fast_car")
                 .queryParam("point", "42.531073,1.573792")
                 .queryParam("time_limit", 5 * 60)
                 .queryParam("buckets", 2)
                 .queryParam("type", "geojson")
-                .queryParam("algorithm", algorithm)
                 .request().get(JsonFeatureCollection.class);
 
         assertEquals(2, featureCollection.getFeatures().size());
@@ -180,9 +178,11 @@ public class IsochroneResourceTest {
                 .request().get(JsonFeatureCollection.class);
         Geometry weightLimitPolygon = weightLimitFeatureCollection.getFeatures().get(0).getGeometry();
 
-        // a weight_limit of 6000 and a time_limit of 600 describe the same reachable set for car, so the two
-        // isochrones must (nearly) coincide. The default (tinfour) interpolates contour vertices along the z-field
-        // so they are not bit-identical (JTS's midpoint contour is), hence compare by area instead of equalsTopo.
+        // weight_limit 6000 and time_limit 600 describe the same reachable set for car, so the isochrones must
+        // (nearly) coincide. JTS makes them bit-identical (equalsTopo) by placing contour vertices at edge
+        // midpoints (z-independent); tinfour interpolates the z-crossing, and weight (double) vs time (long ms)
+        // differ by ms-rounding, so its polygons match only by area (~0.005%). A step valuator (z<=level?0:1 at
+        // level 0.5) would reproduce JTS midpoints exactly, but trades away tinfour's more accurate boundary.
         double timeArea = timeLimitPolygon.getArea();
         double weightArea = weightLimitPolygon.getArea();
         assertEquals(timeArea, weightArea, timeArea * 0.001);
