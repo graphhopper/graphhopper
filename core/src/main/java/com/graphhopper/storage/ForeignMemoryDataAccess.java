@@ -57,10 +57,8 @@ public final class ForeignMemoryDataAccess extends AbstractDataAccess {
     private static final VarHandle SHORT_VH = SHORT_LE.varHandle();
     private static final VarHandle BYTE_VH = BYTE_LAYOUT.varHandle();
 
-    // POSIX mmap/mremap/munmap bindings. Resolved once. The native path is used only when all three
-    // resolve, i.e. only when we can grow in place with mremap (Linux) — otherwise the copy is
-    // unavoidable and a raw-mmap+copy would just add a second code path with no benefit over the
-    // portable Arena.allocate+copy fallback (see USE_MMAP).
+    // The native path is only used when all three methods resolve (mmap/mremap/munmap), i.e. only when we
+    // can grow the segment *in place* with mremap (Linux). Otherwise MemorySegment.copy is unavoidable.
     private static final MethodHandle MMAP;
     private static final MethodHandle MREMAP;
     private static final MethodHandle MUNMAP;
@@ -89,9 +87,6 @@ public final class ForeignMemoryDataAccess extends AbstractDataAccess {
             mremap = std.find("mremap").map(seg -> linker.downcallHandle(seg, FunctionDescriptor.of(
                     ADDRESS, ADDRESS, JAVA_LONG, JAVA_LONG, JAVA_INT))).orElse(null);
         } catch (Throwable t) {
-            mmap = null;
-            mremap = null;
-            munmap = null;
         }
         MMAP = mmap;
         MREMAP = mremap;
@@ -241,7 +236,6 @@ public final class ForeignMemoryDataAccess extends AbstractDataAccess {
 
     @Override
     public int getInt(long bytePos) {
-        assert capacity > 0 : "call create or loadExisting before usage!";
         return (int) INT_VH.get(segment, bytePos);
     }
 
@@ -253,7 +247,6 @@ public final class ForeignMemoryDataAccess extends AbstractDataAccess {
 
     @Override
     public short getShort(long bytePos) {
-        assert capacity > 0 : "call create or loadExisting before usage!";
         return (short) SHORT_VH.get(segment, bytePos);
     }
 
@@ -265,7 +258,6 @@ public final class ForeignMemoryDataAccess extends AbstractDataAccess {
 
     @Override
     public void getBytes(long bytePos, byte[] values, int length) {
-        assert capacity > 0 : "call create or loadExisting before usage!";
         MemorySegment.copy(segment, BYTE_LAYOUT, bytePos, values, 0, length);
     }
 
@@ -277,7 +269,6 @@ public final class ForeignMemoryDataAccess extends AbstractDataAccess {
 
     @Override
     public byte getByte(long bytePos) {
-        assert capacity > 0 : "call create or loadExisting before usage!";
         return (byte) BYTE_VH.get(segment, bytePos);
     }
 
