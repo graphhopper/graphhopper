@@ -230,7 +230,6 @@ public final class ForeignMemoryDataAccess extends AbstractDataAccess {
 
     @Override
     public void setInt(long bytePos, int value) {
-        assert capacity > 0 : "call create or loadExisting before usage!";
         INT_VH.set(segment, bytePos, value);
     }
 
@@ -241,7 +240,6 @@ public final class ForeignMemoryDataAccess extends AbstractDataAccess {
 
     @Override
     public void setShort(long bytePos, short value) {
-        assert capacity > 0 : "call create or loadExisting before usage!";
         SHORT_VH.set(segment, bytePos, value);
     }
 
@@ -252,7 +250,6 @@ public final class ForeignMemoryDataAccess extends AbstractDataAccess {
 
     @Override
     public void setBytes(long bytePos, byte[] values, int length) {
-        assert capacity > 0 : "call create or loadExisting before usage!";
         MemorySegment.copy(values, 0, segment, BYTE_LAYOUT, bytePos, length);
     }
 
@@ -263,7 +260,6 @@ public final class ForeignMemoryDataAccess extends AbstractDataAccess {
 
     @Override
     public void setByte(long bytePos, byte value) {
-        assert capacity > 0 : "call create or loadExisting before usage!";
         BYTE_VH.set(segment, bytePos, value);
     }
 
