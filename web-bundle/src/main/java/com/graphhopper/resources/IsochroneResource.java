@@ -80,7 +80,7 @@ public class IsochroneResource {
             @QueryParam("type") @DefaultValue("json") ResponseType respType,
             @QueryParam("tolerance") @DefaultValue("0") double toleranceInMeter,
             @QueryParam("full_geometry") @DefaultValue("false") boolean fullGeometry,
-            @QueryParam("algorithm") @DefaultValue("jts") String algorithm) {
+            @QueryParam("algorithm") @DefaultValue("semitinfour") String algorithm) {
         StopWatch sw = new StopWatch().start();
         PMap hintsMap = new PMap();
         RouteResource.initHints(hintsMap, uriInfo.getQueryParameters());
@@ -137,12 +137,16 @@ public class IsochroneResource {
         debug.put("algorithm", tinfour ? (semiTinfour ? "semitinfour" : "tinfour") : "jts");
         List<Geometry> rawIsolines;
         if (tinfour) {
+            // according to javadocs SemiVirtualIncrementalTin is 30% slower per insert
+            // but in practise is nearly as fast as normal one but uses a lot less memory and waste.
             TinfourIsochroneBuilder builder = new TinfourIsochroneBuilder(semiTinfour);
             rawIsolines = builder.computeIsolines(snap, queryGraph, shortestPathTree, fz, zs);
             debug.put("sites", builder.vertexCount);
             debug.put("search_ms", builder.searchMillis);
             debug.put("sort_ms", builder.sortMillis);
-            debug.put("tin_build_ms", builder.tinBuildMillis);
+            // same key as the JTS branch so the two engines can be compared directly (Tinfour additionally
+            // breaks out search_ms/sort_ms, which the JTS triangulate_ms bundles in)
+            debug.put("triangulate_ms", builder.tinBuildMillis);
             debug.put("contour_ms", builder.contourMillis);
         } else {
             StopWatch swTriangulate = new StopWatch().start();

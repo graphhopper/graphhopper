@@ -159,7 +159,7 @@ public class IsochroneResourceTest {
         assertTrue(polygon0.contains(geometryFactory.createPoint(new Coordinate(1.57937, 42.531706))));
         assertFalse(polygon0.contains(geometryFactory.createPoint(new Coordinate(1.587224, 42.5386))));
 
-        assertTrue(polygon1.contains(geometryFactory.createPoint(new Coordinate(1.591644, 42.543216))));
+        assertTrue(polygon1.contains(geometryFactory.createPoint(new Coordinate(1.588, 42.540))));
         assertFalse(polygon1.contains(geometryFactory.createPoint(new Coordinate(1.589756, 42.558012))));
     }
 
@@ -180,8 +180,14 @@ public class IsochroneResourceTest {
                 .request().get(JsonFeatureCollection.class);
         Geometry weightLimitPolygon = weightLimitFeatureCollection.getFeatures().get(0).getGeometry();
 
-        assertEquals(timeLimitPolygon.getNumPoints(), weightLimitPolygon.getNumPoints());
-        assertTrue(weightLimitPolygon.equalsTopo(timeLimitPolygon));
+        // a weight_limit of 6000 and a time_limit of 600 describe the same reachable set for car, so the two
+        // isochrones must (nearly) coincide. The default (tinfour) interpolates contour vertices along the z-field
+        // so they are not bit-identical (JTS's midpoint contour is), hence compare by area instead of equalsTopo.
+        double timeArea = timeLimitPolygon.getArea();
+        double weightArea = weightLimitPolygon.getArea();
+        assertEquals(timeArea, weightArea, timeArea * 0.001);
+        assertTrue(timeLimitPolygon.symDifference(weightLimitPolygon).getArea() < timeArea * 0.01,
+                "weight and time isochrones should nearly coincide");
     }
 
     @Test
@@ -252,7 +258,7 @@ public class IsochroneResourceTest {
         Geometry polygon0 = featureCollection.getFeatures().get(0).getGeometry();
         assertIs2D(polygon0);
 
-        assertTrue(polygon0.contains(geometryFactory.createPoint(new Coordinate(1.527057, 42.507145))));
+        assertTrue(polygon0.contains(geometryFactory.createPoint(new Coordinate(1.533, 42.508))));
         assertFalse(polygon0.contains(geometryFactory.createPoint(new Coordinate(1.525404, 42.507081))));
     }
 
@@ -262,8 +268,8 @@ public class IsochroneResourceTest {
 
     @Test
     public void debugTimingsInInfo() {
-        // JTS default path exposes triangulate/contour timings
-        JsonNode jts = getWithStatus(clientTarget(app, "/isochrone?profile=fast_car&point=42.531073,1.573792&time_limit=300")).getBody();
+        // JTS path exposes triangulate/contour timings
+        JsonNode jts = getWithStatus(clientTarget(app, "/isochrone?profile=fast_car&point=42.531073,1.573792&time_limit=300&algorithm=jts")).getBody();
         JsonNode jtsDebug = jts.path("info").path("debug");
         assertEquals("jts", jtsDebug.path("algorithm").asText());
         assertTrue(jtsDebug.has("triangulate_ms"), "expected triangulate_ms, got: " + jtsDebug);
@@ -274,7 +280,8 @@ public class IsochroneResourceTest {
         JsonNode tinDebug = tin.path("info").path("debug");
         assertEquals("tinfour", tinDebug.path("algorithm").asText());
         assertTrue(tinDebug.has("sort_ms"), "expected sort_ms, got: " + tinDebug);
-        assertTrue(tinDebug.has("tin_build_ms"));
+        assertTrue(tinDebug.has("triangulate_ms"));
+        assertTrue(tinDebug.has("contour_ms"));
         assertTrue(tinDebug.path("sites").asInt() > 0);
     }
 
