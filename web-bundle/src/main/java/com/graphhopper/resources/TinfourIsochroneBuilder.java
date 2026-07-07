@@ -51,12 +51,10 @@ import java.util.function.ToDoubleFunction;
  * Tinfour builds the TIN and traces closed contour regions directly. In benchmarks it is roughly
  * 2-3.5x faster than the JTS path and uses about a third less heap. The vertices are Hilbert-sorted
  * before insertion because Tinfour's incremental insertion uses a walk-based point locator that
- * degrades badly (~O(n^2)) when the insertion order is not spatially coherent -- which is the case for
- * the shortest-path-tree order the sites are produced in.
+ * degrades badly (~O(n^2)) when the insertion order is not spatially coherent.
  * <p>
  * This is a "good enough to compare" implementation: each bucket returns the reachable regions as a
- * MultiPolygon; interior holes (unreachable pockets) are not punched out. Selected via the
- * {@code algorithm=tinfour} query parameter of {@link IsochroneResource}.
+ * MultiPolygon; interior holes (unreachable pockets) are not punched out.
  */
 public class TinfourIsochroneBuilder {
 
@@ -68,10 +66,6 @@ public class TinfourIsochroneBuilder {
     // Per-request timing breakdown (ms) and vertex count, populated by computeIsolines() for debugging/comparison.
     public long searchMillis, sortMillis, tinBuildMillis, contourMillis;
     public int vertexCount;
-
-    public TinfourIsochroneBuilder() {
-        this(false);
-    }
 
     /**
      * @param semiVirtual if true use {@link SemiVirtualIncrementalTin} (about half the TIN memory and far fewer

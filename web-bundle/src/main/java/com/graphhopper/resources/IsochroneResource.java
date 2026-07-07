@@ -80,7 +80,7 @@ public class IsochroneResource {
             @QueryParam("type") @DefaultValue("json") ResponseType respType,
             @QueryParam("tolerance") @DefaultValue("0") double toleranceInMeter,
             @QueryParam("full_geometry") @DefaultValue("false") boolean fullGeometry,
-            @QueryParam("algorithm") @DefaultValue("semitinfour") String algorithm) {
+            @QueryParam("algorithm") @DefaultValue("tinfour") String algorithm) {
         StopWatch sw = new StopWatch().start();
         PMap hintsMap = new PMap();
         RouteResource.initHints(hintsMap, uriInfo.getQueryParameters());
@@ -127,19 +127,15 @@ public class IsochroneResource {
             zs.add((i + 1) * delta);
         }
 
-        // one MultiPolygon per bucket, built either via the JTS Delaunay+ContourBuilder pipeline (default)
+        // one MultiPolygon per bucket, built either via the JTS Delaunay+ContourBuilder pipeline
         // or via the Tinfour library (algorithm=tinfour). Both consume the same shortest-path-tree.
-        // A per-phase timing breakdown is collected so JTS vs Tinfour (and the Tinfour sorting options) can be
-        // compared directly from the response (see 'info.debug' / the X-GH-Iso-* headers).
-        boolean semiTinfour = "semitinfour".equalsIgnoreCase(algorithm);
-        boolean tinfour = semiTinfour || "tinfour".equalsIgnoreCase(algorithm);
         ObjectNode debug = JsonNodeFactory.instance.objectNode();
-        debug.put("algorithm", tinfour ? (semiTinfour ? "semitinfour" : "tinfour") : "jts");
         List<Geometry> rawIsolines;
-        if (tinfour) {
+        if ("tinfour".equalsIgnoreCase(algorithm)) {
+            boolean semiVirtual = true;
             // according to javadocs SemiVirtualIncrementalTin is 30% slower per insert
             // but in practise is nearly as fast as normal one but uses a lot less memory and waste.
-            TinfourIsochroneBuilder builder = new TinfourIsochroneBuilder(semiTinfour);
+            TinfourIsochroneBuilder builder = new TinfourIsochroneBuilder(semiVirtual);
             rawIsolines = builder.computeIsolines(snap, queryGraph, shortestPathTree, fz, zs);
             debug.put("sites", builder.vertexCount);
             debug.put("search_ms", builder.searchMillis);
@@ -161,6 +157,7 @@ public class IsochroneResource {
             }
             debug.put("contour_ms", swContour.stop().getMillis());
         }
+        debug.put("algorithm", algorithm);
         debug.put("visited_nodes", shortestPathTree.getVisitedNodes());
 
         ArrayList<Geometry> isochrones = new ArrayList<>();
