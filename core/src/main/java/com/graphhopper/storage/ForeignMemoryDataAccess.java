@@ -48,6 +48,7 @@ import static java.lang.foreign.ValueLayout.*;
  * flight — a concurrent access could touch memory that was just unmapped and crash the JVM.
  */
 public final class ForeignMemoryDataAccess extends AbstractDataAccess {
+    private static final MemorySegment EVERYTHING = MemorySegment.NULL.reinterpret(Long.MAX_VALUE);
     private static final ValueLayout.OfInt INT_LE =
             ValueLayout.JAVA_INT.withOrder(ByteOrder.LITTLE_ENDIAN).withByteAlignment(1);
     private static final ValueLayout.OfShort SHORT_LE =
@@ -144,6 +145,7 @@ public final class ForeignMemoryDataAccess extends AbstractDataAccess {
                 }
                 arena = newArena;
                 segment = newSegment;
+                address = segment.address();
             }
             capacity = newCapacity;
         } catch (OutOfMemoryError err) {
@@ -186,6 +188,7 @@ public final class ForeignMemoryDataAccess extends AbstractDataAccess {
                     arena = Arena.ofShared();
                     segment = arena.allocate(totalCapacity); // zero-initialized by the FFM API
                 }
+                address = segment.address();
                 capacity = totalCapacity;
 
                 byte[] buffer = new byte[segmentSizeInBytes];
@@ -230,46 +233,42 @@ public final class ForeignMemoryDataAccess extends AbstractDataAccess {
 
     @Override
     public void setInt(long bytePos, int value) {
-        assert capacity > 0 : "call create or loadExisting before usage!";
-        INT_VH.set(segment, bytePos, value);
+        INT_VH.set(EVERYTHING, address + bytePos, value);
     }
 
     @Override
     public int getInt(long bytePos) {
-        return (int) INT_VH.get(segment, bytePos);
+        return (int) INT_VH.get(EVERYTHING, address + bytePos);
     }
 
     @Override
     public void setShort(long bytePos, short value) {
-        assert capacity > 0 : "call create or loadExisting before usage!";
-        SHORT_VH.set(segment, bytePos, value);
+        SHORT_VH.set(EVERYTHING, address + bytePos, value);
     }
 
     @Override
     public short getShort(long bytePos) {
-        return (short) SHORT_VH.get(segment, bytePos);
+        return (short) SHORT_VH.get(EVERYTHING, address + bytePos);
     }
 
     @Override
     public void setBytes(long bytePos, byte[] values, int length) {
-        assert capacity > 0 : "call create or loadExisting before usage!";
-        MemorySegment.copy(values, 0, segment, BYTE_LAYOUT, bytePos, length);
+        MemorySegment.copy(values, 0, EVERYTHING, BYTE_LAYOUT, address + bytePos, length);
     }
 
     @Override
     public void getBytes(long bytePos, byte[] values, int length) {
-        MemorySegment.copy(segment, BYTE_LAYOUT, bytePos, values, 0, length);
+        MemorySegment.copy(EVERYTHING, BYTE_LAYOUT, address + bytePos, values, 0, length);
     }
 
     @Override
     public void setByte(long bytePos, byte value) {
-        assert capacity > 0 : "call create or loadExisting before usage!";
-        BYTE_VH.set(segment, bytePos, value);
+        BYTE_VH.set(EVERYTHING, address + bytePos, value);
     }
 
     @Override
     public byte getByte(long bytePos) {
-        return (byte) BYTE_VH.get(segment, bytePos);
+        return (byte) BYTE_VH.get(EVERYTHING, address + bytePos);
     }
 
     @Override
