@@ -164,7 +164,7 @@ public class RAMDataAccess extends AbstractDataAccess {
 
     @Override
     public final void setInt(long bytePos, int value) {
-        assert segmentSizePower > 0 : "call create or loadExisting before usage!";
+        checkCreated();
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
         if (index + 3 >= segmentSizeInBytes) {
@@ -186,9 +186,19 @@ public class RAMDataAccess extends AbstractDataAccess {
         }
     }
 
+    void checkCreated() {
+        if (segmentSizePower <= 0)
+            throw new IllegalStateException("call create or loadExisting before usage!");
+    }
+
+    void checkCreated2() {
+        if (segments.length <= 0)
+            throw new IllegalStateException("call create or loadExisting before usage!");
+    }
+
     @Override
     public final int getInt(long bytePos) {
-        assert segments.length > 0 : "call create or loadExisting before usage!";
+        checkCreated();
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
         if (index + 3 >= segmentSizeInBytes) {
@@ -205,7 +215,7 @@ public class RAMDataAccess extends AbstractDataAccess {
 
     @Override
     public final void setShort(long bytePos, short value) {
-        assert segments.length > 0 : "call create or loadExisting before usage!";
+        checkCreated();
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
         if (index + 1 >= segmentSizeInBytes) {
@@ -219,7 +229,7 @@ public class RAMDataAccess extends AbstractDataAccess {
 
     @Override
     public final short getShort(long bytePos) {
-        assert segments.length > 0 : "call create or loadExisting before usage!";
+        checkCreated();
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
         if (index + 1 >= segmentSizeInBytes)
@@ -231,7 +241,7 @@ public class RAMDataAccess extends AbstractDataAccess {
     @Override
     public void setBytes(long bytePos, byte[] values, int length) {
         assert length <= segmentSizeInBytes : "the length has to be smaller or equal to the segment size: " + length + " vs. " + segmentSizeInBytes;
-        assert segments.length > 0 : "call create or loadExisting before usage!";
+        checkCreated();
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
         byte[] seg = segments[bufferIndex];
@@ -249,7 +259,7 @@ public class RAMDataAccess extends AbstractDataAccess {
     @Override
     public void getBytes(long bytePos, byte[] values, int length) {
         assert length <= segmentSizeInBytes : "the length has to be smaller or equal to the segment size: " + length + " vs. " + segmentSizeInBytes;
-        assert segments.length > 0 : "call create or loadExisting before usage!";
+        checkCreated();
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
         byte[] seg = segments[bufferIndex];
@@ -266,7 +276,7 @@ public class RAMDataAccess extends AbstractDataAccess {
 
     @Override
     public final void setByte(long bytePos, byte value) {
-        assert segments.length > 0 : "call create or loadExisting before usage!";
+        checkCreated();
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
         segments[bufferIndex][index] = value;
@@ -274,7 +284,7 @@ public class RAMDataAccess extends AbstractDataAccess {
 
     @Override
     public final byte getByte(long bytePos) {
-        assert segments.length > 0 : "call create or loadExisting before usage!";
+        checkCreated();
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
         return segments[bufferIndex][index];

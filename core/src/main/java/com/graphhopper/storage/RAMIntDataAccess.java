@@ -166,7 +166,7 @@ public class RAMIntDataAccess extends AbstractDataAccess {
 
     @Override
     public final void setInt(long bytePos, int value) {
-        assert segments.length > 0 : "call create or loadExisting before usage!";
+        checkCreated();
         bytePos >>>= 2;
         int bufferIndex = (int) (bytePos >>> segmentSizeIntsPower);
         int index = (int) (bytePos & indexDivisor);
@@ -175,16 +175,21 @@ public class RAMIntDataAccess extends AbstractDataAccess {
 
     @Override
     public final int getInt(long bytePos) {
-        assert segments.length > 0 : "call create or loadExisting before usage!";
+        checkCreated();
         bytePos >>>= 2;
         int bufferIndex = (int) (bytePos >>> segmentSizeIntsPower);
         int index = (int) (bytePos & indexDivisor);
         return segments[bufferIndex][index];
     }
 
+    private void checkCreated() {
+        if (segments.length <= 0)
+            throw new IllegalStateException("call create or loadExisting before usage!");
+    }
+
     @Override
     public final void setShort(long bytePos, short value) {
-        assert segments.length > 0 : "call create or loadExisting before usage!";
+        checkCreated();
         if (bytePos % 4 != 0 && bytePos % 4 != 2)
             throw new IllegalMonitorStateException("bytePos of wrong multiple for RAMInt " + bytePos);
 
@@ -200,7 +205,7 @@ public class RAMIntDataAccess extends AbstractDataAccess {
 
     @Override
     public final short getShort(long bytePos) {
-        assert segments.length > 0 : "call create or loadExisting before usage!";
+        checkCreated();
         if (bytePos % 4 != 0 && bytePos % 4 != 2)
             throw new IllegalMonitorStateException("bytePos of wrong multiple for RAMInt " + bytePos);
 

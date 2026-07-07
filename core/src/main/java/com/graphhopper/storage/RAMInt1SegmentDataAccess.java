@@ -148,14 +148,19 @@ public class RAMInt1SegmentDataAccess extends AbstractDataAccess {
 
     @Override
     public final void setInt(long bytePos, int value) {
-        assert data.length > 0 : "call create or loadExisting before usage!";
+        checkCreated();
         data[(int) (bytePos >>> 2)] = value;
     }
 
     @Override
     public final int getInt(long bytePos) {
-        assert data.length > 0 : "call create or loadExisting before usage!";
+        checkCreated();
         return data[(int) (bytePos >>> 2)];
+    }
+
+    private void checkCreated() {
+        if (data.length <= 0)
+            throw new IllegalStateException("call create or loadExisting before usage!");
     }
 
     public final int getIntRaw(int index) {
