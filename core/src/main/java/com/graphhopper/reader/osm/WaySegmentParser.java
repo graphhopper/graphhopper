@@ -98,8 +98,10 @@ public class WaySegmentParser {
 
         LOGGER.info("Creating graph. Node count (pillar+tower): " + nodes + ", " + Helper.getMemInfo());
 
-        // the OSM-node-id key set is now fixed: switch to a read-optimal layout for the lookup-heavy pass2
-        nodeData.freeze();
+        // the OSM-node-id key set is now fixed: switch to a read-optimal layout for the lookup-heavy pass2.
+        // TEMPORARILY DISABLED to benchmark the plain B-tree baseline - re-enable this one line to turn the
+        // Eytzinger node map back on (FrozenEytzingerLongLongMap + OSMNodeData.freeze remain in the tree).
+        // nodeData.freeze();
 
         LOGGER.info("pass2 - start");
         StopWatch sw2 = new StopWatch().start();
