@@ -219,6 +219,16 @@ public class GHLongLongBTree implements LongLongMap {
         logger.info(root.toString(1));
     }
 
+    /**
+     * Writes all entries into the given arrays in ascending key order (in-order traversal).
+     * {@code outKeys}/{@code outValues} must be at least {@link #getSize()} long.
+     *
+     * @return the number of entries written
+     */
+    public int fillSorted(long[] outKeys, long[] outValues) {
+        return root.fillSorted(outKeys, outValues, 0);
+    }
+
     long toLong(byte[] b) {
         return toLong(b, 0);
     }
@@ -438,23 +448,21 @@ public class GHLongLongBTree implements LongLongMap {
             toChild.entrySize = count;
         }
 
-        void insertKeyValue(int index, long key, long value) {
-            ensureSize(entrySize + 1);
-            int count = entrySize - index;
-            if (count > 0) {
-                System.arraycopy(keys, index, keys, index + 1, count);
-                System.arraycopy(values, index * bytesPerValue, values, index * bytesPerValue + bytesPerValue, count * bytesPerValue);
-                if (!isLeaf) {
-                    System.arraycopy(children, index + 1, children, index + 2, count);
-                }
+        // in-order traversal -> entries in ascending key order
+        int fillSorted(long[] outKeys, long[] outValues, int pos) {
+            for (int i = 0; i < entrySize; i++) {
+                if (!isLeaf && children[i] != null)
+                    pos = children[i].fillSorted(outKeys, outValues, pos);
+                outKeys[pos] = keys[i];
+                outValues[pos] = toLong(values, i * bytesPerValue);
+                pos++;
             }
-
-            keys[index] = key;
-            fromLong(values, value, index * bytesPerValue);
-            entrySize++;
+            if (!isLeaf && children[entrySize] != null)
+                pos = children[entrySize].fillSorted(outKeys, outValues, pos);
+            return pos;
         }
 
-        // Same as above but writes the value directly from a long, avoiding a temporary byte[]
+        // writes the value directly from a long, avoiding a temporary byte[]
         // allocation on the (very hot) leaf-insert path.
         void insertKeyValue(int index, long key, long value) {
             ensureSize(entrySize + 1);

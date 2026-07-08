@@ -20,6 +20,7 @@ package com.graphhopper.reader.osm;
 
 import com.carrotsearch.hppc.LongScatterSet;
 import com.carrotsearch.hppc.LongSet;
+import com.graphhopper.coll.FrozenEytzingerLongLongMap;
 import com.graphhopper.coll.GHLongLongBTree;
 import com.graphhopper.coll.LongLongMap;
 import com.graphhopper.reader.ReaderNode;
@@ -62,7 +63,8 @@ class OSMNodeData {
     // this map stores our internal node id for each OSM node.
     // For tower nodes, the value is a negative id (see towerNodeToId).
     // For pillar nodes, the value is a packed lat/lon long (see packLatLon).
-    private final LongLongMap idsByOsmNodeIds;
+    // not final: replaced by a frozen, cache-optimal Eytzinger map once pass1 has built the key set
+    private LongLongMap idsByOsmNodeIds;
 
     private final PointAccess towerNodes;
 
@@ -101,6 +103,25 @@ class OSMNodeData {
      */
     public long getId(long osmNodeId) {
         return idsByOsmNodeIds.get(osmNodeId);
+    }
+
+    /**
+     * Called between pass1 and pass2, once the OSM-node-id key set is fully built. Replaces the
+     * build-friendly B-tree with a read-optimal, cache-friendly Eytzinger layout for the lookup-heavy
+     * pass2. New keys created during pass2 (artificial split nodes) go to a small overflow map.
+     */
+    void freeze() {
+        if (!(idsByOsmNodeIds instanceof GHLongLongBTree btree))
+            return;
+        int size = Math.toIntExact(btree.getSize());
+        long[] sortedKeys = new long[size];
+        long[] sortedValues = new long[size];
+        btree.fillSorted(sortedKeys, sortedValues);
+        // drop the B-tree before allocating the Eytzinger arrays so the two don't both sit in the heap
+        // (the frozen map's steady-state footprint is actually smaller than the B-tree's)
+        idsByOsmNodeIds = null;
+        LongLongMap overflow = new GHLongLongBTree(200, 8, EMPTY_NODE);
+        idsByOsmNodeIds = new FrozenEytzingerLongLongMap(sortedKeys, sortedValues, EMPTY_NODE, overflow);
     }
 
     public static boolean isTowerNode(long id) {
