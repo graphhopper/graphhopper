@@ -110,11 +110,12 @@ public class GHLongLongBTree implements LongLongMap {
             // reason the Kotlin build's binarySearch was faster - kotlinc happens to emit this same
             // two-back-edge shape; -XX:ConditionalMoveLimit=0 reproduces the win on the plain
             // if/else form, confirming CMOV is the sole cause.) The logic is identical to if/else.
-            if (guessedKey < key) {
-                low = guess;
+            if (guessedKey >= key) {
+                high = guess;
                 continue;
             }
-            high = guess;
+            low = guess;
+
         }
 
         if (high == start + len) {
