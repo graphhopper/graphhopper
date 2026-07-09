@@ -95,6 +95,9 @@ class WaySegmentParser private constructor(private val nodeData: OSMNodeData) {
 
         LOGGER.info("Creating graph. Node count (pillar+tower): " + nodes + ", " + Helper.getMemInfo())
 
+        // the OSM-node-id key set is now fixed: switch to a read-optimal layout for the lookup-heavy pass2
+        nodeData.freeze()
+
         LOGGER.info("pass2 - start")
         val sw2 = StopWatch().start()
         readOSM(osmFile, Pass2Handler(), SkipOptions.none())

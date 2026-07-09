@@ -20,6 +20,7 @@ package com.graphhopper.reader.osm
 
 import androidx.collection.MutableLongSet
 import com.graphhopper.coll.GHLongLongBTree
+import com.graphhopper.coll.InterleavedEytzingerLongLongMap
 import com.graphhopper.coll.LongLongMap
 import com.graphhopper.reader.ReaderNode
 import com.graphhopper.search.KVStorage
@@ -52,7 +53,7 @@ internal class OSMNodeData(nodeAccess: PointAccess, directory: Directory) {
     // this map stores our internal node id for each OSM node.
     // For tower nodes, the value is a negative id (see towerNodeToId).
     // For pillar nodes, the value is a packed lat/lon long (see packLatLon).
-    private val idsByOsmNodeIds: LongLongMap
+    private var idsByOsmNodeIds: LongLongMap
 
     private val towerNodes: PointAccess
 
@@ -90,6 +91,21 @@ internal class OSMNodeData(nodeAccess: PointAccess, directory: Directory) {
      * id means
      */
     fun getId(osmNodeId: Long): Long = idsByOsmNodeIds.get(osmNodeId)
+
+    /**
+     * Called between pass1 and pass2 once the OSM-node-id key set is fixed: freeze the B-tree into a
+     * cache-optimal interleaved Eytzinger array for the lookup-heavy pass2. pass2's few artificial
+     * split nodes go to a small overflow B-tree.
+     */
+    fun freeze() {
+        val btree = idsByOsmNodeIds as? GHLongLongBTree ?: return
+        val size = Math.toIntExact(btree.size)
+        val sortedKeys = LongArray(size)
+        val sortedValues = LongArray(size)
+        btree.fillSorted(sortedKeys, sortedValues)
+        val overflow = GHLongLongBTree(200, 8, EMPTY_NODE)
+        idsByOsmNodeIds = InterleavedEytzingerLongLongMap(sortedKeys, sortedValues, EMPTY_NODE, overflow)
+    }
 
     fun setOrUpdateNodeType(osmNodeId: Long, newNodeType: Long, nodeTypeUpdate: LongUnaryOperator) {
         idsByOsmNodeIds.putOrCompute(osmNodeId, newNodeType, nodeTypeUpdate)

@@ -124,6 +124,9 @@ class GHLongLongBTree(maxLeafEntries: Int, bytesPerValue: Int, emptyValue: Long)
         return root.get(key)
     }
 
+    /** Writes all entries into the given arrays in ascending key order (in-order traversal). */
+    fun fillSorted(outKeys: LongArray, outValues: LongArray): Int = root.fillSorted(outKeys, outValues, 0)
+
     @JvmName("height")
     internal fun height(): Int {
         return height
@@ -423,6 +426,21 @@ class GHLongLongBTree(maxLeafEntries: Int, bytesPerValue: Int, emptyValue: Long)
                 return emptyValue
             }
             return children!![childIndex]!!.get(key)
+        }
+
+        // in-order traversal -> entries written in ascending key order
+        fun fillSorted(outKeys: LongArray, outValues: LongArray, pos0: Int): Int {
+            var pos = pos0
+            for (i in 0 until entrySize) {
+                if (!isLeaf && children!![i] != null)
+                    pos = children!![i]!!.fillSorted(outKeys, outValues, pos)
+                outKeys[pos] = keys[i]
+                outValues[pos] = toLong(values, i * bytesPerValue)
+                pos++
+            }
+            if (!isLeaf && children!![entrySize] != null)
+                pos = children!![entrySize]!!.fillSorted(outKeys, outValues, pos)
+            return pos
         }
 
         /**
