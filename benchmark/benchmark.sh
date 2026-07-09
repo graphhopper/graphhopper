@@ -29,7 +29,7 @@ defaultUseMeasurementTimeAsRefTime=false
 #                   import+preparation - graph-compatibility + query-speed comparison only
 #   GH_COUNT        number of measured routing queries per mode (default 5000)
 #   GH_DATAACCESS   e.g. MMAP to benchmark on machines with little RAM (default RAM_STORE)
-#   GH_CUSTOM_BACKEND janino|closure|kotlinsource custom-model weighting backend (default kotlinsource).
+#   GH_CUSTOM_BACKEND janino|closure|kotlinsource custom-model weighting backend (default janino).
 #                     kotlinsource = build-time generated Kotlin weighting (compiled into the tools
 #                     jar, no runtime code generation); it can only route the models its classes were
 #                     generated from (benchmark/car_access_speed.json, core's car.json,
@@ -41,7 +41,7 @@ GH_JAVA_OPTS=${GH_JAVA_OPTS:--XX:+UseParallelGC -Xmx20g -Xms20g}
 GH_CLEAN=${GH_CLEAN:-true}
 GH_COUNT=${GH_COUNT:-5000}
 GH_DATAACCESS=${GH_DATAACCESS:-RAM_STORE}
-GH_CUSTOM_BACKEND=${GH_CUSTOM_BACKEND:-kotlinsource}
+GH_CUSTOM_BACKEND=${GH_CUSTOM_BACKEND:-janino}
 
 # In scenarios 1 & 2 janino/closure run the standard access+speed car model (TestProfiles.accessAndSpeed
 # via Measurement's standard-profile branch) - exactly what the master baseline runs, so those numbers
