@@ -20,11 +20,12 @@ package com.graphhopper.reader.osm;
 
 import com.carrotsearch.hppc.LongScatterSet;
 import com.carrotsearch.hppc.LongSet;
+import com.graphhopper.coll.DataAccessEytzingerLongLongMap;
 import com.graphhopper.coll.GHLongLongBTree;
-import com.graphhopper.coll.InterleavedEytzingerLongLongMap;
 import com.graphhopper.coll.LongLongMap;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.search.KVStorage;
+import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointAccess;
@@ -78,8 +79,11 @@ class OSMNodeData {
     private int nextTowerId = 0;
     // we use negative ids to create artificial OSM node ids
     private long nextArtificialOSMNodeId = -Long.MAX_VALUE;
+    // used by freeze() to allocate the DataAccess-backed frozen node map
+    private final Directory directory;
 
     public OSMNodeData(PointAccess nodeAccess, Directory directory) {
+        this.directory = directory;
         // We use a b-tree that can store as many entries as there are longs. A tree is also more
         // memory efficient, because there is no waste for empty entries, and it also avoids
         // allocating big arrays when growing the size.
@@ -104,16 +108,23 @@ class OSMNodeData {
         return idsByOsmNodeIds.get(osmNodeId);
     }
 
+    /**
+     * Between pass1 and pass2 the OSM-node-id key set is fixed: move it into a read-optimal, planet-safe
+     * interleaved Eytzinger map backed by a {@link DataAccess} (long-addressed, can be off-heap/MMAP).
+     * The B-tree is drained destructively into the map so peak memory stays ~max(B-tree, map) rather
+     * than their sum. pass2's few artificial split nodes go to a small overflow B-tree.
+     */
     void freeze() {
         if (!(idsByOsmNodeIds instanceof GHLongLongBTree btree))
             return;
-        int size = Math.toIntExact(btree.getSize());
-        long[] sortedKeys = new long[size];
-        long[] sortedValues = new long[size];
-        btree.fillSorted(sortedKeys, sortedValues);
-        idsByOsmNodeIds = null;
+        long size = btree.getSize();
+        DataAccess da = directory.create("osm_node_id_eytzinger").create(16L * (size + 1));
         LongLongMap overflow = new GHLongLongBTree(200, 8, EMPTY_NODE);
-        idsByOsmNodeIds = new InterleavedEytzingerLongLongMap(sortedKeys, sortedValues, EMPTY_NODE, overflow);
+        DataAccessEytzingerLongLongMap map = new DataAccessEytzingerLongLongMap(da, size, EMPTY_NODE, overflow);
+        idsByOsmNodeIds = map;
+        // destructive drain: the B-tree is freed subtree-by-subtree while filling the map, so peak
+        // memory is ~max(B-tree, map) rather than their sum
+        btree.drainSortedAndClear(map::acceptSorted);
     }
 
     public static boolean isTowerNode(long id) {
