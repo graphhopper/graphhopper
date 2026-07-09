@@ -15,15 +15,15 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.coll;
+package com.graphhopper.coll
 
-import java.util.function.LongUnaryOperator;
+import java.util.function.LongUnaryOperator
 
 /**
  * @author Peter Karich
  */
-public interface LongLongMap {
-    long put(long key, long value);
+interface LongLongMap {
+    fun put(key: Long, value: Long): Long
 
     /**
      * If the key is absent, inserts valueIfAbsent.
@@ -32,17 +32,17 @@ public interface LongLongMap {
      *
      * @return the previous value, or the empty value if the key was absent
      */
-    long putOrCompute(long key, long valueIfAbsent, LongUnaryOperator computeIfPresent);
+    fun putOrCompute(key: Long, valueIfAbsent: Long, computeIfPresent: LongUnaryOperator): Long
 
-    long get(long key);
+    fun get(key: Long): Long
 
-    long getSize();
+    val size: Long
 
-    long getMaxValue();
+    val maxValue: Long
 
-    void optimize();
+    fun optimize()
 
-    int getMemoryUsage();
+    val memoryUsage: Int
 
-    void clear();
+    fun clear()
 }
