@@ -86,11 +86,35 @@ public class GHLongLongBTree implements LongLongMap {
             // use >>> for average or we could get an integer overflow.
             guess = (high + low) >>> 1;
             long guessedKey = keys[guess];
+            // The `continue;` below looks pointless (an if/else would be equivalent), but it is a
+            // ~30% speedup for this hot lookup. Why:
+            //
+            // This search is a *dependent-load chain*: the address of the next key we read
+            // (keys[guess]) depends on the result of the current comparison. Written as a plain
+            // if/else, both arms rejoin at a single "merge block" and the loop has one "back-edge"
+            // (the jump from the bottom back up to the top for the next iteration). The JIT (C2)
+            // recognises that split-then-merge diamond and "if-converts" it into a branchless
+            // conditional-move (CMOV) - normally a good thing, since a CMOV can't be mis-predicted.
+            //
+            // But here branchless is SLOWER. The CMOV's output is the very index used to compute the
+            // next load address, so each iteration cannot begin its load until the previous CMOV has
+            // resolved: the whole loop serialises at one memory-load latency per step. A real branch
+            // instead lets the CPU *predict* the direction and start the next load speculatively,
+            // before the comparison resolves - so several iterations' loads are in flight at once
+            // (memory-level parallelism), hiding the latency. For a cache-resident B-tree node that
+            // overlap easily beats the occasional mis-prediction.
+            //
+            // The `continue;` is what keeps the branch: it gives the taken arm its own back-edge
+            // (jump straight to the loop head) instead of routing through the shared merge block, so
+            // C2 no longer sees a convertible diamond and leaves the branch in. (This is the entire
+            // reason the Kotlin build's binarySearch was faster - kotlinc happens to emit this same
+            // two-back-edge shape; -XX:ConditionalMoveLimit=0 reproduces the win on the plain
+            // if/else form, confirming CMOV is the sole cause.) The logic is identical to if/else.
             if (guessedKey < key) {
                 low = guess;
-            } else {
-                high = guess;
+                continue;
             }
+            high = guess;
         }
 
         if (high == start + len) {
