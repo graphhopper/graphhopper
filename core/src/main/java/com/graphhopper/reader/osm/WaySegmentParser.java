@@ -98,6 +98,8 @@ public class WaySegmentParser {
 
         LOGGER.info("Creating graph. Node count (pillar+tower): " + nodes + ", " + Helper.getMemInfo());
 
+        nodeData.freeze();
+
         LOGGER.info("pass2 - start");
         StopWatch sw2 = new StopWatch().start();
         readOSM(osmFile, new Pass2Handler(), SkipOptions.none());

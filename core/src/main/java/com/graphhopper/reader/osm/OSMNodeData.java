@@ -21,6 +21,7 @@ package com.graphhopper.reader.osm;
 import com.carrotsearch.hppc.LongScatterSet;
 import com.carrotsearch.hppc.LongSet;
 import com.graphhopper.coll.GHLongLongBTree;
+import com.graphhopper.coll.InterleavedEytzingerLongLongMap;
 import com.graphhopper.coll.LongLongMap;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.search.KVStorage;
@@ -62,7 +63,7 @@ class OSMNodeData {
     // this map stores our internal node id for each OSM node.
     // For tower nodes, the value is a negative id (see towerNodeToId).
     // For pillar nodes, the value is a packed lat/lon long (see packLatLon).
-    private final LongLongMap idsByOsmNodeIds;
+    private LongLongMap idsByOsmNodeIds;
 
     private final PointAccess towerNodes;
 
@@ -101,6 +102,18 @@ class OSMNodeData {
      */
     public long getId(long osmNodeId) {
         return idsByOsmNodeIds.get(osmNodeId);
+    }
+
+    void freeze() {
+        if (!(idsByOsmNodeIds instanceof GHLongLongBTree btree))
+            return;
+        int size = Math.toIntExact(btree.getSize());
+        long[] sortedKeys = new long[size];
+        long[] sortedValues = new long[size];
+        btree.fillSorted(sortedKeys, sortedValues);
+        idsByOsmNodeIds = null;
+        LongLongMap overflow = new GHLongLongBTree(200, 8, EMPTY_NODE);
+        idsByOsmNodeIds = new InterleavedEytzingerLongLongMap(sortedKeys, sortedValues, EMPTY_NODE, overflow);
     }
 
     public static boolean isTowerNode(long id) {

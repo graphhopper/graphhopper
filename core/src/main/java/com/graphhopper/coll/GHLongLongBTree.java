@@ -146,6 +146,11 @@ public class GHLongLongBTree implements LongLongMap {
         return root.get(key);
     }
 
+    /** Writes all entries into the given arrays in ascending key order (in-order traversal). */
+    public int fillSorted(long[] outKeys, long[] outValues) {
+        return root.fillSorted(outKeys, outValues, 0);
+    }
+
     int height() {
         return height;
     }
@@ -463,6 +468,19 @@ public class GHLongLongBTree implements LongLongMap {
                 return emptyValue;
             }
             return children[index].get(key);
+        }
+
+        int fillSorted(long[] outKeys, long[] outValues, int pos) {
+            for (int i = 0; i < entrySize; i++) {
+                if (!isLeaf && children[i] != null)
+                    pos = children[i].fillSorted(outKeys, outValues, pos);
+                outKeys[pos] = keys[i];
+                outValues[pos] = toLong(values, i * bytesPerValue);
+                pos++;
+            }
+            if (!isLeaf && children[entrySize] != null)
+                pos = children[entrySize].fillSorted(outKeys, outValues, pos);
+            return pos;
         }
 
         /**
