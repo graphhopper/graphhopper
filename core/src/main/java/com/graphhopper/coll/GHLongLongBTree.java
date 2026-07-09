@@ -85,7 +85,6 @@ public class GHLongLongBTree implements LongLongMap {
         while (high - low > 1) {
             // use >>> for average or we could get an integer overflow.
             guess = (high + low) >>> 1;
-            long guessedKey = keys[guess];
             // The `continue;` below looks pointless (an if/else would be equivalent), but it is a
             // ~30% speedup for this hot lookup. Why:
             //
@@ -110,7 +109,7 @@ public class GHLongLongBTree implements LongLongMap {
             // reason the Kotlin build's binarySearch was faster - kotlinc happens to emit this same
             // two-back-edge shape; -XX:ConditionalMoveLimit=0 reproduces the win on the plain
             // if/else form, confirming CMOV is the sole cause.) The logic is identical to if/else.
-            if (guessedKey >= key) {
+            if (keys[guess] >= key) {
                 high = guess;
                 continue;
             }
