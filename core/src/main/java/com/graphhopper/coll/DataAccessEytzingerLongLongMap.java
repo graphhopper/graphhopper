@@ -22,9 +22,9 @@ import com.graphhopper.storage.DataAccess;
 import java.util.function.LongUnaryOperator;
 
 /**
- * Planet-safe interleaved Eytzinger long-&gt;long map. Same cache-optimal layout as
- * {@code InterleavedEytzingerLongLongMap} (keys and values interleaved in Eytzinger/BFS order, value
- * in the key's cache line), but backed by a {@link DataAccess} instead of a {@code long[]}:
+ * Planet-safe interleaved Eytzinger long-&gt;long map: keys and values are interleaved in Eytzinger
+ * (BFS) order so the matched value sits in the key's cache line and the hot upper levels of the
+ * search stay cache-resident. Backed by a {@link DataAccess} instead of a {@code long[]}:
  *
  * <ul>
  *   <li>long-addressed, so it is NOT limited to ~2^31 entries (Java array cap) - it scales to a full
