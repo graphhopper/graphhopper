@@ -151,6 +151,16 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("highway", "primary");
         way.setTag("surface", "unknownpavement");
         assertEquals(PUSHING_SECTION_SPEED, getSpeedFromFlags(way), 1e-1);
+
+        way.clearTags();
+        way.setTag("highway", "primary");
+        way.setTag("surface", "clay");
+        assertEquals(MIN_SPEED, getSpeedFromFlags(way), 1e-1);
+
+        way.clearTags();
+        way.setTag("highway", "primary");
+        way.setTag("surface", "laterite");
+        assertEquals(MIN_SPEED, getSpeedFromFlags(way), 1e-1);
     }
 
     @Test

@@ -340,6 +340,15 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("surface", "unknown_surface");
         assertPriorityAndSpeed(UNCHANGED, PUSHING_SECTION_SPEED, way);
 
+        way.setTag("surface", "mud");
+        assertPriorityAndSpeed(UNCHANGED, PUSHING_SECTION_SPEED, way);
+
+        way.setTag("surface", "clay");
+        assertPriorityAndSpeed(UNCHANGED, 8, way);
+
+        way.setTag("surface", "laterite");
+        assertPriorityAndSpeed(UNCHANGED, 6, way);
+
         way.clearTags();
         way.setTag("highway", "track");
         way.setTag("surface", "gravel");
