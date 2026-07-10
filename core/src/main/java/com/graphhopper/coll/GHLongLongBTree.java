@@ -254,8 +254,7 @@ public class GHLongLongBTree implements LongLongMap {
         }
 
         /**
-         * @return the old value which was associated with the specified key or if no update it
-         * returns noNumberValue
+         * @return the old value which was associated with the specified key or null if no update.
          */
         ReturnValue put(long key, long newValue) {
             int index = Arrays.binarySearch(keys, 0, entrySize, key);
