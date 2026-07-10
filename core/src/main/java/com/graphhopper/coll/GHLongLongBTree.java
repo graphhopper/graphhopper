@@ -72,6 +72,25 @@ public class GHLongLongBTree implements LongLongMap {
         clear();
     }
 
+    // Like Arrays.binarySearch but without range check
+    private static int binarySearch(long[] a, int fromIndex, int toIndex, long key) {
+        int low = fromIndex;
+        int high = toIndex - 1;
+
+        while (low <= high) {
+            int mid = (low + high) >>> 1;
+            long midVal = a[mid];
+
+            if (midVal < key)
+                low = mid + 1;
+            else if (midVal > key)
+                high = mid - 1;
+            else
+                return mid; // key found
+        }
+        return -(low + 1);  // key not found.
+    }
+
     @Override
     public long put(long key, long value) {
         if (value > maxValue)
@@ -257,7 +276,7 @@ public class GHLongLongBTree implements LongLongMap {
          * @return the old value which was associated with the specified key or null if no update.
          */
         ReturnValue put(long key, long newValue) {
-            int index = Arrays.binarySearch(keys, 0, entrySize, key);
+            int index = binarySearch(keys, 0, entrySize, key);
             if (index >= 0) {
                 // update
                 byte[] oldValue = new byte[bytesPerValue];
@@ -308,7 +327,7 @@ public class GHLongLongBTree implements LongLongMap {
          * This avoids a separate get+put traversal.
          */
         ReturnValue putOrCompute(long key, long valueIfAbsent, LongUnaryOperator computeIfPresent) {
-            int index = Arrays.binarySearch(keys, 0, entrySize, key);
+            int index = binarySearch(keys, 0, entrySize, key);
             if (index >= 0) {
                 // key exists: compute new value from old value
                 byte[] oldValue = new byte[bytesPerValue];
@@ -428,7 +447,7 @@ public class GHLongLongBTree implements LongLongMap {
         }
 
         long get(long key) {
-            int index = Arrays.binarySearch(keys, 0, entrySize, key);
+            int index = binarySearch(keys, 0, entrySize, key);
             if (index >= 0) {
                 return toLong(values, index * bytesPerValue);
             }
