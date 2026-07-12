@@ -70,6 +70,18 @@ public class OSMSurfaceParserTest {
         readerWay.setTag("surface", "grass_paver");
         parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
         assertEquals(Surface.GRASS, surfaceEnc.getEnum(false, edgeId, edgeIntAccess));
+
+        readerWay.setTag("surface", "mud");
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(Surface.DIRT, surfaceEnc.getEnum(false, edgeId, edgeIntAccess));
+
+        readerWay.setTag("surface", "laterite");
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(Surface.DIRT, surfaceEnc.getEnum(false, edgeId, edgeIntAccess));
+
+        readerWay.setTag("surface", "clay");
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(Surface.DIRT, surfaceEnc.getEnum(false, edgeId, edgeIntAccess));
     }
 
     @Test
