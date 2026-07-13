@@ -101,16 +101,17 @@ public class RAMLongDataAccess extends AbstractDataAccess {
                 data = new long[longCount];
 
                 byte[] buffer = new byte[segmentSizeInBytes];
-                int offset = 0;
+                long offset = 0;
                 while (offset < byteCount) {
-                    int toRead = (int) Math.min(byteCount - offset, segmentSizeInBytes);
+                    int toRead = (int) Math.min(byteCount - offset, (long) segmentSizeInBytes);
                     int read = raFile.read(buffer, 0, toRead);
                     if (read <= 0)
                         throw new IllegalStateException("unexpected end of file at offset " + offset + " " + toString());
                     // Convert bytes to longs (little-endian)
                     for (int i = 0; i < read; i++) {
-                        int longIdx = (offset + i) / 8;
-                        int shift = ((offset + i) % 8) * 8;
+                        long pos = offset + i;
+                        int longIdx = (int) (pos >>> 3);
+                        int shift = (int) (pos & 7) * 8;
                         data[longIdx] |= (buffer[i] & 0xFFL) << shift;
                     }
                     offset += read;
