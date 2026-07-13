@@ -137,8 +137,8 @@ graphhopper:
   # default location for cache is /tmp/srtm
   # graph.elevation.cache_dir: ./srtmprovider/
 
-  # If you have a slow disk and plenty of RAM change the default MMAP to:
-  # graph.elevation.dataaccess: NATIVE_STORE
+  # If you have a slow disk or plenty of RAM change the default MMAP to:
+  # graph.elevation.dataaccess: RAM_STORE
 
   # To enable bilinear interpolation when sampling elevation at points (default uses nearest neighbor):
   # graph.elevation.interpolate: bilinear
@@ -228,8 +228,8 @@ graphhopper:
   # will write way names in the preferred language (language code as defined in ISO 639-1 or ISO 639-2):
   # datareader.preferred_language: en
 
-  # configure the memory access, use NATIVE_STORE for well equipped servers (default and recommended)
-  graph.dataaccess.default_type: NATIVE_STORE
+  # configure the memory access, use RAM_STORE for well equipped servers (default and recommended)
+  graph.dataaccess.default_type: RAM_STORE
 
   # If MMAP is not suited for everything you can use it for selected files e.g. while import to reduce heap usage (see #2440):
   # graph.dataaccess.type.geometry: MMAP
