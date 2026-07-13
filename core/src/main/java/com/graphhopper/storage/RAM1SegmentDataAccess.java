@@ -66,8 +66,11 @@ public class RAM1SegmentDataAccess extends AbstractDataAccess {
         if (newCap % segmentSizeInBytes != 0)
             newCap = (newCap / segmentSizeInBytes + 1) * segmentSizeInBytes;
 
+        if (newCap > Integer.MAX_VALUE - 8L)
+            throw new RuntimeException("Cannot ensure capacity for " + bytes + " bytes using RAM1SegmentDataAccess. Max: " + (Integer.MAX_VALUE - 8L));
+
         try {
-            data = Arrays.copyOf(data, (int) Math.min(newCap, Integer.MAX_VALUE - 8));
+            data = Arrays.copyOf(data, (int) newCap);
         } catch (OutOfMemoryError err) {
             throw new OutOfMemoryError(err.getMessage() + " - problem when allocating new memory. Old capacity: "
                     + cap + ", requested bytes:" + bytes);
