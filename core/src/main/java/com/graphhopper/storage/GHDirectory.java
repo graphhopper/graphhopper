@@ -23,6 +23,8 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import static com.graphhopper.storage.DAType.RAM_INT;
+import static com.graphhopper.storage.DAType.RAM_INT_STORE;
 import static com.graphhopper.util.Helper.*;
 
 /**
@@ -214,8 +216,8 @@ public class GHDirectory implements Directory {
      */
     public DAType getDefaultType(String dataAccess, boolean preferInts) {
         DAType type = getDefault(dataAccess, typeFallback);
-//        if (preferInts && type.isInMemory())
-//            return type.isStoring() ? RAM_INT_STORE : RAM_INT;
+        if (preferInts && type.isInMemory())
+            return type.isStoring() ? RAM_INT_STORE : RAM_INT;
         return type;
     }
 
