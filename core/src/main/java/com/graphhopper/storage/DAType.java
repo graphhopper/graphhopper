@@ -131,7 +131,7 @@ public class DAType {
      * INT / 1SEG / RO / STORE modifiers) are combined so that every valid combination is reachable
      * from config, not only the predefined constants.
      */
-    public static DAType valueOf(String dataAccess) {
+    public static DAType fromString(String dataAccess) {
         dataAccess = toUpperCase(dataAccess);
         if (dataAccess.contains("SYNC"))
             throw new IllegalArgumentException("SYNC option is no longer supported, see #982");

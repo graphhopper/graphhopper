@@ -23,8 +23,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import static com.graphhopper.storage.DAType.RAM_INT;
-import static com.graphhopper.storage.DAType.RAM_INT_STORE;
 import static com.graphhopper.util.Helper.*;
 
 /**
@@ -79,7 +77,7 @@ public class GHDirectory implements Directory {
                 }
             else {
                 String pattern = kv.getKey();
-                defaultTypes.put(pattern, DAType.valueOf(value));
+                defaultTypes.put(pattern, DAType.fromString(value));
             }
         }
         return this;
