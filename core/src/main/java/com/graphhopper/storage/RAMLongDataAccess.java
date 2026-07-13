@@ -138,17 +138,18 @@ public class RAMLongDataAccess extends AbstractDataAccess {
 
                 byte[] buffer = new byte[segmentSizeInBytes];
                 long remaining = len;
-                int longOffset = 0;
+                long byteOffset = 0;
                 while (remaining > 0) {
-                    int chunk = (int) Math.min(remaining, segmentSizeInBytes);
+                    int chunk = (int) Math.min(remaining, (long) segmentSizeInBytes);
                     for (int i = 0; i < chunk; i++) {
-                        int longIdx = (longOffset + i) / 8;
-                        int shift = ((longOffset + i) % 8) * 8;
+                        long pos = byteOffset + i;
+                        int longIdx = (int) (pos >>> 3);
+                        int shift = (int) (pos & 7) * 8;
                         buffer[i] = (byte) (data[longIdx] >>> shift);
                     }
                     raFile.write(buffer, 0, chunk);
                     remaining -= chunk;
-                    longOffset += chunk;
+                    byteOffset += chunk;
                 }
                 raFile.setLength(HEADER_OFFSET + len);
             }
