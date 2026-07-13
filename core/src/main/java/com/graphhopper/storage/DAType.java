@@ -230,7 +230,7 @@ public class DAType {
             str += "_LONG";
         if (!isAllowWrites())
             str += "_RO";
-        else if (isStoring())
+        else if (isStoring() && !isMMap())
             str += "_STORE";
         return str;
     }
