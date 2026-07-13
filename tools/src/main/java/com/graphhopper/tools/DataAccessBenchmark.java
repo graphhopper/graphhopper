@@ -55,7 +55,6 @@ public class DataAccessBenchmark {
                 : Files.createTempDirectory("gh_bench_");
         String tmpLoc = tmpDir.toString() + "/";
         MMapForeignMemoryDataAccess mfmDA = new MMapForeignMemoryDataAccess("bench_mmap", tmpLoc, true, segmentSize);
-        mfmDA.load(100);
         benchmarkImpl("MMapForeignMemoryDataAccess", mfmDA);
     }
 
