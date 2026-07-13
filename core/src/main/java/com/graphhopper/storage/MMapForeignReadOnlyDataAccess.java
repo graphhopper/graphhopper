@@ -71,6 +71,7 @@ public final class MMapForeignReadOnlyDataAccess extends AbstractDataAccess {
      *
      * @param preload     if true, forces all mapped pages into RAM after mapping
      * @param segmentSize ignored; overridden by the segment size recorded in the file header
+     */
     public static MMapForeignReadOnlyDataAccess load(String name, String location,
                                                      int segmentSize, boolean preload) {
         File file = new File(location + name);
