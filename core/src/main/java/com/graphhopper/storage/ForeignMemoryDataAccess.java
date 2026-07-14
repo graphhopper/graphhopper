@@ -392,7 +392,7 @@ public final class ForeignMemoryDataAccess extends AbstractDataAccess {
     @Override
     public DAType getType() {
         if (isStoring())
-            return DAType.NATIVE_STORE;
-        return DAType.NATIVE;
+            return DAType.FOREIGN_ANON_STORE;
+        return DAType.FOREIGN_ANON;
     }
 }

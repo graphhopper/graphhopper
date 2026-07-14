@@ -56,7 +56,7 @@ public class DAType {
     public static final DAType RAM_INT_1SEG_STORE = new DAType(MemRef.HEAP, true, true, true, true);
     /**
      * Like RAM, but backed by a single contiguous byte[] (no segment math). Limited to ~2GB.
-     * The on-heap equivalent of NATIVE. See RAM1SegmentDataAccess.
+     * The on-heap equivalent of FOREIGN_ANON. See RAM1SegmentDataAccess.
      */
     public static final DAType RAM_1SEG = new DAType(MemRef.HEAP, false, false, true, true);
     /**
@@ -73,30 +73,30 @@ public class DAType {
      */
     public static final DAType RAM_LONG_STORE = new DAType(MemRef.HEAP, true, false, true, true, true);
     /**
-     * Off-heap DA object backed by native (foreign) memory - the equivalent of RAM but outside the
+     * Off-heap DA object backed by anonymous (foreign) memory - the equivalent of RAM but outside the
      * JVM heap. Loading and flushing is a no-op. See ForeignMemoryDataAccess.
      */
-    public static final DAType NATIVE = new DAType(MemRef.NATIVE, false, false, true);
+    public static final DAType FOREIGN_ANON = new DAType(MemRef.FOREIGN_ANON, false, false, true);
     /**
-     * Like NATIVE but loads from and flushes to disc. See ForeignMemoryDataAccess.
+     * Like FOREIGN_ANON but loads from and flushes to disc. See ForeignMemoryDataAccess.
      */
-    public static final DAType NATIVE_STORE = new DAType(MemRef.NATIVE, true, false, true);
+    public static final DAType FOREIGN_ANON_STORE = new DAType(MemRef.FOREIGN_ANON, true, false, true);
     /**
-     * Memory mapped DA object. See MMapForeignMemoryDataAccess.
+     * Memory mapped DA object backed by the Foreign Memory API. See MMapForeignMemoryDataAccess.
      */
-    public static final DAType MMAP = new DAType(MemRef.MMAP, true, false, true);
+    public static final DAType FOREIGN_MMAP = new DAType(MemRef.FOREIGN_MMAP, true, false, true);
 
     /**
-     * Read-only memory mapped DA object. To avoid write access useful for reading on mobile or
-     * embedded data stores. See MMapForeignReadOnlyDataAccess.
+     * Read-only memory mapped DA object (Foreign Memory API). To avoid write access useful for reading
+     * on mobile or embedded data stores. See MMapForeignReadOnlyDataAccess.
      */
-    public static final DAType MMAP_RO = new DAType(MemRef.MMAP, true, false, false);
+    public static final DAType FOREIGN_MMAP_RO = new DAType(MemRef.FOREIGN_MMAP, true, false, false);
 
     /**
      * Legacy memory mapped DA object backed by ByteBuffers instead of the Foreign Memory API.
      * Kept usable as a fallback and for comparison. See MMapDataAccess.
      */
-    public static final DAType MMAP_OLD = new DAType(MemRef.MMAP_OLD, true, false, true);
+    public static final DAType MMAP = new DAType(MemRef.MMAP, true, false, true);
     private final MemRef memRef;
     private final boolean storing;
     private final boolean integ;
@@ -127,9 +127,9 @@ public class DAType {
 
     /**
      * Parses a DAType from its {@link #toString()} form, e.g. "RAM", "RAM_INT_1SEG_STORE", "MMAP",
-     * "MMAP_RO", "MMAP_OLD" or "NATIVE_STORE". The individual tokens (memory backing plus the
-     * INT / 1SEG / RO / STORE modifiers) are combined so that every valid combination is reachable
-     * from config, not only the predefined constants.
+     * "FOREIGN_MMAP", "FOREIGN_MMAP_RO" or "FOREIGN_ANON_STORE". The individual tokens (memory backing
+     * plus the INT / 1SEG / RO / STORE modifiers) are combined so that every valid combination is
+     * reachable from config, not only the predefined constants.
      */
     public static DAType fromString(String dataAccess) {
         dataAccess = toUpperCase(dataAccess);
@@ -139,12 +139,12 @@ public class DAType {
             throw new IllegalArgumentException("UNSAFE option is no longer supported, see #1620");
 
         MemRef memRef;
-        if (dataAccess.contains("MMAP_OLD"))
-            memRef = MemRef.MMAP_OLD;
+        if (dataAccess.contains("FOREIGN_MMAP"))
+            memRef = MemRef.FOREIGN_MMAP;
+        else if (dataAccess.contains("FOREIGN_ANON"))
+            memRef = MemRef.FOREIGN_ANON;
         else if (dataAccess.contains("MMAP"))
             memRef = MemRef.MMAP;
-        else if (dataAccess.contains("NATIVE"))
-            memRef = MemRef.NATIVE;
         else
             memRef = MemRef.HEAP;
 
@@ -153,8 +153,8 @@ public class DAType {
         // a long[] backing is always a single contiguous array
         boolean singleSegment = dataAccess.contains("1SEG") || longBacked;
         boolean allowWrites = !dataAccess.contains("_RO");
-        // mmap always persists to its file; on heap/native memory storing must be requested explicitly
-        boolean storing = memRef == MemRef.MMAP || memRef == MemRef.MMAP_OLD || dataAccess.contains("STORE");
+        // mmap always persists to its file; on heap/foreign memory storing must be requested explicitly
+        boolean storing = memRef == MemRef.FOREIGN_MMAP || memRef == MemRef.MMAP || dataAccess.contains("STORE");
         return new DAType(memRef, storing, integ, allowWrites, singleSegment, longBacked);
     }
 
@@ -178,7 +178,7 @@ public class DAType {
     }
 
     public boolean isMMap() {
-        return memRef == MemRef.MMAP || memRef == MemRef.MMAP_OLD;
+        return memRef == MemRef.FOREIGN_MMAP || memRef == MemRef.MMAP;
     }
 
     /**
@@ -213,12 +213,12 @@ public class DAType {
     @Override
     public String toString() {
         String str;
-        if (getMemRef() == MemRef.MMAP_OLD)
-            str = "MMAP_OLD";
-        else if (getMemRef() == MemRef.MMAP)
+        if (getMemRef() == MemRef.MMAP)
             str = "MMAP";
-        else if (getMemRef() == MemRef.NATIVE)
-            str = "NATIVE";
+        else if (getMemRef() == MemRef.FOREIGN_MMAP)
+            str = "FOREIGN_MMAP";
+        else if (getMemRef() == MemRef.FOREIGN_ANON)
+            str = "FOREIGN_ANON";
         else
             str = "RAM";
 
@@ -270,6 +270,6 @@ public class DAType {
     }
 
     public enum MemRef {
-        HEAP, NATIVE, MMAP, MMAP_OLD
+        HEAP, FOREIGN_ANON, FOREIGN_MMAP, MMAP
     }
 }

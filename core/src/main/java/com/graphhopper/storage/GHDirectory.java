@@ -140,7 +140,7 @@ public class GHDirectory implements Directory {
 
         DataAccess da;
         if (type.isMMap()) {
-            if (type.getMemRef() == DAType.MemRef.MMAP_OLD) {
+            if (type.getMemRef() == DAType.MemRef.MMAP) {
                 // Legacy ByteBuffer-based mmap, kept as a fallback / for comparison.
                 da = new MMapDataAccess(name, location, type.isAllowWrites(), segmentSize);
             } else if (type.isAllowWrites()) {
@@ -165,7 +165,7 @@ public class GHDirectory implements Directory {
                 da = new RAMDataAccess(name, location, type.isStoring(), segmentSize);
             }
         } else {
-            // MemRef.NATIVE: off-heap foreign memory (single contiguous MemorySegment, long-indexed)
+            // MemRef.FOREIGN_ANON: off-heap foreign memory (single contiguous MemorySegment, long-indexed)
             da = new ForeignMemoryDataAccess(name, location, type.isStoring(), segmentSize);
         }
 

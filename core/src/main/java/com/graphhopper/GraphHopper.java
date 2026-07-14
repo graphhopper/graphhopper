@@ -749,7 +749,7 @@ public class GraphHopper {
             if (baseURL.isEmpty() && ghConfig.has("graph.elevation.baseurl"))
                 throw new IllegalArgumentException("use graph.elevation.base_url not baseurl in configuration");
 
-            DAType elevationDAType = DAType.fromString(ghConfig.getString("graph.elevation.dataaccess", "MMAP"));
+            DAType elevationDAType = DAType.fromString(ghConfig.getString("graph.elevation.dataaccess", "FOREIGN_MMAP"));
 
             provider
                     .setAutoRemoveTemporaryFiles(removeTempElevationFiles)
@@ -1216,7 +1216,7 @@ public class GraphHopper {
 
         // todo: this does not really belong here, we abuse the load method to derive the dataAccessDefaultType setting from others
         if (!allowWrites && dataAccessDefaultType.isMMap())
-            dataAccessDefaultType = DAType.MMAP_RO;
+            dataAccessDefaultType = DAType.FOREIGN_MMAP_RO;
 
         if (!new File(ghLocation).exists())
             // there is just nothing to load

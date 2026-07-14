@@ -46,7 +46,7 @@ public class DataAccessBenchmark {
 //        benchmarkImpl("RAMDataAccess (32MB seg)", new RAMDataAccess("bench_ram", "", false, segmentSize));
 //        benchmarkImpl("ForeignMemorySegmentedDataAccess (32MB seg)", new ForeignMemorySegmentedDataAccess("bench_native", "", false, segmentSize));
 
-        // --- MMAP via Foreign Memory (on tmpfs where available) ---
+        // --- FOREIGN_MMAP via Foreign Memory (on tmpfs where available) ---
         // /dev/shm is a Linux-only tmpfs; on macOS/Windows it doesn't exist, so fall
         // back to the default temp dir (java.io.tmpdir).
         Path shm = Path.of("/dev/shm");

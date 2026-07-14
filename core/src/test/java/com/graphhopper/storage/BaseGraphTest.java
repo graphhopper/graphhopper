@@ -83,7 +83,7 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
         graph.flush();
         graph.close();
 
-        graph = newGHStorage(new GHDirectory(defaultGraphLoc, DAType.MMAP), true);
+        graph = newGHStorage(new GHDirectory(defaultGraphLoc, DAType.FOREIGN_MMAP), true);
         graph.loadExisting();
 
         assertEquals(12, graph.getNodes());
@@ -117,7 +117,7 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
         graph.flush();
         graph.close();
 
-        graph = newGHStorage(new GHDirectory(defaultGraphLoc, DAType.MMAP), true);
+        graph = newGHStorage(new GHDirectory(defaultGraphLoc, DAType.FOREIGN_MMAP), true);
         graph.loadExisting();
         assertEquals(2, graph.getNodes());
         assertTrue(graph.isFrozen());
