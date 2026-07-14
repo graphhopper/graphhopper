@@ -35,6 +35,27 @@ public class MaxWeightExceptParserTest {
         readerWay.setTag("maxweight:conditional", "no@ (destination)");
         parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
         assertEquals(MaxWeightExcept.DESTINATION, mwEnc.getEnum(false, edgeId, edgeIntAccess));
+
+        edgeIntAccess = new ArrayEdgeIntAccess(1);
+        readerWay.clearTags();
+        readerWay.setTag("highway", "primary");
+        readerWay.setTag("maxweight:hgv:conditional", "none @ delivery");
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(MaxWeightExcept.DELIVERY, mwEnc.getEnum(false, edgeId, edgeIntAccess));
+
+        edgeIntAccess = new ArrayEdgeIntAccess(1);
+        readerWay.clearTags();
+        readerWay.setTag("highway", "primary");
+        readerWay.setTag("maxweightrating:conditional", "no @ destination");
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(MaxWeightExcept.DESTINATION, mwEnc.getEnum(false, edgeId, edgeIntAccess));
+
+        edgeIntAccess = new ArrayEdgeIntAccess(1);
+        readerWay.clearTags();
+        readerWay.setTag("highway", "primary");
+        readerWay.setTag("maxweightrating:hgv:conditional", "none @ forestry");
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(MaxWeightExcept.FORESTRY, mwEnc.getEnum(false, edgeId, edgeIntAccess));
     }
 
     @Test

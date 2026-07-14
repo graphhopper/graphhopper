@@ -18,6 +18,7 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
+import com.graphhopper.routing.ev.AccessControl;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RoadClass;
@@ -62,9 +63,10 @@ public class ViaRouting {
 
         final EnumEncodedValue<RoadClass> roadClassEnc = lookup.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         final EnumEncodedValue<RoadEnvironment> roadEnvEnc = lookup.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
+        final EnumEncodedValue<AccessControl> accessControlEnc = lookup.getEnumEncodedValue(AccessControl.KEY, AccessControl.class);
         EdgeFilter strictEdgeFilter = snapPreventions.isEmpty()
                 ? snapFilter
-                : new SnapPreventionEdgeFilter(snapFilter, roadClassEnc, roadEnvEnc, snapPreventions);
+                : new SnapPreventionEdgeFilter(snapFilter, roadClassEnc, roadEnvEnc, accessControlEnc, snapPreventions);
         List<Snap> snaps = new ArrayList<>(points.size());
         IntArrayList pointsNotFound = new IntArrayList();
         for (int placeIndex = 0; placeIndex < points.size(); placeIndex++) {

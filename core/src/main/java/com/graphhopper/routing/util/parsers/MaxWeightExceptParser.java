@@ -15,25 +15,40 @@ import static com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor.str
 
 public class MaxWeightExceptParser implements TagParser {
     private final EnumEncodedValue<MaxWeightExcept> mweEnc;
+    private static final List<String> MAX_WEIGHT_TAGS = List.of(
+        "maxweight",
+        "maxweight:hgv",
+        "maxweightrating",
+        "maxweightrating:hgv",
+        "maxgcweight"/*abandoned*/
+    );
     private static final List<String> HGV_RESTRICTIONS = OSMRoadAccessParser.toOSMRestrictions(TransportationMode.HGV).stream()
             .map(e -> e + ":conditional").collect(Collectors.toList());
+    private static final List<String> MAX_WEIGHT_CONDITIONAL_TAGS = List.of(
+        "maxweight:hgv:conditional",
+        "maxweightrating:hgv:conditional",
+        "maxweight:conditional",
+        "maxweightrating:conditional",
+        "maxgcweight:conditional"/*abandoned*/
+    );
 
     public MaxWeightExceptParser(EnumEncodedValue<MaxWeightExcept> mweEnc) {
         this.mweEnc = mweEnc;
     }
 
     public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
-        // tagging like maxweight:conditional=no/none @ destination/delivery/forestry/service
-        String condValue = way.getTag("maxweight:conditional", "");
-        if (!condValue.isEmpty()) {
-            String[] values = condValue.split("@");
-            if (values.length == 2) {
-                String key = values[0].trim();
-                String value = values[1].trim();
-                if ("no".equals(key) || "none".equals(key)) {
-                    if (value.startsWith("(") && value.endsWith(")")) value = value.substring(1, value.length() - 1);
-                    mweEnc.setEnum(false, edgeId, edgeIntAccess, MaxWeightExcept.find(value));
-                    return;
+        for (String conditionalTag : MAX_WEIGHT_CONDITIONAL_TAGS) {
+            String condValue = way.getTag(conditionalTag, "");
+            if (!condValue.isEmpty()) {
+                String[] values = condValue.split("@");
+                if (values.length == 2) {
+                    String key = values[0].trim();
+                    String value = values[1].trim();
+                    if ("no".equals(key) || "none".equals(key)) {
+                        if (value.startsWith("(") && value.endsWith(")")) value = value.substring(1, value.length() - 1);
+                        mweEnc.setEnum(false, edgeId, edgeIntAccess, MaxWeightExcept.find(value));
+                        return;
+                    }
                 }
             }
         }
@@ -48,6 +63,7 @@ public class MaxWeightExceptParser implements TagParser {
                 // set it only if the weight value is the same as in max_weight
                 if (!Double.isNaN(dec)
                         && (stringToTons(way.getTag("maxweight", "")) == dec
+                        || stringToTons(way.getTag("maxweight:hgv", "")) == dec
                         || stringToTons(way.getTag("maxweightrating:hgv", "")) == dec
                         || stringToTons(way.getTag("maxgcweight", "")) == dec)) {
                     mweEnc.setEnum(false, edgeId, edgeIntAccess, MaxWeightExcept.find(value.substring(0, atIndex).trim()));

@@ -29,6 +29,11 @@ public class OSMMaxWeightParserTest {
         readerWay.setTag("maxweight", "5");
         assertEquals(5.0, getMaxWeight(readerWay), .01);
 
+        readerWay.clearTags();
+        readerWay.setTag("highway", "primary");
+        readerWay.setTag("maxweight:hgv", "6");
+        assertEquals(6.0, getMaxWeight(readerWay), .01);
+
         // if value is beyond the maximum then do not use infinity instead fallback to more restrictive maximum
         readerWay.setTag("maxweight", "54");
         assertEquals(51, getMaxWeight(readerWay), .01);
