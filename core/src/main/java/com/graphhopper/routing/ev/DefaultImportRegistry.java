@@ -235,6 +235,13 @@ public class DefaultImportRegistry implements ImportRegistry {
                             PMap.toSet(props.getString("allow", "")), PMap.toSet(props.getString("restrict", ""))),
                     "roundabout"
             );
+        else if (HgvAccess.KEY.equals(name))
+            return ImportUnit.create(name, props -> HgvAccess.create(),
+                    (lookup, props) -> new ModeAccessParser(OSMRoadAccessParser.toOSMRestrictions(TransportationMode.HGV),
+                            lookup.getBooleanEncodedValue(name), true, lookup.getBooleanEncodedValue(Roundabout.KEY),
+                            PMap.toSet(props.getString("allow", "")), PMap.toSet(props.getString("restrict", ""))),
+                    "roundabout"
+            );
         else if (FootTemporalAccess.KEY.equals(name))
             return ImportUnit.create(name, props -> FootTemporalAccess.create(),
                     (lookup, props) -> {
