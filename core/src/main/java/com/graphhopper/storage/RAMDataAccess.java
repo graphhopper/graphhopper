@@ -314,8 +314,6 @@ public class RAMDataAccess extends AbstractDataAccess {
 
     @Override
     public DAType getType() {
-        if (isStoring())
-            return DAType.RAM_STORE;
-        return DAType.RAM;
+        return isStoring() ? DAType.RAM : DAType.RAM_NOFILE;
     }
 }

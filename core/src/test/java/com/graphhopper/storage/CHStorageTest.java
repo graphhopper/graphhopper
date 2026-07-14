@@ -12,7 +12,7 @@ class CHStorageTest {
 
     @Test
     void setAndGetLevels() {
-        GHDirectory dir = new GHDirectory("", DAType.RAM);
+        GHDirectory dir = new GHDirectory("", DAType.RAM_NOFILE);
         CHStorage store = new CHStorage(dir, "ch1", false);
         store.create(30, 5);
         assertEquals(0, store.getLevel(store.toNodePointer(10)));
@@ -57,7 +57,7 @@ class CHStorageTest {
 
     @Test
     public void testBigWeight() {
-        CHStorage g = new CHStorage(new GHDirectory("", DAType.RAM), "abc", false);
+        CHStorage g = new CHStorage(new GHDirectory("", DAType.RAM_NOFILE), "abc", false);
         g.shortcutNodeBased(0, 0, 0, 10, 0, 1);
 
         g.setWeight(0, (1L << 32) - 3);

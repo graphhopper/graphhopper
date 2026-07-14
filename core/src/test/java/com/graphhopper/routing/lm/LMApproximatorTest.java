@@ -45,7 +45,7 @@ public class LMApproximatorTest {
     }
 
     private void run(long seed) {
-        Directory dir = new GHDirectory("", DAType.RAM);
+        Directory dir = new GHDirectory("", DAType.RAM_NOFILE);
         DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, true);
         DecimalEncodedValue turnCostEnc = TurnCost.create("car", 1);
         EncodingManager encodingManager = new EncodingManager.Builder().add(speedEnc).addTurnCostEncodedValue(turnCostEnc).add(Subnetwork.create("car")).build();

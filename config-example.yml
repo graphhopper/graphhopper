@@ -228,8 +228,8 @@ graphhopper:
   # will write way names in the preferred language (language code as defined in ISO 639-1 or ISO 639-2):
   # datareader.preferred_language: en
 
-  # configure the memory access, use RAM_STORE for well equipped servers (default and recommended)
-  graph.dataaccess.default_type: RAM_STORE
+  # configure the memory access, use RAM for well equipped servers (default and recommended, RAM_STORE is an alias)
+  graph.dataaccess.default_type: RAM
 
   # If FOREIGN_MMAP is not suited for everything you can use it for selected files e.g. while import to reduce heap usage (see #2440):
   # graph.dataaccess.type.geometry: FOREIGN_MMAP

@@ -221,8 +221,6 @@ public class RAM1SegmentDataAccess extends AbstractDataAccess {
 
     @Override
     public DAType getType() {
-        if (isStoring())
-            return DAType.RAM_1SEG_STORE;
-        return DAType.RAM_1SEG;
+        return isStoring() ? DAType.RAM_1SEG : DAType.RAM_1SEG_NOFILE;
     }
 }

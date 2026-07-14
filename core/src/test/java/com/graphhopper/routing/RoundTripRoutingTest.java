@@ -77,7 +77,7 @@ public class RoundTripRoutingTest {
         PMap hints = new PMap();
         hints.putObject(Parameters.Algorithms.RoundTrip.POINTS, numPoints);
         hints.putObject(Parameters.Algorithms.RoundTrip.DISTANCE, roundTripDistance);
-        LocationIndex locationIndex = new LocationIndexTree(g, new GHDirectory("", DAType.RAM)).prepareIndex();
+        LocationIndex locationIndex = new LocationIndexTree(g, new GHDirectory("", DAType.RAM_NOFILE)).prepareIndex();
         List<Snap> stagePoints = RoundTripRouting.lookup(Collections.singletonList(start),
                 new FiniteWeightFilter(weighting), locationIndex,
                 new RoundTripRouting.Params(hints, heading, 3));
@@ -99,7 +99,7 @@ public class RoundTripRoutingTest {
     public void testCalcRoundTrip() {
         BaseGraph g = createTestGraph();
 
-        LocationIndex locationIndex = new LocationIndexTree(g, new GHDirectory("", DAType.RAM)).prepareIndex();
+        LocationIndex locationIndex = new LocationIndexTree(g, new GHDirectory("", DAType.RAM_NOFILE)).prepareIndex();
         Snap snap4 = locationIndex.findClosest(0.05, 0.25, EdgeFilter.ALL_EDGES);
         assertEquals(4, snap4.getClosestNode());
         Snap snap5 = locationIndex.findClosest(0.00, 0.05, EdgeFilter.ALL_EDGES);

@@ -310,7 +310,7 @@ public class DirectionResolverOnQueryGraphTest {
     }
 
     private void init() {
-        locationIndex = new LocationIndexTree(graph, new GHDirectory("", DAType.RAM));
+        locationIndex = new LocationIndexTree(graph, new GHDirectory("", DAType.RAM_NOFILE));
         locationIndex.prepareIndex();
     }
 

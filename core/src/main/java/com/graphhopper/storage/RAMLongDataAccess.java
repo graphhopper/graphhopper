@@ -292,8 +292,6 @@ public class RAMLongDataAccess extends AbstractDataAccess {
 
     @Override
     public DAType getType() {
-        if (isStoring())
-            return DAType.RAM_LONG_STORE;
-        return DAType.RAM_LONG;
+        return isStoring() ? DAType.RAM_LONG : DAType.RAM_LONG_NOFILE;
     }
 }

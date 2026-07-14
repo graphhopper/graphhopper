@@ -101,7 +101,7 @@ public class GraphHopper {
     private OSMParsers osmParsers;
     private int defaultSegmentSize = AbstractDataAccess.SEGMENT_SIZE_DEFAULT;
     private String ghLocation = "";
-    private DAType dataAccessDefaultType = DAType.RAM_STORE;
+    private DAType dataAccessDefaultType = DAType.RAM;
     private final LinkedHashMap<String, String> dataAccessConfig = new LinkedHashMap<>();
     private boolean sortGraph = true;
     private boolean elevation = false;
@@ -236,9 +236,9 @@ public class GraphHopper {
     public GraphHopper setStoreOnFlush(boolean storeOnFlush) {
         ensureNotLoaded();
         if (storeOnFlush)
-            dataAccessDefaultType = DAType.RAM_STORE;
-        else
             dataAccessDefaultType = DAType.RAM;
+        else
+            dataAccessDefaultType = DAType.RAM_NOFILE;
         return this;
     }
 
@@ -491,7 +491,7 @@ public class GraphHopper {
 
         defaultSegmentSize = ghConfig.getInt("graph.dataaccess.segment_size", defaultSegmentSize);
 
-        String daTypeString = ghConfig.getString("graph.dataaccess.default_type", ghConfig.getString("graph.dataaccess", "RAM_STORE"));
+        String daTypeString = ghConfig.getString("graph.dataaccess.default_type", ghConfig.getString("graph.dataaccess", "RAM"));
         dataAccessDefaultType = DAType.fromString(daTypeString);
         for (Map.Entry<String, Object> entry : ghConfig.asPMap().toMap().entrySet()) {
             if (entry.getKey().startsWith("graph.dataaccess.type."))

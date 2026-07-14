@@ -318,8 +318,6 @@ public final class ForeignMemorySegmentedDataAccess extends AbstractDataAccess {
     @Override
     public DAType getType() {
         // off-heap foreign memory (segmented); there is no dedicated segmented-foreign constant
-        if (isStoring())
-            return DAType.FOREIGN_ANON_STORE;
-        return DAType.FOREIGN_ANON;
+        return isStoring() ? DAType.FOREIGN_ANON : DAType.FOREIGN_ANON_NOFILE;
     }
 }

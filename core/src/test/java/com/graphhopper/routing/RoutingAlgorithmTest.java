@@ -1175,7 +1175,7 @@ public class RoutingAlgorithmTest {
 
         @Override
         public Path calcPath(BaseGraph graph, Weighting weighting, TraversalMode traversalMode, int maxVisitedNodes, GHPoint from, GHPoint to) {
-            LocationIndexTree index = new LocationIndexTree(graph, new GHDirectory("", DAType.RAM));
+            LocationIndexTree index = new LocationIndexTree(graph, new GHDirectory("", DAType.RAM_NOFILE));
             index.prepareIndex();
             Snap fromSnap = index.findClosest(from.getLat(), from.getLon(), EdgeFilter.ALL_EDGES);
             Snap toSnap = index.findClosest(to.getLat(), to.getLon(), EdgeFilter.ALL_EDGES);
@@ -1276,7 +1276,7 @@ public class RoutingAlgorithmTest {
 
         @Override
         public Path calcPath(BaseGraph graph, Weighting weighting, TraversalMode traversalMode, int maxVisitedNodes, GHPoint from, GHPoint to) {
-            LocationIndexTree locationIndex = new LocationIndexTree(graph, new GHDirectory("", DAType.RAM));
+            LocationIndexTree locationIndex = new LocationIndexTree(graph, new GHDirectory("", DAType.RAM_NOFILE));
             LocationIndex index = locationIndex.prepareIndex();
             Snap fromSnap = index.findClosest(from.getLat(), from.getLon(), EdgeFilter.ALL_EDGES);
             Snap toSnap = index.findClosest(to.getLat(), to.getLon(), EdgeFilter.ALL_EDGES);

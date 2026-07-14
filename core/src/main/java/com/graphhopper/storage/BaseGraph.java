@@ -688,7 +688,7 @@ public class BaseGraph implements Graph, Closeable {
 
     public static class Builder {
         private final int bytesForFlags;
-        private Directory directory = new GHDirectory("", DAType.RAM);
+        private Directory directory = new GHDirectory("", DAType.RAM_NOFILE);
         private boolean withElevation = false;
         private boolean withTurnCosts = false;
         private long bytes = 100;

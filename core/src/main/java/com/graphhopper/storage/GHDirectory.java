@@ -24,7 +24,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static com.graphhopper.storage.DAType.RAM_INT;
-import static com.graphhopper.storage.DAType.RAM_INT_STORE;
+import static com.graphhopper.storage.DAType.RAM_INT_NOFILE;
 import static com.graphhopper.util.Helper.*;
 
 /**
@@ -151,7 +151,7 @@ public class GHDirectory implements Directory {
                 // The RO mapping preloads in its constructor, so pass the configured preload here.
                 da = MMapForeignReadOnlyDataAccess.load(name, location, segmentSize, getPreload(name) > 0);
             }
-        } else if (type.isInMemory()) {
+        } else if (type.isOnHeap()) {
             if (type.isInteg()) {
                 if (type.isSingleSegment())
                     da = new RAMInt1SegmentDataAccess(name, location, type.isStoring(), segmentSize);
@@ -216,8 +216,8 @@ public class GHDirectory implements Directory {
      */
     public DAType getDefaultType(String dataAccess, boolean preferInts) {
         DAType type = getDefault(dataAccess, typeFallback);
-        if (preferInts && type.isInMemory())
-            return type.isStoring() ? RAM_INT_STORE : RAM_INT;
+        if (preferInts && type.isOnHeap())
+            return type.isStoring() ? RAM_INT : RAM_INT_NOFILE;
         return type;
     }
 

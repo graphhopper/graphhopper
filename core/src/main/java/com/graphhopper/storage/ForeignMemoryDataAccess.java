@@ -391,8 +391,6 @@ public final class ForeignMemoryDataAccess extends AbstractDataAccess {
 
     @Override
     public DAType getType() {
-        if (isStoring())
-            return DAType.FOREIGN_ANON_STORE;
-        return DAType.FOREIGN_ANON;
+        return isStoring() ? DAType.FOREIGN_ANON : DAType.FOREIGN_ANON_NOFILE;
     }
 }

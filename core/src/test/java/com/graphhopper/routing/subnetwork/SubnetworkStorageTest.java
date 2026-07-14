@@ -10,7 +10,7 @@ public class SubnetworkStorageTest {
 
     @Test
     public void testSimple() {
-        SubnetworkStorage storage = new SubnetworkStorage(new GHDirectory("", DAType.RAM).create("test"));
+        SubnetworkStorage storage = new SubnetworkStorage(new GHDirectory("", DAType.RAM_NOFILE).create("test"));
         storage.create(2000);
         storage.setSubnetwork(1, 88);
         assertEquals(88, storage.getSubnetwork(1));
