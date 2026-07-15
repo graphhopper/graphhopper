@@ -138,37 +138,7 @@ public class GHDirectory implements Directory {
             // per file name
             throw new IllegalStateException("DataAccess " + name + " has already been created");
 
-        DataAccess da;
-        if (type.isMMap()) {
-            if (type.getMemRef() == DAType.MemRef.MMAP) {
-                // Legacy ByteBuffer-based mmap, kept as a fallback / for comparison.
-                da = new MMapDataAccess(name, location, type.isAllowWrites(), segmentSize);
-            } else if (type.isAllowWrites()) {
-                da = new MMapForeignMemoryDataAccess(name, location, true, segmentSize);
-            } else {
-                // Fast read-only path with all-final fields. The file must already exist on disk;
-                // there is no "loadExisting returned false" state — the constructor fails fast.
-                // The RO mapping preloads in its constructor, so pass the configured preload here.
-                da = MMapForeignReadOnlyDataAccess.load(name, location, segmentSize, getPreload(name) > 0);
-            }
-        } else if (type.isOnHeap()) {
-            if (type.isInteg()) {
-                if (type.isSingleSegment())
-                    da = new RAMInt1SegmentDataAccess(name, location, type.isStoring(), segmentSize);
-                else
-                    da = new RAMIntDataAccess(name, location, type.isStoring(), segmentSize);
-            } else if (type.isLongBacked()) {
-                da = new RAMLongDataAccess(name, location, type.isStoring(), segmentSize);
-            } else if (type.isSingleSegment()) {
-                da = new RAM1SegmentDataAccess(name, location, type.isStoring(), segmentSize);
-            } else {
-                da = new RAMDataAccess(name, location, type.isStoring(), segmentSize);
-            }
-        } else {
-            // MemRef.FOREIGN_ANON: off-heap foreign memory (single contiguous MemorySegment, long-indexed)
-            da = new ForeignMemoryDataAccess(name, location, type.isStoring(), segmentSize);
-        }
-
+        DataAccess da = type.create(name, location, segmentSize, getPreload(name));
         map.put(name, da);
         return da;
     }
