@@ -151,22 +151,6 @@ public class GHLongLongBTree implements LongLongMap {
         return root.fillSorted(outKeys, outValues, 0);
     }
 
-    /**
-     * Streams every entry to {@code visitor} in ascending key order and DESTROYS the tree as it goes:
-     * each subtree is unlinked as soon as it has been streamed, so it becomes garbage-collectable
-     * while the rest of the tree is still being drained. This keeps peak memory at roughly
-     * max(remaining B-tree, destination) instead of (whole B-tree + destination) - important when the
-     * destination is a fresh copy of the same data (e.g. building a frozen node map). The tree is
-     * empty afterwards.
-     */
-    public void drainSortedAndClear(LongLongConsumer visitor) {
-        if (root != null)
-            root.drainSortedAndClear(visitor);
-        root = null;
-        size = 0;
-        height = 0;
-    }
-
     int height() {
         return height;
     }
@@ -497,25 +481,6 @@ public class GHLongLongBTree implements LongLongMap {
             if (!isLeaf && children[entrySize] != null)
                 pos = children[entrySize].fillSorted(outKeys, outValues, pos);
             return pos;
-        }
-
-        // in-order stream that unlinks each child subtree right after draining it, so consumed
-        // subtrees are freed while the remaining tree is still being walked
-        void drainSortedAndClear(LongLongConsumer visitor) {
-            for (int i = 0; i < entrySize; i++) {
-                if (!isLeaf && children[i] != null) {
-                    children[i].drainSortedAndClear(visitor);
-                    children[i] = null;
-                }
-                visitor.accept(keys[i], toLong(values, i * bytesPerValue));
-            }
-            if (!isLeaf && children[entrySize] != null) {
-                children[entrySize].drainSortedAndClear(visitor);
-                children[entrySize] = null;
-            }
-            keys = null;
-            values = null;
-            children = null;
         }
 
         /**
