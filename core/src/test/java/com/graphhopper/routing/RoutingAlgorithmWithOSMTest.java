@@ -704,7 +704,7 @@ public class RoutingAlgorithmWithOSMTest {
      */
     private GraphHopper createHopper(String osmFile, Profile... profiles) {
         GraphHopper hopper = new GraphHopper().
-                setStoreOnFlush(false).
+                setFileBacked(false).
                 setOSMFile(osmFile).
                 setProfiles(profiles).
                 setEncodedValuesString("hike_rating, car_access, car_average_speed, " +

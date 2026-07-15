@@ -171,7 +171,7 @@ public class GHDirectory implements Directory {
     }
 
     private void removeBackingFile(DataAccess da, String name) {
-        if (da.getType().isStoring())
+        if (da.isFileBacked())
             removeDir(new File(location + name));
     }
 
@@ -187,17 +187,17 @@ public class GHDirectory implements Directory {
     public DAType getDefaultType(String dataAccess, boolean preferInts) {
         DAType type = getDefault(dataAccess, typeFallback);
         if (preferInts && type.isOnHeap())
-            return type.isStoring() ? RAM_INT : RAM_INT_NOFILE;
+            return type.isFileBacked() ? RAM_INT : RAM_INT_NOFILE;
         return type;
     }
 
-    public boolean isStoring() {
-        return typeFallback.isStoring();
+    public boolean isFileBacked() {
+        return typeFallback.isFileBacked();
     }
 
     @Override
     public Directory create() {
-        if (isStoring())
+        if (isFileBacked())
             new File(location).mkdirs();
         return this;
     }

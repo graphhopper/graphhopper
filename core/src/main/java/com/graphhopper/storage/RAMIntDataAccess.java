@@ -32,25 +32,17 @@ import java.util.Arrays;
 public class RAMIntDataAccess extends AbstractDataAccess {
     private int[][] segments = new int[0][];
     private boolean closed = false;
-    private boolean store;
+    private final boolean fileBacked;
     private int segmentSizeIntsPower;
 
-    public RAMIntDataAccess(String name, String location, boolean store, int segmentSize) {
+    public RAMIntDataAccess(String name, String location, boolean fileBacked, int segmentSize) {
         super(name, location, segmentSize);
-        this.store = store;
-    }
-
-    /**
-     * @param store true if in-memory data should be saved when calling flush
-     */
-    public RAMIntDataAccess setStore(boolean store) {
-        this.store = store;
-        return this;
+        this.fileBacked = fileBacked;
     }
 
     @Override
-    public boolean isStoring() {
-        return store;
+    public boolean isFileBacked() {
+        return fileBacked;
     }
 
     @Override
@@ -98,7 +90,7 @@ public class RAMIntDataAccess extends AbstractDataAccess {
         if (isClosed())
             throw new IllegalStateException("already closed");
 
-        if (!store)
+        if (!fileBacked)
             return false;
 
         File file = new File(getFullName());
@@ -139,7 +131,7 @@ public class RAMIntDataAccess extends AbstractDataAccess {
         if (closed) {
             throw new IllegalStateException("already closed");
         }
-        if (!store) {
+        if (!fileBacked) {
             return;
         }
         try {
@@ -278,8 +270,4 @@ public class RAMIntDataAccess extends AbstractDataAccess {
         return true;
     }
 
-    @Override
-    public DAType getType() {
-        return isStoring() ? DAType.RAM_INT : DAType.RAM_INT_NOFILE;
-    }
 }

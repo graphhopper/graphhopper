@@ -72,7 +72,7 @@ public class GraphHopperOSMTest {
     public void testLoadOSM() {
         String profile = "car_profile";
         GraphHopper hopper = new GraphHopper().
-                setStoreOnFlush(true).
+                setFileBacked(true).
                 setProfiles(TestProfiles.constantSpeed(profile)).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm);
@@ -88,7 +88,7 @@ public class GraphHopperOSMTest {
         // no encoding manager necessary
         hopper = new GraphHopper().
                 setProfiles(TestProfiles.constantSpeed(profile)).
-                setStoreOnFlush(true);
+                setFileBacked(true);
         hopper.getCHPreparationHandler().setCHProfiles(new CHProfile(profile));
         hopper.setGraphHopperLocation(ghLoc);
         assertTrue(hopper.load());
@@ -119,7 +119,7 @@ public class GraphHopperOSMTest {
         final String profile = "profile";
         GraphHopper gh = new GraphHopper().
                 setProfiles(TestProfiles.constantSpeed(profile)).
-                setStoreOnFlush(true).
+                setFileBacked(true).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm);
         gh.importOrLoad();
@@ -134,7 +134,7 @@ public class GraphHopperOSMTest {
         gh.close();
         gh = new GraphHopper().
                 setProfiles(TestProfiles.constantSpeed(profile)).
-                setStoreOnFlush(true).
+                setFileBacked(true).
                 setGraphHopperLocation(ghLoc);
         assertTrue(gh.load());
         rsp = gh.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4)
@@ -157,7 +157,7 @@ public class GraphHopperOSMTest {
     public void testQueryLocationIndexWithBBox() {
         final GraphHopper gh = new GraphHopper().
                 setProfiles(TestProfiles.constantSpeed("car")).
-                setStoreOnFlush(true).
+                setFileBacked(true).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile("../core/files/monaco.osm.gz");
         gh.importOrLoad();
@@ -213,7 +213,7 @@ public class GraphHopperOSMTest {
         Profile profile = TestProfiles.constantSpeed("car");
 
         GraphHopper gh = new GraphHopper().
-                setStoreOnFlush(true).
+                setFileBacked(true).
                 setProfiles(profile).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm);
@@ -227,7 +227,7 @@ public class GraphHopperOSMTest {
         // now load GH without CH profile
         gh = new GraphHopper().
                 setProfiles(profile).
-                setStoreOnFlush(true).
+                setFileBacked(true).
                 setGraphHopperLocation(ghLoc);
         gh.load();
         // no error
@@ -236,7 +236,7 @@ public class GraphHopperOSMTest {
 
         // when there is no CH preparation yet it will be added (CH delta import)
         gh = new GraphHopper().
-                setStoreOnFlush(true).
+                setFileBacked(true).
                 setProfiles(profile).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm);
@@ -248,7 +248,7 @@ public class GraphHopperOSMTest {
 
         gh = new GraphHopper().
                 setProfiles(new Profile(profile)).
-                setStoreOnFlush(true);
+                setFileBacked(true);
         gh.getCHPreparationHandler().setCHProfiles(new CHProfile("car"));
         gh.setGraphHopperLocation(ghLoc);
         gh.importOrLoad();
@@ -262,21 +262,21 @@ public class GraphHopperOSMTest {
     public void testAllowMultipleReadingInstances() {
         GraphHopper instance1 = new GraphHopper().
                 setProfiles(TestProfiles.constantSpeed("car")).
-                setStoreOnFlush(true).
+                setFileBacked(true).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm);
         instance1.importOrLoad();
 
         GraphHopper instance2 = new GraphHopper().
                 setProfiles(TestProfiles.constantSpeed("car")).
-                setStoreOnFlush(true).
+                setFileBacked(true).
                 setOSMFile(testOsm).
                 setGraphHopperLocation(ghLoc);
         instance2.load();
 
         GraphHopper instance3 = new GraphHopper().
                 setProfiles(TestProfiles.constantSpeed("car")).
-                setStoreOnFlush(true).
+                setFileBacked(true).
                 setOSMFile(testOsm).
                 setGraphHopperLocation(ghLoc);
         instance3.load();
@@ -301,7 +301,7 @@ public class GraphHopperOSMTest {
                 }
                 super.importOSM();
             }
-        }.setStoreOnFlush(true).
+        }.setFileBacked(true).
                 setGraphHopperLocation(ghLoc).
                 setProfiles(TestProfiles.constantSpeed("car")).
                 setOSMFile(testOsm);
@@ -320,7 +320,7 @@ public class GraphHopperOSMTest {
 
         GraphHopper instance2 = new GraphHopper().
                 setProfiles(TestProfiles.constantSpeed("car")).
-                setStoreOnFlush(true).
+                setFileBacked(true).
                 setOSMFile(testOsm).
                 setGraphHopperLocation(ghLoc);
         try {
@@ -349,7 +349,7 @@ public class GraphHopperOSMTest {
         final String profile = "profile";
 
         instance = new GraphHopper().
-                setStoreOnFlush(false).
+                setFileBacked(false).
                 setProfiles(TestProfiles.constantSpeed("profile")).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm);
@@ -375,7 +375,7 @@ public class GraphHopperOSMTest {
                         TestProfiles.accessAndSpeed(profile1, "car"),
                         TestProfiles.accessAndSpeed(profile2, "foot")
                 ).
-                setStoreOnFlush(false).
+                setFileBacked(false).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm8);
         instance.importOrLoad();
@@ -505,7 +505,7 @@ public class GraphHopperOSMTest {
         String profile = "profile";
         instance = new GraphHopper().
                 setProfiles(new Profile(profile)).
-                setStoreOnFlush(true).
+                setFileBacked(true).
                 setGraphHopperLocation(ghLoc);
         try {
             // loading from empty directory
@@ -543,7 +543,7 @@ public class GraphHopperOSMTest {
         // missing OSM file to import
         instance = new GraphHopper().
                 setProfiles(TestProfiles.constantSpeed("car")).
-                setStoreOnFlush(true).
+                setFileBacked(true).
                 setGraphHopperLocation(ghLoc);
         ex = assertThrows(IllegalStateException.class, instance::importOrLoad);
         assertEquals("Couldn't load from existing folder: " + ghLoc
@@ -551,16 +551,16 @@ public class GraphHopperOSMTest {
 
         // missing profiles
         instance = new GraphHopper().
-                setStoreOnFlush(true).
+                setFileBacked(true).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm3);
         ex = assertThrows(IllegalArgumentException.class, instance::importOrLoad);
         assertTrue(ex.getMessage().startsWith("There has to be at least one profile"), ex.getMessage());
 
-        // Import is possible even if no storeOnFlush is specified BUT here we miss the OSM file
+        // Import is possible even without file-backed storage BUT here we miss the OSM file
         instance = new GraphHopper().
                 setProfiles(TestProfiles.constantSpeed("car")).
-                setStoreOnFlush(false).
+                setFileBacked(false).
                 setGraphHopperLocation(ghLoc);
         ex = assertThrows(IllegalStateException.class, instance::importOrLoad);
         assertEquals("Couldn't load from existing folder: " + ghLoc
@@ -572,7 +572,7 @@ public class GraphHopperOSMTest {
         // now only footable ways are imported => no A D C and B D E => the other both ways have pillar nodes!
         final String profile = "foot_profile";
         instance = new GraphHopper().
-                setStoreOnFlush(false).
+                setFileBacked(false).
                 setEncodedValuesString("foot_access, foot_priority, foot_average_speed").
                 setProfiles(TestProfiles.accessSpeedAndPriority(profile, "foot")).
                 setGraphHopperLocation(ghLoc).
@@ -599,7 +599,7 @@ public class GraphHopperOSMTest {
     public void testVia() {
         final String profile = "profile";
 
-        instance = new GraphHopper().setStoreOnFlush(true).
+        instance = new GraphHopper().setFileBacked(true).
                 init(new GraphHopperConfig().
                         putObject("datareader.file", testOsm3).
                         putObject("prepare.min_network_size", 0).
@@ -637,7 +637,7 @@ public class GraphHopperOSMTest {
         // try all parallelization modes
         for (int threadCount = 1; threadCount < 6; threadCount++) {
             GraphHopper hopper = new GraphHopper().
-                    setStoreOnFlush(false).
+                    setFileBacked(false).
                     setProfiles(
                             TestProfiles.constantSpeed("p1", 60),
                             TestProfiles.constantSpeed("p2", 70),
@@ -684,7 +684,7 @@ public class GraphHopperOSMTest {
         // try all parallelization modes
         for (int threadCount = 1; threadCount < 6; threadCount++) {
             GraphHopper hopper = new GraphHopper().
-                    setStoreOnFlush(false).
+                    setFileBacked(false).
                     setProfiles(Arrays.asList(
                             TestProfiles.constantSpeed("p1", 60),
                             TestProfiles.constantSpeed("p2", 70),
@@ -732,7 +732,7 @@ public class GraphHopperOSMTest {
                         TestProfiles.constantSpeed("profile1", 60),
                         TestProfiles.constantSpeed("profile2", 100)
                 ).
-                setStoreOnFlush(false).
+                setFileBacked(false).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm);
         hopper.getCHPreparationHandler().setCHProfiles(
@@ -827,7 +827,7 @@ public class GraphHopperOSMTest {
 
         // we have to manipulate the props file to set up a situation where the LM/CH preparations do not match the
         // profiles, because changing the profiles would be an error in itself
-        StorableProperties props = new StorableProperties(new GHDirectory(ghLoc, DAType.RAM_STORE));
+        StorableProperties props = new StorableProperties(new GHDirectory(ghLoc, DAType.RAM));
         props.loadExisting();
         props.put("graph.profiles.ch.car.version", 404);
         props.put("graph.profiles.lm.car.version", 505);

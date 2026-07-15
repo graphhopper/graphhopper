@@ -281,8 +281,4 @@ public final class MMapForeignMemoryDataAccess extends AbstractDataAccess {
         return segs;
     }
 
-    @Override
-    public DAType getType() {
-        return DAType.FOREIGN_MMAP;
-    }
 }

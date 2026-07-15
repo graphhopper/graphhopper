@@ -41,10 +41,6 @@ public class DAType {
     public static final DAType RAM = register("RAM", true, true, false,
             (name, location, segmentSize, preload) -> new RAMDataAccess(name, location, true, segmentSize));
     /**
-     * Alias for {@link #RAM}.
-     */
-    public static final DAType RAM_STORE = alias("RAM_STORE", RAM);
-    /**
      * Like RAM, but without a backing file: loading and flushing are no-ops.
      */
     public static final DAType RAM_NOFILE = register("RAM_NOFILE", true, false, false,
@@ -54,10 +50,6 @@ public class DAType {
      */
     public static final DAType RAM_INT = register("RAM_INT", true, true, false,
             (name, location, segmentSize, preload) -> new RAMIntDataAccess(name, location, true, segmentSize));
-    /**
-     * Alias for {@link #RAM_INT}.
-     */
-    public static final DAType RAM_INT_STORE = alias("RAM_INT_STORE", RAM_INT);
     /**
      * Like RAM_INT, but without a backing file.
      */
@@ -131,16 +123,22 @@ public class DAType {
     public static final DAType MMAP_RO = register("MMAP_RO", false, true, true,
                 (name, location, segmentSize, preload) -> new MMapDataAccess(name, location, false, segmentSize));
 
+    static {
+        // legacy names, still accepted in configs
+        alias("RAM_STORE", RAM);
+        alias("RAM_INT_STORE", RAM_INT);
+    }
+
     private final String name;
     private final boolean onHeap;
-    private final boolean storing;
+    private final boolean fileBacked;
     private final boolean mmap;
     private final DataAccessFactory factory;
 
-    private DAType(String name, boolean onHeap, boolean storing, boolean mmap, DataAccessFactory factory) {
+    private DAType(String name, boolean onHeap, boolean fileBacked, boolean mmap, DataAccessFactory factory) {
         this.name = name;
         this.onHeap = onHeap;
-        this.storing = storing;
+        this.fileBacked = fileBacked;
         this.mmap = mmap;
         this.factory = factory;
     }
@@ -150,12 +148,12 @@ public class DAType {
      * and can be used everywhere a predefined type can, e.g. in the graph.dataaccess configuration.
      *
      * @param onHeap  true if the data resides in the JVM heap
-     * @param storing true if there is a backing file, see {@link #isStoring()}
+     * @param fileBacked true if there is a backing file, see {@link #isFileBacked()}
      * @param mmap    true if the backing file is memory mapped instead of being read and written
      *                explicitly on loadExisting and flush
      */
-    public static DAType register(String name, boolean onHeap, boolean storing, boolean mmap, DataAccessFactory factory) {
-        DAType type = new DAType(toUpperCase(name), onHeap, storing, mmap, factory);
+    public static DAType register(String name, boolean onHeap, boolean fileBacked, boolean mmap, DataAccessFactory factory) {
+        DAType type = new DAType(toUpperCase(name), onHeap, fileBacked, mmap, factory);
         if (REGISTRY.putIfAbsent(type.name, type) != null)
             throw new IllegalArgumentException("DAType " + type.name + " is already registered");
         return type;
@@ -194,8 +192,8 @@ public class DAType {
     /**
      * @return true if there is a backing file, false for purely in-memory (NOFILE) data.
      */
-    public boolean isStoring() {
-        return storing;
+    public boolean isFileBacked() {
+        return fileBacked;
     }
 
     /**

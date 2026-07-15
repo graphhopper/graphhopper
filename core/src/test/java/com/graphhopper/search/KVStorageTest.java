@@ -274,12 +274,12 @@ public class KVStorageTest {
     public void testFlush() {
         Helper.removeDir(new File(location));
 
-        KVStorage index = new KVStorage(new GHDirectory(location, DAType.RAM_STORE).create(), true);
+        KVStorage index = new KVStorage(new GHDirectory(location, DAType.RAM).create(), true);
         long pointer = index.add(createMap("", "test"));
         index.flush();
         index.close();
 
-        index = new KVStorage(new GHDirectory(location, DAType.RAM_STORE), true);
+        index = new KVStorage(new GHDirectory(location, DAType.RAM), true);
         assertTrue(index.loadExisting());
         assertEquals("test", index.get(pointer, "", false));
         // make sure bytePointer is correctly set after loadExisting
@@ -296,7 +296,7 @@ public class KVStorageTest {
     public void testLoadKeys() {
         Helper.removeDir(new File(location));
 
-        KVStorage index = new KVStorage(new GHDirectory(location, DAType.RAM_STORE).create(), true).create(1000);
+        KVStorage index = new KVStorage(new GHDirectory(location, DAType.RAM).create(), true).create(1000);
         long pointerA = index.add(createMap("c", "test value"));
         assertEquals(2, index.getKeys().size());
         long pointerB = index.add(createMap("a", "value", "b", "another value"));
@@ -305,7 +305,7 @@ public class KVStorageTest {
         index.flush();
         index.close();
 
-        index = new KVStorage(new GHDirectory(location, DAType.RAM_STORE), true);
+        index = new KVStorage(new GHDirectory(location, DAType.RAM), true);
         assertTrue(index.loadExisting());
         assertEquals("[, c, a, b]", index.getKeys().toString());
         assertEquals("test value", index.get(pointerA, "c", false));
@@ -370,7 +370,7 @@ public class KVStorageTest {
     public void testRandom() {
         final long seed = new Random().nextLong();
         try {
-            KVStorage index = new KVStorage(new GHDirectory(location, DAType.RAM_STORE).create(), true).create(1000);
+            KVStorage index = new KVStorage(new GHDirectory(location, DAType.RAM).create(), true).create(1000);
             Random random = new Random(seed);
             List<String> keys = createRandomStringList(random, "_key", 100);
             List<Integer> values = createRandomMap(random, 500);
@@ -399,7 +399,7 @@ public class KVStorageTest {
             index.flush();
             index.close();
 
-            index = new KVStorage(new GHDirectory(location, DAType.RAM_STORE).create(), true);
+            index = new KVStorage(new GHDirectory(location, DAType.RAM).create(), true);
             assertTrue(index.loadExisting());
             for (int i = 0; i < size; i++) {
                 Map<String, KValue> map = index.getAll(pointers.get(i));

@@ -36,7 +36,7 @@ For CGIAR the default URL is `https://srtm.csi.cgiar.org/wp-content/uploads/file
 and this is only accessibly if you specify the [full zip file](https://srtm.csi.cgiar.org/wp-content/uploads/files/srtm_5x5/TIFF//srtm_01_02.zip).
 
 If the geographical area is small and you need a faster import you can change the default MMAP setting to:
-`graph.elevation.dataaccess: RAM_STORE`
+`graph.elevation.dataaccess: RAM`
 
 ### Manual Download Required
 

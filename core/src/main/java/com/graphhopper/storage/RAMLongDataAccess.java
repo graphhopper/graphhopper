@@ -30,11 +30,11 @@ import java.util.Arrays;
  */
 public class RAMLongDataAccess extends AbstractDataAccess {
     private long[] data = new long[0];
-    private boolean store;
+    private final boolean fileBacked;
 
-    public RAMLongDataAccess(String name, String location, boolean store, int segmentSize) {
+    public RAMLongDataAccess(String name, String location, boolean fileBacked, int segmentSize) {
         super(name, location, segmentSize);
-        this.store = store;
+        this.fileBacked = fileBacked;
     }
 
     @Override
@@ -78,7 +78,7 @@ public class RAMLongDataAccess extends AbstractDataAccess {
             throw new IllegalStateException("already initialized");
         if (isClosed())
             throw new IllegalStateException("already closed");
-        if (!store)
+        if (!fileBacked)
             return false;
 
         File file = new File(getFullName());
@@ -127,7 +127,7 @@ public class RAMLongDataAccess extends AbstractDataAccess {
     public void flush() {
         if (closed)
             throw new IllegalStateException("already closed");
-        if (!store)
+        if (!fileBacked)
             return;
 
         try {
@@ -286,12 +286,8 @@ public class RAMLongDataAccess extends AbstractDataAccess {
     }
 
     @Override
-    public boolean isStoring() {
-        return store;
+    public boolean isFileBacked() {
+        return fileBacked;
     }
 
-    @Override
-    public DAType getType() {
-        return isStoring() ? DAType.RAM_LONG : DAType.RAM_LONG_NOFILE;
-    }
 }

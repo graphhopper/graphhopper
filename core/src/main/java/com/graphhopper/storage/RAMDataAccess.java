@@ -34,27 +34,19 @@ import java.util.Arrays;
  */
 public class RAMDataAccess extends AbstractDataAccess {
     private byte[][] segments = new byte[0][];
-    private boolean store;
+    private final boolean fileBacked;
     // we could also use UNSAFE but it is not really faster (see #3005)
     private static final VarHandle INT = MethodHandles.byteArrayViewVarHandle(int[].class, ByteOrder.LITTLE_ENDIAN).withInvokeExactBehavior();
     private static final VarHandle SHORT = MethodHandles.byteArrayViewVarHandle(short[].class, ByteOrder.LITTLE_ENDIAN).withInvokeExactBehavior();
 
-    public RAMDataAccess(String name, String location, boolean store, int segmentSize) {
+    public RAMDataAccess(String name, String location, boolean fileBacked, int segmentSize) {
         super(name, location, segmentSize);
-        this.store = store;
-    }
-
-    /**
-     * @param store true if in-memory data should be saved when calling flush
-     */
-    public RAMDataAccess store(boolean store) {
-        this.store = store;
-        return this;
+        this.fileBacked = fileBacked;
     }
 
     @Override
-    public boolean isStoring() {
-        return store;
+    public boolean isFileBacked() {
+        return fileBacked;
     }
 
     @Override
@@ -102,7 +94,7 @@ public class RAMDataAccess extends AbstractDataAccess {
         if (isClosed())
             throw new IllegalStateException("already closed");
 
-        if (!store)
+        if (!fileBacked)
             return false;
 
         File file = new File(getFullName());
@@ -142,7 +134,7 @@ public class RAMDataAccess extends AbstractDataAccess {
         if (closed)
             throw new IllegalStateException("already closed");
 
-        if (!store)
+        if (!fileBacked)
             return;
 
         try {
@@ -312,8 +304,4 @@ public class RAMDataAccess extends AbstractDataAccess {
         return segments.length;
     }
 
-    @Override
-    public DAType getType() {
-        return isStoring() ? DAType.RAM : DAType.RAM_NOFILE;
-    }
 }

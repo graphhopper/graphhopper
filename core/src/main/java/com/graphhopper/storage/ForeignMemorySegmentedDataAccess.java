@@ -46,11 +46,11 @@ public final class ForeignMemorySegmentedDataAccess extends AbstractDataAccess {
     private static final VarHandle BYTE_VH = BYTE_LAYOUT.varHandle();
 
     private MemorySegment[] segments = new MemorySegment[0];
-    private boolean store;
+    private final boolean fileBacked;
 
-    public ForeignMemorySegmentedDataAccess(String name, String location, boolean store, int segmentSize) {
+    public ForeignMemorySegmentedDataAccess(String name, String location, boolean fileBacked, int segmentSize) {
         super(name, location, segmentSize);
-        this.store = store;
+        this.fileBacked = fileBacked;
     }
 
     private static MemorySegment allocateNativeSegment(int size) {
@@ -100,7 +100,7 @@ public final class ForeignMemorySegmentedDataAccess extends AbstractDataAccess {
             throw new IllegalStateException("already initialized");
         if (isClosed())
             throw new IllegalStateException("already closed");
-        if (!store)
+        if (!fileBacked)
             return false;
 
         File file = new File(getFullName());
@@ -139,7 +139,7 @@ public final class ForeignMemorySegmentedDataAccess extends AbstractDataAccess {
     public void flush() {
         if (closed)
             throw new IllegalStateException("already closed");
-        if (!store)
+        if (!fileBacked)
             return;
 
         try {
@@ -311,13 +311,8 @@ public final class ForeignMemorySegmentedDataAccess extends AbstractDataAccess {
     }
 
     @Override
-    public boolean isStoring() {
-        return store;
+    public boolean isFileBacked() {
+        return fileBacked;
     }
 
-    @Override
-    public DAType getType() {
-        // off-heap foreign memory (segmented); there is no dedicated segmented-foreign constant
-        return isStoring() ? DAType.FOREIGN_ANON : DAType.FOREIGN_ANON_NOFILE;
-    }
 }

@@ -151,7 +151,7 @@ public class GraphHopperProfileTest {
     private GraphHopper createHopper() {
         final GraphHopper hopper = new GraphHopper();
         hopper.setGraphHopperLocation(GH_LOCATION);
-        hopper.setStoreOnFlush(false);
+        hopper.setFileBacked(false);
         return hopper;
     }
 

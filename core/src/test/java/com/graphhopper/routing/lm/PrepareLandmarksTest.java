@@ -185,7 +185,7 @@ public class PrepareLandmarksTest {
         String fileStr = "./target/tmp-lm";
         Helper.removeDir(new File(fileStr));
 
-        Directory dir = new GHDirectory(fileStr, DAType.RAM_STORE).create();
+        Directory dir = new GHDirectory(fileStr, DAType.RAM).create();
         Weighting weighting = new SpeedWeighting(speedEnc);
         LMConfig lmConfig = new LMConfig("car", weighting);
         PrepareLandmarks plm = new PrepareLandmarks(dir, graph, encodingManager, lmConfig, 2);
@@ -199,7 +199,7 @@ public class PrepareLandmarksTest {
         }), Arrays.toString(plm.getLandmarkStorage().getLandmarks(1)));
         assertEquals(13333, Math.round(plm.getLandmarkStorage().getFromWeight(0, 1) * expectedFactor));
 
-        dir = new GHDirectory(fileStr, DAType.RAM_STORE);
+        dir = new GHDirectory(fileStr, DAType.RAM);
         plm = new PrepareLandmarks(dir, graph, encodingManager, lmConfig, 2);
         assertTrue(plm.loadExisting());
         assertEquals(expectedFactor, plm.getLandmarkStorage().getFactor(), 1e-6);

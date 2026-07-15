@@ -137,7 +137,7 @@ public interface DataAccess extends Closeable {
     int getSegments();
 
     /**
-     * @return the data access type of this object.
+     * @return true if there is a backing file, false for purely in-memory data.
      */
-    DAType getType();
+    boolean isFileBacked();
 }

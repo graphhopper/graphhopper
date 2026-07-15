@@ -227,18 +227,13 @@ public class GraphHopper {
     }
 
     /**
-     * Only valid option for in-memory graph and if you e.g. want to disable store on flush for unit
-     * tests. Specify storeOnFlush to true if you want that existing data will be loaded FROM disc
-     * and all in-memory data will be flushed TO disc after flush is called e.g. while OSM import.
-     *
-     * @param storeOnFlush true by default
+     * Only valid option for the in-memory graph: if true (default) existing data will be loaded
+     * FROM disc and all in-memory data will be flushed TO disc when flush is called, e.g. after
+     * the OSM import. Disable e.g. for unit tests.
      */
-    public GraphHopper setStoreOnFlush(boolean storeOnFlush) {
+    public GraphHopper setFileBacked(boolean fileBacked) {
         ensureNotLoaded();
-        if (storeOnFlush)
-            dataAccessDefaultType = DAType.RAM;
-        else
-            dataAccessDefaultType = DAType.RAM_NOFILE;
+        dataAccessDefaultType = fileBacked ? DAType.RAM : DAType.RAM_NOFILE;
         return this;
     }
 
@@ -833,7 +828,7 @@ public class GraphHopper {
 
         GHLock lock = null;
         try {
-            if (directory.getDefaultType().isStoring()) {
+            if (directory.getDefaultType().isFileBacked()) {
                 lockFactory.setLockDir(new File(ghLocation));
                 lock = lockFactory.create(fileLockName, true);
                 if (!lock.tryLock())
@@ -1228,7 +1223,7 @@ public class GraphHopper {
         try {
             // create locks only if writes are allowed, if they are not allowed a lock cannot be created
             // (e.g. on a read only filesystem locks would fail)
-            if (directory.getDefaultType().isStoring() && isAllowWrites()) {
+            if (directory.getDefaultType().isFileBacked() && isAllowWrites()) {
                 lockFactory.setLockDir(new File(ghLocation));
                 lock = lockFactory.create(fileLockName, false);
                 if (!lock.tryLock())

@@ -53,7 +53,7 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
 
     @Test
     public void testSave_and_fileFormat() {
-        graph = newGHStorage(new GHDirectory(defaultGraphLoc, DAType.RAM_STORE), true).create(defaultSize);
+        graph = newGHStorage(new GHDirectory(defaultGraphLoc, DAType.RAM), true).create(defaultSize);
         NodeAccess na = graph.getNodeAccess();
         assertTrue(na.is3D());
         na.setNode(0, 10, 10, 0);
@@ -110,7 +110,7 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
 
     @Test
     public void testSave_and_Freeze() {
-        graph = newGHStorage(new GHDirectory(defaultGraphLoc, DAType.RAM_STORE), true).create(defaultSize);
+        graph = newGHStorage(new GHDirectory(defaultGraphLoc, DAType.RAM), true).create(defaultSize);
         graph.edge(1, 0);
         graph.freeze();
 
@@ -166,12 +166,12 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
 
     @Test
     public void testDoThrowExceptionIfDimDoesNotMatch() {
-        graph = newGHStorage(new GHDirectory(defaultGraphLoc, DAType.RAM_STORE), false);
+        graph = newGHStorage(new GHDirectory(defaultGraphLoc, DAType.RAM), false);
         graph.create(1000);
         graph.flush();
         graph.close();
 
-        graph = newGHStorage(new GHDirectory(defaultGraphLoc, DAType.RAM_STORE), true);
+        graph = newGHStorage(new GHDirectory(defaultGraphLoc, DAType.RAM), true);
         assertThrows(Exception.class, () -> graph.loadExisting());
     }
 

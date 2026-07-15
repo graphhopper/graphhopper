@@ -142,7 +142,7 @@ public abstract class AbstractDataAccess implements DataAccess {
         return getFullName();
     }
 
-    public boolean isStoring() {
+    public boolean isFileBacked() {
         return true;
     }
 

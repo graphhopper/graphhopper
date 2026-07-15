@@ -105,11 +105,11 @@ public final class ForeignMemoryDataAccess extends AbstractDataAccess {
     private Arena arena;
     private MemorySegment segment = MemorySegment.NULL;
     private long capacity;
-    private final boolean store;
+    private final boolean fileBacked;
 
-    public ForeignMemoryDataAccess(String name, String location, boolean store, int segmentSize) {
+    public ForeignMemoryDataAccess(String name, String location, boolean fileBacked, int segmentSize) {
         super(name, location, segmentSize);
-        this.store = store;
+        this.fileBacked = fileBacked;
     }
 
     @Override
@@ -164,7 +164,7 @@ public final class ForeignMemoryDataAccess extends AbstractDataAccess {
             throw new IllegalStateException("already initialized");
         if (isClosed())
             throw new IllegalStateException("already closed");
-        if (!store)
+        if (!fileBacked)
             return false;
 
         File file = new File(getFullName());
@@ -211,7 +211,7 @@ public final class ForeignMemoryDataAccess extends AbstractDataAccess {
     public void flush() {
         if (closed)
             throw new IllegalStateException("already closed");
-        if (!store)
+        if (!fileBacked)
             return;
 
         try {
@@ -385,12 +385,8 @@ public final class ForeignMemoryDataAccess extends AbstractDataAccess {
     }
 
     @Override
-    public boolean isStoring() {
-        return store;
+    public boolean isFileBacked() {
+        return fileBacked;
     }
 
-    @Override
-    public DAType getType() {
-        return isStoring() ? DAType.FOREIGN_ANON : DAType.FOREIGN_ANON_NOFILE;
-    }
 }

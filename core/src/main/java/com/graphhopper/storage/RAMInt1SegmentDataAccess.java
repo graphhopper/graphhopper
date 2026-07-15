@@ -28,11 +28,11 @@ import java.util.Arrays;
  */
 public class RAMInt1SegmentDataAccess extends AbstractDataAccess {
     private int[] data = new int[0];
-    private final boolean store;
+    private final boolean fileBacked;
 
-    public RAMInt1SegmentDataAccess(String name, String location, boolean store, int segmentSize) {
+    public RAMInt1SegmentDataAccess(String name, String location, boolean fileBacked, int segmentSize) {
         super(name, location, segmentSize);
-        this.store = store;
+        this.fileBacked = fileBacked;
     }
 
     @Override
@@ -76,7 +76,7 @@ public class RAMInt1SegmentDataAccess extends AbstractDataAccess {
         if (isClosed())
             throw new IllegalStateException("already closed");
 
-        if (!store)
+        if (!fileBacked)
             return false;
 
         File file = new File(getFullName());
@@ -119,7 +119,7 @@ public class RAMInt1SegmentDataAccess extends AbstractDataAccess {
     public void flush() {
         if (closed)
             throw new IllegalStateException("already closed");
-        if (!store)
+        if (!fileBacked)
             return;
 
         try {
@@ -225,8 +225,8 @@ public class RAMInt1SegmentDataAccess extends AbstractDataAccess {
     }
 
     @Override
-    public boolean isStoring() {
-        return store;
+    public boolean isFileBacked() {
+        return fileBacked;
     }
 
     @Override
@@ -234,8 +234,4 @@ public class RAMInt1SegmentDataAccess extends AbstractDataAccess {
         return true;
     }
 
-    @Override
-    public DAType getType() {
-        return isStoring() ? DAType.RAM_INT_1SEG : DAType.RAM_INT_1SEG_NOFILE;
-    }
 }
