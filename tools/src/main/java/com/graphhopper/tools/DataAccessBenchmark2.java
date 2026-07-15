@@ -100,8 +100,8 @@ public class DataAccessBenchmark2 {
         for (int i = 0; i < INDEX_COUNT; i++) indices[i] = (i & (RECORDS - 1)) * FIELDS * 4;
         long totalBytes = (long) RECORDS * FIELDS * 4;
         da = type.equals("ramint")
-                ? new RAMInt1SegmentDataAccess("bench", storageDir, false, -1)
-                : new ForeignMemoryDataAccess("bench", storageDir, false, -1);
+                ? new RAMInt1SegmentDataAccess("bench", storageDir, false, false, -1)
+                : new ForeignMemoryDataAccess("bench", storageDir, false, false, -1);
         da.create(totalBytes);
         for (long j = 0; j < (long) RECORDS * FIELDS; j++) da.setInt(j * 4, rng.nextInt());
     }

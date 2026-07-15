@@ -33,11 +33,13 @@ public class RAMIntDataAccess extends AbstractDataAccess {
     private int[][] segments = new int[0][];
     private boolean closed = false;
     private final boolean fileBacked;
+    private final boolean readOnly;
     private int segmentSizeIntsPower;
 
-    public RAMIntDataAccess(String name, String location, boolean fileBacked, int segmentSize) {
+    public RAMIntDataAccess(String name, String location, boolean fileBacked, boolean readOnly, int segmentSize) {
         super(name, location, segmentSize);
         this.fileBacked = fileBacked;
+        this.readOnly = readOnly;
     }
 
     @Override
@@ -131,6 +133,8 @@ public class RAMIntDataAccess extends AbstractDataAccess {
         if (closed) {
             throw new IllegalStateException("already closed");
         }
+        if (readOnly)
+            throw new IllegalStateException("Cannot flush the read-only DataAccess " + getFullName());
         if (!fileBacked) {
             return;
         }

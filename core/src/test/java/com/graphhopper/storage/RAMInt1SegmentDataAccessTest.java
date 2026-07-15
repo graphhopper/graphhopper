@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 public class RAMInt1SegmentDataAccessTest extends DataAccessTest {
     @Override
     public DataAccess createDataAccess(String name, int segmentSize) {
-        return new RAMInt1SegmentDataAccess(name, directory, true, segmentSize);
+        return new RAMInt1SegmentDataAccess(name, directory, true, false, segmentSize);
     }
 
     @Override

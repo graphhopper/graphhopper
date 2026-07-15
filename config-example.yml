@@ -243,6 +243,10 @@ graphhopper:
   # graph.dataaccess.mmap.preload.nodes_ch_car.*: 100
   # graph.dataaccess.mmap.preload.nodes_ch.*: 30
 
+  # For a read-only filesystem (works with any dataaccess type): no lock file is created, the graph
+  # files are never modified and memory mapped types map them read-only (enforced by the OS).
+  # graph.read_only: true
+
   #### Custom Areas ####
 
   # GraphHopper reads GeoJSON polygon files including their properties from this directory and makes them available

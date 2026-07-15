@@ -106,7 +106,7 @@ public class GraphHopper {
     private boolean sortGraph = true;
     private boolean elevation = false;
     private LockFactory lockFactory = new NativeFSLockFactory();
-    private boolean allowWrites = true;
+    private boolean readOnly = false;
     private boolean fullyLoaded = false;
     private final OSMReaderConfig osmReaderConfig = new OSMReaderConfig();
     // for routing
@@ -413,16 +413,17 @@ public class GraphHopper {
         this.locationIndex = locationIndex;
     }
 
-    public boolean isAllowWrites() {
-        return allowWrites;
+    public boolean isReadOnly() {
+        return readOnly;
     }
 
     /**
-     * Specifies if it is allowed for GraphHopper to write. E.g. for read only filesystems it is not
-     * possible to create a lock file and so we can avoid write locks.
+     * Marks the graph folder as read-only, e.g. for a read-only filesystem: no lock file is
+     * created, the backing files are never modified and memory mapped DataAccess objects map them
+     * read-only (enforced by the OS).
      */
-    public GraphHopper setAllowWrites(boolean allowWrites) {
-        this.allowWrites = allowWrites;
+    public GraphHopper setReadOnly(boolean readOnly) {
+        this.readOnly = readOnly;
         return this;
     }
 
@@ -488,6 +489,7 @@ public class GraphHopper {
 
         String daTypeString = ghConfig.getString("graph.dataaccess.default_type", ghConfig.getString("graph.dataaccess", "RAM"));
         dataAccessDefaultType = DAType.fromString(daTypeString);
+        readOnly = ghConfig.getBool("graph.read_only", readOnly);
         for (Map.Entry<String, Object> entry : ghConfig.asPMap().toMap().entrySet()) {
             if (entry.getKey().startsWith("graph.dataaccess.type."))
                 dataAccessConfig.put(entry.getKey().substring("graph.dataaccess.type.".length()), entry.getValue().toString());
@@ -1209,21 +1211,17 @@ public class GraphHopper {
             }
         }
 
-        // todo: this does not really belong here, we abuse the load method to derive the dataAccessDefaultType setting from others
-        if (!allowWrites && dataAccessDefaultType.isMMap())
-            dataAccessDefaultType = DAType.FOREIGN_MMAP_RO;
-
         if (!new File(ghLocation).exists())
             // there is just nothing to load
             return false;
 
-        GHDirectory directory = new GHDirectory(ghLocation, dataAccessDefaultType);
+        GHDirectory directory = new GHDirectory(ghLocation, dataAccessDefaultType).setReadOnly(readOnly);
         directory.configure(dataAccessConfig);
         GHLock lock = null;
         try {
             // create locks only if writes are allowed, if they are not allowed a lock cannot be created
             // (e.g. on a read only filesystem locks would fail)
-            if (directory.getDefaultType().isFileBacked() && isAllowWrites()) {
+            if (directory.getDefaultType().isFileBacked() && !readOnly) {
                 lockFactory.setLockDir(new File(ghLocation));
                 lock = lockFactory.create(fileLockName, false);
                 if (!lock.tryLock())
@@ -1681,8 +1679,8 @@ public class GraphHopper {
     }
 
     protected void ensureWriteAccess() {
-        if (!allowWrites)
-            throw new IllegalStateException("Writes are not allowed!");
+        if (readOnly)
+            throw new IllegalStateException("Writes are not allowed: read-only mode was explicitly enabled");
     }
 
     private void setFullyLoaded() {

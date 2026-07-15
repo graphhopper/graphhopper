@@ -39,89 +39,83 @@ public class DAType {
      * See RAMDataAccess.
      */
     public static final DAType RAM = register("RAM", true, true, false,
-            (name, location, segmentSize, preload) -> new RAMDataAccess(name, location, true, segmentSize));
+            (name, location, segmentSize, preload, readOnly) -> new RAMDataAccess(name, location, true, readOnly, segmentSize));
     /**
      * Like RAM, but without a backing file: loading and flushing are no-ops.
      */
     public static final DAType RAM_NOFILE = register("RAM_NOFILE", true, false, false,
-            (name, location, segmentSize, preload) -> new RAMDataAccess(name, location, false, segmentSize));
+            (name, location, segmentSize, preload, readOnly) -> new RAMDataAccess(name, location, false, false, segmentSize));
     /**
      * Optimized RAM DA type for integer access. The set and getBytes methods cannot be used.
      */
     public static final DAType RAM_INT = register("RAM_INT", true, true, false,
-            (name, location, segmentSize, preload) -> new RAMIntDataAccess(name, location, true, segmentSize));
+            (name, location, segmentSize, preload, readOnly) -> new RAMIntDataAccess(name, location, true, readOnly, segmentSize));
     /**
      * Like RAM_INT, but without a backing file.
      */
     public static final DAType RAM_INT_NOFILE = register("RAM_INT_NOFILE", true, false, false,
-            (name, location, segmentSize, preload) -> new RAMIntDataAccess(name, location, false, segmentSize));
+            (name, location, segmentSize, preload, readOnly) -> new RAMIntDataAccess(name, location, false, false, segmentSize));
     /**
      * Like RAM_INT, but backed by a single contiguous int[] for maximum read speed.
      * Not a good fit if the array needs to be resized frequently. Limited to Integer.MAX_VALUE ints
      * No support for short,byte and bytes.
      */
     public static final DAType RAM_INT_1SEG = register("RAM_INT_1SEG", true, true, false,
-            (name, location, segmentSize, preload) -> new RAMInt1SegmentDataAccess(name, location, true, segmentSize));
+            (name, location, segmentSize, preload, readOnly) -> new RAMInt1SegmentDataAccess(name, location, true, readOnly, segmentSize));
     /**
      * Like RAM_INT_1SEG, but without a backing file.
      */
     public static final DAType RAM_INT_1SEG_NOFILE = register("RAM_INT_1SEG_NOFILE", true, false, false,
-            (name, location, segmentSize, preload) -> new RAMInt1SegmentDataAccess(name, location, false, segmentSize));
+            (name, location, segmentSize, preload, readOnly) -> new RAMInt1SegmentDataAccess(name, location, false, false, segmentSize));
     /**
      * Like RAM, but backed by a single contiguous byte[] (no segment math). Limited to ~2GB.
      * The on-heap equivalent of FOREIGN_ANON. See RAM1SegmentDataAccess.
      */
     public static final DAType RAM_1SEG = register("RAM_1SEG", true, true, false,
-            (name, location, segmentSize, preload) -> new RAM1SegmentDataAccess(name, location, true, segmentSize));
+            (name, location, segmentSize, preload, readOnly) -> new RAM1SegmentDataAccess(name, location, true, readOnly, segmentSize));
     /**
      * Like RAM_1SEG, but without a backing file.
      */
     public static final DAType RAM_1SEG_NOFILE = register("RAM_1SEG_NOFILE", true, false, false,
-            (name, location, segmentSize, preload) -> new RAM1SegmentDataAccess(name, location, false, segmentSize));
+            (name, location, segmentSize, preload, readOnly) -> new RAM1SegmentDataAccess(name, location, false, false, segmentSize));
     /**
      * Like RAM_1SEG (single contiguous heap array, full byte access), but backed by a {@code long[]}
      * instead of a {@code byte[]} to allow up to ~16GB. See RAMLongDataAccess.
      */
     public static final DAType RAM_LONG = register("RAM_LONG", true, true, false,
-            (name, location, segmentSize, preload) -> new RAMLongDataAccess(name, location, true, segmentSize));
+            (name, location, segmentSize, preload, readOnly) -> new RAMLongDataAccess(name, location, true, readOnly, segmentSize));
     /**
      * Like RAM_LONG, but without a backing file.
      */
     public static final DAType RAM_LONG_NOFILE = register("RAM_LONG_NOFILE", true, false, false,
-            (name, location, segmentSize, preload) -> new RAMLongDataAccess(name, location, false, segmentSize));
+            (name, location, segmentSize, preload, readOnly) -> new RAMLongDataAccess(name, location, false, false, segmentSize));
     /**
      * Off-heap DA object backed by anonymous (foreign) memory - the equivalent of RAM but outside
      * the JVM heap. Loads from and flushes to disc. See ForeignMemoryDataAccess.
      */
     public static final DAType FOREIGN_ANON = register("FOREIGN_ANON", false, true, false,
-            (name, location, segmentSize, preload) -> new ForeignMemoryDataAccess(name, location, true, segmentSize));
+            (name, location, segmentSize, preload, readOnly) -> new ForeignMemoryDataAccess(name, location, true, readOnly, segmentSize));
     /**
      * Like FOREIGN_ANON, but without a backing file.
      */
     public static final DAType FOREIGN_ANON_NOFILE = register("FOREIGN_ANON_NOFILE", false, false, false,
-            (name, location, segmentSize, preload) -> new ForeignMemoryDataAccess(name, location, false, segmentSize));
+            (name, location, segmentSize, preload, readOnly) -> new ForeignMemoryDataAccess(name, location, false, false, segmentSize));
     /**
      * Memory mapped DA object backed by the Foreign Memory API. See MMapForeignMemoryDataAccess.
+     * In read-only mode the MMapForeignReadOnlyDataAccess with a fast path due to all-final fields
+     * is used instead: the file must already exist on disk, there is no "loadExisting returned
+     * false" state as the factory fails fast.
      */
     public static final DAType FOREIGN_MMAP = register("FOREIGN_MMAP", false, true, true,
-            (name, location, segmentSize, preload) -> new MMapForeignMemoryDataAccess(name, location, true, segmentSize));
-    /**
-     * Read-only memory mapped DA object (Foreign Memory API) with a fast path due to all-final
-     * fields. The file must already exist on disk; there is no "loadExisting returned false" state
-     * as the factory fails fast. To avoid write access useful for reading on mobile or embedded
-     * data stores. See MMapForeignReadOnlyDataAccess.
-     */
-    public static final DAType FOREIGN_MMAP_RO = register("FOREIGN_MMAP_RO", false, true, true,
-            (name, location, segmentSize, preload) -> MMapForeignReadOnlyDataAccess.load(name, location, segmentSize, preload > 0));
+            (name, location, segmentSize, preload, readOnly) -> readOnly
+                    ? MMapForeignReadOnlyDataAccess.load(name, location, segmentSize, preload > 0)
+                    : new MMapForeignMemoryDataAccess(name, location, true, segmentSize));
     /**
      * Legacy memory mapped DA object backed by ByteBuffers instead of the Foreign Memory API.
      * Kept usable as a fallback and for comparison. See MMapDataAccess.
      */
     public static final DAType MMAP = register("MMAP", false, true, true,
-            (name, location, segmentSize, preload) -> new MMapDataAccess(name, location, true, segmentSize));
-
-    public static final DAType MMAP_RO = register("MMAP_RO", false, true, true,
-                (name, location, segmentSize, preload) -> new MMapDataAccess(name, location, false, segmentSize));
+            (name, location, segmentSize, preload, readOnly) -> new MMapDataAccess(name, location, !readOnly, segmentSize));
 
     static {
         // legacy names, still accepted in configs
@@ -167,26 +161,34 @@ public class DAType {
 
     /**
      * Returns the registered DAType for the given name, e.g. "RAM", "RAM_INT_1SEG", "RAM_NOFILE",
-     * "MMAP", "FOREIGN_MMAP" or "FOREIGN_MMAP_RO".
+     * "MMAP" or "FOREIGN_MMAP".
      */
     public static DAType fromString(String dataAccess) {
         dataAccess = toUpperCase(dataAccess);
         if (dataAccess.contains("SYNC"))
             throw new IllegalArgumentException("SYNC option is no longer supported, see #982");
         DAType type = REGISTRY.get(dataAccess);
-        if (type == null)
+        if (type == null) {
+            if (dataAccess.endsWith("_RO"))
+                throw new IllegalArgumentException("DAType " + dataAccess + " no longer exists, use "
+                        + dataAccess.substring(0, dataAccess.length() - "_RO".length())
+                        + " with the system-wide read-only mode instead (graph.read_only)");
             throw new IllegalArgumentException("Unknown DAType " + dataAccess + ", supported: " + REGISTRY.keySet());
+        }
         return type;
     }
 
     /**
      * Creates the DataAccess object of this type.
      *
-     * @param preload percentage of the backing file to load into physical memory upfront, so far
-     *                only used by FOREIGN_MMAP_RO
+     * @param preload  percentage of the backing file to load into physical memory upfront, so far
+     *                 only used by the read-only FOREIGN_MMAP
+     * @param readOnly if true the backing file must not be modified: memory mapped types map it
+     *                 read-only (enforced by the OS) and all other types throw on flush. Useful
+     *                 for read-only filesystems, see GraphHopper.setReadOnly.
      */
-    public DataAccess create(String name, String location, int segmentSize, int preload) {
-        return factory.create(name, location, segmentSize, preload);
+    public DataAccess create(String name, String location, int segmentSize, int preload, boolean readOnly) {
+        return factory.create(name, location, segmentSize, preload, readOnly);
     }
 
     /**
@@ -229,8 +231,8 @@ public class DAType {
     @FunctionalInterface
     public interface DataAccessFactory {
         /**
-         * @see DAType#create(String, String, int, int)
+         * @see DAType#create(String, String, int, int, boolean)
          */
-        DataAccess create(String name, String location, int segmentSize, int preload);
+        DataAccess create(String name, String location, int segmentSize, int preload, boolean readOnly);
     }
 }

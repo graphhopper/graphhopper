@@ -35,13 +35,15 @@ import java.util.Arrays;
 public class RAMDataAccess extends AbstractDataAccess {
     private byte[][] segments = new byte[0][];
     private final boolean fileBacked;
+    private final boolean readOnly;
     // we could also use UNSAFE but it is not really faster (see #3005)
     private static final VarHandle INT = MethodHandles.byteArrayViewVarHandle(int[].class, ByteOrder.LITTLE_ENDIAN).withInvokeExactBehavior();
     private static final VarHandle SHORT = MethodHandles.byteArrayViewVarHandle(short[].class, ByteOrder.LITTLE_ENDIAN).withInvokeExactBehavior();
 
-    public RAMDataAccess(String name, String location, boolean fileBacked, int segmentSize) {
+    public RAMDataAccess(String name, String location, boolean fileBacked, boolean readOnly, int segmentSize) {
         super(name, location, segmentSize);
         this.fileBacked = fileBacked;
+        this.readOnly = readOnly;
     }
 
     @Override
@@ -134,6 +136,8 @@ public class RAMDataAccess extends AbstractDataAccess {
         if (closed)
             throw new IllegalStateException("already closed");
 
+        if (readOnly)
+            throw new IllegalStateException("Cannot flush the read-only DataAccess " + getFullName());
         if (!fileBacked)
             return;
 

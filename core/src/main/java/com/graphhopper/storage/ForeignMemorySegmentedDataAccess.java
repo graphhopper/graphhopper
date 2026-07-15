@@ -47,10 +47,12 @@ public final class ForeignMemorySegmentedDataAccess extends AbstractDataAccess {
 
     private MemorySegment[] segments = new MemorySegment[0];
     private final boolean fileBacked;
+    private final boolean readOnly;
 
-    public ForeignMemorySegmentedDataAccess(String name, String location, boolean fileBacked, int segmentSize) {
+    public ForeignMemorySegmentedDataAccess(String name, String location, boolean fileBacked, boolean readOnly, int segmentSize) {
         super(name, location, segmentSize);
         this.fileBacked = fileBacked;
+        this.readOnly = readOnly;
     }
 
     private static MemorySegment allocateNativeSegment(int size) {
@@ -139,6 +141,8 @@ public final class ForeignMemorySegmentedDataAccess extends AbstractDataAccess {
     public void flush() {
         if (closed)
             throw new IllegalStateException("already closed");
+        if (readOnly)
+            throw new IllegalStateException("Cannot flush the read-only DataAccess " + getFullName());
         if (!fileBacked)
             return;
 

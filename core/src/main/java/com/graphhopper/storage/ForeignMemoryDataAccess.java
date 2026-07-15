@@ -106,10 +106,12 @@ public final class ForeignMemoryDataAccess extends AbstractDataAccess {
     private MemorySegment segment = MemorySegment.NULL;
     private long capacity;
     private final boolean fileBacked;
+    private final boolean readOnly;
 
-    public ForeignMemoryDataAccess(String name, String location, boolean fileBacked, int segmentSize) {
+    public ForeignMemoryDataAccess(String name, String location, boolean fileBacked, boolean readOnly, int segmentSize) {
         super(name, location, segmentSize);
         this.fileBacked = fileBacked;
+        this.readOnly = readOnly;
     }
 
     @Override
@@ -211,6 +213,8 @@ public final class ForeignMemoryDataAccess extends AbstractDataAccess {
     public void flush() {
         if (closed)
             throw new IllegalStateException("already closed");
+        if (readOnly)
+            throw new IllegalStateException("Cannot flush the read-only DataAccess " + getFullName());
         if (!fileBacked)
             return;
 

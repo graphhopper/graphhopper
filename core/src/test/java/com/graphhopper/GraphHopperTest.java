@@ -322,7 +322,7 @@ public class GraphHopperTest {
                 setOSMFile(MONACO).
                 setProfiles(profile).
                 setFileBacked(true).
-                setAllowWrites(false);
+                setReadOnly(true);
         if (ch) {
             hopper.getCHPreparationHandler()
                     .setCHProfiles(new CHProfile(profileName));

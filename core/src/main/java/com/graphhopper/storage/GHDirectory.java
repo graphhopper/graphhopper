@@ -40,6 +40,7 @@ public class GHDirectory implements Directory {
     private final Map<String, Integer> mmapPreloads = new LinkedHashMap<>();
     private final Map<String, DataAccess> map = Collections.synchronizedMap(new HashMap<>());
     private final int defaultSegmentSize;
+    private boolean readOnly;
 
     public GHDirectory(String _location, DAType defaultType) {
         this(_location, defaultType, AbstractDataAccess.SEGMENT_SIZE_DEFAULT);
@@ -138,7 +139,7 @@ public class GHDirectory implements Directory {
             // per file name
             throw new IllegalStateException("DataAccess " + name + " has already been created");
 
-        DataAccess da = type.create(name, location, segmentSize, getPreload(name));
+        DataAccess da = type.create(name, location, segmentSize, getPreload(name), readOnly);
         map.put(name, da);
         return da;
     }
@@ -193,6 +194,16 @@ public class GHDirectory implements Directory {
 
     public boolean isFileBacked() {
         return typeFallback.isFileBacked();
+    }
+
+    /**
+     * Marks this Directory as read-only, e.g. for a read-only filesystem: the backing files of all
+     * DataAccess objects created afterwards must not be modified. Memory mapped types map them
+     * read-only (enforced by the OS), all other types throw on flush.
+     */
+    public GHDirectory setReadOnly(boolean readOnly) {
+        this.readOnly = readOnly;
+        return this;
     }
 
     @Override

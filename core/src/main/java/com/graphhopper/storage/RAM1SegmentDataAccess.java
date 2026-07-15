@@ -38,10 +38,12 @@ public class RAM1SegmentDataAccess extends AbstractDataAccess {
 
     private byte[] data = new byte[0];
     private final boolean fileBacked;
+    private final boolean readOnly;
 
-    public RAM1SegmentDataAccess(String name, String location, boolean fileBacked, int segmentSize) {
+    public RAM1SegmentDataAccess(String name, String location, boolean fileBacked, boolean readOnly, int segmentSize) {
         super(name, location, segmentSize);
         this.fileBacked = fileBacked;
+        this.readOnly = readOnly;
     }
 
     @Override
@@ -121,6 +123,8 @@ public class RAM1SegmentDataAccess extends AbstractDataAccess {
     public void flush() {
         if (closed)
             throw new IllegalStateException("already closed");
+        if (readOnly)
+            throw new IllegalStateException("Cannot flush the read-only DataAccess " + getFullName());
         if (!fileBacked)
             return;
 

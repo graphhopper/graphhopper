@@ -31,10 +31,12 @@ import java.util.Arrays;
 public class RAMLongDataAccess extends AbstractDataAccess {
     private long[] data = new long[0];
     private final boolean fileBacked;
+    private final boolean readOnly;
 
-    public RAMLongDataAccess(String name, String location, boolean fileBacked, int segmentSize) {
+    public RAMLongDataAccess(String name, String location, boolean fileBacked, boolean readOnly, int segmentSize) {
         super(name, location, segmentSize);
         this.fileBacked = fileBacked;
+        this.readOnly = readOnly;
     }
 
     @Override
@@ -127,6 +129,8 @@ public class RAMLongDataAccess extends AbstractDataAccess {
     public void flush() {
         if (closed)
             throw new IllegalStateException("already closed");
+        if (readOnly)
+            throw new IllegalStateException("Cannot flush the read-only DataAccess " + getFullName());
         if (!fileBacked)
             return;
 
