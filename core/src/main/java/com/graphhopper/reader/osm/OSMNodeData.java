@@ -20,8 +20,8 @@ package com.graphhopper.reader.osm;
 
 import com.carrotsearch.hppc.LongScatterSet;
 import com.carrotsearch.hppc.LongSet;
+import com.graphhopper.coll.BlockedBTreeLongLongMap;
 import com.graphhopper.coll.GHLongLongBTree;
-import com.graphhopper.coll.InterleavedEytzingerLongLongMap;
 import com.graphhopper.coll.LongLongMap;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.search.KVStorage;
@@ -104,6 +104,13 @@ class OSMNodeData {
         return idsByOsmNodeIds.get(osmNodeId);
     }
 
+    /**
+     * Between pass1 and pass2 the OSM-node-id key set is fixed: move it from the mutable B-tree into a
+     * read-optimal static blocked B-tree ({@link BlockedBTreeLongLongMap}, the "B-tree layout" from
+     * Khuong &amp; Morin, arXiv:1509.05053). It packs keys into cache-line blocks so a lookup incurs far
+     * fewer cold cache misses than the B-tree, which speeds up the get()-heavy pass2. pass2's few
+     * artificial split nodes go to a small overflow B-tree.
+     */
     void freeze() {
         if (!(idsByOsmNodeIds instanceof GHLongLongBTree btree))
             return;
@@ -113,7 +120,7 @@ class OSMNodeData {
         btree.fillSorted(sortedKeys, sortedValues);
         idsByOsmNodeIds = null;
         LongLongMap overflow = new GHLongLongBTree(200, 8, EMPTY_NODE);
-        idsByOsmNodeIds = new InterleavedEytzingerLongLongMap(sortedKeys, sortedValues, EMPTY_NODE, overflow);
+        idsByOsmNodeIds = new BlockedBTreeLongLongMap(sortedKeys, sortedValues, EMPTY_NODE, overflow);
     }
 
     public static boolean isTowerNode(long id) {
