@@ -57,7 +57,9 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         setSurfaceSpeed("gravel", 12);
         setSurfaceSpeed("ice", MIN_SPEED);
         setSurfaceSpeed("metal", 10);
-        setSurfaceSpeed("mud", 10);
+        setSurfaceSpeed("mud", PUSHING_SECTION_SPEED);
+        setSurfaceSpeed("clay", 8); // dry and passable much of the year, but rougher than dirt
+        setSurfaceSpeed("laterite", 6); // as clay, but with a slippery near-frictionless phase when wet
         setSurfaceSpeed("pebblestone", 14);
         setSurfaceSpeed("salt", PUSHING_SECTION_SPEED);
         setSurfaceSpeed("sand", PUSHING_SECTION_SPEED);

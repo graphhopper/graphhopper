@@ -38,6 +38,8 @@ public class RacingBikeAverageSpeedParser extends BikeCommonAverageSpeedParser {
         setSurfaceSpeed("ice", MIN_SPEED);
         setSurfaceSpeed("metal", MIN_SPEED);
         setSurfaceSpeed("mud", MIN_SPEED);
+        setSurfaceSpeed("clay", MIN_SPEED);
+        setSurfaceSpeed("laterite", MIN_SPEED);
         setSurfaceSpeed("pebblestone", PUSHING_SECTION_SPEED);
         setSurfaceSpeed("salt", MIN_SPEED);
         setSurfaceSpeed("sand", MIN_SPEED);

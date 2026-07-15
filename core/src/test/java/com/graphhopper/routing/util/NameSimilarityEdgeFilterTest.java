@@ -44,7 +44,6 @@ public class NameSimilarityEdgeFilterTest {
     public void testAccept() {
         EdgeFilter edgeFilter = createNameSimilarityEdgeFilter("Laufamholzstraße 154 Nürnberg");
         EdgeIteratorState edge = createTestEdgeIterator("Laufamholzstraße, ST1333");
-        edge.getName();
         assertTrue(edgeFilter.accept(edge));
 
         edge = createTestEdgeIterator("Hauptstraße");
@@ -86,6 +85,17 @@ public class NameSimilarityEdgeFilterTest {
 
         edge = createTestEdgeIterator("Hauptstr.");
         assertTrue(edgeFilter.accept(edge));
+    }
+
+    @Test
+    public void testDoNotRemoveCertainSmallImportantWords() {
+        // see point=53.5456765,10.2848122
+        EdgeFilter edgeFilter = createNameSimilarityEdgeFilter("Am Röhbrook");
+        EdgeIteratorState edge = createTestEdgeIterator("Am Röhbrook");
+        assertTrue(edgeFilter.accept(edge));
+
+        edge = createTestEdgeIterator("Röhbrookring");
+        assertFalse(edgeFilter.accept(edge));
     }
 
     @Test

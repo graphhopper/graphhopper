@@ -28,6 +28,7 @@ import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -55,7 +56,7 @@ import static com.graphhopper.util.Helper.toLowerCase;
  */
 public class NameSimilarityEdgeFilter implements EdgeFilter {
 
-    private static final Map<String, String> DEFAULT_REWRITE_MAP = new HashMap<String, String>() {{
+    private static final Map<String, String> DEFAULT_REWRITE_MAP = new HashMap<>() {{
         // Words with 2 characters like "Dr" (Drive) will be ignored, so it is not required to list them here.
         // Words with 3 and more characters should be listed here to remove or rename them.
         for (String remove : Arrays.asList(
@@ -87,6 +88,7 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
         put("se", "southeast");
         put("sw", "southwest");
     }};
+    private static final List<String> acceptShortWordsList = List.of("am", "im", "an");
     private static final Pattern WORD_CHAR = Pattern.compile("\\p{LD}+");
     private static final JaroWinkler jaroWinkler = new JaroWinkler();
     private static final double JARO_WINKLER_ACCEPT_FACTOR = .9;
@@ -129,7 +131,9 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
             if (normalizedToken.isEmpty())
                 continue;
             // Ignore matching short phrases like de, la, ... except it is a number
-            if (normalizedToken.length() > 2) {
+            if (acceptShortWordsList.contains(normalizedToken)) {
+                sb.append(normalizedToken);
+            } else if (normalizedToken.length() > 2) {
                 sb.append(normalizedToken);
             } else {
                 if (Character.isDigit(normalizedToken.charAt(0)) && (normalizedToken.length() == 1 || Character.isDigit(normalizedToken.charAt(1)))) {
