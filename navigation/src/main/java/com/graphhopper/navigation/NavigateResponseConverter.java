@@ -674,11 +674,12 @@ public class NavigateResponseConverter {
                 maneuver.put("type", "depart");
                 break;
             case ROUNDABOUT:
-                if (instruction.getSign() == Instruction.ROUNDABOUT_USE) {
+                if (instruction.getSign() == Instruction.ROUNDABOUT_EXIT) {
+                    maneuver.put("type", "exit roundabout");
+                } else {
                     maneuver.put("exit", ((RoundaboutInstruction) instruction).getExitNumber());
                     maneuver.put("type", "roundabout");
-                } else
-                    maneuver.put("type", "exit roundabout");
+                }
                 break;
             default: // i.e. ManeuverType.TURN:
                 maneuver.put("type", "turn");
