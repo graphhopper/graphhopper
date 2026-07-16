@@ -208,6 +208,7 @@ public class NavigateResponseConverterTest {
 
         JsonNode roundaboutStep = steps.get(6);
         assertEquals("roundabout", roundaboutStep.get("maneuver").get("type").asText());
+        assertEquals(2, roundaboutStep.get("maneuver").get("exit").asInt());
         voiceInstructions = roundaboutStep.get("voiceInstructions");
         assertEquals(1, voiceInstructions.size());
         voiceInstruction = voiceInstructions.get(0);
@@ -215,8 +216,9 @@ public class NavigateResponseConverterTest {
         assertEquals("exit the roundabout, then at roundabout, take exit 2 onto CG-3",
                 voiceInstruction.get("announcement").asText());
 
-        // the additional exit step
+        // the additional exit step carries the exit number too so that clients can show it while inside the roundabout
         assertEquals("exit roundabout", steps.get(7).get("maneuver").get("type").asText());
+        assertEquals(2, steps.get(7).get("maneuver").get("exit").asInt());
     }
 
     @Test

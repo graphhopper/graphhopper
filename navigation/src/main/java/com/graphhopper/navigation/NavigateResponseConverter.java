@@ -674,12 +674,9 @@ public class NavigateResponseConverter {
                 maneuver.put("type", "depart");
                 break;
             case ROUNDABOUT:
-                if (instruction.getSign() == Instruction.ROUNDABOUT_EXIT) {
-                    maneuver.put("type", "exit roundabout");
-                } else {
-                    maneuver.put("exit", ((RoundaboutInstruction) instruction).getExitNumber());
-                    maneuver.put("type", "roundabout");
-                }
+                // include the exit number in both instructions to make it easier for the navigation clients (OSRM does this too)
+                maneuver.put("exit", ((RoundaboutInstruction) instruction).getExitNumber());
+                maneuver.put("type", instruction.getSign() == Instruction.ROUNDABOUT_EXIT ? "exit roundabout" : "roundabout");
                 break;
             default: // i.e. ManeuverType.TURN:
                 maneuver.put("type", "turn");

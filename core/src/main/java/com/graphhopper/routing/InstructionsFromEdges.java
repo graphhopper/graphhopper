@@ -271,9 +271,10 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             if (rInstr.getExitNumber() == 0) rInstr.increaseExitNumber();
 
             if (includeRoundaboutExits) {
-                prevInstruction = new RoundaboutInstruction(ROUNDABOUT_EXIT, name, new PointList(10, nodeAccess.is3D()));
-                // do not set radian and dir of rotation as exit should not have to know exit_number, turn_angle or dirOfRotation.
-
+                // do not set radian and dir of rotation as exit should not have to know turn_angle or dirOfRotation.
+                // the exit number is carried over so that navigation clients can show it while inside the roundabout
+                prevInstruction = new RoundaboutInstruction(ROUNDABOUT_EXIT, name, new PointList(10, nodeAccess.is3D())).
+                        setExitNumber(rInstr.getExitNumber());
                 ways.add(prevInstruction);
             }
 
