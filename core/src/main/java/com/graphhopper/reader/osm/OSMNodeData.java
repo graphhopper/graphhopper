@@ -18,6 +18,7 @@
 
 package com.graphhopper.reader.osm;
 
+import com.carrotsearch.hppc.LongArrayList;
 import com.carrotsearch.hppc.LongScatterSet;
 import com.carrotsearch.hppc.LongSet;
 import com.graphhopper.coll.BlockedBTreeLongLongMap;
@@ -31,9 +32,9 @@ import com.graphhopper.util.PointAccess;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.GHPoint3D;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
-import java.util.function.LongUnaryOperator;
 import java.util.stream.Collectors;
 
 /**
@@ -63,7 +64,14 @@ class OSMNodeData {
     // this map stores our internal node id for each OSM node.
     // For tower nodes, the value is a negative id (see towerNodeToId).
     // For pillar nodes, the value is a packed lat/lon long (see packLatLon).
+    // null until freeze(): during pass1 we only append raw observations to nodeObs.
     private LongLongMap idsByOsmNodeIds;
+
+    // pass1 append buffer: one packed long per way-node occurrence, (osmNodeId << 1) | isEnd.
+    // No dedup/merge during pass1 - that is deferred to freeze() (sort + merge runs), which is the
+    // only place the node type of a shared node can be decided. Appending is O(1) and cache-friendly,
+    // unlike the per-occurrence B-tree putOrCompute it replaces.
+    private LongArrayList nodeObs;
 
     private final PointAccess towerNodes;
 
@@ -80,11 +88,8 @@ class OSMNodeData {
     private long nextArtificialOSMNodeId = -Long.MAX_VALUE;
 
     public OSMNodeData(PointAccess nodeAccess, Directory directory) {
-        // We use a b-tree that can store as many entries as there are longs. A tree is also more
-        // memory efficient, because there is no waste for empty entries, and it also avoids
-        // allocating big arrays when growing the size.
-        // 8 bytes per value to hold packed lat/lon for pillar nodes (and negative tower IDs)
-        idsByOsmNodeIds = new GHLongLongBTree(200, 8, EMPTY_NODE);
+        // pass1 just appends one long per way-node occurrence; freeze() turns it into the read map.
+        nodeObs = new LongArrayList(1 << 20);
         towerNodes = nodeAccess;
 
         nodeTagIndicesByOsmNodeIds = new GHLongLongBTree(200, 4, -1);
@@ -105,20 +110,48 @@ class OSMNodeData {
     }
 
     /**
-     * Between pass1 and pass2 the OSM-node-id key set is fixed: move it from the mutable B-tree into a
-     * read-optimal static blocked B-tree ({@link BlockedBTreeLongLongMap}, the "B-tree layout" from
-     * Khuong &amp; Morin, arXiv:1509.05053). It packs keys into cache-line blocks so a lookup incurs far
-     * fewer cold cache misses than the B-tree, which speeds up the get()-heavy pass2. pass2's few
+     * Called once between pass1 and pass2, when the OSM-node-id key set is fixed. Turns the appended
+     * pass1 occurrences ({@link #nodeObs}) into the read map: sort by id, merge each run of equal ids
+     * into its final node type ({@link #mergeNodeType}), and build a read-optimal static blocked B-tree
+     * ({@link BlockedBTreeLongLongMap}, the "B-tree layout" from Khuong &amp; Morin, arXiv:1509.05053)
+     * from the resulting sorted (key,value) arrays. No B-tree is built during pass1 at all. pass2's few
      * artificial split nodes go to a small overflow B-tree.
      */
     void freeze() {
-        if (!(idsByOsmNodeIds instanceof GHLongLongBTree btree))
+        if (idsByOsmNodeIds != null)
             return;
-        int size = Math.toIntExact(btree.getSize());
-        long[] sortedKeys = new long[size];
-        long[] sortedValues = new long[size];
-        btree.fillSorted(sortedKeys, sortedValues);
-        idsByOsmNodeIds = null;
+        // sort the appended occurrences so equal osm node ids become adjacent runs
+        int m = nodeObs.size();
+        long[] obs = nodeObs.buffer;
+        Arrays.sort(obs, 0, m);
+
+        // count unique keys
+        int u = 0;
+        for (int i = 0; i < m; ) {
+            long key = obs[i] >>> 1;
+            u++;
+            do i++; while (i < m && (obs[i] >>> 1) == key);
+        }
+
+        // merge each run of equal ids into its final node type
+        long[] sortedKeys = new long[u];
+        long[] sortedValues = new long[u];
+        int w = 0;
+        for (int i = 0; i < m; ) {
+            long key = obs[i] >>> 1;
+            long v = EMPTY_NODE;
+            do {
+                long nt = ((obs[i] & 1L) == 1L) ? END_NODE : INTERMEDIATE_NODE;
+                v = (v == EMPTY_NODE) ? nt : mergeNodeType(v, nt);
+                i++;
+            } while (i < m && (obs[i] >>> 1) == key);
+            sortedKeys[w] = key;
+            sortedValues[w] = v;
+            w++;
+        }
+        nodeObs = null;
+        obs = null;
+
         LongLongMap overflow = new GHLongLongBTree(200, 8, EMPTY_NODE);
         idsByOsmNodeIds = new BlockedBTreeLongLongMap(sortedKeys, sortedValues, EMPTY_NODE, overflow);
     }
@@ -137,15 +170,31 @@ class OSMNodeData {
         return id > CONNECTION_NODE || id < JUNCTION_NODE;
     }
 
-    public void setOrUpdateNodeType(long osmNodeId, long newNodeType, LongUnaryOperator nodeTypeUpdate) {
-        idsByOsmNodeIds.putOrCompute(osmNodeId, newNodeType, nodeTypeUpdate);
+    /**
+     * Records one occurrence of an OSM node in a way. {@code newNodeType} is {@link #END_NODE} for the
+     * first/last node of the way and {@link #INTERMEDIATE_NODE} otherwise. During pass1 we only append
+     * the observation; the actual node type (which needs to see all occurrences of the node) is decided
+     * in {@link #freeze()}.
+     */
+    public void setOrUpdateNodeType(long osmNodeId, long newNodeType) {
+        // pack the single isEnd bit next to the id; sorting by this groups a node's occurrences together
+        nodeObs.add((osmNodeId << 1) | (newNodeType == END_NODE ? 1L : 0L));
+    }
+
+    // Merge rule for a node seen more than once, reconstructing the pass1 putOrCompute in
+    // WaySegmentParser: two ways sharing only their END node -> connection node, otherwise junction.
+    // isEnd of an occurrence is encoded as newNodeType == END_NODE, so this is a pure function of the
+    // previous value and the new occurrence's type -> the merge is order-independent and deferrable.
+    private static long mergeNodeType(long prev, long newNodeType) {
+        return (prev == END_NODE && newNodeType == END_NODE) ? CONNECTION_NODE : JUNCTION_NODE;
     }
 
     /**
      * @return the number of mapped nodes (tower + pillar, but also including pillar nodes that were converted to tower)
      */
     public long getNodeCount() {
-        return idsByOsmNodeIds.getSize();
+        // before freeze() this is the raw occurrence count (with duplicates); after, the unique count
+        return idsByOsmNodeIds != null ? idsByOsmNodeIds.getSize() : nodeObs.size();
     }
 
     public long getTaggedNodeCount() {
@@ -299,7 +348,8 @@ class OSMNodeData {
     }
 
     public void release() {
-        idsByOsmNodeIds.clear();
+        if (idsByOsmNodeIds != null)
+            idsByOsmNodeIds.clear();
         nodeTagIndicesByOsmNodeIds.clear();
         nodeKVStorage.clear();
         nodesToBeSplit.clear();

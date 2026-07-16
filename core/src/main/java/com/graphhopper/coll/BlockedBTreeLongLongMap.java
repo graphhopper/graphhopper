@@ -31,7 +31,7 @@ import java.util.function.LongUnaryOperator;
  *
  * <p>Values live in a parallel array {@link #bv} with the same block layout, fetched once after the
  * key is located. Immutable key set (values mutable in place); keys inserted afterwards go to a small
- * {@code overflow} map. Built from a sorted snapshot ({@link GHLongLongBTree#fillSorted}). All frozen
+ * {@code overflow} map. Built from sorted (key, value) arrays. All frozen
  * keys are real (positive) OSM node ids, so {@link Long#MAX_VALUE} is used as the empty-slot sentinel.
  * Int-indexed (keys array ~n longs), capped at ~2^31 keys.
  */

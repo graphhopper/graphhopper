@@ -94,11 +94,11 @@ public class WaySegmentParser {
         readOSM(osmFile, new Pass1Handler(), new SkipOptions(true, false, false));
         LOGGER.info("pass1 - finished, took: {}", sw1.stop().getTimeString());
 
+        nodeData.freeze();
+
         long nodes = nodeData.getNodeCount();
 
         LOGGER.info("Creating graph. Node count (pillar+tower): " + nodes + ", " + Helper.getMemInfo());
-
-        nodeData.freeze();
 
         LOGGER.info("pass2 - start");
         StopWatch sw2 = new StopWatch().start();
@@ -148,10 +148,8 @@ public class WaySegmentParser {
             for (LongCursor node : way.getNodes()) {
                 final boolean isEnd = node.index == 0 || node.index == way.getNodes().size() - 1;
                 final long osmId = node.value;
-                nodeData.setOrUpdateNodeType(osmId,
-                        isEnd ? END_NODE : INTERMEDIATE_NODE,
-                        // connection nodes are those where (only) two OSM ways are connected at their ends
-                        prev -> prev == END_NODE && isEnd ? CONNECTION_NODE : JUNCTION_NODE);
+                // just record the occurrence; the node type is decided in OSMNodeData.freeze()
+                nodeData.setOrUpdateNodeType(osmId, isEnd ? END_NODE : INTERMEDIATE_NODE);
             }
         }
 
