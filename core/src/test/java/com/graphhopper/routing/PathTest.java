@@ -233,7 +233,7 @@ public class PathTest {
                 .calcPath(1, 8);
         assertTrue(p.isFound());
         assertEquals("[1, 2, 3, 4, 5, 8]", p.calcNodes().toString());
-        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, mixedEncodingManager, tr);
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, mixedEncodingManager, tr, true);
         // Test instructions
         List<String> tmpList = getTurnDescriptions(wayList);
         assertEquals(List.of("continue onto MainStreet 1 2",
@@ -249,7 +249,7 @@ public class PathTest {
         // case of continuing a street through a roundabout
         p = new Dijkstra(roundaboutGraph.g, weighting, TraversalMode.NODE_BASED).
                 calcPath(1, 7);
-        wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, mixedEncodingManager, tr);
+        wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, mixedEncodingManager, tr, true);
         tmpList = getTurnDescriptions(wayList);
         assertEquals(List.of("continue onto MainStreet 1 2",
                         "at roundabout, take exit 2 onto MainStreet 4 7",
@@ -268,7 +268,7 @@ public class PathTest {
         Path p = new Dijkstra(roundaboutGraph.g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(2, 8);
         assertTrue(p.isFound());
-        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, mixedEncodingManager, tr);
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, mixedEncodingManager, tr, true);
         List<String> tmpList = getTurnDescriptions(wayList);
         assertEquals(List.of("at roundabout, take exit 3 onto 5-8",
                         "exit the roundabout onto 5-8",
@@ -283,7 +283,7 @@ public class PathTest {
         Path p = new Dijkstra(roundaboutGraph.g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(6, 8);
         assertTrue(p.isFound());
-        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, mixedEncodingManager, tr);
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, mixedEncodingManager, tr, true);
         List<String> tmpList = getTurnDescriptions(wayList);
         assertEquals(List.of("continue onto 3-6",
                         "at roundabout, take exit 3 onto 5-8",
@@ -655,7 +655,7 @@ public class PathTest {
         Path p = new Dijkstra(roundaboutGraph.g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(1, 8);
         assertTrue(p.isFound());
-        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, mixedEncodingManager, tr);
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, mixedEncodingManager, tr, true);
         List<String> tmpList = getTurnDescriptions(wayList);
         assertEquals(List.of("continue onto MainStreet 1 2",
                         "at roundabout, take exit 2 onto 5-8",
@@ -734,7 +734,7 @@ public class PathTest {
         Path p = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED)
                 .calcPath(6, 11);
         assertTrue(p.isFound());
-        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, carManager, tr);
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, carManager, tr, true);
         List<String> tmpList = getTurnDescriptions(wayList);
         assertEquals(List.of("at roundabout, take exit 1 onto MainStreet 1 11",
                         "exit the roundabout onto MainStreet 1 11",
@@ -850,7 +850,7 @@ public class PathTest {
         Path p = new Dijkstra(roundaboutGraph.g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(1, 8);
         assertTrue(p.isFound());
-        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, mixedEncodingManager, tr);
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, p.graph, weighting, mixedEncodingManager, tr, true);
         List<String> tmpList = getTurnDescriptions(wayList);
         assertEquals(List.of("continue onto MainStreet 1 2",
                         "at roundabout, take exit 1 onto 5-8",

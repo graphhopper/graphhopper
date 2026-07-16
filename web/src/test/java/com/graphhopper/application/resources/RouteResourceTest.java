@@ -245,12 +245,26 @@ public class RouteResourceTest {
         assertTrue(res.getDistance() < 21000, "distance wasn't correct:" + res.getDistance());
 
         InstructionList instructions = res.getInstructions();
-        assertEquals(35, instructions.size());
+        assertEquals(25, instructions.size());
         assertEquals("Continue onto la Callisa", instructions.get(0).getTurnDescription(null));
         assertEquals("At roundabout, take exit 2", instructions.get(4).getTurnDescription(null));
+        assertEquals(true, instructions.get(4).getExtraInfoJSON().get("exited"));
+        assertEquals(false, instructions.get(23).getExtraInfoJSON().get("exited"));
+
+        // with roundabout_exits=true there is an additional instruction for every exited roundabout
+        rsp = hopper.route(new GHRequest().
+                setProfile("my_car").
+                addPoint(new GHPoint(42.554851, 1.536198)).
+                addPoint(new GHPoint(42.531896, 1.553278)).
+                addPoint(new GHPoint(42.510071, 1.548128)).
+                putHint("roundabout_exits", true));
+        assertTrue(rsp.getErrors().isEmpty(), rsp.getErrors().toString());
+        instructions = rsp.getBest().getInstructions();
+        assertEquals(35, instructions.size());
+        assertEquals("At roundabout, take exit 2", instructions.get(4).getTurnDescription(null));
+        assertEquals(false, instructions.get(4).getExtraInfoJSON().get("exited"));
         assertEquals(true, instructions.get(5).getExtraInfoJSON().get("exited"));
         assertNull(instructions.get(10).getExtraInfoJSON().get("exited"));
-        assertEquals(false, instructions.get(33).getExtraInfoJSON().get("exited"));
     }
 
     @Test
