@@ -1,6 +1,6 @@
 ### 12.0 [not yet released]
 
-- roundabout instruction is now split into two instructions: the first one has turn_angle and the second has exited==true
+- the roundabout instruction can now be split into two instructions: the first one has turn_angle and the second has exited==true. Enable via the request parameter roundabout_exits=true (default is false)
 - weightings are now expected to return whole numbers, the built-in weightings (most importantly CustomWeighting) now return x10 their previous value (#3297) 
 - the default value for `graph.elevation.clear` changed to false as is much better when the cached tiles can be reused
 - artificial tag way_distance does no longer include the elevation => renamed to way_distance_2d

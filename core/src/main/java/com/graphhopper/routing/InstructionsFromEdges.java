@@ -118,7 +118,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
 
     public static InstructionList calcInstructions(Path path, Graph graph, Weighting weighting,
                                                    EncodedValueLookup evLookup, final Translation tr) {
-        return calcInstructions(path, graph, weighting, evLookup, tr, true);
+        return calcInstructions(path, graph, weighting, evLookup, tr, false);
     }
 
     public static InstructionList calcInstructions(Path path, Graph graph, Weighting weighting,

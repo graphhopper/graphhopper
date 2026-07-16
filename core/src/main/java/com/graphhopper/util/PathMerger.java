@@ -50,7 +50,7 @@ public class PathMerger {
     private final Weighting weighting;
 
     private boolean enableInstructions = true;
-    private boolean includeRoundaboutExitInstruction = true;
+    private boolean includeRoundaboutExitInstruction = false;
     private boolean enableViaPointInstructions = true;
     private boolean simplifyResponse = true;
     private RamerDouglasPeucker ramerDouglasPeucker = RDP;
