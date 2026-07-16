@@ -94,9 +94,4 @@ public class NavigateResourceTest {
         assertEquals(4, bearings.size());
         assertEquals(100, bearings.get(1), .1);
     }
-
-//    public static WebTarget clientTarget(DropwizardAppExtension<? extends Configuration> app, String path) {
-//        String url = "http://localhost:" + app.getLocalPort() + path;
-//        return app.client().target(url);
-//    }
 }
