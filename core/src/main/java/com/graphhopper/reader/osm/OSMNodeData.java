@@ -18,12 +18,12 @@
 
 package com.graphhopper.reader.osm;
 
-import com.carrotsearch.hppc.LongArrayList;
 import com.carrotsearch.hppc.LongScatterSet;
 import com.carrotsearch.hppc.LongSet;
 import com.graphhopper.coll.BlockedBTreeLongLongMap;
 import com.graphhopper.coll.GHLongLongBTree;
 import com.graphhopper.coll.LongLongMap;
+import com.graphhopper.coll.PagedLongArray;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.search.KVStorage;
 import com.graphhopper.storage.Directory;
@@ -32,7 +32,6 @@ import com.graphhopper.util.PointAccess;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.GHPoint3D;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -70,8 +69,8 @@ class OSMNodeData {
     // pass1 append buffer: one packed long per way-node occurrence, (osmNodeId << 1) | isEnd.
     // No dedup/merge during pass1 - that is deferred to freeze() (sort + merge runs), which is the
     // only place the node type of a shared node can be decided. Appending is O(1) and cache-friendly,
-    // unlike the per-occurrence B-tree putOrCompute it replaces.
-    private LongArrayList nodeObs;
+    // unlike the per-occurrence B-tree putOrCompute it replaces. Paged, so it is planet-scale.
+    private PagedLongArray nodeObs;
 
     private final PointAccess towerNodes;
 
@@ -89,7 +88,7 @@ class OSMNodeData {
 
     public OSMNodeData(PointAccess nodeAccess, Directory directory) {
         // pass1 just appends one long per way-node occurrence; freeze() turns it into the read map.
-        nodeObs = new LongArrayList(1 << 20);
+        nodeObs = new PagedLongArray();
         towerNodes = nodeAccess;
 
         nodeTagIndicesByOsmNodeIds = new GHLongLongBTree(200, 4, -1);
@@ -120,40 +119,54 @@ class OSMNodeData {
     void freeze() {
         if (idsByOsmNodeIds != null)
             return;
-        // sort the appended occurrences so equal osm node ids become adjacent runs
-        int m = nodeObs.size();
-        long[] obs = nodeObs.buffer;
-        Arrays.sort(obs, 0, m);
-
-        // count unique keys
-        int u = 0;
-        for (int i = 0; i < m; ) {
-            long key = obs[i] >>> 1;
-            u++;
-            do i++; while (i < m && (obs[i] >>> 1) == key);
-        }
-
-        // merge each run of equal ids into its final node type
-        long[] sortedKeys = new long[u];
-        long[] sortedValues = new long[u];
-        int w = 0;
-        for (int i = 0; i < m; ) {
-            long key = obs[i] >>> 1;
-            long v = EMPTY_NODE;
-            do {
-                long nt = ((obs[i] & 1L) == 1L) ? END_NODE : INTERMEDIATE_NODE;
-                v = (v == EMPTY_NODE) ? nt : mergeNodeType(v, nt);
-                i++;
-            } while (i < m && (obs[i] >>> 1) == key);
-            sortedKeys[w] = key;
-            sortedValues[w] = v;
-            w++;
-        }
+        // sort the appended occurrences so equal osm node ids become adjacent runs (radix scratch is
+        // released before the map is built, so peak memory is ~ 8*occurrences + 16*uniqueKeys bytes)
+        final long m = nodeObs.size();
+        final PagedLongArray obs = PagedLongArray.radixSort(nodeObs, m);
         nodeObs = null;
-        obs = null;
 
+        // count unique keys (needed to size the blocked B-tree)
+        long u = 0;
+        for (long i = 0; i < m; ) {
+            long key = obs.get(i) >>> 1;
+            u++;
+            do i++; while (i < m && (obs.get(i) >>> 1) == key);
+        }
+
+        // stream the sorted occurrences, merging each run of equal ids into its final node type, and
+        // feed them straight into the blocked B-tree - no intermediate sorted key/value arrays
+        BlockedBTreeLongLongMap.SortedSource src = new BlockedBTreeLongLongMap.SortedSource() {
+            long i = 0, curKey, curValue;
+
+            @Override
+            public boolean next() {
+                if (i >= m)
+                    return false;
+                long key = obs.get(i) >>> 1;
+                long v = EMPTY_NODE;
+                do {
+                    long nt = ((obs.get(i) & 1L) == 1L) ? END_NODE : INTERMEDIATE_NODE;
+                    v = (v == EMPTY_NODE) ? nt : mergeNodeType(v, nt);
+                    i++;
+                } while (i < m && (obs.get(i) >>> 1) == key);
+                curKey = key;
+                curValue = v;
+                return true;
+            }
+
+            @Override
+            public long key() {
+                return curKey;
+            }
+
+            @Override
+            public long value() {
+                return curValue;
+            }
+        };
         LongLongMap overflow = new GHLongLongBTree(200, 8, EMPTY_NODE);
-        idsByOsmNodeIds = new BlockedBTreeLongLongMap(sortedKeys, sortedValues, EMPTY_NODE, overflow);
+        idsByOsmNodeIds = new BlockedBTreeLongLongMap(u, src, EMPTY_NODE, overflow);
+        obs.release();
     }
 
     public static boolean isTowerNode(long id) {

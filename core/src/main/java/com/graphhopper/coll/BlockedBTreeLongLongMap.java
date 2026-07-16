@@ -26,87 +26,118 @@ import java.util.function.LongUnaryOperator;
  * blocks form an implicit {@code (B+1)}-ary search tree in BFS order: block {@code k}'s children are
  * blocks {@code (B+1)*k+1 .. (B+1)*k+(B+1)}. A lookup loads exactly one cache line per level
  * ({@code log_{B+1}(n)} levels) and scans the {@code B} keys within it in L1 - far fewer cold cache
- * misses per lookup than a binary layout (which touches one line per binary level). On a cold,
- * planet-sized array that miss count is the dominant cost, so it is markedly faster than a B-tree.
+ * misses per lookup than a binary layout, so it is markedly faster than a B-tree on a cold array.
  *
- * <p>Values live in a parallel array {@link #bv} with the same block layout, fetched once after the
- * key is located. Immutable key set (values mutable in place); keys inserted afterwards go to a small
- * {@code overflow} map. Built from sorted (key, value) arrays. All frozen
- * keys are real (positive) OSM node ids, so {@link Long#MAX_VALUE} is used as the empty-slot sentinel.
- * Int-indexed (keys array ~n longs), capped at ~2^31 keys.
+ * <p>Keys and values live in paged {@code long[][]} arrays (long-indexed), so the map is planet-scale
+ * like {@link GHLongLongBTree} and not limited to {@code 2^31} entries. It is built by streaming a
+ * sorted {@link SortedSource} - the caller never has to materialise sorted key/value arrays, which
+ * keeps peak memory low. Immutable key set (values mutable in place); keys inserted afterwards go to a
+ * small {@code overflow} map. All frozen keys are real (positive) OSM node ids, so
+ * {@link Long#MAX_VALUE} is the empty-slot sentinel (compares greater than any real key).
  */
 public class BlockedBTreeLongLongMap implements LongLongMap {
     static final int B = 8;                 // keys per block = one 64-byte cache line
     private static final long INF = Long.MAX_VALUE;
+    // page size must be a multiple of B so a block never straddles a page boundary
+    private static final int PAGE_BITS = 22;
+    private static final int PAGE_SIZE = 1 << PAGE_BITS;
+    private static final int PAGE_MASK = PAGE_SIZE - 1;
+
+    /** Sorted (ascending key) stream of (key, value) pairs used to build the map. */
+    public interface SortedSource {
+        /** advance to the next pair; false when exhausted */
+        boolean next();
+
+        long key();
+
+        long value();
+    }
 
     private final long emptyValue;
-    private final int n;
-    private final int nblocks;
-    private final long[] bt;                // keys, block k at bt[k*B .. k*B+B-1]
-    private final long[] bv;                // values, same layout
+    private final long n;
+    private final long nblocks;
+    private final long[][] bt;              // keys, block k at flat index [k*B .. k*B+B-1]
+    private final long[][] bv;              // values, same layout
     private final LongLongMap overflow;
 
-    private int buildT;                     // running sorted index during build
-
-    public BlockedBTreeLongLongMap(long[] sortedKeys, long[] sortedValues, long emptyValue, LongLongMap overflow) {
+    public BlockedBTreeLongLongMap(long n, SortedSource src, long emptyValue, LongLongMap overflow) {
         this.emptyValue = emptyValue;
-        this.n = sortedKeys.length;
+        this.n = n;
         this.overflow = overflow;
         this.nblocks = (n + B - 1) / B;
-        this.bt = new long[nblocks * B];
-        this.bv = new long[nblocks * B];
-        buildT = 0;
-        build(0, sortedKeys, sortedValues);
+        long slots = nblocks * B;
+        int np = (int) ((slots + PAGE_SIZE - 1) >>> PAGE_BITS);
+        bt = new long[Math.max(1, np)][];
+        bv = new long[Math.max(1, np)][];
+        for (int i = 0; i < np; i++) {
+            bt[i] = new long[PAGE_SIZE];
+            bv[i] = new long[PAGE_SIZE];
+        }
+        build(0, src);
     }
 
-    // in-order fill: an in-order walk of the implicit tree yields ascending key order
-    private void build(int k, long[] sortedKeys, long[] sortedValues) {
+    // in-order fill: an in-order walk of the implicit tree consumes src in ascending key order
+    private void build(long k, SortedSource src) {
         if (k >= nblocks)
             return;
-        int base = k * B;
+        long base = k * B;
         for (int i = 0; i < B; i++) {
-            build(child(k, i), sortedKeys, sortedValues);
-            if (buildT < n) {
-                bt[base + i] = sortedKeys[buildT];
-                bv[base + i] = sortedValues[buildT];
-                buildT++;
+            build(k * (B + 1) + i + 1, src);
+            if (src.next()) {
+                setBt(base + i, src.key());
+                setBv(base + i, src.value());
             } else {
-                bt[base + i] = INF;
+                setBt(base + i, INF);
             }
         }
-        build(child(k, B), sortedKeys, sortedValues);
+        build(k * (B + 1) + B + 1, src);
     }
 
-    private static int child(int k, int i) {
-        return k * (B + 1) + i + 1;
+    private long getBt(long i) {
+        return bt[(int) (i >>> PAGE_BITS)][(int) (i & PAGE_MASK)];
     }
 
-    /** @return the flat index of key in {@link #bt}/{@link #bv}, or -1 if absent */
-    private int indexOf(long key) {
-        int cand = -1;
-        int k = 0;
+    private void setBt(long i, long v) {
+        bt[(int) (i >>> PAGE_BITS)][(int) (i & PAGE_MASK)] = v;
+    }
+
+    private long getBv(long i) {
+        return bv[(int) (i >>> PAGE_BITS)][(int) (i & PAGE_MASK)];
+    }
+
+    private void setBv(long i, long v) {
+        bv[(int) (i >>> PAGE_BITS)][(int) (i & PAGE_MASK)] = v;
+    }
+
+    /** @return the flat index of key, or -1 if absent */
+    private long indexOf(long key) {
+        long cand = -1;
+        long k = 0;
         while (k < nblocks) {
-            int base = k * B;
+            long base = k * B;
+            // a block is page-aligned (PAGE_SIZE is a multiple of B), so one page deref covers it
+            long[] page = bt[(int) (base >>> PAGE_BITS)];
+            int off = (int) (base & PAGE_MASK);
             int i = 0;
-            while (i < B && bt[base + i] < key) i++;
+            while (i < B && page[off + i] < key) i++;
             if (i < B) cand = base + i;      // smallest key >= key seen so far (lower_bound candidate)
             k = k * (B + 1) + i + 1;
         }
-        return (cand >= 0 && bt[cand] == key) ? cand : -1;
+        return (cand >= 0 && getBt(cand) == key) ? cand : -1;
     }
 
     @Override
     public long get(long key) {
-        int idx = indexOf(key);
-        return idx >= 0 ? bv[idx] : overflow.get(key);
+        long idx = indexOf(key);
+        return idx >= 0 ? getBv(idx) : overflow.get(key);
     }
 
     @Override
     public long put(long key, long value) {
-        int idx = indexOf(key);
+        long idx = indexOf(key);
         if (idx >= 0) {
-            long old = bv[idx];
-            bv[idx] = value;
+            long old = getBv(idx);
+            setBv(idx, value);
             return old;
         }
         return overflow.put(key, value);
@@ -114,10 +145,10 @@ public class BlockedBTreeLongLongMap implements LongLongMap {
 
     @Override
     public long putOrCompute(long key, long valueIfAbsent, LongUnaryOperator computeIfPresent) {
-        int idx = indexOf(key);
+        long idx = indexOf(key);
         if (idx >= 0) {
-            long old = bv[idx];
-            bv[idx] = computeIfPresent.applyAsLong(old);
+            long old = getBv(idx);
+            setBv(idx, computeIfPresent.applyAsLong(old));
             return old;
         }
         return overflow.putOrCompute(key, valueIfAbsent, computeIfPresent);
@@ -125,7 +156,7 @@ public class BlockedBTreeLongLongMap implements LongLongMap {
 
     @Override
     public long getSize() {
-        return (long) n + overflow.getSize();
+        return n + overflow.getSize();
     }
 
     @Override
@@ -140,7 +171,7 @@ public class BlockedBTreeLongLongMap implements LongLongMap {
 
     @Override
     public int getMemoryUsage() {
-        return (int) ((bt.length + bv.length) * 8L / (1024 * 1024)) + overflow.getMemoryUsage();
+        return (int) (nblocks * B * 2 * 8L / (1024 * 1024)) + overflow.getMemoryUsage();
     }
 
     @Override
