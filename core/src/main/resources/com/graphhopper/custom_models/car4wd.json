@@ -1,5 +1,5 @@
 // to use this custom model you need to set the following option in the config.yml
-// graph.encoded_values: car_access, car_average_speed, track_type, road_access, max_speed
+// graph.encoded_values: car_access, car_average_speed, track_type, road_access, max_speed, ferry_speed
 // profiles:
 //    - name: car4wd
 //      turn_costs:
@@ -12,14 +12,9 @@
     { "if": "track_type != GRADE4 && track_type != GRADE5 && car_access == false", "multiply_by": "0" }
   ],
   "speed": [
-    {
-      "if": "track_type == GRADE4 || track_type == GRADE5",
-      "limit_to": 5
-    },
-    {
-      "else": "",
-      "limit_to": "car_average_speed"
-    },
+    { "if": "track_type == GRADE4 || track_type == GRADE5", "limit_to": 5 },
+    { "else_if": "road_environment == FERRY", "limit_to": "ferry_speed" },
+    { "else": "", "limit_to": "car_average_speed" },
     { "if": "true", "limit_to": "max_speed * 0.9" }
   ]
 

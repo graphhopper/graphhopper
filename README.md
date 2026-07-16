@@ -103,7 +103,7 @@ See the [changelog file](./CHANGELOG.md) for Java API Changes.
 
 ## Installation
 
-To install the [GraphHopper Maps](https://graphhopper.com/maps/) UI and the web service locally you [need a JVM](https://adoptium.net) (>= Java 17) and do:
+To install the [GraphHopper Maps](https://graphhopper.com/maps/) UI and the web service locally you [need a JVM](https://adoptium.net) (>= Java 25) and do:
 
 ```bash
 wget https://repo1.maven.org/maven2/com/graphhopper/graphhopper-web/11.0/graphhopper-web-11.0.jar \
@@ -129,7 +129,7 @@ The GraphHopper routing server uses GraphHopper Maps as web interface, which is 
 To see GraphHopper Maps in action go to [graphhopper.com/maps/](https://graphhopper.com/maps/),
 which is an instance of GraphHopper Maps and available for free, via encrypted connections and from German servers - for a nice and private route planning experience!
 
-[![GraphHopper Maps](https://www.graphhopper.com/wp-content/uploads/2025/06/graphhopper-maps-2025.png)](https://graphhopper.com/maps)
+[![GraphHopper Maps](https://www.graphhopper.com/wp-content/uploads/2026/05/graphhopper-maps.png)](https://graphhopper.com/maps)
 
 ## GraphHopper Directions API
 
@@ -272,7 +272,6 @@ A fast and production-ready map visualization for the Desktop can be implemented
  * Supports [turn costs and restrictions](./docs/core/turn-restrictions.md).
  * Offers country-specific routing via country rules.
  * Allows customizing routing behavior using custom areas.
- * The core uses only a few dependencies (hppc, jts, janino and slf4j).
  * Scales from small indoor-sized to world-wide-sized graphs.
  * Finds nearest point on street e.g. to get elevation or 'snap to road' or being used as spatial index (see [#1485](https://github.com/graphhopper/graphhopper/pull/1485)).
  * Calculates isochrones and [shortest path trees](https://github.com/graphhopper/graphhopper/pull/1577).

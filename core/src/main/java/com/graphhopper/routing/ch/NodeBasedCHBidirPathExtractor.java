@@ -19,16 +19,19 @@
 package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.DefaultBidirPathExtractor;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.RoutingCHGraph;
 
 public class NodeBasedCHBidirPathExtractor extends DefaultBidirPathExtractor {
     private final ShortcutUnpacker shortcutUnpacker;
     private final RoutingCHGraph routingGraph;
+    private final Weighting weighting;
 
     public NodeBasedCHBidirPathExtractor(RoutingCHGraph routingGraph) {
         super(routingGraph.getBaseGraph(), routingGraph.getWeighting());
         this.routingGraph = routingGraph;
         shortcutUnpacker = createShortcutUnpacker();
+        weighting = routingGraph.getBaseGraph().wrapWeighting(routingGraph.getWeighting());
     }
 
     @Override
@@ -42,8 +45,8 @@ public class NodeBasedCHBidirPathExtractor extends DefaultBidirPathExtractor {
 
     private ShortcutUnpacker createShortcutUnpacker() {
         return new ShortcutUnpacker(routingGraph, (edge, reverse, prevOrNextEdgeId) -> {
-            path.addDistance(edge.getDistance());
-            path.addTime(routingGraph.getWeighting().calcEdgeMillis(edge, reverse));
+            path.addDistance_mm(edge.getDistance_mm());
+            path.addTime(weighting.calcEdgeMillis(edge, reverse));
             path.addEdge(edge.getEdge());
         }, false);
     }

@@ -32,7 +32,7 @@ import static com.graphhopper.util.Parameters.Details.WEIGHT;
 public class WeightDetails extends AbstractPathDetailsBuilder {
 
     private final Weighting weighting;
-    private int edgeId = EdgeIterator.NO_EDGE;
+    private int prevEdgeId = EdgeIterator.NO_EDGE;
     private Double weight;
 
     public WeightDetails(Weighting weighting) {
@@ -42,9 +42,9 @@ public class WeightDetails extends AbstractPathDetailsBuilder {
 
     @Override
     public boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge) {
-        if (edge.getEdge() != edgeId) {
-            edgeId = edge.getEdge();
-            weight = GHUtility.calcWeightWithTurnWeight(weighting, edge, false, edgeId);
+        if (edge.getEdge() != prevEdgeId) {
+            weight = GHUtility.calcWeightWithTurnWeight(weighting, edge, false, prevEdgeId);
+            prevEdgeId = edge.getEdge();
             return true;
         }
         return false;

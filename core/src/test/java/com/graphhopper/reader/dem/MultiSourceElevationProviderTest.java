@@ -37,18 +37,18 @@ public class MultiSourceElevationProviderTest {
     @Test
     public void testGetEleMocked() {
         instance = new MultiSourceElevationProvider(
-                new CGIARProvider() {
+                (TileBasedElevationProvider) new CGIARProvider() {
                     @Override
                     public double getEle(double lat, double lon) {
                         return 1;
                     }
-                },
-                new GMTEDProvider() {
+                }.init(),
+                (GMTEDProvider) new GMTEDProvider() {
                     @Override
                     public double getEle(double lat, double lon) {
                         return 2;
                     }
-                }
+                }.init()
         );
 
         assertEquals(1, instance.getEle(0, 0), .1);

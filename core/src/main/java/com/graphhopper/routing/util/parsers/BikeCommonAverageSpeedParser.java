@@ -25,23 +25,22 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
 
     protected BikeCommonAverageSpeedParser(DecimalEncodedValue speedEnc,
                                            EnumEncodedValue<Smoothness> smoothnessEnc,
-                                           DecimalEncodedValue ferrySpeedEnc,
                                            EnumEncodedValue<RouteNetwork> bikeRouteEnc) {
-        super(speedEnc, ferrySpeedEnc);
+        super(speedEnc);
         this.bikeRouteEnc = bikeRouteEnc;
         this.smoothnessEnc = smoothnessEnc;
 
         setTrackTypeSpeed("grade1", 18); // paved
-        setTrackTypeSpeed("grade2", 12); // now unpaved ...
-        setTrackTypeSpeed("grade3", 8);
-        setTrackTypeSpeed("grade4", 6);
+        setTrackTypeSpeed("grade2", 14); // like compacted
+        setTrackTypeSpeed("grade3", 12); // like unpaved
+        setTrackTypeSpeed("grade4", 10); // better than grass, more like dirt ("hard or compacted materials mixed in")
         setTrackTypeSpeed("grade5", PUSHING_SECTION_SPEED); // like sand
 
         setSurfaceSpeed("paved", 18);
         setSurfaceSpeed("asphalt", 18);
         setSurfaceSpeed("cobblestone", 8);
         setSurfaceSpeed("cobblestone:flattened", 10);
-        setSurfaceSpeed("sett", 10);
+        setSurfaceSpeed("sett", 12);
         setSurfaceSpeed("concrete", 18);
         setSurfaceSpeed("concrete:lanes", 16);
         setSurfaceSpeed("concrete:plates", 16);
@@ -58,13 +57,14 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         setSurfaceSpeed("gravel", 12);
         setSurfaceSpeed("ice", MIN_SPEED);
         setSurfaceSpeed("metal", 10);
-        setSurfaceSpeed("mud", 10);
+        setSurfaceSpeed("mud", PUSHING_SECTION_SPEED);
+        setSurfaceSpeed("clay", 8); // dry and passable much of the year, but rougher than dirt
+        setSurfaceSpeed("laterite", 6); // as clay, but with a slippery near-frictionless phase when wet
         setSurfaceSpeed("pebblestone", 14);
         setSurfaceSpeed("salt", PUSHING_SECTION_SPEED);
         setSurfaceSpeed("sand", PUSHING_SECTION_SPEED);
         setSurfaceSpeed("wood", PUSHING_SECTION_SPEED);
 
-        setHighwaySpeed("living_street", 6);
         setHighwaySpeed("steps", MIN_SPEED);
 
         setHighwaySpeed("cycleway", 18);
@@ -74,13 +74,12 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         setHighwaySpeed("pedestrian", 6);
         setHighwaySpeed("bridleway", 6);
         setHighwaySpeed("track", 12);
-        setHighwaySpeed("service", 12);
-        setHighwaySpeed("residential", 18);
-        // no other highway applies:
-        setHighwaySpeed("unclassified", 16);
-        // unknown road:
-        setHighwaySpeed("road", 12);
 
+        setHighwaySpeed("living_street", 12);
+        setHighwaySpeed("service", 18);
+        setHighwaySpeed("residential", 18);
+        setHighwaySpeed("unclassified", 18);
+        setHighwaySpeed("road", 18);
         setHighwaySpeed("trunk", 18);
         setHighwaySpeed("trunk_link", 18);
         setHighwaySpeed("primary", 18);
@@ -122,13 +121,7 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
     public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way) {
         String highwayValue = way.getTag("highway", "");
         if (highwayValue.isEmpty()) {
-            if (FerrySpeedCalculator.isFerry(way)) {
-                double ferrySpeed = FerrySpeedCalculator.minmax(ferrySpeedEnc.getDecimal(false, edgeId, edgeIntAccess), avgSpeedEnc);
-                setSpeed(false, edgeId, edgeIntAccess, ferrySpeed);
-                if (avgSpeedEnc.isStoreTwoDirections())
-                    setSpeed(true, edgeId, edgeIntAccess, ferrySpeed);
-            }
-            if (!way.hasTag("railway", "platform") && !way.hasTag("man_made", "pier"))
+            if (FerrySpeedCalculator.isFerry(way) || !way.hasTag("railway", "platform") && !way.hasTag("man_made", "pier"))
                 return;
         }
 
@@ -146,8 +139,7 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         if (way.hasTag("surface") && surfaceSpeed == null
                 || way.hasTag("bicycle", "dismount")
                 || way.hasTag("railway", "platform")
-                || pushingRestriction && !way.hasTag("bicycle", INTENDED)
-                || way.hasTag("service") && !bikeDesignated) {
+                || pushingRestriction && !way.hasTag("bicycle", INTENDED)) {
             speed = PUSHING_SECTION_SPEED;
 
         } else {
@@ -172,15 +164,23 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
                         speed = Math.max(speed, highwaySpeeds.get("cycleway"));
                     else if (bikeAllowed)
                         speed = Math.max(speed, 12);
+                    break;
+            }
+
+            if (way.hasTag("service", "parking_aisle") && !bikeDesignated)
+                speed = Math.min(speed, 8);
+
+            double smoothSpeed = smoothnessFactor.get(smoothnessEnc.getEnum(false, edgeId, edgeIntAccess)) * speed;
+
+            // speed reduction if bad surface
+            if (surfaceSpeed != null) {
+                // pick the smallest of smoothness<->surface, if both are present
+                speed = Math.max(MIN_SPEED, Math.min(Math.min(surfaceSpeed, speed), smoothSpeed));
+            } else {
+                speed = Math.max(MIN_SPEED, smoothSpeed);
             }
         }
 
-        // speed reduction if bad surface
-        if (surfaceSpeed != null)
-            speed = Math.min(surfaceSpeed, speed);
-
-        Smoothness smoothness = smoothnessEnc.getEnum(false, edgeId, edgeIntAccess);
-        speed = Math.max(MIN_SPEED, smoothnessFactor.get(smoothness) * speed);
         setSpeed(false, edgeId, edgeIntAccess, applyMaxSpeed(way, speed, false));
         if (avgSpeedEnc.isStoreTwoDirections())
             setSpeed(true, edgeId, edgeIntAccess, applyMaxSpeed(way, speed, true));

@@ -7,15 +7,13 @@ public class RacingBikeAverageSpeedParser extends BikeCommonAverageSpeedParser {
     public RacingBikeAverageSpeedParser(EncodedValueLookup lookup) {
         this(lookup.getDecimalEncodedValue(VehicleSpeed.key("racingbike")),
                 lookup.getEnumEncodedValue(Smoothness.KEY, Smoothness.class),
-                lookup.getDecimalEncodedValue(FerrySpeed.KEY),
                 lookup.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class));
     }
 
     protected RacingBikeAverageSpeedParser(DecimalEncodedValue speedEnc,
                                            EnumEncodedValue<Smoothness> smoothnessEnc,
-                                           DecimalEncodedValue ferrySpeedEnc,
                                            EnumEncodedValue<RouteNetwork> bikeRouteEnc) {
-        super(speedEnc, smoothnessEnc, ferrySpeedEnc, bikeRouteEnc);
+        super(speedEnc, smoothnessEnc, bikeRouteEnc);
 
         setTrackTypeSpeed("grade1", 24); // paved
         setTrackTypeSpeed("grade2", 10); // now unpaved ...
@@ -40,6 +38,8 @@ public class RacingBikeAverageSpeedParser extends BikeCommonAverageSpeedParser {
         setSurfaceSpeed("ice", MIN_SPEED);
         setSurfaceSpeed("metal", MIN_SPEED);
         setSurfaceSpeed("mud", MIN_SPEED);
+        setSurfaceSpeed("clay", MIN_SPEED);
+        setSurfaceSpeed("laterite", MIN_SPEED);
         setSurfaceSpeed("pebblestone", PUSHING_SECTION_SPEED);
         setSurfaceSpeed("salt", MIN_SPEED);
         setSurfaceSpeed("sand", MIN_SPEED);
@@ -56,6 +56,8 @@ public class RacingBikeAverageSpeedParser extends BikeCommonAverageSpeedParser {
         setHighwaySpeed("tertiary", 24);
         setHighwaySpeed("tertiary_link", 24);
         setHighwaySpeed("cycleway", 24);
+        setHighwaySpeed("residential", 24);
+        setHighwaySpeed("unclassified", 24);
 
         // overwrite map from BikeCommon
         setSmoothnessSpeedFactor(Smoothness.EXCELLENT, 1.2d);

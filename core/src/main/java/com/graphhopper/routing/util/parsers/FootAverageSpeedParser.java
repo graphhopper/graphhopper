@@ -16,12 +16,11 @@ public class FootAverageSpeedParser extends AbstractAverageSpeedParser implement
     protected Map<RouteNetwork, Integer> routeMap = new HashMap<>();
 
     public FootAverageSpeedParser(EncodedValueLookup lookup) {
-        this(lookup.getDecimalEncodedValue(VehicleSpeed.key("foot")),
-                lookup.getDecimalEncodedValue(FerrySpeed.KEY));
+        this(lookup.getDecimalEncodedValue(VehicleSpeed.key("foot")));
     }
 
-    public FootAverageSpeedParser(DecimalEncodedValue speedEnc, DecimalEncodedValue ferrySpeedEnc) {
-        super(speedEnc, ferrySpeedEnc);
+    public FootAverageSpeedParser(DecimalEncodedValue speedEnc) {
+        super(speedEnc);
 
         routeMap.put(INTERNATIONAL, UNCHANGED.getValue());
         routeMap.put(NATIONAL, UNCHANGED.getValue());
@@ -33,13 +32,7 @@ public class FootAverageSpeedParser extends AbstractAverageSpeedParser implement
     public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way) {
         String highwayValue = way.getTag("highway");
         if (highwayValue == null) {
-            if (FerrySpeedCalculator.isFerry(way)) {
-                double ferrySpeed = FerrySpeedCalculator.minmax(ferrySpeedEnc.getDecimal(false, edgeId, edgeIntAccess), avgSpeedEnc);
-                setSpeed(false, edgeId, edgeIntAccess, ferrySpeed);
-                if (avgSpeedEnc.isStoreTwoDirections())
-                    setSpeed(true, edgeId, edgeIntAccess, ferrySpeed);
-            }
-            if (!way.hasTag("railway", "platform") && !way.hasTag("man_made", "pier"))
+            if (FerrySpeedCalculator.isFerry(way) || !way.hasTag("railway", "platform") && !way.hasTag("man_made", "pier"))
                 return;
         }
 

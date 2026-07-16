@@ -62,7 +62,6 @@ public class WaySegmentParser {
     private static final Logger LOGGER = LoggerFactory.getLogger(WaySegmentParser.class);
     private static final Set<String> INCLUDE_IF_NODE_TAGS = new HashSet<>(Arrays.asList("barrier", "highway", "railway", "crossing", "ford"));
 
-    private ToDoubleFunction<ReaderNode> elevationProvider = node -> 0d;
     private Predicate<ReaderWay> wayFilter = way -> true;
     private Predicate<ReaderNode> splitNodeFilter = node -> false;
     private WayPreprocessor wayPreprocessor = (way, coordinateSupplier, nodeTagSupplier) -> {
@@ -109,7 +108,8 @@ public class WaySegmentParser {
         LOGGER.info("Finished reading OSM file." +
                 " pass1: " + (int) sw1.getSeconds() + "s, " +
                 " pass2: " + (int) sw2.getSeconds() + "s, " +
-                " total: " + (int) (sw1.getSeconds() + sw2.getSeconds()) + "s");
+                " total: " + (int) (sw1.getSeconds() + sw2.getSeconds()) + "s" +
+                " memory: " + Helper.getMemInfo());
     }
 
     /**
@@ -203,7 +203,7 @@ public class WaySegmentParser {
                 LOGGER.info("pass2 - processed nodes: " + nf(nodeCounter) + ", accepted nodes: " + nf(acceptedNodes) +
                         ", " + Helper.getMemInfo());
 
-            long nodeType = nodeData.addCoordinatesIfMapped(node.getId(), node.getLat(), node.getLon(), () -> elevationProvider.applyAsDouble(node));
+            long nodeType = nodeData.addCoordinatesIfMapped(node.getId(), node.getLat(), node.getLon());
             if (nodeType == EMPTY_NODE)
                 return;
 
@@ -323,10 +323,19 @@ public class WaySegmentParser {
 
                     // mark barrier edge
                     way.setTag("gh:barrier_edge", true);
+                    // a barrier edge has two identical endpoints, so its geometry alone is not
+                    // enough to derive an orientation. Pass the coordinates of the surrounding
+                    // way nodes as transient tags so OrientationCalculator can use them.
+                    if (i > 0)
+                        way.setTag("gh:barrier_prev_point", nodeData.getCoordinates(parentSegment.get(i - 1).id));
+                    if (i < parentSegment.size() - 1)
+                        way.setTag("gh:barrier_next_point", nodeData.getCoordinates(parentSegment.get(i + 1).id));
                     segment.add(barrierFrom);
                     segment.add(barrierTo);
                     handleSegment(segment, way);
                     way.removeTag("gh:barrier_edge");
+                    way.removeTag("gh:barrier_prev_point");
+                    way.removeTag("gh:barrier_next_point");
 
                     segment = new ArrayList<>();
                     segment.add(barrierTo);
@@ -415,14 +424,6 @@ public class WaySegmentParser {
          */
         public Builder(PointAccess pointAccess, Directory directory) {
             waySegmentParser = new WaySegmentParser(new OSMNodeData(pointAccess, directory));
-        }
-
-        /**
-         * @param elevationProvider used to determine the elevation of an OSM node
-         */
-        public Builder setElevationProvider(ToDoubleFunction<ReaderNode> elevationProvider) {
-            waySegmentParser.elevationProvider = elevationProvider;
-            return this;
         }
 
         /**

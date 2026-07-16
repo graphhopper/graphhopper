@@ -447,7 +447,7 @@ public class CarTagParserTest {
         way.setTag("motorcar", "yes");
         way.setTag("bicycle", "no");
         // Provide the duration value in seconds:
-        way.setTag("way_distance", 50000.0);
+        way.setTag("way_distance_2d", 50000.0);
         way.setTag("duration_in_seconds", 35.0);
         assertTrue(parser.getAccess(way).isFerry());
 
@@ -455,7 +455,7 @@ public class CarTagParserTest {
         way = new ReaderWay(1);
         way.setTag("route", "ferry");
         way.setTag("motorcar", "yes");
-        way.setTag("way_distance", 100.0);
+        way.setTag("way_distance_2d", 100.0);
         way.setTag("duration_in_seconds", 12.0);
         assertTrue(parser.getAccess(way).isFerry());
 
@@ -489,6 +489,21 @@ public class CarTagParserTest {
         assertTrue(parser.getAccess(way).canSkip());
         way.setTag("vehicle", "yes");
         assertTrue(parser.getAccess(way).isFerry());
+
+        // issue #1432
+        way.clearTags();
+        way.setTag("route", "ferry");
+        way.setTag("oneway", "yes");
+        EdgeIntAccess edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
+        int edgeId = 0;
+        parser.handleWayTags(edgeId, edgeIntAccess, way);
+        assertTrue(accessEnc.getBool(false, edgeId, edgeIntAccess));
+        assertFalse(accessEnc.getBool(true, edgeId, edgeIntAccess));
+
+        // speed for ferry is moved out of the encoded value, i.e. it is 0
+        edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
+        parser.handleWayTags(edgeId, edgeIntAccess, way);
+        assertEquals(0, avSpeedEnc.getDecimal(false, edgeId, edgeIntAccess));
     }
 
     @Test
@@ -599,29 +614,6 @@ public class CarTagParserTest {
         way.setTag("highway", "secondary");
         way.setTag("surface", "unpaved");
         assertEquals(30, speedParser.applyBadSurfaceSpeed(way, 90), 1e-1);
-    }
-
-    @Test
-    public void testIssue_1256() {
-        ReaderWay way = new ReaderWay(1);
-        way.setTag("route", "ferry");
-        way.setTag("edge_distance", 257.0);
-
-        EdgeIntAccess edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
-        int edgeId = 0;
-        speedParser.handleWayTags(edgeId, edgeIntAccess, way);
-        assertEquals(2, speedParser.getAverageSpeedEnc().getDecimal(false, edgeId, edgeIntAccess), .1);
-
-        // for a smaller speed factor the minimum speed is also smaller
-        DecimalEncodedValueImpl lowFactorSpeedEnc = new DecimalEncodedValueImpl(VehicleSpeed.key("car"), 10, 1, false);
-        EncodingManager lowFactorEm = new EncodingManager.Builder()
-                .add(new SimpleBooleanEncodedValue(VehicleAccess.key("car"), true))
-                .add(lowFactorSpeedEnc)
-                .add(FerrySpeed.create())
-                .build();
-        edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(lowFactorEm.getBytesForFlags());
-        new CarAverageSpeedParser(lowFactorEm).handleWayTags(edgeId, edgeIntAccess, way);
-        assertEquals(1, lowFactorSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), .1);
     }
 
     @Test

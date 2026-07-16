@@ -22,11 +22,13 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
+import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -36,10 +38,13 @@ import static org.junit.jupiter.api.Assertions.*;
 public class GMTEDProviderTest {
     private double precision = .1;
     GMTEDProvider instance;
+    @TempDir
+    Path tempDir;
 
     @BeforeEach
     public void setUp() {
-        instance = new GMTEDProvider();
+        instance = new GMTEDProvider(tempDir.toString());
+        instance.init();
     }
 
     @AfterEach
@@ -88,7 +93,7 @@ public class GMTEDProviderTest {
         file.delete();
         zipFile.delete();
 
-        instance.setDownloader(new Downloader("test GH") {
+        instance.setDownloader(new Downloader() {
             @Override
             public void downloadFile(String url, String toFile) throws IOException {
                 throw new FileNotFoundException("xyz");
@@ -100,7 +105,7 @@ public class GMTEDProviderTest {
         assertTrue(file.exists());
         assertEquals(1048676, file.length());
 
-        instance.setDownloader(new Downloader("test GH") {
+        instance.setDownloader(new Downloader() {
             @Override
             public void downloadFile(String url, String toFile) throws IOException {
                 throw new SocketTimeoutException("xyz");

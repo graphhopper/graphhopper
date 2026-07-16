@@ -167,7 +167,28 @@ public class Snap {
                 snappedPoint = new GHPoint3D(adjLat, adjLon, adjEle);
                 closestNode = wayIndex == fullPL.size() - 1 ? closestEdge.getAdjNode() : closestNode;
             } else {
-                snappedPoint = new GHPoint3D(crossingPoint.lat, crossingPoint.lon, (tmpEle + adjEle) / 2);
+                double delta_lat = adjLat - tmpLat;
+                double delta_lon = adjLon - tmpLon;
+                double elevation;
+                if (delta_lon == 0 && delta_lat == 0)
+                    elevation = tmpEle;
+                else {
+                    // We can calculate the fraction t directly from the crossing point, without
+                    // calculating the distance to the previous point:
+                    // calcCrossingPointToEdge computes the point on a straight line between A and B
+                    // that is closest to the query point (the "crossing point C") in the shrunk space
+                    // where x_lat' = x_lat and x_lon' = x_lon*s:
+                    //  c_lat' = c_lat   = a_lat   + t*(b_lat   - a_lat)
+                    //  c_lon' = c_lon*s = a_lon*s + t*(b_lon*s - a_lon*s)
+                    // and returns (c_lat', c_lon'/s), so:
+                    //  c_lon = a_lon + t*(b_lon - a_lon)
+                    // => C lies also on a straight line between A and B in lat/lon coordinates
+                    double t = Math.abs(delta_lat) > Math.abs(delta_lon)
+                            ? (crossingPoint.lat - tmpLat) / delta_lat
+                            : (crossingPoint.lon - tmpLon) / delta_lon;
+                    elevation = tmpEle + t * (adjEle - tmpEle);
+                }
+                snappedPoint = new GHPoint3D(crossingPoint.lat, crossingPoint.lon, elevation);
             }
         } else {
             // outside of edge segment [wayIndex, wayIndex+1] should not happen for EDGE

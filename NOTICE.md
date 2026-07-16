@@ -10,6 +10,8 @@ The core module includes the following additional software:
  * com.carrotsearch:hppc (Apache license)
  * Snippets regarding mmap, vint/vlong and compression from Lucene (Apache license)
  * XMLGraphics-Commons for CGIAR elevation files (Apache License)
+ * libwebp from Google for PMTiles (BSD-3-Clause license)
+ * com.github.usefulness:webp-imageio for PMTiles (Apache license)
  * Apache Commons Lang - we copied the implementation of the Levenshtein Distance - see com.graphhopper.apache.commons.lang3 (Apache License)
  * Apache Commons Collections - we copied parts of the BinaryHeap - see com.graphhopper.apache.commons.collections (Apache License)
  * java-string-similarity - we copied the implementation of JaroWinkler (MIT license)
@@ -19,7 +21,7 @@ The core module includes the following additional software:
  * janino compiler (BSD-3-Clause license)
  * osm-legal-default-speeds-jvm (BSD-3-Clause license)
  * kotlin stdlib (Apache License)
- * protobuf - (New BSD license)
+ * protobuf from Google - (BSD-3-Clause license)
  * OSM-binary - (LGPL license)
  * Osmosis - public domain, see their github under package/copying.txt
 

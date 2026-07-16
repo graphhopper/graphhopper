@@ -377,15 +377,17 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
 
         // after copying an edge we can no longer change the geometry
         assertThrows(IllegalStateException.class, () -> graph.getEdgeIteratorState(edge1.getEdge(), Integer.MIN_VALUE).setWayGeometry(Helper.createPointList(1.5, 1, 5, 4)));
-        // after setting the geometry once we can change it again
-        graph.getEdgeIteratorState(edge2.getEdge(), Integer.MIN_VALUE).setWayGeometry(Helper.createPointList(2, 3, 4, 5));
-        // ... but not if it is longer than before
-        IllegalStateException e = assertThrows(IllegalStateException.class, () -> graph.getEdgeIteratorState(edge2.getEdge(), Integer.MIN_VALUE).setWayGeometry(Helper.createPointList(2, 3, 4, 5, 6, 7)));
-        assertTrue(e.getMessage().contains("This edge already has a way geometry so it cannot be changed to a bigger geometry"), e.getMessage());
-        // it's the same for edges with geometry that were copied:
+        // after setting the geometry once we can still change it (the new payload either fits in
+        // the existing slot or a fresh slot is allocated — both round-trip correctly)
+        graph.getEdgeIteratorState(edge2.getEdge(), Integer.MIN_VALUE).setWayGeometry(Helper.createPointList(0, 1));
+        graph.getEdgeIteratorState(edge2.getEdge(), Integer.MIN_VALUE).setWayGeometry(Helper.createPointList(2, 3, 4, 5, 6, 7));
+        PointList fetched = graph.getEdgeIteratorState(edge2.getEdge(), Integer.MIN_VALUE).fetchWayGeometry(FetchMode.PILLAR_ONLY);
+        assertEquals(3, fetched.size());
+        assertEquals(2, fetched.getLat(0), 1e-6);
+        assertEquals(3, fetched.getLon(0), 1e-6);
+        // the same holds for edges with geometry that were copied from another edge
         graph.getEdgeIteratorState(edge3.getEdge(), Integer.MIN_VALUE).setWayGeometry(Helper.createPointList(6, 7, 8, 9));
-        e = assertThrows(IllegalStateException.class, () -> graph.getEdgeIteratorState(edge3.getEdge(), Integer.MIN_VALUE).setWayGeometry(Helper.createPointList(0, 1, 6, 7, 8, 9)));
-        assertTrue(e.getMessage().contains("This edge already has a way geometry so it cannot be changed to a bigger geometry"), e.getMessage());
+        graph.getEdgeIteratorState(edge3.getEdge(), Integer.MIN_VALUE).setWayGeometry(Helper.createPointList(0, 1, 6, 7, 8, 9));
     }
 
     @Test

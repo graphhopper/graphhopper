@@ -43,7 +43,8 @@ public interface Weighting {
      * @param reverse   if the specified edge is specified in reverse direction e.g. from the reverse
      *                  case of a bidirectional search.
      * @return the calculated weight with the specified velocity has to be in the range of 0 and
-     * +Infinity. Make sure your method does not return NaN which can e.g. occur for 0/0.
+     * +Infinity. GraphHopper expects weights to be whole numbers only. Consider using {@link Weighting#roundWeight(double)}
+     * to post-process all weights. Make sure your method does not return NaN which can e.g. occur for 0/0.
      */
     double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse);
 
@@ -71,5 +72,15 @@ public interface Weighting {
             return false;
 
         return name.matches("[\\|_a-z]+");
+    }
+
+    static double roundWeight(double w) {
+        assert !Double.isNaN(w) : "weights should not be NaN";
+        assert w >= 0 : "weights should be >= 0, got: " + w;
+        if (Double.isInfinite(w)) return Double.POSITIVE_INFINITY;
+        if (w != 0 && w < 0.5)
+            // we round up to weight 1, because weight 0 introduces ambiguity for shortest paths
+            return 1;
+        return Math.round(w);
     }
 }

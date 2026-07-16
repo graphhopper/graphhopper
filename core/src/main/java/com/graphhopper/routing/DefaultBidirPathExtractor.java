@@ -109,7 +109,7 @@ public class DefaultBidirPathExtractor implements BidirPathExtractor {
 
     protected void onEdge(int edge, int adjNode, boolean reverse, int prevOrNextEdge) {
         EdgeIteratorState edgeState = graph.getEdgeIteratorState(edge, adjNode);
-        path.addDistance(edgeState.getDistance());
+        path.addDistance_mm(edgeState.getDistance_mm());
         path.addTime(GHUtility.calcMillisWithTurnMillis(weighting, edgeState, reverse, prevOrNextEdge));
         path.addEdge(edge);
     }

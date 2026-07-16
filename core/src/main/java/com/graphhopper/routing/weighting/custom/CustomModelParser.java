@@ -47,6 +47,7 @@ public class CustomModelParser {
     static final String BACKWARD_PREFIX = "backward_";
     static final String PREV_PREFIX = "prev_";
     static final String CHANGE_ANGLE = "change_angle";
+    static final String STREET_NAME = "street_name";
     private static final boolean JANINO_DEBUG = Boolean.getBoolean(Scanner.SYSTEM_PROPERTY_SOURCE_DEBUGGING_ENABLE);
     private static final String SCRIPT_FILE_DIR = System.getProperty(Scanner.SYSTEM_PROPERTY_SOURCE_DEBUGGING_DIR, "./src/main/java/com/graphhopper/routing/weighting/custom");
 
@@ -303,7 +304,7 @@ public class CustomModelParser {
             // but is slightly less safe as it cannot check that at least one node must be
             // identical (the case where getEdgeIteratorState returns null)
             turnPenaltyMethodStartBlock += "boolean inEdgeReverse = !graph.isAdjNode(inEdge, viaNode);\n" +
-                    "boolean outEdgeReverse = !graph.isAdjNode(outEdge, viaNode);\n";
+                    "boolean outEdgeReverse = graph.isAdjNode(outEdge, viaNode);\n";
         }
 
         for (String arg : turnPenaltyVariables) {
@@ -353,23 +354,25 @@ public class CustomModelParser {
         // parameters in method getTurnPenalty are: int inEdge, int viaNode, int outEdge.
         // The variables outEdgeReverse and inEdgeReverse are provided from initial calls if needTwoDirections is true.
         if (arg.equals(CHANGE_ANGLE)) {
-            return "double change_angle = CustomWeightingHelper.calcChangeAngle(edgeIntAccess, this.orientation_enc, inEdge, inEdgeReverse, outEdge, outEdgeReverse);\n";
+            // calcChangeAngle expects the orientation slot at the viaNode side of outEdge (see OrientationCalculator);
+            // since outEdgeReverse now means direction of travel, invert it here.
+            return "double change_angle = CustomWeightingHelper.calcChangeAngle(edgeIntAccess, this.orientation_enc, inEdge, inEdgeReverse, outEdge, !outEdgeReverse);\n";
+        } else if (arg.equals(STREET_NAME)) {
+            return "String street_name = graph.getEdgeIteratorState(outEdge, Integer.MIN_VALUE).getName();\n"; // TODO PERF: get ref into KVStorage without creation of EdgeIteratorState
+        } else if (arg.equals(PREV_PREFIX + STREET_NAME)) {
+            return "String prev_street_name = graph.getEdgeIteratorState(inEdge, Integer.MIN_VALUE).getName();\n"; // TODO PERF
         } else if (lookup.hasEncodedValue(arg)) {
             EncodedValue enc = lookup.getEncodedValue(arg, EncodedValue.class);
-            if (!(enc instanceof EnumEncodedValue<?>))
-                throw new IllegalArgumentException("Currently only EnumEncodedValues are supported: " + arg);
-
+            String reverseExpr = needTwoDirections ? "outEdgeReverse" : "false";
             return getReturnType(enc) + " " + arg + " = (" + getReturnType(enc) + ") " +
-                    "this." + arg + "_enc.getEnum(" + (needTwoDirections ? "outEdgeReverse" : "false") + ", outEdge, edgeIntAccess);\n";
+                    getTurnPenaltyAccessor(enc, arg, reverseExpr, "outEdge") + ";\n";
         } else if (arg.startsWith(PREV_PREFIX)) {
             final String argSubstr = arg.substring(PREV_PREFIX.length());
             if (lookup.hasEncodedValue(argSubstr)) {
                 EncodedValue enc = lookup.getEncodedValue(argSubstr, EncodedValue.class);
-                if (!(enc instanceof EnumEncodedValue<?>))
-                    throw new IllegalArgumentException("Currently only EnumEncodedValues are supported: " + arg);
-
+                String reverseExpr = needTwoDirections ? "inEdgeReverse" : "false";
                 return getReturnType(enc) + " " + arg + " = (" + getReturnType(enc) + ") " +
-                        "this." + argSubstr + "_enc.getEnum(" + (needTwoDirections ? "inEdgeReverse" : "false") + ", inEdge, edgeIntAccess);\n";
+                        getTurnPenaltyAccessor(enc, argSubstr, reverseExpr, "inEdge") + ";\n";
             } else {
                 throw new IllegalArgumentException("Not supported for prev: " + argSubstr);
             }
@@ -387,6 +390,22 @@ public class CustomModelParser {
         if (enc instanceof StringEncodedValue) return IntEncodedValue.class.getSimpleName();
         if (enc.getClass().getInterfaces().length == 0) return enc.getClass().getSimpleName();
         return enc.getClass().getInterfaces()[0].getSimpleName();
+    }
+
+    /**
+     * @return the accessor method call for the given EncodedValue used in turn penalty code, e.g.
+     * "this.road_class_enc.getEnum(reverse, edgeId, edgeIntAccess)" for EnumEncodedValue.
+     */
+    private static String getTurnPenaltyAccessor(EncodedValue enc, String fieldName, String reverseExpr, String edgeExpr) {
+        String method;
+        // order is important: EnumEncodedValue and BooleanEncodedValue extend IntEncodedValueImpl
+        if (enc instanceof EnumEncodedValue) method = "getEnum";
+        else if (enc instanceof BooleanEncodedValue) method = "getBool";
+        else if (enc instanceof DecimalEncodedValue) method = "getDecimal";
+        else if (enc instanceof IntEncodedValue) method = "getInt";
+        else throw new IllegalArgumentException("Unsupported EncodedValue for turn penalty: " + enc.getClass());
+
+        return "this." + fieldName + "_enc." + method + "(" + reverseExpr + ", " + edgeExpr + ", edgeIntAccess)";
     }
 
     private static String getReturnType(EncodedValue encodedValue) {
@@ -464,6 +483,8 @@ public class CustomModelParser {
                 classSourceCode.append("protected " + Polygon.class.getSimpleName() + " " + arg + ";\n");
                 initSourceCode.append("JsonFeature feature_" + id + " = (JsonFeature) areas.get(\"" + id + "\");\n");
                 initSourceCode.append("this." + arg + " = new Polygon(new PreparedPolygon((Polygonal) feature_" + id + ".getGeometry()));\n");
+            } else if (arg.equals(STREET_NAME)) {
+                // street_name is resolved at runtime from graph KV storage, no class field needed
             } else {
                 if (!arg.startsWith(IN_AREA_PREFIX))
                     throw new IllegalArgumentException("Variable not supported: " + arg);
@@ -511,6 +532,7 @@ public class CustomModelParser {
         // allow variables, all encoded values, constants and special variables like in_xyarea or backward_car_access
         NameValidator nameInConditionValidator = name -> lookup.hasEncodedValue(name)
                 || name.toUpperCase(Locale.ROOT).equals(name) || name.startsWith(IN_AREA_PREFIX) || name.equals(CHANGE_ANGLE)
+                || name.equals(STREET_NAME) || name.equals(PREV_PREFIX + STREET_NAME)
                 || name.startsWith(BACKWARD_PREFIX) && lookup.hasEncodedValue(name.substring(BACKWARD_PREFIX.length()))
                 || name.startsWith(PREV_PREFIX) && lookup.hasEncodedValue(name.substring(PREV_PREFIX.length()));
         Function<String, EncodedValue> fct = createSimplifiedLookup(lookup);
@@ -528,7 +550,9 @@ public class CustomModelParser {
 
     private static Function<String, EncodedValue> createSimplifiedLookup(EncodedValueLookup lookup) {
         return key -> {
-            if (key.startsWith(BACKWARD_PREFIX))
+            if (key.equals(STREET_NAME) || key.equals(PREV_PREFIX + STREET_NAME))
+                return null;
+            else if (key.startsWith(BACKWARD_PREFIX))
                 return lookup.getEncodedValue(key.substring(BACKWARD_PREFIX.length()), EncodedValue.class);
             else if (key.startsWith(PREV_PREFIX))
                 return lookup.getEncodedValue(key.substring(PREV_PREFIX.length()), EncodedValue.class);

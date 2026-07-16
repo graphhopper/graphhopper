@@ -24,6 +24,12 @@ import com.graphhopper.reader.ReaderNode;
  */
 public interface ElevationProvider {
     ElevationProvider NOOP = new ElevationProvider() {
+
+        @Override
+        public ElevationProvider init() {
+            return this;
+        }
+
         @Override
         public double getEle(double lat, double lon) {
             return Double.NaN;
@@ -38,6 +44,8 @@ public interface ElevationProvider {
             return false;
         }
     };
+
+    ElevationProvider init();
 
     /**
      * @return returns the height in meters or Double.NaN if invalid

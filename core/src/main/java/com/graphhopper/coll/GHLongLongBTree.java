@@ -72,31 +72,6 @@ public class GHLongLongBTree implements LongLongMap {
         clear();
     }
 
-    static int binarySearch(long[] keys, int start, int len, long key) {
-        int high = start + len, low = start - 1, guess;
-        while (high - low > 1) {
-            // use >>> for average or we could get an integer overflow.
-            guess = (high + low) >>> 1;
-            long guessedKey = keys[guess];
-            if (guessedKey < key) {
-                low = guess;
-            } else {
-                high = guess;
-            }
-        }
-
-        if (high == start + len) {
-            return ~(start + len);
-        }
-
-        long highKey = keys[high];
-        if (highKey == key) {
-            return high;
-        } else {
-            return ~high;
-        }
-    }
-
     @Override
     public long put(long key, long value) {
         if (value > maxValue)
@@ -279,11 +254,10 @@ public class GHLongLongBTree implements LongLongMap {
         }
 
         /**
-         * @return the old value which was associated with the specified key or if no update it
-         * returns noNumberValue
+         * @return the old value which was associated with the specified key or null if no update.
          */
         ReturnValue put(long key, long newValue) {
-            int index = binarySearch(keys, 0, entrySize, key);
+            int index = Arrays.binarySearch(keys, 0, entrySize, key);
             if (index >= 0) {
                 // update
                 byte[] oldValue = new byte[bytesPerValue];
@@ -334,7 +308,7 @@ public class GHLongLongBTree implements LongLongMap {
          * This avoids a separate get+put traversal.
          */
         ReturnValue putOrCompute(long key, long valueIfAbsent, LongUnaryOperator computeIfPresent) {
-            int index = binarySearch(keys, 0, entrySize, key);
+            int index = Arrays.binarySearch(keys, 0, entrySize, key);
             if (index >= 0) {
                 // key exists: compute new value from old value
                 byte[] oldValue = new byte[bytesPerValue];
@@ -454,7 +428,7 @@ public class GHLongLongBTree implements LongLongMap {
         }
 
         long get(long key) {
-            int index = binarySearch(keys, 0, entrySize, key);
+            int index = Arrays.binarySearch(keys, 0, entrySize, key);
             if (index >= 0) {
                 return toLong(values, index * bytesPerValue);
             }

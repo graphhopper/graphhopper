@@ -19,7 +19,7 @@
 package com.graphhopper.jackson;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.graphhopper.GraphHopperConfig;
 import org.junit.jupiter.api.Assertions;
@@ -32,7 +32,7 @@ public class GraphHopperConfigModuleTest {
     @Test
     public void testDeserializeConfig() throws IOException {
         ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory());
-        objectMapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
+        objectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
         GraphHopperConfig graphHopperConfig = objectMapper.readValue(getClass().getResourceAsStream("config.yml"), GraphHopperConfig.class);
         // The dot in the key is no special symbol in YAML. It's just part of the string.
         Assertions.assertEquals(graphHopperConfig.getInt("index.max_region_search", 0), 100);

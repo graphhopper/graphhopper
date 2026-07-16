@@ -21,6 +21,7 @@ package com.graphhopper.util;
 import com.carrotsearch.hppc.BitSet;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
+import com.carrotsearch.hppc.LongArrayList;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.carrotsearch.hppc.sorting.IndirectComparator;
 import com.carrotsearch.hppc.sorting.IndirectSort;
@@ -101,6 +102,18 @@ public class ArrayUtil {
     public static IntArrayList reverse(IntArrayList list) {
         final int[] buffer = list.buffer;
         int tmp;
+        for (int start = 0, end = list.size() - 1; start < end; start++, end--) {
+            // swap the values
+            tmp = buffer[start];
+            buffer[start] = buffer[end];
+            buffer[end] = tmp;
+        }
+        return list;
+    }
+
+    public static LongArrayList reverse(LongArrayList list) {
+        final long[] buffer = list.buffer;
+        long tmp;
         for (int start = 0, end = list.size() - 1; start < end; start++, end--) {
             // swap the values
             tmp = buffer[start];

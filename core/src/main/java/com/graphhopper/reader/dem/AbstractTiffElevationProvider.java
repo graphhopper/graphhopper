@@ -45,10 +45,10 @@ public abstract class AbstractTiffElevationProvider extends TileBasedElevationPr
     // Degrees of longitude covered by this tile
     final int LON_DEGREE;
 
-    public AbstractTiffElevationProvider(String baseUrl, String cacheDir, String downloaderName, int width, int height, int latDegree, int lonDegree) {
+    public AbstractTiffElevationProvider(String baseUrl, String cacheDir, int width, int height, int latDegree, int lonDegree) {
         super(cacheDir);
         this.baseUrl = baseUrl;
-        this.downloader = new Downloader(downloaderName).setTimeout(10000);
+        this.downloader = new Downloader().setTimeout(10000);
         this.WIDTH = width;
         this.HEIGHT = height;
         this.LAT_DEGREE = latDegree;

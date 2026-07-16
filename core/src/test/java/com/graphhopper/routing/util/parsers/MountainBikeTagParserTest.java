@@ -67,7 +67,7 @@ public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
         assertPriorityAndSpeed(BAD, 18, way);
 
         way.setTag("highway", "residential");
-        assertPriorityAndSpeed(PREFER, 18, way);
+        assertPriorityAndSpeed(SLIGHT_PREFER, 18, way);
 
         // Test pushing section speeds
         way.setTag("highway", "footway");
@@ -92,7 +92,7 @@ public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
         way.clearTags();
         way.setTag("highway", "path");
         way.setTag("surface", "ground");
-        assertPriorityAndSpeed(PREFER, 10, way);
+        assertPriorityAndSpeed(SLIGHT_PREFER, 10, way);
     }
 
     @Test
@@ -116,17 +116,16 @@ public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("surface", "ground");
         assertEquals(14, getSpeedFromFlags(way), 0.01);
 
+        // pick smallest of highway, tracktype, and applied smoothness speed
         way.setTag("smoothness", "bad");
-        assertEquals(10, getSpeedFromFlags(way), 0.01);
+        assertEquals(12, getSpeedFromFlags(way), 0.01);
 
         way.clearTags();
         way.setTag("highway", "track");
         way.setTag("tracktype", "grade4");
         assertEquals(8, getSpeedFromFlags(way), 0.01);
 
-        way.setTag("smoothness", "bad");
-        assertEquals(6, getSpeedFromFlags(way), 0.01);
-
+        // ignored smoothness if surface is set
         way.setTag("smoothness", "impassable");
         assertEquals(MIN_SPEED, getSpeedFromFlags(way), 0.01);
     }
@@ -160,6 +159,6 @@ public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
     public void testPreferenceForSlowSpeed() {
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "tertiary");
-        assertPriority(PREFER, osmWay);
+        assertPriority(SLIGHT_PREFER, osmWay);
     }
 }

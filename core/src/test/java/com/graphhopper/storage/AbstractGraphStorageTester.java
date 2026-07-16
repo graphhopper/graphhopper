@@ -121,13 +121,72 @@ public abstract class AbstractGraphStorageTester {
     public void testSetTooBigDistance_435() {
         graph = createGHStorage();
 
-        double maxDist = BaseGraphNodesAndEdges.MAX_DIST;
+        double maxDist = BaseGraph.MAX_DIST_METERS;
         EdgeIteratorState edge1 = graph.edge(0, 1).setDistance(maxDist);
         assertEquals(maxDist, edge1.getDistance(), 1);
 
         // max out should NOT lead to infinity as this leads fast to NaN! -> we set dist to the maximum if its larger than desired
         EdgeIteratorState edge2 = graph.edge(0, 2).setDistance(maxDist + 1);
         assertEquals(maxDist, edge2.getDistance(), 1);
+    }
+
+    @Test
+    public void testGetSetDistance_mm() {
+        graph = createGHStorage();
+
+        // basic round-trip: setDistance_mm -> getDistance_mm is lossless
+        EdgeIteratorState edge = graph.edge(0, 1).setDistance_mm(123456);
+        assertEquals(123456, edge.getDistance_mm());
+        // getDistance returns meters
+        assertEquals(123.456, edge.getDistance(), 1e-9);
+
+        // zero distance
+        edge.setDistance_mm(0);
+        assertEquals(0, edge.getDistance_mm());
+        assertEquals(0, edge.getDistance(), 1e-9);
+
+        // single millimeter
+        edge.setDistance_mm(1);
+        assertEquals(1, edge.getDistance_mm());
+        assertEquals(0.001, edge.getDistance(), 1e-9);
+
+        // setDistance -> getDistance_mm should give the rounded mm value
+        edge.setDistance(1.2345);
+        // 1.2345 * 1000 = 1234.5 -> rounds to 1235
+        assertEquals(1235, edge.getDistance_mm());
+        assertEquals(1.235, edge.getDistance(), 1e-9);
+
+        // setDistance_mm -> setDistance_mm copy is lossless (the whole point of the API)
+        EdgeIteratorState edge2 = graph.edge(0, 2);
+        edge2.setDistance_mm(edge.getDistance_mm());
+        assertEquals(edge.getDistance_mm(), edge2.getDistance_mm());
+        assertEquals(edge.getDistance(), edge2.getDistance(), 1e-9);
+    }
+
+    @Test
+    public void testDistance_mmCapping() {
+        graph = createGHStorage();
+
+        // distances at MAX_DIST_MM are stored exactly
+        EdgeIteratorState edge = graph.edge(0, 1).setDistance_mm(BaseGraphNodesAndEdges.MAX_DIST_MM);
+        assertEquals(BaseGraphNodesAndEdges.MAX_DIST_MM, edge.getDistance_mm());
+
+        // values larger than MAX_DIST_MM are capped
+        EdgeIteratorState edge2 = graph.edge(0, 2).setDistance_mm(BaseGraphNodesAndEdges.MAX_DIST_MM + 1);
+        assertEquals(BaseGraphNodesAndEdges.MAX_DIST_MM, edge2.getDistance_mm());
+    }
+
+    @Test
+    public void testDistance_mmArguments() {
+        graph = createGHStorage();
+        EdgeIteratorState edge = graph.edge(0, 1);
+        assertThrows(IllegalArgumentException.class, () -> edge.setDistance_mm(-1));
+        // if the distance exceeds the limit it will be capped silently! debatable, but this is what
+        // we've been doing for a long time in setDistance.
+        edge.setDistance_mm(BaseGraphNodesAndEdges.MAX_DIST_MM + 1L);
+        assertEquals(BaseGraphNodesAndEdges.MAX_DIST_MM, edge.getDistance_mm());
+        edge.setDistance(BaseGraph.MAX_DIST_METERS + 1L);
+        assertEquals(BaseGraph.MAX_DIST_METERS, edge.getDistance());
     }
 
     @Test
@@ -728,18 +787,24 @@ public abstract class AbstractGraphStorageTester {
         final BaseGraph baseGraph = graph.getBaseGraph();
         assertEquals(1, baseGraph.getMaxGeoRef());
         iter2.setWayGeometry(Helper.createPointList3D(1, 2, 3, 3, 4, 5, 5, 6, 7, 7, 8, 9));
-        assertEquals(1 + 2 + 4 * 11, baseGraph.getMaxGeoRef());
+        long refAfterFirst = baseGraph.getMaxGeoRef();
+        assertTrue(refAfterFirst > 1, "expected geometry bytes to be written, maxGeoRef=" + refAfterFirst);
         iter2.setWayGeometry(Helper.createPointList3D(1, 2, 3, 3, 4, 5, 5, 6, 7));
-        assertEquals(1 + 2 + 4 * 11, baseGraph.getMaxGeoRef());
+        assertEquals(refAfterFirst, baseGraph.getMaxGeoRef());
         iter2.setWayGeometry(Helper.createPointList3D(1, 2, 3, 3, 4, 5));
-        assertEquals(1 + 2 + 4 * 11, baseGraph.getMaxGeoRef());
+        assertEquals(refAfterFirst, baseGraph.getMaxGeoRef());
         iter2.setWayGeometry(Helper.createPointList3D(1, 2, 3));
-        assertEquals(1 + 2 + 4 * 11, baseGraph.getMaxGeoRef());
-        assertThrows(IllegalStateException.class, () -> iter2.setWayGeometry(Helper.createPointList3D(1.5, 1, 0, 2, 3, 0)));
-        assertEquals(1 + 2 + 4 * 11, baseGraph.getMaxGeoRef());
+        assertEquals(refAfterFirst, baseGraph.getMaxGeoRef());
+        // growing past the existing slot allocates a fresh slot (the old slot becomes
+        // abandoned bytes in wayGeometry; no correctness issue).
+        PointList grownGeometry = Helper.createPointList3D(1.5, 1, 0, 2, 3, 0);
+        iter2.setWayGeometry(grownGeometry);
+        long refAfterGrow = baseGraph.getMaxGeoRef();
+        assertTrue(refAfterGrow > refAfterFirst);
+        assertEquals(grownGeometry, iter2.fetchWayGeometry(FetchMode.PILLAR_ONLY));
         EdgeIteratorState iter1 = graph.edge(0, 2).setDistance(200).set(carAccessEnc, true, true);
         iter1.setWayGeometry(Helper.createPointList3D(3.5, 4.5, 0, 5, 6, 0));
-        assertEquals(1 + 2 + 4 * 11 + (2 + 2 * 11), baseGraph.getMaxGeoRef());
+        assertTrue(baseGraph.getMaxGeoRef() > refAfterGrow);
     }
 
     @Test

@@ -45,9 +45,9 @@ public class GraphHopperConfig {
 
     public GraphHopperConfig() {
         this(new PMap());
-        // This includes the required attribution for OpenStreetMap.
+        // This includes the required attribution for OpenStreetMap. Do not remove it.
         // Do not hesitate to  mention us and link us in your about page
-        // https://support.graphhopper.com/support/search/solutions?term=attribution
+        // https://www.graphhopper.com/attribution/
         copyrights.add("GraphHopper");
         copyrights.add("OpenStreetMap contributors");
     }

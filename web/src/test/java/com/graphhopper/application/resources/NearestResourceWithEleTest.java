@@ -49,6 +49,7 @@ public class NearestResourceWithEleTest {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
                 putObject("graph.elevation.provider", "srtm").
+                putObject("graph.elevation.clear", true).
                 putObject("graph.elevation.cache_dir", "../core/files/").
                 putObject("prepare.min_network_size", 0).
                 putObject("datareader.file", "../core/files/monaco.osm.gz").
@@ -73,7 +74,7 @@ public class NearestResourceWithEleTest {
         double lon = point.get(0).asDouble();
         double lat = point.get(1).asDouble();
         double ele = point.get(2).asDouble();
-        assertTrue(lat == 43.73084185257864 && lon == 7.420749379140277 && ele == 59.0, "nearest point wasn't correct: lat=" + lat + ", lon=" + lon + ", ele=" + ele);
+        assertTrue(lat == 43.73084185257864 && lon == 7.420749379140277 && ele == 58.80088609718373, "nearest point wasn't correct: lat=" + lat + ", lon=" + lon + ", ele=" + ele);
     }
 
     @Test

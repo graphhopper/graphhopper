@@ -85,7 +85,7 @@ public class LowLevelAPIExample {
             QueryGraph queryGraph = QueryGraph.create(graph, fromSnap, toSnap);
             Weighting weighting = CustomModelParser.createWeighting(em, TurnCostProvider.NO_TURN_COST_PROVIDER,
                     new CustomModel().addToPriority(If("!" + accessEnc.getName(), MULTIPLY, "0")).addToSpeed(If("true", LIMIT, speedEnc.getName())));
-            Path path = new Dijkstra(queryGraph, weighting, TraversalMode.NODE_BASED).calcPath(fromSnap.getClosestNode(), toSnap.getClosestNode());
+            Path path = new Dijkstra(queryGraph, queryGraph.wrapWeighting(weighting), TraversalMode.NODE_BASED).calcPath(fromSnap.getClosestNode(), toSnap.getClosestNode());
             assert Helper.round(path.getDistance(), -2) == 1500;
 
             // calculate without location index (get the fromId and toId nodes from other code parts)

@@ -76,6 +76,12 @@
         <tag k="highway" v="secondary"/>
     </way>
 
+    <way id="21" version="85762">
+        <nd ref="60"/>
+        <nd ref="50"/>
+        <tag k="highway" v="secondary"/>
+    </way>
+
     <way id="15" version="85762">
         <nd ref="50"/>
         <nd ref="40"/>
