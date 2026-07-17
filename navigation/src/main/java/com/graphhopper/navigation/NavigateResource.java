@@ -132,7 +132,6 @@ public class NavigateResource {
 
         // Only do this, when there are more than 2 points, otherwise we use alternative routes
         if (!ghResponse.hasErrors() && !favoredHeadings.isEmpty()) {
-            request.setHeadings(Collections.emptyList());
             GHResponse noHeadingResponse = calcRouteForGET(request, Collections.emptyList(), requestPoints);
             if (ghResponse.getBest().getDistance() != noHeadingResponse.getBest().getDistance()) {
                 ghResponse.getAll().add(noHeadingResponse.getBest());
