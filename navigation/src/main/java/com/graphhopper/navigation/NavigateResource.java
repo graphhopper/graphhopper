@@ -248,7 +248,7 @@ public class NavigateResource {
         return points;
     }
 
-    public static List<Double> getBearing(String bearingString) {
+    static List<Double> getBearing(String bearingString) {
         if (bearingString == null || bearingString.isEmpty())
             return Collections.emptyList();
 
