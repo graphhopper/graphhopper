@@ -112,31 +112,28 @@ public class NavigateResource {
         double minPathPrecision = overview.equals("full") ? 0 : 1;
         String ghProfile = resolverMap.getOrDefault(mapboxProfile, mapboxProfile);
         List<GHPoint> requestPoints = getPointsFromRequest(httpReq, mapboxProfile);
-
-        GHRequest request = new GHRequest(requestPoints).
-                setProfile(ghProfile).
-                setLocale(localeStr).
-                // We force the intersection details here as we cannot easily add this to the URL
-                        setPathDetails(List.of(INTERSECTION)).
-                putHint(ROUNDABOUT_EXITS, roundaboutExits).
-                putHint(CALC_POINTS, true).
-                putHint(INSTRUCTIONS, enableInstructions).
-                putHint(WAY_POINT_MAX_DISTANCE, minPathPrecision);
-
         List<Double> favoredHeadings = getBearing(bearings);
         if (!favoredHeadings.isEmpty() && favoredHeadings.size() != requestPoints.size()) {
             throw new IllegalArgumentException("Number of bearings and waypoints did not match");
         }
 
-        GHResponse ghResponse = calcRouteForGET(request, favoredHeadings, requestPoints);
+        GHRequest request = new GHRequest(requestPoints).
+                setHeadings(favoredHeadings).
+                setProfile(ghProfile).
+                setLocale(localeStr).
+                // We force the intersection details here as we cannot easily add this to the URL
+                setPathDetails(List.of(INTERSECTION)).
+                putHint(ROUNDABOUT_EXITS, roundaboutExits).
+                putHint(CALC_POINTS, true).
+                putHint(INSTRUCTIONS, enableInstructions).
+                putHint(WAY_POINT_MAX_DISTANCE, minPathPrecision);
 
-        // Only do this, when there are more than 2 points, otherwise we use alternative routes
-        if (!ghResponse.hasErrors() && !favoredHeadings.isEmpty()) {
-            GHResponse noHeadingResponse = calcRouteForGET(request, Collections.emptyList(), requestPoints);
-            if (ghResponse.getBest().getDistance() != noHeadingResponse.getBest().getDistance()) {
-                ghResponse.getAll().add(noHeadingResponse.getBest());
-            }
+        if (requestPoints.size() > 2 || !favoredHeadings.isEmpty()) {
+            request.putHint(Parameters.CH.DISABLE, true).
+                    putHint(Parameters.Routing.PASS_THROUGH, true);
         }
+
+        GHResponse ghResponse = graphHopper.route(request);
 
         float took = sw.stop().getSeconds();
         String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
@@ -229,16 +226,6 @@ public class NavigateResource {
                     header("X-GH-Took", "" + Math.round(took * 1000)).
                     build();
         }
-    }
-
-    private GHResponse calcRouteForGET(GHRequest request, List<Double> headings, List<GHPoint> requestPoints) {
-        request.setHeadings(headings);
-        if (requestPoints.size() > 2 || !headings.isEmpty()) {
-            request.putHint(Parameters.CH.DISABLE, true).
-                    putHint(Parameters.Routing.PASS_THROUGH, true);
-        }
-
-        return graphHopper.route(request);
     }
 
     /**

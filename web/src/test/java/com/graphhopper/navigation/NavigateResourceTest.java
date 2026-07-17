@@ -1,10 +1,9 @@
-package com.graphhopper.application.resources;
+package com.graphhopper.navigation;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
-import com.graphhopper.navigation.NavigateResource;
 import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
