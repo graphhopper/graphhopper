@@ -63,7 +63,7 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         setSurfaceSpeed("pebblestone", 14);
         setSurfaceSpeed("salt", PUSHING_SECTION_SPEED);
         setSurfaceSpeed("sand", PUSHING_SECTION_SPEED);
-        setSurfaceSpeed("wood", PUSHING_SECTION_SPEED);
+        setSurfaceSpeed("wood", 16);
 
         setHighwaySpeed("steps", MIN_SPEED);
 
