@@ -45,9 +45,13 @@ public class PrepareLandmarks {
     private boolean prepared = false;
 
     public PrepareLandmarks(Directory dir, BaseGraph graph, EncodedValueLookup encodedValueLookup, LMConfig lmConfig, int landmarks) {
+        this(graph, new LandmarkStorage(graph, encodedValueLookup, dir, lmConfig, landmarks), lmConfig);
+    }
+
+    public PrepareLandmarks(BaseGraph graph, LandmarkStorage lms, LMConfig lmConfig) {
         this.graph = graph;
         this.lmConfig = lmConfig;
-        lms = new LandmarkStorage(graph, encodedValueLookup, dir, lmConfig, landmarks);
+        this.lms = lms;
     }
 
     /**

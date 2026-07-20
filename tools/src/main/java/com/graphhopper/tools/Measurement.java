@@ -29,7 +29,7 @@ import com.graphhopper.jackson.Jackson;
 import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.lm.LMConfig;
+import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.Weighting;
@@ -120,9 +120,9 @@ public class Measurement {
 
         GraphHopper hopper = new GraphHopper() {
             @Override
-            protected Map<String, PrepareContractionHierarchies.Result> prepareCH(boolean closeEarly, List<CHConfig> configsToPrepare) {
+            protected Map<String, PrepareContractionHierarchies.Result> prepareCH(boolean closeEarly, Map<CHConfig, CHStorage> storagesToPrepare) {
                 StopWatch sw = new StopWatch().start();
-                Map<String, PrepareContractionHierarchies.Result> result = super.prepareCH(closeEarly, configsToPrepare);
+                Map<String, PrepareContractionHierarchies.Result> result = super.prepareCH(closeEarly, storagesToPrepare);
                 // note that we measure the total time of all (possibly edge&node) CH preparations
                 put(Parameters.CH.PREPARE + "time", sw.stop().getMillis());
                 if (result.get("profile_no_tc") != null) {
@@ -139,8 +139,8 @@ public class Measurement {
             }
 
             @Override
-            protected List<PrepareLandmarks> prepareLM(boolean closeEarly, List<LMConfig> configsToPrepare) {
-                List<PrepareLandmarks> prepareLandmarks = super.prepareLM(closeEarly, configsToPrepare);
+            protected List<PrepareLandmarks> prepareLM(boolean closeEarly, List<LandmarkStorage> storagesToPrepare) {
+                List<PrepareLandmarks> prepareLandmarks = super.prepareLM(closeEarly, storagesToPrepare);
                 for (PrepareLandmarks plm : prepareLandmarks) {
                     put(Landmark.PREPARE + "time", plm.getTotalPrepareTime());
                 }
