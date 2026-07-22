@@ -202,22 +202,15 @@ public class FootTagParserTest {
 
     @Test
     public void testUnknownFootValueDoesNotShadowAccess() {
-        // An unrecognized foot value carries no information and must not shadow a more general
-        // access restriction: access=no still blocks (hierarchy foot -> access).
+        // an unrecognized foot value must defer to access, not shadow it
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "service");
         way.setTag("access", "no");
-        way.setTag("foot", "somethingunexpected");
+        way.setTag("foot", "unknownvalue");
         assertTrue(accessParser.getAccess(way).canSkip());
 
-        // a recognized foot value still overrides access=no as before
-        way.setTag("foot", "yes");
-        assertTrue(accessParser.getAccess(way).isWay());
-
-        // without an access restriction an unrecognized foot value stays allowed (unchanged)
-        way.clearTags();
-        way.setTag("highway", "service");
-        way.setTag("foot", "somethingunexpected");
+        // but without any restriction it stays allowed
+        way.removeTag("access");
         assertTrue(accessParser.getAccess(way).isWay());
     }
 

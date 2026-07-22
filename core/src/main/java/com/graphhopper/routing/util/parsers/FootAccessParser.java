@@ -28,7 +28,6 @@ import java.util.*;
 
 import static com.graphhopper.routing.ev.RouteNetwork.*;
 import static com.graphhopper.routing.util.PriorityCode.UNCHANGED;
-import static com.graphhopper.routing.util.parsers.OSMTemporalAccessParser.hasPermissiveTemporalRestriction;
 
 public class FootAccessParser extends AbstractAccessParser implements TagParser {
 
@@ -113,30 +112,9 @@ public class FootAccessParser extends AbstractAccessParser implements TagParser 
         if ("via_ferrata".equals(highwayValue))
             return WayAccess.CAN_SKIP;
 
-        // Walk the restriction keys in priority order (most specific first: foot, then access).
-        // A key only decides access if its value is recognized (allowed or restricted). An unknown
-        // value carries no information, so we defer to the next, more generic key instead of silently
-        // allowing the way - e.g. an unrecognized foot=* must not shadow access=no.
-        for (int i = 0; i < restrictionKeys.size(); i++) {
-            String firstValue = way.getTag(restrictionKeys.get(i), "");
-            if (firstValue.isEmpty())
-                continue;
-            String[] restrict = firstValue.split(";");
-            boolean allowed = false, restricted = false;
-            // an allowed value anywhere wins regardless of order
-            for (String value : restrict) {
-                if (allowedValues.contains(value)) allowed = true;
-                else if (restrictedValues.contains(value)) restricted = true;
-            }
-            if (allowed)
-                return WayAccess.WAY;
-            if (restricted) {
-                if (!hasPermissiveTemporalRestriction(way, i, restrictionKeys, allowedValues))
-                    return WayAccess.CAN_SKIP;
-                break; // restricted, but a permissive conditional applies -> fall through to default
-            }
-            // value present but unrecognized -> defer to the next, more generic key
-        }
+        WayAccess access = getAccessFromRestrictions(way);
+        if (access != null)
+            return access;
 
         if (way.hasTag("sidewalk", sidewalkValues))
             return WayAccess.WAY;

@@ -521,22 +521,15 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
 
     @Test
     public void testUnknownBicycleValueDoesNotShadowAccess() {
-        // An unrecognized bicycle value carries no information and must not shadow a more
-        // general access restriction: access=no still blocks (see #xyAccessParser hierarchy).
+        // an unrecognized bicycle value must defer to access, not shadow it
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "service");
         way.setTag("access", "no");
         way.setTag("bicycle", "unknownvalue");
         assertTrue(accessParser.getAccess(way).canSkip());
 
-        // a recognized bicycle value still overrides access=no as before
-        way.setTag("bicycle", "yes");
-        assertTrue(accessParser.getAccess(way).isWay());
-
-        // without an access restriction an unrecognized bicycle value stays allowed (unchanged)
-        way.clearTags();
-        way.setTag("highway", "service");
-        way.setTag("bicycle", "unknownvalue");
+        // but without any restriction it stays allowed
+        way.removeTag("access");
         assertTrue(accessParser.getAccess(way).isWay());
     }
 

@@ -8,8 +8,6 @@ import com.graphhopper.routing.util.WayAccess;
 
 import java.util.*;
 
-import static com.graphhopper.routing.util.parsers.OSMTemporalAccessParser.hasPermissiveTemporalRestriction;
-
 public abstract class BikeCommonAccessParser extends AbstractAccessParser implements TagParser {
 
     private static final Set<String> OPP_LANES = new HashSet<>(Arrays.asList("opposite", "opposite_lane", "opposite_track"));
@@ -74,29 +72,9 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
                 || "cycleway".equals(highwayValue) && !way.hasTag("bicycle", "no")) // cycleway gets bicycle=yes by default
             return WayAccess.WAY;
 
-        // Walk the restriction keys in priority order (most specific first: bicycle, then access).
-        // A key only decides access if its value is recognized (allowed or restricted). An unknown
-        // value carries no information, so we defer to the next.
-        for (int i = 0; i < restrictionKeys.size(); i++) {
-            String firstValue = way.getTag(restrictionKeys.get(i), "");
-            if (firstValue.isEmpty())
-                continue;
-            String[] restrict = firstValue.split(";");
-            boolean allowed = false, restricted = false;
-            // an allowed value anywhere wins regardless of order
-            for (String value : restrict) {
-                if (allowedValues.contains(value)) allowed = true;
-                else if (restrictedValues.contains(value)) restricted = true;
-            }
-            if (allowed)
-                return WayAccess.WAY;
-            if (restricted) {
-                if (!hasPermissiveTemporalRestriction(way, i, restrictionKeys, allowedValues))
-                    return WayAccess.CAN_SKIP;
-                break; // restricted, but a permissive conditional applies -> fall through to default
-            }
-            // value present but unrecognized -> defer to the next, more generic key
-        }
+        WayAccess access = getAccessFromRestrictions(way);
+        if (access != null)
+            return access;
 
         // accept only if explicitly tagged for bike usage
         if ("motorway".equals(highwayValue) || "motorway_link".equals(highwayValue))

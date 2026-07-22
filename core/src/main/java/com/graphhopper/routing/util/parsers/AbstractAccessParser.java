@@ -21,6 +21,7 @@ import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.util.WayAccess;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.*;
@@ -81,6 +82,31 @@ public abstract class AbstractAccessParser implements TagParser {
     }
 
     public abstract void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way);
+
+    /**
+     * Walks the restriction keys most-specific-first and returns the access decided by the first key
+     * with a recognized value (WAY if allowed, CAN_SKIP if restricted). Returns null if no key
+     * decides: all present values are unrecognized (so an unknown value defers to the more generic
+     * key instead of shadowing it) or a restricted value is lifted by a permissive temporal restriction.
+     */
+    protected WayAccess getAccessFromRestrictions(ReaderWay way) {
+        for (int i = 0; i < restrictionKeys.size(); i++) {
+            String value = way.getTag(restrictionKeys.get(i), "");
+            if (value.isEmpty())
+                continue;
+            boolean allowed = false, restricted = false;
+            for (String v : value.split(";")) {
+                if (allowedValues.contains(v)) allowed = true;
+                else if (restrictedValues.contains(v)) restricted = true;
+            }
+            if (allowed)
+                return WayAccess.WAY;
+            if (restricted)
+                return OSMTemporalAccessParser.hasPermissiveTemporalRestriction(way, i, restrictionKeys, allowedValues)
+                        ? null : WayAccess.CAN_SKIP;
+        }
+        return null;
+    }
 
     /**
      * @return true if the given OSM node blocks access for the specified restrictions, false otherwise

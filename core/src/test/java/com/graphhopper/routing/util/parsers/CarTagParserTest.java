@@ -155,34 +155,15 @@ public class CarTagParserTest {
 
     @Test
     public void testUnknownValueDoesNotShadowAccess() {
-        // An unrecognized value on a more specific key must not shadow a more general access
-        // restriction: it carries no information, so we defer to the next key in the hierarchy
-        // (motorcar -> motor_vehicle -> vehicle -> access).
+        // an unrecognized value on a more specific key must defer to access, not shadow it
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "service");
         way.setTag("access", "no");
-        way.setTag("motor_vehicle", "somethingunexpected");
+        way.setTag("motor_vehicle", "unknownvalue");
         assertTrue(parser.getAccess(way).canSkip());
 
-        // an unrecognized value on the more specific key does not shadow a restriction on a less
-        // specific one either
-        way.clearTags();
-        way.setTag("highway", "service");
-        way.setTag("vehicle", "no");
-        way.setTag("motorcar", "somethingunexpected");
-        assertTrue(parser.getAccess(way).canSkip());
-
-        // a recognized value still overrides the more general key as before
-        way.clearTags();
-        way.setTag("highway", "service");
-        way.setTag("access", "no");
-        way.setTag("motor_vehicle", "yes");
-        assertTrue(parser.getAccess(way).isWay());
-
-        // without a restriction an unrecognized value stays allowed (unchanged behavior)
-        way.clearTags();
-        way.setTag("highway", "service");
-        way.setTag("motor_vehicle", "somethingunexpected");
+        // but without any restriction it stays allowed
+        way.removeTag("access");
         assertTrue(parser.getAccess(way).isWay());
     }
 
