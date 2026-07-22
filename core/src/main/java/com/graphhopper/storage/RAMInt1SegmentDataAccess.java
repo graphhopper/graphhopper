@@ -28,12 +28,10 @@ import java.util.Arrays;
  */
 public class RAMInt1SegmentDataAccess extends AbstractDataAccess {
     private int[] data = new int[0];
-    private final boolean fileBacked;
     private final boolean readOnly;
 
-    public RAMInt1SegmentDataAccess(String name, String location, boolean fileBacked, boolean readOnly, int segmentSize) {
+    public RAMInt1SegmentDataAccess(String name, String location, boolean readOnly, int segmentSize) {
         super(name, location, segmentSize);
-        this.fileBacked = fileBacked;
         this.readOnly = readOnly;
     }
 
@@ -78,9 +76,6 @@ public class RAMInt1SegmentDataAccess extends AbstractDataAccess {
         if (isClosed())
             throw new IllegalStateException("already closed");
 
-        if (!fileBacked)
-            return false;
-
         File file = new File(getFullName());
         if (!file.exists() || file.length() == 0)
             return false;
@@ -123,8 +118,7 @@ public class RAMInt1SegmentDataAccess extends AbstractDataAccess {
             throw new IllegalStateException("already closed");
         if (readOnly)
             throw new IllegalStateException("Cannot flush the read-only DataAccess " + getFullName());
-        if (!fileBacked)
-            return;
+        ensureParentDirectoryExists();
 
         try {
             try (RandomAccessFile raFile = new RandomAccessFile(getFullName(), "rw")) {
@@ -226,11 +220,6 @@ public class RAMInt1SegmentDataAccess extends AbstractDataAccess {
     @Override
     public int getSegments() {
         return data.length / (segmentSizeInBytes / 4);
-    }
-
-    @Override
-    public boolean isFileBacked() {
-        return fileBacked;
     }
 
     @Override

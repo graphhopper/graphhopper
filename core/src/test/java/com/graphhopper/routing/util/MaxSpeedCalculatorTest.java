@@ -49,7 +49,7 @@ class MaxSpeedCalculatorTest {
         parsers.addWayTagParser(new OSMMaxSpeedParser(maxSpeedEnc));
         parsers.addWayTagParser(calc.getParser());
 
-        calc.createDataAccessForParser(new GHDirectory("", DAType.RAM).setFileBacked(false));
+        calc.createDataAccessForParser(new GHDirectory("", DAType.RAM));
     }
 
     @Test

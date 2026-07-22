@@ -42,7 +42,7 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
     @Override
     public BaseGraph createGHStorage(String location, boolean enabled3D) {
         // reduce segment size in order to test the case where multiple segments come into the game
-        BaseGraph gs = newGHStorage(new GHDirectory(location, DAType.RAM).setFileBacked(false), enabled3D);
+        BaseGraph gs = newGHStorage(new GHDirectory(location, DAType.RAM), enabled3D);
         gs.create(defaultSize);
         return gs;
     }
@@ -409,7 +409,7 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
     @Test
     public void testMaxPillarNodes() {
         // 1. Use -1 to use the default segment size (1MB).
-        BaseGraph graph = newGHStorage(new GHDirectory("", DAType.RAM).setFileBacked(false), false);
+        BaseGraph graph = newGHStorage(new GHDirectory("", DAType.RAM), false);
         graph.create(defaultSize);
 
         // 2. Create the massive point list (65535 nodes)

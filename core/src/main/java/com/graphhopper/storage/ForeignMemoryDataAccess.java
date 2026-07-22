@@ -105,12 +105,10 @@ public final class ForeignMemoryDataAccess extends AbstractDataAccess {
     private Arena arena;
     private MemorySegment segment = MemorySegment.NULL;
     private long capacity;
-    private final boolean fileBacked;
     private final boolean readOnly;
 
-    public ForeignMemoryDataAccess(String name, String location, boolean fileBacked, boolean readOnly, int segmentSize) {
+    public ForeignMemoryDataAccess(String name, String location, boolean readOnly, int segmentSize) {
         super(name, location, segmentSize);
-        this.fileBacked = fileBacked;
         this.readOnly = readOnly;
     }
 
@@ -166,9 +164,6 @@ public final class ForeignMemoryDataAccess extends AbstractDataAccess {
             throw new IllegalStateException("already initialized");
         if (isClosed())
             throw new IllegalStateException("already closed");
-        if (!fileBacked)
-            return false;
-
         File file = new File(getFullName());
         if (!file.exists() || file.length() == 0)
             return false;
@@ -215,8 +210,7 @@ public final class ForeignMemoryDataAccess extends AbstractDataAccess {
             throw new IllegalStateException("already closed");
         if (readOnly)
             throw new IllegalStateException("Cannot flush the read-only DataAccess " + getFullName());
-        if (!fileBacked)
-            return;
+        ensureParentDirectoryExists();
 
         try {
             try (RandomAccessFile raFile = new RandomAccessFile(getFullName(), "rw")) {
@@ -386,11 +380,6 @@ public final class ForeignMemoryDataAccess extends AbstractDataAccess {
     @Override
     public int getSegments() {
         return (int) (capacity / segmentSizeInBytes);
-    }
-
-    @Override
-    public boolean isFileBacked() {
-        return fileBacked;
     }
 
 }

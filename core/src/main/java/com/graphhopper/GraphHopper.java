@@ -820,10 +820,11 @@ public class GraphHopper {
         prepareImport();
         if (encodingManager == null)
             throw new IllegalStateException("The EncodingManager must be created in `prepareImport()`");
-        GHDirectory directory = new GHDirectory(ghLocation, dataAccessDefaultType, defaultSegmentSize).setFileBacked(fileBacked);
+        GHDirectory directory = new GHDirectory(ghLocation, dataAccessDefaultType, defaultSegmentSize);
         directory.configure(dataAccessConfig);
         baseGraph = new BaseGraph.Builder(getEncodingManager())
                 .setDir(directory)
+                .setFileBacked(fileBacked)
                 .set3D(hasElevation())
                 .withTurnCosts(encodingManager.needsTurnCostsSupport())
                 .build();
@@ -832,7 +833,7 @@ public class GraphHopper {
 
         GHLock lock = null;
         try {
-            if (directory.isFileBacked()) {
+            if (fileBacked) {
                 lockFactory.setLockDir(new File(ghLocation));
                 lock = lockFactory.create(fileLockName, true);
                 if (!lock.tryLock())
@@ -1217,13 +1218,13 @@ public class GraphHopper {
             // there is just nothing to load
             return false;
 
-        GHDirectory directory = new GHDirectory(ghLocation, dataAccessDefaultType).setFileBacked(fileBacked).setReadOnly(readOnly);
+        GHDirectory directory = new GHDirectory(ghLocation, dataAccessDefaultType).setReadOnly(readOnly);
         directory.configure(dataAccessConfig);
         GHLock lock = null;
         try {
             // create locks only if writes are allowed, if they are not allowed a lock cannot be created
             // (e.g. on a read only filesystem locks would fail)
-            if (directory.isFileBacked() && !readOnly) {
+            if (fileBacked && !readOnly) {
                 lockFactory.setLockDir(new File(ghLocation));
                 lock = lockFactory.create(fileLockName, false);
                 if (!lock.tryLock())
@@ -1237,6 +1238,7 @@ public class GraphHopper {
             encodingManager = EncodingManager.fromProperties(properties);
             baseGraph = new BaseGraph.Builder(encodingManager)
                     .setDir(directory)
+                    .setFileBacked(fileBacked)
                     .set3D(hasElevation())
                     .withTurnCosts(encodingManager.needsTurnCostsSupport())
                     .build();
@@ -1383,10 +1385,14 @@ public class GraphHopper {
 
         if (closeEarly) {
             boolean includesCustomProfiles = profilesByName.values().stream().anyMatch(p -> CustomWeighting.NAME.equals(p.getWeighting()));
-            if (!includesCustomProfiles)
+            if (!includesCustomProfiles) {
                 // when there are custom profiles we must not close way geometry or KVStorage, because
                 // they might be needed to evaluate the custom weightings for the following preparations
-                baseGraph.flushAndCloseGeometryAndNameStorage();
+                if (fileBacked)
+                    baseGraph.flushAndCloseGeometryAndNameStorage();
+                else
+                    baseGraph.closeGeometryAndNameStorage();
+            }
         }
 
         if (lmPreparationHandler.isEnabled())
@@ -1467,6 +1473,8 @@ public class GraphHopper {
         if (!tmpIndex.loadExisting()) {
             ensureWriteAccess();
             tmpIndex.prepareIndex();
+            if (fileBacked)
+                tmpIndex.flush();
         }
 
         return tmpIndex;
@@ -1566,7 +1574,7 @@ public class GraphHopper {
             ensureWriteAccess();
         if (!baseGraph.isFrozen())
             baseGraph.freeze();
-        return chPreparationHandler.prepare(baseGraph, properties, configsToPrepare, closeEarly);
+        return chPreparationHandler.prepare(baseGraph, properties, configsToPrepare, closeEarly, fileBacked);
     }
 
     /**
@@ -1607,7 +1615,7 @@ public class GraphHopper {
             ensureWriteAccess();
         if (!baseGraph.isFrozen())
             baseGraph.freeze();
-        return lmPreparationHandler.prepare(configsToPrepare, baseGraph, encodingManager, properties, locationIndex, closeEarly);
+        return lmPreparationHandler.prepare(configsToPrepare, baseGraph, encodingManager, properties, locationIndex, closeEarly, fileBacked);
     }
 
     /**
@@ -1632,6 +1640,11 @@ public class GraphHopper {
     }
 
     protected void flush() {
+        if (!fileBacked) {
+            // purely in-memory graph: nothing is persisted
+            setFullyLoaded();
+            return;
+        }
         logger.info("flushing graph " + getBaseGraphString() + ", details:" + baseGraph.toDetailsString() + ", "
                 + getMemInfo() + ")");
         baseGraph.flush();

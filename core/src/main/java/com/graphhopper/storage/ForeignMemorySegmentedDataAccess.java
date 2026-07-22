@@ -46,12 +46,10 @@ public final class ForeignMemorySegmentedDataAccess extends AbstractDataAccess {
     private static final VarHandle BYTE_VH = BYTE_LAYOUT.varHandle();
 
     private MemorySegment[] segments = new MemorySegment[0];
-    private final boolean fileBacked;
     private final boolean readOnly;
 
-    public ForeignMemorySegmentedDataAccess(String name, String location, boolean fileBacked, boolean readOnly, int segmentSize) {
+    public ForeignMemorySegmentedDataAccess(String name, String location, boolean readOnly, int segmentSize) {
         super(name, location, segmentSize);
-        this.fileBacked = fileBacked;
         this.readOnly = readOnly;
     }
 
@@ -102,9 +100,6 @@ public final class ForeignMemorySegmentedDataAccess extends AbstractDataAccess {
             throw new IllegalStateException("already initialized");
         if (isClosed())
             throw new IllegalStateException("already closed");
-        if (!fileBacked)
-            return false;
-
         File file = new File(getFullName());
         if (!file.exists() || file.length() == 0)
             return false;
@@ -143,8 +138,7 @@ public final class ForeignMemorySegmentedDataAccess extends AbstractDataAccess {
             throw new IllegalStateException("already closed");
         if (readOnly)
             throw new IllegalStateException("Cannot flush the read-only DataAccess " + getFullName());
-        if (!fileBacked)
-            return;
+        ensureParentDirectoryExists();
 
         try {
             try (RandomAccessFile raFile = new RandomAccessFile(getFullName(), "rw")) {
@@ -312,11 +306,6 @@ public final class ForeignMemorySegmentedDataAccess extends AbstractDataAccess {
     @Override
     public int getSegments() {
         return segments.length;
-    }
-
-    @Override
-    public boolean isFileBacked() {
-        return fileBacked;
     }
 
 }

@@ -84,6 +84,8 @@ public final class MMapDataAccess extends AbstractDataAccess {
 
         try {
             // raFile necessary for loadExisting and create
+            if (allowWrites)
+                ensureParentDirectoryExists();
             raFile = new RandomAccessFile(getFullName(), allowWrites ? "rw" : "r");
         } catch (IOException ex) {
             throw new RuntimeException(ex);

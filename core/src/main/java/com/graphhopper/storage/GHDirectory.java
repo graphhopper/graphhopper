@@ -40,11 +40,6 @@ public class GHDirectory implements Directory {
     private final Map<String, DataAccess> map = Collections.synchronizedMap(new HashMap<>());
     private final int defaultSegmentSize;
     private boolean readOnly;
-    // false = purely in-memory: the DataAccess objects created here do not load from or flush to
-    // disc (loadExisting and flush are no-ops), independent of the type and the location. A
-    // read-only file backed Directory (fileBacked && readOnly) is the normal read-only load case;
-    // in-memory && readOnly is contradictory and rejected, see setFileBacked/setReadOnly.
-    private boolean fileBacked = true;
 
     public GHDirectory(String _location, DAType defaultType) {
         this(_location, defaultType, AbstractDataAccess.SEGMENT_SIZE_DEFAULT);
@@ -143,7 +138,7 @@ public class GHDirectory implements Directory {
             // per file name
             throw new IllegalStateException("DataAccess " + name + " has already been created");
 
-        DataAccess da = type.create(name, location, segmentSize, getPreload(name), fileBacked, readOnly);
+        DataAccess da = type.create(name, location, segmentSize, getPreload(name), readOnly);
         map.put(name, da);
         return da;
     }
@@ -176,8 +171,8 @@ public class GHDirectory implements Directory {
     }
 
     private void removeBackingFile(DataAccess da, String name) {
-        if (da.isFileBacked())
-            removeDir(new File(location + name));
+        // harmless no-op if the DataAccess was never flushed to disc (purely in-memory)
+        removeDir(new File(location + name));
     }
 
     @Override
@@ -197,43 +192,19 @@ public class GHDirectory implements Directory {
     }
 
     /**
-     * @return false if this is a purely in-memory Directory whose DataAccess objects neither load
-     * from nor flush to disc. See {@link #setFileBacked(boolean)}.
-     */
-    @Override
-    public boolean isFileBacked() {
-        return fileBacked;
-    }
-
-    /**
-     * If set to false the DataAccess objects created afterwards are purely in-memory: loadExisting
-     * and flush become no-ops and no backing files, lock or directory are created. Useful e.g. for
-     * unit tests that should not touch the disc. Only meaningful for the on-heap and foreign
-     * anonymous types, the memory mapped types are always file backed.
-     */
-    public GHDirectory setFileBacked(boolean fileBacked) {
-        if (!fileBacked && readOnly)
-            throw new IllegalStateException("A purely in-memory Directory cannot be read-only, there is no backing file to protect");
-        this.fileBacked = fileBacked;
-        return this;
-    }
-
-    /**
      * Marks this Directory as read-only, e.g. for a read-only filesystem: the backing files of all
      * DataAccess objects created afterwards must not be modified. Memory mapped types map them
      * read-only (enforced by the OS), all other types throw on flush.
      */
     public GHDirectory setReadOnly(boolean readOnly) {
-        if (readOnly && !fileBacked)
-            throw new IllegalStateException("A purely in-memory Directory cannot be read-only, there is no backing file to protect");
         this.readOnly = readOnly;
         return this;
     }
 
     @Override
     public Directory create() {
-        if (fileBacked)
-            new File(location).mkdirs();
+        // the backing directory is created lazily by each DataAccess when it actually writes a
+        // file, so a purely in-memory Directory (that is never flushed) does not touch the disc
         return this;
     }
 

@@ -83,7 +83,6 @@ public class MMapForeignReadOnlyDataAccessTest {
             da.getBytes(80, out, out.length);
             assertArrayEquals(new byte[]{1, 2, 3, 4, 5}, out);
             assertEquals(0xCAFEBABE, da.getHeader(0));
-            assertTrue(da.isFileBacked());
             assertTrue(da.getCapacity() >= SEGMENT_SIZE * 4L);
             assertTrue(da.getSegments() >= 4);
         } finally {

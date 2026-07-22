@@ -37,12 +37,10 @@ public class RAM1SegmentDataAccess extends AbstractDataAccess {
     private static final VarHandle SHORT = MethodHandles.byteArrayViewVarHandle(short[].class, ByteOrder.LITTLE_ENDIAN).withInvokeExactBehavior();
 
     private byte[] data = new byte[0];
-    private final boolean fileBacked;
     private final boolean readOnly;
 
-    public RAM1SegmentDataAccess(String name, String location, boolean fileBacked, boolean readOnly, int segmentSize) {
+    public RAM1SegmentDataAccess(String name, String location, boolean readOnly, int segmentSize) {
         super(name, location, segmentSize);
-        this.fileBacked = fileBacked;
         this.readOnly = readOnly;
     }
 
@@ -86,9 +84,6 @@ public class RAM1SegmentDataAccess extends AbstractDataAccess {
             throw new IllegalStateException("already initialized");
         if (isClosed())
             throw new IllegalStateException("already closed");
-        if (!fileBacked)
-            return false;
-
         File file = new File(getFullName());
         if (!file.exists() || file.length() == 0)
             return false;
@@ -125,8 +120,7 @@ public class RAM1SegmentDataAccess extends AbstractDataAccess {
             throw new IllegalStateException("already closed");
         if (readOnly)
             throw new IllegalStateException("Cannot flush the read-only DataAccess " + getFullName());
-        if (!fileBacked)
-            return;
+        ensureParentDirectoryExists();
 
         try {
             try (RandomAccessFile raFile = new RandomAccessFile(getFullName(), "rw")) {
@@ -216,11 +210,6 @@ public class RAM1SegmentDataAccess extends AbstractDataAccess {
         if (cap % segmentSizeInBytes != 0)
             segs++;
         return segs;
-    }
-
-    @Override
-    public boolean isFileBacked() {
-        return fileBacked;
     }
 
 }

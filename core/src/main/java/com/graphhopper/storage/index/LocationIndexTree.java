@@ -169,7 +169,7 @@ public class LocationIndexTree implements LocationIndex {
         lineIntIndex.setMinResolutionInMeter(minResolutionInMeter);
         lineIntIndex.store(inMemConstructionIndex);
         lineIntIndex.setChecksum(checksum());
-        flush();
+        // the caller decides whether to persist the index to disc by calling flush(), see GraphHopper
         logger.info("location index created in " + sw.stop().getSeconds()
                 + "s, size:" + Helper.nf(lineIntIndex.getSize())
                 + ", leafs:" + Helper.nf(lineIntIndex.getLeafs())

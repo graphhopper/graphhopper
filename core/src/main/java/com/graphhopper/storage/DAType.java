@@ -34,60 +34,60 @@ public class DAType {
     private static final Map<String, DAType> REGISTRY = new ConcurrentHashMap<>();
 
     /**
-     * The DA object is hold entirely in-memory. Whether loadExisting and flush actually read from
-     * resp. write to a backing file is decided by the {@code fileBacked} flag of the owning Directory,
-     * not by the type, see {@link Directory#isFileBacked()}. See RAMDataAccess.
+     * The DA object is hold entirely in-memory. It only reads from resp. writes to a backing file
+     * if loadExisting resp. flush are called, so whether it persists is decided by the caller, not
+     * by the type. See RAMDataAccess.
      */
     public static final DAType RAM = register("RAM", true, false,
-            (name, location, segmentSize, preload, fileBacked, readOnly) -> new RAMDataAccess(name, location, fileBacked, readOnly, segmentSize));
+            (name, location, segmentSize, preload, readOnly) -> new RAMDataAccess(name, location, readOnly, segmentSize));
     /**
      * Optimized RAM DA type for integer access. The set and getBytes methods cannot be used.
      */
     public static final DAType RAM_INT = register("RAM_INT", true, false,
-            (name, location, segmentSize, preload, fileBacked, readOnly) -> new RAMIntDataAccess(name, location, fileBacked, readOnly, segmentSize));
+            (name, location, segmentSize, preload, readOnly) -> new RAMIntDataAccess(name, location, readOnly, segmentSize));
     /**
      * Like RAM_INT, but backed by a single contiguous int[] for maximum read speed.
      * Not a good fit if the array needs to be resized frequently. Limited to Integer.MAX_VALUE ints
      * No support for short,byte and bytes.
      */
     public static final DAType RAM_INT_1SEG = register("RAM_INT_1SEG", true, false,
-            (name, location, segmentSize, preload, fileBacked, readOnly) -> new RAMInt1SegmentDataAccess(name, location, fileBacked, readOnly, segmentSize));
+            (name, location, segmentSize, preload, readOnly) -> new RAMInt1SegmentDataAccess(name, location, readOnly, segmentSize));
     /**
      * Like RAM, but backed by a single contiguous byte[] (no segment math). Limited to ~2GB.
      * The on-heap equivalent of FOREIGN_ANON. See RAM1SegmentDataAccess.
      */
     public static final DAType RAM_1SEG = register("RAM_1SEG", true, false,
-            (name, location, segmentSize, preload, fileBacked, readOnly) -> new RAM1SegmentDataAccess(name, location, fileBacked, readOnly, segmentSize));
+            (name, location, segmentSize, preload, readOnly) -> new RAM1SegmentDataAccess(name, location, readOnly, segmentSize));
     /**
      * Like RAM_1SEG (single contiguous heap array, full byte access), but backed by a {@code long[]}
      * instead of a {@code byte[]} to allow up to ~16GB. See RAMLongDataAccess.
      */
     public static final DAType RAM_LONG = register("RAM_LONG", true, false,
-            (name, location, segmentSize, preload, fileBacked, readOnly) -> new RAMLongDataAccess(name, location, fileBacked, readOnly, segmentSize));
+            (name, location, segmentSize, preload, readOnly) -> new RAMLongDataAccess(name, location, readOnly, segmentSize));
     /**
      * Off-heap DA object backed by anonymous (foreign) memory - the equivalent of RAM but outside
      * the JVM heap. See ForeignMemoryDataAccess.
      */
     public static final DAType FOREIGN_ANON = register("FOREIGN_ANON", false, false,
-            (name, location, segmentSize, preload, fileBacked, readOnly) -> new ForeignMemoryDataAccess(name, location, fileBacked, readOnly, segmentSize));
+            (name, location, segmentSize, preload, readOnly) -> new ForeignMemoryDataAccess(name, location, readOnly, segmentSize));
     /**
-     * Memory mapped DA object backed by the Foreign Memory API. Always file backed, so the
-     * Directory fileBacked flag is ignored. See MMapForeignMemoryDataAccess.
+     * Memory mapped DA object backed by the Foreign Memory API. Always writes a file when created. The
+     * caller cannot keep it in-memory. See MMapForeignMemoryDataAccess.
      * In read-only mode the MMapForeignReadOnlyDataAccess with a fast path due to all-final fields
      * is used instead: the file must already exist on disk, there is no "loadExisting returned
      * false" state as the factory fails fast.
      */
     public static final DAType FOREIGN_MMAP = register("FOREIGN_MMAP", false, true,
-            (name, location, segmentSize, preload, fileBacked, readOnly) -> readOnly
+            (name, location, segmentSize, preload, readOnly) -> readOnly
                     ? MMapForeignReadOnlyDataAccess.load(name, location, segmentSize, preload > 0)
                     : new MMapForeignMemoryDataAccess(name, location, true, segmentSize));
     /**
      * Legacy memory mapped DA object backed by ByteBuffers instead of the Foreign Memory API.
-     * Always file backed, so the Directory fileBacked flag is ignored. Kept usable as a fallback and
+     * Always writes a file when created, it cannot be kept in-memory. Kept usable as a fallback and
      * for comparison. See MMapDataAccess.
      */
     public static final DAType MMAP = register("MMAP", false, true,
-            (name, location, segmentSize, preload, fileBacked, readOnly) -> new MMapDataAccess(name, location, !readOnly, segmentSize));
+            (name, location, segmentSize, preload, readOnly) -> new MMapDataAccess(name, location, !readOnly, segmentSize));
 
     static {
         // legacy names, still accepted in configs
@@ -110,8 +110,8 @@ public class DAType {
     /**
      * Registers a new DAType under the given name so that it is available via {@link #fromString}
      * and can be used everywhere a predefined type can, e.g. in the graph.dataaccess configuration.
-     * Whether the created DataAccess persists to a backing file is controlled by the owning
-     * Directory (its fileBacked flag), not by the type, see {@link Directory#isFileBacked()}.
+     * Whether a created DataAccess persists to a backing file is decided by the caller (by calling
+     * loadExisting resp. flush or not), not by the type.
      *
      * @param onHeap  true if the data resides in the JVM heap
      * @param mmap    true if the backing file is memory mapped instead of being read and written
@@ -154,15 +154,12 @@ public class DAType {
      *
      * @param preload  percentage of the backing file to load into physical memory upfront, so far
      *                 only used by the read-only FOREIGN_MMAP
-     * @param fileBacked if false the (heap or foreign anonymous) DataAccess is purely in-memory:
-     *                 loadExisting and flush become no-ops. Ignored by the always file backed
-     *                 memory mapped types. See {@link Directory#isFileBacked()}.
      * @param readOnly if true the backing file must not be modified: memory mapped types map it
      *                 read-only (enforced by the OS) and all other types throw on flush. Useful
      *                 for read-only filesystems, see GraphHopper.setReadOnly.
      */
-    public DataAccess create(String name, String location, int segmentSize, int preload, boolean fileBacked, boolean readOnly) {
-        return factory.create(name, location, segmentSize, preload, fileBacked, readOnly);
+    public DataAccess create(String name, String location, int segmentSize, int preload, boolean readOnly) {
+        return factory.create(name, location, segmentSize, preload, readOnly);
     }
 
     /**
@@ -200,6 +197,6 @@ public class DAType {
         /**
          * @see DAType#create(String, String, int, int, boolean, boolean)
          */
-        DataAccess create(String name, String location, int segmentSize, int preload, boolean fileBacked, boolean readOnly);
+        DataAccess create(String name, String location, int segmentSize, int preload, boolean readOnly);
     }
 }

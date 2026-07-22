@@ -30,12 +30,10 @@ import java.util.Arrays;
  */
 public class RAMLongDataAccess extends AbstractDataAccess {
     private long[] data = new long[0];
-    private final boolean fileBacked;
     private final boolean readOnly;
 
-    public RAMLongDataAccess(String name, String location, boolean fileBacked, boolean readOnly, int segmentSize) {
+    public RAMLongDataAccess(String name, String location, boolean readOnly, int segmentSize) {
         super(name, location, segmentSize);
-        this.fileBacked = fileBacked;
         this.readOnly = readOnly;
     }
 
@@ -80,9 +78,6 @@ public class RAMLongDataAccess extends AbstractDataAccess {
             throw new IllegalStateException("already initialized");
         if (isClosed())
             throw new IllegalStateException("already closed");
-        if (!fileBacked)
-            return false;
-
         File file = new File(getFullName());
         if (!file.exists() || file.length() == 0)
             return false;
@@ -131,8 +126,7 @@ public class RAMLongDataAccess extends AbstractDataAccess {
             throw new IllegalStateException("already closed");
         if (readOnly)
             throw new IllegalStateException("Cannot flush the read-only DataAccess " + getFullName());
-        if (!fileBacked)
-            return;
+        ensureParentDirectoryExists();
 
         try {
             try (RandomAccessFile raFile = new RandomAccessFile(getFullName(), "rw")) {
@@ -287,11 +281,6 @@ public class RAMLongDataAccess extends AbstractDataAccess {
         if (cap % segmentSizeInBytes != 0)
             segs++;
         return segs;
-    }
-
-    @Override
-    public boolean isFileBacked() {
-        return fileBacked;
     }
 
 }

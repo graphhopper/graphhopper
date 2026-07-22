@@ -348,7 +348,7 @@ class HeadingRoutingTest {
     }
 
     private Router createRouter(BaseGraph graph, EncodingManager encodingManager) {
-        LocationIndexTree locationIndex = new LocationIndexTree(graph, new GHDirectory("", DAType.RAM).setFileBacked(false));
+        LocationIndexTree locationIndex = new LocationIndexTree(graph, new GHDirectory("", DAType.RAM));
         locationIndex.prepareIndex();
         Map<String, Profile> profilesByName = new HashMap<>();
         profilesByName.put("profile", TestProfiles.accessAndSpeed("profile", "car"));

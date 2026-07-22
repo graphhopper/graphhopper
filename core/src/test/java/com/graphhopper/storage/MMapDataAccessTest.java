@@ -32,7 +32,7 @@ public class MMapDataAccessTest extends DataAccessTest {
 
     @Test
     public void textMixRAM2MMAP() {
-        DataAccess da = new RAMDataAccess(name, directory, true, false, -1);
+        DataAccess da = new RAMDataAccess(name, directory, false, -1);
         assertFalse(da.loadExisting());
         da.create(100);
         da.setInt(7 * 4, 123);
@@ -54,7 +54,7 @@ public class MMapDataAccessTest extends DataAccessTest {
         // TODO "memory mapped flush" is expensive and not required. only writing the header is required.
         da.flush();
         da.close();
-        da = new RAMDataAccess(name, directory, true, false, -1);
+        da = new RAMDataAccess(name, directory, false, -1);
         assertTrue(da.loadExisting());
         assertEquals(123, da.getInt(7 * 4));
         da.close();

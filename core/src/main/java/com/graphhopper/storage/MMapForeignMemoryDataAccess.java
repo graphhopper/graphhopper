@@ -92,6 +92,8 @@ public final class MMapForeignMemoryDataAccess extends AbstractDataAccess {
         if (raFile != null)
             return;
         try {
+            if (allowWrites)
+                ensureParentDirectoryExists();
             raFile = new RandomAccessFile(getFullName(), allowWrites ? "rw" : "r");
         } catch (IOException ex) {
             throw new RuntimeException(ex);

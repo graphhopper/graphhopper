@@ -135,9 +135,4 @@ public interface DataAccess extends Closeable {
      * @return the number of segments.
      */
     int getSegments();
-
-    /**
-     * @return true if there is a backing file, false for purely in-memory data.
-     */
-    boolean isFileBacked();
 }

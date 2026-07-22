@@ -38,7 +38,7 @@ public class HeightTileTest {
         int height = 20;
         double precision = 1e6;
         HeightTile instance = new HeightTile(0, 0, width, height, precision, 10, 20);
-        DataAccess heights = new GHDirectory("", DAType.RAM).setFileBacked(false).create("tmp");
+        DataAccess heights = new GHDirectory("", DAType.RAM).create("tmp");
         heights.create(2 * width * height);
         instance.setHeights(heights);
         fillGrid(heights, width, height, (short) 1);
@@ -77,7 +77,7 @@ public class HeightTileTest {
         int height = 10;
         // Tile covers 0 to 10 degrees lat/lon
         HeightTile instance = new HeightTile(0, 0, width, height, 1e7, 10, 10);
-        DataAccess heights = new GHDirectory("", DAType.RAM).setFileBacked(false).create("tmp");
+        DataAccess heights = new GHDirectory("", DAType.RAM).create("tmp");
         heights.create(2 * width * height);
         instance.setHeights(heights);
         fillGrid(heights, width, height, (short) 0);
@@ -114,7 +114,7 @@ public class HeightTileTest {
     public void testGetHeightForNegativeTile() {
         int width = 10;
         HeightTile instance = new HeightTile(-20, -20, width, width, 1e6, 10, 10);
-        DataAccess heights = new GHDirectory("", DAType.RAM).setFileBacked(false).create("tmp");
+        DataAccess heights = new GHDirectory("", DAType.RAM).create("tmp");
         heights.create(2 * 10 * 10);
         instance.setHeights(heights);
         fillGrid(heights, width, width, (short) 1);
@@ -137,7 +137,7 @@ public class HeightTileTest {
         int width = 10;
         // Tile starting at lat 10, lon 10
         HeightTile instance = new HeightTile(10, 10, width, width, 1e6, 10, 10);
-        DataAccess heights = new GHDirectory("", DAType.RAM).setFileBacked(false).create("tmp");
+        DataAccess heights = new GHDirectory("", DAType.RAM).create("tmp");
         heights.create(2 * width * width);
         instance.setHeights(heights);
 
@@ -165,7 +165,7 @@ public class HeightTileTest {
         int width = 10;
         // Tile starting at lat 10, lon 10
         HeightTile instance = new HeightTile(-10, -10, width, width, 1e6, 10, 10);
-        DataAccess heights = new GHDirectory("", DAType.RAM).setFileBacked(false).create("tmp");
+        DataAccess heights = new GHDirectory("", DAType.RAM).create("tmp");
         heights.create(2 * width * width);
         instance.setHeights(heights);
 
@@ -190,7 +190,7 @@ public class HeightTileTest {
     @Test
     public void testInterpolate() {
         HeightTile instance = new HeightTile(0, 0, 2, 2, 1e6, 10, 10).setInterpolate(true);
-        DataAccess heights = new GHDirectory("", DAType.RAM).setFileBacked(false).create("tmp");
+        DataAccess heights = new GHDirectory("", DAType.RAM).create("tmp");
         heights.create(2 * 2 * 2);
         instance.setHeights(heights);
         double topLeft = 0, topRight = 1, bottomLeft = 2, bottomRight = 3;
