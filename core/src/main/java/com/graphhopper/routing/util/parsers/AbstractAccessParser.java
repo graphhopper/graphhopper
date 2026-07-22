@@ -48,7 +48,6 @@ public abstract class AbstractAccessParser implements TagParser {
         restrictedValues.add("restricted");
         restrictedValues.add("military");
         restrictedValues.add("emergency");
-        restrictedValues.add("unknown");
 
         restrictedValues.add("private");
         restrictedValues.add("service");

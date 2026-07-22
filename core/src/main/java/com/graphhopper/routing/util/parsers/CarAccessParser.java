@@ -112,18 +112,30 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
         if (way.hasTag("impassable", "yes") || way.hasTag("status", "impassable"))
             return WayAccess.CAN_SKIP;
 
-        // multiple restrictions needs special handling
-        if (firstIndex >= 0) {
-            String[] restrict = firstValue.split(";");
-            // if any of the values allows access then return early (regardless of the order)
-            for (String value : restrict) {
-                if (allowedValues.contains(value))
-                    return WayAccess.WAY;
+        // Walk the restriction keys in priority order (most specific first: motorcar ->
+        // motor_vehicle -> vehicle -> access). A key only decides access if its value is recognized
+        // (allowed or restricted). An unrecognized value carries no information, so we defer to the
+        // next, more generic key instead of silently allowing the way - e.g. an unrecognized
+        // motor_vehicle=* must not shadow access=no. Multiple ';'-separated values are all checked.
+        for (int i = 0; i < restrictionKeys.size(); i++) {
+            String value = way.getTag(restrictionKeys.get(i), "");
+            if (value.isEmpty())
+                continue;
+            String[] restrict = value.split(";");
+            boolean allowed = false, restricted = false;
+            // an allowed value anywhere wins regardless of order
+            for (String v : restrict) {
+                if (allowedValues.contains(v)) allowed = true;
+                else if (restrictedValues.contains(v)) restricted = true;
             }
-            for (String value : restrict) {
-                if (restrictedValues.contains(value) && !hasPermissiveTemporalRestriction(way, firstIndex, restrictionKeys, allowedValues))
+            if (allowed)
+                return WayAccess.WAY;
+            if (restricted) {
+                if (!hasPermissiveTemporalRestriction(way, i, restrictionKeys, allowedValues))
                     return WayAccess.CAN_SKIP;
+                break; // restricted, but a permissive conditional applies -> fall through to default
             }
+            // value present but unrecognized -> defer to the next, more generic key
         }
 
         return WayAccess.WAY;

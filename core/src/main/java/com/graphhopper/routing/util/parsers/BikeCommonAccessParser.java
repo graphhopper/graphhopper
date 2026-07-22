@@ -74,19 +74,28 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
                 || "cycleway".equals(highwayValue) && !way.hasTag("bicycle", "no")) // cycleway gets bicycle=yes by default
             return WayAccess.WAY;
 
-        int firstIndex = way.getFirstIndex(restrictionKeys);
-        if (firstIndex >= 0) {
-            String firstValue = way.getTag(restrictionKeys.get(firstIndex), "");
+        // Walk the restriction keys in priority order (most specific first: bicycle, then access).
+        // A key only decides access if its value is recognized (allowed or restricted). An unknown
+        // value carries no information, so we defer to the next.
+        for (int i = 0; i < restrictionKeys.size(); i++) {
+            String firstValue = way.getTag(restrictionKeys.get(i), "");
+            if (firstValue.isEmpty())
+                continue;
             String[] restrict = firstValue.split(";");
-            // if any of the values allows access then return early (regardless of the order)
+            boolean allowed = false, restricted = false;
+            // an allowed value anywhere wins regardless of order
             for (String value : restrict) {
-                if (allowedValues.contains(value))
-                    return WayAccess.WAY;
+                if (allowedValues.contains(value)) allowed = true;
+                else if (restrictedValues.contains(value)) restricted = true;
             }
-            for (String value : restrict) {
-                if (restrictedValues.contains(value) && !hasPermissiveTemporalRestriction(way, firstIndex, restrictionKeys, allowedValues))
+            if (allowed)
+                return WayAccess.WAY;
+            if (restricted) {
+                if (!hasPermissiveTemporalRestriction(way, i, restrictionKeys, allowedValues))
                     return WayAccess.CAN_SKIP;
+                break; // restricted, but a permissive conditional applies -> fall through to default
             }
+            // value present but unrecognized -> defer to the next, more generic key
         }
 
         // accept only if explicitly tagged for bike usage
