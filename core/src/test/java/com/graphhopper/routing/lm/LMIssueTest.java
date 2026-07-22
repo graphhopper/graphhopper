@@ -52,7 +52,7 @@ public class LMIssueTest {
 
     @BeforeEach
     public void init() {
-        dir = new GHDirectory("", DAType.RAM_NOFILE);
+        dir = new GHDirectory("", DAType.RAM).setFileBacked(false);
         speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, true);
         DecimalEncodedValue turnCostEnc = TurnCost.create("car", 1);
         encodingManager = new EncodingManager.Builder().add(speedEnc).addTurnCostEncodedValue(turnCostEnc).add(Subnetwork.create("car")).build();

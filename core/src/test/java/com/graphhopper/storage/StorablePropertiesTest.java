@@ -33,7 +33,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class StorablePropertiesTest {
     Directory createDir(String location, boolean store) {
-        return new GHDirectory(location, store ? DAType.RAM : DAType.RAM_NOFILE).create();
+        return new GHDirectory(location, DAType.RAM).setFileBacked(store).create();
     }
 
     @Test

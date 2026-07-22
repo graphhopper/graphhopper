@@ -90,7 +90,7 @@ public class PrepareLandmarksTest {
                 updateDistancesFor(graph, node, -hIndex / 50.0, wIndex / 50.0);
             }
         }
-        Directory dir = new GHDirectory("", DAType.RAM_NOFILE);
+        Directory dir = new GHDirectory("", DAType.RAM).setFileBacked(false);
         LocationIndexTree index = new LocationIndexTree(graph, dir);
         index.prepareIndex();
 
@@ -133,7 +133,7 @@ public class PrepareLandmarksTest {
         // TODO should better select 0 and 224?
         assertEquals(Arrays.asList(224, 70), list);
 
-        PrepareLandmarks prepare = new PrepareLandmarks(new GHDirectory("", DAType.RAM_NOFILE), graph, encodingManager, lmConfig, 4);
+        PrepareLandmarks prepare = new PrepareLandmarks(new GHDirectory("", DAType.RAM).setFileBacked(false), graph, encodingManager, lmConfig, 4);
         prepare.setMinimumNodes(2);
         prepare.doWork();
         LandmarkStorage lms = prepare.getLandmarkStorage();

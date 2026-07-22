@@ -139,7 +139,7 @@ public class BaseGraphWithTurnCostsTest extends BaseGraphTest {
 
     @Test
     public void testInitializeTurnCost() {
-        graph = newGHStorage(new GHDirectory(defaultGraphLoc, DAType.RAM_NOFILE), true).create(defaultSize);
+        graph = newGHStorage(new GHDirectory(defaultGraphLoc, DAType.RAM).setFileBacked(false), true).create(defaultSize);
         NodeAccess na = graph.getNodeAccess();
 
         // turn cost index is initialized in BaseGraph.initNodeRefs

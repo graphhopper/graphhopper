@@ -54,6 +54,12 @@ public interface Directory {
     void remove(String name);
 
     /**
+     * @return false if this is a purely in-memory Directory whose DataAccess objects neither load
+     * from nor flush to disc, e.g. for unit tests. True by default.
+     */
+    boolean isFileBacked();
+
+    /**
      * @return the default type of a newly created DataAccess object
      */
     DAType getDefaultType();

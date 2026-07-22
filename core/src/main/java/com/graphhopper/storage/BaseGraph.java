@@ -74,7 +74,7 @@ public class BaseGraph implements Graph, Closeable {
     public BaseGraph(Directory dir, boolean withElevation, boolean withTurnCosts, int bytesForFlags) {
         this.dir = dir;
         this.bitUtil = BitUtil.LITTLE;
-        this.wayGeometry = dir.create("geometry", dir.getDefaultType().isFileBacked() ? DAType.FOREIGN_MMAP : dir.getDefaultType());
+        this.wayGeometry = dir.create("geometry", dir.isFileBacked() ? DAType.FOREIGN_MMAP : dir.getDefaultType());
         this.edgeKVStorage = new KVStorage(dir, true);
         this.store = new BaseGraphNodesAndEdges(dir, withElevation, withTurnCosts, bytesForFlags);
         this.nodeAccess = new GHNodeAccess(store);
@@ -688,7 +688,7 @@ public class BaseGraph implements Graph, Closeable {
 
     public static class Builder {
         private final int bytesForFlags;
-        private Directory directory = new GHDirectory("", DAType.RAM_NOFILE);
+        private Directory directory = new GHDirectory("", DAType.RAM).setFileBacked(false);
         private boolean withElevation = false;
         private boolean withTurnCosts = false;
         private long bytes = 100;

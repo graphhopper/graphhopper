@@ -102,6 +102,8 @@ public class GraphHopper {
     private int defaultSegmentSize = AbstractDataAccess.SEGMENT_SIZE_DEFAULT;
     private String ghLocation = "";
     private DAType dataAccessDefaultType = DAType.RAM;
+    // false = purely in-memory graph: nothing is loaded from or flushed to disc
+    private boolean fileBacked = true;
     private final LinkedHashMap<String, String> dataAccessConfig = new LinkedHashMap<>();
     private boolean sortGraph = true;
     private boolean elevation = false;
@@ -233,7 +235,7 @@ public class GraphHopper {
      */
     public GraphHopper setFileBacked(boolean fileBacked) {
         ensureNotLoaded();
-        dataAccessDefaultType = fileBacked ? DAType.RAM : DAType.RAM_NOFILE;
+        this.fileBacked = fileBacked;
         return this;
     }
 
@@ -818,7 +820,7 @@ public class GraphHopper {
         prepareImport();
         if (encodingManager == null)
             throw new IllegalStateException("The EncodingManager must be created in `prepareImport()`");
-        GHDirectory directory = new GHDirectory(ghLocation, dataAccessDefaultType, defaultSegmentSize);
+        GHDirectory directory = new GHDirectory(ghLocation, dataAccessDefaultType, defaultSegmentSize).setFileBacked(fileBacked);
         directory.configure(dataAccessConfig);
         baseGraph = new BaseGraph.Builder(getEncodingManager())
                 .setDir(directory)
@@ -830,7 +832,7 @@ public class GraphHopper {
 
         GHLock lock = null;
         try {
-            if (directory.getDefaultType().isFileBacked()) {
+            if (directory.isFileBacked()) {
                 lockFactory.setLockDir(new File(ghLocation));
                 lock = lockFactory.create(fileLockName, true);
                 if (!lock.tryLock())
@@ -1215,13 +1217,13 @@ public class GraphHopper {
             // there is just nothing to load
             return false;
 
-        GHDirectory directory = new GHDirectory(ghLocation, dataAccessDefaultType).setReadOnly(readOnly);
+        GHDirectory directory = new GHDirectory(ghLocation, dataAccessDefaultType).setFileBacked(fileBacked).setReadOnly(readOnly);
         directory.configure(dataAccessConfig);
         GHLock lock = null;
         try {
             // create locks only if writes are allowed, if they are not allowed a lock cannot be created
             // (e.g. on a read only filesystem locks would fail)
-            if (directory.getDefaultType().isFileBacked() && !readOnly) {
+            if (directory.isFileBacked() && !readOnly) {
                 lockFactory.setLockDir(new File(ghLocation));
                 lock = lockFactory.create(fileLockName, false);
                 if (!lock.tryLock())

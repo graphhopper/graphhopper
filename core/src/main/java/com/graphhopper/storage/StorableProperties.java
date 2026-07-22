@@ -84,7 +84,7 @@ public class StorableProperties {
         }
         da.flush();
         // todo: would not be needed if the properties file used a format that is compatible with common text tools
-        if (dir.getDefaultType().isFileBacked()) {
+        if (dir.isFileBacked()) {
             try (BufferedWriter writer = new BufferedWriter(new FileWriter(dir.getLocation() + "/properties.txt"))) {
                 writer.write(props);
             } catch (IOException e) {

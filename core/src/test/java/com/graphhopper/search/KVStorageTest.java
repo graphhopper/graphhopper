@@ -21,7 +21,7 @@ public class KVStorageTest {
     private final static String location = "./target/edge-kv-storage";
 
     private KVStorage create() {
-        return new KVStorage(new GHDirectory("", DAType.RAM_NOFILE), true).create(1000);
+        return new KVStorage(new GHDirectory("", DAType.RAM).setFileBacked(false), true).create(1000);
     }
 
     Map<String, KValue> createMap(Object... keyValues) {
