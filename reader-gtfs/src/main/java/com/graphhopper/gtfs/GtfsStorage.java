@@ -258,7 +258,7 @@ public class GtfsStorage {
 	}
 
 	void create() {
-		this.dir.create();
+		new File(dir.getLocation()).mkdirs();
 		final File file = new File(dir.getLocation() + "/transit_schedule");
 		try {
 			Files.deleteIfExists(file.toPath());

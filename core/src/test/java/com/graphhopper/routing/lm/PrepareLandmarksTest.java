@@ -185,7 +185,7 @@ public class PrepareLandmarksTest {
         String fileStr = "./target/tmp-lm";
         Helper.removeDir(new File(fileStr));
 
-        Directory dir = new GHDirectory(fileStr, DAType.RAM).create();
+        Directory dir = new GHDirectory(fileStr, DAType.RAM);
         Weighting weighting = new SpeedWeighting(speedEnc);
         LMConfig lmConfig = new LMConfig("car", weighting);
         PrepareLandmarks plm = new PrepareLandmarks(dir, graph, encodingManager, lmConfig, 2);

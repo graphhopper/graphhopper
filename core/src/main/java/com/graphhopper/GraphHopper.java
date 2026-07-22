@@ -1064,7 +1064,6 @@ public class GraphHopper {
     }
 
     protected void createBaseGraphAndProperties() {
-        baseGraph.getDirectory().create();
         baseGraph.create(100);
         properties.create(100);
         if (maxSpeedCalculator != null)
@@ -1636,15 +1635,13 @@ public class GraphHopper {
     }
 
     protected void flush() {
-        if (!fileBacked) {
-            setFullyLoaded();
-            return;
+        if (fileBacked) {
+            logger.info("flushing graph " + getBaseGraphString() + ", details:" + baseGraph.toDetailsString() + ", "
+                    + getMemInfo() + ")");
+            baseGraph.flush();
+            properties.flush();
+            logger.info("flushed graph " + getMemInfo() + ")");
         }
-        logger.info("flushing graph " + getBaseGraphString() + ", details:" + baseGraph.toDetailsString() + ", "
-                + getMemInfo() + ")");
-        baseGraph.flush();
-        properties.flush();
-        logger.info("flushed graph " + getMemInfo() + ")");
         setFullyLoaded();
     }
 

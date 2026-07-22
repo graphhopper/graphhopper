@@ -202,12 +202,6 @@ public class GHDirectory implements Directory {
     }
 
     @Override
-    public Directory create() {
-        // no-op: each DataAccess creates the directory lazily when it writes its file
-        return this;
-    }
-
-    @Override
     public String toString() {
         return getLocation();
     }

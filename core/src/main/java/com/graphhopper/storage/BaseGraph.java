@@ -184,7 +184,6 @@ public class BaseGraph implements Graph, Closeable {
 
     public BaseGraph create(long initSize) {
         checkNotInitialized();
-        dir.create();
         store.create(initSize);
 
         initSize = Math.min(initSize, 2000);
