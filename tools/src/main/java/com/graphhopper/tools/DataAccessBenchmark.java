@@ -37,14 +37,14 @@ public class DataAccessBenchmark {
         System.out.println();
 
         // --- Single-segment / contiguous implementations ---
-//        benchmarkImpl("RAM1SegmentDataAccess (byte[])", new RAM1SegmentDataAccess("bench_ram1", "", false, false, segmentSize));
-//        benchmarkImpl("RAMLongDataAccess (long[])", new RAMLongDataAccess("bench_long", "", false, false, segmentSize));
-        benchmarkImpl("ForeignMemoryDataAccess", new ForeignMemoryDataAccess("bench_foreign", "", false, false, segmentSize));
+//        benchmarkImpl("RAM1SegmentDataAccess (byte[])", new RAM1SegmentDataAccess("bench_ram1", "", false, segmentSize));
+//        benchmarkImpl("RAMLongDataAccess (long[])", new RAMLongDataAccess("bench_long", "", false, segmentSize));
+        benchmarkImpl("ForeignMemoryDataAccess", new ForeignMemoryDataAccess("bench_foreign", "", false, segmentSize));
 
         // --- Segmented implementations: small segments ---
-        benchmarkImpl("RAMIntDataAccess (32MB seg)", new RAMIntDataAccess("bench_int", "", false, false, segmentSize));
-//        benchmarkImpl("RAMDataAccess (32MB seg)", new RAMDataAccess("bench_ram", "", false, false, segmentSize));
-//        benchmarkImpl("ForeignMemorySegmentedDataAccess (32MB seg)", new ForeignMemorySegmentedDataAccess("bench_native", "", false, false, segmentSize));
+        benchmarkImpl("RAMIntDataAccess (32MB seg)", new RAMIntDataAccess("bench_int", "", false, segmentSize));
+//        benchmarkImpl("RAMDataAccess (32MB seg)", new RAMDataAccess("bench_ram", "", false, segmentSize));
+//        benchmarkImpl("ForeignMemorySegmentedDataAccess (32MB seg)", new ForeignMemorySegmentedDataAccess("bench_native", "", false, segmentSize));
 
         // --- FOREIGN_MMAP via Foreign Memory (on tmpfs where available) ---
         // /dev/shm is a Linux-only tmpfs; on macOS/Windows it doesn't exist, so fall

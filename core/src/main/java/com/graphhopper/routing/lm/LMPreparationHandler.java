@@ -186,7 +186,6 @@ public class LMPreparationHandler {
                 LOGGER.info(count + "/" + lmConfigs.size() + " calling LM prepare.doWork for " + prepare.getLMConfig().getName() + " ... (" + getMemInfo() + ")");
                 Thread.currentThread().setName(name);
                 prepare.doWork();
-                // only persist the LM data to disc for a file backed graph, the caller decides
                 if (fileBacked)
                     prepare.flush();
                 if (closeEarly)

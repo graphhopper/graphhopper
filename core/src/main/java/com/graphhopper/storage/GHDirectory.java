@@ -171,7 +171,7 @@ public class GHDirectory implements Directory {
     }
 
     private void removeBackingFile(DataAccess da, String name) {
-        // harmless no-op if the DataAccess was never flushed to disc (purely in-memory)
+        // removeDir is a no-op if the file was never written (purely in-memory)
         removeDir(new File(location + name));
     }
 
@@ -203,8 +203,7 @@ public class GHDirectory implements Directory {
 
     @Override
     public Directory create() {
-        // the backing directory is created lazily by each DataAccess when it actually writes a
-        // file, so a purely in-memory Directory (that is never flushed) does not touch the disc
+        // no-op: each DataAccess creates the directory lazily when it writes its file
         return this;
     }
 

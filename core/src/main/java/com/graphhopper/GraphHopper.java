@@ -1385,14 +1385,10 @@ public class GraphHopper {
 
         if (closeEarly) {
             boolean includesCustomProfiles = profilesByName.values().stream().anyMatch(p -> CustomWeighting.NAME.equals(p.getWeighting()));
-            if (!includesCustomProfiles) {
+            if (!includesCustomProfiles)
                 // when there are custom profiles we must not close way geometry or KVStorage, because
                 // they might be needed to evaluate the custom weightings for the following preparations
-                if (fileBacked)
-                    baseGraph.flushAndCloseGeometryAndNameStorage();
-                else
-                    baseGraph.closeGeometryAndNameStorage();
-            }
+                baseGraph.closeGeometryAndNameStorage(fileBacked);
         }
 
         if (lmPreparationHandler.isEnabled())
@@ -1641,7 +1637,6 @@ public class GraphHopper {
 
     protected void flush() {
         if (!fileBacked) {
-            // purely in-memory graph: nothing is persisted
             setFullyLoaded();
             return;
         }

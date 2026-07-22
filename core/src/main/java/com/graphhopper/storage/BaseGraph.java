@@ -207,23 +207,15 @@ public class BaseGraph implements Graph, Closeable {
     }
 
     /**
-     * Flush and free resources that are not needed for post-processing (way geometries and KVStorage for edges).
+     * Frees the resources not needed for post-processing (way geometries and KVStorage for edges),
+     * optionally persisting them to disc first.
      */
-    public void flushAndCloseGeometryAndNameStorage() {
-        setWayGeometryHeader();
-
-        wayGeometry.flush();
-        wayGeometry.close();
-
-        edgeKVStorage.flush();
-        edgeKVStorage.close();
-    }
-
-    /**
-     * Like {@link #flushAndCloseGeometryAndNameStorage()} but without flushing to disc, for a purely
-     * in-memory graph that must not persist. Only frees the resources.
-     */
-    public void closeGeometryAndNameStorage() {
+    public void closeGeometryAndNameStorage(boolean flush) {
+        if (flush) {
+            setWayGeometryHeader();
+            wayGeometry.flush();
+            edgeKVStorage.flush();
+        }
         wayGeometry.close();
         edgeKVStorage.close();
     }
@@ -700,9 +692,8 @@ public class BaseGraph implements Graph, Closeable {
         private Directory directory = new GHDirectory("", DAType.RAM);
         private boolean withElevation = false;
         private boolean withTurnCosts = false;
-        // true = the graph is meant to be persisted, so the way geometry uses the memory mapped
-        // FOREIGN_MMAP; false = purely in-memory graph. Whether anything is actually written to disc
-        // is still decided by the caller (whether flush is called), see BaseGraph#flush.
+        // true = way geometry uses the memory mapped FOREIGN_MMAP, false = on-heap. Whether the
+        // graph is actually written to disc is a separate decision made by the caller (via flush).
         private boolean fileBacked = false;
         private long bytes = 100;
 

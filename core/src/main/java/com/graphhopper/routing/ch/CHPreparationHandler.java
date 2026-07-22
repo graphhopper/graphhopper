@@ -132,7 +132,6 @@ public class CHPreparationHandler {
                 prepare.setParams(pMap);
                 PrepareContractionHierarchies.Result result = prepare.doWork();
                 results.put(name, result);
-                // only persist the CH to disc for a file backed graph, the caller decides
                 if (fileBacked)
                     prepare.flush();
                 if (closeEarly)
