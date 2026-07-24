@@ -116,6 +116,22 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         // foot=yes is related to the highway, i.e. can be ignored for the cycleway
         osmWay.setTag("foot", "yes");
         assertPriorityAndSpeed(PREFER, 24, osmWay);
+
+        // a painted lane boosts one step but stays below cycleway=track
+        osmWay = new ReaderWay(1);
+        osmWay.setTag("highway", "residential");
+        osmWay.setTag("cycleway", "lane");
+        assertPriorityAndSpeed(UNCHANGED, 24, osmWay);
+
+        osmWay = new ReaderWay(1);
+        osmWay.setTag("highway", "primary");
+        osmWay.setTag("cycleway:right", "shoulder");
+        assertPriorityAndSpeed(SLIGHT_PREFER, 24, osmWay);
+
+        osmWay = new ReaderWay(1);
+        osmWay.setTag("highway", "secondary");
+        osmWay.setTag("cycleway", "lane");
+        assertPriorityAndSpeed(SLIGHT_PREFER, 24, osmWay);
     }
 
     @Test

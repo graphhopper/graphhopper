@@ -19,6 +19,9 @@ public class RacingBikePriorityParser extends BikeCommonPriorityParser {
     // usually too narrow for racing bikes, so e.g. bicycle=designated must not boost them
     private static final Set<String> NARROW_WAYS = new HashSet<>(List.of("cycleway", "path", "footway", "pedestrian", "platform"));
 
+    private static final List<String> CYCLEWAY_KEYS = List.of("cycleway", "cycleway:left", "cycleway:both", "cycleway:right");
+    private static final Set<String> CYCLEWAY_LANES = Set.of("lane", "shoulder");
+
     private final Map<String, PriorityCode> highwayToPrio = new HashMap<>();
 
     public RacingBikePriorityParser(EncodedValueLookup lookup) {
@@ -63,6 +66,9 @@ public class RacingBikePriorityParser extends BikeCommonPriorityParser {
             prio = REACH_DESTINATION;
         } else if (bikeDesignated && !NARROW_WAYS.contains(highway) && !"parking_aisle".equals(way.getTag("service"))) {
             prio = PREFER;
+        } else if (prio.getValue() < SLIGHT_PREFER.getValue() && way.hasTag(CYCLEWAY_KEYS, CYCLEWAY_LANES)) {
+            // a painted lane boosts one step, but always stays below cycleway=track (PREFER via designated)
+            prio = prio.better();
         } else if ("cycleway".equals(highway) && way.hasTag("foot", INTENDED)) {
             // too narrow when shared with pedestrians; wide roads keep their priority
             prio = SLIGHT_AVOID;
