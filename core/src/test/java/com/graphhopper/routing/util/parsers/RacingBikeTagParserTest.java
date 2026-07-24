@@ -78,6 +78,17 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         osmWay.setTag("foot", "yes");
         assertPriorityAndSpeed(SLIGHT_AVOID, 24, osmWay);
 
+        // bicycle=designated does not help if shared with pedestrians, even if segregated
+        osmWay = new ReaderWay(1);
+        osmWay.setTag("highway", "cycleway");
+        osmWay.setTag("bicycle", "designated");
+        osmWay.setTag("foot", "designated");
+        osmWay.setTag("segregated", "no");
+        assertPriorityAndSpeed(SLIGHT_AVOID, 24, osmWay);
+
+        osmWay.setTag("segregated", "yes");
+        assertPriorityAndSpeed(SLIGHT_AVOID, 24, osmWay);
+
         // same or worse as highway=cycleway + foot=yes
         osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "footway");

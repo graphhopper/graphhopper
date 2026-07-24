@@ -43,15 +43,16 @@ public class RacingBikePriorityParser extends BikeCommonPriorityParser {
         String highway = way.getTag("highway");
         double maxSpeed = Math.max(OSMMaxSpeedParser.parseMaxSpeed(way, false), OSMMaxSpeedParser.parseMaxSpeed(way, true));
 
-        if (bikeDesignated)
-            weightToPrioMap.put(100d, PREFER);
-
         if ("track".equals(highway)) {
             String trackType = way.getTag("tracktype");
             if ("grade1".equals(trackType) || goodSurface.contains(way.getTag("surface", "")))
                 weightToPrioMap.put(110d, UNCHANGED);
             else if (trackType == null || trackType.startsWith("grade"))
                 weightToPrioMap.put(110d, AVOID_MORE);
+        } else if (bikeDesignated && !"cycleway".equals(highway)) {
+            // no boost for cycleway: usually too narrow for racing bikes, and if shared
+            // with pedestrians it is even avoided via the foot handling below
+            weightToPrioMap.put(100d, PREFER);
         } else if (preferHighwayTags.contains(highway) || maxSpeed <= 30) {
             weightToPrioMap.put(40d, SLIGHT_PREFER);
             if (way.hasTag("tunnel", INTENDED))
