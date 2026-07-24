@@ -153,6 +153,13 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "bridleway");
         assertPriority(AVOID, osmWay);
+
+        // walking pace, so also no 30 zone boost
+        osmWay = new ReaderWay(1);
+        osmWay.setTag("highway", "living_street");
+        assertPriority(AVOID, osmWay);
+        osmWay.setTag("maxspeed", "30");
+        assertPriority(AVOID, osmWay);
     }
 
     @Test
