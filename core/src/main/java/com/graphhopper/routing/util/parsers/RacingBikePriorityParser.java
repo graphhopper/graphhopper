@@ -5,7 +5,6 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.PriorityCode;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -17,7 +16,7 @@ import static com.graphhopper.routing.util.parsers.AbstractAccessParser.INTENDED
 public class RacingBikePriorityParser extends BikeCommonPriorityParser {
 
     // usually too narrow for racing bikes, so e.g. bicycle=designated must not boost them
-    private static final Set<String> NARROW_WAYS = new HashSet<>(List.of("cycleway", "path", "footway", "pedestrian", "platform"));
+    private static final Set<String> NARROW_WAYS = Set.of("cycleway", "path", "footway", "pedestrian", "platform");
 
     private static final List<String> CYCLEWAY_KEYS = List.of("cycleway", "cycleway:left", "cycleway:both", "cycleway:right");
     private static final Set<String> CYCLEWAY_LANES = Set.of("lane", "shoulder");
@@ -54,7 +53,7 @@ public class RacingBikePriorityParser extends BikeCommonPriorityParser {
 
     @Override
     void collect(ReaderWay way, boolean bikeDesignated, TreeMap<Double, PriorityCode> weightToPrioMap) {
-        String highway = way.getTag("highway");
+        String highway = way.getTag("highway", "");
         double maxSpeed = Math.max(OSMMaxSpeedParser.parseMaxSpeed(way, false), OSMMaxSpeedParser.parseMaxSpeed(way, true));
         PriorityCode prio = highwayToPrio.getOrDefault(highway, UNCHANGED);
 
@@ -77,9 +76,8 @@ public class RacingBikePriorityParser extends BikeCommonPriorityParser {
             // tunnels are only dangerous on the high-speed roads that we strongly avoid anyway
             if (prio == BAD) prio = REACH_DESTINATION;
             else if (prio == SLIGHT_PREFER) prio = UNCHANGED;
-        } else if (maxSpeed <= 30 && prio == UNCHANGED && !"cycleway".equals(highway)) {
-            // a slow but otherwise neutral road is pleasant, but this must not lift
-            // e.g. residential in a 30 zone above the parallel main road
+        } else if (maxSpeed <= 30 && highway.startsWith("primary")) {
+            // a slow primary is as pleasant as a secondary
             prio = SLIGHT_PREFER;
         }
 
