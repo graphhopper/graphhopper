@@ -70,7 +70,9 @@ public class RacingBikePriorityParser extends BikeCommonPriorityParser {
             // tunnels are only dangerous on the high-speed roads that we strongly avoid anyway
             if (prio == BAD) prio = REACH_DESTINATION;
             else if (prio == SLIGHT_PREFER) prio = UNCHANGED;
-        } else if (maxSpeed <= 30 && !NARROW_WAYS.contains(highway) && prio.getValue() < SLIGHT_PREFER.getValue()) {
+        } else if (maxSpeed <= 30 && prio == UNCHANGED && !"cycleway".equals(highway)) {
+            // a slow but otherwise neutral road is pleasant, but this must not lift
+            // e.g. residential in a 30 zone above the parallel main road
             prio = SLIGHT_PREFER;
         }
 

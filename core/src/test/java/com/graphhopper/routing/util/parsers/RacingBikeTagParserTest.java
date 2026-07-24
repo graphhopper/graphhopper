@@ -379,5 +379,16 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "tertiary");
         assertPriority(SLIGHT_PREFER, osmWay);
+
+        osmWay = new ReaderWay(1);
+        osmWay.setTag("highway", "primary");
+        osmWay.setTag("maxspeed", "30");
+        assertPriority(SLIGHT_PREFER, osmWay);
+
+        // a 30 zone must not lift smaller roads above the parallel main road
+        osmWay = new ReaderWay(1);
+        osmWay.setTag("highway", "residential");
+        osmWay.setTag("maxspeed", "30");
+        assertPriority(SLIGHT_AVOID, osmWay);
     }
 }
