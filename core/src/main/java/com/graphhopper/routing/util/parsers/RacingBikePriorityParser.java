@@ -61,7 +61,7 @@ public class RacingBikePriorityParser extends BikeCommonPriorityParser {
                 prio = UNCHANGED;
         } else if (way.hasTag("bicycle", "use_sidepath")) {
             prio = REACH_DESTINATION;
-        } else if (bikeDesignated && !NARROW_WAYS.contains(highway)) {
+        } else if (bikeDesignated && !NARROW_WAYS.contains(highway) && !"parking_aisle".equals(way.getTag("service"))) {
             prio = PREFER;
         } else if ("cycleway".equals(highway) && way.hasTag("foot", INTENDED)) {
             // too narrow when shared with pedestrians; wide roads keep their priority

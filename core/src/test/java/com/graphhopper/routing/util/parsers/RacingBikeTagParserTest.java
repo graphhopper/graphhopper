@@ -89,11 +89,24 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         osmWay.setTag("segregated", "yes");
         assertPriorityAndSpeed(SLIGHT_AVOID, 24, osmWay);
 
+        // segregated=yes alone does not boost either
+        osmWay = new ReaderWay(1);
+        osmWay.setTag("highway", "cycleway");
+        osmWay.setTag("segregated", "yes");
+        assertPriorityAndSpeed(UNCHANGED, 24, osmWay);
+
         // same or worse as highway=cycleway + foot=yes
         osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "footway");
         osmWay.setTag("bicycle", "designated");
         assertPriorityAndSpeed(SLIGHT_AVOID, 24, osmWay);
+
+        // like the shared cycleway case above
+        osmWay = new ReaderWay(1);
+        osmWay.setTag("highway", "path");
+        osmWay.setTag("bicycle", "designated");
+        osmWay.setTag("foot", "designated");
+        assertPriority(SLIGHT_AVOID, osmWay);
 
         osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "unclassified");
@@ -120,6 +133,10 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         osmWay.setTag("highway", "primary");
         osmWay.setTag("foot", "yes");
         assertPriorityAndSpeed(UNCHANGED, 24, osmWay);
+
+        osmWay = new ReaderWay(1);
+        osmWay.setTag("highway", "bridleway");
+        assertPriority(AVOID, osmWay);
     }
 
     @Test
@@ -137,6 +154,11 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
 
         osmWay.setTag("bicycle", "designated");
         assertPriorityAndSpeed(PREFER, 24, osmWay);
+
+        osmWay = new ReaderWay(1);
+        osmWay.setTag("highway", "trunk");
+        osmWay.setTag("tunnel", "yes");
+        assertPriority(REACH_DESTINATION, osmWay);
     }
 
     @Test
@@ -148,6 +170,8 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
 
         way.setTag("service", "parking_aisle");
         assertPriorityAndSpeed(SLIGHT_AVOID, 8, way);
+        way.setTag("bicycle", "designated");
+        assertPriority(SLIGHT_AVOID, way);
     }
 
     @Test
