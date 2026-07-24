@@ -73,20 +73,19 @@ public class RacingBikePriorityParser extends BikeCommonPriorityParser {
         } else if (maxSpeed <= 30 && !NARROW_WAYS.contains(highway) && prio.getValue() < SLIGHT_PREFER.getValue()) {
             prio = SLIGHT_PREFER;
         }
-        weightToPrioMap.put(100d, prio);
 
         if (way.hasTag("railway", "tram") && !bikeDesignated)
-            weightToPrioMap.put(100d, AVOID_MORE);
+            prio = AVOID_MORE;
 
         String classBicycleValue = way.getTag("class:bicycle:roadcycling");
-
-        // We assume that humans are better in classifying preferences compared to our algorithm above
         if (classBicycleValue != null) {
-            PriorityCode prioFromClass = convertClassValueToPriority(classBicycleValue);
-            // do not overwrite if e.g. designated
-            weightToPrioMap.compute(100d, (key, existing) ->
-                    existing == null || existing.getValue() < prioFromClass.getValue() ? prioFromClass : existing
-            );
+            // We assume that humans are better in classifying preferences compared to our algorithm above,
+            // but do not degrade e.g. designated
+            PriorityCode classPrio = convertClassValueToPriority(classBicycleValue);
+            if (classPrio.getValue() > prio.getValue())
+                prio = classPrio;
         }
+
+        weightToPrioMap.put(100d, prio);
     }
 }
