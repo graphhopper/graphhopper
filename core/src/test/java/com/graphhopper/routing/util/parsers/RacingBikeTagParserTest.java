@@ -98,11 +98,11 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "unclassified");
         osmWay.setTag("cycleway", "track");
-        assertPriorityAndSpeed(VERY_NICE, 24, osmWay);
+        assertPriorityAndSpeed(PREFER, 24, osmWay);
 
         // foot=yes is related to the highway, i.e. can be ignored for the cycleway
         osmWay.setTag("foot", "yes");
-        assertPriorityAndSpeed(VERY_NICE, 24, osmWay);
+        assertPriorityAndSpeed(PREFER, 24, osmWay);
     }
 
     @Test
@@ -114,6 +114,12 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         assertPriorityAndSpeed(PREFER, 24, osmWay);
         osmWay.setTag("foot", "yes"); // residential is allowed for foot anyway
         assertPriorityAndSpeed(PREFER, 24, osmWay);
+
+        // wide roads keep their priority even with foot=yes
+        osmWay = new ReaderWay(1);
+        osmWay.setTag("highway", "primary");
+        osmWay.setTag("foot", "yes");
+        assertPriorityAndSpeed(UNCHANGED, 24, osmWay);
     }
 
     @Test
