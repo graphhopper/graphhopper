@@ -151,6 +151,19 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         assertPriorityAndSpeed(UNCHANGED, 24, osmWay);
 
         osmWay = new ReaderWay(1);
+        osmWay.setTag("highway", "unclassified");
+        assertPriority(UNCHANGED, osmWay);
+
+        // a 30 zone must not make it a detour worth taking (#3375)
+        osmWay.setTag("maxspeed", "30");
+        assertPriority(UNCHANGED, osmWay);
+
+        // unknown classification, so unknown quality
+        osmWay = new ReaderWay(1);
+        osmWay.setTag("highway", "road");
+        assertPriority(SLIGHT_AVOID, osmWay);
+
+        osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "bridleway");
         assertPriority(AVOID, osmWay);
 
@@ -419,6 +432,16 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
 
         way.setTag("class:bicycle", "-2");
         assertPriority(BEST, way);
+
+        // a bad classification degrades the highway priority
+        way = new ReaderWay(1);
+        way.setTag("highway", "tertiary");
+        way.setTag("class:bicycle:roadcycling", "-3");
+        assertPriority(REACH_DESTINATION, way);
+
+        // even for designated infrastructure
+        way.setTag("bicycle", "designated");
+        assertPriority(REACH_DESTINATION, way);
     }
 
     @Test

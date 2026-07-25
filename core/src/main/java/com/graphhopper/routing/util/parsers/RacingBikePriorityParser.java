@@ -30,21 +30,26 @@ public class RacingBikePriorityParser extends BikeCommonPriorityParser {
     protected RacingBikePriorityParser(DecimalEncodedValue priorityEnc) {
         super(priorityEnc);
 
-        highwayToPrio.put("road", SLIGHT_PREFER);
         highwayToPrio.put("secondary", SLIGHT_PREFER);
         highwayToPrio.put("secondary_link", SLIGHT_PREFER);
         highwayToPrio.put("tertiary", SLIGHT_PREFER);
         highwayToPrio.put("tertiary_link", SLIGHT_PREFER);
+
+        highwayToPrio.put("unclassified", UNCHANGED);
+        highwayToPrio.put("primary", UNCHANGED);
+        highwayToPrio.put("primary_link", UNCHANGED);
+        highwayToPrio.put("cycleway", UNCHANGED);
+
+        highwayToPrio.put("road", SLIGHT_AVOID);
         highwayToPrio.put("service", SLIGHT_AVOID);
         highwayToPrio.put("residential", SLIGHT_AVOID);
-        highwayToPrio.put("unclassified", SLIGHT_AVOID);
         highwayToPrio.put("path", SLIGHT_AVOID);
         highwayToPrio.put("footway", SLIGHT_AVOID);
         highwayToPrio.put("pedestrian", SLIGHT_AVOID);
         highwayToPrio.put("platform", SLIGHT_AVOID);
-        highwayToPrio.put("track", AVOID_MORE);
         highwayToPrio.put("living_street", AVOID);
         highwayToPrio.put("bridleway", AVOID);
+        highwayToPrio.put("track", AVOID_MORE);
         highwayToPrio.put("motorway", BAD);
         highwayToPrio.put("motorway_link", BAD);
         highwayToPrio.put("trunk", BAD);
@@ -86,11 +91,8 @@ public class RacingBikePriorityParser extends BikeCommonPriorityParser {
 
         String classBicycleValue = way.getTag("class:bicycle:roadcycling");
         if (classBicycleValue != null) {
-            // We assume that humans are better in classifying preferences compared to our algorithm above,
-            // but do not degrade e.g. designated
-            PriorityCode classPrio = convertClassValueToPriority(classBicycleValue);
-            if (classPrio.getValue() > prio.getValue())
-                prio = classPrio;
+            // We assume that humans are better in classifying preferences compared to our algorithm above
+            prio = convertClassValueToPriority(classBicycleValue);
         }
 
         weightToPrioMap.put(100d, prio);
