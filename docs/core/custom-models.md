@@ -122,6 +122,7 @@ There are also some that take on a numeric value, like:
 Special expressions:
 
  - `backward_*`: this expression allows to access the reverse direction of the current edge
+ - `is_forward`: is true if the edge is passed in the direction it is stored in the graph (useful to change speed/priority of an edge in one direction only)
  - `in_*`: see `areas` for more information about this expression
  - `prev_*`: this expression allows to access the previous edge; can only be used in statements of `turn_penalty`.
  - `country.isRightHandTraffic()`: returns true if right-hand traffic is the standard in the country of the current edge; `false` otherwise
