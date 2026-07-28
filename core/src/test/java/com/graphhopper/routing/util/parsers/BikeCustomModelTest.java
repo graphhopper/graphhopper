@@ -200,16 +200,16 @@ public class BikeCustomModelTest {
         way.setTag("highway", "path");
         EdgeIteratorState edge = createEdge(way);
         CustomWeighting.Parameters p = CustomModelParser.createWeightingParameters(cm, em);
-        assertEquals(0.9, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
+        assertEquals(0.8, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
         assertEquals(6.0, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
         way.setTag("mtb:scale", "0");
         edge = createEdge(way);
-        assertEquals(0.9, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
+        assertEquals(0.8, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
 
         way.setTag("mtb:scale", "1");
         edge = createEdge(way);
-        assertEquals(0.45, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
+        assertEquals(0.4, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
 
         way.setTag("mtb:scale", "2");
         edge = createEdge(way);
@@ -218,7 +218,7 @@ public class BikeCustomModelTest {
         way.removeTag("mtb:scale");
         way.setTag("sac_scale", "hiking");
         edge = createEdge(way);
-        assertEquals(0.9, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
+        assertEquals(0.8, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
         way.setTag("sac_scale", "mountain_hiking");
         edge = createEdge(way);
         assertEquals(0.0, p.getEdgeToPriorityMapping().get(edge, false), 0.01);

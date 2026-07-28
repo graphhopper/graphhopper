@@ -71,12 +71,12 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
     public void testCycleway() {
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "cycleway");
-        assertPriorityAndSpeed(UNCHANGED, 24, osmWay);
+        assertPriorityAndSpeed(AVOID, 24, osmWay);
 
         osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "cycleway");
         osmWay.setTag("foot", "yes");
-        assertPriorityAndSpeed(SLIGHT_AVOID, 24, osmWay);
+        assertPriorityAndSpeed(AVOID, 24, osmWay);
 
         // bicycle=designated does not help if shared with pedestrians, even if segregated
         osmWay = new ReaderWay(1);
@@ -84,29 +84,29 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         osmWay.setTag("bicycle", "designated");
         osmWay.setTag("foot", "designated");
         osmWay.setTag("segregated", "no");
-        assertPriorityAndSpeed(SLIGHT_AVOID, 24, osmWay);
+        assertPriorityAndSpeed(AVOID, 24, osmWay);
 
         osmWay.setTag("segregated", "yes");
-        assertPriorityAndSpeed(SLIGHT_AVOID, 24, osmWay);
+        assertPriorityAndSpeed(AVOID, 24, osmWay);
 
         // segregated=yes alone does not boost either
         osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "cycleway");
         osmWay.setTag("segregated", "yes");
-        assertPriorityAndSpeed(UNCHANGED, 24, osmWay);
+        assertPriorityAndSpeed(AVOID, 24, osmWay);
 
         // same or worse as highway=cycleway + foot=yes
         osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "footway");
         osmWay.setTag("bicycle", "designated");
-        assertPriorityAndSpeed(SLIGHT_AVOID, 24, osmWay);
+        assertPriorityAndSpeed(AVOID, 24, osmWay);
 
         // like the shared cycleway case above
         osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "path");
         osmWay.setTag("bicycle", "designated");
         osmWay.setTag("foot", "designated");
-        assertPriority(SLIGHT_AVOID, osmWay);
+        assertPriority(AVOID, osmWay);
 
         osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "unclassified");
@@ -161,7 +161,7 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         // unknown classification, so unknown quality
         osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "road");
-        assertPriority(SLIGHT_AVOID, osmWay);
+        assertPriority(AVOID, osmWay);
 
         osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "bridleway");
@@ -202,12 +202,12 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
     public void testService() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "service");
-        assertPriorityAndSpeed(SLIGHT_AVOID, 18, way);
+        assertPriorityAndSpeed(AVOID, 18, way);
 
         way.setTag("service", "parking_aisle");
-        assertPriorityAndSpeed(SLIGHT_AVOID, 8, way);
+        assertPriorityAndSpeed(AVOID, 8, way);
         way.setTag("bicycle", "designated");
-        assertPriority(SLIGHT_AVOID, way);
+        assertPriority(AVOID, way);
     }
 
     @Test
