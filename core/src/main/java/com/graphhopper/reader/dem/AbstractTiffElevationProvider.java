@@ -23,6 +23,7 @@ import com.graphhopper.util.Downloader;
 import javax.net.ssl.SSLException;
 import java.awt.image.Raster;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.util.HashMap;
@@ -129,18 +130,26 @@ public abstract class AbstractTiffElevationProvider extends TileBasedElevationPr
 
             if (!loadExisting) {
                 File zipFile = new File(cacheDir, new File(getFileNameOfLocalFile(lat, lon)).getName());
-                if (!zipFile.exists())
+                if (!zipFile.exists()) {
                     try {
                         String zippedURL = getDownloadURL(lat, lon);
                         downloadToFile(zipFile, zippedURL);
                     } catch (SSLException ex) {
+                        cacheData.remove(name);
                         throw new IllegalStateException("SSL problem with elevation provider " + getClass().getSimpleName(), ex);
-                    } catch (IOException ex) {
+                    } catch (FileNotFoundException ex) {
+                        // Missing tile (e.g. ocean): treat as sea level. Do not swallow other IO failures.
                         demProvider.setSeaLevel(true);
                         // use small size on disc and in-memory
                         heights.create(10).flush();
                         return 0;
+                    } catch (IOException ex) {
+                        // Timeout, connection errors, partial responses, etc. must not be cached as elev=0
+                        cacheData.remove(name);
+                        throw new IllegalStateException("Unable to download elevation data for " + name
+                                + " using " + getClass().getSimpleName(), ex);
                     }
+                }
 
                 // short == 2 bytes
                 heights.create(2L * WIDTH * HEIGHT);
@@ -171,7 +180,7 @@ public abstract class AbstractTiffElevationProvider extends TileBasedElevationPr
                     return;
                 } catch (SocketTimeoutException ex) {
                     if (trial >= max - 1)
-                        throw new RuntimeException(ex);
+                        throw ex;
                     try {
                         Thread.sleep(sleep);
                     } catch (InterruptedException ignored) {
