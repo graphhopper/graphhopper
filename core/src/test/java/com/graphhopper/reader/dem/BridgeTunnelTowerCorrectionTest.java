@@ -376,4 +376,24 @@ public class BridgeTunnelTowerCorrectionTest {
         assertEquals(200, na.getEle(1), 0.5);
     }
 
+    @Test
+    public void testClimbAtShortBridge() {
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(0, 0, 0, 194); // ground, stays level on the valley side
+        na.setNode(1, 1, 0, 193); // bridge tower, valley side
+        na.setNode(2, 2, 0, 193); // bridge tower, hill side
+        na.setNode(3, 3, 0, 212); // ground, up the climb
+
+        GHUtility.setSpeed(60, 60, accessEnc, speedEnc,
+                graph.edge(0, 1).setDistance(17).set(roadEnvEnc, ROAD),
+                graph.edge(1, 2).setDistance(0.62).set(roadEnvEnc, BRIDGE),
+                graph.edge(2, 3).setDistance(50).set(roadEnvEnc, ROAD));
+
+        new BridgeTunnelTowerCorrection(graph, roadEnvEnc).execute();
+
+        // Both ends keep their DEM, so the bridge stays flat instead of becoming a step.
+        assertEquals(193, na.getEle(2), 0.5);
+        assertEquals(193, na.getEle(1), 0.5);
+    }
+
 }

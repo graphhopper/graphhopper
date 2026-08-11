@@ -199,8 +199,9 @@ public class BridgeTunnelTowerCorrection {
         double maxBefore = 0, maxAfter = 0, maxStructureBefore = 0, maxStructureAfter = 0;
         EdgeIterator it = explorer.setBaseNode(node);
         while (it.next()) {
+            // skip only zero-length edges (they have no slope)
             double dist = it.getDistance();
-            if (dist < 1) continue;
+            if (dist == 0) continue;
             int adj = it.getAdjNode();
             // Skip inner towers (no ground touching edges, e.g. B in a bridge A-B-C): B is not lifted but
             // interpolated later, so judging A and C against B's stale elevation would wrongly reject both.
