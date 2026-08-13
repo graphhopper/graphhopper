@@ -269,7 +269,8 @@ public interface EdgeIteratorState {
      * The default implementation falls back to string-based {@link #getValue(String)}.
      */
     default Object get(KVStorageEncodedValue property) {
-        return getValue(property.getName());
+        // KVStorage is keyed by the raw OSM key, not by the EncodedValue name
+        return getValue(property.getRawTagName());
     }
 
     /**

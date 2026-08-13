@@ -1040,6 +1040,12 @@ public class QueryGraphTest {
         assertNull(edge0ToSnap.detach(true).getValue("a"));
         assertEquals("world", edge0ToSnap.detach(true).getValue("b"));
         assertNull(edge0ToSnap.getValue("b"));
+
+        // a virtual edge uses the default get(KVStorageEncodedValue) which must use the raw OSM key
+        KVStorageEncodedValue kvEnc = new KVStorageEncodedValue("a");
+        kvEnc.setKeyIndex(g.getEdgeKVStorage().getKeyIndex("a"));
+        assertEquals("hello", origEdge.get(kvEnc));
+        assertEquals("hello", edge0ToSnap.get(kvEnc));
     }
 
     @Test
