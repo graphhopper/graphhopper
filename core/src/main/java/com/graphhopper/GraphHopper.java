@@ -574,7 +574,8 @@ public class GraphHopper {
         osmReaderConfig.setWorkerThreads(ghConfig.getInt("datareader.worker_threads", osmReaderConfig.getWorkerThreads()));
         String storedTagsStr = ghConfig.getString("graph.stored_tags", "");
         if (!storedTagsStr.isEmpty())
-            osmReaderConfig.setStoredTags(new LinkedHashSet<>(Arrays.asList(storedTagsStr.split(","))));
+            osmReaderConfig.setStoredTags(Arrays.stream(storedTagsStr.split(",")).map(String::trim)
+                    .filter(s -> !s.isEmpty()).collect(Collectors.toCollection(LinkedHashSet::new)));
 
         // index
         preciseIndexResolution = ghConfig.getInt("index.high_resolution", preciseIndexResolution);
@@ -623,15 +624,22 @@ public class GraphHopper {
 
         EncodingManager.Builder emBuilder = new EncodingManager.Builder();
         encodedValues.forEach(emBuilder::add);
+        // 'a:b' and 'a_b' both become 'kv_a_b', so reject such a clash with a clear message
+        Map<String, String> tagsByFieldName = new HashMap<>();
         for (String tag : osmReaderConfig.getStoredTags()) {
-            emBuilder.add(new KVStorageEncodedValue(tag));
+            if (KVStorageEncodedValue.isStoredAutomatically(tag))
+                throw new IllegalArgumentException("The tag '" + tag + "' is stored automatically, remove it from "
+                        + "stored_tags and use tag('" + tag + "') in your custom model");
+            KVStorageEncodedValue kvEnc = new KVStorageEncodedValue(tag);
+            String prevTag = tagsByFieldName.put(kvEnc.getName(), tag);
+            if (prevTag != null)
+                throw new IllegalArgumentException("The stored tags '" + prevTag + "' and '" + tag
+                        + "' cannot be used together as both are stored as '" + kvEnc.getName() + "'");
+            emBuilder.add(kvEnc);
         }
-        // TODO NOW: better integrate with existing data in KVStorage
-        if (!osmReaderConfig.getStoredTags().isEmpty()) {
-            // probably we should also change street_name into name to make it easier to use
-            emBuilder.add(new KVStorageEncodedValue(Parameters.Details.STREET_NAME));
-            emBuilder.add(new KVStorageEncodedValue(Parameters.Details.STREET_REF));
-        }
+        // the OSMReader always stores name and ref, so tag('name')/tag('ref') work without stored_tags
+        emBuilder.add(new KVStorageEncodedValue(Parameters.Details.STREET_NAME));
+        emBuilder.add(new KVStorageEncodedValue(Parameters.Details.STREET_REF));
 
         restrictionVehicleTypesByProfile.entrySet().stream()
                 .filter(e -> !e.getValue().isEmpty())
@@ -1065,7 +1073,6 @@ public class GraphHopper {
         logger.info("using " + getBaseGraphString() + ", memory:" + getMemInfo());
 
         createBaseGraphAndProperties();
-        initKVStorageEncodedValues(true);
 
         try {
             reader.readGraph();
@@ -1081,6 +1088,8 @@ public class GraphHopper {
     protected void createBaseGraphAndProperties() {
         baseGraph.create(100);
         properties.create(100);
+        // every graph reserves the keys, not just an OSM import, as the EncodedValues are added unconditionally
+        initKVStorageEncodedValues(true);
         if (maxSpeedCalculator != null)
             maxSpeedCalculator.createDataAccessForParser(baseGraph.getDirectory());
     }

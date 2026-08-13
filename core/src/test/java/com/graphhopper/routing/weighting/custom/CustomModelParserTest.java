@@ -64,7 +64,7 @@ class CustomModelParserTest {
         stateEnc = State.create();
         encodingManager = new EncodingManager.Builder().add(accessEnc).add(avgSpeedEnc).add(new EnumEncodedValue<>("bus", MyBus.class))
                 .add(stateEnc).add(countryEnc).add(MaxSpeed.create()).add(Surface.create()).add(RoadClass.create()).add(RoadEnvironment.create())
-                .add(new KVStorageEncodedValue("cycleway")).build();
+                .add(new KVStorageEncodedValue("cycleway")).add(new KVStorageEncodedValue(STREET_NAME)).build();
         graph = new BaseGraph.Builder(encodingManager).create();
         initKVStorageEncodedValues(graph);
         roadClassEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
@@ -491,6 +491,22 @@ class CustomModelParserTest {
         assertEquals(1.0, parameters.getEdgeToPriorityMapping().get(edgeWithLane, false), 1.e-6);
         assertEquals(0.5, parameters.getEdgeToPriorityMapping().get(edgeWithTrack, false), 1.e-6);
         assertEquals(0.5, parameters.getEdgeToPriorityMapping().get(edgeWithout, false), 1.e-6);
+    }
+
+    @Test
+    void testTagNameAlias() {
+        CustomModel customModel = new CustomModel();
+        customModel.addToPriority(If("tag('name') == 'Main St'", MULTIPLY, "0.5"));
+        customModel.addToSpeed(If("true", LIMIT, "100"));
+        CustomWeighting.Parameters parameters = CustomModelParser.createWeightingParameters(customModel, encodingManager);
+
+        EdgeIteratorState mainSt = graph.edge(0, 1).setDistance(100).
+                setKeyValues(Map.of(STREET_NAME, new KVStorage.KValue("Main St")));
+        EdgeIteratorState other = graph.edge(1, 2).setDistance(100).
+                setKeyValues(Map.of(STREET_NAME, new KVStorage.KValue("Other St")));
+
+        assertEquals(0.5, parameters.getEdgeToPriorityMapping().get(mainSt, false), 1.e-6);
+        assertEquals(1.0, parameters.getEdgeToPriorityMapping().get(other, false), 1.e-6);
     }
 
     @Test

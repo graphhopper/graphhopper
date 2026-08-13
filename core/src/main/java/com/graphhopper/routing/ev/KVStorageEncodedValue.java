@@ -20,6 +20,9 @@ package com.graphhopper.routing.ev;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.graphhopper.util.Parameters;
+
+import java.util.Map;
 
 /**
  * An EncodedValue that represents a key-value tag stored in KVStorage. Unlike other EncodedValues,
@@ -41,6 +44,21 @@ public class KVStorageEncodedValue implements EncodedValue {
         this.name = toFieldName(rawTagName);
     }
 
+    /** name and ref are already stored under a different key, so point to them instead of storing twice */
+    private static final Map<String, String> ALIASES = Map.of(
+            "name", Parameters.Details.STREET_NAME,
+            "ref", Parameters.Details.STREET_REF);
+
+    /** @return the KVStorage key for the given OSM key, e.g. 'name' -> 'street_name' */
+    public static String resolveAlias(String osmKey) {
+        return ALIASES.getOrDefault(osmKey, osmKey);
+    }
+
+    /** @return true if the OSMReader stores this key anyway, so it must not be listed in stored_tags */
+    public static boolean isStoredAutomatically(String osmKey) {
+        return ALIASES.containsKey(osmKey) || ALIASES.containsValue(osmKey);
+    }
+
     /**
      * Sanitizes an OSM key (e.g. "cycleway:left") to a valid Java identifier (e.g. "kv_cycleway_left").
      */
@@ -50,8 +68,11 @@ public class KVStorageEncodedValue implements EncodedValue {
             char c = osmKey.charAt(i);
             if (c >= 'a' && c <= 'z' || c >= '0' && c <= '9' || c == '_')
                 sb.append(c);
-            else
+            else if (c == ':')
                 sb.append('_');
+            else
+                // otherwise e.g. 'XY:ab' would silently become 'kv____ab'
+                throw new IllegalArgumentException("Illegal character '" + c + "' in tag key: " + osmKey);
         }
         return sb.toString();
     }

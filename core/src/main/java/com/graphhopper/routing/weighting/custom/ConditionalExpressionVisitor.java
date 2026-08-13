@@ -121,7 +121,7 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
             Java.BinaryOperation binOp = (Java.BinaryOperation) rv;
             int startRH = binOp.rhs.getLocation().getColumnNumber() - 1;
 
-            // Handle tag("key") or tag.get("key") compared to a string or null, in either order
+            // Handle tag("key") compared to a string or null, in either order
             Java.MethodInvocation tagCall = isTagCall(binOp.lhs) ? (Java.MethodInvocation) binOp.lhs
                     : isTagCall(binOp.rhs) ? (Java.MethodInvocation) binOp.rhs : null;
             Java.Rvalue other = tagCall == binOp.lhs ? binOp.rhs : binOp.lhs;
@@ -133,7 +133,8 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
                         throw new IllegalArgumentException("Only == and != allowed for tag() comparison");
 
                     String key = extractStringLiteralValue(((Java.Literal) tagCall.arguments[0]).value);
-                    String fieldName = KVStorageEncodedValue.toFieldName(key);
+                    // tag('name') and tag('ref') point to street_name and street_ref
+                    String fieldName = KVStorageEncodedValue.toFieldName(KVStorageEncodedValue.resolveAlias(key));
                     result.guessedVariables.add(fieldName);
 
                     int tagCallStart = tagCall.getLocation().getColumnNumber() - 1;
