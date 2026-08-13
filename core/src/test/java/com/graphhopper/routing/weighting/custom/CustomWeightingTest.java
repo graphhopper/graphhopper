@@ -341,6 +341,19 @@ class CustomWeightingTest {
     }
 
     @Test
+    public void testEdgeDistanceInCondition() {
+        EdgeIteratorState shortEdge = graph.edge(0, 1).set(avSpeedEnc, 100, 100).setDistance(100);
+        EdgeIteratorState longEdge = graph.edge(1, 2).set(avSpeedEnc, 100, 100).setDistance(1000);
+
+        CustomModel customModel = createSpeedCustomModel(avSpeedEnc).setDistanceInfluence(0d).
+                addToPriority(If("edge.getDistance() > 500", MULTIPLY, "0.1"));
+        Weighting weighting = createWeighting(customModel);
+
+        assertEquals(36, weighting.calcEdgeWeight(shortEdge, false));
+        assertEquals(3600, weighting.calcEdgeWeight(longEdge, false));
+    }
+
+    @Test
     public void testMinWeightHasSameUnitAs_getWeight() {
         EdgeIteratorState edge = graph.edge(0, 1).set(avSpeedEnc, 140, 0).setDistance(1000);
         CustomModel customModel = createSpeedCustomModel(avSpeedEnc);

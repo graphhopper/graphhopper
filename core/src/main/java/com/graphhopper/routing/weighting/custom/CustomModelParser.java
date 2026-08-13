@@ -48,6 +48,7 @@ public class CustomModelParser {
     static final String PREV_PREFIX = "prev_";
     static final String CHANGE_ANGLE = "change_angle";
     static final String STREET_NAME = "street_name";
+    static final String EDGE = "edge";
     private static final boolean JANINO_DEBUG = Boolean.getBoolean(Scanner.SYSTEM_PROPERTY_SOURCE_DEBUGGING_ENABLE);
     private static final String SCRIPT_FILE_DIR = System.getProperty(Scanner.SYSTEM_PROPERTY_SOURCE_DEBUGGING_DIR, "./src/main/java/com/graphhopper/routing/weighting/custom");
 
@@ -343,7 +344,8 @@ public class CustomModelParser {
             } else {
                 throw new IllegalArgumentException("Not supported for backward: " + argSubstr);
             }
-        } else if (arg.startsWith(IN_AREA_PREFIX)) {
+        } else if (arg.startsWith(IN_AREA_PREFIX) || arg.equals(EDGE)) {
+            // 'edge' is already a parameter of getPriority and getSpeed
             return "";
         } else {
             throw new IllegalArgumentException("Not supported " + arg);
@@ -483,8 +485,9 @@ public class CustomModelParser {
                 classSourceCode.append("protected " + Polygon.class.getSimpleName() + " " + arg + ";\n");
                 initSourceCode.append("JsonFeature feature_" + id + " = (JsonFeature) areas.get(\"" + id + "\");\n");
                 initSourceCode.append("this." + arg + " = new Polygon(new PreparedPolygon((Polygonal) feature_" + id + ".getGeometry()));\n");
-            } else if (arg.equals(STREET_NAME)) {
-                // street_name is resolved at runtime from graph KV storage, no class field needed
+            } else if (arg.equals(STREET_NAME) || arg.equals(EDGE)) {
+                // street_name is resolved at runtime from graph KV storage and 'edge' is a method
+                // parameter, so no class field is needed
             } else {
                 if (!arg.startsWith(IN_AREA_PREFIX))
                     throw new IllegalArgumentException("Variable not supported: " + arg);
