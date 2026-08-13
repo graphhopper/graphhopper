@@ -138,10 +138,11 @@ class AreaIndexTest {
         assertEquals("DE", countryIndex.query(52.52437, 13.41053).get(0).getProperties().get(State.ISO_3166_2));
         assertEquals("FR", countryIndex.query(48.86471, 2.349014).get(0).getProperties().get(State.ISO_3166_2));
         assertEquals("US-NM", countryIndex.query(35.67514, -105.94665).get(0).getProperties().get(State.ISO_3166_2));
-        assertEquals("AT", countryIndex.query(48.20448, 16.10788).get(0).getProperties().get(State.ISO_3166_2));
-        assertEquals("GB", countryIndex.query(51.6730876, 0.0041691).get(0).getProperties().get(State.ISO_3166_2));
+        assertEquals("AT", countryIndex.query(48.204480, 16.10788).get(0).getProperties().get(State.ISO_3166_2));
+        assertEquals("GB", countryIndex.query(51.673087, 0.004169).get(0).getProperties().get(State.ISO_3166_2));
         assertEquals("BE", countryIndex.query(50.846931, 4.332262).get(0).getProperties().get(State.ISO_3166_2));
         assertEquals("NL", countryIndex.query(52.208451, 5.500524).get(0).getProperties().get(State.ISO_3166_2));
+        assertEquals("HK", countryIndex.query(22.492655,113.94390).get(0).getProperties().get(State.ISO_3166_2));
     }
 
     private AreaIndex<CustomArea> createCountryIndex() {

@@ -44,3 +44,4 @@ local.properties
 /graph-cache
 package-lock.json
 .vscode/
+.claude/

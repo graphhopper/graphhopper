@@ -30,6 +30,7 @@ import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.RandomGraph;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -149,17 +150,26 @@ public class EdgeBasedRoutingAlgorithmTest {
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
     public void testRandomGraph(String algoStr) {
+        run_testRandomGraph(algoStr, false);
+    }
+
+    @ParameterizedTest
+    @ArgumentsSource(FixtureProvider.class)
+    public void testRandomGraph_strict(String algoStr) {
+        run_testRandomGraph(algoStr, true);
+    }
+
+    private void run_testRandomGraph(String algoStr, boolean tree) {
         long seed = System.nanoTime();
         final int numQueries = 100;
         Random rnd = new Random(seed);
         EncodingManager em = createEncodingManager(false);
         BaseGraph g = createStorage(em);
-        GHUtility.buildRandomGraph(g, rnd, 50, 2.2, true, speedEnc, null, 0.8, 0.8);
+        RandomGraph.start().seed(seed).nodes(50).curviness(0.1).speedZero(tree ? 0 : 0.1).tree(tree).fill(g, speedEnc);
         GHUtility.addRandomTurnCosts(g, seed, null, turnCostEnc, 3, tcs);
         g.freeze();
         int numPathsNotFound = 0;
         // todo: reduce redundancy with RandomCHRoutingTest
-        List<String> strictViolations = new ArrayList<>();
         for (int i = 0; i < numQueries; i++) {
             int from = rnd.nextInt(g.getNodes());
             int to = rnd.nextInt(g.getNodes());
@@ -176,27 +186,12 @@ public class EdgeBasedRoutingAlgorithmTest {
             if (!path.isFound()) {
                 fail("path not found for " + from + "->" + to + ", expected weight: " + refWeight);
             }
-
-            double weight = path.getWeight();
-            if (Math.abs(refWeight - weight) > 1.e-2) {
-                LOGGER.warn("expected: " + refPath.calcNodes());
-                LOGGER.warn("given:    " + path.calcNodes());
-                fail("wrong weight: " + from + "->" + to + ", dijkstra: " + refWeight + " vs. " + algoStr + ": " + path.getWeight());
-            }
-            if (Math.abs(path.getDistance() - refPath.getDistance()) > 1.e-1) {
-                strictViolations.add("wrong distance " + from + "->" + to + ", expected: " + refPath.getDistance() + ", given: " + path.getDistance());
-            }
-            if (Math.abs(path.getTime() - refPath.getTime()) > 50) {
-                strictViolations.add("wrong time " + from + "->" + to + ", expected: " + refPath.getTime() + ", given: " + path.getTime());
-            }
+            List<String> strictViolations = GHUtility.comparePaths(refPath, path, from, to, false, seed);
+            if (tree && !strictViolations.isEmpty())
+                fail(strictViolations.toString());
         }
-        if (numPathsNotFound > 0.9 * numQueries) {
+        if (numPathsNotFound > 0.9 * numQueries)
             fail("Too many paths not found: " + numPathsNotFound + "/" + numQueries);
-        }
-        if (strictViolations.size() > 0.05 * numQueries) {
-            fail("Too many strict violations: " + strictViolations.size() + "/" + numQueries + "\n" +
-                    String.join("\n", strictViolations));
-        }
     }
 
     @ParameterizedTest
@@ -232,8 +227,8 @@ public class EdgeBasedRoutingAlgorithmTest {
         {
             // simple case where turn cost is encountered during forward search
             Path p14 = calcPath(graph, 1, 4, algoStr);
-            assertDistTimeWeight(p14, 3, distance, 6, turnCosts);
-            assertEquals(20, p14.getWeight(), 1.e-6);
+            assertEquals(180, p14.getDistance());
+            assertEquals(180 + 20, p14.getWeight());
             assertEquals(20000, p14.getTime());
         }
 
@@ -241,16 +236,10 @@ public class EdgeBasedRoutingAlgorithmTest {
             // this test is more involved for bidir algos: the turn costs have to be taken into account also at the
             // node where fwd and bwd searches meet
             Path p04 = calcPath(graph, 0, 4, algoStr);
-            assertDistTimeWeight(p04, 4, distance, 6, turnCosts);
-            assertEquals(26, p04.getWeight(), 1.e-6);
+            assertEquals(240, p04.getDistance());
+            assertEquals(240 + 20, p04.getWeight());
             assertEquals(26000, p04.getTime());
         }
-    }
-
-    private void assertDistTimeWeight(Path path, int numEdges, double distPerEdge, double weightPerEdge, int turnCost) {
-        assertEquals(numEdges * distPerEdge, path.getDistance(), 1.e-6, "wrong distance");
-        assertEquals(numEdges * weightPerEdge + turnCost, path.getWeight(), 1.e-6, "wrong weight");
-        assertEquals(1000 * (numEdges * weightPerEdge + turnCost), path.getTime(), 1.e-6, "wrong time");
     }
 
     private void blockNode3(BaseGraph g) {
@@ -302,14 +291,14 @@ public class EdgeBasedRoutingAlgorithmTest {
 
         assertEquals(IntArrayList.from(7, 6, 3, 6, 5), p.calcNodes());
         assertEquals(200 + 20, p.getDistance(), 1.e-6);
-        assertEquals(22 + 50, p.getWeight(), 1.e-6);
+        assertEquals(220 + 500, p.getWeight());
         assertEquals((22 + 50) * 1000, p.getTime(), 1.e-6);
 
         // with default infinite u-turn costs we need to take an expensive detour
         p = calcPath(g, 7, 5, algoStr);
         assertEquals(IntArrayList.from(7, 6, 3, 2, 5), p.calcNodes());
         assertEquals(100 + 10 + 8640 + 50, p.getDistance(), 1.e-6);
-        assertEquals(880.0, p.getWeight(), 1.e-6);
+        assertEquals(8800.0, p.getWeight());
 
         // no more u-turn 6-3-6 -> now we have to take the expensive roads even with finite u-turn costs
         setTurnRestriction(g, 6, 3, 6);
@@ -317,7 +306,7 @@ public class EdgeBasedRoutingAlgorithmTest {
 
         assertEquals(IntArrayList.from(7, 6, 3, 2, 5), p.calcNodes());
         assertEquals(100 + 10 + 8640 + 50, p.getDistance(), 1.e-6);
-        assertEquals(880.0, p.getWeight(), 1.e-6);
+        assertEquals(8800.0, p.getWeight());
     }
 
     @ParameterizedTest
@@ -347,7 +336,7 @@ public class EdgeBasedRoutingAlgorithmTest {
         {
             Path path = createAlgo(g, createWeighting(67), algoStr, EDGE_BASED).calcPath(0, 5);
             assertEquals(600, path.getDistance(), 1.e-6);
-            assertEquals(60 + 67, path.getWeight(), 1.e-6);
+            assertEquals(600 + 670, path.getWeight());
             assertEquals((60 + 67) * 1000, path.getTime(), 1.e-6);
         }
     }
@@ -407,7 +396,7 @@ public class EdgeBasedRoutingAlgorithmTest {
         };
         Path p = createAlgo(g, weighting, algoStr, EDGE_BASED).calcPath(5, 1);
         assertEquals(IntArrayList.from(5, 6, 7, 4, 3, 1), p.calcNodes());
-        assertEquals(5 * 10 + 1, p.getWeight(), 1.e-6);
+        assertEquals(5 * 100 + 10, p.getWeight());
         assertEquals(5 * 10000 + 1000, p.getTime(), .1);
     }
 

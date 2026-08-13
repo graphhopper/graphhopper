@@ -46,8 +46,7 @@ import java.util.*;
 
 import static com.graphhopper.json.Statement.If;
 import static com.graphhopper.json.Statement.Op.MULTIPLY;
-import static com.graphhopper.util.Instruction.FINISH;
-import static com.graphhopper.util.Instruction.REACHED_VIA;
+import static com.graphhopper.util.Instruction.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -63,6 +62,7 @@ public class RouteResourceClientHCTest {
         config.getGraphHopperConfiguration().
                 putObject("prepare.min_network_size", 0).
                 putObject("graph.elevation.provider", "srtm").
+                putObject("graph.elevation.clear", true).
                 putObject("graph.elevation.cache_dir", "../core/files/").
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("graph.encoded_values", "road_class,surface,road_environment,max_speed").
@@ -120,9 +120,9 @@ public class RouteResourceClientHCTest {
         ResponsePath res = rsp.getBest();
         isBetween(70, 80, res.getPoints().size());
         isBetween(2900, 3000, res.getDistance());
-        isBetween(110, 120, res.getAscend());
+        isBetween(120, 130, res.getAscend());
         isBetween(75, 85, res.getDescend());
-        isBetween(190, 200, res.getRouteWeight());
+        isBetween(1900, 2000, res.getRouteWeight());
 
         // change vehicle
         rsp = gh.route(new GHRequest(42.5093, 1.5274, 42.5126, 1.5410).
@@ -192,12 +192,15 @@ public class RouteResourceClientHCTest {
         GHResponse res = gh.route(req);
         int counter = 0;
         for (Instruction i : res.getBest().getInstructions()) {
-            if (i instanceof RoundaboutInstruction) {
-                counter++;
-                RoundaboutInstruction ri = (RoundaboutInstruction) i;
-                assertEquals(-5, ri.getTurnAngle(), 0.1, "turn_angle was incorrect:" + ri.getTurnAngle());
-                // This route contains only one roundabout and no (via) point in a roundabout
-                assertTrue(ri.isExited(), "exited was incorrect:" + ri.isExited());
+            if (i instanceof RoundaboutInstruction ri) {
+                if (ri.getSign() == ROUNDABOUT_USE) {
+                    counter++;
+                    assertEquals(-5, ri.getTurnAngle(), 0.1, "turn_angle was incorrect:" + ri.getTurnAngle());
+                } else if (ri.getSign() == ROUNDABOUT_EXIT) {
+                    counter++;
+                    // This route contains only one roundabout and no (via) point in a roundabout
+                    assertTrue((Boolean) ri.getExtraInfoJSON().get("exited"), "exited was incorrect:" + ri.getExtraInfoJSON().get("exited"));
+                }
             }
         }
         assertTrue(counter > 0, "no roundabout in route?");
@@ -373,7 +376,7 @@ public class RouteResourceClientHCTest {
                 putHint("ch.disable", true);
         GHResponse rsp = gh.route(req);
         assertFalse(rsp.hasErrors(), "errors:" + rsp.getErrors().toString());
-        assertEquals(1_614_000, rsp.getBest().getTime(), 1000);
+        assertEquals(1_613_000, rsp.getBest().getTime(), 1000);
 
         // ... and again without the custom model, using the tunnel -> we are much faster
         req.setCustomModel(null);
@@ -390,7 +393,7 @@ public class RouteResourceClientHCTest {
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(42.509141, 1.546063)).
                 // #2915: duplicating the first point yields an empty leg, but there should still be path details for it
-                addPoint(new GHPoint(42.509141, 1.546063)).
+                        addPoint(new GHPoint(42.509141, 1.546063)).
                 addPoint(new GHPoint(42.507173, 1.531902)).
                 addPoint(new GHPoint(42.505435, 1.515943)).
                 addPoint(new GHPoint(42.499062, 1.506067)).
@@ -406,7 +409,7 @@ public class RouteResourceClientHCTest {
 
         GHResponse response = gh.route(req);
         ResponsePath path = response.getBest();
-        assertEquals(5158, path.getDistance(), 5);
+        assertEquals(5112, path.getDistance(), 5);
         assertEquals(11, path.getWaypoints().size());
 
         assertEquals(path.getTime(), path.getPathDetails().get("leg_time").stream().mapToLong(d -> (long) d.getValue()).sum(), 1);

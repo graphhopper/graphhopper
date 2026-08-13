@@ -32,7 +32,7 @@ import java.util.Map;
 /**
  * @author Peter Karich
  */
-class VirtualEdgeIterator implements EdgeIterator {
+public class VirtualEdgeIterator implements EdgeIterator {
     private final EdgeFilter edgeFilter;
     private List<EdgeIteratorState> edges;
     private int current;
@@ -108,6 +108,16 @@ class VirtualEdgeIterator implements EdgeIterator {
     @Override
     public EdgeIteratorState setDistance(double dist) {
         return getCurrentEdge().setDistance(dist);
+    }
+
+    @Override
+    public long getDistance_mm() {
+        return getCurrentEdge().getDistance_mm();
+    }
+
+    @Override
+    public EdgeIteratorState setDistance_mm(long distance_mm) {
+        return getCurrentEdge().setDistance_mm(distance_mm);
     }
 
     @Override
@@ -275,6 +285,11 @@ class VirtualEdgeIterator implements EdgeIterator {
     @Override
     public Object getValue(String key) {
         return getCurrentEdge().getValue(key);
+    }
+
+    @Override
+    public boolean isVirtual() {
+        return getCurrentEdge().isVirtual();
     }
 
     @Override

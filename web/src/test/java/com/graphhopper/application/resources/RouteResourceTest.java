@@ -67,24 +67,14 @@ import static org.junit.jupiter.api.Assertions.*;
 @ExtendWith(DropwizardExtensionsSupport.class)
 public class RouteResourceTest {
 
-    // for this test we use a non-standard profile name
-    private static final Map<String, String> mapboxResolver = new HashMap<String, String>() {
-        {
-            put("driving", "my_car");
-            put("driving-traffic", "my_car");
-        }
-    };
-
     private static final String DIR = "./target/andorra-gh/";
     private static final DropwizardAppExtension<GraphHopperServerConfiguration> app = new DropwizardAppExtension<>(GraphHopperApplication.class, createConfig());
 
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("profiles_mapbox", mapboxResolver).
                 putObject("prepare.min_network_size", 0).
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
-                putObject("graph.encoded_values", "road_class,surface,road_environment,max_speed,country").
                 putObject("max_speed_calculator.enabled", true).
                 putObject("graph.urban_density.threads", 1). // for max_speed_calculator
                 putObject("graph.urban_density.city_radius", 0).
@@ -149,15 +139,6 @@ public class RouteResourceTest {
     }
 
     @Test
-    public void testBasicNavigationQuery() {
-        JsonNode json = clientTarget(app, "/navigate/directions/v5/gh/driving/1.537174,42.507145;1.539116,42.511368?" +
-                "access_token=pk.my_api_key&alternatives=true&geometries=polyline6&overview=full&steps=true&continue_straight=true&" +
-                "annotations=congestion%2Cdistance&language=en&roundabout_exits=true&voice_instructions=true&banner_instructions=true&voice_units=metric").
-                request().get(JsonNode.class);
-        assertEquals(1256, json.get("routes").get(0).get("distance").asDouble(), 20);
-    }
-
-    @Test
     public void testWrongPointFormat() {
         BodyAndStatus response = getWithStatus(clientTarget(app, "/route?profile=my_car&point=1234&point=42.510071,1.548128"));
         assertEquals(400, response.getStatus());
@@ -182,6 +163,22 @@ public class RouteResourceTest {
         double distance = path.get("distance").asDouble();
         assertTrue(distance > 9000, "distance wasn't correct:" + distance);
         assertTrue(distance < 9500, "distance wasn't correct:" + distance);
+    }
+
+    @Test
+    public void testQueryWithViaPointInstructions() {
+        JsonNode json = clientTarget(app, 
+            "/route?profile=my_car&point=42.554851,1.536198&point=42.526351,1.526435&point=42.510071,1.548128&via_point_instructions=true")
+            .request().get(JsonNode.class);
+        JsonNode infoJson = json.get("info");
+        assertFalse(infoJson.has("errors"));
+        JsonNode instructions = json.get("paths").get(0).get("instructions");
+        boolean foundViaPointInstruction = false;
+        for(int i = 0; i < instructions.size(); i++) {
+            if(instructions.get(i).get("sign").asInt() == 5) foundViaPointInstruction = true;
+        }
+        
+        assertTrue(foundViaPointInstruction, "No via point instructions were found");
     }
 
     @Test
@@ -253,6 +250,21 @@ public class RouteResourceTest {
         assertEquals("At roundabout, take exit 2", instructions.get(4).getTurnDescription(null));
         assertEquals(true, instructions.get(4).getExtraInfoJSON().get("exited"));
         assertEquals(false, instructions.get(23).getExtraInfoJSON().get("exited"));
+
+        // with roundabout_exits=true there is an additional instruction for every exited roundabout
+        rsp = hopper.route(new GHRequest().
+                setProfile("my_car").
+                addPoint(new GHPoint(42.554851, 1.536198)).
+                addPoint(new GHPoint(42.531896, 1.553278)).
+                addPoint(new GHPoint(42.510071, 1.548128)).
+                putHint("roundabout_exits", true));
+        assertTrue(rsp.getErrors().isEmpty(), rsp.getErrors().toString());
+        instructions = rsp.getBest().getInstructions();
+        assertEquals(35, instructions.size());
+        assertEquals("At roundabout, take exit 2", instructions.get(4).getTurnDescription(null));
+        assertEquals(false, instructions.get(4).getExtraInfoJSON().get("exited"));
+        assertEquals(true, instructions.get(5).getExtraInfoJSON().get("exited"));
+        assertNull(instructions.get(10).getExtraInfoJSON().get("exited"));
     }
 
     @Test

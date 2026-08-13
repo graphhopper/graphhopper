@@ -24,6 +24,7 @@ import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.EdgeIteratorState;
 
+import static com.graphhopper.routing.weighting.Weighting.roundWeight;
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
 
 /**
@@ -108,7 +109,7 @@ public final class CustomWeighting implements Weighting {
 
     @Override
     public double calcMinWeightPerDistance() {
-        return 1d / (maxSpeedCalc.calcMax() / SPEED_CONV) / maxPrioCalc.calcMax() + distanceInfluence;
+        return 10 * (1d / (maxSpeedCalc.calcMax() / SPEED_CONV) / maxPrioCalc.calcMax() + distanceInfluence);
     }
 
     @Override
@@ -123,7 +124,9 @@ public final class CustomWeighting implements Weighting {
         if (edgeState.get(EdgeIteratorState.UNFAVORED_EDGE)) seconds += headingPenaltySeconds;
         double distanceCosts = distance * distanceInfluence;
         if (Double.isInfinite(distanceCosts)) return Double.POSITIVE_INFINITY;
-        return seconds / priority + distanceCosts;
+        // we limit the weight increase due to priority to 1M (i.e. ~28h). this guards against
+        // tiny priority factors (for example applying 0.001 multiple times to the same edge)
+        return roundWeight(10 * (Math.min(seconds / priority, seconds + 100_000) + distanceCosts));
     }
 
     double calcSeconds(double distance, EdgeIteratorState edgeState, boolean reverse) {
@@ -143,7 +146,8 @@ public final class CustomWeighting implements Weighting {
 
     @Override
     public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
-        return turnCostProvider.calcTurnWeight(inEdge, viaNode, outEdge);
+        double turnWeight = turnCostProvider.calcTurnWeight(inEdge, viaNode, outEdge);
+        return roundWeight(10 * turnWeight);
     }
 
     @Override

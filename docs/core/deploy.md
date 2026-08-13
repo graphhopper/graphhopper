@@ -18,11 +18,20 @@ java [options] -jar *.jar import config.yml
 java [options] -jar *.jar server config.yml # calls the import command implicitly, if not done before
 ```
 
+A good estimation for the `-Xmx` value in the server command is "size of graph-cache minus the geometry file".
+The import command typically requires much higher values for `-Xmx`, especially when CH is enabled.
+For the server command it is also recommended to use the same value for `-Xms` as you use for `-Xmx`.
+
 To further reduce memory usage for `import` try a special garbage collector (GC): `-XX:+UseParallelGC`.
 
-However after the import, for serving the routing requests GCs like ZGC or Shenandoah could be better than the default G1 as those are optimized for JVMs with bigger heaps (>32GB) and low pauses.
+However after the import, for serving the routing requests GCs like ZGC or Shenandoah could be better than 
+the default G1 as those are optimized for JVMs with bigger heaps (>32GB) and low pauses.
 They can be enabled with `-XX:+UseZGC` or `-XX:+UseShenandoahGC`. Please note that especially ZGC and G1 require quite a
 bit memory additionally to the heap and so sometimes overall speed could be increased when lowering the `Xmx` value.
+
+We do not recommend the default G1 GC for GraphHopper, as without careful alignment of the segment size in DataAccess 
+(`graph.dataaccess.segment_size`) and the heap region size, G1's humongous allocations can waste large amounts of memory
+on filler objects. See for example: https://www.oracle.com/technical-resources/articles/java/g1gc.html 
 
 If you want to support none-CH requests you should consider enabling landmarks or limit requests to a
 certain distance via `routing.non_ch.max_waypoint_distance` (in meter, default is 1) or
@@ -45,7 +54,7 @@ You can get a plan there too and set the API keys in the config.js file.
 GraphHopper can handle the world-wide [OpenStreetMap road network](http://planet.osm.org/).
 
 Parsing this planet file and creating the GraphHopper base graph requires ~60GB RAM and takes ~3h for the import. If you can accept
-much slower import times (3 days!) this can be reduced to 31GB RAM when you set `datareader.dataaccess=MMAP` in the config file.
+much slower import times (3 days!) this can be reduced to 31GB RAM when you set `graph.dataaccess.default_type: MMAP` in the config file.
 As of May 2022 the graph has around 415M edges (150M for Europe, 86M for North America).
 
 Running the CH preparation, required for best response times, needs ~120GB RAM and the additional CH preparation takes ~25 hours

@@ -40,7 +40,7 @@ public class NavigateResponseConverterTest {
         // make sure we are using fresh files with correct vehicle
         Helper.removeDir(new File(graphFolder));
 
-        hopper = new GraphHopper().setOSMFile(osmFile).setStoreOnFlush(true).setGraphHopperLocation(graphFolder)
+        hopper = new GraphHopper().setOSMFile(osmFile).setFileBacked(true).setGraphHopperLocation(graphFolder)
                 .setEncodedValuesString("car_access, car_average_speed, max_speed")
                 .setProfiles(TestProfiles.accessAndSpeed(profile, "car")).importOrLoad();
     }
@@ -186,6 +186,39 @@ public class NavigateResponseConverterTest {
 
         voiceInstruction = voiceInstructions.get(3);
         assertEquals("keep right", voiceInstruction.get("announcement").asText());
+    }
+
+    @Test
+    public void roundaboutExitInstructionTest() {
+        GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setProfile(profile)
+                .putHint(Parameters.Routing.ROUNDABOUT_EXITS, true));
+
+        ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH, distanceConfig);
+
+        JsonNode steps = json.get("routes").get(0).get("legs").get(0).get("steps");
+
+        // with roundabout_exits=true the roundabout is split into two steps and the exit
+        // instruction is not merged into the announcement of the previous step
+        JsonNode voiceInstructions = steps.get(5).get("voiceInstructions");
+        assertEquals(2, voiceInstructions.size());
+        JsonNode voiceInstruction = voiceInstructions.get(0);
+        assertEquals(200, voiceInstruction.get("distanceAlongGeometry").asDouble(), 1);
+        assertEquals("In 200 meters at roundabout, take exit 2 onto CS-340",
+                voiceInstruction.get("announcement").asText());
+
+        JsonNode roundaboutStep = steps.get(6);
+        assertEquals("roundabout", roundaboutStep.get("maneuver").get("type").asText());
+        assertEquals(2, roundaboutStep.get("maneuver").get("exit").asInt());
+        voiceInstructions = roundaboutStep.get("voiceInstructions");
+        assertEquals(1, voiceInstructions.size());
+        voiceInstruction = voiceInstructions.get(0);
+        assertEquals(16, voiceInstruction.get("distanceAlongGeometry").asDouble(), 1);
+        assertEquals("exit the roundabout, then at roundabout, take exit 2 onto CG-3",
+                voiceInstruction.get("announcement").asText());
+
+        // the additional exit step carries the exit number too so that clients can show it while inside the roundabout
+        assertEquals("exit roundabout", steps.get(7).get("maneuver").get("type").asText());
+        assertEquals(2, steps.get(7).get("maneuver").get("exit").asInt());
     }
 
     @Test

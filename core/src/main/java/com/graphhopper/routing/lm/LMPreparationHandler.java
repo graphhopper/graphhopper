@@ -171,7 +171,7 @@ public class LMPreparationHandler {
     /**
      * Prepares the landmark data for all given configs
      */
-    public List<PrepareLandmarks> prepare(List<LMConfig> lmConfigs, BaseGraph baseGraph, EncodingManager encodingManager, StorableProperties properties, LocationIndex locationIndex, final boolean closeEarly) {
+    public List<PrepareLandmarks> prepare(List<LMConfig> lmConfigs, BaseGraph baseGraph, EncodingManager encodingManager, StorableProperties properties, LocationIndex locationIndex, final boolean closeEarly, final boolean fileBacked) {
         if (lmConfigs.isEmpty()) {
             LOGGER.info("There are no LMs to prepare");
             return Collections.emptyList();
@@ -186,6 +186,8 @@ public class LMPreparationHandler {
                 LOGGER.info(count + "/" + lmConfigs.size() + " calling LM prepare.doWork for " + prepare.getLMConfig().getName() + " ... (" + getMemInfo() + ")");
                 Thread.currentThread().setName(name);
                 prepare.doWork();
+                if (fileBacked)
+                    prepare.flush();
                 if (closeEarly)
                     prepare.close();
                 LOGGER.info("LM {} finished {}", name, getMemInfo());

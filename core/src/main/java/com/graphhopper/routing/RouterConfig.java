@@ -28,6 +28,7 @@ public class RouterConfig {
     private int nonChMaxWaypointDistance = Integer.MAX_VALUE;
     private boolean calcPoints = true;
     private boolean instructionsEnabled = true;
+    private boolean viaPointInstructionsEnabled = true;
     private boolean simplifyResponse = true;
     private double elevationWayPointMaxDistance = Double.MAX_VALUE;
     private int activeLandmarkCount = 8;
@@ -90,6 +91,14 @@ public class RouterConfig {
 
     public void setInstructionsEnabled(boolean instructionsEnabled) {
         this.instructionsEnabled = instructionsEnabled;
+    }
+
+    public boolean isViaPointInstructionsEnabled() {
+        return viaPointInstructionsEnabled;
+    }
+
+    public void setViaPointInstructionsEnabled(boolean viaPointInstructionsEnabled) {
+        this.viaPointInstructionsEnabled = viaPointInstructionsEnabled;
     }
 
     public boolean isSimplifyResponse() {

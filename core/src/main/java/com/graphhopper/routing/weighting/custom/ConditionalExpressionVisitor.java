@@ -33,8 +33,8 @@ import static com.graphhopper.routing.weighting.custom.CustomModelParser.IN_AREA
 class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
 
     private static final Set<String> allowedMethodParents = new HashSet<>(Arrays.asList("edge", "Math", "country"));
-    private static final Set<String> allowedMethods = new HashSet<>(Arrays.asList("ordinal", "getDistance", "getName",
-            "contains", "sqrt", "abs", "isRightHandTraffic"));
+    private static final Set<String> allowedMethods = new HashSet<>(Arrays.asList("ordinal", "getDistance",
+            "contains", "sqrt", "abs", "isRightHandTraffic", "equals"));
     private final ParseResult result;
     private final TreeMap<Integer, Replacement> replacements = new TreeMap<>();
     private final NameValidator variableValidator;
@@ -89,8 +89,8 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
         } else if (rv instanceof Java.MethodInvocation) {
             Java.MethodInvocation mi = (Java.MethodInvocation) rv;
             if (allowedMethods.contains(mi.methodName) && mi.target != null) {
-                Java.AmbiguousName n = (Java.AmbiguousName) mi.target.toRvalue();
-                if (n.identifiers.length == 2) {
+                // a chained call like edge.getName().contains("A 4") has no AmbiguousName target and is rejected
+                if (mi.target.toRvalue() instanceof Java.AmbiguousName n && n.identifiers.length == 2) {
                     if (allowedMethodParents.contains(n.identifiers[0])) {
                         // edge.getDistance(), Math.sqrt(x) => check target name i.e. edge or Math
                         if (mi.arguments.length == 0) {
@@ -105,6 +105,10 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
                         if (mi.arguments.length == 0) {
                             result.guessedVariables.add(n.identifiers[0]); // return road_class
                             return true;
+                        } else if (mi.arguments.length == 1) {
+                            // prev_street_name.equals(street_name)
+                            result.guessedVariables.add(n.identifiers[0]);
+                            return mi.arguments[0].accept(this);
                         }
                     }
                 }
@@ -276,6 +280,10 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
                     result.converted.append(convertedExpression.substring(start));
                 }
             }
+        } catch (IllegalArgumentException ex) {
+            // e.g. convertSingleToDoubleQuotes rejects the expression; keep the reason instead of
+            // returning a ParseResult that says only "invalid condition"
+            result.invalidMessage = ex.getMessage();
         } catch (Exception ex) {
         }
         return result;

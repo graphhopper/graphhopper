@@ -32,7 +32,7 @@ public class Distributions {
      * arithmetic underflow for very small probabilities.
      */
     public static double logNormalDistribution(double sigma, double x) {
-        return Math.log(1.0 / (sqrt(2.0 * PI) * sigma)) + (-0.5 * pow(x / sigma, 2));
+        return -0.5 * pow(x / sigma, 2);
     }
 
     /**
@@ -49,6 +49,6 @@ public class Distributions {
      * @param beta =1/lambda with lambda being the standard exponential distribution rate parameter
      */
     static double logExponentialDistribution(double beta, double x) {
-        return log(1.0 / beta) - (x / beta);
+        return -x / beta;
     }
 }

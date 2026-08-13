@@ -22,11 +22,13 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
+import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -36,10 +38,13 @@ import static org.junit.jupiter.api.Assertions.*;
 public class GMTEDProviderTest {
     private double precision = .1;
     GMTEDProvider instance;
+    @TempDir
+    Path tempDir;
 
     @BeforeEach
     public void setUp() {
-        instance = new GMTEDProvider();
+        instance = new GMTEDProvider(tempDir.toString());
+        instance.init();
     }
 
     @AfterEach
@@ -88,7 +93,7 @@ public class GMTEDProviderTest {
         file.delete();
         zipFile.delete();
 
-        instance.setDownloader(new Downloader("test GH") {
+        instance.setDownloader(new Downloader() {
             @Override
             public void downloadFile(String url, String toFile) throws IOException {
                 throw new FileNotFoundException("xyz");
@@ -100,19 +105,34 @@ public class GMTEDProviderTest {
         assertTrue(file.exists());
         assertEquals(1048676, file.length());
 
-        instance.setDownloader(new Downloader("test GH") {
+        instance.setDownloader(new Downloader() {
             @Override
             public void downloadFile(String url, String toFile) throws IOException {
                 throw new SocketTimeoutException("xyz");
             }
         });
 
-        try {
-            instance.setSleep(30);
-            instance.getEle(16, -20);
-            fail();
-        } catch (Exception ex) {
-        }
+        instance.setSleep(30);
+        // Use a different tile than the FileNotFound case above (GMTED tiles are 20°×30°)
+        IllegalStateException timeoutEx = assertThrows(IllegalStateException.class,
+                () -> instance.getEle(16, -20));
+        assertInstanceOf(SocketTimeoutException.class, timeoutEx.getCause());
+        assertTrue(timeoutEx.getMessage().contains("Unable to download elevation data"));
+
+        // Generic download failures must not be treated as sea level (elev=0).
+        // 50°N is a different tile than 16°N for GMTED (20° lat bands).
+        instance.setDownloader(new Downloader() {
+            @Override
+            public void downloadFile(String url, String toFile) throws IOException {
+                throw new IOException("connection reset");
+            }
+        });
+        IllegalStateException ioEx = assertThrows(IllegalStateException.class,
+                () -> instance.getEle(50, 0));
+        assertInstanceOf(IOException.class, ioEx.getCause());
+        assertEquals("connection reset", ioEx.getCause().getMessage());
+        assertTrue(ioEx.getMessage().contains("Unable to download elevation data"));
+        assertFalse(new File(instance.getCacheDir(), instance.getFileName(50, 0) + ".gh").exists());
 
         file.delete();
         zipFile.delete();

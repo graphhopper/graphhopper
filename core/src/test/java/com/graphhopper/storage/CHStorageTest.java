@@ -6,8 +6,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class CHStorageTest {
 
@@ -26,7 +25,7 @@ class CHStorageTest {
     @Test
     void createAndLoad(@TempDir Path path) {
         {
-            GHDirectory dir = new GHDirectory(path.toAbsolutePath().toString(), DAType.RAM_INT_STORE);
+            GHDirectory dir = new GHDirectory(path.toAbsolutePath().toString(), DAType.RAM_INT);
             CHStorage chStorage = new CHStorage(dir, "car", false);
             // we have to call create, because we want to create a new storage not load an existing one
             chStorage.create(5, 3);
@@ -41,7 +40,7 @@ class CHStorageTest {
             chStorage.close();
         }
         {
-            GHDirectory dir = new GHDirectory(path.toAbsolutePath().toString(), DAType.RAM_INT_STORE);
+            GHDirectory dir = new GHDirectory(path.toAbsolutePath().toString(), DAType.RAM_INT);
             CHStorage chStorage = new CHStorage(dir, "car", false);
             // this time we load from disk
             chStorage.loadExisting();
@@ -61,24 +60,31 @@ class CHStorageTest {
         CHStorage g = new CHStorage(new GHDirectory("", DAType.RAM), "abc", false);
         g.shortcutNodeBased(0, 0, 0, 10, 0, 1);
 
-        g.setWeight(0, Integer.MAX_VALUE / 1000d + 1000);
-        assertEquals(Integer.MAX_VALUE / 1000d + 1000, g.getWeight(0));
+        g.setWeight(0, (1L << 32) - 3);
+        assertEquals((1L << 32) - 3, g.getWeight(0));
 
-        g.setWeight(0, ((long) Integer.MAX_VALUE << 1) / 1000d - 0.001);
-        assertEquals(((long) Integer.MAX_VALUE << 1) / 1000d - 0.001, g.getWeight(0), 0.001);
+        g.setWeight(0, (1L << 32) - 2);
+        assertTrue(Double.isInfinite(g.getWeight(0)));
 
-        g.setWeight(0, ((long) Integer.MAX_VALUE << 1) / 1000d);
+        g.setWeight(0, 5.e9);
         assertTrue(Double.isInfinite(g.getWeight(0)));
-        g.setWeight(0, ((long) Integer.MAX_VALUE << 1) / 1000d + 1);
-        assertTrue(Double.isInfinite(g.getWeight(0)));
-        g.setWeight(0, ((long) Integer.MAX_VALUE << 1) / 1000d + 100);
-        assertTrue(Double.isInfinite(g.getWeight(0)));
+
+        g.setWeight(0, 0);
+        assertEquals(0, g.getWeight(0));
+
+        assertThrows(IllegalArgumentException.class, () -> g.setWeight(0, 0.0000001));
+        assertThrows(IllegalArgumentException.class, () -> g.setWeight(0, 0.0001));
+        assertThrows(IllegalArgumentException.class, () -> g.setWeight(0, 0.1));
+        assertThrows(IllegalArgumentException.class, () -> g.setWeight(0, -0.1));
+        assertThrows(IllegalArgumentException.class, () -> g.setWeight(0, -1));
+
+
     }
 
     @Test
     public void testLargeNodeA() {
         int nodeA = Integer.MAX_VALUE;
-        RAMIntDataAccess access = new RAMIntDataAccess("", "", false, -1);
+        RAMIntDataAccess access = new RAMIntDataAccess("", "", -1, false);
         access.create(1000);
         access.setInt(0, nodeA << 1 | 1 & PrepareEncoder.getScFwdDir());
         assertTrue(access.getInt(0) < 0);

@@ -120,6 +120,13 @@ public interface DataAccess extends Closeable {
     boolean ensureCapacity(long bytes);
 
     /**
+     * Reduces the capacity to the specified number of bytes (rounded up to the next segment
+     * boundary). The specified capacity must be less than or equal to the current capacity.
+     * A capacity of zero releases all segments.
+     */
+    void trimTo(long capacity);
+
+    /**
      * @return the size of one segment in bytes
      */
     int getSegmentSize();
@@ -128,9 +135,4 @@ public interface DataAccess extends Closeable {
      * @return the number of segments.
      */
     int getSegments();
-
-    /**
-     * @return the data access type of this object.
-     */
-    DAType getType();
 }

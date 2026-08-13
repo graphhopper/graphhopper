@@ -70,7 +70,5 @@ public interface Directory {
      */
     void close();
 
-    Directory create();
-
     Map<String, DataAccess> getDAs();
 }

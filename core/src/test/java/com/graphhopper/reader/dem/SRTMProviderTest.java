@@ -36,6 +36,7 @@ public class SRTMProviderTest {
     @BeforeEach
     public void setUp() {
         instance = new SRTMProvider();
+        instance.init();
     }
 
     @AfterEach
@@ -57,8 +58,9 @@ public class SRTMProviderTest {
     }
 
     @Test
-    public void testGetHeight() throws IOException {
+    public void testGetHeight() {
         instance = new SRTMProvider("./files/");
+        instance.init();
         // easy to verify orientation of tile:
 //        instance.getEle(43, 13);
 
@@ -86,16 +88,17 @@ public class SRTMProviderTest {
     }
 
     @Test
-    public void testGetHeight_issue545() throws IOException {
+    public void testGetHeight_issue545() {
         instance = new SRTMProvider("./files/");
-
+        instance.init();
         // test different precision of the elevation file (3600)
         assertEquals(84, instance.getEle(48.003878, -124.660492), 1e-1);
     }
 
     @Test
-    public void testGetHeightMMap() throws IOException {
+    public void testGetHeightMMap() {
         instance = new SRTMProvider("./files/");
+        instance.init();
         assertEquals(161, instance.getEle(55.8943144, -3), 1e-1);
     }
 
@@ -103,6 +106,7 @@ public class SRTMProviderTest {
     @Test
     public void testGetEle() {
         instance = new SRTMProvider();
+        instance.init();
         assertEquals(337, instance.getEle(49.949784, 11.57517), precision);
         assertEquals(466, instance.getEle(49.968668, 11.575127), precision);
         assertEquals(466, instance.getEle(49.968682, 11.574842), precision);
@@ -129,6 +133,7 @@ public class SRTMProviderTest {
     @Test
     public void testGetEleVerticalBorder() {
         instance = new SRTMProvider();
+        instance.init();
         // Border between the tiles N42E011 and N43E011
         assertEquals("Eurasia/N42E011", instance.getFileName(42.999999, 11.48));
         assertEquals(419, instance.getEle(42.999999, 11.48), precision);
@@ -140,6 +145,7 @@ public class SRTMProviderTest {
     @Test
     public void testGetEleHorizontalBorder() {
         instance = new SRTMProvider();
+        instance.init();
         // Border between the tiles N42E011 and N42E012
         assertEquals("Eurasia/N42E011", instance.getFileName(42.1, 11.999999));
         assertEquals(324, instance.getEle(42.1, 11.999999), precision);
@@ -151,6 +157,7 @@ public class SRTMProviderTest {
     @Test
     public void testDownloadIssue_1274() {
         instance = new SRTMProvider();
+        instance.init();
         // The file is incorrectly named on the sever: N55W061hgt.zip (it should be N55W061.hgt.zip)
         assertEquals("North_America/N55W061", instance.getFileName(55.055,-60.541));
         assertEquals(204, instance.getEle(55.055,-60.541), .1);

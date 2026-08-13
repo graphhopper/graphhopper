@@ -18,7 +18,6 @@
 package com.graphhopper.routing.subnetwork;
 
 import com.carrotsearch.hppc.BitSet;
-import com.carrotsearch.hppc.BitSetIterator;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
@@ -120,60 +119,133 @@ public class PrepareRoutingSubnetworks {
     }
 
     private int setSubnetworks(Weighting weighting, String jobName, BitSet subnetworkFlags) {
-        // partition graph into strongly connected components using Tarjan's algorithm
-        StopWatch sw = new StopWatch().start();
-        EdgeBasedTarjanSCC.ConnectedComponents ccs = EdgeBasedTarjanSCC.findComponents(graph,
-                (prev, edge) -> Double.isFinite(GHUtility.calcWeightWithTurnWeight(weighting, edge, false, prev)),
-                false);
-        List<IntArrayList> components = ccs.getComponents();
-        BitSet singleEdgeComponents = ccs.getSingleEdgeComponents();
-        long numSingleEdgeComponents = singleEdgeComponents.cardinality();
-        logger.info(jobName + " - Found " + ccs.getTotalComponents() + " subnetworks (" + numSingleEdgeComponents + " single edges and "
-                + components.size() + " components with more than one edge, total nodes: " + ccs.getEdgeKeys() + "), took: " + sw.stop().getSeconds() + "s");
-
+        // partition graph into strongly connected components using Tarjan's algorithm; stream the
+        // components so we never materialize the giant main component. We still need to keep the
+        // biggest component "alive" until we know we're not going to mark it, hence the explicit
+        // belowThresholdCandidate buffer.
         final int minNetworkSizeEdgeKeys = 2 * minNetworkSize;
+        StopWatch sw = new StopWatch().start();
 
-        // make all small components subnetworks, but keep the biggest (even when its smaller than the given min_network_size)
+        class Consumer implements EdgeBasedTarjanSCC.SCCConsumer {
+            IntArrayList currentBuffer;
+            boolean overflowed;
+            int currentSize;
+            // largest below-threshold component seen so far; we keep it as long as no above-threshold
+            // component has shown up. If one ever does, this is no longer the biggest and gets disposed.
+            IntArrayList belowThresholdCandidate;
+            boolean aboveThresholdSeen;
+
+            int totalComponents = 0;
+            int totalEdgeKeys = 0;
+            int numSingleEdgeComponents = 0;
+            int numMultiEdgeComponents = 0;
+            int subnetworks = 0;
+            int markedEdges = 0;
+            int biggestSubnetwork = 0;
+            int aboveThresholdMin = Integer.MAX_VALUE;
+            int largestMultiEdgeComponentSize = 0;
+
+            @Override
+            public void beginComponent() {
+                currentBuffer = new IntArrayList();
+                overflowed = false;
+                currentSize = 0;
+            }
+
+            @Override
+            public void edgeKey(int key) {
+                currentSize++;
+                totalEdgeKeys++;
+                if (!overflowed) {
+                    currentBuffer.add(key);
+                    if (minNetworkSizeEdgeKeys > 0 && currentBuffer.size() >= minNetworkSizeEdgeKeys) {
+                        currentBuffer = null;
+                        overflowed = true;
+                    }
+                }
+            }
+
+            @Override
+            public void endComponent() {
+                totalComponents++;
+                numMultiEdgeComponents++;
+                if (currentSize > largestMultiEdgeComponentSize)
+                    largestMultiEdgeComponentSize = currentSize;
+                if (overflowed) {
+                    aboveThresholdSeen = true;
+                    if (belowThresholdCandidate != null) {
+                        disposeMaterialized(belowThresholdCandidate);
+                        belowThresholdCandidate = null;
+                    }
+                    if (currentSize < aboveThresholdMin)
+                        aboveThresholdMin = currentSize;
+                } else if (aboveThresholdSeen) {
+                    disposeMaterialized(currentBuffer);
+                } else if (belowThresholdCandidate == null || currentBuffer.size() > belowThresholdCandidate.size()) {
+                    if (belowThresholdCandidate != null)
+                        disposeMaterialized(belowThresholdCandidate);
+                    belowThresholdCandidate = currentBuffer;
+                } else {
+                    disposeMaterialized(currentBuffer);
+                }
+                currentBuffer = null;
+                currentSize = 0;
+            }
+
+            @Override
+            public void singleEdgeComponent(int key) {
+                totalComponents++;
+                numSingleEdgeComponents++;
+                totalEdgeKeys++;
+                if (minNetworkSizeEdgeKeys > 0) {
+                    markedEdges += setSubnetworkEdge(key, weighting, subnetworkFlags);
+                    subnetworks++;
+                    if (biggestSubnetwork < 1)
+                        biggestSubnetwork = 1;
+                }
+            }
+
+            private void disposeMaterialized(IntArrayList c) {
+                if (c.size() < minNetworkSizeEdgeKeys) {
+                    for (IntCursor cursor : c)
+                        markedEdges += setSubnetworkEdge(cursor.value, weighting, subnetworkFlags);
+                    subnetworks++;
+                    if (c.size() > biggestSubnetwork)
+                        biggestSubnetwork = c.size();
+                } else if (c.size() < aboveThresholdMin) {
+                    aboveThresholdMin = c.size();
+                }
+            }
+        }
+
+        Consumer c = new Consumer();
+        EdgeBasedTarjanSCC.findComponentsStreaming(graph,
+                (prev, edge) -> Double.isFinite(GHUtility.calcWeightWithTurnWeight(weighting, edge, false, prev)),
+                c);
+
+        logger.info(jobName + " - Found " + c.totalComponents + " subnetworks (" + c.numSingleEdgeComponents + " single edges and "
+                + c.numMultiEdgeComponents + " components with more than one edge, total nodes: " + c.totalEdgeKeys + "), took: " + sw.stop().getSeconds() + "s");
+
         sw = new StopWatch().start();
-        int subnetworks = 0;
-        int markedEdges = 0;
-        int smallestNonSubnetwork = ccs.getBiggestComponent().size();
-        int biggestSubnetwork = 0;
-
-        for (IntArrayList component : components) {
-            if (component == ccs.getBiggestComponent())
-                continue;
-
-            if (component.size() < minNetworkSizeEdgeKeys) {
-                for (IntCursor cursor : component)
-                    markedEdges += setSubnetworkEdge(cursor.value, weighting, subnetworkFlags);
-                subnetworks++;
-                biggestSubnetwork = Math.max(biggestSubnetwork, component.size());
-            } else {
-                smallestNonSubnetwork = Math.min(smallestNonSubnetwork, component.size());
-            }
-        }
-
-        if (minNetworkSizeEdgeKeys > 0) {
-            BitSetIterator iter = singleEdgeComponents.iterator();
-            for (int edgeKey = iter.nextSetBit(); edgeKey >= 0; edgeKey = iter.nextSetBit()) {
-                markedEdges += setSubnetworkEdge(edgeKey, weighting, subnetworkFlags);
-                subnetworks++;
-                biggestSubnetwork = Math.max(biggestSubnetwork, 1);
-            }
-        } else if (numSingleEdgeComponents > 0) {
-            smallestNonSubnetwork = Math.min(smallestNonSubnetwork, 1);
-        }
+        int smallestNonSubnetwork = Integer.MAX_VALUE;
+        if (c.belowThresholdCandidate != null)
+            smallestNonSubnetwork = c.belowThresholdCandidate.size();
+        if (c.aboveThresholdMin < smallestNonSubnetwork)
+            smallestNonSubnetwork = c.aboveThresholdMin;
+        if (smallestNonSubnetwork == Integer.MAX_VALUE)
+            smallestNonSubnetwork = 0;
+        if (minNetworkSizeEdgeKeys == 0 && c.numSingleEdgeComponents > 0 && smallestNonSubnetwork > 1)
+            smallestNonSubnetwork = 1;
 
         int allowedMarked = graph.getEdges() / 2;
-        if (markedEdges / 2 > allowedMarked)
-            throw new IllegalStateException("Too many total (directed) edges were marked as subnetwork edges: " + markedEdges + " out of " + (2 * graph.getEdges()) + "\n" +
+        if (c.markedEdges / 2 > allowedMarked)
+            throw new IllegalStateException("Too many total (directed) edges were marked as subnetwork edges: " + c.markedEdges + " out of " + (2 * graph.getEdges()) + "\n" +
                     "The maximum number of subnetwork edges is: " + (2 * allowedMarked));
 
-        logger.info(jobName + " - Marked " + subnetworks + " subnetworks (biggest: " + biggestSubnetwork + " edges) -> " +
-                (ccs.getTotalComponents() - subnetworks) + " components(s) remain (smallest: " + smallestNonSubnetwork + ", biggest: " + ccs.getBiggestComponent().size() + " edges)"
-                + ", total marked edges: " + markedEdges + ", took: " + sw.stop().getSeconds() + "s");
-        return markedEdges;
+        logger.info(jobName + " - Marked " + c.subnetworks + " subnetworks (biggest: " + c.biggestSubnetwork + " edges) -> " +
+                (c.totalComponents - c.subnetworks) + " components(s) remain (smallest: " + smallestNonSubnetwork + ", biggest: " + c.largestMultiEdgeComponentSize + " edges)"
+                + ", total marked edges: " + c.markedEdges + ", took: " + sw.stop().getSeconds() + "s");
+        return c.markedEdges;
     }
 
     private int setSubnetworkEdge(int edgeKey, Weighting weighting, BitSet subnetworkFlags) {

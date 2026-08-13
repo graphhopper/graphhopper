@@ -36,12 +36,16 @@ import java.util.regex.Pattern;
 public class GpxConversions {
 
     private static final AngleCalc AC = AngleCalc.ANGLE_CALC;
-    private static final Pattern XML_ESCAPE_PATTERN = Pattern.compile("[\\<\\>]");
+    // besides the markup characters this also matches control characters that are illegal
+    // in XML 1.0 even when escaped
+    private static final Pattern XML_ESCAPE_PATTERN = Pattern.compile("[<>\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F]");
 
     static String simpleXMLEscape(String str) {
         // We could even use the 'more flexible' CDATA section but for now do the following:
-        // The 'and' could be important sometimes but remove others
-        return XML_ESCAPE_PATTERN.matcher(str.replace("&", "&amp;")).replaceAll("_");
+        // The 'and' could be important sometimes but remove others. Quotes are escaped so the
+        // result is safe in attribute values, not just in element content.
+        String escaped = str.replace("&", "&amp;").replace("\"", "&quot;").replace("'", "&apos;");
+        return XML_ESCAPE_PATTERN.matcher(escaped).replaceAll("_");
     }
 
     public static List<GPXEntry> createGPXList(InstructionList instructions) {
@@ -89,7 +93,7 @@ public class GpxConversions {
 
         String header = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>"
                 + "<gpx xmlns=\"http://www.topografix.com/GPX/1/1\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\""
-                + " creator=\"Graphhopper version " + version + "\" version=\"1.1\""
+                + " creator=\"Graphhopper version " + simpleXMLEscape(version) + "\" version=\"1.1\""
                 // This xmlns:gh acts only as ID, no valid URL necessary.
                 // Use a separate namespace for custom extensions to make basecamp happy.
                 + " xmlns:gh=\"https://graphhopper.com/public/schema/gpx/1.1\">"
@@ -126,7 +130,7 @@ public class GpxConversions {
             }
         }
         if (withTrack) {
-            gpxOutput.append("\n<trk><name>").append(trackName).append("</name>");
+            gpxOutput.append("\n<trk><name>").append(simpleXMLEscape(trackName)).append("</name>");
 
             gpxOutput.append("<trkseg>");
             for (GPXEntry entry : createGPXList(instructions)) {

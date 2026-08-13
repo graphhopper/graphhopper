@@ -29,28 +29,15 @@ import java.util.Arrays;
  *
  * @author Peter Karich
  */
-class RAMIntDataAccess extends AbstractDataAccess {
+public class RAMIntDataAccess extends AbstractDataAccess {
     private int[][] segments = new int[0][];
     private boolean closed = false;
-    private boolean store;
+    private final boolean readOnly;
     private int segmentSizeIntsPower;
 
-    RAMIntDataAccess(String name, String location, boolean store, int segmentSize) {
+    public RAMIntDataAccess(String name, String location, int segmentSize, boolean readOnly) {
         super(name, location, segmentSize);
-        this.store = store;
-    }
-
-    /**
-     * @param store true if in-memory data should be saved when calling flush
-     */
-    public RAMIntDataAccess setStore(boolean store) {
-        this.store = store;
-        return this;
-    }
-
-    @Override
-    public boolean isStoring() {
-        return store;
+        this.readOnly = readOnly;
     }
 
     @Override
@@ -98,9 +85,6 @@ class RAMIntDataAccess extends AbstractDataAccess {
         if (isClosed())
             throw new IllegalStateException("already closed");
 
-        if (!store)
-            return false;
-
         File file = new File(getFullName());
         if (!file.exists() || file.length() == 0) {
             return false;
@@ -139,13 +123,13 @@ class RAMIntDataAccess extends AbstractDataAccess {
         if (closed) {
             throw new IllegalStateException("already closed");
         }
-        if (!store) {
-            return;
-        }
+        if (readOnly)
+            throw new IllegalStateException("Cannot flush the read-only DataAccess " + getFullName());
+        ensureParentDirectoryExists();
         try {
             try (RandomAccessFile raFile = new RandomAccessFile(getFullName(), "rw")) {
                 long len = getCapacity();
-                writeHeader(raFile, len, segmentSizeInBytes);
+                writeHeader(raFile, HEADER_OFFSET + len, segmentSizeInBytes);
                 raFile.seek(HEADER_OFFSET);
                 // raFile.writeInt() <- too slow, so copy into byte array
                 for (int s = 0; s < segments.length; s++) {
@@ -157,6 +141,7 @@ class RAMIntDataAccess extends AbstractDataAccess {
                     }
                     raFile.write(byteArea);
                 }
+                raFile.setLength(HEADER_OFFSET + len);
             }
         } catch (Exception ex) {
             throw new RuntimeException("Couldn't store integers to " + toString(), ex);
@@ -233,6 +218,21 @@ class RAMIntDataAccess extends AbstractDataAccess {
     }
 
     @Override
+    public void trimTo(long capacity) {
+        if (capacity < 0)
+            throw new IllegalArgumentException("capacity must not be negative");
+        if (capacity > getCapacity())
+            throw new IllegalArgumentException("capacity cannot be larger than the current capacity: " + capacity + " > " + getCapacity());
+
+        int newSegmentCount = (int) (capacity / segmentSizeInBytes);
+        if (capacity % segmentSizeInBytes != 0)
+            newSegmentCount++;
+
+        if (newSegmentCount < segments.length)
+            segments = Arrays.copyOf(segments, newSegmentCount);
+    }
+
+    @Override
     public void close() {
         super.close();
         segments = new int[0][];
@@ -257,20 +257,9 @@ class RAMIntDataAccess extends AbstractDataAccess {
         return this;
     }
 
-    boolean releaseSegment(int segNumber) {
-        segments[segNumber] = null;
-        return true;
-    }
-
     @Override
     protected boolean isIntBased() {
         return true;
     }
 
-    @Override
-    public DAType getType() {
-        if (isStoring())
-            return DAType.RAM_INT_STORE;
-        return DAType.RAM_INT;
-    }
 }

@@ -10,11 +10,11 @@ class GHDirectoryTest {
 
     @Test
     public void testConfigure() {
-        GHDirectory dir = new GHDirectory("", DAType.RAM_STORE);
+        GHDirectory dir = new GHDirectory("", DAType.RAM);
         LinkedHashMap<String, String> map = new LinkedHashMap<>();
-        map.put("nodes", "MMAP");
+        map.put("nodes", "FOREIGN_MMAP");
         dir.configure(map);
-        assertEquals(DAType.MMAP, dir.getDefaultType("nodes", true));
+        assertEquals(DAType.FOREIGN_MMAP, dir.getDefaultType("nodes", true));
 
         // first rule wins
         map.put("preload.nodes", "10");
@@ -25,12 +25,12 @@ class GHDirectoryTest {
 
     @Test
     public void testPatternMatching() {
-        GHDirectory dir = new GHDirectory("", DAType.RAM_STORE);
+        GHDirectory dir = new GHDirectory("", DAType.RAM);
         LinkedHashMap<String, String> map = new LinkedHashMap<>();
-        map.put("nodes_ch.*", "MMAP");
+        map.put("nodes_ch.*", "FOREIGN_MMAP");
         dir.configure(map);
-        assertEquals(DAType.RAM_STORE, dir.getDefaultType("nodes", false));
-        assertEquals(DAType.MMAP, dir.getDefaultType("nodes_ch_car", false));
+        assertEquals(DAType.RAM, dir.getDefaultType("nodes", false));
+        assertEquals(DAType.FOREIGN_MMAP, dir.getDefaultType("nodes_ch_car", false));
     }
 
 }

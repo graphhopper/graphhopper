@@ -47,9 +47,14 @@ import static com.graphhopper.util.Parameters.Details.STREET_NAME;
  * loadExisting, (4) usage, (5) flush, (6) close
  */
 public class BaseGraph implements Graph, Closeable {
+    /**
+     * Maximum distance per edge in meters (~2147 km).
+     */
+    public static final double MAX_DIST_METERS = BaseGraphNodesAndEdges.MAX_DIST_MM / 1000.0;
     final static long MAX_UNSIGNED_INT = 0xFFFF_FFFFL;
     private static final int MAX_PILLAR_NODES = 65535;
-    private static final int GEOMETRY_HEADER_BYTES = 2;
+    // Worst-case bytes per varint-encoded signed int.
+    private static final int MAX_VARINT_BYTES = 5;
     final BaseGraphNodesAndEdges store;
     final NodeAccess nodeAccess;
     final KVStorage edgeKVStorage;
@@ -62,17 +67,18 @@ public class BaseGraph implements Graph, Closeable {
     private boolean initialized = false;
     private long minGeoRef;
     private long maxGeoRef;
-    private final int eleBytesPerCoord;
+    // stores a byte array plus the length of actually used bytes (the array may be over-allocated)
+    private record EncodedBytes(byte[] bytes, int length) {
+    }
 
-    public BaseGraph(Directory dir, boolean withElevation, boolean withTurnCosts, int bytesForFlags) {
+    public BaseGraph(Directory dir, DataAccess wayGeometry, boolean withElevation, boolean withTurnCosts, int bytesForFlags) {
         this.dir = dir;
         this.bitUtil = BitUtil.LITTLE;
-        this.wayGeometry = dir.create("geometry");
+        this.wayGeometry = wayGeometry;
         this.edgeKVStorage = new KVStorage(dir, true);
         this.store = new BaseGraphNodesAndEdges(dir, withElevation, withTurnCosts, bytesForFlags);
         this.nodeAccess = new GHNodeAccess(store);
         this.turnCostStorage = withTurnCosts ? new TurnCostStorage(this, dir.create("turn_costs", dir.getDefaultType("turn_costs", true))) : null;
-        this.eleBytesPerCoord = (nodeAccess.getDimension() == 3 ? 3 : 0);
     }
 
     BaseGraphNodesAndEdges getStore() {
@@ -182,7 +188,6 @@ public class BaseGraph implements Graph, Closeable {
 
     public BaseGraph create(long initSize) {
         checkNotInitialized();
-        dir.create();
         store.create(initSize);
 
         initSize = Math.min(initSize, 2000);
@@ -205,15 +210,16 @@ public class BaseGraph implements Graph, Closeable {
     }
 
     /**
-     * Flush and free resources that are not needed for post-processing (way geometries and KVStorage for edges).
+     * Frees the resources not needed for post-processing (way geometries and KVStorage for edges),
+     * optionally persisting them to disc first.
      */
-    public void flushAndCloseGeometryAndNameStorage() {
-        setWayGeometryHeader();
-
-        wayGeometry.flush();
+    public void closeGeometryAndNameStorage(boolean flush) {
+        if (flush) {
+            setWayGeometryHeader();
+            wayGeometry.flush();
+            edgeKVStorage.flush();
+        }
         wayGeometry.close();
-
-        edgeKVStorage.flush();
         edgeKVStorage.close();
     }
 
@@ -283,7 +289,7 @@ public class BaseGraph implements Graph, Closeable {
         store.writeFlags(edgePointer, from.getFlags());
 
         // copy the rest with higher level API
-        to.setDistance(from.getDistance()).
+        to.setDistance_mm(from.getDistance_mm()).
                 setKeyValues(from.getKeyValues()).
                 setWayGeometry(from.fetchWayGeometry(FetchMode.PILLAR_ONLY));
 
@@ -324,7 +330,7 @@ public class BaseGraph implements Graph, Closeable {
         EdgeIteratorStateImpl edgeState = (EdgeIteratorStateImpl) getEdgeIteratorState(edge, Integer.MIN_VALUE);
         EdgeIteratorStateImpl newEdge = (EdgeIteratorStateImpl) edge(edgeState.getBaseNode(), edgeState.getAdjNode())
                 .setFlags(edgeState.getFlags())
-                .setDistance(edgeState.getDistance())
+                .setDistance_mm(edgeState.getDistance_mm())
                 .setKeyValues(edgeState.getKeyValues());
         if (reuseGeometry) {
             // We use the same geo ref for the copied edge. This saves memory because we are not duplicating
@@ -429,6 +435,15 @@ public class BaseGraph implements Graph, Closeable {
         return new AllEdgeIterator(this);
     }
 
+    /**
+     * Like {@link #getAllEdges()} but restricted to edge ids in {@code [from, toExclusive)}.
+     * Enables splitting an all-edges traversal across threads without each thread fast-forwarding
+     * from edge 0.
+     */
+    public AllEdgesIterator getAllEdges(int from, int toExclusive) {
+        return new AllEdgeIterator(this, from, toExclusive);
+    }
+
     @Override
     public TurnCostStorage getTurnCostStorage() {
         return turnCostStorage;
@@ -472,18 +487,24 @@ public class BaseGraph implements Graph, Closeable {
                 // longer possible to find the copies corresponding to an edge, so we deny this
                 throw new IllegalStateException("This edge has already been copied so we can no longer change the geometry, pointer=" + edgePointer);
 
-            int len = pillarNodes.size();
+            EncodedBytes encoded = createWayGeometryBytes(pillarNodes, reverse);
+
             if (existingGeoRef > 0) {
-                final int count = getPillarCount(existingGeoRef);
-                if (len <= count) {
-                    setWayGeometryAtGeoRef(pillarNodes, edgePointer, reverse, existingGeoRef);
+                int existingByteSize = readEntryByteSize(existingGeoRef);
+                if (encoded.length <= existingByteSize) {
+                    // Fits in the existing slot. The new entry's length header tells the
+                    // reader when to stop, so any leftover bytes are harmless.
+                    wayGeometry.setBytes(existingGeoRef, encoded.bytes, encoded.length);
                     return;
-                } else {
-                    throw new IllegalStateException("This edge already has a way geometry so it cannot be changed to a bigger geometry, pointer=" + edgePointer);
                 }
+                // Abandon the slot and allocate a fresh one. The old bytes become unreachable.
+                // As we just need this for EdgeElevationInterpolator this is currently rare (<0.03%).
+                // It is a bit of work but we could avoid it: do edge.setWayGeometry in OSMReader after post-import edge interpolation.
             }
-            long nextGeoRef = nextGeoRef(GEOMETRY_HEADER_BYTES + len * (8 + eleBytesPerCoord));
-            setWayGeometryAtGeoRef(pillarNodes, edgePointer, reverse, nextGeoRef);
+            long geoRef = nextGeoRef(encoded.length);
+            wayGeometry.ensureCapacity(geoRef + encoded.length);
+            wayGeometry.setBytes(geoRef, encoded.bytes, encoded.length);
+            store.setGeoRef(edgePointer, geoRef);
         } else {
             store.setGeoRef(edgePointer, 0L);
         }
@@ -493,47 +514,83 @@ public class BaseGraph implements Graph, Closeable {
         return store;
     }
 
-    private void setWayGeometryAtGeoRef(PointList pillarNodes, long edgePointer, boolean reverse, long geoRef) {
-        byte[] wayGeometryBytes = createWayGeometryBytes(pillarNodes, reverse);
-        wayGeometry.ensureCapacity(geoRef + wayGeometryBytes.length);
-        wayGeometry.setBytes(geoRef, wayGeometryBytes, wayGeometryBytes.length);
-        store.setGeoRef(edgePointer, geoRef);
-    }
-
-    private byte[] createWayGeometryBytes(PointList pillarNodes, boolean reverse) {
+    /**
+     * Creates bytes from the geometry for storage. First comes 1 byte for the bytes length L if L < 0xFF.
+     * If more bytes are required then L == 0xFF and 4 more bytes are required.
+     * Then come the pillar bytes: for each coordinate the zigzag-varint Δlat, Δlon, (Δele if 3D) is calculated.
+     * @return The bytes in EncodedBytes may be over-allocated, i.e. use EncodedBytes.length and not EncodedBytes.bytes.length.
+     */
+    private EncodedBytes createWayGeometryBytes(PointList pillarNodes, boolean reverse) {
         int len = pillarNodes.size();
         if (len > MAX_PILLAR_NODES) throw new IllegalArgumentException("Too many pillar nodes: " + len);
+        if (reverse) pillarNodes.reverse();
 
-        // We use 2 bytes to store the node count (unsigned short)
-        // Per node we need 4 bytes for Latitude and Longitude, and possibly 3 bytes if we have elevation.
-        int totalLen = GEOMETRY_HEADER_BYTES + len * (8 + eleBytesPerCoord);
+        int perPillarMax = nodeAccess.is3D() ? 3 * MAX_VARINT_BYTES : 2 * MAX_VARINT_BYTES;
+        // Reserve worst case = byte count header (5 bytes) + pillar bytes. We write pillar bytes
+        // starting at offset 1 (the optimistic 1-byte-header position); if they fit in 1 byte then
+        // no shift is needed. Otherwise we shift to make room for the 5 bytes header.
+        byte[] bytes = new byte[5 + len * perPillarMax];
 
-        byte[] bytes = new byte[totalLen];
-        bitUtil.fromShort(bytes, (short) len, 0);
-
-        if (reverse)
-            pillarNodes.reverse();
-
-        int tmpOffset = GEOMETRY_HEADER_BYTES;
+        int offset = 1;
+        // Use long to avoid int overflow when computing deltas near the anti-meridian (e.g. 179.9 -> -179.9).
+        // The varint encoder/decoder receives the lower 32 bits (int cast), so the round-trip is exact.
+        long prevLat = 0, prevLon = 0;
+        int prevEle = 0;
         boolean is3D = nodeAccess.is3D();
         for (int i = 0; i < len; i++) {
-            double lat = pillarNodes.getLat(i);
-            bitUtil.fromInt(bytes, Helper.degreeToInt(lat), tmpOffset);
-            tmpOffset += 4;
-            bitUtil.fromInt(bytes, Helper.degreeToInt(pillarNodes.getLon(i)), tmpOffset);
-            tmpOffset += 4;
-
+            long lat = Helper.degreeToInt(pillarNodes.getLat(i));
+            long lon = Helper.degreeToInt(pillarNodes.getLon(i));
+            offset = writeZigZagVarInt(bytes, offset, (int) (lat - prevLat));
+            offset = writeZigZagVarInt(bytes, offset, (int) (lon - prevLon));
+            prevLat = lat;
+            prevLon = lon;
             if (is3D) {
-                bitUtil.fromUInt3(bytes, Helper.eleToUInt(pillarNodes.getEle(i)), tmpOffset);
-                tmpOffset += 3;
+                int ele = Helper.eleToUInt(pillarNodes.getEle(i));
+                offset = writeZigZagVarInt(bytes, offset, ele - prevEle);
+                prevEle = ele;
             }
         }
-        return bytes;
+        int pillarBytesLen = offset - 1;
+        if (pillarBytesLen < 0xFF) {
+            bytes[0] = (byte) pillarBytesLen;
+            return new EncodedBytes(bytes, 1 + pillarBytesLen);
+        }
+        // Rare fallback for long PointLists (0.1%): shift pillar bytes 4 positions to make room for [0xFF | int len].
+        System.arraycopy(bytes, 1, bytes, 5, pillarBytesLen);
+        bytes[0] = (byte) 0xFF;
+        bitUtil.fromInt(bytes, pillarBytesLen, 1);
+        return new EncodedBytes(bytes, 5 + pillarBytesLen);
     }
 
-    private int getPillarCount(long geoRef) {
-        // Read short as unsigned int
-        return wayGeometry.getShort(geoRef) & 0xFFFF;
+    private static int writeZigZagVarInt(byte[] bytes, int offset, int value) {
+        int zz = (value << 1) ^ (value >> 31);
+        while ((zz & ~0x7F) != 0) {
+            bytes[offset++] = (byte) ((zz & 0x7F) | 0x80);
+            zz >>>= 7;
+        }
+        bytes[offset++] = (byte) zz;
+        return offset;
+    }
+
+    // Returns the decoded signed int; advances pos[0] past the varint bytes.
+    private static int readZigZagVarInt(byte[] bytes, int[] pos) {
+        int p = pos[0];
+        int raw = 0;
+        int shift = 0;
+        byte b;
+        do {
+            b = bytes[p++];
+            raw |= (b & 0x7F) << shift;
+            shift += 7;
+        } while ((b & 0x80) != 0);
+        pos[0] = p;
+        return (raw >>> 1) ^ -(raw & 1);
+    }
+
+    // Total byte size of the entry stored at geoRef (header + pillar bytes).
+    private int readEntryByteSize(long geoRef) {
+        int header = wayGeometry.getByte(geoRef) & 0xFF;
+        return header < 0xFF ? 1 + header : 5 + wayGeometry.getInt(geoRef + 1);
     }
 
     private PointList fetchWayGeometry_(long edgePointer, boolean reverse, FetchMode mode, int baseNode, int adjNode) {
@@ -545,32 +602,49 @@ public class BaseGraph implements Graph, Closeable {
             return pillarNodes;
         }
         long geoRef = store.getGeoRef(edgePointer);
-        int count = 0;
         byte[] bytes = null;
+        int pillarBytesLen = 0;
+        boolean is3D = nodeAccess.is3D();
         if (geoRef > 0) {
-            count = getPillarCount(geoRef);
-            geoRef += GEOMETRY_HEADER_BYTES;
-            bytes = new byte[count * (8 + eleBytesPerCoord)];
-            wayGeometry.getBytes(geoRef, bytes, bytes.length);
+            int header = wayGeometry.getByte(geoRef) & 0xFF;
+            long pillarBytesStart;
+            if (header < 0xFF) {
+                pillarBytesLen = header;
+                pillarBytesStart = geoRef + 1;
+            } else {
+                pillarBytesLen = wayGeometry.getInt(geoRef + 1);
+                pillarBytesStart = geoRef + 5;
+            }
+            int maxPillarBytesLen = MAX_PILLAR_NODES * (is3D ? 3 : 2) * MAX_VARINT_BYTES;
+            if (pillarBytesLen < 0 || pillarBytesLen > maxPillarBytesLen)
+                throw new IllegalStateException("Invalid pillar bytes length " + pillarBytesLen + " for edge at geoRef " + geoRef
+                        + ". Expected [0, " + maxPillarBytesLen + "].");
+            bytes = new byte[pillarBytesLen];
+            wayGeometry.getBytes(pillarBytesStart, bytes, pillarBytesLen);
         } else if (mode == FetchMode.PILLAR_ONLY)
             return PointList.EMPTY;
 
-        PointList pillarNodes = new PointList(getPointListLength(count, mode), nodeAccess.is3D());
+        // Estimate pillar node count from pillar-bytes size. PointList grows on demand.
+        int countEstimate = is3D ? pillarBytesLen / 3 : pillarBytesLen / 2;
+        PointList pillarNodes = new PointList(getPointListLength(countEstimate, mode), is3D);
         if (reverse) {
             if (mode == FetchMode.ALL || mode == FetchMode.PILLAR_AND_ADJ)
                 pillarNodes.add(nodeAccess, adjNode);
         } else if (mode == FetchMode.ALL || mode == FetchMode.BASE_AND_PILLAR)
             pillarNodes.add(nodeAccess, baseNode);
 
-        int index = 0;
-        for (int i = 0; i < count; i++) {
-            double lat = Helper.intToDegree(bitUtil.toInt(bytes, index));
-            index += 4;
-            double lon = Helper.intToDegree(bitUtil.toInt(bytes, index));
-            index += 4;
-            if (nodeAccess.is3D()) {
-                pillarNodes.add(lat, lon, Helper.uIntToEle(bitUtil.toUInt3(bytes, index)));
-                index += 3;
+        // Use long accumulators to mirror the encode path and avoid implicit int overflow near the anti-meridian.
+        long curLat = 0, curLon = 0;
+        int curEle = 0;
+        int[] pos = {0};
+        while (pos[0] < pillarBytesLen) {
+            curLat = (int) (curLat + readZigZagVarInt(bytes, pos));
+            curLon = (int) (curLon + readZigZagVarInt(bytes, pos));
+            double lat = Helper.intToDegree((int) curLat);
+            double lon = Helper.intToDegree((int) curLon);
+            if (is3D) {
+                curEle += readZigZagVarInt(bytes, pos);
+                pillarNodes.add(lat, lon, Helper.uIntToEle(curEle));
             } else {
                 pillarNodes.add(lat, lon);
             }
@@ -621,6 +695,9 @@ public class BaseGraph implements Graph, Closeable {
         private Directory directory = new GHDirectory("", DAType.RAM);
         private boolean withElevation = false;
         private boolean withTurnCosts = false;
+        // true = way geometry uses the memory mapped FOREIGN_MMAP, false = on-heap. Whether the
+        // graph is actually written to disc is a separate decision made by the caller (via flush).
+        private boolean fileBacked = false;
         private long bytes = 100;
 
         public Builder(EncodingManager em) {
@@ -635,6 +712,16 @@ public class BaseGraph implements Graph, Closeable {
         // todo: maybe rename later, but for now this makes it easier to replace GraphBuilder
         public Builder setDir(Directory directory) {
             this.directory = directory;
+            return this;
+        }
+
+        /**
+         * @param fileBacked true if the graph is meant to be persisted: the way geometry then uses
+         *                   the memory mapped FOREIGN_MMAP instead of an on-heap DataAccess. Whether
+         *                   the graph is actually flushed to disc is decided by the caller.
+         */
+        public Builder setFileBacked(boolean fileBacked) {
+            this.fileBacked = fileBacked;
             return this;
         }
 
@@ -656,7 +743,8 @@ public class BaseGraph implements Graph, Closeable {
         }
 
         public BaseGraph build() {
-            return new BaseGraph(directory, withElevation, withTurnCosts, bytesForFlags);
+            DataAccess wayGeometry = directory.create("geometry", fileBacked ? DAType.FOREIGN_MMAP : directory.getDefaultType());
+            return new BaseGraph(directory, wayGeometry, withElevation, withTurnCosts, bytesForFlags);
         }
 
         public BaseGraph create() {
@@ -720,19 +808,27 @@ public class BaseGraph implements Graph, Closeable {
      * Include all edges of this storage in the iterator.
      */
     protected static class AllEdgeIterator extends EdgeIteratorStateImpl implements AllEdgesIterator {
+        private final int toExclusive;
+
         public AllEdgeIterator(BaseGraph baseGraph) {
+            this(baseGraph, 0, baseGraph.store.getEdges());
+        }
+
+        public AllEdgeIterator(BaseGraph baseGraph, int from, int toExclusive) {
             super(baseGraph);
+            this.edgeId = from - 1;
+            this.toExclusive = toExclusive;
         }
 
         @Override
         public int length() {
-            return store.getEdges();
+            return toExclusive;
         }
 
         @Override
         public boolean next() {
             edgeId++;
-            if (edgeId >= store.getEdges())
+            if (edgeId >= toExclusive)
                 return false;
             edgePointer = store.toEdgePointer(edgeId);
             baseNode = store.getNodeA(edgePointer);
@@ -836,12 +932,38 @@ public class BaseGraph implements Graph, Closeable {
 
         @Override
         public double getDistance() {
-            return store.getDist(edgePointer);
+            // never return infinity even if dist_mm is INT MAX, see #435
+            return getDistance_mm() / 1000.0;
         }
 
         @Override
         public EdgeIteratorState setDistance(double dist) {
-            store.setDist(edgePointer, dist);
+            if (dist < 0)
+                throw new IllegalArgumentException("distances must be non-negative, got: " + dist);
+            // distances above ~2147km are capped
+            if (dist > MAX_DIST_METERS)
+                dist = MAX_DIST_METERS;
+            // distances below 0.5mm are rounded down to zero
+            long dist_mm = Math.round(dist * 1000);
+            setDistance_mm(dist_mm);
+            return this;
+        }
+
+        /**
+         * Returns the distance in millimeters
+         */
+        @Override
+        public long getDistance_mm() {
+            return store.getDist_mm(edgePointer);
+        }
+
+        @Override
+        public EdgeIteratorState setDistance_mm(long distance_mm) {
+            if (distance_mm < 0)
+                throw new IllegalArgumentException("distances must be non-negative, got: " + distance_mm);
+            if (distance_mm > BaseGraphNodesAndEdges.MAX_DIST_MM)
+                distance_mm = BaseGraphNodesAndEdges.MAX_DIST_MM;
+            store.setDist_mm(edgePointer, distance_mm);
             return this;
         }
 
@@ -1097,6 +1219,11 @@ public class BaseGraph implements Graph, Closeable {
                 edge.reverse = !reverse;
             }
             return edge;
+        }
+
+        @Override
+        public boolean isVirtual() {
+            return false;
         }
 
         @Override

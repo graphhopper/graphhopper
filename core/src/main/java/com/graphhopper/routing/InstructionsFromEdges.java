@@ -24,6 +24,7 @@ import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 
+import static com.graphhopper.util.Instruction.ROUNDABOUT_EXIT;
 import static com.graphhopper.util.Parameters.Details.*;
 
 /**
@@ -39,6 +40,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
     private final NodeAccess nodeAccess;
 
     private final InstructionList ways;
+    private final boolean includeRoundaboutExits;
     private final EdgeExplorer outEdgeExplorer;
     private final EdgeExplorer allExplorer;
     private final BooleanEncodedValue roundaboutEnc;
@@ -47,6 +49,13 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
     private final EnumEncodedValue<RoadEnvironment> roadEnvEnc;
     private final IntEncodedValue lanesEnc;
     private final DecimalEncodedValue maxSpeedEnc;
+
+    /**
+     * True when the current instruction started on an unnamed link road and we want to
+     * replace its blank name later with the first suitable named non-link major road
+     * encountered on the actual routed continuation of the same instruction.
+     */
+    private boolean prevInstructionNeedsNameFallback;
 
     /*
      * We need three points to make directions
@@ -85,7 +94,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
     private static final int MAX_U_TURN_DISTANCE = 35;
 
     public InstructionsFromEdges(Graph graph, Weighting weighting, EncodedValueLookup evLookup,
-                                 InstructionList ways) {
+                                 InstructionList ways, boolean includeRoundaboutExits) {
         this.weighting = weighting;
         this.roundaboutEnc = evLookup.getBooleanEncodedValue(Roundabout.KEY);
         this.roadEnvEnc = evLookup.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
@@ -95,26 +104,32 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         this.lanesEnc = evLookup.hasEncodedValue(Lanes.KEY) ? evLookup.getIntEncodedValue(Lanes.KEY) : null;
         this.nodeAccess = graph.getNodeAccess();
         this.ways = ways;
+        this.includeRoundaboutExits = includeRoundaboutExits;
         prevNode = -1;
         prevInRoundabout = false;
         prevName = null;
         prevRoadEnv = null;
+        prevInstructionNeedsNameFallback = false;
 
         BooleanEncodedValue carAccessEnc = evLookup.getBooleanEncodedValue(VehicleAccess.key("car"));
         outEdgeExplorer = graph.createEdgeExplorer(edge -> edge.get(carAccessEnc));
         allExplorer = graph.createEdgeExplorer();
     }
 
-    /**
-     * @return the list of instructions for this path.
-     */
-    public static InstructionList calcInstructions(Path path, Graph graph, Weighting weighting, EncodedValueLookup evLookup, final Translation tr) {
+    public static InstructionList calcInstructions(Path path, Graph graph, Weighting weighting,
+                                                   EncodedValueLookup evLookup, final Translation tr) {
+        return calcInstructions(path, graph, weighting, evLookup, tr, false);
+    }
+
+    public static InstructionList calcInstructions(Path path, Graph graph, Weighting weighting,
+                                                   EncodedValueLookup evLookup, final Translation tr,
+                                                   boolean includeRoundaboutExits) {
         final InstructionList ways = new InstructionList(tr);
         if (path.isFound()) {
             if (path.getEdgeCount() == 0) {
                 ways.add(new FinishInstruction(graph.getNodeAccess(), path.getEndNode()));
             } else {
-                path.forEveryEdge(new InstructionsFromEdges(graph, weighting, evLookup, ways));
+                path.forEveryEdge(new InstructionsFromEdges(graph, weighting, evLookup, ways, includeRoundaboutExits));
             }
         }
         return ways;
@@ -170,6 +185,10 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             double heading = AngleCalc.ANGLE_CALC.calcAzimuth(startLat, startLon, latitude, longitude);
             prevInstruction.setExtraInfo("heading", Helper.round(heading, 2));
             ways.add(prevInstruction);
+
+            // If the route starts on an unnamed link road, keep a deferred fallback pending.
+            prevInstructionNeedsNameFallback = isBlank(name) && isLinkRoad(edge);
+
             prevName = name;
             prevRoadEnv = roadEnv;
             prevDestinationAndRef = destination + destinationRef;
@@ -178,8 +197,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             // remark: names and annotations within roundabout are ignored
             if (!prevInRoundabout) //just entered roundabout
             {
-                int sign = Instruction.USE_ROUNDABOUT;
-                RoundaboutInstruction roundaboutInstruction = new RoundaboutInstruction(sign, name,
+                RoundaboutInstruction roundaboutInstruction = new RoundaboutInstruction(Instruction.ROUNDABOUT_USE, name,
                         new PointList(10, nodeAccess.is3D()));
                 prevInstructionPrevOrientation = prevOrientation;
                 if (prevInstruction != null) {
@@ -213,6 +231,9 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                 ways.add(prevInstruction);
             }
 
+            // once in roundabout, deferred fallback should not leak into roundabout instructions
+            prevInstructionNeedsNameFallback = false;
+
             // Add passed exits to instruction. A node is counted if there is at least one outgoing edge
             // out of the roundabout
             EdgeIterator edgeIter = outEdgeExplorer.setBaseNode(edge.getAdjNode());
@@ -223,9 +244,9 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                 }
             }
 
-        } else if (prevInRoundabout) //previously in roundabout but not anymore
+        } else if (prevInRoundabout) // exit roundabout
         {
-            prevInstruction.setName(name);
+            prevInstruction.setName(name == null ? "" : name);
             prevInstruction.setExtraInfo(STREET_REF, ref);
             prevInstruction.setExtraInfo(STREET_DESTINATION, destination);
             prevInstruction.setExtraInfo(STREET_DESTINATION_REF, destinationRef);
@@ -243,10 +264,26 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             orientation = AngleCalc.ANGLE_CALC.alignOrientation(recentOrientation, orientation);
             double deltaOut = (orientation - recentOrientation);
 
-            prevInstruction = ((RoundaboutInstruction) prevInstruction)
-                    .setRadian(deltaInOut)
-                    .setDirOfRotation(deltaOut)
-                    .setExited();
+            RoundaboutInstruction rInstr = (RoundaboutInstruction) prevInstruction;
+            rInstr.setRadian(deltaInOut).setDirOfRotation(deltaOut);
+
+            // we use an exit that is not considered as it is inaccessible by car (#3081)
+            if (rInstr.getExitNumber() == 0) rInstr.increaseExitNumber();
+
+            if (includeRoundaboutExits) {
+                // do not set radian and dir of rotation as exit should not have to know turn_angle or dirOfRotation.
+                // the exit number is carried over so that navigation clients can show it while inside the roundabout
+                prevInstruction = new RoundaboutInstruction(ROUNDABOUT_EXIT, name, new PointList(10, nodeAccess.is3D())).
+                        setExitNumber(rInstr.getExitNumber());
+                ways.add(prevInstruction);
+            }
+
+            ((RoundaboutInstruction) prevInstruction).setExited();
+            prevInstructionPrevOrientation = prevOrientation;
+            prevOrientation = orientation;
+
+            // exiting roundabout: no deferred fallback from previous instruction
+            prevInstructionNeedsNameFallback = false;
 
             prevInstructionName = prevName;
             prevName = name;
@@ -255,6 +292,18 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
 
         } else {
             int sign = getTurn(edge, baseNode, prevNode, adjNode, name, destination + destinationRef);
+
+            if (prevInstructionNeedsNameFallback
+                    && sign == Instruction.IGNORE
+                    && isMajorNonLinkRoad(edge)
+                    && hasUsableRoadLabel(name, ref)
+                    && !hasDestinationInfo(prevInstruction)) {
+
+                prevInstruction.setName(name);
+                prevInstruction.setExtraInfo(STREET_REF, ref);
+                prevInstructionNeedsNameFallback = false;
+            }
+
             if (sign != Instruction.IGNORE) {
                 /*
                     Check if the next instruction is likely to only be a short connector to execute a u-turn
@@ -297,12 +346,17 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                 if (isUTurn) {
                     prevInstruction.setSign(uTurnType);
                     prevInstruction.setName(name);
+                    prevInstructionNeedsNameFallback = false;
                 } else {
+                    boolean needsDeferredFallback = isBlank(name) && isLinkRoad(edge);
+
                     prevInstruction = new Instruction(sign, name, new PointList(10, nodeAccess.is3D()));
-                    // Remember the Orientation and name of the road, before doing this maneuver
+                    // Remember the orientation and name of the road, before doing this maneuver
                     prevInstructionPrevOrientation = prevOrientation;
                     prevInstructionName = prevName;
                     ways.add(prevInstruction);
+
+                    prevInstructionNeedsNameFallback = needsDeferredFallback;
                 }
                 prevInstruction.setExtraInfo(STREET_REF, ref);
                 prevInstruction.setExtraInfo(STREET_DESTINATION, destination);
@@ -343,7 +397,6 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             orientation = AngleCalc.ANGLE_CALC.alignOrientation(prevOrientation, orientation);
             double delta = (orientation - prevOrientation);
             ((RoundaboutInstruction) prevInstruction).setRadian(delta);
-
         }
 
         Instruction finishInstruction = new FinishInstruction(nodeAccess, prevEdge.getAdjNode());
@@ -356,6 +409,9 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         if (edge.getEdge() == prevEdge.getEdge())
             // this is the simplest turn to recognize, a plain u-turn.
             return Instruction.U_TURN_UNKNOWN;
+        RoadEnvironment roadEnv = edge.get(roadEnvEnc);
+        if (InstructionsHelper.isToFerry(roadEnv, prevRoadEnv)) return Instruction.FERRY;
+
         GHPoint point = InstructionsHelper.getPointForOrientationCalculation(edge, nodeAccess);
         double lat = point.getLat();
         double lon = point.getLon();
@@ -365,17 +421,15 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         InstructionsOutgoingEdges outgoingEdges = new InstructionsOutgoingEdges(prevEdge, edge, weighting, maxSpeedEnc,
                 roadClassEnc, roadClassLinkEnc, lanesEnc, allExplorer, nodeAccess, prevNode, baseNode, adjNode);
         int nrOfPossibleTurns = outgoingEdges.getAllowedTurns();
-        RoadEnvironment roadEnv = edge.get(roadEnvEnc);
 
         // there is no other turn possible
         if (nrOfPossibleTurns <= 1) {
-            if (InstructionsHelper.isToFerry(roadEnv, prevRoadEnv)) return Instruction.FERRY;
             if (Math.abs(sign) > 1 && outgoingEdges.getVisibleTurns() > 1 && !outgoingEdges.mergedOrSplitWay()
                     || InstructionsHelper.isFromFerry(roadEnv, prevRoadEnv)) {
                 // This is an actual turn because |sign| > 1
                 // There could be some confusion, if we would not create a turn instruction, even though it is the only
                 // possible turn, also see #1048
-                // TODO if we see issue with this approach we could consider checking if the edge is a oneway
+                // TODO for motorways or trunks: merge left/right onto A4
                 return sign;
             }
             return Instruction.IGNORE;
@@ -383,7 +437,6 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
 
         // Very certain, this is a turn
         if (Math.abs(sign) > 1) {
-            if (InstructionsHelper.isToFerry(roadEnv, prevRoadEnv)) return Instruction.FERRY;
             // Don't show an instruction if the user is following a street, even though the street is
             // bending. We should only do this, if following the street is the obvious choice.
             if (InstructionsHelper.isSameName(name, prevName) && outgoingEdges.outgoingEdgesAreSlowerByFactor(2)
@@ -416,9 +469,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         // Signs provide too less detail, so we use the delta for a precise comparison
         double delta = InstructionsHelper.calculateOrientationDelta(prevLat, prevLon, lat, lon, prevOrientation);
 
-        if (InstructionsHelper.isToFerry(roadEnv, prevRoadEnv))
-            return Instruction.FERRY;
-        else if (InstructionsHelper.isFromFerry(roadEnv, prevRoadEnv))
+        if (InstructionsHelper.isFromFerry(roadEnv, prevRoadEnv))
             return Instruction.CONTINUE_ON_STREET;
 
         // This state is bad! Two streets are going more or less straight
@@ -447,7 +498,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                 double otherDelta = InstructionsHelper.calculateOrientationDelta(prevLat, prevLon, tmpPoint.getLat(), tmpPoint.getLon(), prevOrientation);
 
                 // This is required to avoid keep left/right on the motorway at off-ramps/motorway_links
-                if (Math.abs(delta) < .1 && Math.abs(otherDelta) > .15 && InstructionsHelper.isSameName(name, prevName)) {
+                if (Math.abs(delta) < .1 /* ~5.7° */ && Math.abs(otherDelta) > .15 /* ~8.6° */ && InstructionsHelper.isSameName(name, prevName)) {
                     return Instruction.CONTINUE_ON_STREET;
                 }
 
@@ -481,6 +532,37 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             prevInstruction.setTime(GHUtility.calcMillisWithTurnMillis(weighting, edge, false, prevEdge.getEdge()) + prevInstruction.getTime());
         else
             prevInstruction.setTime(weighting.calcEdgeMillis(edge, false) + prevInstruction.getTime());
+    }
+
+    private boolean isLinkRoad(EdgeIteratorState edge) {
+        return edge.get(roadClassLinkEnc);
+    }
+
+    private boolean hasUsableRoadLabel(String name, String ref) {
+        return !isBlank(name) || !isBlank(ref);
+    }
+
+    private boolean isMajorNonLinkRoad(EdgeIteratorState edge) {
+        if (edge.get(roadClassLinkEnc)) return false;
+
+        RoadClass rc = edge.get(roadClassEnc);
+        return rc == RoadClass.MOTORWAY
+                || rc == RoadClass.TRUNK
+                || rc == RoadClass.PRIMARY
+                || rc == RoadClass.SECONDARY
+                || rc == RoadClass.TERTIARY;
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.isBlank();
+    }
+
+    private boolean hasDestinationInfo(Instruction instruction) {
+        String destination = (String) instruction.getExtraInfoJSON().get(STREET_DESTINATION);
+        String destinationRef = (String) instruction.getExtraInfoJSON().get(STREET_DESTINATION_REF);
+        String motorwayJunction = (String) instruction.getExtraInfoJSON().get(MOTORWAY_JUNCTION);
+
+        return !isBlank(destination) || !isBlank(destinationRef) || !isBlank(motorwayJunction);
     }
 
 }

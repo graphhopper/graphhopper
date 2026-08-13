@@ -1,9 +1,12 @@
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.ArrayEdgeIntAccess;
 import com.graphhopper.routing.ev.Curvature;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.storage.BaseGraph;
+import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.DistanceCalcEarth;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.PointList;
 import org.junit.jupiter.api.Test;
 
@@ -13,65 +16,47 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class CurvatureCalculatorTest {
 
     private final EncodingManager em = EncodingManager.start().add(Curvature.create()).build();
+    private final DecimalEncodedValue curvatureEnc = em.getDecimalEncodedValue(Curvature.KEY);
 
     @Test
     public void testCurvature() {
-        CurvatureCalculator calculator = new CurvatureCalculator(em.getDecimalEncodedValue(Curvature.KEY));
-        ArrayEdgeIntAccess intAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
-        int edgeId = 0;
-        calculator.handleWayTags(edgeId, intAccess, getStraightWay(), null);
-        double valueStraight = em.getDecimalEncodedValue(Curvature.KEY).getDecimal(false, edgeId, intAccess);
+        BaseGraph graph = new BaseGraph.Builder(em).create();
+        NodeAccess na = graph.getNodeAccess();
 
-        intAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
-        calculator.handleWayTags(edgeId, intAccess, getCurvyWay(), null);
-        double valueCurvy = em.getDecimalEncodedValue(Curvature.KEY).getDecimal(false, edgeId, intAccess);
+        // straight way: 2 tower nodes, ~100m
+        na.setNode(0, 50.9, 13.13);
+        na.setNode(1, 50.899, 13.13);
+        EdgeIteratorState straightEdge = graph.edge(0, 1).setDistance(100);
 
+        // curvy way: 2 tower nodes + 1 pillar, ~160m
+        na.setNode(2, 50.9, 13.13);
+        na.setNode(3, 50.899, 13.13);
+        PointList pillar = new PointList();
+        pillar.add(50.899, 13.129);
+        EdgeIteratorState curvyEdge = graph.edge(2, 3).setWayGeometry(pillar).setDistance(160);
+
+        new CurvatureCalculator(curvatureEnc).execute(graph);
+
+        double valueStraight = straightEdge.get(curvatureEnc);
+        double valueCurvy = curvyEdge.get(curvatureEnc);
         assertTrue(valueCurvy < valueStraight, "The bendiness of the straight road is smaller than the one of the curvy road");
-    }
-
-    private ReaderWay getStraightWay() {
-        ReaderWay way = new ReaderWay(1);
-        way.setTag("highway", "primary");
-        PointList pointList = new PointList();
-        pointList.add(50.9, 13.13);
-        pointList.add(50.899, 13.13);
-
-        // setArtificialWayTags
-        way.setTag("point_list", pointList);
-        way.setTag("edge_distance", 100d);
-        return way;
-    }
-
-    private ReaderWay getCurvyWay() {
-        ReaderWay way = new ReaderWay(1);
-        way.setTag("highway", "primary");
-        PointList pointList = new PointList();
-        pointList.add(50.9, 13.13);
-        pointList.add(50.899, 13.129);
-        pointList.add(50.899, 13.13);
-
-        // setArtificialWayTags
-        way.setTag("point_list", pointList);
-        way.setTag("edge_distance", 160d);
-        return way;
     }
 
     @Test
     public void testCurvatureWithElevation() {
-        ReaderWay straight = new ReaderWay(1);
-        straight.setTag("highway", "primary");
+        BaseGraph graph = new BaseGraph.Builder(em).set3D(true).create();
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(0, 50.9, 13.13, 0);
+        na.setNode(1, 50.899, 13.13, 100);
         PointList pointList = new PointList(2, true);
         pointList.add(50.9, 13.13, 0);
         pointList.add(50.899, 13.13, 100);
+        double distance = DistanceCalcEarth.DIST_EARTH.calcDistance(pointList);
+        EdgeIteratorState edge = graph.edge(0, 1).setDistance(distance);
 
-        // setArtificialWayTags
-        straight.setTag("point_list", pointList);
-        straight.setTag("edge_distance", DistanceCalcEarth.DIST_EARTH.calcDistance(pointList));
+        new CurvatureCalculator(curvatureEnc).execute(graph);
 
-        ArrayEdgeIntAccess intAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
-        new CurvatureCalculator(em.getDecimalEncodedValue(Curvature.KEY)).
-                handleWayTags(0, intAccess, straight, null);
-        double curvature = em.getDecimalEncodedValue(Curvature.KEY).getDecimal(false, 0, intAccess);
+        double curvature = edge.get(curvatureEnc);
         assertEquals(1, curvature, 0.01);
     }
 }

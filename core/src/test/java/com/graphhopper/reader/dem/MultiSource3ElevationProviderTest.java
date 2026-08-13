@@ -37,24 +37,24 @@ public class MultiSource3ElevationProviderTest {
     @Test
     public void testGetEleMocked() {
         instance = new MultiSource3ElevationProvider(
-                new CGIARProvider() {
+                (CGIARProvider) new CGIARProvider() {
                     @Override
                     public double getEle(double lat, double lon) {
                         return 1;
                     }
-                },
-                new GMTEDProvider() {
+                }.init(),
+                (GMTEDProvider) new GMTEDProvider() {
                     @Override
                     public double getEle(double lat, double lon) {
                         return 2;
                     }
-                },
-                new SonnyProvider() {
+                }.init(),
+                (SonnyProvider) new SonnyProvider() {
                     @Override
                     public double getEle(double lat, double lon) {
                         return 3;
                     }
-                }
+                }.init()
         );
 
         assertEquals(3, instance.getEle(0, 0), .1);

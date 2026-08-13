@@ -51,8 +51,6 @@ public class SRTMProvider extends AbstractSRTMElevationProvider {
                 60,
                 1201
         );
-        // move to explicit calls?
-        init();
     }
 
     public static void main(String[] args) throws IOException {
@@ -86,7 +84,9 @@ public class SRTMProvider extends AbstractSRTMElevationProvider {
      * The URLs are a bit ugly and so we need to find out which area name a certain lat,lon
      * coordinate has.
      */
-    private SRTMProvider init() {
+    @Override
+    public ElevationProvider init() {
+        super.init();
         try {
             String strs[] = {"Africa", "Australia", "Eurasia", "Islands", "North_America", "South_America"};
             for (String str : strs) {

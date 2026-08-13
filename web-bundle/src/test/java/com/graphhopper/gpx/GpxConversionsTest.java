@@ -166,7 +166,7 @@ public class GpxConversionsTest {
         pl.add(52.555423473315, 13.43890086052345);
         pl.add(52.555550691982, 13.43946393816465);
         pl.add(52.555619423589, 13.43886994061328);
-        RoundaboutInstruction instr = new RoundaboutInstruction(Instruction.USE_ROUNDABOUT, "streetname", pl)
+        RoundaboutInstruction instr = new RoundaboutInstruction(Instruction.ROUNDABOUT_USE, "streetname", pl)
                 .setRadian(2.058006514284998d)
                 .setExitNumber(3)
                 .setExited();

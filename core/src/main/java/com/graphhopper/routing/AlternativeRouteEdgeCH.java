@@ -111,7 +111,7 @@ public class AlternativeRouteEdgeCH extends DijkstraBidirectionEdgeCHNoSOD {
             PotentialAlternativeInfo potentialAlternativeInfo = new PotentialAlternativeInfo();
             potentialAlternativeInfo.v = fromSPTEntry.adjNode;
             potentialAlternativeInfo.edgeIn = getIncomingEdge(fromSPTEntry);
-            potentialAlternativeInfo.weight = 2 * (fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath()) + preliminaryShare;
+            potentialAlternativeInfo.weight = 0.2 * (fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath()) + preliminaryShare;
             potentialAlternativeInfos.add(potentialAlternativeInfo);
             return true;
         });
@@ -257,7 +257,7 @@ public class AlternativeRouteEdgeCH extends DijkstraBidirectionEdgeCHNoSOD {
         EdgeIteratorState vuEdgeState = graph.getEdgeIteratorState(uvEdge, uvtPath.getFromNode());
         path.setEndNode(uvtPath.getEndNode());
         path.setWeight(suvPath.getWeight() + uvtPath.getWeight() - weighting.calcEdgeWeight(vuEdgeState, true));
-        path.setDistance(suvPath.getDistance() + uvtPath.getDistance() - vuEdgeState.getDistance());
+        path.addDistance_mm(suvPath.getDistance_mm() + uvtPath.getDistance_mm() - vuEdgeState.getDistance_mm());
         path.addTime(suvPath.getTime() + uvtPath.getTime() - weighting.calcEdgeMillis(vuEdgeState, true));
         path.setFound(true);
         return path;

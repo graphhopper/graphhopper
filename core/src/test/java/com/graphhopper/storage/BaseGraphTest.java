@@ -53,7 +53,7 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
 
     @Test
     public void testSave_and_fileFormat() {
-        graph = newGHStorage(new GHDirectory(defaultGraphLoc, DAType.RAM_STORE), true).create(defaultSize);
+        graph = newGHStorage(new GHDirectory(defaultGraphLoc, DAType.RAM), true).create(defaultSize);
         NodeAccess na = graph.getNodeAccess();
         assertTrue(na.is3D());
         na.setNode(0, 10, 10, 0);
@@ -83,7 +83,7 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
         graph.flush();
         graph.close();
 
-        graph = newGHStorage(new GHDirectory(defaultGraphLoc, DAType.MMAP), true);
+        graph = newGHStorage(new GHDirectory(defaultGraphLoc, DAType.FOREIGN_MMAP), true);
         graph.loadExisting();
 
         assertEquals(12, graph.getNodes());
@@ -110,14 +110,14 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
 
     @Test
     public void testSave_and_Freeze() {
-        graph = newGHStorage(new GHDirectory(defaultGraphLoc, DAType.RAM_STORE), true).create(defaultSize);
+        graph = newGHStorage(new GHDirectory(defaultGraphLoc, DAType.RAM), true).create(defaultSize);
         graph.edge(1, 0);
         graph.freeze();
 
         graph.flush();
         graph.close();
 
-        graph = newGHStorage(new GHDirectory(defaultGraphLoc, DAType.MMAP), true);
+        graph = newGHStorage(new GHDirectory(defaultGraphLoc, DAType.FOREIGN_MMAP), true);
         graph.loadExisting();
         assertEquals(2, graph.getNodes());
         assertTrue(graph.isFrozen());
@@ -166,12 +166,12 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
 
     @Test
     public void testDoThrowExceptionIfDimDoesNotMatch() {
-        graph = newGHStorage(new GHDirectory(defaultGraphLoc, DAType.RAM_STORE), false);
+        graph = newGHStorage(new GHDirectory(defaultGraphLoc, DAType.RAM), false);
         graph.create(1000);
         graph.flush();
         graph.close();
 
-        graph = newGHStorage(new GHDirectory(defaultGraphLoc, DAType.RAM_STORE), true);
+        graph = newGHStorage(new GHDirectory(defaultGraphLoc, DAType.RAM), true);
         assertThrows(Exception.class, () -> graph.loadExisting());
     }
 
@@ -377,15 +377,17 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
 
         // after copying an edge we can no longer change the geometry
         assertThrows(IllegalStateException.class, () -> graph.getEdgeIteratorState(edge1.getEdge(), Integer.MIN_VALUE).setWayGeometry(Helper.createPointList(1.5, 1, 5, 4)));
-        // after setting the geometry once we can change it again
-        graph.getEdgeIteratorState(edge2.getEdge(), Integer.MIN_VALUE).setWayGeometry(Helper.createPointList(2, 3, 4, 5));
-        // ... but not if it is longer than before
-        IllegalStateException e = assertThrows(IllegalStateException.class, () -> graph.getEdgeIteratorState(edge2.getEdge(), Integer.MIN_VALUE).setWayGeometry(Helper.createPointList(2, 3, 4, 5, 6, 7)));
-        assertTrue(e.getMessage().contains("This edge already has a way geometry so it cannot be changed to a bigger geometry"), e.getMessage());
-        // it's the same for edges with geometry that were copied:
+        // after setting the geometry once we can still change it (the new payload either fits in
+        // the existing slot or a fresh slot is allocated — both round-trip correctly)
+        graph.getEdgeIteratorState(edge2.getEdge(), Integer.MIN_VALUE).setWayGeometry(Helper.createPointList(0, 1));
+        graph.getEdgeIteratorState(edge2.getEdge(), Integer.MIN_VALUE).setWayGeometry(Helper.createPointList(2, 3, 4, 5, 6, 7));
+        PointList fetched = graph.getEdgeIteratorState(edge2.getEdge(), Integer.MIN_VALUE).fetchWayGeometry(FetchMode.PILLAR_ONLY);
+        assertEquals(3, fetched.size());
+        assertEquals(2, fetched.getLat(0), 1e-6);
+        assertEquals(3, fetched.getLon(0), 1e-6);
+        // the same holds for edges with geometry that were copied from another edge
         graph.getEdgeIteratorState(edge3.getEdge(), Integer.MIN_VALUE).setWayGeometry(Helper.createPointList(6, 7, 8, 9));
-        e = assertThrows(IllegalStateException.class, () -> graph.getEdgeIteratorState(edge3.getEdge(), Integer.MIN_VALUE).setWayGeometry(Helper.createPointList(0, 1, 6, 7, 8, 9)));
-        assertTrue(e.getMessage().contains("This edge already has a way geometry so it cannot be changed to a bigger geometry"), e.getMessage());
+        graph.getEdgeIteratorState(edge3.getEdge(), Integer.MIN_VALUE).setWayGeometry(Helper.createPointList(0, 1, 6, 7, 8, 9));
     }
 
     @Test

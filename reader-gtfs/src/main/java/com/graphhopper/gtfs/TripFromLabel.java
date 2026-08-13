@@ -343,7 +343,10 @@ class TripFromLabel {
     // One could argue that one should never write a parser
     // by hand, because it is always ugly, but use a parser library.
     // The code would then read like a specification of what paths through the graph mean.
-    List<Trip.Leg> parsePartitionToLegs(List<Label.Transition> path, Graph graph, EncodedValueLookup encodedValueLookup, Weighting weighting, Translation tr, List<String> requestedPathDetails) {
+    List<Trip.Leg> parsePartitionToLegs(List<Label.Transition> path, Graph graph,
+                                        EncodedValueLookup encodedValueLookup, Weighting weighting,
+                                        Translation tr, List<String> requestedPathDetails) {
+        boolean includeRoundaboutExit = true;
         if (path.size() <= 1) {
             return Collections.emptyList();
         }
@@ -395,7 +398,7 @@ class TripFromLabel {
         } else {
             InstructionList instructions = new InstructionList(tr);
             InstructionsFromEdges instructionsFromEdges = new InstructionsFromEdges(graph,
-                    weighting, encodedValueLookup, instructions);
+                    weighting, encodedValueLookup, instructions, includeRoundaboutExit);
             int prevEdgeId = -1;
             for (int i = 1; i < path.size(); i++) {
                 if (path.get(i).edge.getType() != GtfsStorage.EdgeType.HIGHWAY) {

@@ -44,7 +44,7 @@ public class GraphSpeedMeasurement {
             GraphHopperConfig ghConfig = new GraphHopperConfig()
                     .putObject("datareader.file", args.getString("map", "map-matching/files/leipzig_germany.osm.pbf"))
                     .putObject("graph.location", args.getString("location", "graph-speed-measurement") + "-" + speedBits + "-gh")
-                    .putObject("graph.dataaccess", args.getString("da", "RAM_STORE"))
+                    .putObject("graph.dataaccess", args.getString("da", "RAM"))
                     .putObject("import.osm.ignored_highways", "")
                     .putObject("graph.encoded_values", String.format("car_average_speed|speed_bits=%d,bike_average_speed|speed_bits=%d,foot_average_speed|speed_bits=%d", speedBits, speedBits, speedBits))
                     .setProfiles(List.of(

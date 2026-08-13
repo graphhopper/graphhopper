@@ -210,7 +210,7 @@ public class AlternativeRouteEdgeCHTest {
         List<AlternativeRouteEdgeCH.AlternativeInfo> pathInfos = altDijkstra.calcAlternatives(s, t);
         AlternativeRouteEdgeCH.AlternativeInfo best = pathInfos.get(0);
         assertEquals(3450, best.path.getDistance());
-        assertEquals(57.500, best.path.getWeight(), 1.e-3);
+        assertEquals(573, best.path.getWeight());
         assertEquals(57498, best.path.getTime(), 10);
         assertEquals(IntArrayList.from(0, 1, 2, 5, 6, 7, 8), best.path.calcNodes());
         assertTrue(pathInfos.size() > 1, "the graph, contraction order and alternative route algorithm must be such that " +
@@ -218,7 +218,7 @@ public class AlternativeRouteEdgeCHTest {
         for (int j = 1; j < pathInfos.size(); j++) {
             Path alternative = pathInfos.get(j).path;
             assertEquals(3500, alternative.getDistance());
-            assertEquals(58.3333, alternative.getWeight(), 1.e-3);
+            assertEquals(582, alternative.getWeight());
             assertEquals(58333, alternative.getTime(), 1);
             assertEquals(IntArrayList.from(0, 1, 2, 3, 7, 8), alternative.calcNodes());
         }

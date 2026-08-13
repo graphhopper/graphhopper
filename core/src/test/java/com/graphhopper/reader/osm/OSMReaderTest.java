@@ -39,6 +39,7 @@ import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetail;
+import com.graphhopper.util.shapes.GHPoint3D;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -991,6 +992,63 @@ public class OSMReaderTest {
         assertEquals("B8, B12", OSMReader.fixWayName("B8; B12"));
     }
 
+    @Test
+    public void testStreetNameFallback() throws IOException {
+        // Test that street:name is used as a fallback when name and is_sidepath:of:name are not present
+        EncodingManager em = EncodingManager.start()
+                .add(VehicleSpeed.create("bike", 4, 2, false)).add(VehicleAccess.create("bike"))
+                .build();
+        OSMParsers osmParsers = new OSMParsers();
+        BaseGraph graph = new BaseGraph.Builder(em).create();
+        OSMReader reader = new OSMReader(graph, osmParsers, new OSMReaderConfig());
+        reader.setFile(new File(getClass().getResource("test-osm-street-name.xml").getFile()));
+        reader.readGraph();
+
+        assertEquals(3, graph.getEdges());
+        // way 1: only street:name -> should use street:name
+        EdgeIteratorState edge0 = graph.getEdgeIteratorState(0, Integer.MIN_VALUE);
+        assertEquals("Main Street", edge0.getName());
+
+        // way 2: is_sidepath:of:name and street:name -> is_sidepath:of:name should take priority
+        EdgeIteratorState edge1 = graph.getEdgeIteratorState(1, Integer.MIN_VALUE);
+        assertEquals("Sidepath Road", edge1.getName());
+
+        // way 3: name and street:name -> name should take priority
+        EdgeIteratorState edge2 = graph.getEdgeIteratorState(2, Integer.MIN_VALUE);
+        assertEquals("Explicit Name", edge2.getName());
+    }
+
+    @Test
+    public void testCalc2DDistanceWithMixedElevation() {
+        // Simulate the scenario where tower nodes have elevation but pillar nodes return NaN
+        // (because pillar elevation is deferred to edge creation time).
+        // calc2DDistance should use 2D distance and not throw.
+        ReaderWay way = new ReaderWay(1);
+        way.getNodes().add(1, 2, 3);
+
+        // node 1 = tower (has elevation), node 2 = pillar (NaN elevation), node 3 = tower (has elevation)
+        GHPoint3D tower1 = new GHPoint3D(49.0, 11.0, 400.0);
+        GHPoint3D pillar = new GHPoint3D(49.001, 11.001, Double.NaN);
+        GHPoint3D tower2 = new GHPoint3D(49.002, 11.002, 410.0);
+
+        double distance = OSMReader.calc2DDistance(way, osmNodeId -> {
+            if (osmNodeId == 1) return tower1;
+            if (osmNodeId == 2) return pillar;
+            if (osmNodeId == 3) return tower2;
+            return null;
+        });
+
+        // Should be a valid 2D distance, not NaN and not throw
+        assertFalse(Double.isNaN(distance));
+        assertTrue(distance > 0);
+
+        // Verify it returns NaN when a node is missing
+        ReaderWay way2 = new ReaderWay(2);
+        way2.getNodes().add(1, 99);
+        double distMissing = OSMReader.calc2DDistance(way2, osmNodeId -> osmNodeId == 1 ? tower1 : null);
+        assertTrue(Double.isNaN(distMissing));
+    }
+
     private AreaIndex<CustomArea> createCountryIndex() {
         return new AreaIndex<>(readCountries());
     }
@@ -1001,7 +1059,7 @@ public class OSMReaderTest {
         }
 
         public GraphHopperFacade(String osmFile, String prefLang) {
-            setStoreOnFlush(false);
+            setFileBacked(false);
             setOSMFile(osmFile);
             setGraphHopperLocation(dir);
             setEncodedValuesString("max_width,max_height,max_weight,road_environment," +

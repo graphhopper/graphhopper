@@ -162,6 +162,16 @@ public class DefaultImportRegistry implements ImportRegistry {
                     (lookup, props) -> new OSMFootwayParser(
                             lookup.getEnumEncodedValue(Footway.KEY, Footway.class))
             );
+        else if (Sidewalk.KEY.equals(name))
+            return ImportUnit.create(name, props -> Sidewalk.create(),
+                    (lookup, props) -> new OSMSidewalkParser(
+                            lookup.getEnumEncodedValue(Sidewalk.KEY, Sidewalk.class))
+            );
+        else if (Cycleway.KEY.equals(name))
+            return ImportUnit.create(name, props -> Cycleway.create(),
+                    (lookup, props) -> new OSMCyclewayParser(
+                            lookup.getEnumEncodedValue(Cycleway.KEY, Cycleway.class))
+            );
         else if (OSMWayID.KEY.equals(name))
             return ImportUnit.create(name, props -> OSMWayID.create(),
                     (lookup, props) -> new OSMWayIDParser(
@@ -202,20 +212,11 @@ public class DefaultImportRegistry implements ImportRegistry {
                     (lookup, props) -> new FerrySpeedCalculator(
                             lookup.getDecimalEncodedValue(FerrySpeed.KEY)));
         else if (Curvature.KEY.equals(name))
-            return ImportUnit.create(name, props -> Curvature.create(),
-                    (lookup, props) -> new CurvatureCalculator(
-                            lookup.getDecimalEncodedValue(Curvature.KEY))
-            );
+            return ImportUnit.create(name, props -> Curvature.create(), null);
         else if (AverageSlope.KEY.equals(name))
-            return ImportUnit.create(name, props -> AverageSlope.create(), null, "slope_calculator");
+            return ImportUnit.create(name, props -> AverageSlope.create(), null);
         else if (MaxSlope.KEY.equals(name))
-            return ImportUnit.create(name, props -> MaxSlope.create(), null, "slope_calculator");
-        else if ("slope_calculator".equals(name))
-            return ImportUnit.create(name, null,
-                    (lookup, props) -> new SlopeCalculator(
-                            lookup.hasEncodedValue(MaxSlope.KEY) ? lookup.getDecimalEncodedValue(MaxSlope.KEY) : null,
-                            lookup.hasEncodedValue(AverageSlope.KEY) ? lookup.getDecimalEncodedValue(AverageSlope.KEY) : null
-                    ));
+            return ImportUnit.create(name, props -> MaxSlope.create(), null);
         else if (BikeNetwork.KEY.equals(name) || MtbNetwork.KEY.equals(name) || FootNetwork.KEY.equals(name))
             return ImportUnit.create(name, props -> RouteNetwork.create(name), null);
 
@@ -223,7 +224,7 @@ public class DefaultImportRegistry implements ImportRegistry {
             return ImportUnit.create(name, props -> BusAccess.create(),
                     (lookup, props) -> new ModeAccessParser(OSMRoadAccessParser.toOSMRestrictions(TransportationMode.BUS),
                             lookup.getBooleanEncodedValue(name), true, lookup.getBooleanEncodedValue(Roundabout.KEY),
-                            PMap.toSet(props.getString("restrictions", "")), PMap.toSet(props.getString("barriers", ""))),
+                            PMap.toSet(props.getString("allow", "")), PMap.toSet(props.getString("restrict", ""))),
                     "roundabout"
             );
 
@@ -231,7 +232,7 @@ public class DefaultImportRegistry implements ImportRegistry {
             return ImportUnit.create(name, props -> HovAccess.create(),
                     (lookup, props) -> new ModeAccessParser(OSMRoadAccessParser.toOSMRestrictions(TransportationMode.HOV),
                             lookup.getBooleanEncodedValue(name), true, lookup.getBooleanEncodedValue(Roundabout.KEY),
-                            PMap.toSet(props.getString("restrictions", "")), PMap.toSet(props.getString("barriers", ""))),
+                            PMap.toSet(props.getString("allow", "")), PMap.toSet(props.getString("restrict", ""))),
                     "roundabout"
             );
         else if (FootTemporalAccess.KEY.equals(name))
@@ -336,6 +337,11 @@ public class DefaultImportRegistry implements ImportRegistry {
             return ImportUnit.create(name, props -> VehiclePriority.create("mtb", 4, PriorityCode.getFactor(1), false),
                     (lookup, props) -> new MountainBikePriorityParser(lookup),
                     VehicleSpeed.key("mtb"), BikeNetwork.KEY, MtbNetwork.KEY
+            );
+        else if (Lit.KEY.equals(name))
+            return ImportUnit.create(name, props -> Lit.create(),
+                    (lookup, props) -> new OSMLitParser(
+                            lookup.getBooleanEncodedValue(Lit.KEY))
             );
         return null;
     }

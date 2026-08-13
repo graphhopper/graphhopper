@@ -50,6 +50,8 @@ public class PathMerger {
     private final Weighting weighting;
 
     private boolean enableInstructions = true;
+    private boolean includeRoundaboutExitInstruction = false;
+    private boolean enableViaPointInstructions = true;
     private boolean simplifyResponse = true;
     private RamerDouglasPeucker ramerDouglasPeucker = RDP;
     private boolean calcPoints = true;
@@ -88,12 +90,22 @@ public class PathMerger {
         return this;
     }
 
+    public PathMerger setIncludeRoundaboutExitInstruction(boolean includeRoundaboutExitInstruction) {
+        this.includeRoundaboutExitInstruction = includeRoundaboutExitInstruction;
+        return this;
+    }
+
+    public PathMerger setEnableViaPointInstructions(boolean enableViaPointInstructions) {
+        this.enableViaPointInstructions = enableViaPointInstructions;
+        return this;
+    }
+
     public ResponsePath doWork(PointList waypoints, List<Path> paths, EncodedValueLookup evLookup, Translation tr) {
         ResponsePath responsePath = new ResponsePath();
         int origPoints = 0;
         long fullTimeInMillis = 0;
         double fullWeight = 0;
-        double fullDistance = 0;
+        long fullDistance_mm = 0;
         boolean allFound = true;
 
         InstructionList fullInstructions = new InstructionList(tr);
@@ -108,10 +120,10 @@ public class PathMerger {
             }
             description.addAll(path.getDescription());
             fullTimeInMillis += path.getTime();
-            fullDistance += path.getDistance();
+            fullDistance_mm += path.getDistance_mm();
             fullWeight += path.getWeight();
             if (enableInstructions) {
-                InstructionList il = InstructionsFromEdges.calcInstructions(path, graph, weighting, evLookup, tr);
+                InstructionList il = InstructionsFromEdges.calcInstructions(path, graph, weighting, evLookup, tr, includeRoundaboutExitInstruction);
 
                 if (!il.isEmpty()) {
                     fullInstructions.addAll(il);
@@ -170,7 +182,7 @@ public class PathMerger {
         responsePath.setDescription(description).
                 setPoints(fullPoints).
                 setRouteWeight(fullWeight).
-                setDistance(fullDistance).
+                setDistance(fullDistance_mm / 1000.0).
                 setTime(fullTimeInMillis).
                 setWaypoints(waypoints).
                 setWaypointIndices(wayPointIndices);
@@ -205,6 +217,12 @@ public class PathMerger {
             }
 
             if (instruction.getSign() == Instruction.REACHED_VIA) {
+                // Remove the Via Point Instruction
+                if (!enableViaPointInstructions) {
+                    instructions.remove(i--);
+                    continue;
+                }
+
                 nextInstruction = instructions.get(i + 1);
                 if (nextInstruction.getSign() != Instruction.CONTINUE_ON_STREET
                         || !instruction.extraInfo.containsKey("last_heading")

@@ -3,6 +3,8 @@ name: Bug report
 about: Create a report to help us improve
 ---
 
+Before you report a bug, be sure to search through the [issues](https://github.com/graphhopper/graphhopper/issues) and [pull requests](https://github.com/graphhopper/graphhopper/pulls) to see if the bug has already been reported.
+
 **Describe the bug**
 A clear and concise description of what the bug is. For questions or usage problems please create a new topic in [our forum](https://discuss.graphhopper.com/c/graphhopper) instead.
 

@@ -126,20 +126,27 @@ public class MapMatchingResource {
         hints.putObject("profile", profile);
         removeLegacyParameters(hints);
 
+        boolean debugMode = "debug".equals(outType);
         MapMatching matching = new MapMatching(graphHopper.getBaseGraph(), (LocationIndexTree) graphHopper.getLocationIndex(), mapMatchingRouterFactory.createMapMatchingRouter(hints));
         matching.setMeasurementErrorSigma(gpsAccuracy);
+        matching.setCollectDebugInfo(debugMode);
 
         List<Observation> measurements = GpxConversions.getEntries(gpx.trk.get(0));
         MatchResult matchResult = matching.match(measurements);
 
         sw.stop();
         logger.info(objectMapper.createObjectNode()
-                .put("duration", sw.getNanos())
+                .put("took", sw.getMillisDouble())
                 .put("profile", profile)
                 .put("observations", measurements.size())
-                .putPOJO("mapmatching", matching.getStatistics()).toString());
+                .put("original_distance", matchResult.getGpxEntriesLength())
+                .put("distance", matchResult.getMatchLength()).toString());
 
-        if ("extended_json".equals(outType)) {
+        if (debugMode) {
+            return Response.ok(matching.getDebugInfo()).
+                    header("X-GH-Took", "" + Math.round(sw.getMillisDouble())).
+                    build();
+        } else if ("extended_json".equals(outType)) {
             return Response.ok(convertToTree(matchResult, enableElevation, pointsEncoded, pointsEncodedMultiplier)).
                     header("X-GH-Took", "" + Math.round(sw.getMillisDouble())).
                     build();

@@ -33,8 +33,10 @@ import static com.graphhopper.util.Helper.*;
 public class TranslationMap {
     // ISO codes (639-1), use 'en_US' as reference
     private static final List<String> LOCALES = Arrays.asList("ar", "ast", "bg", "bn_BN", "ca",
-            "cs_CZ", "da_DK", "de_DE", "el", "eo", "es", "en_US", "fa", "fil", "fi",
-            "fr_FR", "fr_CH", "gl", "he", "hr_HR", "hsb", "hu_HU", "in_ID", "it", "ja", "ko",
+            "cs_CZ", "da_DK", "de_DE", "el",
+            /* default for en -> must come first: */ "en_US", "en_AU",
+            "eo", "es", "fa", "fil", "fi",
+            "fr_FR", "fr_CH", "gl", "he", "hr_HR", "hsb", "hu_HU", "in_ID", "it", "ja", "kab_DZ", "ko",
             "kz", "lt_LT", "mn", "nb_NO", "ne", "nl", "pl_PL", "pt_BR", "pt_PT", "ro", "ru", "sk",
             "sl_SI", "sr_RS", "sv_SE", "tr", "uk", "uz", "vi_VN", "zh_CN", "zh_HK", "zh_TW");
 

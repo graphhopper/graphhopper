@@ -38,11 +38,11 @@ public class RacingBikeAverageSpeedParser extends BikeCommonAverageSpeedParser {
         setSurfaceSpeed("ice", MIN_SPEED);
         setSurfaceSpeed("metal", MIN_SPEED);
         setSurfaceSpeed("mud", MIN_SPEED);
+        setSurfaceSpeed("clay", MIN_SPEED);
+        setSurfaceSpeed("laterite", MIN_SPEED);
         setSurfaceSpeed("pebblestone", PUSHING_SECTION_SPEED);
         setSurfaceSpeed("salt", MIN_SPEED);
         setSurfaceSpeed("sand", MIN_SPEED);
-        setSurfaceSpeed("wood", MIN_SPEED);
-
         setHighwaySpeed("track", MIN_SPEED); // assume unpaved
 
         setHighwaySpeed("trunk", 24);
@@ -54,6 +54,8 @@ public class RacingBikeAverageSpeedParser extends BikeCommonAverageSpeedParser {
         setHighwaySpeed("tertiary", 24);
         setHighwaySpeed("tertiary_link", 24);
         setHighwaySpeed("cycleway", 24);
+        setHighwaySpeed("residential", 24);
+        setHighwaySpeed("unclassified", 24);
 
         // overwrite map from BikeCommon
         setSmoothnessSpeedFactor(Smoothness.EXCELLENT, 1.2d);

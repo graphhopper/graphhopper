@@ -17,6 +17,7 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.util.Constants;
 import com.graphhopper.util.Helper;
 
 import java.io.File;
@@ -52,7 +53,7 @@ public final class MMapDataAccess extends AbstractDataAccess {
     private RandomAccessFile raFile;
     private final List<MappedByteBuffer> segments = new ArrayList<>();
 
-    MMapDataAccess(String name, String location, boolean allowWrites, int segmentSize) {
+    public MMapDataAccess(String name, String location, boolean allowWrites, int segmentSize) {
         super(name, location, segmentSize);
         this.allowWrites = allowWrites;
     }
@@ -83,6 +84,8 @@ public final class MMapDataAccess extends AbstractDataAccess {
 
         try {
             // raFile necessary for loadExisting and create
+            if (allowWrites)
+                ensureParentDirectoryExists();
             raFile = new RandomAccessFile(getFullName(), allowWrites ? "rw" : "r");
         } catch (IOException ex) {
             throw new RuntimeException(ex);
@@ -243,6 +246,42 @@ public final class MMapDataAccess extends AbstractDataAccess {
     }
 
     @Override
+    public void trimTo(long capacity) {
+        if (capacity < 0)
+            throw new IllegalArgumentException("capacity must not be negative");
+        if (capacity > getCapacity())
+            throw new IllegalArgumentException("capacity cannot be larger than the current capacity: " + capacity + " > " + getCapacity());
+
+        int newSegmentCount = (int) (capacity / segmentSizeInBytes);
+        if (capacity % segmentSizeInBytes != 0)
+            newSegmentCount++;
+
+        if (newSegmentCount < segments.size()) {
+            try {
+                if (Constants.WINDOWS) {
+                    // Windows refuses setLength while any mapping on the file is open, so unmap
+                    // all segments before truncating and remap the remaining ones afterwards.
+                    // Might be slightly slower so do this only for Windows.
+                    clean(0, segments.size());
+                    segments.clear();
+                    raFile.setLength(HEADER_OFFSET + (long) newSegmentCount * segmentSizeInBytes);
+                    long bufferStart = HEADER_OFFSET;
+                    for (int i = 0; i < newSegmentCount; i++) {
+                        segments.add(newByteBuffer(bufferStart, segmentSizeInBytes));
+                        bufferStart += segmentSizeInBytes;
+                    }
+                } else {
+                    clean(newSegmentCount, segments.size());
+                    segments.subList(newSegmentCount, segments.size()).clear();
+                    raFile.setLength(HEADER_OFFSET + getCapacity());
+                }
+            } catch (IOException ex) {
+                throw new RuntimeException("Failed to truncate file " + getFullName(), ex);
+            }
+        }
+    }
+
+    @Override
     public void close() {
         super.close();
         clean(0, segments.size());
@@ -399,8 +438,4 @@ public final class MMapDataAccess extends AbstractDataAccess {
         }
     }
 
-    @Override
-    public DAType getType() {
-        return DAType.MMAP;
-    }
 }

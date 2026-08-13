@@ -35,15 +35,21 @@ import java.io.IOException;
 public abstract class TileBasedElevationProvider implements ElevationProvider {
     final Logger logger = LoggerFactory.getLogger(getClass());
     Downloader downloader;
-    final File cacheDir;
+    File cacheDir;
+    final String cacheDirString;
     String baseUrl;
     Directory dir;
-    DAType daType = DAType.MMAP;
+    DAType daType = DAType.FOREIGN_MMAP;
     boolean interpolate = false;
     boolean autoRemoveTemporary = true;
     long sleep = 2000;
 
     protected TileBasedElevationProvider(String cacheDirString) {
+        this.cacheDirString = cacheDirString;
+    }
+
+    @Override
+    public ElevationProvider init() {
         File cacheDir = new File(cacheDirString);
         if (cacheDir.exists() && !cacheDir.isDirectory())
             throw new IllegalArgumentException("Cache path has to be a directory");
@@ -52,6 +58,7 @@ public abstract class TileBasedElevationProvider implements ElevationProvider {
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
+        return this;
     }
 
     /**
@@ -86,7 +93,7 @@ public abstract class TileBasedElevationProvider implements ElevationProvider {
     }
 
     /**
-     * Set to true if you have a small area and need high speed access. Default is DAType.MMAP
+     * Set to true if you have a small area and need high speed access. Default is DAType.FOREIGN_MMAP
      */
     public TileBasedElevationProvider setDAType(DAType daType) {
         this.daType = daType;

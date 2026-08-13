@@ -110,7 +110,7 @@ graphhopper:
   #   car_access|block_private=false, bike_access|block_private=false
   # By default we add the necessary encoded values for car.json, bike.json and foot.json (remove them if you do not need them)
   graph.encoded_values: |
-    car_access, car_average_speed, country, road_class, roundabout, max_speed,
+    car_access, car_average_speed, country, road_class, roundabout, max_speed, road_environment,
     foot_access, foot_average_speed, foot_priority, foot_road_access, hike_rating, average_slope,
     bike_access, bike_average_speed, bike_priority, bike_road_access, bike_network, mtb_rating, ferry_speed
 
@@ -147,8 +147,8 @@ graphhopper:
   # default location for cache is /tmp/srtm
   # graph.elevation.cache_dir: ./srtmprovider/
 
-  # If you have a slow disk or plenty of RAM change the default MMAP to:
-  # graph.elevation.dataaccess: RAM_STORE
+  # If you have a slow disk or plenty of RAM change the default FOREIGN_MMAP to:
+  # graph.elevation.dataaccess: RAM
 
   # To enable bilinear interpolation when sampling elevation at points (default uses nearest neighbor):
   # graph.elevation.interpolate: bilinear
@@ -235,11 +235,29 @@ graphhopper:
   # import.osm.ignored_highways: footway,construction,cycleway,path,steps # use if you only have motorized-only vehicle profiles
   # import.osm.ignored_highways: motorway,trunk # use if you only have non-motorized vehicle profiles
 
-  # configure the memory access, use RAM_STORE for well equipped servers (default and recommended)
-  graph.dataaccess.default_type: RAM_STORE
-
   # will write way names in the preferred language (language code as defined in ISO 639-1 or ISO 639-2):
   # datareader.preferred_language: en
+
+  # configure the memory access, use RAM for well equipped servers (default and recommended)
+  graph.dataaccess.default_type: RAM
+
+  # Everything except the way geometry is in-memory. However you can make it in-memory too for slightly faster CH routing requests (see #3352):
+  # graph.dataaccess.type.geometry: RAM
+
+  # If FOREIGN_MMAP is not suited for everything you can use it for selected files e.g. while import to reduce heap usage (see #2440):
+  # graph.dataaccess.type.edges: FOREIGN_MMAP
+  # graph.dataaccess.type.nodes: FOREIGN_MMAP
+  # graph.dataaccess.type.nodes_ch.*: FOREIGN_MMAP
+  # graph.dataaccess.type.shortcuts_.*: FOREIGN_MMAP
+
+  # If also for routing the environment is heap constrained and you can sacrify speed, then you can also use FOREIGN_MMAP but maybe preload them:
+  # first rule matches
+  # graph.dataaccess.mmap.preload.nodes_ch_car.*: 100
+  # graph.dataaccess.mmap.preload.nodes_ch.*: 30
+
+  # For a read-only filesystem (works with any dataaccess type): no lock file is created, the graph
+  # files are never modified and memory mapped types map them read-only (enforced by the OS).
+  # graph.read_only: true
 
   #### Custom Areas ####
 

@@ -20,6 +20,7 @@ package com.graphhopper.storage;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.Helper;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteOrder;
@@ -61,6 +62,18 @@ public abstract class AbstractDataAccess implements DataAccess {
 
     protected String getFullName() {
         return location + name;
+    }
+
+    /**
+     * Ensures the parent directory of the backing file exists before it is written. Called by the
+     * subclasses right before they open the file for writing, so that a directory is only created
+     * on disc when data is actually persisted (never for a purely in-memory graph that is never
+     * flushed).
+     */
+    protected void ensureParentDirectoryExists() {
+        File parent = new File(getFullName()).getAbsoluteFile().getParentFile();
+        if (parent != null)
+            parent.mkdirs();
     }
 
     @Override
@@ -140,10 +153,6 @@ public abstract class AbstractDataAccess implements DataAccess {
     @Override
     public String toString() {
         return getFullName();
-    }
-
-    public boolean isStoring() {
-        return true;
     }
 
     protected boolean isIntBased() {
