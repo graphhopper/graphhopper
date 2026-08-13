@@ -504,8 +504,11 @@ class CustomModelParserTest {
         initKVStorageEncodedValues(graph);
         EdgeIteratorState edge = graph.edge(0, 1).setDistance(100).set(avgSpeedEnc, 60).set(accessEnc, true, true);
 
-        assertEquals(1.0, parameters.getEdgeToPriorityMapping().get(edge, false), 1.e-6);
+        // 0->1 is the direction the way was drawn, so is_forward is true
+        assertEquals(0.5, parameters.getEdgeToPriorityMapping().get(edge, false), 1.e-6);
         assertEquals(1.0, parameters.getEdgeToPriorityMapping().get(edge, true), 1.e-6);
+        // same traversal as the first, only via a reversed iterator
         assertEquals(0.5, parameters.getEdgeToPriorityMapping().get(edge.detach(true), true), 1.e-6);
+        assertEquals(1.0, parameters.getEdgeToPriorityMapping().get(edge.detach(true), false), 1.e-6);
     }
 }

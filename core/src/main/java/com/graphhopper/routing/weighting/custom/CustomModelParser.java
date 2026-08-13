@@ -333,7 +333,9 @@ public class CustomModelParser {
         if (arg.startsWith(KV_PREFIX)) {
             return ""; // currently no local variable is introduced assuming that is is more likely to be used once
         } else if (arg.equals(IS_FORWARD)) {
-            return "boolean " + IS_FORWARD + " = edge.get(EdgeIteratorState.REVERSE_STATE);\n";
+            // true if we travel in the direction the OSM way was drawn. REVERSE_STATE is only the
+            // iterator orientation, so it must be combined with 'reverse'.
+            return "boolean " + IS_FORWARD + " = reverse == edge.get(EdgeIteratorState.REVERSE_STATE);\n";
         } else if (lookup.hasEncodedValue(arg)) {
             // parameters in method getPriority or getSpeed are: EdgeIteratorState edge, boolean reverse
             EncodedValue enc = lookup.getEncodedValue(arg, EncodedValue.class);
