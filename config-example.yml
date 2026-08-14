@@ -116,12 +116,14 @@ graphhopper:
 
   # Tags are a more flexible and 'raw' approach as no source code needs to be changed to add them.
   # However, there have the following downsides:
-  #   1. value is string and currently only == and != as operator possible in the custom model (TODO: contains, startsWith)
+  #   1. value is string, so only ==, != and the methods contains and startsWith are possible in the custom model.
+  #      An absent tag is an empty string, i.e. tag('cycleway') == '' is true if the tag is missing.
   #   2. slower access, i.e. slower non-CH routing,
   #   3. not directional, i.e. the values with xy:forward/xy:backward are separate and have no meaning (check against is_forward)
   #   4. values not normalized, checked or corrected
   #   5. space/memory usage is heavier if a frequent tag and/or lots of unique and long values, but can be even lower, especially for rare tags like conditional tags
-  # You can use them via tag('cycleway') == 'lane' in a condition of a custom model.
+  # You can use them via tag('cycleway') == 'lane' in a condition of a custom model and request them
+  # as path detail via their raw key, e.g. details=cycleway
   graph.stored_tags: cycleway, cycleway:left, cycleway:left:oneway, cycleway:right, cycleway:right:oneway, lit, sidewalk
 
   #### Speed, hybrid and flexible mode ####

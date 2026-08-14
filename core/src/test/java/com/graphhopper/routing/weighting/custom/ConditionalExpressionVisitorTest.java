@@ -180,12 +180,12 @@ public class ConditionalExpressionVisitorTest {
         // basic tag() == test
         ParseResult result = parse("tag('cycleway') == 'lane'", validVariable, k -> "");
         assertTrue(result.ok);
-        assertTrue(result.converted.toString().contains("\"lane\".equals(edge.get(this.kv_cycleway_enc))"));
+        assertTrue(result.converted.toString().contains("Objects.toString(edge.get(this.kv_cycleway_enc), \"\").equals(\"lane\")"));
 
         // tag() != test
         result = parse("tag('lit') != 'yes'", validVariable, k -> "");
         assertTrue(result.ok);
-        assertTrue(result.converted.toString().contains("!\"yes\".equals(edge.get(this.kv_lit_enc))"));
+        assertTrue(result.converted.toString().contains("!Objects.toString(edge.get(this.kv_lit_enc), \"\").equals(\"yes\")"));
 
         // compound expression with tag() and regular encoded value
         result = parse("tag('cycleway') == 'lane' || road_class == PRIMARY", validVariable, k -> "RoadClass");
@@ -196,8 +196,8 @@ public class ConditionalExpressionVisitorTest {
         result = parse("tag('cycleway') == 'lane' || tag('cycleway') == 'track'", validVariable, k -> "");
         assertTrue(result.ok);
         String converted = result.converted.toString();
-        assertTrue(converted.contains("\"lane\".equals(edge.get(this.kv_cycleway_enc))"), converted);
-        assertTrue(converted.contains("\"track\".equals(edge.get(this.kv_cycleway_enc))"), converted);
+        assertTrue(converted.contains("Objects.toString(edge.get(this.kv_cycleway_enc), \"\").equals(\"lane\")"), converted);
+        assertTrue(converted.contains("Objects.toString(edge.get(this.kv_cycleway_enc), \"\").equals(\"track\")"), converted);
 
         // tag() == null
         result = parse("tag('lit') == null", validVariable, k -> "");
@@ -212,6 +212,33 @@ public class ConditionalExpressionVisitorTest {
         // reversed: literal on left, tag() on right
         result = parse("'lane' == tag('cycleway')", validVariable, k -> "");
         assertTrue(result.ok);
-        assertTrue(result.converted.toString().contains("\"lane\".equals(edge.get(this.kv_cycleway_enc))"));
+        assertTrue(result.converted.toString().contains("Objects.toString(edge.get(this.kv_cycleway_enc), \"\").equals(\"lane\")"));
+    }
+
+    @Test
+    public void testTagStringMethods() {
+        NameValidator validVariable = s -> Helper.toUpperCase(s).equals(s) || s.equals("road_class");
+
+        ParseResult result = parse("tag('name').contains('A 4')", validVariable, k -> "");
+        assertTrue(result.ok, result.invalidMessage);
+        assertEquals("Objects.toString(edge.get(this.kv_street_name_enc), \"\").contains(\"A 4\")",
+                result.converted.toString());
+        assertTrue(result.guessedVariables.contains("kv_street_name"), result.guessedVariables.toString());
+
+        result = parse("tag('ref').startsWith('A')", validVariable, k -> "");
+        assertTrue(result.ok, result.invalidMessage);
+        assertEquals("Objects.toString(edge.get(this.kv_street_ref_enc), \"\").startsWith(\"A\")",
+                result.converted.toString());
+
+        // negated and combined with a regular encoded value
+        result = parse("!tag('cycleway').contains('lane') && road_class == PRIMARY", validVariable, k -> "RoadClass");
+        assertTrue(result.ok, result.invalidMessage);
+        String converted = result.converted.toString();
+        assertTrue(converted.contains("!Objects.toString(edge.get(this.kv_cycleway_enc), \"\").contains(\"lane\")"), converted);
+        assertTrue(converted.contains("road_class == RoadClass.PRIMARY"), converted);
+
+        // only the two string methods are allowed on a tag()
+        result = parse("tag('name').equalsIgnoreCase('A 4')", validVariable, k -> "");
+        assertFalse(result.ok);
     }
 }

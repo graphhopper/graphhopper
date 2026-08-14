@@ -35,6 +35,8 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
     private static final Set<String> allowedMethodParents = new HashSet<>(Arrays.asList("edge", "Math", "country"));
     private static final Set<String> allowedMethods = new HashSet<>(Arrays.asList("ordinal", "getDistance",
             "contains", "sqrt", "abs", "isRightHandTraffic", "equals"));
+    // methods that can be called on a tag("key") as its value is a String
+    private static final Set<String> tagStringMethods = new HashSet<>(Arrays.asList("contains", "startsWith"));
     private final ParseResult result;
     private final TreeMap<Integer, Replacement> replacements = new TreeMap<>();
     private final NameValidator variableValidator;
@@ -88,6 +90,21 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
             return false;
         } else if (rv instanceof Java.MethodInvocation) {
             Java.MethodInvocation mi = (Java.MethodInvocation) rv;
+            if (tagStringMethods.contains(mi.methodName) && mi.target != null && isTagCall(mi.target.toRvalue())
+                    && mi.arguments.length == 1 && isStringLiteral(mi.arguments[0])) {
+                // tag("name").contains("A 4")
+                Java.MethodInvocation tagCall = (Java.MethodInvocation) mi.target.toRvalue();
+                String key = extractStringLiteralValue(((Java.Literal) tagCall.arguments[0]).value);
+                String fieldName = KVStorageEncodedValue.toFieldName(KVStorageEncodedValue.resolveAlias(key));
+                result.guessedVariables.add(fieldName);
+
+                Java.Literal argLiteral = (Java.Literal) mi.arguments[0];
+                int exprStart = tagCall.getLocation().getColumnNumber() - 1;
+                int exprEnd = argLiteral.getLocation().getColumnNumber() - 1 + argLiteral.value.length() + 1;
+                replacements.put(exprStart, new Replacement(exprStart, exprEnd - exprStart,
+                        tagValue(fieldName) + "." + mi.methodName + "(" + argLiteral.value + ")"));
+                return true;
+            }
             if (allowedMethods.contains(mi.methodName) && mi.target != null) {
                 // a chained call like edge.getName().contains("A 4") has no AmbiguousName target and is rejected
                 if (mi.target.toRvalue() instanceof Java.AmbiguousName n && n.identifiers.length == 2) {
@@ -146,14 +163,12 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
                     int exprStart = Math.min(tagCallStart, otherStart);
                     int exprEnd = Math.max(tagCallEnd, otherEnd);
 
-                    String getCall = "edge.get(this." + fieldName + "_enc)";
                     String newExpr;
                     if (isNull) {
-                        newExpr = getCall + " " + binOp.operator + " null";
+                        newExpr = "edge.get(this." + fieldName + "_enc) " + binOp.operator + " null";
                     } else {
-                        String value = extractStringLiteralValue(((Java.Literal) other).value);
                         String prefix = binOp.operator.equals("!=") ? "!" : "";
-                        newExpr = prefix + "\"" + value + "\".equals(" + getCall + ")";
+                        newExpr = prefix + tagValue(fieldName) + ".equals(" + ((Java.Literal) other).value + ")";
                     }
 
                     replacements.put(exprStart, new Replacement(exprStart, exprEnd - exprStart, newExpr));
@@ -193,6 +208,13 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
     @Override
     public Boolean visitConstructorInvocation(Java.ConstructorInvocation ci) {
         return false;
+    }
+
+    /**
+     * On the Java level an absent tag is null, but in a custom model tag('xy') is an empty String.
+     */
+    private static String tagValue(String fieldName) {
+        return "Objects.toString(edge.get(this." + fieldName + "_enc), \"\")";
     }
 
     private static boolean isTagCall(Java.Rvalue rvalue) {

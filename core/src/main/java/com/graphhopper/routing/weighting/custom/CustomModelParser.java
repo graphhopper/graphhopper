@@ -445,6 +445,7 @@ public class CustomModelParser {
                                               EncodedValueLookup lookup, Map<String, JsonFeature> areas) {
         final StringBuilder importSourceCode = new StringBuilder("import com.graphhopper.routing.ev.*;\n");
         importSourceCode.append("import java.util.Map;\n");
+        importSourceCode.append("import java.util.Objects;\n");
         importSourceCode.append("import " + CustomModel.class.getName() + ";\n");
         importSourceCode.append("import " + BaseGraph.class.getName() + ";\n");
         importSourceCode.append("import " + EdgeIntAccess.class.getName() + ";\n");

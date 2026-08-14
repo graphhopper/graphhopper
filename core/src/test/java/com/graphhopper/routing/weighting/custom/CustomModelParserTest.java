@@ -510,6 +510,42 @@ class CustomModelParserTest {
     }
 
     @Test
+    void testTagContainsAndStartsWith() {
+        CustomModel customModel = new CustomModel();
+        customModel.addToPriority(If("tag('name').contains('A 4')", MULTIPLY, "0.5"));
+        customModel.addToPriority(If("tag('name').startsWith('B')", MULTIPLY, "0.2"));
+        customModel.addToSpeed(If("true", LIMIT, "100"));
+        CustomWeighting.Parameters parameters = CustomModelParser.createWeightingParameters(customModel, encodingManager);
+
+        // a ref is often concatenated, so equality would not match
+        EdgeIteratorState concatenated = graph.edge(0, 1).setDistance(100).
+                setKeyValues(Map.of(STREET_NAME, new KVStorage.KValue("A 4;E 40")));
+        EdgeIteratorState other = graph.edge(1, 2).setDistance(100).
+                setKeyValues(Map.of(STREET_NAME, new KVStorage.KValue("B 5")));
+        EdgeIteratorState noName = graph.edge(2, 3).setDistance(100);
+
+        assertEquals(0.5, parameters.getEdgeToPriorityMapping().get(concatenated, false), 1.e-6);
+        assertEquals(0.2, parameters.getEdgeToPriorityMapping().get(other, false), 1.e-6);
+        // must not throw for an edge without that tag
+        assertEquals(1.0, parameters.getEdgeToPriorityMapping().get(noName, false), 1.e-6);
+    }
+
+    @Test
+    void testTagEmptyMeansAbsent() {
+        CustomModel customModel = new CustomModel();
+        customModel.addToPriority(If("tag('name') == ''", MULTIPLY, "0.5"));
+        customModel.addToSpeed(If("true", LIMIT, "100"));
+        CustomWeighting.Parameters parameters = CustomModelParser.createWeightingParameters(customModel, encodingManager);
+
+        EdgeIteratorState named = graph.edge(0, 1).setDistance(100).
+                setKeyValues(Map.of(STREET_NAME, new KVStorage.KValue("A 4")));
+        EdgeIteratorState noName = graph.edge(1, 2).setDistance(100);
+
+        assertEquals(1.0, parameters.getEdgeToPriorityMapping().get(named, false), 1.e-6);
+        assertEquals(0.5, parameters.getEdgeToPriorityMapping().get(noName, false), 1.e-6);
+    }
+
+    @Test
     void testIsForward() {
         CustomModel customModel = new CustomModel();
         customModel.addToPriority(If("is_forward", MULTIPLY, "0.5"));
