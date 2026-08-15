@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.graphhopper.util.Parameters;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -36,6 +37,7 @@ public class KVStorageEncodedValue implements EncodedValue {
     @JsonIgnore
     private final String name;
     private final String rawTagName;
+    @JsonIgnore // already stored in KVStorage
     private int keyIndex = -1;
 
     @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
@@ -49,11 +51,14 @@ public class KVStorageEncodedValue implements EncodedValue {
      * of storing them twice. destination and destination:ref are stored per direction, i.e. tag('destination')
      * returns the value for the direction of travel.
      */
-    public static final Map<String, String> ALIASES = Map.of(
-            "name", Parameters.Details.STREET_NAME,
-            "ref", Parameters.Details.STREET_REF,
-            "destination", Parameters.Details.STREET_DESTINATION,
-            "destination:ref", Parameters.Details.STREET_DESTINATION_REF);
+    public static final Map<String, String> ALIASES = new LinkedHashMap<>(); // keep order deterministic
+
+    static {
+        ALIASES.put("name", Parameters.Details.STREET_NAME);
+        ALIASES.put("ref", Parameters.Details.STREET_REF);
+        ALIASES.put("destination", Parameters.Details.STREET_DESTINATION);
+        ALIASES.put("destination:ref", Parameters.Details.STREET_DESTINATION_REF);
+    }
 
     /** @return the KVStorage key for the given OSM key, e.g. 'name' -> 'street_name' */
     public static String resolveAlias(String osmKey) {

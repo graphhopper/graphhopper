@@ -1088,29 +1088,21 @@ public class GraphHopper {
     protected void createBaseGraphAndProperties() {
         baseGraph.create(100);
         properties.create(100);
-        // every graph reserves the keys, not just an OSM import, as the EncodedValues are added unconditionally
         initKVStorageEncodedValues(true);
         if (maxSpeedCalculator != null)
             maxSpeedCalculator.createDataAccessForParser(baseGraph.getDirectory());
     }
 
+    /**
+     * Connects the KVStorageEncodedValues with the KVStorage of the graph: reserve the keys on create and resolve
+     * their index on load (-1 if never stored, then tag() returns '').
+     */
     private void initKVStorageEncodedValues(boolean create) {
         KVStorage kvStorage = baseGraph.getEdgeKVStorage();
-        for (EncodedValue ev : encodingManager.getEncodedValues()) {
-            if (ev instanceof KVStorageEncodedValue kvEnc) {
-                String rawTag = kvEnc.getRawTagName();
-                if (create) {
-                    kvEnc.setKeyIndex(kvStorage.reserveKey(rawTag, String.class));
-                } else {
-                    int index = kvStorage.getKeyIndex(rawTag);
-                    if (index < 0)
-                        throw new IllegalArgumentException("KVStorage key not found for " + rawTag);
-                    if (kvEnc.getKeyIndex() != index)
-                        throw new IllegalStateException("Stored keyIndex " + kvEnc.getKeyIndex()
-                                + " for " + rawTag + " does not match currently configured index: " + index);
-                }
-            }
-        }
+        for (EncodedValue ev : encodingManager.getEncodedValues())
+            if (ev instanceof KVStorageEncodedValue kvEnc)
+                kvEnc.setKeyIndex(create ? kvStorage.reserveKey(kvEnc.getRawTagName(), String.class)
+                        : kvStorage.getKeyIndex(kvEnc.getRawTagName()));
     }
 
     public static void sortGraphAlongHilbertCurve(BaseGraph graph) {
