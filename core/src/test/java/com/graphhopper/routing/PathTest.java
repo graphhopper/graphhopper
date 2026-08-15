@@ -1397,6 +1397,20 @@ public class PathTest {
         wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, manager, tr);
         assertEquals("at roundabout, take exit 1 onto Nordeast out", wayList.get(1).getTurnDescription(tr));
         assertEquals(15, wayList.stream().mapToDouble(Instruction::getDistance).sum());
+
+        // a foot-only exit (no car access at all) is counted for foot, but not for car
+        na.setNode(11, 52.50395, 13.41075);
+        g.edge(3, 11).setDistance(5).set(carAccessEnc, false, false).set(footAccessEnc, true, true).setKeyValues(Map.of(STREET_NAME, new KValue("North, foot-only")));
+        p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED).calcPath(10, 0);
+        assertEquals("[10, 9, 5, 3, 2, 0]", p.calcNodes().toString());
+        wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, manager, tr);
+        assertEquals("at roundabout, take exit 3 onto Nordwest", wayList.get(1).getTurnDescription(tr));
+
+        Weighting carWeighting = new AccessWeighting(carAccessEnc);
+        p = new Dijkstra(g, carWeighting, TraversalMode.NODE_BASED).calcPath(10, 0);
+        assertEquals("[10, 9, 5, 3, 2, 0]", p.calcNodes().toString());
+        wayList = InstructionsFromEdges.calcInstructions(p, g, carWeighting, manager, tr);
+        assertEquals("at roundabout, take exit 2 onto Nordwest", wayList.get(1).getTurnDescription(tr));
     }
 
     static class AccessWeighting implements Weighting {

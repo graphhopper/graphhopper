@@ -111,8 +111,12 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         prevRoadEnv = null;
         prevInstructionNeedsNameFallback = false;
 
+        // roundabout exits are counted like for a car (roads leading in for cars are not counted, even if the
+        // profile could use them, see #3079). Roads without any car access (cycleway, footway, ...) are counted
+        // if the current profile can use them.
         BooleanEncodedValue carAccessEnc = evLookup.getBooleanEncodedValue(VehicleAccess.key("car"));
-        outEdgeExplorer = graph.createEdgeExplorer(edge -> edge.get(carAccessEnc));
+        outEdgeExplorer = graph.createEdgeExplorer(edge -> edge.get(carAccessEnc)
+                || !edge.getReverse(carAccessEnc) && Double.isFinite(weighting.calcEdgeWeight(edge, false)));
         allExplorer = graph.createEdgeExplorer();
     }
 
