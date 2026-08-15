@@ -488,8 +488,8 @@ public class OSMReader {
             }
 
         for (String osmKey : config.getStoredTags()) {
-            String value = way.getTag(osmKey);
-            if (value != null && !value.isEmpty())
+            // artificial tags like 'country' are no Strings
+            if (way.getTag(osmKey) instanceof String value && !value.isEmpty())
                 map.put(osmKey, new KVStorage.KValue(KVStorage.cutString(value)));
         }
 

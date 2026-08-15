@@ -44,14 +44,27 @@ public class KVStorageEncodedValue implements EncodedValue {
         this.name = toFieldName(rawTagName);
     }
 
-    /** name and ref are already stored under a different key, so point to them instead of storing twice */
-    private static final Map<String, String> ALIASES = Map.of(
+    /**
+     * The OSMReader always stores these OSM keys under a different KVStorage key, so point to them instead
+     * of storing them twice. destination and destination:ref are stored per direction, i.e. tag('destination')
+     * returns the value for the direction of travel.
+     */
+    public static final Map<String, String> ALIASES = Map.of(
             "name", Parameters.Details.STREET_NAME,
-            "ref", Parameters.Details.STREET_REF);
+            "ref", Parameters.Details.STREET_REF,
+            "destination", Parameters.Details.STREET_DESTINATION,
+            "destination:ref", Parameters.Details.STREET_DESTINATION_REF);
 
     /** @return the KVStorage key for the given OSM key, e.g. 'name' -> 'street_name' */
     public static String resolveAlias(String osmKey) {
         return ALIASES.getOrDefault(osmKey, osmKey);
+    }
+
+    /** @return the OSM key for this EncodedValue, e.g. 'name' for the KVStorage key 'street_name' */
+    public String getOSMKey() {
+        for (Map.Entry<String, String> e : ALIASES.entrySet())
+            if (e.getValue().equals(rawTagName)) return e.getKey();
+        return rawTagName;
     }
 
     /** @return true if the OSMReader stores this key anyway, so it must not be listed in stored_tags */

@@ -94,9 +94,8 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
                     && mi.arguments.length == 1 && isStringLiteral(mi.arguments[0])) {
                 // tag("name").contains("A 4")
                 Java.MethodInvocation tagCall = (Java.MethodInvocation) mi.target.toRvalue();
-                String key = extractStringLiteralValue(((Java.Literal) tagCall.arguments[0]).value);
-                String fieldName = KVStorageEncodedValue.toFieldName(KVStorageEncodedValue.resolveAlias(key));
-                result.guessedVariables.add(fieldName);
+                String fieldName = getTagFieldName(tagCall);
+                if (fieldName == null) return false;
 
                 Java.Literal argLiteral = (Java.Literal) mi.arguments[0];
                 int exprStart = tagCall.getLocation().getColumnNumber() - 1;
@@ -138,42 +137,30 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
             Java.BinaryOperation binOp = (Java.BinaryOperation) rv;
             int startRH = binOp.rhs.getLocation().getColumnNumber() - 1;
 
-            // Handle tag("key") compared to a string or null, in either order
+            // Handle tag("key") compared to a string, in either order. An absent tag is '' so null is not needed.
             Java.MethodInvocation tagCall = isTagCall(binOp.lhs) ? (Java.MethodInvocation) binOp.lhs
                     : isTagCall(binOp.rhs) ? (Java.MethodInvocation) binOp.rhs : null;
             Java.Rvalue other = tagCall == binOp.lhs ? binOp.rhs : binOp.lhs;
-            if (tagCall != null && other instanceof Java.Literal) {
-                boolean isNull = isNullLiteral(other);
-                boolean isString = isStringLiteral(other);
-                if (isNull || isString) {
-                    if (!binOp.operator.equals("==") && !binOp.operator.equals("!="))
-                        throw new IllegalArgumentException("Only == and != allowed for tag() comparison");
+            if (tagCall != null && isStringLiteral(other)) {
+                if (!binOp.operator.equals("==") && !binOp.operator.equals("!="))
+                    throw new IllegalArgumentException("Only == and != allowed for tag() comparison");
 
-                    String key = extractStringLiteralValue(((Java.Literal) tagCall.arguments[0]).value);
-                    // tag('name') and tag('ref') point to street_name and street_ref
-                    String fieldName = KVStorageEncodedValue.toFieldName(KVStorageEncodedValue.resolveAlias(key));
-                    result.guessedVariables.add(fieldName);
+                String fieldName = getTagFieldName(tagCall);
+                if (fieldName == null) return false;
 
-                    int tagCallStart = tagCall.getLocation().getColumnNumber() - 1;
-                    Java.Literal argLiteral = (Java.Literal) tagCall.arguments[0];
-                    int tagCallEnd = argLiteral.getLocation().getColumnNumber() - 1 + argLiteral.value.length() + 1;
-                    int otherStart = other.getLocation().getColumnNumber() - 1;
-                    int otherEnd = otherStart + ((Java.Literal) other).value.length();
+                int tagCallStart = tagCall.getLocation().getColumnNumber() - 1;
+                Java.Literal argLiteral = (Java.Literal) tagCall.arguments[0];
+                int tagCallEnd = argLiteral.getLocation().getColumnNumber() - 1 + argLiteral.value.length() + 1;
+                int otherStart = other.getLocation().getColumnNumber() - 1;
+                int otherEnd = otherStart + ((Java.Literal) other).value.length();
 
-                    int exprStart = Math.min(tagCallStart, otherStart);
-                    int exprEnd = Math.max(tagCallEnd, otherEnd);
+                int exprStart = Math.min(tagCallStart, otherStart);
+                int exprEnd = Math.max(tagCallEnd, otherEnd);
 
-                    String newExpr;
-                    if (isNull) {
-                        newExpr = "edge.get(this." + fieldName + "_enc) " + binOp.operator + " null";
-                    } else {
-                        String prefix = binOp.operator.equals("!=") ? "!" : "";
-                        newExpr = prefix + tagValue(fieldName) + ".equals(" + ((Java.Literal) other).value + ")";
-                    }
-
-                    replacements.put(exprStart, new Replacement(exprStart, exprEnd - exprStart, newExpr));
-                    return true;
-                }
+                String prefix = binOp.operator.equals("!=") ? "!" : "";
+                String newExpr = prefix + tagValue(fieldName) + ".equals(" + ((Java.Literal) other).value + ")";
+                replacements.put(exprStart, new Replacement(exprStart, exprEnd - exprStart, newExpr));
+                return true;
             }
 
             if (binOp.lhs instanceof Java.AmbiguousName && ((Java.AmbiguousName) binOp.lhs).identifiers.length == 1) {
@@ -211,6 +198,21 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
     }
 
     /**
+     * @return the field name like kv_cycleway_left for tag('cycleway:left') or null if the tag is not stored.
+     * tag('name') and tag('ref') point to street_name and street_ref.
+     */
+    private String getTagFieldName(Java.MethodInvocation tagCall) {
+        String key = extractStringLiteralValue(((Java.Literal) tagCall.arguments[0]).value);
+        String fieldName = KVStorageEncodedValue.toFieldName(KVStorageEncodedValue.resolveAlias(key));
+        if (!variableValidator.isValid(fieldName)) {
+            invalidMessage = "tag '" + key + "' is not stored, add it to graph.stored_tags";
+            return null;
+        }
+        result.guessedVariables.add(fieldName);
+        return fieldName;
+    }
+
+    /**
      * On the Java level an absent tag is null, but in a custom model tag('xy') is an empty String.
      */
     private static String tagValue(String fieldName) {
@@ -230,47 +232,40 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
         return value.startsWith("\"") && value.endsWith("\"");
     }
 
-    private static boolean isNullLiteral(Java.Rvalue rvalue) {
-        return rvalue instanceof Java.Literal && "null".equals(((Java.Literal) rvalue).value);
-    }
-
     private static String extractStringLiteralValue(String literalValue) {
         return literalValue.substring(1, literalValue.length() - 1);
     }
 
     /**
-     * Convert single-quoted strings to double-quoted strings for Janino parsing.
-     * Escaped single quotes (\') inside strings are converted to literal single quotes.
+     * Convert single-quoted strings to double-quoted strings for Janino parsing. Double-quoted strings are
+     * kept as they are, so both 'a' and "a" work and a single quote inside "O'Brien" or \' inside 'O\'Brien'
+     * stays a literal single quote.
      */
     static String convertSingleToDoubleQuotes(String expression) {
-        boolean hasSingleQuotes = false;
-        for (int i = 0; i < expression.length(); i++) {
-            if (expression.charAt(i) == '"')
-                throw new IllegalArgumentException("Double quotes are not allowed in expression: " + expression);
-            if (expression.charAt(i) == '\'' && (i == 0 || expression.charAt(i - 1) != '\\')) {
-                hasSingleQuotes = true;
-                break;
-            }
-        }
-        if (!hasSingleQuotes) return expression;
-
         StringBuilder sb = new StringBuilder(expression.length());
-        int unescapedCount = 0;
+        char open = 0; // the quote character of the string we are currently in, 0 if outside of a string
         for (int i = 0; i < expression.length(); i++) {
             char c = expression.charAt(i);
-            if (c == '\\' && i + 1 < expression.length() && expression.charAt(i + 1) == '\'') {
-                // escaped single quote \' -> literal single quote (valid inside double-quoted strings)
-                sb.append('\'');
-                i++; // skip the quote
-            } else if (c == '\'') {
+            if (open == 0) {
+                if (c == '\'') open = c;
+                else if (c == '"') open = c;
+                sb.append(c == '\'' ? '"' : c);
+            } else if (c == '\\' && i + 1 < expression.length()) {
+                // keep escape sequences except that \' becomes ' inside a now double-quoted string
+                char next = expression.charAt(++i);
+                if (open == '\'' && next == '\'') sb.append('\'');
+                else sb.append(c).append(next);
+            } else if (c == open) {
+                open = 0;
                 sb.append('"');
-                unescapedCount++;
+            } else if (open == '\'' && c == '"') {
+                sb.append("\\\"");
             } else {
                 sb.append(c);
             }
         }
-        if (unescapedCount % 2 != 0)
-            throw new IllegalArgumentException("Unmatched single quotes in expression: " + expression);
+        if (open != 0)
+            throw new IllegalArgumentException("Unmatched quote " + open + " in expression: " + expression);
         return sb.toString();
     }
 

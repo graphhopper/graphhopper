@@ -473,9 +473,9 @@ class CustomModelParserTest {
         assertEquals(1.0, parameters.getEdgeToPriorityMapping().get(edgeWithTrack, false), 1.e-6);
         assertEquals(1.0, parameters.getEdgeToPriorityMapping().get(edgeWithout, false), 1.e-6);
 
-        // null comparison
+        // absent tag is an empty string
         customModel = new CustomModel();
-        customModel.addToPriority(If("tag('cycleway') == null", MULTIPLY, "0.3"));
+        customModel.addToPriority(If("tag('cycleway') == ''", MULTIPLY, "0.3"));
         customModel.addToSpeed(If("true", LIMIT, "100"));
         parameters = CustomModelParser.createWeightingParameters(customModel, encodingManager);
 
@@ -543,6 +543,18 @@ class CustomModelParserTest {
 
         assertEquals(1.0, parameters.getEdgeToPriorityMapping().get(named, false), 1.e-6);
         assertEquals(0.5, parameters.getEdgeToPriorityMapping().get(noName, false), 1.e-6);
+    }
+
+    @Test
+    void testTagAndIsForwardRejectedInTurnPenalty() {
+        for (String cond : List.of("tag('cycleway') == 'lane'", "is_forward")) {
+            CustomModel customModel = new CustomModel();
+            customModel.addToSpeed(If("true", LIMIT, "100"));
+            customModel.addToTurnPenalty(If(cond, ADD, "10"));
+            String msg = assertThrows(IllegalArgumentException.class,
+                    () -> CustomModelParser.createWeightingParameters(customModel, encodingManager)).getMessage();
+            assertTrue(msg.contains("not yet implemented"), msg);
+        }
     }
 
     @Test

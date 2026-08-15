@@ -108,9 +108,9 @@ public class ConditionalExpressionVisitorTest {
         assertEquals("contains is an illegal method in a conditional expression", result.invalidMessage);
 
         // the reason must survive even when it is thrown before the expression is parsed
-        result = parse("edge.getName().contains(\"A 4\")", validVariable, k -> "");
+        result = parse("tag('name) == 'A 4'", validVariable, k -> "");
         assertFalse(result.ok);
-        assertEquals("Double quotes are not allowed in expression: edge.getName().contains(\"A 4\")", result.invalidMessage);
+        assertEquals("Unmatched quote ' in expression: tag('name) == 'A 4'", result.invalidMessage);
 
         assertFalse(parse("road_class == PRIMARY", s -> false, k -> "").ok);
         result = parse("road_class == PRIMARY", validVariable, k -> "");
@@ -170,15 +170,24 @@ public class ConditionalExpressionVisitorTest {
         assertEquals("tag(\"cycleway\") == \"lane\"", convertSingleToDoubleQuotes("tag('cycleway') == 'lane'"));
         assertEquals("tag(\"name\") == \"O'Brien\"", convertSingleToDoubleQuotes("tag('name') == 'O\\'Brien'"));
         assertThrows(IllegalArgumentException.class, () -> convertSingleToDoubleQuotes("tag('cycleway)"));
-        assertThrows(IllegalArgumentException.class, () -> convertSingleToDoubleQuotes("tag(\"cycleway\")"));
+        // double quotes are kept and a single quote inside is a literal single quote
+        assertEquals("tag(\"cycleway\")", convertSingleToDoubleQuotes("tag(\"cycleway\")"));
+        assertEquals("tag(\"name\") == \"O'Brien\"", convertSingleToDoubleQuotes("tag('name') == \"O'Brien\""));
+        assertEquals("tag(\"name\") == \"a\\\"b\"", convertSingleToDoubleQuotes("tag('name') == 'a\"b'"));
     }
 
     @Test
     public void testTagGetExpression() {
-        NameValidator validVariable = s -> Helper.toUpperCase(s).equals(s) || s.equals("road_class");
+        NameValidator validVariable = s -> Helper.toUpperCase(s).equals(s) || s.equals("road_class")
+                || s.equals("kv_cycleway") || s.equals("kv_lit") || s.equals("kv_street_name");
+
+        // an unknown tag must not leak the internal name
+        ParseResult result = parse("tag('sidewalk') == 'left'", validVariable, k -> "");
+        assertFalse(result.ok);
+        assertEquals("tag 'sidewalk' is not stored, add it to graph.stored_tags", result.invalidMessage);
 
         // basic tag() == test
-        ParseResult result = parse("tag('cycleway') == 'lane'", validVariable, k -> "");
+        result = parse("tag('cycleway') == 'lane'", validVariable, k -> "");
         assertTrue(result.ok);
         assertTrue(result.converted.toString().contains("Objects.toString(edge.get(this.kv_cycleway_enc), \"\").equals(\"lane\")"));
 
@@ -199,15 +208,9 @@ public class ConditionalExpressionVisitorTest {
         assertTrue(converted.contains("Objects.toString(edge.get(this.kv_cycleway_enc), \"\").equals(\"lane\")"), converted);
         assertTrue(converted.contains("Objects.toString(edge.get(this.kv_cycleway_enc), \"\").equals(\"track\")"), converted);
 
-        // tag() == null
-        result = parse("tag('lit') == null", validVariable, k -> "");
-        assertTrue(result.ok);
-        assertTrue(result.converted.toString().contains("edge.get(this.kv_lit_enc) == null"));
-
-        // tag() != null
-        result = parse("tag('lit') != null", validVariable, k -> "");
-        assertTrue(result.ok);
-        assertTrue(result.converted.toString().contains("edge.get(this.kv_lit_enc) != null"));
+        // an absent tag is '' so a null comparison is not supported
+        assertFalse(parse("tag('lit') == null", validVariable, k -> "").ok);
+        assertFalse(parse("tag('lit') != null", validVariable, k -> "").ok);
 
         // reversed: literal on left, tag() on right
         result = parse("'lane' == tag('cycleway')", validVariable, k -> "");
@@ -217,7 +220,7 @@ public class ConditionalExpressionVisitorTest {
 
     @Test
     public void testTagStringMethods() {
-        NameValidator validVariable = s -> Helper.toUpperCase(s).equals(s) || s.equals("road_class");
+        NameValidator validVariable = s -> Helper.toUpperCase(s).equals(s) || s.equals("road_class") || s.startsWith("kv_");
 
         ParseResult result = parse("tag('name').contains('A 4')", validVariable, k -> "");
         assertTrue(result.ok, result.invalidMessage);

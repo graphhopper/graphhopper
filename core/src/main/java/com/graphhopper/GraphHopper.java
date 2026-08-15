@@ -637,9 +637,9 @@ public class GraphHopper {
                         + "' cannot be used together as both are stored as '" + kvEnc.getName() + "'");
             emBuilder.add(kvEnc);
         }
-        // the OSMReader always stores name and ref, so tag('name')/tag('ref') work without stored_tags
-        emBuilder.add(new KVStorageEncodedValue(Parameters.Details.STREET_NAME));
-        emBuilder.add(new KVStorageEncodedValue(Parameters.Details.STREET_REF));
+        // the OSMReader always stores e.g. name and ref, so tag('name') and tag('ref') work without stored_tags
+        for (String kvKey : KVStorageEncodedValue.ALIASES.values())
+            emBuilder.add(new KVStorageEncodedValue(kvKey));
 
         restrictionVehicleTypesByProfile.entrySet().stream()
                 .filter(e -> !e.getValue().isEmpty())

@@ -363,6 +363,8 @@ public class CustomModelParser {
     private static String getTurnPenaltyVariableDeclaration(EncodedValueLookup lookup, final String arg, boolean needTwoDirections) {
         // parameters in method getTurnPenalty are: int inEdge, int viaNode, int outEdge.
         // The variables outEdgeReverse and inEdgeReverse are provided from initial calls if needTwoDirections is true.
+        if (arg.startsWith(KV_PREFIX) || arg.equals(IS_FORWARD))
+            throw new IllegalArgumentException("'" + (arg.equals(IS_FORWARD) ? IS_FORWARD : "tag()") + "' cannot be used in a 'turn_penalty' statement (not yet implemented)");
         if (arg.equals(CHANGE_ANGLE)) {
             // calcChangeAngle expects the orientation slot at the viaNode side of outEdge (see OrientationCalculator);
             // since outEdgeReverse now means direction of travel, invert it here.

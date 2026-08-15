@@ -143,7 +143,9 @@ They are then available via `tag('key')` in a condition, and requestable as a pa
 e.g. `details=cycleway`. If an encoded value with the same name exists it wins, so `details=surface` still returns
 the encoded value even when `surface` is a stored tag too.
 
-The name and the ref of a way are always stored, so `tag('name')` and `tag('ref')` work without configuring anything.
+The `name`, `ref`, `destination` and `destination:ref` of a way are always stored, so `tag('name')` etc. work without
+configuring anything. `destination` and `destination:ref` are stored per direction, so `tag('destination')` returns the
+value for the direction of travel. The available tags are listed under `stored_tags` in the `/info` response.
 
 The value is always a string, so only the following is possible:
 
