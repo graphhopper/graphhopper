@@ -9,6 +9,7 @@
 - OSMReader no longer sets the artificial speed_from_duration tag but instead uses duration_in_seconds, when the duration tag is present (#3266)
 - country rules were moved into parsers and are now enabled by default
 - speeds generated from highway class now respects country-specific default speed limits, but the max_speed encoded value is now required; see #3249
+- isochrones: the tolerance parameter thins the triangulation again like <= 10.x (coarser output for a given tolerance) and the convex hull is computed from the sites instead of all triangulation edges, fixing a performance/OOM regression introduced in 11.0 by #3128
 
 ### 11.0 [14 Oct 2025]
 
