@@ -1,6 +1,7 @@
 package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.json.MinMax;
+import com.graphhopper.routing.ev.AverageSlope;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
 import com.graphhopper.routing.ev.EncodedValueLookup;
@@ -63,6 +64,75 @@ class ValueExpressionVisitorTest {
         // assertTrue(parse("Math.sqrt(road_class.ordinal())", validVariable).ok);
     }
 
+
+    @Test
+    public void bikeClimbFunctions() {
+        NameValidator validator = s -> s.equals("average_slope");
+        ParseResult result = parse("bike_climb_factor(average_slope, 120, 95, 18)", validator);
+        assertTrue(result.ok, result.invalidMessage);
+        assertEquals("[average_slope]", result.guessedVariables.toString());
+
+        // scaled by a literal the expression stays monotone in the encoded value
+        result = parse("0.9 * bike_climb_factor(average_slope, 120, 95, 18)", validator);
+        assertTrue(result.ok, result.invalidMessage);
+        result = parse("bike_climb_factor(average_slope, 120, 95, 18) * 0.8", validator);
+        assertTrue(result.ok, result.invalidMessage);
+
+        // combined with other terms it can be non-monotone and the endpoint-based findMinMax would
+        // calculate wrong bounds, e.g. here the real maximum is at average_slope=2 and not at ±31.5
+        result = parse("bike_climb_factor(average_slope, 120, 95, 18) + 0.02 * average_slope", validator);
+        assertFalse(result.ok);
+        assertTrue(result.invalidMessage.contains("must be the entire expression"), result.invalidMessage);
+        result = parse("average_slope * bike_climb_factor(average_slope, 120, 95, 18)", validator);
+        assertFalse(result.ok);
+        result = parse("Math.sqrt(bike_climb_factor(average_slope, 120, 95, 18))", validator);
+        assertFalse(result.ok);
+
+        result = parse("bike_climb_factor(average_slope, 120, 95)", validator);
+        assertFalse(result.ok);
+        assertTrue(result.invalidMessage.contains("bike_climb_factor expects 4 arguments"), result.invalidMessage);
+
+        // bike_climb_speed is no longer a built-in function
+        result = parse("bike_climb_speed(average_slope, 120, 95)", validator);
+        assertFalse(result.ok);
+        assertTrue(result.invalidMessage.contains("illegal method"), result.invalidMessage);
+
+        result = parse("bike_climb_factor(unknown, 120, 95, 18)", validator);
+        assertFalse(result.ok);
+        assertTrue(result.invalidMessage.contains("'unknown' not available"), result.invalidMessage);
+    }
+
+    @Test
+    public void convertedValueExpression() {
+        // the converted expression is used in the generated getSpeed code and injects the current
+        // speed as last argument; findMinMax uses the expression as written instead
+        NameValidator validator = s -> s.equals("average_slope");
+        ParseResult result = parse("bike_climb_factor(average_slope, 120, 95, 18)", validator);
+        assertTrue(result.ok, result.invalidMessage);
+        assertEquals("bike_climb_factor(average_slope, 120, 95, 18, value)", result.converted.toString());
+
+        result = parse("0.9 * bike_climb_factor(average_slope, 120, 95, 18)", validator);
+        assertTrue(result.ok, result.invalidMessage);
+        assertEquals("0.9 * bike_climb_factor(average_slope, 120, 95, 18, value)", result.converted.toString());
+
+        // without a built-in function the expression stays unchanged
+        result = parse("average_slope * 2.5", validator);
+        assertTrue(result.ok, result.invalidMessage);
+        assertEquals("average_slope * 2.5", result.converted.toString());
+    }
+
+    @Test
+    public void bikeClimbMinMax() {
+        EncodedValueLookup lookup = new EncodingManager.Builder().add(AverageSlope.create()).build();
+        // the function is monotone decreasing in slope so the bounds are taken from the interval
+        // limits of average_slope (-31.5 .. 31.5)
+        assertInterval(CustomWeightingHelper.bike_climb_factor(31.5, 120, 95, 18), 1.0,
+                "bike_climb_factor(average_slope, 120, 95, 18)", lookup);
+        assertInterval(0.9 * CustomWeightingHelper.bike_climb_factor(31.5, 120, 95, 18), 0.9,
+                "0.9 * bike_climb_factor(average_slope, 120, 95, 18)", lookup);
+
+        assertEquals(Set.of("average_slope"), findVariables("bike_climb_factor(average_slope, 120, 95, 18)", lookup));
+    }
 
     @Test
     public void testErrors() {

@@ -273,6 +273,32 @@ class CustomWeightingTest {
     }
 
     @Test
+    public void testBikeClimbFunctions() {
+        DecimalEncodedValue slopeEnc = AverageSlope.create();
+        DecimalEncodedValue speedEnc = VehicleSpeed.create("bike", 4, 2, true);
+        EncodingManager em = new EncodingManager.Builder().add(speedEnc).add(slopeEnc).build();
+        BaseGraph graph = new BaseGraph.Builder(em).create();
+        EdgeIteratorState edge = graph.edge(0, 1).setDistance(1000).set(speedEnc, 18, 18).set(slopeEnc, 12);
+
+        CustomModel customModel = new CustomModel().setDistanceInfluence(0d);
+        customModel.addToSpeed(If("true", LIMIT, speedEnc.getName()));
+        customModel.addToSpeed(If("average_slope >= 0", MULTIPLY, "bike_climb_factor(average_slope, 120, 95, 18)"));
+        Weighting weighting = CustomModelParser.createWeighting(em, NO_TURN_COST_PROVIDER, customModel);
+        assertEquals(10 * 1000 / (18 * CustomWeightingHelper.bike_climb_factor(12, 120, 95, 18) / 3.6),
+                weighting.calcEdgeWeight(edge, false), 1);
+        // downhill the average_slope is negated and the factor does not apply
+        assertEquals(10 * 1000 / (18 / 3.6), weighting.calcEdgeWeight(edge, true), 1);
+
+        // the current speed is injected into bike_climb_factor: for a slower edge (rough surface)
+        // the climbing speed is only reduced via a higher rolling resistance, i.e. 3.54km/h and
+        // not the proportional 10/18*3.68=2.05km/h
+        EdgeIteratorState slowEdge = graph.edge(2, 3).setDistance(1000).set(speedEnc, 10, 10).set(slopeEnc, 12);
+        assertEquals(10 * 1000 / (10 * CustomWeightingHelper.bike_climb_factor(12, 120, 95, 18, 10) / 3.6),
+                weighting.calcEdgeWeight(slowEdge, false), 1);
+        assertEquals(10 * 1000 / (3.54 / 3.6), weighting.calcEdgeWeight(slowEdge, false), 30);
+    }
+
+    @Test
     public void testMaxSpeed() {
         assertEquals(155, avSpeedEnc.getMaxOrMaxStorableDecimal(), 0.1);
 

@@ -730,6 +730,35 @@ Note that when using a dynamic value like `my_precalculated_value` the maximum v
 the response time of A-star routing requests (i.e. when CH and LM are disabled). This means that if you pick a
 smaller or more narrow range, or if you can avoid them entirely, then these requests might get faster.
 
+#### Built-in functions
+
+Besides `Math.sqrt` a value expression can call the following built-in function:
+
+* `bike_climb_factor(average_slope, power, mass, base_speed)`: the continuous power-limited climbing
+  speed of a cyclist producing `power` watts with a total `mass` (rider plus bike) in kg, as a
+  factor relative to the speed of the preceding statements and capped at 1, for the usage with
+  `multiply_by`. The slope is expected in percent, e.g. from the `average_slope` encoded value, and
+  for negative values the factor is 1. A speed below the flat `base_speed` (km/h) of the profile
+  indicates a rough surface, for which the rolling resistance is increased instead of scaling the
+  climbing speed down, because on a steep climb the speed is limited by the power and not by the
+  surface. So the comfort-limited surface penalty of the base profile still applies on the flat but
+  is not double-counted against gravity on a climb. Where riding gets slower than walking, the
+  speed of pushing the bike is used instead. See `bike_elevation.json` for an example:
+
+```json
+{
+  "speed": [
+    { "if": "average_slope >= 2", "multiply_by": "bike_climb_factor(average_slope, 120, 95, 18)" }
+  ]
+}
+```
+
+A built-in function call must be the entire value, optionally scaled by a number like
+`"0.9 * bike_climb_factor(average_slope, 120, 95, 18)"` — it cannot be combined with other terms.
+
+A continuous function avoids the small detours or shortcuts that the band edges of an equivalent
+if-else "staircase" of slope bands can create.
+
 ### Customizing `distance_influence`
 
 We already explained the meaning of `distance_influence` in one of the previous sections. To specify its value simply

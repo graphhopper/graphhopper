@@ -59,6 +59,43 @@ class CustomWeightingHelperTest {
     }
 
     @Test
+    public void testBikeClimbFactor() {
+        // 120W and 95kg: continuous replacement for the former staircase in bike_elevation.json,
+        // the speed at the base speed 18 is 18 * factor
+        assertEquals(3.68, 18 * CustomWeightingHelper.bike_climb_factor(12, 120, 95, 18), 0.01);
+        assertEquals(2.97, 18 * CustomWeightingHelper.bike_climb_factor(15, 120, 95, 18), 0.01);
+        // where riding gets slower than walking the cyclist pushes the bike instead
+        // (approximately 0.8 times Tobler's hiking speed)
+        assertEquals(1.57, 18 * CustomWeightingHelper.bike_climb_factor(31, 120, 95, 18), 0.01);
+        assertEquals(2.0, 18 * CustomWeightingHelper.bike_climb_factor(20, 80, 95, 18), 0.01);
+        // capped at 1 for shallow and downhill slopes
+        assertEquals(1, CustomWeightingHelper.bike_climb_factor(1, 120, 95, 18));
+        assertEquals(1, CustomWeightingHelper.bike_climb_factor(-10, 120, 95, 18));
+
+        assertThrows(IllegalArgumentException.class, () -> CustomWeightingHelper.bike_climb_factor(12, 0, 95, 18));
+        assertThrows(IllegalArgumentException.class, () -> CustomWeightingHelper.bike_climb_factor(12, 120, 95, 0));
+    }
+
+    @Test
+    public void testBikeClimbFactorCurrentSpeed() {
+        // a current speed reduced from the base 18 (e.g. from a rough surface) increases the rolling
+        // resistance but no longer scales the power-limited climbing speed down: for 9km/h the
+        // rolling resistance doubles to 0.012 and the resulting speed 9*factor is 3.51km/h instead
+        // of the proportional 9/18*3.68=1.84km/h
+        assertEquals(3.51, 9 * CustomWeightingHelper.bike_climb_factor(12, 120, 95, 18, 9), 0.01);
+        // the factor never increases the speed above the current speed...
+        assertEquals(1, CustomWeightingHelper.bike_climb_factor(12, 120, 95, 18, 3));
+        // ...and the rolling resistance increase is capped (factor 3)
+        assertEquals(1, CustomWeightingHelper.bike_climb_factor(12, 120, 95, 18, 2));
+        // a current speed above the base speed keeps the default rolling resistance, i.e. the
+        // same absolute climbing speed as at the base speed
+        assertEquals(3.68, 25 * CustomWeightingHelper.bike_climb_factor(12, 120, 95, 18, 25), 0.01);
+        // the four argument variant used for the bounds is the factor at the base speed
+        assertEquals(CustomWeightingHelper.bike_climb_factor(12, 120, 95, 18, 18),
+                CustomWeightingHelper.bike_climb_factor(12, 120, 95, 18), 1.e-6);
+    }
+
+    @Test
     public void testNegativeMax() {
         CustomModel customModel = new CustomModel();
         customModel.addToSpeed(If("true", LIMIT, VehicleSpeed.key("car")));

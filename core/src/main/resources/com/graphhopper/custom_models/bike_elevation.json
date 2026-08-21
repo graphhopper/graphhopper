@@ -1,14 +1,11 @@
-// assume constant power of 120W and a weight of 95kg and base speed of approx. 18km/h
+// assume constant power of 120W, a weight of 95kg (bike + rider) and a base speed of approx. 18km/h.
+// The bike_climb_factor slows down relative to the speed of the base profile (injected as hidden
+// first argument): a reduced base speed indicates a rough surface for which only the rolling
+// resistance is increased, as on a steep climb the speed is limited by the power and not by the
+// surface. The speed is never below the walking speed at which the cyclist pushes the bike.
 {
   "speed": [
-    { "if":      "average_slope >= 25",  "limit_to": "1.2" },
-    { "else_if": "average_slope >= 15",  "limit_to": "3.0" },
-    { "else_if": "average_slope >= 12",  "limit_to": "4.0" },
-    { "else_if": "average_slope >=  8",  "multiply_by": "0.28" },
-    { "else_if": "average_slope >=  6",  "multiply_by": "0.36" },
-    { "else_if": "average_slope >=  4",  "multiply_by": "0.50" },
-    { "else_if": "average_slope >=  3",  "multiply_by": "0.60" },
-
+    { "if":      "average_slope >=   2", "multiply_by": "bike_climb_factor(average_slope, 120, 95, 18)" },
     { "else_if": "average_slope <= -15", "multiply_by": "1.00" },
     { "else_if": "average_slope <=  -9", "multiply_by": "1.50" },
     { "else_if": "average_slope <=  -6", "multiply_by": "1.30" },

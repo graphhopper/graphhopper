@@ -562,12 +562,25 @@ public class CustomModelParser {
         };
     }
 
+    /**
+     * bike_climb_factor is relative to the speed computed from the preceding statements, so for
+     * the generated getSpeed code we use the converted value expression where this current speed
+     * ("value") is injected as last argument, see ValueExpressionVisitor.parse.
+     */
+    private static String convertValue(String valueExpression, NameValidator nameValidator) {
+        ParseResult result = ValueExpressionVisitor.parse(valueExpression,
+                name -> nameValidator.isValid(name) || name.contains("Infinity"));
+        return result.ok ? result.converted.toString() : valueExpression;
+    }
+
     static void parseExpressions(StringBuilder expressions, NameValidator nameInConditionValidator,
                                  String exceptionInfo, Set<String> createObjects, List<Statement> list,
                                  ClassHelper classHelper, String indentation) {
 
+        boolean isSpeed = "speed entry".equals(exceptionInfo);
         for (Statement statement : list) {
-            // avoid parsing the RHS value expression again as we just did it to get the maximum values in createClazz
+            // the RHS value expression was already verified in createClazz; for speed statements it
+            // is parsed again to get the converted expression (injected current speed)
             if (statement.keyword() == Statement.Keyword.ELSE) {
                 if (!Helper.isEmpty(statement.condition()))
                     throw new IllegalArgumentException("condition must be empty but was " + statement.condition());
@@ -578,7 +591,8 @@ public class CustomModelParser {
                     parseExpressions(expressions, nameInConditionValidator, exceptionInfo, createObjects, statement.doBlock(), classHelper, indentation + "  ");
                     expressions.append(indentation).append("}\n");
                 } else {
-                    expressions.append("else {").append(statement.operation().build(statement.value())).append("; }\n");
+                    String value = isSpeed ? convertValue(statement.value(), nameInConditionValidator) : statement.value();
+                    expressions.append("else {").append(statement.operation().build(value)).append("; }\n");
                 }
             } else if (statement.keyword() == Statement.Keyword.ELSEIF || statement.keyword() == Statement.Keyword.IF) {
                 ParseResult parseResult = ConditionalExpressionVisitor.parse(statement.condition(), nameInConditionValidator, classHelper);
@@ -595,8 +609,9 @@ public class CustomModelParser {
                     parseExpressions(expressions, nameInConditionValidator, exceptionInfo, createObjects, statement.doBlock(), classHelper, indentation + "  ");
                     expressions.append(indentation).append("}\n");
                 } else {
+                    String value = isSpeed ? convertValue(statement.value(), nameInConditionValidator) : statement.value();
                     expressions.append("if (").append(parseResult.converted).append(") {").
-                            append(statement.operation().build(statement.value())).append(";}\n");
+                            append(statement.operation().build(value)).append(";}\n");
                 }
             } else {
                 throw new IllegalArgumentException("The statement must be either 'if', 'else_if' or 'else'");

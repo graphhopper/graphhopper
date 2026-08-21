@@ -29,6 +29,7 @@ import org.codehaus.janino.*;
 import java.io.StringReader;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static com.graphhopper.json.Statement.Keyword.IF;
@@ -41,9 +42,18 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
     private static final String INFINITY = Double.toString(Double.POSITIVE_INFINITY);
     private static final Set<String> allowedMethodParents = Set.of("Math");
     private static final Set<String> allowedMethods = Set.of("sqrt");
+    // built-in functions (static methods in CustomWeightingHelper) mapped to their expected number
+    // of arguments. They must be monotone in the encoded value argument, see findMinMax.
+    private static final Map<String, Integer> allowedFunctions = Map.of("bike_climb_factor", 4);
     private final ParseResult result;
     private final NameValidator variableValidator;
     private String invalidMessage;
+    // the offset of the single allowed built-in function call, see parse
+    private int functionCallStart = -1;
+    // a built-in function combined with other terms can be non-monotone in the encoded value which
+    // would break the endpoint-based interval calculation in findMinMax. So allow it only as the
+    // entire expression, optionally scaled by a literal like "0.9 * bike_climb_speed(...)"
+    private boolean functionCallAllowed = true;
 
     public ValueExpressionVisitor(ParseResult result, NameValidator variableValidator) {
         this.result = result;
@@ -77,10 +87,28 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
             return true;
         } else if (rv instanceof Java.UnaryOperation uop) {
             result.operators.add(uop.operator);
-            if (uop.operator.equals("-"))
+            if (uop.operator.equals("-")) {
+                functionCallAllowed = false;
                 return uop.operand.accept(this);
+            }
             return false;
         } else if (rv instanceof Java.MethodInvocation mi) {
+            if (mi.target == null && allowedFunctions.containsKey(mi.methodName)) {
+                if (!functionCallAllowed) {
+                    invalidMessage = mi.methodName + " must be the entire expression, optionally scaled like \"0.9 * " + mi.methodName + "(...)\"";
+                    return false;
+                }
+                int arity = allowedFunctions.get(mi.methodName);
+                if (mi.arguments.length != arity) {
+                    invalidMessage = mi.methodName + " expects " + arity + " arguments, but got: " + mi.arguments.length;
+                    return false;
+                }
+                functionCallStart = mi.getLocation().getColumnNumber() - 1;
+                functionCallAllowed = false; // no built-in function inside the arguments
+                for (Java.Rvalue argument : mi.arguments)
+                    if (!argument.accept(this)) return false;
+                return true;
+            }
             if (allowedMethods.contains(mi.methodName)) {
                 // skip methods like this.in()
                 if (mi.target != null) {
@@ -94,6 +122,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
                                 return true;
                             } else if (mi.arguments.length == 1) {
                                 // return "x" but verify before
+                                functionCallAllowed = false;
                                 return mi.arguments[0].accept(this);
                             }
                         }
@@ -110,7 +139,11 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
             String op = binOp.operator;
             result.operators.add(op);
             if (op.equals("*") || op.equals("+") || binOp.operator.equals("-")) {
-                return binOp.lhs.accept(this) && binOp.rhs.accept(this);
+                boolean allowed = functionCallAllowed;
+                functionCallAllowed = allowed && op.equals("*") && binOp.rhs instanceof Java.Literal;
+                if (!binOp.lhs.accept(this)) return false;
+                functionCallAllowed = allowed && op.equals("*") && binOp.lhs instanceof Java.Literal;
+                return binOp.rhs.accept(this);
             }
             invalidMessage = "invalid operation '" + op + "'";
             return false;
@@ -144,10 +177,34 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
                 ValueExpressionVisitor visitor = new ValueExpressionVisitor(result, variableValidator);
                 result.ok = atom.accept(visitor);
                 result.invalidMessage = visitor.invalidMessage;
+                if (result.ok) {
+                    // The converted expression is used in the generated getSpeed code and injects
+                    // the current speed ("value") as last argument of the built-in function call.
+                    // Note that findMinMax uses the expression as written in the custom model
+                    // instead, i.e. it resolves to the function without the currentSpeed parameter.
+                    result.converted = new StringBuilder(expression);
+                    if (visitor.functionCallStart >= 0)
+                        result.converted.insert(findClosingParen(expression, visitor.functionCallStart), ", value");
+                }
             }
         } catch (Exception ex) {
         }
         return result;
+    }
+
+    /**
+     * @return the offset of the closing parenthesis that ends the function call starting at the
+     * given offset. Parentheses are purely structural in a value expression (no strings or
+     * comments), so counting the depth is safe.
+     */
+    private static int findClosingParen(String expression, int callStart) {
+        int depth = 0;
+        for (int i = callStart; i < expression.length(); i++) {
+            char c = expression.charAt(i);
+            if (c == '(') depth++;
+            else if (c == ')' && --depth == 0) return i;
+        }
+        throw new IllegalArgumentException("no closing parenthesis found in: " + expression);
     }
 
     static Set<String> findVariables(List<Statement> statements, EncodedValueLookup lookup) {
@@ -203,7 +260,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         } catch (NumberFormatException ex) {
             try {
                 if (result.guessedVariables.isEmpty()) { // without encoded values
-                    NoArgEvaluator ee = new ExpressionEvaluator().createFastEvaluator(valueExpression, NoArgEvaluator.class);
+                    NoArgEvaluator ee = createExpressionEvaluator().createFastEvaluator(valueExpression, NoArgEvaluator.class);
                     value = ee.evaluate();
                 } else if (lookup.hasEncodedValue(valueExpression)) { // speed up for common case that complete right-hand side is the encoded value
                     EncodedValue enc = lookup.getEncodedValue(valueExpression, EncodedValue.class);
@@ -211,7 +268,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
                 } else {
                     // single encoded value
                     String var = result.guessedVariables.iterator().next();
-                    SingleArgEvaluator ee = new ExpressionEvaluator().createFastEvaluator(valueExpression, SingleArgEvaluator.class, var);
+                    SingleArgEvaluator ee = createExpressionEvaluator().createFastEvaluator(valueExpression, SingleArgEvaluator.class, var);
                     EncodedValue enc = lookup.getEncodedValue(var, EncodedValue.class);
                     double max = getMax(enc);
                     double val1 = ee.evaluate(max);
@@ -248,7 +305,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
 
         try {
             if (result.guessedVariables.isEmpty()) { // without encoded values
-                NoArgEvaluator ee = new ExpressionEvaluator().createFastEvaluator(valueExpression, NoArgEvaluator.class);
+                NoArgEvaluator ee = createExpressionEvaluator().createFastEvaluator(valueExpression, NoArgEvaluator.class);
                 double val = ee.evaluate();
                 return new MinMax(val, val);
             }
@@ -260,7 +317,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
             }
 
             String var = result.guessedVariables.iterator().next();
-            SingleArgEvaluator ee = new ExpressionEvaluator().createFastEvaluator(valueExpression, SingleArgEvaluator.class, var);
+            SingleArgEvaluator ee = createExpressionEvaluator().createFastEvaluator(valueExpression, SingleArgEvaluator.class, var);
             EncodedValue enc = lookup.getEncodedValue(var, EncodedValue.class);
             double max = getMax(enc);
             double val1 = ee.evaluate(max);
@@ -270,6 +327,13 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         } catch (CompileException ex) {
             throw new IllegalArgumentException(ex);
         }
+    }
+
+    private static ExpressionEvaluator createExpressionEvaluator() {
+        ExpressionEvaluator ee = new ExpressionEvaluator();
+        // make the built-in functions from allowedFunctions resolvable
+        ee.setDefaultImports("static " + CustomWeightingHelper.class.getName() + ".*");
+        return ee;
     }
 
     static double getMin(EncodedValue enc) {

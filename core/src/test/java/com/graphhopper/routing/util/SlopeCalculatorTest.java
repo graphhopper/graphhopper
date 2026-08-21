@@ -77,7 +77,8 @@ class SlopeCalculatorTest {
         new SlopeCalculator(maxEnc, averageEnc).execute(graph);
 
         assertEquals(31, edge.get(maxEnc), 1e-3);
-        assertEquals(-31, edge.getReverse(averageEnc), 1e-3);
+        // average_slope stores 6 bits with 0.5 precision, so it clamps at 31.5
+        assertEquals(-31.5, edge.getReverse(averageEnc), 1e-3);
     }
 
     @Test
@@ -97,7 +98,7 @@ class SlopeCalculatorTest {
         new SlopeCalculator(maxEnc, averageEnc).execute(graph);
 
         assertEquals(-31, edge.get(maxEnc), 1e-3);
-        assertEquals(31, edge.getReverse(averageEnc), 1e-3);
+        assertEquals(31.5, edge.getReverse(averageEnc), 1e-3);
     }
 
     @Test
