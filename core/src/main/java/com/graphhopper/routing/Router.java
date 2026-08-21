@@ -221,7 +221,7 @@ public class Router {
         // we merge the different legs of the roundtrip into one response path
         // note that the waypoints are not just the snapped points of the snaps, as usual, because we do some kind of tweak
         // to avoid 'unnecessary tails' in the roundtrip algo
-        ResponsePath responsePath = concatenatePaths(request, solver.weighting, queryGraph, result.paths, result.wayPoints);
+        ResponsePath responsePath = concatenatePaths(request, solver, queryGraph, result.paths, result.wayPoints);
         ghRsp.add(responsePath);
         ghRsp.getHints().putObject("visited_nodes.sum", result.visitedNodes);
         ghRsp.getHints().putObject("visited_nodes.average", (float) result.visitedNodes / (snaps.size() - 1));
@@ -252,7 +252,7 @@ public class Router {
             throw new RuntimeException("Empty paths for alternative route calculation not expected");
 
         // each path represents a different alternative and we do the path merging for each of them
-        PathMerger pathMerger = createPathMerger(request, solver.weighting, queryGraph);
+        PathMerger pathMerger = createPathMerger(request, solver, queryGraph);
         for (Path path : result.paths) {
             PointList waypoints = getWaypoints(snaps);
             ResponsePath responsePath = pathMerger.doWork(waypoints, Collections.singletonList(path), encodingManager, translationMap.getWithFallBack(request.getLocale()));
@@ -283,7 +283,7 @@ public class Router {
             throw new RuntimeException("There should be exactly one more point than paths. points:" + request.getPoints().size() + ", paths:" + result.paths.size());
 
         // here each path represents one leg of the via-route and we merge them all together into one response path
-        ResponsePath responsePath = concatenatePaths(request, solver.weighting, queryGraph, result.paths, getWaypoints(snaps));
+        ResponsePath responsePath = concatenatePaths(request, solver, queryGraph, result.paths, getWaypoints(snaps));
         responsePath.addDebugInfo(result.debug);
         ghRsp.add(responsePath);
         ghRsp.getHints().putObject("visited_nodes.sum", result.visitedNodes);
@@ -291,7 +291,7 @@ public class Router {
         return ghRsp;
     }
 
-    private PathMerger createPathMerger(GHRequest request, Weighting weighting, Graph graph) {
+    private PathMerger createPathMerger(GHRequest request, Solver solver, Graph graph) {
         boolean enableInstructions = request.getHints().getBool(Parameters.Routing.INSTRUCTIONS, routerConfig.isInstructionsEnabled());
         boolean includeRoundaboutExitInstruction = request.getHints().getBool(Parameters.Routing.ROUNDABOUT_EXITS, false);
         boolean enableViaPointInstructions = request.getHints().getBool(Parameters.Routing.VIA_POINT_INSTRUCTIONS, routerConfig.isViaPointInstructionsEnabled());
@@ -302,7 +302,7 @@ public class Router {
         RamerDouglasPeucker peucker = new RamerDouglasPeucker().
                 setMaxDistance(wayPointMaxDistance).
                 setElevationMaxDistance(elevationWayPointMaxDistance);
-        PathMerger pathMerger = new PathMerger(graph, weighting).
+        PathMerger pathMerger = new PathMerger(graph, solver.weighting, solver.baseWeighting).
                 setCalcPoints(calcPoints).
                 setRamerDouglasPeucker(peucker).
                 setEnableInstructions(enableInstructions).
@@ -316,8 +316,8 @@ public class Router {
         return pathMerger;
     }
 
-    private ResponsePath concatenatePaths(GHRequest request, Weighting weighting, QueryGraph queryGraph, List<Path> paths, PointList waypoints) {
-        PathMerger pathMerger = createPathMerger(request, weighting, queryGraph);
+    private ResponsePath concatenatePaths(GHRequest request, Solver solver, QueryGraph queryGraph, List<Path> paths, PointList waypoints) {
+        PathMerger pathMerger = createPathMerger(request, solver, queryGraph);
         return pathMerger.doWork(waypoints, paths, encodingManager, translationMap.getWithFallBack(request.getLocale()));
     }
 
@@ -354,6 +354,7 @@ public class Router {
         private final RouterConfig routerConfig;
         protected Profile profile;
         protected Weighting weighting;
+        protected Weighting baseWeighting;
         protected final EncodedValueLookup lookup;
 
         public Solver(GHRequest request, Map<String, Profile> profilesByName, RouterConfig routerConfig, EncodedValueLookup lookup) {
@@ -382,6 +383,7 @@ public class Router {
             profile = getProfile();
             checkProfileCompatibility();
             weighting = createWeighting();
+            baseWeighting = createBaseWeighting();
         }
 
         protected Profile getProfile() {
@@ -406,6 +408,13 @@ public class Router {
         }
 
         protected abstract Weighting createWeighting();
+
+        /**
+         * The weighting without the query-time custom model, used for the turn instructions, see #3223.
+         */
+        protected Weighting createBaseWeighting() {
+            return weighting;
+        }
 
         protected EdgeFilter createSnapFilter() {
             return new DefaultSnapFilter(weighting, lookup.getBooleanEncodedValue(Subnetwork.key(profile.getName())));
@@ -519,6 +528,13 @@ public class Router {
             PMap requestHints = new PMap(request.getHints());
             requestHints.putObject(CustomModel.KEY, request.getCustomModel());
             return weightingFactory.createWeighting(profile, requestHints, false);
+        }
+
+        @Override
+        protected Weighting createBaseWeighting() {
+            if (request.getCustomModel() == null) return weighting;
+            // turn costs are irrelevant as only edge weights are checked
+            return weightingFactory.createWeighting(profile, new PMap(request.getHints()), true);
         }
 
         @Override

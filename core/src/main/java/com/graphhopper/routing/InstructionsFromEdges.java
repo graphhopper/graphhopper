@@ -37,6 +37,8 @@ import static com.graphhopper.util.Parameters.Details.*;
 public class InstructionsFromEdges implements Path.EdgeVisitor {
 
     private final Weighting weighting;
+    // without the query-time custom model, so roads it blocks stay visible for junction classification, see #3223
+    private final Weighting baseWeighting;
     private final NodeAccess nodeAccess;
 
     private final InstructionList ways;
@@ -93,9 +95,10 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
 
     private static final int MAX_U_TURN_DISTANCE = 35;
 
-    public InstructionsFromEdges(Graph graph, Weighting weighting, EncodedValueLookup evLookup,
+    public InstructionsFromEdges(Graph graph, Weighting weighting, Weighting baseWeighting, EncodedValueLookup evLookup,
                                  InstructionList ways, boolean includeRoundaboutExits) {
         this.weighting = weighting;
+        this.baseWeighting = baseWeighting;
         this.roundaboutEnc = evLookup.getBooleanEncodedValue(Roundabout.KEY);
         this.roadEnvEnc = evLookup.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
         this.roadClassEnc = evLookup.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
@@ -116,16 +119,22 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         // if the current profile can use them.
         BooleanEncodedValue carAccessEnc = evLookup.getBooleanEncodedValue(VehicleAccess.key("car"));
         outEdgeExplorer = graph.createEdgeExplorer(edge -> edge.get(carAccessEnc)
-                || !edge.getReverse(carAccessEnc) && Double.isFinite(weighting.calcEdgeWeight(edge, false)));
+                || !edge.getReverse(carAccessEnc) && Double.isFinite(baseWeighting.calcEdgeWeight(edge, false)));
         allExplorer = graph.createEdgeExplorer();
     }
 
     public static InstructionList calcInstructions(Path path, Graph graph, Weighting weighting,
                                                    EncodedValueLookup evLookup, final Translation tr) {
-        return calcInstructions(path, graph, weighting, evLookup, tr, false);
+        return calcInstructions(path, graph, weighting, weighting, evLookup, tr, false);
     }
 
     public static InstructionList calcInstructions(Path path, Graph graph, Weighting weighting,
+                                                   EncodedValueLookup evLookup, final Translation tr,
+                                                   boolean includeRoundaboutExits) {
+        return calcInstructions(path, graph, weighting, weighting, evLookup, tr, includeRoundaboutExits);
+    }
+
+    public static InstructionList calcInstructions(Path path, Graph graph, Weighting weighting, Weighting baseWeighting,
                                                    EncodedValueLookup evLookup, final Translation tr,
                                                    boolean includeRoundaboutExits) {
         final InstructionList ways = new InstructionList(tr);
@@ -133,7 +142,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             if (path.getEdgeCount() == 0) {
                 ways.add(new FinishInstruction(graph.getNodeAccess(), path.getEndNode()));
             } else {
-                path.forEveryEdge(new InstructionsFromEdges(graph, weighting, evLookup, ways, includeRoundaboutExits));
+                path.forEveryEdge(new InstructionsFromEdges(graph, weighting, baseWeighting, evLookup, ways, includeRoundaboutExits));
             }
         }
         return ways;
@@ -328,7 +337,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                         && (sign < 0) == (prevInstruction.getSign() < 0)
                         && (Math.abs(sign) == Instruction.TURN_SLIGHT_RIGHT || Math.abs(sign) == Instruction.TURN_RIGHT || Math.abs(sign) == Instruction.TURN_SHARP_RIGHT)
                         && (Math.abs(prevInstruction.getSign()) == Instruction.TURN_SLIGHT_RIGHT || Math.abs(prevInstruction.getSign()) == Instruction.TURN_RIGHT || Math.abs(prevInstruction.getSign()) == Instruction.TURN_SHARP_RIGHT)
-                        && Double.isFinite(weighting.calcEdgeWeight(edge, false)) != Double.isFinite(weighting.calcEdgeWeight(edge, true))
+                        && Double.isFinite(baseWeighting.calcEdgeWeight(edge, false)) != Double.isFinite(baseWeighting.calcEdgeWeight(edge, true))
                         && InstructionsHelper.isSameName(prevInstructionName, name)) {
                     // Chances are good that this is a u-turn, we only need to check if the orientation matches
                     GHPoint point = InstructionsHelper.getPointForOrientationCalculation(edge, nodeAccess);
@@ -422,7 +431,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         prevOrientation = AngleCalc.ANGLE_CALC.calcOrientation(doublePrevLat, doublePrevLon, prevLat, prevLon);
         int sign = InstructionsHelper.calculateSign(prevLat, prevLon, lat, lon, prevOrientation);
 
-        InstructionsOutgoingEdges outgoingEdges = new InstructionsOutgoingEdges(prevEdge, edge, weighting, maxSpeedEnc,
+        InstructionsOutgoingEdges outgoingEdges = new InstructionsOutgoingEdges(prevEdge, edge, baseWeighting, maxSpeedEnc,
                 roadClassEnc, roadClassLinkEnc, lanesEnc, allExplorer, nodeAccess, prevNode, baseNode, adjNode);
         int nrOfPossibleTurns = outgoingEdges.getAllowedTurns();
 

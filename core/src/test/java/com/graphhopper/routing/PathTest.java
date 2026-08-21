@@ -890,6 +890,44 @@ public class PathTest {
     }
 
     @Test
+    public void testCalcInstructionsTurnIfOnlyAlternativeIsBlocked() {
+        final BaseGraph graph = new BaseGraph.Builder(carManager).create();
+        final NodeAccess na = graph.getNodeAccess();
+
+        // 1 -- 2 -- 3
+        //      |
+        //      4
+        na.setNode(1, 52.514, 13.348);
+        na.setNode(2, 52.514, 13.349);
+        na.setNode(3, 52.514, 13.350);
+        na.setNode(4, 52.513, 13.349);
+
+        graph.edge(1, 2).set(carAvSpeedEnc, 60, 60).setDistance(70).setKeyValues(Map.of(STREET_NAME, new KValue("Main")));
+        EdgeIteratorState blockedEdge = graph.edge(2, 3).set(carAvSpeedEnc, 60, 60).setDistance(70).setKeyValues(Map.of(STREET_NAME, new KValue("Main")));
+        graph.edge(2, 4).set(carAvSpeedEnc, 60, 60).setDistance(110).setKeyValues(Map.of(STREET_NAME, new KValue("Side")));
+
+        Weighting weighting = new SpeedWeighting(carAvSpeedEnc);
+        // simulates a query-time custom model blocking the continuation of Main
+        Weighting blockedWeighting = new SpeedWeighting(carAvSpeedEnc) {
+            @Override
+            public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
+                return edgeState.getEdge() == blockedEdge.getEdge() ? Double.POSITIVE_INFINITY : super.calcEdgeWeight(edgeState, reverse);
+            }
+        };
+        Path p = new Dijkstra(graph, blockedWeighting, TraversalMode.NODE_BASED).calcPath(1, 4);
+        assertTrue(p.isFound());
+
+        // the blocked edge is invisible for the request weighting, so the turn is missing, see #3223
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, graph, blockedWeighting, carManager, tr);
+        assertEquals(2, wayList.size());
+
+        // but visible for the base weighting, so the turn is created
+        wayList = InstructionsFromEdges.calcInstructions(p, graph, blockedWeighting, weighting, carManager, tr, false);
+        assertEquals(3, wayList.size());
+        assertEquals("turn right onto Side", wayList.get(1).getTurnDescription(tr));
+    }
+
+    @Test
     public void testCalcInstructionForForkWithSameName() {
         final BaseGraph graph = new BaseGraph.Builder(carManager).create();
         final NodeAccess na = graph.getNodeAccess();
