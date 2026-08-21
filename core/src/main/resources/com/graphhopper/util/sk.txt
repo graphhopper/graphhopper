@@ -70,6 +70,7 @@ web.query_osm=Požiadavka na OSM
 web.route=Trasa
 web.add_to_route=Pridať umiestnenie
 web.delete_from_route=Odstrániť z trasy
+web.delete=
 web.open_custom_model_box=
 web.draw_areas_enabled=Kresliť a meniť oblasti na mape
 web.help_custom_model=Pomocník

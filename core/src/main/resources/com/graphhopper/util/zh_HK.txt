@@ -70,6 +70,7 @@ web.query_osm=查詢 OSM
 web.route=路線
 web.add_to_route=增加位置
 web.delete_from_route=從路線移除
+web.delete=
 web.open_custom_model_box=打開自定義模型選項
 web.draw_areas_enabled=在地圖上繪製和修改區域
 web.help_custom_model=幫助

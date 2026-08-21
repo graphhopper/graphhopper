@@ -70,6 +70,7 @@ web.query_osm=Consulta OSM
 web.route=Rota
 web.add_to_route=Adicionar Local
 web.delete_from_route=Remover da rota
+web.delete=
 web.open_custom_model_box=Abrir modelo personalizado
 web.draw_areas_enabled=Desenhar modelo personalizado
 web.help_custom_model=Desenhar e modificar áreas no mapa

@@ -70,6 +70,7 @@ web.query_osm=Forespørg OSM
 web.route=Rute
 web.add_to_route=Tilføj placering
 web.delete_from_route=Fjern fra rute
+web.delete=
 web.open_custom_model_box=Åbn box til brugerdefineret model
 web.draw_areas_enabled=Tegn og ændr områder på kort
 web.help_custom_model=Hjælp

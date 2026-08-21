@@ -70,6 +70,7 @@ web.query_osm=Consulta OSM
 web.route=Ruta
 web.add_to_route=Afegeix la ubicació
 web.delete_from_route=Suprimeix el punt de la ruta
+web.delete=
 web.open_custom_model_box=Obre model personalitzat
 web.draw_areas_enabled=Dibuixa i modifica àrees al mapa
 web.help_custom_model=Ajuda

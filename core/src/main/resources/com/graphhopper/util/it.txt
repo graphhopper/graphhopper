@@ -70,6 +70,7 @@ web.query_osm=
 web.route=Itinerario
 web.add_to_route=Aggiungi destinazione
 web.delete_from_route=Elimina dall'itinerario
+web.delete=
 web.open_custom_model_box=
 web.draw_areas_enabled=
 web.help_custom_model=Aiuto

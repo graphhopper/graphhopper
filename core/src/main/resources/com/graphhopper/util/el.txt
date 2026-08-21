@@ -70,6 +70,7 @@ web.query_osm=Ερώτημα OSM
 web.route=Διαδρομή
 web.add_to_route=Προσθήκη τοποθεσίας
 web.delete_from_route=Αφαίρεση από διαδρομή
+web.delete=
 web.open_custom_model_box=Άνοιγμα πλαισίου προσαρμοσμένου μοντέλου
 web.draw_areas_enabled=Σχεδίαση και τροποποίηση περιοχών στον χάρτη
 web.help_custom_model=Βοήθεια

@@ -70,6 +70,7 @@ web.query_osm=
 web.route=Rute
 web.add_to_route=Legg til
 web.delete_from_route=Fjern fra ruten
+web.delete=
 web.open_custom_model_box=Åpne tilpasser modellboks
 web.draw_areas_enabled=
 web.help_custom_model=Hjelp
