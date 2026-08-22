@@ -573,14 +573,20 @@ public class CustomModelParser {
     }
 
     /**
-     * bike_climb_factor is relative to the speed computed from the preceding statements, so for
-     * the generated getSpeed code we use the converted value expression where this current speed
-     * ("value") is injected as last argument, see ValueExpressionVisitor.parse.
+     * bike_climb_factor is relative to the speed computed from the preceding statements, so for the
+     * generated getSpeed code the call is replaced by the method of the table field (see createClassTemplate)
+     * with the injected current speed ("value"), e.g. bike_climb_table_120.getBikeClimbFactor(average_slope, value)
      */
     private static String convertValue(String valueExpression, NameValidator nameValidator) {
         ParseResult result = ValueExpressionVisitor.parse(valueExpression,
                 name -> nameValidator.isValid(name) || name.contains("Infinity"));
-        return result.ok ? result.converted.toString() : valueExpression;
+        if (!result.ok) return valueExpression;
+        String expression = result.converted.toString();
+        for (Map.Entry<String, String[]> entry : result.methods.entrySet())
+            expression = expression.replace(ValueExpressionVisitor.toCall(entry.getKey(), entry.getValue()),
+                    ValueExpressionVisitor.toFieldName(ValueExpressionVisitor.toCall(BIKE_CLIMB_TABLE, entry.getValue()))
+                            + ".getBikeClimbFactor(" + AverageSlope.KEY + ", value)");
+        return expression;
     }
 
     static void parseExpressions(StringBuilder expressions, NameValidator nameInConditionValidator,

@@ -28,6 +28,7 @@ import org.codehaus.commons.compiler.CompileException;
 import org.codehaus.janino.*;
 
 import java.io.StringReader;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -124,7 +125,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
                     }
                     params[i] = ((Java.Literal) mi.arguments[i]).value;
                 }
-                result.bikeClimbTable = BIKE_CLIMB_TABLE + "(" + String.join(", ", params) + ")";
+                result.methods.put(mi.methodName, params);
                 return true;
             }
             if (allowedMethods.contains(mi.methodName)) {
@@ -192,22 +193,19 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
             if (parser.peek().type == TokenType.END_OF_INPUT) {
                 result.guessedVariables = new LinkedHashSet<>();
                 result.operators = new LinkedHashSet<>();
+                result.methods = new LinkedHashMap<>();
                 ValueExpressionVisitor visitor = new ValueExpressionVisitor(result, variableValidator);
                 result.ok = atom.accept(visitor);
                 result.invalidMessage = visitor.invalidMessage;
                 if (result.ok) {
-                    // The converted expression is used in the generated getSpeed code: the call is
-                    // replaced by the method of the table field and the current speed ("value") is injected, e.g.
-                    // bike_climb_factor(120, 95) -> bike_climb_table_120.getBikeClimbFactor(average_slope, value)
-                    // For findMinMax and findVariables the static function with the explicit encoded value is
-                    // used instead, i.e. bike_climb_factor(average_slope, 120, 95)
+                    // The converted expression contains the built-in function call in its canonical form
+                    // (see toCall), e.g. "bike_climb_factor( 120,95 )" -> "bike_climb_factor(120, 95)", so that
+                    // the generated getSpeed code (CustomModelParser.convertValue) and the expression for the
+                    // ExpressionEvaluator (toEvaluable) can be derived via a simple String.replace
                     result.converted = new StringBuilder(expression);
-                    result.evaluable = expression;
-                    if (visitor.functionCallStart >= 0) {
-                        int start = visitor.functionCallStart, end = findClosingParen(expression, start);
-                        result.converted.replace(start, end + 1, toFieldName(result.bikeClimbTable) + ".getBikeClimbFactor(" + AverageSlope.KEY + ", value)");
-                        result.evaluable = new StringBuilder(expression).insert(expression.indexOf('(', start) + 1, AverageSlope.KEY + ", ").toString();
-                    }
+                    for (Map.Entry<String, String[]> entry : result.methods.entrySet())
+                        result.converted.replace(visitor.functionCallStart, findClosingParen(expression, visitor.functionCallStart) + 1,
+                                toCall(entry.getKey(), entry.getValue()));
                 }
             }
         } catch (Exception ex) {
@@ -216,10 +214,29 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
     }
 
     /**
+     * @return the canonical call of the specified method, e.g. bike_climb_factor(120, 95)
+     */
+    static String toCall(String method, String[] params) {
+        return method + "(" + String.join(", ", params) + ")";
+    }
+
+    /**
      * @return the field name in the generated class, e.g. bike_climb_table_120 for bike_climb_table(120, 95)
      */
     static String toFieldName(String bikeClimbTable) {
         return BIKE_CLIMB_TABLE + "_" + bikeClimbTable.substring(BIKE_CLIMB_TABLE.length() + 1, bikeClimbTable.indexOf(','));
+    }
+
+    /**
+     * @return the expression for the ExpressionEvaluator used in findMinMax and findVariables, i.e. with the
+     * static function with the slope as explicit first argument, e.g. bike_climb_factor(average_slope, 120, 95)
+     */
+    private static String toEvaluable(ParseResult result) {
+        String expression = result.converted.toString();
+        for (Map.Entry<String, String[]> entry : result.methods.entrySet())
+            expression = expression.replace(toCall(entry.getKey(), entry.getValue()),
+                    entry.getKey() + "(" + AverageSlope.KEY + ", " + String.join(", ", entry.getValue()) + ")");
+        return expression;
     }
 
     /**
@@ -298,7 +315,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
                 } else {
                     // single encoded value
                     String var = result.guessedVariables.iterator().next();
-                    SingleArgEvaluator ee = createExpressionEvaluator().createFastEvaluator(result.evaluable, SingleArgEvaluator.class, var);
+                    SingleArgEvaluator ee = createExpressionEvaluator().createFastEvaluator(toEvaluable(result), SingleArgEvaluator.class, var);
                     EncodedValue enc = lookup.getEncodedValue(var, EncodedValue.class);
                     double max = getMax(enc);
                     double val1 = ee.evaluate(max);
@@ -313,10 +330,10 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         if (value < 0)
             throw new IllegalArgumentException("illegal expression as it can result in a negative weight: " + valueExpression);
 
-        if (result.bikeClimbTable == null) return result.guessedVariables;
+        if (result.methods.isEmpty()) return result.guessedVariables;
         // the generated class needs a field for the table, see CustomModelParser.createClassTemplate
         Set<String> variables = new LinkedHashSet<>(result.guessedVariables);
-        variables.add(result.bikeClimbTable);
+        for (String[] params : result.methods.values()) variables.add(toCall(BIKE_CLIMB_TABLE, params));
         return variables;
     }
 
@@ -351,7 +368,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
             }
 
             String var = result.guessedVariables.iterator().next();
-            SingleArgEvaluator ee = createExpressionEvaluator().createFastEvaluator(result.evaluable, SingleArgEvaluator.class, var);
+            SingleArgEvaluator ee = createExpressionEvaluator().createFastEvaluator(toEvaluable(result), SingleArgEvaluator.class, var);
             EncodedValue enc = lookup.getEncodedValue(var, EncodedValue.class);
             double max = getMax(enc);
             double val1 = ee.evaluate(max);

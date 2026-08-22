@@ -115,32 +115,26 @@ class ValueExpressionVisitorTest {
 
     @Test
     public void convertedValueExpression() {
-        // the converted expression is used in the generated getSpeed code and calls the method of
-        // the table field with the injected current speed; findMinMax and findVariables use the
-        // evaluable expression with the static function and the explicit encoded value instead
+        // the methods map contains the parsed literals and the converted expression the canonical call,
+        // from which the generated getSpeed code and the expression for the evaluator are derived
         NameValidator validator = s -> s.equals("average_slope");
         ParseResult result = parse("bike_climb_factor(120, 95)", validator);
         assertTrue(result.ok, result.invalidMessage);
-        assertEquals("bike_climb_table(120, 95)", result.bikeClimbTable);
-        assertEquals("bike_climb_table_120.getBikeClimbFactor(average_slope, value)", result.converted.toString());
-        assertEquals("bike_climb_factor(average_slope, 120, 95)", result.evaluable);
+        assertEquals(Set.of("bike_climb_factor"), result.methods.keySet());
+        assertArrayEquals(new String[]{"120", "95"}, result.methods.get("bike_climb_factor"));
+        assertEquals("bike_climb_factor(120, 95)", result.converted.toString());
 
-        result = parse("0.9 * bike_climb_factor(120, 95.5)", validator);
+        // independent of whitespace
+        result = parse("0.9 * bike_climb_factor(   120  ,95.5 )", validator);
         assertTrue(result.ok, result.invalidMessage);
-        assertEquals("0.9 * bike_climb_table_120.getBikeClimbFactor(average_slope, value)", result.converted.toString());
-        assertEquals("0.9 * bike_climb_factor(average_slope, 120, 95.5)", result.evaluable);
-
-        // the table key and field name are built from the parsed literals, i.e. independent of whitespace
-        result = parse("bike_climb_factor(   120  ,95 )", validator);
-        assertTrue(result.ok, result.invalidMessage);
-        assertEquals("bike_climb_table(120, 95)", result.bikeClimbTable);
-        assertEquals("bike_climb_table_120.getBikeClimbFactor(average_slope, value)", result.converted.toString());
+        assertArrayEquals(new String[]{"120", "95.5"}, result.methods.get("bike_climb_factor"));
+        assertEquals("0.9 * bike_climb_factor(120, 95.5)", result.converted.toString());
 
         // without a built-in function the expression stays unchanged
         result = parse("average_slope * 2.5", validator);
         assertTrue(result.ok, result.invalidMessage);
+        assertTrue(result.methods.isEmpty());
         assertEquals("average_slope * 2.5", result.converted.toString());
-        assertEquals("average_slope * 2.5", result.evaluable);
     }
 
     @Test

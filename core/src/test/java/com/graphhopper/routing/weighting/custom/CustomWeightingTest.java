@@ -306,7 +306,7 @@ class CustomWeightingTest {
         racingModel.addToSpeed(If("true", LIMIT, racingSpeedEnc.getName()));
         racingModel.addToSpeed(If("average_slope >= 0", MULTIPLY, "bike_climb_factor(200, 90)"));
         Weighting racingWeighting = CustomModelParser.createWeighting(racingEM, NO_TURN_COST_PROVIDER, racingModel);
-        assertEquals(10 * 1000 / (new BikeClimbSpeedTable(200, 90, 24, 0.006).speed(5) / 3.6), racingWeighting.calcEdgeWeight(racingEdge, false), 1);
+        assertEquals(10 * 1000 / (new BikeClimbSpeedTable(200, 90, 24, 0.006).getSpeed(5) / 3.6), racingWeighting.calcEdgeWeight(racingEdge, false), 1);
         assertEquals(10 * 1000 / (12.76 / 3.6), racingWeighting.calcEdgeWeight(racingEdge, false), 10);
 
         // the table field is created only for the speed statements

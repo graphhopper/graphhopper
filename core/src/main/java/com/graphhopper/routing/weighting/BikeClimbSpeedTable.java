@@ -14,7 +14,9 @@ public class BikeClimbSpeedTable {
 
     private final double[] tab;   // values in km/h
     private final double walkSlope;
-    private final double power, mass, baseSpeed, crr, aero;
+    // the speed below which the rolling resistance increase is capped and the slope offset per km/h
+    // below the base speed, see getSlopeOffset
+    private final double baseSpeed, capSpeed, offsetPerKmh;
 
     public BikeClimbSpeedTable(double power, double mass) {
         this(power, mass, DEFAULT_BASE_SPEED, DEFAULT_CRR);
@@ -41,12 +43,10 @@ public class BikeClimbSpeedTable {
         if (aero <= 0)
             throw new IllegalArgumentException("Inconsistency: power not sufficient at crr=" + crr
                     + " for baseSpeed=" + baseSpeed + " km/h in flat (aero <= 0)");
-        this.power = power;
-        this.mass = mass;
-        this.baseSpeed = baseSpeed;
-        this.crr = crr;
-        this.aero = aero;
         double mg100 = mass * G / 100.0;
+        this.baseSpeed = baseSpeed;
+        this.capSpeed = cyclingSpeedKmh(0, power, v0, rollingForce + mass * G * MAX_CRR_INCREASE, aero, mg100);
+        this.offsetPerKmh = 100 * MAX_CRR_INCREASE / (baseSpeed - capSpeed);
 
         // calculate dismount slope (at approx. 12% for bike and 22.7% for racingbike)
         double vd = V_DISMOUNT_KMH / 3.6;
@@ -116,25 +116,28 @@ public class BikeClimbSpeedTable {
      */
     public double getBikeClimbFactor(double slope, double currentSpeed) {
         if (slope < 0 || currentSpeed <= 0) return 1;
-        return Math.min(1, speed(slope + getSlopeOffset(currentSpeed)) / currentSpeed);
+        return Math.min(1, getSpeed(slope + getSlopeOffset(currentSpeed)) / currentSpeed);
     }
 
     /**
-     * A current speed below the base speed (e.g. due to a rough surface) is partly interpreted as an
-     * increased rolling resistance: the equivalent crr follows from the power balance on the flat at the
-     * current speed. The increase is capped as the speed reduction of the profile is mostly a comfort
-     * limit and not an energy loss (the comfort limit is handled via the minimum in getBikeClimbFactor).
-     * Rolling resistance and slope enter the power balance only via their sum, so the increase is
-     * returned as slope offset (in percent) for the table.
+     * A current speed below the base speed (e.g. rough surface) is interpreted as a higher rolling
+     * resistance crrEq, solved from the power balance on the flat: power = aero·v³ + m·g·crrEq·v.
+     * The increase is capped (at MAX_CRR_INCREASE, reached at capSpeed) as the reduced speed is
+     * mostly a comfort limit (see the minimum in getBikeClimbFactor) and not an energy loss. In the
+     * narrow band between capSpeed and baseSpeed the increase is nearly linear in the speed and so
+     * it is interpolated linearly instead of solving the cubic equation per edge.
+     * <p>
+     * In the power balance "power = aero·v³ + m·g·(crr + slope/100)·v" the rolling resistance and the
+     * slope appear only as sum, i.e. a crr increase is identical to a slope increase of 100·Δcrr
+     * percent and so we can reuse the table (calibrated with crr) via getSpeed(slope + offset).
      */
     double getSlopeOffset(double currentSpeed) {
         if (currentSpeed >= baseSpeed) return 0;
-        double v = currentSpeed / 3.6;
-        double crrEq = (power - aero * v * v * v) / (mass * G * v);
-        return 100 * Math.min(MAX_CRR_INCREASE, crrEq - crr);
+        if (currentSpeed <= capSpeed) return 100 * MAX_CRR_INCREASE;
+        return (baseSpeed - currentSpeed) * offsetPerKmh;
     }
 
-    public double speed(double slope) {
+    public double getSpeed(double slope) {
         if (slope < 0)
             throw new IllegalArgumentException("negative slope: " + slope);
         if (slope >= walkSlope)
