@@ -38,7 +38,7 @@ public class RacingBikePriorityParser extends BikeCommonPriorityParser {
         highwayToPrio.put("unclassified", UNCHANGED);
         highwayToPrio.put("primary", UNCHANGED);
         highwayToPrio.put("primary_link", UNCHANGED);
-        highwayToPrio.put("cycleway", AVOID);
+        highwayToPrio.put("cycleway", SLIGHT_AVOID);
 
         highwayToPrio.put("road", AVOID);
         highwayToPrio.put("service", AVOID);
