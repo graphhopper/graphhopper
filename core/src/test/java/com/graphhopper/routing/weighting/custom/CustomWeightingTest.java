@@ -8,6 +8,7 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
+import com.graphhopper.routing.weighting.BikeClimbSpeedTable;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
@@ -282,20 +283,37 @@ class CustomWeightingTest {
 
         CustomModel customModel = new CustomModel().setDistanceInfluence(0d);
         customModel.addToSpeed(If("true", LIMIT, speedEnc.getName()));
-        customModel.addToSpeed(If("average_slope >= 0", MULTIPLY, "bike_climb_factor(average_slope, 120, 95, 18)"));
+        customModel.addToSpeed(If("average_slope >= 0", MULTIPLY, "bike_climb_factor(120, 95)"));
         Weighting weighting = CustomModelParser.createWeighting(em, NO_TURN_COST_PROVIDER, customModel);
-        assertEquals(10 * 1000 / (18 * CustomWeightingHelper.bike_climb_factor(12, 120, 95, 18) / 3.6),
+        assertEquals(10 * 1000 / (18 * CustomWeightingHelper.bike_climb_factor(12, 120, 95) / 3.6),
                 weighting.calcEdgeWeight(edge, false), 1);
         // downhill the average_slope is negated and the factor does not apply
         assertEquals(10 * 1000 / (18 / 3.6), weighting.calcEdgeWeight(edge, true), 1);
 
         // the current speed is injected into bike_climb_factor: for a slower edge (rough surface)
-        // the climbing speed is only reduced via a higher rolling resistance, i.e. 3.54km/h and
-        // not the proportional 10/18*3.68=2.05km/h
+        // the climbing speed is reduced via a higher rolling resistance, i.e. it is 3.02km/h and not
+        // the proportional 10/18*3.66=2.03km/h
         EdgeIteratorState slowEdge = graph.edge(2, 3).setDistance(1000).set(speedEnc, 10, 10).set(slopeEnc, 12);
-        assertEquals(10 * 1000 / (10 * CustomWeightingHelper.bike_climb_factor(12, 120, 95, 18, 10) / 3.6),
-                weighting.calcEdgeWeight(slowEdge, false), 1);
-        assertEquals(10 * 1000 / (3.54 / 3.6), weighting.calcEdgeWeight(slowEdge, false), 30);
+        assertEquals(10 * 1000 / (3.02 / 3.6), weighting.calcEdgeWeight(slowEdge, false), 30);
+
+        // for racingbike the table is created with the base speed 24 instead of 18, i.e. 12.76km/h at 5% for 200W and 90kg
+        DecimalEncodedValue racingSpeedEnc = VehicleSpeed.create("racingbike", 5, 2, true);
+        DecimalEncodedValue racingSlopeEnc = AverageSlope.create();
+        EncodingManager racingEM = new EncodingManager.Builder().add(racingSpeedEnc).add(racingSlopeEnc).build();
+        BaseGraph racingGraph = new BaseGraph.Builder(racingEM).create();
+        EdgeIteratorState racingEdge = racingGraph.edge(0, 1).setDistance(1000).set(racingSpeedEnc, 24, 24).set(racingSlopeEnc, 5);
+        CustomModel racingModel = new CustomModel().setDistanceInfluence(0d);
+        racingModel.addToSpeed(If("true", LIMIT, racingSpeedEnc.getName()));
+        racingModel.addToSpeed(If("average_slope >= 0", MULTIPLY, "bike_climb_factor(200, 90)"));
+        Weighting racingWeighting = CustomModelParser.createWeighting(racingEM, NO_TURN_COST_PROVIDER, racingModel);
+        assertEquals(10 * 1000 / (new BikeClimbSpeedTable(200, 90, 24, 0.006).speed(5) / 3.6), racingWeighting.calcEdgeWeight(racingEdge, false), 1);
+        assertEquals(10 * 1000 / (12.76 / 3.6), racingWeighting.calcEdgeWeight(racingEdge, false), 10);
+
+        // the table field is created only for the speed statements
+        customModel.addToPriority(If("average_slope >= 0", MULTIPLY, "bike_climb_factor(120, 95)"));
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> CustomModelParser.createWeighting(em, NO_TURN_COST_PROVIDER, customModel));
+        assertTrue(ex.getMessage().contains("bike_climb_factor is only supported for 'speed'"), ex.getMessage());
     }
 
     @Test

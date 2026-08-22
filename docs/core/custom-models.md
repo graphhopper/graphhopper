@@ -734,27 +734,33 @@ smaller or more narrow range, or if you can avoid them entirely, then these requ
 
 Besides `Math.sqrt` a value expression can call the following built-in function:
 
-* `bike_climb_factor(average_slope, power, mass, base_speed)`: the continuous power-limited climbing
+* `bike_climb_factor(power, mass)`: the continuous power-limited climbing
   speed of a cyclist producing `power` watts with a total `mass` (rider plus bike) in kg, as a
   factor relative to the speed of the preceding statements and capped at 1, for the usage with
-  `multiply_by`. The slope is expected in percent, e.g. from the `average_slope` encoded value, and
-  for negative values the factor is 1. A speed below the flat `base_speed` (km/h) of the profile
-  indicates a rough surface, for which the rolling resistance is increased instead of scaling the
-  climbing speed down, because on a steep climb the speed is limited by the power and not by the
-  surface. So the comfort-limited surface penalty of the base profile still applies on the flat but
-  is not double-counted against gravity on a climb. Where riding gets slower than walking, the
-  speed of pushing the bike is used instead. See `bike_elevation.json` for an example:
+  `multiply_by`. The slope is taken from the `average_slope` encoded value (in percent, in travel
+  direction) and for negative values the factor is 1. The flat base speed of the profile (24 km/h if the
+  initial speed statement refers to racingbike, 18 km/h otherwise) calibrates the
+  aerodynamic drag, which dominates for small slopes, and the climbing speed is calculated from the
+  power balance with rolling resistance (coefficient 0.006), drag and gravity (see
+  `BikeClimbSpeedTable`). The factor is
+  relative to the speed of the preceding statements, i.e. the resulting speed is the minimum of the
+  surface-limited speed and the climbing speed, and so a surface penalty of the base profile is not
+  double-counted against gravity on a climb. A speed below the base speed is interpreted only partly as
+  energy loss: it increases the rolling resistance by at most 0.012. Where riding gets slower than walking, the speed of
+  pushing the bike is used instead. The `power` and `mass` arguments must be numbers and `power` an
+  integer, as one lookup table per power is created.
+  See `bike_elevation.json` for an example:
 
 ```json
 {
   "speed": [
-    { "if": "average_slope >= 2", "multiply_by": "bike_climb_factor(average_slope, 120, 95, 18)" }
+    { "if": "average_slope >= 2", "multiply_by": "bike_climb_factor(120, 95)" }
   ]
 }
 ```
 
 A built-in function call must be the entire value, optionally scaled by a number like
-`"0.9 * bike_climb_factor(average_slope, 120, 95, 18)"` — it cannot be combined with other terms.
+`"0.9 * bike_climb_factor(120, 95)"` — it cannot be combined with other terms.
 
 A continuous function avoids the small detours or shortcuts that the band edges of an equivalent
 if-else "staircase" of slope bands can create.

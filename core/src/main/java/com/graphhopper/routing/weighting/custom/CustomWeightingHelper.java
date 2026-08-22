@@ -22,6 +22,7 @@ import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.weighting.BikeClimbSpeedTable;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
@@ -90,38 +91,23 @@ public class CustomWeightingHelper {
         return minMaxPriority.max;
     }
 
-    private static double bike_climb_speed(double slope, double power, double mass, double rollingResistance) {
-        if (power <= 0 || mass <= 0)
-            throw new IllegalArgumentException("bike_climb_speed expects a positive power and mass, but got: " + power + ", " + mass);
-        double speed = 3.6 * power / (mass * 9.81 * (slope / 100 + rollingResistance));
-        // if slow => dismount and pushes bike. Then use an approximation for Tobler's hiking function scaled by 0.8
-        // other option Munter: 40/(10+Math.max(slope, 0))
-        double walkingSpeed = 80 / (20 + slope);
-        return Math.max(speed, walkingSpeed);
-    }
-
     /**
      * This method calculates the slowdown factor based on the slope for the usage with 'multiply_by'.
-     * The current speed value is injected as last argument by CustomModelParser to avoid a too harsh
-     * slowdown for bad surface at steep inclines (increased rolling resistance).
-     * On a steep climb the speed is limited by the power and not that much by the surface.
+     * This method is only used for findMinMax and findVariables. In the generated getSpeed code
+     * the CustomModelParser creates a BikeClimbSpeedTable field per call instead (see createBikeClimbTable)
+     * and calls its getBikeClimbFactor with the current speed, see ValueExpressionVisitor.
      */
-    public static double bike_climb_factor(double slope, double power, double mass, double baseSpeed, double currentSpeed) {
-        if (slope < 0) return 1;
-        if (baseSpeed <= 0)
-            throw new IllegalArgumentException("bike_climb_factor expects a positive base speed, but got: " + baseSpeed);
-        if (currentSpeed <= 0) return 1;
-        double rollingResistance = 0.006 * Math.min(3, Math.max(1, baseSpeed / currentSpeed));
-        return Math.min(1, bike_climb_speed(slope, power, mass, rollingResistance) / currentSpeed);
+    public static double bike_climb_factor(double slope, double power, double mass) {
+        return new BikeClimbSpeedTable(power, mass).getBikeClimbFactor(slope, BikeClimbSpeedTable.DEFAULT_BASE_SPEED);
     }
 
     /**
-     * At the moment this method is only used for findMinMax, which compiles the value expression
-     * as written in the custom model, i.e. without the injected current speed. In the generated
-     * getSpeed code the five argument method is called instead.
+     * Called from init of the generated class for every bike_climb_factor call of the custom model.
      */
-    public static double bike_climb_factor(double slope, double power, double mass, double baseSpeed) {
-        return bike_climb_factor(slope, power, mass, baseSpeed, baseSpeed);
+    protected BikeClimbSpeedTable createBikeClimbTable(double power, double mass) {
+        // TODO: remove this workaround to get flat speed.
+        boolean racingbike = customModel.getSpeed().get(0).toString().contains("racingbike");
+        return new BikeClimbSpeedTable(power, mass, racingbike ? 24 : BikeClimbSpeedTable.DEFAULT_BASE_SPEED, BikeClimbSpeedTable.DEFAULT_CRR);
     }
 
     public static boolean in(Polygon p, EdgeIteratorState edge) {

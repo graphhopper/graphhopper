@@ -19,6 +19,7 @@ package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.weighting.BikeClimbSpeedTable;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.*;
@@ -40,6 +41,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
 import static com.graphhopper.json.Statement.Keyword.IF;
+import static com.graphhopper.routing.weighting.custom.ValueExpressionVisitor.BIKE_CLIMB_TABLE;
 
 public class CustomModelParser {
     private static final AtomicLong longVal = new AtomicLong(1);
@@ -343,7 +345,7 @@ public class CustomModelParser {
             } else {
                 throw new IllegalArgumentException("Not supported for backward: " + argSubstr);
             }
-        } else if (arg.startsWith(IN_AREA_PREFIX)) {
+        } else if (arg.startsWith(IN_AREA_PREFIX) || arg.startsWith(BIKE_CLIMB_TABLE)) {
             return "";
         } else {
             throw new IllegalArgumentException("Not supported " + arg);
@@ -438,6 +440,7 @@ public class CustomModelParser {
         importSourceCode.append("import " + CustomModel.class.getName() + ";\n");
         importSourceCode.append("import " + BaseGraph.class.getName() + ";\n");
         importSourceCode.append("import " + EdgeIntAccess.class.getName() + ";\n");
+        importSourceCode.append("import " + BikeClimbSpeedTable.class.getName() + ";\n");
         final StringBuilder classSourceCode = new StringBuilder(100);
         boolean includedAreaImports = false;
 
@@ -485,6 +488,11 @@ public class CustomModelParser {
                 initSourceCode.append("this." + arg + " = new Polygon(new PreparedPolygon((Polygonal) feature_" + id + ".getGeometry()));\n");
             } else if (arg.equals(STREET_NAME)) {
                 // street_name is resolved at runtime from graph KV storage, no class field needed
+            } else if (arg.startsWith(BIKE_CLIMB_TABLE)) {
+                // e.g. bike_climb_table(120, 95) with the literals from bike_climb_factor, see ValueExpressionVisitor
+                String field = ValueExpressionVisitor.toFieldName(arg);
+                classSourceCode.append("protected BikeClimbSpeedTable " + field + ";\n");
+                initSourceCode.append("this." + field + " = createBikeClimbTable" + arg.substring(BIKE_CLIMB_TABLE.length()) + ";\n");
             } else {
                 if (!arg.startsWith(IN_AREA_PREFIX))
                     throw new IllegalArgumentException("Variable not supported: " + arg);
@@ -529,6 +537,8 @@ public class CustomModelParser {
      */
     private static List<Java.BlockStatement> verifyExpressions(StringBuilder expressions, String info, Set<String> createObjects,
                                                                List<Statement> list, EncodedValueLookup lookup) throws Exception {
+        if (!"speed entry".equals(info) && createObjects.stream().anyMatch(o -> o.startsWith(BIKE_CLIMB_TABLE)))
+            throw new IllegalArgumentException("bike_climb_factor is only supported for 'speed' but was used in " + info);
         // allow variables, all encoded values, constants and special variables like in_xyarea or backward_car_access
         NameValidator nameInConditionValidator = name -> lookup.hasEncodedValue(name)
                 || name.toUpperCase(Locale.ROOT).equals(name) || name.startsWith(IN_AREA_PREFIX) || name.equals(CHANGE_ANGLE)

@@ -6,6 +6,7 @@ import com.graphhopper.routing.DefaultWeightingFactory;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.parsers.OrientationCalculator;
+import com.graphhopper.routing.weighting.BikeClimbSpeedTable;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.*;
@@ -62,37 +63,34 @@ class CustomWeightingHelperTest {
     public void testBikeClimbFactor() {
         // 120W and 95kg: continuous replacement for the former staircase in bike_elevation.json,
         // the speed at the base speed 18 is 18 * factor
-        assertEquals(3.68, 18 * CustomWeightingHelper.bike_climb_factor(12, 120, 95, 18), 0.01);
-        assertEquals(2.97, 18 * CustomWeightingHelper.bike_climb_factor(15, 120, 95, 18), 0.01);
+        assertEquals(3.66, 18 * CustomWeightingHelper.bike_climb_factor(12, 120, 95), 0.01);
         // where riding gets slower than walking the cyclist pushes the bike instead
         // (approximately 0.8 times Tobler's hiking speed)
-        assertEquals(1.57, 18 * CustomWeightingHelper.bike_climb_factor(31, 120, 95, 18), 0.01);
-        assertEquals(2.0, 18 * CustomWeightingHelper.bike_climb_factor(20, 80, 95, 18), 0.01);
-        // capped at 1 for shallow and downhill slopes
-        assertEquals(1, CustomWeightingHelper.bike_climb_factor(1, 120, 95, 18));
-        assertEquals(1, CustomWeightingHelper.bike_climb_factor(-10, 120, 95, 18));
+        assertEquals(2.29, 18 * CustomWeightingHelper.bike_climb_factor(15, 120, 95), 0.01);
+        assertEquals(1.57, 18 * CustomWeightingHelper.bike_climb_factor(31, 120, 95), 0.01);
+        assertEquals(2.0, 18 * CustomWeightingHelper.bike_climb_factor(20, 80, 95), 0.01);
+        // capped at 1 for downhill slopes
+        assertEquals(1, CustomWeightingHelper.bike_climb_factor(0, 120, 95));
+        assertEquals(1, CustomWeightingHelper.bike_climb_factor(-10, 120, 95));
 
-        assertThrows(IllegalArgumentException.class, () -> CustomWeightingHelper.bike_climb_factor(12, 0, 95, 18));
-        assertThrows(IllegalArgumentException.class, () -> CustomWeightingHelper.bike_climb_factor(12, 120, 95, 0));
+        assertThrows(IllegalArgumentException.class, () -> CustomWeightingHelper.bike_climb_factor(12, 0, 95));
+        assertThrows(IllegalArgumentException.class, () -> CustomWeightingHelper.bike_climb_factor(12, 120, 0));
     }
 
     @Test
     public void testBikeClimbFactorCurrentSpeed() {
-        // a current speed reduced from the base 18 (e.g. from a rough surface) increases the rolling
-        // resistance but no longer scales the power-limited climbing speed down: for 9km/h the
-        // rolling resistance doubles to 0.012 and the resulting speed 9*factor is 3.51km/h instead
-        // of the proportional 9/18*3.68=1.84km/h
-        assertEquals(3.51, 9 * CustomWeightingHelper.bike_climb_factor(12, 120, 95, 18, 9), 0.01);
-        // the factor never increases the speed above the current speed...
-        assertEquals(1, CustomWeightingHelper.bike_climb_factor(12, 120, 95, 18, 3));
-        // ...and the rolling resistance increase is capped (factor 3)
-        assertEquals(1, CustomWeightingHelper.bike_climb_factor(12, 120, 95, 18, 2));
-        // a current speed above the base speed keeps the default rolling resistance, i.e. the
-        // same absolute climbing speed as at the base speed
-        assertEquals(3.68, 25 * CustomWeightingHelper.bike_climb_factor(12, 120, 95, 18, 25), 0.01);
-        // the four argument variant used for the bounds is the factor at the base speed
-        assertEquals(CustomWeightingHelper.bike_climb_factor(12, 120, 95, 18, 18),
-                CustomWeightingHelper.bike_climb_factor(12, 120, 95, 18), 1.e-6);
+        // the generated code calls the table method with the injected current speed: for a current
+        // speed reduced from the base 18 (e.g. from a rough surface) the rolling resistance is increased
+        // (capped at +0.012, i.e. +1.2% slope) but the power-limited climbing speed is not scaled down
+        // proportionally, i.e. 9*factor is 3.02km/h and not 9/18*3.66=1.83km/h
+        BikeClimbSpeedTable table = new BikeClimbSpeedTable(120, 95);
+        assertEquals(3.02, 9 * table.getBikeClimbFactor(12, 9), 0.01);
+        // the factor never increases the speed above the current speed
+        assertEquals(1, table.getBikeClimbFactor(12, 3));
+        // a current speed above the base speed results in the same absolute climbing speed
+        assertEquals(3.66, 25 * table.getBikeClimbFactor(12, 25), 0.01);
+        // the static variant used for the bounds is the factor at the base speed
+        assertEquals(table.getBikeClimbFactor(12, 18), CustomWeightingHelper.bike_climb_factor(12, 120, 95), 1.e-6);
     }
 
     @Test

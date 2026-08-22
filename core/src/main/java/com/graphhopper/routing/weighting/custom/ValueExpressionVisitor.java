@@ -20,6 +20,7 @@ package com.graphhopper.routing.weighting.custom;
 import com.graphhopper.json.MinMax;
 import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.AverageSlope;
 import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.IntEncodedValue;
@@ -44,7 +45,8 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
     private static final Set<String> allowedMethods = Set.of("sqrt");
     // built-in functions (static methods in CustomWeightingHelper) mapped to their expected number
     // of arguments. They must be monotone in the encoded value argument, see findMinMax.
-    private static final Map<String, Integer> allowedFunctions = Map.of("bike_climb_factor", 4);
+    private static final Map<String, Integer> allowedFunctions = Map.of("bike_climb_factor", 2);
+    static final String BIKE_CLIMB_TABLE = "bike_climb_table";
     private final ParseResult result;
     private final NameValidator variableValidator;
     private String invalidMessage;
@@ -104,9 +106,25 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
                     return false;
                 }
                 functionCallStart = mi.getLocation().getColumnNumber() - 1;
-                functionCallAllowed = false; // no built-in function inside the arguments
-                for (Java.Rvalue argument : mi.arguments)
-                    if (!argument.accept(this)) return false;
+                // the slope is not an argument but implicitly the average_slope encoded value
+                if (!isValidIdentifier(AverageSlope.KEY)) {
+                    invalidMessage = mi.methodName + " requires '" + AverageSlope.KEY + "' which is not available";
+                    return false;
+                }
+                // the arguments (power, mass) must be numbers as CustomModelParser creates a
+                // BikeClimbSpeedTable field from them in the generated class. The field is named after
+                // the power, which therefore must be an integer (one table per power).
+                String[] params = new String[arity];
+                for (int i = 0; i < arity; i++) {
+                    boolean valid = i == 0 ? mi.arguments[i] instanceof Java.IntegerLiteral
+                            : mi.arguments[i] instanceof Java.IntegerLiteral || mi.arguments[i] instanceof Java.FloatingPointLiteral;
+                    if (!valid) {
+                        invalidMessage = mi.methodName + " expects " + (i == 0 ? "an integer" : "a number") + " as argument " + (i + 1) + ", but got: " + mi.arguments[i];
+                        return false;
+                    }
+                    params[i] = ((Java.Literal) mi.arguments[i]).value;
+                }
+                result.bikeClimbTable = BIKE_CLIMB_TABLE + "(" + String.join(", ", params) + ")";
                 return true;
             }
             if (allowedMethods.contains(mi.methodName)) {
@@ -178,18 +196,30 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
                 result.ok = atom.accept(visitor);
                 result.invalidMessage = visitor.invalidMessage;
                 if (result.ok) {
-                    // The converted expression is used in the generated getSpeed code and injects
-                    // the current speed ("value") as last argument of the built-in function call.
-                    // Note that findMinMax uses the expression as written in the custom model
-                    // instead, i.e. it resolves to the function without the currentSpeed parameter.
+                    // The converted expression is used in the generated getSpeed code: the call is
+                    // replaced by the method of the table field and the current speed ("value") is injected, e.g.
+                    // bike_climb_factor(120, 95) -> bike_climb_table_120.getBikeClimbFactor(average_slope, value)
+                    // For findMinMax and findVariables the static function with the explicit encoded value is
+                    // used instead, i.e. bike_climb_factor(average_slope, 120, 95)
                     result.converted = new StringBuilder(expression);
-                    if (visitor.functionCallStart >= 0)
-                        result.converted.insert(findClosingParen(expression, visitor.functionCallStart), ", value");
+                    result.evaluable = expression;
+                    if (visitor.functionCallStart >= 0) {
+                        int start = visitor.functionCallStart, end = findClosingParen(expression, start);
+                        result.converted.replace(start, end + 1, toFieldName(result.bikeClimbTable) + ".getBikeClimbFactor(" + AverageSlope.KEY + ", value)");
+                        result.evaluable = new StringBuilder(expression).insert(expression.indexOf('(', start) + 1, AverageSlope.KEY + ", ").toString();
+                    }
                 }
             }
         } catch (Exception ex) {
         }
         return result;
+    }
+
+    /**
+     * @return the field name in the generated class, e.g. bike_climb_table_120 for bike_climb_table(120, 95)
+     */
+    static String toFieldName(String bikeClimbTable) {
+        return BIKE_CLIMB_TABLE + "_" + bikeClimbTable.substring(BIKE_CLIMB_TABLE.length() + 1, bikeClimbTable.indexOf(','));
     }
 
     /**
@@ -268,7 +298,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
                 } else {
                     // single encoded value
                     String var = result.guessedVariables.iterator().next();
-                    SingleArgEvaluator ee = createExpressionEvaluator().createFastEvaluator(valueExpression, SingleArgEvaluator.class, var);
+                    SingleArgEvaluator ee = createExpressionEvaluator().createFastEvaluator(result.evaluable, SingleArgEvaluator.class, var);
                     EncodedValue enc = lookup.getEncodedValue(var, EncodedValue.class);
                     double max = getMax(enc);
                     double val1 = ee.evaluate(max);
@@ -283,7 +313,11 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         if (value < 0)
             throw new IllegalArgumentException("illegal expression as it can result in a negative weight: " + valueExpression);
 
-        return result.guessedVariables;
+        if (result.bikeClimbTable == null) return result.guessedVariables;
+        // the generated class needs a field for the table, see CustomModelParser.createClassTemplate
+        Set<String> variables = new LinkedHashSet<>(result.guessedVariables);
+        variables.add(result.bikeClimbTable);
+        return variables;
     }
 
     static MinMax findMinMax(String valueExpression, EncodedValueLookup lookup) {
@@ -317,7 +351,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
             }
 
             String var = result.guessedVariables.iterator().next();
-            SingleArgEvaluator ee = createExpressionEvaluator().createFastEvaluator(valueExpression, SingleArgEvaluator.class, var);
+            SingleArgEvaluator ee = createExpressionEvaluator().createFastEvaluator(result.evaluable, SingleArgEvaluator.class, var);
             EncodedValue enc = lookup.getEncodedValue(var, EncodedValue.class);
             double max = getMax(enc);
             double val1 = ee.evaluate(max);
