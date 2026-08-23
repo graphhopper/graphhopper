@@ -46,7 +46,9 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
     private static final Set<String> allowedMethods = Set.of("sqrt");
     // built-in functions (static methods in CustomWeightingHelper) mapped to their expected number
     // of arguments. They must be monotone in the encoded value argument, see findMinMax.
-    private static final Map<String, Integer> allowedFunctions = Map.of("bike_climb_factor", 2);
+    static final String BIKE_CLIMB_FACTOR = "bike_climb_factor";
+    private static final Map<String, Integer> allowedFunctions = Map.of(BIKE_CLIMB_FACTOR, 2);
+    // the pseudo variable and field prefix for the BikeClimbSpeedTable of a bike_climb_factor call
     static final String BIKE_CLIMB_TABLE = "bike_climb_table";
     private final ParseResult result;
     private final NameValidator variableValidator;
@@ -228,14 +230,16 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
     }
 
     /**
-     * @return the expression for the ExpressionEvaluator used in findMinMax and findVariables, i.e. with the
-     * static function with the slope as explicit first argument, e.g. bike_climb_factor(average_slope, 120, 95)
+     * @return the expression for the ExpressionEvaluator used in findMinMax and findVariables. Currently
+     * only bike_climb_factor is a built-in function, which is replaced by the static function with the slope
+     * as explicit first argument, e.g. bike_climb_factor(average_slope, 120, 95)
      */
     private static String toEvaluable(ParseResult result) {
         String expression = result.converted.toString();
         for (Map.Entry<String, String[]> entry : result.methods.entrySet())
-            expression = expression.replace(toCall(entry.getKey(), entry.getValue()),
-                    entry.getKey() + "(" + AverageSlope.KEY + ", " + String.join(", ", entry.getValue()) + ")");
+            if (entry.getKey().equals(BIKE_CLIMB_FACTOR))
+                expression = expression.replace(toCall(entry.getKey(), entry.getValue()),
+                        BIKE_CLIMB_FACTOR + "(" + AverageSlope.KEY + ", " + String.join(", ", entry.getValue()) + ")");
         return expression;
     }
 

@@ -746,7 +746,7 @@ Besides `Math.sqrt` a value expression can call the following built-in function:
   relative to the speed of the preceding statements, i.e. the resulting speed is the minimum of the
   surface-limited speed and the climbing speed, and so a surface penalty of the base profile is not
   double-counted against gravity on a climb. A speed below the base speed is interpreted only partly as
-  energy loss: it increases the rolling resistance by at most 0.012. Where riding gets slower than walking, the speed of
+  energy loss: it increases the rolling resistance by the factor base speed / speed (at most 3). Where riding gets slower than walking, the speed of
   pushing the bike is used instead. The `power` and `mass` arguments must be numbers and `power` an
   integer, as one lookup table per power is created.
   See `bike_elevation.json` for an example:

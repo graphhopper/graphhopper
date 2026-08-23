@@ -65,9 +65,9 @@ class CustomWeightingHelperTest {
         // the speed at the base speed 18 is 18 * factor
         assertEquals(3.66, 18 * CustomWeightingHelper.bike_climb_factor(12, 120, 95), 0.01);
         // where riding gets slower than walking the cyclist pushes the bike instead
-        // (approximately 0.8 times Tobler's hiking speed)
-        assertEquals(2.29, 18 * CustomWeightingHelper.bike_climb_factor(15, 120, 95), 0.01);
-        assertEquals(1.57, 18 * CustomWeightingHelper.bike_climb_factor(31, 120, 95), 0.01);
+        // (0.8 times Tobler's hiking speed)
+        assertEquals(2.38, 18 * CustomWeightingHelper.bike_climb_factor(15, 120, 95), 0.01);
+        assertEquals(1.36, 18 * CustomWeightingHelper.bike_climb_factor(31, 120, 95), 0.01);
         assertEquals(2.0, 18 * CustomWeightingHelper.bike_climb_factor(20, 80, 95), 0.01);
         // capped at 1 for downhill slopes
         assertEquals(1, CustomWeightingHelper.bike_climb_factor(0, 120, 95));
@@ -81,10 +81,10 @@ class CustomWeightingHelperTest {
     public void testBikeClimbFactorCurrentSpeed() {
         // the generated code calls the table method with the injected current speed: for a current
         // speed reduced from the base 18 (e.g. from a rough surface) the rolling resistance is increased
-        // (capped at +0.012, i.e. +1.2% slope) but the power-limited climbing speed is not scaled down
-        // proportionally, i.e. 9*factor is 3.02km/h and not 9/18*3.66=1.83km/h
+        // (doubled for 9km/h) but the power-limited climbing speed is not scaled down proportionally,
+        // i.e. 9*factor is 3.45km/h and not 9/18*3.66=1.83km/h
         BikeClimbSpeedTable table = new BikeClimbSpeedTable(120, 95);
-        assertEquals(3.02, 9 * table.getBikeClimbFactor(12, 9), 0.01);
+        assertEquals(3.45, 9 * table.getBikeClimbFactor(12, 9), 0.01);
         // the factor never increases the speed above the current speed
         assertEquals(1, table.getBikeClimbFactor(12, 3));
         // a current speed above the base speed results in the same absolute climbing speed

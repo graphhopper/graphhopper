@@ -6,7 +6,7 @@
 // The speed never falls below the walking speed at which the cyclist pushes the bike.
 {
   "speed": [
-    { "if":      "average_slope >=   2", "multiply_by": "bike_climb_factor(120, 95)" },
+    { "if":      "average_slope  >   0", "multiply_by": "bike_climb_factor(120, 95)" },
     { "else_if": "average_slope <= -15", "multiply_by": "1.00" },
     { "else_if": "average_slope <=  -9", "multiply_by": "1.50" },
     { "else_if": "average_slope <=  -6", "multiply_by": "1.30" },

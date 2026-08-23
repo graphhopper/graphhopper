@@ -291,10 +291,10 @@ class CustomWeightingTest {
         assertEquals(10 * 1000 / (18 / 3.6), weighting.calcEdgeWeight(edge, true), 1);
 
         // the current speed is injected into bike_climb_factor: for a slower edge (rough surface)
-        // the climbing speed is reduced via a higher rolling resistance, i.e. it is 3.02km/h and not
+        // the climbing speed is reduced via a higher rolling resistance, i.e. it is 3.52km/h and not
         // the proportional 10/18*3.66=2.03km/h
         EdgeIteratorState slowEdge = graph.edge(2, 3).setDistance(1000).set(speedEnc, 10, 10).set(slopeEnc, 12);
-        assertEquals(10 * 1000 / (3.02 / 3.6), weighting.calcEdgeWeight(slowEdge, false), 30);
+        assertEquals(10 * 1000 / (3.52 / 3.6), weighting.calcEdgeWeight(slowEdge, false), 30);
 
         // for racingbike the table is created with the base speed 24 instead of 18, i.e. 12.76km/h at 5% for 200W and 90kg
         DecimalEncodedValue racingSpeedEnc = VehicleSpeed.create("racingbike", 5, 2, true);

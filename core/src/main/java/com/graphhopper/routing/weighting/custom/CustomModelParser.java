@@ -41,6 +41,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
 import static com.graphhopper.json.Statement.Keyword.IF;
+import static com.graphhopper.routing.weighting.custom.ValueExpressionVisitor.BIKE_CLIMB_FACTOR;
 import static com.graphhopper.routing.weighting.custom.ValueExpressionVisitor.BIKE_CLIMB_TABLE;
 
 public class CustomModelParser {
@@ -573,9 +574,9 @@ public class CustomModelParser {
     }
 
     /**
-     * bike_climb_factor is relative to the speed computed from the preceding statements, so for the
-     * generated getSpeed code the call is replaced by the method of the table field (see createClassTemplate)
-     * with the injected current speed ("value"), e.g. bike_climb_table_120.getBikeClimbFactor(average_slope, value)
+     * Converts the built-in function calls of the value expression for the generated code. Currently only
+     * bike_climb_factor exists: the call is replaced by the method of the table field
+     * (see createClassTemplate) with the injected current speed ("value"), e.g. bike_climb_factor(120, 95) -> bike_climb_table_120.getBikeClimbFactor(average_slope, value)
      */
     private static String convertValue(String valueExpression, NameValidator nameValidator) {
         ParseResult result = ValueExpressionVisitor.parse(valueExpression,
@@ -583,9 +584,10 @@ public class CustomModelParser {
         if (!result.ok) return valueExpression;
         String expression = result.converted.toString();
         for (Map.Entry<String, String[]> entry : result.methods.entrySet())
-            expression = expression.replace(ValueExpressionVisitor.toCall(entry.getKey(), entry.getValue()),
-                    ValueExpressionVisitor.toFieldName(ValueExpressionVisitor.toCall(BIKE_CLIMB_TABLE, entry.getValue()))
-                            + ".getBikeClimbFactor(" + AverageSlope.KEY + ", value)");
+            if (entry.getKey().equals(BIKE_CLIMB_FACTOR))
+                expression = expression.replace(ValueExpressionVisitor.toCall(entry.getKey(), entry.getValue()),
+                        ValueExpressionVisitor.toFieldName(ValueExpressionVisitor.toCall(BIKE_CLIMB_TABLE, entry.getValue()))
+                                + ".getBikeClimbFactor(" + AverageSlope.KEY + ", value)");
         return expression;
     }
 
@@ -593,10 +595,9 @@ public class CustomModelParser {
                                  String exceptionInfo, Set<String> createObjects, List<Statement> list,
                                  ClassHelper classHelper, String indentation) {
 
-        boolean isSpeed = "speed entry".equals(exceptionInfo);
         for (Statement statement : list) {
-            // the RHS value expression was already verified in createClazz; for speed statements it
-            // is parsed again to get the converted expression (injected current speed)
+            // the RHS value expression was already verified in createClazz and is parsed again to get
+            // the converted expression, see convertValue
             if (statement.keyword() == Statement.Keyword.ELSE) {
                 if (!Helper.isEmpty(statement.condition()))
                     throw new IllegalArgumentException("condition must be empty but was " + statement.condition());
@@ -607,7 +608,7 @@ public class CustomModelParser {
                     parseExpressions(expressions, nameInConditionValidator, exceptionInfo, createObjects, statement.doBlock(), classHelper, indentation + "  ");
                     expressions.append(indentation).append("}\n");
                 } else {
-                    String value = isSpeed ? convertValue(statement.value(), nameInConditionValidator) : statement.value();
+                    String value = convertValue(statement.value(), nameInConditionValidator);
                     expressions.append("else {").append(statement.operation().build(value)).append("; }\n");
                 }
             } else if (statement.keyword() == Statement.Keyword.ELSEIF || statement.keyword() == Statement.Keyword.IF) {
@@ -625,7 +626,7 @@ public class CustomModelParser {
                     parseExpressions(expressions, nameInConditionValidator, exceptionInfo, createObjects, statement.doBlock(), classHelper, indentation + "  ");
                     expressions.append(indentation).append("}\n");
                 } else {
-                    String value = isSpeed ? convertValue(statement.value(), nameInConditionValidator) : statement.value();
+                    String value = convertValue(statement.value(), nameInConditionValidator);
                     expressions.append("if (").append(parseResult.converted).append(") {").
                             append(statement.operation().build(value)).append(";}\n");
                 }

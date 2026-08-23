@@ -4,7 +4,7 @@
 // TODO: for 200W we need to change the base speed to 28km/h in RacingBikeAverageSpeedParser
 {
   "speed": [
-    { "if":      "average_slope >=   2", "multiply_by": "bike_climb_factor(200, 90)" },
+    { "if":      "average_slope  >   0", "multiply_by": "bike_climb_factor(200, 90)" },
     { "else_if": "average_slope <= -15", "multiply_by": "1.10" },
     { "else_if": "average_slope <=  -9", "multiply_by": "1.60" },
     { "else_if": "average_slope <=  -6", "multiply_by": "1.40" },
