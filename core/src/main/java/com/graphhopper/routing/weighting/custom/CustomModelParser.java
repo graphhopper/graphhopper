@@ -142,7 +142,7 @@ public class CustomModelParser {
      */
     private static Class<?> createClazz(CustomModel customModel, EncodedValueLookup lookup) {
         try {
-            Set<String> priorityVariables = ValueExpressionVisitor.findVariables(customModel.getPriority(), lookup);
+            Set<String> priorityVariables = new LinkedHashSet<>();
             List<Java.BlockStatement> priorityStatements = createGetPriorityStatements(priorityVariables, customModel, lookup);
 
             if (customModel.getSpeed().isEmpty())
@@ -159,10 +159,10 @@ public class CustomModelParser {
                     throw new IllegalArgumentException("The first group needs to contain a single unconditional 'if' statement (or end with an 'else').");
             }
 
-            Set<String> speedVariables = ValueExpressionVisitor.findVariables(customModel.getSpeed(), lookup);
+            Set<String> speedVariables = new LinkedHashSet<>();
             List<Java.BlockStatement> speedStatements = createGetSpeedStatements(speedVariables, customModel, lookup);
 
-            Set<String> turnPenaltyVariables = ValueExpressionVisitor.findVariables(customModel.getTurnPenalty(), lookup);
+            Set<String> turnPenaltyVariables = new LinkedHashSet<>();
             List<Java.BlockStatement> turnPenaltyStatements = createGetTurnPenaltyStatements(turnPenaltyVariables, customModel, lookup);
 
             // Create different class name, which is required only for debugging.
@@ -538,8 +538,6 @@ public class CustomModelParser {
      */
     private static List<Java.BlockStatement> verifyExpressions(StringBuilder expressions, String info, Set<String> createObjects,
                                                                List<Statement> list, EncodedValueLookup lookup) throws Exception {
-        if (!"speed entry".equals(info) && createObjects.stream().anyMatch(o -> o.startsWith(BIKE_CLIMB_TABLE)))
-            throw new IllegalArgumentException("bike_climb_factor is only supported for 'speed' but was used in " + info);
         // allow variables, all encoded values, constants and special variables like in_xyarea or backward_car_access
         NameValidator nameInConditionValidator = name -> lookup.hasEncodedValue(name)
                 || name.toUpperCase(Locale.ROOT).equals(name) || name.startsWith(IN_AREA_PREFIX) || name.equals(CHANGE_ANGLE)
@@ -553,7 +551,9 @@ public class CustomModelParser {
             return getReturnType(ev);
         };
 
-        parseExpressions(expressions, nameInConditionValidator, info, createObjects, list, helper, "");
+        parseExpressions(expressions, nameInConditionValidator, info, createObjects, list, helper, lookup, "");
+        if (!"speed entry".equals(info) && createObjects.stream().anyMatch(o -> o.startsWith(BIKE_CLIMB_TABLE)))
+            throw new IllegalArgumentException("bike_climb_factor is only supported for 'speed' but was used in " + info);
         expressions.append("return value;\n");
         return new Parser(new org.codehaus.janino.Scanner(info, new StringReader(expressions.toString()))).
                 parseBlockStatements();
@@ -574,14 +574,14 @@ public class CustomModelParser {
     }
 
     /**
-     * Converts the built-in function calls of the value expression for the generated code. Currently only
-     * bike_climb_factor exists: the call is replaced by the method of the table field
-     * (see createClassTemplate) with the injected current speed ("value"), e.g. bike_climb_factor(120, 95) -> bike_climb_table_120.getBikeClimbFactor(average_slope, value)
+     * Verifies the value expression of the statement, collects its variables and converts the built-in
+     * function calls for the generated code. Currently only bike_climb_factor exists: the call is replaced
+     * by the method of the table field (see createClassTemplate) with the injected current speed ("value"),
+     * e.g. bike_climb_factor(120, 95) -> bike_climb_table_120.getBikeClimbFactor(average_slope, value)
      */
-    private static String convertValue(String valueExpression, NameValidator nameValidator) {
-        ParseResult result = ValueExpressionVisitor.parse(valueExpression,
-                name -> nameValidator.isValid(name) || name.contains("Infinity"));
-        if (!result.ok) return valueExpression;
+    private static String parseValue(Statement statement, Set<String> createObjects, EncodedValueLookup lookup) {
+        ParseResult result = ValueExpressionVisitor.parseValue(statement.value(), lookup);
+        createObjects.addAll(ValueExpressionVisitor.findVariables(result));
         String expression = result.converted.toString();
         for (Map.Entry<String, String[]> entry : result.methods.entrySet())
             if (entry.getKey().equals(BIKE_CLIMB_FACTOR))
@@ -593,11 +593,11 @@ public class CustomModelParser {
 
     static void parseExpressions(StringBuilder expressions, NameValidator nameInConditionValidator,
                                  String exceptionInfo, Set<String> createObjects, List<Statement> list,
-                                 ClassHelper classHelper, String indentation) {
-
+                                 ClassHelper classHelper, EncodedValueLookup lookup, String indentation) {
+        for (List<Statement> group : splitIntoGroup(list))
+            if (group.size() > 1 && "true".equals(group.get(0).condition().trim()))
+                throw new IllegalArgumentException("Only one statement allowed for an unconditional statement");
         for (Statement statement : list) {
-            // the RHS value expression was already verified in createClazz and is parsed again to get
-            // the converted expression, see convertValue
             if (statement.keyword() == Statement.Keyword.ELSE) {
                 if (!Helper.isEmpty(statement.condition()))
                     throw new IllegalArgumentException("condition must be empty but was " + statement.condition());
@@ -605,10 +605,10 @@ public class CustomModelParser {
                 expressions.append(indentation);
                 if (statement.isBlock()) {
                     expressions.append("else {");
-                    parseExpressions(expressions, nameInConditionValidator, exceptionInfo, createObjects, statement.doBlock(), classHelper, indentation + "  ");
+                    parseExpressions(expressions, nameInConditionValidator, exceptionInfo, createObjects, statement.doBlock(), classHelper, lookup, indentation + "  ");
                     expressions.append(indentation).append("}\n");
                 } else {
-                    String value = convertValue(statement.value(), nameInConditionValidator);
+                    String value = parseValue(statement, createObjects, lookup);
                     expressions.append("else {").append(statement.operation().build(value)).append("; }\n");
                 }
             } else if (statement.keyword() == Statement.Keyword.ELSEIF || statement.keyword() == Statement.Keyword.IF) {
@@ -623,10 +623,10 @@ public class CustomModelParser {
                 expressions.append(indentation);
                 if (statement.isBlock()) {
                     expressions.append("if (").append(parseResult.converted).append(") {\n");
-                    parseExpressions(expressions, nameInConditionValidator, exceptionInfo, createObjects, statement.doBlock(), classHelper, indentation + "  ");
+                    parseExpressions(expressions, nameInConditionValidator, exceptionInfo, createObjects, statement.doBlock(), classHelper, lookup, indentation + "  ");
                     expressions.append(indentation).append("}\n");
                 } else {
-                    String value = convertValue(statement.value(), nameInConditionValidator);
+                    String value = parseValue(statement, createObjects, lookup);
                     expressions.append("if (").append(parseResult.converted).append(") {").
                             append(statement.operation().build(value)).append(";}\n");
                 }

@@ -146,7 +146,7 @@ class ValueExpressionVisitorTest {
         assertInterval(0.9 * CustomWeightingHelper.bike_climb_factor(31.5, 120, 95), 0.9, "0.9 * bike_climb_factor(120, 95)", lookup);
 
         // average_slope and the table call are returned so that the generated class creates the variable and the field
-        assertEquals(Set.of("average_slope", "bike_climb_table(120, 95)"), findVariables("bike_climb_factor(120, 95)", lookup));
+        assertEquals(Set.of("average_slope", "bike_climb_table(120, 95)"), findVariables(parseValue("bike_climb_factor(120, 95)", lookup)));
     }
 
     @Test
@@ -170,28 +170,28 @@ class ValueExpressionVisitorTest {
         msg = assertThrows(IllegalArgumentException.class, () -> findMinMax("my_priority*my_priority2 * 3", lookup)).getMessage();
         assertTrue(msg.contains("Currently only a single EncodedValue is allowed on the right-hand side"), msg);
 
-        msg = assertThrows(IllegalArgumentException.class, () -> findVariables("unknown*3", lookup)).getMessage();
+        msg = assertThrows(IllegalArgumentException.class, () -> parseValue("unknown*3", lookup)).getMessage();
         assertTrue(msg.contains("'unknown' not available"), msg);
 
-        msg = assertThrows(IllegalArgumentException.class, () -> findVariables("my_priority - my_priority2 * 3", lookup)).getMessage();
+        msg = assertThrows(IllegalArgumentException.class, () -> parseValue("my_priority - my_priority2 * 3", lookup)).getMessage();
         assertTrue(msg.contains("a single EncodedValue"), msg);
         // unary minus is also a minus operator
-        msg = assertThrows(IllegalArgumentException.class, () -> findVariables("-my_priority + my_priority2 * 3", lookup)).getMessage();
+        msg = assertThrows(IllegalArgumentException.class, () -> parseValue("-my_priority + my_priority2 * 3", lookup)).getMessage();
         assertTrue(msg.contains("a single EncodedValue"), msg);
 
-        msg = assertThrows(IllegalArgumentException.class, () -> findVariables("1/my_priority", lookup)).getMessage();
+        msg = assertThrows(IllegalArgumentException.class, () -> parseValue("1/my_priority", lookup)).getMessage();
         assertTrue(msg.contains("invalid operation '/'"), msg);
 
-        msg = assertThrows(IllegalArgumentException.class, () -> findVariables("my_priority*my_priority2 * 3", lookup)).getMessage();
+        msg = assertThrows(IllegalArgumentException.class, () -> parseValue("my_priority*my_priority2 * 3", lookup)).getMessage();
         assertTrue(msg.contains("Currently only a single EncodedValue is allowed on the right-hand side"), msg);
 
-        msg = assertThrows(IllegalArgumentException.class, () -> findVariables("my_prio*my_priority2 * 3", lookup)).getMessage();
+        msg = assertThrows(IllegalArgumentException.class, () -> parseValue("my_prio*my_priority2 * 3", lookup)).getMessage();
         assertEquals("'my_prio' not available", msg);
 
-        msg = assertThrows(IllegalArgumentException.class, () -> findVariables("-0.5", lookup)).getMessage();
+        msg = assertThrows(IllegalArgumentException.class, () -> parseValue("-0.5", lookup)).getMessage();
         assertEquals("illegal expression as it can result in a negative weight: -0.5", msg);
 
-        msg = assertThrows(IllegalArgumentException.class, () -> findVariables("-my_priority", lookup)).getMessage();
+        msg = assertThrows(IllegalArgumentException.class, () -> parseValue("-my_priority", lookup)).getMessage();
         assertEquals("illegal expression as it can result in a negative weight: -my_priority", msg);
     }
 
@@ -214,10 +214,10 @@ class ValueExpressionVisitorTest {
         IntEncodedValueImpl prio2 = new IntEncodedValueImpl("my_priority2", 5, -5, false, false);
         EncodedValueLookup lookup = new EncodingManager.Builder().add(prio1).add(prio2).build();
 
-        assertEquals(Set.of(), findVariables("2", lookup));
-        assertEquals(Set.of("my_priority"), findVariables("2*my_priority", lookup));
+        assertEquals(Set.of(), findVariables(parseValue("2", lookup)));
+        assertEquals(Set.of("my_priority"), findVariables(parseValue("2*my_priority", lookup)));
 
-        Exception ex = assertThrows(IllegalArgumentException.class, () ->  findVariables("-2*my_priority", lookup));
+        Exception ex = assertThrows(IllegalArgumentException.class, () ->  parseValue("-2*my_priority", lookup));
         assertTrue(ex.getMessage().contains("illegal expression as it can result in a negative weight"));
     }
 

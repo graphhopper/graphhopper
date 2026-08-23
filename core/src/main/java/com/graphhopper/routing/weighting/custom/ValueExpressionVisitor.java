@@ -18,7 +18,6 @@
 package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.json.MinMax;
-import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.AverageSlope;
 import com.graphhopper.routing.ev.EncodedValue;
@@ -30,11 +29,9 @@ import org.codehaus.janino.*;
 import java.io.StringReader;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static com.graphhopper.json.Statement.Keyword.IF;
 
 /**
  * Expression visitor for right-hand side value of limit_to or multiply_by.
@@ -258,43 +255,11 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         throw new IllegalArgumentException("no closing parenthesis found in: " + expression);
     }
 
-    static Set<String> findVariables(List<Statement> statements, EncodedValueLookup lookup) {
-        List<List<Statement>> groups = CustomModelParser.splitIntoGroup(statements);
-        Set<String> variables = new LinkedHashSet<>();
-        for (List<Statement> group : groups) findVariablesForGroup(variables, group, lookup);
-        return variables;
-    }
-
-    private static void findVariablesForGroup(Set<String> createdObjects, List<Statement> group, EncodedValueLookup lookup) {
-        if (group.isEmpty() || !IF.equals(group.get(0).keyword()))
-            throw new IllegalArgumentException("Every group of statements must start with an if-statement");
-
-        Statement first = group.get(0);
-        if (first.condition().trim().equals("true")) {
-            if (first.isBlock()) {
-                List<List<Statement>> groups = CustomModelParser.splitIntoGroup(first.doBlock());
-                for (List<Statement> subGroup : groups)
-                    findVariablesForGroup(createdObjects, subGroup, lookup);
-            } else {
-                createdObjects.addAll(ValueExpressionVisitor.findVariables(first.value(), lookup));
-            }
-
-            if (group.size() > 1)
-                throw new IllegalArgumentException("Only one statement allowed for an unconditional statement");
-        } else {
-            for (Statement st : group) {
-                if (st.isBlock()) {
-                    List<List<Statement>> groups = CustomModelParser.splitIntoGroup(st.doBlock());
-                    for (List<Statement> subGroup : groups)
-                        findVariablesForGroup(createdObjects, subGroup, lookup);
-                } else {
-                    createdObjects.addAll(ValueExpressionVisitor.findVariables(st.value(), lookup));
-                }
-            }
-        }
-    }
-
-    static Set<String> findVariables(String valueExpression, EncodedValueLookup lookup) {
+    /**
+     * Parses the value expression and throws an exception if it is invalid, contains more than one
+     * encoded value or can result in a negative value.
+     */
+    static ParseResult parseValue(String valueExpression, EncodedValueLookup lookup) {
         ParseResult result = parse(valueExpression, key -> lookup.hasEncodedValue(key) || key.contains(INFINITY));
         if (!result.ok)
             throw new IllegalArgumentException(result.invalidMessage);
@@ -333,9 +298,15 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         }
         if (value < 0)
             throw new IllegalArgumentException("illegal expression as it can result in a negative weight: " + valueExpression);
+        return result;
+    }
 
+    /**
+     * @return the variables of the parsed value expression that the generated class has to provide, i.e. the
+     * encoded values and the pseudo variable bike_climb_table(...) for the table field, see CustomModelParser.createClassTemplate
+     */
+    static Set<String> findVariables(ParseResult result) {
         if (result.methods.isEmpty()) return result.guessedVariables;
-        // the generated class needs a field for the table, see CustomModelParser.createClassTemplate
         Set<String> variables = new LinkedHashSet<>(result.guessedVariables);
         for (String[] params : result.methods.values()) variables.add(toCall(BIKE_CLIMB_TABLE, params));
         return variables;
