@@ -38,15 +38,15 @@ public class RacingBikePriorityParser extends BikeCommonPriorityParser {
         highwayToPrio.put("unclassified", UNCHANGED);
         highwayToPrio.put("primary", UNCHANGED);
         highwayToPrio.put("primary_link", UNCHANGED);
-        highwayToPrio.put("cycleway", UNCHANGED);
+        highwayToPrio.put("cycleway", SLIGHT_AVOID);
 
-        highwayToPrio.put("road", SLIGHT_AVOID);
-        highwayToPrio.put("service", SLIGHT_AVOID);
+        highwayToPrio.put("road", AVOID);
+        highwayToPrio.put("service", AVOID);
         highwayToPrio.put("residential", SLIGHT_AVOID);
-        highwayToPrio.put("path", SLIGHT_AVOID);
-        highwayToPrio.put("footway", SLIGHT_AVOID);
-        highwayToPrio.put("pedestrian", SLIGHT_AVOID);
-        highwayToPrio.put("platform", SLIGHT_AVOID);
+        highwayToPrio.put("path", AVOID);
+        highwayToPrio.put("footway", AVOID);
+        highwayToPrio.put("pedestrian", AVOID);
+        highwayToPrio.put("platform", AVOID);
         highwayToPrio.put("living_street", AVOID);
         highwayToPrio.put("bridleway", AVOID);
         highwayToPrio.put("track", AVOID_MORE);
@@ -76,7 +76,7 @@ public class RacingBikePriorityParser extends BikeCommonPriorityParser {
             prio = prio.better();
         } else if ("cycleway".equals(highway) && way.hasTag("foot", INTENDED)) {
             // too narrow when shared with pedestrians; wide roads keep their priority
-            prio = SLIGHT_AVOID;
+            prio = AVOID;
         } else if (way.hasTag("tunnel", INTENDED)) {
             // tunnels are only dangerous on the high-speed roads that we strongly avoid anyway
             if (prio == BAD) prio = REACH_DESTINATION;
