@@ -18,7 +18,6 @@
 package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.json.MinMax;
-import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
@@ -28,10 +27,7 @@ import org.codehaus.janino.*;
 
 import java.io.StringReader;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
-
-import static com.graphhopper.json.Statement.Keyword.IF;
 
 /**
  * Expression visitor for right-hand side value of limit_to or multiply_by.
@@ -150,42 +146,10 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         return result;
     }
 
-    static Set<String> findVariables(List<Statement> statements, EncodedValueLookup lookup) {
-        List<List<Statement>> groups = CustomModelParser.splitIntoGroup(statements);
-        Set<String> variables = new LinkedHashSet<>();
-        for (List<Statement> group : groups) findVariablesForGroup(variables, group, lookup);
-        return variables;
-    }
-
-    private static void findVariablesForGroup(Set<String> createdObjects, List<Statement> group, EncodedValueLookup lookup) {
-        if (group.isEmpty() || !IF.equals(group.get(0).keyword()))
-            throw new IllegalArgumentException("Every group of statements must start with an if-statement");
-
-        Statement first = group.get(0);
-        if (first.condition().trim().equals("true")) {
-            if (first.isBlock()) {
-                List<List<Statement>> groups = CustomModelParser.splitIntoGroup(first.doBlock());
-                for (List<Statement> subGroup : groups)
-                    findVariablesForGroup(createdObjects, subGroup, lookup);
-            } else {
-                createdObjects.addAll(ValueExpressionVisitor.findVariables(first.value(), lookup));
-            }
-
-            if (group.size() > 1)
-                throw new IllegalArgumentException("Only one statement allowed for an unconditional statement");
-        } else {
-            for (Statement st : group) {
-                if (st.isBlock()) {
-                    List<List<Statement>> groups = CustomModelParser.splitIntoGroup(st.doBlock());
-                    for (List<Statement> subGroup : groups)
-                        findVariablesForGroup(createdObjects, subGroup, lookup);
-                } else {
-                    createdObjects.addAll(ValueExpressionVisitor.findVariables(st.value(), lookup));
-                }
-            }
-        }
-    }
-
+    /**
+     * @return the encoded values of the value expression. Throws an exception if the expression is invalid,
+     * contains more than one encoded value or can result in a negative value.
+     */
     static Set<String> findVariables(String valueExpression, EncodedValueLookup lookup) {
         ParseResult result = parse(valueExpression, key -> lookup.hasEncodedValue(key) || key.contains(INFINITY));
         if (!result.ok)

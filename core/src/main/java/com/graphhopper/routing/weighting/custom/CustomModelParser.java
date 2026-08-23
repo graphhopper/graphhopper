@@ -128,19 +128,16 @@ public class CustomModelParser {
     /**
      * This method does the following:
      * <ul>
-     * <li>
-     *     1. parse the value expressions (RHS) to know about additional encoded values ('findVariables')
-     *     and check for multiplications with negative values.
+     * <li>1. parse the conditions and value expressions of the statements (parseExpressions) to verify
+     *     them and to know about the required encoded values
      * </li>
-     * <li>2. parse conditional expression of priority and speed statements -> done in ConditionalExpressionVisitor (don't parse RHS expressions again)
-     * </li>
-     * <li>3. create class template as String, inject the created statements and create the Class
+     * <li>2. create class template as String, inject the created statements and create the Class
      * </li>
      * </ul>
      */
     private static Class<?> createClazz(CustomModel customModel, EncodedValueLookup lookup) {
         try {
-            Set<String> priorityVariables = ValueExpressionVisitor.findVariables(customModel.getPriority(), lookup);
+            Set<String> priorityVariables = new LinkedHashSet<>();
             List<Java.BlockStatement> priorityStatements = createGetPriorityStatements(priorityVariables, customModel, lookup);
 
             if (customModel.getSpeed().isEmpty())
@@ -157,10 +154,10 @@ public class CustomModelParser {
                     throw new IllegalArgumentException("The first group needs to contain a single unconditional 'if' statement (or end with an 'else').");
             }
 
-            Set<String> speedVariables = ValueExpressionVisitor.findVariables(customModel.getSpeed(), lookup);
+            Set<String> speedVariables = new LinkedHashSet<>();
             List<Java.BlockStatement> speedStatements = createGetSpeedStatements(speedVariables, customModel, lookup);
 
-            Set<String> turnPenaltyVariables = ValueExpressionVisitor.findVariables(customModel.getTurnPenalty(), lookup);
+            Set<String> turnPenaltyVariables = new LinkedHashSet<>();
             List<Java.BlockStatement> turnPenaltyStatements = createGetTurnPenaltyStatements(turnPenaltyVariables, customModel, lookup);
 
             // Create different class name, which is required only for debugging.
@@ -545,7 +542,7 @@ public class CustomModelParser {
             return getReturnType(ev);
         };
 
-        parseExpressions(expressions, nameInConditionValidator, info, createObjects, list, helper, "");
+        parseExpressions(expressions, nameInConditionValidator, info, createObjects, list, helper, lookup, "");
         expressions.append("return value;\n");
         return new Parser(new org.codehaus.janino.Scanner(info, new StringReader(expressions.toString()))).
                 parseBlockStatements();
@@ -567,10 +564,11 @@ public class CustomModelParser {
 
     static void parseExpressions(StringBuilder expressions, NameValidator nameInConditionValidator,
                                  String exceptionInfo, Set<String> createObjects, List<Statement> list,
-                                 ClassHelper classHelper, String indentation) {
-
+                                 ClassHelper classHelper, EncodedValueLookup lookup, String indentation) {
+        for (List<Statement> group : splitIntoGroup(list))
+            if (group.size() > 1 && "true".equals(group.get(0).condition().trim()))
+                throw new IllegalArgumentException("Only one statement allowed for an unconditional statement");
         for (Statement statement : list) {
-            // avoid parsing the RHS value expression again as we just did it to get the maximum values in createClazz
             if (statement.keyword() == Statement.Keyword.ELSE) {
                 if (!Helper.isEmpty(statement.condition()))
                     throw new IllegalArgumentException("condition must be empty but was " + statement.condition());
@@ -578,9 +576,10 @@ public class CustomModelParser {
                 expressions.append(indentation);
                 if (statement.isBlock()) {
                     expressions.append("else {");
-                    parseExpressions(expressions, nameInConditionValidator, exceptionInfo, createObjects, statement.doBlock(), classHelper, indentation + "  ");
+                    parseExpressions(expressions, nameInConditionValidator, exceptionInfo, createObjects, statement.doBlock(), classHelper, lookup, indentation + "  ");
                     expressions.append(indentation).append("}\n");
                 } else {
+                    createObjects.addAll(ValueExpressionVisitor.findVariables(statement.value(), lookup));
                     expressions.append("else {").append(statement.operation().build(statement.value())).append("; }\n");
                 }
             } else if (statement.keyword() == Statement.Keyword.ELSEIF || statement.keyword() == Statement.Keyword.IF) {
@@ -595,9 +594,10 @@ public class CustomModelParser {
                 expressions.append(indentation);
                 if (statement.isBlock()) {
                     expressions.append("if (").append(parseResult.converted).append(") {\n");
-                    parseExpressions(expressions, nameInConditionValidator, exceptionInfo, createObjects, statement.doBlock(), classHelper, indentation + "  ");
+                    parseExpressions(expressions, nameInConditionValidator, exceptionInfo, createObjects, statement.doBlock(), classHelper, lookup, indentation + "  ");
                     expressions.append(indentation).append("}\n");
                 } else {
+                    createObjects.addAll(ValueExpressionVisitor.findVariables(statement.value(), lookup));
                     expressions.append("if (").append(parseResult.converted).append(") {").
                             append(statement.operation().build(statement.value())).append(";}\n");
                 }
