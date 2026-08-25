@@ -12,14 +12,18 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import static com.graphhopper.json.Statement.*;
 import static com.graphhopper.json.Statement.Op.LIMIT;
 import static com.graphhopper.json.Statement.Op.MULTIPLY;
-import static com.graphhopper.routing.weighting.custom.FindMinMax.findMinMax;
 import static org.junit.jupiter.api.Assertions.*;
 
 class FindMinMaxTest {
+
+    static MinMax findMinMax(MinMax minMax, List<Statement> statements, EncodedValueLookup lookup) {
+        return FindMinMax.findMinMax(minMax, statements, lookup, Map.of());
+    }
 
     private EncodedValueLookup lookup;
 
@@ -35,6 +39,29 @@ class FindMinMaxTest {
         assertEquals(1, CustomModel.merge(new CustomModel(), queryModel).getPriority().size());
         // priority bigger than 1 is not ok for CustomModel of query
         assertThrows(IllegalArgumentException.class, () -> FindMinMax.checkLMConstraints(new CustomModel(), queryModel, lookup));
+    }
+
+    @Test
+    public void testCheckParameters() {
+        CustomModel baseModel = new CustomModel().setParameter("factor", 0.5);
+        // a query cannot change a parameter of the (prepared) base model ...
+        CustomModel queryModel = new CustomModel().setParameter("factor", 0.6);
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> FindMinMax.checkLMConstraints(baseModel, queryModel, lookup));
+        assertTrue(ex.getMessage().contains("cannot change the parameter 'factor'"), ex.getMessage());
+
+        // ... but sending the same value or a new parameter is allowed
+        FindMinMax.checkLMConstraints(baseModel, new CustomModel().setParameter("factor", 0.5), lookup);
+        CustomModel newParamModel = new CustomModel().setParameter("other", 0.8);
+        newParamModel.addToPriority(If("road_environment == FERRY", MULTIPLY, "other"));
+        FindMinMax.checkLMConstraints(baseModel, newParamModel, lookup);
+
+        // multiply with a parameter above 1 is rejected like a literal above 1
+        CustomModel tooLarge = new CustomModel().setParameter("other", 1.2);
+        tooLarge.addToPriority(If("road_environment == FERRY", MULTIPLY, "other"));
+        ex = assertThrows(IllegalArgumentException.class,
+                () -> FindMinMax.checkLMConstraints(baseModel, tooLarge, lookup));
+        assertTrue(ex.getMessage().contains("cannot be larger than 1"), ex.getMessage());
     }
 
     @Test

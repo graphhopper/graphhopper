@@ -730,6 +730,37 @@ Note that when using a dynamic value like `my_precalculated_value` the maximum v
 the response time of A-star routing requests (i.e. when CH and LM are disabled). This means that if you pick a
 smaller or more narrow range, or if you can avoid them entirely, then these requests might get faster.
 
+### `parameters`
+
+The `parameters` section defines named numbers and booleans that can be used in conditions and value expressions:
+
+```json
+{
+  "parameters": { "speed_threshold": 50, "slow_factor": 0.8, "avoid_hills": true },
+  "speed": [
+    { "if": "car_average_speed < speed_threshold", "multiply_by": "slow_factor" }
+  ],
+  "priority": [
+    { "if": "avoid_hills && average_slope > 4", "multiply_by": "0.5" }
+  ]
+}
+```
+
+For vehicle properties the built-in custom models use the naming convention `vehicle_*` (e.g.
+`vehicle_width`, `vehicle_max_speed`) and `tolerated_*` for the maximum tolerated ratings (e.g.
+`tolerated_hike_rating`), which is recommended for consistency across profiles.
+
+Unlike statements, which are appended when a request custom model is merged with the profile's custom
+model, parameters are overridden per name. So a request can tweak the values that the server-side
+profile uses without repeating (and accidentally double-applying) its statements - here e.g. with
+`{"parameters": {"slow_factor": 0.6}}`. A parameter name must consist of lower case letters, numbers
+and underscore, and must not collide with an encoded value name.
+
+Note that for a profile prepared with landmarks (hybrid mode) a request cannot change the value of a
+parameter that the profile already defines, as the landmark preparation is based on it - use
+`lm.disable=true` for such requests. Changing parameter values does not trigger a recompilation of
+the custom model, so it is cheaper than changing statements.
+
 ### Customizing `distance_influence`
 
 We already explained the meaning of `distance_influence` in one of the previous sections. To specify its value simply

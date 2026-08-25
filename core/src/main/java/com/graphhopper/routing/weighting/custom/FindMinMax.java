@@ -22,7 +22,9 @@ import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.util.CustomModel;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import static com.graphhopper.json.Statement.Keyword.ELSE;
 import static com.graphhopper.json.Statement.Keyword.IF;
@@ -42,14 +44,29 @@ public class FindMinMax {
                         + bmDI + ", but was: " + queryModel.getDistanceInfluence());
         }
 
-        checkMultiplyValue(queryModel.getPriority(), lookup);
-        checkMultiplyValue(queryModel.getSpeed(), lookup);
+        // changing a parameter of the (prepared) base model can decrease edge weights
+        for (Map.Entry<String, Object> entry : queryModel.getParameters().entrySet()) {
+            Object baseValue = baseModel.getParameters().get(entry.getKey());
+            if (baseValue != null && !equalValues(baseValue, entry.getValue()))
+                throw new IllegalArgumentException("CustomModel in query cannot change the parameter '" + entry.getKey()
+                        + "' from " + baseValue + " to " + entry.getValue() + ". Use lm.disable=true");
+        }
+        Map<String, Object> parameters = new LinkedHashMap<>(baseModel.getParameters());
+        parameters.putAll(queryModel.getParameters());
+
+        checkMultiplyValue(queryModel.getPriority(), lookup, parameters);
+        checkMultiplyValue(queryModel.getSpeed(), lookup, parameters);
     }
 
-    private static void checkMultiplyValue(List<Statement> list, EncodedValueLookup lookup) {
+    private static boolean equalValues(Object a, Object b) {
+        if (a instanceof Number na && b instanceof Number nb) return na.doubleValue() == nb.doubleValue();
+        return a.equals(b);
+    }
+
+    private static void checkMultiplyValue(List<Statement> list, EncodedValueLookup lookup, Map<String, Object> parameters) {
         for (Statement statement : list) {
             if (statement.operation() == Statement.Op.MULTIPLY) {
-                MinMax minMax = ValueExpressionVisitor.findMinMax(statement.value(), lookup);
+                MinMax minMax = ValueExpressionVisitor.findMinMax(statement.value(), lookup, parameters);
                 if (minMax.max > 1)
                     throw new IllegalArgumentException("maximum of value '" + statement.value() + "' cannot be larger than 1, but was: " + minMax.max);
                 else if (minMax.min < 0)
@@ -62,13 +79,13 @@ public class FindMinMax {
      * This method returns the smallest value possible in "min" and the smallest value that cannot be
      * exceeded by any edge in max.
      */
-    static MinMax findMinMax(MinMax minMax, List<Statement> statements, EncodedValueLookup lookup) {
+    static MinMax findMinMax(MinMax minMax, List<Statement> statements, EncodedValueLookup lookup, Map<String, Object> parameters) {
         List<List<Statement>> groups = CustomModelParser.splitIntoGroup(statements);
-        for (List<Statement> group : groups) findMinMaxForGroup(minMax, group, lookup);
+        for (List<Statement> group : groups) findMinMaxForGroup(minMax, group, lookup, parameters);
         return minMax;
     }
 
-    private static void findMinMaxForGroup(final MinMax minMax, List<Statement> group, EncodedValueLookup lookup) {
+    private static void findMinMaxForGroup(final MinMax minMax, List<Statement> group, EncodedValueLookup lookup, Map<String, Object> parameters) {
         if (group.isEmpty() || !IF.equals(group.get(0).keyword()))
             throw new IllegalArgumentException("Every group must start with an if-statement");
 
@@ -76,10 +93,10 @@ public class FindMinMax {
         Statement first = group.get(0);
         if (first.condition().trim().equals("true")) {
             if(first.isBlock()) {
-                for (List<Statement> subGroup : CustomModelParser.splitIntoGroup(first.doBlock())) findMinMaxForGroup(minMax, subGroup, lookup);
+                for (List<Statement> subGroup : CustomModelParser.splitIntoGroup(first.doBlock())) findMinMaxForGroup(minMax, subGroup, lookup, parameters);
                 return;
             } else {
-                minMaxGroup = first.operation().apply(minMax, ValueExpressionVisitor.findMinMax(first.value(), lookup));
+                minMaxGroup = first.operation().apply(minMax, ValueExpressionVisitor.findMinMax(first.value(), lookup, parameters));
                 if (minMaxGroup.max < 0)
                     throw new IllegalArgumentException("statement resulted in negative value: " + first);
             }
@@ -91,9 +108,9 @@ public class FindMinMax {
                 MinMax tmp;
                 if(s.isBlock()) {
                     tmp = new MinMax(minMax.min, minMax.max);
-                    for (List<Statement> subGroup : CustomModelParser.splitIntoGroup(s.doBlock())) findMinMaxForGroup(tmp, subGroup, lookup);
+                    for (List<Statement> subGroup : CustomModelParser.splitIntoGroup(s.doBlock())) findMinMaxForGroup(tmp, subGroup, lookup, parameters);
                 } else {
-                    tmp = s.operation().apply(minMax, ValueExpressionVisitor.findMinMax(s.value(), lookup));
+                    tmp = s.operation().apply(minMax, ValueExpressionVisitor.findMinMax(s.value(), lookup, parameters));
                     if (tmp.max < 0)
                         throw new IllegalArgumentException("statement resulted in negative value: " + s);
                 }

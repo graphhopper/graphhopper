@@ -9,12 +9,21 @@ import com.graphhopper.routing.util.EncodingManager;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Set;
 
 import static com.graphhopper.routing.weighting.custom.ValueExpressionVisitor.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ValueExpressionVisitorTest {
+
+    static Set<String> findVariables(String valueExpression, EncodedValueLookup lookup) {
+        return ValueExpressionVisitor.findVariables(valueExpression, lookup, Map.of());
+    }
+
+    static MinMax findMinMax(String valueExpression, EncodedValueLookup lookup) {
+        return ValueExpressionVisitor.findMinMax(valueExpression, lookup, Map.of());
+    }
 
     @Test
     public void protectUsFromStuff() {

@@ -39,6 +39,9 @@ public class CustomModel {
     private List<Statement> speedStatements = new ArrayList<>();
     private List<Statement> priorityStatements = new ArrayList<>();
     private List<Statement> turnPenaltyStatements = new ArrayList<>();
+    // numbers and booleans usable in the expressions of the statements; on merge they are
+    // overridden per key (unlike statements, which are appended)
+    private Map<String, Object> parameters = new LinkedHashMap<>();
 
     private JsonFeatureCollection areas = new JsonFeatureCollection();
 
@@ -54,6 +57,7 @@ public class CustomModel {
         speedStatements = deepCopy(toCopy.getSpeed());
         priorityStatements = deepCopy(toCopy.getPriority());
         turnPenaltyStatements = deepCopy(toCopy.getTurnPenalty());
+        parameters.putAll(toCopy.parameters);
 
         addAreas(toCopy.getAreas());
     }
@@ -130,6 +134,20 @@ public class CustomModel {
         return this;
     }
 
+    public Map<String, Object> getParameters() {
+        return parameters;
+    }
+
+    public CustomModel setParameter(String name, double value) {
+        parameters.put(name, value);
+        return this;
+    }
+
+    public CustomModel setParameter(String name, boolean value) {
+        parameters.put(name, value);
+        return this;
+    }
+
     @JsonProperty("turn_penalty")
     public List<Statement> getTurnPenalty() {
         return turnPenaltyStatements;
@@ -170,7 +188,20 @@ public class CustomModel {
 
     @Override
     public String toString() {
-        return createContentString();
+        return createContentString() + "|parameters=" + parameters;
+    }
+
+    /**
+     * @return the string that identifies the compiled custom weighting class, i.e. without the
+     * parameter values, which the generated class reads at runtime in init (see CustomModelParser).
+     * The names are not required either (the statements determine the created fields), but the types
+     * are, as they determine the field types.
+     */
+    public String createClassKey() {
+        Map<String, String> types = new TreeMap<>();
+        for (Map.Entry<String, Object> entry : parameters.entrySet())
+            types.put(entry.getKey(), entry.getValue() instanceof Boolean ? "boolean" : "double");
+        return createContentString() + "|parameterTypes=" + types;
     }
 
     private String createContentString() {
@@ -198,6 +229,7 @@ public class CustomModel {
         mergedCM.speedStatements.addAll(queryModel.getSpeed());
         mergedCM.priorityStatements.addAll(queryModel.getPriority());
         mergedCM.turnPenaltyStatements.addAll(queryModel.getTurnPenalty());
+        mergedCM.parameters.putAll(queryModel.parameters);
 
         mergedCM.addAreas(queryModel.getAreas());
         return mergedCM;

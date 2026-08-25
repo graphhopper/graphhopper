@@ -66,6 +66,60 @@ class CustomWeightingTest {
     }
 
     @Test
+    public void testParameters() {
+        // 25km/h -> 1440s per km, 100km/h -> 360s per km
+        EdgeIteratorState slow = graph.edge(0, 1).set(avSpeedEnc, 25, 25).setDistance(1000);
+        EdgeIteratorState fast = graph.edge(2, 3).set(avSpeedEnc, 100, 100).setDistance(1000);
+
+        CustomModel customModel = createSpeedCustomModel(avSpeedEnc).setDistanceInfluence(0d).
+                setParameter("speed_threshold", 50).setParameter("slow_factor", 0.5);
+        // parameters in a condition and as value expression
+        customModel.addToSpeed(If("car_average_speed < speed_threshold", MULTIPLY, "slow_factor"));
+        Weighting weighting = createWeighting(customModel);
+        assertEquals(2 * 1440, weighting.calcEdgeWeight(slow, false));
+        assertEquals(360, weighting.calcEdgeWeight(fast, false));
+
+        // the same model with different values shares the compiled class, only init changes
+        Weighting changed = createWeighting(new CustomModel(customModel).
+                setParameter("speed_threshold", 120).setParameter("slow_factor", 0.25));
+        assertEquals(4 * 1440, changed.calcEdgeWeight(slow, false));
+        assertEquals(4 * 360, changed.calcEdgeWeight(fast, false));
+
+        // a parameter scaled by a literal in a value expression, and in priority
+        CustomModel priorityModel = createSpeedCustomModel(avSpeedEnc).setDistanceInfluence(0d).
+                setParameter("avoidance", 0.5);
+        priorityModel.addToPriority(If("road_class == SECONDARY", MULTIPLY, "0.5 * avoidance"));
+        Weighting priorityWeighting = createWeighting(priorityModel);
+        assertEquals(4 * 1440, priorityWeighting.calcEdgeWeight(slow.set(roadClassEnc, SECONDARY), false));
+
+        // boolean parameters in conditions
+        CustomModel boolModel = createSpeedCustomModel(avSpeedEnc).setDistanceInfluence(0d).setParameter("slow_mode", true);
+        boolModel.addToSpeed(If("slow_mode", MULTIPLY, "0.5"));
+        assertEquals(2 * 1440, createWeighting(boolModel).calcEdgeWeight(slow, false));
+        assertEquals(1440, createWeighting(new CustomModel(boolModel).setParameter("slow_mode", false)).calcEdgeWeight(slow, false));
+
+        // a parameter that makes a multiply_by negative is rejected
+        CustomModel negModel = createSpeedCustomModel(avSpeedEnc).setParameter("slow_factor", -0.5);
+        negModel.addToSpeed(If("true", MULTIPLY, "slow_factor"));
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> createWeighting(negModel));
+        assertTrue(ex.getMessage().contains("negative"), ex.getMessage());
+
+        // name collisions and invalid names are rejected
+        ex = assertThrows(IllegalArgumentException.class, () -> createWeighting(
+                createSpeedCustomModel(avSpeedEnc).setParameter("car_average_speed", 30)));
+        assertTrue(ex.getMessage().contains("collides"), ex.getMessage());
+        ex = assertThrows(IllegalArgumentException.class, () -> createWeighting(
+                createSpeedCustomModel(avSpeedEnc).setParameter("myValue", 30)));
+        assertTrue(ex.getMessage().contains("invalid name"), ex.getMessage());
+        ex = assertThrows(IllegalArgumentException.class, () -> createWeighting(
+                createSpeedCustomModel(avSpeedEnc).setParameter("double", 30)));
+        assertTrue(ex.getMessage().contains("invalid name"), ex.getMessage());
+        ex = assertThrows(IllegalArgumentException.class, () -> createWeighting(
+                createSpeedCustomModel(avSpeedEnc).setParameter("nan", Double.NaN)));
+        assertTrue(ex.getMessage().contains("finite"), ex.getMessage());
+    }
+
+    @Test
     public void speedOnly() {
         // 50km/h -> 72s per km, 100km/h -> 36s per km
         EdgeIteratorState edge = graph.edge(0, 1).setDistance(1000).set(avSpeedEnc, 50, 100);

@@ -91,7 +91,9 @@ public class CustomModelParser {
      * and returns an instance.
      */
     public static CustomWeighting.Parameters createWeightingParameters(CustomModel customModel, EncodedValueLookup lookup) {
-        String key = customModel.toString();
+        // outside of the class cache as the parameter values change without changing the class
+        checkParameters(customModel, lookup);
+        String key = customModel.createClassKey();
         Class<?> clazz = customModel.isInternal() ? INTERNAL_CACHE.get(key) : null;
         if (CACHE_SIZE > 0 && clazz == null)
             clazz = CACHE.get(key);
@@ -122,6 +124,25 @@ public class CustomModelParser {
                     customModel.getHeadingPenalty() == null ? Parameters.Routing.DEFAULT_HEADING_PENALTY : customModel.getHeadingPenalty());
         } catch (ReflectiveOperationException ex) {
             throw new IllegalArgumentException("Cannot compile expression " + ex.getMessage(), ex);
+        }
+    }
+
+    private static void checkParameters(CustomModel customModel, EncodedValueLookup lookup) {
+        for (Map.Entry<String, Object> entry : customModel.getParameters().entrySet()) {
+            String name = entry.getKey();
+            if (!name.matches("[a-z][a-z0-9_]*") || !javax.lang.model.SourceVersion.isName(name))
+                throw new IllegalArgumentException("parameter '" + name + "' has an invalid name. Only lower case letters, numbers and underscore are allowed");
+            if (lookup.hasEncodedValue(name) || name.startsWith(IN_AREA_PREFIX) || name.startsWith(BACKWARD_PREFIX)
+                    || name.startsWith(PREV_PREFIX) || name.equals(CHANGE_ANGLE) || name.equals(STREET_NAME)
+                    || name.equals(EDGE) || name.equals("value") || name.equals("reverse") || name.equals("graph")
+                    || name.equals("lookup") || name.equals("areas"))
+                throw new IllegalArgumentException("parameter '" + name + "' collides with an encoded value or a reserved name");
+            if (entry.getValue() instanceof Number number) {
+                if (!Double.isFinite(number.doubleValue()))
+                    throw new IllegalArgumentException("parameter '" + name + "' must be a finite number, but was: " + number);
+            } else if (!(entry.getValue() instanceof Boolean)) {
+                throw new IllegalArgumentException("parameter '" + name + "' must be a finite number or a boolean, but was: " + entry.getValue());
+            }
         }
     }
 
@@ -164,7 +185,8 @@ public class CustomModelParser {
             // TODO does it improve performance too? I.e. it could be that the JIT is confused if different classes
             //  have the same name and it mixes performance stats. See https://github.com/janino-compiler/janino/issues/137
             long counter = longVal.incrementAndGet();
-            String classTemplate = createClassTemplate(counter, priorityVariables, speedVariables, turnPenaltyVariables, lookup, CustomModel.getAreasAsMap(customModel.getAreas()));
+            String classTemplate = createClassTemplate(counter, priorityVariables, speedVariables, turnPenaltyVariables, lookup,
+                    CustomModel.getAreasAsMap(customModel.getAreas()), customModel.getParameters());
             Java.CompilationUnit cu = (Java.CompilationUnit) new Parser(new Scanner("source", new StringReader(classTemplate))).
                     parseAbstractCompilationUnit();
             cu = injectStatements(priorityStatements, speedStatements, turnPenaltyStatements, cu);
@@ -182,6 +204,9 @@ public class CustomModelParser {
         NameValidator nameValidatorIntern = s -> {
             // some literals are no variables and would throw an exception (encoded value not found)
             if (Character.isUpperCase(s.charAt(0)) || s.startsWith(IN_AREA_PREFIX))
+                return true;
+            // parameters are no encoded values
+            if (model.getParameters().containsKey(s))
                 return true;
             if (nameValidator.isValid(s)) {
                 variables.add(s);
@@ -233,11 +258,13 @@ public class CustomModelParser {
     private static List<Java.BlockStatement> createGetSpeedStatements(Set<String> speedVariables,
                                                                       CustomModel customModel, EncodedValueLookup lookup) throws Exception {
         List<Java.BlockStatement> speedStatements = new ArrayList<>(verifyExpressions(new StringBuilder(),
-                "speed entry", speedVariables, customModel.getSpeed(), lookup));
+                "speed entry", speedVariables, customModel.getSpeed(), lookup, customModel.getParameters()));
         String speedMethodStartBlock = "double value = " + CustomWeightingHelper.GLOBAL_MAX_SPEED + ";\n";
         // potentially we fetch EncodedValues twice (one time here and one time for priority)
         for (String arg : speedVariables) {
-            speedMethodStartBlock += getVariableDeclaration(lookup, arg);
+            // parameters are class fields and directly usable, see createClassTemplate
+            if (!customModel.getParameters().containsKey(arg))
+                speedMethodStartBlock += getVariableDeclaration(lookup, arg);
         }
         speedStatements.addAll(0, new Parser(new org.codehaus.janino.Scanner("getSpeed", new StringReader(speedMethodStartBlock))).
                 parseBlockStatements());
@@ -256,10 +283,11 @@ public class CustomModelParser {
                 throw new IllegalArgumentException("'priority' statement must not have the operation 'add'");
         }
         List<Java.BlockStatement> priorityStatements = new ArrayList<>(verifyExpressions(new StringBuilder(),
-                "priority entry", priorityVariables, customModel.getPriority(), lookup));
+                "priority entry", priorityVariables, customModel.getPriority(), lookup, customModel.getParameters()));
         String priorityMethodStartBlock = "double value = " + CustomWeightingHelper.GLOBAL_PRIORITY + ";\n";
         for (String arg : priorityVariables) {
-            priorityMethodStartBlock += getVariableDeclaration(lookup, arg);
+            if (!customModel.getParameters().containsKey(arg))
+                priorityMethodStartBlock += getVariableDeclaration(lookup, arg);
         }
         priorityStatements.addAll(0, new Parser(new org.codehaus.janino.Scanner("getPriority", new StringReader(priorityMethodStartBlock))).
                 parseBlockStatements());
@@ -283,7 +311,7 @@ public class CustomModelParser {
         }
 
         List<Java.BlockStatement> turnPenaltyStatements = new ArrayList<>(verifyExpressions(new StringBuilder(),
-                "turn_penalty entry", turnPenaltyVariables, customModel.getTurnPenalty(), lookup));
+                "turn_penalty entry", turnPenaltyVariables, customModel.getTurnPenalty(), lookup, customModel.getParameters()));
         boolean needTwoDirections = false;
         Function<String, EncodedValue> fct = createSimplifiedLookup(lookup);
         for (String ttv : turnPenaltyVariables) {
@@ -306,7 +334,8 @@ public class CustomModelParser {
         }
 
         for (String arg : turnPenaltyVariables) {
-            turnPenaltyMethodStartBlock += getTurnPenaltyVariableDeclaration(lookup, arg, needTwoDirections);
+            if (!customModel.getParameters().containsKey(arg))
+                turnPenaltyMethodStartBlock += getTurnPenaltyVariableDeclaration(lookup, arg, needTwoDirections);
         }
 
         // special case for change_angle method call: we need the orientation encoded value
@@ -431,7 +460,8 @@ public class CustomModelParser {
                                               Set<String> priorityVariables,
                                               Set<String> speedVariables,
                                               Set<String> turnPenaltyVariables,
-                                              EncodedValueLookup lookup, Map<String, JsonFeature> areas) {
+                                              EncodedValueLookup lookup, Map<String, JsonFeature> areas,
+                                              Map<String, Object> parameters) {
         final StringBuilder importSourceCode = new StringBuilder("import com.graphhopper.routing.ev.*;\n");
         importSourceCode.append("import java.util.Map;\n");
         importSourceCode.append("import " + CustomModel.class.getName() + ";\n");
@@ -451,7 +481,16 @@ public class CustomModelParser {
             set.add(speedVar.startsWith(PREV_PREFIX) ? speedVar.substring(PREV_PREFIX.length()) : speedVar);
 
         for (String arg : set) {
-            if (lookup.hasEncodedValue(arg)) {
+            if (parameters.containsKey(arg)) {
+                // read the value in init so that models differing only in the values share this class
+                if (parameters.get(arg) instanceof Boolean) {
+                    classSourceCode.append("protected boolean " + arg + ";\n");
+                    initSourceCode.append("this." + arg + " = ((Boolean) customModel.getParameters().get(\"" + arg + "\")).booleanValue();\n");
+                } else {
+                    classSourceCode.append("protected double " + arg + ";\n");
+                    initSourceCode.append("this." + arg + " = ((Number) customModel.getParameters().get(\"" + arg + "\")).doubleValue();\n");
+                }
+            } else if (lookup.hasEncodedValue(arg)) {
                 EncodedValue enc = lookup.getEncodedValue(arg, EncodedValue.class);
                 classSourceCode.append("protected " + getInterface(enc) + " " + arg + "_enc;\n");
                 initSourceCode.append("this." + arg + "_enc = (" + getInterface(enc)
@@ -528,13 +567,15 @@ public class CustomModelParser {
      * @return the created if-then, else and elseif statements
      */
     private static List<Java.BlockStatement> verifyExpressions(StringBuilder expressions, String info, Set<String> createObjects,
-                                                               List<Statement> list, EncodedValueLookup lookup) throws Exception {
-        // allow variables, all encoded values, constants and special variables like in_xyarea or backward_car_access
+                                                               List<Statement> list, EncodedValueLookup lookup,
+                                                               Map<String, Object> parameters) throws Exception {
+        // allow variables, all encoded values, constants, parameters and special variables like in_xyarea or backward_car_access
         NameValidator nameInConditionValidator = name -> lookup.hasEncodedValue(name)
                 || name.toUpperCase(Locale.ROOT).equals(name) || name.startsWith(IN_AREA_PREFIX) || name.equals(CHANGE_ANGLE)
                 || name.equals(STREET_NAME) || name.equals(PREV_PREFIX + STREET_NAME)
                 || name.startsWith(BACKWARD_PREFIX) && lookup.hasEncodedValue(name.substring(BACKWARD_PREFIX.length()))
-                || name.startsWith(PREV_PREFIX) && lookup.hasEncodedValue(name.substring(PREV_PREFIX.length()));
+                || name.startsWith(PREV_PREFIX) && lookup.hasEncodedValue(name.substring(PREV_PREFIX.length()))
+                || parameters.containsKey(name);
         Function<String, EncodedValue> fct = createSimplifiedLookup(lookup);
         ClassHelper helper = key -> {
             EncodedValue ev = fct.apply(key);
@@ -542,7 +583,7 @@ public class CustomModelParser {
             return getReturnType(ev);
         };
 
-        parseExpressions(expressions, nameInConditionValidator, info, createObjects, list, helper, lookup, "");
+        parseExpressions(expressions, nameInConditionValidator, info, createObjects, list, helper, lookup, parameters, "");
         expressions.append("return value;\n");
         return new Parser(new org.codehaus.janino.Scanner(info, new StringReader(expressions.toString()))).
                 parseBlockStatements();
@@ -564,7 +605,8 @@ public class CustomModelParser {
 
     static void parseExpressions(StringBuilder expressions, NameValidator nameInConditionValidator,
                                  String exceptionInfo, Set<String> createObjects, List<Statement> list,
-                                 ClassHelper classHelper, EncodedValueLookup lookup, String indentation) {
+                                 ClassHelper classHelper, EncodedValueLookup lookup,
+                                 Map<String, Object> parameters, String indentation) {
         for (List<Statement> group : splitIntoGroup(list))
             if (group.size() > 1 && "true".equals(group.get(0).condition().trim()))
                 throw new IllegalArgumentException("Only one statement allowed for an unconditional statement");
@@ -576,10 +618,10 @@ public class CustomModelParser {
                 expressions.append(indentation);
                 if (statement.isBlock()) {
                     expressions.append("else {");
-                    parseExpressions(expressions, nameInConditionValidator, exceptionInfo, createObjects, statement.doBlock(), classHelper, lookup, indentation + "  ");
+                    parseExpressions(expressions, nameInConditionValidator, exceptionInfo, createObjects, statement.doBlock(), classHelper, lookup, parameters, indentation + "  ");
                     expressions.append(indentation).append("}\n");
                 } else {
-                    createObjects.addAll(ValueExpressionVisitor.findVariables(statement.value(), lookup));
+                    createObjects.addAll(ValueExpressionVisitor.findVariables(statement.value(), lookup, parameters));
                     expressions.append("else {").append(statement.operation().build(statement.value())).append("; }\n");
                 }
             } else if (statement.keyword() == Statement.Keyword.ELSEIF || statement.keyword() == Statement.Keyword.IF) {
@@ -594,10 +636,10 @@ public class CustomModelParser {
                 expressions.append(indentation);
                 if (statement.isBlock()) {
                     expressions.append("if (").append(parseResult.converted).append(") {\n");
-                    parseExpressions(expressions, nameInConditionValidator, exceptionInfo, createObjects, statement.doBlock(), classHelper, lookup, indentation + "  ");
+                    parseExpressions(expressions, nameInConditionValidator, exceptionInfo, createObjects, statement.doBlock(), classHelper, lookup, parameters, indentation + "  ");
                     expressions.append(indentation).append("}\n");
                 } else {
-                    createObjects.addAll(ValueExpressionVisitor.findVariables(statement.value(), lookup));
+                    createObjects.addAll(ValueExpressionVisitor.findVariables(statement.value(), lookup, parameters));
                     expressions.append("if (").append(parseResult.converted).append(") {").
                             append(statement.operation().build(statement.value())).append(";}\n");
                 }

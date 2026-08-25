@@ -27,6 +27,7 @@ import org.codehaus.janino.*;
 
 import java.io.StringReader;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -147,15 +148,17 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
     }
 
     /**
-     * @return the encoded values of the value expression. Throws an exception if the expression is invalid,
-     * contains more than one encoded value or can result in a negative value.
+     * @return the encoded values and parameters of the value expression. Throws an exception if the
+     * expression is invalid, contains more than one encoded value or can result in a negative value.
      */
-    static Set<String> findVariables(String valueExpression, EncodedValueLookup lookup) {
-        ParseResult result = parse(valueExpression, key -> lookup.hasEncodedValue(key) || key.contains(INFINITY));
+    static Set<String> findVariables(String valueExpression, EncodedValueLookup lookup, Map<String, Object> parameters) {
+        ParseResult result = parse(valueExpression, key -> lookup.hasEncodedValue(key) || key.contains(INFINITY) || parameters.containsKey(key));
         if (!result.ok)
             throw new IllegalArgumentException(result.invalidMessage);
-        if (result.guessedVariables.size() > 1)
-            throw new IllegalArgumentException("Currently only a single EncodedValue is allowed on the right-hand side, but was " + result.guessedVariables.size() + ". Value expression: " + valueExpression);
+        Set<String> encodedValues = new LinkedHashSet<>(result.guessedVariables);
+        encodedValues.removeAll(parameters.keySet());
+        if (encodedValues.size() > 1)
+            throw new IllegalArgumentException("Currently only a single EncodedValue is allowed on the right-hand side, but was " + encodedValues.size() + ". Value expression: " + valueExpression);
 
         // TODO Nearly duplicate code as in findMinMax
         double value;
@@ -165,17 +168,19 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
             // expressions are accepted from Double.parseDouble but parse() rejects them. With this call order we avoid unexpected security problems.
             value = Double.parseDouble(valueExpression);
         } catch (NumberFormatException ex) {
+            // the evaluator does not know the parameters, so replace them with their values
+            String evalExpression = replaceParameters(valueExpression, parameters);
             try {
-                if (result.guessedVariables.isEmpty()) { // without encoded values
-                    NoArgEvaluator ee = new ExpressionEvaluator().createFastEvaluator(valueExpression, NoArgEvaluator.class);
+                if (encodedValues.isEmpty()) { // without encoded values
+                    NoArgEvaluator ee = new ExpressionEvaluator().createFastEvaluator(evalExpression, NoArgEvaluator.class);
                     value = ee.evaluate();
                 } else if (lookup.hasEncodedValue(valueExpression)) { // speed up for common case that complete right-hand side is the encoded value
                     EncodedValue enc = lookup.getEncodedValue(valueExpression, EncodedValue.class);
                     value = Math.min(getMin(enc), getMax(enc));
                 } else {
                     // single encoded value
-                    String var = result.guessedVariables.iterator().next();
-                    SingleArgEvaluator ee = new ExpressionEvaluator().createFastEvaluator(valueExpression, SingleArgEvaluator.class, var);
+                    String var = encodedValues.iterator().next();
+                    SingleArgEvaluator ee = new ExpressionEvaluator().createFastEvaluator(evalExpression, SingleArgEvaluator.class, var);
                     EncodedValue enc = lookup.getEncodedValue(var, EncodedValue.class);
                     double max = getMax(enc);
                     double val1 = ee.evaluate(max);
@@ -193,12 +198,14 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         return result.guessedVariables;
     }
 
-    static MinMax findMinMax(String valueExpression, EncodedValueLookup lookup) {
-        ParseResult result = parse(valueExpression, lookup::hasEncodedValue);
+    static MinMax findMinMax(String valueExpression, EncodedValueLookup lookup, Map<String, Object> parameters) {
+        ParseResult result = parse(valueExpression, key -> lookup.hasEncodedValue(key) || parameters.containsKey(key));
         if (!result.ok)
             throw new IllegalArgumentException(result.invalidMessage);
-        if (result.guessedVariables.size() > 1)
-            throw new IllegalArgumentException("Currently only a single EncodedValue is allowed on the right-hand side, but was " + result.guessedVariables.size() + ". Value expression: " + valueExpression);
+        Set<String> encodedValues = new LinkedHashSet<>(result.guessedVariables);
+        encodedValues.removeAll(parameters.keySet());
+        if (encodedValues.size() > 1)
+            throw new IllegalArgumentException("Currently only a single EncodedValue is allowed on the right-hand side, but was " + encodedValues.size() + ". Value expression: " + valueExpression);
 
         // TODO Nearly duplicate as in findVariables
         try {
@@ -210,9 +217,11 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         } catch (NumberFormatException ex) {
         }
 
+        // the evaluator does not know the parameters, so replace them with their values
+        String evalExpression = replaceParameters(valueExpression, parameters);
         try {
-            if (result.guessedVariables.isEmpty()) { // without encoded values
-                NoArgEvaluator ee = new ExpressionEvaluator().createFastEvaluator(valueExpression, NoArgEvaluator.class);
+            if (encodedValues.isEmpty()) { // without encoded values
+                NoArgEvaluator ee = new ExpressionEvaluator().createFastEvaluator(evalExpression, NoArgEvaluator.class);
                 double val = ee.evaluate();
                 return new MinMax(val, val);
             }
@@ -223,8 +232,8 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
                 return new MinMax(min, max);
             }
 
-            String var = result.guessedVariables.iterator().next();
-            SingleArgEvaluator ee = new ExpressionEvaluator().createFastEvaluator(valueExpression, SingleArgEvaluator.class, var);
+            String var = encodedValues.iterator().next();
+            SingleArgEvaluator ee = new ExpressionEvaluator().createFastEvaluator(evalExpression, SingleArgEvaluator.class, var);
             EncodedValue enc = lookup.getEncodedValue(var, EncodedValue.class);
             double max = getMax(enc);
             double val1 = ee.evaluate(max);
@@ -234,6 +243,16 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         } catch (CompileException ex) {
             throw new IllegalArgumentException(ex);
         }
+    }
+
+    /**
+     * @return the expression with the parameters replaced by their values for the ExpressionEvaluator,
+     * e.g. "0.9 * hill_factor" -> "0.9 * 0.5"
+     */
+    private static String replaceParameters(String expression, Map<String, Object> parameters) {
+        for (Map.Entry<String, Object> entry : parameters.entrySet())
+            expression = expression.replaceAll("\\b" + entry.getKey() + "\\b", entry.getValue().toString());
+        return expression;
     }
 
     static double getMin(EncodedValue enc) {

@@ -18,6 +18,7 @@
 
 package com.graphhopper.util;
 
+import com.graphhopper.jackson.Jackson;
 import com.graphhopper.json.Statement;
 import org.junit.jupiter.api.Test;
 
@@ -26,6 +27,7 @@ import java.util.Iterator;
 import static com.graphhopper.json.Statement.*;
 import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 public class CustomModelTest {
 
@@ -54,6 +56,37 @@ public class CustomModelTest {
         CustomModel merged = CustomModel.merge(truck, car);
         assertEquals(2, merged.getPriority().size());
         assertEquals(1, car.getPriority().size());
+    }
+
+    @Test
+    public void testParametersFromJson() throws Exception {
+        CustomModel cm = Jackson.newObjectMapper().readValue(
+                "{\"parameters\": {\"power\": 120, \"mass\": 95.5, \"electric\": true}, \"speed\": [{\"if\": \"true\", \"limit_to\": \"car_average_speed\"}]}",
+                CustomModel.class);
+        assertEquals(120, cm.getParameters().get("power"));
+        assertEquals(95.5, cm.getParameters().get("mass"));
+        assertEquals(true, cm.getParameters().get("electric"));
+        assertEquals(1, cm.getSpeed().size());
+    }
+
+    @Test
+    public void testMergeParameters() {
+        CustomModel base = new CustomModel().setParameter("power", 120.0).setParameter("mass", 95.0);
+        CustomModel query = new CustomModel().setParameter("power", 100.0).setParameter("extra", 0.5);
+
+        CustomModel merged = CustomModel.merge(base, query);
+        assertEquals(100.0, merged.getParameters().get("power"));
+        assertEquals(95.0, merged.getParameters().get("mass"));
+        assertEquals(0.5, merged.getParameters().get("extra"));
+        // the input models are unchanged
+        assertEquals(120.0, base.getParameters().get("power"));
+        assertEquals(2, query.getParameters().size());
+
+        // the class key ignores the parameter values but not the types (they determine the field types)
+        assertEquals(base.createClassKey(), new CustomModel(base).setParameter("power", 130.0).createClassKey());
+        assertNotEquals(base.createClassKey(), merged.createClassKey());
+        assertNotEquals(base.createClassKey(), new CustomModel(base).setParameter("power", true).createClassKey());
+        assertNotEquals(base.toString(), new CustomModel(base).setParameter("power", 130.0).toString());
     }
 
     @Test
