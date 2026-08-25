@@ -48,7 +48,6 @@ public class PathMerger {
     private static final RamerDouglasPeucker RDP = new RamerDouglasPeucker();
     private final Graph graph;
     private final Weighting weighting;
-    private final Weighting baseWeighting;
 
     private boolean enableInstructions = true;
     private boolean includeRoundaboutExitInstruction = false;
@@ -61,13 +60,8 @@ public class PathMerger {
     private double favoredHeading = Double.NaN;
 
     public PathMerger(Graph graph, Weighting weighting) {
-        this(graph, weighting, weighting);
-    }
-
-    public PathMerger(Graph graph, Weighting weighting, Weighting baseWeighting) {
         this.graph = graph;
         this.weighting = graph.wrapWeighting(weighting);
-        this.baseWeighting = graph.wrapWeighting(baseWeighting);
     }
 
     public PathMerger setCalcPoints(boolean calcPoints) {
@@ -129,7 +123,7 @@ public class PathMerger {
             fullDistance_mm += path.getDistance_mm();
             fullWeight += path.getWeight();
             if (enableInstructions) {
-                InstructionList il = InstructionsFromEdges.calcInstructions(path, graph, weighting, baseWeighting, evLookup, tr, includeRoundaboutExitInstruction);
+                InstructionList il = InstructionsFromEdges.calcInstructions(path, graph, weighting, evLookup, tr, includeRoundaboutExitInstruction);
 
                 if (!il.isEmpty()) {
                     fullInstructions.addAll(il);
