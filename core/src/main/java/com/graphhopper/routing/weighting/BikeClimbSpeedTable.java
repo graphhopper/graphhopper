@@ -31,7 +31,7 @@ public class BikeClimbSpeedTable {
      */
     public BikeClimbSpeedTable(double power, double mass, double baseSpeed, double crr) {
         if (power <= 0 || mass <= 0 || crr < 0)
-            throw new IllegalArgumentException("power > 0, mass > 0, crr >= 0, blend >= 0 expected, got: "
+            throw new IllegalArgumentException("power > 0, mass > 0, crr >= 0 expected, got: "
                     + power + ", " + mass + ", " + crr);
         if (baseSpeed <= V_DISMOUNT_KMH)
             throw new IllegalArgumentException("baseSpeed must be > " + V_DISMOUNT_KMH + " km/h, got: " + baseSpeed);

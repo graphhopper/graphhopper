@@ -144,6 +144,7 @@ public class CustomModelParser {
         try {
             Set<String> priorityVariables = new LinkedHashSet<>();
             List<Java.BlockStatement> priorityStatements = createGetPriorityStatements(priorityVariables, customModel, lookup);
+            checkBikeClimbUnsupported(priorityVariables, "priority");
 
             if (customModel.getSpeed().isEmpty())
                 throw new IllegalArgumentException("At least one initial statement under 'speed' is required.");
@@ -164,6 +165,7 @@ public class CustomModelParser {
 
             Set<String> turnPenaltyVariables = new LinkedHashSet<>();
             List<Java.BlockStatement> turnPenaltyStatements = createGetTurnPenaltyStatements(turnPenaltyVariables, customModel, lookup);
+            checkBikeClimbUnsupported(turnPenaltyVariables, "turn_penalty");
 
             // Create different class name, which is required only for debugging.
             // TODO does it improve performance too? I.e. it could be that the JIT is confused if different classes
@@ -179,6 +181,11 @@ public class CustomModelParser {
             String errString = "Cannot compile expression";
             throw new IllegalArgumentException(errString + ": " + ex.getMessage(), ex);
         }
+    }
+
+    private static void checkBikeClimbUnsupported(Set<String> variables, String section) {
+        if (variables.stream().anyMatch(v -> v.startsWith(BIKE_CLIMB_TABLE)))
+            throw new IllegalArgumentException("bike_climb_factor is only supported for 'speed' but was used in " + section);
     }
 
     public static List<String> findVariablesForEncodedValuesString(CustomModel model, NameValidator nameValidator, ClassHelper classHelper) {
@@ -447,6 +454,7 @@ public class CustomModelParser {
 
         final StringBuilder initSourceCode = new StringBuilder("this.lookup = lookup;\n");
         initSourceCode.append("this.customModel = customModel;\n");
+        Set<String> bikeClimbFields = new HashSet<>();
         Set<String> set = new HashSet<>();
         for (String prioVar : priorityVariables)
             set.add(prioVar.startsWith(BACKWARD_PREFIX) ? prioVar.substring(BACKWARD_PREFIX.length()) : prioVar);
@@ -492,6 +500,10 @@ public class CustomModelParser {
             } else if (arg.startsWith(BIKE_CLIMB_TABLE)) {
                 // e.g. bike_climb_table(120, 95) with the literals from bike_climb_factor, see ValueExpressionVisitor
                 String field = ValueExpressionVisitor.toFieldName(arg);
+                // the field is named after the power only, so two calls with the same power must be identical
+                if (!bikeClimbFields.add(field))
+                    throw new IllegalArgumentException("Only one bike_climb_factor call per power is supported, but got a second: "
+                            + arg.replace(BIKE_CLIMB_TABLE, BIKE_CLIMB_FACTOR));
                 classSourceCode.append("protected BikeClimbSpeedTable " + field + ";\n");
                 initSourceCode.append("this." + field + " = createBikeClimbTable" + arg.substring(BIKE_CLIMB_TABLE.length()) + ";\n");
             } else {
@@ -552,8 +564,6 @@ public class CustomModelParser {
         };
 
         parseExpressions(expressions, nameInConditionValidator, info, createObjects, list, helper, lookup, "");
-        if (!"speed entry".equals(info) && createObjects.stream().anyMatch(o -> o.startsWith(BIKE_CLIMB_TABLE)))
-            throw new IllegalArgumentException("bike_climb_factor is only supported for 'speed' but was used in " + info);
         expressions.append("return value;\n");
         return new Parser(new org.codehaus.janino.Scanner(info, new StringReader(expressions.toString()))).
                 parseBlockStatements();

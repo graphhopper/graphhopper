@@ -50,11 +50,10 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
     private final ParseResult result;
     private final NameValidator variableValidator;
     private String invalidMessage;
-    // the offset of the single allowed built-in function call, see parse
+    // the offset of the built-in function call (exactly one is allowed)
     private int functionCallStart = -1;
-    // a built-in function combined with other terms can be non-monotone in the encoded value which
-    // would break the endpoint-based interval calculation in findMinMax. So allow it only as the
-    // entire expression, optionally scaled by a literal like "0.9 * bike_climb_speed(...)"
+    // findMinMax evaluates only start and end of the encoded value which requires monotonic
+    // expressions to be still correct, so allow the call only alone or scaled by a literal like "0.9 * bike_climb_factor(...)"
     private boolean functionCallAllowed = true;
 
     public ValueExpressionVisitor(ParseResult result, NameValidator variableValidator) {
