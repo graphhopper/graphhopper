@@ -732,29 +732,28 @@ smaller or more narrow range, or if you can avoid them entirely, then these requ
 
 ### `parameters`
 
-The `parameters` section defines named numbers and booleans that can be used in conditions and value expressions:
+The `parameters` section defines named numbers and booleans that can be used in conditions and value
+expressions. Similar to `areas` referenced via `in_<area_id>`, a parameter `xy` is referenced with the
+prefix `p_` as `p_xy` - this makes the origin visible in the expression and avoids collisions with
+encoded values:
 
 ```json
 {
   "parameters": { "speed_threshold": 50, "slow_factor": 0.8, "avoid_hills": true },
   "speed": [
-    { "if": "car_average_speed < speed_threshold", "multiply_by": "slow_factor" }
+    { "if": "car_average_speed < p_speed_threshold", "multiply_by": "p_slow_factor" }
   ],
   "priority": [
-    { "if": "avoid_hills && average_slope > 4", "multiply_by": "0.5" }
+    { "if": "p_avoid_hills && average_slope > 4", "multiply_by": "0.5" }
   ]
 }
 ```
-
-For vehicle properties the built-in custom models use the naming convention `vehicle_*` (e.g.
-`vehicle_width`, `vehicle_max_speed`) and `tolerated_*` for the maximum tolerated ratings (e.g.
-`tolerated_hike_rating`), which is recommended for consistency across profiles.
 
 Unlike statements, which are appended when a request custom model is merged with the profile's custom
 model, parameters are overridden per name. So a request can tweak the values that the server-side
 profile uses without repeating (and accidentally double-applying) its statements - here e.g. with
 `{"parameters": {"slow_factor": 0.6}}`. A parameter name must consist of lower case letters, numbers
-and underscore, and must not collide with an encoded value name.
+and underscore.
 
 Note that for a profile prepared with landmarks (hybrid mode) a request cannot change the value of a
 parameter that the profile already defines, as the landmark preparation is based on it - use

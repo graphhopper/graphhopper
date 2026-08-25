@@ -49,6 +49,7 @@ public class CustomModelParser {
     static final String CHANGE_ANGLE = "change_angle";
     static final String STREET_NAME = "street_name";
     static final String EDGE = "edge";
+    static final String PARAM_PREFIX = "p_";
     private static final boolean JANINO_DEBUG = Boolean.getBoolean(Scanner.SYSTEM_PROPERTY_SOURCE_DEBUGGING_ENABLE);
     private static final String SCRIPT_FILE_DIR = System.getProperty(Scanner.SYSTEM_PROPERTY_SOURCE_DEBUGGING_DIR, "./src/main/java/com/graphhopper/routing/weighting/custom");
 
@@ -130,13 +131,10 @@ public class CustomModelParser {
     private static void checkParameters(CustomModel customModel, EncodedValueLookup lookup) {
         for (Map.Entry<String, Object> entry : customModel.getParameters().entrySet()) {
             String name = entry.getKey();
-            if (!name.matches("[a-z][a-z0-9_]*") || !javax.lang.model.SourceVersion.isName(name))
+            if (!name.matches("[a-z][a-z0-9_]*"))
                 throw new IllegalArgumentException("parameter '" + name + "' has an invalid name. Only lower case letters, numbers and underscore are allowed");
-            if (lookup.hasEncodedValue(name) || name.startsWith(IN_AREA_PREFIX) || name.startsWith(BACKWARD_PREFIX)
-                    || name.startsWith(PREV_PREFIX) || name.equals(CHANGE_ANGLE) || name.equals(STREET_NAME)
-                    || name.equals(EDGE) || name.equals("value") || name.equals("reverse") || name.equals("graph")
-                    || name.equals("lookup") || name.equals("areas"))
-                throw new IllegalArgumentException("parameter '" + name + "' collides with an encoded value or a reserved name");
+            if (lookup.hasEncodedValue(PARAM_PREFIX + name))
+                throw new IllegalArgumentException("parameter '" + name + "' collides with the encoded value '" + PARAM_PREFIX + name + "'");
             if (entry.getValue() instanceof Number number) {
                 if (!Double.isFinite(number.doubleValue()))
                     throw new IllegalArgumentException("parameter '" + name + "' must be a finite number, but was: " + number);
@@ -144,6 +142,13 @@ public class CustomModelParser {
                 throw new IllegalArgumentException("parameter '" + name + "' must be a finite number or a boolean, but was: " + entry.getValue());
             }
         }
+    }
+
+    /**
+     * @return true if arg references a parameter, e.g. p_width for {"parameters": {"width": 3}}
+     */
+    static boolean isParameter(String arg, Map<String, Object> parameters) {
+        return arg.startsWith(PARAM_PREFIX) && parameters.containsKey(arg.substring(PARAM_PREFIX.length()));
     }
 
     /**
@@ -206,7 +211,7 @@ public class CustomModelParser {
             if (Character.isUpperCase(s.charAt(0)) || s.startsWith(IN_AREA_PREFIX))
                 return true;
             // parameters are no encoded values
-            if (model.getParameters().containsKey(s))
+            if (isParameter(s, model.getParameters()))
                 return true;
             if (nameValidator.isValid(s)) {
                 variables.add(s);
@@ -263,7 +268,7 @@ public class CustomModelParser {
         // potentially we fetch EncodedValues twice (one time here and one time for priority)
         for (String arg : speedVariables) {
             // parameters are class fields and directly usable, see createClassTemplate
-            if (!customModel.getParameters().containsKey(arg))
+            if (!isParameter(arg, customModel.getParameters()))
                 speedMethodStartBlock += getVariableDeclaration(lookup, arg);
         }
         speedStatements.addAll(0, new Parser(new org.codehaus.janino.Scanner("getSpeed", new StringReader(speedMethodStartBlock))).
@@ -286,7 +291,7 @@ public class CustomModelParser {
                 "priority entry", priorityVariables, customModel.getPriority(), lookup, customModel.getParameters()));
         String priorityMethodStartBlock = "double value = " + CustomWeightingHelper.GLOBAL_PRIORITY + ";\n";
         for (String arg : priorityVariables) {
-            if (!customModel.getParameters().containsKey(arg))
+            if (!isParameter(arg, customModel.getParameters()))
                 priorityMethodStartBlock += getVariableDeclaration(lookup, arg);
         }
         priorityStatements.addAll(0, new Parser(new org.codehaus.janino.Scanner("getPriority", new StringReader(priorityMethodStartBlock))).
@@ -334,7 +339,7 @@ public class CustomModelParser {
         }
 
         for (String arg : turnPenaltyVariables) {
-            if (!customModel.getParameters().containsKey(arg))
+            if (!isParameter(arg, customModel.getParameters()))
                 turnPenaltyMethodStartBlock += getTurnPenaltyVariableDeclaration(lookup, arg, needTwoDirections);
         }
 
@@ -481,14 +486,15 @@ public class CustomModelParser {
             set.add(speedVar.startsWith(PREV_PREFIX) ? speedVar.substring(PREV_PREFIX.length()) : speedVar);
 
         for (String arg : set) {
-            if (parameters.containsKey(arg)) {
+            if (isParameter(arg, parameters)) {
                 // read the value in init so that models differing only in the values share this class
-                if (parameters.get(arg) instanceof Boolean) {
+                String name = arg.substring(PARAM_PREFIX.length());
+                if (parameters.get(name) instanceof Boolean) {
                     classSourceCode.append("protected boolean " + arg + ";\n");
-                    initSourceCode.append("this." + arg + " = ((Boolean) customModel.getParameters().get(\"" + arg + "\")).booleanValue();\n");
+                    initSourceCode.append("this." + arg + " = ((Boolean) customModel.getParameters().get(\"" + name + "\")).booleanValue();\n");
                 } else {
                     classSourceCode.append("protected double " + arg + ";\n");
-                    initSourceCode.append("this." + arg + " = ((Number) customModel.getParameters().get(\"" + arg + "\")).doubleValue();\n");
+                    initSourceCode.append("this." + arg + " = ((Number) customModel.getParameters().get(\"" + name + "\")).doubleValue();\n");
                 }
             } else if (lookup.hasEncodedValue(arg)) {
                 EncodedValue enc = lookup.getEncodedValue(arg, EncodedValue.class);
@@ -575,7 +581,7 @@ public class CustomModelParser {
                 || name.equals(STREET_NAME) || name.equals(PREV_PREFIX + STREET_NAME)
                 || name.startsWith(BACKWARD_PREFIX) && lookup.hasEncodedValue(name.substring(BACKWARD_PREFIX.length()))
                 || name.startsWith(PREV_PREFIX) && lookup.hasEncodedValue(name.substring(PREV_PREFIX.length()))
-                || parameters.containsKey(name);
+                || isParameter(name, parameters);
         Function<String, EncodedValue> fct = createSimplifiedLookup(lookup);
         ClassHelper helper = key -> {
             EncodedValue ev = fct.apply(key);

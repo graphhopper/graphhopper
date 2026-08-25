@@ -53,12 +53,12 @@ class FindMinMaxTest {
         // ... but sending the same value or a new parameter is allowed
         FindMinMax.checkLMConstraints(baseModel, new CustomModel().setParameter("factor", 0.5), lookup);
         CustomModel newParamModel = new CustomModel().setParameter("other", 0.8);
-        newParamModel.addToPriority(If("road_environment == FERRY", MULTIPLY, "other"));
+        newParamModel.addToPriority(If("road_environment == FERRY", MULTIPLY, "p_other"));
         FindMinMax.checkLMConstraints(baseModel, newParamModel, lookup);
 
         // multiply with a parameter above 1 is rejected like a literal above 1
         CustomModel tooLarge = new CustomModel().setParameter("other", 1.2);
-        tooLarge.addToPriority(If("road_environment == FERRY", MULTIPLY, "other"));
+        tooLarge.addToPriority(If("road_environment == FERRY", MULTIPLY, "p_other"));
         ex = assertThrows(IllegalArgumentException.class,
                 () -> FindMinMax.checkLMConstraints(baseModel, tooLarge, lookup));
         assertTrue(ex.getMessage().contains("cannot be larger than 1"), ex.getMessage());

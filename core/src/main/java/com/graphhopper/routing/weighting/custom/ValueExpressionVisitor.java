@@ -152,11 +152,11 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
      * expression is invalid, contains more than one encoded value or can result in a negative value.
      */
     static Set<String> findVariables(String valueExpression, EncodedValueLookup lookup, Map<String, Object> parameters) {
-        ParseResult result = parse(valueExpression, key -> lookup.hasEncodedValue(key) || key.contains(INFINITY) || parameters.containsKey(key));
+        ParseResult result = parse(valueExpression, key -> lookup.hasEncodedValue(key) || key.contains(INFINITY) || CustomModelParser.isParameter(key, parameters));
         if (!result.ok)
             throw new IllegalArgumentException(result.invalidMessage);
         Set<String> encodedValues = new LinkedHashSet<>(result.guessedVariables);
-        encodedValues.removeAll(parameters.keySet());
+        encodedValues.removeIf(v -> CustomModelParser.isParameter(v, parameters));
         if (encodedValues.size() > 1)
             throw new IllegalArgumentException("Currently only a single EncodedValue is allowed on the right-hand side, but was " + encodedValues.size() + ". Value expression: " + valueExpression);
 
@@ -199,11 +199,11 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
     }
 
     static MinMax findMinMax(String valueExpression, EncodedValueLookup lookup, Map<String, Object> parameters) {
-        ParseResult result = parse(valueExpression, key -> lookup.hasEncodedValue(key) || parameters.containsKey(key));
+        ParseResult result = parse(valueExpression, key -> lookup.hasEncodedValue(key) || CustomModelParser.isParameter(key, parameters));
         if (!result.ok)
             throw new IllegalArgumentException(result.invalidMessage);
         Set<String> encodedValues = new LinkedHashSet<>(result.guessedVariables);
-        encodedValues.removeAll(parameters.keySet());
+        encodedValues.removeIf(v -> CustomModelParser.isParameter(v, parameters));
         if (encodedValues.size() > 1)
             throw new IllegalArgumentException("Currently only a single EncodedValue is allowed on the right-hand side, but was " + encodedValues.size() + ". Value expression: " + valueExpression);
 
@@ -247,11 +247,11 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
 
     /**
      * @return the expression with the parameters replaced by their values for the ExpressionEvaluator,
-     * e.g. "0.9 * hill_factor" -> "0.9 * 0.5"
+     * e.g. "0.9 * p_hill_factor" -> "0.9 * 0.5"
      */
     private static String replaceParameters(String expression, Map<String, Object> parameters) {
         for (Map.Entry<String, Object> entry : parameters.entrySet())
-            expression = expression.replaceAll("\\b" + entry.getKey() + "\\b", entry.getValue().toString());
+            expression = expression.replaceAll("\\b" + CustomModelParser.PARAM_PREFIX + entry.getKey() + "\\b", entry.getValue().toString());
         return expression;
     }
 

@@ -1,6 +1,6 @@
 ### 12.0 [not yet released]
 
-- custom models: new `parameters` section with named numbers and booleans usable in conditions and value expressions; on merge they are overridden per name, so a request can tweak the values of the server-side profile without repeating its statements (and without recompiling the custom model class)
+- custom models: new `parameters` section with named numbers and booleans usable in conditions and value expressions (a parameter xy is referenced as p_xy); on merge they are overridden per name, so a request can tweak the values of the server-side profile without repeating its statements (and without recompiling the custom model class)
 - several changes regarding DAType (#3382) including constructor parameters of DataAccess
 - the roundabout instruction can now be split into two instructions: the first one has turn_angle and the second has exited==true. Enable via the request parameter roundabout_exits=true (default is false)
 - weightings are now expected to return whole numbers, the built-in weightings (most importantly CustomWeighting) now return x10 their previous value (#3297) 

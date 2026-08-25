@@ -6,9 +6,9 @@
 //      custom_model_files: [hike.json, foot_elevation.json]
 
 {
-  "parameters": { "tolerated_hike_rating": 5 },
+  "parameters": { "max_hike_rating": 5 },
   "priority": [
-    { "if": "!foot_access || hike_rating > tolerated_hike_rating", "multiply_by": "0"},
+    { "if": "!foot_access || hike_rating > p_max_hike_rating", "multiply_by": "0"},
     { "else": "", "multiply_by": "foot_priority"},
     { "if": "foot_network == INTERNATIONAL || foot_network == NATIONAL", "multiply_by": "1.7"},
     { "else_if": "foot_network == REGIONAL || foot_network == LOCAL", "multiply_by": "1.5"},

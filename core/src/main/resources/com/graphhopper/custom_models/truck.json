@@ -8,17 +8,17 @@
 
 {
   "distance_influence": 1,
-  "parameters": { "vehicle_width": 3, "vehicle_height": 4, "vehicle_weight": 18, "vehicle_max_speed": 95 },
+  "parameters": { "width": 3, "height": 4, "weight": 18, "max_speed": 95 },
   "priority": [
     { "if": "!hgv_access",  "multiply_by": "0" },
     { "if": "hgv == DELIVERY || hgv == DESTINATION",  "multiply_by": "0.1" },
-    { "if": "max_width < vehicle_width || max_height < vehicle_height", "multiply_by": "0" },
-    { "if": "max_weight < vehicle_weight && max_weight_except == MISSING", "multiply_by": "0" }
+    { "if": "max_width < p_width || max_height < p_height", "multiply_by": "0" },
+    { "if": "max_weight < p_weight && max_weight_except == MISSING", "multiply_by": "0" }
   ],
   "speed": [
     { "if": "road_environment == FERRY", "limit_to": "ferry_speed" },
     { "else": "", "limit_to": "car_average_speed * 0.9" },
     { "if": "true", "limit_to": "max_speed * 0.9" },
-    { "if": "true", "limit_to": "vehicle_max_speed" }
+    { "if": "true", "limit_to": "p_max_speed" }
   ]
 }
