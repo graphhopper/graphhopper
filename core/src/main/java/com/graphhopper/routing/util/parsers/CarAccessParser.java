@@ -112,21 +112,8 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
         if (way.hasTag("impassable", "yes") || way.hasTag("status", "impassable"))
             return WayAccess.CAN_SKIP;
 
-        // multiple restrictions needs special handling
-        if (firstIndex >= 0) {
-            String[] restrict = firstValue.split(";");
-            // if any of the values allows access then return early (regardless of the order)
-            for (String value : restrict) {
-                if (allowedValues.contains(value))
-                    return WayAccess.WAY;
-            }
-            for (String value : restrict) {
-                if (restrictedValues.contains(value) && !hasPermissiveTemporalRestriction(way, firstIndex, restrictionKeys, allowedValues))
-                    return WayAccess.CAN_SKIP;
-            }
-        }
-
-        return WayAccess.WAY;
+        WayAccess access = getAccessFromRestrictions(way);
+        return access != null ? access : WayAccess.WAY;
     }
 
     @Override

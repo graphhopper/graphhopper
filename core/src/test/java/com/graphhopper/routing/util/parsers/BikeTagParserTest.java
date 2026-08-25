@@ -520,6 +520,20 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
     }
 
     @Test
+    public void testUnknownBicycleValueDoesNotShadowAccess() {
+        // an unrecognized bicycle value must defer to access, not shadow it
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "service");
+        way.setTag("access", "no");
+        way.setTag("bicycle", "unknownvalue");
+        assertTrue(accessParser.getAccess(way).canSkip());
+
+        // but without any restriction it stays allowed
+        way.removeTag("access");
+        assertTrue(accessParser.getAccess(way).isWay());
+    }
+
+    @Test
     public void testPreferenceForSlowSpeed() {
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "tertiary");

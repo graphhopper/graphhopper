@@ -28,7 +28,6 @@ import java.util.*;
 
 import static com.graphhopper.routing.ev.RouteNetwork.*;
 import static com.graphhopper.routing.util.PriorityCode.UNCHANGED;
-import static com.graphhopper.routing.util.parsers.OSMTemporalAccessParser.hasPermissiveTemporalRestriction;
 
 public class FootAccessParser extends AbstractAccessParser implements TagParser {
 
@@ -113,20 +112,9 @@ public class FootAccessParser extends AbstractAccessParser implements TagParser 
         if ("via_ferrata".equals(highwayValue))
             return WayAccess.CAN_SKIP;
 
-        int firstIndex = way.getFirstIndex(restrictionKeys);
-        if (firstIndex >= 0) {
-            String firstValue = way.getTag(restrictionKeys.get(firstIndex), "");
-            String[] restrict = firstValue.split(";");
-            // if any of the values allows access then return early (regardless of the order)
-            for (String value : restrict) {
-                if (allowedValues.contains(value))
-                    return WayAccess.WAY;
-            }
-            for (String value : restrict) {
-                if (restrictedValues.contains(value) && !hasPermissiveTemporalRestriction(way, firstIndex, restrictionKeys, allowedValues))
-                    return WayAccess.CAN_SKIP;
-            }
-        }
+        WayAccess access = getAccessFromRestrictions(way);
+        if (access != null)
+            return access;
 
         if (way.hasTag("sidewalk", sidewalkValues))
             return WayAccess.WAY;
