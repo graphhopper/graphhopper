@@ -41,7 +41,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
 import static com.graphhopper.json.Statement.Keyword.IF;
-import static com.graphhopper.routing.weighting.custom.ValueExpressionVisitor.BIKE_CLIMB_FACTOR;
 import static com.graphhopper.routing.weighting.custom.ValueExpressionVisitor.BIKE_CLIMB_TABLE;
 
 public class CustomModelParser {
@@ -454,7 +453,6 @@ public class CustomModelParser {
 
         final StringBuilder initSourceCode = new StringBuilder("this.lookup = lookup;\n");
         initSourceCode.append("this.customModel = customModel;\n");
-        Set<String> bikeClimbFields = new HashSet<>();
         Set<String> set = new HashSet<>();
         for (String prioVar : priorityVariables)
             set.add(prioVar.startsWith(BACKWARD_PREFIX) ? prioVar.substring(BACKWARD_PREFIX.length()) : prioVar);
@@ -498,14 +496,11 @@ public class CustomModelParser {
             } else if (arg.equals(STREET_NAME)) {
                 // street_name is resolved at runtime from graph KV storage, no class field needed
             } else if (arg.startsWith(BIKE_CLIMB_TABLE)) {
-                // e.g. bike_climb_table(120, 95) with the literals from bike_climb_factor, see ValueExpressionVisitor
-                String field = ValueExpressionVisitor.toFieldName(arg);
-                // the field is named after the power only, so two calls with the same power must be identical
-                if (!bikeClimbFields.add(field))
-                    throw new IllegalArgumentException("Only one bike_climb_factor call per power is supported, but got a second: "
-                            + arg.replace(BIKE_CLIMB_TABLE, BIKE_CLIMB_FACTOR));
-                classSourceCode.append("protected BikeClimbSpeedTable " + field + ";\n");
-                initSourceCode.append("this." + field + " = createBikeClimbTable" + arg.substring(BIKE_CLIMB_TABLE.length()) + ";\n");
+                // the field name encodes the integer arguments of the bike_climb_factor call,
+                String[] parts = arg.split("_");
+                classSourceCode.append("protected BikeClimbSpeedTable " + arg + ";\n");
+                initSourceCode.append("this." + arg + " = createBikeClimbTable("
+                        + parts[parts.length - 2] + ", " + parts[parts.length - 1] + ");\n");
             } else {
                 if (!arg.startsWith(IN_AREA_PREFIX))
                     throw new IllegalArgumentException("Variable not supported: " + arg);
@@ -584,21 +579,17 @@ public class CustomModelParser {
     }
 
     /**
-     * Verifies the value expression of the statement, collects its variables and converts the built-in
-     * function calls for the generated code. Currently only bike_climb_factor exists: the call is replaced
-     * by the method of the table field (see createClassTemplate) with the injected current speed ("value"),
-     * e.g. bike_climb_factor(120, 95) -> bike_climb_table_120.getBikeClimbFactor(average_slope, value)
+     * Verifies the value expression of the statement and collects its variables. A bike_climb_factor
+     * call is replaced by the method of the table field (see createClassTemplate) with the injected
+     * current speed ("value"), e.g. bike_climb_factor(120, 95) ->
+     * bike_climb_table_120_95.getBikeClimbFactor(average_slope, value)
      */
     private static String parseValue(Statement statement, Set<String> createObjects, EncodedValueLookup lookup) {
         ParseResult result = ValueExpressionVisitor.parseValue(statement.value(), lookup);
         createObjects.addAll(ValueExpressionVisitor.findVariables(result));
-        String expression = result.converted.toString();
-        for (Map.Entry<String, String[]> entry : result.methods.entrySet())
-            if (entry.getKey().equals(BIKE_CLIMB_FACTOR))
-                expression = expression.replace(ValueExpressionVisitor.toCall(entry.getKey(), entry.getValue()),
-                        ValueExpressionVisitor.toFieldName(ValueExpressionVisitor.toCall(BIKE_CLIMB_TABLE, entry.getValue()))
-                                + ".getBikeClimbFactor(" + AverageSlope.KEY + ", value)");
-        return expression;
+        if (result.bikeClimbArgs == null) return statement.value();
+        return result.bikeClimbScale + ValueExpressionVisitor.toTableField(result.bikeClimbArgs)
+                + ".getBikeClimbFactor(" + AverageSlope.KEY + ", value)";
     }
 
     static void parseExpressions(StringBuilder expressions, NameValidator nameInConditionValidator,

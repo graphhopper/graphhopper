@@ -104,37 +104,38 @@ class ValueExpressionVisitorTest {
         assertFalse(result.ok);
         assertTrue(result.invalidMessage.contains("requires 'average_slope'"), result.invalidMessage);
 
-        // the table field is named after the power, which must be an integer; the mass must be a number
+        // power and mass are encoded into the table field name and so must be integers
         result = parse("bike_climb_factor(120.5, 95)", validator);
         assertFalse(result.ok);
         assertTrue(result.invalidMessage.contains("expects an integer as argument 1"), result.invalidMessage);
         result = parse("bike_climb_factor(120, average_slope)", validator);
         assertFalse(result.ok);
-        assertTrue(result.invalidMessage.contains("expects a number as argument 2"), result.invalidMessage);
+        assertTrue(result.invalidMessage.contains("expects an integer as argument 2"), result.invalidMessage);
+        result = parse("bike_climb_factor(120, 95.5)", validator);
+        assertFalse(result.ok);
+        assertTrue(result.invalidMessage.contains("expects an integer as argument 2"), result.invalidMessage);
     }
 
     @Test
-    public void convertedValueExpression() {
-        // the methods map contains the parsed literals and the converted expression the canonical call,
-        // from which the generated getSpeed code and the expression for the evaluator are derived
+    public void parsedBikeClimbArgs() {
+        // the parsed literals and the optional scale are kept, from which the generated getSpeed code
+        // and the expression for the evaluator are derived
         NameValidator validator = s -> s.equals("average_slope");
         ParseResult result = parse("bike_climb_factor(120, 95)", validator);
         assertTrue(result.ok, result.invalidMessage);
-        assertEquals(Set.of("bike_climb_factor"), result.methods.keySet());
-        assertArrayEquals(new String[]{"120", "95"}, result.methods.get("bike_climb_factor"));
-        assertEquals("bike_climb_factor(120, 95)", result.converted.toString());
+        assertArrayEquals(new String[]{"120", "95"}, result.bikeClimbArgs);
+        assertEquals("", result.bikeClimbScale);
 
         // independent of whitespace
-        result = parse("0.9 * bike_climb_factor(   120  ,95.5 )", validator);
+        result = parse("0.9 * bike_climb_factor(   120  ,95 )", validator);
         assertTrue(result.ok, result.invalidMessage);
-        assertArrayEquals(new String[]{"120", "95.5"}, result.methods.get("bike_climb_factor"));
-        assertEquals("0.9 * bike_climb_factor(120, 95.5)", result.converted.toString());
+        assertArrayEquals(new String[]{"120", "95"}, result.bikeClimbArgs);
+        assertEquals("0.9 * ", result.bikeClimbScale);
 
-        // without a built-in function the expression stays unchanged
+        // without the built-in function nothing is recorded
         result = parse("average_slope * 2.5", validator);
         assertTrue(result.ok, result.invalidMessage);
-        assertTrue(result.methods.isEmpty());
-        assertEquals("average_slope * 2.5", result.converted.toString());
+        assertNull(result.bikeClimbArgs);
     }
 
     @Test
@@ -145,8 +146,8 @@ class ValueExpressionVisitorTest {
         assertInterval(CustomWeightingHelper.bike_climb_factor(31.5, 120, 95), 1.0, "bike_climb_factor(120, 95)", lookup);
         assertInterval(0.9 * CustomWeightingHelper.bike_climb_factor(31.5, 120, 95), 0.9, "0.9 * bike_climb_factor(120, 95)", lookup);
 
-        // average_slope and the table call are returned so that the generated class creates the variable and the field
-        assertEquals(Set.of("average_slope", "bike_climb_table(120, 95)"), findVariables(parseValue("bike_climb_factor(120, 95)", lookup)));
+        // average_slope and the table pseudo variable are returned so that the generated class creates the variable and the field
+        assertEquals(Set.of("average_slope", "bike_climb_table_120_95"), findVariables(parseValue("bike_climb_factor(120, 95)", lookup)));
     }
 
     @Test

@@ -315,14 +315,12 @@ class CustomWeightingTest {
                 () -> CustomModelParser.createWeighting(em, NO_TURN_COST_PROVIDER, customModel));
         assertTrue(ex.getMessage().contains("bike_climb_factor is only supported for 'speed'"), ex.getMessage());
 
-        // two calls with the same power but a different mass would collide on the same table field
+        // two calls with the same power but a different mass get separate table fields
         CustomModel dupModel = new CustomModel().setDistanceInfluence(0d);
         dupModel.addToSpeed(If("true", LIMIT, speedEnc.getName()));
         dupModel.addToSpeed(If("average_slope >= 10", MULTIPLY, "bike_climb_factor(120, 95)"));
         dupModel.addToSpeed(If("average_slope >= 0", MULTIPLY, "bike_climb_factor(120, 80)"));
-        ex = assertThrows(IllegalArgumentException.class,
-                () -> CustomModelParser.createWeighting(em, NO_TURN_COST_PROVIDER, dupModel));
-        assertTrue(ex.getMessage().contains("one bike_climb_factor call per power"), ex.getMessage());
+        assertNotNull(CustomModelParser.createWeighting(em, NO_TURN_COST_PROVIDER, dupModel));
     }
 
     @Test

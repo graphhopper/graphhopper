@@ -732,38 +732,26 @@ smaller or more narrow range, or if you can avoid them entirely, then these requ
 
 #### Built-in functions
 
-Besides `Math.sqrt` a value expression can call the following built-in function:
-
-* `bike_climb_factor(power, mass)`: the continuous power-limited climbing
-  speed of a cyclist producing `power` watts with a total `mass` (rider plus bike) in kg, as a
-  factor relative to the speed of the preceding statements and capped at 1, for the usage with
-  `multiply_by`. The slope is taken from the `average_slope` encoded value (in percent, in travel
-  direction) and for negative values the factor is 1. The flat base speed of the profile (24 km/h if the
-  initial speed statement refers to racingbike, 18 km/h otherwise) calibrates the
-  aerodynamic drag, which dominates for small slopes, and the climbing speed is calculated from the
-  power balance with rolling resistance (coefficient 0.006), drag and gravity (see
-  `BikeClimbSpeedTable`). The factor is
-  relative to the speed of the preceding statements, i.e. the resulting speed is the minimum of the
-  surface-limited speed and the climbing speed, and so a surface penalty of the base profile is not
-  double-counted against gravity on a climb. A speed below the base speed is interpreted only partly as
-  energy loss: it increases the rolling resistance by the factor base speed / speed (at most 3). Where riding gets slower than walking, the speed of
-  pushing the bike is used instead. The `power` and `mass` arguments must be numbers and `power` an
-  integer, as one lookup table per power is created.
-  See `bike_elevation.json` for an example:
+Besides `Math.sqrt` a value expression can call the built-in function `bike_climb_factor(power, mass)`:
+the slowdown factor for climbs, calculated for a cyclist producing `power` watts with a total `mass` 
+(rider plus bike) in kg. The slope is implicitly the `average_slope` encoded value;
+for downhill slopes the factor is 1. The climbing speed follows from the power balance of gravity,
+rolling resistance and aerodynamic drag - the latter calibrated from the flat base speed 
+and where riding gets slower than walking, the speed of pushing the bike is used instead. As the factor 
+is relative to the speed of the preceding statements, the resulting speed is roughly the minimum of the
+surface-limited speed and the climbing speed, i.e. a surface penalty of the base profile is not
+double-counted against gravity on a climb. Example:
 
 ```json
 {
   "speed": [
-    { "if": "average_slope >= 2", "multiply_by": "bike_climb_factor(120, 95)" }
+    { "if": "average_slope > 0", "multiply_by": "bike_climb_factor(120, 95)" }
   ]
 }
 ```
 
-A built-in function call must be the entire value, optionally scaled by a number like
-`"0.9 * bike_climb_factor(120, 95)"` — it cannot be combined with other terms.
-
-A continuous function avoids the small detours or shortcuts that the band edges of an equivalent
-if-else "staircase" of slope bands can create.
+The `power` and `mass` arguments must be integers, and the call must be in the `speed` section, optionally
+scaled by a number like `"0.9 * bike_climb_factor(120, 95)"`.
 
 ### Customizing `distance_influence`
 

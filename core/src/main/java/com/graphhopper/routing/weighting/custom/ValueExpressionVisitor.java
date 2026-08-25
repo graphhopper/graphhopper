@@ -27,9 +27,7 @@ import org.codehaus.commons.compiler.CompileException;
 import org.codehaus.janino.*;
 
 import java.io.StringReader;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.Map;
 import java.util.Set;
 
 
@@ -41,20 +39,13 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
     private static final String INFINITY = Double.toString(Double.POSITIVE_INFINITY);
     private static final Set<String> allowedMethodParents = Set.of("Math");
     private static final Set<String> allowedMethods = Set.of("sqrt");
-    // built-in functions (static methods in CustomWeightingHelper) mapped to their expected number
-    // of arguments. They must be monotone in the encoded value argument, see findMinMax.
+    // the built-in function, also a static method in CustomWeightingHelper for the ExpressionEvaluator
     static final String BIKE_CLIMB_FACTOR = "bike_climb_factor";
-    private static final Map<String, Integer> allowedFunctions = Map.of(BIKE_CLIMB_FACTOR, 2);
     // the pseudo variable and field prefix for the BikeClimbSpeedTable of a bike_climb_factor call
     static final String BIKE_CLIMB_TABLE = "bike_climb_table";
     private final ParseResult result;
     private final NameValidator variableValidator;
     private String invalidMessage;
-    // the offset of the built-in function call (exactly one is allowed)
-    private int functionCallStart = -1;
-    // findMinMax evaluates only start and end of the encoded value which requires monotonic
-    // expressions to be still correct, so allow the call only alone or scaled by a literal like "0.9 * bike_climb_factor(...)"
-    private boolean functionCallAllowed = true;
 
     public ValueExpressionVisitor(ParseResult result, NameValidator variableValidator) {
         this.result = result;
@@ -88,42 +79,31 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
             return true;
         } else if (rv instanceof Java.UnaryOperation uop) {
             result.operators.add(uop.operator);
-            if (uop.operator.equals("-")) {
-                functionCallAllowed = false;
+            if (uop.operator.equals("-"))
                 return uop.operand.accept(this);
-            }
             return false;
         } else if (rv instanceof Java.MethodInvocation mi) {
-            if (mi.target == null && allowedFunctions.containsKey(mi.methodName)) {
-                if (!functionCallAllowed) {
-                    invalidMessage = mi.methodName + " must be the entire expression, optionally scaled like \"0.9 * " + mi.methodName + "(...)\"";
+            if (mi.target == null && mi.methodName.equals(BIKE_CLIMB_FACTOR)) {
+                if (mi.arguments.length != 2) {
+                    invalidMessage = BIKE_CLIMB_FACTOR + " expects 2 arguments, but got: " + mi.arguments.length;
                     return false;
                 }
-                int arity = allowedFunctions.get(mi.methodName);
-                if (mi.arguments.length != arity) {
-                    invalidMessage = mi.methodName + " expects " + arity + " arguments, but got: " + mi.arguments.length;
-                    return false;
-                }
-                functionCallStart = mi.getLocation().getColumnNumber() - 1;
                 // the slope is not an argument but implicitly the average_slope encoded value
                 if (!isValidIdentifier(AverageSlope.KEY)) {
-                    invalidMessage = mi.methodName + " requires '" + AverageSlope.KEY + "' which is not available";
+                    invalidMessage = BIKE_CLIMB_FACTOR + " requires '" + AverageSlope.KEY + "' which is not available";
                     return false;
                 }
-                // the arguments (power, mass) must be numbers as CustomModelParser creates a
-                // BikeClimbSpeedTable field from them in the generated class. The field is named after
-                // the power, which therefore must be an integer (one table per power).
-                String[] params = new String[arity];
-                for (int i = 0; i < arity; i++) {
-                    boolean valid = i == 0 ? mi.arguments[i] instanceof Java.IntegerLiteral
-                            : mi.arguments[i] instanceof Java.IntegerLiteral || mi.arguments[i] instanceof Java.FloatingPointLiteral;
-                    if (!valid) {
-                        invalidMessage = mi.methodName + " expects " + (i == 0 ? "an integer" : "a number") + " as argument " + (i + 1) + ", but got: " + mi.arguments[i];
+                // the arguments (power, mass) must be integers as they are encoded into the name of the
+                // BikeClimbSpeedTable field of the generated class, see toTableField
+                String[] args = new String[2];
+                for (int i = 0; i < 2; i++) {
+                    if (!(mi.arguments[i] instanceof Java.IntegerLiteral literal)) {
+                        invalidMessage = BIKE_CLIMB_FACTOR + " expects an integer as argument " + (i + 1) + ", but got: " + mi.arguments[i];
                         return false;
                     }
-                    params[i] = ((Java.Literal) mi.arguments[i]).value;
+                    args[i] = literal.value;
                 }
-                result.methods.put(mi.methodName, params);
+                result.bikeClimbArgs = args;
                 return true;
             }
             if (allowedMethods.contains(mi.methodName)) {
@@ -139,7 +119,6 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
                                 return true;
                             } else if (mi.arguments.length == 1) {
                                 // return "x" but verify before
-                                functionCallAllowed = false;
                                 return mi.arguments[0].accept(this);
                             }
                         }
@@ -156,11 +135,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
             String op = binOp.operator;
             result.operators.add(op);
             if (op.equals("*") || op.equals("+") || binOp.operator.equals("-")) {
-                boolean allowed = functionCallAllowed;
-                functionCallAllowed = allowed && op.equals("*") && binOp.rhs instanceof Java.Literal;
-                if (!binOp.lhs.accept(this)) return false;
-                functionCallAllowed = allowed && op.equals("*") && binOp.lhs instanceof Java.Literal;
-                return binOp.rhs.accept(this);
+                return binOp.lhs.accept(this) && binOp.rhs.accept(this);
             }
             invalidMessage = "invalid operation '" + op + "'";
             return false;
@@ -191,19 +166,12 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
             if (parser.peek().type == TokenType.END_OF_INPUT) {
                 result.guessedVariables = new LinkedHashSet<>();
                 result.operators = new LinkedHashSet<>();
-                result.methods = new LinkedHashMap<>();
                 ValueExpressionVisitor visitor = new ValueExpressionVisitor(result, variableValidator);
                 result.ok = atom.accept(visitor);
                 result.invalidMessage = visitor.invalidMessage;
-                if (result.ok) {
-                    // The converted expression contains the built-in function call in its canonical form
-                    // (see toCall), e.g. "bike_climb_factor( 120,95 )" -> "bike_climb_factor(120, 95)", so that
-                    // the generated getSpeed code (CustomModelParser.convertValue) and the expression for the
-                    // ExpressionEvaluator (toEvaluable) can be derived via a simple String.replace
-                    result.converted = new StringBuilder(expression);
-                    for (Map.Entry<String, String[]> entry : result.methods.entrySet())
-                        result.converted.replace(visitor.functionCallStart, findClosingParen(expression, visitor.functionCallStart) + 1,
-                                toCall(entry.getKey(), entry.getValue()));
+                if (result.ok && result.bikeClimbArgs != null && !isScaledCall(atom, result)) {
+                    result.ok = false;
+                    result.invalidMessage = BIKE_CLIMB_FACTOR + " must be the entire expression, optionally scaled like \"0.9 * " + BIKE_CLIMB_FACTOR + "(...)\"";
                 }
             }
         } catch (Exception ex) {
@@ -212,46 +180,46 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
     }
 
     /**
-     * @return the canonical call of the specified method, e.g. bike_climb_factor(120, 95)
+     * @return true if the expression is just the bike_climb_factor call, optionally multiplied by a
+     * literal, which is then stored in bikeClimbScale as code prefix like "0.9 * "
      */
-    static String toCall(String method, String[] params) {
-        return method + "(" + String.join(", ", params) + ")";
-    }
-
-    /**
-     * @return the field name in the generated class, e.g. bike_climb_table_120 for bike_climb_table(120, 95)
-     */
-    static String toFieldName(String bikeClimbTable) {
-        return BIKE_CLIMB_TABLE + "_" + bikeClimbTable.substring(BIKE_CLIMB_TABLE.length() + 1, bikeClimbTable.indexOf(','));
-    }
-
-    /**
-     * @return the expression for the ExpressionEvaluator used in findMinMax and findVariables. Currently
-     * only bike_climb_factor is a built-in function, which is replaced by the static function with the slope
-     * as explicit first argument, e.g. bike_climb_factor(average_slope, 120, 95)
-     */
-    private static String toEvaluable(ParseResult result) {
-        String expression = result.converted.toString();
-        for (Map.Entry<String, String[]> entry : result.methods.entrySet())
-            if (entry.getKey().equals(BIKE_CLIMB_FACTOR))
-                expression = expression.replace(toCall(entry.getKey(), entry.getValue()),
-                        BIKE_CLIMB_FACTOR + "(" + AverageSlope.KEY + ", " + String.join(", ", entry.getValue()) + ")");
-        return expression;
-    }
-
-    /**
-     * @return the offset of the closing parenthesis that ends the function call starting at the
-     * given offset. Parentheses are purely structural in a value expression (no strings or
-     * comments), so counting the depth is safe.
-     */
-    private static int findClosingParen(String expression, int callStart) {
-        int depth = 0;
-        for (int i = callStart; i < expression.length(); i++) {
-            char c = expression.charAt(i);
-            if (c == '(') depth++;
-            else if (c == ')' && --depth == 0) return i;
+    private static boolean isScaledCall(Java.Atom atom, ParseResult result) {
+        if (isBikeClimbCall(atom)) return true;
+        if (atom instanceof Java.BinaryOperation binOp && binOp.operator.equals("*")) {
+            if (binOp.lhs instanceof Java.Literal literal && isBikeClimbCall(binOp.rhs)) {
+                result.bikeClimbScale = literal.value + " * ";
+                return true;
+            }
+            if (binOp.rhs instanceof Java.Literal literal && isBikeClimbCall(binOp.lhs)) {
+                result.bikeClimbScale = literal.value + " * ";
+                return true;
+            }
         }
-        throw new IllegalArgumentException("no closing parenthesis found in: " + expression);
+        return false;
+    }
+
+    private static boolean isBikeClimbCall(Java.Atom atom) {
+        return atom instanceof Java.MethodInvocation mi && mi.methodName.equals(BIKE_CLIMB_FACTOR);
+    }
+
+    /**
+     * @return the name of the BikeClimbSpeedTable field of the generated class with the integer
+     * arguments encoded, e.g. bike_climb_table_120_95 for bike_climb_factor(120, 95). It is also used
+     * as pseudo variable, see CustomModelParser.createClassTemplate.
+     */
+    static String toTableField(String[] args) {
+        return BIKE_CLIMB_TABLE + "_" + String.join("_", args);
+    }
+
+    /**
+     * @return the expression for the ExpressionEvaluator used in findMinMax and parseValue: the
+     * bike_climb_factor call is replaced by the static function with the slope as explicit first
+     * argument, e.g. bike_climb_factor(average_slope, 120, 95)
+     */
+    private static String toEvaluable(ParseResult result, String valueExpression) {
+        if (result.bikeClimbArgs == null) return valueExpression;
+        return result.bikeClimbScale + BIKE_CLIMB_FACTOR + "(" + AverageSlope.KEY + ", "
+                + String.join(", ", result.bikeClimbArgs) + ")";
     }
 
     /**
@@ -283,7 +251,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
                 } else {
                     // single encoded value
                     String var = result.guessedVariables.iterator().next();
-                    SingleArgEvaluator ee = createExpressionEvaluator().createFastEvaluator(toEvaluable(result), SingleArgEvaluator.class, var);
+                    SingleArgEvaluator ee = createExpressionEvaluator().createFastEvaluator(toEvaluable(result, valueExpression), SingleArgEvaluator.class, var);
                     EncodedValue enc = lookup.getEncodedValue(var, EncodedValue.class);
                     double max = getMax(enc);
                     double val1 = ee.evaluate(max);
@@ -302,12 +270,12 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
 
     /**
      * @return the variables of the parsed value expression that the generated class has to provide, i.e. the
-     * encoded values and the pseudo variable bike_climb_table(...) for the table field, see CustomModelParser.createClassTemplate
+     * encoded values and the pseudo variable for the table field, see CustomModelParser.createClassTemplate
      */
     static Set<String> findVariables(ParseResult result) {
-        if (result.methods.isEmpty()) return result.guessedVariables;
+        if (result.bikeClimbArgs == null) return result.guessedVariables;
         Set<String> variables = new LinkedHashSet<>(result.guessedVariables);
-        for (String[] params : result.methods.values()) variables.add(toCall(BIKE_CLIMB_TABLE, params));
+        variables.add(toTableField(result.bikeClimbArgs));
         return variables;
     }
 
@@ -342,7 +310,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
             }
 
             String var = result.guessedVariables.iterator().next();
-            SingleArgEvaluator ee = createExpressionEvaluator().createFastEvaluator(toEvaluable(result), SingleArgEvaluator.class, var);
+            SingleArgEvaluator ee = createExpressionEvaluator().createFastEvaluator(toEvaluable(result, valueExpression), SingleArgEvaluator.class, var);
             EncodedValue enc = lookup.getEncodedValue(var, EncodedValue.class);
             double max = getMax(enc);
             double val1 = ee.evaluate(max);
@@ -356,7 +324,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
 
     private static ExpressionEvaluator createExpressionEvaluator() {
         ExpressionEvaluator ee = new ExpressionEvaluator();
-        // make the built-in functions from allowedFunctions resolvable
+        // make the built-in function resolvable
         ee.setDefaultImports("static " + CustomWeightingHelper.class.getName() + ".*");
         return ee;
     }
