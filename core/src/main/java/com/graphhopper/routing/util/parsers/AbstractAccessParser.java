@@ -95,7 +95,8 @@ public abstract class AbstractAccessParser implements TagParser {
             if (value.isEmpty())
                 continue;
             boolean allowed = false, restricted = false;
-            for (String v : value.split(";")) {
+            for (String raw : value.split(";")) {
+                String v = raw.trim();
                 if (allowedValues.contains(v)) allowed = true;
                 else if (restrictedValues.contains(v)) restricted = true;
             }
