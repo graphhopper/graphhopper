@@ -7,7 +7,7 @@ public class AverageSlope {
     public static final String KEY = "average_slope";
 
     public static DecimalEncodedValue create() {
-        return new DecimalEncodedValueImpl(KEY, 5, 0, 1,
+        return new DecimalEncodedValueImpl(KEY, 6, 0, 0.5,
                 true, false, false);
     }
 }
