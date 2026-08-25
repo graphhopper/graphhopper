@@ -18,6 +18,7 @@
 package com.graphhopper.util;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.graphhopper.jackson.CustomModelAreasDeserializer;
@@ -116,6 +117,7 @@ public class CustomModel {
         }
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public List<Statement> getSpeed() {
         return speedStatements;
     }
@@ -125,6 +127,7 @@ public class CustomModel {
         return this;
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public List<Statement> getPriority() {
         return priorityStatements;
     }
@@ -134,6 +137,7 @@ public class CustomModel {
         return this;
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public Map<String, Object> getParameters() {
         return parameters;
     }
@@ -149,6 +153,7 @@ public class CustomModel {
     }
 
     @JsonProperty("turn_penalty")
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public List<Statement> getTurnPenalty() {
         return turnPenaltyStatements;
     }
