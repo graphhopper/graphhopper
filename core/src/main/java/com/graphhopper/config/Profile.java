@@ -21,11 +21,13 @@ package com.graphhopper.config;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.TurnCostsConfig;
 
+import java.util.Arrays;
 import java.util.List;
 
 import static java.util.Collections.emptyList;
@@ -110,6 +112,35 @@ public class Profile {
         return turnCostsConfig != null;
     }
 
+    /**
+     * The base mode of transportation used when creating the instructions, i.e. which roads the driver
+     * perceives as usable (not necessarily routable) and which voice instruction distances fit.
+     * Restricted to BIKE, FOOT and CAR. CAR is the fallback if instructions_base_mode is empty or unknown.
+     */
+    @JsonIgnore
+    public TransportationMode getInstructionsBaseMode() {
+        switch (Helper.toLowerCase(getHints().getString("instructions_base_mode", getName()))) {
+            case "bike":
+            case "bicycle":
+            case "mtb":
+            case "racingbike":
+            case "cargobike":
+            case "cargo_bike":
+            case "cycling":
+            case "biking":
+                return TransportationMode.BIKE;
+            case "foot":
+            case "hike":
+            case "hiking":
+            case "pedestrian":
+            case "walking":
+            case "walk":
+                return TransportationMode.FOOT;
+            default:
+                return TransportationMode.CAR;
+        }
+    }
+
     @JsonIgnore
     public PMap getHints() {
         return hints;
@@ -121,6 +152,10 @@ public class Profile {
             throw new IllegalArgumentException("u_turn_costs no longer accepted in profile. Use the turn costs configuration instead, see docs/migration/config-migration-08-09.md");
         if (key.equals("vehicle"))
             throw new IllegalArgumentException("vehicle no longer accepted in profile, see docs/migration/config-migration-08-09.md");
+        if (key.equals("navigation_mode"))
+            throw new IllegalArgumentException("navigation_mode no longer accepted in profile, use instructions_base_mode instead");
+        if (key.equals("instructions_base_mode") && !Arrays.asList("car", "bike", "foot").contains(Helper.toLowerCase(value.toString())))
+            throw new IllegalArgumentException("instructions_base_mode must be car, bike or foot, but was: " + value);
         this.hints.putObject(key, value);
         return this;
     }

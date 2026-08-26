@@ -18,6 +18,8 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.util.DirectedEdgeFilter;
+import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
@@ -37,6 +39,8 @@ import static com.graphhopper.util.Parameters.Details.*;
 public class InstructionsFromEdges implements Path.EdgeVisitor {
 
     private final Weighting weighting;
+    // This includes edges where car or base access is true, or where the weighting is finite, see #3223. (for 'base' see Profile.getInstructionsBaseMode)
+    private final DirectedEdgeFilter candidateEdges;
     private final NodeAccess nodeAccess;
 
     private final InstructionList ways;
@@ -95,6 +99,11 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
 
     public InstructionsFromEdges(Graph graph, Weighting weighting, EncodedValueLookup evLookup,
                                  InstructionList ways, boolean includeRoundaboutExits) {
+        this(graph, weighting, TransportationMode.CAR, evLookup, ways, includeRoundaboutExits);
+    }
+
+    public InstructionsFromEdges(Graph graph, Weighting weighting, TransportationMode instructionsBaseMode, EncodedValueLookup evLookup,
+                                 InstructionList ways, boolean includeRoundaboutExits) {
         this.weighting = weighting;
         this.roundaboutEnc = evLookup.getBooleanEncodedValue(Roundabout.KEY);
         this.roadEnvEnc = evLookup.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
@@ -111,12 +120,21 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         prevRoadEnv = null;
         prevInstructionNeedsNameFallback = false;
 
-        // roundabout exits are counted like for a car (roads leading in for cars are not counted, even if the
-        // profile could use them, see #3079). Roads without any car access (cycleway, footway, ...) are counted
-        // if the current profile can use them.
+        // the driver perceives an edge as accessible if it belongs to the general (car) road network or to the
+        // infrastructure of the instructions_base_mode vehicle, even if it is blocked for the current request (#3223)
         BooleanEncodedValue carAccessEnc = evLookup.getBooleanEncodedValue(VehicleAccess.key("car"));
-        outEdgeExplorer = graph.createEdgeExplorer(edge -> edge.get(carAccessEnc)
-                || !edge.getReverse(carAccessEnc) && Double.isFinite(weighting.calcEdgeWeight(edge, false)));
+        String accessKey = VehicleAccess.key(Helper.toLowerCase(instructionsBaseMode.name()));
+        BooleanEncodedValue baseAccessEnc = evLookup.hasEncodedValue(accessKey) ? evLookup.getBooleanEncodedValue(accessKey) : carAccessEnc;
+        DirectedEdgeFilter carOrBaseAccess = (edge, reverse) -> reverse
+                ? edge.getReverse(carAccessEnc) || edge.getReverse(baseAccessEnc)
+                : edge.get(carAccessEnc) || edge.get(baseAccessEnc);
+        // and an edge without such access (e.g. a path for the car mode) is still a candidate if the current request can use it
+        candidateEdges = (edge, reverse) -> carOrBaseAccess.accept(edge, reverse)
+                || Double.isFinite(weighting.calcEdgeWeight(edge, reverse));
+        // roundabout exits are counted the same way, but roads leading in are not counted, even if the
+        // current request could use them, see #3079
+        outEdgeExplorer = graph.createEdgeExplorer(edge -> carOrBaseAccess.accept(edge, false)
+                || !carOrBaseAccess.accept(edge, true) && Double.isFinite(weighting.calcEdgeWeight(edge, false)));
         allExplorer = graph.createEdgeExplorer();
     }
 
@@ -128,12 +146,18 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
     public static InstructionList calcInstructions(Path path, Graph graph, Weighting weighting,
                                                    EncodedValueLookup evLookup, final Translation tr,
                                                    boolean includeRoundaboutExits) {
+        return calcInstructions(path, graph, weighting, TransportationMode.CAR, evLookup, tr, includeRoundaboutExits);
+    }
+
+    public static InstructionList calcInstructions(Path path, Graph graph, Weighting weighting, TransportationMode instructionsBaseMode,
+                                                   EncodedValueLookup evLookup, final Translation tr,
+                                                   boolean includeRoundaboutExits) {
         final InstructionList ways = new InstructionList(tr);
         if (path.isFound()) {
             if (path.getEdgeCount() == 0) {
                 ways.add(new FinishInstruction(graph.getNodeAccess(), path.getEndNode()));
             } else {
-                path.forEveryEdge(new InstructionsFromEdges(graph, weighting, evLookup, ways, includeRoundaboutExits));
+                path.forEveryEdge(new InstructionsFromEdges(graph, weighting, instructionsBaseMode, evLookup, ways, includeRoundaboutExits));
             }
         }
         return ways;
@@ -271,7 +295,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             RoundaboutInstruction rInstr = (RoundaboutInstruction) prevInstruction;
             rInstr.setRadian(deltaInOut).setDirOfRotation(deltaOut);
 
-            // we use an exit that is not considered as it is inaccessible by car (#3081)
+            // we use an exit that is not considered as it has no car or base access (#3081)
             if (rInstr.getExitNumber() == 0) rInstr.increaseExitNumber();
 
             if (includeRoundaboutExits) {
@@ -328,7 +352,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                         && (sign < 0) == (prevInstruction.getSign() < 0)
                         && (Math.abs(sign) == Instruction.TURN_SLIGHT_RIGHT || Math.abs(sign) == Instruction.TURN_RIGHT || Math.abs(sign) == Instruction.TURN_SHARP_RIGHT)
                         && (Math.abs(prevInstruction.getSign()) == Instruction.TURN_SLIGHT_RIGHT || Math.abs(prevInstruction.getSign()) == Instruction.TURN_RIGHT || Math.abs(prevInstruction.getSign()) == Instruction.TURN_SHARP_RIGHT)
-                        && Double.isFinite(weighting.calcEdgeWeight(edge, false)) != Double.isFinite(weighting.calcEdgeWeight(edge, true))
+                        && candidateEdges.accept(edge, false) != candidateEdges.accept(edge, true)
                         && InstructionsHelper.isSameName(prevInstructionName, name)) {
                     // Chances are good that this is a u-turn, we only need to check if the orientation matches
                     GHPoint point = InstructionsHelper.getPointForOrientationCalculation(edge, nodeAccess);
@@ -422,7 +446,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         prevOrientation = AngleCalc.ANGLE_CALC.calcOrientation(doublePrevLat, doublePrevLon, prevLat, prevLon);
         int sign = InstructionsHelper.calculateSign(prevLat, prevLon, lat, lon, prevOrientation);
 
-        InstructionsOutgoingEdges outgoingEdges = new InstructionsOutgoingEdges(prevEdge, edge, weighting, maxSpeedEnc,
+        InstructionsOutgoingEdges outgoingEdges = new InstructionsOutgoingEdges(prevEdge, edge, weighting, candidateEdges, maxSpeedEnc,
                 roadClassEnc, roadClassLinkEnc, lanesEnc, allExplorer, nodeAccess, prevNode, baseNode, adjNode);
         int nrOfPossibleTurns = outgoingEdges.getAllowedTurns();
 

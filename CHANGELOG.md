@@ -1,5 +1,6 @@
 ### 12.0 [not yet released]
 
+- the profile parameter instructions_base_mode (car, bike or foot) replaces navigation_mode and is derived from the profile name if not specified, with car as fallback (#3394)
 - several changes regarding DAType (#3382) including constructor parameters of DataAccess
 - the roundabout instruction can now be split into two instructions: the first one has turn_angle and the second has exited==true. Enable via the request parameter roundabout_exits=true (default is false)
 - weightings are now expected to return whole numbers, the built-in weightings (most importantly CustomWeighting) now return x10 their previous value (#3297) 

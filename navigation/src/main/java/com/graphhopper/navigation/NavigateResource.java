@@ -149,7 +149,7 @@ public class NavigateResource {
         } else {
             DistanceUtils.Unit unit = voiceUnits.equals("metric") ? DistanceUtils.Unit.METRIC : DistanceUtils.Unit.IMPERIAL;
             Locale locale = Helper.getLocale(localeStr);
-            DistanceConfig config = new DistanceConfig(unit, translationMap, locale, graphHopper.getNavigationMode(ghProfile));
+            DistanceConfig config = new DistanceConfig(unit, translationMap, locale, graphHopper.getInstructionsBaseMode(ghProfile));
             logger.info(logStr);
             return Response.ok(NavigateResponseConverter.convertFromGHResponse(ghResponse, translationMap, locale, config)).
                     header("X-GH-Took", "" + Math.round(took * 1000)).
@@ -220,7 +220,7 @@ public class NavigateResource {
                 unit = DistanceUtils.Unit.IMPERIAL;
             }
 
-            DistanceConfig config = new DistanceConfig(unit, translationMap, request.getLocale(), graphHopper.getNavigationMode(request.getProfile()));
+            DistanceConfig config = new DistanceConfig(unit, translationMap, request.getLocale(), graphHopper.getInstructionsBaseMode(request.getProfile()));
             logger.info(logStr);
             return Response.ok(NavigateResponseConverter.convertFromGHResponse(ghResponse, translationMap, request.getLocale(), config)).
                     header("X-GH-Took", "" + Math.round(took * 1000)).
