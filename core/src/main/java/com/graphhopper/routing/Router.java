@@ -303,7 +303,7 @@ public class Router {
                 setMaxDistance(wayPointMaxDistance).
                 setElevationMaxDistance(elevationWayPointMaxDistance);
         PathMerger pathMerger = new PathMerger(graph, weighting).
-                setNavigationMode(profilesByName.get(request.getProfile()).getNavigationMode()).
+                setInstructionsBaseMode(profilesByName.get(request.getProfile()).getInstructionsBaseMode()).
                 setCalcPoints(calcPoints).
                 setRamerDouglasPeucker(peucker).
                 setEnableInstructions(enableInstructions).

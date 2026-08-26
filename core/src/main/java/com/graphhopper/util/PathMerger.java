@@ -56,7 +56,7 @@ public class PathMerger {
     private boolean simplifyResponse = true;
     private RamerDouglasPeucker ramerDouglasPeucker = RDP;
     private boolean calcPoints = true;
-    private TransportationMode navigationMode = TransportationMode.CAR;
+    private TransportationMode instructionsBaseMode = TransportationMode.CAR;
     private PathDetailsBuilderFactory pathBuilderFactory;
     private List<String> requestedPathDetails = Collections.emptyList();
     private double favoredHeading = Double.NaN;
@@ -66,8 +66,8 @@ public class PathMerger {
         this.weighting = graph.wrapWeighting(weighting);
     }
 
-    public PathMerger setNavigationMode(TransportationMode navigationMode) {
-        this.navigationMode = navigationMode;
+    public PathMerger setInstructionsBaseMode(TransportationMode instructionsBaseMode) {
+        this.instructionsBaseMode = instructionsBaseMode;
         return this;
     }
 
@@ -130,7 +130,7 @@ public class PathMerger {
             fullDistance_mm += path.getDistance_mm();
             fullWeight += path.getWeight();
             if (enableInstructions) {
-                InstructionList il = InstructionsFromEdges.calcInstructions(path, graph, weighting, navigationMode, evLookup, tr, includeRoundaboutExitInstruction);
+                InstructionList il = InstructionsFromEdges.calcInstructions(path, graph, weighting, instructionsBaseMode, evLookup, tr, includeRoundaboutExitInstruction);
 
                 if (!il.isEmpty()) {
                     fullInstructions.addAll(il);

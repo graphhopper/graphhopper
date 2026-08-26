@@ -102,7 +102,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         this(graph, weighting, TransportationMode.CAR, evLookup, ways, includeRoundaboutExits);
     }
 
-    public InstructionsFromEdges(Graph graph, Weighting weighting, TransportationMode navigationMode, EncodedValueLookup evLookup,
+    public InstructionsFromEdges(Graph graph, Weighting weighting, TransportationMode instructionsBaseMode, EncodedValueLookup evLookup,
                                  InstructionList ways, boolean includeRoundaboutExits) {
         this.weighting = weighting;
         this.roundaboutEnc = evLookup.getBooleanEncodedValue(Roundabout.KEY);
@@ -120,9 +120,9 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         prevRoadEnv = null;
         prevInstructionNeedsNameFallback = false;
 
-        // an edge is usable if the navigation_mode vehicle can access it, even if it is blocked for the
-        // current request (#3223), or if it has no such access but the current request can use it
-        String accessKey = VehicleAccess.key(Helper.toLowerCase(navigationMode.name()));
+        // an edge is usable if the instructions_base_mode vehicle can access it, even if it is blocked for
+        // the current request (#3223), or if it has no such access but the current request can use it
+        String accessKey = VehicleAccess.key(Helper.toLowerCase(instructionsBaseMode.name()));
         BooleanEncodedValue accessEnc = evLookup.hasEncodedValue(accessKey)
                 ? evLookup.getBooleanEncodedValue(accessKey)
                 : evLookup.getBooleanEncodedValue(VehicleAccess.key("car"));
@@ -148,7 +148,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         return calcInstructions(path, graph, weighting, TransportationMode.CAR, evLookup, tr, includeRoundaboutExits);
     }
 
-    public static InstructionList calcInstructions(Path path, Graph graph, Weighting weighting, TransportationMode navigationMode,
+    public static InstructionList calcInstructions(Path path, Graph graph, Weighting weighting, TransportationMode instructionsBaseMode,
                                                    EncodedValueLookup evLookup, final Translation tr,
                                                    boolean includeRoundaboutExits) {
         final InstructionList ways = new InstructionList(tr);
@@ -156,7 +156,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             if (path.getEdgeCount() == 0) {
                 ways.add(new FinishInstruction(graph.getNodeAccess(), path.getEndNode()));
             } else {
-                path.forEveryEdge(new InstructionsFromEdges(graph, weighting, navigationMode, evLookup, ways, includeRoundaboutExits));
+                path.forEveryEdge(new InstructionsFromEdges(graph, weighting, instructionsBaseMode, evLookup, ways, includeRoundaboutExits));
             }
         }
         return ways;

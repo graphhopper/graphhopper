@@ -6,6 +6,7 @@ import com.graphhopper.routing.util.TransportationMode;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class DistanceConfigTest {
 
@@ -25,11 +26,15 @@ public class DistanceConfigTest {
         GraphHopper hopper = new GraphHopper().setProfiles(
                 new Profile("my_truck"),
                 new Profile("foot"),
-                new Profile("ebike").putHint("navigation_mode", "bike"));
-        assertEquals(TransportationMode.CAR, hopper.getNavigationMode("unknown"));
-        assertEquals(TransportationMode.CAR, hopper.getNavigationMode("my_truck"));
-        assertEquals(TransportationMode.FOOT, hopper.getNavigationMode("foot"));
-        assertEquals(TransportationMode.BIKE, hopper.getNavigationMode("ebike"));
+                new Profile("walking"),
+                new Profile("ebike").putHint("instructions_base_mode", "bike"));
+        assertEquals(TransportationMode.CAR, hopper.getInstructionsBaseMode("unknown"));
+        assertEquals(TransportationMode.CAR, hopper.getInstructionsBaseMode("my_truck"));
+        assertEquals(TransportationMode.FOOT, hopper.getInstructionsBaseMode("foot"));
+        assertEquals(TransportationMode.FOOT, hopper.getInstructionsBaseMode("walking"));
+        assertEquals(TransportationMode.BIKE, hopper.getInstructionsBaseMode("ebike"));
+        assertThrows(IllegalArgumentException.class, () -> new Profile("x").putHint("navigation_mode", "bike"));
+        assertThrows(IllegalArgumentException.class, () -> new Profile("x").putHint("instructions_base_mode", "hgv"));
 
         // from String
         DistanceConfig driving = new DistanceConfig(DistanceUtils.Unit.METRIC, null, null, "driving");
