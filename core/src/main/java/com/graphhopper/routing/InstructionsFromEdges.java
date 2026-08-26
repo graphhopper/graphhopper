@@ -19,6 +19,7 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.DirectedEdgeFilter;
+import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
@@ -98,6 +99,11 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
 
     public InstructionsFromEdges(Graph graph, Weighting weighting, EncodedValueLookup evLookup,
                                  InstructionList ways, boolean includeRoundaboutExits) {
+        this(graph, weighting, TransportationMode.CAR, evLookup, ways, includeRoundaboutExits);
+    }
+
+    public InstructionsFromEdges(Graph graph, Weighting weighting, TransportationMode navigationMode, EncodedValueLookup evLookup,
+                                 InstructionList ways, boolean includeRoundaboutExits) {
         this.weighting = weighting;
         this.roundaboutEnc = evLookup.getBooleanEncodedValue(Roundabout.KEY);
         this.roadEnvEnc = evLookup.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
@@ -114,14 +120,18 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         prevRoadEnv = null;
         prevInstructionNeedsNameFallback = false;
 
-        // an edge is usable if cars can access it, even if it is blocked for the current request (#3223), or
-        // if it has no car access (cycleway, footway, ...) but the current request can use it
-        BooleanEncodedValue carAccessEnc = evLookup.getBooleanEncodedValue(VehicleAccess.key("car"));
+        // an edge is usable if the navigation_mode vehicle can access it, even if it is blocked for the
+        // current request (#3223), or if it has no such access but the current request can use it
+        String accessKey = VehicleAccess.key(Helper.toLowerCase(navigationMode.name()));
+        BooleanEncodedValue accessEnc = evLookup.hasEncodedValue(accessKey)
+                ? evLookup.getBooleanEncodedValue(accessKey)
+                : evLookup.getBooleanEncodedValue(VehicleAccess.key("car"));
         usableEdges = (edge, reverse) -> reverse
-                ? edge.getReverse(carAccessEnc) || Double.isFinite(weighting.calcEdgeWeight(edge, true))
-                : edge.get(carAccessEnc) || Double.isFinite(weighting.calcEdgeWeight(edge, false));
+                ? edge.getReverse(accessEnc) || Double.isFinite(weighting.calcEdgeWeight(edge, true))
+                : edge.get(accessEnc) || Double.isFinite(weighting.calcEdgeWeight(edge, false));
         // roundabout exits are counted like for a car: roads leading in for cars are not counted, even if the
         // current request could use them, see #3079
+        BooleanEncodedValue carAccessEnc = evLookup.getBooleanEncodedValue(VehicleAccess.key("car"));
         outEdgeExplorer = graph.createEdgeExplorer(edge -> edge.get(carAccessEnc)
                 || !edge.getReverse(carAccessEnc) && Double.isFinite(weighting.calcEdgeWeight(edge, false)));
         allExplorer = graph.createEdgeExplorer();
@@ -135,12 +145,18 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
     public static InstructionList calcInstructions(Path path, Graph graph, Weighting weighting,
                                                    EncodedValueLookup evLookup, final Translation tr,
                                                    boolean includeRoundaboutExits) {
+        return calcInstructions(path, graph, weighting, TransportationMode.CAR, evLookup, tr, includeRoundaboutExits);
+    }
+
+    public static InstructionList calcInstructions(Path path, Graph graph, Weighting weighting, TransportationMode navigationMode,
+                                                   EncodedValueLookup evLookup, final Translation tr,
+                                                   boolean includeRoundaboutExits) {
         final InstructionList ways = new InstructionList(tr);
         if (path.isFound()) {
             if (path.getEdgeCount() == 0) {
                 ways.add(new FinishInstruction(graph.getNodeAccess(), path.getEndNode()));
             } else {
-                path.forEveryEdge(new InstructionsFromEdges(graph, weighting, evLookup, ways, includeRoundaboutExits));
+                path.forEveryEdge(new InstructionsFromEdges(graph, weighting, navigationMode, evLookup, ways, includeRoundaboutExits));
             }
         }
         return ways;

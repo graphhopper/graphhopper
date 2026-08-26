@@ -21,12 +21,14 @@ package com.graphhopper.config;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.TurnCostsConfig;
 
 import java.util.List;
+import java.util.Locale;
 
 import static java.util.Collections.emptyList;
 
@@ -108,6 +110,19 @@ public class Profile {
 
     public boolean hasTurnCosts() {
         return turnCostsConfig != null;
+    }
+
+    /**
+     * The mode of transportation the user of this profile navigates with, e.g. used for the turn instructions.
+     * It is specified via the profile entry "navigation_mode" and defaults to the profile name, or CAR.
+     */
+    @JsonIgnore
+    public TransportationMode getNavigationMode() {
+        try {
+            return TransportationMode.valueOf(getHints().getString("navigation_mode", getName()).toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            return TransportationMode.CAR;
+        }
     }
 
     @JsonIgnore

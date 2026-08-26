@@ -397,11 +397,70 @@ class HeadingAndCustomModelRoutingTest {
         assertEquals("Side", il.get(1).getName());
     }
 
+    @Test
+    public void testTurnInstructionAtBlockedAreaForBike() {
+        BooleanEncodedValue accessEnc = VehicleAccess.create("bike");
+        DecimalEncodedValue speedEnc = VehicleSpeed.create("bike", 4, 2, false);
+        EncodingManager encodingManager = new EncodingManager.Builder().add(accessEnc).add(speedEnc)
+                .add(VehicleAccess.create("car"))
+                .add(RoadClass.create())
+                .add(RoadClassLink.create())
+                .add(RoadEnvironment.create())
+                .add(Roundabout.create())
+                .add(MaxSpeed.create())
+                .add(Subnetwork.create("profile")).build();
+        BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
+        // same scenario as in testTurnInstructionAtBlockedArea, but with bike-only ways (no car access)
+        // 0 --- 1 --- 2   Main
+        //       |
+        //       3         Side
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(0, 0.001, 0.000);
+        na.setNode(1, 0.001, 0.001);
+        na.setNode(2, 0.001, 0.002);
+        na.setNode(3, 0.000, 0.001);
+        GHUtility.setSpeed(18, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(110).setKeyValues(Map.of(STREET_NAME, new KValue("Main"))));
+        GHUtility.setSpeed(18, true, true, accessEnc, speedEnc, graph.edge(1, 2).setDistance(110).setKeyValues(Map.of(STREET_NAME, new KValue("Main"))));
+        GHUtility.setSpeed(18, true, true, accessEnc, speedEnc, graph.edge(1, 3).setDistance(110).setKeyValues(Map.of(STREET_NAME, new KValue("Side"))));
+
+        JsonFeature area = new JsonFeature();
+        area.setId("area1");
+        area.setGeometry(new GeometryFactory().createPolygon(new Coordinate[]{
+                new Coordinate(0.0015, 0.0005),
+                new Coordinate(0.0025, 0.0005),
+                new Coordinate(0.0025, 0.0015),
+                new Coordinate(0.0015, 0.0015),
+                new Coordinate(0.0015, 0.0005)}));
+        CustomModel customModel = new CustomModel();
+        customModel.addToPriority(If("in_area1", MULTIPLY, "0"));
+        customModel.getAreas().getFeatures().add(area);
+        GHRequest req = new GHRequest(new GHPoint(0.001, 0.000), new GHPoint(0.000, 0.001)).
+                setProfile("profile").setCustomModel(customModel);
+
+        // with navigation_mode: bike the blocked continuation of Main is visible and the turn is created
+        Profile profile = TestProfiles.accessAndSpeed("profile", "bike").putHint("navigation_mode", "bike");
+        GHResponse rsp = createRouter(graph, encodingManager, profile).route(req);
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
+        InstructionList il = rsp.getBest().getInstructions();
+        assertEquals(3, il.size());
+        assertEquals(Instruction.TURN_RIGHT, il.get(1).getSign());
+        assertEquals("Side", il.get(1).getName());
+
+        // without navigation_mode it falls back to car_access and the blocked bike-only way stays invisible
+        rsp = createRouter(graph, encodingManager, TestProfiles.accessAndSpeed("profile", "bike")).route(req);
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
+        assertEquals(2, rsp.getBest().getInstructions().size());
+    }
+
     private Router createRouter(BaseGraph graph, EncodingManager encodingManager) {
+        return createRouter(graph, encodingManager, TestProfiles.accessAndSpeed("profile", "car"));
+    }
+
+    private Router createRouter(BaseGraph graph, EncodingManager encodingManager, Profile profile) {
         LocationIndexTree locationIndex = new LocationIndexTree(graph, new GHDirectory("", DAType.RAM));
         locationIndex.prepareIndex();
         Map<String, Profile> profilesByName = new HashMap<>();
-        profilesByName.put("profile", TestProfiles.accessAndSpeed("profile", "car"));
+        profilesByName.put(profile.getName(), profile);
         return new Router(graph.getBaseGraph(), encodingManager, locationIndex, profilesByName, new PathDetailsBuilderFactory(), new TranslationMap().doImport(), new RouterConfig(),
                 new DefaultWeightingFactory(graph.getBaseGraph(), encodingManager), Collections.emptyMap(), Collections.emptyMap());
     }
