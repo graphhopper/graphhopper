@@ -66,14 +66,14 @@ class InstructionsOutgoingEdges {
     private final IntEncodedValue lanesEnc;
     private final NodeAccess nodeAccess;
     private final Weighting weighting;
-    private final DirectedEdgeFilter usableEdges;
+    private final DirectedEdgeFilter candidateEdges;
     private final int baseNode;
     private final EdgeExplorer allExplorer;
 
     public InstructionsOutgoingEdges(EdgeIteratorState prevEdge,
                                      EdgeIteratorState currentEdge,
                                      Weighting weighting,
-                                     DirectedEdgeFilter usableEdges,
+                                     DirectedEdgeFilter candidateEdges,
                                      DecimalEncodedValue maxSpeedEnc,
                                      EnumEncodedValue<RoadClass> roadClassEnc,
                                      BooleanEncodedValue roadClassLinkEnc,
@@ -86,7 +86,7 @@ class InstructionsOutgoingEdges {
         this.prevEdge = prevEdge;
         this.currentEdge = currentEdge;
         this.weighting = weighting;
-        this.usableEdges = usableEdges;
+        this.candidateEdges = candidateEdges;
         this.maxSpeedEnc = maxSpeedEnc;
         this.roadClassEnc = roadClassEnc;
         this.roadClassLinkEnc = roadClassLinkEnc;
@@ -100,11 +100,11 @@ class InstructionsOutgoingEdges {
         EdgeIterator edgeIter = allExplorer.setBaseNode(baseNode);
         while (edgeIter.next()) {
             if (edgeIter.getAdjNode() != prevNode && edgeIter.getAdjNode() != adjNode) {
-                if (usableEdges.accept(edgeIter, false)) {
+                if (candidateEdges.accept(edgeIter, false)) {
                     EdgeIteratorState tmpEdge = edgeIter.detach(false);
                     allowedAlternativeTurns.add(tmpEdge);
                     visibleAlternativeTurns.add(tmpEdge);
-                } else if (usableEdges.accept(edgeIter, true)) {
+                } else if (candidateEdges.accept(edgeIter, true)) {
                     visibleAlternativeTurns.add(edgeIter.detach(false));
                 }
             }
@@ -227,22 +227,22 @@ class InstructionsOutgoingEdges {
                     && prevEdge.getEdge() != edgeIter.getEdge()
                     && roadClass == edgeIter.get(roadClassEnc)
                     && InstructionsHelper.isSameName(name, edgeIter.getName())
-                    && (usableEdges.accept(edgeIter, false) || usableEdges.accept(edgeIter, true))) {
+                    && (candidateEdges.accept(edgeIter, false) || candidateEdges.accept(edgeIter, true))) {
                 if (otherEdge != null) return false; // too many possible other edges
                 otherEdge = edgeIter.detach(false);
             }
         }
         if (otherEdge == null) return false;
 
-        if (usableEdges.accept(currentEdge, true)) {
+        if (candidateEdges.accept(currentEdge, true)) {
             // assume two ways are merged into one way
             // -> prev ->
             //              <- edge ->
             // -> other ->
-            if (usableEdges.accept(prevEdge, true)) return false;
+            if (candidateEdges.accept(prevEdge, true)) return false;
             // otherEdge has direction from junction outwards
-            if (!usableEdges.accept(otherEdge, false)) return false;
-            if (usableEdges.accept(otherEdge, true)) return false;
+            if (!candidateEdges.accept(otherEdge, false)) return false;
+            if (candidateEdges.accept(otherEdge, true)) return false;
 
             int delta = Math.abs(prevEdge.get(lanesEnc) + otherEdge.get(lanesEnc) - currentEdge.get(lanesEnc));
             return delta <= 1;
@@ -252,10 +252,10 @@ class InstructionsOutgoingEdges {
         //             -> edge ->
         // <- prev ->
         //             -> other ->
-        if (!usableEdges.accept(prevEdge, true)) return false;
+        if (!candidateEdges.accept(prevEdge, true)) return false;
         // otherEdge has direction from junction outwards
-        if (usableEdges.accept(otherEdge, false)) return false;
-        if (!usableEdges.accept(otherEdge, true)) return false;
+        if (candidateEdges.accept(otherEdge, false)) return false;
+        if (!candidateEdges.accept(otherEdge, true)) return false;
 
         int delta = prevEdge.get(lanesEnc) - (currentEdge.get(lanesEnc) + otherEdge.get(lanesEnc));
         return delta <= 1;

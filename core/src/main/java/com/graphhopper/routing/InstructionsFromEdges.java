@@ -40,7 +40,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
 
     private final Weighting weighting;
     // roads blocked for routing, e.g. via a custom model, are still visible to the driver, see #3223
-    private final DirectedEdgeFilter usableEdges;
+    private final DirectedEdgeFilter candidateEdges;
     private final NodeAccess nodeAccess;
 
     private final InstructionList ways;
@@ -128,8 +128,8 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         DirectedEdgeFilter carOrBaseAccess = (edge, reverse) -> reverse
                 ? edge.getReverse(carAccessEnc) || edge.getReverse(baseAccessEnc)
                 : edge.get(carAccessEnc) || edge.get(baseAccessEnc);
-        // and an edge without such access (e.g. a path for the car mode) is usable if the current request can use it
-        usableEdges = (edge, reverse) -> carOrBaseAccess.accept(edge, reverse)
+        // and an edge without such access (e.g. a path for the car mode) is still a candidate if the current request can use it
+        candidateEdges = (edge, reverse) -> carOrBaseAccess.accept(edge, reverse)
                 || Double.isFinite(weighting.calcEdgeWeight(edge, reverse));
         // roundabout exits are counted the same way, but roads leading in are not counted, even if the
         // current request could use them, see #3079
@@ -352,7 +352,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                         && (sign < 0) == (prevInstruction.getSign() < 0)
                         && (Math.abs(sign) == Instruction.TURN_SLIGHT_RIGHT || Math.abs(sign) == Instruction.TURN_RIGHT || Math.abs(sign) == Instruction.TURN_SHARP_RIGHT)
                         && (Math.abs(prevInstruction.getSign()) == Instruction.TURN_SLIGHT_RIGHT || Math.abs(prevInstruction.getSign()) == Instruction.TURN_RIGHT || Math.abs(prevInstruction.getSign()) == Instruction.TURN_SHARP_RIGHT)
-                        && usableEdges.accept(edge, false) != usableEdges.accept(edge, true)
+                        && candidateEdges.accept(edge, false) != candidateEdges.accept(edge, true)
                         && InstructionsHelper.isSameName(prevInstructionName, name)) {
                     // Chances are good that this is a u-turn, we only need to check if the orientation matches
                     GHPoint point = InstructionsHelper.getPointForOrientationCalculation(edge, nodeAccess);
@@ -446,7 +446,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         prevOrientation = AngleCalc.ANGLE_CALC.calcOrientation(doublePrevLat, doublePrevLon, prevLat, prevLon);
         int sign = InstructionsHelper.calculateSign(prevLat, prevLon, lat, lon, prevOrientation);
 
-        InstructionsOutgoingEdges outgoingEdges = new InstructionsOutgoingEdges(prevEdge, edge, weighting, usableEdges, maxSpeedEnc,
+        InstructionsOutgoingEdges outgoingEdges = new InstructionsOutgoingEdges(prevEdge, edge, weighting, candidateEdges, maxSpeedEnc,
                 roadClassEnc, roadClassLinkEnc, lanesEnc, allExplorer, nodeAccess, prevNode, baseNode, adjNode);
         int nrOfPossibleTurns = outgoingEdges.getAllowedTurns();
 
