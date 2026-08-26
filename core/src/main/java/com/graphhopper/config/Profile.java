@@ -126,6 +126,7 @@ public class Profile {
             case "mtb":
             case "racingbike":
             case "cargobike":
+            case "cargo_bike":
             case "cycling":
             case "biking":
                 return TransportationMode.BIKE;

@@ -125,16 +125,16 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         BooleanEncodedValue carAccessEnc = evLookup.getBooleanEncodedValue(VehicleAccess.key("car"));
         String accessKey = VehicleAccess.key(Helper.toLowerCase(instructionsBaseMode.name()));
         BooleanEncodedValue baseAccessEnc = evLookup.hasEncodedValue(accessKey) ? evLookup.getBooleanEncodedValue(accessKey) : carAccessEnc;
-        DirectedEdgeFilter perceivedAccess = (edge, reverse) -> reverse
+        DirectedEdgeFilter carOrBaseAccess = (edge, reverse) -> reverse
                 ? edge.getReverse(carAccessEnc) || edge.getReverse(baseAccessEnc)
                 : edge.get(carAccessEnc) || edge.get(baseAccessEnc);
         // and an edge without such access (e.g. a path for the car mode) is usable if the current request can use it
-        usableEdges = (edge, reverse) -> perceivedAccess.accept(edge, reverse)
+        usableEdges = (edge, reverse) -> carOrBaseAccess.accept(edge, reverse)
                 || Double.isFinite(weighting.calcEdgeWeight(edge, reverse));
         // roundabout exits are counted the same way, but roads leading in are not counted, even if the
         // current request could use them, see #3079
-        outEdgeExplorer = graph.createEdgeExplorer(edge -> perceivedAccess.accept(edge, false)
-                || !perceivedAccess.accept(edge, true) && Double.isFinite(weighting.calcEdgeWeight(edge, false)));
+        outEdgeExplorer = graph.createEdgeExplorer(edge -> carOrBaseAccess.accept(edge, false)
+                || !carOrBaseAccess.accept(edge, true) && Double.isFinite(weighting.calcEdgeWeight(edge, false)));
         allExplorer = graph.createEdgeExplorer();
     }
 
