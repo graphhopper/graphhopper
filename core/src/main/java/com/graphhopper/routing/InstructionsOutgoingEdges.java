@@ -34,9 +34,10 @@ import java.util.List;
  * There are different sets of edges.
  * The previous edge is the edge we are coming from.
  * The current edge is the edge we turn on.
- * The allowedAlternativeTurns contains all edges that the current vehicle is allowed(*) to turn on to, excluding the prev edge and the current edge.
+ * The allowedAlternativeTurns contains all edges that the driver perceives(*) as turn options, excluding the prev edge and the current edge.
  * The visibleAlternativeTurns contains all edges surrounding this turn instruction, without the prev edge and the current edge.
- * (*): This might not consider turn restrictions, but only simple access values.
+ * (*): Since #3223 this can include edges blocked for the current request, e.g. via a custom model, as long as
+ * they have car or base access. Turn restrictions are not considered.
  * Here is an example:
  * <pre>
  * A --> B --> C

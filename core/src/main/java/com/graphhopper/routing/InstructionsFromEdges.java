@@ -295,7 +295,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             RoundaboutInstruction rInstr = (RoundaboutInstruction) prevInstruction;
             rInstr.setRadian(deltaInOut).setDirOfRotation(deltaOut);
 
-            // we use an exit that is not considered as it is inaccessible by car (#3081)
+            // we use an exit that is not considered as it has no car or base access (#3081)
             if (rInstr.getExitNumber() == 0) rInstr.increaseExitNumber();
 
             if (includeRoundaboutExits) {
