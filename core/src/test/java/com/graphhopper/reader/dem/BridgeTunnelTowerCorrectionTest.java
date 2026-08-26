@@ -340,6 +340,35 @@ public class BridgeTunnelTowerCorrectionTest {
         assertEquals(0.10, Math.abs(na.getEle(2) - na.getEle(3)) / 100, 1e-6);
     }
 
+    /**
+     * A bridge where BOTH tower nodes read the underpass DEM (47.3983,15.1716): the raw
+     *  structure slope is ~0 and the joint lift adds a small real grade (~0.9%) the guard must tolerate
+     *  (STRUCTURE_SLOPE_FLOOR). Otherwise, the tower nodes stay ~5 m too low and the ramps keep fake 13%/10% spikes.
+     */
+    @Test
+    public void liftsBothTowersOfFlatBridgeOverUnderpass() {
+        NodeAccess na = graph.getNodeAccess();
+        // real-world elevations of the B116/S6 case
+        na.setNode(0, 0, 0, 522.0);
+        na.setNode(1, 1, 0, 521.7);
+        na.setNode(2, 2, 0, 516.1); // bridge tower, underpass DEM (too low)
+        na.setNode(3, 3, 0, 515.9); // bridge tower, underpass DEM (too low)
+        na.setNode(4, 4, 0, 520.8);
+        na.setNode(5, 5, 0, 521.2);
+
+        GHUtility.setSpeed(60, 60, accessEnc, speedEnc,
+                graph.edge(0, 1).setDistance(119).set(roadEnvEnc, ROAD),
+                graph.edge(1, 2).setDistance(42.6).set(roadEnvEnc, ROAD),
+                graph.edge(2, 3).setDistance(96.7).set(roadEnvEnc, BRIDGE),
+                graph.edge(3, 4).setDistance(48.7).set(roadEnvEnc, ROAD),
+                graph.edge(4, 5).setDistance(96.3).set(roadEnvEnc, ROAD));
+
+        new BridgeTunnelTowerCorrection(graph, roadEnvEnc).execute();
+
+        assertEquals(521.5, na.getEle(2), 0.6);
+        assertEquals(520.8, na.getEle(3), 0.6);
+    }
+
     /** Tower with fewer than MIN_ROAD_SAMPLES pure-ground neighbours (deep inside a
      *  combined structure chain) is left at its DEM value — this is the
      *  tunnel→bridge→tunnel boundary case. */
