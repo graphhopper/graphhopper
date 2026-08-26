@@ -38,6 +38,8 @@ public enum BikeRoadAccess {
             return MISSING;
         if (name.equalsIgnoreCase("permit") || name.equalsIgnoreCase("customers"))
             return PRIVATE;
+        if (name.equalsIgnoreCase("forestry") || name.equalsIgnoreCase("agricultural"))
+            return DISMOUNT;
         try {
             return BikeRoadAccess.valueOf(Helper.toUpperCase(name));
         } catch (IllegalArgumentException ex) {
