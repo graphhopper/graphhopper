@@ -114,9 +114,8 @@ public class Profile {
 
     /**
      * The base mode of transportation used when creating the instructions, i.e. which roads the driver
-     * perceives as usable (#3223) and which voice instruction distances fit. Restricted to CAR, BIKE or FOOT.
-     * It is specified via the profile entry "instructions_base_mode" and otherwise derived from the profile
-     * name, with CAR as fallback.
+     * perceives as usable (not necessarily routable) and which voice instruction distances fit.
+     * Restricted to BIKE, FOOT and CAR. CAR is the fallback if instructions_base_mode is empty or unknown.
      */
     @JsonIgnore
     public TransportationMode getInstructionsBaseMode() {

@@ -437,7 +437,7 @@ class HeadingAndCustomModelRoutingTest {
         GHRequest req = new GHRequest(new GHPoint(0.001, 0.000), new GHPoint(0.000, 0.001)).
                 setProfile("profile").setCustomModel(customModel);
 
-        // with instructions_base_mode: bike the blocked continuation of Main is visible and the turn is created
+        // with 'instructions_base_mode: bike' the blocked continuation of Main is visible and the turn is created
         Profile profile = TestProfiles.accessAndSpeed("profile", "bike").putHint("instructions_base_mode", "bike");
         GHResponse rsp = createRouter(graph, encodingManager, profile).route(req);
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
@@ -446,7 +446,8 @@ class HeadingAndCustomModelRoutingTest {
         assertEquals(Instruction.TURN_RIGHT, il.get(1).getSign());
         assertEquals("Side", il.get(1).getName());
 
-        // without instructions_base_mode it falls back to car_access and the blocked bike-only way stays invisible
+        // without instructions_base_mode it falls back to car_access (because profile name is 'profile')
+        // and the blocked bike-only way stays invisible
         rsp = createRouter(graph, encodingManager, TestProfiles.accessAndSpeed("profile", "bike")).route(req);
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(2, rsp.getBest().getInstructions().size());

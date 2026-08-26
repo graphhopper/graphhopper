@@ -39,7 +39,7 @@ import static com.graphhopper.util.Parameters.Details.*;
 public class InstructionsFromEdges implements Path.EdgeVisitor {
 
     private final Weighting weighting;
-    // roads blocked for routing, e.g. via a custom model, are still visible to the driver, see #3223
+    // This includes edges where car or base access is true, or where the weighting is finite, see #3223. (for 'base' see Profile.getInstructionsBaseMode)
     private final DirectedEdgeFilter candidateEdges;
     private final NodeAccess nodeAccess;
 
