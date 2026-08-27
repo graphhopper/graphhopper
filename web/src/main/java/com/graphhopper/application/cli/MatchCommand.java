@@ -130,6 +130,7 @@ public class MatchCommand extends ConfiguredCommand<GraphHopperServerConfigurati
                 System.out.println("\texport results to:" + outFile);
 
                 ResponsePath responsePath = new PathMerger(mr.getGraph(), mr.getWeighting()).
+                        setInstructionsBaseMode(hopper.getInstructionsBaseMode(args.getString("profile"))).
                         doWork(PointList.EMPTY, Collections.singletonList(mr.getMergedPath()), hopper.getEncodingManager(), tr);
                 if (responsePath.hasErrors()) {
                     System.err.println("Problem with file " + gpxFile + ", " + responsePath.getErrors());

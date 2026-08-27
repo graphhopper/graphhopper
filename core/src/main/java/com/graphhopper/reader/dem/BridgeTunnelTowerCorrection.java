@@ -61,6 +61,9 @@ public class BridgeTunnelTowerCorrection {
 
     // How far outward to search via Dijkstra (in meter).
     private static final double MAX_DIST_M = 50.0;
+    // A structure grade below this is never a spike, so the guard tolerates steepening up to it (liftsBothTowersOfFlatBridgeOverUnderpass).
+    // Needed when both towers read the same wrong DEM (flat underpass) and the joint lift adds a small real grade.
+    private static final double STRUCTURE_SLOPE_FLOOR = 0.015;
 
     private final BaseGraph graph;
     private final EnumEncodedValue<RoadEnvironment> roadEnvEnc;
@@ -183,7 +186,8 @@ public class BridgeTunnelTowerCorrection {
      * are uphill, and the IDW pulls a self-consistent tower up.
      * <p>
      * Rejected if the lift increases the steepest slope over either (a) all incident edges, or
-     * (b) the structure edges alone. Test (b) is needed because the lift flattens the steep ramp under
+     * (b) the structure edges alone (with a tolerance of {@link #STRUCTURE_SLOPE_FLOOR}). Test (b) is
+     * needed because the lift flattens the steep ramp under
      * such a tower, which would hide the structure steepening if only (a) were checked (the Gsollstraße
      * bridges near the B115). Both compare the steepest edge before/after, so a structure whose DEM is
      * already spiky can still be smoothed (a Monaco hillside tunnel), and (a) still keeps a tower
@@ -218,7 +222,8 @@ public class BridgeTunnelTowerCorrection {
                 maxStructureAfter = Math.max(maxStructureAfter, slopeAfter);
             }
         }
-        return maxAfter > maxBefore + 1e-9 || maxStructureAfter > maxStructureBefore + 1e-9;
+        return maxAfter > maxBefore + 1e-9
+                || maxStructureAfter > Math.max(maxStructureBefore, STRUCTURE_SLOPE_FLOOR) + 1e-9;
     }
 
     /**

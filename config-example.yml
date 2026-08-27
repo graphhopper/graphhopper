@@ -53,7 +53,7 @@ graphhopper:
 #      custom_model_files: [mtb.json, bike_elevation.json]
 #
 #    - name: custom_profile
-#      navigation_mode: bike
+#      instructions_base_mode: bike
 #      turn_costs:
 #        vehicle_types: [bicycle]
 #        u_turn_costs: 10

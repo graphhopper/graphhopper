@@ -294,14 +294,9 @@ public class GraphHopper {
         return profilesByName.get(profileName);
     }
 
-    public TransportationMode getNavigationMode(String profileName) {
+    public TransportationMode getInstructionsBaseMode(String profileName) {
         Profile profile = profilesByName.get(profileName);
-        if (profile == null) return TransportationMode.CAR;
-        try {
-            return TransportationMode.valueOf(profile.getHints().getString("navigation_mode", profileName).toUpperCase(Locale.ROOT));
-        } catch (IllegalArgumentException e) {
-            return TransportationMode.CAR;
-        }
+        return profile == null ? TransportationMode.CAR : profile.getInstructionsBaseMode();
     }
 
     /**
