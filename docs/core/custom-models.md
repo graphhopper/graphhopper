@@ -739,7 +739,7 @@ encoded values:
 
 ```json
 {
-  "parameters": { "speed_threshold": 50, "slow_factor": 0.8, "avoid_hills": true },
+  "parameters": { "speed_threshold": 50, "slow_factor": { "value": 0.8, "max": 1 }, "avoid_hills": true },
   "speed": [
     { "if": "car_average_speed < p_speed_threshold", "multiply_by": "p_slow_factor" }
   ],
@@ -749,16 +749,27 @@ encoded values:
 }
 ```
 
-Unlike statements, which are appended when a request custom model is merged with the profile's custom
-model, parameters are overridden per name. So a request can tweak the values that the server-side
-profile uses without repeating (and accidentally double-applying) its statements - here e.g. with
-`{"parameters": {"slow_factor": 0.6}}`. A parameter name must consist of lower case letters, numbers
-and underscore.
+Parameters can only be defined in the server-side custom model. A request can then override the
+values, but not introduce new parameters and not change the type. Unlike statements, which are
+appended when a request custom model is merged with the profile's custom model, parameters are
+overridden per name. So a request can tweak the values that the server-side profile uses without
+repeating (and accidentally double-applying) its statements - here e.g. with
+`{"parameters": {"slow_factor": 0.6}}`. A parameter name must start with a lower case letter,
+followed by lower case letters, numbers or underscore.
 
-Note that for a profile prepared with landmarks (hybrid mode) a request cannot change the value of a
-parameter that the profile already defines, as the landmark preparation is based on it - use
-`lm.disable=true` for such requests. Changing parameter values does not trigger a recompilation of
-the custom model, so it is cheaper than changing statements.
+For number parameters the server-side definition can restrict the allowed values with the object
+form `{"value": 0.8, "min": 0.5, "max": 1}` - requests must stay within `[min, max]` and cannot
+specify a range themselves. Without an explicit range `[0, Infinity)` is used. On startup the custom
+model is validated at both ends of every range, so e.g. a parameter used to increase the speed
+requires a finite `max`.
+
+Note that for a profile prepared with landmarks (hybrid mode) a request can change a parameter value
+only if this cannot decrease any edge weight, as the landmark preparation is based on the server-side
+values: the value of a statement must not increase (e.g. a decreased `p_max_speed`) and a parameter
+in a condition is only supported for blocking statements, where the condition must apply to more
+edges (e.g. a decreased `p_max_mtb_rating` of the bike custom model excludes more roads). Everything
+else is rejected - use `lm.disable=true` for such requests. Changing parameter values does not
+trigger a recompilation of the custom model, so it is cheaper than changing statements.
 
 ### Customizing `distance_influence`
 

@@ -21,10 +21,16 @@ import com.graphhopper.json.MinMax;
 import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.util.CustomModel;
+import org.codehaus.janino.Java;
+import org.codehaus.janino.Parser;
+import org.codehaus.janino.Scanner;
+import org.codehaus.janino.TokenType;
 
+import java.io.StringReader;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import static com.graphhopper.json.Statement.Keyword.ELSE;
 import static com.graphhopper.json.Statement.Keyword.IF;
@@ -44,15 +50,22 @@ public class FindMinMax {
                         + bmDI + ", but was: " + queryModel.getDistanceInfluence());
         }
 
-        // changing a parameter of the (prepared) base model can decrease edge weights
-        for (Map.Entry<String, Object> entry : queryModel.getParameters().entrySet()) {
-            Object baseValue = baseModel.getParameters().get(entry.getKey());
-            if (baseValue != null && !equalValues(baseValue, entry.getValue()))
-                throw new IllegalArgumentException("CustomModel in query cannot change the parameter '" + entry.getKey()
-                        + "' from " + baseValue + " to " + entry.getValue() + ". Use lm.disable=true");
-        }
         Map<String, Object> parameters = new LinkedHashMap<>(baseModel.getParameters());
         parameters.putAll(queryModel.getParameters());
+
+        // changing a parameter of the (prepared) base model is only accepted when it provably cannot
+        // decrease any edge weight, e.g. a decreased p_max_speed
+        for (Map.Entry<String, Object> entry : queryModel.getParameters().entrySet()) {
+            String name = entry.getKey();
+            Object baseValue = baseModel.getParameters().get(name);
+            if (baseValue == null)
+                throw new IllegalArgumentException("parameter '" + name + "' is not defined in the server-side custom model");
+            if (equalValues(baseValue, entry.getValue())) continue;
+            if (!(baseValue instanceof Number oldValue) || !(entry.getValue() instanceof Number))
+                throw cannotChange(name, baseValue, entry.getValue(), "");
+            boolean increased = ((Number) entry.getValue()).doubleValue() > oldValue.doubleValue();
+            checkWeightOnlyIncreases(baseModel, name, increased, baseModel.getParameters(), parameters, lookup);
+        }
 
         checkMultiplyValue(queryModel.getPriority(), lookup, parameters);
         checkMultiplyValue(queryModel.getSpeed(), lookup, parameters);
@@ -61,6 +74,117 @@ public class FindMinMax {
     private static boolean equalValues(Object a, Object b) {
         if (a instanceof Number na && b instanceof Number nb) return na.doubleValue() == nb.doubleValue();
         return a.equals(b);
+    }
+
+    private static IllegalArgumentException cannotChange(String name, Object oldValue, Object newValue, String reason) {
+        return new IllegalArgumentException("CustomModel in query cannot change the parameter '" + name + "' from "
+                + oldValue + " to " + newValue + (reason.isEmpty() ? "" : ": " + reason) + ". Use lm.disable=true");
+    }
+
+    /**
+     * Throws an exception unless changing the specified parameter of the base model can only increase
+     * (or keep) the weight of every edge, i.e. reduce access, lower the speed or the priority.
+     */
+    private static void checkWeightOnlyIncreases(CustomModel baseModel, String name, boolean increased,
+                                                 Map<String, Object> oldParams, Map<String, Object> newParams,
+                                                 EncodedValueLookup lookup) {
+        // the name is already validated and contains no regex special characters
+        Pattern pattern = Pattern.compile("\\b" + CustomModelParser.PARAM_PREFIX + name + "\\b");
+        if (pattern.matcher(baseModel.getTurnPenalty().toString()).find())
+            throw cannotChange(name, oldParams.get(name), newParams.get(name), "it is used in turn_penalty");
+        checkStatements(baseModel.getSpeed(), pattern, name, increased, oldParams, newParams, lookup);
+        checkStatements(baseModel.getPriority(), pattern, name, increased, oldParams, newParams, lookup);
+    }
+
+    private static void checkStatements(List<Statement> statements, Pattern pattern, String name, boolean increased,
+                                        Map<String, Object> oldParams, Map<String, Object> newParams,
+                                        EncodedValueLookup lookup) {
+        Object oldValue = oldParams.get(name), newValue = newParams.get(name);
+        for (Statement statement : statements) {
+            if (statement.isBlock()) {
+                if (pattern.matcher(statement.condition()).find())
+                    throw cannotChange(name, oldValue, newValue, "it is used in the condition of a block statement");
+                checkStatements(statement.doBlock(), pattern, name, increased, oldParams, newParams, lookup);
+                continue;
+            }
+            // for speed and priority a smaller value means a larger weight, so the value must not increase
+            if (pattern.matcher(statement.value()).find()
+                    && ValueExpressionVisitor.findMinMax(statement.value(), lookup, newParams).max
+                    > ValueExpressionVisitor.findMinMax(statement.value(), lookup, oldParams).min)
+                throw cannotChange(name, oldValue, newValue, "the value '" + statement.value() + "' could increase");
+            if (pattern.matcher(statement.condition()).find()) {
+                Integer direction = conditionDirection(statement.condition(), CustomModelParser.PARAM_PREFIX + name);
+                if (direction == null)
+                    throw cannotChange(name, oldValue, newValue, "cannot analyze the condition '" + statement.condition() + "'");
+                if (direction != 0) {
+                    if (increased != (direction > 0))
+                        throw cannotChange(name, oldValue, newValue, "the condition '" + statement.condition() + "' would apply to fewer edges");
+                    // applying to more edges increases the weight no matter which branch they were in
+                    // before, but only when the statement blocks them, i.e. sets speed or priority to 0
+                    if (ValueExpressionVisitor.findMinMax(statement.value(), lookup, newParams).max > 0
+                            || ValueExpressionVisitor.findMinMax(statement.value(), lookup, oldParams).max > 0)
+                        throw cannotChange(name, oldValue, newValue, "a parameter in a condition is only supported for blocking statements (value 0)");
+                }
+            }
+        }
+    }
+
+    /**
+     * @return +1 if the condition applies to more edges when the variable increases, -1 if it applies
+     * to more edges when it decreases, 0 if it does not depend on the variable and null if unknown
+     */
+    private static Integer conditionDirection(String condition, String variable) {
+        try {
+            Parser parser = new Parser(new Scanner("ignore", new StringReader(condition)));
+            Java.Atom atom = parser.parseConditionalExpression();
+            if (parser.peek().type != TokenType.END_OF_INPUT) return null;
+            return direction(atom.toRvalueOrCompileException(), variable);
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
+    private static Integer direction(Java.Rvalue rv, String variable) {
+        if (rv instanceof Java.AmbiguousName name)
+            return isVariable(name, variable) ? null : 0;
+        if (rv instanceof Java.Literal) return 0;
+        if (rv instanceof Java.ParenthesizedExpression pe) return direction(pe.value, variable);
+        if (rv instanceof Java.UnaryOperation uo) {
+            Integer dir = direction(uo.operand, variable);
+            if (uo.operator.equals("!")) return dir == null ? null : -dir;
+            return isZero(dir) ? 0 : null;
+        }
+        if (rv instanceof Java.BinaryOperation binOp) {
+            Integer lhs = direction(binOp.lhs, variable), rhs = direction(binOp.rhs, variable);
+            switch (binOp.operator) {
+                case "&&", "||" -> {
+                    if (isZero(lhs)) return rhs;
+                    if (isZero(rhs)) return lhs;
+                    return lhs != null && lhs.equals(rhs) ? lhs : null;
+                }
+                case "<", "<=", ">", ">=" -> {
+                    boolean less = binOp.operator.startsWith("<");
+                    // e.g. "p_weight < max_weight" applies to more edges when p_weight decreases
+                    if (isVariable(binOp.lhs, variable) && isZero(rhs)) return less ? -1 : +1;
+                    // e.g. "max_weight < p_weight" applies to more edges when p_weight increases
+                    if (isVariable(binOp.rhs, variable) && isZero(lhs)) return less ? +1 : -1;
+                    return isZero(lhs) && isZero(rhs) ? 0 : null;
+                }
+                default -> {
+                    return isZero(lhs) && isZero(rhs) ? 0 : null;
+                }
+            }
+        }
+        // be conservative for anything else, e.g. a method invocation
+        return null;
+    }
+
+    private static boolean isZero(Integer direction) {
+        return direction != null && direction == 0;
+    }
+
+    private static boolean isVariable(Java.Atom atom, String variable) {
+        return atom instanceof Java.AmbiguousName name && name.identifiers.length == 1 && name.identifiers[0].equals(variable);
     }
 
     private static void checkMultiplyValue(List<Statement> list, EncodedValueLookup lookup, Map<String, Object> parameters) {

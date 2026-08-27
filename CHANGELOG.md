@@ -1,6 +1,6 @@
 ### 12.0 [not yet released]
 
-- custom models: new `parameters` section with named numbers and booleans usable in conditions and value expressions (a parameter xy is referenced as p_xy); on merge they are overridden per name, so a request can tweak the values of the server-side profile without repeating its statements (and without recompiling the custom model class)
+- custom models: new `parameters` section with named numbers and booleans usable in conditions and value expressions (a parameter xy is referenced as p_xy); parameters can only be defined in the server-side custom model, optionally with an allowed value range; on merge the values are overridden per name, so a request can tweak the values of the server-side profile without repeating its statements (and without recompiling the custom model class)
 - the profile parameter instructions_base_mode (car, bike or foot) replaces navigation_mode and is derived from the profile name if not specified, with car as fallback (#3394)
 - several changes regarding DAType (#3382) including constructor parameters of DataAccess
 - the roundabout instruction can now be split into two instructions: the first one has turn_angle and the second has exited==true. Enable via the request parameter roundabout_exits=true (default is false)

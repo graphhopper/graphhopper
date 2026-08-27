@@ -120,6 +120,28 @@ class CustomWeightingTest {
     }
 
     @Test
+    public void testCheckParameterRanges() {
+        // without an explicit range the default [0, Infinity) fails for a speed limit (0 => max speed 0)
+        CustomModel defaultRange = createSpeedCustomModel(avSpeedEnc).setParameter("max_speed", 90);
+        defaultRange.addToSpeed(If("true", LIMIT, "p_max_speed"));
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> CustomModelParser.checkParameterRanges(defaultRange, encodingManager));
+        assertTrue(ex.getMessage().contains("maximum speed has to be >0"), ex.getMessage());
+
+        CustomModel explicitRange = createSpeedCustomModel(avSpeedEnc).setParameter("max_speed", 90, 10, 140);
+        explicitRange.addToSpeed(If("true", LIMIT, "p_max_speed"));
+        CustomModelParser.checkParameterRanges(explicitRange, encodingManager);
+
+        // a parameter that can scale the speed up requires a finite max
+        CustomModel scale = createSpeedCustomModel(avSpeedEnc).setParameter("factor", 1.0);
+        scale.addToSpeed(If("road_class == MOTORWAY", MULTIPLY, "p_factor"));
+        ex = assertThrows(IllegalArgumentException.class,
+                () -> CustomModelParser.checkParameterRanges(scale, encodingManager));
+        assertTrue(ex.getMessage().contains("finite"), ex.getMessage());
+        CustomModelParser.checkParameterRanges(scale.setParameter("factor", 1.0, 0, 1.2), encodingManager);
+    }
+
+    @Test
     public void speedOnly() {
         // 50km/h -> 72s per km, 100km/h -> 36s per km
         EdgeIteratorState edge = graph.edge(0, 1).setDistance(1000).set(avSpeedEnc, 50, 100);

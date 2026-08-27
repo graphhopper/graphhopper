@@ -251,8 +251,15 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
      */
     private static String replaceParameters(String expression, Map<String, Object> parameters) {
         for (Map.Entry<String, Object> entry : parameters.entrySet())
-            expression = expression.replaceAll("\\b" + CustomModelParser.PARAM_PREFIX + entry.getKey() + "\\b", entry.getValue().toString());
+            expression = expression.replaceAll("\\b" + CustomModelParser.PARAM_PREFIX + entry.getKey() + "\\b", toExpression(entry.getValue()));
         return expression;
+    }
+
+    private static String toExpression(Object value) {
+        // an infinite range limit is no valid Java literal
+        if (value instanceof Number number && Double.isInfinite(number.doubleValue()))
+            return number.doubleValue() > 0 ? "Double.POSITIVE_INFINITY" : "Double.NEGATIVE_INFINITY";
+        return value.toString();
     }
 
     static double getMin(EncodedValue enc) {

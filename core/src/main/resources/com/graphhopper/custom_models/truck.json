@@ -8,7 +8,7 @@
 
 {
   "distance_influence": 1,
-  "parameters": { "width": 3, "height": 4, "weight": 18, "max_speed": 95 },
+  "parameters": { "width": 3, "height": 4, "weight": 18, "max_speed": { "value": 95, "min": 10, "max": 140 } },
   "priority": [
     { "if": "!hgv_access",  "multiply_by": "0" },
     { "if": "hgv == DELIVERY || hgv == DESTINATION",  "multiply_by": "0.1" },

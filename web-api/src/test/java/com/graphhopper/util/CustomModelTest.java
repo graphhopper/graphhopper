@@ -26,8 +26,7 @@ import java.util.Iterator;
 
 import static com.graphhopper.json.Statement.*;
 import static com.graphhopper.json.Statement.Op.MULTIPLY;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class CustomModelTest {
 
@@ -67,6 +66,43 @@ public class CustomModelTest {
         assertEquals(95.5, cm.getParameters().get("mass"));
         assertEquals(true, cm.getParameters().get("electric"));
         assertEquals(1, cm.getSpeed().size());
+    }
+
+    @Test
+    public void testParameterRangeFromJson() throws Exception {
+        CustomModel cm = Jackson.newObjectMapper().readValue(
+                "{\"parameters\": {\"width\": {\"value\": 3, \"min\": 2, \"max\": 5}, \"power\": 120}}",
+                CustomModel.class);
+        assertEquals(3.0, cm.getParameters().get("width"));
+        assertEquals(2, cm.getParameterRange("width").min);
+        assertEquals(5, cm.getParameterRange("width").max);
+        // without an explicit range [0, Infinity) is used
+        assertEquals(0, cm.getParameterRange("power").min);
+        assertEquals(Double.POSITIVE_INFINITY, cm.getParameterRange("power").max);
+
+        Exception ex = assertThrows(Exception.class, () -> Jackson.newObjectMapper().readValue(
+                "{\"parameters\": {\"width\": {\"value\": 7, \"min\": 2, \"max\": 5}}}", CustomModel.class));
+        assertTrue(ex.getMessage().contains("within its range"), ex.getMessage());
+    }
+
+    @Test
+    public void testCheckParameterOverrides() {
+        CustomModel base = new CustomModel().setParameter("width", 3.0, 2, 5).setParameter("push", true);
+        CustomModel.checkParameterOverrides(base, new CustomModel().setParameter("width", 4.0));
+
+        Exception ex = assertThrows(IllegalArgumentException.class,
+                () -> CustomModel.checkParameterOverrides(base, new CustomModel().setParameter("height", 2.0)));
+        assertTrue(ex.getMessage().contains("not defined in the server-side custom model"), ex.getMessage());
+        ex = assertThrows(IllegalArgumentException.class,
+                () -> CustomModel.checkParameterOverrides(base, new CustomModel().setParameter("width", true)));
+        assertTrue(ex.getMessage().contains("same type"), ex.getMessage());
+        ex = assertThrows(IllegalArgumentException.class,
+                () -> CustomModel.checkParameterOverrides(base, new CustomModel().setParameter("width", 7.0)));
+        assertTrue(ex.getMessage().contains("within its range"), ex.getMessage());
+        // a range can only be specified in a server-side custom model
+        ex = assertThrows(IllegalArgumentException.class,
+                () -> CustomModel.checkParameterOverrides(base, new CustomModel().setParameter("width", 4.0, 2, 5)));
+        assertTrue(ex.getMessage().contains("server-side"), ex.getMessage());
     }
 
     @Test

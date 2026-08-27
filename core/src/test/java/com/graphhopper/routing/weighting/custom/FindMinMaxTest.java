@@ -43,25 +43,62 @@ class FindMinMaxTest {
 
     @Test
     public void testCheckParameters() {
-        CustomModel baseModel = new CustomModel().setParameter("factor", 0.5);
-        // a query cannot change a parameter of the (prepared) base model ...
-        CustomModel queryModel = new CustomModel().setParameter("factor", 0.6);
+        CustomModel baseModel = new CustomModel().setParameter("max_speed", 90.0).setParameter("flag", true);
+        baseModel.addToSpeed(If("true", LIMIT, "p_max_speed"));
+
+        // parameters can only be defined in the server-side custom model
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> FindMinMax.checkLMConstraints(baseModel, queryModel, lookup));
-        assertTrue(ex.getMessage().contains("cannot change the parameter 'factor'"), ex.getMessage());
+                () -> FindMinMax.checkLMConstraints(baseModel, new CustomModel().setParameter("other", 0.8), lookup));
+        assertTrue(ex.getMessage().contains("not defined in the server-side custom model"), ex.getMessage());
 
-        // ... but sending the same value or a new parameter is allowed
-        FindMinMax.checkLMConstraints(baseModel, new CustomModel().setParameter("factor", 0.5), lookup);
-        CustomModel newParamModel = new CustomModel().setParameter("other", 0.8);
-        newParamModel.addToPriority(If("road_environment == FERRY", MULTIPLY, "p_other"));
-        FindMinMax.checkLMConstraints(baseModel, newParamModel, lookup);
-
-        // multiply with a parameter above 1 is rejected like a literal above 1
-        CustomModel tooLarge = new CustomModel().setParameter("other", 1.2);
-        tooLarge.addToPriority(If("road_environment == FERRY", MULTIPLY, "p_other"));
+        // a lower speed limit increases the weight and is fine, a higher one is rejected
+        FindMinMax.checkLMConstraints(baseModel, new CustomModel().setParameter("max_speed", 80), lookup);
         ex = assertThrows(IllegalArgumentException.class,
-                () -> FindMinMax.checkLMConstraints(baseModel, tooLarge, lookup));
-        assertTrue(ex.getMessage().contains("cannot be larger than 1"), ex.getMessage());
+                () -> FindMinMax.checkLMConstraints(baseModel, new CustomModel().setParameter("max_speed", 100), lookup));
+        assertTrue(ex.getMessage().contains("could increase"), ex.getMessage());
+
+        // a boolean parameter cannot be changed
+        ex = assertThrows(IllegalArgumentException.class,
+                () -> FindMinMax.checkLMConstraints(baseModel, new CustomModel().setParameter("flag", false), lookup));
+        assertTrue(ex.getMessage().contains("cannot change the parameter 'flag'"), ex.getMessage());
+
+        // a parameter used in turn_penalty cannot be changed
+        CustomModel turnModel = new CustomModel().setParameter("penalty", 10.0);
+        turnModel.addToTurnPenalty(If("road_environment == FERRY", MULTIPLY, "p_penalty"));
+        ex = assertThrows(IllegalArgumentException.class,
+                () -> FindMinMax.checkLMConstraints(turnModel, new CustomModel().setParameter("penalty", 5), lookup));
+        assertTrue(ex.getMessage().contains("turn_penalty"), ex.getMessage());
+    }
+
+    @Test
+    public void testChangeParameterInCondition() {
+        // like the bike custom models: a lower rating excludes more roads and is fine
+        CustomModel bike = new CustomModel().setParameter("max_rating", 2.0);
+        bike.addToPriority(If("mtb_rating > p_max_rating", MULTIPLY, "0"));
+        bike.addToPriority(ElseIf("mtb_rating > 1", MULTIPLY, "0.5"));
+        FindMinMax.checkLMConstraints(bike, new CustomModel().setParameter("max_rating", 1), lookup);
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> FindMinMax.checkLMConstraints(bike, new CustomModel().setParameter("max_rating", 3), lookup));
+        assertTrue(ex.getMessage().contains("fewer edges"), ex.getMessage());
+
+        // like the truck custom model: a larger truck excludes more roads and is fine
+        CustomModel truck = new CustomModel().setParameter("weight", 18.0).setParameter("width", 3.0);
+        truck.addToPriority(If("max_weight < p_weight || max_width < p_width", MULTIPLY, "0"));
+        FindMinMax.checkLMConstraints(truck, new CustomModel().setParameter("weight", 25), lookup);
+
+        // even if the condition applies to more edges, only blocking statements (value 0) are supported
+        CustomModel nonBlocking = new CustomModel().setParameter("max_rating", 2.0);
+        nonBlocking.addToPriority(If("mtb_rating > p_max_rating", MULTIPLY, "0.6"));
+        ex = assertThrows(IllegalArgumentException.class,
+                () -> FindMinMax.checkLMConstraints(nonBlocking, new CustomModel().setParameter("max_rating", 1), lookup));
+        assertTrue(ex.getMessage().contains("blocking statements"), ex.getMessage());
+
+        // a condition that cannot be analyzed is rejected
+        CustomModel equality = new CustomModel().setParameter("rating", 2.0);
+        equality.addToPriority(If("mtb_rating == p_rating", MULTIPLY, "0"));
+        ex = assertThrows(IllegalArgumentException.class,
+                () -> FindMinMax.checkLMConstraints(equality, new CustomModel().setParameter("rating", 1), lookup));
+        assertTrue(ex.getMessage().contains("cannot analyze"), ex.getMessage());
     }
 
     @Test

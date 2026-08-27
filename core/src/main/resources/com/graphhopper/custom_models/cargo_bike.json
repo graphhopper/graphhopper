@@ -2,7 +2,7 @@
 // prefer better tracks than usually done with bike and avoid all situations where we have to get off the bike
 
 {
-  "parameters": { "height": 2.3, "width": 1.2, "max_speed": 25 },
+  "parameters": { "height": 2.3, "width": 1.2, "max_speed": { "value": 25, "min": 5, "max": 35 } },
   "priority": [
     { "if": "road_class == STEPS", "multiply_by": 0 },
     { "if": "surface == SAND", "multiply_by": 0.5 },

@@ -8,7 +8,7 @@
 
 {
   "distance_influence": 90,
-  "parameters": { "weight": 5, "width": 3, "height": 4, "max_speed": 100 },
+  "parameters": { "weight": 5, "width": 3, "height": 4, "max_speed": { "value": 100, "min": 10, "max": 140 } },
   "priority": [
     { "if": "max_weight < p_weight || max_width < p_width || max_height < p_height", "multiply_by": "0" },
     { "if": "road_class == TRACK", "multiply_by": "0" },

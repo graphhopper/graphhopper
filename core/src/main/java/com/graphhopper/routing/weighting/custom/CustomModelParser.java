@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.weighting.custom;
 
+import com.graphhopper.json.MinMax;
 import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.weighting.TurnCostProvider;
@@ -149,6 +150,47 @@ public class CustomModelParser {
      */
     static boolean isParameter(String arg, Map<String, Object> parameters) {
         return arg.startsWith(PARAM_PREFIX) && parameters.containsKey(arg.substring(PARAM_PREFIX.length()));
+    }
+
+    /**
+     * Checks that the custom model stays valid for all values within the parameter ranges, one
+     * parameter at a time. Call this for server-side custom models on startup, as requests can
+     * override a parameter with any value within its range.
+     */
+    public static void checkParameterRanges(CustomModel customModel, EncodedValueLookup lookup) {
+        for (Map.Entry<String, Object> entry : customModel.getParameters().entrySet()) {
+            String name = entry.getKey();
+            if (!(entry.getValue() instanceof Number number)) continue;
+            MinMax range = customModel.getParameterRange(name);
+            if (number.doubleValue() < range.min || number.doubleValue() > range.max)
+                throw new IllegalArgumentException("parameter '" + name + "': value " + number
+                        + " must be within its range [" + range.min + ", " + range.max + "]");
+            for (double endpoint : new double[]{range.min, range.max}) {
+                Map<String, Object> parameters = new LinkedHashMap<>(customModel.getParameters());
+                parameters.put(name, endpoint);
+                try {
+                    checkSpeedAndPriority(customModel, lookup, parameters);
+                } catch (IllegalArgumentException ex) {
+                    throw new IllegalArgumentException("parameter '" + name + "' with value " + endpoint
+                            + " of its range [" + range.min + ", " + range.max + "]: " + ex.getMessage());
+                }
+            }
+        }
+    }
+
+    private static void checkSpeedAndPriority(CustomModel customModel, EncodedValueLookup lookup, Map<String, Object> parameters) {
+        MinMax speed = FindMinMax.findMinMax(new MinMax(0, CustomWeightingHelper.GLOBAL_MAX_SPEED), customModel.getSpeed(), lookup, parameters);
+        if (speed.min < 0)
+            throw new IllegalArgumentException("speed has to be >=0 but can be negative (" + speed.min + ")");
+        if (speed.max <= 0)
+            throw new IllegalArgumentException("maximum speed has to be >0 but was " + speed.max);
+        if (Double.isInfinite(speed.max))
+            throw new IllegalArgumentException("maximum speed has to be finite. Specify a 'max' for the parameter");
+        MinMax priority = FindMinMax.findMinMax(new MinMax(0, CustomWeightingHelper.GLOBAL_PRIORITY), customModel.getPriority(), lookup, parameters);
+        if (priority.min < 0)
+            throw new IllegalArgumentException("priority has to be >=0 but can be negative (" + priority.min + ")");
+        if (Double.isInfinite(priority.max))
+            throw new IllegalArgumentException("maximum priority has to be finite. Specify a 'max' for the parameter");
     }
 
     /**

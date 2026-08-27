@@ -1283,6 +1283,8 @@ public class GraphHopper {
         for (Profile profile : profilesByName.values()) {
             try {
                 createWeighting(profile, new PMap());
+                if (profile.getCustomModel() != null)
+                    CustomModelParser.checkParameterRanges(profile.getCustomModel(), encodingManager);
             } catch (IllegalArgumentException e) {
                 throw new IllegalArgumentException("Could not create weighting for profile: '" + profile.getName() + "'.\n" +
                         "Profile: " + profile + "\n" +
