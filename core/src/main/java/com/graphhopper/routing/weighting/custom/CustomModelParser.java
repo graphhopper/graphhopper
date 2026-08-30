@@ -169,7 +169,7 @@ public class CustomModelParser {
                 Map<String, Object> parameters = new LinkedHashMap<>(customModel.getParameters());
                 parameters.put(name, endpoint);
                 try {
-                    checkSpeedAndPriority(customModel, lookup, parameters);
+                    checkSpeedPriorityAndTurnPenalty(customModel, lookup, parameters);
                 } catch (IllegalArgumentException ex) {
                     throw new IllegalArgumentException("parameter '" + name + "' with value " + endpoint
                             + " of its range [" + range.min + ", " + range.max + "]: " + ex.getMessage());
@@ -178,7 +178,7 @@ public class CustomModelParser {
         }
     }
 
-    private static void checkSpeedAndPriority(CustomModel customModel, EncodedValueLookup lookup, Map<String, Object> parameters) {
+    private static void checkSpeedPriorityAndTurnPenalty(CustomModel customModel, EncodedValueLookup lookup, Map<String, Object> parameters) {
         MinMax speed = FindMinMax.findMinMax(new MinMax(0, CustomWeightingHelper.GLOBAL_MAX_SPEED), customModel.getSpeed(), lookup, parameters);
         if (speed.min < 0)
             throw new IllegalArgumentException("speed has to be >=0 but can be negative (" + speed.min + ")");
@@ -191,6 +191,9 @@ public class CustomModelParser {
             throw new IllegalArgumentException("priority has to be >=0 but can be negative (" + priority.min + ")");
         if (Double.isInfinite(priority.max))
             throw new IllegalArgumentException("maximum priority has to be finite. Specify a 'max' for the parameter");
+        MinMax turnPenalty = FindMinMax.findMinMax(new MinMax(0, 0), customModel.getTurnPenalty(), lookup, parameters);
+        if (turnPenalty.min < 0)
+            throw new IllegalArgumentException("turn penalty has to be >=0 but can be negative (" + turnPenalty.min + ")");
     }
 
     /**

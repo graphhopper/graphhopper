@@ -158,6 +158,14 @@ class CustomWeightingTest {
                 () -> CustomModelParser.checkParameterRanges(subtract, encodingManager));
         assertTrue(ex.getMessage().contains("negative"), ex.getMessage());
         CustomModelParser.checkParameterRanges(subtract.setParameter("x", 30.0, 0, 50), encodingManager);
+
+        // turn_penalty is validated at the endpoints too
+        CustomModel turn = createSpeedCustomModel(avSpeedEnc).setParameter("discount", 30.0, 0, 600);
+        turn.addToTurnPenalty(If("true", Statement.Op.ADD, "60 - p_discount"));
+        ex = assertThrows(IllegalArgumentException.class,
+                () -> CustomModelParser.checkParameterRanges(turn, encodingManager));
+        assertTrue(ex.getMessage().contains("negative"), ex.getMessage());
+        CustomModelParser.checkParameterRanges(turn.setParameter("discount", 30.0, 0, 60), encodingManager);
     }
 
     @Test
