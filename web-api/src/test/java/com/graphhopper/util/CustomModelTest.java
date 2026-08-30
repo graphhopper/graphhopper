@@ -62,7 +62,7 @@ public class CustomModelTest {
         CustomModel cm = Jackson.newObjectMapper().readValue(
                 "{\"parameters\": {\"power\": 120, \"mass\": 95.5, \"electric\": true}, \"speed\": [{\"if\": \"true\", \"limit_to\": \"car_average_speed\"}]}",
                 CustomModel.class);
-        assertEquals(120, cm.getParameters().get("power"));
+        assertEquals(120.0, cm.getParameters().get("power"));
         assertEquals(95.5, cm.getParameters().get("mass"));
         assertEquals(true, cm.getParameters().get("electric"));
         assertEquals(1, cm.getSpeed().size());
@@ -83,6 +83,12 @@ public class CustomModelTest {
         Exception ex = assertThrows(Exception.class, () -> Jackson.newObjectMapper().readValue(
                 "{\"parameters\": {\"width\": {\"value\": 7, \"min\": 2, \"max\": 5}}}", CustomModel.class));
         assertTrue(ex.getMessage().contains("within its range"), ex.getMessage());
+
+        // adding a range keeps toString identical, so it requires no re-import or new preparation
+        CustomModel bare = Jackson.newObjectMapper().readValue("{\"parameters\": {\"weight\": 5}}", CustomModel.class);
+        CustomModel ranged = Jackson.newObjectMapper().readValue(
+                "{\"parameters\": {\"weight\": {\"value\": 5, \"min\": 1, \"max\": 10}}}", CustomModel.class);
+        assertEquals(bare.toString(), ranged.toString());
     }
 
     @Test

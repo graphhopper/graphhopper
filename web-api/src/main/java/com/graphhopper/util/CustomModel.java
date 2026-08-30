@@ -165,7 +165,8 @@ public class CustomModel {
                     rangeLimit(name, "min", object.get("min"), 0),
                     rangeLimit(name, "max", object.get("max"), Double.POSITIVE_INFINITY));
         } else {
-            parameters.put(name, value);
+            // store numbers as Double so that toString does not change when a range is added (5 -> 5.0)
+            parameters.put(name, value instanceof Number number ? number.doubleValue() : value);
         }
     }
 
