@@ -102,6 +102,23 @@ class FindMinMaxTest {
     }
 
     @Test
+    public void testChangeParameterCombinedWithEncodedValue() {
+        // an encoded value is evaluated only at its endpoints, which misses interior extremes of a non-monotone expression
+        CustomModel evValue = new CustomModel().setParameter("factor", 0.9);
+        evValue.addToSpeed(If("true", LIMIT, "p_factor * max_weight"));
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> FindMinMax.checkLMConstraints(evValue, new CustomModel().setParameter("factor", 0.8), lookup));
+        assertTrue(ex.getMessage().contains("encoded value"), ex.getMessage());
+
+        // same for the blocking check: "max_weight * 0" is 0 at the endpoints but not provably everywhere
+        CustomModel evBlock = new CustomModel().setParameter("rating", 2.0);
+        evBlock.addToPriority(If("mtb_rating > p_rating", MULTIPLY, "max_weight * 0"));
+        ex = assertThrows(IllegalArgumentException.class,
+                () -> FindMinMax.checkLMConstraints(evBlock, new CustomModel().setParameter("rating", 1), lookup));
+        assertTrue(ex.getMessage().contains("blocking statements"), ex.getMessage());
+    }
+
+    @Test
     public void testFindMax() {
         List<Statement> statements = new ArrayList<>();
         statements.add(If("true", LIMIT, "100"));

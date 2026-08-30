@@ -108,10 +108,14 @@ public class FindMinMax {
                 continue;
             }
             // for speed and priority a smaller value means a larger weight, so the value must not increase
-            if (pattern.matcher(statement.value()).find()
-                    && ValueExpressionVisitor.findMinMax(statement.value(), lookup, newParams).max
-                    > ValueExpressionVisitor.findMinMax(statement.value(), lookup, oldParams).min)
-                throw cannotChange(name, oldValue, newValue, "the value '" + statement.value() + "' could increase");
+            if (pattern.matcher(statement.value()).find()) {
+                // findMinMax evaluates an encoded value only at its endpoints and misses interior extremes of a non-monotone expression
+                if (ValueExpressionVisitor.containsEncodedValue(statement.value(), lookup, newParams))
+                    throw cannotChange(name, oldValue, newValue, "the value '" + statement.value() + "' uses an encoded value");
+                if (ValueExpressionVisitor.findMinMax(statement.value(), lookup, newParams).max
+                        > ValueExpressionVisitor.findMinMax(statement.value(), lookup, oldParams).min)
+                    throw cannotChange(name, oldValue, newValue, "the value '" + statement.value() + "' could increase");
+            }
             if (pattern.matcher(statement.condition()).find()) {
                 Integer direction = conditionDirection(statement.condition(), CustomModelParser.PARAM_PREFIX + name);
                 if (direction == null)
@@ -121,7 +125,8 @@ public class FindMinMax {
                         throw cannotChange(name, oldValue, newValue, "the condition '" + statement.condition() + "' would apply to fewer edges");
                     // applying to more edges increases the weight no matter which branch they were in
                     // before, but only when the statement blocks them, i.e. sets speed or priority to 0
-                    if (ValueExpressionVisitor.findMinMax(statement.value(), lookup, newParams).max > 0
+                    if (ValueExpressionVisitor.containsEncodedValue(statement.value(), lookup, newParams)
+                            || ValueExpressionVisitor.findMinMax(statement.value(), lookup, newParams).max > 0
                             || ValueExpressionVisitor.findMinMax(statement.value(), lookup, oldParams).max > 0)
                         throw cannotChange(name, oldValue, newValue, "a parameter in a condition is only supported for blocking statements (value 0)");
                 }

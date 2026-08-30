@@ -260,6 +260,11 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         }
     }
 
+    static boolean containsEncodedValue(String valueExpression, EncodedValueLookup lookup, Map<String, Object> parameters) {
+        ParseResult result = parse(valueExpression, key -> lookup.hasEncodedValue(key) || key.contains(INFINITY) || CustomModelParser.isParameter(key, parameters));
+        return !result.ok || result.guessedVariables.stream().anyMatch(lookup::hasEncodedValue);
+    }
+
     /**
      * @return the expression with the parameters replaced by their values for the ExpressionEvaluator,
      * e.g. "0.9 * p_hill_factor" -> "0.9 * 0.5"
