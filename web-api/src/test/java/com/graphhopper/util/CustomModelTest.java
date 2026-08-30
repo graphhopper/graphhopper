@@ -23,6 +23,7 @@ import com.graphhopper.json.Statement;
 import org.junit.jupiter.api.Test;
 
 import java.util.Iterator;
+import java.util.Map;
 
 import static com.graphhopper.json.Statement.*;
 import static com.graphhopper.json.Statement.Op.MULTIPLY;
@@ -101,6 +102,13 @@ public class CustomModelTest {
         assertTrue(ex.getMessage().contains("not defined in the server-side custom model"), ex.getMessage());
         ex = assertThrows(IllegalArgumentException.class,
                 () -> CustomModel.checkParameterOverrides(base, new CustomModel().setParameter("width", true)));
+        assertTrue(ex.getMessage().contains("same type"), ex.getMessage());
+        ex = assertThrows(IllegalArgumentException.class,
+                () -> CustomModel.checkParameterOverrides(base, new CustomModel().setParameter("push", 1.0)));
+        assertTrue(ex.getMessage().contains("same type"), ex.getMessage());
+        // a String value (e.g. a quoted number in JSON) is rejected here and not deep in the parser
+        ex = assertThrows(IllegalArgumentException.class,
+                () -> CustomModel.checkParameterOverrides(base, new CustomModel().setParameters(Map.of("width", "4"))));
         assertTrue(ex.getMessage().contains("same type"), ex.getMessage());
         ex = assertThrows(IllegalArgumentException.class,
                 () -> CustomModel.checkParameterOverrides(base, new CustomModel().setParameter("width", 7.0)));

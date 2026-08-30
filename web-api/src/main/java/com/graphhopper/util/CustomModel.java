@@ -226,9 +226,9 @@ public class CustomModel {
             if (baseValue == null)
                 throw new IllegalArgumentException("parameter '" + name + "' is not defined in the server-side custom model. Only the values of "
                         + baseModel.parameters.keySet() + " can be overridden");
-            if (baseValue instanceof Boolean != entry.getValue() instanceof Boolean)
-                throw new IllegalArgumentException("parameter '" + name + "' must have the same type as in the server-side custom model, "
-                        + "but was: " + entry.getValue());
+            if (baseValue instanceof Boolean ? !(entry.getValue() instanceof Boolean) : !(entry.getValue() instanceof Number))
+                throw new IllegalArgumentException("parameter '" + name + "' must have the same type as in the server-side custom model ("
+                        + baseValue + "), but was: " + entry.getValue());
             if (entry.getValue() instanceof Number number) {
                 MinMax range = baseModel.getParameterRange(name);
                 if (number.doubleValue() < range.min || number.doubleValue() > range.max)
