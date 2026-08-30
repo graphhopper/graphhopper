@@ -35,6 +35,18 @@ class FindMinMaxTest {
         assertEquals(1, CustomModel.merge(new CustomModel(), queryModel).getPriority().size());
         // priority bigger than 1 is not ok for CustomModel of query
         assertThrows(IllegalArgumentException.class, () -> FindMinMax.checkLMConstraints(new CustomModel(), queryModel, lookup));
+
+        // the same inside a block statement
+        CustomModel blockModel = new CustomModel();
+        blockModel.addToPriority(If("road_environment == FERRY", List.of(If("true", MULTIPLY, "1.5"))));
+        Exception ex = assertThrows(IllegalArgumentException.class, () -> FindMinMax.checkLMConstraints(new CustomModel(), blockModel, lookup));
+        assertTrue(ex.getMessage().contains("cannot be larger than 1"), ex.getMessage());
+
+        // add increases the speed and so decreases the weight
+        CustomModel addModel = new CustomModel();
+        addModel.addToSpeed(If("true", Statement.Op.ADD, "10"));
+        ex = assertThrows(IllegalArgumentException.class, () -> FindMinMax.checkLMConstraints(new CustomModel(), addModel, lookup));
+        assertTrue(ex.getMessage().contains("add"), ex.getMessage());
     }
 
     @Test
