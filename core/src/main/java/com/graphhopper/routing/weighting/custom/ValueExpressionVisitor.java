@@ -270,8 +270,11 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
      * e.g. "0.9 * p_hill_factor" -> "0.9 * 0.5"
      */
     private static String replaceParameters(String expression, Map<String, Object> parameters) {
-        for (Map.Entry<String, Object> entry : parameters.entrySet())
-            expression = expression.replaceAll("\\b" + CustomModelParser.PARAM_PREFIX + entry.getKey() + "\\b", entry.getValue().toString());
+        for (Map.Entry<String, Object> entry : parameters.entrySet()) {
+            // parenthesized canonical literal, as e.g. "speed--2" for a negative value would not compile
+            String literal = entry.getValue() instanceof Number number ? "(" + number.doubleValue() + ")" : entry.getValue().toString();
+            expression = expression.replaceAll("\\b" + CustomModelParser.PARAM_PREFIX + entry.getKey() + "\\b", literal);
+        }
         return Statement.toJavaExpression(expression);
     }
 

@@ -110,6 +110,11 @@ class CustomWeightingTest {
         ex = assertThrows(IllegalArgumentException.class, () -> createWeighting(unprefixedModel));
         assertTrue(ex.getMessage().contains("'slow_factor' not available"), ex.getMessage());
 
+        // a negative parameter value directly after '-' must still compile ("50--5.0" would not)
+        CustomModel negCorr = createSpeedCustomModel(avSpeedEnc).setDistanceInfluence(0d).setParameter("corr", -5.0);
+        negCorr.addToSpeed(If("true", LIMIT, "50-p_corr"));
+        assertEquals(1440, createWeighting(negCorr).calcEdgeWeight(slow, false));
+
         // a value expression can use only a single parameter and only once, so that validating the
         // range endpoints covers all values in between (unlike e.g. p_a - p_b at a==min and b==max)
         CustomModel twoParams = createSpeedCustomModel(avSpeedEnc).setParameter("a", 0.9).setParameter("b", 0.0);
