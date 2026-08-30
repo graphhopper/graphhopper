@@ -159,6 +159,19 @@ class CustomWeightingTest {
         assertTrue(ex.getMessage().contains("negative"), ex.getMessage());
         CustomModelParser.checkParameterRanges(subtract.setParameter("x", 30.0, 0, 50), encodingManager);
 
+        // Infinity * 0 (the minimum of the encoded value) is NaN and must not slip through
+        CustomModel nan = createSpeedCustomModel(avSpeedEnc).setParameter("factor", 1.0, 0.5, Double.POSITIVE_INFINITY);
+        nan.addToSpeed(If("true", LIMIT, "p_factor * car_average_speed"));
+        ex = assertThrows(IllegalArgumentException.class,
+                () -> CustomModelParser.checkParameterRanges(nan, encodingManager));
+        assertTrue(ex.getMessage().contains("finite"), ex.getMessage());
+
+        CustomModel turnNaN = createSpeedCustomModel(avSpeedEnc).setParameter("scale", 1.0);
+        turnNaN.addToTurnPenalty(If("true", MULTIPLY, "p_scale"));
+        ex = assertThrows(IllegalArgumentException.class,
+                () -> CustomModelParser.checkParameterRanges(turnNaN, encodingManager));
+        assertTrue(ex.getMessage().contains(">=0"), ex.getMessage());
+
         // turn_penalty is validated at the endpoints too
         CustomModel turn = createSpeedCustomModel(avSpeedEnc).setParameter("discount", 30.0, 0, 600);
         turn.addToTurnPenalty(If("true", Statement.Op.ADD, "60 - p_discount"));

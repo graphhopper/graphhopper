@@ -184,15 +184,15 @@ public class CustomModelParser {
             throw new IllegalArgumentException("speed has to be >=0 but can be negative (" + speed.min + ")");
         if (speed.max <= 0)
             throw new IllegalArgumentException("maximum speed has to be >0 but was " + speed.max);
-        if (Double.isInfinite(speed.max))
+        if (!Double.isFinite(speed.max))
             throw new IllegalArgumentException("maximum speed has to be finite. Specify a 'max' for the parameter");
         MinMax priority = FindMinMax.findMinMax(new MinMax(0, CustomWeightingHelper.GLOBAL_PRIORITY), customModel.getPriority(), lookup, parameters);
         if (priority.min < 0)
             throw new IllegalArgumentException("priority has to be >=0 but can be negative (" + priority.min + ")");
-        if (Double.isInfinite(priority.max))
+        if (!Double.isFinite(priority.max))
             throw new IllegalArgumentException("maximum priority has to be finite. Specify a 'max' for the parameter");
         MinMax turnPenalty = FindMinMax.findMinMax(new MinMax(0, 0), customModel.getTurnPenalty(), lookup, parameters);
-        if (turnPenalty.min < 0)
+        if (!(turnPenalty.min >= 0)) // negated to catch NaN, e.g. from 0 * Infinity
             throw new IllegalArgumentException("turn penalty has to be >=0 but can be negative (" + turnPenalty.min + ")");
     }
 
