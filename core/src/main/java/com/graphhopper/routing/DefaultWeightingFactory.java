@@ -33,6 +33,7 @@ import com.graphhopper.util.Parameters;
 import com.graphhopper.util.TurnCostsConfig;
 
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
+import static com.graphhopper.routing.weighting.custom.CustomModelParser.checkSpeedAndPriority;
 import static com.graphhopper.routing.weighting.custom.CustomModelParser.createWeightingParameters;
 import static com.graphhopper.util.Helper.toLowerCase;
 
@@ -68,6 +69,9 @@ public class DefaultWeightingFactory implements WeightingFactory {
             if (queryCustomModel != null)
                 CustomModel.checkParameterOverrides(profile.getCustomModel(), queryCustomModel);
             final CustomModel mergedCustomModel = CustomModel.merge(profile.getCustomModel(), queryCustomModel);
+            if (queryCustomModel != null && !queryCustomModel.getParameters().isEmpty())
+                // required as the class cache ignores the values and checkParameterRanges covers only one parameter at a time
+                checkSpeedAndPriority(mergedCustomModel, encodingManager, mergedCustomModel.getParameters());
             if (requestHints.has(Parameters.Routing.HEADING_PENALTY))
                 mergedCustomModel.setHeadingPenalty(requestHints.getDouble(Parameters.Routing.HEADING_PENALTY, Parameters.Routing.DEFAULT_HEADING_PENALTY));
 
