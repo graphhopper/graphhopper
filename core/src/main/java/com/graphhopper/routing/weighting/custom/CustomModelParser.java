@@ -178,7 +178,7 @@ public class CustomModelParser {
         }
     }
 
-    public static void checkSpeedAndPriority(CustomModel customModel, EncodedValueLookup lookup, Map<String, Object> parameters) {
+    private static void checkSpeedAndPriority(CustomModel customModel, EncodedValueLookup lookup, Map<String, Object> parameters) {
         MinMax speed = FindMinMax.findMinMax(new MinMax(0, CustomWeightingHelper.GLOBAL_MAX_SPEED), customModel.getSpeed(), lookup, parameters);
         if (speed.min < 0)
             throw new IllegalArgumentException("speed has to be >=0 but can be negative (" + speed.min + ")");

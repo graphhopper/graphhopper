@@ -110,6 +110,17 @@ class CustomWeightingTest {
         ex = assertThrows(IllegalArgumentException.class, () -> createWeighting(unprefixedModel));
         assertTrue(ex.getMessage().contains("'slow_factor' not available"), ex.getMessage());
 
+        // a value expression can use only a single parameter and only once, so that validating the
+        // range endpoints covers all values in between (unlike e.g. p_a - p_b at a==min and b==max)
+        CustomModel twoParams = createSpeedCustomModel(avSpeedEnc).setParameter("a", 0.9).setParameter("b", 0.0);
+        twoParams.addToSpeed(If("true", MULTIPLY, "p_a - p_b"));
+        ex = assertThrows(IllegalArgumentException.class, () -> createWeighting(twoParams));
+        assertTrue(ex.getMessage().contains("single parameter"), ex.getMessage());
+        CustomModel repeated = createSpeedCustomModel(avSpeedEnc).setParameter("x", 0.5);
+        repeated.addToSpeed(If("true", MULTIPLY, "p_x * p_x"));
+        ex = assertThrows(IllegalArgumentException.class, () -> createWeighting(repeated));
+        assertTrue(ex.getMessage().contains("more than once"), ex.getMessage());
+
         // invalid names and values are rejected
         ex = assertThrows(IllegalArgumentException.class, () -> createWeighting(
                 createSpeedCustomModel(avSpeedEnc).setParameter("myValue", 30)));
@@ -139,6 +150,14 @@ class CustomWeightingTest {
                 () -> CustomModelParser.checkParameterRanges(scale, encodingManager));
         assertTrue(ex.getMessage().contains("finite"), ex.getMessage());
         CustomModelParser.checkParameterRanges(scale.setParameter("factor", 1.0, 0, 1.2), encodingManager);
+
+        // as a value expression is linear in its single parameter, the endpoint check covers the whole range
+        CustomModel subtract = createSpeedCustomModel(avSpeedEnc).setParameter("x", 30.0, 0, 100);
+        subtract.addToSpeed(If("true", LIMIT, "60 - p_x"));
+        ex = assertThrows(IllegalArgumentException.class,
+                () -> CustomModelParser.checkParameterRanges(subtract, encodingManager));
+        assertTrue(ex.getMessage().contains("negative"), ex.getMessage());
+        CustomModelParser.checkParameterRanges(subtract.setParameter("x", 30.0, 0, 50), encodingManager);
     }
 
     @Test

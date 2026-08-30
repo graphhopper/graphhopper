@@ -761,7 +761,8 @@ For number parameters the server-side definition can restrict the allowed values
 form `{"value": 0.8, "min": 0.5, "max": 1}` - requests must stay within `[min, max]` and cannot
 specify a range themselves. Without an explicit range `[0, Infinity)` is used. On startup the custom
 model is validated at both ends of every range, so e.g. a parameter used to increase the speed
-requires a finite `max`.
+requires a finite `max`. A value expression can use at most one parameter and only once, so that
+checking the range endpoints is sufficient. Conditions can combine multiple parameters.
 
 Note that for a profile prepared with landmarks (hybrid mode) a request can change a parameter value
 only if this cannot decrease any edge weight, as the landmark preparation is based on the server-side
