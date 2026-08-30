@@ -768,9 +768,11 @@ Note that for a profile prepared with landmarks (hybrid mode) a request can chan
 only if this cannot decrease any edge weight, as the landmark preparation is based on the server-side
 values: the value of a statement must not increase (e.g. a decreased `p_max_speed`) and a parameter
 in a condition is only supported for blocking statements, where the condition must apply to more
-edges (e.g. a decreased `p_max_mtb_rating` of the bike custom model excludes more roads). Everything
-else is rejected - use `lm.disable=true` for such requests. Changing parameter values does not
-trigger a recompilation of the custom model, so it is cheaper than changing statements.
+edges (e.g. a decreased `p_max_mtb_rating` of the bike custom model excludes more roads). Booleans
+and parameters used in `turn_penalty` or with an encoded value can never change. Everything else is
+rejected - use `lm.disable=true`. So pick the server-side value at the permissive end of the range
+(e.g. the smallest truck weight), as requests can only restrict further. Changing parameter values
+does not trigger a recompilation of the custom model, so it is cheaper than changing statements.
 
 ### Customizing `distance_influence`
 
