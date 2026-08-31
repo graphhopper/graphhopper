@@ -141,6 +141,43 @@ class MaxSpeedCalculatorTest {
     }
 
     @Test
+    public void testUrbanMotorwayUsesRuralValue() {
+        // NLD has no "urban motorway" entry and the generic urban default (50km/h) must not apply,
+        // see https://github.com/westnordost/osm-legal-default-speeds/discussions/17
+        ReaderWay way = new ReaderWay(0L);
+        way.setTag("country", Country.NLD);
+        way.setTag("highway", "motorway");
+        EdgeIteratorState edge = createEdge(way).set(urbanDensity, CITY);
+        calc.fillMaxSpeed(graph, em);
+        assertEquals(130, edge.get(maxSpeedEnc), 1);
+
+        way = new ReaderWay(0L);
+        way.setTag("country", Country.USA);
+        way.setTag("country_state", State.US_CA);
+        way.setTag("highway", "motorway");
+        edge = createEdge(way).set(urbanDensity, CITY);
+        calc.fillMaxSpeed(graph, em);
+        assertEquals(105, edge.get(maxSpeedEnc), 1);
+
+        way = new ReaderWay(0L);
+        way.setTag("country", Country.USA);
+        way.setTag("country_state", State.US_CA);
+        way.setTag("highway", "trunk");
+        way.setTag("expressway", "yes");
+        edge = createEdge(way).set(urbanDensity, CITY);
+        calc.fillMaxSpeed(graph, em);
+        assertEquals(105, edge.get(maxSpeedEnc), 1);
+
+        // an explicit "urban motorway" entry still wins
+        way = new ReaderWay(0L);
+        way.setTag("country", Country.CZE);
+        way.setTag("highway", "motorway");
+        edge = createEdge(way).set(urbanDensity, CITY);
+        calc.fillMaxSpeed(graph, em);
+        assertEquals(80, edge.get(maxSpeedEnc), 1);
+    }
+
+    @Test
     public void testRoundabout() {
         ReaderWay way = new ReaderWay(0L);
         way.setTag("country", Country.CRI);

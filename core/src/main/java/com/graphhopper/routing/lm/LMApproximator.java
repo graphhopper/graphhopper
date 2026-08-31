@@ -83,7 +83,8 @@ public class LMApproximator implements WeightApproximator {
         this.lmWeighting = lmWeighting;
         this.routingWeighting = routingWeighting;
         this.fallBackApproximation = new BeelineWeightApproximator(graph.getNodeAccess(), routingWeighting);
-        this.beelineApproximation = new BeelineWeightApproximator(graph.getNodeAccess(), routingWeighting);
+        // it is direction-agnostic, so reverse() is just a copy that avoids recomputing the min weight
+        this.beelineApproximation = fallBackApproximation.reverse();
         this.maxBaseNodes = lms.getBaseNodes();
     }
 

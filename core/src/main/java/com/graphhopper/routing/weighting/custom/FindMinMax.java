@@ -194,8 +194,13 @@ public class FindMinMax {
 
     private static void checkMultiplyValue(List<Statement> list, EncodedValueLookup lookup, Map<String, Object> parameters) {
         for (Statement statement : list) {
-            if (statement.operation() == Statement.Op.MULTIPLY) {
-                MinMax minMax = ValueExpressionVisitor.findMinMax(statement.value(), lookup, parameters);
+            if (statement.isBlock()) {
+                checkMultiplyValue(statement.doBlock(), lookup);
+            } else if (statement.operation() == Statement.Op.ADD) {
+                // a non-negative add increases the speed and so decreases the weight
+                throw new IllegalArgumentException("CustomModel in query must not use 'add'");
+            } else if (statement.operation() == Statement.Op.MULTIPLY) {
+                MinMax minMax = ValueExpressionVisitor.findMinMax(statement.value(), lookup);
                 if (minMax.max > 1)
                     throw new IllegalArgumentException("maximum of value '" + statement.value() + "' cannot be larger than 1, but was: " + minMax.max);
                 else if (minMax.min < 0)
