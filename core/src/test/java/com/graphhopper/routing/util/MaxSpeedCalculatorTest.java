@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static com.graphhopper.routing.ev.MaxSpeed.MAXSPEED_150;
@@ -175,6 +176,32 @@ class MaxSpeedCalculatorTest {
         edge = createEdge(way).set(urbanDensity, CITY);
         calc.fillMaxSpeed(graph, em);
         assertEquals(80, edge.get(maxSpeedEnc), 1);
+    }
+
+    @Test
+    public void testUrbanMotorwayForAllCountries() {
+        // ensure for every country and state that the urban motorway estimate is never absurdly
+        // below the rural one, see https://github.com/westnordost/osm-legal-default-speeds/discussions/17
+        List<String> regions = new ArrayList<>();
+        List<EdgeIteratorState> urbanEdges = new ArrayList<>(), ruralEdges = new ArrayList<>();
+        for (Country country : Country.values()) {
+            if (country == Country.MISSING) continue;
+            ReaderWay way = new ReaderWay(0L);
+            way.setTag("country", country);
+            way.setTag("highway", "motorway");
+            List<State> states = country.getStates().isEmpty() ? List.of(State.MISSING) : country.getStates();
+            for (State state : states) {
+                if (state != State.MISSING) way.setTag("country_state", state);
+                regions.add(country + "|" + state);
+                urbanEdges.add(createEdge(way).set(urbanDensity, CITY));
+                ruralEdges.add(createEdge(way).set(urbanDensity, RURAL));
+            }
+        }
+        calc.fillMaxSpeed(graph, em);
+        for (int i = 0; i < regions.size(); i++) {
+            double urban = urbanEdges.get(i).get(maxSpeedEnc), rural = ruralEdges.get(i).get(maxSpeedEnc);
+            assertTrue(urban >= Math.min(80, rural), regions.get(i) + ": urban " + urban + ", rural " + rural);
+        }
     }
 
     @Test
