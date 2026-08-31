@@ -379,6 +379,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                     boolean needsDeferredFallback = isBlank(name) && isLinkRoad(edge);
 
                     prevInstruction = new Instruction(sign, name, new PointList(10, nodeAccess.is3D()));
+                    prevInstruction.setStreetNameChanged(!InstructionsHelper.isSameName(prevName, name));
                     // Remember the orientation and name of the road, before doing this maneuver
                     prevInstructionPrevOrientation = prevOrientation;
                     prevInstructionName = prevName;

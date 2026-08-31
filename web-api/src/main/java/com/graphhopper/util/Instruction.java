@@ -53,6 +53,8 @@ public class Instruction {
     protected double distance;
     protected long time;
     protected Map<String, Object> extraInfo = new HashMap<>(3);
+    // true: "onto" (name changed or first instruction). false: "on" (still on the same street).
+    private boolean streetNameChanged = true;
 
     /**
      * The points, distances and times have exactly the same count. The last point of this
@@ -89,6 +91,11 @@ public class Instruction {
 
     public void setName(String name) {
         if (name != null) this.name = name;
+    }
+
+    public Instruction setStreetNameChanged(boolean streetNameChanged) {
+        this.streetNameChanged = streetNameChanged;
+        return this;
     }
 
     String _getName() {
@@ -175,7 +182,13 @@ public class Instruction {
 
         int sign = getSign();
         if (sign == Instruction.CONTINUE_ON_STREET) {
-            str = Helper.isEmpty(streetName) ? tr.tr("continue") : tr.tr("continue_onto", streetName);
+            if (Helper.isEmpty(streetName)) {
+                str = tr.tr("continue");
+            } else if (streetNameChanged) {
+                str = tr.tr("continue_onto", streetName);
+            } else {
+                str = tr.tr("continue_on", streetName);
+            }
         } else if (sign == Instruction.FERRY) {
             if (ferryStr == null)
                 throw new RuntimeException("no ferry information provided but sign is FERRY");
@@ -225,8 +238,12 @@ public class Instruction {
             }
             if (dir == null)
                 str = tr.tr("unknown", sign);
+            else if (streetName.isEmpty())
+                str = dir;
+            else if (!streetNameChanged && (sign == Instruction.KEEP_LEFT || sign == Instruction.KEEP_RIGHT))
+                str = tr.tr("turn_on", dir, streetName);
             else
-                str = streetName.isEmpty() ? dir : tr.tr("turn_onto", dir, streetName);
+                str = tr.tr("turn_onto", dir, streetName);
         }
 
         if ("leave_ferry".equals(ferryStr))

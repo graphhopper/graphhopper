@@ -417,7 +417,7 @@ public class InstructionListTest {
         assertEquals(IntArrayList.from(4, 2, 3), p.calcNodes());
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, tmpEM, usTR);
         List<String> tmpList = getTurnDescriptions(wayList);
-        assertEquals(Arrays.asList("continue onto myroad", "keep right onto myroad", "arrive at destination"), tmpList);
+        assertEquals(Arrays.asList("continue onto myroad", "keep right on myroad", "arrive at destination"), tmpList);
         assertEquals(3, wayList.size());
         assertEquals(20, wayList.get(1).getDistance());
 
@@ -425,9 +425,22 @@ public class InstructionListTest {
         assertEquals(IntArrayList.from(4, 2, 1), p.calcNodes());
         wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, tmpEM, usTR);
         tmpList = getTurnDescriptions(wayList);
-        assertEquals(Arrays.asList("continue onto myroad", "keep left onto myroad", "arrive at destination"), tmpList);
+        assertEquals(Arrays.asList("continue onto myroad", "keep left on myroad", "arrive at destination"), tmpList);
         assertEquals(3, wayList.size());
         assertEquals(20, wayList.get(1).getDistance());
+    }
+
+    @Test
+    public void testContinueOnWhenStreetNameUnchanged() {
+        Instruction cont = new Instruction(Instruction.CONTINUE_ON_STREET, "E42", new PointList());
+        assertEquals("continue onto E42", cont.getTurnDescription(usTR));
+        cont.setStreetNameChanged(false);
+        assertEquals("continue on E42", cont.getTurnDescription(usTR));
+
+        Instruction keep = new Instruction(Instruction.KEEP_LEFT, "E42", new PointList());
+        assertEquals("keep left onto E42", keep.getTurnDescription(usTR));
+        keep.setStreetNameChanged(false);
+        assertEquals("keep left on E42", keep.getTurnDescription(usTR));
     }
 
     @Test

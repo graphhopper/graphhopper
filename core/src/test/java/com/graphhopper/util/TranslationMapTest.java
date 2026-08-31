@@ -36,6 +36,8 @@ public class TranslationMapTest {
     public void testToString() {
         Translation enMap = SINGLETON.getWithFallBack(Locale.UK);
         assertEquals("continue onto blp street", enMap.tr("continue_onto", "blp street"));
+        assertEquals("continue on blp street", enMap.tr("continue_on", "blp street"));
+        assertEquals("keep left on E42", enMap.tr("turn_on", "keep left", "E42"));
 
         Translation trMap = SINGLETON.getWithFallBack(Locale.GERMANY);
         assertEquals("Zu Fuß", trMap.tr("web.FOOT"));
