@@ -58,9 +58,16 @@ public class DefaultMaxSpeedParser implements TagParser {
                     tmpResult = speeds.getSpeedLimits(code,
                             tags, Collections.emptyList(), (name, eval) -> eval.invoke() || "urban".equals(name));
                     if (tmpResult != null) {
-                        internRes.urban = parseInt(tmpResult.getTags().get("maxspeed"));
-                        if (internRes.urban == null && "130".equals(tmpResult.getTags().get("maxspeed:advisory")))
-                            internRes.urban = (int) MAXSPEED_150;
+                        // The generic urban default (e.g. 40km/h in California) does not apply to
+                        // limited-access roads. An explicit entry like "motorway" or "urban motorway" is missing.
+                        // => we use the rural value instead, see https://github.com/westnordost/osm-legal-default-speeds/discussions/17
+                        if (isLimitedAccess(tags) && "urban".equals(tmpResult.getRoadTypeName())) {
+                            internRes.urban = internRes.rural;
+                        } else {
+                            internRes.urban = parseInt(tmpResult.getTags().get("maxspeed"));
+                            if (internRes.urban == null && "130".equals(tmpResult.getTags().get("maxspeed:advisory")))
+                                internRes.urban = (int) MAXSPEED_150;
+                        }
                     }
                     return internRes;
                 });
@@ -72,6 +79,12 @@ public class DefaultMaxSpeedParser implements TagParser {
 
         urbanMaxSpeedEnc.setDecimal(false, edgeId, externalAccess, urbanSpeedInt == null ? MAXSPEED_MISSING : urbanSpeedInt);
         ruralMaxSpeedEnc.setDecimal(false, edgeId, externalAccess, ruralSpeedInt == null ? MAXSPEED_MISSING : ruralSpeedInt);
+    }
+
+    private static boolean isLimitedAccess(Map<String, String> tags) {
+        String highway = tags.get("highway");
+        return "motorway".equals(highway) || "motorway_link".equals(highway)
+                || "yes".equals(tags.get("motorroad")) || "yes".equals(tags.get("expressway"));
     }
 
     private Map<String, String> filter(Map<String, Object> tags) {
