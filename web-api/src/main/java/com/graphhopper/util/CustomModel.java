@@ -225,7 +225,7 @@ public class CustomModel {
             Object baseValue = baseModel.parameters.get(name);
             if (baseValue == null)
                 throw new IllegalArgumentException("parameter '" + name + "' is not defined in the server-side custom model. Only the values of "
-                        + baseModel.parameters.keySet() + " can be overridden");
+                        + baseModel.parameters.keySet().stream().filter(n -> !n.startsWith("private_")).toList() + " can be overridden");
             if (baseValue instanceof Boolean ? !(entry.getValue() instanceof Boolean) : !(entry.getValue() instanceof Number))
                 throw new IllegalArgumentException("parameter '" + name + "' must have the same type as in the server-side custom model ("
                         + baseValue + "), but was: " + entry.getValue());

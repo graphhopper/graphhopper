@@ -94,12 +94,14 @@ public class CustomModelTest {
 
     @Test
     public void testCheckParameterOverrides() {
-        CustomModel base = new CustomModel().setParameter("width", 3.0, 2, 5).setParameter("push", true);
+        CustomModel base = new CustomModel().setParameter("width", 3.0, 2, 5).setParameter("push", true).setParameter("private_debug", 1.0);
         CustomModel.checkParameterOverrides(base, new CustomModel().setParameter("width", 4.0));
 
         Exception ex = assertThrows(IllegalArgumentException.class,
                 () -> CustomModel.checkParameterOverrides(base, new CustomModel().setParameter("height", 2.0)));
         assertTrue(ex.getMessage().contains("not defined in the server-side custom model"), ex.getMessage());
+        // private_ parameters are not advertised
+        assertTrue(ex.getMessage().contains("[width, push]"), ex.getMessage());
         ex = assertThrows(IllegalArgumentException.class,
                 () -> CustomModel.checkParameterOverrides(base, new CustomModel().setParameter("width", true)));
         assertTrue(ex.getMessage().contains("same type"), ex.getMessage());
