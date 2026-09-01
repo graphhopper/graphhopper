@@ -105,6 +105,32 @@ public class KVStorageTest {
     }
 
     @Test
+    public void testEmptyValue() {
+        // the optimization for empty String/byte[] in add must pack key index and direction bits like the normal path
+        KVStorage index = create();
+        Map<String, KValue> map = new LinkedHashMap<>();
+        map.put("empty", new KValue(""));
+        map.put("fwdEmpty", new KValue("", null));
+        map.put("mixed", new KValue("", "back"));
+        map.put("bytes", new KValue(new byte[0]));
+        map.put("after", new KValue("value after"));
+        long pointer = index.add(map);
+
+        assertEquals("", index.get(pointer, "empty", false));
+        assertEquals("", index.get(pointer, "empty", true));
+        assertEquals("", index.get(pointer, "fwdEmpty", false));
+        assertNull(index.get(pointer, "fwdEmpty", true));
+        assertEquals("", index.get(pointer, "mixed", false));
+        assertEquals("back", index.get(pointer, "mixed", true));
+        assertArrayEquals(new byte[0], (byte[]) index.get(pointer, "bytes", false));
+        assertEquals("value after", index.get(pointer, "after", false));
+
+        assertEquals(map, index.getAll(pointer));
+        assertEquals("", index.getMap(pointer).get("empty"));
+        assertEquals(5, index.getMap(pointer).size());
+    }
+
+    @Test
     public void putMany() {
         KVStorage index = create();
         long aPointer = 0, tmpPointer = 0;
