@@ -1777,7 +1777,10 @@ public class GraphHopper {
                                 // 2. try to load custom model file from external location
                                 string = readJSONFileWithoutComments(customModelFile.toFile().getAbsolutePath());
                             }
-                            customModel = CustomModel.merge(customModel, jsonOM.readValue(string, CustomModel.class));
+                            CustomModel fileModel = jsonOM.readValue(string, CustomModel.class);
+                            customModel = CustomModel.merge(customModel, fileModel);
+                            // merge() ignores parameter ranges as query models must never change them
+                            customModel.getParameterRanges().putAll(fileModel.getParameterRanges());
                         } catch (IOException ex) {
                             throw new RuntimeException("Cannot load custom_model from location " + file + ", profile:" + profile.getName(), ex);
                         }

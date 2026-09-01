@@ -323,7 +323,8 @@ public class CustomModel {
         mergedCM.priorityStatements.addAll(queryModel.getPriority());
         mergedCM.turnPenaltyStatements.addAll(queryModel.getTurnPenalty());
         mergedCM.parameters.putAll(queryModel.parameters);
-        queryModel.parameterRanges.forEach((name, range) -> mergedCM.parameterRanges.put(name, new MinMax(range.min, range.max)));
+        // ranges are deliberately not merged so that a query model can never change them; the server-side
+        // custom_model_files merge copies them explicitly (GraphHopper.resolveCustomModelFiles)
 
         mergedCM.addAreas(queryModel.getAreas());
         return mergedCM;

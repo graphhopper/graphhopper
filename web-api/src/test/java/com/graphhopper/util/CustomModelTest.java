@@ -130,6 +130,8 @@ public class CustomModelTest {
         assertEquals(100.0, merged.getParameters().get("power"));
         assertEquals(95.0, merged.getParameters().get("mass"));
         assertEquals(0.5, merged.getParameters().get("extra"));
+        // the second model's ranges are never merged, so a query model cannot change them
+        assertTrue(CustomModel.merge(base, new CustomModel().setParameter("power", 100.0, 50, 150)).getParameterRanges().isEmpty());
         // the input models are unchanged
         assertEquals(120.0, base.getParameters().get("power"));
         assertEquals(2, query.getParameters().size());
