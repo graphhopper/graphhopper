@@ -42,6 +42,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -292,6 +293,59 @@ public class MapMatchingTest {
         mr = mapMatching.match(GpxConversions.getEntries(gpx.trk.get(0)));
         assertEquals(Arrays.asList("Gustav-Adolf-Straße", "Funkenburgstraße"), fetchStreets(mr.getEdgeMatches()));
         assertEquals(445.0, mr.getMatchLength(), 1.0);
+    }
+
+    /**
+     * Verifies that a custom TransitionRouteLengthFunction is invoked during matching.
+     */
+    @ParameterizedTest
+    @ArgumentsSource(FixtureProvider.class)
+    public void testCustomTransitionRouteLengthFunctionIsInvoked(PMap hints) {
+        MapMatching mapMatching = MapMatching.fromGraphHopper(graphHopper, hints);
+        ResponsePath route = graphHopper.route(new GHRequest(
+                new GHPoint(51.358735, 12.360574),
+                new GHPoint(51.358594, 12.360032))
+                .setProfile("my_profile")).getBest();
+        List<Observation> inputGPXEntries = createRandomGPXEntriesAlongRoute(route);
+
+        AtomicInteger callCount = new AtomicInteger();
+        mapMatching.setTransitionRouteLengthFunction((distance, timeMillis, weight) -> {
+            callCount.incrementAndGet();
+            return distance;
+        });
+        mapMatching.match(inputGPXEntries);
+
+        assertTrue(callCount.get() > 0, "Custom strategy should be invoked at least once");
+    }
+
+    /**
+     * Verifies that passing null to setTransitionRouteLengthFunction stops the
+     * previously-installed custom strategy from being invoked on subsequent matches.
+     */
+    @ParameterizedTest
+    @ArgumentsSource(FixtureProvider.class)
+    public void testNullClearsPreviouslyInstalledStrategy(PMap hints) {
+        MapMatching mapMatching = MapMatching.fromGraphHopper(graphHopper, hints);
+        ResponsePath route = graphHopper.route(new GHRequest(
+                new GHPoint(51.358735, 12.360574),
+                new GHPoint(51.358594, 12.360032))
+                .setProfile("my_profile")).getBest();
+        List<Observation> inputGPXEntries = createRandomGPXEntriesAlongRoute(route);
+
+        AtomicInteger callCount = new AtomicInteger();
+        mapMatching.setTransitionRouteLengthFunction((distance, timeMillis, weight) -> {
+            callCount.incrementAndGet();
+            return distance;
+        });
+        mapMatching.match(inputGPXEntries);
+        int countAfterFirstMatch = callCount.get();
+        assertTrue(countAfterFirstMatch > 0, "Sanity: the custom strategy should run on the first match");
+
+        mapMatching.setTransitionRouteLengthFunction(null);
+        mapMatching.match(inputGPXEntries);
+
+        assertEquals(countAfterFirstMatch, callCount.get(),
+                "After null reset, the previously-installed strategy must not run again");
     }
 
     static List<String> fetchStreets(List<EdgeMatch> emList) {
