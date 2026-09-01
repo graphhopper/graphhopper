@@ -1,10 +1,12 @@
 # do not edit manually, instead use spreadsheet from translations.md and script ./core/files/update-translations.sh
 continue=sigue
 continue_onto=sigue per %1$s
+continue_on=sigue per %1$s
 finish=¡Aportasti!
 keep_left=sigui pela izquierda
 keep_right=sigui pela derecha
 turn_onto=%1$s per %2$s
+turn_on=%1$s per %2$s
 turn_left=xira a la izquierda
 turn_right=xira a la drecha
 turn_slight_left=xira llixeramente a la izquierda

@@ -41,6 +41,9 @@ public class TranslationMapTest {
 
         Translation trMap = SINGLETON.getWithFallBack(Locale.GERMANY);
         assertEquals("Zu Fuß", trMap.tr("web.FOOT"));
+        // other locales keep the onto wording until translators update continue_on / turn_on
+        assertEquals("dem Straßenverlauf von E42 folgen", trMap.tr("continue_on", "E42"));
+        assertEquals("links halten auf E42", trMap.tr("turn_on", "links halten", "E42"));
 
         Translation ruMap = SINGLETON.getWithFallBack(new Locale("ru"));
         assertEquals("Пешком", ruMap.tr("web.FOOT"));

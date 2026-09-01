@@ -1,10 +1,12 @@
 # do not edit manually, instead use spreadsheet from translations.md and script ./core/files/update-translations.sh
 continue=Harakatni davom ettiring
 continue_onto=%1$s bo'ylab harakatni davom ettiring
+continue_on=%1$s bo'ylab harakatni davom ettiring
 finish=Yetib keldingiz
 keep_left=Chaproq tuting
 keep_right=O'ngroq tuting
 turn_onto=%1$s dan %2$s ga
+turn_on=%1$s dan %2$s ga
 turn_left=Chapga buriling
 turn_right=O'ngga buriling
 turn_slight_left=Yengil chapga buriling

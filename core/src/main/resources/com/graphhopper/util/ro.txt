@@ -1,10 +1,12 @@
 # do not edit manually, instead use spreadsheet from translations.md and script ./core/files/update-translations.sh
 continue=continuă
 continue_onto=continuă pe %1$s
+continue_on=continuă pe %1$s
 finish=obiectiv atins
 keep_left=Rămâneți pe banda stângă
 keep_right=Rămâneți pe banda dreaptă
 turn_onto=%1$s pe %2$s
+turn_on=%1$s pe %2$s
 turn_left=schimbați direcția la stânga
 turn_right=schimbați direcția la dreapta
 turn_slight_left=schimbați direcția la ușor la stânga

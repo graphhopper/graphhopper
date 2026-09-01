@@ -1,10 +1,12 @@
 # do not edit manually, instead use spreadsheet from translations.md and script ./core/files/update-translations.sh
 continue=進む
 continue_onto=%1$sまで進む
+continue_on=%1$sまで進む
 finish=目標達成
 keep_left=
 keep_right=
 turn_onto=%1$sに曲がって%2$sに入る
+turn_on=%1$sに曲がって%2$sに入る
 turn_left=左に曲がる
 turn_right=右に曲がる
 turn_slight_left=左に曲がる

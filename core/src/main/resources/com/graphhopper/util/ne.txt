@@ -1,10 +1,12 @@
 # do not edit manually, instead use spreadsheet from translations.md and script ./core/files/update-translations.sh
 continue=गहिरख्नुहोस
 continue_onto=%1$s गहिरख्नुहोस
+continue_on=%1$s गहिरख्नुहोस
 finish=सकियो
 keep_left=
 keep_right=
 turn_onto=%2$s मा %1$s मोड्नुहोस
+turn_on=%2$s मा %1$s मोड्नुहोस
 turn_left=बाया मोड्नुहोस
 turn_right=दाया मोड्नुहोस
 turn_slight_left=थोरै बाया मोड्नुहोस

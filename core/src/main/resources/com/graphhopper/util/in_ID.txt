@@ -1,10 +1,12 @@
 # do not edit manually, instead use spreadsheet from translations.md and script ./core/files/update-translations.sh
 continue=lanjut
 continue_onto=menuju pada %1$s
+continue_on=menuju pada %1$s
 finish=Sampai pada tujuan akhir
 keep_left=tetap berada jalur kiri
 keep_right=tetap berada jalur kiri
 turn_onto=%1$s belok menuju %2$s
+turn_on=%1$s belok menuju %2$s
 turn_left=belok kiri
 turn_right=belok kanan
 turn_slight_left=belok kiri sedikit

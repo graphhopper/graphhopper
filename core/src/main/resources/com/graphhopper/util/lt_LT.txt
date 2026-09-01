@@ -1,10 +1,12 @@
 # do not edit manually, instead use spreadsheet from translations.md and script ./core/files/update-translations.sh
 continue=tęskite
 continue_onto=tęskite toliau %1$s
+continue_on=tęskite toliau %1$s
 finish=Tikslas pasiektas!
 keep_left=laikykitės kairiau
 keep_right=laikykitės dešiniau
 turn_onto=%1$s į %2$s
+turn_on=%1$s į %2$s
 turn_left=sukite kairėn
 turn_right=sukite dešinėn
 turn_slight_left=laikykite kairiau

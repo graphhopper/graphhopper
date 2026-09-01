@@ -1,10 +1,12 @@
 # do not edit manually, instead use spreadsheet from translations.md and script ./core/files/update-translations.sh
 continue=dem Straßenverlauf folgen
 continue_onto=dem Straßenverlauf von %1$s folgen
+continue_on=dem Straßenverlauf von %1$s folgen
 finish=Ziel erreicht
 keep_left=links halten
 keep_right=rechts halten
 turn_onto=%1$s auf %2$s
+turn_on=%1$s auf %2$s
 turn_left=links abbiegen
 turn_right=rechts abbiegen
 turn_slight_left=leicht links abbiegen

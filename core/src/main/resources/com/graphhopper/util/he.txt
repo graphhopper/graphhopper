@@ -1,10 +1,12 @@
 # do not edit manually, instead use spreadsheet from translations.md and script ./core/files/update-translations.sh
 continue=להמשיך
 continue_onto=להמשיך אל %1$s
+continue_on=להמשיך אל %1$s
 finish=הגעת ליעד
 keep_left=להיצמד לשמאל
 keep_right=להיצמד לימין
 turn_onto=יש לפנות %1$s אל %2$s
+turn_on=יש לפנות %1$s אל %2$s
 turn_left=שמאלה
 turn_right=ימינה
 turn_slight_left=מעט שמאלה

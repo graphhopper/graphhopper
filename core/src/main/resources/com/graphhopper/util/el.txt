@@ -1,10 +1,12 @@
 # do not edit manually, instead use spreadsheet from translations.md and script ./core/files/update-translations.sh
 continue=συνεχίστε
 continue_onto=συνεχίστε στην %1$s
+continue_on=συνεχίστε στην %1$s
 finish=άφιξη στον προορισμό
 keep_left=μείνετε αριστερά
 keep_right=μείνετε δεξιά
 turn_onto=%1$s στην %2$s
+turn_on=%1$s στην %2$s
 turn_left=στρίψτε αριστερά
 turn_right=στρίψτε δεξιά
 turn_slight_left=στρίψτε λοξά αριστερά

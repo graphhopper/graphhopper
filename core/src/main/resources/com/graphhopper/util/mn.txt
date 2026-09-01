@@ -1,10 +1,12 @@
 # do not edit manually, instead use spreadsheet from translations.md and script ./core/files/update-translations.sh
 continue=үргэлжлүүл
 continue_onto=%1$s дээр үргэлжлүүлнэ үү
+continue_on=%1$s дээр үргэлжлүүлнэ үү
 finish=зорьсон газраа хүрэх
 keep_left=зүүн байлгах
 keep_right=зөв байлгах
 turn_onto=%1$s дээр %2$s
+turn_on=%1$s дээр %2$s
 turn_left=зүүн эргэ
 turn_right=баруун эргэ
 turn_slight_left=бага зэрэг зүүн эргэ

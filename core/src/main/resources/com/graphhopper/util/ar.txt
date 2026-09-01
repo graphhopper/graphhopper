@@ -1,10 +1,12 @@
 # do not edit manually, instead use spreadsheet from translations.md and script ./core/files/update-translations.sh
 continue=استمر
 continue_onto=
+continue_on=
 finish=النهاية
 keep_left=احفظ الشمال
 keep_right=احفظ اليمين
 turn_onto=%1$s خلال %2$s
+turn_on=%1$s خلال %2$s
 turn_left=اتجه يساراً
 turn_right=اتجه يميناً
 turn_slight_left=إستدر لليسار قليلا

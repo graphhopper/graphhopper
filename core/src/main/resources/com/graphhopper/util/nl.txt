@@ -1,10 +1,12 @@
 # do not edit manually, instead use spreadsheet from translations.md and script ./core/files/update-translations.sh
 continue=Ga rechtdoor
 continue_onto=blijf op %1$s
+continue_on=blijf op %1$s
 finish=Bestemming bereikt
 keep_left=houd links aan
 keep_right=houd rechts aan
 turn_onto=%1$s naar %2$s
+turn_on=%1$s naar %2$s
 turn_left=linksaf
 turn_right=rechtsaf
 turn_slight_left=houd links aan

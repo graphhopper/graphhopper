@@ -1,10 +1,12 @@
 # do not edit manually, instead use spreadsheet from translations.md and script ./core/files/update-translations.sh
 continue=ادامه دهید
 continue_onto=در %1$s ادامه دهید
+continue_on=در %1$s ادامه دهید
 finish=به مقصد رسیدید
 keep_left=به چپ برانید
 keep_right=به راست برانید
 turn_onto=%1$s و به %2$s وارد شوید
+turn_on=%1$s و به %2$s وارد شوید
 turn_left=به چپ بپیچید
 turn_right=به راست بپیچید
 turn_slight_left=کمی به چپ بپیچید

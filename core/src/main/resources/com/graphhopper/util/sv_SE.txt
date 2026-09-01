@@ -1,10 +1,12 @@
 # do not edit manually, instead use spreadsheet from translations.md and script ./core/files/update-translations.sh
 continue=fortsätt
 continue_onto=fortsätt in på %1$s
+continue_on=fortsätt in på %1$s
 finish=Framme!
 keep_left=håll till vänster
 keep_right=håll till höger
 turn_onto=%1$s in på %2$s
+turn_on=%1$s in på %2$s
 turn_left=sväng vänster
 turn_right=sväng höger
 turn_slight_left=sväng svagt vänster

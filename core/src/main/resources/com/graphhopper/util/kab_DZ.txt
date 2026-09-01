@@ -1,10 +1,12 @@
 # do not edit manually, instead use spreadsheet from translations.md and script ./core/files/update-translations.sh
 continue=Kemmel
 continue_onto=Kemmel ɣef %1$s
+continue_on=Kemmel ɣef %1$s
 finish=ad tawḍeḍ anda i tettedduḍ
 keep_left=ṭṭef tama taẓelmaḍt
 keep_right=ṭṭef tama tayeffust
 turn_onto=%1$s ɣef %2$s
+turn_on=%1$s ɣef %2$s
 turn_left=bren ɣer tama taẓelmaḍt
 turn_right=bren ɣer tama tayeffust
 turn_slight_left=bren am wacemma ɣer tama taẓelmaḍt

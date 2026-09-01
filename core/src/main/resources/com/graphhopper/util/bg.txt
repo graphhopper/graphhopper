@@ -1,10 +1,12 @@
 # do not edit manually, instead use spreadsheet from translations.md and script ./core/files/update-translations.sh
 continue=продължете
 continue_onto=продължете по %1$s
+continue_on=продължете по %1$s
 finish=Пристигнахте в крайната точка
 keep_left=дръжте ляво
 keep_right=дръжте дясно
 turn_onto=%1$s по %2$s
+turn_on=%1$s по %2$s
 turn_left=завийте наляво
 turn_right=завийте надясно
 turn_slight_left=завийте леко наляво

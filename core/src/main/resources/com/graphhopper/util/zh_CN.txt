@@ -1,10 +1,12 @@
 # do not edit manually, instead use spreadsheet from translations.md and script ./core/files/update-translations.sh
 continue=继续
 continue_onto=继续行驶到 %1$s
+continue_on=继续行驶到 %1$s
 finish=到达终点
 keep_left=保持左行
 keep_right=保持右行
 turn_onto=%1$s到 %2$s
+turn_on=%1$s到 %2$s
 turn_left=左转
 turn_right=右转
 turn_slight_left=偏左转

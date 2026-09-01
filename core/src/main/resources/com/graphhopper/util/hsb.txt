@@ -1,10 +1,12 @@
 # do not edit manually, instead use spreadsheet from translations.md and script ./core/files/update-translations.sh
 continue=runjewon
 continue_onto=runjewon na %1$s
+continue_on=runjewon na %1$s
 finish=dojěł
 keep_left=
 keep_right=
 turn_onto=%1$s na %2$s
+turn_on=%1$s na %2$s
 turn_left=nalěwo wotbočić
 turn_right=naprawo wotbočić
 turn_slight_left=zlochka nalěwo wotbočić

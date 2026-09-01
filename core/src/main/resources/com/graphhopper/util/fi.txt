@@ -1,10 +1,12 @@
 # do not edit manually, instead use spreadsheet from translations.md and script ./core/files/update-translations.sh
 continue=jatka
 continue_onto=jatka tielle %1$S
+continue_on=jatka tielle %1$S
 finish=Olet perillä!
 keep_left=pysy vasemmalla
 keep_right=pysy oikealla
 turn_onto=%1$S tielle %2$S
+turn_on=%1$S tielle %2$S
 turn_left=käänny vasemmalle
 turn_right=käänny oikealle
 turn_slight_left=käänny loivasti vasemmalle

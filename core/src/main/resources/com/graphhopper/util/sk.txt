@@ -1,10 +1,12 @@
 # do not edit manually, instead use spreadsheet from translations.md and script ./core/files/update-translations.sh
 continue=pokračujte
 continue_onto=pokračujte na %1$s
+continue_on=pokračujte na %1$s
 finish=Cieľ!
 keep_left=držte sa vľavo
 keep_right=držte sa vpravo
 turn_onto=%1$s na %2$s
+turn_on=%1$s na %2$s
 turn_left=odbočte doľava
 turn_right=odbočte doprava
 turn_slight_left=odbočte mierne doľava

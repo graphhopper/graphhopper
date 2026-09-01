@@ -1,10 +1,12 @@
 # do not edit manually, instead use spreadsheet from translations.md and script ./core/files/update-translations.sh
 continue=계속
 continue_onto=%1$s(으)로 계속 이동
+continue_on=%1$s(으)로 계속 이동
 finish=도착
 keep_left=좌측 유지
 keep_right=우측 유지
 turn_onto=%2$s로 %1$s
+turn_on=%2$s로 %1$s
 turn_left=좌회전
 turn_right=우회전
 turn_slight_left=왼쪽 방향

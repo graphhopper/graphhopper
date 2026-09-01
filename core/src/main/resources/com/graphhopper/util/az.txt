@@ -1,10 +1,12 @@
 # do not edit manually, instead use spreadsheet from translations.md and script ./core/files/update-translations.sh
 continue=Davam edin
 continue_onto=Davam edin - %1$s
+continue_on=Davam edin - %1$s
 finish=Məntəqəyə çatdınız
 keep_left=Sol tərəfi tutaraq hərəkət edin
 keep_right=Sağ tərəfi tutaraq hərəkət edin
 turn_onto=%1$s - %2$s
+turn_on=%1$s - %2$s
 turn_left=Sola dönün
 turn_right=Sağa dönün
 turn_slight_left=Yavaşca sola dönün

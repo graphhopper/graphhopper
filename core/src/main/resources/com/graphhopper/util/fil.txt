@@ -1,10 +1,12 @@
 # do not edit manually, instead use spreadsheet from translations.md and script ./core/files/update-translations.sh
 continue=tuwirín ang daán
 continue_onto=magpatuloy papunta sa %1$s
+continue_on=magpatuloy papunta sa %1$s
 finish=Tapusin!
 keep_left=
 keep_right=
 turn_onto=%1$s papunta sa %2$s
+turn_on=%1$s papunta sa %2$s
 turn_left=pagliko kaliwa
 turn_right=pagliko karapatan
 turn_slight_left=pagliko bahagyang kaliwa

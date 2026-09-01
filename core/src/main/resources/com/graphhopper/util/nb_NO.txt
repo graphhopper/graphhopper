@@ -1,10 +1,12 @@
 # do not edit manually, instead use spreadsheet from translations.md and script ./core/files/update-translations.sh
 continue=fortsett
 continue_onto=fortsett på %1$s
+continue_on=fortsett på %1$s
 finish=fremme
 keep_left=hold til venstre
 keep_right=hold til høyre
 turn_onto=%1$s på %2$s
+turn_on=%1$s på %2$s
 turn_left=sving til venstre
 turn_right=sving til høyre
 turn_slight_left=svak venstre

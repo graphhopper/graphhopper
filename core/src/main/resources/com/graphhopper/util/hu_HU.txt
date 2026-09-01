@@ -1,10 +1,12 @@
 # do not edit manually, instead use spreadsheet from translations.md and script ./core/files/update-translations.sh
 continue=haladjon tovább
 continue_onto=haladjon tovább erre: %1$s
+continue_on=haladjon tovább erre: %1$s
 finish=érkezés a célponthoz
 keep_left=tartson balra
 keep_right=tartson jobbra
 turn_onto=%1$s erre: %2$s
+turn_on=%1$s erre: %2$s
 turn_left=forduljon balra
 turn_right=forduljon jobbra
 turn_slight_left=forduljon enyhén balra

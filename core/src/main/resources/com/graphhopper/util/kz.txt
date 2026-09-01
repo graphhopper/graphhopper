@@ -1,10 +1,12 @@
 # do not edit manually, instead use spreadsheet from translations.md and script ./core/files/update-translations.sh
 continue=Жалғастырыңыз
 continue_onto=%1$s бойынша жалғастырыңыз
+continue_on=%1$s бойынша жалғастырыңыз
 finish=мәреге жеттіңіз
 keep_left=сол жаққа шығыңыз
 keep_right=оң жаққа шығыңыз
 turn_onto=
+turn_on=
 turn_left=солға бұрылыңыз
 turn_right=оңға бұрылыңыз
 turn_slight_left=аздап солға бұрылыңыз

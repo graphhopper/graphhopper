@@ -1,10 +1,12 @@
 # do not edit manually, instead use spreadsheet from translations.md and script ./core/files/update-translations.sh
 continue=devam
 continue_onto=%1$s üstünde devam edin
+continue_on=%1$s üstünde devam edin
 finish=hedefe ulaştınız
 keep_left=soldan ilerleyin
 keep_right=sağdan ilerleyin
 turn_onto=%2$s üstünde %1$s
+turn_on=%2$s üstünde %1$s
 turn_left=sola dönün
 turn_right=sağa dönün
 turn_slight_left=hafif sola dönün

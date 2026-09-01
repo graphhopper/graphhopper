@@ -1,10 +1,12 @@
 # do not edit manually, instead use spreadsheet from translations.md and script ./core/files/update-translations.sh
 continue=pluu
 continue_onto=pluu laŭlonge de %1$s
+continue_on=pluu laŭlonge de %1$s
 finish=Celo!
 keep_left=veturu ĉe maldekstra flanko
 keep_right=veturu ĉe dekstra fllanko
 turn_onto=%1$s al %2$s
+turn_on=%1$s al %2$s
 turn_left=turniĝu maldekstren
 turn_right=turniĝu dekstren
 turn_slight_left=turniĝetu maldekstren

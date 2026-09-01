@@ -1,10 +1,12 @@
 # do not edit manually, instead use spreadsheet from translations.md and script ./core/files/update-translations.sh
 continue=সোজা যেতে থাকুন
 continue_onto=%1$s সড়কে সোজা যেতে থাকুন
+continue_on=%1$s সড়কে সোজা যেতে থাকুন
 finish=
 keep_left=বামে থাকুন
 keep_right=ডানে থাকুন
 turn_onto=%1$s  %2$s এর দিকে
+turn_on=%1$s  %2$s এর দিকে
 turn_left=বামে যান
 turn_right=ডানে যান
 turn_slight_left=একটু বামে যান

@@ -1,10 +1,12 @@
 # do not edit manually, instead use spreadsheet from translations.md and script ./core/files/update-translations.sh
 continue=tiếp tục
 continue_onto=tiếp tục đến %1$s
+continue_on=tiếp tục đến %1$s
 finish=Kết thúc!
 keep_left=ở bên trái
 keep_right=ở bên phải
 turn_onto=%1$s vào %2$s
+turn_on=%1$s vào %2$s
 turn_left=rẽ trái
 turn_right=rẽ phải
 turn_slight_left=rẽ nhẹ sang trái
