@@ -1778,6 +1778,10 @@ public class GraphHopper {
                                 string = readJSONFileWithoutComments(customModelFile.toFile().getAbsolutePath());
                             }
                             CustomModel fileModel = jsonOM.readValue(string, CustomModel.class);
+                            for (String name : fileModel.getParameters().keySet())
+                                if (customModel.getParameters().containsKey(name))
+                                    throw new IllegalArgumentException("parameter '" + name + "' of custom model file '" + file
+                                            + "' is already defined in a previous custom model, profile: " + profile.getName());
                             customModel = CustomModel.merge(customModel, fileModel);
                             // merge() ignores parameter ranges as query models must never change them
                             customModel.getParameterRanges().putAll(fileModel.getParameterRanges());
