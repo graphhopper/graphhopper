@@ -130,17 +130,17 @@ public class CustomModelParser {
     }
 
     private static void checkParameters(CustomModel customModel, EncodedValueLookup lookup) {
-        for (Map.Entry<String, Object> entry : customModel.getParameters().entrySet()) {
+        for (Map.Entry<String, CustomModel.Parameter> entry : customModel.getParameters().entrySet()) {
             String name = entry.getKey();
             if (!name.matches("[a-z][a-z0-9_]*"))
                 throw new IllegalArgumentException("parameter '" + name + "' has an invalid name. Only lower case letters, numbers and underscore are allowed");
             if (lookup.hasEncodedValue(PARAM_PREFIX + name))
                 throw new IllegalArgumentException("parameter '" + name + "' collides with the encoded value '" + PARAM_PREFIX + name + "'");
-            if (entry.getValue() instanceof Number number) {
+            if (entry.getValue().value instanceof Number number) {
                 if (!Double.isFinite(number.doubleValue()))
                     throw new IllegalArgumentException("parameter '" + name + "' must be a finite number, but was: " + number);
-            } else if (!(entry.getValue() instanceof Boolean)) {
-                throw new IllegalArgumentException("parameter '" + name + "' must be a finite number or a boolean, but was: " + entry.getValue());
+            } else if (!(entry.getValue().value instanceof Boolean)) {
+                throw new IllegalArgumentException("parameter '" + name + "' must be a finite number or a boolean, but was: " + entry.getValue().value);
             }
         }
     }
@@ -148,7 +148,7 @@ public class CustomModelParser {
     /**
      * @return true if arg references a parameter, e.g. p_width for {"parameters": {"width": 3}}
      */
-    static boolean isParameter(String arg, Map<String, Object> parameters) {
+    static boolean isParameter(String arg, Map<String, CustomModel.Parameter> parameters) {
         return arg.startsWith(PARAM_PREFIX) && parameters.containsKey(arg.substring(PARAM_PREFIX.length()));
     }
 
@@ -158,27 +158,27 @@ public class CustomModelParser {
      * override a parameter with any value within its range.
      */
     public static void checkParameterRanges(CustomModel customModel, EncodedValueLookup lookup) {
-        for (Map.Entry<String, Object> entry : customModel.getParameters().entrySet()) {
+        for (Map.Entry<String, CustomModel.Parameter> entry : customModel.getParameters().entrySet()) {
             String name = entry.getKey();
-            if (!(entry.getValue() instanceof Number number)) continue;
-            MinMax range = customModel.getParameterRange(name);
-            if (number.doubleValue() < range.min || number.doubleValue() > range.max)
+            CustomModel.Parameter param = entry.getValue();
+            if (!(param.value instanceof Number number)) continue;
+            if (number.doubleValue() < param.min || number.doubleValue() > param.max)
                 throw new IllegalArgumentException("parameter '" + name + "': value " + number
-                        + " must be within its range [" + range.min + ", " + range.max + "]");
-            for (double endpoint : new double[]{range.min, range.max}) {
-                Map<String, Object> parameters = new LinkedHashMap<>(customModel.getParameters());
-                parameters.put(name, endpoint);
+                        + " must be within its range [" + param.min + ", " + param.max + "]");
+            for (double endpoint : new double[]{param.min, param.max}) {
+                Map<String, CustomModel.Parameter> parameters = new LinkedHashMap<>(customModel.getParameters());
+                parameters.put(name, new CustomModel.Parameter(endpoint));
                 try {
                     checkSpeedPriorityAndTurnPenalty(customModel, lookup, parameters);
                 } catch (IllegalArgumentException ex) {
                     throw new IllegalArgumentException("parameter '" + name + "' with value " + endpoint
-                            + " of its range [" + range.min + ", " + range.max + "]: " + ex.getMessage());
+                            + " of its range [" + param.min + ", " + param.max + "]: " + ex.getMessage());
                 }
             }
         }
     }
 
-    private static void checkSpeedPriorityAndTurnPenalty(CustomModel customModel, EncodedValueLookup lookup, Map<String, Object> parameters) {
+    private static void checkSpeedPriorityAndTurnPenalty(CustomModel customModel, EncodedValueLookup lookup, Map<String, CustomModel.Parameter> parameters) {
         MinMax speed = FindMinMax.findMinMax(new MinMax(0, CustomWeightingHelper.GLOBAL_MAX_SPEED), customModel.getSpeed(), lookup, parameters);
         if (speed.min < 0)
             throw new IllegalArgumentException("speed has to be >=0 but can be negative (" + speed.min + ")");
@@ -511,7 +511,7 @@ public class CustomModelParser {
                                               Set<String> speedVariables,
                                               Set<String> turnPenaltyVariables,
                                               EncodedValueLookup lookup, Map<String, JsonFeature> areas,
-                                              Map<String, Object> parameters) {
+                                              Map<String, CustomModel.Parameter> parameters) {
         final StringBuilder importSourceCode = new StringBuilder("import com.graphhopper.routing.ev.*;\n");
         importSourceCode.append("import java.util.Map;\n");
         importSourceCode.append("import " + CustomModel.class.getName() + ";\n");
@@ -534,12 +534,12 @@ public class CustomModelParser {
             if (isParameter(arg, parameters)) {
                 // read the value in init so that models differing only in the values share this class
                 String name = arg.substring(PARAM_PREFIX.length());
-                if (parameters.get(name) instanceof Boolean) {
+                if (parameters.get(name).value instanceof Boolean) {
                     classSourceCode.append("protected boolean " + arg + ";\n");
-                    initSourceCode.append("this." + arg + " = ((Boolean) customModel.getParameters().get(\"" + name + "\")).booleanValue();\n");
+                    initSourceCode.append("this." + arg + " = ((Boolean) ((CustomModel.Parameter) customModel.getParameters().get(\"" + name + "\")).value).booleanValue();\n");
                 } else {
                     classSourceCode.append("protected double " + arg + ";\n");
-                    initSourceCode.append("this." + arg + " = ((Number) customModel.getParameters().get(\"" + name + "\")).doubleValue();\n");
+                    initSourceCode.append("this." + arg + " = ((Number) ((CustomModel.Parameter) customModel.getParameters().get(\"" + name + "\")).value).doubleValue();\n");
                 }
             } else if (lookup.hasEncodedValue(arg)) {
                 EncodedValue enc = lookup.getEncodedValue(arg, EncodedValue.class);
@@ -619,7 +619,7 @@ public class CustomModelParser {
      */
     private static List<Java.BlockStatement> verifyExpressions(StringBuilder expressions, String info, Set<String> createObjects,
                                                                List<Statement> list, EncodedValueLookup lookup,
-                                                               Map<String, Object> parameters) throws Exception {
+                                                               Map<String, CustomModel.Parameter> parameters) throws Exception {
         // allow variables, all encoded values, constants, parameters and special variables like in_xyarea or backward_car_access
         NameValidator nameInConditionValidator = name -> lookup.hasEncodedValue(name)
                 || name.toUpperCase(Locale.ROOT).equals(name) || name.startsWith(IN_AREA_PREFIX) || name.equals(CHANGE_ANGLE)
@@ -657,7 +657,7 @@ public class CustomModelParser {
     static void parseExpressions(StringBuilder expressions, NameValidator nameInConditionValidator,
                                  String exceptionInfo, Set<String> createObjects, List<Statement> list,
                                  ClassHelper classHelper, EncodedValueLookup lookup,
-                                 Map<String, Object> parameters, String indentation) {
+                                 Map<String, CustomModel.Parameter> parameters, String indentation) {
         for (List<Statement> group : splitIntoGroup(list))
             if (group.size() > 1 && "true".equals(group.get(0).condition().trim()))
                 throw new IllegalArgumentException("Only one statement allowed for an unconditional statement");

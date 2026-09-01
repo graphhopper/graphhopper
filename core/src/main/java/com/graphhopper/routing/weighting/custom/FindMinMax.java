@@ -50,20 +50,21 @@ public class FindMinMax {
                         + bmDI + ", but was: " + queryModel.getDistanceInfluence());
         }
 
-        Map<String, Object> parameters = new LinkedHashMap<>(baseModel.getParameters());
+        Map<String, CustomModel.Parameter> parameters = new LinkedHashMap<>(baseModel.getParameters());
         parameters.putAll(queryModel.getParameters());
 
         // changing a parameter of the (prepared) base model is only accepted when it provably cannot
         // decrease any edge weight, e.g. a decreased p_max_speed
-        for (Map.Entry<String, Object> entry : queryModel.getParameters().entrySet()) {
+        for (Map.Entry<String, CustomModel.Parameter> entry : queryModel.getParameters().entrySet()) {
             String name = entry.getKey();
-            Object baseValue = baseModel.getParameters().get(name);
-            if (baseValue == null)
+            CustomModel.Parameter base = baseModel.getParameters().get(name);
+            if (base == null)
                 throw new IllegalArgumentException("parameter '" + name + "' is not defined in the server-side custom model");
-            if (equalValues(baseValue, entry.getValue())) continue;
-            if (!(baseValue instanceof Number oldValue) || !(entry.getValue() instanceof Number))
-                throw cannotChange(name, baseValue, entry.getValue(), "");
-            boolean increased = ((Number) entry.getValue()).doubleValue() > oldValue.doubleValue();
+            Object newValue = entry.getValue().value;
+            if (equalValues(base.value, newValue)) continue;
+            if (!(base.value instanceof Number oldValue) || !(newValue instanceof Number))
+                throw cannotChange(name, base.value, newValue, "");
+            boolean increased = ((Number) newValue).doubleValue() > oldValue.doubleValue();
             checkWeightOnlyIncreases(baseModel, name, increased, baseModel.getParameters(), parameters, lookup);
         }
 
@@ -86,7 +87,7 @@ public class FindMinMax {
      * (or keep) the weight of every edge, i.e. reduce access, lower the speed or the priority.
      */
     private static void checkWeightOnlyIncreases(CustomModel baseModel, String name, boolean increased,
-                                                 Map<String, Object> oldParams, Map<String, Object> newParams,
+                                                 Map<String, CustomModel.Parameter> oldParams, Map<String, CustomModel.Parameter> newParams,
                                                  EncodedValueLookup lookup) {
         // the name is already validated and contains no regex special characters
         Pattern pattern = Pattern.compile("\\b" + CustomModelParser.PARAM_PREFIX + name + "\\b");
@@ -97,7 +98,7 @@ public class FindMinMax {
     }
 
     private static void checkStatements(List<Statement> statements, Pattern pattern, String name, boolean increased,
-                                        Map<String, Object> oldParams, Map<String, Object> newParams,
+                                        Map<String, CustomModel.Parameter> oldParams, Map<String, CustomModel.Parameter> newParams,
                                         EncodedValueLookup lookup) {
         Object oldValue = oldParams.get(name), newValue = newParams.get(name);
         for (Statement statement : statements) {
@@ -192,7 +193,7 @@ public class FindMinMax {
         return atom instanceof Java.AmbiguousName name && name.identifiers.length == 1 && name.identifiers[0].equals(variable);
     }
 
-    private static void checkMultiplyValue(List<Statement> list, EncodedValueLookup lookup, Map<String, Object> parameters) {
+    private static void checkMultiplyValue(List<Statement> list, EncodedValueLookup lookup, Map<String, CustomModel.Parameter> parameters) {
         for (Statement statement : list) {
             if (statement.isBlock()) {
                 checkMultiplyValue(statement.doBlock(), lookup, parameters);
@@ -213,13 +214,13 @@ public class FindMinMax {
      * This method returns the smallest value possible in "min" and the smallest value that cannot be
      * exceeded by any edge in max.
      */
-    static MinMax findMinMax(MinMax minMax, List<Statement> statements, EncodedValueLookup lookup, Map<String, Object> parameters) {
+    static MinMax findMinMax(MinMax minMax, List<Statement> statements, EncodedValueLookup lookup, Map<String, CustomModel.Parameter> parameters) {
         List<List<Statement>> groups = CustomModelParser.splitIntoGroup(statements);
         for (List<Statement> group : groups) findMinMaxForGroup(minMax, group, lookup, parameters);
         return minMax;
     }
 
-    private static void findMinMaxForGroup(final MinMax minMax, List<Statement> group, EncodedValueLookup lookup, Map<String, Object> parameters) {
+    private static void findMinMaxForGroup(final MinMax minMax, List<Statement> group, EncodedValueLookup lookup, Map<String, CustomModel.Parameter> parameters) {
         if (group.isEmpty() || !IF.equals(group.get(0).keyword()))
             throw new IllegalArgumentException("Every group must start with an if-statement");
 

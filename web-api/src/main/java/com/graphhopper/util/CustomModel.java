@@ -20,6 +20,7 @@ package com.graphhopper.util;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.graphhopper.jackson.CustomModelAreasDeserializer;
 import com.graphhopper.json.MinMax;
@@ -43,10 +44,7 @@ public class CustomModel {
     private List<Statement> turnPenaltyStatements = new ArrayList<>();
     // numbers and booleans usable in the expressions of the statements; on merge they are
     // overridden per key (unlike statements, which are appended)
-    private Map<String, Object> parameters = new LinkedHashMap<>();
-    // the allowed value range of a number parameter; can only be specified in a server-side custom
-    // model, absent means the default range, see getParameterRange
-    private Map<String, MinMax> parameterRanges = new LinkedHashMap<>();
+    private Map<String, Parameter> parameters = new LinkedHashMap<>();
 
     private JsonFeatureCollection areas = new JsonFeatureCollection();
 
@@ -62,8 +60,7 @@ public class CustomModel {
         speedStatements = deepCopy(toCopy.getSpeed());
         priorityStatements = deepCopy(toCopy.getPriority());
         turnPenaltyStatements = deepCopy(toCopy.getTurnPenalty());
-        parameters.putAll(toCopy.parameters);
-        toCopy.parameterRanges.forEach((name, range) -> parameterRanges.put(name, new MinMax(range.min, range.max)));
+        parameters.putAll(toCopy.parameters); // Parameter is immutable
 
         addAreas(toCopy.getAreas());
     }
@@ -142,8 +139,48 @@ public class CustomModel {
         return this;
     }
 
+    /**
+     * A named number or boolean usable in the expressions of the statements, referenced with the p_ prefix.
+     */
+    public static class Parameter {
+        public final Object value; // Double or Boolean
+        // the allowed value range of a number parameter; a non-default range can only be specified
+        // in a server-side custom model
+        public final double min, max;
+
+        public Parameter(Object value) {
+            this(value, 0, Double.POSITIVE_INFINITY);
+        }
+
+        public Parameter(Object value, double min, double max) {
+            this.value = value;
+            this.min = min;
+            this.max = max;
+        }
+
+        public boolean hasDefaultRange() {
+            return min == 0 && max == Double.POSITIVE_INFINITY;
+        }
+
+        @JsonValue
+        Object toJson() {
+            if (hasDefaultRange()) return value;
+            Map<String, Object> map = new LinkedHashMap<>();
+            map.put("value", value);
+            if (min != 0) map.put("min", min);
+            if (max != Double.POSITIVE_INFINITY) map.put("max", max);
+            return map;
+        }
+
+        @Override
+        public String toString() {
+            // the range is excluded, see CustomModel.toString
+            return String.valueOf(value);
+        }
+    }
+
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public Map<String, Object> getParameters() {
+    public Map<String, Parameter> getParameters() {
         return parameters;
     }
 
@@ -166,7 +203,7 @@ public class CustomModel {
                     rangeLimit(name, "max", object.get("max"), Double.POSITIVE_INFINITY));
         } else {
             // store numbers as Double so that toString does not change when a range is added (5 -> 5.0)
-            parameters.put(name, value instanceof Number number ? number.doubleValue() : value);
+            parameters.put(name, new Parameter(value instanceof Number number ? number.doubleValue() : value));
         }
     }
 
@@ -178,7 +215,7 @@ public class CustomModel {
     }
 
     public CustomModel setParameter(String name, double value) {
-        parameters.put(name, value);
+        parameters.put(name, new Parameter(value));
         return this;
     }
 
@@ -187,29 +224,13 @@ public class CustomModel {
             throw new IllegalArgumentException("parameter '" + name + "': min " + min + " must not be larger than max " + max);
         if (value < min || value > max)
             throw new IllegalArgumentException("parameter '" + name + "': value " + value + " must be within its range [" + min + ", " + max + "]");
-        parameters.put(name, value);
-        parameterRanges.put(name, new MinMax(min, max));
+        parameters.put(name, new Parameter(value, min, max));
         return this;
     }
 
     public CustomModel setParameter(String name, boolean value) {
-        parameters.put(name, value);
+        parameters.put(name, new Parameter(value));
         return this;
-    }
-
-    /**
-     * @return the allowed value range of the specified number parameter, [0, Infinity) unless the
-     * server-side custom model defined an explicit range
-     */
-    @JsonIgnore
-    public MinMax getParameterRange(String name) {
-        MinMax range = parameterRanges.get(name);
-        return range == null ? new MinMax(0, Double.POSITIVE_INFINITY) : range;
-    }
-
-    @JsonIgnore
-    public Map<String, MinMax> getParameterRanges() {
-        return parameterRanges;
     }
 
     /**
@@ -217,23 +238,22 @@ public class CustomModel {
      * base (server-side) model defines, with the same type and within the allowed range.
      */
     public static void checkParameterOverrides(CustomModel baseModel, CustomModel queryModel) {
-        if (!queryModel.parameterRanges.isEmpty())
-            throw new IllegalArgumentException("a parameter range can only be specified in a server-side custom model, but got one for: "
-                    + queryModel.parameterRanges.keySet());
-        for (Map.Entry<String, Object> entry : queryModel.parameters.entrySet()) {
+        for (Map.Entry<String, Parameter> entry : queryModel.parameters.entrySet()) {
             String name = entry.getKey();
-            Object baseValue = baseModel.parameters.get(name);
-            if (baseValue == null)
+            if (!entry.getValue().hasDefaultRange())
+                throw new IllegalArgumentException("a parameter range can only be specified in a server-side custom model, but got one for: '" + name + "'");
+            Parameter base = baseModel.parameters.get(name);
+            Object value = entry.getValue().value;
+            if (base == null)
                 throw new IllegalArgumentException("parameter '" + name + "' is not defined in the server-side custom model. Only the values of "
                         + baseModel.parameters.keySet().stream().filter(n -> !n.startsWith("private_")).toList() + " can be overridden");
-            if (baseValue instanceof Boolean ? !(entry.getValue() instanceof Boolean) : !(entry.getValue() instanceof Number))
+            if (base.value instanceof Boolean ? !(value instanceof Boolean) : !(value instanceof Number))
                 throw new IllegalArgumentException("parameter '" + name + "' must have the same type as in the server-side custom model ("
-                        + baseValue + "), but was: " + entry.getValue());
-            if (entry.getValue() instanceof Number number) {
-                MinMax range = baseModel.getParameterRange(name);
-                if (number.doubleValue() < range.min || number.doubleValue() > range.max)
+                        + base.value + "), but was: " + value);
+            if (value instanceof Number number) {
+                if (number.doubleValue() < base.min || number.doubleValue() > base.max)
                     throw new IllegalArgumentException("parameter '" + name + "': value " + number
-                            + " must be within its range [" + range.min + ", " + range.max + "]");
+                            + " must be within its range [" + base.min + ", " + base.max + "]");
             }
         }
     }
@@ -279,8 +299,8 @@ public class CustomModel {
 
     @Override
     public String toString() {
-        // parameterRanges are excluded as they only restrict requests and do not affect the weights,
-        // i.e. changing a range must not require a re-import or new preparation
+        // parameter ranges are excluded (Parameter.toString) as they only restrict requests and do not
+        // affect the weights, i.e. changing a range must not require a re-import or new preparation
         return createContentString() + "|parameters=" + parameters;
     }
 
@@ -292,8 +312,8 @@ public class CustomModel {
      */
     public String createClassKey() {
         Map<String, String> types = new TreeMap<>();
-        for (Map.Entry<String, Object> entry : parameters.entrySet())
-            types.put(entry.getKey(), entry.getValue() instanceof Boolean ? "boolean" : "double");
+        for (Map.Entry<String, Parameter> entry : parameters.entrySet())
+            types.put(entry.getKey(), entry.getValue().value instanceof Boolean ? "boolean" : "double");
         return createContentString() + "|parameterTypes=" + types;
     }
 
@@ -322,9 +342,11 @@ public class CustomModel {
         mergedCM.speedStatements.addAll(queryModel.getSpeed());
         mergedCM.priorityStatements.addAll(queryModel.getPriority());
         mergedCM.turnPenaltyStatements.addAll(queryModel.getTurnPenalty());
-        mergedCM.parameters.putAll(queryModel.parameters);
-        // ranges are deliberately not merged so that a query model can never change them; the server-side
-        // custom_model_files merge copies them explicitly (GraphHopper.resolveCustomModelFiles)
+        // when overriding an existing parameter only the value is taken, so that a query model can never change a range
+        queryModel.parameters.forEach((name, param) -> {
+            Parameter existing = mergedCM.parameters.get(name);
+            mergedCM.parameters.put(name, existing == null ? param : new Parameter(param.value, existing.min, existing.max));
+        });
 
         mergedCM.addAreas(queryModel.getAreas());
         return mergedCM;

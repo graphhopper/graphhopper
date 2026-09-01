@@ -23,6 +23,7 @@ import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.IntEncodedValue;
+import com.graphhopper.util.CustomModel;
 import org.codehaus.commons.compiler.CompileException;
 import org.codehaus.janino.*;
 
@@ -154,7 +155,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
      * @return the encoded values and parameters of the value expression. Throws an exception if the
      * expression is invalid, contains more than one encoded value or can result in a negative value.
      */
-    static Set<String> findVariables(String valueExpression, EncodedValueLookup lookup, Map<String, Object> parameters) {
+    static Set<String> findVariables(String valueExpression, EncodedValueLookup lookup, Map<String, CustomModel.Parameter> parameters) {
         ParseResult result = parse(valueExpression, key -> lookup.hasEncodedValue(key) || key.contains(INFINITY) || CustomModelParser.isParameter(key, parameters));
         if (!result.ok)
             throw new IllegalArgumentException(result.invalidMessage);
@@ -213,7 +214,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         return result.guessedVariables;
     }
 
-    static MinMax findMinMax(String valueExpression, EncodedValueLookup lookup, Map<String, Object> parameters) {
+    static MinMax findMinMax(String valueExpression, EncodedValueLookup lookup, Map<String, CustomModel.Parameter> parameters) {
         ParseResult result = parse(valueExpression, key -> lookup.hasEncodedValue(key) || key.contains(INFINITY) || CustomModelParser.isParameter(key, parameters));
         if (!result.ok)
             throw new IllegalArgumentException(result.invalidMessage);
@@ -260,7 +261,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         }
     }
 
-    static boolean containsEncodedValue(String valueExpression, EncodedValueLookup lookup, Map<String, Object> parameters) {
+    static boolean containsEncodedValue(String valueExpression, EncodedValueLookup lookup, Map<String, CustomModel.Parameter> parameters) {
         ParseResult result = parse(valueExpression, key -> lookup.hasEncodedValue(key) || key.contains(INFINITY) || CustomModelParser.isParameter(key, parameters));
         return !result.ok || result.guessedVariables.stream().anyMatch(lookup::hasEncodedValue);
     }
@@ -269,10 +270,10 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
      * @return the expression with the parameters replaced by their values for the ExpressionEvaluator,
      * e.g. "0.9 * p_hill_factor" -> "0.9 * 0.5"
      */
-    private static String replaceParameters(String expression, Map<String, Object> parameters) {
-        for (Map.Entry<String, Object> entry : parameters.entrySet()) {
+    private static String replaceParameters(String expression, Map<String, CustomModel.Parameter> parameters) {
+        for (Map.Entry<String, CustomModel.Parameter> entry : parameters.entrySet()) {
             // parenthesized canonical literal, as e.g. "speed--2" for a negative value would not compile
-            String literal = entry.getValue() instanceof Number number ? "(" + number.doubleValue() + ")" : entry.getValue().toString();
+            String literal = entry.getValue().value instanceof Number number ? "(" + number.doubleValue() + ")" : entry.getValue().value.toString();
             expression = expression.replaceAll("\\b" + CustomModelParser.PARAM_PREFIX + entry.getKey() + "\\b", literal);
         }
         return Statement.toJavaExpression(expression);

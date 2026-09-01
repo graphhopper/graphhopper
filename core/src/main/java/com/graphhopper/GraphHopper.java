@@ -1783,8 +1783,6 @@ public class GraphHopper {
                                     throw new IllegalArgumentException("parameter '" + name + "' of custom model file '" + file
                                             + "' is already defined in a previous custom model, profile: " + profile.getName());
                             customModel = CustomModel.merge(customModel, fileModel);
-                            // merge() ignores parameter ranges as query models must never change them
-                            customModel.getParameterRanges().putAll(fileModel.getParameterRanges());
                         } catch (IOException ex) {
                             throw new RuntimeException("Cannot load custom_model from location " + file + ", profile:" + profile.getName(), ex);
                         }
