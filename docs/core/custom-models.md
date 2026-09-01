@@ -766,7 +766,7 @@ checking the range endpoints is sufficient. Conditions can combine multiple para
 
 Note that for a profile prepared with landmarks (hybrid mode) a request can change a parameter value
 only if this cannot decrease any edge weight, as the landmark preparation is based on the server-side
-values: the value of a statement must not increase (e.g. a decreased `p_max_speed`) and a parameter
+values: the value of a statement must not increase (e.g. a decreased `p_vehicle_max_speed`) and a parameter
 in a condition is only supported for blocking statements, where the condition must apply to more
 edges (e.g. a decreased `p_max_mtb_rating` of the bike custom model excludes more roads). Booleans
 and parameters used in `turn_penalty` or with an encoded value can never change. Everything else is

@@ -54,7 +54,7 @@ public class FindMinMax {
         parameters.putAll(queryModel.getParameters());
 
         // changing a parameter of the (prepared) base model is only accepted when it provably cannot
-        // decrease any edge weight, e.g. a decreased p_max_speed
+        // decrease any edge weight, e.g. a decreased p_vehicle_max_speed
         for (Map.Entry<String, CustomModel.Parameter> entry : queryModel.getParameters().entrySet()) {
             String name = entry.getKey();
             CustomModel.Parameter base = baseModel.getParameters().get(name);
@@ -170,9 +170,9 @@ public class FindMinMax {
                 }
                 case "<", "<=", ">", ">=" -> {
                     boolean less = binOp.operator.startsWith("<");
-                    // e.g. "p_weight < max_weight" applies to more edges when p_weight decreases
+                    // e.g. "p_vehicle_weight < max_weight" applies to more edges when p_vehicle_weight decreases
                     if (isVariable(binOp.lhs, variable) && isZero(rhs)) return less ? -1 : +1;
-                    // e.g. "max_weight < p_weight" applies to more edges when p_weight increases
+                    // e.g. "max_weight < p_vehicle_weight" applies to more edges when p_vehicle_weight increases
                     if (isVariable(binOp.rhs, variable) && isZero(lhs)) return less ? +1 : -1;
                     return isZero(lhs) && isZero(rhs) ? 0 : null;
                 }

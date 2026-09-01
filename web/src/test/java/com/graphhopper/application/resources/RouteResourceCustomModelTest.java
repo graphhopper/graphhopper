@@ -260,12 +260,12 @@ public class RouteResourceCustomModelTest {
         assertEquals(path.get("distance").asDouble(), 1007, 5);
 
         // a request can override a parameter value within its range, but only the value
-        body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"cargo_bike\", \"custom_model\": {\"parameters\": {\"max_speed\": 20}}, \"ch.disable\": true}";
+        body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"cargo_bike\", \"custom_model\": {\"parameters\": {\"vehicle_max_speed\": 20}}, \"ch.disable\": true}";
         JsonNode path2 = getPath(body);
         assertEquals(path.get("distance").asDouble(), path2.get("distance").asDouble(), 1);
         assertTrue(path2.get("time").asLong() > path.get("time").asLong());
-        assertMessageStartsWith(query(body.replace(": 20", ": 50"), 400), "parameter 'max_speed': value 50");
-        assertMessageStartsWith(query(body.replace("max_speed", "maxspeed"), 400), "parameter 'maxspeed' is not defined");
+        assertMessageStartsWith(query(body.replace(": 20", ": 50"), 400), "parameter 'vehicle_max_speed': value 50");
+        assertMessageStartsWith(query(body.replace("max_speed", "maxspeed"), 400), "parameter 'vehicle_maxspeed' is not defined");
     }
 
     @Test
