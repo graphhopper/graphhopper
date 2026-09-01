@@ -214,7 +214,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
     }
 
     static MinMax findMinMax(String valueExpression, EncodedValueLookup lookup, Map<String, Object> parameters) {
-        ParseResult result = parse(valueExpression, key -> lookup.hasEncodedValue(key) || CustomModelParser.isParameter(key, parameters));
+        ParseResult result = parse(valueExpression, key -> lookup.hasEncodedValue(key) || key.contains(INFINITY) || CustomModelParser.isParameter(key, parameters));
         if (!result.ok)
             throw new IllegalArgumentException(result.invalidMessage);
         Set<String> encodedValues = new LinkedHashSet<>(result.guessedVariables);

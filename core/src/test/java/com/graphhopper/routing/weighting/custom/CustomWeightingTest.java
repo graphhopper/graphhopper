@@ -184,6 +184,11 @@ class CustomWeightingTest {
                 () -> CustomModelParser.checkParameterRanges(turn, encodingManager));
         assertTrue(ex.getMessage().contains("negative"), ex.getMessage());
         CustomModelParser.checkParameterRanges(turn.setParameter("discount", 30.0, 0, 60), encodingManager);
+
+        // "Infinity" is a valid turn_penalty value (see avoid_turns.json) and must pass the endpoint check
+        CustomModel infiniteTurn = createSpeedCustomModel(avSpeedEnc).setParameter("x", 1.0, 0, 2);
+        infiniteTurn.addToTurnPenalty(If("true", Statement.Op.ADD, "Infinity"));
+        CustomModelParser.checkParameterRanges(infiniteTurn, encodingManager);
     }
 
     @Test
