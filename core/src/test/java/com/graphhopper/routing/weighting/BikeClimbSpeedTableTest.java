@@ -40,10 +40,10 @@ public class BikeClimbSpeedTableTest {
         assertEquals(1.2, table.getSlopeOffset(4), 0.01);
 
         // the factor is relative to the current speed: 12% on a 9km/h track is 3.45km/h instead of 3.66km/h
-        assertEquals(3.45, 9 * table.getBikeClimbFactor(12, 9), 0.01);
-        assertEquals(3.66, 18 * table.getBikeClimbFactor(12, 18), 0.01);
+        assertEquals(3.45, 9 * table.getClimbFactor(12, 9), 0.01);
+        assertEquals(3.66, 18 * table.getClimbFactor(12, 18), 0.01);
         // the factor never increases the speed above the current speed
-        assertEquals(1, table.getBikeClimbFactor(12, 3));
-        assertEquals(1, table.getBikeClimbFactor(-5, 18));
+        assertEquals(1, table.getClimbFactor(12, 3));
+        assertEquals(1, table.getClimbFactor(-5, 18));
     }
 }

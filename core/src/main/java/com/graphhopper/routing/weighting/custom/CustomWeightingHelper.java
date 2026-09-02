@@ -39,6 +39,7 @@ public class CustomWeightingHelper {
 
     protected EncodedValueLookup lookup;
     protected CustomModel customModel;
+    private BikeClimbSpeedTable bikeClimbTable;
 
     protected CustomWeightingHelper() {
     }
@@ -85,12 +86,26 @@ public class CustomWeightingHelper {
 
     /**
      * This method calculates the slowdown factor based on the slope for the usage with 'multiply_by'.
-     * This method is only used for findMinMax and parseValue. In the generated getSpeed code the
-     * CustomModelParser creates a BikeClimbSpeedTable field from the parameters instead and calls
-     * its getBikeClimbFactor with the current speed, see ValueExpressionVisitor.
+     * This method is only used for findMinMax and parseValue, the generated getSpeed code calls
+     * getBikeClimbFactor with the current speed instead, see CustomModelParser.parseValue.
      */
     public static double bike_climb_factor(double slope, double power, double mass, double baseSpeed, double crr) {
-        return new BikeClimbSpeedTable(power, mass, baseSpeed, crr).getBikeClimbFactor(slope, baseSpeed);
+        return new BikeClimbSpeedTable(power, mass, baseSpeed, crr).getClimbFactor(slope, baseSpeed);
+    }
+
+    /**
+     * Called per edge from the generated getSpeed for bike_climb_factor(p_power, p_mass, p_base_speed, p_crr)
+     * with the injected average_slope and current speed. The arguments are parameters and so constant
+     * for this instance (one per request), which allows to create the speed table lazily.
+     */
+    protected double getBikeClimbFactor(double slope, double currentSpeed, double power, double mass, double baseSpeed, double crr) {
+        // benign race if the instance is ever shared between threads: identical tables would be created and
+        // as all fields of the table are final the reference can be published without synchronization
+        if (bikeClimbTable == null)
+            bikeClimbTable = new BikeClimbSpeedTable(power, mass, baseSpeed, crr);
+        else if (!bikeClimbTable.matches(power, mass, baseSpeed, crr))
+            throw new IllegalArgumentException("bike_climb_factor must be called with the same arguments everywhere");
+        return bikeClimbTable.getClimbFactor(slope, currentSpeed);
     }
 
     public static boolean in(Polygon p, EdgeIteratorState edge) {

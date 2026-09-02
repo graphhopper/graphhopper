@@ -466,12 +466,15 @@ class CustomWeightingTest {
         ex = assertThrows(IllegalArgumentException.class, () -> CustomModelParser.createWeighting(em, NO_TURN_COST_PROVIDER, customModel));
         assertTrue(ex.getMessage().contains("bike_climb_factor is only supported for 'speed'"), ex.getMessage());
 
-        // there is a single table, so all calls must use the same arguments
+        // the table is created lazily per instance, so all calls must use the same arguments
         CustomModel dupModel = bikeClimbModel(speedEnc.getName(), 120, 95, 18).setParameter("mass2", 80);
         dupModel.addToSpeed(If("average_slope >= 10", MULTIPLY, "0.9 * bike_climb_factor(p_power, p_mass, p_base_speed, p_crr)"));
-        assertNotNull(CustomModelParser.createWeighting(em, NO_TURN_COST_PROVIDER, dupModel));
-        dupModel.addToSpeed(If("average_slope >= 20", MULTIPLY, "bike_climb_factor(p_power, p_mass2, p_base_speed, p_crr)"));
-        ex = assertThrows(IllegalArgumentException.class, () -> CustomModelParser.createWeighting(em, NO_TURN_COST_PROVIDER, dupModel));
+        // both calls apply (the second one to the already reduced speed), which is at least the 0.9 scaling
+        double dupWeight = CustomModelParser.createWeighting(em, NO_TURN_COST_PROVIDER, dupModel).calcEdgeWeight(edge, false);
+        assertTrue(dupWeight >= weighting.calcEdgeWeight(edge, false) / 0.9 && dupWeight < 20000, "" + dupWeight);
+        dupModel.addToSpeed(If("average_slope >= 5", MULTIPLY, "bike_climb_factor(p_power, p_mass2, p_base_speed, p_crr)"));
+        Weighting dupWeighting = CustomModelParser.createWeighting(em, NO_TURN_COST_PROVIDER, dupModel);
+        ex = assertThrows(IllegalArgumentException.class, () -> dupWeighting.calcEdgeWeight(edge, false));
         assertTrue(ex.getMessage().contains("must be called with the same arguments"), ex.getMessage());
     }
 

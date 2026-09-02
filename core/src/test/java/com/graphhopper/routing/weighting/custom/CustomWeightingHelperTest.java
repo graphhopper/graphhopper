@@ -84,13 +84,13 @@ class CustomWeightingHelperTest {
         // (doubled for 9km/h) but the power-limited climbing speed is not scaled down proportionally,
         // i.e. 9*factor is 3.45km/h and not 9/18*3.66=1.83km/h
         BikeClimbSpeedTable table = new BikeClimbSpeedTable(120, 95, 18, 0.006);
-        assertEquals(3.45, 9 * table.getBikeClimbFactor(12, 9), 0.01);
+        assertEquals(3.45, 9 * table.getClimbFactor(12, 9), 0.01);
         // the factor never increases the speed above the current speed
-        assertEquals(1, table.getBikeClimbFactor(12, 3));
+        assertEquals(1, table.getClimbFactor(12, 3));
         // a current speed above the base speed results in the same absolute climbing speed
-        assertEquals(3.66, 25 * table.getBikeClimbFactor(12, 25), 0.01);
+        assertEquals(3.66, 25 * table.getClimbFactor(12, 25), 0.01);
         // the static variant used for the bounds is the factor at the base speed
-        assertEquals(table.getBikeClimbFactor(12, 18), CustomWeightingHelper.bike_climb_factor(12, 120, 95, 18, 0.006), 1.e-6);
+        assertEquals(table.getClimbFactor(12, 18), CustomWeightingHelper.bike_climb_factor(12, 120, 95, 18, 0.006), 1.e-6);
     }
 
     @Test

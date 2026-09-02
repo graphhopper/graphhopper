@@ -13,7 +13,7 @@ public class BikeClimbSpeedTable {
     // the table covers the slopes up to this value (in percent), beyond the last entry is used. The maximum
     // of average_slope is 31.5 plus the slope offset of at most 100 * crr * (MAX_CRR_FACTOR - 1), see getSlopeOffset
     private static final double MAX_SLOPE = 40;
-    private final double baseSpeed, crr;
+    private final double power, mass, baseSpeed, crr;
 
     /**
      * This constructor creates a speed table to be later used via getSpeed as a fast function inside a custom model.
@@ -37,6 +37,8 @@ public class BikeClimbSpeedTable {
             throw new IllegalArgumentException("Inconsistency: power not sufficient at crr=" + crr
                     + " for baseSpeed=" + baseSpeed + " km/h in flat (aero <= 0)");
         double m_g_100 = mass * 9.81 / 100.0;
+        this.power = power;
+        this.mass = mass;
         this.baseSpeed = baseSpeed;
         this.crr = crr;
 
@@ -109,7 +111,7 @@ public class BikeClimbSpeedTable {
      * surface) and the power-limited climb speed, i.e. the factor is never above 1. A current speed
      * below the base speed additionally increases the rolling resistance, see getSlopeOffset.
      */
-    public double getBikeClimbFactor(double slope, double currentSpeed) {
+    public double getClimbFactor(double slope, double currentSpeed) {
         if (slope < 0 || currentSpeed <= 0) return 1;
         return Math.min(1, getSpeed(slope + getSlopeOffset(currentSpeed)) / currentSpeed);
     }
@@ -124,6 +126,10 @@ public class BikeClimbSpeedTable {
     double getSlopeOffset(double currentSpeed) {
         if (currentSpeed >= baseSpeed) return 0;
         return 100 * crr * (Math.min(MAX_CRR_FACTOR, baseSpeed / currentSpeed) - 1);
+    }
+
+    public boolean matches(double power, double mass, double baseSpeed, double crr) {
+        return this.power == power && this.mass == mass && this.baseSpeed == baseSpeed && this.crr == crr;
     }
 
     public double getSpeed(double slope) {

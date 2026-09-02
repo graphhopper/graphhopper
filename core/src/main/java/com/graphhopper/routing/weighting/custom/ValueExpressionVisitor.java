@@ -45,9 +45,6 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
     private static final Set<String> allowedMethods = Set.of("sqrt");
     // the built-in function, also a static method in CustomWeightingHelper for the ExpressionEvaluator
     static final String BIKE_CLIMB_FACTOR = "bike_climb_factor";
-    // the field of the generated class for the BikeClimbSpeedTable of the bike_climb_factor call, also the
-    // prefix of the pseudo variable that carries the arguments, see toTableVariable
-    static final String BIKE_CLIMB_TABLE = "bike_climb_table";
     // the meaning of the arguments of bike_climb_factor (only used for error messages)
     static final String[] BIKE_CLIMB_ARGS = {"power", "mass", "base_speed", "crr"};
     private final ParseResult result;
@@ -101,7 +98,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
                     return false;
                 }
                 // the arguments must be parameters (verified in checkBikeClimbArgs) as the BikeClimbSpeedTable
-                // is created from their values in init of the generated class, see CustomModelParser.createClassTemplate
+                // is created once per instance from their values, see CustomWeightingHelper.bike_climb_factor
                 String[] args = new String[mi.arguments.length];
                 for (int i = 0; i < args.length; i++) {
                     String expects = BIKE_CLIMB_FACTOR + " expects a parameter like p_" + BIKE_CLIMB_ARGS[i] + " as argument " + (i + 1) + ", but ";
@@ -214,21 +211,6 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         return atom instanceof Java.MethodInvocation mi && mi.methodName.equals(BIKE_CLIMB_FACTOR);
     }
 
-    /**
-     * @return the pseudo variable that carries the arguments of the bike_climb_factor call to
-     * CustomModelParser.createClassTemplate, e.g. bike_climb_table(p_power,p_mass,p_base_speed,p_crr)
-     */
-    static String toTableVariable(String[] args) {
-        return BIKE_CLIMB_TABLE + "(" + String.join(",", args) + ")";
-    }
-
-    /**
-     * @return the arguments of the bike_climb_factor call carried by the pseudo variable, see toTableVariable
-     */
-    static String[] fromTableVariable(String variable) {
-        return variable.substring(BIKE_CLIMB_TABLE.length() + 1, variable.length() - 1).split(",");
-    }
-
     private static void checkBikeClimbArgs(ParseResult result, Map<String, CustomModel.Parameter> parameters) {
         if (result.bikeClimbArgs == null) return;
         for (String arg : result.bikeClimbArgs)
@@ -318,17 +300,6 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         if (value < 0)
             throw new IllegalArgumentException("illegal expression as it can result in a negative weight: " + valueExpression);
         return result;
-    }
-
-    /**
-     * @return the variables of the parsed value expression that the generated class has to provide, i.e. the
-     * encoded values and the pseudo variable for the table field, see CustomModelParser.createClassTemplate
-     */
-    static Set<String> findVariables(ParseResult result) {
-        if (result.bikeClimbArgs == null) return result.guessedVariables;
-        Set<String> variables = new LinkedHashSet<>(result.guessedVariables);
-        variables.add(toTableVariable(result.bikeClimbArgs));
-        return variables;
     }
 
     static MinMax findMinMax(String valueExpression, Map<String, CustomModel.Parameter> parameters, EncodedValueLookup lookup) {

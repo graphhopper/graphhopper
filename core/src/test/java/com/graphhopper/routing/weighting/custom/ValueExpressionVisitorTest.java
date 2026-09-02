@@ -164,10 +164,9 @@ class ValueExpressionVisitorTest {
         assertInterval(minFactor, 1.0, ValueExpressionVisitor.findMinMax(BIKE_CALL, BIKE_PARAMS, lookup));
         assertInterval(0.9 * minFactor, 0.9, ValueExpressionVisitor.findMinMax("0.9 * " + BIKE_CALL, BIKE_PARAMS, lookup));
 
-        // average_slope, the parameters and the table pseudo variable are returned so that the generated
-        // class creates the variables and the field
-        assertEquals(Set.of("average_slope", "p_power", "p_mass", "p_base_speed", "p_crr", "bike_climb_table(p_power,p_mass,p_base_speed,p_crr)"),
-                findVariables(ValueExpressionVisitor.parseValue(BIKE_CALL, BIKE_PARAMS, lookup)));
+        // average_slope and the parameters are variables so that the generated class provides them
+        assertEquals(Set.of("average_slope", "p_power", "p_mass", "p_base_speed", "p_crr"),
+                ValueExpressionVisitor.parseValue(BIKE_CALL, BIKE_PARAMS, lookup).guessedVariables);
 
         // the arguments must be defined parameters, not encoded values
         String msg = assertThrows(IllegalArgumentException.class, () -> ValueExpressionVisitor.parseValue(
@@ -247,8 +246,8 @@ class ValueExpressionVisitorTest {
         IntEncodedValueImpl prio2 = new IntEncodedValueImpl("my_priority2", 5, -5, false, false);
         EncodedValueLookup lookup = new EncodingManager.Builder().add(prio1).add(prio2).build();
 
-        assertEquals(Set.of(), findVariables(parseValue("2", lookup)));
-        assertEquals(Set.of("my_priority"), findVariables(parseValue("2*my_priority", lookup)));
+        assertEquals(Set.of(), parseValue("2", lookup).guessedVariables);
+        assertEquals(Set.of("my_priority"), parseValue("2*my_priority", lookup).guessedVariables);
 
         Exception ex = assertThrows(IllegalArgumentException.class, () ->  parseValue("-2*my_priority", lookup));
         assertTrue(ex.getMessage().contains("illegal expression as it can result in a negative weight"));

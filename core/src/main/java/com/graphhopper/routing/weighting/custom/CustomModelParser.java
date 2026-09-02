@@ -20,7 +20,6 @@ package com.graphhopper.routing.weighting.custom;
 import com.graphhopper.json.MinMax;
 import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.weighting.BikeClimbSpeedTable;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.*;
@@ -42,7 +41,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
 import static com.graphhopper.json.Statement.Keyword.IF;
-import static com.graphhopper.routing.weighting.custom.ValueExpressionVisitor.BIKE_CLIMB_TABLE;
+import static com.graphhopper.routing.weighting.custom.ValueExpressionVisitor.BIKE_CLIMB_FACTOR;
 
 public class CustomModelParser {
     private static final AtomicLong longVal = new AtomicLong(1);
@@ -238,7 +237,6 @@ public class CustomModelParser {
         try {
             Set<String> priorityVariables = new LinkedHashSet<>();
             List<Java.BlockStatement> priorityStatements = createGetPriorityStatements(priorityVariables, customModel, lookup);
-            checkBikeClimbUnsupported(priorityVariables, "priority");
 
             if (customModel.getSpeed().isEmpty())
                 throw new IllegalArgumentException("At least one initial statement under 'speed' is required.");
@@ -256,13 +254,9 @@ public class CustomModelParser {
 
             Set<String> speedVariables = new LinkedHashSet<>();
             List<Java.BlockStatement> speedStatements = createGetSpeedStatements(speedVariables, customModel, lookup);
-            List<String> tables = speedVariables.stream().filter(v -> v.startsWith(BIKE_CLIMB_TABLE)).toList();
-            if (tables.size() > 1)
-                throw new IllegalArgumentException("bike_climb_factor must be called with the same arguments everywhere, but got: " + tables);
 
             Set<String> turnPenaltyVariables = new LinkedHashSet<>();
             List<Java.BlockStatement> turnPenaltyStatements = createGetTurnPenaltyStatements(turnPenaltyVariables, customModel, lookup);
-            checkBikeClimbUnsupported(turnPenaltyVariables, "turn_penalty");
 
             // Create different class name, which is required only for debugging.
             // TODO does it improve performance too? I.e. it could be that the JIT is confused if different classes
@@ -279,11 +273,6 @@ public class CustomModelParser {
             String errString = "Cannot compile expression";
             throw new IllegalArgumentException(errString + ": " + ex.getMessage(), ex);
         }
-    }
-
-    private static void checkBikeClimbUnsupported(Set<String> variables, String section) {
-        if (variables.stream().anyMatch(v -> v.startsWith(BIKE_CLIMB_TABLE)))
-            throw new IllegalArgumentException("bike_climb_factor is only supported for 'speed' but was used in " + section);
     }
 
     public static List<String> findVariablesForEncodedValuesString(CustomModel model, NameValidator nameValidator, ClassHelper classHelper) {
@@ -458,7 +447,7 @@ public class CustomModelParser {
             } else {
                 throw new IllegalArgumentException("Not supported for backward: " + argSubstr);
             }
-        } else if (arg.startsWith(IN_AREA_PREFIX) || arg.startsWith(BIKE_CLIMB_TABLE) || arg.equals(EDGE)) {
+        } else if (arg.startsWith(IN_AREA_PREFIX) || arg.equals(EDGE)) {
             // 'edge' is already a parameter of getPriority and getSpeed
             return "";
         } else {
@@ -555,13 +544,11 @@ public class CustomModelParser {
         importSourceCode.append("import " + CustomModel.class.getName() + ";\n");
         importSourceCode.append("import " + BaseGraph.class.getName() + ";\n");
         importSourceCode.append("import " + EdgeIntAccess.class.getName() + ";\n");
-        importSourceCode.append("import " + BikeClimbSpeedTable.class.getName() + ";\n");
         final StringBuilder classSourceCode = new StringBuilder(100);
         boolean includedAreaImports = false;
 
         final StringBuilder initSourceCode = new StringBuilder("this.lookup = lookup;\n");
         initSourceCode.append("this.customModel = customModel;\n");
-        final StringBuilder tableInitSourceCode = new StringBuilder();
         Set<String> set = new HashSet<>();
         for (String prioVar : priorityVariables)
             set.add(prioVar.startsWith(BACKWARD_PREFIX) ? prioVar.substring(BACKWARD_PREFIX.length()) : prioVar);
@@ -615,18 +602,11 @@ public class CustomModelParser {
             } else if (arg.equals(STREET_NAME) || arg.equals(EDGE)) {
                 // street_name is resolved at runtime from graph KV storage and 'edge' is a method
                 // parameter, so no class field is needed
-            } else if (arg.startsWith(BIKE_CLIMB_TABLE)) {
-                // the pseudo variable carries the parameters of the bike_climb_factor call, which are
-                // fields assigned in the loop above and so the table is created after it
-                classSourceCode.append("protected BikeClimbSpeedTable " + BIKE_CLIMB_TABLE + ";\n");
-                tableInitSourceCode.append("this." + BIKE_CLIMB_TABLE + " = new BikeClimbSpeedTable("
-                        + String.join(", ", ValueExpressionVisitor.fromTableVariable(arg)) + ");\n");
             } else {
                 if (!arg.startsWith(IN_AREA_PREFIX))
                     throw new IllegalArgumentException("Variable not supported: " + arg);
             }
         }
-        initSourceCode.append(tableInitSourceCode);
 
         return ""
                 + "package com.graphhopper.routing.weighting.custom;\n"
@@ -703,15 +683,18 @@ public class CustomModelParser {
 
     /**
      * Verifies the value expression of the statement and collects its variables. A bike_climb_factor
-     * call is replaced by the method of the table field (see createClassTemplate) with the injected
-     * current speed ("value"), e.g. bike_climb_factor(p_power, p_mass, p_base_speed, p_crr) ->
-     * bike_climb_table.getBikeClimbFactor(average_slope, value)
+     * call gets the slope and the current speed ("value") injected as first arguments and calls
+     * the instance method of CustomWeightingHelper: bike_climb_factor(p_power, p_mass, p_base_speed, p_crr)
+     * -> getBikeClimbFactor(average_slope, value, p_power, p_mass, p_base_speed, p_crr)
      */
-    private static String parseValue(Statement statement, Set<String> createObjects, Map<String, CustomModel.Parameter> parameters, EncodedValueLookup lookup) {
+    private static String parseValue(Statement statement, Set<String> createObjects, Map<String, CustomModel.Parameter> parameters,
+                                     EncodedValueLookup lookup, String exceptionInfo) {
         ParseResult result = ValueExpressionVisitor.parseValue(statement.value(), parameters, lookup);
-        createObjects.addAll(ValueExpressionVisitor.findVariables(result));
+        createObjects.addAll(result.guessedVariables);
         if (result.bikeClimbArgs == null) return statement.value();
-        return result.bikeClimbScale + BIKE_CLIMB_TABLE + ".getBikeClimbFactor(" + AverageSlope.KEY + ", value)";
+        if (!exceptionInfo.startsWith("speed"))
+            throw new IllegalArgumentException(BIKE_CLIMB_FACTOR + " is only supported for 'speed' but was used in " + exceptionInfo);
+        return result.bikeClimbScale + "getBikeClimbFactor(" + AverageSlope.KEY + ", value, " + String.join(", ", result.bikeClimbArgs) + ")";
     }
 
     static void parseExpressions(StringBuilder expressions, NameValidator nameInConditionValidator,
@@ -732,7 +715,7 @@ public class CustomModelParser {
                     parseExpressions(expressions, nameInConditionValidator, exceptionInfo, createObjects, statement.doBlock(), parameters, classHelper, lookup, indentation + "  ");
                     expressions.append(indentation).append("}\n");
                 } else {
-                    String value = parseValue(statement, createObjects, parameters, lookup);
+                    String value = parseValue(statement, createObjects, parameters, lookup, exceptionInfo);
                     expressions.append("else {").append(statement.operation().build(value)).append("; }\n");
                 }
             } else if (statement.keyword() == Statement.Keyword.ELSEIF || statement.keyword() == Statement.Keyword.IF) {
@@ -750,7 +733,7 @@ public class CustomModelParser {
                     parseExpressions(expressions, nameInConditionValidator, exceptionInfo, createObjects, statement.doBlock(), parameters, classHelper, lookup, indentation + "  ");
                     expressions.append(indentation).append("}\n");
                 } else {
-                    String value = parseValue(statement, createObjects, parameters, lookup);
+                    String value = parseValue(statement, createObjects, parameters, lookup, exceptionInfo);
                     expressions.append("if (").append(parseResult.converted).append(") {").
                             append(statement.operation().build(value)).append(";}\n");
                 }
