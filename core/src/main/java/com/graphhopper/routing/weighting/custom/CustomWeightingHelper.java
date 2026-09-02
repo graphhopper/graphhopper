@@ -77,7 +77,8 @@ public class CustomWeightingHelper {
     public final double calcMaxPriority() {
         MinMax minMaxPriority = new MinMax(0, GLOBAL_PRIORITY);
         List<Statement> statements = customModel.getPriority();
-        if (!statements.isEmpty() && "true".equals(statements.get(0).condition())) {
+        // a leading unconditional block has no single value; FindMinMax derives the maximum from it
+        if (!statements.isEmpty() && !statements.get(0).isBlock() && "true".equals(statements.get(0).condition())) {
             String value = statements.get(0).value();
             if (lookup.hasEncodedValue(value))
                 minMaxPriority.max = lookup.getDecimalEncodedValue(value).getMaxOrMaxStorableDecimal();
