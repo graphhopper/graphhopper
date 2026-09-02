@@ -70,6 +70,7 @@ web.query_osm=
 web.route=Itinéraire
 web.add_to_route=Ajouter un Emplacement
 web.delete_from_route=Supprimer ce point de l'itinéraire
+web.delete=
 web.open_custom_model_box=Ouvrir la boîte du modèle personnalisé
 web.draw_areas_enabled=
 web.help_custom_model=Aide

@@ -22,7 +22,7 @@ public abstract class BikeCommonPriorityParser implements TagParser {
     private static final List<String> CYCLEWAY_BICYCLE_KEYS = List.of("cycleway:bicycle", "cycleway:both:bicycle", "cycleway:left:bicycle", "cycleway:right:bicycle");
 
     // pushing section highways are parts where you need to get off your bike and push it
-    protected final HashSet<String> pushingSectionsHighways = new HashSet<>();
+    protected final Set<String> pushingSectionsHighways = new HashSet<>();
     protected final Set<String> preferHighwayTags = new HashSet<>();
     protected final Map<String, PriorityCode> avoidHighwayTags = new HashMap<>();
     protected final DecimalEncodedValue priorityEnc;

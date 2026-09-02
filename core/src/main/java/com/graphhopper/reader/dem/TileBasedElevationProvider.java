@@ -39,7 +39,7 @@ public abstract class TileBasedElevationProvider implements ElevationProvider {
     final String cacheDirString;
     String baseUrl;
     Directory dir;
-    DAType daType = DAType.MMAP;
+    DAType daType = DAType.FOREIGN_MMAP;
     boolean interpolate = false;
     boolean autoRemoveTemporary = true;
     long sleep = 2000;
@@ -93,7 +93,7 @@ public abstract class TileBasedElevationProvider implements ElevationProvider {
     }
 
     /**
-     * Set to true if you have a small area and need high speed access. Default is DAType.MMAP
+     * Set to true if you have a small area and need high speed access. Default is DAType.FOREIGN_MMAP
      */
     public TileBasedElevationProvider setDAType(DAType daType) {
         this.daType = daType;

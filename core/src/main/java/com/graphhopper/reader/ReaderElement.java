@@ -175,19 +175,6 @@ public abstract class ReaderElement {
         return "";
     }
 
-    /**
-     * @return -1 if not found
-     */
-    public int getFirstIndex(List<String> searchedTags) {
-        for (int i = 0; i < searchedTags.size(); i++) {
-            String str = searchedTags.get(i);
-            Object value = properties.get(str);
-            if (value != null)
-                return i;
-        }
-        return -1;
-    }
-
     public void removeTag(String name) {
         properties.remove(name);
     }

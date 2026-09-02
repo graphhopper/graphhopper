@@ -7,8 +7,8 @@ It can be used as a Java library or standalone web server to calculate the dista
 turn-by-turn instructions and many road attributes for a route between two or more points.
 Beyond this "A-to-B" routing it supports ["snap to road"](README.md#Map-Matching),
 [Isochrone calculation](README.md#Analysis), [mobile navigation](README.md#mobile-apps) and
-[more](README.md#Features). GraphHopper uses OpenStreetMap and GTFS data by default and it
-can import [other data sources too](README.md#OpenStreetMap-Support).
+[more](README.md#Features). GraphHopper uses OpenStreetMap and GTFS data by default, along
+with precise elevation data, and can also import [other data sources](README.md#OpenStreetMap-Support).
 
 # Community
 

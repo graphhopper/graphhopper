@@ -199,7 +199,7 @@ public class KVStorage {
             if (clazz.equals(String.class) && ((String) value).isEmpty()
                     || clazz.equals(byte[].class) && ((byte[]) value).length == 0) {
                 vals.ensureCapacity(currentPointer + 3);
-                vals.setShort(currentPointer, keyIndex.shortValue());
+                vals.setShort(currentPointer, (short) (keyIndex << 2 | (fwd ? 2 : 0) | (bwd ? 1 : 0)));
                 // ensure that also in case of MMap value is set to 0
                 vals.setByte(currentPointer + 2, (byte) 0);
                 return currentPointer + 3;

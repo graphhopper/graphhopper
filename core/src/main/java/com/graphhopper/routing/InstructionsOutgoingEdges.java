@@ -18,6 +18,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.util.DirectedEdgeFilter;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeExplorer;
@@ -33,9 +34,10 @@ import java.util.List;
  * There are different sets of edges.
  * The previous edge is the edge we are coming from.
  * The current edge is the edge we turn on.
- * The allowedAlternativeTurns contains all edges that the current vehicle is allowed(*) to turn on to, excluding the prev edge and the current edge.
+ * The allowedAlternativeTurns contains all edges that the driver perceives(*) as turn options, excluding the prev edge and the current edge.
  * The visibleAlternativeTurns contains all edges surrounding this turn instruction, without the prev edge and the current edge.
- * (*): This might not consider turn restrictions, but only simple access values.
+ * (*): Since #3223 this can include edges blocked for the current request, e.g. via a custom model, as long as
+ * they have car or base access. Turn restrictions are not considered.
  * Here is an example:
  * <pre>
  * A --> B --> C
@@ -65,12 +67,14 @@ class InstructionsOutgoingEdges {
     private final IntEncodedValue lanesEnc;
     private final NodeAccess nodeAccess;
     private final Weighting weighting;
+    private final DirectedEdgeFilter candidateEdges;
     private final int baseNode;
     private final EdgeExplorer allExplorer;
 
     public InstructionsOutgoingEdges(EdgeIteratorState prevEdge,
                                      EdgeIteratorState currentEdge,
                                      Weighting weighting,
+                                     DirectedEdgeFilter candidateEdges,
                                      DecimalEncodedValue maxSpeedEnc,
                                      EnumEncodedValue<RoadClass> roadClassEnc,
                                      BooleanEncodedValue roadClassLinkEnc,
@@ -83,6 +87,7 @@ class InstructionsOutgoingEdges {
         this.prevEdge = prevEdge;
         this.currentEdge = currentEdge;
         this.weighting = weighting;
+        this.candidateEdges = candidateEdges;
         this.maxSpeedEnc = maxSpeedEnc;
         this.roadClassEnc = roadClassEnc;
         this.roadClassLinkEnc = roadClassLinkEnc;
@@ -96,11 +101,11 @@ class InstructionsOutgoingEdges {
         EdgeIterator edgeIter = allExplorer.setBaseNode(baseNode);
         while (edgeIter.next()) {
             if (edgeIter.getAdjNode() != prevNode && edgeIter.getAdjNode() != adjNode) {
-                if (Double.isFinite(weighting.calcEdgeWeight(edgeIter, false))) {
+                if (candidateEdges.accept(edgeIter, false)) {
                     EdgeIteratorState tmpEdge = edgeIter.detach(false);
                     allowedAlternativeTurns.add(tmpEdge);
                     visibleAlternativeTurns.add(tmpEdge);
-                } else if (Double.isFinite(weighting.calcEdgeWeight(edgeIter, true))) {
+                } else if (candidateEdges.accept(edgeIter, true)) {
                     visibleAlternativeTurns.add(edgeIter.detach(false));
                 }
             }
@@ -223,23 +228,22 @@ class InstructionsOutgoingEdges {
                     && prevEdge.getEdge() != edgeIter.getEdge()
                     && roadClass == edgeIter.get(roadClassEnc)
                     && InstructionsHelper.isSameName(name, edgeIter.getName())
-                    && (Double.isFinite(weighting.calcEdgeWeight(edgeIter, false))
-                    || Double.isFinite(weighting.calcEdgeWeight(edgeIter, true)))) {
+                    && (candidateEdges.accept(edgeIter, false) || candidateEdges.accept(edgeIter, true))) {
                 if (otherEdge != null) return false; // too many possible other edges
                 otherEdge = edgeIter.detach(false);
             }
         }
         if (otherEdge == null) return false;
 
-        if (Double.isFinite(weighting.calcEdgeWeight(currentEdge, true))) {
+        if (candidateEdges.accept(currentEdge, true)) {
             // assume two ways are merged into one way
             // -> prev ->
             //              <- edge ->
             // -> other ->
-            if (Double.isFinite(weighting.calcEdgeWeight(prevEdge, true))) return false;
+            if (candidateEdges.accept(prevEdge, true)) return false;
             // otherEdge has direction from junction outwards
-            if (!Double.isFinite(weighting.calcEdgeWeight(otherEdge, false))) return false;
-            if (Double.isFinite(weighting.calcEdgeWeight(otherEdge, true))) return false;
+            if (!candidateEdges.accept(otherEdge, false)) return false;
+            if (candidateEdges.accept(otherEdge, true)) return false;
 
             int delta = Math.abs(prevEdge.get(lanesEnc) + otherEdge.get(lanesEnc) - currentEdge.get(lanesEnc));
             return delta <= 1;
@@ -249,10 +253,10 @@ class InstructionsOutgoingEdges {
         //             -> edge ->
         // <- prev ->
         //             -> other ->
-        if (!Double.isFinite(weighting.calcEdgeWeight(prevEdge, true))) return false;
+        if (!candidateEdges.accept(prevEdge, true)) return false;
         // otherEdge has direction from junction outwards
-        if (Double.isFinite(weighting.calcEdgeWeight(otherEdge, false))) return false;
-        if (!Double.isFinite(weighting.calcEdgeWeight(otherEdge, true))) return false;
+        if (candidateEdges.accept(otherEdge, false)) return false;
+        if (!candidateEdges.accept(otherEdge, true)) return false;
 
         int delta = prevEdge.get(lanesEnc) - (currentEdge.get(lanesEnc) + otherEdge.get(lanesEnc));
         return delta <= 1;

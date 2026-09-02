@@ -54,7 +54,7 @@ You can get a plan there too and set the API keys in the config.js file.
 GraphHopper can handle the world-wide [OpenStreetMap road network](http://planet.osm.org/).
 
 Parsing this planet file and creating the GraphHopper base graph requires ~60GB RAM and takes ~3h for the import. If you can accept
-much slower import times (3 days!) this can be reduced to 31GB RAM when you set `datareader.dataaccess=MMAP` in the config file.
+much slower import times (3 days!) this can be reduced to 31GB RAM when you set `graph.dataaccess.default_type: MMAP` in the config file.
 As of May 2022 the graph has around 415M edges (150M for Europe, 86M for North America).
 
 Running the CH preparation, required for best response times, needs ~120GB RAM and the additional CH preparation takes ~25 hours

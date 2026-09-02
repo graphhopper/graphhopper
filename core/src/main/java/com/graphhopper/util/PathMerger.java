@@ -21,6 +21,7 @@ import com.graphhopper.ResponsePath;
 import com.graphhopper.routing.InstructionsFromEdges;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
@@ -55,6 +56,7 @@ public class PathMerger {
     private boolean simplifyResponse = true;
     private RamerDouglasPeucker ramerDouglasPeucker = RDP;
     private boolean calcPoints = true;
+    private TransportationMode instructionsBaseMode = TransportationMode.CAR;
     private PathDetailsBuilderFactory pathBuilderFactory;
     private List<String> requestedPathDetails = Collections.emptyList();
     private double favoredHeading = Double.NaN;
@@ -62,6 +64,11 @@ public class PathMerger {
     public PathMerger(Graph graph, Weighting weighting) {
         this.graph = graph;
         this.weighting = graph.wrapWeighting(weighting);
+    }
+
+    public PathMerger setInstructionsBaseMode(TransportationMode instructionsBaseMode) {
+        this.instructionsBaseMode = instructionsBaseMode;
+        return this;
     }
 
     public PathMerger setCalcPoints(boolean calcPoints) {
@@ -123,7 +130,7 @@ public class PathMerger {
             fullDistance_mm += path.getDistance_mm();
             fullWeight += path.getWeight();
             if (enableInstructions) {
-                InstructionList il = InstructionsFromEdges.calcInstructions(path, graph, weighting, evLookup, tr, includeRoundaboutExitInstruction);
+                InstructionList il = InstructionsFromEdges.calcInstructions(path, graph, weighting, instructionsBaseMode, evLookup, tr, includeRoundaboutExitInstruction);
 
                 if (!il.isEmpty()) {
                     fullInstructions.addAll(il);

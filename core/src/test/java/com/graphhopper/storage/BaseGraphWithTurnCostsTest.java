@@ -58,7 +58,7 @@ public class BaseGraphWithTurnCostsTest extends BaseGraphTest {
     @Override
     @Test
     public void testSave_and_fileFormat() {
-        graph = newGHStorage(new GHDirectory(defaultGraphLoc, DAType.RAM_STORE), true).create(defaultSize);
+        graph = newGHStorage(new GHDirectory(defaultGraphLoc, DAType.RAM), true).create(defaultSize);
         NodeAccess na = graph.getNodeAccess();
         assertTrue(na.is3D());
         na.setNode(0, 10, 10, 0);
@@ -84,7 +84,7 @@ public class BaseGraphWithTurnCostsTest extends BaseGraphTest {
         graph.flush();
         graph.close();
 
-        graph = newGHStorage(new GHDirectory(defaultGraphLoc, DAType.MMAP), true);
+        graph = newGHStorage(new GHDirectory(defaultGraphLoc, DAType.FOREIGN_MMAP), true);
         graph.loadExisting();
 
         assertEquals(12, graph.getNodes());
@@ -105,7 +105,7 @@ public class BaseGraphWithTurnCostsTest extends BaseGraphTest {
 
     @Test
     public void testEnsureCapacity() {
-        graph = newGHStorage(new GHDirectory(defaultGraphLoc, DAType.MMAP), false);
+        graph = newGHStorage(new GHDirectory(defaultGraphLoc, DAType.FOREIGN_MMAP), false);
         graph.create(100); // 100 is the minimum size
 
         TurnCostStorage turnCostStorage = graph.getTurnCostStorage();

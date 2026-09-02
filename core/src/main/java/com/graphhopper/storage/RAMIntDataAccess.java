@@ -32,25 +32,12 @@ import java.util.Arrays;
 public class RAMIntDataAccess extends AbstractDataAccess {
     private int[][] segments = new int[0][];
     private boolean closed = false;
-    private boolean store;
+    private final boolean readOnly;
     private int segmentSizeIntsPower;
 
-    public RAMIntDataAccess(String name, String location, boolean store, int segmentSize) {
+    public RAMIntDataAccess(String name, String location, int segmentSize, boolean readOnly) {
         super(name, location, segmentSize);
-        this.store = store;
-    }
-
-    /**
-     * @param store true if in-memory data should be saved when calling flush
-     */
-    public RAMIntDataAccess setStore(boolean store) {
-        this.store = store;
-        return this;
-    }
-
-    @Override
-    public boolean isStoring() {
-        return store;
+        this.readOnly = readOnly;
     }
 
     @Override
@@ -98,9 +85,6 @@ public class RAMIntDataAccess extends AbstractDataAccess {
         if (isClosed())
             throw new IllegalStateException("already closed");
 
-        if (!store)
-            return false;
-
         File file = new File(getFullName());
         if (!file.exists() || file.length() == 0) {
             return false;
@@ -139,9 +123,9 @@ public class RAMIntDataAccess extends AbstractDataAccess {
         if (closed) {
             throw new IllegalStateException("already closed");
         }
-        if (!store) {
-            return;
-        }
+        if (readOnly)
+            throw new IllegalStateException("Cannot flush the read-only DataAccess " + getFullName());
+        ensureParentDirectoryExists();
         try {
             try (RandomAccessFile raFile = new RandomAccessFile(getFullName(), "rw")) {
                 long len = getCapacity();
@@ -278,10 +262,4 @@ public class RAMIntDataAccess extends AbstractDataAccess {
         return true;
     }
 
-    @Override
-    public DAType getType() {
-        if (isStoring())
-            return DAType.RAM_INT_STORE;
-        return DAType.RAM_INT;
-    }
 }

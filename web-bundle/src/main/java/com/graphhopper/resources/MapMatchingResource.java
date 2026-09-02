@@ -154,6 +154,7 @@ public class MapMatchingResource {
             Translation tr = trMap.getWithFallBack(Helper.getLocale(localeStr));
             RamerDouglasPeucker simplifyAlgo = new RamerDouglasPeucker().setMaxDistance(minPathPrecision);
             PathMerger pathMerger = new PathMerger(matchResult.getGraph(), matchResult.getWeighting()).
+                    setInstructionsBaseMode(graphHopper.getInstructionsBaseMode(profile)).
                     setEnableInstructions(instructions).
                     setPathDetailsBuilders(graphHopper.getPathDetailsBuilderFactory(), pathDetails).
                     setRamerDouglasPeucker(simplifyAlgo).

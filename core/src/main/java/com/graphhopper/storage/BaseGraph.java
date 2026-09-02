@@ -71,10 +71,10 @@ public class BaseGraph implements Graph, Closeable {
     private record EncodedBytes(byte[] bytes, int length) {
     }
 
-    public BaseGraph(Directory dir, boolean withElevation, boolean withTurnCosts, int bytesForFlags) {
+    public BaseGraph(Directory dir, DataAccess wayGeometry, boolean withElevation, boolean withTurnCosts, int bytesForFlags) {
         this.dir = dir;
         this.bitUtil = BitUtil.LITTLE;
-        this.wayGeometry = dir.create("geometry", dir.getDefaultType().isStoring() ? DAType.MMAP : dir.getDefaultType());
+        this.wayGeometry = wayGeometry;
         this.edgeKVStorage = new KVStorage(dir, true);
         this.store = new BaseGraphNodesAndEdges(dir, withElevation, withTurnCosts, bytesForFlags);
         this.nodeAccess = new GHNodeAccess(store);
@@ -184,7 +184,6 @@ public class BaseGraph implements Graph, Closeable {
 
     public BaseGraph create(long initSize) {
         checkNotInitialized();
-        dir.create();
         store.create(initSize);
 
         initSize = Math.min(initSize, 2000);
@@ -207,15 +206,16 @@ public class BaseGraph implements Graph, Closeable {
     }
 
     /**
-     * Flush and free resources that are not needed for post-processing (way geometries and KVStorage for edges).
+     * Frees the resources not needed for post-processing (way geometries and KVStorage for edges),
+     * optionally persisting them to disc first.
      */
-    public void flushAndCloseGeometryAndNameStorage() {
-        setWayGeometryHeader();
-
-        wayGeometry.flush();
+    public void closeGeometryAndNameStorage(boolean flush) {
+        if (flush) {
+            setWayGeometryHeader();
+            wayGeometry.flush();
+            edgeKVStorage.flush();
+        }
         wayGeometry.close();
-
-        edgeKVStorage.flush();
         edgeKVStorage.close();
     }
 
@@ -691,6 +691,9 @@ public class BaseGraph implements Graph, Closeable {
         private Directory directory = new GHDirectory("", DAType.RAM);
         private boolean withElevation = false;
         private boolean withTurnCosts = false;
+        // true = way geometry uses the memory mapped FOREIGN_MMAP, false = on-heap. Whether the
+        // graph is actually written to disc is a separate decision made by the caller (via flush).
+        private boolean fileBacked = false;
         private long bytes = 100;
 
         public Builder(EncodingManager em) {
@@ -705,6 +708,16 @@ public class BaseGraph implements Graph, Closeable {
         // todo: maybe rename later, but for now this makes it easier to replace GraphBuilder
         public Builder setDir(Directory directory) {
             this.directory = directory;
+            return this;
+        }
+
+        /**
+         * @param fileBacked true if the graph is meant to be persisted: the way geometry then uses
+         *                   the memory mapped FOREIGN_MMAP instead of an on-heap DataAccess. Whether
+         *                   the graph is actually flushed to disc is decided by the caller.
+         */
+        public Builder setFileBacked(boolean fileBacked) {
+            this.fileBacked = fileBacked;
             return this;
         }
 
@@ -726,7 +739,8 @@ public class BaseGraph implements Graph, Closeable {
         }
 
         public BaseGraph build() {
-            return new BaseGraph(directory, withElevation, withTurnCosts, bytesForFlags);
+            DataAccess wayGeometry = directory.create("geometry", fileBacked ? DAType.FOREIGN_MMAP : directory.getDefaultType());
+            return new BaseGraph(directory, wayGeometry, withElevation, withTurnCosts, bytesForFlags);
         }
 
         public BaseGraph create() {

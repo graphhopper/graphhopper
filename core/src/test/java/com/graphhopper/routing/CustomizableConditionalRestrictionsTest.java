@@ -34,7 +34,7 @@ public class CustomizableConditionalRestrictionsTest {
     @Test
     public void testConditionalAccess() {
         GraphHopper hopper = new GraphHopper().
-                setStoreOnFlush(false).
+                setFileBacked(false).
                 setEncodedValuesString(FootTemporalAccess.KEY);
 
         hopper.init(new GraphHopperConfig().

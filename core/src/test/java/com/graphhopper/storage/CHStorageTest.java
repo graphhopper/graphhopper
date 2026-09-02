@@ -25,7 +25,7 @@ class CHStorageTest {
     @Test
     void createAndLoad(@TempDir Path path) {
         {
-            GHDirectory dir = new GHDirectory(path.toAbsolutePath().toString(), DAType.RAM_INT_STORE);
+            GHDirectory dir = new GHDirectory(path.toAbsolutePath().toString(), DAType.RAM_INT);
             CHStorage chStorage = new CHStorage(dir, "car", false);
             // we have to call create, because we want to create a new storage not load an existing one
             chStorage.create(5, 3);
@@ -40,7 +40,7 @@ class CHStorageTest {
             chStorage.close();
         }
         {
-            GHDirectory dir = new GHDirectory(path.toAbsolutePath().toString(), DAType.RAM_INT_STORE);
+            GHDirectory dir = new GHDirectory(path.toAbsolutePath().toString(), DAType.RAM_INT);
             CHStorage chStorage = new CHStorage(dir, "car", false);
             // this time we load from disk
             chStorage.loadExisting();
@@ -84,7 +84,7 @@ class CHStorageTest {
     @Test
     public void testLargeNodeA() {
         int nodeA = Integer.MAX_VALUE;
-        RAMIntDataAccess access = new RAMIntDataAccess("", "", false, -1);
+        RAMIntDataAccess access = new RAMIntDataAccess("", "", -1, false);
         access.create(1000);
         access.setInt(0, nodeA << 1 | 1 & PrepareEncoder.getScFwdDir());
         assertTrue(access.getInt(0) < 0);

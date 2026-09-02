@@ -28,11 +28,11 @@ import java.util.Arrays;
  */
 public class RAMInt1SegmentDataAccess extends AbstractDataAccess {
     private int[] data = new int[0];
-    private final boolean store;
+    private final boolean readOnly;
 
-    public RAMInt1SegmentDataAccess(String name, String location, boolean store, int segmentSize) {
+    public RAMInt1SegmentDataAccess(String name, String location, int segmentSize, boolean readOnly) {
         super(name, location, segmentSize);
-        this.store = store;
+        this.readOnly = readOnly;
     }
 
     @Override
@@ -76,9 +76,6 @@ public class RAMInt1SegmentDataAccess extends AbstractDataAccess {
         if (isClosed())
             throw new IllegalStateException("already closed");
 
-        if (!store)
-            return false;
-
         File file = new File(getFullName());
         if (!file.exists() || file.length() == 0)
             return false;
@@ -119,8 +116,9 @@ public class RAMInt1SegmentDataAccess extends AbstractDataAccess {
     public void flush() {
         if (closed)
             throw new IllegalStateException("already closed");
-        if (!store)
-            return;
+        if (readOnly)
+            throw new IllegalStateException("Cannot flush the read-only DataAccess " + getFullName());
+        ensureParentDirectoryExists();
 
         try {
             try (RandomAccessFile raFile = new RandomAccessFile(getFullName(), "rw")) {
@@ -225,19 +223,8 @@ public class RAMInt1SegmentDataAccess extends AbstractDataAccess {
     }
 
     @Override
-    public boolean isStoring() {
-        return store;
-    }
-
-    @Override
     protected boolean isIntBased() {
         return true;
     }
 
-    @Override
-    public DAType getType() {
-        if (isStoring())
-            return DAType.RAM_INT_1SEG_STORE;
-        return DAType.RAM_INT_1SEG;
-    }
 }

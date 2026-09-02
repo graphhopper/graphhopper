@@ -29,7 +29,6 @@ import com.graphhopper.util.DistanceCalcEarth;
  */
 public class BeelineWeightApproximator implements WeightApproximator {
     private final NodeAccess nodeAccess;
-    private final Weighting weighting;
     private final double minWeightPerDistance;
     private DistanceCalc distanceCalc = DistanceCalcEarth.DIST_EARTH;
     private double toLat, toLon;
@@ -37,8 +36,14 @@ public class BeelineWeightApproximator implements WeightApproximator {
 
     public BeelineWeightApproximator(NodeAccess nodeAccess, Weighting weighting) {
         this.nodeAccess = nodeAccess;
-        this.weighting = weighting;
         this.minWeightPerDistance = weighting.calcMinWeightPerDistance();
+    }
+
+    private BeelineWeightApproximator(BeelineWeightApproximator toCopy) {
+        this.nodeAccess = toCopy.nodeAccess;
+        this.minWeightPerDistance = toCopy.minWeightPerDistance;
+        this.distanceCalc = toCopy.distanceCalc;
+        this.epsilon = toCopy.epsilon;
     }
 
     @Override
@@ -54,7 +59,9 @@ public class BeelineWeightApproximator implements WeightApproximator {
 
     @Override
     public WeightApproximator reverse() {
-        return new BeelineWeightApproximator(nodeAccess, weighting).setDistanceCalc(distanceCalc).setEpsilon(epsilon);
+        // the beeline approximation is direction-agnostic, so avoid recomputing the min weight,
+        // which requires a full pass over the statements for a custom model
+        return new BeelineWeightApproximator(this);
     }
 
     @Override

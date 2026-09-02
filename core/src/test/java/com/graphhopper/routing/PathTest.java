@@ -22,6 +22,7 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.util.parsers.OrientationCalculator;
 import com.graphhopper.routing.weighting.SpeedWeighting;
@@ -890,6 +891,81 @@ public class PathTest {
     }
 
     @Test
+    public void testCalcInstructionsTurnIfOnlyAlternativeIsCarOnly() {
+        DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, true);
+        BooleanEncodedValue bikeAccessEnc = VehicleAccess.create("bike");
+        EncodingManager em = EncodingManager.start().add(speedEnc).add(bikeAccessEnc).add(VehicleAccess.create("car")).
+                add(Roundabout.create()).add(RoadClass.create()).add(RoadEnvironment.create()).
+                add(RoadClassLink.create()).add(MaxSpeed.create()).build();
+        BooleanEncodedValue carAccessEnc = em.getBooleanEncodedValue(VehicleAccess.key("car"));
+        final BaseGraph graph = new BaseGraph.Builder(em).create();
+        final NodeAccess na = graph.getNodeAccess();
+
+        // 1 -- 2 -- 3
+        //      |
+        //      4
+        na.setNode(1, 52.514, 13.348);
+        na.setNode(2, 52.514, 13.349);
+        na.setNode(3, 52.514, 13.350);
+        na.setNode(4, 52.513, 13.349);
+
+        graph.edge(1, 2).set(speedEnc, 20, 20).set(bikeAccessEnc, true, true).setDistance(70).setKeyValues(Map.of(STREET_NAME, new KValue("Main")));
+        // the continuation of Main is for cars only
+        EdgeIteratorState carOnlyEdge = graph.edge(2, 3).set(speedEnc, 60, 60).set(carAccessEnc, true, true).setDistance(70).setKeyValues(Map.of(STREET_NAME, new KValue("Main")));
+        graph.edge(2, 4).set(speedEnc, 20, 20).set(bikeAccessEnc, true, true).setDistance(110).setKeyValues(Map.of(STREET_NAME, new KValue("Side")));
+
+        Weighting bikeWeighting = new SpeedWeighting(speedEnc) {
+            @Override
+            public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
+                return edgeState.getEdge() == carOnlyEdge.getEdge() ? Double.POSITIVE_INFINITY : super.calcEdgeWeight(edgeState, reverse);
+            }
+        };
+        Path p = new Dijkstra(graph, bikeWeighting, TraversalMode.NODE_BASED).calcPath(1, 4);
+        assertTrue(p.isFound());
+
+        // although the bike can neither access nor use the continuation of Main, the driver sees it and
+        // so the turn must be created
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, graph, bikeWeighting, TransportationMode.BIKE, em, tr, false);
+        assertEquals(3, wayList.size());
+        assertEquals("turn right onto Side", wayList.get(1).getTurnDescription(tr));
+    }
+
+    @Test
+    public void testCalcInstructionsTurnIfOnlyAlternativeIsBlocked() {
+        final BaseGraph graph = new BaseGraph.Builder(carManager).create();
+        final NodeAccess na = graph.getNodeAccess();
+
+        // 1 -- 2 -- 3
+        //      |
+        //      4
+        na.setNode(1, 52.514, 13.348);
+        na.setNode(2, 52.514, 13.349);
+        na.setNode(3, 52.514, 13.350);
+        na.setNode(4, 52.513, 13.349);
+
+        BooleanEncodedValue carAccessEnc = carManager.getBooleanEncodedValue(VehicleAccess.key("car"));
+        graph.edge(1, 2).set(carAvSpeedEnc, 60, 60).set(carAccessEnc, true, true).setDistance(70).setKeyValues(Map.of(STREET_NAME, new KValue("Main")));
+        EdgeIteratorState blockedEdge = graph.edge(2, 3).set(carAvSpeedEnc, 60, 60).set(carAccessEnc, true, true).setDistance(70).setKeyValues(Map.of(STREET_NAME, new KValue("Main")));
+        graph.edge(2, 4).set(carAvSpeedEnc, 60, 60).set(carAccessEnc, true, true).setDistance(110).setKeyValues(Map.of(STREET_NAME, new KValue("Side")));
+
+        // simulates a query-time custom model blocking the continuation of Main
+        Weighting blockedWeighting = new SpeedWeighting(carAvSpeedEnc) {
+            @Override
+            public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
+                return edgeState.getEdge() == blockedEdge.getEdge() ? Double.POSITIVE_INFINITY : super.calcEdgeWeight(edgeState, reverse);
+            }
+        };
+        Path p = new Dijkstra(graph, blockedWeighting, TraversalMode.NODE_BASED).calcPath(1, 4);
+        assertTrue(p.isFound());
+
+        // the blocked edge is invisible for the weighting but not for the driver (car access), so
+        // the turn must be created, see #3223
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, graph, blockedWeighting, carManager, tr);
+        assertEquals(3, wayList.size());
+        assertEquals("turn right onto Side", wayList.get(1).getTurnDescription(tr));
+    }
+
+    @Test
     public void testCalcInstructionForForkWithSameName() {
         final BaseGraph graph = new BaseGraph.Builder(carManager).create();
         final NodeAccess na = graph.getNodeAccess();
@@ -1397,6 +1473,20 @@ public class PathTest {
         wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, manager, tr);
         assertEquals("at roundabout, take exit 1 onto Nordeast out", wayList.get(1).getTurnDescription(tr));
         assertEquals(15, wayList.stream().mapToDouble(Instruction::getDistance).sum());
+
+        // a foot-only exit (no car access at all) is counted for foot, but not for car
+        na.setNode(11, 52.50395, 13.41075);
+        g.edge(3, 11).setDistance(5).set(carAccessEnc, false, false).set(footAccessEnc, true, true).setKeyValues(Map.of(STREET_NAME, new KValue("North, foot-only")));
+        p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED).calcPath(10, 0);
+        assertEquals("[10, 9, 5, 3, 2, 0]", p.calcNodes().toString());
+        wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, manager, tr);
+        assertEquals("at roundabout, take exit 3 onto Nordwest", wayList.get(1).getTurnDescription(tr));
+
+        Weighting carWeighting = new AccessWeighting(carAccessEnc);
+        p = new Dijkstra(g, carWeighting, TraversalMode.NODE_BASED).calcPath(10, 0);
+        assertEquals("[10, 9, 5, 3, 2, 0]", p.calcNodes().toString());
+        wayList = InstructionsFromEdges.calcInstructions(p, g, carWeighting, manager, tr);
+        assertEquals("at roundabout, take exit 2 onto Nordwest", wayList.get(1).getTurnDescription(tr));
     }
 
     static class AccessWeighting implements Weighting {

@@ -111,7 +111,7 @@ public record Statement(Keyword keyword, String condition, Op operation, String 
                 case LIMIT:
                     return "value = Math.min(value," + value + ")";
                 case ADD:
-                    return "value += " + (value.equals("Infinity") ? "Double.POSITIVE_INFINITY" : value);
+                    return "value += " + toJavaExpression(value);
                 default:
                     throw new IllegalArgumentException();
             }
@@ -129,6 +129,13 @@ public record Statement(Keyword keyword, String condition, Op operation, String 
                     throw new IllegalArgumentException();
             }
         }
+    }
+
+    /**
+     * @return the value as a compilable Java expression, i.e. with the "Infinity" literal replaced
+     */
+    public static String toJavaExpression(String value) {
+        return value.replaceAll("\\bInfinity\\b", "Double.POSITIVE_INFINITY");
     }
 
     public static Statement If(String expression, List<Statement> doBlock) {

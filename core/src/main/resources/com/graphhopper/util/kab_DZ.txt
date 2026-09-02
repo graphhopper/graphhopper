@@ -70,6 +70,7 @@ web.query_osm=Tuttra OSM
 web.route=Abrid
 web.add_to_route=Rnu adig
 web.delete_from_route=Kkes it seg ubrid
+web.delete=
 web.open_custom_model_box=
 web.draw_areas_enabled=
 web.help_custom_model=Tallalt

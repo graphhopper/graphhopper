@@ -112,12 +112,26 @@ public class CGIARProviderTest {
             }
         });
 
-        try {
-            instance.setSleep(30);
-            instance.getEle(16, -20);
-            fail();
-        } catch (Exception ex) {
-        }
+        instance.setSleep(30);
+        IllegalStateException timeoutEx = assertThrows(IllegalStateException.class,
+                () -> instance.getEle(16, -20));
+        assertInstanceOf(SocketTimeoutException.class, timeoutEx.getCause());
+        assertTrue(timeoutEx.getMessage().contains("Unable to download elevation data"));
+
+        // Generic download failures must not be treated as sea level (elev=0)
+        instance.setDownloader(new Downloader() {
+            @Override
+            public void downloadFile(String url, String toFile) throws IOException {
+                throw new IOException("connection reset");
+            }
+        });
+        IllegalStateException ioEx = assertThrows(IllegalStateException.class,
+                () -> instance.getEle(26, -20));
+        assertInstanceOf(IOException.class, ioEx.getCause());
+        assertEquals("connection reset", ioEx.getCause().getMessage());
+        assertTrue(ioEx.getMessage().contains("Unable to download elevation data"));
+        // Failed download must not leave a sea-level cache entry
+        assertFalse(new File(instance.getCacheDir(), instance.getFileName(26, -20) + ".gh").exists());
 
         file.delete();
         zipFile.delete();

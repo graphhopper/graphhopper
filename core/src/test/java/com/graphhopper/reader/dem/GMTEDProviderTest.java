@@ -112,12 +112,27 @@ public class GMTEDProviderTest {
             }
         });
 
-        try {
-            instance.setSleep(30);
-            instance.getEle(16, -20);
-            fail();
-        } catch (Exception ex) {
-        }
+        instance.setSleep(30);
+        // Use a different tile than the FileNotFound case above (GMTED tiles are 20°×30°)
+        IllegalStateException timeoutEx = assertThrows(IllegalStateException.class,
+                () -> instance.getEle(16, -20));
+        assertInstanceOf(SocketTimeoutException.class, timeoutEx.getCause());
+        assertTrue(timeoutEx.getMessage().contains("Unable to download elevation data"));
+
+        // Generic download failures must not be treated as sea level (elev=0).
+        // 50°N is a different tile than 16°N for GMTED (20° lat bands).
+        instance.setDownloader(new Downloader() {
+            @Override
+            public void downloadFile(String url, String toFile) throws IOException {
+                throw new IOException("connection reset");
+            }
+        });
+        IllegalStateException ioEx = assertThrows(IllegalStateException.class,
+                () -> instance.getEle(50, 0));
+        assertInstanceOf(IOException.class, ioEx.getCause());
+        assertEquals("connection reset", ioEx.getCause().getMessage());
+        assertTrue(ioEx.getMessage().contains("Unable to download elevation data"));
+        assertFalse(new File(instance.getCacheDir(), instance.getFileName(50, 0) + ".gh").exists());
 
         file.delete();
         zipFile.delete();

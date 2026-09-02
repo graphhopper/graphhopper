@@ -99,6 +99,13 @@ public class ConditionalExpressionVisitorTest {
         result = parse("edge.getDistance()", validVariable, k -> "");
         assertTrue(result.ok);
         assertEquals("[edge]", result.guessedVariables.toString());
+
+        // chained calls are not supported and the message must state a reason
+        result = parse("edge.getName().contains(\"A 4\")", validVariable, k -> "");
+        assertFalse(result.ok);
+        assertTrue(result.guessedVariables.isEmpty());
+        assertEquals("contains is an illegal method in a conditional expression", result.invalidMessage);
+
         assertFalse(parse("road_class == PRIMARY", s -> false, k -> "").ok);
         result = parse("road_class == PRIMARY", validVariable, k -> "");
         assertTrue(result.ok);

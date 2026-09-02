@@ -116,12 +116,15 @@ public class PrepareLandmarks {
         LOGGER.info("Start calculating " + lms.getLandmarkCount() + " landmarks, weighting:" + lms.getLmSelectionWeighting() + ", " + Helper.getMemInfo());
 
         lms.createLandmarks();
-        lms.flush();
 
         LOGGER.info("Calculated landmarks for " + (lms.getSubnetworksWithLandmarks() - 1) + " subnetworks, took:" + (int) sw.stop().getSeconds() + "s => "
                 + lms.getLandmarksAsGeoJSON() + ", stored weights:" + lms.getLandmarkCount()
                 + ", nodes:" + graph.getNodes() + ", " + Helper.getMemInfo());
         totalPrepareTime = sw.getMillis();
+    }
+
+    public void flush() {
+        lms.flush();
     }
 
     public boolean isPrepared() {

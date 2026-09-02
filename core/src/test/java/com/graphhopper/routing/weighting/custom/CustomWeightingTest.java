@@ -16,6 +16,9 @@ import com.graphhopper.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+import java.util.Map;
+
 import static com.graphhopper.json.Statement.*;
 import static com.graphhopper.json.Statement.Op.LIMIT;
 import static com.graphhopper.json.Statement.Op.MULTIPLY;
@@ -45,6 +48,7 @@ class CustomWeightingTest {
                 .add(MaxSpeed.create())
                 .add(RoadClass.create())
                 .add(RoadClassLink.create())
+                .add(new DecimalEncodedValueImpl("my_priority", 4, 0.05, false))
                 .addTurnCostEncodedValue(turnRestrictionEnc)
                 .build();
         maxSpeedEnc = encodingManager.getDecimalEncodedValue(MaxSpeed.KEY);
@@ -64,6 +68,143 @@ class CustomWeightingTest {
 
     private Weighting createWeighting(CustomModel vehicleModel) {
         return CustomModelParser.createWeighting(encodingManager, NO_TURN_COST_PROVIDER, vehicleModel);
+    }
+
+    @Test
+    public void testParameters() {
+        // 25km/h -> 1440s per km, 100km/h -> 360s per km
+        EdgeIteratorState slow = graph.edge(0, 1).set(avSpeedEnc, 25, 25).setDistance(1000);
+        EdgeIteratorState fast = graph.edge(2, 3).set(avSpeedEnc, 100, 100).setDistance(1000);
+
+        CustomModel customModel = createSpeedCustomModel(avSpeedEnc).setDistanceInfluence(0d).
+                setParameter("speed_threshold", 50).setParameter("slow_factor", 0.5);
+        // parameters in a condition and as value expression
+        customModel.addToSpeed(If("car_average_speed < p_speed_threshold", MULTIPLY, "p_slow_factor"));
+        Weighting weighting = createWeighting(customModel);
+        assertEquals(2 * 1440, weighting.calcEdgeWeight(slow, false));
+        assertEquals(360, weighting.calcEdgeWeight(fast, false));
+
+        // the same model with different values shares the compiled class, only init changes
+        Weighting changed = createWeighting(new CustomModel(customModel).
+                setParameter("speed_threshold", 120).setParameter("slow_factor", 0.25));
+        assertEquals(4 * 1440, changed.calcEdgeWeight(slow, false));
+        assertEquals(4 * 360, changed.calcEdgeWeight(fast, false));
+
+        // boolean parameters in conditions
+        CustomModel boolModel = createSpeedCustomModel(avSpeedEnc).setDistanceInfluence(0d).setParameter("slow_mode", true);
+        boolModel.addToSpeed(If("p_slow_mode", MULTIPLY, "0.5"));
+        assertEquals(2 * 1440, createWeighting(boolModel).calcEdgeWeight(slow, false));
+        assertEquals(1440, createWeighting(new CustomModel(boolModel).setParameter("slow_mode", false)).calcEdgeWeight(slow, false));
+
+        // a parameter that makes a multiply_by negative is rejected
+        CustomModel negModel = createSpeedCustomModel(avSpeedEnc).setParameter("slow_factor", -0.5);
+        negModel.addToSpeed(If("true", MULTIPLY, "p_slow_factor"));
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> createWeighting(negModel));
+        assertTrue(ex.getMessage().contains("negative"), ex.getMessage());
+
+        // a parameter must be referenced with the p_ prefix
+        CustomModel unprefixedModel = createSpeedCustomModel(avSpeedEnc).setParameter("slow_factor", 0.5);
+        unprefixedModel.addToSpeed(If("true", MULTIPLY, "slow_factor"));
+        ex = assertThrows(IllegalArgumentException.class, () -> createWeighting(unprefixedModel));
+        assertTrue(ex.getMessage().contains("'slow_factor' not available"), ex.getMessage());
+
+        // a negative parameter value directly after '-' must still compile ("50--5.0" would not)
+        CustomModel negCorr = createSpeedCustomModel(avSpeedEnc).setDistanceInfluence(0d).setParameter("corr", -5.0);
+        negCorr.addToSpeed(If("true", LIMIT, "50-p_corr"));
+        assertEquals(1440, createWeighting(negCorr).calcEdgeWeight(slow, false));
+
+        // a value expression can use only a single parameter and only once, so that validating the
+        // range endpoints covers all values in between (unlike e.g. p_aa - p_bb at aa==min and bb==max)
+        CustomModel twoParams = createSpeedCustomModel(avSpeedEnc).setParameter("aa", 0.9).setParameter("bb", 0.0);
+        twoParams.addToSpeed(If("true", MULTIPLY, "p_aa - p_bb"));
+        ex = assertThrows(IllegalArgumentException.class, () -> createWeighting(twoParams));
+        assertTrue(ex.getMessage().contains("single parameter"), ex.getMessage());
+        CustomModel repeated = createSpeedCustomModel(avSpeedEnc).setParameter("xx", 0.5);
+        repeated.addToSpeed(If("true", MULTIPLY, "p_xx * p_xx"));
+        ex = assertThrows(IllegalArgumentException.class, () -> createWeighting(repeated));
+        assertTrue(ex.getMessage().contains("more than once"), ex.getMessage());
+
+        // invalid names and values are rejected
+        ex = assertThrows(IllegalArgumentException.class, () -> createWeighting(
+                createSpeedCustomModel(avSpeedEnc).setParameter("myValue", 30)));
+        assertTrue(ex.getMessage().contains("invalid name"), ex.getMessage());
+        ex = assertThrows(IllegalArgumentException.class, () -> createWeighting(
+                createSpeedCustomModel(avSpeedEnc).setParameter("nan", Double.NaN)));
+        assertTrue(ex.getMessage().contains("finite"), ex.getMessage());
+    }
+
+    @Test
+    public void testCheckParameterOverrides() {
+        CustomModel base = new CustomModel().setParameter("width", 3.0, 2, 5).setParameter("push", true).setParameter("private_debug", 1.0);
+        CustomModelParser.checkParameterOverrides(base, new CustomModel().setParameter("width", 4.0));
+
+        Exception ex = assertThrows(IllegalArgumentException.class,
+                () -> CustomModelParser.checkParameterOverrides(base, new CustomModel().setParameter("height", 2.0)));
+        assertTrue(ex.getMessage().contains("not defined in the server-side custom model"), ex.getMessage());
+        // private_ parameters are not advertised
+        assertTrue(ex.getMessage().contains("[width, push]"), ex.getMessage());
+        ex = assertThrows(IllegalArgumentException.class,
+                () -> CustomModelParser.checkParameterOverrides(base, new CustomModel().setParameter("push", 1.0)));
+        assertTrue(ex.getMessage().contains("same type"), ex.getMessage());
+        // a String value (e.g. a quoted number in JSON) is rejected here and not deep in the parser
+        ex = assertThrows(IllegalArgumentException.class,
+                () -> CustomModelParser.checkParameterOverrides(base, new CustomModel().setParameters(Map.of("width", "4"))));
+        assertTrue(ex.getMessage().contains("same type"), ex.getMessage());
+        ex = assertThrows(IllegalArgumentException.class,
+                () -> CustomModelParser.checkParameterOverrides(base, new CustomModel().setParameter("width", 7.0)));
+        assertTrue(ex.getMessage().contains("within its range"), ex.getMessage());
+        // a range can only be specified in a server-side custom model
+        ex = assertThrows(IllegalArgumentException.class,
+                () -> CustomModelParser.checkParameterOverrides(base, new CustomModel().setParameter("width", 4.0, 2, 5)));
+        assertTrue(ex.getMessage().contains("server-side"), ex.getMessage());
+    }
+
+    @Test
+    public void testCheckParameterRanges() {
+        // without an explicit range the default [0, Infinity) fails for a speed limit (0 => max speed 0)
+        CustomModel defaultRange = createSpeedCustomModel(avSpeedEnc).setParameter("max_speed", 90);
+        defaultRange.addToSpeed(If("true", LIMIT, "p_max_speed"));
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> CustomModelParser.checkParameterRanges(defaultRange, encodingManager));
+        assertTrue(ex.getMessage().contains("maximum speed has to be >0"), ex.getMessage());
+
+        CustomModel explicitRange = createSpeedCustomModel(avSpeedEnc).setParameter("max_speed", 90, 10, 140);
+        explicitRange.addToSpeed(If("true", LIMIT, "p_max_speed"));
+        CustomModelParser.checkParameterRanges(explicitRange, encodingManager);
+
+        // a parameter that can scale the speed up requires a finite max
+        CustomModel scale = createSpeedCustomModel(avSpeedEnc).setParameter("factor", 1.0);
+        scale.addToSpeed(If("road_class == MOTORWAY", MULTIPLY, "p_factor"));
+        ex = assertThrows(IllegalArgumentException.class,
+                () -> CustomModelParser.checkParameterRanges(scale, encodingManager));
+        assertTrue(ex.getMessage().contains("finite"), ex.getMessage());
+        CustomModelParser.checkParameterRanges(scale.setParameter("factor", 1.0, 0, 1.2), encodingManager);
+
+        // Infinity * 0 (the minimum of the encoded value) is NaN and must not slip through
+        CustomModel nan = createSpeedCustomModel(avSpeedEnc).setParameter("factor", 1.0, 0.5, Double.POSITIVE_INFINITY);
+        nan.addToSpeed(If("true", LIMIT, "p_factor * car_average_speed"));
+        ex = assertThrows(IllegalArgumentException.class,
+                () -> CustomModelParser.checkParameterRanges(nan, encodingManager));
+        assertTrue(ex.getMessage().contains("finite"), ex.getMessage());
+
+        CustomModel turnNaN = createSpeedCustomModel(avSpeedEnc).setParameter("scale", 1.0);
+        turnNaN.addToTurnPenalty(If("true", MULTIPLY, "p_scale"));
+        ex = assertThrows(IllegalArgumentException.class,
+                () -> CustomModelParser.checkParameterRanges(turnNaN, encodingManager));
+        assertTrue(ex.getMessage().contains(">=0"), ex.getMessage());
+
+        // turn_penalty is validated at the endpoints too
+        CustomModel turn = createSpeedCustomModel(avSpeedEnc).setParameter("discount", 30.0, 0, 600);
+        turn.addToTurnPenalty(If("true", Statement.Op.ADD, "60 - p_discount"));
+        ex = assertThrows(IllegalArgumentException.class,
+                () -> CustomModelParser.checkParameterRanges(turn, encodingManager));
+        assertTrue(ex.getMessage().contains("negative"), ex.getMessage());
+        CustomModelParser.checkParameterRanges(turn.setParameter("discount", 30.0, 0, 60), encodingManager);
+
+        // "Infinity" is a valid turn_penalty value (see avoid_turns.json) and must pass the endpoint check
+        CustomModel infiniteTurn = createSpeedCustomModel(avSpeedEnc).setParameter("xx", 1.0, 0, 2);
+        infiniteTurn.addToTurnPenalty(If("true", Statement.Op.ADD, "Infinity"));
+        CustomModelParser.checkParameterRanges(infiniteTurn, encodingManager);
     }
 
     @Test
@@ -365,6 +506,15 @@ class CustomWeightingTest {
         // do NOT pick maximum priority when it is for a special case
         assertEquals(10d / maxSpeed / 1.0 * 3.6, createWeighting(createSpeedCustomModel(avSpeedEnc).
                 addToPriority(If("road_class == SERVICE", MULTIPLY, "0.5"))).calcMinWeightPerDistance(), 1.e-6);
+
+        // an unconditional multiply_by with an encoded value must use its maximum (0.75) only once, not squared
+        assertEquals(10d / maxSpeed / 0.75 * 3.6, createWeighting(createSpeedCustomModel(avSpeedEnc).
+                addToPriority(If("true", MULTIPLY, "my_priority"))).calcMinWeightPerDistance(), 1.e-6);
+
+        // a leading unconditional 'do' block must not throw and the maximum (0.9) is picked from its branches
+        assertEquals(10d / maxSpeed / 0.9 * 3.6, createWeighting(createSpeedCustomModel(avSpeedEnc).
+                addToPriority(If("true", List.of(If("road_class == MOTORWAY", MULTIPLY, "0.5"), Else(MULTIPLY, "0.9"))))).
+                calcMinWeightPerDistance(), 1.e-6);
     }
 
     @Test
@@ -389,6 +539,19 @@ class CustomWeightingTest {
         Weighting weighting = createWeighting(customModel);
         assertFalse(Double.isNaN(weighting.calcEdgeWeight(motorway, false)));
         assertTrue(Double.isInfinite(weighting.calcEdgeWeight(motorway, false)));
+    }
+
+    @Test
+    public void testEdgeDistanceInCondition() {
+        EdgeIteratorState shortEdge = graph.edge(0, 1).set(avSpeedEnc, 100, 100).setDistance(100);
+        EdgeIteratorState longEdge = graph.edge(1, 2).set(avSpeedEnc, 100, 100).setDistance(1000);
+
+        CustomModel customModel = createSpeedCustomModel(avSpeedEnc).setDistanceInfluence(0d).
+                addToPriority(If("edge.getDistance() > 500", MULTIPLY, "0.1"));
+        Weighting weighting = createWeighting(customModel);
+
+        assertEquals(36, weighting.calcEdgeWeight(shortEdge, false));
+        assertEquals(3600, weighting.calcEdgeWeight(longEdge, false));
     }
 
     @Test

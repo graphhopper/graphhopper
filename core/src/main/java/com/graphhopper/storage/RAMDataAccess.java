@@ -34,27 +34,14 @@ import java.util.Arrays;
  */
 public class RAMDataAccess extends AbstractDataAccess {
     private byte[][] segments = new byte[0][];
-    private boolean store;
+    private final boolean readOnly;
     // we could also use UNSAFE but it is not really faster (see #3005)
     private static final VarHandle INT = MethodHandles.byteArrayViewVarHandle(int[].class, ByteOrder.LITTLE_ENDIAN).withInvokeExactBehavior();
     private static final VarHandle SHORT = MethodHandles.byteArrayViewVarHandle(short[].class, ByteOrder.LITTLE_ENDIAN).withInvokeExactBehavior();
 
-    public RAMDataAccess(String name, String location, boolean store, int segmentSize) {
+    public RAMDataAccess(String name, String location, int segmentSize, boolean readOnly) {
         super(name, location, segmentSize);
-        this.store = store;
-    }
-
-    /**
-     * @param store true if in-memory data should be saved when calling flush
-     */
-    public RAMDataAccess store(boolean store) {
-        this.store = store;
-        return this;
-    }
-
-    @Override
-    public boolean isStoring() {
-        return store;
+        this.readOnly = readOnly;
     }
 
     @Override
@@ -102,9 +89,6 @@ public class RAMDataAccess extends AbstractDataAccess {
         if (isClosed())
             throw new IllegalStateException("already closed");
 
-        if (!store)
-            return false;
-
         File file = new File(getFullName());
         if (!file.exists() || file.length() == 0)
             return false;
@@ -142,9 +126,10 @@ public class RAMDataAccess extends AbstractDataAccess {
         if (closed)
             throw new IllegalStateException("already closed");
 
-        if (!store)
-            return;
+        if (readOnly)
+            throw new IllegalStateException("Cannot flush the read-only DataAccess " + getFullName());
 
+        ensureParentDirectoryExists();
         try {
             try (RandomAccessFile raFile = new RandomAccessFile(getFullName(), "rw")) {
                 long len = getCapacity();
@@ -312,10 +297,4 @@ public class RAMDataAccess extends AbstractDataAccess {
         return segments.length;
     }
 
-    @Override
-    public DAType getType() {
-        if (isStoring())
-            return DAType.RAM_STORE;
-        return DAType.RAM;
-    }
 }

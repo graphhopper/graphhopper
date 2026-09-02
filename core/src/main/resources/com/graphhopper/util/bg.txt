@@ -70,6 +70,7 @@ web.query_osm=
 web.route=Маршрут
 web.add_to_route=
 web.delete_from_route=Премахване от маршрута
+web.delete=
 web.open_custom_model_box=
 web.draw_areas_enabled=
 web.help_custom_model=

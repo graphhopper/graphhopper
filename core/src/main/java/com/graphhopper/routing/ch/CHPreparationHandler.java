@@ -112,7 +112,7 @@ public class CHPreparationHandler {
         return loaded;
     }
 
-    public Map<String, PrepareContractionHierarchies.Result> prepare(BaseGraph baseGraph, StorableProperties properties, List<CHConfig> chConfigs, final boolean closeEarly) {
+    public Map<String, PrepareContractionHierarchies.Result> prepare(BaseGraph baseGraph, StorableProperties properties, List<CHConfig> chConfigs, final boolean closeEarly, final boolean fileBacked) {
         if (chConfigs.isEmpty()) {
             LOGGER.info("There are no CHs to prepare");
             return Collections.emptyMap();
@@ -132,7 +132,8 @@ public class CHPreparationHandler {
                 prepare.setParams(pMap);
                 PrepareContractionHierarchies.Result result = prepare.doWork();
                 results.put(name, result);
-                prepare.flush();
+                if (fileBacked)
+                    prepare.flush();
                 if (closeEarly)
                     prepare.close();
                 properties.put(CH.PREPARE + "date." + name, createFormatter().format(new Date()));

@@ -1059,7 +1059,7 @@ public class OSMReaderTest {
         }
 
         public GraphHopperFacade(String osmFile, String prefLang) {
-            setStoreOnFlush(false);
+            setFileBacked(false);
             setOSMFile(osmFile);
             setGraphHopperLocation(dir);
             setEncodedValuesString("max_width,max_height,max_weight,road_environment," +

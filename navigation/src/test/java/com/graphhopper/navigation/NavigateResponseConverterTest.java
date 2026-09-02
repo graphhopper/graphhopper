@@ -40,7 +40,7 @@ public class NavigateResponseConverterTest {
         // make sure we are using fresh files with correct vehicle
         Helper.removeDir(new File(graphFolder));
 
-        hopper = new GraphHopper().setOSMFile(osmFile).setStoreOnFlush(true).setGraphHopperLocation(graphFolder)
+        hopper = new GraphHopper().setOSMFile(osmFile).setFileBacked(true).setGraphHopperLocation(graphFolder)
                 .setEncodedValuesString("car_access, car_average_speed, max_speed")
                 .setProfiles(TestProfiles.accessAndSpeed(profile, "car")).importOrLoad();
     }

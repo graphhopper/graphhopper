@@ -154,6 +154,32 @@ public class CarTagParserTest {
     }
 
     @Test
+    public void testUnknownValueDoesNotShadowAccess() {
+        // an unrecognized value on a more specific key must defer to access, not shadow it
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "service");
+        way.setTag("access", "no");
+        way.setTag("motor_vehicle", "unknownvalue");
+        assertTrue(parser.getAccess(way).canSkip());
+
+        // but without any restriction it stays allowed
+        way.removeTag("access");
+        assertTrue(parser.getAccess(way).isWay());
+
+        // also for highway=pedestrian, which requires an explicitly allowed value
+        way.setTag("highway", "pedestrian");
+        way.setTag("motorcar", "unknownvalue");
+        way.setTag("motor_vehicle", "yes");
+        assertTrue(parser.getAccess(way).isWay());
+
+        // and for ferries the implied default still applies
+        way.clearTags();
+        way.setTag("route", "ferry");
+        way.setTag("motorcar", "unknownvalue");
+        assertTrue(parser.getAccess(way).isFerry());
+    }
+
+    @Test
     public void testMilitaryAccess() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "track");

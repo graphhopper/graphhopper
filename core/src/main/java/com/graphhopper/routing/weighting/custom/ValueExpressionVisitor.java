@@ -18,18 +18,22 @@
 package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.json.MinMax;
+import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.AverageSlope;
 import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.IntEncodedValue;
+import com.graphhopper.util.CustomModel;
 import org.codehaus.commons.compiler.CompileException;
 import org.codehaus.janino.*;
 
 import java.io.StringReader;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
-
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Expression visitor for right-hand side value of limit_to or multiply_by.
@@ -214,24 +218,47 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
     /**
      * @return the expression for the ExpressionEvaluator used in findMinMax and parseValue: the
      * bike_climb_factor call is replaced by the static function with the slope as explicit first
-     * argument, e.g. bike_climb_factor(average_slope, 120, 95)
+     * argument, e.g. bike_climb_factor(average_slope, 120, 95), and the parameters are replaced by
+     * their values as the evaluator does not know them, e.g. "0.9 * p_hill_factor" -> "0.9 * 0.5"
      */
-    private static String toEvaluable(ParseResult result, String valueExpression) {
-        if (result.bikeClimbArgs == null) return valueExpression;
-        return result.bikeClimbScale + BIKE_CLIMB_FACTOR + "(" + AverageSlope.KEY + ", "
-                + String.join(", ", result.bikeClimbArgs) + ")";
+    private static String toEvaluable(ParseResult result, String valueExpression, Map<String, CustomModel.Parameter> parameters) {
+        if (result.bikeClimbArgs != null)
+            return result.bikeClimbScale + BIKE_CLIMB_FACTOR + "(" + AverageSlope.KEY + ", "
+                    + String.join(", ", result.bikeClimbArgs) + ")";
+        return replaceParameters(valueExpression, parameters);
+    }
+
+    /**
+     * @return the encoded values of the variables of the parsed value expression
+     */
+    private static Set<String> encodedValuesOf(ParseResult result, Map<String, CustomModel.Parameter> parameters) {
+        Set<String> encodedValues = new LinkedHashSet<>(result.guessedVariables);
+        encodedValues.removeIf(v -> CustomModelParser.isParameter(v, parameters));
+        return encodedValues;
     }
 
     /**
      * Parses the value expression and throws an exception if it is invalid, contains more than one
-     * encoded value or can result in a negative value.
+     * encoded value or parameter or can result in a negative value.
      */
-    static ParseResult parseValue(String valueExpression, EncodedValueLookup lookup) {
-        ParseResult result = parse(valueExpression, key -> lookup.hasEncodedValue(key) || key.contains(INFINITY));
+    static ParseResult parseValue(String valueExpression, Map<String, CustomModel.Parameter> parameters, EncodedValueLookup lookup) {
+        ParseResult result = parse(valueExpression, key -> lookup.hasEncodedValue(key) || key.contains(INFINITY) || CustomModelParser.isParameter(key, parameters));
         if (!result.ok)
             throw new IllegalArgumentException(result.invalidMessage);
-        if (result.guessedVariables.size() > 1)
-            throw new IllegalArgumentException("Currently only a single EncodedValue is allowed on the right-hand side, but was " + result.guessedVariables.size() + ". Value expression: " + valueExpression);
+        Set<String> encodedValues = encodedValuesOf(result, parameters);
+        if (encodedValues.size() > 1)
+            throw new IllegalArgumentException("Currently only a single EncodedValue is allowed on the right-hand side, but was " + encodedValues.size() + ". Value expression: " + valueExpression);
+
+        Set<String> usedParameters = new LinkedHashSet<>(result.guessedVariables);
+        usedParameters.removeAll(encodedValues);
+        if (usedParameters.size() > 1)
+            throw new IllegalArgumentException("Currently only a single parameter is allowed on the right-hand side, but was " + usedParameters.size() + ". Value expression: " + valueExpression);
+        if (usedParameters.size() == 1) {
+            Matcher matcher = Pattern.compile("\\b" + usedParameters.iterator().next() + "\\b").matcher(valueExpression);
+            matcher.find();
+            if (matcher.find())
+                throw new IllegalArgumentException("Parameter '" + usedParameters.iterator().next() + "' must not be used more than once. Value expression: " + valueExpression);
+        }
 
         // TODO Nearly duplicate code as in findMinMax
         double value;
@@ -241,17 +268,18 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
             // expressions are accepted from Double.parseDouble but parse() rejects them. With this call order we avoid unexpected security problems.
             value = Double.parseDouble(valueExpression);
         } catch (NumberFormatException ex) {
+            String evalExpression = toEvaluable(result, valueExpression, parameters);
             try {
-                if (result.guessedVariables.isEmpty()) { // without encoded values
-                    NoArgEvaluator ee = createExpressionEvaluator().createFastEvaluator(valueExpression, NoArgEvaluator.class);
+                if (encodedValues.isEmpty()) { // without encoded values
+                    NoArgEvaluator ee = createExpressionEvaluator().createFastEvaluator(evalExpression, NoArgEvaluator.class);
                     value = ee.evaluate();
                 } else if (lookup.hasEncodedValue(valueExpression)) { // speed up for common case that complete right-hand side is the encoded value
                     EncodedValue enc = lookup.getEncodedValue(valueExpression, EncodedValue.class);
                     value = Math.min(getMin(enc), getMax(enc));
                 } else {
                     // single encoded value
-                    String var = result.guessedVariables.iterator().next();
-                    SingleArgEvaluator ee = createExpressionEvaluator().createFastEvaluator(toEvaluable(result, valueExpression), SingleArgEvaluator.class, var);
+                    String var = encodedValues.iterator().next();
+                    SingleArgEvaluator ee = createExpressionEvaluator().createFastEvaluator(evalExpression, SingleArgEvaluator.class, var);
                     EncodedValue enc = lookup.getEncodedValue(var, EncodedValue.class);
                     double max = getMax(enc);
                     double val1 = ee.evaluate(max);
@@ -279,12 +307,13 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         return variables;
     }
 
-    static MinMax findMinMax(String valueExpression, EncodedValueLookup lookup) {
-        ParseResult result = parse(valueExpression, lookup::hasEncodedValue);
+    static MinMax findMinMax(String valueExpression, Map<String, CustomModel.Parameter> parameters, EncodedValueLookup lookup) {
+        ParseResult result = parse(valueExpression, key -> lookup.hasEncodedValue(key) || key.contains(INFINITY) || CustomModelParser.isParameter(key, parameters));
         if (!result.ok)
             throw new IllegalArgumentException(result.invalidMessage);
-        if (result.guessedVariables.size() > 1)
-            throw new IllegalArgumentException("Currently only a single EncodedValue is allowed on the right-hand side, but was " + result.guessedVariables.size() + ". Value expression: " + valueExpression);
+        Set<String> encodedValues = encodedValuesOf(result, parameters);
+        if (encodedValues.size() > 1)
+            throw new IllegalArgumentException("Currently only a single EncodedValue is allowed on the right-hand side, but was " + encodedValues.size() + ". Value expression: " + valueExpression);
 
         // TODO Nearly duplicate as in findVariables
         try {
@@ -296,9 +325,10 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         } catch (NumberFormatException ex) {
         }
 
+        String evalExpression = toEvaluable(result, valueExpression, parameters);
         try {
-            if (result.guessedVariables.isEmpty()) { // without encoded values
-                NoArgEvaluator ee = createExpressionEvaluator().createFastEvaluator(valueExpression, NoArgEvaluator.class);
+            if (encodedValues.isEmpty()) { // without encoded values
+                NoArgEvaluator ee = createExpressionEvaluator().createFastEvaluator(evalExpression, NoArgEvaluator.class);
                 double val = ee.evaluate();
                 return new MinMax(val, val);
             }
@@ -309,8 +339,8 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
                 return new MinMax(min, max);
             }
 
-            String var = result.guessedVariables.iterator().next();
-            SingleArgEvaluator ee = createExpressionEvaluator().createFastEvaluator(toEvaluable(result, valueExpression), SingleArgEvaluator.class, var);
+            String var = encodedValues.iterator().next();
+            SingleArgEvaluator ee = createExpressionEvaluator().createFastEvaluator(evalExpression, SingleArgEvaluator.class, var);
             EncodedValue enc = lookup.getEncodedValue(var, EncodedValue.class);
             double max = getMax(enc);
             double val1 = ee.evaluate(max);
@@ -327,6 +357,20 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         // make the built-in function resolvable
         ee.setDefaultImports("static " + CustomWeightingHelper.class.getName() + ".*");
         return ee;
+    }
+
+    static boolean containsEncodedValue(String valueExpression, Map<String, CustomModel.Parameter> parameters, EncodedValueLookup lookup) {
+        ParseResult result = parse(valueExpression, key -> lookup.hasEncodedValue(key) || key.contains(INFINITY) || CustomModelParser.isParameter(key, parameters));
+        return !result.ok || result.guessedVariables.stream().anyMatch(lookup::hasEncodedValue);
+    }
+
+    private static String replaceParameters(String expression, Map<String, CustomModel.Parameter> parameters) {
+        for (Map.Entry<String, CustomModel.Parameter> entry : parameters.entrySet()) {
+            // parenthesized canonical literal, as e.g. "speed--2" for a negative value would not compile
+            String literal = entry.getValue().value() instanceof Number number ? "(" + number.doubleValue() + ")" : entry.getValue().value().toString();
+            expression = expression.replaceAll("\\b" + CustomModelParser.PARAM_PREFIX + entry.getKey() + "\\b", literal);
+        }
+        return Statement.toJavaExpression(expression);
     }
 
     static double getMin(EncodedValue enc) {

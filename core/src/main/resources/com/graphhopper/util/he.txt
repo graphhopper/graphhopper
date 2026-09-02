@@ -70,6 +70,7 @@ web.query_osm=שאילתת OSM
 web.route=מסלול
 web.add_to_route=הוספה למסלול
 web.delete_from_route=מחיקה מהמסלול
+web.delete=
 web.open_custom_model_box=פתיחת חלונית מודל מותאם אישית
 web.draw_areas_enabled=שירטוט ועריכה של אזורים על המפה
 web.help_custom_model=עזרה
