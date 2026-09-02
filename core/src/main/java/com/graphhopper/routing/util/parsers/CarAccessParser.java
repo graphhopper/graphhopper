@@ -76,24 +76,22 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
     public WayAccess getAccess(ReaderWay way) {
         // TODO: Ferries have conditionals, like opening hours or are closed during some time in the year
         String highwayValue = way.getTag("highway");
-        int firstIndex = way.getFirstIndex(restrictionKeys);
-        String firstValue = firstIndex < 0 ? "" : way.getTag(restrictionKeys.get(firstIndex), "");
+        // null if no restriction key has a recognized value or the restriction is lifted by a temporal conditional
+        WayAccess access = getAccessFromRestrictions(way);
         if (highwayValue == null) {
             if (FerrySpeedCalculator.isFerry(way)) {
-                if (allowedValues.contains(firstValue) ||
+                if (access == WayAccess.WAY ||
                         // implied default is allowed only if foot and bicycle is not specified:
-                        firstValue.isEmpty() && !way.hasTag("foot") && !way.hasTag("bicycle") ||
+                        access == null && !way.hasTag("foot") && !way.hasTag("bicycle") ||
                         // if hgv is allowed then smaller trucks and cars are allowed too
                         way.hasTag("hgv", "yes"))
                     return WayAccess.FERRY;
-                if (restrictedValues.contains(firstValue))
-                    return WayAccess.CAN_SKIP;
             }
             return WayAccess.CAN_SKIP;
         }
 
         if ("pedestrian".equals(highwayValue)
-                && !allowedValues.contains(firstValue)
+                && access != WayAccess.WAY
                 && !hasPermissiveTemporalRestriction(way, restrictionKeys.size() - 1, restrictionKeys, allowedValues)) {
             // allow pedestrian if explicitly tagged
             return WayAccess.CAN_SKIP;
@@ -112,7 +110,6 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
         if (way.hasTag("impassable", "yes") || way.hasTag("status", "impassable"))
             return WayAccess.CAN_SKIP;
 
-        WayAccess access = getAccessFromRestrictions(way);
         return access != null ? access : WayAccess.WAY;
     }
 

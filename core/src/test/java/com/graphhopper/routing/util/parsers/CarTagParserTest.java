@@ -165,6 +165,18 @@ public class CarTagParserTest {
         // but without any restriction it stays allowed
         way.removeTag("access");
         assertTrue(parser.getAccess(way).isWay());
+
+        // also for highway=pedestrian, which requires an explicitly allowed value
+        way.setTag("highway", "pedestrian");
+        way.setTag("motorcar", "unknownvalue");
+        way.setTag("motor_vehicle", "yes");
+        assertTrue(parser.getAccess(way).isWay());
+
+        // and for ferries the implied default still applies
+        way.clearTags();
+        way.setTag("route", "ferry");
+        way.setTag("motorcar", "unknownvalue");
+        assertTrue(parser.getAccess(way).isFerry());
     }
 
     @Test
