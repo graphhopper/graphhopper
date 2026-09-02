@@ -113,8 +113,8 @@ public class FindMinMax {
                 // findMinMax evaluates an encoded value only at its endpoints and misses interior extremes of a non-monotone expression
                 if (ValueExpressionVisitor.containsEncodedValue(statement.value(), lookup, newParams))
                     throw cannotChange(name, oldValue, newValue, "the value '" + statement.value() + "' uses an encoded value");
-                if (ValueExpressionVisitor.findMinMax(statement.value(), lookup, newParams).max
-                        > ValueExpressionVisitor.findMinMax(statement.value(), lookup, oldParams).min)
+                if (ValueExpressionVisitor.findMinMax(statement.value(), newParams, lookup).max
+                        > ValueExpressionVisitor.findMinMax(statement.value(), oldParams, lookup).min)
                     throw cannotChange(name, oldValue, newValue, "the value '" + statement.value() + "' could increase");
             }
             if (pattern.matcher(statement.condition()).find()) {
@@ -127,8 +127,8 @@ public class FindMinMax {
                     // applying to more edges increases the weight no matter which branch they were in
                     // before, but only when the statement blocks them, i.e. sets speed or priority to 0
                     if (ValueExpressionVisitor.containsEncodedValue(statement.value(), lookup, newParams)
-                            || ValueExpressionVisitor.findMinMax(statement.value(), lookup, newParams).max > 0
-                            || ValueExpressionVisitor.findMinMax(statement.value(), lookup, oldParams).max > 0)
+                            || ValueExpressionVisitor.findMinMax(statement.value(), newParams, lookup).max > 0
+                            || ValueExpressionVisitor.findMinMax(statement.value(), oldParams, lookup).max > 0)
                         throw cannotChange(name, oldValue, newValue, "a parameter in a condition is only supported for blocking statements (value 0)");
                 }
             }
@@ -201,7 +201,7 @@ public class FindMinMax {
                 // a non-negative add increases the speed and so decreases the weight
                 throw new IllegalArgumentException("CustomModel in query must not use 'add'");
             } else if (statement.operation() == Statement.Op.MULTIPLY) {
-                MinMax minMax = ValueExpressionVisitor.findMinMax(statement.value(), lookup, parameters);
+                MinMax minMax = ValueExpressionVisitor.findMinMax(statement.value(), parameters, lookup);
                 if (minMax.max > 1)
                     throw new IllegalArgumentException("maximum of value '" + statement.value() + "' cannot be larger than 1, but was: " + minMax.max);
                 else if (minMax.min < 0)
@@ -231,7 +231,7 @@ public class FindMinMax {
                 for (List<Statement> subGroup : CustomModelParser.splitIntoGroup(first.doBlock())) findMinMaxForGroup(minMax, subGroup, parameters, lookup);
                 return;
             } else {
-                minMaxGroup = first.operation().apply(minMax, ValueExpressionVisitor.findMinMax(first.value(), lookup, parameters));
+                minMaxGroup = first.operation().apply(minMax, ValueExpressionVisitor.findMinMax(first.value(), parameters, lookup));
                 if (minMaxGroup.max < 0)
                     throw new IllegalArgumentException("statement resulted in negative value: " + first);
             }
@@ -245,7 +245,7 @@ public class FindMinMax {
                     tmp = new MinMax(minMax.min, minMax.max);
                     for (List<Statement> subGroup : CustomModelParser.splitIntoGroup(s.doBlock())) findMinMaxForGroup(tmp, subGroup, parameters, lookup);
                 } else {
-                    tmp = s.operation().apply(minMax, ValueExpressionVisitor.findMinMax(s.value(), lookup, parameters));
+                    tmp = s.operation().apply(minMax, ValueExpressionVisitor.findMinMax(s.value(), parameters, lookup));
                     if (tmp.max < 0)
                         throw new IllegalArgumentException("statement resulted in negative value: " + s);
                 }

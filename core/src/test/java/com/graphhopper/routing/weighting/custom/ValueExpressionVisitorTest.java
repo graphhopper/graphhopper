@@ -18,11 +18,11 @@ import static org.junit.jupiter.api.Assertions.*;
 class ValueExpressionVisitorTest {
 
     static Set<String> findVariables(String valueExpression, EncodedValueLookup lookup) {
-        return ValueExpressionVisitor.findVariables(valueExpression, lookup, Map.of());
+        return ValueExpressionVisitor.findVariables(valueExpression, Map.of(), lookup);
     }
 
     static MinMax findMinMax(String valueExpression, EncodedValueLookup lookup) {
-        return ValueExpressionVisitor.findMinMax(valueExpression, lookup, Map.of());
+        return ValueExpressionVisitor.findMinMax(valueExpression, Map.of(), lookup);
     }
 
     @Test

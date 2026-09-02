@@ -672,7 +672,7 @@ public class CustomModelParser {
                     parseExpressions(expressions, nameInConditionValidator, exceptionInfo, createObjects, statement.doBlock(), classHelper, lookup, parameters, indentation + "  ");
                     expressions.append(indentation).append("}\n");
                 } else {
-                    createObjects.addAll(ValueExpressionVisitor.findVariables(statement.value(), lookup, parameters));
+                    createObjects.addAll(ValueExpressionVisitor.findVariables(statement.value(), parameters, lookup));
                     expressions.append("else {").append(statement.operation().build(statement.value())).append("; }\n");
                 }
             } else if (statement.keyword() == Statement.Keyword.ELSEIF || statement.keyword() == Statement.Keyword.IF) {
@@ -690,7 +690,7 @@ public class CustomModelParser {
                     parseExpressions(expressions, nameInConditionValidator, exceptionInfo, createObjects, statement.doBlock(), classHelper, lookup, parameters, indentation + "  ");
                     expressions.append(indentation).append("}\n");
                 } else {
-                    createObjects.addAll(ValueExpressionVisitor.findVariables(statement.value(), lookup, parameters));
+                    createObjects.addAll(ValueExpressionVisitor.findVariables(statement.value(), parameters, lookup));
                     expressions.append("if (").append(parseResult.converted).append(") {").
                             append(statement.operation().build(statement.value())).append(";}\n");
                 }

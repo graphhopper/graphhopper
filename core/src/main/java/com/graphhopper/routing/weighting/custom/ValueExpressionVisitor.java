@@ -155,7 +155,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
      * @return the encoded values and parameters of the value expression. Throws an exception if the
      * expression is invalid, contains more than one encoded value or can result in a negative value.
      */
-    static Set<String> findVariables(String valueExpression, EncodedValueLookup lookup, Map<String, CustomModel.Parameter> parameters) {
+    static Set<String> findVariables(String valueExpression, Map<String, CustomModel.Parameter> parameters, EncodedValueLookup lookup) {
         ParseResult result = parse(valueExpression, key -> lookup.hasEncodedValue(key) || key.contains(INFINITY) || CustomModelParser.isParameter(key, parameters));
         if (!result.ok)
             throw new IllegalArgumentException(result.invalidMessage);
@@ -214,7 +214,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         return result.guessedVariables;
     }
 
-    static MinMax findMinMax(String valueExpression, EncodedValueLookup lookup, Map<String, CustomModel.Parameter> parameters) {
+    static MinMax findMinMax(String valueExpression, Map<String, CustomModel.Parameter> parameters, EncodedValueLookup lookup) {
         ParseResult result = parse(valueExpression, key -> lookup.hasEncodedValue(key) || key.contains(INFINITY) || CustomModelParser.isParameter(key, parameters));
         if (!result.ok)
             throw new IllegalArgumentException(result.invalidMessage);
