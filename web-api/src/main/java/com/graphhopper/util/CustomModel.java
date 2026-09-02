@@ -18,9 +18,12 @@
 package com.graphhopper.util;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.graphhopper.jackson.CustomModelAreasDeserializer;
+import com.graphhopper.json.MinMax;
 import com.graphhopper.json.Statement;
 
 import java.util.*;
@@ -39,6 +42,7 @@ public class CustomModel {
     private List<Statement> speedStatements = new ArrayList<>();
     private List<Statement> priorityStatements = new ArrayList<>();
     private List<Statement> turnPenaltyStatements = new ArrayList<>();
+    private Map<String, Parameter> parameters = new LinkedHashMap<>();
 
     private JsonFeatureCollection areas = new JsonFeatureCollection();
 
@@ -54,6 +58,7 @@ public class CustomModel {
         speedStatements = deepCopy(toCopy.getSpeed());
         priorityStatements = deepCopy(toCopy.getPriority());
         turnPenaltyStatements = deepCopy(toCopy.getTurnPenalty());
+        parameters.putAll(toCopy.parameters); // Parameter is immutable
 
         addAreas(toCopy.getAreas());
     }
@@ -112,6 +117,7 @@ public class CustomModel {
         }
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public List<Statement> getSpeed() {
         return speedStatements;
     }
@@ -121,6 +127,7 @@ public class CustomModel {
         return this;
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public List<Statement> getPriority() {
         return priorityStatements;
     }
@@ -130,7 +137,89 @@ public class CustomModel {
         return this;
     }
 
+    /**
+     * A named number or boolean usable in the expressions of the statements, referenced with the p_ prefix.
+     *
+     * @param value a Double or Boolean
+     * @param min   lower limit of a number parameter; a non-default range can only be specified in a server-side custom model
+     * @param max   upper limit, see min
+     */
+    public record Parameter(Object value, double min, double max) {
+        public Parameter(Object value) {
+            this(value, 0, Double.POSITIVE_INFINITY);
+        }
+
+        public boolean hasDefaultRange() {
+            return min == 0 && max == Double.POSITIVE_INFINITY;
+        }
+
+        @JsonValue
+        Object toJson() {
+            if (hasDefaultRange()) return value;
+            Map<String, Object> map = new LinkedHashMap<>();
+            map.put("value", value);
+            if (min != 0) map.put("min", min);
+            if (max != Double.POSITIVE_INFINITY) map.put("max", max);
+            return map;
+        }
+
+        @Override
+        public String toString() {
+            // the range is excluded, see CustomModel.toString
+            return String.valueOf(value);
+        }
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public Map<String, Parameter> getParameters() {
+        return parameters;
+    }
+
+    @JsonProperty("parameters")
+    public CustomModel setParameters(Map<String, Object> map) {
+        map.forEach(this::setParameter);
+        return this;
+    }
+
+    /**
+     * @param value a number or boolean, or the object form with value, min and max like in JSON
+     */
+    public CustomModel setParameter(String name, Object value) {
+        if (value instanceof Map<?, ?> object) {
+            // the object form defines a range: {"value": 3, "min": 2, "max": 5}, min and max are optional
+            for (Object key : object.keySet())
+                if (!"value".equals(key) && !"min".equals(key) && !"max".equals(key))
+                    throw new IllegalArgumentException("parameter '" + name + "': unexpected key '" + key + "'. Only value, min and max are allowed");
+            if (!(object.get("value") instanceof Number number))
+                throw new IllegalArgumentException("parameter '" + name + "': a number 'value' is required when a range is specified, but was: " + object.get("value"));
+            setParameter(name, number.doubleValue(),
+                    rangeLimit(name, "min", object.get("min"), 0),
+                    rangeLimit(name, "max", object.get("max"), Double.POSITIVE_INFINITY));
+        } else {
+            // store numbers as Double so that toString does not change when a range is added (5 -> 5.0)
+            parameters.put(name, new Parameter(value instanceof Number number ? number.doubleValue() : value));
+        }
+        return this;
+    }
+
+    private static double rangeLimit(String name, String key, Object limit, double defaultValue) {
+        if (limit == null) return defaultValue;
+        if (!(limit instanceof Number number))
+            throw new IllegalArgumentException("parameter '" + name + "': '" + key + "' must be a number, but was: " + limit);
+        return number.doubleValue();
+    }
+
+    public CustomModel setParameter(String name, double value, double min, double max) {
+        if (min > max)
+            throw new IllegalArgumentException("parameter '" + name + "': min " + min + " must not be larger than max " + max);
+        if (value < min || value > max)
+            throw new IllegalArgumentException("parameter '" + name + "': value " + value + " must be within its range [" + min + ", " + max + "]");
+        parameters.put(name, new Parameter(value, min, max));
+        return this;
+    }
+
     @JsonProperty("turn_penalty")
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public List<Statement> getTurnPenalty() {
         return turnPenaltyStatements;
     }
@@ -170,7 +259,22 @@ public class CustomModel {
 
     @Override
     public String toString() {
-        return createContentString();
+        // parameter ranges are excluded (Parameter.toString) as they only restrict requests and do not
+        // affect the weights, i.e. changing a range must not require a re-import or new preparation
+        return createContentString() + "|parameters=" + parameters;
+    }
+
+    /**
+     * @return the string that identifies the compiled custom weighting class, i.e. without the
+     * parameter values, which the generated class reads at runtime in init (see CustomModelParser).
+     * The names are not required either (the statements determine the created fields), but the types
+     * are, as they determine the field types.
+     */
+    public String createClassKey() {
+        Map<String, String> types = new TreeMap<>();
+        for (Map.Entry<String, Parameter> entry : parameters.entrySet())
+            types.put(entry.getKey(), entry.getValue().value() instanceof Boolean ? "boolean" : "double");
+        return createContentString() + "|parameterTypes=" + types;
     }
 
     private String createContentString() {
@@ -198,6 +302,11 @@ public class CustomModel {
         mergedCM.speedStatements.addAll(queryModel.getSpeed());
         mergedCM.priorityStatements.addAll(queryModel.getPriority());
         mergedCM.turnPenaltyStatements.addAll(queryModel.getTurnPenalty());
+        // when overriding an existing parameter only the value is taken, so that a query model can never change a range
+        queryModel.parameters.forEach((name, param) -> {
+            Parameter existing = mergedCM.parameters.get(name);
+            mergedCM.parameters.put(name, existing == null ? param : new Parameter(param.value(), existing.min(), existing.max()));
+        });
 
         mergedCM.addAreas(queryModel.getAreas());
         return mergedCM;

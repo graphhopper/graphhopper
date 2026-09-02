@@ -88,21 +88,21 @@ public final class CustomWeighting implements Weighting {
     private final MaxCalc maxPrioCalc;
     private final MaxCalc maxSpeedCalc;
 
-    public CustomWeighting(TurnCostProvider turnCostProvider, Parameters parameters) {
+    public CustomWeighting(TurnCostProvider turnCostProvider, Config config) {
         if (!Weighting.isValidName(getName()))
             throw new IllegalStateException("Not a valid name for a Weighting: " + getName());
         this.turnCostProvider = turnCostProvider;
 
-        this.edgeToSpeedMapping = parameters.getEdgeToSpeedMapping();
-        this.maxSpeedCalc = parameters.getMaxSpeedCalc();
+        this.edgeToSpeedMapping = config.getEdgeToSpeedMapping();
+        this.maxSpeedCalc = config.getMaxSpeedCalc();
 
-        this.edgeToPriorityMapping = parameters.getEdgeToPriorityMapping();
-        this.maxPrioCalc = parameters.getMaxPrioCalc();
+        this.edgeToPriorityMapping = config.getEdgeToPriorityMapping();
+        this.maxPrioCalc = config.getMaxPrioCalc();
 
-        this.headingPenaltySeconds = parameters.getHeadingPenaltySeconds();
+        this.headingPenaltySeconds = config.getHeadingPenaltySeconds();
 
         // given unit is s/km -> convert to s/m
-        this.distanceInfluence = parameters.getDistanceInfluence() / 1000.0;
+        this.distanceInfluence = config.getDistanceInfluence() / 1000.0;
         if (this.distanceInfluence < 0)
             throw new IllegalArgumentException("distance_influence cannot be negative " + this.distanceInfluence);
     }
@@ -179,7 +179,7 @@ public final class CustomWeighting implements Weighting {
         double calcMax();
     }
 
-    public static class Parameters {
+    public static class Config {
         private final EdgeToDoubleMapping edgeToSpeedMapping;
         private final EdgeToDoubleMapping edgeToPriorityMapping;
         private final MaxCalc maxSpeedCalc;
@@ -188,7 +188,7 @@ public final class CustomWeighting implements Weighting {
         private final double distanceInfluence;
         private final double headingPenaltySeconds;
 
-        public Parameters(EdgeToDoubleMapping edgeToSpeedMapping, MaxCalc maxSpeedCalc,
+        public Config(EdgeToDoubleMapping edgeToSpeedMapping, MaxCalc maxSpeedCalc,
                           EdgeToDoubleMapping edgeToPriorityMapping, MaxCalc maxPrioCalc,
                           TurnPenaltyMapping turnPenaltyMapping,
                           double distanceInfluence, double headingPenaltySeconds) {

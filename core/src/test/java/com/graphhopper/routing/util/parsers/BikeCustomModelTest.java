@@ -92,7 +92,7 @@ public class BikeCustomModelTest {
         way.setTag("highway", "path");
         way.setTag("surface", "ground");
         EdgeIteratorState edge = createEdge(way);
-        CustomWeighting.Parameters p = CustomModelParser.createWeightingParameters(cm, em);
+        CustomWeighting.Config p = CustomModelParser.createWeightingConfig(cm, em);
         assertEquals(0.9, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
 
         way.setTag("mtb:scale", "0");
@@ -130,24 +130,24 @@ public class BikeCustomModelTest {
         ReaderWay way = new ReaderWay(0L);
         way.setTag("highway", "bridleway");
         EdgeIteratorState edge = createEdge(way);
-        CustomWeighting.Parameters p = CustomModelParser.createWeightingParameters(cm, em);
+        CustomWeighting.Config p = CustomModelParser.createWeightingConfig(cm, em);
         assertEquals(0.8, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
 
         way.setTag("country", Country.DEU);
         edge = createEdge(way);
-        p = CustomModelParser.createWeightingParameters(cm, em);
+        p = CustomModelParser.createWeightingConfig(cm, em);
         assertEquals(0, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
 
         way.setTag("bicycle", "yes");
         edge = createEdge(way);
-        p = CustomModelParser.createWeightingParameters(cm, em);
+        p = CustomModelParser.createWeightingConfig(cm, em);
         assertEquals(0.8, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
 
         way = new ReaderWay(0L);
         way.setTag("highway", "trunk_link");
         way.setTag("country", Country.CHE);
         edge = createEdge(way);
-        p = CustomModelParser.createWeightingParameters(cm, em);
+        p = CustomModelParser.createWeightingConfig(cm, em);
         assertEquals(0, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
     }
 
@@ -158,7 +158,7 @@ public class BikeCustomModelTest {
         way.setTag("highway", "path");
         way.setTag("surface", "ground"); // bad surface means slow speed for mtb too
         EdgeIteratorState edge = createEdge(way);
-        CustomWeighting.Parameters p = CustomModelParser.createWeightingParameters(cm, em);
+        CustomWeighting.Config p = CustomModelParser.createWeightingConfig(cm, em);
         assertEquals(1.1, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
         assertEquals(10.0, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
@@ -199,7 +199,7 @@ public class BikeCustomModelTest {
         ReaderWay way = new ReaderWay(0L);
         way.setTag("highway", "path");
         EdgeIteratorState edge = createEdge(way);
-        CustomWeighting.Parameters p = CustomModelParser.createWeightingParameters(cm, em);
+        CustomWeighting.Config p = CustomModelParser.createWeightingConfig(cm, em);
         assertEquals(0.8, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
         assertEquals(6.0, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
@@ -227,7 +227,7 @@ public class BikeCustomModelTest {
     @Test
     public void testCalcPriority() {
         CustomModel cm = GHUtility.loadCustomModelFromJar("bike.json");
-        CustomWeighting.Parameters p = CustomModelParser.createWeightingParameters(cm, em);
+        CustomWeighting.Config p = CustomModelParser.createWeightingConfig(cm, em);
 
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "tertiary");
@@ -252,7 +252,7 @@ public class BikeCustomModelTest {
     @Test
     public void testHandleWayTagsInfluencedByRelation() {
         CustomModel cm = GHUtility.loadCustomModelFromJar("bike.json");
-        CustomWeighting.Parameters p = CustomModelParser.createWeightingParameters(cm, em);
+        CustomWeighting.Config p = CustomModelParser.createWeightingConfig(cm, em);
 
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "road");
@@ -324,7 +324,7 @@ public class BikeCustomModelTest {
     @Test
     public void testHandleWayTagsInfluencedByBikeAndMtbRelation() {
         CustomModel cm = GHUtility.loadCustomModelFromJar("mtb.json");
-        CustomWeighting.Parameters p = CustomModelParser.createWeightingParameters(cm, em);
+        CustomWeighting.Config p = CustomModelParser.createWeightingConfig(cm, em);
 
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "track");

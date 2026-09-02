@@ -141,6 +141,16 @@ public class GraphHopperTest {
     }
 
     @Test
+    public void testCustomModelFilesParameterCollision() {
+        // bike.json and mtb.json both define max_mtb_rating
+        Profile profile = new Profile("bike").setCustomModel(null).
+                putHint("custom_model_files", List.of("bike.json", "mtb.json"));
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> GraphHopper.resolveCustomModelFiles(GH_LOCATION, List.of(profile), new JsonFeatureCollection()));
+        assertTrue(ex.getMessage().contains("parameter 'max_mtb_rating' of custom model file 'mtb.json'"), ex.getMessage());
+    }
+
+    @Test
     public void testMonacoWithInstructions() {
         final String profile = "profile";
 

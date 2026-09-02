@@ -1283,6 +1283,8 @@ public class GraphHopper {
         for (Profile profile : profilesByName.values()) {
             try {
                 createWeighting(profile, new PMap());
+                if (profile.getCustomModel() != null)
+                    CustomModelParser.checkParameterRanges(profile.getCustomModel(), encodingManager);
             } catch (IllegalArgumentException e) {
                 throw new IllegalArgumentException("Could not create weighting for profile: '" + profile.getName() + "'.\n" +
                         "Profile: " + profile + "\n" +
@@ -1775,7 +1777,12 @@ public class GraphHopper {
                                 // 2. try to load custom model file from external location
                                 string = readJSONFileWithoutComments(customModelFile.toFile().getAbsolutePath());
                             }
-                            customModel = CustomModel.merge(customModel, jsonOM.readValue(string, CustomModel.class));
+                            CustomModel fileModel = jsonOM.readValue(string, CustomModel.class);
+                            for (String name : fileModel.getParameters().keySet())
+                                if (customModel.getParameters().containsKey(name))
+                                    throw new IllegalArgumentException("parameter '" + name + "' of custom model file '" + file
+                                            + "' is already defined in a previous custom model, profile: " + profile.getName());
+                            customModel = CustomModel.merge(customModel, fileModel);
                         } catch (IOException ex) {
                             throw new RuntimeException("Cannot load custom_model from location " + file + ", profile:" + profile.getName(), ex);
                         }
