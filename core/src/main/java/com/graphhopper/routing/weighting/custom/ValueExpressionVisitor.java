@@ -163,8 +163,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         encodedValues.removeIf(v -> CustomModelParser.isParameter(v, parameters));
         if (encodedValues.size() > 1)
             throw new IllegalArgumentException("Currently only a single EncodedValue is allowed on the right-hand side, but was " + encodedValues.size() + ". Value expression: " + valueExpression);
-        // at most one parameter and only once, so that the expression is linear in the parameter and
-        // validating the range endpoints (checkParameterRanges) covers all values in between
+
         Set<String> usedParameters = new LinkedHashSet<>(result.guessedVariables);
         usedParameters.removeAll(encodedValues);
         if (usedParameters.size() > 1)
@@ -261,7 +260,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         }
     }
 
-    static boolean containsEncodedValue(String valueExpression, EncodedValueLookup lookup, Map<String, CustomModel.Parameter> parameters) {
+    static boolean containsEncodedValue(String valueExpression, Map<String, CustomModel.Parameter> parameters, EncodedValueLookup lookup) {
         ParseResult result = parse(valueExpression, key -> lookup.hasEncodedValue(key) || key.contains(INFINITY) || CustomModelParser.isParameter(key, parameters));
         return !result.ok || result.guessedVariables.stream().anyMatch(lookup::hasEncodedValue);
     }

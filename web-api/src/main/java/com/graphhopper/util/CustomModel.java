@@ -233,31 +233,6 @@ public class CustomModel {
         return this;
     }
 
-    /**
-     * Throws an exception if the query model does not just override the values of parameters that the
-     * base (server-side) model defines, with the same type and within the allowed range.
-     */
-    public static void checkParameterOverrides(CustomModel baseModel, CustomModel queryModel) {
-        for (Map.Entry<String, Parameter> entry : queryModel.parameters.entrySet()) {
-            String name = entry.getKey();
-            if (!entry.getValue().hasDefaultRange())
-                throw new IllegalArgumentException("a parameter range can only be specified in a server-side custom model, but got one for: '" + name + "'");
-            Parameter base = baseModel.parameters.get(name);
-            Object value = entry.getValue().value;
-            if (base == null)
-                throw new IllegalArgumentException("parameter '" + name + "' is not defined in the server-side custom model. Only the values of "
-                        + baseModel.parameters.keySet().stream().filter(n -> !n.startsWith("private_")).toList() + " can be overridden");
-            if (base.value instanceof Boolean ? !(value instanceof Boolean) : !(value instanceof Number))
-                throw new IllegalArgumentException("parameter '" + name + "' must have the same type as in the server-side custom model ("
-                        + base.value + "), but was: " + value);
-            if (value instanceof Number number) {
-                if (number.doubleValue() < base.min || number.doubleValue() > base.max)
-                    throw new IllegalArgumentException("parameter '" + name + "': value " + number
-                            + " must be within its range [" + base.min + ", " + base.max + "]");
-            }
-        }
-    }
-
     @JsonProperty("turn_penalty")
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public List<Statement> getTurnPenalty() {

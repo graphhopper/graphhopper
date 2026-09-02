@@ -111,7 +111,7 @@ public class FindMinMax {
             // for speed and priority a smaller value means a larger weight, so the value must not increase
             if (pattern.matcher(statement.value()).find()) {
                 // findMinMax evaluates an encoded value only at its endpoints and misses interior extremes of a non-monotone expression
-                if (ValueExpressionVisitor.containsEncodedValue(statement.value(), lookup, newParams))
+                if (ValueExpressionVisitor.containsEncodedValue(statement.value(), newParams, lookup))
                     throw cannotChange(name, oldValue, newValue, "the value '" + statement.value() + "' uses an encoded value");
                 if (ValueExpressionVisitor.findMinMax(statement.value(), newParams, lookup).max
                         > ValueExpressionVisitor.findMinMax(statement.value(), oldParams, lookup).min)
@@ -126,7 +126,7 @@ public class FindMinMax {
                         throw cannotChange(name, oldValue, newValue, "the condition '" + statement.condition() + "' would apply to fewer edges");
                     // applying to more edges increases the weight no matter which branch they were in
                     // before, but only when the statement blocks them, i.e. sets speed or priority to 0
-                    if (ValueExpressionVisitor.containsEncodedValue(statement.value(), lookup, newParams)
+                    if (ValueExpressionVisitor.containsEncodedValue(statement.value(), newParams, lookup)
                             || ValueExpressionVisitor.findMinMax(statement.value(), newParams, lookup).max > 0
                             || ValueExpressionVisitor.findMinMax(statement.value(), oldParams, lookup).max > 0)
                         throw cannotChange(name, oldValue, newValue, "a parameter in a condition is only supported for blocking statements (value 0)");

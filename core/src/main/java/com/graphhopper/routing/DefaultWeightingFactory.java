@@ -33,6 +33,7 @@ import com.graphhopper.util.Parameters;
 import com.graphhopper.util.TurnCostsConfig;
 
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
+import static com.graphhopper.routing.weighting.custom.CustomModelParser.checkParameterOverrides;
 import static com.graphhopper.routing.weighting.custom.CustomModelParser.createWeightingParameters;
 import static com.graphhopper.util.Helper.toLowerCase;
 
@@ -66,7 +67,7 @@ public class DefaultWeightingFactory implements WeightingFactory {
                 throw new IllegalArgumentException("The turn_penalty feature is not supported per request for " + profile.getName() + ". Set 'allow_turn_penalty_in_request' to true in the 'turn_costs' option in the config.yml.");
 
             if (queryCustomModel != null)
-                CustomModel.checkParameterOverrides(profile.getCustomModel(), queryCustomModel);
+                checkParameterOverrides(profile.getCustomModel(), queryCustomModel);
             final CustomModel mergedCustomModel = CustomModel.merge(profile.getCustomModel(), queryCustomModel);
             if (requestHints.has(Parameters.Routing.HEADING_PENALTY))
                 mergedCustomModel.setHeadingPenalty(requestHints.getDouble(Parameters.Routing.HEADING_PENALTY, Parameters.Routing.DEFAULT_HEADING_PENALTY));
