@@ -8,6 +8,7 @@ import de.westnordost.osm_legal_default_speeds.LegalDefaultSpeeds;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import static com.graphhopper.routing.ev.MaxSpeed.MAXSPEED_150;
@@ -58,10 +59,10 @@ public class DefaultMaxSpeedParser implements TagParser {
                     tmpResult = speeds.getSpeedLimits(code,
                             tags, Collections.emptyList(), (name, eval) -> eval.invoke() || "urban".equals(name));
                     if (tmpResult != null) {
-                        // The generic urban default (e.g. 40km/h in California) does not apply to
+                        // A generic urban default (e.g. 40km/h in California or "Alberta: Urban road") does not apply to
                         // limited-access roads. An explicit entry like "motorway" or "urban motorway" is missing.
                         // => we use the rural value instead, see https://github.com/westnordost/osm-legal-default-speeds/discussions/17
-                        if (isLimitedAccess(tags) && "urban".equals(tmpResult.getRoadTypeName())) {
+                        if (isLimitedAccess(tags) && !isLimitedAccessRoadType(tmpResult.getRoadTypeName())) {
                             internRes.urban = internRes.rural;
                         } else {
                             internRes.urban = parseInt(tmpResult.getTags().get("maxspeed"));
@@ -85,6 +86,14 @@ public class DefaultMaxSpeedParser implements TagParser {
         String highway = tags.get("highway");
         return "motorway".equals(highway) || "motorway_link".equals(highway)
                 || "yes".equals(tags.get("motorroad")) || "yes".equals(tags.get("expressway"));
+    }
+
+    private static boolean isLimitedAccessRoadType(String roadTypeName) {
+        if (roadTypeName == null) return false;
+        String name = roadTypeName.toLowerCase(Locale.ROOT);
+        return name.contains("motorway") || name.contains("motorroad") || name.contains("expressway")
+                || name.contains("interstate") || name.contains("freeway")
+                || name.contains("autoroute") || name.contains("autopista");
     }
 
     private Map<String, String> filter(Map<String, Object> tags) {

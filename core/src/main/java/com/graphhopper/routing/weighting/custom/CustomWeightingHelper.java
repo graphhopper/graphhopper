@@ -18,7 +18,6 @@
 package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.json.MinMax;
-import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.ev.EncodedValueLookup;
@@ -27,7 +26,6 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.Polygon;
 
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -63,7 +61,7 @@ public class CustomWeightingHelper {
 
     public final double calcMaxSpeed() {
         MinMax minMaxSpeed = new MinMax(0, GLOBAL_MAX_SPEED);
-        FindMinMax.findMinMax(minMaxSpeed, customModel.getSpeed(), lookup, customModel.getParameters());
+        FindMinMax.findMinMax(minMaxSpeed, customModel.getSpeed(), customModel.getParameters(), lookup);
         if (minMaxSpeed.min < 0)
             throw new IllegalArgumentException("speed has to be >=0 but can be negative (" + minMaxSpeed.min + ")");
         if (minMaxSpeed.max <= 0)
@@ -76,13 +74,7 @@ public class CustomWeightingHelper {
 
     public final double calcMaxPriority() {
         MinMax minMaxPriority = new MinMax(0, GLOBAL_PRIORITY);
-        List<Statement> statements = customModel.getPriority();
-        if (!statements.isEmpty() && "true".equals(statements.get(0).condition())) {
-            String value = statements.get(0).value();
-            if (lookup.hasEncodedValue(value))
-                minMaxPriority.max = lookup.getDecimalEncodedValue(value).getMaxOrMaxStorableDecimal();
-        }
-        FindMinMax.findMinMax(minMaxPriority, statements, lookup, customModel.getParameters());
+        FindMinMax.findMinMax(minMaxPriority, customModel.getPriority(), customModel.getParameters(), lookup);
         if (minMaxPriority.min < 0)
             throw new IllegalArgumentException("priority has to be >=0 but can be negative (" + minMaxPriority.min + ")");
         if (minMaxPriority.max < 0)

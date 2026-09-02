@@ -68,8 +68,8 @@ public class FindMinMax {
             checkWeightOnlyIncreases(baseModel, name, increased, baseModel.getParameters(), parameters, lookup);
         }
 
-        checkMultiplyValue(queryModel.getPriority(), lookup, parameters);
-        checkMultiplyValue(queryModel.getSpeed(), lookup, parameters);
+        checkMultiplyValue(queryModel.getPriority(), parameters, lookup);
+        checkMultiplyValue(queryModel.getSpeed(), parameters, lookup);
     }
 
     private static boolean equalValues(Object a, Object b) {
@@ -193,10 +193,10 @@ public class FindMinMax {
         return atom instanceof Java.AmbiguousName name && name.identifiers.length == 1 && name.identifiers[0].equals(variable);
     }
 
-    private static void checkMultiplyValue(List<Statement> list, EncodedValueLookup lookup, Map<String, CustomModel.Parameter> parameters) {
+    private static void checkMultiplyValue(List<Statement> list, Map<String, CustomModel.Parameter> parameters, EncodedValueLookup lookup) {
         for (Statement statement : list) {
             if (statement.isBlock()) {
-                checkMultiplyValue(statement.doBlock(), lookup, parameters);
+                checkMultiplyValue(statement.doBlock(), parameters, lookup);
             } else if (statement.operation() == Statement.Op.ADD) {
                 // a non-negative add increases the speed and so decreases the weight
                 throw new IllegalArgumentException("CustomModel in query must not use 'add'");
@@ -214,13 +214,13 @@ public class FindMinMax {
      * This method returns the smallest value possible in "min" and the smallest value that cannot be
      * exceeded by any edge in max.
      */
-    static MinMax findMinMax(MinMax minMax, List<Statement> statements, EncodedValueLookup lookup, Map<String, CustomModel.Parameter> parameters) {
+    static MinMax findMinMax(MinMax minMax, List<Statement> statements, Map<String, CustomModel.Parameter> parameters, EncodedValueLookup lookup) {
         List<List<Statement>> groups = CustomModelParser.splitIntoGroup(statements);
-        for (List<Statement> group : groups) findMinMaxForGroup(minMax, group, lookup, parameters);
+        for (List<Statement> group : groups) findMinMaxForGroup(minMax, group, parameters, lookup);
         return minMax;
     }
 
-    private static void findMinMaxForGroup(final MinMax minMax, List<Statement> group, EncodedValueLookup lookup, Map<String, CustomModel.Parameter> parameters) {
+    private static void findMinMaxForGroup(final MinMax minMax, List<Statement> group, Map<String, CustomModel.Parameter> parameters, EncodedValueLookup lookup) {
         if (group.isEmpty() || !IF.equals(group.get(0).keyword()))
             throw new IllegalArgumentException("Every group must start with an if-statement");
 
@@ -228,7 +228,7 @@ public class FindMinMax {
         Statement first = group.get(0);
         if (first.condition().trim().equals("true")) {
             if(first.isBlock()) {
-                for (List<Statement> subGroup : CustomModelParser.splitIntoGroup(first.doBlock())) findMinMaxForGroup(minMax, subGroup, lookup, parameters);
+                for (List<Statement> subGroup : CustomModelParser.splitIntoGroup(first.doBlock())) findMinMaxForGroup(minMax, subGroup, parameters, lookup);
                 return;
             } else {
                 minMaxGroup = first.operation().apply(minMax, ValueExpressionVisitor.findMinMax(first.value(), lookup, parameters));
@@ -243,7 +243,7 @@ public class FindMinMax {
                 MinMax tmp;
                 if(s.isBlock()) {
                     tmp = new MinMax(minMax.min, minMax.max);
-                    for (List<Statement> subGroup : CustomModelParser.splitIntoGroup(s.doBlock())) findMinMaxForGroup(tmp, subGroup, lookup, parameters);
+                    for (List<Statement> subGroup : CustomModelParser.splitIntoGroup(s.doBlock())) findMinMaxForGroup(tmp, subGroup, parameters, lookup);
                 } else {
                     tmp = s.operation().apply(minMax, ValueExpressionVisitor.findMinMax(s.value(), lookup, parameters));
                     if (tmp.max < 0)

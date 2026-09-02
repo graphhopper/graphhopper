@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class FindMinMaxTest {
 
     static MinMax findMinMax(MinMax minMax, List<Statement> statements, EncodedValueLookup lookup) {
-        return FindMinMax.findMinMax(minMax, statements, lookup, Map.of());
+        return FindMinMax.findMinMax(minMax, statements, Map.of(), lookup);
     }
 
     private EncodedValueLookup lookup;
