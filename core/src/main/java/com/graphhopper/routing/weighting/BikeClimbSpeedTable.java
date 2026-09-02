@@ -13,7 +13,7 @@ public class BikeClimbSpeedTable {
     // the table covers the slopes up to this value (in percent), beyond the last entry is used. The maximum
     // of average_slope is 31.5 plus the slope offset of at most 100 * crr * (MAX_CRR_FACTOR - 1), see getSlopeOffset
     private static final double MAX_SLOPE = 40;
-    private final double power, mass, baseSpeed, crr;
+    private final double baseSpeed, crr;
 
     /**
      * This constructor creates a speed table to be later used via getSpeed as a fast function inside a custom model.
@@ -37,8 +37,6 @@ public class BikeClimbSpeedTable {
             throw new IllegalArgumentException("Inconsistency: power not sufficient at crr=" + crr
                     + " for baseSpeed=" + baseSpeed + " km/h in flat (aero <= 0)");
         double m_g_100 = mass * 9.81 / 100.0;
-        this.power = power;
-        this.mass = mass;
         this.baseSpeed = baseSpeed;
         this.crr = crr;
 
@@ -119,17 +117,13 @@ public class BikeClimbSpeedTable {
     /**
      * A current speed below the base speed (e.g. rough surface) is interpreted as a higher rolling
      * resistance crr * min(MAX_CRR_FACTOR, baseSpeed / currentSpeed) - only partly, as the reduced speed
-     * is mostly a comfort limit (see the minimum in getBikeClimbFactor) and not an energy loss. As crr
+     * is mostly a comfort limit (see the minimum in getClimbFactor) and not an energy loss. As crr
      * and slope/100 appear only as sum in the power balance power = aero * v^3 + m * g * (crr + slope/100) * v,
      * the increase is returned as slope offset in percent, which allows to reuse the table (calibrated with crr).
      */
     double getSlopeOffset(double currentSpeed) {
         if (currentSpeed >= baseSpeed) return 0;
         return 100 * crr * (Math.min(MAX_CRR_FACTOR, baseSpeed / currentSpeed) - 1);
-    }
-
-    public boolean matches(double power, double mass, double baseSpeed, double crr) {
-        return this.power == power && this.mass == mass && this.baseSpeed == baseSpeed && this.crr == crr;
     }
 
     public double getSpeed(double slope) {

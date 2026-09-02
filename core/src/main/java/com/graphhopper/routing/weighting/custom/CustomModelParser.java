@@ -39,6 +39,8 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.graphhopper.json.Statement.Keyword.IF;
 import static com.graphhopper.routing.weighting.custom.ValueExpressionVisitor.BIKE_CLIMB_FACTOR;
@@ -251,6 +253,12 @@ public class CustomModelParser {
                 if (!"true".equals(firstSt.condition()) || firstSt.operation() != Statement.Op.LIMIT || firstSt.keyword() != Statement.Keyword.IF)
                     throw new IllegalArgumentException("The first group needs to contain a single unconditional 'if' statement (or end with an 'else').");
             }
+
+            // a single call keeps the speed table of CustomWeightingHelper unique and avoids that a request
+            // repeats the call of the profile, which would apply the factor twice
+            Matcher matcher = Pattern.compile("\\b" + BIKE_CLIMB_FACTOR + "\\b").matcher(customModel.getSpeed().toString());
+            if (matcher.find() && matcher.find())
+                throw new IllegalArgumentException(BIKE_CLIMB_FACTOR + " can be called only once per custom model");
 
             Set<String> speedVariables = new LinkedHashSet<>();
             List<Java.BlockStatement> speedStatements = createGetSpeedStatements(speedVariables, customModel, lookup);

@@ -752,7 +752,8 @@ base profile is not double-counted against gravity on a climb. Example:
 ```
 
 The call must be in the `speed` section, optionally scaled by a number like
-`"0.9 * bike_climb_factor(p_power, p_mass, p_base_speed, p_crr)"`, and every call must use the same arguments.
+`"0.9 * bike_climb_factor(p_power, p_mass, p_base_speed, p_crr)"`, and only once per custom model, i.e. a request
+custom model cannot repeat it.
 Finite ranges are required as the custom model is validated at the range endpoints on startup: a power of 0
 or an infinite power is rejected. See `bike_elevation.json` for the physical background.
 

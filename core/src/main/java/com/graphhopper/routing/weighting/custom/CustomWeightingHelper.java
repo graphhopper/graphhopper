@@ -95,16 +95,14 @@ public class CustomWeightingHelper {
 
     /**
      * Called per edge from the generated getSpeed for bike_climb_factor(p_power, p_mass, p_base_speed, p_crr)
-     * with the injected average_slope and current speed. The arguments are parameters and so constant
-     * for this instance (one per request), which allows to create the speed table lazily.
+     * with the injected average_slope and current speed. The arguments are parameters and the call is
+     * allowed only once per custom model (see CustomModelParser), so the speed table can be created lazily.
      */
     protected double getBikeClimbFactor(double slope, double currentSpeed, double power, double mass, double baseSpeed, double crr) {
         // benign race if the instance is ever shared between threads: identical tables would be created and
         // as all fields of the table are final the reference can be published without synchronization
         if (bikeClimbTable == null)
             bikeClimbTable = new BikeClimbSpeedTable(power, mass, baseSpeed, crr);
-        else if (!bikeClimbTable.matches(power, mass, baseSpeed, crr))
-            throw new IllegalArgumentException("bike_climb_factor must be called with the same arguments everywhere");
         return bikeClimbTable.getClimbFactor(slope, currentSpeed);
     }
 
