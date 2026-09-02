@@ -153,8 +153,9 @@ public class EdgeBasedTarjanSCC {
             if (!edgeKeyIndex.has(edgeKeyFwd))
                 findComponentForEdgeKey(edgeKeyFwd, iter.getAdjNode());
             int edgeKeyBwd = createEdgeKey(iter, true);
+            // the reverse edge key means traversing the edge from adj to base, so the search starts at the base node
             if (!edgeKeyIndex.has(edgeKeyBwd))
-                findComponentForEdgeKey(edgeKeyBwd, iter.getAdjNode());
+                findComponentForEdgeKey(edgeKeyBwd, iter.getBaseNode());
         }
     }
 
@@ -234,8 +235,9 @@ public class EdgeBasedTarjanSCC {
         // We need to start the search for both edge keys of this edge, but its important to check if the second
         // has already been found by the first search. So we cannot simply push them both and start the search once.
         int edgeKeyBwd = createEdgeKey(edge, true);
+        // the reverse edge key means traversing the edge from adj to base, so the search starts at the base node
         if (!edgeKeyIndex.has(edgeKeyBwd))
-            pushFindComponentForEdgeKey(edgeKeyBwd, edge.getAdjNode());
+            pushFindComponentForEdgeKey(edgeKeyBwd, edge.getBaseNode());
         startSearch();
     }
 

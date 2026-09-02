@@ -32,6 +32,7 @@ import com.graphhopper.util.RandomGraph;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
 import java.util.Set;
 
 import static com.graphhopper.routing.subnetwork.TarjanSCCTest.buildComponentSet;
@@ -235,6 +236,29 @@ class EdgeBasedTarjanSCCTest {
         assertEquals(10, result.getSingleEdgeComponents().cardinality());
         for (IntCursor c : IntArrayList.from(0, 1, 2, 3, 4, 5, 6, 7, 8, 9)) {
             assertTrue(result.getSingleEdgeComponents().get(c.value));
+        }
+    }
+
+    @Test
+    public void reverseEdgeKeyStartsAtBaseNode() {
+        // The reverse edge key of an edge state means traversing it from adj to base, so a search seeded with it
+        // must start at the base node. This only matters when the reverse key is not reached via u-turn, i.e.
+        // when u-turns are rejected like in PrepareRoutingSubnetworks for turn cost profiles.
+        // 2 <- 1 <-> 0 -> 3 -> 1
+        g.edge(0, 1).setDistance(1).set(speedEnc, 10, 10); // edge-keys 0 (0->1), 1 (1->0)
+        g.edge(1, 2).setDistance(1).set(speedEnc, 10, 0); // edge-keys 2 (1->2), 3 (2->1)
+        g.edge(3, 1).setDistance(1).set(speedEnc, 10, 0); // edge-keys 4 (3->1), 5 (1->3)
+        g.edge(0, 3).setDistance(1).set(speedEnc, 10, 0); // edge-keys 6 (0->3), 7 (3->0)
+        EdgeBasedTarjanSCC.EdgeTransitionFilter noUTurnFilter = (prev, edge) -> fwdAccessFilter.accept(prev, edge) && prev != edge.getEdge();
+        // edge keys 1 (1->0), 6 (0->3) and 4 (3->1) form a cycle
+        for (ConnectedComponents result : Arrays.asList(
+                EdgeBasedTarjanSCC.findComponentsRecursive(g, noUTurnFilter, false),
+                EdgeBasedTarjanSCC.findComponents(g, noUTurnFilter, false),
+                EdgeBasedTarjanSCC.findComponentsForStartEdges(g, noUTurnFilter, IntArrayList.from(0, 1, 2, 3)))) {
+            assertEquals(1, result.getComponents().size());
+            IntArrayList component = result.getComponents().get(0).clone();
+            Arrays.sort(component.buffer, 0, component.size());
+            assertEquals(IntArrayList.from(1, 4, 6), component);
         }
     }
 
