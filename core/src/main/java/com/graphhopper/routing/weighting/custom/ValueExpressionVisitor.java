@@ -272,7 +272,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
     private static String replaceParameters(String expression, Map<String, CustomModel.Parameter> parameters) {
         for (Map.Entry<String, CustomModel.Parameter> entry : parameters.entrySet()) {
             // parenthesized canonical literal, as e.g. "speed--2" for a negative value would not compile
-            String literal = entry.getValue().value instanceof Number number ? "(" + number.doubleValue() + ")" : entry.getValue().value.toString();
+            String literal = entry.getValue().value() instanceof Number number ? "(" + number.doubleValue() + ")" : entry.getValue().value().toString();
             expression = expression.replaceAll("\\b" + CustomModelParser.PARAM_PREFIX + entry.getKey() + "\\b", literal);
         }
         return Statement.toJavaExpression(expression);

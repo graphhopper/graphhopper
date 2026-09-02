@@ -136,11 +136,11 @@ public class CustomModelParser {
                 throw new IllegalArgumentException("parameter '" + name + "' has an invalid name. Use lower case letters, underscore and numbers only");
             if (lookup.hasEncodedValue(PARAM_PREFIX + name))
                 throw new IllegalArgumentException("parameter '" + name + "' collides with the encoded value '" + PARAM_PREFIX + name + "'");
-            if (entry.getValue().value instanceof Number number) {
+            if (entry.getValue().value() instanceof Number number) {
                 if (!Double.isFinite(number.doubleValue()))
                     throw new IllegalArgumentException("parameter '" + name + "' must be a finite number, but was: " + number);
-            } else if (!(entry.getValue().value instanceof Boolean)) {
-                throw new IllegalArgumentException("parameter '" + name + "' must be a finite number or a boolean, but was: " + entry.getValue().value);
+            } else if (!(entry.getValue().value() instanceof Boolean)) {
+                throw new IllegalArgumentException("parameter '" + name + "' must be a finite number or a boolean, but was: " + entry.getValue().value());
             }
         }
     }
@@ -156,17 +156,17 @@ public class CustomModelParser {
             if (!entry.getValue().hasDefaultRange())
                 throw new IllegalArgumentException("a parameter range can only be specified in a server-side custom model, but got one for: '" + name + "'");
             CustomModel.Parameter base = baseModel.getParameters().get(name);
-            Object value = entry.getValue().value;
+            Object value = entry.getValue().value();
             if (base == null)
                 throw new IllegalArgumentException("parameter '" + name + "' is not defined in the server-side custom model. Only the values of "
                         + baseModel.getParameters().keySet().stream().filter(n -> !n.startsWith("private_")).toList() + " can be overridden");
-            if (base.value instanceof Boolean ? !(value instanceof Boolean) : !(value instanceof Number))
+            if (base.value() instanceof Boolean ? !(value instanceof Boolean) : !(value instanceof Number))
                 throw new IllegalArgumentException("parameter '" + name + "' must have the same type as in the server-side custom model ("
-                        + base.value + "), but was: " + value);
+                        + base.value() + "), but was: " + value);
             if (value instanceof Number number) {
-                if (number.doubleValue() < base.min || number.doubleValue() > base.max)
+                if (number.doubleValue() < base.min() || number.doubleValue() > base.max())
                     throw new IllegalArgumentException("parameter '" + name + "': value " + number
-                            + " must be within its range [" + base.min + ", " + base.max + "]");
+                            + " must be within its range [" + base.min() + ", " + base.max() + "]");
             }
         }
     }
@@ -187,18 +187,18 @@ public class CustomModelParser {
         for (Map.Entry<String, CustomModel.Parameter> entry : customModel.getParameters().entrySet()) {
             String name = entry.getKey();
             CustomModel.Parameter param = entry.getValue();
-            if (!(param.value instanceof Number number)) continue;
-            if (number.doubleValue() < param.min || number.doubleValue() > param.max)
+            if (!(param.value() instanceof Number number)) continue;
+            if (number.doubleValue() < param.min() || number.doubleValue() > param.max())
                 throw new IllegalArgumentException("parameter '" + name + "': value " + number
-                        + " must be within its range [" + param.min + ", " + param.max + "]");
-            for (double endpoint : new double[]{param.min, param.max}) {
+                        + " must be within its range [" + param.min() + ", " + param.max() + "]");
+            for (double endpoint : new double[]{param.min(), param.max()}) {
                 Map<String, CustomModel.Parameter> parameters = new LinkedHashMap<>(customModel.getParameters());
                 parameters.put(name, new CustomModel.Parameter(endpoint));
                 try {
                     checkSpeedPriorityAndTurnPenalty(customModel, parameters, lookup);
                 } catch (IllegalArgumentException ex) {
                     throw new IllegalArgumentException("parameter '" + name + "' with value " + endpoint
-                            + " of its range [" + param.min + ", " + param.max + "]: " + ex.getMessage());
+                            + " of its range [" + param.min() + ", " + param.max() + "]: " + ex.getMessage());
                 }
             }
         }
@@ -560,12 +560,12 @@ public class CustomModelParser {
             if (isParameter(arg, parameters)) {
                 // read the value in init so that models differing only in the values share this class
                 String name = arg.substring(PARAM_PREFIX.length());
-                if (parameters.get(name).value instanceof Boolean) {
+                if (parameters.get(name).value() instanceof Boolean) {
                     classSourceCode.append("protected boolean " + arg + ";\n");
-                    initSourceCode.append("this." + arg + " = ((Boolean) ((CustomModel.Parameter) customModel.getParameters().get(\"" + name + "\")).value).booleanValue();\n");
+                    initSourceCode.append("this." + arg + " = ((Boolean) ((CustomModel.Parameter) customModel.getParameters().get(\"" + name + "\")).value()).booleanValue();\n");
                 } else {
                     classSourceCode.append("protected double " + arg + ";\n");
-                    initSourceCode.append("this." + arg + " = ((Number) ((CustomModel.Parameter) customModel.getParameters().get(\"" + name + "\")).value).doubleValue();\n");
+                    initSourceCode.append("this." + arg + " = ((Number) ((CustomModel.Parameter) customModel.getParameters().get(\"" + name + "\")).value()).doubleValue();\n");
                 }
             } else if (lookup.hasEncodedValue(arg)) {
                 EncodedValue enc = lookup.getEncodedValue(arg, EncodedValue.class);

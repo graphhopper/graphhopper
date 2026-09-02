@@ -139,21 +139,14 @@ public class CustomModel {
 
     /**
      * A named number or boolean usable in the expressions of the statements, referenced with the p_ prefix.
+     *
+     * @param value a Double or Boolean
+     * @param min   lower limit of a number parameter; a non-default range can only be specified in a server-side custom model
+     * @param max   upper limit, see min
      */
-    public static class Parameter {
-        public final Object value; // Double or Boolean
-        // the allowed value range of a number parameter; a non-default range can only be specified
-        // in a server-side custom model
-        public final double min, max;
-
+    public record Parameter(Object value, double min, double max) {
         public Parameter(Object value) {
             this(value, 0, Double.POSITIVE_INFINITY);
-        }
-
-        public Parameter(Object value, double min, double max) {
-            this.value = value;
-            this.min = min;
-            this.max = max;
         }
 
         public boolean hasDefaultRange() {
@@ -280,7 +273,7 @@ public class CustomModel {
     public String createClassKey() {
         Map<String, String> types = new TreeMap<>();
         for (Map.Entry<String, Parameter> entry : parameters.entrySet())
-            types.put(entry.getKey(), entry.getValue().value instanceof Boolean ? "boolean" : "double");
+            types.put(entry.getKey(), entry.getValue().value() instanceof Boolean ? "boolean" : "double");
         return createContentString() + "|parameterTypes=" + types;
     }
 
@@ -312,7 +305,7 @@ public class CustomModel {
         // when overriding an existing parameter only the value is taken, so that a query model can never change a range
         queryModel.parameters.forEach((name, param) -> {
             Parameter existing = mergedCM.parameters.get(name);
-            mergedCM.parameters.put(name, existing == null ? param : new Parameter(param.value, existing.min, existing.max));
+            mergedCM.parameters.put(name, existing == null ? param : new Parameter(param.value(), existing.min(), existing.max()));
         });
 
         mergedCM.addAreas(queryModel.getAreas());

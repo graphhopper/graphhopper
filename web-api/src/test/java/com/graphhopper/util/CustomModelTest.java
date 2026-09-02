@@ -62,9 +62,9 @@ public class CustomModelTest {
         CustomModel cm = Jackson.newObjectMapper().readValue(
                 "{\"parameters\": {\"power\": 120, \"mass\": 95.5, \"electric\": true}, \"speed\": [{\"if\": \"true\", \"limit_to\": \"car_average_speed\"}]}",
                 CustomModel.class);
-        assertEquals(120.0, cm.getParameters().get("power").value);
-        assertEquals(95.5, cm.getParameters().get("mass").value);
-        assertEquals(true, cm.getParameters().get("electric").value);
+        assertEquals(120.0, cm.getParameters().get("power").value());
+        assertEquals(95.5, cm.getParameters().get("mass").value());
+        assertEquals(true, cm.getParameters().get("electric").value());
         assertEquals(1, cm.getSpeed().size());
     }
 
@@ -73,12 +73,12 @@ public class CustomModelTest {
         CustomModel cm = Jackson.newObjectMapper().readValue(
                 "{\"parameters\": {\"width\": {\"value\": 3, \"min\": 2, \"max\": 5}, \"power\": 120}}",
                 CustomModel.class);
-        assertEquals(3.0, cm.getParameters().get("width").value);
-        assertEquals(2, cm.getParameters().get("width").min);
-        assertEquals(5, cm.getParameters().get("width").max);
+        assertEquals(3.0, cm.getParameters().get("width").value());
+        assertEquals(2, cm.getParameters().get("width").min());
+        assertEquals(5, cm.getParameters().get("width").max());
         // without an explicit range [0, Infinity) is used
-        assertEquals(0, cm.getParameters().get("power").min);
-        assertEquals(Double.POSITIVE_INFINITY, cm.getParameters().get("power").max);
+        assertEquals(0, cm.getParameters().get("power").min());
+        assertEquals(Double.POSITIVE_INFINITY, cm.getParameters().get("power").max());
         // the range survives serialization
         assertTrue(Jackson.newObjectMapper().writeValueAsString(cm).contains("\"width\":{\"value\":3.0,\"min\":2.0,\"max\":5.0}"));
 
@@ -99,13 +99,13 @@ public class CustomModelTest {
         CustomModel query = new CustomModel().setParameter("power", 100.0).setParameter("extra", 0.5);
 
         CustomModel merged = CustomModel.merge(base, query);
-        assertEquals(100.0, merged.getParameters().get("power").value);
-        assertEquals(95.0, merged.getParameters().get("mass").value);
-        assertEquals(0.5, merged.getParameters().get("extra").value);
+        assertEquals(100.0, merged.getParameters().get("power").value());
+        assertEquals(95.0, merged.getParameters().get("mass").value());
+        assertEquals(0.5, merged.getParameters().get("extra").value());
         // the second model's ranges are never merged, so a query model cannot change them
         assertTrue(CustomModel.merge(base, new CustomModel().setParameter("power", 100.0, 50, 150)).getParameters().get("power").hasDefaultRange());
         // the input models are unchanged
-        assertEquals(120.0, base.getParameters().get("power").value);
+        assertEquals(120.0, base.getParameters().get("power").value());
         assertEquals(2, query.getParameters().size());
 
         // the class key ignores the parameter values but not the types (they determine the field types)

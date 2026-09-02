@@ -57,13 +57,12 @@ public class FindMinMax {
         // decrease any edge weight, e.g. a decreased p_vehicle_max_speed
         for (Map.Entry<String, CustomModel.Parameter> entry : queryModel.getParameters().entrySet()) {
             String name = entry.getKey();
+            // unknown parameters were already rejected by CustomModelParser.checkParameterOverrides
             CustomModel.Parameter base = baseModel.getParameters().get(name);
-            if (base == null)
-                throw new IllegalArgumentException("parameter '" + name + "' is not defined in the server-side custom model");
-            Object newValue = entry.getValue().value;
-            if (equalValues(base.value, newValue)) continue;
-            if (!(base.value instanceof Number oldValue) || !(newValue instanceof Number))
-                throw cannotChange(name, base.value, newValue, "");
+            Object newValue = entry.getValue().value();
+            if (equalValues(base.value(), newValue)) continue;
+            if (!(base.value() instanceof Number oldValue) || !(newValue instanceof Number))
+                throw cannotChange(name, base.value(), newValue, "");
             boolean increased = ((Number) newValue).doubleValue() > oldValue.doubleValue();
             checkWeightOnlyIncreases(baseModel, name, increased, baseModel.getParameters(), parameters, lookup);
         }

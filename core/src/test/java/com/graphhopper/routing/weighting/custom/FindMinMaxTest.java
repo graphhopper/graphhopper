@@ -58,14 +58,9 @@ class FindMinMaxTest {
         CustomModel baseModel = new CustomModel().setParameter("max_speed", 90.0).setParameter("flag", true);
         baseModel.addToSpeed(If("true", LIMIT, "p_max_speed"));
 
-        // parameters can only be defined in the server-side custom model
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> FindMinMax.checkLMConstraints(baseModel, new CustomModel().setParameter("other", 0.8), lookup));
-        assertTrue(ex.getMessage().contains("not defined in the server-side custom model"), ex.getMessage());
-
         // a lower speed limit increases the weight and is fine, a higher one is rejected
         FindMinMax.checkLMConstraints(baseModel, new CustomModel().setParameter("max_speed", 80), lookup);
-        ex = assertThrows(IllegalArgumentException.class,
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> FindMinMax.checkLMConstraints(baseModel, new CustomModel().setParameter("max_speed", 100), lookup));
         assertTrue(ex.getMessage().contains("could increase"), ex.getMessage());
 

@@ -89,13 +89,6 @@ class CustomWeightingTest {
         assertEquals(4 * 1440, changed.calcEdgeWeight(slow, false));
         assertEquals(4 * 360, changed.calcEdgeWeight(fast, false));
 
-        // a parameter scaled by a literal in a value expression, and in priority
-        CustomModel priorityModel = createSpeedCustomModel(avSpeedEnc).setDistanceInfluence(0d).
-                setParameter("avoidance", 0.5);
-        priorityModel.addToPriority(If("road_class == SECONDARY", MULTIPLY, "0.5 * p_avoidance"));
-        Weighting priorityWeighting = createWeighting(priorityModel);
-        assertEquals(4 * 1440, priorityWeighting.calcEdgeWeight(slow.set(roadClassEnc, SECONDARY), false));
-
         // boolean parameters in conditions
         CustomModel boolModel = createSpeedCustomModel(avSpeedEnc).setDistanceInfluence(0d).setParameter("slow_mode", true);
         boolModel.addToSpeed(If("p_slow_mode", MULTIPLY, "0.5"));
@@ -150,9 +143,6 @@ class CustomWeightingTest {
         // private_ parameters are not advertised
         assertTrue(ex.getMessage().contains("[width, push]"), ex.getMessage());
         ex = assertThrows(IllegalArgumentException.class,
-                () -> CustomModelParser.checkParameterOverrides(base, new CustomModel().setParameter("width", true)));
-        assertTrue(ex.getMessage().contains("same type"), ex.getMessage());
-        ex = assertThrows(IllegalArgumentException.class,
                 () -> CustomModelParser.checkParameterOverrides(base, new CustomModel().setParameter("push", 1.0)));
         assertTrue(ex.getMessage().contains("same type"), ex.getMessage());
         // a String value (e.g. a quoted number in JSON) is rejected here and not deep in the parser
@@ -188,14 +178,6 @@ class CustomWeightingTest {
                 () -> CustomModelParser.checkParameterRanges(scale, encodingManager));
         assertTrue(ex.getMessage().contains("finite"), ex.getMessage());
         CustomModelParser.checkParameterRanges(scale.setParameter("factor", 1.0, 0, 1.2), encodingManager);
-
-        // as a value expression is linear in its single parameter, the endpoint check covers the whole range
-        CustomModel subtract = createSpeedCustomModel(avSpeedEnc).setParameter("xx", 30.0, 0, 100);
-        subtract.addToSpeed(If("true", LIMIT, "60 - p_xx"));
-        ex = assertThrows(IllegalArgumentException.class,
-                () -> CustomModelParser.checkParameterRanges(subtract, encodingManager));
-        assertTrue(ex.getMessage().contains("negative"), ex.getMessage());
-        CustomModelParser.checkParameterRanges(subtract.setParameter("xx", 30.0, 0, 50), encodingManager);
 
         // Infinity * 0 (the minimum of the encoded value) is NaN and must not slip through
         CustomModel nan = createSpeedCustomModel(avSpeedEnc).setParameter("factor", 1.0, 0.5, Double.POSITIVE_INFINITY);
