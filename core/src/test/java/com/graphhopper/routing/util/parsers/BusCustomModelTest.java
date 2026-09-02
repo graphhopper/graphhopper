@@ -23,7 +23,7 @@ public class BusCustomModelTest {
 
     private EncodingManager em;
     private OSMParsers parsers;
-    private CustomWeighting.Parameters params;
+    private CustomWeighting.Config params;
 
     @BeforeEach
     public void setup() {
@@ -49,7 +49,7 @@ public class BusCustomModelTest {
                         busAccess, true, em.getBooleanEncodedValue(Roundabout.KEY)));
 
         CustomModel cm = GHUtility.loadCustomModelFromJar("bus.json");
-        params = CustomModelParser.createWeightingParameters(cm, em);
+        params = CustomModelParser.createWeightingConfig(cm, em);
     }
 
     double priority(ReaderWay way) {

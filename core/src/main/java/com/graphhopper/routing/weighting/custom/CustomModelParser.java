@@ -84,17 +84,17 @@ public class CustomModelParser {
         if (customModel == null)
             throw new IllegalStateException("CustomModel cannot be null");
 
-        CustomWeighting.Parameters parameters = createWeightingParameters(customModel, lookup);
-        return new CustomWeighting(turnCostProvider, parameters);
+        CustomWeighting.Config config = createWeightingConfig(customModel, lookup);
+        return new CustomWeighting(turnCostProvider, config);
     }
 
     /**
      * This method compiles a new subclass of CustomWeightingHelper composed of the provided CustomModel caches this
      * and returns an instance.
      */
-    public static CustomWeighting.Parameters createWeightingParameters(CustomModel customModel, EncodedValueLookup lookup) {
+    public static CustomWeighting.Config createWeightingConfig(CustomModel customModel, EncodedValueLookup lookup) {
         // outside of the class cache as the parameter values change without changing the class
-        checkParameters(customModel, lookup);
+        checkParameterDefinitions(customModel, lookup);
         String key = customModel.createClassKey();
         Class<?> clazz = customModel.isInternal() ? INTERNAL_CACHE.get(key) : null;
         if (CACHE_SIZE > 0 && clazz == null)
@@ -118,7 +118,7 @@ public class CustomModelParser {
             // The class does not need to be thread-safe as we create an instance per request
             CustomWeightingHelper prio = (CustomWeightingHelper) clazz.getDeclaredConstructor().newInstance();
             prio.init(customModel, lookup, CustomModel.getAreasAsMap(customModel.getAreas()));
-            return new CustomWeighting.Parameters(
+            return new CustomWeighting.Config(
                     prio::getSpeed, prio::calcMaxSpeed,
                     prio::getPriority, prio::calcMaxPriority,
                     prio::getTurnPenalty,
@@ -129,7 +129,7 @@ public class CustomModelParser {
         }
     }
 
-    private static void checkParameters(CustomModel customModel, EncodedValueLookup lookup) {
+    private static void checkParameterDefinitions(CustomModel customModel, EncodedValueLookup lookup) {
         for (Map.Entry<String, CustomModel.Parameter> entry : customModel.getParameters().entrySet()) {
             String name = entry.getKey();
             if (!name.matches("[a-z][a-z0-9_]*"))

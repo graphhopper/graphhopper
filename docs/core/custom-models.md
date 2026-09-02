@@ -131,11 +131,6 @@ In the next section will see how we can use these encoded values to customize Gr
 
 ## How you can customize GraphHopper's route calculations: Custom Models
 
-*Disclaimer*: Custom models should still be considered a beta feature. They work, but details about the weighting
-formula and the meaning of the different parameters is still subject to change. Also this feature will strongly benefit
-from community feedback, so do not hesitate to share your experience, your favorite custom model or some of the problems
-you ran into when you tried building your own with custom model.
-
 As described in the previous sections, GraphHopper's route calculations are controlled by the weighting of the different
 road segments. GraphHopper offers a simple way to modify this weighting based on the edges' encoded values. To make use
 of this you need to specify a so called 'custom model', which is a set of rules that determine the `speed` and the
