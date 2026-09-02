@@ -46,6 +46,7 @@ class CustomWeightingTest {
                 .add(MaxSpeed.create())
                 .add(RoadClass.create())
                 .add(RoadClassLink.create())
+                .add(new DecimalEncodedValueImpl("my_priority", 4, 0.05, false))
                 .addTurnCostEncodedValue(turnRestrictionEnc)
                 .build();
         maxSpeedEnc = encodingManager.getDecimalEncodedValue(MaxSpeed.KEY);
@@ -316,6 +317,10 @@ class CustomWeightingTest {
         // do NOT pick maximum priority when it is for a special case
         assertEquals(10d / maxSpeed / 1.0 * 3.6, createWeighting(createSpeedCustomModel(avSpeedEnc).
                 addToPriority(If("road_class == SERVICE", MULTIPLY, "0.5"))).calcMinWeightPerDistance(), 1.e-6);
+
+        // an unconditional multiply_by with an encoded value must use its maximum (0.75) only once, not squared
+        assertEquals(10d / maxSpeed / 0.75 * 3.6, createWeighting(createSpeedCustomModel(avSpeedEnc).
+                addToPriority(If("true", MULTIPLY, "my_priority"))).calcMinWeightPerDistance(), 1.e-6);
 
         // a leading unconditional 'do' block must not throw and the maximum (0.9) is picked from its branches
         assertEquals(10d / maxSpeed / 0.9 * 3.6, createWeighting(createSpeedCustomModel(avSpeedEnc).
