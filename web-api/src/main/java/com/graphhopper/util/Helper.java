@@ -27,6 +27,8 @@ import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+import javax.lang.model.SourceVersion;
+
 /**
  * @author Peter Karich
  */
@@ -437,4 +439,31 @@ public class Helper {
         return val;
     }
 
+    /**
+     * @return true if the name is usable as an encoded value or custom model parameter name: lower case
+     * letters, digits and single underscores only, starting with a letter and no Java keyword.
+     */
+    public static boolean isValidEncodedValue(String name) {
+        if (name.length() < 2 || name.startsWith("in_") || name.startsWith("backward_")
+                || !isLowerLetter(name.charAt(0)) || SourceVersion.isKeyword(name))
+            return false;
+
+        int underscoreCount = 0;
+        for (int i = 1; i < name.length(); i++) {
+            char c = name.charAt(i);
+            if (c == '_') {
+                if (underscoreCount > 0) return false;
+                underscoreCount++;
+            } else if (!isLowerLetter(c) && !Character.isDigit(c)) {
+                return false;
+            } else {
+                underscoreCount = 0;
+            }
+        }
+        return true;
+    }
+
+    private static boolean isLowerLetter(char c) {
+        return c >= 'a' && c <= 'z';
+    }
 }

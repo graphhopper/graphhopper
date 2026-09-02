@@ -132,8 +132,8 @@ public class CustomModelParser {
     private static void checkParameterDefinitions(CustomModel customModel, EncodedValueLookup lookup) {
         for (Map.Entry<String, CustomModel.Parameter> entry : customModel.getParameters().entrySet()) {
             String name = entry.getKey();
-            if (!name.matches("[a-z][a-z0-9_]*"))
-                throw new IllegalArgumentException("parameter '" + name + "' has an invalid name. Only lower case letters, numbers and underscore are allowed");
+            if (!Helper.isValidEncodedValue(name))
+                throw new IllegalArgumentException("parameter '" + name + "' has an invalid name. Use lower case letters, underscore and numbers only");
             if (lookup.hasEncodedValue(PARAM_PREFIX + name))
                 throw new IllegalArgumentException("parameter '" + name + "' collides with the encoded value '" + PARAM_PREFIX + name + "'");
             if (entry.getValue().value instanceof Number number) {

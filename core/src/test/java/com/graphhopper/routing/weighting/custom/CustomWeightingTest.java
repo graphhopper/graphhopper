@@ -120,13 +120,13 @@ class CustomWeightingTest {
         assertEquals(1440, createWeighting(negCorr).calcEdgeWeight(slow, false));
 
         // a value expression can use only a single parameter and only once, so that validating the
-        // range endpoints covers all values in between (unlike e.g. p_a - p_b at a==min and b==max)
-        CustomModel twoParams = createSpeedCustomModel(avSpeedEnc).setParameter("a", 0.9).setParameter("b", 0.0);
-        twoParams.addToSpeed(If("true", MULTIPLY, "p_a - p_b"));
+        // range endpoints covers all values in between (unlike e.g. p_aa - p_bb at aa==min and bb==max)
+        CustomModel twoParams = createSpeedCustomModel(avSpeedEnc).setParameter("aa", 0.9).setParameter("bb", 0.0);
+        twoParams.addToSpeed(If("true", MULTIPLY, "p_aa - p_bb"));
         ex = assertThrows(IllegalArgumentException.class, () -> createWeighting(twoParams));
         assertTrue(ex.getMessage().contains("single parameter"), ex.getMessage());
-        CustomModel repeated = createSpeedCustomModel(avSpeedEnc).setParameter("x", 0.5);
-        repeated.addToSpeed(If("true", MULTIPLY, "p_x * p_x"));
+        CustomModel repeated = createSpeedCustomModel(avSpeedEnc).setParameter("xx", 0.5);
+        repeated.addToSpeed(If("true", MULTIPLY, "p_xx * p_xx"));
         ex = assertThrows(IllegalArgumentException.class, () -> createWeighting(repeated));
         assertTrue(ex.getMessage().contains("more than once"), ex.getMessage());
 
@@ -190,12 +190,12 @@ class CustomWeightingTest {
         CustomModelParser.checkParameterRanges(scale.setParameter("factor", 1.0, 0, 1.2), encodingManager);
 
         // as a value expression is linear in its single parameter, the endpoint check covers the whole range
-        CustomModel subtract = createSpeedCustomModel(avSpeedEnc).setParameter("x", 30.0, 0, 100);
-        subtract.addToSpeed(If("true", LIMIT, "60 - p_x"));
+        CustomModel subtract = createSpeedCustomModel(avSpeedEnc).setParameter("xx", 30.0, 0, 100);
+        subtract.addToSpeed(If("true", LIMIT, "60 - p_xx"));
         ex = assertThrows(IllegalArgumentException.class,
                 () -> CustomModelParser.checkParameterRanges(subtract, encodingManager));
         assertTrue(ex.getMessage().contains("negative"), ex.getMessage());
-        CustomModelParser.checkParameterRanges(subtract.setParameter("x", 30.0, 0, 50), encodingManager);
+        CustomModelParser.checkParameterRanges(subtract.setParameter("xx", 30.0, 0, 50), encodingManager);
 
         // Infinity * 0 (the minimum of the encoded value) is NaN and must not slip through
         CustomModel nan = createSpeedCustomModel(avSpeedEnc).setParameter("factor", 1.0, 0.5, Double.POSITIVE_INFINITY);
@@ -219,7 +219,7 @@ class CustomWeightingTest {
         CustomModelParser.checkParameterRanges(turn.setParameter("discount", 30.0, 0, 60), encodingManager);
 
         // "Infinity" is a valid turn_penalty value (see avoid_turns.json) and must pass the endpoint check
-        CustomModel infiniteTurn = createSpeedCustomModel(avSpeedEnc).setParameter("x", 1.0, 0, 2);
+        CustomModel infiniteTurn = createSpeedCustomModel(avSpeedEnc).setParameter("xx", 1.0, 0, 2);
         infiniteTurn.addToTurnPenalty(If("true", Statement.Op.ADD, "Infinity"));
         CustomModelParser.checkParameterRanges(infiniteTurn, encodingManager);
     }

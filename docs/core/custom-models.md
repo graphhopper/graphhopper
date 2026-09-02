@@ -749,8 +749,8 @@ values, but not introduce new parameters and not change the type. Unlike stateme
 appended when a request custom model is merged with the profile's custom model, parameters are
 overridden per name. So a request can tweak the values that the server-side profile uses without
 repeating (and accidentally double-applying) its statements - here e.g. with
-`{"parameters": {"slow_factor": 0.6}}`. A parameter name must start with a lower case letter,
-followed by lower case letters, numbers or underscore.
+`{"parameters": {"slow_factor": 0.6}}`. A parameter name follows the same rules as an
+encoded value name: it starts with a lower case letter, followed by lower case letters, numbers or single underscores.
 
 For number parameters the server-side definition can restrict the allowed values with the object
 form `{"value": 0.8, "min": 0.5, "max": 1}` - requests must stay within `[min, max]` and cannot

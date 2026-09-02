@@ -42,8 +42,6 @@ public class CustomModel {
     private List<Statement> speedStatements = new ArrayList<>();
     private List<Statement> priorityStatements = new ArrayList<>();
     private List<Statement> turnPenaltyStatements = new ArrayList<>();
-    // numbers and booleans usable in the expressions of the statements; on merge they are
-    // overridden per key (unlike statements, which are appended)
     private Map<String, Parameter> parameters = new LinkedHashMap<>();
 
     private JsonFeatureCollection areas = new JsonFeatureCollection();
@@ -186,11 +184,14 @@ public class CustomModel {
 
     @JsonProperty("parameters")
     public CustomModel setParameters(Map<String, Object> map) {
-        map.forEach(this::putParameter);
+        map.forEach(this::setParameter);
         return this;
     }
 
-    private void putParameter(String name, Object value) {
+    /**
+     * @param value a number or boolean, or the object form with value, min and max like in JSON
+     */
+    public CustomModel setParameter(String name, Object value) {
         if (value instanceof Map<?, ?> object) {
             // the object form defines a range: {"value": 3, "min": 2, "max": 5}, min and max are optional
             for (Object key : object.keySet())
@@ -205,6 +206,7 @@ public class CustomModel {
             // store numbers as Double so that toString does not change when a range is added (5 -> 5.0)
             parameters.put(name, new Parameter(value instanceof Number number ? number.doubleValue() : value));
         }
+        return this;
     }
 
     private static double rangeLimit(String name, String key, Object limit, double defaultValue) {
@@ -214,22 +216,12 @@ public class CustomModel {
         return number.doubleValue();
     }
 
-    public CustomModel setParameter(String name, double value) {
-        parameters.put(name, new Parameter(value));
-        return this;
-    }
-
     public CustomModel setParameter(String name, double value, double min, double max) {
         if (min > max)
             throw new IllegalArgumentException("parameter '" + name + "': min " + min + " must not be larger than max " + max);
         if (value < min || value > max)
             throw new IllegalArgumentException("parameter '" + name + "': value " + value + " must be within its range [" + min + ", " + max + "]");
         parameters.put(name, new Parameter(value, min, max));
-        return this;
-    }
-
-    public CustomModel setParameter(String name, boolean value) {
-        parameters.put(name, new Parameter(value));
         return this;
     }
 

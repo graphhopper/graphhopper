@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 
-import static com.graphhopper.routing.ev.IntEncodedValueImpl.isValidEncodedValue;
+import static com.graphhopper.util.Helper.isValidEncodedValue;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class IntEncodedValueImplTest {
