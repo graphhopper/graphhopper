@@ -6,8 +6,6 @@ public class BikeClimbSpeedTable {
     private static final double INV_STEP = 1.0 / STEP;
     private static final double V_DISMOUNT_KMH = 3.5;
 
-    public static final double DEFAULT_BASE_SPEED = 18; // km/h, the flat speed of the bike profile
-    public static final double DEFAULT_CRR = 0.006; // rolling resistance coefficient
     // maximum factor for the rolling resistance derived from a reduced current speed, see getSlopeOffset
     static final double MAX_CRR_FACTOR = 3;
 
@@ -16,10 +14,6 @@ public class BikeClimbSpeedTable {
     // of average_slope is 31.5 plus the slope offset of at most 100 * crr * (MAX_CRR_FACTOR - 1), see getSlopeOffset
     private static final double MAX_SLOPE = 40;
     private final double baseSpeed, crr;
-
-    public BikeClimbSpeedTable(double power, double mass) {
-        this(power, mass, DEFAULT_BASE_SPEED, DEFAULT_CRR);
-    }
 
     /**
      * This constructor creates a speed table to be later used via getSpeed as a fast function inside a custom model.

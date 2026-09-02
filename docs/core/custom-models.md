@@ -727,26 +727,34 @@ smaller or more narrow range, or if you can avoid them entirely, then these requ
 
 #### Built-in functions
 
-Besides `Math.sqrt` a value expression can call the built-in function `bike_climb_factor(power, mass)`:
-the slowdown factor for climbs, calculated for a cyclist producing `power` watts with a total `mass` 
-(rider plus bike) in kg. The slope is implicitly the `average_slope` encoded value;
-for downhill slopes the factor is 1. The climbing speed follows from the power balance of gravity,
-rolling resistance and aerodynamic drag - the latter calibrated from the flat base speed 
-and where riding gets slower than walking, the speed of pushing the bike is used instead. As the factor 
-is relative to the speed of the preceding statements, the resulting speed is roughly the minimum of the
-surface-limited speed and the climbing speed, i.e. a surface penalty of the base profile is not
-double-counted against gravity on a climb. Example:
+Besides `Math.sqrt` a value expression can call the built-in function
+`bike_climb_factor(p_power, p_mass, p_base_speed, p_crr)`: the slowdown factor for climbs, calculated for a
+cyclist producing `power` watts with a total `mass` (rider plus bike) in kg, a flat speed `base_speed` in km/h
+and the rolling resistance coefficient `crr`. All four arguments must be [parameters](#parameters), so that
+a request can override e.g. the power within the range of the server-side custom model. The slope is
+implicitly the `average_slope` encoded value; for downhill slopes the factor is 1. The climbing speed
+follows from the power balance of gravity, rolling resistance and aerodynamic drag - the latter calibrated
+from the base speed - and where riding gets slower than walking, the speed of pushing the bike is used
+instead. As the factor is relative to the speed of the preceding statements, the resulting speed is
+roughly the minimum of the surface-limited speed and the climbing speed, i.e. a surface penalty of the
+base profile is not double-counted against gravity on a climb. Example:
 
 ```json
 {
+  "parameters": {
+    "power": { "value": 120, "min": 50, "max": 1000 }, "mass": { "value": 95, "min": 30, "max": 300 },
+    "base_speed": { "value": 18, "min": 5, "max": 60 }, "crr": { "value": 0.006, "min": 0, "max": 0.02 }
+  },
   "speed": [
-    { "if": "average_slope > 0", "multiply_by": "bike_climb_factor(120, 95)" }
+    { "if": "average_slope > 0", "multiply_by": "bike_climb_factor(p_power, p_mass, p_base_speed, p_crr)" }
   ]
 }
 ```
 
-The `power` and `mass` arguments must be integers, and the call must be in the `speed` section, optionally
-scaled by a number like `"0.9 * bike_climb_factor(120, 95)"`.
+The call must be in the `speed` section, optionally scaled by a number like
+`"0.9 * bike_climb_factor(p_power, p_mass, p_base_speed, p_crr)"`, and every call must use the same arguments.
+Finite ranges are required as the custom model is validated at the range endpoints on startup: a power of 0
+or an infinite power is rejected. See `bike_elevation.json` for the physical background.
 
 ### `parameters`
 

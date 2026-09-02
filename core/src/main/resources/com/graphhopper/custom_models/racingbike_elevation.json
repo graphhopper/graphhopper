@@ -1,10 +1,15 @@
-// Assume constant power of 200W and a weight of 90kg (bike + rider). For racingbike the base speed is 24km/h,
-// see CustomWeightingHelper.createBikeClimbTable.
-// See bike_elevation.json for details about bike_climb_factor.
+// Assume a constant power of 200W and a total mass of 90kg (bike plus rider). For racingbike the base speed is 24km/h.
+// See bike_elevation.json for details about the parameters and bike_climb_factor.
 // TODO: for 200W we need to change the base speed to 28km/h in RacingBikeAverageSpeedParser
 {
+  "parameters": {
+    "power":      { "value": 200,   "min": 50, "max": 1000 },
+    "mass":       { "value": 90,    "min": 30, "max": 300 },
+    "base_speed": { "value": 24,    "min": 5,  "max": 60 },
+    "crr":        { "value": 0.006, "min": 0,  "max": 0.02 }
+  },
   "speed": [
-    { "if":      "average_slope  >   0", "multiply_by": "bike_climb_factor(200, 90)" },
+    { "if":      "average_slope  >   0", "multiply_by": "bike_climb_factor(p_power, p_mass, p_base_speed, p_crr)" },
     { "else_if": "average_slope <= -15", "multiply_by": "1.10" },
     { "else_if": "average_slope <=  -9", "multiply_by": "1.60" },
     { "else_if": "average_slope <=  -6", "multiply_by": "1.40" },

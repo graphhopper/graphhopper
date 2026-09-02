@@ -3,7 +3,7 @@
 // graph.encoded_values: racingbike_priority, racingbike_access, bike_network, roundabout, racingbike_average_speed, bike_road_access, average_slope, mtb_rating, hike_rating, sac_scale, country, road_class, ferry_speed
 // profiles:
 //    - name: racingbike
-//      custom_model_files: [racingbike.json, bike_elevation.json]
+//      custom_model_files: [racingbike.json, racingbike_elevation.json]
 
 {
   "priority": [

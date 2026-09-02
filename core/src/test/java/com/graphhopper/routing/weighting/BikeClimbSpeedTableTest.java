@@ -9,7 +9,7 @@ public class BikeClimbSpeedTableTest {
 
     @Test
     public void testSpeed() {
-        BikeClimbSpeedTable table = new BikeClimbSpeedTable(120, 95);
+        BikeClimbSpeedTable table = new BikeClimbSpeedTable(120, 95, 18, 0.006);
         assertEquals(18, table.getSpeed(0), 0.01);
         // aero resistance dominates for small slopes
         assertEquals(12.85, table.getSpeed(2), 0.01);
@@ -27,7 +27,7 @@ public class BikeClimbSpeedTableTest {
 
     @Test
     public void testSlopeOffset() {
-        BikeClimbSpeedTable table = new BikeClimbSpeedTable(120, 95);
+        BikeClimbSpeedTable table = new BikeClimbSpeedTable(120, 95, 18, 0.006);
         // no offset for the base speed and above
         assertEquals(0, table.getSlopeOffset(18), 0.01);
         assertEquals(0, table.getSlopeOffset(25), 0.01);

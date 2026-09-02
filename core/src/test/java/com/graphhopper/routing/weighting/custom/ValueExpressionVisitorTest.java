@@ -7,6 +7,7 @@ import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.IntEncodedValueImpl;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.util.CustomModel;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -74,34 +75,41 @@ class ValueExpressionVisitorTest {
     }
 
 
+    static final Map<String, CustomModel.Parameter> BIKE_PARAMS = Map.of("power", new CustomModel.Parameter(120),
+            "mass", new CustomModel.Parameter(95), "base_speed", new CustomModel.Parameter(18), "crr", new CustomModel.Parameter(0.006));
+    static final String BIKE_CALL = "bike_climb_factor(p_power, p_mass, p_base_speed, p_crr)";
+
     @Test
     public void bikeClimbFunctions() {
-        NameValidator validator = s -> s.equals("average_slope");
-        ParseResult result = parse("bike_climb_factor(120, 95)", validator);
+        NameValidator validator = s -> s.equals("average_slope") || s.startsWith("p_");
+        ParseResult result = parse(BIKE_CALL, validator);
         assertTrue(result.ok, result.invalidMessage);
-        // the slope is implicitly the average_slope encoded value
-        assertEquals("[average_slope]", result.guessedVariables.toString());
+        // the slope is implicitly the average_slope encoded value, the parameters are variables too
+        assertEquals("[average_slope, p_power, p_mass, p_base_speed, p_crr]", result.guessedVariables.toString());
 
         // scaled by a literal the expression stays monotone in the encoded value
-        result = parse("0.9 * bike_climb_factor(120, 95)", validator);
+        result = parse("0.9 * " + BIKE_CALL, validator);
         assertTrue(result.ok, result.invalidMessage);
-        result = parse("bike_climb_factor(120, 95) * 0.8", validator);
+        result = parse(BIKE_CALL + " * 0.8", validator);
         assertTrue(result.ok, result.invalidMessage);
 
         // combined with other terms it can be non-monotone and the endpoint-based findMinMax would
         // calculate wrong bounds, e.g. here the real maximum is at average_slope=2 and not at ±31.5
-        result = parse("bike_climb_factor(120, 95) + 0.02 * average_slope", validator);
+        result = parse(BIKE_CALL + " + 0.02 * average_slope", validator);
         assertFalse(result.ok);
         assertTrue(result.invalidMessage.contains("must be the entire expression"), result.invalidMessage);
-        result = parse("average_slope * bike_climb_factor(120, 95)", validator);
+        result = parse("average_slope * " + BIKE_CALL, validator);
         assertFalse(result.ok);
-        result = parse("Math.sqrt(bike_climb_factor(120, 95))", validator);
+        result = parse("Math.sqrt(" + BIKE_CALL + ")", validator);
         assertFalse(result.ok);
 
-        // slope, base speed and rolling resistance are not arguments
-        result = parse("bike_climb_factor(average_slope, 120, 95)", validator);
+        // the slope is not an argument
+        result = parse("bike_climb_factor(average_slope, p_power, p_mass, p_base_speed, p_crr)", validator);
         assertFalse(result.ok);
-        assertTrue(result.invalidMessage.contains("bike_climb_factor expects 2 arguments"), result.invalidMessage);
+        assertTrue(result.invalidMessage.contains("bike_climb_factor expects 4 arguments"), result.invalidMessage);
+        result = parse("bike_climb_factor(p_power, p_mass)", validator);
+        assertFalse(result.ok);
+        assertTrue(result.invalidMessage.contains("bike_climb_factor expects 4 arguments"), result.invalidMessage);
 
         // bike_climb_speed is no longer a built-in function
         result = parse("bike_climb_speed(average_slope, 120, 95)", validator);
@@ -109,36 +117,36 @@ class ValueExpressionVisitorTest {
         assertTrue(result.invalidMessage.contains("illegal method"), result.invalidMessage);
 
         // average_slope must be available
-        result = parse("bike_climb_factor(120, 95)", s -> s.equals("max_slope"));
+        result = parse(BIKE_CALL, s -> s.startsWith("p_"));
         assertFalse(result.ok);
         assertTrue(result.invalidMessage.contains("requires 'average_slope'"), result.invalidMessage);
 
-        // power and mass are encoded into the table field name and so must be integers
-        result = parse("bike_climb_factor(120.5, 95)", validator);
+        // the arguments must be variables (parameters) as the table is created from them in init
+        result = parse("bike_climb_factor(120, p_mass, p_base_speed, p_crr)", validator);
         assertFalse(result.ok);
-        assertTrue(result.invalidMessage.contains("expects an integer as argument 1"), result.invalidMessage);
-        result = parse("bike_climb_factor(120, average_slope)", validator);
+        assertTrue(result.invalidMessage.contains("expects a parameter like p_power as argument 1"), result.invalidMessage);
+        result = parse("bike_climb_factor(p_power, 2 * p_mass, p_base_speed, p_crr)", validator);
         assertFalse(result.ok);
-        assertTrue(result.invalidMessage.contains("expects an integer as argument 2"), result.invalidMessage);
-        result = parse("bike_climb_factor(120, 95.5)", validator);
+        assertTrue(result.invalidMessage.contains("expects a parameter like p_mass as argument 2"), result.invalidMessage);
+        result = parse("bike_climb_factor(p_power, p_mass, p_base_speed, unknown)", validator);
         assertFalse(result.ok);
-        assertTrue(result.invalidMessage.contains("expects an integer as argument 2"), result.invalidMessage);
+        assertTrue(result.invalidMessage.contains("expects a parameter like p_crr as argument 4, but 'unknown' is not available"), result.invalidMessage);
     }
 
     @Test
     public void parsedBikeClimbArgs() {
-        // the parsed literals and the optional scale are kept, from which the generated getSpeed code
+        // the parsed arguments and the optional scale are kept, from which the generated getSpeed code
         // and the expression for the evaluator are derived
-        NameValidator validator = s -> s.equals("average_slope");
-        ParseResult result = parse("bike_climb_factor(120, 95)", validator);
+        NameValidator validator = s -> s.equals("average_slope") || s.startsWith("p_");
+        ParseResult result = parse(BIKE_CALL, validator);
         assertTrue(result.ok, result.invalidMessage);
-        assertArrayEquals(new String[]{"120", "95"}, result.bikeClimbArgs);
+        assertArrayEquals(new String[]{"p_power", "p_mass", "p_base_speed", "p_crr"}, result.bikeClimbArgs);
         assertEquals("", result.bikeClimbScale);
 
         // independent of whitespace
-        result = parse("0.9 * bike_climb_factor(   120  ,95 )", validator);
+        result = parse("0.9 * bike_climb_factor(   p_power  ,p_mass, p_base_speed ,p_crr )", validator);
         assertTrue(result.ok, result.invalidMessage);
-        assertArrayEquals(new String[]{"120", "95"}, result.bikeClimbArgs);
+        assertArrayEquals(new String[]{"p_power", "p_mass", "p_base_speed", "p_crr"}, result.bikeClimbArgs);
         assertEquals("0.9 * ", result.bikeClimbScale);
 
         // without the built-in function nothing is recorded
@@ -152,11 +160,26 @@ class ValueExpressionVisitorTest {
         EncodedValueLookup lookup = new EncodingManager.Builder().add(AverageSlope.create()).build();
         // the function is monotone decreasing in slope so the bounds are taken from the interval
         // limits of average_slope (-31.5 .. 31.5)
-        assertInterval(CustomWeightingHelper.bike_climb_factor(31.5, 120, 95), 1.0, "bike_climb_factor(120, 95)", lookup);
-        assertInterval(0.9 * CustomWeightingHelper.bike_climb_factor(31.5, 120, 95), 0.9, "0.9 * bike_climb_factor(120, 95)", lookup);
+        double minFactor = CustomWeightingHelper.bike_climb_factor(31.5, 120, 95, 18, 0.006);
+        assertInterval(minFactor, 1.0, ValueExpressionVisitor.findMinMax(BIKE_CALL, BIKE_PARAMS, lookup));
+        assertInterval(0.9 * minFactor, 0.9, ValueExpressionVisitor.findMinMax("0.9 * " + BIKE_CALL, BIKE_PARAMS, lookup));
 
-        // average_slope and the table pseudo variable are returned so that the generated class creates the variable and the field
-        assertEquals(Set.of("average_slope", "bike_climb_table_120_95"), findVariables(parseValue("bike_climb_factor(120, 95)", lookup)));
+        // average_slope, the parameters and the table pseudo variable are returned so that the generated
+        // class creates the variables and the field
+        assertEquals(Set.of("average_slope", "p_power", "p_mass", "p_base_speed", "p_crr", "bike_climb_table(p_power,p_mass,p_base_speed,p_crr)"),
+                findVariables(ValueExpressionVisitor.parseValue(BIKE_CALL, BIKE_PARAMS, lookup)));
+
+        // the arguments must be defined parameters, not encoded values
+        String msg = assertThrows(IllegalArgumentException.class, () -> ValueExpressionVisitor.parseValue(
+                "bike_climb_factor(p_power, p_mass, p_base_speed, average_slope)", BIKE_PARAMS, lookup)).getMessage();
+        assertTrue(msg.contains("'average_slope' is not defined in 'parameters'"), msg);
+        msg = assertThrows(IllegalArgumentException.class, () -> ValueExpressionVisitor.findMinMax(
+                BIKE_CALL, Map.of("power", new CustomModel.Parameter(120)), lookup)).getMessage();
+        assertTrue(msg.contains("p_mass as argument 2, but 'p_mass' is not available"), msg);
+        // an invalid parameter value is rejected when the bounds are calculated, e.g. at the range endpoints on startup
+        Map<String, CustomModel.Parameter> zeroPower = new java.util.HashMap<>(BIKE_PARAMS);
+        zeroPower.put("power", new CustomModel.Parameter(0));
+        assertThrows(IllegalArgumentException.class, () -> ValueExpressionVisitor.findMinMax(BIKE_CALL, zeroPower, lookup));
     }
 
     @Test
@@ -232,8 +255,11 @@ class ValueExpressionVisitorTest {
     }
 
     void assertInterval(double min, double max, String expression, EncodedValueLookup lookup) {
-        MinMax minmax = findMinMax(expression, lookup);
-        assertEquals(min, minmax.min, 0.1, expression);
-        assertEquals(max, minmax.max, 0.1, expression);
+        assertInterval(min, max, findMinMax(expression, lookup));
+    }
+
+    void assertInterval(double min, double max, MinMax minmax) {
+        assertEquals(min, minmax.min, 0.1);
+        assertEquals(max, minmax.max, 0.1);
     }
 }

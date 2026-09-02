@@ -85,21 +85,12 @@ public class CustomWeightingHelper {
 
     /**
      * This method calculates the slowdown factor based on the slope for the usage with 'multiply_by'.
-     * This method is only used for findMinMax and findVariables. In the generated getSpeed code
-     * the CustomModelParser creates a BikeClimbSpeedTable field per call instead (see createBikeClimbTable)
-     * and calls its getBikeClimbFactor with the current speed, see ValueExpressionVisitor.
+     * This method is only used for findMinMax and parseValue. In the generated getSpeed code the
+     * CustomModelParser creates a BikeClimbSpeedTable field from the parameters instead and calls
+     * its getBikeClimbFactor with the current speed, see ValueExpressionVisitor.
      */
-    public static double bike_climb_factor(double slope, double power, double mass) {
-        return new BikeClimbSpeedTable(power, mass).getBikeClimbFactor(slope, BikeClimbSpeedTable.DEFAULT_BASE_SPEED);
-    }
-
-    /**
-     * Called from init of the generated class for every bike_climb_factor call of the custom model.
-     */
-    protected BikeClimbSpeedTable createBikeClimbTable(double power, double mass) {
-        // TODO: remove this workaround to get flat speed.
-        boolean racingbike = customModel.getSpeed().get(0).toString().contains("racingbike");
-        return new BikeClimbSpeedTable(power, mass, racingbike ? 24 : BikeClimbSpeedTable.DEFAULT_BASE_SPEED, BikeClimbSpeedTable.DEFAULT_CRR);
+    public static double bike_climb_factor(double slope, double power, double mass, double baseSpeed, double crr) {
+        return new BikeClimbSpeedTable(power, mass, baseSpeed, crr).getBikeClimbFactor(slope, baseSpeed);
     }
 
     public static boolean in(Polygon p, EdgeIteratorState edge) {

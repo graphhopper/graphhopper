@@ -1,12 +1,19 @@
-// Assume constant power of 120W and a total weight of 95kg. (base speed 18km/h, rolling resistance 0.006)
-// According to these values the bike_climb_factor considers the incline. For steep climbs the
-// resulting speed is dominated by the power loss from the climb rather than by the surface: a reduced speed
-// (rough surface) increases the rolling resistance only slightly (capped), see BikeClimbSpeedTable.
-// The base speed calibrates the air resistance, which dominates for small inclines, see BikeClimbSpeedTable.
+// Assume a constant power of 120W and a total mass of 95kg (bike plus rider). The base speed is the flat speed of
+// the bike profile (18km/h) and calibrates the air resistance, which dominates for small inclines. crr is the
+// rolling resistance coefficient, see BikeClimbSpeedTable. According to these parameters the bike_climb_factor
+// considers the incline. For steep climbs the resulting speed is dominated by the power loss from the climb
+// rather than by the surface: a reduced speed (rough surface) increases the rolling resistance only slightly (capped).
 // The speed never falls below the walking speed at which the cyclist pushes the bike.
+// A request can override the values within the ranges, e.g. {"parameters": {"power": 200, "mass": 85}}
 {
+  "parameters": {
+    "power":      { "value": 120,   "min": 50, "max": 1000 },
+    "mass":       { "value": 95,    "min": 30, "max": 300 },
+    "base_speed": { "value": 18,    "min": 5,  "max": 60 },
+    "crr":        { "value": 0.006, "min": 0,  "max": 0.02 }
+  },
   "speed": [
-    { "if":      "average_slope  >   0", "multiply_by": "bike_climb_factor(120, 95)" },
+    { "if":      "average_slope  >   0", "multiply_by": "bike_climb_factor(p_power, p_mass, p_base_speed, p_crr)" },
     { "else_if": "average_slope <= -15", "multiply_by": "1.00" },
     { "else_if": "average_slope <=  -9", "multiply_by": "1.50" },
     { "else_if": "average_slope <=  -6", "multiply_by": "1.30" },

@@ -256,6 +256,9 @@ public class CustomModelParser {
 
             Set<String> speedVariables = new LinkedHashSet<>();
             List<Java.BlockStatement> speedStatements = createGetSpeedStatements(speedVariables, customModel, lookup);
+            List<String> tables = speedVariables.stream().filter(v -> v.startsWith(BIKE_CLIMB_TABLE)).toList();
+            if (tables.size() > 1)
+                throw new IllegalArgumentException("bike_climb_factor must be called with the same arguments everywhere, but got: " + tables);
 
             Set<String> turnPenaltyVariables = new LinkedHashSet<>();
             List<Java.BlockStatement> turnPenaltyStatements = createGetTurnPenaltyStatements(turnPenaltyVariables, customModel, lookup);
@@ -558,6 +561,7 @@ public class CustomModelParser {
 
         final StringBuilder initSourceCode = new StringBuilder("this.lookup = lookup;\n");
         initSourceCode.append("this.customModel = customModel;\n");
+        final StringBuilder tableInitSourceCode = new StringBuilder();
         Set<String> set = new HashSet<>();
         for (String prioVar : priorityVariables)
             set.add(prioVar.startsWith(BACKWARD_PREFIX) ? prioVar.substring(BACKWARD_PREFIX.length()) : prioVar);
@@ -612,16 +616,17 @@ public class CustomModelParser {
                 // street_name is resolved at runtime from graph KV storage and 'edge' is a method
                 // parameter, so no class field is needed
             } else if (arg.startsWith(BIKE_CLIMB_TABLE)) {
-                // the field name encodes the integer arguments of the bike_climb_factor call,
-                String[] parts = arg.split("_");
-                classSourceCode.append("protected BikeClimbSpeedTable " + arg + ";\n");
-                initSourceCode.append("this." + arg + " = createBikeClimbTable("
-                        + parts[parts.length - 2] + ", " + parts[parts.length - 1] + ");\n");
+                // the pseudo variable carries the parameters of the bike_climb_factor call, which are
+                // fields assigned in the loop above and so the table is created after it
+                classSourceCode.append("protected BikeClimbSpeedTable " + BIKE_CLIMB_TABLE + ";\n");
+                tableInitSourceCode.append("this." + BIKE_CLIMB_TABLE + " = new BikeClimbSpeedTable("
+                        + String.join(", ", ValueExpressionVisitor.fromTableVariable(arg)) + ");\n");
             } else {
                 if (!arg.startsWith(IN_AREA_PREFIX))
                     throw new IllegalArgumentException("Variable not supported: " + arg);
             }
         }
+        initSourceCode.append(tableInitSourceCode);
 
         return ""
                 + "package com.graphhopper.routing.weighting.custom;\n"
@@ -699,15 +704,14 @@ public class CustomModelParser {
     /**
      * Verifies the value expression of the statement and collects its variables. A bike_climb_factor
      * call is replaced by the method of the table field (see createClassTemplate) with the injected
-     * current speed ("value"), e.g. bike_climb_factor(120, 95) ->
-     * bike_climb_table_120_95.getBikeClimbFactor(average_slope, value)
+     * current speed ("value"), e.g. bike_climb_factor(p_power, p_mass, p_base_speed, p_crr) ->
+     * bike_climb_table.getBikeClimbFactor(average_slope, value)
      */
     private static String parseValue(Statement statement, Set<String> createObjects, Map<String, CustomModel.Parameter> parameters, EncodedValueLookup lookup) {
         ParseResult result = ValueExpressionVisitor.parseValue(statement.value(), parameters, lookup);
         createObjects.addAll(ValueExpressionVisitor.findVariables(result));
         if (result.bikeClimbArgs == null) return statement.value();
-        return result.bikeClimbScale + ValueExpressionVisitor.toTableField(result.bikeClimbArgs)
-                + ".getBikeClimbFactor(" + AverageSlope.KEY + ", value)";
+        return result.bikeClimbScale + BIKE_CLIMB_TABLE + ".getBikeClimbFactor(" + AverageSlope.KEY + ", value)";
     }
 
     static void parseExpressions(StringBuilder expressions, NameValidator nameInConditionValidator,
