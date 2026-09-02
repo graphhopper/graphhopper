@@ -176,15 +176,16 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         }
 
         // TODO Nearly duplicate code as in findMinMax
+        // the evaluator does not know the parameters, so replace them with their values
+        String evalExpression = replaceParameters(valueExpression, parameters);
         double value;
         try {
             // Speed optimization for numbers only as its over 200x faster than ExpressionEvaluator+cook+evaluate!
             // We still call the parse() method before as it is only ~3x slower and might increase security slightly. Because certain
             // expressions are accepted from Double.parseDouble but parse() rejects them. With this call order we avoid unexpected security problems.
-            value = Double.parseDouble(valueExpression);
+            value = Double.parseDouble(evalExpression);
         } catch (NumberFormatException ex) {
-            // the evaluator does not know the parameters, so replace them with their values
-            String evalExpression = replaceParameters(valueExpression, parameters);
+            evalExpression = Statement.toJavaExpression(evalExpression);
             try {
                 if (encodedValues.isEmpty()) { // without encoded values
                     NoArgEvaluator ee = new ExpressionEvaluator().createFastEvaluator(evalExpression, NoArgEvaluator.class);
@@ -223,17 +224,18 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
             throw new IllegalArgumentException("Currently only a single EncodedValue is allowed on the right-hand side, but was " + encodedValues.size() + ". Value expression: " + valueExpression);
 
         // TODO Nearly duplicate as in findVariables
+        // the evaluator does not know the parameters, so replace them with their values
+        String evalExpression = replaceParameters(valueExpression, parameters);
         try {
             // Speed optimization for numbers only as its over 200x faster than ExpressionEvaluator+cook+evaluate!
             // We still call the parse() method before as it is only ~3x slower and might increase security slightly. Because certain
             // expressions are accepted from Double.parseDouble but parse() rejects them. With this call order we avoid unexpected security problems.
-            double val = Double.parseDouble(valueExpression);
+            double val = Double.parseDouble(evalExpression);
             return new MinMax(val, val);
         } catch (NumberFormatException ex) {
         }
 
-        // the evaluator does not know the parameters, so replace them with their values
-        String evalExpression = replaceParameters(valueExpression, parameters);
+        evalExpression = Statement.toJavaExpression(evalExpression);
         try {
             if (encodedValues.isEmpty()) { // without encoded values
                 NoArgEvaluator ee = new ExpressionEvaluator().createFastEvaluator(evalExpression, NoArgEvaluator.class);
@@ -267,15 +269,18 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
 
     /**
      * @return the expression with the parameters replaced by their values for the ExpressionEvaluator,
-     * e.g. "0.9 * p_hill_factor" -> "0.9 * 0.5"
+     * e.g. "0.9 * p_hill_factor" -> "0.9 * (0.5)". A lone parameter becomes the bare literal for the
+     * Double.parseDouble fast path.
      */
     private static String replaceParameters(String expression, Map<String, CustomModel.Parameter> parameters) {
         for (Map.Entry<String, CustomModel.Parameter> entry : parameters.entrySet()) {
+            String name = CustomModelParser.PARAM_PREFIX + entry.getKey();
+            if (expression.trim().equals(name)) return entry.getValue().toString();
             // parenthesized canonical literal, as e.g. "speed--2" for a negative value would not compile
             String literal = entry.getValue().value() instanceof Number number ? "(" + number.doubleValue() + ")" : entry.getValue().value().toString();
-            expression = expression.replaceAll("\\b" + CustomModelParser.PARAM_PREFIX + entry.getKey() + "\\b", literal);
+            expression = expression.replaceAll("\\b" + name + "\\b", literal);
         }
-        return Statement.toJavaExpression(expression);
+        return expression;
     }
 
     static double getMin(EncodedValue enc) {

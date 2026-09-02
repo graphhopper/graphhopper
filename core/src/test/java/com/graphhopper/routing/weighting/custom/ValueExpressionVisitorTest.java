@@ -6,6 +6,7 @@ import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.IntEncodedValueImpl;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.util.CustomModel;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -72,6 +73,25 @@ class ValueExpressionVisitorTest {
         // assertTrue(parse("Math.sqrt(road_class.ordinal())", validVariable).ok);
     }
 
+
+    @Test
+    public void parameters() {
+        DecimalEncodedValue prio = new DecimalEncodedValueImpl("my_priority", 5, 1, false);
+        EncodedValueLookup lookup = new EncodingManager.Builder().add(prio).build();
+        Map<String, CustomModel.Parameter> params = Map.of("factor", new CustomModel.Parameter(0.8), "negative", new CustomModel.Parameter(-2));
+
+        // a lone parameter takes the fast path for numbers (no ExpressionEvaluator)
+        assertEquals(Set.of("p_factor"), ValueExpressionVisitor.findVariables("p_factor", params, lookup));
+        assertInterval(0.8, 0.8, ValueExpressionVisitor.findMinMax(" p_factor ", params, lookup));
+        String msg = assertThrows(IllegalArgumentException.class, () -> ValueExpressionVisitor.findVariables("p_negative", params, lookup)).getMessage();
+        assertTrue(msg.contains("negative weight"), msg);
+
+        // combined with other terms the parameter is substituted for the evaluator
+        assertInterval(1.6, 1.6, ValueExpressionVisitor.findMinMax("2 * p_factor", params, lookup));
+        assertInterval(-4, -4, ValueExpressionVisitor.findMinMax("2 * p_negative", params, lookup));
+        assertInterval(0, 24.8, ValueExpressionVisitor.findMinMax("p_factor * my_priority", params, lookup));
+        assertEquals(Set.of("p_factor", "my_priority"), ValueExpressionVisitor.findVariables("p_factor * my_priority", params, lookup));
+    }
 
     @Test
     public void testErrors() {
@@ -146,8 +166,11 @@ class ValueExpressionVisitorTest {
     }
 
     void assertInterval(double min, double max, String expression, EncodedValueLookup lookup) {
-        MinMax minmax = findMinMax(expression, lookup);
-        assertEquals(min, minmax.min, 0.1, expression);
-        assertEquals(max, minmax.max, 0.1, expression);
+        assertInterval(min, max, findMinMax(expression, lookup));
+    }
+
+    void assertInterval(double min, double max, MinMax minmax) {
+        assertEquals(min, minmax.min, 0.1);
+        assertEquals(max, minmax.max, 0.1);
     }
 }
