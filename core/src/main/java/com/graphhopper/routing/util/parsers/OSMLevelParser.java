@@ -33,7 +33,14 @@ public class OSMLevelParser implements TagParser {
         this.levelEnc = levelEnc;
     }
 
-    private int clampLevel (int level) {
+    private int cleanAndClampLevel(String levelStr) {
+        int level;
+        try {
+            level = Integer.parseInt(levelStr);
+        } catch (NumberFormatException ex) {
+            level = (int) Math.floor(Float.parseFloat(levelStr));
+        }
+
         int minLevel = -50;
         int maxLevel = 256 + minLevel - 1;
 
@@ -57,7 +64,7 @@ public class OSMLevelParser implements TagParser {
             // TODO
             if (levelsTok.length == 1) {
                 try {
-                    int levelInt = this.clampLevel(Integer.parseInt(levelsTok[0]));
+                    int levelInt = cleanAndClampLevel(levelsTok[0]);
                     forward = levelInt;
                     backward = levelInt;
                 } catch (NumberFormatException ex) {
@@ -65,8 +72,8 @@ public class OSMLevelParser implements TagParser {
                 }
             } else if (levelsTok.length == 2) {
                 try {
-                    int first = this.clampLevel(Integer.parseInt(levelsTok[0]));
-                    int second = this.clampLevel(Integer.parseInt(levelsTok[1]));
+                    int first = cleanAndClampLevel(levelsTok[0]);
+                    int second = cleanAndClampLevel(levelsTok[1]);
                     forward = first;
                     backward = second;
                 } catch (NumberFormatException ex) {

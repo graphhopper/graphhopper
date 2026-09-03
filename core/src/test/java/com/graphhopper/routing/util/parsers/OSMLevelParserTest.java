@@ -71,16 +71,28 @@ class OSMLevelParserTest {
     }
 
     @Test
-    void halfLevelsNotSupported() {
-        // Half levels aren't documented, but should be rounded down, 
-        // instead of default value of 0.
+    void floatAndClamping() {
         ReaderWay readerWay = new ReaderWay(1);
         EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
         int edgeId = 0;
+        
         readerWay.setTag("level", "1.5");
         parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
         Assertions.assertEquals(1, levelEnc.getInt(false, edgeId, edgeIntAccess));
         Assertions.assertEquals(1, levelEnc.getInt(true, edgeId, edgeIntAccess));
+        
+        readerWay.setTag("level", "-1.5");
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        Assertions.assertEquals(-2, levelEnc.getInt(false, edgeId, edgeIntAccess));
+        Assertions.assertEquals(-2, levelEnc.getInt(true, edgeId, edgeIntAccess));
+
+        readerWay.setTag("level", "-100");
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        Assertions.assertEquals(-50, levelEnc.getInt(false, edgeId, edgeIntAccess));
+
+        readerWay.setTag("level", "300");
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        Assertions.assertEquals(205, levelEnc.getInt(false, edgeId, edgeIntAccess));
     }
 
     
