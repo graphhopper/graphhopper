@@ -29,20 +29,20 @@ import com.graphhopper.storage.IntsRef;
 public class OSMLevelParser implements TagParser {
     private final IntEncodedValue levelEnc;
 
-    public OSMLanesParser(IntEncodedValue levelEnc) {
+    public OSMLevelParser(IntEncodedValue levelEnc) {
         this.levelEnc = levelEnc;
     }
 
     private int clampLevel (int level) {
-        int minLevel = -50
-        int maxLevel = 256 + minLevel - 1
+        int minLevel = -50;
+        int maxLevel = 256 + minLevel - 1;
 
         if (level < minLevel)
-            return minLevel
-        else if (levelInt > maxLevel)
-            return maxLevel
-        else/
-            return level
+            return minLevel;
+        else if (level > maxLevel)
+            return maxLevel;
+        else
+            return level;
     }
 
     @Override
@@ -63,7 +63,7 @@ public class OSMLevelParser implements TagParser {
                 } catch (NumberFormatException ex) {
                     // ignore if no number
                 }
-            } else if levelsTok.length == 2 {
+            } else if (levelsTok.length == 2) {
                 try {
                     int first = this.clampLevel(Integer.parseInt(levelsTok[0]));
                     int second = this.clampLevel(Integer.parseInt(levelsTok[1]));
@@ -74,7 +74,7 @@ public class OSMLevelParser implements TagParser {
                 }
             }
         }
-        lanesEnc.setInt(false, edgeId, edgeIntAccess, forward);
-        lanesEnc.setInt(true, edgeId, edgeIntAccess, backward);
+        levelEnc.setInt(false, edgeId, edgeIntAccess, forward);
+        levelEnc.setInt(true, edgeId, edgeIntAccess, backward);
     }
 }
