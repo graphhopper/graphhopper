@@ -9,6 +9,7 @@ Here is an overview:
  * andreaswolf, flag encoder versioning and more
  * andreylh, polygon for blocked area #1306
  * Anvoker, fixes like #1614 and helped with JUnit 5 migration #1632 
+ * AzazelSensei, docs for planet import memory #3053
  * b3nn0, Android improvements
  * baumboi, path detail and landmark improvements
  * baybatu, improved error for EncodingManager

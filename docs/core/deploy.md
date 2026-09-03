@@ -56,6 +56,11 @@ GraphHopper can handle the world-wide [OpenStreetMap road network](http://planet
 Parsing this planet file and creating the GraphHopper base graph requires ~60GB RAM and takes ~3h for the import. If you can accept
 much slower import times (3 days!) this can be reduced to 31GB RAM when you set `graph.dataaccess.default_type: MMAP` in the config file.
 As of May 2022 the graph has around 415M edges (150M for Europe, 86M for North America).
+The planet file has grown a lot since then, so treat those RAM and time numbers as a lower bound.
+
+When using MMAP, set `-Xmx` well below the physical RAM so the OS still has off-heap memory for the mapped files.
+Do not set `-Xmx` larger than the RAM, even if you have swap. GraphHopper already pages through the graph-cache files,
+and a heap bigger than RAM only makes the import slower or fail with a heap error.
 
 Running the CH preparation, required for best response times, needs ~120GB RAM and the additional CH preparation takes ~25 hours
 (for the car profile with turn cost) but heavily depends on the CPU and memory speed. Without turn cost
