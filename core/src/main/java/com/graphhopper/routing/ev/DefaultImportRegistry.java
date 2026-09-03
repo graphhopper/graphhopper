@@ -18,67 +18,8 @@
 
 package com.graphhopper.routing.ev;
 
-<<<<<<< HEAD
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.parsers.*;
-=======
-import com.graphhopper.routing.util.CurvatureCalculator;
-import com.graphhopper.routing.util.FerrySpeedCalculator;
-import com.graphhopper.routing.util.PriorityCode;
-import com.graphhopper.routing.util.SlopeCalculator;
-import com.graphhopper.routing.util.TransportationMode;
-import com.graphhopper.routing.util.parsers.BikeAccessParser;
-import com.graphhopper.routing.util.parsers.BikeAverageSpeedParser;
-import com.graphhopper.routing.util.parsers.BikePriorityParser;
-import com.graphhopper.routing.util.parsers.CarAccessParser;
-import com.graphhopper.routing.util.parsers.CarAverageSpeedParser;
-import com.graphhopper.routing.util.parsers.CountryParser;
-import com.graphhopper.routing.util.parsers.FootAccessParser;
-import com.graphhopper.routing.util.parsers.FootAverageSpeedParser;
-import com.graphhopper.routing.util.parsers.FootPriorityParser;
-import com.graphhopper.routing.util.parsers.MaxWeightExceptParser;
-import com.graphhopper.routing.util.parsers.ModeAccessParser;
-import com.graphhopper.routing.util.parsers.MountainBikeAccessParser;
-import com.graphhopper.routing.util.parsers.MountainBikeAverageSpeedParser;
-import com.graphhopper.routing.util.parsers.MountainBikePriorityParser;
-import com.graphhopper.routing.util.parsers.OSMCrossingParser;
-import com.graphhopper.routing.util.parsers.OSMFootwayParser;
-import com.graphhopper.routing.util.parsers.OSMGetOffBikeParser;
-import com.graphhopper.routing.util.parsers.OSMHazmatParser;
-import com.graphhopper.routing.util.parsers.OSMHazmatTunnelParser;
-import com.graphhopper.routing.util.parsers.OSMHazmatWaterParser;
-import com.graphhopper.routing.util.parsers.OSMHgvParser;
-import com.graphhopper.routing.util.parsers.OSMHikeRatingParser;
-import com.graphhopper.routing.util.parsers.OSMHorseRatingParser;
-import com.graphhopper.routing.util.parsers.OSMKerbParser;
-import com.graphhopper.routing.util.parsers.OSMLanesParser;
-import com.graphhopper.routing.util.parsers.OSMLevelParser;
-import com.graphhopper.routing.util.parsers.OSMMaxAxleLoadParser;
-import com.graphhopper.routing.util.parsers.OSMMaxHeightParser;
-import com.graphhopper.routing.util.parsers.OSMMaxLengthParser;
-import com.graphhopper.routing.util.parsers.OSMMaxSpeedParser;
-import com.graphhopper.routing.util.parsers.OSMMaxWeightParser;
-import com.graphhopper.routing.util.parsers.OSMMaxWidthParser;
-import com.graphhopper.routing.util.parsers.OSMMtbRatingParser;
-import com.graphhopper.routing.util.parsers.OSMRoadAccessParser;
-import com.graphhopper.routing.util.parsers.OSMRoadClassLinkParser;
-import com.graphhopper.routing.util.parsers.OSMRoadClassParser;
-import com.graphhopper.routing.util.parsers.OSMRoadEnvironmentParser;
-import com.graphhopper.routing.util.parsers.OSMRoundaboutParser;
-import com.graphhopper.routing.util.parsers.OSMSmoothnessParser;
-import com.graphhopper.routing.util.parsers.OSMSurfaceParser;
-import com.graphhopper.routing.util.parsers.OSMTactilePavingParser;
-import com.graphhopper.routing.util.parsers.OSMTemporalAccessParser;
-import com.graphhopper.routing.util.parsers.OSMTollParser;
-import com.graphhopper.routing.util.parsers.OSMTrackTypeParser;
-import com.graphhopper.routing.util.parsers.OSMTrafficSignalsSoundParser;
-import com.graphhopper.routing.util.parsers.OSMWayIDParser;
-import com.graphhopper.routing.util.parsers.OrientationCalculator;
-import com.graphhopper.routing.util.parsers.RacingBikeAccessParser;
-import com.graphhopper.routing.util.parsers.RacingBikeAverageSpeedParser;
-import com.graphhopper.routing.util.parsers.RacingBikePriorityParser;
-import com.graphhopper.routing.util.parsers.StateParser;
->>>>>>> 0e9dd7a73 (Fixed silly mistakes and added simple unit test.)
 import com.graphhopper.util.PMap;
 
 public class DefaultImportRegistry implements ImportRegistry {
