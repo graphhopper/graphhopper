@@ -68,7 +68,7 @@ class OSMLevelParserTest {
     }
 
     @Test
-    void floatAndClamping() {
+    void floatLevel() {
         ReaderWay readerWay = new ReaderWay(1);
         EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
         int edgeId = 0;
@@ -76,17 +76,37 @@ class OSMLevelParserTest {
         readerWay.setTag("level", "1.5");
         parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
         Assertions.assertEquals(1.5, levelEnc.getDecimal(false, edgeId, edgeIntAccess));
-        
+    }
+
+    @Test
+    void negativeFloatLevel() {
+        ReaderWay readerWay = new ReaderWay(1);
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        int edgeId = 0;
+                
         readerWay.setTag("level", "-1.5");
         parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
         Assertions.assertEquals(-1.5, levelEnc.getDecimal(false, edgeId, edgeIntAccess));
+    }
+
+    @Test
+    void belowMinLevel() {
+        ReaderWay readerWay = new ReaderWay(1);
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        int edgeId = 0;
 
         readerWay.setTag("level", "-100");
         parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
         Assertions.assertEquals(-40.0, levelEnc.getDecimal(false, edgeId, edgeIntAccess));
+    }
 
+    @Test
+    void aboveMaxLevel() {
+        ReaderWay readerWay = new ReaderWay(1);
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        int edgeId = 0;
+        
         readerWay.setTag("level", "300");
         parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
         Assertions.assertEquals(164.7, levelEnc.getDecimal(false, edgeId, edgeIntAccess));
     }
-}
