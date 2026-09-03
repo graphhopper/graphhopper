@@ -61,37 +61,39 @@ class CustomWeightingHelperTest {
 
     @Test
     public void testBikeClimbFactor() {
-        // 120W and 95kg: continuous replacement for the former staircase in bike_elevation.json,
-        // the speed at the base speed 18 is 18 * factor
-        assertEquals(3.66, 18 * CustomWeightingHelper.bike_climb_factor(12, 120, 95, 18, 0.006), 0.01);
+        // 120W, 95kg and a drag area of 0.6m^2: the flat speed is 22.14km/h and the static variant returns the
+        // factor relative to it, i.e. the speed at 12% is 22.14 * factor = 3.67km/h
+        double flat = new BikeClimbSpeedTable(120, 95, 0.6, 0.006).getFlatSpeed();
+        assertEquals(22.14, flat, 0.01);
+        assertEquals(3.67, flat * CustomWeightingHelper.bike_climb_factor(12, 120, 95, 0.6, 0.006), 0.01);
         // where riding gets slower than walking the cyclist pushes the bike instead
         // (0.8 times Tobler's hiking speed)
-        assertEquals(2.38, 18 * CustomWeightingHelper.bike_climb_factor(15, 120, 95, 18, 0.006), 0.01);
-        assertEquals(1.36, 18 * CustomWeightingHelper.bike_climb_factor(31, 120, 95, 18, 0.006), 0.01);
-        assertEquals(2.0, 18 * CustomWeightingHelper.bike_climb_factor(20, 80, 95, 18, 0.006), 0.01);
-        assertEquals(1, CustomWeightingHelper.bike_climb_factor(0, 120, 95, 18, 0.006));
-        // faster for downhill slopes
-        assertEquals(28.7, 18 * CustomWeightingHelper.bike_climb_factor(-4, 120, 95, 18, 0.006), 0.1);
-        assertEquals(41.5, 18 * CustomWeightingHelper.bike_climb_factor(-10, 120, 95, 18, 0.006), 0.1);
+        assertEquals(2.38, flat * CustomWeightingHelper.bike_climb_factor(15, 120, 95, 0.6, 0.006), 0.01);
+        assertEquals(1.36, flat * CustomWeightingHelper.bike_climb_factor(31, 120, 95, 0.6, 0.006), 0.01);
+        assertEquals(1, CustomWeightingHelper.bike_climb_factor(0, 120, 95, 0.6, 0.006));
+        // faster for downhill slopes: 38.8km/h at -4%
+        assertEquals(1.75, CustomWeightingHelper.bike_climb_factor(-4, 120, 95, 0.6, 0.006), 0.01);
+        assertEquals(2.61, CustomWeightingHelper.bike_climb_factor(-10, 120, 95, 0.6, 0.006), 0.01);
 
-        assertThrows(IllegalArgumentException.class, () -> CustomWeightingHelper.bike_climb_factor(12, 0, 95, 18, 0.006));
-        assertThrows(IllegalArgumentException.class, () -> CustomWeightingHelper.bike_climb_factor(12, 120, 0, 18, 0.006));
+        assertThrows(IllegalArgumentException.class, () -> CustomWeightingHelper.bike_climb_factor(12, 0, 95, 0.6, 0.006));
+        assertThrows(IllegalArgumentException.class, () -> CustomWeightingHelper.bike_climb_factor(12, 120, 0, 0.6, 0.006));
+        assertThrows(IllegalArgumentException.class, () -> CustomWeightingHelper.bike_climb_factor(12, 120, 95, 0, 0.006));
     }
 
     @Test
     public void testBikeClimbFactorCurrentSpeed() {
         // the generated code calls the table method with the injected current speed: for a current
-        // speed reduced from the base 18 (e.g. from a rough surface) the rolling resistance is increased
-        // (doubled for 9km/h) but the power-limited climbing speed is not scaled down proportionally,
-        // i.e. 9*factor is 3.45km/h and not 9/18*3.66=1.83km/h
-        BikeClimbSpeedTable table = new BikeClimbSpeedTable(120, 95, 18, 0.006);
-        assertEquals(3.45, 9 * table.getClimbFactor(12, 9), 0.01);
+        // speed reduced from the flat speed 22.14 (e.g. from a rough surface) the rolling resistance is
+        // increased (2.5 times for 9km/h) but the power-limited climbing speed is not scaled down
+        // proportionally, i.e. 9*factor is 3.27km/h and not 9/22.14*3.67=1.49km/h
+        BikeClimbSpeedTable table = new BikeClimbSpeedTable(120, 95, 0.6, 0.006);
+        assertEquals(3.27, 9 * table.getClimbFactor(12, 9), 0.01);
         // the factor never increases the speed above the current speed
         assertEquals(1, table.getClimbFactor(12, 3));
-        // a current speed above the base speed results in the same absolute climbing speed
-        assertEquals(3.66, 25 * table.getClimbFactor(12, 25), 0.01);
-        // the static variant used for the bounds is the factor at the base speed
-        assertEquals(table.getClimbFactor(12, 18), CustomWeightingHelper.bike_climb_factor(12, 120, 95, 18, 0.006), 1.e-6);
+        // a current speed above the flat speed results in the same absolute climbing speed
+        assertEquals(3.67, 25 * table.getClimbFactor(12, 25), 0.01);
+        // the static variant used for the bounds is the factor at the flat speed
+        assertEquals(table.getClimbFactor(12, table.getFlatSpeed()), CustomWeightingHelper.bike_climb_factor(12, 120, 95, 0.6, 0.006), 1.e-6);
     }
 
     @Test

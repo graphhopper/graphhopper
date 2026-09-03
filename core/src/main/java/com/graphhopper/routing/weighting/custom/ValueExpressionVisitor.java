@@ -46,7 +46,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
     // the built-in function, also a static method in CustomWeightingHelper for the ExpressionEvaluator
     static final String BIKE_CLIMB_FACTOR = "bike_climb_factor";
     // the meaning of the arguments of bike_climb_factor (only used for error messages)
-    static final String[] BIKE_CLIMB_ARGS = {"power", "mass", "base_speed", "crr"};
+    static final String[] BIKE_CLIMB_ARGS = {"power", "mass", "cda", "crr"};
     private final ParseResult result;
     private final NameValidator variableValidator;
     private String invalidMessage;
@@ -221,7 +221,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
     /**
      * @return the expression for the ExpressionEvaluator used in findMinMax and parseValue: the
      * bike_climb_factor call is replaced by the static function with the slope as explicit first
-     * argument, e.g. bike_climb_factor(average_slope, p_power, p_mass, p_base_speed, p_crr), and the
+     * argument, e.g. bike_climb_factor(average_slope, p_power, p_mass, p_cda, p_crr), and the
      * parameters are replaced by their values as the evaluator does not know them, e.g. "0.9 * p_hill_factor" -> "0.9 * 0.5"
      */
     private static String toEvaluable(ParseResult result, String valueExpression, Map<String, CustomModel.Parameter> parameters) {

@@ -76,8 +76,8 @@ class ValueExpressionVisitorTest {
 
 
     static final Map<String, CustomModel.Parameter> BIKE_PARAMS = Map.of("power", new CustomModel.Parameter(120),
-            "mass", new CustomModel.Parameter(95), "base_speed", new CustomModel.Parameter(18), "crr", new CustomModel.Parameter(0.006));
-    static final String BIKE_CALL = "bike_climb_factor(p_power, p_mass, p_base_speed, p_crr)";
+            "mass", new CustomModel.Parameter(95), "cda", new CustomModel.Parameter(0.6), "crr", new CustomModel.Parameter(0.006));
+    static final String BIKE_CALL = "bike_climb_factor(p_power, p_mass, p_cda, p_crr)";
 
     @Test
     public void bikeClimbFunctions() {
@@ -85,7 +85,7 @@ class ValueExpressionVisitorTest {
         ParseResult result = parse(BIKE_CALL, validator);
         assertTrue(result.ok, result.invalidMessage);
         // the slope is implicitly the average_slope encoded value, the parameters are variables too
-        assertEquals("[average_slope, p_power, p_mass, p_base_speed, p_crr]", result.guessedVariables.toString());
+        assertEquals("[average_slope, p_power, p_mass, p_cda, p_crr]", result.guessedVariables.toString());
 
         // scaled by a literal the expression stays monotone in the encoded value
         result = parse("0.9 * " + BIKE_CALL, validator);
@@ -104,7 +104,7 @@ class ValueExpressionVisitorTest {
         assertFalse(result.ok);
 
         // the slope is not an argument
-        result = parse("bike_climb_factor(average_slope, p_power, p_mass, p_base_speed, p_crr)", validator);
+        result = parse("bike_climb_factor(average_slope, p_power, p_mass, p_cda, p_crr)", validator);
         assertFalse(result.ok);
         assertTrue(result.invalidMessage.contains("bike_climb_factor expects 4 arguments"), result.invalidMessage);
         result = parse("bike_climb_factor(p_power, p_mass)", validator);
@@ -122,13 +122,13 @@ class ValueExpressionVisitorTest {
         assertTrue(result.invalidMessage.contains("requires 'average_slope'"), result.invalidMessage);
 
         // the arguments must be variables (parameters) as the table is created from them in init
-        result = parse("bike_climb_factor(120, p_mass, p_base_speed, p_crr)", validator);
+        result = parse("bike_climb_factor(120, p_mass, p_cda, p_crr)", validator);
         assertFalse(result.ok);
         assertTrue(result.invalidMessage.contains("expects a parameter like p_power as argument 1"), result.invalidMessage);
-        result = parse("bike_climb_factor(p_power, 2 * p_mass, p_base_speed, p_crr)", validator);
+        result = parse("bike_climb_factor(p_power, 2 * p_mass, p_cda, p_crr)", validator);
         assertFalse(result.ok);
         assertTrue(result.invalidMessage.contains("expects a parameter like p_mass as argument 2"), result.invalidMessage);
-        result = parse("bike_climb_factor(p_power, p_mass, p_base_speed, unknown)", validator);
+        result = parse("bike_climb_factor(p_power, p_mass, p_cda, unknown)", validator);
         assertFalse(result.ok);
         assertTrue(result.invalidMessage.contains("expects a parameter like p_crr as argument 4, but 'unknown' is not available"), result.invalidMessage);
     }
@@ -140,13 +140,13 @@ class ValueExpressionVisitorTest {
         NameValidator validator = s -> s.equals("average_slope") || s.startsWith("p_");
         ParseResult result = parse(BIKE_CALL, validator);
         assertTrue(result.ok, result.invalidMessage);
-        assertArrayEquals(new String[]{"p_power", "p_mass", "p_base_speed", "p_crr"}, result.bikeClimbArgs);
+        assertArrayEquals(new String[]{"p_power", "p_mass", "p_cda", "p_crr"}, result.bikeClimbArgs);
         assertEquals("", result.bikeClimbScale);
 
         // independent of whitespace
-        result = parse("0.9 * bike_climb_factor(   p_power  ,p_mass, p_base_speed ,p_crr )", validator);
+        result = parse("0.9 * bike_climb_factor(   p_power  ,p_mass, p_cda ,p_crr )", validator);
         assertTrue(result.ok, result.invalidMessage);
-        assertArrayEquals(new String[]{"p_power", "p_mass", "p_base_speed", "p_crr"}, result.bikeClimbArgs);
+        assertArrayEquals(new String[]{"p_power", "p_mass", "p_cda", "p_crr"}, result.bikeClimbArgs);
         assertEquals("0.9 * ", result.bikeClimbScale);
 
         // without the built-in function nothing is recorded
@@ -160,19 +160,19 @@ class ValueExpressionVisitorTest {
         EncodedValueLookup lookup = new EncodingManager.Builder().add(AverageSlope.create()).build();
         // the function is monotone decreasing in slope so the bounds are taken from the interval
         // limits of average_slope (-31.5 .. 31.5)
-        double minFactor = CustomWeightingHelper.bike_climb_factor(31.5, 120, 95, 18, 0.006);
-        double maxFactor = CustomWeightingHelper.bike_climb_factor(-31.5, 120, 95, 18, 0.006);
-        assertEquals(4.0, maxFactor, 0.01);
+        double minFactor = CustomWeightingHelper.bike_climb_factor(31.5, 120, 95, 0.6, 0.006);
+        double maxFactor = CustomWeightingHelper.bike_climb_factor(-31.5, 120, 95, 0.6, 0.006);
+        assertEquals(4.58, maxFactor, 0.01);
         assertInterval(minFactor, maxFactor, ValueExpressionVisitor.findMinMax(BIKE_CALL, BIKE_PARAMS, lookup));
         assertInterval(0.9 * minFactor, 0.9 * maxFactor, ValueExpressionVisitor.findMinMax("0.9 * " + BIKE_CALL, BIKE_PARAMS, lookup));
 
         // average_slope and the parameters are variables so that the generated class provides them
-        assertEquals(Set.of("average_slope", "p_power", "p_mass", "p_base_speed", "p_crr"),
+        assertEquals(Set.of("average_slope", "p_power", "p_mass", "p_cda", "p_crr"),
                 ValueExpressionVisitor.parseValue(BIKE_CALL, BIKE_PARAMS, lookup).guessedVariables);
 
         // the arguments must be defined parameters, not encoded values
         String msg = assertThrows(IllegalArgumentException.class, () -> ValueExpressionVisitor.parseValue(
-                "bike_climb_factor(p_power, p_mass, p_base_speed, average_slope)", BIKE_PARAMS, lookup)).getMessage();
+                "bike_climb_factor(p_power, p_mass, p_cda, average_slope)", BIKE_PARAMS, lookup)).getMessage();
         assertTrue(msg.contains("'average_slope' is not defined in 'parameters'"), msg);
         msg = assertThrows(IllegalArgumentException.class, () -> ValueExpressionVisitor.findMinMax(
                 BIKE_CALL, Map.of("power", new CustomModel.Parameter(120)), lookup)).getMessage();

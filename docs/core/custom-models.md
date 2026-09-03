@@ -728,28 +728,29 @@ smaller or more narrow range, or if you can avoid them entirely, then these requ
 #### Built-in functions
 
 Besides `Math.sqrt` a value expression can call the built-in function
-`bike_climb_factor(p_power, p_mass, p_base_speed, p_crr)`: the slowdown factor for climbs, calculated for a
-cyclist producing `power` watts with a total `mass` (rider plus bike) in kg, a flat speed `base_speed` in km/h
-and the rolling resistance coefficient `crr`. All four arguments must be [parameters](#parameters), so that
-a request can override e.g. the power within the range of the server-side custom model. The slope is
-implicitly the `average_slope` encoded value. The climbing speed follows from the power balance of gravity,
-rolling resistance and aerodynamic drag - the latter calibrated from the base speed - and where riding gets
-slower than walking, the speed of pushing the bike is used instead. As the factor is relative to the speed
-of the preceding statements, the resulting speed is roughly the minimum of the surface-limited speed and
-the climbing speed, i.e. a surface penalty of the base profile is not double-counted against gravity on a
-climb. For downhill slopes the same power balance results in a factor above 1 (the speed gain relative to
-the base speed), which is applied to the surface-limited speed. As braking is not modelled, the resulting
-speed should be limited. Example:
+`bike_climb_factor(p_power, p_mass, p_cda, p_crr)`: the slowdown factor for climbs, calculated for a
+cyclist producing `power` watts with a total `mass` (rider plus bike) in kg, the drag area `cda` (drag
+coefficient times frontal area in m², e.g. 0.6 upright and 0.4 on a racingbike) and the rolling resistance
+coefficient `crr`. All four arguments must be [parameters](#parameters), so that a request can override
+e.g. the power within the range of the server-side custom model. The slope is implicitly the `average_slope`
+encoded value. The climbing speed follows from the power balance of gravity, rolling resistance and
+aerodynamic drag, and where riding gets slower than walking, the speed of pushing the bike is used instead.
+As the factor is relative to the speed of the preceding statements, the resulting speed is the minimum of
+the speed so far (e.g. limited by the surface or the profile's flat speed) and the climbing speed, i.e. a
+surface penalty of the base profile is not double-counted against gravity on a climb. For downhill slopes
+the same power balance results in a factor above 1 (the speed gain relative to the flat speed of the power
+balance), which is applied to the speed so far. As braking is not modelled, the resulting speed should be
+limited. Example:
 
 ```json
 {
   "parameters": {
     "power": { "value": 120, "min": 50, "max": 1000 }, "mass": { "value": 95, "min": 30, "max": 300 },
-    "base_speed": { "value": 18, "min": 5, "max": 60 }, "crr": { "value": 0.006, "min": 0, "max": 0.02 },
+    "cda": { "value": 0.6, "min": 0.1, "max": 2 }, "crr": { "value": 0.006, "min": 0, "max": 0.02 },
     "vehicle_max_speed": { "value": 35, "min": 5, "max": 80 }
   },
   "speed": [
-    { "if": "average_slope > -15", "multiply_by": "bike_climb_factor(p_power, p_mass, p_base_speed, p_crr)" },
+    { "if": "average_slope > -15", "multiply_by": "bike_climb_factor(p_power, p_mass, p_cda, p_crr)" },
     { "if": "true", "limit_to": "p_vehicle_max_speed" }
   ]
 }
@@ -758,7 +759,7 @@ speed should be limited. Example:
 Here the condition excludes steep descents where the cyclist brakes, so their speed stays unchanged, and
 a request can lower `vehicle_max_speed` for a more cautious rider.
 The call must be in the `speed` section, optionally scaled by a number like
-`"0.9 * bike_climb_factor(p_power, p_mass, p_base_speed, p_crr)"`, and only once per custom model, i.e. a request
+`"0.9 * bike_climb_factor(p_power, p_mass, p_cda, p_crr)"`, and only once per custom model, i.e. a request
 custom model cannot repeat it.
 Finite ranges are required as the custom model is validated at the range endpoints on startup: a power of 0
 or an infinite power is rejected. See `bike_elevation.json` for the physical background.

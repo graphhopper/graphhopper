@@ -692,8 +692,8 @@ public class CustomModelParser {
     /**
      * Verifies the value expression of the statement and collects its variables. A bike_climb_factor
      * call gets the slope and the current speed ("value") injected as first arguments and calls
-     * the instance method of CustomWeightingHelper: bike_climb_factor(p_power, p_mass, p_base_speed, p_crr)
-     * -> getBikeClimbFactor(average_slope, value, p_power, p_mass, p_base_speed, p_crr)
+     * the instance method of CustomWeightingHelper: bike_climb_factor(p_power, p_mass, p_cda, p_crr)
+     * -> getBikeClimbFactor(average_slope, value, p_power, p_mass, p_cda, p_crr)
      */
     private static String parseValue(Statement statement, Set<String> createObjects, Map<String, CustomModel.Parameter> parameters,
                                      EncodedValueLookup lookup, String exceptionInfo) {

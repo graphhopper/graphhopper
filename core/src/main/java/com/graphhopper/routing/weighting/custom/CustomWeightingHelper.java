@@ -89,20 +89,21 @@ public class CustomWeightingHelper {
      * This method is only used for findMinMax and parseValue, the generated getSpeed code calls
      * getBikeClimbFactor with the current speed instead, see CustomModelParser.parseValue.
      */
-    public static double bike_climb_factor(double slope, double power, double mass, double baseSpeed, double crr) {
-        return new BikeClimbSpeedTable(power, mass, baseSpeed, crr).getClimbFactor(slope, baseSpeed);
+    public static double bike_climb_factor(double slope, double power, double mass, double cda, double crr) {
+        BikeClimbSpeedTable table = new BikeClimbSpeedTable(power, mass, cda, crr);
+        return table.getClimbFactor(slope, table.getFlatSpeed());
     }
 
     /**
-     * Called per edge from the generated getSpeed for bike_climb_factor(p_power, p_mass, p_base_speed, p_crr)
+     * Called per edge from the generated getSpeed for bike_climb_factor(p_power, p_mass, p_cda, p_crr)
      * with the injected average_slope and current speed. The arguments are parameters and the call is
      * allowed only once per custom model (see CustomModelParser), so the speed table can be created lazily.
      */
-    protected double getBikeClimbFactor(double slope, double currentSpeed, double power, double mass, double baseSpeed, double crr) {
+    protected double getBikeClimbFactor(double slope, double currentSpeed, double power, double mass, double cda, double crr) {
         // benign race if the instance is ever shared between threads: identical tables would be created and
         // as all fields of the table are final the reference can be published without synchronization
         if (bikeClimbTable == null)
-            bikeClimbTable = new BikeClimbSpeedTable(power, mass, baseSpeed, crr);
+            bikeClimbTable = new BikeClimbSpeedTable(power, mass, cda, crr);
         return bikeClimbTable.getClimbFactor(slope, currentSpeed);
     }
 

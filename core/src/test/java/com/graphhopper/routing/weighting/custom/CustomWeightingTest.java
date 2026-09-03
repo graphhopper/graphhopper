@@ -414,11 +414,11 @@ class CustomWeightingTest {
         assertEquals(12, weighting.calcEdgeWeight(edge2, false));
     }
 
-    static CustomModel bikeClimbModel(String speedEncName, double power, double mass, double baseSpeed) {
+    static CustomModel bikeClimbModel(String speedEncName, double power, double mass, double cda) {
         return new CustomModel().setDistanceInfluence(0d).
-                setParameter("power", power).setParameter("mass", mass).setParameter("base_speed", baseSpeed).setParameter("crr", 0.006).
+                setParameter("power", power).setParameter("mass", mass).setParameter("cda", cda).setParameter("crr", 0.006).
                 addToSpeed(If("true", LIMIT, speedEncName)).
-                addToSpeed(If("true", MULTIPLY, "bike_climb_factor(p_power, p_mass, p_base_speed, p_crr)"));
+                addToSpeed(If("true", MULTIPLY, "bike_climb_factor(p_power, p_mass, p_cda, p_crr)"));
     }
 
     @Test
@@ -429,47 +429,49 @@ class CustomWeightingTest {
         BaseGraph graph = new BaseGraph.Builder(em).create();
         EdgeIteratorState edge = graph.edge(0, 1).setDistance(1000).set(speedEnc, 18, 18).set(slopeEnc, 12);
 
-        CustomModel customModel = bikeClimbModel(speedEnc.getName(), 120, 95, 18);
+        CustomModel customModel = bikeClimbModel(speedEnc.getName(), 120, 95, 0.6);
         Weighting weighting = CustomModelParser.createWeighting(em, NO_TURN_COST_PROVIDER, customModel);
-        assertEquals(10 * 1000 / (18 * CustomWeightingHelper.bike_climb_factor(12, 120, 95, 18, 0.006) / 3.6),
+        assertEquals(10 * 1000 / (18 * new BikeClimbSpeedTable(120, 95, 0.6, 0.006).getClimbFactor(12, 18) / 3.6),
                 weighting.calcEdgeWeight(edge, false), 1);
-        // downhill the average_slope is negated and the factor increases the speed (45.1km/h at -12%)
-        assertEquals(10 * 1000 / (45.15 / 3.6), weighting.calcEdgeWeight(edge, true), 1);
+        assertEquals(10 * 1000 / (3.63 / 3.6), weighting.calcEdgeWeight(edge, false), 10);
+        // downhill the average_slope is negated and the factor increases the speed (51.3km/h at -12%,
+        // to be limited in the custom model)
+        assertEquals(10 * 1000 / (51.3 / 3.6), weighting.calcEdgeWeight(edge, true), 1);
 
         // the current speed is injected into bike_climb_factor: for a slower edge (rough surface)
-        // the climbing speed is reduced via a higher rolling resistance, i.e. it is 3.52km/h and not
-        // the proportional 10/18*3.66=2.03km/h
+        // the climbing speed is reduced via a higher rolling resistance, i.e. it is 3.37km/h and not
+        // the proportional 10/22.14*3.67=1.66km/h
         EdgeIteratorState slowEdge = graph.edge(2, 3).setDistance(1000).set(speedEnc, 10, 10).set(slopeEnc, 12);
-        assertEquals(10 * 1000 / (3.52 / 3.6), weighting.calcEdgeWeight(slowEdge, false), 30);
+        assertEquals(10 * 1000 / (3.37 / 3.6), weighting.calcEdgeWeight(slowEdge, false), 30);
 
         // the table is created from the parameter values in init, i.e. the same class works for
-        // other values (e.g. from a request): 200W, 90kg and the base speed 24 give 12.76km/h at 5%
+        // other values (e.g. from a request): 200W, 90kg and a drag area of 0.4 give 13.27km/h at 5%
         EdgeIteratorState racingEdge = graph.edge(4, 5).setDistance(1000).set(speedEnc, 24, 24).set(slopeEnc, 5);
-        CustomModel racingModel = bikeClimbModel(speedEnc.getName(), 200, 90, 24);
+        CustomModel racingModel = bikeClimbModel(speedEnc.getName(), 200, 90, 0.4);
         Weighting racingWeighting = CustomModelParser.createWeighting(em, NO_TURN_COST_PROVIDER, racingModel);
-        assertEquals(10 * 1000 / (new BikeClimbSpeedTable(200, 90, 24, 0.006).getSpeed(5) / 3.6), racingWeighting.calcEdgeWeight(racingEdge, false), 1);
-        assertEquals(10 * 1000 / (12.76 / 3.6), racingWeighting.calcEdgeWeight(racingEdge, false), 10);
+        assertEquals(10 * 1000 / (24 * new BikeClimbSpeedTable(200, 90, 0.4, 0.006).getClimbFactor(5, 24) / 3.6), racingWeighting.calcEdgeWeight(racingEdge, false), 1);
+        assertEquals(10 * 1000 / (13.27 / 3.6), racingWeighting.calcEdgeWeight(racingEdge, false), 10);
 
         // the arguments must be parameters
         CustomModel literalModel = new CustomModel().setDistanceInfluence(0d).addToSpeed(If("true", LIMIT, speedEnc.getName())).
-                addToSpeed(If("average_slope >= 0", MULTIPLY, "bike_climb_factor(120, 95, 18, 0.006)"));
+                addToSpeed(If("average_slope >= 0", MULTIPLY, "bike_climb_factor(120, 95, 0.6, 0.006)"));
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> CustomModelParser.createWeighting(em, NO_TURN_COST_PROVIDER, literalModel));
         assertTrue(ex.getMessage().contains("expects a parameter like p_power as argument 1"), ex.getMessage());
         CustomModel undefinedModel = new CustomModel().setDistanceInfluence(0d).setParameter("power", 120).addToSpeed(If("true", LIMIT, speedEnc.getName())).
-                addToSpeed(If("average_slope >= 0", MULTIPLY, "bike_climb_factor(p_power, p_mass, p_base_speed, p_crr)"));
+                addToSpeed(If("average_slope >= 0", MULTIPLY, "bike_climb_factor(p_power, p_mass, p_cda, p_crr)"));
         ex = assertThrows(IllegalArgumentException.class, () -> CustomModelParser.createWeighting(em, NO_TURN_COST_PROVIDER, undefinedModel));
         assertTrue(ex.getMessage().contains("p_mass as argument 2, but 'p_mass' is not available"), ex.getMessage());
 
         // the table field is created only for the speed statements
-        customModel.addToPriority(If("average_slope >= 0", MULTIPLY, "bike_climb_factor(p_power, p_mass, p_base_speed, p_crr)"));
+        customModel.addToPriority(If("average_slope >= 0", MULTIPLY, "bike_climb_factor(p_power, p_mass, p_cda, p_crr)"));
         ex = assertThrows(IllegalArgumentException.class, () -> CustomModelParser.createWeighting(em, NO_TURN_COST_PROVIDER, customModel));
         assertTrue(ex.getMessage().contains("bike_climb_factor is only supported for 'speed'"), ex.getMessage());
 
         // a single call per model: the table is created once per instance and a request cannot
         // repeat the call of the profile (which would apply the factor twice)
         CustomModel dupModel = bikeClimbModel(speedEnc.getName(), 120, 95, 18);
-        dupModel.addToSpeed(If("average_slope >= 10", MULTIPLY, "0.9 * bike_climb_factor(p_power, p_mass, p_base_speed, p_crr)"));
+        dupModel.addToSpeed(If("average_slope >= 10", MULTIPLY, "0.9 * bike_climb_factor(p_power, p_mass, p_cda, p_crr)"));
         ex = assertThrows(IllegalArgumentException.class, () -> CustomModelParser.createWeighting(em, NO_TURN_COST_PROVIDER, dupModel));
         assertTrue(ex.getMessage().contains("can be called only once"), ex.getMessage());
     }
@@ -481,7 +483,7 @@ class CustomWeightingTest {
         EncodingManager em = new EncodingManager.Builder().add(speedEnc).add(slopeEnc).build();
         // the default range [0, Infinity) is invalid for the physics (power > 0 and finite), so the
         // shipped models must specify finite ranges which are validated at their endpoints
-        CustomModel customModel = bikeClimbModel(speedEnc.getName(), 120, 95, 18);
+        CustomModel customModel = bikeClimbModel(speedEnc.getName(), 120, 95, 0.6);
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> CustomModelParser.checkParameterRanges(customModel, em));
         assertTrue(ex.getMessage().contains("parameter 'power' with value 0.0"), ex.getMessage());
         for (String model : List.of("bike_elevation.json", "racingbike_elevation.json"))
