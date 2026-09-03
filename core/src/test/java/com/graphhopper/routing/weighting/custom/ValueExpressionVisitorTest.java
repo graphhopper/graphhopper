@@ -44,6 +44,13 @@ class ValueExpressionVisitorTest {
         assertTrue(result.ok, result.invalidMessage);
         assertEquals("[my_speed]", result.guessedVariables.toString());
 
+        result = parse("Math.min(my_speed, 10)", (arg) -> arg.equals("my_speed"));
+        assertTrue(result.ok, result.invalidMessage);
+        assertEquals("[my_speed]", result.guessedVariables.toString());
+        result = parse("1 - 0.1 * Math.max(0.5, my_speed)", (arg) -> arg.equals("my_speed"));
+        assertTrue(result.ok, result.invalidMessage);
+        assertFalse(parse("Math.pow(my_speed, 2)", (arg) -> arg.equals("my_speed")).ok);
+
         result = parse("edge.getDistance()", (arg) -> false);
         assertFalse(result.ok);
 
@@ -119,6 +126,10 @@ class ValueExpressionVisitorTest {
         assertInterval(2, 2, "2", lookup);
 
         assertInterval(0, 62, "2*my_priority", lookup);
+        // Math.min and Math.max are monotone, so the bounds from the range endpoints are exact
+        assertInterval(0, 10, "Math.min(my_priority, 10)", lookup);
+        assertInterval(10, 31, "Math.max(10, my_priority)", lookup);
+        assertInterval(0.7, 1, "1 - 0.03 * Math.min(my_priority, 10)", lookup);
 
         assertInterval(-52, 10, "-2*my_priority2", lookup);
     }

@@ -687,7 +687,7 @@ Similarly, you can discourage border crossings by penalizing transitions between
 
 The value of `limit_to` or `multiply_by` is usually only a number but can be more complex expression like `max_speed`
 or even something like `max_speed + 0.5`. In general one encoded value is accepted in combination with one or more 
-operations with a number and the operator `+`, `*` and `-`.
+operations with a number and the operator `+`, `*` and `-`, and the methods `Math.sqrt`, `Math.min` and `Math.max`.
 
 This can be useful to reduce the speed of the base profile to a dynamic value. See e.g. the following example:
 

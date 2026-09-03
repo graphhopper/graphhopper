@@ -69,6 +69,19 @@ class CustomWeightingTest {
     }
 
     @Test
+    public void testMinMaxInValueExpression() {
+        DecimalEncodedValue myPriorityEnc = encodingManager.getDecimalEncodedValue("my_priority");
+        EdgeIteratorState edge = graph.edge(0, 1).setDistance(1000).set(avSpeedEnc, 50, 50).set(myPriorityEnc, 0.7);
+        Weighting weighting = createWeighting(createSpeedCustomModel(avSpeedEnc).setDistanceInfluence(0d).
+                addToPriority(If("true", MULTIPLY, "Math.min(my_priority, 0.5)")));
+        // the priority is limited to 0.5 -> the weight doubles compared to 72s
+        assertEquals(10 * 72 / 0.5, weighting.calcEdgeWeight(edge, false), 0.1);
+        weighting = createWeighting(createSpeedCustomModel(avSpeedEnc).setDistanceInfluence(0d).
+                addToPriority(If("true", MULTIPLY, "Math.max(0.8, 1 - my_priority)")));
+        assertEquals(10 * 72 / 0.8, weighting.calcEdgeWeight(edge, false), 0.1);
+    }
+
+    @Test
     public void speedOnly() {
         // 50km/h -> 72s per km, 100km/h -> 36s per km
         EdgeIteratorState edge = graph.edge(0, 1).setDistance(1000).set(avSpeedEnc, 50, 100);
