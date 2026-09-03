@@ -48,6 +48,43 @@ class OSMLevelParserTest {
         Assertions.assertEquals(2, levelEnc.getInt(true, edgeId, edgeIntAccess));
     }
 
+    @Test
+    void staircaseUp() {
+        ReaderWay readerWay = new ReaderWay(1);
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        int edgeId = 0;
+        readerWay.setTag("level", "0;1");
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        Assertions.assertEquals(0, levelEnc.getInt(false, edgeId, edgeIntAccess));
+        Assertions.assertEquals(1, levelEnc.getInt(true, edgeId, edgeIntAccess));
+    }
+
+    @Test
+    void staircaseDown() {
+        ReaderWay readerWay = new ReaderWay(1);
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        int edgeId = 0;
+        readerWay.setTag("level", "3;2");
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        Assertions.assertEquals(3, levelEnc.getInt(false, edgeId, edgeIntAccess));
+        Assertions.assertEquals(2, levelEnc.getInt(true, edgeId, edgeIntAccess));
+    }
+
+    @Test
+    void halfLevelsNotSupported() {
+        // Half levels aren't documented, but should be rounded down, 
+        // instead of default value of 0.
+        ReaderWay readerWay = new ReaderWay(1);
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        int edgeId = 0;
+        readerWay.setTag("level", "1.5");
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        Assertions.assertEquals(1, levelEnc.getInt(false, edgeId, edgeIntAccess));
+        Assertions.assertEquals(1, levelEnc.getInt(true, edgeId, edgeIntAccess));
+    }
+
+    
+
     // @Test
     // void notTagged() {
     //     ReaderWay readerWay = new ReaderWay(1);
