@@ -265,6 +265,15 @@ public interface EdgeIteratorState {
     Object getValue(String key);
 
     /**
+     * Returns the value for the given KVStorageEncodedValue using its pre-resolved key index for fast lookup.
+     * The default implementation falls back to string-based {@link #getValue(String)}.
+     */
+    default Object get(KVStorageEncodedValue property) {
+        // KVStorage is keyed by the raw OSM key, not by the EncodedValue name
+        return getValue(property.getRawTagName());
+    }
+
+    /**
      * Clones this EdgeIteratorState.
      *
      * @param reverse if true a detached edgeState with reversed properties is created where base

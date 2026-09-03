@@ -50,6 +50,7 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.routing.weighting.custom.NameValidator;
+import com.graphhopper.search.KVStorage;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -566,6 +567,10 @@ public class GraphHopper {
         osmReaderConfig.setPreferredLanguage(ghConfig.getString("datareader.preferred_language", osmReaderConfig.getPreferredLanguage()));
         osmReaderConfig.setMaxWayPointDistance(ghConfig.getDouble(Routing.INIT_WAY_POINT_MAX_DISTANCE, osmReaderConfig.getMaxWayPointDistance()));
         osmReaderConfig.setWorkerThreads(ghConfig.getInt("datareader.worker_threads", osmReaderConfig.getWorkerThreads()));
+        String storedTagsStr = ghConfig.getString("graph.stored_tags", "");
+        if (!storedTagsStr.isEmpty())
+            osmReaderConfig.setStoredTags(Arrays.stream(storedTagsStr.split(",")).map(String::trim)
+                    .filter(s -> !s.isEmpty()).collect(Collectors.toCollection(LinkedHashSet::new)));
 
         // index
         preciseIndexResolution = ghConfig.getInt("index.high_resolution", preciseIndexResolution);
@@ -614,6 +619,23 @@ public class GraphHopper {
 
         EncodingManager.Builder emBuilder = new EncodingManager.Builder();
         encodedValues.forEach(emBuilder::add);
+        // 'a:b' and 'a_b' both become 'kv_a_b', so reject such a clash with a clear message
+        Map<String, String> tagsByFieldName = new HashMap<>();
+        for (String tag : osmReaderConfig.getStoredTags()) {
+            if (KVStorageEncodedValue.isStoredAutomatically(tag))
+                throw new IllegalArgumentException("The tag '" + tag + "' is stored automatically, remove it from "
+                        + "stored_tags and use tag('" + tag + "') in your custom model");
+            KVStorageEncodedValue kvEnc = new KVStorageEncodedValue(tag);
+            String prevTag = tagsByFieldName.put(kvEnc.getName(), tag);
+            if (prevTag != null)
+                throw new IllegalArgumentException("The stored tags '" + prevTag + "' and '" + tag
+                        + "' cannot be used together as both are stored as '" + kvEnc.getName() + "'");
+            emBuilder.add(kvEnc);
+        }
+        // the OSMReader always stores e.g. name and ref, so tag('name') and tag('ref') work without stored_tags
+        for (String kvKey : KVStorageEncodedValue.ALIASES.values())
+            emBuilder.add(new KVStorageEncodedValue(kvKey));
+
         restrictionVehicleTypesByProfile.entrySet().stream()
                 .filter(e -> !e.getValue().isEmpty())
                 .forEach(e -> emBuilder.addTurnCostEncodedValue(TurnRestriction.create(e.getKey())));
@@ -1061,8 +1083,21 @@ public class GraphHopper {
     protected void createBaseGraphAndProperties() {
         baseGraph.create(100);
         properties.create(100);
+        initKVStorageEncodedValues(true);
         if (maxSpeedCalculator != null)
             maxSpeedCalculator.createDataAccessForParser(baseGraph.getDirectory());
+    }
+
+    /**
+     * Connects the KVStorageEncodedValues with the KVStorage of the graph: reserve the keys on create and resolve
+     * their index on load (-1 if never stored, then tag() returns '').
+     */
+    private void initKVStorageEncodedValues(boolean create) {
+        KVStorage kvStorage = baseGraph.getEdgeKVStorage();
+        for (EncodedValue ev : encodingManager.getEncodedValues())
+            if (ev instanceof KVStorageEncodedValue kvEnc)
+                kvEnc.setKeyIndex(create ? kvStorage.reserveKey(kvEnc.getRawTagName(), String.class)
+                        : kvStorage.getKeyIndex(kvEnc.getRawTagName()));
     }
 
     public static void sortGraphAlongHilbertCurve(BaseGraph graph) {
@@ -1238,6 +1273,7 @@ public class GraphHopper {
                     .build();
             checkProfilesConsistency();
             baseGraph.loadExisting();
+            initKVStorageEncodedValues(false);
             if (!skipProfileMatchCheck) {
                 String storedProfilesString = properties.get("profiles");
                 Map<String, Integer> storedProfileHashes = Arrays.stream(storedProfilesString.split(",")).map(s -> s.split("\\|", 2)).collect((Collectors.toMap(kv -> kv[0], kv -> Integer.parseInt(kv[1]))));

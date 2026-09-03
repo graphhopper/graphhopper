@@ -181,12 +181,7 @@ public class KVStorage {
         Integer keyIndex = keyToIndex.get(key);
         Class<?> clazz;
         if (keyIndex == null) {
-            keyIndex = keyToIndex.size();
-            if (keyIndex >= MAX_UNIQUE_KEYS)
-                throw new IllegalArgumentException("Cannot store more than " + MAX_UNIQUE_KEYS + " unique keys");
-            keyToIndex.put(key, keyIndex);
-            indexToKey.add(key);
-            indexToClass.add(clazz = value.getClass());
+            keyIndex = reserveKey(key, clazz = value.getClass());
         } else {
             clazz = indexToClass.get(keyIndex);
             if (clazz != value.getClass())
@@ -422,15 +417,31 @@ public class KVStorage {
         }
     }
 
+    /**
+     * Retrieve the value associated with the specified key at the specified position ('entryPointer')
+     */
     public Object get(final long entryPointer, String key, boolean reverse) {
         if (entryPointer < 0)
             throw new IllegalStateException("Pointer to access KVStorage cannot be negative:" + entryPointer);
-
         if (entryPointer == EMPTY_POINTER) return null;
-
         Integer keyIndex = keyToIndex.get(key);
         if (keyIndex == null) return null; // key wasn't stored before
+        return get(entryPointer, keyIndex, reverse);
+    }
 
+    /**
+     * Like {@link #get(long, String, boolean)} but uses a pre-resolved key index to avoid the HashMap lookup.
+     * To get the keyIndex use the {@link #reserveKey(String, Class)} method.
+     */
+    public Object get(final long entryPointer, int keyIndex, boolean reverse) {
+        if (entryPointer < 0)
+            throw new IllegalStateException("Pointer to access KVStorage cannot be negative:" + entryPointer);
+        if (entryPointer == EMPTY_POINTER) return null;
+        if (keyIndex < 0) return null;
+        return _unchecked_get(entryPointer, keyIndex, reverse);
+    }
+
+    private Object _unchecked_get(final long entryPointer, int keyIndex, boolean reverse) {
         int keyCount = vals.getByte(entryPointer) & 0xFF;
         if (keyCount == 0) return null; // no entries
 
@@ -455,6 +466,28 @@ public class KVStorage {
 
         // value for specified key does not exist for the specified pointer
         return null;
+    }
+
+    public int getKeyIndex(String key) {
+        return keyToIndex.getOrDefault(key, -1);
+    }
+
+    /**
+     * Pre-assigns a key index for the given key if not already present. Must be called after
+     * {@link #create(long)} or {@link #loadExisting()}, before {@link #add(Map)}.
+     *
+     * @return the internal integer value that can later be used to more quickly retrieve associated values. See {@link #get(long, int, boolean)}.
+     */
+    public int reserveKey(String key, Class<?> clazz) {
+        if (keyToIndex.containsKey(key))
+            throw new IllegalArgumentException("Cannot store existing: " + key);
+        int index = keyToIndex.size();
+        if (index >= MAX_UNIQUE_KEYS)
+            throw new IllegalArgumentException("Cannot store more than " + MAX_UNIQUE_KEYS + " unique keys");
+        keyToIndex.put(key, index);
+        indexToKey.add(key);
+        indexToClass.add(clazz);
+        return index;
     }
 
     public void flush() {

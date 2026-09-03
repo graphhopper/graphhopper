@@ -2830,4 +2830,33 @@ public class GraphHopperTest {
         assertEquals(0.0, (double) p.get(1).getValue(), 1.e-3);
     }
 
+    @Test
+    public void testStoredTagsValidation() {
+        GraphHopper hopper = new GraphHopper();
+        Map<String, PMap> noProps = Map.of();
+        Map<String, ImportUnit> noUnits = Map.of();
+        Map<String, List<String>> noRestrictions = Map.of();
+
+        // 'a:b' and 'a_b' are both stored as 'kv_a_b'
+        hopper.getReaderConfig().setStoredTags(new LinkedHashSet<>(Arrays.asList("a:b", "a_b")));
+        assertTrue(assertThrows(IllegalArgumentException.class,
+                () -> hopper.buildEncodingManager(noProps, noUnits, noRestrictions)).getMessage().contains("kv_a_b"));
+
+        // an upper case key would silently mangle into kv____ab
+        hopper.getReaderConfig().setStoredTags(new LinkedHashSet<>(List.of("XY:ab")));
+        assertTrue(assertThrows(IllegalArgumentException.class,
+                () -> hopper.buildEncodingManager(noProps, noUnits, noRestrictions)).getMessage().contains("XY:ab"));
+
+        // name and ref are stored anyway
+        hopper.getReaderConfig().setStoredTags(new LinkedHashSet<>(List.of("name")));
+        assertTrue(assertThrows(IllegalArgumentException.class,
+                () -> hopper.buildEncodingManager(noProps, noUnits, noRestrictions)).getMessage().contains("stored automatically"));
+
+        // the config is a comma separated list and the spaces must not end up in the key
+        GraphHopper configured = new GraphHopper();
+        configured.init(new GraphHopperConfig().putObject("graph.location", GH_LOCATION)
+                .putObject("import.osm.ignored_highways", "")
+                .putObject("graph.stored_tags", "cycleway, lit"));
+        assertEquals(new LinkedHashSet<>(Arrays.asList("cycleway", "lit")), configured.getReaderConfig().getStoredTags());
+    }
 }

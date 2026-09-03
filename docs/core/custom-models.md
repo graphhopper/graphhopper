@@ -126,6 +126,42 @@ Special expressions:
  - `prev_*`: this expression allows to access the previous edge; can only be used in statements of `turn_penalty`.
  - `country.isRightHandTraffic()`: returns true if right-hand traffic is the standard in the country of the current edge; `false` otherwise
  - `edge.getDistance()`: returns the distance of the current edge
+ - `is_forward`: true if the edge is traversed in the direction the OSM way was drawn. Use it to pick the
+   matching side of a directional tag like `cycleway:left` and `cycleway:right`.
+ - `tag('key')`: the raw value of an OSM tag, see the next section
+
+### Raw OSM tags
+
+Encoded values are normalized and checked, but adding a new one requires a source code change. For everything else
+there are raw OSM tags. List them under `graph.stored_tags` in the configuration and a new import is necessary:
+
+```yaml
+graph.stored_tags: cycleway, cycleway:left, lit, sidewalk
+```
+
+They are then available via `tag('key')` in a condition, and requestable as a path detail via the very same key,
+e.g. `details=cycleway`. If an encoded value with the same name exists it wins, so `details=surface` still returns
+the encoded value even when `surface` is a stored tag too.
+
+The `name`, `ref`, `destination` and `destination:ref` of a way are always stored, so `tag('name')` etc. work without
+configuring anything. `destination` and `destination:ref` are stored per direction, so `tag('destination')` returns the
+value for the direction of travel. The available tags are listed under `stored_tags` in the `/info` response.
+
+The value is always a string, so only the following is possible:
+
+```json
+{ "if": "tag('cycleway') == 'lane'", "multiply_by": "1.5" }
+{ "if": "tag('cycleway') != 'lane'", "multiply_by": "0.9" }
+{ "if": "tag('ref').contains('A 4')", "multiply_by": "0.1" }
+{ "if": "tag('ref').startsWith('A')", "multiply_by": "0.5" }
+```
+
+A missing tag is an **empty string**, not null, i.e. `tag('cycleway') == ''` is true if the tag is absent. Note that
+this also means a negated method call matches a missing tag, as `!tag('ref').contains('A 4')` is true when there is
+no `ref` at all.
+
+Compared to an encoded value a raw tag is slower to access, is not normalized or corrected, and is not directional:
+`cycleway:left` and `cycleway:right` are separate tags and you have to combine them with `is_forward` yourself.
 
 In the next section will see how we can use these encoded values to customize GraphHopper's route calculations.
 
