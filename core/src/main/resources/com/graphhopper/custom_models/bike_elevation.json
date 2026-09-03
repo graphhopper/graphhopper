@@ -4,7 +4,8 @@
 // would allow 22km/h. Where riding gets slower than walking the bike is pushed. On descents the speed increases
 // up to vehicle_max_speed, but stays unchanged on steep descents (braking). The slower speed already avoids climbs,
 // the priority penalty per slope percent (hill_penalty, 0 for none) adds to it, e.g. 0.03 avoids a 5% climb like
-// an edge that takes 18% longer.
+// an edge that takes 18% longer. Beyond 10% the penalty stays constant: the speed is already close to walking
+// speed there and short steep edges are often elevation noise.
 {
   "parameters": {
     "power":      { "value": 120,   "min": 40, "max": 1000 },
@@ -12,10 +13,10 @@
     "cda":        { "value": 0.6,   "min": 0.1, "max": 2 },
     "crr":        { "value": 0.01, "min": 0,  "max": 0.02 },
     "vehicle_max_speed": { "value": 45, "min": 5, "max": 80 },
-    "hill_penalty": { "value": 0.03, "min": 0, "max": 0.03 }
+    "hill_penalty": { "value": 0.03, "min": 0, "max": 0.09 }
   },
   "priority": [
-    { "if": "average_slope > 0", "multiply_by": "1 - p_hill_penalty * average_slope" }
+    { "if": "average_slope > 0", "multiply_by": "1 - p_hill_penalty * Math.min(average_slope, 10)" }
   ],
   "speed": [
     { "if": "average_slope > -15", "multiply_by": "bike_climb_factor(p_power, p_mass, p_cda, p_crr)" },
