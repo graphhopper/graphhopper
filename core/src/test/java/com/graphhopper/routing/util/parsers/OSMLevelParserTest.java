@@ -26,7 +26,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class OSMLevelParserTest {
-    private final IntEncodedValue levelEnc = Level.create();
+    private final DecimalEncodedValue levelEnc = Level.create();
     private OSMLevelParser parser;
     private IntsRef relFlags;
 
@@ -44,8 +44,7 @@ class OSMLevelParserTest {
         int edgeId = 0;
         readerWay.setTag("level", "2");
         parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
-        Assertions.assertEquals(2, levelEnc.getInt(false, edgeId, edgeIntAccess));
-        Assertions.assertEquals(2, levelEnc.getInt(true, edgeId, edgeIntAccess));
+        Assertions.assertEquals(2.0, levelEnc.getDecimal(false, edgeId, edgeIntAccess));
     }
 
     @Test
@@ -55,8 +54,7 @@ class OSMLevelParserTest {
         int edgeId = 0;
         readerWay.setTag("level", "0;1");
         parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
-        Assertions.assertEquals(0, levelEnc.getInt(false, edgeId, edgeIntAccess));
-        Assertions.assertEquals(1, levelEnc.getInt(true, edgeId, edgeIntAccess));
+        Assertions.assertEquals(0.5, levelEnc.getDecimal(false, edgeId, edgeIntAccess));
     }
 
     @Test
@@ -66,8 +64,7 @@ class OSMLevelParserTest {
         int edgeId = 0;
         readerWay.setTag("level", "3;2");
         parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
-        Assertions.assertEquals(3, levelEnc.getInt(false, edgeId, edgeIntAccess));
-        Assertions.assertEquals(2, levelEnc.getInt(true, edgeId, edgeIntAccess));
+        Assertions.assertEquals(2.5, levelEnc.getDecimal(false, edgeId, edgeIntAccess));
     }
 
     @Test
@@ -78,32 +75,18 @@ class OSMLevelParserTest {
         
         readerWay.setTag("level", "1.5");
         parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
-        Assertions.assertEquals(1, levelEnc.getInt(false, edgeId, edgeIntAccess));
-        Assertions.assertEquals(1, levelEnc.getInt(true, edgeId, edgeIntAccess));
+        Assertions.assertEquals(1.5, levelEnc.getDecimal(false, edgeId, edgeIntAccess));
         
         readerWay.setTag("level", "-1.5");
         parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
-        Assertions.assertEquals(-2, levelEnc.getInt(false, edgeId, edgeIntAccess));
-        Assertions.assertEquals(-2, levelEnc.getInt(true, edgeId, edgeIntAccess));
+        Assertions.assertEquals(-1.5, levelEnc.getDecimal(false, edgeId, edgeIntAccess));
 
         readerWay.setTag("level", "-100");
         parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
-        Assertions.assertEquals(-50, levelEnc.getInt(false, edgeId, edgeIntAccess));
+        Assertions.assertEquals(-40.0, levelEnc.getDecimal(false, edgeId, edgeIntAccess));
 
         readerWay.setTag("level", "300");
         parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
-        Assertions.assertEquals(205, levelEnc.getInt(false, edgeId, edgeIntAccess));
+        Assertions.assertEquals(164.7, levelEnc.getDecimal(false, edgeId, edgeIntAccess));
     }
-
-    
-
-    // @Test
-    // void notTagged() {
-    //     ReaderWay readerWay = new ReaderWay(1);
-    //     EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
-    //     int edgeId = 0;
-    //     parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
-    //     Assertions.assertEquals(1, lanesEnc.getInt(false, edgeId, edgeIntAccess));
-    // }
-
 }

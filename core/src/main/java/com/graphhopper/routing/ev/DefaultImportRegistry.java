@@ -212,7 +212,6 @@ public class DefaultImportRegistry implements ImportRegistry {
                             lookup.getEnumEncodedValue(HazmatWater.KEY, HazmatWater.class))
             );
         else if (Lanes.KEY.equals(name))
-        else if (Lanes.KEY.equals(name))
             return ImportUnit.create(name, props -> Lanes.create(),
                     (lookup, props) -> new OSMLanesParser(
                             lookup.getIntEncodedValue(Lanes.KEY))
@@ -220,7 +219,7 @@ public class DefaultImportRegistry implements ImportRegistry {
         else if (Level.KEY.equals(name))
             return ImportUnit.create(name, props -> Level.create(),
                     (lookup, props) -> new OSMLevelParser(
-                            lookup.getIntEncodedValue(Level.KEY))
+                            lookup.getDecimalEncodedValue(Level.KEY))
             );
         else if (Footway.KEY.equals(name))
             return ImportUnit.create(name, props -> Footway.create(),

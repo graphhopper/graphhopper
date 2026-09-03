@@ -20,68 +20,44 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.EdgeIntAccess;
-import com.graphhopper.routing.ev.IntEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.storage.IntsRef;
 
 /**
  * https://wiki.openstreetmap.org/wiki/Key:level
  */
 public class OSMLevelParser implements TagParser {
-    private final IntEncodedValue levelEnc;
+    private final DecimalEncodedValue levelEnc;
 
-    public OSMLevelParser(IntEncodedValue levelEnc) {
+    public OSMLevelParser(DecimalEncodedValue levelEnc) {
         this.levelEnc = levelEnc;
-    }
-
-    private int cleanAndClampLevel(String levelStr) {
-        int level;
-        try {
-            level = Integer.parseInt(levelStr);
-        } catch (NumberFormatException ex) {
-            level = (int) Math.floor(Float.parseFloat(levelStr));
-        }
-
-        int minLevel = -50;
-        int maxLevel = 256 + minLevel - 1;
-
-        if (level < minLevel)
-            return minLevel;
-        else if (level > maxLevel)
-            return maxLevel;
-        else
-            return level;
     }
 
     @Override
     public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
-        int forward = 0;
-        int backward = 0;
+        float level = 0;
 
         if (way.hasTag("level")) {
             String levels = way.getTag("level");
-            String[] levelsTok = levels.split(";");
+            String[] levelsTok = levels.split(";|-");
 
             // TODO
             if (levelsTok.length == 1) {
                 try {
-                    int levelInt = cleanAndClampLevel(levelsTok[0]);
-                    forward = levelInt;
-                    backward = levelInt;
+                    level = Float.parseFloat(levelsTok[0]);
                 } catch (NumberFormatException ex) {
                     // ignore if no number
                 }
             } else if (levelsTok.length == 2) {
                 try {
-                    int first = cleanAndClampLevel(levelsTok[0]);
-                    int second = cleanAndClampLevel(levelsTok[1]);
-                    forward = first;
-                    backward = second;
+                    float first = Float.parseFloat(levelsTok[0]);
+                    float second = Float.parseFloat(levelsTok[1]);
+                    level = (first + second)/2;
                 } catch (NumberFormatException ex) {
                     // ignore if no number
                 }
             }
         }
-        levelEnc.setInt(false, edgeId, edgeIntAccess, forward);
-        levelEnc.setInt(true, edgeId, edgeIntAccess, backward);
+        levelEnc.setDecimal(false, edgeId, edgeIntAccess, level);
     }
 }

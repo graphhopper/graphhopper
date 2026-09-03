@@ -21,15 +21,13 @@ package com.graphhopper.routing.ev;
 public class Level {
     public static final String KEY = "level";
 
-    public static IntEncodedValue create() {
-        // 8 bits stores 256 values. Burj Khalifa containes 163 stories.
-        // -50 allows for plenty of space in negative values.
+    public static DecimalEncodedValue create() {
+        // factor: 0.1 in order to get half levels for stairs.
+        // bits: 11 bits stores 2048 values, so 204.7 total levels.
+        // minStorableValue: -400 * 0.1 = -40 (minLevel) and 204.7 - 40 = 164.7 (maxLevel)
+        // For reference Burj Khalifa has 163 floors
         // negateReverseDirection is false, levels keep their sign
-        // storeTwoDirections contains the level of the starting point of the way.
-        // Examples :
-        // 1. a way going from level 0 to level 1, will contain 0 in the 
-        // forward direction and 1 in the backward direction
-        // 2. a way that stays on the same level 0, contains 0 in both directions.
-        return new IntEncodedValueImpl(KEY, 8, -50, false, true);
+        // storeTwoDirections: false, only one level per way.
+        return new DecimalEncodedValueImpl(KEY, 11, -40, 0.1, false, false, false);
     }
 }
