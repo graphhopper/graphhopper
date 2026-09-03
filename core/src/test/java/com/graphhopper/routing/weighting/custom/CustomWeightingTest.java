@@ -418,7 +418,7 @@ class CustomWeightingTest {
         return new CustomModel().setDistanceInfluence(0d).
                 setParameter("power", power).setParameter("mass", mass).setParameter("base_speed", baseSpeed).setParameter("crr", 0.006).
                 addToSpeed(If("true", LIMIT, speedEncName)).
-                addToSpeed(If("average_slope >= 0", MULTIPLY, "bike_climb_factor(p_power, p_mass, p_base_speed, p_crr)"));
+                addToSpeed(If("true", MULTIPLY, "bike_climb_factor(p_power, p_mass, p_base_speed, p_crr)"));
     }
 
     @Test
@@ -433,8 +433,8 @@ class CustomWeightingTest {
         Weighting weighting = CustomModelParser.createWeighting(em, NO_TURN_COST_PROVIDER, customModel);
         assertEquals(10 * 1000 / (18 * CustomWeightingHelper.bike_climb_factor(12, 120, 95, 18, 0.006) / 3.6),
                 weighting.calcEdgeWeight(edge, false), 1);
-        // downhill the average_slope is negated and the factor does not apply
-        assertEquals(10 * 1000 / (18 / 3.6), weighting.calcEdgeWeight(edge, true), 1);
+        // downhill the average_slope is negated and the factor increases the speed (45.1km/h at -12%)
+        assertEquals(10 * 1000 / (45.15 / 3.6), weighting.calcEdgeWeight(edge, true), 1);
 
         // the current speed is injected into bike_climb_factor: for a slower edge (rough surface)
         // the climbing speed is reduced via a higher rolling resistance, i.e. it is 3.52km/h and not

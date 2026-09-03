@@ -6,13 +6,11 @@
     "power":      { "value": 200,   "min": 50, "max": 1000 },
     "mass":       { "value": 90,    "min": 30, "max": 300 },
     "base_speed": { "value": 24,    "min": 5,  "max": 60 },
-    "crr":        { "value": 0.006, "min": 0,  "max": 0.02 }
+    "crr":        { "value": 0.006, "min": 0,  "max": 0.02 },
+    "vehicle_max_speed": { "value": 50, "min": 5, "max": 80 }
   },
   "speed": [
-    { "if":      "average_slope  >   0", "multiply_by": "bike_climb_factor(p_power, p_mass, p_base_speed, p_crr)" },
-    { "else_if": "average_slope <= -15", "multiply_by": "1.10" },
-    { "else_if": "average_slope <=  -9", "multiply_by": "1.60" },
-    { "else_if": "average_slope <=  -6", "multiply_by": "1.40" },
-    { "else_if": "average_slope <=  -3", "multiply_by": "1.20" }
+    { "if": "average_slope > -15", "multiply_by": "bike_climb_factor(p_power, p_mass, p_base_speed, p_crr)" },
+    { "if": "true", "limit_to": "p_vehicle_max_speed" }
   ]
 }

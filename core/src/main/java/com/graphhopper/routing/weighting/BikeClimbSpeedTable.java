@@ -10,9 +10,11 @@ public class BikeClimbSpeedTable {
     static final double MAX_CRR_FACTOR = 3;
 
     private final double[] tab;   // values in km/h
-    // the table covers the slopes up to this value (in percent), beyond the last entry is used. The maximum
-    // of average_slope is 31.5 plus the slope offset of at most 100 * crr * (MAX_CRR_FACTOR - 1), see getSlopeOffset
+    // the table covers the slopes from -MAX_SLOPE to MAX_SLOPE (in percent), beyond the first or last entry is
+    // used. The maximum of average_slope is 31.5 plus the slope offset of at most 100 * crr * (MAX_CRR_FACTOR - 1),
+    // see getSlopeOffset
     private static final double MAX_SLOPE = 40;
+    private static final int OFFSET = (int) (MAX_SLOPE * INV_STEP); // index of slope 0
     private final double baseSpeed, crr;
 
     /**
@@ -52,17 +54,20 @@ public class BikeClimbSpeedTable {
         double blendStartSlope = blendStartIdx * STEP;
         double blendEndSlope = blendEndIdx * STEP;
 
-        this.tab = new double[(int) (MAX_SLOPE * INV_STEP) + 1];
-        for (int i = 0; i < tab.length; i++) {
+        this.tab = new double[2 * OFFSET + 1];
+        // descents: the power model ignores braking, so limit the resulting speed in the custom model
+        for (int i = 0; i < OFFSET; i++)
+            tab[i] = cyclingSpeedKmh((i - OFFSET) * STEP, power, v0, rollingForce, aero, m_g_100);
+        for (int i = 0; i <= OFFSET; i++) {
             double slope = i * STEP;
             if (i <= blendStartIdx) {
-                tab[i] = cyclingSpeedKmh(slope, power, v0, rollingForce, aero, m_g_100);
+                tab[OFFSET + i] = cyclingSpeedKmh(slope, power, v0, rollingForce, aero, m_g_100);
             } else if (i < blendEndIdx) {
                 double walkInfluence = (slope - blendStartSlope) / (blendEndSlope - blendStartSlope);
-                tab[i] = (1 - walkInfluence) * cyclingSpeedKmh(slope, power, v0, rollingForce, aero, m_g_100)
+                tab[OFFSET + i] = (1 - walkInfluence) * cyclingSpeedKmh(slope, power, v0, rollingForce, aero, m_g_100)
                         + walkInfluence * walkingSpeedKmh(slope);
             } else {
-                tab[i] = walkingSpeedKmh(slope);
+                tab[OFFSET + i] = walkingSpeedKmh(slope);
             }
         }
     }
@@ -80,9 +85,10 @@ public class BikeClimbSpeedTable {
      * Calculates the speed of a cyclist on a given gradient, from the power balance
      * {@code power = c * v + aero * v^3}. Solved exactly via Newton iteration; the
      * start value lies on the safe side of this convex function, so convergence
-     * is monotone and guaranteed, and 8 iterations converge to machine precision
+     * is monotone and guaranteed, and 8 iterations converge to machine precision.
+     * For descents (c < 0) the start value is beyond the root where the function increases.
      *
-     * @param slope        gradient in percent, e.g. {@code 5} = 5 %; must be >= 0
+     * @param slope        gradient in percent, e.g. {@code 5} = 5 %, negative for descents
      * @param power        rider's power in watts; assumed to be the same power at
      *                     which {@code v0} is ridden on flat ground
      * @param v0           speed on flat ground in m/s (= baseSpeedKmh / 3.6);
@@ -96,21 +102,25 @@ public class BikeClimbSpeedTable {
      */
     private static double cyclingSpeedKmh(double slope, double power, double v0,
                                           double rollingForce, double aero, double m_g_100) {
-        double c = rollingForce + m_g_100 * slope;   // total resisting force per m/s [N]
-        double v = Math.min(v0, power / c);          // seed: flat speed or drag-free climb speed
+        double c = rollingForce + m_g_100 * slope;   // total resisting force per m/s [N], negative for descents
+        // seed: flat speed or drag-free climb speed, for descents the coasting speed plus the drag-only speed
+        double v = c > 0 ? Math.min(v0, power / c) : Math.sqrt(-c / aero) + Math.cbrt(power / aero);
         for (int k = 0; k < 8; k++)
             v -= (aero * v * v * v + c * v - power) / (3 * aero * v * v + c);
         return v * 3.6;
     }
 
     /**
-     * @return the factor for 'multiply_by' to reduce the current speed to the climb speed for the
-     * specified slope. The resulting speed is the minimum of the current speed (e.g. limited by the
-     * surface) and the power-limited climb speed, i.e. the factor is never above 1. A current speed
-     * below the base speed additionally increases the rolling resistance, see getSlopeOffset.
+     * @return the factor for 'multiply_by' to change the current speed to the climb or descent speed for
+     * the specified slope. For a climb the resulting speed is the minimum of the current speed (e.g.
+     * limited by the surface) and the power-limited climb speed, i.e. the factor is never above 1. A
+     * current speed below the base speed additionally increases the rolling resistance, see getSlopeOffset.
+     * For a descent the factor is the speed gain relative to the base speed, i.e. a surface-limited
+     * current speed increases proportionally.
      */
     public double getClimbFactor(double slope, double currentSpeed) {
-        if (slope < 0 || currentSpeed <= 0) return 1;
+        if (currentSpeed <= 0) return 1;
+        if (slope < 0) return getSpeed(slope) / baseSpeed;
         return Math.min(1, getSpeed(slope + getSlopeOffset(currentSpeed)) / currentSpeed);
     }
 
@@ -127,11 +137,9 @@ public class BikeClimbSpeedTable {
     }
 
     public double getSpeed(double slope) {
-        if (slope < 0)
-            throw new IllegalArgumentException("negative slope: " + slope);
-        if (slope >= MAX_SLOPE) //
-            return tab[tab.length - 1];
-        double t = slope * INV_STEP;
+        if (slope <= -MAX_SLOPE) return tab[0];
+        if (slope >= MAX_SLOPE) return tab[tab.length - 1];
+        double t = (slope + MAX_SLOPE) * INV_STEP;
         int idx = (int) t;
         return tab[idx] + (t - idx) * (tab[idx + 1] - tab[idx]); // interpolate
     }

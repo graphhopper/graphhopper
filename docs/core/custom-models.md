@@ -732,25 +732,31 @@ Besides `Math.sqrt` a value expression can call the built-in function
 cyclist producing `power` watts with a total `mass` (rider plus bike) in kg, a flat speed `base_speed` in km/h
 and the rolling resistance coefficient `crr`. All four arguments must be [parameters](#parameters), so that
 a request can override e.g. the power within the range of the server-side custom model. The slope is
-implicitly the `average_slope` encoded value; for downhill slopes the factor is 1. The climbing speed
-follows from the power balance of gravity, rolling resistance and aerodynamic drag - the latter calibrated
-from the base speed - and where riding gets slower than walking, the speed of pushing the bike is used
-instead. As the factor is relative to the speed of the preceding statements, the resulting speed is
-roughly the minimum of the surface-limited speed and the climbing speed, i.e. a surface penalty of the
-base profile is not double-counted against gravity on a climb. Example:
+implicitly the `average_slope` encoded value. The climbing speed follows from the power balance of gravity,
+rolling resistance and aerodynamic drag - the latter calibrated from the base speed - and where riding gets
+slower than walking, the speed of pushing the bike is used instead. As the factor is relative to the speed
+of the preceding statements, the resulting speed is roughly the minimum of the surface-limited speed and
+the climbing speed, i.e. a surface penalty of the base profile is not double-counted against gravity on a
+climb. For downhill slopes the same power balance results in a factor above 1 (the speed gain relative to
+the base speed), which is applied to the surface-limited speed. As braking is not modelled, the resulting
+speed should be limited. Example:
 
 ```json
 {
   "parameters": {
     "power": { "value": 120, "min": 50, "max": 1000 }, "mass": { "value": 95, "min": 30, "max": 300 },
-    "base_speed": { "value": 18, "min": 5, "max": 60 }, "crr": { "value": 0.006, "min": 0, "max": 0.02 }
+    "base_speed": { "value": 18, "min": 5, "max": 60 }, "crr": { "value": 0.006, "min": 0, "max": 0.02 },
+    "vehicle_max_speed": { "value": 35, "min": 5, "max": 80 }
   },
   "speed": [
-    { "if": "average_slope > 0", "multiply_by": "bike_climb_factor(p_power, p_mass, p_base_speed, p_crr)" }
+    { "if": "average_slope > -15", "multiply_by": "bike_climb_factor(p_power, p_mass, p_base_speed, p_crr)" },
+    { "if": "true", "limit_to": "p_vehicle_max_speed" }
   ]
 }
 ```
 
+Here the condition excludes steep descents where the cyclist brakes, so their speed stays unchanged, and
+a request can lower `vehicle_max_speed` for a more cautious rider.
 The call must be in the `speed` section, optionally scaled by a number like
 `"0.9 * bike_climb_factor(p_power, p_mass, p_base_speed, p_crr)"`, and only once per custom model, i.e. a request
 custom model cannot repeat it.

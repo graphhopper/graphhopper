@@ -69,9 +69,10 @@ class CustomWeightingHelperTest {
         assertEquals(2.38, 18 * CustomWeightingHelper.bike_climb_factor(15, 120, 95, 18, 0.006), 0.01);
         assertEquals(1.36, 18 * CustomWeightingHelper.bike_climb_factor(31, 120, 95, 18, 0.006), 0.01);
         assertEquals(2.0, 18 * CustomWeightingHelper.bike_climb_factor(20, 80, 95, 18, 0.006), 0.01);
-        // capped at 1 for downhill slopes
         assertEquals(1, CustomWeightingHelper.bike_climb_factor(0, 120, 95, 18, 0.006));
-        assertEquals(1, CustomWeightingHelper.bike_climb_factor(-10, 120, 95, 18, 0.006));
+        // faster for downhill slopes
+        assertEquals(28.7, 18 * CustomWeightingHelper.bike_climb_factor(-4, 120, 95, 18, 0.006), 0.1);
+        assertEquals(41.5, 18 * CustomWeightingHelper.bike_climb_factor(-10, 120, 95, 18, 0.006), 0.1);
 
         assertThrows(IllegalArgumentException.class, () -> CustomWeightingHelper.bike_climb_factor(12, 0, 95, 18, 0.006));
         assertThrows(IllegalArgumentException.class, () -> CustomWeightingHelper.bike_climb_factor(12, 120, 0, 18, 0.006));

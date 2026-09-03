@@ -254,7 +254,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
             throw new IllegalArgumentException("Currently only a single EncodedValue is allowed on the right-hand side, but was " + encodedValues.size() + ". Value expression: " + valueExpression);
 
         // the limits of a single parameter are checked at its range endpoints, see CustomModelParser.checkParameterRanges.
-        // bike_climb_factor is exempt as its result is within [0, 1] for all (valid) parameter values
+        // bike_climb_factor is exempt as its result is non-negative and finite for all (valid) parameter values
         Set<String> usedParameters = new LinkedHashSet<>(result.guessedVariables);
         usedParameters.removeAll(encodedValues);
         if (result.bikeClimbArgs == null && usedParameters.size() > 1)

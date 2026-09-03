@@ -161,8 +161,10 @@ class ValueExpressionVisitorTest {
         // the function is monotone decreasing in slope so the bounds are taken from the interval
         // limits of average_slope (-31.5 .. 31.5)
         double minFactor = CustomWeightingHelper.bike_climb_factor(31.5, 120, 95, 18, 0.006);
-        assertInterval(minFactor, 1.0, ValueExpressionVisitor.findMinMax(BIKE_CALL, BIKE_PARAMS, lookup));
-        assertInterval(0.9 * minFactor, 0.9, ValueExpressionVisitor.findMinMax("0.9 * " + BIKE_CALL, BIKE_PARAMS, lookup));
+        double maxFactor = CustomWeightingHelper.bike_climb_factor(-31.5, 120, 95, 18, 0.006);
+        assertEquals(4.0, maxFactor, 0.01);
+        assertInterval(minFactor, maxFactor, ValueExpressionVisitor.findMinMax(BIKE_CALL, BIKE_PARAMS, lookup));
+        assertInterval(0.9 * minFactor, 0.9 * maxFactor, ValueExpressionVisitor.findMinMax("0.9 * " + BIKE_CALL, BIKE_PARAMS, lookup));
 
         // average_slope and the parameters are variables so that the generated class provides them
         assertEquals(Set.of("average_slope", "p_power", "p_mass", "p_base_speed", "p_crr"),

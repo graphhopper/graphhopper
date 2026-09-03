@@ -21,7 +21,12 @@ public class BikeClimbSpeedTableTest {
         assertEquals(1.34, table.getSpeed(31.5), 0.01);
         // beyond the table the last value is used
         assertEquals(table.getSpeed(40), table.getSpeed(50), 0.001);
-        assertThrows(IllegalArgumentException.class, () -> table.getSpeed(-1));
+        // descents: the same power balance without braking, i.e. limit the speed in the custom model
+        assertEquals(23.5, table.getSpeed(-2), 0.1);
+        assertEquals(28.7, table.getSpeed(-4), 0.1);
+        assertEquals(33.4, table.getSpeed(-6), 0.1);
+        assertEquals(39.6, table.getSpeed(-9), 0.1);
+        assertEquals(table.getSpeed(-40), table.getSpeed(-50), 0.001);
         assertThrows(IllegalArgumentException.class, () -> new BikeClimbSpeedTable(120, 95, 3, 0.006));
     }
 
@@ -44,6 +49,8 @@ public class BikeClimbSpeedTableTest {
         assertEquals(3.66, 18 * table.getClimbFactor(12, 18), 0.01);
         // the factor never increases the speed above the current speed
         assertEquals(1, table.getClimbFactor(12, 3));
-        assertEquals(1, table.getClimbFactor(-5, 18));
+        // on a descent the gain relative to the base speed is applied to the current speed
+        assertEquals(31.1, 18 * table.getClimbFactor(-5, 18), 0.1);
+        assertEquals(15.5, 9 * table.getClimbFactor(-5, 9), 0.1);
     }
 }
