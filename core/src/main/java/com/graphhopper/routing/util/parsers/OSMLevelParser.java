@@ -35,29 +35,30 @@ public class OSMLevelParser implements TagParser {
 
     @Override
     public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
-        float level = 0;
+        double level = 0;
 
         if (way.hasTag("level")) {
             String levels = way.getTag("level");
-            String[] levelsTok = levels.split(";|-");
+            
+            String[] levelsTok = levels.split(";|(?<=\\d)\\s*-\\s*(?=-?\\d)");
 
-            // TODO
             if (levelsTok.length == 1) {
                 try {
-                    level = Float.parseFloat(levelsTok[0]);
+                    level = Double.parseDouble(levelsTok[0]);
                 } catch (NumberFormatException ex) {
                     // ignore if no number
                 }
             } else if (levelsTok.length == 2) {
                 try {
-                    float first = Float.parseFloat(levelsTok[0]);
-                    float second = Float.parseFloat(levelsTok[1]);
+                    double first = Double.parseDouble(levelsTok[0]);
+                    double second = Double.parseDouble(levelsTok[1]);
                     level = (first + second)/2;
                 } catch (NumberFormatException ex) {
                     // ignore if no number
                 }
             }
         }
+        level = Math.max(levelEnc.getMinStorableDecimal(), Math.min(levelEnc.getMaxStorableDecimal(), level));
         levelEnc.setDecimal(false, edgeId, edgeIntAccess, level);
     }
 }

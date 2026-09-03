@@ -108,5 +108,6 @@ class OSMLevelParserTest {
         
         readerWay.setTag("level", "300");
         parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
-        Assertions.assertEquals(164.7, levelEnc.getDecimal(false, edgeId, edgeIntAccess));
+        Assertions.assertEquals(164.7, levelEnc.getDecimal(false, edgeId, edgeIntAccess), 1e-10);
     }
+}
