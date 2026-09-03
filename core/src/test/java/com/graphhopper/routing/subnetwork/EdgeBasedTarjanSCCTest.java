@@ -32,6 +32,8 @@ import com.graphhopper.util.RandomGraph;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
+
 import java.util.Set;
 
 import static com.graphhopper.routing.subnetwork.TarjanSCCTest.buildComponentSet;
@@ -235,6 +237,36 @@ class EdgeBasedTarjanSCCTest {
         assertEquals(10, result.getSingleEdgeComponents().cardinality());
         for (IntCursor c : IntArrayList.from(0, 1, 2, 3, 4, 5, 6, 7, 8, 9)) {
             assertTrue(result.getSingleEdgeComponents().get(c.value));
+        }
+    }
+
+    @Test
+    public void reverseEdgeKeyStartsAtBaseNode() {
+        // 0 --> 1   3 --> 4
+        // |     |   |     |
+        // -< 2 <-   -< 5 <-
+        g.edge(0, 1).setDistance(1).set(speedEnc, 10, 0); // edge-keys 0 (0->1), 1 (1->0)
+        g.edge(1, 2).setDistance(1).set(speedEnc, 10, 0); // edge-keys 2 (1->2), 3 (2->1)
+        g.edge(2, 0).setDistance(1).set(speedEnc, 10, 0); // edge-keys 4 (2->0), 5 (0->2)
+        // the same circle, but in reverse storage order
+        g.edge(4, 3).setDistance(1).set(speedEnc, 0, 10); // edge-keys 6 (4->3), 7 (3->4)
+        g.edge(5, 4).setDistance(1).set(speedEnc, 0, 10); // edge-keys 8 (5->4), 9 (4->5)
+        g.edge(3, 5).setDistance(1).set(speedEnc, 0, 10); // edge-keys 10 (3->5), 11 (5->3)
+        // we deny u-turns so it's crucial to start the search correctly in both directions
+        EdgeBasedTarjanSCC.EdgeTransitionFilter noUTurnFilter = (prev, edge) -> fwdAccessFilter.accept(prev, edge) && prev != edge.getEdge();
+        for (ConnectedComponents result : Arrays.asList(
+                EdgeBasedTarjanSCC.findComponentsRecursive(g, noUTurnFilter, false),
+                EdgeBasedTarjanSCC.findComponents(g, noUTurnFilter, false),
+                EdgeBasedTarjanSCC.findComponentsForStartEdges(g, noUTurnFilter, IntArrayList.from(0, 1, 2, 3, 4, 5)))) {
+            assertEquals(2, result.getComponents().size());
+
+            IntArrayList fwdCircle = result.getComponents().get(0);
+            Arrays.sort(fwdCircle.buffer, 0, fwdCircle.size());
+            assertEquals(IntArrayList.from(0, 2, 4), fwdCircle);
+
+            IntArrayList bwdCircle = result.getComponents().get(1);
+            Arrays.sort(bwdCircle.buffer, 0, bwdCircle.size());
+            assertEquals(IntArrayList.from(7, 9, 11), bwdCircle);
         }
     }
 
