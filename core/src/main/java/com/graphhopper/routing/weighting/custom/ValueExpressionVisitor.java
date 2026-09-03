@@ -42,7 +42,8 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
 
     private static final String INFINITY = Double.toString(Double.POSITIVE_INFINITY);
     private static final Set<String> allowedMethodParents = Set.of("Math");
-    private static final Set<String> allowedMethods = Set.of("sqrt");
+    // functions must be monotone in every argument (see findMinMax)
+    private static final Set<String> allowedMethods = Set.of("sqrt", "min", "max");
     // the built-in function, also a static method in CustomWeightingHelper for the ExpressionEvaluator
     static final String BIKE_CLIMB_FACTOR = "bike_climb_factor";
     // the meaning of the arguments of bike_climb_factor (only used for error messages)
@@ -129,6 +130,9 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
                             } else if (mi.arguments.length == 1) {
                                 // return "x" but verify before
                                 return mi.arguments[0].accept(this);
+                            } else if (mi.arguments.length == 2) {
+                                // Math.min(x, 10) or Math.max(0.5, x)
+                                return mi.arguments[0].accept(this) && mi.arguments[1].accept(this);
                             }
                         }
                         // TODO unlike in ConditionalExpressionVisitor we don't support a call like road_class.ordinal()
