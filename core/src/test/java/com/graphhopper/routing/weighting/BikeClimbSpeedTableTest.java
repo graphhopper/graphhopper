@@ -33,24 +33,19 @@ public class BikeClimbSpeedTableTest {
     }
 
     @Test
-    public void testSlopeOffset() {
+    public void testClimbFactor() {
         BikeClimbSpeedTable table = new BikeClimbSpeedTable(120, 95, 0.6, 0.006);
-        // no offset for the flat speed (22.14) and above
-        assertEquals(0, table.getSlopeOffset(table.getFlatSpeed()), 0.01);
-        assertEquals(0, table.getSlopeOffset(25), 0.01);
-        // a reduced speed is interpreted as a rolling resistance crr * flat/current, i.e. as slope offset 100 * crr * (flat/current - 1) ...
-        assertEquals(0.18, table.getSlopeOffset(17), 0.01);
-        assertEquals(0.32, table.getSlopeOffset(14.4), 0.01);
-        assertEquals(0.88, table.getSlopeOffset(9), 0.01);
-        // ... but the rolling resistance is at most 3 * crr
-        assertEquals(1.2, table.getSlopeOffset(6), 0.01);
-        assertEquals(1.2, table.getSlopeOffset(4), 0.01);
-
-        // the factor is relative to the current speed: 12% on a 9km/h track is 3.27km/h instead of 3.67km/h
-        assertEquals(3.27, 9 * table.getClimbFactor(12, 9), 0.01);
+        // a current speed at or above the flat speed (22.14) results in the climb speed of the table
+        assertEquals(3.67, 25 * table.getClimbFactor(12, 25), 0.01);
+        // a reduced speed is interpreted as a rolling resistance crr * flat/current, i.e. as slope offset
+        // 100 * crr * (flat/current - 1) = 0.88 for 9km/h: 12% on a 9km/h track is 3.32km/h instead of 3.67km/h
+        assertEquals(3.32, 9 * table.getClimbFactor(12, 9), 0.01);
+        assertEquals(table.getSpeed(12.88), 9 * table.getClimbFactor(12, 9), 0.01);
         assertEquals(3.63, 18 * table.getClimbFactor(12, 18), 0.01);
         // the factor never increases the speed above the current speed
-        assertEquals(1, table.getClimbFactor(12, 3));
+        assertEquals(1, table.getClimbFactor(2, 3));
+        // but even pushing the bike (3km/h) gets slower on a 12% climb
+        assertEquals(2.32, 3 * table.getClimbFactor(12, 3), 0.01);
         // on a descent the gain relative to the flat speed is applied to the current speed
         assertEquals(34.5, 18 * table.getClimbFactor(-5, 18), 0.1);
         assertEquals(17.3, 9 * table.getClimbFactor(-5, 9), 0.1);

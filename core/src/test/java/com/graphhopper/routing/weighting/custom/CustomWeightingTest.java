@@ -452,10 +452,10 @@ class CustomWeightingTest {
         assertEquals(10 * 1000 / (51.3 / 3.6), weighting.calcEdgeWeight(edge, true), 1);
 
         // the current speed is injected into bike_climb_factor: for a slower edge (rough surface)
-        // the climbing speed is reduced via a higher rolling resistance, i.e. it is 3.37km/h and not
+        // the climbing speed is reduced via a higher rolling resistance, i.e. it is 3.41km/h and not
         // the proportional 10/22.14*3.67=1.66km/h
         EdgeIteratorState slowEdge = graph.edge(2, 3).setDistance(1000).set(speedEnc, 10, 10).set(slopeEnc, 12);
-        assertEquals(10 * 1000 / (3.37 / 3.6), weighting.calcEdgeWeight(slowEdge, false), 30);
+        assertEquals(10 * 1000 / (3.41 / 3.6), weighting.calcEdgeWeight(slowEdge, false), 30);
 
         // the table is created from the parameter values in init, i.e. the same class works for
         // other values (e.g. from a request): 200W, 90kg and a drag area of 0.4 give 13.27km/h at 5%
@@ -484,7 +484,7 @@ class CustomWeightingTest {
         // a single call per model: the table is created once per instance and a request cannot
         // repeat the call of the profile (which would apply the factor twice)
         CustomModel dupModel = bikeClimbModel(speedEnc.getName(), 120, 95, 18);
-        dupModel.addToSpeed(If("average_slope >= 10", MULTIPLY, "0.9 * bike_climb_factor(p_power, p_mass, p_cda, p_crr)"));
+        dupModel.addToSpeed(If("average_slope >= 10", MULTIPLY, "bike_climb_factor(p_power, p_mass, p_cda, p_crr)"));
         ex = assertThrows(IllegalArgumentException.class, () -> CustomModelParser.createWeighting(em, NO_TURN_COST_PROVIDER, dupModel));
         assertTrue(ex.getMessage().contains("can be called only once"), ex.getMessage());
     }

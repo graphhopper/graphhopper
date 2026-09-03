@@ -182,33 +182,15 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
                 ValueExpressionVisitor visitor = new ValueExpressionVisitor(result, variableValidator);
                 result.ok = atom.accept(visitor);
                 result.invalidMessage = visitor.invalidMessage;
-                if (result.ok && result.bikeClimbArgs != null && !isScaledCall(atom, result)) {
+                // combined with other terms the expression could be non-monotone in average_slope, see findMinMax
+                if (result.ok && result.bikeClimbArgs != null && !isBikeClimbCall(atom)) {
                     result.ok = false;
-                    result.invalidMessage = BIKE_CLIMB_FACTOR + " must be the entire expression, optionally scaled like \"0.9 * " + BIKE_CLIMB_FACTOR + "(...)\"";
+                    result.invalidMessage = BIKE_CLIMB_FACTOR + " must be the entire expression";
                 }
             }
         } catch (Exception ex) {
         }
         return result;
-    }
-
-    /**
-     * @return true if the expression is just the bike_climb_factor call, optionally multiplied by a
-     * literal, which is then stored in bikeClimbScale as code prefix like "0.9 * "
-     */
-    private static boolean isScaledCall(Java.Atom atom, ParseResult result) {
-        if (isBikeClimbCall(atom)) return true;
-        if (atom instanceof Java.BinaryOperation binOp && binOp.operator.equals("*")) {
-            if (binOp.lhs instanceof Java.Literal literal && isBikeClimbCall(binOp.rhs)) {
-                result.bikeClimbScale = literal.value + " * ";
-                return true;
-            }
-            if (binOp.rhs instanceof Java.Literal literal && isBikeClimbCall(binOp.lhs)) {
-                result.bikeClimbScale = literal.value + " * ";
-                return true;
-            }
-        }
-        return false;
     }
 
     private static boolean isBikeClimbCall(Java.Atom atom) {
@@ -230,7 +212,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
      */
     private static String toEvaluable(ParseResult result, String valueExpression, Map<String, CustomModel.Parameter> parameters) {
         if (result.bikeClimbArgs != null)
-            valueExpression = result.bikeClimbScale + BIKE_CLIMB_FACTOR + "(" + AverageSlope.KEY + ", "
+            valueExpression = BIKE_CLIMB_FACTOR + "(" + AverageSlope.KEY + ", "
                     + String.join(", ", result.bikeClimbArgs) + ")";
         return replaceParameters(valueExpression, parameters);
     }

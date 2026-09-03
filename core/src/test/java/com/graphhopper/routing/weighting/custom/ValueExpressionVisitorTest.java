@@ -94,12 +94,6 @@ class ValueExpressionVisitorTest {
         // the slope is implicitly the average_slope encoded value, the parameters are variables too
         assertEquals("[average_slope, p_power, p_mass, p_cda, p_crr]", result.guessedVariables.toString());
 
-        // scaled by a literal the expression stays monotone in the encoded value
-        result = parse("0.9 * " + BIKE_CALL, validator);
-        assertTrue(result.ok, result.invalidMessage);
-        result = parse(BIKE_CALL + " * 0.8", validator);
-        assertTrue(result.ok, result.invalidMessage);
-
         // combined with other terms it can be non-monotone and the endpoint-based findMinMax would
         // calculate wrong bounds, e.g. here the real maximum is at average_slope=2 and not at ±31.5
         result = parse(BIKE_CALL + " + 0.02 * average_slope", validator);
@@ -108,6 +102,9 @@ class ValueExpressionVisitorTest {
         result = parse("average_slope * " + BIKE_CALL, validator);
         assertFalse(result.ok);
         result = parse("Math.sqrt(" + BIKE_CALL + ")", validator);
+        assertFalse(result.ok);
+        // use a separate statement instead of a scale
+        result = parse("0.9 * " + BIKE_CALL, validator);
         assertFalse(result.ok);
 
         // the slope is not an argument
@@ -142,19 +139,17 @@ class ValueExpressionVisitorTest {
 
     @Test
     public void parsedBikeClimbArgs() {
-        // the parsed arguments and the optional scale are kept, from which the generated getSpeed code
-        // and the expression for the evaluator are derived
+        // the parsed arguments are kept, from which the generated getSpeed code and the expression
+        // for the evaluator are derived
         NameValidator validator = s -> s.equals("average_slope") || s.startsWith("p_");
         ParseResult result = parse(BIKE_CALL, validator);
         assertTrue(result.ok, result.invalidMessage);
         assertArrayEquals(new String[]{"p_power", "p_mass", "p_cda", "p_crr"}, result.bikeClimbArgs);
-        assertEquals("", result.bikeClimbScale);
 
         // independent of whitespace
-        result = parse("0.9 * bike_climb_factor(   p_power  ,p_mass, p_cda ,p_crr )", validator);
+        result = parse("bike_climb_factor(   p_power  ,p_mass, p_cda ,p_crr )", validator);
         assertTrue(result.ok, result.invalidMessage);
         assertArrayEquals(new String[]{"p_power", "p_mass", "p_cda", "p_crr"}, result.bikeClimbArgs);
-        assertEquals("0.9 * ", result.bikeClimbScale);
 
         // without the built-in function nothing is recorded
         result = parse("average_slope * 2.5", validator);
@@ -171,7 +166,6 @@ class ValueExpressionVisitorTest {
         double maxFactor = CustomWeightingHelper.bike_climb_factor(-31.5, 120, 95, 0.6, 0.006);
         assertEquals(4.58, maxFactor, 0.01);
         assertInterval(minFactor, maxFactor, ValueExpressionVisitor.findMinMax(BIKE_CALL, BIKE_PARAMS, lookup));
-        assertInterval(0.9 * minFactor, 0.9 * maxFactor, ValueExpressionVisitor.findMinMax("0.9 * " + BIKE_CALL, BIKE_PARAMS, lookup));
 
         // average_slope and the parameters are variables so that the generated class provides them
         assertEquals(Set.of("average_slope", "p_power", "p_mass", "p_cda", "p_crr"),

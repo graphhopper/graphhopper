@@ -702,7 +702,7 @@ public class CustomModelParser {
         if (result.bikeClimbArgs == null) return statement.value();
         if (!exceptionInfo.startsWith("speed"))
             throw new IllegalArgumentException(BIKE_CLIMB_FACTOR + " is only supported for 'speed' but was used in " + exceptionInfo);
-        return result.bikeClimbScale + "getBikeClimbFactor(" + AverageSlope.KEY + ", value, " + String.join(", ", result.bikeClimbArgs) + ")";
+        return "getBikeClimbFactor(" + AverageSlope.KEY + ", value, " + String.join(", ", result.bikeClimbArgs) + ")";
     }
 
     static void parseExpressions(StringBuilder expressions, NameValidator nameInConditionValidator,

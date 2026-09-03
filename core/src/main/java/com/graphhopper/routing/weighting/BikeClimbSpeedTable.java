@@ -6,13 +6,9 @@ public class BikeClimbSpeedTable {
     private static final double INV_STEP = 1.0 / STEP;
     private static final double V_DISMOUNT_KMH = 3.5;
 
-    // maximum factor for the rolling resistance derived from a reduced current speed, see getSlopeOffset
-    static final double MAX_CRR_FACTOR = 3;
-
     private final double[] tab;   // values in km/h
     // the table covers the slopes from -MAX_SLOPE to MAX_SLOPE (in percent), beyond the first or last entry is
-    // used. The maximum of average_slope is 31.5 plus the slope offset of at most 100 * crr * (MAX_CRR_FACTOR - 1),
-    // see getSlopeOffset
+    // used. The maximum of average_slope is 31.5 plus the slope offset of getClimbFactor
     private static final double MAX_SLOPE = 40;
     private static final int OFFSET = (int) (MAX_SLOPE * INV_STEP); // index of slope 0
     private final double flatSpeed, crr; // the flat speed in km/h follows from the power balance
@@ -41,33 +37,19 @@ public class BikeClimbSpeedTable {
         this.flatSpeed = cyclingSpeedKmh(0, power, rollingForce, aero, m_g_100);
         this.crr = crr;
 
-        // calculate dismount slope (at approx. 12% for bike and 22.7% for racingbike)
+        // Below V_DISMOUNT_KMH the cyclist cannot balance and pushes the bike instead (at approx. 12% for the bike
+        // and 22.7% for the racingbike). Blend from riding to pushing over a 2% slope interval to avoid
+        // fluctuations, e.g. from tiny elevation data changes.
         double vd = V_DISMOUNT_KMH / 3.6;
         double dismountSlope = 100.0 * ((power - aero * vd * vd * vd) / (vd * mass * 9.81) - crr);
 
-        // Dismounting for small speed (steep incline) reduces speed by a lot. With this 'blending'
-        // we try to avoid fluctuation problems e.g. because of tiny elevation data changes.
-        int blendStartIdx = Math.max(1, (int) Math.floor(dismountSlope * INV_STEP));
-        double dismountBlendPercent = 2; // 2% slope interval for the blending from biking (at high slopes) to pushing the bike (at even higher slopes)
-        int blendEndIdx = blendStartIdx + (int) Math.ceil(dismountBlendPercent * INV_STEP);
-        double blendStartSlope = blendStartIdx * STEP;
-        double blendEndSlope = blendEndIdx * STEP;
-
-        this.tab = new double[2 * OFFSET + 1];
         // descents: the power model ignores braking, so limit the resulting speed in the custom model
-        for (int i = 0; i < OFFSET; i++)
-            tab[i] = cyclingSpeedKmh((i - OFFSET) * STEP, power, rollingForce, aero, m_g_100);
-        for (int i = 0; i <= OFFSET; i++) {
-            double slope = i * STEP;
-            if (i <= blendStartIdx) {
-                tab[OFFSET + i] = cyclingSpeedKmh(slope, power, rollingForce, aero, m_g_100);
-            } else if (i < blendEndIdx) {
-                double walkInfluence = (slope - blendStartSlope) / (blendEndSlope - blendStartSlope);
-                tab[OFFSET + i] = (1 - walkInfluence) * cyclingSpeedKmh(slope, power, rollingForce, aero, m_g_100)
-                        + walkInfluence * walkingSpeedKmh(slope);
-            } else {
-                tab[OFFSET + i] = walkingSpeedKmh(slope);
-            }
+        this.tab = new double[2 * OFFSET + 1];
+        for (int i = 0; i < tab.length; i++) {
+            double slope = (i - OFFSET) * STEP;
+            double walkInfluence = Math.min(1, Math.max(0, (slope - dismountSlope) / 2));
+            tab[i] = (1 - walkInfluence) * cyclingSpeedKmh(slope, power, rollingForce, aero, m_g_100)
+                    + walkInfluence * walkingSpeedKmh(slope);
         }
     }
 
@@ -106,14 +88,18 @@ public class BikeClimbSpeedTable {
      * @return the factor for 'multiply_by' to change the current speed to the climb or descent speed for
      * the specified slope. For a climb the resulting speed is the minimum of the current speed (e.g.
      * limited by the surface) and the power-limited climb speed, i.e. the factor is never above 1. A
-     * current speed below the flat speed additionally increases the rolling resistance, see getSlopeOffset.
+     * current speed below the flat speed (e.g. rough surface) is additionally interpreted as a higher
+     * rolling resistance crr * flatSpeed / currentSpeed - only partly, as the reduced speed is mostly a
+     * comfort limit (see the minimum) and not an energy loss. As crr and slope/100 appear only as sum
+     * in the power balance, this is a slope offset in percent, which allows to reuse the table.
      * For a descent the factor is the speed gain relative to the flat speed, i.e. a surface-limited
      * current speed increases proportionally.
      */
     public double getClimbFactor(double slope, double currentSpeed) {
         if (currentSpeed <= 0) return 1;
         if (slope < 0) return getSpeed(slope) / flatSpeed;
-        return Math.min(1, getSpeed(slope + getSlopeOffset(currentSpeed)) / currentSpeed);
+        double slopeOffset = 100 * crr * Math.max(0, flatSpeed / currentSpeed - 1);
+        return Math.min(1, getSpeed(slope + slopeOffset) / currentSpeed);
     }
 
     /**
@@ -121,18 +107,6 @@ public class BikeClimbSpeedTable {
      */
     public double getFlatSpeed() {
         return flatSpeed;
-    }
-
-    /**
-     * A current speed below the flat speed (e.g. rough surface) is interpreted as a higher rolling
-     * resistance crr * min(MAX_CRR_FACTOR, flatSpeed / currentSpeed) - only partly, as the reduced speed
-     * is mostly a comfort limit (see the minimum in getClimbFactor) and not an energy loss. As crr
-     * and slope/100 appear only as sum in the power balance power = aero * v^3 + m * g * (crr + slope/100) * v,
-     * the increase is returned as slope offset in percent, which allows to reuse the table (calibrated with crr).
-     */
-    double getSlopeOffset(double currentSpeed) {
-        if (currentSpeed >= flatSpeed) return 0;
-        return 100 * crr * (Math.min(MAX_CRR_FACTOR, flatSpeed / currentSpeed) - 1);
     }
 
     public double getSpeed(double slope) {

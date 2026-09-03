@@ -85,11 +85,11 @@ class CustomWeightingHelperTest {
         // the generated code calls the table method with the injected current speed: for a current
         // speed reduced from the flat speed 22.14 (e.g. from a rough surface) the rolling resistance is
         // increased (2.5 times for 9km/h) but the power-limited climbing speed is not scaled down
-        // proportionally, i.e. 9*factor is 3.27km/h and not 9/22.14*3.67=1.49km/h
+        // proportionally, i.e. 9*factor is 3.32km/h and not 9/22.14*3.67=1.49km/h
         BikeClimbSpeedTable table = new BikeClimbSpeedTable(120, 95, 0.6, 0.006);
-        assertEquals(3.27, 9 * table.getClimbFactor(12, 9), 0.01);
+        assertEquals(3.32, 9 * table.getClimbFactor(12, 9), 0.01);
         // the factor never increases the speed above the current speed
-        assertEquals(1, table.getClimbFactor(12, 3));
+        assertEquals(1, table.getClimbFactor(2, 3));
         // a current speed above the flat speed results in the same absolute climbing speed
         assertEquals(3.67, 25 * table.getClimbFactor(12, 25), 0.01);
         // the static variant used for the bounds is the factor at the flat speed

@@ -727,11 +727,10 @@ smaller or more narrow range, or if you can avoid them entirely, then these requ
 
 #### Built-in functions
 
-Besides `Math.sqrt` a value expression can call the built-in function
+Besides the `Math` methods a value expression can call the built-in function
 `bike_climb_factor(p_power, p_mass, p_cda, p_crr)`: the slowdown factor for climbs, calculated for a
 cyclist producing `power` watts with a total `mass` (rider plus bike) in kg, the drag area `cda` (drag
-coefficient times frontal area in m², e.g. 0.6 upright and 0.4 on a racingbike) and the rolling resistance
-coefficient `crr`. All four arguments must be [parameters](#parameters), so that a request can override
+coefficient times frontal area in m²) and the rolling resistance coefficient `crr`. All four arguments must be [parameters](#parameters), so that a request can override
 e.g. the power within the range of the server-side custom model. The slope is implicitly the `average_slope`
 encoded value. The climbing speed follows from the power balance of gravity, rolling resistance and
 aerodynamic drag, and where riding gets slower than walking, the speed of pushing the bike is used instead.
@@ -740,15 +739,10 @@ the speed so far (e.g. limited by the surface or the profile's flat speed) and t
 surface penalty of the base profile is not double-counted against gravity on a climb. For downhill slopes
 the same power balance results in a factor above 1 (the speed gain relative to the flat speed of the power
 balance), which is applied to the speed so far. As braking is not modelled, the resulting speed should be
-limited. Example:
+limited. Example with the parameters defined as in `bike_elevation.json`:
 
 ```json
 {
-  "parameters": {
-    "power": { "value": 120, "min": 50, "max": 1000 }, "mass": { "value": 95, "min": 30, "max": 300 },
-    "cda": { "value": 0.6, "min": 0.1, "max": 2 }, "crr": { "value": 0.006, "min": 0, "max": 0.02 },
-    "vehicle_max_speed": { "value": 35, "min": 5, "max": 80 }
-  },
   "speed": [
     { "if": "average_slope > -15", "multiply_by": "bike_climb_factor(p_power, p_mass, p_cda, p_crr)" },
     { "if": "true", "limit_to": "p_vehicle_max_speed" }
@@ -758,11 +752,10 @@ limited. Example:
 
 Here the condition excludes steep descents where the cyclist brakes, so their speed stays unchanged, and
 a request can lower `vehicle_max_speed` for a more cautious rider.
-The call must be in the `speed` section, optionally scaled by a number like
-`"0.9 * bike_climb_factor(p_power, p_mass, p_cda, p_crr)"`, and only once per custom model, i.e. a request
-custom model cannot repeat it.
+The call must be the entire value expression in the `speed` section and only once per custom model, i.e. a
+request custom model cannot repeat it.
 Finite ranges are required as the custom model is validated at the range endpoints on startup: a power of 0
-or an infinite power is rejected. See `bike_elevation.json` for the physical background.
+or an infinite power is rejected. See `bike_elevation.json` for the physical background and typical values.
 
 ### `parameters`
 

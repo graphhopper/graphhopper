@@ -8,8 +8,6 @@ public class ParseResult {
     String invalidMessage;
     Set<String> guessedVariables;
     Set<String> operators;
-    // the (power, mass) arguments of the single allowed bike_climb_factor call, or null
+    // the (power, mass, cda, crr) arguments of the bike_climb_factor call, or null
     String[] bikeClimbArgs;
-    // the optional literal scale of the call as code prefix, e.g. "0.9 * ", see ValueExpressionVisitor.isScaledCall
-    String bikeClimbScale = "";
 }
