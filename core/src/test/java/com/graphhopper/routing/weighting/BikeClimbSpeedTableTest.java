@@ -16,8 +16,10 @@ public class BikeClimbSpeedTableTest {
         // aero resistance dominates for small slopes
         assertEquals(14.36, table.getSpeed(2), 0.01);
         assertEquals(8.0, table.getSpeed(5), 0.01);
-        assertEquals(3.67, table.getSpeed(12), 0.01);
-        // blending into the walking speed of the pushing cyclist (0.8 times Tobler's hiking function)
+        assertEquals(5.34, table.getSpeed(8), 0.01);
+        // below 4.5km/h (at 9.6%) blending into the walking speed of the pushing cyclist (0.8 times Tobler's
+        // hiking function), which is much slower than riding and so avoids steep climbs
+        assertEquals(2.65, table.getSpeed(12), 0.01);
         assertEquals(2.38, table.getSpeed(15), 0.01);
         assertEquals(2.0, table.getSpeed(20), 0.01);
         assertEquals(1.34, table.getSpeed(31.5), 0.01);
@@ -36,12 +38,12 @@ public class BikeClimbSpeedTableTest {
     public void testClimbFactor() {
         BikeClimbSpeedTable table = new BikeClimbSpeedTable(120, 95, 0.6, 0.006);
         // a current speed at or above the flat speed (22.14) results in the climb speed of the table
-        assertEquals(3.67, 25 * table.getClimbFactor(12, 25), 0.01);
+        assertEquals(2.65, 25 * table.getClimbFactor(12, 25), 0.01);
         // a reduced speed is interpreted as a rolling resistance crr * flat/current, i.e. as slope offset
-        // 100 * crr * (flat/current - 1) = 0.88 for 9km/h: 12% on a 9km/h track is 3.32km/h instead of 3.67km/h
-        assertEquals(3.32, 9 * table.getClimbFactor(12, 9), 0.01);
+        // 100 * crr * (flat/current - 1) = 0.88 for 9km/h: 12% on a 9km/h track is 2.57km/h instead of 2.65km/h
+        assertEquals(2.57, 9 * table.getClimbFactor(12, 9), 0.01);
         assertEquals(table.getSpeed(12.88), 9 * table.getClimbFactor(12, 9), 0.01);
-        assertEquals(3.63, 18 * table.getClimbFactor(12, 18), 0.01);
+        assertEquals(2.64, 18 * table.getClimbFactor(12, 18), 0.01);
         // the factor never increases the speed above the current speed
         assertEquals(1, table.getClimbFactor(2, 3));
         // but even pushing the bike (3km/h) gets slower on a 12% climb

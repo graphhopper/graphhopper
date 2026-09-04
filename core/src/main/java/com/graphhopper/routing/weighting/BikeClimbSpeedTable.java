@@ -4,7 +4,7 @@ public class BikeClimbSpeedTable {
 
     private static final double STEP = 0.25; // in percentage
     private static final double INV_STEP = 1.0 / STEP;
-    private static final double V_DISMOUNT_KMH = 3.5;
+    private static final double V_DISMOUNT_KMH = 4.5;
 
     private final double[] tab;   // values in km/h
     // the table covers the slopes from -MAX_SLOPE to MAX_SLOPE (in percent), beyond the first or last entry is
@@ -22,9 +22,9 @@ public class BikeClimbSpeedTable {
      * As only the product can be measured, wind tunnel and field tests report cda directly.
      *
      * @param power in Watt
-     * @param mass in kg
-     * @param cda drag area in m^2, e.g. 0.6 for an upright cyclist and 0.4 on a racingbike
-     * @param crr coefficient of rolling resistance (F_roll = crr * m * g)
+     * @param mass  in kg
+     * @param cda   drag area in m^2, e.g. 0.6 for an upright cyclist and 0.4 on a racingbike
+     * @param crr   coefficient of rolling resistance (F_roll = crr * m * g)
      */
     public BikeClimbSpeedTable(double power, double mass, double cda, double crr) {
         if (power <= 0 || mass <= 0 || cda <= 0 || crr < 0)
@@ -37,9 +37,12 @@ public class BikeClimbSpeedTable {
         this.flatSpeed = cyclingSpeedKmh(0, power, rollingForce, aero, m_g_100);
         this.crr = crr;
 
-        // Below V_DISMOUNT_KMH the cyclist cannot balance and pushes the bike instead (at approx. 12% for the bike
-        // and 22.7% for the racingbike). Blend from riding to pushing over a 2% slope interval to avoid
-        // fluctuations, e.g. from tiny elevation data changes.
+        // Below V_DISMOUNT_KMH the cyclist pushes the bike instead (120W & other defaults => at 9% for bike; 200W => 17.5% for racingbike).
+        // Riding is still possible at 3.5km/h but as pushing is slower than riding the dismount speed
+        // also creates the avoidance of steep climbs, which is wanted. The power balance alone costs the same time per
+        // meter of ascent regardless of the steepness.
+        // Finally, no step function but blend this speed (from riding to pushing) over a 2% slope
+        // interval to avoid fluctuations, e.g. from tiny elevation data changes.
         double vd = V_DISMOUNT_KMH / 3.6;
         double dismountSlope = 100.0 * ((power - aero * vd * vd * vd) / (vd * mass * 9.81) - crr);
 
