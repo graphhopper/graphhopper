@@ -1,4 +1,5 @@
-// Assume a constant power of 200W, a total mass of 90kg (bike plus rider) and a drag area of 0.4m^2.
+// Assume a constant power of 200W, a total mass of 90kg (bike plus rider) and a drag area of 0.4m^2. No hill_penalty
+// priority as the racing cyclist rides up to 22.7% before pushing and steeper roads are rare, i.e. the penalty would have nearly no effect.
 // See bike_elevation.json for details about the parameters and bike_climb_factor.
 {
   "parameters": {
@@ -6,12 +7,8 @@
     "mass":       { "value": 90,    "min": 30, "max": 300 },
     "cda":        { "value": 0.4,   "min": 0.1, "max": 2 },
     "crr":        { "value": 0.006, "min": 0,  "max": 0.02 },
-    "vehicle_max_speed": { "value": 50, "min": 5, "max": 80 },
-    "hill_penalty": { "value": 0.010, "min": 0, "max": 0.03 }
+    "vehicle_max_speed": { "value": 50, "min": 5, "max": 80 }
   },
-  "priority": [
-    { "if": "average_slope > 3", "multiply_by": "1 - p_hill_penalty * Math.max(average_slope - 3, 0)" }
-  ],
   "speed": [
     { "if": "average_slope > -15", "multiply_by": "bike_climb_factor(p_power, p_mass, p_cda, p_crr)" },
     { "if": "true", "limit_to": "p_vehicle_max_speed" }
