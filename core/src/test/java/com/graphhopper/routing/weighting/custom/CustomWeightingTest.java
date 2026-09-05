@@ -431,7 +431,7 @@ class CustomWeightingTest {
         return new CustomModel().setDistanceInfluence(0d).
                 setParameter("power", power).setParameter("mass", mass).setParameter("cda", cda).setParameter("crr", 0.006).
                 addToSpeed(If("true", LIMIT, speedEncName)).
-                addToSpeed(If("true", MULTIPLY, "bike_climb_factor(p_power, p_mass, p_cda, p_crr)"));
+                addToSpeed(If("true", MULTIPLY, "bike_climb_factor(average_slope, p_power, p_mass, p_cda, p_crr)"));
     }
 
     @Test
@@ -465,26 +465,24 @@ class CustomWeightingTest {
         assertEquals(10 * 1000 / (24 * new BikeClimbSpeedTable(200, 90, 0.4, 0.006).getClimbFactor(5, 24) / 3.6), racingWeighting.calcEdgeWeight(racingEdge, false), 1);
         assertEquals(10 * 1000 / (13.27 / 3.6), racingWeighting.calcEdgeWeight(racingEdge, false), 10);
 
-        // the arguments must be parameters
+        // the arguments can be numbers too (then a request cannot change them)
         CustomModel literalModel = new CustomModel().setDistanceInfluence(0d).addToSpeed(If("true", LIMIT, speedEnc.getName())).
-                addToSpeed(If("average_slope >= 0", MULTIPLY, "bike_climb_factor(120, 95, 0.6, 0.006)"));
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> CustomModelParser.createWeighting(em, NO_TURN_COST_PROVIDER, literalModel));
-        assertTrue(ex.getMessage().contains("expects a parameter like p_power as argument 1"), ex.getMessage());
+                addToSpeed(If("true", MULTIPLY, "bike_climb_factor(average_slope, 120, 95, 0.6, 0.006)"));
+        assertEquals(weighting.calcEdgeWeight(edge, false), CustomModelParser.createWeighting(em, NO_TURN_COST_PROVIDER, literalModel).calcEdgeWeight(edge, false));
         CustomModel undefinedModel = new CustomModel().setDistanceInfluence(0d).setParameter("power", 120).addToSpeed(If("true", LIMIT, speedEnc.getName())).
-                addToSpeed(If("average_slope >= 0", MULTIPLY, "bike_climb_factor(p_power, p_mass, p_cda, p_crr)"));
-        ex = assertThrows(IllegalArgumentException.class, () -> CustomModelParser.createWeighting(em, NO_TURN_COST_PROVIDER, undefinedModel));
-        assertTrue(ex.getMessage().contains("p_mass as argument 2, but 'p_mass' is not available"), ex.getMessage());
+                addToSpeed(If("average_slope >= 0", MULTIPLY, "bike_climb_factor(average_slope, p_power, p_mass, p_cda, p_crr)"));
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> CustomModelParser.createWeighting(em, NO_TURN_COST_PROVIDER, undefinedModel));
+        assertTrue(ex.getMessage().contains("p_mass as argument 3, but 'p_mass' is not available"), ex.getMessage());
 
         // the table field is created only for the speed statements
-        customModel.addToPriority(If("average_slope >= 0", MULTIPLY, "bike_climb_factor(p_power, p_mass, p_cda, p_crr)"));
+        customModel.addToPriority(If("average_slope >= 0", MULTIPLY, "bike_climb_factor(average_slope, p_power, p_mass, p_cda, p_crr)"));
         ex = assertThrows(IllegalArgumentException.class, () -> CustomModelParser.createWeighting(em, NO_TURN_COST_PROVIDER, customModel));
         assertTrue(ex.getMessage().contains("bike_climb_factor is only supported for 'speed'"), ex.getMessage());
 
         // a single call per model: the table is created once per instance and a request cannot
         // repeat the call of the profile (which would apply the factor twice)
         CustomModel dupModel = bikeClimbModel(speedEnc.getName(), 120, 95, 18);
-        dupModel.addToSpeed(If("average_slope >= 10", MULTIPLY, "bike_climb_factor(p_power, p_mass, p_cda, p_crr)"));
+        dupModel.addToSpeed(If("average_slope >= 10", MULTIPLY, "bike_climb_factor(average_slope, p_power, p_mass, p_cda, p_crr)"));
         ex = assertThrows(IllegalArgumentException.class, () -> CustomModelParser.createWeighting(em, NO_TURN_COST_PROVIDER, dupModel));
         assertTrue(ex.getMessage().contains("can be called only once"), ex.getMessage());
     }

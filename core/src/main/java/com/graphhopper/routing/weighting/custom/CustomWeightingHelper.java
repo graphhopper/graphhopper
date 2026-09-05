@@ -95,11 +95,11 @@ public class CustomWeightingHelper {
     }
 
     /**
-     * Called per edge from the generated getSpeed for bike_climb_factor(p_power, p_mass, p_cda, p_crr)
-     * with the injected average_slope and current speed. The arguments are parameters and the call is
-     * allowed only once per custom model (see CustomModelParser), so the speed table can be created lazily.
+     * Called per edge from the generated getSpeed for bike_climb_factor(average_slope, p_power, p_mass, p_cda, p_crr)
+     * with the injected current speed. The arguments are parameters and the call is allowed only once
+     * per custom model (see CustomModelParser), so the speed table can be created lazily.
      */
-    protected double getBikeClimbFactor(double slope, double currentSpeed, double power, double mass, double cda, double crr) {
+    protected double getBikeClimbFactor(double currentSpeed, double slope, double power, double mass, double cda, double crr) {
         // benign race if the instance is ever shared between threads: identical tables would be created and
         // as all fields of the table are final the reference can be published without synchronization
         if (bikeClimbTable == null)

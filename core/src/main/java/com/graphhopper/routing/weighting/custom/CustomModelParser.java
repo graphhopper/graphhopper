@@ -691,9 +691,9 @@ public class CustomModelParser {
 
     /**
      * Verifies the value expression of the statement and collects its variables. A bike_climb_factor
-     * call gets the slope and the current speed ("value") injected as first arguments and calls
-     * the instance method of CustomWeightingHelper: bike_climb_factor(p_power, p_mass, p_cda, p_crr)
-     * -> getBikeClimbFactor(average_slope, value, p_power, p_mass, p_cda, p_crr)
+     * call gets the current speed ("value") injected as first argument and calls the instance method
+     * of CustomWeightingHelper: bike_climb_factor(average_slope, p_power, p_mass, p_cda, p_crr)
+     * -> getBikeClimbFactor(value, average_slope, p_power, p_mass, p_cda, p_crr)
      */
     private static String parseValue(Statement statement, Set<String> createObjects, Map<String, CustomModel.Parameter> parameters,
                                      EncodedValueLookup lookup, String exceptionInfo) {
@@ -702,7 +702,7 @@ public class CustomModelParser {
         if (result.bikeClimbArgs == null) return statement.value();
         if (!exceptionInfo.startsWith("speed"))
             throw new IllegalArgumentException(BIKE_CLIMB_FACTOR + " is only supported for 'speed' but was used in " + exceptionInfo);
-        return "getBikeClimbFactor(" + AverageSlope.KEY + ", value, " + String.join(", ", result.bikeClimbArgs) + ")";
+        return "getBikeClimbFactor(value, " + String.join(", ", result.bikeClimbArgs) + ")";
     }
 
     static void parseExpressions(StringBuilder expressions, NameValidator nameInConditionValidator,

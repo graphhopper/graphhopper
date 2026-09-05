@@ -20,7 +20,6 @@ package com.graphhopper.routing.weighting.custom;
 import com.graphhopper.json.MinMax;
 import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.AverageSlope;
 import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.IntEncodedValue;
@@ -46,8 +45,8 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
     private static final Set<String> allowedMethods = Set.of("sqrt", "min", "max");
     // the built-in function, also a static method in CustomWeightingHelper for the ExpressionEvaluator
     static final String BIKE_CLIMB_FACTOR = "bike_climb_factor";
-    // the meaning of the arguments of bike_climb_factor (only used for error messages)
-    static final String[] BIKE_CLIMB_ARGS = {"power", "mass", "cda", "crr"};
+    // example arguments of bike_climb_factor (only used for error messages): the slope encoded value and the parameters
+    static final String[] BIKE_CLIMB_ARGS = {"average_slope", "p_power", "p_mass", "p_cda", "p_crr"};
     private final ParseResult result;
     private final NameValidator variableValidator;
     private String invalidMessage;
@@ -90,19 +89,18 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         } else if (rv instanceof Java.MethodInvocation mi) {
             if (mi.target == null && mi.methodName.equals(BIKE_CLIMB_FACTOR)) {
                 if (mi.arguments.length != BIKE_CLIMB_ARGS.length) {
-                    invalidMessage = BIKE_CLIMB_FACTOR + " expects " + BIKE_CLIMB_ARGS.length + " arguments " + String.join(", ", BIKE_CLIMB_ARGS) + ", but got: " + mi.arguments.length;
+                    invalidMessage = BIKE_CLIMB_FACTOR + " expects " + BIKE_CLIMB_ARGS.length + " arguments like " + String.join(", ", BIKE_CLIMB_ARGS) + ", but got: " + mi.arguments.length;
                     return false;
                 }
-                // the slope is not an argument but implicitly the average_slope encoded value
-                if (!isValidIdentifier(AverageSlope.KEY)) {
-                    invalidMessage = BIKE_CLIMB_FACTOR + " requires '" + AverageSlope.KEY + "' which is not available";
-                    return false;
-                }
-                // the arguments must be parameters (verified in checkBikeClimbArgs) as the BikeClimbSpeedTable
-                // is created once per instance from their values, see CustomWeightingHelper.bike_climb_factor
+                // the arguments must be the slope encoded value and numbers or parameters (verified in
+                // checkBikeClimbArgs) as the BikeClimbSpeedTable is created once per instance from their values
                 String[] args = new String[mi.arguments.length];
                 for (int i = 0; i < args.length; i++) {
-                    String expects = BIKE_CLIMB_FACTOR + " expects a parameter like p_" + BIKE_CLIMB_ARGS[i] + " as argument " + (i + 1) + ", but ";
+                    String expects = BIKE_CLIMB_FACTOR + " expects an argument like " + BIKE_CLIMB_ARGS[i] + " as argument " + (i + 1) + ", but ";
+                    if (i > 0 && (mi.arguments[i] instanceof Java.IntegerLiteral || mi.arguments[i] instanceof Java.FloatingPointLiteral)) {
+                        args[i] = ((Java.Literal) mi.arguments[i]).value;
+                        continue;
+                    }
                     if (!(mi.arguments[i] instanceof Java.AmbiguousName n) || n.identifiers.length != 1) {
                         invalidMessage = expects + "got: " + mi.arguments[i];
                         return false;
@@ -197,24 +195,23 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         return atom instanceof Java.MethodInvocation mi && mi.methodName.equals(BIKE_CLIMB_FACTOR);
     }
 
-    private static void checkBikeClimbArgs(ParseResult result, Map<String, CustomModel.Parameter> parameters) {
+    private static void checkBikeClimbArgs(ParseResult result, Map<String, CustomModel.Parameter> parameters, EncodedValueLookup lookup) {
         if (result.bikeClimbArgs == null) return;
-        for (String arg : result.bikeClimbArgs)
-            if (!CustomModelParser.isParameter(arg, parameters))
-                throw new IllegalArgumentException(BIKE_CLIMB_FACTOR + " expects parameters as arguments but '" + arg + "' is not defined in 'parameters'");
+        String[] args = result.bikeClimbArgs;
+        if (!lookup.hasEncodedValue(args[0]))
+            throw new IllegalArgumentException(BIKE_CLIMB_FACTOR + " expects the slope encoded value as first argument but '" + args[0] + "' is not an encoded value");
+        for (int i = 1; i < args.length; i++)
+            if (!CustomModelParser.isParameter(args[i], parameters) && !isNumber(args[i]))
+                throw new IllegalArgumentException(BIKE_CLIMB_FACTOR + " expects numbers or parameters as arguments but '" + args[i] + "' is not defined in 'parameters'");
     }
 
-    /**
-     * @return the expression for the ExpressionEvaluator used in findMinMax and parseValue: the
-     * bike_climb_factor call is replaced by the static function with the slope as explicit first
-     * argument, e.g. bike_climb_factor(average_slope, p_power, p_mass, p_cda, p_crr), and the
-     * parameters are replaced by their values as the evaluator does not know them, e.g. "0.9 * p_hill_factor" -> "0.9 * 0.5"
-     */
-    private static String toEvaluable(ParseResult result, String valueExpression, Map<String, CustomModel.Parameter> parameters) {
-        if (result.bikeClimbArgs != null)
-            valueExpression = BIKE_CLIMB_FACTOR + "(" + AverageSlope.KEY + ", "
-                    + String.join(", ", result.bikeClimbArgs) + ")";
-        return replaceParameters(valueExpression, parameters);
+    private static boolean isNumber(String str) {
+        try {
+            Double.parseDouble(str);
+            return true;
+        } catch (NumberFormatException ex) {
+            return false;
+        }
     }
 
     /**
@@ -234,7 +231,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         ParseResult result = parse(valueExpression, key -> lookup.hasEncodedValue(key) || key.contains(INFINITY) || CustomModelParser.isParameter(key, parameters));
         if (!result.ok)
             throw new IllegalArgumentException(result.invalidMessage);
-        checkBikeClimbArgs(result, parameters);
+        checkBikeClimbArgs(result, parameters, lookup);
         Set<String> encodedValues = encodedValuesOf(result, parameters);
         if (encodedValues.size() > 1)
             throw new IllegalArgumentException("Currently only a single EncodedValue is allowed on the right-hand side, but was " + encodedValues.size() + ". Value expression: " + valueExpression);
@@ -260,7 +257,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
             // expressions are accepted from Double.parseDouble but parse() rejects them. With this call order we avoid unexpected security problems.
             value = Double.parseDouble(valueExpression);
         } catch (NumberFormatException ex) {
-            String evalExpression = toEvaluable(result, valueExpression, parameters);
+            String evalExpression = replaceParameters(valueExpression, parameters);
             try {
                 if (encodedValues.isEmpty()) { // without encoded values
                     NoArgEvaluator ee = createExpressionEvaluator().createFastEvaluator(evalExpression, NoArgEvaluator.class);
@@ -292,7 +289,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         ParseResult result = parse(valueExpression, key -> lookup.hasEncodedValue(key) || key.contains(INFINITY) || CustomModelParser.isParameter(key, parameters));
         if (!result.ok)
             throw new IllegalArgumentException(result.invalidMessage);
-        checkBikeClimbArgs(result, parameters);
+        checkBikeClimbArgs(result, parameters, lookup);
         Set<String> encodedValues = encodedValuesOf(result, parameters);
         if (encodedValues.size() > 1)
             throw new IllegalArgumentException("Currently only a single EncodedValue is allowed on the right-hand side, but was " + encodedValues.size() + ". Value expression: " + valueExpression);
@@ -307,7 +304,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         } catch (NumberFormatException ex) {
         }
 
-        String evalExpression = toEvaluable(result, valueExpression, parameters);
+        String evalExpression = replaceParameters(valueExpression, parameters);
         try {
             if (encodedValues.isEmpty()) { // without encoded values
                 NoArgEvaluator ee = createExpressionEvaluator().createFastEvaluator(evalExpression, NoArgEvaluator.class);

@@ -8,6 +8,6 @@ public class ParseResult {
     String invalidMessage;
     Set<String> guessedVariables;
     Set<String> operators;
-    // the (power, mass, cda, crr) arguments of the bike_climb_factor call, or null
+    // the (slope, power, mass, cda, crr) arguments of the bike_climb_factor call, or null
     String[] bikeClimbArgs;
 }

@@ -728,11 +728,11 @@ smaller or more narrow range, or if you can avoid them entirely, then these requ
 #### Built-in functions
 
 Besides the `Math` methods a value expression can call the built-in function
-`bike_climb_factor(p_power, p_mass, p_cda, p_crr)`: the slowdown factor for climbs, calculated for a
+`bike_climb_factor(average_slope, p_power, p_mass, p_cda, p_crr)`: the slowdown factor for climbs, calculated for a
 cyclist producing `power` watts with a total `mass` (rider plus bike) in kg, the drag area `cda` (drag
-coefficient times frontal area in m²) and the rolling resistance coefficient `crr`. All four arguments must be [parameters](#parameters), so that a request can override
-e.g. the power within the range of the server-side custom model. The slope is implicitly the `average_slope`
-encoded value. The climbing speed follows from the power balance of gravity, rolling resistance and
+coefficient times frontal area in m²) and the rolling resistance coefficient `crr`. The first argument is the
+slope encoded value in percent, the other four are numbers or [parameters](#parameters). With parameters a
+request can override e.g. the power within the range of the server-side custom model. The climbing speed follows from the power balance of gravity, rolling resistance and
 aerodynamic drag, and where riding gets slower than walking, the speed of pushing the bike is used instead.
 As the factor is relative to the speed of the preceding statements, the resulting speed is the minimum of
 the speed so far (e.g. limited by the surface or the profile's flat speed) and the climbing speed, i.e. a
@@ -744,7 +744,7 @@ limited. Example with the parameters defined as in `bike_elevation.json`:
 ```json
 {
   "speed": [
-    { "if": "average_slope > -15", "multiply_by": "bike_climb_factor(p_power, p_mass, p_cda, p_crr)" },
+    { "if": "average_slope > -15", "multiply_by": "bike_climb_factor(average_slope, p_power, p_mass, p_cda, p_crr)" },
     { "if": "true", "limit_to": "p_vehicle_max_speed" }
   ]
 }

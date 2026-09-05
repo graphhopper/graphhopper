@@ -10,7 +10,7 @@
     "vehicle_max_speed": { "value": 50, "min": 5, "max": 80 }
   },
   "speed": [
-    { "if": "average_slope > -15", "multiply_by": "bike_climb_factor(p_power, p_mass, p_cda, p_crr)" },
+    { "if": "average_slope > -15", "multiply_by": "bike_climb_factor(average_slope, p_power, p_mass, p_cda, p_crr)" },
     { "if": "true", "limit_to": "p_vehicle_max_speed" }
   ]
 }
