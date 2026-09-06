@@ -19,10 +19,7 @@ package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.json.MinMax;
 import com.graphhopper.json.Statement;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EncodedValue;
-import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.routing.ev.IntEncodedValue;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.util.CustomModel;
 import org.codehaus.commons.compiler.CompileException;
 import org.codehaus.janino.*;
@@ -43,10 +40,25 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
     private static final Set<String> allowedMethodParents = Set.of("Math");
     // functions must be monotone in every argument (see findMinMax)
     private static final Set<String> allowedMethods = Set.of("sqrt", "min", "max");
-    // the built-in function, also a static method in CustomWeightingHelper for the ExpressionEvaluator
+    /**
+     * A built-in function: the first arguments are encoded values (a number for a null type, otherwise the
+     * boolean or enum type is checked), the remaining arguments are numbers or parameters as the speed table
+     * is created once per instance from their values. The example arguments are used for error messages.
+     */
+    record BuiltIn(String name, String[] exampleArgs, Class<?>[] evTypes) {
+        int evArgs() {
+            return evTypes.length;
+        }
+    }
+
+    // the built-in functions, see CustomWeightingHelper. bike_climb_factor is also a static method there for
+    // the ExpressionEvaluator, bike_speed gets its bounds from CustomWeightingHelper.bikeSpeedMinMax
     static final String BIKE_CLIMB_FACTOR = "bike_climb_factor";
-    // example arguments of bike_climb_factor (only used for error messages): the slope encoded value and the parameters
-    static final String[] BIKE_CLIMB_ARGS = {"average_slope", "p_power", "p_mass", "p_cda", "p_crr"};
+    static final String BIKE_SPEED = "bike_speed";
+    static final Map<String, BuiltIn> BUILT_INS = Map.of(
+            BIKE_CLIMB_FACTOR, new BuiltIn(BIKE_CLIMB_FACTOR, new String[]{"average_slope", "p_power", "p_mass", "p_cda", "p_crr"}, new Class[]{null}),
+            BIKE_SPEED, new BuiltIn(BIKE_SPEED, new String[]{"average_slope", "road_class", "surface", "track_type", "smoothness", "bike_network", "get_off_bike", "p_power", "p_mass", "p_cda", "p_crr"},
+                    new Class[]{null, RoadClass.class, Surface.class, TrackType.class, Smoothness.class, RouteNetwork.class, Boolean.class}));
     private final ParseResult result;
     private final NameValidator variableValidator;
     private String invalidMessage;
@@ -87,17 +99,18 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
                 return uop.operand.accept(this);
             return false;
         } else if (rv instanceof Java.MethodInvocation mi) {
-            if (mi.target == null && mi.methodName.equals(BIKE_CLIMB_FACTOR)) {
-                if (mi.arguments.length != BIKE_CLIMB_ARGS.length) {
-                    invalidMessage = BIKE_CLIMB_FACTOR + " expects " + BIKE_CLIMB_ARGS.length + " arguments like " + String.join(", ", BIKE_CLIMB_ARGS) + ", but got: " + mi.arguments.length;
+            BuiltIn builtIn = mi.target == null ? BUILT_INS.get(mi.methodName) : null;
+            if (builtIn != null) {
+                String[] exampleArgs = builtIn.exampleArgs();
+                if (mi.arguments.length != exampleArgs.length) {
+                    invalidMessage = builtIn.name() + " expects " + exampleArgs.length + " arguments like " + String.join(", ", exampleArgs) + ", but got: " + mi.arguments.length;
                     return false;
                 }
-                // the arguments must be the slope encoded value and numbers or parameters (verified in
-                // checkBikeClimbArgs) as the BikeClimbSpeedTable is created once per instance from their values
+                // the arguments must be encoded values and numbers or parameters, see BuiltIn and checkFunctionArgs
                 String[] args = new String[mi.arguments.length];
                 for (int i = 0; i < args.length; i++) {
-                    String expects = BIKE_CLIMB_FACTOR + " expects an argument like " + BIKE_CLIMB_ARGS[i] + " as argument " + (i + 1) + ", but ";
-                    if (i > 0 && (mi.arguments[i] instanceof Java.IntegerLiteral || mi.arguments[i] instanceof Java.FloatingPointLiteral)) {
+                    String expects = builtIn.name() + " expects an argument like " + exampleArgs[i] + " as argument " + (i + 1) + ", but ";
+                    if (i >= builtIn.evArgs() && (mi.arguments[i] instanceof Java.IntegerLiteral || mi.arguments[i] instanceof Java.FloatingPointLiteral)) {
                         args[i] = ((Java.Literal) mi.arguments[i]).value;
                         continue;
                     }
@@ -111,7 +124,8 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
                     }
                     args[i] = n.identifiers[0];
                 }
-                result.bikeClimbArgs = args;
+                result.function = builtIn.name();
+                result.functionArgs = args;
                 return true;
             }
             if (allowedMethods.contains(mi.methodName)) {
@@ -181,9 +195,9 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
                 result.ok = atom.accept(visitor);
                 result.invalidMessage = visitor.invalidMessage;
                 // combined with other terms the expression could be non-monotone in average_slope, see findMinMax
-                if (result.ok && result.bikeClimbArgs != null && !isBikeClimbCall(atom)) {
+                if (result.ok && result.function != null && !(atom instanceof Java.MethodInvocation mi && mi.methodName.equals(result.function))) {
                     result.ok = false;
-                    result.invalidMessage = BIKE_CLIMB_FACTOR + " must be the entire expression";
+                    result.invalidMessage = result.function + " must be the entire expression";
                 }
             }
         } catch (Exception ex) {
@@ -191,18 +205,44 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         return result;
     }
 
-    private static boolean isBikeClimbCall(Java.Atom atom) {
-        return atom instanceof Java.MethodInvocation mi && mi.methodName.equals(BIKE_CLIMB_FACTOR);
+    private static void checkFunctionArgs(ParseResult result, Map<String, CustomModel.Parameter> parameters, EncodedValueLookup lookup) {
+        if (result.function == null) return;
+        BuiltIn builtIn = BUILT_INS.get(result.function);
+        String[] args = result.functionArgs;
+        for (int i = 0; i < args.length; i++) {
+            if (i >= builtIn.evArgs()) {
+                if (!CustomModelParser.isParameter(args[i], parameters) && !isNumber(args[i]))
+                    throw new IllegalArgumentException(builtIn.name() + " expects numbers or parameters as arguments but '" + args[i] + "' is not defined in 'parameters'");
+                continue;
+            }
+            String expects = builtIn.name() + " expects the encoded value " + builtIn.exampleArgs()[i] + " as argument " + (i + 1) + " but '" + args[i] + "' is ";
+            if (!lookup.hasEncodedValue(args[i]))
+                throw new IllegalArgumentException(expects + "not an encoded value");
+            Class<?> type = builtIn.evTypes()[i];
+            EncodedValue enc = lookup.getEncodedValue(args[i], EncodedValue.class);
+            boolean typeOk = type == null ? enc instanceof DecimalEncodedValue || enc instanceof IntEncodedValue
+                    : type == Boolean.class ? enc instanceof BooleanEncodedValue
+                    : enc instanceof EnumEncodedValue<?> enumEnc && enumEnc.getEnumType() == type;
+            if (!typeOk)
+                throw new IllegalArgumentException(expects + "not of type " + (type == null ? "number" : type.getSimpleName()));
+        }
     }
 
-    private static void checkBikeClimbArgs(ParseResult result, Map<String, CustomModel.Parameter> parameters, EncodedValueLookup lookup) {
-        if (result.bikeClimbArgs == null) return;
-        String[] args = result.bikeClimbArgs;
-        if (!lookup.hasEncodedValue(args[0]))
-            throw new IllegalArgumentException(BIKE_CLIMB_FACTOR + " expects the slope encoded value as first argument but '" + args[0] + "' is not an encoded value");
-        for (int i = 1; i < args.length; i++)
-            if (!CustomModelParser.isParameter(args[i], parameters) && !isNumber(args[i]))
-                throw new IllegalArgumentException(BIKE_CLIMB_FACTOR + " expects numbers or parameters as arguments but '" + args[i] + "' is not defined in 'parameters'");
+    /**
+     * @return the bounds of a bike_speed call, which cannot be evaluated at the endpoints of a single
+     * encoded value. The speed decreases with the slope and the rolling resistance of the surface.
+     */
+    private static MinMax bikeSpeedMinMax(ParseResult result, Map<String, CustomModel.Parameter> parameters, EncodedValueLookup lookup) {
+        String[] args = result.functionArgs;
+        double[] numbers = new double[4];
+        for (int i = 0; i < numbers.length; i++) {
+            String arg = args[args.length - numbers.length + i];
+            numbers[i] = CustomModelParser.isParameter(arg, parameters)
+                    ? ((Number) parameters.get(arg.substring(CustomModelParser.PARAM_PREFIX.length())).value()).doubleValue()
+                    : Double.parseDouble(arg);
+        }
+        EncodedValue slopeEnc = lookup.getEncodedValue(args[0], EncodedValue.class);
+        return CustomWeightingHelper.bikeSpeedMinMax(getMin(slopeEnc), getMax(slopeEnc), numbers[0], numbers[1], numbers[2], numbers[3]);
     }
 
     private static boolean isNumber(String str) {
@@ -231,18 +271,23 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         ParseResult result = parse(valueExpression, key -> lookup.hasEncodedValue(key) || key.contains(INFINITY) || CustomModelParser.isParameter(key, parameters));
         if (!result.ok)
             throw new IllegalArgumentException(result.invalidMessage);
-        checkBikeClimbArgs(result, parameters, lookup);
+        checkFunctionArgs(result, parameters, lookup);
+        if (BIKE_SPEED.equals(result.function)) {
+            // non-negative and finite for all (valid) parameter values
+            bikeSpeedMinMax(result, parameters, lookup);
+            return result;
+        }
         Set<String> encodedValues = encodedValuesOf(result, parameters);
         if (encodedValues.size() > 1)
             throw new IllegalArgumentException("Currently only a single EncodedValue is allowed on the right-hand side, but was " + encodedValues.size() + ". Value expression: " + valueExpression);
 
         // the limits of a single parameter are checked at its range endpoints, see CustomModelParser.checkParameterRanges.
-        // bike_climb_factor is exempt as its result is non-negative and finite for all (valid) parameter values
+        // the built-in functions are exempt as their result is non-negative and finite for all (valid) parameter values
         Set<String> usedParameters = new LinkedHashSet<>(result.guessedVariables);
         usedParameters.removeAll(encodedValues);
-        if (result.bikeClimbArgs == null && usedParameters.size() > 1)
+        if (result.function == null && usedParameters.size() > 1)
             throw new IllegalArgumentException("Currently only a single parameter is allowed on the right-hand side, but was " + usedParameters.size() + ". Value expression: " + valueExpression);
-        if (result.bikeClimbArgs == null && usedParameters.size() == 1) {
+        if (result.function == null && usedParameters.size() == 1) {
             Matcher matcher = Pattern.compile("\\b" + usedParameters.iterator().next() + "\\b").matcher(valueExpression);
             matcher.find();
             if (matcher.find())
@@ -289,7 +334,9 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         ParseResult result = parse(valueExpression, key -> lookup.hasEncodedValue(key) || key.contains(INFINITY) || CustomModelParser.isParameter(key, parameters));
         if (!result.ok)
             throw new IllegalArgumentException(result.invalidMessage);
-        checkBikeClimbArgs(result, parameters, lookup);
+        checkFunctionArgs(result, parameters, lookup);
+        if (BIKE_SPEED.equals(result.function))
+            return bikeSpeedMinMax(result, parameters, lookup);
         Set<String> encodedValues = encodedValuesOf(result, parameters);
         if (encodedValues.size() > 1)
             throw new IllegalArgumentException("Currently only a single EncodedValue is allowed on the right-hand side, but was " + encodedValues.size() + ". Value expression: " + valueExpression);

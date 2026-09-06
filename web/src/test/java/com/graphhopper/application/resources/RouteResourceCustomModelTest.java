@@ -68,7 +68,7 @@ public class RouteResourceCustomModelTest {
                 putObject("graph.encoded_values", "car_access, car_average_speed, road_access, max_speed, " +
                         "bike_access, bike_priority, bike_average_speed, bike_road_access, bike_network, " +
                         "foot_access, foot_priority, foot_average_speed, foot_road_access, " +
-                        "max_height, max_weight, max_width, hazmat, toll, surface, track_type, hgv, " +
+                        "max_height, max_weight, max_width, hazmat, toll, surface, track_type, smoothness, hgv, " +
                         "average_slope, max_slope, bus_access, road_class, get_off_bike, roundabout, " +
                         "country, orientation, mtb_rating, hike_rating, road_environment,ferry_speed").
                 setProfiles(List.of(
@@ -85,7 +85,7 @@ public class RouteResourceCustomModelTest {
                         TestProfiles.accessSpeedAndPriority("bike"),
                         new Profile("bus").setCustomModel(null).putHint("custom_model_files", List.of("bus.json")),
                         new Profile("cargo_bike").setCustomModel(null).putHint("custom_model_files", List.of("cargo_bike.json")),
-                        new Profile("json_bike").setCustomModel(null).putHint("custom_model_files", List.of("bike.json", "bike_elevation.json")),
+                        new Profile("json_bike").setCustomModel(null).putHint("custom_model_files", List.of("bike.json", "bike_speed.json")),
                         TestProfiles.accessSpeedAndPriority("foot_profile", "foot"),
                         new Profile("car_no_unclassified").setCustomModel(TestProfiles.accessAndSpeed("unused", "car").getCustomModel().
                                 addToPriority(If("road_class == UNCLASSIFIED", LIMIT, "0"))),
@@ -275,7 +275,7 @@ public class RouteResourceCustomModelTest {
         JsonNode path = getPath(jsonQuery);
         assertEquals(660, path.get("distance").asDouble(), 10);
 
-        // check reverse oneway is allowed for short distances
+        // check reverse oneway is allowed for short distances (pushing the bike at walking speed, see get_off_bike)
         jsonQuery = "{\"points\": [[11.545768,50.020137], [11.545728,50.020115]]," +
                 " \"profile\": \"json_bike\", \"ch.disable\": true }";
         path = getPath(jsonQuery);

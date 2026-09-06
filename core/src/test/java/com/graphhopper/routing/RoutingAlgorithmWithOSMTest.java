@@ -322,22 +322,22 @@ public class RoutingAlgorithmWithOSMTest {
         // 2.
         queries.add(new Query(43.728499, 7.417907, 43.74958, 7.436566, 4212, 231));
         // 3.
-        queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 2830, 152));
+        queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 2839, 145));
         // 4.
         queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 1567, 83));
 
         // try reverse direction
         // 1.
-        queries.add(new Query(43.727687, 7.418737, 43.730864, 7.420771, 2596, 119));
+        queries.add(new Query(43.727687, 7.418737, 43.730864, 7.420771, 1901, 93));
         queries.add(new Query(43.74958, 7.436566, 43.728499, 7.417907, 4129, 194));
         queries.add(new Query(43.739213, 7.427806, 43.728677, 7.41016, 2845, 148));
         // 4. avoid tunnel(s)!
         queries.add(new Query(43.739662, 7.424355, 43.733802, 7.413433, 1901, 116));
         // tests here still assert that reverse oneways are excluded
         GraphHopper hopper = createHopper(MONACO,
-                new Profile("bike").setCustomModel(CustomModel.merge(getCustomModel("bike.json"), getCustomModel("bike_elevation.json")).
+                new Profile("bike").setCustomModel(CustomModel.merge(getCustomModel("bike.json"), getCustomModel("bike_speed.json")).
                         addToPriority(If("!bike_access", MULTIPLY, "0"))));
-        hopper.setEncodedValuesString("average_slope, max_slope, " + hopper.getEncodedValuesString());
+        hopper.setEncodedValuesString("average_slope, max_slope, surface, track_type, smoothness, get_off_bike, max_speed, " + hopper.getEncodedValuesString());
         hopper.setElevationProvider(new SRTMProvider(DIR));
         hopper.importOrLoad();
         checkQueries(hopper, queries);
@@ -590,8 +590,8 @@ public class RoutingAlgorithmWithOSMTest {
         list.add(new Query(49.979667, 11.521019, 49.987415, 11.510577, 1288, 45));
 
         GraphHopper hopper = createHopper(BAYREUTH, new Profile("bike").setCustomModel(
-                CustomModel.merge(getCustomModel("bike.json"), getCustomModel("bike_elevation.json"))));
-        hopper.setEncodedValuesString("average_slope, max_slope, " + hopper.getEncodedValuesString());
+                CustomModel.merge(getCustomModel("bike.json"), getCustomModel("bike_speed.json"))));
+        hopper.setEncodedValuesString("average_slope, max_slope, surface, track_type, smoothness, get_off_bike, max_speed, " + hopper.getEncodedValuesString());
         hopper.setElevationProvider(new SRTMProvider(DIR));
         hopper.importOrLoad();
         checkQueries(hopper, list);

@@ -8,6 +8,7 @@ public class ParseResult {
     String invalidMessage;
     Set<String> guessedVariables;
     Set<String> operators;
-    // the (slope, power, mass, cda, crr) arguments of the bike_climb_factor call, or null
-    String[] bikeClimbArgs;
+    // the name and arguments of the built-in function call (see ValueExpressionVisitor.BUILT_INS), or null
+    String function;
+    String[] functionArgs;
 }

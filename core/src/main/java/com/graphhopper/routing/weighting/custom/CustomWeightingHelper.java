@@ -18,10 +18,9 @@
 package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.json.MinMax;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EdgeIntAccess;
-import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.weighting.BikeClimbSpeedTable;
+import com.graphhopper.routing.weighting.BikeRollingResistance;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
@@ -39,7 +38,9 @@ public class CustomWeightingHelper {
 
     protected EncodedValueLookup lookup;
     protected CustomModel customModel;
-    private BikeClimbSpeedTable bikeClimbTable;
+    private BikeClimbSpeedTable bikeClimbTable, bikeSpeedTable;
+    // the power balance ignores braking, so below this slope (in percent) bike_speed keeps the flat speed
+    static final double BRAKING_SLOPE = -15;
 
     protected CustomWeightingHelper() {
     }
@@ -105,6 +106,33 @@ public class CustomWeightingHelper {
         if (bikeClimbTable == null)
             bikeClimbTable = new BikeClimbSpeedTable(power, mass, cda, crr);
         return bikeClimbTable.getClimbFactor(slope, currentSpeed);
+    }
+
+    /**
+     * Called per edge from the generated getSpeed for bike_speed(average_slope, road_class, surface, track_type,
+     * smoothness, bike_network, get_off_bike, p_power, p_mass, p_cda, p_crr): the speed in km/h from the power balance for
+     * the slope and the rolling resistance of the surface (see BikeRollingResistance), or the walking speed
+     * where the bike is pushed. It replaces the speed of the average speed parser, so that the speed on the
+     * flat, on climbs and on rough surfaces follows from the same power. On descents steeper than
+     * BRAKING_SLOPE the cyclist brakes and the flat speed is used.
+     */
+    protected double getBikeSpeed(double slope, RoadClass roadClass, Surface surface, TrackType trackType, Smoothness smoothness,
+                                  RouteNetwork bikeNetwork, boolean getOffBike, double power, double mass, double cda, double crr) {
+        if (getOffBike) return BikeClimbSpeedTable.walkingSpeedKmh(slope);
+        if (bikeSpeedTable == null)
+            bikeSpeedTable = new BikeClimbSpeedTable(power, mass, cda, crr);
+        if (slope < BRAKING_SLOPE) slope = 0;
+        return bikeSpeedTable.getSurfaceSpeed(slope, BikeRollingResistance.factor(roadClass, surface, trackType, smoothness, bikeNetwork));
+    }
+
+    /**
+     * The bounds of bike_speed for findMinMax: the speed decreases with the slope and the rolling resistance
+     * and the walking speed is below the flat speed of any valid parameters.
+     */
+    public static MinMax bikeSpeedMinMax(double minSlope, double maxSlope, double power, double mass, double cda, double crr) {
+        BikeClimbSpeedTable table = new BikeClimbSpeedTable(power, mass, cda, crr);
+        double min = Math.min(BikeClimbSpeedTable.walkingSpeedKmh(maxSlope), table.getSurfaceSpeed(maxSlope, BikeRollingResistance.PUSHING));
+        return new MinMax(min, Math.max(BikeClimbSpeedTable.walkingSpeedKmh(minSlope), table.getSurfaceSpeed(minSlope, 1)));
     }
 
     public static boolean in(Polygon p, EdgeIteratorState edge) {

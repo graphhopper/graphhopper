@@ -757,6 +757,27 @@ request custom model cannot repeat it.
 Finite ranges are required as the custom model is validated at the range endpoints on startup: a power of 0
 or an infinite power is rejected. See `bike_elevation.json` for the physical background and typical values.
 
+`bike_speed(average_slope, road_class, surface, track_type, smoothness, bike_network, get_off_bike, p_power, p_mass, p_cda, p_crr)`
+calculates the speed in km/h from the same power balance, but without a base speed from an average speed
+parser: the flat speed follows from the power (about 18.7km/h for 100W), a rough surface is a higher rolling
+resistance (e.g. 2.8 times the `crr` of asphalt for gravel, see `BikeRollingResistance`; a track or path
+without surface tag in a bike network is assumed to be paved) and where the bike has to be pushed
+(`get_off_bike`) or riding gets slower than walking, the walking speed for the slope is used (5km/h on the flat).
+On descents steeper than 15% the flat speed is kept (braking). So a request that lowers the power slows
+down the flat, the climbs and the rough surfaces consistently. The first seven arguments are the encoded values,
+the other four numbers or parameters like for `bike_climb_factor`. Use it with `limit_to` as first statement
+and limit the descents, see `bike_speed.json`:
+
+```json
+{
+  "speed": [
+    { "if": "road_environment == FERRY", "limit_to": "ferry_speed" },
+    { "else": "", "limit_to": "bike_speed(average_slope, road_class, surface, track_type, smoothness, bike_network, get_off_bike, p_power, p_mass, p_cda, p_crr)" },
+    { "if": "true", "limit_to": "p_vehicle_max_speed" }
+  ]
+}
+```
+
 ### `parameters`
 
 The `parameters` section defines named numbers and booleans that can be used in conditions and value

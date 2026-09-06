@@ -488,6 +488,58 @@ class CustomWeightingTest {
     }
 
     @Test
+    public void testBikeSpeedFunction() {
+        DecimalEncodedValue slopeEnc = AverageSlope.create();
+        EnumEncodedValue<Surface> surfaceEnc = Surface.create();
+        BooleanEncodedValue getOffBikeEnc = GetOffBike.create();
+        EncodingManager em = new EncodingManager.Builder().add(slopeEnc).add(RoadClass.create()).add(surfaceEnc).
+                add(TrackType.create()).add(Smoothness.create()).add(RouteNetwork.create(BikeNetwork.KEY)).add(getOffBikeEnc).build();
+        BaseGraph graph = new BaseGraph.Builder(em).create();
+        String call = "bike_speed(average_slope, road_class, surface, track_type, smoothness, bike_network, get_off_bike, p_power, p_mass, p_cda, p_crr)";
+        CustomModel customModel = new CustomModel().setDistanceInfluence(0d).
+                setParameter("power", 120).setParameter("mass", 95).setParameter("cda", 0.6).setParameter("crr", 0.01).
+                addToSpeed(If("true", LIMIT, call));
+        Weighting weighting = CustomModelParser.createWeighting(em, NO_TURN_COST_PROVIDER, customModel);
+        BikeClimbSpeedTable table = new BikeClimbSpeedTable(120, 95, 0.6, 0.01);
+        // no base speed: the flat speed on asphalt follows from the power
+        EdgeIteratorState edge = graph.edge(0, 1).setDistance(1000).set(slopeEnc, 0);
+        assertEquals(20.4, table.getFlatSpeed(), 0.1);
+        assertEquals(10 * 1000 / (table.getFlatSpeed() / 3.6), weighting.calcEdgeWeight(edge, false), 5);
+        // a rough surface is a higher rolling resistance, gravel gives 13.7km/h at 120W (12km/h for the 100W of the profile like the former average speed parser)
+        EdgeIteratorState gravel = graph.edge(2, 3).setDistance(1000).set(slopeEnc, 0).set(surfaceEnc, Surface.GRAVEL);
+        assertEquals(10 * 1000 / (13.75 / 3.6), weighting.calcEdgeWeight(gravel, false), 5);
+        // and on a climb the same power balance applies to slope plus rolling resistance
+        gravel.set(slopeEnc, 5);
+        assertEquals(10 * 1000 / (table.getSurfaceSpeed(5, 2.8) / 3.6), weighting.calcEdgeWeight(gravel, false), 5);
+        // pushing at walking speed, 5km/h on the flat
+        EdgeIteratorState footway = graph.edge(4, 5).setDistance(1000).set(slopeEnc, 0).set(getOffBikeEnc, true);
+        assertEquals(10 * 1000 / (5.04 / 3.6), weighting.calcEdgeWeight(footway, false), 5);
+        // descents are faster (to be limited in the custom model), but on steep descents the flat speed is kept
+        edge.set(slopeEnc, 8);
+        assertEquals(10 * 1000 / (table.getSpeed(-8) / 3.6), weighting.calcEdgeWeight(edge, true), 5);
+        edge.set(slopeEnc, 20);
+        assertEquals(10 * 1000 / (table.getFlatSpeed() / 3.6), weighting.calcEdgeWeight(edge, true), 5);
+
+        // a lower power slows down the flat, the climb and the rough surface consistently
+        CustomModel weakModel = new CustomModel().setDistanceInfluence(0d).
+                setParameter("power", 80).setParameter("mass", 95).setParameter("cda", 0.6).setParameter("crr", 0.01).
+                addToSpeed(If("true", LIMIT, call));
+        Weighting weakWeighting = CustomModelParser.createWeighting(em, NO_TURN_COST_PROVIDER, weakModel);
+        BikeClimbSpeedTable weakTable = new BikeClimbSpeedTable(80, 95, 0.6, 0.01);
+        assertEquals(16.7, weakTable.getFlatSpeed(), 0.1);
+        assertEquals(10 * 1000 / (weakTable.getSurfaceSpeed(5, 2.8) / 3.6), weakWeighting.calcEdgeWeight(gravel, false), 5);
+
+        // the types of the encoded values are checked
+        CustomModel wrongModel = new CustomModel().setDistanceInfluence(0d).setParameter("power", 120).setParameter("mass", 95).
+                setParameter("cda", 0.6).setParameter("crr", 0.01).
+                addToSpeed(If("true", LIMIT, "bike_speed(average_slope, surface, road_class, track_type, smoothness, bike_network, get_off_bike, p_power, p_mass, p_cda, p_crr)"));
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> CustomModelParser.createWeighting(em, NO_TURN_COST_PROVIDER, wrongModel));
+        assertTrue(ex.getMessage().contains("expects the encoded value road_class as argument 2 but 'surface' is not of type RoadClass"), ex.getMessage());
+        // the maximum speed is the descent at the steepest slope
+        assertEquals(table.getSpeed(-31.5), CustomModelParser.createWeightingConfig(customModel, em).getMaxSpeedCalc().calcMax(), 0.1);
+    }
+
+    @Test
     public void testBikeClimbParameterRanges() {
         DecimalEncodedValue slopeEnc = AverageSlope.create();
         DecimalEncodedValue speedEnc = VehicleSpeed.create("bike", 4, 2, true);

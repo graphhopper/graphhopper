@@ -43,7 +43,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.graphhopper.json.Statement.Keyword.IF;
-import static com.graphhopper.routing.weighting.custom.ValueExpressionVisitor.BIKE_CLIMB_FACTOR;
+import static com.graphhopper.routing.weighting.custom.ValueExpressionVisitor.*;
 
 public class CustomModelParser {
     private static final AtomicLong longVal = new AtomicLong(1);
@@ -256,9 +256,11 @@ public class CustomModelParser {
 
             // a single call keeps the speed table of CustomWeightingHelper unique and avoids that a request
             // repeats the call of the profile, which would apply the factor twice
-            Matcher matcher = Pattern.compile("\\b" + BIKE_CLIMB_FACTOR + "\\b").matcher(customModel.getSpeed().toString());
-            if (matcher.find() && matcher.find())
-                throw new IllegalArgumentException(BIKE_CLIMB_FACTOR + " can be called only once per custom model");
+            for (String function : List.of(BIKE_CLIMB_FACTOR, BIKE_SPEED)) {
+                Matcher matcher = Pattern.compile("\\b" + function + "\\b").matcher(customModel.getSpeed().toString());
+                if (matcher.find() && matcher.find())
+                    throw new IllegalArgumentException(function + " can be called only once per custom model");
+            }
 
             Set<String> speedVariables = new LinkedHashSet<>();
             List<Java.BlockStatement> speedStatements = createGetSpeedStatements(speedVariables, customModel, lookup);
@@ -690,19 +692,21 @@ public class CustomModelParser {
     }
 
     /**
-     * Verifies the value expression of the statement and collects its variables. A bike_climb_factor
-     * call gets the current speed ("value") injected as first argument and calls the instance method
-     * of CustomWeightingHelper: bike_climb_factor(average_slope, p_power, p_mass, p_cda, p_crr)
+     * Verifies the value expression of the statement and collects its variables. The built-in functions
+     * with a speed table call the instance methods of CustomWeightingHelper, where a bike_climb_factor
+     * call gets the current speed ("value") injected as first argument:
+     * bike_climb_factor(average_slope, p_power, p_mass, p_cda, p_crr)
      * -> getBikeClimbFactor(value, average_slope, p_power, p_mass, p_cda, p_crr)
      */
     private static String parseValue(Statement statement, Set<String> createObjects, Map<String, CustomModel.Parameter> parameters,
                                      EncodedValueLookup lookup, String exceptionInfo) {
         ParseResult result = ValueExpressionVisitor.parseValue(statement.value(), parameters, lookup);
         createObjects.addAll(result.guessedVariables);
-        if (result.bikeClimbArgs == null) return statement.value();
+        if (result.function == null) return statement.value();
         if (!exceptionInfo.startsWith("speed"))
-            throw new IllegalArgumentException(BIKE_CLIMB_FACTOR + " is only supported for 'speed' but was used in " + exceptionInfo);
-        return "getBikeClimbFactor(value, " + String.join(", ", result.bikeClimbArgs) + ")";
+            throw new IllegalArgumentException(result.function + " is only supported for 'speed' but was used in " + exceptionInfo);
+        String args = String.join(", ", result.functionArgs);
+        return BIKE_CLIMB_FACTOR.equals(result.function) ? "getBikeClimbFactor(value, " + args + ")" : "getBikeSpeed(" + args + ")";
     }
 
     static void parseExpressions(StringBuilder expressions, NameValidator nameInConditionValidator,

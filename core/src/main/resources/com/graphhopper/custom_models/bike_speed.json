@@ -1,0 +1,34 @@
+// The speed of the bike follows from the power balance of a cyclist with the specified power and mass (bike plus
+// rider), the drag area cda (drag coefficient times frontal area in m^2) and the rolling resistance coefficient crr
+// on asphalt, i.e. about 18.7km/h on the flat for 100W. A rough surface is a higher rolling resistance (see
+// BikeRollingResistance) and a climb a steeper slope: both slow down via the same power balance, so a different
+// power changes the speed on the flat, on climbs and on rough surfaces consistently. Where riding gets slower than
+// walking, or where cycling is not intended (get_off_bike, e.g. footways), the bike is pushed at walking speed
+// (5km/h on the flat). On descents the speed increases up to vehicle_max_speed, but stays at the flat speed on descents steeper
+// than 15% (braking). The slower speed already avoids climbs proportional to the ascent, the priority penalty per
+// slope percent above 3% (hill_penalty, 0 for none) adds an avoidance of steepness, e.g. 0.015 avoids a 10% climb
+// like an edge that takes 12% longer. It is small for the rideable range so that the same ascent is not spread over
+// a longer, gentler road (elevation noise would create small detours) and grows without a cap into the pushing
+// range to avoid steep shortcuts. Below 3% there is no penalty.
+{
+  "parameters": {
+    "power":      { "value": 100,   "min": 40, "max": 1000 },
+    "mass":       { "value": 95,    "min": 25, "max": 300 },
+    "cda":        { "value": 0.6,   "min": 0.1, "max": 2 },
+    "crr":        { "value": 0.01,  "min": 0.002, "max": 0.02 },
+    "vehicle_max_speed": { "value": 45, "min": 5, "max": 80 },
+    "hill_penalty": { "value": 0.015, "min": 0, "max": 0.03 }
+  },
+  "priority": [
+    { "if": "average_slope > 3", "multiply_by": "1 - p_hill_penalty * Math.max(average_slope - 3, 0)" }
+  ],
+  "speed": [
+    { "if": "road_environment == FERRY", "limit_to": "ferry_speed" },
+    { "else": "", "limit_to": "bike_speed(average_slope, road_class, surface, track_type, smoothness, bike_network, get_off_bike, p_power, p_mass, p_cda, p_crr)" },
+    { "if": "road_class == STEPS", "limit_to": "2" },
+    // shared with pedestrians: ride slowly unless designated for bikes
+    { "if": "(road_class == FOOTWAY || road_class == PEDESTRIAN || road_class == LIVING_STREET) && bike_road_access != DESIGNATED", "limit_to": "12" },
+    { "if": "true", "limit_to": "max_speed" },
+    { "if": "true", "limit_to": "p_vehicle_max_speed" }
+  ]
+}

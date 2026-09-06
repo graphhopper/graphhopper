@@ -7,6 +7,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.OSMParsers;
 import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.routing.util.TransportationMode;
+import com.graphhopper.routing.weighting.BikeClimbSpeedTable;
 import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.BaseGraph;
@@ -30,8 +31,15 @@ public class BikeCustomModelTest {
         IntEncodedValue bikeRating = MtbRating.create();
         IntEncodedValue hikeRating = HikeRating.create();
         EnumEncodedValue<BikeRoadAccess> bikeRA = BikeRoadAccess.create();
+        BooleanEncodedValue bikeAccess = VehicleAccess.create("bike");
+        BooleanEncodedValue getOffBike = GetOffBike.create();
         em = new EncodingManager.Builder().
-                add(VehicleAccess.create("bike")).
+                add(bikeAccess).
+                add(getOffBike).
+                add(AverageSlope.create()).
+                add(Surface.create()).
+                add(TrackType.create()).
+                add(MaxSpeed.create()).
                 add(VehicleSpeed.create("bike", 4, 2, false)).
                 add(VehiclePriority.create("bike", 4, PriorityCode.getFactor(1), false)).
                 add(VehicleAccess.create("mtb")).
@@ -55,6 +63,10 @@ public class BikeCustomModelTest {
                 add(hikeRating).build();
 
         parsers = new OSMParsers().
+                addWayTagParser(new OSMRoadClassParser(em.getEnumEncodedValue(RoadClass.KEY, RoadClass.class))).
+                addWayTagParser(new OSMSurfaceParser(em.getEnumEncodedValue(Surface.KEY, Surface.class))).
+                addWayTagParser(new OSMTrackTypeParser(em.getEnumEncodedValue(TrackType.KEY, TrackType.class))).
+                addWayTagParser(new OSMSmoothnessParser(em.getEnumEncodedValue(Smoothness.KEY, Smoothness.class))).
                 addWayTagParser(new OSMMtbRatingParser(bikeRating)).
                 addWayTagParser(new OSMHikeRatingParser(hikeRating)).
                 addWayTagParser(new BikeAccessParser(em, new PMap())).
@@ -66,10 +78,17 @@ public class BikeCustomModelTest {
                 addWayTagParser(new BikePriorityParser(em)).
                 addWayTagParser(new MountainBikePriorityParser(em)).
                 addWayTagParser(new RacingBikePriorityParser(em)).
-                addWayTagParser(OSMRoadAccessParser.forBike(bikeRA));
+                addWayTagParser(OSMRoadAccessParser.forBike(bikeRA)).
+                addWayTagParser(new OSMGetOffBikeParser(getOffBike, bikeAccess)).
+                addWayTagParser(new OSMMaxSpeedParser(em.getDecimalEncodedValue(MaxSpeed.KEY)));
 
         parsers.addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(em.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class), relConfig, "bicycle")).
                 addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(em.getEnumEncodedValue(MtbNetwork.KEY, RouteNetwork.class), relConfig, "mtb"));
+    }
+
+    static CustomModel bikeModel() {
+        // the priority from bike.json, the speed from the power balance in bike_speed.json
+        return CustomModel.merge(GHUtility.loadCustomModelFromJar("bike.json"), GHUtility.loadCustomModelFromJar("bike_speed.json"));
     }
 
     EdgeIteratorState createEdge(ReaderWay way, ReaderRelation... readerRelation) {
@@ -85,7 +104,7 @@ public class BikeCustomModelTest {
 
     @Test
     public void testCustomBike() {
-        CustomModel baseCM = GHUtility.loadCustomModelFromJar("bike.json");
+        CustomModel baseCM = bikeModel();
         CustomModel bikeAvoidPrivate = GHUtility.loadCustomModelFromJar("bike_avoid_private_node.json");
         CustomModel cm = CustomModel.merge(baseCM, bikeAvoidPrivate);
         ReaderWay way = new ReaderWay(0L);
@@ -115,7 +134,9 @@ public class BikeCustomModelTest {
         way.setTag("sac_scale", "mountain_hiking");
         edge = createEdge(way);
         assertEquals(0.0, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(8.0, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        // the speed follows from the power balance with the rolling resistance of the surface (ground)
+        assertEquals(new BikeClimbSpeedTable(100, 95, 0.6, 0.01).getSurfaceSpeed(0, 3.6), p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        assertEquals(9.9, p.getEdgeToSpeedMapping().get(edge, false), 0.1);
 
         way.clearTags();
         way.setTag("highway", "tertiary");
@@ -126,7 +147,7 @@ public class BikeCustomModelTest {
 
     @Test
     public void testCountryAccessDefault() {
-        CustomModel cm = GHUtility.loadCustomModelFromJar("bike.json");
+        CustomModel cm = bikeModel();
         ReaderWay way = new ReaderWay(0L);
         way.setTag("highway", "bridleway");
         EdgeIteratorState edge = createEdge(way);
@@ -226,7 +247,7 @@ public class BikeCustomModelTest {
 
     @Test
     public void testCalcPriority() {
-        CustomModel cm = GHUtility.loadCustomModelFromJar("bike.json");
+        CustomModel cm = bikeModel();
         CustomWeighting.Config p = CustomModelParser.createWeightingConfig(cm, em);
 
         ReaderWay way = new ReaderWay(1);
@@ -251,7 +272,7 @@ public class BikeCustomModelTest {
 
     @Test
     public void testHandleWayTagsInfluencedByRelation() {
-        CustomModel cm = GHUtility.loadCustomModelFromJar("bike.json");
+        CustomModel cm = bikeModel();
         CustomWeighting.Config p = CustomModelParser.createWeightingConfig(cm, em);
 
         ReaderWay way = new ReaderWay(1);
@@ -264,7 +285,8 @@ public class BikeCustomModelTest {
         way.setTag("lcn", "yes");
         edge = createEdge(way);
         assertEquals(1.2, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(18, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        // the flat speed of 100W on asphalt
+        assertEquals(18.7, p.getEdgeToSpeedMapping().get(edge, false), 0.1);
 
         // relation code is VERY_NICE
         ReaderRelation rel = new ReaderRelation(1);
@@ -273,30 +295,30 @@ public class BikeCustomModelTest {
         way.setTag("highway", "road");
         edge = createEdge(way, rel);
         assertEquals(1.2, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(18, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        assertEquals(18.7, p.getEdgeToSpeedMapping().get(edge, false), 0.1);
 
         rel.setTag("network", "lcn");
         edge = createEdge(way, rel);
         assertEquals(1.2, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(18, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        assertEquals(18.7, p.getEdgeToSpeedMapping().get(edge, false), 0.1);
 
         // relation code is NICE
         rel.setTag("network", "rcn");
         edge = createEdge(way, rel);
         assertEquals(1.2, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(18, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        assertEquals(18.7, p.getEdgeToSpeedMapping().get(edge, false), 0.1);
 
         // no "double boosting" due because way lcn=yes is only considered if no route relation
         way.setTag("lcn", "yes");
         edge = createEdge(way, rel);
         assertEquals(1.2, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(18, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        assertEquals(18.7, p.getEdgeToSpeedMapping().get(edge, false), 0.1);
 
         // relation code is BEST
         rel.setTag("network", "ncn");
         edge = createEdge(way, rel);
         assertEquals(1.4, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(18, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        assertEquals(18.7, p.getEdgeToSpeedMapping().get(edge, false), 0.1);
 
         // PREFER relation, but tertiary road => no get off the bike but road wayTypeCode and faster
         way.clearTags();
@@ -305,20 +327,21 @@ public class BikeCustomModelTest {
         rel.setTag("network", "lcn");
         edge = createEdge(way, rel);
         assertEquals(1.2, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(18, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        assertEquals(18.7, p.getEdgeToSpeedMapping().get(edge, false), 0.1);
 
         rel.clearTags();
         way.clearTags();
         way.setTag("highway", "track");
         edge = createEdge(way, rel);
         assertEquals(1, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(12, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        assertEquals(12.0, p.getEdgeToSpeedMapping().get(edge, false), 0.1);
 
         rel.setTag("route", "bicycle");
         rel.setTag("network", "lcn");
         edge = createEdge(way, rel);
         assertEquals(1.2, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(18, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        // a track without surface tag in a bike network is assumed to be paved
+        assertEquals(18.7, p.getEdgeToSpeedMapping().get(edge, false), 0.1);
     }
 
     @Test

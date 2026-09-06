@@ -8,8 +8,8 @@ public class BikeClimbSpeedTable {
 
     private final double[] tab;   // values in km/h
     // the table covers the slopes from -MAX_SLOPE to MAX_SLOPE (in percent), beyond the first or last entry is
-    // used. The maximum of average_slope is 31.5 plus the slope offset of getClimbFactor
-    private static final double MAX_SLOPE = 40;
+    // used. The maximum of average_slope is 31.5 plus the slope offset of getClimbFactor or getSurfaceSpeed
+    private static final double MAX_SLOPE = 50;
     private static final int OFFSET = (int) (MAX_SLOPE * INV_STEP); // index of slope 0
     private final double flatSpeed, crr; // the flat speed in km/h follows from the power balance
 
@@ -48,18 +48,18 @@ public class BikeClimbSpeedTable {
         for (int i = 0; i < tab.length; i++) {
             double slope = (i - OFFSET) * STEP;
             double walkInfluence = Math.min(1, Math.max(0, (slope - dismountSlope) / 2));
+            // pushing the bike up a steep slope is slower than walking, i.e. 0.8 times the walking speed
             tab[i] = (1 - walkInfluence) * cyclingSpeedKmh(slope, power, rollingForce, aero, m_g_100)
-                    + walkInfluence * walkingSpeedKmh(slope);
+                    + walkInfluence * 0.8 * walkingSpeedKmh(slope);
         }
     }
 
     /**
-     * High precision calculation for when the table values are created (not called per edge).
-     *
-     * @return the speed of the cyclist pushing the bike, i.e. 0.8 times Tobler's hiking function.
+     * @return the walking speed in km/h from Tobler's hiking function: 5km/h on the flat and slower uphill.
+     * Downhill it stays 5km/h as the bike has to be held back.
      */
-    private static double walkingSpeedKmh(double slope) {
-        return 0.8 * 6 * Math.exp(-3.5 * (slope / 100 + 0.05));
+    public static double walkingSpeedKmh(double slope) {
+        return 6 * Math.exp(-3.5 * (Math.max(0, slope) / 100 + 0.05));
     }
 
     /**
@@ -100,6 +100,15 @@ public class BikeClimbSpeedTable {
         if (slope < 0) return getSpeed(slope) / flatSpeed;
         double slopeOffset = 100 * crr * Math.max(0, flatSpeed / currentSpeed - 1);
         return Math.min(1, getSpeed(slope + slopeOffset) / currentSpeed);
+    }
+
+    /**
+     * @return the speed in km/h for the specified slope on a surface with the specified rolling resistance
+     * relative to the crr of this table, see BikeRollingResistance. As crr and slope/100 appear only as sum
+     * in the power balance, the additional rolling resistance is a slope offset in percent.
+     */
+    public double getSurfaceSpeed(double slope, double crrFactor) {
+        return getSpeed(slope + 100 * crr * (crrFactor - 1));
     }
 
     /**

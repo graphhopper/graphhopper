@@ -1,9 +1,11 @@
 // to use this custom model you need to set the following option in the config.yml
 // graph.elevation.provider: srtm   # enables elevation
-// graph.encoded_values: bike_priority, bike_access, bike_network, roundabout, bike_average_speed, bike_road_access, foot_road_access, average_slope, mtb_rating, hike_rating, country, road_class, ferry_speed
+// graph.encoded_values: bike_priority, bike_access, bike_network, roundabout, bike_road_access, foot_road_access, average_slope, mtb_rating, hike_rating, country, road_class, road_environment, ferry_speed, surface, track_type, smoothness, get_off_bike, max_speed
 // profiles:
 //    - name: bike
-//      custom_model_files: [bike.json, bike_avoid_private_node.json, bike_elevation.json]
+//      custom_model_files: [bike.json, bike_avoid_private_node.json, bike_speed.json]
+//
+// This file contains the priority (which roads to prefer), the speed is calculated in bike_speed.json.
 //
 // To reduce turns and enable a more advanced "private-road avoidance" you can enable turn costs:
 // profiles:
@@ -11,7 +13,7 @@
 //      turn_costs:
 //        vehicle_types: [bicycle]
 //        u_turn_costs: 10
-//      custom_model_files: [bike.json, bike_avoid_private.json, avoid_turns.json, bike_elevation.json]
+//      custom_model_files: [bike.json, bike_avoid_private.json, avoid_turns.json, bike_speed.json]
 
 {
   "parameters": { "max_mtb_rating": 2, "max_hike_rating": 1 },
@@ -25,10 +27,5 @@
     { "if": "bike_road_access == NO", "multiply_by": "0" },
     { "if": "!bike_access && (!backward_bike_access || roundabout)",  "multiply_by": "0" },
     { "else_if": "!bike_access && backward_bike_access",  "multiply_by": "0.2" }
-  ],
-  "speed": [
-    { "if": "road_environment == FERRY", "limit_to": "ferry_speed" },
-    { "else": "", "limit_to": "bike_average_speed" },
-    { "if": "!bike_access && backward_bike_access", "limit_to": "6" }
   ]
 }

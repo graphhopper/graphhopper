@@ -22,13 +22,13 @@ public class BikeClimbSpeedTableTest {
         assertEquals(2.0, table.getSpeed(20), 0.01);
         assertEquals(1.34, table.getSpeed(31.5), 0.01);
         // beyond the table the last value is used
-        assertEquals(table.getSpeed(40), table.getSpeed(50), 0.001);
+        assertEquals(table.getSpeed(50), table.getSpeed(60), 0.001);
         // descents: the same power balance without braking, i.e. limit the speed in the custom model
         assertEquals(30.9, table.getSpeed(-2), 0.1);
         assertEquals(38.8, table.getSpeed(-4), 0.1);
         assertEquals(45.9, table.getSpeed(-6), 0.1);
         assertEquals(55.1, table.getSpeed(-9), 0.1);
-        assertEquals(table.getSpeed(-40), table.getSpeed(-50), 0.001);
+        assertEquals(table.getSpeed(-50), table.getSpeed(-60), 0.001);
         assertThrows(IllegalArgumentException.class, () -> new BikeClimbSpeedTable(120, 95, 0, 0.006));
     }
 

@@ -131,7 +131,7 @@ class ValueExpressionVisitorTest {
         assertTrue(result.invalidMessage.contains("expects an argument like average_slope as argument 1"), result.invalidMessage);
         result = parse("bike_climb_factor(average_slope, 120, p_mass, 0.6, p_crr)", validator);
         assertTrue(result.ok, result.invalidMessage);
-        assertArrayEquals(new String[]{"average_slope", "120", "p_mass", "0.6", "p_crr"}, result.bikeClimbArgs);
+        assertArrayEquals(new String[]{"average_slope", "120", "p_mass", "0.6", "p_crr"}, result.functionArgs);
         result = parse("bike_climb_factor(average_slope, p_power, 2 * p_mass, p_cda, p_crr)", validator);
         assertFalse(result.ok);
         assertTrue(result.invalidMessage.contains("expects an argument like p_mass as argument 3"), result.invalidMessage);
@@ -147,17 +147,17 @@ class ValueExpressionVisitorTest {
         NameValidator validator = s -> s.equals("average_slope") || s.startsWith("p_");
         ParseResult result = parse(BIKE_CALL, validator);
         assertTrue(result.ok, result.invalidMessage);
-        assertArrayEquals(new String[]{"average_slope", "p_power", "p_mass", "p_cda", "p_crr"}, result.bikeClimbArgs);
+        assertArrayEquals(new String[]{"average_slope", "p_power", "p_mass", "p_cda", "p_crr"}, result.functionArgs);
 
         // independent of whitespace
         result = parse("bike_climb_factor( average_slope,   p_power  ,p_mass, p_cda ,p_crr )", validator);
         assertTrue(result.ok, result.invalidMessage);
-        assertArrayEquals(new String[]{"average_slope", "p_power", "p_mass", "p_cda", "p_crr"}, result.bikeClimbArgs);
+        assertArrayEquals(new String[]{"average_slope", "p_power", "p_mass", "p_cda", "p_crr"}, result.functionArgs);
 
         // without the built-in function nothing is recorded
         result = parse("average_slope * 2.5", validator);
         assertTrue(result.ok, result.invalidMessage);
-        assertNull(result.bikeClimbArgs);
+        assertNull(result.functionArgs);
     }
 
     @Test
