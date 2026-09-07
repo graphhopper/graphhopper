@@ -100,6 +100,7 @@ public final class MMapDataAccess extends AbstractDataAccess {
         initRandomAccessFile();
         bytes = Math.max(10 * 4, bytes);
         ensureCapacity(bytes);
+        initialized = true;
         return this;
     }
 
@@ -207,6 +208,7 @@ public final class MMapDataAccess extends AbstractDataAccess {
                 return false;
 
             mapIt(HEADER_OFFSET, byteCount - HEADER_OFFSET);
+            initialized = true;
             return true;
         } catch (IOException ex) {
             throw new RuntimeException("Problem while loading " + getFullName(), ex);
@@ -217,6 +219,8 @@ public final class MMapDataAccess extends AbstractDataAccess {
     public void flush() {
         if (isClosed())
             throw new IllegalStateException("already closed");
+        if (!initialized)
+            throw new IllegalStateException("not initialized");
 
         try {
             for (MappedByteBuffer bb : segments) {

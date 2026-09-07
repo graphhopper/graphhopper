@@ -40,6 +40,7 @@ public class RAMInt1SegmentDataAccess extends AbstractDataAccess {
         if (data.length > 0)
             throw new IllegalThreadStateException("already created");
         ensureCapacity(Math.max(10 * 4, bytes));
+        initialized = true;
         return this;
     }
 
@@ -105,6 +106,7 @@ public class RAMInt1SegmentDataAccess extends AbstractDataAccess {
                         data[offset + j] = bitUtil.toInt(bytes, j * 4);
                     }
                 }
+                initialized = true;
                 return true;
             }
         } catch (IOException ex) {
@@ -118,6 +120,8 @@ public class RAMInt1SegmentDataAccess extends AbstractDataAccess {
             throw new IllegalStateException("already closed");
         if (readOnly)
             throw new IllegalStateException("Cannot flush the read-only DataAccess " + getFullName());
+        if (!initialized)
+            throw new IllegalStateException("not initialized");
         ensureParentDirectoryExists();
 
         try {
