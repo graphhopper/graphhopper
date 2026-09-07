@@ -1,6 +1,6 @@
 // The speed of the bike follows from the power balance of a cyclist with the specified power and mass (bike plus
 // rider), the drag area cda (drag coefficient times frontal area in m^2) and the rolling resistance coefficient crr
-// on asphalt, i.e. about 18.7km/h on the flat for 100W. A rough surface is a higher rolling resistance (see
+// on asphalt, i.e. about 19.6km/h on the flat for 110W. A rough surface is a higher rolling resistance (see
 // BikeRollingResistance) and a climb a steeper slope: both slow down via the same power balance, so a different
 // power changes the speed on the flat, on climbs and on rough surfaces consistently. Where riding gets slower than
 // walking, or where cycling is not intended (get_off_bike, e.g. footways), the bike is pushed at walking speed
@@ -12,7 +12,7 @@
 // range to avoid steep shortcuts. Below 3% there is no penalty.
 {
   "parameters": {
-    "power":      { "value": 100,   "min": 40, "max": 1000 },
+    "power":      { "value": 110,   "min": 40, "max": 1000 },
     "mass":       { "value": 95,    "min": 25, "max": 300 },
     "cda":        { "value": 0.6,   "min": 0.1, "max": 2 },
     "crr":        { "value": 0.01,  "min": 0.002, "max": 0.02 },

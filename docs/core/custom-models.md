@@ -759,7 +759,7 @@ or an infinite power is rejected. See `bike_elevation.json` for the physical bac
 
 `bike_speed(average_slope, road_class, surface, track_type, smoothness, bike_network, get_off_bike, p_power, p_mass, p_cda, p_crr)`
 calculates the speed in km/h from the same power balance, but without a base speed from an average speed
-parser: the flat speed follows from the power (about 18.7km/h for 100W), a rough surface is a higher rolling
+parser: the flat speed follows from the power (about 19.6km/h for 110W), a rough surface is a higher rolling
 resistance (e.g. 2.8 times the `crr` of asphalt for gravel, see `BikeRollingResistance`; a track or path
 without surface tag in a bike network is assumed to be paved) and where the bike has to be pushed
 (`get_off_bike`) or riding gets slower than walking, the walking speed for the slope is used (5km/h on the flat).
