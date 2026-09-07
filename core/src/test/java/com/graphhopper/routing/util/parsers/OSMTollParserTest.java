@@ -141,6 +141,10 @@ public class OSMTollParserTest {
         assertEquals(Toll.NO, getToll("trunk", "", Country.FRA));
         assertEquals(Toll.NO, getToll("primary", "", Country.FRA));
 
+        // only ~1300 of ~17000 km of Spanish motorways are tolled, see discuss.graphhopper.com/t/10020
+        assertEquals(Toll.NO, getToll("motorway", "", Country.ESP));
+        assertEquals(Toll.ALL, getToll("motorway", "toll=yes", Country.ESP));
+
         assertEquals(Toll.NO, getToll("motorway", "", Country.MEX));
         assertEquals(Toll.NO, getToll("trunk", "", Country.MEX));
         assertEquals(Toll.NO, getToll("primary", "", Country.MEX));
