@@ -179,7 +179,7 @@ public class MaxSpeedCalculator {
         if (!encodingManager.hasEncodedValue(Country.KEY))
             throw new IllegalArgumentException("max_speed_calculator needs country");
         if (!encodingManager.hasEncodedValue(UrbanDensity.KEY))
-            throw new IllegalArgumentException("max_speed_calculator needs urban_density");
+            throw new IllegalArgumentException("max_speed_calculator needs urban_density. Enable via e.g. graph.urban_density.threads: 1");
     }
 
     static class SpeedLimitsJson {
