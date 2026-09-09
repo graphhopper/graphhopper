@@ -22,10 +22,7 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.storage.IntsRef;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 
 public class OSMRoadAccessParser<T extends Enum> implements TagParser {
@@ -304,6 +301,20 @@ public class OSMRoadAccessParser<T extends Enum> implements TagParser {
     }
 
     public static OSMRoadAccessParser<FootRoadAccess> forFoot(EnumEncodedValue<FootRoadAccess> roadAccessEnc) {
-        return new OSMRoadAccessParser<>(roadAccessEnc, toOSMRestrictions(TransportationMode.FOOT), FOOT_HANDLER, FootRoadAccess::find);
+        return new OSMRoadAccessParser<>(roadAccessEnc, toOSMRestrictions(TransportationMode.FOOT), FOOT_HANDLER, FootRoadAccess::find)
+        {
+            private final Set<String> SIDEWALKS_NO_VALS = Set.of("no", "none", "separate");
+
+            @Override
+            public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
+                if (way.hasTag("sidewalk", "separate")
+                        || way.hasTag("sidewalk:both", "separate")
+                        || (way.hasTag("sidewalk:left", "separate") && way.hasTag("sidewalk:right", SIDEWALKS_NO_VALS))
+                        || (way.hasTag("sidewalk:right", "separate") && way.hasTag("sidewalk:left", SIDEWALKS_NO_VALS)))
+                    accessEnc.setEnum(false, edgeId, edgeIntAccess, FootRoadAccess.USE_SIDEPATH);
+                else
+                    super.handleWayTags(edgeId, edgeIntAccess, way, relationFlags);
+            }
+        };
     }
 }
