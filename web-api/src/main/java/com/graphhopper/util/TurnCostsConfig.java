@@ -11,7 +11,6 @@ public class TurnCostsConfig {
 
     private int uTurnCosts = INFINITE_U_TURN_COSTS;
     private List<String> vehicleTypes;
-    private boolean allowTurnPenaltyInRequest;
 
     // ensure that no typos can occur like motor_car vs motorcar or bike vs bicycle
     private static final Set<String> ALL_SUPPORTED = Set.of(
@@ -76,16 +75,6 @@ public class TurnCostsConfig {
      */
     public TurnCostsConfig setUTurnCosts(int uTurnCosts) {
         this.uTurnCosts = uTurnCosts;
-        return this;
-    }
-
-    @JsonProperty("allow_turn_penalty_in_request")
-    public boolean isAllowTurnPenaltyInRequest() {
-        return allowTurnPenaltyInRequest;
-    }
-
-    public TurnCostsConfig setAllowTurnPenaltyInRequest(boolean allowTurnPenaltyInRequest) {
-        this.allowTurnPenaltyInRequest = allowTurnPenaltyInRequest;
         return this;
     }
 
