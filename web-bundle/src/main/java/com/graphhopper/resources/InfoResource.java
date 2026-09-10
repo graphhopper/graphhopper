@@ -17,6 +17,7 @@
  */
 package com.graphhopper.resources;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.Profile;
@@ -25,6 +26,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.util.Constants;
+import com.graphhopper.util.CustomModel;
 import org.locationtech.jts.geom.Envelope;
 
 import jakarta.inject.Inject;
@@ -74,6 +76,12 @@ public class InfoResource {
             }
 
             public String name;
+            /**
+             * The parameters of the server-side custom model that a request can override, each with value, min and
+             * max (max is omitted when unbounded, min and max are omitted for booleans).
+             */
+            @JsonInclude(JsonInclude.Include.NON_EMPTY)
+            public Map<String, Map<String, Object>> parameters;
         }
 
         public Envelope bbox;
@@ -91,6 +99,8 @@ public class InfoResource {
         info.bbox = new Envelope(baseGraph.getBounds().minLon, baseGraph.getBounds().maxLon, baseGraph.getBounds().minLat, baseGraph.getBounds().maxLat);
         for (Profile p : config.getProfiles()) {
             Info.ProfileData profileData = new Info.ProfileData(p.getName());
+            if (p.getCustomModel() != null)
+                profileData.parameters = createParameters(p.getCustomModel());
             info.profiles.add(profileData);
         }
         if (config.has("gtfs.file"))
@@ -124,5 +134,21 @@ public class InfoResource {
             info.encoded_values.put(name, possibleValueList);
         }
         return info;
+    }
+
+    private static Map<String, Map<String, Object>> createParameters(CustomModel customModel) {
+        Map<String, Map<String, Object>> result = new LinkedHashMap<>();
+        customModel.getParameters().forEach((name, param) -> {
+            // like in the error message of CustomModelParser.checkParameterOverrides
+            if (name.startsWith("private_")) return;
+            Map<String, Object> map = new LinkedHashMap<>();
+            map.put("value", param.value());
+            if (param.value() instanceof Double) {
+                map.put("min", param.min());
+                if (param.max() != Double.POSITIVE_INFINITY) map.put("max", param.max());
+            }
+            result.put(name, map);
+        });
+        return result;
     }
 }

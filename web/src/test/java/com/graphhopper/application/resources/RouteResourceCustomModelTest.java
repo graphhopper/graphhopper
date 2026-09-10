@@ -24,6 +24,7 @@ import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.Profile;
+import com.graphhopper.resources.InfoResource;
 import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.BodyAndStatus;
 import com.graphhopper.util.Helper;
@@ -40,6 +41,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import static com.graphhopper.application.resources.Util.postWithStatus;
 import static com.graphhopper.application.util.TestUtils.clientTarget;
@@ -108,6 +110,17 @@ public class RouteResourceCustomModelTest {
     @AfterAll
     public static void cleanUp() {
         Helper.removeDir(new File(DIR));
+    }
+
+    @Test
+    public void testInfoParameters() {
+        InfoResource.Info info = clientTarget(app, "/info").request().get(InfoResource.Info.class);
+        InfoResource.Info.ProfileData cargoBike = info.profiles.stream().filter(p -> p.name.equals("cargo_bike")).findFirst().orElseThrow();
+        assertEquals(Map.of("vehicle_height", Map.of("value", 2.3, "min", 0.0),
+                "vehicle_width", Map.of("value", 1.2, "min", 0.0),
+                "vehicle_max_speed", Map.of("value", 25.0, "min", 5.0, "max", 35.0)), cargoBike.parameters);
+        InfoResource.Info.ProfileData car = info.profiles.stream().filter(p -> p.name.equals("car")).findFirst().orElseThrow();
+        assertNull(car.parameters);
     }
 
     @Test
