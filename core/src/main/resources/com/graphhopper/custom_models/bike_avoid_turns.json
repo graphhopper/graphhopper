@@ -5,12 +5,10 @@
     // right:
     { "else_if": "change_angle >= 25 && change_angle < 80", "add":  "3" },
     // sharp right:
-    { "else_if": "change_angle >= 80 && change_angle <= 180", "add":  "3" },
+    { "else_if": "change_angle >= 80 && change_angle <= 180", "add":  "4" },
     // left:
     { "else_if": "change_angle <= -25 && change_angle > -80", "add":  "3" },
     // sharp left:
-    { "else_if": "change_angle <= -80 && change_angle >= -180", "add":  "3" },
-    // uTurnCosts:
-    { "else": "", "add":  "Infinity" }
+    { "else_if": "change_angle <= -80 && change_angle >= -180", "add":  "4" }
   ]
 }
