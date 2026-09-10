@@ -154,7 +154,7 @@ public class EdgeBasedTarjanSCC {
                 findComponentForEdgeKey(edgeKeyFwd, iter.getAdjNode());
             int edgeKeyBwd = createEdgeKey(iter, true);
             if (!edgeKeyIndex.has(edgeKeyBwd))
-                findComponentForEdgeKey(edgeKeyBwd, iter.getAdjNode());
+                findComponentForEdgeKey(edgeKeyBwd, iter.getBaseNode());
         }
     }
 
@@ -235,7 +235,7 @@ public class EdgeBasedTarjanSCC {
         // has already been found by the first search. So we cannot simply push them both and start the search once.
         int edgeKeyBwd = createEdgeKey(edge, true);
         if (!edgeKeyIndex.has(edgeKeyBwd))
-            pushFindComponentForEdgeKey(edgeKeyBwd, edge.getAdjNode());
+            pushFindComponentForEdgeKey(edgeKeyBwd, edge.getBaseNode());
         startSearch();
     }
 

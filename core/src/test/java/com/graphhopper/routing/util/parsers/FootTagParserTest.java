@@ -380,8 +380,6 @@ public class FootTagParserTest {
         way.clearTags();
         way.setTag("highway", "tertiary");
         assertPriority(PriorityCode.UNCHANGED, way);
-        way.setTag("foot", "use_sidepath");
-        assertPriority(PriorityCode.VERY_BAD, way);
 
         way.clearTags();
         way.setTag("highway", "tertiary");

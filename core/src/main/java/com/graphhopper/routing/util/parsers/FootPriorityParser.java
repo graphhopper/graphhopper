@@ -78,10 +78,6 @@ public class FootPriorityParser implements TagParser {
         if (way.hasTag("foot", "designated"))
             weightToPrioMap.put(100d, PREFER);
 
-        if (way.hasTag("foot", "use_sidepath")) {
-            weightToPrioMap.put(100d, VERY_BAD); // see #3035
-        }
-
         double maxSpeed = Math.max(OSMMaxSpeedParser.parseMaxSpeed(way, false), OSMMaxSpeedParser.parseMaxSpeed(way, true));
         if (safeHighwayTags.contains(highway) || maxSpeed <= 20) {
             weightToPrioMap.put(40d, PREFER);
