@@ -131,11 +131,6 @@ In the next section will see how we can use these encoded values to customize Gr
 
 ## How you can customize GraphHopper's route calculations: Custom Models
 
-*Disclaimer*: Custom models should still be considered a beta feature. They work, but details about the weighting
-formula and the meaning of the different parameters is still subject to change. Also this feature will strongly benefit
-from community feedback, so do not hesitate to share your experience, your favorite custom model or some of the problems
-you ran into when you tried building your own with custom model.
-
 As described in the previous sections, GraphHopper's route calculations are controlled by the weighting of the different
 road segments. GraphHopper offers a simple way to modify this weighting based on the edges' encoded values. To make use
 of this you need to specify a so called 'custom model', which is a set of rules that determine the `speed` and the
@@ -729,6 +724,50 @@ You can use a value expression also for `priority`, e.g. to pre-populated it bas
 Note that when using a dynamic value like `my_precalculated_value` the maximum value correlates strongly with 
 the response time of A-star routing requests (i.e. when CH and LM are disabled). This means that if you pick a
 smaller or more narrow range, or if you can avoid them entirely, then these requests might get faster.
+
+### `parameters`
+
+The `parameters` section defines named numbers and booleans that can be used in conditions and value
+expressions. Similar to `areas` referenced via `in_<area_id>`, a parameter `xy` is referenced with the
+prefix `p_` as `p_xy` - this makes the origin visible in the expression and avoids collisions with
+encoded values:
+
+```json
+{
+  "parameters": { "speed_threshold": 50, "slow_factor": { "value": 0.8, "max": 1 }, "avoid_hills": true },
+  "speed": [
+    { "if": "car_average_speed < p_speed_threshold", "multiply_by": "p_slow_factor" }
+  ],
+  "priority": [
+    { "if": "p_avoid_hills && average_slope > 4", "multiply_by": "0.5" }
+  ]
+}
+```
+
+Parameters can only be defined in the server-side custom model. A request can then override the
+values, but not introduce new parameters and not change the type. Unlike statements, which are
+appended when a request custom model is merged with the profile's custom model, parameters are
+overridden per name. So a request can tweak the values that the server-side profile uses without
+repeating (and accidentally double-applying) its statements - here e.g. with
+`{"parameters": {"slow_factor": 0.6}}`. A parameter name follows the same rules as an
+encoded value name: it starts with a lower case letter, followed by lower case letters, numbers or single underscores.
+
+For number parameters the server-side definition can restrict the allowed values with the object
+form `{"value": 0.8, "min": 0.5, "max": 1}` - requests must stay within `[min, max]` and cannot
+specify a range themselves. Without an explicit range `[0, Infinity)` is used. On startup the custom
+model is validated at both ends of every range, so e.g. a parameter used to increase the speed
+requires a finite `max`. A value expression can use at most one parameter and only once, so that
+checking the range endpoints is sufficient. Conditions can combine multiple parameters.
+
+Note that for a profile prepared with landmarks (hybrid mode) a request can change a parameter value
+only if this cannot decrease any edge weight, as the landmark preparation is based on the server-side
+values: the value of a statement must not increase (e.g. a decreased `p_vehicle_max_speed`) and a parameter
+in a condition is only supported for blocking statements, where the condition must apply to more
+edges (e.g. a decreased `p_max_mtb_rating` of the bike custom model excludes more roads). Booleans
+and parameters used in `turn_penalty` or with an encoded value can never change. Everything else is
+rejected - use `lm.disable=true`. So pick the server-side value at the permissive end of the range
+(e.g. the smallest truck weight), as requests can only restrict further. Changing parameter values
+does not trigger a recompilation of the custom model, so it is cheaper than changing statements.
 
 ### Customizing `distance_influence`
 

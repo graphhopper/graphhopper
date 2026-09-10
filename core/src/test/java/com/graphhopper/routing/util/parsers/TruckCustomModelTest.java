@@ -24,7 +24,7 @@ public class TruckCustomModelTest {
 
     private EncodingManager em;
     private OSMParsers parsers;
-    private CustomWeighting.Parameters params;
+    private CustomWeighting.Config params;
 
     @BeforeEach
     public void setup() {
@@ -53,7 +53,7 @@ public class TruckCustomModelTest {
                         Set.of("delivery", "private"), Set.of()));
 
         CustomModel cm = GHUtility.loadCustomModelFromJar("truck.json");
-        params = CustomModelParser.createWeightingParameters(cm, em);
+        params = CustomModelParser.createWeightingConfig(cm, em);
     }
 
     double priority(ReaderWay way) {
