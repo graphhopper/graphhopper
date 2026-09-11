@@ -329,9 +329,25 @@ function mapillaryPhotos(lat, lon) {
 
 let photoRequest = 0;
 
+/**
+ * The three map links, shown right away for the problem itself and updated once a photo is found,
+ * because then the position of that photo is the more useful one.
+ */
+function showLinks(lat, lon, photo) {
+    // for panoramax the picture itself is the better link, its map needs a few clicks first
+    const panoUrl = photo && photo.source === 'Panoramax' ? photo.page
+        : 'https://panoramax.openstreetmap.fr/#map=19/' + lat + '/' + lon;
+    $('edit-links').innerHTML =
+        '<a href="https://www.mapillary.com/app/?lat=' + lat + '&lng=' + lon
+        + '&z=19&trafficSign=all" target="_blank">Mapillary</a>'
+        + '<a href="https://kartaview.org/map/@' + lat + ',' + lon + ',19z" target="_blank">KartaView</a>'
+        + '<a href="' + panoUrl + '" target="_blank">Panoramax</a>';
+}
+
 function loadPhoto(lat, lon, line) {
     const req = ++photoRequest;
     $('photo').textContent = 'looking for a photo ...';
+    showLinks(lat, lon, null);
     const failed = name => err => (console.error(name + ' lookup failed:', err), []);
     Promise.all([
         panoramaxPhotos(lat, lon).catch(failed('Panoramax')),
@@ -340,22 +356,13 @@ function loadPhoto(lat, lon, line) {
     ]).then(lists => {
         if (req !== photoRequest) return; // another marker was clicked in the meantime
         const best = pickPhoto(lists.flat(), lat, lon, line);
-        const photo = best && best.photo;
-        // the map links point at the photo, so that the map opens where the picture was taken
-        const mapLat = photo ? photo.lat : lat, mapLon = photo ? photo.lon : lon;
-        // for panoramax the picture itself is the better link, its map needs a few clicks first
-        const panoUrl = photo && photo.source === 'Panoramax' ? photo.page
-            : 'https://panoramax.openstreetmap.fr/#map=19/' + mapLat + '/' + mapLon;
-        $('edit-links').innerHTML =
-            '<a href="https://www.mapillary.com/app/?lat=' + mapLat + '&lng=' + mapLon
-            + '&z=19&trafficSign=all" target="_blank">Mapillary</a>'
-            + '<a href="https://kartaview.org/map/@' + mapLat + ',' + mapLon
-            + ',19z" target="_blank">KartaView</a>'
-            + '<a href="' + panoUrl + '" target="_blank">Panoramax</a>';
-        if (!photo) {
+        if (!best) {
             $('photo').textContent = 'no street level photo on this way looking at this spot';
             return;
         }
+        const photo = best.photo;
+        // the map links now point at the photo, so that the map opens where it was taken
+        showLinks(photo.lat, photo.lon, photo);
         const link = el('a');
         link.href = photo.page;
         link.target = '_blank';
@@ -365,8 +372,6 @@ function loadPhoto(lat, lon, line) {
         link.append(img);
         $('photo').replaceChildren(link, photo.source + ', ' + Math.round(best.dist)
             + ' m before the spot' + (photo.date ? ', ' + photo.date : ''));
-        // whoever reads the value off this photo should say so in the changeset
-        if (!$('source').value) $('source').value = photo.source;
     });
 }
 
