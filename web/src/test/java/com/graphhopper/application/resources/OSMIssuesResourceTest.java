@@ -89,26 +89,22 @@ public class OSMIssuesResourceTest {
     }
 
     @Test
-    public void testRoadClassGroups() {
-        // maxheight has cases in both groups here, unclassified belongs to "rest"
+    public void testRoadClassFilter() {
+        // maxheight has cases in several road classes here
         String bbox = "bbox=1.50,42.50,1.55,42.53&types=missing_maxheight";
         int all = query(bbox).get("features").size();
-        List<String> normal = List.of("primary", "secondary", "tertiary", "residential");
 
-        // the groups can be combined, an empty list means every road class
-        JsonNode onlyNormal = query(bbox + "&roads=normal");
-        assertTrue(onlyNormal.get("features").size() < all, onlyNormal.get("features").size() + " vs " + all);
-        assertTrue(onlyNormal.get("features").size() > 0);
-        for (JsonNode f : onlyNormal.get("features"))
-            assertTrue(normal.contains(f.get("properties").get("road_class").asText()), f.toString());
+        // the parameter takes the road class names, so the UI decides how to group them
+        JsonNode some = query(bbox + "&roads=primary,residential");
+        assertTrue(some.get("features").size() < all, some.get("features").size() + " vs " + all);
+        assertTrue(some.get("features").size() > 0);
+        for (JsonNode f : some.get("features"))
+            assertTrue(List.of("primary", "residential").contains(f.get("properties").get("road_class").asText()),
+                    f.toString());
 
-        JsonNode onlyRest = query(bbox + "&roads=rest");
-        for (JsonNode f : onlyRest.get("features"))
-            assertFalse(normal.contains(f.get("properties").get("road_class").asText()), f.toString());
-
-        // two groups together are the same as each of them on its own
-        assertEquals(onlyNormal.get("features").size() + onlyRest.get("features").size(),
-                query(bbox + "&roads=normal,rest").get("features").size());
+        // unknown names simply match nothing, "all" and an empty value match everything
+        assertEquals(0, query(bbox + "&roads=does_not_exist").get("features").size());
+        assertEquals(all, query(bbox + "&roads=all").get("features").size());
     }
 
     @Test

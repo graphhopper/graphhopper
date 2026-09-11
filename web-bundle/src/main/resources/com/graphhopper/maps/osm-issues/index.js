@@ -129,12 +129,13 @@ $('filters').open = localStorage.getItem('filters_open') !== 'no';
 $('filters').ontoggle = () => localStorage.setItem('filters_open', $('filters').open ? 'yes' : 'no');
 
 // the road groups are remembered, they are a setting you pick once and keep
+// every box carries the road class names it stands for, so the grouping is only defined here
 const roadBoxes = [...document.querySelectorAll('.road-group')];
 const roadGroups = () => roadBoxes.filter(cb => cb.checked).map(cb => cb.value);
-const storedGroups = localStorage.getItem('road_groups');
-if (storedGroups !== null) roadBoxes.forEach(cb => cb.checked = storedGroups.split(',').includes(cb.value));
+const storedBoxes = localStorage.getItem('road_classes');
+if (storedBoxes !== null) roadBoxes.forEach(cb => cb.checked = storedBoxes.split(';').includes(cb.value));
 roadBoxes.forEach(cb => cb.onchange = () => {
-    localStorage.setItem('road_groups', roadGroups().join(','));
+    localStorage.setItem('road_classes', roadGroups().join(';'));
     load();
 });
 

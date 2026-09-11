@@ -96,7 +96,7 @@ public class OSMIssuesResource {
         BBox bbox = parseBBox(bboxStr);
         // an empty list means every road class
         Set<String> roads = roadsStr.isEmpty() ? Collections.emptySet()
-                : new HashSet<>(Arrays.asList(roadsStr.split(",")));
+                : new HashSet<>(Arrays.asList(roadsStr.toLowerCase().split(",")));
         List<Map<String, Object>> features = findIssues(bbox, types, roads, limit);
 
         Map<String, Object> result = new LinkedHashMap<>();
@@ -258,27 +258,11 @@ public class OSMIssuesResource {
     }
 
     /**
-     * The road classes are offered in three groups, so they can be combined as needed.
-     *
-     * @param roads the wanted groups, an empty set means all of them
+     * @param roads the wanted road class names as GraphHopper spells them, e.g. "motorway,trunk".
+     *              An empty set or "all" means every road class, so the grouping stays in the UI.
      */
     private static boolean wanted(RoadClass roadClass, Set<String> roads) {
-        return roads.isEmpty() || roads.contains(group(roadClass));
-    }
-
-    private static String group(RoadClass roadClass) {
-        switch (roadClass) {
-            case MOTORWAY:
-            case TRUNK:
-                return "main";
-            case PRIMARY:
-            case SECONDARY:
-            case TERTIARY:
-            case RESIDENTIAL:
-                return "normal";
-            default:
-                return "rest";
-        }
+        return roads.isEmpty() || roads.contains("all") || roads.contains(roadClass.toString());
     }
 
     private static boolean isMotorized(RoadClass roadClass) {
