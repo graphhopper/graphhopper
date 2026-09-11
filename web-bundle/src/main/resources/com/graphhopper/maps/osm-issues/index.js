@@ -70,24 +70,34 @@ let currentIssue = null, currentWay = null;
 // ---------------------------------------------------------------- map + issues
 
 const issueSource = new ol.source.Vector();
+const waySource = new ol.source.Vector();
+
+// the way that is currently being edited, drawn below the markers with a white casing
+const wayLayer = new ol.layer.Vector({
+    source: waySource,
+    style: [
+        new ol.style.Style({stroke: new ol.style.Stroke({color: '#fff', width: 11})}),
+        new ol.style.Style({stroke: new ol.style.Stroke({color: '#2d7dd2', width: 5})})
+    ]
+});
+
+const issueLayer = new ol.layer.Vector({
+    source: issueSource,
+    style: feature => {
+        const edited = pendingEdits.some(e => e.wayId === feature.get('way_id'));
+        return new ol.style.Style({
+            image: new ol.style.Circle({
+                radius: 7,
+                fill: new ol.style.Fill({color: (ISSUES[feature.get('type')] || {}).color || '#000'}),
+                stroke: new ol.style.Stroke({color: edited ? '#2e9e4f' : '#fff', width: edited ? 3 : 2})
+            })
+        });
+    }
+});
+
 const map = new ol.Map({
     target: 'map',
-    layers: [
-        new ol.layer.Tile({source: new ol.source.OSM()}),
-        new ol.layer.Vector({
-            source: issueSource,
-            style: feature => {
-                const edited = pendingEdits.some(e => e.wayId === feature.get('way_id'));
-                return new ol.style.Style({
-                    image: new ol.style.Circle({
-                        radius: 7,
-                        fill: new ol.style.Fill({color: (ISSUES[feature.get('type')] || {}).color || '#000'}),
-                        stroke: new ol.style.Stroke({color: edited ? '#2e9e4f' : '#fff', width: edited ? 3 : 2})
-                    })
-                });
-            }
-        })
-    ],
+    layers: [new ol.layer.Tile({source: new ol.source.OSM()}), wayLayer, issueLayer],
     view: new ol.View(parseHash() || {center: [0, 0], zoom: 2})
 });
 
@@ -158,7 +168,8 @@ map.on('moveend', () => {
 });
 
 map.on('singleclick', evt => {
-    const feature = map.forEachFeatureAtPixel(evt.pixel, f => f, {hitTolerance: 6});
+    const feature = map.forEachFeatureAtPixel(evt.pixel, f => f,
+        {hitTolerance: 6, layerFilter: layer => layer === issueLayer});
     if (feature) openIssue(feature);
 });
 
@@ -375,8 +386,13 @@ function loadWay(wayId) {
         + '#map=19/' + currentIssue.lat.toFixed(5) + '/' + currentIssue.lon.toFixed(5)
         + '" target="_blank">open in iD</a>';
 
-    osmRead('/api/0.6/way/' + wayId + '.json').then(json => {
-        const way = json.elements[0];
+    // "full" gives us the nodes with their coordinates as well, so we can draw the way
+    osmRead('/api/0.6/way/' + wayId + '/full.json').then(json => {
+        const way = json.elements.find(e => e.type === 'way');
+        const coords = new Map(json.elements.filter(e => e.type === 'node').map(n => [n.id, [n.lon, n.lat]]));
+        waySource.clear();
+        waySource.addFeature(new ol.Feature(new ol.geom.LineString(
+            way.nodes.map(id => ol.proj.fromLonLat(coords.get(id))))));
         const pending = pendingEdits.find(e => e.wayId === wayId) || {changes: {}};
         currentWay = {id: wayId, tags: Object.assign({}, way.tags)};
         EDITABLE.forEach(key => {
@@ -392,6 +408,7 @@ function loadWay(wayId) {
         if (wanted && !way.tags[wanted]) tagInput(wanted).focus();
     }).catch(err => {
         $('tags').textContent = '';
+        waySource.clear();
         $('way-state').textContent = 'could not load way ' + wayId + ' from ' + settings.api + ': ' + err.message
             + (settings.isDevApi ? ' - the dev API has its own database, the real ways do not exist there' : '');
     });
@@ -450,14 +467,17 @@ function keepChanges() {
 
 $('save').onclick = () => {
     keepChanges();
-    $('edit').hidden = true;
+    closeEdit();
     $('pending').scrollIntoView({block: 'nearest'});
 };
 
-$('close-edit').onclick = () => {
+$('close-edit').onclick = closeEdit;
+
+function closeEdit() {
     keepChanges();
     $('edit').hidden = true;
-};
+    waySource.clear();
+}
 
 // ---------------------------------------------------------------- upload
 
