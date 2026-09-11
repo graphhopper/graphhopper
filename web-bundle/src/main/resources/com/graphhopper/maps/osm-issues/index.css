@@ -47,10 +47,28 @@ label {
     cursor: pointer;
 }
 
+/* small caps group heading, so the structure is visible without shouting */
+.label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: #777;
+    margin: 14px 0 5px;
+}
+
+.label:first-child {
+    margin-top: 0;
+}
+
 label.field {
     margin: 8px 0 0;
     font-size: 12px;
-    color: #555;
+    color: #444;
+}
+
+.hint.note {
+    color: #c2650a;
 }
 
 input[type=text], select {
@@ -123,7 +141,7 @@ button:disabled {
 }
 
 #status {
-    margin-top: 8px;
+    margin-top: 10px;
     color: #555;
     font-size: 12px;
 }
@@ -159,7 +177,15 @@ button:disabled {
 }
 
 #way-picker {
-    margin-top: 4px;
+    margin-top: 0;
+}
+
+#way-state:empty {
+    display: none;
+}
+
+#pending input[type=text] {
+    margin-top: 5px;
 }
 
 /* sits below the input fields, away from the way buttons, so it cannot be hit by accident */
@@ -210,8 +236,12 @@ input.changed {
     background: #eaf2fb;
 }
 
-#edit-fields {
-    margin-top: 8px;
+#edit-fields label.field {
+    margin-top: 6px;
+}
+
+#edit-fields label.field:first-child {
+    margin-top: 0;
 }
 
 #all-tags {

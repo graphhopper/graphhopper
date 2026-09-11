@@ -36,12 +36,11 @@
         <label><input type="checkbox" data-type="missing_maxheight" checked><span class="dot maxheight"></span> maxheight below bridge</label>
         <label><input type="checkbox" data-type="missing_maxweight"><span class="dot maxweight"></span> maxweight on bridge</label>
         <label><input type="checkbox" data-type="missing_bridge"><span class="dot bridge"></span> bridge tag (crossing ways)</label>
-        <label class="field">roads
-            <select id="road-filter">
-                <option value="major" selected>only motorway, trunk, primary, secondary, tertiary</option>
-                <option value="all">all roads</option>
-            </select>
-        </label>
+        <div class="label">roads</div>
+        <select id="road-filter">
+            <option value="major" selected>only motorway, trunk, primary, secondary, tertiary</option>
+            <option value="all">all roads</option>
+        </select>
         <div id="status">move the map to load issues</div>
     </section>
 
@@ -75,9 +74,10 @@
         <div id="edit-hint" class="hint"></div>
         <div id="photo" class="hint"></div>
         <div id="edit-links"></div>
-        <div class="hint">which way do you want to edit?</div>
+        <div class="label">which way do you want to edit?</div>
         <div id="way-picker"></div>
         <div id="way-state" class="hint warn"></div>
+        <div class="label">tags</div>
         <div id="edit-fields">
             <label class="field">maxheight <input id="tag-maxheight" type="text" placeholder="e.g. 3.8 or default"></label>
             <label class="field">maxweight <input id="tag-maxweight" type="text" placeholder="e.g. 7.5"></label>
@@ -98,6 +98,7 @@
     <section id="pending" hidden>
         <h2>not uploaded yet (<span id="pending-count">0</span>)</h2>
         <div id="pending-list"></div>
+        <div class="label">changeset</div>
         <input id="comment" type="text" placeholder="changeset comment">
         <input id="source" type="text" placeholder="source, e.g. KartaView or survey">
         <div class="row">

@@ -448,7 +448,7 @@ function loadWay(wayId) {
         // jump right to the tag this issue is about, or say that it is done already
         const wanted = (ISSUES[currentIssue.type] || {}).tag;
         if (wanted && way.tags[wanted] !== undefined) {
-            $('way-state').className = 'hint';
+            $('way-state').className = 'hint note';
             $('way-state').textContent = 'OSM already has ' + wanted + '=' + way.tags[wanted]
                 + ' here. GraphHopper reports it until its data is imported again.';
         } else if (wanted) {
