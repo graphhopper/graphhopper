@@ -28,8 +28,42 @@ const settings = {
     get clientId() { return localStorage.getItem('osm_client_id') || ''; },
     set clientId(v) { localStorage.setItem('osm_client_id', v); },
     get mapillaryToken() { return localStorage.getItem('mapillary_token') || ''; },
-    set mapillaryToken(v) { localStorage.setItem('mapillary_token', v); }
+    set mapillaryToken(v) { localStorage.setItem('mapillary_token', v); },
+    /** empty means the GraphHopper server is the one that serves this page */
+    get gh() { return localStorage.getItem('gh_url') || ''; },
+    set gh(v) { localStorage.setItem('gh_url', v.replace(/\/$/, '')); }
 };
+
+// ?gh=http://host:8989 sets the GraphHopper server once, afterwards it is remembered
+if (new URLSearchParams(location.search).get('gh'))
+    settings.gh = new URLSearchParams(location.search).get('gh');
+
+function preview(text) {
+    return (text || '(empty response)').replace(/\s+/g, ' ').trim().slice(0, 120);
+}
+
+/** GET from the GraphHopper server, with an error message that says what came back instead */
+function ghFetch(path, options) {
+    const url = settings.gh + path;
+    return fetch(url, options).then(res => res.text().then(text => {
+        let json = null;
+        try {
+            json = JSON.parse(text);
+        } catch (e) { /* not json, handled below */ }
+        // anything but JSON means we did not reach GraphHopper at all, e.g. the 404 page of a
+        // static web server when the page is served from a different port than GraphHopper
+        const hint = json === null && !settings.gh
+            ? ' - this did not come from GraphHopper, set its URL in the settings' : '';
+        if (!res.ok)
+            throw new Error((json && json.message) || res.status + ' ' + res.statusText + ' from ' + url + hint);
+        if (json === null) throw new Error('no JSON from ' + url + ' (content-type '
+            + (res.headers.get('content-type') || 'unknown') + '): ' + preview(text) + hint);
+        return json;
+    })).catch(err => {
+        console.error('GraphHopper request failed:', url, err);
+        throw err;
+    });
+}
 
 const redirectUri = location.origin + location.pathname.replace(/\/?$/, '/');
 let pendingEdits = JSON.parse(localStorage.getItem('osm_pending') || '[]');
@@ -75,10 +109,10 @@ function parseHash() {
 
 // without a position in the url hash we show the area of the imported map
 if (!parseHash())
-    fetch('/info').then(res => res.json()).then(info => {
+    ghFetch('/info').then(info => {
         map.getView().fit(ol.proj.transformExtent(info.bbox, 'EPSG:4326', 'EPSG:3857'),
             {size: map.getSize(), maxZoom: 16});
-    }).catch(() => {});
+    }).catch(err => $('status').textContent = err.message);
 
 function updateHash() {
     const view = map.getView(), center = ol.proj.toLonLat(view.getCenter());
@@ -111,12 +145,8 @@ function load() {
     const majorOnly = $('road-filter').value === 'major';
     $('status').textContent = 'loading ...';
     controller = new AbortController();
-    fetch('/osm-issues?bbox=' + bbox + '&types=' + types.join(',') + '&major_only=' + majorOnly,
+    ghFetch('/osm-issues?bbox=' + bbox + '&types=' + types.join(',') + '&major_only=' + majorOnly,
         {signal: controller.signal})
-        .then(res => res.json().then(json => {
-            if (!res.ok) throw new Error(json.message || res.statusText);
-            return json;
-        }))
         .then(json => {
             issueSource.clear();
             issueSource.addFeatures(new ol.format.GeoJSON().readFeatures(json, {featureProjection: 'EPSG:3857'}));
@@ -209,8 +239,8 @@ function loadPhoto(lat, lon) {
     const req = ++photoRequest, container = $('photo'), links = $('edit-links');
     container.textContent = 'looking for a photo ...';
     Promise.all([
-        kartaViewPhotos(lat, lon).catch(() => []),
-        mapillaryPhotos(lat, lon).catch(() => [])
+        kartaViewPhotos(lat, lon).catch(err => (console.error('KartaView lookup failed:', err), [])),
+        mapillaryPhotos(lat, lon).catch(err => (console.error('Mapillary lookup failed:', err), []))
     ]).then(lists => {
         if (req !== photoRequest) return; // another marker was clicked in the meantime
         const best = pickPhoto([].concat(...lists), lat, lon);
@@ -540,6 +570,11 @@ $('settings-toggle').onclick = e => {
     showSettings($('settings').hidden);
 };
 
+$('gh-url').value = settings.gh;
+$('gh-url').onchange = () => {
+    settings.gh = $('gh-url').value.trim();
+    load();
+};
 $('api-select').value = settings.api;
 $('client-id').value = settings.clientId;
 $('mapillary-token').value = settings.mapillaryToken;
