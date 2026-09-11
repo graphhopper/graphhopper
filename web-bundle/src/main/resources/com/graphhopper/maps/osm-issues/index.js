@@ -65,6 +65,8 @@ if (ghParam) settings.gh = ghParam;
 
 const redirectUri = location.origin + location.pathname.replace(/\/?$/, '/');
 let pendingEdits = JSON.parse(localStorage.getItem('osm_pending') || '[]');
+// ways we uploaded ourselves. GraphHopper keeps reporting them until it is imported again
+let uploadedWays = JSON.parse(localStorage.getItem('osm_uploaded') || '[]');
 let currentIssue = null, currentWay = null;
 
 // ---------------------------------------------------------------- map + issues
@@ -84,11 +86,15 @@ const wayLayer = new ol.layer.Vector({
 const issueLayer = new ol.layer.Vector({
     source: issueSource,
     style: feature => {
-        const edited = pendingEdits.some(e => e.wayId === feature.get('way_id'));
+        const wayId = feature.get('way_id');
+        const edited = pendingEdits.some(e => e.wayId === wayId);
+        const done = uploadedWays.includes(wayId);
         return new ol.style.Style({
             image: new ol.style.Circle({
-                radius: 7,
-                fill: new ol.style.Fill({color: (ISSUES[feature.get('type')] || {}).color || '#000'}),
+                radius: done ? 5 : 7,
+                fill: new ol.style.Fill({
+                    color: done ? '#bbb' : (ISSUES[feature.get('type')] || {}).color || '#000'
+                }),
                 stroke: new ol.style.Stroke({color: edited ? '#2e9e4f' : '#fff', width: edited ? 3 : 2})
             })
         });
@@ -405,6 +411,7 @@ function openIssue(feature) {
 function loadWay(wayId) {
     keepChanges();
     currentWay = null;
+    $('way-state').className = 'hint warn';
     $('way-state').textContent = '';
     $('tags').textContent = 'loading way ' + wayId + ' ...';
     EDITABLE.forEach(key => {
@@ -432,14 +439,21 @@ function loadWay(wayId) {
         EDITABLE.forEach(key => {
             const input = tagInput(key);
             input.value = key in pending.changes ? pending.changes[key] : (way.tags[key] || '');
-            input.disabled = false;
+            // what OSM already has is shown but not editable, this app only adds missing tags
+            input.disabled = way.tags[key] !== undefined && !(key in pending.changes);
             input.classList.toggle('changed', key in pending.changes);
         });
         renderTags();
         updateSaveButton();
-        // jump right to the tag this issue is about
+        // jump right to the tag this issue is about, or say that it is done already
         const wanted = (ISSUES[currentIssue.type] || {}).tag;
-        if (wanted && !way.tags[wanted]) tagInput(wanted).focus();
+        if (wanted && way.tags[wanted] !== undefined) {
+            $('way-state').className = 'hint';
+            $('way-state').textContent = 'OSM already has ' + wanted + '=' + way.tags[wanted]
+                + ' here. GraphHopper reports it until its data is imported again.';
+        } else if (wanted) {
+            tagInput(wanted).focus();
+        }
     }).catch(err => {
         $('tags').textContent = '';
         waySource.clear();
@@ -614,6 +628,8 @@ $('upload').onclick = async () => {
         await osmFetch('/api/0.6/changeset/' + changesetId + '/close', {method: 'PUT'});
 
         pendingEdits = [];
+        uploadedWays = [...new Set(uploadedWays.concat(ways.map(w => w.way.id)))];
+        localStorage.setItem('osm_uploaded', JSON.stringify(uploadedWays));
         $('comment').value = DEFAULT_COMMENT;
         localStorage.setItem('changeset_source', source);
         state.innerHTML = 'uploaded ' + ways.length + ' way(s) as <a href="' + settings.api
