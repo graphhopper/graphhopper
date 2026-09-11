@@ -22,15 +22,22 @@ const TAGS = {
     missing_bridge: 'bridge'
 };
 
+// config.js holds the values for this deployment, what a user sets in the panel wins over it
+const deployed = typeof osmIssuesConfig === 'object' ? osmIssuesConfig : {};
+
 const settings = {
     get api() { return localStorage.getItem('osm_api') || 'https://www.openstreetmap.org'; },
     set api(v) { localStorage.setItem('osm_api', v); },
-    get clientId() { return localStorage.getItem('osm_client_id') || ''; },
-    set clientId(v) { localStorage.setItem('osm_client_id', v); },
-    get mapillaryToken() { return localStorage.getItem('mapillary_token') || ''; },
+    get isDevApi() { return this.api.indexOf('dev.openstreetmap') >= 0; },
+    get clientId() {
+        return localStorage.getItem('osm_client_id_' + this.api)
+            || (this.isDevApi ? deployed.osmClientIdDev : deployed.osmClientId) || '';
+    },
+    set clientId(v) { localStorage.setItem('osm_client_id_' + this.api, v); },
+    get mapillaryToken() { return localStorage.getItem('mapillary_token') || deployed.mapillaryToken || ''; },
     set mapillaryToken(v) { localStorage.setItem('mapillary_token', v); },
     /** empty means the GraphHopper server is the one that serves this page */
-    get gh() { return localStorage.getItem('gh_url') || ''; },
+    get gh() { return localStorage.getItem('gh_url') || deployed.graphhopperUrl || ''; },
     set gh(v) { localStorage.setItem('gh_url', v.replace(/\/$/, '')); }
 };
 
@@ -510,7 +517,7 @@ $('upload').onclick = async () => {
     if (!pendingEdits.length) return;
     const comment = $('comment').value.trim()
         || 'add missing maxheight/maxweight tags at bridges';
-    const real = settings.api.indexOf('dev.openstreetmap') < 0;
+    const real = !settings.isDevApi;
     if (!confirm('Upload ' + pendingEdits.length + ' way(s) to ' + settings.api
         + (real ? ' (this changes the real OSM data!)' : '') + '?\n\n'
         + pendingEdits.map(e => 'way ' + e.wayId + ': '
@@ -594,6 +601,7 @@ $('redirect-hint').textContent = 'Register an OAuth 2 application in your OSM se
 
 $('api-select').onchange = () => {
     settings.api = $('api-select').value;
+    $('client-id').value = settings.clientId;
     initAuth();
     updateAccount();
 };
