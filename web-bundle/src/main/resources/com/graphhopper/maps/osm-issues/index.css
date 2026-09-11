@@ -230,6 +230,13 @@ input.changed {
     font-size: 12px;
 }
 
+/* the remove link sits at the right edge, so it cannot be read as part of the tag change */
+.pending-title {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+}
+
 .pending-item code {
     display: block;
     color: #246bb5;

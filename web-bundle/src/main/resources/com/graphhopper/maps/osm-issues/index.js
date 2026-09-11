@@ -475,8 +475,9 @@ function renderPending() {
     $('pending-count').textContent = pendingEdits.length;
     $('pending-list').replaceChildren(...pendingEdits.map(edit => {
         const item = el('div', '', 'pending-item');
-        const title = el('div', (edit.name || '(no name)') + ' - way ' + edit.wayId + ' ');
-        const remove = el('a', 'remove');
+        const title = el('div', '', 'pending-title');
+        title.append(el('span', (edit.name || '(no name)') + ' - way ' + edit.wayId));
+        const remove = el('a', 'remove from list');
         remove.onclick = () => {
             pendingEdits = pendingEdits.filter(e => e !== edit);
             savePending();
