@@ -388,8 +388,13 @@ function openIssue(feature) {
 
 function loadWay(wayId) {
     currentWay = null;
+    updateSaveButton();
+    $('way-state').textContent = '';
     $('tags').textContent = 'loading way ' + wayId + ' ...';
-    EDITABLE.forEach(key => $('tag-' + key).value = '');
+    EDITABLE.forEach(key => {
+        $('tag-' + key).value = '';
+        $('tag-' + key).disabled = true;
+    });
     // small link to the way itself, to look at it in OSM or fix something this app cannot do
     const at = '#map=19/' + currentIssue.lat.toFixed(5) + '/' + currentIssue.lon.toFixed(5);
     $('way-links').innerHTML = '<a href="' + settings.api + '/way/' + wayId + '" target="_blank">way '
@@ -406,10 +411,17 @@ function loadWay(wayId) {
             input.classList.toggle('changed', !!pending && key in pending.changes);
         });
         renderTags();
+        EDITABLE.forEach(key => $('tag-' + key).disabled = false);
+        updateSaveButton();
         // jump right to the tag this issue is about
         const wanted = TAGS[currentIssue.type];
         if (wanted && !way.tags[wanted]) $('tag-' + wanted).focus();
-    }).catch(err => $('tags').textContent = 'could not load way ' + wayId + ': ' + err.message);
+    }).catch(err => {
+        $('tags').textContent = '';
+        $('way-state').textContent = 'could not load way ' + wayId + ' from ' + settings.api
+            + ': ' + err.message
+            + (settings.isDevApi ? ' - the dev API has its own database, the real ways do not exist there' : '');
+    });
 }
 
 /** the current tags of the way, read only - just to see what is already mapped */
@@ -437,7 +449,16 @@ EDITABLE.forEach(key => $('tag-' + key).oninput = () => {
     if (!currentWay) return;
     const value = $('tag-' + key).value.trim();
     $('tag-' + key).classList.toggle('changed', value !== (currentWay.tags[key] || ''));
+    updateSaveButton();
 });
+
+/** a tag that is empty or unchanged is nothing to save */
+function updateSaveButton() {
+    $('save').disabled = !currentWay || !EDITABLE.some(key => {
+        const value = $('tag-' + key).value.trim();
+        return value && value !== currentWay.tags[key];
+    });
+}
 
 $('save').onclick = () => {
     if (!currentWay) return;
@@ -455,6 +476,7 @@ $('save').onclick = () => {
     }
     savePending();
     $('edit').hidden = true;
+    $('pending').scrollIntoView({block: 'nearest'});
 };
 
 $('close-edit').onclick = () => $('edit').hidden = true;
@@ -462,7 +484,8 @@ $('close-edit').onclick = () => $('edit').hidden = true;
 // ---------------------------------------------------------------- upload
 
 function renderPending() {
-    $('pending').hidden = pendingEdits.length === 0;
+    // keep the panel while it reports the last upload, otherwise the changeset link would vanish
+    $('pending').hidden = pendingEdits.length === 0 && !$('upload-state').innerHTML;
     $('pending-count').textContent = pendingEdits.length;
     const list = $('pending-list');
     list.innerHTML = '';
@@ -525,6 +548,7 @@ $('upload').onclick = async () => {
         return;
 
     const state = $('upload-state');
+    state.innerHTML = '';
     $('upload').disabled = true;
     let changesetId = null;
     try {
@@ -556,10 +580,10 @@ $('upload').onclick = async () => {
         await osmFetch('/api/0.6/changeset/' + changesetId + '/close', {method: 'PUT'});
 
         pendingEdits = [];
-        savePending();
         $('comment').value = '';
-        state.innerHTML = 'uploaded as <a href="' + settings.api + '/changeset/' + changesetId
-            + '" target="_blank">changeset ' + changesetId + '</a>';
+        state.innerHTML = 'uploaded ' + ways.length + ' way(s) as <a href="' + settings.api
+            + '/changeset/' + changesetId + '" target="_blank">changeset ' + changesetId + '</a>';
+        savePending();
         load();
     } catch (err) {
         state.textContent = 'upload failed: ' + err.message;
