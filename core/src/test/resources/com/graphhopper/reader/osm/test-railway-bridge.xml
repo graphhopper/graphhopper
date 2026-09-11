@@ -1,0 +1,31 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<osm version="0.6" generator="pbf2osm">
+    <node id="10" lat="52.0" lon="9.0" version="1"/>
+    <node id="20" lat="52.0" lon="9.2" version="1"/>
+    <node id="30" lat="51.9" lon="9.1" version="1"/>
+    <node id="40" lat="52.1" lon="9.1" version="1"/>
+    <node id="50" lat="51.8" lon="9.3" version="1"/>
+    <node id="60" lat="51.7" lon="9.3" version="1"/>
+
+    <!-- a road, crossed by the railway bridge below without sharing a node -->
+    <way id="100" version="1">
+        <nd ref="10"/>
+        <nd ref="20"/>
+        <tag k="highway" v="primary"/>
+    </way>
+
+    <way id="200" version="1">
+        <nd ref="30"/>
+        <nd ref="40"/>
+        <tag k="railway" v="rail"/>
+        <tag k="bridge" v="yes"/>
+        <tag k="layer" v="1"/>
+    </way>
+
+    <!-- a plain railway is never imported -->
+    <way id="300" version="1">
+        <nd ref="50"/>
+        <nd ref="60"/>
+        <tag k="railway" v="rail"/>
+    </way>
+</osm>

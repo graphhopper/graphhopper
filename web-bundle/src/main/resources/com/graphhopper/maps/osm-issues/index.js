@@ -133,6 +133,11 @@ $('road-filter').onchange = () => {
     localStorage.setItem('road_filter', $('road-filter').value);
     load();
 };
+$('skip-motorway-bridges').checked = localStorage.getItem('skip_motorway_bridges') !== 'no';
+$('skip-motorway-bridges').onchange = () => {
+    localStorage.setItem('skip_motorway_bridges', $('skip-motorway-bridges').checked ? 'yes' : 'no');
+    load();
+};
 
 let controller = null;
 
@@ -154,7 +159,8 @@ function load() {
     $('status').textContent = 'loading ...';
     controller = new AbortController();
     ghFetch('/osm-issues?bbox=' + extent.map(v => v.toFixed(6)).join(',')
-        + '&types=' + types.join(',') + '&major_only=' + ($('road-filter').value === 'major'),
+        + '&types=' + types.join(',') + '&major_only=' + ($('road-filter').value === 'major')
+        + '&skip_motorway_bridges=' + $('skip-motorway-bridges').checked,
         {signal: controller.signal})
         .then(json => {
             issueSource.clear();

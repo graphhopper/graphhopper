@@ -82,6 +82,7 @@ public class OSMIssuesResource {
     public Response doGet(@QueryParam("bbox") String bboxStr,
                           @QueryParam("types") String typesStr,
                           @QueryParam("major_only") @DefaultValue("false") boolean majorOnly,
+                          @QueryParam("skip_motorway_bridges") @DefaultValue("false") boolean skipMotorwayBridges,
                           @QueryParam("limit") @DefaultValue("2000") int limit) {
         for (String key : Arrays.asList(RoadClass.KEY, RoadEnvironment.KEY, OSMWayID.KEY))
             if (!encodingManager.hasEncodedValue(key))
@@ -94,7 +95,7 @@ public class OSMIssuesResource {
 
         StopWatch sw = new StopWatch().start();
         BBox bbox = parseBBox(bboxStr);
-        List<Map<String, Object>> features = findIssues(bbox, types, majorOnly, limit);
+        List<Map<String, Object>> features = findIssues(bbox, types, majorOnly, skipMotorwayBridges, limit);
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("type", "FeatureCollection");
@@ -104,7 +105,8 @@ public class OSMIssuesResource {
         return Response.ok(result).header("X-GH-Took", "" + sw.getMillis()).build();
     }
 
-    private List<Map<String, Object>> findIssues(BBox bbox, Set<String> types, boolean majorOnly, int limit) {
+    private List<Map<String, Object>> findIssues(BBox bbox, Set<String> types, boolean majorOnly,
+                                                boolean skipMotorwayBridges, int limit) {
         BaseGraph graph = graphHopper.getBaseGraph();
         LocationIndexTree locationIndex = (LocationIndexTree) graphHopper.getLocationIndex();
         EnumEncodedValue<RoadClass> roadClassEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
@@ -158,6 +160,8 @@ public class OSMIssuesResource {
                 int bridgeId = bridgeIds.get(i);
                 LineString bridgeLS = geometries.get(bridgeId);
                 EdgeIteratorState bridge = graph.getEdgeIteratorStateForKey(bridgeId * 2);
+                // motorway bridges are usually built high enough to not need a maxheight below
+                if (skipMotorwayBridges && bridge.get(roadClassEnc) == RoadClass.MOTORWAY) continue;
                 for (Object o : tree.query(bridgeLS.getEnvelopeInternal())) {
                     int belowId = (Integer) o;
                     if (belowId == bridgeId) continue;
