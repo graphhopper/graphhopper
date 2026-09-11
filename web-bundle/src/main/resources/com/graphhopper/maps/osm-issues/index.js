@@ -243,6 +243,21 @@ function kartaViewPhotos(lat, lon) {
     }));
 }
 
+// panoramax is run by the OSM community and needs no token at all
+function panoramaxPhotos(lat, lon) {
+    const dLat = 90 / 111320, dLon = dLat / Math.cos(lat * Math.PI / 180);
+    const bbox = [lon - dLon, lat - dLat, lon + dLon, lat + dLat].map(v => v.toFixed(6)).join(',');
+    return fetch('https://api.panoramax.xyz/api/search?limit=50&bbox=' + bbox)
+        .then(res => res.json()).then(json => (json.features || []).map(f => ({
+            lat: f.geometry.coordinates[1], lon: f.geometry.coordinates[0],
+            heading: f.properties['view:azimuth'],
+            date: (f.properties.datetime || '').substring(0, 10),
+            thumb: (f.assets.sd || f.assets.thumb).href,
+            page: 'https://panoramax.openstreetmap.fr/#focus=pic&pic=' + f.id,
+            source: 'Panoramax'
+        })));
+}
+
 // mapillary cannot open the nearest image by coordinate, it needs the image id from its API
 function mapillaryPhotos(lat, lon) {
     if (!settings.mapillaryToken) return Promise.resolve([]);
@@ -268,6 +283,7 @@ function loadPhoto(lat, lon) {
     $('photo').textContent = 'looking for a photo ...';
     const failed = name => err => (console.error(name + ' lookup failed:', err), []);
     Promise.all([
+        panoramaxPhotos(lat, lon).catch(failed('Panoramax')),
         kartaViewPhotos(lat, lon).catch(failed('KartaView')),
         mapillaryPhotos(lat, lon).catch(failed('Mapillary'))
     ]).then(lists => {
@@ -278,9 +294,9 @@ function loadPhoto(lat, lon) {
         const mapLat = photo ? photo.lat : lat, mapLon = photo ? photo.lon : lon;
         $('edit-links').innerHTML =
             '<a href="https://www.mapillary.com/app/?lat=' + mapLat + '&lng=' + mapLon
-            + '&z=19&trafficSign=all" target="_blank">Mapillary signs</a>'
+            + '&z=19&trafficSign=all" target="_blank">Mapillary</a>'
             + '<a href="https://kartaview.org/map/@' + mapLat + ',' + mapLon
-            + ',19z" target="_blank">KartaView map</a>';
+            + ',19z" target="_blank">KartaView</a>';
         if (!photo) {
             $('photo').textContent = 'no street level photo looking at this spot';
             return;
@@ -537,8 +553,12 @@ function wayXml(way, changes, changesetId) {
 
 $('upload').onclick = async () => {
     if (!pendingEdits.length) return;
-    const comment = $('comment').value.trim() || 'add missing maxheight/maxweight tags at bridges';
-    const source = $('source').value.trim();
+    const comment = $('comment').value.trim(), source = $('source').value.trim();
+    if (!comment || !source) {
+        $('upload-state').textContent = 'please fill in both the changeset comment and the source';
+        (comment ? $('source') : $('comment')).focus();
+        return;
+    }
     if (!confirm('Upload ' + pendingEdits.length + ' way(s) to ' + settings.api
         + (settings.isDevApi ? '' : ' (this changes the real OSM data!)') + '?\n\n'
         + pendingEdits.map(e => 'way ' + e.wayId + ': ' + describe(e)).join('\n')))
@@ -576,7 +596,7 @@ $('upload').onclick = async () => {
         await osmFetch('/api/0.6/changeset/' + changesetId + '/close', {method: 'PUT'});
 
         pendingEdits = [];
-        $('comment').value = '';
+        $('comment').value = DEFAULT_COMMENT;
         localStorage.setItem('changeset_source', source);
         state.innerHTML = 'uploaded ' + ways.length + ' way(s) as <a href="' + settings.api
             + '/changeset/' + changesetId + '" target="_blank">changeset ' + changesetId + '</a>';
@@ -604,6 +624,8 @@ $('settings-toggle').onclick = e => {
     e.preventDefault();
     $('settings').hidden = !$('settings').hidden;
 };
+const DEFAULT_COMMENT = 'add missing maxheight/maxweight tags at bridges';
+$('comment').value = DEFAULT_COMMENT;
 $('source').value = stored('changeset_source', '');
 $('gh-url').value = settings.gh;
 $('gh-url').onchange = () => {
