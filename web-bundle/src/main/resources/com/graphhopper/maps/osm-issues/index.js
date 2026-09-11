@@ -4,6 +4,9 @@
 const MIN_ZOOM = 11;
 const LIMIT = 2000;
 const DEFAULT_COMMENT = 'add missing maxheight/maxweight tags at bridges';
+// How far the crossing may be from the way as OSM has it now. The import simplifies geometries
+// (import.osm.max_way_point_distance, 0.5m by default), set that to 0 to use a value this small.
+const MAX_CROSSING_OFFSET = 0.2;
 
 // everything that differs per issue type: marker color, what to tell the user and which tag it is about
 const ISSUES = {
@@ -456,11 +459,11 @@ function loadWay(wayId) {
         + '#map=19/' + currentIssue.lat.toFixed(5) + '/' + currentIssue.lon.toFixed(5)
         + '" target="_blank">open in iD</a>';
 
-    // "full" gives us the nodes with their coordinates as well, so we can draw the way
+    // "full" gives us the nodes with their coordinates as well, so we can draw the way. The way it
+    // crosses is loaded too, to see whether OSM still has them crossing at all.
     osmRead('/api/0.6/way/' + wayId + '/full.json').then(json => {
         const way = json.elements.find(e => e.type === 'way');
-        const coords = new Map(json.elements.filter(e => e.type === 'node').map(n => [n.id, [n.lon, n.lat]]));
-        const line = way.nodes.map(id => coords.get(id));
+        const line = geometryOf(json);
         waySource.clear();
         waySource.addFeature(new ol.Feature(new ol.geom.LineString(line.map(c => ol.proj.fromLonLat(c)))));
         // a photo of this problem has to be taken on this way, not on the one crossing it
@@ -475,6 +478,17 @@ function loadWay(wayId) {
             input.classList.toggle('changed', key in pending.changes);
         });
         renderTags();
+
+        // the crossing has to sit on the way, otherwise OSM has moved on since the import
+        const offset = distanceToLine(currentIssue.lat, currentIssue.lon, line);
+        if (offset > MAX_CROSSING_OFFSET) {
+            $('way-state').className = 'hint warn';
+            $('way-state').textContent = 'this spot is ' + offset.toFixed(1) + ' m away from the way '
+                + 'as OSM has it now, so the imported data is out of date. Not editable here.';
+            EDITABLE.forEach(key => tagInput(key).disabled = true);
+            updateSaveButton();
+            return;
+        }
         updateSaveButton();
         // jump right to the tag this issue is about, or say that it is done already
         const wanted = (ISSUES[currentIssue.type] || {}).tag;
@@ -491,6 +505,13 @@ function loadWay(wayId) {
         $('way-state').textContent = 'could not load way ' + wayId + ' from ' + settings.api + ': ' + err.message
             + (settings.isDevApi ? ' - the dev API has its own database, the real ways do not exist there' : '');
     });
+}
+
+/** the [lon, lat] pairs of the way in a "full" answer */
+function geometryOf(json) {
+    const way = json.elements.find(e => e.type === 'way');
+    const coords = new Map(json.elements.filter(e => e.type === 'node').map(n => [n.id, [n.lon, n.lat]]));
+    return way.nodes.map(id => coords.get(id));
 }
 
 /** the current tags of the way, read only - just to see what is already mapped */
