@@ -36,6 +36,8 @@ import com.graphhopper.routing.util.AreaIndex;
 import com.graphhopper.routing.util.CustomArea;
 import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.routing.util.OSMParsers;
+import com.graphhopper.routing.util.parsers.OSMMaxHeightParser;
+import com.graphhopper.routing.util.parsers.OSMMaxWeightParser;
 import com.graphhopper.routing.util.parsers.RestrictionSetter;
 import com.graphhopper.search.KVStorage;
 import com.graphhopper.storage.BaseGraph;
@@ -486,6 +488,15 @@ public class OSMReader {
                     }
                 }
             }
+
+        // max_height and max_weight are stored as a number, so values like "default" or "none" are
+        // lost. Keep the raw value to be able to tell a missing tag from one we cannot parse.
+        String maxHeight = way.getFirstValue(OSMMaxHeightParser.MAX_HEIGHT_TAGS);
+        if (!maxHeight.isEmpty())
+            map.put(MAX_HEIGHT_TAG, new KValue(KVStorage.cutString(maxHeight)));
+        String maxWeight = way.getFirstValue(OSMMaxWeightParser.MAX_WEIGHT_TAGS);
+        if (!maxWeight.isEmpty())
+            map.put(MAX_WEIGHT_TAG, new KValue(KVStorage.cutString(maxWeight)));
 
         way.setTag("key_values", map);
 

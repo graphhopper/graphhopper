@@ -65,15 +65,16 @@ public class OSMIssuesResourceTest {
         JsonNode json = query("bbox=1.50,42.50,1.55,42.53");
         assertEquals("FeatureCollection", json.get("type").asText());
         JsonNode features = json.get("features");
-        assertTrue(features.size() > 0);
+        // "Avinguda Doctor Mitjavila" passes below the bridge "Vial de la Unio" and has no maxheight tag
         JsonNode maxHeight = null;
         for (JsonNode f : features)
-            if ("missing_maxheight".equals(f.get("properties").get("type").asText())) maxHeight = f.get("properties");
-        assertNotNull(maxHeight, "no missing max_height found in " + features);
-        // the way below the bridge is the one that needs the max_height
-        assertEquals("residential", maxHeight.get("road_class").asText());
-        assertTrue(maxHeight.get("way_id").asLong() > 0);
-        assertTrue(maxHeight.get("other_way_id").asLong() > 0);
+            if (f.get("properties").get("way_id").asLong() == 24362802) maxHeight = f.get("properties");
+        assertNotNull(maxHeight, "no issue for way 24362802 in " + features);
+        assertEquals("missing_maxheight", maxHeight.get("type").asText());
+        // the way that needs the tag comes first, the bridge above it second
+        assertEquals("Avinguda Doctor Mitjavila", maxHeight.get("way_name").asText());
+        assertEquals(208585098, maxHeight.get("other_way_id").asLong());
+        assertEquals("Vial de la Unio", maxHeight.get("other_way_name").asText().replace("\u00f2", "o"));
     }
 
     @Test

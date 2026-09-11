@@ -1,0 +1,32 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<osm version="0.6" generator="pbf2osm">
+    <node id="10" lat="51" lon="9.4" version="1"/>
+    <node id="20" lat="52" lon="9.4" version="1"/>
+    <node id="30" lat="53" lon="9.4" version="1"/>
+    <node id="40" lat="54" lon="9.4" version="1"/>
+
+    <!-- a value we can parse -->
+    <way id="100" version="1">
+        <nd ref="10"/>
+        <nd ref="20"/>
+        <tag k="highway" v="primary"/>
+        <tag k="maxheight" v="3.5"/>
+        <tag k="maxweight" v="7.5"/>
+    </way>
+
+    <!-- tagged, but not as a number. the value is dropped by the encoded value -->
+    <way id="200" version="1">
+        <nd ref="20"/>
+        <nd ref="30"/>
+        <tag k="highway" v="primary"/>
+        <tag k="maxheight" v="default"/>
+        <tag k="maxweight" v="none"/>
+    </way>
+
+    <!-- not tagged at all -->
+    <way id="300" version="1">
+        <nd ref="30"/>
+        <nd ref="40"/>
+        <tag k="highway" v="primary"/>
+    </way>
+</osm>

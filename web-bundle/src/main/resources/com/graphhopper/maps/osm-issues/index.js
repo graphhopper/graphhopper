@@ -1,5 +1,5 @@
 // Simple map app that shows OSM ways with missing bridge related tags, see /osm-issues
-const MIN_ZOOM = 13;
+const MIN_ZOOM = 11;
 
 const COLORS = {
     missing_maxheight: '#e6194b',
@@ -34,15 +34,21 @@ const map = new ol.Map({
     target: 'map',
     layers: [new ol.layer.Tile({source: new ol.source.OSM()}), layer],
     overlays: [popup],
-    view: new ol.View(parseHash())
+    view: new ol.View(parseHash() || {center: [0, 0], zoom: 2})
 });
+
+// without a position in the url hash we show the area of the imported map
+if (!parseHash())
+    fetch('/info').then(res => res.json()).then(info => {
+        map.getView().fit(ol.proj.transformExtent(info.bbox, 'EPSG:4326', 'EPSG:3857'),
+            {size: map.getSize(), maxZoom: 16});
+    }).catch(() => {});
 
 function parseHash() {
     const parts = window.location.hash.replace('#', '').split('/');
     if (parts.length === 3 && !isNaN(parts[0]))
         return {center: ol.proj.fromLonLat([+parts[2], +parts[1]]), zoom: +parts[0]};
-    // Eiffel tower, where a road passes below a bridge
-    return {center: ol.proj.fromLonLat([2.294, 48.858]), zoom: 16};
+    return null;
 }
 
 function updateHash() {

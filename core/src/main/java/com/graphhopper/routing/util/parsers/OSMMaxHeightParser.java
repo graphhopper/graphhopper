@@ -28,6 +28,9 @@ import java.util.List;
 
 public class OSMMaxHeightParser implements TagParser {
 
+    // the OSM tag "height" is not used for the height of a road, so omit it here!
+    public static final List<String> MAX_HEIGHT_TAGS = Arrays.asList("maxheight", "maxheight:physical");
+
     private final DecimalEncodedValue heightEncoder;
 
     public OSMMaxHeightParser(DecimalEncodedValue heightEncoder) {
@@ -36,7 +39,6 @@ public class OSMMaxHeightParser implements TagParser {
 
     @Override
     public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
-        List<String> heightTags = Arrays.asList("maxheight", "maxheight:physical"/*, the OSM tag "height" is not used for the height of a road, so omit it here! */);
-        OSMValueExtractor.extractMeter(edgeId, edgeIntAccess, way, heightEncoder, heightTags);
+        OSMValueExtractor.extractMeter(edgeId, edgeIntAccess, way, heightEncoder, MAX_HEIGHT_TAGS);
     }
 }

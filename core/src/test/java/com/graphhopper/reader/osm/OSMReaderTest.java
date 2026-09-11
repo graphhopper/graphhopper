@@ -56,6 +56,8 @@ import static com.graphhopper.json.Statement.If;
 import static com.graphhopper.json.Statement.Op.LIMIT;
 import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static com.graphhopper.util.GHUtility.readCountries;
+import static com.graphhopper.util.Parameters.Details.MAX_HEIGHT_TAG;
+import static com.graphhopper.util.Parameters.Details.MAX_WEIGHT_TAG;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -1053,6 +1055,36 @@ public class OSMReaderTest {
         return new AreaIndex<>(readCountries());
     }
 
+    @Test
+    public void testMaxHeightAndWeightKeyValues() {
+        GraphHopper hopper = new GraphHopperFacade("test-max-height-weight.xml").importOrLoad();
+        BaseGraph graph = hopper.getBaseGraph();
+        DecimalEncodedValue maxHeightEnc = hopper.getEncodingManager().getDecimalEncodedValue(MaxHeight.KEY);
+        DecimalEncodedValue maxWeightEnc = hopper.getEncodingManager().getDecimalEncodedValue(MaxWeight.KEY);
+        IntEncodedValue wayIdEnc = hopper.getEncodingManager().getIntEncodedValue(OSMWayID.KEY);
+
+        AllEdgesIterator iter = graph.getAllEdges();
+        HashMap<Integer, EdgeIteratorState> edges = new HashMap<>();
+        while (iter.next()) edges.put(iter.get(wayIdEnc), iter.detach(false));
+
+        // a value we can parse ends up in both the encoded value and the key values
+        assertEquals(3.5, edges.get(100).get(maxHeightEnc), .1);
+        assertEquals(7.5, edges.get(100).get(maxWeightEnc), .1);
+        assertEquals("3.5", edges.get(100).getValue(MAX_HEIGHT_TAG));
+        assertEquals("7.5", edges.get(100).getValue(MAX_WEIGHT_TAG));
+
+        // a value we cannot parse is infinity in the encoded value, but the raw tag is still there
+        assertTrue(Double.isInfinite(edges.get(200).get(maxHeightEnc)));
+        assertTrue(Double.isInfinite(edges.get(200).get(maxWeightEnc)));
+        assertEquals("default", edges.get(200).getValue(MAX_HEIGHT_TAG));
+        assertEquals("none", edges.get(200).getValue(MAX_WEIGHT_TAG));
+
+        // without the tag there is no key value, which is how a missing tag can be detected
+        assertTrue(Double.isInfinite(edges.get(300).get(maxHeightEnc)));
+        assertNull(edges.get(300).getValue(MAX_HEIGHT_TAG));
+        assertNull(edges.get(300).getValue(MAX_WEIGHT_TAG));
+    }
+
     class GraphHopperFacade extends GraphHopper {
         public GraphHopperFacade(String osmFile) {
             this(osmFile, "");
@@ -1064,7 +1096,7 @@ public class OSMReaderTest {
             setGraphHopperLocation(dir);
             setEncodedValuesString("max_width,max_height,max_weight,road_environment," +
                     "foot_access, foot_priority, foot_average_speed, " +
-                    "car_access, car_average_speed, bike_access, bike_priority, bike_average_speed, ferry_speed");
+                    "car_access, car_average_speed, bike_access, bike_priority, bike_average_speed, ferry_speed, osm_way_id");
             setProfiles(createProfiles());
             getReaderConfig().setPreferredLanguage(prefLang);
         }

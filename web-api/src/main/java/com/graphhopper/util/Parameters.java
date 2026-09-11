@@ -210,6 +210,10 @@ public class Parameters {
         public static final String STREET_DESTINATION = "street_destination";
         public static final String STREET_DESTINATION_REF = "street_destination_ref";
         public static final String MOTORWAY_JUNCTION = "motorway_junction";
+        // the raw OSM values, in contrast to the max_height and max_weight encoded values these also
+        // keep values that cannot be parsed into a number like "default"
+        public static final String MAX_HEIGHT_TAG = "maxheight";
+        public static final String MAX_WEIGHT_TAG = "maxweight";
 
         public static final String AVERAGE_SPEED = "average_speed";
         public static final String EDGE_ID = "edge_id";

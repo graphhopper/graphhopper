@@ -30,6 +30,9 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.BBox;
+
+import static com.graphhopper.util.Parameters.Details.MAX_HEIGHT_TAG;
+import static com.graphhopper.util.Parameters.Details.MAX_WEIGHT_TAG;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LineString;
@@ -55,8 +58,8 @@ import java.util.*;
 public class OSMIssuesResource {
 
     private static final Logger logger = LoggerFactory.getLogger(OSMIssuesResource.class);
-    /** if the bbox contains more edges than this we refuse to answer and ask the user to zoom in */
-    private static final int MAX_EDGES = 30_000;
+    /** we keep the geometry of every edge of the bbox in memory, so this is just a safety net against OOM */
+    private static final int MAX_EDGES = 2_000_000;
     /** intersections closer than this to an end point of both edges are rather unconnected junctions */
     private static final double MIN_DIST_TO_TOWER_NODE = 1;
 
@@ -78,10 +81,10 @@ public class OSMIssuesResource {
     public Response doGet(@QueryParam("bbox") String bboxStr,
                           @QueryParam("types") String typesStr,
                           @QueryParam("limit") @DefaultValue("2000") int limit) {
-        for (String key : Arrays.asList(RoadClass.KEY, RoadEnvironment.KEY, MaxHeight.KEY, MaxWeight.KEY, OSMWayID.KEY))
+        for (String key : Arrays.asList(RoadClass.KEY, RoadEnvironment.KEY, OSMWayID.KEY))
             if (!encodingManager.hasEncodedValue(key))
                 throw new IllegalArgumentException("You need to configure GraphHopper with graph.encoded_values: "
-                        + "road_class, road_environment, max_height, max_weight, osm_way_id but " + key + " is missing");
+                        + "road_class, road_environment, osm_way_id but " + key + " is missing");
 
         Set<String> types = typesStr == null || typesStr.isEmpty()
                 ? new HashSet<>(Arrays.asList(MISSING_MAXHEIGHT, MISSING_MAXWEIGHT, MISSING_BRIDGE))
@@ -104,8 +107,6 @@ public class OSMIssuesResource {
         LocationIndexTree locationIndex = (LocationIndexTree) graphHopper.getLocationIndex();
         EnumEncodedValue<RoadClass> roadClassEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         EnumEncodedValue<RoadEnvironment> roadEnvEnc = encodingManager.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
-        DecimalEncodedValue maxHeightEnc = encodingManager.getDecimalEncodedValue(MaxHeight.KEY);
-        DecimalEncodedValue maxWeightEnc = encodingManager.getDecimalEncodedValue(MaxWeight.KEY);
         IntEncodedValue wayIdEnc = encodingManager.getIntEncodedValue(OSMWayID.KEY);
 
         IntHashSet visited = new IntHashSet();
@@ -113,76 +114,102 @@ public class OSMIssuesResource {
         locationIndex.query(bbox, edgeId -> {
             if (visited.add(edgeId)) edgeIds.add(edgeId);
         });
-        if (edgeIds.size() > MAX_EDGES)
-            throw new IllegalArgumentException("Too many edges in this area (" + edgeIds.size() + "), please zoom in");
-
         List<Map<String, Object>> features = new ArrayList<>();
         Set<String> reported = new HashSet<>();
+        // only the missing bridge tags require the crossings of all ways with each other, max_height
+        // starts at the bridges and max_weight needs no crossing at all
+        boolean allCrossings = types.contains(MISSING_BRIDGE);
+        boolean needsTree = allCrossings || types.contains(MISSING_MAXHEIGHT);
+        // we only keep the geometry of every edge in memory when we need the tree, so only then we have to limit the area
+        if (needsTree && edgeIds.size() > MAX_EDGES)
+            throw new IllegalArgumentException("Too many edges in this area (" + edgeIds.size() + "), please zoom in");
 
         IntObjectHashMap<LineString> geometries = new IntObjectHashMap<>(edgeIds.size());
-        STRtree tree = new STRtree(Math.max(10, edgeIds.size()));
+        IntArrayList bridgeIds = new IntArrayList();
+        STRtree tree = new STRtree();
         for (int i = 0; i < edgeIds.size(); i++) {
             int edgeId = edgeIds.get(i);
             EdgeIteratorState edge = graph.getEdgeIteratorStateForKey(edgeId * 2);
-            if (edge.get(roadEnvEnc) == RoadEnvironment.FERRY) continue;
-            LineString ls = edge.fetchWayGeometry(FetchMode.ALL).toLineString(false);
-            geometries.put(edgeId, ls);
-            tree.insert(ls.getEnvelopeInternal(), edgeId);
+            RoadEnvironment re = edge.get(roadEnvEnc);
+            if (re == RoadEnvironment.FERRY) continue;
+            LineString ls = null;
+            if (needsTree) {
+                ls = edge.fetchWayGeometry(FetchMode.ALL).toLineString(false);
+                geometries.put(edgeId, ls);
+                tree.insert(ls.getEnvelopeInternal(), edgeId);
+            }
+            if (re != RoadEnvironment.BRIDGE) continue;
+            bridgeIds.add(edgeId);
 
             // a bridge needs a max_weight regardless of what it crosses (river, railway, road, ...)
-            if (types.contains(MISSING_MAXWEIGHT) && edge.get(roadEnvEnc) == RoadEnvironment.BRIDGE
-                    && Double.isInfinite(edge.get(maxWeightEnc)) && isMotorized(edge.get(roadClassEnc))) {
+            if (types.contains(MISSING_MAXWEIGHT) && edge.getValue(MAX_WEIGHT_TAG) == null
+                    && isMotorized(edge.get(roadClassEnc))) {
+                if (ls == null) ls = edge.fetchWayGeometry(FetchMode.ALL).toLineString(false);
                 Coordinate at = ls.getCoordinateN(ls.getNumPoints() / 2);
                 if (bbox.contains(at.y, at.x))
                     addFeature(features, reported, MISSING_MAXWEIGHT, at, edge, null, wayIdEnc, roadClassEnc);
             }
         }
-        for (int i = 0; i < edgeIds.size(); i++) {
-            int edgeId = edgeIds.get(i);
-            LineString lsA = geometries.get(edgeId);
-            if (lsA == null) continue;
-            EdgeIteratorState edgeA = graph.getEdgeIteratorStateForKey(edgeId * 2);
-            for (Object o : tree.query(lsA.getEnvelopeInternal())) {
-                int otherId = (Integer) o;
-                // every pair should be checked only once
-                if (otherId <= edgeId) continue;
-                LineString lsB = geometries.get(otherId);
-                EdgeIteratorState edgeB = graph.getEdgeIteratorStateForKey(otherId * 2);
-                if (sharesTowerNode(edgeA, edgeB)) continue;
-                if (!lsA.intersects(lsB)) continue;
-                Geometry intersection = lsA.intersection(lsB);
-                if (intersection.isEmpty()) continue;
-                Coordinate at = intersection.getCoordinate();
-                if (!bbox.contains(at.y, at.x)) continue;
-                // if both edges just end here this is an unconnected junction and not a crossing
-                if (closeToTowerNode(lsA, at) && closeToTowerNode(lsB, at)) continue;
 
-                RoadEnvironment reA = edgeA.get(roadEnvEnc), reB = edgeB.get(roadEnvEnc);
-                EdgeIteratorState bridge = null, below = null;
-                if (reA == RoadEnvironment.BRIDGE && reB != RoadEnvironment.BRIDGE) {
-                    bridge = edgeA;
-                    below = edgeB;
-                } else if (reB == RoadEnvironment.BRIDGE && reA != RoadEnvironment.BRIDGE) {
-                    bridge = edgeB;
-                    below = edgeA;
-                }
-
-                if (bridge != null) {
-                    RoadEnvironment belowRE = below.get(roadEnvEnc);
-                    // a tunnel below a bridge does not need a max_height
-                    if (types.contains(MISSING_MAXHEIGHT) && belowRE != RoadEnvironment.TUNNEL
-                            && belowRE != RoadEnvironment.FORD && Double.isInfinite(below.get(maxHeightEnc))
-                            && isMotorized(below.get(roadClassEnc)))
+        if (types.contains(MISSING_MAXHEIGHT)) {
+            for (int i = 0; i < bridgeIds.size() && features.size() < limit; i++) {
+                int bridgeId = bridgeIds.get(i);
+                LineString bridgeLS = geometries.get(bridgeId);
+                EdgeIteratorState bridge = graph.getEdgeIteratorStateForKey(bridgeId * 2);
+                for (Object o : tree.query(bridgeLS.getEnvelopeInternal())) {
+                    int belowId = (Integer) o;
+                    if (belowId == bridgeId) continue;
+                    EdgeIteratorState below = graph.getEdgeIteratorStateForKey(belowId * 2);
+                    // a bridge or tunnel below a bridge does not need a max_height
+                    if (isSeparatedLevel(below.get(roadEnvEnc))) continue;
+                    // a way that has a maxheight tag we cannot parse, like "default", is tagged just fine
+                    if (below.getValue(MAX_HEIGHT_TAG) != null || !isMotorized(below.get(roadClassEnc))) continue;
+                    Coordinate at = crossing(bridge, bridgeLS, below, geometries.get(belowId), bbox);
+                    if (at != null)
                         addFeature(features, reported, MISSING_MAXHEIGHT, at, below, bridge, wayIdEnc, roadClassEnc);
-                } else if (types.contains(MISSING_BRIDGE) && reA != RoadEnvironment.BRIDGE
-                        && reA != RoadEnvironment.TUNNEL && reB != RoadEnvironment.TUNNEL
-                        && reA != RoadEnvironment.FORD && reB != RoadEnvironment.FORD) {
-                    addFeature(features, reported, MISSING_BRIDGE, at, edgeA, edgeB, wayIdEnc, roadClassEnc);
                 }
-                if (features.size() >= limit) return features;
+            }
+        }
+
+        if (allCrossings) {
+            for (int i = 0; i < edgeIds.size() && features.size() < limit; i++) {
+                int edgeId = edgeIds.get(i);
+                LineString lsA = geometries.get(edgeId);
+                if (lsA == null) continue;
+                EdgeIteratorState edgeA = graph.getEdgeIteratorStateForKey(edgeId * 2);
+                if (isSeparatedLevel(edgeA.get(roadEnvEnc))) continue;
+                for (Object o : tree.query(lsA.getEnvelopeInternal())) {
+                    int otherId = (Integer) o;
+                    // every pair should be checked only once
+                    if (otherId <= edgeId) continue;
+                    EdgeIteratorState edgeB = graph.getEdgeIteratorStateForKey(otherId * 2);
+                    if (isSeparatedLevel(edgeB.get(roadEnvEnc))) continue;
+                    Coordinate at = crossing(edgeA, lsA, edgeB, geometries.get(otherId), bbox);
+                    if (at != null)
+                        addFeature(features, reported, MISSING_BRIDGE, at, edgeA, edgeB, wayIdEnc, roadClassEnc);
+                }
             }
         }
         return features;
+    }
+
+    /**
+     * @return the point where the two edges cross without being connected there, or null if they do not
+     */
+    private Coordinate crossing(EdgeIteratorState a, LineString lsA, EdgeIteratorState b, LineString lsB, BBox bbox) {
+        if (sharesTowerNode(a, b)) return null;
+        if (!lsA.intersects(lsB)) return null;
+        Geometry intersection = lsA.intersection(lsB);
+        if (intersection.isEmpty()) return null;
+        Coordinate at = intersection.getCoordinate();
+        if (!bbox.contains(at.y, at.x)) return null;
+        // if both edges just end here this is an unconnected junction and not a crossing
+        if (closeToTowerNode(lsA, at) && closeToTowerNode(lsB, at)) return null;
+        return at;
+    }
+
+    private static boolean isSeparatedLevel(RoadEnvironment re) {
+        return re == RoadEnvironment.BRIDGE || re == RoadEnvironment.TUNNEL || re == RoadEnvironment.FORD;
     }
 
     private void addFeature(List<Map<String, Object>> features, Set<String> reported, String type, Coordinate at,
