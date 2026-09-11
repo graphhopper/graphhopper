@@ -8,12 +8,12 @@ const ISSUES = {
     missing_maxheight: {
         color: '#e6194b', tag: 'maxheight',
         title: 'missing maxheight below a bridge',
-        hint: 'the way below the bridge needs the maxheight tag'
+        // the first way is the one that needs the tag, say so on the buttons
+        roles: ['needs the tag', 'the bridge above']
     },
     missing_maxweight: {
         color: '#f58231', tag: 'maxweight',
-        title: 'bridge without maxweight',
-        hint: 'the bridge needs the maxweight tag'
+        title: 'bridge without maxweight'
     },
     missing_bridge: {
         color: '#4363d8', tag: 'bridge', warn: true,
@@ -402,8 +402,11 @@ function openIssue(feature) {
     const ways = [{id: p.way_id, name: p.way_name, cls: p.road_class}];
     if (p.other_way_id) ways.push({id: p.other_way_id, name: p.other_way_name, cls: p.other_road_class});
     const picker = $('way-picker');
+    const roles = issue.roles || [];
     picker.replaceChildren(...ways.map((way, i) => {
-        const button = el('button', (way.name || '(no name)') + ' [' + way.cls + ']', i ? '' : 'selected');
+        const label = (way.name || '(no name)') + ' [' + way.cls + ']'
+            + (roles[i] ? ' - ' + roles[i] : '');
+        const button = el('button', label, i ? '' : 'selected');
         button.onclick = () => {
             [...picker.children].forEach(c => c.classList.remove('selected'));
             button.classList.add('selected');

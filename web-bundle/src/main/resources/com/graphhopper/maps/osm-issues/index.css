@@ -31,15 +31,11 @@ html, body {
     border-bottom: 1px solid #e3e3e3;
 }
 
-h1 {
-    font-size: 15px;
-    margin: 0;
-    display: inline;
-}
-
 /* the filters can be folded away, the status line below stays */
 #filters summary {
     cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
     margin-bottom: 8px;
 }
 
@@ -191,7 +187,7 @@ button:disabled {
     margin-top: 0;
 }
 
-#way-state:empty {
+#way-state:empty, #edit-hint:empty {
     display: none;
 }
 
@@ -199,9 +195,10 @@ button:disabled {
     margin-top: 5px;
 }
 
+/* rarely needed, but the way out for everything this app does not do - so it sits at the bottom */
 #way-links {
     margin-top: 10px;
-    font-size: 12px;
+    font-size: 11px;
 }
 
 #way-links a {
