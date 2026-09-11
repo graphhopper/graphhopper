@@ -162,7 +162,7 @@ button:disabled {
 
 #edit-links a {
     flex: 1;
-    padding: 6px 8px;
+    padding: 6px 4px;
     border: 1px solid #ccc;
     border-radius: 3px;
     background: #fff;

@@ -316,7 +316,9 @@ function loadPhoto(lat, lon, line) {
         // the map links point at the photo, so that the map opens where the picture was taken
         const mapLat = photo ? photo.lat : lat, mapLon = photo ? photo.lon : lon;
         $('edit-links').innerHTML =
-            '<a href="https://www.mapillary.com/app/?lat=' + mapLat + '&lng=' + mapLon
+            '<a href="https://panoramax.openstreetmap.fr/#map=19/' + mapLat + '/' + mapLon
+            + '" target="_blank">Panoramax</a>'
+            + '<a href="https://www.mapillary.com/app/?lat=' + mapLat + '&lng=' + mapLon
             + '&z=19&trafficSign=all" target="_blank">Mapillary</a>'
             + '<a href="https://kartaview.org/map/@' + mapLat + ',' + mapLon
             + ',19z" target="_blank">KartaView</a>';
