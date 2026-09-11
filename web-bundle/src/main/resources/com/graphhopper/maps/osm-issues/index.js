@@ -2,6 +2,7 @@
 // them right here: log in to OSM, edit the tags of a way, collect the changes and upload them as a
 // single changeset.
 const MIN_ZOOM = 11;
+const LIMIT = 2000;
 
 // everything that differs per issue type: marker color, what to tell the user and which tag it is about
 const ISSUES = {
@@ -138,6 +139,11 @@ roadBoxes.forEach(cb => cb.onchange = () => {
 });
 
 let controller = null;
+// what the markers on the map currently show, to avoid reloading when zooming in
+let loaded = null;
+
+/** is the second [minLon, minLat, maxLon, maxLat] inside the first one? */
+const contains = (a, b) => a[0] <= b[0] && a[1] <= b[1] && a[2] >= b[2] && a[3] >= b[3];
 
 function load() {
     if (controller) controller.abort();
@@ -159,15 +165,23 @@ function load() {
         return;
     }
     const extent = ol.proj.transformExtent(map.getView().calculateExtent(map.getSize()), 'EPSG:3857', 'EPSG:4326');
+    const filter = types.join(',') + '|' + roadGroups().join(',');
+    // zooming in or panning inside the loaded area shows a part of what we already have
+    if (loaded && loaded.filter === filter && contains(loaded.extent, extent)) {
+        $('status').textContent = issueSource.getFeatures().length + ' issue(s) loaded for this area';
+        return;
+    }
     $('status').textContent = 'loading ...';
     controller = new AbortController();
     ghFetch('/osm-issues?bbox=' + extent.map(v => v.toFixed(6)).join(',')
-        + '&types=' + types.join(',') + '&roads=' + roadGroups().join(','),
+        + '&types=' + types.join(',') + '&roads=' + roadGroups().join(',') + '&limit=' + LIMIT,
         {signal: controller.signal})
         .then(json => {
             issueSource.clear();
             issueSource.addFeatures(new ol.format.GeoJSON().readFeatures(json, {featureProjection: 'EPSG:3857'}));
             $('status').textContent = json.features.length + ' issue(s) in this view';
+            // a truncated answer does not cover the area, so do not reuse it when zooming in
+            loaded = json.features.length < LIMIT ? {extent: extent, filter: filter} : null;
         })
         .catch(err => {
             // keep whatever is on the map, the error message alone tells what happened
@@ -656,6 +670,7 @@ $('upload').onclick = async () => {
         state.innerHTML = 'uploaded ' + ways.length + ' way(s) as <a href="' + settings.api
             + '/changeset/' + changesetId + '" target="_blank">changeset ' + changesetId + '</a>';
         savePending();
+        loaded = null;
         load();
     } catch (err) {
         state.textContent = 'upload failed: ' + err.message;
