@@ -211,14 +211,31 @@ function distance(lat1, lon1, lat2, lon2) {
     return Math.hypot((lat1 - lat2) * 111320, (lon1 - lon2) * 111320 * Math.cos(lat1 * Math.PI / 180));
 }
 
-// we want a photo taken ~40m before the problem and looking at it, so that the bridge and its sign
-// are in the picture instead of being right above the camera
-function pickPhoto(photos, lat, lon) {
+/** shortest distance in meters from a point to a polyline of [lon, lat] pairs */
+function distanceToLine(lat, lon, line) {
+    const mx = 111320 * Math.cos(lat * Math.PI / 180), my = 111320;
+    const px = lon * mx, py = lat * my;
+    let min = Infinity;
+    for (let i = 1; i < line.length; i++) {
+        const ax = line[i - 1][0] * mx, ay = line[i - 1][1] * my;
+        const dx = line[i][0] * mx - ax, dy = line[i][1] * my - ay;
+        const len2 = dx * dx + dy * dy;
+        const t = len2 ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / len2)) : 0;
+        min = Math.min(min, Math.hypot(px - (ax + t * dx), py - (ay + t * dy)));
+    }
+    return min;
+}
+
+// We want a photo taken ~40m before the problem and looking at it, so that the bridge and its sign
+// are in the picture instead of being right above the camera. It also has to be taken on the way we
+// are editing, otherwise we end up with a picture from the bridge itself.
+function pickPhoto(photos, lat, lon, line) {
     let best = null;
     for (const p of photos) {
         if (isNaN(p.heading)) continue;
         const dist = distance(lat, lon, p.lat, p.lon);
         if (dist < 20 || dist > 70) continue;
+        if (line && distanceToLine(p.lat, p.lon, line) > 20) continue;
         const off = Math.abs((bearing(p.lat, p.lon, lat, lon) - p.heading + 540) % 360 - 180);
         if (off > 40) continue;
         const score = off + Math.abs(dist - 40);
@@ -278,7 +295,7 @@ function mapillaryPhotos(lat, lon) {
 
 let photoRequest = 0;
 
-function loadPhoto(lat, lon) {
+function loadPhoto(lat, lon, line) {
     const req = ++photoRequest;
     $('photo').textContent = 'looking for a photo ...';
     const failed = name => err => (console.error(name + ' lookup failed:', err), []);
@@ -288,7 +305,7 @@ function loadPhoto(lat, lon) {
         mapillaryPhotos(lat, lon).catch(failed('Mapillary'))
     ]).then(lists => {
         if (req !== photoRequest) return; // another marker was clicked in the meantime
-        const best = pickPhoto(lists.flat(), lat, lon);
+        const best = pickPhoto(lists.flat(), lat, lon, line);
         const photo = best && best.photo;
         // the map links point at the photo, so that the map opens where the picture was taken
         const mapLat = photo ? photo.lat : lat, mapLon = photo ? photo.lon : lon;
@@ -298,7 +315,7 @@ function loadPhoto(lat, lon) {
             + '<a href="https://kartaview.org/map/@' + mapLat + ',' + mapLon
             + ',19z" target="_blank">KartaView</a>';
         if (!photo) {
-            $('photo').textContent = 'no street level photo looking at this spot';
+            $('photo').textContent = 'no street level photo on this way looking at this spot';
             return;
         }
         const link = el('a');
@@ -383,7 +400,6 @@ function openIssue(feature) {
         return button;
     }));
     loadWay(ways[0].id);
-    loadPhoto(lat, lon);
 }
 
 function loadWay(wayId) {
@@ -406,9 +422,11 @@ function loadWay(wayId) {
     osmRead('/api/0.6/way/' + wayId + '/full.json').then(json => {
         const way = json.elements.find(e => e.type === 'way');
         const coords = new Map(json.elements.filter(e => e.type === 'node').map(n => [n.id, [n.lon, n.lat]]));
+        const line = way.nodes.map(id => coords.get(id));
         waySource.clear();
-        waySource.addFeature(new ol.Feature(new ol.geom.LineString(
-            way.nodes.map(id => ol.proj.fromLonLat(coords.get(id))))));
+        waySource.addFeature(new ol.Feature(new ol.geom.LineString(line.map(c => ol.proj.fromLonLat(c)))));
+        // a photo of this problem has to be taken on this way, not on the one crossing it
+        loadPhoto(currentIssue.lat, currentIssue.lon, line);
         const pending = pendingEdits.find(e => e.wayId === wayId) || {changes: {}};
         currentWay = {id: wayId, tags: Object.assign({}, way.tags)};
         EDITABLE.forEach(key => {
