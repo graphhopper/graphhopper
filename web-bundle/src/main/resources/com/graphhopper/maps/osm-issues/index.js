@@ -60,7 +60,8 @@ function ghFetch(path, options) {
             + (res.headers.get('content-type') || 'unknown') + '): ' + preview(text) + hint);
         return json;
     })).catch(err => {
-        console.error('GraphHopper request failed:', url, err);
+        // aborting the previous request while panning is normal, do not report it
+        if (err.name !== 'AbortError') console.error('GraphHopper request failed:', url, err);
         throw err;
     });
 }
@@ -124,7 +125,7 @@ const checkboxes = [...document.querySelectorAll('#issues input[type=checkbox]')
 checkboxes.forEach(cb => cb.addEventListener('change', () => load()));
 
 // the road filter is remembered, it is a setting you pick once and keep
-$('road-filter').value = localStorage.getItem('road_filter') || 'all';
+$('road-filter').value = localStorage.getItem('road_filter') || 'major';
 $('road-filter').onchange = () => {
     localStorage.setItem('road_filter', $('road-filter').value);
     load();
@@ -135,9 +136,15 @@ let controller = null;
 function load() {
     if (controller) controller.abort();
     const types = checkboxes.filter(cb => cb.checked).map(cb => cb.dataset.type);
-    if (map.getView().getZoom() < MIN_ZOOM || types.length === 0) {
+    if (types.length === 0) {
+        // unchecking every type is a deliberate action, there the markers should go away at once
         issueSource.clear();
-        $('status').textContent = types.length === 0 ? 'no issue type selected' : 'zoom in to load issues';
+        $('status').textContent = 'no issue type selected';
+        return;
+    }
+    // the old markers stay on the map until the new ones are there, so panning does not blank it
+    if (map.getView().getZoom() < MIN_ZOOM) {
+        $('status').textContent = 'zoom in to load issues';
         return;
     }
     const e = ol.proj.transformExtent(map.getView().calculateExtent(map.getSize()), 'EPSG:3857', 'EPSG:4326');
@@ -154,14 +161,17 @@ function load() {
         })
         .catch(err => {
             if (err.name === 'AbortError') return;
-            issueSource.clear();
+            // keep whatever is on the map, the error message alone tells what happened
             $('status').textContent = err.message;
         });
 }
 
+let moveTimer = null;
 map.on('moveend', () => {
     updateHash();
-    load();
+    // wait for the map to come to rest, otherwise every pan step starts and aborts a request
+    clearTimeout(moveTimer);
+    moveTimer = setTimeout(load, 300);
 });
 
 map.on('singleclick', evt => {
