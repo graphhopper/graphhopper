@@ -3,6 +3,7 @@
 // single changeset.
 const MIN_ZOOM = 11;
 const LIMIT = 2000;
+const DEFAULT_COMMENT = 'add missing maxheight/maxweight tags at bridges';
 
 // everything that differs per issue type: marker color, what to tell the user and which tag it is about
 const ISSUES = {
@@ -701,6 +702,9 @@ $('logout').onclick = () => {
     auth.logout();
     updateAccount();
 };
+
+$('comment').value = DEFAULT_COMMENT;
+$('source').value = localStorage.getItem('changeset_source') || '';
 
 initAuth();
 // coming back from the OSM login page, osm-auth exchanges the code in the url for a token
