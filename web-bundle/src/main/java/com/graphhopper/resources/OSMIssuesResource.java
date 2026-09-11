@@ -189,7 +189,9 @@ public class OSMIssuesResource {
                     if (otherId <= edgeId) continue;
                     EdgeIteratorState edgeB = graph.getEdgeIteratorStateForKey(otherId * 2);
                     if (isSeparatedLevel(edgeB.get(roadEnvEnc))) continue;
-                    if (!wanted(edgeA.get(roadClassEnc), roads) && !wanted(edgeB.get(roadClassEnc), roads))
+                    // here it is unknown which of the two should carry the bridge tag, so both of
+                    // them have to pass the filter - otherwise a filtered class could be reported
+                    if (!wanted(edgeA.get(roadClassEnc), roads) || !wanted(edgeB.get(roadClassEnc), roads))
                         continue;
                     Coordinate at = crossing(edgeA, lsA, edgeB, geometries.get(otherId), bbox);
                     if (at != null)
