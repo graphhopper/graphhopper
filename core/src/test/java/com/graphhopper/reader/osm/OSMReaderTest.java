@@ -56,6 +56,7 @@ import static com.graphhopper.json.Statement.If;
 import static com.graphhopper.json.Statement.Op.LIMIT;
 import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static com.graphhopper.util.GHUtility.readCountries;
+import static com.graphhopper.util.Parameters.Details.MAX_HEIGHT_SIGNED_TAG;
 import static com.graphhopper.util.Parameters.Details.MAX_HEIGHT_TAG;
 import static com.graphhopper.util.Parameters.Details.MAX_WEIGHT_TAG;
 import static org.junit.jupiter.api.Assertions.*;
@@ -1079,9 +1080,14 @@ public class OSMReaderTest {
         assertEquals("default", edges.get(200).getValue(MAX_HEIGHT_TAG));
         assertEquals("none", edges.get(200).getValue(MAX_WEIGHT_TAG));
 
+        // "maxheight:signed=no" is kept as well, it says that a mapper checked there is no sign
+        assertNull(edges.get(250).getValue(MAX_HEIGHT_TAG));
+        assertEquals("no", edges.get(250).getValue(MAX_HEIGHT_SIGNED_TAG));
+
         // without the tag there is no key value, which is how a missing tag can be detected
         assertTrue(Double.isInfinite(edges.get(300).get(maxHeightEnc)));
         assertNull(edges.get(300).getValue(MAX_HEIGHT_TAG));
+        assertNull(edges.get(300).getValue(MAX_HEIGHT_SIGNED_TAG));
         assertNull(edges.get(300).getValue(MAX_WEIGHT_TAG));
     }
 

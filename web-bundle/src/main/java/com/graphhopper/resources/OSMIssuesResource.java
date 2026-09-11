@@ -31,6 +31,7 @@ import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.BBox;
 
+import static com.graphhopper.util.Parameters.Details.MAX_HEIGHT_SIGNED_TAG;
 import static com.graphhopper.util.Parameters.Details.MAX_HEIGHT_TAG;
 import static com.graphhopper.util.Parameters.Details.MAX_WEIGHT_TAG;
 import org.locationtech.jts.geom.Coordinate;
@@ -163,8 +164,10 @@ public class OSMIssuesResource {
                     EdgeIteratorState below = graph.getEdgeIteratorStateForKey(belowId * 2);
                     // a bridge or tunnel below a bridge does not need a max_height
                     if (isSeparatedLevel(below.get(roadEnvEnc))) continue;
-                    // a way that has a maxheight tag we cannot parse, like "default", is tagged just fine
+                    // a way that has a maxheight tag we cannot parse, like "default", is tagged just
+                    // fine, and maxheight:signed=no says a mapper checked that there is no sign
                     if (below.getValue(MAX_HEIGHT_TAG) != null || !isMotorized(below.get(roadClassEnc))) continue;
+                    if ("no".equals(below.getValue(MAX_HEIGHT_SIGNED_TAG))) continue;
                     if (majorOnly && !isMajor(below.get(roadClassEnc))) continue;
                     Coordinate at = crossing(bridge, bridgeLS, below, geometries.get(belowId), bbox);
                     if (at != null)

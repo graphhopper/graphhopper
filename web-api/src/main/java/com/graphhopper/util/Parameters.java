@@ -213,6 +213,8 @@ public class Parameters {
         // the raw OSM values, in contrast to the max_height and max_weight encoded values these also
         // keep values that cannot be parsed into a number like "default"
         public static final String MAX_HEIGHT_TAG = "maxheight";
+        // "no" states that a mapper checked that there is no sign, like maxheight=default does
+        public static final String MAX_HEIGHT_SIGNED_TAG = "maxheight:signed";
         public static final String MAX_WEIGHT_TAG = "maxweight";
 
         public static final String AVERAGE_SPEED = "average_speed";

@@ -494,6 +494,9 @@ public class OSMReader {
         String maxHeight = way.getFirstValue(OSMMaxHeightParser.MAX_HEIGHT_TAGS);
         if (!maxHeight.isEmpty())
             map.put(MAX_HEIGHT_TAG, new KValue(KVStorage.cutString(maxHeight)));
+        String maxHeightSigned = way.getTag(MAX_HEIGHT_SIGNED_TAG, "");
+        if (!maxHeightSigned.isEmpty())
+            map.put(MAX_HEIGHT_SIGNED_TAG, new KValue(KVStorage.cutString(maxHeightSigned)));
         String maxWeight = way.getFirstValue(OSMMaxWeightParser.MAX_WEIGHT_TAGS);
         if (!maxWeight.isEmpty())
             map.put(MAX_WEIGHT_TAG, new KValue(KVStorage.cutString(maxWeight)));
