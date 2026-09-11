@@ -89,24 +89,26 @@ public class OSMIssuesResourceTest {
     }
 
     @Test
-    public void testRoadClassFilter() {
-        String bbox = "bbox=1.50,42.50,1.55,42.53&types=missing_maxweight";
+    public void testRoadClassGroups() {
+        // maxheight has cases in both groups here, unclassified belongs to "rest"
+        String bbox = "bbox=1.50,42.50,1.55,42.53&types=missing_maxheight";
         int all = query(bbox).get("features").size();
-        List<String> major = List.of("motorway", "trunk", "primary", "secondary", "tertiary");
+        List<String> normal = List.of("primary", "secondary", "tertiary", "residential");
 
-        JsonNode filtered = query(bbox + "&roads=major");
-        assertTrue(filtered.get("features").size() < all, filtered.get("features").size() + " vs " + all);
-        assertTrue(filtered.get("features").size() > 0);
-        for (JsonNode f : filtered.get("features"))
-            assertTrue(major.contains(f.get("properties").get("road_class").asText()), f.toString());
+        // the groups can be combined, an empty list means every road class
+        JsonNode onlyNormal = query(bbox + "&roads=normal");
+        assertTrue(onlyNormal.get("features").size() < all, onlyNormal.get("features").size() + " vs " + all);
+        assertTrue(onlyNormal.get("features").size() > 0);
+        for (JsonNode f : onlyNormal.get("features"))
+            assertTrue(normal.contains(f.get("properties").get("road_class").asText()), f.toString());
 
-        // the same without motorways, which are usually crossed by high enough bridges. Andorra has
-        // no motorway, so the result can only be checked to be a subset without any motorway
-        JsonNode noMotorway = query(bbox + "&roads=no_motorway");
-        assertTrue(noMotorway.get("features").size() <= filtered.get("features").size());
-        assertTrue(noMotorway.get("features").size() > 0);
-        for (JsonNode f : noMotorway.get("features"))
-            assertNotEquals("motorway", f.get("properties").get("road_class").asText());
+        JsonNode onlyRest = query(bbox + "&roads=rest");
+        for (JsonNode f : onlyRest.get("features"))
+            assertFalse(normal.contains(f.get("properties").get("road_class").asText()), f.toString());
+
+        // two groups together are the same as each of them on its own
+        assertEquals(onlyNormal.get("features").size() + onlyRest.get("features").size(),
+                query(bbox + "&roads=normal,rest").get("features").size());
     }
 
     @Test

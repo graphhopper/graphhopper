@@ -81,7 +81,7 @@ public class OSMIssuesResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response doGet(@QueryParam("bbox") String bboxStr,
                           @QueryParam("types") String typesStr,
-                          @QueryParam("roads") @DefaultValue("all") String roads,
+                          @QueryParam("roads") @DefaultValue("") String roadsStr,
                           @QueryParam("limit") @DefaultValue("2000") int limit) {
         for (String key : Arrays.asList(RoadClass.KEY, RoadEnvironment.KEY, OSMWayID.KEY))
             if (!encodingManager.hasEncodedValue(key))
@@ -94,6 +94,9 @@ public class OSMIssuesResource {
 
         StopWatch sw = new StopWatch().start();
         BBox bbox = parseBBox(bboxStr);
+        // an empty list means every road class
+        Set<String> roads = roadsStr.isEmpty() ? Collections.emptySet()
+                : new HashSet<>(Arrays.asList(roadsStr.split(",")));
         List<Map<String, Object>> features = findIssues(bbox, types, roads, limit);
 
         Map<String, Object> result = new LinkedHashMap<>();
@@ -104,7 +107,7 @@ public class OSMIssuesResource {
         return Response.ok(result).header("X-GH-Took", "" + sw.getMillis()).build();
     }
 
-    private List<Map<String, Object>> findIssues(BBox bbox, Set<String> types, String roads, int limit) {
+    private List<Map<String, Object>> findIssues(BBox bbox, Set<String> types, Set<String> roads, int limit) {
         BaseGraph graph = graphHopper.getBaseGraph();
         LocationIndexTree locationIndex = (LocationIndexTree) graphHopper.getLocationIndex();
         EnumEncodedValue<RoadClass> roadClassEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
@@ -255,22 +258,26 @@ public class OSMIssuesResource {
     }
 
     /**
-     * @param roads "major" for the road classes most people would call a "real" road, "no_motorway"
-     *              for the same without motorways, anything else means no filtering at all
+     * The road classes are offered in three groups, so they can be combined as needed.
+     *
+     * @param roads the wanted groups, an empty set means all of them
      */
-    private static boolean wanted(RoadClass roadClass, String roads) {
-        boolean major = "major".equals(roads), noMotorway = "no_motorway".equals(roads);
-        if (!major && !noMotorway) return true;
+    private static boolean wanted(RoadClass roadClass, Set<String> roads) {
+        return roads.isEmpty() || roads.contains(group(roadClass));
+    }
+
+    private static String group(RoadClass roadClass) {
         switch (roadClass) {
             case MOTORWAY:
-                return major;
             case TRUNK:
+                return "main";
             case PRIMARY:
             case SECONDARY:
             case TERTIARY:
-                return true;
+            case RESIDENTIAL:
+                return "normal";
             default:
-                return false;
+                return "rest";
         }
     }
 

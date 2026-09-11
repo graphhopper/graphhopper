@@ -127,18 +127,26 @@ checkboxes.forEach(cb => cb.onchange = () => load());
 $('filters').open = localStorage.getItem('filters_open') !== 'no';
 $('filters').ontoggle = () => localStorage.setItem('filters_open', $('filters').open ? 'yes' : 'no');
 
-// the road filter is remembered, it is a setting you pick once and keep
-$('road-filter').value = stored('road_filter', 'no_motorway');
-$('road-filter').onchange = () => {
-    localStorage.setItem('road_filter', $('road-filter').value);
+// the road groups are remembered, they are a setting you pick once and keep
+const roadBoxes = [...document.querySelectorAll('.road-group')];
+const roadGroups = () => roadBoxes.filter(cb => cb.checked).map(cb => cb.value);
+const storedGroups = localStorage.getItem('road_groups');
+if (storedGroups !== null) roadBoxes.forEach(cb => cb.checked = storedGroups.split(',').includes(cb.value));
+roadBoxes.forEach(cb => cb.onchange = () => {
+    localStorage.setItem('road_groups', roadGroups().join(','));
     load();
-};
+});
 
 let controller = null;
 
 function load() {
     if (controller) controller.abort();
     const types = checkboxes.filter(cb => cb.checked).map(cb => cb.dataset.type);
+    if (!roadGroups().length) {
+        issueSource.clear();
+        $('status').textContent = 'no road class selected';
+        return;
+    }
     if (!types.length) {
         // unchecking every type is a deliberate action, there the markers should go away at once
         issueSource.clear();
@@ -154,7 +162,7 @@ function load() {
     $('status').textContent = 'loading ...';
     controller = new AbortController();
     ghFetch('/osm-issues?bbox=' + extent.map(v => v.toFixed(6)).join(',')
-        + '&types=' + types.join(',') + '&roads=' + $('road-filter').value,
+        + '&types=' + types.join(',') + '&roads=' + roadGroups().join(','),
         {signal: controller.signal})
         .then(json => {
             issueSource.clear();
