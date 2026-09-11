@@ -8,8 +8,9 @@ const osmIssuesConfig = {
     // client id of an OAuth 2 application registered at https://www.openstreetmap.org/oauth2/applications
     // (not confidential, redirect uri = the url of this page, permission "modify the map")
     osmClientId: '',
-    // client id of the same kind of application on the dev API, used when the dev API is selected
-    osmClientIdDev: '',
+    // the OSM instance to edit. Use https://master.apis.dev.openstreetmap.org to try things out,
+    // but note that it has its own database without the real ways
+    osmApi: 'https://www.openstreetmap.org',
     // optional, enables direct links to Mapillary images instead of only its traffic sign layer
     mapillaryToken: ''
 };

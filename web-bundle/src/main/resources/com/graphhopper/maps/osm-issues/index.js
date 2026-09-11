@@ -40,29 +40,18 @@ function el(tag, text, className) {
 
 // ---------------------------------------------------------------- settings
 
-// config.js holds the values for this deployment, what a user sets in the panel wins over it
+// everything configurable lives in config.js, ?gh=... overrides the server for one visit
 const deployed = typeof osmIssuesConfig === 'object' ? osmIssuesConfig : {};
-const stored = (key, fallback) => localStorage.getItem(key) || fallback || '';
 
 const settings = {
-    get api() { return stored('osm_api', 'https://www.openstreetmap.org'); },
-    set api(v) { localStorage.setItem('osm_api', v); },
-    get isDevApi() { return this.api.includes('dev.openstreetmap'); },
-    get clientId() {
-        return stored('osm_client_id_' + this.api,
-            this.isDevApi ? deployed.osmClientIdDev : deployed.osmClientId);
-    },
-    set clientId(v) { localStorage.setItem('osm_client_id_' + this.api, v); },
-    get mapillaryToken() { return stored('mapillary_token', deployed.mapillaryToken); },
-    set mapillaryToken(v) { localStorage.setItem('mapillary_token', v); },
-    /** empty means the GraphHopper server is the one that serves this page */
-    get gh() { return stored('gh_url', deployed.graphhopperUrl); },
-    set gh(v) { localStorage.setItem('gh_url', v.replace(/\/$/, '')); }
+    api: deployed.osmApi || 'https://www.openstreetmap.org',
+    gh: (new URLSearchParams(location.search).get('gh') || deployed.graphhopperUrl || '').replace(/\/$/, ''),
+    clientId: deployed.osmClientId || '',
+    mapillaryToken: deployed.mapillaryToken || '',
+    get isDevApi() {
+        return this.api.includes('dev.openstreetmap');
+    }
 };
-
-// ?gh=http://host:8989 sets the GraphHopper server once, afterwards it is remembered
-const ghParam = new URLSearchParams(location.search).get('gh');
-if (ghParam) settings.gh = ghParam;
 
 const redirectUri = location.origin + location.pathname.replace(/\/?$/, '/');
 let pendingEdits = JSON.parse(localStorage.getItem('osm_pending') || '[]');
@@ -694,42 +683,13 @@ $('discard').onclick = () => {
     }
 };
 
-// ---------------------------------------------------------------- settings panel and start
-
-$('settings-toggle').onclick = e => {
-    e.preventDefault();
-    $('settings').hidden = !$('settings').hidden;
-};
-const DEFAULT_COMMENT = 'add missing maxheight/maxweight tags at bridges';
-$('comment').value = DEFAULT_COMMENT;
-$('source').value = stored('changeset_source', '');
-$('gh-url').value = settings.gh;
-$('gh-url').onchange = () => {
-    settings.gh = $('gh-url').value.trim();
-    load();
-};
-$('api-select').value = settings.api;
-$('api-select').onchange = () => {
-    settings.api = $('api-select').value;
-    $('client-id').value = settings.clientId;
-    initAuth();
-    updateAccount();
-};
-$('client-id').value = settings.clientId;
-$('client-id').onchange = () => {
-    settings.clientId = $('client-id').value.trim();
-    initAuth();
-};
-$('mapillary-token').value = settings.mapillaryToken;
-$('mapillary-token').onchange = () => settings.mapillaryToken = $('mapillary-token').value.trim();
-$('redirect-hint').textContent = 'Register an OAuth 2 application in your OSM settings with the '
-    + 'redirect URI ' + redirectUri + ' and the permission "modify the map". OSM only allows https '
-    + 'or http://127.0.0.1 as redirect, so open this page via 127.0.0.1 and not via localhost.';
+// ---------------------------------------------------------------- start
 
 $('login').onclick = () => {
     if (!settings.clientId) {
-        $('settings').hidden = false;
-        $('account-state').textContent = 'please enter an OAuth client id first';
+        $('account-state').textContent = 'no osmClientId in config.js. Register an OAuth 2 '
+            + 'application at ' + settings.api + '/oauth2/applications with the redirect URI '
+            + redirectUri + ' and the permission "modify the map", not confidential.';
         return;
     }
     auth.authenticate(err => {

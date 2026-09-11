@@ -35,25 +35,6 @@
         <div id="account-state">not logged in</div>
         <button id="login">log in to OSM</button>
         <button id="logout" hidden>log out</button>
-        <a href="#" id="settings-toggle">settings</a>
-        <div id="settings" hidden>
-            <label class="field">GraphHopper URL
-                <input id="gh-url" type="text" placeholder="empty = the server that serves this page">
-            </label>
-            <label class="field">OSM API
-                <select id="api-select">
-                    <option value="https://www.openstreetmap.org">openstreetmap.org (real edits)</option>
-                    <option value="https://master.apis.dev.openstreetmap.org">dev API (for testing)</option>
-                </select>
-            </label>
-            <label class="field">OAuth client id
-                <input id="client-id" type="text" placeholder="from OSM > settings > OAuth 2 applications">
-            </label>
-            <label class="field">Mapillary token (optional)
-                <input id="mapillary-token" type="text" placeholder="MLY|... for direct image links">
-            </label>
-            <div class="hint" id="redirect-hint"></div>
-        </div>
     </section>
 
     <section id="issues">
