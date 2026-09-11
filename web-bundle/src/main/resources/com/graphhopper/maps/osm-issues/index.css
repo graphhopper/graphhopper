@@ -10,30 +10,92 @@ html, body {
     position: absolute;
     top: 0;
     bottom: 0;
-    width: 100%;
+    left: 0;
+    right: 340px;
 }
 
-#panel {
+#sidebar {
     position: absolute;
-    top: 10px;
-    right: 10px;
-    z-index: 1;
-    background: rgba(255, 255, 255, 0.95);
-    padding: 10px 14px;
-    border-radius: 4px;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
-    max-width: 260px;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    width: 340px;
+    box-sizing: border-box;
+    overflow-y: auto;
+    background: #fafafa;
+    border-left: 1px solid #ddd;
 }
 
-#panel h1 {
-    font-size: 14px;
+#sidebar section {
+    padding: 10px 14px;
+    border-bottom: 1px solid #e3e3e3;
+}
+
+h1 {
+    font-size: 15px;
     margin: 0 0 8px;
 }
 
-#panel label {
+h2 {
+    font-size: 14px;
+    margin: 0 0 6px;
+}
+
+label {
     display: block;
     margin: 4px 0;
     cursor: pointer;
+}
+
+label.field {
+    margin: 8px 0 0;
+    font-size: 12px;
+    color: #555;
+}
+
+input[type=text], select {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 4px;
+    margin-top: 2px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    font-size: 13px;
+}
+
+button {
+    padding: 5px 10px;
+    border: 1px solid #bbb;
+    border-radius: 3px;
+    background: #fff;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+button:hover {
+    background: #f0f0f0;
+}
+
+button.primary {
+    background: #2d7dd2;
+    border-color: #2d7dd2;
+    color: #fff;
+}
+
+button.primary:hover {
+    background: #246bb5;
+}
+
+button:disabled {
+    opacity: .5;
+    cursor: default;
+}
+
+.row {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+    align-items: center;
 }
 
 .dot {
@@ -50,65 +112,130 @@ html, body {
 .dot.maxweight { background: #f58231; }
 .dot.bridge { background: #4363d8; }
 
+.hint {
+    color: #555;
+    font-size: 12px;
+    margin: 6px 0 0;
+}
+
+.hint.warn {
+    color: #a33;
+}
+
 #status {
     margin-top: 8px;
     color: #555;
     font-size: 12px;
 }
 
-.ol-popup {
-    position: absolute;
-    background: #fff;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
-    padding: 12px 24px 12px 12px;
-    border-radius: 4px;
-    border: 1px solid #ccc;
-    bottom: 14px;
-    left: -60px;
-    width: 280px;
-    display: none;
-}
-
-.ol-popup:after {
-    content: "";
-    position: absolute;
-    top: 100%;
-    left: 60px;
-    margin-left: -10px;
-    border: 10px solid transparent;
-    border-top-color: #fff;
-}
-
-.ol-popup-closer {
-    position: absolute;
-    top: 4px;
-    right: 8px;
-    text-decoration: none;
-    color: #777;
-}
-
-.ol-popup h2 {
-    font-size: 14px;
-    margin: 0 0 6px;
-}
-
-.ol-popup .way {
-    margin: 6px 0;
-}
-
-.ol-popup .hint {
-    color: #555;
-    font-size: 12px;
-    margin: 6px 0 0;
-}
-
-.ol-popup .images a {
-    margin-right: 10px;
-}
-
-.ol-popup img {
+#photo img {
     width: 100%;
     display: block;
     border-radius: 3px;
     margin-bottom: 4px;
+}
+
+/* own row with a real click target, so they cannot be hit by accident when picking a way */
+#edit-links {
+    display: flex;
+    gap: 8px;
+    margin: 8px 0 16px;
+}
+
+#edit-links a {
+    flex: 1;
+    padding: 6px 8px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    background: #fff;
+    color: #246bb5;
+    text-align: center;
+    text-decoration: none;
+    font-size: 12px;
+}
+
+#edit-links a:hover {
+    background: #f0f0f0;
+}
+
+#way-picker {
+    margin-top: 4px;
+}
+
+/* sits below the input fields, away from the way buttons, so it cannot be hit by accident */
+#way-links {
+    margin-top: 16px;
+    padding-top: 10px;
+    border-top: 1px solid #e3e3e3;
+    font-size: 12px;
+}
+
+#way-links a {
+    display: inline-block;
+    padding: 3px 0;
+    color: #246bb5;
+}
+
+#way-picker button {
+    margin: 0 4px 4px 0;
+    font-size: 12px;
+}
+
+#way-picker button.selected {
+    background: #2d7dd2;
+    border-color: #2d7dd2;
+    color: #fff;
+}
+
+.tag {
+    display: flex;
+    gap: 4px;
+    margin-top: 4px;
+    align-items: center;
+}
+
+.tag {
+    font-size: 12px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    word-break: break-all;
+}
+
+.tag .key {
+    flex: 0 0 42%;
+    color: #555;
+}
+
+input.changed {
+    border-color: #2d7dd2;
+    background: #eaf2fb;
+}
+
+#edit-fields {
+    margin-top: 8px;
+}
+
+#all-tags {
+    margin-top: 10px;
+    font-size: 12px;
+}
+
+#all-tags summary {
+    cursor: pointer;
+    color: #555;
+}
+
+.pending-item {
+    border-top: 1px solid #eee;
+    padding: 6px 0;
+    font-size: 12px;
+}
+
+.pending-item code {
+    display: block;
+    color: #246bb5;
+    word-break: break-all;
+}
+
+.pending-item a {
+    cursor: pointer;
 }

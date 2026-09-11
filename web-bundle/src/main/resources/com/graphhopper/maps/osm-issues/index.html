@@ -23,22 +23,83 @@
     <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no"/>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@10.3.1/ol.css">
     <script src="https://cdn.jsdelivr.net/npm/ol@10.3.1/dist/ol.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/osm-auth@3.2.0/dist/osm-auth.iife.js"></script>
     <link rel="stylesheet" href="index.css">
 </head>
 <body>
 <div id="map"></div>
 
-<div id="panel">
-    <h1>missing OSM tags</h1>
-    <label><input type="checkbox" data-type="missing_maxheight" checked><span class="dot maxheight"></span> max_height below bridge</label>
-    <label><input type="checkbox" data-type="missing_maxweight" checked><span class="dot maxweight"></span> max_weight on bridge</label>
-    <label><input type="checkbox" data-type="missing_bridge" checked><span class="dot bridge"></span> bridge tag (crossing ways)</label>
-    <div id="status">move the map to load issues</div>
-</div>
+<div id="sidebar">
+    <section id="issues">
+        <h1>missing OSM tags</h1>
+        <label><input type="checkbox" data-type="missing_maxheight" checked><span class="dot maxheight"></span> max_height below bridge</label>
+        <label><input type="checkbox" data-type="missing_maxweight" checked><span class="dot maxweight"></span> max_weight on bridge</label>
+        <label><input type="checkbox" data-type="missing_bridge" checked><span class="dot bridge"></span> bridge tag (crossing ways)</label>
+        <label class="field">roads
+            <select id="road-filter">
+                <option value="all">all roads</option>
+                <option value="major">only motorway, trunk, primary, secondary, tertiary</option>
+            </select>
+        </label>
+        <div id="status">move the map to load issues</div>
+    </section>
 
-<div id="popup" class="ol-popup">
-    <a href="#" id="popup-closer" class="ol-popup-closer">&times;</a>
-    <div id="popup-content"></div>
+    <section id="account">
+        <div id="account-state">not logged in</div>
+        <button id="login">log in to OSM</button>
+        <button id="logout" hidden>log out</button>
+        <a href="#" id="settings-toggle">settings</a>
+        <div id="settings" hidden>
+            <label class="field">OSM API
+                <select id="api-select">
+                    <option value="https://www.openstreetmap.org">openstreetmap.org (real edits)</option>
+                    <option value="https://master.apis.dev.openstreetmap.org">dev API (for testing)</option>
+                </select>
+            </label>
+            <label class="field">OAuth client id
+                <input id="client-id" type="text" placeholder="from OSM > settings > OAuth 2 applications">
+            </label>
+            <label class="field">Mapillary token (optional)
+                <input id="mapillary-token" type="text" placeholder="MLY|... for direct image links">
+            </label>
+            <div class="hint" id="redirect-hint"></div>
+        </div>
+    </section>
+
+    <section id="edit" hidden>
+        <h2 id="edit-title"></h2>
+        <div id="edit-hint" class="hint"></div>
+        <div id="photo" class="hint"></div>
+        <div id="edit-links"></div>
+        <div class="hint">which way do you want to edit?</div>
+        <div id="way-picker"></div>
+        <div id="edit-fields">
+            <label class="field">maxheight <input id="tag-maxheight" type="text" placeholder="e.g. 3.8 or default"></label>
+            <label class="field">maxweight <input id="tag-maxweight" type="text" placeholder="e.g. 7.5"></label>
+            <label class="field">bridge <input id="tag-bridge" type="text" placeholder="e.g. yes"></label>
+            <div class="hint">only these three tags can be edited, nothing else is touched</div>
+        </div>
+        <div id="way-links" class="hint"></div>
+        <details id="all-tags">
+            <summary>all tags of this way</summary>
+            <div id="tags"></div>
+        </details>
+        <div class="row">
+            <button id="save" class="primary">save change</button>
+            <button id="close-edit">close</button>
+        </div>
+    </section>
+
+    <section id="pending" hidden>
+        <h2>not uploaded yet (<span id="pending-count">0</span>)</h2>
+        <div id="pending-list"></div>
+        <input id="comment" type="text" placeholder="changeset comment">
+        <div class="row">
+            <button id="upload" class="primary">upload to OSM</button>
+            <button id="discard">discard all</button>
+        </div>
+        <div id="upload-state" class="hint"></div>
+    </section>
 </div>
 
 <script src="index.js"></script>

@@ -80,6 +80,7 @@ public class OSMIssuesResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response doGet(@QueryParam("bbox") String bboxStr,
                           @QueryParam("types") String typesStr,
+                          @QueryParam("major_only") @DefaultValue("false") boolean majorOnly,
                           @QueryParam("limit") @DefaultValue("2000") int limit) {
         for (String key : Arrays.asList(RoadClass.KEY, RoadEnvironment.KEY, OSMWayID.KEY))
             if (!encodingManager.hasEncodedValue(key))
@@ -92,7 +93,7 @@ public class OSMIssuesResource {
 
         StopWatch sw = new StopWatch().start();
         BBox bbox = parseBBox(bboxStr);
-        List<Map<String, Object>> features = findIssues(bbox, types, limit);
+        List<Map<String, Object>> features = findIssues(bbox, types, majorOnly, limit);
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("type", "FeatureCollection");
@@ -102,7 +103,7 @@ public class OSMIssuesResource {
         return Response.ok(result).header("X-GH-Took", "" + sw.getMillis()).build();
     }
 
-    private List<Map<String, Object>> findIssues(BBox bbox, Set<String> types, int limit) {
+    private List<Map<String, Object>> findIssues(BBox bbox, Set<String> types, boolean majorOnly, int limit) {
         BaseGraph graph = graphHopper.getBaseGraph();
         LocationIndexTree locationIndex = (LocationIndexTree) graphHopper.getLocationIndex();
         EnumEncodedValue<RoadClass> roadClassEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
@@ -143,7 +144,7 @@ public class OSMIssuesResource {
 
             // a bridge needs a max_weight regardless of what it crosses (river, railway, road, ...)
             if (types.contains(MISSING_MAXWEIGHT) && edge.getValue(MAX_WEIGHT_TAG) == null
-                    && isMotorized(edge.get(roadClassEnc))) {
+                    && isMotorized(edge.get(roadClassEnc)) && (!majorOnly || isMajor(edge.get(roadClassEnc)))) {
                 if (ls == null) ls = edge.fetchWayGeometry(FetchMode.ALL).toLineString(false);
                 Coordinate at = ls.getCoordinateN(ls.getNumPoints() / 2);
                 if (bbox.contains(at.y, at.x))
@@ -164,6 +165,7 @@ public class OSMIssuesResource {
                     if (isSeparatedLevel(below.get(roadEnvEnc))) continue;
                     // a way that has a maxheight tag we cannot parse, like "default", is tagged just fine
                     if (below.getValue(MAX_HEIGHT_TAG) != null || !isMotorized(below.get(roadClassEnc))) continue;
+                    if (majorOnly && !isMajor(below.get(roadClassEnc))) continue;
                     Coordinate at = crossing(bridge, bridgeLS, below, geometries.get(belowId), bbox);
                     if (at != null)
                         addFeature(features, reported, MISSING_MAXHEIGHT, at, below, bridge, wayIdEnc, roadClassEnc);
@@ -184,6 +186,8 @@ public class OSMIssuesResource {
                     if (otherId <= edgeId) continue;
                     EdgeIteratorState edgeB = graph.getEdgeIteratorStateForKey(otherId * 2);
                     if (isSeparatedLevel(edgeB.get(roadEnvEnc))) continue;
+                    if (majorOnly && !isMajor(edgeA.get(roadClassEnc)) && !isMajor(edgeB.get(roadClassEnc)))
+                        continue;
                     Coordinate at = crossing(edgeA, lsA, edgeB, geometries.get(otherId), bbox);
                     if (at != null)
                         addFeature(features, reported, MISSING_BRIDGE, at, edgeA, edgeB, wayIdEnc, roadClassEnc);
@@ -243,6 +247,20 @@ public class OSMIssuesResource {
         feature.put("geometry", geometry);
         feature.put("properties", properties);
         features.add(feature);
+    }
+
+    /** the road classes that most people would call a "real" road */
+    private static boolean isMajor(RoadClass roadClass) {
+        switch (roadClass) {
+            case MOTORWAY:
+            case TRUNK:
+            case PRIMARY:
+            case SECONDARY:
+            case TERTIARY:
+                return true;
+            default:
+                return false;
+        }
     }
 
     private static boolean isMotorized(RoadClass roadClass) {

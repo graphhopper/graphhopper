@@ -89,6 +89,18 @@ public class OSMIssuesResourceTest {
     }
 
     @Test
+    public void testMajorOnlyFilter() {
+        String bbox = "bbox=1.50,42.50,1.55,42.53&types=missing_maxweight";
+        int all = query(bbox).get("features").size();
+        JsonNode major = query(bbox + "&major_only=true");
+        assertTrue(major.get("features").size() < all, major.get("features").size() + " vs " + all);
+        assertTrue(major.get("features").size() > 0);
+        for (JsonNode f : major.get("features"))
+            assertTrue(List.of("motorway", "trunk", "primary", "secondary", "tertiary")
+                    .contains(f.get("properties").get("road_class").asText()), f.toString());
+    }
+
+    @Test
     public void testTypeFilter() {
         JsonNode json = query("bbox=1.50,42.50,1.55,42.53&types=missing_bridge");
         for (JsonNode f : json.get("features"))
