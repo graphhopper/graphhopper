@@ -283,6 +283,8 @@ function loadPhoto(lat, lon) {
         link.append(img);
         $('photo').replaceChildren(link, photo.source + ', ' + Math.round(best.dist)
             + ' m before the spot' + (photo.date ? ', ' + photo.date : ''));
+        // whoever reads the value off this photo should say so in the changeset
+        if (!$('source').value) $('source').value = photo.source;
     });
 }
 
@@ -516,6 +518,7 @@ function wayXml(way, changes, changesetId) {
 $('upload').onclick = async () => {
     if (!pendingEdits.length) return;
     const comment = $('comment').value.trim() || 'add missing maxheight/maxweight tags at bridges';
+    const source = $('source').value.trim();
     if (!confirm('Upload ' + pendingEdits.length + ' way(s) to ' + settings.api
         + (settings.isDevApi ? '' : ' (this changes the real OSM data!)') + '?\n\n'
         + pendingEdits.map(e => 'way ' + e.wayId + ': ' + describe(e)).join('\n')))
@@ -538,7 +541,9 @@ $('upload').onclick = async () => {
             method: 'PUT',
             headers: {'Content-Type': 'text/xml'},
             body: '<osm><changeset><tag k="created_by" v="GraphHopper osm-issues"/>'
-                + '<tag k="comment" v="' + xmlEscape(comment) + '"/></changeset></osm>'
+                + '<tag k="comment" v="' + xmlEscape(comment) + '"/>'
+                + (source ? '<tag k="source" v="' + xmlEscape(source) + '"/>' : '')
+                + '</changeset></osm>'
         });
 
         state.textContent = 'uploading ...';
@@ -552,6 +557,7 @@ $('upload').onclick = async () => {
 
         pendingEdits = [];
         $('comment').value = '';
+        localStorage.setItem('changeset_source', source);
         state.innerHTML = 'uploaded ' + ways.length + ' way(s) as <a href="' + settings.api
             + '/changeset/' + changesetId + '" target="_blank">changeset ' + changesetId + '</a>';
         savePending();
@@ -578,6 +584,7 @@ $('settings-toggle').onclick = e => {
     e.preventDefault();
     $('settings').hidden = !$('settings').hidden;
 };
+$('source').value = stored('changeset_source', '');
 $('gh-url').value = settings.gh;
 $('gh-url').onchange = () => {
     settings.gh = $('gh-url').value.trim();
