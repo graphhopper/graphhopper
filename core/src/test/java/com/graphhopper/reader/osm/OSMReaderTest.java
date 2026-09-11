@@ -1057,6 +1057,29 @@ public class OSMReaderTest {
     }
 
     @Test
+    public void testRailwayBridges() {
+        // without the flag no railway is imported at all, only the road is there
+        GraphHopper hopper = new GraphHopperFacade("test-railway-bridge.xml").importOrLoad();
+        assertEquals(1, hopper.getBaseGraph().getEdges());
+
+        Helper.removeDir(new File(dir));
+        GraphHopperFacade withBridges = new GraphHopperFacade("test-railway-bridge.xml");
+        withBridges.getReaderConfig().setImportRailwayBridges(true);
+        hopper = withBridges.importOrLoad();
+
+        // the bridge is there now, the railway without a bridge tag is still ignored
+        EnumEncodedValue<RoadEnvironment> reEnc = hopper.getEncodingManager()
+                .getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
+        IntEncodedValue wayIdEnc = hopper.getEncodingManager().getIntEncodedValue(OSMWayID.KEY);
+        assertEquals(2, hopper.getBaseGraph().getEdges());
+        AllEdgesIterator iter = hopper.getBaseGraph().getAllEdges();
+        HashMap<Integer, RoadEnvironment> envByWay = new HashMap<>();
+        while (iter.next()) envByWay.put(iter.get(wayIdEnc), iter.get(reEnc));
+        assertEquals(RoadEnvironment.BRIDGE, envByWay.get(200));
+        assertNull(envByWay.get(300));
+    }
+
+    @Test
     public void testMaxHeightAndWeightKeyValues() {
         GraphHopper hopper = new GraphHopperFacade("test-max-height-weight.xml").importOrLoad();
         BaseGraph graph = hopper.getBaseGraph();

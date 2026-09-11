@@ -33,6 +33,7 @@ import java.util.function.Function;
 
 public class OSMParsers {
     private final List<String> ignoredHighways;
+    private boolean importRailwayBridges;
     private final List<TagParser> wayTagParsers;
     private final List<RelationTagParser> relationTagParsers;
     private final List<RestrictionTagParser> restrictionTagParsers;
@@ -48,6 +49,11 @@ public class OSMParsers {
         this.wayTagParsers = wayTagParsers;
         this.relationTagParsers = relationTagParsers;
         this.restrictionTagParsers = restrictionTagParsers;
+    }
+
+    public OSMParsers setImportRailwayBridges(boolean importRailwayBridges) {
+        this.importRailwayBridges = importRailwayBridges;
+        return this;
     }
 
     public OSMParsers addIgnoredHighway(String highway) {
@@ -82,6 +88,9 @@ public class OSMParsers {
         else if ("pier".equals(way.getTag("man_made")))
             return true;
         else if ("platform".equals(way.getTag("railway")))
+            return true;
+        else if (importRailwayBridges && way.hasTag("railway") && way.hasTag("bridge") && !way.hasTag("bridge", "no"))
+            // railway bridges are not routable, but they tell us what crosses a road from above
             return true;
         else
             return false;

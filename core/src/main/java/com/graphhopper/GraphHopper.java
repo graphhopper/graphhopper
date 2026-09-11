@@ -562,6 +562,7 @@ public class GraphHopper {
 
         osmReaderConfig.setIgnoredHighways(Arrays.stream(ghConfig.getString("import.osm.ignored_highways", String.join(",", osmReaderConfig.getIgnoredHighways()))
                 .split(",")).map(String::trim).collect(Collectors.toList()));
+        osmReaderConfig.setImportRailwayBridges(ghConfig.getBool("import.osm.railway_bridges", osmReaderConfig.isImportRailwayBridges()));
         osmReaderConfig.setParseWayNames(ghConfig.getBool("datareader.instructions", osmReaderConfig.isParseWayNames()));
         osmReaderConfig.setPreferredLanguage(ghConfig.getString("datareader.preferred_language", osmReaderConfig.getPreferredLanguage()));
         osmReaderConfig.setMaxWayPointDistance(ghConfig.getDouble(Routing.INIT_WAY_POINT_MAX_DISTANCE, osmReaderConfig.getMaxWayPointDistance()));
@@ -898,6 +899,7 @@ public class GraphHopper {
         }
         encodingManager = buildEncodingManager(encodedValuesWithProps, activeImportUnits, restrictionVehicleTypesByProfile);
         osmParsers = buildOSMParsers(encodedValuesWithProps, activeImportUnits, restrictionVehicleTypesByProfile, osmReaderConfig.getIgnoredHighways());
+        osmParsers.setImportRailwayBridges(osmReaderConfig.isImportRailwayBridges());
     }
 
     protected void postImportOSM() {

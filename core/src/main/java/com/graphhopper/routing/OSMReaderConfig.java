@@ -23,6 +23,7 @@ import java.util.List;
 
 public class OSMReaderConfig {
     private List<String> ignoredHighways = new ArrayList<>();
+    private boolean importRailwayBridges = false;
     private boolean parseWayNames = true;
     private String preferredLanguage = "";
     private double maxWayPointDistance = 0.5;
@@ -50,6 +51,19 @@ public class OSMReaderConfig {
      */
     public OSMReaderConfig setIgnoredHighways(List<String> ignoredHighways) {
         this.ignoredHighways = ignoredHighways;
+        return this;
+    }
+
+    public boolean isImportRailwayBridges() {
+        return importRailwayBridges;
+    }
+
+    /**
+     * Railways are not imported, but their bridges can be, so tools can see what crosses a road from
+     * above. These ways are not routable, they only add geometry to the graph.
+     */
+    public OSMReaderConfig setImportRailwayBridges(boolean importRailwayBridges) {
+        this.importRailwayBridges = importRailwayBridges;
         return this;
     }
 
