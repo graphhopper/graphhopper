@@ -33,7 +33,18 @@ html, body {
 
 h1 {
     font-size: 15px;
-    margin: 0 0 8px;
+    margin: 0;
+    display: inline;
+}
+
+/* the filters can be folded away, the status line below stays */
+#filters summary {
+    cursor: pointer;
+    margin-bottom: 8px;
+}
+
+#filters[open] summary {
+    margin-bottom: 4px;
 }
 
 h2 {
@@ -188,11 +199,8 @@ button:disabled {
     margin-top: 5px;
 }
 
-/* sits below the input fields, away from the way buttons, so it cannot be hit by accident */
 #way-links {
-    margin-top: 16px;
-    padding-top: 10px;
-    border-top: 1px solid #e3e3e3;
+    margin-top: 10px;
     font-size: 12px;
 }
 

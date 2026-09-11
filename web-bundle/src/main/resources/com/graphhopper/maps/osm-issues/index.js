@@ -123,6 +123,10 @@ if (!parseHash())
 const checkboxes = [...document.querySelectorAll('#issues input[type=checkbox]')];
 checkboxes.forEach(cb => cb.onchange = () => load());
 
+// the filter section stays folded the way the user left it
+$('filters').open = localStorage.getItem('filters_open') !== 'no';
+$('filters').ontoggle = () => localStorage.setItem('filters_open', $('filters').open ? 'yes' : 'no');
+
 // the road filter is remembered, it is a setting you pick once and keep
 $('road-filter').value = stored('road_filter', 'major');
 $('road-filter').onchange = () => {
