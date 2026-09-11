@@ -264,7 +264,9 @@ function kartaViewPhotos(lat, lon) {
             lat: +p.lat, lon: +p.lng, heading: parseFloat(p.heading),
             date: (p.shot_date || p.date_added || '').substring(0, 10),
             thumb: 'https://' + host + '.openstreetcam.org/' + p.lth_name.slice(host.length + 1),
-            page: 'https://kartaview.org/details/' + p.sequence_id + '/' + p.sequence_index,
+            // its detail view loads the whole sequence and fails on the long ones, so we open the
+            // map at the position of this picture instead
+            page: 'https://kartaview.org/map/@' + p.lat + ',' + p.lng + ',19z',
             source: 'KartaView'
         };
     }));
@@ -319,13 +321,15 @@ function loadPhoto(lat, lon, line) {
         const photo = best && best.photo;
         // the map links point at the photo, so that the map opens where the picture was taken
         const mapLat = photo ? photo.lat : lat, mapLon = photo ? photo.lon : lon;
+        // for panoramax the picture itself is the better link, its map needs a few clicks first
+        const panoUrl = photo && photo.source === 'Panoramax' ? photo.page
+            : 'https://panoramax.openstreetmap.fr/#map=19/' + mapLat + '/' + mapLon;
         $('edit-links').innerHTML =
-            '<a href="https://panoramax.openstreetmap.fr/#map=19/' + mapLat + '/' + mapLon
-            + '" target="_blank">Panoramax</a>'
-            + '<a href="https://www.mapillary.com/app/?lat=' + mapLat + '&lng=' + mapLon
+            '<a href="https://www.mapillary.com/app/?lat=' + mapLat + '&lng=' + mapLon
             + '&z=19&trafficSign=all" target="_blank">Mapillary</a>'
             + '<a href="https://kartaview.org/map/@' + mapLat + ',' + mapLon
-            + ',19z" target="_blank">KartaView</a>';
+            + ',19z" target="_blank">KartaView</a>'
+            + '<a href="' + panoUrl + '" target="_blank">Panoramax</a>';
         if (!photo) {
             $('photo').textContent = 'no street level photo on this way looking at this spot';
             return;
