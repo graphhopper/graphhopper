@@ -39,10 +39,10 @@
             <label><input type="checkbox" data-type="missing_bridge"><span class="dot bridge"></span> bridge tag (crossing ways)</label>
             <div class="label">roads</div>
             <select id="road-filter">
-                <option value="major" selected>only motorway, trunk, primary, secondary, tertiary</option>
+                <option value="no_motorway" selected>only trunk, primary, secondary, tertiary</option>
+                <option value="major">the same plus motorway</option>
                 <option value="all">all roads</option>
             </select>
-            <label title="motorway bridges are usually built high enough"><input type="checkbox" id="skip-motorway-bridges" checked> ignore motorway bridges</label>
         </details>
         <div id="status">move the map to load issues</div>
     </section>

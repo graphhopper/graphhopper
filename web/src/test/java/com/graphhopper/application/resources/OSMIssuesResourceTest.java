@@ -89,15 +89,24 @@ public class OSMIssuesResourceTest {
     }
 
     @Test
-    public void testMajorOnlyFilter() {
+    public void testRoadClassFilter() {
         String bbox = "bbox=1.50,42.50,1.55,42.53&types=missing_maxweight";
         int all = query(bbox).get("features").size();
-        JsonNode major = query(bbox + "&major_only=true");
-        assertTrue(major.get("features").size() < all, major.get("features").size() + " vs " + all);
-        assertTrue(major.get("features").size() > 0);
-        for (JsonNode f : major.get("features"))
-            assertTrue(List.of("motorway", "trunk", "primary", "secondary", "tertiary")
-                    .contains(f.get("properties").get("road_class").asText()), f.toString());
+        List<String> major = List.of("motorway", "trunk", "primary", "secondary", "tertiary");
+
+        JsonNode filtered = query(bbox + "&roads=major");
+        assertTrue(filtered.get("features").size() < all, filtered.get("features").size() + " vs " + all);
+        assertTrue(filtered.get("features").size() > 0);
+        for (JsonNode f : filtered.get("features"))
+            assertTrue(major.contains(f.get("properties").get("road_class").asText()), f.toString());
+
+        // the same without motorways, which are usually crossed by high enough bridges. Andorra has
+        // no motorway, so the result can only be checked to be a subset without any motorway
+        JsonNode noMotorway = query(bbox + "&roads=no_motorway");
+        assertTrue(noMotorway.get("features").size() <= filtered.get("features").size());
+        assertTrue(noMotorway.get("features").size() > 0);
+        for (JsonNode f : noMotorway.get("features"))
+            assertNotEquals("motorway", f.get("properties").get("road_class").asText());
     }
 
     @Test

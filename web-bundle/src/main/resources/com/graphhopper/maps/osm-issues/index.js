@@ -128,14 +128,9 @@ $('filters').open = localStorage.getItem('filters_open') !== 'no';
 $('filters').ontoggle = () => localStorage.setItem('filters_open', $('filters').open ? 'yes' : 'no');
 
 // the road filter is remembered, it is a setting you pick once and keep
-$('road-filter').value = stored('road_filter', 'major');
+$('road-filter').value = stored('road_filter', 'no_motorway');
 $('road-filter').onchange = () => {
     localStorage.setItem('road_filter', $('road-filter').value);
-    load();
-};
-$('skip-motorway-bridges').checked = localStorage.getItem('skip_motorway_bridges') !== 'no';
-$('skip-motorway-bridges').onchange = () => {
-    localStorage.setItem('skip_motorway_bridges', $('skip-motorway-bridges').checked ? 'yes' : 'no');
     load();
 };
 
@@ -159,8 +154,7 @@ function load() {
     $('status').textContent = 'loading ...';
     controller = new AbortController();
     ghFetch('/osm-issues?bbox=' + extent.map(v => v.toFixed(6)).join(',')
-        + '&types=' + types.join(',') + '&major_only=' + ($('road-filter').value === 'major')
-        + '&skip_motorway_bridges=' + $('skip-motorway-bridges').checked,
+        + '&types=' + types.join(',') + '&roads=' + $('road-filter').value,
         {signal: controller.signal})
         .then(json => {
             issueSource.clear();
