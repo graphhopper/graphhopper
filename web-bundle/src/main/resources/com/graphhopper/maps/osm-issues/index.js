@@ -10,8 +10,8 @@ const COLORS = {
 };
 
 const TITLES = {
-    missing_maxheight: 'missing max_height below a bridge',
-    missing_maxweight: 'bridge without max_weight',
+    missing_maxheight: 'missing maxheight below a bridge',
+    missing_maxweight: 'bridge without maxweight',
     missing_bridge: 'missing bridge tag'
 };
 
