@@ -65,7 +65,7 @@ html, body {
     border: 1px solid #ccc;
     bottom: 14px;
     left: -60px;
-    min-width: 240px;
+    width: 280px;
     display: none;
 }
 
@@ -104,4 +104,11 @@ html, body {
 
 .ol-popup .images a {
     margin-right: 10px;
+}
+
+.ol-popup img {
+    width: 100%;
+    display: block;
+    border-radius: 3px;
+    margin-bottom: 4px;
 }
