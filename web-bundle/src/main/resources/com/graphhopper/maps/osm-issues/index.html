@@ -1,0 +1,46 @@
+<!--
+  ~  Licensed to GraphHopper GmbH under one or more contributor
+  ~  license agreements. See the NOTICE file distributed with this work for
+  ~  additional information regarding copyright ownership.
+  ~
+  ~  GraphHopper GmbH licenses this file to you under the Apache License,
+  ~  Version 2.0 (the "License"); you may not use this file except in
+  ~  compliance with the License. You may obtain a copy of the License at
+  ~
+  ~       http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~  Unless required by applicable law or agreed to in writing, software
+  ~  distributed under the License is distributed on an "AS IS" BASIS,
+  ~  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~  See the License for the specific language governing permissions and
+  ~  limitations under the License.
+  -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title>GraphHopper - missing OSM bridge tags</title>
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@10.3.1/ol.css">
+    <script src="https://cdn.jsdelivr.net/npm/ol@10.3.1/dist/ol.js"></script>
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+<div id="map"></div>
+
+<div id="panel">
+    <h1>missing OSM tags</h1>
+    <label><input type="checkbox" data-type="missing_maxheight" checked><span class="dot maxheight"></span> max_height below bridge</label>
+    <label><input type="checkbox" data-type="missing_maxweight" checked><span class="dot maxweight"></span> max_weight on bridge</label>
+    <label><input type="checkbox" data-type="missing_bridge" checked><span class="dot bridge"></span> bridge tag (crossing ways)</label>
+    <div id="status">move the map to load issues</div>
+</div>
+
+<div id="popup" class="ol-popup">
+    <a href="#" id="popup-closer" class="ol-popup-closer">&times;</a>
+    <div id="popup-content"></div>
+</div>
+
+<script src="index.js"></script>
+</body>
+</html>

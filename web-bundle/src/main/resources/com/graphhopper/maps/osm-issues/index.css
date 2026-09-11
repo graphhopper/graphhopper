@@ -1,0 +1,107 @@
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 14px;
+}
+
+#map {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 100%;
+}
+
+#panel {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 1;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 10px 14px;
+    border-radius: 4px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+    max-width: 260px;
+}
+
+#panel h1 {
+    font-size: 14px;
+    margin: 0 0 8px;
+}
+
+#panel label {
+    display: block;
+    margin: 4px 0;
+    cursor: pointer;
+}
+
+.dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 1px solid #333;
+    vertical-align: middle;
+    margin: 0 4px;
+}
+
+.dot.maxheight { background: #e6194b; }
+.dot.maxweight { background: #f58231; }
+.dot.bridge { background: #4363d8; }
+
+#status {
+    margin-top: 8px;
+    color: #555;
+    font-size: 12px;
+}
+
+.ol-popup {
+    position: absolute;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+    padding: 12px 24px 12px 12px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    bottom: 14px;
+    left: -60px;
+    min-width: 240px;
+    display: none;
+}
+
+.ol-popup:after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 60px;
+    margin-left: -10px;
+    border: 10px solid transparent;
+    border-top-color: #fff;
+}
+
+.ol-popup-closer {
+    position: absolute;
+    top: 4px;
+    right: 8px;
+    text-decoration: none;
+    color: #777;
+}
+
+.ol-popup h2 {
+    font-size: 14px;
+    margin: 0 0 6px;
+}
+
+.ol-popup .way {
+    margin: 6px 0;
+}
+
+.ol-popup .hint {
+    color: #555;
+    font-size: 12px;
+    margin: 6px 0 0;
+}
+
+.ol-popup .images a {
+    margin-right: 10px;
+}
