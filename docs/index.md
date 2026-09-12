@@ -69,6 +69,11 @@ The Android demo, that shows how to use GraphHopper for offline routing on
 Android, was available until [GraphHopper 1.0](https://github.com/graphhopper/graphhopper/tree/1.0/android).
 See discussion on this topic [here](https://github.com/graphhopper/graphhopper/issues/1940).
 
+Embedding GraphHopper's core directly in an Android app and routing
+in-process still works on modern GraphHopper, though it isn't an officially
+maintained target. See [Offline routing on Android](./core/android.md) for
+a community-documented technique and its caveats.
+
 There is a GraphHopper fork for iOS that allows to do offline routing on
 iOS. See the Instructions on how to setup this [here](https://github.com/graphhopper/graphhopper-ios/) including a sample application.
 See the necessary changes for modern iOS and GraphHopper 1.0 in [this pull request](https://github.com/graphhopper/graphhopper-ios/pull/47).
