@@ -28,6 +28,7 @@ import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.FetchMode;
+import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.BBox;
 
@@ -82,6 +83,8 @@ public class OSMIssuesResource {
     public Response doGet(@QueryParam("bbox") String bboxStr,
                           @QueryParam("types") String typesStr,
                           @QueryParam("roads") @DefaultValue("") String roadsStr,
+                          @QueryParam("min_clearance") @DefaultValue("0") double minClearance,
+                          @QueryParam("tagged") @DefaultValue("false") boolean tagged,
                           @QueryParam("limit") @DefaultValue("2000") int limit) {
         for (String key : Arrays.asList(RoadClass.KEY, RoadEnvironment.KEY, OSMWayID.KEY))
             if (!encodingManager.hasEncodedValue(key))
@@ -97,7 +100,7 @@ public class OSMIssuesResource {
         // an empty list means every road class
         Set<String> roads = roadsStr.isEmpty() ? Collections.emptySet()
                 : new HashSet<>(Arrays.asList(roadsStr.toLowerCase().split(",")));
-        List<Map<String, Object>> features = findIssues(bbox, types, roads, limit);
+        List<Map<String, Object>> features = findIssues(bbox, types, roads, minClearance, tagged, limit);
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("type", "FeatureCollection");
@@ -107,7 +110,8 @@ public class OSMIssuesResource {
         return Response.ok(result).header("X-GH-Took", "" + sw.getMillis()).build();
     }
 
-    private List<Map<String, Object>> findIssues(BBox bbox, Set<String> types, Set<String> roads, int limit) {
+    private List<Map<String, Object>> findIssues(BBox bbox, Set<String> types, Set<String> roads,
+                                                double minClearance, boolean tagged, int limit) {
         BaseGraph graph = graphHopper.getBaseGraph();
         LocationIndexTree locationIndex = (LocationIndexTree) graphHopper.getLocationIndex();
         EnumEncodedValue<RoadClass> roadClassEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
@@ -167,14 +171,23 @@ public class OSMIssuesResource {
                     EdgeIteratorState below = graph.getEdgeIteratorStateForKey(belowId * 2);
                     // a bridge or tunnel below a bridge does not need a max_height
                     if (isSeparatedLevel(below.get(roadEnvEnc))) continue;
+                    if (!isMotorized(below.get(roadClassEnc))) continue;
                     // a way that has a maxheight tag we cannot parse, like "default", is tagged just
-                    // fine, and maxheight:signed=no says a mapper checked that there is no sign
-                    if (below.getValue(MAX_HEIGHT_TAG) != null || !isMotorized(below.get(roadClassEnc))) continue;
-                    if ("no".equals(below.getValue(MAX_HEIGHT_SIGNED_TAG))) continue;
+                    // fine, and maxheight:signed=no says a mapper checked that there is no sign.
+                    // With tagged=true exactly those are reported instead, to compare their clearance.
+                    boolean hasTag = below.getValue(MAX_HEIGHT_TAG) != null
+                            || "no".equals(below.getValue(MAX_HEIGHT_SIGNED_TAG));
+                    if (hasTag != tagged) continue;
                     if (!wanted(below.get(roadClassEnc), roads)) continue;
                     Coordinate at = crossing(bridge, bridgeLS, below, geometries.get(belowId), bbox);
-                    if (at != null)
-                        addFeature(features, reported, MISSING_MAXHEIGHT, at, below, bridge, wayIdEnc, roadClassEnc);
+                    if (at == null) continue;
+                    // how much higher the bridge is than the road below, if the graph has elevation
+                    double bridgeEle = elevationAt(bridge.fetchWayGeometry(FetchMode.ALL), at);
+                    double belowEle = elevationAt(below.fetchWayGeometry(FetchMode.ALL), at);
+                    double clearance = bridgeEle - belowEle;
+                    if (minClearance > 0 && clearance > minClearance) continue;
+                    addFeature(features, reported, MISSING_MAXHEIGHT, at, below, bridge, wayIdEnc,
+                            roadClassEnc, belowEle, bridgeEle);
                 }
             }
         }
@@ -227,6 +240,12 @@ public class OSMIssuesResource {
     private void addFeature(List<Map<String, Object>> features, Set<String> reported, String type, Coordinate at,
                             EdgeIteratorState edge, EdgeIteratorState otherEdge, IntEncodedValue wayIdEnc,
                             EnumEncodedValue<RoadClass> roadClassEnc) {
+        addFeature(features, reported, type, at, edge, otherEdge, wayIdEnc, roadClassEnc, Double.NaN, Double.NaN);
+    }
+
+    private void addFeature(List<Map<String, Object>> features, Set<String> reported, String type, Coordinate at,
+                            EdgeIteratorState edge, EdgeIteratorState otherEdge, IntEncodedValue wayIdEnc,
+                            EnumEncodedValue<RoadClass> roadClassEnc, double belowEle, double bridgeEle) {
         int wayId = edge.get(wayIdEnc);
         int otherWayId = otherEdge == null ? 0 : otherEdge.get(wayIdEnc);
         // report every way (or pair of ways) only once even if it is split into multiple edges
@@ -237,9 +256,17 @@ public class OSMIssuesResource {
 
         Map<String, Object> properties = new LinkedHashMap<>();
         properties.put("type", type);
+        // how much higher the bridge is than the way below, as a hint whether it is high enough.
+        // Only meaningful for bridges in the routable network, see TODO-osm-issues-map.md
+        if (!Double.isNaN(bridgeEle)) {
+            properties.put("clearance", round(bridgeEle - belowEle));
+            properties.put("ele_below", round(belowEle));
+            properties.put("ele_bridge", round(bridgeEle));
+        }
         properties.put("way_id", wayId);
         properties.put("way_name", edge.getName());
         properties.put("road_class", edge.get(roadClassEnc).toString());
+        if (edge.getValue(MAX_HEIGHT_TAG) != null) properties.put("maxheight", edge.getValue(MAX_HEIGHT_TAG));
         if (otherEdge != null) {
             properties.put("other_way_id", otherWayId);
             properties.put("other_way_name", otherEdge.getName());
@@ -257,12 +284,42 @@ public class OSMIssuesResource {
         features.add(feature);
     }
 
+    private static double round(double value) {
+        return Math.round(value * 10) / 10.0;
+    }
+
     /**
      * @param roads the wanted road class names as GraphHopper spells them, e.g. "motorway,trunk".
      *              An empty set or "all" means every road class, so the grouping stays in the UI.
      */
     private static boolean wanted(RoadClass roadClass, Set<String> roads) {
         return roads.isEmpty() || roads.contains("all") || roads.contains(roadClass.toString());
+    }
+
+    /**
+     * The elevation of the way at the given point, interpolated along the segment it falls on.
+     * Bridges carry interpolated elevation from the import, so the difference to the way below is
+     * roughly the clearance under the bridge.
+     *
+     * @return NaN if the graph has no elevation
+     */
+    private static double elevationAt(PointList pl, Coordinate at) {
+        if (!pl.is3D()) return Double.NaN;
+        double bestDist = Double.MAX_VALUE, ele = Double.NaN;
+        double cosLat = Math.cos(Math.toRadians(at.y));
+        for (int i = 1; i < pl.size(); i++) {
+            double ax = pl.getLon(i - 1) * cosLat, ay = pl.getLat(i - 1);
+            double dx = pl.getLon(i) * cosLat - ax, dy = pl.getLat(i) - ay;
+            double len2 = dx * dx + dy * dy;
+            double t = len2 == 0 ? 0 : Math.max(0, Math.min(1, ((at.x * cosLat - ax) * dx + (at.y - ay) * dy) / len2));
+            double distX = at.x * cosLat - (ax + t * dx), distY = at.y - (ay + t * dy);
+            double dist = distX * distX + distY * distY;
+            if (dist < bestDist) {
+                bestDist = dist;
+                ele = pl.getEle(i - 1) + t * (pl.getEle(i) - pl.getEle(i - 1));
+            }
+        }
+        return ele;
     }
 
     private static boolean isMotorized(RoadClass roadClass) {
