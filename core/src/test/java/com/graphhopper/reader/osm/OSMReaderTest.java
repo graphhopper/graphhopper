@@ -49,6 +49,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 import static com.graphhopper.json.Statement.Else;
@@ -1067,16 +1068,75 @@ public class OSMReaderTest {
         withBridges.getReaderConfig().setImportRailwayBridges(true);
         hopper = withBridges.importOrLoad();
 
-        // the bridge is there now, the railway without a bridge tag is still ignored
+        // the bridge is there now, together with the railways that continue on both of its ends.
+        // A railway somewhere else and an abandoned one next to the bridge are still ignored.
         EnumEncodedValue<RoadEnvironment> reEnc = hopper.getEncodingManager()
                 .getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
         IntEncodedValue wayIdEnc = hopper.getEncodingManager().getIntEncodedValue(OSMWayID.KEY);
-        assertEquals(2, hopper.getBaseGraph().getEdges());
+        assertEquals(4, hopper.getBaseGraph().getEdges());
         AllEdgesIterator iter = hopper.getBaseGraph().getAllEdges();
         HashMap<Integer, RoadEnvironment> envByWay = new HashMap<>();
         while (iter.next()) envByWay.put(iter.get(wayIdEnc), iter.get(reEnc));
         assertEquals(RoadEnvironment.BRIDGE, envByWay.get(200));
+        assertEquals(RoadEnvironment.OTHER, envByWay.get(400));
+        assertEquals(RoadEnvironment.OTHER, envByWay.get(500));
         assertNull(envByWay.get(300));
+        assertNull(envByWay.get(600));
+
+        // and the approaches really are connected to the bridge, otherwise they anchor nothing
+        EdgeExplorer explorer = hopper.getBaseGraph().createEdgeExplorer();
+        iter = hopper.getBaseGraph().getAllEdges();
+        while (iter.next()) {
+            if (iter.get(wayIdEnc) != 200) continue;
+            HashSet<Integer> neighbors = new HashSet<>();
+            for (int node : new int[]{iter.getBaseNode(), iter.getAdjNode()}) {
+                EdgeIterator neighborIter = explorer.setBaseNode(node);
+                while (neighborIter.next()) neighbors.add(neighborIter.get(wayIdEnc));
+            }
+            assertEquals(new HashSet<>(Arrays.asList(200, 400, 500)), neighbors);
+        }
+    }
+
+    @Test
+    public void testRailwayBridgeApproachesFixElevation() {
+        // the road runs in a cutting, so the DEM is 10m too low everywhere within ~90m of it -
+        // which includes both ends of a railway bridge that crosses it
+        ElevationProvider cutting = new ElevationProvider() {
+            @Override
+            public ElevationProvider init() {
+                return this;
+            }
+
+            @Override
+            public double getEle(double lat, double lon) {
+                return Math.abs(lat - 52.0) < 0.0006 ? 90 : 100;
+            }
+
+            @Override
+            public void release() {
+            }
+
+            @Override
+            public boolean canInterpolate() {
+                return false;
+            }
+        };
+        GraphHopperFacade facade = new GraphHopperFacade("test-railway-bridge-elevation.xml");
+        facade.getReaderConfig().setImportRailwayBridges(true);
+        // keep every node, otherwise the approach loses the point that is outside of the cutting
+        facade.getReaderConfig().setMaxWayPointDistance(0);
+        facade.setElevation(true).setElevationProvider(cutting);
+        GraphHopper hopper = facade.importOrLoad();
+
+        BaseGraph graph = hopper.getBaseGraph();
+        NodeAccess na = graph.getNodeAccess();
+        // the bridge with the railway continuing on both sides is anchored on the embankment, so its
+        // ends are lifted out of the cutting up to the level of the tracks next to it
+        assertEquals(100, na.getEle(AbstractGraphStorageTester.getIdOf(graph, 51.9995, 9.0)), .1);
+        assertEquals(100, na.getEle(AbstractGraphStorageTester.getIdOf(graph, 52.0005, 9.0)), .1);
+        // the bridge without them has no ground to be corrected from and keeps the DEM of the cutting
+        assertEquals(90, na.getEle(AbstractGraphStorageTester.getIdOf(graph, 51.9995, 9.1)), 1e-3);
+        assertEquals(90, na.getEle(AbstractGraphStorageTester.getIdOf(graph, 52.0005, 9.1)), 1e-3);
     }
 
     @Test

@@ -1,0 +1,59 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<osm version="0.6" generator="pbf2osm">
+    <!-- Two railway bridges over a road that runs in a cutting along lat 52.0, see
+         testRailwayBridgeApproachesFixElevation. The DEM reads the cutting up to ~67m to both
+         sides of the road, so both ends of a bridge crossing it are 10m too low. The first bridge
+         has the railway continuing on both sides, the second one has not. -->
+
+    <!-- bridge with approaches, at lon 9.0. The approaches have a node just outside the cutting -->
+    <node id="10" lat="51.99800" lon="9.0" version="1"/>
+    <node id="11" lat="51.99900" lon="9.0" version="1"/>
+    <node id="12" lat="51.99930" lon="9.0" version="1"/>
+    <node id="13" lat="51.99950" lon="9.0" version="1"/>
+    <node id="14" lat="52.00050" lon="9.0" version="1"/>
+    <node id="15" lat="52.00070" lon="9.0" version="1"/>
+    <node id="16" lat="52.00100" lon="9.0" version="1"/>
+    <node id="17" lat="52.00200" lon="9.0" version="1"/>
+    <!-- bridge without approaches, at lon 9.1 -->
+    <node id="20" lat="51.99950" lon="9.1" version="1"/>
+    <node id="21" lat="52.00050" lon="9.1" version="1"/>
+    <!-- the road below -->
+    <node id="30" lat="52.0" lon="8.99" version="1"/>
+    <node id="31" lat="52.0" lon="9.11" version="1"/>
+
+    <way id="100" version="1">
+        <nd ref="10"/>
+        <nd ref="11"/>
+        <nd ref="12"/>
+        <nd ref="13"/>
+        <tag k="railway" v="rail"/>
+    </way>
+    <way id="101" version="1">
+        <nd ref="13"/>
+        <nd ref="14"/>
+        <tag k="railway" v="rail"/>
+        <tag k="bridge" v="yes"/>
+        <tag k="layer" v="1"/>
+    </way>
+    <way id="102" version="1">
+        <nd ref="14"/>
+        <nd ref="15"/>
+        <nd ref="16"/>
+        <nd ref="17"/>
+        <tag k="railway" v="rail"/>
+    </way>
+
+    <way id="200" version="1">
+        <nd ref="20"/>
+        <nd ref="21"/>
+        <tag k="railway" v="rail"/>
+        <tag k="bridge" v="yes"/>
+        <tag k="layer" v="1"/>
+    </way>
+
+    <way id="300" version="1">
+        <nd ref="30"/>
+        <nd ref="31"/>
+        <tag k="highway" v="primary"/>
+    </way>
+</osm>

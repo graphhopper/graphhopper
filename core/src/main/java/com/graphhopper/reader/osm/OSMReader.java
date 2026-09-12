@@ -19,6 +19,8 @@ package com.graphhopper.reader.osm;
 
 import com.carrotsearch.hppc.BitSet;
 import com.carrotsearch.hppc.LongArrayList;
+import com.carrotsearch.hppc.LongHashSet;
+import com.carrotsearch.hppc.cursors.LongCursor;
 import com.graphhopper.coll.GHLongLongHashMap;
 import com.graphhopper.reader.ReaderElement;
 import com.graphhopper.reader.ReaderNode;
@@ -77,6 +79,11 @@ public class OSMReader {
 
     private static final Pattern WAY_NAME_PATTERN = Pattern.compile("; *");
 
+    // railway values that describe an actual track on the ground, so a piece of it next to a bridge
+    // tells us how high the embankment is. Things like abandoned or proposed do not.
+    private static final Set<String> RAILWAY_TRACK_VALUES = new HashSet<>(Arrays.asList("rail", "light_rail",
+            "narrow_gauge", "subway", "tram", "monorail", "funicular", "miniature", "preserved", "disused"));
+
     private final OSMReaderConfig config;
     private final BaseGraph baseGraph;
     private final EdgeIntAccess edgeIntAccess;
@@ -93,6 +100,10 @@ public class OSMReader {
     private final IntsRef tempRelFlags;
     private Date osmDataDate;
     private long zeroCounter = 0;
+
+    // the OSM nodes at which railway bridges end, see acceptRailwayBridgeApproach. Only filled when
+    // config.isImportRailwayBridges() is set, otherwise it stays empty.
+    private final LongHashSet railwayBridgeEndNodes = new LongHashSet();
 
     private GHLongLongHashMap osmWayIdToRelationFlagsMap = new GHLongLongHashMap(200, .5f);
     private WayToEdgesMap restrictedWaysToEdgesMap = new WayToEdgesMap();
@@ -156,16 +167,19 @@ public class OSMReader {
         if (!baseGraph.isInitialized())
             throw new IllegalStateException("BaseGraph must be initialize before we can read OSM");
 
-        WaySegmentParser waySegmentParser = new WaySegmentParser.Builder(baseGraph.getNodeAccess(), baseGraph.getDirectory())
+        WaySegmentParser.Builder builder = new WaySegmentParser.Builder(baseGraph.getNodeAccess(), baseGraph.getDirectory())
                 .setWayFilter(this::acceptWay)
                 .setSplitNodeFilter(this::isBarrierNode)
                 .setWayPreprocessor(this::preprocessWay)
                 .setRelationPreprocessor(this::preprocessRelations)
                 .setRelationProcessor(this::processRelation)
                 .setEdgeHandler(this::addEdge)
-                .setWorkerThreads(config.getWorkerThreads())
-                .build();
+                .setWorkerThreads(config.getWorkerThreads());
+        if (config.isImportRailwayBridges())
+            builder.setWayScanner(this::scanForRailwayBridgeEnds);
+        WaySegmentParser waySegmentParser = builder.build();
         waySegmentParser.readOSM(osmFile);
+        railwayBridgeEndNodes.release();
         osmDataDate = waySegmentParser.getTimestamp();
         if (baseGraph.getNodes() == 0)
             throw new RuntimeException("Graph after reading OSM must not be empty");
@@ -201,7 +215,34 @@ public class OSMReader {
         if (!way.hasTags())
             return false;
 
-        return osmParsers.acceptWay(way);
+        return osmParsers.acceptWay(way) || acceptRailwayBridgeApproach(way);
+    }
+
+    /**
+     * Called for every OSM way in an extra pass before the way filter runs, see
+     * {@link #acceptRailwayBridgeApproach}.
+     */
+    private void scanForRailwayBridgeEnds(ReaderWay way) {
+        if (way.getNodes().size() < 2 || !OSMParsers.isRailwayBridge(way))
+            return;
+        railwayBridgeEndNodes.add(way.getNodes().get(0));
+        railwayBridgeEndNodes.add(way.getNodes().get(way.getNodes().size() - 1));
+    }
+
+    /**
+     * A railway bridge on its own hangs in the graph without a single connection, so
+     * {@link com.graphhopper.reader.dem.BridgeTunnelTowerCorrection} finds no ground next to it and its
+     * towers keep the DEM elevation, which at a bridge end usually is the road or river below rather
+     * than the embankment. To give it something to be anchored to we also import the railways that
+     * continue on both sides. Like the bridges themselves they are not routable and only add geometry.
+     */
+    private boolean acceptRailwayBridgeApproach(ReaderWay way) {
+        if (railwayBridgeEndNodes.isEmpty() || !RAILWAY_TRACK_VALUES.contains(way.getTag("railway", "")))
+            return false;
+        for (LongCursor node : way.getNodes())
+            if (railwayBridgeEndNodes.contains(node.value))
+                return true;
+        return false;
     }
 
     /**

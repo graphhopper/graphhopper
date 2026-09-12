@@ -60,7 +60,9 @@ public class OSMReaderConfig {
 
     /**
      * Railways are not imported, but their bridges can be, so tools can see what crosses a road from
-     * above. These ways are not routable, they only add geometry to the graph.
+     * above. The tracks that continue on both ends of such a bridge are imported as well, they anchor
+     * its elevation. These ways are not routable, they only add geometry to the graph. Enabling this
+     * costs an extra pass over the ways of the OSM file.
      */
     public OSMReaderConfig setImportRailwayBridges(boolean importRailwayBridges) {
         this.importRailwayBridges = importRailwayBridges;

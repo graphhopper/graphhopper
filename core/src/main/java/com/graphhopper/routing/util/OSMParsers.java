@@ -89,11 +89,15 @@ public class OSMParsers {
             return true;
         else if ("platform".equals(way.getTag("railway")))
             return true;
-        else if (importRailwayBridges && way.hasTag("railway") && way.hasTag("bridge") && !way.hasTag("bridge", "no"))
+        else if (importRailwayBridges && isRailwayBridge(way))
             // railway bridges are not routable, but they tell us what crosses a road from above
             return true;
         else
             return false;
+    }
+
+    public static boolean isRailwayBridge(ReaderWay way) {
+        return way.hasTag("railway") && way.hasTag("bridge") && !way.hasTag("bridge", "no");
     }
 
     public IntsRef handleRelationTags(ReaderRelation relation, IntsRef relFlags) {

@@ -6,6 +6,8 @@
     <node id="40" lat="52.1" lon="9.1" version="1"/>
     <node id="50" lat="51.8" lon="9.3" version="1"/>
     <node id="60" lat="51.7" lon="9.3" version="1"/>
+    <node id="70" lat="51.8" lon="9.1" version="1"/>
+    <node id="80" lat="52.2" lon="9.1" version="1"/>
 
     <!-- a road, crossed by the railway bridge below without sharing a node -->
     <way id="100" version="1">
@@ -27,5 +29,24 @@
         <nd ref="50"/>
         <nd ref="60"/>
         <tag k="railway" v="rail"/>
+    </way>
+
+    <!-- the railways continuing on both sides of the bridge, they anchor its elevation -->
+    <way id="400" version="1">
+        <nd ref="70"/>
+        <nd ref="30"/>
+        <tag k="railway" v="rail"/>
+    </way>
+    <way id="500" version="1">
+        <nd ref="40"/>
+        <nd ref="80"/>
+        <tag k="railway" v="light_rail"/>
+    </way>
+
+    <!-- a railway that is not a track on the ground is no anchor, even next to the bridge -->
+    <way id="600" version="1">
+        <nd ref="40"/>
+        <nd ref="60"/>
+        <tag k="railway" v="abandoned"/>
     </way>
 </osm>

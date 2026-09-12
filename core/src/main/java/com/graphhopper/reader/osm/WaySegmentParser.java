@@ -63,6 +63,7 @@ public class WaySegmentParser {
     private static final Set<String> INCLUDE_IF_NODE_TAGS = new HashSet<>(Arrays.asList("barrier", "highway", "railway", "crossing", "ford"));
 
     private Predicate<ReaderWay> wayFilter = way -> true;
+    private Consumer<ReaderWay> wayScanner = null;
     private Predicate<ReaderNode> splitNodeFilter = node -> false;
     private WayPreprocessor wayPreprocessor = (way, coordinateSupplier, nodeTagSupplier) -> {
     };
@@ -89,6 +90,14 @@ public class WaySegmentParser {
             throw new IllegalStateException("You can only run way segment parser once");
 
         LOGGER.info("Start reading OSM file: '" + osmFile + "'");
+        StopWatch sw0 = new StopWatch();
+        if (wayScanner != null) {
+            LOGGER.info("pass0 - start");
+            sw0.start();
+            readOSM(osmFile, new Pass0Handler(), new SkipOptions(true, false, true));
+            LOGGER.info("pass0 - finished, took: {}", sw0.stop().getTimeString());
+        }
+
         LOGGER.info("pass1 - start");
         StopWatch sw1 = StopWatch.started();
         readOSM(osmFile, new Pass1Handler(), new SkipOptions(true, false, false));
@@ -106,9 +115,10 @@ public class WaySegmentParser {
         nodeData.release();
 
         LOGGER.info("Finished reading OSM file." +
+                (wayScanner == null ? "" : " pass0: " + (int) sw0.getSeconds() + "s, ") +
                 " pass1: " + (int) sw1.getSeconds() + "s, " +
                 " pass2: " + (int) sw2.getSeconds() + "s, " +
-                " total: " + (int) (sw1.getSeconds() + sw2.getSeconds()) + "s" +
+                " total: " + (int) (sw0.getSeconds() + sw1.getSeconds() + sw2.getSeconds()) + "s" +
                 " memory: " + Helper.getMemInfo());
     }
 
@@ -117,6 +127,26 @@ public class WaySegmentParser {
      */
     public Date getTimestamp() {
         return timestamp;
+    }
+
+    /**
+     * Runs before pass1 and shows every OSM way to the way scanner. This exists for way filters that
+     * cannot decide about a way on its own, but need to know something about the other ways first.
+     */
+    private class Pass0Handler implements ReaderElementHandler {
+        private long wayCounter = 0;
+
+        @Override
+        public void handleWay(ReaderWay way) {
+            if (++wayCounter % 10_000_000 == 0)
+                LOGGER.info("pass0 - processed ways: " + nf(wayCounter) + ", " + Helper.getMemInfo());
+            wayScanner.accept(way);
+        }
+
+        @Override
+        public void onFinish() {
+            LOGGER.info("pass0 - finished, processed ways: " + nf(wayCounter) + ", " + Helper.getMemInfo());
+        }
     }
 
     private class Pass1Handler implements ReaderElementHandler {
@@ -431,6 +461,16 @@ public class WaySegmentParser {
          */
         public Builder setWayFilter(Predicate<ReaderWay> wayFilter) {
             waySegmentParser.wayFilter = wayFilter;
+            return this;
+        }
+
+        /**
+         * @param wayScanner callback function that receives every OSM way in an extra pass before pass1. Only set
+         *                   this if the way filter needs to know about other ways, because it costs another read
+         *                   of all the ways in the file.
+         */
+        public Builder setWayScanner(Consumer<ReaderWay> wayScanner) {
+            waySegmentParser.wayScanner = wayScanner;
             return this;
         }
 
