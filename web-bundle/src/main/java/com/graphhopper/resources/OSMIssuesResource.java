@@ -65,11 +65,7 @@ import java.util.*;
 public class OSMIssuesResource {
 
     private static final Logger logger = LoggerFactory.getLogger(OSMIssuesResource.class);
-    /**
-     * We keep the geometry of every edge of the bbox in memory, so this is just a safety net against
-     * OOM - roughly 400 bytes per edge, so 8 million is a few GB while the request runs. Raise it
-     * further only together with the heap.
-     */
+    /** safety net against OOM: we hold every edge geometry of the bbox, about 400 bytes each */
     private static final int MAX_EDGES = 8_000_000;
     /** intersections closer than this to an end point of both edges are rather unconnected junctions */
     private static final double MIN_DIST_TO_TOWER_NODE = 1;
@@ -79,10 +75,9 @@ public class OSMIssuesResource {
     public static final String MISSING_BRIDGE = "missing_bridge";
 
     /**
-     * P(a visit here finds a real sign | clearance, road below, bridge above, country, what the
-     * other ways under the same bridge already say), as smoothed log-odds learned from the places
-     * that are already tagged. See TODO-osm-issues-map.md; regenerate with analyse.py.
-     * Null when the file is missing, then nothing is scored and the order stays as found.
+     * P(a visit finds a real sign), as smoothed log-odds over clearance, road below, bridge above,
+     * country and what the other ways under the same bridge say. Learned by analyse.py, see
+     * TODO-osm-issues-map.md. Null when the file is missing, then nothing is scored.
      */
     private static final SignModel MODEL = SignModel.load();
 
@@ -144,7 +139,7 @@ public class OSMIssuesResource {
         }
     }
 
-    /** one candidate place, kept until everything under its bridge is known and it can be scored */
+    /** a candidate, kept until everything under its bridge is known and it can be scored */
     private static class Scored {
         final Coordinate at;
         final EdgeIteratorState below, bridge;
@@ -165,7 +160,7 @@ public class OSMIssuesResource {
         }
     }
 
-    /** true if the raw maxheight value is an actual number, i.e. a sign someone read off a plate */
+    /** true if the raw maxheight is a number, i.e. someone read it off a plate */
     private static boolean hasNumber(String raw) {
         if (raw == null) return false;
         try {
@@ -286,11 +281,10 @@ public class OSMIssuesResource {
         if (types.contains(MISSING_MAXHEIGHT)) {
             EnumEncodedValue<Country> countryEnc = encodingManager.hasEncodedValue(Country.KEY)
                     ? encodingManager.getEnumEncodedValue(Country.KEY, Country.class) : null;
-            // Two passes per bridge. The first one asks what the ways under this bridge already say,
-            // because that is the sharpest predictor there is: where every neighbour says "nothing
-            // to sign", 2% of the remaining ones still have a sign, where one carries a number, 83%
-            // do. Only then can the untagged ones be scored and ranked. (Neighbours outside the
-            // requested bbox are not seen, so a bridge at the edge is scored on what is visible.)
+            // Two passes per bridge: what the ways under it already say is the sharpest predictor
+            // (2% still have a sign where every neighbour says none, 83% where one has a number),
+            // so it has to be known before the untagged ones can be scored. Neighbours outside the
+            // bbox are not seen, so a bridge at the edge is scored on what is visible.
             List<Scored> scored = new ArrayList<>();
             for (int i = 0; i < bridgeIds.size(); i++) {
                 int bridgeId = bridgeIds.get(i);
@@ -411,8 +405,10 @@ public class OSMIssuesResource {
                             double pSign, String neighbours) {
         int wayId = edge.get(wayIdEnc);
         int otherWayId = otherEdge == null ? 0 : otherEdge.get(wayIdEnc);
-        // report every way (or pair of ways) only once even if it is split into multiple edges
-        String key = otherEdge == null ? type + "-" + wayId
+        // Report every way (or pair of ways) once. For maxheight the bridge is not part of the key:
+        // one tag fixes every crossing of that road, and the list is sorted by score, so the
+        // crossing that survives is the most promising one.
+        String key = otherEdge == null || MISSING_MAXHEIGHT.equals(type) ? type + "-" + wayId
                 : MISSING_BRIDGE.equals(type) ? type + "-" + Math.min(wayId, otherWayId) + "-" + Math.max(wayId, otherWayId)
                 : type + "-" + wayId + "-" + otherWayId;
         if (!reported.add(key)) return;
