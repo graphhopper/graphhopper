@@ -1,8 +1,8 @@
 // Map app that shows OSM ways with missing bridge related tags (see /osm-issues) and lets you fix
 // them right here: log in to OSM, edit the tags of a way, collect the changes and upload them as a
 // single changeset.
-const MIN_ZOOM = 11;
-const LIMIT = 2000;
+const MIN_ZOOM = 10;
+const LIMIT = 6000;
 const DEFAULT_COMMENT = 'add missing maxheight/maxweight tags at bridges';
 // How far the crossing may be from the way as OSM has it now. The import simplifies geometries
 // (import.osm.max_way_point_distance, 0.5m by default), set that to 0 to use a value this small.
@@ -83,9 +83,14 @@ const issueLayer = new ol.layer.Vector({
         const wayId = feature.get('way_id');
         const edited = pendingEdits.some(e => e.wayId === wayId);
         const done = uploadedWays.includes(wayId);
+        // colour says what kind of problem it is, size says how likely a visit finds a sign here
+        // rather than another maxheight=default. Without a score (the other issue types) they are
+        // all the same size.
+        const p = feature.get('p_sign');
+        const radius = done ? 4 : (p == null ? 7 : 4 + 7 * p * p);
         return new ol.style.Style({
             image: new ol.style.Circle({
-                radius: done ? 5 : 7,
+                radius: radius,
                 fill: new ol.style.Fill({
                     color: done ? '#bbb' : (ISSUES[feature.get('type')] || {}).color || '#000'
                 }),
@@ -95,9 +100,44 @@ const issueLayer = new ol.layer.Vector({
     }
 });
 
+// Mapillary's traffic sign detections, narrowed to the height signs. They answer the question the
+// elevation cannot: is there a sign here at all, or would a visit only produce maxheight=default.
+// Detections carry no value, so the number still has to be read off the photo.
+const HEIGHT_SIGNS = new Set([
+    'regulatory--height-limit--g1',
+    'warning--height-restriction--g2', 'warning--height-restriction--g3',
+    'warning--height-restriction--g4', 'warning--height-restriction--g5',
+    'information--height-limit--g1', 'information--height-limit--g2',
+    'complementary--height-limit--g1', 'complementary--height-limit--g2'
+]);
+
+// Our own sign: the red ring and the two arrows of a height restriction, with a question mark
+// where the number would be. Mapillary's own icon carries a placeholder height (it draws "3 m" on
+// every one of them) and the detection does not carry the real value - unlike speed limits, where
+// it is part of the class name - so anything but a question mark here would be invented.
+const SIGN_ICON = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMCIgaGVpZ2h0PSIzMCIgdmlld0JveD0iMCAwIDMwIDMwIj48Y2lyY2xlIGN4PSIxNSIgY3k9IjE1IiByPSIxMiIgZmlsbD0iI2ZmZmZmZiIgc3Ryb2tlPSIjZDAwMjFiIiBzdHJva2Utd2lkdGg9IjMuNCIvPjxwYXRoIGQ9Ik0xMS4zIDYuNiBMMTguNyA2LjYgTDE1IDEwLjIgWiIgZmlsbD0iIzFhMWExYSIvPjxwYXRoIGQ9Ik0xMS4zIDIzLjQgTDE4LjcgMjMuNCBMMTUgMTkuOCBaIiBmaWxsPSIjMWExYTFhIi8+PHRleHQgeD0iMTUiIHk9IjE4LjEiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiMxYTFhMWEiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2EsQXJpYWwsc2Fucy1zZXJpZiIgZm9udC1zaXplPSI4LjYiIGZvbnQtd2VpZ2h0PSI3MDAiPj8gbTwvdGV4dD48L3N2Zz4=';
+
+const signStyle = new ol.style.Style({
+    image: new ol.style.Icon({src: SIGN_ICON, scale: 1})
+});
+
+// The tiles exist at zoom 14 only. maxZoom lets OpenLayers overzoom them when the user goes
+// closer, minZoom on the layer keeps it from asking for zoom 13 and below, which would 404.
+const signLayer = new ol.layer.VectorTile({
+    visible: false,
+    declutter: true,
+    minZoom: 13.99,
+    source: new ol.source.VectorTile({
+        format: new ol.format.MVT(),
+        maxZoom: 14,
+        url: 'https://tiles.mapillary.com/maps/vtp/mly_map_feature_traffic_sign/2/{z}/{x}/{y}'
+    }),
+    style: feature => HEIGHT_SIGNS.has(feature.get('value')) ? signStyle : null
+});
+
 const map = new ol.Map({
     target: 'map',
-    layers: [new ol.layer.Tile({source: new ol.source.OSM()}), wayLayer, issueLayer],
+    layers: [new ol.layer.Tile({source: new ol.source.OSM()}), signLayer, wayLayer, issueLayer],
     view: new ol.View(parseHash() || {center: [0, 0], zoom: 2})
 });
 
@@ -114,7 +154,7 @@ if (!parseHash())
         ol.proj.transformExtent(info.bbox, 'EPSG:4326', 'EPSG:3857'), {size: map.getSize(), maxZoom: 16}
     )).catch(err => $('status').textContent = err.message);
 
-const checkboxes = [...document.querySelectorAll('#issues input[type=checkbox]')];
+const checkboxes = [...document.querySelectorAll('#issues input[data-type]')];
 checkboxes.forEach(cb => cb.onchange = () => load());
 
 // the filter section stays folded the way the user left it
@@ -131,6 +171,14 @@ roadBoxes.forEach(cb => cb.onchange = () => {
     localStorage.setItem('road_classes', roadGroups().join(';'));
     load();
 });
+
+// The Mapillary overlay is simply on whenever a token is configured - there is nothing to decide,
+// it only draws where a height sign was detected and it needs zoom 14 anyway.
+if (settings.mapillaryToken) {
+    signLayer.getSource().setUrl('https://tiles.mapillary.com/maps/vtp/mly_map_feature_traffic_sign'
+        + '/2/{z}/{x}/{y}?access_token=' + encodeURIComponent(settings.mapillaryToken));
+    signLayer.setVisible(true);
+}
 
 let controller = null;
 // what the markers on the map currently show, to avoid reloading when zooming in
@@ -196,8 +244,40 @@ map.on('moveend', () => {
 map.on('singleclick', evt => {
     const feature = map.forEachFeatureAtPixel(evt.pixel, f => f,
         {hitTolerance: 6, layerFilter: layer => layer === issueLayer});
-    if (feature) openIssue(feature);
+    if (feature) return openIssue(feature);
+    const sign = map.forEachFeatureAtPixel(evt.pixel, f => HEIGHT_SIGNS.has(f.get('value')) ? f : null,
+        {hitTolerance: 8, layerFilter: layer => layer === signLayer});
+    if (sign) openSign(sign);
 });
+
+/**
+ * A detection has no picture of its own, only an id, so ask the API which images show it and open
+ * the first one. Without that round trip we could only center the Mapillary map on the coordinate.
+ */
+function openSign(feature) {
+    // not getId(): that is the running number inside the tile, the Mapillary id is a property
+    const id = feature.get('id');
+    if (!id) return;
+    const win = window.open('', '_blank');
+    fetch('https://graph.mapillary.com/' + id + '?access_token='
+        + encodeURIComponent(settings.mapillaryToken) + '&fields=images')
+        .then(res => res.json())
+        .then(json => {
+            const img = json && json.images && json.images.data && json.images.data[0];
+            win.location = img
+                ? 'https://www.mapillary.com/app/?pKey=' + img.id + '&focus=photo'
+                : 'https://www.mapillary.com/app/?focus=map&lat=' + evtLat(feature)
+                  + '&lng=' + evtLon(feature) + '&z=19';
+        })
+        .catch(() => {
+            win.location = 'https://www.mapillary.com/app/?focus=map&lat=' + evtLat(feature)
+                + '&lng=' + evtLon(feature) + '&z=19';
+        });
+}
+
+const signLonLat = f => ol.proj.toLonLat(f.getGeometry().getFirstCoordinate());
+const evtLon = f => signLonLat(f)[0];
+const evtLat = f => signLonLat(f)[1];
 
 /** GET from the GraphHopper server, with an error message that says what came back instead */
 function ghFetch(path, options) {
@@ -422,6 +502,16 @@ function openIssue(feature) {
     $('edit-title').textContent = issue.title || p.type;
     $('edit-hint').textContent = issue.hint || '';
     $('edit-hint').className = issue.warn ? 'hint warn' : 'hint';
+    // what the ranking thinks of this place, so the size of the marker is explainable
+    const NB = {
+        has_number: 'another way under this bridge already carries a number',
+        only_default: 'every other way under this bridge says there is nothing to sign',
+        untagged: 'the other ways under this bridge are untagged too',
+        none: 'no other road passes under this bridge'
+    };
+    $('edit-odds').textContent = p.p_sign == null ? ''
+        : Math.round(p.p_sign * 100) + '% of comparable places turned out to have a real sign'
+          + (NB[p.neighbours] ? ' \u00b7 ' + NB[p.neighbours] : '');
 
     // for maxheight the way below the bridge comes first, it is the one that needs the tag
     const ways = [{id: p.way_id, name: p.way_name, cls: p.road_class}];

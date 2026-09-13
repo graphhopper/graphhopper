@@ -11,6 +11,8 @@ const osmIssuesConfig = {
     // the OSM instance to edit. Use https://master.apis.dev.openstreetmap.org to try things out,
     // but note that it has its own database without the real ways
     osmApi: 'https://www.openstreetmap.org',
-    // optional, enables direct links to Mapillary images instead of only its traffic sign layer
+    // optional, enables the height sign layer and direct links to Mapillary images.
+    // A client token of an app registered at https://www.mapillary.com/dashboard/developers,
+    // it is meant to be used from the browser like the OAuth client id above.
     mapillaryToken: ''
 };

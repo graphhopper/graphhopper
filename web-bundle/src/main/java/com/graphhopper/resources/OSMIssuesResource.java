@@ -22,7 +22,9 @@ import com.carrotsearch.hppc.IntHashSet;
 import com.carrotsearch.hppc.IntObjectHashMap;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.ev.Country;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.DistanceCalcEarth;
@@ -31,6 +33,9 @@ import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.BBox;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.InputStream;
 
 import static com.graphhopper.util.Parameters.Details.MAX_HEIGHT_SIGNED_TAG;
 import static com.graphhopper.util.Parameters.Details.MAX_HEIGHT_TAG;
@@ -60,8 +65,12 @@ import java.util.*;
 public class OSMIssuesResource {
 
     private static final Logger logger = LoggerFactory.getLogger(OSMIssuesResource.class);
-    /** we keep the geometry of every edge of the bbox in memory, so this is just a safety net against OOM */
-    private static final int MAX_EDGES = 2_000_000;
+    /**
+     * We keep the geometry of every edge of the bbox in memory, so this is just a safety net against
+     * OOM - roughly 400 bytes per edge, so 8 million is a few GB while the request runs. Raise it
+     * further only together with the heap.
+     */
+    private static final int MAX_EDGES = 8_000_000;
     /** intersections closer than this to an end point of both edges are rather unconnected junctions */
     private static final double MIN_DIST_TO_TOWER_NODE = 1;
 
@@ -69,8 +78,122 @@ public class OSMIssuesResource {
     public static final String MISSING_MAXWEIGHT = "missing_maxweight";
     public static final String MISSING_BRIDGE = "missing_bridge";
 
+    /**
+     * P(a visit here finds a real sign | clearance, road below, bridge above, country, what the
+     * other ways under the same bridge already say), as smoothed log-odds learned from the places
+     * that are already tagged. See TODO-osm-issues-map.md; regenerate with analyse.py.
+     * Null when the file is missing, then nothing is scored and the order stays as found.
+     */
+    private static final SignModel MODEL = SignModel.load();
+
     private final GraphHopper graphHopper;
     private final EncodingManager encodingManager;
+
+    static class SignModel {
+        final double baseLogOdds;
+        final double[] clearanceBins;
+        final Map<String, Map<String, Double>> weights;
+
+        SignModel(double base, double[] bins, Map<String, Map<String, Double>> weights) {
+            this.baseLogOdds = Math.log(base / (1 - base));
+            this.clearanceBins = bins;
+            this.weights = weights;
+        }
+
+        static SignModel load() {
+            try (InputStream in = OSMIssuesResource.class.getResourceAsStream("osm-issues-model.json")) {
+                if (in == null) {
+                    logger.warn("osm-issues-model.json not found, issues will not be scored");
+                    return null;
+                }
+                JsonNode root = new ObjectMapper().readTree(in);
+                double[] bins = new double[root.get("clearance_bins").size()];
+                for (int i = 0; i < bins.length; i++)
+                    bins[i] = root.get("clearance_bins").get(i).asDouble();
+                Map<String, Map<String, Double>> w = new HashMap<>();
+                root.get("weights").fields().forEachRemaining(e -> {
+                    Map<String, Double> t = new HashMap<>();
+                    e.getValue().fields().forEachRemaining(v -> t.put(v.getKey(), v.getValue().asDouble()));
+                    w.put(e.getKey(), t);
+                });
+                return new SignModel(root.get("base_rate").asDouble(), bins, w);
+            } catch (Exception e) {
+                logger.warn("could not read osm-issues-model.json, issues will not be scored", e);
+                return null;
+            }
+        }
+
+        private double weight(String feature, String value) {
+            Map<String, Double> t = weights.get(feature);
+            Double v = t == null ? null : t.get(value);
+            return v == null ? 0 : v;      // an unseen value is simply uninformative
+        }
+
+        double probability(double clearance, String below, String bridgeGroup, String country,
+                           String neighbours) {
+            int bin = clearanceBins.length - 2;
+            for (int i = 0; i + 1 < clearanceBins.length; i++)
+                if (clearance >= clearanceBins[i] && clearance < clearanceBins[i + 1]) {
+                    bin = i;
+                    break;
+                }
+            double lo = baseLogOdds + weight("clearance", String.valueOf(bin))
+                    + weight("below", below) + weight("bridge", bridgeGroup)
+                    + weight("country", country) + weight("neighbours", neighbours);
+            return 1 / (1 + Math.exp(-lo));
+        }
+    }
+
+    /** one candidate place, kept until everything under its bridge is known and it can be scored */
+    private static class Scored {
+        final Coordinate at;
+        final EdgeIteratorState below, bridge;
+        final double belowEle, bridgeEle;
+        final String country, bridgeGroup;
+        String neighbours = "none";
+        double p = Double.NaN;
+
+        Scored(Coordinate at, EdgeIteratorState below, EdgeIteratorState bridge, double belowEle,
+               double bridgeEle, String country, String bridgeGroup) {
+            this.at = at;
+            this.below = below.detach(false);
+            this.bridge = bridge.detach(false);
+            this.belowEle = belowEle;
+            this.bridgeEle = bridgeEle;
+            this.country = country;
+            this.bridgeGroup = bridgeGroup;
+        }
+    }
+
+    /** true if the raw maxheight value is an actual number, i.e. a sign someone read off a plate */
+    private static boolean hasNumber(String raw) {
+        if (raw == null) return false;
+        try {
+            double v = OSMValueExtractor.stringToMeter(raw);
+            return !Double.isNaN(v) && !Double.isInfinite(v);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /** the bridge_group of the measurement: how the bridge over the road is classified */
+    static String bridgeGroup(RoadClass rc) {
+        switch (rc) {
+            case MOTORWAY:
+            case TRUNK:
+                return "motorway+trunk";
+            case PRIMARY:
+                return "primary";
+            case SECONDARY:
+            case TERTIARY:
+            case RESIDENTIAL:
+                return "secondary+tertiary+residential";
+            case OTHER:
+                return "railway";
+            default:
+                return "rest";
+        }
+    }
 
     @Inject
     public OSMIssuesResource(GraphHopper graphHopper, EncodingManager encodingManager) {
@@ -161,10 +284,21 @@ public class OSMIssuesResource {
         }
 
         if (types.contains(MISSING_MAXHEIGHT)) {
-            for (int i = 0; i < bridgeIds.size() && features.size() < limit; i++) {
+            EnumEncodedValue<Country> countryEnc = encodingManager.hasEncodedValue(Country.KEY)
+                    ? encodingManager.getEnumEncodedValue(Country.KEY, Country.class) : null;
+            // Two passes per bridge. The first one asks what the ways under this bridge already say,
+            // because that is the sharpest predictor there is: where every neighbour says "nothing
+            // to sign", 2% of the remaining ones still have a sign, where one carries a number, 83%
+            // do. Only then can the untagged ones be scored and ranked. (Neighbours outside the
+            // requested bbox are not seen, so a bridge at the edge is scored on what is visible.)
+            List<Scored> scored = new ArrayList<>();
+            for (int i = 0; i < bridgeIds.size(); i++) {
                 int bridgeId = bridgeIds.get(i);
                 LineString bridgeLS = geometries.get(bridgeId);
                 EdgeIteratorState bridge = graph.getEdgeIteratorStateForKey(bridgeId * 2);
+                List<Scored> underBridge = new ArrayList<>();
+                int under = 0;
+                boolean anyNumber = false, anyWithoutNumber = false;
                 for (Object o : tree.query(bridgeLS.getEnvelopeInternal())) {
                     int belowId = (Integer) o;
                     if (belowId == bridgeId) continue;
@@ -172,23 +306,44 @@ public class OSMIssuesResource {
                     // a bridge or tunnel below a bridge does not need a max_height
                     if (isSeparatedLevel(below.get(roadEnvEnc))) continue;
                     if (!isMotorized(below.get(roadClassEnc))) continue;
+                    Coordinate at = crossing(bridge, bridgeLS, below, geometries.get(belowId), bbox);
+                    if (at == null) continue;
+                    under++;
                     // a way that has a maxheight tag we cannot parse, like "default", is tagged just
                     // fine, and maxheight:signed=no says a mapper checked that there is no sign.
                     // With tagged=true exactly those are reported instead, to compare their clearance.
-                    boolean hasTag = below.getValue(MAX_HEIGHT_TAG) != null
-                            || "no".equals(below.getValue(MAX_HEIGHT_SIGNED_TAG));
+                    String raw = (String) below.getValue(MAX_HEIGHT_TAG);
+                    boolean hasTag = raw != null || "no".equals(below.getValue(MAX_HEIGHT_SIGNED_TAG));
+                    if (hasNumber(raw)) anyNumber = true;
+                    else if (hasTag) anyWithoutNumber = true;
                     if (hasTag != tagged) continue;
                     if (!wanted(below.get(roadClassEnc), roads)) continue;
-                    Coordinate at = crossing(bridge, bridgeLS, below, geometries.get(belowId), bbox);
-                    if (at == null) continue;
                     // how much higher the bridge is than the road below, if the graph has elevation
                     double bridgeEle = elevationAt(bridge.fetchWayGeometry(FetchMode.ALL), at);
                     double belowEle = elevationAt(below.fetchWayGeometry(FetchMode.ALL), at);
-                    double clearance = bridgeEle - belowEle;
-                    if (minClearance > 0 && clearance > minClearance) continue;
-                    addFeature(features, reported, MISSING_MAXHEIGHT, at, below, bridge, wayIdEnc,
-                            roadClassEnc, belowEle, bridgeEle);
+                    if (minClearance > 0 && bridgeEle - belowEle > minClearance) continue;
+                    underBridge.add(new Scored(at, below, bridge, belowEle, bridgeEle,
+                            countryEnc == null ? "" : below.get(countryEnc).getAlpha3(),
+                            bridgeGroup(bridge.get(roadClassEnc))));
                 }
+                String neighbours = under <= 1 ? "none"
+                        : anyNumber ? "has_number"
+                        : anyWithoutNumber ? "only_default" : "untagged";
+                for (Scored c : underBridge) {
+                    c.neighbours = neighbours;
+                    c.p = MODEL == null ? Double.NaN : MODEL.probability(
+                            c.bridgeEle - c.belowEle, c.below.get(roadClassEnc).toString(),
+                            c.bridgeGroup, c.country, neighbours);
+                }
+                scored.addAll(underBridge);
+            }
+            // the most promising first, so a truncated answer keeps the places worth visiting
+            if (MODEL != null)
+                scored.sort((a, b) -> Double.compare(b.p, a.p));
+            for (Scored c : scored) {
+                if (features.size() >= limit) break;
+                addFeature(features, reported, MISSING_MAXHEIGHT, c.at, c.below, c.bridge, wayIdEnc,
+                        roadClassEnc, c.belowEle, c.bridgeEle, c.p, c.neighbours);
             }
         }
 
@@ -246,6 +401,14 @@ public class OSMIssuesResource {
     private void addFeature(List<Map<String, Object>> features, Set<String> reported, String type, Coordinate at,
                             EdgeIteratorState edge, EdgeIteratorState otherEdge, IntEncodedValue wayIdEnc,
                             EnumEncodedValue<RoadClass> roadClassEnc, double belowEle, double bridgeEle) {
+        addFeature(features, reported, type, at, edge, otherEdge, wayIdEnc, roadClassEnc, belowEle,
+                bridgeEle, Double.NaN, null);
+    }
+
+    private void addFeature(List<Map<String, Object>> features, Set<String> reported, String type, Coordinate at,
+                            EdgeIteratorState edge, EdgeIteratorState otherEdge, IntEncodedValue wayIdEnc,
+                            EnumEncodedValue<RoadClass> roadClassEnc, double belowEle, double bridgeEle,
+                            double pSign, String neighbours) {
         int wayId = edge.get(wayIdEnc);
         int otherWayId = otherEdge == null ? 0 : otherEdge.get(wayIdEnc);
         // report every way (or pair of ways) only once even if it is split into multiple edges
@@ -256,6 +419,11 @@ public class OSMIssuesResource {
 
         Map<String, Object> properties = new LinkedHashMap<>();
         properties.put("type", type);
+        // how likely a visit here finds an actual sign rather than another maxheight=default
+        if (!Double.isNaN(pSign)) {
+            properties.put("p_sign", Math.round(pSign * 100) / 100.0);
+            properties.put("neighbours", neighbours);
+        }
         // how much higher the bridge is than the way below, as a hint whether it is high enough.
         // Only meaningful for bridges in the routable network, see TODO-osm-issues-map.md
         if (!Double.isNaN(bridgeEle)) {
