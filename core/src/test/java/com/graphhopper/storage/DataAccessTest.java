@@ -89,6 +89,52 @@ public abstract class DataAccessTest {
     }
 
     @Test
+    public void testFlushWithoutCreate() {
+        try (DataAccess da = createDataAccess(name)) {
+            da.setHeader(0, 6);
+            assertEquals(6, da.getHeader(0));
+            IllegalStateException exception = assertThrows(IllegalStateException.class, da::flush);
+            assertEquals("not initialized", exception.getMessage());
+            assertFalse(new File(directory, name).exists());
+
+            da.create(0);
+            da.flush();
+        }
+        try (DataAccess da = createDataAccess(name)) {
+            assertTrue(da.loadExisting());
+            assertEquals(6, da.getHeader(0));
+        }
+    }
+
+    @Test
+    public void testFlushAfterFailedLoad() {
+        try (DataAccess da = createDataAccess(name)) {
+            assertFalse(da.loadExisting());
+            IllegalStateException exception = assertThrows(IllegalStateException.class, da::flush);
+            assertEquals("not initialized", exception.getMessage());
+            assertFalse(new File(directory, name).exists());
+        }
+    }
+
+    @Test
+    public void testFlushAfterLoadExisting() {
+        try (DataAccess da = createDataAccess(name)) {
+            da.create(0);
+            da.setHeader(0, 6);
+            da.flush();
+        }
+        try (DataAccess da = createDataAccess(name)) {
+            assertTrue(da.loadExisting());
+            da.setHeader(0, 7);
+            da.flush();
+        }
+        try (DataAccess da = createDataAccess(name)) {
+            assertTrue(da.loadExisting());
+            assertEquals(7, da.getHeader(0));
+        }
+    }
+
+    @Test
     public void testExceptionIfNoEnsureCapacityWasCalled() {
         DataAccess da = createDataAccess(name);
         assertFalse(da.loadExisting());
@@ -346,6 +392,7 @@ public abstract class DataAccessTest {
         da.trimTo(0);
         assertEquals(0, da.getSegments());
         assertEquals(0, da.getCapacity());
+        da.flush();
         da.close();
     }
 
