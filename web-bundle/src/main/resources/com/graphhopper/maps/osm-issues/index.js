@@ -206,32 +206,10 @@ const icon = paths => '<svg viewBox="0 0 24 24" width="21" height="21" fill="non
 // Two more controls under the zoom buttons. They have to go through addControl: OpenLayers puts
 // pointer-events:none on the container its controls live in and only sets it back to auto on the
 // elements it manages itself, so an appended div would be visible but dead.
-// One more control: what to show on top of the issues. Both overlays are optional because they
-// answer different questions - what OSM knows already, and what a camera has actually seen.
-function addLayerControl() {
-    const box = document.createElement('div');
-    box.className = 'ol-control ol-unselectable layer-control';
-    box.innerHTML = '<button id="layers-toggle" type="button" title="overlays">'
-        + icon('<path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="M2 12l10 5 10-5"/>'
-               + '<path d="M2 17l10 5 10-5"/>') + '</button>'
-        + '<div id="layers-panel" hidden>'
-        + '<label><input type="checkbox" id="layer-issues">'
-        + '<span class="key dot mixed"></span> problems found</label>'
-        + '<label title="every road class, the problem filter does not apply here">'
-        + '<input type="checkbox" id="layer-osm">'
-        + '<span class="key dot osm"></span> maxheight in OSM</label>'
-        + '<label><input type="checkbox" id="layer-signs">'
-        + '<span class="key sign" style="background-image:url(' + SIGN_ICON + ')"></span>'
-        + ' signs seen by Mapillary</label>'
-        + '</div>';
-    map.addControl(new ol.control.Control({element: box}));
-
-    $('layers-toggle').onclick = () => $('layers-panel').hidden = !$('layers-panel').hidden;
-    $('layer-issues').onchange = e => {
-        issueLayer.setVisible(e.target.checked);
-        localStorage.setItem('layer_issues', e.target.checked ? 'yes' : 'no');
-        if (e.target.checked) load(); else issueSource.clear();
-    };
+// The two layers below the problems in the sidebar. They are optional because they answer different
+// questions - what OSM knows already, and what a camera has actually seen.
+function initKnownLayers() {
+    $('key-sign').style.backgroundImage = 'url(' + SIGN_ICON + ')';
     $('layer-osm').onchange = e => {
         osmTagLayer.setVisible(e.target.checked);
         localStorage.setItem('layer_osm', e.target.checked ? 'yes' : 'no');
@@ -242,9 +220,7 @@ function addLayerControl() {
         signLayer.setVisible(e.target.checked);
         localStorage.setItem('layer_signs', e.target.checked ? 'yes' : 'no');
     };
-    // all three are on unless the user turned them off - they are the point of the map
-    $('layer-issues').checked = localStorage.getItem('layer_issues') !== 'no';
-    issueLayer.setVisible($('layer-issues').checked);
+    // both are on unless the user turned them off - they are the point of the map
     $('layer-osm').checked = localStorage.getItem('layer_osm') !== 'no';
     osmTagLayer.setVisible($('layer-osm').checked);
     // the Mapillary layer needs a token, without one the box says so and stays off
@@ -252,7 +228,13 @@ function addLayerControl() {
     $('layer-signs').disabled = !hasToken;
     $('layer-signs').checked = hasToken && localStorage.getItem('layer_signs') !== 'no';
     signLayer.setVisible($('layer-signs').checked);
-    if (!hasToken) $('layer-signs').parentNode.title = 'needs a mapillaryToken in config.js';
+    if (!hasToken) $('layer-signs-label').title = 'needs a mapillaryToken in config.js';
+    // the layer draws nothing further out, which otherwise looks as if there were no signs at all
+    const updateSignsZoom = () => $('signs-zoom').hidden = !hasToken || !$('layer-signs').checked
+        || map.getView().getZoom() >= SIGN_MIN_ZOOM;
+    map.getView().on('change:resolution', updateSignsZoom);
+    $('layer-signs').addEventListener('change', updateSignsZoom);
+    updateSignsZoom();
 }
 
 function addMapTools() {
@@ -326,7 +308,7 @@ function parseHash() {
 
 // without a position in the url hash we show the area of the imported map
 addMapTools();
-addLayerControl();
+initKnownLayers();
 
 if (!parseHash())
     ghFetch('/info').then(info => map.getView().fit(
@@ -420,7 +402,7 @@ function load() {
     if (!types.length) {
         // unchecking every type is a deliberate action, there the markers should go away at once
         issueSource.clear();
-        $('status').textContent = 'no issue type selected';
+        $('status').textContent = 'no problem type selected';
         return;
     }
     // the old markers stay on the map until the new ones are there, so panning does not blank it
@@ -432,10 +414,6 @@ function load() {
     // zooming in or panning inside the loaded area shows a part of what we already have
     if (loaded && loaded.filter === filter && contains(loaded.extent, extent)) {
         $('status').textContent = issueSource.getFeatures().length + ' issue(s) loaded for this area';
-        return;
-    }
-    if (!issueLayer.getVisible()) {
-        $('status').textContent = 'problems hidden, see the overlay menu';
         return;
     }
     $('status').textContent = 'loading ...';
@@ -488,23 +466,17 @@ map.getViewport().addEventListener('contextmenu', evt => {
 });
 
 const hidePhotoMenu = () => photoMenu.hidden = true;
-const hideLayers = () => $('layers-panel').hidden = true;
 
 // anything opened over the map closes again when you touch the map, in the order you would expect
 document.addEventListener('pointerdown', e => {
     if (!photoMenu.contains(e.target)) hidePhotoMenu();
-    if (!$('layers-panel').parentNode.contains(e.target)) hideLayers();
 });
 document.addEventListener('keydown', e => {
     if (e.key !== 'Escape') return;
     if (!photoMenu.hidden) hidePhotoMenu();
-    else if (!$('layers-panel').hidden) hideLayers();
     else if (!$('edit').hidden) closeEdit();
 });
-map.on('movestart', () => {
-    hidePhotoMenu();
-    hideLayers();
-});
+map.on('movestart', hidePhotoMenu);
 
 map.on('singleclick', evt => {
     const feature = map.forEachFeatureAtPixel(evt.pixel, f => f,

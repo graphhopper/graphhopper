@@ -39,15 +39,24 @@
     <section id="issues">
         <div class="panel">
         <details id="filters" open>
-            <summary>problem filter</summary>
-            <label><input type="checkbox" data-type="missing_maxheight" checked><span class="dot maxheight"></span> maxheight below bridge</label>
-            <label><input type="checkbox" data-type="missing_maxheight_tunnel" checked><span class="dot tunnel"></span> maxheight in tunnel</label>
-            <label><input type="checkbox" data-type="missing_maxweight"><span class="dot maxweight"></span> maxweight on bridge</label>
-            <label><input type="checkbox" data-type="missing_bridge"><span class="dot bridge"></span> bridge tag (crossing ways)</label>
-            <div class="label">roads</div>
-            <label><input type="checkbox" class="road-group" value="motorway,trunk,primary"> motorway, trunk, primary</label>
-            <label><input type="checkbox" class="road-group" value="secondary,tertiary,residential" checked> secondary, tertiary, residential</label>
-            <label><input type="checkbox" class="road-group" value="unclassified,service,road,track,living_street,busway,construction"> everything else (service, track, ...)</label>
+            <summary>on the map</summary>
+            <!-- grouped by what a layer means, not by where it comes from: the work list and its
+                 road filter on top, what is already known below it -->
+            <div class="label">problems to fix</div>
+            <label><input type="checkbox" data-type="missing_maxheight" checked><span class="key dot maxheight"></span> maxheight below bridge</label>
+            <label><input type="checkbox" data-type="missing_maxheight_tunnel" checked><span class="key dot tunnel"></span> maxheight in tunnel</label>
+            <label><input type="checkbox" data-type="missing_maxweight"><span class="key dot maxweight"></span> maxweight on bridge</label>
+            <label><input type="checkbox" data-type="missing_bridge"><span class="key dot bridge"></span> bridge tag missing</label>
+            <div class="roads">
+                <div class="sublabel">only on these roads</div>
+                <label><input type="checkbox" class="road-group" value="motorway,trunk,primary"> motorway, trunk, primary</label>
+                <label><input type="checkbox" class="road-group" value="secondary,tertiary,residential" checked> secondary, tertiary, residential</label>
+                <label><input type="checkbox" class="road-group" value="unclassified,service,road,track,living_street,busway,construction"> everything else (service, track, ...)</label>
+                <div class="hint">maxheight: the road under the bridge or in the tunnel<br>maxweight: the bridge itself<br>bridge tag: both crossing ways</div>
+            </div>
+            <div class="label">already known</div>
+            <label><input type="checkbox" id="layer-osm"><span class="key dot osm"></span> maxheight in OSM</label>
+            <label id="layer-signs-label"><input type="checkbox" id="layer-signs"><span class="key sign" id="key-sign"></span> signs seen by Mapillary <span id="signs-zoom" class="zoom-note" hidden>(zoom in)</span></label>
         </details>
         <div id="status">move the map to load issues</div>
         </div>
