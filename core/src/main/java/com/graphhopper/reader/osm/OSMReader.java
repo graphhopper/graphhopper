@@ -487,6 +487,12 @@ public class OSMReader {
                 }
             }
 
+        for (String osmKey : config.getStoredTags()) {
+            // artificial tags like 'country' are no Strings
+            if (way.getTag(osmKey) instanceof String value && !value.isEmpty())
+                map.put(osmKey, new KVStorage.KValue(KVStorage.cutString(value)));
+        }
+
         way.setTag("key_values", map);
 
         if (!isCalculateWayDistance(way))

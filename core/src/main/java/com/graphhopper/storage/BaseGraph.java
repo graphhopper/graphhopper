@@ -109,6 +109,10 @@ public class BaseGraph implements Graph, Closeable {
         return this;
     }
 
+    public KVStorage getEdgeKVStorage() {
+        return edgeKVStorage;
+    }
+
     public boolean isInitialized() {
         return initialized;
     }
@@ -1188,6 +1192,12 @@ public class BaseGraph implements Graph, Closeable {
             // Shift left to restore the actual byte offset
             long kvEntryRef = shiftedRef << KVStorage.ALIGNMENT_SHIFT;
             return baseGraph.edgeKVStorage.get(kvEntryRef, key, reverse);
+        }
+
+        @Override
+        public Object get(KVStorageEncodedValue property) {
+            long kvEntryRef = Integer.toUnsignedLong(store.getKeyValuesRef(edgePointer)) << KVStorage.ALIGNMENT_SHIFT;
+            return baseGraph.edgeKVStorage.get(kvEntryRef, property.getKeyIndex(), reverse);
         }
 
         @Override

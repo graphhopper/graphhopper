@@ -19,7 +19,9 @@
 package com.graphhopper.routing;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 public class OSMReaderConfig {
     private List<String> ignoredHighways = new ArrayList<>();
@@ -34,6 +36,7 @@ public class OSMReaderConfig {
     private double longEdgeSamplingDistance = Double.MAX_VALUE;
     private int workerThreads = 2;
     private double defaultElevation = 0;
+    private Set<String> storedTags = new LinkedHashSet<>();
 
     public List<String> getIgnoredHighways() {
         return ignoredHighways;
@@ -166,6 +169,16 @@ public class OSMReaderConfig {
      */
     public OSMReaderConfig setDefaultElevation(double defaultElevation) {
         this.defaultElevation = defaultElevation;
+        return this;
+    }
+
+    public Set<String> getStoredTags() {
+        return storedTags;
+    }
+
+    // maybe rename to setStoreOSMTagsAsKeyValues?
+    public OSMReaderConfig setStoredTags(Set<String> storedTags) {
+        this.storedTags = storedTags;
         return this;
     }
 }

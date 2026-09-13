@@ -17,9 +17,10 @@
  */
 package com.graphhopper.routing.weighting.custom;
 
+import com.graphhopper.routing.ev.KVStorageEncodedValue;
 import com.graphhopper.util.Helper;
-import org.codehaus.janino.Scanner;
 import org.codehaus.janino.*;
+import org.codehaus.janino.Scanner;
 
 import java.io.StringReader;
 import java.util.*;
@@ -34,6 +35,8 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
     private static final Set<String> allowedMethodParents = new HashSet<>(Arrays.asList("edge", "Math", "country"));
     private static final Set<String> allowedMethods = new HashSet<>(Arrays.asList("ordinal", "getDistance",
             "contains", "sqrt", "abs", "isRightHandTraffic", "equals"));
+    // methods that can be called on a tag("key") as its value is a String
+    private static final Set<String> tagStringMethods = new HashSet<>(Arrays.asList("contains", "startsWith"));
     private final ParseResult result;
     private final TreeMap<Integer, Replacement> replacements = new TreeMap<>();
     private final NameValidator variableValidator;
@@ -87,6 +90,20 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
             return false;
         } else if (rv instanceof Java.MethodInvocation) {
             Java.MethodInvocation mi = (Java.MethodInvocation) rv;
+            if (tagStringMethods.contains(mi.methodName) && mi.target != null && isTagCall(mi.target.toRvalue())
+                    && mi.arguments.length == 1 && isStringLiteral(mi.arguments[0])) {
+                // tag("name").contains("A 4")
+                Java.MethodInvocation tagCall = (Java.MethodInvocation) mi.target.toRvalue();
+                String fieldName = getTagFieldName(tagCall);
+                if (fieldName == null) return false;
+
+                Java.Literal argLiteral = (Java.Literal) mi.arguments[0];
+                int exprStart = tagCall.getLocation().getColumnNumber() - 1;
+                int exprEnd = argLiteral.getLocation().getColumnNumber() - 1 + argLiteral.value.length() + 1;
+                replacements.put(exprStart, new Replacement(exprStart, exprEnd - exprStart,
+                        tagValue(fieldName) + "." + mi.methodName + "(" + argLiteral.value + ")"));
+                return true;
+            }
             if (allowedMethods.contains(mi.methodName) && mi.target != null) {
                 // a chained call like edge.getName().contains("A 4") has no AmbiguousName target and is rejected
                 if (mi.target.toRvalue() instanceof Java.AmbiguousName n && n.identifiers.length == 2) {
@@ -119,6 +136,33 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
         } else if (rv instanceof Java.BinaryOperation) {
             Java.BinaryOperation binOp = (Java.BinaryOperation) rv;
             int startRH = binOp.rhs.getLocation().getColumnNumber() - 1;
+
+            // Handle tag("key") compared to a string, in either order. An absent tag is '' so null is not needed.
+            Java.MethodInvocation tagCall = isTagCall(binOp.lhs) ? (Java.MethodInvocation) binOp.lhs
+                    : isTagCall(binOp.rhs) ? (Java.MethodInvocation) binOp.rhs : null;
+            Java.Rvalue other = tagCall == binOp.lhs ? binOp.rhs : binOp.lhs;
+            if (tagCall != null && isStringLiteral(other)) {
+                if (!binOp.operator.equals("==") && !binOp.operator.equals("!="))
+                    throw new IllegalArgumentException("Only == and != allowed for tag() comparison");
+
+                String fieldName = getTagFieldName(tagCall);
+                if (fieldName == null) return false;
+
+                int tagCallStart = tagCall.getLocation().getColumnNumber() - 1;
+                Java.Literal argLiteral = (Java.Literal) tagCall.arguments[0];
+                int tagCallEnd = argLiteral.getLocation().getColumnNumber() - 1 + argLiteral.value.length() + 1;
+                int otherStart = other.getLocation().getColumnNumber() - 1;
+                int otherEnd = otherStart + ((Java.Literal) other).value.length();
+
+                int exprStart = Math.min(tagCallStart, otherStart);
+                int exprEnd = Math.max(tagCallEnd, otherEnd);
+
+                String prefix = binOp.operator.equals("!=") ? "!" : "";
+                String newExpr = prefix + tagValue(fieldName) + ".equals(" + ((Java.Literal) other).value + ")";
+                replacements.put(exprStart, new Replacement(exprStart, exprEnd - exprStart, newExpr));
+                return true;
+            }
+
             if (binOp.lhs instanceof Java.AmbiguousName && ((Java.AmbiguousName) binOp.lhs).identifiers.length == 1) {
                 String lhVarAsString = ((Java.AmbiguousName) binOp.lhs).identifiers[0];
                 boolean eqOps = binOp.operator.equals("==") || binOp.operator.equals("!=");
@@ -154,6 +198,78 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
     }
 
     /**
+     * @return the field name like kv_cycleway_left for tag('cycleway:left') or null if the tag is not stored.
+     * tag('name') and tag('ref') point to street_name and street_ref.
+     */
+    private String getTagFieldName(Java.MethodInvocation tagCall) {
+        String key = extractStringLiteralValue(((Java.Literal) tagCall.arguments[0]).value);
+        String fieldName = KVStorageEncodedValue.toFieldName(KVStorageEncodedValue.resolveAlias(key));
+        if (!variableValidator.isValid(fieldName)) {
+            invalidMessage = "tag '" + key + "' is not stored, add it to graph.stored_tags";
+            return null;
+        }
+        result.guessedVariables.add(fieldName);
+        return fieldName;
+    }
+
+    /**
+     * On the Java level an absent tag is null, but in a custom model tag('xy') is an empty String.
+     */
+    private static String tagValue(String fieldName) {
+        return "Objects.toString(edge.get(this." + fieldName + "_enc), \"\")";
+    }
+
+    private static boolean isTagCall(Java.Rvalue rvalue) {
+        if (!(rvalue instanceof Java.MethodInvocation)) return false;
+        Java.MethodInvocation mi = (Java.MethodInvocation) rvalue;
+        if (mi.arguments.length != 1 || !(mi.arguments[0] instanceof Java.Literal)) return false;
+        return "tag".equals(mi.methodName) && mi.target == null;
+    }
+
+    private static boolean isStringLiteral(Java.Rvalue rvalue) {
+        if (!(rvalue instanceof Java.Literal)) return false;
+        String value = ((Java.Literal) rvalue).value;
+        return value.startsWith("\"") && value.endsWith("\"");
+    }
+
+    private static String extractStringLiteralValue(String literalValue) {
+        return literalValue.substring(1, literalValue.length() - 1);
+    }
+
+    /**
+     * Convert single-quoted strings to double-quoted strings for Janino parsing. Double-quoted strings are
+     * kept as they are, so both 'a' and "a" work and a single quote inside "O'Brien" or \' inside 'O\'Brien'
+     * stays a literal single quote.
+     */
+    static String convertSingleToDoubleQuotes(String expression) {
+        StringBuilder sb = new StringBuilder(expression.length());
+        char open = 0; // the quote character of the string we are currently in, 0 if outside of a string
+        for (int i = 0; i < expression.length(); i++) {
+            char c = expression.charAt(i);
+            if (open == 0) {
+                if (c == '\'') open = c;
+                else if (c == '"') open = c;
+                sb.append(c == '\'' ? '"' : c);
+            } else if (c == '\\' && i + 1 < expression.length()) {
+                // keep escape sequences except that \' becomes ' inside a now double-quoted string
+                char next = expression.charAt(++i);
+                if (open == '\'' && next == '\'') sb.append('\'');
+                else sb.append(c).append(next);
+            } else if (c == open) {
+                open = 0;
+                sb.append('"');
+            } else if (open == '\'' && c == '"') {
+                sb.append("\\\"");
+            } else {
+                sb.append(c);
+            }
+        }
+        if (open != 0)
+            throw new IllegalArgumentException("Unmatched quote " + open + " in expression: " + expression);
+        return sb.toString();
+    }
+
+    /**
      * Enforce simple expressions of user input to increase security.
      *
      * @return ParseResult with ok if it is a valid and "simple" expression. It contains all guessed variables and a
@@ -163,7 +279,8 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
     static ParseResult parse(String expression, NameValidator validator, ClassHelper helper) {
         ParseResult result = new ParseResult();
         try {
-            Parser parser = new Parser(new Scanner("ignore", new StringReader(expression)));
+            String convertedExpression = convertSingleToDoubleQuotes(expression);
+            Parser parser = new Parser(new Scanner("ignore", new StringReader(convertedExpression)));
             Java.Atom atom = parser.parseConditionalExpression();
             // after parsing the expression the input should end (otherwise it is not "simple")
             if (parser.peek().type == TokenType.END_OF_INPUT) {
@@ -172,15 +289,19 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
                 result.ok = atom.accept(visitor);
                 result.invalidMessage = visitor.invalidMessage;
                 if (result.ok) {
-                    result.converted = new StringBuilder(expression.length());
+                    result.converted = new StringBuilder(convertedExpression.length());
                     int start = 0;
                     for (Replacement replace : visitor.replacements.values()) {
-                        result.converted.append(expression, start, replace.start).append(replace.newString);
+                        result.converted.append(convertedExpression, start, replace.start).append(replace.newString);
                         start = replace.start + replace.oldLength;
                     }
-                    result.converted.append(expression.substring(start));
+                    result.converted.append(convertedExpression.substring(start));
                 }
             }
+        } catch (IllegalArgumentException ex) {
+            // e.g. convertSingleToDoubleQuotes rejects the expression; keep the reason instead of
+            // returning a ParseResult that says only "invalid condition"
+            result.invalidMessage = ex.getMessage();
         } catch (Exception ex) {
         }
         return result;

@@ -60,6 +60,15 @@ public class PathDetailsBuilderFactory {
         if (requestedPathDetails.contains(STREET_DESTINATION))
             builders.add(new KVStringDetails(STREET_DESTINATION));
 
+        // a stored tag is requested via its raw OSM key, the internal kv_ name is not part of the API.
+        // An EncodedValue and the explicit details above win over a stored tag with the same name.
+        for (EncodedValue ev : evl.getEncodedValues())
+            if (ev instanceof KVStorageEncodedValue kvEnc
+                    && !KVStorageEncodedValue.isStoredAutomatically(kvEnc.getRawTagName())
+                    && !evl.hasEncodedValue(kvEnc.getRawTagName())
+                    && requestedPathDetails.contains(kvEnc.getRawTagName()))
+                builders.add(new KVStringDetails(kvEnc.getRawTagName()));
+
         if (requestedPathDetails.contains(AVERAGE_SPEED))
             builders.add(new AverageSpeedDetails(weighting));
 
@@ -96,6 +105,8 @@ public class PathDetailsBuilderFactory {
                 builders.add(new StringDetails(pathDetail, (StringEncodedValue) ev));
             else if (ev instanceof IntEncodedValue)
                 builders.add(new IntDetails(pathDetail, (IntEncodedValue) ev));
+            else if( ev instanceof KVStorageEncodedValue)
+                continue; // TODO: make it working via a new KVDetails? but skip street_name
             else
                 throw new IllegalArgumentException("unknown EncodedValue class " + ev.getClass().getName());
         }

@@ -81,6 +81,8 @@ public class InfoResource {
         public String version = Constants.VERSION;
         public boolean elevation;
         public Map<String, List<Object>> encoded_values;
+        // OSM keys usable via tag('key') in a custom model
+        public final List<String> stored_tags = new ArrayList<>();
         public String import_date;
         public String data_date;
     }
@@ -106,6 +108,9 @@ public class InfoResource {
             List<Object> possibleValueList = new ArrayList<>();
             String name = encodedValue.getName();
             if (privateEV.contains(name)) {
+                continue;
+            } else if (encodedValue instanceof KVStorageEncodedValue kvEnc) {
+                info.stored_tags.add(kvEnc.getOSMKey());
                 continue;
             } else if (encodedValue instanceof EnumEncodedValue) {
                 for (Enum o : ((EnumEncodedValue) encodedValue).getValues()) {

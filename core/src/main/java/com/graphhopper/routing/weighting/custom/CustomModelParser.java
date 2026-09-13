@@ -47,6 +47,8 @@ public class CustomModelParser {
     static final String BACKWARD_PREFIX = "backward_";
     static final String PREV_PREFIX = "prev_";
     static final String CHANGE_ANGLE = "change_angle";
+    static final String IS_FORWARD = "is_forward";
+    private static final String KV_PREFIX = "kv_";
     static final String STREET_NAME = "street_name";
     static final String EDGE = "edge";
     private static final boolean JANINO_DEBUG = Boolean.getBoolean(Scanner.SYSTEM_PROPERTY_SOURCE_DEBUGGING_ENABLE);
@@ -325,7 +327,13 @@ public class CustomModelParser {
      * or if an area contains the current edge.
      */
     private static String getVariableDeclaration(EncodedValueLookup lookup, final String arg) {
-        if (lookup.hasEncodedValue(arg)) {
+        if (arg.startsWith(KV_PREFIX)) {
+            return ""; // currently no local variable is introduced assuming that is is more likely to be used once
+        } else if (arg.equals(IS_FORWARD)) {
+            // true if we travel in the direction the OSM way was drawn. REVERSE_STATE is only the
+            // iterator orientation, so it must be combined with 'reverse'.
+            return "boolean " + IS_FORWARD + " = reverse == edge.get(EdgeIteratorState.REVERSE_STATE);\n";
+        } else if (lookup.hasEncodedValue(arg)) {
             // parameters in method getPriority or getSpeed are: EdgeIteratorState edge, boolean reverse
             EncodedValue enc = lookup.getEncodedValue(arg, EncodedValue.class);
             return getReturnType(enc) + " " + arg + " = (" + getReturnType(enc) + ") (reverse ? " +
@@ -352,6 +360,8 @@ public class CustomModelParser {
     private static String getTurnPenaltyVariableDeclaration(EncodedValueLookup lookup, final String arg, boolean needTwoDirections) {
         // parameters in method getTurnPenalty are: int inEdge, int viaNode, int outEdge.
         // The variables outEdgeReverse and inEdgeReverse are provided from initial calls if needTwoDirections is true.
+        if (arg.startsWith(KV_PREFIX) || arg.equals(IS_FORWARD))
+            throw new IllegalArgumentException("'" + (arg.equals(IS_FORWARD) ? IS_FORWARD : "tag()") + "' cannot be used in a 'turn_penalty' statement (not yet implemented)");
         if (arg.equals(CHANGE_ANGLE)) {
             // calcChangeAngle expects the orientation slot at the viaNode side of outEdge (see OrientationCalculator);
             // since outEdgeReverse now means direction of travel, invert it here.
@@ -434,6 +444,7 @@ public class CustomModelParser {
                                               EncodedValueLookup lookup, Map<String, JsonFeature> areas) {
         final StringBuilder importSourceCode = new StringBuilder("import com.graphhopper.routing.ev.*;\n");
         importSourceCode.append("import java.util.Map;\n");
+        importSourceCode.append("import java.util.Objects;\n");
         importSourceCode.append("import " + CustomModel.class.getName() + ";\n");
         importSourceCode.append("import " + BaseGraph.class.getName() + ";\n");
         importSourceCode.append("import " + EdgeIntAccess.class.getName() + ";\n");
@@ -451,7 +462,10 @@ public class CustomModelParser {
             set.add(speedVar.startsWith(PREV_PREFIX) ? speedVar.substring(PREV_PREFIX.length()) : speedVar);
 
         for (String arg : set) {
-            if (lookup.hasEncodedValue(arg)) {
+            if (arg.startsWith(KV_PREFIX)) {
+                classSourceCode.append("protected KVStorageEncodedValue " + arg + "_enc;\n");
+                initSourceCode.append("this." + arg + "_enc = (KVStorageEncodedValue) lookup.getEncodedValue(\"" + arg + "\", EncodedValue.class);\n");
+            } else if (lookup.hasEncodedValue(arg)) {
                 EncodedValue enc = lookup.getEncodedValue(arg, EncodedValue.class);
                 classSourceCode.append("protected " + getInterface(enc) + " " + arg + "_enc;\n");
                 initSourceCode.append("this." + arg + "_enc = (" + getInterface(enc)
@@ -482,9 +496,9 @@ public class CustomModelParser {
                 classSourceCode.append("protected " + Polygon.class.getSimpleName() + " " + arg + ";\n");
                 initSourceCode.append("JsonFeature feature_" + id + " = (JsonFeature) areas.get(\"" + id + "\");\n");
                 initSourceCode.append("this." + arg + " = new Polygon(new PreparedPolygon((Polygonal) feature_" + id + ".getGeometry()));\n");
-            } else if (arg.equals(STREET_NAME) || arg.equals(EDGE)) {
-                // street_name is resolved at runtime from graph KV storage and 'edge' is a method
-                // parameter, so no class field is needed
+            } else if (arg.equals(IS_FORWARD) || arg.equals(STREET_NAME) || arg.equals(EDGE)) {
+                // no class field needed: is_forward is a local variable, street_name is resolved at
+                // runtime from the graph KV storage and 'edge' is a method parameter
             } else {
                 if (!arg.startsWith(IN_AREA_PREFIX))
                     throw new IllegalArgumentException("Variable not supported: " + arg);
@@ -531,7 +545,8 @@ public class CustomModelParser {
                                                                List<Statement> list, EncodedValueLookup lookup) throws Exception {
         // allow variables, all encoded values, constants and special variables like in_xyarea or backward_car_access
         NameValidator nameInConditionValidator = name -> lookup.hasEncodedValue(name)
-                || name.toUpperCase(Locale.ROOT).equals(name) || name.startsWith(IN_AREA_PREFIX) || name.equals(CHANGE_ANGLE)
+                || name.toUpperCase(Locale.ROOT).equals(name) || name.startsWith(IN_AREA_PREFIX)
+                || name.equals(CHANGE_ANGLE) || name.equals(IS_FORWARD)
                 || name.equals(STREET_NAME) || name.equals(PREV_PREFIX + STREET_NAME)
                 || name.startsWith(BACKWARD_PREFIX) && lookup.hasEncodedValue(name.substring(BACKWARD_PREFIX.length()))
                 || name.startsWith(PREV_PREFIX) && lookup.hasEncodedValue(name.substring(PREV_PREFIX.length()));
