@@ -352,7 +352,10 @@ const photoMenu = $('photo-menu');
 map.getViewport().addEventListener('contextmenu', evt => {
     evt.preventDefault();
     const [lon, lat] = ol.proj.toLonLat(map.getEventCoordinate(evt)).map(v => v.toFixed(6));
+    const zoom = Math.round(map.getView().getZoom());
     photoMenu.innerHTML = '<div class="coord">' + lat + ', ' + lon + '</div>'
+        + '<a href="' + settings.api + '/#map=' + zoom + '/' + lat + '/' + lon
+        + '" target="_blank">OpenStreetMap</a>'
         + '<a href="https://www.mapillary.com/app/?lat=' + lat + '&lng=' + lon
         + '&z=19&trafficSign=all" target="_blank">Mapillary</a>'
         + '<a href="https://kartaview.org/map/@' + lat + ',' + lon + ',19z" target="_blank">KartaView</a>'
