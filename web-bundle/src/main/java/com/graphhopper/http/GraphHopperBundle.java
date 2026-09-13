@@ -295,14 +295,20 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
             }
         });
 
-        environment.jersey().register(MVTResource.class);
-        environment.jersey().register(OSMIssuesResource.class);
-        environment.jersey().register(NearestResource.class);
-        environment.jersey().register(RouteResource.class);
-        environment.jersey().register(IsochroneResource.class);
-        environment.jersey().register(MapMatchingResource.class);
+        // A deployment that only serves /osm-issues has no use for the routing API, and every one of
+        // these answers costs a lot of graph work, so it can be left out entirely.
+        boolean routingApi = configuration.getGraphHopperConfiguration().getBool("web.routing_endpoints", true);
 
-        if (configuration.getGraphHopperConfiguration().has("gtfs.file")) {
+        environment.jersey().register(OSMIssuesResource.class);
+        if (routingApi) {
+            environment.jersey().register(MVTResource.class);
+            environment.jersey().register(NearestResource.class);
+            environment.jersey().register(RouteResource.class);
+            environment.jersey().register(IsochroneResource.class);
+            environment.jersey().register(MapMatchingResource.class);
+        }
+
+        if (routingApi && configuration.getGraphHopperConfiguration().has("gtfs.file")) {
             // These are pt-specific implementations of /route and /isochrone, but the same API.
             // We serve them under different paths (/route-pt and /isochrone-pt), and forward
             // requests for ?vehicle=pt there.
@@ -326,7 +332,8 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
             environment.jersey().register(PtMVTResource.class);
             environment.jersey().register(PtRedirectFilter.class);
         }
-        environment.jersey().register(SPTResource.class);
+        if (routingApi)
+            environment.jersey().register(SPTResource.class);
         environment.jersey().register(I18NResource.class);
         environment.jersey().register(InfoResource.class);
         environment.healthChecks().register("graphhopper", new GraphHopperHealthCheck(graphHopper));

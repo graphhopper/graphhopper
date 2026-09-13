@@ -1,7 +1,9 @@
 // Map app that shows OSM ways with missing bridge related tags (see /osm-issues) and lets you fix
 // them right here: log in to OSM, edit the tags of a way, collect the changes and upload them as a
 // single changeset.
-const MIN_ZOOM = 10;
+// About "a whole city fits on the screen" - a view this size answers in a few seconds and is a
+// few hundred kB. Further out the bounding box grows faster than the map is useful.
+const MIN_ZOOM = 11;
 const LIMIT = 6000;
 const DEFAULT_COMMENT = 'add missing maxheight/maxweight tags at bridges';
 // How far the crossing may be from the way as OSM has it now. The import simplifies geometries
