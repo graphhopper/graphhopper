@@ -28,6 +28,7 @@ import com.graphhopper.routing.util.parsers.TagParser;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 
@@ -96,8 +97,17 @@ public class OSMParsers {
             return false;
     }
 
+    // A bridge that was taken down, or was never built, crosses nothing. Per the OSM wiki razed is
+    // "railway physical features are completely removed", dismantled leaves only earthworks, and
+    // proposed was never built. Deliberately not in here: abandoned ("may retain physical
+    // structures"), disused (the rails are still in place) and construction, where the bridge is
+    // normally built before the track. The lifecycle prefix form, demolished:railway=rail, needs
+    // no entry - such a way has no railway key at all and is already rejected.
+    private static final List<String> GONE_RAILWAYS = Arrays.asList("razed", "dismantled", "proposed");
+
     public static boolean isRailwayBridge(ReaderWay way) {
-        return way.hasTag("railway") && way.hasTag("bridge") && !way.hasTag("bridge", "no");
+        return way.hasTag("railway") && way.hasTag("bridge") && !way.hasTag("bridge", "no")
+                && !GONE_RAILWAYS.contains(way.getTag("railway", ""));
     }
 
     public IntsRef handleRelationTags(ReaderRelation relation, IntsRef relFlags) {

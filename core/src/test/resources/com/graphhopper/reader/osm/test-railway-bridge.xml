@@ -43,6 +43,14 @@
         <tag k="railway" v="light_rail"/>
     </way>
 
+    <!-- a bridge that was taken down crosses nothing, so it is not imported either -->
+    <way id="700" version="1">
+        <nd ref="10"/>
+        <nd ref="40"/>
+        <tag k="railway" v="razed"/>
+        <tag k="bridge" v="yes"/>
+    </way>
+
     <!-- a railway that is not a track on the ground is no anchor, even next to the bridge -->
     <way id="600" version="1">
         <nd ref="40"/>

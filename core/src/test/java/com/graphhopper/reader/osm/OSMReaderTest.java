@@ -1082,6 +1082,8 @@ public class OSMReaderTest {
         assertEquals(RoadEnvironment.OTHER, envByWay.get(500));
         assertNull(envByWay.get(300));
         assertNull(envByWay.get(600));
+        // a razed railway bridge is gone, so it is not a bridge over anything
+        assertNull(envByWay.get(700));
 
         // and the approaches really are connected to the bridge, otherwise they anchor nothing
         EdgeExplorer explorer = hopper.getBaseGraph().createEdgeExplorer();
