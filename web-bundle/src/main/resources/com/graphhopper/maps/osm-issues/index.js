@@ -720,20 +720,36 @@ function initAuth() {
     });
 }
 
+// Every call to the OpenStreetMap API goes through this queue, at most two per second. Clicking
+// through markers quickly is normal use, and a marker opens a way lookup each time - without a
+// queue that is a burst against somebody else's server for every twitch of the mouse.
+const OSM_MIN_GAP = 500;
+let osmNextSlot = 0;
+
+function osmSlot() {
+    const at = Math.max(Date.now(), osmNextSlot);
+    osmNextSlot = at + OSM_MIN_GAP;
+    return new Promise(r => setTimeout(r, at - Date.now()));
+}
+
 /** authenticated request against the OSM API, returns the response body as text */
 function osmFetch(path, options) {
-    return auth.fetch(settings.api + path, options).then(res => res.text().then(text => {
-        if (!res.ok) throw new Error(res.status + ' ' + (text || res.statusText));
-        return text;
-    }));
+    return osmSlot()
+        .then(() => auth.fetch(settings.api + path, options))
+        .then(res => res.text().then(text => {
+            if (!res.ok) throw new Error(res.status + ' ' + (text || res.statusText));
+            return text;
+        }));
 }
 
 /** reading a way needs no login, so the tags can be inspected before logging in */
 function osmRead(path) {
-    return fetch(settings.api + path).then(res => {
-        if (!res.ok) throw new Error(res.status + ' ' + res.statusText);
-        return res.json();
-    });
+    return osmSlot()
+        .then(() => fetch(settings.api + path))
+        .then(res => {
+            if (!res.ok) throw new Error(res.status + ' ' + res.statusText);
+            return res.json();
+        });
 }
 
 function updateAccount() {
@@ -932,8 +948,9 @@ function checkTag(key, raw) {
     if (metres === null) return {level: 'error', text: 'GraphHopper cannot read "' + v + '"'};
 
     const unit = key === 'maxweight' ? 't' : 'm';
+    // feet and inches go to OSM exactly as typed, this only says what they mean
     const shown = unit === 'm' && !/^\d+(\.\d+)?\s*m?$/.test(v)
-        ? ' = ' + metres.toFixed(2) + ' m' : '';
+        ? ' = ' + metres.toFixed(2) + ' m, stored as typed' : '';
     const [lo, hi] = key === 'maxweight' ? [0.5, 100] : [1.5, 10];
     if (metres < lo || metres > hi)
         return {level: 'warn', text: metres.toFixed(2) + ' ' + unit + ' - is that right?'};

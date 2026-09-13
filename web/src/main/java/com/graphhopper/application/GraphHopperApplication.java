@@ -21,6 +21,7 @@ import com.graphhopper.application.cli.ImportCommand;
 import com.graphhopper.application.cli.MatchCommand;
 import com.graphhopper.application.resources.RootResource;
 import com.graphhopper.http.CORSFilter;
+import com.graphhopper.http.RateLimitFilter;
 import com.graphhopper.http.GraphHopperBundle;
 import com.graphhopper.navigation.NavigateResource;
 import io.dropwizard.assets.AssetsBundle;
@@ -52,5 +53,6 @@ public final class GraphHopperApplication extends Application<GraphHopperServerC
         environment.jersey().register(new RootResource());
         environment.jersey().register(NavigateResource.class);
         environment.servlets().addFilter("cors", CORSFilter.class).addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), false, "*");
+        environment.servlets().addFilter("ratelimit", new RateLimitFilter()).addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), false, "*");
     }
 }
