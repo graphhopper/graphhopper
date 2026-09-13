@@ -45,3 +45,4 @@ local.properties
 package-lock.json
 .vscode/
 .claude/
+web-bundle/src/main/resources/com/graphhopper/maps/osm-issues/config-local.js

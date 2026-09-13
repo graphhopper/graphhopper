@@ -1,7 +1,10 @@
-// Deployment specific settings, so that nobody has to type them into the settings panel.
-// Everything here is public: the page ships it to every visitor. The OAuth client id is meant to be
-// public (PKCE, no secret), but never put the client *secret* of a confidential application here.
-// A user can still override each value in the settings panel, that choice then wins.
+// Deployment specific settings. Everything here is public: the page ships it to every visitor. The
+// OAuth client id is meant to be public (PKCE, no secret), never put a client *secret* here.
+//
+// This file is committed, so keep credentials out of it - put them in config-local.js next to it,
+// which is git-ignored, loaded right after and ends up in the jar of whoever builds it:
+//
+//   Object.assign(osmIssuesConfig, {mapillaryToken: 'MLY|...'});
 const osmIssuesConfig = {
     // where GraphHopper runs. Empty means the same server that serves this page.
     graphhopperUrl: '',
