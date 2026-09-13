@@ -196,7 +196,8 @@ const map = new ol.Map({
     // order matters: the highlighted way is a line under the markers, not across them, and the
     // issues stay on top of everything
     layers: [new ol.layer.Tile({source: new ol.source.OSM()}), signLayer, wayLayer, osmTagLayer, issueLayer],
-    view: new ol.View(parseHash() || {center: [0, 0], zoom: 2})
+    // a two finger pinch on a phone turns the map by accident far more often than on purpose
+    view: new ol.View({...(parseHash() || {center: [0, 0], zoom: 2}), enableRotation: false})
 });
 
 function parseHash() {
