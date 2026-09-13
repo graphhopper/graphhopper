@@ -840,8 +840,11 @@ function loadWay(wayId) {
         EDITABLE.forEach(key => {
             const input = tagInput(key);
             input.value = key in pending.changes ? pending.changes[key] : (way.tags[key] || '');
-            // what OSM already has is shown but not editable, this app only adds missing tags
-            input.disabled = way.tags[key] !== undefined && !(key in pending.changes);
+            // What OSM already has is locked rather than disabled: a disabled field swallows the
+            // click, and a wrong value - a maxheight=default that is not default at all - has to be
+            // correctable. Clicking asks first, see below.
+            input.readOnly = way.tags[key] !== undefined && !(key in pending.changes);
+            input.disabled = false;
             input.classList.toggle('changed', key in pending.changes);
         });
         renderTags();
@@ -862,7 +865,8 @@ function loadWay(wayId) {
         if (wanted && way.tags[wanted] !== undefined) {
             $('way-state').className = 'hint note';
             $('way-state').textContent = 'OSM already has ' + wanted + '=' + way.tags[wanted]
-                + ' here. GraphHopper reports it until its data is imported again.';
+                + ' here. GraphHopper reports it until its data is imported again. Click the field '
+                + 'if that value is wrong.';
         } else if (wanted && !narrow.matches) {
             // not on a phone: there the keyboard would cover the panel we just opened
             tagInput(wanted).focus();
@@ -893,6 +897,49 @@ function renderTags() {
     if (!keys.length) $('tags').textContent = 'this way has no tags';
 }
 
+// Values OSM accepts without a number - they say "nothing to sign here", which is a statement too
+const NO_NUMBER = ['default', 'none', 'below_default', 'unsigned', 'no_sign', 'no_indications'];
+
+/**
+ * Checks a value the way GraphHopper will later read it, so a typo is caught here and not in a
+ * routing result. Feet and inches are fine - that is what British signs say - but the dash between
+ * them is not, and "4,8" or "13-9" would silently come out as 4 or as nothing at all.
+ */
+function checkTag(key, raw) {
+    const v = raw.trim();
+    if (!v) return null;
+    if (key === 'bridge') {
+        const known = ['yes', 'viaduct', 'aqueduct', 'boardwalk', 'cantilever', 'covered',
+            'movable', 'trestle', 'low_water_crossing', 'no'];
+        if (known.includes(v)) return null;
+        // OSM values are lowercase words with underscores, anything else is a typo not a rare value
+        if (!/^[a-z][a-z_]*$/.test(v))
+            return {level: 'error', text: '"' + v + '" is not an OSM value, try yes'};
+        return {level: 'warn', text: '"' + v + '" is an unusual bridge value'};
+    }
+    if (NO_NUMBER.includes(v)) return {level: 'ok', text: v + ': no number, but a statement'};
+    if (v.includes(',')) return {level: 'error', text: 'use a dot for decimals, not a comma'};
+    if (/^\d+\s*[-\u2013]\s*\d+$/.test(v))
+        return {level: 'error', text: 'a sign reading 13-9 is written 13\'9" here'};
+
+    let metres = null;
+    let m = v.match(/^(\d+(?:\.\d+)?)\s*(m|t)?$/);
+    if (m) metres = +m[1];
+    else if ((m = v.match(/^(\d+)'(?:(\d+(?:\.\d+)?)")?$/)))
+        metres = +m[1] * 0.3048 + (+(m[2] || 0)) * 0.0254;
+    else if ((m = v.match(/^(\d+)\s*ft(?:\s*(\d+)\s*in)?$/)))
+        metres = +m[1] * 0.3048 + (+(m[2] || 0)) * 0.0254;
+    if (metres === null) return {level: 'error', text: 'GraphHopper cannot read "' + v + '"'};
+
+    const unit = key === 'maxweight' ? 't' : 'm';
+    const shown = unit === 'm' && !/^\d+(\.\d+)?\s*m?$/.test(v)
+        ? ' = ' + metres.toFixed(2) + ' m' : '';
+    const [lo, hi] = key === 'maxweight' ? [0.5, 100] : [1.5, 10];
+    if (metres < lo || metres > hi)
+        return {level: 'warn', text: metres.toFixed(2) + ' ' + unit + ' - is that right?'};
+    return shown ? {level: 'ok', text: shown.slice(3)} : null;
+}
+
 /** what the user typed, without empty fields and without values that are already in OSM */
 function currentChanges() {
     const changes = {};
@@ -905,8 +952,26 @@ function currentChanges() {
 }
 
 function updateSaveButton() {
-    $('save').disabled = !Object.keys(currentChanges()).length;
+    const problems = EDITABLE
+        .map(key => [key, checkTag(key, tagInput(key).value)])
+        .filter(([, c]) => c);
+    $('tag-check').innerHTML = problems
+        .map(([key, c]) => '<span class="' + c.level + '">' + key + ': ' + c.text + '</span>')
+        .join('');
+    const broken = problems.some(([, c]) => c.level === 'error');
+    $('save').disabled = broken || !Object.keys(currentChanges()).length;
 }
+
+EDITABLE.forEach(key => tagInput(key).onmousedown = tagInput(key).ontouchstart = e => {
+    const input = e.currentTarget;
+    if (!input.readOnly) return;
+    e.preventDefault();
+    if (!confirm('OpenStreetMap already says ' + key + '=' + input.value
+            + ' here. Change that value?')) return;
+    input.readOnly = false;
+    input.focus();
+    input.select();
+});
 
 EDITABLE.forEach(key => tagInput(key).oninput = () => {
     if (!currentWay) return;

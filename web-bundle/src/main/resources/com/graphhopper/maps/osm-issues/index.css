@@ -591,3 +591,22 @@ input.changed {
         top: 48px;
     }
 }
+
+/* a locked field holds a value OpenStreetMap already has - clearly not an empty field with a
+   placeholder, and clearly not something you type into by accident */
+#edit-fields input[readonly] {
+    background: #f1f1f1;
+    color: #555;
+    cursor: pointer;
+}
+
+/* what the value will mean once GraphHopper reads it, or why it cannot */
+#tag-check span {
+    display: block;
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+#tag-check .error { color: #a33; }
+#tag-check .warn { color: #8a5a00; }
+#tag-check .ok { color: #1a6b1a; }
