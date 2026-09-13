@@ -89,7 +89,7 @@ const wayLayer = new ol.layer.Vector({
 });
 
 /** the mark that says "this is the one you are editing" - the middle is the only free channel here,
- *  colour and size already carry the problem type and how promising the place is */
+ *  colour and size already carry the issue type and how promising the place is */
 const redrawMarkers = () => {
     issueSource.changed();
     osmTagSource.changed();
@@ -108,7 +108,7 @@ const issueLayer = new ol.layer.Vector({
         const wayId = feature.get('way_id');
         const edited = pendingEdits.some(e => e.wayId === wayId);
         const done = uploadedWays.includes(wayId);
-        // colour says what kind of problem it is, size says how likely a visit finds a sign here
+        // colour says what kind of issue it is, size says how likely a visit finds a sign here
         // rather than another maxheight=default. Without a score (the other issue types) they are
         // all the same size.
         const p = feature.get('p_sign');
@@ -194,7 +194,7 @@ const osmTagLayer = new ol.layer.Vector({
 const map = new ol.Map({
     target: 'map',
     // order matters: the highlighted way is a line under the markers, not across them, and the
-    // problems stay on top of everything
+    // issues stay on top of everything
     layers: [new ol.layer.Tile({source: new ol.source.OSM()}), signLayer, wayLayer, osmTagLayer, issueLayer],
     view: new ol.View(parseHash() || {center: [0, 0], zoom: 2})
 });
@@ -206,7 +206,7 @@ const icon = paths => '<svg viewBox="0 0 24 24" width="21" height="21" fill="non
 // Two more controls under the zoom buttons. They have to go through addControl: OpenLayers puts
 // pointer-events:none on the container its controls live in and only sets it back to auto on the
 // elements it manages itself, so an appended div would be visible but dead.
-// The two layers below the problems in the sidebar. They are optional because they answer different
+// The two layers below the issues in the sidebar. They are optional because they answer different
 // questions - what OSM knows already, and what a camera has actually seen.
 function initKnownLayers() {
     $('key-sign').style.backgroundImage = 'url(' + SIGN_ICON + ')';
@@ -229,12 +229,17 @@ function initKnownLayers() {
     $('layer-signs').checked = hasToken && localStorage.getItem('layer_signs') !== 'no';
     signLayer.setVisible($('layer-signs').checked);
     if (!hasToken) $('layer-signs-label').title = 'needs a mapillaryToken in config.js';
-    // the layer draws nothing further out, which otherwise looks as if there were no signs at all
-    const updateSignsZoom = () => $('signs-zoom').hidden = !hasToken || !$('layer-signs').checked
-        || map.getView().getZoom() >= SIGN_MIN_ZOOM;
-    map.getView().on('change:resolution', updateSignsZoom);
-    $('layer-signs').addEventListener('change', updateSignsZoom);
-    updateSignsZoom();
+    // nothing is loaded further out, which otherwise looks as if there was nothing to show
+    const updateZoomNotes = () => {
+        const zoom = map.getView().getZoom();
+        $('issues-zoom').hidden = zoom >= MIN_ZOOM;
+        $('osm-zoom').hidden = !$('layer-osm').checked || zoom >= MIN_ZOOM;
+        $('signs-zoom').hidden = !hasToken || !$('layer-signs').checked || zoom >= SIGN_MIN_ZOOM;
+    };
+    map.getView().on('change:resolution', updateZoomNotes);
+    $('layer-osm').addEventListener('change', updateZoomNotes);
+    $('layer-signs').addEventListener('change', updateZoomNotes);
+    updateZoomNotes();
 }
 
 function addMapTools() {
@@ -290,7 +295,7 @@ function goToMyLocation() {
         alert('this browser has no location support');
         return;
     }
-    $('status').textContent = 'locating ...';
+    setStatus('locating ...');
     navigator.geolocation.getCurrentPosition(
         pos => map.getView().animate({
             center: ol.proj.fromLonLat([pos.coords.longitude, pos.coords.latitude]), zoom: 17
@@ -313,10 +318,19 @@ initKnownLayers();
 if (!parseHash())
     ghFetch('/info').then(info => map.getView().fit(
         ol.proj.transformExtent(info.bbox, 'EPSG:4326', 'EPSG:3857'), {size: map.getSize(), maxZoom: 16}
-    )).catch(err => $('status').textContent = err.message);
+    )).catch(err => setStatus(err.message));
 
 const checkboxes = [...document.querySelectorAll('#issues input[data-type]')];
 checkboxes.forEach(cb => cb.onchange = () => load());
+
+/** The status is about the issues and sits at the end of their group. Folded, or with the sheet
+ *  collapsed on a phone, that group is not visible - there the heading carries it instead. */
+function setStatus(text, folded = text) {
+    $('status').textContent = text;
+    $('summary-status').textContent = folded;
+}
+
+const issueCount = n => n + (n === 1 ? ' issue' : ' issues');
 
 // the filter section stays folded the way the user left it
 $('filters').open = localStorage.getItem('filters_open') !== 'no';
@@ -350,6 +364,12 @@ const setSheet = open => {
 };
 setSheet(false);
 sheetToggle.onclick = () => setSheet(sheet.classList.contains('collapsed'));
+// collapsed, the heading is only there for the status, so a tap opens the sheet and not the fold
+$('filters').querySelector('summary').addEventListener('click', e => {
+    if (!sheet.classList.contains('collapsed')) return;
+    e.preventDefault();
+    setSheet(true);
+});
 // an on-screen keyboard covers the lower half of the sheet, so bring the focused field up
 sheet.addEventListener('focusin', e => {
     if (e.target.matches('input, textarea'))
@@ -362,12 +382,13 @@ let controller = null, osmTagController = null;
 let osmTagLoaded = null;
 
 /** the same crossings, but the ones OpenStreetMap already has a maxheight for. This is what is
- *  already mapped, not a work list, so the road class filter of the problems does not apply. */
+ *  already mapped, not a work list, so the road class filter of the issues does not apply. */
 function loadOsmTags(extent) {
     if (!osmTagLayer.getVisible()) return;
     if (osmTagLoaded && contains(osmTagLoaded, extent)) return;
     if (osmTagController) osmTagController.abort();
     osmTagController = new AbortController();
+    $('osm-loading').hidden = false;
     ghFetch('/osm-issues?bbox=' + extent.map(v => v.toFixed(6)).join(',')
         + '&types=missing_maxheight&roads=all&tagged=true&limit=' + LIMIT,
         {signal: osmTagController.signal})
@@ -377,8 +398,14 @@ function loadOsmTags(extent) {
                 .readFeatures(json, {featureProjection: 'EPSG:3857'}));
             // a truncated answer does not cover the area, so do not reuse it when zooming in
             osmTagLoaded = json.features.length < LIMIT ? extent : null;
+            $('osm-loading').hidden = true;
         })
-        .catch(err => err.name !== 'AbortError' && console.error('osm overlay:', err));
+        .catch(err => {
+            // an aborted request was replaced by a newer one, which is still loading
+            if (err.name === 'AbortError') return;
+            $('osm-loading').hidden = true;
+            console.error('osm overlay:', err);
+        });
 }
 
 // what the markers on the map currently show, to avoid reloading when zooming in
@@ -389,34 +416,38 @@ const contains = (a, b) => a[0] <= b[0] && a[1] <= b[1] && a[2] >= b[2] && a[3] 
 
 function load() {
     if (controller) controller.abort();
+    // shown next to the heading, a large view can take a few seconds
+    $('issues-loading').hidden = true;
     const types = checkboxes.filter(cb => cb.checked).map(cb => cb.dataset.type);
     const zoomedIn = map.getView().getZoom() >= MIN_ZOOM;
     const extent = ol.proj.transformExtent(map.getView().calculateExtent(map.getSize()), 'EPSG:3857', 'EPSG:4326');
-    // not filtered like the problems below, so it stays visible whatever is selected there
+    // not filtered like the issues below, so it stays visible whatever is selected there
     if (zoomedIn) loadOsmTags(extent);
     if (!roadGroups().length) {
         issueSource.clear();
-        $('status').textContent = 'no road class selected';
+        setStatus('no road class selected');
         return;
     }
     if (!types.length) {
         // unchecking every type is a deliberate action, there the markers should go away at once
         issueSource.clear();
-        $('status').textContent = 'no problem type selected';
+        setStatus('no issue type selected');
         return;
     }
     // the old markers stay on the map until the new ones are there, so panning does not blank it
     if (!zoomedIn) {
-        $('status').textContent = 'zoom in to load issues';
+        // the heading says "zoom in" already, only the folded heading needs it spelled out
+        setStatus('', 'zoom in');
         return;
     }
     const filter = types.join(',') + '|' + roadGroups().join(',');
     // zooming in or panning inside the loaded area shows a part of what we already have
     if (loaded && loaded.filter === filter && contains(loaded.extent, extent)) {
-        $('status').textContent = issueSource.getFeatures().length + ' issue(s) loaded for this area';
+        setStatus(issueCount(issueSource.getFeatures().length) + ' loaded for this area');
         return;
     }
-    $('status').textContent = 'loading ...';
+    setStatus('', 'loading ...');
+    $('issues-loading').hidden = false;
     controller = new AbortController();
     ghFetch('/osm-issues?bbox=' + extent.map(v => v.toFixed(6)).join(',')
         + '&types=' + types.join(',') + '&roads=' + roadGroups().join(',') + '&limit=' + LIMIT,
@@ -424,13 +455,16 @@ function load() {
         .then(json => {
             issueSource.clear();
             issueSource.addFeatures(new ol.format.GeoJSON().readFeatures(json, {featureProjection: 'EPSG:3857'}));
-            $('status').textContent = json.features.length + ' issue(s) in this view';
+            setStatus(issueCount(json.features.length) + ' in this view');
+            $('issues-loading').hidden = true;
             // a truncated answer does not cover the area, so do not reuse it when zooming in
             loaded = json.features.length < LIMIT ? {extent: extent, filter: filter} : null;
         })
         .catch(err => {
             // keep whatever is on the map, the error message alone tells what happened
-            if (err.name !== 'AbortError') $('status').textContent = err.message;
+            if (err.name === 'AbortError') return;
+            setStatus(err.message);
+            $('issues-loading').hidden = true;
         });
 }
 
@@ -576,7 +610,7 @@ function distanceToLine(lat, lon, line) {
     return min;
 }
 
-// We want a photo taken ~40m before the problem and looking at it, so that the bridge and its sign
+// We want a photo taken ~40m before the issue and looking at it, so that the bridge and its sign
 // are in the picture instead of being right above the camera. It also has to be taken on the way we
 // are editing, otherwise we end up with a picture from the bridge itself.
 function pickPhoto(photos, lat, lon, line) {
@@ -648,7 +682,7 @@ function mapillaryPhotos(lat, lon) {
 let photoRequest = 0;
 
 /**
- * The three map links, shown right away for the problem itself and updated once a photo is found,
+ * The three map links, shown right away for the issue itself and updated once a photo is found,
  * because then the position of that photo is the more useful one.
  */
 function showLinks(lat, lon, photo) {
@@ -834,7 +868,7 @@ function loadWay(wayId) {
         const line = geometryOf(json);
         waySource.clear();
         waySource.addFeature(new ol.Feature(new ol.geom.LineString(line.map(c => ol.proj.fromLonLat(c)))));
-        // a photo of this problem has to be taken on this way, not on the one crossing it
+        // a photo of this issue has to be taken on this way, not on the one crossing it
         loadPhoto(currentIssue.lat, currentIssue.lon, line);
         const pending = pendingEdits.find(e => e.wayId === wayId) || {changes: {}};
         currentWay = {id: wayId, tags: Object.assign({}, way.tags)};
@@ -954,13 +988,13 @@ function currentChanges() {
 }
 
 function updateSaveButton() {
-    const problems = EDITABLE
+    const checks = EDITABLE
         .map(key => [key, checkTag(key, tagInput(key).value)])
         .filter(([, c]) => c);
-    $('tag-check').innerHTML = problems
+    $('tag-check').innerHTML = checks
         .map(([key, c]) => '<span class="' + c.level + '">' + key + ': ' + c.text + '</span>')
         .join('');
-    const broken = problems.some(([, c]) => c.level === 'error');
+    const broken = checks.some(([, c]) => c.level === 'error');
     $('save').disabled = broken || !Object.keys(currentChanges()).length;
 }
 

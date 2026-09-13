@@ -87,10 +87,6 @@ html, body {
     background: #fff;
 }
 
-/* the filters can be folded away, the status line below stays */
-.panel > #status {
-    margin-top: 8px;
-}
 
 #filters summary {
     cursor: pointer;
@@ -380,13 +376,21 @@ input.changed {
     }
 
     #sidebar.collapsed section,
-    #sidebar.collapsed #filters {
+    #sidebar.collapsed #filters > :not(summary) {
         display: none;
     }
 
-    #sidebar.collapsed #issues,
-    #sidebar.collapsed #issues #status {
+    #sidebar.collapsed #issues {
         display: block;
+    }
+
+    /* the heading with the status in it is all that is left */
+    #sidebar.collapsed #filters #summary-status:not(:empty) {
+        display: inline;
+    }
+
+    #sidebar.collapsed #filters summary {
+        margin-bottom: 0;
     }
 
     #sidebar.collapsed #issues {
@@ -526,8 +530,8 @@ input.changed {
 
 /* ---------------------------------------------------------------- what the map shows
 
-   The problems, the road filter that belongs to them and the two layers of what is already known
-   share one list. The road filter is indented under the problem types with a rule on its left, so
+   The issues, the road filter that belongs to them and the two layers of what is already known
+   share one list. The road filter is indented under the issue types with a rule on its left, so
    it reads as part of that group and not as a filter for everything. */
 #filters label {
     display: flex;
@@ -569,9 +573,41 @@ input.changed {
     font-size: 13px;
 }
 
+/* keeps its line when empty, e.g. while loading, or everything below it jumps with each request */
+#filters #status {
+    margin: 8px 0 0;
+    line-height: 1.4;
+    min-height: 1.4em;
+}
+
+/* the status in the heading only when the group it belongs to is folded away */
+#summary-status {
+    font-size: 12px;
+    font-weight: 400;
+    color: #666;
+}
+
+#summary-status:empty,
+#filters[open] #summary-status {
+    display: none;
+}
+
+#summary-status::before {
+    content: "· ";
+}
+
 #filters .zoom-note {
     color: #888;
     font-size: 12px;
+    /* also inside the small caps heading of the issues */
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+/* no larger than the heading, or the heading grows by a pixel whenever the note shows */
+#filters .label .zoom-note {
+    font-size: inherit;
 }
 
 #filters .roads .sublabel {

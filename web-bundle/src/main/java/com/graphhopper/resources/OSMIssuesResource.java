@@ -55,10 +55,10 @@ import jakarta.ws.rs.core.Response;
 import java.util.*;
 
 /**
- * Finds OSM tagging problems around bridges in the current map view: roads passing under a bridge
+ * Finds OSM tagging issues around bridges in the current map view: roads passing under a bridge
  * without max_height, bridges without max_weight and roads crossing each other without a bridge
- * (or tunnel) tag at all. The result is GeoJSON with one point per problem, including the OSM way
- * ids so that the problem can be fixed right away.
+ * (or tunnel) tag at all. The result is GeoJSON with one point per issue, including the OSM way
+ * ids so that the issue can be fixed right away.
  * <p>
  * Everything is calculated on the fly for the requested bbox, i.e. there is no preprocessing.
  */
