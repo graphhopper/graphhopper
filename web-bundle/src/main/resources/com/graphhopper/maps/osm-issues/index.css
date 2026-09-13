@@ -430,8 +430,12 @@ input.changed {
     width: 36px;
     height: 36px;
     font-size: 19px;
-    line-height: 36px;
     border-radius: 3px;
+    /* centres the + and - as well as the svg icons, whatever their size */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
 }
 
 .map-tools {
@@ -467,12 +471,6 @@ input.changed {
     display: none;
 }
 
-/* the icons are svg, so they have to be centred themselves */
-.map-tools svg {
-    display: block;
-    margin: 0 auto;
-}
-
 #goto.bad {
     border-color: #d0021b;
     background: #fff3f3;
@@ -483,7 +481,6 @@ input.changed {
         width: 44px;
         height: 44px;
         font-size: 22px;
-        line-height: 44px;
     }
 
     .map-tools {
@@ -526,4 +523,72 @@ input.changed {
 
 #photo-menu a:hover {
     background: #f0f0f0;
+}
+
+/* the overlay switch, a button that opens a small list */
+.layer-control {
+    top: 180px;
+    left: .5em;
+    background: none;
+    padding: 0;
+}
+
+#layers-panel {
+    position: absolute;
+    left: 0;
+    top: 40px;
+    min-width: 210px;
+    padding: 8px 10px;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, .18);
+}
+
+/* The colour each layer draws with, so the map needs no legend of its own. All three keys are the
+   same kind of box on purpose - .dot carries a border and a horizontal margin of its own, and an
+   img brings its own sizing, so mixing them left the sign 4px off. */
+#layers-panel .key {
+    flex: none;
+    box-sizing: border-box;
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    background-position: center;
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+
+.dot.osm {
+    background: #2e9e4f;
+}
+
+/* split, because a problem is drawn in the colour of its type - saves explaining that in words */
+.dot.mixed {
+    background: linear-gradient(to bottom, #e6194b 0 50%, #f58231 50% 100%);
+}
+
+#layers-panel label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+#layers-panel input:disabled + * ,
+#layers-panel label:has(input:disabled) {
+    color: #999;
+    cursor: default;
+}
+
+@media (max-width: 900px) {
+    .layer-control {
+        top: 212px;
+    }
+
+    #layers-panel {
+        top: 48px;
+    }
 }

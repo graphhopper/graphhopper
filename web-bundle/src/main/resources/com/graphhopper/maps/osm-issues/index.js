@@ -151,9 +151,31 @@ const signLayer = new ol.layer.VectorTile({
     style: feature => HEIGHT_SIGNS.has(feature.get('value')) ? signStyle : null
 });
 
+// What OpenStreetMap already says, as an overlay: the same crossings, but the ones that already
+// carry maxheight, drawn with the value so it can be compared against a photo at a glance.
+const osmTagSource = new ol.source.Vector();
+const osmTagLayer = new ol.layer.Vector({
+    visible: false,
+    source: osmTagSource,
+    style: feature => new ol.style.Style({
+        image: new ol.style.Circle({
+            radius: 8,
+            fill: new ol.style.Fill({color: '#2e9e4f'}),
+            stroke: new ol.style.Stroke({color: '#fff', width: 2})
+        }),
+        text: new ol.style.Text({
+            text: String(feature.get('maxheight') || ''),
+            offsetY: -16,
+            font: '600 12px system-ui, sans-serif',
+            fill: new ol.style.Fill({color: '#1b5e2a'}),
+            stroke: new ol.style.Stroke({color: '#fff', width: 3})
+        })
+    })
+});
+
 const map = new ol.Map({
     target: 'map',
-    layers: [new ol.layer.Tile({source: new ol.source.OSM()}), signLayer, wayLayer, issueLayer],
+    layers: [new ol.layer.Tile({source: new ol.source.OSM()}), signLayer, osmTagLayer, wayLayer, issueLayer],
     view: new ol.View(parseHash() || {center: [0, 0], zoom: 2})
 });
 
@@ -164,6 +186,53 @@ const icon = paths => '<svg viewBox="0 0 24 24" width="21" height="21" fill="non
 // Two more controls under the zoom buttons. They have to go through addControl: OpenLayers puts
 // pointer-events:none on the container its controls live in and only sets it back to auto on the
 // elements it manages itself, so an appended div would be visible but dead.
+// One more control: what to show on top of the issues. Both overlays are optional because they
+// answer different questions - what OSM knows already, and what a camera has actually seen.
+function addLayerControl() {
+    const box = document.createElement('div');
+    box.className = 'ol-control ol-unselectable layer-control';
+    box.innerHTML = '<button id="layers-toggle" type="button" title="overlays">'
+        + icon('<path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="M2 12l10 5 10-5"/>'
+               + '<path d="M2 17l10 5 10-5"/>') + '</button>'
+        + '<div id="layers-panel" hidden>'
+        + '<label><input type="checkbox" id="layer-issues">'
+        + '<span class="key dot mixed"></span> problems found</label>'
+        + '<label><input type="checkbox" id="layer-osm">'
+        + '<span class="key dot osm"></span> maxheight in OSM</label>'
+        + '<label><input type="checkbox" id="layer-signs">'
+        + '<span class="key sign" style="background-image:url(' + SIGN_ICON + ')"></span>'
+        + ' signs seen by Mapillary</label>'
+        + '</div>';
+    map.addControl(new ol.control.Control({element: box}));
+
+    $('layers-toggle').onclick = () => $('layers-panel').hidden = !$('layers-panel').hidden;
+    $('layer-issues').onchange = e => {
+        issueLayer.setVisible(e.target.checked);
+        localStorage.setItem('layer_issues', e.target.checked ? 'yes' : 'no');
+        if (e.target.checked) load(); else issueSource.clear();
+    };
+    $('layer-osm').onchange = e => {
+        osmTagLayer.setVisible(e.target.checked);
+        localStorage.setItem('layer_osm', e.target.checked ? 'yes' : 'no');
+        if (e.target.checked) load(); else osmTagSource.clear();
+    };
+    $('layer-signs').onchange = e => {
+        signLayer.setVisible(e.target.checked);
+        localStorage.setItem('layer_signs', e.target.checked ? 'yes' : 'no');
+    };
+    // all three are on unless the user turned them off - they are the point of the map
+    $('layer-issues').checked = localStorage.getItem('layer_issues') !== 'no';
+    issueLayer.setVisible($('layer-issues').checked);
+    $('layer-osm').checked = localStorage.getItem('layer_osm') !== 'no';
+    osmTagLayer.setVisible($('layer-osm').checked);
+    // the Mapillary layer needs a token, without one the box says so and stays off
+    const hasToken = !!settings.mapillaryToken;
+    $('layer-signs').disabled = !hasToken;
+    $('layer-signs').checked = hasToken && localStorage.getItem('layer_signs') !== 'no';
+    signLayer.setVisible($('layer-signs').checked);
+    if (!hasToken) $('layer-signs').parentNode.title = 'needs a mapillaryToken in config.js';
+}
+
 function addMapTools() {
     const tools = document.createElement('div');
     tools.className = 'ol-control ol-unselectable map-tools';
@@ -235,6 +304,7 @@ function parseHash() {
 
 // without a position in the url hash we show the area of the imported map
 addMapTools();
+addLayerControl();
 
 if (!parseHash())
     ghFetch('/info').then(info => map.getView().fit(
@@ -261,11 +331,9 @@ roadBoxes.forEach(cb => cb.onchange = () => {
 
 // The Mapillary overlay is simply on whenever a token is configured - there is nothing to decide,
 // it only draws where a height sign was detected and it needs zoom 14 anyway.
-if (settings.mapillaryToken) {
+if (settings.mapillaryToken)
     signLayer.getSource().setUrl('https://tiles.mapillary.com/maps/vtp/mly_map_feature_traffic_sign'
         + '/2/{z}/{x}/{y}?access_token=' + encodeURIComponent(settings.mapillaryToken));
-    signLayer.setVisible(true);
-}
 
 // On a phone the sidebar is a bottom sheet: collapsed by default so the map is usable, expanded
 // when there is something to do in it. On a wide screen the class does nothing.
@@ -284,7 +352,24 @@ sheet.addEventListener('focusin', e => {
         setTimeout(() => e.target.scrollIntoView({block: 'center', behavior: 'smooth'}), 250);
 });
 
-let controller = null;
+let controller = null, osmTagController = null;
+
+/** the same crossings, but the ones OpenStreetMap already has a maxheight for */
+function loadOsmTags(extent) {
+    if (osmTagController) osmTagController.abort();
+    if (!osmTagLayer.getVisible()) return;
+    osmTagController = new AbortController();
+    ghFetch('/osm-issues?bbox=' + extent.map(v => v.toFixed(6)).join(',')
+        + '&types=missing_maxheight&roads=' + roadGroups().join(',') + '&tagged=true&limit=' + LIMIT,
+        {signal: osmTagController.signal})
+        .then(json => {
+            osmTagSource.clear();
+            osmTagSource.addFeatures(new ol.format.GeoJSON()
+                .readFeatures(json, {featureProjection: 'EPSG:3857'}));
+        })
+        .catch(err => err.name !== 'AbortError' && console.error('osm overlay:', err));
+}
+
 // what the markers on the map currently show, to avoid reloading when zooming in
 let loaded = null;
 
@@ -315,6 +400,11 @@ function load() {
     // zooming in or panning inside the loaded area shows a part of what we already have
     if (loaded && loaded.filter === filter && contains(loaded.extent, extent)) {
         $('status').textContent = issueSource.getFeatures().length + ' issue(s) loaded for this area';
+        return;
+    }
+    loadOsmTags(extent);
+    if (!issueLayer.getVisible()) {
+        $('status').textContent = 'problems hidden, see the overlay menu';
         return;
     }
     $('status').textContent = 'loading ...';
@@ -367,20 +457,33 @@ map.getViewport().addEventListener('contextmenu', evt => {
 });
 
 const hidePhotoMenu = () => photoMenu.hidden = true;
+const hideLayers = () => $('layers-panel').hidden = true;
+
+// anything opened over the map closes again when you touch the map, in the order you would expect
 document.addEventListener('pointerdown', e => {
     if (!photoMenu.contains(e.target)) hidePhotoMenu();
+    if (!$('layers-panel').parentNode.contains(e.target)) hideLayers();
 });
 document.addEventListener('keydown', e => {
     if (e.key !== 'Escape') return;
     if (!photoMenu.hidden) hidePhotoMenu();
+    else if (!$('layers-panel').hidden) hideLayers();
     else if (!$('edit').hidden) closeEdit();
 });
-map.on('movestart', hidePhotoMenu);
+map.on('movestart', () => {
+    hidePhotoMenu();
+    hideLayers();
+});
 
 map.on('singleclick', evt => {
     const feature = map.forEachFeatureAtPixel(evt.pixel, f => f,
         {hitTolerance: 6, layerFilter: layer => layer === issueLayer});
     if (feature) return openIssue(feature);
+    // the green ones carry the same properties, so they open the same panel - useful when a value
+    // in OSM turns out to be wrong on the photo
+    const tagged = map.forEachFeatureAtPixel(evt.pixel, f => f,
+        {hitTolerance: 6, layerFilter: layer => layer === osmTagLayer});
+    if (tagged) return openIssue(tagged);
     const sign = map.forEachFeatureAtPixel(evt.pixel, f => HEIGHT_SIGNS.has(f.get('value')) ? f : null,
         {hitTolerance: 8, layerFilter: layer => layer === signLayer});
     if (sign) return openSign(sign);
@@ -648,7 +751,9 @@ function openIssue(feature) {
         document.activeElement.blur();
     $('edit').hidden = false;
     setSheet(true);
-    $('edit-title').textContent = issue.title || p.type;
+    // a place that already carries a value is not a missing tag, so do not call it one
+    $('edit-title').textContent = p.maxheight
+        ? 'maxheight is ' + p.maxheight : (issue.title || p.type);
     $('edit-hint').textContent = issue.hint || '';
     $('edit-hint').className = issue.warn ? 'hint warn' : 'hint';
     // what the ranking thinks of this place, so the size of the marker is explainable
@@ -661,7 +766,7 @@ function openIssue(feature) {
     // the score is the one number worth scanning for, so it gets a chip of its own instead of
     // disappearing into a line of grey prose
     // the number sits in the sentence it belongs to, not off in a corner of its own
-    const pct = p.p_sign == null ? null : Math.round(p.p_sign * 100);
+    const pct = p.maxheight || p.p_sign == null ? null : Math.round(p.p_sign * 100);
     $('edit-odds').innerHTML = pct == null ? '' :
         '<b class="' + (p.p_sign >= 0.7 ? 'good' : p.p_sign >= 0.4 ? 'maybe' : 'weak') + '">'
         + pct + '%</b> chance of finding a sign here'
