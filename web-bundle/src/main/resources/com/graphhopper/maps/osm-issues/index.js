@@ -215,7 +215,8 @@ function addLayerControl() {
         + '<div id="layers-panel" hidden>'
         + '<label><input type="checkbox" id="layer-issues">'
         + '<span class="key dot mixed"></span> problems found</label>'
-        + '<label><input type="checkbox" id="layer-osm">'
+        + '<label title="every road class, the problem filter does not apply here">'
+        + '<input type="checkbox" id="layer-osm">'
         + '<span class="key dot osm"></span> maxheight in OSM</label>'
         + '<label><input type="checkbox" id="layer-signs">'
         + '<span class="key sign" style="background-image:url(' + SIGN_ICON + ')"></span>'
@@ -232,6 +233,7 @@ function addLayerControl() {
     $('layer-osm').onchange = e => {
         osmTagLayer.setVisible(e.target.checked);
         localStorage.setItem('layer_osm', e.target.checked ? 'yes' : 'no');
+        osmTagLoaded = null;
         if (e.target.checked) load(); else osmTagSource.clear();
     };
     $('layer-signs').onchange = e => {
@@ -372,18 +374,25 @@ sheet.addEventListener('focusin', e => {
 
 let controller = null, osmTagController = null;
 
-/** the same crossings, but the ones OpenStreetMap already has a maxheight for */
+// the area the overlay holds, so panning inside it does not load it again
+let osmTagLoaded = null;
+
+/** the same crossings, but the ones OpenStreetMap already has a maxheight for. This is what is
+ *  already mapped, not a work list, so the road class filter of the problems does not apply. */
 function loadOsmTags(extent) {
-    if (osmTagController) osmTagController.abort();
     if (!osmTagLayer.getVisible()) return;
+    if (osmTagLoaded && contains(osmTagLoaded, extent)) return;
+    if (osmTagController) osmTagController.abort();
     osmTagController = new AbortController();
     ghFetch('/osm-issues?bbox=' + extent.map(v => v.toFixed(6)).join(',')
-        + '&types=missing_maxheight&roads=' + roadGroups().join(',') + '&tagged=true&limit=' + LIMIT,
+        + '&types=missing_maxheight&roads=all&tagged=true&limit=' + LIMIT,
         {signal: osmTagController.signal})
         .then(json => {
             osmTagSource.clear();
             osmTagSource.addFeatures(new ol.format.GeoJSON()
                 .readFeatures(json, {featureProjection: 'EPSG:3857'}));
+            // a truncated answer does not cover the area, so do not reuse it when zooming in
+            osmTagLoaded = json.features.length < LIMIT ? extent : null;
         })
         .catch(err => err.name !== 'AbortError' && console.error('osm overlay:', err));
 }
@@ -397,6 +406,10 @@ const contains = (a, b) => a[0] <= b[0] && a[1] <= b[1] && a[2] >= b[2] && a[3] 
 function load() {
     if (controller) controller.abort();
     const types = checkboxes.filter(cb => cb.checked).map(cb => cb.dataset.type);
+    const zoomedIn = map.getView().getZoom() >= MIN_ZOOM;
+    const extent = ol.proj.transformExtent(map.getView().calculateExtent(map.getSize()), 'EPSG:3857', 'EPSG:4326');
+    // not filtered like the problems below, so it stays visible whatever is selected there
+    if (zoomedIn) loadOsmTags(extent);
     if (!roadGroups().length) {
         issueSource.clear();
         $('status').textContent = 'no road class selected';
@@ -409,18 +422,16 @@ function load() {
         return;
     }
     // the old markers stay on the map until the new ones are there, so panning does not blank it
-    if (map.getView().getZoom() < MIN_ZOOM) {
+    if (!zoomedIn) {
         $('status').textContent = 'zoom in to load issues';
         return;
     }
-    const extent = ol.proj.transformExtent(map.getView().calculateExtent(map.getSize()), 'EPSG:3857', 'EPSG:4326');
     const filter = types.join(',') + '|' + roadGroups().join(',');
     // zooming in or panning inside the loaded area shows a part of what we already have
     if (loaded && loaded.filter === filter && contains(loaded.extent, extent)) {
         $('status').textContent = issueSource.getFeatures().length + ' issue(s) loaded for this area';
         return;
     }
-    loadOsmTags(extent);
     if (!issueLayer.getVisible()) {
         $('status').textContent = 'problems hidden, see the overlay menu';
         return;
