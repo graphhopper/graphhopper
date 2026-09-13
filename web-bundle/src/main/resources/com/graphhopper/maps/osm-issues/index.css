@@ -26,12 +26,76 @@ html, body {
     border-left: 1px solid #ddd;
 }
 
+/* Picking the way, looking at the photo and changing the tags are one job, so the panel is one
+   block and not three labelled sections. Only the number gets emphasis, inside its own sentence. */
+#edit-odds {
+    font-size: 12.5px;
+    color: #444;
+    margin: 2px 0 12px;
+    line-height: 1.45;
+}
+
+#edit-odds b {
+    font-size: 14px;
+    padding: 1px 6px;
+    border-radius: 9px;
+    font-variant-numeric: tabular-nums;
+}
+
+#edit-odds b.good { background: #e3f4e3; color: #1a6b1a; }
+#edit-odds b.maybe { background: #fbf0d8; color: #8a5a00; }
+#edit-odds b.weak { background: #eee; color: #666; }
+
+#way-picker,
+#edit-links {
+    margin-bottom: 12px;
+}
+
+#photo {
+    margin-top: 12px;
+}
+
+/* Picking a way, looking at the photo and changing the tags are one job, so they share one box.
+   The login is a line in it, not a panel of its own. */
+.panel > .label:first-child,
+#edit-box .label:first-child {
+    margin-top: 0;
+}
+
+#account {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+    font-size: 12.5px;
+    color: #444;
+}
+
+/* a hint directly above a button needs room, it has no bottom margin of its own */
+.hint + button,
+.hint + .row {
+    margin-top: 10px;
+}
+
 #sidebar section {
-    padding: 10px 14px;
-    border-bottom: 1px solid #e3e3e3;
+    padding: 10px 12px;
+}
+
+/* Each thing you can act on sits in its own box - the filter, the edit form, the upload list. The
+   grouping is what makes a "close" button read as closing something. */
+.panel {
+    border: 1px solid #dcdcdc;
+    border-radius: 5px;
+    padding: 10px 12px 12px;
+    background: #fff;
 }
 
 /* the filters can be folded away, the status line below stays */
+.panel > #status {
+    margin-top: 8px;
+}
+
 #filters summary {
     cursor: pointer;
     font-size: 14px;
@@ -430,4 +494,36 @@ input.changed {
         height: 44px;
         width: min(190px, calc(100vw - 120px));
     }
+}
+
+/* right click menu with the street level services at the spot under the cursor */
+#photo-menu {
+    position: fixed;
+    z-index: 20;
+    min-width: 160px;
+    padding: 4px 0;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, .2);
+}
+
+#photo-menu .coord {
+    padding: 5px 12px 7px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid #eee;
+    color: #666;
+    font-family: ui-monospace, monospace;
+    font-size: 12px;
+}
+
+#photo-menu a {
+    display: block;
+    padding: 9px 12px;
+    color: #1a1a1a;
+    text-decoration: none;
+}
+
+#photo-menu a:hover {
+    background: #f0f0f0;
 }

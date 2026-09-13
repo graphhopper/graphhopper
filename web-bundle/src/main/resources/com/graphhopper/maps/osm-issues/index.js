@@ -132,15 +132,20 @@ const signStyle = new ol.style.Style({
     image: new ol.style.Icon({src: SIGN_ICON, scale: 1})
 });
 
-// The tiles exist at zoom 14 only. maxZoom lets OpenLayers overzoom them when the user goes
-// closer, minZoom on the layer keeps it from asking for zoom 13 and below, which would 404.
+// Mapillary serves these at zoom 14 only, so the tile grid has that single level: closer in
+// OpenLayers scales one tile up, further out it fetches four times as many per zoom step. A
+// 1600x900 view needs about 22 tiles at zoom 14 and 88 at 13, against a budget of 50000 a day -
+// which is why the layer stops there and does not go to 12, where it would be 350.
+const SIGN_MIN_ZOOM = 13;
 const signLayer = new ol.layer.VectorTile({
     visible: false,
     declutter: true,
-    minZoom: 13.99,
+    minZoom: SIGN_MIN_ZOOM - 0.01,
     source: new ol.source.VectorTile({
         format: new ol.format.MVT(),
+        minZoom: 14,
         maxZoom: 14,
+        attributions: 'signs &copy; <a href="https://www.mapillary.com" target="_blank">Mapillary</a>',
         url: 'https://tiles.mapillary.com/maps/vtp/mly_map_feature_traffic_sign/2/{z}/{x}/{y}'
     }),
     style: feature => HEIGHT_SIGNS.has(feature.get('value')) ? signStyle : null
@@ -340,13 +345,44 @@ map.on('moveend', () => {
     moveTimer = setTimeout(load, 300);
 });
 
+// Right click offers the three street level services at the spot under the cursor - useful for
+// looking at a place the endpoint did not report, or for checking the surroundings of one it did.
+const photoMenu = $('photo-menu');
+
+map.getViewport().addEventListener('contextmenu', evt => {
+    evt.preventDefault();
+    const [lon, lat] = ol.proj.toLonLat(map.getEventCoordinate(evt)).map(v => v.toFixed(6));
+    photoMenu.innerHTML = '<div class="coord">' + lat + ', ' + lon + '</div>'
+        + '<a href="https://www.mapillary.com/app/?lat=' + lat + '&lng=' + lon
+        + '&z=19&trafficSign=all" target="_blank">Mapillary</a>'
+        + '<a href="https://kartaview.org/map/@' + lat + ',' + lon + ',19z" target="_blank">KartaView</a>'
+        + '<a href="https://panoramax.openstreetmap.fr/#map=19/' + lat + '/' + lon
+        + '" target="_blank">Panoramax</a>';
+    photoMenu.style.left = Math.min(evt.clientX, innerWidth - 170) + 'px';
+    photoMenu.style.top = Math.min(evt.clientY, innerHeight - 130) + 'px';
+    photoMenu.hidden = false;
+});
+
+const hidePhotoMenu = () => photoMenu.hidden = true;
+document.addEventListener('pointerdown', e => {
+    if (!photoMenu.contains(e.target)) hidePhotoMenu();
+});
+document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    if (!photoMenu.hidden) hidePhotoMenu();
+    else if (!$('edit').hidden) closeEdit();
+});
+map.on('movestart', hidePhotoMenu);
+
 map.on('singleclick', evt => {
     const feature = map.forEachFeatureAtPixel(evt.pixel, f => f,
         {hitTolerance: 6, layerFilter: layer => layer === issueLayer});
     if (feature) return openIssue(feature);
     const sign = map.forEachFeatureAtPixel(evt.pixel, f => HEIGHT_SIGNS.has(f.get('value')) ? f : null,
         {hitTolerance: 8, layerFilter: layer => layer === signLayer});
-    if (sign) openSign(sign);
+    if (sign) return openSign(sign);
+    // clicking the map itself is how you put the panel away - no button needed for that
+    if (!$('edit').hidden) closeEdit();
 });
 
 /**
@@ -581,7 +617,12 @@ function updateAccount() {
     $('login').hidden = loggedIn;
     $('logout').hidden = !loggedIn;
     $('upload').disabled = !loggedIn;
-    $('account-state').textContent = loggedIn ? 'logged in' : 'not logged in';
+    // without a login the tag fields only invite work that cannot be uploaded, so they stay away
+    $('edit-fields').hidden = !loggedIn;
+    $('save').hidden = !loggedIn;
+    $('account-why').hidden = loggedIn;
+    $('account-state').hidden = !loggedIn;
+    $('account-state').textContent = loggedIn ? 'logged in' : '';
     if (loggedIn)
         osmFetch('/api/0.6/user/details.json')
             .then(text => $('account-state').textContent = 'logged in as ' + JSON.parse(text).user.display_name)
@@ -614,9 +655,14 @@ function openIssue(feature) {
         untagged: 'the other ways under this bridge are untagged too',
         none: 'no other road passes under this bridge'
     };
-    $('edit-odds').textContent = p.p_sign == null ? ''
-        : Math.round(p.p_sign * 100) + '% of comparable places turned out to have a real sign'
-          + (NB[p.neighbours] ? ' \u00b7 ' + NB[p.neighbours] : '');
+    // the score is the one number worth scanning for, so it gets a chip of its own instead of
+    // disappearing into a line of grey prose
+    // the number sits in the sentence it belongs to, not off in a corner of its own
+    const pct = p.p_sign == null ? null : Math.round(p.p_sign * 100);
+    $('edit-odds').innerHTML = pct == null ? '' :
+        '<b class="' + (p.p_sign >= 0.7 ? 'good' : p.p_sign >= 0.4 ? 'maybe' : 'weak') + '">'
+        + pct + '%</b> chance of finding a sign here'
+        + (NB[p.neighbours] ? ' \u2014 ' + NB[p.neighbours] : '');
 
     // for maxheight the way below the bridge comes first, it is the one that needs the tag
     const ways = [{id: p.way_id, name: p.way_name, cls: p.road_class}];
@@ -767,7 +813,7 @@ $('save').onclick = () => {
     $('pending').scrollIntoView({block: 'nearest'});
 };
 
-$('close-edit').onclick = closeEdit;
+
 
 function closeEdit() {
     keepChanges();

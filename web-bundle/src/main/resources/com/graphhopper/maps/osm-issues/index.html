@@ -31,17 +31,13 @@
 </head>
 <body>
 <div id="map"></div>
+<div id="photo-menu" hidden></div>
 
 <div id="sidebar">
     <!-- only visible when the sidebar is a bottom sheet, see index.css -->
     <button id="sheet-toggle" aria-expanded="false" aria-label="collapse or expand the panel"></button>
-    <section id="account">
-        <div id="account-state">not logged in</div>
-        <button id="login">log in to OSM</button>
-        <button id="logout" hidden>log out</button>
-    </section>
-
     <section id="issues">
+        <div class="panel">
         <details id="filters" open>
             <summary>filter</summary>
             <label><input type="checkbox" data-type="missing_maxheight" checked><span class="dot maxheight"></span> maxheight below bridge</label>
@@ -53,50 +49,59 @@
             <label><input type="checkbox" class="road-group" value="unclassified,service,road,track,living_street,busway,construction"> everything else (service, track, ...)</label>
         </details>
         <div id="status">move the map to load issues</div>
+        </div>
     </section>
 
     <section id="edit" hidden>
         <h2 id="edit-title"></h2>
 
-        <div class="label">which way do you want to edit?</div>
-        <div id="edit-hint" class="hint"></div>
-        <div id="edit-odds" class="hint"></div>
-        <div id="way-picker"></div>
-        <div id="way-state" class="hint warn"></div>
+        <div id="edit-box" class="panel">
+            <div class="label">which way do you want to edit?</div>
+            <div id="edit-hint" class="hint"></div>
+            <div id="way-picker"></div>
+            <div id="way-state" class="hint warn"></div>
 
-        <div class="label">street level photo</div>
-        <div id="photo" class="hint"></div>
-        <div id="edit-links"></div>
+            <div id="photo" class="hint"></div>
+            <div id="edit-links"></div>
 
-        <div class="label">tags</div>
-        <div id="edit-fields">
-            <label class="field">maxheight <input id="tag-maxheight" type="text" placeholder="e.g. 3.8 or default"></label>
-            <label class="field">maxweight <input id="tag-maxweight" type="text" placeholder="e.g. 7.5"></label>
-            <label class="field">bridge <input id="tag-bridge" type="text" placeholder="e.g. yes"></label>
-            <div class="hint">only these three tags can be edited, nothing else is touched</div>
+            <div id="edit-odds"></div>
+
+            <div id="edit-fields">
+                <label class="field">maxheight <input id="tag-maxheight" type="text" placeholder="e.g. 3.8 or default"></label>
+                <label class="field">maxweight <input id="tag-maxweight" type="text" placeholder="e.g. 7.5"></label>
+                <label class="field">bridge <input id="tag-bridge" type="text" placeholder="e.g. yes"></label>
+                <div class="hint">only these three tags can be edited, nothing else is touched</div>
+            </div>
+            <div id="account">
+                <button id="login">log in to OSM</button>
+                <span id="account-why">to change tags</span>
+                <span id="account-state" hidden></span>
+                <button id="logout" hidden>log out</button>
+            </div>
+            <div class="row">
+                <button id="save" class="primary">add to upload list</button>
+            </div>
         </div>
         <details id="all-tags">
             <summary>all tags of this way</summary>
             <div id="tags"></div>
         </details>
         <div id="way-links" class="hint"></div>
-        <div class="row">
-            <button id="save" class="primary">add to upload list</button>
-            <button id="close-edit">close</button>
-        </div>
     </section>
 
     <section id="pending" hidden>
         <h2>not uploaded yet (<span id="pending-count">0</span>)</h2>
-        <div id="pending-list"></div>
-        <div class="label">changeset</div>
-        <input id="comment" type="text" placeholder="changeset comment">
-        <input id="source" type="text" placeholder="source, e.g. KartaView or survey">
-        <div class="row">
-            <button id="upload" class="primary">upload to OSM</button>
-            <button id="discard">discard all</button>
+        <div class="panel">
+            <div id="pending-list"></div>
+            <div class="label">changeset</div>
+            <input id="comment" type="text" placeholder="changeset comment">
+            <input id="source" type="text" placeholder="source, e.g. KartaView or survey">
+            <div class="row">
+                <button id="upload" class="primary">upload to OSM</button>
+                <button id="discard">discard all</button>
+            </div>
+            <div id="upload-state" class="hint"></div>
         </div>
-        <div id="upload-state" class="hint"></div>
     </section>
 </div>
 
