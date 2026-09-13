@@ -80,6 +80,20 @@ const wayLayer = new ol.layer.Vector({
     ]
 });
 
+/** the mark that says "this is the one you are editing" - the middle is the only free channel here,
+ *  colour and size already carry the problem type and how promising the place is */
+const redrawMarkers = () => {
+    issueSource.changed();
+    osmTagSource.changed();
+};
+
+const selectedDot = radius => new ol.style.Style({
+    image: new ol.style.Circle({
+        radius: Math.max(2.5, radius / 3),
+        fill: new ol.style.Fill({color: '#fff'})
+    })
+});
+
 const issueLayer = new ol.layer.Vector({
     source: issueSource,
     style: feature => {
@@ -100,14 +114,7 @@ const issueLayer = new ol.layer.Vector({
                 stroke: new ol.style.Stroke({color: edited ? '#2e9e4f' : '#fff', width: edited ? 3 : 2})
             })
         });
-        if (feature !== selectedFeature) return marker;
-        // a ring around the one being edited, so it stays findable among the others
-        return [new ol.style.Style({
-            image: new ol.style.Circle({
-                radius: radius + 5,
-                stroke: new ol.style.Stroke({color: '#111', width: 2})
-            })
-        }), marker];
+        return feature === selectedFeature ? [marker, selectedDot(radius)] : marker;
     }
 });
 
@@ -157,25 +164,30 @@ const osmTagSource = new ol.source.Vector();
 const osmTagLayer = new ol.layer.Vector({
     visible: false,
     source: osmTagSource,
-    style: feature => new ol.style.Style({
-        image: new ol.style.Circle({
-            radius: 8,
-            fill: new ol.style.Fill({color: '#2e9e4f'}),
-            stroke: new ol.style.Stroke({color: '#fff', width: 2})
-        }),
-        text: new ol.style.Text({
-            text: String(feature.get('maxheight') || ''),
-            offsetY: -16,
-            font: '600 12px system-ui, sans-serif',
-            fill: new ol.style.Fill({color: '#1b5e2a'}),
-            stroke: new ol.style.Stroke({color: '#fff', width: 3})
-        })
-    })
+    style: feature => {
+        const marker = new ol.style.Style({
+            image: new ol.style.Circle({
+                radius: 8,
+                fill: new ol.style.Fill({color: '#2e9e4f'}),
+                stroke: new ol.style.Stroke({color: '#fff', width: 2})
+            }),
+            text: new ol.style.Text({
+                text: String(feature.get('maxheight') || ''),
+                offsetY: -16,
+                font: '600 12px system-ui, sans-serif',
+                fill: new ol.style.Fill({color: '#1b5e2a'}),
+                stroke: new ol.style.Stroke({color: '#fff', width: 3})
+            })
+        });
+        return feature === selectedFeature ? [marker, selectedDot(8)] : marker;
+    }
 });
 
 const map = new ol.Map({
     target: 'map',
-    layers: [new ol.layer.Tile({source: new ol.source.OSM()}), signLayer, osmTagLayer, wayLayer, issueLayer],
+    // order matters: the highlighted way is a line under the markers, not across them, and the
+    // problems stay on top of everything
+    layers: [new ol.layer.Tile({source: new ol.source.OSM()}), signLayer, wayLayer, osmTagLayer, issueLayer],
     view: new ol.View(parseHash() || {center: [0, 0], zoom: 2})
 });
 
@@ -745,7 +757,7 @@ function openIssue(feature) {
     currentIssue = {type: p.type, lat: lat, lon: lon, properties: p};
 
     selectedFeature = feature;
-    issueSource.changed();
+    redrawMarkers();
     // tapping a marker while typing must not leave the keyboard up
     if (narrow.matches && document.activeElement && document.activeElement.blur)
         document.activeElement.blur();
@@ -926,7 +938,7 @@ $('save').onclick = () => {
 function closeEdit() {
     keepChanges();
     selectedFeature = null;
-    issueSource.changed();
+    redrawMarkers();
     $('edit').hidden = true;
     waySource.clear();
     // nothing left to do in the sheet, give the map back
