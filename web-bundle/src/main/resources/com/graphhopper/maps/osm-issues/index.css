@@ -596,7 +596,7 @@ input.changed {
     content: "· ";
 }
 
-#filters .zoom-note {
+#filters .note {
     color: #888;
     font-size: 12px;
     /* also inside the small caps heading of the issues */
@@ -606,7 +606,7 @@ input.changed {
 }
 
 /* no larger than the heading, or the heading grows by a pixel whenever the note shows */
-#filters .label .zoom-note {
+#filters .label .note {
     font-size: inherit;
 }
 

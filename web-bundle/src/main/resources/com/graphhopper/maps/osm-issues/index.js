@@ -88,13 +88,13 @@ const wayLayer = new ol.layer.Vector({
     ]
 });
 
-/** the mark that says "this is the one you are editing" - the middle is the only free channel here,
- *  colour and size already carry the issue type and how promising the place is */
 const redrawMarkers = () => {
     issueSource.changed();
     osmTagSource.changed();
 };
 
+/** the mark that says "this is the one you are editing" - the middle is the only free channel here,
+ *  colour and size already carry the issue type and how promising the place is */
 const selectedDot = radius => new ol.style.Style({
     image: new ol.style.Circle({
         radius: Math.max(2.5, radius / 3),
@@ -199,52 +199,21 @@ const map = new ol.Map({
     view: new ol.View(parseHash() || {center: [0, 0], zoom: 2})
 });
 
-const icon = paths => '<svg viewBox="0 0 24 24" width="21" height="21" fill="none" '
-    + 'stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">'
-    + paths + '</svg>';
+function parseHash() {
+    const parts = location.hash.replace('#', '').split('/');
+    if (parts.length === 3 && !isNaN(parts[0]))
+        return {center: ol.proj.fromLonLat([+parts[2], +parts[1]]), zoom: +parts[0]};
+    return null;
+}
 
 // Two more controls under the zoom buttons. They have to go through addControl: OpenLayers puts
 // pointer-events:none on the container its controls live in and only sets it back to auto on the
 // elements it manages itself, so an appended div would be visible but dead.
-// The two layers below the issues in the sidebar. They are optional because they answer different
-// questions - what OSM knows already, and what a camera has actually seen.
-function initKnownLayers() {
-    $('key-sign').style.backgroundImage = 'url(' + SIGN_ICON + ')';
-    $('layer-osm').onchange = e => {
-        osmTagLayer.setVisible(e.target.checked);
-        localStorage.setItem('layer_osm', e.target.checked ? 'yes' : 'no');
-        osmTagLoaded = null;
-        if (e.target.checked) load(); else osmTagSource.clear();
-    };
-    $('layer-signs').onchange = e => {
-        signLayer.setVisible(e.target.checked);
-        localStorage.setItem('layer_signs', e.target.checked ? 'yes' : 'no');
-    };
-    // both are on unless the user turned them off - they are the point of the map
-    $('layer-osm').checked = localStorage.getItem('layer_osm') !== 'no';
-    osmTagLayer.setVisible($('layer-osm').checked);
-    // the Mapillary layer needs a token, without one the box says so and stays off
-    const hasToken = !!settings.mapillaryToken;
-    $('layer-signs').disabled = !hasToken;
-    $('layer-signs').checked = hasToken && localStorage.getItem('layer_signs') !== 'no';
-    signLayer.setVisible($('layer-signs').checked);
-    if (!hasToken) $('layer-signs-label').title = 'needs a mapillaryToken in config.js';
-    // nothing is loaded further out, which otherwise looks as if there was nothing to show
-    const updateZoomNotes = () => {
-        const zoom = map.getView().getZoom();
-        $('issues-zoom').hidden = zoom >= MIN_ZOOM;
-        $('osm-zoom').hidden = !$('layer-osm').checked || zoom >= MIN_ZOOM;
-        $('signs-zoom').hidden = !hasToken || !$('layer-signs').checked || zoom >= SIGN_MIN_ZOOM;
-    };
-    map.getView().on('change:resolution', updateZoomNotes);
-    $('layer-osm').addEventListener('change', updateZoomNotes);
-    $('layer-signs').addEventListener('change', updateZoomNotes);
-    updateZoomNotes();
-}
-
 function addMapTools() {
-    const tools = document.createElement('div');
-    tools.className = 'ol-control ol-unselectable map-tools';
+    const icon = paths => '<svg viewBox="0 0 24 24" width="21" height="21" fill="none" '
+        + 'stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">'
+        + paths + '</svg>';
+    const tools = el('div', '', 'ol-control ol-unselectable map-tools');
     tools.innerHTML = '<button id="goto-toggle" type="button" title="go to coordinates">'
         + icon('<circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/>') + '</button>'
         + '<input id="goto" type="text" placeholder="lat, lon" aria-label="go to coordinates" '
@@ -304,24 +273,105 @@ function goToMyLocation() {
         {enableHighAccuracy: true, timeout: 10000});
 }
 
-function parseHash() {
-    const parts = location.hash.replace('#', '').split('/');
-    if (parts.length === 3 && !isNaN(parts[0]))
-        return {center: ol.proj.fromLonLat([+parts[2], +parts[1]]), zoom: +parts[0]};
-    return null;
-}
+addMapTools();
 
 // without a position in the url hash we show the area of the imported map
-addMapTools();
-initKnownLayers();
-
 if (!parseHash())
     ghFetch('/info').then(info => map.getView().fit(
         ol.proj.transformExtent(info.bbox, 'EPSG:4326', 'EPSG:3857'), {size: map.getSize(), maxZoom: 16}
     )).catch(err => setStatus(err.message));
 
-const checkboxes = [...document.querySelectorAll('#issues input[data-type]')];
-checkboxes.forEach(cb => cb.onchange = () => load());
+// ---------------------------------------------------------------- loading
+
+/** is the second [minLon, minLat, maxLon, maxLat] inside the first one? */
+const contains = (a, b) => a[0] <= b[0] && a[1] <= b[1] && a[2] >= b[2] && a[3] >= b[3];
+
+/**
+ * Fills a source from /osm-issues, one request at a time: a newer one aborts the older. It also
+ * remembers what the source holds, so zooming in or panning inside that area loads nothing.
+ */
+function layerLoader(source) {
+    let controller = null, holds = null;
+    const loader = {busy: false};
+    const setBusy = on => {
+        loader.busy = on;
+        updateNotes();
+    };
+    loader.abort = () => {
+        if (controller) controller.abort();
+        controller = null;
+        if (loader.busy) setBusy(false);
+    };
+    loader.forget = () => holds = null;
+    /** starts a request unless the source covers the extent already, returns whether it did */
+    loader.request = (extent, params, done = () => {}, failed = () => {}) => {
+        loader.abort();
+        const query = new URLSearchParams(params).toString();
+        if (holds && holds.query === query && contains(holds.extent, extent)) return false;
+        controller = new AbortController();
+        setBusy(true);
+        ghFetch('/osm-issues?bbox=' + extent.map(v => v.toFixed(6)).join(',') + '&' + query + '&limit=' + LIMIT,
+            {signal: controller.signal})
+            .then(json => {
+                source.clear();
+                source.addFeatures(new ol.format.GeoJSON().readFeatures(json, {featureProjection: 'EPSG:3857'}));
+                // a truncated answer does not cover the area, so do not reuse it when zooming in
+                holds = json.features.length < LIMIT ? {query: query, extent: extent} : null;
+                setBusy(false);
+                done(json.features.length);
+            })
+            .catch(err => {
+                // aborted means replaced by a newer request, which is busy now
+                if (err.name === 'AbortError') return;
+                setBusy(false);
+                failed(err);
+            });
+        return true;
+    };
+    return loader;
+}
+
+const issues = layerLoader(issueSource), osmTags = layerLoader(osmTagSource);
+
+function load() {
+    issues.abort();
+    const view = map.getView();
+    const extent = ol.proj.transformExtent(view.calculateExtent(map.getSize()), 'EPSG:3857', 'EPSG:4326');
+    const zoomedIn = view.getZoom() >= MIN_ZOOM;
+    // what OSM has already is not a work list, so the filters of the issues do not apply to it
+    if (zoomedIn && osmTagLayer.getVisible())
+        osmTags.request(extent, {types: 'missing_maxheight', roads: 'all', tagged: true});
+
+    const types = typeBoxes.filter(cb => cb.checked).map(cb => cb.dataset.type);
+    if (!types.length || !roadGroups().length) {
+        // unchecking every box is a deliberate action, there the markers should go away at once
+        issueSource.clear();
+        issues.forget();
+        setStatus(roadGroups().length ? 'no issue type selected' : 'no road class selected');
+        return;
+    }
+    // the old markers stay on the map until the new ones are there, so panning does not blank it.
+    // The heading says "zoom in" already, only the folded heading needs it spelled out.
+    if (!zoomedIn) return setStatus('', 'zoom in');
+    const started = issues.request(extent, {types: types.join(','), roads: roadGroups().join(',')},
+        n => setStatus(issueCount(n) + ' in this view'),
+        // keep whatever is on the map, the error message alone tells what happened
+        err => setStatus(err.message));
+    if (started) setStatus('', 'loading ...');
+    else setStatus(issueCount(issueSource.getFeatures().length) + ' loaded for this area');
+}
+
+let moveTimer = null;
+map.on('moveend', () => {
+    const view = map.getView(), center = ol.proj.toLonLat(view.getCenter());
+    history.replaceState(null, '',
+        '#' + Math.round(view.getZoom()) + '/' + center[1].toFixed(5) + '/' + center[0].toFixed(5));
+    // wait for the map to come to rest, otherwise every pan step starts and aborts a request
+    clearTimeout(moveTimer);
+    moveTimer = setTimeout(load, 300);
+});
+
+// ---------------------------------------------------------------- sidebar
 
 /** The status is about the issues and sits at the end of their group. Folded, or with the sheet
  *  collapsed on a phone, that group is not visible - there the heading carries it instead. */
@@ -332,9 +382,20 @@ function setStatus(text, folded = text) {
 
 const issueCount = n => n + (n === 1 ? ' issue' : ' issues');
 
-// the filter section stays folded the way the user left it
-$('filters').open = localStorage.getItem('filters_open') !== 'no';
-$('filters').ontoggle = () => localStorage.setItem('filters_open', $('filters').open ? 'yes' : 'no');
+/** The note behind a layer name: further out nothing is loaded, which would otherwise look as if
+ *  there was nothing to show, and a large view can take a few seconds. */
+function updateNotes() {
+    const zoom = map.getView().getZoom();
+    const note = (on, minZoom, loader) => !on ? ''
+        : zoom < minZoom ? '(zoom in)' : loader && loader.busy ? '(loading ...)' : '';
+    $('issues-note').textContent = note(true, MIN_ZOOM, issues);
+    $('osm-note').textContent = note($('layer-osm').checked, MIN_ZOOM, osmTags);
+    $('signs-note').textContent = note($('layer-signs').checked, SIGN_MIN_ZOOM);
+}
+map.getView().on('change:resolution', updateNotes);
+
+const typeBoxes = [...document.querySelectorAll('#issues input[data-type]')];
+typeBoxes.forEach(cb => cb.onchange = load);
 
 // the road groups are remembered, they are a setting you pick once and keep
 // every box carries the road class names it stands for, so the grouping is only defined here
@@ -347,11 +408,40 @@ roadBoxes.forEach(cb => cb.onchange = () => {
     load();
 });
 
-// The Mapillary overlay is simply on whenever a token is configured - there is nothing to decide,
-// it only draws where a height sign was detected and it needs zoom 14 anyway.
-if (settings.mapillaryToken)
+/** a layer that is on unless the user turned it off - they are the point of the map */
+function layerSwitch(box, layer, key, changed = () => {}) {
+    box.checked = !box.disabled && localStorage.getItem(key) !== 'no';
+    layer.setVisible(box.checked);
+    box.onchange = () => {
+        localStorage.setItem(key, box.checked ? 'yes' : 'no');
+        layer.setVisible(box.checked);
+        updateNotes();
+        changed();
+    };
+}
+
+// The two layers of what is known already. They answer different questions - what OSM has, and
+// what a camera has actually seen.
+layerSwitch($('layer-osm'), osmTagLayer, 'layer_osm', () => {
+    // a hidden layer is not kept up to date, so it starts over
+    osmTagSource.clear();
+    osmTags.forget();
+    load();
+});
+$('key-sign').style.backgroundImage = 'url(' + SIGN_ICON + ')';
+if (settings.mapillaryToken) {
     signLayer.getSource().setUrl('https://tiles.mapillary.com/maps/vtp/mly_map_feature_traffic_sign'
         + '/2/{z}/{x}/{y}?access_token=' + encodeURIComponent(settings.mapillaryToken));
+} else {
+    $('layer-signs').disabled = true;
+    $('layer-signs').parentNode.title = 'needs a mapillaryToken in config.js';
+}
+layerSwitch($('layer-signs'), signLayer, 'layer_signs');
+updateNotes();
+
+// the filter section stays folded the way the user left it
+$('filters').open = localStorage.getItem('filters_open') !== 'no';
+$('filters').ontoggle = () => localStorage.setItem('filters_open', $('filters').open ? 'yes' : 'no');
 
 // On a phone the sidebar is a bottom sheet: collapsed by default so the map is usable, expanded
 // when there is something to do in it. On a wide screen the class does nothing.
@@ -376,108 +466,6 @@ sheet.addEventListener('focusin', e => {
         setTimeout(() => e.target.scrollIntoView({block: 'center', behavior: 'smooth'}), 250);
 });
 
-let controller = null, osmTagController = null;
-
-// the area the overlay holds, so panning inside it does not load it again
-let osmTagLoaded = null;
-
-/** the same crossings, but the ones OpenStreetMap already has a maxheight for. This is what is
- *  already mapped, not a work list, so the road class filter of the issues does not apply. */
-function loadOsmTags(extent) {
-    if (!osmTagLayer.getVisible()) return;
-    if (osmTagLoaded && contains(osmTagLoaded, extent)) return;
-    if (osmTagController) osmTagController.abort();
-    osmTagController = new AbortController();
-    $('osm-loading').hidden = false;
-    ghFetch('/osm-issues?bbox=' + extent.map(v => v.toFixed(6)).join(',')
-        + '&types=missing_maxheight&roads=all&tagged=true&limit=' + LIMIT,
-        {signal: osmTagController.signal})
-        .then(json => {
-            osmTagSource.clear();
-            osmTagSource.addFeatures(new ol.format.GeoJSON()
-                .readFeatures(json, {featureProjection: 'EPSG:3857'}));
-            // a truncated answer does not cover the area, so do not reuse it when zooming in
-            osmTagLoaded = json.features.length < LIMIT ? extent : null;
-            $('osm-loading').hidden = true;
-        })
-        .catch(err => {
-            // an aborted request was replaced by a newer one, which is still loading
-            if (err.name === 'AbortError') return;
-            $('osm-loading').hidden = true;
-            console.error('osm overlay:', err);
-        });
-}
-
-// what the markers on the map currently show, to avoid reloading when zooming in
-let loaded = null;
-
-/** is the second [minLon, minLat, maxLon, maxLat] inside the first one? */
-const contains = (a, b) => a[0] <= b[0] && a[1] <= b[1] && a[2] >= b[2] && a[3] >= b[3];
-
-function load() {
-    if (controller) controller.abort();
-    // shown next to the heading, a large view can take a few seconds
-    $('issues-loading').hidden = true;
-    const types = checkboxes.filter(cb => cb.checked).map(cb => cb.dataset.type);
-    const zoomedIn = map.getView().getZoom() >= MIN_ZOOM;
-    const extent = ol.proj.transformExtent(map.getView().calculateExtent(map.getSize()), 'EPSG:3857', 'EPSG:4326');
-    // not filtered like the issues below, so it stays visible whatever is selected there
-    if (zoomedIn) loadOsmTags(extent);
-    if (!roadGroups().length) {
-        issueSource.clear();
-        setStatus('no road class selected');
-        return;
-    }
-    if (!types.length) {
-        // unchecking every type is a deliberate action, there the markers should go away at once
-        issueSource.clear();
-        setStatus('no issue type selected');
-        return;
-    }
-    // the old markers stay on the map until the new ones are there, so panning does not blank it
-    if (!zoomedIn) {
-        // the heading says "zoom in" already, only the folded heading needs it spelled out
-        setStatus('', 'zoom in');
-        return;
-    }
-    const filter = types.join(',') + '|' + roadGroups().join(',');
-    // zooming in or panning inside the loaded area shows a part of what we already have
-    if (loaded && loaded.filter === filter && contains(loaded.extent, extent)) {
-        setStatus(issueCount(issueSource.getFeatures().length) + ' loaded for this area');
-        return;
-    }
-    setStatus('', 'loading ...');
-    $('issues-loading').hidden = false;
-    controller = new AbortController();
-    ghFetch('/osm-issues?bbox=' + extent.map(v => v.toFixed(6)).join(',')
-        + '&types=' + types.join(',') + '&roads=' + roadGroups().join(',') + '&limit=' + LIMIT,
-        {signal: controller.signal})
-        .then(json => {
-            issueSource.clear();
-            issueSource.addFeatures(new ol.format.GeoJSON().readFeatures(json, {featureProjection: 'EPSG:3857'}));
-            setStatus(issueCount(json.features.length) + ' in this view');
-            $('issues-loading').hidden = true;
-            // a truncated answer does not cover the area, so do not reuse it when zooming in
-            loaded = json.features.length < LIMIT ? {extent: extent, filter: filter} : null;
-        })
-        .catch(err => {
-            // keep whatever is on the map, the error message alone tells what happened
-            if (err.name === 'AbortError') return;
-            setStatus(err.message);
-            $('issues-loading').hidden = true;
-        });
-}
-
-let moveTimer = null;
-map.on('moveend', () => {
-    const view = map.getView(), center = ol.proj.toLonLat(view.getCenter());
-    history.replaceState(null, '',
-        '#' + Math.round(view.getZoom()) + '/' + center[1].toFixed(5) + '/' + center[0].toFixed(5));
-    // wait for the map to come to rest, otherwise every pan step starts and aborts a request
-    clearTimeout(moveTimer);
-    moveTimer = setTimeout(load, 300);
-});
-
 // Right click offers the three street level services at the spot under the cursor - useful for
 // looking at a place the endpoint did not report, or for checking the surroundings of one it did.
 const photoMenu = $('photo-menu');
@@ -488,12 +476,7 @@ map.getViewport().addEventListener('contextmenu', evt => {
     const zoom = Math.round(map.getView().getZoom());
     photoMenu.innerHTML = '<div class="coord">' + lat + ', ' + lon + '</div>'
         + '<a href="' + settings.api + '/#map=' + zoom + '/' + lat + '/' + lon
-        + '" target="_blank">OpenStreetMap</a>'
-        + '<a href="https://www.mapillary.com/app/?lat=' + lat + '&lng=' + lon
-        + '&z=19&trafficSign=all" target="_blank">Mapillary</a>'
-        + '<a href="https://kartaview.org/map/@' + lat + ',' + lon + ',19z" target="_blank">KartaView</a>'
-        + '<a href="https://panoramax.openstreetmap.fr/#map=19/' + lat + '/' + lon
-        + '" target="_blank">Panoramax</a>';
+        + '" target="_blank">OpenStreetMap</a>' + photoLinks(lat, lon);
     photoMenu.style.left = Math.min(evt.clientX, innerWidth - 170) + 'px';
     photoMenu.style.top = Math.min(evt.clientY, innerHeight - 130) + 'px';
     photoMenu.hidden = false;
@@ -513,16 +496,13 @@ document.addEventListener('keydown', e => {
 map.on('movestart', hidePhotoMenu);
 
 map.on('singleclick', evt => {
-    const feature = map.forEachFeatureAtPixel(evt.pixel, f => f,
-        {hitTolerance: 6, layerFilter: layer => layer === issueLayer});
-    if (feature) return openIssue(feature);
+    const hit = (layer, tolerance, accept = () => true) => map.forEachFeatureAtPixel(evt.pixel,
+        f => accept(f) ? f : null, {hitTolerance: tolerance, layerFilter: l => l === layer});
     // the green ones carry the same properties, so they open the same panel - useful when a value
     // in OSM turns out to be wrong on the photo
-    const tagged = map.forEachFeatureAtPixel(evt.pixel, f => f,
-        {hitTolerance: 6, layerFilter: layer => layer === osmTagLayer});
-    if (tagged) return openIssue(tagged);
-    const sign = map.forEachFeatureAtPixel(evt.pixel, f => HEIGHT_SIGNS.has(f.get('value')) ? f : null,
-        {hitTolerance: 8, layerFilter: layer => layer === signLayer});
+    const feature = hit(issueLayer, 6) || hit(osmTagLayer, 6);
+    if (feature) return openIssue(feature);
+    const sign = hit(signLayer, 8, f => HEIGHT_SIGNS.has(f.get('value')));
     if (sign) return openSign(sign);
     // clicking the map itself is how you put the panel away - no button needed for that
     if (!$('edit').hidden) closeEdit();
@@ -537,25 +517,17 @@ function openSign(feature) {
     const id = feature.get('id');
     if (!id) return;
     const win = window.open('', '_blank');
+    const [lon, lat] = ol.proj.toLonLat(feature.getGeometry().getFirstCoordinate());
+    const onMap = 'https://www.mapillary.com/app/?focus=map&lat=' + lat + '&lng=' + lon + '&z=19';
     fetch('https://graph.mapillary.com/' + id + '?access_token='
         + encodeURIComponent(settings.mapillaryToken) + '&fields=images')
         .then(res => res.json())
         .then(json => {
-            const img = json && json.images && json.images.data && json.images.data[0];
-            win.location = img
-                ? 'https://www.mapillary.com/app/?pKey=' + img.id + '&focus=photo'
-                : 'https://www.mapillary.com/app/?focus=map&lat=' + evtLat(feature)
-                  + '&lng=' + evtLon(feature) + '&z=19';
+            const img = json?.images?.data?.[0];
+            win.location = img ? 'https://www.mapillary.com/app/?pKey=' + img.id + '&focus=photo' : onMap;
         })
-        .catch(() => {
-            win.location = 'https://www.mapillary.com/app/?focus=map&lat=' + evtLat(feature)
-                + '&lng=' + evtLon(feature) + '&z=19';
-        });
+        .catch(() => win.location = onMap);
 }
-
-const signLonLat = f => ol.proj.toLonLat(f.getGeometry().getFirstCoordinate());
-const evtLon = f => signLonLat(f)[0];
-const evtLat = f => signLonLat(f)[1];
 
 /** GET from the GraphHopper server, with an error message that says what came back instead */
 function ghFetch(path, options) {
@@ -681,19 +653,22 @@ function mapillaryPhotos(lat, lon) {
 
 let photoRequest = 0;
 
+/** the three street level services at a spot, as links */
+function photoLinks(lat, lon, panoramaxUrl) {
+    return '<a href="https://www.mapillary.com/app/?lat=' + lat + '&lng=' + lon
+        + '&z=19&trafficSign=all" target="_blank">Mapillary</a>'
+        + '<a href="https://kartaview.org/map/@' + lat + ',' + lon + ',19z" target="_blank">KartaView</a>'
+        + '<a href="' + (panoramaxUrl || 'https://panoramax.openstreetmap.fr/#map=19/' + lat + '/' + lon)
+        + '" target="_blank">Panoramax</a>';
+}
+
 /**
- * The three map links, shown right away for the issue itself and updated once a photo is found,
- * because then the position of that photo is the more useful one.
+ * The map links of the edit panel, shown right away for the issue itself and updated once a photo
+ * is found, because then the position of that photo is the more useful one.
  */
 function showLinks(lat, lon, photo) {
     // for panoramax the picture itself is the better link, its map needs a few clicks first
-    const panoUrl = photo && photo.source === 'Panoramax' ? photo.page
-        : 'https://panoramax.openstreetmap.fr/#map=19/' + lat + '/' + lon;
-    $('edit-links').innerHTML =
-        '<a href="https://www.mapillary.com/app/?lat=' + lat + '&lng=' + lon
-        + '&z=19&trafficSign=all" target="_blank">Mapillary</a>'
-        + '<a href="https://kartaview.org/map/@' + lat + ',' + lon + ',19z" target="_blank">KartaView</a>'
-        + '<a href="' + panoUrl + '" target="_blank">Panoramax</a>';
+    $('edit-links').innerHTML = photoLinks(lat, lon, photo && photo.source === 'Panoramax' && photo.page);
 }
 
 function loadPhoto(lat, lon, line) {
@@ -809,16 +784,14 @@ function openIssue(feature) {
         ? 'maxheight is ' + p.maxheight : (issue.title || p.type);
     $('edit-hint').textContent = issue.hint || '';
     $('edit-hint').className = issue.warn ? 'hint warn' : 'hint';
-    // what the ranking thinks of this place, so the size of the marker is explainable
+    // what the ranking thinks of this place, so the size of the marker is explainable. The number
+    // sits in the sentence it belongs to, with a chip of its own so it can be scanned for.
     const NB = {
         has_number: 'Another way under this bridge already carries a number.',
         only_default: 'Every other way under this bridge says there is nothing to sign.',
         untagged: 'The other ways under this bridge are untagged too.',
         none: 'No other road passes under this bridge.'
     };
-    // the score is the one number worth scanning for, so it gets a chip of its own instead of
-    // disappearing into a line of grey prose
-    // the number sits in the sentence it belongs to, not off in a corner of its own
     const pct = p.maxheight || p.p_sign == null ? null : Math.round(p.p_sign * 100);
     $('edit-odds').innerHTML = pct == null ? '' :
         '<b class="' + (p.p_sign >= 0.7 ? 'good' : p.p_sign >= 0.4 ? 'maybe' : 'weak') + '">'
@@ -861,8 +834,7 @@ function loadWay(wayId) {
         + '#map=19/' + currentIssue.lat.toFixed(5) + '/' + currentIssue.lon.toFixed(5)
         + '" target="_blank">open in iD</a>';
 
-    // "full" gives us the nodes with their coordinates as well, so we can draw the way. The way it
-    // crosses is loaded too, to see whether OSM still has them crossing at all.
+    // "full" gives us the nodes with their coordinates as well, so we can draw the way
     osmRead('/api/0.6/way/' + wayId + '/full.json').then(json => {
         const way = json.elements.find(e => e.type === 'way');
         const line = geometryOf(json);
@@ -998,21 +970,23 @@ function updateSaveButton() {
     $('save').disabled = broken || !Object.keys(currentChanges()).length;
 }
 
-EDITABLE.forEach(key => tagInput(key).onmousedown = tagInput(key).ontouchstart = e => {
-    const input = e.currentTarget;
-    if (!input.readOnly) return;
-    e.preventDefault();
-    if (!confirm('OpenStreetMap already says ' + key + '=' + input.value
-            + ' here. Change that value?')) return;
-    input.readOnly = false;
-    input.focus();
-    input.select();
-});
-
-EDITABLE.forEach(key => tagInput(key).oninput = () => {
-    if (!currentWay) return;
-    tagInput(key).classList.toggle('changed', tagInput(key).value.trim() !== (currentWay.tags[key] || ''));
-    updateSaveButton();
+EDITABLE.forEach(key => {
+    const input = tagInput(key);
+    // a value OSM has already is locked, see loadWay
+    input.onmousedown = input.ontouchstart = e => {
+        if (!input.readOnly) return;
+        e.preventDefault();
+        if (!confirm('OpenStreetMap already says ' + key + '=' + input.value + ' here. Change that value?'))
+            return;
+        input.readOnly = false;
+        input.focus();
+        input.select();
+    };
+    input.oninput = () => {
+        if (!currentWay) return;
+        input.classList.toggle('changed', input.value.trim() !== (currentWay.tags[key] || ''));
+        updateSaveButton();
+    };
 });
 
 /**
@@ -1021,7 +995,7 @@ EDITABLE.forEach(key => tagInput(key).oninput = () => {
  */
 function keepChanges() {
     const changes = currentChanges();
-    if (!Object.keys(changes).length) return false;
+    if (!Object.keys(changes).length) return;
     const p = currentIssue.properties;
     pendingEdits = pendingEdits.filter(e => e.wayId !== currentWay.id);
     pendingEdits.push({
@@ -1031,7 +1005,6 @@ function keepChanges() {
     });
     currentWay = null; // taken over, do not add it a second time
     savePending();
-    return true;
 }
 
 $('save').onclick = () => {
@@ -1039,8 +1012,6 @@ $('save').onclick = () => {
     closeEdit();
     $('pending').scrollIntoView({block: 'nearest'});
 };
-
-
 
 function closeEdit() {
     keepChanges();
@@ -1160,7 +1131,7 @@ $('upload').onclick = async () => {
         state.innerHTML = 'uploaded ' + ways.length + ' way(s) as <a href="' + settings.api
             + '/changeset/' + changesetId + '" target="_blank">changeset ' + changesetId + '</a>';
         savePending();
-        loaded = null;
+        issues.forget();
         load();
     } catch (err) {
         state.textContent = 'upload failed: ' + err.message;
@@ -1212,4 +1183,4 @@ if (/[?&](code|error)=/.test(location.search))
 else
     updateAccount();
 renderPending();
-load();
+// no load() here: the map fires moveend once it has rendered for the first time, which loads
