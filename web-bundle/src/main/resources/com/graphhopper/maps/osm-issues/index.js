@@ -64,7 +64,7 @@ const redirectUri = location.origin + location.pathname.replace(/\/?$/, '/');
 let pendingEdits = JSON.parse(localStorage.getItem('osm_pending') || '[]');
 // ways we uploaded ourselves. GraphHopper keeps reporting them until it is imported again
 let uploadedWays = JSON.parse(localStorage.getItem('osm_uploaded') || '[]');
-let currentIssue = null, currentWay = null;
+let currentIssue = null, currentWay = null, selectedFeature = null;
 
 // ---------------------------------------------------------------- map + issues
 
@@ -91,7 +91,7 @@ const issueLayer = new ol.layer.Vector({
         // all the same size.
         const p = feature.get('p_sign');
         const radius = done ? 4 : (p == null ? 7 : 4 + 7 * p * p);
-        return new ol.style.Style({
+        const marker = new ol.style.Style({
             image: new ol.style.Circle({
                 radius: radius,
                 fill: new ol.style.Fill({
@@ -100,6 +100,14 @@ const issueLayer = new ol.layer.Vector({
                 stroke: new ol.style.Stroke({color: edited ? '#2e9e4f' : '#fff', width: edited ? 3 : 2})
             })
         });
+        if (feature !== selectedFeature) return marker;
+        // a ring around the one being edited, so it stays findable among the others
+        return [new ol.style.Style({
+            image: new ol.style.Circle({
+                radius: radius + 5,
+                stroke: new ol.style.Stroke({color: '#111', width: 2})
+            })
+        }), marker];
     }
 });
 
@@ -144,6 +152,75 @@ const map = new ol.Map({
     view: new ol.View(parseHash() || {center: [0, 0], zoom: 2})
 });
 
+const icon = paths => '<svg viewBox="0 0 24 24" width="21" height="21" fill="none" '
+    + 'stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">'
+    + paths + '</svg>';
+
+// Two more controls under the zoom buttons. They have to go through addControl: OpenLayers puts
+// pointer-events:none on the container its controls live in and only sets it back to auto on the
+// elements it manages itself, so an appended div would be visible but dead.
+function addMapTools() {
+    const tools = document.createElement('div');
+    tools.className = 'ol-control ol-unselectable map-tools';
+    tools.innerHTML = '<button id="goto-toggle" type="button" title="go to coordinates">'
+        + icon('<circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/>') + '</button>'
+        + '<input id="goto" type="text" placeholder="lat, lon" aria-label="go to coordinates" '
+        + 'autocomplete="off" spellcheck="false">'
+        + '<button id="locate" type="button" title="go to my location">'
+        + icon('<circle cx="12" cy="12" r="6"/>'
+               + '<circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/>'
+               + '<path d="M12 1.5v3.5M12 19v3.5M1.5 12h3.5M19 12h3.5"/>') + '</button>';
+    map.addControl(new ol.control.Control({element: tools}));
+    // the field only takes up the width once it is needed
+    const open = on => {
+        tools.classList.toggle('open', on);
+        if (on) $('goto').focus(); else $('goto').classList.remove('bad');
+    };
+    $('goto-toggle').onclick = () => open(true);
+    $('goto').addEventListener('keydown', e => {
+        if (e.key === 'Enter' && goToCoordinates(e.target)) open(false);
+        if (e.key === 'Escape') open(false);
+    });
+    $('goto').addEventListener('blur', () => {
+        if (!$('goto').value.trim()) open(false);
+    });
+    $('locate').onclick = goToMyLocation;
+}
+
+/** accepts "52.52, 13.40", "52.52 13.40" and a zoom/lat/lon hash, ours as well as openstreetmap.org's */
+function parseCoordinates(text) {
+    const hash = text.match(/#(?:map=)?([\d.]+)\/(-?[\d.]+)\/(-?[\d.]+)/);
+    if (hash) return {lat: +hash[2], lon: +hash[3], zoom: +hash[1]};
+    const pair = text.match(/(-?\d+(?:\.\d+)?)\s*[,; ]\s*(-?\d+(?:\.\d+)?)/);
+    if (!pair) return null;
+    const lat = +pair[1], lon = +pair[2];
+    if (Math.abs(lat) > 90 || Math.abs(lon) > 180) return null;
+    return {lat: lat, lon: lon};
+}
+
+function goToCoordinates(input) {
+    const c = parseCoordinates(input.value);
+    input.classList.toggle('bad', !c && input.value.trim() !== '');
+    if (!c) return false;
+    input.blur();
+    map.getView().animate({center: ol.proj.fromLonLat([c.lon, c.lat]), zoom: c.zoom || 17});
+    return true;
+}
+
+function goToMyLocation() {
+    if (!navigator.geolocation) {
+        alert('this browser has no location support');
+        return;
+    }
+    $('status').textContent = 'locating ...';
+    navigator.geolocation.getCurrentPosition(
+        pos => map.getView().animate({
+            center: ol.proj.fromLonLat([pos.coords.longitude, pos.coords.latitude]), zoom: 17
+        }),
+        err => alert('could not get your location: ' + err.message),
+        {enableHighAccuracy: true, timeout: 10000});
+}
+
 function parseHash() {
     const parts = location.hash.replace('#', '').split('/');
     if (parts.length === 3 && !isNaN(parts[0]))
@@ -152,6 +229,8 @@ function parseHash() {
 }
 
 // without a position in the url hash we show the area of the imported map
+addMapTools();
+
 if (!parseHash())
     ghFetch('/info').then(info => map.getView().fit(
         ol.proj.transformExtent(info.bbox, 'EPSG:4326', 'EPSG:3857'), {size: map.getSize(), maxZoom: 16}
@@ -186,6 +265,8 @@ if (settings.mapillaryToken) {
 // On a phone the sidebar is a bottom sheet: collapsed by default so the map is usable, expanded
 // when there is something to do in it. On a wide screen the class does nothing.
 const sheet = $('sidebar'), sheetToggle = $('sheet-toggle');
+// the same breakpoint as the bottom sheet in index.css
+const narrow = window.matchMedia('(max-width: 900px)');
 const setSheet = open => {
     sheet.classList.toggle('collapsed', !open);
     sheetToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
@@ -516,6 +597,11 @@ function openIssue(feature) {
     const issue = ISSUES[p.type] || {};
     currentIssue = {type: p.type, lat: lat, lon: lon, properties: p};
 
+    selectedFeature = feature;
+    issueSource.changed();
+    // tapping a marker while typing must not leave the keyboard up
+    if (narrow.matches && document.activeElement && document.activeElement.blur)
+        document.activeElement.blur();
     $('edit').hidden = false;
     setSheet(true);
     $('edit-title').textContent = issue.title || p.type;
@@ -605,7 +691,8 @@ function loadWay(wayId) {
             $('way-state').className = 'hint note';
             $('way-state').textContent = 'OSM already has ' + wanted + '=' + way.tags[wanted]
                 + ' here. GraphHopper reports it until its data is imported again.';
-        } else if (wanted) {
+        } else if (wanted && !narrow.matches) {
+            // not on a phone: there the keyboard would cover the panel we just opened
             tagInput(wanted).focus();
         }
     }).catch(err => {
@@ -684,6 +771,8 @@ $('close-edit').onclick = closeEdit;
 
 function closeEdit() {
     keepChanges();
+    selectedFeature = null;
+    issueSource.changed();
     $('edit').hidden = true;
     waySource.clear();
     // nothing left to do in the sheet, give the map back

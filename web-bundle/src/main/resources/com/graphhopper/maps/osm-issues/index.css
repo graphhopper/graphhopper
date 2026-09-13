@@ -357,3 +357,77 @@ input.changed {
         margin: 0 auto;
     }
 }
+
+/* ---------------------------------------------------------------- map controls
+
+   OpenLayers sizes its buttons around 25px, which is not reliably tappable. 36px everywhere and
+   44px once the layout is narrow, which is the size a thumb needs. */
+.ol-control button {
+    width: 36px;
+    height: 36px;
+    font-size: 19px;
+    line-height: 36px;
+    border-radius: 3px;
+}
+
+.map-tools {
+    top: 94px;
+    left: .5em;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    background: none;
+    padding: 0;
+}
+
+/* collapsed it is just the button, the field appears on click */
+#goto {
+    display: none;
+    width: 190px;
+    height: 36px;
+    box-sizing: border-box;
+    padding: 0 10px;
+    border: 1px solid rgba(0, 0, 0, .25);
+    border-radius: 3px;
+    /* 16px keeps iOS from zooming the page when the field is focused */
+    font-size: 16px;
+    background: rgba(255, 255, 255, .92);
+}
+
+.map-tools.open #goto {
+    display: block;
+}
+
+.map-tools.open #goto-toggle {
+    display: none;
+}
+
+/* the icons are svg, so they have to be centred themselves */
+.map-tools svg {
+    display: block;
+    margin: 0 auto;
+}
+
+#goto.bad {
+    border-color: #d0021b;
+    background: #fff3f3;
+}
+
+@media (max-width: 900px) {
+    .ol-control button {
+        width: 44px;
+        height: 44px;
+        font-size: 22px;
+        line-height: 44px;
+    }
+
+    .map-tools {
+        top: 110px;
+    }
+
+    #goto {
+        height: 44px;
+        width: min(190px, calc(100vw - 120px));
+    }
+}

@@ -9,14 +9,17 @@ const path = require('path');
 const DIR = path.resolve(__dirname, '../../main/resources/com/graphhopper/maps/osm-issues');
 const html = fs.readFileSync(DIR + '/index.html', 'utf8');
 
-const ids = new Set([...html.matchAll(/id="([^"]+)"/g)].map(m => m[1]));
+// ids from the page plus the ones index.js builds at runtime, e.g. the map controls
+const js = fs.readFileSync(DIR + '/index.js', 'utf8');
+const ids = new Set([...(html + js).matchAll(/id="([^"]+)"/g)].map(m => m[1]));
 const missing = new Set();
 
 function el(id) {
     const e = {
         id, checked: false, disabled: false, hidden: false, value: '', textContent: '',
         innerHTML: '', open: false, dataset: {}, style: {}, classList: {add(){}, remove(){}, toggle(){}},
-        appendChild() {}, removeChild() {}, remove() {}, focus() {}, setAttribute() {},
+        appendChild() {}, removeChild() {}, remove() {}, focus() {}, blur() {}, setAttribute() {},
+        get parentNode() { return el(this.id + ':parent'); },
         replaceChildren() {}, prepend() {}, append() {}, scrollIntoView() {}, click() {},
         getAttribute: () => null, addEventListener() {}, querySelector: () => el('x'),
         querySelectorAll: () => [], insertAdjacentHTML() {}, closest: () => null,
@@ -45,7 +48,10 @@ global.document = {
     createElement: () => el('new'),
     addEventListener() {}, body: el('body'), head: el('head'),
 };
-global.window = {addEventListener() {}, location: {}, history: {replaceState() {}}};
+global.window = {
+    addEventListener() {}, location: {}, history: {replaceState() {}},
+    matchMedia: () => ({matches: false, addEventListener() {}}),
+};
 global.localStorage = {
     store: {}, getItem(k) { return this.store[k] ?? null; }, setItem(k, v) { this.store[k] = v; },
     removeItem(k) { delete this.store[k]; },
@@ -88,8 +94,8 @@ vm.runInThisContext(fs.readFileSync(DIR + '/config.js', 'utf8') + '\n'
     + fs.readFileSync(DIR + '/index.js', 'utf8'), {filename: 'osm-issues'});
 
 if (missing.size) {
-    console.log('FAIL - index.js asks for element ids that index.html does not define:');
+    console.log('FAIL - index.js asks for element ids that are never defined:');
     for (const m of missing) console.log('   #' + m);
     process.exit(1);
 }
-console.log('OK - loaded, all ' + ids.size + ' referenced element ids exist');
+console.log('OK - loaded, all ' + ids.size + ' element ids referenced are defined');
