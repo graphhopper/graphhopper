@@ -770,10 +770,10 @@ function openIssue(feature) {
     $('edit-hint').className = issue.warn ? 'hint warn' : 'hint';
     // what the ranking thinks of this place, so the size of the marker is explainable
     const NB = {
-        has_number: 'another way under this bridge already carries a number',
-        only_default: 'every other way under this bridge says there is nothing to sign',
-        untagged: 'the other ways under this bridge are untagged too',
-        none: 'no other road passes under this bridge'
+        has_number: 'Another way under this bridge already carries a number.',
+        only_default: 'Every other way under this bridge says there is nothing to sign.',
+        untagged: 'The other ways under this bridge are untagged too.',
+        none: 'No other road passes under this bridge.'
     };
     // the score is the one number worth scanning for, so it gets a chip of its own instead of
     // disappearing into a line of grey prose
@@ -781,8 +781,8 @@ function openIssue(feature) {
     const pct = p.maxheight || p.p_sign == null ? null : Math.round(p.p_sign * 100);
     $('edit-odds').innerHTML = pct == null ? '' :
         '<b class="' + (p.p_sign >= 0.7 ? 'good' : p.p_sign >= 0.4 ? 'maybe' : 'weak') + '">'
-        + pct + '%</b> chance of finding a sign here'
-        + (NB[p.neighbours] ? ' \u2014 ' + NB[p.neighbours] : '');
+        + pct + '%</b> chance of finding a sign here.'
+        + (NB[p.neighbours] ? ' ' + NB[p.neighbours] : '');
 
     // for maxheight the way below the bridge comes first, it is the one that needs the tag
     const ways = [{id: p.way_id, name: p.way_name, cls: p.road_class}];
