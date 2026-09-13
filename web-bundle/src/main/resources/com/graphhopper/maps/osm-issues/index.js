@@ -50,7 +50,10 @@ const deployed = typeof osmIssuesConfig === 'object' ? osmIssuesConfig : {};
 const settings = {
     api: deployed.osmApi || 'https://www.openstreetmap.org',
     gh: (new URLSearchParams(location.search).get('gh') || deployed.graphhopperUrl || '').replace(/\/$/, ''),
-    clientId: deployed.osmClientId || '',
+    // an OAuth app is registered against one instance, so the dev API needs its own id
+    get clientId() {
+        return (this.isDevApi ? deployed.osmClientIdDev : deployed.osmClientId) || '';
+    },
     mapillaryToken: deployed.mapillaryToken || '',
     get isDevApi() {
         return this.api.includes('dev.openstreetmap');
@@ -817,7 +820,8 @@ $('discard').onclick = () => {
 
 $('login').onclick = () => {
     if (!settings.clientId) {
-        $('account-state').textContent = 'no osmClientId in config.js. Register an OAuth 2 '
+        $('account-state').textContent = 'no ' + (settings.isDevApi ? 'osmClientIdDev' : 'osmClientId')
+            + ' in config.js. Register an OAuth 2 '
             + 'application at ' + settings.api + '/oauth2/applications with the redirect URI '
             + redirectUri + ' and the permission "modify the map", not confidential.';
         return;

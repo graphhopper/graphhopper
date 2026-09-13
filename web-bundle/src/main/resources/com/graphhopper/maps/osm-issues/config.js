@@ -11,6 +11,8 @@ const osmIssuesConfig = {
     // client id of an OAuth 2 application registered at https://www.openstreetmap.org/oauth2/applications
     // (not confidential, redirect uri = the url of this page, permission "modify the map")
     osmClientId: '',
+    // the dev instance below needs its own app, registered there
+    osmClientIdDev: '',
     // the OSM instance to edit. Use https://master.apis.dev.openstreetmap.org to try things out,
     // but note that it has its own database without the real ways
     osmApi: 'https://www.openstreetmap.org',
