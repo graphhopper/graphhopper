@@ -281,3 +281,79 @@ input.changed {
 .pending-item a {
     cursor: pointer;
 }
+
+/* ---------------------------------------------------------------- narrow layout
+
+   The sidebar is 340px wide, so below roughly 900px there is not enough map left to work with -
+   on a phone almost none. There it becomes a bottom sheet: collapsed it is just the handle and the
+   status line, opening a marker expands it. The map keeps the full screen and is only overlapped. */
+#sheet-toggle {
+    display: none;
+}
+
+@media (max-width: 900px) {
+    #map {
+        right: 0;
+    }
+
+    #sidebar {
+        top: auto;
+        left: 0;
+        width: auto;
+        max-height: 55vh;
+        border-left: none;
+        border-top: 1px solid #ddd;
+        border-radius: 12px 12px 0 0;
+        box-shadow: 0 -2px 12px rgba(0, 0, 0, .18);
+        overscroll-behavior: contain;
+        /* leave room for the map even when the sheet is full */
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    /* collapsed: everything but the toggle and the status line is folded away */
+    #sidebar.collapsed {
+        max-height: none;
+        overflow: hidden;
+    }
+
+    #sidebar.collapsed section,
+    #sidebar.collapsed #filters {
+        display: none;
+    }
+
+    #sidebar.collapsed #issues,
+    #sidebar.collapsed #issues #status {
+        display: block;
+    }
+
+    #sidebar.collapsed #issues {
+        border-bottom: none;
+        padding-top: 0;
+    }
+
+    /* just the grab handle - the sidebar is the scroll container, so sticky keeps it reachable
+       while the content scrolls under it */
+    #sheet-toggle {
+        display: block;
+        width: 100%;
+        border: none;
+        padding: 9px 0 7px;
+        cursor: pointer;
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        background: #fafafa;
+        border-radius: 12px 12px 0 0;
+        box-shadow: 0 1px 0 #e3e3e3;
+    }
+
+    #sheet-toggle::before {
+        content: "";
+        display: block;
+        width: 40px;
+        height: 4px;
+        border-radius: 2px;
+        background: #bbb;
+        margin: 0 auto;
+    }
+}

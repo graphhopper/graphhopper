@@ -180,6 +180,21 @@ if (settings.mapillaryToken) {
     signLayer.setVisible(true);
 }
 
+// On a phone the sidebar is a bottom sheet: collapsed by default so the map is usable, expanded
+// when there is something to do in it. On a wide screen the class does nothing.
+const sheet = $('sidebar'), sheetToggle = $('sheet-toggle');
+const setSheet = open => {
+    sheet.classList.toggle('collapsed', !open);
+    sheetToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+};
+setSheet(false);
+sheetToggle.onclick = () => setSheet(sheet.classList.contains('collapsed'));
+// an on-screen keyboard covers the lower half of the sheet, so bring the focused field up
+sheet.addEventListener('focusin', e => {
+    if (e.target.matches('input, textarea'))
+        setTimeout(() => e.target.scrollIntoView({block: 'center', behavior: 'smooth'}), 250);
+});
+
 let controller = null;
 // what the markers on the map currently show, to avoid reloading when zooming in
 let loaded = null;
@@ -499,6 +514,7 @@ function openIssue(feature) {
     currentIssue = {type: p.type, lat: lat, lon: lon, properties: p};
 
     $('edit').hidden = false;
+    setSheet(true);
     $('edit-title').textContent = issue.title || p.type;
     $('edit-hint').textContent = issue.hint || '';
     $('edit-hint').className = issue.warn ? 'hint warn' : 'hint';
@@ -667,6 +683,8 @@ function closeEdit() {
     keepChanges();
     $('edit').hidden = true;
     waySource.clear();
+    // nothing left to do in the sheet, give the map back
+    if ($('pending').hidden) setSheet(false);
 }
 
 // ---------------------------------------------------------------- upload
