@@ -37,6 +37,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.InputStream;
 
+import static com.graphhopper.util.Parameters.Details.COVERED_TAG;
 import static com.graphhopper.util.Parameters.Details.MAX_HEIGHT_SIGNED_TAG;
 import static com.graphhopper.util.Parameters.Details.MAX_HEIGHT_TAG;
 import static com.graphhopper.util.Parameters.Details.MAX_WEIGHT_TAG;
@@ -73,6 +74,7 @@ public class OSMIssuesResource {
     public static final String MISSING_MAXHEIGHT = "missing_maxheight";
     public static final String MISSING_MAXWEIGHT = "missing_maxweight";
     public static final String MISSING_BRIDGE = "missing_bridge";
+    public static final String MISSING_MAXHEIGHT_TUNNEL = "missing_maxheight_tunnel";
 
     /**
      * P(a visit finds a real sign), as smoothed log-odds over clearance, road below, bridge above,
@@ -210,7 +212,8 @@ public class OSMIssuesResource {
                         + "road_class, road_environment, osm_way_id but " + key + " is missing");
 
         Set<String> types = typesStr == null || typesStr.isEmpty()
-                ? new HashSet<>(Arrays.asList(MISSING_MAXHEIGHT, MISSING_MAXWEIGHT, MISSING_BRIDGE))
+                ? new HashSet<>(Arrays.asList(MISSING_MAXHEIGHT, MISSING_MAXWEIGHT, MISSING_BRIDGE,
+                        MISSING_MAXHEIGHT_TUNNEL))
                 : new HashSet<>(Arrays.asList(typesStr.split(",")));
 
         StopWatch sw = new StopWatch().start();
@@ -338,6 +341,30 @@ public class OSMIssuesResource {
                 if (features.size() >= limit) break;
                 addFeature(features, reported, MISSING_MAXHEIGHT, c.at, c.below, c.bridge, wayIdEnc,
                         roadClassEnc, c.belowEle, c.bridgeEle, c.p, c.neighbours);
+            }
+        }
+
+        if (types.contains(MISSING_MAXHEIGHT_TUNNEL)) {
+            // A tunnel or a roof over the road limits its height by itself, so unlike a bridge there
+            // is nothing to intersect. covered=yes is not in road_environment - tunnel, bridge and
+            // ford win there - so it is read from the raw tag the reader keeps.
+            for (int i = 0; i < edgeIds.size() && features.size() < limit; i++) {
+                int edgeId = edgeIds.get(i);
+                EdgeIteratorState edge = graph.getEdgeIteratorStateForKey(edgeId * 2);
+                boolean roofed = edge.get(roadEnvEnc) == RoadEnvironment.TUNNEL
+                        || edge.getValue(COVERED_TAG) != null;
+                if (!roofed || !isMotorized(edge.get(roadClassEnc))) continue;
+                if (!wanted(edge.get(roadClassEnc), roads)) continue;
+                boolean hasTag = edge.getValue(MAX_HEIGHT_TAG) != null
+                        || "no".equals(edge.getValue(MAX_HEIGHT_SIGNED_TAG));
+                if (hasTag != tagged) continue;
+                PointList pl = edge.fetchWayGeometry(FetchMode.ALL);
+                if (pl.size() < 2) continue;
+                int mid = pl.size() / 2;
+                Coordinate at = new Coordinate(pl.getLon(mid), pl.getLat(mid));
+                if (!bbox.contains(at.y, at.x)) continue;
+                addFeature(features, reported, MISSING_MAXHEIGHT_TUNNEL, at, edge, null, wayIdEnc,
+                        roadClassEnc, Double.NaN, Double.NaN);
             }
         }
 

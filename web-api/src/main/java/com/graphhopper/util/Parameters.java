@@ -216,6 +216,8 @@ public class Parameters {
         // "no" states that a mapper checked that there is no sign, like maxheight=default does
         public static final String MAX_HEIGHT_SIGNED_TAG = "maxheight:signed";
         public static final String MAX_WEIGHT_TAG = "maxweight";
+        // covered=yes is a height restriction like a tunnel, but no encoded value carries it
+        public static final String COVERED_TAG = "covered";
 
         public static final String AVERAGE_SPEED = "average_speed";
         public static final String EDGE_ID = "edge_id";

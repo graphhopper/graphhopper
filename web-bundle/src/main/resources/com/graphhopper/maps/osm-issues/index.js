@@ -20,6 +20,12 @@ const ISSUES = {
         color: '#f58231', tag: 'maxweight',
         title: 'bridge without maxweight'
     },
+    missing_maxheight_tunnel: {
+        color: '#911eb4', tag: 'maxheight',
+        title: 'missing maxheight in a tunnel',
+        hint: 'a tunnel or a roof over the road. Nearly six in ten of these turn out to carry a real '
+            + 'sign, twice the rate under bridges.'
+    },
     missing_bridge: {
         color: '#4363d8', tag: 'bridge', warn: true,
         title: 'missing bridge tag',

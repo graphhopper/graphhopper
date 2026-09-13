@@ -198,6 +198,7 @@ button:disabled {
 }
 
 .dot.maxheight { background: #e6194b; }
+.dot.tunnel { background: #911eb4; }
 .dot.maxweight { background: #f58231; }
 .dot.bridge { background: #4363d8; }
 
@@ -565,7 +566,7 @@ input.changed {
 
 /* split, because a problem is drawn in the colour of its type - saves explaining that in words */
 .dot.mixed {
-    background: linear-gradient(to bottom, #e6194b 0 50%, #f58231 50% 100%);
+    background: linear-gradient(to bottom, #e6194b 0 50%, #911eb4 50% 100%);
 }
 
 #layers-panel label {

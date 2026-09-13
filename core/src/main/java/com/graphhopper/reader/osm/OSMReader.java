@@ -541,6 +541,11 @@ public class OSMReader {
         String maxWeight = way.getFirstValue(OSMMaxWeightParser.MAX_WEIGHT_TAGS);
         if (!maxWeight.isEmpty())
             map.put(MAX_WEIGHT_TAG, new KValue(KVStorage.cutString(maxWeight)));
+        // a roof over the road limits its height as a tunnel does, and road_environment has no
+        // value for it - tunnel, bridge and ford win there
+        String covered = way.getTag(COVERED_TAG, "");
+        if (!covered.isEmpty() && !"no".equals(covered))
+            map.put(COVERED_TAG, new KValue(KVStorage.cutString(covered)));
 
         way.setTag("key_values", map);
 
