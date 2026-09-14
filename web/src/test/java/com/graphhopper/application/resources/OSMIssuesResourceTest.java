@@ -79,6 +79,10 @@ public class OSMIssuesResourceTest {
         // bridge do
         assertTrue(maxHeight.get("p_sign").asDouble() > 0, maxHeight.toString());
         assertEquals("primary", maxHeight.get("over").asText());
+        // how much the clearance can be trusted: a long bridge, or a crossing far from its ends, less so
+        assertTrue(maxHeight.get("bridge_len").asDouble() > 0, maxHeight.toString());
+        assertTrue(maxHeight.get("end_dist").asDouble() >= 0
+                && maxHeight.get("end_dist").asDouble() <= maxHeight.get("bridge_len").asDouble(), maxHeight.toString());
     }
 
     @Test

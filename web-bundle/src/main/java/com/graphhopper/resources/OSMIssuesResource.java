@@ -89,14 +89,15 @@ public class OSMIssuesResource {
 
     static class SignModel {
         final double baseLogOdds;
-        final double[] clearanceBins;
+        /** the bin edges of the numeric features, e.g. clearance, bridge_len, end_dist */
+        final Map<String, double[]> bins;
         final Map<String, Map<String, Double>> weights;
         /** what the probability is about: "any" numeric sign, or a "low" one that changes truck routing */
         final String target;
 
-        SignModel(double base, double[] bins, Map<String, Map<String, Double>> weights, String target) {
+        SignModel(double base, Map<String, double[]> bins, Map<String, Map<String, Double>> weights, String target) {
             this.baseLogOdds = Math.log(base / (1 - base));
-            this.clearanceBins = bins;
+            this.bins = bins;
             this.weights = weights;
             this.target = target;
         }
@@ -108,9 +109,12 @@ public class OSMIssuesResource {
                     return null;
                 }
                 JsonNode root = new ObjectMapper().readTree(in);
-                double[] bins = new double[root.get("clearance_bins").size()];
-                for (int i = 0; i < bins.length; i++)
-                    bins[i] = root.get("clearance_bins").get(i).asDouble();
+                Map<String, double[]> bins = new HashMap<>();
+                root.get("bins").fields().forEachRemaining(e -> {
+                    double[] b = new double[e.getValue().size()];
+                    for (int i = 0; i < b.length; i++) b[i] = e.getValue().get(i).asDouble();
+                    bins.put(e.getKey(), b);
+                });
                 Map<String, Map<String, Double>> w = new HashMap<>();
                 root.get("weights").fields().forEachRemaining(e -> {
                     Map<String, Double> t = new HashMap<>();
@@ -131,24 +135,32 @@ public class OSMIssuesResource {
             return v == null ? 0 : v;      // an unseen value is simply uninformative
         }
 
+        /** the bin of a numeric feature, or "unknown" if the value is NaN or the model has no bins for it */
+        private String bin(String feature, double value) {
+            double[] b = bins.get(feature);
+            if (b == null || Double.isNaN(value)) return "unknown";
+            int bin = b.length - 2;
+            for (int i = 0; i + 1 < b.length; i++)
+                if (value >= b[i] && value < b[i + 1]) {
+                    bin = i;
+                    break;
+                }
+            return String.valueOf(bin);
+        }
+
         /**
          * @param clearance NaN if unknown, e.g. without elevation or for a tunnel. Then it does not
-         *                  count, rather than falling into a bin
+         *                  count, rather than falling into a bin. Same for the other numbers.
+         * @param bridgeLen the length of the bridge edge in meter, a viaduct is not a bridge
+         * @param endDist   how far the crossing is from the nearest end of the bridge edge in
+         *                  meter, i.e. from the ground the bridge elevation is anchored to
          * @param over      what is over the road: a bridge group, "tunnel" or "covered"
          */
-        double probability(double clearance, String below, String over, String country,
-                           String neighbours) {
-            String bin = "unknown";
-            if (!Double.isNaN(clearance)) {
-                int b = clearanceBins.length - 2;
-                for (int i = 0; i + 1 < clearanceBins.length; i++)
-                    if (clearance >= clearanceBins[i] && clearance < clearanceBins[i + 1]) {
-                        b = i;
-                        break;
-                    }
-                bin = String.valueOf(b);
-            }
-            double lo = baseLogOdds + weight("clearance", bin)
+        double probability(double clearance, double bridgeLen, double endDist, String below,
+                           String over, String country, String neighbours) {
+            double lo = baseLogOdds + weight("clearance", bin("clearance", clearance))
+                    + weight("bridge_len", bin("bridge_len", bridgeLen))
+                    + weight("end_dist", bin("end_dist", endDist))
                     + weight("below", below) + weight("bridge", over)
                     + weight("country", country) + weight("neighbours", neighbours);
             return 1 / (1 + Math.exp(-lo));
@@ -165,17 +177,22 @@ public class OSMIssuesResource {
         /** the bridge is null for a tunnel, there is nothing crossing the road there */
         final EdgeIteratorState below, bridge;
         final double belowEle, bridgeEle;
+        /** length of the bridge edge and distance of the crossing to its nearest end, NaN for a tunnel */
+        final double bridgeLen, endDist;
         /** what is over the road: the bridge group of the model, "tunnel" or "covered" */
         final String country, over;
         String neighbours = "unknown";
         double p = Double.NaN;
 
-        Scored(String type, Coordinate at, EdgeIteratorState below, EdgeIteratorState bridge,
+        Scored(String type, Coordinate at, EdgeIteratorState below, EdgeIteratorState bridge, LineString bridgeLS,
                double belowEle, double bridgeEle, String country, String over) {
             this.type = type;
             this.at = at;
             this.below = below.detach(false);
             this.bridge = bridge == null ? null : bridge.detach(false);
+            this.bridgeLen = bridge == null ? Double.NaN : bridge.getDistance();
+            this.endDist = bridge == null ? Double.NaN : Math.min(dist(bridgeLS.getCoordinateN(0), at),
+                    dist(bridgeLS.getCoordinateN(bridgeLS.getNumPoints() - 1), at));
             this.belowEle = belowEle;
             this.bridgeEle = bridgeEle;
             this.country = country;
@@ -344,7 +361,7 @@ public class OSMIssuesResource {
                     double bridgeEle = elevationAt(bridge.fetchWayGeometry(FetchMode.ALL), at);
                     double belowEle = elevationAt(below.fetchWayGeometry(FetchMode.ALL), at);
                     if (minClearance > 0 && bridgeEle - belowEle > minClearance) continue;
-                    underBridge.add(new Scored(MISSING_MAXHEIGHT, at, below, bridge, belowEle, bridgeEle,
+                    underBridge.add(new Scored(MISSING_MAXHEIGHT, at, below, bridge, bridgeLS, belowEle, bridgeEle,
                             countryEnc == null ? "" : below.get(countryEnc).getAlpha3(),
                             bridgeGroup(bridge.get(roadClassEnc))));
                 }
@@ -354,8 +371,8 @@ public class OSMIssuesResource {
                 for (Scored c : underBridge) {
                     c.neighbours = neighbours;
                     c.p = MODEL == null ? Double.NaN : MODEL.probability(
-                            c.bridgeEle - c.belowEle, c.below.get(roadClassEnc).toString(),
-                            c.over, c.country, neighbours);
+                            c.bridgeEle - c.belowEle, c.bridgeLen, c.endDist,
+                            c.below.get(roadClassEnc).toString(), c.over, c.country, neighbours);
                 }
                 scored.addAll(underBridge);
             }
@@ -382,9 +399,9 @@ public class OSMIssuesResource {
                 if (!bbox.contains(at.y, at.x)) continue;
                 // no clearance and no neighbours here, so the model ranks these by what is left:
                 // the road, the country and that it is a tunnel or a roof
-                Scored c = new Scored(MISSING_MAXHEIGHT_TUNNEL, at, edge, null, Double.NaN, Double.NaN,
+                Scored c = new Scored(MISSING_MAXHEIGHT_TUNNEL, at, edge, null, null, Double.NaN, Double.NaN,
                         countryEnc == null ? "" : edge.get(countryEnc).getAlpha3(), tunnel ? "tunnel" : "covered");
-                c.p = MODEL == null ? Double.NaN : MODEL.probability(Double.NaN,
+                c.p = MODEL == null ? Double.NaN : MODEL.probability(Double.NaN, Double.NaN, Double.NaN,
                         c.below.get(roadClassEnc).toString(), c.over, c.country, c.neighbours);
                 scored.add(c);
             }
@@ -395,7 +412,7 @@ public class OSMIssuesResource {
             scored.sort((a, b) -> Double.compare(b.p, a.p));
         for (Scored c : scored) {
             if (features.size() >= limit) break;
-            addFeature(features, reported, c, wayIdEnc, roadClassEnc);
+            addFeature(features, reported, c, wayIdEnc, roadClassEnc, tagged);
         }
 
         if (allCrossings) {
@@ -446,11 +463,16 @@ public class OSMIssuesResource {
     private void addFeature(List<Map<String, Object>> features, Set<String> reported, String type, Coordinate at,
                             EdgeIteratorState edge, EdgeIteratorState otherEdge, IntEncodedValue wayIdEnc,
                             EnumEncodedValue<RoadClass> roadClassEnc) {
-        addFeature(features, reported, type, at, edge, otherEdge, wayIdEnc, roadClassEnc, Collections.emptyMap());
+        addFeature(features, reported, type, at, edge, otherEdge, wayIdEnc, roadClassEnc, Collections.emptyMap(), null);
     }
 
+    /**
+     * @param perBridge report a road once per bridge it passes under instead of once altogether.
+     *                  Used for tagged=true, where the result is training data and the pairing with
+     *                  the lowest bridge is done there
+     */
     private void addFeature(List<Map<String, Object>> features, Set<String> reported, Scored c,
-                            IntEncodedValue wayIdEnc, EnumEncodedValue<RoadClass> roadClassEnc) {
+                            IntEncodedValue wayIdEnc, EnumEncodedValue<RoadClass> roadClassEnc, boolean perBridge) {
         Map<String, Object> extra = new LinkedHashMap<>();
         // how likely a visit here finds an actual sign rather than another maxheight=default
         if (!Double.isNaN(c.p)) {
@@ -466,20 +488,27 @@ public class OSMIssuesResource {
             extra.put("ele_below", round(c.belowEle));
             extra.put("ele_bridge", round(c.bridgeEle));
         }
-        addFeature(features, reported, c.type, c.at, c.below, c.bridge, wayIdEnc, roadClassEnc, extra);
+        if (!Double.isNaN(c.bridgeLen)) {
+            extra.put("bridge_len", Math.round(c.bridgeLen));
+            extra.put("end_dist", Math.round(c.endDist));
+        }
+        String key = perBridge && c.bridge != null
+                ? c.type + "-" + c.below.get(wayIdEnc) + "-" + c.bridge.get(wayIdEnc) : null;
+        addFeature(features, reported, c.type, c.at, c.below, c.bridge, wayIdEnc, roadClassEnc, extra, key);
     }
 
     private void addFeature(List<Map<String, Object>> features, Set<String> reported, String type, Coordinate at,
                             EdgeIteratorState edge, EdgeIteratorState otherEdge, IntEncodedValue wayIdEnc,
-                            EnumEncodedValue<RoadClass> roadClassEnc, Map<String, Object> extra) {
+                            EnumEncodedValue<RoadClass> roadClassEnc, Map<String, Object> extra, String key) {
         int wayId = edge.get(wayIdEnc);
         int otherWayId = otherEdge == null ? 0 : otherEdge.get(wayIdEnc);
         // Report every way (or pair of ways) once. For maxheight the bridge is not part of the key:
         // one tag fixes every crossing of that road, and the list is sorted by score, so the
         // crossing that survives is the most promising one.
-        String key = otherEdge == null || MISSING_MAXHEIGHT.equals(type) ? type + "-" + wayId
-                : MISSING_BRIDGE.equals(type) ? type + "-" + Math.min(wayId, otherWayId) + "-" + Math.max(wayId, otherWayId)
-                : type + "-" + wayId + "-" + otherWayId;
+        if (key == null)
+            key = otherEdge == null || MISSING_MAXHEIGHT.equals(type) ? type + "-" + wayId
+                    : MISSING_BRIDGE.equals(type) ? type + "-" + Math.min(wayId, otherWayId) + "-" + Math.max(wayId, otherWayId)
+                    : type + "-" + wayId + "-" + otherWayId;
         if (!reported.add(key)) return;
 
         Map<String, Object> properties = new LinkedHashMap<>();
