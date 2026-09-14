@@ -28,6 +28,12 @@ const ISSUES = {
         hint: 'a tunnel or a roof over the road. Nearly six in ten of these turn out to carry a real '
             + 'sign, twice the rate under bridges.'
     },
+    maxheight_below_default: {
+        color: '#9a6324', tag: 'maxheight',
+        title: 'maxheight is below_default, the number is missing',
+        hint: 'a mapper confirmed that the road is lower than the legal default, so a truck router '
+            + 'has to guess here. The sign has the number, replace below_default with it.'
+    },
     missing_bridge: {
         color: '#4363d8', tag: 'bridge', warn: true,
         title: 'missing bridge tag',
@@ -854,13 +860,17 @@ function loadWay(wayId) {
         loadPhoto(currentIssue.lat, currentIssue.lon, line);
         const pending = pendingEdits.find(e => e.wayId === wayId) || {changes: {}};
         currentWay = {id: wayId, tags: Object.assign({}, way.tags)};
+        const wanted = (ISSUES[currentIssue.type] || {}).tag;
+        // for the below_default issue the value is the thing to replace, so it is not "done"
+        // and not locked either
+        const toReplace = currentIssue.type === 'maxheight_below_default' && way.tags[wanted] === 'below_default';
         EDITABLE.forEach(key => {
             const input = tagInput(key);
             input.value = key in pending.changes ? pending.changes[key] : (way.tags[key] || '');
             // What OSM already has is locked rather than disabled: a disabled field swallows the
             // click, and a wrong value - a maxheight=default that is not default at all - has to be
             // correctable. Clicking asks first, see below.
-            input.readOnly = way.tags[key] !== undefined && !(key in pending.changes);
+            input.readOnly = way.tags[key] !== undefined && !(key in pending.changes) && !(toReplace && key === wanted);
             input.disabled = false;
             input.classList.toggle('changed', key in pending.changes);
         });
@@ -878,8 +888,7 @@ function loadWay(wayId) {
         }
         updateSaveButton();
         // jump right to the tag this issue is about, or say that it is done already
-        const wanted = (ISSUES[currentIssue.type] || {}).tag;
-        if (wanted && way.tags[wanted] !== undefined) {
+        if (wanted && way.tags[wanted] !== undefined && !toReplace) {
             $('way-state').className = 'hint note';
             $('way-state').textContent = 'OSM already has ' + wanted + '=' + way.tags[wanted]
                 + ' here. GraphHopper reports it until its data is imported again. Click the field '

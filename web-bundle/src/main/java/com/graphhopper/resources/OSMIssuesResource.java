@@ -75,6 +75,8 @@ public class OSMIssuesResource {
     public static final String MISSING_MAXWEIGHT = "missing_maxweight";
     public static final String MISSING_BRIDGE = "missing_bridge";
     public static final String MISSING_MAXHEIGHT_TUNNEL = "missing_maxheight_tunnel";
+    /** maxheight=below_default: a mapper confirmed a restriction, but a router still has to guess the number */
+    public static final String MAXHEIGHT_BELOW_DEFAULT = "maxheight_below_default";
 
     /**
      * P(a visit finds a real sign), as additive log-odds over clearance, road below, what is over
@@ -251,7 +253,7 @@ public class OSMIssuesResource {
 
         Set<String> types = typesStr == null || typesStr.isEmpty()
                 ? new HashSet<>(Arrays.asList(MISSING_MAXHEIGHT, MISSING_MAXWEIGHT, MISSING_BRIDGE,
-                        MISSING_MAXHEIGHT_TUNNEL))
+                        MISSING_MAXHEIGHT_TUNNEL, MAXHEIGHT_BELOW_DEFAULT))
                 : new HashSet<>(Arrays.asList(typesStr.split(",")));
 
         StopWatch sw = new StopWatch().start();
@@ -404,6 +406,28 @@ public class OSMIssuesResource {
                 c.p = MODEL == null ? Double.NaN : MODEL.probability(Double.NaN, Double.NaN, Double.NaN,
                         c.below.get(roadClassEnc).toString(), c.over, c.country, c.neighbours);
                 scored.add(c);
+            }
+        }
+
+        if (types.contains(MAXHEIGHT_BELOW_DEFAULT)) {
+            // below_default says a mapper saw that the road is lower than the legal default, so a
+            // restriction exists for sure and only the number is missing - the most valuable kind
+            // of gap. Service roads and roads cars may not use are left out, they do not route.
+            BooleanEncodedValue carAccessEnc = encodingManager.hasEncodedValue("car_access")
+                    ? encodingManager.getBooleanEncodedValue("car_access") : null;
+            for (int i = 0; i < edgeIds.size() && features.size() < limit; i++) {
+                int edgeId = edgeIds.get(i);
+                EdgeIteratorState edge = graph.getEdgeIteratorStateForKey(edgeId * 2);
+                if (!"below_default".equals(edge.getValue(MAX_HEIGHT_TAG))) continue;
+                RoadClass rc = edge.get(roadClassEnc);
+                if (!isMotorized(rc) || rc == RoadClass.SERVICE || !wanted(rc, roads)) continue;
+                if (carAccessEnc != null && !edge.get(carAccessEnc) && !edge.getReverse(carAccessEnc)) continue;
+                PointList pl = edge.fetchWayGeometry(FetchMode.ALL);
+                if (pl.size() < 2) continue;
+                int mid = pl.size() / 2;
+                Coordinate at = new Coordinate(pl.getLon(mid), pl.getLat(mid));
+                if (!bbox.contains(at.y, at.x)) continue;
+                addFeature(features, reported, MAXHEIGHT_BELOW_DEFAULT, at, edge, null, wayIdEnc, roadClassEnc);
             }
         }
 
