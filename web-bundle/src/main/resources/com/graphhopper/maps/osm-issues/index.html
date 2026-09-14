@@ -102,15 +102,17 @@
     </section>
 
     <section id="pending" hidden>
-        <h2>not uploaded yet (<span id="pending-count">0</span>)</h2>
+        <h2 id="pending-title"></h2>
         <div class="panel">
             <div id="pending-list"></div>
-            <div class="label">changeset</div>
-            <input id="comment" type="text" placeholder="changeset comment">
-            <input id="source" type="text" placeholder="source, e.g. KartaView or survey">
-            <div class="row">
-                <button id="upload" class="primary">upload to OSM</button>
-                <button id="discard">discard all</button>
+            <div id="pending-form">
+                <div class="label">changeset</div>
+                <input id="comment" type="text" placeholder="changeset comment">
+                <input id="source" type="text" placeholder="source, e.g. KartaView or survey">
+                <div class="row">
+                    <button id="upload" class="primary">upload to OSM</button>
+                    <button id="discard">discard all</button>
+                </div>
             </div>
             <div id="upload-state" class="hint"></div>
         </div>

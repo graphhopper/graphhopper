@@ -1036,10 +1036,17 @@ function describe(edit) {
     return Object.keys(edit.changes).map(key => key + '=' + edit.changes[key]).join(', ');
 }
 
+// set by a successful upload, so its changeset link stays visible after the list is empty
+let justUploaded = false;
+
 function renderPending() {
-    // keep the panel while it reports the last upload, otherwise the changeset link would vanish
-    $('pending').hidden = !pendingEdits.length && !$('upload-state').innerHTML;
-    $('pending-count').textContent = pendingEdits.length;
+    const n = pendingEdits.length;
+    // any other message is about the list, e.g. a failed upload, and goes away with it
+    if (!n && !justUploaded) $('upload-state').textContent = '';
+    $('pending').hidden = !n && !justUploaded;
+    // nothing left to upload or discard
+    $('pending-form').hidden = !n;
+    $('pending-title').textContent = n ? 'not uploaded yet (' + n + ')' : 'uploaded';
     $('pending-list').replaceChildren(...pendingEdits.map(edit => {
         const item = el('div', '', 'pending-item');
         const title = el('div', '', 'pending-title');
@@ -1095,6 +1102,7 @@ $('upload').onclick = async () => {
 
     const state = $('upload-state');
     state.innerHTML = '';
+    justUploaded = false;
     $('upload').disabled = true;
     let changesetId = null;
     try {
@@ -1131,6 +1139,7 @@ $('upload').onclick = async () => {
         localStorage.setItem('changeset_source', source);
         state.innerHTML = 'uploaded ' + ways.length + ' way(s) as <a href="' + settings.api
             + '/changeset/' + changesetId + '" target="_blank">changeset ' + changesetId + '</a>';
+        justUploaded = true;
         savePending();
         issues.forget();
         load();

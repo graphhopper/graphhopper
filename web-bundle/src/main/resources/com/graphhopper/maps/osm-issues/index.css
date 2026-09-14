@@ -250,6 +250,11 @@ button:disabled {
     display: none;
 }
 
+/* the heading of the form, not of the panel - the list above it is empty only after an upload */
+#pending-form > .label:first-child {
+    margin-top: 14px;
+}
+
 #pending input[type=text] {
     margin-top: 5px;
 }
