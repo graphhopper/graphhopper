@@ -102,6 +102,13 @@ const selectedDot = radius => new ol.style.Style({
     })
 });
 
+// What counts as a good score depends on what the model predicts. A sign below 4 m is rarer than
+// any sign, so its probabilities run lower: over Europe's open places the top 5% start at about 0.6
+// for "low" and 0.87 for "any". "top" is where the marker reaches its full size.
+function scoreScale() {
+    return issues.signTarget === 'low' ? {good: 0.5, maybe: 0.3, top: 0.7} : {good: 0.7, maybe: 0.4, top: 1};
+}
+
 const issueLayer = new ol.layer.Vector({
     source: issueSource,
     style: feature => {
@@ -112,7 +119,7 @@ const issueLayer = new ol.layer.Vector({
         // rather than another maxheight=default. Without a score (the other issue types) they are
         // all the same size.
         const p = feature.get('p_sign');
-        const radius = done ? 4 : (p == null ? 7 : 4 + 7 * p * p);
+        const radius = done ? 4 : (p == null ? 7 : 4 + 7 * Math.pow(Math.min(1, p / scoreScale().top), 2));
         const marker = new ol.style.Style({
             image: new ol.style.Circle({
                 radius: radius,
@@ -316,6 +323,8 @@ function layerLoader(source) {
             .then(json => {
                 source.clear();
                 source.addFeatures(new ol.format.GeoJSON().readFeatures(json, {featureProjection: 'EPSG:3857'}));
+                // what p_sign is the probability of: "any" numeric sign, or a "low" one below 4 m
+                loader.signTarget = json.sign_target;
                 // a truncated answer does not cover the area, so do not reuse it when zooming in
                 holds = json.features.length < LIMIT ? {query: query, extent: extent} : null;
                 setBusy(false);
@@ -795,8 +804,8 @@ function openIssue(feature) {
     };
     const pct = p.maxheight || p.p_sign == null ? null : Math.round(p.p_sign * 100);
     $('edit-odds').innerHTML = pct == null ? '' :
-        '<b class="' + (p.p_sign >= 0.7 ? 'good' : p.p_sign >= 0.4 ? 'maybe' : 'weak') + '">'
-        + pct + '%</b> chance of finding a sign here.'
+        '<b class="' + (p.p_sign >= scoreScale().good ? 'good' : p.p_sign >= scoreScale().maybe ? 'maybe' : 'weak') + '">'
+        + pct + '%</b> chance of finding a sign' + (issues.signTarget === 'low' ? ' below 4 m' : '') + ' here.'
         + (NB[p.neighbours] ? ' ' + NB[p.neighbours] : '');
 
     // for maxheight the way below the bridge comes first, it is the one that needs the tag

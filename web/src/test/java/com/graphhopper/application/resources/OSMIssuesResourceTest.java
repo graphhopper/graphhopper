@@ -75,6 +75,28 @@ public class OSMIssuesResourceTest {
         assertEquals("Avinguda Doctor Mitjavila", maxHeight.get("way_name").asText());
         assertEquals(208585098, maxHeight.get("other_way_id").asLong());
         assertEquals("Vial de la Unio", maxHeight.get("other_way_name").asText().replace("\u00f2", "o"));
+        // scored even without elevation: an unknown clearance does not count, but the road and the
+        // bridge do
+        assertTrue(maxHeight.get("p_sign").asDouble() > 0, maxHeight.toString());
+        assertEquals("primary", maxHeight.get("over").asText());
+    }
+
+    @Test
+    public void testTunnelsAreScoredToo() {
+        JsonNode json = query("bbox=1.40,42.42,1.80,42.66&types=missing_maxheight_tunnel");
+        assertTrue(json.get("features").size() > 5, "" + json.get("features").size());
+        double last = 1;
+        for (JsonNode f : json.get("features")) {
+            JsonNode p = f.get("properties");
+            assertEquals("missing_maxheight_tunnel", p.get("type").asText());
+            assertTrue(List.of("tunnel", "covered").contains(p.get("over").asText()), p.toString());
+            assertNull(p.get("clearance"));
+            assertNull(p.get("neighbours"));
+            // no clearance and no neighbours, still ranked by the road, the country and the tunnel
+            double pSign = p.get("p_sign").asDouble();
+            assertTrue(pSign > 0 && pSign <= last, p.toString());
+            last = pSign;
+        }
     }
 
     @Test
