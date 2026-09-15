@@ -193,9 +193,11 @@ public class OSMIssuesResource {
             this.at = at;
             this.below = below.detach(false);
             this.bridge = bridge == null ? null : bridge.detach(false);
-            this.bridgeLen = bridge == null ? Double.NaN : bridge.getDistance();
-            this.endDist = bridge == null ? Double.NaN : Math.min(dist(bridgeLS.getCoordinateN(0), at),
-                    dist(bridgeLS.getCoordinateN(bridgeLS.getNumPoints() - 1), at));
+            // the outline of a roof is not a bridge: its length and ends say nothing about the elevation
+            boolean span = bridge != null && !"roof".equals(over);
+            this.bridgeLen = span ? bridge.getDistance() : Double.NaN;
+            this.endDist = span ? Math.min(dist(bridgeLS.getCoordinateN(0), at),
+                    dist(bridgeLS.getCoordinateN(bridgeLS.getNumPoints() - 1), at)) : Double.NaN;
             this.belowEle = belowEle;
             this.bridgeEle = bridgeEle;
             this.country = country;
@@ -365,13 +367,15 @@ public class OSMIssuesResource {
                     else if (hasTag) anyWithoutNumber = true;
                     if (hasTag != tagged) continue;
                     if (!wanted(below.get(roadClassEnc), roads)) continue;
-                    // how much higher the bridge is than the road below, if the graph has elevation
-                    double bridgeEle = elevationAt(bridge.fetchWayGeometry(FetchMode.ALL), at);
-                    double belowEle = elevationAt(below.fetchWayGeometry(FetchMode.ALL), at);
+                    // how much higher the bridge is than the road below, if the graph has elevation.
+                    // The outline of a roof sits on the ground, so there is no clearance to estimate
+                    String group = bridgeGroup(bridge, roadClassEnc);
+                    boolean roof = "roof".equals(group);
+                    double bridgeEle = roof ? Double.NaN : elevationAt(bridge.fetchWayGeometry(FetchMode.ALL), at);
+                    double belowEle = roof ? Double.NaN : elevationAt(below.fetchWayGeometry(FetchMode.ALL), at);
                     if (minClearance > 0 && bridgeEle - belowEle > minClearance) continue;
                     underBridge.add(new Scored(MISSING_MAXHEIGHT, at, below, bridge, bridgeLS, belowEle, bridgeEle,
-                            countryEnc == null ? "" : below.get(countryEnc).getAlpha3(),
-                            bridgeGroup(bridge, roadClassEnc)));
+                            countryEnc == null ? "" : below.get(countryEnc).getAlpha3(), group));
                 }
                 String neighbours = under <= 1 ? "none"
                         : anyNumber ? "has_number"
@@ -522,6 +526,10 @@ public class OSMIssuesResource {
             extra.put("bridge_len", Math.round(c.bridgeLen));
             extra.put("end_dist", Math.round(c.endDist));
         }
+        // what OSM says about the roof: min_height is the underside, height the top
+        if (c.bridge != null && "roof".equals(c.over))
+            for (String key : Arrays.asList("min_height", "height"))
+                if (c.bridge.getValue(key) != null) extra.put("roof_" + key, c.bridge.getValue(key));
         String key = perBridge && c.bridge != null
                 ? c.type + "-" + c.below.get(wayIdEnc) + "-" + c.bridge.get(wayIdEnc) : null;
         addFeature(features, reported, c.type, c.at, c.below, c.bridge, wayIdEnc, roadClassEnc, extra, key);

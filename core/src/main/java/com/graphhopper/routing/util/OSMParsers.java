@@ -111,19 +111,22 @@ public class OSMParsers {
     }
 
     /**
-     * A bridge that carries no road, but still limits the height of the road below it: a railway,
-     * a pipeline (district heating pipes over the roads of an industrial area are a classic), a
-     * conveyor belt or an aqueduct. What it is goes into the {@code structure} key value, see
-     * {@link #structureOf(ReaderWay)}.
+     * Something that carries no road, but still limits the height of the road below it: a bridge
+     * with a railway, a pipeline (district heating pipes over the roads of an industrial area are a
+     * classic), a conveyor belt or an aqueduct, or a roof - the canopy of a petrol station, a
+     * carport, a bus station. What it is goes into the {@code structure} key value, see
+     * {@link #structureOf(ReaderWay)}. The outline of a roof is a closed way; a road passing under
+     * it crosses the outline, which is all the crossing detection needs.
      */
     public static boolean isStructureBridge(ReaderWay way) {
         return !way.hasTag("highway") && structureOf(way) != null;
     }
 
     /**
-     * @return what a non-highway bridge carries, or null if it is not one of the structures we import
+     * @return what a non-highway structure over a road carries, or null if it is not one we import
      */
     public static String structureOf(ReaderWay way) {
+        if (way.hasTag("building", "roof")) return "roof";
         if (!way.hasTag("bridge") || way.hasTag("bridge", "no")) return null;
         if (isRailwayBridge(way)) return "railway";
         if (way.hasTag("man_made", "pipeline")) return "pipeline";

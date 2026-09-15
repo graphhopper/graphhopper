@@ -1073,14 +1073,25 @@ public class OSMReaderTest {
         EnumEncodedValue<RoadEnvironment> reEnc = hopper.getEncodingManager()
                 .getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
         IntEncodedValue wayIdEnc = hopper.getEncodingManager().getIntEncodedValue(OSMWayID.KEY);
-        assertEquals(6, hopper.getBaseGraph().getEdges());
         AllEdgesIterator iter = hopper.getBaseGraph().getAllEdges();
         HashMap<Integer, RoadEnvironment> envByWay = new HashMap<>();
         HashMap<Integer, Object> structureByWay = new HashMap<>();
+        HashMap<Integer, Object> heightByWay = new HashMap<>();
+        int roofEdges = 0;
         while (iter.next()) {
             envByWay.put(iter.get(wayIdEnc), iter.get(reEnc));
             structureByWay.put(iter.get(wayIdEnc), iter.getValue(Parameters.Details.STRUCTURE_TAG));
+            heightByWay.put(iter.get(wayIdEnc), iter.getValue("height"));
+            if (iter.get(wayIdEnc) == 900) roofEdges++;
         }
+        // the road, the railway bridge with its two approaches, the pipeline and the aqueduct
+        assertEquals(6, hopper.getBaseGraph().getEdges() - roofEdges);
+        // the outline of the roof is a closed way, so it becomes more than one edge
+        assertTrue(roofEdges >= 2, "" + roofEdges);
+        assertEquals(RoadEnvironment.BRIDGE, envByWay.get(900));
+        assertEquals("roof", structureByWay.get(900));
+        assertEquals("4.5", heightByWay.get(900));
+        assertNull(heightByWay.get(200));
         assertEquals(RoadEnvironment.BRIDGE, envByWay.get(200));
         assertEquals("railway", structureByWay.get(200));
         // a pipeline and an aqueduct on a bridge limit the height below just like a railway does

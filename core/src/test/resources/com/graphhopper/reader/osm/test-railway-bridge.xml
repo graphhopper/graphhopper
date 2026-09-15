@@ -14,6 +14,10 @@
     <node id="93" lat="52.05" lon="9.05" version="1"/>
     <node id="94" lat="51.95" lon="9.18" version="1"/>
     <node id="95" lat="52.05" lon="9.18" version="1"/>
+    <node id="96" lat="51.98" lon="9.12" version="1"/>
+    <node id="97" lat="52.02" lon="9.12" version="1"/>
+    <node id="98" lat="52.02" lon="9.14" version="1"/>
+    <node id="99" lat="51.98" lon="9.14" version="1"/>
 
     <!-- a road, crossed by the railway bridge below without sharing a node -->
     <way id="100" version="1">
@@ -69,6 +73,16 @@
         <nd ref="93"/>
         <tag k="waterway" v="canal"/>
         <tag k="bridge" v="aqueduct"/>
+    </way>
+    <!-- a roof, e.g. of a petrol station: its outline is imported, the height tags are kept -->
+    <way id="900" version="1">
+        <nd ref="96"/>
+        <nd ref="97"/>
+        <nd ref="98"/>
+        <nd ref="99"/>
+        <nd ref="96"/>
+        <tag k="building" v="roof"/>
+        <tag k="height" v="4.5"/>
     </way>
     <!-- a pipeline on the ground is not -->
     <way id="820" version="1">

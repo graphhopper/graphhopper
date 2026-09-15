@@ -548,8 +548,16 @@ public class OSMReader {
             map.put(COVERED_TAG, new KValue(KVStorage.cutString(covered)));
         // a bridge without a highway: say what it carries, so a railway bridge can be told from a pipeline
         String structure = way.hasTag("highway") ? null : OSMParsers.structureOf(way);
-        if (structure != null)
+        if (structure != null) {
             map.put(STRUCTURE_TAG, new KValue(structure));
+            if ("roof".equals(structure)) {
+                // a roof is a bridge over the road as far as road_environment is concerned, and its
+                // height tags say how much room there is below - better than any elevation model
+                if (!way.hasTag("bridge")) way.setTag("bridge", "yes");
+                for (String key : Arrays.asList("min_height", "height"))
+                    if (way.hasTag(key)) map.put(key, new KValue(KVStorage.cutString(way.getTag(key))));
+            }
+        }
 
         way.setTag("key_values", map);
 

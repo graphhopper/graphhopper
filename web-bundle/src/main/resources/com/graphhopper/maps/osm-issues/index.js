@@ -818,7 +818,7 @@ function openIssue(feature) {
     const ways = [{id: p.way_id, name: p.way_name, cls: p.road_class}];
     if (p.other_way_id) ways.push({id: p.other_way_id, name: p.other_way_name, cls: p.other_road_class});
     const picker = $('way-picker');
-    const roles = issue.roles || [];
+    const roles = (issue.roles || []).map(r => p.over === 'roof' ? r.replace('bridge', 'roof') : r);
     picker.replaceChildren(...ways.map((way, i) => {
         const label = (way.name || '(no name)') + ' [' + way.cls + ']'
             + (roles[i] ? ' - ' + roles[i] : '');
