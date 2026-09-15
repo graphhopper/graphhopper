@@ -261,6 +261,8 @@ public class GraphHopperWeb {
             requestJson.putArray("point_hints").addAll(createStringList(ghRequest.getPointHints()));
         if (!ghRequest.getHeadings().isEmpty())
             requestJson.putArray("headings").addAll(createDoubleList(ghRequest.getHeadings()));
+        if (!ghRequest.getLevels().isEmpty())
+            requestJson.putArray("levels").addAll(createDoubleList(ghRequest.getLevels()));
         if (!ghRequest.getCurbsides().isEmpty())
             requestJson.putArray("curbsides").addAll(createStringList(ghRequest.getCurbsides()));
         if (ghRequest.hasSnapPreventions())
@@ -354,6 +356,10 @@ public class GraphHopperWeb {
         if (ghRequest.getHeadings().stream().anyMatch(h -> !Double.isNaN(h)))
             for (Double heading : ghRequest.getHeadings())
                 url += "&heading=" + heading;
+        
+        if (ghRequest.getLevels().stream().anyMatch(h -> !Double.isNaN(h)))
+            for (Double level : ghRequest.getLevels())
+                url += "&level=" + level;
 
         if (ghRequest.hasSnapPreventions()) {
             if (ghRequest.getSnapPreventions().isEmpty())

@@ -20,8 +20,10 @@ package com.graphhopper.routing;
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.routing.ev.RoadEnvironment;
+import com.graphhopper.routing.ev.Level;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.*;
@@ -56,12 +58,13 @@ public class ViaRouting {
      */
     public static List<Snap> lookup(EncodedValueLookup lookup, List<GHPoint> points, EdgeFilter snapFilter,
                                     LocationIndex locationIndex, List<String> snapPreventions, List<String> pointHints,
-                                    DirectedEdgeFilter directedSnapFilter, List<Double> headings) {
+                                    DirectedEdgeFilter directedSnapFilter, List<Double> headings, List<Double> levels) {
         if (points.size() < 2)
             throw new IllegalArgumentException("At least 2 points have to be specified, but was:" + points.size());
 
         final EnumEncodedValue<RoadClass> roadClassEnc = lookup.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         final EnumEncodedValue<RoadEnvironment> roadEnvEnc = lookup.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
+        final DecimalEncodedValue levelEnc = lookup.getDecimalEncodedValue(Level.KEY);
         EdgeFilter strictEdgeFilter = snapPreventions.isEmpty()
                 ? snapFilter
                 : new SnapPreventionEdgeFilter(snapFilter, roadClassEnc, roadEnvEnc, snapPreventions);
@@ -75,6 +78,8 @@ public class ViaRouting {
                     throw new IllegalArgumentException("Cannot specify heading and point_hint at the same time. " +
                             "Make sure you specify either an empty point_hint (String) or a NaN heading (double) for point " + placeIndex);
                 snap = locationIndex.findClosest(point.lat, point.lon, new HeadingEdgeFilter(directedSnapFilter, headings.get(placeIndex), point));
+            } else if (placeIndex < levels.size() && !Double.isNaN(levels.get(placeIndex))) {
+                snap = locationIndex.findClosest(point.lat, point.lon, new LevelEdgeFilter(strictEdgeFilter, levelEnc, levels.get(placeIndex)));
             } else if (!pointHints.isEmpty()) {
                 snap = locationIndex.findClosest(point.lat, point.lon, new NameSimilarityEdgeFilter(strictEdgeFilter,
                         pointHints.get(placeIndex), point, 170));
