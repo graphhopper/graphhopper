@@ -449,6 +449,30 @@ public class OSMIssuesResource {
             addFeature(features, reported, c, wayIdEnc, roadClassEnc, tagged);
         }
 
+        if (tagged && types.contains(MISSING_MAXHEIGHT)) {
+            // What OSM has is more than what lies under a bridge in the graph: the structure may be
+            // missing in OSM, be a building without building=roof, or a passage without covered.
+            // Report those too, at the middle of the way - the crossings above were added first
+            // and win, so a way is still there only once.
+            for (int i = 0; i < edgeIds.size() && features.size() < limit; i++) {
+                int edgeId = edgeIds.get(i);
+                EdgeIteratorState edge = graph.getEdgeIteratorStateForKey(edgeId * 2);
+                if (edge.getValue(MAX_HEIGHT_TAG) == null && !"no".equals(edge.getValue(MAX_HEIGHT_SIGNED_TAG)))
+                    continue;
+                RoadClass rc = edge.get(roadClassEnc);
+                if (!isMotorized(rc) || !wanted(rc, roads)) continue;
+                int wayId = edge.get(wayIdEnc);
+                if (reported.contains(MISSING_MAXHEIGHT_TUNNEL + "-" + wayId)) continue;
+                PointList pl = edge.fetchWayGeometry(FetchMode.ALL);
+                if (pl.size() < 2) continue;
+                int mid = pl.size() / 2;
+                Coordinate at = new Coordinate(pl.getLon(mid), pl.getLat(mid));
+                if (!bbox.contains(at.y, at.x)) continue;
+                addFeature(features, reported, MISSING_MAXHEIGHT, at, edge, null, wayIdEnc, roadClassEnc,
+                        Collections.emptyMap(), MISSING_MAXHEIGHT + "-" + wayId);
+            }
+        }
+
         if (allCrossings) {
             for (int i = 0; i < edgeIds.size() && features.size() < limit; i++) {
                 int edgeId = edgeIds.get(i);
@@ -556,6 +580,7 @@ public class OSMIssuesResource {
         properties.put("way_name", edge.getName());
         properties.put("road_class", edge.get(roadClassEnc).toString());
         if (edge.getValue(MAX_HEIGHT_TAG) != null) properties.put("maxheight", edge.getValue(MAX_HEIGHT_TAG));
+        if (edge.getValue(MAX_HEIGHT_SIGNED_TAG) != null) properties.put("maxheight_signed", edge.getValue(MAX_HEIGHT_SIGNED_TAG));
         if (otherEdge != null) {
             properties.put("other_way_id", otherWayId);
             properties.put("other_way_name", otherEdge.getName());

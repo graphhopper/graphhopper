@@ -193,7 +193,7 @@ const osmTagLayer = new ol.layer.Vector({
                 stroke: new ol.style.Stroke({color: '#fff', width: 2})
             }),
             text: new ol.style.Text({
-                text: String(feature.get('maxheight') || ''),
+                text: String(feature.get('maxheight') || (feature.get('maxheight_signed') === 'no' ? 'no sign' : '')),
                 offsetY: -16,
                 font: '600 12px system-ui, sans-serif',
                 fill: new ol.style.Fill({color: '#1b5e2a'}),
@@ -356,7 +356,7 @@ function load() {
     const zoomedIn = view.getZoom() >= MIN_ZOOM;
     // what OSM has already is not a work list, so the filters of the issues do not apply to it
     if (zoomedIn && osmTagLayer.getVisible())
-        osmTags.request(extent, {types: 'missing_maxheight', roads: 'all', tagged: true});
+        osmTags.request(extent, {types: 'missing_maxheight,missing_maxheight_tunnel', roads: 'all', tagged: true});
 
     const types = typeBoxes.filter(cb => cb.checked).map(cb => cb.dataset.type);
     if (!types.length || !roadGroups().length) {
@@ -649,11 +649,14 @@ function panoramaxPhotos(lat, lon) {
         })));
 }
 
-// mapillary cannot open the nearest image by coordinate, it needs the image id from its API
+// mapillary cannot open the nearest image by coordinate, it needs the image id from its API.
+// The radius is capped at 50 m nowadays, so of the 20-70 m pickPhoto would take only 20-50 m
+// are available here. A bbox has no such cap, but fails with "reduce the amount of data" in
+// dense areas whatever the limit, so it is no way out.
 function mapillaryPhotos(lat, lon) {
     if (!settings.mapillaryToken) return Promise.resolve([]);
     const params = new URLSearchParams({
-        access_token: settings.mapillaryToken, lat: lat, lng: lon, radius: '90', limit: '50',
+        access_token: settings.mapillaryToken, lat: lat, lng: lon, radius: '50', limit: '50',
         fields: 'id,compass_angle,computed_geometry,captured_at,thumb_1024_url'
     });
     return fetch('https://graph.mapillary.com/images?' + params).then(res => res.json()).then(json =>
