@@ -43,23 +43,23 @@
                 <!-- grouped by what a layer means: the work list with its road filter, then what is
                      known already. The notes say "zoom in" or "loading ...", see updateNotes -->
                 <div class="label">issues to fix <span id="issues-note" class="note"></span></div>
-                <label title="a road passes under a bridge, a railway, a pipeline, a conveyor, an aqueduct or a roof (petrol station canopy, carport) and has no maxheight tag. Marker size: how likely a visit finds a sign below 4 m"><input type="checkbox" data-type="missing_maxheight" checked><span class="key dot maxheight"></span> maxheight below bridge/roof</label>
-                <label title="a road in a tunnel or under a roof tagged covered=yes without maxheight. Ranked by road class and country only, there is nothing to measure"><input type="checkbox" data-type="missing_maxheight_tunnel" checked><span class="key dot tunnel"></span> maxheight in tunnel</label>
-                <label title="maxheight=below_default on a road cars may use, not a service road: a restriction exists for sure, only the number on the sign is missing"><input type="checkbox" data-type="maxheight_below_default" checked><span class="key dot below-default"></span> below_default without number</label>
-                <label title="a road bridge without maxweight, whatever it crosses"><input type="checkbox" data-type="missing_maxweight"><span class="key dot maxweight"></span> maxweight on bridge</label>
-                <label title="two roads cross without a junction and neither is a bridge, tunnel or ford. Slow for large areas"><input type="checkbox" data-type="missing_bridge"><span class="key dot bridge"></span> bridge tag missing</label>
+                <label title="shows roads under a bridge, railway, roof or similar that have no maxheight tag. Bigger marker: more likely a sign below 4 m"><input type="checkbox" data-type="missing_maxheight" checked><span class="key dot maxheight"></span> maxheight below bridge/roof</label>
+                <label title="shows roads in a tunnel or tagged covered=yes that have no maxheight tag"><input type="checkbox" data-type="missing_maxheight_tunnel" checked><span class="key dot tunnel"></span> maxheight in tunnel</label>
+                <label title="shows roads tagged maxheight=below_default. The restriction is confirmed, only the number is missing"><input type="checkbox" data-type="maxheight_below_default" checked><span class="key dot below-default"></span> below_default without number</label>
+                <label title="shows road bridges that have no maxweight tag"><input type="checkbox" data-type="missing_maxweight"><span class="key dot maxweight"></span> maxweight on bridge</label>
+                <label title="shows roads that cross without a junction and without a bridge or tunnel tag. Slow for large areas"><input type="checkbox" data-type="missing_bridge"><span class="key dot bridge"></span> bridge tag missing</label>
                 <div class="roads">
                     <div class="sublabel">only on these roads</div>
-                    <label title="the road that needs the tag: under the bridge or in the tunnel for maxheight, the bridge itself for maxweight, both ways for a missing bridge tag"><input type="checkbox" class="road-group" value="motorway,trunk,primary"> motorway, trunk, primary</label>
+                    <label title="filters by the road that needs the tag"><input type="checkbox" class="road-group" value="motorway,trunk,primary"> motorway, trunk, primary</label>
                     <label><input type="checkbox" class="road-group" value="secondary,tertiary,residential" checked> secondary, tertiary, residential</label>
-                    <label title="service roads are where the roofs are: petrol stations, parking, depots"><input type="checkbox" class="road-group" value="unclassified,service,road,track,living_street,busway,construction"> everything else (service, track, ...)</label>
+                    <label title="includes service roads, where most roofs are (petrol stations, parking)"><input type="checkbox" class="road-group" value="unclassified,service,road,track,living_street,busway,construction"> everything else (service, track, ...)</label>
                     <div class="hint">maxheight: the road under the bridge or in the tunnel<br>maxweight: the bridge itself<br>bridge tag: both crossing ways</div>
                 </div>
                 <div id="status">move the map to load issues</div>
 
                 <div class="label">already known</div>
-                <label title="every maxheight OSM already has here, with its value, to compare against a photo"><input type="checkbox" id="layer-osm"><span class="key dot osm"></span> maxheight in OSM <span id="osm-note" class="note"></span></label>
-                <label title="height limit signs detected on Mapillary photos, the strongest hint that there is something to tag"><input type="checkbox" id="layer-signs"><span class="key sign" id="key-sign"></span> signs seen by Mapillary <span id="signs-note" class="note"></span></label>
+                <label title="shows the maxheight values OSM already has"><input type="checkbox" id="layer-osm"><span class="key dot osm"></span> maxheight in OSM <span id="osm-note" class="note"></span></label>
+                <label title="shows height limit signs detected on Mapillary photos"><input type="checkbox" id="layer-signs"><span class="key sign" id="key-sign"></span> signs seen by Mapillary <span id="signs-note" class="note"></span></label>
             </details>
         </div>
     </section>
