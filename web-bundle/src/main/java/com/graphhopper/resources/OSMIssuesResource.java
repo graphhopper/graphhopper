@@ -220,8 +220,8 @@ public class OSMIssuesResource {
     static String bridgeGroup(EdgeIteratorState bridge, EnumEncodedValue<RoadClass> roadClassEnc) {
         RoadClass rc = bridge.get(roadClassEnc);
         if (rc == RoadClass.OTHER) {
-            // a bridge without a highway: railway, pipeline, conveyor, aqueduct. Graphs imported
-            // before the structure key existed only have railway bridges
+            // a bridge without a road class: railway, pipeline, conveyor, aqueduct, roof, or an
+            // abandoned road. Graphs imported before the structure key existed only have railway bridges
             String structure = (String) bridge.getValue(STRUCTURE_TAG);
             return structure == null ? "railway" : structure;
         }
@@ -319,6 +319,10 @@ public class OSMIssuesResource {
                 tree.insert(ls.getEnvelopeInternal(), edgeId);
             }
             if (re != RoadEnvironment.BRIDGE) continue;
+            // A bridge that is neither a road nor one of the imported structures is a highway value
+            // outside the road classes: proposed, razed, bus_stop. Nothing crosses the road there.
+            // (abandoned and disused roads carry structure=abandoned, they still stand.)
+            if (edge.get(roadClassEnc) == RoadClass.OTHER && edge.getValue(STRUCTURE_TAG) == null) continue;
             bridgeIds.add(edgeId);
 
             // a bridge needs a max_weight regardless of what it crosses (river, railway, road, ...)
@@ -480,12 +484,15 @@ public class OSMIssuesResource {
                 if (lsA == null) continue;
                 EdgeIteratorState edgeA = graph.getEdgeIteratorStateForKey(edgeId * 2);
                 if (isSeparatedLevel(edgeA.get(roadEnvEnc))) continue;
+                // proposed, abandoned and the like cross nothing
+                if (edgeA.get(roadClassEnc) == RoadClass.OTHER) continue;
                 for (Object o : tree.query(lsA.getEnvelopeInternal())) {
                     int otherId = (Integer) o;
                     // every pair should be checked only once
                     if (otherId <= edgeId) continue;
                     EdgeIteratorState edgeB = graph.getEdgeIteratorStateForKey(otherId * 2);
                     if (isSeparatedLevel(edgeB.get(roadEnvEnc))) continue;
+                    if (edgeB.get(roadClassEnc) == RoadClass.OTHER) continue;
                     // here it is unknown which of the two should carry the bridge tag, so both of
                     // them have to pass the filter - otherwise a filtered class could be reported
                     if (!wanted(edgeA.get(roadClassEnc), roads) || !wanted(edgeB.get(roadClassEnc), roads))

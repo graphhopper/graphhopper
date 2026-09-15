@@ -123,9 +123,14 @@ public class OSMParsers {
     }
 
     /**
-     * @return what a non-highway structure over a road carries, or null if it is not one we import
+     * @return what a structure over a road carries, or null if it is a plain road or nothing we
+     * import. For a highway this is only set when the road is out of use: it has no road class then,
+     * but the bridge still stands over the road below.
      */
     public static String structureOf(ReaderWay way) {
+        if (way.hasTag("highway"))
+            return way.hasTag("highway", "abandoned", "disused") && way.hasTag("bridge") && !way.hasTag("bridge", "no")
+                    ? "abandoned" : null;
         if (way.hasTag("building", "roof")) return "roof";
         if (!way.hasTag("bridge") || way.hasTag("bridge", "no")) return null;
         if (isRailwayBridge(way)) return "railway";
