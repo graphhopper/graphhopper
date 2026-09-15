@@ -41,6 +41,7 @@ import static com.graphhopper.util.Parameters.Details.COVERED_TAG;
 import static com.graphhopper.util.Parameters.Details.MAX_HEIGHT_SIGNED_TAG;
 import static com.graphhopper.util.Parameters.Details.MAX_HEIGHT_TAG;
 import static com.graphhopper.util.Parameters.Details.MAX_WEIGHT_TAG;
+import static com.graphhopper.util.Parameters.Details.STRUCTURE_TAG;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LineString;
@@ -213,8 +214,15 @@ public class OSMIssuesResource {
         }
     }
 
-    /** the bridge_group of the measurement: how the bridge over the road is classified */
-    static String bridgeGroup(RoadClass rc) {
+    /** the bridge_group of the model: how the bridge over the road is classified */
+    static String bridgeGroup(EdgeIteratorState bridge, EnumEncodedValue<RoadClass> roadClassEnc) {
+        RoadClass rc = bridge.get(roadClassEnc);
+        if (rc == RoadClass.OTHER) {
+            // a bridge without a highway: railway, pipeline, conveyor, aqueduct. Graphs imported
+            // before the structure key existed only have railway bridges
+            String structure = (String) bridge.getValue(STRUCTURE_TAG);
+            return structure == null ? "railway" : structure;
+        }
         switch (rc) {
             case MOTORWAY:
             case TRUNK:
@@ -225,8 +233,6 @@ public class OSMIssuesResource {
             case TERTIARY:
             case RESIDENTIAL:
                 return "secondary+tertiary+residential";
-            case OTHER:
-                return "railway";
             default:
                 return "rest";
         }
@@ -365,7 +371,7 @@ public class OSMIssuesResource {
                     if (minClearance > 0 && bridgeEle - belowEle > minClearance) continue;
                     underBridge.add(new Scored(MISSING_MAXHEIGHT, at, below, bridge, bridgeLS, belowEle, bridgeEle,
                             countryEnc == null ? "" : below.get(countryEnc).getAlpha3(),
-                            bridgeGroup(bridge.get(roadClassEnc))));
+                            bridgeGroup(bridge, roadClassEnc)));
                 }
                 String neighbours = under <= 1 ? "none"
                         : anyNumber ? "has_number"

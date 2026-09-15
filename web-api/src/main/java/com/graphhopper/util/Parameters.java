@@ -218,6 +218,9 @@ public class Parameters {
         public static final String MAX_WEIGHT_TAG = "maxweight";
         // covered=yes is a height restriction like a tunnel, but no encoded value carries it
         public static final String COVERED_TAG = "covered";
+        // what a bridge without a highway carries: railway, pipeline, conveyor, aqueduct. Not an
+        // OSM key, see OSMParsers.structureOf
+        public static final String STRUCTURE_TAG = "structure";
 
         public static final String AVERAGE_SPEED = "average_speed";
         public static final String EDGE_ID = "edge_id";

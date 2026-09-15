@@ -226,9 +226,10 @@ graphhopper:
   # import.osm.ignored_highways: motorway,trunk # use if you only have non-motorized vehicle profiles
 
   # Railways are not imported, but their bridges can be, together with the tracks that continue on
-  # both of their ends so the elevation of the bridge can be corrected. They are not routable and
-  # only add geometry, which tools like the /osm-issues map need to see what crosses a road from
-  # above. This costs an extra pass over the ways of the OSM file.
+  # both of their ends so the elevation of the bridge can be corrected. The same goes for bridges
+  # carrying a pipeline, a conveyor belt or an aqueduct. They are not routable and only add
+  # geometry, which tools like the /osm-issues map need to see what crosses a road from above.
+  # This costs an extra pass over the ways of the OSM file.
   # import.osm.railway_bridges: true
 
   # will write way names in the preferred language (language code as defined in ISO 639-1 or ISO 639-2):

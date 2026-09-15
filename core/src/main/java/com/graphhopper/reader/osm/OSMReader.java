@@ -546,6 +546,10 @@ public class OSMReader {
         String covered = way.getTag(COVERED_TAG, "");
         if (!covered.isEmpty() && !"no".equals(covered))
             map.put(COVERED_TAG, new KValue(KVStorage.cutString(covered)));
+        // a bridge without a highway: say what it carries, so a railway bridge can be told from a pipeline
+        String structure = way.hasTag("highway") ? null : OSMParsers.structureOf(way);
+        if (structure != null)
+            map.put(STRUCTURE_TAG, new KValue(structure));
 
         way.setTag("key_values", map);
 

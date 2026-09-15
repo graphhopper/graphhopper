@@ -8,6 +8,12 @@
     <node id="60" lat="51.7" lon="9.3" version="1"/>
     <node id="70" lat="51.8" lon="9.1" version="1"/>
     <node id="80" lat="52.2" lon="9.1" version="1"/>
+    <node id="90" lat="51.95" lon="9.15" version="1"/>
+    <node id="91" lat="52.05" lon="9.15" version="1"/>
+    <node id="92" lat="51.95" lon="9.05" version="1"/>
+    <node id="93" lat="52.05" lon="9.05" version="1"/>
+    <node id="94" lat="51.95" lon="9.18" version="1"/>
+    <node id="95" lat="52.05" lon="9.18" version="1"/>
 
     <!-- a road, crossed by the railway bridge below without sharing a node -->
     <way id="100" version="1">
@@ -49,6 +55,26 @@
         <nd ref="40"/>
         <tag k="railway" v="razed"/>
         <tag k="bridge" v="yes"/>
+    </way>
+
+    <!-- other things crossing the road on a bridge: a pipeline and an aqueduct are imported -->
+    <way id="800" version="1">
+        <nd ref="90"/>
+        <nd ref="91"/>
+        <tag k="man_made" v="pipeline"/>
+        <tag k="bridge" v="yes"/>
+    </way>
+    <way id="810" version="1">
+        <nd ref="92"/>
+        <nd ref="93"/>
+        <tag k="waterway" v="canal"/>
+        <tag k="bridge" v="aqueduct"/>
+    </way>
+    <!-- a pipeline on the ground is not -->
+    <way id="820" version="1">
+        <nd ref="94"/>
+        <nd ref="95"/>
+        <tag k="man_made" v="pipeline"/>
     </way>
 
     <!-- a railway that is not a track on the ground is no anchor, even next to the bridge -->

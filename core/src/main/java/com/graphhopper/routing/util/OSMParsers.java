@@ -90,8 +90,8 @@ public class OSMParsers {
             return true;
         else if ("platform".equals(way.getTag("railway")))
             return true;
-        else if (importRailwayBridges && isRailwayBridge(way))
-            // railway bridges are not routable, but they tell us what crosses a road from above
+        else if (importRailwayBridges && isStructureBridge(way))
+            // not routable, but they tell us what crosses a road from above
             return true;
         else
             return false;
@@ -108,6 +108,28 @@ public class OSMParsers {
     public static boolean isRailwayBridge(ReaderWay way) {
         return way.hasTag("railway") && way.hasTag("bridge") && !way.hasTag("bridge", "no")
                 && !GONE_RAILWAYS.contains(way.getTag("railway", ""));
+    }
+
+    /**
+     * A bridge that carries no road, but still limits the height of the road below it: a railway,
+     * a pipeline (district heating pipes over the roads of an industrial area are a classic), a
+     * conveyor belt or an aqueduct. What it is goes into the {@code structure} key value, see
+     * {@link #structureOf(ReaderWay)}.
+     */
+    public static boolean isStructureBridge(ReaderWay way) {
+        return !way.hasTag("highway") && structureOf(way) != null;
+    }
+
+    /**
+     * @return what a non-highway bridge carries, or null if it is not one of the structures we import
+     */
+    public static String structureOf(ReaderWay way) {
+        if (!way.hasTag("bridge") || way.hasTag("bridge", "no")) return null;
+        if (isRailwayBridge(way)) return "railway";
+        if (way.hasTag("man_made", "pipeline")) return "pipeline";
+        if (way.hasTag("man_made", "goods_conveyor")) return "conveyor";
+        if (way.hasTag("waterway")) return "aqueduct";
+        return null;
     }
 
     public IntsRef handleRelationTags(ReaderRelation relation, IntsRef relFlags) {
