@@ -170,6 +170,25 @@ graphhopper:
   # max_speed_calculator.enabled: true
 
 
+  #### Values from point files ####
+
+  # Sets an encoded value for the closest edge of every point in a GeoJSON file, directly after the import.
+  # Feature properties: value (required), name (only edges with a similar name) and heading (in degrees, only edges
+  # in that direction, and for encoded values with two directions only this direction is set).
+  # pick: min or max - how several points on one edge are combined and, if overwrite is false, with the value from OSM.
+  # Values are rounded towards the picked side, e.g. 2.65 becomes 2.6 for pick: min.
+  # An encoded value that GraphHopper does not know yet is created, but needs its layout in graph.encoded_values:
+  # bits or max, optionally min, factor, two_directions and default (the value without a point), e.g.
+  # graph.encoded_values: bridge_class|max=200|default=infinity
+  # import.point_values:
+  #   - file: data/max_height.json
+  #     encoded_value: max_height
+  #     pick: min
+  #     overwrite: false
+  #     max_distance: 10
+  #     heading_tolerance: 30
+
+
   #### Urban density (built-up areas) ####
 
   # This feature allows classifying roads into 'rural', 'residential' and 'city' areas (encoded value 'urban_density')

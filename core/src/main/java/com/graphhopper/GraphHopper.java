@@ -85,6 +85,7 @@ import static com.graphhopper.util.Parameters.Algorithms.RoundTrip;
 public class GraphHopper {
     private static final Logger logger = LoggerFactory.getLogger(GraphHopper.class);
     private MaxSpeedCalculator maxSpeedCalculator;
+    private PointValueImporter pointValueImporter;
     private final Map<String, Profile> profilesByName = new LinkedHashMap<>();
     private final String fileLockName = "gh.lock";
     // utils
@@ -497,6 +498,9 @@ public class GraphHopper {
         sortGraph = ghConfig.getBool("graph.sort", sortGraph);
         if (ghConfig.getBool("max_speed_calculator.enabled", false))
             maxSpeedCalculator = new MaxSpeedCalculator(MaxSpeedCalculator.createLegalDefaultSpeeds());
+        List<PointValueImporter.Config> pointValueConfigs = PointValueImporter.parseConfigs(ghConfig.asPMap().getObject("import.point_values", null));
+        if (!pointValueConfigs.isEmpty())
+            importRegistry = pointValueImporter = new PointValueImporter(importRegistry, pointValueConfigs);
 
         removeZipped = ghConfig.getBool("graph.remove_zipped", removeZipped);
 
@@ -885,6 +889,8 @@ public class GraphHopper {
             encodedValuesWithProps.put(UrbanDensity.KEY, new PMap());
         if (maxSpeedCalculator != null)
             encodedValuesWithProps.put(MaxSpeedEstimated.KEY, new PMap());
+        if (pointValueImporter != null)
+            pointValueImporter.getConfigs().forEach(c -> encodedValuesWithProps.putIfAbsent(c.encodedValue(), new PMap()));
 
         Map<String, ImportUnit> activeImportUnits = new LinkedHashMap<>();
         ArrayDeque<String> deque = new ArrayDeque<>(encodedValuesWithProps.keySet());
@@ -913,6 +919,9 @@ public class GraphHopper {
             maxSpeedCalculator.fillMaxSpeed(getBaseGraph(), encodingManager);
             maxSpeedCalculator.close();
         }
+
+        if (pointValueImporter != null)
+            pointValueImporter.execute(baseGraph, encodingManager);
 
         if (hasElevation())
             interpolateBridgesTunnelsAndFerries();
