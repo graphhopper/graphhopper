@@ -155,10 +155,41 @@ const HEIGHT_SIGNS = new Set([
 // every one of them) and the detection does not carry the real value - unlike speed limits, where
 // it is part of the class name - so anything but a question mark here would be invented.
 const SIGN_ICON = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMCIgaGVpZ2h0PSIzMCIgdmlld0JveD0iMCAwIDMwIDMwIj48Y2lyY2xlIGN4PSIxNSIgY3k9IjE1IiByPSIxMiIgZmlsbD0iI2ZmZmZmZiIgc3Ryb2tlPSIjZDAwMjFiIiBzdHJva2Utd2lkdGg9IjMuNCIvPjxwYXRoIGQ9Ik0xMS4zIDYuNiBMMTguNyA2LjYgTDE1IDEwLjIgWiIgZmlsbD0iIzFhMWExYSIvPjxwYXRoIGQ9Ik0xMS4zIDIzLjQgTDE4LjcgMjMuNCBMMTUgMTkuOCBaIiBmaWxsPSIjMWExYTFhIi8+PHRleHQgeD0iMTUiIHk9IjE4LjEiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiMxYTFhMWEiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2EsQXJpYWwsc2Fucy1zZXJpZiIgZm9udC1zaXplPSI4LjYiIGZvbnQtd2VpZ2h0PSI3MDAiPj8gbTwvdGV4dD48L3N2Zz4=';
+// the same sign a little smaller, with an empty distance plate below it
+const AHEAD_ICON = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMCIgaGVpZ2h0PSIzNCIgdmlld0JveD0iMCAwIDMwIDM0Ij48ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxNSAxMikgc2NhbGUoMC44KSB0cmFuc2xhdGUoLTE1IC0xNSkiPjxjaXJjbGUgY3g9IjE1IiBjeT0iMTUiIHI9IjEyIiBmaWxsPSIjZmZmZmZmIiBzdHJva2U9IiNkMDAyMWIiIHN0cm9rZS13aWR0aD0iMy40Ii8+PHBhdGggZD0iTTExLjMgNi42IEwxOC43IDYuNiBMMTUgMTAuMiBaIiBmaWxsPSIjMWExYTFhIi8+PHBhdGggZD0iTTExLjMgMjMuNCBMMTguNyAyMy40IEwxNSAxOS44IFoiIGZpbGw9IiMxYTFhMWEiLz48dGV4dCB4PSIxNSIgeT0iMTguMSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzFhMWExYSIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxBcmlhbCxzYW5zLXNlcmlmIiBmb250LXNpemU9IjguNiIgZm9udC13ZWlnaHQ9IjcwMCI+PyBtPC90ZXh0PjwvZz48cmVjdCB4PSI3LjUiIHk9IjI1LjUiIHdpZHRoPSIxNSIgaGVpZ2h0PSI3IiBmaWxsPSIjZmZmZmZmIiBzdHJva2U9IiMxYTFhMWEiIHN0cm9rZS13aWR0aD0iMS4yIi8+PC9zdmc+';
 
 const signStyle = new ol.style.Style({
     image: new ol.style.Icon({src: SIGN_ICON, scale: 1})
 });
+
+// A distance plate ("in 350 m") under the sign means the restriction is further ahead, not here.
+// Mapillary detects the plate as a feature of its own, without the number, usually a metre or two
+// from the sign it belongs to. It misses some, so no plate does not prove the sign is at the spot.
+const PLATE_RADIUS_M = 5;
+const aheadStyle = new ol.style.Style({
+    // anchored on the middle of the ring, like the plain sign
+    image: new ol.style.Icon({src: AHEAD_ICON, anchor: [0.5, 12 / 34], opacity: 0.6})
+});
+
+const signFormat = new ol.format.MVT();
+const readSigns = signFormat.readFeatures.bind(signFormat);
+signFormat.readFeatures = (source, options) => {
+    const features = readSigns(source, options);
+    const at = f => ol.extent.getCenter(f.getGeometry().getExtent());
+    const plates = features.filter(f => f.get('value')?.startsWith('complementary--distance--')).map(at);
+    if (!plates.length) return features;
+    // web mercator stretches by 1/cos(lat), which is the same for the whole tile
+    const stretch = 1 / Math.cos(ol.proj.toLonLat(plates[0])[1] * Math.PI / 180);
+    const radius = PLATE_RADIUS_M * stretch;
+    for (const f of features) {
+        if (!HEIGHT_SIGNS.has(f.get('value'))) continue;
+        const [x, y] = at(f);
+        // tile features are RenderFeatures, which have no set(), but hand out their properties
+        if (plates.some(([px, py]) => Math.hypot(px - x, py - y) <= radius))
+            f.getProperties().distance_plate = true;
+    }
+    return features;
+};
 
 // Mapillary serves these at zoom 14 only, so the tile grid has that single level: closer in
 // OpenLayers scales one tile up, further out it fetches four times as many per zoom step. A
@@ -170,13 +201,14 @@ const signLayer = new ol.layer.VectorTile({
     declutter: true,
     minZoom: SIGN_MIN_ZOOM - 0.01,
     source: new ol.source.VectorTile({
-        format: new ol.format.MVT(),
+        format: signFormat,
         minZoom: 14,
         maxZoom: 14,
         attributions: 'signs &copy; <a href="https://www.mapillary.com" target="_blank">Mapillary</a>',
         url: 'https://tiles.mapillary.com/maps/vtp/mly_map_feature_traffic_sign/2/{z}/{x}/{y}'
     }),
-    style: feature => HEIGHT_SIGNS.has(feature.get('value')) ? signStyle : null
+    style: feature => !HEIGHT_SIGNS.has(feature.get('value')) ? null
+        : feature.get('distance_plate') ? aheadStyle : signStyle
 });
 
 // What OpenStreetMap already says, as an overlay: the same crossings, but the ones that already
@@ -532,9 +564,11 @@ function openSign(feature) {
     // not getId(): that is the running number inside the tile, the Mapillary id is a property
     const id = feature.get('id');
     if (!id) return;
-    const win = window.open('', '_blank');
-    const [lon, lat] = ol.proj.toLonLat(feature.getGeometry().getFirstCoordinate());
+    // a tile feature is a RenderFeature, which has no getFirstCoordinate(), but both have an extent
+    const [lon, lat] = ol.proj.toLonLat(ol.extent.getCenter(feature.getGeometry().getExtent()));
     const onMap = 'https://www.mapillary.com/app/?focus=map&lat=' + lat + '&lng=' + lon + '&z=19';
+    // opened before the fetch, while we are still inside the click, or the popup blocker steps in
+    const win = window.open('', '_blank');
     fetch('https://graph.mapillary.com/' + id + '?access_token='
         + encodeURIComponent(settings.mapillaryToken) + '&fields=images')
         .then(res => res.json())
