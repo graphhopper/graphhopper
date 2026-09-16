@@ -33,6 +33,8 @@ class CarAccessAndRoadAccessTest {
                 Arguments.of("residential", "motor_vehicle:conditional=no @ (06:00-11:00)",                       true,  RoadAccess.YES),
                 Arguments.of("residential", "motor_vehicle:conditional=destination @ (06:00-11:00)",              true,  RoadAccess.YES),
                 Arguments.of("residential", "motor_vehicle=destination",                                          true,  RoadAccess.DESTINATION),
+                Arguments.of("residential", "motorcar=designated",                                                true,  RoadAccess.DESIGNATED),
+                Arguments.of("residential", "access=discouraged",                                                 true,  RoadAccess.DISCOURAGED),
                 Arguments.of("residential", "motor_vehicle=private",                                              false, RoadAccess.PRIVATE),
                 Arguments.of("residential", "motor_vehicle=delivery",                                             false, RoadAccess.DELIVERY),
                 Arguments.of("residential", "motor_vehicle=no",                                                   false, RoadAccess.NO),

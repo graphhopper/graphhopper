@@ -1,5 +1,7 @@
 ### 12.0 [not yet released]
 
+- breaking: road_access now contains DESIGNATED and DISCOURAGED. All custom models using road_access == YES or road_access != YES need to consider this.
+- hgv deprecated. Use hgv_road_access that also considers other access tags similar to road_access.
 - the profile parameter instructions_base_mode (car, bike or foot) replaces navigation_mode and is derived from the profile name if not specified, with car as fallback (#3394)
 - several changes regarding DAType (#3382) including constructor parameters of DataAccess
 - the roundabout instruction can now be split into two instructions: the first one has turn_angle and the second has exited==true. Enable via the request parameter roundabout_exits=true (default is false)

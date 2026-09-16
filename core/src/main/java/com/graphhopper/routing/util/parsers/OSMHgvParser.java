@@ -9,6 +9,10 @@ import com.graphhopper.storage.IntsRef;
 
 import static com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor.conditionalWeightToTons;
 
+/**
+ * @deprecated use the hgv_road_access encoded value instead, see {@link OSMRoadAccessParser#forHgv}
+ */
+@Deprecated
 public class OSMHgvParser implements TagParser {
     EnumEncodedValue<Hgv> hgvEnc;
 

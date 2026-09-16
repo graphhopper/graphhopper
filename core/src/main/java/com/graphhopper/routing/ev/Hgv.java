@@ -23,7 +23,10 @@ import com.graphhopper.util.Helper;
  * This enum defines the road access of an edge. Most edges are accessible from everyone and so the default value is
  * YES. But some have restrictions like "accessible only for customers" or when delivering. Unknown tags will get the
  * value OTHER. The NO value does not permit any access.
+ *
+ * @deprecated use {@link HgvRoadAccess} instead, which also considers motor_vehicle, vehicle and access
  */
+@Deprecated
 public enum Hgv {
     MISSING, YES, DESIGNATED, DESTINATION, DELIVERY, DISCOURAGED, AGRICULTURAL, NO;
 

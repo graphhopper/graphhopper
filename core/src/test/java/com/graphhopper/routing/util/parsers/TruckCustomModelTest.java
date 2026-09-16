@@ -111,6 +111,8 @@ public class TruckCustomModelTest {
         assertEquals(2000, turnPenalty(open, createWay("residential", "access", "private")), 0.01);
         // hgv=yes overrules the more generic access=private
         assertEquals(0, turnPenalty(open, createWay("residential", "access", "private", "hgv", "yes")), 0.01);
+        // a lorry route is not restricted
+        assertEquals(0, turnPenalty(open, createWay("residential", "hgv", "designated")), 0.01);
         // driving inside the area or leaving it is free
         ReaderWay destination = createWay("residential", "hgv", "destination");
         assertEquals(0, turnPenalty(destination, createWay("residential", "hgv", "destination")), 0.01);

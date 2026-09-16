@@ -76,8 +76,8 @@ encoded values are the following (some of their possible values are given in bra
 
 - road_class: (OTHER, MOTORWAY, TRUNK, PRIMARY, SECONDARY, TRACK, STEPS, CYCLEWAY, FOOTWAY, ...)
 - road_environment: (ROAD, FERRY, BRIDGE, TUNNEL, ...)
-- road_access: (DESTINATION, DELIVERY, PRIVATE, NO, ...)
-- hgv_road_access: like road_access but the hgv tag wins over the more generic ones
+- road_access: (DESIGNATED, YES, DISCOURAGED, DESTINATION, DELIVERY, PRIVATE, NO, ...)
+- hgv_road_access: like road_access but the hgv tag wins over motor_vehicle, vehicle and access
 - surface: (PAVED, DIRT, SAND, GRAVEL, ...)
 - sidewalk: (YES, SEPARATE, NO, ...) stores two directions
 - cycleway: (TRACK, LANE, SEPARATE, NO, ...) stores two directions
@@ -87,7 +87,7 @@ encoded values are the following (some of their possible values are given in bra
 - country: (`MISSING` or the country as a `ISO3166-1:alpha3` code e.g. `DEU`)
 - state: (`MISSING` or the state as `ISO3166-2` code e.g. `US_CA`)
 - hazmat: (YES, NO), hazmat_tunnel: (A, B, .., E), hazmat_water: (YES, PERMISSIVE, NO)
-- hgv: (MISSING, YES, DESIGNATED, ...)
+- hgv: (MISSING, YES, DESIGNATED, ...), deprecated, use hgv_road_access
 - track_type: (MISSING, GRADE1, GRADE2, ..., GRADE5)
 - urban_density: (RURAL, RESIDENTIAL, CITY)
 - max_weight_except: (NONE, DELIVERY, DESTINATION, FORESTRY)
