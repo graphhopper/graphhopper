@@ -77,6 +77,7 @@ encoded values are the following (some of their possible values are given in bra
 - road_class: (OTHER, MOTORWAY, TRUNK, PRIMARY, SECONDARY, TRACK, STEPS, CYCLEWAY, FOOTWAY, ...)
 - road_environment: (ROAD, FERRY, BRIDGE, TUNNEL, ...)
 - road_access: (DESTINATION, DELIVERY, PRIVATE, NO, ...)
+- hgv_road_access: like road_access but the hgv tag wins over the more generic ones
 - surface: (PAVED, DIRT, SAND, GRAVEL, ...)
 - sidewalk: (YES, SEPARATE, NO, ...) stores two directions
 - cycleway: (TRACK, LANE, SEPARATE, NO, ...) stores two directions

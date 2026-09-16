@@ -28,14 +28,14 @@ public class TruckCustomModelTest {
 
     @BeforeEach
     public void setup() {
-        BooleanEncodedValue hgvAccess = HgvAccess.create();
-        EnumEncodedValue<Hgv> hgv = Hgv.create();
+        BooleanEncodedValue hgvAccess = VehicleAccess.create("hgv");
+        EnumEncodedValue<RoadAccess> hgvRoadAccess = HgvRoadAccess.create();
         DecimalEncodedValue maxHeight = MaxHeight.create();
         DecimalEncodedValue maxWidth = MaxWidth.create();
         DecimalEncodedValue maxWeight = MaxWeight.create();
         EnumEncodedValue<MaxWeightExcept> maxWeightExcept = MaxWeightExcept.create();
         em = new EncodingManager.Builder().
-                add(hgvAccess).add(hgv).
+                add(hgvAccess).add(hgvRoadAccess).
                 add(VehicleSpeed.create("car", 5, 5, false)).
                 add(RoadEnvironment.create()).
                 add(Roundabout.create()).add(FerrySpeed.create()).
@@ -43,16 +43,18 @@ public class TruckCustomModelTest {
                 build();
 
         parsers = new OSMParsers().
-                addWayTagParser(new OSMHgvParser(hgv)).
                 addWayTagParser(new OSMMaxHeightParser(maxHeight)).
                 addWayTagParser(new OSMMaxWidthParser(maxWidth)).
                 addWayTagParser(new OSMMaxWeightParser(maxWeight)).
                 addWayTagParser(new MaxWeightExceptParser(maxWeightExcept)).
+                addWayTagParser(OSMRoadAccessParser.forHgv(hgvRoadAccess)).
                 addWayTagParser(new ModeAccessParser(OSMRoadAccessParser.toOSMRestrictions(TransportationMode.HGV),
                         hgvAccess, true, em.getBooleanEncodedValue(Roundabout.KEY),
                         Set.of("delivery", "private"), Set.of()));
 
-        CustomModel cm = GHUtility.loadCustomModelFromJar("truck.json");
+        // merge returns a new model instead of changing the given one
+        CustomModel cm = CustomModel.merge(GHUtility.loadCustomModelFromJar("truck.json"),
+                GHUtility.loadCustomModelFromJar("hgv_avoid_private_etc.json"));
         params = CustomModelParser.createWeightingParameters(cm, em);
     }
 
@@ -61,6 +63,14 @@ public class TruckCustomModelTest {
         EdgeIteratorState edge = graph.edge(0, 1);
         parsers.handleWayTags(edge.getEdge(), graph.getEdgeAccess(), way, em.createRelationFlags());
         return params.getEdgeToPriorityMapping().get(edge, false);
+    }
+
+    double turnPenalty(ReaderWay from, ReaderWay to) {
+        BaseGraph graph = new BaseGraph.Builder(em).create();
+        EdgeIteratorState inEdge = graph.edge(0, 1), outEdge = graph.edge(1, 2);
+        parsers.handleWayTags(inEdge.getEdge(), graph.getEdgeAccess(), from, em.createRelationFlags());
+        parsers.handleWayTags(outEdge.getEdge(), graph.getEdgeAccess(), to, em.createRelationFlags());
+        return params.getTurnPenaltyMapping().get(graph, graph.getEdgeAccess(), inEdge.getEdge(), 1, outEdge.getEdge());
     }
 
     ReaderWay createWay(String highway, String... tags) {
@@ -90,10 +100,21 @@ public class TruckCustomModelTest {
 
     @Test
     public void testDestinationAndPrivate() {
-        assertEquals(0.1, priority(createWay("residential", "hgv", "destination")), 0.01);
-        assertEquals(0.1, priority(createWay("residential", "hgv", "delivery")), 0.01);
-        // deliveries to private premises must remain possible, see the allow=private option
+        // deliveries to private premises must remain possible, see the allow=private option. Restricted areas are
+        // not made unattractive per edge but only when entering them, see hgv_avoid_private_etc.json
+        assertEquals(1, priority(createWay("residential", "hgv", "destination")), 0.01);
         assertEquals(1, priority(createWay("residential", "access", "private")), 0.01);
+
+        ReaderWay open = createWay("residential");
+        assertEquals(2000, turnPenalty(open, createWay("residential", "hgv", "destination")), 0.01);
+        assertEquals(2000, turnPenalty(open, createWay("residential", "hgv", "delivery")), 0.01);
+        assertEquals(2000, turnPenalty(open, createWay("residential", "access", "private")), 0.01);
+        // hgv=yes overrules the more generic access=private
+        assertEquals(0, turnPenalty(open, createWay("residential", "access", "private", "hgv", "yes")), 0.01);
+        // driving inside the area or leaving it is free
+        ReaderWay destination = createWay("residential", "hgv", "destination");
+        assertEquals(0, turnPenalty(destination, createWay("residential", "hgv", "destination")), 0.01);
+        assertEquals(0, turnPenalty(destination, open), 0.01);
     }
 
     @Test

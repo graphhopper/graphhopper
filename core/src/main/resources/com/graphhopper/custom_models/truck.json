@@ -1,16 +1,15 @@
 // to use this custom model you need to set the following option in the config.yml
-// graph.encoded_values: hgv_access|allow=delivery;private, hgv, max_width, max_height, car_average_speed, max_weight, max_weight_except, max_speed, ferry_speed
+// graph.encoded_values: hgv_access|allow=delivery;private, hgv_road_access, max_width, max_height, car_average_speed, max_weight, max_weight_except, max_speed, ferry_speed
 // profiles:
 //    - name: truck
 //      turn_costs:
-//        vehicle_types: [hgv, motorcar, motor_vehicle]
-//      custom_model_files: [truck.json]
+//        vehicle_types: [ hgv, motorcar, motor_vehicle ]
+//      custom_model_files: [ truck.json, hgv_avoid_private_etc.json ]
 
 {
   "distance_influence": 1,
   "priority": [
     { "if": "!hgv_access",  "multiply_by": "0" },
-    { "if": "hgv == DELIVERY || hgv == DESTINATION",  "multiply_by": "0.1" },
     { "if": "max_width < 3 || max_height < 4", "multiply_by": "0" },
     { "if": "max_weight < 18 && max_weight_except == MISSING", "multiply_by": "0" }
   ],
