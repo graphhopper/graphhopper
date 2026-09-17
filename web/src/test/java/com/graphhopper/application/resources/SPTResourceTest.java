@@ -106,15 +106,10 @@ public class SPTResourceTest {
         String rspCsvString = clientTarget(app, "/spt?profile=car_without_turncosts&point=42.531073,1.573792&time_limit=300&columns=street_name,road_class,max_speed").request().get(String.class);
         String[] lines = rspCsvString.split("\n");
 
-        String[] row = lines[362].split(",");
-        assertEquals("Placeta Na Maria Pla", row[0]);
-        assertEquals("residential", row[1]);
-        assertEquals(50, Double.parseDouble(row[2]), .1);
-
-        row = lines[249].split(",");
-        assertEquals("Carrer de la Plana", row[0]);
-        assertEquals("unclassified", row[1]);
-        assertEquals(Double.POSITIVE_INFINITY, Double.parseDouble(row[2]), .1);
+        // the order of the rows depends on the travel times, so we only check that the rows exist
+        List<String> rows = Arrays.asList(lines);
+        assertTrue(rows.contains("Placeta Na Maria Pla,residential,50.0"), rspCsvString);
+        assertTrue(rows.contains("Carrer de la Plana,unclassified,Infinity"), rspCsvString);
     }
 
     @Test

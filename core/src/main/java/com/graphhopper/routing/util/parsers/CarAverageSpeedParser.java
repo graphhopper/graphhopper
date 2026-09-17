@@ -22,6 +22,7 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.util.Helper;
 
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
@@ -31,8 +32,8 @@ import static com.graphhopper.routing.ev.Surface.*;
 
 public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements TagParser {
 
-    private static final Set<Surface> BAD_SURFACES = EnumSet.of(COBBLESTONE, GRAVEL, FINE_GRAVEL, SAND, PAVING_STONES,
-            DIRT, GROUND, WOOD, GRASS, UNPAVED, COMPACTED, OTHER);
+    public static final Set<Surface> BAD_SURFACES = Collections.unmodifiableSet(EnumSet.of(COBBLESTONE, GRAVEL,
+            FINE_GRAVEL, SAND, PAVING_STONES, DIRT, GROUND, WOOD, GRASS, UNPAVED, COMPACTED, OTHER));
     // This value determines the maximal possible speed on roads with bad surfaces
     private static final int BAD_SURFACE_SPEED = 30;
 
