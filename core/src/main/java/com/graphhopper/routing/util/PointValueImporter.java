@@ -131,6 +131,8 @@ public class PointValueImporter implements ImportRegistry {
 
     public void execute(BaseGraph graph, EncodedValueLookup lookup) {
         StopWatch sw = StopWatch.started();
+        // TODO GraphHopper creates its index only later, after sorting and cleanUp. Moving initLocationIndex to the
+        //  end of postImportOSM would allow to reuse it.
         LocationIndexTree index = new LocationIndexTree(graph, new GHDirectory("", DAType.RAM));
         index.prepareIndex();
         for (Config config : configs) {
@@ -260,17 +262,12 @@ public class PointValueImporter implements ImportRegistry {
      */
     private static void set(IntEncodedValue enc, boolean reverse, int edge, EdgeIntAccess access, double value, Pick pick) {
         if (enc instanceof DecimalEncodedValue dec) {
-            if (Double.isInfinite(value) && dec.getMaxStorableDecimal() != Double.POSITIVE_INFINITY)
-                value = value > 0 ? dec.getMaxStorableDecimal() : dec.getMinStorableDecimal();
             value = Math.max(dec.getMinStorableDecimal(), Math.min(dec.getMaxStorableDecimal(), value));
-            dec.setDecimal(reverse, edge, access, value);
-            if (Double.isInfinite(value)) return;
-            double stored = dec.getDecimal(reverse, edge, access);
+            // getNextStorableValue rounds up, setDecimal rounds to the closest value
+            dec.setDecimal(reverse, edge, access, pick == Pick.MAX ? dec.getNextStorableValue(value) : value);
             int i = enc.getInt(reverse, edge, access);
-            if (pick == Pick.MIN && stored > value && i > enc.getMinStorableInt())
+            if (pick == Pick.MIN && dec.getDecimal(reverse, edge, access) > value && i > enc.getMinStorableInt())
                 enc.setInt(reverse, edge, access, i - 1);
-            else if (pick == Pick.MAX && stored < value && i < enc.getMaxStorableInt() - (Double.isInfinite(dec.getMaxStorableDecimal()) ? 1 : 0))
-                enc.setInt(reverse, edge, access, i + 1);
         } else {
             long rounded = pick == Pick.MIN ? (long) Math.floor(value) : (long) Math.ceil(value);
             enc.setInt(reverse, edge, access, (int) Math.max(enc.getMinStorableInt(), Math.min(enc.getMaxStorableInt(), rounded)));

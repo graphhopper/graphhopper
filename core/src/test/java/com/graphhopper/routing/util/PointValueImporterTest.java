@@ -66,6 +66,11 @@ class PointValueImporterTest {
         PointValueImporter.apply(graph, index, heightEnc, config("max_height", Pick.MIN, true),
                 List.of(new Point(50.0, 10.005, 5, "", Double.NaN)));
         assertEquals(5, graph.getEdgeIteratorState(0, 1).get(heightEnc), 1e-6);
+
+        // pick max rounds the other way
+        PointValueImporter.apply(graph, index, heightEnc, config("max_height", Pick.MAX, true),
+                List.of(new Point(50.0, 10.005, 4.55, "", Double.NaN)));
+        assertEquals(4.6, graph.getEdgeIteratorState(0, 1).get(heightEnc), 1e-6);
     }
 
     @Test
