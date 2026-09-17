@@ -22,10 +22,12 @@ import com.graphhopper.util.Helper;
 /**
  * This enum defines the road access of an edge. Most edges are accessible from everyone and so the
  * default value is YES. But some have restrictions like "accessible only for customers" or when
- * delivering. The NO value does not permit any access.
+ * delivering. The NO value does not permit any access. The values are ordered from least to most
+ * restrictive, which is used to resolve conditional tags. Only YES has to stay the first value, as
+ * it is the default for edges without an access tag.
  */
 public enum RoadAccess {
-    YES, DESTINATION, CUSTOMERS, DELIVERY, PRIVATE, MILITARY, AGRICULTURAL, FORESTRY, NO;
+    YES, DESIGNATED, DISCOURAGED, DESTINATION, CUSTOMERS, DELIVERY, PRIVATE, MILITARY, AGRICULTURAL, FORESTRY, NO;
 
     public static final String KEY = "road_access";
 

@@ -66,6 +66,11 @@ public class DefaultImportRegistry implements ImportRegistry {
                     (lookup, props) -> OSMRoadAccessParser.forCar(
                             lookup.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class))
             );
+        else if (HgvRoadAccess.KEY.equals(name))
+            return ImportUnit.create(name, props -> HgvRoadAccess.create(),
+                    (lookup, props) -> OSMRoadAccessParser.forHgv(
+                            lookup.getEnumEncodedValue(HgvRoadAccess.KEY, RoadAccess.class))
+            );
         else if (MaxSpeed.KEY.equals(name))
             return ImportUnit.create(name, props -> MaxSpeed.create(),
                     (lookup, props) -> new OSMMaxSpeedParser(
@@ -235,13 +240,6 @@ public class DefaultImportRegistry implements ImportRegistry {
                             PMap.toSet(props.getString("allow", "")), PMap.toSet(props.getString("restrict", ""))),
                     "roundabout"
             );
-        else if (HgvAccess.KEY.equals(name))
-            return ImportUnit.create(name, props -> HgvAccess.create(),
-                    (lookup, props) -> new ModeAccessParser(OSMRoadAccessParser.toOSMRestrictions(TransportationMode.HGV),
-                            lookup.getBooleanEncodedValue(name), true, lookup.getBooleanEncodedValue(Roundabout.KEY),
-                            PMap.toSet(props.getString("allow", "")), PMap.toSet(props.getString("restrict", ""))),
-                    "roundabout"
-            );
         else if (FootTemporalAccess.KEY.equals(name))
             return ImportUnit.create(name, props -> FootTemporalAccess.create(),
                     (lookup, props) -> {
@@ -269,6 +267,13 @@ public class DefaultImportRegistry implements ImportRegistry {
                     }
             );
 
+        else if (VehicleAccess.key("hgv").equals(name))
+            return ImportUnit.create(name, props -> VehicleAccess.create("hgv"),
+                    (lookup, props) -> new ModeAccessParser(OSMRoadAccessParser.toOSMRestrictions(TransportationMode.HGV),
+                            lookup.getBooleanEncodedValue(name), true, lookup.getBooleanEncodedValue(Roundabout.KEY),
+                            PMap.toSet(props.getString("allow", "")), PMap.toSet(props.getString("restrict", ""))),
+                    "roundabout"
+            );
         else if (VehicleAccess.key("car").equals(name))
             return ImportUnit.create(name, props -> VehicleAccess.create("car"),
                     CarAccessParser::new,
