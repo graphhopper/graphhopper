@@ -56,7 +56,7 @@ public class HikeCustomModelTest {
         ReaderWay way = new ReaderWay(0L);
         way.setTag("highway", "track");
         EdgeIteratorState edge = createEdge(way);
-        CustomWeighting.Parameters p = CustomModelParser.createWeightingParameters(cm, em);
+        CustomWeighting.Config p = CustomModelParser.createWeightingConfig(cm, em);
         assertEquals(1.2, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
 
         way.setTag("motor_vehicle", "private");

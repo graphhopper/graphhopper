@@ -24,7 +24,7 @@ public class TruckCustomModelTest {
 
     private EncodingManager em;
     private OSMParsers parsers;
-    private CustomWeighting.Parameters params;
+    private CustomWeighting.Config params;
 
     @BeforeEach
     public void setup() {
@@ -55,7 +55,7 @@ public class TruckCustomModelTest {
         // merge returns a new model instead of changing the given one
         CustomModel cm = CustomModel.merge(GHUtility.loadCustomModelFromJar("truck.json"),
                 GHUtility.loadCustomModelFromJar("hgv_avoid_private_etc.json"));
-        params = CustomModelParser.createWeightingParameters(cm, em);
+        params = CustomModelParser.createWeightingConfig(cm, em);
     }
 
     double priority(ReaderWay way) {

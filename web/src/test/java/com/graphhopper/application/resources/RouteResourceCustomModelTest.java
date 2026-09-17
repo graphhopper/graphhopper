@@ -24,9 +24,9 @@ import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.Profile;
+import com.graphhopper.resources.InfoResource;
 import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.BodyAndStatus;
-import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TurnCostsConfig;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
@@ -39,10 +39,9 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import static com.graphhopper.application.resources.Util.postWithStatus;
 import static com.graphhopper.application.util.TestUtils.clientTarget;
@@ -111,6 +110,17 @@ public class RouteResourceCustomModelTest {
     @AfterAll
     public static void cleanUp() {
         Helper.removeDir(new File(DIR));
+    }
+
+    @Test
+    public void testInfoParameters() {
+        InfoResource.Info info = clientTarget(app, "/info").request().get(InfoResource.Info.class);
+        InfoResource.Info.ProfileData cargoBike = info.profiles.stream().filter(p -> p.name.equals("cargo_bike")).findFirst().orElseThrow();
+        assertEquals(Map.of("vehicle_height", Map.of("value", 2.3, "min", 0.0),
+                "vehicle_width", Map.of("value", 1.2, "min", 0.0),
+                "vehicle_max_speed", Map.of("value", 25.0, "min", 5.0, "max", 35.0)), cargoBike.parameters);
+        InfoResource.Info.ProfileData car = info.profiles.stream().filter(p -> p.name.equals("car")).findFirst().orElseThrow();
+        assertNull(car.parameters);
     }
 
     @Test
@@ -253,20 +263,22 @@ public class RouteResourceCustomModelTest {
     }
 
     @Test
-    public void testCargoBike() throws IOException {
+    public void testCargoBike() {
         String body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"bike\", \"custom_model\": {}, \"ch.disable\": true}";
         JsonNode path = getPath(body);
         assertEquals(path.get("distance").asDouble(), 661, 5);
 
-        String json = Helper.readJSONFileWithoutComments(new InputStreamReader(GHUtility.class.getResourceAsStream("/com/graphhopper/custom_models/cargo_bike.json")));
-        body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"bike\", \"custom_model\":" + json + ", \"ch.disable\": true}";
+        body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"cargo_bike\", \"custom_model\": {}, \"ch.disable\": true}";
         path = getPath(body);
         assertEquals(path.get("distance").asDouble(), 1007, 5);
 
-        // results should be identical be it via server-side profile or query profile:
-        body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"cargo_bike\", \"custom_model\": {}, \"ch.disable\": true}";
+        // a request can override a parameter value within its range, but only the value
+        body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"cargo_bike\", \"custom_model\": {\"parameters\": {\"vehicle_max_speed\": 20}}, \"ch.disable\": true}";
         JsonNode path2 = getPath(body);
         assertEquals(path.get("distance").asDouble(), path2.get("distance").asDouble(), 1);
+        assertTrue(path2.get("time").asLong() > path.get("time").asLong());
+        assertMessageStartsWith(query(body.replace(": 20", ": 50"), 400), "parameter 'vehicle_max_speed': value 50");
+        assertMessageStartsWith(query(body.replace("max_speed", "maxspeed"), 400), "parameter 'vehicle_maxspeed' is not defined");
     }
 
     @Test
