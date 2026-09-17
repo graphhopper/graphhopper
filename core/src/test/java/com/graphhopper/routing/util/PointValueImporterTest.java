@@ -22,6 +22,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import static com.graphhopper.json.Statement.If;
 import static com.graphhopper.json.Statement.Op.MULTIPLY;
@@ -59,17 +60,17 @@ class PointValueImporterTest {
         LocationIndexTree index = createGraph();
         // 2.65 is below the OSM value 3.1 and has to be stored as 2.6, not 2.7
         PointValueImporter.apply(graph, index, heightEnc, config("max_height", Pick.MIN, false),
-                List.of(new Point(50.0, 10.005, 2.65, "", Double.NaN), new Point(50.00018, 10.005, 4.5, "", Double.NaN)));
+                Stream.of(new Point(50.0, 10.005, 2.65, "", Double.NaN), new Point(50.00018, 10.005, 4.5, "", Double.NaN)));
         assertEquals(2.6, graph.getEdgeIteratorState(0, 1).get(heightEnc), 1e-6);
         assertEquals(4.5, graph.getEdgeIteratorState(1, 3).get(heightEnc), 1e-6);
 
         PointValueImporter.apply(graph, index, heightEnc, config("max_height", Pick.MIN, true),
-                List.of(new Point(50.0, 10.005, 5, "", Double.NaN)));
+                Stream.of(new Point(50.0, 10.005, 5, "", Double.NaN)));
         assertEquals(5, graph.getEdgeIteratorState(0, 1).get(heightEnc), 1e-6);
 
         // pick max rounds the other way
         PointValueImporter.apply(graph, index, heightEnc, config("max_height", Pick.MAX, true),
-                List.of(new Point(50.0, 10.005, 4.55, "", Double.NaN)));
+                Stream.of(new Point(50.0, 10.005, 4.55, "", Double.NaN)));
         assertEquals(4.6, graph.getEdgeIteratorState(0, 1).get(heightEnc), 1e-6);
     }
 
@@ -78,7 +79,7 @@ class PointValueImporterTest {
         LocationIndexTree index = createGraph();
         // closer to Main Street, but the name says Side Street. The last point is too far away.
         PointValueImporter.apply(graph, index, heightEnc, config("max_height", Pick.MIN, true),
-                List.of(new Point(50.00007, 10.005, 4, "Side Str.", Double.NaN), new Point(50.001, 10.005, 2, "", Double.NaN)));
+                Stream.of(new Point(50.00007, 10.005, 4, "Side Str.", Double.NaN), new Point(50.001, 10.005, 2, "", Double.NaN)));
         assertEquals(3.1, graph.getEdgeIteratorState(0, 1).get(heightEnc), 1e-6);
         assertEquals(4, graph.getEdgeIteratorState(1, 3).get(heightEnc), 1e-6);
     }
@@ -88,7 +89,7 @@ class PointValueImporterTest {
         LocationIndexTree index = createGraph();
         // exactly in the middle between Main Street and Side Street
         PointValueImporter.apply(graph, index, heightEnc, config("max_height", Pick.MIN, true),
-                List.of(new Point(50.00009, 10.005, 4, "", Double.NaN)));
+                Stream.of(new Point(50.00009, 10.005, 4, "", Double.NaN)));
         assertEquals(4, graph.getEdgeIteratorState(0, 1).get(heightEnc), 1e-6);
         assertEquals(4, graph.getEdgeIteratorState(1, 3).get(heightEnc), 1e-6);
     }
@@ -98,7 +99,7 @@ class PointValueImporterTest {
         LocationIndexTree index = createGraph();
         // heading 270 is westbound, i.e. against the direction 0->1
         PointValueImporter.apply(graph, index, speedEnc, config("speed", Pick.MAX, true),
-                List.of(new Point(50.0, 10.005, 30, "", 270)));
+                Stream.of(new Point(50.0, 10.005, 30, "", 270)));
         EdgeIteratorState edge = graph.getEdgeIteratorState(0, 1);
         assertEquals(0, edge.get(speedEnc));
         assertEquals(30, edge.getReverse(speedEnc));
@@ -106,10 +107,9 @@ class PointValueImporterTest {
 
     @Test
     void importViaConfig(@TempDir Path dir) throws Exception {
-        Path file = dir.resolve("points.json");
+        Path file = dir.resolve("points.ndjson");
         Files.writeString(file, """
-                {"type":"FeatureCollection","features":[
-                 {"type":"Feature","geometry":{"type":"Point","coordinates":[7.4204,43.7334]},"properties":{"value":3.2}}]}""");
+                {"lat": 43.7334, "lon": 7.4204, "value": 3.2}""");
         GraphHopperConfig config = new GraphHopperConfig();
         config.putObject("datareader.file", "../core/files/monaco.osm.gz");
         config.putObject("graph.location", dir.resolve("gh").toString());

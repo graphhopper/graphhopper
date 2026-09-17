@@ -172,15 +172,15 @@ graphhopper:
 
   #### Values from point files ####
 
-  # Sets an encoded value for the closest edge of every point in a GeoJSON file, directly after the import, e.g.
-  # { "type": "Feature", "geometry": { "type": "Point", "coordinates": [9.61768, 55.70960] },
-  #   "properties": { "value": 2.65, "name": "Højstrupvej", "heading": 96 } }
-  # Only value is required. With name only edges with a similar name are used (fails if not found) and with heading (in degrees) only
+  # Sets an encoded value for the closest edge of every point of a file, directly after the import. The file has one
+  # JSON object per line, e.g.
+  #   {"lat": 55.70960, "lon": 9.61768, "value": 2.65, "name": "Højstrupvej", "heading": 96}
+  # Only lat, lon and value are required. With name only edges with a similar name are used (fails if not found) and with heading (in degrees) only
   # edges in that direction. The encoded value has to exist.
   # pick: min or max means how several points on one edge are combined (if overwrite=false is also used for existing OSM data).
   # Values are rounded towards the picked side, e.g. 2.65 becomes 2.6 for "pick: min".
   # import.point_values:
-  #   - file: data/max_height.json
+  #   - file: data/max_height.ndjson
   #     encoded_value: max_height
   #     pick: min
   #     overwrite: false

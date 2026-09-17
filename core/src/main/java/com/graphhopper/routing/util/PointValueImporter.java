@@ -32,9 +32,11 @@ import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Stream;
 
 /**
  * Sets an encoded value for the edges next to points read from GeoJSON files, e.g. official clearance heights of
@@ -97,49 +99,56 @@ public class PointValueImporter {
         for (Config config : configs) {
             if (!lookup.hasEncodedValue(config.encodedValue))
                 throw new IllegalArgumentException("import.point_values: encoded value " + config.encodedValue + " does not exist");
-            apply(graph, index, lookup.getEncodedValue(config.encodedValue, EncodedValue.class), config, readPoints(config.file));
+            try (Stream<Point> points = readPoints(config.file)) {
+                apply(graph, index, lookup.getEncodedValue(config.encodedValue, EncodedValue.class), config, points);
+            }
         }
         logger.info("point values took: " + sw.stop().getSeconds() + "s");
     }
 
-    static List<Point> readPoints(String file) {
+    /**
+     * @return the points of a file with one JSON object per line, e.g.
+     * {"lat": 55.70960, "lon": 9.61768, "value": 2.65, "name": "Højstrupvej", "heading": 96}
+     */
+    static Stream<Point> readPoints(String file) {
         try {
-            JsonNode features = new ObjectMapper().readTree(new File(file)).get("features");
-            if (features == null)
-                throw new IllegalArgumentException("Point values must be a GeoJSON FeatureCollection: " + file);
-            List<Point> points = new ArrayList<>(features.size());
-            for (JsonNode feature : features) {
-                JsonNode props = feature.path("properties"), coords = feature.path("geometry").path("coordinates");
-                if (!"Point".equals(feature.path("geometry").path("type").asText()) || coords.size() < 2 || !props.hasNonNull("value"))
-                    throw new IllegalArgumentException("Every feature needs a Point geometry and a value, but was " + feature + " in " + file);
-                points.add(new Point(coords.get(1).asDouble(), coords.get(0).asDouble(), props.get("value").asDouble(),
-                        props.path("name").asText(""), props.hasNonNull("heading") ? props.get("heading").asDouble() : Double.NaN));
-            }
-            return points;
+            ObjectMapper mapper = new ObjectMapper();
+            return Files.lines(Path.of(file)).filter(line -> !line.isBlank()).map(line -> {
+                try {
+                    JsonNode node = mapper.readTree(line);
+                    if (!node.hasNonNull("lat") || !node.hasNonNull("lon") || !node.hasNonNull("value"))
+                        throw new IllegalArgumentException("Every line needs lat, lon and value, but was " + line + " in " + file);
+                    return new Point(node.get("lat").asDouble(), node.get("lon").asDouble(), node.get("value").asDouble(),
+                            node.path("name").asText(""), node.hasNonNull("heading") ? node.get("heading").asDouble() : Double.NaN);
+                } catch (IOException ex) {
+                    throw new RuntimeException("Cannot parse " + line + " in " + file, ex);
+                }
+            });
         } catch (IOException ex) {
             throw new RuntimeException("Cannot read point values from " + file, ex);
         }
     }
 
-    static void apply(BaseGraph graph, LocationIndexTree index, EncodedValue enc, Config config, List<Point> points) {
+    static void apply(BaseGraph graph, LocationIndexTree index, EncodedValue enc, Config config, Stream<Point> points) {
         if (!(enc instanceof IntEncodedValue intEnc) || enc instanceof EnumEncodedValue || enc instanceof BooleanEncodedValue)
             throw new IllegalArgumentException("import.point_values supports only numeric encoded values, but " + enc.getName() + " is not");
         // edge key -> picked value of all points on it
         IntDoubleHashMap values = new IntDoubleHashMap();
-        int unmatched = 0;
+        int[] counts = new int[2];
         List<Point> unmatchedExamples = new ArrayList<>();
-        for (Point p : points) {
+        points.forEach(p -> {
+            counts[0]++;
             IntHashSet keys = findEdgeKeys(graph, index, p, config, enc.isStoreTwoDirections());
             if (keys.isEmpty()) {
-                unmatched++;
+                counts[1]++;
                 if (unmatchedExamples.size() < 3) unmatchedExamples.add(p);
-                continue;
+                return;
             }
             for (var key : keys) {
                 double old = values.getOrDefault(key.value, Double.NaN);
                 values.put(key.value, Double.isNaN(old) ? p.value : pick(config.pick, old, p.value));
             }
-        }
+        });
 
         EdgeIntAccess access = graph.getEdgeAccess();
         int changed = 0;
@@ -153,9 +162,9 @@ public class PointValueImporter {
             changed++;
         }
         logger.info("point values from {} for {}: points: {}, unmatched: {}, changed edges: {}",
-                config.file, enc.getName(), points.size(), unmatched, changed);
+                config.file, enc.getName(), counts[0], counts[1], changed);
         // the coordinates make it possible to look up on a map why a point was too far away or had the wrong name
-        if (unmatched > 0) logger.info("unmatched points e.g. {}", unmatchedExamples.stream()
+        if (counts[1] > 0) logger.info("unmatched points e.g. {}", unmatchedExamples.stream()
                 .map(p -> p.lat + "," + p.lon + (p.name.isEmpty() ? "" : " (" + p.name + ")")).toList());
     }
 
