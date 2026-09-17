@@ -19,6 +19,7 @@ package com.graphhopper.resources;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntHashSet;
+import com.carrotsearch.hppc.IntIntHashMap;
 import com.carrotsearch.hppc.IntObjectHashMap;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.routing.ev.*;
@@ -33,6 +34,7 @@ import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.util.shapes.GHPoint;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.InputStream;
@@ -394,6 +396,21 @@ public class OSMIssuesResource {
             }
         }
 
+        // A way is split into edges at every junction, down to a few metres where a footway joins.
+        // Markers that stand for a whole way go on the middle of its longest edge in view. Only
+        // tunnels, roofs and ways with maxheight get such a marker.
+        IntIntHashMap longestEdge = new IntIntHashMap();
+        for (int i = 0; i < edgeIds.size(); i++) {
+            EdgeIteratorState edge = graph.getEdgeIteratorStateForKey(edgeIds.get(i) * 2);
+            if (edge.get(roadEnvEnc) != RoadEnvironment.TUNNEL && edge.getValue(COVERED_TAG) == null
+                    && edge.getValue(MAX_HEIGHT_TAG) == null && edge.getValue(MAX_HEIGHT_SIGNED_TAG) == null) continue;
+            Coordinate at = halfway(edge.fetchWayGeometry(FetchMode.ALL));
+            int other = longestEdge.getOrDefault(edge.get(wayIdEnc), -1);
+            if (bbox.contains(at.y, at.x) && (other < 0
+                    || edge.getDistance() > graph.getEdgeIteratorStateForKey(other * 2).getDistance()))
+                longestEdge.put(edge.get(wayIdEnc), edgeIds.get(i));
+        }
+
         if (types.contains(MISSING_MAXHEIGHT_TUNNEL)) {
             // A tunnel or a roof over the road limits its height by itself, so unlike a bridge there
             // is nothing to intersect. covered=yes is not in road_environment - tunnel, bridge and
@@ -401,6 +418,7 @@ public class OSMIssuesResource {
             for (int i = 0; i < edgeIds.size(); i++) {
                 int edgeId = edgeIds.get(i);
                 EdgeIteratorState edge = graph.getEdgeIteratorStateForKey(edgeId * 2);
+                if (longestEdge.getOrDefault(edge.get(wayIdEnc), -1) != edgeId) continue;
                 boolean tunnel = edge.get(roadEnvEnc) == RoadEnvironment.TUNNEL;
                 boolean roofed = tunnel || edge.getValue(COVERED_TAG) != null;
                 if (!roofed || !isMotorized(edge.get(roadClassEnc))) continue;
@@ -408,11 +426,7 @@ public class OSMIssuesResource {
                 boolean hasTag = edge.getValue(MAX_HEIGHT_TAG) != null
                         || "no".equals(edge.getValue(MAX_HEIGHT_SIGNED_TAG));
                 if (hasTag != tagged) continue;
-                PointList pl = edge.fetchWayGeometry(FetchMode.ALL);
-                if (pl.size() < 2) continue;
-                int mid = pl.size() / 2;
-                Coordinate at = new Coordinate(pl.getLon(mid), pl.getLat(mid));
-                if (!bbox.contains(at.y, at.x)) continue;
+                Coordinate at = halfway(edge.fetchWayGeometry(FetchMode.ALL));
                 // no clearance and no neighbours here, so the model ranks these by what is left:
                 // the road, the country and that it is a tunnel or a roof
                 Scored c = new Scored(MISSING_MAXHEIGHT_TUNNEL, at, edge, null, null, Double.NaN, Double.NaN,
@@ -433,14 +447,11 @@ public class OSMIssuesResource {
                 int edgeId = edgeIds.get(i);
                 EdgeIteratorState edge = graph.getEdgeIteratorStateForKey(edgeId * 2);
                 if (!"below_default".equals(edge.getValue(MAX_HEIGHT_TAG))) continue;
+                if (longestEdge.getOrDefault(edge.get(wayIdEnc), -1) != edgeId) continue;
                 RoadClass rc = edge.get(roadClassEnc);
                 if (!isMotorized(rc) || rc == RoadClass.SERVICE || !wanted(rc, roads)) continue;
                 if (carAccessEnc != null && !edge.get(carAccessEnc) && !edge.getReverse(carAccessEnc)) continue;
-                PointList pl = edge.fetchWayGeometry(FetchMode.ALL);
-                if (pl.size() < 2) continue;
-                int mid = pl.size() / 2;
-                Coordinate at = new Coordinate(pl.getLon(mid), pl.getLat(mid));
-                if (!bbox.contains(at.y, at.x)) continue;
+                Coordinate at = halfway(edge.fetchWayGeometry(FetchMode.ALL));
                 addFeature(features, reported, MAXHEIGHT_BELOW_DEFAULT, at, edge, null, wayIdEnc, roadClassEnc);
             }
         }
@@ -466,12 +477,9 @@ public class OSMIssuesResource {
                 RoadClass rc = edge.get(roadClassEnc);
                 if (!isMotorized(rc) || !wanted(rc, roads)) continue;
                 int wayId = edge.get(wayIdEnc);
+                if (longestEdge.getOrDefault(wayId, -1) != edgeId) continue;
                 if (reported.contains(MISSING_MAXHEIGHT_TUNNEL + "-" + wayId)) continue;
-                PointList pl = edge.fetchWayGeometry(FetchMode.ALL);
-                if (pl.size() < 2) continue;
-                int mid = pl.size() / 2;
-                Coordinate at = new Coordinate(pl.getLon(mid), pl.getLat(mid));
-                if (!bbox.contains(at.y, at.x)) continue;
+                Coordinate at = halfway(edge.fetchWayGeometry(FetchMode.ALL));
                 addFeature(features, reported, MISSING_MAXHEIGHT, at, edge, null, wayIdEnc, roadClassEnc,
                         Collections.emptyMap(), MISSING_MAXHEIGHT + "-" + wayId);
             }
@@ -641,6 +649,24 @@ public class OSMIssuesResource {
             }
         }
         return ele;
+    }
+
+    /**
+     * The point halfway along the line, by length. The middle entry of the list is not: a straight
+     * way has only its two ends, and the marker would sit on one of them.
+     */
+    static Coordinate halfway(PointList pl) {
+        DistanceCalcEarth calc = DistanceCalcEarth.DIST_EARTH;
+        double left = DistanceCalcEarth.calcDistance(pl, false) / 2;
+        for (int i = 1; i < pl.size(); i++) {
+            double len = calc.calcDist(pl.getLat(i - 1), pl.getLon(i - 1), pl.getLat(i), pl.getLon(i));
+            if (len > 0 && len >= left) {
+                GHPoint p = calc.intermediatePoint(left / len, pl.getLat(i - 1), pl.getLon(i - 1), pl.getLat(i), pl.getLon(i));
+                return new Coordinate(p.lon, p.lat);
+            }
+            left -= len;
+        }
+        return new Coordinate(pl.getLon(0), pl.getLat(0));
     }
 
     private static boolean isMotorized(RoadClass roadClass) {
