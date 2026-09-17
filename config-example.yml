@@ -172,12 +172,13 @@ graphhopper:
 
   #### Values from point files ####
 
-  # Sets an encoded value for the closest edge of every point in a GeoJSON file, directly after the import.
-  # Feature properties: value (required), name (only edges with a similar name) and heading (in degrees, only edges
-  # in that direction, and for encoded values with two directions only this direction is set).
-  # pick: min or max - how several points on one edge are combined and, if overwrite is false, with the value from OSM.
-  # Values are rounded towards the picked side, e.g. 2.65 becomes 2.6 for pick: min.
-  # The encoded value has to exist, i.e. it must be listed in graph.encoded_values.
+  # Sets an encoded value for the closest edge of every point in a GeoJSON file, directly after the import, e.g.
+  # { "type": "Feature", "geometry": { "type": "Point", "coordinates": [9.61768, 55.70960] },
+  #   "properties": { "value": 2.65, "name": "Højstrupvej", "heading": 96 } }
+  # Only value is required. With name only edges with a similar name are used (fails if not found) and with heading (in degrees) only
+  # edges in that direction. The encoded value has to exist.
+  # pick: min or max means how several points on one edge are combined (if overwrite=false is also used for existing OSM data).
+  # Values are rounded towards the picked side, e.g. 2.65 becomes 2.6 for "pick: min".
   # import.point_values:
   #   - file: data/max_height.json
   #     encoded_value: max_height
