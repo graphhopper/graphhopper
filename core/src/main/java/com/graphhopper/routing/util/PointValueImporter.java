@@ -43,10 +43,8 @@ import java.util.*;
  * and a matching heading. Runs directly after the import, so subnetworks, CH and LM see the values.
  * <p>
  * Feature properties: value (required), name, heading (degrees).
- * <p>
- * As ImportRegistry it wraps the existing registry and creates the encoded values that GraphHopper does not know.
  */
-public class PointValueImporter implements ImportRegistry {
+public class PointValueImporter {
     private static final Logger logger = LoggerFactory.getLogger(PointValueImporter.class);
     // edges at the same distance are all taken, e.g. the artificial copies of an edge
     private static final double SAME_DISTANCE = 0.01;
@@ -70,16 +68,10 @@ public class PointValueImporter implements ImportRegistry {
     record Point(double lat, double lon, double value, String name, double heading) {
     }
 
-    private final ImportRegistry registry;
     private final List<Config> configs;
 
-    public PointValueImporter(ImportRegistry registry, List<Config> configs) {
-        this.registry = registry;
+    public PointValueImporter(List<Config> configs) {
         this.configs = configs;
-    }
-
-    public List<Config> getConfigs() {
-        return configs;
     }
 
     /**
@@ -91,42 +83,6 @@ public class PointValueImporter implements ImportRegistry {
         if (!(object instanceof List<?> list))
             throw new IllegalArgumentException("import.point_values must be a list but was " + object);
         return list.stream().map(o -> Config.fromMap((Map<String, Object>) o)).toList();
-    }
-
-    /**
-     * An encoded value that only this importer fills needs its layout from graph.encoded_values, e.g.
-     * bridge_class|max=200|default=infinity. Supported: bits or max, min (0), factor (1), two_directions (false)
-     * and default (0), which is the value of edges without a point.
-     */
-    @Override
-    public ImportUnit createImportUnit(String name) {
-        ImportUnit importUnit = registry.createImportUnit(name);
-        if (importUnit != null || configs.stream().noneMatch(c -> c.encodedValue.equals(name)))
-            return importUnit;
-        return ImportUnit.create(name, props -> {
-            if (!props.has("bits") && !props.has("max"))
-                throw new IllegalArgumentException("Encoded value " + name + " is unknown, so it needs bits or max, e.g. graph.encoded_values: "
-                        + name + "|max=100|factor=1|default=infinity");
-            double factor = props.getDouble("factor", 1), min = props.getDouble("min", 0);
-            boolean infinity = isInfinity(props.getString("default", "0"));
-            // the maximum is reserved for infinity
-            int bits = props.has("bits") ? props.getInt("bits", 0)
-                    : 64 - Long.numberOfLeadingZeros(Math.round((props.getDouble("max", 0) - min) / factor) + (infinity ? 1 : 0));
-            return new DecimalEncodedValueImpl(name, bits, min, factor, false, props.getBool("two_directions", false), infinity);
-        }, (lookup, props) -> {
-            String defaultStr = props.getString("default", "0");
-            double defaultValue = isInfinity(defaultStr) ? Double.POSITIVE_INFINITY : Double.parseDouble(defaultStr);
-            if (defaultValue == 0) return null;
-            DecimalEncodedValue enc = lookup.getDecimalEncodedValue(name);
-            return (edgeId, edgeIntAccess, way, relationFlags) -> {
-                enc.setDecimal(false, edgeId, edgeIntAccess, defaultValue);
-                if (enc.isStoreTwoDirections()) enc.setDecimal(true, edgeId, edgeIntAccess, defaultValue);
-            };
-        });
-    }
-
-    private static boolean isInfinity(String str) {
-        return str.equalsIgnoreCase("infinity");
     }
 
     public void execute(BaseGraph graph, EncodedValueLookup lookup) {

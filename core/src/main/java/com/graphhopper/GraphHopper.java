@@ -500,7 +500,7 @@ public class GraphHopper {
             maxSpeedCalculator = new MaxSpeedCalculator(MaxSpeedCalculator.createLegalDefaultSpeeds());
         List<PointValueImporter.Config> pointValueConfigs = PointValueImporter.parseConfigs(ghConfig.asPMap().getObject("import.point_values", null));
         if (!pointValueConfigs.isEmpty())
-            importRegistry = pointValueImporter = new PointValueImporter(importRegistry, pointValueConfigs);
+            pointValueImporter = new PointValueImporter(pointValueConfigs);
 
         removeZipped = ghConfig.getBool("graph.remove_zipped", removeZipped);
 
@@ -889,9 +889,6 @@ public class GraphHopper {
             encodedValuesWithProps.put(UrbanDensity.KEY, new PMap());
         if (maxSpeedCalculator != null)
             encodedValuesWithProps.put(MaxSpeedEstimated.KEY, new PMap());
-        if (pointValueImporter != null)
-            pointValueImporter.getConfigs().forEach(c -> encodedValuesWithProps.putIfAbsent(c.encodedValue(), new PMap()));
-
         Map<String, ImportUnit> activeImportUnits = new LinkedHashMap<>();
         ArrayDeque<String> deque = new ArrayDeque<>(encodedValuesWithProps.keySet());
         while (!deque.isEmpty()) {

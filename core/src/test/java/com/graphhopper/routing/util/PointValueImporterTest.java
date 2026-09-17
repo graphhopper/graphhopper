@@ -95,24 +95,24 @@ class PointValueImporterTest {
     }
 
     @Test
-    void importWithNewEncodedValue(@TempDir Path dir) throws Exception {
+    void importViaConfig(@TempDir Path dir) throws Exception {
         Path file = dir.resolve("points.json");
         Files.writeString(file, """
                 {"type":"FeatureCollection","features":[
-                 {"type":"Feature","geometry":{"type":"Point","coordinates":[7.4204,43.7334]},"properties":{"value":42}}]}""");
+                 {"type":"Feature","geometry":{"type":"Point","coordinates":[7.4204,43.7334]},"properties":{"value":3.2}}]}""");
         GraphHopperConfig config = new GraphHopperConfig();
         config.putObject("datareader.file", "../core/files/monaco.osm.gz");
         config.putObject("graph.location", dir.resolve("gh").toString());
         config.putObject("import.osm.ignored_highways", "");
-        config.putObject("graph.encoded_values", "car_access, bridge_class|max=200|default=infinity");
-        config.putObject("import.point_values", List.of(Map.of("file", file.toString(), "encoded_value", "bridge_class", "pick", "min", "max_distance", 50)));
+        config.putObject("graph.encoded_values", "car_access, max_height");
+        config.putObject("import.point_values", List.of(Map.of("file", file.toString(), "encoded_value", "max_height", "pick", "min", "max_distance", 50)));
         config.setProfiles(List.of(new Profile("car").setCustomModel(new com.graphhopper.util.CustomModel()
                 .addToPriority(If("!car_access", MULTIPLY, "0")).addToSpeed(If("true", com.graphhopper.json.Statement.Op.LIMIT, "100")))));
         GraphHopper hopper = new GraphHopper().init(config).importOrLoad();
 
-        DecimalEncodedValue enc = hopper.getEncodingManager().getDecimalEncodedValue("bridge_class");
+        DecimalEncodedValue enc = hopper.getEncodingManager().getDecimalEncodedValue("max_height");
         Snap snap = hopper.getLocationIndex().findClosest(43.7334, 7.4204, EdgeFilter.ALL_EDGES);
-        assertEquals(42, snap.getClosestEdge().get(enc));
+        assertEquals(3.2, snap.getClosestEdge().get(enc), 1e-6);
         assertEquals(INF, hopper.getBaseGraph().getEdgeIteratorState(0, Integer.MIN_VALUE).get(enc));
         hopper.close();
     }
