@@ -22,17 +22,21 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.util.Helper;
 
+import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import static com.graphhopper.routing.ev.Surface.*;
+
 public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements TagParser {
 
+    private static final Set<Surface> BAD_SURFACES = EnumSet.of(COBBLESTONE, GRAVEL, FINE_GRAVEL, SAND, PAVING_STONES,
+            DIRT, GROUND, WOOD, GRASS, UNPAVED, COMPACTED, OTHER);
+    // This value determines the maximal possible speed on roads with bad surfaces
+    private static final int BAD_SURFACE_SPEED = 30;
+
     protected final Map<String, Integer> trackTypeSpeedMap = new HashMap<>();
-    protected final Set<String> badSurfaceSpeedMap = new HashSet<>();
-    // This value determines the maximal possible on roads with bad surfaces
-    private final int badSurfaceSpeed;
 
     /**
      * A map which associates string to speed. Get some impression:
@@ -47,23 +51,6 @@ public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements
 
     public CarAverageSpeedParser(DecimalEncodedValue speedEnc) {
         super(speedEnc);
-
-        badSurfaceSpeedMap.add("cobblestone");
-        badSurfaceSpeedMap.add("unhewn_cobblestone");
-        badSurfaceSpeedMap.add("sett");
-        badSurfaceSpeedMap.add("grass_paver");
-        badSurfaceSpeedMap.add("gravel");
-        badSurfaceSpeedMap.add("fine_gravel");
-        badSurfaceSpeedMap.add("pebblestone");
-        badSurfaceSpeedMap.add("sand");
-        badSurfaceSpeedMap.add("paving_stones");
-        badSurfaceSpeedMap.add("dirt");
-        badSurfaceSpeedMap.add("earth");
-        badSurfaceSpeedMap.add("ground");
-        badSurfaceSpeedMap.add("wood");
-        badSurfaceSpeedMap.add("grass");
-        badSurfaceSpeedMap.add("unpaved");
-        badSurfaceSpeedMap.add("compacted");
 
         // autobahn
         defaultSpeedMap.put("motorway", 100);
@@ -94,9 +81,6 @@ public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements
         trackTypeSpeedMap.put("grade2", 15); // now unpaved - gravel mixed with ...
         trackTypeSpeedMap.put("grade3", 10); // ... hard and soft materials
         trackTypeSpeedMap.put(null, defaultSpeedMap.get("track"));
-
-        // limit speed on bad surfaces to 30 km/h
-        badSurfaceSpeed = 30;
     }
 
     protected double getSpeed(ReaderWay way) {
@@ -125,7 +109,6 @@ public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements
 
         // get assumed speed from highway type
         double speed = getSpeed(way);
-        speed = applyBadSurfaceSpeed(way, speed);
 
         setSpeed(false, edgeId, edgeIntAccess, applyMaxSpeed(way, speed, false));
         setSpeed(true, edgeId, edgeIntAccess, applyMaxSpeed(way, speed, true));
@@ -138,7 +121,9 @@ public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements
      */
     protected double applyMaxSpeed(ReaderWay way, double speed, boolean bwd) {
         double maxSpeed = OSMMaxSpeedParser.parseMaxSpeed(way, bwd);
-        return maxSpeed != MaxSpeed.MAXSPEED_MISSING ? Math.max(1, maxSpeed * 0.9) : speed;
+        speed = maxSpeed != MaxSpeed.MAXSPEED_MISSING ? Math.max(1, maxSpeed * 0.9) : speed;
+        // a bad surface limits the speed even if the legal speed limit is higher
+        return applyBadSurfaceSpeed(way, speed);
     }
 
     /**
@@ -147,15 +132,6 @@ public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements
      * @return The assumed speed
      */
     protected double applyBadSurfaceSpeed(ReaderWay way, double speed) {
-        // limit speed if bad surface
-        if (badSurfaceSpeed > 0 && speed > badSurfaceSpeed) {
-            String surface = way.getTag("surface", "");
-            int colonIndex = surface.indexOf(":");
-            if (colonIndex != -1)
-                surface = surface.substring(0, colonIndex);
-            if (badSurfaceSpeedMap.contains(surface))
-                speed = badSurfaceSpeed;
-        }
-        return speed;
+        return BAD_SURFACES.contains(Surface.find(way.getTag("surface"))) ? Math.min(speed, BAD_SURFACE_SPEED) : speed;
     }
 }
