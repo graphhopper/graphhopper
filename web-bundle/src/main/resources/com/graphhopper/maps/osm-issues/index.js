@@ -236,11 +236,15 @@ const osmTagLayer = new ol.layer.Vector({
     }
 });
 
+// the background, its attribution also says how old the data behind the issues is. A function,
+// because setAttributions() would reset the tile source and crash tiles still waiting to load.
+let dataAge = '';
+const osmSource = new ol.source.OSM({attributions: () => ol.source.OSM.ATTRIBUTION.replace(/\.$/, '') + dataAge});
 const map = new ol.Map({
     target: 'map',
     // order matters: the highlighted way is a line under the markers, not across them, and the
     // issues stay on top of everything
-    layers: [new ol.layer.Tile({source: new ol.source.OSM()}), signLayer, wayLayer, osmTagLayer, issueLayer],
+    layers: [new ol.layer.Tile({source: osmSource}), signLayer, wayLayer, osmTagLayer, issueLayer],
     // a two finger pinch on a phone turns the map by accident far more often than on purpose
     view: new ol.View({...(parseHash() || {center: [0, 0], zoom: 2}), enableRotation: false})
 });
@@ -321,11 +325,18 @@ function goToMyLocation() {
 
 addMapTools();
 
-// without a position in the url hash we show the area of the imported map
-if (!parseHash())
-    ghFetch('/info').then(info => map.getView().fit(
-        ol.proj.transformExtent(info.bbox, 'EPSG:4326', 'EPSG:3857'), {size: map.getSize(), maxZoom: 16}
-    )).catch(err => setStatus(err.message));
+// how old the OSM data behind the issues is, and without a position in the url hash the area of
+// the imported map
+ghFetch('/info').then(info => {
+    if (info.data_date) {
+        const days = Math.floor((Date.now() - Date.parse(info.data_date)) / 86400000);
+        dataAge = ' (data from ' + info.data_date.slice(0, 10) + ', ' + (days === 1 ? '1 day' : days + ' days') + ' old)';
+        map.render();
+    }
+    if (!parseHash())
+        map.getView().fit(ol.proj.transformExtent(info.bbox, 'EPSG:4326', 'EPSG:3857'),
+            {size: map.getSize(), maxZoom: 16});
+}).catch(err => setStatus(err.message));
 
 // ---------------------------------------------------------------- loading
 
@@ -395,7 +406,8 @@ function load() {
         // unchecking every box is a deliberate action, there the markers should go away at once
         issueSource.clear();
         issues.forget();
-        setStatus(roadGroups().length ? 'no issue type selected' : 'no road class selected');
+        const why = roadGroups().length ? 'no issue type selected' : 'no road class selected';
+        setStatus(why, why, true);
         return;
     }
     // the old markers stay on the map until the new ones are there, so panning does not blank it.
@@ -423,9 +435,13 @@ map.on('moveend', () => {
 
 /** The status is about the issues and sits at the end of their group. Folded, or with the sheet
  *  collapsed on a phone, that group is not visible - there the heading carries it instead. */
-function setStatus(text, folded = text) {
+function setStatus(text, folded = text, warn = false) {
     $('status').textContent = text;
     $('summary-status').textContent = folded;
+    // orange for "nothing is loaded because of a filter" - the empty map is easy to mistake for
+    // "nothing found here"
+    $('status').classList.toggle('warn', warn);
+    $('summary-status').classList.toggle('warn', warn);
 }
 
 const issueCount = n => n + (n === 1 ? ' issue' : ' issues');

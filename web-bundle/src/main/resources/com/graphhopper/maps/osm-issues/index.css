@@ -602,6 +602,13 @@ input.changed {
     content: "· ";
 }
 
+/* a filter that hides everything is a warning, not information */
+#status.warn,
+#summary-status.warn {
+    color: #d35400;
+    font-weight: 600;
+}
+
 #filters .note {
     color: #888;
     font-size: 12px;
