@@ -84,6 +84,16 @@ class PointValueImporterTest {
     }
 
     @Test
+    void sameDistanceGoesToAllEdges() {
+        LocationIndexTree index = createGraph();
+        // exactly in the middle between Main Street and Side Street
+        PointValueImporter.apply(graph, index, heightEnc, config("max_height", Pick.MIN, true),
+                List.of(new Point(50.00009, 10.005, 4, "", Double.NaN)));
+        assertEquals(4, graph.getEdgeIteratorState(0, 1).get(heightEnc), 1e-6);
+        assertEquals(4, graph.getEdgeIteratorState(1, 3).get(heightEnc), 1e-6);
+    }
+
+    @Test
     void headingSelectsDirection() {
         LocationIndexTree index = createGraph();
         // heading 270 is westbound, i.e. against the direction 0->1

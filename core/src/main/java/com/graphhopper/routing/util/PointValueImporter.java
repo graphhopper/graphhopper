@@ -81,7 +81,11 @@ public class PointValueImporter {
         if (object == null) return List.of();
         if (!(object instanceof List<?> list))
             throw new IllegalArgumentException("import.point_values must be a list but was " + object);
-        return list.stream().map(o -> Config.fromMap((Map<String, Object>) o)).toList();
+        return list.stream().map(o -> {
+            if (!(o instanceof Map))
+                throw new IllegalArgumentException("Every import.point_values entry must be a map but was " + o);
+            return Config.fromMap((Map<String, Object>) o);
+        }).toList();
     }
 
     public void execute(BaseGraph graph, EncodedValueLookup lookup) {
@@ -105,10 +109,9 @@ public class PointValueImporter {
                 throw new IllegalArgumentException("Point values must be a GeoJSON FeatureCollection: " + file);
             List<Point> points = new ArrayList<>(features.size());
             for (JsonNode feature : features) {
-                JsonNode geometry = feature.get("geometry"), props = feature.get("properties");
-                if (geometry == null || !"Point".equals(geometry.path("type").asText()) || !props.hasNonNull("value"))
+                JsonNode props = feature.path("properties"), coords = feature.path("geometry").path("coordinates");
+                if (!"Point".equals(feature.path("geometry").path("type").asText()) || coords.size() < 2 || !props.hasNonNull("value"))
                     throw new IllegalArgumentException("Every feature needs a Point geometry and a value, but was " + feature + " in " + file);
-                JsonNode coords = geometry.get("coordinates");
                 points.add(new Point(coords.get(1).asDouble(), coords.get(0).asDouble(), props.get("value").asDouble(),
                         props.path("name").asText(""), props.hasNonNull("heading") ? props.get("heading").asDouble() : Double.NaN));
             }
@@ -124,10 +127,12 @@ public class PointValueImporter {
         // edge key -> picked value of all points on it
         IntDoubleHashMap values = new IntDoubleHashMap();
         int unmatched = 0;
+        List<Point> unmatchedExamples = new ArrayList<>();
         for (Point p : points) {
             IntHashSet keys = findEdgeKeys(graph, index, p, config, enc.isStoreTwoDirections());
             if (keys.isEmpty()) {
                 unmatched++;
+                if (unmatchedExamples.size() < 3) unmatchedExamples.add(p);
                 continue;
             }
             for (var key : keys) {
@@ -149,6 +154,9 @@ public class PointValueImporter {
         }
         logger.info("point values from {} for {}: points: {}, unmatched: {}, changed edges: {}",
                 config.file, enc.getName(), points.size(), unmatched, changed);
+        // the coordinates make it possible to look up on a map why a point was too far away or had the wrong name
+        if (unmatched > 0) logger.info("unmatched points e.g. {}", unmatchedExamples.stream()
+                .map(p -> p.lat + "," + p.lon + (p.name.isEmpty() ? "" : " (" + p.name + ")")).toList());
     }
 
     /**
