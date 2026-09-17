@@ -18,7 +18,9 @@
 
 package com.graphhopper.routing;
 
+import com.carrotsearch.hppc.IntHashSet;
 import com.carrotsearch.hppc.IntIndexedContainer;
+import com.carrotsearch.hppc.IntSet;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.carrotsearch.hppc.predicates.IntObjectPredicate;
 import com.graphhopper.routing.weighting.Weighting;
@@ -187,7 +189,7 @@ public class AlternativeRouteEdgeCH extends DijkstraBidirectionEdgeCHNoSOD {
         double sharedDistance = 0.0;
         List<EdgeIteratorState> edges = path.calcEdges();
         for (EdgeIteratorState edge : edges) {
-            if (alternatives.get(0).nodes.contains(edge.getBaseNode()) && alternatives.get(0).nodes.contains(edge.getAdjNode())) {
+            if (alternatives.getFirst().nodes.contains(edge.getBaseNode()) && alternatives.getFirst().nodes.contains(edge.getAdjNode())) {
                 sharedDistance += edge.getDistance();
             }
         }
@@ -290,12 +292,12 @@ public class AlternativeRouteEdgeCH extends DijkstraBidirectionEdgeCHNoSOD {
     public static class AlternativeInfo {
         final double shareWeight;
         final Path path;
-        final IntIndexedContainer nodes;
+        final IntSet nodes;
 
         AlternativeInfo(Path path, double shareWeight) {
             this.path = path;
             this.shareWeight = shareWeight;
-            this.nodes = path.calcNodes();
+            this.nodes = new IntHashSet(path.calcNodes());
         }
 
         @Override
