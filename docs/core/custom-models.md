@@ -749,9 +749,8 @@ Parameters can only be defined in the server-side custom model. A request can th
 values, but not introduce new parameters and not change the type. Unlike statements, which are
 appended when a request custom model is merged with the profile's custom model, parameters are
 overridden per name. So a request can tweak the values that the server-side profile uses without
-repeating (and accidentally double-applying) its statements - here e.g. with
-`{"parameters": {"slow_factor": 0.6}}`. A parameter name follows the same rules as an
-encoded value name: it starts with a lower case letter, followed by lower case letters, numbers or single underscores.
+repeating (and accidentally double-applying) its statements e.g. with
+`{"parameters": {"slow_factor": 0.6}}`.
 
 For number parameters the server-side definition can restrict the allowed values with the object
 form `{"value": 0.8, "min": 0.5, "max": 1}` - requests must stay within `[min, max]` and cannot
@@ -766,7 +765,7 @@ values: the value of a statement must not increase (e.g. a decreased `p_vehicle_
 in a condition is only supported for blocking statements, where the condition must apply to more
 edges (e.g. a decreased `p_max_mtb_rating` of the bike custom model excludes more roads). Booleans
 and parameters used in `turn_penalty` or with an encoded value can never change. Everything else is
-rejected - use `lm.disable=true`. So pick the server-side value at the permissive end of the range
+rejected and to avoid this use `lm.disable=true`. So pick the server-side value at the permissive end of the range
 (e.g. the smallest truck weight), as requests can only restrict further. Changing parameter values
 does not trigger a recompilation of the custom model, so it is cheaper than changing statements.
 
