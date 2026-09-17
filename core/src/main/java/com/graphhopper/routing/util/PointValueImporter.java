@@ -28,7 +28,6 @@ import com.graphhopper.storage.DAType;
 import com.graphhopper.storage.GHDirectory;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.*;
-import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -157,10 +156,8 @@ public class PointValueImporter {
      * (or for an encoded value with one direction) both directions of the edge are returned.
      */
     static IntHashSet findEdgeKeys(BaseGraph graph, LocationIndexTree index, Point p, Config config, boolean twoDirections) {
-        double dLat = config.maxDistance / DistanceCalcEarth.METERS_PER_DEGREE;
-        double dLon = dLat / Math.cos(Math.toRadians(p.lat));
         IntHashSet edgeIds = new IntHashSet();
-        index.query(new BBox(p.lon - dLon, p.lon + dLon, p.lat - dLat, p.lat + dLat), edgeIds::add);
+        index.query(DistanceCalcEarth.DIST_EARTH.createBBox(p.lat, p.lon, config.maxDistance), edgeIds::add);
 
         GHPoint point = new GHPoint(p.lat, p.lon);
         NameSimilarityEdgeFilter nameFilter = p.name.isEmpty() ? null
