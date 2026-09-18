@@ -524,13 +524,20 @@ public class FootTagParserTest {
         node.setTag("locked", "yes");
         assertTrue(allowPrivateAccessParser.isBarrier(node));
 
-        // same test as before with other tag order
+        // Same test as before with other tag order
         node.clearTags();
         node.setTag("barrier", "gate");
         node.setTag("locked", "yes");
         assertTrue(allowPrivateAccessParser.isBarrier(node));
         node.setTag("access", "private");
         assertTrue(allowPrivateAccessParser.isBarrier(node));
+        node.setTag("access", "destination");
+        // See discussion in #3406. It is impossible to guess the intention for this combination.
+        // We block it because this simplifies the implementation logic.
+        // If someone wants to allow access for foot, they can add foot=yes.
+        assertTrue(allowPrivateAccessParser.isBarrier(node));
+        node.setTag("foot", "yes");
+        assertFalse(allowPrivateAccessParser.isBarrier(node));
     }
 
     @Test
