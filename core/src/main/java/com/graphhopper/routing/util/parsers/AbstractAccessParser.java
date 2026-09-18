@@ -118,7 +118,7 @@ public abstract class AbstractAccessParser implements TagParser {
 
         if (restrictedValues.contains(firstValue))
             return true;
-        else if (node.hasTag("locked", "yes") && !allowedValues.contains(firstValue))
+        else if (node.hasTag("locked", "yes") && (!allowedValues.contains(firstValue) || firstValue.equals("private")))
             return true;
         else if (allowedValues.contains(firstValue))
             return false;

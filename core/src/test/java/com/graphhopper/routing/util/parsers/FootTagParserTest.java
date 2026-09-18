@@ -56,10 +56,12 @@ public class FootTagParserTest {
             .add(FerrySpeed.create())
             .build();
     private final FootAccessParser accessParser = new FootAccessParser(encodingManager, new PMap());
+    private final FootAccessParser allowPrivateAccessParser = new FootAccessParser(encodingManager, new PMap());
     private final FootAverageSpeedParser speedParser = new FootAverageSpeedParser(encodingManager);
     private final FootPriorityParser prioParser = new FootPriorityParser(encodingManager);
 
     public FootTagParserTest() {
+        allowPrivateAccessParser.blockPrivate(false);
     }
 
     @Test
@@ -512,6 +514,14 @@ public class FootTagParserTest {
         node.setTag("barrier", "yes");
         node.setTag("access", "no");
         assertTrue(accessParser.isBarrier(node));
+
+        node.clearTags();
+        node.setTag("barrier", "gate");
+        assertFalse(allowPrivateAccessParser.isBarrier(node));
+        node.setTag("access", "private");
+        assertFalse(allowPrivateAccessParser.isBarrier(node));
+        node.setTag("locked", "yes");
+        assertTrue(allowPrivateAccessParser.isBarrier(node));
     }
 
     @Test
