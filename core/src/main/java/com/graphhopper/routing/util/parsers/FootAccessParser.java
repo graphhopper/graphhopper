@@ -49,6 +49,7 @@ public class FootAccessParser extends AbstractAccessParser implements TagParser 
         sidewalkValues.add("right");
 
         barriers.add("fence");
+        barriers.add("wall");
 
         allowedHighwayTags.add("footway");
         allowedHighwayTags.add("path");

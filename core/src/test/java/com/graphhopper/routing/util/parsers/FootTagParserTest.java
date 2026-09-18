@@ -56,10 +56,12 @@ public class FootTagParserTest {
             .add(FerrySpeed.create())
             .build();
     private final FootAccessParser accessParser = new FootAccessParser(encodingManager, new PMap());
+    private final FootAccessParser allowPrivateAccessParser = new FootAccessParser(encodingManager, new PMap());
     private final FootAverageSpeedParser speedParser = new FootAverageSpeedParser(encodingManager);
     private final FootPriorityParser prioParser = new FootPriorityParser(encodingManager);
 
     public FootTagParserTest() {
+        allowPrivateAccessParser.blockPrivate(false);
     }
 
     @Test
@@ -512,6 +514,30 @@ public class FootTagParserTest {
         node.setTag("barrier", "yes");
         node.setTag("access", "no");
         assertTrue(accessParser.isBarrier(node));
+
+        // test usage of xy_access|block_private=false
+        node.clearTags();
+        node.setTag("barrier", "gate");
+        assertFalse(allowPrivateAccessParser.isBarrier(node));
+        node.setTag("access", "private");
+        assertFalse(allowPrivateAccessParser.isBarrier(node));
+        node.setTag("locked", "yes");
+        assertTrue(allowPrivateAccessParser.isBarrier(node));
+
+        // Same test as before with other tag order
+        node.clearTags();
+        node.setTag("barrier", "gate");
+        node.setTag("locked", "yes");
+        assertTrue(allowPrivateAccessParser.isBarrier(node));
+        node.setTag("access", "private");
+        assertTrue(allowPrivateAccessParser.isBarrier(node));
+        node.setTag("access", "destination");
+        // See discussion in #3406. It is impossible to guess the intention for this combination.
+        // We block it because this simplifies the implementation logic.
+        // If someone wants to allow access for foot, they can add foot=yes.
+        assertTrue(allowPrivateAccessParser.isBarrier(node));
+        node.setTag("foot", "yes");
+        assertFalse(allowPrivateAccessParser.isBarrier(node));
     }
 
     @Test
