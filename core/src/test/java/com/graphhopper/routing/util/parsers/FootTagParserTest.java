@@ -515,12 +515,21 @@ public class FootTagParserTest {
         node.setTag("access", "no");
         assertTrue(accessParser.isBarrier(node));
 
+        // test usage of xy_access|block_private=false
         node.clearTags();
         node.setTag("barrier", "gate");
         assertFalse(allowPrivateAccessParser.isBarrier(node));
         node.setTag("access", "private");
         assertFalse(allowPrivateAccessParser.isBarrier(node));
         node.setTag("locked", "yes");
+        assertTrue(allowPrivateAccessParser.isBarrier(node));
+
+        // same test as before with other tag order
+        node.clearTags();
+        node.setTag("barrier", "gate");
+        node.setTag("locked", "yes");
+        assertTrue(allowPrivateAccessParser.isBarrier(node));
+        node.setTag("access", "private");
         assertTrue(allowPrivateAccessParser.isBarrier(node));
     }
 
