@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -159,6 +160,18 @@ class FootModeAccessParserTest {
         assertTrue(footAccessEnc.getBool(false, edgeId, access));
     }
 
+    @Test
+    void testLockedGateWithAllowedPrivate() {
+        ModeAccessParser allowPrivateParser = new ModeAccessParser(OSMRoadAccessParser.toOSMRestrictions(TransportationMode.FOOT),
+                footAccessEnc, false, em.getBooleanEncodedValue(Roundabout.KEY), Set.of("private"), Set.of());
+        ArrayEdgeIntAccess access = new ArrayEdgeIntAccess(1);
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "footway");
+        way.setTag("gh:barrier_edge", true);
+        way.setTag("node_tags", List.of(Map.of("barrier", "gate", "access", "private", "locked", "yes"), Map.of()));
+        allowPrivateParser.handleWayTags(0, access, way, null);
+        assertFalse(footAccessEnc.getBool(false, 0, access));
+    }
 
     @Test
     public void motorwayImpliesOneway() {

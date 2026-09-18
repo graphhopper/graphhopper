@@ -12,7 +12,7 @@ import static com.graphhopper.routing.util.parsers.OSMTemporalAccessParser.hasPe
 
 public class ModeAccessParser implements TagParser {
 
-    private static final Set<String> INTENDED = Set.of("yes", "designated", "official", "permissive", "destination");
+    private static final Set<String> ALLOWED = Set.of("yes", "designated", "official", "permissive", "destination");
     private static final Set<String> RESTRICTED = Set.of("no", "restricted", "military", "emergency",
             "private", "permit", "service", "delivery", "customers", "agricultural", "forestry");
     private static final Map<String, String> MOTORROAD_DEFAULTS = Map.of("foot", "no", "bicycle", "no");
@@ -72,7 +72,7 @@ public class ModeAccessParser implements TagParser {
         BARRIER_TYPE_DEFAULTS = Map.copyOf(b);
     }
     private static final Set<String> ONEWAYS_FW = Set.of("yes", "true", "1");
-    private final Set<String> intended;
+    private final Set<String> allowed;
     private final Set<String> restricted;
     private final List<String> restrictionKeys;
     private final List<String> vehicleForward;
@@ -93,17 +93,17 @@ public class ModeAccessParser implements TagParser {
         onewayModeKeys = restrictionKeys.stream().map(r -> "oneway:" + r).toList();
         this.skipEmergency = skipEmergency;
 
-        this.intended = new HashSet<>(INTENDED);
+        this.allowed = new HashSet<>(ALLOWED);
         this.restricted = new HashSet<>(RESTRICTED);
         for (String value : allow) {
             if (restricted.remove(value))
-                intended.add(value);
-            else if (!intended.contains(value))
+                allowed.add(value);
+            else if (!allowed.contains(value))
                 throw new IllegalArgumentException("cannot allow '" + value + "' — not a known restricted value");
         }
         for (String value : restrict) {
-            if (intended.contains(value))
-                throw new IllegalArgumentException("cannot restrict '" + value + "' — it is an intended value");
+            if (allowed.contains(value))
+                throw new IllegalArgumentException("cannot restrict '" + value + "' — it is an allowed value");
             restricted.add(value);
         }
     }
@@ -141,7 +141,7 @@ public class ModeAccessParser implements TagParser {
             String key = restrictionKeys.get(i);
             String explicit = way.getTag(key);
             if (explicit != null) {
-                if (intended.contains(explicit) || restricted.contains(explicit)) {
+                if (allowed.contains(explicit) || restricted.contains(explicit)) {
                     firstIndex = i;
                     firstValue = explicit;
                     break;
@@ -155,7 +155,7 @@ public class ModeAccessParser implements TagParser {
                 break;
             }
         }
-        if (restricted.contains(firstValue) && !hasPermissiveTemporalRestriction(way, firstIndex, restrictionKeys, intended))
+        if (restricted.contains(firstValue) && !hasPermissiveTemporalRestriction(way, firstIndex, restrictionKeys, allowed))
             return;
 
         if (way.hasTag("gh:barrier_edge") && way.hasTag("node_tags")) {
@@ -168,7 +168,7 @@ public class ModeAccessParser implements TagParser {
             for (String key : restrictionKeys) {
                 String explicit = (String) firstNodeTags.get(key);
                 if (explicit != null) {
-                    if (intended.contains(explicit) || restricted.contains(explicit)) {
+                    if (allowed.contains(explicit) || restricted.contains(explicit)) {
                         nodeValue = explicit;
                         break;
                     }
@@ -181,13 +181,13 @@ public class ModeAccessParser implements TagParser {
             }
             if (restricted.contains(nodeValue))
                 return;
-            if ("yes".equals(firstNodeTags.get("locked")) && !intended.contains(nodeValue))
+            if ("yes".equals(firstNodeTags.get("locked")) && !ALLOWED.contains(nodeValue))
                 return;
         }
 
         if (FerrySpeedCalculator.isFerry(way)) {
             boolean isCar = restrictionKeys.contains("motorcar");
-            if (intended.contains(firstValue)
+            if (allowed.contains(firstValue)
                     // implied default is allowed only if foot and bicycle is not specified:
                     || isCar && firstValue.isEmpty() && !way.hasTag("foot") && !way.hasTag("bicycle")
                     // if hgv is allowed then smaller trucks and cars are allowed too even if not specified
