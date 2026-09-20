@@ -97,6 +97,33 @@ public class IsochroneResourceTest {
     }
 
     @Test
+    public void requestWithTolerance() {
+        JsonFeatureCollection rawCollection = clientTarget(app, "/isochrone")
+                .queryParam("profile", "fast_car")
+                .queryParam("point", "42.531073,1.573792")
+                .queryParam("time_limit", 5 * 60)
+                .queryParam("type", "geojson")
+                .request().get(JsonFeatureCollection.class);
+        Geometry raw = rawCollection.getFeatures().get(0).getGeometry();
+
+        JsonFeatureCollection thinnedCollection = clientTarget(app, "/isochrone")
+                .queryParam("profile", "fast_car")
+                .queryParam("point", "42.531073,1.573792")
+                .queryParam("time_limit", 5 * 60)
+                .queryParam("type", "geojson")
+                .queryParam("tolerance", 200)
+                .request().get(JsonFeatureCollection.class);
+        Geometry thinned = thinnedCollection.getFeatures().get(0).getGeometry();
+
+        assertTrue(thinned.getNumPoints() * 2 < raw.getNumPoints(),
+                "tolerance should thin the polygon, got " + thinned.getNumPoints() + " of "
+                        + raw.getNumPoints() + " points");
+        assertTrue(thinned.contains(geometryFactory.createPoint(new Coordinate(1.587224, 42.5386))));
+        assertFalse(thinned.contains(geometryFactory.createPoint(new Coordinate(1.635246, 42.53841))));
+        assertEquals(raw.getArea(), thinned.getArea(), 0.15 * raw.getArea());
+    }
+
+    @Test
     public void requestByTimeLimitNoTurnRestrictions() {
         JsonFeatureCollection featureCollection = clientTarget(app, "/isochrone")
                 .queryParam("profile", "fast_car_no_turn_restrictions")
