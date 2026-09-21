@@ -22,20 +22,19 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.util.Helper;
 
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static com.graphhopper.routing.ev.Surface.*;
+import static java.util.Map.entry;
 
 public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements TagParser {
 
-    public static final Set<Surface> BAD_SURFACES = Collections.unmodifiableSet(EnumSet.of(COBBLESTONE, GRAVEL,
-            FINE_GRAVEL, SAND, PAVING_STONES, DIRT, GROUND, WOOD, GRASS, UNPAVED, COMPACTED, OTHER));
-    // This value determines the maximal possible speed on roads with bad surfaces
-    private static final int BAD_SURFACE_SPEED = 30;
+    public static final Map<Surface, Integer> BAD_SURFACES = Map.ofEntries(
+            entry(PAVING_STONES, 60),
+            entry(COMPACTED, 50), entry(FINE_GRAVEL, 50),
+            entry(GRAVEL, 40),
+            entry(UNPAVED, 30), entry(COBBLESTONE, 30), entry(DIRT, 30), entry(GROUND, 30), entry(WOOD, 30), entry(OTHER, 30),
+            entry(SAND, 20), entry(GRASS, 20));
 
     protected final Map<String, Integer> trackTypeSpeedMap = new HashMap<>();
 
@@ -133,6 +132,7 @@ public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements
      * @return The assumed speed
      */
     protected double applyBadSurfaceSpeed(ReaderWay way, double speed) {
-        return BAD_SURFACES.contains(Surface.find(way.getTag("surface"))) ? Math.min(speed, BAD_SURFACE_SPEED) : speed;
+        Integer speedCap = BAD_SURFACES.get(Surface.find(way.getTag("surface")));
+        return speedCap != null ? Math.min(speed, speedCap) : speed;
     }
 }

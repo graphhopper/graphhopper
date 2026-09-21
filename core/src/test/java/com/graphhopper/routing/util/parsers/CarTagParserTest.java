@@ -346,7 +346,7 @@ public class CarTagParserTest {
         edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
         speedParser.handleWayTags(edgeId, edgeIntAccess, way);
 
-        assertEquals(30, avSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), 1e-1);
+        assertEquals(50, avSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), 1e-1);
 
         way.clearTags();
         way.setTag("highway", "secondary");
@@ -645,7 +645,7 @@ public class CarTagParserTest {
         way.setTag("surface", "sett");
         assertEquals(30, speedParser.applyBadSurfaceSpeed(way, 90), 1e-1);
         way.setTag("surface", "gravel:lanes");
-        assertEquals(30, speedParser.applyBadSurfaceSpeed(way, 90), 1e-1);
+        assertEquals(40, speedParser.applyBadSurfaceSpeed(way, 90), 1e-1);
         way.setTag("surface", "asphalt");
         assertEquals(90, speedParser.applyBadSurfaceSpeed(way, 90), 1e-1);
         way.setTag("surface", "something_unknown");
@@ -663,7 +663,7 @@ public class CarTagParserTest {
         EdgeIntAccess edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
         int edgeId = 0;
         speedParser.handleWayTags(edgeId, edgeIntAccess, way);
-        assertEquals(30, avSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), 1e-1);
+        assertEquals(40, avSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), 1e-1);
 
         way.setTag("surface", "asphalt");
         edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
