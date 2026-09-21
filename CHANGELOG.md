@@ -1,5 +1,6 @@
 ### 12.0 [not yet released]
 
+- racingbike: base speed on paved roads is 30km/h instead of 24 (matches the flat speed of a 200W cyclist and is the maximum of the 4 bit encoded value); smoothness=excellent no longer increases the speed for bike, mtb and racingbike (the physical gain of 1-2% is below the 2km/h resolution)
 - custom models: new `parameters` section with named numbers and booleans usable in conditions and value expressions (a parameter xy is referenced as p_xy); parameters can only be defined in the server-side custom model, optionally with an allowed value range; on merge the values are overridden per name, so a request can tweak the values of the server-side profile without repeating its statements (and without recompiling the custom model class); empty speed/priority/turn_penalty sections are no longer serialized
 - breaking: road_access now contains DESIGNATED and DISCOURAGED. All custom models using road_access == YES or road_access != YES need to consider this.
 - hgv deprecated. Use hgv_road_access that also considers other access tags similar to road_access.

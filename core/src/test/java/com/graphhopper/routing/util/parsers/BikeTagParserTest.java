@@ -361,7 +361,7 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "residential");
         way.setTag("smoothness", "excellent");
-        assertEquals(20, getSpeedFromFlags(way), 0.01);
+        assertEquals(18, getSpeedFromFlags(way), 0.01);
 
         way.setTag("smoothness", "bad");
         assertEquals(12, getSpeedFromFlags(way), 0.01);
