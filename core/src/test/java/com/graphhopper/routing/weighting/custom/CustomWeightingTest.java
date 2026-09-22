@@ -660,4 +660,16 @@ class CustomWeightingTest {
         // private should influence bike only slightly
         assertEquals(2400, bikeWeighting.calcEdgeWeight(edge, false));
     }
+
+    @Test
+    public void testFirstSpeedGroupWithBlock() {
+        // an else block sets the speed if its own first group does
+        CustomModel cm = new CustomModel().addToSpeed(If("road_class == PRIMARY", LIMIT, "30")).
+                addToSpeed(Else(List.of(If("true", LIMIT, avSpeedEnc.getName()), If("true", MULTIPLY, "0.5"))));
+        assertNotNull(CustomModelParser.createWeighting(encodingManager, NO_TURN_COST_PROVIDER, cm));
+        CustomModel invalid = new CustomModel().addToSpeed(If("road_class == PRIMARY", LIMIT, "30")).
+                addToSpeed(Else(List.of(If("true", MULTIPLY, "0.5"))));
+        String msg = assertThrows(IllegalArgumentException.class, () -> CustomModelParser.createWeighting(encodingManager, NO_TURN_COST_PROVIDER, invalid)).getMessage();
+        assertTrue(msg.contains("'limit_to'"), msg);
+    }
 }

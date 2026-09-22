@@ -223,6 +223,26 @@ public class CustomModelParser {
     }
 
     /**
+     * The first group under 'speed' must set the speed unconditionally via 'limit_to': a single 'if true'
+     * statement or an if/else group. The statement can also be a block whose first group fulfills this again.
+     */
+    private static void checkFirstGroupSetsSpeed(List<Statement> statements) {
+        if (statements.isEmpty())
+            throw new IllegalArgumentException("At least one initial statement under 'speed' is required.");
+        List<Statement> firstGroup = splitIntoGroup(statements).get(0);
+        Statement st = firstGroup.get(firstGroup.size() - 1);
+        if (firstGroup.size() > 1) {
+            if (st.keyword() != Statement.Keyword.ELSE)
+                throw new IllegalArgumentException("The first group needs to end with an 'else' (or contain a single unconditional 'if' statement).");
+        } else if (!"true".equals(st.condition()) || st.keyword() != Statement.Keyword.IF) {
+            throw new IllegalArgumentException("The first group needs to contain a single unconditional 'if' statement (or end with an 'else').");
+        }
+        if (st.isBlock()) checkFirstGroupSetsSpeed(st.doBlock());
+        else if (st.operation() != Statement.Op.LIMIT)
+            throw new IllegalArgumentException("The first group needs to set the speed with 'limit_to', but was: " + st);
+    }
+
+    /**
      * This method does the following:
      * <ul>
      * <li>1. parse the conditions and value expressions of the statements (parseExpressions) to verify
@@ -237,19 +257,7 @@ public class CustomModelParser {
             Set<String> priorityVariables = new LinkedHashSet<>();
             List<Java.BlockStatement> priorityStatements = createGetPriorityStatements(priorityVariables, customModel, lookup);
 
-            if (customModel.getSpeed().isEmpty())
-                throw new IllegalArgumentException("At least one initial statement under 'speed' is required.");
-
-            List<Statement> firstGroup = splitIntoGroup(customModel.getSpeed()).get(0);
-            if (firstGroup.size() > 1) {
-                Statement lastSt = firstGroup.get(firstGroup.size() - 1);
-                if (lastSt.operation() != Statement.Op.LIMIT || lastSt.keyword() != Statement.Keyword.ELSE)
-                    throw new IllegalArgumentException("The first group needs to end with an 'else' (or contain a single unconditional 'if' statement).");
-            } else {
-                Statement firstSt = firstGroup.get(0);
-                if (!"true".equals(firstSt.condition()) || firstSt.operation() != Statement.Op.LIMIT || firstSt.keyword() != Statement.Keyword.IF)
-                    throw new IllegalArgumentException("The first group needs to contain a single unconditional 'if' statement (or end with an 'else').");
-            }
+            checkFirstGroupSetsSpeed(customModel.getSpeed());
 
             Set<String> speedVariables = new LinkedHashSet<>();
             List<Java.BlockStatement> speedStatements = createGetSpeedStatements(speedVariables, customModel, lookup);
