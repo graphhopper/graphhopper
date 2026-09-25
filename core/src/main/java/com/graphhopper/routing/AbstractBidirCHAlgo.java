@@ -24,6 +24,7 @@ import com.graphhopper.storage.*;
 import com.graphhopper.util.GHUtility;
 
 import java.util.PriorityQueue;
+import com.graphhopper.coll.BinaryHeapWithDuplicates;
 import java.util.function.Supplier;
 
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
@@ -174,7 +175,7 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements E
         return true;
     }
 
-    private void fillEdges(SPTEntry currEdge, PriorityQueue<SPTEntry> prioQueue,
+    private void fillEdges(SPTEntry currEdge, BinaryHeapWithDuplicates<SPTEntry> prioQueue,
                            IntObjectMap<SPTEntry> bestWeightMap, RoutingCHEdgeExplorer explorer, boolean reverse) {
         RoutingCHEdgeIterator iter = explorer.setBaseNode(currEdge.adjNode);
         while (iter.next()) {
@@ -191,7 +192,7 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements E
             if (entry == null) {
                 entry = createEntry(iter.getEdge(), iter.getAdjNode(), origEdgeId, weight, currEdge, reverse);
                 bestWeightMap.put(traversalId, entry);
-                prioQueue.add(entry);
+                prioQueue.add(entry, entry.weight);
             } else if (entry.getWeightOfVisitedPath() > weight) {
                 // flagging this entry, so it will be ignored when it is polled the next time
                 // this is faster than removing the entry from the queue and adding again, but for CH it does not really
@@ -200,7 +201,7 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements E
                 boolean isBestEntry = reverse ? (entry == bestBwdEntry) : (entry == bestFwdEntry);
                 entry = createEntry(iter.getEdge(), iter.getAdjNode(), origEdgeId, weight, currEdge, reverse);
                 bestWeightMap.put(traversalId, entry);
-                prioQueue.add(entry);
+                prioQueue.add(entry, entry.weight);
                 // if this is the best entry we need to update the best reference as well
                 if (isBestEntry)
                     if (reverse)
